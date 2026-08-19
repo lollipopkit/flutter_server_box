@@ -663,6 +663,18 @@ abstract class AppLocalizations {
   /// **'Incorrect backup password'**
   String get backupPasswordWrong;
 
+  /// No description provided for @remoteBackupPasswordRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote backups require a non-empty backup password'**
+  String get remoteBackupPasswordRequired;
+
+  /// No description provided for @monitorHttpsRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote monitor agents require HTTPS; HTTP is allowed only on loopback.'**
+  String get monitorHttpsRequired;
+
   /// No description provided for @backupTip.
   ///
   /// In en, this message translates to:
@@ -1836,7 +1848,7 @@ abstract class AppLocalizations {
   /// No description provided for @sshHostKeyFingerprintMd5Hex.
   ///
   /// In en, this message translates to:
-  /// **'Fingerprint (MD5 hex): {fingerprint}'**
+  /// **'Fingerprint (SHA256): {fingerprint}'**
   String sshHostKeyFingerprintMd5Hex(Object fingerprint);
 
   /// Label for the SSH host key type displayed in the host key verification dialog.

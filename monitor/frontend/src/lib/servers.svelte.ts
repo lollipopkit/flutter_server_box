@@ -12,16 +12,14 @@ export interface ServerEntry {
 }
 
 import { probe } from './probe'
+import { isSecureAgentUrl, normalizeAgentUrl } from './agentUrl'
 
 const KEY = 'servers.v1'
+const SESSION_KEY = 'servers.sessions.v1'
 
 /// The entry assumed before anything has been asked: the origin this panel was
 /// served from. See confirmSameOrigin().
 const LOCAL_ID = 'local'
-
-function normalizeUrl(u: string): string {
-  return u.trim().replace(/\/+$/, '')
-}
 
 /// No locally-editable/cached name — this is only the pre-connection
 /// fallback. The real display name always comes live from the agent
@@ -40,11 +38,29 @@ class ServersStore {
   currentId = $state('')
 
   constructor() {
+    let sessions: Record<string, { token: string; username: string | null }> = {}
+    try {
+      sessions = JSON.parse(window.sessionStorage.getItem(SESSION_KEY) ?? '{}') as typeof sessions
+    } catch {
+      // Corrupt session state is equivalent to being logged out.
+    }
     const raw = window.localStorage.getItem(KEY)
     if (raw) {
       try {
         const parsed = JSON.parse(raw) as { list?: ServerEntry[]; currentId?: string }
-        this.list = parsed.list ?? []
+        this.list = (parsed.list ?? []).map((entry) => {
+          const migratedToken = entry.token ?? sessions[entry.id]?.token ?? null
+          const migratedUsername = entry.username ?? sessions[entry.id]?.username ?? null
+          if (migratedToken) {
+            sessions[entry.id] = { token: migratedToken, username: migratedUsername }
+          }
+          return {
+            id: entry.id,
+            url: entry.url,
+            token: isSecureAgentUrl(entry.url) ? migratedToken : null,
+            username: migratedUsername,
+          }
+        })
         this.currentId = parsed.currentId ?? ''
       } catch {
         // Corrupt store: fall through to the default entry
@@ -56,8 +72,8 @@ class ServersStore {
         {
           id: LOCAL_ID,
           url: '',
-          token: window.localStorage.getItem('token'),
-          username: window.localStorage.getItem('username'),
+          token: window.sessionStorage.getItem('token') ?? window.localStorage.getItem('token'),
+          username: window.sessionStorage.getItem('username') ?? window.localStorage.getItem('username'),
         },
       ]
       this.currentId = LOCAL_ID
@@ -66,6 +82,10 @@ class ServersStore {
     if (!this.list.some((s) => s.id === this.currentId)) {
       this.currentId = this.list[0]?.id ?? ''
     }
+    window.localStorage.removeItem('token')
+    window.localStorage.removeItem('username')
+    this.#persist()
+    this.#persistSessions()
   }
 
   get current(): ServerEntry | undefined {
@@ -106,7 +126,7 @@ class ServersStore {
   add(url: string) {
     const entry: ServerEntry = {
       id: newId(),
-      url: normalizeUrl(url),
+      url: normalizeAgentUrl(url),
       token: null,
       username: null,
     }
@@ -122,7 +142,7 @@ class ServersStore {
   update(id: string, url: string) {
     const entry = this.list.find((s) => s.id === id)
     if (!entry) return
-    const normalized = normalizeUrl(url)
+    const normalized = normalizeAgentUrl(url)
     if (normalized !== entry.url) {
       entry.token = null
       entry.username = null
@@ -162,14 +182,32 @@ class ServersStore {
     const entry = this.current
     if (!entry) return
     entry.token = null
+    entry.username = null
     this.#persist()
+    this.#persistSessions()
   }
 
   #persist() {
+    const list = $state.snapshot(this.list).map(({ id, url }) => ({
+      id,
+      url,
+      token: null,
+      username: null,
+    }))
     window.localStorage.setItem(
       KEY,
-      JSON.stringify({ list: $state.snapshot(this.list), currentId: this.currentId }),
+      JSON.stringify({ list, currentId: this.currentId }),
     )
+    this.#persistSessions()
+  }
+
+  #persistSessions() {
+    const sessions = Object.fromEntries(
+      this.list
+        .filter((entry) => entry.token)
+        .map((entry) => [entry.id, { token: entry.token, username: entry.username }]),
+    )
+    window.sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessions))
   }
 }
 

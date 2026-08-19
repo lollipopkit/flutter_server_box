@@ -6,32 +6,55 @@ export class Poller<T> {
   error = $state<string | null>(null)
   loading = $state(true)
 
-  #fetcher: () => Promise<T>
+  #fetcher: (signal: AbortSignal) => Promise<T>
   #intervalMs: number
-  #timer: ReturnType<typeof setInterval> | undefined
+  #timer: ReturnType<typeof setTimeout> | undefined
+  #controller: AbortController | undefined
+  #generation = 0
 
-  constructor(fetcher: () => Promise<T>, intervalMs = 5000) {
+  constructor(fetcher: (signal: AbortSignal) => Promise<T>, intervalMs = 5000) {
     this.#fetcher = fetcher
     this.#intervalMs = intervalMs
   }
 
   start() {
-    void this.#tick()
-    this.#timer = setInterval(() => void this.#tick(), this.#intervalMs)
+    this.stop()
+    this.loading = this.data === null
+    const generation = ++this.#generation
+    void this.#tick(generation)
+  }
+
+  reset() {
+    this.data = null
+    this.error = null
+    this.loading = true
   }
 
   stop() {
-    clearInterval(this.#timer)
+    this.#generation += 1
+    clearTimeout(this.#timer)
+    this.#timer = undefined
+    this.#controller?.abort()
+    this.#controller = undefined
   }
 
-  async #tick() {
+  async #tick(generation: number) {
+    const controller = new AbortController()
+    this.#controller = controller
     try {
-      this.data = await this.#fetcher()
+      const data = await this.#fetcher(controller.signal)
+      if (generation !== this.#generation) return
+      this.data = data
       this.error = null
     } catch (e) {
+      if (controller.signal.aborted || generation !== this.#generation) return
       this.error = e instanceof Error ? e.message : String(e)
     } finally {
-      this.loading = false
+      if (generation === this.#generation) {
+        this.#controller = undefined
+        this.loading = false
+        this.#timer = setTimeout(() => void this.#tick(generation), this.#intervalMs)
+      }
     }
   }
 }

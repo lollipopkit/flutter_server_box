@@ -79,7 +79,7 @@ extension _SSH on _AppSettingsPageState {
       }
       final resolvedList = ServerDeduplication.resolveNameConflicts([spi]);
       final resolvedSpi = resolvedList.first;
-      ref.read(serversProvider.notifier).addServer(resolvedSpi);
+      await ref.read(serversProvider.notifier).addServer(resolvedSpi);
       Toast.success(libL10n.success);
     } catch (e, s) {
       context.showErrDialog(e, s);

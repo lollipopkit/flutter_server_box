@@ -46,6 +46,8 @@ abstract final class TermSessionManager {
   static final Map<String, _Entry> _entries = {};
   static String? _activeId; // For iOS Live Activity
   static Timer? _updateTimer; // Timer for iOS Live Activity updates
+  static Future<void>? _syncing;
+  static bool _syncDirty = false;
   static const _updateInterval = Duration(
     seconds: 5,
   ); // 5-second update interval
@@ -137,7 +139,24 @@ abstract final class TermSessionManager {
     _sync();
   }
 
-  static Future<void> _sync() async {
+  static void _sync() {
+    _syncDirty = true;
+    _syncing ??= _drainSync();
+  }
+
+  static Future<void> _drainSync() async {
+    try {
+      while (_syncDirty) {
+        _syncDirty = false;
+        await _syncLatest();
+      }
+    } finally {
+      _syncing = null;
+      if (_syncDirty) _syncing = _drainSync();
+    }
+  }
+
+  static Future<void> _syncLatest() async {
     // Android: update foreground service notifications
     if (isAndroid) {
       final isRunning = await MethodChans.isServiceRunning();
@@ -167,7 +186,7 @@ abstract final class TermSessionManager {
         // Start timer if not already running
         _updateTimer ??= Timer.periodic(
           _updateInterval,
-          (_) => _updateLiveActivity(),
+          (_) => _sync(),
         );
         // Immediately update for immediate feedback
         await _updateLiveActivity();
@@ -242,6 +261,8 @@ abstract final class TermSessionManager {
     // Cancel any running timers
     _updateTimer?.cancel();
     _updateTimer = null;
+
+    await _syncing;
 
     // Stop the Live Activity
     await MethodChans.stopLiveActivity();

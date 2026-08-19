@@ -309,6 +309,14 @@ class AppLocalizationsNl extends AppLocalizations {
   String get backupPasswordWrong => 'Onjuist back-up wachtwoord';
 
   @override
+  String get remoteBackupPasswordRequired =>
+      'Externe back-ups vereisen een niet-leeg back-upwachtwoord';
+
+  @override
+  String get monitorHttpsRequired =>
+      'Externe monitoragents vereisen HTTPS; HTTP is alleen toegestaan op loopback-adressen.';
+
+  @override
   String get backupTip =>
       'De geëxporteerde gegevens kunnen worden versleuteld met een wachtwoord. \nBewaar deze aub veilig.';
 
@@ -1003,7 +1011,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
-    return 'Vingerafdruk (MD5 hex): $fingerprint';
+    return 'Vingerafdruk (SHA256): $fingerprint';
   }
 
   @override

@@ -164,6 +164,7 @@ class AgentSessionState {
 class AgentSession extends _$AgentSession {
   StreamSubscription<AskAiEvent>? _subscription;
   StreamSubscription<void>? _conversationWatch;
+  bool _submissionInFlight = false;
 
   /// The language to answer in, remembered from the last thing the user did.
   ///
@@ -195,22 +196,30 @@ class AgentSession extends _$AgentSession {
 
   /// Whether the prompt was taken. False leaves it with the caller, which is
   /// what the composer needs to know before it empties its box.
-  bool submitPrompt(String prompt, {String? localeHint}) {
+  Future<bool> submitPrompt(String prompt, {String? localeHint}) async {
     final text = prompt.trim();
-    if (text.isEmpty || state.isWorking || state.pendingTool != null) {
+    if (text.isEmpty ||
+        _submissionInFlight ||
+        state.isWorking ||
+        state.pendingTool != null) {
       return false;
     }
-    if (localeHint != null) _localeHint = localeHint;
-    _ensureConversation();
-    state = state.copyWith(
-      history: [...state.history, AskAiMessageItem.user(text)],
-      timeline: [...state.timeline, AgentUserEntry(text)],
-      autoRunCount: 0,
-      error: null,
-    );
-    _persist();
-    startStream();
-    return true;
+    _submissionInFlight = true;
+    try {
+      if (localeHint != null) _localeHint = localeHint;
+      await _ensureConversation();
+      state = state.copyWith(
+        history: [...state.history, AskAiMessageItem.user(text)],
+        timeline: [...state.timeline, AgentUserEntry(text)],
+        autoRunCount: 0,
+        error: null,
+      );
+      await _persist();
+      startStream();
+      return true;
+    } finally {
+      _submissionInFlight = false;
+    }
   }
 
   void startStream({String? localeHint}) {
@@ -250,7 +259,7 @@ class AgentSession extends _$AgentSession {
         );
   }
 
-  void _handleEvent(AskAiEvent event) {
+  Future<void> _handleEvent(AskAiEvent event) async {
     if (event is AskAiContentDelta) {
       state = state.copyWith(
         streamingContent: (state.streamingContent ?? '') + event.delta,
@@ -300,7 +309,7 @@ class AgentSession extends _$AgentSession {
           ? const AgentNoResponse()
           : null,
     );
-    _persist();
+    await _persist();
 
     if (command == null) return;
     if (!shouldAutoRunAgentCommand(
@@ -366,11 +375,11 @@ class AgentSession extends _$AgentSession {
       pendingToolRestored: false,
       isExecuting: false,
     );
-    _persist();
+    await _persist();
     if (!result.cancelled) startStream();
   }
 
-  void declinePendingTool() {
+  Future<void> declinePendingTool() async {
     final proposal = state.pendingTool;
     if (proposal == null || state.isWorking) return;
     state = state.copyWith(
@@ -390,7 +399,7 @@ class AgentSession extends _$AgentSession {
       pendingTool: null,
       pendingToolRestored: false,
     );
-    _persist();
+    await _persist();
     startStream();
   }
 
@@ -422,7 +431,7 @@ class AgentSession extends _$AgentSession {
     state = _stateFor(conversation);
   }
 
-  void beginNewConversation() {
+  Future<void> beginNewConversation() async {
     if (state.isWorking) return;
     restoreConversation(
       Stores.agentConversation.create(
@@ -434,7 +443,7 @@ class AgentSession extends _$AgentSession {
     );
   }
 
-  void activateConversation(AgentConversation conversation) {
+  Future<void> activateConversation(AgentConversation conversation) async {
     if (state.isWorking ||
         conversation.serverId != globalAgentConversationScope) {
       return;
@@ -448,7 +457,7 @@ class AgentSession extends _$AgentSession {
     restoreConversation(conversation);
   }
 
-  bool renameConversation(String id, String title) {
+  Future<bool> renameConversation(String id, String title) async {
     if (!Stores.agentConversation.rename(id, title)) return false;
     state = state.copyWith(
       conversations: _fetchConversations(),
@@ -459,7 +468,7 @@ class AgentSession extends _$AgentSession {
     return true;
   }
 
-  void deleteConversation(String id) {
+  Future<void> deleteConversation(String id) async {
     // Re-checked here and not only where the confirmation was raised: an
     // auto-approved tool can start while that dialog is on screen, and tearing
     // the conversation down under it leaves the execution running, to append
@@ -479,7 +488,7 @@ class AgentSession extends _$AgentSession {
     }
   }
 
-  void clearConversationHistory() {
+  Future<void> clearConversationHistory() async {
     if (state.isWorking) return;
     Stores.agentConversation.clearServer(globalAgentConversationScope);
     restoreConversation(null);
@@ -505,7 +514,7 @@ class AgentSession extends _$AgentSession {
     );
   }
 
-  AgentConversation _ensureConversation() {
+  Future<AgentConversation> _ensureConversation() async {
     final existing = state.conversation;
     if (existing != null) return existing;
     final created = Stores.agentConversation.create(
@@ -521,8 +530,8 @@ class AgentSession extends _$AgentSession {
     return created;
   }
 
-  void _persist() {
-    final conversation = _ensureConversation();
+  Future<void> _persist() async {
+    final conversation = await _ensureConversation();
     final trimmed = AgentConversationStore.trimItemsForStorage(state.history);
     final updated = conversation.copyWith(
       updatedAt: DateTime.now(),

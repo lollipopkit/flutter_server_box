@@ -256,7 +256,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
                 if (p0) {
                   final url = PrefProps.webdavUrl.get();
                   final user = PrefProps.webdavUser.get();
-                  final pwd = PrefProps.webdavPwd.get();
+                  final pwd = await SecureStoreProps.webdavPwd.read();
 
                   final anyNull = url == null || user == null || pwd == null;
                   if (anyNull) {
@@ -333,7 +333,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
                   if (!ok) return false;
                 }
                 if (p0) {
-                  final token = PrefProps.githubToken.get();
+                  final token = await SecureStoreProps.githubToken.read();
                   // Allow empty gistId (will create one on first upload)
                   final hasToken = token != null && token.isNotEmpty;
                   if (!hasToken) {
@@ -553,7 +553,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
         if (confirmed != true || !context.mounted) return;
         final notifier = ref.read(snippetProvider.notifier);
         for (final snippet in snippets) {
-          notifier.add(snippet);
+          await notifier.add(snippet);
         }
         context.pop();
       },
@@ -619,9 +619,13 @@ extension on _BackupPageState {
       final ok = await _ensureBakPwd(context);
       if (!ok) return;
       final savedPassword = await SecureStoreProps.bakPwd.read();
+      if (savedPassword == null || savedPassword.isEmpty) {
+        Toast.show(l10n.backupPassword);
+        return;
+      }
       await BackupV2.backup(
         bakName,
-        savedPassword?.isEmpty == true ? null : savedPassword,
+        savedPassword,
       );
       await Webdav.shared.upload(relativePath: bakName);
       Loggers.app.info('Upload webdav backup success');
@@ -664,9 +668,13 @@ extension on _BackupPageState {
       final ok = await _ensureBakPwd(context);
       if (!ok) return;
       final savedPassword = await SecureStoreProps.bakPwd.read();
+      if (savedPassword == null || savedPassword.isEmpty) {
+        Toast.show(l10n.backupPassword);
+        return;
+      }
       await BackupV2.backup(
         bakName,
-        savedPassword?.isEmpty == true ? null : savedPassword,
+        savedPassword,
       );
       await GistRs.shared.upload(relativePath: bakName);
       Loggers.app.info('Upload gist backup success');
@@ -679,7 +687,9 @@ extension on _BackupPageState {
   }
 
   Future<void> _onTapGistSetting(BuildContext context) async {
-    final tokenCtrl = TextEditingController(text: PrefProps.githubToken.get());
+    final tokenCtrl = TextEditingController(
+      text: await SecureStoreProps.githubToken.read(),
+    );
     final gistIdCtrl = TextEditingController(text: PrefProps.gistId.get());
     final nodeToken = FocusNode();
     final appL10n = context.l10n;
@@ -715,7 +725,8 @@ extension on _BackupPageState {
         );
         Toast.success(libL10n.success);
 
-        await PrefProps.githubToken.set(token_);
+        await SecureStoreProps.githubToken.write(token_);
+        GistRs.shared.token = token_;
         if (gistId_.isEmpty) {
           await PrefProps.gistId.remove();
         } else {
@@ -733,7 +744,9 @@ extension on _BackupPageState {
   Future<void> _onTapWebdavSetting(BuildContext context) async {
     final url = TextEditingController(text: PrefProps.webdavUrl.get());
     final user = TextEditingController(text: PrefProps.webdavUser.get());
-    final pwd = TextEditingController(text: PrefProps.webdavPwd.get());
+    final pwd = TextEditingController(
+      text: await SecureStoreProps.webdavPwd.read(),
+    );
     final nodeUser = FocusNode();
     final nodePwd = FocusNode();
     final result = await context.showRoundDialog<bool>(
@@ -780,9 +793,9 @@ extension on _BackupPageState {
           user: user_,
           pwd: pwd_,
         );
-        PrefProps.webdavUrl.set(url_);
-        PrefProps.webdavUser.set(user_);
-        PrefProps.webdavPwd.set(pwd_);
+        await PrefProps.webdavUrl.set(url_);
+        await PrefProps.webdavUser.set(user_);
+        await SecureStoreProps.webdavPwd.write(pwd_);
       } catch (e, s) {
         context.showErrDialog(e, s, 'Webdav');
       }
@@ -852,33 +865,30 @@ extension on _BackupPageState {
     final saved = await SecureStoreProps.bakPwd.read();
     if (saved != null && saved.isNotEmpty) return true;
 
-    // Show dialog asking if user wants to set password or continue without
+    // Remote backups contain credentials and private keys, so encryption is
+    // mandatory rather than an optional warning.
     final result = await context.showRoundDialog<bool>(
       title: l10n.backupPassword,
       child: Text(l10n.backupPasswordTip, style: UIs.textGrey),
       actions: [
         TextButton(
-          onPressed: () => context.popDialog(true),
+          onPressed: () => context.popDialog(false),
           child: Text(libL10n.cancel),
         ),
         TextButton(
-          onPressed: () => context.popDialog(false),
+          onPressed: () => context.popDialog(true),
           child: Text(libL10n.setting),
         ),
       ],
     );
 
     if (result == true) {
-      // Continue without password
-      return true;
-    } else if (result == false) {
-      // User wants to set password
       await _onTapSetBakPwd(context);
       final savedAfterSetting = await SecureStoreProps.bakPwd.read();
       return savedAfterSetting != null && savedAfterSetting.isNotEmpty;
     }
 
-    return false; // User cancelled the dialog
+    return false;
   }
 }
 

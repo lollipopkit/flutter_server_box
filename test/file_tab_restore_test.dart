@@ -53,8 +53,9 @@ void main() {
     await tempDir.delete(recursive: true);
   });
 
-  void saveTabs(List<Map<String, dynamic>> tabs) =>
-      Stores.history.fileTabs.put(jsonEncode(tabs));
+  Future<void> saveTabs(List<Map<String, dynamic>> tabs) async {
+    Stores.history.fileTabs.put(jsonEncode(tabs));
+  }
 
   /// The tab set as the page wrote it back — one entry per session.
   ///
@@ -104,7 +105,7 @@ void main() {
   testWidgets('a saved local session comes back in its directory', (
     tester,
   ) async {
-    saveTabs([
+    await saveTabs([
       {'kind': 'local', 'path': '/tmp/somewhere'},
     ]);
 
@@ -119,7 +120,7 @@ void main() {
   ) async {
     // The line this existed for.
     Stores.server.put(spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u'));
-    saveTabs([
+    await saveTabs([
       {'kind': 'server', 'serverId': 'srv-1', 'path': '/var/log'},
     ]);
 
@@ -134,7 +135,7 @@ void main() {
     // Not an error tab, and not a crash out of the loop that would take the
     // others with it.
     Stores.server.put(spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u'));
-    saveTabs([
+    await saveTabs([
       {'kind': 'server', 'serverId': 'srv-1', 'path': '/etc'},
       {'kind': 'server', 'serverId': 'srv-gone', 'path': '/etc'},
     ]);
@@ -146,7 +147,7 @@ void main() {
 
   testWidgets('everything gone falls back to this device', (tester) async {
     // Rather than the empty page this tab no longer opens with.
-    saveTabs([
+    await saveTabs([
       {'kind': 'server', 'serverId': 'srv-gone', 'path': '/etc'},
     ]);
 
@@ -160,7 +161,7 @@ void main() {
   ) async {
     // The migration residue the restore path carries a TODO for: local was
     // implied by the absence of a server id.
-    saveTabs([
+    await saveTabs([
       {'path': '/tmp/old'},
     ]);
 

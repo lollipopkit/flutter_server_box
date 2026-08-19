@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:meta/meta.dart';
 import 'package:riverpod/riverpod.dart';
+import 'package:server_box/core/utils/secure_endpoint.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
@@ -45,7 +46,7 @@ class AskAiRepository {
     final parsedBaseUri = Uri.tryParse(baseUrl);
     final hasScheme = parsedBaseUri?.hasScheme ?? false;
     final hasHost = (parsedBaseUri?.host ?? '').isNotEmpty;
-    if (!hasScheme || !hasHost) {
+    if (!hasScheme || !hasHost || !isSecureRemoteEndpoint(parsedBaseUri!)) {
       throw AskAiConfigException(invalidBaseUrl: baseUrl);
     }
 

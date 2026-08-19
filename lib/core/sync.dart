@@ -1,20 +1,21 @@
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/bak/backup.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/app/bak/utils.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/store/schema.dart';
 
-const bakSync = BakSyncer._();
+final bakSync = BakSyncer._();
 
 final icloud = ICloud(containerId: 'iCloud.tech.lolli.serverbox');
 
 bool get isICloudSupported => isMacOS || isIOS;
 
 final class BakSyncer extends SyncIface {
-  const BakSyncer._() : super();
+  BakSyncer._() : super();
 
   /// Set by [fromFile] when the remote payload came from a newer build.
   ///
@@ -35,10 +36,13 @@ final class BakSyncer extends SyncIface {
   @override
   Future<void> saveToFile() async {
     final pwd = await SecureStoreProps.bakPwd.read();
+    if (pwd == null || pwd.isEmpty) {
+      throw StateError(l10n.remoteBackupPasswordRequired);
+    }
     final includeSettings = PrefProps.syncAppSettings.get();
     await BackupV2.backup(
       null,
-      pwd?.isEmpty == true ? null : pwd,
+      pwd,
       includeSettings,
     );
   }

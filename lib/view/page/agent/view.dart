@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -292,18 +294,23 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
     // rather than eating it: the box stays usable while an answer streams, and
     // a keystroke that neither sends nor types anything simply disappears.
     if (ref.read(agentSessionProvider).isWorking) return KeyEventResult.ignored;
-    _submitPrompt(_inputController.text);
+    unawaited(_submitPrompt(_inputController.text));
     // Handled either way from here: the key meant "send", and letting it
     // through would leave a line break behind whenever there was nothing to
     // send.
     return KeyEventResult.handled;
   }
 
-  void _submitPrompt(String prompt) {
+  Future<void> _submitPrompt(String prompt) async {
     // Emptied only once the session has taken it. It refuses while a turn is
     // running or a tool is waiting to be reviewed, and a box cleared anyway
     // would lose what was typed.
-    if (_notifier.submitPrompt(prompt, localeHint: _localeHint)) {
+    final submitted = await _notifier.submitPrompt(
+      prompt,
+      localeHint: _localeHint,
+    );
+    if (!mounted) return;
+    if (submitted) {
       _inputController.clear();
     }
   }
@@ -1003,7 +1010,7 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
                 TextButton(
                   onPressed: session.isWorking
                       ? null
-                      : _notifier.declinePendingTool,
+                      : () => unawaited(_notifier.declinePendingTool()),
                   child: Text(context.l10n.askAiDecline),
                 ),
                 const SizedBox(width: 8),

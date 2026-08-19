@@ -94,9 +94,17 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     _selectedId = first.firstLeaf?.id;
   }
 
-  void _clearAllSettings() {
-    SettingStore.instance.clear();
-    Toast.success(libL10n.success);
+  Future<void> _clearAllSettings() async {
+    try {
+      if (!await SettingStore.instance.clear()) {
+        Toast.error(libL10n.fail);
+        return;
+      }
+      Toast.success(libL10n.success);
+    } catch (e, s) {
+      Loggers.app.warning('Failed to clear settings', e, s);
+      Toast.error(libL10n.fail);
+    }
   }
 
   /// The menu, built here because every title comes from the l10n of the

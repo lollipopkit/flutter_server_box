@@ -57,4 +57,18 @@ describe('probe', () => {
 
     expect(await probe('')).toBe('unreachable')
   })
+
+  it('refuses plaintext remote agents without making a request', async () => {
+    const fetch = vi.fn()
+    vi.stubGlobal('fetch', fetch)
+
+    expect(await probe('http://agent.example')).toBe('unreachable')
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it('allows plaintext loopback agents', async () => {
+    respondWith(JSON.stringify({ status: 'healthy' }))
+
+    expect(await probe('http://127.0.0.1:3770')).toBe('healthy')
+  })
 })

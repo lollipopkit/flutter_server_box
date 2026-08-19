@@ -313,6 +313,14 @@ class AppLocalizationsIt extends AppLocalizations {
   String get backupPasswordWrong => 'Password di backup errata';
 
   @override
+  String get remoteBackupPasswordRequired =>
+      'Remote backups require a non-empty backup password';
+
+  @override
+  String get monitorHttpsRequired =>
+      'Remote monitor agents require HTTPS; HTTP is allowed only on loopback.';
+
+  @override
   String get backupTip =>
       'I dati esportati possono essere crittografati con password.\nConservali al sicuro.';
 
@@ -1009,7 +1017,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
-    return 'Impronta digitale (MD5 hex): $fingerprint';
+    return 'Impronta digitale (SHA256): $fingerprint';
   }
 
   @override

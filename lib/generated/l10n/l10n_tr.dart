@@ -310,6 +310,14 @@ class AppLocalizationsTr extends AppLocalizations {
   String get backupPasswordWrong => 'Yanlış yedekleme parolası';
 
   @override
+  String get remoteBackupPasswordRequired =>
+      'Uzak yedeklemeler için boş olmayan bir yedekleme parolası gerekir';
+
+  @override
+  String get monitorHttpsRequired =>
+      'Uzak izleme aracıları HTTPS gerektirir; HTTP\'ye yalnızca geri döngü adreslerinde izin verilir.';
+
+  @override
   String get backupTip =>
       'Dışa aktarılan veriler parola ile şifrelenebilir. \nLütfen güvenli bir şekilde saklayın.';
 
@@ -1004,7 +1012,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
-    return 'Parmak izi (MD5 hex): $fingerprint';
+    return 'Parmak izi (SHA256): $fingerprint';
   }
 
   @override

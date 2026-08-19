@@ -94,38 +94,43 @@
     { label: '7d', minutes: 7 * 24 * 60 },
   ]
   let rangeMinutes = $state(60)
-  let history = $state<HistoryPoint[]>([])
-  let historyError = $state<string | null>(null)
-
-  async function loadHistory(minutes: number) {
-    try {
-      history = await api.getHistory(minutes)
-      historyError = null
-    } catch (e) {
-      historyError = e instanceof Error ? e.message : String(e)
-    }
-  }
-
-  // Refetches on range change (and once authenticated)
-  $effect(() => {
-    if (servers.authenticated) void loadHistory(rangeMinutes)
-  })
-
-  let historyTimer: ReturnType<typeof setInterval> | undefined
+  let requestedHistoryMinutes = 60
+  const historyPoller = new Poller(
+    (signal) => api.getHistory(requestedHistoryMinutes, signal),
+    60_000,
+  )
+  const history = $derived(historyPoller.data ?? ([] as HistoryPoint[]))
+  const historyError = $derived(historyPoller.error)
 
   // Polling (and the 401 it'd draw) only makes sense once this server has a
   // session; toggling auth state starts/stops it instead of an unconditional
   // onMount, so a freshly-added, not-yet-logged-in server stays quiet
   $effect(() => {
-    if (servers.authenticated) {
+    const serverId = servers.currentId
+    if (serverId && servers.authenticated) {
+      status.reset()
+      metrics.reset()
       status.start()
       metrics.start()
-      historyTimer = setInterval(() => void loadHistory(rangeMinutes), 60_000)
     }
     return () => {
       status.stop()
       metrics.stop()
-      clearInterval(historyTimer)
+    }
+  })
+
+  // History additionally depends on the selected range. Restarting aborts
+  // the old request so a slow 7d response cannot overwrite a newer 1h view.
+  $effect(() => {
+    const serverId = servers.currentId
+    const minutes = rangeMinutes
+    requestedHistoryMinutes = minutes
+    if (serverId && servers.authenticated) {
+      historyPoller.reset()
+      historyPoller.start()
+    }
+    return () => {
+      historyPoller.stop()
     }
   })
 

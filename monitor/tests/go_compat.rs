@@ -4,7 +4,7 @@
 //! Each test names the Go semantics it covers; see the threshold.rs module comment for the two deliberate divergences (Go-side bugs).
 
 use server_box_monitor::core::config::Config;
-use server_box_monitor::monitoring::monitoring::{
+use server_box_monitor::monitoring::{
     parse_disk_metrics, DiskMetrics, MemoryMetrics, NetworkMetrics, SwapMetrics, SystemMetrics,
 };
 use server_box_monitor::monitoring::push::PushRateLimiter;

@@ -10,12 +10,12 @@ void main() {
   setUp(() async {
     SqliteDb.openInMemory();
     store = AgentConversationStore.forTest();
-    await store.init();
+    store.init();
   });
 
   tearDown(SqliteDb.close);
 
-  test('round-trips protocol-complete conversation items', () {
+  test('round-trips protocol-complete conversation items', () async {
     const command = AskAiCommand(
       id: 'call-1',
       command: 'uptime',
@@ -67,7 +67,7 @@ void main() {
     expect(store.activeConversationId('server-1'), 'conversation-1');
   });
 
-  test('isolates servers and prunes only their oldest conversations', () {
+  test('isolates servers and prunes only their oldest conversations', () async {
     for (
       var index = 0;
       index < AgentConversationStore.maxConversationsPerServer + 1;
@@ -100,7 +100,7 @@ void main() {
     expect(store.fetchForServer('server-b').single.id, other.id);
   });
 
-  test('deleting the active conversation selects the next newest one', () {
+  test('deleting the active conversation selects the next newest one', () async {
     final older = store.create(
       serverId: 'server-1',
       protocol: AskAiProtocol.chatCompletions,
@@ -122,7 +122,7 @@ void main() {
     expect(store.fetch(newer.id), isNull);
   });
 
-  test('rename keeps the selected conversation active', () {
+  test('rename keeps the selected conversation active', () async {
     final active = store.create(
       serverId: 'server-1',
       protocol: AskAiProtocol.chatCompletions,
@@ -143,7 +143,7 @@ void main() {
     expect(store.fetch(other.id)?.title, 'Renamed conversation');
   });
 
-  test('cannot delete another server conversation through a foreign key', () {
+  test('cannot delete another server conversation through a foreign key', () async {
     final other = store.create(
       serverId: 'server-b',
       protocol: AskAiProtocol.chatCompletions,
@@ -223,7 +223,7 @@ void main() {
     );
   });
 
-  test('clearServer does not remove conversations from other servers', () {
+  test('clearServer does not remove conversations from other servers', () async {
     store.create(
       serverId: 'server-a',
       protocol: AskAiProtocol.chatCompletions,

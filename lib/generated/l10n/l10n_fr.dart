@@ -314,6 +314,14 @@ class AppLocalizationsFr extends AppLocalizations {
   String get backupPasswordWrong => 'Mot de passe de sauvegarde incorrect';
 
   @override
+  String get remoteBackupPasswordRequired =>
+      'Les sauvegardes distantes nécessitent un mot de passe de sauvegarde non vide';
+
+  @override
+  String get monitorHttpsRequired =>
+      'Les agents de surveillance distants nécessitent HTTPS ; HTTP n’est autorisé que sur l’interface de bouclage.';
+
+  @override
   String get backupTip =>
       'Les données exportées peuvent être chiffrées avec un mot de passe. \nVeuillez les garder en sécurité.';
 
@@ -1012,7 +1020,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
-    return 'Empreinte (MD5 hex) : $fingerprint';
+    return 'Empreinte (SHA256) : $fingerprint';
   }
 
   @override
