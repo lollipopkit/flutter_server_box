@@ -331,7 +331,7 @@ class ServersNotifier extends _$ServersNotifier {
       await WatchSync.instance.removeServer(spi);
     }
     Stores.setting.serverOrder.put([]);
-    Stores.server.clear();
+    await Stores.server.clear();
     state = const ServersState();
     await Future.wait(serverIds.map(_clearSudoPasswordOverrideBestEffort));
     Stores.connectionStats.clearAll();

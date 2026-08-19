@@ -94,8 +94,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     _selectedId = first.firstLeaf?.id;
   }
 
-  void _clearAllSettings() {
-    SettingStore.instance.clear();
+  Future<void> _clearAllSettings() async {
+    await SettingStore.instance.clear();
     Toast.success(libL10n.success);
   }
 

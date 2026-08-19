@@ -49,9 +49,11 @@ abstract class CachedSqliteStore<T extends Object> extends SqliteStore {
   }
 
   @override
-  bool clear({bool? updateLastUpdateTsOnClear}) {
+  Future<bool> clear({bool? updateLastUpdateTsOnClear}) async {
     _cache = null;
-    return super.clear(updateLastUpdateTsOnClear: updateLastUpdateTsOnClear);
+    return await super.clear(
+      updateLastUpdateTsOnClear: updateLastUpdateTsOnClear,
+    );
   }
 
   void invalidateCache() => _cache = null;
