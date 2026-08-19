@@ -1,70 +1,69 @@
-import 'dart:io';
-
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:server_box/data/store/setting.dart';
 
 void main() {
-  late Directory tempDir;
-  late Box<dynamic> box;
   late SettingStore store;
 
-  setUpAll(() async {
-    tempDir = await Directory.systemTemp.createTemp('server-box-setting-test-');
-    Hive.init(tempDir.path);
-    box = await Hive.openBox<dynamic>('setting_test');
-    store = SettingStore.forBox(box);
+  setUp(() {
+    SqliteDb.openInMemory();
+    store = SettingStore.forTest();
   });
 
-  setUp(() async {
-    await box.clear();
-  });
-
-  tearDownAll(() async {
-    await box.close();
-    await tempDir.delete(recursive: true);
-  });
+  tearDown(SqliteDb.close);
 
   test('adds Agent to the legacy default home tabs once', () async {
-    await box.put('homeTabs', ['server', 'ssh', 'file', 'snippet']);
+    store.set('homeTabs', ['server', 'ssh', 'file', 'snippet']);
 
     await store.migrateHomeTabsAgent();
 
-    expect(box.get('homeTabs'), ['server', 'ssh', 'file', 'snippet', 'agent']);
-    expect(box.get('homeTabsAgentMigrated'), isTrue);
+    expect(store.get<List>('homeTabs'), [
+      'server',
+      'ssh',
+      'file',
+      'snippet',
+      'agent',
+    ]);
+    expect(store.get<bool>('homeTabsAgentMigrated'), isTrue);
   });
 
   test('preserves a custom home tab configuration', () async {
-    await box.put('homeTabs', ['server', 'ssh']);
+    store.set('homeTabs', ['server', 'ssh']);
 
     await store.migrateHomeTabsAgent();
 
-    expect(box.get('homeTabs'), ['server', 'ssh']);
-    expect(box.get('homeTabsAgentMigrated'), isTrue);
+    expect(store.get<List>('homeTabs'), ['server', 'ssh']);
+    expect(store.get<bool>('homeTabsAgentMigrated'), isTrue);
   });
 
   test('preserves home tabs that already contain Agent', () async {
-    await box.put('homeTabs', ['server', 'ssh', 'file', 'snippet', 'agent']);
+    store.set('homeTabs', ['server', 'ssh', 'file', 'snippet', 'agent']);
 
     await store.migrateHomeTabsAgent();
 
-    expect(box.get('homeTabs'), ['server', 'ssh', 'file', 'snippet', 'agent']);
-    expect(box.get('homeTabsAgentMigrated'), isTrue);
+    expect(store.get<List>('homeTabs'), [
+      'server',
+      'ssh',
+      'file',
+      'snippet',
+      'agent',
+    ]);
+    expect(store.get<bool>('homeTabsAgentMigrated'), isTrue);
   });
 
   test('a second migration does not alter later custom tabs', () async {
-    await box.put('homeTabs', ['server', 'ssh', 'file', 'snippet']);
+    store.set('homeTabs', ['server', 'ssh', 'file', 'snippet']);
     await store.migrateHomeTabsAgent();
-    await box.put('homeTabs', ['server', 'agent']);
+    store.set('homeTabs', ['server', 'agent']);
 
     await store.migrateHomeTabsAgent();
 
-    expect(box.get('homeTabs'), ['server', 'agent']);
-    expect(box.get('homeTabsAgentMigrated'), isTrue);
+    expect(store.get<List>('homeTabs'), ['server', 'agent']);
+    expect(store.get<bool>('homeTabsAgentMigrated'), isTrue);
   });
 
   test('removes retired setting keys without touching active settings', () async {
-    await box.putAll({
+    store.setAll({
       'moveOutServerTabFuncBtns': true,
       'forceSinglePane': true,
       'recordHistory': false,
@@ -72,8 +71,17 @@ void main() {
 
     await store.removeRetiredKeys();
 
-    expect(box.containsKey('moveOutServerTabFuncBtns'), isFalse);
-    expect(box.containsKey('forceSinglePane'), isFalse);
-    expect(box.get('recordHistory'), isFalse);
+    expect(store.get<bool>('moveOutServerTabFuncBtns'), isNull);
+    expect(store.get<bool>('forceSinglePane'), isNull);
+    expect(store.get<bool>('recordHistory'), isFalse);
+  });
+
+  test('a migration flag does not count as a user edit', () async {
+    await store.migrateHomeTabsAgent();
+
+    // The Hive version wrote these straight to the box to keep them out of
+    // `lastUpdateTs`. Sync compares that number, so a device that had only ever
+    // run a migration would otherwise claim the newer copy.
+    expect(store.lastUpdateTs, anyOf(isNull, isEmpty));
   });
 }

@@ -20,7 +20,6 @@ import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
-import 'package:server_box/data/store/migrations/m002_nest_ssh.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/hive/hive_registrar.g.dart';
@@ -130,12 +129,15 @@ Future<void> _initData() async {
     dirs: const {PathDir.img, PathDir.font},
   );
 
+  // Only so `HiveImport` can read the boxes an upgrading install still has.
+  // Nothing writes Hive any more.
+  //
+  // TODO: drop this, `lib/hive/` and the `hive_ce*` dependencies together with
+  // `HiveImport`, once no supported install can still be on Hive.
   await Hive.initFlutter();
   Hive.registerAdapters();
   // Reads pre-v3 server records, which the generated SpiAdapter no longer
   // understands (it owns a new typeId and the nested layout).
-  // TODO: drop together with SpiNestSshMigration once no install can still be
-  // on schema v2.
   Hive.registerAdapter(SpiLegacyAdapter());
 
   await PrefStore.shared.init(); // Call this before accessing any store
@@ -156,11 +158,12 @@ Future<void> _initData() async {
     // start empty — an app that opens with nothing in it can still be told
     // what happened, one that does not open cannot.
     Loggers.app.warning('Stores.init after sandbox import', e, s);
-    // Closed before the files are deleted. `Stores.init` may have opened
-    // several boxes before the one that threw, and unlinking a `.hive` out
-    // from under a live handle is undefined at best: on Windows the delete
-    // fails outright and the copy stays, so the retry below reopens exactly
-    // the data that just failed to open.
+    // Closed before the files are deleted. `Stores.init` may have got as far as
+    // opening the database, or several boxes, before the one that threw, and
+    // unlinking a file out from under a live handle is undefined at best: on
+    // Windows the delete fails outright and the copy stays, so the retry below
+    // reopens exactly the data that just failed to open.
+    await SqliteDb.close();
     await Hive.close();
     await getIt.reset();
     await SandboxImport.undo();
@@ -232,7 +235,12 @@ Future<void> _doDbMigrate() async {
   // its current type. Throws SchemaTooNewException when the data was written
   // by a newer build — that must not be swallowed, since continuing would let
   // this build overwrite records whose shape it doesn't understand.
-  await SchemaVersion.migrate(const [SpiNestSshMigration()]);
+  //
+  // The list is empty as of v4: `HiveImport` brings every install straight to
+  // `current` while copying, because a pre-v3 record only exists as a Hive
+  // value and that is the one pass that reads one. The call stays for the
+  // downgrade check it performs, and for the next step that does exist.
+  await SchemaVersion.migrate(const []);
 
   // Then the app-level fixups, which read records as `Spi`.
   ServerStore.instance.migrateIds();

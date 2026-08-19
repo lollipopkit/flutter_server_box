@@ -45,10 +45,10 @@ packages:
     dependency: transitive
     description:
       name: archive
-      sha256: a96e8b390886ee8abb49b7bd3ac8df6f451c621619f52a26e815fdcf568959ff
+      sha256: be169cf6ac481e052c4538715d88841d567150dfe1df38aaec76461a4e7b39f2
       url: "https://pub.dev"
     source: hosted
-    version: "4.0.9"
+    version: "4.1.0"
   args:
     dependency: transitive
     description:
@@ -584,10 +584,9 @@ packages:
   flutter_pty:
     dependency: "direct main"
     description:
-      name: flutter_pty
-      sha256: c2f3b3160b519ac820fa3f6ef175361f2dfc52c557465643589542e9f229ad66
-      url: "https://pub.dev"
-    source: hosted
+      path: "packages/flutter_pty"
+      relative: true
+    source: path
     version: "0.4.2"
   flutter_riverpod:
     dependency: "direct main"
@@ -601,10 +600,18 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_rust_bridge
-      sha256: e87d6b9ee934dcd24a128ccb2bd91905d2d5fe5c06245d6a8f5477d4907a437a
+      sha256: "7e8f565714dcb06197d29c74a559ee826c4eab4d586d7ccf9826aa5dc9478015"
       url: "https://pub.dev"
     source: hosted
-    version: "2.12.0"
+    version: "2.13.0-beta.6"
+  flutter_rust_bridge_hooks:
+    dependency: "direct main"
+    description:
+      name: flutter_rust_bridge_hooks
+      sha256: a950952d2de2ffc2464e336bd04fe16124b863a27ed547c41b94ad635d07bfd1
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.13.0-beta.6"
   flutter_secure_storage:
     dependency: transitive
     description:
@@ -768,10 +775,10 @@ packages:
     dependency: transitive
     description:
       name: hooks
-      sha256: "03a564c3704524ee0f7fc56fc621e8796cc2eb8c24d1f1a33b34979815b285c4"
+      sha256: eaac480a35ec0814146c2c48d96aaa829e0e44a7662c88ae84c9edf4bc35651f
       url: "https://pub.dev"
     source: hosted
-    version: "2.1.0"
+    version: "2.2.0"
   html:
     dependency: transitive
     description:
@@ -833,10 +840,10 @@ packages:
     dependency: transitive
     description:
       name: image
-      sha256: "6300175e00616bbc832e2fc91bfa4d776af5402c81c7151bee6905bb08473c52"
+      sha256: "1976370a4df3091bb0f72409c187ad1f9132a818bc6b95ca59c0bae1c75c688e"
       url: "https://pub.dev"
     source: hosted
-    version: "4.9.1"
+    version: "4.9.2"
   integration_test:
     dependency: "direct dev"
     description: flutter
@@ -1074,6 +1081,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.6.2"
+  native_toolchain_c:
+    dependency: transitive
+    description:
+      name: native_toolchain_c
+      sha256: a1c26117c48cebe5677b0cf0e33a980a79a7c5577effc86f52e5a0d309cdcb60
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.19.3"
+  native_toolchain_rust:
+    dependency: transitive
+    description:
+      name: native_toolchain_rust
+      sha256: "8469a0e32a47a5c84b7fd300de9fd0e8082aac76c37922986324f5082a58350d"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.6"
   nested:
     dependency: transitive
     description:
@@ -1342,10 +1365,10 @@ packages:
     dependency: transitive
     description:
       name: record_use
-      sha256: "3b4ab682aff40175afca6ff090cc5aa7ce9dafe8dfbae1537a6c678e6678baee"
+      sha256: "1cb8564af8d43b464294411db9217f5ec04891c6f22ee2c32d73ae05e88a6bd2"
       url: "https://pub.dev"
     source: hosted
-    version: "1.1.0"
+    version: "1.1.1"
   responsive_framework:
     dependency: "direct main"
     description:
@@ -1386,13 +1409,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.0.4"
-  sbm_ffi:
-    dependency: "direct main"
-    description:
-      path: "crates/sbm_ffi"
-      relative: true
-    source: path
-    version: "0.0.1"
   screen_retriever:
     dependency: transitive
     description:
@@ -1582,6 +1598,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.10.2"
+  sqlite3:
+    dependency: "direct main"
+    description:
+      name: sqlite3
+      sha256: "64b2c63c8232dd20d14b34105a81ebfd74320442e8451f836179ec89986aa478"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.5.1"
   stack_trace:
     dependency: transitive
     description:
@@ -1662,6 +1686,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.6.18"
+  toml:
+    dependency: transitive
+    description:
+      name: toml
+      sha256: "35a35f782228656a2af31e8c73d1353cc4ef3d683fd68af1111b44631879c05e"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.18.0"
   tuple:
     dependency: transitive
     description:
@@ -1802,10 +1834,10 @@ packages:
     dependency: transitive
     description:
       name: vm_service
-      sha256: "0016aef94fc66495ac78af5859181e3f3bf2026bd8eecc72b9565601e19ab360"
+      sha256: "5f37239c4851efcef929cea7824e76df7f2f0970aef85d66bbc430afa40e72f0"
       url: "https://pub.dev"
     source: hosted
-    version: "15.2.0"
+    version: "15.3.0"
   wake_on_lan:
     dependency: "direct main"
     description:

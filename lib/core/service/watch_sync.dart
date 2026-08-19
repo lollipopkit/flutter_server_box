@@ -130,11 +130,11 @@ final class WatchSync {
     final existingTokens = await _existingTokens();
     final tokens = reusableTokens(
       selectedIds: selectedIds,
-      lookup: (id) => Stores.server.get<Spi>(id),
+      lookup: Stores.server.fetchOneRaw,
       existingTokens: existingTokens,
     );
     for (final id in selectedIds) {
-      final spi = Stores.server.get<Spi>(id);
+      final spi = Stores.server.fetchOneRaw(id);
       final monitor = spi?.monitor;
       if (spi == null || monitor == null) continue;
       if (tokens.containsKey(id)) continue;
@@ -154,7 +154,7 @@ final class WatchSync {
     }
     return payloadFrom(
       selectedIds: selectedIds,
-      lookup: (id) => Stores.server.get<Spi>(id),
+      lookup: Stores.server.fetchOneRaw,
       tokens: tokens,
       // TODO: drop with `SettingStore.watchLegacyUrls`.
       legacyUrls: Stores.setting.watchLegacyUrls.fetch(),
@@ -206,7 +206,7 @@ final class WatchSync {
     final nextIds = next.toSet();
     final existingTokens = await _existingTokens();
     for (final id in previous.where((id) => !nextIds.contains(id))) {
-      final spi = Stores.server.get<Spi>(id);
+      final spi = Stores.server.fetchOneRaw(id);
       if (spi != null) {
         await _revokeServer(spi, endpoint: existingTokens[id]?.endpoint);
       }
@@ -229,7 +229,7 @@ final class WatchSync {
   Future<void> _revokeSelectedServers() async {
     final existingTokens = await _existingTokens();
     for (final id in Stores.setting.watchServerIds.fetch()) {
-      final spi = Stores.server.get<Spi>(id);
+      final spi = Stores.server.fetchOneRaw(id);
       if (spi != null) {
         await _revokeServer(spi, endpoint: existingTokens[id]?.endpoint);
       }
@@ -366,7 +366,7 @@ final class WatchSync {
     });
     // A server's monitor address or login can change without the watch
     // selection changing, and issuing again also rotates the scoped token.
-    _serverStoreSub = Stores.server.box.watch().listen((_) => _schedulePush());
+    _serverStoreSub = Stores.server.watch().listen((_) => _schedulePush());
   }
 
   void _schedulePush() {

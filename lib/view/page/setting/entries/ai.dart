@@ -5,7 +5,7 @@ extension _AI on _AppSettingsPageState {
   /// settings row that opens something: title, the current value under it, and
   /// a chevron saying there is more behind the tap.
   Widget _buildAskAiTextTile({
-    required HiveProp<String> prop,
+    required SqliteProp<String> prop,
     required Widget leading,
     required String title,
     required String hint,
@@ -141,7 +141,7 @@ extension _AI on _AppSettingsPageState {
   }
 
   Future<void> _showAskAiFieldDialog({
-    required HiveProp<String> prop,
+    required SqliteProp<String> prop,
     required String title,
     required String hint,
     String? description,

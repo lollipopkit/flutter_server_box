@@ -1,12 +1,10 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/generated/l10n/lib_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
@@ -26,30 +24,19 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late Directory tempDir;
-  late Box<dynamic> settingBox;
-  late Box<dynamic> snippetBox;
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-snippet-');
-    Hive.init(tempDir.path);
+    SqliteDb.openInMemory();
     // In memory: this page persists the pane width on every drag, and a real
     // write started in a `testWidgets` body never lets go of the box's lock.
-    settingBox = await Hive.openBox<dynamic>(
-      'setting_test',
-      bytes: Uint8List(0),
-    );
-    snippetBox = await Hive.openBox<dynamic>(
-      'snippet_test',
-      bytes: Uint8List(0),
-    );
-    getIt.registerSingleton<SettingStore>(SettingStore.forBox(settingBox));
-    getIt.registerSingleton<SnippetStore>(SnippetStore.forBox(snippetBox));
+    getIt.registerSingleton<SettingStore>(SettingStore.forTest());
+    getIt.registerSingleton<SnippetStore>(SnippetStore.forTest());
   });
 
   tearDown(() async {
     await getIt.reset();
-    await settingBox.close();
-    await snippetBox.close();
+    await SqliteDb.close();
     await tempDir.delete(recursive: true);
   });
 

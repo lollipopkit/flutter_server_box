@@ -1,18 +1,14 @@
-import 'package:hive_ce/hive.dart';
 import 'package:meta/meta.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/store/cached_store.dart';
 
-class SnippetStore extends CachedHiveStore<Snippet> {
+class SnippetStore extends CachedSqliteStore<Snippet> {
   SnippetStore._() : super('snippet');
 
-  /// The same seam [ServerStore.forBox] has: `init()` reaches for the
-  /// platform's secure storage to get an encryption cipher, which a unit test
-  /// has no implementation of.
+  /// The same seam [ServerStore.forTest] has: a distinct store name, so a test
+  /// on `SqliteDb.openInMemory()` cannot collide with another test's rows.
   @visibleForTesting
-  SnippetStore.forBox(Box<dynamic> testBox) : super('snippet_test') {
-    box = testBox;
-  }
+  SnippetStore.forTest() : super('snippet_test');
 
   static final instance = SnippetStore._();
 

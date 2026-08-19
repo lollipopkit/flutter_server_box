@@ -95,8 +95,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   void _clearAllSettings() {
-    final keys = SettingStore.instance.box.keys;
-    SettingStore.instance.box.deleteAll(keys);
+    SettingStore.instance.clear();
     Toast.success(libL10n.success);
   }
 

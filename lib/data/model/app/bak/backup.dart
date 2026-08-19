@@ -78,134 +78,26 @@ class Backup implements Mergeable {
       return;
     }
 
-    // Snippets
-    if (force) {
-      for (final s in snippets) {
-        await Stores.snippet.box.put(s.name, s);
-      }
-    } else {
-      final nowSnippets = Stores.snippet.box.keys.toSet();
-      final bakSnippets = snippets.map((e) => e.name).toSet();
-      final newSnippets = bakSnippets.difference(nowSnippets);
-      final delSnippets = nowSnippets.difference(bakSnippets);
-      final updateSnippets = nowSnippets.intersection(bakSnippets);
-      for (final s in newSnippets) {
-        await Stores.snippet.box.put(s, snippets.firstWhere((e) => e.name == s));
-      }
-      for (final s in delSnippets) {
-        await Stores.snippet.box.delete(s);
-      }
-      for (final s in updateSnippets) {
-        await Stores.snippet.box.put(s, snippets.firstWhere((e) => e.name == s));
-      }
-    }
+    // One transaction for the whole merge. Per-key commits would leave a
+    // restore that was interrupted — process killed, device out of battery —
+    // with servers deleted whose replacements were never written, and no way to
+    // tell that had happened.
+    SqliteStore.transact(() {
+      _restoreInto(
+        Stores.snippet,
+        {for (final s in snippets) s.name: s},
+        force: force,
+      );
+      _restoreInto(Stores.server, {for (final s in spis) s.id: s}, force: force);
+      _restoreInto(Stores.key, {for (final s in keys) s.id: s}, force: force);
+      _restoreInto(Stores.history, history, force: force);
+      _restoreInto(Stores.container, container, force: force);
 
-    // ServerPrivateInfo
-    if (force) {
-      for (final s in spis) {
-        await Stores.server.box.put(s.id, s);
+      final settings_ = settings;
+      if (settings_ != null) {
+        _restoreInto(Stores.setting, settings_, force: force);
       }
-    } else {
-      final nowSpis = Stores.server.box.keys.toSet();
-      final bakSpis = spis.map((e) => e.id).toSet();
-      final newSpis = bakSpis.difference(nowSpis);
-      final delSpis = nowSpis.difference(bakSpis);
-      final updateSpis = nowSpis.intersection(bakSpis);
-      for (final s in newSpis) {
-        await Stores.server.box.put(s, spis.firstWhere((e) => e.id == s));
-      }
-      for (final s in delSpis) {
-        await Stores.server.box.delete(s);
-      }
-      for (final s in updateSpis) {
-        await Stores.server.box.put(s, spis.firstWhere((e) => e.id == s));
-      }
-    }
-
-    // PrivateKeyInfo
-    if (force) {
-      for (final s in keys) {
-        await Stores.key.box.put(s.id, s);
-      }
-    } else {
-      final nowKeys = Stores.key.box.keys.toSet();
-      final bakKeys = keys.map((e) => e.id).toSet();
-      final newKeys = bakKeys.difference(nowKeys);
-      final delKeys = nowKeys.difference(bakKeys);
-      final updateKeys = nowKeys.intersection(bakKeys);
-      for (final s in newKeys) {
-        await Stores.key.box.put(s, keys.firstWhere((e) => e.id == s));
-      }
-      for (final s in delKeys) {
-        await Stores.key.box.delete(s);
-      }
-      for (final s in updateKeys) {
-        await Stores.key.box.put(s, keys.firstWhere((e) => e.id == s));
-      }
-    }
-
-    // History
-    if (force) {
-      await Stores.history.box.putAll(history);
-    } else {
-      final nowHistory = Stores.history.box.keys.toSet();
-      final bakHistory = history.keys.toSet();
-      final newHistory = bakHistory.difference(nowHistory);
-      final delHistory = nowHistory.difference(bakHistory);
-      final updateHistory = nowHistory.intersection(bakHistory);
-      for (final s in newHistory) {
-        await Stores.history.box.put(s, history[s]);
-      }
-      for (final s in delHistory) {
-        await Stores.history.box.delete(s);
-      }
-      for (final s in updateHistory) {
-        await Stores.history.box.put(s, history[s]);
-      }
-    }
-
-    // Container
-    if (force) {
-      await Stores.container.box.putAll(container);
-    } else {
-      final nowContainer = Stores.container.box.keys.toSet();
-      final bakContainer = container.keys.toSet();
-      final newContainer = bakContainer.difference(nowContainer);
-      final delContainer = nowContainer.difference(bakContainer);
-      final updateContainer = nowContainer.intersection(bakContainer);
-      for (final s in newContainer) {
-        await Stores.container.box.put(s, container[s]);
-      }
-      for (final s in delContainer) {
-        await Stores.container.box.delete(s);
-      }
-      for (final s in updateContainer) {
-        await Stores.container.box.put(s, container[s]);
-      }
-    }
-
-    // Settings
-    final settings_ = settings;
-    if (settings_ != null) {
-      if (force) {
-        await Stores.setting.box.putAll(settings_);
-      } else {
-        final nowSettings = Stores.setting.box.keys.toSet();
-        final bakSettings = settings_.keys.toSet();
-        final newSettings = bakSettings.difference(nowSettings);
-        final delSettings = nowSettings.difference(bakSettings);
-        final updateSettings = nowSettings.intersection(bakSettings);
-        for (final s in newSettings) {
-          await Stores.setting.box.put(s, settings_[s]);
-        }
-        for (final s in delSettings) {
-          await Stores.setting.box.delete(s);
-        }
-        for (final s in updateSettings) {
-          await Stores.setting.box.put(s, settings_[s]);
-        }
-      }
-    }
+    });
 
     Provider.reload();
     RNodes.app.notify();
@@ -215,6 +107,41 @@ class Backup implements Mergeable {
 
   factory Backup.fromJsonString(String raw) =>
       Backup.fromJson(json.decode(_diyDecrypt(raw)));
+}
+
+/// Writes one section of a backup into the store it came from.
+///
+/// [force] replaces what is there; otherwise the store is also made to *stop*
+/// holding whatever the backup does not, which is what makes a delete on one
+/// device reach another.
+///
+/// Nothing here stamps `lastUpdateTs`, which is what writing straight to the
+/// Hive box used to achieve. A restore is not an edit: marking every restored
+/// key as changed now would leave the merged copy looking newer than the backup
+/// it came from, and the next sync would push it straight back out.
+///
+/// Uses `keys()` rather than every key in the store, so the internal
+/// `lastUpdateTs` entry is not one of the ones deleted for being absent from
+/// the backup — `getAllMap` leaves it out of the backup by the same rule, so
+/// the box-level version deleted it on every non-forced merge.
+void _restoreInto(
+  SqliteStore store,
+  Map<String, Object?> incoming, {
+  required bool force,
+}) {
+  if (!force) {
+    for (final key in store.keys().difference(incoming.keys.toSet())) {
+      store.remove(key, updateLastUpdateTsOnRemove: false);
+    }
+  }
+  for (final entry in incoming.entries) {
+    final value = entry.value;
+    if (value == null) {
+      store.remove(entry.key, updateLastUpdateTsOnRemove: false);
+      continue;
+    }
+    store.set(entry.key, value, updateLastUpdateTsOnSet: false);
+  }
 }
 
 String _diyEncrypt(String raw) =>

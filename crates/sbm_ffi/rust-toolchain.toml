@@ -1,0 +1,26 @@
+# `native_toolchain_rust` wants an exact channel rather than `stable`, so that
+# the library shipped in a release is built by a toolchain the version control
+# names.
+#
+# Scoped to this crate rather than the workspace root: `sbm_parser`,
+# `sbm_native` and `monitor` are built by cargo directly and have no reason to
+# be pinned to whatever the app's build hook happens to need.
+#
+# `targets` is every platform the app ships to. A target missing here is not a
+# build error, it is a build that silently falls back to the host.
+[toolchain]
+channel = "1.97.1"
+targets = [
+  "aarch64-apple-darwin",
+  "x86_64-apple-darwin",
+  "aarch64-apple-ios",
+  "aarch64-apple-ios-sim",
+  "x86_64-apple-ios",
+  "aarch64-linux-android",
+  "armv7-linux-androideabi",
+  "x86_64-linux-android",
+  "aarch64-unknown-linux-gnu",
+  "x86_64-unknown-linux-gnu",
+  "aarch64-pc-windows-msvc",
+  "x86_64-pc-windows-msvc",
+]

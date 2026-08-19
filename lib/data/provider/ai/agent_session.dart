@@ -179,7 +179,7 @@ class AgentSession extends _$AgentSession {
   AgentSessionState build() {
     // Watches the box, so a write this class did not make — a restored backup
     // — is not missed.
-    _conversationWatch = Stores.agentConversation.box.watch().listen((_) {
+    _conversationWatch = Stores.agentConversation.watch().listen((_) {
       state = state.copyWith(conversations: _fetchConversations());
     });
     ref.onDispose(() {

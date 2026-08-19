@@ -5,17 +5,17 @@ import 'package:server_box/data/res/store.dart';
 const _keyConfig = 'providerConfig';
 const _keyHost = 'containerHost';
 
-class ContainerStore extends HiveStore {
+class ContainerStore extends SqliteStore {
   ContainerStore._() : super('docker');
 
   static final instance = ContainerStore._();
 
   String? fetch(String? id, ContainerType type) {
-    final host = box.get(_hostKey(id, type));
+    final host = get<String>(_hostKey(id, type));
     if (host != null || type == ContainerType.podman) return host;
 
     // Preserve existing Docker host settings stored before per-runtime hosts.
-    return box.get(id);
+    return id == null ? null : get<String>(id);
   }
 
   void put(String id, ContainerType type, String host) {
@@ -31,7 +31,7 @@ class ContainerStore extends HiveStore {
       '$_keyHost${type.name}${id ?? ''}';
 
   ContainerType getType([String id = '']) {
-    final cfg = box.get(_keyConfig + id);
+    final cfg = get<String>(_keyConfig + id);
     if (cfg != null) {
       final type = ContainerType.values.firstWhereOrNull(
         (e) => e.toString() == cfg,

@@ -1,12 +1,10 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/generated/l10n/lib_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/server.dart';
@@ -24,25 +22,20 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late Directory tempDir;
-  late Box<dynamic> settingBox;
-  late Box<dynamic> serverBox;
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-settings-');
-    Hive.init(tempDir.path);
+    SqliteDb.openInMemory();
     // In memory: a real write started in a `testWidgets` body never lets go of
     // the box's lock, and this page writes on nearly every switch.
-    settingBox = await Hive.openBox<dynamic>('setting_test', bytes: Uint8List(0));
-    serverBox = await Hive.openBox<dynamic>('server_test', bytes: Uint8List(0));
-    getIt.registerSingleton<SettingStore>(SettingStore.forBox(settingBox));
+    getIt.registerSingleton<SettingStore>(SettingStore.forTest());
     // The server order page reads it as soon as it is shown.
-    getIt.registerSingleton<ServerStore>(ServerStore.forBox(serverBox));
+    getIt.registerSingleton<ServerStore>(ServerStore.forTest());
   });
 
   tearDown(() async {
     await getIt.reset();
-    await settingBox.close();
-    await serverBox.close();
+    await SqliteDb.close();
     await tempDir.delete(recursive: true);
   });
 
