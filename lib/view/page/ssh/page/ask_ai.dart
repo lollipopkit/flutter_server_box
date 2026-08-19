@@ -301,7 +301,6 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
   final _inputController = TextEditingController();
   late AskAiProtocol _protocol;
   AgentConversation? _conversation;
-  Future<AgentConversation>? _conversationFuture;
   AskAiCommand? _pendingCommand;
   String? _streamingContent;
   String? _error;
@@ -430,22 +429,14 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
   Future<AgentConversation> _ensureConversation() async {
     final existing = _conversation;
     if (existing != null) return existing;
-    final inFlight = _conversationFuture;
-    if (inFlight != null) return inFlight;
-    final future = Stores.agentConversation.create(
+    final created = Stores.agentConversation.create(
       serverId: widget.serverId,
       protocol: _protocol,
       providerBaseUrl: Stores.setting.askAiBaseUrl.fetch(),
       model: Stores.setting.askAiModel.fetch(),
     );
-    _conversationFuture = future;
-    try {
-      final created = await future;
-      _conversation = created;
-      return created;
-    } finally {
-      if (identical(_conversationFuture, future)) _conversationFuture = null;
-    }
+    _conversation = created;
+    return created;
   }
 
   Future<void> _persistConversation() async {
@@ -456,7 +447,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       protocol: _protocol,
       items: trimmed,
     );
-    if (!await Stores.agentConversation.save(updated)) return;
+    if (!Stores.agentConversation.save(updated)) return;
     _conversation = Stores.agentConversation.fetch(updated.id) ?? updated;
     if (trimmed.length != _history.length) {
       _history

@@ -43,7 +43,7 @@ void main() {
     getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore.forTest());
     // 0 is what `normalizeServerStatusRefreshSeconds` reads as off; its
     // periodic timer would otherwise outlive the tree and fail the run.
-    await Stores.setting.serverStatusUpdateInterval.put(0);
+    Stores.setting.serverStatusUpdateInterval.put(0);
   });
 
   tearDown(() async {
@@ -66,10 +66,10 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
 
-    await Stores.setting.paneListWidth.put(width);
+    Stores.setting.paneListWidth.put(width);
     // A name past the column's width and two tags: the row has to elide the
     // one, and the bar above has to fit the other beside the connection count.
-    await Stores.server.put(
+    Stores.server.put(
       spiFixture(
         id: 'srv-1',
         name: 'a server with a fairly long name',
@@ -136,7 +136,7 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
 
-    await Stores.server.put(
+    Stores.server.put(
       spiFixture(
         id: 'srv-1',
         name: 'a server whose name is far longer than any card is wide',

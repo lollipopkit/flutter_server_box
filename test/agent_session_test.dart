@@ -1,7 +1,7 @@
 import 'dart:io';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:server_box/data/model/ai/agent_conversation_replay.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
@@ -233,20 +233,17 @@ void main() {
 
     setUpAll(() async {
       tempDir = await Directory.systemTemp.createTemp('server-box-agent-session-');
-      Hive.init(tempDir.path);
-      final settingBox = await Hive.openBox<dynamic>('agent_session_setting');
-      final serverBox = await Hive.openBox<dynamic>('agent_session_server');
-      final conversationBox = await Hive.openBox<dynamic>('agent_session_conversation');
+      SqliteDb.openInMemory();
       await getIt.reset();
-      getIt.registerSingleton<SettingStore>(SettingStore.forBox(settingBox));
-      getIt.registerSingleton<ServerStore>(ServerStore.forBox(serverBox));
-      conversationStore = AgentConversationStore.forBox(conversationBox);
+      getIt.registerSingleton<SettingStore>(SettingStore.forTest()..init());
+      getIt.registerSingleton<ServerStore>(ServerStore.forTest()..init());
+      conversationStore = AgentConversationStore.forTest()..init();
       getIt.registerSingleton<AgentConversationStore>(conversationStore);
     });
 
     tearDownAll(() async {
       await getIt.reset();
-      await Hive.close();
+      await SqliteDb.close();
       await tempDir.delete(recursive: true);
     });
 

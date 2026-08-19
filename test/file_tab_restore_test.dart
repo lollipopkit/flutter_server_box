@@ -44,7 +44,7 @@ void main() {
     // A restored server session opens its browser, which now connects rather
     // than reporting that it is not connected — so an unreachable fixture
     // leaves a timer running. One second, pumped past below.
-    await Stores.setting.timeout.put(1);
+    Stores.setting.timeout.put(1);
   });
 
   tearDown(() async {
@@ -53,8 +53,9 @@ void main() {
     await tempDir.delete(recursive: true);
   });
 
-  Future<void> saveTabs(List<Map<String, dynamic>> tabs) =>
-      Stores.history.fileTabs.put(jsonEncode(tabs));
+  Future<void> saveTabs(List<Map<String, dynamic>> tabs) async {
+    Stores.history.fileTabs.put(jsonEncode(tabs));
+  }
 
   /// The tab set as the page wrote it back — one entry per session.
   ///
@@ -118,7 +119,7 @@ void main() {
     tester,
   ) async {
     // The line this existed for.
-    await Stores.server.put(spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u'));
+    Stores.server.put(spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u'));
     await saveTabs([
       {'kind': 'server', 'serverId': 'srv-1', 'path': '/var/log'},
     ]);
@@ -133,7 +134,7 @@ void main() {
   testWidgets('a session whose server was deleted is dropped', (tester) async {
     // Not an error tab, and not a crash out of the loop that would take the
     // others with it.
-    await Stores.server.put(spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u'));
+    Stores.server.put(spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u'));
     await saveTabs([
       {'kind': 'server', 'serverId': 'srv-1', 'path': '/etc'},
       {'kind': 'server', 'serverId': 'srv-gone', 'path': '/etc'},
@@ -171,7 +172,7 @@ void main() {
   });
 
   testWidgets('an unreadable set does not throw', (tester) async {
-    await Stores.history.fileTabs.put('{{{ not json');
+    Stores.history.fileTabs.put('{{{ not json');
 
     await pump(tester);
 

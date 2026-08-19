@@ -35,14 +35,14 @@ class PrivateKeyNotifier extends _$PrivateKeyNotifier {
 
   Future<void> add(PrivateKeyInfo info) async {
     final newKeys = [...state.keys, info];
-    await Stores.key.put(info);
+    Stores.key.put(info);
     state = state.copyWith(keys: newKeys);
     bakSync.sync(milliDelay: 1000);
   }
 
   Future<void> delete(PrivateKeyInfo info) async {
     final newKeys = state.keys.where((e) => e.id != info.id).toList();
-    await Stores.key.delete(info);
+    Stores.key.delete(info);
     state = state.copyWith(keys: newKeys);
     bakSync.sync(milliDelay: 1000);
   }
@@ -52,11 +52,11 @@ class PrivateKeyNotifier extends _$PrivateKeyNotifier {
     final idx = keys.indexWhere((e) => e.id == old.id);
     if (idx == -1) {
       keys.add(newInfo);
-      await Stores.key.put(newInfo);
-      await Stores.key.delete(old);
+      Stores.key.put(newInfo);
+      Stores.key.delete(old);
     } else {
       keys[idx] = newInfo;
-      await Stores.key.update(old, newInfo);
+      Stores.key.update(old, newInfo);
     }
     state = state.copyWith(keys: keys);
     bakSync.sync(milliDelay: 1000);

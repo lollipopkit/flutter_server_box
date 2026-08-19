@@ -846,7 +846,7 @@ extension on _BackupPageState {
               final spiWithId = isIdUsed
                   ? spi.copyWith(id: ShortId.generate())
                   : spi;
-              await Stores.server.put(spiWithId);
+              Stores.server.put(spiWithId);
               usedIds.add(spiWithId.id);
             }
             return true;

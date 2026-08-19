@@ -211,7 +211,7 @@ final class WatchSync {
         await _revokeServer(spi, endpoint: existingTokens[id]?.endpoint);
       }
     }
-    await Stores.setting.watchServerIds.put(next);
+    Stores.setting.watchServerIds.put(next);
     await push();
   }
 
@@ -220,7 +220,7 @@ final class WatchSync {
     await _revokeServer(spi, endpoint: existingTokens[spi.id]?.endpoint);
     final selected = Stores.setting.watchServerIds.fetch();
     if (!selected.contains(spi.id)) return;
-    await Stores.setting.watchServerIds.put(
+    Stores.setting.watchServerIds.put(
       selected.where((id) => id != spi.id).toList(),
     );
     await push();
@@ -318,9 +318,9 @@ final class WatchSync {
           .where((e) => e.trim().isNotEmpty)
           .toList();
       if (urls != null && urls.isNotEmpty) {
-        await Stores.setting.watchLegacyUrls.put(urls);
+        Stores.setting.watchLegacyUrls.put(urls);
       }
-      await imported.put(true);
+      imported.put(true);
     } catch (e, s) {
       // Leave the flag unset so the next launch retries; an empty import is
       // indistinguishable from a failed one otherwise.

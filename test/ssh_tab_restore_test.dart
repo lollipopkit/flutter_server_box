@@ -47,8 +47,9 @@ void main() {
   });
 
   /// Writes a saved tab set, as a previous run would have left it.
-  Future<void> saveTabs(List<Map<String, dynamic>> tabs) =>
-      Stores.history.sshTabs.put(jsonEncode(tabs));
+  Future<void> saveTabs(List<Map<String, dynamic>> tabs) async {
+    Stores.history.sshTabs.put(jsonEncode(tabs));
+  }
 
   /// The tab set as the page wrote it back.
   ///
@@ -93,7 +94,7 @@ void main() {
     // the entry would collapse these into one, and the second window's tmux
     // state would go with it.
     final spi = spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u');
-    await Stores.server.put(spi);
+    Stores.server.put(spi);
     await saveTabs([
       {'sourceId': 'srv-1', 'tmuxSession': 'work', 'tmuxWindow': 0},
       {'sourceId': 'srv-1', 'tmuxSession': 'work', 'tmuxWindow': 3},
@@ -113,7 +114,7 @@ void main() {
     // Not an error tab, and not a crash out of the loop that would take the
     // others with it.
     final spi = spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u');
-    await Stores.server.put(spi);
+    Stores.server.put(spi);
     await saveTabs([
       {'sourceId': 'srv-1'},
       {'sourceId': 'srv-gone'},
@@ -130,8 +131,8 @@ void main() {
     // What this path is defensive about: it is the one place that reads data
     // an older build wrote, and one bad record used to abort the loop.
     final spi = spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u');
-    await Stores.server.put(spi);
-    await Stores.history.sshTabs.put(
+    Stores.server.put(spi);
+    Stores.history.sshTabs.put(
       jsonEncode(['not a map', 42, {'sourceId': 'srv-1'}]),
     );
 
@@ -143,7 +144,7 @@ void main() {
   testWidgets('an unreadable set opens the picker rather than throwing', (
     tester,
   ) async {
-    await Stores.history.sshTabs.put('{{{ not json');
+    Stores.history.sshTabs.put('{{{ not json');
 
     await pump(tester);
 
@@ -198,7 +199,7 @@ void main() {
   ) async {
     // The other half: passing over the local shell must not turn restoring
     // into a set of tabs that all sit there closed.
-    await Stores.server.put(spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u'));
+    Stores.server.put(spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u'));
     await saveTabs([
       {'sourceId': const LocalSource().id},
       {'sourceId': 'srv-1'},

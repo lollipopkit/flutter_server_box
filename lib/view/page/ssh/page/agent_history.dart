@@ -49,7 +49,7 @@ extension _AgentHistoryActions on _AskAiPanelState {
 
   Future<void> _beginNewConversation() async {
     if (_isWorking) return;
-    final conversation = await Stores.agentConversation.create(
+    final conversation = Stores.agentConversation.create(
       serverId: widget.serverId,
       protocol: _resolvedConfiguredProtocol(),
       providerBaseUrl: Stores.setting.askAiBaseUrl.fetch(),
@@ -60,7 +60,7 @@ extension _AgentHistoryActions on _AskAiPanelState {
 
   Future<void> _activateConversation(AgentConversation conversation) async {
     if (_isWorking || conversation.serverId != widget.serverId) return;
-    if (!await Stores.agentConversation.setActive(
+    if (!Stores.agentConversation.setActive(
       widget.serverId,
       conversation.id,
     )) {
@@ -93,7 +93,7 @@ extension _AgentHistoryActions on _AskAiPanelState {
         ],
       );
       if (title == null || title.trim().isEmpty) return;
-      if (!await Stores.agentConversation.rename(conversation.id, title)) return;
+      if (!Stores.agentConversation.rename(conversation.id, title)) return;
       _refreshConversationMetadata(conversation.id);
     } finally {
       controller.dispose();
@@ -114,7 +114,7 @@ extension _AgentHistoryActions on _AskAiPanelState {
     );
     if (confirmed != true || !mounted) return;
     final deletingCurrent = _conversation?.id == conversation.id;
-    await Stores.agentConversation.deleteConversation(
+    Stores.agentConversation.deleteConversation(
       widget.serverId,
       conversation.id,
     );
@@ -138,7 +138,7 @@ extension _AgentHistoryActions on _AskAiPanelState {
       ],
     );
     if (confirmed != true || !mounted) return;
-    await Stores.agentConversation.clearServer(widget.serverId);
+    Stores.agentConversation.clearServer(widget.serverId);
     _restoreConversation(null);
   }
 }

@@ -67,7 +67,7 @@ class ServersNotifier extends _$ServersNotifier {
 
     // Must use [equals] to compare [Order] here.
     if (!newServerOrder.equals(serverOrder_)) {
-      unawaited(Stores.setting.serverOrder.put(newServerOrder));
+      Stores.setting.serverOrder.put(newServerOrder);
     }
 
     final newTags = _calculateTags(newServers);
@@ -276,8 +276,8 @@ class ServersNotifier extends _$ServersNotifier {
     final newManualDisconnected = Set<String>.from(state.manualDisconnectedIds)
       ..remove(spi.id);
 
-    await Stores.server.put(spi);
-    await Stores.setting.serverOrder.put(newOrder);
+    Stores.server.put(spi);
+    Stores.setting.serverOrder.put(newOrder);
     state = state.copyWith(
       servers: newServers,
       serverOrder: newOrder,
@@ -299,8 +299,8 @@ class ServersNotifier extends _$ServersNotifier {
     final newManualDisconnected = Set<String>.from(state.manualDisconnectedIds)
       ..remove(id);
 
-    await Stores.setting.serverOrder.put(newOrder);
-    await Stores.server.deleteById(id);
+    Stores.setting.serverOrder.put(newOrder);
+    Stores.server.deleteById(id);
     state = state.copyWith(
       servers: newServers,
       serverOrder: newOrder,
@@ -309,7 +309,7 @@ class ServersNotifier extends _$ServersNotifier {
     );
     await _clearSudoPasswordOverrideBestEffort(id);
 
-    await Stores.connectionStats.clearServerStats(id);
+    Stores.connectionStats.clearServerStats(id);
 
     // Remove SSH session when server is deleted
     final sessionId = 'ssh_$id';
@@ -330,11 +330,11 @@ class ServersNotifier extends _$ServersNotifier {
     for (final spi in state.servers.values) {
       await WatchSync.instance.removeServer(spi);
     }
-    await Stores.setting.serverOrder.put([]);
-    await Stores.server.clear();
+    Stores.setting.serverOrder.put([]);
+    Stores.server.clear();
     state = const ServersState();
     await Future.wait(serverIds.map(_clearSudoPasswordOverrideBestEffort));
-    await Stores.connectionStats.clearAll();
+    Stores.connectionStats.clearAll();
     bakSync.sync(milliDelay: 1000);
   }
 
@@ -362,7 +362,7 @@ class ServersNotifier extends _$ServersNotifier {
       return;
     }
 
-    await Stores.setting.serverOrder.put(newOrder);
+    Stores.setting.serverOrder.put(newOrder);
     state = state.copyWith(serverOrder: newOrder);
     bakSync.sync(milliDelay: 1000);
   }
@@ -376,7 +376,7 @@ class ServersNotifier extends _$ServersNotifier {
     newSpi.validateOrThrow();
 
     if (old != newSpi) {
-      await Stores.server.update(old, newSpi);
+      Stores.server.update(old, newSpi);
 
       final newServers = Map<String, Spi>.from(state.servers);
       final newOrder = List<String>.from(state.serverOrder);
@@ -391,7 +391,7 @@ class ServersNotifier extends _$ServersNotifier {
         if (newManualDisconnected.remove(old.id)) {
           newManualDisconnected.add(newSpi.id);
         }
-        await Stores.setting.serverOrder.put(newOrder);
+        Stores.setting.serverOrder.put(newOrder);
 
         // Update SSH session ID when server ID changes
         final oldSessionId = 'ssh_${old.id}';

@@ -434,7 +434,7 @@ class AgentSession extends _$AgentSession {
   Future<void> beginNewConversation() async {
     if (state.isWorking) return;
     restoreConversation(
-      await Stores.agentConversation.create(
+      Stores.agentConversation.create(
         serverId: globalAgentConversationScope,
         protocol: _configuredProtocol(),
         providerBaseUrl: Stores.setting.askAiBaseUrl.fetch(),
@@ -448,7 +448,7 @@ class AgentSession extends _$AgentSession {
         conversation.serverId != globalAgentConversationScope) {
       return;
     }
-    if (!await Stores.agentConversation.setActive(
+    if (!Stores.agentConversation.setActive(
       globalAgentConversationScope,
       conversation.id,
     )) {
@@ -458,7 +458,7 @@ class AgentSession extends _$AgentSession {
   }
 
   Future<bool> renameConversation(String id, String title) async {
-    if (!await Stores.agentConversation.rename(id, title)) return false;
+    if (!Stores.agentConversation.rename(id, title)) return false;
     state = state.copyWith(
       conversations: _fetchConversations(),
       conversation: state.conversation?.id == id
@@ -475,7 +475,7 @@ class AgentSession extends _$AgentSession {
     // its result to whichever conversation is active by then.
     if (state.isWorking) return;
     final deletingCurrent = state.conversation?.id == id;
-    await Stores.agentConversation.deleteConversation(
+    Stores.agentConversation.deleteConversation(
       globalAgentConversationScope,
       id,
     );
@@ -490,7 +490,7 @@ class AgentSession extends _$AgentSession {
 
   Future<void> clearConversationHistory() async {
     if (state.isWorking) return;
-    await Stores.agentConversation.clearServer(globalAgentConversationScope);
+    Stores.agentConversation.clearServer(globalAgentConversationScope);
     restoreConversation(null);
   }
 
@@ -517,7 +517,7 @@ class AgentSession extends _$AgentSession {
   Future<AgentConversation> _ensureConversation() async {
     final existing = state.conversation;
     if (existing != null) return existing;
-    final created = await Stores.agentConversation.create(
+    final created = Stores.agentConversation.create(
       serverId: globalAgentConversationScope,
       protocol: state.protocol,
       providerBaseUrl: Stores.setting.askAiBaseUrl.fetch(),
@@ -540,7 +540,7 @@ class AgentSession extends _$AgentSession {
       model: Stores.setting.askAiModel.fetch(),
       items: trimmed,
     );
-    if (!await Stores.agentConversation.save(updated)) return;
+    if (!Stores.agentConversation.save(updated)) return;
     state = state.copyWith(
       conversations: _fetchConversations(),
       conversation: Stores.agentConversation.fetch(updated.id) ?? updated,
