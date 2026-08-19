@@ -56,7 +56,7 @@ pub async fn verify(pool: &SqlitePool, addr: &str, key: &PublicKey) -> Result<Ve
             // `OR IGNORE`, not `REPLACE`: two terminals opening at once must
             // not turn a race into a silent re-pin. The loser's key already
             // matches — they raced on the same connection to the same sshd.
-            sqlx::query(
+            let inserted = sqlx::query(
                 "INSERT OR IGNORE INTO ssh_known_hosts (addr, key_type, fingerprint) \
                  VALUES (?, ?, ?)",
             )
@@ -65,8 +65,23 @@ pub async fn verify(pool: &SqlitePool, addr: &str, key: &PublicKey) -> Result<Ve
             .bind(&actual)
             .execute(pool)
             .await?;
-            tracing::info!("Pinned SSH host key for {addr}: {actual} ({key_type})");
-            Ok(Verdict::Pinned)
+            if inserted.rows_affected() == 1 {
+                tracing::info!("Pinned SSH host key for {addr}: {actual} ({key_type})");
+                return Ok(Verdict::Pinned);
+            }
+
+            // Another connection won the first-pin race. Never report our key
+            // as pinned until it has been compared with the row that won.
+            let expected: String =
+                sqlx::query_scalar("SELECT fingerprint FROM ssh_known_hosts WHERE addr = ?")
+                    .bind(addr)
+                    .fetch_one(pool)
+                    .await?;
+            if expected == actual {
+                Ok(Verdict::Known)
+            } else {
+                Ok(Verdict::Mismatch { expected, actual })
+            }
         }
     }
 }

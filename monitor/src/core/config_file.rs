@@ -24,6 +24,8 @@
 //! even though every individual write is atomic.
 
 use std::fs;
+use std::fs::OpenOptions;
+use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use crate::core::config::Config;
@@ -78,7 +80,7 @@ pub fn write(config: &Config) -> Result<()> {
     if let Ok(existing) = fs::read(path) {
         match backup_path() {
             Ok(backup) => {
-                if let Err(e) = fs::write(&backup, &existing) {
+                if let Err(e) = write_private_new(&backup, &existing) {
                     tracing::warn!("Failed to back up {CONFIG_PATH} before saving: {e}");
                 } else {
                     prune_backups(dir);
@@ -100,13 +102,18 @@ fn backup_path() -> Result<PathBuf> {
 }
 
 fn write_atomic(path: &Path, bytes: &[u8]) -> Result<()> {
-    use std::io::Write;
-
     // Same directory as the target: `rename` is only atomic within a
     // filesystem, and a temp dir may well be on another one.
-    let tmp = path.with_extension(format!("tmp-{}", std::process::id()));
+    let tmp = path.with_extension(format!(
+        "tmp-{}-{}",
+        std::process::id(),
+        chrono::Utc::now().timestamp_nanos_opt().unwrap_or_default()
+    ));
 
-    let mut file = fs::File::create(&tmp).map_err(|e| {
+    let mut file = private_options()
+        .create_new(true)
+        .open(&tmp)
+        .map_err(|e| {
         config_err(format!("Failed to create temp file {}: {e}", tmp.display()))
     })?;
     let written = file
@@ -131,6 +138,23 @@ fn write_atomic(path: &Path, bytes: &[u8]) -> Result<()> {
             tmp.display()
         ))
     })
+}
+
+fn private_options() -> OpenOptions {
+    let mut options = OpenOptions::new();
+    options.write(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o600);
+    }
+    options
+}
+
+fn write_private_new(path: &Path, bytes: &[u8]) -> std::io::Result<()> {
+    let mut file = private_options().create_new(true).open(path)?;
+    file.write_all(bytes)?;
+    file.sync_all()
 }
 
 /// Deletes all but the [`MAX_BACKUPS`] most recent backups.
@@ -239,6 +263,33 @@ mod tests {
             write(&config).unwrap();
             let read_back = read().unwrap();
             assert_eq!(read_back.get_server().card_order, vec!["cpu", "memory"]);
+        });
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn config_and_backups_are_owner_only() {
+        use std::os::unix::fs::PermissionsExt;
+
+        with_temp_cwd(|dir| {
+            write(&minimal_config()).unwrap();
+            write(&minimal_config()).unwrap();
+
+            let config_mode = fs::metadata(CONFIG_PATH).unwrap().permissions().mode() & 0o777;
+            assert_eq!(config_mode, 0o600);
+
+            let backup = fs::read_dir(dir)
+                .unwrap()
+                .flatten()
+                .find(|entry| {
+                    entry
+                        .file_name()
+                        .to_str()
+                        .is_some_and(|name| name.starts_with(BACKUP_PREFIX))
+                })
+                .expect("the second save creates a backup");
+            let backup_mode = backup.metadata().unwrap().permissions().mode() & 0o777;
+            assert_eq!(backup_mode, 0o600);
         });
     }
 

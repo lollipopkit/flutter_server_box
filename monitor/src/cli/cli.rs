@@ -1,6 +1,6 @@
 use crate::core::config::Config;
 use crate::db;
-use crate::monitoring::monitoring;
+use crate::monitoring;
 use crate::db::cleanup;
 use clap::{Arg, Command};
 use std::sync::Arc;
