@@ -43,7 +43,7 @@ sqlx = { version = "0.9", features = [
 # rust_crypto instead of aws_lc_rs: pure Rust, no cmake/assembly dependency for static musl builds
 jsonwebtoken = { version = "11.0", default-features = false, features = ["rust_crypto"] }
 bcrypt = "0.19"
-sha2 = "0.10"
+sha2 = "0.11"
 
 # Configuration
 dotenvy = "0.15"
