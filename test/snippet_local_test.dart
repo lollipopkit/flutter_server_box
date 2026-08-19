@@ -20,7 +20,7 @@ void main() {
         r'sshpass -p ${pwd} true',
       ]) {
         expect(
-          Snippet(name: 'n', script: script).needsServer,
+          Snippet(id: 'n', name: 'n', script: script).needsServer,
           isTrue,
           reason: script,
         );
@@ -37,7 +37,7 @@ void main() {
         r'${ctrl+c}',
       ]) {
         expect(
-          Snippet(name: 'n', script: script).needsServer,
+          Snippet(id: 'n', name: 'n', script: script).needsServer,
           isFalse,
           reason: script,
         );
@@ -47,7 +47,7 @@ void main() {
 
   group('formatting', () {
     test('a server answers its own placeholders', () {
-      const snippet = Snippet(name: 'n', script: r'ssh ${user}@${host} -p ${port}');
+      const snippet = Snippet(id: 'n', name: 'n', script: r'ssh ${user}@${host} -p ${port}');
       expect(snippet.fmtWithSpi(spi), 'ssh lk@10.0.0.1 -p 2222');
     });
 
@@ -56,7 +56,7 @@ void main() {
       // here to substitute. Substituting an empty string would have turned
       // `ssh ${user}@${host}` into `ssh @`, which is a different command
       // rather than a refusal — hence [Snippet.needsServer] filtering first.
-      const snippet = Snippet(name: 'n', script: 'df -h');
+      const snippet = Snippet(id: 'n', name: 'n', script: 'df -h');
       expect(snippet.fmtWithSpi(null), 'df -h');
     });
   });

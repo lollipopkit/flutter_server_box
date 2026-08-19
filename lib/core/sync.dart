@@ -25,7 +25,7 @@ final class BakSyncer extends SyncIface {
   /// didn't understand. [backup] is the one hook available for refusing that
   /// without forking the whole cycle.
   ///
-  /// Static because the syncer is a const singleton.
+  /// Static because the syncer is a single instance shared by every caller.
   static SchemaTooNewException? _remoteTooNew;
 
   /// Whether the last sync attempt aborted because the remote data is newer

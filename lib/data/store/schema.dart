@@ -59,7 +59,9 @@ abstract final class SchemaVersion {
   /// only place a pre-v3 record can be decoded at all; it records [current]
   /// when it finishes. Every install therefore reaches SQLite already at v4,
   /// and [migrate] has nothing to do until a v5 exists.
-  static const current = 4;
+  /// v5: entities out of `kv` and into tables with columns, foreign keys
+  ///     and per-row sync metadata
+  static const current = 5;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the
@@ -98,4 +100,18 @@ abstract final class SchemaVersion {
   /// Marks a fresh install as already current, so its empty stores aren't put
   /// through migrations written for data that doesn't exist.
   static void initFresh() => _store(current);
+
+  /// The layout `HiveImport` produces: entities as JSON rows in `kv`.
+  ///
+  /// The import is not a fresh install even though it starts from an empty
+  /// database — it writes the shape that was current when Hive was dropped,
+  /// which later steps still have to convert. Recording [current] instead
+  /// would tell the migrator there is nothing to do and strand every record
+  /// in the shape it landed in.
+  ///
+  /// TODO: delete with `HiveImport`, and bump this in step with it until then.
+  static const hiveImportProduces = 4;
+
+  /// Marks the layout [HiveImport] wrote, so the steps after it still run.
+  static void initAtHiveImport() => _store(hiveImportProduces);
 }

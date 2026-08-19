@@ -657,6 +657,11 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String nameAlreadyExistsFmt(Object name) {
+    return '«$name» esiste già';
+  }
+
+  @override
   String get noJumpServerAvailable => 'Nessun jump server disponibile.';
 
   @override

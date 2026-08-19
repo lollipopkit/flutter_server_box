@@ -606,6 +606,11 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String nameAlreadyExistsFmt(Object name) {
+    return '「$name」已存在';
+  }
+
+  @override
   String get noJumpServerAvailable => '没有可用的跳板服务器。';
 
   @override
@@ -1891,6 +1896,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String jumpServersNotFoundFmt(Object serverName, Object jumpIds) {
     return '未找到 $serverName 配置的跳板伺服器：$jumpIds';
+  }
+
+  @override
+  String nameAlreadyExistsFmt(Object name) {
+    return '「$name」已存在';
   }
 
   @override

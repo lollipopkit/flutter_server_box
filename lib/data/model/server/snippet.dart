@@ -11,6 +11,9 @@ part 'snippet.freezed.dart';
 @freezed
 abstract class Snippet with _$Snippet {
   const factory Snippet({
+    /// Generated. A snippet used to be keyed by [name], so renaming one was a
+    /// delete and an insert — and `snippetOrder` still pointed at the old name.
+    required String id,
     required String name,
     required String script,
     List<String>? tags,
@@ -20,10 +23,17 @@ abstract class Snippet with _$Snippet {
     List<String>? autoRunOn,
   }) = _Snippet;
 
-  factory Snippet.fromJson(Map<String, dynamic> json) =>
-      _$SnippetFromJson(json);
+  /// A record written before snippets had ids gets one here.
+  ///
+  /// Safe to generate rather than derive: nothing references a snippet. Its
+  /// `autoRunOn` names *servers*, and `snippetOrder` is a list of names.
+  factory Snippet.fromJson(Map<String, dynamic> json) => _$SnippetFromJson({
+    ...json,
+    if ((json['id'] as String?)?.isNotEmpty != true) 'id': ShortId.generate(),
+  });
 
   static const example = Snippet(
+    id: 'example',
     name: 'example',
     script: 'echo hello',
     tags: ['tag'],

@@ -15,7 +15,9 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Snippet {
 
- String get name; String get script; List<String>? get tags; String? get note;/// List of server id that this snippet should be auto run on
+/// Generated. A snippet used to be keyed by [name], so renaming one was a
+/// delete and an insert — and `snippetOrder` still pointed at the old name.
+ String get id; String get name; String get script; List<String>? get tags; String? get note;/// List of server id that this snippet should be auto run on
  List<String>? get autoRunOn;
 /// Create a copy of Snippet
 /// with the given fields replaced by the non-null parameter values.
@@ -29,16 +31,16 @@ $SnippetCopyWith<Snippet> get copyWith => _$SnippetCopyWithImpl<Snippet>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Snippet&&(identical(other.name, name) || other.name == name)&&(identical(other.script, script) || other.script == script)&&const DeepCollectionEquality().equals(other.tags, tags)&&(identical(other.note, note) || other.note == note)&&const DeepCollectionEquality().equals(other.autoRunOn, autoRunOn));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Snippet&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.script, script) || other.script == script)&&const DeepCollectionEquality().equals(other.tags, tags)&&(identical(other.note, note) || other.note == note)&&const DeepCollectionEquality().equals(other.autoRunOn, autoRunOn));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,script,const DeepCollectionEquality().hash(tags),note,const DeepCollectionEquality().hash(autoRunOn));
+int get hashCode => Object.hash(runtimeType,id,name,script,const DeepCollectionEquality().hash(tags),note,const DeepCollectionEquality().hash(autoRunOn));
 
 @override
 String toString() {
-  return 'Snippet(name: $name, script: $script, tags: $tags, note: $note, autoRunOn: $autoRunOn)';
+  return 'Snippet(id: $id, name: $name, script: $script, tags: $tags, note: $note, autoRunOn: $autoRunOn)';
 }
 
 
@@ -49,7 +51,7 @@ abstract mixin class $SnippetCopyWith<$Res>  {
   factory $SnippetCopyWith(Snippet value, $Res Function(Snippet) _then) = _$SnippetCopyWithImpl;
 @useResult
 $Res call({
- String name, String script, List<String>? tags, String? note, List<String>? autoRunOn
+ String id, String name, String script, List<String>? tags, String? note, List<String>? autoRunOn
 });
 
 
@@ -66,9 +68,10 @@ class _$SnippetCopyWithImpl<$Res>
 
 /// Create a copy of Snippet
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? script = null,Object? tags = freezed,Object? note = freezed,Object? autoRunOn = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? script = null,Object? tags = freezed,Object? note = freezed,Object? autoRunOn = freezed,}) {
   return _then(_self.copyWith(
-name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,script: null == script ? _self.script : script // ignore: cast_nullable_to_non_nullable
 as String,tags: freezed == tags ? _self.tags : tags // ignore: cast_nullable_to_non_nullable
 as List<String>?,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
@@ -158,10 +161,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String script,  List<String>? tags,  String? note,  List<String>? autoRunOn)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String script,  List<String>? tags,  String? note,  List<String>? autoRunOn)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Snippet() when $default != null:
-return $default(_that.name,_that.script,_that.tags,_that.note,_that.autoRunOn);case _:
+return $default(_that.id,_that.name,_that.script,_that.tags,_that.note,_that.autoRunOn);case _:
   return orElse();
 
 }
@@ -179,10 +182,10 @@ return $default(_that.name,_that.script,_that.tags,_that.note,_that.autoRunOn);c
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String script,  List<String>? tags,  String? note,  List<String>? autoRunOn)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String script,  List<String>? tags,  String? note,  List<String>? autoRunOn)  $default,) {final _that = this;
 switch (_that) {
 case _Snippet():
-return $default(_that.name,_that.script,_that.tags,_that.note,_that.autoRunOn);case _:
+return $default(_that.id,_that.name,_that.script,_that.tags,_that.note,_that.autoRunOn);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -199,10 +202,10 @@ return $default(_that.name,_that.script,_that.tags,_that.note,_that.autoRunOn);c
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String script,  List<String>? tags,  String? note,  List<String>? autoRunOn)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String script,  List<String>? tags,  String? note,  List<String>? autoRunOn)?  $default,) {final _that = this;
 switch (_that) {
 case _Snippet() when $default != null:
-return $default(_that.name,_that.script,_that.tags,_that.note,_that.autoRunOn);case _:
+return $default(_that.id,_that.name,_that.script,_that.tags,_that.note,_that.autoRunOn);case _:
   return null;
 
 }
@@ -214,9 +217,12 @@ return $default(_that.name,_that.script,_that.tags,_that.note,_that.autoRunOn);c
 @JsonSerializable()
 
 class _Snippet implements Snippet {
-  const _Snippet({required this.name, required this.script, final  List<String>? tags, this.note, final  List<String>? autoRunOn}): _tags = tags,_autoRunOn = autoRunOn;
+  const _Snippet({required this.id, required this.name, required this.script, final  List<String>? tags, this.note, final  List<String>? autoRunOn}): _tags = tags,_autoRunOn = autoRunOn;
   factory _Snippet.fromJson(Map<String, dynamic> json) => _$SnippetFromJson(json);
 
+/// Generated. A snippet used to be keyed by [name], so renaming one was a
+/// delete and an insert — and `snippetOrder` still pointed at the old name.
+@override final  String id;
 @override final  String name;
 @override final  String script;
  final  List<String>? _tags;
@@ -254,16 +260,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Snippet&&(identical(other.name, name) || other.name == name)&&(identical(other.script, script) || other.script == script)&&const DeepCollectionEquality().equals(other._tags, _tags)&&(identical(other.note, note) || other.note == note)&&const DeepCollectionEquality().equals(other._autoRunOn, _autoRunOn));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Snippet&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.script, script) || other.script == script)&&const DeepCollectionEquality().equals(other._tags, _tags)&&(identical(other.note, note) || other.note == note)&&const DeepCollectionEquality().equals(other._autoRunOn, _autoRunOn));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,script,const DeepCollectionEquality().hash(_tags),note,const DeepCollectionEquality().hash(_autoRunOn));
+int get hashCode => Object.hash(runtimeType,id,name,script,const DeepCollectionEquality().hash(_tags),note,const DeepCollectionEquality().hash(_autoRunOn));
 
 @override
 String toString() {
-  return 'Snippet(name: $name, script: $script, tags: $tags, note: $note, autoRunOn: $autoRunOn)';
+  return 'Snippet(id: $id, name: $name, script: $script, tags: $tags, note: $note, autoRunOn: $autoRunOn)';
 }
 
 
@@ -274,7 +280,7 @@ abstract mixin class _$SnippetCopyWith<$Res> implements $SnippetCopyWith<$Res> {
   factory _$SnippetCopyWith(_Snippet value, $Res Function(_Snippet) _then) = __$SnippetCopyWithImpl;
 @override @useResult
 $Res call({
- String name, String script, List<String>? tags, String? note, List<String>? autoRunOn
+ String id, String name, String script, List<String>? tags, String? note, List<String>? autoRunOn
 });
 
 
@@ -291,9 +297,10 @@ class __$SnippetCopyWithImpl<$Res>
 
 /// Create a copy of Snippet
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? script = null,Object? tags = freezed,Object? note = freezed,Object? autoRunOn = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? script = null,Object? tags = freezed,Object? note = freezed,Object? autoRunOn = freezed,}) {
   return _then(_Snippet(
-name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,script: null == script ? _self.script : script // ignore: cast_nullable_to_non_nullable
 as String,tags: freezed == tags ? _self._tags : tags // ignore: cast_nullable_to_non_nullable
 as List<String>?,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable

@@ -653,6 +653,11 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String nameAlreadyExistsFmt(Object name) {
+    return '«$name» вже існує';
+  }
+
+  @override
   String get noJumpServerAvailable => 'Немає доступного проміжного сервера.';
 
   @override

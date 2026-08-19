@@ -6,6 +6,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:logging/logging.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
@@ -47,6 +48,11 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     required Map<String, Object?> container,
     required Map<String, Object?> history,
     required Map<String, Object?> settings,
+
+    /// Absent from every file written before port forwards became a record of
+    /// their own, so it defaults rather than being required — an older backup
+    /// has to keep decoding.
+    @Default(<String, Object?>{}) Map<String, Object?> portForwards,
   }) = _BackupV2;
 
   /// Must stay a single expression with a cascade, not a block body.
@@ -64,23 +70,20 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     _validateRestorableTypedStores();
     _loggerV2.info('Merging...');
 
-    final results = await Future.wait([
-      Mergeable.mergeStore(
-        backupData: spis,
-        store: Stores.server,
-        force: force,
-      ),
-      Mergeable.mergeStore(
-        backupData: snippets,
-        store: Stores.snippet,
-        force: force,
-      ),
-      Mergeable.mergeStore(backupData: keys, store: Stores.key, force: force),
-      Mergeable.mergeStore(
-        backupData: container,
-        store: Stores.container,
-        force: force,
-      ),
+    // Ordered by what references what: a server names a private key, a snippet
+    // and a port forward name a server, and a container host is a child of one.
+    // Merging a store before the one it points at would drop every record whose
+    // foreign key has not arrived yet.
+    final keysChanged = Stores.key.merge(keys, force: force);
+    final serversChanged = Stores.server.merge(spis, force: force);
+    final snippetsChanged = Stores.snippet.merge(snippets, force: force);
+    Stores.portForward.merge(portForwards, force: force);
+    for (final entry in container.entries) {
+      if (entry.key.startsWith(StoreDefaults.prefixKey)) continue;
+      Stores.container.restoreOne(entry.key, entry.value);
+    }
+
+    await Future.wait([
       Mergeable.mergeStore(
         backupData: history,
         store: Stores.history,
@@ -91,14 +94,14 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
           backupData: settings,
           store: Stores.setting,
           force: force,
-        )
-      else
-        Future.value(false),
+        ),
     ]);
 
-    if (results[0]) GlobalRef.gRef?.read(serversProvider.notifier).reload();
-    if (results[1]) GlobalRef.gRef?.read(snippetProvider.notifier).reload();
-    if (results[2]) GlobalRef.gRef?.read(privateKeyProvider.notifier).reload();
+    if (serversChanged) GlobalRef.gRef?.read(serversProvider.notifier).reload();
+    if (snippetsChanged) {
+      GlobalRef.gRef?.read(snippetProvider.notifier).reload();
+    }
+    if (keysChanged) GlobalRef.gRef?.read(privateKeyProvider.notifier).reload();
 
     _loggerV2.info('Merge completed');
   }
@@ -115,10 +118,11 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     return BackupV2(
       version: formatVer,
       date: DateTimeX.timestamp,
-      spis: Stores.server.getAllMap(includeInternalKeys: true),
-      snippets: Stores.snippet.getAllMap(includeInternalKeys: true),
-      keys: Stores.key.getAllMap(includeInternalKeys: true),
-      container: Stores.container.getAllMap(includeInternalKeys: true),
+      spis: Stores.server.getAllMap(),
+      snippets: Stores.snippet.getAllMap(),
+      keys: Stores.key.getAllMap(),
+      portForwards: Stores.portForward.getAllMap(),
+      container: Stores.container.getAllMap(),
       history: Stores.history.getAllMap(includeInternalKeys: true),
       settings: includeSettings
           ? Stores.setting.getAllMap(includeInternalKeys: true)
@@ -170,6 +174,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     _validateRestorableStore('spis', spis);
     _validateRestorableStore('snippets', snippets);
     _validateRestorableStore('keys', keys);
+    _validateRestorableStore('portForwards', portForwards);
   }
 }
 
@@ -180,6 +185,7 @@ Object? _toEncodable(Object? value) {
     final Spi spi => spi.toJson(),
     final Snippet snippet => snippet.toJson(),
     final PrivateKeyInfo key => key.toJson(),
+    final PortForwardConfig forward => forward.toJson(),
     final ServerCustom custom => custom.toJson(),
     final WakeOnLanCfg wolCfg => wolCfg.toJson(),
     // Nested on Spi. Both were missing, so backing up a server that used

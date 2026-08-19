@@ -185,6 +185,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.4.1"
+  charcode:
+    dependency: transitive
+    description:
+      name: charcode
+      sha256: fb0f1107cac15a5ea6ef0a6ef71a807b9e4267c713bb93e00e92d737cc8dbd8a
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.4.0"
   charset:
     dependency: transitive
     description:
@@ -224,6 +232,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.2.0"
+  cli_util:
+    dependency: transitive
+    description:
+      name: cli_util
+      sha256: ff6785f7e9e3c38ac98b2fb035701789de90154024a75b6cb926445e83197d1c
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.4.2"
   clock:
     dependency: transitive
     description:
@@ -352,6 +368,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.1"
+  drift:
+    dependency: "direct main"
+    description:
+      name: drift
+      sha256: "3a3f1f6f905037d7426e4c445854139fd6a3d592135f7c96d7931682b73d16f4"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.34.3"
+  drift_dev:
+    dependency: "direct dev"
+    description:
+      name: drift_dev
+      sha256: "9cfff1576b49725da0d32c040651a41ae195e8c4af8d8da301593e41d7abc2f7"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.34.0"
   dynamic_color:
     dependency: "direct main"
     description:
@@ -1361,6 +1393,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.0.3"
+  recase:
+    dependency: transitive
+    description:
+      name: recase
+      sha256: e4eb4ec2dcdee52dcf99cb4ceabaffc631d7424ee55e56f280bc039737f89213
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.1.0"
   record_use:
     dependency: transitive
     description:
@@ -1606,6 +1646,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.5.1"
+  sqlparser:
+    dependency: transitive
+    description:
+      name: sqlparser
+      sha256: "40bdddb306a727be9ce510bd2d2b9a6c9db6c586d846ef7b22e3990a2b24f02d"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.44.5"
   stack_trace:
     dependency: transitive
     description:

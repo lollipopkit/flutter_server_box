@@ -27,7 +27,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
         state = state.copyWith(activeForwards: {});
       }
     });
-    final configs = Stores.portForward.fetch(serverId);
+    final configs = Stores.portForward.fetchForServer(serverId);
     return PortForwardState(serverId: serverId, configs: configs);
   }
 

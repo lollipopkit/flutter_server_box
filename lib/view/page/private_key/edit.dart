@@ -10,6 +10,7 @@ import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/res/misc.dart';
+import 'package:server_box/data/store/entity_store.dart';
 import 'package:server_box/view/widget/page_columns.dart';
 
 const _format = 'text/plain';
@@ -68,7 +69,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
     super.initState();
     final pki = this.pki;
     if (pki != null) {
-      _nameController.text = pki.id;
+      _nameController.text = pki.name;
       _keyController.text = pki.key;
     } else {
       Clipboard.getData(_format).then((value) {
@@ -109,7 +110,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
                   title: libL10n.attention,
                   child: Text(
                     libL10n.askContinue(
-                      '${libL10n.delete} ${l10n.privateKey}(${pki.id})',
+                      '${libL10n.delete} ${l10n.privateKey}(${pki.name})',
                     ),
                   ),
                   actions: Btn.ok(red: true).toList,
@@ -279,19 +280,34 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
     _loading.value = SizedLoading.medium;
     try {
       final decrypted = await Computer.shared.start(decryptPem, [key, pwd]);
-      final pki = PrivateKeyInfo(id: name, key: decrypted);
+      // The id of the record being edited: renaming a key must not detach the
+      // servers pointing at it, which is what happened when the two were one
+      // value.
+      final pki = PrivateKeyInfo(
+        id: this.pki?.id ?? ShortId.generate(),
+        name: name,
+        key: decrypted,
+      );
       final originPki = this.pki;
       if (originPki != null) {
         await _notifier.update(originPki, pki);
       } else {
         await _notifier.add(pki);
       }
+    } on DuplicateNameException catch (e) {
+      // The name is unique in the schema, so this is where a collision is
+      // found. The page stays open on the name the user has to change.
+      Toast.error(l10n.nameAlreadyExistsFmt(e.name));
+      return;
     } catch (e) {
       Toast.error(e.toString());
       rethrow;
     } finally {
-      _loading.value = null;
+      // `decryptPem` runs on another isolate, so the page can be gone by the
+      // time this runs — and `_loading` is disposed with it.
+      if (mounted) _loading.value = null;
     }
+    if (!mounted) return;
     context.pop();
   }
 }

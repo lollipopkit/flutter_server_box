@@ -3,28 +3,6 @@
 # Check in to version control
 nextTypeId: 17
 types:
-  PrivateKeyInfo:
-    typeId: 1
-    nextIndex: 2
-    fields:
-      id:
-        index: 0
-      key:
-        index: 1
-  Snippet:
-    typeId: 2
-    nextIndex: 5
-    fields:
-      name:
-        index: 0
-      script:
-        index: 1
-      tags:
-        index: 2
-      note:
-        index: 3
-      autoRunOn:
-        index: 4
   VirtKey:
     typeId: 4
     nextIndex: 47

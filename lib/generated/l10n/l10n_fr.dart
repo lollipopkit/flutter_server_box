@@ -658,6 +658,11 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String nameAlreadyExistsFmt(Object name) {
+    return '« $name » existe déjà';
+  }
+
+  @override
   String get noJumpServerAvailable => 'Aucun serveur de rebond disponible.';
 
   @override

@@ -4,13 +4,14 @@ import 'package:server_box/data/model/ai/agent_conversation.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/store/agent_conversation.dart';
 
+import 'helpers/test_db.dart';
+
 void main() {
   late AgentConversationStore store;
 
   setUp(() async {
-    SqliteDb.openInMemory();
+    await openTestDb();
     store = AgentConversationStore.forTest();
-    store.init();
   });
 
   tearDown(SqliteDb.close);

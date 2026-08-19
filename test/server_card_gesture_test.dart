@@ -15,6 +15,7 @@ import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/server/tab/tab.dart';
 
 import 'helpers/spi_fixture.dart';
+import 'helpers/test_db.dart';
 
 /// What a long press — and so a right-click — does to a server card.
 ///
@@ -30,7 +31,7 @@ void main() {
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-card-');
-    SqliteDb.openInMemory();
+    await openTestDb();
       // In memory: this tree writes as it builds, and a test has no
       // business leaving a database behind.
     getIt.registerSingleton<SettingStore>(SettingStore.forTest());

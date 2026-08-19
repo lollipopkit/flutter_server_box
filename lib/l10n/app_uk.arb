@@ -160,6 +160,7 @@
   },
   "rootfsSubtitle": "Користувацьке середовище Linux на цьому пристрої",
   "rootfsInstallTip": "Завантажити Alpine Linux {version} (близько 3 МБ) і розпакувати на цьому пристрої. Це дає застосунку оболонку з менеджером пакунків; її можна будь-коли видалити.",
+  "nameAlreadyExistsFmt": "«{name}» вже існує",
   "sameIdServerExist": "Сервер з таким ID вже існує",
   "second": "сек.",
   "serverFilesUnavailableTip": "Доступно через SSH цього сервера або через агент monitor з увімкненим файловим API.",

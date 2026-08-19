@@ -14,6 +14,7 @@ import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/server/tab/tab.dart';
 
 import 'helpers/spi_fixture.dart';
+import 'helpers/test_db.dart';
 
 /// How narrow the list column may be, held to what it actually lays out at.
 ///
@@ -35,7 +36,7 @@ void main() {
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-pane-');
-    SqliteDb.openInMemory();
+    await openTestDb();
       // In memory: this tree writes as it builds, and a test has no
       // business leaving a database behind.
     getIt.registerSingleton<SettingStore>(SettingStore.forTest());
