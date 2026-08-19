@@ -579,6 +579,12 @@ class KvToTablesMigration implements SchemaMigration {
       }
       final updatedAt = DateTime.tryParse('${v['updated_at']}');
       final scope = serverIds[serverId] ?? serverId;
+      // Inside the payload too, not only in the column. The store rebuilds a
+      // conversation from `data` and then compares `conversation.serverId`
+      // against the server it was asked about — `fetchActive`, `setActive` and
+      // `deleteConversation` all do — so a record whose JSON still named the
+      // old id would be unreachable by every one of them.
+      v['server_id'] = scope;
       // `ON CONFLICT`, not `OR REPLACE`: the active row references this one and
       // cascades, so replacing would delete the record of which conversation
       // is open.
