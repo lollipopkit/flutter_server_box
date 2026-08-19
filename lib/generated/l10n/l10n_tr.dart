@@ -311,11 +311,11 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get remoteBackupPasswordRequired =>
-      'Remote backups require a non-empty backup password';
+      'Uzak yedeklemeler için boş olmayan bir yedekleme parolası gerekir';
 
   @override
   String get monitorHttpsRequired =>
-      'Remote monitor agents require HTTPS; HTTP is allowed only on loopback.';
+      'Uzak izleme aracıları HTTPS gerektirir; HTTP\'ye yalnızca geri döngü adreslerinde izin verilir.';
 
   @override
   String get backupTip =>

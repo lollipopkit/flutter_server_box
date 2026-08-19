@@ -51,23 +51,30 @@ describe('Poller', () => {
     expect(poller.data).toBeNull()
   })
 
-  it('clears a successful server result before polling a new identity', async () => {
+  it('clears state and ignores a late result when polling a new identity', async () => {
+    let resolveFirst!: (value: string) => void
     let resolveSecond!: (value: string) => void
     const fetcher = vi
       .fn<(signal: AbortSignal) => Promise<string>>()
-      .mockResolvedValueOnce('server-a')
+      .mockImplementationOnce(
+        () => new Promise((resolve) => (resolveFirst = resolve)),
+      )
       .mockImplementationOnce(
         () => new Promise((resolve) => (resolveSecond = resolve)),
       )
     const poller = new Poller(fetcher)
 
     poller.start()
-    await vi.waitFor(() => expect(poller.data).toBe('server-a'))
+    poller.error = 'old error'
     poller.reset()
     poller.start()
 
     expect(poller.data).toBeNull()
     expect(poller.error).toBeNull()
+    resolveFirst('stale-server')
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(poller.data).toBeNull()
     resolveSecond('server-b')
     await vi.waitFor(() => expect(poller.data).toBe('server-b'))
     poller.stop()

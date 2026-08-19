@@ -315,11 +315,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get remoteBackupPasswordRequired =>
-      'Remote backups require a non-empty backup password';
+      'Les sauvegardes distantes nécessitent un mot de passe de sauvegarde non vide';
 
   @override
   String get monitorHttpsRequired =>
-      'Remote monitor agents require HTTPS; HTTP is allowed only on loopback.';
+      'Les agents de surveillance distants nécessitent HTTPS ; HTTP n’est autorisé que sur l’interface de bouclage.';
 
   @override
   String get backupTip =>

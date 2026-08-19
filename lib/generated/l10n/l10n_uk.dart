@@ -310,11 +310,11 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get remoteBackupPasswordRequired =>
-      'Remote backups require a non-empty backup password';
+      'Для віддалених резервних копій потрібен непорожній пароль резервного копіювання';
 
   @override
   String get monitorHttpsRequired =>
-      'Remote monitor agents require HTTPS; HTTP is allowed only on loopback.';
+      'Віддалені агенти моніторингу потребують HTTPS; HTTP дозволено лише для адрес зворотного зв’язку.';
 
   @override
   String get backupTip =>

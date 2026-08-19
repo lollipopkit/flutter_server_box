@@ -310,11 +310,11 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get remoteBackupPasswordRequired =>
-      'Remote backups require a non-empty backup password';
+      'Externe back-ups vereisen een niet-leeg back-upwachtwoord';
 
   @override
   String get monitorHttpsRequired =>
-      'Remote monitor agents require HTTPS; HTTP is allowed only on loopback.';
+      'Externe monitoragents vereisen HTTPS; HTTP is alleen toegestaan op loopback-adressen.';
 
   @override
   String get backupTip =>

@@ -311,11 +311,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get remoteBackupPasswordRequired =>
-      'Remote backups require a non-empty backup password';
+      'Для удалённых резервных копий требуется непустой пароль резервного копирования';
 
   @override
   String get monitorHttpsRequired =>
-      'Remote monitor agents require HTTPS; HTTP is allowed only on loopback.';
+      'Для удалённых агентов мониторинга требуется HTTPS; HTTP разрешён только для loopback-адресов.';
 
   @override
   String get backupTip =>

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
+import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
 import 'package:server_box/data/res/store.dart';
@@ -136,6 +137,12 @@ final class WatchSync {
       final spi = Stores.server.get<Spi>(id);
       final monitor = spi?.monitor;
       if (spi == null || monitor == null) continue;
+      if (tokens.containsKey(id)) continue;
+      final existing = existingTokens[id];
+      if (existing != null &&
+          existing.endpoint != _normalizedEndpoint(monitor.addr)) {
+        await _revokeServer(spi, endpoint: existing.endpoint);
+      }
       final client = MonitorHttpClient(monitor);
       try {
         tokens[id] = await client.issueWatchToken('watch:${spi.id}');
@@ -197,16 +204,20 @@ final class WatchSync {
   Future<void> updateSelection(List<String> next) async {
     final previous = Stores.setting.watchServerIds.fetch();
     final nextIds = next.toSet();
+    final existingTokens = await _existingTokens();
     for (final id in previous.where((id) => !nextIds.contains(id))) {
       final spi = Stores.server.get<Spi>(id);
-      if (spi != null) await _revokeServer(spi);
+      if (spi != null) {
+        await _revokeServer(spi, endpoint: existingTokens[id]?.endpoint);
+      }
     }
     await Stores.setting.watchServerIds.put(next);
     await push();
   }
 
   Future<void> removeServer(Spi spi) async {
-    await _revokeServer(spi);
+    final existingTokens = await _existingTokens();
+    await _revokeServer(spi, endpoint: existingTokens[spi.id]?.endpoint);
     final selected = Stores.setting.watchServerIds.fetch();
     if (!selected.contains(spi.id)) return;
     await Stores.setting.watchServerIds.put(
@@ -216,20 +227,33 @@ final class WatchSync {
   }
 
   Future<void> _revokeSelectedServers() async {
+    final existingTokens = await _existingTokens();
     for (final id in Stores.setting.watchServerIds.fetch()) {
       final spi = Stores.server.get<Spi>(id);
-      if (spi != null) await _revokeServer(spi);
+      if (spi != null) {
+        await _revokeServer(spi, endpoint: existingTokens[id]?.endpoint);
+      }
     }
   }
 
-  Future<void> _revokeServer(Spi spi) async {
+  Future<void> _revokeServer(Spi spi, {String? endpoint}) async {
     final monitor = spi.monitor;
     if (monitor == null) return;
-    final client = MonitorHttpClient(monitor);
+    final revocationEndpoint = endpoint?.trim();
+    final credential = revocationEndpoint == null || revocationEndpoint.isEmpty
+        ? monitor
+        : MonitorHttpCredential(
+            addr: revocationEndpoint,
+            user: monitor.user,
+            pwd: monitor.pwd,
+            ignoreCert: monitor.ignoreCert,
+          );
+    final client = MonitorHttpClient(credential);
     try {
       await client.revokeWatchToken('watch:${spi.id}');
     } catch (e, s) {
       Loggers.app.warning('Failed to revoke watch token for ${spi.id}', e, s);
+      rethrow;
     } finally {
       client.dispose();
     }
