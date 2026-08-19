@@ -283,6 +283,34 @@ void main() {
         reason: 'a box already copied is not copied a second time');
   });
 
+  test('a record the destination rejects does not hold its box open', () async {
+    await seedHive();
+    // `importRow` takes a map, so a String is rejected. Seeded here rather
+    // than in `seedHive`, which the other tests share.
+    final stats = HiveStore('connection_stats');
+    await stats.init();
+    await stats.box.put('bad-row', 'not a record');
+    await Hive.close();
+
+    await Stores.init();
+
+    expect(Stores.connectionStats.getConnectionHistory('srv-1').length, 1,
+        reason: 'the readable record still lands');
+
+    // Deliberate, and the opposite of an unopenable box: what makes a record
+    // fail here — an unregistered typeId, a truncated value, a shape the
+    // destination will not take — gives the same answer on every later launch.
+    // Holding the box open for it would leave the marker unwritten for good,
+    // so the import would re-run every launch and `conn_stats_index` would
+    // stay on disk in plaintext, which is the thing deleting it exists to
+    // avoid.
+    expect(
+      Stores.setting.get<bool>('${StoreDefaults.prefixKey}hiveImported'),
+      true,
+      reason: 'the box is done; the rejected record is not retried',
+    );
+  });
+
   test('importing does not present itself as a local edit', () async {
     await seedHive();
     await Stores.init();
