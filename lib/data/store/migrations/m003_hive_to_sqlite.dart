@@ -121,7 +121,7 @@ abstract final class HiveImport {
       // What did land is already in the current shape, so the version is set
       // now: a launch in this state runs the migrator like any other, and the
       // step for a shape this data no longer has must not be applied to it.
-      if (done.isNotEmpty) SchemaVersion.initFresh();
+      if (done.isNotEmpty) SchemaVersion.initAtHiveImport();
       return;
     }
 
@@ -129,9 +129,10 @@ abstract final class HiveImport {
     _dropPlaintextIndex(dir);
 
     // The copy nests a pre-v3 server record on the way across, which is what
-    // the v2 -> v3 step used to do in place, so what has landed is current by
-    // construction.
-    SchemaVersion.initFresh();
+    // the v2 -> v3 step used to do in place. What has landed is the layout of
+    // the build that dropped Hive, not the current one — the steps after this
+    // still have to run over it.
+    SchemaVersion.initAtHiveImport();
     Stores.setting.set(_markerKey, true);
     Stores.setting.remove(_doneKey);
   }

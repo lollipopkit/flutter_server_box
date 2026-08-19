@@ -323,8 +323,10 @@ void main() {
       );
     });
 
-    test('the schema is marked current, and not as a local edit', () {
-      expect(SchemaVersion.stored, SchemaVersion.current);
+    test('the schema is marked at the import, and not as a local edit', () {
+      // Not `current`: the rows are still the shape the import writes, and
+      // the steps after it have yet to run.
+      expect(SchemaVersion.stored, SchemaVersion.hiveImportProduces);
       // `Stores.lastModTime` decides which side of a sync wins; a device that
       // has just read its own disk must not claim the newer copy.
       expect(Stores.lastModTime, 0);

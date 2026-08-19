@@ -20,6 +20,7 @@ import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
+import 'package:server_box/data/store/migrations/m004_kv_to_tables.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/hive/hive_registrar.g.dart';
@@ -238,7 +239,7 @@ Future<void> _doDbMigrate() async {
   // `current` while copying, because a pre-v3 record only exists as a Hive
   // value and that is the one pass that reads one. The call stays for the
   // downgrade check it performs, and for the next step that does exist.
-  await SchemaVersion.migrate(const []);
+  await SchemaVersion.migrate(const [KvToTablesMigration()]);
 
   // Then the app-level fixups, which read records as `Spi`.
   ServerStore.instance.migrateIds();

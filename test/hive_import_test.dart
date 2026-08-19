@@ -176,10 +176,14 @@ void main() {
     expect((decoded['ssh'] as Map)['ip'], '10.0.0.1');
   });
 
-  test('it records the current schema version', () async {
+  test('it records the layout it wrote, not the current one', () async {
     await seedHive();
     await Stores.init();
-    expect(SchemaVersion.stored, SchemaVersion.current);
+    // The import produces the shape that was current when Hive was dropped.
+    // Claiming `current` would tell the migrator there is nothing left to do
+    // and strand every record in that shape.
+    expect(SchemaVersion.stored, SchemaVersion.hiveImportProduces);
+    expect(SchemaVersion.stored, lessThan(SchemaVersion.current));
   });
 
   test('a second launch does not import again', () async {
