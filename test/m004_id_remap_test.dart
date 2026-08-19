@@ -19,20 +19,24 @@ import 'helpers/test_db.dart';
 ///
 /// The input here is hand-written because m004's input is not a release
 /// artifact: it consumes what `HiveImport` leaves in `kv`, which is this
-/// repo's own intermediate. The one thing that *is* a fact about a released
-/// build — that such a server arrives with `id == ''` — is checked against the
-/// 1466 fixture in `hive_release_migration_test.dart`, so this seed cannot
-/// drift away from what a real upgrade produces without that test failing.
+/// repo's own intermediate.
 ///
-/// The key below is the `user@ip:port` form such an install used. Any string
-/// would do: what is under test is that the *reference* is rewritten, not what
-/// it looked like.
+/// Exactly two things about it are backed by a released build, both asserted
+/// against the fixtures in `hive_release_migration_test.dart`: such a server
+/// arrives with `id == ''`, and its `ssh` fields arrive nested under one key.
+/// Those are what the seed cannot drift away from without that test failing.
+///
+/// Nothing else here is: the `kv` key is an arbitrary legacy reference, chosen
+/// to read like one rather than because any fixture verifies that shape. What
+/// is under test is that the *reference* is rewritten, whatever it was.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late ServerStore servers;
 
-  /// The old key, and what the app wrote into every record that referenced it.
+  /// An arbitrary legacy reference: the `kv` key the server is stored under,
+  /// and the value every record below uses to name it. Its shape is not
+  /// asserted anywhere and nothing depends on it.
   const legacyRef = 'root@10.0.0.1:22';
 
   setUp(() async {
@@ -49,7 +53,8 @@ void main() {
     );
   }
 
-  /// Written the way 1466 wrote it: no id of its own, keyed by the connection.
+  /// The empty `id` and the nested `ssh` are the release-backed part; the key
+  /// it is stored under is not.
   void seedLegacyServer() => seed('server', legacyRef, {
     'id': '',
     'name': 'legacy',
