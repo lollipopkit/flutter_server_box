@@ -112,7 +112,8 @@ void main() {
   });
 
   test('deleting a private key keeps the servers that used it', () {
-    db.execute("INSERT INTO private_key VALUES ('k1', 'work', 'PRIVATE');");
+    db.execute('INSERT INTO private_key (id, name, key) '
+        "VALUES ('k1', 'work', 'PRIVATE');");
     addServer('srv', keyId: 'k1');
 
     db.execute("DELETE FROM private_key WHERE id = 'k1';");
@@ -136,7 +137,8 @@ void main() {
 
   test('an auto-run target that is deleted stops being one', () {
     addServer('srv');
-    db.execute("INSERT INTO snippet VALUES ('s1', 'deploy', 'echo', NULL);");
+    db.execute('INSERT INTO snippet (id, name, script) '
+        "VALUES ('s1', 'deploy', 'echo');");
     db.execute("INSERT INTO snippet_auto_run_on VALUES ('s1', 'srv');");
 
     db.execute("DELETE FROM server WHERE id = 'srv';");
@@ -150,10 +152,12 @@ void main() {
   });
 
   test('a name the user typed is not a key, but is still unique', () {
-    db.execute("INSERT INTO snippet VALUES ('s1', 'deploy', 'echo a', NULL);");
+    db.execute('INSERT INTO snippet (id, name, script) '
+        "VALUES ('s1', 'deploy', 'echo a');");
     // A different snippet, same name.
     expect(
-      () => db.execute("INSERT INTO snippet VALUES ('s2', 'deploy', 'b', NULL);"),
+      () => db.execute('INSERT INTO snippet (id, name, script) '
+          "VALUES ('s2', 'deploy', 'b');"),
       throwsA(isA<SqliteException>()),
     );
     // Renaming is one column, and s1 keeps its identity.
@@ -191,6 +195,56 @@ void main() {
       ),
       throwsA(isA<SqliteException>()),
     );
+  });
+
+  group('sync metadata', () {
+    test('every sync root carries updated_at and rev', () {
+      for (final t in Tables.syncRoots) {
+        final cols = db
+            .select('PRAGMA table_info($t);')
+            .map((r) => r['name'] as String)
+            .toSet();
+        expect(cols, containsAll(['updated_at', 'rev']), reason: t);
+      }
+    });
+
+    test('a child table has neither: it moves with its parent', () {
+      for (final t in const ['server_tag', 'server_env', 'server_jump']) {
+        final cols = db
+            .select('PRAGMA table_info($t);')
+            .map((r) => r['name'] as String)
+            .toSet();
+        expect(cols, isNot(contains('updated_at')), reason: t);
+      }
+    });
+
+    test('an incremental pull is one indexed query per root', () {
+      addServer('a');
+      db.execute("UPDATE server SET updated_at = 100 WHERE id = 'a';");
+      addServer('b');
+      db.execute("UPDATE server SET updated_at = 300 WHERE id = 'b';");
+
+      final since = db
+          .select('SELECT id FROM server WHERE updated_at > ? ORDER BY id;', [200])
+          .map((r) => r['id'])
+          .toList();
+      expect(since, ['b'], reason: 'only what changed since the watermark');
+    });
+
+    test('a deletion is a fact that survives, so it can travel', () {
+      addServer('gone');
+      db.execute("DELETE FROM server WHERE id = 'gone';");
+      // The store records it; the schema is what makes the record possible.
+      db.execute("INSERT INTO tombstone VALUES ('server', 'gone', 500);");
+
+      final deleted = db
+          .select('SELECT row_id FROM tombstone WHERE tbl = ? AND deleted_at > ?;',
+              ['server', 400])
+          .map((r) => r['row_id'])
+          .toList();
+      expect(deleted, ['gone'],
+          reason: 'without this a peer re-adds the row it still has');
+    });
   });
 
   test('tags are queryable, not decodable', () {

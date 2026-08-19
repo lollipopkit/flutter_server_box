@@ -33,7 +33,33 @@ abstract final class Tables {
     }
   }
 
-  /// Every table this module owns, newest dependants last.
+  /// Tables holding one logical record each, and so the unit of sync.
+  ///
+  /// A server and its tags, envs and jump hosts move together: the children
+  /// have no independent meaning and cascade with the parent, so only the
+  /// parent carries [syncColumns] and editing a child bumps the parent's
+  /// `updated_at`. Syncing children separately would mean a tag could arrive
+  /// before the server it belongs to.
+  static const syncRoots = [
+    'private_key',
+    'server',
+    'snippet',
+    'port_forward',
+    'container_host',
+    'agent_conversation',
+  ];
+
+  /// Appended to every table in [syncRoots].
+  ///
+  /// `updated_at` is what an incremental sync selects on. `rev` distinguishes
+  /// two edits inside the same millisecond, which a clock alone cannot, and
+  /// makes "has this actually changed" answerable without comparing every
+  /// column.
+  static const syncColumns = '''
+  updated_at INTEGER NOT NULL DEFAULT 0,
+  rev        INTEGER NOT NULL DEFAULT 0''';
+
+  /// Every table this module owns, dependants after what they depend on.
   ///
   /// Used by the migration to write into them, and by tests to assert the
   /// database has nothing else in it.
@@ -54,6 +80,8 @@ abstract final class Tables {
     'conn_stat',
     'agent_conversation',
     'agent_active_conversation',
+    'tombstone',
+    'sync_state',
   ];
 
   static const _ddl = [
@@ -64,7 +92,9 @@ abstract final class Tables {
 CREATE TABLE IF NOT EXISTS private_key (
   id   TEXT NOT NULL PRIMARY KEY,
   name TEXT NOT NULL UNIQUE,
-  key  TEXT NOT NULL
+  key  TEXT NOT NULL,
+  updated_at INTEGER NOT NULL DEFAULT 0,
+  rev        INTEGER NOT NULL DEFAULT 0
 ) WITHOUT ROWID;
 ''',
 
@@ -111,6 +141,9 @@ CREATE TABLE IF NOT EXISTS server (
   logo_url          TEXT,
   net_dev           TEXT,
   script_dir        TEXT,
+
+  updated_at        INTEGER NOT NULL DEFAULT 0,
+  rev               INTEGER NOT NULL DEFAULT 0,
 
   -- Reached over SSH or over a monitor agent, never both and never neither.
   CHECK ((ssh_ip IS NOT NULL) <> (monitor_addr IS NOT NULL))
@@ -188,7 +221,9 @@ CREATE TABLE IF NOT EXISTS snippet (
   id     TEXT NOT NULL PRIMARY KEY,
   name   TEXT NOT NULL UNIQUE,
   script TEXT NOT NULL,
-  note   TEXT
+  note   TEXT,
+  updated_at INTEGER NOT NULL DEFAULT 0,
+  rev        INTEGER NOT NULL DEFAULT 0
 ) WITHOUT ROWID;
 ''',
     '''
@@ -222,7 +257,9 @@ CREATE TABLE IF NOT EXISTS port_forward (
   local_host  TEXT,
   local_port  INTEGER NOT NULL DEFAULT 0,
   remote_host TEXT,
-  remote_port INTEGER
+  remote_port INTEGER,
+  updated_at  INTEGER NOT NULL DEFAULT 0,
+  rev         INTEGER NOT NULL DEFAULT 0
 ) WITHOUT ROWID;
 ''',
     'CREATE INDEX IF NOT EXISTS idx_port_forward_server '
@@ -233,9 +270,11 @@ CREATE TABLE IF NOT EXISTS port_forward (
     // foreign key here: the empty id belongs to no server.
     '''
 CREATE TABLE IF NOT EXISTS container_host (
-  server_id TEXT NOT NULL,
-  type      TEXT NOT NULL CHECK (type IN ('docker', 'podman')),
-  host      TEXT NOT NULL,
+  server_id  TEXT NOT NULL,
+  type       TEXT NOT NULL CHECK (type IN ('docker', 'podman')),
+  host       TEXT NOT NULL,
+  updated_at INTEGER NOT NULL DEFAULT 0,
+  rev        INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (server_id, type)
 ) WITHOUT ROWID;
 ''',
@@ -275,7 +314,8 @@ CREATE TABLE IF NOT EXISTS agent_conversation (
   id         TEXT    NOT NULL PRIMARY KEY,
   server_id  TEXT    NOT NULL,
   updated_at INTEGER NOT NULL,
-  data       TEXT    NOT NULL
+  data       TEXT    NOT NULL,
+  rev        INTEGER NOT NULL DEFAULT 0
 ) WITHOUT ROWID;
 ''',
     'CREATE INDEX IF NOT EXISTS idx_agent_conversation_server_updated '
@@ -284,6 +324,33 @@ CREATE TABLE IF NOT EXISTS agent_conversation (
 CREATE TABLE IF NOT EXISTS agent_active_conversation (
   server_id       TEXT NOT NULL PRIMARY KEY,
   conversation_id TEXT NOT NULL REFERENCES agent_conversation(id) ON DELETE CASCADE
+) WITHOUT ROWID;
+''',
+
+    // ---- sync bookkeeping ------------------------------------------------
+    // A delete has to be a fact that can travel. Without a tombstone the peer
+    // that still has the row treats it as an addition and puts it back, which
+    // is how a deleted server reappears on the next sync.
+    //
+    // Swept once the row is older than every peer's watermark; until then it
+    // is the only record that the deletion happened.
+    '''
+CREATE TABLE IF NOT EXISTS tombstone (
+  tbl        TEXT    NOT NULL,
+  row_id     TEXT    NOT NULL,
+  deleted_at INTEGER NOT NULL,
+  PRIMARY KEY (tbl, row_id)
+) WITHOUT ROWID;
+''',
+    'CREATE INDEX IF NOT EXISTS idx_tombstone_deleted ON tombstone(deleted_at);',
+
+    // This device's id, and how far it has read each peer's log. Key-value
+    // because it is bookkeeping about sync rather than anything synced, and
+    // it must never itself be uploaded.
+    '''
+CREATE TABLE IF NOT EXISTS sync_state (
+  k TEXT NOT NULL PRIMARY KEY,
+  v TEXT NOT NULL
 ) WITHOUT ROWID;
 ''',
   ];
