@@ -146,6 +146,9 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> {
     }
     final note = _noteController.text;
     return Snippet(
+      // The id of the record being edited, so a rename stays an update of one
+      // column. A new snippet gets one that outlives every rename after it.
+      id: widget.args?.snippet?.id ?? ShortId.generate(),
       name: name,
       script: script,
       tags: _tags.value.isEmpty ? null : _tags.value.toList(),

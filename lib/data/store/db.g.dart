@@ -4799,28 +4799,6 @@ class $ContainerHostsTable extends ContainerHosts
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
   $ContainerHostsTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
-    'updatedAt',
-  );
-  @override
-  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
-    'updated_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultValue: const Constant(0),
-  );
-  static const VerificationMeta _revMeta = const VerificationMeta('rev');
-  @override
-  late final GeneratedColumn<int> rev = GeneratedColumn<int>(
-    'rev',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultValue: const Constant(0),
-  );
   static const VerificationMeta _serverIdMeta = const VerificationMeta(
     'serverId',
   );
@@ -4831,6 +4809,9 @@ class $ContainerHostsTable extends ContainerHosts
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES server (id) ON DELETE CASCADE',
+    ),
   );
   static const VerificationMeta _typeMeta = const VerificationMeta('type');
   @override
@@ -4851,7 +4832,7 @@ class $ContainerHostsTable extends ContainerHosts
     requiredDuringInsert: true,
   );
   @override
-  List<GeneratedColumn> get $columns => [updatedAt, rev, serverId, type, host];
+  List<GeneratedColumn> get $columns => [serverId, type, host];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -4864,18 +4845,6 @@ class $ContainerHostsTable extends ContainerHosts
   }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
-    if (data.containsKey('updated_at')) {
-      context.handle(
-        _updatedAtMeta,
-        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
-      );
-    }
-    if (data.containsKey('rev')) {
-      context.handle(
-        _revMeta,
-        rev.isAcceptableOrUnknown(data['rev']!, _revMeta),
-      );
-    }
     if (data.containsKey('server_id')) {
       context.handle(
         _serverIdMeta,
@@ -4909,14 +4878,6 @@ class $ContainerHostsTable extends ContainerHosts
   ContainerHostRow map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return ContainerHostRow(
-      updatedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}updated_at'],
-      )!,
-      rev: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}rev'],
-      )!,
       serverId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}server_id'],
@@ -4943,14 +4904,10 @@ class $ContainerHostsTable extends ContainerHosts
 
 class ContainerHostRow extends DataClass
     implements Insertable<ContainerHostRow> {
-  final int updatedAt;
-  final int rev;
   final String serverId;
   final String type;
   final String host;
   const ContainerHostRow({
-    required this.updatedAt,
-    required this.rev,
     required this.serverId,
     required this.type,
     required this.host,
@@ -4958,8 +4915,6 @@ class ContainerHostRow extends DataClass
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['updated_at'] = Variable<int>(updatedAt);
-    map['rev'] = Variable<int>(rev);
     map['server_id'] = Variable<String>(serverId);
     map['type'] = Variable<String>(type);
     map['host'] = Variable<String>(host);
@@ -4968,8 +4923,6 @@ class ContainerHostRow extends DataClass
 
   ContainerHostsCompanion toCompanion(bool nullToAbsent) {
     return ContainerHostsCompanion(
-      updatedAt: Value(updatedAt),
-      rev: Value(rev),
       serverId: Value(serverId),
       type: Value(type),
       host: Value(host),
@@ -4982,8 +4935,6 @@ class ContainerHostRow extends DataClass
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return ContainerHostRow(
-      updatedAt: serializer.fromJson<int>(json['updatedAt']),
-      rev: serializer.fromJson<int>(json['rev']),
       serverId: serializer.fromJson<String>(json['serverId']),
       type: serializer.fromJson<String>(json['type']),
       host: serializer.fromJson<String>(json['host']),
@@ -4993,31 +4944,20 @@ class ContainerHostRow extends DataClass
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'updatedAt': serializer.toJson<int>(updatedAt),
-      'rev': serializer.toJson<int>(rev),
       'serverId': serializer.toJson<String>(serverId),
       'type': serializer.toJson<String>(type),
       'host': serializer.toJson<String>(host),
     };
   }
 
-  ContainerHostRow copyWith({
-    int? updatedAt,
-    int? rev,
-    String? serverId,
-    String? type,
-    String? host,
-  }) => ContainerHostRow(
-    updatedAt: updatedAt ?? this.updatedAt,
-    rev: rev ?? this.rev,
-    serverId: serverId ?? this.serverId,
-    type: type ?? this.type,
-    host: host ?? this.host,
-  );
+  ContainerHostRow copyWith({String? serverId, String? type, String? host}) =>
+      ContainerHostRow(
+        serverId: serverId ?? this.serverId,
+        type: type ?? this.type,
+        host: host ?? this.host,
+      );
   ContainerHostRow copyWithCompanion(ContainerHostsCompanion data) {
     return ContainerHostRow(
-      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-      rev: data.rev.present ? data.rev.value : this.rev,
       serverId: data.serverId.present ? data.serverId.value : this.serverId,
       type: data.type.present ? data.type.value : this.type,
       host: data.host.present ? data.host.value : this.host,
@@ -5027,8 +4967,6 @@ class ContainerHostRow extends DataClass
   @override
   String toString() {
     return (StringBuffer('ContainerHostRow(')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('rev: $rev, ')
           ..write('serverId: $serverId, ')
           ..write('type: $type, ')
           ..write('host: $host')
@@ -5037,34 +4975,26 @@ class ContainerHostRow extends DataClass
   }
 
   @override
-  int get hashCode => Object.hash(updatedAt, rev, serverId, type, host);
+  int get hashCode => Object.hash(serverId, type, host);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is ContainerHostRow &&
-          other.updatedAt == this.updatedAt &&
-          other.rev == this.rev &&
           other.serverId == this.serverId &&
           other.type == this.type &&
           other.host == this.host);
 }
 
 class ContainerHostsCompanion extends UpdateCompanion<ContainerHostRow> {
-  final Value<int> updatedAt;
-  final Value<int> rev;
   final Value<String> serverId;
   final Value<String> type;
   final Value<String> host;
   const ContainerHostsCompanion({
-    this.updatedAt = const Value.absent(),
-    this.rev = const Value.absent(),
     this.serverId = const Value.absent(),
     this.type = const Value.absent(),
     this.host = const Value.absent(),
   });
   ContainerHostsCompanion.insert({
-    this.updatedAt = const Value.absent(),
-    this.rev = const Value.absent(),
     required String serverId,
     required String type,
     required String host,
@@ -5072,15 +5002,11 @@ class ContainerHostsCompanion extends UpdateCompanion<ContainerHostRow> {
        type = Value(type),
        host = Value(host);
   static Insertable<ContainerHostRow> custom({
-    Expression<int>? updatedAt,
-    Expression<int>? rev,
     Expression<String>? serverId,
     Expression<String>? type,
     Expression<String>? host,
   }) {
     return RawValuesInsertable({
-      if (updatedAt != null) 'updated_at': updatedAt,
-      if (rev != null) 'rev': rev,
       if (serverId != null) 'server_id': serverId,
       if (type != null) 'type': type,
       if (host != null) 'host': host,
@@ -5088,15 +5014,11 @@ class ContainerHostsCompanion extends UpdateCompanion<ContainerHostRow> {
   }
 
   ContainerHostsCompanion copyWith({
-    Value<int>? updatedAt,
-    Value<int>? rev,
     Value<String>? serverId,
     Value<String>? type,
     Value<String>? host,
   }) {
     return ContainerHostsCompanion(
-      updatedAt: updatedAt ?? this.updatedAt,
-      rev: rev ?? this.rev,
       serverId: serverId ?? this.serverId,
       type: type ?? this.type,
       host: host ?? this.host,
@@ -5106,12 +5028,6 @@ class ContainerHostsCompanion extends UpdateCompanion<ContainerHostRow> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    if (updatedAt.present) {
-      map['updated_at'] = Variable<int>(updatedAt.value);
-    }
-    if (rev.present) {
-      map['rev'] = Variable<int>(rev.value);
-    }
     if (serverId.present) {
       map['server_id'] = Variable<String>(serverId.value);
     }
@@ -5127,11 +5043,221 @@ class ContainerHostsCompanion extends UpdateCompanion<ContainerHostRow> {
   @override
   String toString() {
     return (StringBuffer('ContainerHostsCompanion(')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('rev: $rev, ')
           ..write('serverId: $serverId, ')
           ..write('type: $type, ')
           ..write('host: $host')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ContainerRuntimesTable extends ContainerRuntimes
+    with TableInfo<$ContainerRuntimesTable, ContainerRuntimeRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ContainerRuntimesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _serverIdMeta = const VerificationMeta(
+    'serverId',
+  );
+  @override
+  late final GeneratedColumn<String> serverId = GeneratedColumn<String>(
+    'server_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES server (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+    'type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [serverId, type];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'container_runtime';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ContainerRuntimeRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('server_id')) {
+      context.handle(
+        _serverIdMeta,
+        serverId.isAcceptableOrUnknown(data['server_id']!, _serverIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_serverIdMeta);
+    }
+    if (data.containsKey('type')) {
+      context.handle(
+        _typeMeta,
+        type.isAcceptableOrUnknown(data['type']!, _typeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_typeMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {serverId};
+  @override
+  ContainerRuntimeRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ContainerRuntimeRow(
+      serverId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}server_id'],
+      )!,
+      type: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}type'],
+      )!,
+    );
+  }
+
+  @override
+  $ContainerRuntimesTable createAlias(String alias) {
+    return $ContainerRuntimesTable(attachedDatabase, alias);
+  }
+
+  @override
+  bool get withoutRowId => true;
+}
+
+class ContainerRuntimeRow extends DataClass
+    implements Insertable<ContainerRuntimeRow> {
+  final String serverId;
+  final String type;
+  const ContainerRuntimeRow({required this.serverId, required this.type});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['server_id'] = Variable<String>(serverId);
+    map['type'] = Variable<String>(type);
+    return map;
+  }
+
+  ContainerRuntimesCompanion toCompanion(bool nullToAbsent) {
+    return ContainerRuntimesCompanion(
+      serverId: Value(serverId),
+      type: Value(type),
+    );
+  }
+
+  factory ContainerRuntimeRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ContainerRuntimeRow(
+      serverId: serializer.fromJson<String>(json['serverId']),
+      type: serializer.fromJson<String>(json['type']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'serverId': serializer.toJson<String>(serverId),
+      'type': serializer.toJson<String>(type),
+    };
+  }
+
+  ContainerRuntimeRow copyWith({String? serverId, String? type}) =>
+      ContainerRuntimeRow(
+        serverId: serverId ?? this.serverId,
+        type: type ?? this.type,
+      );
+  ContainerRuntimeRow copyWithCompanion(ContainerRuntimesCompanion data) {
+    return ContainerRuntimeRow(
+      serverId: data.serverId.present ? data.serverId.value : this.serverId,
+      type: data.type.present ? data.type.value : this.type,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ContainerRuntimeRow(')
+          ..write('serverId: $serverId, ')
+          ..write('type: $type')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(serverId, type);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ContainerRuntimeRow &&
+          other.serverId == this.serverId &&
+          other.type == this.type);
+}
+
+class ContainerRuntimesCompanion extends UpdateCompanion<ContainerRuntimeRow> {
+  final Value<String> serverId;
+  final Value<String> type;
+  const ContainerRuntimesCompanion({
+    this.serverId = const Value.absent(),
+    this.type = const Value.absent(),
+  });
+  ContainerRuntimesCompanion.insert({
+    required String serverId,
+    required String type,
+  }) : serverId = Value(serverId),
+       type = Value(type);
+  static Insertable<ContainerRuntimeRow> custom({
+    Expression<String>? serverId,
+    Expression<String>? type,
+  }) {
+    return RawValuesInsertable({
+      if (serverId != null) 'server_id': serverId,
+      if (type != null) 'type': type,
+    });
+  }
+
+  ContainerRuntimesCompanion copyWith({
+    Value<String>? serverId,
+    Value<String>? type,
+  }) {
+    return ContainerRuntimesCompanion(
+      serverId: serverId ?? this.serverId,
+      type: type ?? this.type,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (serverId.present) {
+      map['server_id'] = Variable<String>(serverId.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ContainerRuntimesCompanion(')
+          ..write('serverId: $serverId, ')
+          ..write('type: $type')
           ..write(')'))
         .toString();
   }
@@ -5647,18 +5773,8 @@ class $AgentConversationsTable extends AgentConversations
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _revMeta = const VerificationMeta('rev');
   @override
-  late final GeneratedColumn<int> rev = GeneratedColumn<int>(
-    'rev',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultValue: const Constant(0),
-  );
-  @override
-  List<GeneratedColumn> get $columns => [id, serverId, updatedAt, data, rev];
+  List<GeneratedColumn> get $columns => [id, serverId, updatedAt, data];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -5700,12 +5816,6 @@ class $AgentConversationsTable extends AgentConversations
     } else if (isInserting) {
       context.missing(_dataMeta);
     }
-    if (data.containsKey('rev')) {
-      context.handle(
-        _revMeta,
-        rev.isAcceptableOrUnknown(data['rev']!, _revMeta),
-      );
-    }
     return context;
   }
 
@@ -5731,10 +5841,6 @@ class $AgentConversationsTable extends AgentConversations
         DriftSqlType.string,
         data['${effectivePrefix}data'],
       )!,
-      rev: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}rev'],
-      )!,
     );
   }
 
@@ -5753,13 +5859,11 @@ class AgentConversationRow extends DataClass
   final String serverId;
   final int updatedAt;
   final String data;
-  final int rev;
   const AgentConversationRow({
     required this.id,
     required this.serverId,
     required this.updatedAt,
     required this.data,
-    required this.rev,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -5768,7 +5872,6 @@ class AgentConversationRow extends DataClass
     map['server_id'] = Variable<String>(serverId);
     map['updated_at'] = Variable<int>(updatedAt);
     map['data'] = Variable<String>(data);
-    map['rev'] = Variable<int>(rev);
     return map;
   }
 
@@ -5778,7 +5881,6 @@ class AgentConversationRow extends DataClass
       serverId: Value(serverId),
       updatedAt: Value(updatedAt),
       data: Value(data),
-      rev: Value(rev),
     );
   }
 
@@ -5792,7 +5894,6 @@ class AgentConversationRow extends DataClass
       serverId: serializer.fromJson<String>(json['serverId']),
       updatedAt: serializer.fromJson<int>(json['updatedAt']),
       data: serializer.fromJson<String>(json['data']),
-      rev: serializer.fromJson<int>(json['rev']),
     );
   }
   @override
@@ -5803,7 +5904,6 @@ class AgentConversationRow extends DataClass
       'serverId': serializer.toJson<String>(serverId),
       'updatedAt': serializer.toJson<int>(updatedAt),
       'data': serializer.toJson<String>(data),
-      'rev': serializer.toJson<int>(rev),
     };
   }
 
@@ -5812,13 +5912,11 @@ class AgentConversationRow extends DataClass
     String? serverId,
     int? updatedAt,
     String? data,
-    int? rev,
   }) => AgentConversationRow(
     id: id ?? this.id,
     serverId: serverId ?? this.serverId,
     updatedAt: updatedAt ?? this.updatedAt,
     data: data ?? this.data,
-    rev: rev ?? this.rev,
   );
   AgentConversationRow copyWithCompanion(AgentConversationsCompanion data) {
     return AgentConversationRow(
@@ -5826,7 +5924,6 @@ class AgentConversationRow extends DataClass
       serverId: data.serverId.present ? data.serverId.value : this.serverId,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       data: data.data.present ? data.data.value : this.data,
-      rev: data.rev.present ? data.rev.value : this.rev,
     );
   }
 
@@ -5836,14 +5933,13 @@ class AgentConversationRow extends DataClass
           ..write('id: $id, ')
           ..write('serverId: $serverId, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('data: $data, ')
-          ..write('rev: $rev')
+          ..write('data: $data')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, serverId, updatedAt, data, rev);
+  int get hashCode => Object.hash(id, serverId, updatedAt, data);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -5851,8 +5947,7 @@ class AgentConversationRow extends DataClass
           other.id == this.id &&
           other.serverId == this.serverId &&
           other.updatedAt == this.updatedAt &&
-          other.data == this.data &&
-          other.rev == this.rev);
+          other.data == this.data);
 }
 
 class AgentConversationsCompanion
@@ -5861,20 +5956,17 @@ class AgentConversationsCompanion
   final Value<String> serverId;
   final Value<int> updatedAt;
   final Value<String> data;
-  final Value<int> rev;
   const AgentConversationsCompanion({
     this.id = const Value.absent(),
     this.serverId = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.data = const Value.absent(),
-    this.rev = const Value.absent(),
   });
   AgentConversationsCompanion.insert({
     required String id,
     required String serverId,
     required int updatedAt,
     required String data,
-    this.rev = const Value.absent(),
   }) : id = Value(id),
        serverId = Value(serverId),
        updatedAt = Value(updatedAt),
@@ -5884,14 +5976,12 @@ class AgentConversationsCompanion
     Expression<String>? serverId,
     Expression<int>? updatedAt,
     Expression<String>? data,
-    Expression<int>? rev,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (serverId != null) 'server_id': serverId,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (data != null) 'data': data,
-      if (rev != null) 'rev': rev,
     });
   }
 
@@ -5900,14 +5990,12 @@ class AgentConversationsCompanion
     Value<String>? serverId,
     Value<int>? updatedAt,
     Value<String>? data,
-    Value<int>? rev,
   }) {
     return AgentConversationsCompanion(
       id: id ?? this.id,
       serverId: serverId ?? this.serverId,
       updatedAt: updatedAt ?? this.updatedAt,
       data: data ?? this.data,
-      rev: rev ?? this.rev,
     );
   }
 
@@ -5926,9 +6014,6 @@ class AgentConversationsCompanion
     if (data.present) {
       map['data'] = Variable<String>(data.value);
     }
-    if (rev.present) {
-      map['rev'] = Variable<int>(rev.value);
-    }
     return map;
   }
 
@@ -5938,8 +6023,7 @@ class AgentConversationsCompanion
           ..write('id: $id, ')
           ..write('serverId: $serverId, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('data: $data, ')
-          ..write('rev: $rev')
+          ..write('data: $data')
           ..write(')'))
         .toString();
   }
@@ -6631,6 +6715,8 @@ abstract class _$AppDb extends GeneratedDatabase {
   );
   late final $PortForwardsTable portForwards = $PortForwardsTable(this);
   late final $ContainerHostsTable containerHosts = $ContainerHostsTable(this);
+  late final $ContainerRuntimesTable containerRuntimes =
+      $ContainerRuntimesTable(this);
   late final $ConnStatsTable connStats = $ConnStatsTable(this);
   late final $AgentConversationsTable agentConversations =
       $AgentConversationsTable(this);
@@ -6656,6 +6742,7 @@ abstract class _$AppDb extends GeneratedDatabase {
     snippetAutoRunOn,
     portForwards,
     containerHosts,
+    containerRuntimes,
     connStats,
     agentConversations,
     agentActiveConversations,
@@ -6747,6 +6834,20 @@ abstract class _$AppDb extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('port_forward', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'server',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('container_host', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'server',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('container_runtime', kind: UpdateKind.delete)],
     ),
     WritePropagation(
       on: TableUpdateQuery.onTableName(
@@ -7284,6 +7385,44 @@ final class $$ServersTableReferences
     );
   }
 
+  static MultiTypedResultKey<$ContainerHostsTable, List<ContainerHostRow>>
+  _containerHostsRefsTable(_$AppDb db) => MultiTypedResultKey.fromTable(
+    db.containerHosts,
+    aliasName: 'server__id__container_host__server_id',
+  );
+
+  $$ContainerHostsTableProcessedTableManager get containerHostsRefs {
+    final manager = $$ContainerHostsTableTableManager(
+      $_db,
+      $_db.containerHosts,
+    ).filter((f) => f.serverId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_containerHostsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$ContainerRuntimesTable, List<ContainerRuntimeRow>>
+  _containerRuntimesRefsTable(_$AppDb db) => MultiTypedResultKey.fromTable(
+    db.containerRuntimes,
+    aliasName: 'server__id__container_runtime__server_id',
+  );
+
+  $$ContainerRuntimesTableProcessedTableManager get containerRuntimesRefs {
+    final manager = $$ContainerRuntimesTableTableManager(
+      $_db,
+      $_db.containerRuntimes,
+    ).filter((f) => f.serverId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _containerRuntimesRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
   static MultiTypedResultKey<$ConnStatsTable, List<ConnStatRow>>
   _connStatsRefsTable(_$AppDb db) => MultiTypedResultKey.fromTable(
     db.connStats,
@@ -7640,6 +7779,56 @@ class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
           }) => $$PortForwardsTableFilterComposer(
             $db: $db,
             $table: $db.portForwards,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> containerHostsRefs(
+    Expression<bool> Function($$ContainerHostsTableFilterComposer f) f,
+  ) {
+    final $$ContainerHostsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.containerHosts,
+      getReferencedColumn: (t) => t.serverId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ContainerHostsTableFilterComposer(
+            $db: $db,
+            $table: $db.containerHosts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> containerRuntimesRefs(
+    Expression<bool> Function($$ContainerRuntimesTableFilterComposer f) f,
+  ) {
+    final $$ContainerRuntimesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.containerRuntimes,
+      getReferencedColumn: (t) => t.serverId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ContainerRuntimesTableFilterComposer(
+            $db: $db,
+            $table: $db.containerRuntimes,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -8163,6 +8352,57 @@ class $$ServersTableAnnotationComposer
     return f(composer);
   }
 
+  Expression<T> containerHostsRefs<T extends Object>(
+    Expression<T> Function($$ContainerHostsTableAnnotationComposer a) f,
+  ) {
+    final $$ContainerHostsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.containerHosts,
+      getReferencedColumn: (t) => t.serverId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ContainerHostsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.containerHosts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> containerRuntimesRefs<T extends Object>(
+    Expression<T> Function($$ContainerRuntimesTableAnnotationComposer a) f,
+  ) {
+    final $$ContainerRuntimesTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.containerRuntimes,
+          getReferencedColumn: (t) => t.serverId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$ContainerRuntimesTableAnnotationComposer(
+                $db: $db,
+                $table: $db.containerRuntimes,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+
   Expression<T> connStatsRefs<T extends Object>(
     Expression<T> Function($$ConnStatsTableAnnotationComposer a) f,
   ) {
@@ -8211,6 +8451,8 @@ class $$ServersTableTableManager
             bool knownHostsRefs,
             bool snippetAutoRunOnRefs,
             bool portForwardsRefs,
+            bool containerHostsRefs,
+            bool containerRuntimesRefs,
             bool connStatsRefs,
           })
         > {
@@ -8367,6 +8609,8 @@ class $$ServersTableTableManager
                 knownHostsRefs = false,
                 snippetAutoRunOnRefs = false,
                 portForwardsRefs = false,
+                containerHostsRefs = false,
+                containerRuntimesRefs = false,
                 connStatsRefs = false,
               }) {
                 return PrefetchHooks(
@@ -8379,6 +8623,8 @@ class $$ServersTableTableManager
                     if (knownHostsRefs) db.knownHosts,
                     if (snippetAutoRunOnRefs) db.snippetAutoRunOn,
                     if (portForwardsRefs) db.portForwards,
+                    if (containerHostsRefs) db.containerHosts,
+                    if (containerRuntimesRefs) db.containerRuntimes,
                     if (connStatsRefs) db.connStats,
                   ],
                   addJoins:
@@ -8562,6 +8808,48 @@ class $$ServersTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (containerHostsRefs)
+                        await $_getPrefetchedData<
+                          ServerRow,
+                          $ServersTable,
+                          ContainerHostRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ServersTableReferences
+                              ._containerHostsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ServersTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).containerHostsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.serverId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (containerRuntimesRefs)
+                        await $_getPrefetchedData<
+                          ServerRow,
+                          $ServersTable,
+                          ContainerRuntimeRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ServersTableReferences
+                              ._containerRuntimesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ServersTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).containerRuntimesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.serverId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                       if (connStatsRefs)
                         await $_getPrefetchedData<
                           ServerRow,
@@ -8612,6 +8900,8 @@ typedef $$ServersTableProcessedTableManager =
         bool knownHostsRefs,
         bool snippetAutoRunOnRefs,
         bool portForwardsRefs,
+        bool containerHostsRefs,
+        bool containerRuntimesRefs,
         bool connStatsRefs,
       })
     >;
@@ -11727,20 +12017,42 @@ typedef $$PortForwardsTableProcessedTableManager =
     >;
 typedef $$ContainerHostsTableCreateCompanionBuilder =
     ContainerHostsCompanion Function({
-      Value<int> updatedAt,
-      Value<int> rev,
       required String serverId,
       required String type,
       required String host,
     });
 typedef $$ContainerHostsTableUpdateCompanionBuilder =
     ContainerHostsCompanion Function({
-      Value<int> updatedAt,
-      Value<int> rev,
       Value<String> serverId,
       Value<String> type,
       Value<String> host,
     });
+
+final class $$ContainerHostsTableReferences
+    extends BaseReferences<_$AppDb, $ContainerHostsTable, ContainerHostRow> {
+  $$ContainerHostsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $ServersTable _serverIdTable(_$AppDb db) =>
+      db.servers.createAlias('container_host__server_id__server__id');
+
+  $$ServersTableProcessedTableManager get serverId {
+    final $_column = $_itemColumn<String>('server_id')!;
+
+    final manager = $$ServersTableTableManager(
+      $_db,
+      $_db.servers,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_serverIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
 
 class $$ContainerHostsTableFilterComposer
     extends Composer<_$AppDb, $ContainerHostsTable> {
@@ -11751,21 +12063,6 @@ class $$ContainerHostsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<int> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get rev => $composableBuilder(
-    column: $table.rev,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get serverId => $composableBuilder(
-    column: $table.serverId,
-    builder: (column) => ColumnFilters(column),
-  );
-
   ColumnFilters<String> get type => $composableBuilder(
     column: $table.type,
     builder: (column) => ColumnFilters(column),
@@ -11775,6 +12072,29 @@ class $$ContainerHostsTableFilterComposer
     column: $table.host,
     builder: (column) => ColumnFilters(column),
   );
+
+  $$ServersTableFilterComposer get serverId {
+    final $$ServersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableFilterComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$ContainerHostsTableOrderingComposer
@@ -11786,21 +12106,6 @@ class $$ContainerHostsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<int> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get rev => $composableBuilder(
-    column: $table.rev,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get serverId => $composableBuilder(
-    column: $table.serverId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<String> get type => $composableBuilder(
     column: $table.type,
     builder: (column) => ColumnOrderings(column),
@@ -11810,6 +12115,29 @@ class $$ContainerHostsTableOrderingComposer
     column: $table.host,
     builder: (column) => ColumnOrderings(column),
   );
+
+  $$ServersTableOrderingComposer get serverId {
+    final $$ServersTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableOrderingComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$ContainerHostsTableAnnotationComposer
@@ -11821,20 +12149,34 @@ class $$ContainerHostsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<int> get updatedAt =>
-      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-
-  GeneratedColumn<int> get rev =>
-      $composableBuilder(column: $table.rev, builder: (column) => column);
-
-  GeneratedColumn<String> get serverId =>
-      $composableBuilder(column: $table.serverId, builder: (column) => column);
-
   GeneratedColumn<String> get type =>
       $composableBuilder(column: $table.type, builder: (column) => column);
 
   GeneratedColumn<String> get host =>
       $composableBuilder(column: $table.host, builder: (column) => column);
+
+  $$ServersTableAnnotationComposer get serverId {
+    final $$ServersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$ContainerHostsTableTableManager
@@ -11848,12 +12190,9 @@ class $$ContainerHostsTableTableManager
           $$ContainerHostsTableAnnotationComposer,
           $$ContainerHostsTableCreateCompanionBuilder,
           $$ContainerHostsTableUpdateCompanionBuilder,
-          (
-            ContainerHostRow,
-            BaseReferences<_$AppDb, $ContainerHostsTable, ContainerHostRow>,
-          ),
+          (ContainerHostRow, $$ContainerHostsTableReferences),
           ContainerHostRow,
-          PrefetchHooks Function()
+          PrefetchHooks Function({bool serverId})
         > {
   $$ContainerHostsTableTableManager(_$AppDb db, $ContainerHostsTable table)
     : super(
@@ -11868,36 +12207,74 @@ class $$ContainerHostsTableTableManager
               $$ContainerHostsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
-                Value<int> updatedAt = const Value.absent(),
-                Value<int> rev = const Value.absent(),
                 Value<String> serverId = const Value.absent(),
                 Value<String> type = const Value.absent(),
                 Value<String> host = const Value.absent(),
               }) => ContainerHostsCompanion(
-                updatedAt: updatedAt,
-                rev: rev,
                 serverId: serverId,
                 type: type,
                 host: host,
               ),
           createCompanionCallback:
               ({
-                Value<int> updatedAt = const Value.absent(),
-                Value<int> rev = const Value.absent(),
                 required String serverId,
                 required String type,
                 required String host,
               }) => ContainerHostsCompanion.insert(
-                updatedAt: updatedAt,
-                rev: rev,
                 serverId: serverId,
                 type: type,
                 host: host,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$ContainerHostsTableReferences(db, table, e),
+                ),
+              )
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({serverId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (serverId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.serverId,
+                                referencedTable: $$ContainerHostsTableReferences
+                                    ._serverIdTable(db),
+                                referencedColumn:
+                                    $$ContainerHostsTableReferences
+                                        ._serverIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
         ),
       );
 }
@@ -11912,12 +12289,270 @@ typedef $$ContainerHostsTableProcessedTableManager =
       $$ContainerHostsTableAnnotationComposer,
       $$ContainerHostsTableCreateCompanionBuilder,
       $$ContainerHostsTableUpdateCompanionBuilder,
-      (
-        ContainerHostRow,
-        BaseReferences<_$AppDb, $ContainerHostsTable, ContainerHostRow>,
-      ),
+      (ContainerHostRow, $$ContainerHostsTableReferences),
       ContainerHostRow,
-      PrefetchHooks Function()
+      PrefetchHooks Function({bool serverId})
+    >;
+typedef $$ContainerRuntimesTableCreateCompanionBuilder =
+    ContainerRuntimesCompanion Function({
+      required String serverId,
+      required String type,
+    });
+typedef $$ContainerRuntimesTableUpdateCompanionBuilder =
+    ContainerRuntimesCompanion Function({
+      Value<String> serverId,
+      Value<String> type,
+    });
+
+final class $$ContainerRuntimesTableReferences
+    extends
+        BaseReferences<_$AppDb, $ContainerRuntimesTable, ContainerRuntimeRow> {
+  $$ContainerRuntimesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $ServersTable _serverIdTable(_$AppDb db) =>
+      db.servers.createAlias('container_runtime__server_id__server__id');
+
+  $$ServersTableProcessedTableManager get serverId {
+    final $_column = $_itemColumn<String>('server_id')!;
+
+    final manager = $$ServersTableTableManager(
+      $_db,
+      $_db.servers,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_serverIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$ContainerRuntimesTableFilterComposer
+    extends Composer<_$AppDb, $ContainerRuntimesTable> {
+  $$ContainerRuntimesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ServersTableFilterComposer get serverId {
+    final $$ServersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableFilterComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ContainerRuntimesTableOrderingComposer
+    extends Composer<_$AppDb, $ContainerRuntimesTable> {
+  $$ContainerRuntimesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ServersTableOrderingComposer get serverId {
+    final $$ServersTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableOrderingComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ContainerRuntimesTableAnnotationComposer
+    extends Composer<_$AppDb, $ContainerRuntimesTable> {
+  $$ContainerRuntimesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  $$ServersTableAnnotationComposer get serverId {
+    final $$ServersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ContainerRuntimesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDb,
+          $ContainerRuntimesTable,
+          ContainerRuntimeRow,
+          $$ContainerRuntimesTableFilterComposer,
+          $$ContainerRuntimesTableOrderingComposer,
+          $$ContainerRuntimesTableAnnotationComposer,
+          $$ContainerRuntimesTableCreateCompanionBuilder,
+          $$ContainerRuntimesTableUpdateCompanionBuilder,
+          (ContainerRuntimeRow, $$ContainerRuntimesTableReferences),
+          ContainerRuntimeRow,
+          PrefetchHooks Function({bool serverId})
+        > {
+  $$ContainerRuntimesTableTableManager(
+    _$AppDb db,
+    $ContainerRuntimesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ContainerRuntimesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ContainerRuntimesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ContainerRuntimesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> serverId = const Value.absent(),
+                Value<String> type = const Value.absent(),
+              }) => ContainerRuntimesCompanion(serverId: serverId, type: type),
+          createCompanionCallback:
+              ({required String serverId, required String type}) =>
+                  ContainerRuntimesCompanion.insert(
+                    serverId: serverId,
+                    type: type,
+                  ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$ContainerRuntimesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({serverId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (serverId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.serverId,
+                                referencedTable:
+                                    $$ContainerRuntimesTableReferences
+                                        ._serverIdTable(db),
+                                referencedColumn:
+                                    $$ContainerRuntimesTableReferences
+                                        ._serverIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ContainerRuntimesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDb,
+      $ContainerRuntimesTable,
+      ContainerRuntimeRow,
+      $$ContainerRuntimesTableFilterComposer,
+      $$ContainerRuntimesTableOrderingComposer,
+      $$ContainerRuntimesTableAnnotationComposer,
+      $$ContainerRuntimesTableCreateCompanionBuilder,
+      $$ContainerRuntimesTableUpdateCompanionBuilder,
+      (ContainerRuntimeRow, $$ContainerRuntimesTableReferences),
+      ContainerRuntimeRow,
+      PrefetchHooks Function({bool serverId})
     >;
 typedef $$ConnStatsTableCreateCompanionBuilder =
     ConnStatsCompanion Function({
@@ -12280,7 +12915,6 @@ typedef $$AgentConversationsTableCreateCompanionBuilder =
       required String serverId,
       required int updatedAt,
       required String data,
-      Value<int> rev,
     });
 typedef $$AgentConversationsTableUpdateCompanionBuilder =
     AgentConversationsCompanion Function({
@@ -12288,7 +12922,6 @@ typedef $$AgentConversationsTableUpdateCompanionBuilder =
       Value<String> serverId,
       Value<int> updatedAt,
       Value<String> data,
-      Value<int> rev,
     });
 
 final class $$AgentConversationsTableReferences
@@ -12361,11 +12994,6 @@ class $$AgentConversationsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get rev => $composableBuilder(
-    column: $table.rev,
-    builder: (column) => ColumnFilters(column),
-  );
-
   Expression<bool> agentActiveConversationsRefs(
     Expression<bool> Function($$AgentActiveConversationsTableFilterComposer f)
     f,
@@ -12422,11 +13050,6 @@ class $$AgentConversationsTableOrderingComposer
     column: $table.data,
     builder: (column) => ColumnOrderings(column),
   );
-
-  ColumnOrderings<int> get rev => $composableBuilder(
-    column: $table.rev,
-    builder: (column) => ColumnOrderings(column),
-  );
 }
 
 class $$AgentConversationsTableAnnotationComposer
@@ -12449,9 +13072,6 @@ class $$AgentConversationsTableAnnotationComposer
 
   GeneratedColumn<String> get data =>
       $composableBuilder(column: $table.data, builder: (column) => column);
-
-  GeneratedColumn<int> get rev =>
-      $composableBuilder(column: $table.rev, builder: (column) => column);
 
   Expression<T> agentActiveConversationsRefs<T extends Object>(
     Expression<T> Function($$AgentActiveConversationsTableAnnotationComposer a)
@@ -12518,13 +13138,11 @@ class $$AgentConversationsTableTableManager
                 Value<String> serverId = const Value.absent(),
                 Value<int> updatedAt = const Value.absent(),
                 Value<String> data = const Value.absent(),
-                Value<int> rev = const Value.absent(),
               }) => AgentConversationsCompanion(
                 id: id,
                 serverId: serverId,
                 updatedAt: updatedAt,
                 data: data,
-                rev: rev,
               ),
           createCompanionCallback:
               ({
@@ -12532,13 +13150,11 @@ class $$AgentConversationsTableTableManager
                 required String serverId,
                 required int updatedAt,
                 required String data,
-                Value<int> rev = const Value.absent(),
               }) => AgentConversationsCompanion.insert(
                 id: id,
                 serverId: serverId,
                 updatedAt: updatedAt,
                 data: data,
-                rev: rev,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -13182,6 +13798,8 @@ class $AppDbManager {
       $$PortForwardsTableTableManager(_db, _db.portForwards);
   $$ContainerHostsTableTableManager get containerHosts =>
       $$ContainerHostsTableTableManager(_db, _db.containerHosts);
+  $$ContainerRuntimesTableTableManager get containerRuntimes =>
+      $$ContainerRuntimesTableTableManager(_db, _db.containerRuntimes);
   $$ConnStatsTableTableManager get connStats =>
       $$ConnStatsTableTableManager(_db, _db.connStats);
   $$AgentConversationsTableTableManager get agentConversations =>

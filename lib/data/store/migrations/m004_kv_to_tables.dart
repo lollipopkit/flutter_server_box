@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/store/schema.dart';
-import 'package:server_box/data/store/tables.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 /// Moves the entities out of `kv` and into tables with columns.
@@ -11,16 +10,30 @@ import 'package:sqlite3/sqlite3.dart';
 /// worse than one that has not started: the records exist in two shapes at
 /// once and nothing can tell which is authoritative.
 ///
-/// Two things it does beyond copying:
+/// The tables themselves are not created here — the schema is created when the
+/// database is opened, so this step only ever reads `kv` and inserts. That is
+/// also why it can stay inside one synchronous transaction: creating the schema
+/// means opening Drift over the connection, which is asynchronous, and a
+/// synchronous transaction block cannot await it.
+///
+/// Four things it does beyond copying:
 ///
 /// - **Gives snippets and private keys real ids.** Both were keyed by a name
 ///   the user typed — a private key's `id` *was* its name — so `Spi.ssh.keyId`
 ///   pointed at a name, and renaming a key silently detached every server
 ///   using it. New ids are generated here and the references rewritten.
-/// - **Drops rows that point at nothing.** `conn_stat` has a foreign key now,
-///   and the old `delServer` cleaned up by hand and missed cases, so an
-///   upgrading install has statistics for servers deleted long ago. They
-///   cannot be inserted and are not worth keeping.
+/// - **Gives a server with no id one.** A record from before 1155 was stored
+///   under `user@ip:port` with an empty `id` field, which the app fixed up at
+///   every launch afterwards. There is nowhere to keep an empty primary key,
+///   so it happens here instead, once, with every reference rewritten.
+/// - **Recovers an `IdentityFile` path out of `keyId`.** `~/.ssh/config` import
+///   used to write a path into the field that names a private key. Mapping the
+///   old key ids would turn that into a null and lose it, so a value naming no
+///   key that looks like a path lands in `ssh_key_path`, which is what it meant.
+/// - **Drops rows that point at nothing.** Every child table has a foreign key
+///   now, and the old `delServer` cleaned up by hand and missed cases, so an
+///   upgrading install has statistics and container hosts for servers deleted
+///   long ago. They cannot be inserted and are not worth keeping.
 class KvToTablesMigration implements SchemaMigration {
   const KvToTablesMigration();
 
@@ -29,65 +42,40 @@ class KvToTablesMigration implements SchemaMigration {
 
   Database get _db => SqliteDb.instance;
 
+  /// The `kv` stores this consumes. Left behind they would be a second copy
+  /// that nothing reads and a backup would still carry.
+  static const _consumed = [
+    'server',
+    'key',
+    'snippet',
+    'port_forward',
+    'docker',
+    'conn_stat',
+    'agent_conversation',
+  ];
+
   @override
   Future<void> apply() async {
-    // The three tables that already exist under these names, from before this
-    // step. `Tables.createAll` is `IF NOT EXISTS`, so it would leave the old
-    // shape in place — they have to move out of the way first.
-    const renamed = {
-      'conn_stat': '_m004_old_conn_stat',
-      'agent_conversation': '_m004_old_agent_conversation',
-      'agent_active': '_m004_old_agent_active',
-    };
-
     SqliteStore.transact(() {
-      for (final entry in renamed.entries) {
-        if (_tableExists(entry.key)) {
-          _db.execute('ALTER TABLE ${entry.key} RENAME TO ${entry.value};');
-        }
-      }
-
-      // Drift owns the DDL, so the tables are created by opening the
-      // database rather than by this step. `createTables` is the seam that
-      // makes the migration runnable against a connection Drift has not
-      // opened yet — a test, and the first launch after upgrading.
-      createTables(_db);
-
       final keyIds = _migratePrivateKeys();
       final serverIds = _migrateServers(keyIds);
       _migrateKnownHosts(serverIds);
-      _migrateSnippets(serverIds);
+      final snippetNames = _migrateSnippets(serverIds);
       _migratePortForwards(serverIds);
-      _migrateContainerHosts();
+      _migrateContainer(serverIds);
       _migrateConnStats(serverIds);
       _migrateAgentConversations();
+      _rewriteOrder('serverOrder', serverIds);
+      _rewriteOrder('snippetOrder', snippetNames);
 
-      for (final old in renamed.values) {
-        if (_tableExists(old)) _db.execute('DROP TABLE $old;');
-      }
-      // The rows these came from. Left behind they are a second copy that
-      // nothing reads and a backup would still carry.
-      for (final store in const [
-        'server',
-        'key',
-        'snippet',
-        'port_forward',
-        'docker',
-      ]) {
+      for (final store in _consumed) {
         _db.execute('DELETE FROM kv WHERE store = ?;', [store]);
       }
-      _db.execute(
-        "DELETE FROM kv WHERE store = 'setting' AND key = ?;",
-        ['sshKnownHostFingerprints'],
-      );
+      _db.execute("DELETE FROM kv WHERE store = 'setting' AND key = ?;", [
+        'sshKnownHostFingerprints',
+      ]);
     });
   }
-
-  bool _tableExists(String name) => _db
-      .select("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?;", [
-        name,
-      ])
-      .isNotEmpty;
 
   /// Every row of one `kv` store, decoded, with the timestamp it was written.
   ///
@@ -98,6 +86,21 @@ class KvToTablesMigration implements SchemaMigration {
     String store,
   ) {
     final out = <({String key, Map<String, dynamic> value, int updatedAt})>[];
+    for (final row in _raw(store)) {
+      if (row.value is! Map) continue;
+      out.add((
+        key: row.key,
+        value: Map<String, dynamic>.from(row.value as Map),
+        updatedAt: row.updatedAt,
+      ));
+    }
+    return out;
+  }
+
+  /// The same, without requiring the value to be an object: the agent box held
+  /// a bare string under half of its keys.
+  List<({String key, Object? value, int updatedAt})> _raw(String store) {
+    final out = <({String key, Object? value, int updatedAt})>[];
     for (final row in _db.select(
       'SELECT key, value, updated_at FROM kv WHERE store = ?;',
       [store],
@@ -105,11 +108,9 @@ class KvToTablesMigration implements SchemaMigration {
       final key = row['key'] as String;
       if (key.startsWith(StoreDefaults.prefixKey)) continue;
       try {
-        final decoded = json.decode(row['value'] as String);
-        if (decoded is! Map) continue;
         out.add((
           key: key,
-          value: Map<String, dynamic>.from(decoded),
+          value: json.decode(row['value'] as String),
           updatedAt: row['updated_at'] as int? ?? 0,
         ));
       } catch (e) {
@@ -149,16 +150,22 @@ class KvToTablesMigration implements SchemaMigration {
     return ids;
   }
 
-  /// The set of server ids that made it across, for the tables keyed on them.
-  Set<String> _migrateServers(Map<String, String> keyIds) {
-    final kept = <String>{};
+  /// Every way a server could be referred to before -> the id it has now.
+  ///
+  /// Two entries per server where the two differ: the `kv` key it was stored
+  /// under, and the `id` field inside the record. They are the same for
+  /// everything written since 1155, and for anything older the field is empty
+  /// and the key is `user@ip:port` — which other records point at.
+  Map<String, String> _migrateServers(Map<String, String> keyIds) {
+    final ids = <String, String>{};
     final jumps = <String, List<String>>{};
 
     for (final row in _rows('server')) {
       final v = row.value;
-      final id = (v['id'] as String?)?.isNotEmpty == true
-          ? v['id'] as String
-          : row.key;
+      final stored = v['id'] as String?;
+      final id = stored != null && stored.isNotEmpty
+          ? stored
+          : ShortId.generate();
       final ssh = v['ssh'] as Map?;
       final monitor = v['monitorHttp'] as Map?;
       final sshIp = ssh?['ip'] as String?;
@@ -181,6 +188,15 @@ class KvToTablesMigration implements SchemaMigration {
       final custom = v['custom'] as Map? ?? const {};
       final wol = v['wolCfg'] as Map?;
 
+      // A key id that names no key. If it looks like a path it is one: the
+      // `~/.ssh/config` import wrote `IdentityFile` into this field. Mapping it
+      // to null would be the only record that it ever existed.
+      final oldKeyId = ssh?['keyId'] as String?;
+      final newKeyId = keyIds[oldKeyId];
+      final keyPath = newKeyId == null && oldKeyId != null && _isPath(oldKeyId)
+          ? oldKeyId
+          : ssh?['keyPath'] as String?;
+
       _db.execute(
         'INSERT INTO server ('
         'id, name, auto_connect, system_type, '
@@ -202,8 +218,8 @@ class KvToTablesMigration implements SchemaMigration {
           hasSsh ? ((ssh?['user'] as String?) ?? 'root') : null,
           ssh?['pwd'] as String?,
           // Points at the new id, so renaming the key later cannot detach it.
-          keyIds[ssh?['keyId'] as String?],
-          ssh?['keyPath'] as String?,
+          newKeyId,
+          keyPath,
           ssh?['alterUrl'] as String?,
           ssh?['proxyCommand'] as String?,
           hasMonitor ? monitorAddr : null,
@@ -224,13 +240,14 @@ class KvToTablesMigration implements SchemaMigration {
           row.updatedAt,
         ],
       );
-      kept.add(id);
+      ids[row.key] = id;
+      if (stored != null && stored.isNotEmpty) ids[stored] = id;
 
       for (final tag in (v['tags'] as List? ?? const []).whereType<String>()) {
-        _db.execute(
-          'INSERT OR IGNORE INTO server_tag VALUES (?, ?);',
-          [id, tag],
-        );
+        _db.execute('INSERT OR IGNORE INTO server_tag VALUES (?, ?);', [
+          id,
+          tag,
+        ]);
       }
       (v['envs'] as Map? ?? const {}).forEach((k, val) {
         _db.execute('INSERT OR IGNORE INTO server_env VALUES (?, ?, ?);', [
@@ -241,25 +258,23 @@ class KvToTablesMigration implements SchemaMigration {
       });
       for (final cmd
           in (v['disabledCmdTypes'] as List? ?? const []).whereType<String>()) {
-        _db.execute(
-          'INSERT OR IGNORE INTO server_disabled_cmd VALUES (?, ?);',
-          [id, cmd],
-        );
+        _db.execute('INSERT OR IGNORE INTO server_disabled_cmd VALUES (?, ?);', [
+          id,
+          cmd,
+        ]);
       }
       (custom['cmds'] as Map? ?? const {}).forEach((k, val) {
-        _db.execute(
-          'INSERT OR IGNORE INTO server_custom_cmd VALUES (?, ?, ?);',
-          [id, '$k', '$val'],
-        );
+        _db.execute('INSERT OR IGNORE INTO server_custom_cmd VALUES (?, ?, ?);', [
+          id,
+          '$k',
+          '$val',
+        ]);
       });
 
       // Held back: a jump host is a server, so the row it points at may not
-      // have been inserted yet.
+      // have been inserted yet — and its id may not be known yet either.
       final ordered = <String>[
-        for (final j in [
-          ssh?['jumpId'],
-          ...?(ssh?['jumpIds'] as List?),
-        ])
+        for (final j in [ssh?['jumpId'], ...?(ssh?['jumpIds'] as List?)])
           if (j is String && j.isNotEmpty) j,
       ];
       final seen = <String>{};
@@ -275,7 +290,8 @@ class KvToTablesMigration implements SchemaMigration {
       for (final target in targets) {
         // A jump host that no longer exists is a dead reference the old shape
         // could hold and this one cannot.
-        if (!kept.contains(target)) {
+        final resolved = ids[target];
+        if (resolved == null) {
           Loggers.app.warning(
             'm004: server "$serverId" jumps via "$target", which does not '
             'exist; dropped',
@@ -285,17 +301,30 @@ class KvToTablesMigration implements SchemaMigration {
         _db.execute('INSERT INTO server_jump VALUES (?, ?, ?);', [
           serverId,
           ord++,
-          target,
+          resolved,
         ]);
       }
     });
 
-    return kept;
+    return ids;
   }
+
+  /// Whether [value] is a filesystem path rather than a key id.
+  ///
+  /// `ShortId`'s alphabet is `0-9a-zA-Z-+`, so a generated id can match none of
+  /// these; a user-typed key name can, which is why the caller checks that it
+  /// names no key first.
+  ///
+  /// Known gap: `IdentityFile id_ed25519` with no separator at all is legal in
+  /// an ssh config, and such a value is indistinguishable from a key the user
+  /// has since deleted. It stays a dangling reference, which the edit page
+  /// shows as "no key" — the same as before.
+  static bool _isPath(String value) =>
+      value.startsWith('~') || value.contains('/') || value.contains(r'\');
 
   /// `sshKnownHostFingerprints`, a JSON map in `setting` keyed
   /// `<serverId>::<keyType>`, becomes rows that cascade with their server.
-  void _migrateKnownHosts(Set<String> serverIds) {
+  void _migrateKnownHosts(Map<String, String> serverIds) {
     final raw = _db.select(
       "SELECT value FROM kv WHERE store = 'setting' AND key = ?;",
       ['sshKnownHostFingerprints'],
@@ -311,28 +340,35 @@ class KvToTablesMigration implements SchemaMigration {
     if (decoded is! Map) return;
 
     decoded.forEach((k, v) {
-      final parts = '$k'.split('::');
-      if (parts.length != 2) return;
-      if (!serverIds.contains(parts[0])) return;
+      // Split once from the left: a key type never contains `::`, and an old
+      // `user@ip:port` server id does contain colons.
+      final at = '$k'.indexOf('::');
+      if (at <= 0) return;
+      final serverId = serverIds['$k'.substring(0, at)];
+      if (serverId == null) return;
       _db.execute('INSERT OR IGNORE INTO known_host VALUES (?, ?, ?);', [
-        parts[0],
-        parts[1],
+        serverId,
+        '$k'.substring(at + 2),
         '$v',
       ]);
     });
   }
 
-  void _migrateSnippets(Set<String> serverIds) {
+  /// Old name -> the name it kept, for `snippetOrder`, which is a list of them.
+  Map<String, String> _migrateSnippets(Map<String, String> serverIds) {
+    final renamed = <String, String>{};
     final names = <String>{};
     for (final row in _rows('snippet')) {
       final v = row.value;
       final script = v['script'] as String?;
       if (script == null) continue;
 
-      var name = v['name'] as String? ?? row.key;
+      final oldName = v['name'] as String? ?? row.key;
+      var name = oldName;
       for (var n = 2; !names.add(name); n++) {
-        name = '${v['name'] ?? row.key} ($n)';
+        name = '$oldName ($n)';
       }
+      renamed[oldName] = name;
 
       final id = ShortId.generate();
       _db.execute(
@@ -348,24 +384,26 @@ class KvToTablesMigration implements SchemaMigration {
       }
       for (final target
           in (v['autoRunOn'] as List? ?? const []).whereType<String>()) {
-        if (!serverIds.contains(target)) continue;
-        _db.execute(
-          'INSERT OR IGNORE INTO snippet_auto_run_on VALUES (?, ?);',
-          [id, target],
-        );
+        final serverId = serverIds[target];
+        if (serverId == null) continue;
+        _db.execute('INSERT OR IGNORE INTO snippet_auto_run_on VALUES (?, ?);', [
+          id,
+          serverId,
+        ]);
       }
     }
+    return renamed;
   }
 
-  void _migratePortForwards(Set<String> serverIds) {
+  void _migratePortForwards(Map<String, String> serverIds) {
     for (final row in _rows('port_forward')) {
       final v = row.value;
       final id = v['id'] as String? ?? row.key;
-      final serverId = v['serverId'] as String?;
-      if (serverId == null || !serverIds.contains(serverId)) {
+      final serverId = serverIds[v['serverId'] as String?];
+      if (serverId == null) {
         Loggers.app.warning(
-          'm004: port forward "$id" names server "$serverId", which does not '
-          'exist; dropped',
+          'm004: port forward "$id" names server "${v['serverId']}", which '
+          'does not exist; dropped',
         );
         continue;
       }
@@ -390,43 +428,90 @@ class KvToTablesMigration implements SchemaMigration {
     }
   }
 
-  /// `containerHost<type><serverId>` -> a row keyed by the two of them.
-  void _migrateContainerHosts() {
-    const prefix = 'containerHost';
-    for (final row in _db.select(
-      "SELECT key, value, updated_at FROM kv WHERE store = 'docker';",
-    )) {
-      final key = row['key'] as String;
-      if (!key.startsWith(prefix)) continue;
-      final rest = key.substring(prefix.length);
-      final type = const ['docker', 'podman'].firstWhereOrNull(rest.startsWith);
-      if (type == null) continue;
+  /// The `docker` store held three kinds of key under one namespace:
+  ///
+  /// - `containerHost<type><serverId>` -> the host for that runtime
+  /// - `providerConfig<serverId>`      -> `ContainerType.podman`, from
+  ///   `toString()` on the enum
+  /// - `<serverId>`                    -> the Docker host, from before there
+  ///   was a runtime to name
+  void _migrateContainer(Map<String, String> serverIds) {
+    const hostPrefix = 'containerHost';
+    const typePrefix = 'providerConfig';
+    const runtimes = ['docker', 'podman'];
 
-      Object? host;
-      try {
-        host = json.decode(row['value'] as String);
-      } catch (_) {
+    for (final row in _raw('docker')) {
+      final value = row.value;
+      if (value is! String || value.isEmpty) continue;
+
+      if (row.key.startsWith(hostPrefix)) {
+        final rest = row.key.substring(hostPrefix.length);
+        final type = runtimes.firstWhereOrNull(rest.startsWith);
+        if (type == null) continue;
+        final serverId = serverIds[rest.substring(type.length)];
+        if (serverId == null) continue;
+        _db.execute(
+          'INSERT OR REPLACE INTO container_host (server_id, type, host) '
+          'VALUES (?, ?, ?);',
+          [serverId, type, value],
+        );
         continue;
       }
-      if (host is! String || host.isEmpty) continue;
 
+      if (row.key.startsWith(typePrefix)) {
+        final serverId = serverIds[row.key.substring(typePrefix.length)];
+        // `providerConfig` with no id was a global override on top of
+        // `usePodman`, which says the same thing; it belongs to no server and
+        // there is nowhere to put it.
+        if (serverId == null) continue;
+        final type = runtimes.firstWhereOrNull(value.endsWith);
+        if (type == null) continue;
+        _db.execute(
+          'INSERT OR REPLACE INTO container_runtime (server_id, type) '
+          'VALUES (?, ?);',
+          [serverId, type],
+        );
+        continue;
+      }
+
+      // Bare server id: the Docker host as it was stored before per-runtime
+      // hosts existed. `fetch` still fell back to it, so dropping it would
+      // silently move those servers back to the local socket.
+      final serverId = serverIds[row.key];
+      if (serverId == null) continue;
       _db.execute(
-        'INSERT OR REPLACE INTO container_host '
-        '(server_id, type, host, updated_at) VALUES (?, ?, ?, ?);',
-        [rest.substring(type.length), type, host, row['updated_at'] as int? ?? 0],
+        'INSERT OR IGNORE INTO container_host (server_id, type, host) '
+        'VALUES (?, ?, ?);',
+        [serverId, 'docker', value],
       );
     }
   }
 
-  void _migrateConnStats(Set<String> serverIds) {
-    if (!_tableExists('_m004_old_conn_stat')) return;
+  /// `ConnectionResult` as JSON -> as stored.
+  ///
+  /// The model's `@JsonValue`s are snake_case and the column holds the enum's
+  /// `name`, which is not the same string for three of the five. Written out
+  /// rather than read off the enum: this has to keep meaning what it meant when
+  /// the data was written, whatever the model does later.
+  static const _results = {
+    'success': 'success',
+    'timeout': 'timeout',
+    'auth_failed': 'authFailed',
+    'network_error': 'networkError',
+    'unknown_error': 'unknownError',
+  };
+
+  void _migrateConnStats(Map<String, String> serverIds) {
     var dropped = 0;
-    for (final row in _db.select('SELECT * FROM _m004_old_conn_stat;')) {
-      final serverId = row['server_id'] as String;
-      if (!serverIds.contains(serverId)) {
+    for (final row in _rows('conn_stat')) {
+      final v = row.value;
+      final serverId = serverIds[v['serverId'] as String?];
+      if (serverId == null) {
         dropped++;
         continue;
       }
+      final timestamp = DateTime.tryParse('${v['timestamp']}');
+      if (timestamp == null) continue;
       // A fresh id: the old one was `<serverId>_<millis>`, so two attempts in
       // the same millisecond shared a key and the second overwrote the first.
       _db.execute(
@@ -435,11 +520,11 @@ class KvToTablesMigration implements SchemaMigration {
         [
           ShortId.generate(),
           serverId,
-          row['server_name'],
-          row['timestamp'],
-          row['result'],
-          row['error_message'] ?? '',
-          row['duration_ms'],
+          v['serverName'] as String? ?? '',
+          timestamp.millisecondsSinceEpoch,
+          _results['${v['result']}'] ?? 'unknownError',
+          v['errorMessage'] as String? ?? '',
+          (v['durationMs'] as num?)?.toInt() ?? 0,
         ],
       );
     }
@@ -448,32 +533,95 @@ class KvToTablesMigration implements SchemaMigration {
     }
   }
 
+  /// The agent box held conversations and the per-server active one under one
+  /// namespace, told apart by a key prefix.
+  ///
+  /// Server ids are *not* remapped: the scope id of the global agent is not a
+  /// server, so there is nothing to check a conversation's against, and the
+  /// table has no foreign key for the same reason.
   void _migrateAgentConversations() {
-    if (_tableExists('_m004_old_agent_conversation')) {
-      for (final row in _db.select(
-        'SELECT * FROM _m004_old_agent_conversation;',
-      )) {
-        _db.execute(
-          'INSERT OR REPLACE INTO agent_conversation '
-          '(id, server_id, updated_at, data) VALUES (?, ?, ?, ?);',
-          [row['id'], row['server_id'], row['updated_at'], row['data']],
-        );
+    const conversationPrefix = 'conversation::';
+    const activePrefix = 'active::';
+    final active = <String, String>{};
+
+    for (final row in _raw('agent_conversation')) {
+      if (row.key.startsWith(activePrefix)) {
+        final id = row.value;
+        if (id is String && id.isNotEmpty) {
+          active[row.key.substring(activePrefix.length)] = id;
+        }
+        continue;
       }
+      if (!row.key.startsWith(conversationPrefix)) continue;
+      final v = row.value;
+      if (v is! Map) continue;
+      final id = v['id'] as String?;
+      final serverId = v['serverId'] as String?;
+      if (id == null || id.isEmpty || serverId == null || serverId.isEmpty) {
+        continue;
+      }
+      final updatedAt = DateTime.tryParse('${v['updatedAt']}');
+      _db.execute(
+        'INSERT OR REPLACE INTO agent_conversation '
+        '(id, server_id, updated_at, data) VALUES (?, ?, ?, ?);',
+        [
+          id,
+          serverId,
+          updatedAt?.millisecondsSinceEpoch ?? row.updatedAt,
+          json.encode(v),
+        ],
+      );
     }
-    if (!_tableExists('_m004_old_agent_active')) return;
-    for (final row in _db.select('SELECT * FROM _m004_old_agent_active;')) {
-      final conversationId = row['conversation_id'];
-      // The active row now references a real conversation.
+
+    active.forEach((serverId, conversationId) {
+      // The active row references a real conversation now.
       final exists = _db
           .select('SELECT 1 FROM agent_conversation WHERE id = ?;', [
             conversationId,
           ])
           .isNotEmpty;
-      if (!exists) continue;
+      if (!exists) return;
       _db.execute(
         'INSERT OR REPLACE INTO agent_active_conversation VALUES (?, ?);',
-        [row['server_id'], conversationId],
+        [serverId, conversationId],
       );
+    });
+  }
+
+  /// Rewrites one `setting` list whose entries this migration renamed.
+  ///
+  /// `serverOrder` holds ids and `snippetOrder` holds names, and both could
+  /// change above. An entry that no longer resolves is dropped — it named a
+  /// record that is not here.
+  void _rewriteOrder(String key, Map<String, String> mapping) {
+    final rows = _db.select(
+      "SELECT value FROM kv WHERE store = 'setting' AND key = ?;",
+      [key],
+    );
+    if (rows.isEmpty) return;
+    final List<String> entries;
+    try {
+      final decoded = json.decode(rows.single['value'] as String);
+      if (decoded is! List) return;
+      entries = decoded.whereType<String>().toList();
+    } catch (e) {
+      Loggers.app.warning('m004: $key unreadable', e);
+      return;
     }
+
+    final rewritten = [
+      for (final entry in entries)
+        ?mapping[entry],
+    ];
+    if (rewritten.length == entries.length &&
+        rewritten.indexed.every((e) => e.$2 == entries[e.$1])) {
+      return;
+    }
+    // Not an edit by the user, so the timestamp stays where it was: stamping
+    // it would tell the next sync this device holds the newer copy.
+    _db.execute(
+      "UPDATE kv SET value = ? WHERE store = 'setting' AND key = ?;",
+      [json.encode(rewritten), key],
+    );
   }
 }

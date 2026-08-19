@@ -284,21 +284,52 @@ class PortForwards extends Table with SyncMeta {
   ];
 }
 
-/// `serverId` is `''` for the global default, which is why there is no foreign
-/// key here: the empty id belongs to no server.
+/// `DOCKER_HOST` (or the podman equivalent) for one server.
+///
+/// A child of `server` rather than a record of its own: it is per-server
+/// configuration with no meaning apart from the server, so it cascades with it
+/// and the parent's `updated_at` is what moves when it changes — the same rule
+/// tags and envs follow.
 @DataClassName('ContainerHostRow')
-class ContainerHosts extends Table with SyncMeta {
+class ContainerHosts extends Table {
   @override
   String get tableName => 'container_host';
   @override
   bool get withoutRowId => true;
 
-  TextColumn get serverId => text()();
+  TextColumn get serverId =>
+      text().references(Servers, #id, onDelete: KeyAction.cascade)();
   TextColumn get type => text()();
   TextColumn get host => text()();
 
   @override
   Set<Column> get primaryKey => {serverId, type};
+
+  @override
+  List<String> get customConstraints => [
+    "CHECK (type IN ('docker', 'podman'))",
+  ];
+}
+
+/// Which runtime the user picked for one server, where absent means the global
+/// default (`SettingStore.usePodman`).
+///
+/// Was `providerConfig<serverId>` in the `docker` K-V store, holding
+/// `ContainerType.podman` — the result of `toString()` on an enum, so a
+/// renamed case would have read as the default without saying so.
+@DataClassName('ContainerRuntimeRow')
+class ContainerRuntimes extends Table {
+  @override
+  String get tableName => 'container_runtime';
+  @override
+  bool get withoutRowId => true;
+
+  TextColumn get serverId =>
+      text().references(Servers, #id, onDelete: KeyAction.cascade)();
+  TextColumn get type => text()();
+
+  @override
+  Set<Column> get primaryKey => {serverId};
 
   @override
   List<String> get customConstraints => [
@@ -338,6 +369,12 @@ class ConnStats extends Table {
 ///
 /// `serverId` has no foreign key: the global agent uses a scope id that is not
 /// a server.
+///
+/// No sync columns, and not a sync root: a conversation carries terminal output
+/// and reasoning, so it is deliberately left out of backup and sync. Its
+/// `updatedAt` is the conversation's own timestamp — what the list is ordered
+/// by and what the per-server cap keeps — rather than a record of when this
+/// device last touched the row.
 @DataClassName('AgentConversationRow')
 class AgentConversations extends Table {
   @override
@@ -349,7 +386,6 @@ class AgentConversations extends Table {
   TextColumn get serverId => text()();
   IntColumn get updatedAt => integer()();
   TextColumn get data => text()();
-  IntColumn get rev => integer().withDefault(const Constant(0))();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -433,6 +469,7 @@ class SyncStates extends Table {
     SnippetAutoRunOn,
     PortForwards,
     ContainerHosts,
+    ContainerRuntimes,
     ConnStats,
     AgentConversations,
     AgentActiveConversations,

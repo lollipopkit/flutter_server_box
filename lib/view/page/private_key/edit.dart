@@ -68,7 +68,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
     super.initState();
     final pki = this.pki;
     if (pki != null) {
-      _nameController.text = pki.id;
+      _nameController.text = pki.name;
       _keyController.text = pki.key;
     } else {
       Clipboard.getData(_format).then((value) {
@@ -109,7 +109,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
                   title: libL10n.attention,
                   child: Text(
                     libL10n.askContinue(
-                      '${libL10n.delete} ${l10n.privateKey}(${pki.id})',
+                      '${libL10n.delete} ${l10n.privateKey}(${pki.name})',
                     ),
                   ),
                   actions: Btn.ok(red: true).toList,
@@ -279,7 +279,14 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
     _loading.value = SizedLoading.medium;
     try {
       final decrypted = await Computer.shared.start(decryptPem, [key, pwd]);
-      final pki = PrivateKeyInfo(id: name, key: decrypted);
+      // The id of the record being edited: renaming a key must not detach the
+      // servers pointing at it, which is what happened when the two were one
+      // value.
+      final pki = PrivateKeyInfo(
+        id: this.pki?.id ?? ShortId.generate(),
+        name: name,
+        key: decrypted,
+      );
       final originPki = this.pki;
       if (originPki != null) {
         _notifier.update(originPki, pki);

@@ -1,4 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
+import 'package:meta/meta.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -14,12 +15,22 @@ import 'package:sqlite3/sqlite3.dart';
 /// [readAll] reads each child table once and groups in Dart, so the cost is
 /// the number of tables rather than the number of servers.
 class ServerStore extends EntityStore<Spi> {
-  ServerStore._() : super('server');
+  ServerStore._();
+
+  /// See [PrivateKeyStore.forTest].
+  @visibleForTesting
+  ServerStore.forTest();
 
   static final instance = ServerStore._();
 
   @override
+  String get table => 'server';
+
+  @override
   String idOf(Spi item) => item.id;
+
+  @override
+  String? nameOf(Spi item) => item.name;
 
   @override
   List<Spi> readAll() {
@@ -150,7 +161,7 @@ class ServerStore extends EntityStore<Spi> {
       'pve_addr', 'pve_ignore_cert', 'pve_pwd', 'prefer_temp_dev',
       'temp_is_celsius', 'logo_url', 'net_dev', 'script_dir',
     ];
-    upsert(table, columns, [
+    upsert(columns, [
       item.id,
       item.name,
       item.autoConnect ? 1 : 0,
@@ -236,9 +247,17 @@ class ServerStore extends EntityStore<Spi> {
   }
 
   @override
-  Map<String, Object?> getAllMap() => {
-    for (final spi in fetch()) spi.id: spi.toJson(),
-  };
+  Map<String, dynamic> toJson(Spi item) => item.toJson();
+
+  @override
+  Spi? fromJson(Map<String, dynamic> json) {
+    try {
+      return Spi.fromJson(json);
+    } catch (e) {
+      dprint('Parsing Spi from JSON', e);
+      return null;
+    }
+  }
 
   /// Servers carrying [tag], as a query rather than a decode of every record.
   List<String> idsWithTag(String tag) => db

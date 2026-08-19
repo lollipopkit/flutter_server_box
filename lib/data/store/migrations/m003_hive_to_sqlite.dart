@@ -28,26 +28,28 @@ abstract final class HiveImport {
 
   /// Box name -> what takes one of its rows.
   ///
-  /// Most go to a K-V store under the same key. The last two own tables now, so
-  /// they take the row apart themselves.
+  /// Every box lands in `kv` under its own store name, one row per Hive key.
+  /// That is the whole of the v4 shape, and it is all this step knows how to
+  /// produce: taking a record apart into columns is m004's job, against data
+  /// that is already off Hive.
+  ///
+  /// Straight into `kv` rather than through the store objects, because those
+  /// stores have moved on to tables — a migration that calls today's code
+  /// changes meaning every time that code does.
   ///
   /// `conn_stats_index` is deliberately absent: it held nothing that is not
   /// derivable from the records, and it is the one box that was never
   /// encrypted — so it is deleted below rather than carried across.
   static Map<String, bool Function(String, Object)> get _boxes => {
     'setting': _intoKv(Stores.setting),
-    // Straight into `kv` rather than through the store objects: this step
-    // produces the v4 shape, and those stores have moved on to tables. A
-    // migration that calls today's code changes meaning every time that code
-    // does.
+    'history': _intoKv(Stores.history),
     'server': _intoKvTable('server'),
     'docker': _intoKvTable('docker'),
     'key': _intoKvTable('key'),
     'snippet': _intoKvTable('snippet'),
-    'history': _intoKv(Stores.history),
     'port_forward': _intoKvTable('port_forward'),
-    'connection_stats': Stores.connectionStats.importRow,
-    'agent_conversation': Stores.agentConversation.importRow,
+    'connection_stats': _intoKvTable('conn_stat'),
+    'agent_conversation': _intoKvTable('agent_conversation'),
   };
 
   /// `updateLastUpdateTsOnSet: false`: the timestamps are copied across with
@@ -232,9 +234,8 @@ abstract final class HiveImport {
   /// The value as something made of maps, lists and primitives.
   ///
   /// A Hive box hands back whatever its adapter decoded — a `ConnectionStat`,
-  /// not a map. The K-V stores would encode that on write, but the two
-  /// table-backed stores parse what they are given with `fromJson`, so both
-  /// kinds of destination are handed the same shape.
+  /// not a map — and every destination here is a JSON column, so the value has
+  /// to be reduced to maps, lists and primitives before it can be encoded.
   static Object _jsonSafe(Object value) {
     if (value is Map || value is List || value is Enum) return value;
     if (value is num || value is String || value is bool) return value;

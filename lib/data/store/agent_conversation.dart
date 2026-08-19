@@ -21,14 +21,14 @@ import 'package:sqlite3/sqlite3.dart';
 /// Left out of backup and sync on purpose: these may contain terminal output
 /// and reasoning.
 class AgentConversationStore {
-  AgentConversationStore._() : _suffix = '';
+  AgentConversationStore._();
 
-  /// A distinct table name, so a test on `SqliteDb.openInMemory()` cannot
-  /// collide with another test's rows.
+  /// A second instance over the same tables.
+  ///
+  /// The table names are fixed by the schema now, so isolation between tests
+  /// comes from `SqliteDb.openInMemory()` being fresh per test.
   @visibleForTesting
-  AgentConversationStore.forTest() : _suffix = '_test';
-
-  final String _suffix;
+  AgentConversationStore.forTest();
 
   static final instance = AgentConversationStore._();
 
@@ -36,16 +36,10 @@ class AgentConversationStore {
   static const maxItemsPerConversation = 240;
   static const maxCharactersPerConversation = 512000;
 
-  /// Key prefixes of the Hive box these tables replaced. Only [importRow]
-  /// still needs them.
-  ///
-  /// TODO: delete with `HiveImport`.
-  static const _conversationPrefix = 'conversation::';
-  static const _activePrefix = 'active::';
-
   Database get _db => SqliteDb.instance;
-  String get _conv => 'agent_conversation$_suffix';
-  String get _active => 'agent_active$_suffix';
+
+  static const _conv = 'agent_conversation';
+  static const _active = 'agent_active_conversation';
 
   final _changes = StreamController<void>.broadcast();
 
@@ -54,27 +48,6 @@ class AgentConversationStore {
   /// What `box.watch()` was: a view showing the conversation list has to notice
   /// a write it did not make itself, and every write goes through this class.
   Stream<void> watch() => _changes.stream;
-
-  Future<void> init() async {
-    _db.execute(
-      'CREATE TABLE IF NOT EXISTS $_conv ('
-      '  id         TEXT    NOT NULL PRIMARY KEY,'
-      '  server_id  TEXT    NOT NULL,'
-      '  updated_at INTEGER NOT NULL,'
-      '  data       TEXT    NOT NULL'
-      ') WITHOUT ROWID;',
-    );
-    _db.execute(
-      'CREATE INDEX IF NOT EXISTS idx_${_conv}_server_updated '
-      'ON $_conv(server_id, updated_at DESC);',
-    );
-    _db.execute(
-      'CREATE TABLE IF NOT EXISTS $_active ('
-      '  server_id       TEXT NOT NULL PRIMARY KEY,'
-      '  conversation_id TEXT NOT NULL'
-      ') WITHOUT ROWID;',
-    );
-  }
 
   List<AgentConversation> fetchForServer(String serverId) {
     final rows = _db.select(
@@ -306,25 +279,6 @@ class AgentConversationStore {
       return value.length <= 60 ? value : '${value.substring(0, 57)}...';
     }
     return '';
-  }
-
-  /// Takes one row out of the Hive box these tables replaced.
-  ///
-  /// Used only by `HiveImport`. The box held both kinds under one namespace,
-  /// told apart by the key prefix.
-  bool importRow(String key, Object value) {
-    if (key.startsWith(_activePrefix)) {
-      if (value is! String || value.isEmpty) return false;
-      _setActiveRow(key.substring(_activePrefix.length), value);
-      return true;
-    }
-    if (!key.startsWith(_conversationPrefix) || value is! Map) return false;
-    final conversation = _fromMap(Map<String, dynamic>.from(value));
-    if (conversation == null) return false;
-    // Not through `save`: that would re-trim and re-title a record the user
-    // already has, and prune against a table still being filled.
-    _upsert(conversation);
-    return true;
   }
 
   void _upsert(AgentConversation conversation) {

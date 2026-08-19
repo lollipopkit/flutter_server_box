@@ -5,15 +5,17 @@ nextTypeId: 17
 types:
   PrivateKeyInfo:
     typeId: 1
-    nextIndex: 2
+    nextIndex: 3
     fields:
       id:
         index: 0
       key:
         index: 1
+      name:
+        index: 2
   Snippet:
     typeId: 2
-    nextIndex: 5
+    nextIndex: 6
     fields:
       name:
         index: 0
@@ -25,6 +27,8 @@ types:
         index: 3
       autoRunOn:
         index: 4
+      id:
+        index: 5
   VirtKey:
     typeId: 4
     nextIndex: 47

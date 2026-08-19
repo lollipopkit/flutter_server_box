@@ -7,6 +7,7 @@ part of 'snippet.dart';
 // **************************************************************************
 
 _Snippet _$SnippetFromJson(Map<String, dynamic> json) => _Snippet(
+  id: json['id'] as String,
   name: json['name'] as String,
   script: json['script'] as String,
   tags: (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList(),
@@ -17,6 +18,7 @@ _Snippet _$SnippetFromJson(Map<String, dynamic> json) => _Snippet(
 );
 
 Map<String, dynamic> _$SnippetToJson(_Snippet instance) => <String, dynamic>{
+  'id': instance.id,
   'name': instance.name,
   'script': instance.script,
   'tags': instance.tags,

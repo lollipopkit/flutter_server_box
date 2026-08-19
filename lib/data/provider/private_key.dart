@@ -22,7 +22,7 @@ class PrivateKeyNotifier extends _$PrivateKeyNotifier {
   }
 
   void reload() {
-    Stores.key.invalidateCache();
+    Stores.key.dropCache();
     final newState = _load();
     if (newState == state) return;
     state = newState;

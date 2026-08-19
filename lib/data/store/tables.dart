@@ -29,18 +29,20 @@ import 'package:sqlite3/sqlite3.dart';
 abstract final class Tables {
   /// Tables holding one logical record each, and so the unit of sync.
   ///
-  /// A server and its tags, envs and jump hosts move together: the children
-  /// have no independent meaning and cascade with the parent, so only the
-  /// parent carries the sync columns and editing a child bumps the parent's
-  /// `updated_at`. Syncing children separately would mean a tag could arrive
-  /// before the server it belongs to.
+  /// A server and its tags, envs, jump hosts and container settings move
+  /// together: the children have no independent meaning and cascade with the
+  /// parent, so only the parent carries the sync columns and editing a child
+  /// bumps the parent's `updated_at`. Syncing children separately would mean a
+  /// tag could arrive before the server it belongs to.
+  ///
+  /// `conn_stat` and `agent_conversation` are absent on purpose. Connecting to
+  /// a server is not an edit, and a conversation carries terminal output and
+  /// reasoning — neither leaves the device.
   static const syncRoots = [
     'private_key',
     'server',
     'snippet',
     'port_forward',
-    'container_host',
-    'agent_conversation',
   ];
 
   /// Every table the app owns, dependants after what they depend on.
@@ -56,11 +58,12 @@ abstract final class Tables {
     'server_disabled_cmd',
     'server_custom_cmd',
     'known_host',
+    'container_host',
+    'container_runtime',
     'snippet',
     'snippet_tag',
     'snippet_auto_run_on',
     'port_forward',
-    'container_host',
     'conn_stat',
     'agent_conversation',
     'agent_active_conversation',

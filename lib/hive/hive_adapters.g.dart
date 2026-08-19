@@ -16,17 +16,23 @@ class PrivateKeyInfoAdapter extends TypeAdapter<PrivateKeyInfo> {
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return PrivateKeyInfo(id: fields[0] as String, key: fields[1] as String);
+    return PrivateKeyInfo(
+      id: fields[0] as String,
+      name: fields[2] as String,
+      key: fields[1] as String,
+    );
   }
 
   @override
   void write(BinaryWriter writer, PrivateKeyInfo obj) {
     writer
-      ..writeByte(2)
+      ..writeByte(3)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
-      ..write(obj.key);
+      ..write(obj.key)
+      ..writeByte(2)
+      ..write(obj.name);
   }
 
   @override
@@ -51,6 +57,7 @@ class SnippetAdapter extends TypeAdapter<Snippet> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return Snippet(
+      id: fields[5] as String,
       name: fields[0] as String,
       script: fields[1] as String,
       tags: (fields[2] as List?)?.cast<String>(),
@@ -62,7 +69,7 @@ class SnippetAdapter extends TypeAdapter<Snippet> {
   @override
   void write(BinaryWriter writer, Snippet obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -72,7 +79,9 @@ class SnippetAdapter extends TypeAdapter<Snippet> {
       ..writeByte(3)
       ..write(obj.note)
       ..writeByte(4)
-      ..write(obj.autoRunOn);
+      ..write(obj.autoRunOn)
+      ..writeByte(5)
+      ..write(obj.id);
   }
 
   @override
