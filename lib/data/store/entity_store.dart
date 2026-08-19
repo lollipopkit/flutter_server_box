@@ -193,6 +193,7 @@ abstract class EntityStore<T extends Object> {
     try {
       SqliteStore.transact(() {
         write(item);
+        writeLinks(item);
         synced.stamp(idOf(item));
       });
     } on SqliteException catch (e) {
@@ -209,6 +210,14 @@ abstract class EntityStore<T extends Object> {
   /// Inserts or replaces the row and its children. Called inside a
   /// transaction, with the timestamp applied afterwards.
   void write(T item);
+
+  /// Links [item] to other records of the same table.
+  ///
+  /// A second pass, because a foreign key pointing into this table cannot be
+  /// satisfied while the batch is still being written: a jump host is a
+  /// server, and the row it names may come later in the same restore. Writing
+  /// it inline dropped every forward reference.
+  void writeLinks(T item) {}
 
   void upsert(
     List<String> columns,
@@ -311,14 +320,20 @@ abstract class EntityStore<T extends Object> {
 
     var changed = false;
     SqliteStore.transact(() {
+      final written = <T>[];
       for (final id in {...records, ...current.keys}) {
-        final bakTs = incoming[id] ?? 0;
-        if (!force && bakTs <= (current[id] ?? 0)) continue;
+        final bakTs = incoming[id];
+        if (!force && (bakTs ?? 0) <= (current[id] ?? 0)) continue;
+        // A backup with no timestamp for this record — an older envelope, or
+        // one written before the store carried them — is stamped as now.
+        // Stamping 0 would leave the record looking older than anything, and
+        // the next sync would take it straight back out.
+        final at = bakTs ?? DateTimeX.timestamp;
 
         if (!records.contains(id)) {
           if (!current.containsKey(id)) continue;
           db.execute('DELETE FROM $table WHERE $idColumn = ?;', [id]);
-          synced.tombstone(id, at: bakTs);
+          synced.tombstone(id, at: at);
           changed = true;
           continue;
         }
@@ -330,7 +345,8 @@ abstract class EntityStore<T extends Object> {
         try {
           final resolved = reconcile(item);
           write(resolved);
-          synced.stamp(idOf(resolved), at: bakTs);
+          written.add(resolved);
+          synced.stamp(idOf(resolved), at: at);
           changed = true;
         } on SqliteException catch (e) {
           // One record that cannot be written must not fail the restore: a
@@ -338,6 +354,10 @@ abstract class EntityStore<T extends Object> {
           // whole file over it would leave the user with neither copy.
           Loggers.app.warning('Restore skipped $table/$id', e);
         }
+      }
+      // Once every row exists, so a reference to one written later still lands.
+      for (final item in written) {
+        writeLinks(item);
       }
     });
     if (changed) invalidate();
@@ -352,14 +372,20 @@ abstract class EntityStore<T extends Object> {
         synced.tombstone(id);
       }
       db.execute('DELETE FROM $table;');
+      final written = <T>[];
       for (final item in items) {
         try {
           final resolved = reconcile(item);
           write(resolved);
+          written.add(resolved);
           synced.stamp(idOf(resolved));
         } on SqliteException catch (e) {
           Loggers.app.warning('Restore skipped a $T', e);
         }
+      }
+      // Once every row exists — see [writeLinks].
+      for (final item in written) {
+        writeLinks(item);
       }
     });
     invalidate();

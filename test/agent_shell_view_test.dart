@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,10 +27,8 @@ class _FixedSession extends AgentSession {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late Directory tempDir;
 
   setUp(() async {
-    tempDir = await Directory.systemTemp.createTemp('server-box-agent-shell-');
     await openTestDb();
     // In memory rather than on disk: the shell persists its mode the moment it
     // changes, so every test here writes, and none of them should leave a
@@ -45,7 +42,6 @@ void main() {
   tearDown(() async {
     await getIt.reset();
     await SqliteDb.close();
-    await tempDir.delete(recursive: true);
   });
 
   /// Past the end of whatever is running.

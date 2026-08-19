@@ -159,16 +159,20 @@ class AgentConversationStore {
     // Asked before the delete: the active row references the conversation and
     // cascades with it, so afterwards there is nothing left to compare.
     final wasActive = activeConversationId(serverId) == conversationId;
-    _db.execute('DELETE FROM $_conv WHERE id = ?;', [conversationId]);
+    // One unit: the delete cascades the active row away, so committing it
+    // without the replacement would leave the server with none.
+    SqliteStore.transact(() {
+      _db.execute('DELETE FROM $_conv WHERE id = ?;', [conversationId]);
+      if (wasActive) {
+        final remaining = fetchForServer(serverId);
+        if (remaining.isNotEmpty) _setActiveRow(serverId, remaining.first.id);
+      }
+    });
 
     // Exactly once, whichever way this returns. Deleting a conversation that
     // was not the active one used to return before notifying at all, leaving
     // the list showing a row that is gone; promoting a replacement notified
     // twice, because `setActive` notifies too.
-    if (wasActive) {
-      final remaining = fetchForServer(serverId);
-      if (remaining.isNotEmpty) _setActiveRow(serverId, remaining.first.id);
-    }
     _changes.add(null);
   }
 

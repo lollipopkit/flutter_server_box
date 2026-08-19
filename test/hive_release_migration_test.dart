@@ -113,7 +113,6 @@ void main() {
       expect(index.readAsStringSync(), contains('srv-pwd'));
       // An encrypted box is not.
       final server = File(fixtureDir.path.joinPath('server_enc.hive'));
-      expect(server.readAsBytesSync(), isNot(contains(0x68656c))); // no plain run
       expect(
         utf8.decode(server.readAsBytesSync(), allowMalformed: true),
         isNot(contains('password auth')),

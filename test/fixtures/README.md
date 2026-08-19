@@ -61,7 +61,7 @@ git submodule update --init packages/dartssh2 packages/circle_chart \
 flutter pub get
 cp <repo>/test/fixtures/hive_v<tag>/gen_fixture.dart.txt test/gen_fixture.dart
 flutter test test/gen_fixture.dart
-cp /tmp/sb1466-out/*.hive <repo>/test/fixtures/hive_v1466/
+cp /tmp/sb<tag>-out/*.hive <repo>/test/fixtures/hive_v<tag>/
 cd <repo> && git worktree remove /tmp/sb1466
 ```
 

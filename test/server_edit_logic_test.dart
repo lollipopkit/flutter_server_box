@@ -143,7 +143,7 @@ void main() {
         port: 22,
         user: 'root',
         pwd: 'password123',
-        keyId: 'test-key',
+        keyId: 'key-id-1',
         id: 'combined-auth-server-id',
       );
       Spi? persisted;
@@ -159,7 +159,7 @@ void main() {
             ),
             privateKeyProvider.overrideWithValue(
               const PrivateKeyState(
-                keys: [PrivateKeyInfo(id: 'test-key', name: 'test-key', key: 'unused')],
+                keys: [PrivateKeyInfo(id: 'key-id-1', name: 'prod key', key: 'unused')],
               ),
             ),
           ],
@@ -197,7 +197,8 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
 
-      expect(find.text('test-key'), findsOneWidget);
+      // The name, not the id: an id is not something the user typed.
+      expect(find.text('prod key'), findsOneWidget);
       expect(
         tester
             .widgetList<EditableText>(find.byType(EditableText))
@@ -213,14 +214,16 @@ void main() {
       expect(persisted, isNotNull);
       final restored = persisted!;
       expect(restored.ssh?.pwd, 'password123');
-      expect(restored.ssh?.keyId, 'test-key');
+      // The reference is by id, which a rename cannot break.
+      expect(restored.ssh?.keyId, 'key-id-1');
 
       server = restored;
       await tester.tap(find.byKey(const ValueKey('open-server-editor')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
 
-      expect(find.text('test-key'), findsOneWidget);
+      // The name, not the id: an id is not something the user typed.
+      expect(find.text('prod key'), findsOneWidget);
       expect(
         tester
             .widgetList<EditableText>(find.byType(EditableText))

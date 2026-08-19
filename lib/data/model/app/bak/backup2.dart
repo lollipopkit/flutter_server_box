@@ -6,6 +6,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:logging/logging.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
@@ -184,6 +185,7 @@ Object? _toEncodable(Object? value) {
     final Spi spi => spi.toJson(),
     final Snippet snippet => snippet.toJson(),
     final PrivateKeyInfo key => key.toJson(),
+    final PortForwardConfig forward => forward.toJson(),
     final ServerCustom custom => custom.toJson(),
     final WakeOnLanCfg wolCfg => wolCfg.toJson(),
     // Nested on Spi. Both were missing, so backing up a server that used

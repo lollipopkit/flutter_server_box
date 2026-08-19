@@ -65,8 +65,14 @@ class KvToTablesMigration implements SchemaMigration {
       _migrateContainer(serverIds);
       _migrateConnStats(serverIds);
       _migrateAgentConversations();
-      _rewriteOrder('serverOrder', serverIds);
-      _rewriteOrder('snippetOrder', snippetNames);
+      _rewriteOrder('serverOrder', (entry) => serverIds[entry]);
+      // Occurrence by occurrence: two snippets could share a stored name, and
+      // only one of them keeps it. A plain map would send both order entries
+      // to whichever was de-duplicated last.
+      _rewriteOrder('snippetOrder', (entry) {
+        final queue = snippetNames[entry];
+        return queue == null || queue.isEmpty ? null : queue.removeAt(0);
+      });
 
       for (final store in _consumed) {
         _db.execute('DELETE FROM kv WHERE store = ?;', [store]);
@@ -358,9 +364,11 @@ class KvToTablesMigration implements SchemaMigration {
     });
   }
 
-  /// Old name -> the name it kept, for `snippetOrder`, which is a list of them.
-  Map<String, String> _migrateSnippets(Map<String, String> serverIds) {
-    final renamed = <String, String>{};
+  /// Old name -> the names its records ended up with, in the order they were
+  /// migrated. `snippetOrder` is a list of names, and a name that was not
+  /// unique produced more than one.
+  Map<String, List<String>> _migrateSnippets(Map<String, String> serverIds) {
+    final renamed = <String, List<String>>{};
     final names = <String>{};
     for (final row in _rows('snippet')) {
       final v = row.value;
@@ -372,7 +380,7 @@ class KvToTablesMigration implements SchemaMigration {
       for (var n = 2; !names.add(name); n++) {
         name = '$oldName ($n)';
       }
-      renamed[oldName] = name;
+      (renamed[oldName] ??= []).add(name);
 
       final id = ShortId.generate();
       _db.execute(
@@ -598,9 +606,9 @@ class KvToTablesMigration implements SchemaMigration {
   /// Rewrites one `setting` list whose entries this migration renamed.
   ///
   /// `serverOrder` holds ids and `snippetOrder` holds names, and both could
-  /// change above. An entry that no longer resolves is dropped — it named a
-  /// record that is not here.
-  void _rewriteOrder(String key, Map<String, String> mapping) {
+  /// change above. [resolve] answers what an entry became, or null if it named
+  /// a record that is not here — those are dropped.
+  void _rewriteOrder(String key, String? Function(String) resolve) {
     final rows = _db.select(
       "SELECT value FROM kv WHERE store = 'setting' AND key = ?;",
       [key],
@@ -617,8 +625,7 @@ class KvToTablesMigration implements SchemaMigration {
     }
 
     final rewritten = [
-      for (final entry in entries)
-        ?mapping[entry],
+      for (final entry in entries) ?resolve(entry),
     ];
     if (rewritten.length == entries.length &&
         rewritten.indexed.every((e) => e.$2 == entries[e.$1])) {

@@ -87,6 +87,11 @@ class SnippetNotifier extends _$SnippetNotifier {
   /// carry the same id, and deleting first would tombstone a record that is
   /// still there and take its tags and auto-run targets with it.
   Future<void> update(Snippet old, Snippet newOne) async {
+    if (old.id != newOne.id) {
+      // `EntityStore.update` refuses this; going straight to `put` would let a
+      // caller insert a second record under the name of the first.
+      throw ArgumentError('cannot change the id of a Snippet');
+    }
     final newSnippets = state.snippets
         .map((s) => s.id == old.id ? newOne : s)
         .toList();

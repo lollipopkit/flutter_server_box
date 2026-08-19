@@ -10,6 +10,9 @@ import 'package:server_box/data/store/tables.dart';
 /// `testWidgets` fake-async zone completes on a callback that zone never
 /// pumps, which is how one such test hung a whole run.
 Future<void> openTestDb() async {
+  // The previous test closed its handle directly, so the cached `AppDb` from
+  // that connection has to go with it.
+  resetTables();
   SqliteDb.openInMemory();
   SqliteDb.instance.execute('PRAGMA foreign_keys = ON;');
   await createTables(SqliteDb.instance);

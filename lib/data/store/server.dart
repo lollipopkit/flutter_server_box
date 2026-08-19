@@ -258,10 +258,19 @@ class ServerStore extends EntityStore<Spi> {
       ]);
     });
 
+  }
+
+  /// A jump host is a server, so the row it names may not have been written
+  /// yet — during a restore the order is whatever the backup listed. This runs
+  /// once every server exists.
+  ///
+  /// One that is still missing is dropped rather than written as a dangling
+  /// reference; the foreign key would refuse it anyway, and refusing would
+  /// fail the whole restore over a server deleted long ago.
+  @override
+  void writeLinks(Spi item) {
     var ord = 0;
-    for (final jump in ssh?.resolvedJumpIds ?? const <String>[]) {
-      // A jump host is a server, and the schema says so. One that is not there
-      // is dropped rather than written as a dangling reference.
+    for (final jump in item.ssh?.resolvedJumpIds ?? const <String>[]) {
       final exists = db
           .select('SELECT 1 FROM server WHERE id = ?;', [jump])
           .isNotEmpty;

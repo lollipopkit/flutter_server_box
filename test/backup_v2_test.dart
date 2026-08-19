@@ -3,12 +3,55 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/app/tab.dart';
+import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 
 void main() {
   group('BackupV2 JSON encoding', () {
+    test('a typed port forward encodes, and comes back the same', () {
+      // `PortForwardConfig` is the one freezed model with no `.g.dart`, so its
+      // `toJson` is hand-written — and `_toEncodable` did not know the type at
+      // all, which threw the moment a backup carried one.
+      const forward = PortForwardConfig(
+        id: 'pf-1',
+        serverId: 'srv-1',
+        name: 'postgres',
+        type: PortForwardType.remote,
+        localHost: '127.0.0.1',
+        localPort: 15432,
+        remoteHost: '10.0.0.50',
+        remotePort: 5432,
+      );
+      final backup = BackupV2(
+        version: BackupV2.formatVer,
+        date: 1,
+        spis: const {},
+        snippets: const {},
+        keys: const {},
+        portForwards: const {'pf-1': forward},
+        container: const {},
+        history: const {},
+        settings: const {},
+      );
+
+      final encoded = backup.toJsonString();
+      final decoded = json.decode(encoded) as Map<String, dynamic>;
+      final raw = (decoded['portForwards'] as Map)['pf-1'] as Map;
+      expect(raw['type'], 'remote', reason: 'the enum by name, not its index');
+      expect(raw['remotePort'], 5432);
+
+      // Through the reader the app actually uses, not just `fromJson`.
+      final reread = BackupV2.fromJsonString(encoded);
+      expect(
+        PortForwardConfig.fromJson(
+          Map<String, dynamic>.from(reread.portForwards['pf-1'] as Map),
+        ),
+        forward,
+      );
+    });
+
     test('serializes typed store objects as JSON objects', () {
       final backup = BackupV2(
         version: BackupV2.formatVer,

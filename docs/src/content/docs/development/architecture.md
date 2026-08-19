@@ -87,9 +87,10 @@ and stays there, because the steps that matter are outside what a Drift
 migration can express. Two of them exist:
 
 - `HiveImport` (m003) copies an upgrading install's Hive boxes into `kv`, once
-  per device. It reads through frozen adapters in `lib/hive/legacy_adapters
-  .dart` rather than through the live models — adding a field to a model makes
-  a *generated* adapter unable to read any box written before it.
+  per device. It reads through frozen adapters in
+  `lib/hive/legacy_adapters.dart` rather than through the live models — adding
+  a field to a model makes a *generated* adapter unable to read any box written
+  before it.
 - `KvToTablesMigration` (m004) takes those rows apart into the entity tables,
   generating ids for the records that were keyed by name and rewriting every
   reference to them.

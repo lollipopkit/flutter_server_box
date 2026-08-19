@@ -304,7 +304,9 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
       Toast.error(e.toString());
       rethrow;
     } finally {
-      _loading.value = null;
+      // `decryptPem` runs on another isolate, so the page can be gone by the
+      // time this runs — and `_loading` is disposed with it.
+      if (mounted) _loading.value = null;
     }
     if (!mounted) return;
     context.pop();
