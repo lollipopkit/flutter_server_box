@@ -202,6 +202,8 @@ class ServersNotifier extends _$ServersNotifier {
       final timer = Timer(Duration(seconds: duration), () async {
         try {
           await refresh();
+        } catch (e, s) {
+          Loggers.app.warning('Auto refresh failed', e, s);
         } finally {
           if (generation == _autoRefreshGeneration) schedule();
         }
@@ -331,7 +333,17 @@ class ServersNotifier extends _$ServersNotifier {
       await WatchSync.instance.removeServer(spi);
     }
     Stores.setting.serverOrder.put([]);
-    await Stores.server.clear();
+    final bool cleared;
+    try {
+      cleared = await Stores.server.clear();
+    } catch (e, s) {
+      Loggers.app.warning('Failed to clear servers', e, s);
+      return;
+    }
+    if (!cleared) {
+      Loggers.app.warning('Failed to clear servers');
+      return;
+    }
     state = const ServersState();
     await Future.wait(serverIds.map(_clearSudoPasswordOverrideBestEffort));
     Stores.connectionStats.clearAll();
