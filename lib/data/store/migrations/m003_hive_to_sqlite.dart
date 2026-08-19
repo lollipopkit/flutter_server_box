@@ -20,6 +20,11 @@ abstract final class HiveImport {
   /// Internal, so it stays out of backups and out of `lastUpdateTs`.
   static const _markerKey = '${StoreDefaults.prefixKey}hiveImported';
 
+  /// Which boxes have been copied, for an import finishing across launches.
+  ///
+  /// Removed once [_markerKey] is written, since it answers nothing after that.
+  static const _doneKey = '${StoreDefaults.prefixKey}hiveImportedBoxes';
+
   /// Box name -> what takes one of its rows.
   ///
   /// Most go to a K-V store under the same key. The last two own tables now, so
@@ -50,8 +55,17 @@ abstract final class HiveImport {
   /// Runs the import if this device has data in Hive and none in SQLite yet.
   ///
   /// Safe to re-run: nothing is deleted from Hive, so a crash part-way through
-  /// leaves the marker unwritten and the next launch copies everything again,
-  /// overwriting whatever the interrupted attempt had managed to write.
+  /// leaves the marker unwritten and the next launch copies what it had not
+  /// got to yet.
+  ///
+  /// Progress is per box rather than all-or-nothing, because neither end of
+  /// that choice is safe. Marking the import done when only some boxes opened
+  /// drops the rest for good — the marker is the first thing checked, so no
+  /// later launch retries them. Leaving the marker unwritten instead re-copies
+  /// the boxes that *did* open, and the app is usable in the meantime, so that
+  /// overwrites whatever the user changed between the two launches. Recording
+  /// which boxes landed avoids both: a box is copied once, and one that could
+  /// not be read is retried until it can.
   static Future<void> runIfNeeded() async {
     if (Stores.setting.get<bool>(_markerKey) == true) return;
 
@@ -79,28 +93,39 @@ abstract final class HiveImport {
       return;
     }
 
-    Loggers.app.info('Importing ${present.length} Hive boxes into SQLite');
+    final done = _doneBoxes();
+    final pending = present.where((name) => !done.contains(name)).toList();
+    Loggers.app.info(
+      'Importing ${pending.length} Hive boxes into SQLite, '
+      '${done.length} already copied',
+    );
+
     var copied = 0;
-    var failed = 0;
-    for (final name in present) {
+    for (final name in pending) {
       final result = await _importBox(name, _boxes[name]!);
       copied += result.copied;
-      if (!result.opened) failed++;
+      if (result.opened) done.add(name);
     }
-    Loggers.app.info('Imported $copied rows from Hive, $failed boxes unread');
 
-    // Not marked done if nothing could be read. A box fails to open when the
-    // keychain is briefly unavailable — the device still locked at launch, on
-    // iOS — and writing the marker anyway would leave the user with an empty
-    // app and no launch that ever retries, because the marker is the first
-    // thing checked. Their data is still on disk; this just tries again.
-    if (failed == present.length && copied == 0) {
+    final unread = present.where((name) => !done.contains(name)).toList();
+    if (unread.isNotEmpty) {
+      // A box fails to open when the keychain is briefly unavailable — the
+      // device still locked at launch, on iOS — and an install old enough to
+      // predate box encryption has some boxes that need it and some that do
+      // not, so this is reached with part of the data across and part not.
+      _setDoneBoxes(done);
       Loggers.app.warning(
-        'No Hive box could be read; leaving the import to the next launch',
+        'Imported $copied rows from Hive; $unread unread, '
+        'left to the next launch',
       );
+      // What did land is already in the current shape, so the version is set
+      // now: a launch in this state runs the migrator like any other, and the
+      // step for a shape this data no longer has must not be applied to it.
+      if (done.isNotEmpty) SchemaVersion.initFresh();
       return;
     }
 
+    Loggers.app.info('Imported $copied rows from Hive, every box read');
     _dropPlaintextIndex(dir);
 
     // The copy nests a pre-v3 server record on the way across, which is what
@@ -108,7 +133,17 @@ abstract final class HiveImport {
     // construction.
     SchemaVersion.initFresh();
     Stores.setting.set(_markerKey, true);
+    Stores.setting.remove(_doneKey);
   }
+
+  static Set<String> _doneBoxes() {
+    final raw = Stores.setting.get<List>(_doneKey);
+    if (raw == null) return <String>{};
+    return raw.whereType<String>().toSet();
+  }
+
+  static void _setDoneBoxes(Set<String> names) =>
+      Stores.setting.set(_doneKey, names.toList());
 
   static Future<({bool opened, int copied})> _importBox(
     String name,

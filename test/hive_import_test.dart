@@ -237,6 +237,52 @@ void main() {
     expect(Stores.server.fetch(), isEmpty);
   });
 
+  test('a box that could not be read is retried, the rest are not recopied',
+      () async {
+    await seedHive();
+
+    // A box that will not open. In the field this is the keychain being
+    // briefly unavailable at launch on a locked iOS device, which hits the
+    // encrypted boxes and not the plaintext ones. Here the box file is a
+    // directory, which `Hive.openBox` cannot read either — corrupting the
+    // bytes instead does not work, because Hive recovers such a box as an
+    // empty one rather than failing to open it.
+    final encPath = tempDir.path.joinPath('snippet_enc.hive');
+    final intact = File(encPath).readAsBytesSync();
+    File(encPath).deleteSync();
+    Directory(encPath).createSync();
+    addTearDown(() {
+      final dir = Directory(encPath);
+      if (dir.existsSync()) dir.deleteSync(recursive: true);
+    });
+    // `runIfNeeded` looks for either name, so the box still counts as present.
+    final plain = File(tempDir.path.joinPath('snippet.hive'))..createSync();
+
+    await Stores.init();
+
+    expect(Stores.server.fetchOneRaw('srv-1')?.name, 'prod',
+        reason: 'a box that opened is across');
+    expect(Stores.snippet.fetchOneRaw('uptime'), isNull,
+        reason: 'the box that did not open has nothing across');
+
+    // Stands in for a user edit between the two launches. The app is usable
+    // with the import unfinished, so copying every box again would put the old
+    // value back.
+    Stores.setting.timeout.put(42);
+    await getIt.reset();
+
+    // The box is readable again.
+    Directory(encPath).deleteSync(recursive: true);
+    plain.deleteSync();
+    File(encPath).writeAsBytesSync(intact);
+    await Stores.init();
+
+    expect(Stores.snippet.fetchOneRaw('uptime')?.script, 'w',
+        reason: 'the unread box is retried');
+    expect(Stores.setting.timeout.get(), 42,
+        reason: 'a box already copied is not copied a second time');
+  });
+
   test('importing does not present itself as a local edit', () async {
     await seedHive();
     await Stores.init();
