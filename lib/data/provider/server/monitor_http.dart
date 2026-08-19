@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
+import 'package:server_box/core/utils/secure_endpoint.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/monitor_capabilities.dart';
 import 'package:server_box/data/model/server/monitor_exec_output.dart';
@@ -20,20 +21,42 @@ import 'package:server_box/data/model/server/monitor_metrics.dart';
 class MonitorHttpClient {
   MonitorHttpClient(this.monitor);
 
+  static const _connectTimeout = Duration(seconds: 10);
+  static const _sendTimeout = Duration(seconds: 30);
+  static const _receiveTimeout = Duration(seconds: 30);
+
   final MonitorHttpCredential monitor;
 
   Dio? _dio;
   String? _token;
+  Future<void>? _loginFuture;
 
   String get _addr {
     final addr = monitor.addr.trim();
-    return addr.endsWith('/') ? addr.substring(0, addr.length - 1) : addr;
+    final normalized = addr.endsWith('/')
+        ? addr.substring(0, addr.length - 1)
+        : addr;
+    final uri = Uri.tryParse(normalized);
+    if (uri == null || !isSecureRemoteEndpoint(uri)) {
+      throw const MonitorHttpErr(
+        type: MonitorHttpErrType.net,
+        message: 'Remote monitor agents require HTTPS; HTTP is allowed only on loopback.',
+      );
+    }
+    return normalized;
   }
 
   Dio _session() {
     final existing = _dio;
     if (existing != null) return existing;
-    final dio = Dio(BaseOptions(baseUrl: _addr))
+    final dio = Dio(
+      BaseOptions(
+        baseUrl: _addr,
+        connectTimeout: _connectTimeout,
+        sendTimeout: _sendTimeout,
+        receiveTimeout: _receiveTimeout,
+      ),
+    )
       ..httpClientAdapter = IOHttpClientAdapter(
         createHttpClient: _httpClient,
         validateCertificate: monitor.ignoreCert ? (_, _, _) => true : null,
@@ -50,7 +73,17 @@ class MonitorHttpClient {
     return client;
   }
 
-  Future<void> _login() async {
+  Future<void> _login() {
+    final existing = _loginFuture;
+    if (existing != null) return existing;
+    final future = _loginImpl();
+    _loginFuture = future;
+    return future.whenComplete(() {
+      if (identical(_loginFuture, future)) _loginFuture = null;
+    });
+  }
+
+  Future<void> _loginImpl() async {
     final user = monitor.user?.trim() ?? '';
     final pwd = monitor.pwd ?? '';
     try {
@@ -122,6 +155,25 @@ class MonitorHttpClient {
   Future<MonitorMetrics> fetchStatus() {
     return _authed(() async {
       return MonitorMetrics.fromJson(await _object('/api/v1/metrics'));
+    });
+  }
+
+  /// Mints a read-only, independently revocable credential for a watch.
+  /// The normal session token is never handed to the second device.
+  Future<String> issueWatchToken(String clientId) {
+    return _authed(() async {
+      final resp = await _object(
+        '/api/v1/watch-token',
+        post: {'client_id': clientId},
+      );
+      final token = resp['token'] as String?;
+      if (token == null || token.isEmpty) {
+        throw const MonitorHttpErr(
+          type: MonitorHttpErrType.invalidResponse,
+          message: 'Empty token in /api/v1/watch-token response',
+        );
+      }
+      return token;
     });
   }
 
@@ -435,6 +487,7 @@ class MonitorHttpClient {
     _dio?.close(force: true);
     _dio = null;
     _token = null;
+    _loginFuture = null;
   }
 
   /// Whether this client was built from the same monitor connection config
@@ -445,6 +498,7 @@ class MonitorHttpClient {
   MonitorHttpErr _toMonitorHttpErr(DioException e) {
     if (e.type == DioExceptionType.connectionError ||
         e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.sendTimeout ||
         e.type == DioExceptionType.receiveTimeout) {
       return MonitorHttpErr(type: MonitorHttpErrType.net, message: e.toString());
     }

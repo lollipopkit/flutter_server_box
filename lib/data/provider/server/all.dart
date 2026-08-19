@@ -31,6 +31,9 @@ abstract class ServersState with _$ServersState {
 
 @Riverpod(keepAlive: true)
 class ServersNotifier extends _$ServersNotifier {
+  static const _maxConcurrentRefreshes = 4;
+  int _autoRefreshGeneration = 0;
+
   @override
   ServersState build() {
     return _load();
@@ -164,10 +167,20 @@ class ServersNotifier extends _$ServersNotifier {
       TryLimiter.reset(id);
     }
 
-    for (final entry in serversToRefresh) {
-      final serverNotifier = ref.read(serverProvider(entry.key).notifier);
-      serverNotifier.refresh().ignore();
+    var next = 0;
+    Future<void> worker() async {
+      while (next < serversToRefresh.length) {
+        final entry = serversToRefresh[next++];
+        final serverNotifier = ref.read(serverProvider(entry.key).notifier);
+        await serverNotifier.refresh();
+      }
     }
+    await Future.wait(
+      List.generate(
+        serversToRefresh.length.clamp(0, _maxConcurrentRefreshes),
+        (_) => worker(),
+      ),
+    );
   }
 
   Future<void> startAutoRefresh() async {
@@ -182,13 +195,23 @@ class ServersNotifier extends _$ServersNotifier {
         'Invalid duration: $rawDuration, use default $duration',
       );
     }
-    final timer = Timer.periodic(Duration(seconds: duration), (_) async {
-      await refresh();
-    });
-    state = state.copyWith(autoRefreshTimer: timer);
+    final generation = ++_autoRefreshGeneration;
+    void schedule() {
+      if (generation != _autoRefreshGeneration) return;
+      final timer = Timer(Duration(seconds: duration), () async {
+        try {
+          await refresh();
+        } finally {
+          if (generation == _autoRefreshGeneration) schedule();
+        }
+      });
+      state = state.copyWith(autoRefreshTimer: timer);
+    }
+    schedule();
   }
 
   void stopAutoRefresh() {
+    _autoRefreshGeneration++;
     final timer = state.autoRefreshTimer;
     if (timer != null) {
       timer.cancel();
