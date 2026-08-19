@@ -159,6 +159,7 @@
   },
   "rootfsSubtitle": "この端末上の Linux ユーザーランド",
   "rootfsInstallTip": "Alpine Linux {version}(約 3 MB)をダウンロードし、この端末に展開します。パッケージマネージャー付きのシェルをこのアプリに提供し、いつでも削除できます。",
+  "nameAlreadyExistsFmt": "「{name}」は既に存在します",
   "sameIdServerExist": "同じIDのサーバーが既に存在します",
   "second": "秒",
   "serverFilesUnavailableTip": "このサーバーの SSH に接続できるか、monitor エージェントのファイル API が有効になっている必要があります。",

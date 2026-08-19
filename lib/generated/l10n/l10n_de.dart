@@ -654,7 +654,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String nameAlreadyExistsFmt(Object name) {
-    return '\"$name\" already exists';
+    return '„$name“ existiert bereits';
   }
 
   @override

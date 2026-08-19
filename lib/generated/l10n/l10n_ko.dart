@@ -619,7 +619,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String nameAlreadyExistsFmt(Object name) {
-    return '\"$name\" already exists';
+    return '\'$name\'은(는) 이미 존재합니다';
   }
 
   @override

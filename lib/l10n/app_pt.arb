@@ -159,6 +159,7 @@
   },
   "rootfsSubtitle": "Um espaço de usuário Linux neste dispositivo",
   "rootfsInstallTip": "Baixa o Alpine Linux {version} (cerca de 3 MB) e o descompacta neste dispositivo. Dá a este app um shell com gerenciador de pacotes, e pode ser excluído a qualquer momento.",
+  "nameAlreadyExistsFmt": "\"{name}\" já existe",
   "sameIdServerExist": "Já existe um servidor com o mesmo ID",
   "second": "Segundo",
   "serverFilesUnavailableTip": "Acessível através do SSH deste servidor, ou através de um agente monitor com a sua API de ficheiros ativada.",

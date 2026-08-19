@@ -64,7 +64,7 @@ class KvToTablesMigration implements SchemaMigration {
       _migratePortForwards(serverIds);
       _migrateContainer(serverIds);
       _migrateConnStats(serverIds);
-      _migrateAgentConversations();
+      _migrateAgentConversations(serverIds);
       _rewriteOrder('serverOrder', (entry) => serverIds[entry]);
       // Occurrence by occurrence: two snippets could share a stored name, and
       // only one of them keeps it. A plain map would send both order entries
@@ -548,10 +548,11 @@ class KvToTablesMigration implements SchemaMigration {
   /// The agent box held conversations and the per-server active one under one
   /// namespace, told apart by a key prefix.
   ///
-  /// Server ids are *not* remapped: the scope id of the global agent is not a
-  /// server, so there is nothing to check a conversation's against, and the
-  /// table has no foreign key for the same reason.
-  void _migrateAgentConversations() {
+  /// A scope that names a server follows that server's id, which this
+  /// migration may have regenerated. One that names no server is kept as it
+  /// is — the global agent's scope is not a server, which is also why the
+  /// table has no foreign key.
+  void _migrateAgentConversations(Map<String, String> serverIds) {
     const conversationPrefix = 'conversation::';
     const activePrefix = 'active::';
     final active = <String, String>{};
@@ -560,7 +561,8 @@ class KvToTablesMigration implements SchemaMigration {
       if (row.key.startsWith(activePrefix)) {
         final id = row.value;
         if (id is String && id.isNotEmpty) {
-          active[row.key.substring(activePrefix.length)] = id;
+          final scope = row.key.substring(activePrefix.length);
+          active[serverIds[scope] ?? scope] = id;
         }
         continue;
       }
@@ -576,12 +578,18 @@ class KvToTablesMigration implements SchemaMigration {
         continue;
       }
       final updatedAt = DateTime.tryParse('${v['updated_at']}');
+      final scope = serverIds[serverId] ?? serverId;
+      // `ON CONFLICT`, not `OR REPLACE`: the active row references this one and
+      // cascades, so replacing would delete the record of which conversation
+      // is open.
       _db.execute(
-        'INSERT OR REPLACE INTO agent_conversation '
-        '(id, server_id, updated_at, data) VALUES (?, ?, ?, ?);',
+        'INSERT INTO agent_conversation (id, server_id, updated_at, data) '
+        'VALUES (?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET '
+        'server_id = excluded.server_id, updated_at = excluded.updated_at, '
+        'data = excluded.data;',
         [
           id,
-          serverId,
+          scope,
           updatedAt?.millisecondsSinceEpoch ?? row.updatedAt,
           json.encode(v),
         ],
@@ -597,7 +605,9 @@ class KvToTablesMigration implements SchemaMigration {
           .isNotEmpty;
       if (!exists) return;
       _db.execute(
-        'INSERT OR REPLACE INTO agent_active_conversation VALUES (?, ?);',
+        'INSERT INTO agent_active_conversation (server_id, conversation_id) '
+        'VALUES (?, ?) ON CONFLICT (server_id) DO UPDATE SET '
+        'conversation_id = excluded.conversation_id;',
         [serverId, conversationId],
       );
     });

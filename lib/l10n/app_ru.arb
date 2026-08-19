@@ -159,6 +159,7 @@
   },
   "rootfsSubtitle": "Пользовательское окружение Linux на этом устройстве",
   "rootfsInstallTip": "Загрузить Alpine Linux {version} (около 3 МБ) и распаковать на этом устройстве. Это даёт приложению оболочку с пакетным менеджером; её можно удалить в любой момент.",
+  "nameAlreadyExistsFmt": "«{name}» уже существует",
   "sameIdServerExist": "Сервер с таким ID уже существует",
   "second": "с",
   "serverFilesUnavailableTip": "Доступно через SSH этого сервера или через агент monitor с включённым файловым API.",

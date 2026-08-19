@@ -298,7 +298,6 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
       // The name is unique in the schema, so this is where a collision is
       // found. The page stays open on the name the user has to change.
       Toast.error(l10n.nameAlreadyExistsFmt(e.name));
-      _loading.value = null;
       return;
     } catch (e) {
       Toast.error(e.toString());

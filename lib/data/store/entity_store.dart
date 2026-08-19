@@ -323,15 +323,20 @@ abstract class EntityStore<T extends Object> {
       final written = <T>[];
       for (final id in {...records, ...current.keys}) {
         final bakTs = incoming[id];
-        if (!force && (bakTs ?? 0) <= (current[id] ?? 0)) continue;
-        // A backup with no timestamp for this record — an older envelope, or
-        // one written before the store carried them — is stamped as now.
-        // Stamping 0 would leave the record looking older than anything, and
-        // the next sync would take it straight back out.
+        final known = current.containsKey(id);
+        // A record this device has never seen is an addition. Comparing
+        // timestamps first made `0 <= 0` a tie and dropped every record from a
+        // backup that carries none — which is every older envelope.
+        if (!force && known && (bakTs ?? 0) <= (current[id] ?? 0)) continue;
+        // And a record with no timestamp is stamped as now. Stamping 0 would
+        // leave it looking older than anything, and the next sync would take
+        // it straight back out.
         final at = bakTs ?? DateTimeX.timestamp;
 
         if (!records.contains(id)) {
-          if (!current.containsKey(id)) continue;
+          // Only a record the backup knew about and no longer holds is a
+          // delete; one it never had a timestamp for says nothing.
+          if (!known || bakTs == null) continue;
           db.execute('DELETE FROM $table WHERE $idColumn = ?;', [id]);
           synced.tombstone(id, at: at);
           changed = true;

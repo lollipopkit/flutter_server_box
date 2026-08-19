@@ -51,6 +51,11 @@ class PrivateKeyNotifier extends _$PrivateKeyNotifier {
   /// deleted the old record existed because the id *was* the name — and with
   /// ids equal it deleted the record it had just written.
   Future<void> update(PrivateKeyInfo old, PrivateKeyInfo newInfo) async {
+    if (old.id != newInfo.id) {
+      // `EntityStore.update` refuses this; going straight to `put` would let a
+      // caller insert a second record under the name of the first.
+      throw ArgumentError('cannot change the id of a PrivateKeyInfo');
+    }
     final keys = [...state.keys];
     final idx = keys.indexWhere((e) => e.id == old.id);
     if (idx == -1) {

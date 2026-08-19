@@ -653,7 +653,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String nameAlreadyExistsFmt(Object name) {
-    return '\"$name\" already exists';
+    return '\"$name\" sudah ada';
   }
 
   @override

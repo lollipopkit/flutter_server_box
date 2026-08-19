@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/custom.dart';
@@ -149,5 +151,67 @@ void main() {
     ));
     store.invalidate();
     expect(store.fetchOneRaw('srv-1')!.ssh?.jumpIds, anyOf(isNull, isEmpty));
+  });
+
+  group('restoring a backup', () {
+    /// What a backup file holds, rather than what `toJson` returns.
+    ///
+    /// `Spi.toJson` leaves the nested `SshCredential` as an object — the
+    /// backup encoder is what walks it — so a merge is only ever handed the
+    /// decoded form.
+    Map<String, dynamic> asStored(Spi spi) => Map<String, dynamic>.from(
+      json.decode(
+        json.encode(spi.toJson(), toEncodable: (o) => (o as dynamic).toJson()),
+      ) as Map,
+    );
+
+    const jumper = Spi(
+      id: 'srv-a',
+      name: 'jumper',
+      ssh: SshCredential(
+        ip: '10.0.0.10',
+        user: 'root',
+        port: 22,
+        jumpIds: ['srv-b'],
+      ),
+    );
+    const target = Spi(
+      id: 'srv-b',
+      name: 'target',
+      ssh: SshCredential(ip: '10.0.0.11', user: 'root', port: 22),
+    );
+
+    test('a jump host named before it arrives is still linked', () {
+      // The order a backup lists them in is not the order the rows can be
+      // written in: a jump host is a server, so `srv-a` names a row that does
+      // not exist yet. Writing the link inline dropped it silently.
+      store.replaceAll([jumper, target]);
+
+      expect(store.fetchOneRaw('srv-a')!.ssh?.jumpIds, ['srv-b']);
+    });
+
+    test('a backup carrying no timestamps still adds its records', () {
+      // Every older envelope is like this. Comparing timestamps first made the
+      // absent one a tie against a record this device does not have, and the
+      // whole backup restored as nothing.
+      final added = store.merge({
+        'srv-b': asStored(target),
+      }, force: false);
+
+      expect(added, isTrue);
+      expect(store.fetchOneRaw('srv-b')?.name, 'target');
+      expect(
+        store.timestamps['srv-b'],
+        greaterThan(0),
+        reason: 'stamped as now, not as older than everything',
+      );
+    });
+
+    test('a record the backup never knew about is not deleted', () {
+      store.put(rich);
+      store.merge({'srv-b': asStored(target)}, force: false);
+
+      expect(store.fetchOneRaw('srv-1'), isNotNull);
+    });
   });
 }
