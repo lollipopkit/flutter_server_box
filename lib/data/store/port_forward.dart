@@ -1,8 +1,13 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
+import 'package:server_box/data/store/server.dart';
 
 class PortForwardStore extends SqliteStore {
   PortForwardStore._() : super('port_forward');
+
+  /// The same seam [ServerStore.forTest] has: a distinct store name, so a test
+  /// tree writing here cannot touch what the app stores.
+  PortForwardStore.forTest() : super('port_forward_test');
 
   static final instance = PortForwardStore._();
 

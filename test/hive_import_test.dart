@@ -311,6 +311,84 @@ void main() {
     );
   });
 
+  test('a v1.0.1466 server record arrives nested under ssh', () async {
+    await seedHive();
+
+    // What 1466 actually had on disk. Its `Spi` was typeId 3 with the SSH
+    // fields flat on the record; the current one is typeId 15 with them under
+    // `ssh`, and `seedHive` writes that current shape — so nothing else here
+    // exercises the path every App Store install upgrading from 1466 takes.
+    //
+    // Registered over `SpiLegacyAdapter` only to seed, because that one is
+    // read-only by design. `_V2SpiWriter.write` is a copy of the 1466
+    // generated `SpiAdapter.write`, which is the layout under test.
+    Hive.registerAdapter(_V2SpiWriter(), override: true);
+    final server = HiveStore('server');
+    await server.init();
+    await server.box.put(
+      'srv-v2',
+      const LegacySpiV2(
+        name: 'legacy',
+        ssh: SshCredential(
+          ip: '10.0.0.9',
+          port: 2200,
+          user: 'admin',
+          pwd: 'secret',
+          keyId: 'k1',
+          alterUrl: 'alt.example',
+          jumpId: 'srv-1',
+          jumpIds: ['srv-1'],
+          proxyCommand: 'nc %h %p',
+        ),
+        monitorHttp: null,
+        tags: ['legacy'],
+        autoConnect: false,
+        custom: null,
+        wolCfg: null,
+        envs: {'TERM': 'xterm'},
+        id: 'srv-v2',
+        customSystemType: null,
+        disabledCmdTypes: ['sensors'],
+      ),
+    );
+    await Hive.close();
+    // Back to the read-only decoder the app registers.
+    Hive.registerAdapter(SpiLegacyAdapter(), override: true);
+
+    await Stores.init();
+
+    final spi = Stores.server.fetchOneRaw('srv-v2');
+    expect(spi, isNotNull, reason: 'a typeId 3 record is still readable');
+    expect(spi!.name, 'legacy');
+    expect(spi.id, 'srv-v2');
+    expect(spi.tags, ['legacy']);
+    expect(spi.autoConnect, false);
+    expect(spi.envs, {'TERM': 'xterm'});
+    expect(spi.disabledCmdTypes, ['sensors']);
+
+    // The nesting itself: flat fields 1..17 become one credential.
+    expect(spi.ssh?.ip, '10.0.0.9');
+    expect(spi.ssh?.port, 2200);
+    expect(spi.ssh?.user, 'admin');
+    expect(spi.ssh?.pwd, 'secret');
+    expect(spi.ssh?.keyId, 'k1');
+    expect(spi.ssh?.alterUrl, 'alt.example');
+    expect(spi.ssh?.jumpId, 'srv-1');
+    expect(spi.ssh?.jumpIds, ['srv-1']);
+    expect(spi.ssh?.proxyCommand, 'nc %h %p');
+    // 1466 had no monitor support, so field 18 was never written.
+    expect(spi.monitorHttp, isNull);
+
+    // Landed as JSON in the current shape, not as v2 bytes.
+    final raw = SqliteDb.instance.select(
+      'SELECT value FROM kv WHERE store = ? AND key = ?;',
+      ['server', 'srv-v2'],
+    ).single['value'] as String;
+    final decoded = json.decode(raw) as Map<String, dynamic>;
+    expect((decoded['ssh'] as Map)['ip'], '10.0.0.9');
+    expect(decoded.containsKey('ip'), isFalse, reason: 'no flat field is left');
+  });
+
   test('importing does not present itself as a local edit', () async {
     await seedHive();
     await Stores.init();
@@ -320,4 +398,62 @@ void main() {
     // disk claim the newer copy of everything.
     expect(Stores.lastModTime, 0);
   });
+}
+
+/// Writes the typeId 3 layout that v1.0.1466 wrote, so the import is fed the
+/// bytes a real upgrading install has rather than the current shape.
+///
+/// The body is the generated `SpiAdapter.write` from that tag, with the flat
+/// SSH fields taken off [LegacySpiV2.ssh]. There is no field 18 because 1466
+/// had none — the count stays 18, as it was written then.
+class _V2SpiWriter extends TypeAdapter<LegacySpiV2> {
+  @override
+  final typeId = 3;
+
+  @override
+  LegacySpiV2 read(BinaryReader reader) =>
+      throw UnsupportedError('seed-only writer');
+
+  @override
+  void write(BinaryWriter writer, LegacySpiV2 obj) {
+    final ssh = obj.ssh;
+    writer
+      ..writeByte(18)
+      ..writeByte(0)
+      ..write(obj.name)
+      ..writeByte(1)
+      ..write(ssh?.ip ?? '')
+      ..writeByte(2)
+      ..write(ssh?.port ?? 22)
+      ..writeByte(3)
+      ..write(ssh?.user ?? 'root')
+      ..writeByte(4)
+      ..write(ssh?.pwd)
+      ..writeByte(5)
+      ..write(ssh?.keyId)
+      ..writeByte(6)
+      ..write(obj.tags)
+      ..writeByte(7)
+      ..write(ssh?.alterUrl)
+      ..writeByte(8)
+      ..write(obj.autoConnect)
+      ..writeByte(9)
+      ..write(ssh?.jumpId)
+      ..writeByte(10)
+      ..write(obj.custom)
+      ..writeByte(11)
+      ..write(obj.wolCfg)
+      ..writeByte(12)
+      ..write(obj.envs)
+      ..writeByte(13)
+      ..write(obj.id)
+      ..writeByte(14)
+      ..write(obj.customSystemType)
+      ..writeByte(15)
+      ..write(obj.disabledCmdTypes)
+      ..writeByte(16)
+      ..write(ssh?.proxyCommand)
+      ..writeByte(17)
+      ..write(ssh?.jumpIds);
+  }
 }
