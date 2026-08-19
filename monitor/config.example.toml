@@ -166,6 +166,10 @@ enabled = false
 # password worth a shell: anyone who can write ~/.ssh/authorized_keys has one.
 # The agent warns about it at startup. Prefer naming what actually needs to be
 # reachable.
+#
+# File contents and the bearer token must not cross the network in plaintext.
+# Remote callers therefore need TLS above; a same-host reverse proxy remains
+# supported because its loopback connection to monitor is local.
 [remote_access.fs]
 enabled = false
 roots = []

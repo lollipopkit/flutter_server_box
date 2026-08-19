@@ -29,7 +29,7 @@ use serde::{Deserialize, Serialize};
 use tokio::io::{AsyncReadExt, AsyncSeekExt, AsyncWriteExt};
 
 use super::server::{AppState, verify_auth};
-use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
+use super::ws::{self, audit::{Action, Event, Kind, Outcome, peer_ip}};
 use crate::core::fs_roots::FsDenied;
 
 /// How much of a file is read per chunk. The same 32 KiB the SFTP path uses,
@@ -102,10 +102,10 @@ async fn admit(
     if verify_auth(req, &state.config.get_jwt_secret()).is_err() {
         return Err(HttpResponse::Unauthorized().finish());
     }
-    if !state.remote_access.fs.available() {
+    if !state.remote_access.fs.available(is_secure_request(req, state)) {
         Event::new(Kind::Fs, Action::Denied, Outcome::Denied)
             .remote_ip(peer_ip(req))
-            .detail("file api disabled")
+            .detail("file api disabled or insecure transport")
             .record(&state.db)
             .await;
         return Err(HttpResponse::Forbidden().finish());
@@ -118,6 +118,10 @@ async fn admit(
         .record(&state.db)
         .await;
     Ok(())
+}
+
+fn is_secure_request(req: &HttpRequest, state: &AppState) -> bool {
+    ws::is_secure_transport(req, state.tls_active)
 }
 
 /// Turns a refusal into a response.

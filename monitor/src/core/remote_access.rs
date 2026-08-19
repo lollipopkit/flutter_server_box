@@ -331,13 +331,11 @@ impl Fs {
     /// half-finished configuration, and serving the whole filesystem would be
     /// the worst possible reading of it.
     ///
-    /// Not gated on transport security, unlike the terminal. What travels here
-    /// is file contents, which are exactly as sensitive as the files — the
-    /// terminal's extra check exists because its opening frame carries an SSH
-    /// password, and this endpoint has no credential of its own to leak beyond
-    /// the JWT every other endpoint already carries.
-    pub fn available(&self) -> bool {
-        self.enabled && !self.roots.is_empty()
+    /// File contents and the bearer token are both sensitive, so a direct
+    /// network request needs TLS. A local caller or same-host reverse proxy is
+    /// safe for the same reason as the terminal path (see `api::ws`).
+    pub fn available(&self, secure: bool) -> bool {
+        self.enabled && !self.roots.is_empty() && secure
     }
 }
 
@@ -345,7 +343,7 @@ impl RemoteAccess {
     /// Whether anything here is switched on, i.e. whether the startup summary
     /// and the `ssh_addr` resolution check are worth running at all.
     pub fn any_enabled(&self) -> bool {
-        self.tunnel.enabled || self.terminal.enabled || self.fs.available()
+        self.tunnel.enabled || self.terminal.enabled || self.fs.enabled && !self.fs.roots.is_empty()
     }
 
     /// Whether a client may reach this machine without presenting SSH
@@ -381,7 +379,7 @@ impl RemoteAccess {
             self.full_access,
             self.ssh_addr,
         );
-        if self.fs.available() {
+        if self.fs.available(tls_active) {
             tracing::info!(
                 "File API: roots={:?}, max write {} MiB",
                 self.fs.roots.as_slice(),
@@ -405,7 +403,7 @@ impl RemoteAccess {
                  the directories it may reach, e.g. roots = [\"/srv/data\"]."
             );
         }
-        if self.fs.available() && self.fs.roots.is_unrestricted() {
+        if self.fs.enabled && !self.fs.roots.is_empty() && self.fs.roots.is_unrestricted() {
             tracing::warn!(
                 "The file API is serving the whole filesystem. At that setting it is \
                  equivalent to a shell as {}: anyone who can log into the panel can \
@@ -434,6 +432,13 @@ impl RemoteAccess {
                      remote_access.terminal.allow_insecure"
                 );
             }
+        }
+        if self.fs.enabled && !self.fs.roots.is_empty() && !tls_active {
+            tracing::warn!(
+                "File API is enabled without TLS: it will serve clients on loopback \
+                 (including a same-host reverse proxy) but refuse anything arriving \
+                 over the network; configure TLS before using it remotely"
+            );
         }
         if self.tunnel.enabled && !tls_active {
             tracing::warn!(
@@ -571,6 +576,21 @@ mod tests {
 
         let disabled = resolved(None);
         assert!(!disabled.terminal.available(true));
+    }
+
+    #[test]
+    fn file_api_needs_a_secure_transport() {
+        let configured = RemoteAccessConfig {
+            fs: FsConfig {
+                enabled: true,
+                roots: vec!["/tmp".to_string()],
+                ..Default::default()
+            },
+            ..Default::default()
+        }
+        .resolve(None);
+        assert!(configured.fs.available(true));
+        assert!(!configured.fs.available(false));
     }
 
     #[test]

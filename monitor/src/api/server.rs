@@ -634,7 +634,7 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
             terminal: app_state.remote_access.terminal.available(secure),
             secure,
             full_access: app_state.full_access_allowed(secure),
-            files: app_state.remote_access.fs.available(),
+            files: app_state.remote_access.fs.available(secure),
         },
     }))
 }
@@ -792,6 +792,11 @@ async fn update_settings(
     if payload.interval_seconds < 1 {
         return Ok(HttpResponse::BadRequest()
             .json(&ErrorResponse { error: "interval_seconds must be at least 1".to_string() }));
+    }
+    if let Some(retention) = &payload.data_retention
+        && let Err(error) = retention.validate()
+    {
+        return Ok(HttpResponse::BadRequest().json(&ErrorResponse { error }));
     }
     for rule in &payload.rules {
         if let Err(e) = validate_threshold_format(&rule.threshold) {

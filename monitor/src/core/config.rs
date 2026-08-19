@@ -251,6 +251,18 @@ pub struct DataRetentionConfig {
     pub max_db_size_mb: u64,
 }
 
+impl DataRetentionConfig {
+    /// A zero duration makes Tokio's interval tick continuously, turning
+    /// retention into a database-consuming busy loop.
+    pub fn validate(&self) -> std::result::Result<(), String> {
+        if self.cleanup_interval_hours < 1 {
+            Err("data_retention.cleanup_interval_hours must be at least 1".to_string())
+        } else {
+            Ok(())
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MonitoringRule {
     pub name: String,
@@ -298,6 +310,7 @@ impl Config {
             // Convert from Go format if needed
             config.normalize()?;
             config.apply_env_overrides();
+            config.validate()?;
             return Ok(config);
         } else if Path::new("config.json").exists() {
             let content =
@@ -307,6 +320,7 @@ impl Config {
             // Convert from Go format if needed
             config.normalize()?;
             config.apply_env_overrides();
+            config.validate()?;
 
             // One-way migration to config.toml so subsequent starts take the
             // config.toml branch above instead of re-parsing JSON every time.
@@ -333,6 +347,7 @@ impl Config {
         // Create default config
         let mut config = Self::default();
         config.apply_env_overrides();
+        config.validate()?;
 
         // Save default config as TOML
         let content =
@@ -341,6 +356,19 @@ impl Config {
             .context("Failed to write default config.toml")?;
 
         Ok(config)
+    }
+
+    /// Validates values that would otherwise be accepted by serde but make a
+    /// runtime task unsafe or unusable.
+    pub fn validate(&self) -> Result<()> {
+        if let Some(retention) = self
+            .monitoring
+            .as_ref()
+            .and_then(|monitoring| monitoring.data_retention.as_ref())
+        {
+            retention.validate().map_err(anyhow::Error::msg)?;
+        }
+        Ok(())
     }
 
     /// Folds the Go agent's flat keys into the sections this agent uses, then
