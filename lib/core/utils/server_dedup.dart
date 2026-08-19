@@ -110,7 +110,7 @@ class ServerDeduplication {
     }
 
     for (final server in resolved) {
-      ref.read(serversProvider.notifier).addServer(server);
+      await ref.read(serversProvider.notifier).addServer(server);
     }
     Toast.show(importedMessage('${resolved.length}'));
     return resolved.length;

@@ -111,7 +111,7 @@ fn write_dir(dir: &Path, cmds: &[CustomCmd]) -> Result<(), Error> {
     let _ = std::fs::remove_dir_all(&tmp);
     std::fs::create_dir_all(&tmp)?;
 
-    let system = crate::monitoring::monitoring::system_type();
+    let system = crate::monitoring::system_type();
     let ext = script::custom_cmd_file_ext(system);
     for (i, cmd) in cmds.iter().enumerate() {
         let order = (i as u32 + 1) * script::CUSTOM_CMD_ORDER_STEP;

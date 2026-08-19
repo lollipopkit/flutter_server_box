@@ -33,6 +33,8 @@ abstract class PveState with _$PveState {
 
 @riverpod
 class PveNotifier extends _$PveNotifier {
+  static const _connectTimeout = Duration(seconds: 15);
+  static const _requestTimeout = Duration(seconds: 30);
   String? addr;
   ServerSocket? _serverSocket;
   final List<SSHForwardChannel> _forwards = [];
@@ -111,7 +113,13 @@ class PveNotifier extends _$PveNotifier {
 
   void _initSession() {
     _session?.close(force: true);
-    _session = Dio()
+    _session = Dio(
+      BaseOptions(
+        connectTimeout: _connectTimeout,
+        sendTimeout: _requestTimeout,
+        receiveTimeout: _requestTimeout,
+      ),
+    )
       ..httpClientAdapter = IOHttpClientAdapter(
         createHttpClient: () {
           final client = HttpClient();
@@ -201,7 +209,9 @@ class PveNotifier extends _$PveNotifier {
       serverSocket.listen((socket) async {
         try {
           final generationAtAccept = _sessionGeneration;
-          final forward = await _client.forwardLocal(url.host, url.port);
+          final forward = await _client
+              .forwardLocal(url.host, url.port)
+              .timeout(_connectTimeout);
           if (!_isActiveInit(generationAtAccept)) {
             socket.destroy();
             try {
@@ -212,8 +222,7 @@ class PveNotifier extends _$PveNotifier {
             return;
           }
           _forwards.add(forward);
-          forward.stream.cast<List<int>>().pipe(socket);
-          socket.cast<List<int>>().pipe(forward.sink);
+          unawaited(_bridgeForward(socket, forward));
         } catch (e, s) {
           Loggers.app.warning('PVE forward failed', e, s);
           if (_isActiveInit(generation)) {
@@ -230,6 +239,28 @@ class PveNotifier extends _$PveNotifier {
           socket.destroy();
         }
       });
+    }
+  }
+
+  Future<void> _bridgeForward(
+    Socket socket,
+    SSHForwardChannel forward,
+  ) async {
+    try {
+      await Future.any([
+        forward.stream.cast<List<int>>().pipe(socket),
+        socket.cast<List<int>>().pipe(forward.sink),
+      ]);
+    } catch (e, s) {
+      Loggers.app.warning('PVE forward connection closed with an error', e, s);
+    } finally {
+      _forwards.remove(forward);
+      socket.destroy();
+      try {
+        await forward.close();
+      } catch (e, s) {
+        Loggers.app.warning('Failed to close PVE forward', e, s);
+      }
     }
   }
 

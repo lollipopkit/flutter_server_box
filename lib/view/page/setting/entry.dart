@@ -95,10 +95,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   Future<void> _clearAllSettings() async {
-    // Awaited: `clear` became asynchronous, so reporting success on the next
-    // line reported it before anything had been cleared.
-    await SettingStore.instance.clear();
-    Toast.success(libL10n.success);
+    try {
+      if (!await SettingStore.instance.clear()) {
+        Toast.error(libL10n.fail);
+        return;
+      }
+      Toast.success(libL10n.success);
+    } catch (e, s) {
+      Loggers.app.warning('Failed to clear settings', e, s);
+      Toast.error(libL10n.fail);
+    }
   }
 
   /// The menu, built here because every title comes from the l10n of the

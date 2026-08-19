@@ -187,13 +187,33 @@ download() {
         exit 1
     fi
     ver=${tag#monitor-v}
-    url="https://github.com/${REPO}/releases/download/${tag}/server-box-monitor_v${ver}_linux_${arch}.tar.gz"
+    asset="server-box-monitor_v${ver}_linux_${arch}.tar.gz"
+    base_url="https://github.com/${REPO}/releases/download/${tag}"
+    url="$base_url/$asset"
 
     echo "Downloading $url"
     rm -rf "$TMP_DIR"
     mkdir -p "$TMP_DIR"
     if ! curl -fsSL "$url" -o "$TMP_DIR/pkg.tar.gz"; then
         echo "Download failed"
+        exit 1
+    fi
+
+    if ! command -v sha256sum >/dev/null 2>&1; then
+        echo "Please install sha256sum (usually provided by coreutils)"
+        exit 1
+    fi
+    if ! curl -fsSL "$base_url/SHA256SUMS" -o "$TMP_DIR/SHA256SUMS"; then
+        echo "Checksum download failed"
+        exit 1
+    fi
+    expected=$(awk -v asset="$asset" '$2 == asset || $2 == "*" asset { print $1; exit }' "$TMP_DIR/SHA256SUMS")
+    if [ -z "$expected" ]; then
+        echo "No checksum published for $asset"
+        exit 1
+    fi
+    if ! printf '%s  %s\n' "$expected" "$TMP_DIR/pkg.tar.gz" | sha256sum -c -; then
+        echo "Package checksum verification failed"
         exit 1
     fi
 

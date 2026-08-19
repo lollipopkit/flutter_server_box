@@ -1,6 +1,6 @@
 use anyhow::Result;
 use chrono::Utc;
-use server_box_monitor::monitoring::monitoring::{
+use server_box_monitor::monitoring::{
     DiskMetrics, MemoryMetrics, NetworkMetrics, SwapMetrics, SystemMetrics,
 };
 use sqlx::{Row, SqlitePool};
@@ -68,7 +68,7 @@ async fn store_metrics_writes_diskio_and_battery_columns() -> Result<()> {
     let pool = setup_test_db().await?;
     let metrics = sample_metrics();
 
-    server_box_monitor::monitoring::monitoring::store_metrics(&pool, &metrics).await?;
+    server_box_monitor::monitoring::store_metrics(&pool, &metrics).await?;
 
     let row = sqlx::query("SELECT diskio_read_bytes, diskio_write_bytes, battery_percent FROM system_metrics")
         .fetch_one(&pool)

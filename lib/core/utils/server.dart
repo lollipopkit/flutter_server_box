@@ -116,7 +116,7 @@ Future<SSHClient> genClient(
   /// Handle keyboard-interactive authentication
   SSHKeyboardInteractiveHandler? onKeyboardInteractive,
   Map<String, String>? knownHostFingerprints,
-  void Function(String storageKey, String fingerprintHex)? onHostKeyAccepted,
+  HostKeyPersistCallback? onHostKeyAccepted,
   Future<bool> Function(HostKeyPromptInfo info)? onHostKeyPrompt,
   Set<String>? visitedServerIds,
 }) async {
@@ -332,7 +332,7 @@ Future<SSHClient> _authenticatedClient({
 }
 
 typedef HostKeyPersistCallback =
-    void Function(String storageKey, String fingerprintHex);
+    FutureOr<void> Function(String storageKey, String fingerprint);
 
 List<Spi> _resolveJumpCandidates({
   required Spi spi,
@@ -376,18 +376,30 @@ class HostKeyPromptInfo {
   HostKeyPromptInfo({
     required this.spi,
     required this.keyType,
-    required this.fingerprintHex,
-    required this.fingerprintBase64,
+    String? fingerprint,
+    @Deprecated('Use fingerprint') String? fingerprintHex,
+    @Deprecated('Use fingerprint') String? fingerprintBase64,
     required this.isMismatch,
-    this.previousFingerprintHex,
-  });
+    String? previousFingerprint,
+    @Deprecated('Use previousFingerprint') String? previousFingerprintHex,
+  }) : fingerprint = fingerprint ?? fingerprintHex ?? fingerprintBase64 ?? '',
+       previousFingerprint = previousFingerprint ?? previousFingerprintHex;
 
   final Spi spi;
   final String keyType;
-  final String fingerprintHex;
-  final String fingerprintBase64;
+  /// OpenSSH-style fingerprint, normally `SHA256:<base64-without-padding>`.
+  final String fingerprint;
   final bool isMismatch;
-  final String? previousFingerprintHex;
+  final String? previousFingerprint;
+
+  @Deprecated('Use fingerprint')
+  String get fingerprintHex => fingerprint;
+
+  @Deprecated('Use fingerprint')
+  String get fingerprintBase64 => fingerprint;
+
+  @Deprecated('Use previousFingerprint')
+  String? get previousFingerprintHex => previousFingerprint;
 }
 
 /// What `onVerifyHostKey` decides, and what it writes down when it decides it.
@@ -412,17 +424,20 @@ class HostKeyVerifier {
 
   Future<bool> call(String keyType, Uint8List fingerprintBytes) async {
     final storageKey = _hostKeyStorageKey(spi, keyType);
-    final fingerprintHex = _fingerprintToHex(fingerprintBytes);
-    final fingerprintBase64 = _fingerprintToBase64(fingerprintBytes);
-    final existing = _cache[storageKey];
+    final fingerprint = fingerprintToOpenSsh(fingerprintBytes);
+    final stored = _cache[storageKey];
+    final existing = stored == null ? null : normalizeStoredFingerprint(stored);
+    if (stored != null && existing != stored) {
+      _cache[storageKey] = existing!;
+      await persistCallback?.call(storageKey, existing);
+    }
 
     if (existing == null) {
       final accepted = await prompt(
         HostKeyPromptInfo(
           spi: spi,
           keyType: keyType,
-          fingerprintHex: fingerprintHex,
-          fingerprintBase64: fingerprintBase64,
+          fingerprint: fingerprint,
           isMismatch: false,
         ),
       );
@@ -432,13 +447,13 @@ class HostKeyVerifier {
         );
         return false;
       }
-      _cache[storageKey] = fingerprintHex;
-      persistCallback?.call(storageKey, fingerprintHex);
+      _cache[storageKey] = fingerprint;
+      await persistCallback?.call(storageKey, fingerprint);
       Loggers.app.info('Trusted SSH host key for ${spi.name} ($keyType).');
       return true;
     }
 
-    if (existing == fingerprintHex) {
+    if (existing == fingerprint) {
       return true;
     }
 
@@ -446,22 +461,21 @@ class HostKeyVerifier {
       HostKeyPromptInfo(
         spi: spi,
         keyType: keyType,
-        fingerprintHex: fingerprintHex,
-        fingerprintBase64: fingerprintBase64,
+        fingerprint: fingerprint,
         isMismatch: true,
-        previousFingerprintHex: existing,
+        previousFingerprint: existing,
       ),
     );
     if (!accepted) {
       Loggers.app.warning(
         'SSH host key mismatch for ${spi.name}',
-        'expected $existing but received $fingerprintHex ($keyType)',
+        'expected $existing but received $fingerprint ($keyType)',
       );
       return false;
     }
 
-    _cache[storageKey] = fingerprintHex;
-    persistCallback?.call(storageKey, fingerprintHex);
+    _cache[storageKey] = fingerprint;
+    await persistCallback?.call(storageKey, fingerprint);
     Loggers.app.warning(
       'Updated stored SSH host key for ${spi.name} ($keyType) after user confirmation.',
     );
@@ -479,19 +493,25 @@ Map<String, String> _loadKnownHostFingerprints() {
   }
 }
 
-void persistHostKeyFingerprint(String storageKey, String fingerprintHex) {
-  try {
-    final prop = Stores.setting.sshKnownHostFingerprints;
-    final updated = Map<String, String>.from(prop.get());
-    if (updated[storageKey] == fingerprintHex) {
-      return;
+Future<void> _hostKeyPersistence = Future.value();
+
+Future<void> persistHostKeyFingerprint(
+  String storageKey,
+  String fingerprint,
+) {
+  _hostKeyPersistence = _hostKeyPersistence.then((_) async {
+    try {
+      final prop = Stores.setting.sshKnownHostFingerprints;
+      final updated = Map<String, String>.from(prop.get());
+      if (updated[storageKey] == fingerprint) return;
+      updated[storageKey] = fingerprint;
+      await prop.set(updated);
+      Loggers.app.info('Stored SSH host key fingerprint for $storageKey');
+    } catch (e, stack) {
+      Loggers.app.warning('Persist SSH host key fingerprint failed', e, stack);
     }
-    updated[storageKey] = fingerprintHex;
-    prop.put(updated);
-    Loggers.app.info('Stored SSH host key fingerprint for $storageKey');
-  } catch (e, stack) {
-    Loggers.app.warning('Persist SSH host key fingerprint failed', e, stack);
-  }
+  });
+  return _hostKeyPersistence;
 }
 
 /// Forgets every host key filed under one server id.
@@ -568,7 +588,7 @@ Future<bool> promptHostKeyExclusively(
   Future<bool> Function() show,
 ) async {
   final server = _hostIdentifier(info.spi);
-  final question = '${info.keyType} ${info.fingerprintHex}';
+  final question = '${info.keyType} ${info.fingerprint}';
 
   while (true) {
     final pending = _pendingHostKeyPrompts[server];
@@ -632,14 +652,11 @@ Future<bool> _showHostKeyDialog(
         SelectableText('${libL10n.server}: ${info.spi.name}'),
         SelectableText('${libL10n.addr}: $hostLine'),
         SelectableText('${l10n.sshHostKeyType}: ${info.keyType}'),
-        SelectableText(l10n.sshHostKeyFingerprintMd5Hex(info.fingerprintHex)),
-        SelectableText(
-          l10n.sshHostKeyFingerprintMd5Base64(info.fingerprintBase64),
-        ),
-        if (info.previousFingerprintHex != null) ...[
+        SelectableText(l10n.sshHostKeyFingerprintMd5Hex(info.fingerprint)),
+        if (info.previousFingerprint != null) ...[
           const SizedBox(height: 12),
           SelectableText(
-            l10n.sshHostKeyStoredFingerprint(info.previousFingerprintHex!),
+            l10n.sshHostKeyStoredFingerprint(info.previousFingerprint!),
           ),
         ],
       ],
@@ -738,8 +755,51 @@ String _fingerprintToHex(Uint8List fingerprint) {
   return buffer.toString();
 }
 
-String _fingerprintToBase64(Uint8List fingerprint) =>
-    base64.encode(fingerprint);
+final _openSshSha256 = RegExp(r'^SHA256:[A-Za-z0-9+/]{43}$');
+final _colonHexFingerprint = RegExp(
+  r'^(?:[0-9a-fA-F]{2}:)*[0-9a-fA-F]{2}$',
+);
+
+@visibleForTesting
+String fingerprintToOpenSsh(Uint8List fingerprint) {
+  try {
+    final encoded = utf8.decode(fingerprint);
+    if (_openSshSha256.hasMatch(encoded)) return encoded;
+  } on FormatException {
+    // Older dartssh2 versions passed digest bytes instead of the formatted
+    // OpenSSH fingerprint.
+  }
+
+  if (fingerprint.length == 32) {
+    final encoded = base64.encode(fingerprint).replaceAll('=', '');
+    return 'SHA256:$encoded';
+  }
+  return 'MD5:${_fingerprintToHex(fingerprint)}';
+}
+
+@visibleForTesting
+String normalizeStoredFingerprint(String fingerprint) {
+  if (_openSshSha256.hasMatch(fingerprint) || fingerprint.startsWith('MD5:')) {
+    return fingerprint;
+  }
+  if (!_colonHexFingerprint.hasMatch(fingerprint)) return fingerprint;
+
+  final bytes = Uint8List.fromList(
+    fingerprint.split(':').map((part) => int.parse(part, radix: 16)).toList(),
+  );
+  try {
+    final decoded = utf8.decode(bytes);
+    if (_openSshSha256.hasMatch(decoded)) return decoded;
+  } on FormatException {
+    // A legacy raw digest is handled by length below.
+  }
+  if (bytes.length == 32) {
+    final encoded = base64.encode(bytes).replaceAll('=', '');
+    return 'SHA256:$encoded';
+  }
+  if (bytes.length == 16) return 'MD5:${_fingerprintToHex(bytes)}';
+  return fingerprint;
+}
 
 /// One remembered host key: which server it was filed under, which algorithm
 /// the host offered, and the fingerprint that was accepted.

@@ -125,7 +125,7 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> {
             actions: Btn.ok(red: true).toList,
           );
           if (confirmed != true || !context.mounted) return;
-          ref.read(snippetProvider.notifier).del(snippet);
+          await ref.read(snippetProvider.notifier).del(snippet);
           _leave();
         },
         tooltip: libL10n.delete,
@@ -158,16 +158,16 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> {
     );
   }
 
-  void _save() {
+  Future<void> _save() async {
     final snippet = _draft();
     if (snippet == null) return;
     final oldSnippet = widget.args?.snippet;
     final notifier = ref.read(snippetProvider.notifier);
     try {
       if (oldSnippet != null) {
-        notifier.update(oldSnippet, snippet);
+        await notifier.update(oldSnippet, snippet);
       } else {
-        notifier.add(snippet);
+        await notifier.add(snippet);
       }
     } on DuplicateNameException catch (e) {
       // The name is unique in the schema rather than in whichever dialog last
@@ -176,6 +176,7 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> {
       Toast.error(l10n.nameAlreadyExistsFmt(e.name));
       return;
     }
+    if (!mounted) return;
     _leave();
   }
 

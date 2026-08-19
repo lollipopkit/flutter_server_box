@@ -310,6 +310,14 @@ class AppLocalizationsRu extends AppLocalizations {
   String get backupPasswordWrong => 'Неверный пароль резервной копии';
 
   @override
+  String get remoteBackupPasswordRequired =>
+      'Для удалённых резервных копий требуется непустой пароль резервного копирования';
+
+  @override
+  String get monitorHttpsRequired =>
+      'Для удалённых агентов мониторинга требуется HTTPS; HTTP разрешён только для loopback-адресов.';
+
+  @override
   String get backupTip =>
       'Экспортированные данные могут быть зашифрованы паролем. \nПожалуйста, храните их в безопасности.';
 
@@ -1010,7 +1018,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
-    return 'Отпечаток (MD5 hex): $fingerprint';
+    return 'Отпечаток (SHA256): $fingerprint';
   }
 
   @override

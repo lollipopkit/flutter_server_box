@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:server_box/core/service/watch_sync.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/core/utils/refresh_interval.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
@@ -31,6 +32,9 @@ abstract class ServersState with _$ServersState {
 
 @Riverpod(keepAlive: true)
 class ServersNotifier extends _$ServersNotifier {
+  static const _maxConcurrentRefreshes = 4;
+  int _autoRefreshGeneration = 0;
+
   @override
   ServersState build() {
     return _load();
@@ -164,10 +168,20 @@ class ServersNotifier extends _$ServersNotifier {
       TryLimiter.reset(id);
     }
 
-    for (final entry in serversToRefresh) {
-      final serverNotifier = ref.read(serverProvider(entry.key).notifier);
-      serverNotifier.refresh().ignore();
+    var next = 0;
+    Future<void> worker() async {
+      while (next < serversToRefresh.length) {
+        final entry = serversToRefresh[next++];
+        final serverNotifier = ref.read(serverProvider(entry.key).notifier);
+        await serverNotifier.refresh();
+      }
     }
+    await Future.wait(
+      List.generate(
+        serversToRefresh.length.clamp(0, _maxConcurrentRefreshes).toInt(),
+        (_) => worker(),
+      ),
+    );
   }
 
   Future<void> startAutoRefresh() async {
@@ -182,13 +196,25 @@ class ServersNotifier extends _$ServersNotifier {
         'Invalid duration: $rawDuration, use default $duration',
       );
     }
-    final timer = Timer.periodic(Duration(seconds: duration), (_) async {
-      await refresh();
-    });
-    state = state.copyWith(autoRefreshTimer: timer);
+    final generation = ++_autoRefreshGeneration;
+    void schedule() {
+      if (generation != _autoRefreshGeneration) return;
+      final timer = Timer(Duration(seconds: duration), () async {
+        try {
+          await refresh();
+        } catch (e, s) {
+          Loggers.app.warning('Auto refresh failed', e, s);
+        } finally {
+          if (generation == _autoRefreshGeneration) schedule();
+        }
+      });
+      state = state.copyWith(autoRefreshTimer: timer);
+    }
+    schedule();
   }
 
   void stopAutoRefresh() {
+    _autoRefreshGeneration++;
     final timer = state.autoRefreshTimer;
     if (timer != null) {
       timer.cancel();
@@ -241,7 +267,7 @@ class ServersNotifier extends _$ServersNotifier {
     TermSessionManager.remove(sessionId);
   }
 
-  void addServer(Spi spi) {
+  Future<void> addServer(Spi spi) async {
     spi.validateOrThrow();
 
     final newServers = Map<String, Spi>.from(state.servers);
@@ -252,20 +278,21 @@ class ServersNotifier extends _$ServersNotifier {
     final newManualDisconnected = Set<String>.from(state.manualDisconnectedIds)
       ..remove(spi.id);
 
+    Stores.server.put(spi);
+    Stores.setting.serverOrder.put(newOrder);
     state = state.copyWith(
       servers: newServers,
       serverOrder: newOrder,
       tags: newTags,
       manualDisconnectedIds: newManualDisconnected,
     );
-
-    Stores.server.put(spi);
-    Stores.setting.serverOrder.put(newOrder);
-    refresh(spi: spi);
+    unawaited(refresh(spi: spi));
     bakSync.sync(milliDelay: 1000);
   }
 
   Future<void> delServer(String id) async {
+    final deleting = state.servers[id];
+    if (deleting != null) await WatchSync.instance.removeServer(deleting);
     final newServers = Map<String, Spi>.from(state.servers);
     newServers.remove(id);
 
@@ -274,18 +301,17 @@ class ServersNotifier extends _$ServersNotifier {
     final newManualDisconnected = Set<String>.from(state.manualDisconnectedIds)
       ..remove(id);
 
+    Stores.setting.serverOrder.put(newOrder);
+    Stores.server.deleteById(id);
     state = state.copyWith(
       servers: newServers,
       serverOrder: newOrder,
       tags: newTags,
       manualDisconnectedIds: newManualDisconnected,
     );
-
-    Stores.setting.serverOrder.put(newOrder);
-    Stores.server.deleteById(id);
     await _clearSudoPasswordOverrideBestEffort(id);
 
-    await Stores.connectionStats.clearServerStats(id);
+    Stores.connectionStats.clearServerStats(id);
 
     // Remove SSH session when server is deleted
     final sessionId = 'ssh_$id';
@@ -303,16 +329,28 @@ class ServersNotifier extends _$ServersNotifier {
       TermSessionManager.remove(sessionId);
     }
 
-    state = const ServersState();
-
+    for (final spi in state.servers.values) {
+      await WatchSync.instance.removeServer(spi);
+    }
+    final bool cleared;
+    try {
+      cleared = await Stores.server.clear();
+    } catch (e, s) {
+      Loggers.app.warning('Failed to clear servers', e, s);
+      return;
+    }
+    if (!cleared) {
+      Loggers.app.warning('Failed to clear servers');
+      return;
+    }
     Stores.setting.serverOrder.put([]);
-    Stores.server.clear();
+    state = const ServersState();
     await Future.wait(serverIds.map(_clearSudoPasswordOverrideBestEffort));
-    await Stores.connectionStats.clearAll();
+    Stores.connectionStats.clearAll();
     bakSync.sync(milliDelay: 1000);
   }
 
-  void updateServerOrder(List<String> order) {
+  Future<void> updateServerOrder(List<String> order) async {
     final seen = <String>{};
     final newOrder = <String>[];
 
@@ -336,8 +374,8 @@ class ServersNotifier extends _$ServersNotifier {
       return;
     }
 
-    state = state.copyWith(serverOrder: newOrder);
     Stores.setting.serverOrder.put(newOrder);
+    state = state.copyWith(serverOrder: newOrder);
     bakSync.sync(milliDelay: 1000);
   }
 
@@ -391,7 +429,7 @@ class ServersNotifier extends _$ServersNotifier {
       if (newSpi.shouldReconnect(old)) {
         // Use [newSpi.id] instead of [old.id] because [old.id] may be changed
         TryLimiter.reset(newSpi.id);
-        refresh(spi: newSpi);
+        unawaited(refresh(spi: newSpi));
       }
     }
     bakSync.sync(milliDelay: 1000);

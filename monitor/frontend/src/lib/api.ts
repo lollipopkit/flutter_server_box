@@ -13,6 +13,7 @@ import type {
   WsTicketPurpose,
   WsTicketResponse,
 } from '../types'
+import { isSecureAgentUrl } from './agentUrl'
 import { servers, type ServerEntry } from './servers.svelte'
 
 const TIMEOUT_MS = 10_000
@@ -29,8 +30,25 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, init: RequestInit = {}, fallback = 'Request failed'): Promise<T> {
+function requestSignal(signal?: AbortSignal): AbortSignal {
+  const timeout = AbortSignal.timeout(TIMEOUT_MS)
+  return signal ? AbortSignal.any([signal, timeout]) : timeout
+}
+
+function requireSecureUrl(url: string) {
+  if (!isSecureAgentUrl(url)) {
+    throw new ApiError('Remote monitor agents require HTTPS; HTTP is allowed only on loopback.')
+  }
+}
+
+async function request<T>(
+  path: string,
+  init: RequestInit = {},
+  fallback = 'Request failed',
+  signal?: AbortSignal,
+): Promise<T> {
   const server = servers.current
+  requireSecureUrl(server?.url ?? '')
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (server?.token) headers.Authorization = `Bearer ${server.token}`
 
@@ -39,7 +57,7 @@ async function request<T>(path: string, init: RequestInit = {}, fallback = 'Requ
     res = await fetch(`${server?.url ?? ''}/api/v1${path}`, {
       ...init,
       headers,
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+      signal: requestSignal(signal),
     })
   } catch {
     throw new ApiError(fallback)
@@ -66,11 +84,12 @@ async function request<T>(path: string, init: RequestInit = {}, fallback = 'Requ
 /// Fetches capabilities for an explicit server entry (rather than
 /// `servers.current`) — used by the sidebar to show every authenticated
 /// entry's OS icon, not just the currently-selected one
-export async function getCapabilitiesFor(entry: ServerEntry): Promise<Capabilities> {
+export async function getCapabilitiesFor(entry: ServerEntry, signal?: AbortSignal): Promise<Capabilities> {
   if (!entry.token) throw new ApiError('Not authenticated')
+  requireSecureUrl(entry.url)
   const res = await fetch(`${entry.url}/api/v1/capabilities`, {
     headers: { Authorization: `Bearer ${entry.token}` },
-    signal: AbortSignal.timeout(TIMEOUT_MS),
+    signal: requestSignal(signal),
   })
   if (!res.ok) throw new ApiError('Failed to fetch capabilities')
   return res.json() as Promise<Capabilities>
@@ -79,11 +98,12 @@ export async function getCapabilitiesFor(entry: ServerEntry): Promise<Capabiliti
 /// Fetches status (incl. the agent-reported `name`) for an explicit server
 /// entry — used by the sidebar/settings header so the displayed name always
 /// reflects config.toml's current hostname, never a locally cached copy
-export async function getStatusFor(entry: ServerEntry): Promise<StatusResponse> {
+export async function getStatusFor(entry: ServerEntry, signal?: AbortSignal): Promise<StatusResponse> {
   if (!entry.token) throw new ApiError('Not authenticated')
+  requireSecureUrl(entry.url)
   const res = await fetch(`${entry.url}/api/v1/status`, {
     headers: { Authorization: `Bearer ${entry.token}` },
-    signal: AbortSignal.timeout(TIMEOUT_MS),
+    signal: requestSignal(signal),
   })
   if (!res.ok) throw new ApiError('Failed to fetch status')
   return res.json() as Promise<StatusResponse>
@@ -93,7 +113,8 @@ export async function getStatusFor(entry: ServerEntry): Promise<StatusResponse> 
 /// form), independent of `servers.current` since the entry may not be saved yet
 export async function testConnection(url: string): Promise<boolean> {
   try {
-    const res = await fetch(`${url}/api/v1/health`, { signal: AbortSignal.timeout(TIMEOUT_MS) })
+    requireSecureUrl(url)
+    const res = await fetch(`${url}/api/v1/health`, { signal: requestSignal() })
     return res.ok
   } catch {
     return false
@@ -102,13 +123,14 @@ export async function testConnection(url: string): Promise<boolean> {
 
 /// Logs into an explicit URL (add/edit server form) instead of `servers.current`
 export async function loginTo(url: string, credentials: LoginRequest): Promise<LoginResponse> {
+  requireSecureUrl(url)
   let res: Response
   try {
     res = await fetch(`${url}/api/v1/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(credentials),
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+      signal: requestSignal(),
     })
   } catch {
     throw new ApiError('Login failed')
@@ -133,10 +155,17 @@ export const api = {
       { method: 'POST', body: JSON.stringify(credentials) },
       'Login failed',
     ),
-  getStatus: () => request<StatusResponse>('/status', {}, 'Failed to fetch status'),
-  getMetrics: () => request<SystemMetrics>('/metrics', {}, 'Failed to fetch metrics'),
-  getHistory: (minutes: number) =>
-    request<HistoryPoint[]>(`/metrics/history?minutes=${minutes}`, {}, 'Failed to fetch history'),
+  getStatus: (signal?: AbortSignal) =>
+    request<StatusResponse>('/status', {}, 'Failed to fetch status', signal),
+  getMetrics: (signal?: AbortSignal) =>
+    request<SystemMetrics>('/metrics', {}, 'Failed to fetch metrics', signal),
+  getHistory: (minutes: number, signal?: AbortSignal) =>
+    request<HistoryPoint[]>(
+      `/metrics/history?minutes=${minutes}`,
+      {},
+      'Failed to fetch history',
+      signal,
+    ),
   // Platform-only, doesn't change per-sample — fetch once per server
   // connection, not on the metrics poll cadence
   getCapabilities: () => request<Capabilities>('/capabilities', {}, 'Failed to fetch capabilities'),

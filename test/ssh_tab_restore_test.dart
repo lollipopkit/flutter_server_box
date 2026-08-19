@@ -48,8 +48,9 @@ void main() {
   });
 
   /// Writes a saved tab set, as a previous run would have left it.
-  void saveTabs(List<Map<String, dynamic>> tabs) =>
-      Stores.history.sshTabs.put(jsonEncode(tabs));
+  Future<void> saveTabs(List<Map<String, dynamic>> tabs) async {
+    Stores.history.sshTabs.put(jsonEncode(tabs));
+  }
 
   /// The tab set as the page wrote it back.
   ///
@@ -95,7 +96,7 @@ void main() {
     // state would go with it.
     final spi = spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u');
     Stores.server.put(spi);
-    saveTabs([
+    await saveTabs([
       {'sourceId': 'srv-1', 'tmuxSession': 'work', 'tmuxWindow': 0},
       {'sourceId': 'srv-1', 'tmuxSession': 'work', 'tmuxWindow': 3},
     ]);
@@ -115,7 +116,7 @@ void main() {
     // others with it.
     final spi = spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u');
     Stores.server.put(spi);
-    saveTabs([
+    await saveTabs([
       {'sourceId': 'srv-1'},
       {'sourceId': 'srv-gone'},
     ]);
@@ -158,7 +159,7 @@ void main() {
     // same account — so this entry is skipped rather than opened as a terminal
     // that can only fail when its pty is asked for. Which way it goes is the
     // platform's answer, so the test asks the same question the page does.
-    saveTabs([
+    await saveTabs([
       {'sourceId': const LocalSource().id},
     ]);
 
@@ -179,7 +180,7 @@ void main() {
     // The tab is remembered; starting it is a decision, and arriving on this
     // tab is not one.
     if (!LocalShellBackend.isSupported) return;
-    saveTabs([
+    await saveTabs([
       {'sourceId': const LocalSource().id},
     ]);
 
@@ -200,7 +201,7 @@ void main() {
     // The other half: passing over the local shell must not turn restoring
     // into a set of tabs that all sit there closed.
     Stores.server.put(spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u'));
-    saveTabs([
+    await saveTabs([
       {'sourceId': const LocalSource().id},
       {'sourceId': 'srv-1'},
     ]);

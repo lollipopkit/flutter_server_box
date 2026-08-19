@@ -231,8 +231,7 @@ extension _Actions on _IosSettingsPageState {
       ...selectedIds.where(pickedIds.contains),
       ...pickedIds.where((id) => !selectedIds.contains(id)),
     ];
-    Stores.setting.watchServerIds.put(next);
-    await WatchSync.instance.push();
+    await WatchSync.instance.updateSelection(next);
     _refresh();
   }
 

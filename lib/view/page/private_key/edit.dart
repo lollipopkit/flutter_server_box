@@ -116,7 +116,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
                   actions: Btn.ok(red: true).toList,
                 );
                 if (confirmed != true || !context.mounted) return;
-                _notifier.delete(pki);
+                await _notifier.delete(pki);
                 context.pop();
               },
               icon: const Icon(Icons.delete),
@@ -290,9 +290,9 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
       );
       final originPki = this.pki;
       if (originPki != null) {
-        _notifier.update(originPki, pki);
+        await _notifier.update(originPki, pki);
       } else {
-        _notifier.add(pki);
+        await _notifier.add(pki);
       }
     } on DuplicateNameException catch (e) {
       // The name is unique in the schema, so this is where a collision is

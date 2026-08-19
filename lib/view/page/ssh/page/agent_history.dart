@@ -60,7 +60,10 @@ extension _AgentHistoryActions on _AskAiPanelState {
 
   Future<void> _activateConversation(AgentConversation conversation) async {
     if (_isWorking || conversation.serverId != widget.serverId) return;
-    if (!Stores.agentConversation.setActive(widget.serverId, conversation.id)) {
+    if (!Stores.agentConversation.setActive(
+      widget.serverId,
+      conversation.id,
+    )) {
       return;
     }
     _restoreConversation(conversation);

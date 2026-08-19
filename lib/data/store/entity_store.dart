@@ -239,7 +239,10 @@ abstract class EntityStore<T extends Object> {
     invalidate();
   }
 
-  void clear() {
+  /// `Future<bool>` to match `SqliteStore.clear`, which callers guard on: a
+  /// store is a store at the call site, whichever shape backs it. Failure is a
+  /// throw, so this only ever answers true.
+  Future<bool> clear() async {
     SqliteStore.transact(() {
       for (final id in keys()) {
         synced.tombstone(id);
@@ -247,6 +250,7 @@ abstract class EntityStore<T extends Object> {
       db.execute('DELETE FROM $table;');
     });
     invalidate();
+    return true;
   }
 
   /// Bumps the parent after a child row changed, so an edit to a tag or an env
