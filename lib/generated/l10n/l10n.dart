@@ -1431,6 +1431,156 @@ abstract class AppLocalizations {
   /// **'Private key [{keyId}] not found.'**
   String privateKeyNotFoundFmt(Object keyId);
 
+  /// No description provided for @bmcPowerOnAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Power on'**
+  String get bmcPowerOnAction;
+
+  /// No description provided for @bmcShutdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Shut down'**
+  String get bmcShutdown;
+
+  /// No description provided for @bmcForceOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Force off'**
+  String get bmcForceOff;
+
+  /// No description provided for @bmcRestart.
+  ///
+  /// In en, this message translates to:
+  /// **'Restart'**
+  String get bmcRestart;
+
+  /// No description provided for @bmcPowerCycle.
+  ///
+  /// In en, this message translates to:
+  /// **'Power cycle'**
+  String get bmcPowerCycle;
+
+  /// No description provided for @bmcPowerConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Send this to {server}? The service will be asked for \"{resetType}\", which is what it allows for this action.'**
+  String bmcPowerConfirm(String server, String resetType);
+
+  /// No description provided for @bmcPowerDone.
+  ///
+  /// In en, this message translates to:
+  /// **'The power state changed'**
+  String get bmcPowerDone;
+
+  /// No description provided for @bmcPowerAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepted, but the power state has not changed yet. A graceful operation depends on the OS, and some services do not distinguish it.'**
+  String get bmcPowerAccepted;
+
+  /// No description provided for @bmcPowerUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'This service allows nothing for that action'**
+  String get bmcPowerUnsupported;
+
+  /// No description provided for @bmcUnauthorized.
+  ///
+  /// In en, this message translates to:
+  /// **'The BMC refused the account'**
+  String get bmcUnauthorized;
+
+  /// No description provided for @bmcPowerOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Powered on'**
+  String get bmcPowerOn;
+
+  /// No description provided for @bmcPowerOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Powered off'**
+  String get bmcPowerOff;
+
+  /// No description provided for @bmcCertRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Certificate refused — review it in the server settings'**
+  String get bmcCertRejected;
+
+  /// No description provided for @bmcNotAService.
+  ///
+  /// In en, this message translates to:
+  /// **'No Redfish service at this address'**
+  String get bmcNotAService;
+
+  /// No description provided for @bmcNoSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'The service reports no system'**
+  String get bmcNoSystem;
+
+  /// No description provided for @bmcSensorsTruncated.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the first sensors are shown'**
+  String get bmcSensorsTruncated;
+
+  /// No description provided for @bmcTip.
+  ///
+  /// In en, this message translates to:
+  /// **'The BMC is a separate computer on the motherboard, reachable when the host OS is not. Configured here, it can report power state and hardware sensors while the server is off or hung. Needs Redfish, which most enterprise hardware from about 2016 on has.'**
+  String get bmcTip;
+
+  /// No description provided for @bmcCert.
+  ///
+  /// In en, this message translates to:
+  /// **'Certificate'**
+  String get bmcCert;
+
+  /// No description provided for @bmcCertPinned.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviewed and pinned'**
+  String get bmcCertPinned;
+
+  /// No description provided for @bmcCertUnreviewed.
+  ///
+  /// In en, this message translates to:
+  /// **'Not reviewed yet — tap to see what the BMC presents'**
+  String get bmcCertUnreviewed;
+
+  /// No description provided for @bmcCertReview.
+  ///
+  /// In en, this message translates to:
+  /// **'BMCs use self-signed certificates, so nothing vouches for this one. Compare it against what the BMC\'s own web interface shows. Once accepted, only this exact certificate is trusted.'**
+  String get bmcCertReview;
+
+  /// No description provided for @bmcCertChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'This is not the certificate that was accepted before. That happens when the BMC\'s certificate is regenerated or its firmware is updated — and it is also what an interception would look like. Check it before accepting.'**
+  String get bmcCertChanged;
+
+  /// No description provided for @bmcCertExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'This certificate is outside its validity dates.'**
+  String get bmcCertExpired;
+
+  /// No description provided for @bmcCertWas.
+  ///
+  /// In en, this message translates to:
+  /// **'Previously accepted: {fingerprint}'**
+  String bmcCertWas(String fingerprint);
+
+  /// No description provided for @bmcAddrInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'The BMC address must be a URL, e.g. https://10.0.0.9'**
+  String get bmcAddrInvalid;
+
   /// No description provided for @proxyCommandSandboxed.
   ///
   /// In en, this message translates to:

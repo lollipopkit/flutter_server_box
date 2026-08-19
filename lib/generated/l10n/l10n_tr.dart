@@ -758,6 +758,93 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get bmcPowerOnAction => 'Aç';
+
+  @override
+  String get bmcShutdown => 'Kapat';
+
+  @override
+  String get bmcForceOff => 'Zorla kapat';
+
+  @override
+  String get bmcRestart => 'Yeniden başlat';
+
+  @override
+  String get bmcPowerCycle => 'Güç döngüsü';
+
+  @override
+  String bmcPowerConfirm(String server, String resetType) {
+    return 'Bu $server sunucusuna gönderilsin mi? Hizmete \"$resetType\" istenecek; bu eylem için izin verdiği tür budur.';
+  }
+
+  @override
+  String get bmcPowerDone => 'Güç durumu değişti';
+
+  @override
+  String get bmcPowerAccepted =>
+      'Kabul edildi, ancak güç durumu henüz değişmedi. Nazik bir işlem işletim sistemine bağlıdır ve bazı hizmetler bunu ayırt etmez.';
+
+  @override
+  String get bmcPowerUnsupported =>
+      'Bu hizmet o eylem için hiçbir şeye izin vermiyor';
+
+  @override
+  String get bmcUnauthorized => 'BMC hesabı reddetti';
+
+  @override
+  String get bmcPowerOn => 'Açık';
+
+  @override
+  String get bmcPowerOff => 'Kapalı';
+
+  @override
+  String get bmcCertRejected =>
+      'Sertifika reddedildi — sunucu ayarlarından inceleyin';
+
+  @override
+  String get bmcNotAService => 'Bu adreste Redfish hizmeti yok';
+
+  @override
+  String get bmcNoSystem => 'Hizmet herhangi bir sistem bildirmiyor';
+
+  @override
+  String get bmcSensorsTruncated => 'Yalnızca ilk sensörler gösteriliyor';
+
+  @override
+  String get bmcTip =>
+      'BMC, anakart üzerindeki ayrı bir bilgisayardır ve ana makinenin işletim sistemine ulaşılamadığında da erişilebilir. Burada yapılandırıldığında, sunucu kapalıyken ya da takılıyken güç durumunu ve donanım sensörlerini bildirir. Redfish gerektirir; yaklaşık 2016\'dan sonraki kurumsal donanımların çoğunda bulunur.';
+
+  @override
+  String get bmcCert => 'Sertifika';
+
+  @override
+  String get bmcCertPinned => 'İncelendi ve sabitlendi';
+
+  @override
+  String get bmcCertUnreviewed =>
+      'Henüz incelenmedi — BMC\'nin sunduğunu görmek için dokunun';
+
+  @override
+  String get bmcCertReview =>
+      'BMC\'ler kendinden imzalı sertifika kullanır, dolayısıyla bunun için kefil olan bir taraf yoktur. BMC\'nin kendi web arayüzünde görünenle karşılaştırın. Kabul edildikten sonra yalnızca tam olarak bu sertifikaya güvenilir.';
+
+  @override
+  String get bmcCertChanged =>
+      'Bu, daha önce kabul edilen sertifika değil. BMC sertifikasını yeniden ürettiğinde ya da bellenimi güncellendiğinde böyle olur — ama bir araya girme de tam olarak böyle görünür. Kabul etmeden önce doğrulayın.';
+
+  @override
+  String get bmcCertExpired => 'Bu sertifika geçerlilik tarihlerinin dışında.';
+
+  @override
+  String bmcCertWas(String fingerprint) {
+    return 'Daha önce kabul edilen: $fingerprint';
+  }
+
+  @override
+  String get bmcAddrInvalid =>
+      'BMC adresi bir URL olmalı, örneğin https://10.0.0.9';
+
+  @override
   String get proxyCommandSandboxed =>
       'Bu sürüm bir kum havuzunda çalışır: komut sizinki yerine boş bir ev dizini görür, bu yüzden ~/.ssh okuyan her şey (ssh -W, cloudflared) başarısız olur ve çoğu zaman yanlış sunucuyu adlandıran bir zaman aşımı olarak görünür. Yalnızca ağı kullanan komutlar çalışmaya devam eder. DMG sürümünde kum havuzu yoktur.';
 

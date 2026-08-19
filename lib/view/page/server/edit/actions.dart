@@ -61,6 +61,67 @@ extension _Actions on _ServerEditPageState {
     _hasStoredSudoPassword.value = value != null && value.isNotEmpty;
   }
 
+  /// Fetches the certificate the BMC presents, shows it, and pins it if the
+  /// user agrees.
+  ///
+  /// The connection here sends nothing — it exists only to read what the far
+  /// end offers — so an impostor at that address learns no password from it.
+  /// That is what makes it safe to accept any certificate for this one step,
+  /// and it is the only step that does.
+  Future<void> _onTapBmcCert() async {
+    final cfg = BmcCfg(
+      addr: _bmcAddrCtrl.text.trim(),
+      user: _bmcUserCtrl.text.trim(),
+    );
+    final uri = cfg.uri;
+    if (uri == null) {
+      Toast.error(libL10n.fail, body: l10n.bmcAddrInvalid);
+      return;
+    }
+
+    final CertInfo info;
+    try {
+      info = await fetchServerCert(uri.host, cfg.port);
+    } catch (e) {
+      Toast.error(libL10n.fail, body: '$e');
+      return;
+    }
+    if (!mounted) return;
+
+    final pinned = _bmcCert.value;
+    final changed = pinned != null && pinned != info.fingerprint;
+
+    final accepted = await context.showRoundDialog<bool>(
+      title: l10n.bmcCert,
+      barrierDismiss: false,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(changed ? l10n.bmcCertChanged : l10n.bmcCertReview),
+          const SizedBox(height: 12),
+          SelectableText('${libL10n.addr}: ${uri.host}:${cfg.port}'),
+          SelectableText('Subject: ${info.subject}'),
+          SelectableText('Issuer: ${info.issuer}'),
+          SelectableText('SHA-256: ${info.prettyFingerprint}'),
+          if (info.isExpired) ...[
+            const SizedBox(height: 8),
+            Text(l10n.bmcCertExpired, style: const TextStyle(color: Colors.orange)),
+          ],
+          if (changed) ...[
+            const SizedBox(height: 8),
+            SelectableText(l10n.bmcCertWas(pinned)),
+          ],
+        ],
+      ),
+      actions: Btnx.cancelOk,
+    );
+    // The dialog answers; this page acts on the answer and this page is what
+    // holds the field — see the dialog rules in CLAUDE.md
+    if (accepted != true) return;
+    _bmcCert.value = info.fingerprint;
+  }
+
   Future<void> _onTapSudoPassword() async {
     final controller = TextEditingController();
     controller.text = _pendingSudoPassword ?? '';
@@ -346,6 +407,22 @@ extension _Actions on _ServerEditPageState {
       }
     }
 
+    // An address alone is not enough to reach a BMC, and a half-filled one
+    // would poll forever against nothing — so it is all or nothing
+    final bmcAddr = _bmcAddrCtrl.text.trim();
+    final bmc = bmcAddr.isEmpty
+        ? null
+        : BmcCfg(
+            addr: bmcAddr,
+            user: _bmcUserCtrl.text.trim(),
+            pwd: _bmcPwdCtrl.text.selfNotEmptyOrNull,
+            certSha256: _bmcCert.value,
+          );
+    if (bmc != null && !bmc.isComplete) {
+      Toast.error(libL10n.fail, body: l10n.bmcAddrInvalid);
+      return;
+    }
+
     final spi = Spi(
       name: _nameController.text.isEmpty
           ? (ssh?.ip ?? monitorHttp?.addr ?? '')
@@ -355,6 +432,7 @@ extension _Actions on _ServerEditPageState {
       autoConnect: _autoConnect.value,
       custom: custom,
       wolCfg: wol,
+      bmc: bmc,
       monitorHttp: monitorHttp,
       envs: _env.value.isEmpty ? null : _env.value,
       id: _serverId,
@@ -534,6 +612,14 @@ extension _Utils on _ServerEditPageState {
       _monitorUserCtrl.text = monitorHttp.user ?? '';
       _monitorPwdCtrl.text = monitorHttp.pwd ?? '';
       _monitorIgnoreCert.value = monitorHttp.ignoreCert;
+    }
+
+    final bmc = spi.bmc;
+    if (bmc != null) {
+      _bmcAddrCtrl.text = bmc.addr;
+      _bmcUserCtrl.text = bmc.user;
+      _bmcPwdCtrl.text = bmc.pwd ?? '';
+      _bmcCert.value = bmc.certSha256;
     }
 
     final wol = spi.wolCfg;

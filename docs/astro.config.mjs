@@ -76,6 +76,7 @@ export default defineConfig({
 						{ label: 'SSH Connection', translations: { zh: 'SSH 连接' }, slug: 'principles/ssh' },
 						{ label: 'Terminal', translations: { zh: '终端' }, slug: 'principles/terminal' },
 						{ label: 'SFTP', translations: { zh: 'SFTP' }, slug: 'principles/sftp' },
+						{ label: 'BMC (Redfish)', translations: { zh: 'BMC(Redfish)' }, slug: 'principles/bmc' },
 						{ label: 'State Management', translations: { zh: '状态管理' }, slug: 'principles/state' },
 					],
 				},

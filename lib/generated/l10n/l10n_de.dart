@@ -757,6 +757,96 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get bmcPowerOnAction => 'Einschalten';
+
+  @override
+  String get bmcShutdown => 'Herunterfahren';
+
+  @override
+  String get bmcForceOff => 'Hart ausschalten';
+
+  @override
+  String get bmcRestart => 'Neu starten';
+
+  @override
+  String get bmcPowerCycle => 'Strom aus und ein';
+
+  @override
+  String bmcPowerConfirm(String server, String resetType) {
+    return 'An $server senden? Der Dienst wird um \"$resetType\" gebeten — das ist, was er für diese Aktion zulässt.';
+  }
+
+  @override
+  String get bmcPowerDone => 'Der Energiezustand hat sich geändert';
+
+  @override
+  String get bmcPowerAccepted =>
+      'Angenommen, aber der Energiezustand hat sich noch nicht geändert. Eine sanfte Operation hängt vom Betriebssystem ab, und manche Dienste unterscheiden sie nicht.';
+
+  @override
+  String get bmcPowerUnsupported =>
+      'Dieser Dienst lässt für diese Aktion nichts zu';
+
+  @override
+  String get bmcUnauthorized => 'Der BMC hat das Konto abgelehnt';
+
+  @override
+  String get bmcPowerOn => 'Eingeschaltet';
+
+  @override
+  String get bmcPowerOff => 'Ausgeschaltet';
+
+  @override
+  String get bmcCertRejected =>
+      'Zertifikat abgelehnt — in den Servereinstellungen prüfen';
+
+  @override
+  String get bmcNotAService =>
+      'Unter dieser Adresse gibt es keinen Redfish-Dienst';
+
+  @override
+  String get bmcNoSystem => 'Der Dienst meldet kein System';
+
+  @override
+  String get bmcSensorsTruncated =>
+      'Es werden nur die ersten Sensoren angezeigt';
+
+  @override
+  String get bmcTip =>
+      'Der BMC ist ein eigener Computer auf dem Mainboard, erreichbar auch wenn das Host-Betriebssystem es nicht ist. Hier eingerichtet, meldet er Energiezustand und Hardwaresensoren, während der Server aus oder hängen geblieben ist. Erfordert Redfish, das Enterprise-Hardware etwa ab 2016 mitbringt.';
+
+  @override
+  String get bmcCert => 'Zertifikat';
+
+  @override
+  String get bmcCertPinned => 'Geprüft und angeheftet';
+
+  @override
+  String get bmcCertUnreviewed =>
+      'Noch nicht geprüft — tippen, um zu sehen, was der BMC vorlegt';
+
+  @override
+  String get bmcCertReview =>
+      'BMCs verwenden selbstsignierte Zertifikate, für dieses bürgt also niemand. Vergleichen Sie es mit dem, was die Weboberfläche des BMC anzeigt. Nach der Annahme wird ausschließlich genau dieses Zertifikat vertraut.';
+
+  @override
+  String get bmcCertChanged =>
+      'Dies ist nicht das zuvor angenommene Zertifikat. Das passiert, wenn der BMC sein Zertifikat neu erzeugt oder seine Firmware aktualisiert wird — genauso sähe aber auch ein Abfangen aus. Prüfen Sie es vor der Annahme.';
+
+  @override
+  String get bmcCertExpired =>
+      'Dieses Zertifikat liegt außerhalb seiner Gültigkeitsdaten.';
+
+  @override
+  String bmcCertWas(String fingerprint) {
+    return 'Zuvor angenommen: $fingerprint';
+  }
+
+  @override
+  String get bmcAddrInvalid =>
+      'Die BMC-Adresse muss eine URL sein, z. B. https://10.0.0.9';
+
+  @override
   String get proxyCommandSandboxed =>
       'Dieser Build läuft in einer Sandbox: Der Befehl sieht statt Ihres Home-Verzeichnisses ein leeres, daher schlägt alles fehl, was ~/.ssh liest (ssh -W, cloudflared) — meist als Zeitüberschreitung mit dem falschen Host. Befehle, die nur das Netzwerk nutzen, funktionieren weiterhin. Der DMG-Build hat keine Sandbox.';
 

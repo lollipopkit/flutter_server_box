@@ -765,6 +765,94 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get bmcPowerOnAction => 'Encender';
+
+  @override
+  String get bmcShutdown => 'Apagar';
+
+  @override
+  String get bmcForceOff => 'Forzar apagado';
+
+  @override
+  String get bmcRestart => 'Reiniciar';
+
+  @override
+  String get bmcPowerCycle => 'Ciclo de energía';
+
+  @override
+  String bmcPowerConfirm(String server, String resetType) {
+    return '¿Enviar esto a $server? Se pedirá al servicio \"$resetType\", que es lo que permite para esta acción.';
+  }
+
+  @override
+  String get bmcPowerDone => 'El estado de energía cambió';
+
+  @override
+  String get bmcPowerAccepted =>
+      'Aceptado, pero el estado de energía aún no ha cambiado. Una operación limpia depende del sistema operativo, y algunos servicios no la distinguen.';
+
+  @override
+  String get bmcPowerUnsupported =>
+      'Este servicio no permite nada para esa acción';
+
+  @override
+  String get bmcUnauthorized => 'El BMC rechazó la cuenta';
+
+  @override
+  String get bmcPowerOn => 'Encendido';
+
+  @override
+  String get bmcPowerOff => 'Apagado';
+
+  @override
+  String get bmcCertRejected =>
+      'Certificado rechazado: revísalo en los ajustes del servidor';
+
+  @override
+  String get bmcNotAService => 'No hay servicio Redfish en esta dirección';
+
+  @override
+  String get bmcNoSystem => 'El servicio no informa de ningún sistema';
+
+  @override
+  String get bmcSensorsTruncated => 'Solo se muestran los primeros sensores';
+
+  @override
+  String get bmcTip =>
+      'El BMC es un ordenador aparte en la placa base, accesible cuando el sistema operativo del host no lo está. Configurado aquí, informa del estado de energía y de los sensores de hardware mientras el servidor está apagado o bloqueado. Necesita Redfish, presente en la mayoría del hardware empresarial desde alrededor de 2016.';
+
+  @override
+  String get bmcCert => 'Certificado';
+
+  @override
+  String get bmcCertPinned => 'Revisado y fijado';
+
+  @override
+  String get bmcCertUnreviewed =>
+      'Aún sin revisar: toca para ver lo que presenta el BMC';
+
+  @override
+  String get bmcCertReview =>
+      'Los BMC usan certificados autofirmados, así que nada avala este. Compáralo con lo que muestra la propia interfaz web del BMC. Una vez aceptado, solo se confía en este certificado exacto.';
+
+  @override
+  String get bmcCertChanged =>
+      'Este no es el certificado que se aceptó antes. Ocurre cuando el BMC regenera su certificado o se actualiza su firmware, pero también es lo que se vería en una interceptación. Compruébalo antes de aceptar.';
+
+  @override
+  String get bmcCertExpired =>
+      'Este certificado está fuera de sus fechas de validez.';
+
+  @override
+  String bmcCertWas(String fingerprint) {
+    return 'Aceptado anteriormente: $fingerprint';
+  }
+
+  @override
+  String get bmcAddrInvalid =>
+      'La dirección del BMC debe ser una URL, p. ej. https://10.0.0.9';
+
+  @override
   String get proxyCommandSandboxed =>
       'Esta compilación se ejecuta en un espacio aislado: el comando ve un directorio personal vacío en lugar del tuyo, así que todo lo que lea ~/.ssh (ssh -W, cloudflared) falla, a menudo como un tiempo de espera que nombra el host equivocado. Los comandos que solo usan la red siguen funcionando. La versión DMG no tiene espacio aislado.';
 

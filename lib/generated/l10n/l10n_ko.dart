@@ -718,6 +718,89 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get bmcPowerOnAction => '전원 켜기';
+
+  @override
+  String get bmcShutdown => '종료';
+
+  @override
+  String get bmcForceOff => '강제 종료';
+
+  @override
+  String get bmcRestart => '재시작';
+
+  @override
+  String get bmcPowerCycle => '전원 재투입';
+
+  @override
+  String bmcPowerConfirm(String server, String resetType) {
+    return '$server에 실행할까요? 서비스에 \"$resetType\"을(를) 보냅니다. 이 작업에 대해 허용된 유형입니다.';
+  }
+
+  @override
+  String get bmcPowerDone => '전원 상태가 바뀌었습니다';
+
+  @override
+  String get bmcPowerAccepted =>
+      '수락되었지만 전원 상태는 아직 바뀌지 않았습니다. graceful 동작은 OS에 달려 있고, 이를 구분하지 않는 서비스도 있습니다.';
+
+  @override
+  String get bmcPowerUnsupported => '이 서비스는 해당 작업에 대해 아무것도 허용하지 않습니다';
+
+  @override
+  String get bmcUnauthorized => 'BMC가 이 계정을 거부했습니다';
+
+  @override
+  String get bmcPowerOn => '전원 켜짐';
+
+  @override
+  String get bmcPowerOff => '전원 꺼짐';
+
+  @override
+  String get bmcCertRejected => '인증서가 거부됨 — 서버 설정에서 확인하세요';
+
+  @override
+  String get bmcNotAService => '이 주소에는 Redfish 서비스가 없습니다';
+
+  @override
+  String get bmcNoSystem => '서비스가 시스템을 보고하지 않습니다';
+
+  @override
+  String get bmcSensorsTruncated => '앞쪽 센서만 표시됩니다';
+
+  @override
+  String get bmcTip =>
+      'BMC는 메인보드에 있는 별도의 컴퓨터로, 호스트 OS가 응답하지 않아도 접근할 수 있습니다. 여기서 설정하면 서버가 꺼져 있거나 멈춰 있어도 전원 상태와 하드웨어 센서를 읽을 수 있습니다. Redfish가 필요하며 대략 2016년 이후 기업용 하드웨어는 대부분 지원합니다.';
+
+  @override
+  String get bmcCert => '인증서';
+
+  @override
+  String get bmcCertPinned => '확인 후 고정됨';
+
+  @override
+  String get bmcCertUnreviewed => '아직 확인하지 않음 — 탭하여 BMC가 제시하는 인증서 보기';
+
+  @override
+  String get bmcCertReview =>
+      'BMC는 자체 서명 인증서를 쓰므로 이를 보증하는 곳이 없습니다. BMC 자체 웹 화면에 표시된 것과 대조해 보세요. 수락하면 이 인증서만 신뢰됩니다.';
+
+  @override
+  String get bmcCertChanged =>
+      '이전에 수락한 인증서가 아닙니다. BMC가 인증서를 새로 만들거나 펌웨어를 업데이트할 때도 이렇게 되지만, 가로채기가 일어날 때도 똑같아 보입니다. 수락하기 전에 확인하세요.';
+
+  @override
+  String get bmcCertExpired => '이 인증서는 유효 기간을 벗어났습니다.';
+
+  @override
+  String bmcCertWas(String fingerprint) {
+    return '이전에 수락함: $fingerprint';
+  }
+
+  @override
+  String get bmcAddrInvalid => 'BMC 주소는 URL이어야 합니다. 예: https://10.0.0.9';
+
+  @override
   String get proxyCommandSandboxed =>
       '이 빌드는 샌드박스에서 실행됩니다. 명령이 보는 홈 디렉터리는 실제 홈이 아니라 비어 있는 것이라서 ~/.ssh를 읽는 명령(ssh -W, cloudflared)은 실패하며, 대개 엉뚱한 호스트의 시간 초과로 나타납니다. 네트워크만 쓰는 명령은 그대로 동작합니다. DMG 버전에는 샌드박스가 없습니다.';
 

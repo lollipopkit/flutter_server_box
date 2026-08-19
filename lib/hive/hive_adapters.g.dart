@@ -625,6 +625,7 @@ class SpiAdapter extends TypeAdapter<Spi> {
       autoConnect: fields[8] == null ? true : fields[8] as bool,
       custom: fields[10] as ServerCustom?,
       wolCfg: fields[11] as WakeOnLanCfg?,
+      bmc: fields[20] as BmcCfg?,
       envs: (fields[12] as Map?)?.cast<String, String>(),
       id: fields[13] == null ? '' : fields[13] as String,
       customSystemType: fields[14] as SystemType?,
@@ -635,7 +636,7 @@ class SpiAdapter extends TypeAdapter<Spi> {
   @override
   void write(BinaryWriter writer, Spi obj) {
     writer
-      ..writeByte(11)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(6)
@@ -657,7 +658,9 @@ class SpiAdapter extends TypeAdapter<Spi> {
       ..writeByte(18)
       ..write(obj.monitorHttp)
       ..writeByte(19)
-      ..write(obj.ssh);
+      ..write(obj.ssh)
+      ..writeByte(20)
+      ..write(obj.bmc);
   }
 
   @override
@@ -728,6 +731,49 @@ class SshCredentialAdapter extends TypeAdapter<SshCredential> {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is SshCredentialAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
+
+class BmcCfgAdapter extends TypeAdapter<BmcCfg> {
+  @override
+  final typeId = 17;
+
+  @override
+  BmcCfg read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return BmcCfg(
+      addr: fields[0] as String,
+      user: fields[1] as String,
+      pwd: fields[2] as String?,
+      certSha256: fields[3] as String?,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, BmcCfg obj) {
+    writer
+      ..writeByte(4)
+      ..writeByte(0)
+      ..write(obj.addr)
+      ..writeByte(1)
+      ..write(obj.user)
+      ..writeByte(2)
+      ..write(obj.pwd)
+      ..writeByte(3)
+      ..write(obj.certSha256);
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is BmcCfgAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

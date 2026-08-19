@@ -10,6 +10,7 @@ import 'package:server_box/hive/hive_adapters.dart';
 extension HiveRegistrar on HiveInterface {
   void registerAdapters() {
     registerAdapter(AppTabAdapter());
+    registerAdapter(BmcCfgAdapter());
     registerAdapter(ConnectionResultAdapter());
     registerAdapter(ConnectionStatAdapter());
     registerAdapter(MonitorHttpCredentialAdapter());
@@ -30,6 +31,7 @@ extension HiveRegistrar on HiveInterface {
 extension IsolatedHiveRegistrar on IsolatedHiveInterface {
   void registerAdapters() {
     registerAdapter(AppTabAdapter());
+    registerAdapter(BmcCfgAdapter());
     registerAdapter(ConnectionResultAdapter());
     registerAdapter(ConnectionStatAdapter());
     registerAdapter(MonitorHttpCredentialAdapter());

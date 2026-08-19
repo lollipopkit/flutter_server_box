@@ -758,6 +758,93 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get bmcPowerOnAction => 'Включить';
+
+  @override
+  String get bmcShutdown => 'Выключить';
+
+  @override
+  String get bmcForceOff => 'Принудительно выключить';
+
+  @override
+  String get bmcRestart => 'Перезапустить';
+
+  @override
+  String get bmcPowerCycle => 'Полный перезапуск питания';
+
+  @override
+  String bmcPowerConfirm(String server, String resetType) {
+    return 'Отправить это на $server? Службе будет отправлен \"$resetType\" — это то, что она допускает для данного действия.';
+  }
+
+  @override
+  String get bmcPowerDone => 'Состояние питания изменилось';
+
+  @override
+  String get bmcPowerAccepted =>
+      'Принято, но состояние питания пока не изменилось. Мягкая операция зависит от операционной системы, и некоторые службы её не различают.';
+
+  @override
+  String get bmcPowerUnsupported =>
+      'Эта служба ничего не допускает для этого действия';
+
+  @override
+  String get bmcUnauthorized => 'BMC отклонил учётную запись';
+
+  @override
+  String get bmcPowerOn => 'Включён';
+
+  @override
+  String get bmcPowerOff => 'Выключен';
+
+  @override
+  String get bmcCertRejected =>
+      'Сертификат отклонён — проверьте его в настройках сервера';
+
+  @override
+  String get bmcNotAService => 'По этому адресу нет службы Redfish';
+
+  @override
+  String get bmcNoSystem => 'Служба не сообщает ни об одной системе';
+
+  @override
+  String get bmcSensorsTruncated => 'Показаны только первые датчики';
+
+  @override
+  String get bmcTip =>
+      'BMC — отдельный компьютер на материнской плате, доступный тогда, когда операционная система хоста недоступна. Настроенный здесь, он сообщает состояние питания и показания аппаратных датчиков, пока сервер выключен или завис. Требуется Redfish, он есть у большинства серверного оборудования примерно с 2016 года.';
+
+  @override
+  String get bmcCert => 'Сертификат';
+
+  @override
+  String get bmcCertPinned => 'Проверен и закреплён';
+
+  @override
+  String get bmcCertUnreviewed =>
+      'Ещё не проверен — нажмите, чтобы увидеть, что предъявляет BMC';
+
+  @override
+  String get bmcCertReview =>
+      'BMC используют самоподписанные сертификаты, так что за этот никто не ручается. Сравните его с тем, что показывает собственный веб-интерфейс BMC. После принятия доверие будет только к этому сертификату.';
+
+  @override
+  String get bmcCertChanged =>
+      'Это не тот сертификат, который был принят раньше. Так бывает, когда BMC перевыпускает сертификат или обновляется его прошивка, но точно так же выглядел бы и перехват. Проверьте, прежде чем принимать.';
+
+  @override
+  String get bmcCertExpired => 'Этот сертификат вне срока действия.';
+
+  @override
+  String bmcCertWas(String fingerprint) {
+    return 'Принят ранее: $fingerprint';
+  }
+
+  @override
+  String get bmcAddrInvalid =>
+      'Адрес BMC должен быть URL, например https://10.0.0.9';
+
+  @override
   String get proxyCommandSandboxed =>
       'Эта сборка работает в песочнице: команда видит пустой домашний каталог вместо вашего, поэтому всё, что читает ~/.ssh (ssh -W, cloudflared), завершается ошибкой — чаще всего тайм-аутом с именем не того хоста. Команды, использующие только сеть, работают. В сборке DMG песочницы нет.';
 
