@@ -189,7 +189,7 @@
   "sshConfigImported": "Berhasil mengimpor {count} server dari konfigurasi SSH",
   "sshHostKeyChangedDesc": "Kunci host SSH untuk {serverName} telah berubah. Lanjutkan hanya jika Anda mempercayai server ini.",
   "sshHostKeyFingerprintMd5Base64": "Sidik jari (MD5 Base64): {fingerprint}",
-  "sshHostKeyFingerprintMd5Hex": "Sidik jari (MD5 hex): {fingerprint}",
+  "sshHostKeyFingerprintMd5Hex": "Sidik jari (SHA256): {fingerprint}",
   "sshHostKeyType": "Jenis kunci host SSH",
   "sshKnownHostKeys": "Kunci host yang dikenal",
   "sshKnownHostKeysTip": "Kunci host yang telah diterima aplikasi ini. Hapus satu agar ditanyakan lagi saat koneksi berikutnya.",

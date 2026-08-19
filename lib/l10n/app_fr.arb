@@ -189,7 +189,7 @@
   "sshConfigImported": "{count} serveurs importés depuis la configuration SSH",
   "sshHostKeyChangedDesc": "La clé d'hôte SSH de {serverName} a changé. Ne continuez que si vous faites confiance à ce serveur.",
   "sshHostKeyFingerprintMd5Base64": "Empreinte (MD5 Base64) : {fingerprint}",
-  "sshHostKeyFingerprintMd5Hex": "Empreinte (MD5 hex) : {fingerprint}",
+  "sshHostKeyFingerprintMd5Hex": "Empreinte (SHA256) : {fingerprint}",
   "sshHostKeyType": "Type de clé d'hôte SSH",
   "sshKnownHostKeys": "Clés d'hôte connues",
   "sshKnownHostKeysTip": "Clés d'hôte acceptées par cette app. Supprimez-en une pour qu'elle soit redemandée à la prochaine connexion.",

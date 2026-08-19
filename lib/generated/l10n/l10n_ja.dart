@@ -951,7 +951,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
-    return 'フィンガープリント (MD5 16進): $fingerprint';
+    return 'フィンガープリント (SHA256): $fingerprint';
   }
 
   @override

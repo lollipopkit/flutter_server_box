@@ -189,7 +189,7 @@
   "sshConfigImported": "SSH設定から{count}個のサーバーをインポートしました",
   "sshHostKeyChangedDesc": "{serverName} の SSH ホスト鍵が変更されました。このサーバーを信頼できる場合のみ続行してください。",
   "sshHostKeyFingerprintMd5Base64": "フィンガープリント (MD5 Base64): {fingerprint}",
-  "sshHostKeyFingerprintMd5Hex": "フィンガープリント (MD5 16進): {fingerprint}",
+  "sshHostKeyFingerprintMd5Hex": "フィンガープリント (SHA256): {fingerprint}",
   "sshHostKeyType": "SSH ホストキーの種類",
   "sshKnownHostKeys": "既知のホストキー",
   "sshKnownHostKeysTip": "このアプリが受け入れたホストキー。削除すると次回接続時に再度確認されます。",

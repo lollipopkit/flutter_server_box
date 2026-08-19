@@ -1004,7 +1004,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
-    return 'Parmak izi (MD5 hex): $fingerprint';
+    return 'Parmak izi (SHA256): $fingerprint';
   }
 
   @override

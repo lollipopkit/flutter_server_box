@@ -1002,7 +1002,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
-    return 'Sidik jari (MD5 hex): $fingerprint';
+    return 'Sidik jari (SHA256): $fingerprint';
   }
 
   @override

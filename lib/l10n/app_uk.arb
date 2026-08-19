@@ -190,7 +190,7 @@
   "sshConfigImported": "Імпортовано {count} серверів з SSH-конфігурації",
   "sshHostKeyChangedDesc": "SSH-ключ хоста для {serverName} змінено. Продовжуйте лише якщо довіряєте цьому серверу.",
   "sshHostKeyFingerprintMd5Base64": "Відбиток (MD5 Base64): {fingerprint}",
-  "sshHostKeyFingerprintMd5Hex": "Відбиток (MD5 hex): {fingerprint}",
+  "sshHostKeyFingerprintMd5Hex": "Відбиток (SHA256): {fingerprint}",
   "sshHostKeyType": "Тип ключа хоста SSH",
   "sshKnownHostKeys": "Відомі ключі хостів",
   "sshKnownHostKeysTip": "Ключі хостів, які прийняв цей застосунок. Видаліть один, щоб наступного разу спитали знову.",

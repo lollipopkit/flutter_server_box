@@ -189,7 +189,7 @@
   "sshConfigImported": "{count} Server aus SSH-Konfiguration importiert",
   "sshHostKeyChangedDesc": "Der SSH-Hostschlüssel für {serverName} hat sich geändert. Fahren Sie nur fort, wenn Sie diesem Server vertrauen.",
   "sshHostKeyFingerprintMd5Base64": "Fingerabdruck (MD5 Base64): {fingerprint}",
-  "sshHostKeyFingerprintMd5Hex": "Fingerabdruck (MD5 Hex): {fingerprint}",
+  "sshHostKeyFingerprintMd5Hex": "Fingerabdruck (SHA256): {fingerprint}",
   "sshHostKeyType": "SSH-Hostschlüsseltyp",
   "sshKnownHostKeys": "Bekannte Hostschlüssel",
   "sshKnownHostKeysTip": "Von dieser App akzeptierte Hostschlüssel. Wird einer entfernt, wird beim nächsten Verbinden erneut gefragt.",

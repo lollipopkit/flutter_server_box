@@ -189,7 +189,7 @@
   "sshConfigImported": "SSH yapılandırmasından {count} sunucu içe aktarıldı",
   "sshHostKeyChangedDesc": "{serverName} için SSH ana bilgisayar anahtarı değişti. Yalnızca bu sunucuya güveniyorsanız devam edin.",
   "sshHostKeyFingerprintMd5Base64": "Parmak izi (MD5 Base64): {fingerprint}",
-  "sshHostKeyFingerprintMd5Hex": "Parmak izi (MD5 hex): {fingerprint}",
+  "sshHostKeyFingerprintMd5Hex": "Parmak izi (SHA256): {fingerprint}",
   "sshHostKeyType": "SSH ana bilgisayar anahtarı türü",
   "sshKnownHostKeys": "Bilinen ana makine anahtarları",
   "sshKnownHostKeysTip": "Bu uygulamanın kabul ettiği ana makine anahtarları. Birini silerseniz bir sonraki bağlantıda tekrar sorulur.",

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -18,13 +19,12 @@ import 'helpers/spi_fixture.dart';
 /// refusal into permanent trust of whatever answered next time, which is the
 /// attack this dialog exists to stop.
 void main() {
-  /// A fingerprint's bytes. The verifier formats them itself, so what a test
-  /// hands in only has to be distinct.
-  Uint8List key(int seed) => Uint8List.fromList([seed, seed + 1, seed + 2]);
+  String fingerprintOf(int seed) {
+    final digest = List<int>.generate(32, (index) => (seed + index) & 0xff);
+    return 'SHA256:${base64.encode(digest).replaceAll('=', '')}';
+  }
 
-  /// The hex the verifier makes of [key], which is what lands in the store.
-  String hexOf(int seed) =>
-      [seed, seed + 1, seed + 2].map((b) => b.toRadixString(16).padLeft(2, '0')).join(':');
+  Uint8List key(int seed) => Uint8List.fromList(utf8.encode(fingerprintOf(seed)));
 
   /// A verifier over [cache], answering every prompt with [answer].
   ///
@@ -58,8 +58,8 @@ void main() {
       expect(await t.verifier.call('ssh-ed25519', key(1)), isTrue);
 
       expect(t.asked.single.isMismatch, isFalse);
-      expect(t.wrote, ['srv-1::ssh-ed25519=${hexOf(1)}']);
-      expect(cache['srv-1::ssh-ed25519'], hexOf(1));
+      expect(t.wrote, ['srv-1::ssh-ed25519=${fingerprintOf(1)}']);
+      expect(cache['srv-1::ssh-ed25519'], fingerprintOf(1));
     });
 
     test('is refused, and nothing is written down', () async {
@@ -76,7 +76,7 @@ void main() {
 
   group('a host already on file', () {
     test('offering the same key is not asked about again', () async {
-      final cache = {'srv-1::ssh-ed25519': hexOf(1)};
+      final cache = {'srv-1::ssh-ed25519': fingerprintOf(1)};
       final t = build(cache, answer: false);
 
       expect(await t.verifier.call('ssh-ed25519', key(1)), isTrue);
@@ -91,7 +91,7 @@ void main() {
     });
 
     test('offering a different one is asked about as a mismatch', () async {
-      final cache = {'srv-1::ssh-ed25519': hexOf(1)};
+      final cache = {'srv-1::ssh-ed25519': fingerprintOf(1)};
       final t = build(cache, answer: true);
 
       expect(await t.verifier.call('ssh-ed25519', key(9)), isTrue);
@@ -99,24 +99,24 @@ void main() {
       final info = t.asked.single;
       expect(info.isMismatch, isTrue);
       expect(
-        info.previousFingerprintHex,
-        hexOf(1),
+          info.previousFingerprint,
+          fingerprintOf(1),
         reason: 'the dialog has to show what it is replacing, or the user is '
             'agreeing to nothing in particular',
       );
-      expect(cache['srv-1::ssh-ed25519'], hexOf(9));
-      expect(t.wrote, ['srv-1::ssh-ed25519=${hexOf(9)}']);
+      expect(cache['srv-1::ssh-ed25519'], fingerprintOf(9));
+      expect(t.wrote, ['srv-1::ssh-ed25519=${fingerprintOf(9)}']);
     });
 
     test('and refusing it leaves the key that was there', () async {
-      final cache = {'srv-1::ssh-ed25519': hexOf(1)};
+      final cache = {'srv-1::ssh-ed25519': fingerprintOf(1)};
       final t = build(cache, answer: false);
 
       expect(await t.verifier.call('ssh-ed25519', key(9)), isFalse);
 
       expect(
         cache['srv-1::ssh-ed25519'],
-        hexOf(1),
+        fingerprintOf(1),
         reason: 'replacing it here would trust whatever answered next time, '
             'which is what the user just refused',
       );
@@ -128,15 +128,32 @@ void main() {
     // A server offers whichever type the client negotiated. Filed under one
     // key, an accepted ed25519 would silently vouch for an RSA key nobody has
     // seen — and the mismatch branch above would never run.
-    final cache = {'srv-1::ssh-ed25519': hexOf(1)};
+    final cache = {'srv-1::ssh-ed25519': fingerprintOf(1)};
     final t = build(cache, answer: true);
 
     expect(await t.verifier.call('ssh-rsa', key(5)), isTrue);
 
     expect(t.asked.single.isMismatch, isFalse);
     expect(cache, {
-      'srv-1::ssh-ed25519': hexOf(1),
-      'srv-1::ssh-rsa': hexOf(5),
+      'srv-1::ssh-ed25519': fingerprintOf(1),
+      'srv-1::ssh-rsa': fingerprintOf(5),
     });
+  });
+
+  test('uses and migrates OpenSSH SHA256 fingerprints', () async {
+    final fingerprint = fingerprintOf(3);
+    final legacyMisencoded = utf8
+        .encode(fingerprint)
+        .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+        .join(':');
+    final cache = {'srv-1::ssh-ed25519': legacyMisencoded};
+    final t = build(cache, answer: false);
+
+    expect(fingerprintToOpenSsh(key(3)), fingerprint);
+    expect(normalizeStoredFingerprint(legacyMisencoded), fingerprint);
+    expect(await t.verifier.call('ssh-ed25519', key(3)), isTrue);
+    expect(t.asked, isEmpty);
+    expect(cache['srv-1::ssh-ed25519'], fingerprint);
+    expect(t.wrote, ['srv-1::ssh-ed25519=$fingerprint']);
   });
 }

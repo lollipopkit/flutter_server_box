@@ -189,7 +189,7 @@
   "sshConfigImported": "{count} servers geïmporteerd uit SSH-configuratie",
   "sshHostKeyChangedDesc": "De SSH-hostsleutel voor {serverName} is gewijzigd. Ga alleen verder als u deze server vertrouwt.",
   "sshHostKeyFingerprintMd5Base64": "Vingerafdruk (MD5 Base64): {fingerprint}",
-  "sshHostKeyFingerprintMd5Hex": "Vingerafdruk (MD5 hex): {fingerprint}",
+  "sshHostKeyFingerprintMd5Hex": "Vingerafdruk (SHA256): {fingerprint}",
   "sshHostKeyType": "Type SSH-hostsleutel",
   "sshKnownHostKeys": "Bekende hostsleutels",
   "sshKnownHostKeysTip": "Hostsleutels die deze app heeft geaccepteerd. Verwijder er een om er bij de volgende verbinding opnieuw naar gevraagd te worden.",

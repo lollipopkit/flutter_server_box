@@ -1836,7 +1836,7 @@ abstract class AppLocalizations {
   /// No description provided for @sshHostKeyFingerprintMd5Hex.
   ///
   /// In en, this message translates to:
-  /// **'Fingerprint (MD5 hex): {fingerprint}'**
+  /// **'Fingerprint (SHA256): {fingerprint}'**
   String sshHostKeyFingerprintMd5Hex(Object fingerprint);
 
   /// Label for the SSH host key type displayed in the host key verification dialog.

@@ -934,7 +934,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
-    return '指纹（MD5 十六进制）：$fingerprint';
+    return '指纹（SHA256）：$fingerprint';
   }
 
   @override
@@ -2216,7 +2216,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
-    return '指紋（MD5 十六進位）：$fingerprint';
+    return '指紋（SHA256）：$fingerprint';
   }
 
   @override

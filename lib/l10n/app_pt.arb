@@ -189,7 +189,7 @@
   "sshConfigImported": "Importados {count} servidores da configuração SSH",
   "sshHostKeyChangedDesc": "A chave de host SSH de {serverName} foi alterada. Continue apenas se confiar neste servidor.",
   "sshHostKeyFingerprintMd5Base64": "Impressão digital (MD5 Base64): {fingerprint}",
-  "sshHostKeyFingerprintMd5Hex": "Impressão digital (MD5 hex): {fingerprint}",
+  "sshHostKeyFingerprintMd5Hex": "Impressão digital (SHA256): {fingerprint}",
   "sshHostKeyType": "Tipo de chave de host SSH",
   "sshKnownHostKeys": "Chaves de anfitrião conhecidas",
   "sshKnownHostKeysTip": "Chaves de anfitrião que esta app aceitou. Elimine uma para voltar a ser questionado na próxima ligação.",
