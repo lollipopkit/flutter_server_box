@@ -169,7 +169,9 @@ jobs:
           cache-dependency-path: monitor/frontend/package-lock.json
       - name: Install dependencies
         working-directory: monitor/frontend
-        run: npm ci
+        run: |
+          npm ci
+          npm ci --prefix ../../packages/webui
       - name: Test, lint, check and build
         working-directory: monitor/frontend
         run: |
