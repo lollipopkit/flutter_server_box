@@ -414,8 +414,10 @@ async fn login(
     }))
 }
 
+/// Lowercase hex of the SHA-256, which is what the `watch_tokens` rows already
+/// hold — `hex::encode` writes the same bytes the `{:x}` of digest 0.10 did.
 fn watch_token_hash(token: &str) -> String {
-    format!("{:x}", Sha256::digest(token.as_bytes()))
+    hex::encode(Sha256::digest(token.as_bytes()))
 }
 
 fn validate_watch_client_id(client_id: &str) -> Result<&str> {
