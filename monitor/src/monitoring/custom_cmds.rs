@@ -98,32 +98,83 @@ fn read_dir(dir: &Path) -> Result<Vec<CustomCmd>, Error> {
 
 /// Replaces the directory with [`cmds`], in this order.
 ///
-/// Written aside and moved into place, so a collection cycle landing mid-write
-/// runs the old set or the new one and never half of each. The old directory
-/// goes with the move, which is also how a deleted command stops running.
+/// Written aside and installed with a rollback directory. A crash after the
+/// old directory moves aside is repaired before the next write, so an aborted
+/// update cannot permanently erase the user's commands.
 pub fn replace(cmds: &[CustomCmd]) -> Result<(), Error> {
     validate(cmds)?;
     write_dir(&dir()?, cmds)
 }
 
 fn write_dir(dir: &Path, cmds: &[CustomCmd]) -> Result<(), Error> {
-    let tmp = dir.with_file_name(format!("{}.new", script::CUSTOM_CMD_DIR_LEAF));
+    let tmp = side_path(dir, "new");
+    let backup = side_path(dir, "old");
+    if let Some(parent) = dir.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    recover_interrupted_replace(dir, &backup)?;
     let _ = std::fs::remove_dir_all(&tmp);
-    std::fs::create_dir_all(&tmp)?;
+    if let Err(error) = std::fs::create_dir_all(&tmp) {
+        let _ = std::fs::remove_dir_all(&tmp);
+        return Err(Error::Io(error));
+    }
 
     let system = crate::monitoring::system_type();
     let ext = script::custom_cmd_file_ext(system);
     for (i, cmd) in cmds.iter().enumerate() {
         let order = (i as u32 + 1) * script::CUSTOM_CMD_ORDER_STEP;
         let file = format!("{}{ext}", script::custom_cmd_file_name(order, &cmd.name));
-        std::fs::write(tmp.join(file), &cmd.cmd)?;
+        if let Err(error) = std::fs::write(tmp.join(file), &cmd.cmd) {
+            let _ = std::fs::remove_dir_all(&tmp);
+            return Err(Error::Io(error));
+        }
     }
 
-    let _ = std::fs::remove_dir_all(dir);
-    if let Some(parent) = dir.parent() {
-        std::fs::create_dir_all(parent)?;
+    if dir.exists() {
+        if let Err(error) = std::fs::rename(dir, &backup) {
+            let _ = std::fs::remove_dir_all(&tmp);
+            return Err(Error::Io(error));
+        }
+        if let Err(error) = std::fs::rename(&tmp, dir) {
+            if let Err(restore_error) = std::fs::rename(&backup, dir) {
+                return Err(Error::Io(std::io::Error::other(format!(
+                    "failed to install {}: {error}; failed to restore {}: {restore_error}",
+                    dir.display(),
+                    backup.display(),
+                ))));
+            }
+            return Err(Error::Io(error));
+        }
+    } else {
+        std::fs::rename(&tmp, dir)?;
     }
-    std::fs::rename(&tmp, dir)?;
+    if let Err(error) = std::fs::remove_dir_all(&backup)
+        && error.kind() != std::io::ErrorKind::NotFound
+    {
+        // The new directory is already installed. Leaving an old backup is
+        // safe and lets the next update clean it up; failing the save here
+        // would misleadingly tell the caller its commands were not applied.
+        tracing::warn!("Failed to remove old custom commands at {}: {error}", backup.display());
+    }
+    Ok(())
+}
+
+fn side_path(dir: &Path, suffix: &str) -> PathBuf {
+    let leaf = dir.file_name().unwrap_or_else(|| script::CUSTOM_CMD_DIR_LEAF.as_ref());
+    dir.with_file_name(format!("{}.{}", leaf.to_string_lossy(), suffix))
+}
+
+fn recover_interrupted_replace(dir: &Path, backup: &Path) -> Result<(), Error> {
+    if !backup.exists() {
+        return Ok(());
+    }
+    if !dir.exists() {
+        std::fs::rename(backup, dir)?;
+    } else if let Err(error) = std::fs::remove_dir_all(backup)
+        && error.kind() != std::io::ErrorKind::NotFound
+    {
+        return Err(Error::Io(error));
+    }
     Ok(())
 }
 
@@ -200,6 +251,22 @@ mod tests {
         write_dir(&tmp, &[cmd("kept", "echo kept")]).unwrap();
         assert_eq!(read_dir(&tmp).unwrap(), vec![cmd("kept", "echo kept")]);
         let _ = std::fs::remove_dir_all(tmp.parent().unwrap());
+    }
+
+    #[test]
+    fn an_interrupted_replace_recovers_the_old_directory() {
+        let tmp = std::env::temp_dir().join("sbm_custom_cmds_recovery/custom_cmds");
+        let parent = tmp.parent().unwrap();
+        let _ = std::fs::remove_dir_all(parent);
+        write_dir(&tmp, &[cmd("old", "echo old")]).unwrap();
+
+        let backup = side_path(&tmp, "old");
+        std::fs::rename(&tmp, &backup).unwrap();
+        recover_interrupted_replace(&tmp, &backup).unwrap();
+
+        assert_eq!(read_dir(&tmp).unwrap(), vec![cmd("old", "echo old")]);
+        assert!(!backup.exists());
+        let _ = std::fs::remove_dir_all(parent);
     }
 
     #[test]

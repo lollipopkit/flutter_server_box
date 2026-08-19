@@ -23,8 +23,14 @@
 use sbm_parser::types::Disk;
 use sbm_parser::{common, linux, ServerStatus};
 use std::fs;
+use std::fs::OpenOptions;
 use std::path::PathBuf;
-use std::process::Command;
+use std::process::{Command, Stdio};
+use std::time::{Duration, Instant};
+
+/// `df` can block on an unavailable network filesystem. Native sampling runs
+/// on the monitor loop, so an optional command may never hold it indefinitely.
+const COMMAND_TIMEOUT: Duration = Duration::from_secs(10);
 
 fn read(path: &str) -> String {
     fs::read_to_string(path).unwrap_or_default()
@@ -33,13 +39,84 @@ fn read(path: &str) -> String {
 /// Run one targeted command and return stdout, empty on any failure —
 /// matching the shared script's tolerance (a failed segment parses to empty)
 fn run(cmd: &str, args: &[&str]) -> String {
-    Command::new(cmd)
+    let mut command = Command::new(cmd);
+    command
         .args(args)
-        .output()
-        .ok()
-        .filter(|o| o.status.success())
-        .map(|o| String::from_utf8_lossy(&o.stdout).into_owned())
-        .unwrap_or_default()
+        .stdin(Stdio::null())
+        .stderr(Stdio::null());
+    run_command(command)
+}
+
+fn run_command(mut command: Command) -> String {
+    run_command_with_timeout(command, COMMAND_TIMEOUT)
+}
+
+fn run_command_with_timeout(mut command: Command, command_timeout: Duration) -> String {
+    #[cfg(unix)]
+    {
+        use std::os::unix::process::CommandExt;
+        // Keep descendants in one group so a timed-out tool cannot continue
+        // behind its direct process after the monitor has moved on.
+        command.process_group(0);
+    }
+    let Some((output, file)) = output_file() else { return String::new() };
+    command.stdout(Stdio::from(output));
+    let Ok(mut child) = command.spawn() else {
+        let _ = fs::remove_file(file);
+        return String::new();
+    };
+    let deadline = Instant::now() + command_timeout;
+    loop {
+        match child.try_wait() {
+            Ok(Some(status)) => {
+                let stdout = fs::read(&file).unwrap_or_default();
+                let _ = fs::remove_file(file);
+                return status.success().then(|| String::from_utf8_lossy(&stdout).into_owned()).unwrap_or_default();
+            }
+            Ok(None) if Instant::now() < deadline => std::thread::sleep(Duration::from_millis(10)),
+            Ok(None) | Err(_) => {
+                terminate(&mut child);
+                let _ = child.wait();
+                let _ = fs::remove_file(file);
+                return String::new();
+            }
+        }
+    }
+}
+
+/// File-backed output means a short-lived shell cannot leave this synchronous
+/// sampler blocked on an inherited stdout pipe held by one of its descendants.
+fn output_file() -> Option<(std::fs::File, PathBuf)> {
+    let base = std::env::temp_dir().join(format!("sbm-native-{}", std::process::id()));
+    for attempt in 0..16 {
+        let path = base.with_extension(format!(
+            "{}-{attempt}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .ok()?
+                .as_nanos(),
+        ));
+        if let Ok(file) = OpenOptions::new().write(true).create_new(true).open(&path) {
+            return Some((file, path));
+        }
+    }
+    None
+}
+
+fn terminate(child: &mut std::process::Child) {
+    #[cfg(unix)]
+    if let Some(id) = child.id()
+        && unsafe { kill_process_group(-(id as i32), 9) } == 0
+    {
+        return;
+    }
+    let _ = child.kill();
+}
+
+#[cfg(unix)]
+unsafe extern "C" {
+    #[link_name = "kill"]
+    fn kill_process_group(pid: i32, signal: i32) -> i32;
 }
 
 /// Concatenation of every `/etc/*-release` file, filtered to the
@@ -139,5 +216,14 @@ mod tests {
         assert!(status.mem.is_some());
         assert!(status.host.is_some());
         assert!(!status.net.is_empty(), "expected at least one network interface");
+    }
+
+    #[test]
+    fn a_stuck_native_command_is_terminated() {
+        let mut command = Command::new("sh");
+        command.args(["-c", "sleep 2"]);
+        let started = Instant::now();
+        assert!(run_command_with_timeout(command, Duration::from_millis(100)).is_empty());
+        assert!(started.elapsed() < Duration::from_secs(1));
     }
 }
