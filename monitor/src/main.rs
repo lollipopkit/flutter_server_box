@@ -3,7 +3,7 @@
 
 use anyhow::Result;
 use dotenvy::dotenv;
-use server_box_monitor::cli::cli::{build_cli, handle_matches};
+use server_box_monitor::cli::{build_cli, handle_matches};
 
 #[ntex::main]
 async fn main() -> Result<()> {

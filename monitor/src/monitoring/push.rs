@@ -1,11 +1,50 @@
 use crate::{core::config::PushConfig, utils::error::Result};
+use futures::StreamExt;
 use reqwest::Client;
 use serde_json::Value;
 use std::collections::{HashMap, VecDeque};
-use std::sync::{Mutex, OnceLock};
+use std::sync::{Arc, Mutex, OnceLock};
 use std::time::{Duration, Instant};
+use tokio::sync::Semaphore;
 use toml::Value as TomlValue;
 use tracing::{info, warn};
+
+const CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
+const REQUEST_TIMEOUT: Duration = Duration::from_secs(20);
+const MAX_RESPONSE_BYTES: usize = 64 * 1024;
+const MAX_CONCURRENT_PUSHES: usize = 4;
+
+fn http_client() -> &'static Client {
+    static CLIENT: OnceLock<Client> = OnceLock::new();
+    CLIENT.get_or_init(|| {
+        Client::builder()
+            .connect_timeout(CONNECT_TIMEOUT)
+            .timeout(REQUEST_TIMEOUT)
+            .pool_idle_timeout(Duration::from_secs(60))
+            .build()
+            .expect("valid push HTTP client configuration")
+    })
+}
+
+fn push_limit() -> &'static Arc<Semaphore> {
+    static LIMIT: OnceLock<Arc<Semaphore>> = OnceLock::new();
+    LIMIT.get_or_init(|| Arc::new(Semaphore::new(MAX_CONCURRENT_PUSHES)))
+}
+
+async fn response_text_limited(response: reqwest::Response) -> Result<String> {
+    let mut stream = response.bytes_stream();
+    let mut body = Vec::new();
+    while let Some(chunk) = stream.next().await {
+        let chunk = chunk?;
+        if body.len().saturating_add(chunk.len()) > MAX_RESPONSE_BYTES {
+            return Err(crate::utils::error::MonitorError::Push(format!(
+                "Push response exceeded {MAX_RESPONSE_BYTES} bytes"
+            )));
+        }
+        body.extend_from_slice(&chunk);
+    }
+    Ok(String::from_utf8_lossy(&body).into_owned())
+}
 
 /// Rate limit per push name: at most `times` within `window`
 pub struct PushRateLimiter {
@@ -52,6 +91,11 @@ impl PushRateLimiter {
 }
 
 pub async fn send_notification(config: &PushConfig, message: &str) -> Result<()> {
+    let _permit = push_limit()
+        .clone()
+        .acquire_owned()
+        .await
+        .map_err(|_| crate::utils::error::MonitorError::Push("Push queue is unavailable".to_string()))?;
     match config.push_type.as_str() {
         "webhook" => send_webhook_notification(config, message).await,
         "serverchan" => send_serverchan_notification(config, message).await,
@@ -66,7 +110,7 @@ pub async fn send_notification(config: &PushConfig, message: &str) -> Result<()>
 }
 
 async fn send_webhook_notification(config: &PushConfig, message: &str) -> Result<()> {
-    let client = Client::new();
+    let client = http_client();
     
     // Extract webhook configuration
     let url = config.config.get("url")
@@ -120,18 +164,22 @@ async fn send_webhook_notification(config: &PushConfig, message: &str) -> Result
     }
     
     let response = request.send().await?;
+    let status = response.status();
+    let response_text = response_text_limited(response).await?;
     
-    if response.status().is_success() {
+    if status.is_success() {
         info!("Webhook notification sent successfully to {}", config.name);
     } else {
-        warn!("Webhook notification failed: {} {}", response.status(), response.text().await?);
+        return Err(crate::utils::error::MonitorError::Push(format!(
+            "Webhook notification failed: {status} {response_text}"
+        )));
     }
     
     Ok(())
 }
 
 async fn send_serverchan_notification(config: &PushConfig, message: &str) -> Result<()> {
-    let client = Client::new();
+    let client = http_client();
     
     // Extract ServerChan configuration
     let sc_key = config.config.get("sc_key")
@@ -158,7 +206,13 @@ async fn send_serverchan_notification(config: &PushConfig, message: &str) -> Res
         .send()
         .await?;
     
-    let response_text = response.text().await?;
+    let status = response.status();
+    let response_text = response_text_limited(response).await?;
+    if !status.is_success() {
+        return Err(crate::utils::error::MonitorError::Push(format!(
+            "ServerChan notification failed: {status} {response_text}"
+        )));
+    }
     
     // Validate response
     if let Ok(parsed) = serde_json::from_str::<Value>(&response_text) {
@@ -166,20 +220,26 @@ async fn send_serverchan_notification(config: &PushConfig, message: &str) -> Res
             if code == 0 {
                 info!("ServerChan notification sent successfully to {}", config.name);
             } else {
-                warn!("ServerChan notification failed: {} - {}", code, response_text);
+                return Err(crate::utils::error::MonitorError::Push(format!(
+                    "ServerChan notification failed: {code} - {response_text}"
+                )));
             }
         } else {
-            warn!("ServerChan response missing code field: {}", response_text);
+            return Err(crate::utils::error::MonitorError::Push(format!(
+                "ServerChan response missing code field: {response_text}"
+            )));
         }
     } else {
-        warn!("Failed to parse ServerChan response: {}", response_text);
+        return Err(crate::utils::error::MonitorError::Push(format!(
+            "Failed to parse ServerChan response: {response_text}"
+        )));
     }
     
     Ok(())
 }
 
 async fn send_bark_notification(config: &PushConfig, message: &str) -> Result<()> {
-    let client = Client::new();
+    let client = http_client();
     
     // Extract Bark configuration
     let server = config.config.get("server")
@@ -236,18 +296,22 @@ async fn send_bark_notification(config: &PushConfig, message: &str) -> Result<()
     };
     
     let response = client.get(&final_url).send().await?;
+    let status = response.status();
+    let response_text = response_text_limited(response).await?;
     
-    if response.status().is_success() {
+    if status.is_success() {
         info!("Bark notification sent successfully to {}", config.name);
     } else {
-        warn!("Bark notification failed: {} {}", response.status(), response.text().await?);
+        return Err(crate::utils::error::MonitorError::Push(format!(
+            "Bark notification failed: {status} {response_text}"
+        )));
     }
     
     Ok(())
 }
 
 async fn send_ios_notification(config: &PushConfig, message: &str) -> Result<()> {
-    let client = Client::new();
+    let client = http_client();
     
     // Extract iOS configuration
     let token = config.config.get("token")
@@ -277,7 +341,7 @@ async fn send_ios_notification(config: &PushConfig, message: &str) -> Result<()>
         .await?;
     
     let status_code = response.status();
-    let response_text = response.text().await?;
+    let response_text = response_text_limited(response).await?;
     
     // Check if there's an expected response code
     if let Some(expected_code) = config.config.get("code").and_then(|v| v.as_integer())
@@ -353,6 +417,36 @@ fn url_encode(input: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    use tokio::net::TcpListener;
+
+    async fn local_response(status: u16, body: Vec<u8>) -> String {
+        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        tokio::spawn(async move {
+            let (mut socket, _) = listener.accept().await.unwrap();
+            let mut request = [0_u8; 4096];
+            let _ = socket.read(&mut request).await;
+            let reason = if status == 200 { "OK" } else { "Error" };
+            let head = format!(
+                "HTTP/1.1 {status} {reason}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+                body.len()
+            );
+            socket.write_all(head.as_bytes()).await.unwrap();
+            socket.write_all(&body).await.unwrap();
+        });
+        format!("http://{addr}")
+    }
+
+    fn webhook(url: String) -> PushConfig {
+        let mut config = toml::Table::new();
+        config.insert("url".to_string(), toml::Value::String(url));
+        PushConfig {
+            name: "test_webhook".to_string(),
+            push_type: "webhook".to_string(),
+            config,
+        }
+    }
 
     #[test]
     fn test_replace_template_string() {
@@ -367,81 +461,23 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_serverchan_notification() {
-        let config = crate::core::config::PushConfig {
-            name: "test_serverchan".to_string(),
-            push_type: "serverchan".to_string(),
-            config: {
-                let mut table = toml::Table::new();
-                table.insert("sc_key".to_string(), toml::Value::String("test_key".to_string()));
-                table.insert("title".to_string(), toml::Value::String("Test Title".to_string()));
-                table.insert("desp".to_string(), toml::Value::String("Test {{message}}".to_string()));
-                table
-            },
-        };
-
-        let result = send_serverchan_notification(&config, "Test Message").await;
-        // Since we're using a test key, this will likely fail but we're testing to structure
-        assert!(result.is_ok() || result.is_err()); // Either way is fine for structure test
+    async fn webhook_accepts_a_small_success_response() {
+        let config = webhook(local_response(200, b"ok".to_vec()).await);
+        assert!(send_notification(&config, "Test Message").await.is_ok());
     }
 
     #[tokio::test]
-    async fn test_bark_notification() {
-        let config = crate::core::config::PushConfig {
-            name: "test_bark".to_string(),
-            push_type: "bark".to_string(),
-            config: {
-                let mut table = toml::Table::new();
-                table.insert("server".to_string(), toml::Value::String("https://api.day.app".to_string()));
-                table.insert("key".to_string(), toml::Value::String("test_key".to_string()));
-                table.insert("title".to_string(), toml::Value::String("Test Title".to_string()));
-                table.insert("body".to_string(), toml::Value::String("Test {{message}}".to_string()));
-                table.insert("level".to_string(), toml::Value::String("active".to_string()));
-                table
-            },
-        };
-
-        let result = send_bark_notification(&config, "Test Message").await;
-        // Since we're using a test key, this will likely fail but we're testing structure
-        assert!(result.is_ok() || result.is_err()); // Either way is fine for structure test
+    async fn webhook_reports_an_http_failure() {
+        let config = webhook(local_response(500, b"failed".to_vec()).await);
+        let error = send_notification(&config, "Test Message").await.unwrap_err();
+        assert!(error.to_string().contains("500"));
     }
 
     #[tokio::test]
-    async fn test_send_notification_serverchan() {
-        let config = crate::core::config::PushConfig {
-            name: "test_serverchan".to_string(),
-            push_type: "serverchan".to_string(),
-            config: {
-                let mut table = toml::Table::new();
-                table.insert("sc_key".to_string(), toml::Value::String("test_key".to_string()));
-                table.insert("title".to_string(), toml::Value::String("Test".to_string()));
-                table.insert("desp".to_string(), toml::Value::String("{{message}}".to_string()));
-                table
-            },
-        };
-
-        let result = send_notification(&config, "Test Message").await;
-        assert!(result.is_ok()); // Should not panic
-    }
-
-    #[tokio::test]
-    async fn test_send_notification_bark() {
-        let config = crate::core::config::PushConfig {
-            name: "test_bark".to_string(),
-            push_type: "bark".to_string(),
-            config: {
-                let mut table = toml::Table::new();
-                table.insert("server".to_string(), toml::Value::String("https://api.day.app".to_string()));
-                table.insert("key".to_string(), toml::Value::String("test_key".to_string()));
-                table.insert("title".to_string(), toml::Value::String("Test".to_string()));
-                table.insert("body".to_string(), toml::Value::String("{{message}}".to_string()));
-                table.insert("level".to_string(), toml::Value::String("active".to_string()));
-                table
-            },
-        };
-
-        let result = send_notification(&config, "Test Message").await;
-        assert!(result.is_ok()); // Should not panic
+    async fn webhook_refuses_an_oversized_response() {
+        let config = webhook(local_response(200, vec![b'x'; MAX_RESPONSE_BYTES + 1]).await);
+        let error = send_notification(&config, "Test Message").await.unwrap_err();
+        assert!(error.to_string().contains("exceeded"));
     }
 
     #[tokio::test]
@@ -456,27 +492,4 @@ mod tests {
         assert!(result.is_ok()); // Should handle unknown type gracefully
     }
 
-    #[tokio::test]
-    async fn test_bark_notification_with_optional_params() {
-        let config = crate::core::config::PushConfig {
-            name: "test_bark_full".to_string(),
-            push_type: "bark".to_string(),
-            config: {
-                let mut table = toml::Table::new();
-                table.insert("server".to_string(), toml::Value::String("https://api.day.app".to_string()));
-                table.insert("key".to_string(), toml::Value::String("test_key".to_string()));
-                table.insert("title".to_string(), toml::Value::String("Test Title".to_string()));
-                table.insert("body".to_string(), toml::Value::String("Test {{message}}".to_string()));
-                table.insert("level".to_string(), toml::Value::String("timeSensitive".to_string()));
-                table.insert("group".to_string(), toml::Value::String("test_group".to_string()));
-                table.insert("sound".to_string(), toml::Value::String("default".to_string()));
-                table.insert("icon".to_string(), toml::Value::String("https://example.com/icon.png".to_string()));
-                table.insert("url".to_string(), toml::Value::String("https://example.com".to_string()));
-                table
-            },
-        };
-
-        let result = send_bark_notification(&config, "Test Message").await;
-        assert!(result.is_ok() || result.is_err()); // Either way is fine for structure test
-    }
 }
