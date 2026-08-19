@@ -13,7 +13,7 @@ use crate::{
     core::config::Config,
     core::config_file,
     core::remote_access::RemoteAccess,
-    monitoring::monitoring::{self, LiveSettings, SystemMetrics},
+    monitoring::{self, LiveSettings, SystemMetrics},
     monitoring::size::Size,
     monitoring::velocity::{NetworkSpeedInfo, VelocityAnalysisResponse, VelocityManager},
     utils::error::{MonitorError, Result},
@@ -23,6 +23,7 @@ use ntex::web::{self, App, HttpRequest, HttpResponse, HttpServer, middleware::Lo
 use ntex_files::Files;
 use sbm_parser::{SystemType, capabilities::Capabilities};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use sqlx::SqlitePool;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, OnceLock};
@@ -31,6 +32,7 @@ use tokio::sync::{Mutex, RwLock, Semaphore};
 use tracing::info;
 
 const MAX_CONCURRENT_PASSWORD_CHECKS: usize = 4;
+const WATCH_TOKEN_LIFETIME: chrono::Duration = chrono::Duration::days(90);
 
 fn password_check_limit() -> &'static Arc<Semaphore> {
     static LIMIT: OnceLock<Arc<Semaphore>> = OnceLock::new();
@@ -159,6 +161,17 @@ struct LoginResponse {
     token: String,
 }
 
+#[derive(Deserialize)]
+struct WatchTokenRequest {
+    client_id: String,
+}
+
+#[derive(Serialize)]
+struct WatchTokenResponse {
+    token: String,
+    expires_at: i64,
+}
+
 #[derive(Serialize)]
 struct StatusResponse {
     name: String,
@@ -199,6 +212,11 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
             .service(
                 web::scope("/api/v1")
                     .route("/login", web::post().to(login))
+                    .service(
+                        web::resource("/watch-token")
+                            .route(web::post().to(issue_watch_token))
+                            .route(web::delete().to(revoke_watch_token)),
+                    )
                     .route("/status", web::get().to(get_status))
                     .route("/metrics", web::get().to(get_metrics))
                     .route("/capabilities", web::get().to(get_capabilities))
@@ -396,6 +414,77 @@ async fn login(
     }))
 }
 
+fn watch_token_hash(token: &str) -> String {
+    format!("{:x}", Sha256::digest(token.as_bytes()))
+}
+
+fn validate_watch_client_id(client_id: &str) -> Result<&str> {
+    let client_id = client_id.trim();
+    if client_id.is_empty() || client_id.len() > 128 {
+        return Err(MonitorError::Parse(
+            "watch token client_id must be 1..=128 characters".to_string(),
+        ));
+    }
+    Ok(client_id)
+}
+
+async fn issue_watch_token(
+    req: HttpRequest,
+    app_state: web::types::State<Arc<AppState>>,
+    payload: web::types::Json<WatchTokenRequest>,
+) -> Result<HttpResponse> {
+    let claims = match verify_auth(&req, &app_state.config.get_jwt_secret()) {
+        Ok(claims) => claims,
+        Err(_) => {
+            return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
+                error: "Invalid or missing token".to_string(),
+            }));
+        }
+    };
+    let client_id = validate_watch_client_id(&payload.client_id)?;
+    let token = format!("sbw_{}", crate::utils::secrets::random_hex(32)?);
+    let token_hash = watch_token_hash(&token);
+    let now = chrono::Utc::now().timestamp();
+    let expires_at = (chrono::Utc::now() + WATCH_TOKEN_LIFETIME).timestamp();
+    sqlx::query(
+        "INSERT INTO watch_tokens(subject, client_id, token_hash, created_at, expires_at) \
+         VALUES (?, ?, ?, ?, ?) \
+         ON CONFLICT(subject, client_id) DO UPDATE SET \
+         token_hash = excluded.token_hash, created_at = excluded.created_at, \
+         expires_at = excluded.expires_at",
+    )
+    .bind(&claims.sub)
+    .bind(client_id)
+    .bind(token_hash)
+    .bind(now)
+    .bind(expires_at)
+    .execute(&app_state.db)
+    .await?;
+    Ok(HttpResponse::Ok().json(&WatchTokenResponse { token, expires_at }))
+}
+
+async fn revoke_watch_token(
+    req: HttpRequest,
+    app_state: web::types::State<Arc<AppState>>,
+    payload: web::types::Json<WatchTokenRequest>,
+) -> Result<HttpResponse> {
+    let claims = match verify_auth(&req, &app_state.config.get_jwt_secret()) {
+        Ok(claims) => claims,
+        Err(_) => {
+            return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
+                error: "Invalid or missing token".to_string(),
+            }));
+        }
+    };
+    let client_id = validate_watch_client_id(&payload.client_id)?;
+    sqlx::query("DELETE FROM watch_tokens WHERE subject = ? AND client_id = ?")
+        .bind(&claims.sub)
+        .bind(client_id)
+        .execute(&app_state.db)
+        .await?;
+    Ok(HttpResponse::Ok().json(&serde_json::json!({ "status": "revoked" })))
+}
+
 // TODO: Go-compat endpoint (matches the legacy GET /status response format, unauthenticated); remove once flutter_server_box migrates
 async fn get_status_compat(
     app_state: web::types::State<Arc<AppState>>,
@@ -427,7 +516,7 @@ async fn get_status(
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse> {
     // Verify JWT token
-    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
+    if verify_read_auth(&req, &app_state).await.is_err() {
         return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
             error: "Invalid or missing token".to_string(),
         }));
@@ -474,7 +563,7 @@ async fn get_metrics(
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse> {
     // Verify JWT token
-    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
+    if verify_read_auth(&req, &app_state).await.is_err() {
         return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
             error: "Invalid or missing token".to_string(),
         }));
@@ -880,7 +969,7 @@ async fn get_metrics_history(
     req: HttpRequest,
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse> {
-    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
+    if verify_read_auth(&req, &app_state).await.is_err() {
         return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
             error: "Invalid or missing token".to_string(),
         }));
@@ -1047,7 +1136,7 @@ async fn touch_viewer_heartbeat(app_state: &AppState) {
     *app_state.last_viewer_seen.write().await = chrono::Utc::now();
 }
 
-pub(crate) fn verify_auth(req: &HttpRequest, jwt_secret: &str) -> Result<Claims> {
+fn bearer_token(req: &HttpRequest) -> Result<&str> {
     let auth_header = req
         .headers()
         .get("Authorization")
@@ -1065,8 +1154,32 @@ pub(crate) fn verify_auth(req: &HttpRequest, jwt_secret: &str) -> Result<Claims>
         ));
     }
 
-    let token = &auth_header[7..];
-    auth::verify_token(token, jwt_secret)
+    Ok(&auth_header[7..])
+}
+
+pub(crate) fn verify_auth(req: &HttpRequest, jwt_secret: &str) -> Result<Claims> {
+    auth::verify_token(bearer_token(req)?, jwt_secret)
+}
+
+async fn verify_read_auth(req: &HttpRequest, app_state: &AppState) -> Result<String> {
+    let token = bearer_token(req)?;
+    if let Ok(claims) = auth::verify_token(token, &app_state.config.get_jwt_secret()) {
+        return Ok(claims.sub);
+    }
+    verify_watch_token(&app_state.db, token, chrono::Utc::now().timestamp()).await
+}
+
+async fn verify_watch_token(db: &SqlitePool, token: &str, now: i64) -> Result<String> {
+    let token_hash = watch_token_hash(token);
+    let subject = sqlx::query_scalar::<_, String>(
+        "SELECT subject FROM watch_tokens WHERE token_hash = ? AND expires_at > ?",
+    )
+    .bind(token_hash)
+    .bind(now)
+    .fetch_optional(db)
+    .await?
+    .ok_or_else(|| MonitorError::Auth("Invalid or expired token".to_string()))?;
+    Ok(subject)
 }
 
 fn format_bytes(bytes: u64) -> String {
@@ -1083,5 +1196,62 @@ fn format_bytes(bytes: u64) -> String {
         format!("{} {}", bytes, UNITS[unit_index])
     } else {
         format!("{:.1} {}", size, UNITS[unit_index])
+    }
+}
+
+#[cfg(test)]
+mod watch_token_tests {
+    use super::*;
+    use sqlx::sqlite::SqlitePoolOptions;
+
+    async fn pool() -> SqlitePool {
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        sqlx::query(
+            "CREATE TABLE watch_tokens (\
+             subject TEXT NOT NULL, client_id TEXT NOT NULL, \
+             token_hash TEXT NOT NULL UNIQUE, created_at INTEGER NOT NULL, \
+             expires_at INTEGER NOT NULL, PRIMARY KEY(subject, client_id))",
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+        pool
+    }
+
+    #[tokio::test]
+    async fn watch_tokens_are_hashed_expiring_and_revocable() {
+        let pool = pool().await;
+        let token = "sbw_secret";
+        sqlx::query(
+            "INSERT INTO watch_tokens(subject, client_id, token_hash, created_at, expires_at) \
+             VALUES (?, ?, ?, ?, ?)",
+        )
+        .bind("admin")
+        .bind("watch:one")
+        .bind(watch_token_hash(token))
+        .bind(10_i64)
+        .bind(20_i64)
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        assert_eq!(verify_watch_token(&pool, token, 19).await.unwrap(), "admin");
+        assert!(verify_watch_token(&pool, token, 20).await.is_err());
+        let stored: String = sqlx::query_scalar("SELECT token_hash FROM watch_tokens")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_ne!(stored, token);
+
+        sqlx::query("DELETE FROM watch_tokens WHERE client_id = ?")
+            .bind("watch:one")
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert!(verify_watch_token(&pool, token, 19).await.is_err());
     }
 }

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/provider/server/monitor_http.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:watch_connectivity/watch_connectivity.dart';
 
@@ -36,7 +37,7 @@ final class WatchSync {
   /// Bumped when the payload shape changes in a way an older watch app cannot
   /// read. The watch ignores keys it does not know, so additive changes do not
   /// need it.
-  static const _payloadVersion = 2;
+  static const _payloadVersion = 3;
 
   /// Coalesces the burst of box events one server edit produces.
   static const _pushDebounce = Duration(milliseconds: 500);
@@ -49,6 +50,8 @@ final class WatchSync {
   StreamSubscription<Map<String, dynamic>>? _activationSub;
   StreamSubscription<dynamic>? _serverStoreSub;
   Timer? _pushDebouncer;
+  Future<void>? _pushing;
+  bool _pushDirty = false;
 
   /// Completes once [_wc] is either connected or known to be unavailable, so
   /// callers racing app startup wait rather than silently doing nothing.
@@ -72,14 +75,31 @@ final class WatchSync {
   }
 
   /// Rebuilds the payload and hands it to the watch.
-  Future<void> push() async {
-    if (!isIOS) return;
+  Future<void> push() {
+    if (!isIOS) return Future.value();
+    _pushDirty = true;
+    return _pushing ??= _drainPush();
+  }
+
+  Future<void> _drainPush() async {
+    try {
+      while (_pushDirty) {
+        _pushDirty = false;
+        await _pushOnce();
+      }
+    } finally {
+      _pushing = null;
+      if (_pushDirty) _pushing = _drainPush();
+    }
+  }
+
+  Future<void> _pushOnce() async {
     await _setupOnce();
 
     final wc = _wc;
     if (wc == null) return;
 
-    final payload = buildPayload();
+    final payload = await buildPayload();
 
     try {
       await wc.updateApplicationContext(payload);
@@ -100,23 +120,58 @@ final class WatchSync {
   }
 
   /// What the watch app is told to display.
-  Map<String, dynamic> buildPayload() => payloadFrom(
-    selectedIds: Stores.setting.watchServerIds.fetch(),
-    lookup: (id) => Stores.server.get<Spi>(id),
-    // TODO: drop with `SettingStore.watchLegacyUrls`.
-    legacyUrls: Stores.setting.watchLegacyUrls.fetch(),
-  );
+  Future<Map<String, dynamic>> buildPayload() async {
+    final selectedIds = Stores.setting.watchServerIds.fetch();
+    final tokens = await _existingTokens();
+    for (final id in selectedIds) {
+      final spi = Stores.server.get<Spi>(id);
+      final monitor = spi?.monitor;
+      if (spi == null || monitor == null) continue;
+      final client = MonitorHttpClient(monitor);
+      try {
+        tokens[id] = await client.issueWatchToken('watch:${spi.id}');
+      } catch (e, s) {
+        Loggers.app.warning('Failed to issue read-only watch token for $id', e, s);
+      } finally {
+        client.dispose();
+      }
+    }
+    return payloadFrom(
+      selectedIds: selectedIds,
+      lookup: (id) => Stores.server.get<Spi>(id),
+      tokens: tokens,
+      // TODO: drop with `SettingStore.watchLegacyUrls`.
+      legacyUrls: Stores.setting.watchLegacyUrls.fetch(),
+    );
+  }
+
+  Future<Map<String, String>> _existingTokens() async {
+    try {
+      final raw = await _wc?.applicationContext;
+      final servers = raw?['servers'];
+      if (servers is! List) return {};
+      return {
+        for (final entry in servers.whereType<Map>())
+          if (entry['id'] is String && entry['token'] is String)
+            entry['id'] as String: entry['token'] as String,
+      };
+    } catch (e, s) {
+      Loggers.app.info('Could not reuse the current watch token context', e, s);
+      return {};
+    }
+  }
 
   /// The payload as a pure function of the selection, so the shape the watch
   /// depends on can be tested without a Hive box behind it.
   ///
-  /// `servers` carries monitor credentials, so it only ever contains servers
-  /// the user explicitly picked for the watch. `urls` is the pre-v2 shape and
+  /// `servers` carries scoped read-only tokens, so it only ever contains
+  /// servers the user explicitly picked for the watch. `urls` is the pre-v2 shape and
   /// is still emitted so a watch app that has not updated yet keeps working.
   @visibleForTesting
   static Map<String, dynamic> payloadFrom({
     required List<String> selectedIds,
     required Spi? Function(String id) lookup,
+    required Map<String, String> tokens,
     required List<String> legacyUrls,
   }) {
     final servers = <Map<String, dynamic>>[];
@@ -126,13 +181,14 @@ final class WatchSync {
       // picked; sending it would give the watch an entry it can never load.
       final monitor = spi?.monitor;
       if (spi == null || monitor == null) continue;
+      final token = tokens[id];
+      if (token == null || token.isEmpty) continue;
 
       servers.add({
         'id': spi.id,
         'name': spi.name,
         'addr': monitor.addr.trim(),
-        if (monitor.user?.isNotEmpty ?? false) 'user': monitor.user,
-        if (monitor.pwd?.isNotEmpty ?? false) 'pwd': monitor.pwd,
+        'token': token,
         'ignoreCert': monitor.ignoreCert,
       });
     }
@@ -176,7 +232,7 @@ final class WatchSync {
   Future<Map<String, dynamic>> _onWatchAsked(Map<String, dynamic> msg) async {
     if (msg['action'] != 'requestData') return const {};
 
-    final payload = buildPayload();
+    final payload = await buildPayload();
     // The watch is holding whatever it just got; the stored context has to say
     // the same thing, or the next launch would hand it something older.
     final wc = _wc;
@@ -207,8 +263,8 @@ final class WatchSync {
     _activationSub = wc.activationStream.listen((event) {
       if (event['isActivated'] == true) unawaited(push());
     });
-    // A server's monitor address or password can change without the watch
-    // selection changing, and the watch would keep using the stale copy.
+    // A server's monitor address or login can change without the watch
+    // selection changing, and issuing again also rotates the scoped token.
     _serverStoreSub = Stores.server.box.watch().listen((_) => _schedulePush());
   }
 
@@ -220,6 +276,7 @@ final class WatchSync {
   void dispose() {
     _pushDebouncer?.cancel();
     _pushDebouncer = null;
+    _pushDirty = false;
     unawaited(_activationSub?.cancel());
     _activationSub = null;
     unawaited(_serverStoreSub?.cancel());

@@ -13,9 +13,8 @@ import Foundation
 ///
 /// - The App Group holds the server list and the last reading, because the
 ///   widget process has to read them too.
-/// - The Keychain holds monitor passwords. `UserDefaults` is a plist on disk;
-///   a credential that opens a shell on someone's server does not belong there
-///   just because it is convenient.
+/// - The Keychain holds scoped monitor tokens. `UserDefaults` is a plist on
+///   disk; even a read-only bearer credential does not belong there.
 enum WatchStore {
     /// Falls back to `.standard` so that a build whose App Group entitlement
     /// is missing or mis-provisioned still works as an app — only the widget
@@ -24,7 +23,8 @@ enum WatchStore {
         UserDefaults(suiteName: watchAppGroupId) ?? .standard
     }
 
-    private static let keychainService = "tech.lolli.toolbox.watch.monitor"
+    private static let keychainService = "tech.lolli.toolbox.watch.monitor.token"
+    private static let legacyPasswordService = "tech.lolli.toolbox.watch.monitor"
 
     // MARK: - Servers
 
@@ -37,14 +37,14 @@ enum WatchStore {
         guard let data = try? JSONEncoder().encode(servers) else { return }
         defaults.set(data, forKey: WatchKeys.servers)
 
-        // A server the phone stopped sending must not leave its password (or a
+        // A server the phone stopped sending must not leave its token (or a
         // stale reading) behind on the watch.
         let live = Set(servers.map(\.id))
         for id in snapshots().keys where !live.contains(id) {
             removeSnapshot(id: id)
         }
-        for id in passwordAccounts() where !live.contains(id) {
-            setPassword(nil, for: id)
+        for id in tokenAccounts() where !live.contains(id) {
+            setToken(nil, for: id)
         }
     }
 
@@ -83,9 +83,9 @@ enum WatchStore {
         defaults.set(data, forKey: WatchKeys.snapshots)
     }
 
-    // MARK: - Passwords
+    // MARK: - Tokens
 
-    static func password(for id: String) -> String? {
+    static func token(for id: String) -> String? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: keychainService,
@@ -100,15 +100,21 @@ enum WatchStore {
         return String(data: data, encoding: .utf8)
     }
 
-    static func setPassword(_ password: String?, for id: String) {
+    static func setToken(_ token: String?, for id: String) {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: keychainService,
             kSecAttrAccount as String: id,
         ]
         SecItemDelete(query as CFDictionary)
+        let legacyQuery: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: legacyPasswordService,
+            kSecAttrAccount as String: id,
+        ]
+        SecItemDelete(legacyQuery as CFDictionary)
 
-        guard let password, !password.isEmpty, let data = password.data(using: .utf8) else { return }
+        guard let token, !token.isEmpty, let data = token.data(using: .utf8) else { return }
         var attrs = query
         attrs[kSecValueData as String] = data
         // The watch is unlocked whenever it is on the wrist, and a refresh may
@@ -117,7 +123,7 @@ enum WatchStore {
         SecItemAdd(attrs as CFDictionary, nil)
     }
 
-    private static func passwordAccounts() -> [String] {
+    private static func tokenAccounts() -> [String] {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: keychainService,

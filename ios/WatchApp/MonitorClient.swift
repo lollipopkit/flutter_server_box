@@ -2,9 +2,8 @@
 //  MonitorClient.swift
 //  WatchEnd Watch App
 //
-//  Talks to one server's `monitor` agent, the same way the Flutter app's
-//  `MonitorHttpClient` does: log in for a JWT, then read `/api/v1/metrics` and
-//  `/api/v1/metrics/history`.
+//  Reads one server's `/api/v1/metrics` and `/api/v1/metrics/history` with the scoped,
+//  read-only token the phone obtained from the agent.
 //
 //  The watch fetches for itself rather than being fed by the phone, so a watch
 //  on Wi-Fi away from its phone still updates.
@@ -41,11 +40,8 @@ struct MonitorReading {
 }
 
 final class MonitorClient: NSObject {
-    /// One client per server, so the JWT outlives a single refresh.
-    ///
-    /// Logging in costs the agent a bcrypt verification (~100ms by design); a
-    /// fresh client per wrist raise would pay it every time and count against
-    /// the agent's login throttle.
+    /// One client per server, so its URLSession connection pool outlives a
+    /// single refresh.
     private static var cache: [String: (server: WatchServer, client: MonitorClient)] = [:]
     private static let cacheLock = NSLock()
 
@@ -53,9 +49,8 @@ final class MonitorClient: NSObject {
         cacheLock.lock()
         defer { cacheLock.unlock() }
 
-        // Keyed by id but compared by value: an address, user or password the
-        // phone changed must not keep talking to the old endpoint with the old
-        // token.
+        // Keyed by id but compared by value: an address or certificate setting
+        // the phone changed must not keep talking to the old endpoint.
         if let entry = cache[server.id], entry.server == server {
             return entry.client
         }
@@ -64,19 +59,8 @@ final class MonitorClient: NSObject {
         return client
     }
 
-    /// Drops the cached token, so the next call logs in again.
-    ///
-    /// Used when a password may have changed underneath us — the credential
-    /// lives in the Keychain and is not part of `WatchServer`'s identity.
-    static func forget(id: String) {
-        cacheLock.lock()
-        defer { cacheLock.unlock() }
-        cache[id] = nil
-    }
-
     let server: WatchServer
 
-    private var token: String?
     private lazy var session: URLSession = URLSession(
         configuration: .default,
         delegate: self,
@@ -114,7 +98,7 @@ final class MonitorClient: NSObject {
     // MARK: - monitor /api/v1
 
     private func loadMetrics() async throws -> MonitorReading {
-        let metrics: Metrics = try await authed { try await self.get("/api/v1/metrics") }
+        let metrics: Metrics = try await get("/api/v1/metrics")
         return MonitorReading(
             name: metrics.server_name,
             cpu: Double(metrics.cpu_usage),
@@ -128,41 +112,7 @@ final class MonitorClient: NSObject {
     }
 
     private func loadHistory(minutes: Int = 60) async throws -> [HistoryPoint] {
-        try await authed { try await self.get("/api/v1/metrics/history?minutes=\(minutes)") }
-    }
-
-    /// Runs `fn` with a token, taking one first if there is none and taking a
-    /// fresh one once if the agent rejects the one we have.
-    private func authed<T: Decodable>(_ fn: @escaping () async throws -> T) async throws -> T {
-        if token == nil { try await login() }
-        do {
-            return try await fn()
-        } catch MonitorError.http(401, _) {
-            token = nil
-            try await login()
-            return try await fn()
-        }
-    }
-
-    private func login() async throws {
-        guard let url = URL(string: base + "/api/v1/login") else {
-            throw MonitorError.badUrl(base)
-        }
-        var req = URLRequest(url: url)
-        req.httpMethod = "POST"
-        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.httpBody = try? JSONSerialization.data(withJSONObject: [
-            "username": server.user ?? "",
-            "password": WatchStore.password(for: server.id) ?? "",
-        ])
-
-        let data = try await send(req)
-        guard let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let token = obj["token"] as? String, !token.isEmpty
-        else {
-            throw MonitorError.decoding("No token in login response")
-        }
-        self.token = token
+        try await get("/api/v1/metrics/history?minutes=\(minutes)")
     }
 
     private func get<T: Decodable>(_ path: String) async throws -> T {
@@ -170,9 +120,10 @@ final class MonitorClient: NSObject {
             throw MonitorError.badUrl(base + path)
         }
         var req = URLRequest(url: url)
-        if let token {
-            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        guard let token = WatchStore.token(for: server.id), !token.isEmpty else {
+            throw MonitorError.http(401, "No read-only watch token")
         }
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         let data = try await send(req)
         do {
             return try JSONDecoder().decode(T.self, from: data)

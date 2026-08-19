@@ -30,11 +30,13 @@ void main() {
   Map<String, dynamic> payload({
     required List<String> selectedIds,
     List<Spi> servers = const [],
+    Map<String, String> tokens = const {},
     List<String> legacyUrls = const [],
   }) {
     return WatchSync.payloadFrom(
       selectedIds: selectedIds,
       lookup: (id) => servers.where((e) => e.id == id).firstOrNull,
+      tokens: tokens,
       legacyUrls: legacyUrls,
     );
   }
@@ -43,19 +45,22 @@ void main() {
     final result = payload(
       selectedIds: ['a'],
       servers: [monitorSpi(id: 'a', name: 'Home', ignoreCert: true)],
+      tokens: const {'a': 'watch-token'},
     );
 
-    expect(result['v'], 2);
+    expect(result['v'], 3);
     expect(result['servers'], [
       {
         'id': 'a',
         'name': 'Home',
         'addr': 'https://10.0.0.1:3770',
-        'user': 'admin',
-        'pwd': 'secret',
+        'token': 'watch-token',
         'ignoreCert': true,
       },
     ]);
+    final server = (result['servers'] as List).single as Map;
+    expect(server.containsKey('user'), isFalse);
+    expect(server.containsKey('pwd'), isFalse);
   });
 
   test('keeps the selection order, which is the order of the watch pages', () {
@@ -66,6 +71,7 @@ void main() {
         monitorSpi(id: 'b', name: 'B'),
         monitorSpi(id: 'c', name: 'C'),
       ],
+      tokens: const {'a': 'a-token', 'b': 'b-token', 'c': 'c-token'},
     );
 
     final names = (result['servers'] as List).map((e) => e['name']).toList();
@@ -76,6 +82,7 @@ void main() {
     final result = payload(
       selectedIds: ['gone', 'a'],
       servers: [monitorSpi(id: 'a', name: 'A')],
+      tokens: const {'a': 'a-token'},
     );
 
     expect((result['servers'] as List).single['id'], 'a');
@@ -90,6 +97,7 @@ void main() {
         spiFixture(name: 'SSH only', id: 'ssh', ip: '10.0.0.9'),
         monitorSpi(id: 'a', name: 'A'),
       ],
+      tokens: const {'a': 'a-token', 'ssh': 'ssh-token'},
     );
 
     expect((result['servers'] as List).single['id'], 'a');
@@ -99,22 +107,19 @@ void main() {
     final result = payload(
       selectedIds: ['blank'],
       servers: [monitorSpi(id: 'blank', name: 'Blank', addr: '   ')],
+      tokens: const {'blank': 'blank-token'},
     );
 
     expect(result['servers'], isEmpty);
   });
 
-  test('omits empty credentials instead of sending blanks', () {
-    // An agent with authentication disabled has neither; sending `""` would
-    // make the watch attempt a login with an empty username.
+  test('drops a server when no scoped token could be issued', () {
     final result = payload(
       selectedIds: ['a'],
       servers: [monitorSpi(id: 'a', name: 'A', user: '', pwd: '')],
     );
 
-    final server = (result['servers'] as List).single as Map;
-    expect(server.containsKey('user'), isFalse);
-    expect(server.containsKey('pwd'), isFalse);
+    expect(result['servers'], isEmpty);
   });
 
   test('trims the address so the watch can append paths to it', () {
@@ -123,6 +128,7 @@ void main() {
       servers: [
         monitorSpi(id: 'a', name: 'A', addr: '  https://10.0.0.1:3770 '),
       ],
+      tokens: const {'a': 'a-token'},
     );
 
     expect((result['servers'] as List).single['addr'], 'https://10.0.0.1:3770');

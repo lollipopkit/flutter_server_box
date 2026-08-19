@@ -43,6 +43,7 @@ sqlx = { version = "0.9", features = [
 # rust_crypto instead of aws_lc_rs: pure Rust, no cmake/assembly dependency for static musl builds
 jsonwebtoken = { version = "11.0", default-features = false, features = ["rust_crypto"] }
 bcrypt = "0.19"
+sha2 = "0.10"
 
 # Configuration
 dotenvy = "0.15"
@@ -53,7 +54,7 @@ rpassword = "7"
 
 # HTTP client for push notifications
 # rustls instead of native-tls: consistent with sqlx, static musl builds without OpenSSL
-reqwest = { version = "0.13", default-features = false, features = ["json", "rustls", "charset", "http2"] }
+reqwest = { version = "0.13", default-features = false, features = ["json", "rustls", "charset", "http2", "stream"] }
 
 # SSH client for the browser terminal. `ring` rather than the default
 # aws-lc-rs, matching the backend rustls and jsonwebtoken are configured with,
