@@ -1,19 +1,15 @@
-import 'package:fl_lib/fl_lib.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:meta/meta.dart';
 
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/store/cached_store.dart';
 import 'package:server_box/data/store/server.dart';
 
-class PrivateKeyStore extends CachedHiveStore<PrivateKeyInfo> {
+class PrivateKeyStore extends CachedSqliteStore<PrivateKeyInfo> {
   PrivateKeyStore._() : super('key');
 
-  /// See [ServerStore.forBox].
+  /// See [ServerStore.forTest].
   @visibleForTesting
-  PrivateKeyStore.forBox(Box<dynamic> testBox) : super('key_test') {
-    box = testBox;
-  }
+  PrivateKeyStore.forTest() : super('key_test');
 
   static final instance = PrivateKeyStore._();
 
@@ -31,20 +27,6 @@ class PrivateKeyStore extends CachedHiveStore<PrivateKeyInfo> {
         if (pki.id == id) return pki;
       }
     }
-    return _decode(box.get(id));
-  }
-
-  PrivateKeyInfo? _decode(dynamic val) {
-    if (val is PrivateKeyInfo) return val;
-    if (val is Map<dynamic, dynamic>) {
-      final map = val.toStrDynMap;
-      if (map == null) return null;
-      try {
-        return PrivateKeyInfo.fromJson(map as Map<String, dynamic>);
-      } catch (e) {
-        dprint('Parsing PrivateKeyInfo from JSON', e);
-      }
-    }
-    return null;
+    return fetchOneRaw(id);
   }
 }

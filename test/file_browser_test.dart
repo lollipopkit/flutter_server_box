@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/res/store.dart';
@@ -96,18 +95,16 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late Directory tempDir;
-  late Box<dynamic> settingBox;
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-browser-');
-    Hive.init(tempDir.path);
-    settingBox = await Hive.openBox<dynamic>('setting_test');
-    getIt.registerSingleton<SettingStore>(SettingStore.forBox(settingBox));
+    SqliteDb.openInMemory();
+    getIt.registerSingleton<SettingStore>(SettingStore.forTest());
   });
 
   tearDown(() async {
     await getIt.reset();
-    await settingBox.close();
+    await SqliteDb.close();
     await tempDir.delete(recursive: true);
   });
 

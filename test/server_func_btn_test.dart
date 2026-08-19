@@ -1,7 +1,5 @@
-import 'dart:io';
-
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
@@ -9,32 +7,25 @@ import 'package:server_box/data/store/setting.dart';
 /// What `ServerFuncBtn.autoAddNewFuncs` does to a row the user has already
 /// arranged, across an upgrade.
 void main() {
-  late Directory tempDir;
-  late Box<dynamic> box;
+  late SettingStore setting;
 
-  setUpAll(() async {
-    tempDir = await Directory.systemTemp.createTemp('server-box-func-btn-');
-    Hive.init(tempDir.path);
-    box = await Hive.openBox<dynamic>('setting_test');
-    getIt.registerSingleton<SettingStore>(SettingStore.forBox(box));
+  setUp(() {
+    SqliteDb.openInMemory();
+    setting = SettingStore.forTest();
+    getIt.registerSingleton<SettingStore>(setting);
   });
 
-  setUp(() async {
-    await box.clear();
-  });
-
-  tearDownAll(() async {
+  tearDown(() async {
     await getIt.reset();
-    await box.close();
-    await tempDir.delete(recursive: true);
+    await SqliteDb.close();
   });
 
   /// The stored row, as indices — what the setting actually holds.
-  List<int> row() => (box.get('serverBtns') as List?)?.cast<int>() ?? const [];
+  List<int> row() => setting.serverFuncBtns.get();
 
   test('adds every entry that shipped during the upgrade', () async {
     // A row from before systemd (1058), portForward (1340) and power (1481).
-    await box.put('serverBtns', [
+    setting.serverFuncBtns.put([
       ServerFuncBtn.terminal.index,
       ServerFuncBtn.files.index,
     ]);
@@ -51,7 +42,7 @@ void main() {
   });
 
   test('adds nothing for an upgrade that shipped no new entry', () async {
-    await box.put('serverBtns', [ServerFuncBtn.terminal.index]);
+    setting.serverFuncBtns.put([ServerFuncBtn.terminal.index]);
 
     ServerFuncBtn.autoAddNewFuncs(1481, 1600);
 
@@ -63,7 +54,7 @@ void main() {
     // install has been running 1500, and the user took it out of the row. An
     // upgrade to 1600 must not put it back — and would have, when the rule was
     // `to >= addedVersion` alone.
-    await box.put('serverBtns', [
+    setting.serverFuncBtns.put([
       ServerFuncBtn.terminal.index,
       ServerFuncBtn.systemd.index,
     ]);
@@ -74,7 +65,7 @@ void main() {
   });
 
   test('an entry already in the row is not added twice', () async {
-    await box.put('serverBtns', [
+    setting.serverFuncBtns.put([
       ServerFuncBtn.power.index,
       ServerFuncBtn.terminal.index,
     ]);
@@ -94,10 +85,11 @@ void main() {
     ServerFuncBtn.autoAddNewFuncs(0, 1600);
 
     expect(
-      box.get('serverBtns'),
+      setting.get<List>('serverBtns'),
       isNull,
       reason: 'nothing was written, so the defaults still apply',
     );
+    expect(row(), ServerFuncBtn.defaultIdxs);
     expect(
       ServerFuncBtn.defaultIdxs,
       containsAll([

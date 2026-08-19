@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:meta/meta.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/net_view.dart';
@@ -10,13 +9,13 @@ import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/res/default.dart';
 
-class SettingStore extends HiveStore {
+class SettingStore extends SqliteStore {
   SettingStore._() : super('setting');
 
+  /// A distinct store name, so a test on `SqliteDb.openInMemory()` cannot
+  /// collide with another test's rows.
   @visibleForTesting
-  SettingStore.forBox(Box<dynamic> testBox) : super('setting_test') {
-    box = testBox;
-  }
+  SettingStore.forTest() : super('setting_test');
 
   static final instance = SettingStore._();
 
@@ -329,7 +328,26 @@ class SettingStore extends HiveStore {
   /// whatever the last unversioned release wrote, and that is v2 (Spi with a
   /// flat SSH layout plus `monitorHttp`). A fresh install overwrites this with
   /// [SchemaVersion.current] before any migration runs.
-  late final schemaVersion = propertyDefault('schemaVersion', 2);
+  ///
+  /// An **internal** key, so `getAllMap` leaves it out of a backup and `clear`
+  /// leaves it alone. Under a plain key it travelled: restoring a backup taken
+  /// on a device still on the previous release wrote that device's version
+  /// back, and the next launch found a version with no migration registered for
+  /// it and threw `SchemaTooNewException`'s counterpart — a `StateError` that
+  /// nothing catches.
+  ///
+  /// Being internal also means it never stamps `lastUpdateTs`, which it must
+  /// not: it describes this device's storage, so counting a migration writing
+  /// it as a user edit would make a device that has only just upgraded claim
+  /// the newer copy of everything at the next sync.
+  ///
+  /// TODO: drop `schemaVersion` from `removeRetiredKeys` once no install can
+  /// still carry the plain-key copy this replaced.
+  late final schemaVersion = propertyDefault(
+    '${StoreDefaults.prefixKey}schemaVersion',
+    2,
+    updateLastModified: false,
+  );
 
   /// Hide title bar on desktop
   late final hideTitleBar = propertyDefault('hideTitleBar', isDesktop);
@@ -425,12 +443,17 @@ class SettingStore extends HiveStore {
   );
 
   /// Add Agent to the legacy default home tabs once.
+  ///
+  /// Written with `updateLastUpdateTsOnSet: false` throughout, as the Hive
+  /// version got by writing straight to the box: a migration this build runs on
+  /// its own is not an edit the user made, and counting it as one would have
+  /// every install claim a newer copy than whatever it last synced with.
   Future<void> migrateHomeTabsAgent() async {
     const key = 'homeTabs';
     const flagKey = 'homeTabsAgentMigrated';
-    if (box.get(flagKey) == true) return;
+    if (get<bool>(flagKey) == true) return;
 
-    final tabs = AppTab.parseAppTabsFromObj(box.get(key));
+    final tabs = AppTab.parseAppTabsFromObj(get<Object>(key));
     const legacyDefaultTabs = {
       AppTab.server,
       AppTab.ssh,
@@ -439,12 +462,13 @@ class SettingStore extends HiveStore {
     };
     if (tabs.length == legacyDefaultTabs.length &&
         tabs.toSet().containsAll(legacyDefaultTabs)) {
-      await box.put(
+      set(
         key,
         [...tabs, AppTab.agent].map((tab) => tab.name).toList(),
+        updateLastUpdateTsOnSet: false,
       );
     }
-    await box.put(flagKey, true);
+    set(flagKey, true, updateLastUpdateTsOnSet: false);
   }
 
   /// Hide port forward beta warning
@@ -469,7 +493,16 @@ class SettingStore extends HiveStore {
   /// installs are cleaned without another migration flag becoming permanent
   /// state of its own.
   Future<void> removeRetiredKeys() async {
-    await box.deleteAll(const ['moveOutServerTabFuncBtns', 'forceSinglePane']);
+    for (final key in const [
+      'moveOutServerTabFuncBtns',
+      'forceSinglePane',
+      // The plain-key schema version. It moved to an internal key so that a
+      // backup stops carrying it; this drops the copy a Hive import brought
+      // across, which nothing reads and a backup would still export.
+      'schemaVersion',
+    ]) {
+      remove(key, updateLastUpdateTsOnRemove: false);
+    }
   }
 
   /// Migrate sshConnectionMode from old int values (-1/0/1) to bool.
@@ -477,8 +510,8 @@ class SettingStore extends HiveStore {
   void migrateSshConnectionMode() {
     const key = 'sshConnectionMode';
     const flagKey = 'sshConnectionModeMigrated';
-    if (box.get(flagKey) == true) return;
-    final raw = box.get(key);
+    if (get<bool>(flagKey) == true) return;
+    final raw = get<Object>(key);
     if (raw is int) {
       // -1 = auto, 0 = built-in, 1 = system SSH
       final bool value;
@@ -487,8 +520,8 @@ class SettingStore extends HiveStore {
       } else {
         value = raw != 0;
       }
-      box.put(key, value);
+      set(key, value, updateLastUpdateTsOnSet: false);
     }
-    box.put(flagKey, true);
+    set(flagKey, true, updateLastUpdateTsOnSet: false);
   }
 }

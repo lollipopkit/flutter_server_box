@@ -30,15 +30,22 @@ A `Makefile` wraps most common tasks — run `make help` for the full list. Pref
 - `flutter test test/disk_test.dart` - Run specific test file (or `make test-one TEST=test/disk_test.dart`)
 - `cargo test --workspace` - Run all Rust tests (parser, FFI shell, monitor)
 - SSH e2e (opt-in): set `SBM_E2E_SSH_HOST=<ssh destination or ~/.ssh/config alias>` in the workspace-root `.env`, then `cargo test -p sbm_parser --test ssh_e2e` — uploads the generated script to the remote, runs it, and compares the parsed result against direct command output; silently skipped when unset
-- A widget test whose tree writes to a store must open the Hive box **in memory**: `Hive.openBox<dynamic>('setting_test', bytes: Uint8List(0))`. A `testWidgets` body runs in a fake-async zone, and a real file write started there completes on a callback that zone is no longer pumping — so the box's write lock is never released, `box.close()` in `tearDown` blocks forever, and `flutter test` waits on that process. One such test hangs the whole run, with no failure and no output to say which file did it. Widgets that persist on their own (the floating Agent writes its mode on every change, panes write their width on every drag) hit this without the test writing anything itself.
+- A widget test whose tree writes to a store opens the database **in memory**: `SqliteDb.openInMemory()` in `setUp`, `SqliteDb.close` in `tearDown`, and the store's `forTest()` constructor (which only differs by using a distinct store name). Widgets that persist on their own — the floating Agent writes its mode on every change, panes write their width on every drag — write without the test asking them to, so this applies to more trees than it looks like.
+  - This is also why: a `testWidgets` body runs in a fake-async zone, and a real *file* write started there completes on a callback that zone is no longer pumping. Under Hive that left the box's write lock held, `close()` in `tearDown` blocked forever, and `flutter test` waited on the process — one such test hung the whole run with no failure and no output naming the file. An in-memory database has no such lock, but keeping the writes off disk is still the rule.
 - Size the view, not the surface, when a test depends on a breakpoint: `tester.view.physicalSize` + `devicePixelRatio`. `setSurfaceSize` changes what the tree is laid out in but not what `MediaQuery` reports, so a "phone" test written that way silently exercises the desktop rendering.
 - `pumpAndSettle` is not usable on a tree containing a text field or another always-scheduling widget: it waits for a frame in which nothing is scheduled, and then gives up after its 10-minute default. Count the frames out with `pump(duration)` instead. `--timeout 30s` keeps any such mistake from costing ten minutes.
 
 ### Rust / FFI
 
 - `cargo build -p sbm_ffi` - Build the FFI crate; required before running `flutter test test/frb_parser_test.dart` (`test/rust_lib_helper.dart` loads the dylib from `target/`)
-- `flutter_rust_bridge_codegen generate` - Regenerate FRB bindings after changing `crates/sbm_ffi/src/api` (config: `flutter_rust_bridge.yaml`; Dart output `lib/src/rust/`, do not edit generated code)
-- App builds link Rust via cargokit inside `crates/sbm_ffi/` (the crate and the Flutter FFI plugin glue share one directory), pinned to `flutter_rust_bridge: 2.12.0` in pubspec
+- `flutter_rust_bridge_codegen generate` - Regenerate FRB bindings after changing `crates/sbm_ffi/src/api` (config: `flutter_rust_bridge.yaml`; Dart output `lib/src/rust/`, do not edit generated code). Its `dart fix`/`dart format` pass is scoped to that output directory, so it is safe to run.
+  - **Never run `flutter_rust_bridge_codegen integrate`.** It is greenfield scaffolding: on this repo it reformats the whole project *and every submodule*, and writes a second Rust crate at `rust/` beside the real one. To see what a template looks like, run `create` in a temp directory instead.
+- App builds compile Rust through `hook/build.dart` (Dart build hooks, via `flutter_rust_bridge_hooks` → `native_toolchain_rust`). `crates/sbm_ffi` is **not** a Flutter plugin and the app does not depend on it as a package — the hook names the crate path. So it produces no podspec and no `Package.swift`, and one file covers all five platforms.
+  - `flutter_rust_bridge` is pinned to `2.13.0-beta.6` in both `pubspec.yaml` and `crates/sbm_ffi/Cargo.toml`, and the two must match or `RustLib.init` throws at startup. The native-assets backend needs `>= 2.13.0-beta.2` and 2.13.0 has no stable release yet; this is the project's only prerelease dependency.
+  - `crates/sbm_ffi/rust-toolchain.toml` pins the channel and lists every shipped target, which `native_toolchain_rust` requires. A target missing from that list is not an error, it is a silent fallback to the host.
+  - `packages/flutter_pty` is a fork carrying the same change, for the same reason: upstream ships no `Package.swift` and was the last third-party pod. It uses `native_toolchain_c` rather than `native_toolchain_rust`, and is otherwise identical to upstream 0.4.2.
+  - **CocoaPods is gone from iOS and macOS.** No `Podfile`, no `Pods/`, no `Pods-Runner` include in the xcconfigs, nothing named Pods in either `project.pbxproj`. Do not add a pod back without a reason: the CocoaPods registry is read-only from 2026-12-02.
+  - `ios/Flutter/Ish.xcconfig` is still included from `Debug.xcconfig` and `Release.xcconfig` and is what decides whether the iOS Linux engine links. To check it end to end, `xcodebuild -project ios/Runner.xcodeproj -target Runner -configuration Debug -showBuildSettings | rg "SBM_ISH|OTHER_LDFLAGS"`. In a **debug** build the app code is in `Runner.debug.dylib`, not `Runner` — the symbol and `otool -L` checks in that file's own comments are written for a release build and read as "not linked" if pointed at the debug stub.
 
 ## Architecture
 
@@ -50,7 +57,7 @@ This is a Flutter application for managing Linux servers with the following key 
   - Parsing is pure functions: parsers emit raw counters; diff/windowed computation (speeds etc.) is provided as pure functions, mutable time-series state stays on the caller side. The FFI boundary holds no mutable state.
   - The command manifest (cmd name → per-platform command, `SrvBoxSep.<cmd>` segmenting) lives here too; the `commands::EXTENDED` keys (smartctl, AMD GPU) are split out of the fast status function into `SbStatusExt`, which both callers run minutes apart — smartctl at poll frequency keeps a disk from staying spun down
   - Script generation is shared as well (`script.rs`: build/install/exec commands + output splitting, locked by `tests/script_compat.rs`); the app calls it via FFI and merges the two functions' output, the monitor executes the script locally on its extended cycle
-- `crates/sbm_ffi/` - flutter_rust_bridge binding crate + cargokit Flutter plugin glue in one directory (Dart side generated into `lib/src/rust/`)
+- `crates/sbm_ffi/` - flutter_rust_bridge binding crate, built by the root `hook/build.dart` (Dart side generated into `lib/src/rust/`)
 - `crates/sbm_native/` - Native per-platform sampler, **monitor only** — the app always collects over SSH and has no way to run syscalls on a remote host. `sample()` covers cpu/mem/swap/disks/diskio/net/uptime/host/sys via `sysinfo` (BSD/Windows) or direct procfs/sysfs reads feeding `sbm_parser::linux::parse_*` (Linux); amd/sensors/SMART/battery stay on the shared script, which genuinely needs CLI tools
 - `monitor/` - Server-side monitoring service (Rust + Svelte frontend), has its own `monitor/CLAUDE.md`
   - Besides status, it serves the endpoints the app uses for a monitor-backed server — `POST /exec`, `/terminal/ws`, `/fs/*` — plus an in-browser terminal for its own panel. All of them are off by default and configured only in `config.toml`; see the "Remote access" section there for the security model
@@ -65,10 +72,10 @@ This is a Flutter application for managing Linux servers with the following key 
 - `lib/data/` - Data layer with models, providers, and storage
   - `model/` - Data models organized by feature (server, container, ssh, etc.)
   - `provider/` - Riverpod providers for state management
-  - `store/` - Local storage implementations using Hive
+  - `store/` - Local storage implementations over `SqliteStore` (fl_lib)
 - `lib/view/` - UI layer with pages and widgets
 - `lib/generated/` - Generated localization files
-- `lib/hive/` - Hive adapters for local storage
+- `lib/hive/` - Hive adapters, kept only so `HiveImport` can read an upgrading install's old boxes. Nothing writes Hive; the whole directory goes when that import does (TODO in the code)
 - `lib/src/rust/` - Generated FRB bindings (do not edit)
 - `packages/` - Vendored Dart forks referenced by path from pubspec (dartssh2, xterm, fl_lib, fl_build, etc.), each a submodule. The exception is `packages/webui`, an in-repo Svelte package (`@serverbox/webui`) of shared UI primitives and design tokens, consumed as a `file:` dependency by both `monitor/frontend` and `website/`
 - `third_party/ish-arm64` - The iOS Linux engine, a submodule of the `lollipopkit/ShellBox` fork. Not in `packages/` because it is C built by meson and consumed by the Xcode project rather than by pubspec. Which revision builds is the gitlink, not a hash in a script: move it with `git submodule update --remote third_party/ish-arm64` and `git add`. `scripts/build-ish-ios.sh` builds it out of tree into `build/ish/build-<arch>/`, so a build never leaves the submodule dirty
@@ -77,7 +84,7 @@ This is a Flutter application for managing Linux servers with the following key 
 ### Key Technologies
 
 - **State Management**: Riverpod with code generation (riverpod_annotation)
-- **Local Storage**: Hive for persistent data with generated adapters
+- **Local Storage**: one encrypted SQLite file (`store.db`) via `package:sqlite3`, bundled through Dart build hooks with `source: sqlite3mc`
 - **SSH/SFTP**: Custom dartssh2 fork for server connections
 - **Terminal**: Custom xterm.dart fork for SSH terminal interface
 - **Networking**: dio for HTTP requests
@@ -151,7 +158,7 @@ ends, or restore a consumer.
 - Uses Riverpod providers for dependency injection and state management
 - Uses Freezed for immutable state models
 - Providers are organized by feature in `lib/data/provider/`
-- State is often persisted using Hive stores in `lib/data/store/`
+- State is often persisted using the stores in `lib/data/store/`
 
 ### Build System
 
@@ -168,8 +175,10 @@ ends, or restore a consumer.
 - AGAIN, NEVER run code formatting commands.
 - USE dependency injection via GetIt for services like Stores, Services and etc.
 - Generate all l10n files using `flutter gen-l10n` command after modifying ARB files.
-- USE `hive_ce` not `hive` package for Hive integration.
-  - Which no need to config `HiveField` and `HiveType` manually.
+- Storage is SQLite, not Hive. `Store` in fl_lib is `sealed`, so a new backend has to be added there as another `part of 'iface.dart'`, not in this repo.
+  - Most stores are rows in one shared `kv(store, key, value, updated_at)` table, with `value` as JSON — so `get<T>` returns what `jsonDecode` produced and the `fromObj` hook rebuilds the model. `connection_stats` and `agent_conversation` own real tables instead, because every read of them is a range over one server.
+  - Enums are stored **by name**, never by index: an index silently changes meaning when a case is inserted, and these values outlive the build that wrote them.
+  - A write that should not count as a user edit — a migration flag, a restore, device-local bookkeeping — passes `updateLastUpdateTsOnSet: false`. `Stores.lastModTime` is read off those timestamps and decides which side of a sync wins.
 - USE widgets and utilities from `fl_lib` package for common functionalities.
   - Such as `CustomAppBar`, `context.showRoundDialog`, `Input`, `Btnx.cancelOk`, etc.
   - You can use context7 MCP to search `lppcg fl_lib KEYWORD` to find relevant widgets and utilities.

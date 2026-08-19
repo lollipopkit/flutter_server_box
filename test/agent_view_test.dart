@@ -1,10 +1,9 @@
 import 'dart:io';
-import 'dart:typed_data';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:riverpod/misc.dart' show Override;
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/data/model/ai/agent_conversation.dart';
@@ -36,35 +35,21 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late Directory tempDir;
-  late Box<dynamic> settingBox;
-  late Box<dynamic> conversationBox;
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-agent-view-');
-    Hive.init(tempDir.path);
-    // In memory: the return-key tests below write the setting they are
-    // about, and a real file write started inside a `testWidgets` body
-    // completes on a callback the fake-async zone is no longer pumping —
-    // so the box's write lock is never released and `close()` in tearDown
-    // blocks forever, with no failure to say which file did it.
-    settingBox = await Hive.openBox<dynamic>(
-      'setting_test',
-      bytes: Uint8List(0),
-    );
-    conversationBox = await Hive.openBox<dynamic>(
-      'agent_conversation_test',
-      bytes: Uint8List(0),
-    );
-    getIt.registerSingleton<SettingStore>(SettingStore.forBox(settingBox));
+    SqliteDb.openInMemory();
+    // In memory: the return-key tests below write the setting they are about,
+    // and none of them should leave a database behind.
+    getIt.registerSingleton<SettingStore>(SettingStore.forTest());
     getIt.registerSingleton<AgentConversationStore>(
-      AgentConversationStore.forBox(conversationBox),
+      AgentConversationStore.forTest()..init(),
     );
   });
 
   tearDown(() async {
     await getIt.reset();
-    await settingBox.close();
-    await conversationBox.close();
+    await SqliteDb.close();
     await tempDir.delete(recursive: true);
   });
 

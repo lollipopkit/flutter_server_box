@@ -34,14 +34,16 @@ on:
   push:
     branches: [ "main" ]
     paths: &macos_paths
-      # The Xcode project, the entitlements, the Podfile
+      # The Xcode project and the entitlements
       - 'macos/**'
-      # cargokit builds and links these into the app; nothing else in CI links
-      # the Rust library on macOS
+      # `hook/build.dart` is what compiles the Rust library into the app now,
+      # and nothing else in CI links it on macOS
+      - 'hook/**'
       - 'crates/**'
       - 'Cargo.toml'
       - 'Cargo.lock'
-      # A plugin added or moved changes what pod install resolves and links
+      # A dependency added or moved changes what the build hooks produce and
+      # what gets bundled
       - 'pubspec.yaml'
       - 'pubspec.lock'
       # The vendored packages are submodules, so a gitlink move here is a

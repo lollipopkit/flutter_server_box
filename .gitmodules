@@ -30,3 +30,7 @@
 	path = third_party/ish-arm64
 	url = https://github.com/lollipopkit/ShellBox
 	branch = main
+[submodule "packages/flutter_pty"]
+	path = packages/flutter_pty
+	url = https://github.com/lollipopkit/flutter_pty
+	branch = main

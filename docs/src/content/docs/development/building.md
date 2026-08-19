@@ -48,7 +48,6 @@ dart run fl_build -p ios
 
 Requires:
 - macOS with Xcode
-- CocoaPods
 - Apple Developer account for signing
 
 ### Android

@@ -343,7 +343,7 @@ List<Spi> _resolveJumpCandidates({
   for (final jumpId in spi.resolvedJumpIds) {
     final candidate = preloadedJumpSpi?.id == jumpId
         ? preloadedJumpSpi
-        : jumpSpisById?[jumpId] ?? Stores.server.box.get(jumpId);
+        : jumpSpisById?[jumpId] ?? Stores.server.fetchOneRaw(jumpId);
     if (candidate == null || candidates.any((e) => e.id == candidate.id)) {
       continue;
     }

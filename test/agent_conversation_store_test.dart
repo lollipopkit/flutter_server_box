@@ -1,31 +1,19 @@
-import 'dart:io';
-
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:server_box/data/model/ai/agent_conversation.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/store/agent_conversation.dart';
 
 void main() {
-  late Directory tempDir;
-  late Box<dynamic> box;
   late AgentConversationStore store;
 
-  setUpAll(() async {
-    tempDir = await Directory.systemTemp.createTemp('server-box-agent-test-');
-    Hive.init(tempDir.path);
-    box = await Hive.openBox<dynamic>('agent_conversation_test');
-    store = AgentConversationStore.forBox(box);
-  });
-
   setUp(() async {
-    await box.clear();
+    SqliteDb.openInMemory();
+    store = AgentConversationStore.forTest();
+    await store.init();
   });
 
-  tearDownAll(() async {
-    await box.close();
-    await tempDir.delete(recursive: true);
-  });
+  tearDown(SqliteDb.close);
 
   test('round-trips protocol-complete conversation items', () {
     const command = AskAiCommand(
@@ -253,5 +241,86 @@ void main() {
 
     expect(store.fetchForServer('server-a'), isEmpty);
     expect(store.fetchForServer('server-b').single.id, other.id);
+  });
+
+  group('the queries the tables replaced a full scan with', () {
+    AgentConversation conv(String id, String serverId, DateTime updatedAt) =>
+        AgentConversation(
+          id: id,
+          serverId: serverId,
+          title: 't-$id',
+          createdAt: updatedAt,
+          updatedAt: updatedAt,
+          protocol: AskAiProtocol.responses,
+          providerBaseUrl: 'https://x',
+          model: 'm',
+          items: const [],
+        );
+
+    final base = DateTime.fromMillisecondsSinceEpoch(1000);
+
+    test('a server list comes back newest first', () {
+      store.save(conv('a1', 'srv-a', base), setActive: false);
+      store.save(
+        conv('a3', 'srv-a', base.add(const Duration(minutes: 2))),
+        setActive: false,
+      );
+      store.save(
+        conv('a2', 'srv-a', base.add(const Duration(minutes: 1))),
+        setActive: false,
+      );
+
+      // Ordered by the index rather than by an in-memory sort of every
+      // conversation in the app, which is what the K-V version did.
+      expect(store.fetchForServer('srv-a').map((e) => e.id), [
+        'a3',
+        'a2',
+        'a1',
+      ]);
+    });
+
+    test('the active conversation is per server', () {
+      store.save(conv('a1', 'srv-a', base));
+      store.save(conv('b1', 'srv-b', base));
+
+      expect(store.activeConversationId('srv-a'), 'a1');
+      expect(store.activeConversationId('srv-b'), 'b1');
+      expect(store.fetchActive('srv-a')?.id, 'a1');
+    });
+
+    test('another server cannot be made active on this one', () {
+      store.save(conv('a1', 'srv-a', base), setActive: false);
+      expect(store.setActive('srv-b', 'a1'), isFalse);
+      expect(store.activeConversationId('srv-b'), isNull);
+    });
+
+    test('deleting the last conversation leaves nothing active', () {
+      store.save(conv('a1', 'srv-a', base));
+      store.deleteConversation('srv-a', 'a1');
+      expect(store.activeConversationId('srv-a'), isNull);
+    });
+
+    test('clearing a server leaves the others alone', () {
+      store.save(conv('a1', 'srv-a', base));
+      store.save(conv('b1', 'srv-b', base));
+
+      store.clearServer('srv-a');
+
+      expect(store.fetchForServer('srv-a'), isEmpty);
+      expect(store.activeConversationId('srv-a'), isNull);
+      expect(store.fetchForServer('srv-b'), hasLength(1));
+      expect(store.activeConversationId('srv-b'), 'b1');
+    });
+
+    test('a write fires the change stream', () async {
+      final seen = <void>[];
+      final sub = store.watch().listen(seen.add);
+      addTearDown(sub.cancel);
+
+      store.save(conv('a1', 'srv-a', base));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(seen, hasLength(1));
+    });
   });
 }

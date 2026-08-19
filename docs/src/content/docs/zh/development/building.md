@@ -47,7 +47,6 @@ dart run fl_build -p ios
 
 需要：
 - 安装了 Xcode 的 macOS
-- CocoaPods
 - 用于签名的 Apple Developer 账号
 
 ### Android

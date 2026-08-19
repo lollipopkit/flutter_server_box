@@ -288,13 +288,12 @@ extension _Actions on _ConnectionStatsPageState {
   }
 
   Future<void> _showCompactDialog() async {
+    // One file for every store now, so this is the whole database rather than
+    // this page's share of it — and so is the `VACUUM` the dialog runs.
     final oldSize = await Stores.connectionStats.dbSizeAsync();
     if (!mounted) return;
-    final oldIndexSize = await Stores.connectionStats.indexDbSizeAsync();
-    if (!mounted) return;
-    final totalSize = oldSize + oldIndexSize;
 
-    final sizeStr = totalSize.bytes2Str;
+    final sizeStr = oldSize.bytes2Str;
 
     context.showRoundDialog(
       title: l10n.compactDatabase,
@@ -308,10 +307,7 @@ extension _Actions on _ConnectionStatsPageState {
             try {
               await Stores.connectionStats.compact();
               final newSize = await Stores.connectionStats.dbSizeAsync();
-              final newIndexSize = await Stores.connectionStats
-                  .indexDbSizeAsync();
-              final newTotalSize = newSize + newIndexSize;
-              final newSizeStr = newTotalSize.bytes2Str;
+              final newSizeStr = newSize.bytes2Str;
               _finishCompacting('${libL10n.success}: $sizeStr -> $newSizeStr');
             } catch (e) {
               _finishCompacting('${libL10n.error}: $e');

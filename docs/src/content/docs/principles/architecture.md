@@ -132,9 +132,9 @@ Flutter plugins provide platform integration:
 
 | Platform | Integration Method |
 |----------|-------------------|
-| iOS | CocoaPods, Swift/Obj-C |
+| iOS | Swift Package Manager, Swift/Obj-C |
 | Android | Gradle, Kotlin/Java |
-| macOS | CocoaPods, Swift |
+| macOS | Swift Package Manager, Swift |
 | Linux | CMake, C++ |
 | Windows | CMake, C++ |
 
