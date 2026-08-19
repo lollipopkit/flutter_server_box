@@ -39,6 +39,9 @@ jobs:
       rust: ${{ steps.filter.outputs.rust }}
       ish: ${{ steps.filter.outputs.ish }}
       dart: ${{ steps.filter.outputs.dart }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      docs: ${{ steps.filter.outputs.docs }}
+      website: ${{ steps.filter.outputs.website }}
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -48,7 +51,7 @@ jobs:
           set -euo pipefail
 
           if [[ "${{ github.event_name }}" != 'pull_request' ]]; then
-            printf 'rust=true\nish=true\ndart=true\n' >> "$GITHUB_OUTPUT"
+            printf 'rust=true\nish=true\ndart=true\nfrontend=true\ndocs=true\nwebsite=true\n' >> "$GITHUB_OUTPUT"
             echo "not a pull request: running everything"
             exit 0
           fi
@@ -82,19 +85,22 @@ jobs:
           # `crates/` because `flutter test` loads the FFI dylib and the
           # generated bindings come from there
           emit dart "$shared|^lib/|^test/|^integration_test/|^crates/|^Cargo\.(toml|lock)$|^analysis_options\.yaml$"
+          emit frontend "$shared|^monitor/frontend/|^packages/webui/"
+          emit docs "$shared|^docs/"
+          emit website "$shared|^website/|^packages/webui/"
 
   reproducibilityCheck:
     name: Reproducibility check
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 1
           submodules: recursive
           persist-credentials: false
 
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           channel: 'stable'
           flutter-version: ${{ env.FLUTTER_VERSION }}
@@ -131,16 +137,81 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 1
           submodules: recursive
           persist-credentials: false
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
 
       - name: Test Rust workspace
         run: cargo test --workspace --no-fail-fast
+
+      - name: Clippy
+        if: matrix.os == 'ubuntu-latest'
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+
+  monitorFrontend:
+    name: Monitor frontend
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: monitor/frontend/package-lock.json
+      - name: Install dependencies
+        working-directory: monitor/frontend
+        run: npm ci
+      - name: Test, lint, check and build
+        working-directory: monitor/frontend
+        run: |
+          npm exec vitest -- run
+          npm run lint
+          npm run check
+          npm run build
+
+  docs:
+    name: Documentation site
+    needs: changes
+    if: needs.changes.outputs.docs == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24
+      - name: Install and build
+        working-directory: docs
+        run: |
+          npm install
+          npm run build
+
+  website:
+    name: Project website
+    needs: changes
+    if: needs.changes.outputs.website == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24
+      - name: Install and build
+        working-directory: website
+        run: |
+          npm install
+          npm run build
 
   # The one path nothing else in CI compiles. `Build ios` in build.yml ships
   # SBM_ISH = 0, so with the switch off the engine is never fed to a compiler
@@ -158,13 +229,13 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 1
           submodules: recursive
           persist-credentials: false
 
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           channel: 'stable'
           flutter-version: ${{ env.FLUTTER_VERSION }}
@@ -207,13 +278,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 1
           submodules: recursive
           persist-credentials: false
       
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           channel: 'stable'
           flutter-version: ${{ env.FLUTTER_VERSION }}
@@ -228,7 +299,7 @@ jobs:
       - name: Analyze project source
         run: flutter analyze lib test integration_test
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
 
       # FFI-dependent suites (frb_parser/windows/server_status_update_req...)
       # load the dylib from target/debug via test/rust_lib_helper.dart

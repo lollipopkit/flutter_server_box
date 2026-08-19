@@ -26,6 +26,42 @@ updates:
         patterns:
           - "*"
 
+  - package-ecosystem: pub
+    directory: "/"
+    schedule:
+      interval: weekly
+    groups:
+      flutter-deps:
+        patterns:
+          - "*"
+
+  - package-ecosystem: npm
+    directory: "/docs"
+    schedule:
+      interval: weekly
+    groups:
+      docs-deps:
+        patterns:
+          - "*"
+
+  - package-ecosystem: npm
+    directory: "/website"
+    schedule:
+      interval: weekly
+    groups:
+      website-deps:
+        patterns:
+          - "*"
+
+  - package-ecosystem: npm
+    directory: "/packages/webui"
+    schedule:
+      interval: weekly
+    groups:
+      webui-deps:
+        patterns:
+          - "*"
+
   # Grouped like the other two: the actions in a workflow are bumped for one
   # reason at a time (a runner's Node version, most of them), and a review that
   # sees them together is the one that can tell. Ungrouped, a single week's run
