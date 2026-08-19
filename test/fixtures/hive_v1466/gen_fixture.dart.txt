@@ -1,0 +1,307 @@
+// Generates the Hive fixture that the current tree's migration test reads.
+//
+// Run from a worktree checked out at the tag whose on-disk shape is wanted:
+//   flutter test test/gen_fixture.dart
+// It writes `<out>/*_enc.hive`, which are copied into the main repo under
+// `test/fixtures/hive_<tag>/`.
+//
+// The point is that these bytes are produced by that release's own adapters,
+// not by a hand-copy of them into a test.
+import 'dart:convert';
+import 'dart:io';
+import 'dart:math';
+import 'dart:typed_data';
+
+import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:hive_ce/hive.dart';
+import 'package:server_box/data/model/app/net_view.dart';
+import 'package:server_box/data/model/server/connection_stat.dart';
+import 'package:server_box/data/model/server/custom.dart';
+import 'package:server_box/data/model/server/port_forward.dart';
+import 'package:server_box/data/model/server/private_key_info.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/snippet.dart';
+import 'package:server_box/data/model/server/system.dart';
+import 'package:server_box/data/model/server/wol_cfg.dart';
+import 'package:server_box/hive/hive_registrar.g.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+/// Where the boxes are written. Overridden with `--dart-define=OUT=...`.
+const _outDir = String.fromEnvironment('OUT', defaultValue: '/tmp/sb1466-out');
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  test('generate', () async {
+    final out = Directory(_outDir);
+    if (out.existsSync()) out.deleteSync(recursive: true);
+    out.createSync(recursive: true);
+    Paths.doc = out.path;
+    // At this tag `HiveStore.init` asks path_provider for the documents
+    // directory on every platform but Linux/Windows, so the boxes would land
+    // outside `out` — or, in a test, not at all.
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/path_provider'),
+      (call) async => out.path,
+    );
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/path_provider_macos'),
+      (call) async => out.path,
+    );
+
+    // The same key the reading test derives, so the fixture opens there. One
+    // seeded generator reused, matching how the reading test builds it.
+    final rng = Random(1);
+    FlutterSecureStorage.setMockInitialValues({
+      'hivePwd': base64UrlEncode(
+        Uint8List.fromList(List<int>.generate(32, (_) => rng.nextInt(256))),
+      ),
+    });
+    SharedPreferences.setMockInitialValues({});
+    await PrefStore.shared.init();
+
+    Hive.init(out.path);
+    Hive.registerAdapters();
+
+    Future<Box<dynamic>> open(String name) async {
+      final store = HiveStore(name);
+      await store.init();
+      return store.box;
+    }
+
+    // ---- server: every optional field exercised somewhere ----------------
+    final server = await open('server');
+    await server.put(
+      'srv-pwd',
+      const Spi(
+        id: 'srv-pwd',
+        name: 'password auth',
+        ip: '10.0.0.1',
+        port: 22,
+        user: 'root',
+        pwd: 'hunter2',
+        tags: ['prod', 'db'],
+        autoConnect: true,
+      ),
+    );
+    await server.put(
+      'srv-key',
+      const Spi(
+        id: 'srv-key',
+        name: 'key auth + custom',
+        ip: '10.0.0.2',
+        port: 2222,
+        user: 'admin',
+        keyId: 'key-ed25519',
+        tags: ['staging'],
+        autoConnect: false,
+        alterUrl: 'admin@alt.example.com:2200',
+        envs: {'TERM': 'xterm-256color', 'LANG': 'en_US.UTF-8'},
+        customSystemType: SystemType.linux,
+        disabledCmdTypes: ['sensors', 'smartctl'],
+        custom: ServerCustom(
+          pveAddr: 'https://pve.example.com:8006',
+          pveIgnoreCert: true,
+          cmds: {'uptime': 'uptime -p', 'who': 'w'},
+          preferTempDev: 'coretemp',
+          tempIsCelsius: false,
+          logoUrl: 'https://example.com/logo.png',
+          netDev: 'eth0',
+          scriptDir: '/opt/sbm',
+        ),
+        wolCfg: WakeOnLanCfg(
+          mac: 'AA:BB:CC:DD:EE:FF',
+          ip: '10.0.0.255',
+          pwd: 'wolpwd',
+        ),
+      ),
+    );
+    await server.put(
+      'srv-jump',
+      const Spi(
+        id: 'srv-jump',
+        name: 'behind jump hosts',
+        ip: '192.168.1.10',
+        port: 22,
+        user: 'ops',
+        keyId: 'key-rsa',
+        jumpId: 'srv-pwd',
+        jumpIds: ['srv-pwd', 'srv-key'],
+        tags: ['internal'],
+      ),
+    );
+    await server.put(
+      'srv-proxy',
+      const Spi(
+        id: 'srv-proxy',
+        name: 'proxy command',
+        ip: 'unreachable.example',
+        port: 22,
+        user: 'tunnel',
+        proxyCommand: 'nc -X 5 -x 127.0.0.1:1080 %h %p',
+      ),
+    );
+    // Minimum: nothing optional set, and an empty id, which `parseId` fills.
+    await server.put(
+      'srv-bare',
+      const Spi(name: 'bare', ip: '10.0.0.9', port: 22, user: 'root'),
+    );
+
+    // ---- key --------------------------------------------------------------
+    final key = await open('key');
+    await key.put(
+      'key-ed25519',
+      const PrivateKeyInfo(
+        id: 'key-ed25519',
+        key: '-----BEGIN OPENSSH PRIVATE KEY-----\nZmFrZQ==\n'
+            '-----END OPENSSH PRIVATE KEY-----',
+      ),
+    );
+    await key.put(
+      'key-rsa',
+      const PrivateKeyInfo(
+        id: 'key-rsa',
+        key: '-----BEGIN RSA PRIVATE KEY-----\nZmFrZQ==\n'
+            '-----END RSA PRIVATE KEY-----',
+      ),
+    );
+
+    // ---- snippet ----------------------------------------------------------
+    final snippet = await open('snippet');
+    await snippet.put(
+      'uptime',
+      const Snippet(name: 'uptime', script: 'uptime -p'),
+    );
+    await snippet.put(
+      'deploy',
+      const Snippet(
+        name: 'deploy',
+        script: 'cd /srv/app && git pull && systemctl restart app',
+        tags: ['ops', 'risky'],
+        note: 'run on the app hosts only',
+        autoRunOn: ['srv-pwd', 'srv-key'],
+      ),
+    );
+    // Multi-line with the characters most likely to survive badly.
+    await snippet.put(
+      'unicode',
+      const Snippet(
+        name: '日本語 / emoji 🚀',
+        script: "echo '引号 \"双\" \\\\ 反斜杠'\nprintf '%s\\n' \$HOME",
+        note: 'ünïcödé',
+      ),
+    );
+
+    // ---- setting: one of every stored type --------------------------------
+    final setting = await open('setting');
+    await setting.put('timeOut', 9); // int
+    await setting.put('textFactor', 1.25); // double
+    await setting.put('recordHistory', false); // bool
+    await setting.put('locale', 'zh'); // String
+    await setting.put('primaryColor', 4287106639); // large int
+    await setting.put('homeTabs', ['server', 'ssh', 'snippet']); // List<String>
+    await setting.put('sshVirtKeys', [0, 1, 2, 13, 14]); // List<int>
+    await setting.put('serverOrder', ['srv-key', 'srv-pwd', 'srv-jump']);
+    await setting.put('detailCardDisabled', ['temperature']);
+    await setting.put('netViewType', NetViewType.speed.name); // enum by name
+    await setting.put('sshKnownHostFingerprints', {
+      'srv-pwd::ssh-ed25519': 'SHA256:AAAA',
+      'srv-key::ssh-rsa': 'SHA256:BBBB',
+    }); // Map
+    await setting.put('termFontSize', 13.0);
+    await setting.put('maxRetryCount', 2);
+    await setting.put('useBioAuth', true);
+
+    // ---- history ----------------------------------------------------------
+    final history = await open('history');
+    await history.put('sftpPath', ['/etc', '/var/log', '/home/ops']);
+    await history.put('sshTabs', '[]');
+
+    // ---- docker -----------------------------------------------------------
+    final docker = await open('docker');
+    // `containerHost${type.name}${id}` — the key `ContainerStore` builds.
+    await docker.put('containerHostdocker', 'unix:///var/run/docker.sock');
+    await docker.put('containerHostdockersrv-key', 'tcp://10.0.0.2:2375');
+    await docker.put('containerHostpodmansrv-jump', 'unix:///run/podman.sock');
+
+    // ---- port_forward -----------------------------------------------------
+    final portForward = await open('port_forward');
+    await portForward.put(
+      'pf-local',
+      const PortForwardConfig(
+        id: 'pf-local',
+        serverId: 'srv-pwd',
+        name: 'postgres',
+        type: PortForwardType.local,
+        localHost: '127.0.0.1',
+        localPort: 15432,
+        remoteHost: '10.0.0.50',
+        remotePort: 5432,
+      ),
+    );
+    await portForward.put(
+      'pf-remote',
+      const PortForwardConfig(
+        id: 'pf-remote',
+        serverId: 'srv-key',
+        name: 'webhook',
+        type: PortForwardType.remote,
+        localHost: '127.0.0.1',
+        localPort: 8080,
+        remoteHost: '0.0.0.0',
+        remotePort: 9000,
+      ),
+    );
+
+    // ---- connection_stats: enough rows to cross the per-server cap --------
+    final stats = await open('connection_stats');
+    final base = DateTime.utc(2026, 1, 1, 12);
+    var n = 0;
+    for (final (serverId, serverName) in const [
+      ('srv-pwd', 'password auth'),
+      ('srv-key', 'key auth + custom'),
+    ]) {
+      for (var i = 0; i < 60; i++) {
+        final ts = base.add(Duration(minutes: n++));
+        final result = switch (i % 5) {
+          0 => ConnectionResult.timeout,
+          1 => ConnectionResult.authFailed,
+          2 => ConnectionResult.networkError,
+          3 => ConnectionResult.unknownError,
+          _ => ConnectionResult.success,
+        };
+        await stats.put(
+          '${serverId}_${ts.millisecondsSinceEpoch}',
+          ConnectionStat(
+            serverId: serverId,
+            serverName: serverName,
+            timestamp: ts,
+            result: result,
+            errorMessage: result == ConnectionResult.success ? '' : 'boom $i',
+            durationMs: 10 + i,
+          ),
+        );
+      }
+    }
+
+    await Hive.close();
+
+    // The one box the app wrote without a cipher.
+    File(out.path.joinPath('conn_stats_index.hive'))
+        .writeAsStringSync('srv-pwd\nsrv-key\n');
+
+    final written = out
+        .listSync()
+        .whereType<File>()
+        .map((f) => f.path.split('/').last)
+        .toList()
+      ..sort();
+    // ignore: avoid_print
+    print('WROTE ${written.length} files into ${out.path}: $written');
+  });
+}
