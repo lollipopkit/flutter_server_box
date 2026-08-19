@@ -1,8 +1,15 @@
 # Hive boxes as the released builds wrote them
 
-Input for `test/hive_release_migration_test.dart`. Every file here was produced
-by **that release's own generated adapters**, not by the current tree — which
-is the whole point.
+Input for `test/hive_release_migration_test.dart`, which runs the whole upgrade
+against them: `HiveImport` into `kv`, then `KvToTablesMigration` into the entity
+tables. Asserting between the two would only prove the data reached a shape no
+build ships.
+
+Every file here was produced by **that release's own generated adapters**, not
+by the current tree — which is the whole point. The first run against the
+tables migration found four field names the migration had guessed wrong, each
+of which silently dropped an entire store, plus generated adapters that could
+no longer open a released box at all.
 
 The SQLite layout has never shipped, so every install in the field is on Hive
 and **every released version is a migration source**:
