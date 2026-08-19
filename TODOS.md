@@ -126,6 +126,16 @@ fork,把同样的五个平台构建集成换成一个 `hook/build.dart`(用 `nat
 gradle plugin 和 CMake,现在改走同一个 hook,但本机没跑过。要在 CI 或对应机器上
 各跑一次 `dart run fl_build -p <platform>`。
 
+**核对(2026-08-19):hook 路径在 CI 上一次都没跑过。** `build.yml` 只在 `v*` tag
+或手动 dispatch 时触发,最后一次是 v1.0.1491(08-18 05:23),而 `hook/build.dart`
+是 08-19 才随 #1317 合入的(`git cat-file -e v1.0.1491:hook/build.dart` 不存在)。
+所以那次里 windows / linux / ios 三个 success 走的还是 cargokit,不能拿来当验证。
+
+同一次的 Build android 失败,报 AGP 8.9.1 低于 Flutter 要求的 8.11.1。这个原因已经
+不在了:`android/settings.gradle` 在当天 15:00 由 #1234 升到 8.11.1,比那次构建晚
+十小时——但同样没有再跑过。打个 tag 或手动 dispatch 一次 `build.yml`,五个平台一起
+就都验证了。
+
 **CocoaPods 已彻底移除。** `Podfile`、`Podfile.lock`、`Pods/`、xcconfig 里的
 `Pods-Runner` include、workspace 里的 `Pods.xcodeproj` 引用、两个 pbxproj 里所有
 Pods 条目都没了。原先担心的 "non-standard Podfile" 其实只是 Flutter 标准模板,
@@ -331,7 +341,8 @@ agent 的那条完整路径。
 
 ## Hive → SQLite:分阶段做,以及加密怎么落
 
-**状态(2026-08-19):两个阶段都已合入。**
+**状态(2026-08-19):三个阶段都已合入。** 第三阶段超出了本节原来的计划,更正见
+下面「第二阶段」那段。
 
 已做:
 - `SqliteStore` 在 fl_lib(`store/sqlite.dart`),七个 K-V store 换过去,写入
@@ -340,14 +351,21 @@ agent 的那条完整路径。
   (`agent_conversation` + `agent_active` 两表)已关系化,各带索引。
   `conn_stats_index` 那个未加密的盒子随之消失,明文文件在导入时删除。
 - `HiveImport` 负责一次性导入并记 schema v4。
+- **实体表(#1322,m004)。** `server` / `private_key` / `snippet` /
+  `port_forward` 各自一张表,列表和 map 字段落到子表(`server_tag`、
+  `server_env`、`server_jump`、`snippet_tag`、`container_host` 等)。主键一律是
+  生成的 id,名字是带 `UNIQUE` 的普通列。DDL 由 Drift 声明
+  (`lib/data/store/db.dart`),查询手写且同步。`Tables.syncRoots` 是同步的单位。
 
 未做 / 遗留:
 - **`lib/hive/`、`hive_ce*` 依赖、`main.dart` 里的 `Hive.initFlutter()` 都还在。**
-  17 个 TypeAdapter 现在只用于一件事:让 `HiveImport` 读得懂旧盒子。没有任何
+  `@GenerateAdapters` 现在是 11 个类型,外加 `legacy_adapters.dart` 里冻结在
+  发布版写法上的 `Snippet` 和 `PrivateKeyInfo`(改动它们会让旧盒子打不开,
+  所以不再重新生成)。它们只用于一件事:让 `HiveImport` 读得懂旧盒子。没有任何
   代码再往 Hive 写。这些要等到没有受支持的安装还停在 Hive 上才能删,`HiveImport`
   和 `SpiLegacyAdapter` 同批(代码里已标 TODO)。
-- `~/Library/Application Support/ServerBox/app.db` 那批残留和
-  `sandbox_import.dart` 里对它的特判仍未清理(见本节末尾)。
+- `~/Library/Application Support/ServerBox/app.db` 那批文件还躺在开发机上(见本节
+  末尾)。代码侧已经不认它了。
 
 **一处没有覆盖到的路径:v2 记录的导入。** `HiveImport` 会把 `LegacySpiV2`
 转成 `Spi`(原 `SpiNestSshMigration` 做的事),但没有测试跑过它 ——
@@ -430,6 +448,11 @@ virt keys 本来就存 `List<int>`,`agent_conversation` 本来就存 JSON Map。
 - `setting` / `server` / `snippet` / `key` / `history` / `docker` / `port_forward`
   留在 K-V。它们都在 10KB 以下,关系化只换来迁移工作量——上一版的 diff 就是证据。
 
+**最后这条是错的,#1322 推翻了它。** 留在 K-V 的只有 `setting` 和 `history`。
+`server` / `key` / `snippet` / `port_forward` / `docker` 都进了表,理由不是大小
+而是约束:私钥的主键曾经是它的名字,改名就把每台指向它的服务器断开,snippet 同理;
+删一台服务器要手写六处清理子记录,漏了四处。这些是 schema 能表达、K-V 表达不了的。
+
 ### 加密:`package:sqlite3` 3.x + build hooks
 
 **`sqlcipher_flutter_libs` 这条路没了。** 它已废弃(最后版本 `0.7.0+eol`,0.7.0 起
@@ -459,6 +482,12 @@ CocoaPods(见上面那节),而且 CLAUDE.md 写的 FFI 边界原则是「不持�
 不用 drift,理由是上面第二个决定:drift 是异步优先的,而异步化 `Store` 正是上一版
 把改动摊到 34 个文件的原因。
 
+**#1322 之后 drift 回来了,但只负责 DDL。** 表结构由它声明和创建,查询仍然是手写的
+同步 SQL(UI 在 build 里读 store),连接也不由它开——`SqliteDb` 开,加 cipher 和
+`foreign_keys` pragma(pragma 是 per connection 的),再把句柄交给 `createTables`。
+`AppDb.schemaVersion` 钉在 1 不动,版本由 `SchemaVersion` 管:要迁移的步骤是读 Hive
+盒子、重映射 id,不是 drift migration 能表达的东西。
+
 ### 三个具体的点
 
 **密钥要用 raw key,不是 passphrase。** 上一版是 `PRAGMA key = '$escapedKey'`,会被
@@ -482,14 +511,22 @@ CocoaPods(见上面那节),而且 CLAUDE.md 写的 FFI 边界原则是「不持�
 `sqlite3.openInMemory()`。这比 CLAUDE.md 里记的 Hive `bytes: Uint8List(0)` 干净,
 而且不会踩 fake-async 下写锁不释放、`flutter test` 整体挂死那个坑。
 
+落地的形状是 `test/helpers/test_db.dart` 的 `openTestDb()`(openInMemory +
+`foreign_keys` pragma + `createTables`)配各 store 的 `forTest()`。`forTest()` 不再
+换名字——名字由 schema 定死——它存在只是为了让单例的列表缓存不跨测试共享。
+
 ### 顺带要清的残留
 
 上一版分支从没发布,所以下面这些对真实用户不存在,只在开发机上:
 
 - `~/Library/Application Support/ServerBox/app.db` + `app.db-wal`(4KB / 1.7MB,Mar 7),
-  `sqlite3` 已经读不动了。
-- `lib/core/utils/sandbox_import.dart:306` 对 `app.db` 的特判,和 `:375` 跳过 `.db-shm` 的
-  那段——现在是死代码。这轮决定之后,要么删掉,要么改成指向新库。
+  `sqlite3` 已经读不动了。手动删,代码不会再碰它。
+- ~~`sandbox_import.dart` 里对 `app.db` 的特判和跳过 `.db-shm` 的那段是死代码~~
+  ——**已不成立(2026-08-19 核对)**。两处都改成了指向新库:`_isData` 判
+  `name == SqliteDb.fileName`(`store.db`),`_isDataOrSidecar` 判
+  `'${SqliteDb.fileName}-'` 前缀,跳过的是 `'${SqliteDb.fileName}-shm'` 且按精确名
+  而非后缀(用户自己的 `-shm` 文件要照常带过来)。`lib/` 里已经没有 `app.db` 这个
+  字符串。
 
 ## dartssh2:一次写入超过约 32 KiB 会挂住
 
