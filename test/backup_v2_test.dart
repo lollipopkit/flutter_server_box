@@ -18,6 +18,7 @@ void main() {
         keys: {
           'key': const PrivateKeyInfo(
             id: 'key',
+            name: 'key',
             key: '-----BEGIN OPENSSH PRIVATE KEY-----\nkey',
           ),
         },
@@ -130,7 +131,11 @@ final class _NotJsonEncodable {}
 
 final class _ThrowingPrivateKeyInfo extends PrivateKeyInfo {
   const _ThrowingPrivateKeyInfo()
-    : super(id: 'bad', key: '-----BEGIN OPENSSH PRIVATE KEY-----\nbad');
+    : super(
+        id: 'bad',
+        name: 'bad',
+        key: '-----BEGIN OPENSSH PRIVATE KEY-----\nbad',
+      );
 
   @override
   Map<String, dynamic> toJson() => throw StateError('broken toJson');

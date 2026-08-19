@@ -78,9 +78,21 @@ abstract final class Tables {
 /// exist on a raw handle before any Drift object has been built over it. This
 /// is that seam: open, let `onCreate` run, and hand the connection back.
 Future<void> createTables(Database db) async {
-  final appDb = AppDb(NativeDatabase.opened(db));
-  // Nothing exists until the executor opens. The Drift object is dropped
-  // rather than closed: closing it would close the connection underneath,
-  // which the caller still owns.
-  await appDb.customStatement('SELECT 1;');
+  if (!identical(_over, db)) {
+    // One live `AppDb` at a time. Two over the same connection is what Drift
+    // warns about, and a test suite that opens a database per test would
+    // otherwise leave one behind for each.
+    await _appDb?.close();
+    // `closeUnderlyingOnClose: false`: the handle belongs to `SqliteDb`, which
+    // opened it, applied the cipher pragmas and will close it.
+    _appDb = AppDb(NativeDatabase.opened(db, closeUnderlyingOnClose: false));
+    _over = db;
+  }
+  // Nothing exists until the executor opens, and opening is what runs
+  // `onCreate`. Idempotent after that: Drift records its own version in
+  // `user_version` and `createAll` is `IF NOT EXISTS` regardless.
+  await _appDb!.customStatement('SELECT 1;');
 }
+
+AppDb? _appDb;
+Database? _over;

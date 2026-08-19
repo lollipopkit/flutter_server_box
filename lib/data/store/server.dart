@@ -133,17 +133,45 @@ class ServerStore extends EntityStore<Spi> {
               ip: row['wol_ip'] as String? ?? '',
               pwd: row['wol_pwd'] as String?,
             ),
-      custom: ServerCustom(
-        pveAddr: row['pve_addr'] as String?,
-        pveIgnoreCert: (row['pve_ignore_cert'] as int) == 1,
-        pvePwd: row['pve_pwd'] as String?,
-        cmds: cmds,
-        preferTempDev: row['prefer_temp_dev'] as String?,
-        tempIsCelsius: (row['temp_is_celsius'] as int) == 1,
-        logoUrl: row['logo_url'] as String?,
-        netDev: row['net_dev'] as String?,
-        scriptDir: row['script_dir'] as String?,
-      ),
+      custom: _customOf(row, cmds),
+    );
+  }
+
+  /// Null when the record says nothing beyond the defaults.
+  ///
+  /// The columns always have a value — `pve_ignore_cert` and `temp_is_celsius`
+  /// are `NOT NULL` with one — so building a [ServerCustom] unconditionally
+  /// would give every server a non-null `custom` it did not have before, and
+  /// put it in every backup.
+  static ServerCustom? _customOf(Row row, Map<String, String>? cmds) {
+    const strings = [
+      'pve_addr',
+      'pve_pwd',
+      'prefer_temp_dev',
+      'logo_url',
+      'net_dev',
+      'script_dir',
+    ];
+    final pveIgnoreCert = (row['pve_ignore_cert'] as int) == 1;
+    final tempIsCelsius = (row['temp_is_celsius'] as int) == 1;
+    // Field by field rather than against `const ServerCustom()`: this is a
+    // plain class with no `==`, so comparing would always say "different".
+    if (cmds == null &&
+        !pveIgnoreCert &&
+        tempIsCelsius &&
+        strings.every((c) => row[c] == null)) {
+      return null;
+    }
+    return ServerCustom(
+      pveAddr: row['pve_addr'] as String?,
+      pveIgnoreCert: pveIgnoreCert,
+      pvePwd: row['pve_pwd'] as String?,
+      cmds: cmds,
+      preferTempDev: row['prefer_temp_dev'] as String?,
+      tempIsCelsius: tempIsCelsius,
+      logoUrl: row['logo_url'] as String?,
+      netDev: row['net_dev'] as String?,
+      scriptDir: row['script_dir'] as String?,
     );
   }
 

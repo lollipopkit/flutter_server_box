@@ -12,6 +12,8 @@ import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 
+import 'helpers/test_db.dart';
+
 /// One tree, two ways of walking it.
 ///
 /// Above 800 it is a menu beside the content, showing every level and opening
@@ -25,7 +27,7 @@ void main() {
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-settings-');
-    SqliteDb.openInMemory();
+    await openTestDb();
     // In memory: a real write started in a `testWidgets` body never lets go of
     // the box's lock, and this page writes on nearly every switch.
     getIt.registerSingleton<SettingStore>(SettingStore.forTest());

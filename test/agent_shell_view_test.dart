@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,6 +13,8 @@ import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/agent/shell.dart';
 import 'package:server_box/view/page/agent/view.dart';
+
+import 'helpers/test_db.dart';
 
 /// An [AgentSession] frozen at one state, as in `agent_view_test.dart`: these
 /// tests are about the window the conversation is shown in, not about the
@@ -31,13 +32,13 @@ void main() {
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-agent-shell-');
-    SqliteDb.openInMemory();
+    await openTestDb();
     // In memory rather than on disk: the shell persists its mode the moment it
     // changes, so every test here writes, and none of them should leave a
     // database behind.
     getIt.registerSingleton<SettingStore>(SettingStore.forTest());
     getIt.registerSingleton<AgentConversationStore>(
-      AgentConversationStore.forTest()..init(),
+      AgentConversationStore.forTest(),
     );
   });
 

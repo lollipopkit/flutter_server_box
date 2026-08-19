@@ -23,7 +23,7 @@ import 'package:server_box/data/ssh/session_manager.dart';
 import 'package:server_box/data/store/migrations/m004_kv_to_tables.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/hive/hive_registrar.g.dart';
-import 'package:server_box/hive/spi_legacy_adapter.dart';
+import 'package:server_box/hive/legacy_adapters.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
 Future<void> main() async {
@@ -138,7 +138,7 @@ Future<void> _initData() async {
   Hive.registerAdapters();
   // Reads pre-v3 server records, which the generated SpiAdapter no longer
   // understands (it owns a new typeId and the nested layout).
-  Hive.registerAdapter(SpiLegacyAdapter());
+  registerHiveLegacyAdapters();
 
   await PrefStore.shared.init(); // Call this before accessing any store
 

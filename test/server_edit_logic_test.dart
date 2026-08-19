@@ -159,7 +159,7 @@ void main() {
             ),
             privateKeyProvider.overrideWithValue(
               const PrivateKeyState(
-                keys: [PrivateKeyInfo(id: 'test-key', key: 'unused')],
+                keys: [PrivateKeyInfo(id: 'test-key', name: 'test-key', key: 'unused')],
               ),
             ),
           ],

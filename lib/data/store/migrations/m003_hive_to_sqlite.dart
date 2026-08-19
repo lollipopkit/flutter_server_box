@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/schema.dart';
+import 'package:server_box/hive/legacy_adapters.dart';
 import 'package:server_box/hive/spi_legacy_adapter.dart';
 
 /// Copies every Hive box into the SQLite stores, once per device.
@@ -15,8 +16,8 @@ import 'package:server_box/hive/spi_legacy_adapter.dart';
 ///
 /// TODO: delete this, `lib/hive/`, the `hive_ce*` dependencies and the
 /// `Hive.initFlutter()` call in `main.dart` once no supported install can still
-/// be on Hive. Keep [SpiLegacyAdapter] until then — reading a pre-v3 record is
-/// what [_toSpi] needs it for.
+/// be on Hive. Keep the frozen adapters until then — reading what a released
+/// build wrote is what [_fromLegacy] needs them for.
 abstract final class HiveImport {
   /// Internal, so it stays out of backups and out of `lastUpdateTs`.
   static const _markerKey = '${StoreDefaults.prefixKey}hiveImported';
@@ -204,7 +205,7 @@ abstract final class HiveImport {
           final raw = legacy.box.get(key);
           if (raw == null) continue;
 
-          final value = _toSpi(raw) ?? raw;
+          final value = _fromLegacy(raw) ?? raw;
           final ok = into(key, _jsonSafe(value as Object));
           if (ok) {
             copied++;
@@ -224,12 +225,16 @@ abstract final class HiveImport {
     return (opened: true, copied: copied);
   }
 
-  /// A pre-v3 server record, nested into the current shape.
+  /// A record that a released build wrote, as the JSON that build produced.
   ///
-  /// Returns null for anything else, including a record already in the current
-  /// shape — those encode themselves.
-  static Object? _toSpi(Object raw) =>
-      raw is LegacySpiV2 ? raw.toSpi() : null;
+  /// Returns null for anything else, including a record whose adapter is still
+  /// generated from the live model — those encode themselves.
+  static Object? _fromLegacy(Object raw) => switch (raw) {
+    final LegacySpiV2 spi => spi.toSpi(),
+    final LegacyPrivateKeyV1 key => key.toJson(),
+    final LegacySnippetV1 snippet => snippet.toJson(),
+    _ => null,
+  };
 
   /// The value as something made of maps, lists and primitives.
   ///

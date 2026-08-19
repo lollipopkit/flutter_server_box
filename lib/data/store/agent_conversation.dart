@@ -156,26 +156,25 @@ class AgentConversationStore {
   void deleteConversation(String serverId, String conversationId) {
     final conversation = fetch(conversationId);
     if (conversation == null || conversation.serverId != serverId) return;
+    // Asked before the delete: the active row references the conversation and
+    // cascades with it, so afterwards there is nothing left to compare.
+    final wasActive = activeConversationId(serverId) == conversationId;
     _db.execute('DELETE FROM $_conv WHERE id = ?;', [conversationId]);
 
     // Exactly once, whichever way this returns. Deleting a conversation that
     // was not the active one used to return before notifying at all, leaving
     // the list showing a row that is gone; promoting a replacement notified
     // twice, because `setActive` notifies too.
-    if (activeConversationId(serverId) == conversationId) {
+    if (wasActive) {
       final remaining = fetchForServer(serverId);
-      if (remaining.isEmpty) {
-        _db.execute('DELETE FROM $_active WHERE server_id = ?;', [serverId]);
-      } else {
-        _setActiveRow(serverId, remaining.first.id);
-      }
+      if (remaining.isNotEmpty) _setActiveRow(serverId, remaining.first.id);
     }
     _changes.add(null);
   }
 
+  /// The active row goes with the conversations it references, by cascade.
   void clearServer(String serverId) {
     _db.execute('DELETE FROM $_conv WHERE server_id = ?;', [serverId]);
-    _db.execute('DELETE FROM $_active WHERE server_id = ?;', [serverId]);
     _changes.add(null);
   }
 

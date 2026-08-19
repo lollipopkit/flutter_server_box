@@ -13,6 +13,7 @@ import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/storage/file_browser.dart';
 
+import 'helpers/test_db.dart';
 
 /// A filesystem that is a map, so a browser test is about the browser.
 class _MapBackend implements FileBackend {
@@ -98,7 +99,7 @@ void main() {
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-browser-');
-    SqliteDb.openInMemory();
+    await openTestDb();
     getIt.registerSingleton<SettingStore>(SettingStore.forTest());
   });
 

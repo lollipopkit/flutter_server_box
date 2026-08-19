@@ -7,18 +7,17 @@ import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
 import 'package:server_box/data/store/server.dart';
-import 'package:server_box/data/store/tables.dart';
+
+import 'helpers/test_db.dart';
 
 /// A [Spi] is six tables now, so the question is whether it survives being
 /// taken apart and put back together.
 void main() {
   late ServerStore store;
 
-  setUp(() {
-    SqliteDb.openInMemory();
-    SqliteDb.instance.execute('PRAGMA foreign_keys = ON;');
-    Tables.createAll(SqliteDb.instance);
-    store = ServerStore.instance..invalidate();
+  setUp(() async {
+    await openTestDb();
+    store = ServerStore.forTest();
   });
 
   tearDown(() async => SqliteDb.close());

@@ -16,6 +16,7 @@ import 'package:xterm/core.dart';
 import 'package:xterm/ui.dart';
 
 import 'helpers/fake_shell.dart';
+import 'helpers/test_db.dart';
 
 /// Right-click in the terminal, which is copy or paste depending on nothing
 /// but whether anything is selected.
@@ -32,7 +33,7 @@ void main() {
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-term-');
-    SqliteDb.openInMemory();
+    await openTestDb();
     getIt.registerSingleton<SettingStore>(SettingStore.forTest());
 
     clipboard.clear();

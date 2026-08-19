@@ -74,6 +74,14 @@ abstract final class Stores {
     // synchronous transaction and cannot await anything.
     await createTables(SqliteDb.instance);
 
+    // The entity stores are singletons holding a list cache, and this may not
+    // be the database they last read: the sandbox import closes one, restores
+    // the previous file and calls back in here. A cache from the old one would
+    // outlive it, and nothing else would ever drop it.
+    for (final store in _entityStores) {
+      store.dropCache();
+    }
+
     await Future.wait([
       ..._kvStores.map((store) => store.init()),
       // Not a table to create — only the per-launch sweep of expired rows.

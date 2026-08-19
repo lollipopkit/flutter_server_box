@@ -129,7 +129,8 @@ class KvToTablesMigration implements SchemaMigration {
     final names = <String>{};
     for (final row in _rows('key')) {
       final oldId = row.value['id'] as String? ?? row.key;
-      final key = row.value['key'] as String?;
+      // `private_key` is what the released model's `toJson` called it.
+      final key = (row.value['private_key'] ?? row.value['key']) as String?;
       if (key == null) continue;
 
       // The old key was the name, and nothing enforced that it was unique
@@ -191,7 +192,10 @@ class KvToTablesMigration implements SchemaMigration {
       // A key id that names no key. If it looks like a path it is one: the
       // `~/.ssh/config` import wrote `IdentityFile` into this field. Mapping it
       // to null would be the only record that it ever existed.
-      final oldKeyId = ssh?['keyId'] as String?;
+      // `pubKeyId` is what `SshCredential.toJson` calls it, kept from the
+      // flat pre-v3 layout. Reading `keyId` alone found nothing and detached
+      // every server from its key.
+      final oldKeyId = (ssh?['pubKeyId'] ?? ssh?['keyId']) as String?;
       final newKeyId = keyIds[oldKeyId];
       final keyPath = newKeyId == null && oldKeyId != null && _isPath(oldKeyId)
           ? oldKeyId
@@ -555,12 +559,15 @@ class KvToTablesMigration implements SchemaMigration {
       if (!row.key.startsWith(conversationPrefix)) continue;
       final v = row.value;
       if (v is! Map) continue;
+      // snake_case: `AgentConversation.toJson` is hand-written and that is
+      // what it produces, so reading `serverId` here found nothing and every
+      // conversation was dropped.
       final id = v['id'] as String?;
-      final serverId = v['serverId'] as String?;
+      final serverId = v['server_id'] as String?;
       if (id == null || id.isEmpty || serverId == null || serverId.isEmpty) {
         continue;
       }
-      final updatedAt = DateTime.tryParse('${v['updatedAt']}');
+      final updatedAt = DateTime.tryParse('${v['updated_at']}');
       _db.execute(
         'INSERT OR REPLACE INTO agent_conversation '
         '(id, server_id, updated_at, data) VALUES (?, ?, ?, ?);',
