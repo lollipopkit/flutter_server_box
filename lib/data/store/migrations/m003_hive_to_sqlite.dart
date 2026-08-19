@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
@@ -35,12 +36,16 @@ abstract final class HiveImport {
   /// encrypted — so it is deleted below rather than carried across.
   static Map<String, bool Function(String, Object)> get _boxes => {
     'setting': _intoKv(Stores.setting),
-    'server': _intoKv(Stores.server),
-    'docker': _intoKv(Stores.container),
-    'key': _intoKv(Stores.key),
-    'snippet': _intoKv(Stores.snippet),
+    // Straight into `kv` rather than through the store objects: this step
+    // produces the v4 shape, and those stores have moved on to tables. A
+    // migration that calls today's code changes meaning every time that code
+    // does.
+    'server': _intoKvTable('server'),
+    'docker': _intoKvTable('docker'),
+    'key': _intoKvTable('key'),
+    'snippet': _intoKvTable('snippet'),
     'history': _intoKv(Stores.history),
-    'port_forward': _intoKv(Stores.portForward),
+    'port_forward': _intoKvTable('port_forward'),
     'connection_stats': Stores.connectionStats.importRow,
     'agent_conversation': Stores.agentConversation.importRow,
   };
@@ -51,6 +56,26 @@ abstract final class HiveImport {
   /// data it has just finished reading off its own disk.
   static bool Function(String, Object) _intoKv(SqliteStore store) =>
       (key, value) => store.set(key, value, updateLastUpdateTsOnSet: false);
+
+  /// Writes a row of the v4 key-value layout directly.
+  ///
+  /// `updated_at` is 0, not now: m004 carries these timestamps into the entity
+  /// tables, and stamping them as today would make the first sync after
+  /// upgrading read as "everything changed".
+  static bool Function(String, Object) _intoKvTable(String store) =>
+      (key, value) {
+        try {
+          SqliteDb.instance.execute(
+            'INSERT OR REPLACE INTO kv (store, key, value, updated_at) '
+            'VALUES (?, ?, ?, 0);',
+            [store, key, json.encode(value)],
+          );
+          return true;
+        } catch (e) {
+          Loggers.app.warning('m003: could not write $store/$key', e);
+          return false;
+        }
+      };
 
   /// Runs the import if this device has data in Hive and none in SQLite yet.
   ///

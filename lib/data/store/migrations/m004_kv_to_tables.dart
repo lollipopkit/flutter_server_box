@@ -47,7 +47,11 @@ class KvToTablesMigration implements SchemaMigration {
         }
       }
 
-      Tables.createAll(_db);
+      // Drift owns the DDL, so the tables are created by opening the
+      // database rather than by this step. `createTables` is the seam that
+      // makes the migration runnable against a connection Drift has not
+      // opened yet — a test, and the first launch after upgrading.
+      createTables(_db);
 
       final keyIds = _migratePrivateKeys();
       final serverIds = _migrateServers(keyIds);

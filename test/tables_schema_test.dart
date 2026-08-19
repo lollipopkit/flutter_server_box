@@ -1,4 +1,7 @@
+import 'package:drift/drift.dart' hide isNull, isNotNull;
+import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/data/store/db.dart';
 import 'package:server_box/data/store/tables.dart';
 import 'package:sqlite3/sqlite3.dart';
 
@@ -12,13 +15,21 @@ import 'package:sqlite3/sqlite3.dart';
 void main() {
   late Database db;
 
-  setUp(() {
+  late AppDb appDb;
+
+  // Created by Drift, asserted through the raw handle it was handed. Drift
+  // owns the DDL; these are the guarantees it has to deliver.
+  setUp(() async {
     db = sqlite3.openInMemory();
     db.execute('PRAGMA foreign_keys = ON;');
-    Tables.createAll(db);
+    appDb = AppDb(NativeDatabase.opened(db));
+    // Forces `onCreate`; nothing exists until the executor opens.
+    await appDb.customStatement('SELECT 1;');
   });
 
-  tearDown(() => db.close());
+  tearDown(() async {
+    await appDb.close();
+  });
 
   void addServer(
     String id, {
@@ -41,8 +52,7 @@ void main() {
     );
   }
 
-  test('creating twice is a no-op', () {
-    Tables.createAll(db);
+  test('Drift creates exactly the tables the app names', () {
     final tables = db
         .select("SELECT name FROM sqlite_master WHERE type='table';")
         .map((r) => r['name'] as String)
