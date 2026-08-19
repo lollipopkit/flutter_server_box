@@ -115,8 +115,10 @@ and it is not repeatable — once the "done" marker is written the old data is
 never read again. A bug there is not a crash, it is silence: the records are
 still on disk and the app no longer looks at them.
 
-So every storage migration keeps a test that runs forever, against **bytes
+So every storage migration keeps a permanent regression test, against **bytes
 written by the release being migrated from**, not by the current tree.
+Permanent means the test is never retired once the migration ships; it runs and
+finishes on every `flutter test`, like any other.
 
 | File | Role |
 |---|---|
@@ -136,12 +138,18 @@ wrote typeId 3 with them flat. The path every upgrading install takes —
 `SpiLegacyAdapter` decoding typeId 3, `_toSpi` nesting it — had no coverage at
 all until the fixture existed.
 
-The fixture then found a second one on its first run: `PortForwardConfig` is
-the only freezed model in the app with no `.g.dart`, so it has no generated
-`toJson`. Under Hive it persisted through its typeId 10 adapter and never
-needed one. `SqliteStore` encodes with `(value as dynamic).toJson()` and `set`
-returns `false` instead of throwing, so every port forward was being dropped
-silently — on migration *and* on every ordinary save.
+The fixture then exposed a second one on its first run: port forwards were
+being lost **during import**. `PortForwardConfig` is the only freezed model in
+the app with no `.g.dart`, so it has no generated `toJson`. Under Hive it
+persisted through its typeId 10 adapter and never needed one. `SqliteStore.set`
+encodes with `(value as dynamic).toJson()` and returns `false` instead of
+throwing, so the failure was silent.
+
+The import was only where it surfaced. `test/port_forward_store_test.dart`
+establishes the rest independently: an ordinary save loses the record the same
+way, with no migration involved. The two tests answer different questions and
+both are worth keeping — a migration fixture says what happens to old data, and
+says nothing about whether today's writes survive.
 
 ### Adding one for the next migration
 
