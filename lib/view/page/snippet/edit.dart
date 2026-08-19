@@ -7,6 +7,7 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/snippet.dart';
+import 'package:server_box/data/store/entity_store.dart';
 import 'package:server_box/view/page/ssh/snippet_run.dart';
 import 'package:server_box/view/widget/page_columns.dart';
 
@@ -162,10 +163,18 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> {
     if (snippet == null) return;
     final oldSnippet = widget.args?.snippet;
     final notifier = ref.read(snippetProvider.notifier);
-    if (oldSnippet != null) {
-      notifier.update(oldSnippet, snippet);
-    } else {
-      notifier.add(snippet);
+    try {
+      if (oldSnippet != null) {
+        notifier.update(oldSnippet, snippet);
+      } else {
+        notifier.add(snippet);
+      }
+    } on DuplicateNameException catch (e) {
+      // The name is unique in the schema rather than in whichever dialog last
+      // remembered to check, so this is where a collision is found. The page
+      // stays open on the name the user has to change.
+      Toast.error(l10n.nameAlreadyExistsFmt(e.name));
+      return;
     }
     _leave();
   }

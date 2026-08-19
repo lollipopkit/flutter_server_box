@@ -192,6 +192,12 @@
       "jumpIds": {}
     }
   },
+  "nameAlreadyExistsFmt": "\"{name}\" already exists",
+  "@nameAlreadyExistsFmt": {
+    "placeholders": {
+      "name": {}
+    }
+  },
   "noJumpServerAvailable": "No jump server available.",
   "jumpServerAndProxyCommandCannotBeUsedTogether": "Jump server and ProxyCommand cannot be used together.",
   "keepForeground": "Keep app foreground!",

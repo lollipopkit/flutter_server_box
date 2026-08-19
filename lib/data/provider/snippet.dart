@@ -72,40 +72,33 @@ class SnippetNotifier extends _$SnippetNotifier {
   }
 
   void del(Snippet snippet) {
-    final newSnippets = state.snippets.where((s) => s != snippet).toList();
+    final newSnippets = state.snippets
+        .where((s) => s.id != snippet.id)
+        .toList();
     final newTags = _computeTags(newSnippets);
     state = state.copyWith(snippets: newSnippets, tags: newTags);
     Stores.snippet.delete(snippet);
     bakSync.sync(milliDelay: 1000);
   }
 
+  /// A rename is an update of columns, not a delete and an insert: the two
+  /// carry the same id, and deleting first would tombstone a record that is
+  /// still there and take its tags and auto-run targets with it.
   void update(Snippet old, Snippet newOne) {
     final newSnippets = state.snippets
-        .map((s) => s == old ? newOne : s)
+        .map((s) => s.id == old.id ? newOne : s)
         .toList();
     final newTags = _computeTags(newSnippets);
     state = state.copyWith(snippets: newSnippets, tags: newTags);
-    Stores.snippet.delete(old);
     Stores.snippet.put(newOne);
     bakSync.sync(milliDelay: 1000);
   }
 
+  /// One `UPDATE` over the tag rows, rather than rewriting every snippet that
+  /// carries the tag.
   void renameTag(String old, String newOne) {
-    final updatedSnippets = <Snippet>[];
-    for (final s in state.snippets) {
-      if (s.tags?.contains(old) ?? false) {
-        final newTags = Set<String>.from(s.tags!);
-        newTags.remove(old);
-        newTags.add(newOne);
-        final updatedSnippet = s.copyWith(tags: newTags.toList());
-        updatedSnippets.add(updatedSnippet);
-        Stores.snippet.put(updatedSnippet);
-      } else {
-        updatedSnippets.add(s);
-      }
-    }
-    final newTags = _computeTags(updatedSnippets);
-    state = state.copyWith(snippets: updatedSnippets, tags: newTags);
+    Stores.snippet.renameTag(old, newOne);
+    state = _load();
     bakSync.sync(milliDelay: 1000);
   }
 }

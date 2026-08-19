@@ -47,17 +47,17 @@ class PrivateKeyNotifier extends _$PrivateKeyNotifier {
     bakSync.sync(milliDelay: 1000);
   }
 
+  /// The id never changes, so this is one write either way — the branch that
+  /// deleted the old record existed because the id *was* the name.
   void update(PrivateKeyInfo old, PrivateKeyInfo newInfo) {
     final keys = [...state.keys];
     final idx = keys.indexWhere((e) => e.id == old.id);
     if (idx == -1) {
       keys.add(newInfo);
-      Stores.key.put(newInfo);
-      Stores.key.delete(old);
     } else {
       keys[idx] = newInfo;
-      Stores.key.put(newInfo);
     }
+    Stores.key.put(newInfo);
     state = state.copyWith(keys: keys);
     bakSync.sync(milliDelay: 1000);
   }

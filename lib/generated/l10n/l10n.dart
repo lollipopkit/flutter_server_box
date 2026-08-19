@@ -1239,6 +1239,12 @@ abstract class AppLocalizations {
   /// **'Jump servers not found for {serverName}: {jumpIds}'**
   String jumpServersNotFoundFmt(Object serverName, Object jumpIds);
 
+  /// No description provided for @nameAlreadyExistsFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" already exists'**
+  String nameAlreadyExistsFmt(Object name);
+
   /// No description provided for @noJumpServerAvailable.
   ///
   /// In en, this message translates to:
