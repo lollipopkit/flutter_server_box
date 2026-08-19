@@ -393,6 +393,35 @@ void main() {
         );
       });
     });
+      /// What `m004_id_remap_test` seeds by hand, checked against the bytes a
+      /// release actually wrote.
+      ///
+      /// That test cannot take this fixture as its input — m004 consumes what
+      /// `HiveImport` leaves in `kv`, not Hive bytes — so the one fact it
+      /// assumes is pinned here instead: a server from before 1155 arrives
+      /// with an empty `id`, which is what makes the migration generate one.
+      test('a pre-1155 server reaches `kv` with no id of its own', () async {
+        // Import only. After m004 the row is gone from `kv` and the record has
+        // the id this asserts it did not have.
+        await Stores.init();
+
+        final rows = SqliteDb.instance.select(
+          "SELECT value FROM kv WHERE store = 'server';",
+        );
+        final decoded = rows
+            .map((r) => json.decode(r['value'] as String) as Map<String, dynamic>)
+            .toList();
+        final bare = decoded.firstWhere((e) => e['name'] == 'bare');
+        expect(bare['id'], '');
+        expect(bare['ssh'], isA<Map>());
+        // And every other record does have one, so an empty id is the
+        // exception the remapping exists for rather than the norm.
+        expect(
+          decoded.where((e) => (e['id'] as String).isEmpty),
+          hasLength(1),
+        );
+      });
+
       test('the agent conversations come across when the release had them', () async {
         await Stores.init();
         await SchemaVersion.migrate(const [KvToTablesMigration()]);

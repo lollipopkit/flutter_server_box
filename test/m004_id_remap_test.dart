@@ -12,10 +12,21 @@ import 'package:server_box/data/store/snippet.dart';
 
 import 'helpers/test_db.dart';
 
-/// A server stored before 1155 has an **empty** `id` and lives under the key
-/// `user@ip:port`. An empty primary key is not something the table can hold, so
-/// `KvToTablesMigration` generates one — and everything that named the old key
-/// has to follow it in the same pass. Nothing runs afterwards that could.
+/// A server stored before 1155 has an **empty** `id`, so an empty primary key
+/// is what `KvToTablesMigration` would have to write — and it generates one
+/// instead. Everything that named the old key has to follow it in the same
+/// pass; nothing runs afterwards that could.
+///
+/// The input here is hand-written because m004's input is not a release
+/// artifact: it consumes what `HiveImport` leaves in `kv`, which is this
+/// repo's own intermediate. The one thing that *is* a fact about a released
+/// build — that such a server arrives with `id == ''` — is checked against the
+/// 1466 fixture in `hive_release_migration_test.dart`, so this seed cannot
+/// drift away from what a real upgrade produces without that test failing.
+///
+/// The key below is the `user@ip:port` form such an install used. Any string
+/// would do: what is under test is that the *reference* is rewritten, not what
+/// it looked like.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
