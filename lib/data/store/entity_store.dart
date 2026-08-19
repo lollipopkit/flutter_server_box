@@ -64,6 +64,28 @@ abstract class EntityStore<T extends Object> {
   /// transaction, with the timestamp applied afterwards.
   void write(T item);
 
+  /// Writes one row, leaving columns it does not name alone.
+  ///
+  /// Not `INSERT OR REPLACE`: that deletes the row and inserts a new one, so
+  /// every column absent from the statement goes back to its default. Here
+  /// that silently reset `rev` to 0 on every write, which is the one thing
+  /// `rev` exists to prevent — two edits in the same millisecond became
+  /// indistinguishable again.
+  void upsert(String table, List<String> columns, List<Object?> values, {
+    List<String> keyColumns = const ['id'],
+  }) {
+    final placeholders = List.filled(columns.length, '?').join(', ');
+    final assignments = [
+      for (final c in columns)
+        if (!keyColumns.contains(c)) '$c = excluded.$c',
+    ].join(', ');
+    db.execute(
+      'INSERT INTO $table (${columns.join(', ')}) VALUES ($placeholders) '
+      'ON CONFLICT (${keyColumns.join(', ')}) DO UPDATE SET $assignments;',
+      values,
+    );
+  }
+
   void update(T old, T neu) {
     if (idOf(old) != idOf(neu)) {
       // An id is not something the user edits, so this is a bug rather than a
