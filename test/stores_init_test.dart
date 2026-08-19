@@ -111,7 +111,7 @@ void main() {
     expect(Stores.setting.get<bool>(marker), isTrue);
     Stores.setting.timeout.put(31);
 
-    Stores.setting.clear();
+    await Stores.setting.clear();
 
     // The marker is internal, so `clear` leaves it — directly, not inferred
     // from the schema version. Were it dropped, the next launch would copy the

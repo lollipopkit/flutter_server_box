@@ -7,14 +7,14 @@ import 'package:server_box/data/model/app/bak/utils.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/store/schema.dart';
 
-const bakSync = BakSyncer._();
+final bakSync = BakSyncer._();
 
 final icloud = ICloud(containerId: 'iCloud.tech.lolli.serverbox');
 
 bool get isICloudSupported => isMacOS || isIOS;
 
 final class BakSyncer extends SyncIface {
-  const BakSyncer._() : super();
+  BakSyncer._() : super();
 
   /// Set by [fromFile] when the remote payload came from a newer build.
   ///
@@ -24,7 +24,7 @@ final class BakSyncer extends SyncIface {
   /// didn't understand. [backup] is the one hook available for refusing that
   /// without forking the whole cycle.
   ///
-  /// Static because the syncer is a const singleton.
+  /// Static because the syncer is a single instance shared by every caller.
   static SchemaTooNewException? _remoteTooNew;
 
   /// Whether the last sync attempt aborted because the remote data is newer

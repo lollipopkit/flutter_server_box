@@ -136,7 +136,7 @@ void main() {
       );
     });
 
-    test('remove drops one key, clear drops the store only', () {
+    test('remove drops one key, clear drops the store only', () async {
       store.set('x', 1);
       store.set('y', 2);
       other.set('x', 3);
@@ -145,18 +145,18 @@ void main() {
       expect(store.get<int>('x'), isNull);
       expect(store.get<int>('y'), 2);
 
-      store.clear();
+      await store.clear();
       expect(store.keys(), isEmpty);
       expect(other.get<int>('x'), 3);
     });
 
-    test('clear keeps the last-update map', () {
+    test('clear keeps the last-update map', () async {
       store.set('x', 1);
       final before = store.lastUpdateTs;
       expect(before, isNotNull);
       expect(before!['x'], isNotNull);
 
-      store.clear();
+      await store.clear();
 
       // Not just non-null: `clear` used to put the map back in a shape the
       // reader rejected, so the entries have to survive, not only the key.
@@ -275,12 +275,12 @@ void main() {
     });
     tearDown(SqliteDb.close);
 
-    test('clear keeps internal keys, so a migration marker survives', () {
+    test('clear keeps internal keys, so a migration marker survives', () async {
       const marker = '${StoreDefaults.prefixKey}someMigrationDone';
       store.set(marker, true);
       store.set('user-data', 1);
 
-      store.clear();
+      await store.clear();
 
       expect(store.get<int>('user-data'), isNull);
       expect(
