@@ -36,4 +36,10 @@ class PortForwardStore extends SqliteStore {
   void delete(PortForwardConfig config) {
     remove(config.id);
   }
+
+  void clearServer(String serverId) {
+    for (final config in fetch(serverId)) {
+      delete(config);
+    }
+  }
 }

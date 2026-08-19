@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/hive/spi_legacy_adapter.dart';
 
@@ -176,7 +177,7 @@ abstract final class HiveImport {
           final raw = legacy.box.get(key);
           if (raw == null) continue;
 
-          final value = _toSpi(raw) ?? raw;
+          final value = _toSpi(key, raw) ?? raw;
           final ok = into(key, _jsonSafe(value as Object));
           if (ok) {
             copied++;
@@ -196,12 +197,22 @@ abstract final class HiveImport {
     return (opened: true, copied: copied);
   }
 
-  /// A pre-v3 server record, nested into the current shape.
+  /// A server record in the current shape.
   ///
-  /// Returns null for anything else, including a record already in the current
-  /// shape — those encode themselves.
-  static Object? _toSpi(Object raw) =>
-      raw is LegacySpiV2 ? raw.toSpi() : null;
+  /// Besides nesting the pre-v3 layout, give a record that predates server IDs
+  /// the key it was already stored under. JSON decoding deliberately generates
+  /// an ID for a blank field, but it cannot persist that generated value or
+  /// rekey the row. Leaving the field blank here would therefore make updates
+  /// and deletes address a different key after every cache miss.
+  static Object? _toSpi(String key, Object raw) {
+    final spi = switch (raw) {
+      LegacySpiV2() => raw.toSpi(),
+      Spi() => raw,
+      _ => null,
+    };
+    if (spi == null) return null;
+    return spi.id.isEmpty ? spi.copyWith(id: key) : spi;
+  }
 
   /// The value as something made of maps, lists and primitives.
   ///

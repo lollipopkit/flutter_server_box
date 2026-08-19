@@ -62,6 +62,20 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     _forwards.clear();
   }
 
+  /// Stops every live listener before removing the saved configurations.
+  ///
+  /// Server deletion calls this explicitly. Waiting for the SSH client to
+  /// disconnect leaves local, remote, or SOCKS forwards reachable after their
+  /// server has disappeared from the app.
+  Future<void> clear() async {
+    for (final entry in _forwards.values) {
+      await entry.close().catchError((_) {});
+    }
+    _forwards.clear();
+    Stores.portForward.clearServer(_serverId);
+    state = state.copyWith(configs: const [], activeForwards: {});
+  }
+
   Future<void> addConfig(PortForwardConfig config) async {
     final configWithServerId = config.copyWith(serverId: _serverId);
     Stores.portForward.put(configWithServerId);

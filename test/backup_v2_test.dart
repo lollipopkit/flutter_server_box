@@ -1,13 +1,19 @@
+import 'dart:io';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
+import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/schema.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('BackupV2 JSON encoding', () {
     test('serializes typed store objects as JSON objects', () {
       final backup = BackupV2(
@@ -122,6 +128,65 @@ void main() {
       final backup = BackupV2.fromJsonString(raw);
 
       expect(backup.spis['__lkpt_lastUpdateTs'], 'legacy timestamp metadata');
+    });
+  });
+
+  group('BackupV2 store export', () {
+    late Directory tempDir;
+
+    setUpAll(() async {
+      tempDir = await Directory.systemTemp.createTemp('sbm-backup-v2-');
+      Paths.doc = tempDir.path;
+    });
+
+    tearDownAll(() async => tempDir.delete(recursive: true));
+
+    setUp(() async {
+      SqliteDb.openInMemory();
+      await Stores.init();
+    });
+
+    tearDown(() async {
+      await getIt.reset();
+      await SqliteDb.close();
+    });
+
+    test('keeps timestamps but excludes device-local markers', () async {
+      const importMarker = '${StoreDefaults.prefixKey}hiveImported';
+      Stores.setting.set(importMarker, true, updateLastUpdateTsOnSet: false);
+      Stores.setting.timeout.put(11);
+
+      final backup = await BackupV2.loadFromStore();
+
+      expect(backup.settings.containsKey(importMarker), isFalse);
+      expect(backup.settings.containsKey(Stores.setting.schemaVersion.key), isFalse);
+      expect(backup.settings.containsKey(Stores.setting.lastUpdateTsKey), isTrue);
+      expect(backup.settings['timeOut'], 11);
+    });
+
+    test('does not apply device-local markers from an older backup', () async {
+      const importMarker = '${StoreDefaults.prefixKey}hiveImported';
+      Stores.setting.set(importMarker, true, updateLastUpdateTsOnSet: false);
+      final originalSchema = SchemaVersion.stored;
+
+      final backup = BackupV2(
+        version: BackupV2.formatVer,
+        date: 1,
+        spis: const {},
+        snippets: const {},
+        keys: const {},
+        container: const {},
+        history: const {},
+        settings: {
+          importMarker: false,
+          Stores.setting.schemaVersion.key: 2,
+          Stores.setting.lastUpdateTsKey: <String, int>{},
+        },
+      );
+      await backup.merge(force: true);
+
+      expect(Stores.setting.get<bool>(importMarker), isTrue);
+      expect(SchemaVersion.stored, originalSchema);
     });
   });
 }

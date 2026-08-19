@@ -66,29 +66,33 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
 
     final results = await Future.wait([
       Mergeable.mergeStore(
-        backupData: spis,
+        backupData: _mergeDataForStore(Stores.server, spis),
         store: Stores.server,
         force: force,
       ),
       Mergeable.mergeStore(
-        backupData: snippets,
+        backupData: _mergeDataForStore(Stores.snippet, snippets),
         store: Stores.snippet,
         force: force,
       ),
-      Mergeable.mergeStore(backupData: keys, store: Stores.key, force: force),
       Mergeable.mergeStore(
-        backupData: container,
+        backupData: _mergeDataForStore(Stores.key, keys),
+        store: Stores.key,
+        force: force,
+      ),
+      Mergeable.mergeStore(
+        backupData: _mergeDataForStore(Stores.container, container),
         store: Stores.container,
         force: force,
       ),
       Mergeable.mergeStore(
-        backupData: history,
+        backupData: _mergeDataForStore(Stores.history, history),
         store: Stores.history,
         force: force,
       ),
       if (settings.isNotEmpty)
         Mergeable.mergeStore(
-          backupData: settings,
+          backupData: _mergeDataForStore(Stores.setting, settings),
           store: Stores.setting,
           force: force,
         )
@@ -115,14 +119,12 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     return BackupV2(
       version: formatVer,
       date: DateTimeX.timestamp,
-      spis: Stores.server.getAllMap(includeInternalKeys: true),
-      snippets: Stores.snippet.getAllMap(includeInternalKeys: true),
-      keys: Stores.key.getAllMap(includeInternalKeys: true),
-      container: Stores.container.getAllMap(includeInternalKeys: true),
-      history: Stores.history.getAllMap(includeInternalKeys: true),
-      settings: includeSettings
-          ? Stores.setting.getAllMap(includeInternalKeys: true)
-          : const {},
+      spis: _backupStore(Stores.server),
+      snippets: _backupStore(Stores.snippet),
+      keys: _backupStore(Stores.key),
+      container: _backupStore(Stores.container),
+      history: _backupStore(Stores.history),
+      settings: includeSettings ? _backupStore(Stores.setting) : const {},
     );
   }
 
@@ -171,6 +173,37 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     _validateRestorableStore('snippets', snippets);
     _validateRestorableStore('keys', keys);
   }
+}
+
+/// Keeps the per-record modification map needed by sync, but not device-local
+/// layout and migration markers. Restoring those markers from another device
+/// can make this device skip a migration or claim a schema it does not have.
+Map<String, Object?> _backupStore(SqliteStore store) {
+  final rows = store.getAllMap(includeInternalKeys: true);
+  rows.removeWhere(
+    (key, _) => store.isInternalKey(key) && key != store.lastUpdateTsKey,
+  );
+  return rows;
+}
+
+Map<String, Object?> _mergeDataForStore(
+  SqliteStore store,
+  Map<String, Object?> rows,
+) {
+  final result = Map<String, Object?>.from(rows)
+    ..removeWhere(
+      (key, _) => store.isInternalKey(key) && key != store.lastUpdateTsKey,
+    );
+
+  // Mergeable treats an absent key as a deletion. Keep local-only state in
+  // the input until fl_lib can expose an internal-key exclusion policy.
+  for (final entry
+      in store.getAllMap(includeInternalKeys: true).entries
+      .where((entry) =>
+          store.isInternalKey(entry.key) && entry.key != store.lastUpdateTsKey)) {
+    result[entry.key] = entry.value;
+  }
+  return result;
 }
 
 Object? _toEncodable(Object? value) {

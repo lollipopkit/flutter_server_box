@@ -217,13 +217,24 @@ final class WatchSync {
 
   Future<void> removeServer(Spi spi) async {
     final existingTokens = await _existingTokens();
-    await _revokeServer(spi, endpoint: existingTokens[spi.id]?.endpoint);
+    try {
+      await _revokeServer(spi, endpoint: existingTokens[spi.id]?.endpoint);
+    } catch (e, s) {
+      // The local server must remain removable while its monitor is offline.
+      // The token may outlive it remotely, but retaining local credentials is
+      // worse and there is no retry target once the user has deleted it.
+      Loggers.app.warning('Could not revoke watch token for ${spi.id}', e, s);
+    }
     final selected = Stores.setting.watchServerIds.fetch();
     if (!selected.contains(spi.id)) return;
     Stores.setting.watchServerIds.put(
       selected.where((id) => id != spi.id).toList(),
     );
-    await push();
+    try {
+      await push();
+    } catch (e, s) {
+      Loggers.app.warning('Could not update watch after deleting ${spi.id}', e, s);
+    }
   }
 
   Future<void> _revokeSelectedServers() async {

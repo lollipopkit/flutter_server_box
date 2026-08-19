@@ -36,24 +36,17 @@ void main() {
       expect(caps.storedHistory, isTrue);
     });
 
-    test('the agent answers when both are somehow configured', () {
-      // `Spi.validate` rejects this, so it can only arrive from hand-edited
-      // storage. `ServerConnectCredential.fromSpi` reads status over the agent
-      // in that case, and what a server can do has to be the same answer as
-      // how it is actually reached — otherwise the app offers SFTP over a
-      // connection it is not using.
+    test('validation rejects simultaneous SSH and monitor credentials', () {
       final spi = Spi(
         name: 'test',
         id: 'e',
         ssh: const SshCredential(ip: '10.0.0.1'),
         monitorHttp: monitor,
       );
-      final caps = ServerCapabilities.of(
-        ServerConnectCredential.fromSpi(spi),
-        granted: const MonitorRemoteAccess(fullAccess: true),
+      expect(
+        spi.validate(),
+        SpiValidationError.sshAndMonitorHttpConflict,
       );
-      expect(caps, isA<MonitorHttpCapabilities>());
-      expect(caps.byteStream, isFalse);
     });
 
     test('a plain SSH server is unchanged', () {

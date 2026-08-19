@@ -80,4 +80,14 @@ void main() {
     store.delete(config);
     expect(store.fetch('srv-1'), isEmpty);
   });
+
+  test('clearServer removes only that server configurations', () {
+    store.put(config);
+    store.put(config.copyWith(id: 'pf-2', serverId: 'srv-other'));
+
+    store.clearServer('srv-1');
+
+    expect(store.fetch('srv-1'), isEmpty);
+    expect(store.fetch('srv-other').single.id, 'pf-2');
+  });
 }

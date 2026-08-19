@@ -66,7 +66,7 @@ void main() {
     }
     for (final f in fixtureDir.listSync().whereType<File>()) {
       if (!f.path.endsWith('.hive')) continue;
-      f.copySync(tempDir.path.joinPath(f.path.split('/').last));
+      f.copySync(tempDir.path.joinPath(f.uri.pathSegments.last));
     }
     SqliteDb.openInMemory();
   });
@@ -83,7 +83,7 @@ void main() {
     final names = fixtureDir
         .listSync()
         .whereType<File>()
-        .map((f) => f.path.split('/').last)
+        .map((f) => f.uri.pathSegments.last)
         .where((n) => n.endsWith('.hive'))
         .toList()
       ..sort();
@@ -183,9 +183,17 @@ void main() {
       expect(bare.custom, isNull);
       expect(bare.wolCfg, isNull);
       expect(bare.tags, isNull);
-      // 1466 wrote an empty id for a record predating them; `Spi.parseId`
-      // fills one in on read rather than leaving it blank.
-      expect(bare.id, isNotEmpty);
+      // 1466 wrote an empty ID for a record predating IDs. It is normalized
+      // during the one-time import, not generated transiently by JSON decoding.
+      expect(bare.id, 'srv-bare');
+      Stores.server.invalidateCache();
+      expect(Stores.server.fetchOneRaw('srv-bare')?.id, 'srv-bare');
+
+      final raw = SqliteDb.instance.select(
+        'SELECT value FROM kv WHERE store = ? AND key = ?;',
+        ['server', 'srv-bare'],
+      ).single['value'] as String;
+      expect((json.decode(raw) as Map<String, dynamic>)['id'], 'srv-bare');
     });
 
     test('the stored JSON has no flat SSH key left', () {
