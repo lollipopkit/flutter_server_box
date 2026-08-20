@@ -122,9 +122,14 @@ fork,把同样的五个平台构建集成换成一个 `hook/build.dart`(用 `nat
 上游最后一个版本是 0.4.2(2025-01),没有 `Package.swift`,唯一那个 SwiftPM PR
 (#21)只做了 macOS 且无人回应。
 
-**未验证:Android / Linux / Windows。** 这三个平台原先分别走 cargokit 的
-gradle plugin 和 CMake,现在改走同一个 hook,但本机没跑过。要在 CI 或对应机器上
-各跑一次 `dart run fl_build -p <platform>`。
+**Android 已验证(2026-08-20,本机)。** `dart run fl_build -p android` 通过,产出
+`ServerBox_1491_{arm64,arm,amd64}.apk` 三个 split-per-abi 包。arm64 那个在 Android 16
+真机(arm64-v8a)和 arm64 模拟器上都装得上、跑得起来。`RustLib.init()` 在
+`main.dart:103`、`runApp` 之前,FRB 版本对不上会在这里抛异常——两台设备都正常启动,
+所以 `hook/build.dart` 给 `aarch64-linux-android` 编出的 dylib 是能加载的。
+
+**仍未验证:Linux / Windows。** 这两个平台原先走 cargokit 的 CMake,现在改走同一个
+hook,本机没跑过。各跑一次 `dart run fl_build -p <platform>`。
 
 **核对(2026-08-19):hook 路径在 CI 上一次都没跑过。** `build.yml` 只在 `v*` tag
 或手动 dispatch 时触发,最后一次是 v1.0.1491(08-18 05:23),而 `hook/build.dart`
@@ -133,8 +138,8 @@ gradle plugin 和 CMake,现在改走同一个 hook,但本机没跑过。要在 C
 
 同一次的 Build android 失败,报 AGP 8.9.1 低于 Flutter 要求的 8.11.1。这个原因已经
 不在了:`android/settings.gradle` 在当天 15:00 由 #1234 升到 8.11.1,比那次构建晚
-十小时——但同样没有再跑过。打个 tag 或手动 dispatch 一次 `build.yml`,五个平台一起
-就都验证了。
+十小时。本机构建已经能过,但 CI 上仍未跑过。打个 tag 或手动 dispatch 一次
+`build.yml`,五个平台一起就都验证了。
 
 **CocoaPods 已彻底移除。** `Podfile`、`Podfile.lock`、`Pods/`、xcconfig 里的
 `Pods-Runner` include、workspace 里的 `Pods.xcodeproj` 引用、两个 pbxproj 里所有
@@ -198,6 +203,21 @@ CocoaPods 那条时限对它不再适用。
 被这条替代的旧路线(留作记录):预编译 xcframework + `.binaryTarget`。代价是在
 Xcode 里直接 Run 不会重编 Rust,容易用到旧产物,还要维护打包脚本和 `-force_load`。
 hooks 路线没有这些问题。
+
+## Android:wakelock_plus 把 Kotlin language version 钉在 2.1
+
+`wakelock_plus` 的 pigeon 输出 `WakelockPlusMessages.g.kt` 没有 `package` 声明,所以
+同目录的 `Wakelock.kt` 用 `import IsEnabledMessage` / `import ToggleMessage` 从 root
+package 导入。Kotlin 2.2 不接受这种导入,`:wakelock_plus:compileReleaseKotlin` 报
+unresolved reference,Android release 构建直接失败。
+
+两头都堵死:pub 上从 1.3.2 到最新的 1.7.0(2026-07-21)每个版本都是这么写的,降级
+这个包没用;把 KGP 降到 2.1.21 又会被 Flutter 的 gradle plugin 拒绝,它要求
+`>= 2.2.20`。
+
+现在的做法在 `android/build.gradle`:一个 `subprojects` 块,只对 `wakelock_plus` 这个
+module 把 `languageVersion` 设成 `KOTLIN_2_1`,app 自己的 Kotlin 不受影响。代码里已标
+TODO——上游哪天带着 package 声明重新生成,这段就该删。
 
 ## monitor:cpu_core_metrics / velocity_metrics 是只写表
 
@@ -343,6 +363,37 @@ agent 的那条完整路径。
 
 **状态(2026-08-19):三个阶段都已合入。** 第三阶段超出了本节原来的计划,更正见
 下面「第二阶段」那段。
+
+**已在 Android 设备上验证(2026-08-20)。** 之前只有 `flutter test` 这一层证据。
+
+做法:模拟器 `pm clear` 之后,把 `test/fixtures/hive_v1466/` 的盒子放进
+`app_flutter/`,同时把测试用的那把 key(`Random(1)` 生成 32 字节再 base64url)以
+`flutter.hive_key` 写进 `shared_prefs/FlutterSharedPreferences.xml` ——
+`_HiveEnc._encryptionKey` 和 `_StoreSecret.read()` 在 secure storage 为空时都会回落到
+prefs,并顺手把它迁进 secure storage。然后直接用 1491 启动。
+
+结果和单元测试的期望逐项相同:`server` 5、`conn_stat` 120(五种 `ConnectionResult`
+各 24)、`private_key` 2、`snippet` 3(含 CJK/emoji 那条)、`port_forward` 2、
+`container_host` 2;子表 `server_tag` 4、`server_env` 2、`server_jump` 2、
+`server_custom_cmd` 2、`server_disabled_cmd` 2、`snippet_tag` 2;`kv` 里
+`setting` 19 + `history` 2;`__lkpt_schemaVersion` = 5、`__lkpt_hiveImported` = true;
+`conn_stats_index.hive` 已删除。五台服务器的形态(password auth、key auth、jump
+host、ProxyCommand、无可选字段)都落在对的列上。
+
+真机那半也走了一遍:线上 1466 的 APK(versionCode 146603)直接覆盖装成本地构建的
+149103,签名同证书所以不用卸载,启动无 crash、无 `SchemaTooNewException`,用户的数据
+还在。
+
+两条下次会用到的:
+
+- **测迁移不要先启动旧版本。** 先让 1466 跑一分半再升级,拿到的是 `server` 6、
+  `conn_stat` 18 —— 1466 在运行期间自己改写了盒子(`connection_stats_enc.hive` 从
+  15240 涨到 54897)。多出来那台 server 的来源原因未查明。
+- **`store.db` 和 Hive 用同一把 key**(`SecureStoreProps.hivePwd`,见
+  `fl_lib` 的 `_StoreSecret`)。所以只要 key 是自己植入的,就能把库 pull 下来用
+  `PRAGMA cipher = 'chacha20'` + `PRAGMA key = "x'<hex>'"` 打开数行数。真机上做不到
+  这一步:release 包 `debuggable=false`,`run-as` 被拒,又没有 root,`/data/data/`
+  完全读不到,只能看界面。库级核对需要可 root 的模拟器。
 
 已做:
 - `SqliteStore` 在 fl_lib(`store/sqlite.dart`),七个 K-V store 换过去,写入
