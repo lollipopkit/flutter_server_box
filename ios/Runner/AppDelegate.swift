@@ -39,24 +39,32 @@ import ActivityKit
                     WidgetCenter.shared.reloadTimelines(ofKind: "StatusWidget")
                 }
                 result(nil)
+            // The three Live Activity cases answer from inside the Task, not
+            // after starting it. ActivityKit is what takes the time here, and
+            // none of it may run on this thread; replying only once it is done
+            // is also what keeps the Dart side's queue ordering these calls.
             case "startLiveActivity":
-                if #available(iOS 16.2, *) {
-                    if let payload = call.arguments as? String {
-                        LiveActivityManager.start(json: payload)
+                if #available(iOS 16.2, *), let payload = call.arguments as? String {
+                    Task {
+                        await LiveActivityManager.shared.start(json: payload)
+                        result(nil)
                     }
+                } else {
+                    result(nil)
                 }
-                result(nil)
             case "updateLiveActivity":
-                if #available(iOS 16.2, *) {
-                    if let payload = call.arguments as? String {
-                        LiveActivityManager.update(json: payload)
+                if #available(iOS 16.2, *), let payload = call.arguments as? String {
+                    Task {
+                        await LiveActivityManager.shared.update(json: payload)
+                        result(nil)
                     }
+                } else {
+                    result(nil)
                 }
-                result(nil)
             case "stopLiveActivity":
                 if #available(iOS 16.2, *) {
                     Task {
-                        await LiveActivityManager.stop()
+                        await LiveActivityManager.shared.stop()
                         result(nil)
                     }
                 } else {
@@ -95,7 +103,7 @@ import ActivityKit
         // UIScene apps use this callback when the user closes the app from the
         // app switcher. applicationWillTerminate is not reliable for that path.
         if #available(iOS 16.2, *) {
-            Task { await LiveActivityManager.stop() }
+            Task { await LiveActivityManager.shared.stop() }
         }
         super.application(application, didDiscardSceneSessions: sceneSessions)
     }
@@ -103,7 +111,7 @@ import ActivityKit
     override func applicationWillTerminate(_ application: UIApplication) {
         // Stop Live Activity when app is about to terminate
         if #available(iOS 16.2, *) {
-            Task { await LiveActivityManager.stop() }
+            Task { await LiveActivityManager.shared.stop() }
         }
     }
 }
