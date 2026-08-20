@@ -102,16 +102,24 @@ import ActivityKit
     override func application(_ application: UIApplication, didDiscardSceneSessions sceneSessions: Set<UISceneSession>) {
         // UIScene apps use this callback when the user closes the app from the
         // app switcher. applicationWillTerminate is not reliable for that path.
+        //
+        // Deliberately no `super`. This is an optional UIApplicationDelegate
+        // method and FlutterAppDelegate does not implement it, so forwarding
+        // raises NSInvalidArgumentException and terminates the app. Checked
+        // with `otool -oV Flutter`: the selector is in the protocol's name
+        // table with no imp behind it.
         if #available(iOS 16.2, *) {
             Task { await LiveActivityManager.shared.stop() }
         }
-        super.application(application, didDiscardSceneSessions: sceneSessions)
     }
-    
+
     override func applicationWillTerminate(_ application: UIApplication) {
         // Stop Live Activity when app is about to terminate
         if #available(iOS 16.2, *) {
             Task { await LiveActivityManager.shared.stop() }
         }
+        // This one FlutterAppDelegate does implement, and it is how registered
+        // plugins hear that the app is going away.
+        super.applicationWillTerminate(application)
     }
 }
