@@ -435,13 +435,28 @@ int sbm_ish_boot(const char *rootfs) {
     make_dev();
     exit_hook = guest_exited;
 
-    // Init is a shell in a loop. `kernel/exit.c` ends the *host process* when
-    // init dies, so init must not be anything a user can end — and when their
-    // shell exits they get another one, which is what closing a terminal does
-    // on any other machine.
+    // Init has to exist and must never exit — `kernel/exit.c` ends the *host
+    // process* when it does. It does not have to do anything else, and it must
+    // not: a terminal is `sbm_ish_open`, which makes a child of init with a
+    // pty of its own, so a shell started here is one nobody can reach.
+    //
+    // This was `while :; do /bin/sh; done`. Init has no tty and no stdin, so
+    // each of those shells read EOF and exited at once and the loop started
+    // another — a fork/exec storm, inside an interpreter, for as long as the
+    // machine was up. That is what made the whole app slow from the moment
+    // Alpine was opened, and closing the last terminal did not stop it,
+    // because the machine deliberately stays up.
+    //
+    // The sleep is wrapped in a loop rather than left bare so that a signal
+    // cutting it short cannot end init. 2^31-1 seconds is 68 years; the fork
+    // per wakeup is the only work this process ever does.
     char argv[512];
+    const char *parts[] = {
+        "/bin/sh",
+        "-c",
+        "while :; do sleep 2147483647; done",
+    };
     size_t position = 0;
-    const char *parts[] = { "/bin/sh", "-c", "while :; do /bin/sh; done" };
     for (size_t i = 0; i < 3; i++) {
         size_t length = strlen(parts[i]) + 1;
         memcpy(argv + position, parts[i], length);

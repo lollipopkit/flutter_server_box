@@ -42,7 +42,15 @@ abstract final class IosRootfs {
   /// Three ways to be false: not iOS, built with the switch off, or built
   /// before the shim existed — the last of which throws on lookup rather than
   /// answering, so it is caught here and treated as the absence it is.
-  static bool get isAvailable {
+  /// Asked once and kept. Every one of the three ways to be false is decided
+  /// when the app is built, so the answer cannot change while it runs — and
+  /// what reads this is a widget being built: `tab_add.dart` alone asks three
+  /// times per build, between the rail and the grid, and each ask was a call
+  /// across FFI.
+  static bool get isAvailable => _availableAnswer ??= _askAvailable();
+  static bool? _availableAnswer;
+
+  static bool _askAvailable() {
     if (!Platform.isIOS) return false;
     final available = _available;
     if (available == null) return false;
@@ -301,25 +309,36 @@ abstract final class IosRootfs {
   static Uint8List? read(
     int session, {
     Duration timeout = const Duration(milliseconds: 200),
-    int limit = 8192,
   }) {
     final read = _read;
     if (read == null) return null;
-    final buffer = malloc<Uint8>(limit);
-    try {
-      final count = read(session, buffer.cast(), limit, timeout.inMilliseconds);
-      // -EBUSY: a guest thread died holding the output lock. Told apart from
-      // the session having ended, because the answer is different — that one
-      // is over, this one is broken.
-      if (count == -16) throw StateError('The guest stopped holding its lock');
-      if (count < 0) return null;
-      if (count == 0) return Uint8List(0);
-      // Copied: the buffer is freed on the way out of this function.
-      return Uint8List.fromList(buffer.asTypedList(count));
-    } finally {
-      malloc.free(buffer);
-    }
+    final buffer = _readBuffer;
+    final count = read(
+      session,
+      buffer.cast(),
+      _readLimit,
+      timeout.inMilliseconds,
+    );
+    // -EBUSY: a guest thread died holding the output lock. Told apart from
+    // the session having ended, because the answer is different — that one
+    // is over, this one is broken.
+    if (count == -16) throw StateError('The guest stopped holding its lock');
+    if (count < 0) return null;
+    if (count == 0) return _empty;
+    return Uint8List.fromList(buffer.asTypedList(count));
   }
+
+  static const _readLimit = 8192;
+  static final _empty = Uint8List(0);
+
+  /// Allocated once and kept.
+  ///
+  /// A terminal reads on a timer, so this was 8 KB malloc'd and freed on every
+  /// frame of every open session, for the whole life of the session — paid
+  /// even while the shell sat at a prompt with nothing to say. Only ever
+  /// touched from the isolate that calls [read], and its contents are copied
+  /// out before the call returns, so nothing outlives the next one.
+  static final Pointer<Uint8> _readBuffer = malloc<Uint8>(_readLimit);
 
   /// Types [input] at [session].
   ///

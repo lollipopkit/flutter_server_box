@@ -93,7 +93,7 @@ class IshShellBackend implements ShellBackend {
 /// One console on the guest.
 class _IshSession implements ShellSession {
   _IshSession(this.id, {required this.onClosed}) {
-    _poll = Timer.periodic(_interval, (_) => _drain());
+    _schedule(_busyInterval);
   }
 
   /// Its handle in the engine — a process there, with a pty of its own.
@@ -107,11 +107,27 @@ class _IshSession implements ShellSession {
   /// non-blocking read on a timer costs one FFI call a frame and needs no port
   /// plumbing; if that ever shows up in a profile, the answer is a native
   /// thread posting to a `SendPort`, not a longer timeout here.
-  static const _interval = Duration(milliseconds: 16);
+  static const _busyInterval = Duration(milliseconds: 16);
+
+  /// What the same poll costs once the console has gone quiet.
+  ///
+  /// A shell sits at a prompt for minutes at a time, and this timer does not
+  /// stop when the terminal leaves the screen — it belongs to the session, not
+  /// to the page. So a rate chosen for a burst of output was being paid by
+  /// every frame in the app, on whatever tab happened to be in front. At a
+  /// prompt nothing is waiting on the extra rounds: what they return is empty.
+  static const _idleInterval = Duration(milliseconds: 120);
+
+  /// Empty reads before the interval relaxes. One is an ordinary gap between
+  /// two writes; a run of them is a session with nothing to say.
+  static const _quietRounds = 8;
 
   final _output = StreamController<Uint8List>.broadcast();
   Timer? _poll;
+  var _quiet = 0;
   final _done = Completer<void>();
+
+  void _schedule(Duration delay) => _poll = Timer(delay, _drain);
 
   void _drain() {
     // Zero, so this returns whatever is there and no more. The wait, if any,
@@ -123,11 +139,18 @@ class _IshSession implements ShellSession {
       _finish();
       return;
     }
-    if (chunk.isEmpty) return;
-    // Straight through. The terminal decodes UTF-8 itself and carries the
-    // state to do it across chunk boundaries, which is more than can be done
-    // here where each read is a separate call.
-    _output.add(chunk);
+    if (chunk.isEmpty) {
+      if (_quiet < _quietRounds) _quiet++;
+    } else {
+      // Back to the fast rate on the first byte, so the answer to a keystroke
+      // is not held up by however long the session had been quiet.
+      _quiet = 0;
+      // Straight through. The terminal decodes UTF-8 itself and carries the
+      // state to do it across chunk boundaries, which is more than can be done
+      // here where each read is a separate call.
+      _output.add(chunk);
+    }
+    _schedule(_quiet >= _quietRounds ? _idleInterval : _busyInterval);
   }
 
   void _finish() {
