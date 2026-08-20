@@ -230,6 +230,19 @@ abstract final class AndroidRootfs {
         // without any of it being true on the host.
         '--kill-on-exit',
         '-0',
+        // Android refuses `link()` inside an app's own data directory, and
+        // `-0` does not help: it makes the guest believe it is root, while
+        // the uid the kernel checks is still the app's. A package whose tar
+        // carries hard links then fails on exactly those entries and on
+        // nothing else — `apk add go` reports `Permission denied` for
+        // `usr/bin/gcc-{ar,nm,ranlib}` and `usr/bin/ld.gold`, which are the
+        // hard-linked members of gcc and binutils-gold, and leaves a gcc that
+        // is missing its drivers.
+        //
+        // This is why the build uses termux/proot rather than upstream: the
+        // extension is theirs. It resolves a hard link to a symlink, which
+        // those tools are indifferent to — each dispatches on `argv[0]`.
+        '--link2symlink',
         if (command == null) '/bin/sh' else ...['/bin/sh', '-lc', command],
       ],
     );

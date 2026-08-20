@@ -139,6 +139,21 @@ void main() {
     final android = await exec.run(r'ls /system >/dev/null 2>&1; echo rc=$?');
     expect(android.stdout.trim(), 'rc=1');
 
+    // A hard link resolves, which on Android it does not without proot's
+    // `--link2symlink`: the kernel refuses `link()` in an app's own data
+    // directory whatever `-0` tells the guest about being root. Asserted here
+    // rather than through `apk`, because the packages that carry hard links
+    // are the large ones — `apk add go` pulls 357 MB to reach a gcc whose
+    // `gcc-ar`, `gcc-nm`, `gcc-ranlib` and `ld.gold` are the only entries
+    // that fail. The package test below installs curl, which has none, and so
+    // said nothing about this for as long as it was broken.
+    final link = await exec.run(
+      'rm -f /tmp/hl-a /tmp/hl-b; echo hl > /tmp/hl-a && ln /tmp/hl-a /tmp/hl-b'
+      ' && cat /tmp/hl-b',
+    );
+    expect(link.stdout.trim(), 'hl');
+    expect(link.exitCode, 0);
+
     // The file tools resolve inside it too. They are `dart:io` on the host and
     // never enter the guest, so this mapping is the only thing that keeps them
     // in the same filesystem the commands see.
