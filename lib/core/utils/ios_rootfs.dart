@@ -1,5 +1,6 @@
 import 'dart:ffi';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
 import 'package:crypto/crypto.dart';
@@ -288,7 +289,16 @@ abstract final class IosRootfs {
   ///
   /// Null once it has ended and its output is drained; empty when it simply
   /// had nothing to say yet. A caller has to tell those apart.
-  static String? read(
+  ///
+  /// Bytes rather than a `String`, because that is what a console emits and
+  /// the lengths it emits them in are its own — a character can arrive across
+  /// two calls. This used to answer `String.fromCharCodes`, which reads every
+  /// byte as one code unit, and the terminal then encoded that back to UTF-8:
+  /// each byte of a multi-byte character became two. Nothing outside ASCII
+  /// survived it, the tty's echo of what was typed included, so typing a
+  /// Chinese character into the terminal showed mojibake before any command
+  /// had run.
+  static Uint8List? read(
     int session, {
     Duration timeout = const Duration(milliseconds: 200),
     int limit = 8192,
@@ -303,22 +313,31 @@ abstract final class IosRootfs {
       // is over, this one is broken.
       if (count == -16) throw StateError('The guest stopped holding its lock');
       if (count < 0) return null;
-      if (count == 0) return '';
-      return String.fromCharCodes(buffer.asTypedList(count));
+      if (count == 0) return Uint8List(0);
+      // Copied: the buffer is freed on the way out of this function.
+      return Uint8List.fromList(buffer.asTypedList(count));
     } finally {
       malloc.free(buffer);
     }
   }
 
   /// Types [input] at [session].
-  static int write(int session, String input) {
+  ///
+  /// Bytes, for the reason [read] answers in them. Decoding a terminal's byte
+  /// stream to a `String` on the way in only to encode it again cannot be
+  /// lossless for anything that is not already whole valid UTF-8 — a
+  /// multi-byte character split across two keystrokes' worth of input among
+  /// them.
+  static int write(int session, List<int> input) {
     final write = _write;
     if (write == null) return -1;
-    final pointer = input.toNativeUtf8();
+    if (input.isEmpty) return 0;
+    final buffer = malloc<Uint8>(input.length);
     try {
-      return write(session, pointer.cast(), pointer.length);
+      buffer.asTypedList(input.length).setAll(0, input);
+      return write(session, buffer.cast(), input.length);
     } finally {
-      malloc.free(pointer);
+      malloc.free(buffer);
     }
   }
 

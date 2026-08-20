@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:server_box/core/utils/ios_rootfs.dart';
@@ -125,7 +124,10 @@ class _IshSession implements ShellSession {
       return;
     }
     if (chunk.isEmpty) return;
-    _output.add(Uint8List.fromList(utf8.encode(chunk)));
+    // Straight through. The terminal decodes UTF-8 itself and carries the
+    // state to do it across chunk boundaries, which is more than can be done
+    // here where each read is a separate call.
+    _output.add(chunk);
   }
 
   void _finish() {
@@ -150,8 +152,9 @@ class _IshSession implements ShellSession {
   void write(List<int> data) {
     // As typed. The guest's line discipline is what turns a carriage return
     // into a newline, so passing the bytes through is both simpler and the
-    // only thing that makes Enter work.
-    IosRootfs.write(id, utf8.decode(data, allowMalformed: true));
+    // only thing that makes Enter work — and it is now literal: these used to
+    // be decoded to a `String` and re-encoded on the other side.
+    IosRootfs.write(id, data);
   }
 
   @override

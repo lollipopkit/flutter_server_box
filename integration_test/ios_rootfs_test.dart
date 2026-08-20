@@ -37,16 +37,22 @@ void main() {
   }, skip: !Platform.isIOS);
 
   /// Everything one session prints, to a marker or until it ends.
+  ///
+  /// Bytes are accumulated and decoded whole rather than per read: a console
+  /// hands over whatever it had ready, so a multi-byte character can straddle
+  /// two of them.
   Future<String> readTo(int session, String until) async {
-    final output = StringBuffer();
+    final output = <int>[];
+    var text = '';
     for (var round = 0; round < 400; round++) {
       final chunk = IosRootfs.read(session, timeout: Duration.zero);
       if (chunk == null) break;
-      output.write(chunk);
-      if (output.toString().contains(until)) break;
+      output.addAll(chunk);
+      text = utf8.decode(output, allowMalformed: true);
+      if (text.contains(until)) break;
       await Future<void>.delayed(const Duration(milliseconds: 20));
     }
-    return output.toString();
+    return text;
   }
 
   testWidgets('the app installs a userland by itself', (_) async {
