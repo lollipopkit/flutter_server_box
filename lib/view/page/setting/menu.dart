@@ -120,7 +120,13 @@ final class _SettingsTabs extends StatelessWidget {
                   onTap: onBack,
                   tooltip: libL10n.goBackQ,
                 ),
-                const VerticalDivider(width: 1, indent: 12, endIndent: 12),
+                VerticalDivider(
+                  width: Hairline.thickness,
+                  thickness: Hairline.thickness,
+                  color: Hairline.color(context),
+                  indent: 12,
+                  endIndent: 12,
+                ),
               ],
               const SizedBox(width: 4),
               for (final node in nodes)
@@ -172,6 +178,10 @@ final class _TabButton extends StatelessWidget {
   });
 
   /// The pill behind the icon, at the measurements `NavigationBar` uses.
+  ///
+  /// It sizes the icon's background and nothing else. The label below is left
+  /// to its own width, so a tab is as wide as its name — the pill only sets
+  /// how narrow a short one can get.
   static const _indicator = Size(56, 30);
 
   @override
@@ -182,7 +192,10 @@ final class _TabButton extends StatelessWidget {
     final button = InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2),
+        // Wider than it was. The label used to sit in a fixed box and centre
+        // itself in it, which left a gap either side whatever it said; now it
+        // reaches the edges of its tab, and two of them need keeping apart.
+        padding: const EdgeInsets.symmetric(horizontal: 8),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -202,19 +215,21 @@ final class _TabButton extends StatelessWidget {
             ),
             if (label != null) ...[
               const SizedBox(height: 3),
-              SizedBox(
-                width: _indicator.width + 6,
-                child: Text(
-                  label!,
-                  maxLines: 1,
-                  textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11,
-                    height: 1.1,
-                    fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                    color: color,
-                  ),
+              // Unconstrained: a tab is as wide as its own name. Held to the
+              // pill's width these ellipsed — they are section names, not the
+              // one or two words a bottom bar carries, and several languages
+              // spell them longer still. The bar already scrolls sideways when
+              // a level does not fit across the window, so the room is there
+              // to be taken.
+              Text(
+                label!,
+                maxLines: 1,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11,
+                  height: 1.1,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                  color: color,
                 ),
               ),
             ],

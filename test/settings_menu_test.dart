@@ -113,7 +113,7 @@ void main() {
     expect(menuRow(libL10n.file), findsOneWidget);
     expect(menuRow(libL10n.about), findsOneWidget);
     // The one level of nesting there is stays shut until asked for.
-    expect(menuRow(l10n.serverOrder), findsNothing);
+    expect(menuRow(libL10n.sequence), findsNothing);
     expect(find.byKey(settingsTabsKey), findsNothing);
   });
 
@@ -143,7 +143,7 @@ void main() {
     await tester.tap(menuRow(libL10n.server));
     await settle(tester);
 
-    expect(menuRow(l10n.serverOrder), findsOneWidget);
+    expect(menuRow(libL10n.sequence), findsOneWidget);
     // The bar names what it named: the branch opened, it did not select.
     expect(barTitle(tester), before);
   });
@@ -153,10 +153,10 @@ void main() {
 
     await tester.tap(menuRow(libL10n.server));
     await settle(tester);
-    await tester.tap(menuRow(l10n.serverOrder));
+    await tester.tap(menuRow(libL10n.sequence));
     await settle(tester);
 
-    expect(barTitle(tester), l10n.serverOrder);
+    expect(barTitle(tester), libL10n.sequence);
     // Embedded, so it dropped the bar it has when pushed — one page, one bar.
     expect(find.byType(AppBar), findsOneWidget);
   });
@@ -197,9 +197,9 @@ void main() {
     await settle(tester, 20);
 
     expect(find.byKey(settingsTabsKey), findsOneWidget);
-    expect(tabRow(l10n.serverOrder), findsOneWidget);
+    expect(tabRow(libL10n.sequence), findsOneWidget);
     // What is first inside it, rather than a row of tabs with none of them on.
-    expect(barTitle(tester), libL10n.setting);
+    expect(barTitle(tester), libL10n.general);
     expect(backTab, findsOneWidget);
   });
 
@@ -284,8 +284,8 @@ void main() {
 
     // Filled rather than only recoloured — a shade of grey against another is
     // not a state at a glance.
-    expect(fillOf(libL10n.setting), scheme.secondaryContainer);
-    expect(fillOf(l10n.serverOrder), isNull);
+    expect(fillOf(libL10n.general), scheme.secondaryContainer);
+    expect(fillOf(libL10n.sequence), isNull);
   });
 
   testWidgets('the leaves of a level sit side by side, and drag between', (
@@ -295,14 +295,14 @@ void main() {
     await tester.tap(menuRow(libL10n.server));
     await settle(tester, 20);
 
-    expect(barTitle(tester), libL10n.setting);
+    expect(barTitle(tester), libL10n.general);
 
     // Dragging the content is the same move as tapping the next tab, which is
     // what putting them side by side promises.
     await tester.drag(find.byType(PageView), const Offset(-400, 0));
     await settle(tester, 20);
 
-    expect(barTitle(tester), l10n.serverOrder);
+    expect(barTitle(tester), libL10n.sequence);
   });
 
   testWidgets('the list and the level are pages of one navigator', (tester) async {

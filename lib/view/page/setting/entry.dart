@@ -31,9 +31,10 @@ import 'package:server_box/view/page/setting/entries/home_tabs.dart';
 import 'package:server_box/view/page/setting/platform/ios.dart';
 import 'package:server_box/view/page/setting/platform/platform_pub.dart';
 import 'package:server_box/view/page/setting/seq/known_hosts.dart';
-import 'package:server_box/view/page/setting/seq/srv_detail_seq.dart';
+// Still reached on its own from the server settings page, which links straight
+// at it rather than at the tabs.
 import 'package:server_box/view/page/setting/seq/srv_func_seq.dart';
-import 'package:server_box/view/page/setting/seq/srv_seq.dart';
+import 'package:server_box/view/page/setting/seq/srv_orders.dart';
 import 'package:server_box/view/page/setting/seq/virt_key.dart';
 import 'package:server_box/view/widget/dmg_notice.dart';
 
@@ -123,7 +124,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         children: [
           SettingsNode.leaf(
             id: 'app.setting',
-            title: libL10n.setting,
+            title: libL10n.general,
             icon: Icons.settings_outlined,
             page: () => const AppSettingsPage(section: SettingsSection.app),
           ),
@@ -153,27 +154,18 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         children: [
           SettingsNode.leaf(
             id: 'server.setting',
-            title: libL10n.setting,
+            title: libL10n.general,
             icon: Icons.settings_outlined,
             page: () => const AppSettingsPage(section: SettingsSection.server),
           ),
+          // One row for all three orderings. Apart they read alike — the row
+          // could not say which list it opened — and side by side as tabs each
+          // is named by what the other two are not.
           SettingsNode.leaf(
             id: 'server.order',
-            title: l10n.serverOrder,
-            icon: Icons.sort,
-            page: () => const ServerOrderPage(embedded: true),
-          ),
-          SettingsNode.leaf(
-            id: 'server.detail',
-            title: l10n.serverDetailOrder,
-            icon: Icons.dashboard_customize_outlined,
-            page: () => const ServerDetailOrderPage(embedded: true),
-          ),
-          SettingsNode.leaf(
-            id: 'server.func',
             title: libL10n.sequence,
-            icon: Icons.reorder,
-            page: () => const ServerFuncBtnsOrderPage(embedded: true),
+            icon: Icons.sort,
+            page: () => const ServerOrdersPage(embedded: true),
           ),
         ],
       ),
@@ -184,7 +176,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         children: [
           SettingsNode.leaf(
             id: 'terminal.setting',
-            title: libL10n.setting,
+            title: libL10n.general,
             icon: Icons.settings_outlined,
             page: () => const AppSettingsPage(section: SettingsSection.ssh),
           ),
@@ -228,11 +220,24 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         icon: Icons.inbox_outlined,
         page: () => const AppSettingsPage(section: SettingsSection.container),
       ),
-      SettingsNode.leaf(
+      SettingsNode.branch(
         id: 'backup',
         title: libL10n.backup,
         icon: Icons.backup_outlined,
-        page: () => const BackupPage(),
+        children: [
+          SettingsNode.leaf(
+            id: 'backup.sync',
+            title: libL10n.sync,
+            icon: Icons.cloud_sync_outlined,
+            page: () => const BackupPage(section: BackupSection.sync),
+          ),
+          SettingsNode.leaf(
+            id: 'backup.import',
+            title: libL10n.import,
+            icon: Icons.file_download_outlined,
+            page: () => const BackupPage(section: BackupSection.import),
+          ),
+        ],
       ),
       SettingsNode.leaf(
         id: 'privateKey',
@@ -391,7 +396,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             ? Row(
                 children: [
                   SizedBox(width: _kMenuWidth, child: menu),
-                  const VerticalDivider(width: 1, thickness: 1),
+                  // Not Material's default: that one is drawn for a light
+                  // background and reads as a bright seam on a dark one, which
+                  // is why every other seam in the app goes through [Hairline]
+                  // — including the one `AdaptivePanes` draws, which this line
+                  // sits at the same corners as.
+                  VerticalDivider(
+                    width: Hairline.thickness,
+                    thickness: Hairline.thickness,
+                    color: Hairline.color(context),
+                  ),
                   Expanded(child: content),
                 ],
               )
@@ -411,6 +425,20 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     required List<SettingsNode> nodes,
     required SettingsNode selected,
   }) {
+    // A route sliding in has to be opaque, or what it is covering shows
+    // through it for the length of the transition. The pages under here are
+    // `embedded: true` and drop their own `Scaffold`, so without this nothing
+    // gives them a background at all — the one behind belongs to the
+    // `Scaffold` this whole page is in, and both routes were letting it, and
+    // each other, through.
+    //
+    // The `Scaffold`'s colour and not `colorScheme.surface`: that is the slot
+    // `toAmoled` overrides, and the surface one it leaves alone.
+    Widget opaque(Widget child) => Material(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: child,
+    );
+
     Widget pagesOf(String id, List<SettingsNode> level) {
       return _SettingsPages(
         key: ValueKey('pages_$id'),
@@ -425,18 +453,20 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         if (wide)
           MaterialPage<void>(
             key: ValueKey(_groupOf(nodes, selected.id)?.firstOrNull?.id ?? 'root'),
-            child: pagesOf(selected.id, _groupOf(nodes, selected.id) ?? const []),
+            child: opaque(
+              pagesOf(selected.id, _groupOf(nodes, selected.id) ?? const []),
+            ),
           )
         else ...[
           // What settings there are, which is where a narrow window starts.
           MaterialPage<void>(
             key: const ValueKey('root'),
-            child: _SettingsList(nodes: nodes, onTap: _onTab),
+            child: opaque(_SettingsList(nodes: nodes, onTap: _onTab)),
           ),
           for (final entered in _path)
             MaterialPage<void>(
               key: ValueKey(entered.id),
-              child: pagesOf(entered.id, _levelOf(entered)),
+              child: opaque(pagesOf(entered.id, _levelOf(entered))),
             ),
         ],
       ],

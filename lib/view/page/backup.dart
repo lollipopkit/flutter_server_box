@@ -18,8 +18,23 @@ import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:webdav_client_plus/webdav_client_plus.dart';
 
+/// Which half of the page to show.
+///
+/// The two halves answer different questions — "keep this somewhere else" and
+/// "bring something in" — and only ever shared a page because both are about
+/// moving data. The settings menu lists them as two rows, so each opens on its
+/// own.
+enum BackupSection { sync, import }
+
 class BackupPage extends ConsumerStatefulWidget {
-  const BackupPage({super.key});
+  /// Null shows both, side by side, under one heading each.
+  ///
+  /// That is the standalone [route], which the DMG notice opens directly: there
+  /// is no menu around it to say which half you are looking at, so it says so
+  /// itself. Inside the settings page the row that opened it already has.
+  final BackupSection? section;
+
+  const BackupPage({super.key, this.section});
 
   @override
   ConsumerState<BackupPage> createState() => _BackupPageState();
@@ -52,28 +67,43 @@ final class _BackupPageState extends ConsumerState<BackupPage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return Scaffold(body: SafeArea(child: _buildBody));
+
+    final section = widget.section;
+    if (section == null) return Scaffold(body: SafeArea(child: _buildBody));
+
+    // Shown in the settings content pane, which brings the Scaffold and the
+    // bar. No heading either, for the reason [AppSettingsPage] gives: the menu
+    // names the group and the bar repeats it, so a third would be one too many.
+    return ListView(
+      padding: MultiList.kOuterPadding,
+      children: switch (section) {
+        BackupSection.sync => _syncTiles,
+        BackupSection.import => _importTiles,
+      },
+    );
   }
+
+  List<Widget> get _syncTiles => [
+    _buildTip,
+    _buildBakPwd,
+    if (isICloudSupported) _buildIcloud,
+    _buildWebdav,
+    _buildGist,
+    _buildFile,
+    _buildClipboard,
+  ];
+
+  List<Widget> get _importTiles => [
+    _buildBulkImportServers,
+    _buildImportSnippet,
+  ];
 
   Widget get _buildBody {
     return MultiList(
       widthDivider: 2,
       children: [
-        [
-          CenterGreyTitle(libL10n.sync),
-          _buildTip,
-          _buildBakPwd,
-          if (isICloudSupported) _buildIcloud,
-          _buildWebdav,
-          _buildGist,
-          _buildFile,
-          _buildClipboard,
-        ],
-        [
-          CenterGreyTitle(libL10n.import),
-          _buildBulkImportServers,
-          _buildImportSnippet,
-        ],
+        [CenterGreyTitle(libL10n.sync), ..._syncTiles],
+        [CenterGreyTitle(libL10n.import), ..._importTiles],
       ],
     );
   }
