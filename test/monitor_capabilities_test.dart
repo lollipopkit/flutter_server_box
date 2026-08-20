@@ -72,11 +72,11 @@ void main() {
       expect(caps.byteStream, isFalse);
     });
 
-    test('a tunnel or terminal alone is not the grant commands need', () {
-      // Both are about reaching the machine's own sshd, which authenticates
-      // for itself. Only `full_access` is the agent acting as the account.
+    test('a terminal alone is not the grant commands need', () {
+      // The terminal reaches the machine's own sshd, which authenticates for
+      // itself. Only `full_access` is the agent acting as the account.
       const caps = MonitorHttpCapabilities(
-        MonitorRemoteAccess(tunnel: true, terminal: true, secure: true),
+        MonitorRemoteAccess(terminal: true),
       );
       expect(caps.shell, isFalse);
       expect(caps.terminal, isFalse);

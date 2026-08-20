@@ -7,7 +7,6 @@ pub mod audit;
 pub mod session;
 pub mod terminal;
 pub mod ticket;
-pub mod tunnel;
 
 use std::net::IpAddr;
 
@@ -19,8 +18,8 @@ use ntex::web::HttpRequest;
 /// Two ways that holds:
 ///
 /// - the listener itself terminates TLS, or
-/// - the peer is on loopback, which is how every same-host reverse proxy and
-///   tunnel client shows up (nginx, Caddy, `cloudflared`). Those deployments
+/// - the peer is on loopback, which is how every same-host reverse proxy shows
+///   up (nginx, Caddy, `cloudflared`). Those deployments
 ///   are genuinely encrypted end to end even though monitor's own socket is
 ///   plaintext, and refusing them would push people to `allow_insecure`,
 ///   which would then also switch the check off for setups that really are

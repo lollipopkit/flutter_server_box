@@ -1,7 +1,7 @@
--- Tables backing the WebSocket paths to the local sshd (see
+-- Tables backing the WebSocket terminal path to the local sshd (see
 -- core::remote_access and api::ws).
 
--- Who opened a tunnel or a terminal, from where, and whether it worked.
+-- Who opened a terminal, from where, and whether it worked.
 --
 -- Deliberately records no credentials of any kind: `ssh_user` is the account
 -- name a terminal authenticated as, never the password, key or passphrase
@@ -11,15 +11,14 @@
 CREATE TABLE access_log (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-    -- 'ticket' | 'tunnel' | 'terminal'
+    -- 'ticket' | 'terminal'
     kind TEXT NOT NULL,
     -- 'open' | 'attach' | 'detach' | 'close' | 'denied'
     action TEXT NOT NULL,
     -- panel account (JWT subject)
     subject TEXT,
     remote_ip TEXT,
-    -- system account for terminal sessions, NULL for tunnels (the agent never
-    -- sees which user the app authenticates as — that traffic is encrypted)
+    -- system account for terminal sessions
     ssh_user TEXT,
     -- 'ok' | 'denied' | 'error'
     result TEXT NOT NULL,
@@ -42,9 +41,6 @@ INSERT INTO retention_policies (table_name, retention_days) VALUES
 -- else taking over the port after a restart. A mismatch is refused rather
 -- than re-pinned; recovering is a deliberate act (delete the row).
 --
--- The app's tunnel has no row here: it verifies the host key itself, at its
--- own end, against its own store. The agent is a byte relay on that path and
--- could not check it even if it wanted to.
 CREATE TABLE ssh_known_hosts (
     addr TEXT PRIMARY KEY,
     key_type TEXT NOT NULL,

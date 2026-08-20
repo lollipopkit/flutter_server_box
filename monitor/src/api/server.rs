@@ -8,7 +8,6 @@ use crate::{
         session::SessionStore,
         terminal::{start_reaper, terminal_ws},
         ticket::{Purpose, TicketRequest, TicketResponse, TicketStore},
-        tunnel::{TunnelCount, tunnel_ws},
     },
     core::config::Config,
     core::config_file,
@@ -77,7 +76,7 @@ pub struct AppState {
     pub last_viewer_seen: Arc<RwLock<chrono::DateTime<chrono::Utc>>>,
     /// Resolved remote-access settings (capacities filled in from physical
     /// memory at startup — see `core::remote_access`). A snapshot, like
-    /// `config`: turning the tunnel or terminal on is a restart-level change,
+    /// `config`: turning the terminal on is a restart-level change,
     /// not something a running process should pick up mid-session.
     pub remote_access: Arc<RemoteAccess>,
     /// Whether this process terminates TLS itself. Decided once at startup
@@ -85,8 +84,6 @@ pub struct AppState {
     /// to re-derive it.
     pub tls_active: bool,
     pub tickets: Arc<TicketStore>,
-    /// Live tunnel count, for `remote_access.tunnel.max_conns`.
-    pub tunnel_count: Arc<TunnelCount>,
     /// Terminal sessions, which outlive the WebSockets driving them so a
     /// reconnect can rejoin the same shell — see `api::ws::session`.
     pub sessions: Arc<SessionStore>,
@@ -124,7 +121,6 @@ impl AppState {
             remote_access: Arc::new(remote_access),
             tls_active,
             tickets: Arc::new(TicketStore::new()),
-            tunnel_count: Arc::new(Default::default()),
             sessions,
             login_throttle: Arc::new(LoginThrottle::new()),
             full_access_off: Arc::new(AtomicBool::new(false)),
@@ -221,7 +217,6 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
                     .route("/metrics", web::get().to(get_metrics))
                     .route("/capabilities", web::get().to(get_capabilities))
                     .route("/ws-ticket", web::post().to(issue_ws_ticket))
-                    .route("/tunnel/ws", web::get().to(tunnel_ws))
                     .route("/terminal/ws", web::get().to(terminal_ws))
                     .service(
                         // Its own payload limit: ntex allows 32 KiB by
@@ -601,12 +596,10 @@ struct CapabilitiesView {
 /// Which remote-access paths this agent will actually accept, as opposed to
 /// what the config asks for: `terminal` already accounts for the transport
 /// check, so the panel can hide the entry rather than offer something that
-/// answers 403. `secure` is reported separately so it can explain *why*.
+/// answers 403.
 #[derive(Serialize)]
 struct RemoteAccessView {
-    tunnel: bool,
     terminal: bool,
-    secure: bool,
     /// Whether a shell can be opened without SSH credentials. The panel only
     /// offers that entry when this is true — and, being a UI decision, it is
     /// re-checked server-side when the request actually arrives.
@@ -630,9 +623,7 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
         capabilities,
         platform,
         remote_access: RemoteAccessView {
-            tunnel: app_state.remote_access.tunnel.enabled,
             terminal: app_state.remote_access.terminal.available(secure),
-            secure,
             full_access: app_state.full_access_allowed(secure),
             files: app_state.remote_access.fs.available(secure),
         },
@@ -643,8 +634,8 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
 /// authorises one WebSocket upgrade — see `api::ws::ticket` for why the
 /// upgrade can't just carry the JWT.
 ///
-/// Refuses to mint a ticket for a path that isn't open, so a client finds out
-/// here rather than at a failed handshake.
+/// Refuses to mint a ticket while the terminal is unavailable, so a client
+/// finds out here rather than at a failed handshake.
 async fn issue_ws_ticket(
     req: HttpRequest,
     app_state: web::types::State<Arc<AppState>>,
@@ -660,32 +651,32 @@ async fn issue_ws_ticket(
         }
     };
 
-    let purpose = payload.into_inner().purpose;
     let remote_ip = audit::peer_ip(&req);
-    let available = match purpose {
-        Purpose::Tunnel => app_state.remote_access.tunnel.enabled,
-        Purpose::Terminal => app_state
-            .remote_access
-            .terminal.available(ws::is_secure_transport(&req, app_state.tls_active)),
-    };
+    if payload.into_inner().purpose != Purpose::Terminal {
+        unreachable!("Purpose only has the terminal variant");
+    }
+    let available = app_state
+        .remote_access
+        .terminal
+        .available(ws::is_secure_transport(&req, app_state.tls_active));
     if !available {
         Event::new(Kind::Ticket, Action::Denied, Outcome::Denied)
             .subject(&claims.sub)
             .remote_ip(remote_ip)
-            .detail(format!("{purpose:?} not available"))
+            .detail("terminal not available")
             .record(&app_state.db)
             .await;
         return Ok(HttpResponse::Forbidden().json(&ErrorResponse {
-            error: "Remote access is not enabled for this purpose".to_string(),
+            error: "The terminal is not available".to_string(),
         }));
     }
 
-    match app_state.tickets.issue(purpose, &claims.sub) {
+    match app_state.tickets.issue(Purpose::Terminal, &claims.sub) {
         Ok(ticket) => {
             Event::new(Kind::Ticket, Action::Open, Outcome::Ok)
                 .subject(&claims.sub)
                 .remote_ip(remote_ip)
-                .detail(format!("{purpose:?}"))
+                .detail("terminal")
                 .record(&app_state.db)
                 .await;
             Ok(HttpResponse::Ok()

@@ -116,19 +116,6 @@ async fn a_disabled_terminal_refuses_even_a_valid_ticket() {
 }
 
 #[ntex::test]
-async fn a_tunnel_ticket_cannot_open_a_terminal() {
-    let state = app_state(true, "127.0.0.1:22").await;
-    let ticket = state.tickets.issue(Purpose::Tunnel, "admin").unwrap();
-    let srv = test_server(state).await;
-
-    assert!(
-        srv.ws_at(&format!("/api/v1/terminal/ws?ticket={ticket}"))
-            .await
-            .is_err()
-    );
-}
-
-#[ntex::test]
 async fn a_missing_or_forged_ticket_is_refused() {
     let state = app_state(true, "127.0.0.1:22").await;
     let srv = test_server(state).await;

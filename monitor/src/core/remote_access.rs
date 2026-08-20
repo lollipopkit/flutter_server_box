@@ -1,5 +1,4 @@
-//! Settings for the two WebSocket endpoints that reach the local sshd: the
-//! app's SSH-over-HTTPS tunnel and the panel's in-browser terminal.
+//! Settings for the panel's WebSocket terminal and the app's file API.
 //!
 //! Both are **off by default**. Turning them on is a decision about exposing
 //! shell access through the panel's HTTP surface, so it has to be made
@@ -24,11 +23,7 @@ use serde::{Deserialize, Serialize};
 
 use super::fs_roots::FsRoots;
 
-/// Where both endpoints connect. Not client-selectable: the tunnel takes no
-/// target parameter at all, which is what keeps it from being usable as an
-/// SSRF pivot into the network the agent sits in. Reaching another host is
-/// still possible and is the SSH layer's job — configure that host with a
-/// jump server pointing at this one, so its sshd authorises the hop.
+/// The SSH server the panel's terminal connects to.
 fn default_ssh_addr() -> String {
     "127.0.0.1:22".to_string()
 }
@@ -67,14 +62,10 @@ pub struct RemoteAccessConfig {
     /// installs a *user* service by default so that identity is an ordinary
     /// account rather than root.
     ///
-    /// At this level rather than under `terminal`: it is also what `POST
-    /// /api/v1/exec` and the app's port forwarding ask, so scoping it to one
-    /// endpoint would misname it.
+    /// At this level rather than under `terminal`: it also gates `POST
+    /// /api/v1/exec`, so scoping it to one endpoint would misname it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub full_access: Option<bool>,
-
-    #[serde(default)]
-    pub tunnel: TunnelConfig,
 
     #[serde(default)]
     pub terminal: TerminalConfig,
@@ -91,22 +82,10 @@ impl Default for RemoteAccessConfig {
         Self {
             ssh_addr: default_ssh_addr(),
             full_access: None,
-            tunnel: TunnelConfig::default(),
             terminal: TerminalConfig::default(),
             fs: FsConfig::default(),
         }
     }
-}
-
-/// `[remote_access.tunnel]` — the app's SSH-over-HTTPS byte relay.
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct TunnelConfig {
-    #[serde(default)]
-    pub enabled: bool,
-
-    /// `None` = derive from physical memory.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub max_conns: Option<usize>,
 }
 
 /// `[remote_access.terminal]` — the panel's in-browser terminal.
@@ -131,12 +110,8 @@ pub struct TerminalConfig {
 
     /// Whether to serve this endpoint over a plaintext listener.
     ///
-    /// Only the terminal has such a switch: its opening frame carries an SSH
-    /// password and everything after it is cleartext PTY traffic, so without
-    /// TLS the credentials are on the wire. The tunnel needs no equivalent —
-    /// what it carries is the SSH wire protocol itself, already end-to-end
-    /// encrypted with the app verifying the host key, so a plaintext outer
-    /// layer leaks traffic shape and nothing else.
+    /// Its opening frame carries an SSH password and everything after it is
+    /// cleartext PTY traffic, so without TLS the credentials are on the wire.
     #[serde(default)]
     pub allow_insecure: bool,
 }
@@ -244,10 +219,6 @@ impl RemoteAccessConfig {
             full_access: full_access_from_env()
                 .or(self.full_access)
                 .unwrap_or_else(full_access_default),
-            tunnel: Tunnel {
-                enabled: self.tunnel.enabled,
-                max_conns: self.tunnel.max_conns.filter(|&n| n > 0).unwrap_or(slots),
-            },
             terminal: Terminal {
                 enabled: self.terminal.enabled,
                 max_sessions: self.terminal.max_sessions.filter(|&n| n > 0).unwrap_or(slots),
@@ -283,16 +254,8 @@ pub struct RemoteAccess {
     pub ssh_addr: String,
     /// See [`RemoteAccessConfig::full_access`].
     pub full_access: bool,
-    pub tunnel: Tunnel,
     pub terminal: Terminal,
     pub fs: Fs,
-}
-
-/// Resolved [`TunnelConfig`].
-#[derive(Debug, Clone)]
-pub struct Tunnel {
-    pub enabled: bool,
-    pub max_conns: usize,
 }
 
 /// Resolved [`TerminalConfig`].
@@ -343,7 +306,7 @@ impl RemoteAccess {
     /// Whether anything here is switched on, i.e. whether the startup summary
     /// and the `ssh_addr` resolution check are worth running at all.
     pub fn any_enabled(&self) -> bool {
-        self.tunnel.enabled || self.terminal.enabled || self.fs.enabled && !self.fs.roots.is_empty()
+        self.terminal.enabled || self.fs.enabled && !self.fs.roots.is_empty()
     }
 
     /// Whether a client may reach this machine without presenting SSH
@@ -369,9 +332,7 @@ impl RemoteAccess {
             return;
         }
         tracing::info!(
-            "Remote access: tunnel={} (max {} conns), terminal={} (max {} sessions, {} KiB scrollback, {}s detached timeout), full_access={}, target={}",
-            self.tunnel.enabled,
-            self.tunnel.max_conns,
+            "Remote access: terminal={} (max {} sessions, {} KiB scrollback, {}s detached timeout), full_access={}, target={}",
             self.terminal.enabled,
             self.terminal.max_sessions,
             self.terminal.scrollback_bytes / 1024,
@@ -440,12 +401,6 @@ impl RemoteAccess {
                  over the network; configure TLS before using it remotely"
             );
         }
-        if self.tunnel.enabled && !tls_active {
-            tracing::warn!(
-                "Tunnel is enabled on a plaintext listener: the SSH stream inside stays \
-                 end-to-end encrypted, but connection metadata is visible on the network"
-            );
-        }
     }
 }
 
@@ -480,7 +435,6 @@ mod tests {
             let r = resolved(Some(mem));
             assert_eq!(r.terminal.scrollback_bytes, scrollback, "scrollback at {mem} bytes");
             assert_eq!(r.terminal.max_sessions, slots, "sessions at {mem} bytes");
-            assert_eq!(r.tunnel.max_conns, slots, "tunnel conns at {mem} bytes");
         }
     }
 
@@ -511,16 +465,11 @@ mod tests {
                 scrollback_bytes: Some(4096),
                 ..Default::default()
             },
-            tunnel: TunnelConfig {
-                max_conns: Some(64),
-                ..Default::default()
-            },
             ..Default::default()
         };
         let r = config.resolve(Some(64 * GIB));
         assert_eq!(r.terminal.max_sessions, 1);
         assert_eq!(r.terminal.scrollback_bytes, 4096);
-        assert_eq!(r.tunnel.max_conns, 64);
     }
 
     #[test]
@@ -543,7 +492,6 @@ mod tests {
     #[test]
     fn everything_is_off_by_default() {
         let r = resolved(None);
-        assert!(!r.tunnel.enabled);
         assert!(!r.terminal.enabled);
         assert!(!r.terminal.allow_insecure);
         assert!(!r.fs.enabled);
@@ -597,7 +545,6 @@ mod tests {
     fn an_empty_section_parses_to_the_defaults() {
         let parsed: RemoteAccessConfig = toml::from_str("").unwrap();
         assert_eq!(parsed.ssh_addr, default_ssh_addr());
-        assert!(!parsed.tunnel.enabled);
         assert!(!parsed.terminal.enabled);
         assert!(!parsed.fs.enabled);
         assert_eq!(
@@ -624,6 +571,5 @@ mod tests {
         );
         assert_eq!(parsed.ssh_addr, default_ssh_addr());
         assert_eq!(parsed.fs.roots, vec!["/srv".to_string()]);
-        assert!(!parsed.tunnel.enabled);
     }
 }

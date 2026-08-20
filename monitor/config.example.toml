@@ -95,11 +95,7 @@ matcher = "disk"
 #
 # This section is never required — omit it entirely and everything stays off.
 [remote_access]
-# The only address the tunnel and terminal connect to. Not selectable by
-# clients: the tunnel takes no target parameter at all, which is what stops it
-# from being usable to reach other hosts on this agent's network. To reach
-# another machine, configure it in the app with this one as its jump server,
-# so that hop is authorised by SSH rather than by this agent.
+# The SSH server the panel terminal connects to.
 ssh_addr = "127.0.0.1:22"
 
 # Open a shell straight from a panel login, with no SSH credentials at all.
@@ -115,20 +111,6 @@ ssh_addr = "127.0.0.1:22"
 # panel can turn it off — but never on — from its first-run prompt.
 # full_access = false
 
-# Relays an SSH byte stream to ssh_addr. What travels through it is the SSH
-# protocol itself, still end-to-end encrypted between client and sshd — this
-# agent only moves bytes and cannot read the session.
-#
-# TODO: nothing consumes this endpoint today. The ServerBox app used to reach
-# sshd through it; it now reaches a monitor server through /exec, /terminal/ws
-# and /fs/*, and has no tunnel client left. Turning this on currently has no
-# effect.
-[remote_access.tunnel]
-enabled = false
-# Leave unset to size from physical memory; resolved values are logged at
-# startup.
-# max_conns = 8
-
 # In-browser terminal in the panel. The agent acts as an SSH client to
 # ssh_addr, so a session has exactly the privileges of the SSH account the
 # browser authenticates as — the panel password alone grants no shell, unless
@@ -141,8 +123,7 @@ enabled = false
 # Serve on a plaintext listener. Off by default because the terminal's first
 # message carries an SSH password and everything after it is cleartext output.
 # Not needed when TLS is configured above, nor when a proxy on this same host
-# terminates TLS (loopback traffic counts as secure). Only the terminal has
-# this switch — the tunnel carries already-encrypted SSH.
+# terminates TLS (loopback traffic counts as secure).
 # allow_insecure = false
 # Leave unset to size from physical memory.
 # max_sessions = 8

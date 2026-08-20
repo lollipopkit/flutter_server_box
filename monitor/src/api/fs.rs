@@ -2,10 +2,9 @@
 //! operator named.
 //!
 //! The app's third file backend. It already browses a server's files over SFTP
-//! whenever it can reach sshd — directly, or relayed through this agent's
-//! tunnel — so this endpoint exists for exactly one case: a host running the
-//! agent with no reachable sshd at all. That is a small set, and it is why
-//! this is off by default and why it is confined.
+//! whenever it can reach sshd, so this endpoint exists for exactly one case: a
+//! host running the agent with no reachable sshd at all. That is a small set,
+//! and it is why this is off by default and why it is confined.
 //!
 //! **Confinement is the whole design.** `core::fs_roots` resolves every
 //! request to a canonical path and refuses anything that lands outside the

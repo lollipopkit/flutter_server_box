@@ -140,11 +140,6 @@ through a `ProxyCommand`. The last two are mutually exclusive and
 `Spix.validate()` enforces that. Everything above `SSHSocket` is unchanged
 either way, and this app verifies the host key itself in every case.
 
-TODO: the agent still implements `/api/v1/tunnel/ws` (an SSH-over-HTTPS byte
-relay) and still reports it in `/capabilities`, but the app has no client for
-it — `MonitorHttpClient.openTunnel` has no callers, and
-`MonitorRemoteAccess.tunnel`/`.secure` are parsed and never read. Remove both
-ends, or restore a consumer.
 
 ### Features
 

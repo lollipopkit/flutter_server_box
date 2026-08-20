@@ -140,10 +140,7 @@ class MonitorHttpCapabilities implements ServerCapabilities {
   bool get terminal => granted.fullAccess;
 
   /// The agent has no endpoint that relays a connection to an address the app
-  /// names. That is a missing endpoint rather than a second decision, so this
-  /// is not a third switch — it flips for every agent at once when one lands.
-  // TODO: `granted.fullAccess` once the agent relays to a named address, the
-  // way `MonitorTunnelSocket` did for one fixed address.
+  /// names. A future endpoint would enable this for every agent at once.
   @override
   bool get byteStream => false;
 
