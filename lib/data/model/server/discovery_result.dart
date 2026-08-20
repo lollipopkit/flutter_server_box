@@ -9,11 +9,6 @@ abstract class SshDiscoveryResult with _$SshDiscoveryResult {
     required String ip,
     required int port,
     String? banner,
-
-    /// TODO: delete. Nothing sets or reads it — a sweep is picked from one
-    /// host at a time now, so which rows are ticked was never state the model
-    /// had to carry. Kept for one release so a persisted report still parses.
-    @Default(false) bool isSelected,
   }) = _SshDiscoveryResult;
 
   factory SshDiscoveryResult.fromJson(Map<String, dynamic> json) =>
