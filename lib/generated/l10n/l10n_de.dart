@@ -486,7 +486,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Diese Option aktiviert nur die Funktion, ob sie tatsächlich aktiviert werden kann, hängt auch von der Breite des Geräts ab';
 
   @override
-  String get editVirtKeys => 'Virtuelle Tasten bearbeiten';
+  String get editVirtKeys => 'Virtuelle Tasten';
 
   @override
   String get editorHighlightTip =>
@@ -525,7 +525,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Er wurde gelöscht oder umbenannt. Nutze die Leiste unten, um zurückzugehen, zum Startordner zu springen oder woandershin zu wechseln.';
 
   @override
-  String get fullScreen => 'Vollbildmodus';
+  String get fullScreen => 'Vollbild';
 
   @override
   String get fullScreenJitter => 'Jitter im Vollbildmodus';
@@ -1024,7 +1024,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get sshHostKeyType => 'SSH-Hostschlüsseltyp';
 
   @override
-  String get sshKnownHostKeys => 'Bekannte Hostschlüssel';
+  String get sshKnownHostKeys => 'Bekannte Hosts';
 
   @override
   String get sshKnownHostKeysTip =>

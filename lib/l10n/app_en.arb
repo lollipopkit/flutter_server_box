@@ -139,7 +139,7 @@
   "dockerStatistics": "Docker Statistics",
   "doubleColumnMode": "Double column mode",
   "doubleColumnTip": "This option only enables the feature, whether it can actually be enabled depends on the width of the device",
-  "editVirtKeys": "Edit virtual keys",
+  "editVirtKeys": "Virtual keys",
   "editorHighlightTip": "The current code highlighting performance is not ideal and can be optionally turned off to improve.",
   "enableMdns": "Enable mDNS",
   "enableMdnsDesc": "Use mDNS/Bonjour to discover SSH services",
@@ -150,7 +150,7 @@
   "fileTooLarge": "File '{file}' too large {size}, max {sizeMax}",
   "fileDirGone": "This folder is no longer here",
   "fileDirGoneTip": "It was deleted or renamed. Use the bar below to go back, go home, or jump elsewhere.",
-  "fullScreen": "Full screen mode",
+  "fullScreen": "Full screen",
   "fullScreenJitter": "Full screen jitter",
   "fullScreenJitterHelp": "To avoid screen burn-in",
   "fullScreenTip": "Should full-screen mode be enabled when the device is rotated to landscape mode? This option only applies to the server tab.",
@@ -334,7 +334,7 @@
   "sshHostKeyFingerprintMd5Base64": "Fingerprint (MD5 base64): {fingerprint}",
   "sshHostKeyFingerprintMd5Hex": "Fingerprint (SHA256): {fingerprint}",
   "sshHostKeyType": "SSH host key type",
-  "sshKnownHostKeys": "Known host keys",
+  "sshKnownHostKeys": "Known hosts",
   "sshKnownHostKeysTip": "Host keys this app has accepted. Forget one to be asked about it again the next time you connect.",
   "@sshHostKeyType": {
     "description": "Label for the SSH host key type displayed in the host key verification dialog."

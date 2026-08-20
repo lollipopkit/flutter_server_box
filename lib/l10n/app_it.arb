@@ -64,7 +64,7 @@
   "dockerStatistics": "Statistiche Docker",
   "doubleColumnMode": "Modalità a doppia colonna",
   "doubleColumnTip": "Questa opzione abilita solo la funzione, se può essere effettivamente abilitata dipende dalla larghezza del dispositivo",
-  "editVirtKeys": "Modifica tasti virtuali",
+  "editVirtKeys": "Tasti virtuali",
   "editorHighlightTip": "Le attuali prestazioni di evidenziazione del codice non sono ideali e possono essere disabilitate opzionalmente per migliorare.",
   "enableMdns": "Abilita mDNS",
   "enableMdnsDesc": "Usa mDNS/Bonjour per scoprire servizi SSH",
@@ -75,7 +75,7 @@
   "fileTooLarge": "File '{file}' troppo grande {size}, max {sizeMax}",
   "fileDirGone": "Questa cartella non è più qui",
   "fileDirGoneTip": "È stata eliminata o rinominata. Usa la barra in basso per tornare indietro, andare alla home o spostarti altrove.",
-  "fullScreen": "Modalità schermo intero",
+  "fullScreen": "Schermo intero",
   "fullScreenJitter": "Jitter schermo intero",
   "fullScreenJitterHelp": "Per evitare il burn-in dello schermo",
   "fullScreenTip": "La modalità a schermo intero deve essere abilitata quando il dispositivo viene ruotato in modalità orizzontale? Questa opzione si applica solo alla scheda server.",
@@ -195,7 +195,7 @@
   "sshHostKeyFingerprintMd5Base64": "Impronta digitale (MD5 base64): {fingerprint}",
   "sshHostKeyFingerprintMd5Hex": "Impronta digitale (SHA256): {fingerprint}",
   "sshHostKeyType": "Tipo chiave host SSH",
-  "sshKnownHostKeys": "Chiavi host conosciute",
+  "sshKnownHostKeys": "Host conosciuti",
   "sshKnownHostKeysTip": "Chiavi host accettate da questa app. Eliminane una per essere interrogato di nuovo alla prossima connessione.",
   "@sshHostKeyType": {
     "description": "Etichetta per il tipo di chiave host SSH visualizzata nella finestra di dialogo di verifica della chiave host."

@@ -486,7 +486,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Ця опція лише активує функцію, чи можна її насправді включити, залежить від ширини пристрою';
 
   @override
-  String get editVirtKeys => 'Редагувати віртуальні клавіші';
+  String get editVirtKeys => 'Віртуальні клавіші';
 
   @override
   String get editorHighlightTip =>
@@ -525,7 +525,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Її видалено або перейменовано. Скористайтеся панеллю внизу, щоб повернутися, перейти до домівки або в інше місце.';
 
   @override
-  String get fullScreen => 'Повноекранний режим';
+  String get fullScreen => 'Повний екран';
 
   @override
   String get fullScreenJitter => 'Тремтіння в повноекранному режимі';
@@ -1025,7 +1025,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get sshHostKeyType => 'Тип ключа хоста SSH';
 
   @override
-  String get sshKnownHostKeys => 'Відомі ключі хостів';
+  String get sshKnownHostKeys => 'Відомі хости';
 
   @override
   String get sshKnownHostKeysTip =>

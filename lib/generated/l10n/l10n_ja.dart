@@ -461,7 +461,7 @@ class AppLocalizationsJa extends AppLocalizations {
       'このオプションは機能を有効にするだけで、実際に有効にできるかどうかはデバイスの幅に依存します';
 
   @override
-  String get editVirtKeys => '仮想キーを編集';
+  String get editVirtKeys => '仮想キー';
 
   @override
   String get editorHighlightTip =>
@@ -499,7 +499,7 @@ class AppLocalizationsJa extends AppLocalizations {
       '削除されたか名前が変更されました。下のバーで戻る、ホームへ移動、または別の場所へ移動してください。';
 
   @override
-  String get fullScreen => 'フルスクリーンモード';
+  String get fullScreen => 'フルスクリーン';
 
   @override
   String get fullScreenJitter => 'フルスクリーンモードのジッター';
@@ -971,7 +971,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sshHostKeyType => 'SSH ホストキーの種類';
 
   @override
-  String get sshKnownHostKeys => '既知のホストキー';
+  String get sshKnownHostKeys => '既知のホスト';
 
   @override
   String get sshKnownHostKeysTip => 'このアプリが受け入れたホストキー。削除すると次回接続時に再度確認されます。';

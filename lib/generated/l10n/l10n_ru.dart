@@ -486,7 +486,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Эта опция лишь включает функцию; фактическое применение зависит от ширины устройства';
 
   @override
-  String get editVirtKeys => 'Редактировать виртуальные клавиши';
+  String get editVirtKeys => 'Виртуальные клавиши';
 
   @override
   String get editorHighlightTip =>
@@ -525,7 +525,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Она удалена или переименована. Используйте панель внизу, чтобы вернуться, перейти в домашнюю папку или в другое место.';
 
   @override
-  String get fullScreen => 'Полноэкранный режим';
+  String get fullScreen => 'Полный экран';
 
   @override
   String get fullScreenJitter => 'Вибрация в полноэкранном режиме';
@@ -1025,7 +1025,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sshHostKeyType => 'Тип ключа хоста SSH';
 
   @override
-  String get sshKnownHostKeys => 'Известные ключи хостов';
+  String get sshKnownHostKeys => 'Известные хосты';
 
   @override
   String get sshKnownHostKeysTip =>

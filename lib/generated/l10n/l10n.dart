@@ -960,7 +960,7 @@ abstract class AppLocalizations {
   /// No description provided for @editVirtKeys.
   ///
   /// In en, this message translates to:
-  /// **'Edit virtual keys'**
+  /// **'Virtual keys'**
   String get editVirtKeys;
 
   /// No description provided for @editorHighlightTip.
@@ -1026,7 +1026,7 @@ abstract class AppLocalizations {
   /// No description provided for @fullScreen.
   ///
   /// In en, this message translates to:
-  /// **'Full screen mode'**
+  /// **'Full screen'**
   String get fullScreen;
 
   /// No description provided for @fullScreenJitter.
@@ -1866,7 +1866,7 @@ abstract class AppLocalizations {
   /// No description provided for @sshKnownHostKeys.
   ///
   /// In en, this message translates to:
-  /// **'Known host keys'**
+  /// **'Known hosts'**
   String get sshKnownHostKeys;
 
   /// No description provided for @sshKnownHostKeysTip.

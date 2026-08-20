@@ -485,7 +485,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Opsi ini hanya mengaktifkan fitur, apakah itu benar-benar dapat diaktifkan tergantung pada lebar perangkat';
 
   @override
-  String get editVirtKeys => 'Edit kunci virtual';
+  String get editVirtKeys => 'Kunci virtual';
 
   @override
   String get editorHighlightTip =>
@@ -524,7 +524,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Folder ini dihapus atau diganti nama. Gunakan bilah di bawah untuk kembali, ke beranda, atau menuju tempat lain.';
 
   @override
-  String get fullScreen => 'Mode Layar Penuh';
+  String get fullScreen => 'Layar penuh';
 
   @override
   String get fullScreenJitter => 'Jitter layar penuh';
@@ -1022,7 +1022,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get sshHostKeyType => 'Jenis kunci host SSH';
 
   @override
-  String get sshKnownHostKeys => 'Kunci host yang dikenal';
+  String get sshKnownHostKeys => 'Host dikenal';
 
   @override
   String get sshKnownHostKeysTip =>

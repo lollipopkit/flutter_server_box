@@ -485,7 +485,7 @@ class AppLocalizationsNl extends AppLocalizations {
       'Deze optie schakelt alleen de functie in, of deze daadwerkelijk kan worden ingeschakeld, hangt af van de breedte van het apparaat';
 
   @override
-  String get editVirtKeys => 'Virtuele toetsen bewerken';
+  String get editVirtKeys => 'Virtuele toetsen';
 
   @override
   String get editorHighlightTip =>
@@ -524,7 +524,7 @@ class AppLocalizationsNl extends AppLocalizations {
       'Hij is verwijderd of hernoemd. Gebruik de balk onderaan om terug te gaan, naar home te springen of ergens anders heen te gaan.';
 
   @override
-  String get fullScreen => 'Volledig schermmodus';
+  String get fullScreen => 'Volledig scherm';
 
   @override
   String get fullScreenJitter => 'Volledig scherm trilling';
@@ -1023,7 +1023,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get sshHostKeyType => 'Type SSH-hostsleutel';
 
   @override
-  String get sshKnownHostKeys => 'Bekende hostsleutels';
+  String get sshKnownHostKeys => 'Bekende hosts';
 
   @override
   String get sshKnownHostKeysTip =>

@@ -74,7 +74,7 @@
   "dockerStatistics": "Docker 통계",
   "doubleColumnMode": "이중 열 모드",
   "doubleColumnTip": "이 옵션은 기능만 활성화하며, 실제 적용 여부는 기기의 너비에 따라 다릅니다",
-  "editVirtKeys": "가상 키 편집",
+  "editVirtKeys": "가상 키",
   "editorHighlightTip": "현재 코드 하이라이팅 성능이 이상적이지 않습니다. 성능 향상을 위해 선택적으로 끌 수 있습니다.",
   "enableMdns": "mDNS 활성화",
   "enableMdnsDesc": "mDNS/Bonjour를 사용하여 SSH 서비스 검색",
@@ -85,7 +85,7 @@
   "fileTooLarge": "파일 '{file}'이(가) 너무 큽니다. 크기 {size}, 최대 {sizeMax}",
   "fileDirGone": "이 폴더는 더 이상 없습니다",
   "fileDirGoneTip": "삭제되었거나 이름이 바뀌었습니다. 아래 막대에서 뒤로 가기, 홈, 또는 다른 위치로 이동하세요.",
-  "fullScreen": "전체 화면 모드",
+  "fullScreen": "전체 화면",
   "fullScreenJitter": "전체 화면 지터",
   "fullScreenJitterHelp": "화면 번인 방지",
   "fullScreenTip": "기기를 가로 모드로 회전할 때 전체 화면 모드를 활성화하시겠습니까? 이 옵션은 서버 탭에만 적용됩니다.",
@@ -242,7 +242,7 @@
   "sshHostKeyFingerprintMd5Base64": "지문 (MD5 base64): {fingerprint}",
   "sshHostKeyFingerprintMd5Hex": "지문 (SHA256): {fingerprint}",
   "sshHostKeyType": "SSH 호스트 키 유형",
-  "sshKnownHostKeys": "알려진 호스트 키",
+  "sshKnownHostKeys": "알려진 호스트",
   "sshKnownHostKeysTip": "이 앱이 수락한 호스트 키입니다. 삭제하면 다음 연결 시 다시 확인합니다.",
   "@sshHostKeyType": {
     "description": "Label for the SSH host key type displayed in the host key verification dialog."

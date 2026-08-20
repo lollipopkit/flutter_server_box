@@ -491,7 +491,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Cette option n\'active que la fonctionnalité, qu\'elle puisse être activée dépend de la largeur de l\'appareil.';
 
   @override
-  String get editVirtKeys => 'Modifier les touches virtuelles';
+  String get editVirtKeys => 'Touches virtuelles';
 
   @override
   String get editorHighlightTip =>
@@ -530,7 +530,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Il a été supprimé ou renommé. Utilisez la barre du bas pour revenir en arrière, aller au dossier personnel ou vous rendre ailleurs.';
 
   @override
-  String get fullScreen => 'Mode plein écran';
+  String get fullScreen => 'Plein écran';
 
   @override
   String get fullScreenJitter => 'Secousse en plein écran';
@@ -1032,7 +1032,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get sshHostKeyType => 'Type de clé d\'hôte SSH';
 
   @override
-  String get sshKnownHostKeys => 'Clés d\'hôte connues';
+  String get sshKnownHostKeys => 'Hôtes connus';
 
   @override
   String get sshKnownHostKeysTip =>

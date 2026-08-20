@@ -461,7 +461,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get doubleColumnTip => '이 옵션은 기능만 활성화하며, 실제 적용 여부는 기기의 너비에 따라 다릅니다';
 
   @override
-  String get editVirtKeys => '가상 키 편집';
+  String get editVirtKeys => '가상 키';
 
   @override
   String get editorHighlightTip =>
@@ -498,7 +498,7 @@ class AppLocalizationsKo extends AppLocalizations {
       '삭제되었거나 이름이 바뀌었습니다. 아래 막대에서 뒤로 가기, 홈, 또는 다른 위치로 이동하세요.';
 
   @override
-  String get fullScreen => '전체 화면 모드';
+  String get fullScreen => '전체 화면';
 
   @override
   String get fullScreenJitter => '전체 화면 지터';
@@ -972,7 +972,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sshHostKeyType => 'SSH 호스트 키 유형';
 
   @override
-  String get sshKnownHostKeys => '알려진 호스트 키';
+  String get sshKnownHostKeys => '알려진 호스트';
 
   @override
   String get sshKnownHostKeysTip => '이 앱이 수락한 호스트 키입니다. 삭제하면 다음 연결 시 다시 확인합니다.';

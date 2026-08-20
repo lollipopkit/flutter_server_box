@@ -453,7 +453,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get doubleColumnTip => '此选项仅用于启用该功能，是否生效取决于设备宽度';
 
   @override
-  String get editVirtKeys => '编辑虚拟按键';
+  String get editVirtKeys => '虚拟按键';
 
   @override
   String get editorHighlightTip => '代码高亮功能可能影响性能，可选择关闭。';
@@ -488,7 +488,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fileDirGoneTip => '它已被删除或重命名。使用下方的按钮返回、回到主目录，或跳转到其他位置。';
 
   @override
-  String get fullScreen => '全屏模式';
+  String get fullScreen => '全屏';
 
   @override
   String get fullScreenJitter => '全屏模式抖动';
@@ -952,7 +952,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sshHostKeyType => 'SSH 主机密钥类型';
 
   @override
-  String get sshKnownHostKeys => '已信任的主机密钥';
+  String get sshKnownHostKeys => '已信任的主机';
 
   @override
   String get sshKnownHostKeysTip => '本 app 已接受的主机密钥。删掉一条,下次连接时会重新询问。';
@@ -1746,7 +1746,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get doubleColumnTip => '此選項僅用於啟用此功能，是否生效取決於裝置寬度';
 
   @override
-  String get editVirtKeys => '編輯虛擬按鍵';
+  String get editVirtKeys => '虛擬按鍵';
 
   @override
   String get editorHighlightTip => '程式碼高亮功能可能影響效能，可選擇性關閉。';
@@ -1781,7 +1781,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get fileDirGoneTip => '它已被刪除或重新命名。使用下方的按鈕返回、回到主目錄，或跳轉到其他位置。';
 
   @override
-  String get fullScreen => '全螢幕模式';
+  String get fullScreen => '全螢幕';
 
   @override
   String get fullScreenJitter => '全螢幕模式抖動';
@@ -2245,7 +2245,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get sshHostKeyType => 'SSH 主機金鑰類型';
 
   @override
-  String get sshKnownHostKeys => '已信任的主機金鑰';
+  String get sshKnownHostKeys => '已信任的主機';
 
   @override
   String get sshKnownHostKeysTip => '本 app 已接受的主機金鑰。刪掉一條,下次連線時會重新詢問。';

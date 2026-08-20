@@ -480,7 +480,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'This option only enables the feature, whether it can actually be enabled depends on the width of the device';
 
   @override
-  String get editVirtKeys => 'Edit virtual keys';
+  String get editVirtKeys => 'Virtual keys';
 
   @override
   String get editorHighlightTip =>
@@ -518,7 +518,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'It was deleted or renamed. Use the bar below to go back, go home, or jump elsewhere.';
 
   @override
-  String get fullScreen => 'Full screen mode';
+  String get fullScreen => 'Full screen';
 
   @override
   String get fullScreenJitter => 'Full screen jitter';
@@ -1014,7 +1014,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sshHostKeyType => 'SSH host key type';
 
   @override
-  String get sshKnownHostKeys => 'Known host keys';
+  String get sshKnownHostKeys => 'Known hosts';
 
   @override
   String get sshKnownHostKeysTip =>

@@ -487,7 +487,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu seçenek yalnızca özelliği etkinleştirir, gerçekten etkinleşip etkinleşmeyeceği cihazın genişliğine bağlıdır';
 
   @override
-  String get editVirtKeys => 'Sanal tuşları düzenle';
+  String get editVirtKeys => 'Sanal tuşlar';
 
   @override
   String get editorHighlightTip =>
@@ -526,7 +526,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'Silinmiş veya adı değiştirilmiş. Geri dönmek, ana klasöre gitmek ya da başka bir yere geçmek için alttaki çubuğu kullanın.';
 
   @override
-  String get fullScreen => 'Tam ekran modu';
+  String get fullScreen => 'Tam ekran';
 
   @override
   String get fullScreenJitter => 'Tam ekran titreşim';
@@ -1024,7 +1024,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sshHostKeyType => 'SSH ana bilgisayar anahtarı türü';
 
   @override
-  String get sshKnownHostKeys => 'Bilinen ana makine anahtarları';
+  String get sshKnownHostKeys => 'Bilinen ana makineler';
 
   @override
   String get sshKnownHostKeysTip =>
