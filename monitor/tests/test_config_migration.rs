@@ -1,11 +1,18 @@
 use server_box_monitor::core::config::Config;
 use std::fs;
+use std::sync::OnceLock;
+
+fn cwd_lock() -> &'static tokio::sync::Mutex<()> {
+    static LOCK: OnceLock<tokio::sync::Mutex<()>> = OnceLock::new();
+    LOCK.get_or_init(|| tokio::sync::Mutex::new(()))
+}
 
 // Own test binary (own process) so mutating the process-wide CWD here can't
 // race with other test files' `Config::load()` calls, which read whatever
 // config.toml/config.json happens to be in the CWD at the time.
 #[tokio::test]
 async fn config_json_migrates_to_toml() {
+    let _guard = cwd_lock().lock().await;
     let dir = std::env::temp_dir().join(format!(
         "sbm_monitor_config_migration_test_{}_{}",
         std::process::id(),
@@ -67,6 +74,66 @@ async fn config_json_migrates_to_toml() {
     }
     std::env::set_current_dir(original_cwd).unwrap();
     fs::remove_dir_all(&dir).ok();
+}
+
+#[tokio::test]
+async fn a_go_config_in_its_historical_home_is_migrated() {
+    let _guard = cwd_lock().lock().await;
+    let root = std::env::temp_dir().join(format!(
+        "sbm_monitor_go_home_migration_test_{}_{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let workdir = root.join("current-install");
+    let old_config = root.join("home/.config/server_box/config.json");
+    fs::create_dir_all(old_config.parent().unwrap()).unwrap();
+    fs::create_dir_all(&workdir).unwrap();
+    fs::write(
+        &old_config,
+        r#"{
+            "name": "go-home-server",
+            "interval": "9s",
+            "pushes": [{
+                "type": "server_chan",
+                "name": "legacy channel",
+                "iface": {"sckey": "SCT123", "desp": "{{msg}}"}
+            }]
+        }"#,
+    )
+    .unwrap();
+
+    let original_cwd = std::env::current_dir().unwrap();
+    let original_home = std::env::var_os("HOME");
+    std::env::set_current_dir(&workdir).unwrap();
+    unsafe {
+        std::env::set_var("HOME", root.join("home"));
+        std::env::set_var("JWT_SECRET", "test-secret-at-least-32-characters-long");
+    }
+
+    let config = Config::load().await.unwrap();
+
+    assert_eq!(config.get_server_name(), "go-home-server");
+    assert_eq!(config.get_monitoring().interval_seconds, 9);
+    assert!(workdir.join("config.toml").exists());
+    assert!(!old_config.exists());
+    assert!(root.join("home/.config/server_box/config.json.migrated").exists());
+    let push = &config.get_push()[0];
+    assert_eq!(push.push_type, "serverchan");
+    assert_eq!(push.config.get("sc_key").and_then(|v| v.as_str()), Some("SCT123"));
+
+    unsafe {
+        std::env::remove_var("JWT_SECRET");
+        if let Some(home) = original_home {
+            std::env::set_var("HOME", home);
+        } else {
+            std::env::remove_var("HOME");
+        }
+    }
+    std::env::set_current_dir(original_cwd).unwrap();
+    fs::remove_dir_all(root).ok();
 }
 
 #[cfg(unix)]
