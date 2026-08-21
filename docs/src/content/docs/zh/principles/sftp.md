@@ -127,7 +127,9 @@ Future<void> uploadFile(
     await sftp.rename(stagingPath, remotePath);
     pendingStagingPath = null;
   } finally {
-    await remote?.close();
+    try {
+      await remote?.close();
+    } catch (_) {}
     if (pendingStagingPath != null) {
       try {
         await sftp.remove(pendingStagingPath!);
@@ -167,7 +169,9 @@ Future<void> downloadFile(
     remote = null;
     await staging!.rename(localPath);
   } finally {
-    await remote?.close();
+    try {
+      await remote?.close();
+    } catch (_) {}
     try {
       await sink?.close();
     } catch (_) {}
