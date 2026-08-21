@@ -123,6 +123,7 @@
   "lastSuccess": "Son Başarı",
   "letterCache": "Normal klavye girişi",
   "letterCacheTip": "Etkinleştirildiğinde giriş normal IME üzerinden yapılır; bu da bazı sistemlerde terminalde güvenli klavye istemlerini önleyebilir.",
+  "linuxShellTip": "Etkileşimli terminalin neyi çalıştıracağı. Alpine'de chsh yok ve sistemde /etc/passwd okuyan bir şey de yok, dolayısıyla kararı yalnızca bu verir. Tek seferlik komutlar yine /bin/sh ile çalışır, çünkü uygulama ve Agent POSIX yazar. Varsayılana dönmek için boş bırakın.",
   "linuxNetTip": "Linux sisteminin ve paketlerinin nereden indirileceği ve içine yazılacak DNS sunucuları. Varsayılana dönmek için boş bırakın. Kaydetmek, kurulu bir sistemdeki her ikisini de yeniden yazar.",
   "madeWithLove": "{myGithub} tarafından ❤️ ile yapıldı",
   "maxConcurrency": "Maksimum Eşzamanlılık",

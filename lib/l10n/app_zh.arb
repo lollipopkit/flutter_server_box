@@ -205,6 +205,7 @@
   "lastSuccess": "最后成功",
   "letterCache": "普通键盘输入",
   "letterCacheTip": "开启后，输入内容会经过普通输入法，这样可避免部分系统在终端弹出安全键盘",
+  "linuxShellTip": "交互式终端用什么 shell 启动。Alpine 没有 chsh,系统里也没有东西读 /etc/passwd,所以只有这里说了算。一次性命令仍然走 /bin/sh,因为 app 和 Agent 写的是 POSIX。留空恢复 /bin/sh。",
   "linuxNetTip": "Linux 系统及其软件包从哪里下载,以及写入其中的 DNS 服务器。留空恢复默认值。保存时会一并改写已安装系统中的对应文件。",
   "madeWithLove": "用❤️制作 by {myGithub}",
   "maxConcurrency": "最大并发数",

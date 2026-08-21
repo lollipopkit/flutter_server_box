@@ -340,13 +340,24 @@ abstract final class IosRootfs {
   /// [command] null or empty gives an interactive shell. Sessions do not share
   /// a console, so a terminal and a one-shot command cannot land on each
   /// other's output.
-  static int open({String? command, int columns = 80, int rows = 25}) {
+  ///
+  /// [shell] is what runs it, empty meaning `/bin/sh`. The guest has no `login`
+  /// and nothing in it reads `/etc/passwd`, so this is the only thing that
+  /// decides — see `linuxShell()`.
+  static int open({
+    String? command,
+    String shell = '',
+    int columns = 80,
+    int rows = 25,
+  }) {
     final open = _open;
     if (open == null) return -1;
+    final shellPointer = shell.toNativeUtf8();
     final pointer = (command ?? '').toNativeUtf8();
     try {
-      return open(pointer.cast(), columns, rows);
+      return open(shellPointer.cast(), pointer.cast(), columns, rows);
     } finally {
+      malloc.free(shellPointer);
       malloc.free(pointer);
     }
   }
@@ -464,7 +475,7 @@ abstract final class IosRootfs {
   );
   static final _open = _look(
     'sbm_ish_open',
-    (p) => p.lookupFunction<Int Function(Pointer<Char>, Int, Int), int Function(Pointer<Char>, int, int)>('sbm_ish_open'),
+    (p) => p.lookupFunction<Int Function(Pointer<Char>, Pointer<Char>, Int, Int), int Function(Pointer<Char>, Pointer<Char>, int, int)>('sbm_ish_open'),
   );
   static final _read = _look(
     'sbm_ish_read',

@@ -99,6 +99,45 @@ List<String> parseNameservers(String value) => value
     .where((e) => e.isNotEmpty && InternetAddress.tryParse(e) != null)
     .toList();
 
+/// What an interactive terminal in the guest runs.
+///
+/// The guest has no `login` and nothing in it reads `/etc/passwd`, so this is
+/// the only thing that decides which shell a session gets — which is also why
+/// Alpine shipping no `chsh` does not come into it.
+///
+/// **Interactive only.** A one-shot command keeps `/bin/sh`, because the app
+/// and the Agent write POSIX and parse what comes back: `fish` is not a POSIX
+/// shell, so a status script or an `&&` run through the user's choice would
+/// fail in ways that read as the remote host being broken.
+String linuxShell() {
+  final raw = Stores.setting.linuxShell.fetch().trim();
+  return isShellPathValid(raw) ? raw : Defaults.linuxShell;
+}
+
+/// Whether [value] could name a shell inside the guest.
+///
+/// A guest-absolute path and nothing else. Anything relative would be resolved
+/// against a working directory the session has not got yet, and the engine
+/// would answer `ENOENT` from inside `sbm_ish_open` — a terminal that opens and
+/// dies with the reason nowhere on screen.
+bool isShellPathValid(String value) =>
+    value.startsWith('/') && !value.contains(RegExp(r'\s'));
+
+/// Whether [root] holds a file at the guest path [shell].
+///
+/// Checked before the setting is stored rather than after a terminal fails to
+/// open. Under `realfs` the guest's `/bin/fish` really is `<root>/bin/fish` on
+/// the host, so this is one `stat` — and links are not followed for the reason
+/// [looksUnpacked] does not follow them.
+Future<bool> shellExistsIn(String root, String shell) async {
+  if (!isShellPathValid(shell)) return false;
+  final type = await FileSystemEntity.type(
+    root.joinPath(shell.substring(1)),
+    followLinks: false,
+  );
+  return type != FileSystemEntityType.notFound;
+}
+
 /// Whether [root] holds an unpacked Linux system rather than a directory.
 ///
 /// `bin/sh` and `etc/os-release` rather than anything of one distribution's:

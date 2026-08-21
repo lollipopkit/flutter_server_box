@@ -147,6 +147,7 @@
   "lastSuccess": "마지막 성공",
   "letterCache": "일반 키보드 입력",
   "letterCacheTip": "이 옵션을 켜면 입력 내용이 일반 IME를 거치며, 일부 시스템에서는 터미널의 보안 키보드 안내를 피할 수 있습니다.",
+  "linuxShellTip": "대화형 터미널이 실행하는 셸입니다. Alpine에는 chsh가 없고 시스템에서 /etc/passwd를 읽는 것도 없으므로 이 설정만이 결정합니다. 일회성 명령은 계속 /bin/sh로 실행됩니다. 앱과 Agent가 POSIX를 쓰기 때문입니다. 비워 두면 /bin/sh로 돌아갑니다.",
   "linuxNetTip": "Linux 시스템과 패키지를 내려받을 위치, 그리고 기록되는 DNS 서버입니다. 비워 두면 기본값으로 돌아갑니다. 저장하면 이미 설치된 시스템의 파일도 다시 씁니다.",
   "madeWithLove": "{myGithub}이(가) ❤️로 만들었습니다",
   "maxConcurrency": "최대 동시 실행 수",

@@ -286,7 +286,11 @@ abstract final class AndroidRootfs {
         // extension is theirs. It resolves a hard link to a symlink, which
         // those tools are indifferent to — each dispatches on `argv[0]`.
         '--link2symlink',
-        if (command == null) '/bin/sh' else ...['/bin/sh', '-lc', command],
+        // The setting is for interactive terminals only. A one-shot command
+        // stays POSIX: the app and the Agent write `sh` and parse what comes
+        // back, and `fish` would fail at that in ways that read as the host
+        // being broken. See `linuxShell`.
+        if (command == null) linuxShell() else ...['/bin/sh', '-lc', command],
       ],
     );
   }

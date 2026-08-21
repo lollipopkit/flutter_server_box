@@ -359,6 +359,73 @@ agent 的那条完整路径。
   被拒,是**整个 app 的下一次更新被卡住** —— 止血开关就是为这个存在的。这一条决定其余
   是否值得做完。
 
+## iOS:多个内核 / 真隔离
+
+多个 profile 同时运行走的是「一个内核多个 root」。如果要的是**互相隔离**,下面是
+2026-08-21 查过的结论,免得以后再问一遍。
+
+**同进程两个内核:能做,代价是引擎从此结构性分叉。** iSH 的内核状态是文件作用域全局:
+
+| 状态 | 位置 |
+| --- | --- |
+| 挂载表 | `fs/mount.c:212` `struct list mounts` |
+| tty 驱动表 | `fs/tty.c:12` `tty_drivers[256]` |
+| pid 表的锁 | `kernel/task.c:14` `pids_lock` |
+| pty 编号 | `fs/pty.c:148` `pty_reserve_next`,文件作用域 static |
+
+kernel/ 与 fs/ 下这一类大约六十几个。`current` 已经是 `__thread`
+(`kernel/task.c:11`),任务本身不是障碍。要多实例就得引入 `struct kernel*` 穿过上述
+每一处,并永远维护一个和上游分叉的 fork —— 而本仓库的 fork 现在还在往上游 rebase 修复。
+
+而且做完也不是隔离:两个内核共享宿主地址空间和宿主 fd,任一侧崩溃整个 app 一起走。
+
+**两个进程:iOS 上做不到。** App Store 应用不能 fork/exec —— 这正是当初要有这个解释器
+的原因。App Extension 是独立进程但由系统拉起,有自己的内存上限和生命周期,不是能跑
+Linux 的地方。
+
+所以 iOS 上真隔离拿不到,只能接受「一个内核多个 root」的后果:PID 空间共享、`/proc`
+互相看得见、网络共享、`/dev/pts` 编号全局。Android 侧 proot 每会话一个宿主进程,本来
+就是分开的。
+
+## 后台保活
+
+**iOS:能拿到约 30 秒,拿不到持续运行。**
+
+现在 `ios/Runner/Info-Debug.plist:69` 和 `Info-Release.plist:61` 的 `UIBackgroundModes`
+只有 `fetch`。各机制的实际约束:
+
+- `fetch` —— 系统调度的机会性短唤醒,几秒量级,时机不由 app 定
+- `beginBackgroundTask` —— 进后台约 30 秒宽限,然后进程被**挂起**。是冻结不是杀死,
+  会话状态还在、回前台能接着走;挂起期间不跑 CPU,guest 停在半条指令上。挂起中被
+  jetsam 回收时也不会先跑你的代码
+- `BGProcessingTask` —— 设备空闲、通常充电时跑,分钟级,系统排期
+- `audio` / `location` / `voip` 给持续执行,但都是干它们各自的事的;播静音音频按
+  2.5.4 会被拒
+- Live Activity(`ios/Runner/LiveActivityManager.swift`)不给后台执行权,是展示面
+
+**`BGContinuedProcessingTask`(iOS 26.0+)是目前唯一名正言顺的机制。** 以下都是从
+iPhoneOS26.5.sdk 的头文件读的:
+
+- `BGTaskRequest.h:134` —— "A request to begin a workload immediately, or shortly after
+  submission, which is allowed to continue running even if the app is backgrounded."
+- 必须用户发起,带 `title` / `subtitle`,系统给一个 Live Activity 展示进度
+  (`BGTask.h:136-142` 的 `updateTitle:subtitle:`)
+- 必须通过 `NSProgressReporting` 持续汇报进度,**看起来卡住的任务会被强制过期**
+  (`BGTask.h:124-126`)
+- `Queue` 策略下,用户从 app switcher 划掉 app 就取消(`BGTaskRequest.h:110-113`)
+- 基础用法不需要额外 entitlement,只有后台 GPU 需要
+  (`com.apple.developer.background-tasks.continued-processing.gpu`)
+
+它是**任务**不是**保活**:能托住「跑完这个编译」,托不住一个交互式 shell 干等。
+
+**目标设备的 iOS 版本是硬约束。** 手上验证用的 iPad Pro 11" 三代是 iOS 18.7.8,用不上
+这条。
+
+**Android:`bgRun` 的实际覆盖面没有核对过。** 设置项在 `lib/data/store/setting.dart:58`
+(默认 `isAndroid`),但它接的到底是什么、有没有前台服务和常驻通知,**尚未查证**。已知
+缺口是国产 ROM:前台服务 + 常驻通知只是及格线,还要处理各家的自启动白名单和电池优化
+豁免,否则仍然经常被杀。深度睡眠下被杀属于预期。
+
 ## Hive → SQLite:分阶段做,以及加密怎么落
 
 **状态(2026-08-19):三个阶段都已合入。** 第三阶段超出了本节原来的计划,更正见

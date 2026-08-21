@@ -1329,6 +1329,12 @@ abstract class AppLocalizations {
   /// **'When enabled, input goes through the regular IME, which can avoid secure keyboard prompts in the terminal on some systems.'**
   String get letterCacheTip;
 
+  /// No description provided for @linuxShellTip.
+  ///
+  /// In en, this message translates to:
+  /// **'What an interactive terminal runs. Alpine has no chsh and nothing in the system reads /etc/passwd, so this is the only thing that decides. A one-shot command still runs under /bin/sh, because the app and the Agent write POSIX. Leave empty to restore /bin/sh.'**
+  String get linuxShellTip;
+
   /// No description provided for @linuxNetTip.
   ///
   /// In en, this message translates to:

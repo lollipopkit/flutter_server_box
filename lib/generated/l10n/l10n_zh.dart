@@ -650,6 +650,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get letterCacheTip => '开启后，输入内容会经过普通输入法，这样可避免部分系统在终端弹出安全键盘';
 
   @override
+  String get linuxShellTip =>
+      '交互式终端用什么 shell 启动。Alpine 没有 chsh,系统里也没有东西读 /etc/passwd,所以只有这里说了算。一次性命令仍然走 /bin/sh,因为 app 和 Agent 写的是 POSIX。留空恢复 /bin/sh。';
+
+  @override
   String get linuxNetTip =>
       'Linux 系统及其软件包从哪里下载,以及写入其中的 DNS 服务器。留空恢复默认值。保存时会一并改写已安装系统中的对应文件。';
 
@@ -1956,6 +1960,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get letterCacheTip => '開啟後，輸入內容會經過一般輸入法，這樣可避免部分系統在終端彈出安全鍵盤。';
+
+  @override
+  String get linuxShellTip =>
+      '互動式終端使用什麼 shell 啟動。Alpine 沒有 chsh,系統裡也沒有東西讀 /etc/passwd,所以只有這裡說了算。一次性命令仍然走 /bin/sh,因為 app 和 Agent 寫的是 POSIX。留空可恢復 /bin/sh。';
 
   @override
   String get linuxNetTip =>

@@ -24,6 +24,9 @@ abstract final class Rootfs {
   static bool get isReady =>
       isAndroid ? AndroidRootfs.isReady : IosRootfs.isReadySync;
 
+  /// Where the tree is on the host, or null before [prepare].
+  static String? get root => isAndroid ? AndroidRootfs.root : IosRootfs.root;
+
   /// Which distribution the settings name — what [installed] would become.
   static LinuxDistro get selected => linuxDistro();
 

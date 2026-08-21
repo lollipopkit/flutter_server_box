@@ -214,6 +214,42 @@ void main() {
     });
   });
 
+  group('what a shell setting accepts', () {
+    test('a guest-absolute path', () {
+      expect(isShellPathValid('/bin/sh'), isTrue);
+      expect(isShellPathValid('/usr/bin/fish'), isTrue);
+    });
+
+    test('nothing relative', () {
+      // It would be resolved against a working directory the session has not
+      // got yet, and the engine would answer ENOENT from inside
+      // `sbm_ish_open` — a terminal that opens and dies with the reason
+      // nowhere on screen.
+      expect(isShellPathValid('fish'), isFalse);
+      expect(isShellPathValid('bin/sh'), isFalse);
+      expect(isShellPathValid(''), isFalse);
+    });
+
+    test('nothing with whitespace in it', () {
+      // argv is built as one NUL-separated block in `sbm_ish_open`; a path with
+      // a space would not split back into what was meant.
+      expect(isShellPathValid('/bin/sh -l'), isFalse);
+    });
+
+    test('is checked against the tree, links and all', () async {
+      await Directory('${root.path}/bin').create(recursive: true);
+      await File('${root.path}/bin/ash').writeAsString('');
+      // Alpine's shells are links to busybox, and the target is a guest path
+      // that does not resolve host-side — the same trap `looksUnpacked` locks.
+      await Link('${root.path}/bin/sh').create('/bin/busybox');
+
+      expect(await shellExistsIn(root.path, '/bin/ash'), isTrue);
+      expect(await shellExistsIn(root.path, '/bin/sh'), isTrue);
+      expect(await shellExistsIn(root.path, '/usr/bin/fish'), isFalse);
+      expect(await shellExistsIn(root.path, 'fish'), isFalse);
+    });
+  });
+
   group('what the settings answer', () {
     setUp(() async {
       await openTestDb();
@@ -291,6 +327,21 @@ void main() {
       Stores.setting.linuxDns.put('dns.google');
 
       expect(linuxNameservers(), ['8.8.8.8', '1.1.1.1']);
+    });
+
+    test('a stored shell, and /bin/sh for one that is not a path', () {
+      expect(linuxShell(), '/bin/sh');
+
+      Stores.setting.linuxShell.put('/usr/bin/fish');
+      expect(linuxShell(), '/usr/bin/fish');
+
+      Stores.setting.linuxShell.put('fish');
+      expect(
+        linuxShell(),
+        '/bin/sh',
+        reason: 'a terminal that cannot open is worse than one that opens '
+            'with the shell the user did not pick',
+      );
     });
   });
 }

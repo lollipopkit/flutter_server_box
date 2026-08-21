@@ -26,6 +26,7 @@ extension _Linux on _AppSettingsPageState {
       builder: (_) => Column(
         children: [
           _buildLinuxDistro(),
+          _buildLinuxShell(),
           _buildLinuxMirror(),
           _buildLinuxDns(),
         ].map((e) => CardX(child: e)).toList(),
@@ -50,6 +51,19 @@ extension _Linux on _AppSettingsPageState {
             ),
       trailing: Text(selected.label, style: UIs.text15),
       onTap: _onTapLinuxDistro,
+    );
+  }
+
+  Widget _buildLinuxShell() {
+    return ListTile(
+      leading: const Icon(Icons.terminal_outlined, size: _kIconSize),
+      title: TipText(libL10n.terminal, l10n.linuxShellTip),
+      subtitle: ValBuilder(
+        listenable: _setting.linuxShell.listenable(),
+        builder: (val) => Text(val, style: UIs.textGrey),
+      ),
+      trailing: const Icon(Icons.keyboard_arrow_right),
+      onTap: _onTapLinuxShell,
     );
   }
 
@@ -130,6 +144,59 @@ extension _Linux on _AppSettingsPageState {
     if (!mounted) return;
     await installRootfs(context);
     refresh();
+  }
+
+  /// Picking a shell, checked against the system that is actually installed.
+  ///
+  /// Shape and then existence, because neither failure is visible later: the
+  /// engine answers `ENOENT` from inside `sbm_ish_open`, and a terminal that
+  /// opens and dies on sight says nothing about why. The C side falls back to
+  /// `/bin/sh` for the same reason, but only a setting that has gone stale —
+  /// `apk del` on whatever it named — should ever reach that fallback.
+  ///
+  /// Not checked when nothing is installed: there is no tree to look in, and
+  /// refusing a path because of that would be wrong rather than careful.
+  void _onTapLinuxShell() {
+    withTextFieldController((ctrl) async {
+      ctrl.text = _setting.linuxShell.fetch();
+
+      Future<void> save() async {
+        final typed = ctrl.text.trim();
+        context.popDialog();
+        // Empty is how the default is asked for, here as in the rows below.
+        final chosen = typed.isEmpty ? Defaults.linuxShell : typed;
+        final root = Rootfs.root;
+        final ok =
+            isShellPathValid(chosen) &&
+            (root == null ||
+                !Rootfs.isReady ||
+                await shellExistsIn(root, chosen));
+        if (!ok) {
+          if (!mounted) return;
+          await context.showRoundDialog(
+            title: libL10n.fail,
+            child: Text('${libL10n.invalid}: $chosen'),
+          );
+          return;
+        }
+        _setting.linuxShell.put(chosen);
+        Toast.success(libL10n.success);
+      }
+
+      await context.showRoundDialog(
+        title: libL10n.terminal,
+        child: Input(
+          controller: ctrl,
+          autoFocus: true,
+          label: libL10n.terminal,
+          hint: '/bin/sh  /bin/ash  /usr/bin/fish',
+          icon: Icons.terminal_outlined,
+          suggestion: false,
+          onSubmitted: (_) => save(),
+        ),
+        actions: Btn.ok(onTap: save).toList,
+      );
+    });
   }
 
   void _onTapLinuxMirror() {

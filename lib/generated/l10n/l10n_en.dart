@@ -692,6 +692,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'When enabled, input goes through the regular IME, which can avoid secure keyboard prompts in the terminal on some systems.';
 
   @override
+  String get linuxShellTip =>
+      'What an interactive terminal runs. Alpine has no chsh and nothing in the system reads /etc/passwd, so this is the only thing that decides. A one-shot command still runs under /bin/sh, because the app and the Agent write POSIX. Leave empty to restore /bin/sh.';
+
+  @override
   String get linuxNetTip =>
       'Where the Linux system and its packages are downloaded from, and the DNS servers written into it. Leave empty to restore the default. Saving also rewrites both in a system that is already installed.';
 

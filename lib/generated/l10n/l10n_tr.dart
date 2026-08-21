@@ -700,6 +700,10 @@ class AppLocalizationsTr extends AppLocalizations {
       'Etkinleştirildiğinde giriş normal IME üzerinden yapılır; bu da bazı sistemlerde terminalde güvenli klavye istemlerini önleyebilir.';
 
   @override
+  String get linuxShellTip =>
+      'Etkileşimli terminalin neyi çalıştıracağı. Alpine\'de chsh yok ve sistemde /etc/passwd okuyan bir şey de yok, dolayısıyla kararı yalnızca bu verir. Tek seferlik komutlar yine /bin/sh ile çalışır, çünkü uygulama ve Agent POSIX yazar. Varsayılana dönmek için boş bırakın.';
+
+  @override
   String get linuxNetTip =>
       'Linux sisteminin ve paketlerinin nereden indirileceği ve içine yazılacak DNS sunucuları. Varsayılana dönmek için boş bırakın. Kaydetmek, kurulu bir sistemdeki her ikisini de yeniden yazar.';
 

@@ -703,6 +703,10 @@ class AppLocalizationsIt extends AppLocalizations {
       'Quando è attiva, l\'input passa attraverso l\'IME normale, il che può evitare i prompt della tastiera sicura nel terminale su alcuni sistemi.';
 
   @override
+  String get linuxShellTip =>
+      'Cosa avvia un terminale interattivo. Alpine non ha chsh e nulla nel sistema legge /etc/passwd, quindi decide solo questo. I comandi singoli continuano a girare con /bin/sh, perché l\'app e l\'Agent scrivono POSIX. Lascia vuoto per ripristinare /bin/sh.';
+
+  @override
   String get linuxNetTip =>
       'Da dove vengono scaricati il sistema Linux e i suoi pacchetti, e i server DNS scritti al suo interno. Lascia vuoto per ripristinare il valore predefinito. Il salvataggio riscrive entrambi anche in un sistema già installato.';
 

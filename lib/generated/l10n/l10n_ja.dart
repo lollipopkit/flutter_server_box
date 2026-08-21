@@ -664,6 +664,10 @@ class AppLocalizationsJa extends AppLocalizations {
       '有効にすると入力内容は通常のIMEを経由し、一部のシステムでターミナルにセキュアキーボードの案内が表示されるのを避けられます。';
 
   @override
+  String get linuxShellTip =>
+      '対話型ターミナルが起動するシェル。Alpine に chsh はなく、システム内で /etc/passwd を読むものもないため、決めるのはここだけです。単発のコマンドは引き続き /bin/sh で実行されます（アプリと Agent が書くのは POSIX のため）。空にすると /bin/sh に戻ります。';
+
+  @override
   String get linuxNetTip =>
       'Linux システムとそのパッケージのダウンロード元、および書き込まれる DNS サーバー。空にすると既定値に戻ります。保存すると、インストール済みのシステムのファイルも書き換えられます。';
 

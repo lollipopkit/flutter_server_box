@@ -698,6 +698,10 @@ class AppLocalizationsNl extends AppLocalizations {
       'Wanneer dit is ingeschakeld, gaat invoer via de normale IME, wat op sommige systemen beveiligde toetsenbordmeldingen in de terminal kan vermijden.';
 
   @override
+  String get linuxShellTip =>
+      'Wat een interactieve terminal start. Alpine heeft geen chsh en niets in het systeem leest /etc/passwd, dus alleen dit bepaalt het. Losse opdrachten draaien nog steeds onder /bin/sh, omdat de app en de Agent POSIX schrijven. Laat leeg om /bin/sh te herstellen.';
+
+  @override
   String get linuxNetTip =>
       'Waar het Linux-systeem en zijn pakketten vandaan komen, en welke DNS-servers erin worden geschreven. Laat leeg om de standaardwaarde te herstellen. Bij opslaan worden beide ook in een al geïnstalleerd systeem herschreven.';
 

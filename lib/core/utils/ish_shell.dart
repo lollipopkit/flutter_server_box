@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:server_box/core/utils/ios_rootfs.dart';
+import 'package:server_box/core/utils/linux_seed.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 
 /// [ShellBackend] over the Linux guest on iOS.
@@ -63,6 +64,9 @@ class IshShellBackend implements ShellBackend {
 
     final id = IosRootfs.open(
       command: command,
+      // Interactive only: `_start` is also how `execute` runs a one-shot
+      // command, and that one has to stay POSIX. See `linuxShell`.
+      shell: command == null ? linuxShell() : '',
       columns: width > 0 ? width : 80,
       rows: height > 0 ? height : 25,
     );

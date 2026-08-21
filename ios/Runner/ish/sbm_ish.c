@@ -8,8 +8,8 @@
 
 bool sbm_ish_available(void) { return false; }
 int sbm_ish_boot(const char *rootfs) { (void)rootfs; return -1; }
-int sbm_ish_open(const char *command, int columns, int rows) {
-    (void)command; (void)columns; (void)rows;
+int sbm_ish_open(const char *shell, const char *command, int columns, int rows) {
+    (void)shell; (void)command; (void)columns; (void)rows;
     return -1;
 }
 int sbm_ish_read(int session, char *buffer, int length, int timeout_ms) {
@@ -478,10 +478,14 @@ int sbm_ish_boot(const char *rootfs) {
     return 0;
 }
 
-int sbm_ish_open(const char *command, int columns, int rows) {
+int sbm_ish_open(const char *shell, const char *command, int columns, int rows) {
     if (!booted) return -ENOTCONN;
 
     bool interactive = command == NULL || command[0] == '\0';
+    // The guest has no `login` and nothing reads `/etc/passwd`, so which shell
+    // a session gets is decided here and nowhere else — which is also why
+    // Alpine having no `chsh` does not matter.
+    if (shell == NULL || shell[0] == '\0') shell = "/bin/sh";
 
     pthread_mutex_lock(&sessions_lock);
     int index = -1;
@@ -537,19 +541,33 @@ int sbm_ish_open(const char *command, int columns, int rows) {
     written += snprintf(environment + written, sizeof(environment) - written,
                         "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin") + 1;
 
-    char argv[4096];
-    size_t position = 0;
-    const char *parts[3] = { "/bin/sh", "-c", command };
-    int count = interactive ? 1 : 3;
-    for (int i = 0; i < count; i++) {
-        size_t length = strlen(parts[i]) + 1;
-        if (position + length >= sizeof(argv) - 1) { err = -E2BIG; goto fail; }
-        memcpy(argv + position, parts[i], length);
-        position += length;
-    }
-    argv[position] = '\0';
+    // Built twice at most: a shell the setting names but the guest does not
+    // have would otherwise be a terminal that opens and immediately dies, with
+    // the reason visible nowhere. The setting is checked before it is stored,
+    // so reaching the fallback means the guest changed under it — `apk del`
+    // on whatever it named.
+    for (int attempt = 0; attempt < 2; attempt++) {
+        char argv[4096];
+        size_t position = 0;
+        const char *parts[3] = { shell, "-c", command };
+        int count = interactive ? 1 : 3;
+        bool too_long = false;
+        for (int i = 0; i < count; i++) {
+            size_t length = strlen(parts[i]) + 1;
+            if (position + length >= sizeof(argv) - 1) { too_long = true; break; }
+            memcpy(argv + position, parts[i], length);
+            position += length;
+        }
+        if (too_long) { err = -E2BIG; goto fail; }
+        argv[position] = '\0';
 
-    err = do_execve("/bin/sh", count, argv, environment);
+        err = do_execve(shell, count, argv, environment);
+        if (err >= 0) break;
+        if (attempt == 1 || strcmp(shell, "/bin/sh") == 0) goto fail;
+        syslog(LOG_ERR, "sbm_ish: %s did not exec (%d); falling back to /bin/sh",
+               shell, err);
+        shell = "/bin/sh";
+    }
     if (err < 0) goto fail;
     task_start(current);
     return index;

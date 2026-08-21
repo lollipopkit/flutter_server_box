@@ -61,7 +61,15 @@ SBM_ISH_EXPORT int sbm_ish_boot(const char *rootfs);
 /// empty gives an interactive shell. Sessions are independent — a terminal and
 /// a one-shot command do not share a console, and neither sees the other's
 /// output.
-SBM_ISH_EXPORT int sbm_ish_open(const char *command, int columns, int rows);
+///
+/// [shell] is what to run it with, NULL or empty meaning `/bin/sh`. It is a
+/// parameter because the guest has no `login` and nothing there reads
+/// `/etc/passwd` — the shell is this app's choice and no other, which is why
+/// Alpine shipping no `chsh` does not come into it. A shell that will not exec
+/// falls back to `/bin/sh` rather than handing back a terminal that dies on
+/// sight.
+SBM_ISH_EXPORT int sbm_ish_open(const char *shell, const char *command,
+                                int columns, int rows);
 
 /// Reads what [session] has printed, waiting up to [timeout_ms] for the first
 /// byte. Returns the number of bytes, 0 on timeout, or -1 once that session

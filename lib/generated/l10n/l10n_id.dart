@@ -698,6 +698,10 @@ class AppLocalizationsId extends AppLocalizations {
       'Saat diaktifkan, input akan melalui IME biasa, yang dapat menghindari prompt keyboard aman di terminal pada beberapa sistem.';
 
   @override
+  String get linuxShellTip =>
+      'Yang dijalankan terminal interaktif. Alpine tidak punya chsh dan tidak ada di sistem yang membaca /etc/passwd, jadi hanya ini yang menentukan. Perintah sekali jalan tetap berjalan dengan /bin/sh, karena aplikasi dan Agent menulis POSIX. Kosongkan untuk mengembalikan /bin/sh.';
+
+  @override
   String get linuxNetTip =>
       'Dari mana sistem Linux dan paketnya diunduh, serta server DNS yang ditulis ke dalamnya. Kosongkan untuk mengembalikan nilai bawaan. Menyimpan juga menulis ulang keduanya pada sistem yang sudah terpasang.';
 
