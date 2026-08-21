@@ -40,14 +40,15 @@ void main() {
 
     final socket = _IdleSshSocket();
     final client = SSHClient(socket, username: 'test');
+    final serverState = ServerState(
+      spi: spiFixture(name: 'server', id: serverId, ip: '127.0.0.1'),
+      status: InitStatus.status,
+      client: client,
+    );
     final container = ProviderContainer(
       overrides: [
-        serverProvider(serverId).overrideWithValue(
-          ServerState(
-            spi: spiFixture(name: 'server', id: serverId, ip: '127.0.0.1'),
-            status: InitStatus.status,
-            client: client,
-          ),
+        serverProvider(serverId).overrideWith(
+          () => _FixedServerNotifier(serverState),
         ),
       ],
     );
@@ -56,14 +57,13 @@ void main() {
 
       final start = notifier.startForward(config.id);
       final clear = notifier.clear();
-      await Future.wait([start, clear]);
+      await Future.wait([start, clear]).timeout(const Duration(seconds: 5));
 
       expect(notifier.state.configs, isEmpty);
       expect(notifier.state.activeForwards, isEmpty);
       expect(store.fetchForServer(serverId), isEmpty);
 
-      // The late starter bound this port, then saw the cleanup generation and
-      // closed it before `clear()` completed.
+      // A startup that overlaps cleanup cannot leave its listener behind.
       final rebound = await ServerSocket.bind(
         InternetAddress.loopbackIPv4,
         port,
@@ -114,4 +114,13 @@ class _IdleSshSocket implements SSHSocket {
 
   @override
   Future<void> flush() => Future.value();
+}
+
+class _FixedServerNotifier extends ServerNotifier {
+  _FixedServerNotifier(this._serverState);
+
+  final ServerState _serverState;
+
+  @override
+  ServerState build(String serverId) => _serverState;
 }

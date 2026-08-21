@@ -24,6 +24,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     ref.onDispose(() => dispose());
     ref.listen(serverProvider(serverId), (prev, next) {
       if (next.client == null && prev?.client != null) {
+        _generation++;
         final forwards = _forwards.values.toList();
         _forwards.clear();
         for (final entry in forwards) {
@@ -98,7 +99,10 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     try {
       // A start may be awaiting SSH or a listener bind. It owns any entry it
       // creates while cleanup is active and closes it before completing.
-      await Future.wait(_starts.values.toList());
+      await Future.wait(
+        _starts.values.map((start) => start.catchError((_) {})).toList(),
+      );
+      if (!ref.mounted) return;
       Stores.portForward.clearServer(_serverId);
       state = state.copyWith(configs: const [], activeForwards: {});
     } finally {

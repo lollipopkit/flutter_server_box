@@ -91,7 +91,11 @@ fn run_command_with_timeout(mut command: Command, command_timeout: Duration) -> 
             Ok(None) if Instant::now() < deadline => std::thread::sleep(Duration::from_millis(10)),
             Ok(None) | Err(_) => {
                 terminate(&mut child);
-                let _ = child.wait();
+                // A process stuck in uninterruptible I/O can survive SIGKILL;
+                // reap it without holding the sampling loop behind it.
+                let _ = std::thread::spawn(move || {
+                    let _ = child.wait();
+                });
                 let _ = fs::remove_file(file);
                 return String::new();
             }
