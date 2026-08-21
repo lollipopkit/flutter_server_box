@@ -116,12 +116,18 @@ void main() {
     test('an absolute guest symlink still counts', () async {
       await unpackLikeAlpine();
 
-      expect(
-        await File('${root.path}/bin/sh').exists(),
-        isFalse,
-        reason: 'the trap this locks: following the link is how every '
-            'existing install would read as absent',
-      );
+      // The trap this locks, stated as a property of the link rather than of
+      // the machine running the test: the target is absolute *in the guest*,
+      // so following it from the host leaves the tree altogether. Where the
+      // host has no `/bin/busybox` that reads as absent, and every existing
+      // install looks uninstalled — which is the bug. Where the host has one,
+      // and a Linux runner does, it reads as present for a file in the wrong
+      // tree. Neither answer is about this one, which is why [looksUnpacked]
+      // does not follow links.
+      //
+      // Asserting the first of those two — `File(...).exists()` is false — is
+      // what this used to do, and it passed on macOS and failed on CI.
+      expect(await Link('${root.path}/bin/sh').target(), startsWith('/'));
       expect(await looksUnpacked(root.path), isTrue);
     });
 
