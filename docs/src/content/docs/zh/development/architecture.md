@@ -3,7 +3,7 @@ title: 架构
 description: 架构模式与设计决策
 ---
 
-Server Box 遵循整洁架构 (Clean Architecture) 原则，在数据层、领域层和表现层之间实现了清晰的分离。
+Server Box 遵循整洁架构（Clean Architecture）原则，明确分离数据层、领域层和表现层。
 
 ## 分层架构
 
@@ -39,10 +39,10 @@ Server Box 遵循整洁架构 (Clean Architecture) 原则，在数据层、领�
 
 ### 不可变模型：Freezed
 
-- 所有数据模型均使用 Freezed 实现不可变性
-- 使用联合类型 (Union types) 表示不同状态
-- 内置 JSON 序列化支持
-- 提供 CopyWith 扩展以便于更新
+- 许多数据模型使用 Freezed 实现不可变性
+- 使用联合类型（Union types）表示不同状态
+- 在配置后提供 JSON 序列化支持
+- 提供 `copyWith` 方法以便更新
 
 ### 本地存储：SQLite
 
@@ -50,18 +50,18 @@ Server Box 遵循整洁架构 (Clean Architecture) 原则，在数据层、领�
 `sqlite3mc` 加密。其中有两种形态，某个 store 用哪一种，取决于它的记录之间
 是否存在关系：
 
-- **`kv(store, key, value, updated_at)`** 存放 settings 和 history —— 上百条
+- **`kv(store, key, value, updated_at)`** 存放 settings 和 history。这里适合保存上百条
   互不相关的偏好项，没有任何按字段的查询，新增一项应当只是一行改动。`value`
   是 JSON，因此写入这里的值必须有 `toJson`；缺少时 `SqliteStore.set` 返回
   `false` 而不是抛出。
 - **实体表**存放服务器、私钥、snippet、端口转发、连接统计和 agent
-  conversation。真正的列、外键、`CHECK` 约束和索引。
+  conversation，并使用真正的列、外键、`CHECK` 约束和索引。
 
 Drift 负责 DDL（`lib/data/store/db.dart`），且仅负责 DDL：查询是手写且同步的，
-因为 UI 在 build 过程中读取 store。Drift 从不打开连接 —— 由 `SqliteDb` 打开、
+因为 UI 在 build 过程中读取 store。Drift 不负责打开连接，由 `SqliteDb` 打开、
 应用加密和 `foreign_keys` pragma，再把已打开的 handle 交给它。
 
-两条键值形态无法表达的约定：
+此外，还有两项无法由键值存储表达的约定：
 
 - **主键只能是 id，不能是用户输入的名字。** 过去重命名私钥会让所有引用它的
   服务器失联，因为私钥的 id 就是它的名字。现在 name 是普通的 `UNIQUE` 列。
@@ -76,19 +76,25 @@ Drift 负责 DDL（`lib/data/store/db.dart`），且仅负责 DDL：查询是手
 ### 存储迁移
 
 `SchemaVersion` 跟踪布局版本；Drift 自身的 `schemaVersion` 固定为 1 且不再变化，
-因为真正重要的步骤超出 Drift migration 的表达能力。目前有两步：
+因为迁移中的关键步骤超出 Drift migration 的表达能力。Hive 导入与注册的 schema
+migration 分开：`Stores.init` 先执行 `HiveImport`，然后 `SchemaVersion.migrate` 执行
+两步：
 
-- `HiveImport`（m003）把升级安装的 Hive box 复制进 `kv`，每台设备一次。它通过
-  `lib/hive/legacy_adapters.dart` 中冻结的 adapter 读取，而不是通过当前模型 ——
+- `HiveImport`（m003）不是 `SchemaMigration`，而是把升级安装的 Hive box 复制进 `kv`，
+  每台设备一次。它通过
+  `lib/hive/legacy_adapters.dart` 中冻结的 adapter 读取，而不是通过当前模型。
   给模型新增字段会让*生成的* adapter 无法读取此前写入的任何 box。
 - `KvToTablesMigration`（m004）把这些行拆进实体表，为原本以 name 为键的记录
   生成 id，并重写指向它们的每一处引用。
+- `MonitorInsecureHttpMigration`（m005）为 monitor 凭据增加在可信网络上使用明文
+  HTTP 的显式选择。
 
 **存储迁移必须保留一个永久回归测试，输入是被迁移版本真实写出的字节。**
 它对用户数据只有一次机会且不可重复，因此其中的 bug 表现为静默而非崩溃。
 `test/fixtures/hive_v{1466,1480,1491}/` 保存了这些版本各自 adapter 生成的 box，
-`test/hive_release_migration_test.dart` 对每个版本跑完这两步。用当前 adapter
-造数据只能证明今天的代码自洽 —— 该测试首次运行就发现了四处字段名不匹配，
+`test/hive_release_migration_test.dart` 对每个 fixture 跑完 Hive 导入和两个已注册的迁移步骤；
+`test/m005_monitor_insecure_http_test.dart` 单独覆盖 m005。使用当前 adapter
+生成数据只能证明当前代码彼此一致。该测试首次运行就发现了四处字段名不匹配，
 每一处都会静默丢掉一整个 store。
 
 ## 依赖注入 (DI)
@@ -113,12 +119,16 @@ Drift 负责 DDL（`lib/data/store/db.dart`），且仅负责 DDL：查询是手
 
 ## 状态解析：共享 Rust 库
 
-服务器状态解析(CPU、内存、磁盘、网络、温度、GPU、SMART 等)在
-Rust crate `crates/sbm_parser` 中实现一次,App 经 flutter_rust_bridge
-(`crates/sbm_ffi`,生成的 Dart 位于 `lib/src/rust/`)调用;
-服务端 monitor 直接依赖同一 crate,两端解析行为始终一致。
-解析器是纯函数：只返回原始计数,差分/滑窗计算(如网速)同样是纯函数
-——FFI 边界不持有可变状态。
+服务器状态解析在 Rust crate `crates/sbm_parser` 中实现，App 经
+flutter_rust_bridge（`crates/sbm_ffi`，生成的 Dart 位于 `lib/src/rust/`）解析
+SSH 脚本输出。服务端 monitor 使用 monitor 专用的 `crates/sbm_native` 采样器，
+通过系统调用、procfs 或 sysfs 获取 CPU、内存、磁盘、网络等数据；其扩展周期仍使用
+共享脚本解析 amd、传感器、SMART 和电池等需要 CLI 工具的数据。App 的 monitor HTTP
+路径读取 `MonitorMetrics.fromJson` 的 JSON，再由 `applyMonitorMetrics` 映射到
+`ServerStatus`。这些路径共享状态模型，但不是同一条采样或解析路径，字段精度和语义
+应以各自实现为准。
+解析器是纯函数：只返回原始计数；差分和滑窗计算（如网速）同样是纯函数，
+FFI 边界不持有可变状态。
 
 ## 自定义依赖
 
@@ -131,5 +141,5 @@ Rust crate `crates/sbm_parser` 中实现一次,App 经 flutter_rust_bridge
 ## 多线程处理
 
 - **Isolates**：将繁重的计算任务移出主线程
-- **computer 包**：多线程工具类
+- **computer 包**：并发处理工具
 - **Async/Await**：非阻塞式 I/O 操作

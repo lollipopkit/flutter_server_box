@@ -3,27 +3,27 @@ title: Terminal Implementation
 description: How the SSH terminal works internally
 ---
 
-The terminal is one of the most complex features, built on a custom xterm.dart fork.
+The terminal is built on a custom `xterm.dart` fork.
 
 ## Where the bytes come from
 
-Everything above the byte stream is one implementation — the same emulator, the
-same virtual keyboard, the same tabs. Below it, `ShellBackend` has four:
+Everything above the byte stream is one implementation: the same emulator, the
+same virtual keyboard, and the same tabs. Below it, `ShellBackend` has four:
 
 | Backend | Bytes from |
 |---|---|
 | `SshShellBackend` | An SSH channel; the rest of this page |
 | `LocalShellBackend` | A shell on this device, or inside the Alpine container on Android |
 | `IshShellBackend` | The Linux interpreter on iOS |
-| `MonitorShellBackend` | A monitor agent's `/terminal/ws` |
+| `MonitorShellBackend` | A monitor agent's `/api/v1/terminal/ws` |
 
-A caller opens a session and writes to it; which of the four answered is not
-something the UI above asks. See
+A caller opens a session and writes to it. The UI does not need to know which
+backend supplies the response. See
 [Terminal on This Device](/docs/advanced/local-terminal/) for the two local ones
 and [Monitor Agent](/docs/advanced/monitor-agent/) for the last.
 
-The rest of this page follows the SSH path, which is the oldest and the one the
-others were shaped to match.
+The rest of this page describes the SSH path. The other backends expose the same
+interface.
 
 ## Architecture Overview
 
@@ -62,33 +62,18 @@ others were shaped to match.
 
 ```dart
 Future<TerminalSession> createSession(Spi spi) async {
-  // 1. Get SSH client
-  final client = await genClient(spi);
-
-  // 2. Create PTY
-  final pty = await client.openPty(
-    term: 'xterm-256color',
-    cols: 80,
-    rows: 24,
-  );
-
-  // 3. Initialize terminal emulator
-  final terminal = Terminal(
-    backend: PtyBackend(pty),
-  );
-
-  // 4. Setup resize handler
-  terminal.onResize.listen((size) {
-    pty.resize(size.cols, size.rows);
-  });
-
-  return TerminalSession(
-    terminal: terminal,
-    pty: pty,
-    client: client,
-  );
+  final session = TerminalSession(source: ServerSource(spi));
+  await session.connect();
+  final shell = await session.openShell();
+  if (shell == null) throw StateError('No shell backend');
+  session.bindForeground(shell);
+  return session;
 }
 ```
+
+The session's backend creates the SSH PTY with `SSHPtyConfig` and owns the
+shell lifecycle. The same `TerminalSession` shape is also used for local and
+monitor-agent backends.
 
 ### 2. Terminal Emulation
 
@@ -105,7 +90,7 @@ The xterm.dart fork provides:
 - Line-based rendering
 - Bidirectional text support
 - Unicode/emoji support
-- Optimized redraws
+- Redraws limited to changed terminal content
 
 ### 3. Data Flow
 

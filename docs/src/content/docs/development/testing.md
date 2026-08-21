@@ -111,7 +111,7 @@ test('serverStatusProvider returns status', () async {
 ## Storage Migrations
 
 A storage migration gets one pass over a user's real records, on one launch,
-and it is not repeatable — once the "done" marker is written the old data is
+and it is not repeatable. Once the "done" marker is written, the old data is
 never read again. A bug there is not a crash, it is silence: the records are
 still on disk and the app no longer looks at them.
 
@@ -122,8 +122,8 @@ finishes on every `flutter test`, like any other.
 
 | File | Role |
 |---|---|
-| `test/hive_v1466_migration_test.dart` | Reads the fixture and asserts every store arrives intact |
-| `test/fixtures/hive_v1466/` | The boxes v1.0.1466 wrote, plus its generator and a README |
+| `test/hive_release_migration_test.dart` | Reads each fixture and asserts every store arrives intact |
+| `test/fixtures/hive_v{1466,1480,1491}/` | The boxes those releases wrote, plus generators and a README |
 | `test/hive_import_test.dart` | The import's own logic: retry, idempotency, per-box progress |
 
 ### Why the fixture, and not a hand-seeded box
@@ -134,8 +134,8 @@ release actually wrote, because both sides of the test are the same code.
 
 That is not hypothetical. `hive_import_test.dart` seeded `Spi` through the
 current adapter, which writes typeId 15 with the SSH fields nested. v1.0.1466
-wrote typeId 3 with them flat. The path every upgrading install takes —
-`SpiLegacyAdapter` decoding typeId 3, `_toSpi` nesting it — had no coverage at
+wrote typeId 3 with them flat. The path every upgrading install takes,
+`SpiLegacyAdapter` decoding typeId 3 and `_toSpi` nesting it, had no coverage at
 all until the fixture existed.
 
 The fixture then exposed a second one on its first run: port forwards were
@@ -153,16 +153,16 @@ Each covers one half, so both stay:
 
 | Test | What it checks |
 |---|---|
-| `hive_v1466_migration_test.dart` | Records written by an older release import correctly |
+| `hive_release_migration_test.dart` | Records written by older releases import correctly |
 | `port_forward_store_test.dart` | A write made by the current build persists and reads back |
 
 ### Adding one for the next migration
 
 1. `git worktree add /tmp/<tag> <tag>`, init the submodules its `pubspec.yaml`
    needs, `flutter pub get`.
-2. Copy `test/fixtures/hive_v1466/gen_fixture.dart.txt` in as a test, adapt it
+2. Copy the fixture generator from `test/fixtures/hive_v1466/gen_fixture.dart.txt` into a test, adapt it
    to that release's models, and make the data cover **every optional field,
-   every enum case, and every stored type** — not one happy record. Include
+   every enum case, and every stored type**, not one happy record. Include
    non-ASCII, quotes and newlines somewhere.
 3. Run it, copy the output into `test/fixtures/<engine>_<tag>/`, remove the
    worktree.
@@ -190,7 +190,7 @@ skipped unless their environment variables are set, so a default
 ## Integration Tests
 
 `integration_test/` holds what `flutter test` cannot answer. The unit suite runs
-under `flutter_tester`, which loads no plugins — so anything reached through a
+under `flutter_tester`, which loads no plugins. Anything reached through a
 plugin or FFI has never actually run there. These run inside a real app on a
 real device:
 
@@ -211,7 +211,7 @@ flutter test integration_test/local_shell_test.dart
 ```
 
 They live outside `test/` because `flutter test` with no argument runs
-everything in there — device tests placed among the unit suite would be picked
+everything in there. Device tests placed among the unit suite would be picked
 up by every local run and by CI, where there is no device.
 
 `make analyze` covers this directory too (`flutter analyze lib test
@@ -239,6 +239,6 @@ first use, which someone has to allow.
 
 1. **Arrange-Act-Assert**: Structure tests clearly
 2. **Descriptive names**: Test names should describe behavior
-3. **One assertion per test**: Keep tests focused
+3. **Focused tests**: Keep each test focused; use as many assertions as needed to verify its behavior
 4. **Mock external deps**: Don't depend on real servers
 5. **Test edge cases**: Empty lists, null values, etc.

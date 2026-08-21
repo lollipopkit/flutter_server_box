@@ -7,9 +7,10 @@ Server Box 使用 Riverpod 及其代码生成工具进行状态管理。
 
 ## Provider 类型
 
-### StateProvider
+### NotifierProvider
 
-可读写的简单状态：
+基于 class 的 `@riverpod` 声明生成的是 `NotifierProvider`，不是
+`StateProvider`。适合使用带更新方法的状态：
 
 ```dart
 @riverpod
@@ -27,7 +28,7 @@ class Settings extends _$Settings {
 
 ### AsyncNotifierProvider
 
-具有加载中/错误状态的异步加载状态：
+处理加载和错误状态的异步 Provider：
 
 ```dart
 @riverpod
@@ -46,7 +47,7 @@ class ServerStatus extends _$ServerStatus {
 
 ### StreamProvider
 
-来自数据流的实时数据：
+提供数据流中的实时数据：
 
 ```dart
 @riverpod
@@ -67,9 +68,9 @@ state.when(
 )
 ```
 
-### Family Provider (带参数的 Provider)
+### Family Provider（带参数）
 
-带有参数的 Provider：
+接收参数的 Provider：
 
 ```dart
 @riverpod
@@ -78,9 +79,9 @@ List<Container> containers(Ref ref, Server server) {
 }
 ```
 
-### 自动释放 (Auto-Dispose)
+### 自动释放（Auto-Dispose）
 
-当不再被引用时自动销毁的 Provider：
+当不再有监听者时自动销毁的 Provider：
 
 ```dart
 @Riverpod(keepAlive: false)
@@ -93,8 +94,8 @@ class TempState extends _$TempState {
 
 1. **使用代码生成**：始终使用 `@riverpod` 注解。
 2. **就近放置 Provider**：将 Provider 定义在消费它的 Widget 附近。
-3. **避免使用单例**：改用 Provider。
-4. **正确的分层**：保持 UI 逻辑与业务逻辑的分离。
+3. **避免使用单例**：优先使用 Provider 管理共享状态和依赖。
+4. **保持清晰的分层**：将 UI 逻辑与业务逻辑分离。
 
 ## 在 Widget 中读取状态
 

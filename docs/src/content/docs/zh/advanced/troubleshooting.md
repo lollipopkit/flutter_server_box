@@ -11,9 +11,9 @@ description: 常见问题的解决方案
 
 **解决方案：**
 
-1. **核对服务器类型：** 仅支持类 Unix 系统（Linux、macOS、Android/Termux）
+1. **核对服务器类型：** 支持 Linux、macOS、Android/Termux 以及运行 OpenSSH Server 的 Windows 主机
 2. **手动测试：** 在终端运行 `ssh user@server -p port`
-3. **检查防火墙：** 确保 22 端口已开放
+3. **检查防火墙：** 确保配置的 SSH 端口可以访问
 4. **核对凭据：** 确保用户名、密码或密钥正确
 
 ### 频繁掉线
@@ -64,7 +64,7 @@ description: 常见问题的解决方案
 
 **备份失败：**
 - 检查存储空间
-- 确保应用具有存储权限
+- 确认应用已获得存储权限
 - 尝试不同的存储位置
 
 **恢复失败：**
@@ -87,7 +87,7 @@ description: 常见问题的解决方案
 **watchOS：**
 - 重启手表应用
 - 更改配置后等待几分钟
-- 确认该服务器已配置 monitor agent —— 手表只能显示配置了 agent 的服务器
+- 确认该服务器已配置 monitor agent。手表只能显示配置了 agent 的服务器
 
 ### 组件显示错误
 

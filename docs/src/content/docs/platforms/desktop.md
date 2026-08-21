@@ -1,15 +1,15 @@
 ---
 title: Desktop Features
-description: macOS, Linux, and Windows specific features
+description: macOS, Linux and Windows specific features
 ---
 
-Server Box on desktop platforms provides additional productivity features.
+Server Box provides desktop-specific features.
 
 ## macOS
 
 ### Native Menu Bar
 
-Native app menus with standard shortcuts:
+The macOS menu bar provides these menus and shortcuts:
 
 - **Server Box**: About, Settings (⌘,), Quit (⌘Q)
 - **Navigate**: Switch between home tabs (⌘1 … ⌘9)
@@ -40,9 +40,9 @@ Native app menus with standard shortcuts:
 - Auto AMOLED (follows OS, AMOLED when dark)
 - System theme (follows OS)
 
-### Advantages Over Mobile
+### Compared with mobile
 
-- Larger screen for monitoring
-- Full keyboard for terminal
+- More screen space for monitoring
+- Physical keyboard support for the terminal
 - Faster file operations
-- Better multitasking
+- Windowed multitasking

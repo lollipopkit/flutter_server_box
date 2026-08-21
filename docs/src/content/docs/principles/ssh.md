@@ -3,7 +3,7 @@ title: SSH Connection
 description: How SSH connections are established and managed
 ---
 
-Understanding SSH connections in Server Box.
+This page describes how Server Box establishes and manages SSH connections.
 
 This page covers servers added over SSH. A server can instead be added through
 a monitor agent's HTTP API, in which case it carries no SSH credential at all
@@ -18,7 +18,7 @@ User Input → Spi Config → genClient() → SSH Client → Session
 ### Step 1: Configuration
 
 The `Spi` (Server Parameter Info) model holds the SSH settings in a nullable
-`SshCredential` — null for a server reached through a monitor agent:
+`SshCredential`. It is null for a server reached through a monitor agent:
 
 ```dart
 class Spi {
@@ -49,18 +49,22 @@ rejects a server that sets both.
 ```dart
 Future<SSHClient> genClient(Spi spi) async {
   final ssh = spi.ssh!;
-  // 1. Establish socket
-  final socket = await connect(ssh.ip, ssh.port);
-
-  // 2. Try alternative URL if failed
-  if (socket == null && ssh.alterUrl != null) {
-    socket = await connect(ssh.alterUrl, ssh.port);
+  // 1. Establish the socket, then try the parsed alternative URL if it fails.
+  SSHSocket? socket;
+  var alterUser = ssh.user;
+  try {
+    socket = await connect(ssh.ip, ssh.port);
+  } catch (_) {
+    if (ssh.alterUrl == null) rethrow;
+    final (alterHost, parsedUser, alterPort) = ssh.parseAlterUrl();
+    socket = await connect(alterHost, alterPort);
+    alterUser = parsedUser;
   }
 
   // 3. Authenticate
   final client = SSHClient(
-    socket: socket,
-    username: ssh.user,
+    socket: socket!,
+    username: alterUser,
     onPasswordRequest: () => ssh.pwd,
     onIdentityRequest: () => loadKey(ssh.keyId),
   );
@@ -77,10 +81,10 @@ Future<SSHClient> genClient(Spi spi) async {
 `genClient` resolves one of three sources, then everything above `SSHSocket` is
 the same in each case:
 
-**Direct** — the default, `SSHSocket.connect(ip, port)`, falling back to
+**Direct**: the default, `SSHSocket.connect(ip, port)`, falling back to
 `alterUrl` when it fails.
 
-**Jump server** — recursive connection, then a local forward:
+**Jump server**: recursive connection, then a local forward:
 
 ```dart
 for (final jumpId in spi.resolvedJumpIds) {
@@ -89,7 +93,7 @@ for (final jumpId in spi.resolvedJumpIds) {
 }
 ```
 
-**ProxyCommand** — desktop only, since it spawns a process:
+**ProxyCommand**: desktop only, since it spawns a process:
 
 ```dart
 if (ssh.proxyCommand != null) {
@@ -110,7 +114,7 @@ if (ssh.proxyCommand != null) {
 onPasswordRequest: () => ssh.pwd
 ```
 
-- Password stored encrypted in Hive
+- Password stored in the encrypted SQLite database
 - Decrypted on connection
 - Sent to server for verification
 
@@ -148,7 +152,7 @@ Supports:
 
 ### Why Verify Host Keys?
 
-Prevents **Man-in-the-Middle (MITM)** attacks by ensuring you're connecting to the same server.
+Helps detect a possible man-in-the-middle (MITM) attack by comparing the server's host key.
 
 ### Storage Format
 
@@ -162,53 +166,35 @@ my-server::ssh-ed25519
 my-server::ecdsa-sha2-nistp256
 ```
 
-### Fingerprint Formats
+### Fingerprint Format
 
-**MD5 Hex:**
-```
-aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99
-```
-
-**Base64:**
-```
+The current display and storage format is the OpenSSH SHA-256 form:
+```text
 SHA256:AbCdEf1234567890...=
 ```
+Legacy stored values are normalized when read.
 
 ### Verification Flow
 
 ```dart
-Future<void> verifyHostKey(SSHClient client, Spi spi) async {
-  final key = await client.hostKey;
-  final fingerprint = md5Hex(key); // or base64
-
-  final stored = SettingStore.sshKnownHostFingerprints
-      ['$keyId::$keyType'];
-
-  if (stored == null) {
-    // New host - prompt user
-    final trust = await promptUser(
-      'Unknown host',
-      'Fingerprint: $fingerprint',
-    );
-    if (trust) {
-      SettingStore.sshKnownHostFingerprints
-          ['$keyId::$keyType'] = fingerprint;
-    }
-  } else if (stored != fingerprint) {
-    // Changed - warn user
-    await warnUser(
-      'Host key changed!',
-      'Possible MITM attack',
-    );
-  }
-}
+Future<bool> verifyHostKey(
+  HostKeyVerifier verifier,
+  String keyType,
+  Uint8List fingerprintBytes,
+) => verifier(keyType, fingerprintBytes);
 ```
+
+`HostKeyVerifier` compares the received fingerprint with the value stored under
+`spi.id::keyType`. An unknown key is trusted only when the user accepts the
+prompt. A mismatch is accepted only after explicit re-approval; declining it
+returns `false`, so the SSH connection is rejected. Accepted values are then
+persisted for later connections.
 
 ## Session Management
 
 ### Connection Pooling
 
-Active clients maintained in `ServerProvider`:
+`ServerProvider` maintains active clients:
 
 ```dart
 class ServerProvider {
@@ -222,7 +208,7 @@ class ServerProvider {
 
 ### Keep-Alive
 
-Maintain connection during inactivity:
+The client sends keep-alive messages during inactivity:
 
 ```dart
 Timer.periodic(
