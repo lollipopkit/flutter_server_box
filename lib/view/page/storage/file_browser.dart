@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:cross_file/cross_file.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/view/widget/empty_pane.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -1231,9 +1232,16 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
             ).cardx;
           }
           if (items.isEmpty) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Center(child: Text(libL10n.empty, style: UIs.textGrey)),
+            // The mark this tab uses for an empty surface, not a word. The row
+            // above says where you are and how to leave; a sentence here would
+            // be describing what the reader is already looking at.
+            //
+            // The failed *search* below keeps its words: "nothing matched" and
+            // "this place is empty" are different things, and only one of them
+            // is a state of the directory.
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 32),
+              child: EmptyMark(icon: Icons.folder_open),
             );
           }
           return _buildEntry(items[index - up], narrow: narrow);

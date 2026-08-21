@@ -22,8 +22,28 @@ class EmptyPane extends StatelessWidget {
     // already there.
     return ColoredBox(
       color: theme.scaffoldBackgroundColor,
-      child: Center(
-        child: Icon(icon, size: 56, color: theme.colorScheme.outlineVariant),
+      child: EmptyMark(icon: icon),
+    );
+  }
+}
+
+/// The same mark, in a box that is not the whole surface.
+///
+/// An empty directory has a row above it to leave by, so it cannot be a pane —
+/// but it is the same nothing and says so the same way. Sharing the widget is
+/// what keeps the two from drifting apart in size or in how faint they are.
+class EmptyMark extends StatelessWidget {
+  const EmptyMark({super.key, required this.icon});
+
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Icon(
+        icon,
+        size: 56,
+        color: Theme.of(context).colorScheme.outlineVariant,
       ),
     );
   }
