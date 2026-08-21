@@ -458,8 +458,20 @@ static int make_dev(const char *profile) {
     generic_symlinkat("/proc/self/fd/0", AT_PWD, GUEST("/%s/dev/stdin", profile));
     generic_symlinkat("/proc/self/fd/1", AT_PWD, GUEST("/%s/dev/stdout", profile));
     generic_symlinkat("/proc/self/fd/2", AT_PWD, GUEST("/%s/dev/stderr", profile));
+    // A directory, where a `tmpfs` would be the obvious choice. `tmpfs_umount`
+    // is unimplemented in the engine — `fs/tmp.c` answers it with
+    // `TODO("tmpfs umount")`, which is `die()` — and this app's `die_handler`
+    // parks the calling thread with every signal blocked rather than letting
+    // `abort()` take the app. The thread that detaches a system is the one
+    // running Dart, so mounting one here froze the whole app the first time a
+    // system was detached, with no crash and nothing in the log.
+    //
+    // Nothing is lost that a caller can see: `/dev` is a fakefs over an
+    // ordinary directory, so a 01777 directory inside it is writable by
+    // everything that expects `/dev/shm` to be. The difference is that what is
+    // written there is on disk rather than in memory, and goes when the system
+    // does rather than when the app does.
     generic_mkdirat(AT_PWD, GUEST("/%s/dev/shm", profile), 01777);
-    do_mount(&tmpfs, "shm", GUEST("/%s/dev/shm", profile), "", 0);
 #undef GUEST
     return 0;
 }
@@ -495,10 +507,12 @@ static bool is_attached(const char *profile) {
     return false;
 }
 
-/// Everything [sbm_ish_attach] and [make_dev] mount, innermost first: `/dev/pts`
-/// and `/dev/shm` are inside `/dev`, and the outer one cannot go while they
-/// hold it.
-static const char *const mount_points[] = { "dev/pts", "dev/shm", "dev", "proc" };
+/// Everything [sbm_ish_attach] and [make_dev] mount, innermost first:
+/// `/dev/pts` is inside `/dev`, and the outer one cannot go while it holds it.
+///
+/// `dev/shm` is not here because nothing mounts one any more — see [make_dev].
+/// It was, and unmounting it is what froze the app.
+static const char *const mount_points[] = { "dev/pts", "dev", "proc" };
 
 /// Takes one profile's filesystems down. Returns 0, or the first real failure.
 ///
