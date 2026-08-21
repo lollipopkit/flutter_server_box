@@ -426,6 +426,41 @@ iPhoneOS26.5.sdk 的头文件读的:
 缺口是国产 ROM:前台服务 + 常驻通知只是及格线,还要处理各家的自启动白名单和电池优化
 豁免,否则仍然经常被杀。深度睡眠下被杀属于预期。
 
+## 终端:iOS 上按住一个键不重复
+
+按住 backspace 不会连续删,只能反复点。**iOS 这条路径不产生任何按键重复**,不是事件
+类型的问题。
+
+实测(2026-08-21,模拟器 lk17p,在 `_handleKeyEvent` 两处打时间戳):
+
+```
+60313 hw   KeyDownEvent Backspace
+60313 view KeyDownEvent Backspace
+64879 hw   KeyUpEvent   Backspace     ← 4566ms 之后
+```
+
+按住 4.5 秒,一个 Down 一个 Up,中间什么都没有。后续那串 Down/Up 成对、间隔约 160ms
+的是手点——真正的自动重复是**连续 Down 不带 Up**。
+
+连带结论:`packages/xterm/lib/src/terminal_view.dart:646` 里
+`event is! KeyRepeatEvent` 那半个条件在 iOS 上是死代码,`KeyRepeatEvent` 根本不会到。
+
+做法:自己做重复。KeyDown 起定时器(初始延迟约 500ms,之后约 40ms 一次),KeyUp、
+失焦、或另一个键按下时停。
+
+放哪儿有取舍:
+
+- **xterm fork(`terminal_view.dart`)** —— 覆盖所有终端,挨着 `_sendTerminalKey`,
+  重发路径现成;代价是又一处 fork 改动
+- **app 的 `_handleKeyEvent`** —— 不碰 fork,但**可打印字符走的是 IME 文本通道而不是
+  `keyInput`**,所以 `a` 和 backspace 要分两条路重发
+
+倾向 xterm,且先只做特殊键(backspace、方向键、Tab):终端里按住字母连打的需求远低于
+按住退格。
+
+未验证:真机(iPad + 硬件键盘)是否同样不重复。如果真机会重复,那这就是模拟器特有的,
+优先级要降。
+
 ## Hive → SQLite:分阶段做,以及加密怎么落
 
 **状态(2026-08-19):三个阶段都已合入。** 第三阶段超出了本节原来的计划,更正见
