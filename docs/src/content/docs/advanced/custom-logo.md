@@ -20,7 +20,9 @@ Replaced automatically with the detected distribution:
 https://example.com/{DIST}.png
 ```
 
-The requested file can be `debian.png`, `ubuntu.png`, `arch.png`, and so on.
+The requested file can be `debian.png`, `ubuntu.png`, `arch.png`, and so on. If
+the system is not recognized, `{DIST}` is left unchanged; provide a generic URL
+or avoid this placeholder when a fallback is needed.
 
 ### {BRIGHT} - Theme
 

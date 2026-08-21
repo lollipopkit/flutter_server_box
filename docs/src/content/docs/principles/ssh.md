@@ -162,47 +162,29 @@ my-server::ssh-ed25519
 my-server::ecdsa-sha2-nistp256
 ```
 
-### Fingerprint Formats
+### Fingerprint Format
 
-**MD5 Hex:**
-```
-aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99
-```
-
-**Base64:**
+The current display and storage format is the OpenSSH SHA-256 form:
 ```
 SHA256:AbCdEf1234567890...=
 ```
+Legacy stored values are normalized when read.
 
 ### Verification Flow
 
 ```dart
-Future<void> verifyHostKey(SSHClient client, Spi spi) async {
-  final key = await client.hostKey;
-  final fingerprint = md5Hex(key); // or base64
-
-  final stored = SettingStore.sshKnownHostFingerprints
-      ['$keyId::$keyType'];
-
-  if (stored == null) {
-    // New host - prompt user
-    final trust = await promptUser(
-      'Unknown host',
-      'Fingerprint: $fingerprint',
-    );
-    if (trust) {
-      SettingStore.sshKnownHostFingerprints
-          ['$keyId::$keyType'] = fingerprint;
-    }
-  } else if (stored != fingerprint) {
-    // Changed - warn user
-    await warnUser(
-      'Host key changed!',
-      'Possible MITM attack',
-    );
-  }
-}
+Future<bool> verifyHostKey(
+  HostKeyVerifier verifier,
+  String keyType,
+  Uint8List fingerprintBytes,
+) => verifier(keyType, fingerprintBytes);
 ```
+
+`HostKeyVerifier` compares the received fingerprint with the value stored under
+`spi.id::keyType`. An unknown key is trusted only when the user accepts the
+prompt. A mismatch is accepted only after explicit re-approval; declining it
+returns `false`, so the SSH connection is rejected. Accepted values are then
+persisted for later connections.
 
 ## Session Management
 

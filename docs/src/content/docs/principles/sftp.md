@@ -46,7 +46,7 @@ Future<SftpClient> createSftpClient(Spi spi) async {
   final sshClient = await genClient(spi);
 
   // 2. Open SFTP subsystem
-  final sftp = await sshClient.openSftp();
+  final sftp = await sshClient.sftp();
 
   return sftp;
 }
@@ -62,7 +62,7 @@ class ServerProvider {
   SftpClient? _sftpClient;
 
   Future<SftpClient> getSftpClient(String spiId) async {
-    _sftpClient ??= await _sshClient!.openSftp();
+    _sftpClient ??= await _sshClient!.sftp();
     return _sftpClient!;
   }
 }
@@ -73,28 +73,19 @@ class ServerProvider {
 ### Directory Listing
 
 ```dart
-Future<List<SftpFile>> listDirectory(String path) async {
+Future<List<SftpName>> listDirectory(String path) async {
   final sftp = await getSftpClient(spiId);
 
   // List directory
-  final files = await sftp.listDir(path);
+  final files = await sftp.listdir(path);
 
-  // Sort based on settings
-  files.sort((a, b) {
-    switch (sortOption) {
-      case SortOption.name:
-        return a.name.toLowerCase().compareTo(b.name.toLowerCase());
-      case SortOption.size:
-        return a.size.compareTo(b.size);
-      case SortOption.time:
-        return a.modified.compareTo(b.modified);
-    }
-  });
+  // Sort based on settings; each entry exposes metadata through `attr`.
+  files.sort((a, b) => a.filename.toLowerCase().compareTo(b.filename.toLowerCase()));
 
   // Folders first if enabled
   if (showFoldersFirst) {
-    final dirs = files.where((f) => f.isDirectory);
-    final regular = files.where((f) => !f.isDirectory);
+    final dirs = files.where((f) => f.attr.isDirectory);
+    final regular = files.where((f) => !f.attr.isDirectory);
     return [...dirs, ...regular];
   }
 
@@ -104,22 +95,10 @@ Future<List<SftpFile>> listDirectory(String path) async {
 
 ### File Metadata
 
-```dart
-class SftpFile {
-  final String name;
-  final String path;
-  final int size;           // Bytes
-  final int modified;       // Unix timestamp
-  final String permissions;  // e.g., "rwxr-xr-x"
-  final String owner;
-  final String group;
-  final bool isDirectory;
-  final bool isSymlink;
-
-  String get sizeFormatted => formatBytes(size);
-  String get modifiedFormatted => formatDate(modified);
-}
-```
+`SftpClient.listdir` returns `SftpName` entries. Their `filename`, `attr`, and
+the attributes' `size`, `modifyTime`, and `isDirectory` fields provide the
+metadata used by the browser. An opened `SftpFile` is a separate handle used for
+streaming bytes and must be closed.
 
 ## File Operations
 
@@ -132,34 +111,27 @@ Future<void> uploadFile(
 ) async {
   final sftp = await getSftpClient(spiId);
 
-  // Create request
-  final req = SftpReq(
-    spi: spi,
-    remotePath: remotePath,
-    localPath: localPath,
-    type: SftpReqType.upload,
+  final stagingPath = '$remotePath.<unique-suffix>';
+  final remote = await sftp.open(
+    stagingPath,
+    mode: SftpFileOpenMode.create |
+        SftpFileOpenMode.write |
+        SftpFileOpenMode.truncate,
   );
-
-  // Add to queue
-  _transferQueue.add(req);
-
-  // Execute transfer with progress
-  final file = File(localPath);
-  final size = await file.length();
-  final stream = file.openRead();
-
-  await sftp.upload(
-    stream: stream,
-    toPath: remotePath,
-    onProgress: (transferred) {
-      _updateProgress(req, transferred, size);
-    },
-  );
-
-  // Complete
-  _transferQueue.remove(req);
+  try {
+    await remote.write(File(localPath).openRead().map(Uint8List.fromList)).done;
+    await remote.close();
+    await sftp.rename(stagingPath, remotePath);
+  } finally {
+    await remote.close();
+  }
 }
 ```
+
+There is no `sftp.upload` convenience method in the client used by Server Box.
+The real transfer code opens an `SftpFile`, closes it explicitly, writes to a
+staging path, and renames it into place. Failed transfers remove the staging
+file.
 
 ### Download
 
@@ -170,28 +142,19 @@ Future<void> downloadFile(
 ) async {
   final sftp = await getSftpClient(spiId);
 
-  // Create local file
-  final file = File(localPath);
-  final sink = file.openWrite();
-
-  // Download with progress
-  final stat = await sftp.stat(remotePath);
-
-  await sftp.download(
-    fromPath: remotePath,
-    toSink: sink,
-    onProgress: (transferred) {
-      _updateProgress(
-        SftpReq(...),
-        transferred,
-        stat.size,
-      );
-    },
-  );
-
-  await sink.close();
+  final remote = await sftp.open(remotePath, mode: SftpFileOpenMode.read);
+  final sink = File(localPath).openWrite();
+  try {
+    await sink.addStream(remote.read());
+  } finally {
+    await remote.close();
+    await sink.close();
+  }
 }
 ```
+
+There is no `sftp.download` convenience method either. Reads stream from the
+opened `SftpFile`; both the remote handle and local sink must be closed.
 
 ### Permission Editing
 
@@ -207,7 +170,7 @@ Future<void> setPermissions(
 
   // Set via SSH command (more reliable than SFTP)
   final ssh = await getSshClient(spiId);
-  await ssh.exec('chmod $mode "$path"');
+  await ssh.exec('chmod $mode ${shellSingleQuote(path)}');
 }
 ```
 
@@ -391,12 +354,13 @@ Future<void> editFile(String path) async {
 ### External Editor Integration
 
 ```dart
-Future<void> editInExternalEditor(String path) async {
+Future<void> editInExternalEditor(String path, {bool useSudo = false}) async {
   final ssh = await getSshClient(spiId);
 
   // Open terminal with editor
   final editor = getSetting('sftpEditor', 'vim');
-  await ssh.exec('$editor "$path"');
+  final command = '${useSudo ? 'sudo ' : ''}$editor ${shellSingleQuote(path)}';
+  await ssh.exec(command);
 
   // User edits in terminal
   // After save, refresh SFTP view
@@ -409,7 +373,7 @@ Future<void> editInExternalEditor(String path) async {
 
 ```dart
 try {
-  await sftp.upload(...);
+  await uploadFile(localPath, remotePath);
 } on SftpPermissionException {
   showError('Permission denied: ${stat.path}');
   showHint('Check file permissions and ownership');
@@ -420,8 +384,8 @@ try {
 
 ```dart
 try {
-  await sftp.listDir(path);
-} on SftpConnectionException {
+  await sftp.listdir(path);
+} on SftpStatusError {
   showError('Connection lost');
   await reconnect();
 }
@@ -431,8 +395,8 @@ try {
 
 ```dart
 try {
-  await sftp.upload(...);
-} on SftpNoSpaceException {
+  await uploadFile(localPath, remotePath);
+} on SftpStatusError {
   showError('Disk full on remote server');
 }
 ```

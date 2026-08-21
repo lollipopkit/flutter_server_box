@@ -63,8 +63,9 @@ tail -20 /var/log/syslog
 ## 安全性
 
 命令使用 App 连接该服务器时的账号运行，即 SSH 用户或 monitor agent 所属的账号。
-在 monitor 服务器上，编辑它们本身就需要 agent 的 `full_access`：往那个目录加一个
-文件，等同于安排代码在每次刷新时执行。
+在 monitor 服务器上，编辑它们本身就需要 agent 的 `full_access`。该权限只有在 agent
+启用终端能力，且请求满足安全传输或显式 `allow_insecure` 要求时才有效：往那个目录
+加一个文件，等同于安排代码在每次刷新时执行。
 
 避免使用会改变系统状态的命令。
 

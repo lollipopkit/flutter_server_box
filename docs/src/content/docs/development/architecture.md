@@ -84,7 +84,7 @@ and puts it back.
 
 `SchemaVersion` tracks the layout; Drift's own `schemaVersion` is pinned at 1
 and stays there, because the steps that matter are outside what a Drift
-migration can express. Two of them exist:
+migration can express. The current sequence has three registered steps:
 
 - `HiveImport` (m003) copies an upgrading install's Hive boxes into `kv`, once
   per device. It reads through frozen adapters in
@@ -94,14 +94,16 @@ migration can express. Two of them exist:
 - `KvToTablesMigration` (m004) takes those rows apart into the entity tables,
   generating ids for the records that were keyed by name and rewriting every
   reference to them.
+- `MonitorInsecureHttpMigration` (m005) adds the explicit per-monitor opt-in
+  for plaintext HTTP on trusted networks.
 
 **A storage migration keeps a permanent regression test, fed by bytes the
 release being migrated *from* actually wrote.** It gets one pass over a user's
 records and is not repeatable, so a bug there is silence rather than a crash.
 `test/fixtures/hive_v{1466,1480,1491}/` hold boxes produced by those releases'
-own adapters, and `test/hive_release_migration_test.dart` runs both steps
-against each. Seeding through the current adapters would only show that today's
-code agrees with itself. On its first run, that test found four field-name
+own adapters, and `test/hive_release_migration_test.dart` runs the two Hive
+conversion steps against each. Seeding through the current adapters would only
+show that today's code agrees with itself. On its first run, that test found four field-name
 mismatches, each of which silently dropped an entire store.
 
 ## Dependency Injection

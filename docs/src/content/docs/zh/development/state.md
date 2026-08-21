@@ -7,9 +7,10 @@ Server Box 使用 Riverpod 及其代码生成工具进行状态管理。
 
 ## Provider 类型
 
-### StateProvider
+### NotifierProvider
 
-可读写的简单状态：
+基于 class 的 `@riverpod` 声明生成的是 `NotifierProvider`，不是
+`StateProvider`。适合使用带更新方法的状态：
 
 ```dart
 @riverpod

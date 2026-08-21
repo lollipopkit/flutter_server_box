@@ -164,46 +164,25 @@ my-server::ecdsa-sha2-nistp256
 
 ### 指纹格式
 
-**MD5 十六进制：**
-```text
-aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99
-```
-
-**Base64：**
+当前显示和存储的是 OpenSSH SHA-256 格式：
 ```text
 SHA256:AbCdEf1234567890...=
 ```
+读取旧版存储值时会先进行规范化。
 
 ### 验证流程
 
 ```dart
-Future<void> verifyHostKey(SSHClient client, Spi spi) async {
-  final key = await client.hostKey;
-  final keyType = key.type;
-  final fingerprint = md5Hex(key); // 或 base64
-
-  final stored = SettingStore.sshKnownHostFingerprints
-      ['${spi.id}::$keyType'];
-
-  if (stored == null) {
-    // 新主机 - 提示用户
-    final trust = await promptUser(
-      '未知主机',
-      '指纹: $fingerprint',
-    );
-    if (trust) {
-      SettingStore.sshKnownHostFingerprints
-          ['${spi.id}::$keyType'] = fingerprint;
-    }
-  } else if (stored != fingerprint) {
-    // 已更改 - 警告用户
-    await warnUser(
-      '主机密钥已更改！',
-      '可能存在中间人攻击',
-    );
-  }
-}
+Future<bool> verifyHostKey(
+  HostKeyVerifier verifier,
+  String keyType,
+  Uint8List fingerprintBytes,
+) => verifier(keyType, fingerprintBytes);
 ```
+
+`HostKeyVerifier` 会将收到的指纹与 `spi.id::keyType` 下存储的值比较。未知密钥只有
+在用户接受提示后才会信任。密钥不匹配时必须再次明确确认；拒绝会返回 `false`，SSH
+连接也会因此被拒绝。接受的值会持久化，供后续连接使用。
 
 ## 会话管理
 

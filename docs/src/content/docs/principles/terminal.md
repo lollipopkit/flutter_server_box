@@ -62,33 +62,18 @@ interface.
 
 ```dart
 Future<TerminalSession> createSession(Spi spi) async {
-  // 1. Get SSH client
-  final client = await genClient(spi);
-
-  // 2. Create PTY
-  final pty = await client.openPty(
-    term: 'xterm-256color',
-    cols: 80,
-    rows: 24,
-  );
-
-  // 3. Initialize terminal emulator
-  final terminal = Terminal(
-    backend: PtyBackend(pty),
-  );
-
-  // 4. Setup resize handler
-  terminal.onResize.listen((size) {
-    pty.resize(size.cols, size.rows);
-  });
-
-  return TerminalSession(
-    terminal: terminal,
-    pty: pty,
-    client: client,
-  );
+  final session = TerminalSession(source: ServerSource(spi));
+  await session.connect();
+  final shell = await session.openShell();
+  if (shell == null) throw StateError('No shell backend');
+  session.bindForeground(shell);
+  return session;
 }
 ```
+
+The session's backend creates the SSH PTY with `SSHPtyConfig` and owns the
+shell lifecycle. The same `TerminalSession` shape is also used for local and
+monitor-agent backends.
 
 ### 2. Terminal Emulation
 

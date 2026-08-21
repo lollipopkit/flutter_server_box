@@ -44,7 +44,7 @@ SSH 相关字段嵌套在 `ssh` 下。这是 App 写出的格式，也是导入�
 |-------|----------|-------------|
 | `name` | 是 | 显示名称 |
 | `ssh` | 否 | SSH 配置，见下表。纯 monitor 服务器可省略 |
-| `monitorHttp` | 否 | monitor agent：`addr`、`user`、`pwd`、`ignoreCert` |
+| `monitorHttp` | 否 | monitor agent：`addr`、`user`、`pwd`、`ignoreCert`、`allowInsecure` |
 | `tags` | 否 | 用于分组服务器的标签 |
 | `autoConnect` | 否 | 启动时自动连接 |
 | `custom` | 否 | 单服务器附加项：`pveAddr`、`preferTempDev`、`logoUrl` 等 |
@@ -62,7 +62,8 @@ SSH 相关字段嵌套在 `ssh` 下。这是 App 写出的格式，也是导入�
 | `port` | 是 | SSH 端口（通常为 22） |
 | `user` | 是 | SSH 用户名 |
 | `pwd` | 否 | 密码（不建议使用，请改用 SSH 密钥） |
-| `pubKeyId` | 否 | 私钥记录 id（来自“私钥” - 推荐） |
+| `pubKeyId` | 否 | 本 App 中已保存的私钥记录 id（推荐），不是 PEM 文件路径 |
+| `keyPath` | 否 | 仅桌面端使用的私钥文件路径，由 `~/.ssh/config` 导入产生；连接时从文件读取 |
 | `alterUrl` | 否 | 备用地址，`user@ip:port` |
 | `jumpIds` | 否 | 跳板机链，按服务器 id 指定 |
 | `proxyCommand` | 否 | ProxyCommand；仅桌面端，且与 `jumpIds` 互斥 |

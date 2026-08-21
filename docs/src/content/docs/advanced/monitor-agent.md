@@ -28,12 +28,17 @@ same machine feeding the widgets are independent.
 
 ## Install the agent
 
-Download from the repository's `monitor-v*` releases, or build it. The installer
-picks the init system for you:
+Download from a published `monitor-v*` release when one exists, or build it. The
+release workflow is manually dispatched, so an unreleased or offline install
+should use `SBM_INSTALL_PKG` with a local package. The installer picks the init
+system for you:
 
 ```sh
 # systemd: a `systemctl --user` service, running as your own account
 ./install.sh install
+
+# Offline or without a published monitor-v* release
+SBM_INSTALL_PKG=/path/to/server-box-monitor ./install.sh install
 
 # OpenRC (Alpine): needs root to write /etc/init.d, but still runs the agent
 # as the account you sudo'd from
@@ -67,9 +72,12 @@ into the machine beyond what the agent allows.
 ## What each switch grants
 
 The agent tells the app what it will accept, and the app offers exactly that.
-It does not show buttons that would answer 403. Optional capabilities below are
-off unless the operator turns them on in `config.toml`; none can be switched on
-from the web panel.
+It does not show buttons that would answer 403. The file API and the agent-panel
+terminal are off unless the operator turns them on in `config.toml`.
+`full_access` defaults on only on Linux, but it is effective for app
+shell/command access only when `[remote_access.terminal] enabled = true` and the
+request uses secure transport or the terminal's explicit `allow_insecure`
+opt-in. None of these permissions can be widened from the web panel.
 
 **Status, charts and stored history** need nothing beyond the login.
 
@@ -103,8 +111,9 @@ client to its configured `ssh_addr`, so a browser session has the privileges of
 the SSH account it signs in with. The panel password alone grants no shell,
 unless `full_access` is on.
 
-It refuses to run on a plaintext listener, because its first message carries an
-SSH password. TLS satisfies that, and so does a reverse proxy on the same host.
+It refuses to run on a plaintext listener unless
+`[remote_access.terminal] allow_insecure = true`; TLS satisfies the transport
+requirement, and so does a reverse proxy on the same host.
 
 ## What you do not get
 

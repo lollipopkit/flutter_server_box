@@ -25,11 +25,16 @@ App 时图表已经有数据；希望把告警推送到手机。
 
 ## 安装 agent
 
-从仓库的 `monitor-v*` release 下载，或自行构建。安装脚本会自行判断 init 系统：
+如果仓库已有发布的 `monitor-v*` release，可以从那里下载；否则请自行构建。发布
+workflow 需要手动触发，因此未发布版本或离线安装应使用本地包和 `SBM_INSTALL_PKG`。
+安装脚本会自行判断 init 系统：
 
 ```sh
 # systemd: 安装为 `systemctl --user` 服务，以你自己的账号运行
 ./install.sh install
+
+# 没有发布版本或离线安装
+SBM_INSTALL_PKG=/path/to/server-box-monitor ./install.sh install
 
 # OpenRC (Alpine): 写 /etc/init.d 需要 root，但 agent 仍以你 sudo 前的账号运行
 sudo ./install.sh install
@@ -59,8 +64,10 @@ App 可以接受自签名证书，但仅在你明确要求时。
 ## 各个开关授予了什么
 
 agent 会告诉 App 它接受什么，App 只提供这些能力。应用不会显示 agent 会以 403 拒绝的按钮。
-除状态、图表和历史数据外，下面的可选能力默认关闭，只能由运维方在 `config.toml`
-中开启，均无法从网页面板打开。
+文件 API 和 agent 网页面板终端默认关闭，只能由运维方在 `config.toml` 中开启。
+`full_access` 仅在 Linux 上默认开启，但 App 的 shell/命令访问还要求
+`[remote_access.terminal] enabled = true`，终端能力已开启，
+并且请求使用安全传输或终端的显式 `allow_insecure` 选择。网页面板不能扩大这些权限。
 
 **状态、图表和历史数据** 只需要登录。
 
@@ -87,8 +94,8 @@ agent 会在启动时对此告警。
 的部分无关。agent 作为 SSH 客户端连接它配置的 `ssh_addr`，因此浏览器会话的权限等同
 于登录所用的 SSH 账号。除非开了 `full_access`，仅有面板密码不会获得 shell。
 
-它拒绝在明文监听上运行，因为它的第一条消息就带着 SSH 密码。配置 TLS 可满足要求，
-同机反向代理同样可以。
+除非配置 `[remote_access.terminal] allow_insecure = true`，它不会在明文监听上运行，
+因为第一条消息就带着 SSH 密码。配置 TLS 可满足要求，同机反向代理同样可以。
 
 ## 得不到什么
 

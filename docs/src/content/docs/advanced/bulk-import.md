@@ -46,7 +46,7 @@ working. Nothing writes it any more.
 |-------|----------|-------------|
 | `name` | Yes | Display name |
 | `ssh` | No | SSH settings, see below. Omit for a monitor-only server |
-| `monitorHttp` | No | Monitor agent: `addr`, `user`, `pwd`, `ignoreCert` |
+| `monitorHttp` | No | Monitor agent: `addr`, `user`, `pwd`, `ignoreCert`, `allowInsecure` |
 | `tags` | No | Tags used to group servers |
 | `autoConnect` | No | Auto-connect on startup |
 | `custom` | No | Per-server extras: `pveAddr`, `preferTempDev`, `logoUrl`, ... |
@@ -64,7 +64,8 @@ Inside `ssh`:
 | `port` | Yes | SSH port (usually 22) |
 | `user` | Yes | SSH username |
 | `pwd` | No | Password (avoid - use SSH keys instead) |
-| `pubKeyId` | No | Private key id (from Private Keys - recommended) |
+| `pubKeyId` | No | Id of a private key already stored in this app (recommended); it is not a PEM path |
+| `keyPath` | No | Desktop-only path to a private key file, used by `~/.ssh/config` imports; the app reads it when connecting |
 | `alterUrl` | No | Fallback address, `user@ip:port` |
 | `jumpIds` | No | Jump server chain, by server id |
 | `proxyCommand` | No | ProxyCommand; desktop only, and exclusive with `jumpIds` |

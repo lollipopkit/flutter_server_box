@@ -37,9 +37,10 @@ description: 如何使用 Riverpod 进行状态管理
 
 ## 使用的 Provider 类型
 
-### 1. StateProvider（简单状态）
+### 1. NotifierProvider（简单状态）
 
-用于管理简单的可观察状态：
+基于 class 的 `@riverpod` 声明生成的是 `NotifierProvider`，不是
+`StateProvider`：
 
 ```dart
 @riverpod
@@ -260,30 +261,18 @@ Future<SystemInfo> systemInfo(Ref ref, Server server) async {
 
 ## 状态持久化
 
-### Hive 集成
+### SQLite 持久化
+
+权威存储是加密 SQLite 数据库 `store.db`。设置和历史记录使用 `SqliteStore`；服务器
+等具有关联关系的记录使用 `ServerStore` 等实体存储。
 
 ```dart
-@riverpod
-class ServerStoreNotifier extends _$ServerStoreNotifier {
-  @override
-  List<Server> build() {
-    // 从 Hive 加载
-    return Hive.box<Server>('servers').values.toList();
-  }
-
-  void addServer(Server server) {
-    state = [...state, server];
-    // 持久化到 Hive
-    Hive.box<Server>('servers').put(server.id, server);
-  }
-
-  void removeServer(String id) {
-    state = state.where((s) => s.id != id).toList();
-    // 从 Hive 中删除
-    Hive.box<Server>('servers').delete(id);
-  }
-}
+final servers = Stores.server.readAll();
+Stores.server.put(server);
+Stores.server.deleteById(server.id);
 ```
+
+Hive adapter 仅用于从旧安装导入数据。
 
 ## 性能优化
 

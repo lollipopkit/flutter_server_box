@@ -96,7 +96,7 @@ void main() {
 - Works across platforms
 
 **Provider Types Used:**
-- `StateProvider`: Simple mutable state
+- `NotifierProvider`: Mutable state with methods
 - `AsyncNotifierProvider`: Loading/error/data states
 - `StreamProvider`: Real-time data streams
 - Future providers: One-time async operations

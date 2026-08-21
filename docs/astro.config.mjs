@@ -18,7 +18,7 @@ export default defineConfig({
 				},
 				zh: {
 					label: '简体中文',
-					lang: 'zh',
+					lang: 'zh-CN',
 				},
 			},
 			logo: {

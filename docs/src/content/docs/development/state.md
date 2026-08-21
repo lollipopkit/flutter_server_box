@@ -7,9 +7,10 @@ Server Box uses Riverpod with code generation for state management.
 
 ## Provider Types
 
-### StateProvider
+### NotifierProvider
 
-Use for small pieces of state that widgets can read and update:
+Class-based `@riverpod` declarations generate a `NotifierProvider`, not a
+`StateProvider`. Use this pattern for state with update methods:
 
 ```dart
 @riverpod

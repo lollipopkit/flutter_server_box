@@ -19,7 +19,8 @@ Connection timeout in seconds.
 {"timeOut": 10}
 ```
 
-**Type:** integer | **Default:** 5 | **Range:** 1-60
+**Type:** integer | **Default:** 5. The setting is stored as JSON; keep the value
+reasonable because connection code uses it as a timeout in seconds.
 
 ### recordHistory
 
@@ -39,7 +40,8 @@ Text scaling factor.
 {"textFactor": 1.2}
 ```
 
-**Type:** double | **Default:** 1.0 | **Range:** 0.8-1.5
+**Type:** number | **Default:** 1.0. The setting is stored as JSON; extreme
+values may make the interface unusable.
 
 ## Finding More Settings
 

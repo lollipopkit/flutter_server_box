@@ -75,7 +75,7 @@ void main() {
 - 跨平台兼容性好
 
 **使用的 Provider 类型：**
-- `StateProvider`：简单的可变状态
+- `NotifierProvider`：带方法的可变状态
 - `AsyncNotifierProvider`：处理加载/错误/数据状态
 - `StreamProvider`：实时数据流
 - Future providers：一次性异步操作

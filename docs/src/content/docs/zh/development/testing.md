@@ -111,6 +111,22 @@ test('serverStatusProvider 应当返回状态', () async {
 
 上文「需要显式开启的测试」里的 Rust 套件是例外。未设置对应环境变量时会跳过，所以默认的 `cargo test --workspace` 仍然什么都不需要。
 
+## 存储迁移
+
+存储迁移会在一次启动中遍历用户的真实记录，写入完成标记后不会再次读取旧数据。
+因此迁移错误通常是静默丢数据，而不是崩溃。每个迁移都必须保留永久回归测试，输入
+应来自被迁移版本实际写出的字节，而不是当前版本的 adapter 重新生成的数据。
+
+| 文件 | 作用 |
+|---|---|
+| `test/hive_release_migration_test.dart` | 读取每个 fixture，断言所有 store 完整导入 |
+| `test/fixtures/hive_v{1466,1480,1491}/` | 这些版本各自写出的 box，以及生成器和 README |
+| `test/hive_import_test.dart` | 验证导入本身的重试、幂等和按 box 进度 |
+
+当前 fixture 测试会依次覆盖 `HiveImport` 和 `KvToTablesMigration`。使用当前 adapter
+预先写入数据只能证明当前代码和自己一致，不能证明它仍能读取旧 release 的格式。
+fixture 一旦用于回归测试就不能为了让测试通过而重新生成。
+
 ## 集成测试
 
 `integration_test/` 存放 `flutter test` 无法回答的问题。单元测试运行在 `flutter_tester` 下，不会加载任何 plugin，因此经 plugin 或 FFI 到达的代码不会在那里实际运行。这些测试运行在已连接的真实设备或模拟器上的 App 中，因此 plugin 和 FFI 代码会在真实的 App 环境中执行：
@@ -132,7 +148,6 @@ flutter test integration_test/local_shell_test.dart
 ```
 
 `make analyze` 也会分析这个目录（`flutter analyze lib test integration_test`）。
-```
 
 ## 最佳实践
 

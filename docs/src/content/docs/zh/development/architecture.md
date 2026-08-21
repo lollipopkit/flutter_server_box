@@ -76,18 +76,20 @@ Drift 负责 DDL（`lib/data/store/db.dart`），且仅负责 DDL：查询是手
 ### 存储迁移
 
 `SchemaVersion` 跟踪布局版本；Drift 自身的 `schemaVersion` 固定为 1 且不再变化，
-因为迁移中的关键步骤超出 Drift migration 的表达能力。目前有两步：
+因为迁移中的关键步骤超出 Drift migration 的表达能力。目前有三步：
 
 - `HiveImport`（m003）把升级安装的 Hive box 复制进 `kv`，每台设备一次。它通过
   `lib/hive/legacy_adapters.dart` 中冻结的 adapter 读取，而不是通过当前模型。
   给模型新增字段会让*生成的* adapter 无法读取此前写入的任何 box。
 - `KvToTablesMigration`（m004）把这些行拆进实体表，为原本以 name 为键的记录
   生成 id，并重写指向它们的每一处引用。
+- `MonitorInsecureHttpMigration`（m005）为 monitor 凭据增加在可信网络上使用明文
+  HTTP 的显式选择。
 
 **存储迁移必须保留一个永久回归测试，输入是被迁移版本真实写出的字节。**
 它对用户数据只有一次机会且不可重复，因此其中的 bug 表现为静默而非崩溃。
 `test/fixtures/hive_v{1466,1480,1491}/` 保存了这些版本各自 adapter 生成的 box，
-`test/hive_release_migration_test.dart` 对每个版本跑完这两步。使用当前 adapter
+`test/hive_release_migration_test.dart` 对每个版本跑完前两步。使用当前 adapter
 生成数据只能证明当前代码彼此一致。该测试首次运行就发现了四处字段名不匹配，
 每一处都会静默丢掉一整个 store。
 

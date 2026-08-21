@@ -60,33 +60,17 @@ description: SSH 终端的内部工作原理
 
 ```dart
 Future<TerminalSession> createSession(Spi spi) async {
-  // 1. 获取 SSH 客户端
-  final client = await genClient(spi);
-
-  // 2. 创建 PTY
-  final pty = await client.openPty(
-    term: 'xterm-256color',
-    cols: 80,
-    rows: 24,
-  );
-
-  // 3. 初始化终端模拟器
-  final terminal = Terminal(
-    backend: PtyBackend(pty),
-  );
-
-  // 4. 设置调整尺寸处理程序
-  terminal.onResize.listen((size) {
-    pty.resize(size.cols, size.rows);
-  });
-
-  return TerminalSession(
-    terminal: terminal,
-    pty: pty,
-    client: client,
-  );
+  final session = TerminalSession(source: ServerSource(spi));
+  await session.connect();
+  final shell = await session.openShell();
+  if (shell == null) throw StateError('No shell backend');
+  session.bindForeground(shell);
+  return session;
 }
 ```
+
+会话的 backend 使用 `SSHPtyConfig` 创建 SSH PTY，并负责 shell 生命周期。同一个
+`TerminalSession` 形状也用于本机和 monitor agent backend。
 
 ### 2. 终端模拟
 

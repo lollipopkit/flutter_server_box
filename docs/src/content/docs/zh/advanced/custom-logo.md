@@ -20,7 +20,8 @@ description: 为服务器卡片使用自定义图标
 https://example.com/{DIST}.png
 ```
 
-实际请求的文件名为 `debian.png`、`ubuntu.png`、`arch.png` 等。
+实际请求的文件名为 `debian.png`、`ubuntu.png`、`arch.png` 等。如果无法识别系统，
+`{DIST}` 会保持不变；需要回退时请提供通用 URL，或不要使用此占位符。
 
 ### {BRIGHT} - 主题
 

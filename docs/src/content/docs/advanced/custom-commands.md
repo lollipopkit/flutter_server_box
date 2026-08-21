@@ -72,8 +72,10 @@ tail -20 /var/log/syslog
 
 Commands run as the account the app reaches the server with: the SSH user, or
 the account a monitor agent runs as. On a monitor server, editing them at all
-requires the agent's `full_access` grant, because adding a file to that
-directory arranges for code to run on every refresh.
+requires the agent's `full_access` grant. The grant is usable only when the
+agent's terminal capability is enabled and the request meets its secure-transport
+or explicit `allow_insecure` requirement, because adding a file to that directory
+arranges for code to run on every refresh.
 
 Avoid commands that change system state.
 

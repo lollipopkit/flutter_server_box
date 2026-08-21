@@ -47,8 +47,8 @@ the same encrypted store as your server passwords.
 | Tool | What it does |
 |---|---|
 | **Shell** | Run one complete, non-interactive command |
-| **Read file** | Read a text file over SFTP |
-| **Write file** | Replace a text file over SFTP, after review |
+| **Read file** | Read a text file from a server over SFTP, or from this device when local execution is enabled |
+| **Write file** | Replace a server text file over SFTP, or a local file when local execution is enabled, after review |
 | **SSH connect** | Open a connection to a host that is not configured |
 | **Disconnect SSH** | Close one of those |
 | **ServerBox** | Read the app's own state, including which servers exist and their status |
