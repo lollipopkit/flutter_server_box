@@ -19,6 +19,16 @@ class PortForwardNotifier extends _$PortForwardNotifier {
   var _generation = 0;
   var _clearing = false;
 
+  /// Set once, by [dispose], and never unset.
+  ///
+  /// Kept apart from [_clearing] because the two have different lifetimes and
+  /// used to share a field: `delServer` awaits `clear()`, which awaits every
+  /// entry closing, and the notifier can be torn down inside that window. The
+  /// `finally` that ends a clear then wiped the flag `dispose` had just set,
+  /// and a later `startForward` walked through the guard onto a disposed
+  /// notifier and threw reading `state`.
+  var _disposed = false;
+
   @override
   PortForwardState build(String serverId) {
     ref.onDispose(() => dispose());
@@ -62,7 +72,9 @@ class PortForwardNotifier extends _$PortForwardNotifier {
       ref.read(serverProvider(_serverId).notifier).ensureShellClient();
 
   void dispose() {
-    _clearing = true;
+    // Permanent, and not [_clearing]: a clear running underneath ends with a
+    // `finally` that puts that flag back.
+    _disposed = true;
     _generation++;
     final forwards = _forwards.values.toList();
     _forwards.clear();
@@ -145,7 +157,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
   }
 
   Future<void> startForward(String id) {
-    if (_clearing || !_inFlight.add(id)) return Future.value();
+    if (_disposed || _clearing || !_inFlight.add(id)) return Future.value();
     final generation = _generation;
     late final Future<void> start;
     start = _startForward(id, generation).whenComplete(() {
@@ -175,7 +187,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
         PortForwardType.remote => await _startRemoteForward(config),
         PortForwardType.dynamic => await _startDynamicForward(config),
       };
-      if (_clearing || generation != _generation) {
+      if (_disposed || _clearing || generation != _generation) {
         await entry.close().catchError((_) {});
         return;
       }
@@ -186,7 +198,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
       );
     } catch (e) {
       Loggers.app.warning('Port forward failed to start: $e');
-      if (!_clearing && generation == _generation) {
+      if (!_disposed && !_clearing && generation == _generation) {
         _updateStatus(
           id,
           PortForwardStatus(id: id, isActive: false, error: e.toString()),

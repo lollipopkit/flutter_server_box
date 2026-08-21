@@ -142,15 +142,30 @@ trap 'rm -rf "$tmp"' EXIT
 echo "note: fetching the iOS Linux engine for $target, $tag" >&2
 if curl -fsSL --retry 2 -o "$tmp/$asset" "$base/$asset" &&
    curl -fsSL --retry 2 -o "$tmp/SHA256SUMS" "$base/SHA256SUMS"; then
-  # Executable code fetched over a network, which is the standard the alpine
-  # rootfs is already held to — see IosRootfs.install.
+  # Both sides of this come from the same release, so it catches a truncated
+  # or corrupted download and nothing else. It is NOT the guarantee
+  # `IosRootfs.install` gives the rootfs: that compares against
+  # `LinuxDistro.sha256`, a constant in the source, so a replaced release fails
+  # it. Here a replaced release brings its own SHA256SUMS and passes.
+  #
+  # What stands between this and running someone else's code is the release
+  # being reached over HTTPS from a repository the developer controls. That is
+  # weaker, and worth saying rather than implying otherwise.
+  #
+  # TODO: pin the archive's digest next to the gitlink, so moving the submodule
+  # and trusting a build become one reviewable change.
   if ! (cd "$tmp" && grep " $asset\$" SHA256SUMS | shasum -a 256 -c --status -); then
     echo "error: $asset does not match SHA256SUMS for $tag" >&2
     exit 1
   fi
 
   mkdir -p "$lib_dir"
-  tar xzf "$tmp/$asset" -C "$lib_dir"
+  # Owner comes from this machine rather than the archive. Members that are
+  # absolute or climb with `..` are refused by tar itself unless `-P` is given,
+  # which is why there is no guard for them here — this unpacks during the
+  # Xcode build of a shipped app, so it is worth knowing which of the two is
+  # doing the work.
+  tar xzf "$tmp/$asset" -C "$lib_dir" --no-same-owner
   have_libs || { echo "error: $asset did not hold the three libraries" >&2; exit 1; }
   stamp_libs
   echo "note: unpacked into $lib_dir" >&2

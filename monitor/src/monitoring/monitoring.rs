@@ -566,20 +566,67 @@ async fn command_output_with_timeout(
     let process_group = child.id();
     let stdout = child.stdout.take().expect("stdout was requested as piped");
     let stderr = child.stderr.take().expect("stderr was requested as piped");
-    let stdout = tokio::spawn(async move {
-        let mut bytes = Vec::new();
-        let mut stdout = stdout.take(MAX_COMMAND_OUTPUT_BYTES + 1);
-        stdout.read_to_end(&mut bytes).await.map(|_| bytes)
+    // Whichever pipe fills first says so, and the wait below stops waiting.
+    // `take` ends the reader at the cap and leaves the pipe undrained, so a
+    // child that keeps writing blocks on a full pipe and never exits: without
+    // this, `child.wait()` ran to the full timeout and the segment was then
+    // discarded as a timeout rather than reported as too much output. A wide
+    // `smartctl` sweep or `nvidia-smi -q -x` on a many-GPU host reaches it.
+    let (overflow_tx, overflow_rx) = tokio::sync::oneshot::channel::<()>();
+    let overflow_tx = std::sync::Arc::new(std::sync::Mutex::new(Some(overflow_tx)));
+    let announce = {
+        let overflow_tx = overflow_tx.clone();
+        move || {
+            if let Ok(mut slot) = overflow_tx.lock() {
+                if let Some(tx) = slot.take() {
+                    let _ = tx.send(());
+                }
+            }
+        }
+    };
+    let stdout = tokio::spawn({
+        let announce = announce.clone();
+        async move {
+            let mut bytes = Vec::new();
+            let mut stdout = stdout.take(MAX_COMMAND_OUTPUT_BYTES + 1);
+            let read = stdout.read_to_end(&mut bytes).await.map(|_| bytes);
+            if read.as_ref().is_ok_and(|b| b.len() as u64 > MAX_COMMAND_OUTPUT_BYTES) {
+                announce();
+            }
+            read
+        }
     });
     let stderr = tokio::spawn(async move {
         let mut bytes = Vec::new();
         let mut stderr = stderr.take(MAX_COMMAND_OUTPUT_BYTES + 1);
-        stderr.read_to_end(&mut bytes).await.map(|_| bytes)
+        let read = stderr.read_to_end(&mut bytes).await.map(|_| bytes);
+        if read.as_ref().is_ok_and(|b| b.len() as u64 > MAX_COMMAND_OUTPUT_BYTES) {
+            announce();
+        }
+        read
     });
     let stdout_abort = stdout.abort_handle();
     let stderr_abort = stderr.abort_handle();
 
-    let status = match timeout_at(deadline, child.wait()).await {
+    let waited = tokio::select! {
+        // Biased so a child that both overflowed and exited is reported as
+        // overflow, which is the more useful of the two.
+        biased;
+        _ = overflow_rx => {
+            tracing::warn!(
+                "{label} produced more than {MAX_COMMAND_OUTPUT_BYTES} bytes and was terminated"
+            );
+            terminate_command(&mut child, process_group)?;
+            stdout_abort.abort();
+            stderr_abort.abort();
+            tokio::spawn(async move { let _ = child.wait().await; });
+            return Err(std::io::Error::other(format!(
+                "{label} produced more than {MAX_COMMAND_OUTPUT_BYTES} bytes of output"
+            )));
+        }
+        waited = timeout_at(deadline, child.wait()) => waited,
+    };
+    let status = match waited {
         Ok(status) => status?,
         Err(_) => {
             tracing::warn!("{label} exceeded {} seconds and was terminated", command_timeout.as_secs());
