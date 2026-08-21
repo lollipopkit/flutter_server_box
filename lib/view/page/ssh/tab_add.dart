@@ -12,8 +12,9 @@ class _AddPage extends ConsumerStatefulWidget {
     required this.sortVersion,
     required this.onTap,
     required this.onLocal,
-    required this.onRootfs,
-    required this.onRemoveRootfs,
+    required this.onRootfsOpen,
+    required this.onRootfsAdd,
+    required this.onRootfsRemove,
     required this.onLongPress,
   });
 
@@ -26,11 +27,14 @@ class _AddPage extends ConsumerStatefulWidget {
   /// Opens a shell on the machine the app is running on.
   final VoidCallback onLocal;
 
-  /// Opens a shell inside the Linux userland, installing it first if needed.
-  final VoidCallback onRootfs;
+  /// Opens a shell inside one of the installed Linux systems.
+  final void Function(String profileId) onRootfsOpen;
 
-  /// Deletes that userland.
-  final VoidCallback onRemoveRootfs;
+  /// Installs another, and opens a shell in it.
+  final VoidCallback onRootfsAdd;
+
+  /// Deletes one, and the terminals that were inside it.
+  final void Function(LinuxProfile profile) onRootfsRemove;
 
   final void Function(Spi spi) onLongPress;
 
@@ -68,7 +72,7 @@ class _AddPageState extends ConsumerState<_AddPage> {
       return Center(child: Text(libL10n.empty, textAlign: TextAlign.center));
     }
 
-    return MasonryList(
+    final grid = MasonryList(
       columnWidth: _kServerColumnWidth,
       children: [
         // First, and for the same reason the file tab lists it first: it is
@@ -80,24 +84,6 @@ class _AddPageState extends ConsumerState<_AddPage> {
             subtitle: LocalShellBackend.shellPath,
             onTap: widget.onLocal,
           ),
-        // Beside this device rather than among the servers, because that is
-        // what it is: the same machine, with a userland this app installed.
-        if (Rootfs.isAvailable)
-          CardTile(
-            icon: Icons.terminal,
-            // What is installed, not what this build would install. They differ
-            // exactly when there is an update to offer, and naming the one that
-            // is not there yet would be a lie on the way to a true statement.
-            title: Rootfs.selected?.label ?? Rootfs.nextDistro.label,
-            subtitle: switch (Rootfs.selected) {
-              final it? when Rootfs.isOutdated(it) =>
-                '${libL10n.update}: ${it.distro.version}',
-              final it? => '${it.distro.label} ${it.version}',
-              null => l10n.rootfsSubtitle,
-            },
-            onTap: widget.onRootfs,
-            onLongPress: widget.onRemoveRootfs,
-          ),
         for (final id in order)
           if (state.servers[id] case final spi?) _ServerTile(
             key: ValueKey(id),
@@ -106,6 +92,125 @@ class _AddPageState extends ConsumerState<_AddPage> {
             onLongPress: () => widget.onLongPress(spi),
           ),
       ],
+    );
+
+    // Above the grid and outside it. The systems are one subject with several
+    // members, and a card each would have put them among the servers as though
+    // each were another machine — they are all this one.
+    if (!Rootfs.isAvailable) return grid;
+    return Column(
+      children: [
+        _LinuxSection(
+          onOpen: widget.onRootfsOpen,
+          onAdd: widget.onRootfsAdd,
+          onRemove: widget.onRootfsRemove,
+        ),
+        Expanded(child: grid),
+      ],
+    );
+  }
+}
+
+/// The Linux systems on this device, pinned above the servers.
+///
+/// A row of chips rather than a dialog on the way in: they can all run at once,
+/// so which one to open is a thing to see and tap, not a question to answer
+/// before the page will do anything.
+///
+/// Starts open. It is the one control on this page that is not self-evident
+/// from its title, and collapsing it is one tap away.
+class _LinuxSection extends StatefulWidget {
+  const _LinuxSection({
+    required this.onOpen,
+    required this.onAdd,
+    required this.onRemove,
+  });
+
+  final void Function(String profileId) onOpen;
+  final VoidCallback onAdd;
+  final void Function(LinuxProfile profile) onRemove;
+
+  @override
+  State<_LinuxSection> createState() => _LinuxSectionState();
+}
+
+class _LinuxSectionState extends State<_LinuxSection> {
+  var _expanded = true;
+
+  @override
+  Widget build(BuildContext context) {
+    final profiles = Rootfs.profiles;
+    // The grid below keeps its cards off the window edge with
+    // [MasonryList.kPadding]. This one is above the grid rather than in it, so
+    // all it had was the `Card`'s own 4pt margin — a band running edge to edge
+    // over a column of cards that stop well short of it. Taken from the same
+    // constant, so the two cannot drift apart.
+    //
+    // No bottom: the grid's own top padding is the gap between them.
+    return Padding(
+      padding: MasonryList.kPadding.copyWith(bottom: 0),
+      child: CardX(
+        child: Column(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.terminal),
+              title: const Text('Linux'),
+              subtitle: Text(
+                profiles.isEmpty
+                    ? l10n.rootfsSubtitle
+                    : profiles.map((e) => e.label).join(' · '),
+                style: UIs.textGrey,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              trailing: Icon(
+                _expanded ? Icons.expand_less : Icons.expand_more,
+              ),
+              onTap: () => setState(() => _expanded = !_expanded),
+            ),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+              alignment: Alignment.topCenter,
+              child: _expanded ? _buildChips(profiles) : UIs.placeholder,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChips(List<LinuxProfile> profiles) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(17, 0, 17, 13),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (final profile in profiles)
+            GestureDetector(
+              // The gesture the card used to carry, kept where the thing it
+              // deletes now is.
+              onLongPress: () => widget.onRemove(profile),
+              child: ChoiceChip(
+                // Marks the one a restored tab without a profile would open in,
+                // which is the only sense in which one of them is current.
+                // Tapping is opening, not selecting — see `onSelected`.
+                selected: profile.id == Rootfs.selected?.id,
+                label: Text(profile.label),
+                avatar: Rootfs.isOutdated(profile)
+                    ? const Icon(Icons.update, size: 16)
+                    : null,
+                onSelected: (_) => widget.onOpen(profile.id),
+              ),
+            ),
+          ActionChip(
+            avatar: const Icon(Icons.add, size: 18),
+            label: Text(profiles.isEmpty ? libL10n.install : libL10n.add),
+            onPressed: widget.onAdd,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -128,8 +233,9 @@ class _SideBar extends ConsumerStatefulWidget {
     required this.actions,
     required this.onOpen,
     required this.onLocal,
-    required this.onRootfs,
-    required this.onRemoveRootfs,
+    required this.onRootfsOpen,
+    required this.onRootfsAdd,
+    required this.onRootfsRemove,
     required this.onEdit,
     required this.onSelect,
     required this.onClose,
@@ -147,11 +253,14 @@ class _SideBar extends ConsumerStatefulWidget {
   /// Opens a shell on the machine the app is running on.
   final VoidCallback onLocal;
 
-  /// Opens a shell inside the Linux userland, installing it first if needed.
-  final VoidCallback onRootfs;
+  /// Opens a shell inside one of the installed Linux systems.
+  final void Function(String profileId) onRootfsOpen;
 
-  /// Deletes that userland.
-  final VoidCallback onRemoveRootfs;
+  /// Installs another, and opens a shell in it.
+  final VoidCallback onRootfsAdd;
+
+  /// Deletes one, and the terminals that were inside it.
+  final void Function(LinuxProfile profile) onRootfsRemove;
   final void Function(Spi spi) onEdit;
   final void Function(int index) onSelect;
   final void Function(int index) onClose;
@@ -198,12 +307,19 @@ class _SideBarState extends ConsumerState<_SideBar> {
             SideBarSection(libL10n.device),
             if (LocalShellBackend.isSupported)
               SideBarTile(title: libL10n.device, onTap: widget.onLocal),
-            if (Rootfs.isAvailable)
-              SideBarTile(
-                title: 'Alpine',
-                onTap: widget.onRootfs,
-                onLongPress: widget.onRemoveRootfs,
-              ),
+            // One row each rather than chips: a rail is for switching while
+            // something else has your attention, and it is too narrow to lay
+            // them out side by side.
+            if (Rootfs.isAvailable) ...[
+              for (final profile in Rootfs.profiles)
+                SideBarTile(
+                  title: profile.label,
+                  onTap: () => widget.onRootfsOpen(profile.id),
+                  onLongPress: () => widget.onRootfsRemove(profile),
+                ),
+              if (Rootfs.profiles.isEmpty)
+                SideBarTile(title: 'Linux', onTap: widget.onRootfsAdd),
+            ],
           ],
           SideBarSection(libL10n.servers),
           for (final id in order)

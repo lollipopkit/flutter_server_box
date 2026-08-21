@@ -21,7 +21,12 @@ import 'package:server_box/data/model/app/linux_distro.dart';
 /// and `rootfsUpdateTip` name Alpine in all fifteen locales. Both are accurate
 /// while it is the only installable one, and both need a `{distro}` placeholder
 /// the moment that stops being true.
-Future<bool> installRootfs(BuildContext context, {LinuxProfile? into}) async {
+Future<bool> installRootfs(
+  BuildContext context, {
+  LinuxProfile? into,
+  bool another = false,
+  String? label,
+}) async {
   // Both platforms fetch the same release of the same distribution; what
   // differs is what they do with it — Android unpacks a rootfs for proot, iOS a
   // tree for the engine — and neither difference reaches this dialog.
@@ -29,14 +34,16 @@ Future<bool> installRootfs(BuildContext context, {LinuxProfile? into}) async {
       ? await IosRootfs.isInstalled
       : await AndroidRootfs.isInstalled;
   final selected = Rootfs.selected;
-  // Only when there is nothing at all. With systems installed, offering another
-  // is the settings page's job — here the point is that a terminal was opened
-  // and had nothing to open into.
+  // This early return is for the one caller that means "there has to be one to
+  // enter": a terminal was opened and had nothing to open into. Adding another
+  // and replacing one both mean to install *although* something is there, and
+  // both were silently doing nothing.
   //
-  // An outdated one is still one. Replacing it means downloading the release
-  // again and losing everything installed in the old tree, which is a decision
-  // and not something to raise in the way of opening a terminal.
-  if (present) return true;
+  // An outdated one is still one, so the terminal path does not offer to
+  // replace it: that means downloading the release again and losing everything
+  // installed in the old tree, which is a decision and not something to raise
+  // in the way of opening a terminal.
+  if (present && into == null && !another) return true;
   if (!context.mounted) return false;
 
   final distro = into?.distro ?? Rootfs.nextDistro;
@@ -99,6 +106,7 @@ Future<bool> installRootfs(BuildContext context, {LinuxProfile? into}) async {
     await Rootfs.install(
       distro: distro,
       into: into,
+      label: label,
       onProgress: (value) => progress.value = value,
       cancel: cancel,
     );

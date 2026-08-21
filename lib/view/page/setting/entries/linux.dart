@@ -64,14 +64,56 @@ extension _Linux on _AppSettingsPageState {
               '${profile.distro.label} ${profile.version}',
               style: UIs.textGrey,
             ),
-            trailing: const Icon(Icons.more_vert),
+            // The actions themselves, not a menu holding them. Two of them,
+            // so a menu was a tap that only ever revealed the same two —
+            // and the row keeps no hidden long-press now that both are here.
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (Rootfs.isOutdated(profile))
+                  IconButton(
+                    icon: const Icon(Icons.update),
+                    tooltip: libL10n.update,
+                    onPressed: () async {
+                      await installRootfs(context, into: profile);
+                      refresh();
+                    },
+                  ),
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined),
+                  tooltip: libL10n.rename,
+                  onPressed: () => _renameProfile(profile).then((_) => refresh()),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline),
+                  tooltip: libL10n.delete,
+                  // The one coloured thing on this page, and it means what it
+                  // says: this deletes the system and everything installed in
+                  // it. The confirmation is the guard; this is the warning
+                  // before the tap.
+                  color: Theme.of(context).colorScheme.error,
+                  onPressed: () async {
+                    await removeRootfs(context, profile: profile);
+                    refresh();
+                  },
+                ),
+              ],
+            ),
             onTap: () => _selectProfile(profile),
-            onLongPress: () => _profileMenu(profile),
           ),
         ListTile(
           leading: const Icon(Icons.add, size: _kIconSize),
-          title: Text(libL10n.add),
-          subtitle: Text(Rootfs.nextDistro.label, style: UIs.textGrey),
+          title: Text(profiles.isEmpty ? libL10n.install : libL10n.add),
+          // What a tap gets you, not a stored preference. With one
+          // distribution that is the whole answer; with more it is a choice,
+          // and the chevron is what says so.
+          subtitle: LinuxDistro.values.length == 1
+              ? Text(
+                  '${LinuxDistro.values.single.label} '
+                  '${LinuxDistro.values.single.version}',
+                  style: UIs.textGrey,
+                )
+              : null,
           trailing: const Icon(Icons.keyboard_arrow_right),
           onTap: _addProfile,
         ),
@@ -83,43 +125,6 @@ extension _Linux on _AppSettingsPageState {
     // Only which one a *new* terminal opens in. Sessions already running stay
     // where they are — the machine holds them all at once.
     _setting.linuxProfile.put(profile.id);
-    refresh();
-  }
-
-  Future<void> _profileMenu(LinuxProfile profile) async {
-    final action = await context.showRoundDialog<String>(
-      title: profile.label,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            leading: const Icon(Icons.edit_outlined),
-            title: Text(libL10n.rename),
-            onTap: () => context.popDialog('rename'),
-          ),
-          if (Rootfs.isOutdated(profile))
-            ListTile(
-              leading: const Icon(Icons.update),
-              title: Text(libL10n.update),
-              onTap: () => context.popDialog('update'),
-            ),
-          ListTile(
-            leading: const Icon(Icons.delete_outline),
-            title: Text(libL10n.delete),
-            onTap: () => context.popDialog('delete'),
-          ),
-        ],
-      ),
-    );
-    if (!mounted || action == null) return;
-    switch (action) {
-      case 'rename':
-        await _renameProfile(profile);
-      case 'update':
-        await installRootfs(context, into: profile);
-      case 'delete':
-        await removeRootfs(context, profile: profile);
-    }
     refresh();
   }
 
@@ -152,21 +157,95 @@ extension _Linux on _AppSettingsPageState {
     );
   }
 
-  /// Adds another, of whichever distribution is picked.
+  /// Adds another system, of whichever distribution.
   ///
   /// Nothing is replaced: this is what "two Alpines side by side" is, and why
   /// the id under the container is generated rather than the distribution's.
+  ///
+  /// It does not ask when there is only one distribution. A dialog whose only
+  /// answer is the one you came for teaches nothing, and the install
+  /// confirmation after it already names the release and the download. It was
+  /// worse than nothing before: the picker it used marks a current value and
+  /// toggles it, so the one tap available deselected the only item and the
+  /// dialog closed having chosen nothing.
   Future<void> _addProfile() async {
-    final picked = await context.showPickSingleDialog(
-      title: l10n.distro,
-      items: LinuxDistro.values,
-      display: (e) => e.label,
-      initial: Rootfs.nextDistro,
-    );
-    if (picked == null || !mounted) return;
-    _setting.linuxDistro.put(picked.id);
-    await installRootfs(context);
+    final distro = LinuxDistro.values.length == 1
+        ? LinuxDistro.values.single
+        : await _pickDistro();
+    if (distro == null || !mounted) return;
+
+    // Two of one distribution would both be called "Alpine", and this list is
+    // the only thing that tells them apart. Asked only when that is true: the
+    // first of a distribution has a name nobody has to invent.
+    String? label;
+    final existing = Rootfs.profiles.where((e) => e.distro == distro).length;
+    if (existing > 0) {
+      label = await _askProfileName('${distro.label} ${existing + 1}');
+      if (label == null || !mounted) return;
+    }
+
+    _setting.linuxDistro.put(distro.id);
+    // Another, beside whatever is there — not "one if there is none".
+    await installRootfs(context, another: true, label: label);
     refresh();
+  }
+
+  /// Names the system about to be installed. Null when the dialog was
+  /// dismissed, which stops the install — a name asked for and not given is a
+  /// change of mind, not a blank.
+  ///
+  /// [suggestion] is pre-filled and is what an empty field means, so accepting
+  /// is one tap and nobody has to think of anything.
+  Future<String?> _askProfileName(String suggestion) async {
+    String? answer;
+    await Future<void>.sync(
+      () => withTextFieldController((ctrl) async {
+        ctrl.text = suggestion;
+
+        // The buttons answer. `Btnx.cancelOk` pops a value of its own, so an
+        // `onTap` that also popped would have to know which navigator the
+        // dialog is on — the trap this project keeps walking into.
+        final ok = await context.showRoundDialog<bool>(
+          title: libL10n.name,
+          child: Input(
+            controller: ctrl,
+            autoFocus: true,
+            label: libL10n.name,
+            icon: Icons.label_outline,
+            suggestion: false,
+            onSubmitted: (_) => context.popDialog(true),
+          ),
+          actions: Btnx.cancelOk,
+        );
+        if (ok != true) return;
+        final typed = ctrl.text.trim();
+        answer = typed.isEmpty ? suggestion : typed;
+      }),
+    );
+    return answer;
+  }
+
+  /// Which distribution to install, as a list of actions.
+  ///
+  /// Each row *is* the install: tapping one starts it. Not a selection to be
+  /// confirmed afterwards — nothing here is current, so there is no value to
+  /// change, and marking one would say otherwise.
+  Future<LinuxDistro?> _pickDistro() {
+    return context.showRoundDialog<LinuxDistro>(
+      title: l10n.distro,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final distro in LinuxDistro.values)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(distro.label),
+              subtitle: Text(distro.version, style: UIs.textGrey),
+              onTap: () => context.popDialog(distro),
+            ),
+        ],
+      ),
+    );
   }
 
   /// The selected system's shell, which is a file inside it rather than a

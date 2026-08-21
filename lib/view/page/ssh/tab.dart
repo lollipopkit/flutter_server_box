@@ -7,6 +7,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/local_shell.dart';
 import 'package:server_box/core/utils/rootfs.dart';
+import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
@@ -81,8 +82,9 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
       sortVersion: _sortVersion,
       onTap: _openServer,
       onLocal: () => _open(const LocalSource()),
-      onRootfs: _openRootfs,
-      onRemoveRootfs: _removeRootfs,
+      onRootfsOpen: _openRootfs,
+      onRootfsAdd: _addRootfs,
+      onRootfsRemove: _removeRootfs,
       onLongPress: (spi) =>
           ServerEditPage.route.go(context, args: SpiRequiredArgs(spi)),
     ),
@@ -136,8 +138,9 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
           actions: [_sortBtn, _searchBtn, _historyBtn, _addBtn],
           onOpen: _openServer,
           onLocal: () => _open(const LocalSource()),
-          onRootfs: _openRootfs,
-          onRemoveRootfs: _removeRootfs,
+          onRootfsOpen: _openRootfs,
+          onRootfsAdd: _addRootfs,
+          onRootfsRemove: _removeRootfs,
           onEdit: (spi) =>
               ServerEditPage.route.go(context, args: SpiRequiredArgs(spi)),
           onSelect: _sessions.select,
@@ -308,31 +311,29 @@ extension _Sessions on _SSHTabPageState {
     _sessions.select(_sessions.names.indexOf(tab.name));
   }
 
-  /// Opens a shell inside a Linux system, installing one if there is none.
+  /// Opens a shell in the system a chip names.
+  ///
+  /// Which one is picked on the page rather than asked for here: they can all
+  /// run at once, so it is a tap on the one wanted and not a question in the
+  /// way.
+  void _openRootfs(String profileId) =>
+      _open(LocalSource(rootfs: true, profileId: profileId));
+
+  /// Installs another system and opens a shell in it.
   ///
   /// The install is where the tap may stop: it downloads, and it can be
-  /// cancelled or fail. Only a system that is actually there gets a tab.
-  ///
-  /// With more than one installed it asks which, because opening "the selected
-  /// one" would make the second unreachable from here — and they can run at
-  /// once, so this is a choice and not a switch.
-  Future<void> _openRootfs() async {
-    if (!await installRootfs(context)) return;
+  /// cancelled or fail. Only a system that is actually there gets a tab, which
+  /// is why the id comes back from the install rather than from the settings.
+  Future<void> _addRootfs() async {
+    final before = {for (final e in Rootfs.profiles) e.id};
+    // The chip says "install" with nothing there and "add" otherwise, and it
+    // has to mean both.
+    if (!await installRootfs(context, another: before.isNotEmpty)) return;
     if (!mounted) return;
-
-    final profiles = Rootfs.profiles;
-    var id = Rootfs.selected?.id;
-    if (profiles.length > 1) {
-      final picked = await context.showPickSingleDialog(
-        title: libL10n.terminal,
-        items: profiles,
-        display: (e) => e.label,
-        initial: profiles.firstWhereOrNull((e) => e.id == id) ?? profiles.first,
-      );
-      if (picked == null) return;
-      id = picked.id;
-    }
-    _open(LocalSource(rootfs: true, profileId: id));
+    final added = Rootfs.profiles.firstWhereOrNull((e) => !before.contains(e.id));
+    // Nothing new means it was already there and the install returned early —
+    // the first system, opened by the chip that offered to install it.
+    _openRootfs(added?.id ?? Rootfs.selected?.id ?? '');
   }
 
   /// Deletes one Linux system, and the terminals that were inside it.
@@ -341,9 +342,7 @@ extension _Sessions on _SSHTabPageState {
   /// leaving the tabs up would leave dead terminals nobody asked to keep. Tabs
   /// in the *other* systems are untouched — that is the point of them being
   /// separate.
-  Future<void> _removeRootfs() async {
-    final target = Rootfs.selected;
-    if (target == null) return;
+  Future<void> _removeRootfs(LinuxProfile target) async {
     if (!await removeRootfs(context, profile: target)) return;
     for (final tab in [..._sessions.tabs]) {
       final source = tab.data.page.args.source;
