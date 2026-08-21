@@ -97,7 +97,16 @@ actor LiveActivityManager {
     /// empty and asked for another. That is two Live Activities for one
     /// terminal, and only the later of them in `current` — the first is left
     /// running with nothing able to update or end it.
-    private var pending: Task<Activity<TerminalAttributes>?, Never>?
+    /// The request in flight, the lifetime it belongs to, and a tag naming this
+    /// one in particular.
+    ///
+    /// The tag is what lets the caller that made a request tell whether the
+    /// slot is still its own before clearing it: a waiter that gave up on an
+    /// obsolete request puts its own there, and both resume from the same
+    /// completion in an order neither controls. `Task` is a struct, so there is
+    /// no identity to compare instead.
+    private var pending: (tag: Int, generation: Int, task: Task<Activity<TerminalAttributes>?, Never>)?
+    private var nextTag = 0
 
     /// Bumped by [stop].
     ///
@@ -121,24 +130,28 @@ actor LiveActivityManager {
         // one of its own, and then applies *its own* payload to the result.
         // The request in flight carries the older one, so taking its content
         // would show what this call has already replaced.
-        //
-        // Nothing to update once it completes means `stop` ended it in
-        // between. This call then does nothing; the next `update` finds no
-        // activity and comes back through here.
-        if let pending {
-            _ = await pending.value
+        if let pending, pending.generation == generation {
+            _ = await pending.task.value
             if let activity = updatableActivity() {
                 let content = ActivityContent(state: Self.contentState(from: payload), staleDate: nil)
                 await apply(content, to: activity)
             }
             return
         }
+        // A request from a lifetime `stop` has already ended. Waiting for it
+        // keeps the two from racing for the slot, but its result is not this
+        // caller's — that one is being ended by whoever made it. Ask again.
+        if let pending {
+            _ = await pending.task.value
+        }
 
         let mine = generation
+        nextTag += 1
+        let tag = nextTag
         let task = Task { await Self.request(payload) }
-        pending = task
+        pending = (tag, mine, task)
         let activity = await task.value
-        pending = nil
+        if pending?.tag == tag { pending = nil }
         guard generation == mine else {
             // Ended here because `stop` could not: it ran while this was still
             // a request. Leaving it would be an activity nothing holds.

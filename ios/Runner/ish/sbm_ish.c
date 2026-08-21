@@ -495,6 +495,33 @@ static bool is_attached(const char *profile) {
     return false;
 }
 
+/// Everything [sbm_ish_attach] and [make_dev] mount, innermost first: `/dev/pts`
+/// and `/dev/shm` are inside `/dev`, and the outer one cannot go while they
+/// hold it.
+static const char *const mount_points[] = { "dev/pts", "dev/shm", "dev", "proc" };
+
+/// Takes one profile's filesystems down. Returns 0, or the first real failure.
+///
+/// `do_umount` answers `_EINVAL` for a point that carries nothing and `_EBUSY`
+/// while something still holds one — those are its only two errors. The first
+/// is not a failure here: an attach may have stopped partway, and unmounting
+/// twice has to be safe.
+///
+/// The constants in `kernel/errno.h` are already negative, so this compares
+/// against `_EINVAL` rather than negating it. Negating gave `+22`, which no
+/// error equals, and the exemption never applied — every detach of a profile
+/// whose mounts were not all present reported failure.
+static int unmount_profile(const char *profile) {
+    char path[MAX_PATH];
+    int err = 0;
+    for (size_t i = 0; i < sizeof(mount_points) / sizeof(mount_points[0]); i++) {
+        snprintf(path, sizeof(path), "/%s/%s", profile, mount_points[i]);
+        int one = do_umount(path);
+        if (one < 0 && one != _EINVAL && err == 0) err = one;
+    }
+    return err;
+}
+
 /// Points `current` at one profile's subtree, the way `chroot` would.
 ///
 /// Safe to do to a task from `become_new_init_child`: `construct_task` gives
@@ -545,6 +572,21 @@ int sbm_ish_attach(const char *profile) {
         return -EMFILE;
     }
 
+    // Anything still mounted here is left over from an attempt that failed or
+    // from a detach that could not finish — this profile is not in the table,
+    // so nothing considers it attached. `do_mount` does not ask whether a
+    // point already carries a mount and would stack a second one on top, one
+    // per attempt, with only the innermost reachable to unmount. Refuse rather
+    // than stack: a point that will not go is `_EBUSY`, and mounting over
+    // whatever is holding it would hide that.
+    int stale = unmount_profile(profile);
+    if (stale < 0) {
+        pthread_mutex_unlock(&attached_lock);
+        syslog(LOG_ERR, "sbm_ish: %s still has mounts that will not go (%d)",
+               profile, stale);
+        return stale;
+    }
+
     char path[MAX_PATH];
     // `/proc` first: `/dev/stdout` and friends are symlinks into it, and a
     // shell following one before it is mounted gets "nonexistent directory".
@@ -557,11 +599,14 @@ int sbm_ish_attach(const char *profile) {
     // session opens onto a `/dev` that was never mounted.
     int err = make_dev(profile);
     if (err < 0) {
-        // The `/proc` above goes back with it. `do_mount` does not ask whether
-        // the point already carries one, so leaving it means the next attempt
-        // stacks a second procfs on the same path — one per failed attach,
-        // and only the innermost reachable to unmount.
-        do_umount(path);
+        // What was mounted above goes back with it. If it will not, say so and
+        // leave it: the profile is not recorded either way, so the next attach
+        // reaches the rollback above and tries again before mounting anything.
+        int undone = unmount_profile(profile);
+        if (undone < 0) {
+            syslog(LOG_ERR, "sbm_ish: %s did not roll back (%d); its mounts stay "
+                   "until an attach can take them down", profile, undone);
+        }
         pthread_mutex_unlock(&attached_lock);
         return err;
     }
@@ -596,33 +641,25 @@ int sbm_ish_detach(const char *profile) {
     // without mounting anything, and hands back a system whose filesystems are
     // being pulled out underneath it.
     pthread_mutex_lock(&attached_lock);
+    int err = unmount_profile(profile);
 
-    // Innermost first: `/dev/pts` and `/dev/shm` are inside `/dev`, and the
-    // outer one cannot go while they hold it.
-    static const char *const points[] = { "dev/pts", "dev/shm", "dev", "proc" };
-    char path[MAX_PATH];
-    int err = 0;
-    for (size_t i = 0; i < sizeof(points) / sizeof(points[0]); i++) {
-        snprintf(path, sizeof(path), "/%s/%s", profile, points[i]);
-        int one = do_umount(path);
-        // Not mounted is not a failure: attach may have stopped early, and
-        // detaching twice has to be safe.
-        if (one < 0 && one != -_ENOENT && err == 0) err = one;
-    }
-    if (err < 0) {
-        // The name stays in the table: its mounts are still there, and an
-        // attach that finds it and returns 0 is telling the truth.
-        pthread_mutex_unlock(&attached_lock);
-        syslog(LOG_ERR, "sbm_ish: %s did not detach (%d); its mounts stay until "
-               "the app restarts", profile, err);
-        return err;
-    }
-
+    // The name goes whatever happened, and before the lock does. `attached`
+    // means "mounted by us and believed good", and after a detach that failed
+    // partway neither half of that holds: some of the mounts are gone. Leaving
+    // the name would have the next attach find it and answer 0 for a system
+    // missing its `/dev/pts`. Clearing it sends that attach through the
+    // rollback at the top, which either takes the rest down and mounts afresh
+    // or refuses — both of which are answers, where returning 0 was not.
     for (int i = 0; i < SBM_MAX_PROFILES; i++) {
         if (strcmp(attached[i], profile) == 0) { attached[i][0] = '\0'; break; }
     }
     pthread_mutex_unlock(&attached_lock);
-    return 0;
+
+    if (err < 0) {
+        syslog(LOG_ERR, "sbm_ish: %s did not detach (%d); what is left of its "
+               "mounts stays until an attach can take them down", profile, err);
+    }
+    return err;
 }
 
 int sbm_ish_boot(const char *rootfs, const char *profile) {
