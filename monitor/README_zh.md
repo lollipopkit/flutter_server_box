@@ -93,8 +93,11 @@ Windows 默认关闭。**此时面板密码就等于本机的一个 shell**，�
 补充：
 
 - 终端拒绝在明文监听上运行，因为它的第一条消息就带着 SSH 密码。配置 TLS 可满足
-  该要求；同机反向代理同样可以，因为 loopback 流量无法在网络上被读取。
-   `[remote_access.terminal] allow_insecure = true` 可以覆盖这一限制。
+   该要求；同机反向代理同样可以，因为 loopback 流量无法在网络上被读取。
+  在 HTTP 之外已具备传输加密的可信私有网络中（例如 Tailscale），管理员可设置
+  `[remote_access.terminal] allow_insecure = true`。App 还必须对该 Monitor
+  连接单独开启「允许不安全 HTTP」；两端开关缺一不可。否则 SSH 凭据和终端流量会以
+  明文传输，不应在普通局域网或不受控制的网络中使用。
 - 文件 API 也要求远程调用方使用 TLS。在 HTTP 之外已具备传输加密的可信私有网络中
   （例如 Tailscale），管理员可设置 `[remote_access.fs] allow_insecure = true`。
   App 还必须对该 Monitor 连接单独开启「允许不安全 HTTP」；两端开关缺一不可。

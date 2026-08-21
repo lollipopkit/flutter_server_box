@@ -110,8 +110,14 @@ Notes:
 
 - The terminal refuses to run on a plaintext listener, because its first
   message carries an SSH password. TLS satisfies this; so does a reverse proxy
-  on the same host, since loopback traffic can't be read off the network.
-  `[remote_access.terminal] allow_insecure = true` overrides it.
+   on the same host, since loopback traffic can't be read off the network.
+  On a trusted private network with transport encryption outside HTTP (for
+  example Tailscale), an operator may set
+  `[remote_access.terminal] allow_insecure = true`. The App must separately
+  enable **Allow insecure HTTP** for that individual Monitor connection; both
+  opt-ins are required. SSH credentials and terminal traffic are otherwise
+  sent in plaintext, so do not use this for an ordinary LAN or a network you
+  do not control.
 - The file API also requires TLS for remote callers. On a trusted private
   network with transport encryption outside HTTP (for example Tailscale), an
   operator may set `[remote_access.fs] allow_insecure = true`. The App must

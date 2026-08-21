@@ -547,10 +547,11 @@ mod tests {
 
     #[test]
     fn file_api_needs_a_secure_transport() {
+        let root = std::env::temp_dir().to_string_lossy().into_owned();
         let configured = RemoteAccessConfig {
             fs: FsConfig {
                 enabled: true,
-                roots: vec!["/tmp".to_string()],
+                roots: vec![root],
                 ..Default::default()
             },
             ..Default::default()
@@ -562,10 +563,11 @@ mod tests {
 
     #[test]
     fn file_api_can_explicitly_allow_plaintext() {
+        let root = std::env::temp_dir().to_string_lossy().into_owned();
         let configured = RemoteAccessConfig {
             fs: FsConfig {
                 enabled: true,
-                roots: vec!["/tmp".to_string()],
+                roots: vec![root],
                 allow_insecure: true,
                 ..Default::default()
             },

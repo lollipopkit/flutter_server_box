@@ -47,7 +47,7 @@ fn run(cmd: &str, args: &[&str]) -> String {
     run_command(command)
 }
 
-fn run_command(mut command: Command) -> String {
+fn run_command(command: Command) -> String {
     run_command_with_timeout(command, COMMAND_TIMEOUT)
 }
 
@@ -105,8 +105,7 @@ fn output_file() -> Option<(std::fs::File, PathBuf)> {
 
 fn terminate(child: &mut std::process::Child) {
     #[cfg(unix)]
-    if let Some(id) = child.id()
-        && unsafe { kill_process_group(-(id as i32), 9) } == 0
+    if unsafe { kill_process_group(-(child.id() as i32), 9) } == 0
     {
         return;
     }

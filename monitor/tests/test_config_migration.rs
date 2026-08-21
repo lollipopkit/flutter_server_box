@@ -1,10 +1,36 @@
 use server_box_monitor::core::config::Config;
 use std::fs;
+use std::ffi::OsString;
 use std::sync::OnceLock;
 
 fn cwd_lock() -> &'static tokio::sync::Mutex<()> {
     static LOCK: OnceLock<tokio::sync::Mutex<()>> = OnceLock::new();
     LOCK.get_or_init(|| tokio::sync::Mutex::new(()))
+}
+
+struct EnvVarGuard {
+    name: &'static str,
+    previous: Option<OsString>,
+}
+
+impl EnvVarGuard {
+    unsafe fn set(name: &'static str, value: impl AsRef<std::ffi::OsStr>) -> Self {
+        let previous = std::env::var_os(name);
+        unsafe { std::env::set_var(name, value) };
+        Self { name, previous }
+    }
+}
+
+impl Drop for EnvVarGuard {
+    fn drop(&mut self) {
+        unsafe {
+            if let Some(value) = &self.previous {
+                std::env::set_var(self.name, value);
+            } else {
+                std::env::remove_var(self.name);
+            }
+        }
+    }
 }
 
 // Own test binary (own process) so mutating the process-wide CWD here can't
@@ -37,9 +63,9 @@ async fn config_json_migrates_to_toml() {
     .unwrap();
     // A valid, sufficiently long JWT secret so `resolve_jwt_secret`-adjacent
     // paths aren't exercised by this test
-    unsafe {
-        std::env::set_var("JWT_SECRET", "test-secret-at-least-32-characters-long");
-    }
+    let _jwt_secret = unsafe {
+        EnvVarGuard::set("JWT_SECRET", "test-secret-at-least-32-characters-long")
+    };
 
     let config = Config::load().await.expect("load should migrate config.json");
 
@@ -69,9 +95,6 @@ async fn config_json_migrates_to_toml() {
     Config::load().await.expect("load should create the default config.toml");
     assert_private(&dir.join("config.toml"));
 
-    unsafe {
-        std::env::remove_var("JWT_SECRET");
-    }
     std::env::set_current_dir(original_cwd).unwrap();
     fs::remove_dir_all(&dir).ok();
 }
@@ -106,12 +129,11 @@ async fn a_go_config_in_its_historical_home_is_migrated() {
     .unwrap();
 
     let original_cwd = std::env::current_dir().unwrap();
-    let original_home = std::env::var_os("HOME");
     std::env::set_current_dir(&workdir).unwrap();
-    unsafe {
-        std::env::set_var("HOME", root.join("home"));
-        std::env::set_var("JWT_SECRET", "test-secret-at-least-32-characters-long");
-    }
+    let _home = unsafe { EnvVarGuard::set("HOME", root.join("home")) };
+    let _jwt_secret = unsafe {
+        EnvVarGuard::set("JWT_SECRET", "test-secret-at-least-32-characters-long")
+    };
 
     let config = Config::load().await.unwrap();
 
@@ -124,14 +146,6 @@ async fn a_go_config_in_its_historical_home_is_migrated() {
     assert_eq!(push.push_type, "serverchan");
     assert_eq!(push.config.get("sc_key").and_then(|v| v.as_str()), Some("SCT123"));
 
-    unsafe {
-        std::env::remove_var("JWT_SECRET");
-        if let Some(home) = original_home {
-            std::env::set_var("HOME", home);
-        } else {
-            std::env::remove_var("HOME");
-        }
-    }
     std::env::set_current_dir(original_cwd).unwrap();
     fs::remove_dir_all(root).ok();
 }

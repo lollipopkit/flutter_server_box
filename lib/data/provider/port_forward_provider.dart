@@ -14,16 +14,21 @@ part 'port_forward_provider.g.dart';
 class PortForwardNotifier extends _$PortForwardNotifier {
   final Map<String, _ForwardEntry> _forwards = {};
   final Set<String> _inFlight = {};
+  final Map<String, Future<void>> _starts = {};
+  Future<void>? _clearFuture;
+  var _generation = 0;
+  var _clearing = false;
 
   @override
   PortForwardState build(String serverId) {
     ref.onDispose(() => dispose());
     ref.listen(serverProvider(serverId), (prev, next) {
       if (next.client == null && prev?.client != null) {
-        for (final entry in _forwards.values) {
+        final forwards = _forwards.values.toList();
+        _forwards.clear();
+        for (final entry in forwards) {
           entry.close().catchError((_) {});
         }
-        _forwards.clear();
         state = state.copyWith(activeForwards: {});
       }
     });
@@ -56,10 +61,13 @@ class PortForwardNotifier extends _$PortForwardNotifier {
       ref.read(serverProvider(_serverId).notifier).ensureShellClient();
 
   void dispose() {
-    for (final entry in _forwards.values) {
+    _clearing = true;
+    _generation++;
+    final forwards = _forwards.values.toList();
+    _forwards.clear();
+    for (final entry in forwards) {
       entry.close().catchError((_) {});
     }
-    _forwards.clear();
   }
 
   /// Stops every live listener before removing the saved configurations.
@@ -67,13 +75,35 @@ class PortForwardNotifier extends _$PortForwardNotifier {
   /// Server deletion calls this explicitly. Waiting for the SSH client to
   /// disconnect leaves local, remote, or SOCKS forwards reachable after their
   /// server has disappeared from the app.
-  Future<void> clear() async {
-    for (final entry in _forwards.values) {
+  Future<void> clear() {
+    final existing = _clearFuture;
+    if (existing != null) return existing;
+
+    late final Future<void> clear;
+    clear = _clear().whenComplete(() {
+      if (identical(_clearFuture, clear)) _clearFuture = null;
+    });
+    _clearFuture = clear;
+    return clear;
+  }
+
+  Future<void> _clear() async {
+    _clearing = true;
+    _generation++;
+    final forwards = _forwards.values.toList();
+    _forwards.clear();
+    for (final entry in forwards) {
       await entry.close().catchError((_) {});
     }
-    _forwards.clear();
-    Stores.portForward.clearServer(_serverId);
-    state = state.copyWith(configs: const [], activeForwards: {});
+    try {
+      // A start may be awaiting SSH or a listener bind. It owns any entry it
+      // creates while cleanup is active and closes it before completing.
+      await Future.wait(_starts.values.toList());
+      Stores.portForward.clearServer(_serverId);
+      state = state.copyWith(configs: const [], activeForwards: {});
+    } finally {
+      _clearing = false;
+    }
   }
 
   Future<void> addConfig(PortForwardConfig config) async {
@@ -110,43 +140,58 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     state = state.copyWith(configs: configs, activeForwards: activeForwards);
   }
 
-  Future<void> startForward(String id) async {
-    if (!_inFlight.add(id)) return;
+  Future<void> startForward(String id) {
+    if (_clearing || !_inFlight.add(id)) return Future.value();
+    final generation = _generation;
+    late final Future<void> start;
+    start = _startForward(id, generation).whenComplete(() {
+      _inFlight.remove(id);
+      if (identical(_starts[id], start)) _starts.remove(id);
+    });
+    _starts[id] = start;
+    return start;
+  }
+
+  Future<void> _startForward(String id, int generation) async {
+    final config = state.configs.firstWhereOrNull((c) => c.id == id);
+    if (config == null) {
+      Loggers.app.warning('Port forward config not found: $id');
+      return;
+    }
+
+    final existing = _forwards[id];
+    if (existing != null) {
+      _forwards.remove(id);
+      await existing.close().catchError((_) {});
+    }
+
     try {
-      final config = state.configs.firstWhereOrNull((c) => c.id == id);
-      if (config == null) {
-        Loggers.app.warning('Port forward config not found: $id');
+      final entry = switch (config.type) {
+        PortForwardType.local => await _startLocalForward(config),
+        PortForwardType.remote => await _startRemoteForward(config),
+        PortForwardType.dynamic => await _startDynamicForward(config),
+      };
+      if (_clearing || generation != _generation) {
+        await entry.close().catchError((_) {});
         return;
       }
-
-      final existing = _forwards[id];
-      if (existing != null) {
-        await existing.close().catchError((_) {});
-        _forwards.remove(id);
-      }
-
-      try {
-        switch (config.type) {
-          case PortForwardType.local:
-            await _startLocalForward(config);
-          case PortForwardType.remote:
-            await _startRemoteForward(config);
-          case PortForwardType.dynamic:
-            await _startDynamicForward(config);
-        }
-      } catch (e) {
-        Loggers.app.warning('Port forward failed to start: $e');
+      _forwards[config.id] = entry;
+      _updateStatus(
+        config.id,
+        PortForwardStatus(id: config.id, isActive: true),
+      );
+    } catch (e) {
+      Loggers.app.warning('Port forward failed to start: $e');
+      if (!_clearing && generation == _generation) {
         _updateStatus(
           id,
           PortForwardStatus(id: id, isActive: false, error: e.toString()),
         );
       }
-    } finally {
-      _inFlight.remove(id);
     }
   }
 
-  Future<void> _startLocalForward(PortForwardConfig config) async {
+  Future<_ForwardEntry> _startLocalForward(PortForwardConfig config) async {
     if (config.remoteHost == null || config.remotePort == null) {
       throw Exception('Invalid local port forward: remote destination not set');
     }
@@ -169,11 +214,10 @@ class PortForwardNotifier extends _$PortForwardNotifier {
       clientGetter: () => _client,
     );
     entry.start();
-    _forwards[config.id] = entry;
-    _updateStatus(config.id, PortForwardStatus(id: config.id, isActive: true));
+    return entry;
   }
 
-  Future<void> _startRemoteForward(PortForwardConfig config) async {
+  Future<_ForwardEntry> _startRemoteForward(PortForwardConfig config) async {
     if (config.remoteHost == null || config.remotePort == null) {
       throw Exception(
         'Invalid remote port forward: remote destination not set',
@@ -195,11 +239,10 @@ class PortForwardNotifier extends _$PortForwardNotifier {
       remotePort: config.localPort,
     );
     entry.start();
-    _forwards[config.id] = entry;
-    _updateStatus(config.id, PortForwardStatus(id: config.id, isActive: true));
+    return entry;
   }
 
-  Future<void> _startDynamicForward(PortForwardConfig config) async {
+  Future<_ForwardEntry> _startDynamicForward(PortForwardConfig config) async {
     final bindHost = config.localHost ?? 'localhost';
     final dynamicForward = await (await _connectedClient()).forwardDynamic(
       bindHost: bindHost,
@@ -208,9 +251,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     Loggers.app.info(
       'Dynamic port forward (SOCKS5) started: $bindHost:${config.localPort}',
     );
-    final entry = _DynamicForwardEntry(dynamicForward: dynamicForward);
-    _forwards[config.id] = entry;
-    _updateStatus(config.id, PortForwardStatus(id: config.id, isActive: true));
+    return _DynamicForwardEntry(dynamicForward: dynamicForward);
   }
 
   Future<void> stopForward(String id) async {

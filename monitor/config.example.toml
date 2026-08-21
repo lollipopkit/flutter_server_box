@@ -124,6 +124,9 @@ enabled = false
 # message carries an SSH password and everything after it is cleartext output.
 # Not needed when TLS is configured above, nor when a proxy on this same host
 # terminates TLS (loopback traffic counts as secure).
+# Only use this on a trusted private network with transport encryption outside
+# HTTP, such as Tailscale. The App must also enable Allow insecure HTTP for the
+# individual Monitor connection; both opt-ins are required.
 # allow_insecure = false
 # Leave unset to size from physical memory.
 # max_sessions = 8

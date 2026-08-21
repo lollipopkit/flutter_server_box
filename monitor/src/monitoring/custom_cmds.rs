@@ -11,8 +11,9 @@
 //! here is arranging for code to run as the agent's user, and the endpoint
 //! that does it is gated accordingly.
 
-use std::path::{Path, PathBuf};
+use std::{fs::OpenOptions, path::{Path, PathBuf}};
 
+use fs2::FileExt;
 use sbm_parser::script;
 use serde::{Deserialize, Serialize};
 
@@ -107,6 +108,9 @@ pub fn replace(cmds: &[CustomCmd]) -> Result<(), Error> {
 }
 
 fn write_dir(dir: &Path, cmds: &[CustomCmd]) -> Result<(), Error> {
+    // The side paths are fixed per directory. Keep the advisory lock through
+    // recovery and replacement so concurrent processes cannot reuse them.
+    let _lock = replace_lock(dir)?;
     let tmp = side_path(dir, "new");
     let backup = side_path(dir, "old");
     if let Some(parent) = dir.parent() {
@@ -159,6 +163,20 @@ fn write_dir(dir: &Path, cmds: &[CustomCmd]) -> Result<(), Error> {
     Ok(())
 }
 
+fn replace_lock(dir: &Path) -> Result<std::fs::File, Error> {
+    if let Some(parent) = dir.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    let lock = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .truncate(false)
+        .open(side_path(dir, "lock"))?;
+    lock.lock_exclusive()?;
+    Ok(lock)
+}
+
 fn side_path(dir: &Path, suffix: &str) -> PathBuf {
     let leaf = dir.file_name().unwrap_or_else(|| script::CUSTOM_CMD_DIR_LEAF.as_ref());
     dir.with_file_name(format!("{}.{}", leaf.to_string_lossy(), suffix))
@@ -208,6 +226,7 @@ fn validate(cmds: &[CustomCmd]) -> Result<(), Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Arc;
 
     fn cmd(name: &str, body: &str) -> CustomCmd {
         CustomCmd { name: name.to_string(), cmd: body.to_string() }
@@ -277,5 +296,38 @@ mod tests {
         assert!(validate(&[cmd("a", "  ")]).is_err());
         assert!(validate(&[cmd(&"n".repeat(MAX_NAME_LEN + 1), "x")]).is_err());
         assert!(validate(&[cmd("a", "x"), cmd("b", "y")]).is_ok());
+    }
+
+    #[test]
+    fn concurrent_replacements_leave_one_complete_directory() {
+        let tmp = std::env::temp_dir().join(format!(
+            "sbm_custom_cmds_concurrent_{}_{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let dir = tmp.join("custom_cmds");
+        let first = vec![cmd("first", "echo first")];
+        let second = vec![cmd("second", "echo second")];
+        let gate = Arc::new(std::sync::Barrier::new(2));
+        let worker_dir = dir.clone();
+        let worker_gate = Arc::clone(&gate);
+        let worker = std::thread::spawn(move || {
+            worker_gate.wait();
+            write_dir(&worker_dir, &first)
+        });
+
+        gate.wait();
+        write_dir(&dir, &second).unwrap();
+        worker.join().unwrap().unwrap();
+
+        let current = read_dir(&dir).unwrap();
+        assert!(current == vec![cmd("first", "echo first")]
+            || current == vec![cmd("second", "echo second")]);
+        assert!(!side_path(&dir, "new").exists());
+        assert!(!side_path(&dir, "old").exists());
+        let _ = std::fs::remove_dir_all(tmp);
     }
 }

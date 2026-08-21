@@ -81,6 +81,9 @@ void main() {
     }
 
     final server = await open('server');
+    // Production only reads Hive. This writer seeds the current layout the
+    // release used without restoring an adapter for the live Spi model.
+    Hive.registerAdapter(_SpiWriter(), override: true);
     await server.box.put(
       'srv-1',
       const Spi(
@@ -90,6 +93,7 @@ void main() {
         tags: ['a'],
       ),
     );
+    Hive.registerAdapter(SpiNestedLegacyAdapter(), override: true);
 
     // Through the released layouts, not through today's models: `Snippet` and
     // `PrivateKeyInfo` have each gained a field since, so writing one here
@@ -462,6 +466,43 @@ void main() {
     // disk claim the newer copy of everything.
     expect(Stores.lastModTime, 0);
   });
+}
+
+class _SpiWriter extends TypeAdapter<Spi> {
+  @override
+  final typeId = 15;
+
+  @override
+  Spi read(BinaryReader reader) =>
+      throw UnsupportedError('Test adapter only writes released Spi records');
+
+  @override
+  void write(BinaryWriter writer, Spi obj) {
+    writer
+      ..writeByte(11)
+      ..writeByte(0)
+      ..write(obj.name)
+      ..writeByte(6)
+      ..write(obj.tags)
+      ..writeByte(8)
+      ..write(obj.autoConnect)
+      ..writeByte(10)
+      ..write(obj.custom)
+      ..writeByte(11)
+      ..write(obj.wolCfg)
+      ..writeByte(12)
+      ..write(obj.envs)
+      ..writeByte(13)
+      ..write(obj.id)
+      ..writeByte(14)
+      ..write(obj.customSystemType)
+      ..writeByte(15)
+      ..write(obj.disabledCmdTypes)
+      ..writeByte(18)
+      ..write(obj.monitorHttp)
+      ..writeByte(19)
+      ..write(obj.ssh);
+  }
 }
 
 /// Writes the typeId 3 layout that v1.0.1466 wrote, so the import is fed the

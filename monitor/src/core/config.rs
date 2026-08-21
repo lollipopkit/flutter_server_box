@@ -702,10 +702,10 @@ fn normalize_go_push(push: &GoPush) -> PushConfig {
     // different endpoint format.
     config.insert("legacy_go_format".to_string(), toml::Value::Boolean(true));
 
-    if push_type == "serverchan" {
-        if let Some(key) = config.remove("sckey") {
-            config.insert("sc_key".to_string(), key);
-        }
+    if push_type == "serverchan"
+        && let Some(key) = config.remove("sckey")
+    {
+        config.insert("sc_key".to_string(), key);
     }
     // Go's `code` was the expected HTTP status for these three channels.
     // `code` means the same thing for iOS in the current format, so leave it

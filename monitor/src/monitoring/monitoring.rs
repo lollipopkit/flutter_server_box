@@ -15,6 +15,8 @@ use tracing::{info, error};
 /// CLI tools are optional and must not stop the core sampling loop when a
 /// driver, disk, or network filesystem leaves one stuck in kernel I/O.
 const EXTERNAL_COMMAND_TIMEOUT: Duration = Duration::from_secs(30);
+const MAX_COMMAND_OUTPUT_BYTES: u64 = 1024 * 1024;
+const OUTPUT_DRAIN_MINIMUM: Duration = Duration::from_millis(10);
 
 /// The subset of `MonitoringConfig` that takes effect immediately on a
 /// settings save, instead of requiring a restart — resolved once from
@@ -414,12 +416,16 @@ async fn sample_nvidia() -> Vec<sbm_parser::types::NvidiaSmiItem> {
     let output = match command_output(primary, "nvidia-smi").await {
         Ok(output) => output,
         // The WSL driver is not normally on a non-interactive service's PATH.
-        // Only a failure to start tries this second location; a program that
-        // did start but timed out/failed remains its own failure.
-        Err(_) => {
+        // Only PATH lookup failure tries this second location; a process that
+        // did start but failed its collection remains its own failure.
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
             let mut fallback = TokioCommand::new("/usr/lib/wsl/lib/nvidia-smi");
             fallback.args(["-q", "-x"]);
             command_output(fallback, "WSL nvidia-smi").await.ok().flatten()
+        }
+        Err(error) => {
+            tracing::warn!("nvidia-smi collection failed: {error}");
+            None
         }
     };
     let raw = output
@@ -562,12 +568,12 @@ async fn command_output_with_timeout(
     let stderr = child.stderr.take().expect("stderr was requested as piped");
     let stdout = tokio::spawn(async move {
         let mut bytes = Vec::new();
-        let mut stdout = stdout;
+        let mut stdout = stdout.take(MAX_COMMAND_OUTPUT_BYTES + 1);
         stdout.read_to_end(&mut bytes).await.map(|_| bytes)
     });
     let stderr = tokio::spawn(async move {
         let mut bytes = Vec::new();
-        let mut stderr = stderr;
+        let mut stderr = stderr.take(MAX_COMMAND_OUTPUT_BYTES + 1);
         stderr.read_to_end(&mut bytes).await.map(|_| bytes)
     });
     let stdout_abort = stdout.abort_handle();
@@ -592,7 +598,9 @@ async fn command_output_with_timeout(
             return Ok(None);
         }
     };
-    let remaining = deadline.saturating_duration_since(tokio::time::Instant::now());
+    let remaining = deadline
+        .saturating_duration_since(tokio::time::Instant::now())
+        .max(OUTPUT_DRAIN_MINIMUM);
     let output = timeout(remaining, async {
         let stdout = stdout
             .await
@@ -613,6 +621,13 @@ async fn command_output_with_timeout(
             return Ok(None);
         }
     };
+    if stdout.len() as u64 > MAX_COMMAND_OUTPUT_BYTES
+        || stderr.len() as u64 > MAX_COMMAND_OUTPUT_BYTES
+    {
+        return Err(std::io::Error::other(format!(
+            "{label} produced more than {MAX_COMMAND_OUTPUT_BYTES} bytes of output"
+        )));
+    }
     Ok(Some(std::process::Output { status, stdout, stderr }))
 }
 
@@ -1420,5 +1435,28 @@ mod tests {
 
         assert!(output.is_none());
         assert!(started.elapsed() < Duration::from_secs(1));
+    }
+
+    #[tokio::test]
+    async fn an_external_command_cannot_silently_truncate_output() {
+        let command = if cfg!(windows) {
+            let mut command = TokioCommand::new("powershell");
+            command.args([
+                "-NoProfile",
+                "-Command",
+                "$out = [Console]::OpenStandardOutput(); $bytes = New-Object byte[] 1048577; $out.Write($bytes, 0, $bytes.Length)",
+            ]);
+            command
+        } else {
+            let mut command = TokioCommand::new("sh");
+            command.args(["-c", "head -c 1048577 /dev/zero"]);
+            command
+        };
+
+        let error = command_output_with_timeout(command, "test output", Duration::from_secs(5))
+            .await
+            .unwrap_err();
+
+        assert!(error.to_string().contains("more than"));
     }
 }

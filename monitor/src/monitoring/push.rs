@@ -192,8 +192,8 @@ async fn send_serverchan_notification(config: &Config, push: &PushConfig, messag
     let response = if legacy {
         let url = format!(
             "{url}?title={}&desp={}",
-            url_encode(&title),
-            url_encode(&desp),
+            go_url_encode(&title),
+            go_url_encode(&desp),
         );
         client
             .get(&url)
