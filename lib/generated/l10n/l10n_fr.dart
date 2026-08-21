@@ -319,6 +319,13 @@ class AppLocalizationsFr extends AppLocalizations {
       'Les agents de surveillance distants nécessitent HTTPS ; HTTP n’est autorisé que sur l’interface de bouclage.';
 
   @override
+  String get monitorAllowInsecureHttp => 'Allow insecure HTTP';
+
+  @override
+  String get monitorAllowInsecureHttpTip =>
+      'Only enable for a trusted private network with transport encryption outside HTTP, such as Tailscale. The agent must also explicitly allow plaintext file access. Credentials and file contents may otherwise be exposed.';
+
+  @override
   String get backupTip =>
       'Les données exportées peuvent être chiffrées avec un mot de passe. \nVeuillez les garder en sécurité.';
 

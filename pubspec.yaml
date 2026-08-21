@@ -86,6 +86,9 @@ dev_dependencies:
   hive_ce_generator: ^1.11.0
   build_runner: ^2.4.15
   drift_dev: ^2.34.0
+  # drift_dev 2.34.0 still calls DartPlaceholder.when(), removed by sqlparser
+  # 0.44.6. Keep its companion parser at the last compatible release.
+  sqlparser: 0.44.5
   flutter_lints: ^6.0.0
   json_serializable: ^6.13.0
   freezed: ^3.0.0

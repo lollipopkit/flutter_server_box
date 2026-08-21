@@ -123,18 +123,10 @@ Monitor-only crate (the app never depends on it — it always collects over SSH 
 
 ### Remote access (`api/ws/`, `ssh/`, `core/remote_access.rs`)
 
-Two WebSocket endpoints reach the local sshd. **Both are off by default**, are
+The WebSocket terminal reaches the local sshd. It is **off by default** and
 configured only in `config.toml` (deliberately absent from `PUT /settings`, so
-the panel password can't switch them on), and share the admission checks in
+the panel password can't switch it on); shared admission checks live in
 `api/ws/mod.rs`.
-
-- **`/api/v1/tunnel/ws`** — a byte relay for the app, which then speaks SSH end
-  to end with sshd and verifies the host key at its own end. The agent can't
-  read the session. **No target parameter**: it connects to
-  `remote_access.ssh_addr` and nothing else, which is the whole reason it isn't
-  usable as a pivot into the agent's network. Multi-hop is the SSH layer's job
-  (configure the far host with this one as its jump server). Port forwarding
-  needs nothing here — the app's forwards are channels inside that stream.
 - **`POST /api/v1/exec`** — one command, its output, its exit code, for the
   pages that parse what a command printed (processes, units, containers,
   snippets, power). A request rather than a stream because none of those
@@ -263,8 +255,8 @@ Uses environment variables (.env file) and TOML config files:
 - **Configuration file**: Defaults to `config.toml` (with JSON fallback support for `config.json`)
 
 Settings are grouped into subsections by **what they act on**, not by a shared
-name prefix — `[remote_access.tunnel]`, `[remote_access.terminal]`,
-`[remote_access.fs]`, `[monitoring.extended]`,
+name prefix — `[remote_access.terminal]`, `[remote_access.fs]`,
+`[monitoring.extended]`,
 `[monitoring.extended.idle_pause]`. Two consequences worth knowing before
 adding a key:
 
@@ -274,12 +266,12 @@ adding a key:
   only cycle it can pause. What stays at a section's own level is what more
   than one subsection reads (`ssh_addr`, `full_access`). Adding a key to the
   wrong level makes the file lie about what it does.
-- The resolved runtime structs (`RemoteAccess`, with `Tunnel`/`Terminal`/`Fs`)
+- The resolved runtime structs (`RemoteAccess`, with `Terminal`/`Fs`)
   mirror the file's shape, so `terminal.available()` and `fs.available()` are
   methods on the part they answer for.
 
 The **flat pre-Aug-2026 layout is not read at all** (`fs_enabled`,
-`terminal_enabled`, `tunnel_max_conns`, `idle_pause_enabled`, ...). serde
+`terminal_enabled`, `idle_pause_enabled`, ...). serde
 ignores unknown keys, so an old file parses and every switch in it silently
 reverts to off — a deliberate hard cut, since the safe direction is "feature
 disabled". `[server] name` and `[monitoring] push_rate` were also top-level Go
@@ -293,7 +285,7 @@ SQLite database with migrations in `migrations/`:
 - System metrics history
 - User authentication
 - Configuration storage
-- `access_log` — who opened a tunnel/terminal, from where, and whether it
+- `access_log` — who opened a terminal, from where, and whether it
   worked. Never records a credential; cleaned up by the existing
   `retention_policies` mechanism (`DataCleanupService::POLICY_TABLES`)
 - `ssh_known_hosts` — the pinned host key of the sshd the terminal connects to

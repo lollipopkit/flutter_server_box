@@ -79,21 +79,9 @@ over SSH if you need them.
 
 ## 🔐 Remote access (optional, off by default)
 
-Two WebSocket endpoints can reach this machine's SSH service. Both are
-disabled until you turn them on in `config.toml`, and neither can be enabled
-from the panel — see `[remote_access]` in `config.example.toml`.
-
-**`[remote_access.tunnel] enabled`** relays an SSH byte stream to `ssh_addr`.
-The agent only moves bytes — the SSH session is negotiated end to end between
-client and sshd, and this process could not read it even if it tried. There is
-no target parameter: the agent connects to `ssh_addr` and nothing else, which
-is what stops it being usable to reach other hosts on its network.
-
-TODO: **nothing consumes this endpoint today.** The ServerBox app used to reach
-sshd through it; it now reaches a monitor server through `/api/v1/exec`,
-`/api/v1/terminal/ws` and `/api/v1/fs/*` instead, and has no tunnel client
-left. Turning the switch on currently has no effect. Remove the endpoint, or
-restore a consumer.
+The WebSocket terminal is disabled until you turn it on in `config.toml`, and
+cannot be enabled from the panel — see `[remote_access]` in
+`config.example.toml`.
 
 **`[remote_access.terminal] enabled`** adds an in-browser terminal to the panel. The agent acts
 as an SSH client to `ssh_addr`, so a session has exactly the privileges of the
@@ -122,9 +110,21 @@ Notes:
 
 - The terminal refuses to run on a plaintext listener, because its first
   message carries an SSH password. TLS satisfies this; so does a reverse proxy
-  on the same host, since loopback traffic can't be read off the network.
-  `[remote_access.terminal] allow_insecure = true` overrides it. The tunnel is unaffected — what it
-  carries is already encrypted.
+   on the same host, since loopback traffic can't be read off the network.
+  On a trusted private network with transport encryption outside HTTP (for
+  example Tailscale), an operator may set
+  `[remote_access.terminal] allow_insecure = true`. The App must separately
+  enable **Allow insecure HTTP** for that individual Monitor connection; both
+  opt-ins are required. SSH credentials and terminal traffic are otherwise
+  sent in plaintext, so do not use this for an ordinary LAN or a network you
+  do not control.
+- The file API also requires TLS for remote callers. On a trusted private
+  network with transport encryption outside HTTP (for example Tailscale), an
+  operator may set `[remote_access.fs] allow_insecure = true`. The App must
+  separately enable **Allow insecure HTTP** for that individual Monitor
+  connection; both opt-ins are required. Bearer tokens and file contents are
+  otherwise sent in plaintext, so do not use this for an ordinary LAN or a
+  network you do not control.
 - The agent pins the host key of the sshd it connects to on first use and
   refuses a changed one, rather than re-pinning silently. Clearing the pin is
   deliberate: delete the row from `ssh_known_hosts`.

@@ -205,44 +205,6 @@ types:
         index: 1
       dynamic:
         index: 2
-  MonitorHttpCredential:
-    typeId: 13
-    nextIndex: 6
-    fields:
-      addr:
-        index: 0
-      user:
-        index: 1
-      pwd:
-        index: 2
-      ignoreCert:
-        index: 3
-  Spi:
-    typeId: 15
-    nextIndex: 20
-    fields:
-      name:
-        index: 0
-      tags:
-        index: 6
-      autoConnect:
-        index: 8
-      custom:
-        index: 10
-      wolCfg:
-        index: 11
-      envs:
-        index: 12
-      id:
-        index: 13
-      customSystemType:
-        index: 14
-      disabledCmdTypes:
-        index: 15
-      monitorHttp:
-        index: 18
-      ssh:
-        index: 19
   SshCredential:
     typeId: 16
     nextIndex: 11

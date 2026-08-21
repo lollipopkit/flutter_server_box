@@ -547,6 +547,19 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
       'CHECK ("monitor_ignore_cert" IN (0, 1))',
     ),
   );
+  static const VerificationMeta _monitorAllowInsecureMeta =
+      const VerificationMeta('monitorAllowInsecure');
+  @override
+  late final GeneratedColumn<bool> monitorAllowInsecure = GeneratedColumn<bool>(
+    'monitor_allow_insecure',
+    aliasedName,
+    true,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("monitor_allow_insecure" IN (0, 1))',
+    ),
+  );
   static const VerificationMeta _wolMacMeta = const VerificationMeta('wolMac');
   @override
   late final GeneratedColumn<String> wolMac = GeneratedColumn<String>(
@@ -686,6 +699,7 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
     monitorUser,
     monitorPwd,
     monitorIgnoreCert,
+    monitorAllowInsecure,
     wolMac,
     wolIp,
     wolPwd,
@@ -837,6 +851,15 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
         monitorIgnoreCert.isAcceptableOrUnknown(
           data['monitor_ignore_cert']!,
           _monitorIgnoreCertMeta,
+        ),
+      );
+    }
+    if (data.containsKey('monitor_allow_insecure')) {
+      context.handle(
+        _monitorAllowInsecureMeta,
+        monitorAllowInsecure.isAcceptableOrUnknown(
+          data['monitor_allow_insecure']!,
+          _monitorAllowInsecureMeta,
         ),
       );
     }
@@ -996,6 +1019,10 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
         DriftSqlType.bool,
         data['${effectivePrefix}monitor_ignore_cert'],
       ),
+      monitorAllowInsecure: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}monitor_allow_insecure'],
+      ),
       wolMac: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}wol_mac'],
@@ -1074,6 +1101,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
   final String? monitorUser;
   final String? monitorPwd;
   final bool? monitorIgnoreCert;
+  final bool? monitorAllowInsecure;
   final String? wolMac;
   final String? wolIp;
   final String? wolPwd;
@@ -1104,6 +1132,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     this.monitorUser,
     this.monitorPwd,
     this.monitorIgnoreCert,
+    this.monitorAllowInsecure,
     this.wolMac,
     this.wolIp,
     this.wolPwd,
@@ -1162,6 +1191,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     }
     if (!nullToAbsent || monitorIgnoreCert != null) {
       map['monitor_ignore_cert'] = Variable<bool>(monitorIgnoreCert);
+    }
+    if (!nullToAbsent || monitorAllowInsecure != null) {
+      map['monitor_allow_insecure'] = Variable<bool>(monitorAllowInsecure);
     }
     if (!nullToAbsent || wolMac != null) {
       map['wol_mac'] = Variable<String>(wolMac);
@@ -1241,6 +1273,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       monitorIgnoreCert: monitorIgnoreCert == null && nullToAbsent
           ? const Value.absent()
           : Value(monitorIgnoreCert),
+      monitorAllowInsecure: monitorAllowInsecure == null && nullToAbsent
+          ? const Value.absent()
+          : Value(monitorAllowInsecure),
       wolMac: wolMac == null && nullToAbsent
           ? const Value.absent()
           : Value(wolMac),
@@ -1297,6 +1332,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       monitorUser: serializer.fromJson<String?>(json['monitorUser']),
       monitorPwd: serializer.fromJson<String?>(json['monitorPwd']),
       monitorIgnoreCert: serializer.fromJson<bool?>(json['monitorIgnoreCert']),
+      monitorAllowInsecure: serializer.fromJson<bool?>(
+        json['monitorAllowInsecure'],
+      ),
       wolMac: serializer.fromJson<String?>(json['wolMac']),
       wolIp: serializer.fromJson<String?>(json['wolIp']),
       wolPwd: serializer.fromJson<String?>(json['wolPwd']),
@@ -1332,6 +1370,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       'monitorUser': serializer.toJson<String?>(monitorUser),
       'monitorPwd': serializer.toJson<String?>(monitorPwd),
       'monitorIgnoreCert': serializer.toJson<bool?>(monitorIgnoreCert),
+      'monitorAllowInsecure': serializer.toJson<bool?>(monitorAllowInsecure),
       'wolMac': serializer.toJson<String?>(wolMac),
       'wolIp': serializer.toJson<String?>(wolIp),
       'wolPwd': serializer.toJson<String?>(wolPwd),
@@ -1365,6 +1404,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     Value<String?> monitorUser = const Value.absent(),
     Value<String?> monitorPwd = const Value.absent(),
     Value<bool?> monitorIgnoreCert = const Value.absent(),
+    Value<bool?> monitorAllowInsecure = const Value.absent(),
     Value<String?> wolMac = const Value.absent(),
     Value<String?> wolIp = const Value.absent(),
     Value<String?> wolPwd = const Value.absent(),
@@ -1399,6 +1439,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     monitorIgnoreCert: monitorIgnoreCert.present
         ? monitorIgnoreCert.value
         : this.monitorIgnoreCert,
+    monitorAllowInsecure: monitorAllowInsecure.present
+        ? monitorAllowInsecure.value
+        : this.monitorAllowInsecure,
     wolMac: wolMac.present ? wolMac.value : this.wolMac,
     wolIp: wolIp.present ? wolIp.value : this.wolIp,
     wolPwd: wolPwd.present ? wolPwd.value : this.wolPwd,
@@ -1451,6 +1494,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       monitorIgnoreCert: data.monitorIgnoreCert.present
           ? data.monitorIgnoreCert.value
           : this.monitorIgnoreCert,
+      monitorAllowInsecure: data.monitorAllowInsecure.present
+          ? data.monitorAllowInsecure.value
+          : this.monitorAllowInsecure,
       wolMac: data.wolMac.present ? data.wolMac.value : this.wolMac,
       wolIp: data.wolIp.present ? data.wolIp.value : this.wolIp,
       wolPwd: data.wolPwd.present ? data.wolPwd.value : this.wolPwd,
@@ -1492,6 +1538,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           ..write('monitorUser: $monitorUser, ')
           ..write('monitorPwd: $monitorPwd, ')
           ..write('monitorIgnoreCert: $monitorIgnoreCert, ')
+          ..write('monitorAllowInsecure: $monitorAllowInsecure, ')
           ..write('wolMac: $wolMac, ')
           ..write('wolIp: $wolIp, ')
           ..write('wolPwd: $wolPwd, ')
@@ -1527,6 +1574,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     monitorUser,
     monitorPwd,
     monitorIgnoreCert,
+    monitorAllowInsecure,
     wolMac,
     wolIp,
     wolPwd,
@@ -1561,6 +1609,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           other.monitorUser == this.monitorUser &&
           other.monitorPwd == this.monitorPwd &&
           other.monitorIgnoreCert == this.monitorIgnoreCert &&
+          other.monitorAllowInsecure == this.monitorAllowInsecure &&
           other.wolMac == this.wolMac &&
           other.wolIp == this.wolIp &&
           other.wolPwd == this.wolPwd &&
@@ -1593,6 +1642,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
   final Value<String?> monitorUser;
   final Value<String?> monitorPwd;
   final Value<bool?> monitorIgnoreCert;
+  final Value<bool?> monitorAllowInsecure;
   final Value<String?> wolMac;
   final Value<String?> wolIp;
   final Value<String?> wolPwd;
@@ -1623,6 +1673,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     this.monitorUser = const Value.absent(),
     this.monitorPwd = const Value.absent(),
     this.monitorIgnoreCert = const Value.absent(),
+    this.monitorAllowInsecure = const Value.absent(),
     this.wolMac = const Value.absent(),
     this.wolIp = const Value.absent(),
     this.wolPwd = const Value.absent(),
@@ -1654,6 +1705,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     this.monitorUser = const Value.absent(),
     this.monitorPwd = const Value.absent(),
     this.monitorIgnoreCert = const Value.absent(),
+    this.monitorAllowInsecure = const Value.absent(),
     this.wolMac = const Value.absent(),
     this.wolIp = const Value.absent(),
     this.wolPwd = const Value.absent(),
@@ -1686,6 +1738,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     Expression<String>? monitorUser,
     Expression<String>? monitorPwd,
     Expression<bool>? monitorIgnoreCert,
+    Expression<bool>? monitorAllowInsecure,
     Expression<String>? wolMac,
     Expression<String>? wolIp,
     Expression<String>? wolPwd,
@@ -1717,6 +1770,8 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
       if (monitorUser != null) 'monitor_user': monitorUser,
       if (monitorPwd != null) 'monitor_pwd': monitorPwd,
       if (monitorIgnoreCert != null) 'monitor_ignore_cert': monitorIgnoreCert,
+      if (monitorAllowInsecure != null)
+        'monitor_allow_insecure': monitorAllowInsecure,
       if (wolMac != null) 'wol_mac': wolMac,
       if (wolIp != null) 'wol_ip': wolIp,
       if (wolPwd != null) 'wol_pwd': wolPwd,
@@ -1750,6 +1805,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     Value<String?>? monitorUser,
     Value<String?>? monitorPwd,
     Value<bool?>? monitorIgnoreCert,
+    Value<bool?>? monitorAllowInsecure,
     Value<String?>? wolMac,
     Value<String?>? wolIp,
     Value<String?>? wolPwd,
@@ -1781,6 +1837,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
       monitorUser: monitorUser ?? this.monitorUser,
       monitorPwd: monitorPwd ?? this.monitorPwd,
       monitorIgnoreCert: monitorIgnoreCert ?? this.monitorIgnoreCert,
+      monitorAllowInsecure: monitorAllowInsecure ?? this.monitorAllowInsecure,
       wolMac: wolMac ?? this.wolMac,
       wolIp: wolIp ?? this.wolIp,
       wolPwd: wolPwd ?? this.wolPwd,
@@ -1852,6 +1909,11 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     if (monitorIgnoreCert.present) {
       map['monitor_ignore_cert'] = Variable<bool>(monitorIgnoreCert.value);
     }
+    if (monitorAllowInsecure.present) {
+      map['monitor_allow_insecure'] = Variable<bool>(
+        monitorAllowInsecure.value,
+      );
+    }
     if (wolMac.present) {
       map['wol_mac'] = Variable<String>(wolMac.value);
     }
@@ -1909,6 +1971,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
           ..write('monitorUser: $monitorUser, ')
           ..write('monitorPwd: $monitorPwd, ')
           ..write('monitorIgnoreCert: $monitorIgnoreCert, ')
+          ..write('monitorAllowInsecure: $monitorAllowInsecure, ')
           ..write('wolMac: $wolMac, ')
           ..write('wolIp: $wolIp, ')
           ..write('wolPwd: $wolPwd, ')
@@ -7184,6 +7247,7 @@ typedef $$ServersTableCreateCompanionBuilder =
       Value<String?> monitorUser,
       Value<String?> monitorPwd,
       Value<bool?> monitorIgnoreCert,
+      Value<bool?> monitorAllowInsecure,
       Value<String?> wolMac,
       Value<String?> wolIp,
       Value<String?> wolPwd,
@@ -7216,6 +7280,7 @@ typedef $$ServersTableUpdateCompanionBuilder =
       Value<String?> monitorUser,
       Value<String?> monitorPwd,
       Value<bool?> monitorIgnoreCert,
+      Value<bool?> monitorAllowInsecure,
       Value<String?> wolMac,
       Value<String?> wolIp,
       Value<String?> wolPwd,
@@ -7532,6 +7597,11 @@ class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
 
   ColumnFilters<bool> get monitorIgnoreCert => $composableBuilder(
     column: $table.monitorIgnoreCert,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get monitorAllowInsecure => $composableBuilder(
+    column: $table.monitorAllowInsecure,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -7957,6 +8027,11 @@ class $$ServersTableOrderingComposer extends Composer<_$AppDb, $ServersTable> {
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get monitorAllowInsecure => $composableBuilder(
+    column: $table.monitorAllowInsecure,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get wolMac => $composableBuilder(
     column: $table.wolMac,
     builder: (column) => ColumnOrderings(column),
@@ -8111,6 +8186,11 @@ class $$ServersTableAnnotationComposer
 
   GeneratedColumn<bool> get monitorIgnoreCert => $composableBuilder(
     column: $table.monitorIgnoreCert,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get monitorAllowInsecure => $composableBuilder(
+    column: $table.monitorAllowInsecure,
     builder: (column) => column,
   );
 
@@ -8487,6 +8567,7 @@ class $$ServersTableTableManager
                 Value<String?> monitorUser = const Value.absent(),
                 Value<String?> monitorPwd = const Value.absent(),
                 Value<bool?> monitorIgnoreCert = const Value.absent(),
+                Value<bool?> monitorAllowInsecure = const Value.absent(),
                 Value<String?> wolMac = const Value.absent(),
                 Value<String?> wolIp = const Value.absent(),
                 Value<String?> wolPwd = const Value.absent(),
@@ -8517,6 +8598,7 @@ class $$ServersTableTableManager
                 monitorUser: monitorUser,
                 monitorPwd: monitorPwd,
                 monitorIgnoreCert: monitorIgnoreCert,
+                monitorAllowInsecure: monitorAllowInsecure,
                 wolMac: wolMac,
                 wolIp: wolIp,
                 wolPwd: wolPwd,
@@ -8549,6 +8631,7 @@ class $$ServersTableTableManager
                 Value<String?> monitorUser = const Value.absent(),
                 Value<String?> monitorPwd = const Value.absent(),
                 Value<bool?> monitorIgnoreCert = const Value.absent(),
+                Value<bool?> monitorAllowInsecure = const Value.absent(),
                 Value<String?> wolMac = const Value.absent(),
                 Value<String?> wolIp = const Value.absent(),
                 Value<String?> wolPwd = const Value.absent(),
@@ -8579,6 +8662,7 @@ class $$ServersTableTableManager
                 monitorUser: monitorUser,
                 monitorPwd: monitorPwd,
                 monitorIgnoreCert: monitorIgnoreCert,
+                monitorAllowInsecure: monitorAllowInsecure,
                 wolMac: wolMac,
                 wolIp: wolIp,
                 wolPwd: wolPwd,

@@ -6,6 +6,52 @@ import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
 
+/// typeId 13, as written before plaintext HTTP could be explicitly allowed.
+class LegacyMonitorHttpCredentialV1 {
+  const LegacyMonitorHttpCredentialV1({
+    required this.addr,
+    required this.user,
+    required this.pwd,
+    required this.ignoreCert,
+  });
+
+  final String addr;
+  final String? user;
+  final String? pwd;
+  final bool ignoreCert;
+
+  Map<String, dynamic> toJson() => {
+    'addr': addr,
+    'user': user,
+    'pwd': pwd,
+    'ignoreCert': ignoreCert,
+  };
+}
+
+class LegacyMonitorHttpCredentialAdapter
+    extends TypeAdapter<LegacyMonitorHttpCredentialV1> {
+  @override
+  final typeId = 13;
+
+  @override
+  LegacyMonitorHttpCredentialV1 read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return LegacyMonitorHttpCredentialV1(
+      addr: fields[0] as String,
+      user: fields[1] as String?,
+      pwd: fields[2] as String?,
+      ignoreCert: fields[3] == null ? false : fields[3] as bool,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, LegacyMonitorHttpCredentialV1 obj) =>
+      throw UnsupportedError('Hive is read-only');
+}
+
 /// A `Spi` record as written before schema v3, when the SSH fields sat flat on
 /// the record instead of nested under `ssh`.
 ///
@@ -26,7 +72,7 @@ import 'package:server_box/data/model/server/wol_cfg.dart';
 class LegacySpiV2 {
   final String name;
   final SshCredential? ssh;
-  final MonitorHttpCredential? monitorHttp;
+  final LegacyMonitorHttpCredentialV1? monitorHttp;
   final List<String>? tags;
   final bool autoConnect;
   final ServerCustom? custom;
@@ -53,7 +99,7 @@ class LegacySpiV2 {
   Spi toSpi() => Spi(
     name: name,
     ssh: ssh,
-    monitorHttp: monitorHttp,
+    monitorHttp: _monitorCredential(monitorHttp),
     tags: tags,
     autoConnect: autoConnect,
     custom: custom,
@@ -101,7 +147,7 @@ class SpiLegacyAdapter extends TypeAdapter<LegacySpiV2> {
     return LegacySpiV2(
       name: fields[0] as String,
       ssh: ssh,
-      monitorHttp: fields[18] as MonitorHttpCredential?,
+      monitorHttp: fields[18] as LegacyMonitorHttpCredentialV1?,
       tags: (fields[6] as List?)?.cast<String>(),
       autoConnect: fields[8] == null ? true : fields[8] as bool,
       custom: fields[10] as ServerCustom?,
@@ -120,4 +166,90 @@ class SpiLegacyAdapter extends TypeAdapter<LegacySpiV2> {
       'Spi typeId by SpiNestSshMigration',
     );
   }
+}
+
+/// typeId 15, as written after SSH fields moved under `ssh` and before the
+/// monitor credential could opt into plaintext HTTP.
+class LegacySpiV3 {
+  const LegacySpiV3({
+    required this.name,
+    required this.ssh,
+    required this.monitorHttp,
+    required this.tags,
+    required this.autoConnect,
+    required this.custom,
+    required this.wolCfg,
+    required this.envs,
+    required this.id,
+    required this.customSystemType,
+    required this.disabledCmdTypes,
+  });
+
+  final String name;
+  final SshCredential? ssh;
+  final LegacyMonitorHttpCredentialV1? monitorHttp;
+  final List<String>? tags;
+  final bool autoConnect;
+  final ServerCustom? custom;
+  final WakeOnLanCfg? wolCfg;
+  final Map<String, String>? envs;
+  final String id;
+  final SystemType? customSystemType;
+  final List<String>? disabledCmdTypes;
+
+  Spi toSpi() => Spi(
+    name: name,
+    ssh: ssh,
+    monitorHttp: _monitorCredential(monitorHttp),
+    tags: tags,
+    autoConnect: autoConnect,
+    custom: custom,
+    wolCfg: wolCfg,
+    envs: envs,
+    id: id,
+    customSystemType: customSystemType,
+    disabledCmdTypes: disabledCmdTypes,
+  );
+}
+
+class SpiNestedLegacyAdapter extends TypeAdapter<LegacySpiV3> {
+  @override
+  final typeId = 15;
+
+  @override
+  LegacySpiV3 read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return LegacySpiV3(
+      name: fields[0] as String,
+      ssh: fields[19] as SshCredential?,
+      monitorHttp: fields[18] as LegacyMonitorHttpCredentialV1?,
+      tags: (fields[6] as List?)?.cast<String>(),
+      autoConnect: fields[8] == null ? true : fields[8] as bool,
+      custom: fields[10] as ServerCustom?,
+      wolCfg: fields[11] as WakeOnLanCfg?,
+      envs: (fields[12] as Map?)?.cast<String, String>(),
+      id: fields[13] == null ? '' : fields[13] as String,
+      customSystemType: fields[14] as SystemType?,
+      disabledCmdTypes: (fields[15] as List?)?.cast<String>(),
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, LegacySpiV3 obj) =>
+      throw UnsupportedError('Hive is read-only');
+}
+
+MonitorHttpCredential? _monitorCredential(
+  LegacyMonitorHttpCredentialV1? value,
+) {
+  if (value == null) return null;
+  return MonitorHttpCredential(
+    addr: value.addr,
+    user: value.user,
+    pwd: value.pwd,
+    ignoreCert: value.ignoreCert,
+  );
 }

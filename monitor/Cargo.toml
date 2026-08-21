@@ -103,6 +103,8 @@ clap = { version = "4.6", features = ["derive", "env"] }
 hostname = "0.4.2"
 async-stream = "0.3.6"
 futures = "0.3.34"
+# Advisory process-wide lock for custom-command directory replacements.
+fs2 = "0.4"
 
 # Reading the user's login shell out of the passwd database. `$SHELL` is no
 # substitute for a service: it reports whatever launched the agent, not what

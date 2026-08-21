@@ -81,6 +81,7 @@ class Servers extends Table with SyncMeta {
   TextColumn get monitorUser => text().nullable()();
   TextColumn get monitorPwd => text().nullable()();
   BoolColumn get monitorIgnoreCert => boolean().nullable()();
+  BoolColumn get monitorAllowInsecure => boolean().nullable()();
 
   TextColumn get wolMac => text().nullable()();
   TextColumn get wolIp => text().nullable()();

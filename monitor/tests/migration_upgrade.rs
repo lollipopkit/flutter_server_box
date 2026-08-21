@@ -114,7 +114,7 @@ async fn the_audit_log_is_cleaned_up_by_the_retention_service() {
     .execute(&pool)
     .await
     .unwrap();
-    sqlx::query("INSERT INTO access_log (kind, action, result) VALUES ('tunnel','open','ok')")
+    sqlx::query("INSERT INTO access_log (kind, action, result) VALUES ('terminal','open','ok')")
         .execute(&pool)
         .await
         .unwrap();
@@ -136,5 +136,5 @@ async fn the_audit_log_is_cleaned_up_by_the_retention_service() {
         1,
         "an entry older than its retention policy must be collected"
     );
-    assert_eq!(rows[0].get::<String, _>("kind"), "tunnel");
+    assert_eq!(rows[0].get::<String, _>("kind"), "terminal");
 }

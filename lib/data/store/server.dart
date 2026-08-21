@@ -125,6 +125,8 @@ class ServerStore extends EntityStore<Spi> {
               user: row['monitor_user'] as String?,
               pwd: row['monitor_pwd'] as String?,
               ignoreCert: (row['monitor_ignore_cert'] as int? ?? 0) == 1,
+              allowInsecure:
+                  (row['monitor_allow_insecure'] as int? ?? 0) == 1,
             ),
       wolCfg: row['wol_mac'] == null
           ? null
@@ -185,6 +187,7 @@ class ServerStore extends EntityStore<Spi> {
       'ssh_ip', 'ssh_port', 'ssh_user', 'ssh_pwd', 'ssh_key_id',
       'ssh_key_path', 'ssh_alter_url', 'ssh_proxy_command',
       'monitor_addr', 'monitor_user', 'monitor_pwd', 'monitor_ignore_cert',
+      'monitor_allow_insecure',
       'wol_mac', 'wol_ip', 'wol_pwd',
       'pve_addr', 'pve_ignore_cert', 'pve_pwd', 'prefer_temp_dev',
       'temp_is_celsius', 'logo_url', 'net_dev', 'script_dir',
@@ -206,6 +209,7 @@ class ServerStore extends EntityStore<Spi> {
       monitor?.user,
       monitor?.pwd,
       monitor == null ? null : (monitor.ignoreCert ? 1 : 0),
+      monitor == null ? null : (monitor.allowInsecure ? 1 : 0),
       item.wolCfg?.mac,
       item.wolCfg?.ip,
       item.wolCfg?.pwd,

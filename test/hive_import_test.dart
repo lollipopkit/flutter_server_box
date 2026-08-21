@@ -21,7 +21,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 ///
 /// This is the one pass over a user's real records, and it is not repeatable —
 /// once the marker is written the boxes are never read again. So it is worth
-/// checking against boxes written the way the app wrote them, through
+/// checking against released fixture bytes and boxes written through
 /// `HiveStore`, rather than against a hand-built map.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -73,23 +73,20 @@ void main() {
   });
 
   /// Fills the boxes the way a running app would have left them.
-  Future<void> seedHive() async {
+  Future<void> seedHive({bool includeReleasedServer = true}) async {
     Future<HiveStore> open(String name) async {
       final store = HiveStore(name);
       await store.init();
       return store;
     }
 
-    final server = await open('server');
-    await server.box.put(
-      'srv-1',
-      const Spi(
-        id: 'srv-1',
-        name: 'prod',
-        ssh: SshCredential(ip: '10.0.0.1', user: 'root', port: 2222),
-        tags: ['a'],
-      ),
-    );
+    if (includeReleasedServer) {
+      // A released app wrote these bytes with its own generated adapter. The
+      // import must keep accepting that layout, not one today's model writes.
+      File('test/fixtures/hive_v1491/server_enc.hive').copySync(
+        tempDir.path.joinPath('server_enc.hive'),
+      );
+    }
 
     // Through the released layouts, not through today's models: `Snippet` and
     // `PrivateKeyInfo` have each gained a field since, so writing one here
@@ -134,10 +131,10 @@ void main() {
 
     final stats = await open('connection_stats');
     await stats.box.put(
-      'srv-1_1000',
+      'srv-pwd_1000',
       ConnectionStat(
-        serverId: 'srv-1',
-        serverName: 'prod',
+        serverId: 'srv-pwd',
+        serverName: 'password auth',
         timestamp: DateTime.now(),
         result: ConnectionResult.success,
         durationMs: 12,
@@ -145,7 +142,7 @@ void main() {
     );
 
     final agent = await open('agent_conversation');
-    await agent.box.put('active::srv-1', 'conv-1');
+    await agent.box.put('active::srv-pwd', 'conv-1');
 
     await Hive.close();
   }
@@ -169,11 +166,11 @@ void main() {
     await seedHive();
     await Stores.init();
 
-    final spi = kvRow('server', 'srv-1')!;
-    expect(spi['name'], 'prod');
+    final spi = kvRow('server', 'srv-pwd')!;
+    expect(spi['name'], 'password auth');
     expect((spi['ssh'] as Map)['ip'], '10.0.0.1');
-    expect((spi['ssh'] as Map)['port'], 2222);
-    expect(spi['tags'], ['a']);
+    expect((spi['ssh'] as Map)['port'], 22);
+    expect(spi['tags'], ['prod', 'db']);
 
     expect(kvRow('snippet', 'uptime')!['script'], 'w');
     // `private_key`, which is what the released model's `toJson` called it.
@@ -200,7 +197,7 @@ void main() {
       SqliteDb.instance
           .select(
             "SELECT value FROM kv WHERE store = 'agent_conversation' "
-            "AND key = 'active::srv-1';",
+             "AND key = 'active::srv-pwd';",
           )
           .single['value'],
       '"conv-1"',
@@ -215,10 +212,10 @@ void main() {
     // more, so what is in the row has to stand on its own.
     final raw = SqliteDb.instance.select(
       'SELECT value FROM kv WHERE store = ? AND key = ?;',
-      ['server', 'srv-1'],
+      ['server', 'srv-pwd'],
     ).single['value'] as String;
     final decoded = json.decode(raw) as Map<String, dynamic>;
-    expect(decoded['name'], 'prod');
+    expect(decoded['name'], 'password auth');
     expect((decoded['ssh'] as Map)['ip'], '10.0.0.1');
   });
 
@@ -250,7 +247,7 @@ void main() {
     await seedHive();
     // The one box the app opened without a cipher.
     final index = File(tempDir.path.joinPath('conn_stats_index.hive'));
-    await index.writeAsString('idx_srv-1');
+    await index.writeAsString('idx_srv-pwd');
 
     await Stores.init();
 
@@ -277,9 +274,9 @@ void main() {
       0,
     );
 
-    final stat = kvRow('conn_stat', 'srv-1_1000')!;
-    expect(stat['serverId'], 'srv-1');
-    expect(stat['serverName'], 'prod');
+    final stat = kvRow('conn_stat', 'srv-pwd_1000')!;
+    expect(stat['serverId'], 'srv-pwd');
+    expect(stat['serverName'], 'password auth');
     // The `@JsonValue`, not the enum's name. Telling the two apart is the
     // migration's job and it has a table for it.
     expect(stat['result'], 'success');
@@ -323,7 +320,7 @@ void main() {
 
     await Stores.init();
 
-    expect(kvRow('server', 'srv-1')?['name'], 'prod',
+    expect(kvRow('server', 'srv-pwd')?['name'], 'password auth',
         reason: 'a box that opened is across');
     expect(kvRow('snippet', 'uptime'), isNull,
         reason: 'the box that did not open has nothing across');
@@ -357,7 +354,7 @@ void main() {
 
     await Stores.init();
 
-    expect(kvRow('conn_stat', 'srv-1_1000'), isNotNull,
+    expect(kvRow('conn_stat', 'srv-pwd_1000'), isNotNull,
         reason: 'the readable record still lands');
 
     // Deliberate, and the opposite of an unopenable box: what makes a record
@@ -375,12 +372,14 @@ void main() {
   });
 
   test('a v1.0.1466 server record arrives nested under ssh', () async {
-    await seedHive();
+    // The released fixture also uses typeId 3. This test must install the
+    // 1466 writer at that typeId, so seed every other release-format box only.
+    await seedHive(includeReleasedServer: false);
 
     // What 1466 actually had on disk. Its `Spi` was typeId 3 with the SSH
-    // fields flat on the record; the current one is typeId 15 with them under
-    // `ssh`, and `seedHive` writes that current shape — so nothing else here
-    // exercises the path every App Store install upgrading from 1466 takes.
+    // fields flat on the record; the current one has them under `ssh`, so
+    // nothing else here exercises the path every App Store install upgrading
+    // from 1466 takes.
     //
     // Registered over `SpiLegacyAdapter` only to seed, because that one is
     // read-only by design. `_V2SpiWriter.write` is a copy of the 1466

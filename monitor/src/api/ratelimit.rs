@@ -1,9 +1,9 @@
 //! Login throttling.
 //!
 //! `POST /login` had no limit at all, which was survivable while the panel
-//! only exposed metrics. Once the panel can open an SSH tunnel or a terminal,
-//! the password guards shell access to the machine, and an unthrottled login
-//! endpoint is the cheapest way in.
+//! only exposed metrics. Once the panel can open a terminal, the password
+//! guards shell access to the machine, and an unthrottled login endpoint is
+//! the cheapest way in.
 //!
 //! Failure-triggered exponential backoff rather than a fixed-rate token
 //! bucket: legitimate users mistype a password once or twice and should see

@@ -82,6 +82,16 @@ class PortForwardStore extends EntityStore<PortForwardConfig> {
     }
   }
 
+  /// Removes one server's records one by one so each leaves a tombstone.
+  ///
+  /// The server's foreign key would cascade the row deletion, but it cannot
+  /// record a change for this sync root after the child row has disappeared.
+  void clearServer(String serverId) {
+    for (final config in fetchForServer(serverId)) {
+      delete(config);
+    }
+  }
+
   /// One server's forwards, as an indexed query.
   List<PortForwardConfig> fetchForServer(String serverId) => db
       .select('SELECT * FROM port_forward WHERE server_id = ?;', [serverId])

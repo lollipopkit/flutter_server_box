@@ -315,6 +315,13 @@ class AppLocalizationsRu extends AppLocalizations {
       'Для удалённых агентов мониторинга требуется HTTPS; HTTP разрешён только для loopback-адресов.';
 
   @override
+  String get monitorAllowInsecureHttp => 'Allow insecure HTTP';
+
+  @override
+  String get monitorAllowInsecureHttpTip =>
+      'Only enable for a trusted private network with transport encryption outside HTTP, such as Tailscale. The agent must also explicitly allow plaintext file access. Credentials and file contents may otherwise be exposed.';
+
+  @override
   String get backupTip =>
       'Экспортированные данные могут быть зашифрованы паролем. \nПожалуйста, храните их в безопасности.';
 

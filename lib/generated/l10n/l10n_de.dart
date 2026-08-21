@@ -315,6 +315,13 @@ class AppLocalizationsDe extends AppLocalizations {
       'Remote monitor agents require HTTPS; HTTP is allowed only on loopback.';
 
   @override
+  String get monitorAllowInsecureHttp => 'Allow insecure HTTP';
+
+  @override
+  String get monitorAllowInsecureHttpTip =>
+      'Only enable for a trusted private network with transport encryption outside HTTP, such as Tailscale. The agent must also explicitly allow plaintext file access. Credentials and file contents may otherwise be exposed.';
+
+  @override
   String get backupTip =>
       'Die exportierten Daten können mit einem Passwort verschlüsselt werden. \nBitte sicher aufbewahren.';
 

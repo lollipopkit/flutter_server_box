@@ -5,10 +5,18 @@ use sbm_parser::{ServerStatus, SystemType};
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use std::collections::HashMap;
-use std::process::Command;
+use std::process::Stdio;
 use std::sync::Arc;
-use tokio::time::{sleep, Duration};
+use tokio::io::AsyncReadExt;
+use tokio::process::{Child, Command as TokioCommand};
+use tokio::time::{sleep, timeout, timeout_at, Duration};
 use tracing::{info, error};
+
+/// CLI tools are optional and must not stop the core sampling loop when a
+/// driver, disk, or network filesystem leaves one stuck in kernel I/O.
+const EXTERNAL_COMMAND_TIMEOUT: Duration = Duration::from_secs(30);
+const MAX_COMMAND_OUTPUT_BYTES: u64 = 1024 * 1024;
+const OUTPUT_DRAIN_MINIMUM: Duration = Duration::from_millis(10);
 
 /// The subset of `MonitoringConfig` that takes effect immediately on a
 /// settings save, instead of requiring a restart — resolved once from
@@ -344,7 +352,7 @@ async fn collect_metrics(
     // the shared script (a single targeted `nvidia-smi` call, same output
     // shape `gpu::nvidia_from_xml` already parses either way). Runs every
     // cycle, same cadence as before native sampling existed.
-    status.nvidia = sample_nvidia(system).await;
+    status.nvidia = sample_nvidia().await;
 
     // amd/sensors/batteries/disk_smart have no native path (CLI-tool-bound —
     // amd-smi/rocm-smi, `sensors`, smartctl, platform battery queries) and
@@ -402,20 +410,28 @@ fn custom_cmd_outputs(segments: &[(String, String)]) -> Vec<CustomCmdOutput> {
 /// common case), then the WSL-mounted Windows driver path (absent from
 /// non-interactive PATH under WSL), matching the shell command's fallback
 /// this replaces (`commands::LINUX`'s `NVIDIA` entry).
-async fn sample_nvidia(system: SystemType) -> Vec<sbm_parser::types::NvidiaSmiItem> {
-    let raw = tokio::task::spawn_blocking(move || -> String {
-        let output = Command::new("nvidia-smi").args(["-q", "-x"]).output().or_else(|_| {
-            Command::new("/usr/lib/wsl/lib/nvidia-smi").args(["-q", "-x"]).output()
-        });
-        let _ = system; // no per-platform branching needed: PATH resolution covers Windows too
-        output
-            .ok()
-            .filter(|o| o.status.success())
-            .map(|o| String::from_utf8_lossy(&o.stdout).into_owned())
-            .unwrap_or_default()
-    })
-    .await
-    .unwrap_or_default();
+async fn sample_nvidia() -> Vec<sbm_parser::types::NvidiaSmiItem> {
+    let mut primary = TokioCommand::new("nvidia-smi");
+    primary.args(["-q", "-x"]);
+    let output = match command_output(primary, "nvidia-smi").await {
+        Ok(output) => output,
+        // The WSL driver is not normally on a non-interactive service's PATH.
+        // Only PATH lookup failure tries this second location; a process that
+        // did start but failed its collection remains its own failure.
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            let mut fallback = TokioCommand::new("/usr/lib/wsl/lib/nvidia-smi");
+            fallback.args(["-q", "-x"]);
+            command_output(fallback, "WSL nvidia-smi").await.ok().flatten()
+        }
+        Err(error) => {
+            tracing::warn!("nvidia-smi collection failed: {error}");
+            None
+        }
+    };
+    let raw = output
+        .filter(|output| output.status.success())
+        .map(|output| String::from_utf8_lossy(&output.stdout).into_owned())
+        .unwrap_or_default();
     sbm_parser::gpu::nvidia_from_xml(&raw)
 }
 
@@ -477,30 +493,34 @@ async fn execute_commands(system: SystemType) -> Result<Vec<(String, String)>> {
     let content = build_status_script(system);
     let path = script_path(system);
 
-    let stdout = tokio::task::spawn_blocking(move || -> std::io::Result<String> {
-        ensure_script(&path, &content)?;
-        let mut stdout = String::new();
-        for func in EXTENDED_FUNCS {
-            let output = if cfg!(target_os = "windows") {
-                Command::new("powershell")
-                    .args(["-ExecutionPolicy", "Bypass", "-File"])
-                    .arg(&path)
-                    .arg(format!("-{}", func.flag()))
-                    .output()?
-            } else {
-                Command::new("sh").arg(&path).arg(format!("-{}", func.flag())).output()?
-            };
-            if !output.status.success() {
-                error!("Status script {} exited with {}", func.name(), output.status);
-            }
-            stdout.push_str(&String::from_utf8_lossy(&output.stdout));
-            stdout.push('\n');
+    ensure_script(&path, &content)
+        .map_err(|e| crate::utils::error::MonitorError::Monitoring(format!("Status script error: {e}")))?;
+    let mut stdout = String::new();
+    for func in EXTENDED_FUNCS {
+        let command = if cfg!(target_os = "windows") {
+            let mut command = TokioCommand::new("powershell");
+            command
+                .args(["-ExecutionPolicy", "Bypass", "-File"])
+                .arg(&path)
+                .arg(format!("-{}", func.flag()));
+            command
+        } else {
+            let mut command = TokioCommand::new("sh");
+            command.arg(&path).arg(format!("-{}", func.flag()));
+            command
+        };
+        let Some(output) = command_output(command, func.name())
+            .await
+            .map_err(|e| crate::utils::error::MonitorError::Monitoring(format!("Status script error: {e}")))?
+        else {
+            continue;
+        };
+        if !output.status.success() {
+            error!("Status script {} exited with {}", func.name(), output.status);
         }
-        Ok(stdout)
-    })
-    .await
-    .map_err(|e| crate::utils::error::MonitorError::Monitoring(format!("Task join error: {}", e)))?
-    .map_err(|e| crate::utils::error::MonitorError::Monitoring(format!("Status script error: {}", e)))?;
+        stdout.push_str(&String::from_utf8_lossy(&output.stdout));
+        stdout.push('\n');
+    }
 
     if stdout.trim().is_empty() {
         return Err(crate::utils::error::MonitorError::Monitoring(
@@ -510,6 +530,131 @@ async fn execute_commands(system: SystemType) -> Result<Vec<(String, String)>> {
     // Segments rather than a map: custom commands are ordered by the user and
     // that order only exists in the order the script printed them.
     Ok(sbm_parser::script::parse_script_segments(&stdout))
+}
+
+/// Runs a CLI tool with bounded time and output collection.
+///
+/// `Child::wait_with_output` consumes the child, which makes it impossible to
+/// signal it if its wait future expires. Read the pipes independently instead,
+/// retaining the child so a timeout can stop it before awaiting the readers.
+async fn command_output(
+    command: TokioCommand,
+    label: &str,
+) -> std::io::Result<Option<std::process::Output>> {
+    command_output_with_timeout(command, label, EXTERNAL_COMMAND_TIMEOUT).await
+}
+
+async fn command_output_with_timeout(
+    mut command: TokioCommand,
+    label: &str,
+    command_timeout: Duration,
+) -> std::io::Result<Option<std::process::Output>> {
+    #[cfg(unix)]
+    {
+        use std::os::unix::process::CommandExt;
+        // Its descendants inherit this group. On timeout, ending the group
+        // prevents a shell child such as smartctl from outliving its script.
+        command.as_std_mut().process_group(0);
+    }
+    command
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .kill_on_drop(true);
+    let deadline = tokio::time::Instant::now() + command_timeout;
+    let mut child = command.spawn()?;
+    let process_group = child.id();
+    let stdout = child.stdout.take().expect("stdout was requested as piped");
+    let stderr = child.stderr.take().expect("stderr was requested as piped");
+    let stdout = tokio::spawn(async move {
+        let mut bytes = Vec::new();
+        let mut stdout = stdout.take(MAX_COMMAND_OUTPUT_BYTES + 1);
+        stdout.read_to_end(&mut bytes).await.map(|_| bytes)
+    });
+    let stderr = tokio::spawn(async move {
+        let mut bytes = Vec::new();
+        let mut stderr = stderr.take(MAX_COMMAND_OUTPUT_BYTES + 1);
+        stderr.read_to_end(&mut bytes).await.map(|_| bytes)
+    });
+    let stdout_abort = stdout.abort_handle();
+    let stderr_abort = stderr.abort_handle();
+
+    let status = match timeout_at(deadline, child.wait()).await {
+        Ok(status) => status?,
+        Err(_) => {
+            tracing::warn!("{label} exceeded {} seconds and was terminated", command_timeout.as_secs());
+            terminate_command(&mut child, process_group)?;
+            // A shell can leave descendants holding either pipe. Do not join
+            // their readers after the deadline: a timed-out collection must
+            // never turn into an unbounded wait on inherited handles.
+            stdout_abort.abort();
+            stderr_abort.abort();
+            tokio::spawn(async move {
+                // Reap the direct child eventually without holding up the
+                // monitoring loop. Its process group was already signalled
+                // above on Unix, and `start_kill` was requested elsewhere.
+                let _ = child.wait().await;
+            });
+            return Ok(None);
+        }
+    };
+    let remaining = deadline
+        .saturating_duration_since(tokio::time::Instant::now())
+        .max(OUTPUT_DRAIN_MINIMUM);
+    let output = timeout(remaining, async {
+        let stdout = stdout
+            .await
+            .map_err(|e| std::io::Error::other(format!("{label} stdout task failed: {e}")))??;
+        let stderr = stderr
+            .await
+            .map_err(|e| std::io::Error::other(format!("{label} stderr task failed: {e}")))??;
+        Ok::<_, std::io::Error>((stdout, stderr))
+    })
+    .await;
+    let (stdout, stderr) = match output {
+        Ok(output) => output?,
+        Err(_) => {
+            tracing::warn!("{label} left output pipes open after exit and was terminated");
+            terminate_process_group(process_group);
+            stdout_abort.abort();
+            stderr_abort.abort();
+            return Ok(None);
+        }
+    };
+    if stdout.len() as u64 > MAX_COMMAND_OUTPUT_BYTES
+        || stderr.len() as u64 > MAX_COMMAND_OUTPUT_BYTES
+    {
+        return Err(std::io::Error::other(format!(
+            "{label} produced more than {MAX_COMMAND_OUTPUT_BYTES} bytes of output"
+        )));
+    }
+    Ok(Some(std::process::Output { status, stdout, stderr }))
+}
+
+fn terminate_command(child: &mut Child, process_group: Option<u32>) -> std::io::Result<()> {
+    if terminate_process_group(process_group) {
+        return Ok(());
+    }
+
+    child.start_kill()
+}
+
+fn terminate_process_group(_process_group: Option<u32>) -> bool {
+    #[cfg(unix)]
+    if let Some(id) = _process_group
+        // `process_group(0)` above makes the direct child's PID its process
+        // group ID. A negative PID is POSIX's "signal the group" form.
+        && unsafe { kill_process_group(-(id as i32), 9) } == 0
+    {
+        return true;
+    }
+    false
+}
+
+#[cfg(unix)]
+unsafe extern "C" {
+    #[link_name = "kill"]
+    fn kill_process_group(pid: i32, signal: i32) -> i32;
 }
 
 /// `fresh` wins whenever it has data; otherwise keeps whatever the previous
@@ -1270,5 +1415,48 @@ mod tests {
         assert_eq!(out[0].name, "second");
         assert_eq!(out[0].output, "b");
         assert_eq!(out[1].name, "first");
+    }
+
+    #[tokio::test]
+    async fn a_stuck_external_command_is_terminated() {
+        let command = if cfg!(windows) {
+            let mut command = TokioCommand::new("powershell");
+            command.args(["-NoProfile", "-Command", "Start-Sleep -Seconds 2"]);
+            command
+        } else {
+            let mut command = TokioCommand::new("sh");
+            command.args(["-c", "sleep 2"]);
+            command
+        };
+        let started = std::time::Instant::now();
+        let output = command_output_with_timeout(command, "test sleep", Duration::from_millis(100))
+            .await
+            .unwrap();
+
+        assert!(output.is_none());
+        assert!(started.elapsed() < Duration::from_secs(1));
+    }
+
+    #[tokio::test]
+    async fn an_external_command_cannot_silently_truncate_output() {
+        let command = if cfg!(windows) {
+            let mut command = TokioCommand::new("powershell");
+            command.args([
+                "-NoProfile",
+                "-Command",
+                "$out = [Console]::OpenStandardOutput(); $bytes = New-Object byte[] 1048577; $out.Write($bytes, 0, $bytes.Length)",
+            ]);
+            command
+        } else {
+            let mut command = TokioCommand::new("sh");
+            command.args(["-c", "head -c 1048577 /dev/zero"]);
+            command
+        };
+
+        let error = command_output_with_timeout(command, "test output", Duration::from_secs(5))
+            .await
+            .unwrap_err();
+
+        assert!(error.to_string().contains("more than"));
     }
 }

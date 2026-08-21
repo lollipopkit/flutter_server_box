@@ -213,11 +213,12 @@ class KvToTablesMigration implements SchemaMigration {
         'ssh_ip, ssh_port, ssh_user, ssh_pwd, ssh_key_id, ssh_key_path, '
         'ssh_alter_url, ssh_proxy_command, '
         'monitor_addr, monitor_user, monitor_pwd, monitor_ignore_cert, '
+        'monitor_allow_insecure, '
         'wol_mac, wol_ip, wol_pwd, '
         'pve_addr, pve_ignore_cert, pve_pwd, prefer_temp_dev, '
         'temp_is_celsius, logo_url, net_dev, script_dir, updated_at'
         ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '
-        '?, ?, ?, ?, ?, ?, ?, ?, ?);',
+        '?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
         [
           id,
           v['name'] as String? ?? id,
@@ -236,6 +237,7 @@ class KvToTablesMigration implements SchemaMigration {
           monitor?['user'] as String?,
           monitor?['pwd'] as String?,
           hasMonitor ? _bool(monitor?['ignoreCert']) : null,
+          hasMonitor ? _bool(monitor?['allowInsecure']) : null,
           wol?['mac'] as String?,
           wol?['ip'] as String?,
           wol?['pwd'] as String?,

@@ -4,7 +4,7 @@ use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
@@ -251,6 +251,18 @@ pub struct DataRetentionConfig {
     pub max_db_size_mb: u64,
 }
 
+impl DataRetentionConfig {
+    /// A zero duration makes Tokio's interval tick continuously, turning
+    /// retention into a database-consuming busy loop.
+    pub fn validate(&self) -> std::result::Result<(), String> {
+        if self.cleanup_interval_hours < 1 {
+            Err("data_retention.cleanup_interval_hours must be at least 1".to_string())
+        } else {
+            Ok(())
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MonitoringRule {
     pub name: String,
@@ -298,15 +310,17 @@ impl Config {
             // Convert from Go format if needed
             config.normalize()?;
             config.apply_env_overrides();
+            config.validate()?;
             return Ok(config);
-        } else if Path::new("config.json").exists() {
-            let content =
-                fs::read_to_string("config.json").context("Failed to read config.json")?;
+        } else if let Some(json_path) = legacy_json_path() {
+            let content = fs::read_to_string(&json_path)
+                .with_context(|| format!("Failed to read {}", json_path.display()))?;
             let mut config: Self = serde_json::from_str(&content).context("Failed to parse config.json")?;
 
             // Convert from Go format if needed
             config.normalize()?;
             config.apply_env_overrides();
+            config.validate()?;
 
             // One-way migration to config.toml so subsequent starts take the
             // config.toml branch above instead of re-parsing JSON every time.
@@ -318,12 +332,16 @@ impl Config {
                 toml::to_string_pretty(&config).context("Failed to serialize migrated config")?;
             config_file::write_atomic(Path::new("config.toml"), toml_content.as_bytes())
                 .context("Failed to write migrated config.toml")?;
-            match fs::rename("config.json", "config.json.migrated") {
+            let migrated_path = json_path.with_extension("json.migrated");
+            match fs::rename(&json_path, &migrated_path) {
                 Ok(()) => tracing::info!(
-                    "Migrated config.json to config.toml (old file kept as config.json.migrated)"
+                    "Migrated {} to config.toml (old file kept as {})",
+                    json_path.display(),
+                    migrated_path.display(),
                 ),
                 Err(e) => tracing::warn!(
-                    "Migrated config.json to config.toml but couldn't rename the old file: {e}"
+                    "Migrated {} to config.toml but couldn't rename it: {e}",
+                    json_path.display(),
                 ),
             }
 
@@ -333,6 +351,7 @@ impl Config {
         // Create default config
         let mut config = Self::default();
         config.apply_env_overrides();
+        config.validate()?;
 
         // Save default config as TOML
         let content =
@@ -341,6 +360,19 @@ impl Config {
             .context("Failed to write default config.toml")?;
 
         Ok(config)
+    }
+
+    /// Validates values that would otherwise be accepted by serde but make a
+    /// runtime task unsafe or unusable.
+    pub fn validate(&self) -> Result<()> {
+        if let Some(retention) = self
+            .monitoring
+            .as_ref()
+            .and_then(|monitoring| monitoring.data_retention.as_ref())
+        {
+            retention.validate().map_err(anyhow::Error::msg)?;
+        }
+        Ok(())
     }
 
     /// Folds the Go agent's flat keys into the sections this agent uses, then
@@ -399,20 +431,12 @@ impl Config {
                 extended: ExtendedConfig::default(),
             };
 
-            let push = self.legacy.pushes.as_ref().map(|go_pushes| {
-                go_pushes.iter().map(|gp| PushConfig {
-                    name: gp.name.clone(),
-                    push_type: gp.push_type.clone(),
-                    config: match gp.iface {
-                        serde_json::Value::Object(ref obj) => {
-                            obj.iter().map(|(k, v)| {
-                                (k.clone(), toml::Value::try_from(v.clone()).unwrap_or(toml::Value::String(v.to_string())))
-                            }).collect()
-                        }
-                        _ => toml::Table::new(),
-                    },
-                }).collect()
-            }).unwrap_or_default();
+            let push = self
+                .legacy
+                .pushes
+                .as_ref()
+                .map(|pushes| pushes.iter().map(normalize_go_push).collect())
+                .unwrap_or_default();
 
             self.server = Some(server);
             self.monitoring = Some(monitoring);
@@ -629,6 +653,76 @@ impl Config {
                 DEFAULT
             }
         }
+    }
+}
+
+/// Finds the JSON source from a pre-Rust monitor installation. The current
+/// directory wins for the short-lived Rust JSON format; Go wrote exclusively
+/// to `$HOME/.config/server_box/config.json`, while the current installer runs
+/// from a different application directory.
+fn legacy_json_path() -> Option<PathBuf> {
+    let local = PathBuf::from("config.json");
+    if local.is_file() {
+        return Some(local);
+    }
+
+    let go = env::var_os("HOME")
+        .map(PathBuf::from)?
+        .join(".config")
+        .join("server_box")
+        .join("config.json");
+    go.is_file().then_some(go)
+}
+
+/// Maps Go's per-channel JSON shape to the current flattened TOML table.
+/// Keep the fields the old implementations actually consumed rather than
+/// dropping them on import: an upgrade gets one chance to carry notification
+/// credentials and templates forward.
+fn normalize_go_push(push: &GoPush) -> PushConfig {
+    let mut config = match &push.iface {
+        serde_json::Value::Object(object) => object
+            .iter()
+            .map(|(key, value)| {
+                (
+                    key.clone(),
+                    toml::Value::try_from(value.clone())
+                        .unwrap_or_else(|_| toml::Value::String(value.to_string())),
+                )
+            })
+            .collect(),
+        _ => toml::Table::new(),
+    };
+    let push_type = match push.push_type.as_str() {
+        "server_chan" => "serverchan".to_string(),
+        other => other.to_string(),
+    };
+    // The current ServerChan/Bark encodings differ from the Go agent's. Keep
+    // this marker in the migrated file so each channel can preserve its old
+    // request shape instead of accepting the credentials then notifying a
+    // different endpoint format.
+    config.insert("legacy_go_format".to_string(), toml::Value::Boolean(true));
+
+    if push_type == "serverchan"
+        && let Some(key) = config.remove("sckey")
+    {
+        config.insert("sc_key".to_string(), key);
+    }
+    // Go's `code` was the expected HTTP status for these three channels.
+    // `code` means the same thing for iOS in the current format, so leave it
+    // there for that channel.
+    if matches!(push_type.as_str(), "webhook" | "serverchan" | "bark")
+        && let Some(code) = config.remove("code").filter(|code| code.as_integer() != Some(0))
+    {
+        config.insert("expected_http_status".to_string(), code);
+    }
+    if push_type == "ios" && config.get("code").and_then(|code| code.as_integer()) == Some(0) {
+        config.remove("code");
+    }
+
+    PushConfig {
+        name: push.name.clone(),
+        push_type,
+        config,
     }
 }
 

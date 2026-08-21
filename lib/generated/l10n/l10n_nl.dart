@@ -313,6 +313,13 @@ class AppLocalizationsNl extends AppLocalizations {
       'Externe monitoragents vereisen HTTPS; HTTP is alleen toegestaan op loopback-adressen.';
 
   @override
+  String get monitorAllowInsecureHttp => 'Allow insecure HTTP';
+
+  @override
+  String get monitorAllowInsecureHttpTip =>
+      'Only enable for a trusted private network with transport encryption outside HTTP, such as Tailscale. The agent must also explicitly allow plaintext file access. Credentials and file contents may otherwise be exposed.';
+
+  @override
   String get backupTip =>
       'De geëxporteerde gegevens kunnen worden versleuteld met een wachtwoord. \nBewaar deze aub veilig.';
 

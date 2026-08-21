@@ -92,18 +92,15 @@ export interface Capabilities {
 }
 
 /// Which remote-access paths this agent will actually accept, already
-/// accounting for the transport check — `terminal: false` with
-/// `secure: false` means "would work over TLS or from loopback".
+/// accounting for the transport check.
 export interface RemoteAccess {
-  tunnel: boolean
   terminal: boolean
-  secure: boolean
   /// Whether a shell can be opened straight from this panel session, with no
   /// SSH credentials. Absent on agents predating the feature.
   full_access?: boolean
 }
 
-export type WsTicketPurpose = 'terminal' | 'tunnel'
+export type WsTicketPurpose = 'terminal'
 
 export interface WsTicketResponse {
   ticket: string

@@ -320,7 +320,6 @@ void main() {
     test('an older agent grants nothing it was never asked about', () {
       // `/capabilities` without a `files` field at all.
       final granted = MonitorRemoteAccess.fromJson(const {
-        'tunnel': true,
         'terminal': true,
       });
 
