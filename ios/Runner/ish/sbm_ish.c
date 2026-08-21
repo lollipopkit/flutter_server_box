@@ -7,49 +7,6 @@
 // never had one, which is what the Dart side is already written against.
 
 bool sbm_ish_available(void) { return false; }
-/// Unmounts one system's filesystems and forgets it.
-///
-/// Returns 0, or a negative errno. Needed because [sbm_ish_attach] is
-/// idempotent by name: without this, deleting a system or reinstalling one in
-/// place left the name attached, so the next attach did nothing and the fresh
-/// tree was handed the previous one's `/dev` — a fakefs whose database had been
-/// deleted along with the old directory. It also frees the slot, which is one
-/// of eight.
-///
-/// `do_umount` answers `EBUSY` while anything still holds the mount, and this
-/// reports that rather than forcing it: a session still running in the system
-/// is a reason not to pull its `/dev` out from under it. The caller closes
-/// those first.
-int sbm_ish_detach(const char *profile) {
-    if (!booted) return -ENOTCONN;
-    if (profile == NULL || profile[0] == '\0') return -EINVAL;
-    if (strchr(profile, '/') != NULL) return -EINVAL;
-
-    // Innermost first: `/dev/pts` and `/dev/shm` are inside `/dev`, and the
-    // outer one cannot go while they hold it.
-    static const char *const points[] = { "dev/pts", "dev/shm", "dev", "proc" };
-    char path[MAX_PATH];
-    int err = 0;
-    for (size_t i = 0; i < sizeof(points) / sizeof(points[0]); i++) {
-        snprintf(path, sizeof(path), "/%s/%s", profile, points[i]);
-        int one = do_umount(path);
-        // Not mounted is not a failure: attach may have stopped early, and
-        // detaching twice has to be safe.
-        if (one < 0 && one != -_ENOENT && err == 0) err = one;
-    }
-    if (err < 0) {
-        syslog(LOG_ERR, "sbm_ish: %s did not detach (%d); its mounts stay until "
-               "the app restarts", profile, err);
-        return err;
-    }
-
-    pthread_mutex_lock(&attached_lock);
-    for (int i = 0; i < SBM_MAX_PROFILES; i++) {
-        if (strcmp(attached[i], profile) == 0) { attached[i][0] = '\0'; break; }
-    }
-    pthread_mutex_unlock(&attached_lock);
-    return 0;
-}
 
 int sbm_ish_boot(const char *rootfs, const char *profile) {
     (void)rootfs; (void)profile; return -1;
@@ -98,6 +55,10 @@ void sbm_ish_close(int session) { (void)session; }
 #include "fs/fake-db.h"
 #include "fs/real.h"
 #include "fs/tty.h"
+
+// `kernel/uname.c` defines it and no header declares it. The engine's own
+// tests reach it this way too.
+extern const char *uname_hostname_override;
 
 // — Surviving a guest fault ————————————————————————————————————————
 //
@@ -342,10 +303,28 @@ static bool booted;
 static char *rootfs_path;
 
 static void guest_exited(struct task *task, int code) {
+    // `code` is the raw wait(2) status word, and only a normal exit puts the
+    // code in the high byte: a guest killed by a signal carries the signal in
+    // the low 7 bits and nothing above them (`kernel/exit.c` calls
+    // `do_exit_group(sig)` for that, against `do_exit(status << 8)` for
+    // `_exit`). So `code >> 8` alone answered 0 for every death by signal —
+    // indistinguishable from success, which is what `ExecResult.exitCode == 0`
+    // means to every caller on the Dart side.
+    //
+    // 128 + signal is what a shell reports for the same thing, so a caller
+    // that already knows what 143 means needs no telling. It also stays
+    // positive, which this field requires: `sbm_ish_exit_code` answers with a
+    // negative value while a session is still running, and Dart reads that as
+    // "no exit code yet".
+    //
+    // Masked with 0x7f rather than 0xff because 0x80 is the core-dump bit.
+    // Nothing in iSH sets it today, so the two agree; the narrower mask is the
+    // one that keeps agreeing if that changes.
+    int status = (code & 0x7f) ? 128 + (code & 0x7f) : code >> 8;
     pthread_mutex_lock(&sessions_lock);
     for (int i = 0; i < SBM_MAX_SESSIONS; i++) {
         if (sessions[i].used && sessions[i].pid == task->pid) {
-            sessions[i].exit_code = code >> 8;
+            sessions[i].exit_code = status;
             break;
         }
     }
@@ -365,6 +344,16 @@ static void guest_exited(struct task *task, int code) {
 /// Only the root row is written here. The nodes themselves are created through
 /// the kernel afterwards, so how a path is spelled in that table stays the
 /// kernel's business rather than something this file has to guess.
+///
+/// TODO: delete the schema and the root row below in favour of the engine's
+/// `fake_db_create(dir)` (`kernel/fs.h`), which writes both from the one copy
+/// in `fs/fake-schema.c` that `tools/fakefsify` also uses. Compared against it:
+/// the directory modes agree (0755), nothing else goes into `meta.db`, and the
+/// `pragma journal_mode=wal` here is redundant because `fake_db_init` sets it
+/// on every mount. Keep the `access()` guard when switching — `fake_db_create`
+/// runs bare `create table`, so a second call on an existing database fails.
+/// Waiting on ShellBox PR #10 (`feat/sbm-api-harness`); the function does not
+/// exist at the current gitlink.
 static int make_dev_db(const char *profile, char *data_out, size_t data_len) {
     char dir[MAX_PATH];
     // Beside the tree it belongs to, so that deleting a profile takes its
@@ -593,6 +582,18 @@ int sbm_ish_boot(const char *rootfs, const char *profile) {
     install_crash_handler();
     // Otherwise `die()` calls abort(), and the app goes with the guest.
     die_handler = park_on_die;
+
+    // What the guest answers to `uname -n`, and so what its prompt shows.
+    // Without this it is the host's nodename, which on iOS is the device name:
+    // something the user typed, usually containing their own, and reaching the
+    // guest's environment and anything it writes out. It is also not a
+    // hostname — the field is 65 bytes and `do_uname` truncates to fit, so a
+    // name with any multi-byte character in the wrong place is cut mid-
+    // codepoint and shows up as replacement marks.
+    //
+    // One value for the machine rather than one per system: the kernel is
+    // shared, and this is a single global in it.
+    uname_hostname_override = "serverbox";
 
     // An ordinary directory tree, mounted by `realfs`: guest paths resolved
     // against a root fd, with nothing stored beside them. Installing a
