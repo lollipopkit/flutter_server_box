@@ -3,7 +3,7 @@ title: SFTP System
 description: How the SFTP file browser works
 ---
 
-The SFTP system provides file management capabilities over SSH.
+SFTP manages remote files over an SSH connection.
 
 ## Architecture
 
@@ -343,9 +343,9 @@ class TransferQueue {
 
 ## Local Storage Pattern
 
-### Download Cache
+### Downloaded File Location
 
-Downloaded files stored at:
+Downloaded files are stored at:
 
 ```dart
 String getLocalDownloadPath(String spiId, String remotePath) {
@@ -440,6 +440,6 @@ try {
 ## Performance Notes
 
 - The SSH connection is reused for SFTP; no separate connection is opened.
-- Directory listings are fetched on navigation and refreshed on demand —
-  there is no TTL cache layer.
-- Large transfers run in a background isolate so the UI stays responsive.
+- Directory listings are fetched on navigation and refreshed on demand. There is
+  no TTL cache layer.
+- Large transfers run in a background isolate.

@@ -11,9 +11,9 @@ description: Solutions to common problems
 
 **Solutions:**
 
-1. **Verify server type:** Only Unix-like systems supported (Linux, macOS, Android/Termux)
+1. **Verify the SSH server:** The target must provide a supported SSH server.
 2. **Test manually:** `ssh user@server -p port`
-3. **Check firewall:** Port 22 must be open
+3. **Check the firewall:** The configured SSH port must be reachable.
 4. **Verify credentials:** Username and password/key correct
 
 ### Frequent Disconnections
@@ -29,7 +29,7 @@ description: Solutions to common problems
    ClientAliveCountMax 3
    ```
 
-2. **Disable battery optimization:**
+2. **Allow background activity:**
    - MIUI: Battery → "No limits"
    - Android: Settings → Apps → Disable optimization
    - iOS: Enable background refresh
@@ -66,7 +66,7 @@ description: Solutions to common problems
 **Backup not working:**
 - Check storage space
 - Verify app has storage permissions
-- Try different location
+- Select a different destination and retry.
 
 **Restore fails:**
 - Verify backup file integrity
@@ -88,7 +88,7 @@ description: Solutions to common problems
 **watchOS:**
 - Restart watch app
 - Wait a few minutes after config change
-- Verify the server has a monitor agent configured — the watch can only show
+- Verify the server has a monitor agent configured. The watch can only show
   servers that do
 
 ### Widget Shows Error
@@ -99,7 +99,7 @@ description: Solutions to common problems
 
 ## Performance Issues
 
-### App is Slow
+### Slow App Performance
 
 **Solutions:**
 - Reduce refresh rate in settings
@@ -119,4 +119,4 @@ If issues persist:
 
 1. **Search GitHub Issues:** https://github.com/lollipopkit/flutter_server_box/issues
 2. **Create New Issue:** Include app version, platform, and steps to reproduce
-3. **Check Wiki:** This documentation and GitHub Wiki
+3. **Check this documentation and the GitHub Wiki.**

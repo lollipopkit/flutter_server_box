@@ -3,7 +3,7 @@ title: Hidden Settings (JSON)
 description: Access advanced settings via JSON editor
 ---
 
-Some settings are hidden from the UI but accessible via JSON editor.
+Some settings are not exposed in the UI but can be edited in the JSON editor.
 
 ## Access
 
@@ -53,13 +53,13 @@ late final settingName = propertyDefault('settingKey', defaultValue);
 ## ⚠️ Important
 
 **Before editing:**
-- **Create backup** - Wrong settings can cause app to not open
-- **Edit carefully** - JSON must be valid
-- **Change one at a time** - Test each setting
+- **Create a backup**. Invalid settings can prevent the app from starting.
+- **Edit carefully**. The JSON must remain valid.
+- **Change one setting at a time**. Test each change.
 
 ## Recovery
 
-If app won't open after editing:
+If the app does not start after an edit:
 1. Clear app data (last resort)
 2. Reinstall app
 3. Restore from backup

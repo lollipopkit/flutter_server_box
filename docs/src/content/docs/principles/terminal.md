@@ -3,12 +3,12 @@ title: Terminal Implementation
 description: How the SSH terminal works internally
 ---
 
-The terminal is one of the most complex features, built on a custom xterm.dart fork.
+The terminal is built on a custom `xterm.dart` fork.
 
 ## Where the bytes come from
 
-Everything above the byte stream is one implementation — the same emulator, the
-same virtual keyboard, the same tabs. Below it, `ShellBackend` has four:
+Everything above the byte stream is one implementation: the same emulator, the
+same virtual keyboard, and the same tabs. Below it, `ShellBackend` has four:
 
 | Backend | Bytes from |
 |---|---|
@@ -17,13 +17,13 @@ same virtual keyboard, the same tabs. Below it, `ShellBackend` has four:
 | `IshShellBackend` | The Linux interpreter on iOS |
 | `MonitorShellBackend` | A monitor agent's `/terminal/ws` |
 
-A caller opens a session and writes to it; which of the four answered is not
-something the UI above asks. See
+A caller opens a session and writes to it. The UI does not need to know which
+backend supplies the response. See
 [Terminal on This Device](/docs/advanced/local-terminal/) for the two local ones
 and [Monitor Agent](/docs/advanced/monitor-agent/) for the last.
 
-The rest of this page follows the SSH path, which is the oldest and the one the
-others were shaped to match.
+The rest of this page describes the SSH path. The other backends expose the same
+interface.
 
 ## Architecture Overview
 
@@ -105,7 +105,7 @@ The xterm.dart fork provides:
 - Line-based rendering
 - Bidirectional text support
 - Unicode/emoji support
-- Optimized redraws
+- Redraws limited to changed terminal content
 
 ### 3. Data Flow
 

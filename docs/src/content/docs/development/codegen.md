@@ -3,17 +3,17 @@ title: Code Generation
 description: Using build_runner for code generation
 ---
 
-Server Box heavily uses code generation for models, state management, and serialization.
+Server Box uses code generation for models, state management, and serialization.
 
 ## When to Run Code Generation
 
-Run after modifying:
+Run the relevant generator after modifying:
 
 - Models with `@freezed` annotation
 - Classes with `@JsonSerializable`
 - Hive models
 - Providers with `@riverpod`
-- Localizations (ARB files)
+- Localization ARB files; run `flutter gen-l10n`
 
 ## Running Code Generation
 
@@ -21,7 +21,7 @@ Run after modifying:
 # Generate all code
 dart run build_runner build --delete-conflicting-outputs
 
-# Clean generated build cache
+# Clear the build_runner cache
 dart run build_runner clean
 
 # Then regenerate
@@ -45,7 +45,7 @@ class ServerState with _$ServerState {
 
 ### JSON Serialization (`*.g.dart`)
 
-Generated from `json_serializable`:
+The `json_serializable` package generates these files:
 
 ```dart
 @JsonSerializable()
@@ -74,9 +74,9 @@ class MyNotifier extends _$MyNotifier {
 }
 ```
 
-### Hive Adapters (`*.g.dart`)
+### Legacy Hive Adapters (`*.g.dart`)
 
-Auto-generated for Hive models (hive_ce):
+Legacy Hive adapters are retained for storage migration:
 
 ```dart
 @HiveType(typeId: 0)
@@ -108,5 +108,5 @@ Generates `lib/generated/l10n/` from `lib/l10n/*.arb` files.
 ## Tips
 
 - Use `--delete-conflicting-outputs` to avoid conflicts
-- Keep generated files in version control when they are already tracked by this repository
+- Commit generated files that are already tracked by this repository
 - Never manually edit generated files

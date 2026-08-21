@@ -3,15 +3,15 @@ title: State Management
 description: How state is managed with Riverpod
 ---
 
-Understanding the state management architecture in Server Box.
+This page describes Server Box's state-management architecture.
 
 ## Why Riverpod?
 
 **Key Benefits:**
 - **Compile-time safety**: Catch errors at compile time
 - **No BuildContext needed**: Access state anywhere
-- **Easy testing**: Simple to test providers in isolation
-- **Code generation**: Less boilerplate, type-safe
+- **Provider isolation**: Providers can be tested independently
+- **Code generation**: Generated providers reduce boilerplate while preserving static typing
 
 ## Provider Architecture
 
@@ -39,7 +39,7 @@ Understanding the state management architecture in Server Box.
 
 ### 1. StateProvider (Simple State)
 
-For simple, observable state:
+Use for small pieces of observable state:
 
 ```dart
 @riverpod
@@ -103,7 +103,7 @@ status.when(
 
 ### 3. StreamProvider (Real-time Data)
 
-For continuous data streams:
+Use for values emitted by a stream:
 
 ```dart
 @riverpod

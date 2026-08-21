@@ -3,10 +3,10 @@ title: SSH 连接
 description: SSH 连接是如何建立和管理的
 ---
 
-了解 Server Box 中的 SSH 连接机制。
+本页介绍 Server Box 如何建立和管理 SSH 连接。
 
 本页描述以 SSH 方式添加的服务器。服务器也可以通过 monitor agent 的 HTTP API
-添加,那种情况下它不携带任何 SSH 凭据,本页内容都不适用。
+添加。在这种情况下，该服务器不携带任何 SSH 凭据，本页内容均不适用。
 
 ## 连接流程
 
@@ -76,11 +76,11 @@ Future<SSHClient> genClient(Spi spi) async {
 
 ### 第三步：socket 从哪里来
 
-`genClient` 在三种来源中解析出一种,其上层(`SSHSocket` 以上)在三种情况下完全一致:
+`genClient` 会从三种来源中选择一种。在这三种情况下，`SSHSocket` 以上的处理方式完全一致：
 
-**直连** —— 默认方式,`SSHSocket.connect(ip, port)`,失败时回退到 `alterUrl`。
+**直连**：默认方式，使用 `SSHSocket.connect(ip, port)`，失败时回退到 `alterUrl`。
 
-**跳板机** —— 递归连接后做本地转发：
+**跳板机**：递归连接后做本地转发：
 
 ```dart
 for (final jumpId in spi.resolvedJumpIds) {
@@ -89,7 +89,7 @@ for (final jumpId in spi.resolvedJumpIds) {
 }
 ```
 
-**ProxyCommand** —— 仅桌面端,因为它需要启动一个进程：
+**ProxyCommand**：仅桌面端可用，因为它需要启动一个进程：
 
 ```dart
 if (ssh.proxyCommand != null) {
@@ -110,7 +110,7 @@ if (ssh.proxyCommand != null) {
 onPasswordRequest: () => ssh.pwd
 ```
 
-- 密码以加密形式存储在 Hive 中
+- 密码以加密形式存储在 SQLite 中
 - 连接时解密
 - 发送到服务器进行验证
 
@@ -119,7 +119,7 @@ onPasswordRequest: () => ssh.pwd
 ```dart
 onIdentityRequest: () async {
   final key = await PrivateKeyStore.get(ssh.keyId);
-  return decyptPem(key.pem, key.password);
+  return decryptPem(key.pem, key.password);
 }
 ```
 
@@ -148,7 +148,7 @@ onUserInfoRequest: (instructions) async {
 
 ### 为什么要验证主机密钥？
 
-通过确保连接的是同一个服务器，防止**中间人 (MITM)** 攻击。
+通过比对服务器主机密钥，帮助检测可能的**中间人（MITM）**攻击。
 
 ### 存储格式
 
@@ -221,9 +221,9 @@ class ServerProvider {
 }
 ```
 
-### 心跳检测 (Keep-Alive)
+### 连接保活（Keep-Alive）
 
-在闲置期间维持连接：
+客户端在空闲期间发送保活消息：
 
 ```dart
 Timer.periodic(

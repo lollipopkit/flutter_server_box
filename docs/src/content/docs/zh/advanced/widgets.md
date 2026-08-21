@@ -58,7 +58,7 @@ https://your-server.com/status
 ## watchOS
 
 手表自己向 monitor agent 取数据，因此只能显示已配置 monitor 的服务器。请先在
-服务器的编辑页里配置 agent —— 作为连接方式，或与 SSH 并存。
+在服务器的编辑页配置 agent，可将其设为连接方式，也可与 SSH 并存。
 
 ### 设置步骤
 

@@ -7,7 +7,7 @@ description: SSH 终端的内部工作原理
 
 ## 字节从哪里来
 
-字节流之上只有一套实现 —— 同一个模拟器、同一套虚拟键盘、同样的标签页。之下，
+字节流之上只有一套实现，包括同一个模拟器、同一套虚拟键盘和同样的标签页。之下，
 `ShellBackend` 有四个实现：
 
 | 后端 | 字节来源 |
@@ -21,7 +21,7 @@ description: SSH 终端的内部工作原理
 [本机终端](/docs/zh/advanced/local-terminal/)，最后一个见
 [Monitor Agent](/docs/zh/advanced/monitor-agent/)。
 
-本页其余部分沿 SSH 这条路径展开 —— 它是最早的一条，其余几个是照着它的形状做的。
+本页其余部分介绍 SSH 路径。其他后端提供相同的接口。
 
 ## 架构概览
 
@@ -103,7 +103,7 @@ xterm.dart 分支提供：
 - 基于行的渲染
 - 双向文本支持
 - Unicode/Emoji 支持
-- 优化重绘
+- 减少不必要的重绘
 
 ### 3. 数据流向
 
@@ -169,7 +169,7 @@ class TerminalTabs {
 
 虚拟键盘是所有平台通用的 Flutter widget,渲染在终端上方
 (可用按键定义在 `lib/data/model/ssh/virtual_key.dart`),
-移动端与系统键盘同时显示。
+在移动端，虚拟键盘与系统键盘同时显示。
 
 ### 键盘按键
 
@@ -209,7 +209,7 @@ class TerminalDimensions {
 }
 ```
 
-### 捏合缩放 (Pinch-to-Zoom)
+### 捏合缩放（Pinch-to-Zoom）
 
 ```dart
 GestureDetector(
@@ -230,7 +230,7 @@ GestureDetector(
 ## 性能
 
 xterm.dart fork 使用自定义 painter 渲染,仅在终端内容更新时重绘;
-输出写入会先缓冲合并,再送入终端模拟器。
+输出会先缓冲并合并，再传给终端模拟器。
 
 ## 特色功能
 

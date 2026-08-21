@@ -3,7 +3,7 @@ title: SSH Connection
 description: How SSH connections are established and managed
 ---
 
-Understanding SSH connections in Server Box.
+This page describes how Server Box establishes and manages SSH connections.
 
 This page covers servers added over SSH. A server can instead be added through
 a monitor agent's HTTP API, in which case it carries no SSH credential at all
@@ -18,7 +18,7 @@ User Input → Spi Config → genClient() → SSH Client → Session
 ### Step 1: Configuration
 
 The `Spi` (Server Parameter Info) model holds the SSH settings in a nullable
-`SshCredential` — null for a server reached through a monitor agent:
+`SshCredential`. It is null for a server reached through a monitor agent:
 
 ```dart
 class Spi {
@@ -77,10 +77,10 @@ Future<SSHClient> genClient(Spi spi) async {
 `genClient` resolves one of three sources, then everything above `SSHSocket` is
 the same in each case:
 
-**Direct** — the default, `SSHSocket.connect(ip, port)`, falling back to
+**Direct**: the default, `SSHSocket.connect(ip, port)`, falling back to
 `alterUrl` when it fails.
 
-**Jump server** — recursive connection, then a local forward:
+**Jump server**: recursive connection, then a local forward:
 
 ```dart
 for (final jumpId in spi.resolvedJumpIds) {
@@ -89,7 +89,7 @@ for (final jumpId in spi.resolvedJumpIds) {
 }
 ```
 
-**ProxyCommand** — desktop only, since it spawns a process:
+**ProxyCommand**: desktop only, since it spawns a process:
 
 ```dart
 if (ssh.proxyCommand != null) {
@@ -110,7 +110,7 @@ if (ssh.proxyCommand != null) {
 onPasswordRequest: () => ssh.pwd
 ```
 
-- Password stored encrypted in Hive
+- Password stored in the encrypted SQLite database
 - Decrypted on connection
 - Sent to server for verification
 
@@ -148,7 +148,7 @@ Supports:
 
 ### Why Verify Host Keys?
 
-Prevents **Man-in-the-Middle (MITM)** attacks by ensuring you're connecting to the same server.
+Helps detect a possible man-in-the-middle (MITM) attack by comparing the server's host key.
 
 ### Storage Format
 
@@ -208,7 +208,7 @@ Future<void> verifyHostKey(SSHClient client, Spi spi) async {
 
 ### Connection Pooling
 
-Active clients maintained in `ServerProvider`:
+`ServerProvider` maintains active clients:
 
 ```dart
 class ServerProvider {
@@ -222,7 +222,7 @@ class ServerProvider {
 
 ### Keep-Alive
 
-Maintain connection during inactivity:
+The client sends keep-alive messages during inactivity:
 
 ```dart
 Timer.periodic(

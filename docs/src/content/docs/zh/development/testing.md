@@ -113,7 +113,7 @@ test('serverStatusProvider 应当返回状态', () async {
 
 ## 集成测试
 
-`integration_test/` 存放 `flutter test` 无法回答的问题。单元测试跑在 `flutter_tester` 下，它不加载任何 plugin，所以经 plugin 或 FFI 到达的代码在那里从未真正运行过。这些测试运行在真机上的真实 App 里：
+`integration_test/` 存放 `flutter test` 无法回答的问题。单元测试运行在 `flutter_tester` 下，不会加载任何 plugin，因此经 plugin 或 FFI 到达的代码不会在那里实际运行。这些测试运行在真实设备上的 App 中：
 
 | 文件 | 回答的问题 |
 |---|---|
@@ -131,18 +131,7 @@ test('serverStatusProvider 应当返回状态', () async {
 flutter test integration_test/local_shell_test.dart
 ```
 
-`make analyze` 也覆盖这个目录（`flutter analyze lib test integration_test`）。dart
-testWidgets('添加服务器流程', (tester) async {
-  await tester.pumpWidget(MyApp());
-
-  // 点击添加按钮
-  await tester.tap(find.byIcon(Icons.add));
-  await tester.pumpAndSettle();
-
-  // 填写表单
-  await tester.enterText(find.byKey(Key('name')), 'Test Server');
-  // ...
-});
+`make analyze` 也会分析这个目录（`flutter analyze lib test integration_test`）。
 ```
 
 ## 最佳实践

@@ -3,8 +3,8 @@ title: Monitor Agent
 description: 经 agent 而不是 SSH 访问服务器
 ---
 
-ServerBox Monitor 是安装在服务器上的一个小服务。App 通过 HTTP 与它通信，因此它是
-访问该服务器的第二种方式 —— 也是推送告警、桌面小组件和手表 App 的唯一途径，这些
+ServerBox Monitor 是安装在服务器上的轻量服务。App 通过 HTTP 与它通信，因此它是
+访问该服务器的第二种方式，也是推送告警、桌面小组件和手表 App 的唯一途径。这些
 功能都必须在 App 未打开时工作。
 
 ## 什么时候用
@@ -35,7 +35,7 @@ App 时图表已经有数据；希望把告警推送到手机。
 sudo ./install.sh install
 ```
 
-它默认以普通账号运行，这是有意为之 —— 见 [各个开关授予了什么](#各个开关授予了什么)。
+它默认以普通账号运行，见 [各个开关授予了什么](#各个开关授予了什么)。
 
 配置文件是二进制旁边的 `config.toml`，所有配置项都在
 [`config.example.toml`](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/config.example.toml)
@@ -49,17 +49,17 @@ App 可以接受自签名证书，但仅在你明确要求时。
 1. 点击 **+** 添加服务器
 2. 把表单顶部的选择器从 **SSH** 切到 **Monitor HTTP**
 3. 填写：
-   - **URL** —— 例如 `https://1.2.3.4:3770`
-   - **Monitor User** / **Monitor Password** —— agent 的面板登录凭据
-   - **Monitor Ignore certificate** —— 仅在使用自签名证书时开启
+   - **URL**：例如 `https://1.2.3.4:3770`
+   - **Monitor User** / **Monitor Password**：agent 的面板登录凭据
+   - **Monitor Ignore certificate**：仅在使用自签名证书时开启
 
-以这种方式添加的服务器**不携带任何 SSH 凭据**。App 没有任何可回退的途径，这正是
-重点：除了 agent 允许的范围，你并没有给它进入这台机器的方式。
+以这种方式添加的服务器**不携带任何 SSH 凭据**。App 没有其他回退途径，除了 agent
+允许的范围，你没有给 App 进入这台机器的方式。
 
 ## 各个开关授予了什么
 
-agent 会告诉 App 它接受什么，App 就只提供这些 —— 不多，也不会出现按下去只会得到
-403 的按钮。下面所有能力默认关闭，只能由运维方在 `config.toml` 中开启，都无法从
+agent 会告诉 App 它接受什么，App 只提供这些能力。应用不会显示 agent 会以 403 拒绝的按钮。
+下面所有能力默认关闭，只能由运维方在 `config.toml` 中开启，都无法从
 网页面板打开。
 
 **状态、图表和历史数据** 只需要登录。
@@ -67,8 +67,8 @@ agent 会告诉 App 它接受什么，App 就只提供这些 —— 不多，也
 **`full_access`** 让面板登录直接访问这台机器：一个 shell、一条命令，身份是 agent
 所属的账号。App 的进程列表、systemd 单元、容器、snippet、电源控制和终端全都依赖它。
 
-它是一个开关而不是每个功能一个，因为其中只有一个决定 —— 能开 shell 的人就能在那个
-shell 里运行任何东西，所以给了终端却不给命令，等于什么都没有保留。
+它只有一个开关，而不是每个功能各一个。能打开 shell 的人就能在其中运行任意命令，
+因此只开放终端而禁用命令并不能缩小权限范围。
 
 **此时你的面板密码就等于那台机器上的一个 shell。** 这就是 `install.sh` 默认以普通
 账号而不是 root 运行 agent 的原因。如果你确实以 root 运行，请关掉 `full_access`。
@@ -76,16 +76,16 @@ shell 里运行任何东西，所以给了终端却不给命令，等于什么�
 
 **`[remote_access.fs]`** 提供文件浏览，范围限制在 `roots` 指定的目录内。它有自己的
 开关而不是挂在 `full_access` 下，因为后者意味着「一个 shell」，而它意味着「这几个
-目录」—— 合并会让范围更小的那个付出范围更大的代价。
+目录」。将两者合并会让原本仅限目录的访问获得更大的权限范围。
 
-`roots` 没有默认值。每个请求都会被解析为真实路径 —— 跟随 symlink、拒绝 `..` ——
+`roots` 没有默认值。每个请求都会被解析为真实路径，跟随 symlink 并拒绝 `..`。
 落在 roots 之外的一律拒绝，因此 root 内指向 `/etc` 的链接不是出口。
 `roots = ["/"]` 等同于一个 shell，因为能写 `~/.ssh/authorized_keys` 的人就有 shell；
 agent 会在启动时对此告警。
 
 **`[remote_access.terminal]`** 为 agent 自己的网页面板增加浏览器内终端，与 App 使用
 的部分无关。agent 作为 SSH 客户端连接它配置的 `ssh_addr`，因此浏览器会话的权限等同
-于登录所用的 SSH 账号 —— 除非开了 `full_access`，仅有面板密码不会获得 shell。
+于登录所用的 SSH 账号。除非开了 `full_access`，仅有面板密码不会获得 shell。
 
 它拒绝在明文监听上运行，因为它的第一条消息就带着 SSH 密码。配置 TLS 可满足要求，
 同机反向代理同样可以。
@@ -102,7 +102,7 @@ agent 会在启动时对此告警。
 
 这些直接读取 agent，与 App 是否打开无关。
 
-- **桌面小组件** 需要一个以 `/status` 结尾的 URL —— 见
+- **桌面小组件** 需要一个以 `/status` 结尾的 URL，见
   [桌面小组件](/docs/zh/advanced/widgets/)
 - **手表 App** 自己向 agent 取数据，因此只能显示已配置 agent 的服务器
 - **推送告警** 在 agent 上配置，位于 `[[monitoring.rules]]` 和 `[[push]]`
@@ -118,5 +118,5 @@ agent 会在启动时对此告警。
 **面板在另一个 origin 上。** agent 必须显式允许：`config.toml` 里的
 `cors_allowed_origins`，或环境变量 `SBM_CORS_ORIGINS`。
 
-**完全没有反应。** 先确认 agent 在运行、端口可达，然后查它数据库里的 `access_log`
-—— 它记录谁在何时从何处打开了什么、结果如何，且不记录任何凭据。
+**完全没有反应。** 先确认 agent 在运行、端口可达，然后查看数据库里的 `access_log`。
+它记录谁在何时从何处打开了什么以及结果如何，但不记录任何凭据。

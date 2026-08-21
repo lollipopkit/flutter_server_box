@@ -3,15 +3,15 @@ title: 状态管理
 description: 如何使用 Riverpod 进行状态管理
 ---
 
-了解 Server Box 中的状态管理架构。
+本页介绍 Server Box 的状态管理架构。
 
 ## 为何选择 Riverpod？
 
 **主要优势：**
 - **编译时安全**：在编译阶段即可发现错误
 - **无需 BuildContext**：可在任何地方访问状态
-- **易于测试**：方便对 Provider 进行隔离测试
-- **代码生成**：减少样板代码，确保类型安全
+- **Provider 隔离**：可以独立测试各个 Provider
+- **代码生成**：生成的 Provider 减少样板代码，同时保留静态类型检查
 
 ## Provider 架构
 
@@ -37,9 +37,9 @@ description: 如何使用 Riverpod 进行状态管理
 
 ## 使用的 Provider 类型
 
-### 1. StateProvider (简单状态)
+### 1. StateProvider（简单状态）
 
-用于简单的可观察状态：
+用于管理简单的可观察状态：
 
 ```dart
 @riverpod
@@ -101,9 +101,9 @@ status.when(
 )
 ```
 
-### 3. StreamProvider (实时数据)
+### 3. StreamProvider（实时数据）
 
-用于持续的数据流：
+用于提供数据流中的实时数据：
 
 ```dart
 @riverpod
@@ -131,9 +131,9 @@ cpu.when(
 )
 ```
 
-### 4. Family Provider (带参数)
+### 4. Family Provider（带参数）
 
-可以接收参数的 Provider：
+接收参数的 Provider：
 
 ```dart
 @riverpod
@@ -159,7 +159,7 @@ final containers2 = ref.watch(containersProvider(server2));
 ref.read(settingsProvider.notifier).updateTheme(darkMode);
 ```
 
-### 计算状态 (Computed State)
+### 计算状态（Computed State）
 
 ```dart
 @riverpod
@@ -169,7 +169,7 @@ int totalServers(Ref ref) {
 }
 ```
 
-### 派生状态 (Derived State)
+### 派生状态（Derived State）
 
 ```dart
 @riverpod
@@ -205,7 +205,7 @@ class ServerProvider extends _$ServerProvider {
 }
 ```
 
-### Provider 键 (Keys)
+### Provider 键（Keys）
 
 ```dart
 // 每个服务器都有唯一的 Provider

@@ -9,7 +9,7 @@ Server Box uses Riverpod with code generation for state management.
 
 ### StateProvider
 
-Simple state that can be read and written:
+Use for small pieces of state that widgets can read and update:
 
 ```dart
 @riverpod
@@ -46,7 +46,7 @@ class ServerStatus extends _$ServerStatus {
 
 ### StreamProvider
 
-Real-time data from streams:
+Values emitted by streams:
 
 ```dart
 @riverpod
@@ -69,7 +69,7 @@ state.when(
 
 ### Family Providers
 
-Parameterized providers:
+Providers that accept parameters:
 
 ```dart
 @riverpod
@@ -80,7 +80,7 @@ List<Container> containers(Ref ref, Server server) {
 
 ### Auto-Dispose
 
-Providers that dispose when no longer referenced:
+Providers that dispose when no longer watched:
 
 ```dart
 @Riverpod(keepAlive: false)
@@ -93,7 +93,7 @@ class TempState extends _$TempState {
 
 1. **Use code generation**: Always use `@riverpod` annotation
 2. **Co-locate providers**: Place near consuming widgets
-3. **Avoid singletons**: Use providers instead
+3. **Avoid singletons**: Prefer providers for shared state and dependencies
 4. **Layer correctly**: Keep UI logic separate from business logic
 
 ## Reading State in Widgets
