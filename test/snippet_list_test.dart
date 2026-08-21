@@ -76,19 +76,22 @@ void main() {
   ) async {
     await pump(tester, width: 1200);
 
-    expect(find.byType(FloatingActionButton), findsOneWidget);
     expect(find.byIcon(Icons.add), findsOneWidget);
     expect(find.byIcon(Icons.search), findsOneWidget);
+    // Both are in the bar, where the rest of the app keeps the same actions.
+    // Add used to float over the list, which needed two sizes of itself for
+    // the two widths and covered the last row of what it was adding to.
+    expect(find.byType(FloatingActionButton), findsNothing);
   });
 
   testWidgets('a narrow window offers both as well', (tester) async {
     await pump(tester, width: 500);
 
-    expect(find.byType(FloatingActionButton), findsOneWidget);
     expect(find.byIcon(Icons.add), findsOneWidget);
     // Search used to be in the pane's own row, which a single column has none
     // of — so there was no way to search on a phone at all.
     expect(find.byIcon(Icons.search), findsOneWidget);
+    expect(find.byType(FloatingActionButton), findsNothing);
   });
 
   testWidgets('a wide window with snippets lists them under the same row', (
