@@ -76,7 +76,6 @@
   "agentSaveServerTitle": "儲存為伺服器",
   "agentSaveServerTip": "這台主機和你輸入的密碼將儲存在本裝置上。",
   "agentMonitorOptional": "Monitor 代理（選填）",
-  "atLeastOneTab": "至少需要選擇一個標籤",
   "authFailTip": "認證失敗，請檢查連線資訊是否正確",
   "autoBackupConflict": "僅能啟用一項自動備份任務",
   "autoConnect": "自動連線",

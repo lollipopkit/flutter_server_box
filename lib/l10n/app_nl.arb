@@ -10,7 +10,6 @@
   "askAiDisclaimer": "AI kan fouten maken. Gebruik het zorgvuldig.",
   "askAiInsertTerminal": "In terminal invoegen",
   "askAiNoResponse": "Geen reactie",
-  "atLeastOneTab": "Er moet minimaal één tabblad worden geselecteerd",
   "authFailTip": "Authenticatie mislukt, controleer of het wachtwoord/sleutel/host/gebruiker, enz., incorrect zijn.",
   "autoBackupConflict": "Er kan slechts één automatische back-up tegelijk worden ingeschakeld.",
   "autoConnect": "Automatisch verbinden",

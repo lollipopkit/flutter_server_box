@@ -268,9 +268,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get agentMonitorOptional => 'Agente monitor (opcional)';
 
   @override
-  String get atLeastOneTab => 'Al menos una pestaña debe estar seleccionada';
-
-  @override
   String get authFailTip =>
       'La autenticación ha fallado, por favor verifica si la contraseña/llave/host/usuario, etc., son incorrectos.';
 

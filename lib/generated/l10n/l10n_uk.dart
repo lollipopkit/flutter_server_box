@@ -263,9 +263,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get agentMonitorOptional => 'Агент monitor (необов\'язково)';
 
   @override
-  String get atLeastOneTab => 'Потрібно вибрати принаймні одну вкладку';
-
-  @override
   String get authFailTip =>
       'Авторизація не вдалася, будь ласка, перевірте правильність облікових даних';
 

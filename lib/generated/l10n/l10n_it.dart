@@ -268,9 +268,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get agentMonitorOptional => 'Agente monitor (facoltativo)';
 
   @override
-  String get atLeastOneTab => 'Deve essere selezionata almeno una scheda';
-
-  @override
   String get authFailTip =>
       'Autenticazione fallita, verifica se le credenziali sono corrette';
 

@@ -6,6 +6,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
@@ -75,7 +76,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     // bar. No heading either, for the reason [AppSettingsPage] gives: the menu
     // names the group and the bar repeats it, so a third would be one too many.
     return ListView(
-      padding: MultiList.kOuterPadding,
+      padding: context.padBottom(MultiList.kOuterPadding),
       children: switch (section) {
         BackupSection.sync => _syncTiles,
         BackupSection.import => _importTiles,

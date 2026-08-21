@@ -1,5 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/res/store.dart';
 
@@ -26,14 +27,14 @@ class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.embedded) return _buildBody();
+    if (widget.embedded) return _buildBody(context);
     return Scaffold(
       appBar: CustomAppBar(title: Text(libL10n.sequence)),
-      body: _buildBody(),
+      body: _buildBody(context),
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(BuildContext context) {
     return ValBuilder(
       listenable: prop.listenable(),
       builder: (keys) {
@@ -44,7 +45,7 @@ class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
         final allKeys = [...keys, ...disabled];
         return ReorderableListView.builder(
           key: const PageStorageKey('srv_func_seq'),
-          padding: const EdgeInsets.all(7),
+          padding: context.padBottom(const EdgeInsets.all(7)),
           itemCount: allKeys.length,
           itemBuilder: (_, idx) => _buildListItem(allKeys[idx], idx, keys),
           onReorderItem: (o, n) {

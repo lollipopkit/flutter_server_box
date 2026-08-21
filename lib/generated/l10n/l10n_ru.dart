@@ -264,9 +264,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get agentMonitorOptional => 'Агент monitor (необязательно)';
 
   @override
-  String get atLeastOneTab => 'Должна быть выбрана хотя бы одна вкладка';
-
-  @override
   String get authFailTip =>
       'Аутентификация не удалась, пожалуйста, проверьте, правильны ли пароль/ключ/хост/пользователь и т.д.';
 

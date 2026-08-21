@@ -11,7 +11,6 @@
   "askAiDisclaimer": "AI가 부정확할 수 있습니다. 적용 전에 주의 깊게 검토해 주세요.",
   "askAiInsertTerminal": "터미널에 삽입",
   "askAiNoResponse": "응답 없음",
-  "atLeastOneTab": "최소 하나의 탭을 선택해야 합니다",
   "authFailTip": "인증에 실패했습니다. 자격 증명이 올바른지 확인해 주세요.",
   "autoBackupConflict": "자동 백업은 한 번에 하나만 활성화할 수 있습니다.",
   "autoConnect": "자동 연결",

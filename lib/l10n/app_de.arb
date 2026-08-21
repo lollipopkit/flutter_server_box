@@ -10,7 +10,6 @@
   "askAiDisclaimer": "KI kann Fehler machen. Bitte vorsichtig verwenden.",
   "askAiInsertTerminal": "In Terminal einfügen",
   "askAiNoResponse": "Keine Antwort",
-  "atLeastOneTab": "Mindestens ein Tab muss ausgewählt sein",
   "authFailTip": "Authentifizierung fehlgeschlagen, bitte überprüfen Sie, ob das Passwort/Schlüssel/Host/Benutzer usw. falsch sind.",
   "autoBackupConflict": "Es kann nur eine automatische Sicherung gleichzeitig aktiviert werden.",
   "autoConnect": "Automatisch verbinden",

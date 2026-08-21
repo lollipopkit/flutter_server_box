@@ -50,11 +50,9 @@ void main() {
   Finder tabRow(String title) =>
       find.descendant(of: find.byKey(settingsTabsKey), matching: find.text(title));
 
-  /// The way back out. Absent at the root, where there is nowhere to go.
-  final backTab = find.descendant(
-    of: find.byKey(settingsTabsKey),
-    matching: find.byIcon(Icons.arrow_back),
-  );
+  /// The way back out, which is the title bar's own button and the only one on
+  /// the screen — the tabs show the level and nothing else.
+  final backBtn = find.byType(BackButton);
 
   String barTitle(WidgetTester tester) => tester
       .widget<Text>(
@@ -200,7 +198,16 @@ void main() {
     expect(tabRow(libL10n.sequence), findsOneWidget);
     // What is first inside it, rather than a row of tabs with none of them on.
     expect(barTitle(tester), libL10n.general);
-    expect(backTab, findsOneWidget);
+    // One way back, in the bar at the top. A second at the foot was the same
+    // move twice on one screen.
+    expect(backBtn, findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(settingsTabsKey),
+        matching: find.byIcon(Icons.arrow_back),
+      ),
+      findsNothing,
+    );
   });
 
   testWidgets('the tabs rise into place rather than appearing', (tester) async {
@@ -242,7 +249,7 @@ void main() {
 
     await tester.tap(menuRow(libL10n.server));
     await settle(tester, 20);
-    await tester.tap(backTab);
+    await tester.tap(backBtn);
     await settle(tester, 20);
 
     expect(barTitle(tester), libL10n.setting);
@@ -257,7 +264,7 @@ void main() {
     await settle(tester, 20);
     final four = tester.getSize(find.byKey(settingsTabsKey)).width;
 
-    await tester.tap(backTab);
+    await tester.tap(backBtn);
     await settle(tester, 20);
     await tester.tap(menuRow(libL10n.file));
     await settle(tester, 20);
@@ -321,7 +328,7 @@ void main() {
     // comes from.
     expect(contentNav().pages.length, 2);
 
-    await tester.tap(backTab);
+    await tester.tap(backBtn);
     await settle(tester, 20);
     expect(contentNav().pages.length, 1);
   });

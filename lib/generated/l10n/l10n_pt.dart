@@ -263,9 +263,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get agentMonitorOptional => 'Agente monitor (opcional)';
 
   @override
-  String get atLeastOneTab => 'Pelo menos uma aba deve ser selecionada';
-
-  @override
   String get authFailTip =>
       'Autenticação falhou, por favor verifique se a senha/chave/host/usuário, etc., estão incorretos.';
 

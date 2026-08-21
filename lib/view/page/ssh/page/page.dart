@@ -344,6 +344,11 @@ class SSHPageState extends ConsumerState<SSHPage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
+    final bgImage = Stores.setting.sshBgImage.fetch();
+    final bgFile = bgImage.isEmpty ? null : File(bgImage);
+    final hasBg = bgFile != null && bgFile.existsSync();
+
     Widget child = PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -351,6 +356,11 @@ class SSHPageState extends ConsumerState<SSHPage>
         _handleEscKeyOrBackButton();
       },
       child: Scaffold(
+        // One background for the whole page. Transparent over a picture, and
+        // otherwise the `Scaffold`'s own colour — which is what the terminal
+        // is drawn on either way, since [TerminalView] is given
+        // `backgroundOpacity: 0` and paints none of its own.
+        backgroundColor: hasBg ? Colors.transparent : null,
         appBar: widget.args.notFromTab
             ? CustomAppBar(
                 leading: BackButton(onPressed: context.pop),
@@ -359,10 +369,20 @@ class SSHPageState extends ConsumerState<SSHPage>
                 actions: _buildAppBarActions(),
               )
             : null,
-        body: _buildBody(),
+        body: _buildBody(hasBg),
         bottomNavigationBar: isDesktop ? null : _buildBottom(),
       ),
     );
+
+    // Behind the `Scaffold` and not inside the body: the virtual keys are a bar
+    // under it, and a picture that stops where the terminal does leaves them on
+    // a colour of their own.
+    if (hasBg) {
+      child = Stack(
+        fit: StackFit.expand,
+        children: [..._buildBackground(bgFile), child],
+      );
+    }
 
     if (isIOS) {
       child = AnnotatedRegion(
@@ -373,47 +393,44 @@ class SSHPageState extends ConsumerState<SSHPage>
     return child;
   }
 
-  Widget _buildBody() {
-    final letterCache = Stores.setting.letterCache.fetch();
-    final bgImage = Stores.setting.sshBgImage.fetch();
+  /// The picture the page is drawn on, bottom layer first.
+  ///
+  /// Only called when there is one — see [build], which is also where it is
+  /// put in the tree.
+  List<Widget> _buildBackground(File file) {
     final opacity = Stores.setting.sshBgOpacity.fetch();
     final blur = Stores.setting.sshBlurRadius.fetch();
-    final file = File(bgImage);
-    final hasBg = bgImage.isNotEmpty && file.existsSync();
+    return [
+      Positioned.fill(
+        child: Image.file(
+          file,
+          fit: BoxFit.cover,
+          errorBuilder: (_, _, _) => const SizedBox(),
+        ),
+      ),
+      if (blur > 0)
+        Positioned.fill(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+            child: const SizedBox(),
+          ),
+        ),
+      Positioned.fill(
+        child: ColoredBox(
+          color: _terminalTheme.background.withValues(alpha: opacity),
+        ),
+      ),
+    ];
+  }
+
+  Widget _buildBody(bool hasBg) {
+    final letterCache = Stores.setting.letterCache.fetch();
     final theme = hasBg
         ? _terminalTheme.copyWith(background: Colors.transparent)
         : _terminalTheme;
-    final children = <Widget>[];
-    if (hasBg) {
-      children.add(
-        Positioned.fill(
-          child: Image.file(
-            file,
-            fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => const SizedBox(),
-          ),
-        ),
-      );
-      if (blur > 0) {
-        children.add(
-          Positioned.fill(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-              child: const SizedBox(),
-            ),
-          ),
-        );
-      }
-      children.add(
-        Positioned.fill(
-          child: ColoredBox(
-            color: _terminalTheme.background.withValues(alpha: opacity),
-          ),
-        ),
-      );
-    }
-    children.add(
-      Padding(
+    return SizedBox(
+      height: double.infinity,
+      child: Padding(
         padding: EdgeInsets.only(left: _horizonPadding, right: _horizonPadding),
         child: TerminalView(
           _terminal,
@@ -446,11 +463,6 @@ class SSHPageState extends ConsumerState<SSHPage>
         ),
       ),
     );
-
-    return SizedBox(
-      height: double.infinity,
-      child: Stack(children: children),
-    );
   }
 
   Widget _buildBottom() {
@@ -463,8 +475,11 @@ class SSHPageState extends ConsumerState<SSHPage>
         padding: _media.viewInsets,
         duration: const Duration(milliseconds: 23),
         curve: Curves.fastOutSlowIn,
-        child: Container(
-          color: _terminalTheme.background,
+        // No colour of its own: the keys are part of the page and sit on
+        // whatever it is drawn on. Painting the terminal theme's background
+        // here put a strip of another colour under the terminal, which is not
+        // drawn on that colour at all.
+        child: SizedBox(
           height: _virtKeysHeight,
           child: Consumer(
             builder: (context, ref, child) {

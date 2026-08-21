@@ -10,7 +10,6 @@
   "askAiDisclaimer": "AI が誤る可能性があります。注意してご利用ください。",
   "askAiInsertTerminal": "ターミナルに挿入",
   "askAiNoResponse": "応答なし",
-  "atLeastOneTab": "少なくとも1つのタブを選択する必要があります",
   "authFailTip": "認証に失敗しました。パスワード/鍵/ホスト/ユーザーなどが間違っていないか確認してください。",
   "autoBackupConflict": "自動バックアップは一度に一つしか開始できません",
   "autoConnect": "自動接続",

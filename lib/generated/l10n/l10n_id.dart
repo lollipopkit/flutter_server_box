@@ -264,9 +264,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get agentMonitorOptional => 'Agen monitor (opsional)';
 
   @override
-  String get atLeastOneTab => 'Setidaknya satu tab harus dipilih';
-
-  @override
   String get authFailTip =>
       'Otentikasi gagal, silakan periksa apakah kata sandi/kunci/host/pengguna, dll, salah.';
 

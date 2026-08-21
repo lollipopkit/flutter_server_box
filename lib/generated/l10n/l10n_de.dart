@@ -265,9 +265,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get agentMonitorOptional => 'monitor-Agent (optional)';
 
   @override
-  String get atLeastOneTab => 'Mindestens ein Tab muss ausgewählt sein';
-
-  @override
   String get authFailTip =>
       'Authentifizierung fehlgeschlagen, bitte überprüfen Sie, ob das Passwort/Schlüssel/Host/Benutzer usw. falsch sind.';
 

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
+import 'dart:ui' show ImageFilter;
 
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:file_picker/file_picker.dart';
@@ -9,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/linux_seed.dart';
 import 'package:server_box/core/utils/local_exec.dart';
@@ -443,7 +445,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   Expanded(child: content),
                 ],
               )
-            : _buildNarrow(nodes, content),
+            // A `Builder` so the insets read below are the ones this body
+            // actually has: the state's own context is above the `Scaffold`,
+            // where `padding` is still the whole window's — the status bar the
+            // app bar already covers, and the home indicator the `SafeArea`
+            // just above here already cleared.
+            : Builder(builder: (context) => _buildNarrow(context, nodes, content)),
       ),
     );
   }
@@ -517,10 +524,19 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   /// The content with the tabs floating over its foot.
   ///
-  /// The content is told to keep clear of them through the [MediaQuery] its own
-  /// `SafeArea` reads, so a list scrolls to its end above the bar rather than
-  /// under it.
-  Widget _buildNarrow(List<SettingsNode> nodes, Widget content) {
+  /// The content fills the body and the bar sits over it, so what is on the page
+  /// carries on under the bar instead of stopping at a bare strip above it. The
+  /// room a list needs to bring its last row into the clear arrives as
+  /// [MediaQuery] padding, which `context.padBottom` puts on the scrollable —
+  /// padding a list can scroll through, rather than a strip taken out of the
+  /// page's box.
+  ///
+  /// [context] has to be one from inside the body — see where this is called.
+  Widget _buildNarrow(
+    BuildContext context,
+    List<SettingsNode> nodes,
+    Widget content,
+  ) {
     final mediaQuery = MediaQuery.of(context);
     // Nothing over the list — a bar of tabs there would be the same names
     // twice — and nothing over a leaf, which has no level under it to show.
@@ -536,7 +552,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               bottom: mediaQuery.padding.bottom + space,
             ),
           ),
-          child: SafeArea(top: false, child: content),
+          child: content,
         ),
         // Edge to edge, and the bar centres itself within that: it is as wide
         // as the level it is showing, and only scrolls when that is too wide.
@@ -565,9 +581,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     key: ValueKey(level.id),
                     nodes: _levelOf(level),
                     selectedId: _selectedId,
-                    canGoBack: true,
                     onTap: _onTab,
-                    onBack: _onTabBack,
                   ),
           ),
         ),
@@ -643,7 +657,7 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
     };
 
     return ListView(
-      padding: MultiList.kOuterPadding,
+      padding: context.padBottom(MultiList.kOuterPadding),
       children: [group],
     );
   }

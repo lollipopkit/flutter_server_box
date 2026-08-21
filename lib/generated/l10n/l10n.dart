@@ -579,12 +579,6 @@ abstract class AppLocalizations {
   /// **'Monitor agent (optional)'**
   String get agentMonitorOptional;
 
-  /// No description provided for @atLeastOneTab.
-  ///
-  /// In en, this message translates to:
-  /// **'At least one tab must be selected'**
-  String get atLeastOneTab;
-
   /// No description provided for @authFailTip.
   ///
   /// In en, this message translates to:

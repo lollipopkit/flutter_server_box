@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/chan.dart';
+import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/service/watch_sync.dart';
 import 'package:server_box/core/utils/misc.dart';
@@ -58,7 +59,7 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
   @override
   Widget build(BuildContext context) {
     final body = ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 17),
+      padding: context.padBottom(const EdgeInsets.symmetric(horizontal: 17)),
       children: [
         _buildPushToken(),
         _buildAutoUpdateHomeWidget(),

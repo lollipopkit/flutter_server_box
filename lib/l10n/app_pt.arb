@@ -10,7 +10,6 @@
   "askAiDisclaimer": "A IA pode errar. Use com cautela.",
   "askAiInsertTerminal": "Inserir no terminal",
   "askAiNoResponse": "Sem resposta",
-  "atLeastOneTab": "Pelo menos uma aba deve ser selecionada",
   "authFailTip": "Autenticação falhou, por favor verifique se a senha/chave/host/usuário, etc., estão incorretos.",
   "autoBackupConflict": "Apenas um backup automático pode ser ativado por vez",
   "autoConnect": "Conexão automática",

@@ -76,7 +76,6 @@
   "agentSaveServerTitle": "保存为服务器",
   "agentSaveServerTip": "这台主机和你输入的密码将保存在本设备上。",
   "agentMonitorOptional": "Monitor 代理（可选）",
-  "atLeastOneTab": "至少需要选择一个标签",
   "authFailTip": "认证失败，请检查连接信息是否正确",
   "autoBackupConflict": "仅可启用一个自动备份任务",
   "autoConnect": "自动连接",

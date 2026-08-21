@@ -249,9 +249,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentMonitorOptional => 'Monitor 代理（可选）';
 
   @override
-  String get atLeastOneTab => '至少需要选择一个标签';
-
-  @override
   String get authFailTip => '认证失败，请检查连接信息是否正确';
 
   @override
@@ -1559,9 +1556,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get agentMonitorOptional => 'Monitor 代理（選填）';
-
-  @override
-  String get atLeastOneTab => '至少需要選擇一個標籤';
 
   @override
   String get authFailTip => '認證失敗，請檢查連線資訊是否正確';

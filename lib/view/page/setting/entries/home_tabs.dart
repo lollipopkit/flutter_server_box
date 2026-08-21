@@ -1,5 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/res/store.dart';
@@ -78,14 +79,17 @@ class _HomeTabsConfigPageState extends State<HomeTabsConfigPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Not the bottom: the list takes that as padding of its own, so it can be
+    // scrolled through rather than cutting the page short of it.
     final body = SafeArea(
+      bottom: false,
       child: Column(
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(17, 13, 17, 7),
             child: Text(l10n.homeTabsCustomizeDesc, style: UIs.textGrey),
           ),
-          Expanded(child: _buildList()),
+          Expanded(child: _buildList(context)),
         ],
       ),
     );
@@ -99,11 +103,11 @@ class _HomeTabsConfigPageState extends State<HomeTabsConfigPage> {
   /// One list rather than two, with [_buildSeparator] standing between the two
   /// halves of it. Enabling a tab is then the same gesture as ordering one —
   /// dragging it across that line — and there is nothing left to save.
-  Widget _buildList() {
+  Widget _buildList(BuildContext context) {
     final items = _items;
     return ReorderableListView.builder(
       key: const PageStorageKey('home_tabs'),
-      padding: const EdgeInsets.symmetric(horizontal: 7),
+      padding: context.padBottom(const EdgeInsets.symmetric(horizontal: 7)),
       buildDefaultDragHandles: false,
       proxyDecorator: reorderProxyDecorator,
       itemCount: items.length,

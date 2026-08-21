@@ -263,10 +263,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get agentMonitorOptional => 'monitor-agent (optioneel)';
 
   @override
-  String get atLeastOneTab =>
-      'Er moet minimaal één tabblad worden geselecteerd';
-
-  @override
   String get authFailTip =>
       'Authenticatie mislukt, controleer of het wachtwoord/sleutel/host/gebruiker, enz., incorrect zijn.';
 

@@ -10,7 +10,6 @@
   "askAiDisclaimer": "L'IA peut se tromper. Utilisez-la avec prudence.",
   "askAiInsertTerminal": "Insérer dans le terminal",
   "askAiNoResponse": "Aucune réponse",
-  "atLeastOneTab": "Au moins un onglet doit être sélectionné",
   "authFailTip": "Échec de l'authentification. Veuillez vérifier si le mot de passe/clé/hôte/utilisateur, etc., est incorrect.",
   "autoBackupConflict": "Un seul sauvegarde automatique peut être activé en même temps.",
   "autoConnect": "Connexion automatique",

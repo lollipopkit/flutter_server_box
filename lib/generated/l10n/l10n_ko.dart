@@ -252,9 +252,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get agentMonitorOptional => 'monitor 에이전트(선택)';
 
   @override
-  String get atLeastOneTab => '최소 하나의 탭을 선택해야 합니다';
-
-  @override
   String get authFailTip => '인증에 실패했습니다. 자격 증명이 올바른지 확인해 주세요.';
 
   @override

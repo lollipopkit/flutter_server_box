@@ -265,9 +265,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get agentMonitorOptional => 'monitor aracısı (isteğe bağlı)';
 
   @override
-  String get atLeastOneTab => 'En az bir sekme seçilmelidir';
-
-  @override
   String get authFailTip =>
       'Kimlik doğrulama başarısız oldu, lütfen kimlik bilgilerinin doğru olup olmadığını kontrol edin';
 

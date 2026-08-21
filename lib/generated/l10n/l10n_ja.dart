@@ -251,9 +251,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get agentMonitorOptional => 'monitor エージェント（任意）';
 
   @override
-  String get atLeastOneTab => '少なくとも1つのタブを選択する必要があります';
-
-  @override
   String get authFailTip => '認証に失敗しました。パスワード/鍵/ホスト/ユーザーなどが間違っていないか確認してください。';
 
   @override

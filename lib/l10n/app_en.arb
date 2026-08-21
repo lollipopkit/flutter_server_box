@@ -76,7 +76,6 @@
   "agentSaveServerTitle": "Save as a server",
   "agentSaveServerTip": "This host and the password you entered will be stored on this device.",
   "agentMonitorOptional": "Monitor agent (optional)",
-  "atLeastOneTab": "At least one tab must be selected",
   "authFailTip": "Authentication failed, please check whether credentials are correct",
   "autoBackupConflict": "Only one automatic backup can be turned on at the same time.",
   "autoConnect": "Auto connect",

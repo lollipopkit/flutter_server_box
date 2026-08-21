@@ -268,9 +268,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get agentMonitorOptional => 'Agent monitor (facultatif)';
 
   @override
-  String get atLeastOneTab => 'Au moins un onglet doit être sélectionné';
-
-  @override
   String get authFailTip =>
       'Échec de l\'authentification. Veuillez vérifier si le mot de passe/clé/hôte/utilisateur, etc., est incorrect.';
 
