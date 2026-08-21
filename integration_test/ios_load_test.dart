@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/core/utils/ios_rootfs.dart';
 import 'package:server_box/core/utils/ish_exec.dart';
+import 'package:server_box/data/model/app/linux_distro.dart';
 
 /// What the Linux guest costs the app while it is working.
 ///

@@ -6,9 +6,9 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/core/utils/ios_rootfs.dart';
 import 'package:server_box/core/utils/ish_exec.dart';
+import 'package:server_box/data/model/app/linux_distro.dart';
 
 /// The Linux userland on iOS, through the API the app will use.
 ///
