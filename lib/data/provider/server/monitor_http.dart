@@ -38,7 +38,10 @@ class MonitorHttpClient {
         ? addr.substring(0, addr.length - 1)
         : addr;
     final uri = Uri.tryParse(normalized);
-    if (uri == null || !isSecureRemoteEndpoint(uri)) {
+    if (uri == null || !isSecureRemoteEndpoint(
+      uri,
+      allowInsecure: monitor.allowInsecure,
+    )) {
       throw MonitorHttpErr(
         type: MonitorHttpErrType.net,
         message: l10n.monitorHttpsRequired,
@@ -407,30 +410,12 @@ class MonitorHttpClient {
     });
   }
 
-  /// Opens the agent's SSH tunnel and returns the raw WebSocket.
-  ///
-  /// Sends no target — the agent connects to its own configured address and
-  /// refuses to take one from a client.
-  ///
-  /// TODO: **nothing calls this.** A monitor server carries no SSH credential
-  /// any more, so there is nothing to speak SSH with over this stream; shell
-  /// use goes through [exec] and [openTerminal] instead. Remove it along with
-  /// `MonitorRemoteAccess.tunnel`/`.secure`, which are parsed and never read,
-  /// and the agent's `/api/v1/tunnel/ws` — or restore a consumer.
-  Future<WebSocket> openTunnel({Duration? timeout}) =>
-      _openWs(purpose: 'tunnel', path: '/api/v1/tunnel/ws', timeout: timeout);
-
   /// Opens the agent's terminal endpoint and returns the raw WebSocket.
   ///
-  /// Unlike the tunnel this carries no SSH: the agent runs the shell itself
-  /// and what travels here is PTY bytes and control JSON in the clear, which
-  /// is why the agent refuses this endpoint on a plaintext link that isn't
+  /// The agent runs the shell itself; what travels here is PTY bytes and
+  /// control JSON in the clear, so it refuses plaintext links that are not
   /// loopback. See `MonitorShellBackend` for the protocol spoken over it.
-  Future<WebSocket> openTerminal({Duration? timeout}) => _openWs(
-    purpose: 'terminal',
-    path: '/api/v1/terminal/ws',
-    timeout: timeout,
-  );
+  Future<WebSocket> openTerminal({Duration? timeout}) => _openWs(timeout: timeout);
 
   /// What this agent will accept right now, and what it runs on.
   ///
@@ -448,18 +433,12 @@ class MonitorHttpClient {
   /// Takes a single-use ticket, then upgrades.
   ///
   /// A browser can't put a bearer token on a WebSocket handshake, so the agent
-  /// authorises upgrades with a short-lived, purpose-bound ticket instead;
-  /// this client uses the same path rather than a second mechanism that only
-  /// native clients could exercise.
-  Future<WebSocket> _openWs({
-    required String purpose,
-    required String path,
-    Duration? timeout,
-  }) {
+  /// authorises upgrades with a short-lived, single-use ticket instead.
+  Future<WebSocket> _openWs({Duration? timeout}) {
     return _authed(() async {
       final resp = await _object(
         '/api/v1/ws-ticket',
-        post: {'purpose': purpose},
+        post: const {'purpose': 'terminal'},
       );
       final ticket = resp['ticket'] as String?;
       if (ticket == null || ticket.isEmpty) {
@@ -474,7 +453,7 @@ class MonitorHttpClient {
       // plaintext would dial `ws://` at a TLS port and hang
       final url = Uri.parse(_addr).replace(
         scheme: _addr.toLowerCase().startsWith('https') ? 'wss' : 'ws',
-        path: path,
+        path: '/api/v1/terminal/ws',
         queryParameters: {'ticket': ticket},
       );
       final socket = await WebSocket.connect(
@@ -486,7 +465,7 @@ class MonitorHttpClient {
         timeout ?? const Duration(seconds: 15),
         onTimeout: () => throw MonitorHttpErr(
           type: MonitorHttpErrType.net,
-          message: 'Timed out opening the monitor $purpose',
+          message: 'Timed out opening the monitor terminal',
         ),
       );
       return socket;

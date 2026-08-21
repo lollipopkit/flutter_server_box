@@ -12,6 +12,7 @@ import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
+import 'package:server_box/data/provider/port_forward_provider.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
@@ -293,6 +294,7 @@ class ServersNotifier extends _$ServersNotifier {
   Future<void> delServer(String id) async {
     final deleting = state.servers[id];
     if (deleting != null) await WatchSync.instance.removeServer(deleting);
+    await _clearServerData(id);
     final newServers = Map<String, Spi>.from(state.servers);
     newServers.remove(id);
 
@@ -310,8 +312,6 @@ class ServersNotifier extends _$ServersNotifier {
       manualDisconnectedIds: newManualDisconnected,
     );
     await _clearSudoPasswordOverrideBestEffort(id);
-
-    Stores.connectionStats.clearServerStats(id);
 
     // Remove SSH session when server is deleted
     final sessionId = 'ssh_$id';
@@ -332,6 +332,9 @@ class ServersNotifier extends _$ServersNotifier {
     for (final spi in state.servers.values) {
       await WatchSync.instance.removeServer(spi);
     }
+    for (final id in serverIds) {
+      await _clearServerData(id);
+    }
     final bool cleared;
     try {
       cleared = await Stores.server.clear();
@@ -346,8 +349,13 @@ class ServersNotifier extends _$ServersNotifier {
     Stores.setting.serverOrder.put([]);
     state = const ServersState();
     await Future.wait(serverIds.map(_clearSudoPasswordOverrideBestEffort));
-    Stores.connectionStats.clearAll();
     bakSync.sync(milliDelay: 1000);
+  }
+
+  Future<void> _clearServerData(String id) async {
+    await ref.read(portForwardProvider(id).notifier).clear();
+    Stores.agentConversation.clearServer(id);
+    await Stores.connectionStats.clearServerStats(id);
   }
 
   Future<void> updateServerOrder(List<String> order) async {

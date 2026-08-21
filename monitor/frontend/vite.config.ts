@@ -13,9 +13,8 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:3770',
         changeOrigin: true,
-        // The terminal and tunnel endpoints are WebSocket upgrades; without
-        // this the dev server answers the handshake itself and they never
-        // reach the agent
+        // The terminal endpoint is a WebSocket upgrade; without this the dev
+        // server answers the handshake itself and it never reaches the agent.
         ws: true,
       },
     },

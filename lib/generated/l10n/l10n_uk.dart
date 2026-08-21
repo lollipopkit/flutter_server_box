@@ -317,6 +317,13 @@ class AppLocalizationsUk extends AppLocalizations {
       'Віддалені агенти моніторингу потребують HTTPS; HTTP дозволено лише для адрес зворотного зв’язку.';
 
   @override
+  String get monitorAllowInsecureHttp => 'Allow insecure HTTP';
+
+  @override
+  String get monitorAllowInsecureHttpTip =>
+      'Only enable for a trusted private network with transport encryption outside HTTP, such as Tailscale. The agent must also explicitly allow plaintext file access. Credentials and file contents may otherwise be exposed.';
+
+  @override
   String get backupTip =>
       'Експортовані дані можуть бути зашифровані паролем. \nБудь ласка, зберігайте їх у безпеці.';
 

@@ -9,10 +9,6 @@
 //! (delete the row), because silently accepting a changed key would make the
 //! record worthless.
 //!
-//! The app's tunnel has no rows here. It verifies the host key itself, at its
-//! own end, against its own store — the agent is a byte relay on that path and
-//! could not check it even if it wanted to.
-
 use russh::keys::ssh_key::PublicKey;
 use sqlx::SqlitePool;
 

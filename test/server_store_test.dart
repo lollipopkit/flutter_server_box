@@ -76,14 +76,19 @@ void main() {
     store.put(const Spi(
       id: 'mon',
       name: 'agent',
-      monitorHttp: MonitorHttpCredential(addr: 'https://h:3770', pwd: 'p'),
+      monitorHttp: MonitorHttpCredential(
+        addr: 'http://h:3770',
+        pwd: 'p',
+        allowInsecure: true,
+      ),
     ));
     store.invalidate();
 
     final got = store.fetchOneRaw('mon')!;
     expect(got.ssh, isNull);
-    expect(got.monitorHttp?.addr, 'https://h:3770');
+    expect(got.monitorHttp?.addr, 'http://h:3770');
     expect(got.monitorHttp?.pwd, 'p');
+    expect(got.monitorHttp?.allowInsecure, isTrue);
   });
 
   test('what an update drops is really dropped', () {

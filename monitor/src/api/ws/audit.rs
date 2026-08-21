@@ -24,7 +24,6 @@ use sqlx::SqlitePool;
 pub enum Kind {
     /// Issuing a WebSocket ticket
     Ticket,
-    Tunnel,
     Terminal,
     /// A one-off command run through `api::exec`.
     Exec,
@@ -41,7 +40,6 @@ impl Kind {
     fn as_str(self) -> &'static str {
         match self {
             Kind::Ticket => "ticket",
-            Kind::Tunnel => "tunnel",
             Kind::Terminal => "terminal",
             Kind::Exec => "exec",
             Kind::Fs => "fs",
@@ -91,8 +89,7 @@ impl Outcome {
 }
 
 /// One row to be written. Built with the fluent setters so call sites only
-/// mention the fields that apply to them — a tunnel has no `ssh_user`, a
-/// denied ticket has no `subject`.
+/// mention the fields that apply to them — a denied ticket has no `subject`.
 pub struct Event {
     kind: Kind,
     action: Action,

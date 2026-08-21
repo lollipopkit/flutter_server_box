@@ -61,7 +61,8 @@ abstract final class SchemaVersion {
   /// and [migrate] has nothing to do until a v5 exists.
   /// v5: entities out of `kv` and into tables with columns, foreign keys
   ///     and per-row sync metadata
-  static const current = 5;
+  /// v6: per-monitor explicit permission for plaintext HTTP on trusted networks
+  static const current = 6;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

@@ -75,7 +75,10 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     // Merging a store before the one it points at would drop every record whose
     // foreign key has not arrived yet.
     final keysChanged = Stores.key.merge(keys, force: force);
-    final serversChanged = Stores.server.merge(spis, force: force);
+    final serversChanged = Stores.server.merge(
+      _serversWithRestoredKeyIds(),
+      force: force,
+    );
     final snippetsChanged = Stores.snippet.merge(snippets, force: force);
     Stores.portForward.merge(portForwards, force: force);
     for (final entry in container.entries) {
@@ -85,13 +88,13 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
 
     await Future.wait([
       Mergeable.mergeStore(
-        backupData: history,
+        backupData: _mergeDataForStore(Stores.history, history),
         store: Stores.history,
         force: force,
       ),
       if (settings.isNotEmpty)
         Mergeable.mergeStore(
-          backupData: settings,
+          backupData: _mergeDataForStore(Stores.setting, settings),
           store: Stores.setting,
           force: force,
         ),
@@ -123,9 +126,9 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       keys: Stores.key.getAllMap(),
       portForwards: Stores.portForward.getAllMap(),
       container: Stores.container.getAllMap(),
-      history: Stores.history.getAllMap(includeInternalKeys: true),
+      history: _backupStore(Stores.history),
       settings: includeSettings
-          ? Stores.setting.getAllMap(includeInternalKeys: true)
+          ? _backupStore(Stores.setting)
           : const {},
     );
   }
@@ -176,6 +179,94 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     _validateRestorableStore('keys', keys);
     _validateRestorableStore('portForwards', portForwards);
   }
+
+  /// A pre-table backup identifies a private key by its name. When that name
+  /// already exists locally, [PrivateKeyStore.reconcile] correctly keeps the
+  /// local generated id; the server's old name reference must follow it before
+  /// the foreign key can accept the server row.
+  Map<String, Object?> _serversWithRestoredKeyIds() {
+    final keyIds = <String, String>{};
+    for (final entry in keys.entries) {
+      if (_isInternalStoreKey(entry.key) || entry.value is! Map) continue;
+      try {
+        final incoming = PrivateKeyInfo.fromJson(
+          Map<String, dynamic>.from(entry.value as Map),
+        );
+        final restored = Stores.key.fetchByName(incoming.name);
+        if (restored != null) keyIds[incoming.id] = restored.id;
+      } catch (_) {
+        // `merge` skips malformed key records too; leave its server reference
+        // untouched so its foreign key rejects the matching malformed record.
+      }
+    }
+    if (keyIds.isEmpty) return spis;
+
+    return {
+      for (final entry in spis.entries)
+        entry.key: _serverWithRestoredKeyId(entry.value, keyIds),
+    };
+  }
+}
+
+Object? _serverWithRestoredKeyId(
+  Object? value,
+  Map<String, String> keyIds,
+) {
+  if (value is! Map) return value;
+  final server = Map<String, Object?>.from(value);
+  final ssh = server['ssh'];
+  if (ssh is Map) {
+    server['ssh'] = _sshWithRestoredKeyId(ssh, keyIds);
+  } else {
+    for (final key in const ['pubKeyId', 'keyId']) {
+      final id = server[key];
+      if (id is String && keyIds.containsKey(id)) server[key] = keyIds[id];
+    }
+  }
+  return server;
+}
+
+Map<String, Object?> _sshWithRestoredKeyId(
+  Map value,
+  Map<String, String> keyIds,
+) {
+  final ssh = Map<String, Object?>.from(value);
+  for (final key in const ['pubKeyId', 'keyId']) {
+    final id = ssh[key];
+    if (id is String && keyIds.containsKey(id)) ssh[key] = keyIds[id];
+  }
+  return ssh;
+}
+
+/// Keeps the per-record modification map needed by sync, but not device-local
+/// layout and migration markers. Restoring those markers from another device
+/// can make this device skip a migration or claim a schema it does not have.
+Map<String, Object?> _backupStore(SqliteStore store) {
+  final rows = store.getAllMap(includeInternalKeys: true);
+  rows.removeWhere(
+    (key, _) => store.isInternalKey(key) && key != store.lastUpdateTsKey,
+  );
+  return rows;
+}
+
+Map<String, Object?> _mergeDataForStore(
+  SqliteStore store,
+  Map<String, Object?> rows,
+) {
+  final result = Map<String, Object?>.from(rows)
+    ..removeWhere(
+      (key, _) => store.isInternalKey(key) && key != store.lastUpdateTsKey,
+    );
+
+  // Mergeable treats an absent key as a deletion. Keep local-only state in
+  // the input until fl_lib can expose an internal-key exclusion policy.
+  for (final entry
+      in store.getAllMap(includeInternalKeys: true).entries
+      .where((entry) =>
+          store.isInternalKey(entry.key) && entry.key != store.lastUpdateTsKey)) {
+    result[entry.key] = entry.value;
+  }
+  return result;
 }
 
 Object? _toEncodable(Object? value) {

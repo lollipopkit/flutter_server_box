@@ -256,6 +256,9 @@ pub async fn start_cleanup_scheduler(
     pool: SqlitePool,
     config: DataRetentionConfig,
 ) -> Result<()> {
+    config
+        .validate()
+        .map_err(anyhow::Error::msg)?;
     let cleanup_service = DataCleanupService::new(pool, config.clone());
     
     info!(

@@ -672,8 +672,20 @@ abstract class AppLocalizations {
   /// No description provided for @monitorHttpsRequired.
   ///
   /// In en, this message translates to:
-  /// **'Remote monitor agents require HTTPS; HTTP is allowed only on loopback.'**
+  /// **'Remote monitor agents require HTTPS unless this connection explicitly allows insecure HTTP.'**
   String get monitorHttpsRequired;
+
+  /// No description provided for @monitorAllowInsecureHttp.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow insecure HTTP'**
+  String get monitorAllowInsecureHttp;
+
+  /// No description provided for @monitorAllowInsecureHttpTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Only enable for a trusted private network with transport encryption outside HTTP, such as Tailscale. The agent must also explicitly allow plaintext file access. Credentials and file contents may otherwise be exposed.'**
+  String get monitorAllowInsecureHttpTip;
 
   /// No description provided for @backupTip.
   ///
