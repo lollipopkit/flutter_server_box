@@ -12,6 +12,8 @@ import 'package:server_box/data/store/snippet.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/snippet/list.dart';
 
+import 'helpers/test_db.dart';
+
 /// There has to be a way to make the first snippet, and to search for one, at
 /// every width.
 ///
@@ -27,7 +29,7 @@ void main() {
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-snippet-');
-    SqliteDb.openInMemory();
+    await openTestDb();
     // In memory: this page persists the pane width on every drag, and a real
     // write started in a `testWidgets` body never lets go of the box's lock.
     getIt.registerSingleton<SettingStore>(SettingStore.forTest());
@@ -92,7 +94,7 @@ void main() {
   testWidgets('a wide window with snippets lists them under the same row', (
     tester,
   ) async {
-    Stores.snippet.put(const Snippet(name: 'deploy', script: 'echo hi'));
+    Stores.snippet.put(const Snippet(id: 'sn-1', name: 'deploy', script: 'echo hi'));
 
     await pump(tester, width: 1200);
 

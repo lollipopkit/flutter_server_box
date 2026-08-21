@@ -12,8 +12,8 @@ import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
-import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/port_forward_provider.dart';
+import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
 
@@ -42,7 +42,7 @@ class ServersNotifier extends _$ServersNotifier {
   }
 
   Future<void> reload() async {
-    Stores.server.invalidateCache();
+    Stores.server.dropCache();
     final newState = _load();
     if (newState == state) return;
     state = newState;

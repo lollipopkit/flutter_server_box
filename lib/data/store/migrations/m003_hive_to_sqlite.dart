@@ -1,9 +1,10 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/res/store.dart';
-import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/store/schema.dart';
+import 'package:server_box/hive/legacy_adapters.dart';
 import 'package:server_box/hive/spi_legacy_adapter.dart';
 
 /// Copies every Hive box into the SQLite stores, once per device.
@@ -15,8 +16,8 @@ import 'package:server_box/hive/spi_legacy_adapter.dart';
 ///
 /// TODO: delete this, `lib/hive/`, the `hive_ce*` dependencies and the
 /// `Hive.initFlutter()` call in `main.dart` once no supported install can still
-/// be on Hive. Keep [SpiLegacyAdapter] until then — reading a pre-v3 record is
-/// what [_toSpi] needs it for.
+/// be on Hive. Keep the frozen adapters until then — reading what a released
+/// build wrote is what [_fromLegacy] needs them for.
 abstract final class HiveImport {
   /// Internal, so it stays out of backups and out of `lastUpdateTs`.
   static const _markerKey = '${StoreDefaults.prefixKey}hiveImported';
@@ -28,22 +29,28 @@ abstract final class HiveImport {
 
   /// Box name -> what takes one of its rows.
   ///
-  /// Most go to a K-V store under the same key. The last two own tables now, so
-  /// they take the row apart themselves.
+  /// Every box lands in `kv` under its own store name, one row per Hive key.
+  /// That is the whole of the v4 shape, and it is all this step knows how to
+  /// produce: taking a record apart into columns is m004's job, against data
+  /// that is already off Hive.
+  ///
+  /// Straight into `kv` rather than through the store objects, because those
+  /// stores have moved on to tables — a migration that calls today's code
+  /// changes meaning every time that code does.
   ///
   /// `conn_stats_index` is deliberately absent: it held nothing that is not
   /// derivable from the records, and it is the one box that was never
   /// encrypted — so it is deleted below rather than carried across.
   static Map<String, bool Function(String, Object)> get _boxes => {
     'setting': _intoKv(Stores.setting),
-    'server': _intoKv(Stores.server),
-    'docker': _intoKv(Stores.container),
-    'key': _intoKv(Stores.key),
-    'snippet': _intoKv(Stores.snippet),
     'history': _intoKv(Stores.history),
-    'port_forward': _intoKv(Stores.portForward),
-    'connection_stats': Stores.connectionStats.importRow,
-    'agent_conversation': Stores.agentConversation.importRow,
+    'server': _intoKvTable('server'),
+    'docker': _intoKvTable('docker'),
+    'key': _intoKvTable('key'),
+    'snippet': _intoKvTable('snippet'),
+    'port_forward': _intoKvTable('port_forward'),
+    'connection_stats': _intoKvTable('conn_stat'),
+    'agent_conversation': _intoKvTable('agent_conversation'),
   };
 
   /// `updateLastUpdateTsOnSet: false`: the timestamps are copied across with
@@ -52,6 +59,26 @@ abstract final class HiveImport {
   /// data it has just finished reading off its own disk.
   static bool Function(String, Object) _intoKv(SqliteStore store) =>
       (key, value) => store.set(key, value, updateLastUpdateTsOnSet: false);
+
+  /// Writes a row of the v4 key-value layout directly.
+  ///
+  /// `updated_at` is 0, not now: m004 carries these timestamps into the entity
+  /// tables, and stamping them as today would make the first sync after
+  /// upgrading read as "everything changed".
+  static bool Function(String, Object) _intoKvTable(String store) =>
+      (key, value) {
+        try {
+          SqliteDb.instance.execute(
+            'INSERT OR REPLACE INTO kv (store, key, value, updated_at) '
+            'VALUES (?, ?, ?, 0);',
+            [store, key, json.encode(value)],
+          );
+          return true;
+        } catch (e) {
+          Loggers.app.warning('m003: could not write $store/$key', e);
+          return false;
+        }
+      };
 
   /// Runs the import if this device has data in Hive and none in SQLite yet.
   ///
@@ -122,7 +149,7 @@ abstract final class HiveImport {
       // What did land is already in the current shape, so the version is set
       // now: a launch in this state runs the migrator like any other, and the
       // step for a shape this data no longer has must not be applied to it.
-      if (done.isNotEmpty) SchemaVersion.initFresh();
+      if (done.isNotEmpty) SchemaVersion.initAtHiveImport();
       return;
     }
 
@@ -130,9 +157,10 @@ abstract final class HiveImport {
     _dropPlaintextIndex(dir);
 
     // The copy nests a pre-v3 server record on the way across, which is what
-    // the v2 -> v3 step used to do in place, so what has landed is current by
-    // construction.
-    SchemaVersion.initFresh();
+    // the v2 -> v3 step used to do in place. What has landed is the layout of
+    // the build that dropped Hive, not the current one — the steps after this
+    // still have to run over it.
+    SchemaVersion.initAtHiveImport();
     Stores.setting.set(_markerKey, true);
     Stores.setting.remove(_doneKey);
   }
@@ -177,7 +205,7 @@ abstract final class HiveImport {
           final raw = legacy.box.get(key);
           if (raw == null) continue;
 
-          final value = _toSpi(key, raw) ?? raw;
+          final value = _fromLegacy(raw) ?? raw;
           final ok = into(key, _jsonSafe(value as Object));
           if (ok) {
             copied++;
@@ -197,29 +225,22 @@ abstract final class HiveImport {
     return (opened: true, copied: copied);
   }
 
-  /// A server record in the current shape.
+  /// A record that a released build wrote, as the JSON that build produced.
   ///
-  /// Besides nesting the pre-v3 layout, give a record that predates server IDs
-  /// the key it was already stored under. JSON decoding deliberately generates
-  /// an ID for a blank field, but it cannot persist that generated value or
-  /// rekey the row. Leaving the field blank here would therefore make updates
-  /// and deletes address a different key after every cache miss.
-  static Object? _toSpi(String key, Object raw) {
-    final spi = switch (raw) {
-      LegacySpiV2() => raw.toSpi(),
-      Spi() => raw,
-      _ => null,
-    };
-    if (spi == null) return null;
-    return spi.id.isEmpty ? spi.copyWith(id: key) : spi;
-  }
+  /// Returns null for anything else, including a record whose adapter is still
+  /// generated from the live model — those encode themselves.
+  static Object? _fromLegacy(Object raw) => switch (raw) {
+    final LegacySpiV2 spi => spi.toSpi(),
+    final LegacyPrivateKeyV1 key => key.toJson(),
+    final LegacySnippetV1 snippet => snippet.toJson(),
+    _ => null,
+  };
 
   /// The value as something made of maps, lists and primitives.
   ///
   /// A Hive box hands back whatever its adapter decoded — a `ConnectionStat`,
-  /// not a map. The K-V stores would encode that on write, but the two
-  /// table-backed stores parse what they are given with `fromJson`, so both
-  /// kinds of destination are handed the same shape.
+  /// not a map — and every destination here is a JSON column, so the value has
+  /// to be reduced to maps, lists and primitives before it can be encoded.
   static Object _jsonSafe(Object value) {
     if (value is Map || value is List || value is Enum) return value;
     if (value is num || value is String || value is bool) return value;

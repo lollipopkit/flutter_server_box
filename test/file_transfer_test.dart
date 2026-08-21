@@ -16,6 +16,7 @@ import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 
 import 'helpers/spi_fixture.dart';
+import 'helpers/test_db.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -48,7 +49,7 @@ void main() {
 
     setUp(() async {
       tempDir = await Directory.systemTemp.createTemp('server-box-transfer-');
-      SqliteDb.openInMemory();
+      await openTestDb();
       getIt.registerSingleton<SettingStore>(SettingStore.forTest());
       // Building an `SftpFileRef` reads keys and jump servers out of these,
       // which is the work these tests are checking happens on this side.

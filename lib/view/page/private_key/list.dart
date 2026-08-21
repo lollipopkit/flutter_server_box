@@ -50,7 +50,7 @@ class _PrivateKeyListState extends ConsumerState<PrivateKeysListPage>
 
   Widget _buildKeyItem(PrivateKeyInfo item) {
     return ListTile(
-      title: Text(item.id),
+      title: Text(item.name),
       subtitle: Text(item.type ?? libL10n.unknown, style: UIs.textGrey),
       onTap: () => PrivateKeyEditPage.route.go(
         context,
@@ -75,7 +75,8 @@ extension on _PrivateKeyListState {
       final idRsaFile = File(home.joinPath('.ssh/id_rsa'));
       if (!idRsaFile.existsSync()) return;
       final sysPk = PrivateKeyInfo(
-        id: 'system',
+        id: ShortId.generate(),
+        name: 'system',
         key: await idRsaFile.readAsString(),
       );
       context.showRoundDialog(

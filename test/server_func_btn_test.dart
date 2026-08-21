@@ -4,13 +4,15 @@ import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
 
+import 'helpers/test_db.dart';
+
 /// What `ServerFuncBtn.autoAddNewFuncs` does to a row the user has already
 /// arranged, across an upgrade.
 void main() {
   late SettingStore setting;
 
-  setUp(() {
-    SqliteDb.openInMemory();
+  setUp(() async {
+    await openTestDb();
     setting = SettingStore.forTest();
     getIt.registerSingleton<SettingStore>(setting);
   });

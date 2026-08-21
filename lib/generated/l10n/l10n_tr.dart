@@ -654,6 +654,11 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String nameAlreadyExistsFmt(Object name) {
+    return '\"$name\" zaten mevcut';
+  }
+
+  @override
   String get noJumpServerAvailable => 'Kullanılabilir atlama sunucusu yok.';
 
   @override

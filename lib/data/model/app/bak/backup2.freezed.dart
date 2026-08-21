@@ -15,7 +15,10 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$BackupV2 {
 
- int get version; int get date; Map<String, Object?> get spis; Map<String, Object?> get snippets; Map<String, Object?> get keys; Map<String, Object?> get container; Map<String, Object?> get history; Map<String, Object?> get settings;
+ int get version; int get date; Map<String, Object?> get spis; Map<String, Object?> get snippets; Map<String, Object?> get keys; Map<String, Object?> get container; Map<String, Object?> get history; Map<String, Object?> get settings;/// Absent from every file written before port forwards became a record of
+/// their own, so it defaults rather than being required — an older backup
+/// has to keep decoding.
+ Map<String, Object?> get portForwards;
 /// Create a copy of BackupV2
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +31,16 @@ $BackupV2CopyWith<BackupV2> get copyWith => _$BackupV2CopyWithImpl<BackupV2>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BackupV2&&(identical(other.version, version) || other.version == version)&&(identical(other.date, date) || other.date == date)&&const DeepCollectionEquality().equals(other.spis, spis)&&const DeepCollectionEquality().equals(other.snippets, snippets)&&const DeepCollectionEquality().equals(other.keys, keys)&&const DeepCollectionEquality().equals(other.container, container)&&const DeepCollectionEquality().equals(other.history, history)&&const DeepCollectionEquality().equals(other.settings, settings));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is BackupV2&&(identical(other.version, version) || other.version == version)&&(identical(other.date, date) || other.date == date)&&const DeepCollectionEquality().equals(other.spis, spis)&&const DeepCollectionEquality().equals(other.snippets, snippets)&&const DeepCollectionEquality().equals(other.keys, keys)&&const DeepCollectionEquality().equals(other.container, container)&&const DeepCollectionEquality().equals(other.history, history)&&const DeepCollectionEquality().equals(other.settings, settings)&&const DeepCollectionEquality().equals(other.portForwards, portForwards));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,version,date,const DeepCollectionEquality().hash(spis),const DeepCollectionEquality().hash(snippets),const DeepCollectionEquality().hash(keys),const DeepCollectionEquality().hash(container),const DeepCollectionEquality().hash(history),const DeepCollectionEquality().hash(settings));
+int get hashCode => Object.hash(runtimeType,version,date,const DeepCollectionEquality().hash(spis),const DeepCollectionEquality().hash(snippets),const DeepCollectionEquality().hash(keys),const DeepCollectionEquality().hash(container),const DeepCollectionEquality().hash(history),const DeepCollectionEquality().hash(settings),const DeepCollectionEquality().hash(portForwards));
 
 @override
 String toString() {
-  return 'BackupV2(version: $version, date: $date, spis: $spis, snippets: $snippets, keys: $keys, container: $container, history: $history, settings: $settings)';
+  return 'BackupV2(version: $version, date: $date, spis: $spis, snippets: $snippets, keys: $keys, container: $container, history: $history, settings: $settings, portForwards: $portForwards)';
 }
 
 
@@ -48,7 +51,7 @@ abstract mixin class $BackupV2CopyWith<$Res>  {
   factory $BackupV2CopyWith(BackupV2 value, $Res Function(BackupV2) _then) = _$BackupV2CopyWithImpl;
 @useResult
 $Res call({
- int version, int date, Map<String, Object?> spis, Map<String, Object?> snippets, Map<String, Object?> keys, Map<String, Object?> container, Map<String, Object?> history, Map<String, Object?> settings
+ int version, int date, Map<String, Object?> spis, Map<String, Object?> snippets, Map<String, Object?> keys, Map<String, Object?> container, Map<String, Object?> history, Map<String, Object?> settings, Map<String, Object?> portForwards
 });
 
 
@@ -65,7 +68,7 @@ class _$BackupV2CopyWithImpl<$Res>
 
 /// Create a copy of BackupV2
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? version = null,Object? date = null,Object? spis = null,Object? snippets = null,Object? keys = null,Object? container = null,Object? history = null,Object? settings = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? version = null,Object? date = null,Object? spis = null,Object? snippets = null,Object? keys = null,Object? container = null,Object? history = null,Object? settings = null,Object? portForwards = null,}) {
   return _then(_self.copyWith(
 version: null == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
 as int,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
@@ -75,6 +78,7 @@ as Map<String, Object?>,keys: null == keys ? _self.keys : keys // ignore: cast_n
 as Map<String, Object?>,container: null == container ? _self.container : container // ignore: cast_nullable_to_non_nullable
 as Map<String, Object?>,history: null == history ? _self.history : history // ignore: cast_nullable_to_non_nullable
 as Map<String, Object?>,settings: null == settings ? _self.settings : settings // ignore: cast_nullable_to_non_nullable
+as Map<String, Object?>,portForwards: null == portForwards ? _self.portForwards : portForwards // ignore: cast_nullable_to_non_nullable
 as Map<String, Object?>,
   ));
 }
@@ -160,10 +164,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int version,  int date,  Map<String, Object?> spis,  Map<String, Object?> snippets,  Map<String, Object?> keys,  Map<String, Object?> container,  Map<String, Object?> history,  Map<String, Object?> settings)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int version,  int date,  Map<String, Object?> spis,  Map<String, Object?> snippets,  Map<String, Object?> keys,  Map<String, Object?> container,  Map<String, Object?> history,  Map<String, Object?> settings,  Map<String, Object?> portForwards)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _BackupV2() when $default != null:
-return $default(_that.version,_that.date,_that.spis,_that.snippets,_that.keys,_that.container,_that.history,_that.settings);case _:
+return $default(_that.version,_that.date,_that.spis,_that.snippets,_that.keys,_that.container,_that.history,_that.settings,_that.portForwards);case _:
   return orElse();
 
 }
@@ -181,10 +185,10 @@ return $default(_that.version,_that.date,_that.spis,_that.snippets,_that.keys,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int version,  int date,  Map<String, Object?> spis,  Map<String, Object?> snippets,  Map<String, Object?> keys,  Map<String, Object?> container,  Map<String, Object?> history,  Map<String, Object?> settings)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int version,  int date,  Map<String, Object?> spis,  Map<String, Object?> snippets,  Map<String, Object?> keys,  Map<String, Object?> container,  Map<String, Object?> history,  Map<String, Object?> settings,  Map<String, Object?> portForwards)  $default,) {final _that = this;
 switch (_that) {
 case _BackupV2():
-return $default(_that.version,_that.date,_that.spis,_that.snippets,_that.keys,_that.container,_that.history,_that.settings);case _:
+return $default(_that.version,_that.date,_that.spis,_that.snippets,_that.keys,_that.container,_that.history,_that.settings,_that.portForwards);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -201,10 +205,10 @@ return $default(_that.version,_that.date,_that.spis,_that.snippets,_that.keys,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int version,  int date,  Map<String, Object?> spis,  Map<String, Object?> snippets,  Map<String, Object?> keys,  Map<String, Object?> container,  Map<String, Object?> history,  Map<String, Object?> settings)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int version,  int date,  Map<String, Object?> spis,  Map<String, Object?> snippets,  Map<String, Object?> keys,  Map<String, Object?> container,  Map<String, Object?> history,  Map<String, Object?> settings,  Map<String, Object?> portForwards)?  $default,) {final _that = this;
 switch (_that) {
 case _BackupV2() when $default != null:
-return $default(_that.version,_that.date,_that.spis,_that.snippets,_that.keys,_that.container,_that.history,_that.settings);case _:
+return $default(_that.version,_that.date,_that.spis,_that.snippets,_that.keys,_that.container,_that.history,_that.settings,_that.portForwards);case _:
   return null;
 
 }
@@ -216,7 +220,7 @@ return $default(_that.version,_that.date,_that.spis,_that.snippets,_that.keys,_t
 @JsonSerializable()
 
 class _BackupV2 extends BackupV2 {
-  const _BackupV2({required this.version, required this.date, required final  Map<String, Object?> spis, required final  Map<String, Object?> snippets, required final  Map<String, Object?> keys, required final  Map<String, Object?> container, required final  Map<String, Object?> history, required final  Map<String, Object?> settings}): _spis = spis,_snippets = snippets,_keys = keys,_container = container,_history = history,_settings = settings,super._();
+  const _BackupV2({required this.version, required this.date, required final  Map<String, Object?> spis, required final  Map<String, Object?> snippets, required final  Map<String, Object?> keys, required final  Map<String, Object?> container, required final  Map<String, Object?> history, required final  Map<String, Object?> settings, final  Map<String, Object?> portForwards = const <String, Object?>{}}): _spis = spis,_snippets = snippets,_keys = keys,_container = container,_history = history,_settings = settings,_portForwards = portForwards,super._();
   factory _BackupV2.fromJson(Map<String, dynamic> json) => _$BackupV2FromJson(json);
 
 @override final  int version;
@@ -263,6 +267,19 @@ class _BackupV2 extends BackupV2 {
   return EqualUnmodifiableMapView(_settings);
 }
 
+/// Absent from every file written before port forwards became a record of
+/// their own, so it defaults rather than being required — an older backup
+/// has to keep decoding.
+ final  Map<String, Object?> _portForwards;
+/// Absent from every file written before port forwards became a record of
+/// their own, so it defaults rather than being required — an older backup
+/// has to keep decoding.
+@override@JsonKey() Map<String, Object?> get portForwards {
+  if (_portForwards is EqualUnmodifiableMapView) return _portForwards;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_portForwards);
+}
+
 
 /// Create a copy of BackupV2
 /// with the given fields replaced by the non-null parameter values.
@@ -277,16 +294,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BackupV2&&(identical(other.version, version) || other.version == version)&&(identical(other.date, date) || other.date == date)&&const DeepCollectionEquality().equals(other._spis, _spis)&&const DeepCollectionEquality().equals(other._snippets, _snippets)&&const DeepCollectionEquality().equals(other._keys, _keys)&&const DeepCollectionEquality().equals(other._container, _container)&&const DeepCollectionEquality().equals(other._history, _history)&&const DeepCollectionEquality().equals(other._settings, _settings));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BackupV2&&(identical(other.version, version) || other.version == version)&&(identical(other.date, date) || other.date == date)&&const DeepCollectionEquality().equals(other._spis, _spis)&&const DeepCollectionEquality().equals(other._snippets, _snippets)&&const DeepCollectionEquality().equals(other._keys, _keys)&&const DeepCollectionEquality().equals(other._container, _container)&&const DeepCollectionEquality().equals(other._history, _history)&&const DeepCollectionEquality().equals(other._settings, _settings)&&const DeepCollectionEquality().equals(other._portForwards, _portForwards));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,version,date,const DeepCollectionEquality().hash(_spis),const DeepCollectionEquality().hash(_snippets),const DeepCollectionEquality().hash(_keys),const DeepCollectionEquality().hash(_container),const DeepCollectionEquality().hash(_history),const DeepCollectionEquality().hash(_settings));
+int get hashCode => Object.hash(runtimeType,version,date,const DeepCollectionEquality().hash(_spis),const DeepCollectionEquality().hash(_snippets),const DeepCollectionEquality().hash(_keys),const DeepCollectionEquality().hash(_container),const DeepCollectionEquality().hash(_history),const DeepCollectionEquality().hash(_settings),const DeepCollectionEquality().hash(_portForwards));
 
 @override
 String toString() {
-  return 'BackupV2(version: $version, date: $date, spis: $spis, snippets: $snippets, keys: $keys, container: $container, history: $history, settings: $settings)';
+  return 'BackupV2(version: $version, date: $date, spis: $spis, snippets: $snippets, keys: $keys, container: $container, history: $history, settings: $settings, portForwards: $portForwards)';
 }
 
 
@@ -297,7 +314,7 @@ abstract mixin class _$BackupV2CopyWith<$Res> implements $BackupV2CopyWith<$Res>
   factory _$BackupV2CopyWith(_BackupV2 value, $Res Function(_BackupV2) _then) = __$BackupV2CopyWithImpl;
 @override @useResult
 $Res call({
- int version, int date, Map<String, Object?> spis, Map<String, Object?> snippets, Map<String, Object?> keys, Map<String, Object?> container, Map<String, Object?> history, Map<String, Object?> settings
+ int version, int date, Map<String, Object?> spis, Map<String, Object?> snippets, Map<String, Object?> keys, Map<String, Object?> container, Map<String, Object?> history, Map<String, Object?> settings, Map<String, Object?> portForwards
 });
 
 
@@ -314,7 +331,7 @@ class __$BackupV2CopyWithImpl<$Res>
 
 /// Create a copy of BackupV2
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? version = null,Object? date = null,Object? spis = null,Object? snippets = null,Object? keys = null,Object? container = null,Object? history = null,Object? settings = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? version = null,Object? date = null,Object? spis = null,Object? snippets = null,Object? keys = null,Object? container = null,Object? history = null,Object? settings = null,Object? portForwards = null,}) {
   return _then(_BackupV2(
 version: null == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
 as int,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
@@ -324,6 +341,7 @@ as Map<String, Object?>,keys: null == keys ? _self._keys : keys // ignore: cast_
 as Map<String, Object?>,container: null == container ? _self._container : container // ignore: cast_nullable_to_non_nullable
 as Map<String, Object?>,history: null == history ? _self._history : history // ignore: cast_nullable_to_non_nullable
 as Map<String, Object?>,settings: null == settings ? _self._settings : settings // ignore: cast_nullable_to_non_nullable
+as Map<String, Object?>,portForwards: null == portForwards ? _self._portForwards : portForwards // ignore: cast_nullable_to_non_nullable
 as Map<String, Object?>,
   ));
 }

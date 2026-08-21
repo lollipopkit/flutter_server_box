@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,6 +16,8 @@ import 'package:server_box/view/page/agent/agent.dart';
 import 'package:server_box/view/page/agent/history.dart';
 import 'package:server_box/view/page/agent/view.dart';
 
+import 'helpers/test_db.dart';
+
 /// An [AgentSession] frozen at one state.
 ///
 /// The real one reaches for stored conversations in `build`; these tests are
@@ -34,23 +34,20 @@ class _FixedSession extends AgentSession {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late Directory tempDir;
 
   setUp(() async {
-    tempDir = await Directory.systemTemp.createTemp('server-box-agent-view-');
-    SqliteDb.openInMemory();
+    await openTestDb();
     // In memory: the return-key tests below write the setting they are about,
     // and none of them should leave a database behind.
     getIt.registerSingleton<SettingStore>(SettingStore.forTest());
     getIt.registerSingleton<AgentConversationStore>(
-      AgentConversationStore.forTest()..init(),
+      AgentConversationStore.forTest(),
     );
   });
 
   tearDown(() async {
     await getIt.reset();
     await SqliteDb.close();
-    await tempDir.delete(recursive: true);
   });
 
   Future<void> pump(

@@ -9,8 +9,13 @@ part of 'private_key_info.dart';
 PrivateKeyInfo _$PrivateKeyInfoFromJson(Map<String, dynamic> json) =>
     PrivateKeyInfo(
       id: json['id'] as String,
+      name: json['name'] as String,
       key: json['private_key'] as String,
     );
 
 Map<String, dynamic> _$PrivateKeyInfoToJson(PrivateKeyInfo instance) =>
-    <String, dynamic>{'id': instance.id, 'private_key': instance.key};
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'private_key': instance.key,
+    };

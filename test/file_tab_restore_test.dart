@@ -14,6 +14,7 @@ import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/storage/tab.dart';
 
 import 'helpers/spi_fixture.dart';
+import 'helpers/test_db.dart';
 
 /// What the file tab reopens with.
 ///
@@ -34,7 +35,7 @@ void main() {
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-filetab-');
-    SqliteDb.openInMemory();
+    await openTestDb();
       // In memory: this tree writes as it builds, and a test has no
       // business leaving a database behind.
     getIt.registerSingleton<SettingStore>(SettingStore.forTest());

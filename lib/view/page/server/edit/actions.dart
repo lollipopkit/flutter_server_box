@@ -178,6 +178,8 @@ extension _Actions on _ServerEditPageState {
     switch (error) {
       case SpiValidationError.jumpServerAndProxyCommandConflict:
         return l10n.jumpServerAndProxyCommandCannotBeUsedTogether;
+      case SpiValidationError.sshAndMonitorHttpConflict:
+        return libL10n.invalid;
     }
   }
 

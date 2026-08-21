@@ -264,6 +264,7 @@
       "version": {}
     }
   },
+  "nameAlreadyExistsFmt": "「{name}」已存在",
   "sameIdServerExist": "已存在相同 id 的服务器",
   "second": "秒",
   "serverFilesUnavailableTip": "需要能连上这台服务器的 SSH,或者它的 monitor agent 开启了文件 API。",

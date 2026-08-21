@@ -159,6 +159,7 @@
   },
   "rootfsSubtitle": "Lingkungan pengguna Linux di perangkat ini",
   "rootfsInstallTip": "Unduh Alpine Linux {version} (sekitar 3 MB) dan ekstrak di perangkat ini. Ini memberi aplikasi ini shell dengan manajer paket, dan dapat dihapus kapan saja.",
+  "nameAlreadyExistsFmt": "\"{name}\" sudah ada",
   "sameIdServerExist": "Server dengan ID yang sama sudah ada",
   "second": "S",
   "serverFilesUnavailableTip": "Dapat dijangkau melalui SSH server ini, atau melalui agen monitor dengan API berkasnya diaktifkan.",

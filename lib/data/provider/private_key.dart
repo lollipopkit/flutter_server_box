@@ -22,7 +22,7 @@ class PrivateKeyNotifier extends _$PrivateKeyNotifier {
   }
 
   void reload() {
-    Stores.key.invalidateCache();
+    Stores.key.dropCache();
     final newState = _load();
     if (newState == state) return;
     state = newState;
@@ -47,17 +47,23 @@ class PrivateKeyNotifier extends _$PrivateKeyNotifier {
     bakSync.sync(milliDelay: 1000);
   }
 
+  /// The id never changes, so this is one write either way. The branch that
+  /// deleted the old record existed because the id *was* the name — and with
+  /// ids equal it deleted the record it had just written.
   Future<void> update(PrivateKeyInfo old, PrivateKeyInfo newInfo) async {
+    if (old.id != newInfo.id) {
+      // `EntityStore.update` refuses this; going straight to `put` would let a
+      // caller insert a second record under the name of the first.
+      throw ArgumentError('cannot change the id of a PrivateKeyInfo');
+    }
     final keys = [...state.keys];
     final idx = keys.indexWhere((e) => e.id == old.id);
     if (idx == -1) {
       keys.add(newInfo);
-      Stores.key.put(newInfo);
-      Stores.key.delete(old);
     } else {
       keys[idx] = newInfo;
-      Stores.key.update(old, newInfo);
     }
+    Stores.key.put(newInfo);
     state = state.copyWith(keys: keys);
     bakSync.sync(milliDelay: 1000);
   }

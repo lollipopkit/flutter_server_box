@@ -20,10 +20,10 @@ import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
+import 'package:server_box/data/store/migrations/m004_kv_to_tables.dart';
 import 'package:server_box/data/store/schema.dart';
-import 'package:server_box/data/store/server.dart';
 import 'package:server_box/hive/hive_registrar.g.dart';
-import 'package:server_box/hive/spi_legacy_adapter.dart';
+import 'package:server_box/hive/legacy_adapters.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
 Future<void> main() async {
@@ -138,7 +138,7 @@ Future<void> _initData() async {
   Hive.registerAdapters();
   // Reads pre-v3 server records, which the generated SpiAdapter no longer
   // understands (it owns a new typeId and the nested layout).
-  Hive.registerAdapter(SpiLegacyAdapter());
+  registerHiveLegacyAdapters();
 
   await PrefStore.shared.init(); // Call this before accessing any store
   await SecureStoreProps.migrateLegacyPrefs();
@@ -240,12 +240,15 @@ Future<void> _doDbMigrate() async {
   // `current` while copying, because a pre-v3 record only exists as a Hive
   // value and that is the one pass that reads one. The call stays for the
   // downgrade check it performs, and for the next step that does exist.
-  await SchemaVersion.migrate(const []);
+  await SchemaVersion.migrate(const [KvToTablesMigration()]);
 
-  // Then the app-level fixups, which read records as `Spi`.
-  ServerStore.instance.migrateIds();
-  // After the stores are up: it decides against `Stores.key`, not by shape.
-  ServerStore.instance.migrateIdentityFilePaths();
+  // No app-level fixups follow. `migrateIds` and `migrateIdentityFilePaths`
+  // both scanned every server on every launch to repair a record only an
+  // upgrading install can hold; both are part of `KvToTablesMigration` now,
+  // which is the one pass that sees that shape. Neither could have run after
+  // it in any case — an empty `Spi.id` has nowhere to live once the id is a
+  // primary key, and mapping the old private key ids would have turned an
+  // `IdentityFile` path into a null before anything could recognise it.
 
   // Pick up sync history written under the pre-v3 remote filename. Runs at
   // most once per remote and is best-effort — see `inheritLegacyRemote`.

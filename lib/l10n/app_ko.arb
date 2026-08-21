@@ -202,6 +202,7 @@
   },
   "rootfsSubtitle": "이 기기의 Linux 사용자 공간",
   "rootfsInstallTip": "Alpine Linux {version}(약 3 MB)을 내려받아 이 기기에 풉니다. 패키지 관리자가 있는 셸을 이 앱에 제공하며, 언제든지 삭제할 수 있습니다.",
+  "nameAlreadyExistsFmt": "'{name}'은(는) 이미 존재합니다",
   "sameIdServerExist": "동일한 ID의 서버가 이미 존재합니다",
   "second": "초",
   "serverFilesUnavailableTip": "이 서버의 SSH에 연결할 수 있거나, monitor 에이전트의 파일 API가 켜져 있어야 합니다.",

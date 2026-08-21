@@ -618,6 +618,11 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String nameAlreadyExistsFmt(Object name) {
+    return '\'$name\'은(는) 이미 존재합니다';
+  }
+
+  @override
   String get noJumpServerAvailable => '사용 가능한 점프 서버가 없습니다.';
 
   @override

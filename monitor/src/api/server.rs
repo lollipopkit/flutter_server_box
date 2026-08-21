@@ -409,8 +409,10 @@ async fn login(
     }))
 }
 
+/// Lowercase hex of the SHA-256, which is what the `watch_tokens` rows already
+/// hold — `hex::encode` writes the same bytes the `{:x}` of digest 0.10 did.
 fn watch_token_hash(token: &str) -> String {
-    format!("{:x}", Sha256::digest(token.as_bytes()))
+    hex::encode(Sha256::digest(token.as_bytes()))
 }
 
 fn validate_watch_client_id(client_id: &str) -> Result<&str> {
@@ -1218,17 +1220,27 @@ mod watch_token_tests {
         pool
     }
 
+    /// The published SHA-256 of `abc`, so the row below is seeded with a value
+    /// this crate did not produce. Hashing the token through
+    /// `watch_token_hash` on both sides would agree with itself whatever the
+    /// encoding became, and an agent's `watch_tokens` rows outlive the build
+    /// that wrote them: a change there invalidates every paired watch, silently.
+    const TOKEN: &str = "abc";
+    const TOKEN_HASH: &str =
+        "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
+
     #[tokio::test]
     async fn watch_tokens_are_hashed_expiring_and_revocable() {
         let pool = pool().await;
-        let token = "sbw_secret";
+        let token = TOKEN;
+        assert_eq!(watch_token_hash(token), TOKEN_HASH);
         sqlx::query(
             "INSERT INTO watch_tokens(subject, client_id, token_hash, created_at, expires_at) \
              VALUES (?, ?, ?, ?, ?)",
         )
         .bind("admin")
         .bind("watch:one")
-        .bind(watch_token_hash(token))
+        .bind(TOKEN_HASH)
         .bind(10_i64)
         .bind(20_i64)
         .execute(&pool)
@@ -1237,12 +1249,6 @@ mod watch_token_tests {
 
         assert_eq!(verify_watch_token(&pool, token, 19).await.unwrap(), "admin");
         assert!(verify_watch_token(&pool, token, 20).await.is_err());
-        let stored: String = sqlx::query_scalar("SELECT token_hash FROM watch_tokens")
-            .fetch_one(&pool)
-            .await
-            .unwrap();
-        assert_ne!(stored, token);
-
         sqlx::query("DELETE FROM watch_tokens WHERE client_id = ?")
             .bind("watch:one")
             .execute(&pool)

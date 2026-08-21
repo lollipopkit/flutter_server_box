@@ -41,6 +41,10 @@ dependencies:
   # only honoured for this package's own dependencies, and the Hive migration
   # opens the database from here too.
   sqlite3: ^3.5.1
+  # Storage layer over the same encrypted connection: `NativeDatabase.opened`
+  # takes the `sqlite3` Database this app already opens and keys itself, so
+  # sqlite3mc and the build-hook bundling below are untouched.
+  drift: ^2.34.3
   wakelock_plus: ^1.7.0
   wake_on_lan: ^4.1.1+3
   webdav_client_plus: ^2.0.0
@@ -81,6 +85,7 @@ dev_dependencies:
   flutter_native_splash: ^2.1.6
   hive_ce_generator: ^1.11.0
   build_runner: ^2.4.15
+  drift_dev: ^2.34.0
   flutter_lints: ^6.0.0
   json_serializable: ^6.13.0
   freezed: ^3.0.0

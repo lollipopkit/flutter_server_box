@@ -149,10 +149,10 @@ packages:
     dependency: transitive
     description:
       name: camera_android_camerax
-      sha256: "6d8dd23f8ad52c36ae3da7417a59b3c3faa3d1e1b83c983a04ca8383f001233c"
+      sha256: "47aa7c2963ceb8db4fc3dfbba0f9195da3741f3d11e80f0e29472d46bf4c2e66"
       url: "https://pub.dev"
     source: hosted
-    version: "0.7.4+5"
+    version: "0.7.4+6"
   camera_avfoundation:
     dependency: transitive
     description:
@@ -185,6 +185,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.4.1"
+  charcode:
+    dependency: transitive
+    description:
+      name: charcode
+      sha256: fb0f1107cac15a5ea6ef0a6ef71a807b9e4267c713bb93e00e92d737cc8dbd8a
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.4.0"
   charset:
     dependency: transitive
     description:
@@ -224,6 +232,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.2.0"
+  cli_util:
+    dependency: transitive
+    description:
+      name: cli_util
+      sha256: ff6785f7e9e3c38ac98b2fb035701789de90154024a75b6cb926445e83197d1c
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.4.2"
   clock:
     dependency: transitive
     description:
@@ -324,10 +340,10 @@ packages:
     dependency: transitive
     description:
       name: dbus
-      sha256: "792974a4007974fbc5c1b5433eb2330a9db3e368c3f906253af4c007d0f49a91"
+      sha256: a48d5da28e89bd02196e80d81ed8d7954923d00a0f4a68cc20b575038f023383
       url: "https://pub.dev"
     source: hosted
-    version: "0.7.13"
+    version: "0.7.15"
   desktop_drop:
     dependency: "direct main"
     description:
@@ -352,6 +368,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.1"
+  drift:
+    dependency: "direct main"
+    description:
+      name: drift
+      sha256: "3a3f1f6f905037d7426e4c445854139fd6a3d592135f7c96d7931682b73d16f4"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.34.3"
+  drift_dev:
+    dependency: "direct dev"
+    description:
+      name: drift_dev
+      sha256: "9cfff1576b49725da0d32c040651a41ae195e8c4af8d8da301593e41d7abc2f7"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.34.0"
   dynamic_color:
     dependency: "direct main"
     description:
@@ -1361,6 +1393,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.0.3"
+  recase:
+    dependency: transitive
+    description:
+      name: recase
+      sha256: e4eb4ec2dcdee52dcf99cb4ceabaffc631d7424ee55e56f280bc039737f89213
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.1.0"
   record_use:
     dependency: transitive
     description:
@@ -1586,10 +1626,10 @@ packages:
     dependency: transitive
     description:
       name: source_maps
-      sha256: "190222579a448b03896e0ca6eca5998fa810fda630c1d65e2f78b3f638f54812"
+      sha256: "14c2945847669b44089bb1222f66873d7ff7103c58911917f2a63c5a62327898"
       url: "https://pub.dev"
     source: hosted
-    version: "0.10.13"
+    version: "0.10.14"
   source_span:
     dependency: transitive
     description:
@@ -1602,10 +1642,18 @@ packages:
     dependency: "direct main"
     description:
       name: sqlite3
-      sha256: "64b2c63c8232dd20d14b34105a81ebfd74320442e8451f836179ec89986aa478"
+      sha256: "4c7fe79840389aaeaf05fd093f795b631b5a98e2bd28d54e555c100f4a9c7a1c"
       url: "https://pub.dev"
     source: hosted
-    version: "3.5.1"
+    version: "3.5.2"
+  sqlparser:
+    dependency: transitive
+    description:
+      name: sqlparser
+      sha256: d5edca6c3e5d04cb621463051b86b0a9df5dfecce13b975a2810126eca0cc78b
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.44.6"
   stack_trace:
     dependency: transitive
     description:

@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/connection_stat.dart';
 import 'package:server_box/data/store/connection_stats.dart';
 
+import 'helpers/test_db.dart';
+
 /// The bounds this table keeps itself inside, which used to be four hand-written
 /// passes over a K-V store and are now two `DELETE`s.
 void main() {
@@ -21,10 +23,18 @@ void main() {
   );
 
   setUp(() async {
-    SqliteDb.openInMemory();
+    await openTestDb();
+    // `server_id` is a foreign key now, so the servers these rows belong to
+    // have to exist — an attempt against a server that is gone has nothing to
+    // be a statistic of.
+    SqliteDb.instance.execute(
+      'INSERT INTO server (id, name, ssh_ip) VALUES '
+      "('a', 'a', '10.0.0.1'), ('b', 'b', '10.0.0.2'), "
+      "('s0', 's0', '10.0.1.0'), ('s1', 's1', '10.0.1.1'), "
+      "('s2', 's2', '10.0.1.2'), ('s3', 's3', '10.0.1.3');",
+    );
     store = ConnectionStatsStore.instance;
     await store.init();
-    await store.clearAll();
   });
 
   tearDown(SqliteDb.close);
@@ -107,14 +117,24 @@ void main() {
     expect(kept.single.timestamp, base);
   });
 
-  test('recording the same attempt twice does not double it', () async {
+  test('two attempts in the same millisecond are two rows', () async {
+    // They used to be one: the id was `<serverId>_<millis>`, so the second
+    // attempt overwrote the first and the counters under-reported. The id is
+    // generated now, and this is what that buys.
     final at = base;
     await store.recordConnection(stat('a', at: at));
     await store.recordConnection(stat('a', at: at, name: 'renamed'));
 
     final history = store.getConnectionHistory('a');
-    expect(history.length, 1);
-    expect(history.single.serverName, 'renamed');
+    expect(history.length, 2);
+    expect(history.map((e) => e.serverName), containsAll(['srv', 'renamed']));
+  });
+
+  test('an attempt against a server that is gone is not recorded', () async {
+    // `server_id` is a foreign key. A status refresh can land after the user
+    // deleted the server, and the row would only ever be orphaned statistics.
+    await store.recordConnection(stat('deleted-server', at: base));
+    expect(store.getConnectionHistory('deleted-server'), isEmpty);
   });
 
   test('the summary counts both outcomes', () async {

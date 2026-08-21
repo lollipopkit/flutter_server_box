@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:json_annotation/json_annotation.dart';
@@ -7,15 +6,18 @@ import 'package:logging/logging.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
-import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 
 part 'backup.g.dart';
 
-const backupFormatVersion = 1;
-
 final _logger = Logger('Backup');
 
+/// The first backup format, kept for reading only.
+///
+/// The app writes [BackupV2]; this exists so a file from a build old enough to
+/// have written it can still be restored. It carries one timestamp for the
+/// whole file rather than one per record, which is why a merge here can only
+/// take or leave each store whole.
 @JsonSerializable()
 class Backup implements Mergeable {
   // backup format version
@@ -45,29 +47,6 @@ class Backup implements Mergeable {
 
   Map<String, dynamic> toJson() => _$BackupToJson(this);
 
-  static Future<Backup> loadFromStore() async {
-    final lastModTime = Stores.lastModTime;
-    return Backup(
-      version: backupFormatVersion,
-      date: DateTime.now().toString().split('.').firstOrNull ?? '',
-      spis: Stores.server.fetch(),
-      snippets: Stores.snippet.fetch(),
-      keys: Stores.key.fetch(),
-      container: Stores.container.getAllMap(),
-      lastModTime: lastModTime,
-      history: Stores.history.getAllMap(),
-      settings: Stores.setting.getAllMap(),
-    );
-  }
-
-  static Future<String> backup([String? name]) async {
-    final bak = await Backup.loadFromStore();
-    final result = _diyEncrypt(json.encode(bak.toJson()));
-    final path = Paths.doc.joinPath(name ?? Miscs.bakFileName);
-    await File(path).writeAsString(result);
-    return path;
-  }
-
   @override
   Future<void> merge({bool force = false}) async {
     final curTime = Stores.lastModTime;
@@ -82,16 +61,17 @@ class Backup implements Mergeable {
     // restore that was interrupted — process killed, device out of battery —
     // with servers deleted whose replacements were never written, and no way to
     // tell that had happened.
+    //
+    // Whole stores rather than per record: this format carries one timestamp
+    // for the entire file, so there is nothing to compare a single record
+    // against. Ordered by what references what — a server names a private key,
+    // and a snippet names a server.
     SqliteStore.transact(() {
-      _restoreInto(
-        Stores.snippet,
-        {for (final s in snippets) s.name: s},
-        force: force,
-      );
-      _restoreInto(Stores.server, {for (final s in spis) s.id: s}, force: force);
-      _restoreInto(Stores.key, {for (final s in keys) s.id: s}, force: force);
+      Stores.key.replaceAll(keys);
+      Stores.server.replaceAll(spis);
+      Stores.snippet.replaceAll(snippets);
+      Stores.container.restoreLegacyMap(container);
       _restoreInto(Stores.history, history, force: force);
-      _restoreInto(Stores.container, container, force: force);
 
       final settings_ = settings;
       if (settings_ != null) {
@@ -109,7 +89,7 @@ class Backup implements Mergeable {
       Backup.fromJson(json.decode(_diyDecrypt(raw)));
 }
 
-/// Writes one section of a backup into the store it came from.
+/// Writes one section of a backup into the key-value store it came from.
 ///
 /// [force] replaces what is there; otherwise the store is also made to *stop*
 /// holding whatever the backup does not, which is what makes a delete on one
@@ -143,9 +123,6 @@ void _restoreInto(
     store.set(entry.key, value, updateLastUpdateTsOnSet: false);
   }
 }
-
-String _diyEncrypt(String raw) =>
-    json.encode(raw.codeUnits.map((e) => e * 2 + 1).toList(growable: false));
 
 String _diyDecrypt(String raw) {
   try {

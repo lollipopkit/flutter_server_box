@@ -1,13 +1,31 @@
-# Hive boxes as v1.0.1466 wrote them
+# Hive boxes as the released builds wrote them
 
-Input for `test/hive_v1466_migration_test.dart`. Every file here was produced
-by **that release's own generated adapters**, not by the current tree — which
-is the whole point. A test that seeds its boxes through today's adapters can
-only prove today's code is self-consistent; it cannot catch a decoder that
-disagrees with what the old release actually put on disk.
+Input for `test/hive_release_migration_test.dart`, which runs the whole upgrade
+against them: `HiveImport` into `kv`, then `KvToTablesMigration` into the entity
+tables. Asserting between the two would only prove the data reached a shape no
+build ships.
 
-v1.0.1466 is the build the App Store served while the SQLite migration was
-written, so it is the version most installs upgrade from.
+Every file here was produced by **that release's own generated adapters**, not
+by the current tree — which is the whole point. The first run against the
+tables migration found four field names the migration had guessed wrong, each
+of which silently dropped an entire store, plus generated adapters that could
+no longer open a released box at all.
+
+The SQLite layout has never shipped, so every install in the field is on Hive
+and **every released version is a migration source**:
+
+| Fixture | Boxes | Notes |
+| --- | --- | --- |
+| `hive_v1466/` | 8 | The oldest still in the field, and what the App Store served while this was written |
+| `hive_v1480/` | 8 | `hive_adapters.g.dart` is byte-identical to 1466; the generator ran unchanged |
+| `hive_v1491/` | 9 | Adds `agent_conversation`, and new `setting` keys |
+
+1480 is kept even though its adapters match 1466: that they match is a fact
+about today, checked by generating from the tag rather than assumed.
+
+A test that seeds its boxes through today's adapters can only prove today's
+code is self-consistent; it cannot catch a decoder that disagrees with what
+the old release actually put on disk.
 
 ## What is in it
 
@@ -41,9 +59,9 @@ git submodule update --init packages/dartssh2 packages/circle_chart \
   packages/xterm packages/watch_connectivity packages/plain_notification_token \
   packages/fl_lib packages/fl_build
 flutter pub get
-cp <repo>/test/fixtures/hive_v1466/gen_fixture.dart.txt test/gen_fixture.dart
+cp <repo>/test/fixtures/hive_v<tag>/gen_fixture.dart.txt test/gen_fixture.dart
 flutter test test/gen_fixture.dart
-cp /tmp/sb1466-out/*.hive <repo>/test/fixtures/hive_v1466/
+cp /tmp/sb<tag>-out/*.hive <repo>/test/fixtures/hive_v<tag>/
 cd <repo> && git worktree remove /tmp/sb1466
 ```
 
@@ -55,6 +73,11 @@ Two things bite when pointing this at a different tag:
 - **The encryption key.** The generator and the reading test must derive the
   same one. Both build it from `Random(1)`; keep that in step or the boxes
   will not open.
+- **Build the records through that release's own models.** The 1491 agent
+  conversations were first hand-written as JSON and silently dropped on
+  import: the keys are snake_case and the item discriminator is `kind`, and
+  both guesses were wrong. A fixture written by hand tests the guess, not the
+  release.
 
 Do not regenerate these files to make a failing test pass. They are a record
 of what a shipped release wrote, and editing them to suit the current decoder

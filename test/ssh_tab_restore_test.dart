@@ -17,6 +17,7 @@ import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/ssh/tab.dart';
 
 import 'helpers/spi_fixture.dart';
+import 'helpers/test_db.dart';
 
 /// What comes back when the app is opened again.
 ///
@@ -31,7 +32,7 @@ void main() {
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-sshtab-');
-    SqliteDb.openInMemory();
+    await openTestDb();
       // In memory: this tree writes as it builds, and a test has no
       // business leaving a database behind.
     getIt.registerSingleton<SettingStore>(SettingStore.forTest());

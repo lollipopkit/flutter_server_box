@@ -13,6 +13,8 @@ import 'package:server_box/data/store/agent_conversation.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 
+import 'helpers/test_db.dart';
+
 void main() {
   const shellCommand = AskAiCommand(
     id: 'call-shell',
@@ -233,11 +235,11 @@ void main() {
 
     setUpAll(() async {
       tempDir = await Directory.systemTemp.createTemp('server-box-agent-session-');
-      SqliteDb.openInMemory();
+      await openTestDb();
       await getIt.reset();
       getIt.registerSingleton<SettingStore>(SettingStore.forTest()..init());
-      getIt.registerSingleton<ServerStore>(ServerStore.forTest()..init());
-      conversationStore = AgentConversationStore.forTest()..init();
+      getIt.registerSingleton<ServerStore>(ServerStore.forTest());
+      conversationStore = AgentConversationStore.forTest();
       getIt.registerSingleton<AgentConversationStore>(conversationStore);
     });
 

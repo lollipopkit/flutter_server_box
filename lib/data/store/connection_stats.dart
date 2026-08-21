@@ -31,35 +31,24 @@ class ConnectionStatsStore {
 
   Database get _db => SqliteDb.instance;
 
-  Future<void> init() async {
-    _db.execute('''
-CREATE TABLE IF NOT EXISTS conn_stat (
-  id            TEXT    NOT NULL PRIMARY KEY,
-  server_id     TEXT    NOT NULL,
-  server_name   TEXT    NOT NULL,
-  timestamp     INTEGER NOT NULL,
-  result        TEXT    NOT NULL,
-  error_message TEXT    NOT NULL DEFAULT '',
-  duration_ms   INTEGER NOT NULL
-) WITHOUT ROWID;
-''');
-    // Every read is "this server, newest first", and the per-server cap below
-    // is the same order with a LIMIT.
-    _db.execute(
-      'CREATE INDEX IF NOT EXISTS idx_conn_stat_server_ts '
-      'ON conn_stat(server_id, timestamp DESC);',
-    );
-    // The age sweep asks about `timestamp` alone, which the index above cannot
-    // serve — its leading column is `server_id`.
-    _db.execute(
-      'CREATE INDEX IF NOT EXISTS idx_conn_stat_ts ON conn_stat(timestamp);',
-    );
+  /// The table is created with the rest of the schema, so this is only the
+  /// per-launch age sweep.
+  Future<void> init() async => _expire();
 
-    _expire();
-  }
-
+  /// Records one attempt, or does nothing if the server is gone.
+  ///
+  /// `server_id` is a foreign key now: a status refresh that lands after the
+  /// user deleted the server has nothing to attach the record to, and the row
+  /// would only ever have been orphaned statistics.
   Future<void> recordConnection(ConnectionStat stat) async {
-    _insert(_idOf(stat), stat);
+    try {
+      _insert(ShortId.generate(), stat);
+    } on SqliteException catch (e) {
+      if (e.extendedResultCode == 787 /* SQLITE_CONSTRAINT_FOREIGNKEY */ ) {
+        return;
+      }
+      rethrow;
+    }
     _prune(stat.serverId);
   }
 
@@ -236,30 +225,14 @@ CREATE TABLE IF NOT EXISTS conn_stat (
   /// the compaction this feeds is `VACUUM` on that file.
   Future<int> dbSizeAsync() => SqliteDb.size();
 
-  /// Takes one row out of the Hive box this table replaced.
-  ///
-  /// Used only by `HiveImport`. It writes the record under the key it had, so
-  /// re-running the import overwrites rather than duplicates.
-  bool importRow(String key, Object value) {
-    if (value is! Map) return false;
-    try {
-      _insert(key, ConnectionStat.fromJson(Map<String, dynamic>.from(value)));
-      return true;
-    } catch (e) {
-      dprint('Importing ConnectionStat', e);
-      return false;
-    }
-  }
-
+  /// The id is generated rather than `<serverId>_<millis>`, which two attempts
+  /// in the same millisecond shared — the second overwrote the first, and the
+  /// counters are computed from these rows.
   void _insert(String id, ConnectionStat stat) {
     _db.execute(
       'INSERT INTO conn_stat '
       '(id, server_id, server_name, timestamp, result, error_message, duration_ms) '
-      'VALUES (?, ?, ?, ?, ?, ?, ?) '
-      'ON CONFLICT (id) DO UPDATE SET '
-      'server_name = excluded.server_name, timestamp = excluded.timestamp, '
-      'result = excluded.result, error_message = excluded.error_message, '
-      'duration_ms = excluded.duration_ms;',
+      'VALUES (?, ?, ?, ?, ?, ?, ?);',
       [
         id,
         stat.serverId,
@@ -271,9 +244,6 @@ CREATE TABLE IF NOT EXISTS conn_stat (
       ],
     );
   }
-
-  static String _idOf(ConnectionStat stat) =>
-      '${stat.serverId}_${stat.timestamp.millisecondsSinceEpoch}';
 
   static ConnectionStat _fromRow(Row row) => ConnectionStat(
     serverId: row['server_id'] as String,

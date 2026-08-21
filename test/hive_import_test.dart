@@ -7,15 +7,13 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/model/server/connection_stat.dart';
-import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/hive/hive_registrar.g.dart';
+import 'package:server_box/hive/legacy_adapters.dart';
 import 'package:server_box/hive/spi_legacy_adapter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -50,7 +48,7 @@ void main() {
 
     Hive.init(tempDir.path);
     Hive.registerAdapters();
-    Hive.registerAdapter(SpiLegacyAdapter());
+    registerHiveLegacyAdapters();
   });
 
   tearDownAll(() async {
@@ -93,14 +91,34 @@ void main() {
       ),
     );
 
+    // Through the released layouts, not through today's models: `Snippet` and
+    // `PrivateKeyInfo` have each gained a field since, so writing one here
+    // would produce bytes no install has and prove nothing about the ones that
+    // do. The frozen types are read-only, hence the seed-only writers below.
+    Hive.registerAdapter(_V1SnippetWriter(), override: true);
+    Hive.registerAdapter(_V1PrivateKeyWriter(), override: true);
+
     final snippet = await open('snippet');
-    await snippet.box.put('uptime', const Snippet(name: 'uptime', script: 'w'));
+    await snippet.box.put(
+      'uptime',
+      const LegacySnippetV1(
+        name: 'uptime',
+        script: 'w',
+        tags: null,
+        note: null,
+        autoRunOn: null,
+      ),
+    );
 
     final key = await open('key');
     await key.box.put(
       'k1',
-      const PrivateKeyInfo(id: 'k1', key: 'PRIVATE'),
+      const LegacyPrivateKeyV1(id: 'k1', key: 'PRIVATE'),
     );
+
+    // Back to the read-only decoders the app registers.
+    Hive.registerAdapter(LegacySnippetAdapter(), override: true);
+    Hive.registerAdapter(LegacyPrivateKeyAdapter(), override: true);
 
     final setting = await open('setting');
     await setting.box.put('timeOut', 9);
@@ -132,33 +150,61 @@ void main() {
     await Hive.close();
   }
 
+  /// One row of `kv`, decoded.
+  ///
+  /// The import's whole output is that table — taking a record apart into
+  /// columns is `KvToTablesMigration`'s job, and `hive_release_migration_test`
+  /// is what covers the two steps end to end. Reading through the stores here
+  /// would test the migration instead of the import.
+  Map<String, dynamic>? kvRow(String store, String key) {
+    final rows = SqliteDb.instance.select(
+      'SELECT value FROM kv WHERE store = ? AND key = ?;',
+      [store, key],
+    );
+    if (rows.isEmpty) return null;
+    return json.decode(rows.single['value'] as String) as Map<String, dynamic>;
+  }
+
   test('every box lands in the store that replaced it', () async {
     await seedHive();
     await Stores.init();
 
-    final spi = Stores.server.fetchOneRaw('srv-1');
-    expect(spi?.name, 'prod');
-    expect(spi?.ssh?.ip, '10.0.0.1');
-    expect(spi?.ssh?.port, 2222);
-    expect(spi?.tags, ['a']);
+    final spi = kvRow('server', 'srv-1')!;
+    expect(spi['name'], 'prod');
+    expect((spi['ssh'] as Map)['ip'], '10.0.0.1');
+    expect((spi['ssh'] as Map)['port'], 2222);
+    expect(spi['tags'], ['a']);
 
-    expect(Stores.snippet.fetchOneRaw('uptime')?.script, 'w');
-    expect(Stores.key.fetchOneRaw('k1')?.key, 'PRIVATE');
+    expect(kvRow('snippet', 'uptime')!['script'], 'w');
+    // `private_key`, which is what the released model's `toJson` called it.
+    expect(kvRow('key', 'k1')!['private_key'], 'PRIVATE');
 
     expect(Stores.setting.timeout.get(), 9);
     expect(Stores.setting.recordHistory.get(), false);
     expect(Stores.setting.homeTabs.get().map((e) => e.name), ['server', 'ssh']);
 
     expect(Stores.history.sftpGoPath.all, ['/etc', '/var']);
+
+    final docker = SqliteDb.instance.select(
+      "SELECT key FROM kv WHERE store = 'docker';",
+    );
+    expect(docker.map((r) => r['key']), contains('containerHostdocker'));
+
     expect(
-      Stores.container.fetch('', ContainerType.docker),
-      'unix:///var/run/docker.sock',
+      SqliteDb.instance
+          .select("SELECT count(*) AS n FROM kv WHERE store = 'conn_stat';")
+          .single['n'],
+      1,
     );
     expect(
-      Stores.connectionStats.getConnectionHistory('srv-1').single.serverName,
-      'prod',
+      SqliteDb.instance
+          .select(
+            "SELECT value FROM kv WHERE store = 'agent_conversation' "
+            "AND key = 'active::srv-1';",
+          )
+          .single['value'],
+      '"conv-1"',
     );
-    expect(Stores.agentConversation.activeConversationId('srv-1'), 'conv-1');
   });
 
   test('the records are readable as JSON, not as adapter bytes', () async {
@@ -176,10 +222,14 @@ void main() {
     expect((decoded['ssh'] as Map)['ip'], '10.0.0.1');
   });
 
-  test('it records the current schema version', () async {
+  test('it records the layout it wrote, not the current one', () async {
     await seedHive();
     await Stores.init();
-    expect(SchemaVersion.stored, SchemaVersion.current);
+    // The import produces the shape that was current when Hive was dropped.
+    // Claiming `current` would tell the migrator there is nothing left to do
+    // and strand every record in that shape.
+    expect(SchemaVersion.stored, SchemaVersion.hiveImportProduces);
+    expect(SchemaVersion.stored, lessThan(SchemaVersion.current));
   });
 
   test('a second launch does not import again', () async {
@@ -212,21 +262,27 @@ void main() {
     );
   });
 
-  test('connection stats land in their table, not in kv', () async {
+  test('a connection stat arrives as the JSON that release wrote', () async {
     await seedHive();
     await Stores.init();
 
-    // The box held one row per attempt plus a second, unencrypted box of key
-    // lists. Both are one table now, so nothing of it should be left in `kv`.
-    final kv = SqliteDb.instance.select(
-      "SELECT count(*) AS n FROM kv WHERE store LIKE 'conn%';",
-    ).single['n'];
-    expect(kv, 0);
-
-    final rows = SqliteDb.instance.select(
-      'SELECT server_id FROM conn_stat;',
+    // The second, unencrypted box of key lists is not carried across at all:
+    // it held nothing the records do not already say.
+    expect(
+      SqliteDb.instance
+          .select(
+            "SELECT count(*) AS n FROM kv WHERE store = 'conn_stats_index';",
+          )
+          .single['n'],
+      0,
     );
-    expect(rows.single['server_id'], 'srv-1');
+
+    final stat = kvRow('conn_stat', 'srv-1_1000')!;
+    expect(stat['serverId'], 'srv-1');
+    expect(stat['serverName'], 'prod');
+    // The `@JsonValue`, not the enum's name. Telling the two apart is the
+    // migration's job and it has a table for it.
+    expect(stat['result'], 'success');
   });
 
   test('a fresh install imports nothing and is already current', () async {
@@ -234,7 +290,14 @@ void main() {
     await Stores.init();
 
     expect(SchemaVersion.stored, SchemaVersion.current);
-    expect(Stores.server.fetch(), isEmpty);
+    // `setting` is not empty — the marker and the schema version live there —
+    // but no box contributed a record.
+    expect(
+      SqliteDb.instance
+          .select("SELECT count(*) AS n FROM kv WHERE store <> 'setting';")
+          .single['n'],
+      0,
+    );
   });
 
   test('a box that could not be read is retried, the rest are not recopied',
@@ -260,9 +323,9 @@ void main() {
 
     await Stores.init();
 
-    expect(Stores.server.fetchOneRaw('srv-1')?.name, 'prod',
+    expect(kvRow('server', 'srv-1')?['name'], 'prod',
         reason: 'a box that opened is across');
-    expect(Stores.snippet.fetchOneRaw('uptime'), isNull,
+    expect(kvRow('snippet', 'uptime'), isNull,
         reason: 'the box that did not open has nothing across');
 
     // Stands in for a user edit between the two launches. The app is usable
@@ -277,7 +340,7 @@ void main() {
     File(encPath).writeAsBytesSync(intact);
     await Stores.init();
 
-    expect(Stores.snippet.fetchOneRaw('uptime')?.script, 'w',
+    expect(kvRow('snippet', 'uptime')?['script'], 'w',
         reason: 'the unread box is retried');
     expect(Stores.setting.timeout.get(), 42,
         reason: 'a box already copied is not copied a second time');
@@ -285,16 +348,16 @@ void main() {
 
   test('a record the destination rejects does not hold its box open', () async {
     await seedHive();
-    // `importRow` takes a map, so a String is rejected. Seeded here rather
-    // than in `seedHive`, which the other tests share.
+    // A value with no `toJson` and no JSON form. Seeded here rather than in
+    // `seedHive`, which the other tests share.
     final stats = HiveStore('connection_stats');
     await stats.init();
-    await stats.box.put('bad-row', 'not a record');
+    await stats.box.put('bad-row', DateTime(2020));
     await Hive.close();
 
     await Stores.init();
 
-    expect(Stores.connectionStats.getConnectionHistory('srv-1').length, 1,
+    expect(kvRow('conn_stat', 'srv-1_1000'), isNotNull,
         reason: 'the readable record still lands');
 
     // Deliberate, and the opposite of an unopenable box: what makes a record
@@ -357,9 +420,10 @@ void main() {
 
     await Stores.init();
 
-    final spi = Stores.server.fetchOneRaw('srv-v2');
-    expect(spi, isNotNull, reason: 'a typeId 3 record is still readable');
-    expect(spi!.name, 'legacy');
+    final nested = kvRow('server', 'srv-v2');
+    expect(nested, isNotNull, reason: 'a typeId 3 record is still readable');
+    final spi = Spi.fromJson(nested!);
+    expect(spi.name, 'legacy');
     expect(spi.id, 'srv-v2');
     expect(spi.tags, ['legacy']);
     expect(spi.autoConnect, false);
@@ -455,5 +519,53 @@ class _V2SpiWriter extends TypeAdapter<LegacySpiV2> {
       ..write(ssh?.proxyCommand)
       ..writeByte(17)
       ..write(ssh?.jumpIds);
+  }
+}
+
+/// Writes the typeId 2 layout every released build wrote: no id, because a
+/// snippet was keyed by its name.
+class _V1SnippetWriter extends TypeAdapter<LegacySnippetV1> {
+  @override
+  final typeId = 2;
+
+  @override
+  LegacySnippetV1 read(BinaryReader reader) =>
+      throw UnsupportedError('seed-only writer');
+
+  @override
+  void write(BinaryWriter writer, LegacySnippetV1 obj) {
+    writer
+      ..writeByte(5)
+      ..writeByte(0)
+      ..write(obj.name)
+      ..writeByte(1)
+      ..write(obj.script)
+      ..writeByte(2)
+      ..write(obj.tags)
+      ..writeByte(3)
+      ..write(obj.note)
+      ..writeByte(4)
+      ..write(obj.autoRunOn);
+  }
+}
+
+/// Writes the typeId 1 layout every released build wrote: an id that was also
+/// the name, and the key.
+class _V1PrivateKeyWriter extends TypeAdapter<LegacyPrivateKeyV1> {
+  @override
+  final typeId = 1;
+
+  @override
+  LegacyPrivateKeyV1 read(BinaryReader reader) =>
+      throw UnsupportedError('seed-only writer');
+
+  @override
+  void write(BinaryWriter writer, LegacyPrivateKeyV1 obj) {
+    writer
+      ..writeByte(2)
+      ..writeByte(0)
+      ..write(obj.id)
+      ..writeByte(1)
+      ..write(obj.key);
   }
 }
