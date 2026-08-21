@@ -61,11 +61,10 @@ class IshShellBackend implements ShellBackend {
   _IshSession _start(String? command, int width, int height) {
     if (_closed) throw StateError('This guest has been closed');
 
-    // The machine, once. -EEXIST means it is already up — from an earlier
-    // terminal, or from the Agent — and that is not an error: it is the
-    // machine, and this is another process on it.
-    // The machine, once, whichever system asked for it first. Attaching this
-    // one is `open`'s own job.
+    // The machine, once, whichever system asked for it first. -EEXIST means it
+    // is already up — from an earlier terminal, or from the Agent — and that is
+    // not an error: it is the machine, and this is another process on it.
+    // Attaching this system is `open`'s own job.
     final booted = IosRootfs.boot(profileId: profileId);
     if (booted < 0 && booted != IosRootfs.alreadyBooted) {
       throw StateError('The Linux guest did not start ($booted)');
@@ -159,7 +158,10 @@ class _IshSession implements ShellSession {
       // letting the throw escape left `_poll` null and the terminal silent
       // for good, with `done` never completing and the session never removed.
       Loggers.app.warning('ish read', e, s);
-      _schedule(_busyInterval);
+      // Idle rather than busy: the throw says there is nothing readable now,
+      // which is the idle condition, and a lock held by a thread waiting to be
+      // reaped is not released any sooner for being asked 60 times a second.
+      _schedule(_idleInterval);
       return;
     }
     if (chunk == null) {

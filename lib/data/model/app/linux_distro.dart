@@ -131,7 +131,11 @@ final class LinuxProfile {
   /// than a setting, because it describes the tree and has to go when the tree
   /// does — a setting would outlive a directory deleted from under the app and
   /// claim an install that is not there.
-  String encode() => '${distro.id}\n$version\n$label\n';
+  /// The label is flattened on the way out: it is the one field a user types,
+  /// and a newline in it would write a fourth line that [decode] reads as a
+  /// truncated name.
+  String encode() =>
+      '${distro.id}\n$version\n${label.replaceAll(RegExp(r'[\r\n]+'), ' ')}\n';
 
   /// The reverse, and every shape a build ever wrote.
   ///

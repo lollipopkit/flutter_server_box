@@ -279,6 +279,9 @@ class PortForwardNotifier extends _$PortForwardNotifier {
         _forwards.remove(id);
         Loggers.app.info('Port forward stopped: $id');
       }
+      // `close` is awaited, and `dispose` can run underneath it. Every other
+      // path here already checks; this one wrote to a disposed notifier.
+      if (_disposed) return;
       _updateStatus(id, PortForwardStatus(id: id, isActive: false));
     } finally {
       _inFlight.remove(id);

@@ -9,6 +9,7 @@
 /// missing resolver.
 library;
 
+import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
 
@@ -252,7 +253,7 @@ Future<void> seedChsh(String root, {bool force = false}) async {
 
   final script = File(root.joinPath('usr/local/bin/chsh'));
   if (!force && await script.exists()) {
-    final head = await script.readAsString();
+    final head = await _readHead(script);
     if (head.contains('# serverbox-chsh v$_chshVersion')) return;
     // Something else's `chsh`, from `apk add shadow`. Left alone: PATH puts
     // ours first anyway, and overwriting a package's file would have `apk`
@@ -262,6 +263,31 @@ Future<void> seedChsh(String root, {bool force = false}) async {
   await script.parent.create(recursive: true);
   await script.writeAsString(_chshScript(Defaults.linuxShell));
   chmodGuestFile(script.path, 0x1ED); // 0755
+}
+
+/// Enough of [file] to find the marker in, or empty when it cannot be read.
+///
+/// The marker is the script's second line, so a few kilobytes settle it. Read
+/// this way rather than with `readAsString` because of the case the caller
+/// goes on to handle: `apk add shadow` puts a compiled `chsh` at that path,
+/// and decoding one strictly throws — out of a function that runs while the
+/// app is starting, before the check that would have said to leave it alone.
+///
+/// Empty is the safe answer. It contains no marker, so the caller reads the
+/// file as somebody else's and does not touch it.
+Future<String> _readHead(File file) async {
+  try {
+    final handle = await file.open();
+    try {
+      return const Utf8Decoder(
+        allowMalformed: true,
+      ).convert(await handle.read(4096));
+    } finally {
+      await handle.close();
+    }
+  } catch (_) {
+    return '';
+  }
 }
 
 /// `chmod`, which `dart:io` has not got and a file written into a guest cannot
@@ -283,8 +309,15 @@ void chmodGuestFile(String path, int mode) {
 
 final _chmod = () {
   try {
-    return DynamicLibrary.process()
-        .lookupFunction<Int Function(Pointer<Char>, Uint16), int Function(Pointer<Char>, int)>('chmod');
+    final process = DynamicLibrary.process();
+    // `mode_t` is `uint16_t` on Darwin and `unsigned int` everywhere else this
+    // ships, and the lookup has to name the width the call will actually use.
+    if (Platform.isIOS || Platform.isMacOS) {
+      return process
+          .lookupFunction<Int Function(Pointer<Char>, Uint16), int Function(Pointer<Char>, int)>('chmod');
+    }
+    return process
+        .lookupFunction<Int Function(Pointer<Char>, UnsignedInt), int Function(Pointer<Char>, int)>('chmod');
   } catch (_) {
     return null;
   }

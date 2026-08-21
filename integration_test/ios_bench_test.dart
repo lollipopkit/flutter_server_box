@@ -57,7 +57,12 @@ void main() {
       return;
     }
     final shellbench = utf8.decode(base64.decode(_shellbenchB64));
-    await IosRootfs.install(distro: LinuxDistro.alpine);
+    // Only when there is nothing: `install` without `into:` adds a system
+    // beside the existing ones, so an unconditional call leaves a fresh
+    // Alpine behind on every run of this benchmark.
+    if (IosRootfs.selected == null) {
+      await IosRootfs.install(distro: LinuxDistro.alpine);
+    }
     const exec = IshExec();
 
     // The C section runs a prebuilt musl aarch64 binary, which is exactly what

@@ -22,18 +22,23 @@ void main() {
   setUp(() async {
     root = await Directory.systemTemp.createTemp('chsh_script_test');
     await seedChsh(root.path);
-    // The guest resolves `/etc/serverbox/shell` against its own root. Run from
-    // the host there is no such root, so the one line naming it is pointed at
-    // the temporary tree — everything else is the shipped script byte for byte.
+    // The guest resolves absolute paths against its own root. Run from the
+    // host there is no such root, so the two the script names are pointed at
+    // the temporary tree — everything else is the shipped script byte for
+    // byte. `/etc/shells` as well as the conf: left alone it reads the host's,
+    // and a test that writes a fixture the script never opens asserts against
+    // whatever this machine happens to have.
     final source = await File(
       root.path.joinPath('usr/local/bin/chsh'),
     ).readAsString();
     chsh = root.path.joinPath('chsh-under-test');
     await File(chsh).writeAsString(
-      source.replaceFirst(
-        'conf=/$shellConfPath',
-        'conf=${root.path.joinPath(shellConfPath)}',
-      ),
+      source
+          .replaceFirst(
+            'conf=/$shellConfPath',
+            'conf=${root.path.joinPath(shellConfPath)}',
+          )
+          .replaceAll('/etc/shells', root.path.joinPath('etc/shells')),
     );
   });
 
@@ -107,11 +112,17 @@ void main() {
     await File(root.path.joinPath('etc/shells')).writeAsString(
       '# comment\n/bin/sh\n\n/bin/ash\n',
     );
-    // `-l` reads the guest's own path, which the host has as well; what is
-    // being locked is that comments and blank lines do not come back.
+
     final result = await run(['-l']);
 
     expect(result.exitCode, 0);
+    // The two `grep -v` are the whole point of the line: a comment and a blank
+    // are not shells, and offering either back is offering something that
+    // fails the executable check later.
+    expect(
+      result.stdout.toString().trim().split('\n').map((e) => e.trim()).toList(),
+      ['/bin/sh', '/bin/ash'],
+    );
   });
 
   test('refuses a flag it does not know, rather than guessing', () async {

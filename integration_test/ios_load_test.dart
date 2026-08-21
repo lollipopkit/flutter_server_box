@@ -39,7 +39,12 @@ void main() {
       markTestSkipped('this build carries no engine (SBM_ISH = 0)');
       return;
     }
-    await IosRootfs.install(distro: LinuxDistro.alpine);
+    // Only when there is nothing: `install` without `into:` adds a system
+    // beside the existing ones, so an unconditional call leaves a fresh
+    // Alpine behind on every run of this benchmark.
+    if (IosRootfs.selected == null) {
+      await IosRootfs.install(distro: LinuxDistro.alpine);
+    }
     const exec = IshExec();
 
     // Booted and idle, before any work: what the engine costs simply for
@@ -95,7 +100,12 @@ echo DONE
       return;
     }
     await IosRootfs.prepare();
-    await IosRootfs.install(distro: LinuxDistro.alpine);
+    // Only when there is nothing: `install` without `into:` adds a system
+    // beside the existing ones, so an unconditional call leaves a fresh
+    // Alpine behind on every run of this benchmark.
+    if (IosRootfs.selected == null) {
+      await IosRootfs.install(distro: LinuxDistro.alpine);
+    }
     const exec = IshExec();
 
     final before = rss();

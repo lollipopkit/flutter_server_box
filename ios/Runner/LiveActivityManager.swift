@@ -90,6 +90,15 @@ actor LiveActivityManager {
         return activity
     }
 
+    /// The request in flight, if there is one.
+    ///
+    /// An actor is not a lock across a suspension: `request` awaits, and a
+    /// second `start` arriving in that window found `updatableActivity()` still
+    /// empty and asked for another. That is two Live Activities for one
+    /// terminal, and only the later of them in `current` — the first is left
+    /// running with nothing able to update or end it.
+    private var pending: Task<Activity<TerminalAttributes>?, Never>?
+
     func start(json: String) async {
         guard let payload = Self.parse(json) else { return }
 
@@ -99,7 +108,17 @@ actor LiveActivityManager {
             return
         }
 
-        current = await Self.request(payload)
+        // Whoever asked second waits for the first request rather than making
+        // one of its own.
+        if let pending {
+            current = await pending.value
+            return
+        }
+        let task = Task { await Self.request(payload) }
+        pending = task
+        let activity = await task.value
+        pending = nil
+        current = activity
     }
 
     func update(json: String) async {

@@ -157,7 +157,33 @@ abstract final class IosRootfs {
   /// `realfs` needs is only a directory tree, which is why this is possible;
   /// under `fakefs` it would have meant carrying a metadata database and the
   /// tool that writes one.
+  ///
+  /// One at a time. [_install] picks an id from the scan that opens it, so two
+  /// overlapping there are handed the same one — and then the same directory,
+  /// which the second deletes out from under the first.
   static Future<LinuxProfile> install({
+    required LinuxDistro distro,
+    LinuxProfile? into,
+    String? label,
+    void Function(double? progress)? onProgress,
+    CancelToken? cancel,
+  }) {
+    if (_installing) {
+      return Future.error(StateError('An install is already running'));
+    }
+    _installing = true;
+    return _install(
+      distro: distro,
+      into: into,
+      label: label,
+      onProgress: onProgress,
+      cancel: cancel,
+    ).whenComplete(() => _installing = false);
+  }
+
+  static bool _installing = false;
+
+  static Future<LinuxProfile> _install({
     required LinuxDistro distro,
     LinuxProfile? into,
     String? label,
@@ -266,6 +292,9 @@ abstract final class IosRootfs {
 
   /// Removes one system and everything in it. The others stay.
   static Future<void> removeProfile(String id) async {
+    // A known id, before a recursive delete is built from it. `rootOf` only
+    // joins a path, so anything the caller passes becomes one.
+    if (byId(id) == null) return;
     final root = rootOf(id);
     if (root == null) return;
     // Before the directory goes: its `/dev` is a fakefs whose database lives
@@ -322,26 +351,9 @@ abstract final class IosRootfs {
       //
       // Through libc rather than `chmod(1)`: iOS refuses to start a process,
       // which is the same refusal that put an interpreter on this platform.
-      _chmod(path, entry.mode & 0xfff);
+      chmodGuestFile(path, entry.mode & 0xfff);
     }
   }
-
-  /// `chmod`, which `dart:io` does not have and this cannot do without.
-  static void _chmod(String path, int mode) {
-    final chmod = _chmodC;
-    if (chmod == null || mode == 0) return;
-    final pointer = path.toNativeUtf8();
-    try {
-      chmod(pointer.cast(), mode);
-    } finally {
-      malloc.free(pointer);
-    }
-  }
-
-  static final _chmodC = _look(
-    'chmod',
-    (p) => p.lookupFunction<Int Function(Pointer<Char>, Uint16), int Function(Pointer<Char>, int)>('chmod'),
-  );
 
   /// The host path a guest path names, or null when it names nothing inside.
   ///

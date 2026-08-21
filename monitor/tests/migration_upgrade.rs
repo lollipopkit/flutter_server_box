@@ -180,6 +180,17 @@ fn shipped_migrations_keep_their_checksums() {
              to start. Restore the file and add a new migration instead."
         );
     }
+
+    // Otherwise the list above is a subset and a migration added tomorrow is
+    // pinned by nothing: this test would pass while the checksum it should be
+    // guarding went unrecorded.
+    assert_eq!(
+        seen.len(),
+        pinned.len(),
+        "a migration ships without a pinned checksum. Add its version and \
+         checksum to the list above; embedded = {:?}",
+        seen.keys().collect::<Vec<_>>()
+    );
 }
 
 fn hex(bytes: &[u8]) -> String {

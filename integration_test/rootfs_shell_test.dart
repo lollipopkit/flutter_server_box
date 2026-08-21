@@ -33,8 +33,12 @@ void main() {
     // A real install every run. A rootfs left by a previous run would let a
     // change to how one is unpacked pass untested for as long as the device
     // kept the old one.
-    await AndroidRootfs.removeProfile(
-        AndroidRootfs.selected?.id ?? LinuxDistro.alpine.id);
+    // Every one of them: the install below adds a system rather than replacing
+    // one, so leaving any behind means the next run reads an old tree. A
+    // distribution id is not a profile id either — profile ids are generated.
+    for (final profile in AndroidRootfs.profiles.toList()) {
+      await AndroidRootfs.removeProfile(profile.id);
+    }
   });
 
   /// Everything [session] prints until it ends, or until [timeout] passes with

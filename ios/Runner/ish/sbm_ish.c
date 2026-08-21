@@ -411,7 +411,14 @@ static int make_dev_db(const char *profile, char *data_out, size_t data_len) {
 /// every profile. A session sees them as `/dev`, since it is rooted at its own
 /// subtree. Doing it by prefix rather than by chrooting init keeps this off any
 /// path where two profiles being attached at once could see each other's root.
-static void make_dev(const char *profile) {
+/// Returns 0, or a negative errno if the system has no usable `/dev`.
+///
+/// Only the two steps everything below rests on are reported: the database and
+/// the mount that makes it `/dev`. A `mknod` that fails leaves one node
+/// missing, which is a worse `/dev` rather than an absent one; a failed mount
+/// leaves an empty directory that every path below writes into the *host*
+/// tree instead.
+static int make_dev(const char *profile) {
     char path[MAX_PATH];
 #define GUEST(...) (snprintf(path, sizeof(path), __VA_ARGS__), path)
 
@@ -420,8 +427,13 @@ static void make_dev(const char *profile) {
     generic_mkdirat(AT_PWD, GUEST("/%s/dev", profile), 0755);
 
     char data_path[MAX_PATH];
-    if (make_dev_db(profile, data_path, sizeof(data_path)) < 0) return;
-    do_mount(&fakefs, data_path, GUEST("/%s/dev", profile), "", 0);
+    int err = make_dev_db(profile, data_path, sizeof(data_path));
+    if (err < 0) return err;
+    err = do_mount(&fakefs, data_path, GUEST("/%s/dev", profile), "", 0);
+    if (err < 0) {
+        syslog(LOG_ERR, "sbm_ish: %s has no /dev (%d)", profile, err);
+        return err;
+    }
 
     generic_mknodat(AT_PWD, GUEST("/%s/dev/null", profile), S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_NULL_MINOR));
     generic_mknodat(AT_PWD, GUEST("/%s/dev/zero", profile), S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_ZERO_MINOR));
@@ -449,6 +461,7 @@ static void make_dev(const char *profile) {
     generic_mkdirat(AT_PWD, GUEST("/%s/dev/shm", profile), 01777);
     do_mount(&tmpfs, "shm", GUEST("/%s/dev/shm", profile), "", 0);
 #undef GUEST
+    return 0;
 }
 
 /// Which profiles have had their filesystems mounted, so that mounting is done
@@ -460,6 +473,21 @@ static void make_dev(const char *profile) {
 #define SBM_MAX_PROFILES 8
 static char attached[SBM_MAX_PROFILES][64];
 static pthread_mutex_t attached_lock = PTHREAD_MUTEX_INITIALIZER;
+
+/// Whether `profile` names a directory directly under the machine root.
+///
+/// `..` matters here as much as `/` does, and is the reason this is one
+/// function rather than a check repeated at each entry point: every path below
+/// is built as `/<profile>/...`, and `..` normalizes that straight back to the
+/// machine root — reaching outside the container without ever writing a slash.
+/// `.` resolves to the container itself, which is not a system either.
+static int check_profile(const char *profile) {
+    if (profile == NULL || profile[0] == '\0') return -EINVAL;
+    if (strchr(profile, '/') != NULL) return -EINVAL;
+    if (strcmp(profile, ".") == 0 || strcmp(profile, "..") == 0) return -EINVAL;
+    if (strlen(profile) >= sizeof(attached[0])) return -ENAMETOOLONG;
+    return 0;
+}
 
 static bool is_attached(const char *profile) {
     for (int i = 0; i < SBM_MAX_PROFILES; i++)
@@ -501,9 +529,8 @@ bool sbm_ish_available(void) { return true; }
 /// time something wants a terminal in it.
 int sbm_ish_attach(const char *profile) {
     if (!booted) return -ENOTCONN;
-    if (profile == NULL || profile[0] == '\0') return -EINVAL;
-    if (strchr(profile, '/') != NULL) return -EINVAL;
-    if (strlen(profile) >= sizeof(attached[0])) return -ENAMETOOLONG;
+    int checked = check_profile(profile);
+    if (checked < 0) return checked;
 
     pthread_mutex_lock(&attached_lock);
     if (is_attached(profile)) {
@@ -524,7 +551,15 @@ int sbm_ish_attach(const char *profile) {
     snprintf(path, sizeof(path), "/%s/proc", profile);
     generic_mkdirat(AT_PWD, path, 0755);
     do_mount(&procfs, "proc", path, "", 0);
-    make_dev(profile);
+    // Recorded only once the system is actually mounted. Attaching is
+    // idempotent by name, so a half-built profile written here is one nothing
+    // ever retries: every later attach sees the name and returns 0, and the
+    // session opens onto a `/dev` that was never mounted.
+    int err = make_dev(profile);
+    if (err < 0) {
+        pthread_mutex_unlock(&attached_lock);
+        return err;
+    }
 
     snprintf(attached[slot], sizeof(attached[slot]), "%s", profile);
     pthread_mutex_unlock(&attached_lock);
@@ -546,8 +581,8 @@ int sbm_ish_attach(const char *profile) {
 /// those first.
 int sbm_ish_detach(const char *profile) {
     if (!booted) return -ENOTCONN;
-    if (profile == NULL || profile[0] == '\0') return -EINVAL;
-    if (strchr(profile, '/') != NULL) return -EINVAL;
+    int checked = check_profile(profile);
+    if (checked < 0) return checked;
 
     // Innermost first: `/dev/pts` and `/dev/shm` are inside `/dev`, and the
     // outer one cannot go while they hold it.

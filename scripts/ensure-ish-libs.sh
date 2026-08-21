@@ -90,9 +90,14 @@ stamp="$lib_dir/.ish-libs-sha"
 # Highest first, so a commit that ended up with two of them — a re-run of the
 # publishing workflow — takes the later version rather than whichever `git tag`
 # happened to list first.
+#
+# Read whole rather than piped into `head`: this script runs under `pipefail`,
+# and `head` closing the pipe after one line can leave `git` killed by SIGPIPE,
+# which fails the pipeline and takes the script with it.
 version_tag() {
-  git -C "$SRC_DIR" tag --points-at HEAD --list 'v[0-9]*' --sort=-v:refname |
-    head -1
+  local tags
+  tags="$(git -C "$SRC_DIR" tag --points-at HEAD --list 'v[0-9]*' --sort=-v:refname)"
+  printf '%s\n' "${tags%%$'\n'*}"
 }
 
 tag="$(version_tag)"
@@ -105,8 +110,10 @@ fi
 # now never reaches it.
 [ -n "$tag" ] || tag="libs-$sha"
 
+ish_libs=(libish.a libish_emu.a libfakefs.a)
+
 have_libs() {
-  for lib in libish.a libish_emu.a libfakefs.a; do
+  for lib in "${ish_libs[@]}"; do
     [ -f "$lib_dir/$lib" ] || return 1
   done
 }
@@ -160,6 +167,11 @@ if curl -fsSL --retry 2 -o "$tmp/$asset" "$base/$asset" &&
   fi
 
   mkdir -p "$lib_dir"
+  # The previous revision's libraries go first. `have_libs` below asks only
+  # whether the three are present, so one this archive does not carry would
+  # survive the unpack, pass that check, and link into a build it was not built
+  # for.
+  for lib in "${ish_libs[@]}"; do rm -f "$lib_dir/$lib"; done
   # Owner comes from this machine rather than the archive. Members that are
   # absolute or climb with `..` are refused by tar itself unless `-P` is given,
   # which is why there is no guard for them here — this unpacks during the

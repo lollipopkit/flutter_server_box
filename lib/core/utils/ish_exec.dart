@@ -170,7 +170,15 @@ class IshExec extends LocalExec {
     //
     // Reported as stderr because that is where a reader is already looking for
     // a command that went wrong, and because that is what this is.
-    final console = utf8.decoder.startChunkedConversion(
+    //
+    // `allowMalformed` because the tail is not always followed by the rest of
+    // it: a session hung up mid-character leaves the decoder holding an
+    // incomplete sequence, and the strict decoder answers `close()` with a
+    // `FormatException` — thrown from the one place that was about to return
+    // the command's output. Replacement marks are the right answer there.
+    final console = const Utf8Decoder(
+      allowMalformed: true,
+    ).startChunkedConversion(
       _SinkOf<String>((text) {
         if (text.isEmpty) return;
         err.adopt(text);

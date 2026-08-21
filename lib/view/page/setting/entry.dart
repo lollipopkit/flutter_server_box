@@ -664,8 +664,9 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
 
   /// Redraws after something a listenable does not cover.
   ///
-  /// The Linux page reads `Rootfs.installed`, which is a file on disk and not
-  /// a store key, so nothing notifies when an install or a removal changes it.
+  /// The Linux page reads `Rootfs.profiles`, which is built by scanning a
+  /// directory rather than from a store key, so nothing notifies when an
+  /// install or a removal changes it.
   void refresh() {
     if (mounted) setState(() {});
   }

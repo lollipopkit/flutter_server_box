@@ -320,13 +320,6 @@ extension _Linux on _AppSettingsPageState {
     );
   }
 
-  /// Picks a distribution, and replaces what is installed if that is what it
-  /// takes.
-  ///
-  /// The setting is written *before* the download, so that [install] reads the
-  /// one that was chosen — and so that declining the download leaves the
-  /// choice made and the tree gone, which the row above says out loud rather
-  /// than pretending nothing happened.
   /// Picking a shell, checked against the system that is actually installed.
   ///
   /// Shape and then existence, because neither failure is visible later: the

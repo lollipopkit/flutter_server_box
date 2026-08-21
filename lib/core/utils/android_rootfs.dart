@@ -143,15 +143,21 @@ abstract final class AndroidRootfs {
     if (!isAndroid) return;
     _container = (await getApplicationSupportDirectory()).path.joinPath('linux');
 
+    // Whether proot is here decides whether a system can be *run*, which is
+    // what `isAvailable` answers. It does not decide whether one is installed,
+    // so scanning and seeding happen either way: returning early left
+    // `_profiles` empty and every installed system invisible — reported as
+    // "nothing installed" rather than "nothing to run it with".
     final libDir = await MethodChans.nativeLibDir();
-    if (libDir == null) return;
-    final proot = libDir.joinPath('libproot.so');
-    final loader = libDir.joinPath('libproot-loader.so');
-    // Both, or neither is any use: without the loader proot falls back to a
-    // plain `execve` and is refused by the very rule it exists to avoid.
-    if (await File(proot).exists() && await File(loader).exists()) {
-      _proot = proot;
-      _loader = loader;
+    if (libDir != null) {
+      final proot = libDir.joinPath('libproot.so');
+      final loader = libDir.joinPath('libproot-loader.so');
+      // Both, or neither is any use: without the loader proot falls back to a
+      // plain `execve` and is refused by the very rule it exists to avoid.
+      if (await File(proot).exists() && await File(loader).exists()) {
+        _proot = proot;
+        _loader = loader;
+      }
     }
     await scan();
     for (final profile in _profiles) {
@@ -278,6 +284,9 @@ abstract final class AndroidRootfs {
 
   /// Removes one rootfs and everything in it. The others stay.
   static Future<void> removeProfile(String id) async {
+    // A known id, before a recursive delete is built from it. `rootOf` only
+    // joins a path, so anything the caller passes becomes one.
+    if (!_profiles.any((e) => e.id == id)) return;
     final root = rootOf(id);
     if (root == null) return;
     final dir = Directory(root);
@@ -292,6 +301,12 @@ abstract final class AndroidRootfs {
     String? command,
     String? profileId,
   }) {
+    // A named profile has to be one that exists. `rootOf` only joins a path,
+    // so an unknown id reads as a rootfs and starts proot on a directory that
+    // is not there.
+    if (profileId != null && !_profiles.any((e) => e.id == profileId)) {
+      return null;
+    }
     final root = rootOf(profileId ?? selected?.id);
     final proot = _proot;
     if (root == null || proot == null || !isAvailable) return null;

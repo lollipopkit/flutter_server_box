@@ -73,11 +73,11 @@ pass() { printf '\033[0;32m  ✓\033[0m %s\n' "$*"; }
 if [ "$exported" -eq "$expected" ]; then
   pass "all $expected sbm_ish_* are exported"
 else
-  # Single quotes around the whole message: the word below is a shell builtin's
-  # name and was written in backticks, which inside double quotes is command
-  # substitution. Every failure printed "used: command not found" first.
+  # `used` in single quotes, which are literal inside a double-quoted string.
+  # It was in backticks once, and inside double quotes that is command
+  # substitution: every failure printed "used: command not found" first.
   fail "$exported of $expected sbm_ish_* exported — Dart resolves these by name,
-       and the linker dead-strips them without '"'"'used'"'"'"
+       and the linker dead-strips them without 'used'"
 fi
 
 if [ "$EXPECT" = on ]; then

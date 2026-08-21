@@ -65,7 +65,13 @@ void main() {
     // its digest, unpack it in Dart. There is no `tar` here — iOS refuses to
     // start a process — and no metadata database to build, which is what
     // `realfs` bought.
-    await IosRootfs.removeProfile(IosRootfs.selected?.id ?? LinuxDistro.alpine.id);
+    // Every one of them: `isInstalled` asks whether any system is there, and a
+    // second profile left by an earlier run would keep it true. A distribution
+    // id is not a profile id either — profile ids are generated — so removing
+    // by one names nothing.
+    for (final profile in IosRootfs.profiles.toList()) {
+      await IosRootfs.removeProfile(profile.id);
+    }
     expect(await IosRootfs.isInstalled, isFalse);
 
     var seen = -1.0;
@@ -89,8 +95,13 @@ void main() {
       markTestSkipped('this build carries no engine (SBM_ISH = 0)');
       return;
     }
-    // Installed by the test above, or already there.
-    await IosRootfs.install(distro: LinuxDistro.alpine);
+    // Installed by the test above, or already there. Only when there is
+    // nothing: `install` without `into:` adds a system beside the existing
+    // ones rather than reusing one, so calling it unconditionally leaves a
+    // fresh Alpine behind on every run.
+    if (IosRootfs.selected == null) {
+      await IosRootfs.install(distro: LinuxDistro.alpine);
+    }
     expect(await IosRootfs.isInstalled, isTrue);
 
     final booted = IosRootfs.boot();
