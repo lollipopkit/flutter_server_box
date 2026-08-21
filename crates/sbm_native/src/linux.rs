@@ -24,14 +24,67 @@ use sbm_parser::types::Disk;
 use sbm_parser::{common, linux, ServerStatus};
 use std::fs;
 use std::fs::OpenOptions;
+use std::os::unix::fs::OpenOptionsExt;
 use std::path::PathBuf;
-use std::process::{Command, Stdio};
+use std::process::{Child, Command, Stdio};
+use std::sync::{Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
 /// `df` can block on an unavailable network filesystem. Native sampling runs
 /// on the monitor loop, so an optional command may never hold it indefinitely.
 const COMMAND_TIMEOUT: Duration = Duration::from_secs(10);
 const MAX_COMMAND_OUTPUT_BYTES: u64 = 1024 * 1024;
+const MAX_REAPING_CHILDREN: usize = 4;
+
+/// Children that survived a kill attempt. A process in uninterruptible I/O can
+/// outlive SIGKILL, so waiting for it would stall the monitor loop.
+#[derive(Default)]
+struct ChildReaper {
+    children: Vec<Child>,
+    reserved_slots: usize,
+}
+
+impl ChildReaper {
+    fn reap(&mut self) {
+        self.children.retain_mut(|child| match child.try_wait() {
+            Ok(Some(_)) => false,
+            Ok(None) | Err(_) => true,
+        });
+    }
+
+    /// Reserve capacity before spawning, so a killed child can always be
+    /// retained without an unbounded collection or detached waiting thread.
+    fn reserve(&mut self) -> bool {
+        self.reap();
+        if self.children.len() + self.reserved_slots >= MAX_REAPING_CHILDREN {
+            return false;
+        }
+        self.reserved_slots += 1;
+        true
+    }
+
+    fn release(&mut self) {
+        self.reserved_slots = self.reserved_slots.saturating_sub(1);
+    }
+
+    fn retain(&mut self, child: Child) {
+        debug_assert!(self.reserved_slots > 0);
+        self.reserved_slots = self.reserved_slots.saturating_sub(1);
+        self.children.push(child);
+    }
+}
+
+fn child_reaper() -> &'static Mutex<ChildReaper> {
+    static REAPER: OnceLock<Mutex<ChildReaper>> = OnceLock::new();
+    REAPER.get_or_init(|| Mutex::new(ChildReaper::default()))
+}
+
+fn with_child_reaper<T>(f: impl FnOnce(&mut ChildReaper) -> T) -> T {
+    let mut reaper = child_reaper()
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+    f(&mut reaper)
+}
 
 fn read(path: &str) -> String {
     fs::read_to_string(path).unwrap_or_default()
@@ -53,6 +106,9 @@ fn run_command(command: Command) -> String {
 }
 
 fn run_command_with_timeout(mut command: Command, command_timeout: Duration) -> String {
+    if !with_child_reaper(ChildReaper::reserve) {
+        return String::new();
+    }
     #[cfg(unix)]
     {
         use std::os::unix::process::CommandExt;
@@ -64,9 +120,13 @@ fn run_command_with_timeout(mut command: Command, command_timeout: Duration) -> 
         // soon as the file reaches that hard limit.
         unsafe { command.pre_exec(limit_output_size) };
     }
-    let Some((output, file)) = output_file() else { return String::new() };
+    let Some((output, file)) = output_file() else {
+        with_child_reaper(ChildReaper::release);
+        return String::new();
+    };
     command.stdout(Stdio::from(output));
     let Ok(mut child) = command.spawn() else {
+        with_child_reaper(ChildReaper::release);
         let _ = fs::remove_file(file);
         return String::new();
     };
@@ -74,6 +134,7 @@ fn run_command_with_timeout(mut command: Command, command_timeout: Duration) -> 
     loop {
         match child.try_wait() {
             Ok(Some(status)) => {
+                with_child_reaper(ChildReaper::release);
                 let stdout = fs::read(&file).unwrap_or_default();
                 let _ = fs::remove_file(file);
                 return if status.success() {
@@ -84,18 +145,14 @@ fn run_command_with_timeout(mut command: Command, command_timeout: Duration) -> 
             }
             Ok(None) if fs::metadata(&file).is_ok_and(|metadata| metadata.len() >= MAX_COMMAND_OUTPUT_BYTES) => {
                 terminate(&mut child);
-                let _ = child.wait();
+                with_child_reaper(|reaper| reaper.retain(child));
                 let _ = fs::remove_file(file);
                 return String::new();
             }
             Ok(None) if Instant::now() < deadline => std::thread::sleep(Duration::from_millis(10)),
             Ok(None) | Err(_) => {
                 terminate(&mut child);
-                // A process stuck in uninterruptible I/O can survive SIGKILL;
-                // reap it without holding the sampling loop behind it.
-                let _ = std::thread::spawn(move || {
-                    let _ = child.wait();
-                });
+                with_child_reaper(|reaper| reaper.retain(child));
                 let _ = fs::remove_file(file);
                 return String::new();
             }
@@ -129,7 +186,12 @@ fn output_file() -> Option<(std::fs::File, PathBuf)> {
                 .ok()?
                 .as_nanos(),
         ));
-        if let Ok(file) = OpenOptions::new().write(true).create_new(true).open(&path) {
+        if let Ok(file) = OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .mode(0o600)
+            .open(&path)
+        {
             return Some((file, path));
         }
     }
@@ -268,5 +330,28 @@ mod tests {
 
         assert!(run_command_with_timeout(command, Duration::from_secs(2)).is_empty());
         assert!(started.elapsed() < Duration::from_secs(1));
+    }
+
+    #[test]
+    fn child_reaper_limits_pending_children() {
+        let mut reaper = ChildReaper {
+            reserved_slots: MAX_REAPING_CHILDREN,
+            ..Default::default()
+        };
+        assert!(!reaper.reserve());
+
+        reaper.release();
+        assert!(reaper.reserve());
+    }
+
+    #[test]
+    fn output_file_is_owner_only() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let (file, path) = output_file().expect("temporary output file");
+        drop(file);
+        let mode = fs::metadata(&path).expect("output file metadata").permissions().mode();
+        let _ = fs::remove_file(path);
+        assert_eq!(mode & 0o077, 0);
     }
 }

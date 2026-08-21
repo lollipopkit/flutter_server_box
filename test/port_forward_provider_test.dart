@@ -56,6 +56,7 @@ void main() {
       final notifier = container.read(portForwardProvider(serverId).notifier);
 
       final start = notifier.startForward(config.id);
+      await _waitUntilPortIsBound(port);
       final clear = notifier.clear();
       await Future.wait([start, clear]).timeout(const Duration(seconds: 5));
 
@@ -77,6 +78,20 @@ void main() {
       await SqliteDb.close();
     }
   });
+}
+
+Future<void> _waitUntilPortIsBound(int port) async {
+  final deadline = DateTime.now().add(const Duration(seconds: 1));
+  while (DateTime.now().isBefore(deadline)) {
+    try {
+      final socket = await ServerSocket.bind(InternetAddress.loopbackIPv4, port);
+      await socket.close();
+    } on SocketException {
+      return;
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+  }
+  fail('Port forward did not reach its local bind stage');
 }
 
 Future<int> _freeLoopbackPort() async {
