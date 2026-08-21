@@ -18,9 +18,7 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/storage/file_pane.dart';
 import 'package:server_box/view/page/storage/send_to.dart';
 import 'package:server_box/view/page/storage/transfer_announce.dart';
-import 'package:server_box/view/widget/empty_pane.dart';
 import 'package:server_box/view/widget/omit_start_text.dart';
-import 'package:server_box/view/widget/page_issue.dart';
 import 'package:server_box/view/widget/unix_perm.dart';
 
 /// What an injected action is allowed to do to the browser it sits in.

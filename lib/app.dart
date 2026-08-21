@@ -11,7 +11,6 @@ import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/home.dart';
-import 'package:server_box/view/widget/page_columns.dart';
 
 part 'intro.dart';
 

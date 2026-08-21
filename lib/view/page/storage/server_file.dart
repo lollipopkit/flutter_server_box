@@ -11,7 +11,6 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/storage/file_browser.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
 import 'package:server_box/view/page/storage/show_transfers.dart';
-import 'package:server_box/view/widget/page_issue.dart';
 
 /// A server's files, whichever way they are reached.
 ///

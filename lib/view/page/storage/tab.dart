@@ -14,7 +14,6 @@ import 'package:server_box/view/page/storage/local.dart';
 import 'package:server_box/view/page/storage/send_to.dart';
 import 'package:server_box/view/page/storage/server_file.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
-import 'package:server_box/view/widget/empty_pane.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 
 /// Every open file browser, one tab each, plus a picker at the head of the

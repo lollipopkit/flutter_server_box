@@ -28,7 +28,6 @@ import 'package:server_box/view/page/storage/file_browser.dart';
 import 'package:server_box/view/page/storage/local.dart';
 import 'package:server_box/view/page/storage/show_transfers.dart';
 import 'package:server_box/view/page/storage/transfer_announce.dart';
-import 'package:server_box/view/widget/page_issue.dart';
 
 part 'sftp_helpers.dart';
 
