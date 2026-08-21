@@ -3,7 +3,7 @@ title: 快速开始
 description: 在几分钟内开始使用 Server Box
 ---
 
-按照本快速入门指南连接您的第一台服务器并开始监控。
+按照本指南连接第一台服务器并开始监控。
 
 ## 第一步：添加服务器
 
@@ -26,7 +26,7 @@ description: 在几分钟内开始使用 Server Box
 - **Monitor User** / **Monitor Password**：agent 的面板登录凭据
 - **Monitor Ignore certificate**：用于自签名证书
 
-以这种方式添加的服务器不携带任何 SSH 凭据。状态与图表开箱可用；命令、终端和文件浏览取决于 agent 运维方开启了什么，详见 [Monitor Agent](/docs/zh/advanced/monitor-agent/)。此类服务器不提供 SFTP 和端口转发 —— 需要这两项请以 SSH 方式添加。
+以这种方式添加的服务器不携带任何 SSH 凭据。状态和图表无需额外配置即可使用。命令、终端和文件浏览取决于 agent 运维方启用的功能，详见 [Monitor Agent](/docs/zh/advanced/monitor-agent/)。此类服务器不提供 SFTP 和端口转发，需要这两项功能时请以 SSH 方式添加。
 
 ## 第二步：连接并监控
 
@@ -39,14 +39,14 @@ description: 在几分钟内开始使用 Server Box
 
 ## 第三步：探索功能
 
-连接后，您可以：
+连接后可以：
 
-- **打开终端**：点击终端按钮以获得完整的 SSH 访问权限
-- **浏览文件**：使用 SFTP 管理文件
+- **打开终端**：SSH 服务器可点击终端按钮打开 SSH 终端；Monitor HTTP 服务器需要 agent 的 `full_access` 权限。
+- **浏览文件**：SSH 服务器使用 SFTP 管理文件；Monitor HTTP 服务器需要配置 `[remote_access.fs]` 和 `roots`，并使用 agent 的文件 API。
 - **管理容器**：查看和控制 Docker/Podman 容器
 - **查看进程**：检查正在运行的进程
 - **运行片段**：执行保存的命令
-- **询问 Agent**：诊断或操作该服务器 —— 见 [Agent](/docs/zh/advanced/agent/)
+- **使用 Agent**：诊断或操作该服务器，见 [Agent](/docs/zh/advanced/agent/)
 
 ## 提示
 

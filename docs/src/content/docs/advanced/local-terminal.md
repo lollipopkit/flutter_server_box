@@ -6,8 +6,8 @@ description: Open a shell on the machine running ServerBox
 The terminal tab lists two things before your servers, when the build offers
 them: a shell on **this device**, and a Linux container ServerBox installs.
 
-Both are listed first for the same reason the file tab lists this device first —
-it is always reachable, and it needs no credential to be.
+Both are listed first for the same reason the file tab lists this device first:
+the device is always reachable, and these entries do not require credentials.
 
 ## This device
 
@@ -21,22 +21,23 @@ Where it is available:
 | Linux, Windows | yes |
 | macOS (DMG build) | yes |
 | macOS (App Store build) | no |
-| Android | yes, though a phone's shell is a good deal less than a desktop's |
+| Android | yes, though its shell capabilities differ from desktop platforms |
 | iOS | no |
 
 **The App Store macOS build cannot offer one.** It has to be sandboxed, and a
-sandboxed process cannot open a pseudo-terminal — so the entry is simply absent
-rather than present and broken. The DMG build is signed without the sandbox and
-does have one. The app asks the running process rather than deciding at build
-time, so a single binary is honest in both cases.
+sandboxed process cannot open a pseudo-terminal. The entry is omitted rather
+than shown as unavailable. The DMG build is signed without the sandbox and does
+have one. The app checks the running process, so the UI reflects the build's
+sandboxing.
 
 **iOS has none** for a stronger reason: an App Store app cannot start a process
 at all, and there is no `/bin/sh` in its container to start.
 
 ## The Alpine container
 
-Where the platform will not give a shell, or gives a thin one, ServerBox can
-install a Linux userland of its own — Alpine 3.22.5, the same release on both
+Where the platform does not provide a shell or provides only limited shell
+access, ServerBox can
+install a Linux userland of its own, Alpine 3.22.5 on both
 platforms.
 
 It appears in the terminal tab as **Alpine \<version\>**, beside this device
@@ -53,18 +54,18 @@ Two platforms, two mechanisms:
   container is that interpreter's filesystem.
 
 **Both are absent unless the build ships them.** Neither mechanism is included
-by default, so a build may offer this device, the container, both, or neither —
-the terminal tab is written to expect any of those. If you do not see it, your
+by default, so a build may offer this device, the container, both, or neither.
+The terminal tab is written to expect any of those. If you do not see it, your
 build does not have it.
 
-### What it is good for
+### Use cases
 
 - A `curl`, `dig`, `ssh` or `jq` on a phone that has none
 - Scratch work you would rather not do on a production host
-- A target for the Agent that is not your own filesystem — see
+- A sandboxed target for Agent commands, separate from the device filesystem. See
   [Agent](/docs/advanced/agent/)
 
-It is an ordinary Alpine, so `apk add` works.
+The container uses a standard Alpine userland, so `apk add` works.
 
 ### What it cannot see
 
@@ -76,8 +77,8 @@ computer.
 
 ## How it differs from a server
 
-Everything above the byte stream is the same — the same terminal emulator, the
-same virtual keyboard, the same tabs. What changes is where the bytes come from.
+Everything above the byte stream is the same: the terminal emulator, virtual
+keyboard, and tabs. What changes is where the bytes come from.
 
 A local shell has no host key to verify, no reconnection, and no server card. It
 also does not appear on the server list or in status charts: it is a terminal,

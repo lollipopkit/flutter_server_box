@@ -13,8 +13,8 @@ flutter_server_box/
 ├── crates/
 │   ├── sbm_parser/    # Shared status parser (single source of truth,
 │   │                  # used by the app via FFI and by the monitor)
-│   ├── sbm_ffi/       # flutter_rust_bridge binding crate + cargokit
-│   │                  # Flutter plugin glue (one directory)
+│   ├── sbm_ffi/       # flutter_rust_bridge binding crate
+│   │                  # Native build integration
 │   └── sbm_native/    # Native per-platform sampler (monitor only)
 ├── monitor/           # Server-side monitor (Rust service + Svelte frontend)
 ├── packages/          # Vendored Dart forks (path dependencies), plus
@@ -32,7 +32,7 @@ lib/
 ├── data/              # Data layer
 │   ├── model/         # Data models by feature
 │   ├── provider/      # Riverpod providers
-│   ├── store/         # Local storage (Hive)
+│   ├── store/         # Local storage (SQLite)
 │   ├── helper/        # Data-layer helpers
 │   ├── res/           # Resources and constants
 │   └── ssh/           # SSH session management
@@ -41,7 +41,7 @@ lib/
 │   └── widget/        # Reusable widgets
 ├── generated/         # Generated localization
 ├── l10n/              # Localization ARB files
-├── hive/              # Hive adapters
+├── hive/              # Legacy Hive adapters for migration
 └── src/rust/          # Generated flutter_rust_bridge bindings (do not edit)
 ```
 
@@ -75,7 +75,7 @@ Riverpod providers for dependency injection and state management:
 
 ### Stores (`lib/data/store/`)
 
-Hive-based local storage:
+SQLite-backed stores:
 
 - Server storage
 - Settings storage
@@ -111,7 +111,7 @@ Reusable UI components:
 
 ## Packages Directory (`/packages/`)
 
-Contains custom forks of dependencies, referenced by path from `pubspec.yaml`:
+Contains vendored dependencies referenced by path from `pubspec.yaml`:
 
 - `dartssh2/` - SSH library
 - `xterm/` - Terminal emulator
@@ -129,7 +129,7 @@ dependency by both `monitor/frontend` and `website/`.
 
 - `crates/sbm_parser/` - Parses raw command output into structured server status.
   Shared by the app (via FFI) and the monitor, so both always agree on parsing.
-- `crates/sbm_ffi/` - Thin flutter_rust_bridge wrapper around `sbm_parser`.
+- `crates/sbm_ffi/` - Flutter Rust Bridge bindings around `sbm_parser`; the app's native build hook builds it.
   The generated Dart side lives in `lib/src/rust/`.
 - `crates/sbm_native/` - Per-platform native sampling, used by the monitor only.
   It reads cpu/memory/swap/disk/network/uptime directly through syscalls or

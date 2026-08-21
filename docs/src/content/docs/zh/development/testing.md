@@ -111,9 +111,36 @@ test('serverStatusProvider 应当返回状态', () async {
 
 上文「需要显式开启的测试」里的 Rust 套件是例外。未设置对应环境变量时会跳过，所以默认的 `cargo test --workspace` 仍然什么都不需要。
 
+## 存储迁移
+
+存储迁移会在一次启动中遍历用户的真实记录，写入完成标记后不会再次读取旧数据。
+因此迁移错误通常是静默丢数据，而不是崩溃。每个迁移都必须保留永久回归测试，输入
+应来自被迁移版本实际写出的字节，而不是当前版本的 adapter 重新生成的数据。
+
+| 文件 | 作用 |
+|---|---|
+| `test/hive_release_migration_test.dart` | 读取每个 fixture，断言所有 store 完整导入 |
+| `test/fixtures/hive_v{1466,1480,1491}/` | 这些版本各自写出的 box，以及生成器和 README |
+| `test/hive_import_test.dart` | 验证导入本身的重试、幂等和按 box 进度 |
+| `test/m005_monitor_insecure_http_test.dart` | 验证 m005 增加明文 HTTP 选择且可重复执行 |
+
+当前 fixture 测试会依次覆盖 `HiveImport`、`KvToTablesMigration` 和
+`MonitorInsecureHttpMigration`。使用当前 adapter
+预先写入数据只能证明当前代码和自己一致，不能证明它仍能读取旧 release 的格式。
+fixture 一旦用于回归测试就不能为了让测试通过而重新生成。
+
+### 生成 release-authentic fixture
+
+1. `git worktree add /tmp/<tag> <tag>`，初始化该 release 的 `pubspec.yaml` 所需子模块，运行 `flutter pub get`。
+2. 将 `test/fixtures/hive_v1466/gen_fixture.dart.txt` 复制到临时测试中，按该 release 的模型、adapter 和依赖版本调整，并用旧 release 自己的代码写出 `.hive` bytes。数据应覆盖每一个可选字段、每一种枚举值和每一种存储类型，并包含非 ASCII 字符、引号和换行。
+3. 将结果复制到 `test/fixtures/hive_v<tag>/`，保留生成器说明和 README，然后删除 worktree。
+4. 用当前代码通过 public store API 编写读取测试，同时检查数据库编码没有残留旧 shape 的字段。
+
+生成器以 `.txt` 签入，因为它针对旧 release 的 API，在当前 tree 中无法通过 `flutter analyze`。
+
 ## 集成测试
 
-`integration_test/` 存放 `flutter test` 无法回答的问题。单元测试跑在 `flutter_tester` 下，它不加载任何 plugin，所以经 plugin 或 FFI 到达的代码在那里从未真正运行过。这些测试运行在真机上的真实 App 里：
+`integration_test/` 存放 `flutter test` 无法回答的问题。单元测试运行在 `flutter_tester` 下，不会加载任何 plugin，因此经 plugin 或 FFI 到达的代码不会在那里实际运行。这些测试运行在已连接的真实设备或模拟器上的 App 中，因此 plugin 和 FFI 代码会在真实的 App 环境中执行：
 
 | 文件 | 回答的问题 |
 |---|---|
@@ -131,24 +158,25 @@ test('serverStatusProvider 应当返回状态', () async {
 flutter test integration_test/local_shell_test.dart
 ```
 
-`make analyze` 也覆盖这个目录（`flutter analyze lib test integration_test`）。dart
-testWidgets('添加服务器流程', (tester) async {
-  await tester.pumpWidget(MyApp());
+`make analyze` 也会分析这个目录（`flutter analyze lib test integration_test`）。
 
-  // 点击添加按钮
-  await tester.tap(find.byIcon(Icons.add));
-  await tester.pumpAndSettle();
+### iOS 17+ 无线设备
 
-  // 填写表单
-  await tester.enterText(find.byKey(Key('name')), 'Test Server');
-  // ...
-});
+当 Xcode 通过网络连接 iOS 17+ 设备而不是使用数据线时，`flutter test` 会因关闭端口
+发布而无法启动 App。使用 integration-test driver 并发布端口：
+
+```bash
+flutter drive --publish-port \
+  --driver=integration_test/driver.dart \
+  --target=integration_test/ios_rootfs_test.dart
 ```
+
+首次运行时设备会请求本地网络权限，需要允许该权限。
 
 ## 最佳实践
 
 1. **Arrange-Act-Assert**：清晰地组织测试结构（准备-执行-断言）
 2. **描述性名称**：测试名称应描述其行为
-3. **每个测试仅一个断言**：保持测试的专注度
+3. **按行为使用足够的断言**：保持测试专注，同时完整验证该行为
 4. **Mock 外部依赖**：不要依赖真实服务器
 5. **测试边缘情况**：处理空列表、空值等
