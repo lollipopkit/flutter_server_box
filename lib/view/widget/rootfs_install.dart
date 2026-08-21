@@ -7,6 +7,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/android_rootfs.dart';
 import 'package:server_box/core/utils/ios_rootfs.dart';
 import 'package:server_box/core/utils/rootfs.dart';
+import 'package:server_box/data/model/app/linux_distro.dart';
 
 /// Puts a Linux userland on this device, asking first.
 ///
@@ -20,37 +21,37 @@ import 'package:server_box/core/utils/rootfs.dart';
 /// and `rootfsUpdateTip` name Alpine in all fifteen locales. Both are accurate
 /// while it is the only installable one, and both need a `{distro}` placeholder
 /// the moment that stops being true.
-Future<bool> installRootfs(BuildContext context) async {
+Future<bool> installRootfs(BuildContext context, {LinuxProfile? into}) async {
   // Both platforms fetch the same release of the same distribution; what
   // differs is what they do with it — Android unpacks a rootfs for proot, iOS a
   // tree for the engine — and neither difference reaches this dialog.
   final present = isIOS
       ? await IosRootfs.isInstalled
       : await AndroidRootfs.isInstalled;
-  // Asked once, on the way in, and answered either way: a rootfs that is
-  // merely old still works, so declining leaves it running rather than
-  // blocking the terminal that was actually being opened.
-  final replacing = present && !isIOS && AndroidRootfs.isOutdated;
-  if (present && !replacing) return true;
+  final selected = Rootfs.selected;
+  // Only when there is nothing at all. With systems installed, offering another
+  // is the settings page's job — here the point is that a terminal was opened
+  // and had nothing to open into.
+  //
+  // An outdated one is still one. Replacing it means downloading the release
+  // again and losing everything installed in the old tree, which is a decision
+  // and not something to raise in the way of opening a terminal.
+  if (present) return true;
   if (!context.mounted) return false;
 
+  final distro = into?.distro ?? Rootfs.nextDistro;
   final confirm = await context.showRoundDialog<bool>(
     // Capitalised: the shared string is a verb used mid-sentence elsewhere,
     // and a dialog title is not mid-sentence.
-    title: replacing ? libL10n.update : libL10n.install.capitalize,
+    title: into == null ? libL10n.install.capitalize : libL10n.update,
     child: Text(
-      replacing
-          ? context.l10n.rootfsUpdateTip(
-              AndroidRootfs.installedVersion ?? '',
-              AndroidRootfs.version,
-            )
-          : context.l10n.rootfsInstallTip(Rootfs.version),
+      into == null
+          ? context.l10n.rootfsInstallTip(distro.version)
+          : context.l10n.rootfsUpdateTip(into.version, distro.version),
     ),
     actions: Btnx.cancelOk,
   );
-  // An old rootfs is still a rootfs. Saying no here opens the one that is
-  // already there, which is what "not forced" has to mean.
-  if (confirm != true) return present;
+  if (confirm != true) return present || selected != null;
   if (!context.mounted) return false;
 
   final progress = ValueNotifier<double?>(null);
@@ -95,18 +96,12 @@ Future<bool> installRootfs(BuildContext context) async {
   );
 
   try {
-    if (isIOS) {
-      await IosRootfs.install(
-        onProgress: (value) => progress.value = value,
-        cancel: cancel,
-      );
-    } else {
-      await AndroidRootfs.install(
-        onProgress: (value) => progress.value = value,
-        cancel: cancel,
-        replace: replacing,
-      );
-    }
+    await Rootfs.install(
+      distro: distro,
+      into: into,
+      onProgress: (value) => progress.value = value,
+      cancel: cancel,
+    );
     if (context.mounted) context.popDialog();
     return true;
   } catch (e, s) {
@@ -121,20 +116,19 @@ Future<bool> installRootfs(BuildContext context) async {
   }
 }
 
-/// Removes the Linux userland, asking first.
+/// Removes one Linux system, asking first.
 ///
 /// Everything installed inside it goes too, which is why this asks in the same
-/// words as deleting anything else.
-Future<bool> removeRootfs(BuildContext context) async {
-  // Named for what is on disk, which after a switch that was declined is not
-  // what the settings say.
-  final label = (Rootfs.installed?.distro ?? Rootfs.selected).label;
+/// words as deleting anything else. The others are untouched.
+Future<bool> removeRootfs(BuildContext context, {LinuxProfile? profile}) async {
+  final target = profile ?? Rootfs.selected;
+  if (target == null) return false;
   final confirm = await context.showRoundDialog<bool>(
     title: libL10n.attention,
-    child: Text(libL10n.askContinue('${libL10n.delete} $label')),
+    child: Text(libL10n.askContinue('${libL10n.delete} ${target.label}')),
     actions: Btnx.cancelRedOk,
   );
   if (confirm != true) return false;
-  await Rootfs.remove();
+  await Rootfs.removeProfile(target.id);
   return true;
 }

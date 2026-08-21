@@ -16,8 +16,15 @@ import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/res/default.dart';
 import 'package:server_box/data/res/store.dart';
 
-/// Which system the app would install, which is not necessarily the one on
-/// disk — see `Rootfs.installedDistro` for that.
+/// Which profile the app opens a terminal in, by `LinuxProfile.id`.
+///
+/// A profile and not a distribution: two Alpines side by side are two profiles
+/// of one distribution, so the distribution cannot be what identifies either.
+/// Empty until something is chosen, which the platform layer reads as "the
+/// first one there is".
+String linuxProfileId() => Stores.setting.linuxProfile.fetch();
+
+/// Which distribution a *new* profile would be of.
 LinuxDistro linuxDistro() =>
     LinuxDistro.fromName(Stores.setting.linuxDistro.fetch());
 

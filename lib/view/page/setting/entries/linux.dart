@@ -1,16 +1,21 @@
 part of '../entry.dart';
 
-/// The Linux system on this device: which one, and where it gets its bytes.
+/// The Linux systems on this device: which ones there are, and where they get
+/// their bytes.
 ///
-/// Named for Linux and not for the distribution, because which one is installed
-/// is a thing that can change — and the row that changes it is the first one
-/// here.
+/// Named for Linux and not for a distribution, because more than one can be
+/// installed and they need not be of the same one. Two Alpines side by side are
+/// two profiles, which is why the directory under the container is a generated
+/// id and the distribution is a field of the marker inside it.
 ///
-/// Three settings and no more, because these are what a network or a preference
-/// can make wrong and nothing in the app can work around: the default mirror is
-/// not reachable everywhere, and neither are the public resolvers seeded into
-/// the guest — which an app cannot replace with the system's, since it can read
-/// those on neither platform.
+/// Selecting is not switching: nothing is deleted, and a session already
+/// running stays where it is. One kernel holds them all — which is also the
+/// limit of the isolation, since it means one PID space and one network.
+///
+/// The rest is what a network or a preference can make wrong and nothing in the
+/// app can work around: the default mirror is not reachable everywhere, and
+/// neither are the public resolvers seeded into the guest — which an app cannot
+/// replace with the system's, since it can read those on neither platform.
 ///
 /// The mirror and the resolver are seeded into the guest's files at install, so
 /// saving either rewrites them in the system already on disk. Otherwise the
@@ -18,14 +23,14 @@ part of '../entry.dart';
 /// deleting everything the package manager ever put there.
 extension _Linux on _AppSettingsPageState {
   Widget _buildLinux() {
-    // The distribution decides what the two rows below it are *about* — the
-    // mirror is per distribution and the header of each dialog names it — so
-    // all three redraw together when it changes.
+    // Which profile is selected decides what the rows below are *about* — the
+    // mirror is per distribution and each dialog's header names it — so they
+    // redraw together with the list.
     return ValBuilder(
-      listenable: _setting.linuxDistro.listenable(),
+      listenable: _setting.linuxProfile.listenable(),
       builder: (_) => Column(
         children: [
-          _buildLinuxDistro(),
+          _buildLinuxProfiles(),
           _buildLinuxShell(),
           _buildLinuxMirror(),
           _buildLinuxDns(),
@@ -34,24 +39,134 @@ extension _Linux on _AppSettingsPageState {
     );
   }
 
-  Widget _buildLinuxDistro() {
+  /// Every system installed, and a row to add another.
+  ///
+  /// The list is the container's own subdirectories — see `IosRootfs.scan` —
+  /// so a profile deleted from disk cannot linger here, and this cannot promise
+  /// a tree that is not there.
+  Widget _buildLinuxProfiles() {
+    final profiles = Rootfs.profiles;
     final selected = Rootfs.selected;
-    final installed = Rootfs.installed;
-    return ListTile(
-      leading: const Icon(Icons.layers_outlined, size: _kIconSize),
-      title: Text(l10n.distro),
-      // Only says anything while the two disagree, which is a state the user
-      // can reach by declining the download after picking: the setting moved
-      // and the tree did not. Saying so is what makes the next tap explicable.
-      subtitle: installed == null || installed.distro == selected
-          ? null
-          : Text(
-              '${installed.distro.label} → ${selected.label}',
+    return Column(
+      children: [
+        for (final profile in profiles)
+          ListTile(
+            leading: Icon(
+              profile.id == selected?.id
+                  ? Icons.radio_button_checked
+                  : Icons.radio_button_unchecked,
+              size: _kIconSize,
+            ),
+            title: Text(profile.label),
+            // What it is, under what it is called: the label is the user's and
+            // says nothing about which distribution or which release.
+            subtitle: Text(
+              '${profile.distro.label} ${profile.version}',
               style: UIs.textGrey,
             ),
-      trailing: Text(selected.label, style: UIs.text15),
-      onTap: _onTapLinuxDistro,
+            trailing: const Icon(Icons.more_vert),
+            onTap: () => _selectProfile(profile),
+            onLongPress: () => _profileMenu(profile),
+          ),
+        ListTile(
+          leading: const Icon(Icons.add, size: _kIconSize),
+          title: Text(libL10n.add),
+          subtitle: Text(Rootfs.nextDistro.label, style: UIs.textGrey),
+          trailing: const Icon(Icons.keyboard_arrow_right),
+          onTap: _addProfile,
+        ),
+      ],
     );
+  }
+
+  void _selectProfile(LinuxProfile profile) {
+    // Only which one a *new* terminal opens in. Sessions already running stay
+    // where they are — the machine holds them all at once.
+    _setting.linuxProfile.put(profile.id);
+    refresh();
+  }
+
+  Future<void> _profileMenu(LinuxProfile profile) async {
+    final action = await context.showRoundDialog<String>(
+      title: profile.label,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.edit_outlined),
+            title: Text(libL10n.rename),
+            onTap: () => context.popDialog('rename'),
+          ),
+          if (Rootfs.isOutdated(profile))
+            ListTile(
+              leading: const Icon(Icons.update),
+              title: Text(libL10n.update),
+              onTap: () => context.popDialog('update'),
+            ),
+          ListTile(
+            leading: const Icon(Icons.delete_outline),
+            title: Text(libL10n.delete),
+            onTap: () => context.popDialog('delete'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || action == null) return;
+    switch (action) {
+      case 'rename':
+        await _renameProfile(profile);
+      case 'update':
+        await installRootfs(context, into: profile);
+      case 'delete':
+        await removeRootfs(context, profile: profile);
+    }
+    refresh();
+  }
+
+  Future<void> _renameProfile(LinuxProfile profile) async {
+    await Future<void>.sync(
+      () => withTextFieldController((ctrl) async {
+        ctrl.text = profile.label;
+
+        Future<void> save() async {
+          final label = ctrl.text.trim();
+          context.popDialog();
+          if (label.isEmpty) return;
+          await Rootfs.rename(profile, label);
+          refresh();
+        }
+
+        await context.showRoundDialog(
+          title: libL10n.rename,
+          child: Input(
+            controller: ctrl,
+            autoFocus: true,
+            label: libL10n.name,
+            icon: Icons.label_outline,
+            suggestion: false,
+            onSubmitted: (_) => save(),
+          ),
+          actions: Btn.ok(onTap: save).toList,
+        );
+      }),
+    );
+  }
+
+  /// Adds another, of whichever distribution is picked.
+  ///
+  /// Nothing is replaced: this is what "two Alpines side by side" is, and why
+  /// the id under the container is generated rather than the distribution's.
+  Future<void> _addProfile() async {
+    final picked = await context.showPickSingleDialog(
+      title: l10n.distro,
+      items: LinuxDistro.values,
+      display: (e) => e.label,
+      initial: Rootfs.nextDistro,
+    );
+    if (picked == null || !mounted) return;
+    _setting.linuxDistro.put(picked.id);
+    await installRootfs(context);
+    refresh();
   }
 
   Widget _buildLinuxShell() {
@@ -112,40 +227,6 @@ extension _Linux on _AppSettingsPageState {
   /// one that was chosen — and so that declining the download leaves the
   /// choice made and the tree gone, which the row above says out loud rather
   /// than pretending nothing happened.
-  Future<void> _onTapLinuxDistro() async {
-    final picked = await context.showPickSingleDialog(
-      title: l10n.distro,
-      items: LinuxDistro.values,
-      display: (e) => e.label,
-      initial: Rootfs.selected,
-    );
-    if (picked == null || picked == Rootfs.selected) return;
-
-    final installed = Rootfs.installed;
-    // Nothing on disk: the setting is the whole change, and whenever a terminal
-    // next offers to install one it reads this.
-    if (installed == null) {
-      _setting.linuxDistro.put(picked.id);
-      return;
-    }
-
-    if (!mounted) return;
-    final confirmed = await context.showRoundDialog<bool>(
-      title: libL10n.attention,
-      child: Text(
-        l10n.distroSwitchTip(installed.distro.label, picked.label),
-      ),
-      actions: Btnx.cancelRedOk,
-    );
-    if (confirmed != true || !mounted) return;
-
-    await Rootfs.remove();
-    _setting.linuxDistro.put(picked.id);
-    if (!mounted) return;
-    await installRootfs(context);
-    refresh();
-  }
-
   /// Picking a shell, checked against the system that is actually installed.
   ///
   /// Shape and then existence, because neither failure is visible later: the
@@ -200,7 +281,7 @@ extension _Linux on _AppSettingsPageState {
   }
 
   void _onTapLinuxMirror() {
-    final distro = Rootfs.selected;
+    final distro = Rootfs.selected?.distro ?? Rootfs.nextDistro;
     _showLinuxNetDialog(
       // Which distribution's mirror, since it is only that one's.
       title: '${distro.label} ${l10n.mirror.toLowerCase()}',

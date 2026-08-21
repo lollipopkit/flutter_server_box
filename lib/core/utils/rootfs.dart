@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/utils/android_rootfs.dart';
 import 'package:server_box/core/utils/ios_rootfs.dart';
@@ -24,32 +27,33 @@ abstract final class Rootfs {
   static bool get isReady =>
       isAndroid ? AndroidRootfs.isReady : IosRootfs.isReadySync;
 
-  /// Where the tree is on the host, or null before [prepare].
+  /// Where the selected profile's tree is, or null before [prepare].
   static String? get root => isAndroid ? AndroidRootfs.root : IosRootfs.root;
 
-  /// Which distribution the settings name — what [installed] would become.
-  static LinuxDistro get selected => linuxDistro();
+  /// Where one profile's tree is.
+  static String? rootOf(String? id) =>
+      isAndroid ? AndroidRootfs.rootOf(id) : IosRootfs.rootOf(id);
 
-  /// What is on disk, or null with nothing installed.
-  ///
-  /// Distinct from [selected] on purpose: the two differ exactly while a switch
-  /// is pending, and that gap is what the settings page acts on.
-  static InstalledGuest? get installed =>
-      isAndroid ? AndroidRootfs.installed : IosRootfs.installed;
+  /// Every system installed on this device, in one list whichever platform it
+  /// is.
+  static List<LinuxProfile> get profiles =>
+      isAndroid ? AndroidRootfs.profiles : IosRootfs.profiles;
 
-  /// Whether a switch is pending: something is installed, and it is not what
-  /// the settings ask for.
-  static bool get isDistroMismatched {
-    final guest = installed;
-    return guest != null && guest.distro != selected;
-  }
+  /// The one a terminal opens in: what the settings point at, or the first
+  /// there is. Null when nothing is installed.
+  static LinuxProfile? get selected =>
+      isAndroid ? AndroidRootfs.selected : IosRootfs.selected;
 
-  /// What is installed, or what would be.
-  static String get version => installed?.version ?? selected.version;
+  /// Which distribution a *new* profile would be of.
+  static LinuxDistro get nextDistro => linuxDistro();
 
-  /// Whether a newer release of the installed distribution is pinned than the
-  /// one on disk. A *different* distribution is not this — see [isDistroMismatched].
-  static bool get isOutdated => isAndroid && AndroidRootfs.isOutdated;
+  /// What the selected profile is a release of, or what a new one would be.
+  static String get version => selected?.version ?? nextDistro.version;
+
+  /// Whether [profile] is older than what this build would install. Per
+  /// profile, since they are of different distributions and different ages.
+  static bool isOutdated(LinuxProfile profile) =>
+      isAndroid && AndroidRootfs.isProfileOutdated(profile);
 
   /// Locates both, so a caller does not have to ask which platform it is on.
   static Future<void> prepare() async {
@@ -66,15 +70,56 @@ abstract final class Rootfs {
     await IosRootfs.applyNetSettings();
   }
 
-  /// Deletes what is installed, and everything in it.
+  /// Renames one system, which changes its label and not its directory.
   ///
-  /// The caller asks first. This is what switching distributions goes through,
-  /// and what it costs.
-  static Future<void> remove() async {
+  /// The id is a path and stays put: renaming a directory out from under a
+  /// running session would be the one thing a label change must not do.
+  static Future<void> rename(LinuxProfile profile, String label) async {
+    final root = rootOf(profile.id);
+    if (root == null) return;
+    await File(
+      root.joinPath(LinuxProfile.marker),
+    ).writeAsString(profile.copyWith(label: label).encode());
     if (isAndroid) {
-      await AndroidRootfs.remove();
+      await AndroidRootfs.scan();
     } else {
-      await IosRootfs.remove();
+      await IosRootfs.scan();
     }
+  }
+
+  /// Deletes one system and everything in it. The others stay.
+  ///
+  /// The caller asks first.
+  static Future<void> removeProfile(String id) async {
+    if (isAndroid) {
+      await AndroidRootfs.removeProfile(id);
+    } else {
+      await IosRootfs.removeProfile(id);
+    }
+  }
+
+  /// Downloads and unpacks a new system of [distro], beside whatever is there.
+  static Future<LinuxProfile> install({
+    required LinuxDistro distro,
+    LinuxProfile? into,
+    String? label,
+    void Function(double? progress)? onProgress,
+    CancelToken? cancel,
+  }) {
+    return isAndroid
+        ? AndroidRootfs.install(
+            distro: distro,
+            into: into,
+            label: label,
+            onProgress: onProgress,
+            cancel: cancel,
+          )
+        : IosRootfs.install(
+            distro: distro,
+            into: into,
+            label: label,
+            onProgress: onProgress,
+            cancel: cancel,
+          );
   }
 }

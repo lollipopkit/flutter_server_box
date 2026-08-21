@@ -88,10 +88,13 @@ class _AddPageState extends ConsumerState<_AddPage> {
             // What is installed, not what this build would install. They differ
             // exactly when there is an update to offer, and naming the one that
             // is not there yet would be a lie on the way to a true statement.
-            title: 'Alpine ${Rootfs.version}',
-            subtitle: Rootfs.isOutdated
-                ? '${libL10n.update}: ${AndroidRootfs.version}'
-                : l10n.rootfsSubtitle,
+            title: Rootfs.selected?.label ?? Rootfs.nextDistro.label,
+            subtitle: switch (Rootfs.selected) {
+              final it? when Rootfs.isOutdated(it) =>
+                '${libL10n.update}: ${it.distro.version}',
+              final it? => '${it.distro.label} ${it.version}',
+              null => l10n.rootfsSubtitle,
+            },
             onTap: widget.onRootfs,
             onLongPress: widget.onRemoveRootfs,
           ),

@@ -84,17 +84,46 @@ void main() {
 
   group('the marker', () {
     test('round-trips what was installed', () {
-      const guest = InstalledGuest(LinuxDistro.alpine, '3.22.5');
-      final read = InstalledGuest.decode(guest.encode());
+      const profile = LinuxProfile(
+        id: 'alpine-2',
+        distro: LinuxDistro.alpine,
+        version: '3.22.5',
+        label: 'Build box',
+      );
+      final read = LinuxProfile.decode(profile.id, profile.encode());
+
+      expect(read.id, 'alpine-2');
+      expect(read.distro, LinuxDistro.alpine);
+      expect(read.version, '3.22.5');
+      expect(read.label, 'Build box');
+    });
+
+    test('takes the id from the directory, never from the file', () {
+      // The directory *is* the id: two profiles of one distribution differ by
+      // nothing else, so a marker that carried one could disagree with where it
+      // sits.
+      final read = LinuxProfile.decode('alpine-3', 'alpine\n3.22.5\nx\n');
+
+      expect(read.id, 'alpine-3');
+    });
+
+    test('falls back to the distribution name for a label', () {
+      final read = LinuxProfile.decode('alpine', 'alpine\n3.22.5\n');
+
+      expect(read.label, 'Alpine');
+    });
+
+    test('reads a two-line marker, which is what the last build wrote', () {
+      final read = LinuxProfile.decode('alpine', 'alpine\n3.22.5\n');
 
       expect(read.distro, LinuxDistro.alpine);
       expect(read.version, '3.22.5');
     });
 
     test('reads a bare version as Alpine, which is what wrote it', () {
-      // Every release before this one wrote the version alone, and Alpine was
-      // the only thing installable.
-      final read = InstalledGuest.decode('3.22.5\n');
+      // An earlier release wrote the version alone, and Alpine was the only
+      // thing installable.
+      final read = LinuxProfile.decode('alpine', '3.22.5\n');
 
       expect(read.distro, LinuxDistro.alpine);
       expect(read.version, '3.22.5');
@@ -102,19 +131,42 @@ void main() {
 
     test('reads an empty marker as Alpine of no version', () {
       // Older still: the marker was written empty, and its presence alone said
-      // "installed". Android turns the empty version into `0` so that it reads
-      // as outdated, which is what it is.
-      final read = InstalledGuest.decode('');
+      // "installed".
+      final read = LinuxProfile.decode('alpine', '');
 
       expect(read.distro, LinuxDistro.alpine);
       expect(read.version, isEmpty);
     });
 
     test('survives trailing whitespace either side of the newline', () {
-      final read = InstalledGuest.decode('  alpine \n 3.22.5  \n\n');
+      final read = LinuxProfile.decode('alpine', '  alpine \n 3.22.5  \n\n');
 
       expect(read.distro, LinuxDistro.alpine);
       expect(read.version, '3.22.5');
+    });
+  });
+
+  group('a new profile id', () {
+    test('is the distribution name when nothing has taken it', () {
+      expect(LinuxProfile.nextId(LinuxDistro.alpine, const []), 'alpine');
+    });
+
+    test('counts up, so a second of the same distribution fits beside', () {
+      // The whole point of the id being generated: two Alpines are two
+      // profiles, and keying the directory by distribution made that
+      // impossible.
+      expect(LinuxProfile.nextId(LinuxDistro.alpine, ['alpine']), 'alpine-2');
+      expect(
+        LinuxProfile.nextId(LinuxDistro.alpine, ['alpine', 'alpine-2']),
+        'alpine-3',
+      );
+    });
+
+    test('skips a gap rather than reusing it', () {
+      expect(
+        LinuxProfile.nextId(LinuxDistro.alpine, ['alpine', 'alpine-3']),
+        'alpine-2',
+      );
     });
   });
 }

@@ -44,45 +44,54 @@ abstract final class AndroidRootfs {
   /// package over the network and is what would notice this changing.
   static String get version => linuxDistro().version;
 
-  /// Written once the extraction finished. Its presence is the whole record:
-  /// a half-unpacked rootfs must not look installed, and re-downloading a
-  /// working one wastes the user's data. It holds what was unpacked, which is
-  /// what [installed] reads.
-  static const _marker = '.installed';
-
-  static String? _root;
-  static String? _proot;
-  static String? _loader;
-
-  /// Where the rootfs lives, or null before [prepare].
+  /// The directory the rootfs trees live in, one subdirectory each.
   ///
   /// Internal storage. `Paths.doc` is external on Android and mounted
   /// `noexec`, so a rootfs there could never run even under proot.
-  static String? get root => _root;
+  static String? _container;
+  static String? _proot;
+  static String? _loader;
+
+  /// Where the selected rootfs lives, or null before [prepare].
+  static String? get root => rootOf(selected?.id);
+
+  /// Where one profile's tree is.
+  static String? rootOf(String? id) =>
+      id == null ? null : _container?.joinPath(id);
 
   /// Whether this build carries proot at all.
   static bool get isAvailable => _proot != null && _loader != null;
 
-  /// Whether a rootfs is unpacked and ready to enter, and what it is.
+  /// Whether there is anything to enter at all.
   static Future<bool> get isInstalled async {
-    final root = _root;
-    if (root == null) return false;
-    final marker = File(root.joinPath(_marker));
-    if (!await marker.exists()) {
-      _guest = null;
-      return _installed = false;
+    await scan();
+    return _profiles.isNotEmpty;
+  }
+
+  /// Reads the container: one profile per subdirectory that holds a rootfs.
+  ///
+  /// The directory listing is the list, for the reason iOS's is — a profile
+  /// deleted from disk cannot linger in it.
+  static Future<void> scan() async {
+    final container = _container;
+    _profiles.clear();
+    if (container == null) return;
+    final dir = Directory(container);
+    if (!await dir.exists()) return;
+    final entries = await dir.list(followLinks: false).toList();
+    entries.sort((a, b) => a.path.compareTo(b.path));
+    for (final entry in entries) {
+      if (entry is! Directory) continue;
+      final id = entry.path.split(Platform.pathSeparator).last;
+      if (id.startsWith('.')) continue;
+      final marker = File(entry.path.joinPath(LinuxProfile.marker));
+      // The marker rather than [looksUnpacked]: here it is written last and its
+      // presence is what says the extraction finished.
+      if (!await marker.exists()) continue;
+      _profiles.add(
+        LinuxProfile.decode(id, await marker.readAsString()),
+      );
     }
-    // Empty for a rootfs unpacked before the marker carried a version, which
-    // [InstalledGuest.decode] reads as Alpine of no version — "some older one",
-    // which is exactly what it is. The `isEmpty ? '0'` below is what makes that
-    // read as outdated.
-    // TODO(migration residue; remove once no install predates the versioned
-    // marker).
-    final guest = InstalledGuest.decode(await marker.readAsString());
-    _guest = guest.version.isEmpty
-        ? InstalledGuest(guest.distro, '0')
-        : guest;
-    return _installed = true;
   }
 
   /// The last answer [isInstalled] gave, without asking the filesystem again.
@@ -92,43 +101,33 @@ abstract final class AndroidRootfs {
   /// do — are on paths that cannot await one, and a file check per prompt would
   /// be answering the same question a hundred times. Kept true by the two
   /// things that change it, [install] and [remove].
-  static bool get isReady => isAvailable && _installed;
-  static bool _installed = false;
+  static bool get isReady => isAvailable && _profiles.isNotEmpty;
 
-  /// What is unpacked on disk, or null when there is nothing installed.
-  ///
-  /// Read at [prepare] and kept by [install] and [remove], for the same reason
-  /// [isReady] is synchronous: what asks is a widget being built.
-  ///
-  /// Not the same question as `linuxDistro()`, which is what the *setting*
-  /// says: switching writes the setting first and this answers for the tree
-  /// that is still on disk.
-  static InstalledGuest? get installed => _installed ? _guest : null;
-  static InstalledGuest? _guest;
+  /// Every rootfs unpacked in the container.
+  static List<LinuxProfile> get profiles => List.unmodifiable(_profiles);
+  static final _profiles = <LinuxProfile>[];
 
-  /// The version on disk, or null when there is nothing installed.
-  static String? get installedVersion => installed?.version;
-
-  /// Whether what is installed is an older release of the *same* distribution.
-  ///
-  /// A different distribution is not an update — it is a switch, and one that
-  /// throws away everything installed in the old tree. That is offered from the
-  /// settings page and asked for in those words, so it is deliberately not
-  /// folded in here.
-  ///
-  /// Not acted on by itself either. Reinstalling means downloading the rootfs
-  /// again and losing everything `apk add` put in the old one, which is the
-  /// user's call — so this only decides whether to offer.
-  static bool get isOutdated {
-    final guest = installed;
-    if (guest == null) return false;
-    return guest.distro == linuxDistro() && guest.version != version;
+  /// The one the settings point at, or the first there is.
+  static LinuxProfile? get selected {
+    if (_profiles.isEmpty) return null;
+    final id = linuxProfileId();
+    return _profiles.firstWhereOrNull((e) => e.id == id) ?? _profiles.first;
   }
+
+  /// Whether [profile] is an older release than this build would install.
+  ///
+  /// Per profile, because they are of different distributions and of different
+  /// ages. Not acted on by itself: replacing one means downloading it again and
+  /// losing everything `apk add` put in the old tree, which is the user's call.
+  ///
+  /// A version of `0` is what a marker written before versions reads as.
+  static bool isProfileOutdated(LinuxProfile profile) =>
+      profile.version != profile.distro.version;
 
   /// Locates proot and the rootfs. Call once, before anything asks.
   static Future<void> prepare() async {
     if (!isAndroid) return;
-    _root = (await getApplicationSupportDirectory()).path.joinPath('alpine');
+    _container = (await getApplicationSupportDirectory()).path.joinPath('linux');
 
     final libDir = await MethodChans.nativeLibDir();
     if (libDir == null) return;
@@ -140,7 +139,7 @@ abstract final class AndroidRootfs {
       _proot = proot;
       _loader = loader;
     }
-    await isInstalled;
+    await scan();
   }
 
   /// Downloads and unpacks the rootfs.
@@ -148,19 +147,22 @@ abstract final class AndroidRootfs {
   /// [onProgress] is fed a fraction, or null while the size is unknown.
   /// [replace] unpacks over whatever is there, for the version pin having
   /// moved. Everything installed into the old one goes with it.
-  static Future<void> install({
+  static Future<LinuxProfile> install({
+    required LinuxDistro distro,
+    LinuxProfile? into,
+    String? label,
     void Function(double? progress)? onProgress,
     CancelToken? cancel,
-    bool replace = false,
   }) async {
-    final root = _root;
-    if (root == null) throw StateError('AndroidRootfs.prepare was not called');
-    if (!replace && await isInstalled) return;
+    final container = _container;
+    if (container == null) {
+      throw StateError('AndroidRootfs.prepare was not called');
+    }
+    await scan();
 
-    // Read once, so that a setting changed mid-download cannot have the digest
-    // checked against one distribution and the repositories written for
-    // another.
-    final distro = linuxDistro();
+    final id =
+        into?.id ?? LinuxProfile.nextId(distro, _profiles.map((e) => e.id));
+    final root = container.joinPath(id);
     final mirror = linuxMirror(distro);
 
     final dir = Directory(root);
@@ -204,10 +206,15 @@ abstract final class AndroidRootfs {
 
       await seedResolvConf(root, nameservers: linuxNameservers());
       await seedRepositories(root, distro: distro, mirror: mirror);
-      final guest = InstalledGuest(distro, distro.version);
-      await File(root.joinPath(_marker)).writeAsString(guest.encode());
-      _installed = true;
-      _guest = guest;
+      final profile = LinuxProfile(
+        id: id,
+        distro: distro,
+        version: distro.version,
+        label: label ?? into?.label ?? distro.label,
+      );
+      await File(root.joinPath(LinuxProfile.marker)).writeAsString(profile.encode());
+      await scan();
+      return profile;
     } catch (_) {
       // Nothing half-installed is left to be mistaken for a working one.
       if (await dir.exists()) await dir.delete(recursive: true);
@@ -229,25 +236,29 @@ abstract final class AndroidRootfs {
   /// with a switch pending, the repositories file apt or apk is about to read
   /// still belongs to the tree that is there.
   static Future<void> applyNetSettings() async {
-    final root = _root;
-    if (root == null || !await isInstalled) return;
-    final distro = _guest?.distro ?? linuxDistro();
-    await seedResolvConf(
-      root,
-      nameservers: linuxNameservers(),
-      overwrite: true,
-    );
-    await seedRepositories(root, distro: distro, mirror: linuxMirror(distro));
+    for (final profile in _profiles) {
+      final root = rootOf(profile.id);
+      if (root == null) continue;
+      await seedResolvConf(
+        root,
+        nameservers: linuxNameservers(),
+        overwrite: true,
+      );
+      await seedRepositories(
+        root,
+        distro: profile.distro,
+        mirror: linuxMirror(profile.distro),
+      );
+    }
   }
 
-  /// Removes the rootfs and everything in it.
-  static Future<void> remove() async {
-    _installed = false;
-    _guest = null;
-    final root = _root;
+  /// Removes one rootfs and everything in it. The others stay.
+  static Future<void> removeProfile(String id) async {
+    final root = rootOf(id);
     if (root == null) return;
     final dir = Directory(root);
     if (await dir.exists()) await dir.delete(recursive: true);
+    await scan();
   }
 
   /// The command that enters the rootfs, or null when it cannot be entered.
@@ -255,8 +266,9 @@ abstract final class AndroidRootfs {
   /// [command] is what to run inside; null opens a shell.
   static ({String executable, List<String> arguments})? enter({
     String? command,
+    String? profileId,
   }) {
-    final root = _root;
+    final root = rootOf(profileId ?? selected?.id);
     final proot = _proot;
     if (root == null || proot == null || !isAvailable) return null;
     return (
@@ -300,7 +312,7 @@ abstract final class AndroidRootfs {
   /// See [resolveWithinRoot], which iOS's guest shares: what has to be refused
   /// is the same on both, and only the root differs.
   static Future<String?> hostPathOf(String guest, {bool forWrite = false}) {
-    final root = _root;
+    final root = AndroidRootfs.root;
     if (root == null) return Future.value();
     return resolveWithinRoot(root, guest, forWrite: forWrite);
   }
@@ -316,7 +328,7 @@ abstract final class AndroidRootfs {
     'LANG': 'C.UTF-8',
     // Where proot puts what it has to unpack. Left to itself it uses a temp
     // directory that may not exist inside an app's world.
-    'PROOT_TMP_DIR': ?_root,
+    'PROOT_TMP_DIR': ?_container,
     // The loader has to be named. Left alone proot extracts the copy bundled
     // in its own binary into a temp file — which lands in the app's directory,
     // cannot be executed, and proot falls back to the `execve` it exists to

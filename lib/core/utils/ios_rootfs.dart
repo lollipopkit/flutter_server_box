@@ -28,28 +28,40 @@ import 'package:server_box/data/model/app/linux_distro.dart';
 /// build without it is one edit away, should App Store review object — and
 /// [isAvailable] is how everything else asks, exactly as on Android.
 abstract final class IosRootfs {
-  /// The same release the Android rootfs uses, so both platforms answer with
-  /// the same system — and on both it is an ordinary unpacked tree, since
-  /// `realfs` mounts one directly.
-  static String get version => linuxDistro().version;
-
-  /// What is unpacked here, or null with nothing installed.
+  /// Every system unpacked in the container, in the order their directories
+  /// come back.
   ///
-  /// Not the same question as `linuxDistro()`, which is what the *setting*
-  /// says: switching writes the setting first and this answers for the tree
-  /// that is still on disk.
-  static InstalledGuest? get installed => _installed ? _guest : null;
-  static InstalledGuest? _guest;
+  /// Kept rather than re-scanned, and synchronous, because what asks is a
+  /// widget being built. Refreshed by [scan], [install] and [removeProfile].
+  static List<LinuxProfile> get profiles => List.unmodifiable(_profiles);
+  static final _profiles = <LinuxProfile>[];
 
-  /// The marker [install] writes, holding what it unpacked.
+  /// The one the settings point at, or the first there is.
   ///
-  /// Hidden, so that it is not a file in the guest's `/` that a shell shows.
-  static const _marker = '.installed';
+  /// Falls back rather than answering null for a stored id whose directory has
+  /// since gone: something installed is a better answer than nothing.
+  static LinuxProfile? get selected {
+    if (_profiles.isEmpty) return null;
+    final id = linuxProfileId();
+    return _profiles.firstWhereOrNull((e) => e.id == id) ?? _profiles.first;
+  }
 
-  static String? _root;
+  static LinuxProfile? byId(String id) =>
+      _profiles.firstWhereOrNull((e) => e.id == id);
 
-  /// Where the filesystem lives, or null before [prepare].
-  static String? get root => _root;
+  /// The directory the systems live in, one subdirectory each, or null before
+  /// [prepare]. Nothing runs at this level — see `sbm_ish_boot`.
+  static String? _container;
+
+  /// Where the selected system's tree is, or null before [prepare].
+  ///
+  /// Computed rather than kept: which one is selected is a setting, and it
+  /// changes while the app runs.
+  static String? get root => rootOf(selected?.id);
+
+  /// Where one profile's tree is, or null before [prepare] or without an id.
+  static String? rootOf(String? id) =>
+      id == null ? null : _container?.joinPath(id);
 
   /// Whether this build carries the engine.
   ///
@@ -80,54 +92,73 @@ abstract final class IosRootfs {
   ///
   /// Synchronous for the same reason Android's is: what asks is a widget being
   /// built, and a file check per frame answers one question a hundred times.
-  static bool get isReadySync => isAvailable && _installed;
-  static bool _installed = false;
+  static bool get isReadySync => isAvailable && _profiles.isNotEmpty;
 
-  /// Whether a filesystem is unpacked and ready to boot, and what it is.
+  /// Whether there is anything to enter at all.
   static Future<bool> get isInstalled async {
-    final root = _root;
-    if (root == null) return false;
-    // An ordinary tree, mounted by `realfs`. What makes it a system rather than
-    // a directory is that a shell is in it, so that is what [looksUnpacked]
-    // asks — there is no manifest to check because there is nothing but files.
-    if (!await looksUnpacked(root)) {
-      _guest = null;
-      return _installed = false;
+    await scan();
+    return _profiles.isNotEmpty;
+  }
+
+  /// Reads the container: one profile per subdirectory that holds a system.
+  ///
+  /// The directory listing is the list. A subdirectory that does not look
+  /// unpacked is skipped rather than repaired — half of an install is not a
+  /// profile, and `install` deletes what it could not finish.
+  static Future<void> scan() async {
+    final container = _container;
+    _profiles.clear();
+    if (container == null) return;
+    final dir = Directory(container);
+    if (!await dir.exists()) return;
+    final entries = await dir.list(followLinks: false).toList();
+    entries.sort((a, b) => a.path.compareTo(b.path));
+    for (final entry in entries) {
+      if (entry is! Directory) continue;
+      final id = entry.path.split(Platform.pathSeparator).last;
+      if (id.startsWith('.')) continue;
+      if (!await looksUnpacked(entry.path)) continue;
+      final marker = File(entry.path.joinPath(LinuxProfile.marker));
+      _profiles.add(
+        LinuxProfile.decode(
+          id,
+          await marker.exists() ? await marker.readAsString() : '',
+        ),
+      );
     }
-    final marker = File(root.joinPath(_marker));
-    // TODO(migration residue; remove once no install predates the marker): a
-    // tree unpacked by a release that wrote none reads as Alpine, which is what
-    // it is — nothing else was installable then.
-    _guest = await marker.exists()
-        ? InstalledGuest.decode(await marker.readAsString())
-        : const InstalledGuest(LinuxDistro.alpine, '');
-    return _installed = true;
   }
 
 
-  /// Downloads and unpacks the system the settings name.
+  /// Downloads and unpacks a system of [distro] as a profile of its own.
+  ///
+  /// Returns what it installed. Every other profile is left alone — this is how
+  /// a second Alpine comes to sit beside the first, and why nothing here asks
+  /// whether something is already installed.
+  ///
+  /// [into] reinstalls in place, keeping the id and the label: that is what
+  /// replacing an outdated one means. Without it a new id is generated.
   ///
   /// Unpacked in Dart, because iOS will not start a process — no `tar`, and
   /// that refusal is the reason this platform has an interpreter at all. What
   /// `realfs` needs is only a directory tree, which is why this is possible;
   /// under `fakefs` it would have meant carrying a metadata database and the
   /// tool that writes one.
-  ///
-  /// [replace] unpacks over whatever is there, which is what switching
-  /// distributions is: everything the old one had installed goes with it.
-  static Future<void> install({
+  static Future<LinuxProfile> install({
+    required LinuxDistro distro,
+    LinuxProfile? into,
+    String? label,
     void Function(double? progress)? onProgress,
     CancelToken? cancel,
-    bool replace = false,
   }) async {
-    final root = _root;
-    if (root == null) throw StateError('IosRootfs.prepare was not called');
-    if (!replace && await isInstalled) return;
+    final container = _container;
+    if (container == null) throw StateError('IosRootfs.prepare was not called');
+    await scan();
 
+    final id = into?.id ?? LinuxProfile.nextId(distro, _profiles.map((e) => e.id));
+    final root = container.joinPath(id);
     // Read once, so that a setting changed mid-download cannot have the digest
     // checked against one distribution and the repositories written for
     // another.
-    final distro = linuxDistro();
     final mirror = linuxMirror(distro);
 
     final dir = Directory(root);
@@ -165,15 +196,19 @@ abstract final class IosRootfs {
       await seedRepositories(root, distro: distro, mirror: mirror);
       // Last, for the reason Android's marker is last: it is the record that
       // this finished, so anything that threw above must not leave one.
-      final guest = InstalledGuest(distro, distro.version);
-      await File(root.joinPath(_marker)).writeAsString(guest.encode());
-      _guest = guest;
-      _installed = true;
+      final profile = LinuxProfile(
+        id: id,
+        distro: distro,
+        version: distro.version,
+        label: label ?? into?.label ?? distro.label,
+      );
+      await File(root.joinPath(LinuxProfile.marker)).writeAsString(profile.encode());
+      await scan();
+      return profile;
     } catch (_) {
       // Nothing half-installed is left to be mistaken for a working one.
       if (await dir.exists()) await dir.delete(recursive: true);
-      _guest = null;
-      _installed = false;
+      await scan();
       rethrow;
     } finally {
       final leftover = File(archivePath);
@@ -191,26 +226,33 @@ abstract final class IosRootfs {
   /// Written for the distribution *on disk*, not the one the setting names:
   /// with a switch pending, the repositories file apt or apk is about to read
   /// still belongs to the tree that is there.
+  /// Every profile, not only the selected one: the resolvers are the device's
+  /// network and apply to all of them, and a mirror belongs to a distribution
+  /// so each profile of it wants the new one too.
   static Future<void> applyNetSettings() async {
-    final root = _root;
-    if (root == null || !await isInstalled) return;
-    final distro = _guest?.distro ?? linuxDistro();
-    await seedResolvConf(
-      root,
-      nameservers: linuxNameservers(),
-      overwrite: true,
-    );
-    await seedRepositories(root, distro: distro, mirror: linuxMirror(distro));
+    for (final profile in _profiles) {
+      final root = rootOf(profile.id);
+      if (root == null) continue;
+      await seedResolvConf(
+        root,
+        nameservers: linuxNameservers(),
+        overwrite: true,
+      );
+      await seedRepositories(
+        root,
+        distro: profile.distro,
+        mirror: linuxMirror(profile.distro),
+      );
+    }
   }
 
-  /// Removes the system and everything in it.
-  static Future<void> remove() async {
-    _installed = false;
-    _guest = null;
-    final root = _root;
+  /// Removes one system and everything in it. The others stay.
+  static Future<void> removeProfile(String id) async {
+    final root = rootOf(id);
     if (root == null) return;
     final dir = Directory(root);
     if (await dir.exists()) await dir.delete(recursive: true);
+    await scan();
   }
 
   static Future<void> _extract(
@@ -287,7 +329,7 @@ abstract final class IosRootfs {
   /// really is `<root>/etc` on the host. See [resolveWithinRoot] for what has
   /// to be refused — which is the same on both.
   static Future<String?> hostPathOf(String guest, {bool forWrite = false}) {
-    final root = _root;
+    final root = IosRootfs.root;
     if (root == null) return Future.value();
     return resolveWithinRoot(root, guest, forWrite: forWrite);
   }
@@ -300,14 +342,16 @@ abstract final class IosRootfs {
   /// there for nothing.
   static Future<void> prepare() async {
     if (!Platform.isIOS) return;
-    final root = _root =
-        (await getApplicationSupportDirectory()).path.joinPath('alpine');
-    if (!await isInstalled) return;
-    // A system unpacked before [install] seeded a resolver has none, and
-    // nothing else would ever give it one: [install] returns early for a tree
-    // that is already there, so every existing install would have stayed
-    // without DNS. Writes only when the file is absent.
-    await seedResolvConf(root, nameservers: linuxNameservers());
+    _container = (await getApplicationSupportDirectory()).path.joinPath('linux');
+    await scan();
+    for (final profile in _profiles) {
+      final root = rootOf(profile.id);
+      if (root == null) continue;
+      // A system unpacked before [install] seeded a resolver has none, and
+      // nothing else would ever give it one. Writes only when absent, so a
+      // guest pointed at its owner's own resolver keeps it.
+      await seedResolvConf(root, nameservers: linuxNameservers());
+    }
   }
 
   /// What [boot] answers when the machine is already up — `-EEXIST`.
@@ -323,13 +367,30 @@ abstract final class IosRootfs {
   /// One machine per app process, because the engine keeps its kernel state in
   /// globals — but a machine runs as many processes as it is asked to, which
   /// is what [open] is for.
-  static int boot() {
+  static int boot({String? profileId}) {
     final boot = _boot;
-    final root = _root;
-    if (boot == null || root == null) return -1;
-    final pointer = root.toNativeUtf8();
+    final container = _container;
+    final id = profileId ?? selected?.id;
+    if (boot == null || container == null || id == null) return -1;
+    final pointer = container.toNativeUtf8();
+    final profile = id.toNativeUtf8();
     try {
-      return boot(pointer.cast());
+      return boot(pointer.cast(), profile.cast());
+    } finally {
+      malloc.free(pointer);
+      malloc.free(profile);
+    }
+  }
+
+  /// Mounts a system's filesystems, so a session can be opened in it.
+  ///
+  /// [open] does this itself; this exists for attaching one ahead of time.
+  static int attach(String profileId) {
+    final attach = _attach;
+    if (attach == null) return -1;
+    final pointer = profileId.toNativeUtf8();
+    try {
+      return attach(pointer.cast());
     } finally {
       malloc.free(pointer);
     }
@@ -347,16 +408,26 @@ abstract final class IosRootfs {
   static int open({
     String? command,
     String shell = '',
+    String? profileId,
     int columns = 80,
     int rows = 25,
   }) {
     final open = _open;
-    if (open == null) return -1;
+    final id = profileId ?? selected?.id;
+    if (open == null || id == null) return -1;
+    final profile = id.toNativeUtf8();
     final shellPointer = shell.toNativeUtf8();
     final pointer = (command ?? '').toNativeUtf8();
     try {
-      return open(shellPointer.cast(), pointer.cast(), columns, rows);
+      return open(
+        profile.cast(),
+        shellPointer.cast(),
+        pointer.cast(),
+        columns,
+        rows,
+      );
     } finally {
+      malloc.free(profile);
       malloc.free(shellPointer);
       malloc.free(pointer);
     }
@@ -471,11 +542,15 @@ abstract final class IosRootfs {
   );
   static final _boot = _look(
     'sbm_ish_boot',
-    (p) => p.lookupFunction<Int Function(Pointer<Char>), int Function(Pointer<Char>)>('sbm_ish_boot'),
+    (p) => p.lookupFunction<Int Function(Pointer<Char>, Pointer<Char>), int Function(Pointer<Char>, Pointer<Char>)>('sbm_ish_boot'),
+  );
+  static final _attach = _look(
+    'sbm_ish_attach',
+    (p) => p.lookupFunction<Int Function(Pointer<Char>), int Function(Pointer<Char>)>('sbm_ish_attach'),
   );
   static final _open = _look(
     'sbm_ish_open',
-    (p) => p.lookupFunction<Int Function(Pointer<Char>, Pointer<Char>, Int, Int), int Function(Pointer<Char>, Pointer<Char>, int, int)>('sbm_ish_open'),
+    (p) => p.lookupFunction<Int Function(Pointer<Char>, Pointer<Char>, Pointer<Char>, Int, Int), int Function(Pointer<Char>, Pointer<Char>, Pointer<Char>, int, int)>('sbm_ish_open'),
   );
   static final _read = _look(
     'sbm_ish_read',

@@ -104,7 +104,14 @@ class SettingStore extends SqliteStore {
     },
   );
 
-  /// Which Linux system the app would install, by `LinuxDistro.id`.
+  /// Which profile a terminal opens in, by `LinuxProfile.id`.
+  ///
+  /// Empty until something is chosen; the platform layer reads that as "the
+  /// first one installed". A profile and not a distribution, because two of the
+  /// same distribution can be installed side by side.
+  late final linuxProfile = propertyDefault('linuxProfile', '');
+
+  /// Which distribution a *new* profile would be of, by `LinuxDistro.id`.
   ///
   /// By name, never by index: an index silently changes meaning when a case is
   /// inserted, and this outlives the build that wrote it. Read through

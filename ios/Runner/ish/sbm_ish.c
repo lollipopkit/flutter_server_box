@@ -7,9 +7,13 @@
 // never had one, which is what the Dart side is already written against.
 
 bool sbm_ish_available(void) { return false; }
-int sbm_ish_boot(const char *rootfs) { (void)rootfs; return -1; }
-int sbm_ish_open(const char *shell, const char *command, int columns, int rows) {
-    (void)shell; (void)command; (void)columns; (void)rows;
+int sbm_ish_boot(const char *rootfs, const char *profile) {
+    (void)rootfs; (void)profile; return -1;
+}
+int sbm_ish_attach(const char *profile) { (void)profile; return -1; }
+int sbm_ish_open(const char *profile, const char *shell, const char *command,
+                 int columns, int rows) {
+    (void)profile; (void)shell; (void)command; (void)columns; (void)rows;
     return -1;
 }
 int sbm_ish_read(int session, char *buffer, int length, int timeout_ms) {
@@ -316,9 +320,11 @@ static void guest_exited(struct task *task, int code) {
 /// Only the root row is written here. The nodes themselves are created through
 /// the kernel afterwards, so how a path is spelled in that table stays the
 /// kernel's business rather than something this file has to guess.
-static int make_dev_db(char *data_out, size_t data_len) {
+static int make_dev_db(const char *profile, char *data_out, size_t data_len) {
     char dir[MAX_PATH];
-    snprintf(dir, sizeof(dir), "%s/.dev", rootfs_path);
+    // Beside the tree it belongs to, so that deleting a profile takes its
+    // `/dev` with it rather than leaving a database nothing will ever mount.
+    snprintf(dir, sizeof(dir), "%s/%s/.dev", rootfs_path, profile);
     mkdir(dir, 0755);
     snprintf(data_out, data_len, "%s/data", dir);
     mkdir(data_out, 0755);
@@ -364,45 +370,135 @@ static int make_dev_db(char *data_out, size_t data_len) {
     return 0;
 }
 
-/// Everything a userland expects to find at `/dev`.
-static void make_dev(void) {
+/// Everything a userland expects to find at `/dev`, for one profile.
+///
+/// Paths are spelled from the *machine* root — `/alpine/dev`, not `/dev` —
+/// because this runs as init, which lives at the machine root and mounts for
+/// every profile. A session sees them as `/dev`, since it is rooted at its own
+/// subtree. Doing it by prefix rather than by chrooting init keeps this off any
+/// path where two profiles being attached at once could see each other's root.
+static void make_dev(const char *profile) {
+    char path[MAX_PATH];
+#define GUEST(...) (snprintf(path, sizeof(path), __VA_ARGS__), path)
+
     // The mount point first: a minirootfs unpacked without root may have no
     // `/dev` at all, since the device nodes in the tarball are what create it.
-    generic_mkdirat(AT_PWD, "/dev", 0755);
+    generic_mkdirat(AT_PWD, GUEST("/%s/dev", profile), 0755);
 
     char data_path[MAX_PATH];
-    if (make_dev_db(data_path, sizeof(data_path)) < 0) return;
-    do_mount(&fakefs, data_path, "/dev", "", 0);
+    if (make_dev_db(profile, data_path, sizeof(data_path)) < 0) return;
+    do_mount(&fakefs, data_path, GUEST("/%s/dev", profile), "", 0);
 
-    generic_mknodat(AT_PWD, "/dev/null", S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_NULL_MINOR));
-    generic_mknodat(AT_PWD, "/dev/zero", S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_ZERO_MINOR));
-    generic_mknodat(AT_PWD, "/dev/full", S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_FULL_MINOR));
-    generic_mknodat(AT_PWD, "/dev/random", S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_RANDOM_MINOR));
-    generic_mknodat(AT_PWD, "/dev/urandom", S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_URANDOM_MINOR));
-    generic_mknodat(AT_PWD, "/dev/tty", S_IFCHR | 0666, dev_make(TTY_ALTERNATE_MAJOR, DEV_TTY_MINOR));
-    generic_mknodat(AT_PWD, "/dev/console", S_IFCHR | 0666, dev_make(TTY_ALTERNATE_MAJOR, DEV_CONSOLE_MINOR));
-    generic_mknodat(AT_PWD, "/dev/ptmx", S_IFCHR | 0666, dev_make(TTY_ALTERNATE_MAJOR, DEV_PTMX_MINOR));
+    generic_mknodat(AT_PWD, GUEST("/%s/dev/null", profile), S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_NULL_MINOR));
+    generic_mknodat(AT_PWD, GUEST("/%s/dev/zero", profile), S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_ZERO_MINOR));
+    generic_mknodat(AT_PWD, GUEST("/%s/dev/full", profile), S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_FULL_MINOR));
+    generic_mknodat(AT_PWD, GUEST("/%s/dev/random", profile), S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_RANDOM_MINOR));
+    generic_mknodat(AT_PWD, GUEST("/%s/dev/urandom", profile), S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_URANDOM_MINOR));
+    generic_mknodat(AT_PWD, GUEST("/%s/dev/tty", profile), S_IFCHR | 0666, dev_make(TTY_ALTERNATE_MAJOR, DEV_TTY_MINOR));
+    generic_mknodat(AT_PWD, GUEST("/%s/dev/console", profile), S_IFCHR | 0666, dev_make(TTY_ALTERNATE_MAJOR, DEV_CONSOLE_MINOR));
+    generic_mknodat(AT_PWD, GUEST("/%s/dev/ptmx", profile), S_IFCHR | 0666, dev_make(TTY_ALTERNATE_MAJOR, DEV_PTMX_MINOR));
 
     // Where the pty slaves appear. Its mount point has to exist first, since
     // `/dev` is a filesystem that was empty a moment ago.
-    generic_mkdirat(AT_PWD, "/dev/pts", 0755);
-    do_mount(&devptsfs, "devpts", "/dev/pts", "", 0);
+    generic_mkdirat(AT_PWD, GUEST("/%s/dev/pts", profile), 0755);
+    do_mount(&devptsfs, "devpts", GUEST("/%s/dev/pts", profile), "", 0);
 
     // Not device nodes but expected to be there, and cheap to be right about:
     // a shell's `>/dev/stdout`, a script's `/dev/fd/3`, and anything that
     // writes to `/dev/shm` all fail without them.
-    generic_symlinkat("/proc/self/fd", AT_PWD, "/dev/fd");
-    generic_symlinkat("/proc/self/fd/0", AT_PWD, "/dev/stdin");
-    generic_symlinkat("/proc/self/fd/1", AT_PWD, "/dev/stdout");
-    generic_symlinkat("/proc/self/fd/2", AT_PWD, "/dev/stderr");
-    generic_mkdirat(AT_PWD, "/dev/shm", 01777);
-    do_mount(&tmpfs, "shm", "/dev/shm", "", 0);
+    // The *targets* keep no prefix: they are followed from inside the session,
+    // which is rooted at this profile, so `/proc/self/fd` is already its own.
+    generic_symlinkat("/proc/self/fd", AT_PWD, GUEST("/%s/dev/fd", profile));
+    generic_symlinkat("/proc/self/fd/0", AT_PWD, GUEST("/%s/dev/stdin", profile));
+    generic_symlinkat("/proc/self/fd/1", AT_PWD, GUEST("/%s/dev/stdout", profile));
+    generic_symlinkat("/proc/self/fd/2", AT_PWD, GUEST("/%s/dev/stderr", profile));
+    generic_mkdirat(AT_PWD, GUEST("/%s/dev/shm", profile), 01777);
+    do_mount(&tmpfs, "shm", GUEST("/%s/dev/shm", profile), "", 0);
+#undef GUEST
+}
+
+/// Which profiles have had their filesystems mounted, so that mounting is done
+/// once and asking is cheap.
+///
+/// A fixed table rather than a list: the count is the number of Linux systems
+/// a person keeps on a phone, and a bounded array cannot fail to allocate on
+/// the path that opens a terminal.
+#define SBM_MAX_PROFILES 8
+static char attached[SBM_MAX_PROFILES][64];
+static pthread_mutex_t attached_lock = PTHREAD_MUTEX_INITIALIZER;
+
+static bool is_attached(const char *profile) {
+    for (int i = 0; i < SBM_MAX_PROFILES; i++)
+        if (strcmp(attached[i], profile) == 0) return true;
+    return false;
+}
+
+/// Points `current` at one profile's subtree, the way `chroot` would.
+///
+/// Safe to do to a task from `become_new_init_child`: `construct_task` gives
+/// each one its own `fs_info` (`kernel/init.c:107`) rather than sharing init's,
+/// so nothing else sees this.
+static int enter_profile(const char *profile) {
+    char path[MAX_PATH];
+    snprintf(path, sizeof(path), "/%s", profile);
+    struct fd *dir = generic_open(path, O_RDONLY_, 0);
+    if (IS_ERR(dir)) return (int)PTR_ERR(dir);
+    lock(&current->fs->lock);
+    fd_close(current->fs->root);
+    current->fs->root = dir;
+    unlock(&current->fs->lock);
+
+    // The working directory too. It still points at the machine root, which is
+    // no longer a place this task can name — every relative path would resolve
+    // outside its own filesystem.
+    struct fd *pwd = generic_open("/", O_RDONLY_, 0);
+    if (IS_ERR(pwd)) return (int)PTR_ERR(pwd);
+    fs_chdir(current->fs, pwd);
+    return 0;
 }
 
 bool sbm_ish_available(void) { return true; }
 
-int sbm_ish_boot(const char *rootfs) {
-    if (rootfs == NULL) return -EINVAL;
+/// Mounts one profile's filesystems. Idempotent, and the only thing that has
+/// to happen before a session can be opened in it.
+///
+/// Separate from [sbm_ish_boot] because the machine is one and the profiles are
+/// many: the kernel starts once, and each system is attached to it the first
+/// time something wants a terminal in it.
+int sbm_ish_attach(const char *profile) {
+    if (!booted) return -ENOTCONN;
+    if (profile == NULL || profile[0] == '\0') return -EINVAL;
+    if (strchr(profile, '/') != NULL) return -EINVAL;
+    if (strlen(profile) >= sizeof(attached[0])) return -ENAMETOOLONG;
+
+    pthread_mutex_lock(&attached_lock);
+    if (is_attached(profile)) {
+        pthread_mutex_unlock(&attached_lock);
+        return 0;
+    }
+    int slot = -1;
+    for (int i = 0; i < SBM_MAX_PROFILES; i++)
+        if (attached[i][0] == '\0') { slot = i; break; }
+    if (slot < 0) {
+        pthread_mutex_unlock(&attached_lock);
+        return -EMFILE;
+    }
+
+    char path[MAX_PATH];
+    // `/proc` first: `/dev/stdout` and friends are symlinks into it, and a
+    // shell following one before it is mounted gets "nonexistent directory".
+    snprintf(path, sizeof(path), "/%s/proc", profile);
+    generic_mkdirat(AT_PWD, path, 0755);
+    do_mount(&procfs, "proc", path, "", 0);
+    make_dev(profile);
+
+    snprintf(attached[slot], sizeof(attached[slot]), "%s", profile);
+    pthread_mutex_unlock(&attached_lock);
+    return 0;
+}
+
+int sbm_ish_boot(const char *rootfs, const char *profile) {
+    if (rootfs == NULL || profile == NULL || profile[0] == '\0') return -EINVAL;
     if (booted) return -EEXIST;
 
     install_crash_handler();
@@ -428,12 +524,21 @@ int sbm_ish_boot(const char *rootfs) {
     if (IS_ERR(root_fd)) return (int)PTR_ERR(root_fd);
     fs_chdir(current->fs, root_fd);
 
-    // `/proc` first: `/dev/stdout` and friends are symlinks into it, and a
-    // shell following one before it is mounted gets "nonexistent directory".
-    generic_mkdirat(AT_PWD, "/proc", 0755);
-    do_mount(&procfs, "proc", "/proc", "", 0);
-    make_dev();
     exit_hook = guest_exited;
+
+    // The machine is up from here, which is what `sbm_ish_attach` requires.
+    booted = true;
+    err = sbm_ish_attach(profile);
+    if (err < 0) { booted = false; return err; }
+
+    // Init lives inside a profile rather than at the machine root, because the
+    // machine root is a container of trees and holds no `/bin/sh` to exec —
+    // nor the loader that shell names as its interpreter. Which profile is
+    // arbitrary: init only sleeps. It keeps an fd to that directory, so
+    // deleting the profile later leaves init running against an unlinked
+    // directory, which is a thing Unix permits and nothing here reads again.
+    err = enter_profile(profile);
+    if (err < 0) { booted = false; return err; }
 
     // Init has to exist and must never exit — `kernel/exit.c` ends the *host
     // process* when it does. It does not have to do anything else, and it must
@@ -471,15 +576,16 @@ int sbm_ish_boot(const char *rootfs) {
                         "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin") + 1;
 
     err = do_execve("/bin/sh", 3, argv, environment);
-    if (err < 0) return err;
+    if (err < 0) { booted = false; return err; }
     task_start(current);
 
-    booted = true;
     return 0;
 }
 
-int sbm_ish_open(const char *shell, const char *command, int columns, int rows) {
+int sbm_ish_open(const char *profile, const char *shell, const char *command,
+                 int columns, int rows) {
     if (!booted) return -ENOTCONN;
+    if (profile == NULL || profile[0] == '\0') return -EINVAL;
 
     bool interactive = command == NULL || command[0] == '\0';
     // The guest has no `login` and nothing reads `/etc/passwd`, so which shell
@@ -505,6 +611,14 @@ int sbm_ish_open(const char *shell, const char *command, int columns, int rows) 
     // A task of its own, under init. Everything from here happens as that
     // task, on this thread, until `task_start` gives it one.
     int err = become_new_init_child();
+    if (err < 0) goto fail;
+
+    // Before anything opens a path. `attach_stdio` names `/dev/pts/N`, and
+    // that has to mean *this* profile's devpts rather than whichever one init
+    // happens to be rooted at.
+    err = sbm_ish_attach(profile);
+    if (err < 0) goto fail;
+    err = enter_profile(profile);
     if (err < 0) goto fail;
 
     struct tty *tty = pty_open_fake(&sbm_pty_driver);

@@ -79,40 +79,101 @@ enum LinuxDistro {
   };
 }
 
-/// What is unpacked on this device, as the marker file records it.
+/// One Linux system unpacked on this device.
 ///
-/// Two things rather than one, and the distribution is the reason: with more
-/// than one installable, "is something installed" stops being the whole
-/// question — switching has to know what it is replacing, and offering an
-/// update has to know what the version on disk is a version *of*.
-final class InstalledGuest {
+/// A directory under the container plus the marker inside it. The two together
+/// are the whole record: no table, no setting listing what exists. A profile
+/// deleted from disk therefore cannot linger in a list, and a list cannot
+/// promise a tree that is not there.
+///
+/// [id] is that directory's name and is not in the marker — the directory *is*
+/// the id. It is generated rather than typed: a name someone types has to be
+/// made unique and made safe for a path, and a label does neither of those
+/// jobs any worse for being ordinary text.
+///
+/// [distro] is a field rather than the id, which is the whole reason this type
+/// exists: two Alpines side by side are two profiles of one distribution, and
+/// keying the directory by distribution would have made that impossible.
+final class LinuxProfile {
+  /// The file each profile's directory carries, naming what is in it.
+  ///
+  /// Hidden, so a shell listing the guest's `/` does not show it.
+  static const marker = '.installed';
+
+  final String id;
   final LinuxDistro distro;
 
-  /// Empty for an install from a build whose marker carried no version.
+  /// What was unpacked. Empty for an install from a build whose marker carried
+  /// no version.
   final String version;
 
-  const InstalledGuest(this.distro, this.version);
+  /// What the user sees, and may change. The distribution's own name when
+  /// nothing was chosen.
+  final String label;
 
-  /// Two lines: the distribution, then the version.
-  ///
-  /// Written by `install`, read by `isInstalled`. A file rather than a setting,
-  /// because it describes the tree and has to go when the tree does — a setting
-  /// would outlive a directory deleted from under the app and claim an install
-  /// that is not there.
-  String encode() => '${distro.id}\n$version\n';
+  const LinuxProfile({
+    required this.id,
+    required this.distro,
+    required this.version,
+    required this.label,
+  });
 
-  /// The reverse, and every shape a shipped release ever wrote.
+  LinuxProfile copyWith({String? label, String? version}) => LinuxProfile(
+    id: id,
+    distro: distro,
+    version: version ?? this.version,
+    label: label ?? this.label,
+  );
+
+  /// Three lines: the distribution, the version, then the label.
   ///
-  /// TODO(migration residue; remove once no install predates the two-line
-  /// marker): the two branches below are older releases' formats — a bare
-  /// version string, and an empty file. Both read as Alpine, which is what they
-  /// were: nothing else was installable when they were written.
-  static InstalledGuest decode(String raw) {
+  /// Written by `install`, read when the container is scanned. A file rather
+  /// than a setting, because it describes the tree and has to go when the tree
+  /// does — a setting would outlive a directory deleted from under the app and
+  /// claim an install that is not there.
+  String encode() => '${distro.id}\n$version\n$label\n';
+
+  /// The reverse, and every shape a build ever wrote.
+  ///
+  /// [id] comes from the caller because it is the directory's name.
+  ///
+  /// TODO(migration residue; remove once no install predates the three-line
+  /// marker): the shorter forms below are earlier formats — distribution and
+  /// version, a bare version string, and an empty file. The last two read as
+  /// Alpine, which is what they were: nothing else was installable then.
+  static LinuxProfile decode(String id, String raw) {
     final lines = raw.trim().split('\n').map((e) => e.trim()).toList();
-    if (lines.length >= 2) {
-      return InstalledGuest(LinuxDistro.fromName(lines.first), lines[1]);
+    final distro = lines.length >= 2
+        ? LinuxDistro.fromName(lines.first)
+        : LinuxDistro.alpine;
+    final version = switch (lines.length) {
+      0 => '',
+      1 => lines.first,
+      _ => lines[1],
+    };
+    final label = lines.length >= 3 && lines[2].isNotEmpty
+        ? lines[2]
+        : distro.label;
+    return LinuxProfile(
+      id: id,
+      distro: distro,
+      version: version,
+      label: label,
+    );
+  }
+
+  /// A directory name for a new profile of [distro], not colliding with
+  /// [taken].
+  ///
+  /// Readable rather than random — someone reading a file listing or a `du`
+  /// should be able to tell which is which — and still generated, so nothing
+  /// the user types reaches a path.
+  static String nextId(LinuxDistro distro, Iterable<String> taken) {
+    final used = taken.toSet();
+    if (!used.contains(distro.id)) return distro.id;
+    for (var n = 2; ; n++) {
+      final candidate = '${distro.id}-$n';
+      if (!used.contains(candidate)) return candidate;
     }
-    final only = lines.isEmpty ? '' : lines.first;
-    return InstalledGuest(LinuxDistro.alpine, only);
   }
 }
