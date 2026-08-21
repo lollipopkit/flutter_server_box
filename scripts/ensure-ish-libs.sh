@@ -18,12 +18,22 @@
 #
 # ## Which release
 #
-# The one tagged `libs-<sha>`, where the sha is the submodule's checked-out
-# HEAD. That gitlink is this repository's only statement about which revision
-# of the engine it builds against — see CLAUDE.md — so binding the download to
-# it means the libraries and the source cannot drift apart. "The latest
-# release" would link one revision's libraries against another's headers and
-# leave nothing to notice it by.
+# The one whose tag is on the submodule's checked-out HEAD, asked of the
+# submodule itself: the fork tags every published commit `vX.Y.Z`, so
+# `git tag --points-at HEAD` answers offline and exactly. That gitlink is this
+# repository's only statement about which revision of the engine it builds
+# against — see CLAUDE.md — so resolving through it means the libraries and the
+# source cannot drift apart. "The latest release" would link one revision's
+# libraries against another's headers and leave nothing to notice it by.
+#
+# `libs-<sha>` is what the fork tagged with until versions arrived, and is
+# still tried when no `v` tag points here — a gitlink pinned before the change
+# resolves the way it always did.
+#
+# A shallow submodule, or one cloned before the tag existed, has no tag to find
+# and gets one `git fetch --tags` before the fallback. Not on every run: the
+# usual reason to be here is a build directory that is empty or stale, not a
+# checkout that is behind.
 #
 # ## Which not to
 #
@@ -75,8 +85,25 @@ if [ ! -d "$SRC_DIR/.git" ] && [ ! -f "$SRC_DIR/.git" ]; then
 fi
 
 sha="$(git -C "$SRC_DIR" rev-parse HEAD)"
-tag="libs-$sha"
 stamp="$lib_dir/.ish-libs-sha"
+
+# Highest first, so a commit that ended up with two of them — a re-run of the
+# publishing workflow — takes the later version rather than whichever `git tag`
+# happened to list first.
+version_tag() {
+  git -C "$SRC_DIR" tag --points-at HEAD --list 'v[0-9]*' --sort=-v:refname |
+    head -1
+}
+
+tag="$(version_tag)"
+if [ -z "$tag" ]; then
+  git -C "$SRC_DIR" fetch --tags --quiet origin 2>/dev/null || true
+  tag="$(version_tag)"
+fi
+# The name the fork published under before it had versions. Kept as a fallback
+# rather than as the answer: a gitlink from then still resolves, and one from
+# now never reaches it.
+[ -n "$tag" ] || tag="libs-$sha"
 
 have_libs() {
   for lib in libish.a libish_emu.a libfakefs.a; do
