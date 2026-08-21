@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/core/utils/ios_rootfs.dart';
 import 'package:server_box/core/utils/ish_exec.dart';
 
@@ -38,7 +39,7 @@ void main() {
       markTestSkipped('this build carries no engine (SBM_ISH = 0)');
       return;
     }
-    await IosRootfs.install();
+    await IosRootfs.install(distro: LinuxDistro.alpine);
     const exec = IshExec();
 
     // Booted and idle, before any work: what the engine costs simply for
@@ -94,7 +95,7 @@ echo DONE
       return;
     }
     await IosRootfs.prepare();
-    await IosRootfs.install();
+    await IosRootfs.install(distro: LinuxDistro.alpine);
     const exec = IshExec();
 
     final before = rss();

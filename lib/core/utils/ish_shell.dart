@@ -19,7 +19,12 @@ import 'package:server_box/data/model/server/shell_backend.dart';
 /// already does — and how the Android rootfs behaves too, from the other
 /// direction.
 class IshShellBackend implements ShellBackend {
-  IshShellBackend();
+  IshShellBackend({this.profileId});
+
+  /// Which installed system this backend's sessions run in, or null for the
+  /// selected one. The machine holds them all at once, so two backends with
+  /// different ids are two systems running side by side.
+  final String? profileId;
 
   /// Whether this build can open one at all — see [IosRootfs.isAvailable],
   /// which is false whenever the engine was stripped from the build.
@@ -57,7 +62,9 @@ class IshShellBackend implements ShellBackend {
     // The machine, once. -EEXIST means it is already up — from an earlier
     // terminal, or from the Agent — and that is not an error: it is the
     // machine, and this is another process on it.
-    final booted = IosRootfs.boot();
+    // The machine, once, whichever system asked for it first. Attaching this
+    // one is `open`'s own job.
+    final booted = IosRootfs.boot(profileId: profileId);
     if (booted < 0 && booted != IosRootfs.alreadyBooted) {
       throw StateError('The Linux guest did not start ($booted)');
     }
@@ -66,7 +73,10 @@ class IshShellBackend implements ShellBackend {
       command: command,
       // Interactive only: `_start` is also how `execute` runs a one-shot
       // command, and that one has to stay POSIX. See `linuxShell`.
-      shell: command == null ? linuxShell(IosRootfs.root) : '',
+      profileId: profileId,
+      shell: command == null
+          ? linuxShell(IosRootfs.rootOf(profileId ?? IosRootfs.selected?.id))
+          : '',
       columns: width > 0 ? width : 80,
       rows: height > 0 ? height : 25,
     );

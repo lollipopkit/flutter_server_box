@@ -139,6 +139,22 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             icon: Icons.auto_awesome_outlined,
             page: () => const AppSettingsPage(section: SettingsSection.ai),
           ),
+          // A tab of its own rather than a row leading out of the general
+          // page: pushed from there it drew a second title bar under the one
+          // this page already has, naming the same thing twice.
+          SettingsNode.leaf(
+            id: 'app.homeTabs',
+            title: l10n.homeTabs,
+            icon: Icons.tab_outlined,
+            page: () => const HomeTabsConfigPage(embedded: true),
+          ),
+          if (isIOS)
+            SettingsNode.leaf(
+              id: 'app.ios',
+              title: 'iOS',
+              icon: MingCute.apple_fill,
+              page: () => const IosSettingsPage(embedded: true),
+            ),
 
           /// Fullscreen Mode is designed for old mobile phone which can be
           /// used as a status screen.

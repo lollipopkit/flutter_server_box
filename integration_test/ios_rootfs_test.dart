@@ -6,6 +6,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/core/utils/ios_rootfs.dart';
 import 'package:server_box/core/utils/ish_exec.dart';
 
@@ -64,11 +65,11 @@ void main() {
     // its digest, unpack it in Dart. There is no `tar` here — iOS refuses to
     // start a process — and no metadata database to build, which is what
     // `realfs` bought.
-    await IosRootfs.remove();
+    await IosRootfs.removeProfile(IosRootfs.selected?.id ?? LinuxDistro.alpine.id);
     expect(await IosRootfs.isInstalled, isFalse);
 
     var seen = -1.0;
-    await IosRootfs.install(onProgress: (p) => seen = p ?? seen);
+    await IosRootfs.install(distro: LinuxDistro.alpine, onProgress: (p) => seen = p ?? seen);
     expect(await IosRootfs.isInstalled, isTrue);
     expect(seen, greaterThan(0));
 
@@ -89,7 +90,7 @@ void main() {
       return;
     }
     // Installed by the test above, or already there.
-    await IosRootfs.install();
+    await IosRootfs.install(distro: LinuxDistro.alpine);
     expect(await IosRootfs.isInstalled, isTrue);
 
     final booted = IosRootfs.boot();
@@ -102,7 +103,7 @@ void main() {
     expect(one, greaterThanOrEqualTo(0), reason: 'open returned $one');
     final text = await readTo(one, 'SBM_IOS_OK');
     debugPrint('ISHPROBE one=${text.trim()}');
-    expect(text, contains(IosRootfs.version));
+    expect(text, contains(LinuxDistro.alpine.version));
     expect(text, contains('aarch64'));
     expect(text, contains('root'));
 
@@ -131,7 +132,7 @@ void main() {
       markTestSkipped('this build carries no engine (SBM_ISH = 0)');
       return;
     }
-    await IosRootfs.install();
+    await IosRootfs.install(distro: LinuxDistro.alpine);
     IosRootfs.boot();
 
     // The root is an ordinary directory and cannot hold a device node, so
@@ -183,11 +184,11 @@ void main() {
       markTestSkipped('this build carries no engine (SBM_ISH = 0)');
       return;
     }
-    await IosRootfs.install();
+    await IosRootfs.install(distro: LinuxDistro.alpine);
     const exec = IshExec();
 
     final release = await exec.run('cat /etc/alpine-release');
-    expect(release.stdout.trim(), IosRootfs.version);
+    expect(release.stdout.trim(), LinuxDistro.alpine.version);
     expect(release.exitCode, 0);
 
     final failed = await exec.run('exit 3');
@@ -242,7 +243,7 @@ void main() {
       markTestSkipped('this build carries no engine (SBM_ISH = 0)');
       return;
     }
-    await IosRootfs.install();
+    await IosRootfs.install(distro: LinuxDistro.alpine);
     IosRootfs.boot();
 
     // Padded with a comment, so the length is the only thing being varied.
@@ -272,7 +273,7 @@ void main() {
       markTestSkipped('this build carries no engine (SBM_ISH = 0)');
       return;
     }
-    await IosRootfs.install();
+    await IosRootfs.install(distro: LinuxDistro.alpine);
     const exec = IshExec();
 
     // Well past 4 KB, and past it in the part that varies rather than in one
@@ -319,7 +320,7 @@ void main() {
       markTestSkipped('this build carries no engine (SBM_ISH = 0)');
       return;
     }
-    await IosRootfs.install();
+    await IosRootfs.install(distro: LinuxDistro.alpine);
     const exec = IshExec();
 
     final probe = await exec.run(
@@ -389,7 +390,7 @@ void main() {
       markTestSkipped('this build carries no engine (SBM_ISH = 0)');
       return;
     }
-    await IosRootfs.install();
+    await IosRootfs.install(distro: LinuxDistro.alpine);
     const exec = IshExec();
 
     // Enough reads that the hundredths land under ten several times over.

@@ -1,10 +1,10 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/home_tab.dart';
+import 'package:server_box/view/page/setting/seq/reorder_proxy_decorator.dart';
 
 @visibleForTesting
 List<AppTab> availableHomeTabs(Iterable<AppTab> selectedTabs) {
@@ -14,148 +14,170 @@ List<AppTab> availableHomeTabs(Iterable<AppTab> selectedTabs) {
       .toList(growable: false);
 }
 
-class HomeTabsConfigPage extends ConsumerStatefulWidget {
-  const HomeTabsConfigPage({super.key});
+/// Where a drag leaves the two halves of the list, or null when it moves
+/// nothing.
+///
+/// [oldIndex] and [newIndex] address the joined list — enabled, the separator,
+/// then disabled — which is what the reorderable is built from, so crossing the
+/// separator and moving within one half are the same arithmetic. Whether the
+/// result is allowed is the caller's to say.
+@visibleForTesting
+({List<AppTab> enabled, List<AppTab> disabled})? reorderHomeTabs({
+  required List<AppTab> enabled,
+  required List<AppTab> disabled,
+  required int oldIndex,
+  required int newIndex,
+}) {
+  if (oldIndex == newIndex) return null;
+  final items = <AppTab?>[...enabled, null, ...disabled];
+  // The separator is not draggable, so this is a reorder of something else's
+  // making.
+  if (items[oldIndex] == null) return null;
 
-  static final route = AppRouteNoArg(
+  items.insert(newIndex, items.removeAt(oldIndex));
+  final split = items.indexOf(null);
+  return (
+    enabled: items.take(split).whereType<AppTab>().toList(),
+    disabled: items.skip(split + 1).whereType<AppTab>().toList(),
+  );
+}
+
+class HomeTabsConfigPage extends StatefulWidget {
+  /// Whether it is being shown inside the settings pane rather than pushed.
+  ///
+  /// The pane already names what it is showing, in the one bar the page has;
+  /// a second one under it would say it twice.
+  final bool embedded;
+
+  const HomeTabsConfigPage({super.key, this.embedded = false});
+
+  static const route = AppRouteNoArg(
     page: HomeTabsConfigPage.new,
     path: '/settings/home-tabs',
   );
 
   @override
-  ConsumerState<HomeTabsConfigPage> createState() => _HomeTabsConfigPageState();
+  State<HomeTabsConfigPage> createState() => _HomeTabsConfigPageState();
 }
 
-class _HomeTabsConfigPageState extends ConsumerState<HomeTabsConfigPage> {
-  var _selectedTabs = List<AppTab>.from(Stores.setting.homeTabs.fetch());
+class _HomeTabsConfigPageState extends State<HomeTabsConfigPage> {
+  /// The tabs the home page shows, in the order it shows them.
+  late List<AppTab> _enabled;
 
-  void _showHomeTabConstraint(String message) {
-    Toast.show(message);
+  /// The rest, kept as a list rather than derived on every build so that a tab
+  /// dragged out stays where it was dropped instead of jumping to wherever the
+  /// enum happens to put it.
+  late List<AppTab> _disabled;
+
+  @override
+  void initState() {
+    super.initState();
+    _enabled = List<AppTab>.from(Stores.setting.homeTabs.fetch());
+    _disabled = List<AppTab>.from(availableHomeTabs(_enabled));
   }
 
   @override
   Widget build(BuildContext context) {
-    final availableTabs = availableHomeTabs(_selectedTabs);
-    return Scaffold(
-      appBar: CustomAppBar(
-        title: Text(l10n.homeTabs),
-        actions: [
-          TextButton(onPressed: _resetToDefault, child: Text(libL10n.reset)),
-          TextButton(onPressed: _saveAndExit, child: Text(libL10n.save)),
-        ],
-      ),
-      body: Column(
+    final body = SafeArea(
+      child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              l10n.homeTabsCustomizeDesc,
-              style: context.theme.textTheme.bodyMedium,
-            ),
+            padding: const EdgeInsets.fromLTRB(17, 13, 17, 7),
+            child: Text(l10n.homeTabsCustomizeDesc, style: UIs.textGrey),
           ),
-          Expanded(
-            child: ReorderableListView.builder(
-              itemCount: _selectedTabs.length,
-              onReorderItem: _onReorder,
-              buildDefaultDragHandles: false,
-              itemBuilder: (context, index) {
-                final tab = _selectedTabs[index];
-                return _buildTabItem(tab, index, true);
-              },
-            ),
-          ),
-          const Divider(),
+          Expanded(child: _buildList()),
+        ],
+      ),
+    );
+    if (widget.embedded) return body;
+    return Scaffold(
+      appBar: CustomAppBar(title: Text(l10n.homeTabs)),
+      body: body,
+    );
+  }
+
+  /// One list rather than two, with [_buildSeparator] standing between the two
+  /// halves of it. Enabling a tab is then the same gesture as ordering one —
+  /// dragging it across that line — and there is nothing left to save.
+  Widget _buildList() {
+    final items = _items;
+    return ReorderableListView.builder(
+      key: const PageStorageKey('home_tabs'),
+      padding: const EdgeInsets.symmetric(horizontal: 7),
+      buildDefaultDragHandles: false,
+      proxyDecorator: reorderProxyDecorator,
+      itemCount: items.length,
+      itemBuilder: (_, idx) {
+        final tab = items[idx];
+        // The separator itself, which is not draggable: it is where the list
+        // is cut, so it has to keep its meaning while something moves past it.
+        if (tab == null) return _buildSeparator();
+        return _buildTabItem(tab, idx, idx < _enabled.length);
+      },
+      onReorderItem: _onReorder,
+    );
+  }
+
+  /// The list as the reorderable sees it: enabled, the separator, disabled.
+  List<AppTab?> get _items => [..._enabled, null, ..._disabled];
+
+  Widget _buildSeparator() {
+    return Padding(
+      key: const ValueKey('separator'),
+      padding: const EdgeInsets.symmetric(vertical: 13),
+      child: Row(
+        children: [
+          const Expanded(child: Divider()),
           Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              l10n.availableTabs,
-              style: context.theme.textTheme.titleMedium,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 13),
+            child: Text(l10n.availableTabs, style: UIs.textGrey),
           ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: availableTabs.length,
-              itemBuilder: (context, index) {
-                final tab = availableTabs[index];
-                return _buildTabItem(tab, index, false);
-              },
-            ),
-          ),
+          const Expanded(child: Divider()),
         ],
       ),
     );
   }
 
-  Widget _buildTabItem(AppTab tab, int index, bool isSelected) {
-    final canRemove = _selectedTabs.length > 1 && tab != AppTab.server;
-    final child = ListTile(
-      leading: tab.navDestination.icon,
-      title: Text(tab.navDestination.label),
-      trailing: isSelected
-          ? IconButton(
-              icon: const Icon(Icons.delete),
-              onPressed: canRemove ? () => _removeTab(tab) : null,
-              color: canRemove ? null : Theme.of(context).disabledColor,
-              tooltip: canRemove
-                  ? libL10n.delete
-                  : (tab == AppTab.server
-                        ? l10n.serverTabRequired
-                        : l10n.atLeastOneTab),
-            )
-          : IconButton(tooltip: libL10n.add, 
-              icon: const Icon(Icons.add),
-              onPressed: () => _addTab(tab),
-            ),
-      onTap: isSelected && canRemove ? () => _removeTab(tab) : null,
-    );
-
-    return Padding(
+  Widget _buildTabItem(AppTab tab, int idx, bool enabled) {
+    final dest = tab.navDestination;
+    return ReorderableDelayedDragStartListener(
       key: ValueKey(tab.name),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
-      child:
-          (isSelected
-                  ? ReorderableDragStartListener(index: index, child: child)
-                  : child)
-              .cardx,
+      index: idx,
+      child: Opacity(
+        opacity: enabled ? 1.0 : 0.5,
+        child: CardX(
+          child: ListTile(
+            leading: dest.icon,
+            title: Text(dest.label),
+            trailing: ReorderableDragStartListener(
+              index: idx,
+              child: const Icon(Icons.drag_handle),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
   void _onReorder(int oldIndex, int newIndex) {
-    setState(() {
-      final tab = _selectedTabs.removeAt(oldIndex);
-      _selectedTabs.insert(newIndex, tab);
-    });
-  }
+    final next = reorderHomeTabs(
+      enabled: _enabled,
+      disabled: _disabled,
+      oldIndex: oldIndex,
+      newIndex: newIndex,
+    );
+    if (next == null) return;
 
-  void _addTab(AppTab tab) {
-    setState(() {
-      _selectedTabs.add(tab);
-    });
-  }
-
-  void _removeTab(AppTab tab) {
-    if (_selectedTabs.length <= 1) {
-      _showHomeTabConstraint(l10n.atLeastOneTab);
+    // Nothing else to fall back to: the server tab is what the app opens on.
+    if (!next.enabled.contains(AppTab.server)) {
+      Toast.show(l10n.serverTabRequired);
       return;
     }
-    if (tab == AppTab.server) {
-      _showHomeTabConstraint(l10n.serverTabRequired);
-      return;
-    }
-    setState(() {
-      _selectedTabs.remove(tab);
-    });
-  }
 
-  void _saveAndExit() {
-    Stores.setting.homeTabs.put(_selectedTabs);
-    context.pop();
-  }
-
-  void _resetToDefault() {
     setState(() {
-      _selectedTabs = List<AppTab>.from(AppTab.values);
+      _enabled = next.enabled;
+      _disabled = next.disabled;
     });
-    Stores.setting.homeTabs.put(_selectedTabs);
+    Stores.setting.homeTabs.put(_enabled);
   }
 }

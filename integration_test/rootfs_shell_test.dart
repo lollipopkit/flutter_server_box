@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/core/utils/android_rootfs.dart';
 import 'package:server_box/core/utils/local_exec.dart';
 import 'package:server_box/core/utils/local_shell.dart';
@@ -32,7 +33,8 @@ void main() {
     // A real install every run. A rootfs left by a previous run would let a
     // change to how one is unpacked pass untested for as long as the device
     // kept the old one.
-    await AndroidRootfs.remove();
+    await AndroidRootfs.removeProfile(
+        AndroidRootfs.selected?.id ?? LinuxDistro.alpine.id);
   });
 
   /// Everything [session] prints until it ends, or until [timeout] passes with
@@ -64,7 +66,7 @@ void main() {
 
     // Downloads on the first run, and is a no-op afterwards. Not in `setUpAll`:
     // installing *is* one of the things under test.
-    await AndroidRootfs.install();
+    await AndroidRootfs.install(distro: LinuxDistro.alpine);
     expect(await AndroidRootfs.isInstalled, isTrue);
 
     // What makes it a distribution rather than a directory of files.
@@ -118,7 +120,7 @@ void main() {
       markTestSkipped('this build carries no proot');
       return;
     }
-    await AndroidRootfs.install();
+    await AndroidRootfs.install(distro: LinuxDistro.alpine);
 
     // `ProcessExec`, not the terminal's backend: the Agent's shell tool goes
     // through this one, and the terminal working says nothing about it.
@@ -171,7 +173,7 @@ void main() {
       markTestSkipped('this build carries no proot');
       return;
     }
-    await AndroidRootfs.install();
+    await AndroidRootfs.install(distro: LinuxDistro.alpine);
 
     final backend = LocalShellBackend(inRootfs: true);
     addTearDown(backend.close);

@@ -293,24 +293,49 @@ extension _Sessions on _SSHTabPageState {
     _sessions.select(_sessions.names.indexOf(tab.name));
   }
 
-  /// Opens a shell inside the Linux userland, installing it if this is the
-  /// first time.
+  /// Opens a shell inside a Linux system, installing one if there is none.
   ///
   /// The install is where the tap may stop: it downloads, and it can be
-  /// cancelled or fail. Only a rootfs that is actually there gets a tab.
+  /// cancelled or fail. Only a system that is actually there gets a tab.
+  ///
+  /// With more than one installed it asks which, because opening "the selected
+  /// one" would make the second unreachable from here — and they can run at
+  /// once, so this is a choice and not a switch.
   Future<void> _openRootfs() async {
     if (!await installRootfs(context)) return;
-    _open(const LocalSource(rootfs: true));
+    if (!mounted) return;
+
+    final profiles = Rootfs.profiles;
+    var id = Rootfs.selected?.id;
+    if (profiles.length > 1) {
+      final picked = await context.showPickSingleDialog(
+        title: libL10n.terminal,
+        items: profiles,
+        display: (e) => e.label,
+        initial: profiles.firstWhereOrNull((e) => e.id == id) ?? profiles.first,
+      );
+      if (picked == null) return;
+      id = picked.id;
+    }
+    _open(LocalSource(rootfs: true, profileId: id));
   }
 
-  /// Deletes the Linux userland, and the terminals that were inside it.
+  /// Deletes one Linux system, and the terminals that were inside it.
   ///
   /// Their shells are already gone with the files they were running from, so
-  /// leaving the tabs up would leave dead terminals nobody asked to keep.
+  /// leaving the tabs up would leave dead terminals nobody asked to keep. Tabs
+  /// in the *other* systems are untouched — that is the point of them being
+  /// separate.
   Future<void> _removeRootfs() async {
-    if (!await removeRootfs(context)) return;
+    final target = Rootfs.selected;
+    if (target == null) return;
+    if (!await removeRootfs(context, profile: target)) return;
     for (final tab in [..._sessions.tabs]) {
-      if (tab.data.page.args.source == const LocalSource(rootfs: true)) {
+      final source = tab.data.page.args.source;
+      if (source is! LocalSource || !source.rootfs) continue;
+      // A tab that named no profile was opened in whichever was selected, and
+      // this is that one.
+      if (source.profileId == null || source.profileId == target.id) {
         _closeTab(tab.id);
       }
     }
@@ -406,13 +431,23 @@ extension _Sessions on _SSHTabPageState {
       // to reopen has cost nothing.
       final id = entry['sourceId'] ?? entry['serverId'];
       final TerminalSource source;
-      if (id == LocalSource.rootfsId) {
+      if (id is String && id.startsWith(LocalSource.rootfsId)) {
         // Only where there is one to enter. A rootfs the user deleted, or a
         // tab set restored onto a build without proot, would otherwise reopen
         // as a terminal that can only print an error.
         if (!Rootfs.isAvailable) continue;
         if (!Rootfs.isReady) continue;
-        source = const LocalSource(rootfs: true);
+        // A saved set from before profiles existed names no profile, and reads
+        // as "whichever is selected" — which is what it meant.
+        final profileId = LocalSource.profileIdOf(id);
+        // One that names a profile this device has not got is skipped like an
+        // unknown server: a backup restored onto another device is exactly how
+        // that happens.
+        if (profileId != null &&
+            !Rootfs.profiles.any((e) => e.id == profileId)) {
+          continue;
+        }
+        source = LocalSource(rootfs: true, profileId: profileId);
       } else if (id == const LocalSource().id) {
         // A tab set saved on a desktop can be restored on a phone — the same
         // backup, the same account — and iOS has no shell to give. Skipped
