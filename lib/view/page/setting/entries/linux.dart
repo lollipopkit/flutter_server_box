@@ -82,7 +82,10 @@ extension _Linux on _AppSettingsPageState {
                 IconButton(
                   icon: const Icon(Icons.edit_outlined),
                   tooltip: libL10n.rename,
-                  onPressed: () => _renameProfile(profile).then((_) => refresh()),
+                  onPressed: () async {
+                    await _renameProfile(profile);
+                    refresh();
+                  },
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete_outline),
@@ -129,32 +132,31 @@ extension _Linux on _AppSettingsPageState {
   }
 
   Future<void> _renameProfile(LinuxProfile profile) async {
-    await Future<void>.sync(
-      () => withTextFieldController((ctrl) async {
-        ctrl.text = profile.label;
-
-        Future<void> save() async {
-          final label = ctrl.text.trim();
-          context.popDialog();
-          if (label.isEmpty) return;
-          await Rootfs.rename(profile, label);
-          refresh();
-        }
-
-        await context.showRoundDialog(
-          title: libL10n.rename,
-          child: Input(
-            controller: ctrl,
-            autoFocus: true,
-            label: libL10n.name,
-            icon: Icons.label_outline,
-            suggestion: false,
-            onSubmitted: (_) => save(),
-          ),
-          actions: Btn.ok(onTap: save).toList,
-        );
-      }),
-    );
+    // Owns its controller for the reason [_askProfileName] does: awaiting
+    // `withTextFieldController` returns before the dialog is answered.
+    final ctrl = TextEditingController(text: profile.label);
+    try {
+      final ok = await context.showRoundDialog<bool>(
+        title: libL10n.rename,
+        child: Input(
+          controller: ctrl,
+          autoFocus: true,
+          label: libL10n.name,
+          icon: Icons.label_outline,
+          suggestion: false,
+          onSubmitted: (_) => context.popDialog(true),
+        ),
+        actions: Btnx.cancelOk,
+      );
+      if (ok != true) return;
+      final label = ctrl.text.trim();
+      // An empty name would leave the row with nothing to show; the old one is
+      // a better answer than a blank.
+      if (label.isEmpty || label == profile.label) return;
+      await Rootfs.rename(profile, label);
+    } finally {
+      _disposeAfterExit(ctrl);
+    }
   }
 
   /// Adds another system, of whichever distribution.
@@ -197,32 +199,49 @@ extension _Linux on _AppSettingsPageState {
   /// [suggestion] is pre-filled and is what an empty field means, so accepting
   /// is one tap and nobody has to think of anything.
   Future<String?> _askProfileName(String suggestion) async {
-    String? answer;
-    await Future<void>.sync(
-      () => withTextFieldController((ctrl) async {
-        ctrl.text = suggestion;
+    // Not `withTextFieldController`: it returns `void`, so awaiting it (even
+    // wrapped in `Future.sync`) completes before the dialog is answered. This
+    // needs the answer, so it owns the controller and disposes it after.
+    final ctrl = TextEditingController(text: suggestion);
+    try {
+      // The buttons answer. `Btnx.cancelOk` pops a value of its own, so an
+      // `onTap` that also popped would have to know which navigator the dialog
+      // is on — the trap this project keeps walking into.
+      final ok = await context.showRoundDialog<bool>(
+        title: libL10n.name,
+        child: Input(
+          controller: ctrl,
+          autoFocus: true,
+          label: libL10n.name,
+          icon: Icons.label_outline,
+          suggestion: false,
+          onSubmitted: (_) => context.popDialog(true),
+        ),
+        actions: Btnx.cancelOk,
+      );
+      if (ok != true) return null;
+      final typed = ctrl.text.trim();
+      return typed.isEmpty ? suggestion : typed;
+    } finally {
+      // Not disposed here. `showRoundDialog` completes when the route is
+      // popped, and the field is still mounted and animating for a beat after
+      // that — disposing now leaves a live `TextField` holding a dead
+      // controller, which the framework reports as "tried to build dirty
+      // widget in the wrong build scope" from the input decorator. This is
+      // what `withTextFieldController`'s delay before disposing is for; that
+      // helper cannot be used here because it returns `void`, so awaiting it
+      // gives back nothing and does so before the dialog is answered.
+      _disposeAfterExit(ctrl);
+    }
+  }
 
-        // The buttons answer. `Btnx.cancelOk` pops a value of its own, so an
-        // `onTap` that also popped would have to know which navigator the
-        // dialog is on — the trap this project keeps walking into.
-        final ok = await context.showRoundDialog<bool>(
-          title: libL10n.name,
-          child: Input(
-            controller: ctrl,
-            autoFocus: true,
-            label: libL10n.name,
-            icon: Icons.label_outline,
-            suggestion: false,
-            onSubmitted: (_) => context.popDialog(true),
-          ),
-          actions: Btnx.cancelOk,
-        );
-        if (ok != true) return;
-        final typed = ctrl.text.trim();
-        answer = typed.isEmpty ? suggestion : typed;
-      }),
-    );
-    return answer;
+  /// Frees a dialog's controller once its route has finished leaving.
+  ///
+  /// A second is far longer than any dialog transition and costs a controller
+  /// held that much longer; the alternative is delaying the caller, and what
+  /// follows this is a download.
+  void _disposeAfterExit(TextEditingController ctrl) {
+    Future.delayed(const Duration(seconds: 1), ctrl.dispose);
   }
 
   /// Which distribution to install, as a list of actions.
