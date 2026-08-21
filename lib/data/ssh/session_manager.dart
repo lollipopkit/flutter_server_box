@@ -211,14 +211,24 @@ abstract final class TermSessionManager {
       });
       await MethodChans.updateLiveActivity(payload);
     } else {
-      // Multiple connections: show connection count
+      // Several at once: the count in the title, and which ones under it.
+      //
+      // The subtitle used to be a fixed "Multiple SSH sessions active", which
+      // said SSH about whatever was open — two shells inside the Linux
+      // userland on this device included, where nothing is connected to
+      // anything. Their names say what they are without having to classify
+      // them, and the widget holds them to one line.
+      //
+      // The title here is ignored: `LiveActivityManager` localizes it, so that
+      // it follows the language the widget renders in rather than the one the
+      // app was in when this ran.
       final id = _activeId ?? _entries.keys.first;
       final entry = _entries[id];
       if (entry == null) return;
       final payload = jsonEncode({
         'id': 'multi_connections',
-        'title': '$connectionCount connections',
-        'subtitle': 'Multiple SSH sessions active',
+        'title': '$connectionCount',
+        'subtitle': _entries.values.map((e) => e.info.title).join(' · '),
         'startTimeMs': entry.info.startTimeMs,
         'status': TermSessionStatus.connected.toString(),
         'hasTerminal': entry.hasTerminalUI,

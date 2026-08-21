@@ -44,16 +44,21 @@ actor LiveActivityManager {
         return try? JSONDecoder().decode(Payload.self, from: data)
     }
 
-    /// The multi-connection title and subtitle are localized here rather than in
-    /// Dart, so they follow the language the widget renders in.
+    /// The multi-session title is localized here rather than in Dart, so it
+    /// follows the language the widget renders in. Terminals and not
+    /// connections: two of them can be shells on this device, inside the Linux
+    /// userland the app installed, with nothing connected to anything.
+    ///
+    /// The subtitle is whatever Dart sent. It used to be a fixed "Multiple SSH
+    /// sessions active", which said SSH about whatever happened to be open —
+    /// two local Alpine shells included. What Dart sends instead is their
+    /// names, which is both true and worth reading.
     private static func contentState(from p: Payload) -> TerminalAttributes.ContentState {
         let isMulti = (p.id == "multi_connections")
         let title = isMulti
-            ? String(format: NSLocalizedString("%d connections", comment: "Title for multiple connections"), p.connectionCount ?? 1)
+            ? String(format: NSLocalizedString("%d terminals", comment: "Title for several open terminals"), p.connectionCount ?? 1)
             : p.title
-        let subtitle = isMulti
-            ? NSLocalizedString("Multiple SSH sessions active", comment: "Subtitle for multiple connections")
-            : p.subtitle
+        let subtitle = p.subtitle
         return TerminalAttributes.ContentState(
             id: p.id,
             title: title,
