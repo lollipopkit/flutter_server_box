@@ -43,7 +43,10 @@ class PageColumns extends StatelessWidget {
       (_maxColumns - 1) * _spacing +
       _padding.horizontal;
 
-  static const _spacing = 8.0;
+  // Both taken from the grid rather than restated. `_spacing` was written out
+  // as its own 8 and would have gone on saying 8 after the grid stopped, which
+  // is the disagreement the comment below is there to prevent.
+  static const _spacing = MasonryList.kSpacing;
   static const _padding = MasonryList.kPadding;
 
   /// How many columns [width] holds. The same arithmetic [MasonryList] uses,
