@@ -1095,6 +1095,39 @@ class AppLocalizationsKo extends AppLocalizations {
   String get virtKeyHelpSFTP => '현재 디렉토리를 SFTP로 열기.';
 
   @override
+  String get virtKeyHelpSnippet => '스니펫을 골라 이 터미널에서 실행합니다.';
+
+  @override
+  String get virtKeyHelpTmux => 'tmux 세션과 창을 전환합니다.';
+
+  @override
+  String get virtKeyIntroActions => '바로가기';
+
+  @override
+  String get virtKeyIntroActionsTip =>
+      '이 키들은 문자를 입력하지 않고 기능을 엽니다. 길게 누르면 설명을 볼 수 있습니다.';
+
+  @override
+  String get virtKeyIntroCustomizeTip =>
+      '터미널 설정에서 순서를 바꾸거나, 쓰지 않는 키를 숨길 수 있습니다.';
+
+  @override
+  String get virtKeyIntroModifiers => '조합 키';
+
+  @override
+  String get virtKeyIntroModifiersTip =>
+      '한 번 눌러 켠 다음 키보드의 글자를 누르세요. 바로 다음 한 키에만 적용됩니다.';
+
+  @override
+  String get virtKeyIntroNav => '커서 이동';
+
+  @override
+  String get virtKeyIntroNavTip => '이 키들은 커서를 옮깁니다. 방향키를 길게 누르면 반복됩니다.';
+
+  @override
+  String get virtKeyIntroSelect => '터미널에 스크롤할 내용이 있으면 가로로 끌어 텍스트를 선택할 수 있습니다.';
+
+  @override
   String get waitConnection => '연결이 설정될 때까지 기다려 주세요.';
 
   @override

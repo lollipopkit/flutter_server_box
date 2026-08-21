@@ -1152,6 +1152,42 @@ class AppLocalizationsUk extends AppLocalizations {
   String get virtKeyHelpSFTP => 'Відкрити поточний каталог у SFTP.';
 
   @override
+  String get virtKeyHelpSnippet =>
+      'Вибрати сніпет і виконати його в цьому терміналі.';
+
+  @override
+  String get virtKeyHelpTmux => 'Перемикання між сесіями та вікнами tmux.';
+
+  @override
+  String get virtKeyIntroActions => 'Швидкі дії';
+
+  @override
+  String get virtKeyIntroActionsTip =>
+      'Ці клавіші нічого не вводять, а відкривають потрібне. Утримуйте клавішу, щоб прочитати, що вона робить.';
+
+  @override
+  String get virtKeyIntroCustomizeTip =>
+      'У налаштуваннях термінала їх можна переставити або приховати ті, якими ви не користуєтесь.';
+
+  @override
+  String get virtKeyIntroModifiers => 'Модифікатори';
+
+  @override
+  String get virtKeyIntroModifiersTip =>
+      'Натисніть одну, щоб увімкнути, потім літеру на клавіатурі. Вона діє рівно на одну клавішу.';
+
+  @override
+  String get virtKeyIntroNav => 'Переміщення курсора';
+
+  @override
+  String get virtKeyIntroNavTip =>
+      'Ці клавіші рухають курсор. Утримуйте стрілку, щоб повторювати її.';
+
+  @override
+  String get virtKeyIntroSelect =>
+      'Поки в терміналі є що прокручувати, перетягування вбік виділяє текст.';
+
+  @override
   String get waitConnection =>
       'Будь ласка, зачекайте, доки з\'єднання буде встановлено.';
 

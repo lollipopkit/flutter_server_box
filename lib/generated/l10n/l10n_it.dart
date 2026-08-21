@@ -1160,6 +1160,43 @@ class AppLocalizationsIt extends AppLocalizations {
   String get virtKeyHelpSFTP => 'Apri la directory corrente in SFTP.';
 
   @override
+  String get virtKeyHelpSnippet =>
+      'Scegli uno snippet ed eseguilo in questo terminale.';
+
+  @override
+  String get virtKeyHelpTmux =>
+      'Passa da una sessione o finestra tmux all\'altra.';
+
+  @override
+  String get virtKeyIntroActions => 'Scorciatoie';
+
+  @override
+  String get virtKeyIntroActionsTip =>
+      'Questi tasti non scrivono, aprono qualcosa. Tienine premuto uno per leggere cosa fa.';
+
+  @override
+  String get virtKeyIntroCustomizeTip =>
+      'Nelle impostazioni del terminale puoi riordinarli o nascondere quelli che non usi mai.';
+
+  @override
+  String get virtKeyIntroModifiers => 'Modificatori';
+
+  @override
+  String get virtKeyIntroModifiersTip =>
+      'Toccane uno per attivarlo, poi tocca una lettera sulla tastiera. Vale solo per quel tasto.';
+
+  @override
+  String get virtKeyIntroNav => 'Navigazione';
+
+  @override
+  String get virtKeyIntroNavTip =>
+      'Questi tasti spostano il cursore. Tieni premuta una freccia per ripeterla.';
+
+  @override
+  String get virtKeyIntroSelect =>
+      'Finché il terminale ha qualcosa da scorrere, trascinando in orizzontale selezioni il testo.';
+
+  @override
   String get waitConnection => 'Attendi che la connessione venga stabilita.';
 
   @override

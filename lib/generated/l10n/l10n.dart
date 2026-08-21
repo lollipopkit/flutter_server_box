@@ -2073,6 +2073,66 @@ abstract class AppLocalizations {
   /// **'Open current directory in SFTP.'**
   String get virtKeyHelpSFTP;
 
+  /// No description provided for @virtKeyHelpSnippet.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a snippet and run it in this terminal.'**
+  String get virtKeyHelpSnippet;
+
+  /// No description provided for @virtKeyHelpTmux.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch between tmux sessions and windows.'**
+  String get virtKeyHelpTmux;
+
+  /// No description provided for @virtKeyIntroActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Shortcuts'**
+  String get virtKeyIntroActions;
+
+  /// No description provided for @virtKeyIntroActionsTip.
+  ///
+  /// In en, this message translates to:
+  /// **'These open something instead of typing. Hold one to read what it does.'**
+  String get virtKeyIntroActionsTip;
+
+  /// No description provided for @virtKeyIntroCustomizeTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Reorder these keys, or hide the ones you never reach for, in the terminal settings.'**
+  String get virtKeyIntroCustomizeTip;
+
+  /// No description provided for @virtKeyIntroModifiers.
+  ///
+  /// In en, this message translates to:
+  /// **'Modifiers'**
+  String get virtKeyIntroModifiers;
+
+  /// No description provided for @virtKeyIntroModifiersTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap one to arm it, then tap a letter on the keyboard. It stays on for that one key.'**
+  String get virtKeyIntroModifiersTip;
+
+  /// No description provided for @virtKeyIntroNav.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigation'**
+  String get virtKeyIntroNav;
+
+  /// No description provided for @virtKeyIntroNavTip.
+  ///
+  /// In en, this message translates to:
+  /// **'These move the cursor. Hold an arrow to repeat it.'**
+  String get virtKeyIntroNavTip;
+
+  /// No description provided for @virtKeyIntroSelect.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag sideways over the terminal to select text, whenever it has something to scroll.'**
+  String get virtKeyIntroSelect;
+
   /// No description provided for @waitConnection.
   ///
   /// In en, this message translates to:

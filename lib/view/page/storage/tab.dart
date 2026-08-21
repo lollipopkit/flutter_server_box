@@ -306,12 +306,16 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
 
   PreferredSizeWidget get _tabBar => PreferredSizeListenBuilder(
     listenable: _sessions,
+    // The wrapper is what the `Scaffold` measures, so it has to be told;
+    // its own default is a full toolbar.
+    preferSize: const Size.fromHeight(SessionTabBar.height),
     builder: () => SessionTabBar(
       names: _sessions.names,
       index: _sessions.index,
       leadingIcon: MingCute.folder_fill,
       onTap: _sessions.select,
       onClose: _close,
+      detailOf: _sessionPath,
       // One widget that follows whichever session is showing, rather than a
       // list the bar would have to rebuild itself to keep current.
       sessionActions: [_SessionActions(sessions: _sessions)],
@@ -328,6 +332,11 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
       actions: [_SessionActions(sessions: _sessions)],
     ),
   );
+
+  /// What a session's row in the sheet says under the name: where that browser
+  /// is. Two tabs on one server are told apart by this and by nothing else.
+  String? _sessionPath(int index) =>
+      _sessions.tabs.elementAtOrNull(index - 1)?.data.path;
 }
 
 extension _Sessions on _FileTabPageState {

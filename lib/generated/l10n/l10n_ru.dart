@@ -1153,6 +1153,42 @@ class AppLocalizationsRu extends AppLocalizations {
   String get virtKeyHelpSFTP => 'Открыть текущий путь в SFTP.';
 
   @override
+  String get virtKeyHelpSnippet =>
+      'Выбрать сниппет и выполнить его в этом терминале.';
+
+  @override
+  String get virtKeyHelpTmux => 'Переключение между сессиями и окнами tmux.';
+
+  @override
+  String get virtKeyIntroActions => 'Быстрые действия';
+
+  @override
+  String get virtKeyIntroActionsTip =>
+      'Эти клавиши ничего не вводят, а открывают нужное. Удерживайте клавишу, чтобы прочитать, что она делает.';
+
+  @override
+  String get virtKeyIntroCustomizeTip =>
+      'В настройках терминала их можно переставить или скрыть те, которыми вы не пользуетесь.';
+
+  @override
+  String get virtKeyIntroModifiers => 'Модификаторы';
+
+  @override
+  String get virtKeyIntroModifiersTip =>
+      'Нажмите одну, чтобы включить, затем букву на клавиатуре. Она действует ровно на одну клавишу.';
+
+  @override
+  String get virtKeyIntroNav => 'Перемещение курсора';
+
+  @override
+  String get virtKeyIntroNavTip =>
+      'Эти клавиши двигают курсор. Удерживайте стрелку, чтобы повторять её.';
+
+  @override
+  String get virtKeyIntroSelect =>
+      'Пока в терминале есть что прокручивать, перетаскивание вбок выделяет текст.';
+
+  @override
   String get waitConnection => 'Пожалуйста, дождитесь установки соединения';
 
   @override

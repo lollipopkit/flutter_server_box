@@ -406,6 +406,13 @@ class SettingStore extends SqliteStore {
 
   late final sshTermHelpShown = propertyDefault('sshTermHelpShown', false);
 
+  /// Whether the walkthrough over the virtual keys has run.
+  ///
+  /// Separate from [sshTermHelpShown], which gates a dialog about the terminal
+  /// body and is the only guidance a desktop gets — there are no virtual keys
+  /// there to walk through.
+  late final virtKeyIntroShown = propertyDefault('virtKeyIntroShown', false);
+
   late final horizonVirtKey = propertyDefault('horizonVirtKey', false);
 
   /// general wake lock

@@ -1092,6 +1092,38 @@ class AppLocalizationsJa extends AppLocalizations {
   String get virtKeyHelpSFTP => '現在のパスでSFTPを開く。';
 
   @override
+  String get virtKeyHelpSnippet => 'スニペットを選んで、このターミナルで実行します。';
+
+  @override
+  String get virtKeyHelpTmux => 'tmux のセッションとウィンドウを切り替えます。';
+
+  @override
+  String get virtKeyIntroActions => 'ショートカット';
+
+  @override
+  String get virtKeyIntroActionsTip => 'これらは文字を入力せず、機能を開きます。長押しすると説明を読めます。';
+
+  @override
+  String get virtKeyIntroCustomizeTip => 'ターミナル設定で並べ替えたり、使わないキーを隠したりできます。';
+
+  @override
+  String get virtKeyIntroModifiers => '修飾キー';
+
+  @override
+  String get virtKeyIntroModifiersTip =>
+      'タップして有効にしてから、キーボードの文字をタップします。有効なのは次の 1 キーだけです。';
+
+  @override
+  String get virtKeyIntroNav => 'カーソル移動';
+
+  @override
+  String get virtKeyIntroNavTip => 'これらはカーソルを動かします。矢印キーは長押しで連続入力できます。';
+
+  @override
+  String get virtKeyIntroSelect =>
+      'ターミナルにスクロールできる内容があるときは、横にドラッグするとテキストを選択できます。';
+
+  @override
   String get waitConnection => '接続の確立を待ってください';
 
   @override

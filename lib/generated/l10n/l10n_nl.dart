@@ -1151,6 +1151,42 @@ class AppLocalizationsNl extends AppLocalizations {
   String get virtKeyHelpSFTP => 'Huidige map openen in SFTP.';
 
   @override
+  String get virtKeyHelpSnippet =>
+      'Kies een snippet en voer het uit in deze terminal.';
+
+  @override
+  String get virtKeyHelpTmux => 'Wissel tussen tmux-sessies en -vensters.';
+
+  @override
+  String get virtKeyIntroActions => 'Snelkoppelingen';
+
+  @override
+  String get virtKeyIntroActionsTip =>
+      'Deze toetsen typen niets, ze openen iets. Houd er een ingedrukt om te lezen wat hij doet.';
+
+  @override
+  String get virtKeyIntroCustomizeTip =>
+      'In de terminalinstellingen kun je ze herschikken of verbergen wat je nooit gebruikt.';
+
+  @override
+  String get virtKeyIntroModifiers => 'Modificatietoetsen';
+
+  @override
+  String get virtKeyIntroModifiersTip =>
+      'Tik er een aan om hem in te schakelen en tik daarna een letter op het toetsenbord. Hij geldt voor die ene toets.';
+
+  @override
+  String get virtKeyIntroNav => 'Navigatie';
+
+  @override
+  String get virtKeyIntroNavTip =>
+      'Deze toetsen verplaatsen de cursor. Houd een pijltoets ingedrukt om hem te herhalen.';
+
+  @override
+  String get virtKeyIntroSelect =>
+      'Zolang de terminal iets te scrollen heeft, selecteer je tekst door opzij te slepen.';
+
+  @override
   String get waitConnection =>
       'Wacht alstublieft tot de verbinding tot stand is gebracht.';
 

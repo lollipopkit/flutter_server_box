@@ -184,15 +184,30 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
     // Both: the bar shows which tab is current *and* how the picker behind it
     // is sorted.
     listenable: Listenable.merge([_sessions, _sortVersion]),
+    // The wrapper is what the `Scaffold` measures, so it has to be told;
+    // its own default is a full toolbar.
+    preferSize: const Size.fromHeight(SessionTabBar.height),
     builder: () => SessionTabBar(
       names: _sessions.names,
       index: _sessions.index,
       onTap: _sessions.select,
       onClose: _confirmClose,
+      detailOf: _sessionAddr,
       sessionActions: _serverActions,
       leadingActions: [_sortBtn, _searchBtn, _historyBtn],
     ),
   );
+
+  /// What a session's row in the sheet says under the name: the machine the
+  /// shell is on. Nothing for a shell on this device — its name already says
+  /// so, and it has no address to give.
+  String? _sessionAddr(int index) {
+    final tab = _sessions.tabs.elementAtOrNull(index - 1);
+    return switch (tab?.data.page.args.source) {
+      ServerSource(:final spi) => spi.displayAddr,
+      _ => null,
+    };
+  }
 
   PreferredSizeWidget get _sessionBar => PreferredSizeListenBuilder(
     listenable: _sessions,

@@ -1151,6 +1151,43 @@ class AppLocalizationsTr extends AppLocalizations {
   String get virtKeyHelpSFTP => 'Mevcut dizini SFTP\'de aç.';
 
   @override
+  String get virtKeyHelpSnippet =>
+      'Bir parçacık seçip bu terminalde çalıştırır.';
+
+  @override
+  String get virtKeyHelpTmux =>
+      'tmux oturumları ve pencereleri arasında geçiş yapar.';
+
+  @override
+  String get virtKeyIntroActions => 'Kısayollar';
+
+  @override
+  String get virtKeyIntroActionsTip =>
+      'Bu tuşlar yazmaz, bir şey açar. Ne yaptığını okumak için birine basılı tutun.';
+
+  @override
+  String get virtKeyIntroCustomizeTip =>
+      'Terminal ayarlarından sıralarını değiştirebilir, hiç kullanmadıklarınızı gizleyebilirsiniz.';
+
+  @override
+  String get virtKeyIntroModifiers => 'Değiştirici tuşlar';
+
+  @override
+  String get virtKeyIntroModifiersTip =>
+      'Birine dokunup etkinleştirin, sonra klavyeden bir harfe dokunun. Yalnızca o tek tuş için geçerlidir.';
+
+  @override
+  String get virtKeyIntroNav => 'İmleç hareketi';
+
+  @override
+  String get virtKeyIntroNavTip =>
+      'Bu tuşlar imleci hareket ettirir. Yön tuşunu basılı tutarsanız yinelenir.';
+
+  @override
+  String get virtKeyIntroSelect =>
+      'Terminalde kaydırılacak bir şey olduğu sürece, yana sürükleyerek metin seçebilirsiniz.';
+
+  @override
   String get waitConnection => 'Lütfen bağlantının kurulmasını bekleyin.';
 
   @override

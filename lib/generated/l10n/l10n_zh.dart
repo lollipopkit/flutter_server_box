@@ -1070,6 +1070,36 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtKeyHelpSFTP => '在 SFTP 中打开当前路径。';
 
   @override
+  String get virtKeyHelpSnippet => '选择一个代码片段并在当前终端执行。';
+
+  @override
+  String get virtKeyHelpTmux => '在 tmux 的 session 和 window 之间切换。';
+
+  @override
+  String get virtKeyIntroActions => '快捷操作';
+
+  @override
+  String get virtKeyIntroActionsTip => '这些键不输入字符，而是打开对应功能。长按可查看说明。';
+
+  @override
+  String get virtKeyIntroCustomizeTip => '在终端设置里可以调整顺序，或隐藏用不到的键。';
+
+  @override
+  String get virtKeyIntroModifiers => '修饰键';
+
+  @override
+  String get virtKeyIntroModifiersTip => '点一下开启，再按键盘上的字母。开启状态只作用于下一个键。';
+
+  @override
+  String get virtKeyIntroNav => '光标移动';
+
+  @override
+  String get virtKeyIntroNavTip => '这些键移动光标。长按方向键可连续触发。';
+
+  @override
+  String get virtKeyIntroSelect => '终端有内容可滚动时，横向拖动即可选中文字。';
+
+  @override
   String get waitConnection => '请等待连接建立';
 
   @override
@@ -2377,6 +2407,36 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtKeyHelpSFTP => '在 SFTP 中打開目前路徑。';
+
+  @override
+  String get virtKeyHelpSnippet => '選擇一個程式碼片段並在目前終端機執行。';
+
+  @override
+  String get virtKeyHelpTmux => '在 tmux 的 session 和 window 之間切換。';
+
+  @override
+  String get virtKeyIntroActions => '快捷操作';
+
+  @override
+  String get virtKeyIntroActionsTip => '這些鍵不輸入字元，而是開啟對應功能。長按可檢視說明。';
+
+  @override
+  String get virtKeyIntroCustomizeTip => '在終端機設定裡可以調整順序，或隱藏用不到的鍵。';
+
+  @override
+  String get virtKeyIntroModifiers => '修飾鍵';
+
+  @override
+  String get virtKeyIntroModifiersTip => '點一下開啟，再按鍵盤上的字母。開啟狀態只作用於下一個鍵。';
+
+  @override
+  String get virtKeyIntroNav => '游標移動';
+
+  @override
+  String get virtKeyIntroNavTip => '這些鍵移動游標。長按方向鍵可連續觸發。';
+
+  @override
+  String get virtKeyIntroSelect => '終端機有內容可捲動時，橫向拖曳即可選取文字。';
 
   @override
   String get waitConnection => '請等待連線建立';

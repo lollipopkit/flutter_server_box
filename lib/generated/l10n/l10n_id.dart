@@ -1150,6 +1150,42 @@ class AppLocalizationsId extends AppLocalizations {
   String get virtKeyHelpSFTP => 'Buka direktori saat ini di SFTP.';
 
   @override
+  String get virtKeyHelpSnippet =>
+      'Pilih sebuah snippet dan jalankan di terminal ini.';
+
+  @override
+  String get virtKeyHelpTmux => 'Berpindah antar sesi dan jendela tmux.';
+
+  @override
+  String get virtKeyIntroActions => 'Pintasan';
+
+  @override
+  String get virtKeyIntroActionsTip =>
+      'Tombol-tombol ini tidak mengetik, melainkan membuka sesuatu. Tahan salah satunya untuk membaca fungsinya.';
+
+  @override
+  String get virtKeyIntroCustomizeTip =>
+      'Di pengaturan terminal kamu bisa mengubah urutannya, atau menyembunyikan yang tidak pernah dipakai.';
+
+  @override
+  String get virtKeyIntroModifiers => 'Tombol pengubah';
+
+  @override
+  String get virtKeyIntroModifiersTip =>
+      'Ketuk satu untuk mengaktifkannya, lalu ketuk huruf di papan ketik. Berlaku untuk satu tombol itu saja.';
+
+  @override
+  String get virtKeyIntroNav => 'Navigasi';
+
+  @override
+  String get virtKeyIntroNavTip =>
+      'Tombol-tombol ini menggerakkan kursor. Tahan tombol panah untuk mengulanginya.';
+
+  @override
+  String get virtKeyIntroSelect =>
+      'Selama terminal masih bisa digulir, seret ke samping untuk memilih teks.';
+
+  @override
   String get waitConnection => 'Harap tunggu koneksi akan dibuat.';
 
   @override
