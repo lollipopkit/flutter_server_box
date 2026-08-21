@@ -107,10 +107,21 @@ abstract final class IosRootfs {
   /// profile, and `install` deletes what it could not finish.
   static Future<void> scan() async {
     final container = _container;
-    _profiles.clear();
-    if (container == null) return;
+    if (container == null) {
+      _profiles.clear();
+      return;
+    }
+    // Built beside the list rather than in it. [profiles] and [selected] are
+    // synchronous because what reads them is a widget being built, and every
+    // frame drawn between the clear and the last await used to see nothing
+    // installed — no chips, no rail rows, and `open` refusing for want of an
+    // id. Renaming one was enough to hit it.
+    final found = <LinuxProfile>[];
     final dir = Directory(container);
-    if (!await dir.exists()) return;
+    if (!await dir.exists()) {
+      _profiles.clear();
+      return;
+    }
     final entries = await dir.list(followLinks: false).toList();
     entries.sort((a, b) => a.path.compareTo(b.path));
     for (final entry in entries) {
@@ -119,13 +130,16 @@ abstract final class IosRootfs {
       if (id.startsWith('.')) continue;
       if (!await looksUnpacked(entry.path)) continue;
       final marker = File(entry.path.joinPath(LinuxProfile.marker));
-      _profiles.add(
+      found.add(
         LinuxProfile.decode(
           id,
           await marker.exists() ? await marker.readAsString() : '',
         ),
       );
     }
+    _profiles
+      ..clear()
+      ..addAll(found);
   }
 
 
@@ -162,6 +176,9 @@ abstract final class IosRootfs {
     final mirror = linuxMirror(distro);
 
     final dir = Directory(root);
+    // Reinstalling in place deletes the tree, so the engine has to let go of
+    // what it mounted from it first.
+    if (into != null) detach(id);
     // A userland is complete or absent; there is no repairing half of one.
     if (await dir.exists()) await dir.delete(recursive: true);
     await dir.create(recursive: true);
@@ -251,6 +268,9 @@ abstract final class IosRootfs {
   static Future<void> removeProfile(String id) async {
     final root = rootOf(id);
     if (root == null) return;
+    // Before the directory goes: its `/dev` is a fakefs whose database lives
+    // inside it, and the engine keeps the name attached until told otherwise.
+    detach(id);
     final dir = Directory(root);
     if (await dir.exists()) await dir.delete(recursive: true);
     await scan();
@@ -337,10 +357,14 @@ abstract final class IosRootfs {
 
   /// Locates where the filesystem would be. Call once, before anything asks.
   ///
-  /// The directory is still called `alpine` and is not renamed per
-  /// distribution: it is one tree at a time and the name is a path, not a
-  /// claim. Renaming it would orphan the tree of every install already out
-  /// there for nothing.
+  /// The container is `linux/`, holding one subdirectory per system. Releases
+  /// before this unpacked a single tree directly at `alpine/`, and nothing
+  /// moves it: such an install reads as absent and is offered fresh.
+  ///
+  /// TODO(migration residue; remove once no install predates the container):
+  /// the old `alpine/` tree is left on disk where nothing can reach or delete
+  /// it. Deliberate only because none of this has shipped — a released build
+  /// would have to move it or remove it.
   static Future<void> prepare() async {
     if (!Platform.isIOS) return;
     _container = (await getApplicationSupportDirectory()).path.joinPath('linux');
@@ -389,6 +413,25 @@ abstract final class IosRootfs {
   /// Mounts a system's filesystems, so a session can be opened in it.
   ///
   /// [open] does this itself; this exists for attaching one ahead of time.
+  /// Unmounts a system's filesystems, so a later [attach] mounts afresh.
+  ///
+  /// Negative on failure, `-EBUSY` (-16) while a session still holds them —
+  /// the caller closes those first. Logged rather than thrown: a delete the
+  /// user asked for goes ahead either way, and what is left is a mount that
+  /// outlives the tree until the app restarts.
+  static int detach(String profileId) {
+    final detach = _detach;
+    if (detach == null) return -1;
+    final pointer = profileId.toNativeUtf8();
+    try {
+      final err = detach(pointer.cast());
+      if (err < 0) Loggers.app.warning('sbm_ish_detach($profileId) = $err');
+      return err;
+    } finally {
+      malloc.free(pointer);
+    }
+  }
+
   static int attach(String profileId) {
     final attach = _attach;
     if (attach == null) return -1;
@@ -551,6 +594,10 @@ abstract final class IosRootfs {
   static final _attach = _look(
     'sbm_ish_attach',
     (p) => p.lookupFunction<Int Function(Pointer<Char>), int Function(Pointer<Char>)>('sbm_ish_attach'),
+  );
+  static final _detach = _look(
+    'sbm_ish_detach',
+    (p) => p.lookupFunction<Int Function(Pointer<Char>), int Function(Pointer<Char>)>('sbm_ish_detach'),
   );
   static final _open = _look(
     'sbm_ish_open',

@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:fl_lib/fl_lib.dart';
+
 import 'package:server_box/core/utils/ios_rootfs.dart';
 import 'package:server_box/core/utils/linux_seed.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
@@ -146,7 +148,20 @@ class _IshSession implements ShellSession {
   void _drain() {
     // Zero, so this returns whatever is there and no more. The wait, if any,
     // is the timer's.
-    final chunk = IosRootfs.read(id, timeout: Duration.zero);
+    final Uint8List? chunk;
+    try {
+      chunk = IosRootfs.read(id, timeout: Duration.zero);
+    } catch (e, s) {
+      // `read` throws when the engine answers -EBUSY: a guest thread died
+      // holding the output lock. That is this read, not this session — the
+      // lock is released when that thread is reaped. Rearming is the whole
+      // point: the one-shot timer only re-arms at the end of this method, so
+      // letting the throw escape left `_poll` null and the terminal silent
+      // for good, with `done` never completing and the session never removed.
+      Loggers.app.warning('ish read', e, s);
+      _schedule(_busyInterval);
+      return;
+    }
     if (chunk == null) {
       // This session ended — its shell exited, or its command finished. The
       // machine is untouched; only this process on it is over.

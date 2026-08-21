@@ -74,10 +74,21 @@ abstract final class AndroidRootfs {
   /// deleted from disk cannot linger in it.
   static Future<void> scan() async {
     final container = _container;
-    _profiles.clear();
-    if (container == null) return;
+    if (container == null) {
+      _profiles.clear();
+      return;
+    }
+    // Built beside the list rather than in it. [profiles] and [selected] are
+    // synchronous because what reads them is a widget being built, and every
+    // frame drawn between the clear and the last await used to see nothing
+    // installed — no chips, no rail rows, and `open` refusing for want of an
+    // id. Renaming one was enough to hit it.
+    final found = <LinuxProfile>[];
     final dir = Directory(container);
-    if (!await dir.exists()) return;
+    if (!await dir.exists()) {
+      _profiles.clear();
+      return;
+    }
     final entries = await dir.list(followLinks: false).toList();
     entries.sort((a, b) => a.path.compareTo(b.path));
     for (final entry in entries) {
@@ -88,10 +99,13 @@ abstract final class AndroidRootfs {
       // The marker rather than [looksUnpacked]: here it is written last and its
       // presence is what says the extraction finished.
       if (!await marker.exists()) continue;
-      _profiles.add(
+      found.add(
         LinuxProfile.decode(id, await marker.readAsString()),
       );
     }
+    _profiles
+      ..clear()
+      ..addAll(found);
   }
 
   /// The last answer [isInstalled] gave, without asking the filesystem again.

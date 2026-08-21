@@ -7,10 +7,55 @@
 // never had one, which is what the Dart side is already written against.
 
 bool sbm_ish_available(void) { return false; }
+/// Unmounts one system's filesystems and forgets it.
+///
+/// Returns 0, or a negative errno. Needed because [sbm_ish_attach] is
+/// idempotent by name: without this, deleting a system or reinstalling one in
+/// place left the name attached, so the next attach did nothing and the fresh
+/// tree was handed the previous one's `/dev` — a fakefs whose database had been
+/// deleted along with the old directory. It also frees the slot, which is one
+/// of eight.
+///
+/// `do_umount` answers `EBUSY` while anything still holds the mount, and this
+/// reports that rather than forcing it: a session still running in the system
+/// is a reason not to pull its `/dev` out from under it. The caller closes
+/// those first.
+int sbm_ish_detach(const char *profile) {
+    if (!booted) return -ENOTCONN;
+    if (profile == NULL || profile[0] == '\0') return -EINVAL;
+    if (strchr(profile, '/') != NULL) return -EINVAL;
+
+    // Innermost first: `/dev/pts` and `/dev/shm` are inside `/dev`, and the
+    // outer one cannot go while they hold it.
+    static const char *const points[] = { "dev/pts", "dev/shm", "dev", "proc" };
+    char path[MAX_PATH];
+    int err = 0;
+    for (size_t i = 0; i < sizeof(points) / sizeof(points[0]); i++) {
+        snprintf(path, sizeof(path), "/%s/%s", profile, points[i]);
+        int one = do_umount(path);
+        // Not mounted is not a failure: attach may have stopped early, and
+        // detaching twice has to be safe.
+        if (one < 0 && one != -_ENOENT && err == 0) err = one;
+    }
+    if (err < 0) {
+        syslog(LOG_ERR, "sbm_ish: %s did not detach (%d); its mounts stay until "
+               "the app restarts", profile, err);
+        return err;
+    }
+
+    pthread_mutex_lock(&attached_lock);
+    for (int i = 0; i < SBM_MAX_PROFILES; i++) {
+        if (strcmp(attached[i], profile) == 0) { attached[i][0] = '\0'; break; }
+    }
+    pthread_mutex_unlock(&attached_lock);
+    return 0;
+}
+
 int sbm_ish_boot(const char *rootfs, const char *profile) {
     (void)rootfs; (void)profile; return -1;
 }
 int sbm_ish_attach(const char *profile) { (void)profile; return -1; }
+int sbm_ish_detach(const char *profile) { (void)profile; return -1; }
 int sbm_ish_open(const char *profile, const char *shell, const char *command,
                  int columns, int rows) {
     (void)profile; (void)shell; (void)command; (void)columns; (void)rows;
@@ -493,6 +538,50 @@ int sbm_ish_attach(const char *profile) {
     make_dev(profile);
 
     snprintf(attached[slot], sizeof(attached[slot]), "%s", profile);
+    pthread_mutex_unlock(&attached_lock);
+    return 0;
+}
+
+/// Unmounts one system's filesystems and forgets it.
+///
+/// Returns 0, or a negative errno. Needed because [sbm_ish_attach] is
+/// idempotent by name: without this, deleting a system or reinstalling one in
+/// place left the name attached, so the next attach did nothing and the fresh
+/// tree was handed the previous one's `/dev` — a fakefs whose database had been
+/// deleted along with the old directory. It also frees the slot, which is one
+/// of eight.
+///
+/// `do_umount` answers `EBUSY` while anything still holds the mount, and this
+/// reports that rather than forcing it: a session still running in the system
+/// is a reason not to pull its `/dev` out from under it. The caller closes
+/// those first.
+int sbm_ish_detach(const char *profile) {
+    if (!booted) return -ENOTCONN;
+    if (profile == NULL || profile[0] == '\0') return -EINVAL;
+    if (strchr(profile, '/') != NULL) return -EINVAL;
+
+    // Innermost first: `/dev/pts` and `/dev/shm` are inside `/dev`, and the
+    // outer one cannot go while they hold it.
+    static const char *const points[] = { "dev/pts", "dev/shm", "dev", "proc" };
+    char path[MAX_PATH];
+    int err = 0;
+    for (size_t i = 0; i < sizeof(points) / sizeof(points[0]); i++) {
+        snprintf(path, sizeof(path), "/%s/%s", profile, points[i]);
+        int one = do_umount(path);
+        // Not mounted is not a failure: attach may have stopped early, and
+        // detaching twice has to be safe.
+        if (one < 0 && one != -_ENOENT && err == 0) err = one;
+    }
+    if (err < 0) {
+        syslog(LOG_ERR, "sbm_ish: %s did not detach (%d); its mounts stay until "
+               "the app restarts", profile, err);
+        return err;
+    }
+
+    pthread_mutex_lock(&attached_lock);
+    for (int i = 0; i < SBM_MAX_PROFILES; i++) {
+        if (strcmp(attached[i], profile) == 0) { attached[i][0] = '\0'; break; }
+    }
     pthread_mutex_unlock(&attached_lock);
     return 0;
 }

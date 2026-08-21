@@ -103,6 +103,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
   @override
   void initState() {
     super.initState();
+    Rootfs.removed.addListener(_onRootfsRemoved);
     // Both after the first frame, and in this order: a queued request is what
     // the user just asked for, and it should end up beside the tabs that were
     // already open rather than racing them.
@@ -114,6 +115,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
 
   @override
   void dispose() {
+    Rootfs.removed.removeListener(_onRootfsRemoved);
     _sessions.dispose();
     _sortVersion.dispose();
     super.dispose();
@@ -332,7 +334,13 @@ extension _Sessions on _SSHTabPageState {
     final added = Rootfs.profiles.firstWhereOrNull((e) => !before.contains(e.id));
     // Nothing new means it was already there and the install returned early —
     // the first system, opened by the chip that offered to install it.
-    _openRootfs(added?.id ?? Rootfs.selected?.id ?? '');
+    //
+    // Null rather than an empty string: null is what every layer below reads
+    // as "whichever is selected", while "" is a profile name, and the engine
+    // answers -EINVAL to it.
+    final id = added?.id ?? Rootfs.selected?.id;
+    if (id == null) return;
+    _openRootfs(id);
   }
 
   /// Deletes one Linux system, and the terminals that were inside it.
@@ -342,15 +350,26 @@ extension _Sessions on _SSHTabPageState {
   /// in the *other* systems are untouched — that is the point of them being
   /// separate.
   Future<void> _removeRootfs(LinuxProfile target) async {
-    if (!await removeRootfs(context, profile: target)) return;
+    await removeRootfs(context, profile: target);
+  }
+
+  /// Closes the terminals that were running in a system that has been deleted.
+  ///
+  /// Their shells went with the files they were running from, so leaving the
+  /// tabs up leaves dead terminals nobody asked to keep. Driven by
+  /// `Rootfs.removed` rather than by the delete here, because the settings page
+  /// deletes too and only this page has the tabs.
+  void _onRootfsRemoved() {
+    final id = Rootfs.removed.value;
+    if (id == null || !mounted) return;
     for (final tab in [..._sessions.tabs]) {
       final source = tab.data.page.args.source;
       if (source is! LocalSource || !source.rootfs) continue;
-      // A tab that named no profile was opened in whichever was selected, and
-      // this is that one.
-      if (source.profileId == null || source.profileId == target.id) {
-        _closeTab(tab.id);
-      }
+      // A tab that names no profile was opened in whichever was selected then.
+      // With that one gone the selection has moved, so it cannot be recovered
+      // here — such a tab is left alone rather than closed on a guess, and its
+      // shell reports what it finds.
+      if (source.profileId == id) _closeTab(tab.id);
     }
   }
 

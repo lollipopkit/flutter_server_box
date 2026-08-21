@@ -71,6 +71,14 @@ SBM_ISH_EXPORT int sbm_ish_boot(const char *rootfs, const char *profile);
 /// of wanting a terminal in it.
 SBM_ISH_EXPORT int sbm_ish_attach(const char *profile);
 
+/// Unmounts one system's filesystems and forgets it, so a later [sbm_ish_attach]
+/// for the same name mounts afresh.
+///
+/// Returns 0, or a negative errno — `EBUSY` while a session still holds the
+/// mounts. Call it before deleting or replacing a system's directory: the
+/// `/dev` mounted for it is backed by a database inside that directory.
+SBM_ISH_EXPORT int sbm_ish_detach(const char *profile);
+
 /// Opens a session: a process in the machine, on a pseudo-terminal of its own.
 ///
 /// Returns a handle, or a negative errno. [command] is what to run; NULL or

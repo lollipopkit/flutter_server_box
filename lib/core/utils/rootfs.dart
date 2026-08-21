@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+
 import 'package:dio/dio.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/utils/android_rootfs.dart';
@@ -87,6 +89,13 @@ abstract final class Rootfs {
     }
   }
 
+  /// The id of the system deleted most recently.
+  ///
+  /// Two places delete — the terminal tab and the settings page — and only one
+  /// of them holds the sessions that were running inside. A notifier rather
+  /// than a callback, because what listens outlives any one deletion.
+  static final removed = ValueNotifier<String?>(null);
+
   /// Deletes one system and everything in it. The others stay.
   ///
   /// The caller asks first.
@@ -96,6 +105,9 @@ abstract final class Rootfs {
     } else {
       await IosRootfs.removeProfile(id);
     }
+    // After the tree is gone, so a listener that closes tabs cannot race the
+    // deletion it is reacting to.
+    removed.value = id;
   }
 
   /// Downloads and unpacks a new system of [distro], beside whatever is there.
