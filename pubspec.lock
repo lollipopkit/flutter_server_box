@@ -1647,13 +1647,13 @@ packages:
     source: hosted
     version: "3.5.2"
   sqlparser:
-    dependency: transitive
+    dependency: "direct dev"
     description:
       name: sqlparser
-      sha256: d5edca6c3e5d04cb621463051b86b0a9df5dfecce13b975a2810126eca0cc78b
+      sha256: "40bdddb306a727be9ce510bd2d2b9a6c9db6c586d846ef7b22e3990a2b24f02d"
       url: "https://pub.dev"
     source: hosted
-    version: "0.44.6"
+    version: "0.44.5"
   stack_trace:
     dependency: transitive
     description:

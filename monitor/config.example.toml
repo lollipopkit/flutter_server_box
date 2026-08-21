@@ -151,9 +151,13 @@ enabled = false
 # File contents and the bearer token must not cross the network in plaintext.
 # Remote callers therefore need TLS above; a same-host reverse proxy remains
 # supported because its loopback connection to monitor is local.
+# Set this only for a private network whose transport encryption you control,
+# such as a Tailscale tailnet. The App must also explicitly allow insecure HTTP
+# for that individual Monitor connection before it will send a plaintext request.
 [remote_access.fs]
 enabled = false
 roots = []
+# allow_insecure = false
 # Largest single file a write will accept. Leave unset to size it from
 # physical memory. The body is streamed to disk and never buffered whole, so
 # this bounds the disk rather than memory.

@@ -151,6 +151,14 @@ pub struct FsConfig {
     #[serde(default)]
     pub roots: Vec<String>,
 
+    /// Serve files to callers outside loopback without TLS.
+    ///
+    /// A private source address does not prove a path is encrypted, so this is
+    /// off by default and only an operator editing the agent config can enable
+    /// it. The app has a second per-server opt-in before it will send HTTP.
+    #[serde(default)]
+    pub allow_insecure: bool,
+
     /// Largest single file the API will accept on a write. `None` = derive
     /// from physical memory.
     ///
@@ -233,6 +241,7 @@ impl RemoteAccessConfig {
             fs: Fs {
                 enabled: self.fs.enabled,
                 roots: FsRoots::resolve(&self.fs.roots),
+                allow_insecure: self.fs.allow_insecure,
                 // A quarter of RAM, floored and capped: big enough for the
                 // config files and archives people actually move, small enough
                 // that one request cannot fill a small VPS's disk.
@@ -284,6 +293,7 @@ pub struct Fs {
     pub enabled: bool,
     /// Canonicalised at startup — see [`FsRoots`].
     pub roots: FsRoots,
+    pub allow_insecure: bool,
     pub max_write_bytes: u64,
 }
 
@@ -295,10 +305,11 @@ impl Fs {
     /// the worst possible reading of it.
     ///
     /// File contents and the bearer token are both sensitive, so a direct
-    /// network request needs TLS. A local caller or same-host reverse proxy is
-    /// safe for the same reason as the terminal path (see `api::ws`).
+    /// network request needs TLS unless the operator explicitly allows
+    /// plaintext. A local caller or same-host reverse proxy is safe for the
+    /// same reason as the terminal path (see `api::ws`).
     pub fn available(&self, secure: bool) -> bool {
-        self.enabled && !self.roots.is_empty() && secure
+        self.enabled && !self.roots.is_empty() && (secure || self.allow_insecure)
     }
 }
 
@@ -394,11 +405,18 @@ impl RemoteAccess {
                 );
             }
         }
-        if self.fs.enabled && !self.fs.roots.is_empty() && !tls_active {
+        if self.fs.enabled && !self.fs.roots.is_empty() && !tls_active && !self.fs.allow_insecure {
             tracing::warn!(
                 "File API is enabled without TLS: it will serve clients on loopback \
-                 (including a same-host reverse proxy) but refuse anything arriving \
-                 over the network; configure TLS before using it remotely"
+                  (including a same-host reverse proxy) but refuse anything arriving \
+                  over the network; configure TLS or set remote_access.fs.allow_insecure"
+            );
+        }
+        if self.fs.enabled && !self.fs.roots.is_empty() && self.fs.allow_insecure {
+            tracing::warn!(
+                "File API permits plaintext network access: bearer tokens and file \
+                 contents can be read or changed in transit. Keep this limited to a \
+                 network whose transport security you control."
             );
         }
     }
@@ -495,6 +513,7 @@ mod tests {
         assert!(!r.terminal.enabled);
         assert!(!r.terminal.allow_insecure);
         assert!(!r.fs.enabled);
+        assert!(!r.fs.allow_insecure);
         assert!(!r.any_enabled());
     }
 
@@ -539,6 +558,21 @@ mod tests {
         .resolve(None);
         assert!(configured.fs.available(true));
         assert!(!configured.fs.available(false));
+    }
+
+    #[test]
+    fn file_api_can_explicitly_allow_plaintext() {
+        let configured = RemoteAccessConfig {
+            fs: FsConfig {
+                enabled: true,
+                roots: vec!["/tmp".to_string()],
+                allow_insecure: true,
+                ..Default::default()
+            },
+            ..Default::default()
+        }
+        .resolve(None);
+        assert!(configured.fs.available(false));
     }
 
     #[test]

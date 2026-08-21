@@ -38,7 +38,10 @@ class MonitorHttpClient {
         ? addr.substring(0, addr.length - 1)
         : addr;
     final uri = Uri.tryParse(normalized);
-    if (uri == null || !isSecureRemoteEndpoint(uri)) {
+    if (uri == null || !isSecureRemoteEndpoint(
+      uri,
+      allowInsecure: monitor.allowInsecure,
+    )) {
       throw MonitorHttpErr(
         type: MonitorHttpErrType.net,
         message: l10n.monitorHttpsRequired,

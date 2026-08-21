@@ -21,6 +21,7 @@ import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
 import 'package:server_box/data/store/migrations/m004_kv_to_tables.dart';
+import 'package:server_box/data/store/migrations/m005_monitor_insecure_http.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/hive/hive_registrar.g.dart';
 import 'package:server_box/hive/legacy_adapters.dart';
@@ -136,8 +137,8 @@ Future<void> _initData() async {
   // `HiveImport`, once no supported install can still be on Hive.
   await Hive.initFlutter();
   Hive.registerAdapters();
-  // Reads pre-v3 server records, which the generated SpiAdapter no longer
-  // understands (it owns a new typeId and the nested layout).
+  // Reads every released server-record layout. The generated adapters no
+  // longer own the frozen type IDs because nothing writes Hive any more.
   registerHiveLegacyAdapters();
 
   await PrefStore.shared.init(); // Call this before accessing any store
@@ -240,7 +241,10 @@ Future<void> _doDbMigrate() async {
   // `current` while copying, because a pre-v3 record only exists as a Hive
   // value and that is the one pass that reads one. The call stays for the
   // downgrade check it performs, and for the next step that does exist.
-  await SchemaVersion.migrate(const [KvToTablesMigration()]);
+  await SchemaVersion.migrate(const [
+    KvToTablesMigration(),
+    MonitorInsecureHttpMigration(),
+  ]);
 
   // No app-level fixups follow. `migrateIds` and `migrateIdentityFilePaths`
   // both scanned every server on every launch to repair a record only an

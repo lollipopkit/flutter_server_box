@@ -112,6 +112,13 @@ Notes:
   message carries an SSH password. TLS satisfies this; so does a reverse proxy
   on the same host, since loopback traffic can't be read off the network.
   `[remote_access.terminal] allow_insecure = true` overrides it.
+- The file API also requires TLS for remote callers. On a trusted private
+  network with transport encryption outside HTTP (for example Tailscale), an
+  operator may set `[remote_access.fs] allow_insecure = true`. The App must
+  separately enable **Allow insecure HTTP** for that individual Monitor
+  connection; both opt-ins are required. Bearer tokens and file contents are
+  otherwise sent in plaintext, so do not use this for an ordinary LAN or a
+  network you do not control.
 - The agent pins the host key of the sshd it connects to on first use and
   refuses a changed one, rather than re-pinning silently. Clearing the pin is
   deliberate: delete the row from `ssh_known_hosts`.

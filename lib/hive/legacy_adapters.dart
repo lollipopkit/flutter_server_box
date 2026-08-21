@@ -27,8 +27,10 @@ import 'package:server_box/hive/spi_legacy_adapter.dart';
 /// `HiveImport`, once no supported install can still be on Hive.
 void registerHiveLegacyAdapters() {
   Hive.registerAdapter(SpiLegacyAdapter());
+  Hive.registerAdapter(SpiNestedLegacyAdapter());
   Hive.registerAdapter(LegacyPrivateKeyAdapter());
   Hive.registerAdapter(LegacySnippetAdapter());
+  Hive.registerAdapter(LegacyMonitorHttpCredentialAdapter());
 }
 
 /// typeId 1, as written up to and including v1.0.1491: an id that was also the

@@ -258,6 +258,7 @@ final class WatchSync {
             user: monitor.user,
             pwd: monitor.pwd,
             ignoreCert: monitor.ignoreCert,
+            allowInsecure: monitor.allowInsecure,
           );
     final client = MonitorHttpClient(credential);
     try {

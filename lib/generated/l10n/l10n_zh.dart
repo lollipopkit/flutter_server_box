@@ -294,7 +294,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get remoteBackupPasswordRequired => '远程备份需要非空的备份密码';
 
   @override
-  String get monitorHttpsRequired => '远程监控代理必须使用 HTTPS；仅环回地址允许使用 HTTP。';
+  String get monitorHttpsRequired => '远程监控代理必须使用 HTTPS，除非该连接已明确允许不安全 HTTP。';
+
+  @override
+  String get monitorAllowInsecureHttp => '允许不安全 HTTP';
+
+  @override
+  String get monitorAllowInsecureHttpTip =>
+      '仅应在 HTTP 之外具备传输加密的可信私有网络中开启，例如 Tailscale。代理也必须明确允许明文文件访问；否则凭据和文件内容可能暴露。';
 
   @override
   String get backupTip => '导出数据可通过密码加密，请妥善保管。';
@@ -1587,7 +1594,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get remoteBackupPasswordRequired => '遠端備份需要非空的備份密碼';
 
   @override
-  String get monitorHttpsRequired => '遠端監控代理必須使用 HTTPS；僅回環位址允許使用 HTTP。';
+  String get monitorHttpsRequired => '遠端監控代理必須使用 HTTPS，除非該連線已明確允許不安全 HTTP。';
+
+  @override
+  String get monitorAllowInsecureHttp => '允許不安全 HTTP';
+
+  @override
+  String get monitorAllowInsecureHttpTip =>
+      '僅應在 HTTP 之外具備傳輸加密的可信私有網路中開啟，例如 Tailscale。代理也必須明確允許明文檔案存取；否則憑證和檔案內容可能暴露。';
 
   @override
   String get backupTip => '匯出的資料可透過密碼加密，請妥善保管。';

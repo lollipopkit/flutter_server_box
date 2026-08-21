@@ -12,6 +12,7 @@ import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/migrations/m004_kv_to_tables.dart';
+import 'package:server_box/data/store/migrations/m005_monitor_insecure_http.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/hive/hive_registrar.g.dart';
 import 'package:server_box/hive/legacy_adapters.dart';
@@ -127,7 +128,10 @@ void main() {
     group('after importing the boxes and migrating', () {
       setUp(() async {
         await Stores.init();
-        await SchemaVersion.migrate(const [KvToTablesMigration()]);
+        await SchemaVersion.migrate(const [
+          KvToTablesMigration(),
+          MonitorInsecureHttpMigration(),
+        ]);
       });
 
       test('every server arrives with its SSH fields nested', () {
@@ -375,7 +379,10 @@ void main() {
         await getIt.reset();
 
         await Stores.init();
-        await SchemaVersion.migrate(const [KvToTablesMigration()]);
+        await SchemaVersion.migrate(const [
+          KvToTablesMigration(),
+          MonitorInsecureHttpMigration(),
+        ]);
 
         expect(Stores.setting.timeout.get(), 42, reason: 'no re-import');
         expect(Stores.server.fetchOneRaw('srv-key')!.ssh?.ip, before.ssh?.ip);
@@ -424,7 +431,10 @@ void main() {
 
       test('the agent conversations come across when the release had them', () async {
         await Stores.init();
-        await SchemaVersion.migrate(const [KvToTablesMigration()]);
+        await SchemaVersion.migrate(const [
+          KvToTablesMigration(),
+          MonitorInsecureHttpMigration(),
+        ]);
         final had = version == '1491';
         final convs = Stores.agentConversation.fetchForServer('srv-key');
         expect(convs.length, had ? 1 : 0,

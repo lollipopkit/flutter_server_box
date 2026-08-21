@@ -18,11 +18,19 @@ final class MonitorHttpCredential {
 
   final bool ignoreCert;
 
+  /// Permit this connection to use plaintext HTTP away from loopback.
+  ///
+  /// Off by default: a private address does not prove a link cannot be read or
+  /// redirected. The monitor must independently allow any sensitive endpoint
+  /// over plaintext, such as `[remote_access.fs] allow_insecure = true`.
+  final bool allowInsecure;
+
   const MonitorHttpCredential({
     required this.addr,
     this.user,
     this.pwd,
     this.ignoreCert = false,
+    this.allowInsecure = false,
   });
 
   factory MonitorHttpCredential.fromJson(Map<String, dynamic> json) =>
@@ -36,7 +44,8 @@ final class MonitorHttpCredential {
         other.addr == addr &&
         other.user == user &&
         other.pwd == pwd &&
-        other.ignoreCert == ignoreCert;
+        other.ignoreCert == ignoreCert &&
+        other.allowInsecure == allowInsecure;
   }
 
   @override
@@ -45,5 +54,6 @@ final class MonitorHttpCredential {
     user,
     pwd,
     ignoreCert,
+    allowInsecure,
   );
 }

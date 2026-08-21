@@ -480,6 +480,21 @@ extension _Widgets on _ServerEditPageState {
             ),
           ),
         ).cardx,
+        ListTile(
+          leading: const Icon(Icons.warning_amber_rounded),
+          title: TipText(
+            l10n.monitorAllowInsecureHttp,
+            l10n.monitorAllowInsecureHttpTip,
+          ),
+          trailing: _monitorAllowInsecure.listenVal(
+            (v) => Switch(
+              value: v,
+              onChanged: (val) {
+                _monitorAllowInsecure.value = val;
+              },
+            ),
+          ),
+        ).cardx,
       ],
     );
   }

@@ -295,6 +295,7 @@ extension _Actions on _ServerEditPageState {
         user: _monitorUserCtrl.text.selfNotEmptyOrNull,
         pwd: _monitorPwdCtrl.text.selfNotEmptyOrNull,
         ignoreCert: _monitorIgnoreCert.value,
+        allowInsecure: _monitorAllowInsecure.value,
       );
     }
 
@@ -536,6 +537,7 @@ extension _Utils on _ServerEditPageState {
       _monitorUserCtrl.text = monitorHttp.user ?? '';
       _monitorPwdCtrl.text = monitorHttp.pwd ?? '';
       _monitorIgnoreCert.value = monitorHttp.ignoreCert;
+      _monitorAllowInsecure.value = monitorHttp.allowInsecure;
     }
 
     final wol = spi.wolCfg;

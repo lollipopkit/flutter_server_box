@@ -95,6 +95,10 @@ Windows 默认关闭。**此时面板密码就等于本机的一个 shell**，�
 - 终端拒绝在明文监听上运行，因为它的第一条消息就带着 SSH 密码。配置 TLS 可满足
   该要求；同机反向代理同样可以，因为 loopback 流量无法在网络上被读取。
    `[remote_access.terminal] allow_insecure = true` 可以覆盖这一限制。
+- 文件 API 也要求远程调用方使用 TLS。在 HTTP 之外已具备传输加密的可信私有网络中
+  （例如 Tailscale），管理员可设置 `[remote_access.fs] allow_insecure = true`。
+  App 还必须对该 Monitor 连接单独开启「允许不安全 HTTP」；两端开关缺一不可。
+  否则 Bearer token 和文件内容会以明文传输，不应在普通局域网或不受控制的网络中使用。
 - 代理会在首次连接时固定 sshd 的 host key，之后不匹配即拒绝，而不是静默重新固定。
   清除固定需要手动操作：删除 `ssh_known_hosts` 中对应的记录。
 - `access_log` 记录谁在何时从何处打开了什么、结果如何，不记录任何凭据。
