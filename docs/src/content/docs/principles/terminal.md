@@ -15,7 +15,7 @@ same virtual keyboard, and the same tabs. Below it, `ShellBackend` has four:
 | `SshShellBackend` | An SSH channel; the rest of this page |
 | `LocalShellBackend` | A shell on this device, or inside the Alpine container on Android |
 | `IshShellBackend` | The Linux interpreter on iOS |
-| `MonitorShellBackend` | A monitor agent's `/terminal/ws` |
+| `MonitorShellBackend` | A monitor agent's `/api/v1/terminal/ws` |
 
 A caller opens a session and writes to it. The UI does not need to know which
 backend supplies the response. See

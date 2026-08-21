@@ -73,6 +73,11 @@ Inside `ssh`:
 A record with no `ssh` and no `monitorHttp` imports as a server with no way to
 reach it. Give it one or the other.
 
+`allowInsecure` defaults to `false`. Set it only when this monitor connection is
+intentionally allowed to use plaintext HTTP, including for non-loopback private
+addresses. The monitor agent independently applies its own `allow_insecure`
+setting to sensitive endpoints.
+
 ## Import Steps
 
 1. Create JSON file with server configurations

@@ -90,9 +90,10 @@ agent 会告诉 App 它接受什么，App 只提供这些能力。应用不会�
 `roots = ["/"]` 等同于一个 shell，因为能写 `~/.ssh/authorized_keys` 的人就有 shell；
 agent 会在启动时对此告警。
 
-**`[remote_access.terminal]`** 为 agent 自己的网页面板增加浏览器内终端，与 App 使用
-的部分无关。agent 作为 SSH 客户端连接它配置的 `ssh_addr`，因此浏览器会话的权限等同
-于登录所用的 SSH 账号。除非开了 `full_access`，仅有面板密码不会获得 shell。
+**`[remote_access.terminal]`** 开启 App 和 agent 自己网页面板共同使用的终端端点。网页
+面板中的 SSH 会话作为客户端连接配置的 `ssh_addr`；App 的无密码会话则在授予
+`full_access` 时使用 agent 的本地 shell。除非开了 `full_access`，仅有面板密码不会获得
+shell。
 
 除非配置 `[remote_access.terminal] allow_insecure = true`，它不会在明文监听上运行，
 因为第一条消息就带着 SSH 密码。配置 TLS 可满足要求，同机反向代理同样可以。

@@ -215,13 +215,15 @@ Through a monitor agent:
 ```
 1. Timer triggers →
 2. Provider calls the agent's /api/v1/metrics →
-3. The agent has already parsed it with the same Rust crate →
+3. `MonitorMetrics.fromJson` decodes the JSON and `applyMonitorMetrics` maps it to `ServerStatus` →
 4. State updated →
 5. UI rebuilds with new data
 ```
 
-Both ends parse with `sbm_parser`, which is why the two paths produce the same
-`ServerStatus`.
+The SSH path parses command output through the FFI-backed `sbm_parser`; the
+monitor path consumes the agent's JSON contract and maps it locally. They feed
+the same `ServerStatus` shape, but they are not the same parser or guaranteed to
+have identical field semantics.
 
 ### User Action Flow
 

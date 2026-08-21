@@ -6,8 +6,9 @@ description: Ask a model to diagnose and operate your servers, one reviewed acti
 The Agent connects a language model to configured servers and can open temporary SSH connections to other hosts.
 It proposes one action at a time and waits for you to review it.
 
-It is off until you give it an API endpoint and key. There is no default
-provider, and nothing is sent anywhere before that.
+It is off until you give it an API endpoint and model. There is no default
+provider, and nothing is sent anywhere before that. An API key is optional for
+providers that do not require one; when present, it is sent as a bearer token.
 
 ## Two places it appears
 
@@ -47,8 +48,8 @@ the same encrypted store as your server passwords.
 | Tool | What it does |
 |---|---|
 | **Shell** | Run one complete, non-interactive command |
-| **Read file** | Read a text file from a server over SFTP, or from this device when local execution is enabled |
-| **Write file** | Replace a server text file over SFTP, or a local file when local execution is enabled, after review |
+| **Read file** | Read a text file from an SSH server over SFTP, or from this device when local execution is enabled |
+| **Write file** | Replace a text file on an SSH server over SFTP, or a local file when local execution is enabled, after review |
 | **SSH connect** | Open a connection to a host that is not configured |
 | **Disconnect SSH** | Close one of those |
 | **ServerBox** | Read the app's own state, including which servers exist and their status |
@@ -65,6 +66,11 @@ applies to servers only.
 
 The model marks each action as safe or not, and that marking is an input to the
 decision, not the decision. Read the command.
+
+Monitor-only servers do not provide these Agent file tools: the Agent's file
+operations require SFTP, which requires SSH. Their separate File tab can use a
+monitor agent's `/api/v1/fs/*` API when `[remote_access.fs]` is enabled and the
+path is within the operator's configured `roots`.
 
 ## Connecting to a host that is not configured
 

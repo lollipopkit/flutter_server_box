@@ -76,9 +76,12 @@ Drift 负责 DDL（`lib/data/store/db.dart`），且仅负责 DDL：查询是手
 ### 存储迁移
 
 `SchemaVersion` 跟踪布局版本；Drift 自身的 `schemaVersion` 固定为 1 且不再变化，
-因为迁移中的关键步骤超出 Drift migration 的表达能力。目前有三步：
+因为迁移中的关键步骤超出 Drift migration 的表达能力。Hive 导入与注册的 schema
+migration 分开：`Stores.init` 先执行 `HiveImport`，然后 `SchemaVersion.migrate` 执行
+两步：
 
-- `HiveImport`（m003）把升级安装的 Hive box 复制进 `kv`，每台设备一次。它通过
+- `HiveImport`（m003）不是 `SchemaMigration`，而是把升级安装的 Hive box 复制进 `kv`，
+  每台设备一次。它通过
   `lib/hive/legacy_adapters.dart` 中冻结的 adapter 读取，而不是通过当前模型。
   给模型新增字段会让*生成的* adapter 无法读取此前写入的任何 box。
 - `KvToTablesMigration`（m004）把这些行拆进实体表，为原本以 name 为键的记录
@@ -89,7 +92,8 @@ Drift 负责 DDL（`lib/data/store/db.dart`），且仅负责 DDL：查询是手
 **存储迁移必须保留一个永久回归测试，输入是被迁移版本真实写出的字节。**
 它对用户数据只有一次机会且不可重复，因此其中的 bug 表现为静默而非崩溃。
 `test/fixtures/hive_v{1466,1480,1491}/` 保存了这些版本各自 adapter 生成的 box，
-`test/hive_release_migration_test.dart` 对每个版本跑完前两步。使用当前 adapter
+`test/hive_release_migration_test.dart` 对每个 fixture 跑完 Hive 导入和两步注册迁移；
+`test/m005_monitor_insecure_http_test.dart` 单独覆盖 m005。使用当前 adapter
 生成数据只能证明当前代码彼此一致。该测试首次运行就发现了四处字段名不匹配，
 每一处都会静默丢掉一整个 store。
 
@@ -118,7 +122,10 @@ Drift 负责 DDL（`lib/data/store/db.dart`），且仅负责 DDL：查询是手
 服务器状态解析（CPU、内存、磁盘、网络、温度、GPU、SMART 等）在
 Rust crate `crates/sbm_parser` 中实现一次，App 经 flutter_rust_bridge
 （`crates/sbm_ffi`，生成的 Dart 位于 `lib/src/rust/`）调用。
-服务端 monitor 直接依赖同一 crate，两端解析行为始终一致。
+服务端 monitor 直接依赖同一 crate 进行采样，但 App 的 monitor HTTP 路径读取的是
+`MonitorMetrics.fromJson` 的 JSON，再由 `applyMonitorMetrics` 映射到 `ServerStatus`。
+App 的 SSH 路径则通过 FFI 使用 `sbm_parser` 解析脚本输出；两者共享状态模型，但不是
+同一条解析路径，字段精度和语义应以各自实现为准。
 解析器是纯函数：只返回原始计数；差分和滑窗计算（如网速）同样是纯函数，
 FFI 边界不持有可变状态。
 

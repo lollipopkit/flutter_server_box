@@ -15,7 +15,7 @@ description: SSH 终端的内部工作原理
 | `SshShellBackend` | SSH channel；本页其余部分讲的就是它 |
 | `LocalShellBackend` | 本机的 shell；Android 上是 Alpine 容器内的 shell |
 | `IshShellBackend` | iOS 上的 Linux 解释器 |
-| `MonitorShellBackend` | monitor agent 的 `/terminal/ws` |
+| `MonitorShellBackend` | monitor agent 的 `/api/v1/terminal/ws` |
 
 调用方打开一个会话并向它写入，上层 UI 不会去问是四个中的哪一个应答的。前两个见
 [本机终端](/docs/zh/advanced/local-terminal/)，最后一个见

@@ -127,8 +127,10 @@ lib/
 
 ## Rust 侧
 
-- `crates/sbm_parser/` - 将命令原始输出解析为结构化服务器状态。
-  App（经 FFI）与 monitor 共用，两端解析行为始终一致。
+- `crates/sbm_parser/` - 将命令原始输出解析为结构化服务器状态。App 的 SSH 路径经
+  FFI 使用它；monitor 的原生采样也会在需要时使用其中的平台解析器。App 通过 monitor
+  HTTP 获取的数据则由 `MonitorMetrics.fromJson` 和本地映射器转换，两条 App 路径共享
+  `ServerStatus` 形状，但不是同一个解析流程。
 - `crates/sbm_native/` - 各平台的原生采样，仅 monitor 使用。它通过 syscall 或
   procfs 直接读取 cpu/内存/swap/磁盘/网络/uptime，不执行 shell 命令。App 不依赖
   它：App 通过 SSH 采集，无法在远程主机上执行 syscall。

@@ -84,10 +84,12 @@ and puts it back.
 
 `SchemaVersion` tracks the layout; Drift's own `schemaVersion` is pinned at 1
 and stays there, because the steps that matter are outside what a Drift
-migration can express. The current sequence has three registered steps:
+migration can express. `HiveImport` runs separately before the registered
+`SchemaMigration` steps:
 
-- `HiveImport` (m003) copies an upgrading install's Hive boxes into `kv`, once
-  per device. It reads through frozen adapters in
+- `HiveImport` (m003) is not a `SchemaMigration`. `Stores.init` runs it before
+  `SchemaVersion.migrate`; it copies an upgrading install's Hive boxes into
+  `kv`, once per device. It reads through frozen adapters in
   `lib/hive/legacy_adapters.dart` rather than through the live models. Adding
   a field to a model makes a *generated* adapter unable to read any box written
   before it.
@@ -101,8 +103,9 @@ migration can express. The current sequence has three registered steps:
 release being migrated *from* actually wrote.** It gets one pass over a user's
 records and is not repeatable, so a bug there is silence rather than a crash.
 `test/fixtures/hive_v{1466,1480,1491}/` hold boxes produced by those releases'
-own adapters, and `test/hive_release_migration_test.dart` runs the two Hive
-conversion steps against each. Seeding through the current adapters would only
+own adapters, and `test/hive_release_migration_test.dart` runs the Hive import
+followed by both registered steps against each. The isolated
+`test/m005_monitor_insecure_http_test.dart` covers m005 as well. Seeding through the current adapters would only
 show that today's code agrees with itself. On its first run, that test found four field-name
 mismatches, each of which silently dropped an entire store.
 
@@ -128,13 +131,14 @@ User Action → Widget → Provider → Service/Store → Model Update → UI Re
 
 ## Status Parsing: Shared Rust Library
 
-Server status parsing (CPU, memory, disk, network, temperatures, GPU, SMART, …)
-is implemented once in the Rust crate `crates/sbm_parser` and used by the app
-through flutter_rust_bridge (`crates/sbm_ffi`, generated Dart in `lib/src/rust/`).
-The server-side monitor uses the same crate directly, so the app and monitor use
-the same parser implementation. Parsers are pure functions: they return raw counters, and
-diff/windowed computations (e.g. network speed) are pure functions too. No
-mutable state crosses the FFI boundary.
+The app's SSH status path parses command output through the Rust crate
+`crates/sbm_parser`, called through flutter_rust_bridge (`crates/sbm_ffi`,
+generated Dart in `lib/src/rust/`). The monitor's native sampler also uses that
+crate for the platform-specific parsing it needs, while the app's monitor HTTP
+path decodes `MonitorMetrics` JSON and maps it locally to `ServerStatus`.
+Parsers are pure functions: they return raw counters, and diff/windowed
+computations (e.g. network speed) are pure functions too. No mutable state
+crosses the FFI boundary.
 
 ## Custom Dependencies
 

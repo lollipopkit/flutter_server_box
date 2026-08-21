@@ -165,7 +165,7 @@ my-server::ecdsa-sha2-nistp256
 ### Fingerprint Format
 
 The current display and storage format is the OpenSSH SHA-256 form:
-```
+```text
 SHA256:AbCdEf1234567890...=
 ```
 Legacy stored values are normalized when read.

@@ -12,7 +12,8 @@ Install ServerBox Monitor on your server first. See its [README](https://github.
 After installation, verify that the server provides:
 - HTTP/HTTPS endpoint
 - `/status` API endpoint
-- Optional authentication
+- Optional authentication. `/status` is the legacy unauthenticated route; the
+  authenticated `/api/v1/status` route requires a bearer or watch token.
 
 ## URL Format
 
@@ -20,7 +21,8 @@ After installation, verify that the server provides:
 https://your-server.com/status
 ```
 
-The URL must end with `/status`.
+The URL must end with `/status`. URL-only widgets cannot use authenticated
+endpoints that require a bearer or watch token.
 
 ## iOS Widget
 

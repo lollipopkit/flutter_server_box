@@ -105,11 +105,11 @@ link inside a root pointing at `/etc` is not a way out. `roots = ["/"]` makes
 this equivalent to a shell, since anyone who can write `~/.ssh/authorized_keys`
 has one; the agent warns about it at startup.
 
-**`[remote_access.terminal]`** adds an in-browser terminal to the agent's own
-web panel. It is separate from what the app uses. The agent acts as an SSH
-client to its configured `ssh_addr`, so a browser session has the privileges of
-the SSH account it signs in with. The panel password alone grants no shell,
-unless `full_access` is on.
+**`[remote_access.terminal]`** enables the terminal endpoint used by both the app
+and the agent's own web panel. The panel's SSH-backed session acts as an SSH
+client to its configured `ssh_addr`, while the app's passwordless session uses
+the agent's local shell when `full_access` is granted. The panel password alone
+grants no shell unless `full_access` is on.
 
 It refuses to run on a plaintext listener unless
 `[remote_access.terminal] allow_insecure = true`; TLS satisfies the transport

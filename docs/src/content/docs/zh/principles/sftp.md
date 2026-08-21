@@ -111,25 +111,33 @@ Future<void> uploadFile(
 ) async {
   final sftp = await getSftpClient(spiId);
 
-  final stagingPath = '$remotePath.<unique-suffix>';
-  final remote = await sftp.open(
-    stagingPath,
-    mode: SftpFileOpenMode.create |
-        SftpFileOpenMode.write |
-        SftpFileOpenMode.truncate,
-  );
+  final stagingPath = '$remotePath.sb-part-<unique-counter>';
+  SftpFile? remote;
   try {
+    remote = await sftp.open(
+      stagingPath,
+      mode: SftpFileOpenMode.create |
+          SftpFileOpenMode.write |
+          SftpFileOpenMode.truncate,
+    );
     await remote.write(File(localPath).openRead().map(Uint8List.fromList)).done;
     await remote.close();
+    remote = null;
     await sftp.rename(stagingPath, remotePath);
+  } catch (_) {
+    try {
+      await sftp.remove(stagingPath);
+    } catch (_) {}
+    rethrow;
   } finally {
-    await remote.close();
+    await remote?.close();
   }
 }
 ```
 
 客户端没有 `sftp.upload` 便捷方法。实际传输会打开 `SftpFile` 并显式关闭，先写入
-临时路径，再重命名到目标路径；失败时会清理临时文件。
+目标旁边带唯一后缀的临时路径，并在重命名之前关闭句柄；打开、写入、关闭或重命名失败
+时都会删除临时文件。新内容完成之前不会截断目标文件。
 
 ### 下载
 
@@ -141,18 +149,29 @@ Future<void> downloadFile(
   final sftp = await getSftpClient(spiId);
 
   final remote = await sftp.open(remotePath, mode: SftpFileOpenMode.read);
-  final sink = File(localPath).openWrite();
+  final staging = File('$localPath.sb-part-<unique-counter>');
+  final sink = staging.openWrite();
   try {
     await sink.addStream(remote.read());
+    await sink.close();
+    await staging.rename(localPath);
   } finally {
     await remote.close();
-    await sink.close();
+    try {
+      await sink.close();
+    } catch (_) {}
+    if (await staging.exists()) {
+      try {
+        await staging.delete();
+      } catch (_) {}
+    }
   }
 }
 ```
 
 客户端也没有 `sftp.download` 便捷方法。读取通过已打开的 `SftpFile` 流式进行；远端
-句柄和本地 sink 都必须显式关闭。
+句柄和本地 sink 都必须显式关闭。内容先写入本地临时文件，关闭后才重命名覆盖目标；
+失败时会删除临时文件，因此部分下载不会替换原文件。
 
 ### 权限编辑
 
@@ -268,57 +287,31 @@ class TransferProgress {
 
 ### 队列管理
 
-```dart
-class TransferQueue {
-  final List<SftpReq> _queue = [];
-  final Map<String, TransferProgress> _progress = {};
-  int _concurrent = 3;  // 最大并发传输数
-
-  Future<void> process() async {
-    final active = _progress.values.where((p) => p.isInProgress);
-    if (active.length >= _concurrent) return;
-
-    final pending = _queue.where((r) => !_progress.containsKey(r.id));
-    for (final req in pending.take(_concurrent - active.length)) {
-      _executeTransfer(req);
-    }
-  }
-
-  Future<void> _executeTransfer(SftpReq req) async {
-    try {
-      _progress[req.id] = TransferProgress.inProgress(req);
-
-      if (req.type == SftpReqType.upload) {
-        await uploadFile(req.localPath, req.remotePath);
-      } else {
-        await downloadFile(req.remotePath, req.localPath);
-      }
-
-      _progress[req.id] = TransferProgress.completed(req);
-    } catch (e) {
-      _progress[req.id] = TransferProgress.failed(req, e);
-    }
-  }
-}
-```
+App 并不使用固定三并发的 `TransferQueue`。传输由常驻的
+`FileTransferNotifier` 中的 `FileTransferStatus` 表示；每个状态会拥有自己的 worker，
+或直接在当前 isolate 中运行。notifier 通过这一生命周期提供添加、取消、进度、完成和清理。
 
 ## 本地存储模式
 
 ### 下载文件位置
 
-下载的文件存储在：
+下载的文件按服务器 id 和远程路径各级组件存储。组件会按本机平台进行清理，但目录结构
+会保留：
 
 ```dart
 String getLocalDownloadPath(String spiId, String remotePath) {
-  final normalized = remotePath.replaceAll('/', '_');
-  return 'Paths.file/$spiId/$normalized';
+  final parts = remotePath.split('/').where((part) => part.isNotEmpty);
+  return parts.fold(
+    Paths.file.joinPath(spiId),
+    (path, part) => path.joinPath(_safeLocalPathPart(part)),
+  );
 }
 ```
 
 示例：
 - 远程：`/var/log/nginx/access.log`
 - spiId：`server-123`
-- 本地：`Paths.file/server-123/_var_log_nginx_access.log`
+- 本地：`Paths.file/server-123/var/log/nginx/access.log`
 
 ## 文件编辑
 

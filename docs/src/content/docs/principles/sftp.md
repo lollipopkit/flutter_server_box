@@ -111,27 +111,35 @@ Future<void> uploadFile(
 ) async {
   final sftp = await getSftpClient(spiId);
 
-  final stagingPath = '$remotePath.<unique-suffix>';
-  final remote = await sftp.open(
-    stagingPath,
-    mode: SftpFileOpenMode.create |
-        SftpFileOpenMode.write |
-        SftpFileOpenMode.truncate,
-  );
+  final stagingPath = '$remotePath.sb-part-<unique-counter>';
+  SftpFile? remote;
   try {
+    remote = await sftp.open(
+      stagingPath,
+      mode: SftpFileOpenMode.create |
+          SftpFileOpenMode.write |
+          SftpFileOpenMode.truncate,
+    );
     await remote.write(File(localPath).openRead().map(Uint8List.fromList)).done;
     await remote.close();
+    remote = null;
     await sftp.rename(stagingPath, remotePath);
+  } catch (_) {
+    try {
+      await sftp.remove(stagingPath);
+    } catch (_) {}
+    rethrow;
   } finally {
-    await remote.close();
+    await remote?.close();
   }
 }
 ```
 
 There is no `sftp.upload` convenience method in the client used by Server Box.
-The real transfer code opens an `SftpFile`, closes it explicitly, writes to a
-staging path, and renames it into place. Failed transfers remove the staging
-file.
+The real transfer code opens an `SftpFile`, closes it before the rename, writes
+to a unique staging path beside the destination, and removes that staging file
+when opening, writing, closing, or renaming fails. The destination is not
+truncated before the new contents are complete.
 
 ### Download
 
@@ -143,18 +151,30 @@ Future<void> downloadFile(
   final sftp = await getSftpClient(spiId);
 
   final remote = await sftp.open(remotePath, mode: SftpFileOpenMode.read);
-  final sink = File(localPath).openWrite();
+  final staging = File('$localPath.sb-part-<unique-counter>');
+  final sink = staging.openWrite();
   try {
     await sink.addStream(remote.read());
+    await sink.close();
+    await staging.rename(localPath);
   } finally {
     await remote.close();
-    await sink.close();
+    try {
+      await sink.close();
+    } catch (_) {}
+    if (await staging.exists()) {
+      try {
+        await staging.delete();
+      } catch (_) {}
+    }
   }
 }
 ```
 
 There is no `sftp.download` convenience method either. Reads stream from the
-opened `SftpFile`; both the remote handle and local sink must be closed.
+opened `SftpFile` into a local staging file. The remote handle and local sink are
+closed before the staging file is renamed over the destination; failures remove
+the staging file so a partial download cannot replace the existing file.
 
 ### Permission Editing
 
@@ -270,57 +290,34 @@ class TransferProgress {
 
 ### Queue Management
 
-```dart
-class TransferQueue {
-  final List<SftpReq> _queue = [];
-  final Map<String, TransferProgress> _progress = {};
-  int _concurrent = 3;  // Max concurrent transfers
-
-  Future<void> process() async {
-    final active = _progress.values.where((p) => p.isInProgress);
-    if (active.length >= _concurrent) return;
-
-    final pending = _queue.where((r) => !_progress.containsKey(r.id));
-    for (final req in pending.take(_concurrent - active.length)) {
-      _executeTransfer(req);
-    }
-  }
-
-  Future<void> _executeTransfer(SftpReq req) async {
-    try {
-      _progress[req.id] = TransferProgress.inProgress(req);
-
-      if (req.type == SftpReqType.upload) {
-        await uploadFile(req.localPath, req.remotePath);
-      } else {
-        await downloadFile(req.remotePath, req.localPath);
-      }
-
-      _progress[req.id] = TransferProgress.completed(req);
-    } catch (e) {
-      _progress[req.id] = TransferProgress.failed(req, e);
-    }
-  }
-}
-```
+The app does not use a fixed three-transfer `TransferQueue`. Transfers are
+represented by `FileTransferStatus` objects in the keep-alive
+`FileTransferNotifier`. Each status owns its worker or runs inline, and the
+notifier exposes add, cancel, progress, completion, and cleanup through that
+lifecycle.
 
 ## Local Storage Pattern
 
 ### Downloaded File Location
 
-Downloaded files are stored at:
+Downloaded files are stored at a path made from the server id and the remote
+path components. Components are sanitized for the local platform, but the
+directory structure is retained:
 
 ```dart
 String getLocalDownloadPath(String spiId, String remotePath) {
-  final normalized = remotePath.replaceAll('/', '_');
-  return 'Paths.file/$spiId/$normalized';
+  final parts = remotePath.split('/').where((part) => part.isNotEmpty);
+  return parts.fold(
+    Paths.file.joinPath(spiId),
+    (path, part) => path.joinPath(_safeLocalPathPart(part)),
+  );
 }
 ```
 
 Example:
 - Remote: `/var/log/nginx/access.log`
 - spiId: `server-123`
-- Local: `Paths.file/server-123/_var_log_nginx_access.log`
+- Local: `Paths.file/server-123/var/log/nginx/access.log`
 
 ## File Editing
 

@@ -12,7 +12,8 @@ description: 在主屏幕上添加服务器状态小组件
 安装完成后，你的服务器应具备：
 - HTTP/HTTPS 端点
 - `/status` API 接口
-- 可选的身份验证
+- 可选的身份验证。`/status` 是旧版的免认证接口；需要 bearer 或 watch token 的认证
+  `/api/v1/status` 不能由只提供 URL 的小组件使用。
 
 ## URL 格式
 
@@ -20,7 +21,7 @@ description: 在主屏幕上添加服务器状态小组件
 https://your-server.com/status
 ```
 
-必须以 `/status` 结尾。
+必须以 `/status` 结尾。只提供 URL 的小组件不能使用需要 bearer 或 watch token 的认证端点。
 
 ## iOS 小组件
 

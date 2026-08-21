@@ -70,6 +70,10 @@ SSH 相关字段嵌套在 `ssh` 下。这是 App 写出的格式，也是导入�
 
 既没有 `ssh` 也没有 `monitorHttp` 的记录，导入后将成为无法访问的服务器。请至少提供其中一个。
 
+`allowInsecure` 默认为 `false`。只有当你明确允许该 monitor 连接使用明文 HTTP 时才设置为
+`true`，这也包括非 loopback 的私有地址。monitor agent 还会对敏感端点独立检查自己的
+`allow_insecure` 配置。
+
 ## 导入步骤
 
 1. 创建包含服务器配置的 JSON 文件
