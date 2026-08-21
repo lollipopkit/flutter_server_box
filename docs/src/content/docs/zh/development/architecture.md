@@ -92,7 +92,7 @@ migration 分开：`Stores.init` 先执行 `HiveImport`，然后 `SchemaVersion.
 **存储迁移必须保留一个永久回归测试，输入是被迁移版本真实写出的字节。**
 它对用户数据只有一次机会且不可重复，因此其中的 bug 表现为静默而非崩溃。
 `test/fixtures/hive_v{1466,1480,1491}/` 保存了这些版本各自 adapter 生成的 box，
-`test/hive_release_migration_test.dart` 对每个 fixture 跑完 Hive 导入和两步注册迁移；
+`test/hive_release_migration_test.dart` 对每个 fixture 跑完 Hive 导入和两个已注册的迁移步骤；
 `test/m005_monitor_insecure_http_test.dart` 单独覆盖 m005。使用当前 adapter
 生成数据只能证明当前代码彼此一致。该测试首次运行就发现了四处字段名不匹配，
 每一处都会静默丢掉一整个 store。
