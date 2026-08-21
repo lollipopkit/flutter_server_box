@@ -852,6 +852,17 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
 
     final actions = <Widget>[
       ...?widget.args.extraActions?.call(this),
+      // The same menu a right-click on the directory gives — new folder, new
+      // file, and bringing one in from outside — where it can be seen. It was
+      // reachable only by secondary tap, which a phone does not have, so on
+      // every mobile build the one visible `+` in this tab belonged to the
+      // *server* list and adding a file had no button at all.
+      if (!widget.args.isPickFile && !widget.args.isPickDir)
+        Btn.icon(
+          text: libL10n.add,
+          icon: const Icon(Icons.add),
+          onTap: () => showContextMenu(context, _createActions),
+        ),
       _buildViewBtn(),
       Btn.icon(text: libL10n.search, icon: const Icon(Icons.search), onTap: _showSearch),
       if (isDesktop)
