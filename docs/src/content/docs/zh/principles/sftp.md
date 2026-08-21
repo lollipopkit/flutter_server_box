@@ -111,8 +111,9 @@ Future<void> uploadFile(
 ) async {
   final sftp = await getSftpClient(spiId);
 
-  final stagingPath = '$remotePath.sb-part-<unique-counter>';
+  final stagingPath = '$remotePath.sb-part-${nextTransferId()}';
   SftpFile? remote;
+  String? pendingStagingPath = stagingPath;
   try {
     remote = await sftp.open(
       stagingPath,
@@ -124,16 +125,20 @@ Future<void> uploadFile(
     await remote.close();
     remote = null;
     await sftp.rename(stagingPath, remotePath);
-  } catch (_) {
-    try {
-      await sftp.remove(stagingPath);
-    } catch (_) {}
-    rethrow;
+    pendingStagingPath = null;
   } finally {
     await remote?.close();
+    if (pendingStagingPath != null) {
+      try {
+        await sftp.remove(pendingStagingPath!);
+      } catch (_) {}
+    }
   }
 }
 ```
+
+`nextTransferId()` 是进程级计数器。实际实现使用同样的计数器生成不同的
+`.sb-part-<number>` 路径，即使两个传输指向同一个目标文件也不会互相覆盖。
 
 客户端没有 `sftp.upload` 便捷方法。实际传输会打开 `SftpFile` 并显式关闭，先写入
 目标旁边带唯一后缀的临时路径，并在重命名之前关闭句柄；打开、写入、关闭或重命名失败
@@ -148,21 +153,27 @@ Future<void> downloadFile(
 ) async {
   final sftp = await getSftpClient(spiId);
 
-  final remote = await sftp.open(remotePath, mode: SftpFileOpenMode.read);
-  final staging = File('$localPath.sb-part-<unique-counter>');
-  final sink = staging.openWrite();
+  SftpFile? remote;
+  File? staging;
+  IOSink? sink;
   try {
+    remote = await sftp.open(remotePath, mode: SftpFileOpenMode.read);
+    staging = File('$localPath.sb-part-${nextTransferId()}');
+    sink = staging!.openWrite();
     await sink.addStream(remote.read());
     await sink.close();
-    await staging.rename(localPath);
-  } finally {
+    sink = null;
     await remote.close();
+    remote = null;
+    await staging!.rename(localPath);
+  } finally {
+    await remote?.close();
     try {
-      await sink.close();
+      await sink?.close();
     } catch (_) {}
-    if (await staging.exists()) {
+    if (staging != null && await staging!.exists()) {
       try {
-        await staging.delete();
+        await staging!.delete();
       } catch (_) {}
     }
   }
@@ -185,11 +196,14 @@ Future<void> setPermissions(
   // 解析权限 (例如 "rwxr-xr-x" 或 "755")
   final mode = parsePermissions(permissions);
 
-  // 通过 SSH 命令设置 (比 SFTP 更可靠)
-  final ssh = await getSshClient(spiId);
-  await ssh.exec('chmod $mode ${shellSingleQuote(path)}');
+  // 通常通过 SFTP 的 set-stat 操作设置权限。
+  await sftp.setStat(path, SftpFileAttrs(mode: SftpFileMode.value(mode)));
 }
 ```
+
+权限修改通常使用 SFTP `setStat`，不需要 shell。如果服务器拒绝该操作且存在
+SSH 提权处理器，backend 才会用 `sudo chmod` 重试。这个回退需要 shell，并非普通的
+SFTP 路径。
 
 ## 路径管理
 
@@ -249,41 +263,6 @@ class PathHistory {
 ```
 
 ## 传输系统
-
-### 传输请求
-
-```dart
-class SftpReq {
-  final Spi spi;
-  final String remotePath;
-  final String localPath;
-  final SftpReqType type;
-  final DateTime createdAt;
-
-  int? totalBytes;
-  int? transferredBytes;
-  String? error;
-}
-```
-
-### 进度跟踪
-
-```dart
-class TransferProgress {
-  final SftpReq request;
-  final int total;
-  final int transferred;
-  final DateTime startTime;
-
-  double get percentage => (transferred / total) * 100;
-  Duration get elapsed => DateTime.now().difference(startTime);
-
-  String get speedFormatted {
-    final bytesPerSecond = transferred / elapsed.inSeconds;
-    return formatSpeed(bytesPerSecond);
-  }
-}
-```
 
 ### 队列管理
 

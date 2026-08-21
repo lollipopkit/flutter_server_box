@@ -9,7 +9,8 @@ Server Box 使用自定义构建系统 (`fl_build`) 进行跨平台构建。
 
 - Flutter SDK (stable channel)
 - 平台相关工具（iOS 需要 Xcode，Android 需要 Android Studio）
-- Rust 工具链（必需：状态解析库是 Rust crate,经 flutter_rust_bridge/cargokit 构建进各平台的 App）
+- Rust 工具链（必需：`crates/sbm_ffi` Rust crate 由 Dart build hook 通过
+  `flutter_rust_bridge_hooks` 和 native assets 构建进 App）
 
 获取 Dart 依赖前，请先初始化项目内置的 Git 子模块：
 

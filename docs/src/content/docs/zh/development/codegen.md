@@ -11,7 +11,7 @@ Server Box 广泛使用代码生成来处理模型、状态管理和序列化。
 
 - 带有 `@freezed` 注解的模型
 - 带有 `@JsonSerializable` 的类
-- 用于存储迁移的旧版 Hive 适配器
+- 当前生成适配器列表中的 Hive 适配器源码（不是冻结的旧版读取器）
 - 带有 `@riverpod` 的 Provider
 - 本地化文件（ARB 文件）
 
@@ -80,9 +80,9 @@ class MyNotifier extends _$MyNotifier {
 }
 ```
 
-### 旧版 Hive 适配器（`*.g.dart`）
+### Hive 适配器（`*.g.dart`）
 
-为旧版存储迁移保留的 Hive 适配器：
+生成的 Hive 适配器覆盖当前的适配器列表：
 
 ```dart
 @HiveType(typeId: 0)
@@ -91,6 +91,11 @@ class ServerModel {
   final String id;
 }
 ```
+
+`lib/hive/legacy_adapters.dart` 中的适配器是有意冻结的读取器。不要根据当前模型
+重新生成它们，也不要把新增字段的模型加入生成适配器列表：新增的非空字段可能让旧版本
+写入的 box 无法打开。只有当已发布版本实际写入的字节需要变化时，才应更新冻结读取器和
+对应的迁移测试。
 
 
 ## Rust 绑定 (flutter_rust_bridge)

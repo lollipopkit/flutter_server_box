@@ -49,18 +49,22 @@ rejects a server that sets both.
 ```dart
 Future<SSHClient> genClient(Spi spi) async {
   final ssh = spi.ssh!;
-  // 1. Establish socket
-  final socket = await connect(ssh.ip, ssh.port);
-
-  // 2. Try alternative URL if failed
-  if (socket == null && ssh.alterUrl != null) {
-    socket = await connect(ssh.alterUrl, ssh.port);
+  // 1. Establish the socket, then try the parsed alternative URL if it fails.
+  SSHSocket? socket;
+  var alterUser = ssh.user;
+  try {
+    socket = await connect(ssh.ip, ssh.port);
+  } catch (_) {
+    if (ssh.alterUrl == null) rethrow;
+    final (alterHost, parsedUser, alterPort) = ssh.parseAlterUrl();
+    socket = await connect(alterHost, alterPort);
+    alterUser = parsedUser;
   }
 
   // 3. Authenticate
   final client = SSHClient(
-    socket: socket,
-    username: ssh.user,
+    socket: socket!,
+    username: alterUser,
     onPasswordRequest: () => ssh.pwd,
     onIdentityRequest: () => loadKey(ssh.keyId),
   );

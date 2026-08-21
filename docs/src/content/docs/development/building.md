@@ -9,8 +9,8 @@ The project uses `fl_build` to build the supported platforms.
 
 - Flutter SDK (stable channel)
 - Platform toolchains (Xcode for iOS, Android Studio for Android)
-- Rust toolchain (required: the status parser is a Rust crate built into the app
-  via flutter_rust_bridge/cargokit on every platform)
+- Rust toolchain (required: the `crates/sbm_ffi` Rust crate is built into the app
+  by the Dart build hook through `flutter_rust_bridge_hooks` and native assets)
 
 Initialize the bundled Git submodules before fetching Dart dependencies:
 

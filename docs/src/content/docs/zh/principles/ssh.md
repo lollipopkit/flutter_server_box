@@ -47,22 +47,22 @@ final class SshCredential {
 ```dart
 Future<SSHClient> genClient(Spi spi) async {
   final ssh = spi.ssh!;
-  // 1. 建立 socket
-  var socket = await connect(ssh.ip, ssh.port);
-
-  // 2. 如果失败，尝试备用 URL
-  if (socket == null && ssh.alterUrl != null) {
-    socket = await connect(ssh.alterUrl, ssh.port);
-  }
-
-  if (socket == null) {
-    throw ConnectionException('Unable to connect');
+  // 1. 建立 socket；失败后使用解析出的备用主机、用户和端口。
+  SSHSocket? socket;
+  var alterUser = ssh.user;
+  try {
+    socket = await connect(ssh.ip, ssh.port);
+  } catch (_) {
+    if (ssh.alterUrl == null) rethrow;
+    final (alterHost, parsedUser, alterPort) = ssh.parseAlterUrl();
+    socket = await connect(alterHost, alterPort);
+    alterUser = parsedUser;
   }
 
   // 3. 身份验证
   final client = SSHClient(
-    socket: socket,
-    username: ssh.user,
+    socket: socket!,
+    username: alterUser,
     onPasswordRequest: () => ssh.pwd,
     onIdentityRequest: () => loadKey(ssh.keyId),
   );

@@ -7,7 +7,7 @@ Display custom logos on server cards using image URLs.
 
 ## Setup
 
-1. Server settings → Custom Logo
+1. Server settings → **Logo URL**
 2. Enter image URL
 
 ## URL Placeholders

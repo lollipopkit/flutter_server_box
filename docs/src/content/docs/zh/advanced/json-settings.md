@@ -56,6 +56,7 @@ late final settingName = propertyDefault('settingKey', defaultValue);
 **在编辑之前：**
 - **创建备份**：错误的设置可能导致应用无法打开
 - **谨慎编辑**：JSON 必须保持有效
+- **一次只修改一项设置**：每次修改后先测试
 
 ## 恢复方法
 

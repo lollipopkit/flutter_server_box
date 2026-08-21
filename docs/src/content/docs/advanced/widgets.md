@@ -17,7 +17,7 @@ After installation, verify that the server provides:
 
 ## URL Format
 
-```
+```text
 https://your-server.com/status
 ```
 

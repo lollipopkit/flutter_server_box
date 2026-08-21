@@ -35,6 +35,7 @@ Run from `docs/`:
 | :------ | :----- |
 | `npm install` | Install dependencies |
 | `npm run dev` | Dev server at `localhost:4321/docs` |
+| `npm run check-locale-parity` | Check that English and Simplified Chinese pages mirror each other |
 | `npm run build` | Build to `./dist/` |
 | `npm run preview` | Preview the build locally |
 

@@ -11,7 +11,8 @@ Run the relevant generator after modifying:
 
 - Models with `@freezed` annotation
 - Classes with `@JsonSerializable`
-- Legacy Hive adapters for storage migration
+- Hive adapter sources in the current generated adapter list (not frozen legacy
+  readers)
 - Providers with `@riverpod`
 - Localization ARB files; run `flutter gen-l10n`
 
@@ -74,9 +75,9 @@ class MyNotifier extends _$MyNotifier {
 }
 ```
 
-### Legacy Hive Adapters (`*.g.dart`)
+### Hive Adapters (`*.g.dart`)
 
-Legacy Hive adapters are retained for storage migration:
+Generated Hive adapters cover the current adapter list:
 
 ```dart
 @HiveType(typeId: 0)
@@ -85,6 +86,12 @@ class ServerModel {
   final String id;
 }
 ```
+
+The adapters in `lib/hive/legacy_adapters.dart` are intentionally frozen readers.
+Do not regenerate them from current models or add a newly changed model to the
+generated adapter list: a newly added non-nullable field can make boxes written
+by older releases fail to open. Update a frozen reader and its migration test
+only when the bytes written by a released version require it.
 
 ## Rust Bindings (flutter_rust_bridge)
 

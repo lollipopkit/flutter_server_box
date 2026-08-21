@@ -23,7 +23,7 @@ Two consequences:
 
 ## Editing
 
-1. Server settings → **Custom Command** → **Edit**
+1. Open the server's edit page and choose **Custom commands** → **Edit**
 2. Add, rename, edit or reorder entries
 3. Save
 

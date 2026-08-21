@@ -13,7 +13,7 @@ description: 常见问题的解决方案
 
 1. **核对服务器类型：** 支持 Linux、macOS、Android/Termux 以及运行 OpenSSH Server 的 Windows 主机
 2. **手动测试：** 在终端运行 `ssh user@server -p port`
-3. **检查防火墙：** 确保 22 端口已开放
+3. **检查防火墙：** 确保配置的 SSH 端口可以访问
 4. **核对凭据：** 确保用户名、密码或密钥正确
 
 ### 频繁掉线

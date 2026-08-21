@@ -111,8 +111,9 @@ Future<void> uploadFile(
 ) async {
   final sftp = await getSftpClient(spiId);
 
-  final stagingPath = '$remotePath.sb-part-<unique-counter>';
+  final stagingPath = '$remotePath.sb-part-${nextTransferId()}';
   SftpFile? remote;
+  String? pendingStagingPath = stagingPath;
   try {
     remote = await sftp.open(
       stagingPath,
@@ -124,16 +125,21 @@ Future<void> uploadFile(
     await remote.close();
     remote = null;
     await sftp.rename(stagingPath, remotePath);
-  } catch (_) {
-    try {
-      await sftp.remove(stagingPath);
-    } catch (_) {}
-    rethrow;
+    pendingStagingPath = null;
   } finally {
     await remote?.close();
+    if (pendingStagingPath != null) {
+      try {
+        await sftp.remove(pendingStagingPath!);
+      } catch (_) {}
+    }
   }
 }
 ```
+
+`nextTransferId()` is a process-wide counter. The real implementation uses the
+same counter to make each `.sb-part-<number>` path distinct, including when two
+transfers target the same destination.
 
 There is no `sftp.upload` convenience method in the client used by Server Box.
 The real transfer code opens an `SftpFile`, closes it before the rename, writes
@@ -150,21 +156,27 @@ Future<void> downloadFile(
 ) async {
   final sftp = await getSftpClient(spiId);
 
-  final remote = await sftp.open(remotePath, mode: SftpFileOpenMode.read);
-  final staging = File('$localPath.sb-part-<unique-counter>');
-  final sink = staging.openWrite();
+  SftpFile? remote;
+  File? staging;
+  IOSink? sink;
   try {
+    remote = await sftp.open(remotePath, mode: SftpFileOpenMode.read);
+    staging = File('$localPath.sb-part-${nextTransferId()}');
+    sink = staging!.openWrite();
     await sink.addStream(remote.read());
     await sink.close();
-    await staging.rename(localPath);
-  } finally {
+    sink = null;
     await remote.close();
+    remote = null;
+    await staging!.rename(localPath);
+  } finally {
+    await remote?.close();
     try {
-      await sink.close();
+      await sink?.close();
     } catch (_) {}
-    if (await staging.exists()) {
+    if (staging != null && await staging!.exists()) {
       try {
-        await staging.delete();
+        await staging!.delete();
       } catch (_) {}
     }
   }
@@ -188,11 +200,15 @@ Future<void> setPermissions(
   // Parse permissions (e.g., "rwxr-xr-x" or "755")
   final mode = parsePermissions(permissions);
 
-  // Set via SSH command (more reliable than SFTP)
-  final ssh = await getSshClient(spiId);
-  await ssh.exec('chmod $mode ${shellSingleQuote(path)}');
+  // Normal path: use the SFTP set-stat operation.
+  await sftp.setStat(path, SftpFileAttrs(mode: SftpFileMode.value(mode)));
 }
 ```
+
+Permission changes normally use SFTP `setStat`; a shell is not required. If the
+server refuses the operation and an SSH escalation handler is available, the
+backend can retry with `sudo chmod`. That fallback requires a shell and is not
+the normal SFTP path.
 
 ## Path Management
 
@@ -252,41 +268,6 @@ class PathHistory {
 ```
 
 ## Transfer System
-
-### Transfer Request
-
-```dart
-class SftpReq {
-  final Spi spi;
-  final String remotePath;
-  final String localPath;
-  final SftpReqType type;
-  final DateTime createdAt;
-
-  int? totalBytes;
-  int? transferredBytes;
-  String? error;
-}
-```
-
-### Progress Tracking
-
-```dart
-class TransferProgress {
-  final SftpReq request;
-  final int total;
-  final int transferred;
-  final DateTime startTime;
-
-  double get percentage => (transferred / total) * 100;
-  Duration get elapsed => DateTime.now().difference(startTime);
-
-  String get speedFormatted {
-    final bytesPerSecond = transferred / elapsed.inSeconds;
-    return formatSpeed(bytesPerSecond);
-  }
-}
-```
 
 ### Queue Management
 

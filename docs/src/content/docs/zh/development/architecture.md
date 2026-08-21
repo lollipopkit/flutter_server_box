@@ -119,13 +119,14 @@ migration 分开：`Stores.init` 先执行 `HiveImport`，然后 `SchemaVersion.
 
 ## 状态解析：共享 Rust 库
 
-服务器状态解析（CPU、内存、磁盘、网络、温度、GPU、SMART 等）在
-Rust crate `crates/sbm_parser` 中实现一次，App 经 flutter_rust_bridge
-（`crates/sbm_ffi`，生成的 Dart 位于 `lib/src/rust/`）调用。
-服务端 monitor 直接依赖同一 crate 进行采样，但 App 的 monitor HTTP 路径读取的是
-`MonitorMetrics.fromJson` 的 JSON，再由 `applyMonitorMetrics` 映射到 `ServerStatus`。
-App 的 SSH 路径则通过 FFI 使用 `sbm_parser` 解析脚本输出；两者共享状态模型，但不是
-同一条解析路径，字段精度和语义应以各自实现为准。
+服务器状态解析在 Rust crate `crates/sbm_parser` 中实现，App 经
+flutter_rust_bridge（`crates/sbm_ffi`，生成的 Dart 位于 `lib/src/rust/`）解析
+SSH 脚本输出。服务端 monitor 使用 monitor 专用的 `crates/sbm_native` 采样器，
+通过系统调用、procfs 或 sysfs 获取 CPU、内存、磁盘、网络等数据；其扩展周期仍使用
+共享脚本解析 amd、传感器、SMART 和电池等需要 CLI 工具的数据。App 的 monitor HTTP
+路径读取 `MonitorMetrics.fromJson` 的 JSON，再由 `applyMonitorMetrics` 映射到
+`ServerStatus`。这些路径共享状态模型，但不是同一条采样或解析路径，字段精度和语义
+应以各自实现为准。
 解析器是纯函数：只返回原始计数；差分和滑窗计算（如网速）同样是纯函数，
 FFI 边界不持有可变状态。
 

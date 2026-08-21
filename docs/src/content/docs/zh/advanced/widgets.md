@@ -17,7 +17,7 @@ description: 在主屏幕上添加服务器状态小组件
 
 ## URL 格式
 
-```
+```text
 https://your-server.com/status
 ```
 
