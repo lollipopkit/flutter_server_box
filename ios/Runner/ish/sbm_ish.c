@@ -557,6 +557,11 @@ int sbm_ish_attach(const char *profile) {
     // session opens onto a `/dev` that was never mounted.
     int err = make_dev(profile);
     if (err < 0) {
+        // The `/proc` above goes back with it. `do_mount` does not ask whether
+        // the point already carries one, so leaving it means the next attempt
+        // stacks a second procfs on the same path — one per failed attach,
+        // and only the innermost reachable to unmount.
+        do_umount(path);
         pthread_mutex_unlock(&attached_lock);
         return err;
     }
@@ -584,6 +589,14 @@ int sbm_ish_detach(const char *profile) {
     int checked = check_profile(profile);
     if (checked < 0) return checked;
 
+    // The unmounts under the lock as well as the slot, because the two are one
+    // decision. `sbm_ish_attach` holds it across its own mounts and answers 0
+    // for a name it finds in the table — so with the unmounts outside it, an
+    // attach running alongside this reads the name as still attached, returns
+    // without mounting anything, and hands back a system whose filesystems are
+    // being pulled out underneath it.
+    pthread_mutex_lock(&attached_lock);
+
     // Innermost first: `/dev/pts` and `/dev/shm` are inside `/dev`, and the
     // outer one cannot go while they hold it.
     static const char *const points[] = { "dev/pts", "dev/shm", "dev", "proc" };
@@ -597,12 +610,14 @@ int sbm_ish_detach(const char *profile) {
         if (one < 0 && one != -_ENOENT && err == 0) err = one;
     }
     if (err < 0) {
+        // The name stays in the table: its mounts are still there, and an
+        // attach that finds it and returns 0 is telling the truth.
+        pthread_mutex_unlock(&attached_lock);
         syslog(LOG_ERR, "sbm_ish: %s did not detach (%d); its mounts stay until "
                "the app restarts", profile, err);
         return err;
     }
 
-    pthread_mutex_lock(&attached_lock);
     for (int i = 0; i < SBM_MAX_PROFILES; i++) {
         if (strcmp(attached[i], profile) == 0) { attached[i][0] = '\0'; break; }
     }

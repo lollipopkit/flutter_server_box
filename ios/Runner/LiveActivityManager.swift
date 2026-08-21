@@ -99,6 +99,15 @@ actor LiveActivityManager {
     /// running with nothing able to update or end it.
     private var pending: Task<Activity<TerminalAttributes>?, Never>?
 
+    /// Bumped by [stop].
+    ///
+    /// A request in flight when `stop` runs is building an activity that does
+    /// not exist yet, so `trackedActivities` cannot return it and `stop`
+    /// cannot end it. Without this the request finished afterwards and put it
+    /// in `current` — a Live Activity appearing for a terminal the user had
+    /// just closed, and staying there.
+    private var generation = 0
+
     func start(json: String) async {
         guard let payload = Self.parse(json) else { return }
 
@@ -109,15 +118,35 @@ actor LiveActivityManager {
         }
 
         // Whoever asked second waits for the first request rather than making
-        // one of its own.
+        // one of its own, and then applies *its own* payload to the result.
+        // The request in flight carries the older one, so taking its content
+        // would show what this call has already replaced.
+        //
+        // Nothing to update once it completes means `stop` ended it in
+        // between. This call then does nothing; the next `update` finds no
+        // activity and comes back through here.
         if let pending {
-            current = await pending.value
+            _ = await pending.value
+            if let activity = updatableActivity() {
+                let content = ActivityContent(state: Self.contentState(from: payload), staleDate: nil)
+                await apply(content, to: activity)
+            }
             return
         }
+
+        let mine = generation
         let task = Task { await Self.request(payload) }
         pending = task
         let activity = await task.value
         pending = nil
+        guard generation == mine else {
+            // Ended here because `stop` could not: it ran while this was still
+            // a request. Leaving it would be an activity nothing holds.
+            if let activity {
+                await activity.end(dismissalPolicy: .immediate)
+            }
+            return
+        }
         current = activity
     }
 
@@ -132,6 +161,8 @@ actor LiveActivityManager {
     }
 
     func stop() async {
+        // Before the awaits below, so a request already in flight sees it.
+        generation += 1
         let activities = trackedActivities()
         current = nil
         for activity in activities {
