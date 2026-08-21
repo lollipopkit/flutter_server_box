@@ -12,6 +12,12 @@ Server Box uses a custom build system (`fl_build`) for cross-platform builds.
 - Rust toolchain (required: the status parser is a Rust crate built into the app
   via flutter_rust_bridge/cargokit on every platform)
 
+Initialize the bundled Git submodules before fetching Dart dependencies:
+
+```bash
+git submodule update --init --recursive
+```
+
 ## Development Build
 
 ```bash
