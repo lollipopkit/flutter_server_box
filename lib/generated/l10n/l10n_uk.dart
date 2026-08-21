@@ -449,6 +449,14 @@ class AppLocalizationsUk extends AppLocalizations {
   String get discoverySettings => 'Налаштування виявлення';
 
   @override
+  String get distro => 'Дистрибутив';
+
+  @override
+  String distroSwitchTip(Object from, Object to) {
+    return 'Замінити $from на $to. Усе, що встановлено всередині $from, буде видалено, а замість нього буде завантажено й розпаковано $to.';
+  }
+
+  @override
   String get diskHealth => 'Стан диска';
 
   @override
@@ -691,6 +699,10 @@ class AppLocalizationsUk extends AppLocalizations {
       'Коли параметр увімкнено, введення проходить через звичайний IME, що на деяких системах дає змогу уникнути запитів захищеної клавіатури в терміналі.';
 
   @override
+  String get linuxNetTip =>
+      'Звідки завантажуються система Linux і її пакунки та які DNS-сервери в неї записуються. Залиште порожнім, щоб відновити типове значення. Збереження також перезаписує обидва у вже встановленій системі.';
+
+  @override
   String madeWithLove(Object myGithub) {
     return 'Зроблено з ❤️ від $myGithub';
   }
@@ -706,6 +718,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String mismatchSystem(Object system) {
     return 'Невідповідна система: $system';
   }
+
+  @override
+  String get mirror => 'Дзеркало';
 
   @override
   String get needRestart => 'Необхідно перезапустити застосунок';

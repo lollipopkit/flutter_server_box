@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:meta/meta.dart';
+import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
@@ -102,6 +103,43 @@ class SettingStore extends SqliteStore {
       return <String, String>{};
     },
   );
+
+  /// Which Linux system the app would install, by `LinuxDistro.id`.
+  ///
+  /// By name, never by index: an index silently changes meaning when a case is
+  /// inserted, and this outlives the build that wrote it. Read through
+  /// `linuxDistro()`, which falls back for a name no build knows.
+  late final linuxDistro = propertyDefault(
+    'linuxDistro',
+    LinuxDistro.alpine.id,
+  );
+
+  /// Each distribution's mirror, keyed by `LinuxDistro.id`.
+  ///
+  /// A map rather than one string, because a mirror of one distribution is not
+  /// a mirror of another — switching away and back would otherwise drop what
+  /// was typed. Absent means "the distribution's own default", so nothing here
+  /// pins a default against a release that moves it. Read and written through
+  /// `linuxMirror()` / `setLinuxMirror()`.
+  late final linuxMirrors = propertyDefault<Map<String, String>>(
+    'linuxMirrors',
+    const {},
+    fromObj: (raw) {
+      if (raw is Map) {
+        return raw.map(
+          (key, value) => MapEntry(key.toString(), value.toString()),
+        );
+      }
+      return <String, String>{};
+    },
+  );
+
+  /// The resolvers written into the guest's `/etc/resolv.conf`.
+  ///
+  /// Not per distribution: this is the network the device is on. Read through
+  /// `linuxNameservers()`, which is also what decides what counts as an address
+  /// in it.
+  late final linuxDns = propertyDefault('linuxDns', Defaults.linuxDns);
 
   // Editor theme
   late final editorTheme = propertyDefault('editorTheme', Defaults.editorTheme);

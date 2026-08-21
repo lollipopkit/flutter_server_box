@@ -14,11 +14,16 @@ import 'package:server_box/core/utils/rootfs.dart';
 ///
 /// This is a download of executable code, so it says so before starting rather
 /// than fetching several megabytes on a tap. What makes it safe to run is in
-/// [AndroidRootfs]: the release is pinned and its digest is checked.
+/// `LinuxDistro`: the release is pinned and its digest is checked.
+///
+/// TODO(distribution residue; remove when a second one ships): `rootfsInstallTip`
+/// and `rootfsUpdateTip` name Alpine in all fifteen locales. Both are accurate
+/// while it is the only installable one, and both need a `{distro}` placeholder
+/// the moment that stops being true.
 Future<bool> installRootfs(BuildContext context) async {
-  // Both platforms fetch the same Alpine release; what differs is what they do
-  // with it — Android unpacks a rootfs for proot, iOS a tree for the engine —
-  // and neither difference reaches this dialog.
+  // Both platforms fetch the same release of the same distribution; what
+  // differs is what they do with it — Android unpacks a rootfs for proot, iOS a
+  // tree for the engine — and neither difference reaches this dialog.
   final present = isIOS
       ? await IosRootfs.isInstalled
       : await AndroidRootfs.isInstalled;
@@ -121,16 +126,15 @@ Future<bool> installRootfs(BuildContext context) async {
 /// Everything installed inside it goes too, which is why this asks in the same
 /// words as deleting anything else.
 Future<bool> removeRootfs(BuildContext context) async {
+  // Named for what is on disk, which after a switch that was declined is not
+  // what the settings say.
+  final label = (Rootfs.installed?.distro ?? Rootfs.selected).label;
   final confirm = await context.showRoundDialog<bool>(
     title: libL10n.attention,
-    child: Text(libL10n.askContinue('${libL10n.delete} Alpine')),
+    child: Text(libL10n.askContinue('${libL10n.delete} $label')),
     actions: Btnx.cancelRedOk,
   );
   if (confirm != true) return false;
-  if (isIOS) {
-    await IosRootfs.remove();
-  } else {
-    await AndroidRootfs.remove();
-  }
+  await Rootfs.remove();
   return true;
 }

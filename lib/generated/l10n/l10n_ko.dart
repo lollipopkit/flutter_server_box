@@ -426,6 +426,14 @@ class AppLocalizationsKo extends AppLocalizations {
   String get discoverySettings => '검색 설정';
 
   @override
+  String get distro => '배포판';
+
+  @override
+  String distroSwitchTip(Object from, Object to) {
+    return '$from을(를) $to(으)로 바꿉니다. $from 안에 설치한 것은 모두 삭제되고, 그 자리에 $to을(를) 내려받아 풉니다.';
+  }
+
+  @override
   String get diskHealth => '디스크 상태';
 
   @override
@@ -655,6 +663,10 @@ class AppLocalizationsKo extends AppLocalizations {
       '이 옵션을 켜면 입력 내용이 일반 IME를 거치며, 일부 시스템에서는 터미널의 보안 키보드 안내를 피할 수 있습니다.';
 
   @override
+  String get linuxNetTip =>
+      'Linux 시스템과 패키지를 내려받을 위치, 그리고 기록되는 DNS 서버입니다. 비워 두면 기본값으로 돌아갑니다. 저장하면 이미 설치된 시스템의 파일도 다시 씁니다.';
+
+  @override
   String madeWithLove(Object myGithub) {
     return '$myGithub이(가) ❤️로 만들었습니다';
   }
@@ -669,6 +681,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String mismatchSystem(Object system) {
     return '시스템이 일치하지 않습니다: $system';
   }
+
+  @override
+  String get mirror => '미러';
 
   @override
   String get needRestart => '앱을 다시 시작해야 합니다';

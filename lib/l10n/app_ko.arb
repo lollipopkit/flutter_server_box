@@ -64,6 +64,14 @@
   "discoverSshServers": "SSH 서버 검색",
   "discoveryFailed": "검색 실패",
   "discoverySettings": "검색 설정",
+  "distro": "배포판",
+  "distroSwitchTip": "{from}을(를) {to}(으)로 바꿉니다. {from} 안에 설치한 것은 모두 삭제되고, 그 자리에 {to}을(를) 내려받아 풉니다.",
+  "@distroSwitchTip": {
+    "placeholders": {
+      "from": {},
+      "to": {}
+    }
+  },
   "diskHealth": "디스크 상태",
   "displayCpuIndex": "CPU 인덱스 표시",
   "dl2Local": "{fileName}을(를) 로컬에 다운로드하시겠습니까?",
@@ -139,6 +147,7 @@
   "lastSuccess": "마지막 성공",
   "letterCache": "일반 키보드 입력",
   "letterCacheTip": "이 옵션을 켜면 입력 내용이 일반 IME를 거치며, 일부 시스템에서는 터미널의 보안 키보드 안내를 피할 수 있습니다.",
+  "linuxNetTip": "Linux 시스템과 패키지를 내려받을 위치, 그리고 기록되는 DNS 서버입니다. 비워 두면 기본값으로 돌아갑니다. 저장하면 이미 설치된 시스템의 파일도 다시 씁니다.",
   "madeWithLove": "{myGithub}이(가) ❤️로 만들었습니다",
   "maxConcurrency": "최대 동시 실행 수",
   "maxRetryCount": "서버 재연결 횟수",
@@ -148,6 +157,7 @@
       "system": {}
     }
   },
+  "mirror": "미러",
   "needRestart": "앱을 다시 시작해야 합니다",
   "netViewType": "네트워크 뷰 유형",
   "newContainer": "새 컨테이너",

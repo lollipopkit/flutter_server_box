@@ -54,6 +54,14 @@
   "discoverSshServers": "SSHサーバーの発見",
   "discoveryFailed": "発見に失敗",
   "discoverySettings": "発見設定",
+  "distro": "ディストリビューション",
+  "distroSwitchTip": "{from} を {to} に置き換えます。{from} の中にインストールしたものはすべて削除され、代わりに {to} をダウンロードして展開します。",
+  "@distroSwitchTip": {
+    "placeholders": {
+      "from": {},
+      "to": {}
+    }
+  },
   "diskHealth": "ディスクの健康状態",
   "displayCpuIndex": "CPUインデックスを表示する",
   "dl2Local": "{fileName}をローカルにダウンロードしますか？",
@@ -115,6 +123,7 @@
   "lastSuccess": "最後の成功",
   "letterCache": "通常キーボード入力",
   "letterCacheTip": "有効にすると入力内容は通常のIMEを経由し、一部のシステムでターミナルにセキュアキーボードの案内が表示されるのを避けられます。",
+  "linuxNetTip": "Linux システムとそのパッケージのダウンロード元、および書き込まれる DNS サーバー。空にすると既定値に戻ります。保存すると、インストール済みのシステムのファイルも書き換えられます。",
   "madeWithLove": "{myGithub}によって❤️で作成済み",
   "maxConcurrency": "最大同時実行数",
   "maxRetryCount": "サーバーの再接続試行回数",
@@ -124,6 +133,7 @@
       "system": {}
     }
   },
+  "mirror": "ミラー",
   "needRestart": "アプリを再起動する必要があります",
   "netViewType": "ネットワークビュータイプ",
   "newContainer": "新しいコンテナを作成",

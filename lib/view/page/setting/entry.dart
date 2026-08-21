@@ -10,15 +10,18 @@ import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/utils/linux_seed.dart';
 import 'package:server_box/core/utils/local_exec.dart';
 import 'package:server_box/core/utils/rootfs.dart';
 import 'package:server_box/core/utils/server_dedup.dart';
 import 'package:server_box/core/utils/ssh_config.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
+import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/build_data.dart';
+import 'package:server_box/data/res/default.dart';
 import 'package:server_box/data/res/github_id.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
@@ -37,6 +40,7 @@ import 'package:server_box/view/page/setting/seq/srv_func_seq.dart';
 import 'package:server_box/view/page/setting/seq/srv_orders.dart';
 import 'package:server_box/view/page/setting/seq/virt_key.dart';
 import 'package:server_box/view/widget/dmg_notice.dart';
+import 'package:server_box/view/widget/rootfs_install.dart';
 
 part 'about.dart';
 part 'menu.dart';
@@ -45,6 +49,7 @@ part 'entries/app.dart';
 part 'entries/container.dart';
 part 'entries/editor.dart';
 part 'entries/full_screen.dart';
+part 'entries/linux.dart';
 part 'entries/server.dart';
 part 'entries/sftp.dart';
 part 'entries/ssh.dart';
@@ -180,6 +185,19 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             icon: Icons.settings_outlined,
             page: () => const AppSettingsPage(section: SettingsSection.ssh),
           ),
+          // Under the terminal because that is where a Linux system is
+          // reached from, and absent when this build carries none — the same
+          // question the terminal's own tab asks before it offers to install
+          // one. Named for Linux rather than for the distribution: which one
+          // is installed is allowed to change, and none of what is on that
+          // page is about which.
+          if (Rootfs.isAvailable)
+            SettingsNode.leaf(
+              id: 'terminal.linux',
+              title: 'Linux',
+              icon: Icons.layers_outlined,
+              page: () => const AppSettingsPage(section: SettingsSection.linux),
+            ),
           SettingsNode.leaf(
             id: 'terminal.knownHosts',
             title: l10n.sshKnownHostKeys,
@@ -546,7 +564,17 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 ///
 /// One page rather than one per group, so that the state — and the four text
 /// controllers on it — survives moving between them.
-enum SettingsSection { app, ai, server, ssh, sftp, container, editor, fullScreen }
+enum SettingsSection {
+  app,
+  ai,
+  server,
+  ssh,
+  linux,
+  sftp,
+  container,
+  editor,
+  fullScreen,
+}
 
 final class AppSettingsPage extends ConsumerStatefulWidget {
   final SettingsSection section;
@@ -591,6 +619,7 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
       SettingsSection.ai => _buildAskAiConfig(),
       SettingsSection.server => _buildServer(),
       SettingsSection.ssh => _buildSSH(),
+      SettingsSection.linux => _buildLinux(),
       SettingsSection.sftp => _buildSFTP(),
       SettingsSection.container => _buildContainer(),
       SettingsSection.editor => _buildEditor(),
@@ -601,6 +630,14 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
       padding: MultiList.kOuterPadding,
       children: [group],
     );
+  }
+
+  /// Redraws after something a listenable does not cover.
+  ///
+  /// The Linux page reads `Rootfs.installed`, which is a file on disk and not
+  /// a store key, so nothing notifies when an install or a removal changes it.
+  void refresh() {
+    if (mounted) setState(() {});
   }
 
   Future<void> showTextSettingDialog({

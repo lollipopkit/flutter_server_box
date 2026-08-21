@@ -8,8 +8,9 @@ import 'package:dio/dio.dart';
 import 'package:ffi/ffi.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:server_box/core/utils/alpine_seed.dart';
 import 'package:server_box/core/utils/guest_path.dart';
+import 'package:server_box/core/utils/linux_seed.dart';
+import 'package:server_box/data/model/app/linux_distro.dart';
 
 /// A Linux userland on iOS, and what it takes to get one.
 ///
@@ -27,10 +28,23 @@ import 'package:server_box/core/utils/guest_path.dart';
 /// build without it is one edit away, should App Store review object — and
 /// [isAvailable] is how everything else asks, exactly as on Android.
 abstract final class IosRootfs {
-  /// The same Alpine release the Android rootfs uses, so both platforms answer
-  /// with the same userland — and on both it is an ordinary unpacked tree,
-  /// since `realfs` mounts one directly.
-  static const version = '3.22.5';
+  /// The same release the Android rootfs uses, so both platforms answer with
+  /// the same system — and on both it is an ordinary unpacked tree, since
+  /// `realfs` mounts one directly.
+  static String get version => linuxDistro().version;
+
+  /// What is unpacked here, or null with nothing installed.
+  ///
+  /// Not the same question as `linuxDistro()`, which is what the *setting*
+  /// says: switching writes the setting first and this answers for the tree
+  /// that is still on disk.
+  static InstalledGuest? get installed => _installed ? _guest : null;
+  static InstalledGuest? _guest;
+
+  /// The marker [install] writes, holding what it unpacked.
+  ///
+  /// Hidden, so that it is not a file in the guest's `/` that a shell shows.
+  static const _marker = '.installed';
 
   static String? _root;
 
@@ -69,42 +83,52 @@ abstract final class IosRootfs {
   static bool get isReadySync => isAvailable && _installed;
   static bool _installed = false;
 
-  /// Whether a filesystem is unpacked and ready to boot.
+  /// Whether a filesystem is unpacked and ready to boot, and what it is.
   static Future<bool> get isInstalled async {
     final root = _root;
     if (root == null) return false;
-    // An ordinary tree, mounted by `realfs`. What makes it a userland rather
-    // than a directory is that a shell is in it, so that is what this asks —
-    // there is no manifest to check because there is nothing but files.
-    return _installed = await File(root.joinPath('bin/busybox')).exists() &&
-        await File(root.joinPath('etc/alpine-release')).exists();
+    // An ordinary tree, mounted by `realfs`. What makes it a system rather than
+    // a directory is that a shell is in it, so that is what [looksUnpacked]
+    // asks — there is no manifest to check because there is nothing but files.
+    if (!await looksUnpacked(root)) {
+      _guest = null;
+      return _installed = false;
+    }
+    final marker = File(root.joinPath(_marker));
+    // TODO(migration residue; remove once no install predates the marker): a
+    // tree unpacked by a release that wrote none reads as Alpine, which is what
+    // it is — nothing else was installable then.
+    _guest = await marker.exists()
+        ? InstalledGuest.decode(await marker.readAsString())
+        : const InstalledGuest(LinuxDistro.alpine, '');
+    return _installed = true;
   }
 
-  /// Pinned and checked, like Android's — this is executable code fetched over
-  /// the network, and the digest is what makes that different from running
-  /// whatever the connection returned.
-  static const _mirror = 'https://dl-cdn.alpinelinux.org/alpine';
-  static const _branch = 'v3.22';
-  static const _url =
-      '$_mirror/$_branch/releases/aarch64/'
-      'alpine-minirootfs-$version-aarch64.tar.gz';
-  static const _sha256 =
-      '3fbc6285032ed46821b511292633d7b2a6306a2e254f590e92bdafff56cf2f70';
 
-  /// Downloads and unpacks the userland.
+  /// Downloads and unpacks the system the settings name.
   ///
   /// Unpacked in Dart, because iOS will not start a process — no `tar`, and
   /// that refusal is the reason this platform has an interpreter at all. What
   /// `realfs` needs is only a directory tree, which is why this is possible;
   /// under `fakefs` it would have meant carrying a metadata database and the
   /// tool that writes one.
+  ///
+  /// [replace] unpacks over whatever is there, which is what switching
+  /// distributions is: everything the old one had installed goes with it.
   static Future<void> install({
     void Function(double? progress)? onProgress,
     CancelToken? cancel,
+    bool replace = false,
   }) async {
     final root = _root;
     if (root == null) throw StateError('IosRootfs.prepare was not called');
-    if (await isInstalled) return;
+    if (!replace && await isInstalled) return;
+
+    // Read once, so that a setting changed mid-download cannot have the digest
+    // checked against one distribution and the repositories written for
+    // another.
+    final distro = linuxDistro();
+    final mirror = linuxMirror(distro);
 
     final dir = Directory(root);
     // A userland is complete or absent; there is no repairing half of one.
@@ -114,7 +138,7 @@ abstract final class IosRootfs {
     final archivePath = root.joinPath('rootfs.tar.gz');
     try {
       await Dio().download(
-        _url,
+        distro.rootfsUrl(mirror),
         archivePath,
         cancelToken: cancel,
         // The download is most of the wait, so it owns most of the bar; the
@@ -125,10 +149,10 @@ abstract final class IosRootfs {
 
       final file = File(archivePath);
       final digest = (await sha256.bind(file.openRead()).first).toString();
-      if (digest != _sha256) {
+      if (digest != distro.sha256) {
         throw StateError(
-          'The userland did not match its digest and was discarded. '
-          'Expected $_sha256, got $digest.',
+          'The system did not match its digest and was discarded. '
+          'Expected ${distro.sha256}, got $digest.',
         );
       }
 
@@ -137,12 +161,18 @@ abstract final class IosRootfs {
       // address literal is fetched fine, but there is no resolver, so every
       // mirror is a "temporary error" and every package is missing.
       // Measured on a device by `integration_test/ios_load_test.dart`.
-      await seedResolvConf(root);
-      await seedRepositories(root, mirror: _mirror, branch: _branch);
+      await seedResolvConf(root, nameservers: linuxNameservers());
+      await seedRepositories(root, distro: distro, mirror: mirror);
+      // Last, for the reason Android's marker is last: it is the record that
+      // this finished, so anything that threw above must not leave one.
+      final guest = InstalledGuest(distro, distro.version);
+      await File(root.joinPath(_marker)).writeAsString(guest.encode());
+      _guest = guest;
       _installed = true;
     } catch (_) {
       // Nothing half-installed is left to be mistaken for a working one.
       if (await dir.exists()) await dir.delete(recursive: true);
+      _guest = null;
       _installed = false;
       rethrow;
     } finally {
@@ -151,9 +181,32 @@ abstract final class IosRootfs {
     }
   }
 
-  /// Removes the userland and everything in it.
+  /// Rewrites the resolver and repository files of a system already on disk.
+  ///
+  /// Both are seeded at install and never again, so a mirror or a resolver
+  /// changed afterwards would otherwise only take effect on the next install —
+  /// which here means deleting the system and everything its package manager
+  /// put in it.
+  ///
+  /// Written for the distribution *on disk*, not the one the setting names:
+  /// with a switch pending, the repositories file apt or apk is about to read
+  /// still belongs to the tree that is there.
+  static Future<void> applyNetSettings() async {
+    final root = _root;
+    if (root == null || !await isInstalled) return;
+    final distro = _guest?.distro ?? linuxDistro();
+    await seedResolvConf(
+      root,
+      nameservers: linuxNameservers(),
+      overwrite: true,
+    );
+    await seedRepositories(root, distro: distro, mirror: linuxMirror(distro));
+  }
+
+  /// Removes the system and everything in it.
   static Future<void> remove() async {
     _installed = false;
+    _guest = null;
     final root = _root;
     if (root == null) return;
     final dir = Directory(root);
@@ -240,16 +293,21 @@ abstract final class IosRootfs {
   }
 
   /// Locates where the filesystem would be. Call once, before anything asks.
+  ///
+  /// The directory is still called `alpine` and is not renamed per
+  /// distribution: it is one tree at a time and the name is a path, not a
+  /// claim. Renaming it would orphan the tree of every install already out
+  /// there for nothing.
   static Future<void> prepare() async {
     if (!Platform.isIOS) return;
     final root = _root =
         (await getApplicationSupportDirectory()).path.joinPath('alpine');
     if (!await isInstalled) return;
-    // A userland unpacked before [install] seeded a resolver has none, and
+    // A system unpacked before [install] seeded a resolver has none, and
     // nothing else would ever give it one: [install] returns early for a tree
     // that is already there, so every existing install would have stayed
     // without DNS. Writes only when the file is absent.
-    await seedResolvConf(root);
+    await seedResolvConf(root, nameservers: linuxNameservers());
   }
 
   /// What [boot] answers when the machine is already up — `-EEXIST`.

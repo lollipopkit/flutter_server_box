@@ -5,8 +5,9 @@ import 'package:dio/dio.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:server_box/core/chan.dart';
-import 'package:server_box/core/utils/alpine_seed.dart';
 import 'package:server_box/core/utils/guest_path.dart';
+import 'package:server_box/core/utils/linux_seed.dart';
+import 'package:server_box/data/model/app/linux_distro.dart';
 
 /// A Linux userland on Android, and what it takes to get one.
 ///
@@ -28,31 +29,25 @@ import 'package:server_box/core/utils/guest_path.dart';
 /// as is the rootfs, so [isAvailable] is also how a 32-bit or x86 device says
 /// no: there is no `libproot.so` in its own ABI's directory to find.
 abstract final class AndroidRootfs {
-  /// Pinned, and checked. This is a tarball of executable code fetched over
-  /// the network and then run; the digest is the only thing that makes that
-  /// different from running whatever the connection handed back.
+  /// What this build would install, pinned and checked by [LinuxDistro]. The
+  /// tarball is executable code fetched over the network and then run; the
+  /// digest is the only thing that makes that different from running whatever
+  /// the connection handed back.
   ///
-  /// The branch is 3.22 rather than the newest, and that is not for want of
-  /// updating: 3.23 and later ship apk-tools 3, whose network fetches fail
+  /// Alpine's branch is 3.22 rather than the newest, and that is not for want
+  /// of updating: 3.23 and later ship apk-tools 3, whose network fetches fail
   /// under proot on Android with `Permission denied` on every repository —
   /// measured on API 36, where the same rootfs installs happily from a local
   /// file repository and busybox `wget` fetches the same URLs over both HTTP
   /// and HTTPS. Cause not established. 3.22 is the last branch with apk-tools
   /// 2.14, which works; `integration_test/rootfs_shell_test.dart` installs a
   /// package over the network and is what would notice this changing.
-  static const version = '3.22.5';
-  static const _mirror = 'https://dl-cdn.alpinelinux.org/alpine';
-  static const _branch = 'v3.22';
-  static const _url =
-      '$_mirror/$_branch/releases/aarch64/'
-      'alpine-minirootfs-$version-aarch64.tar.gz';
-  static const _sha256 =
-      '3fbc6285032ed46821b511292633d7b2a6306a2e254f590e92bdafff56cf2f70';
+  static String get version => linuxDistro().version;
 
   /// Written once the extraction finished. Its presence is the whole record:
   /// a half-unpacked rootfs must not look installed, and re-downloading a
-  /// working one wastes the user's data. It holds the version it was unpacked
-  /// from, which is what [installedVersion] reads.
+  /// working one wastes the user's data. It holds what was unpacked, which is
+  /// what [installed] reads.
   static const _marker = '.installed';
 
   static String? _root;
@@ -68,21 +63,25 @@ abstract final class AndroidRootfs {
   /// Whether this build carries proot at all.
   static bool get isAvailable => _proot != null && _loader != null;
 
-  /// Whether a rootfs is unpacked and ready to enter.
+  /// Whether a rootfs is unpacked and ready to enter, and what it is.
   static Future<bool> get isInstalled async {
     final root = _root;
     if (root == null) return false;
     final marker = File(root.joinPath(_marker));
     if (!await marker.exists()) {
-      _installedVersion = null;
+      _guest = null;
       return _installed = false;
     }
-    // Empty for a rootfs unpacked before the marker carried a version. Read as
-    // "some older one", which is exactly what it is.
+    // Empty for a rootfs unpacked before the marker carried a version, which
+    // [InstalledGuest.decode] reads as Alpine of no version — "some older one",
+    // which is exactly what it is. The `isEmpty ? '0'` below is what makes that
+    // read as outdated.
     // TODO(migration residue; remove once no install predates the versioned
-    // marker): the `?? '0'` below is what makes that read as outdated.
-    final written = (await marker.readAsString()).trim();
-    _installedVersion = written.isEmpty ? '0' : written;
+    // marker).
+    final guest = InstalledGuest.decode(await marker.readAsString());
+    _guest = guest.version.isEmpty
+        ? InstalledGuest(guest.distro, '0')
+        : guest;
     return _installed = true;
   }
 
@@ -96,20 +95,35 @@ abstract final class AndroidRootfs {
   static bool get isReady => isAvailable && _installed;
   static bool _installed = false;
 
-  /// The version on disk, or null when there is nothing installed.
+  /// What is unpacked on disk, or null when there is nothing installed.
   ///
   /// Read at [prepare] and kept by [install] and [remove], for the same reason
   /// [isReady] is synchronous: what asks is a widget being built.
-  static String? get installedVersion => _installed ? _installedVersion : null;
-  static String? _installedVersion;
-
-  /// Whether what is installed is older than what this build would install.
   ///
-  /// Not acted on by itself. Reinstalling means downloading the rootfs again
-  /// and losing everything `apk add` put in the old one, which is the user's
-  /// call — so this only decides whether to offer.
-  static bool get isOutdated =>
-      isReady && _installedVersion != null && _installedVersion != version;
+  /// Not the same question as `linuxDistro()`, which is what the *setting*
+  /// says: switching writes the setting first and this answers for the tree
+  /// that is still on disk.
+  static InstalledGuest? get installed => _installed ? _guest : null;
+  static InstalledGuest? _guest;
+
+  /// The version on disk, or null when there is nothing installed.
+  static String? get installedVersion => installed?.version;
+
+  /// Whether what is installed is an older release of the *same* distribution.
+  ///
+  /// A different distribution is not an update — it is a switch, and one that
+  /// throws away everything installed in the old tree. That is offered from the
+  /// settings page and asked for in those words, so it is deliberately not
+  /// folded in here.
+  ///
+  /// Not acted on by itself either. Reinstalling means downloading the rootfs
+  /// again and losing everything `apk add` put in the old one, which is the
+  /// user's call — so this only decides whether to offer.
+  static bool get isOutdated {
+    final guest = installed;
+    if (guest == null) return false;
+    return guest.distro == linuxDistro() && guest.version != version;
+  }
 
   /// Locates proot and the rootfs. Call once, before anything asks.
   static Future<void> prepare() async {
@@ -143,6 +157,12 @@ abstract final class AndroidRootfs {
     if (root == null) throw StateError('AndroidRootfs.prepare was not called');
     if (!replace && await isInstalled) return;
 
+    // Read once, so that a setting changed mid-download cannot have the digest
+    // checked against one distribution and the repositories written for
+    // another.
+    final distro = linuxDistro();
+    final mirror = linuxMirror(distro);
+
     final dir = Directory(root);
     // Whatever a previous attempt left. A rootfs is only ever complete or
     // absent; there is no repairing a partial one.
@@ -152,7 +172,7 @@ abstract final class AndroidRootfs {
     final archive = root.joinPath('rootfs.tar.gz');
     try {
       await Dio().download(
-        _url,
+        distro.rootfsUrl(mirror),
         archive,
         cancelToken: cancel,
         onReceiveProgress: (got, total) =>
@@ -160,10 +180,10 @@ abstract final class AndroidRootfs {
       );
 
       final digest = await _sha256Of(File(archive));
-      if (digest != _sha256) {
+      if (digest != distro.sha256) {
         throw StateError(
           'The rootfs did not match its digest and was discarded. '
-          'Expected $_sha256, got $digest.',
+          'Expected ${distro.sha256}, got $digest.',
         );
       }
 
@@ -182,11 +202,12 @@ abstract final class AndroidRootfs {
         throw StateError('Could not unpack the rootfs: ${untar.stderr}');
       }
 
-      await seedResolvConf(root);
-      await seedRepositories(root, mirror: _mirror, branch: _branch);
-      await File(root.joinPath(_marker)).writeAsString(version);
+      await seedResolvConf(root, nameservers: linuxNameservers());
+      await seedRepositories(root, distro: distro, mirror: mirror);
+      final guest = InstalledGuest(distro, distro.version);
+      await File(root.joinPath(_marker)).writeAsString(guest.encode());
       _installed = true;
-      _installedVersion = version;
+      _guest = guest;
     } catch (_) {
       // Nothing half-installed is left to be mistaken for a working one.
       if (await dir.exists()) await dir.delete(recursive: true);
@@ -197,10 +218,32 @@ abstract final class AndroidRootfs {
     }
   }
 
+  /// Rewrites the resolver and repository files of a rootfs already on disk.
+  ///
+  /// Both are seeded at install and never again, so a mirror or a resolver
+  /// changed afterwards would otherwise only take effect on the next install —
+  /// which means downloading the release again and losing everything `apk` put
+  /// in the old one.
+  ///
+  /// Written for the distribution *on disk*, not the one the setting names:
+  /// with a switch pending, the repositories file apt or apk is about to read
+  /// still belongs to the tree that is there.
+  static Future<void> applyNetSettings() async {
+    final root = _root;
+    if (root == null || !await isInstalled) return;
+    final distro = _guest?.distro ?? linuxDistro();
+    await seedResolvConf(
+      root,
+      nameservers: linuxNameservers(),
+      overwrite: true,
+    );
+    await seedRepositories(root, distro: distro, mirror: linuxMirror(distro));
+  }
+
   /// Removes the rootfs and everything in it.
   static Future<void> remove() async {
     _installed = false;
-    _installedVersion = null;
+    _guest = null;
     final root = _root;
     if (root == null) return;
     final dir = Directory(root);

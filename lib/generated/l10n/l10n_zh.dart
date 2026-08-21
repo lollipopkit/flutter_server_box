@@ -418,6 +418,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get discoverySettings => '发现设置';
 
   @override
+  String get distro => '发行版';
+
+  @override
+  String distroSwitchTip(Object from, Object to) {
+    return '用 $to 替换 $from。$from 里装过的所有东西都会被删除,然后下载并解包 $to。';
+  }
+
+  @override
   String get diskHealth => '磁盘健康';
 
   @override
@@ -642,6 +650,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get letterCacheTip => '开启后，输入内容会经过普通输入法，这样可避免部分系统在终端弹出安全键盘';
 
   @override
+  String get linuxNetTip =>
+      'Linux 系统及其软件包从哪里下载,以及写入其中的 DNS 服务器。留空恢复默认值。保存时会一并改写已安装系统中的对应文件。';
+
+  @override
   String madeWithLove(Object myGithub) {
     return '用❤️制作 by $myGithub';
   }
@@ -656,6 +668,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String mismatchSystem(Object system) {
     return '系统不匹配：$system';
   }
+
+  @override
+  String get mirror => '镜像';
 
   @override
   String get needRestart => '需要重启 App';
@@ -1711,6 +1726,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get discoverySettings => '發現設定';
 
   @override
+  String get distro => '發行版';
+
+  @override
+  String distroSwitchTip(Object from, Object to) {
+    return '以 $to 取代 $from。$from 裡安裝過的所有東西都會被刪除,然後下載並解壓 $to。';
+  }
+
+  @override
   String get diskHealth => '磁碟健康';
 
   @override
@@ -1935,6 +1958,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get letterCacheTip => '開啟後，輸入內容會經過一般輸入法，這樣可避免部分系統在終端彈出安全鍵盤。';
 
   @override
+  String get linuxNetTip =>
+      'Linux 系統及其套件從何處下載,以及寫入其中的 DNS 伺服器。留空可恢復預設值。儲存時會一併改寫已安裝系統中的對應檔案。';
+
+  @override
   String madeWithLove(Object myGithub) {
     return '用❤️製作 by $myGithub';
   }
@@ -1949,6 +1976,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String mismatchSystem(Object system) {
     return '系統不匹配：$system';
   }
+
+  @override
+  String get mirror => '鏡像';
 
   @override
   String get needRestart => '需要重開 App';

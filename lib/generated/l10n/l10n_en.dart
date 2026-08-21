@@ -444,6 +444,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get discoverySettings => 'Discovery Settings';
 
   @override
+  String get distro => 'Distribution';
+
+  @override
+  String distroSwitchTip(Object from, Object to) {
+    return 'Replace $from with $to. Everything installed inside $from is deleted, and $to is downloaded and unpacked in its place.';
+  }
+
+  @override
   String get diskHealth => 'Disk Health';
 
   @override
@@ -684,6 +692,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'When enabled, input goes through the regular IME, which can avoid secure keyboard prompts in the terminal on some systems.';
 
   @override
+  String get linuxNetTip =>
+      'Where the Linux system and its packages are downloaded from, and the DNS servers written into it. Leave empty to restore the default. Saving also rewrites both in a system that is already installed.';
+
+  @override
   String madeWithLove(Object myGithub) {
     return 'Made with ❤️ by $myGithub';
   }
@@ -698,6 +710,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String mismatchSystem(Object system) {
     return 'Mismatch system: $system';
   }
+
+  @override
+  String get mirror => 'Mirror';
 
   @override
   String get needRestart => 'App needs to be restarted';

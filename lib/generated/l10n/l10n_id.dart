@@ -448,6 +448,14 @@ class AppLocalizationsId extends AppLocalizations {
   String get discoverySettings => 'Pengaturan Penemuan';
 
   @override
+  String get distro => 'Distribusi';
+
+  @override
+  String distroSwitchTip(Object from, Object to) {
+    return 'Ganti $from dengan $to. Semua yang terpasang di dalam $from akan dihapus, dan $to diunduh serta diekstrak sebagai gantinya.';
+  }
+
+  @override
   String get diskHealth => 'Kesehatan disk';
 
   @override
@@ -690,6 +698,10 @@ class AppLocalizationsId extends AppLocalizations {
       'Saat diaktifkan, input akan melalui IME biasa, yang dapat menghindari prompt keyboard aman di terminal pada beberapa sistem.';
 
   @override
+  String get linuxNetTip =>
+      'Dari mana sistem Linux dan paketnya diunduh, serta server DNS yang ditulis ke dalamnya. Kosongkan untuk mengembalikan nilai bawaan. Menyimpan juga menulis ulang keduanya pada sistem yang sudah terpasang.';
+
+  @override
   String madeWithLove(Object myGithub) {
     return 'Dibuat dengan ❤️ oleh $myGithub';
   }
@@ -704,6 +716,9 @@ class AppLocalizationsId extends AppLocalizations {
   String mismatchSystem(Object system) {
     return 'Sistem tidak cocok: $system';
   }
+
+  @override
+  String get mirror => 'Mirror';
 
   @override
   String get needRestart => 'Perlu memulai ulang aplikasi';

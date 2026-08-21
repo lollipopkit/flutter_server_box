@@ -129,6 +129,14 @@
   "discoverSshServers": "發現SSH服務器",
   "discoveryFailed": "發現失敗",
   "discoverySettings": "發現設定",
+  "distro": "發行版",
+  "distroSwitchTip": "以 {to} 取代 {from}。{from} 裡安裝過的所有東西都會被刪除,然後下載並解壓 {to}。",
+  "@distroSwitchTip": {
+    "placeholders": {
+      "from": {},
+      "to": {}
+    }
+  },
   "diskHealth": "磁碟健康",
   "displayCpuIndex": "顯示 CPU 索引",
   "dl2Local": "下載 {fileName} 到本地？",
@@ -197,6 +205,7 @@
   "lastSuccess": "最後成功",
   "letterCache": "一般鍵盤輸入",
   "letterCacheTip": "開啟後，輸入內容會經過一般輸入法，這樣可避免部分系統在終端彈出安全鍵盤。",
+  "linuxNetTip": "Linux 系統及其套件從何處下載,以及寫入其中的 DNS 伺服器。留空可恢復預設值。儲存時會一併改寫已安裝系統中的對應檔案。",
   "madeWithLove": "用❤️製作 by {myGithub}",
   "maxConcurrency": "最大並發數",
   "maxRetryCount": "伺服器嘗試重連次數",
@@ -206,6 +215,7 @@
       "system": {}
     }
   },
+  "mirror": "鏡像",
   "needRestart": "需要重開 App",
   "netViewType": "網路檢視類型",
   "newContainer": "新建容器",

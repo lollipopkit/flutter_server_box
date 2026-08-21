@@ -450,6 +450,14 @@ class AppLocalizationsTr extends AppLocalizations {
   String get discoverySettings => 'Keşif Ayarları';
 
   @override
+  String get distro => 'Dağıtım';
+
+  @override
+  String distroSwitchTip(Object from, Object to) {
+    return '$from yerine $to kurulur. $from içine kurulmuş her şey silinir ve yerine $to indirilip açılır.';
+  }
+
+  @override
   String get diskHealth => 'Disk sağlığı';
 
   @override
@@ -692,6 +700,10 @@ class AppLocalizationsTr extends AppLocalizations {
       'Etkinleştirildiğinde giriş normal IME üzerinden yapılır; bu da bazı sistemlerde terminalde güvenli klavye istemlerini önleyebilir.';
 
   @override
+  String get linuxNetTip =>
+      'Linux sisteminin ve paketlerinin nereden indirileceği ve içine yazılacak DNS sunucuları. Varsayılana dönmek için boş bırakın. Kaydetmek, kurulu bir sistemdeki her ikisini de yeniden yazar.';
+
+  @override
   String madeWithLove(Object myGithub) {
     return '$myGithub tarafından ❤️ ile yapıldı';
   }
@@ -706,6 +718,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String mismatchSystem(Object system) {
     return 'Eşleşmeyen sistem: $system';
   }
+
+  @override
+  String get mirror => 'Yansı';
 
   @override
   String get needRestart => 'Uygulamanın yeniden başlatılması gerekiyor';

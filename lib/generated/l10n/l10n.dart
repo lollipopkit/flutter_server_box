@@ -897,6 +897,18 @@ abstract class AppLocalizations {
   /// **'Discovery Settings'**
   String get discoverySettings;
 
+  /// No description provided for @distro.
+  ///
+  /// In en, this message translates to:
+  /// **'Distribution'**
+  String get distro;
+
+  /// No description provided for @distroSwitchTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace {from} with {to}. Everything installed inside {from} is deleted, and {to} is downloaded and unpacked in its place.'**
+  String distroSwitchTip(Object from, Object to);
+
   /// No description provided for @diskHealth.
   ///
   /// In en, this message translates to:
@@ -1317,6 +1329,12 @@ abstract class AppLocalizations {
   /// **'When enabled, input goes through the regular IME, which can avoid secure keyboard prompts in the terminal on some systems.'**
   String get letterCacheTip;
 
+  /// No description provided for @linuxNetTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Where the Linux system and its packages are downloaded from, and the DNS servers written into it. Leave empty to restore the default. Saving also rewrites both in a system that is already installed.'**
+  String get linuxNetTip;
+
   /// No description provided for @madeWithLove.
   ///
   /// In en, this message translates to:
@@ -1340,6 +1358,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Mismatch system: {system}'**
   String mismatchSystem(Object system);
+
+  /// No description provided for @mirror.
+  ///
+  /// In en, this message translates to:
+  /// **'Mirror'**
+  String get mirror;
 
   /// No description provided for @needRestart.
   ///

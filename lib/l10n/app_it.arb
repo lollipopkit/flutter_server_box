@@ -54,6 +54,14 @@
   "discoverSshServers": "Scopri server SSH",
   "discoveryFailed": "Scoperta fallita",
   "discoverySettings": "Impostazioni scoperta",
+  "distro": "Distribuzione",
+  "distroSwitchTip": "Sostituire {from} con {to}. Tutto ciò che è installato in {from} viene eliminato e al suo posto viene scaricato e scompattato {to}.",
+  "@distroSwitchTip": {
+    "placeholders": {
+      "from": {},
+      "to": {}
+    }
+  },
   "diskHealth": "Salute disco",
   "displayCpuIndex": "Mostra indice CPU",
   "dl2Local": "Scaricare {fileName} in locale?",
@@ -116,6 +124,7 @@
   "lastSuccess": "Ultimo successo",
   "letterCache": "Input da tastiera normale",
   "letterCacheTip": "Quando è attiva, l'input passa attraverso l'IME normale, il che può evitare i prompt della tastiera sicura nel terminale su alcuni sistemi.",
+  "linuxNetTip": "Da dove vengono scaricati il sistema Linux e i suoi pacchetti, e i server DNS scritti al suo interno. Lascia vuoto per ripristinare il valore predefinito. Il salvataggio riscrive entrambi anche in un sistema già installato.",
   "madeWithLove": "Realizzato con ❤️ da {myGithub}",
   "maxConcurrency": "Massima concorrenza",
   "maxRetryCount": "Numero di riconnessioni del server",
@@ -125,6 +134,7 @@
       "system": {}
     }
   },
+  "mirror": "Mirror",
   "needRestart": "L'app deve essere riavviata",
   "netViewType": "Tipo di visualizzazione rete",
   "newContainer": "Nuovo container",

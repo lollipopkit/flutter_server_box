@@ -54,6 +54,14 @@
   "discoverSshServers": "SSH-servers ontdekken",
   "discoveryFailed": "Ontdekking mislukt",
   "discoverySettings": "Ontdekkingsinstellingen",
+  "distro": "Distributie",
+  "distroSwitchTip": "{from} vervangen door {to}. Alles wat in {from} is geïnstalleerd wordt verwijderd, en {to} wordt in plaats daarvan gedownload en uitgepakt.",
+  "@distroSwitchTip": {
+    "placeholders": {
+      "from": {},
+      "to": {}
+    }
+  },
   "diskHealth": "Schijfgezondheid",
   "displayCpuIndex": "Toon de CPU-index",
   "dl2Local": "Download {fileName} naar lokaal?",
@@ -115,6 +123,7 @@
   "lastSuccess": "Laatst succesvol",
   "letterCache": "Normale toetsenbordinvoer",
   "letterCacheTip": "Wanneer dit is ingeschakeld, gaat invoer via de normale IME, wat op sommige systemen beveiligde toetsenbordmeldingen in de terminal kan vermijden.",
+  "linuxNetTip": "Waar het Linux-systeem en zijn pakketten vandaan komen, en welke DNS-servers erin worden geschreven. Laat leeg om de standaardwaarde te herstellen. Bij opslaan worden beide ook in een al geïnstalleerd systeem herschreven.",
   "madeWithLove": "Gemaakt met ❤️ door {myGithub}",
   "maxConcurrency": "Maximale gelijktijdigheid",
   "maxRetryCount": "Aantal serverherverbindingen",
@@ -124,6 +133,7 @@
       "system": {}
     }
   },
+  "mirror": "Mirror",
   "needRestart": "App moet opnieuw worden gestart",
   "netViewType": "Netweergavetype",
   "newContainer": "Nieuwe container",

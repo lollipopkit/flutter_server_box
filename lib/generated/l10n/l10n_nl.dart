@@ -448,6 +448,14 @@ class AppLocalizationsNl extends AppLocalizations {
   String get discoverySettings => 'Ontdekkingsinstellingen';
 
   @override
+  String get distro => 'Distributie';
+
+  @override
+  String distroSwitchTip(Object from, Object to) {
+    return '$from vervangen door $to. Alles wat in $from is geïnstalleerd wordt verwijderd, en $to wordt in plaats daarvan gedownload en uitgepakt.';
+  }
+
+  @override
   String get diskHealth => 'Schijfgezondheid';
 
   @override
@@ -690,6 +698,10 @@ class AppLocalizationsNl extends AppLocalizations {
       'Wanneer dit is ingeschakeld, gaat invoer via de normale IME, wat op sommige systemen beveiligde toetsenbordmeldingen in de terminal kan vermijden.';
 
   @override
+  String get linuxNetTip =>
+      'Waar het Linux-systeem en zijn pakketten vandaan komen, en welke DNS-servers erin worden geschreven. Laat leeg om de standaardwaarde te herstellen. Bij opslaan worden beide ook in een al geïnstalleerd systeem herschreven.';
+
+  @override
   String madeWithLove(Object myGithub) {
     return 'Gemaakt met ❤️ door $myGithub';
   }
@@ -704,6 +716,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String mismatchSystem(Object system) {
     return 'Niet-overeenkomend systeem: $system';
   }
+
+  @override
+  String get mirror => 'Mirror';
 
   @override
   String get needRestart => 'App moet opnieuw worden gestart';

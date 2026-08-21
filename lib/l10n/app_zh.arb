@@ -129,6 +129,14 @@
   "discoverSshServers": "发现SSH服务器",
   "discoveryFailed": "发现失败",
   "discoverySettings": "发现设置",
+  "distro": "发行版",
+  "distroSwitchTip": "用 {to} 替换 {from}。{from} 里装过的所有东西都会被删除,然后下载并解包 {to}。",
+  "@distroSwitchTip": {
+    "placeholders": {
+      "from": {},
+      "to": {}
+    }
+  },
   "diskHealth": "磁盘健康",
   "displayCpuIndex": "显示 CPU 索引",
   "dl2Local": "下载 {fileName} 到本地？",
@@ -197,6 +205,7 @@
   "lastSuccess": "最后成功",
   "letterCache": "普通键盘输入",
   "letterCacheTip": "开启后，输入内容会经过普通输入法，这样可避免部分系统在终端弹出安全键盘",
+  "linuxNetTip": "Linux 系统及其软件包从哪里下载,以及写入其中的 DNS 服务器。留空恢复默认值。保存时会一并改写已安装系统中的对应文件。",
   "madeWithLove": "用❤️制作 by {myGithub}",
   "maxConcurrency": "最大并发数",
   "maxRetryCount": "服务器尝试重连次数",
@@ -206,6 +215,7 @@
       "system": {}
     }
   },
+  "mirror": "镜像",
   "needRestart": "需要重启 App",
   "netViewType": "网络视图类型",
   "newContainer": "新建容器",

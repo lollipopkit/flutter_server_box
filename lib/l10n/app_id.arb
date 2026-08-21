@@ -54,6 +54,14 @@
   "discoverSshServers": "Temukan Server SSH",
   "discoveryFailed": "Penemuan gagal",
   "discoverySettings": "Pengaturan Penemuan",
+  "distro": "Distribusi",
+  "distroSwitchTip": "Ganti {from} dengan {to}. Semua yang terpasang di dalam {from} akan dihapus, dan {to} diunduh serta diekstrak sebagai gantinya.",
+  "@distroSwitchTip": {
+    "placeholders": {
+      "from": {},
+      "to": {}
+    }
+  },
   "diskHealth": "Kesehatan disk",
   "displayCpuIndex": "Tampilkan indeks CPU",
   "dl2Local": "Unduh {fileName} ke lokal?",
@@ -115,6 +123,7 @@
   "lastSuccess": "Sukses Terakhir",
   "letterCache": "Input keyboard biasa",
   "letterCacheTip": "Saat diaktifkan, input akan melalui IME biasa, yang dapat menghindari prompt keyboard aman di terminal pada beberapa sistem.",
+  "linuxNetTip": "Dari mana sistem Linux dan paketnya diunduh, serta server DNS yang ditulis ke dalamnya. Kosongkan untuk mengembalikan nilai bawaan. Menyimpan juga menulis ulang keduanya pada sistem yang sudah terpasang.",
   "madeWithLove": "Dibuat dengan ❤️ oleh {myGithub}",
   "maxConcurrency": "Konkurensi Maksimum",
   "maxRetryCount": "Jumlah penyambungan kembali server",
@@ -124,6 +133,7 @@
       "system": {}
     }
   },
+  "mirror": "Mirror",
   "needRestart": "Perlu memulai ulang aplikasi",
   "netViewType": "Jenis tampilan bersih",
   "newContainer": "Wadah baru",

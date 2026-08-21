@@ -129,6 +129,14 @@
   "discoverSshServers": "Discover SSH Servers",
   "discoveryFailed": "Discovery failed",
   "discoverySettings": "Discovery Settings",
+  "distro": "Distribution",
+  "distroSwitchTip": "Replace {from} with {to}. Everything installed inside {from} is deleted, and {to} is downloaded and unpacked in its place.",
+  "@distroSwitchTip": {
+    "placeholders": {
+      "from": {},
+      "to": {}
+    }
+  },
   "diskHealth": "Disk Health",
   "displayCpuIndex": "Display CPU index",
   "dl2Local": "Download {fileName} to local?",
@@ -210,6 +218,7 @@
   "lastSuccess": "Last Success",
   "letterCache": "Normal keyboard input",
   "letterCacheTip": "When enabled, input goes through the regular IME, which can avoid secure keyboard prompts in the terminal on some systems.",
+  "linuxNetTip": "Where the Linux system and its packages are downloaded from, and the DNS servers written into it. Leave empty to restore the default. Saving also rewrites both in a system that is already installed.",
   "madeWithLove": "Made with ❤️ by {myGithub}",
   "maxConcurrency": "Max Concurrency",
   "maxRetryCount": "Number of server reconnections",
@@ -219,6 +228,7 @@
       "system": {}
     }
   },
+  "mirror": "Mirror",
   "needRestart": "App needs to be restarted",
   "netViewType": "Network view type",
   "newContainer": "New container",

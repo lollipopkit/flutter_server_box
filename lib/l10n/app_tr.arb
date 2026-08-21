@@ -54,6 +54,14 @@
   "discoverSshServers": "SSH Sunucularını Keşfet",
   "discoveryFailed": "Keşif başarısız",
   "discoverySettings": "Keşif Ayarları",
+  "distro": "Dağıtım",
+  "distroSwitchTip": "{from} yerine {to} kurulur. {from} içine kurulmuş her şey silinir ve yerine {to} indirilip açılır.",
+  "@distroSwitchTip": {
+    "placeholders": {
+      "from": {},
+      "to": {}
+    }
+  },
   "diskHealth": "Disk sağlığı",
   "displayCpuIndex": "CPU indeksini göster",
   "dl2Local": "{fileName} dosyasını yerel cihaza indir?",
@@ -115,6 +123,7 @@
   "lastSuccess": "Son Başarı",
   "letterCache": "Normal klavye girişi",
   "letterCacheTip": "Etkinleştirildiğinde giriş normal IME üzerinden yapılır; bu da bazı sistemlerde terminalde güvenli klavye istemlerini önleyebilir.",
+  "linuxNetTip": "Linux sisteminin ve paketlerinin nereden indirileceği ve içine yazılacak DNS sunucuları. Varsayılana dönmek için boş bırakın. Kaydetmek, kurulu bir sistemdeki her ikisini de yeniden yazar.",
   "madeWithLove": "{myGithub} tarafından ❤️ ile yapıldı",
   "maxConcurrency": "Maksimum Eşzamanlılık",
   "maxRetryCount": "Sunucu yeniden bağlantı sayısı",
@@ -124,6 +133,7 @@
       "system": {}
     }
   },
+  "mirror": "Yansı",
   "needRestart": "Uygulamanın yeniden başlatılması gerekiyor",
   "netViewType": "Ağ görüntüleme türü",
   "newContainer": "Yeni konteyner",
