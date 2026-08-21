@@ -577,10 +577,10 @@ async fn command_output_with_timeout(
     let announce = {
         let overflow_tx = overflow_tx.clone();
         move || {
-            if let Ok(mut slot) = overflow_tx.lock() {
-                if let Some(tx) = slot.take() {
-                    let _ = tx.send(());
-                }
+            if let Ok(mut slot) = overflow_tx.lock()
+                && let Some(tx) = slot.take()
+            {
+                let _ = tx.send(());
             }
         }
     };
