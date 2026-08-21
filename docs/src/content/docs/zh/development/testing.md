@@ -113,7 +113,7 @@ test('serverStatusProvider 应当返回状态', () async {
 
 ## 集成测试
 
-`integration_test/` 存放 `flutter test` 无法回答的问题。单元测试运行在 `flutter_tester` 下，不会加载任何 plugin，因此经 plugin 或 FFI 到达的代码不会在那里实际运行。这些测试运行在真实设备上的 App 中：
+`integration_test/` 存放 `flutter test` 无法回答的问题。单元测试运行在 `flutter_tester` 下，不会加载任何 plugin，因此经 plugin 或 FFI 到达的代码不会在那里实际运行。这些测试运行在已连接的真实设备或模拟器上的 App 中，因此 plugin 和 FFI 代码会在真实的 App 环境中执行：
 
 | 文件 | 回答的问题 |
 |---|---|

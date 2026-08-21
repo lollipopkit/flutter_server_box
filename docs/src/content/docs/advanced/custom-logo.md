@@ -16,7 +16,7 @@ Display custom logos on server cards using image URLs.
 
 Replaced automatically with the detected distribution:
 
-```
+```text
 https://example.com/{DIST}.png
 ```
 
@@ -26,7 +26,7 @@ The requested file can be `debian.png`, `ubuntu.png`, `arch.png`, and so on.
 
 Replaced automatically with the current theme:
 
-```
+```text
 https://example.com/{BRIGHT}.png
 ```
 
@@ -34,7 +34,7 @@ The requested file is `light.png` or `dark.png`.
 
 ### Combining Both Placeholders
 
-```
+```text
 https://example.com/{DIST}-{BRIGHT}.png
 ```
 

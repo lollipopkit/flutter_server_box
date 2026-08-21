@@ -51,8 +51,8 @@ One encrypted file, `store.db`, opened through `package:sqlite3` with the
 it, and which one a store uses is a decision about whether its records have
 relations:
 
-- **`kv(store, key, value, updated_at)`** holds the settings and the history.
-  a hundred unrelated preferences with nothing that queries by field, where
+- **`kv(store, key, value, updated_at)`** holds the settings and the history. It
+  suits a hundred unrelated preferences with nothing that queries by field, where
   adding one should stay a one-line change. `value` is JSON, so a value written
   here needs a `toJson`; `SqliteStore.set` answers `false` rather than throwing
   when it has none.
@@ -144,6 +144,6 @@ The project uses several custom forks to extend functionality:
 
 ## Threading
 
-- **Isolates**: Heavy computation may run away from the main thread
+- **Isolates**: Heavy computation runs in a separate isolate rather than on the main isolate
 - **computer package**: Multi-threading utilities
 - **Async/Await**: Non-blocking I/O operations

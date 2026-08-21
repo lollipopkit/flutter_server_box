@@ -67,9 +67,9 @@ into the machine beyond what the agent allows.
 ## What each switch grants
 
 The agent tells the app what it will accept, and the app offers exactly that.
-It does not show buttons that would answer 403. Everything below is off unless
-the operator turns it on in `config.toml`; none of it can be switched on from
-the web panel.
+It does not show buttons that would answer 403. Optional capabilities below are
+off unless the operator turns them on in `config.toml`; none can be switched on
+from the web panel.
 
 **Status, charts and stored history** need nothing beyond the login.
 

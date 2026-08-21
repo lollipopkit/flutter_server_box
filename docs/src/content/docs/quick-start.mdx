@@ -45,8 +45,8 @@ agent's operator has enabled. See [Monitor Agent](/docs/advanced/monitor-agent/)
 
 Available actions include:
 
-- **Open Terminal**: Tap the terminal button to open an SSH terminal
-- **Browse Files**: Use SFTP to manage files
+- **Open Terminal**: On an SSH server, tap the terminal button to open an SSH terminal. A Monitor HTTP server needs the agent's `full_access` grant.
+- **Browse Files**: On an SSH server, use SFTP to manage files. A Monitor HTTP server needs `[remote_access.fs]` and configured `roots`, and uses the agent's file API.
 - **Manage Containers**: View and control Docker containers
 - **View Processes**: Check running processes
 - **Run Snippets**: Execute saved commands

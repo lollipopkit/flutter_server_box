@@ -107,8 +107,8 @@ all from the conversation history screen.
 
 - **The model can be wrong.** The app says so on every conversation, and the
   review step exists because of it.
-- **Command output goes to the model.** That is how it works. Anything
-  you select in the terminal and ask about. Consider what is on screen.
+- **Command output goes to the model.** Anything you select in the terminal and
+  ask about is sent to the model. Consider what is on screen.
 - **One action at a time.** The Agent does not queue up a plan and execute it;
   it proposes, waits, and continues from the result.
 - **Enter sends by default.** Shift+Enter starts a new line. Settings → App →

@@ -59,7 +59,7 @@ Example:
 
 The watch reads each server from its monitor agent by itself, so it can only
 show servers that have one configured. Add the agent to the server first. In
-the server's edit page, either as its connection method, or alongside SSH.
+the server's edit page, set it as the connection method instead of SSH.
 
 ### Setup
 

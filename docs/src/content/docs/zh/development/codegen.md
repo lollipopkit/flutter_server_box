@@ -11,7 +11,7 @@ Server Box 广泛使用代码生成来处理模型、状态管理和序列化。
 
 - 带有 `@freezed` 注解的模型
 - 带有 `@JsonSerializable` 的类
-- Hive 模型
+- 用于存储迁移的旧版 Hive 适配器
 - 带有 `@riverpod` 的 Provider
 - 本地化文件（ARB 文件）
 

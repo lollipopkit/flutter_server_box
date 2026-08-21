@@ -41,8 +41,8 @@ description: 在几分钟内开始使用 Server Box
 
 连接后可以：
 
-- **打开终端**：点击终端按钮打开 SSH 终端
-- **浏览文件**：使用 SFTP 管理文件
+- **打开终端**：SSH 服务器可点击终端按钮打开 SSH 终端；Monitor HTTP 服务器需要 agent 的 `full_access` 权限。
+- **浏览文件**：SSH 服务器使用 SFTP 管理文件；Monitor HTTP 服务器需要配置 `[remote_access.fs]` 和 `roots`，并使用 agent 的文件 API。
 - **管理容器**：查看和控制 Docker/Podman 容器
 - **查看进程**：检查正在运行的进程
 - **运行片段**：执行保存的命令

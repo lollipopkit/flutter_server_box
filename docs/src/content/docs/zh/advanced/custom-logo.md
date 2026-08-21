@@ -16,7 +16,7 @@ description: 为服务器卡片使用自定义图标
 
 自动替换为检测到的发行版：
 
-```
+```text
 https://example.com/{DIST}.png
 ```
 
@@ -26,7 +26,7 @@ https://example.com/{DIST}.png
 
 自动替换为当前主题：
 
-```
+```text
 https://example.com/{BRIGHT}.png
 ```
 
@@ -34,7 +34,7 @@ https://example.com/{BRIGHT}.png
 
 ### 组合使用
 
-```
+```text
 https://example.com/{DIST}-{BRIGHT}.png
 ```
 

@@ -55,7 +55,7 @@ Two platforms, two mechanisms:
 
 **Both are absent unless the build ships them.** Neither mechanism is included
 by default, so a build may offer this device, the container, both, or neither.
-the terminal tab is written to expect any of those. If you do not see it, your
+The terminal tab is written to expect any of those. If you do not see it, your
 build does not have it.
 
 ### Use cases

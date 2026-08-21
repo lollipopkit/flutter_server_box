@@ -89,7 +89,7 @@ description: Solutions to common problems
 - Restart watch app
 - Wait a few minutes after config change
 - Verify the server has a monitor agent configured. The watch can only show
-  servers that do
+  servers that have a monitor agent configured.
 
 ### Widget Shows Error
 

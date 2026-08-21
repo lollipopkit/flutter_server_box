@@ -11,7 +11,7 @@ Run the relevant generator after modifying:
 
 - Models with `@freezed` annotation
 - Classes with `@JsonSerializable`
-- Hive models
+- Legacy Hive adapters for storage migration
 - Providers with `@riverpod`
 - Localization ARB files; run `flutter gen-l10n`
 

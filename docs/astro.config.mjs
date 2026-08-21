@@ -22,7 +22,7 @@ export default defineConfig({
 				},
 			},
 			logo: {
-				src: './src/assets/logo.svg',
+				src: './src/assets/app_icon.png',
 			},
 			social: [
 				{ icon: 'github', label: 'GitHub', href: 'https://github.com/lollipopkit/flutter_server_box' },
