@@ -3787,6 +3787,7 @@ dependencies = [
 name = "sbm_native"
 version = "0.1.0"
 dependencies = [
+ "libc",
  "sbm_parser",
  "sysinfo",
 ]

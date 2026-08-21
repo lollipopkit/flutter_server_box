@@ -31,6 +31,7 @@ use std::time::{Duration, Instant};
 /// `df` can block on an unavailable network filesystem. Native sampling runs
 /// on the monitor loop, so an optional command may never hold it indefinitely.
 const COMMAND_TIMEOUT: Duration = Duration::from_secs(10);
+const MAX_COMMAND_OUTPUT_BYTES: u64 = 1024 * 1024;
 
 fn read(path: &str) -> String {
     fs::read_to_string(path).unwrap_or_default()
@@ -58,6 +59,10 @@ fn run_command_with_timeout(mut command: Command, command_timeout: Duration) -> 
         // Keep descendants in one group so a timed-out tool cannot continue
         // behind its direct process after the monitor has moved on.
         command.process_group(0);
+        // Limit writes in the child rather than reading an unbounded pipe into
+        // the monitor process. The parent below terminates the whole group as
+        // soon as the file reaches that hard limit.
+        unsafe { command.pre_exec(limit_output_size) };
     }
     let Some((output, file)) = output_file() else { return String::new() };
     command.stdout(Stdio::from(output));
@@ -71,7 +76,17 @@ fn run_command_with_timeout(mut command: Command, command_timeout: Duration) -> 
             Ok(Some(status)) => {
                 let stdout = fs::read(&file).unwrap_or_default();
                 let _ = fs::remove_file(file);
-                return status.success().then(|| String::from_utf8_lossy(&stdout).into_owned()).unwrap_or_default();
+                return if status.success() {
+                    String::from_utf8_lossy(&stdout).into_owned()
+                } else {
+                    String::new()
+                };
+            }
+            Ok(None) if fs::metadata(&file).is_ok_and(|metadata| metadata.len() >= MAX_COMMAND_OUTPUT_BYTES) => {
+                terminate(&mut child);
+                let _ = child.wait();
+                let _ = fs::remove_file(file);
+                return String::new();
             }
             Ok(None) if Instant::now() < deadline => std::thread::sleep(Duration::from_millis(10)),
             Ok(None) | Err(_) => {
@@ -81,6 +96,20 @@ fn run_command_with_timeout(mut command: Command, command_timeout: Duration) -> 
                 return String::new();
             }
         }
+    }
+}
+
+fn limit_output_size() -> std::io::Result<()> {
+    let limit = libc::rlimit {
+        rlim_cur: MAX_COMMAND_OUTPUT_BYTES as libc::rlim_t,
+        rlim_max: MAX_COMMAND_OUTPUT_BYTES as libc::rlim_t,
+    };
+    // This runs only in the child after fork and before exec, so lowering its
+    // file-size limit cannot affect the monitor process.
+    if unsafe { libc::setrlimit(libc::RLIMIT_FSIZE, &limit) } == 0 {
+        Ok(())
+    } else {
+        Err(std::io::Error::last_os_error())
     }
 }
 
@@ -223,6 +252,17 @@ mod tests {
         command.args(["-c", "sleep 2"]);
         let started = Instant::now();
         assert!(run_command_with_timeout(command, Duration::from_millis(100)).is_empty());
+        assert!(started.elapsed() < Duration::from_secs(1));
+    }
+
+    #[test]
+    fn over_limit_native_output_terminates_the_command_group() {
+        let mut command = Command::new("sh");
+        let script = format!("head -c {} /dev/zero; sleep 2", MAX_COMMAND_OUTPUT_BYTES + 1);
+        command.args(["-c", &script]);
+        let started = Instant::now();
+
+        assert!(run_command_with_timeout(command, Duration::from_secs(2)).is_empty());
         assert!(started.elapsed() < Duration::from_secs(1));
     }
 }
