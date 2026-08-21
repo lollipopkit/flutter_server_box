@@ -33,7 +33,6 @@ import 'package:server_box/data/ssh/tmux/tmux_export.dart';
 import 'package:server_box/data/store/agent_conversation.dart';
 import 'package:server_box/view/page/agent/history.dart';
 import 'package:server_box/view/page/ssh/ask_ai_layout.dart';
-import 'package:server_box/view/page/ssh/page/clipboard_chord.dart';
 import 'package:server_box/view/page/ssh/page/virt_key_intro.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
 import 'package:server_box/view/widget/tmux_session_selector.dart';
@@ -769,7 +768,10 @@ class SSHPageState extends ConsumerState<SSHPage>
     if (!mounted) return;
     final text = value?.text;
     if (text == null) return;
-    _terminal.textInput(text);
+    // `paste`, not `textInput`: it brackets the text when the program asked for
+    // that (DECSET 2004), which is what stops an editor auto-indenting every
+    // line of it and a shell running the newlines as commands.
+    _terminal.paste(text);
     _terminalController.clearSelection();
   }
 

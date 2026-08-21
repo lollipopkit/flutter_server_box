@@ -15,20 +15,6 @@ extension _Keyboard on SSHPageState {
   /// there too.
   bool get _appleKeyboard => isMacOS || isIOS;
 
-  /// Whether this looks like "copy" on this platform — see [isClipboardChord],
-  /// which holds the rule and the reason Ctrl+C is not one of them.
-  bool _isClipboardChord(KeyEvent event, LogicalKeyboardKey key) {
-    final keys = HardwareKeyboard.instance;
-    return isClipboardChord(
-      pressed: event.logicalKey,
-      key: key,
-      onMacOS: _appleKeyboard,
-      meta: keys.isMetaPressed,
-      control: keys.isControlPressed,
-      shift: keys.isShiftPressed,
-    );
-  }
-
   /// The line editing Command does on a Mac, as the control characters a shell
   /// already understands.
   ///
@@ -50,21 +36,21 @@ extension _Keyboard on SSHPageState {
   };
 
   bool _handleKeyEvent(KeyEvent event) {
+    // `HardwareKeyboard` handlers are global and every open terminal keeps one
+    // — the pages stay alive, that is what `wantKeepAlive` is for. Without this
+    // an Escape typed in one terminal reached all of them, and every key was
+    // handled as many times as there were tabs.
+    if (!_isVisibleSessionPage) return false;
     if (event is KeyDownEvent) {
-      // Before the rest: a chord is not the key it is built on.
-      if (_isClipboardChord(event, LogicalKeyboardKey.keyC)) {
-        // Only with something selected. Otherwise it is not a copy, and
-        // swallowing it would take the chord away from whatever else wants it.
-        if (_terminalController.selection == null) return false;
-        unawaited(_onClipboardAction());
-        return true;
-      }
-      if (_isClipboardChord(event, LogicalKeyboardKey.keyV)) {
-        unawaited(_onTerminalPaste());
-        return true;
-      }
-      // After the clipboard chords, which are also Command and are named
-      // keys this does not carry.
+      // The clipboard chords are deliberately *not* here. `TerminalView` binds
+      // all of them already — Cmd+C/V, Ctrl+Shift+C/V and Ctrl+V, in
+      // `defaultTerminalShortcuts` — and its intents call the same
+      // `onPaste`/`onCopied` this page passes it. Handling them here as well
+      // ran both: this is a `HardwareKeyboard` handler and that is the focus
+      // tree, two paths that each see every event, so one Cmd+V pasted twice.
+      //
+      // Plain Ctrl+C is bound by neither, which is what keeps SIGINT reaching
+      // the shell — the one key nobody will accept losing.
       if (_appleKeyboard && HardwareKeyboard.instance.isMetaPressed) {
         final letter = _commandChords[event.logicalKey];
         if (letter != null) {
