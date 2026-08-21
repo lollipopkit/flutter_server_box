@@ -1486,47 +1486,42 @@ mod tests {
 
     #[tokio::test]
     async fn an_external_command_cannot_silently_truncate_output() {
-        const PS_WRITE: &str = "$out = [Console]::OpenStandardOutput(); $bytes = New-Object byte[] 1048577; $out.Write($bytes, 0, $bytes.Length)";
-
-        // TODO: temporary, delete once the windows-latest failure is
-        // understood. This test times out there and passes everywhere else,
-        // and the timeout cannot say whether the child produced the bytes at
-        // all. Running the same command plainly answers that much. cargo
-        // prints a failing test's output, so this is only ever read on the
-        // run that needs it.
-        #[cfg(windows)]
-        {
-            let started = std::time::Instant::now();
-            match std::process::Command::new("powershell")
-                .args(["-NoProfile", "-Command", PS_WRITE])
-                .output()
-            {
-                Ok(out) => eprintln!(
-                    "PROBE: elapsed={:?} status={:?} stdout={} stderr={:?}",
-                    started.elapsed(),
-                    out.status,
-                    out.stdout.len(),
-                    String::from_utf8_lossy(&out.stderr),
-                ),
-                Err(err) => eprintln!("PROBE: spawn failed: {err}"),
-            }
-        }
+        // Comfortably over the cap rather than one byte over it. At exactly
+        // `MAX + 1` the reader reaches its `take` limit in the same moment the
+        // child finishes writing and exits, so the two things this races —
+        // the overflow and the wait — become ready together, and the test
+        // stops being about either. Well over, the reader hits the cap while
+        // the child is still writing and then blocks on a full pipe, which is
+        // the case the announcement exists for.
+        const OVER_CAP: usize = 4 * 1024 * 1024;
+        let ps_write = format!(
+            "$out = [Console]::OpenStandardOutput(); $bytes = New-Object byte[] {OVER_CAP}; $out.Write($bytes, 0, $bytes.Length)"
+        );
 
         let command = if cfg!(windows) {
             let mut command = TokioCommand::new("powershell");
-            command.args(["-NoProfile", "-Command", PS_WRITE]);
+            command.args(["-NoProfile", "-Command", &ps_write]);
             command
         } else {
             let mut command = TokioCommand::new("sh");
-            command.args(["-c", "head -c 1048577 /dev/zero"]);
+            command.args(["-c", &format!("head -c {OVER_CAP} /dev/zero")]);
             command
         };
 
-        // Says what it got instead. `unwrap_err` reported only "Ok value:
-        // None", which does not separate a child that wrote nothing from one
-        // that wrote enough and was never noticed.
+        // Generous, because the number is not the subject. What is asserted is
+        // that too much output is *reported* as too much; how long this
+        // machine takes to start a process and move four megabytes is the CI
+        // runner's business. Measured at 179 ms on an idle Windows box against
+        // a 5-second budget, which windows-latest still exceeded often enough
+        // to fail three of five runs — and which 70 runs here, twelve of them
+        // concurrent, never reproduced. Detection that is actually broken
+        // fails this just the same, only later.
+        //
+        // Says what it got instead of `unwrap_err`, which reported only
+        // "Ok value: None" and did not separate a child that wrote nothing
+        // from one that wrote enough and was never noticed.
         let error =
-            match command_output_with_timeout(command, "test output", Duration::from_secs(5)).await
+            match command_output_with_timeout(command, "test output", Duration::from_secs(30)).await
             {
                 Err(error) => error,
                 Ok(output) => panic!(
