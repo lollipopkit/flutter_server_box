@@ -250,6 +250,88 @@ void main() {
     });
   });
 
+  group('the shell a system records', () {
+    test('is /bin/sh until the file says otherwise', () async {
+      expect(linuxShell(root.path), '/bin/sh');
+      expect(linuxShell(null), '/bin/sh');
+    });
+
+    test('round-trips through the file `chsh` writes', () async {
+      await setLinuxShell(root.path, '/usr/bin/fish');
+
+      expect(linuxShell(root.path), '/usr/bin/fish');
+      expect(
+        await File('${root.path}/$shellConfPath').readAsString(),
+        '/usr/bin/fish\n',
+        reason: 'the guest reads this file too, so its shape is a contract',
+      );
+    });
+
+    test('is /bin/sh for a file holding something that is not a path', () {
+      // Whatever a text field or a `chsh` argument last left there. A terminal
+      // that cannot open is worse than one that opens on the wrong shell.
+      File('${root.path}/$shellConfPath')
+        ..createSync(recursive: true)
+        ..writeAsStringSync('fish\n');
+
+      expect(linuxShell(root.path), '/bin/sh');
+    });
+
+    test('is per system, not one for all of them', () async {
+      // A shell is a path to a file inside one tree: `/usr/bin/fish` being
+      // installed in one says nothing about another.
+      final other = await Directory.systemTemp.createTemp('linux_seed_other');
+      addTearDown(() => other.delete(recursive: true));
+      await setLinuxShell(root.path, '/usr/bin/fish');
+
+      expect(linuxShell(other.path), '/bin/sh');
+    });
+  });
+
+  group('the chsh stand-in', () {
+    test('is written with the file it edits', () async {
+      await seedChsh(root.path);
+
+      final script = File('${root.path}/usr/local/bin/chsh');
+      expect(await script.exists(), isTrue);
+      expect(await script.readAsString(), contains('serverbox-chsh v'));
+      expect(linuxShell(root.path), '/bin/sh');
+    });
+
+    test('goes to /usr/local/bin, which the PATH reaches first', () async {
+      // So it also shadows the real `chsh` for anyone who installs `shadow`
+      // afterwards — which is what to want, since that one edits /etc/passwd
+      // and nothing here reads it.
+      await seedChsh(root.path);
+
+      expect(
+        await File('${root.path}/usr/local/bin/chsh').exists(),
+        isTrue,
+      );
+    });
+
+    test('leaves a shell the system already recorded alone', () async {
+      await setLinuxShell(root.path, '/usr/bin/fish');
+
+      await seedChsh(root.path);
+
+      expect(linuxShell(root.path), '/usr/bin/fish');
+    });
+
+    test('does not overwrite a chsh that is not ours', () async {
+      // `apk add shadow` puts a real one there. Overwriting a package's file
+      // would have `apk` reporting a modified system, and PATH puts ours first
+      // regardless.
+      final script = File('${root.path}/usr/local/bin/chsh');
+      await script.parent.create(recursive: true);
+      await script.writeAsString('#!/bin/sh\n# not ours\n');
+
+      await seedChsh(root.path);
+
+      expect(await script.readAsString(), contains('not ours'));
+    });
+  });
+
   group('what the settings answer', () {
     setUp(() async {
       await openTestDb();
@@ -329,19 +411,6 @@ void main() {
       expect(linuxNameservers(), ['8.8.8.8', '1.1.1.1']);
     });
 
-    test('a stored shell, and /bin/sh for one that is not a path', () {
-      expect(linuxShell(), '/bin/sh');
 
-      Stores.setting.linuxShell.put('/usr/bin/fish');
-      expect(linuxShell(), '/usr/bin/fish');
-
-      Stores.setting.linuxShell.put('fish');
-      expect(
-        linuxShell(),
-        '/bin/sh',
-        reason: 'a terminal that cannot open is worse than one that opens '
-            'with the shell the user did not pick',
-      );
-    });
   });
 }

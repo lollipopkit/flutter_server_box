@@ -148,13 +148,6 @@ class SettingStore extends SqliteStore {
   /// in it.
   late final linuxDns = propertyDefault('linuxDns', Defaults.linuxDns);
 
-  /// What an interactive terminal in the guest runs, as a guest-absolute path.
-  ///
-  /// Not per distribution: it names a file inside whichever one is installed,
-  /// and `/bin/sh` is in all of them. Read through `linuxShell()`, which falls
-  /// back for anything that is not a path.
-  late final linuxShell = propertyDefault('linuxShell', Defaults.linuxShell);
-
   // Editor theme
   late final editorTheme = propertyDefault('editorTheme', Defaults.editorTheme);
 

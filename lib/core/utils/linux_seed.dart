@@ -9,8 +9,10 @@
 /// missing resolver.
 library;
 
+import 'dart:ffi';
 import 'dart:io';
 
+import 'package:ffi/ffi.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/res/default.dart';
@@ -106,19 +108,53 @@ List<String> parseNameservers(String value) => value
     .where((e) => e.isNotEmpty && InternetAddress.tryParse(e) != null)
     .toList();
 
-/// What an interactive terminal in the guest runs.
+/// Where a system records the shell its terminals start with.
 ///
-/// The guest has no `login` and nothing in it reads `/etc/passwd`, so this is
-/// the only thing that decides which shell a session gets — which is also why
-/// Alpine shipping no `chsh` does not come into it.
+/// Inside the guest, not in the app's settings, and that is the whole point:
+/// it makes one file the answer for both sides. The app writes it from the
+/// settings page and reads it when opening a terminal; `chsh` inside the guest
+/// writes the same file. Two stores would have meant two answers and a rule
+/// about which wins.
+///
+/// Per system rather than one for all of them, which falls out of the same
+/// choice: a shell is a path to a file inside one tree, and `/usr/bin/fish`
+/// being installed in one says nothing about another.
+const shellConfPath = 'etc/serverbox/shell';
+
+/// What an interactive terminal in [root] runs.
+///
+/// The guest has no `login` and nothing in it reads `/etc/passwd`, so this file
+/// is the only thing that decides — which is also why Alpine shipping no `chsh`
+/// does not come into it, and why the `chsh` this app puts in the guest can be
+/// a shell script.
 ///
 /// **Interactive only.** A one-shot command keeps `/bin/sh`, because the app
 /// and the Agent write POSIX and parse what comes back: `fish` is not a POSIX
 /// shell, so a status script or an `&&` run through the user's choice would
 /// fail in ways that read as the remote host being broken.
-String linuxShell() {
-  final raw = Stores.setting.linuxShell.fetch().trim();
-  return isShellPathValid(raw) ? raw : Defaults.linuxShell;
+///
+/// Read at the moment a terminal opens rather than from anything cached, so a
+/// `chsh` run in the guest a second ago is in force now.
+String linuxShell(String? root) {
+  if (root == null) return Defaults.linuxShell;
+  try {
+    final raw = File(root.joinPath(shellConfPath)).readAsStringSync().trim();
+    return isShellPathValid(raw) ? raw : Defaults.linuxShell;
+  } catch (_) {
+    // Absent, unreadable, whatever: a terminal that opens on `/bin/sh` beats
+    // one that does not open.
+    return Defaults.linuxShell;
+  }
+}
+
+/// Records [shell] as [root]'s, or restores the default when it is empty.
+Future<void> setLinuxShell(String root, String shell) async {
+  final file = File(root.joinPath(shellConfPath));
+  await file.parent.create(recursive: true);
+  final chosen = shell.trim();
+  await file.writeAsString(
+    '${isShellPathValid(chosen) ? chosen : Defaults.linuxShell}\n',
+  );
 }
 
 /// Whether [value] could name a shell inside the guest.
@@ -144,6 +180,115 @@ Future<bool> shellExistsIn(String root, String shell) async {
   );
   return type != FileSystemEntityType.notFound;
 }
+
+/// A `chsh` for a system that has not got one.
+///
+/// Alpine ships none — it is in `shadow`, which a minirootfs does not carry —
+/// and installing the real one would not help: it edits `/etc/passwd`, and
+/// nothing in this guest reads that. There is no `login` here. What decides is
+/// [shellConfPath], so a stand-in that writes that file does the job the real
+/// one is reached for, and does it in a shell script.
+///
+/// At `/usr/local/bin`, which comes before `/usr/bin` in the PATH the engine
+/// sets. So it also shadows the real `chsh` for anyone who installs `shadow`
+/// afterwards — which is the outcome to want, since that one would edit a file
+/// with no readers and report success.
+const _chshVersion = 1;
+
+String _chshScript(String defaultShell) =>
+    '''
+#!/bin/sh
+# serverbox-chsh v$_chshVersion
+#
+# Rewritten by ServerBox when the version above changes. Local edits do not
+# survive that; the file it writes, $shellConfPath, is yours.
+set -e
+
+conf=/$shellConfPath
+usage() {
+	echo "usage: chsh [-s SHELL] [-l]" >&2
+	echo "       ServerBox's chsh. It sets the shell new terminals open with," >&2
+	echo "       by writing \$conf. Nothing here reads /etc/passwd." >&2
+	exit 2
+}
+
+current() {
+	if [ -r "\$conf" ]; then head -n1 "\$conf"; else echo "$defaultShell"; fi
+}
+
+case "\$1" in
+	"") echo "\$(current)"; exit 0 ;;
+	-l|--list-shells)
+		if [ -r /etc/shells ]; then grep -v '^#' /etc/shells | grep -v '^\$'; fi
+		exit 0 ;;
+	-s|--shell) ;;
+	*) usage ;;
+esac
+
+shell="\$2"
+[ -n "\$shell" ] || usage
+case "\$shell" in
+	/*) ;;
+	*) echo "chsh: needs an absolute path: \$shell" >&2; exit 1 ;;
+esac
+[ -x "\$shell" ] || { echo "chsh: not executable: \$shell" >&2; exit 1; }
+
+mkdir -p "\$(dirname "\$conf")"
+printf '%s\\n' "\$shell" > "\$conf"
+echo "chsh: \$shell — takes effect in the next terminal, not this one."
+''';
+
+/// Writes the stand-in, and the file it edits.
+///
+/// [force] false leaves both alone when they are there and current — the
+/// startup path, which repairs a system unpacked before either existed. The
+/// script is rewritten when its version moved, so a fix to it reaches systems
+/// already installed; the shell file never is, because that one is the user's.
+Future<void> seedChsh(String root, {bool force = false}) async {
+  final conf = File(root.joinPath(shellConfPath));
+  if (force || !await conf.exists()) {
+    await setLinuxShell(root, Defaults.linuxShell);
+  }
+
+  final script = File(root.joinPath('usr/local/bin/chsh'));
+  if (!force && await script.exists()) {
+    final head = await script.readAsString();
+    if (head.contains('# serverbox-chsh v$_chshVersion')) return;
+    // Something else's `chsh`, from `apk add shadow`. Left alone: PATH puts
+    // ours first anyway, and overwriting a package's file would have `apk`
+    // reporting a modified system.
+    if (!head.contains('# serverbox-chsh v')) return;
+  }
+  await script.parent.create(recursive: true);
+  await script.writeAsString(_chshScript(Defaults.linuxShell));
+  chmodGuestFile(script.path, 0x1ED); // 0755
+}
+
+/// `chmod`, which `dart:io` has not got and a file written into a guest cannot
+/// do without.
+///
+/// Through libc rather than `chmod(1)`: iOS refuses to start a process, which
+/// is the same refusal that put an interpreter on that platform. The symbol is
+/// in the process on both.
+void chmodGuestFile(String path, int mode) {
+  final chmod = _chmod;
+  if (chmod == null || mode == 0) return;
+  final pointer = path.toNativeUtf8();
+  try {
+    chmod(pointer.cast(), mode);
+  } finally {
+    malloc.free(pointer);
+  }
+}
+
+final _chmod = () {
+  try {
+    return DynamicLibrary.process()
+        .lookupFunction<Int Function(Pointer<Char>, Uint16), int Function(Pointer<Char>, int)>('chmod');
+  } catch (_) {
+    return null;
+  }
+}();
 
 /// Whether [root] holds an unpacked Linux system rather than a directory.
 ///

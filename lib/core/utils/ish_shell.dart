@@ -66,7 +66,7 @@ class IshShellBackend implements ShellBackend {
       command: command,
       // Interactive only: `_start` is also how `execute` runs a one-shot
       // command, and that one has to stay POSIX. See `linuxShell`.
-      shell: command == null ? linuxShell() : '',
+      shell: command == null ? linuxShell(IosRootfs.root) : '',
       columns: width > 0 ? width : 80,
       rows: height > 0 ? height : 25,
     );

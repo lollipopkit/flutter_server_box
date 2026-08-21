@@ -34,7 +34,7 @@ extension _Linux on _AppSettingsPageState {
           _buildLinuxShell(),
           _buildLinuxMirror(),
           _buildLinuxDns(),
-        ].map((e) => CardX(child: e)).toList(),
+        ].nonNulls.map((e) => CardX(child: e)).toList(),
       ),
     );
   }
@@ -169,14 +169,16 @@ extension _Linux on _AppSettingsPageState {
     refresh();
   }
 
-  Widget _buildLinuxShell() {
+  /// The selected system's shell, which is a file inside it rather than a
+  /// setting — the same file `chsh` writes. Absent when nothing is installed:
+  /// there is no tree to hold it.
+  Widget? _buildLinuxShell() {
+    final root = Rootfs.root;
+    if (root == null) return null;
     return ListTile(
       leading: const Icon(Icons.terminal_outlined, size: _kIconSize),
       title: TipText(libL10n.terminal, l10n.linuxShellTip),
-      subtitle: ValBuilder(
-        listenable: _setting.linuxShell.listenable(),
-        builder: (val) => Text(val, style: UIs.textGrey),
-      ),
+      subtitle: Text(linuxShell(root), style: UIs.textGrey),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: _onTapLinuxShell,
     );
@@ -238,21 +240,17 @@ extension _Linux on _AppSettingsPageState {
   /// Not checked when nothing is installed: there is no tree to look in, and
   /// refusing a path because of that would be wrong rather than careful.
   void _onTapLinuxShell() {
+    final root = Rootfs.root;
+    if (root == null) return;
     withTextFieldController((ctrl) async {
-      ctrl.text = _setting.linuxShell.fetch();
+      ctrl.text = linuxShell(root);
 
       Future<void> save() async {
         final typed = ctrl.text.trim();
         context.popDialog();
         // Empty is how the default is asked for, here as in the rows below.
         final chosen = typed.isEmpty ? Defaults.linuxShell : typed;
-        final root = Rootfs.root;
-        final ok =
-            isShellPathValid(chosen) &&
-            (root == null ||
-                !Rootfs.isReady ||
-                await shellExistsIn(root, chosen));
-        if (!ok) {
+        if (!isShellPathValid(chosen) || !await shellExistsIn(root, chosen)) {
           if (!mounted) return;
           await context.showRoundDialog(
             title: libL10n.fail,
@@ -260,7 +258,9 @@ extension _Linux on _AppSettingsPageState {
           );
           return;
         }
-        _setting.linuxShell.put(chosen);
+        // The same file `chsh` writes, in the guest rather than in the app.
+        await setLinuxShell(root, chosen);
+        refresh();
         Toast.success(libL10n.success);
       }
 

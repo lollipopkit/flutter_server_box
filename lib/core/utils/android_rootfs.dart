@@ -140,6 +140,15 @@ abstract final class AndroidRootfs {
       _loader = loader;
     }
     await scan();
+    for (final profile in _profiles) {
+      final root = rootOf(profile.id);
+      if (root == null) continue;
+      // Repairs a rootfs unpacked before either existed, and carries a fix to
+      // the script itself into one already installed. Writes the resolver only
+      // when absent, so one pointed at its owner's own keeps it.
+      await seedResolvConf(root, nameservers: linuxNameservers());
+      await seedChsh(root);
+    }
   }
 
   /// Downloads and unpacks the rootfs.
@@ -206,6 +215,7 @@ abstract final class AndroidRootfs {
 
       await seedResolvConf(root, nameservers: linuxNameservers());
       await seedRepositories(root, distro: distro, mirror: mirror);
+      await seedChsh(root, force: true);
       final profile = LinuxProfile(
         id: id,
         distro: distro,
@@ -302,7 +312,10 @@ abstract final class AndroidRootfs {
         // stays POSIX: the app and the Agent write `sh` and parse what comes
         // back, and `fish` would fail at that in ways that read as the host
         // being broken. See `linuxShell`.
-        if (command == null) linuxShell() else ...['/bin/sh', '-lc', command],
+        if (command == null)
+          linuxShell(root)
+        else
+          ...['/bin/sh', '-lc', command],
       ],
     );
   }

@@ -194,6 +194,7 @@ abstract final class IosRootfs {
       // Measured on a device by `integration_test/ios_load_test.dart`.
       await seedResolvConf(root, nameservers: linuxNameservers());
       await seedRepositories(root, distro: distro, mirror: mirror);
+      await seedChsh(root, force: true);
       // Last, for the reason Android's marker is last: it is the record that
       // this finished, so anything that threw above must not leave one.
       final profile = LinuxProfile(
@@ -351,6 +352,9 @@ abstract final class IosRootfs {
       // nothing else would ever give it one. Writes only when absent, so a
       // guest pointed at its owner's own resolver keeps it.
       await seedResolvConf(root, nameservers: linuxNameservers());
+      // Repairs a system unpacked before either existed, and carries a fix to
+      // the script itself into one already installed.
+      await seedChsh(root);
     }
   }
 
