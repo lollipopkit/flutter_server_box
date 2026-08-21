@@ -87,14 +87,6 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
       onLongPress: (spi) =>
           ServerEditPage.route.go(context, args: SpiRequiredArgs(spi)),
     ),
-    floatingActionButton: Builder(
-      builder: (ctx) => FloatingActionButton(
-        heroTag: 'sshAddServer',
-        onPressed: () => ServerEditPage.route.go(ctx),
-        tooltip: libL10n.add,
-        child: const Icon(Icons.add),
-      ),
-    ),
   );
 
   @override
@@ -136,7 +128,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
         sideBuilder: (_) => _SideBar(
           sessions: _sessions,
           sortVersion: _sortVersion,
-          actions: [_sortBtn, _searchBtn, _historyBtn, _addBtn],
+          actions: [_sortBtn, _searchBtn, _historyBtn],
           onOpen: _openServer,
           onLocal: () => _open(const LocalSource()),
           onRootfsOpen: _openRootfs,
@@ -561,10 +553,6 @@ extension _Actions on _SSHTabPageState {
 
   /// The rail's own way to add a server. On one screen that is the picker's
   /// floating button; a rail has no room for one.
-  Widget get _addBtn => Btn.icon(text: libL10n.add, 
-    icon: const Icon(Icons.add, size: 18),
-    onTap: () => ServerEditPage.route.go(context),
-  );
 
   void _showSortMenu() {
     context.showRoundDialog(
