@@ -198,12 +198,16 @@ abstract final class RootfsManifestSource {
     final chunks = StreamIterator(body.stream);
     try {
       while (await chunks.moveNext()) {
-        builder.add(chunks.current);
-        if (builder.length > _maxBytes) {
+        // Measured before it is kept, not after. Adding first bounds this at
+        // the cap plus whatever one chunk happens to be — which is the
+        // server's choice, not ours, and the whole point of having a cap is
+        // that it is not.
+        if (builder.length + chunks.current.length > _maxBytes) {
           throw StateError(
             '$url answered more than $_maxBytes bytes, which is not one',
           );
         }
+        builder.add(chunks.current);
       }
     } finally {
       // Whatever ended the loop, the connection is done with. Left open, a

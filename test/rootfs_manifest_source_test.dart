@@ -115,6 +115,34 @@ void main() {
       );
     });
 
+    test('the cap is a limit on what is kept, not on what is kept plus one chunk', () async {
+      // The boundary either side of it. Exactly the cap is a manifest — a
+      // large one, but the number is the promise — and one byte more is not.
+      //
+      // This pins the arithmetic, not the ordering: whether the check runs
+      // before or after the chunk is added is not visible from out here, and
+      // over a socket a chunk is whatever the read buffer gave, so the two
+      // orderings differ by at most one buffer. The reason to check first is
+      // that "at most one buffer" is the server's number to choose and not
+      // ours.
+      const cap = 256 * 1024;
+
+      expect(
+        await RootfsManifestSource.getForTest(
+          fakeDio(body: Uint8List(cap)),
+          'https://x.test/manifest.json',
+        ),
+        hasLength(cap),
+      );
+      await expectLater(
+        RootfsManifestSource.getForTest(
+          fakeDio(body: Uint8List(cap + 1)),
+          'https://x.test/manifest.json',
+        ),
+        throwsStateError,
+      );
+    });
+
     test('two overlapping refreshes are one fetch', () async {
       // Two racing to commit, and the one finishing last wins — which need not
       // be the one that started last. A slower fetch of an older manifest

@@ -442,6 +442,10 @@ abstract final class IosRootfs {
     return links;
   }
 
+  /// `0700`. What a directory needs whatever the archive says, since the guest
+  /// runs as one unprivileged host uid and nothing in it is root.
+  static const _ownerRwx = 0x1c0;
+
   /// A tar entry's name without the `./` a great many archives prefix it with.
   static String _tarPath(String name) =>
       name.startsWith('./') ? name.substring(2) : name;
@@ -528,14 +532,22 @@ abstract final class IosRootfs {
         continue;
       }
       if (entry.isDirectory) {
-        // The tarball's mode is deliberately not applied. Rocky ships 17
-        // directories at 0555, `/usr/bin` and `/usr/lib` among them, and
-        // `realfs` hands the host's mode straight to the guest — where the
-        // host process is this app rather than root, so uid 0 in the guest
-        // buys nothing and a package manager cannot create its temp files.
-        // Created at the default 0755 instead, which is the one difference
-        // between an image that can install packages here and one that cannot.
         await Directory(path).create(recursive: true);
+        // The tarball's mode, with owner rwx forced on. `realfs` hands the
+        // host's mode straight to the guest, and the host process is this app
+        // rather than root — so uid 0 in the guest buys nothing, and Rocky's
+        // 17 directories at 0555 (`/usr/bin` and `/usr/lib` among them) are
+        // ones a package manager cannot create its temp files in. That is the
+        // difference between an image that can install packages here and one
+        // that cannot.
+        //
+        // Only that difference, though. Dropping the mode entirely also drops
+        // the bits that say something a single-uid guest still reads: `/tmp`
+        // is 1777 and becomes 0755, and every `--verify` a package manager
+        // offers then reports the directories as altered — which is the same
+        // complaint stripping locales would have caused, and the reason
+        // `shellbox-rootfs` does not strip them.
+        chmodGuestFile(path, (entry.mode & 0xfff) | _ownerRwx);
         continue;
       }
       if (!entry.isFile) {
