@@ -11,9 +11,9 @@
             "compression": "gzip",
             "follows_mirror": false,
             "layout": "plain",
-            "sha256": "ed454523232ffc676764167fe20151422f2640b03d29dd139774ac9566da6f38",
-            "size_bytes": 3975428,
-            "url": "https://github.com/lollipopkit/shellbox-rootfs/releases/download/v2026.08.23/alpine-3.22.5-arm64.tar.gz"
+            "sha256": "420b3594e9c9dba339c3a9b53ba2639d9c3f9b30a61c12859ec43c2e21103b4b",
+            "size_bytes": 3978497,
+            "url": "https://github.com/lollipopkit/shellbox-rootfs/releases/download/v2026.08.22-2/alpine-3.22.5-arm64.tar.gz"
           },
           "upstream": {
             "compression": "gzip",
@@ -31,9 +31,9 @@
             "compression": "gzip",
             "follows_mirror": false,
             "layout": "plain",
-            "sha256": "a74bc3b49bb26a00592bc85d835ae788354f352c5d5da2a7ebe660c0f9358a13",
-            "size_bytes": 3859416,
-            "url": "https://github.com/lollipopkit/shellbox-rootfs/releases/download/v2026.08.23/alpine-3.21.7-arm64.tar.gz"
+            "sha256": "1ab6f447f960b3fd0aa82258a029a5191a7c565fee6e9651f0784938b0b00f1f",
+            "size_bytes": 3862541,
+            "url": "https://github.com/lollipopkit/shellbox-rootfs/releases/download/v2026.08.22-2/alpine-3.21.7-arm64.tar.gz"
           },
           "upstream": {
             "compression": "gzip",
@@ -58,9 +58,9 @@
             "compression": "xz",
             "follows_mirror": false,
             "layout": "plain",
-            "sha256": "e03b49e8441882d7264ba6c1e90de0b93c89aaee9b83f5511d72325de5f9c7b3",
-            "size_bytes": 51069340,
-            "url": "https://github.com/lollipopkit/shellbox-rootfs/releases/download/v2026.08.23/rocky-9.8-arm64.tar.xz"
+            "sha256": "ba39cc544578f15994fafe1f6931ebe2efee5005237b11d213f40e40ea8be28e",
+            "size_bytes": 51082448,
+            "url": "https://github.com/lollipopkit/shellbox-rootfs/releases/download/v2026.08.22-2/rocky-9.8-arm64.tar.xz"
           },
           "upstream": {
             "compression": "xz",
@@ -78,9 +78,9 @@
             "compression": "xz",
             "follows_mirror": false,
             "layout": "plain",
-            "sha256": "21c16e5aafaf3a2b492c6f91cd1b13b51cdf184b625db1f2111cd19ef9ef4153",
-            "size_bytes": 50494028,
-            "url": "https://github.com/lollipopkit/shellbox-rootfs/releases/download/v2026.08.23/rocky-10.2-arm64.tar.xz"
+            "sha256": "41e643d0a14980f7e4d254c6da9828694d1ef5ba09eeff451ca60d9a56f79bba",
+            "size_bytes": 50490708,
+            "url": "https://github.com/lollipopkit/shellbox-rootfs/releases/download/v2026.08.22-2/rocky-10.2-arm64.tar.xz"
           },
           "upstream": {
             "compression": "xz",
@@ -105,9 +105,9 @@
             "compression": "gzip",
             "follows_mirror": false,
             "layout": "plain",
-            "sha256": "95baf7ec0378738fc67bddd111493925baf24e87703ae91c4baf23b1440ee245",
-            "size_bytes": 34075932,
-            "url": "https://github.com/lollipopkit/shellbox-rootfs/releases/download/v2026.08.23/ubuntu-26.04-arm64.tar.gz"
+            "sha256": "1907331fc809bec3aa8445bc6df3d562d05b84bdc249c255e432201e1645898c",
+            "size_bytes": 34126602,
+            "url": "https://github.com/lollipopkit/shellbox-rootfs/releases/download/v2026.08.22-2/ubuntu-26.04-arm64.tar.gz"
           },
           "upstream": {
             "compression": "gzip",
@@ -125,9 +125,9 @@
             "compression": "gzip",
             "follows_mirror": false,
             "layout": "plain",
-            "sha256": "011e02de9fa015b8f844ac5d073150bb589f6e1f9a4fb618d7baf6e286646e82",
-            "size_bytes": 28960657,
-            "url": "https://github.com/lollipopkit/shellbox-rootfs/releases/download/v2026.08.23/ubuntu-24.04.4-arm64.tar.gz"
+            "sha256": "77119804893c3b07006f792cc7a8d39ac31733a33b3a2b03d41ef34de562bb03",
+            "size_bytes": 29021242,
+            "url": "https://github.com/lollipopkit/shellbox-rootfs/releases/download/v2026.08.22-2/ubuntu-24.04.4-arm64.tar.gz"
           },
           "upstream": {
             "compression": "gzip",
@@ -142,8 +142,8 @@
       ]
     }
   },
-  "generated_at": "2026-08-23T00:00:00Z",
+  "generated_at": "2026-08-22T15:46:51Z",
   "schema": 2,
   "serial": 3,
-  "valid_until": "2027-02-19T00:00:00Z"
+  "valid_until": "2027-02-18T15:46:51Z"
 }
