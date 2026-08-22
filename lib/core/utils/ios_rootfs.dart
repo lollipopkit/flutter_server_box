@@ -7,10 +7,13 @@ import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:ffi/ffi.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:meta/meta.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:server_box/core/utils/guest_path.dart';
 import 'package:server_box/core/utils/linux_seed.dart';
+import 'package:server_box/core/utils/oci_image.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
+import 'package:server_box/data/model/app/rootfs_manifest.dart';
 
 /// A Linux userland on iOS, and what it takes to get one.
 ///
@@ -28,6 +31,11 @@ import 'package:server_box/data/model/app/linux_distro.dart';
 /// build without it is one edit away, should App Store review object — and
 /// [isAvailable] is how everything else asks, exactly as on Android.
 abstract final class IosRootfs {
+  /// The guest's `EBUSY`, which is what an unmount answers while something
+  /// still holds the mount. Negative already: `kernel/errno.h` defines the
+  /// guest's errnos that way.
+  static const _ebusy = -16;
+
   /// Every system unpacked in the container, in the order their directories
   /// come back.
   ///
@@ -163,6 +171,7 @@ abstract final class IosRootfs {
   /// which the second deletes out from under the first.
   static Future<LinuxProfile> install({
     required LinuxDistro distro,
+    RootfsRelease? release,
     LinuxProfile? into,
     String? label,
     void Function(double? progress)? onProgress,
@@ -174,6 +183,7 @@ abstract final class IosRootfs {
     _installing = true;
     return _install(
       distro: distro,
+      release: release,
       into: into,
       label: label,
       onProgress: onProgress,
@@ -185,6 +195,7 @@ abstract final class IosRootfs {
 
   static Future<LinuxProfile> _install({
     required LinuxDistro distro,
+    RootfsRelease? release,
     LinuxProfile? into,
     String? label,
     void Function(double? progress)? onProgress,
@@ -200,6 +211,10 @@ abstract final class IosRootfs {
     // checked against one distribution and the repositories written for
     // another.
     final mirror = linuxMirror(distro);
+    // Read once for the same reason the mirror is: a release chosen while a
+    // refetched manifest replaced it underneath would have the digest checked
+    // against one file and the repositories written for another.
+    final chosen = release ?? distro.preferred;
 
     final dir = Directory(root);
     // Reinstalling in place deletes the tree, so the engine has to let go of
@@ -212,7 +227,7 @@ abstract final class IosRootfs {
     final archivePath = root.joinPath('rootfs.tar.gz');
     try {
       await Dio().download(
-        distro.rootfsUrl(mirror),
+        chosen.source.urlOn(mirror, distro.defaultMirror),
         archivePath,
         cancelToken: cancel,
         // The download is most of the wait, so it owns most of the bar; the
@@ -223,27 +238,33 @@ abstract final class IosRootfs {
 
       final file = File(archivePath);
       final digest = (await sha256.bind(file.openRead()).first).toString();
-      if (digest != distro.sha256) {
+      if (digest != chosen.source.sha256) {
         throw StateError(
           'The system did not match its digest and was discarded. '
-          'Expected ${distro.sha256}, got $digest.',
+          'Expected ${chosen.source.sha256}, got $digest.',
         );
       }
 
-      await _extract(file, dir, onProgress: onProgress);
+      await _extract(file, dir, source: chosen.source, onProgress: onProgress);
       // Without these `apk` reaches nothing: the guest's sockets work and an
       // address literal is fetched fine, but there is no resolver, so every
       // mirror is a "temporary error" and every package is missing.
       // Measured on a device by `integration_test/ios_load_test.dart`.
       await seedResolvConf(root, nameservers: linuxNameservers());
-      await seedRepositories(root, distro: distro, mirror: mirror);
+      await seedRepositories(
+        root,
+        distro: distro,
+        release: chosen,
+        mirror: mirror,
+      );
       await seedChsh(root, force: true);
       // Last, for the reason Android's marker is last: it is the record that
       // this finished, so anything that threw above must not leave one.
       final profile = LinuxProfile(
         id: id,
         distro: distro,
-        version: distro.version,
+        version: chosen.version,
+        branch: chosen.branch,
         label: label ?? into?.label ?? distro.label,
       );
       await File(root.joinPath(LinuxProfile.marker)).writeAsString(profile.encode());
@@ -315,27 +336,139 @@ abstract final class IosRootfs {
     // Waiting here rather than inside the engine keeps it off the main
     // isolate: `detach` is a blocking call, and looping it in C would hold
     // both the app and `attached_lock` for as long as it took.
+    //
+    // Retrying is only worth it for the one error that time fixes. `detach`
+    // answers `_EBUSY` (-16) while something still holds a mount, and anything
+    // else — a name it will not accept, a machine that was never booted — will
+    // say the same thing on the tenth attempt as on the first. Ten identical
+    // failures then became "still in use", which was how deleting a system
+    // that had been installed but never opened became impossible.
     var err = detach(id);
-    for (var i = 0; err < 0 && i < 10; i++) {
+    for (var i = 0; err == _ebusy && i < 10; i++) {
       await Future<void>.delayed(const Duration(milliseconds: 200));
       err = detach(id);
     }
     if (err < 0) {
-      throw StateError('The Linux system is still in use ($err)');
+      // Says which, rather than naming a cause it does not know. The number
+      // reaches here from two errno namespaces — the guest's for an unmount,
+      // the host's for a rejected name — so this cannot claim to read it.
+      // No advice attached any more. It used to say to restart the app, which
+      // was true while a session's terminal was released only when its task
+      // was reaped and nothing reaped one — `close_session` gives it up at
+      // hangup now (ShellBox #27), so a system that is genuinely busy has
+      // something running in it rather than something left over from a
+      // terminal that is already closed.
+      throw StateError(
+        err == _ebusy
+            ? 'The Linux system is still in use'
+            : 'The Linux system could not be detached ($err)',
+      );
     }
     final dir = Directory(root);
     if (await dir.exists()) await dir.delete(recursive: true);
     await scan();
   }
 
+  /// Puts the downloaded rootfs on disk, whichever shape it came in.
+  ///
+  /// [LinuxDistro.compression] and [LinuxDistro.layout] are two axes because
+  /// they are two decisions: what decompresses the download, and whether what
+  /// falls out is the filesystem or an image describing one.
+  /// Visible so a test can unpack a real distribution's tarball and look at
+  /// what landed. Hard links, symbolic links and modes are all things whose
+  /// failure looks like a working install until something tries to run.
+  @visibleForTesting
+  static Future<void> extractForTest(
+    File archiveFile,
+    Directory into, {
+    required RootfsSource source,
+    void Function(double? progress)? onProgress,
+  }) => _extract(archiveFile, into, source: source, onProgress: onProgress);
+
   static Future<void> _extract(
     File archiveFile,
     Directory into, {
+    required RootfsSource source,
     void Function(double? progress)? onProgress,
   }) async {
     final bytes = await archiveFile.readAsBytes();
-    final archive = TarDecoder().decodeBytes(GZipDecoder().decodeBytes(bytes));
+    final outerDecoder = TarDecoder();
+    final outer = outerDecoder.decodeBytes(
+      decompressRootfs(bytes, source.compression),
+    );
 
+    switch (source.layout) {
+      case LinuxRootfsLayout.plain:
+        await _unpackTar(outer, outerDecoder, into, onProgress: onProgress);
+      case LinuxRootfsLayout.oci:
+        // In order, and each over the last: a later layer's copy of a path
+        // replaces an earlier one's, and its whiteouts delete what earlier
+        // layers put there.
+        for (final layer in ociLayers(outer)) {
+          final decoder = TarDecoder();
+          await _unpackTar(
+            decoder.decodeBytes(ociLayerTar(layer)),
+            decoder,
+            into,
+            applyWhiteouts: true,
+            onProgress: onProgress,
+          );
+        }
+    }
+  }
+
+  /// Which entries were hard links, by name, with what they point at.
+  ///
+  /// The tar reader hands a hard link and a symbolic link to the caller in the
+  /// same shape — it sets `symbolicLink` from the header's link name for both,
+  /// because both carry one — so the only way to tell them apart is the type
+  /// flag, which lives on the decoder's own entries rather than on the archive
+  /// it builds.
+  ///
+  /// Getting this wrong is not a broken file, it is a link pointing nowhere. A
+  /// hard link's target is a path from the root of the archive; read as a
+  /// symbolic link it resolves relative to the link's own directory instead.
+  /// Ubuntu 26.04 ships uutils coreutils as one binary with 115 hard links to
+  /// it, so `/usr/bin/ls` became a symlink to a symlink to nothing and the
+  /// shell answered `ls: not found` in a system that had `ls`.
+  static Map<String, String> _hardLinks(TarDecoder decoder) {
+    final links = <String, String>{};
+    for (final file in decoder.files) {
+      if (file.typeFlag != TarFile.hardLink) continue;
+      final target = file.nameOfLinkedFile;
+      if (target == null || target.isEmpty) continue;
+      links[_tarPath(file.filename)] = _tarPath(target);
+    }
+    return links;
+  }
+
+  /// `0700`. What a directory needs whatever the archive says, since the guest
+  /// runs as one unprivileged host uid and nothing in it is root.
+  static const _ownerRwx = 0x1c0;
+
+  /// A tar entry's name without the `./` a great many archives prefix it with.
+  static String _tarPath(String name) =>
+      name.startsWith('./') ? name.substring(2) : name;
+
+  static Future<void> _unpackTar(
+    Archive archive,
+    TarDecoder decoder,
+    Directory into, {
+    bool applyWhiteouts = false,
+    void Function(double? progress)? onProgress,
+  }) async {
+    final hardLinks = _hardLinks(decoder);
+    // What this layer writes, which is what an opaque marker spares. Built up
+    // front because the archive is not obliged to put the marker before the
+    // entries it applies to, so "has it been written yet" is not the same
+    // question as "does this layer write it".
+    final written = applyWhiteouts
+        ? ociLayerPaths(archive.map((e) => e.name))
+        : const <String>{};
+    // Applied after everything is written, because an archive may name a link
+    // before the file it points at. Ours is sorted and does not, but upstream's
+    // ordering is upstream's business.
+    final pending = <String, String>{};
     var done = 0;
     for (final entry in archive) {
       done++;
@@ -344,11 +477,53 @@ abstract final class IosRootfs {
       }
       final path = into.path.joinPath(entry.name);
 
+      if (applyWhiteouts) {
+        final mark = ociWhiteout(entry.name.split('/').last);
+        if (mark != null) {
+          final parent = Directory(File(path).parent.path);
+          final directory = ociParent(entry.name);
+          if (mark.opaque) {
+            if (await parent.exists()) {
+              await for (final child in parent.list(followLinks: false)) {
+                // Only what the layers below put here. A sibling this layer
+                // writes stays: the marker hides what is underneath it, and
+                // deleting the layer's own contents would empty a directory
+                // the layer exists to fill.
+                final name = child.path.split(Platform.pathSeparator).last;
+                final sibling = directory.isEmpty
+                    ? name
+                    : '$directory/$name';
+                if (written.contains(sibling)) continue;
+                await child.delete(recursive: true);
+              }
+            }
+          } else {
+            final target = parent.path.joinPath(mark.deletes!);
+            final dir = Directory(target);
+            if (await dir.exists()) {
+              await dir.delete(recursive: true);
+            } else {
+              final file = File(target);
+              if (await file.exists()) await file.delete();
+            }
+          }
+          continue;
+        }
+      }
+
       // Links as links, never followed. Under `realfs` a guest symlink is
       // resolved inside the guest, so `/bin/sh -> /bin/busybox` means the
       // guest's busybox; written as a copy of whatever the host has at that
       // path it is the wrong file, and skipped it is no file — which is how an
       // earlier attempt booted with no `/bin/sh` to run.
+      // Hard links first: the reader marks them symbolic, so asking whether
+      // this is a symlink would answer yes for both.
+      final hardTarget = hardLinks[_tarPath(entry.name)];
+      if (hardTarget != null) {
+        pending[path] = into.path.joinPath(hardTarget);
+        continue;
+      }
+
       if (entry.isSymbolicLink) {
         final link = Link(path);
         await link.parent.create(recursive: true);
@@ -358,6 +533,21 @@ abstract final class IosRootfs {
       }
       if (entry.isDirectory) {
         await Directory(path).create(recursive: true);
+        // The tarball's mode, with owner rwx forced on. `realfs` hands the
+        // host's mode straight to the guest, and the host process is this app
+        // rather than root — so uid 0 in the guest buys nothing, and Rocky's
+        // 17 directories at 0555 (`/usr/bin` and `/usr/lib` among them) are
+        // ones a package manager cannot create its temp files in. That is the
+        // difference between an image that can install packages here and one
+        // that cannot.
+        //
+        // Only that difference, though. Dropping the mode entirely also drops
+        // the bits that say something a single-uid guest still reads: `/tmp`
+        // is 1777 and becomes 0755, and every `--verify` a package manager
+        // offers then reports the directories as altered — which is the same
+        // complaint stripping locales would have caused, and the reason
+        // `shellbox-rootfs` does not strip them.
+        chmodGuestFile(path, (entry.mode & 0xfff) | _ownerRwx);
         continue;
       }
       if (!entry.isFile) {
@@ -376,6 +566,39 @@ abstract final class IosRootfs {
       // which is the same refusal that put an interpreter on this platform.
       chmodGuestFile(path, entry.mode & 0xfff);
     }
+
+    for (final entry in pending.entries) {
+      final path = entry.key;
+      final target = entry.value;
+      await File(path).parent.create(recursive: true);
+      final existing = File(path);
+      if (await existing.exists()) await existing.delete();
+      if (linkGuestFile(target, path)) continue;
+      // A symlink is the fallback, not the intent: same file, one more
+      // indirection, and it costs nothing where a copy would cost a gigabyte.
+      // Relative to the link's own directory, which is what a symlink means
+      // and what reading the hard link as one got wrong in the first place.
+      final rel = _relativeTo(File(path).parent.path, target);
+      final link = Link(path);
+      if (await link.exists()) await link.delete();
+      await link.create(rel);
+    }
+  }
+
+  /// [target] as a path from [from], both absolute.
+  static String _relativeTo(String from, String target) {
+    final fromParts = from.split(Platform.pathSeparator)..removeWhere((e) => e.isEmpty);
+    final toParts = target.split(Platform.pathSeparator)..removeWhere((e) => e.isEmpty);
+    var shared = 0;
+    while (shared < fromParts.length &&
+        shared < toParts.length &&
+        fromParts[shared] == toParts[shared]) {
+      shared++;
+    }
+    return [
+      ...List.filled(fromParts.length - shared, '..'),
+      ...toParts.sublist(shared),
+    ].join('/');
   }
 
   /// The host path a guest path names, or null when it names nothing inside.
@@ -454,6 +677,27 @@ abstract final class IosRootfs {
   /// the caller closes those first. Logged rather than thrown: a delete the
   /// user asked for goes ahead either way, and what is left is a mount that
   /// outlives the tree until the app restarts.
+  /// How many terminals are open in [profileId].
+  ///
+  /// Asked before offering to delete a system. Detaching one hangs up whatever
+  /// is running in it — right as a last resort, wrong as a surprise: a shell
+  /// someone left a half-typed command in is not something to close on their
+  /// behalf without saying so.
+  ///
+  /// The engine's count rather than a tally of the app's own backends, because
+  /// this is the same list that decides whether the unmount can succeed. A
+  /// session the app had lost track of would still hold the filesystem.
+  static int openSessions(String profileId) {
+    final sessions = _sessions;
+    if (sessions == null) return 0;
+    final pointer = profileId.toNativeUtf8();
+    try {
+      return sessions(pointer.cast());
+    } finally {
+      malloc.free(pointer);
+    }
+  }
+
   static int detach(String profileId) {
     final detach = _detach;
     if (detach == null) return -1;
@@ -629,6 +873,10 @@ abstract final class IosRootfs {
   static final _attach = _look(
     'sbm_ish_attach',
     (p) => p.lookupFunction<Int Function(Pointer<Char>), int Function(Pointer<Char>)>('sbm_ish_attach'),
+  );
+  static final _sessions = _look(
+    'sbm_ish_sessions',
+    (p) => p.lookupFunction<Int Function(Pointer<Char>), int Function(Pointer<Char>)>('sbm_ish_sessions'),
   );
   static final _detach = _look(
     'sbm_ish_detach',

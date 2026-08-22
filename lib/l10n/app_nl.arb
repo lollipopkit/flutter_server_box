@@ -160,15 +160,18 @@
   "rememberPwdInMem": "Wachtwoord onthouden in geheugen",
   "rememberPwdInMemTip": "Gebruikt voor containers, opschorting, enz.",
   "remotePath": "Extern pad",
-  "rootfsUpdateTip": "Alpine {installed} is geïnstalleerd en {latest} is beschikbaar. Bijwerken downloadt het opnieuw en vervangt de container: alles wat daarin met apk is geïnstalleerd, gaat verloren. Als je dit overslaat, blijft de huidige gewoon werken.",
+  "rootfsUpdateTip": "{distro} {installed} is geïnstalleerd en {latest} is beschikbaar. Bijwerken downloadt het opnieuw en vervangt de container: alles wat daarin met {pm} is geïnstalleerd, gaat verloren. Als je dit overslaat, blijft de huidige gewoon werken.",
   "@rootfsUpdateTip": {
     "placeholders": {
+      "distro": {},
       "installed": {},
-      "latest": {}
+      "latest": {},
+      "pm": {}
     }
   },
+  "linuxSystemInUse": "{name} heeft nog een terminal open. Sluit die voordat je het systeem verwijdert.",
   "rootfsSubtitle": "Een Linux-userland op dit apparaat",
-  "rootfsInstallTip": "Download Alpine Linux {version} (ongeveer 3 MB) en pak het uit op dit apparaat. Het geeft deze app een shell met pakketbeheerder en kan op elk moment worden verwijderd.",
+  "rootfsInstallTip": "Download {distro} {version} (ongeveer {size} MB) en pak het uit op dit apparaat. Het geeft deze app een shell met pakketbeheerder en kan op elk moment worden verwijderd.",
   "nameAlreadyExistsFmt": "'{name}' bestaat al",
   "sameIdServerExist": "Er bestaat al een server met dezelfde ID",
   "second": "s",
@@ -379,7 +382,7 @@
   "syncAppSettings": "App-instellingen synchroniseren",
   "syncAppSettingsTip": "Thema, indeling, editor, terminal en andere apparaatvoorkeuren meenemen in de automatische synchronisatie.",
   "menuGitHubRepository": "GitHub-repository",
-  "portForwardBeta": "Deze functie is nog in bèta. De werking wordt niet gegarandeerd.",
+  "betaTip": "Deze functie is nog in bèta. De werking wordt niet gegarandeerd.",
   "portForward_startPrompt": "Voeg een poortdoorstuurregel toe om te beginnen",
   "portForward_localHost": "Lokale host",
   "portForward_localPort": "Lokale poort",

@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:archive/archive.dart';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:fl_lib/fl_lib.dart';
@@ -7,7 +9,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/utils/guest_path.dart';
 import 'package:server_box/core/utils/linux_seed.dart';
+import 'package:server_box/core/utils/oci_image.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
+import 'package:server_box/data/model/app/rootfs_manifest.dart';
 
 /// A Linux userland on Android, and what it takes to get one.
 ///
@@ -128,16 +132,6 @@ abstract final class AndroidRootfs {
     return _profiles.firstWhereOrNull((e) => e.id == id) ?? _profiles.first;
   }
 
-  /// Whether [profile] is an older release than this build would install.
-  ///
-  /// Per profile, because they are of different distributions and of different
-  /// ages. Not acted on by itself: replacing one means downloading it again and
-  /// losing everything `apk add` put in the old tree, which is the user's call.
-  ///
-  /// A version of `0` is what a marker written before versions reads as.
-  static bool isProfileOutdated(LinuxProfile profile) =>
-      profile.version != profile.distro.version;
-
   /// Locates proot and the rootfs. Call once, before anything asks.
   static Future<void> prepare() async {
     if (!isAndroid) return;
@@ -178,6 +172,7 @@ abstract final class AndroidRootfs {
   /// moved. Everything installed into the old one goes with it.
   static Future<LinuxProfile> install({
     required LinuxDistro distro,
+    RootfsRelease? release,
     LinuxProfile? into,
     String? label,
     void Function(double? progress)? onProgress,
@@ -193,6 +188,8 @@ abstract final class AndroidRootfs {
         into?.id ?? LinuxProfile.nextId(distro, _profiles.map((e) => e.id));
     final root = container.joinPath(id);
     final mirror = linuxMirror(distro);
+    // Read once, for the reason the mirror is.
+    final chosen = release ?? distro.preferred;
 
     final dir = Directory(root);
     // Whatever a previous attempt left. A rootfs is only ever complete or
@@ -203,7 +200,7 @@ abstract final class AndroidRootfs {
     final archive = root.joinPath('rootfs.tar.gz');
     try {
       await Dio().download(
-        distro.rootfsUrl(mirror),
+        chosen.source.urlOn(mirror, distro.defaultMirror),
         archive,
         cancelToken: cancel,
         onReceiveProgress: (got, total) =>
@@ -211,35 +208,28 @@ abstract final class AndroidRootfs {
       );
 
       final digest = await _sha256Of(File(archive));
-      if (digest != distro.sha256) {
+      if (digest != chosen.source.sha256) {
         throw StateError(
           'The rootfs did not match its digest and was discarded. '
-          'Expected ${distro.sha256}, got $digest.',
+          'Expected ${chosen.source.sha256}, got $digest.',
         );
       }
 
-      // The system's own tar, not a Dart one. It is a system binary so it may
-      // execute, it is far faster on a few thousand files, and — the part that
-      // matters — it restores the symlinks that make `/bin/sh` a name for
-      // busybox. A rootfs whose links became copies is a rootfs of one
-      // program pretending to be two hundred.
-      final untar = await Process.run('/system/bin/tar', [
-        'xzf',
-        archive,
-        '-C',
-        root,
-      ]);
-      if (untar.exitCode != 0) {
-        throw StateError('Could not unpack the rootfs: ${untar.stderr}');
-      }
+      await _unpack(archive, root, source: chosen.source);
 
       await seedResolvConf(root, nameservers: linuxNameservers());
-      await seedRepositories(root, distro: distro, mirror: mirror);
+      await seedRepositories(
+        root,
+        distro: distro,
+        release: chosen,
+        mirror: mirror,
+      );
       await seedChsh(root, force: true);
       final profile = LinuxProfile(
         id: id,
         distro: distro,
-        version: distro.version,
+        version: chosen.version,
+        branch: chosen.branch,
         label: label ?? into?.label ?? distro.label,
       );
       await File(root.joinPath(LinuxProfile.marker)).writeAsString(profile.encode());
@@ -252,6 +242,177 @@ abstract final class AndroidRootfs {
     } finally {
       final leftover = File(archive);
       if (await leftover.exists()) await leftover.delete();
+    }
+  }
+
+  /// Puts the downloaded rootfs on disk, whichever shape it came in.
+  ///
+  /// The writing is done by the system's own tar, not a Dart one. It is a
+  /// system binary so it may execute, it is far faster on a few thousand
+  /// files, and — the part that matters — it restores the symlinks that make
+  /// `/bin/sh` a name for busybox. A rootfs whose links became copies is a
+  /// rootfs of one program pretending to be two hundred.
+  ///
+  /// It is only ever handed a plain or gzipped tar, though. Anything else is
+  /// decompressed here first, so nothing depends on which compressors a given
+  /// device's toybox happens to have been built with — `-J` in particular is
+  /// not something to discover the absence of on a user's phone.
+  static Future<void> _unpack(
+    String archivePath,
+    String root, {
+    required RootfsSource source,
+  }) async {
+    switch (source.layout) {
+      case LinuxRootfsLayout.plain:
+        if (source.compression == LinuxRootfsCompression.gzip) {
+          await _tar(archivePath, root, gzip: true);
+        } else {
+          await _withTemp(
+            '$archivePath.tar',
+            decompressRootfs(
+              await File(archivePath).readAsBytes(),
+              source.compression,
+            ),
+            (path) => _tar(path, root, gzip: false),
+          );
+        }
+      case LinuxRootfsLayout.oci:
+        final image = TarDecoder().decodeBytes(
+          decompressRootfs(
+            await File(archivePath).readAsBytes(),
+            source.compression,
+          ),
+        );
+        var n = 0;
+        for (final layer in ociLayers(image)) {
+          await _withTemp('$archivePath.layer${n++}', ociLayerTar(layer), (
+            path,
+          ) async {
+            // What this layer writes, asked of the archive rather than of the
+            // tree: after extraction the two are indistinguishable, and the
+            // difference is exactly what an opaque marker turns on.
+            final written = ociLayerPaths(await _tarList(path));
+            await _tar(path, root, gzip: false);
+            // Between layers, not at the end: a marker in this layer deletes
+            // what the one below it wrote, and the layer above may put the
+            // same path back.
+            await _applyWhiteouts(root, written);
+          });
+        }
+    }
+    await _makeDirsWritable(root);
+  }
+
+  /// Writes [bytes] to [path], runs [use], and removes it either way.
+  static Future<void> _withTemp(
+    String path,
+    List<int> bytes,
+    Future<void> Function(String path) use,
+  ) async {
+    final file = File(path);
+    await file.writeAsBytes(bytes);
+    try {
+      await use(path);
+    } finally {
+      if (await file.exists()) await file.delete();
+    }
+  }
+
+  /// The names in [archivePath], as the archive spells them.
+  ///
+  /// Asked of the same tar that unpacks it, so the two cannot disagree about
+  /// what is in there. Cheaper than it looks — this reads headers and skips
+  /// the data — and it replaces a recursive walk of the whole extracted tree.
+  static Future<List<String>> _tarList(String archivePath) async {
+    final res = await Process.run('/system/bin/tar', ['tf', archivePath]);
+    if (res.exitCode != 0) {
+      throw StateError('Could not read the rootfs layer: ${res.stderr}');
+    }
+    return LineSplitter.split(res.stdout as String)
+        .where((e) => e.isNotEmpty)
+        .toList();
+  }
+
+  static Future<void> _tar(
+    String archivePath,
+    String root, {
+    required bool gzip,
+  }) async {
+    final res = await Process.run('/system/bin/tar', [
+      gzip ? 'xzf' : 'xf',
+      archivePath,
+      '-C',
+      root,
+    ]);
+    if (res.exitCode != 0) {
+      throw StateError('Could not unpack the rootfs: ${res.stderr}');
+    }
+  }
+
+  /// Acts on the whiteout markers tar has just written out as ordinary files.
+  ///
+  /// It writes them as files because that is what they are in the archive;
+  /// only a reader of the image knows one means "delete this". iOS acts on
+  /// them while unpacking, which it can because it walks the entries itself —
+  /// this is the same rule reached from the other side, sharing
+  /// [ociWhiteout] so the two cannot disagree about what a marker is.
+  ///
+  /// [written] is what this layer's archive contains, which is both where the
+  /// markers are found and what an opaque one spares.
+  static Future<void> _applyWhiteouts(String root, Set<String> written) async {
+    for (final relative in written) {
+      final mark = ociWhiteout(relative.split('/').last);
+      if (mark == null) continue;
+      final path = root.joinPath(relative);
+      final parent = File(path).parent;
+      if (mark.opaque) {
+        if (!await parent.exists()) continue;
+        final directory = ociParent(relative);
+        await for (final child in parent.list(followLinks: false)) {
+          if (child.path == path) continue;
+          // Only what the layers below put here. A sibling this layer writes
+          // stays — the marker hides what is underneath it, and deleting the
+          // layer's own contents would empty a directory the layer exists to
+          // fill.
+          final name = child.path.split(Platform.pathSeparator).last;
+          final sibling = directory.isEmpty ? name : '$directory/$name';
+          if (written.contains(sibling)) continue;
+          await child.delete(recursive: true);
+        }
+      } else {
+        final target = parent.path.joinPath(mark.deletes!);
+        final dir = Directory(target);
+        if (await dir.exists()) {
+          await dir.delete(recursive: true);
+        } else {
+          final file = File(target);
+          if (await file.exists()) await file.delete();
+        }
+      }
+      final marker = File(path);
+      if (await marker.exists()) await marker.delete();
+    }
+  }
+
+  /// Gives every directory back its owner-write bit.
+  ///
+  /// Rocky ships 17 of them at 0555, `/usr/bin` and `/usr/lib` among them.
+  /// proot presents the guest as root but the kernel still checks the app's
+  /// real uid, so a package manager cannot create its temp files there and
+  /// every install fails partway through unpacking — `rpm` reports it as
+  /// `cpio: open failed`, which reads as a broken download.
+  ///
+  /// Not needed on iOS, which creates directories itself and never applies the
+  /// recorded mode; here tar does apply it, so this undoes that much.
+  static Future<void> _makeDirsWritable(String root) async {
+    const ownerWrite = 0x80; // S_IWUSR
+    await for (final entry in Directory(
+      root,
+    ).list(recursive: true, followLinks: false)) {
+      if (entry is! Directory) continue;
+      final mode = (await entry.stat()).mode;
+      if (mode & ownerWrite != 0) continue;
+      chmodGuestFile(entry.path, (mode & 0xfff) | ownerWrite);
     }
   }
 

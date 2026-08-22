@@ -1,0 +1,149 @@
+{
+  "distros": {
+    "alpine": {
+      "default_mirror": "https://dl-cdn.alpinelinux.org/alpine",
+      "label": "Alpine",
+      "package_manager": "apk",
+      "releases": [
+        {
+          "branch": "v3.22",
+          "rootfs": {
+            "compression": "gzip",
+            "follows_mirror": false,
+            "layout": "plain",
+            "sha256": "420b3594e9c9dba339c3a9b53ba2639d9c3f9b30a61c12859ec43c2e21103b4b",
+            "size_bytes": 3978497,
+            "url": "https://github.com/lollipopkit/shellbox-rootfs/releases/download/v2026.08.22-2/alpine-3.22.5-arm64.tar.gz"
+          },
+          "upstream": {
+            "compression": "gzip",
+            "follows_mirror": true,
+            "layout": "plain",
+            "sha256": "3fbc6285032ed46821b511292633d7b2a6306a2e254f590e92bdafff56cf2f70",
+            "size_bytes": 3966256,
+            "url": "https://dl-cdn.alpinelinux.org/alpine/v3.22/releases/aarch64/alpine-minirootfs-3.22.5-aarch64.tar.gz"
+          },
+          "version": "3.22.5"
+        },
+        {
+          "branch": "v3.21",
+          "rootfs": {
+            "compression": "gzip",
+            "follows_mirror": false,
+            "layout": "plain",
+            "sha256": "1ab6f447f960b3fd0aa82258a029a5191a7c565fee6e9651f0784938b0b00f1f",
+            "size_bytes": 3862541,
+            "url": "https://github.com/lollipopkit/shellbox-rootfs/releases/download/v2026.08.22-2/alpine-3.21.7-arm64.tar.gz"
+          },
+          "upstream": {
+            "compression": "gzip",
+            "follows_mirror": true,
+            "layout": "plain",
+            "sha256": "d1d1a3fae5f4d6146e9742790a47fcb116199622cfb8439f218a4d5fbe5000da",
+            "size_bytes": 3850805,
+            "url": "https://dl-cdn.alpinelinux.org/alpine/v3.21/releases/aarch64/alpine-minirootfs-3.21.7-aarch64.tar.gz"
+          },
+          "version": "3.21.7"
+        }
+      ]
+    },
+    "rocky": {
+      "default_mirror": "https://dl.rockylinux.org/pub/rocky",
+      "label": "Rocky Linux",
+      "package_manager": "dnf",
+      "releases": [
+        {
+          "branch": "9",
+          "rootfs": {
+            "compression": "xz",
+            "follows_mirror": false,
+            "layout": "plain",
+            "sha256": "ba39cc544578f15994fafe1f6931ebe2efee5005237b11d213f40e40ea8be28e",
+            "size_bytes": 51082448,
+            "url": "https://github.com/lollipopkit/shellbox-rootfs/releases/download/v2026.08.22-2/rocky-9.8-arm64.tar.xz"
+          },
+          "upstream": {
+            "compression": "xz",
+            "follows_mirror": true,
+            "layout": "oci",
+            "sha256": "254dc06377bb63a5ab390cea33c2f26d71c4e0ff6ae1bc8a0fb0fbb86d992e89",
+            "size_bytes": 84701720,
+            "url": "https://dl.rockylinux.org/pub/rocky/9/images/aarch64/Rocky-9-Container-Base-9.8-20260525.0.aarch64.oci.tar.xz"
+          },
+          "version": "9.8"
+        },
+        {
+          "branch": "10",
+          "rootfs": {
+            "compression": "xz",
+            "follows_mirror": false,
+            "layout": "plain",
+            "sha256": "41e643d0a14980f7e4d254c6da9828694d1ef5ba09eeff451ca60d9a56f79bba",
+            "size_bytes": 50490708,
+            "url": "https://github.com/lollipopkit/shellbox-rootfs/releases/download/v2026.08.22-2/rocky-10.2-arm64.tar.xz"
+          },
+          "upstream": {
+            "compression": "xz",
+            "follows_mirror": true,
+            "layout": "oci",
+            "sha256": "995350a80651f2867e399196288d17704f13b1035fb78e4bf56ba74a2d7775d7",
+            "size_bytes": 84677224,
+            "url": "https://dl.rockylinux.org/pub/rocky/10/images/aarch64/Rocky-10-Container-Base-10.2-20260525.0.aarch64.oci.tar.xz"
+          },
+          "version": "10.2"
+        }
+      ]
+    },
+    "ubuntu": {
+      "default_mirror": "https://archive.ubuntu.com/ubuntu",
+      "label": "Ubuntu",
+      "package_manager": "apt",
+      "releases": [
+        {
+          "branch": "resolute",
+          "rootfs": {
+            "compression": "gzip",
+            "follows_mirror": false,
+            "layout": "plain",
+            "sha256": "1907331fc809bec3aa8445bc6df3d562d05b84bdc249c255e432201e1645898c",
+            "size_bytes": 34126602,
+            "url": "https://github.com/lollipopkit/shellbox-rootfs/releases/download/v2026.08.22-2/ubuntu-26.04-arm64.tar.gz"
+          },
+          "upstream": {
+            "compression": "gzip",
+            "follows_mirror": false,
+            "layout": "plain",
+            "sha256": "b2b46a37324ea1954e93f293fe6d7c2241daf2fc298c4022e6e4caceeed74cab",
+            "size_bytes": 35094845,
+            "url": "https://cdimage.ubuntu.com/ubuntu-base/releases/26.04/release/ubuntu-base-26.04-base-arm64.tar.gz"
+          },
+          "version": "26.04"
+        },
+        {
+          "branch": "noble",
+          "rootfs": {
+            "compression": "gzip",
+            "follows_mirror": false,
+            "layout": "plain",
+            "sha256": "77119804893c3b07006f792cc7a8d39ac31733a33b3a2b03d41ef34de562bb03",
+            "size_bytes": 29021242,
+            "url": "https://github.com/lollipopkit/shellbox-rootfs/releases/download/v2026.08.22-2/ubuntu-24.04.4-arm64.tar.gz"
+          },
+          "upstream": {
+            "compression": "gzip",
+            "follows_mirror": false,
+            "layout": "plain",
+            "sha256": "04207713ece899c3740823d33690441ad3a7f0ded1101aca744e2b0f37ac7ff2",
+            "size_bytes": 29870567,
+            "url": "https://cdimage.ubuntu.com/ubuntu-base/releases/24.04/release/ubuntu-base-24.04.4-base-arm64.tar.gz"
+          },
+          "version": "24.04.4"
+        }
+      ]
+    }
+  },
+  "generated_at": "2026-08-22T15:46:51Z",
+  "schema": 2,
+  "serial": 3,
+  "valid_until": "2027-02-18T15:46:51Z"
+}

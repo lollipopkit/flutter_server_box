@@ -823,16 +823,26 @@ class AppLocalizationsZh extends AppLocalizations {
   String get remotePath => '远端路径';
 
   @override
-  String rootfsUpdateTip(Object installed, Object latest) {
-    return '已安装 Alpine $installed,现有 $latest。更新会重新下载并替换整个容器:里面用 apk 装过的东西都会丢失。跳过的话,现在这个照常可用。';
+  String rootfsUpdateTip(
+    Object distro,
+    Object installed,
+    Object latest,
+    Object pm,
+  ) {
+    return '已安装 $distro $installed,现有 $latest。更新会重新下载并替换整个容器:里面用 $pm 装过的东西都会丢失。跳过的话,现在这个照常可用。';
+  }
+
+  @override
+  String linuxSystemInUse(Object name) {
+    return '$name 还有终端开着。请先关闭,再删除这个系统。';
   }
 
   @override
   String get rootfsSubtitle => '本机上的 Linux 用户空间';
 
   @override
-  String rootfsInstallTip(Object version) {
-    return '下载 Alpine Linux $version(约 3 MB)并解压到本机。它为本 App 提供一个带包管理器的 shell,可随时删除。';
+  String rootfsInstallTip(Object distro, Object version, Object size) {
+    return '下载 $distro $version(约 $size MB)并解压到本机。它为本 App 提供一个带包管理器的 shell,可随时删除。';
   }
 
   @override
@@ -1142,7 +1152,7 @@ class AppLocalizationsZh extends AppLocalizations {
       '检测到 Podman Docker 仿真。请在设置中切换到 Podman。';
 
   @override
-  String get portForwardBeta => '此功能仍在测试阶段，不保证功能可用性。';
+  String get betaTip => '此功能仍在测试阶段，不保证功能可用性。';
 
   @override
   String get portForward_startPrompt => '添加端口映射规则以开始使用';
@@ -2169,16 +2179,26 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get remotePath => '遠端路徑';
 
   @override
-  String rootfsUpdateTip(Object installed, Object latest) {
-    return '已安裝 Alpine $installed,現有 $latest。更新會重新下載並替換整個容器:裡面用 apk 裝過的東西都會遺失。跳過的話,現在這個照常可用。';
+  String rootfsUpdateTip(
+    Object distro,
+    Object installed,
+    Object latest,
+    Object pm,
+  ) {
+    return '已安裝 $distro $installed,現有 $latest。更新會重新下載並替換整個容器:裡面用 $pm 裝過的東西都會遺失。跳過的話,現在這個照常可用。';
+  }
+
+  @override
+  String linuxSystemInUse(Object name) {
+    return '$name 還有終端開著。請先關閉,再刪除這個系統。';
   }
 
   @override
   String get rootfsSubtitle => '本機上的 Linux 使用者空間';
 
   @override
-  String rootfsInstallTip(Object version) {
-    return '下載 Alpine Linux $version(約 3 MB)並解壓到本機。它為本 App 提供一個帶套件管理器的 shell,可隨時刪除。';
+  String rootfsInstallTip(Object distro, Object version, Object size) {
+    return '下載 $distro $version(約 $size MB)並解壓到本機。它為本 App 提供一個帶套件管理器的 shell,可隨時刪除。';
   }
 
   @override
@@ -2488,7 +2508,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       '檢測到 Podman Docker 仿真。請在設定中切換到 Podman。';
 
   @override
-  String get portForwardBeta => '此功能仍在 Beta 測試階段，不保證可正常運作。';
+  String get betaTip => '此功能仍在 Beta 測試階段，不保證可正常運作。';
 
   @override
   String get portForward_startPrompt => '新增一條連接埠轉發規則以開始';

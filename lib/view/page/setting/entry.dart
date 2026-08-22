@@ -15,11 +15,14 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/linux_seed.dart';
 import 'package:server_box/core/utils/local_exec.dart';
 import 'package:server_box/core/utils/rootfs.dart';
+import 'package:server_box/core/utils/rootfs_manifest_source.dart';
 import 'package:server_box/core/utils/server_dedup.dart';
 import 'package:server_box/core/utils/ssh_config.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
+import 'package:server_box/data/model/app/linux_distros.dart';
 import 'package:server_box/data/model/app/net_view.dart';
+import 'package:server_box/data/model/app/rootfs_manifest.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/build_data.dart';
@@ -212,7 +215,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           if (Rootfs.isAvailable)
             SettingsNode.leaf(
               id: 'terminal.linux',
-              title: 'Linux',
+              // Not localized, and not searched for either: the id above is
+              // what the settings search matches on, and "Linux" is the same
+              // word in every locale this ships in.
+              title: 'Linux (Beta)',
               icon: Icons.layers_outlined,
               page: () => const AppSettingsPage(section: SettingsSection.linux),
             ),
@@ -630,6 +636,23 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
   late final _serverLogoCtrl = TextEditingController(
     text: _setting.serverLogoUrl.fetch(),
   );
+
+  @override
+  void initState() {
+    super.initState();
+    // Which releases are installable is fetched rather than compiled in, and
+    // this page is where someone is about to act on the answer: the version
+    // beside "add", the update button on a profile. Launch already tries once;
+    // this catches the case where it failed or the release moved since.
+    //
+    // Not awaited and not shown. What is in force already works, and a refresh
+    // that changes nothing — the ordinary case — should look like nothing.
+    if (widget.section == SettingsSection.linux && Rootfs.isAvailable) {
+      RootfsManifestSource.refresh().then((changed) {
+        if (changed && mounted) setState(() {});
+      });
+    }
+  }
 
   @override
   void dispose() {

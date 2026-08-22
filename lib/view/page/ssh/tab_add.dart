@@ -154,7 +154,11 @@ class _LinuxSectionState extends State<_LinuxSection> {
           children: [
             ListTile(
               leading: const Icon(Icons.terminal),
-              title: const Text('Linux'),
+              // Where it is said on this page. The subtitle below is already
+              // spoken for — it names the systems installed — and the chips
+              // are one per system, so a badge among them would read as being
+              // about one of them.
+              title: const Text('Linux (Beta)'),
               subtitle: Text(
                 profiles.isEmpty
                     ? l10n.rootfsSubtitle

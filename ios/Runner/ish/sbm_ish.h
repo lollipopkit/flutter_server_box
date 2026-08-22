@@ -79,6 +79,20 @@ SBM_ISH_EXPORT int sbm_ish_attach(const char *profile);
 /// `/dev` mounted for it is backed by a database inside that directory.
 SBM_ISH_EXPORT int sbm_ish_detach(const char *profile);
 
+/// How many sessions are open in `profile`.
+///
+/// Asked before offering to delete a system. Detaching one hangs up whatever
+/// is running in it, which is right as a last resort and wrong as a surprise:
+/// a shell someone left a half-typed command in is not something to close on
+/// their behalf without saying so.
+///
+/// The engine's own count rather than the app's, because this is the same list
+/// that decides whether the unmount can succeed. A session the app has
+/// forgotten about would still hold the filesystem.
+///
+/// Answers 0 for a machine that never booted, which has no sessions in it.
+SBM_ISH_EXPORT int sbm_ish_sessions(const char *profile);
+
 /// Opens a session: a process in the machine, on a pseudo-terminal of its own.
 ///
 /// Returns a handle, or a negative errno. [command] is what to run; NULL or

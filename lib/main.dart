@@ -13,6 +13,7 @@ import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/service/watch_sync.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/core/utils/rootfs.dart';
+import 'package:server_box/core/utils/rootfs_manifest_source.dart';
 import 'package:server_box/core/utils/sandbox_import.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
@@ -204,6 +205,19 @@ Future<void> _doPlatformRelated() async {
     await Rootfs.prepare();
   } catch (e, s) {
     Loggers.app.warning('Failed to locate the Linux rootfs', e, s);
+  }
+
+  // Which releases are installable is data that moves on the distributions'
+  // schedule, so it is fetched rather than compiled in. Not awaited: what
+  // `prepare` just adopted already works, and this only ever replaces it with
+  // something newer that verified.
+  //
+  // Gated on the build carrying an engine at all. Most do not — iOS ships with
+  // the switch off and Android needs a proot this repository does not contain —
+  // and a request per launch for a feature that cannot be used is one nobody
+  // asked for.
+  if (Rootfs.isAvailable) {
+    unawaited(RootfsManifestSource.refresh());
   }
 
   // The watch app used to learn about servers only while the user sat on the

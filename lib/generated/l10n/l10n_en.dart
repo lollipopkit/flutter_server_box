@@ -881,16 +881,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get remotePath => 'Remote path';
 
   @override
-  String rootfsUpdateTip(Object installed, Object latest) {
-    return 'Alpine $installed is installed and $latest is available. Updating downloads it again and replaces the container: anything installed inside it with apk is lost. The current one keeps working if you skip this.';
+  String rootfsUpdateTip(
+    Object distro,
+    Object installed,
+    Object latest,
+    Object pm,
+  ) {
+    return '$distro $installed is installed and $latest is available. Updating downloads it again and replaces the container: anything installed inside it with $pm is lost. The current one keeps working if you skip this.';
+  }
+
+  @override
+  String linuxSystemInUse(Object name) {
+    return '$name still has a terminal open. Close it before deleting the system.';
   }
 
   @override
   String get rootfsSubtitle => 'A Linux userland on this device';
 
   @override
-  String rootfsInstallTip(Object version) {
-    return 'Download Alpine Linux $version (about 3 MB) and unpack it on this device. It gives this app a shell with a package manager, and can be deleted at any time.';
+  String rootfsInstallTip(Object distro, Object version, Object size) {
+    return 'Download $distro $version (about $size MB) and unpack it on this device. It gives this app a shell with a package manager, and can be deleted at any time.';
   }
 
   @override
@@ -1222,7 +1232,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Podman Docker emulation detected. Please switch to Podman in settings.';
 
   @override
-  String get portForwardBeta =>
+  String get betaTip =>
       'This feature is still in beta testing. Functionality is not guaranteed.';
 
   @override

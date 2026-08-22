@@ -42,7 +42,7 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Flexible(child: Text(context.l10n.portForwardBeta)),
+          Flexible(child: Text(context.l10n.betaTip)),
           UIs.height13,
           StatefulBuilder(
             builder: (context, setState) {

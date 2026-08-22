@@ -8,6 +8,8 @@ import 'package:server_box/core/utils/android_rootfs.dart';
 import 'package:server_box/core/utils/ios_rootfs.dart';
 import 'package:server_box/core/utils/rootfs.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
+import 'package:server_box/data/model/app/rootfs_manifest.dart';
+import 'package:server_box/data/res/store.dart';
 
 /// Puts a Linux userland on this device, asking first.
 ///
@@ -17,13 +19,16 @@ import 'package:server_box/data/model/app/linux_distro.dart';
 /// than fetching several megabytes on a tap. What makes it safe to run is in
 /// `LinuxDistro`: the release is pinned and its digest is checked.
 ///
-/// TODO(distribution residue; remove when a second one ships): `rootfsInstallTip`
-/// and `rootfsUpdateTip` name Alpine in all fifteen locales. Both are accurate
-/// while it is the only installable one, and both need a `{distro}` placeholder
-/// the moment that stops being true.
+/// The size is named because the three differ by more than an order of
+/// magnitude — 4 MB against 81 — and "several megabytes" is only true of one
+/// of them. So is the package manager in the update warning: what replacing a
+/// system destroys is whatever installed things inside it, and telling someone
+/// running Ubuntu that they will lose what `apk` put there names a command
+/// they have never typed.
 Future<bool> installRootfs(
   BuildContext context, {
   LinuxProfile? into,
+  ({LinuxDistro distro, RootfsRelease release})? picked,
   bool another = false,
   String? label,
 }) async {
@@ -46,15 +51,35 @@ Future<bool> installRootfs(
   if (present && into == null && !another) return true;
   if (!context.mounted) return false;
 
-  final distro = into?.distro ?? Rootfs.nextDistro;
+  // Before anything is downloaded, because this is where the feature is first
+  // met: a system has to be installed before it can be entered, so a warning
+  // here is one nobody reaches a Linux shell without having seen.
+  if (!await _confirmBeta(context)) return present || selected != null;
+  if (!context.mounted) return false;
+
+  // What is being installed, decided in one place — see `Rootfs.target` for
+  // why a replacement never crosses into another series.
+  final target = Rootfs.target(into: into, picked: picked);
+  final distro = target.distro;
+  final chosen = target.release;
+
   final confirm = await context.showRoundDialog<bool>(
     // Capitalised: the shared string is a verb used mid-sentence elsewhere,
     // and a dialog title is not mid-sentence.
     title: into == null ? libL10n.install.capitalize : libL10n.update,
     child: Text(
       into == null
-          ? context.l10n.rootfsInstallTip(distro.version)
-          : context.l10n.rootfsUpdateTip(into.version, distro.version),
+          ? context.l10n.rootfsInstallTip(
+              distro.label,
+              chosen.version,
+              chosen.source.sizeMb,
+            )
+          : context.l10n.rootfsUpdateTip(
+              distro.label,
+              into.version,
+              chosen.version,
+              distro.packageManager,
+            ),
     ),
     actions: Btnx.cancelOk,
   );
@@ -105,6 +130,7 @@ Future<bool> installRootfs(
   try {
     await Rootfs.install(
       distro: distro,
+      release: chosen,
       into: into,
       label: label,
       onProgress: (value) => progress.value = value,
@@ -124,6 +150,47 @@ Future<bool> installRootfs(
   }
 }
 
+/// Says that the Linux feature is beta, once, and lets it be dismissed for
+/// good. Returns whether to go on.
+///
+/// Its own dialog rather than a line added to the install confirmation: that
+/// one asks about downloading a particular release, and answering it yes is
+/// not the same as having read this.
+///
+/// The flag is written only when the answer is yes. A box ticked on a dialog
+/// that was then cancelled has agreed to nothing, and writing on the tick — as
+/// the port forward warning does, where there is nothing to cancel — would
+/// suppress a warning the user backed out of.
+Future<bool> _confirmBeta(BuildContext context) async {
+  if (Stores.setting.linuxBetaWarned.fetch()) return true;
+  var noMore = false;
+  final ok = await context.showRoundDialog<bool>(
+    title: libL10n.attention,
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(child: Text(context.l10n.betaTip)),
+        UIs.height13,
+        StatefulBuilder(
+          builder: (_, setState) => Row(
+            children: [
+              Checkbox(
+                value: noMore,
+                onChanged: (v) => setState(() => noMore = v ?? false),
+              ),
+              Text(l10n.noPromptAgain),
+            ],
+          ),
+        ),
+      ],
+    ),
+    actions: Btnx.cancelOk,
+  );
+  if (ok != true) return false;
+  if (noMore) Stores.setting.linuxBetaWarned.put(true);
+  return true;
+}
+
 /// Removes one Linux system, asking first.
 ///
 /// Everything installed inside it goes too, which is why this asks in the same
@@ -131,20 +198,65 @@ Future<bool> installRootfs(
 Future<bool> removeRootfs(BuildContext context, {LinuxProfile? profile}) async {
   final target = profile ?? Rootfs.selected;
   if (target == null) return false;
+
+  // Asked before the confirmation, not after. Detaching hangs up whatever is
+  // running in the system, which is the right last resort and the wrong
+  // surprise: a shell someone left a half-typed command in is not something to
+  // close on their behalf. And it is what the delete would fail on anyway —
+  // the engine cannot unmount a `/dev/pts` a session still holds — so this
+  // turns an error after the fact into something to do first.
+  if (Rootfs.openSessions(target) > 0) {
+    await context.showRoundDialog(
+      title: libL10n.attention,
+      child: Text(context.l10n.linuxSystemInUse(target.label)),
+      actions: [Btnx.okRed],
+    );
+    return false;
+  }
+
   final confirm = await context.showRoundDialog<bool>(
     title: libL10n.attention,
     child: Text(libL10n.askContinue('${libL10n.delete} ${target.label}')),
     actions: Btnx.cancelRedOk,
   );
   if (confirm != true) return false;
+  if (!context.mounted) return false;
+
+  // Shown because this is not instant and has no business looking like it is:
+  // the engine has to let go of the system's filesystems before the tree can
+  // go, which means waiting on a shell to take SIGHUP and exit, and then
+  // deleting a directory of a few hundred megabytes. Without it a tap did
+  // nothing visible for seconds and then either succeeded silently or
+  // produced an error about something the user had not been told was
+  // happening.
+  //
+  // No answer to give and nothing to cancel: stopping halfway is what leaves
+  // a tree with its `/dev` half unmounted, so there is no barrier dismiss
+  // either. Closed below, whatever happened.
+  unawaited(
+    context.showRoundDialog(
+      title: libL10n.delete,
+      child: const SizedBox(
+        height: 48,
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      barrierDismiss: false,
+      actions: const [],
+    ),
+  );
+
   try {
     await Rootfs.removeProfile(target.id);
   } catch (e, s) {
     // Refused rather than half-done: the tree is still there, and so is
     // whatever was using it. Deleting it anyway is what froze the app.
     Loggers.app.warning('Remove ${target.id}', e, s);
-    if (context.mounted) Toast.error('${libL10n.fail}: $e');
+    if (context.mounted) {
+      context.popDialog();
+      Toast.error('${libL10n.fail}: $e');
+    }
     return false;
   }
+  if (context.mounted) context.popDialog();
   return true;
 }

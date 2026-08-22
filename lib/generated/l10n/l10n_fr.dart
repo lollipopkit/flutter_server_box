@@ -896,16 +896,26 @@ class AppLocalizationsFr extends AppLocalizations {
   String get remotePath => 'Chemin distant';
 
   @override
-  String rootfsUpdateTip(Object installed, Object latest) {
-    return 'Alpine $installed est installé et $latest est disponible. La mise à jour le télécharge à nouveau et remplace le conteneur : tout ce qui y a été installé avec apk est perdu. Si vous l\'ignorez, le conteneur actuel continue de fonctionner.';
+  String rootfsUpdateTip(
+    Object distro,
+    Object installed,
+    Object latest,
+    Object pm,
+  ) {
+    return '$distro $installed est installé et $latest est disponible. La mise à jour le télécharge à nouveau et remplace le conteneur : tout ce qui y a été installé avec $pm est perdu. Si vous l\'ignorez, le conteneur actuel continue de fonctionner.';
+  }
+
+  @override
+  String linuxSystemInUse(Object name) {
+    return '$name a encore un terminal ouvert. Fermez-le avant de supprimer le système.';
   }
 
   @override
   String get rootfsSubtitle => 'Un espace utilisateur Linux sur cet appareil';
 
   @override
-  String rootfsInstallTip(Object version) {
-    return 'Télécharge Alpine Linux $version (environ 3 Mo) et le décompresse sur cet appareil. Il donne à cette application un shell avec gestionnaire de paquets, et peut être supprimé à tout moment.';
+  String rootfsInstallTip(Object distro, Object version, Object size) {
+    return 'Télécharge $distro $version (environ $size Mo) et le décompresse sur cet appareil. Il donne à cette application un shell avec gestionnaire de paquets, et peut être supprimé à tout moment.';
   }
 
   @override
@@ -1245,7 +1255,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Émulation Podman Docker détectée. Veuillez passer à Podman dans les paramètres.';
 
   @override
-  String get portForwardBeta =>
+  String get betaTip =>
       'Cette fonctionnalité est encore en bêta. Son fonctionnement n\'est pas garanti.';
 
   @override

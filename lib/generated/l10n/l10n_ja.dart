@@ -839,16 +839,26 @@ class AppLocalizationsJa extends AppLocalizations {
   String get remotePath => 'リモートパス';
 
   @override
-  String rootfsUpdateTip(Object installed, Object latest) {
-    return 'Alpine $installed がインストールされており、$latest が利用できます。更新すると再度ダウンロードしてコンテナを置き換えるため、その中に apk でインストールしたものはすべて失われます。更新しない場合、現在のものはそのまま使えます。';
+  String rootfsUpdateTip(
+    Object distro,
+    Object installed,
+    Object latest,
+    Object pm,
+  ) {
+    return '$distro $installed がインストールされており、$latest が利用できます。更新すると再度ダウンロードしてコンテナを置き換えるため、その中に $pm でインストールしたものはすべて失われます。更新しない場合、現在のものはそのまま使えます。';
+  }
+
+  @override
+  String linuxSystemInUse(Object name) {
+    return '$name のターミナルがまだ開いています。閉じてからシステムを削除してください。';
   }
 
   @override
   String get rootfsSubtitle => 'この端末上の Linux ユーザーランド';
 
   @override
-  String rootfsInstallTip(Object version) {
-    return 'Alpine Linux $version(約 3 MB)をダウンロードし、この端末に展開します。パッケージマネージャー付きのシェルをこのアプリに提供し、いつでも削除できます。';
+  String rootfsInstallTip(Object distro, Object version, Object size) {
+    return '$distro $version(約 $size MB)をダウンロードし、この端末に展開します。パッケージマネージャー付きのシェルをこのアプリに提供し、いつでも削除できます。';
   }
 
   @override
@@ -1167,7 +1177,7 @@ class AppLocalizationsJa extends AppLocalizations {
       'Podman Docker エミュレーションが検出されました。設定で Podman に切り替えてください。';
 
   @override
-  String get portForwardBeta => 'この機能はまだベータ版です。動作は保証されません。';
+  String get betaTip => 'この機能はまだベータ版です。動作は保証されません。';
 
   @override
   String get portForward_startPrompt => 'ポート転送のルールを追加して始めましょう';

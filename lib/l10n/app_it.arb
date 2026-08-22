@@ -161,15 +161,18 @@
   "rememberPwdInMem": "Ricorda password in memoria",
   "rememberPwdInMemTip": "Utilizzato per container, sospensione, ecc.",
   "remotePath": "Percorso remoto",
-  "rootfsUpdateTip": "Alpine {installed} è installato ed è disponibile {latest}. L'aggiornamento lo scarica di nuovo e sostituisce il container: tutto ciò che vi è stato installato con apk viene perso. Saltando l'aggiornamento, quello attuale continua a funzionare.",
+  "rootfsUpdateTip": "{distro} {installed} è installato ed è disponibile {latest}. L'aggiornamento lo scarica di nuovo e sostituisce il container: tutto ciò che vi è stato installato con {pm} viene perso. Saltando l'aggiornamento, quello attuale continua a funzionare.",
   "@rootfsUpdateTip": {
     "placeholders": {
+      "distro": {},
       "installed": {},
-      "latest": {}
+      "latest": {},
+      "pm": {}
     }
   },
+  "linuxSystemInUse": "{name} ha ancora un terminale aperto. Chiudilo prima di eliminare il sistema.",
   "rootfsSubtitle": "Uno spazio utente Linux su questo dispositivo",
-  "rootfsInstallTip": "Scarica Alpine Linux {version} (circa 3 MB) e lo decomprime su questo dispositivo. Fornisce a questa app una shell con gestore di pacchetti e può essere eliminato in qualsiasi momento.",
+  "rootfsInstallTip": "Scarica {distro} {version} (circa {size} MB) e lo decomprime su questo dispositivo. Fornisce a questa app una shell con gestore di pacchetti e può essere eliminato in qualsiasi momento.",
   "nameAlreadyExistsFmt": "«{name}» esiste già",
   "sameIdServerExist": "Esiste già un server con lo stesso ID",
   "second": "s",
@@ -382,7 +385,7 @@
   "sshConnectionModeUseSystem": "Usa l'SSH di sistema",
   "syncAppSettings": "Sincronizza le impostazioni dell'app",
   "syncAppSettingsTip": "Includi tema, layout, editor, terminale e altre preferenze del dispositivo nella sincronizzazione automatica.",
-  "portForwardBeta": "Questa funzione è ancora in beta. Il funzionamento non è garantito.",
+  "betaTip": "Questa funzione è ancora in beta. Il funzionamento non è garantito.",
   "portForward_startPrompt": "Aggiungi una regola di port forwarding per iniziare",
   "portForward_localHost": "Host locale",
   "portForward_localPort": "Porta locale",

@@ -889,8 +889,18 @@ class AppLocalizationsUk extends AppLocalizations {
   String get remotePath => 'Віддалений шлях';
 
   @override
-  String rootfsUpdateTip(Object installed, Object latest) {
-    return 'Встановлено Alpine $installed, доступна версія $latest. Оновлення завантажить його знову та замінить контейнер: усе, що було встановлено всередині через apk, буде втрачено. Якщо пропустити, поточний контейнер працюватиме далі.';
+  String rootfsUpdateTip(
+    Object distro,
+    Object installed,
+    Object latest,
+    Object pm,
+  ) {
+    return 'Встановлено $distro $installed, доступна версія $latest. Оновлення завантажить його знову та замінить контейнер: усе, що було встановлено всередині через $pm, буде втрачено. Якщо пропустити, поточний контейнер працюватиме далі.';
+  }
+
+  @override
+  String linuxSystemInUse(Object name) {
+    return 'У $name ще відкритий термінал. Закрийте його, перш ніж видаляти систему.';
   }
 
   @override
@@ -898,8 +908,8 @@ class AppLocalizationsUk extends AppLocalizations {
       'Користувацьке середовище Linux на цьому пристрої';
 
   @override
-  String rootfsInstallTip(Object version) {
-    return 'Завантажити Alpine Linux $version (близько 3 МБ) і розпакувати на цьому пристрої. Це дає застосунку оболонку з менеджером пакунків; її можна будь-коли видалити.';
+  String rootfsInstallTip(Object distro, Object version, Object size) {
+    return 'Завантажити $distro $version (близько $size МБ) і розпакувати на цьому пристрої. Це дає застосунку оболонку з менеджером пакунків; її можна будь-коли видалити.';
   }
 
   @override
@@ -1233,7 +1243,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Виявлено емуляцію Podman Docker. Будь ласка, переключіться на Podman у налаштуваннях.';
 
   @override
-  String get portForwardBeta =>
+  String get betaTip =>
       'Функція ще в бета-тестуванні. Її роботу не гарантовано.';
 
   @override

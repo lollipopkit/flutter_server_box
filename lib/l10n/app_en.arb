@@ -293,18 +293,28 @@
   "rememberPwdInMem": "Remember password in memory",
   "rememberPwdInMemTip": "Used for containers, suspending, etc.",
   "remotePath": "Remote path",
-  "rootfsUpdateTip": "Alpine {installed} is installed and {latest} is available. Updating downloads it again and replaces the container: anything installed inside it with apk is lost. The current one keeps working if you skip this.",
+  "rootfsUpdateTip": "{distro} {installed} is installed and {latest} is available. Updating downloads it again and replaces the container: anything installed inside it with {pm} is lost. The current one keeps working if you skip this.",
   "@rootfsUpdateTip": {
     "placeholders": {
+      "distro": {},
       "installed": {},
-      "latest": {}
+      "latest": {},
+      "pm": {}
+    }
+  },
+  "linuxSystemInUse": "{name} still has a terminal open. Close it before deleting the system.",
+  "@linuxSystemInUse": {
+    "placeholders": {
+      "name": {}
     }
   },
   "rootfsSubtitle": "A Linux userland on this device",
-  "rootfsInstallTip": "Download Alpine Linux {version} (about 3 MB) and unpack it on this device. It gives this app a shell with a package manager, and can be deleted at any time.",
+  "rootfsInstallTip": "Download {distro} {version} (about {size} MB) and unpack it on this device. It gives this app a shell with a package manager, and can be deleted at any time.",
   "@rootfsInstallTip": {
     "placeholders": {
-      "version": {}
+      "distro": {},
+      "version": {},
+      "size": {}
     }
   },
   "sameIdServerExist": "A server with the same ID already exists",
@@ -404,7 +414,7 @@
   "writeScriptTip": "After connecting to the server, a script will be written to `~/.config/server_box` \n | `/tmp/server_box` to monitor the system status. You can review the script content.",
   "menuGitHubRepository": "GitHub Repository",
   "podmanDockerEmulationDetected": "Podman Docker emulation detected. Please switch to Podman in settings.",
-  "portForwardBeta": "This feature is still in beta testing. Functionality is not guaranteed.",
+  "betaTip": "This feature is still in beta testing. Functionality is not guaranteed.",
   "portForward_startPrompt": "Add a port forward rule to get started",
   "portForward_localHost": "Local Host",
   "portForward_localPort": "Local Port",

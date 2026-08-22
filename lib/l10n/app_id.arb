@@ -160,15 +160,18 @@
   "rememberPwdInMem": "Ingat kata sandi di dalam memori",
   "rememberPwdInMemTip": "Digunakan untuk kontainer, menangguhkan, dll.",
   "remotePath": "Jalur jarak jauh",
-  "rootfsUpdateTip": "Alpine {installed} terpasang dan {latest} tersedia. Memperbarui akan mengunduhnya lagi dan mengganti kontainer: semua yang dipasang di dalamnya dengan apk akan hilang. Jika dilewati, yang sekarang tetap berfungsi.",
+  "rootfsUpdateTip": "{distro} {installed} terpasang dan {latest} tersedia. Memperbarui akan mengunduhnya lagi dan mengganti kontainer: semua yang dipasang di dalamnya dengan {pm} akan hilang. Jika dilewati, yang sekarang tetap berfungsi.",
   "@rootfsUpdateTip": {
     "placeholders": {
+      "distro": {},
       "installed": {},
-      "latest": {}
+      "latest": {},
+      "pm": {}
     }
   },
+  "linuxSystemInUse": "{name} masih memiliki terminal terbuka. Tutup dulu sebelum menghapus sistem.",
   "rootfsSubtitle": "Lingkungan pengguna Linux di perangkat ini",
-  "rootfsInstallTip": "Unduh Alpine Linux {version} (sekitar 3 MB) dan ekstrak di perangkat ini. Ini memberi aplikasi ini shell dengan manajer paket, dan dapat dihapus kapan saja.",
+  "rootfsInstallTip": "Unduh {distro} {version} (sekitar {size} MB) dan ekstrak di perangkat ini. Ini memberi aplikasi ini shell dengan manajer paket, dan dapat dihapus kapan saja.",
   "nameAlreadyExistsFmt": "\"{name}\" sudah ada",
   "sameIdServerExist": "Server dengan ID yang sama sudah ada",
   "second": "S",
@@ -379,7 +382,7 @@
   "syncAppSettings": "Sinkronkan pengaturan aplikasi",
   "syncAppSettingsTip": "Sertakan tema, tata letak, editor, terminal, dan preferensi perangkat lain dalam sinkronisasi otomatis.",
   "menuGitHubRepository": "Repositori GitHub",
-  "portForwardBeta": "Fitur ini masih dalam uji beta. Fungsinya belum dijamin.",
+  "betaTip": "Fitur ini masih dalam uji beta. Fungsinya belum dijamin.",
   "portForward_startPrompt": "Tambahkan aturan penerusan porta untuk memulai",
   "portForward_localHost": "Host lokal",
   "portForward_localPort": "Porta lokal",
