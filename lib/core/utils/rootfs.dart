@@ -7,6 +7,7 @@ import 'package:server_box/core/utils/android_rootfs.dart';
 import 'package:server_box/core/utils/ios_rootfs.dart';
 import 'package:server_box/core/utils/linux_seed.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
+import 'package:server_box/data/model/app/linux_distros.dart';
 
 /// The Linux system this app can offer, whichever way it gets one.
 ///
@@ -58,6 +59,7 @@ abstract final class Rootfs {
 
   /// Locates both, so a caller does not have to ask which platform it is on.
   static Future<void> prepare() async {
+    await LinuxDistros.loadBundled();
     await AndroidRootfs.prepare();
     await IosRootfs.prepare();
   }

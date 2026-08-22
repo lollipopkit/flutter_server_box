@@ -128,10 +128,10 @@ extension _Linux on _AppSettingsPageState {
           // What a tap gets you, not a stored preference. With one
           // distribution that is the whole answer; with more it is a choice,
           // and the chevron is what says so.
-          subtitle: LinuxDistro.values.length == 1
+          subtitle: LinuxDistros.installable.length == 1
               ? Text(
-                  '${LinuxDistro.values.single.label} '
-                  '${LinuxDistro.values.single.version}',
+                  '${LinuxDistros.installable.single.label} '
+                  '${LinuxDistros.installable.single.version}',
                   style: UIs.textGrey,
                 )
               : null,
@@ -273,7 +273,7 @@ extension _Linux on _AppSettingsPageState {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          for (final distro in LinuxDistro.values)
+          for (final distro in LinuxDistros.installable)
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: Text(distro.label),

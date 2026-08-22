@@ -4,6 +4,8 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/linux_seed.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
+import 'package:server_box/data/model/app/linux_distros.dart';
+import 'package:server_box/data/model/app/rootfs_manifest.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
 
@@ -22,6 +24,16 @@ import 'helpers/test_db.dart';
 /// every startup, so overwriting one would take a guest the user had pointed
 /// at their own DNS and quietly point it back.
 void main() {
+  // Distribution data comes from the manifest now; `Rootfs.prepare` loads
+  // it in the app, and a test reads the same file off disk.
+  setUpAll(() {
+    LinuxDistros.adoptForTest(
+      RootfsManifest.parse(
+        File('assets/rootfs_manifest.json').readAsStringSync(),
+      ),
+    );
+  });
+
   late Directory root;
 
   setUp(() async {

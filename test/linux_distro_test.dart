@@ -1,5 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
+import 'package:server_box/data/model/app/linux_distros.dart';
+import 'package:server_box/data/model/app/rootfs_manifest.dart';
 
 /// What a distribution has to answer, and what the marker on disk means.
 ///
@@ -13,6 +17,17 @@ import 'package:server_box/data/model/app/linux_distro.dart';
 /// from, and the day a second distribution ships is the day misreading those
 /// starts to matter.
 void main() {
+  // Every value below now comes from the manifest rather than a switch, and
+  // `Rootfs.prepare` is what loads it in the app. A test has no asset bundle,
+  // so it reads the same file off disk.
+  setUpAll(() {
+    LinuxDistros.adoptForTest(
+      RootfsManifest.parse(
+        File('assets/rootfs_manifest.json').readAsStringSync(),
+      ),
+    );
+  });
+
   group('a distribution', () {
     test('answers with a label, a version and a digest', () {
       for (final distro in LinuxDistro.values) {

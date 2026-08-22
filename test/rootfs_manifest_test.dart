@@ -7,12 +7,7 @@ import 'package:server_box/data/model/app/rootfs_manifest.dart';
 
 /// The bundled manifest, and the parser that reads it.
 ///
-/// Two jobs. One is the migration safety net: every value in
-/// `assets/rootfs_manifest.json` has to say what [LinuxDistro] says today, so
-/// that moving the switches out is a move and not a rewrite. That group is
-/// temporary and goes with the switches.
-///
-/// The other is permanent. This file decides which bytes get downloaded and
+/// This file decides which bytes get downloaded and
 /// run, so the parser has to refuse anything it does not fully understand
 /// rather than fill in a default — a default here is a silent answer to
 /// "which bytes".
@@ -36,41 +31,20 @@ void main() {
     );
   });
 
-  // TODO(manifest rollout; remove with the LinuxDistro switches): this group
-  // exists only to prove the two agree while both exist.
-  group('the bundled manifest agrees with the hardcoded values', () {
-    test('it describes exactly the distributions this build knows', () {
-      expect(
-        bundled.distros.keys.toSet(),
-        LinuxDistro.values.map((e) => e.id).toSet(),
-      );
-    });
-
-    for (final distro in LinuxDistro.values) {
-      test(distro.id, () {
-        final entry = bundled.distros[distro.id];
-        expect(entry, isNotNull, reason: '${distro.id} is missing');
-        entry!;
-
-        expect(entry.label, distro.label);
-        expect(entry.version, distro.version);
-        expect(entry.branch, distro.branch);
-        expect(entry.packageManager, distro.packageManager);
-        expect(entry.defaultMirror, distro.defaultMirror);
-
-        // Nothing is repacked yet, so upstream is what gets downloaded.
-        expect(entry.rootfs, isNull);
-        expect(entry.source, same(entry.upstream));
-
-        final source = entry.source;
-        expect(source.sha256, distro.sha256);
-        expect(source.layout, distro.layout);
-        expect(source.compression, distro.compression);
-        expect(source.followsMirror, distro.rootfsFollowsMirror);
-        expect(source.url, distro.rootfsUrl(distro.defaultMirror));
-        expect(source.sizeMb, distro.approxDownloadMb);
-      });
-    }
+  test('it describes exactly the distributions this build can configure', () {
+    // Not a restatement of the manifest: installing means writing the package
+    // manager's configuration, and that format is code in LinuxDistro. A
+    // manifest naming something this build has never heard of would describe
+    // a system it could download and unpack and then leave with no working
+    // repositories, so the two lists have to agree.
+    //
+    // The per-field comparison that used to live here went with the switches
+    // it was guarding; comparing the manifest to values read from the manifest
+    // proves nothing.
+    expect(
+      bundled.distros.keys.toSet(),
+      LinuxDistro.values.map((e) => e.id).toSet(),
+    );
   });
 
   group('the parser refuses what it cannot fully read', () {
