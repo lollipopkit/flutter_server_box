@@ -1250,7 +1250,7 @@ packages:
     source: hosted
     version: "7.0.2"
   pinenacl:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: pinenacl
       sha256: "57e907beaacbc3c024a098910b6240758e899674de07d6949a67b52fd984cbdf"
