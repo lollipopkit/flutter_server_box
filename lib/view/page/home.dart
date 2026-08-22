@@ -187,8 +187,17 @@ class _HomePageState extends ConsumerState<HomePage>
     final isMobile = ResponsiveBreakpoints.of(context).isMobile;
     _syncFullscreenSystemUi();
 
+    // No `appBar`, deliberately. It used to hold an empty box the height of
+    // the status bar, which pushed the tabs clear of it — but a page pushed
+    // inside a tab lives in `body`, under that box, so the strip stayed put
+    // while the page animated below it and the transition read as two pieces
+    // moving separately. Without it the tabs reach the top of the window and
+    // each one takes its own top inset, which means a pushed page paints and
+    // animates across the strip like every other part of it.
+    //
+    // The bottom bar is a different case and stays: it is chrome the tabs
+    // share, and a page opened in a tab is meant to leave it in place.
     final Widget mainContent = Scaffold(
-      appBar: _AppBar(MediaQuery.paddingOf(context).top),
       body: Row(
         children: [
           if (!isMobile) _buildRailBar(),
@@ -203,7 +212,19 @@ class _HomePageState extends ConsumerState<HomePage>
               // coming back to a tab returns you to where you were in it.
               itemBuilder: (_, index) => NestedNavigator(
                 key: ValueKey(_tabs[index]),
-                rootBuilder: (_) => _tabs[index].page,
+                // The top inset lands on the tab's own content and not on the
+                // navigator around it, which is the whole point: a page pushed
+                // here is a sibling route, outside this `SafeArea`, so it
+                // reaches the top of the window and animates across the status
+                // bar. Wrapping the navigator instead would inset the pushed
+                // page too and put the seam back.
+                //
+                // Here rather than in each tab because a tab is not one shape:
+                // three of them put a `Scaffold` *inside* a pane splitter, so
+                // the splitter's own divider is above any app bar that could
+                // have spent the inset.
+                rootBuilder: (_) =>
+                    SafeArea(bottom: false, child: _tabs[index].page),
               ),
               onPageChanged: (value) {
                 FocusScope.of(context).unfocus();
@@ -426,21 +447,6 @@ class _HomePageState extends ConsumerState<HomePage>
   }
 }
 
-final class _AppBar extends StatelessWidget implements PreferredSizeWidget {
-  final double paddingTop;
-
-  const _AppBar(this.paddingTop);
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(height: preferredSize.height);
-  }
-
-  @override
-  Size get preferredSize {
-    return Size.fromHeight(paddingTop);
-  }
-}
 
 extension _HomePageStateActions on _HomePageState {
   void _handleHomeTabsChanged() {

@@ -1,5 +1,6 @@
 import 'dart:ffi';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
 import 'package:crypto/crypto.dart';
@@ -7,8 +8,9 @@ import 'package:dio/dio.dart';
 import 'package:ffi/ffi.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:server_box/core/utils/alpine_seed.dart';
 import 'package:server_box/core/utils/guest_path.dart';
+import 'package:server_box/core/utils/linux_seed.dart';
+import 'package:server_box/data/model/app/linux_distro.dart';
 
 /// A Linux userland on iOS, and what it takes to get one.
 ///
@@ -26,22 +28,55 @@ import 'package:server_box/core/utils/guest_path.dart';
 /// build without it is one edit away, should App Store review object — and
 /// [isAvailable] is how everything else asks, exactly as on Android.
 abstract final class IosRootfs {
-  /// The same Alpine release the Android rootfs uses, so both platforms answer
-  /// with the same userland — and on both it is an ordinary unpacked tree,
-  /// since `realfs` mounts one directly.
-  static const version = '3.22.5';
+  /// Every system unpacked in the container, in the order their directories
+  /// come back.
+  ///
+  /// Kept rather than re-scanned, and synchronous, because what asks is a
+  /// widget being built. Refreshed by [scan], [install] and [removeProfile].
+  static List<LinuxProfile> get profiles => List.unmodifiable(_profiles);
+  static final _profiles = <LinuxProfile>[];
 
-  static String? _root;
+  /// The one the settings point at, or the first there is.
+  ///
+  /// Falls back rather than answering null for a stored id whose directory has
+  /// since gone: something installed is a better answer than nothing.
+  static LinuxProfile? get selected {
+    if (_profiles.isEmpty) return null;
+    final id = linuxProfileId();
+    return _profiles.firstWhereOrNull((e) => e.id == id) ?? _profiles.first;
+  }
 
-  /// Where the filesystem lives, or null before [prepare].
-  static String? get root => _root;
+  static LinuxProfile? byId(String id) =>
+      _profiles.firstWhereOrNull((e) => e.id == id);
+
+  /// The directory the systems live in, one subdirectory each, or null before
+  /// [prepare]. Nothing runs at this level — see `sbm_ish_boot`.
+  static String? _container;
+
+  /// Where the selected system's tree is, or null before [prepare].
+  ///
+  /// Computed rather than kept: which one is selected is a setting, and it
+  /// changes while the app runs.
+  static String? get root => rootOf(selected?.id);
+
+  /// Where one profile's tree is, or null before [prepare] or without an id.
+  static String? rootOf(String? id) =>
+      id == null ? null : _container?.joinPath(id);
 
   /// Whether this build carries the engine.
   ///
   /// Three ways to be false: not iOS, built with the switch off, or built
   /// before the shim existed — the last of which throws on lookup rather than
   /// answering, so it is caught here and treated as the absence it is.
-  static bool get isAvailable {
+  /// Asked once and kept. Every one of the three ways to be false is decided
+  /// when the app is built, so the answer cannot change while it runs — and
+  /// what reads this is a widget being built: `tab_add.dart` alone asks three
+  /// times per build, between the rail and the grid, and each ask was a call
+  /// across FFI.
+  static bool get isAvailable => _availableAnswer ??= _askAvailable();
+  static bool? _availableAnswer;
+
+  static bool _askAvailable() {
     if (!Platform.isIOS) return false;
     final available = _available;
     if (available == null) return false;
@@ -57,47 +92,119 @@ abstract final class IosRootfs {
   ///
   /// Synchronous for the same reason Android's is: what asks is a widget being
   /// built, and a file check per frame answers one question a hundred times.
-  static bool get isReadySync => isAvailable && _installed;
-  static bool _installed = false;
+  static bool get isReadySync => isAvailable && _profiles.isNotEmpty;
 
-  /// Whether a filesystem is unpacked and ready to boot.
+  /// Whether there is anything to enter at all.
   static Future<bool> get isInstalled async {
-    final root = _root;
-    if (root == null) return false;
-    // An ordinary tree, mounted by `realfs`. What makes it a userland rather
-    // than a directory is that a shell is in it, so that is what this asks —
-    // there is no manifest to check because there is nothing but files.
-    return _installed = await File(root.joinPath('bin/busybox')).exists() &&
-        await File(root.joinPath('etc/alpine-release')).exists();
+    await scan();
+    return _profiles.isNotEmpty;
   }
 
-  /// Pinned and checked, like Android's — this is executable code fetched over
-  /// the network, and the digest is what makes that different from running
-  /// whatever the connection returned.
-  static const _mirror = 'https://dl-cdn.alpinelinux.org/alpine';
-  static const _branch = 'v3.22';
-  static const _url =
-      '$_mirror/$_branch/releases/aarch64/'
-      'alpine-minirootfs-$version-aarch64.tar.gz';
-  static const _sha256 =
-      '3fbc6285032ed46821b511292633d7b2a6306a2e254f590e92bdafff56cf2f70';
+  /// Reads the container: one profile per subdirectory that holds a system.
+  ///
+  /// The directory listing is the list. A subdirectory that does not look
+  /// unpacked is skipped rather than repaired — half of an install is not a
+  /// profile, and `install` deletes what it could not finish.
+  static Future<void> scan() async {
+    final container = _container;
+    if (container == null) {
+      _profiles.clear();
+      return;
+    }
+    // Built beside the list rather than in it. [profiles] and [selected] are
+    // synchronous because what reads them is a widget being built, and every
+    // frame drawn between the clear and the last await used to see nothing
+    // installed — no chips, no rail rows, and `open` refusing for want of an
+    // id. Renaming one was enough to hit it.
+    final found = <LinuxProfile>[];
+    final dir = Directory(container);
+    if (!await dir.exists()) {
+      _profiles.clear();
+      return;
+    }
+    final entries = await dir.list(followLinks: false).toList();
+    entries.sort((a, b) => a.path.compareTo(b.path));
+    for (final entry in entries) {
+      if (entry is! Directory) continue;
+      final id = entry.path.split(Platform.pathSeparator).last;
+      if (id.startsWith('.')) continue;
+      if (!await looksUnpacked(entry.path)) continue;
+      final marker = File(entry.path.joinPath(LinuxProfile.marker));
+      found.add(
+        LinuxProfile.decode(
+          id,
+          await marker.exists() ? await marker.readAsString() : '',
+        ),
+      );
+    }
+    _profiles
+      ..clear()
+      ..addAll(found);
+  }
 
-  /// Downloads and unpacks the userland.
+
+  /// Downloads and unpacks a system of [distro] as a profile of its own.
+  ///
+  /// Returns what it installed. Every other profile is left alone — this is how
+  /// a second Alpine comes to sit beside the first, and why nothing here asks
+  /// whether something is already installed.
+  ///
+  /// [into] reinstalls in place, keeping the id and the label: that is what
+  /// replacing an outdated one means. Without it a new id is generated.
   ///
   /// Unpacked in Dart, because iOS will not start a process — no `tar`, and
   /// that refusal is the reason this platform has an interpreter at all. What
   /// `realfs` needs is only a directory tree, which is why this is possible;
   /// under `fakefs` it would have meant carrying a metadata database and the
   /// tool that writes one.
-  static Future<void> install({
+  ///
+  /// One at a time. [_install] picks an id from the scan that opens it, so two
+  /// overlapping there are handed the same one — and then the same directory,
+  /// which the second deletes out from under the first.
+  static Future<LinuxProfile> install({
+    required LinuxDistro distro,
+    LinuxProfile? into,
+    String? label,
+    void Function(double? progress)? onProgress,
+    CancelToken? cancel,
+  }) {
+    if (_installing) {
+      return Future.error(StateError('An install is already running'));
+    }
+    _installing = true;
+    return _install(
+      distro: distro,
+      into: into,
+      label: label,
+      onProgress: onProgress,
+      cancel: cancel,
+    ).whenComplete(() => _installing = false);
+  }
+
+  static bool _installing = false;
+
+  static Future<LinuxProfile> _install({
+    required LinuxDistro distro,
+    LinuxProfile? into,
+    String? label,
     void Function(double? progress)? onProgress,
     CancelToken? cancel,
   }) async {
-    final root = _root;
-    if (root == null) throw StateError('IosRootfs.prepare was not called');
-    if (await isInstalled) return;
+    final container = _container;
+    if (container == null) throw StateError('IosRootfs.prepare was not called');
+    await scan();
+
+    final id = into?.id ?? LinuxProfile.nextId(distro, _profiles.map((e) => e.id));
+    final root = container.joinPath(id);
+    // Read once, so that a setting changed mid-download cannot have the digest
+    // checked against one distribution and the repositories written for
+    // another.
+    final mirror = linuxMirror(distro);
 
     final dir = Directory(root);
+    // Reinstalling in place deletes the tree, so the engine has to let go of
+    // what it mounted from it first.
+    if (into != null) detach(id);
     // A userland is complete or absent; there is no repairing half of one.
     if (await dir.exists()) await dir.delete(recursive: true);
     await dir.create(recursive: true);
@@ -105,7 +212,7 @@ abstract final class IosRootfs {
     final archivePath = root.joinPath('rootfs.tar.gz');
     try {
       await Dio().download(
-        _url,
+        distro.rootfsUrl(mirror),
         archivePath,
         cancelToken: cancel,
         // The download is most of the wait, so it owns most of the bar; the
@@ -116,10 +223,10 @@ abstract final class IosRootfs {
 
       final file = File(archivePath);
       final digest = (await sha256.bind(file.openRead()).first).toString();
-      if (digest != _sha256) {
+      if (digest != distro.sha256) {
         throw StateError(
-          'The userland did not match its digest and was discarded. '
-          'Expected $_sha256, got $digest.',
+          'The system did not match its digest and was discarded. '
+          'Expected ${distro.sha256}, got $digest.',
         );
       }
 
@@ -128,13 +235,24 @@ abstract final class IosRootfs {
       // address literal is fetched fine, but there is no resolver, so every
       // mirror is a "temporary error" and every package is missing.
       // Measured on a device by `integration_test/ios_load_test.dart`.
-      await seedResolvConf(root);
-      await seedRepositories(root, mirror: _mirror, branch: _branch);
-      _installed = true;
+      await seedResolvConf(root, nameservers: linuxNameservers());
+      await seedRepositories(root, distro: distro, mirror: mirror);
+      await seedChsh(root, force: true);
+      // Last, for the reason Android's marker is last: it is the record that
+      // this finished, so anything that threw above must not leave one.
+      final profile = LinuxProfile(
+        id: id,
+        distro: distro,
+        version: distro.version,
+        label: label ?? into?.label ?? distro.label,
+      );
+      await File(root.joinPath(LinuxProfile.marker)).writeAsString(profile.encode());
+      await scan();
+      return profile;
     } catch (_) {
       // Nothing half-installed is left to be mistaken for a working one.
       if (await dir.exists()) await dir.delete(recursive: true);
-      _installed = false;
+      await scan();
       rethrow;
     } finally {
       final leftover = File(archivePath);
@@ -142,13 +260,72 @@ abstract final class IosRootfs {
     }
   }
 
-  /// Removes the userland and everything in it.
-  static Future<void> remove() async {
-    _installed = false;
-    final root = _root;
+  /// Rewrites the resolver and repository files of a system already on disk.
+  ///
+  /// Both are seeded at install and never again, so a mirror or a resolver
+  /// changed afterwards would otherwise only take effect on the next install —
+  /// which here means deleting the system and everything its package manager
+  /// put in it.
+  ///
+  /// Written for the distribution *on disk*, not the one the setting names:
+  /// with a switch pending, the repositories file apt or apk is about to read
+  /// still belongs to the tree that is there.
+  /// Every profile, not only the selected one: the resolvers are the device's
+  /// network and apply to all of them, and a mirror belongs to a distribution
+  /// so each profile of it wants the new one too.
+  static Future<void> applyNetSettings() async {
+    for (final profile in _profiles) {
+      final root = rootOf(profile.id);
+      if (root == null) continue;
+      await seedResolvConf(
+        root,
+        nameservers: linuxNameservers(),
+        overwrite: true,
+      );
+      await seedRepositories(
+        root,
+        distro: profile.distro,
+        mirror: linuxMirror(profile.distro),
+      );
+    }
+  }
+
+  /// Removes one system and everything in it. The others stay.
+  static Future<void> removeProfile(String id) async {
+    // A known id, before a recursive delete is built from it. `rootOf` only
+    // joins a path, so anything the caller passes becomes one.
+    if (byId(id) == null) return;
+    final root = rootOf(id);
     if (root == null) return;
+    // Before the directory goes: its `/dev` is a fakefs whose database lives
+    // inside it, and the engine keeps the name attached until told otherwise.
+    //
+    // And only if that worked. Deleting the tree under a mount that is still
+    // live takes the database with it, and the next thing the engine reads
+    // through that mount is a sqlite I/O error — which it answers with
+    // `die()`, parking whichever thread asked. Seen on a device as the whole
+    // app freezing a few seconds after a system was deleted.
+    // Retried, because the usual reason this fails is that it was asked too
+    // soon. Closing a terminal hangs its process up; the shell then has to be
+    // scheduled, take the signal and exit before the pty it held stops
+    // counting against `/dev/pts`, and deleting the system is one tap later.
+    // Measured on a device: the first attempt answers `_EBUSY` and names
+    // `/alpine/dev/pts`.
+    //
+    // Waiting here rather than inside the engine keeps it off the main
+    // isolate: `detach` is a blocking call, and looping it in C would hold
+    // both the app and `attached_lock` for as long as it took.
+    var err = detach(id);
+    for (var i = 0; err < 0 && i < 10; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+      err = detach(id);
+    }
+    if (err < 0) {
+      throw StateError('The Linux system is still in use ($err)');
+    }
     final dir = Directory(root);
     if (await dir.exists()) await dir.delete(recursive: true);
+    await scan();
   }
 
   static Future<void> _extract(
@@ -197,26 +374,9 @@ abstract final class IosRootfs {
       //
       // Through libc rather than `chmod(1)`: iOS refuses to start a process,
       // which is the same refusal that put an interpreter on this platform.
-      _chmod(path, entry.mode & 0xfff);
+      chmodGuestFile(path, entry.mode & 0xfff);
     }
   }
-
-  /// `chmod`, which `dart:io` does not have and this cannot do without.
-  static void _chmod(String path, int mode) {
-    final chmod = _chmodC;
-    if (chmod == null || mode == 0) return;
-    final pointer = path.toNativeUtf8();
-    try {
-      chmod(pointer.cast(), mode);
-    } finally {
-      malloc.free(pointer);
-    }
-  }
-
-  static final _chmodC = _look(
-    'chmod',
-    (p) => p.lookupFunction<Int Function(Pointer<Char>, Uint16), int Function(Pointer<Char>, int)>('chmod'),
-  );
 
   /// The host path a guest path names, or null when it names nothing inside.
   ///
@@ -225,22 +385,36 @@ abstract final class IosRootfs {
   /// really is `<root>/etc` on the host. See [resolveWithinRoot] for what has
   /// to be refused — which is the same on both.
   static Future<String?> hostPathOf(String guest, {bool forWrite = false}) {
-    final root = _root;
+    final root = IosRootfs.root;
     if (root == null) return Future.value();
     return resolveWithinRoot(root, guest, forWrite: forWrite);
   }
 
   /// Locates where the filesystem would be. Call once, before anything asks.
+  ///
+  /// The container is `linux/`, holding one subdirectory per system. Releases
+  /// before this unpacked a single tree directly at `alpine/`, and nothing
+  /// moves it: such an install reads as absent and is offered fresh.
+  ///
+  /// TODO(migration residue; remove once no install predates the container):
+  /// the old `alpine/` tree is left on disk where nothing can reach or delete
+  /// it. Deliberate only because none of this has shipped — a released build
+  /// would have to move it or remove it.
   static Future<void> prepare() async {
     if (!Platform.isIOS) return;
-    final root = _root =
-        (await getApplicationSupportDirectory()).path.joinPath('alpine');
-    if (!await isInstalled) return;
-    // A userland unpacked before [install] seeded a resolver has none, and
-    // nothing else would ever give it one: [install] returns early for a tree
-    // that is already there, so every existing install would have stayed
-    // without DNS. Writes only when the file is absent.
-    await seedResolvConf(root);
+    _container = (await getApplicationSupportDirectory()).path.joinPath('linux');
+    await scan();
+    for (final profile in _profiles) {
+      final root = rootOf(profile.id);
+      if (root == null) continue;
+      // A system unpacked before [install] seeded a resolver has none, and
+      // nothing else would ever give it one. Writes only when absent, so a
+      // guest pointed at its owner's own resolver keeps it.
+      await seedResolvConf(root, nameservers: linuxNameservers());
+      // Repairs a system unpacked before either existed, and carries a fix to
+      // the script itself into one already installed.
+      await seedChsh(root);
+    }
   }
 
   /// What [boot] answers when the machine is already up — `-EEXIST`.
@@ -256,13 +430,49 @@ abstract final class IosRootfs {
   /// One machine per app process, because the engine keeps its kernel state in
   /// globals — but a machine runs as many processes as it is asked to, which
   /// is what [open] is for.
-  static int boot() {
+  static int boot({String? profileId}) {
     final boot = _boot;
-    final root = _root;
-    if (boot == null || root == null) return -1;
-    final pointer = root.toNativeUtf8();
+    final container = _container;
+    final id = profileId ?? selected?.id;
+    if (boot == null || container == null || id == null) return -1;
+    final pointer = container.toNativeUtf8();
+    final profile = id.toNativeUtf8();
     try {
-      return boot(pointer.cast());
+      return boot(pointer.cast(), profile.cast());
+    } finally {
+      malloc.free(pointer);
+      malloc.free(profile);
+    }
+  }
+
+  /// Mounts a system's filesystems, so a session can be opened in it.
+  ///
+  /// [open] does this itself; this exists for attaching one ahead of time.
+  /// Unmounts a system's filesystems, so a later [attach] mounts afresh.
+  ///
+  /// Negative on failure, `-EBUSY` (-16) while a session still holds them —
+  /// the caller closes those first. Logged rather than thrown: a delete the
+  /// user asked for goes ahead either way, and what is left is a mount that
+  /// outlives the tree until the app restarts.
+  static int detach(String profileId) {
+    final detach = _detach;
+    if (detach == null) return -1;
+    final pointer = profileId.toNativeUtf8();
+    try {
+      final err = detach(pointer.cast());
+      if (err < 0) Loggers.app.warning('sbm_ish_detach($profileId) = $err');
+      return err;
+    } finally {
+      malloc.free(pointer);
+    }
+  }
+
+  static int attach(String profileId) {
+    final attach = _attach;
+    if (attach == null) return -1;
+    final pointer = profileId.toNativeUtf8();
+    try {
+      return attach(pointer.cast());
     } finally {
       malloc.free(pointer);
     }
@@ -273,13 +483,34 @@ abstract final class IosRootfs {
   /// [command] null or empty gives an interactive shell. Sessions do not share
   /// a console, so a terminal and a one-shot command cannot land on each
   /// other's output.
-  static int open({String? command, int columns = 80, int rows = 25}) {
+  ///
+  /// [shell] is what runs it, empty meaning `/bin/sh`. The guest has no `login`
+  /// and nothing in it reads `/etc/passwd`, so this is the only thing that
+  /// decides — see `linuxShell()`.
+  static int open({
+    String? command,
+    String shell = '',
+    String? profileId,
+    int columns = 80,
+    int rows = 25,
+  }) {
     final open = _open;
-    if (open == null) return -1;
+    final id = profileId ?? selected?.id;
+    if (open == null || id == null) return -1;
+    final profile = id.toNativeUtf8();
+    final shellPointer = shell.toNativeUtf8();
     final pointer = (command ?? '').toNativeUtf8();
     try {
-      return open(pointer.cast(), columns, rows);
+      return open(
+        profile.cast(),
+        shellPointer.cast(),
+        pointer.cast(),
+        columns,
+        rows,
+      );
     } finally {
+      malloc.free(profile);
+      malloc.free(shellPointer);
       malloc.free(pointer);
     }
   }
@@ -288,37 +519,66 @@ abstract final class IosRootfs {
   ///
   /// Null once it has ended and its output is drained; empty when it simply
   /// had nothing to say yet. A caller has to tell those apart.
-  static String? read(
+  ///
+  /// Bytes rather than a `String`, because that is what a console emits and
+  /// the lengths it emits them in are its own — a character can arrive across
+  /// two calls. This used to answer `String.fromCharCodes`, which reads every
+  /// byte as one code unit, and the terminal then encoded that back to UTF-8:
+  /// each byte of a multi-byte character became two. Nothing outside ASCII
+  /// survived it, the tty's echo of what was typed included, so typing a
+  /// Chinese character into the terminal showed mojibake before any command
+  /// had run.
+  static Uint8List? read(
     int session, {
     Duration timeout = const Duration(milliseconds: 200),
-    int limit = 8192,
   }) {
     final read = _read;
     if (read == null) return null;
-    final buffer = malloc<Uint8>(limit);
-    try {
-      final count = read(session, buffer.cast(), limit, timeout.inMilliseconds);
-      // -EBUSY: a guest thread died holding the output lock. Told apart from
-      // the session having ended, because the answer is different — that one
-      // is over, this one is broken.
-      if (count == -16) throw StateError('The guest stopped holding its lock');
-      if (count < 0) return null;
-      if (count == 0) return '';
-      return String.fromCharCodes(buffer.asTypedList(count));
-    } finally {
-      malloc.free(buffer);
-    }
+    final buffer = _readBuffer;
+    final count = read(
+      session,
+      buffer.cast(),
+      _readLimit,
+      timeout.inMilliseconds,
+    );
+    // -EBUSY: a guest thread died holding the output lock. Told apart from
+    // the session having ended, because the answer is different — that one
+    // is over, this one is broken.
+    if (count == -16) throw StateError('The guest stopped holding its lock');
+    if (count < 0) return null;
+    if (count == 0) return _empty;
+    return Uint8List.fromList(buffer.asTypedList(count));
   }
 
+  static const _readLimit = 8192;
+  static final _empty = Uint8List(0);
+
+  /// Allocated once and kept.
+  ///
+  /// A terminal reads on a timer, so this was 8 KB malloc'd and freed on every
+  /// frame of every open session, for the whole life of the session — paid
+  /// even while the shell sat at a prompt with nothing to say. Only ever
+  /// touched from the isolate that calls [read], and its contents are copied
+  /// out before the call returns, so nothing outlives the next one.
+  static final Pointer<Uint8> _readBuffer = malloc<Uint8>(_readLimit);
+
   /// Types [input] at [session].
-  static int write(int session, String input) {
+  ///
+  /// Bytes, for the reason [read] answers in them. Decoding a terminal's byte
+  /// stream to a `String` on the way in only to encode it again cannot be
+  /// lossless for anything that is not already whole valid UTF-8 — a
+  /// multi-byte character split across two keystrokes' worth of input among
+  /// them.
+  static int write(int session, List<int> input) {
     final write = _write;
     if (write == null) return -1;
-    final pointer = input.toNativeUtf8();
+    if (input.isEmpty) return 0;
+    final buffer = malloc<Uint8>(input.length);
     try {
-      return write(session, pointer.cast(), pointer.length);
+      buffer.asTypedList(input.length).setAll(0, input);
+      return write(session, buffer.cast(), input.length);
     } finally {
-      malloc.free(pointer);
+      malloc.free(buffer);
     }
   }
 
@@ -364,11 +624,19 @@ abstract final class IosRootfs {
   );
   static final _boot = _look(
     'sbm_ish_boot',
-    (p) => p.lookupFunction<Int Function(Pointer<Char>), int Function(Pointer<Char>)>('sbm_ish_boot'),
+    (p) => p.lookupFunction<Int Function(Pointer<Char>, Pointer<Char>), int Function(Pointer<Char>, Pointer<Char>)>('sbm_ish_boot'),
+  );
+  static final _attach = _look(
+    'sbm_ish_attach',
+    (p) => p.lookupFunction<Int Function(Pointer<Char>), int Function(Pointer<Char>)>('sbm_ish_attach'),
+  );
+  static final _detach = _look(
+    'sbm_ish_detach',
+    (p) => p.lookupFunction<Int Function(Pointer<Char>), int Function(Pointer<Char>)>('sbm_ish_detach'),
   );
   static final _open = _look(
     'sbm_ish_open',
-    (p) => p.lookupFunction<Int Function(Pointer<Char>, Int, Int), int Function(Pointer<Char>, int, int)>('sbm_ish_open'),
+    (p) => p.lookupFunction<Int Function(Pointer<Char>, Pointer<Char>, Pointer<Char>, Int, Int), int Function(Pointer<Char>, Pointer<Char>, Pointer<Char>, int, int)>('sbm_ish_open'),
   );
   static final _read = _look(
     'sbm_ish_read',

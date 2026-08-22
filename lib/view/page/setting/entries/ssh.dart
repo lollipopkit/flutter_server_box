@@ -23,23 +23,8 @@ extension _SSH on _AppSettingsPageState {
         if (isLinux) _buildDesktopTerminal(),
         if (isDesktop) _buildDesktopSshAutoCopyPassword(),
         _buildSSHVirtualKeyAutoOff(),
-        if (isMobile) _buildSSHVirtKeys(),
         _buildTmuxAuto(),
-        _buildKnownHosts(),
       ].map((e) => CardX(child: e)).toList(),
-    );
-  }
-
-  /// Where a trusted host key can be taken back.
-  ///
-  /// Beside the other SSH entries rather than under security: what it manages
-  /// is per server, and this is where a server's SSH settings already are.
-  Widget _buildKnownHosts() {
-    return ListTile(
-      leading: const Icon(Icons.vpn_key_outlined),
-      title: Text(l10n.sshKnownHostKeys),
-      trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: () => KnownHostsPage.route.go(context),
     );
   }
 
@@ -213,15 +198,6 @@ extension _SSH on _AppSettingsPageState {
       if (!mounted) return;
       context.showErrDialog(e, s);
     }
-  }
-
-  Widget _buildSSHVirtKeys() {
-    return ListTile(
-      leading: const Icon(BoxIcons.bxs_keyboard),
-      title: Text(l10n.editVirtKeys),
-      trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: () => SSHVirtKeySettingPage.route.go(context),
-    );
   }
 
   Widget _buildSSHVirtualKeyAutoOff() {

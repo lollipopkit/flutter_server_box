@@ -7,6 +7,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:server_box/core/utils/ios_rootfs.dart';
 import 'package:server_box/core/utils/ish_exec.dart';
+import 'package:server_box/data/model/app/linux_distro.dart';
 
 /// What the Linux guest costs on the hardware people actually have.
 ///
@@ -56,7 +57,12 @@ void main() {
       return;
     }
     final shellbench = utf8.decode(base64.decode(_shellbenchB64));
-    await IosRootfs.install();
+    // Only when there is nothing: `install` without `into:` adds a system
+    // beside the existing ones, so an unconditional call leaves a fresh
+    // Alpine behind on every run of this benchmark.
+    if (IosRootfs.selected == null) {
+      await IosRootfs.install(distro: LinuxDistro.alpine);
+    }
     const exec = IshExec();
 
     // The C section runs a prebuilt musl aarch64 binary, which is exactly what

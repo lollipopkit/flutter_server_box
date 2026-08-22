@@ -11,7 +11,6 @@ import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/store/entity_store.dart';
-import 'package:server_box/view/widget/page_columns.dart';
 
 const _format = 'text/plain';
 final _whitespaceRegex = RegExp(r'\s+');

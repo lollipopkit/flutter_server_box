@@ -146,8 +146,14 @@ class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
     // The timestamp went with the second line, which is [SideBarTile]'s own
     // trade-off: at two lines a row a rail stops being something you can take
     // in at a glance, and the conversation beside it says when it was.
+    // Transparent rather than `colorScheme.surface`: in a column this rail
+    // shows the `Scaffold`'s background like the terminal and file rails do,
+    // and in a sheet it shows the sheet's. Both are slots `toAmoled`
+    // overrides and `colorScheme.surface` is not, so painting that here left
+    // the rail Material grey under an AMOLED theme while the page beside it
+    // went black.
     return Material(
-      color: theme.colorScheme.surface,
+      type: MaterialType.transparency,
       child: ListView(
         padding: const EdgeInsets.only(bottom: 12),
         children: [

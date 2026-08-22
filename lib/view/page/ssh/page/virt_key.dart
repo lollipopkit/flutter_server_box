@@ -7,6 +7,69 @@ extension _VirtKey on SSHPageState {
     _updateVirtKeysHeight();
   }
 
+  /// Runs the walkthrough over the keys, once ever — on the terminal that is
+  /// actually on screen.
+  ///
+  /// Every restored tab lays out, not only the one landed on, so this waits
+  /// for its own page to be the visible one. Without that, the walkthrough is
+  /// spent on whichever tab the `PageView` happened to build first and the
+  /// user sees a flag that has already been set.
+  void _startVirtKeyIntroWhenVisible() {
+    final visible = widget.args.visibleListenable;
+    if (visible == null || visible.value) return _startVirtKeyIntro();
+    if (Stores.setting.virtKeyIntroShown.fetch()) return;
+
+    void onVisible() {
+      if (!mounted || !visible.value) return;
+      visible.removeListener(onVisible);
+      _introVisibilityListener = null;
+      _startVirtKeyIntro();
+    }
+
+    _introVisibilityListener = onVisible;
+    visible.addListener(onVisible);
+  }
+
+  /// Only where there are keys to walk through: a desktop has none, and a user
+  /// who hid the lot has said what they think of them. [_showHelp] is what
+  /// covers the terminal itself when this does not run.
+  void _startVirtKeyIntro() {
+    if (_virtKeysHeight == 0) return;
+    if (Stores.setting.virtKeyIntroShown.fetch()) return;
+    // Written now rather than at the end: a walkthrough that reappears because
+    // the app was killed halfway through is worse than one seen once.
+    Stores.setting.virtKeyIntroShown.put(true);
+    setIntroStep(0, steps: VirtKeyIntroStep.of(context));
+  }
+
+  void _endVirtKeyIntro() {
+    if (_introStep == null) return;
+    setIntroStep(null);
+  }
+
+  /// The keys the step on screen is about, or null while none is.
+  VirtKeyGroup? get _introGroup {
+    final step = _introStep;
+    final steps = _introSteps;
+    if (step == null || steps == null || step >= steps.length) return null;
+    return steps[step].group;
+  }
+
+  /// What a key does, for the ones where the label does not say.
+  ///
+  /// A dialog rather than a tooltip: this is reached by holding a key on a
+  /// phone, where a tooltip appears under the finger that is covering it.
+  void _showVirtKeyHelp(VirtKey item) {
+    final help = item.help;
+    if (help == null) return;
+    HapticFeedback.selectionClick();
+    context.showRoundDialog(
+      title: item.text,
+      child: Text(help),
+      actions: [Btn.ok(onTap: context.popDialog)],
+    );
+  }
+
   void _doVirtualKey(VirtKey item, VirtKeyboard virtKeyNotifier) {
     if (item.func != null) {
       HapticFeedback.mediumImpact();

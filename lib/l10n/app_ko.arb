@@ -11,7 +11,6 @@
   "askAiDisclaimer": "AI가 부정확할 수 있습니다. 적용 전에 주의 깊게 검토해 주세요.",
   "askAiInsertTerminal": "터미널에 삽입",
   "askAiNoResponse": "응답 없음",
-  "atLeastOneTab": "최소 하나의 탭을 선택해야 합니다",
   "authFailTip": "인증에 실패했습니다. 자격 증명이 올바른지 확인해 주세요.",
   "autoBackupConflict": "자동 백업은 한 번에 하나만 활성화할 수 있습니다.",
   "autoConnect": "자동 연결",
@@ -64,6 +63,14 @@
   "discoverSshServers": "SSH 서버 검색",
   "discoveryFailed": "검색 실패",
   "discoverySettings": "검색 설정",
+  "distro": "배포판",
+  "distroSwitchTip": "{from}을(를) {to}(으)로 바꿉니다. {from} 안에 설치한 것은 모두 삭제되고, 그 자리에 {to}을(를) 내려받아 풉니다.",
+  "@distroSwitchTip": {
+    "placeholders": {
+      "from": {},
+      "to": {}
+    }
+  },
   "diskHealth": "디스크 상태",
   "displayCpuIndex": "CPU 인덱스 표시",
   "dl2Local": "{fileName}을(를) 로컬에 다운로드하시겠습니까?",
@@ -74,7 +81,7 @@
   "dockerStatistics": "Docker 통계",
   "doubleColumnMode": "이중 열 모드",
   "doubleColumnTip": "이 옵션은 기능만 활성화하며, 실제 적용 여부는 기기의 너비에 따라 다릅니다",
-  "editVirtKeys": "가상 키 편집",
+  "editVirtKeys": "가상 키",
   "editorHighlightTip": "현재 코드 하이라이팅 성능이 이상적이지 않습니다. 성능 향상을 위해 선택적으로 끌 수 있습니다.",
   "enableMdns": "mDNS 활성화",
   "enableMdnsDesc": "mDNS/Bonjour를 사용하여 SSH 서비스 검색",
@@ -85,7 +92,7 @@
   "fileTooLarge": "파일 '{file}'이(가) 너무 큽니다. 크기 {size}, 최대 {sizeMax}",
   "fileDirGone": "이 폴더는 더 이상 없습니다",
   "fileDirGoneTip": "삭제되었거나 이름이 바뀌었습니다. 아래 막대에서 뒤로 가기, 홈, 또는 다른 위치로 이동하세요.",
-  "fullScreen": "전체 화면 모드",
+  "fullScreen": "전체 화면",
   "fullScreenJitter": "전체 화면 지터",
   "fullScreenJitterHelp": "화면 번인 방지",
   "fullScreenTip": "기기를 가로 모드로 회전할 때 전체 화면 모드를 활성화하시겠습니까? 이 옵션은 서버 탭에만 적용됩니다.",
@@ -139,6 +146,8 @@
   "lastSuccess": "마지막 성공",
   "letterCache": "일반 키보드 입력",
   "letterCacheTip": "이 옵션을 켜면 입력 내용이 일반 IME를 거치며, 일부 시스템에서는 터미널의 보안 키보드 안내를 피할 수 있습니다.",
+  "linuxShellTip": "대화형 터미널이 실행하는 셸입니다. Alpine에는 chsh가 없고 시스템에서 /etc/passwd를 읽는 것도 없으므로 이 설정만이 결정합니다. 일회성 명령은 계속 /bin/sh로 실행됩니다. 앱과 Agent가 POSIX를 쓰기 때문입니다. 비워 두면 /bin/sh로 돌아갑니다.",
+  "linuxNetTip": "Linux 시스템과 패키지를 내려받을 위치, 그리고 기록되는 DNS 서버입니다. 비워 두면 기본값으로 돌아갑니다. 저장하면 이미 설치된 시스템의 파일도 다시 씁니다.",
   "madeWithLove": "{myGithub}이(가) ❤️로 만들었습니다",
   "maxConcurrency": "최대 동시 실행 수",
   "maxRetryCount": "서버 재연결 횟수",
@@ -148,6 +157,7 @@
       "system": {}
     }
   },
+  "mirror": "미러",
   "needRestart": "앱을 다시 시작해야 합니다",
   "netViewType": "네트워크 뷰 유형",
   "newContainer": "새 컨테이너",
@@ -242,7 +252,7 @@
   "sshHostKeyFingerprintMd5Base64": "지문 (MD5 base64): {fingerprint}",
   "sshHostKeyFingerprintMd5Hex": "지문 (SHA256): {fingerprint}",
   "sshHostKeyType": "SSH 호스트 키 유형",
-  "sshKnownHostKeys": "알려진 호스트 키",
+  "sshKnownHostKeys": "알려진 호스트",
   "sshKnownHostKeysTip": "이 앱이 수락한 호스트 키입니다. 삭제하면 다음 연결 시 다시 확인합니다.",
   "@sshHostKeyType": {
     "description": "Label for the SSH host key type displayed in the host key verification dialog."
@@ -276,6 +286,16 @@
   "virtKeyHelpClipboard": "터미널에 선택된 텍스트가 있으면 클립보드에 복사하고, 없으면 클립보드 내용을 터미널에 붙여넣습니다.",
   "virtKeyHelpIME": "키보드 켜기/끄기",
   "virtKeyHelpSFTP": "현재 디렉토리를 SFTP로 열기.",
+  "virtKeyHelpSnippet": "스니펫을 골라 이 터미널에서 실행합니다.",
+  "virtKeyHelpTmux": "tmux 세션과 창을 전환합니다.",
+  "virtKeyIntroActions": "바로가기",
+  "virtKeyIntroActionsTip": "이 키들은 문자를 입력하지 않고 기능을 엽니다. 길게 누르면 설명을 볼 수 있습니다.",
+  "virtKeyIntroCustomizeTip": "터미널 설정에서 순서를 바꾸거나, 쓰지 않는 키를 숨길 수 있습니다.",
+  "virtKeyIntroModifiers": "조합 키",
+  "virtKeyIntroModifiersTip": "한 번 눌러 켠 다음 키보드의 글자를 누르세요. 바로 다음 한 키에만 적용됩니다.",
+  "virtKeyIntroNav": "커서 이동",
+  "virtKeyIntroNavTip": "이 키들은 커서를 옮깁니다. 방향키를 길게 누르면 반복됩니다.",
+  "virtKeyIntroSelect": "터미널에 스크롤할 내용이 있으면 가로로 끌어 텍스트를 선택할 수 있습니다.",
   "waitConnection": "연결이 설정될 때까지 기다려 주세요.",
   "wakeLock": "화면 깨우기 유지",
   "watchNotPaired": "페어링된 Apple Watch가 없습니다",

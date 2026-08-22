@@ -264,9 +264,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get agentMonitorOptional => 'Agen monitor (opsional)';
 
   @override
-  String get atLeastOneTab => 'Setidaknya satu tab harus dipilih';
-
-  @override
   String get authFailTip =>
       'Otentikasi gagal, silakan periksa apakah kata sandi/kunci/host/pengguna, dll, salah.';
 
@@ -455,6 +452,14 @@ class AppLocalizationsId extends AppLocalizations {
   String get discoverySettings => 'Pengaturan Penemuan';
 
   @override
+  String get distro => 'Distribusi';
+
+  @override
+  String distroSwitchTip(Object from, Object to) {
+    return 'Ganti $from dengan $to. Semua yang terpasang di dalam $from akan dihapus, dan $to diunduh serta diekstrak sebagai gantinya.';
+  }
+
+  @override
   String get diskHealth => 'Kesehatan disk';
 
   @override
@@ -492,7 +497,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Opsi ini hanya mengaktifkan fitur, apakah itu benar-benar dapat diaktifkan tergantung pada lebar perangkat';
 
   @override
-  String get editVirtKeys => 'Edit kunci virtual';
+  String get editVirtKeys => 'Kunci virtual';
 
   @override
   String get editorHighlightTip =>
@@ -531,7 +536,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Folder ini dihapus atau diganti nama. Gunakan bilah di bawah untuk kembali, ke beranda, atau menuju tempat lain.';
 
   @override
-  String get fullScreen => 'Mode Layar Penuh';
+  String get fullScreen => 'Layar penuh';
 
   @override
   String get fullScreenJitter => 'Jitter layar penuh';
@@ -697,6 +702,14 @@ class AppLocalizationsId extends AppLocalizations {
       'Saat diaktifkan, input akan melalui IME biasa, yang dapat menghindari prompt keyboard aman di terminal pada beberapa sistem.';
 
   @override
+  String get linuxShellTip =>
+      'Yang dijalankan terminal interaktif. Alpine tidak punya chsh dan tidak ada di sistem yang membaca /etc/passwd, jadi hanya ini yang menentukan. Perintah sekali jalan tetap berjalan dengan /bin/sh, karena aplikasi dan Agent menulis POSIX. Kosongkan untuk mengembalikan /bin/sh.';
+
+  @override
+  String get linuxNetTip =>
+      'Dari mana sistem Linux dan paketnya diunduh, serta server DNS yang ditulis ke dalamnya. Kosongkan untuk mengembalikan nilai bawaan. Menyimpan juga menulis ulang keduanya pada sistem yang sudah terpasang.';
+
+  @override
   String madeWithLove(Object myGithub) {
     return 'Dibuat dengan ❤️ oleh $myGithub';
   }
@@ -711,6 +724,9 @@ class AppLocalizationsId extends AppLocalizations {
   String mismatchSystem(Object system) {
     return 'Sistem tidak cocok: $system';
   }
+
+  @override
+  String get mirror => 'Mirror';
 
   @override
   String get needRestart => 'Perlu memulai ulang aplikasi';
@@ -1029,7 +1045,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get sshHostKeyType => 'Jenis kunci host SSH';
 
   @override
-  String get sshKnownHostKeys => 'Kunci host yang dikenal';
+  String get sshKnownHostKeys => 'Host dikenal';
 
   @override
   String get sshKnownHostKeysTip =>
@@ -1139,6 +1155,42 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get virtKeyHelpSFTP => 'Buka direktori saat ini di SFTP.';
+
+  @override
+  String get virtKeyHelpSnippet =>
+      'Pilih sebuah snippet dan jalankan di terminal ini.';
+
+  @override
+  String get virtKeyHelpTmux => 'Berpindah antar sesi dan jendela tmux.';
+
+  @override
+  String get virtKeyIntroActions => 'Pintasan';
+
+  @override
+  String get virtKeyIntroActionsTip =>
+      'Tombol-tombol ini tidak mengetik, melainkan membuka sesuatu. Tahan salah satunya untuk membaca fungsinya.';
+
+  @override
+  String get virtKeyIntroCustomizeTip =>
+      'Di pengaturan terminal kamu bisa mengubah urutannya, atau menyembunyikan yang tidak pernah dipakai.';
+
+  @override
+  String get virtKeyIntroModifiers => 'Tombol pengubah';
+
+  @override
+  String get virtKeyIntroModifiersTip =>
+      'Ketuk satu untuk mengaktifkannya, lalu ketuk huruf di papan ketik. Berlaku untuk satu tombol itu saja.';
+
+  @override
+  String get virtKeyIntroNav => 'Navigasi';
+
+  @override
+  String get virtKeyIntroNavTip =>
+      'Tombol-tombol ini menggerakkan kursor. Tahan tombol panah untuk mengulanginya.';
+
+  @override
+  String get virtKeyIntroSelect =>
+      'Selama terminal masih bisa digulir, seret ke samping untuk memilih teks.';
 
   @override
   String get waitConnection => 'Harap tunggu koneksi akan dibuat.';

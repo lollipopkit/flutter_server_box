@@ -138,3 +138,65 @@ async fn the_audit_log_is_cleaned_up_by_the_retention_service() {
     );
     assert_eq!(rows[0].get::<String, _>("kind"), "terminal");
 }
+
+/// The bytes of a migration that has already run somewhere are frozen.
+///
+/// `Migrator::run` compares the checksum embedded in the binary against the one
+/// `_sqlx_migrations` recorded when the file was first applied. Editing a
+/// shipped migration — even a comment, even to correct it — changes that
+/// checksum, and every agent that already applied it then refuses to start with
+/// `VersionMismatch`, which is not something an operator can fix from the
+/// outside.
+///
+/// The test above cannot catch that: it starts from an empty database and
+/// replays the *current* files, so the checksum it records is always the new
+/// one. This pins them instead. A failure here means a file that has run
+/// somewhere was edited — restore it and put the change in a new migration.
+/// Adding a migration is expected to add a line.
+#[test]
+fn shipped_migrations_keep_their_checksums() {
+    let pinned: &[(i64, &str)] = &[
+        (1, "ac7a765b2d29d0b1e0b55180fca0fe9c582a84ca8ff15e12f1cdac60eb1879009c86603dfb2bbe9efda4046921c86a5a"),
+        (2, "995500f86fcaba8e42845c708779f6e154be1d9df4627d1acbd7a5d6a445f414f6ac0c4002ba41b07c2830681abacfe9"),
+        (3, "33f9861299257235c1fe0bc1bbce5b9f98386e1333c9da2ed636c572e37acef2266948b4e05c052bcf402b53c6a0b393"),
+        (4, "1afb432633d79277bebc544db394282237b0f286f1a31514fc7279e7993dbde19389553a521b8346b6661f03b0582a73"),
+        (5, "a7cf936c175f498f26c2277f92e6a782a5831e1a3269ef9477876949e5aa3e041e06e95c0544d709536cd7a1e2fafec2"),
+        (6, "bc1d80ef7f88751b0bb2a64974a7efb928301cd61740cfe77d9e2306a8f71d8cfbdd24a2e2e5dc2e5b9094755b9e03f9"),
+        (7, "d7726fdbe4fad21ac01dc6b9a3058550aa138829baff1e0968a259f33e9b182e60bc4b658e0227fd4418a3c0fbd0a1f5"),
+    ];
+    let migrator = sqlx::migrate!("./migrations");
+    let mut seen = std::collections::BTreeMap::new();
+    for m in migrator.iter() {
+        seen.insert(m.version, hex(&m.checksum));
+    }
+    for (version, checksum) in pinned {
+        let actual = seen
+            .get(version)
+            .unwrap_or_else(|| panic!("migration {version} is gone; it has run in the field"));
+        assert_eq!(
+            actual, checksum,
+            "migration {version} was edited after shipping. Its checksum is what \
+             every agent that applied it recorded; changing it makes them refuse \
+             to start. Restore the file and add a new migration instead."
+        );
+    }
+
+    // Otherwise the list above is a subset and a migration added tomorrow is
+    // pinned by nothing: this test would pass while the checksum it should be
+    // guarding went unrecorded.
+    assert_eq!(
+        seen.len(),
+        pinned.len(),
+        "a migration ships without a pinned checksum. Add its version and \
+         checksum to the list above; embedded = {:?}",
+        seen.keys().collect::<Vec<_>>()
+    );
+}
+
+fn hex(bytes: &[u8]) -> String {
+    use std::fmt::Write;
+    bytes.iter().fold(String::new(), |mut s, b| {
+        let _ = write!(s, "{b:02x}");
+        s
+    })
+}

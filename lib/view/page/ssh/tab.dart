@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
-import 'package:server_box/core/utils/android_rootfs.dart';
 import 'package:server_box/core/utils/local_shell.dart';
 import 'package:server_box/core/utils/rootfs.dart';
+import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
@@ -17,7 +17,6 @@ import 'package:server_box/data/ssh/terminal_session.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
-import 'package:server_box/view/widget/empty_pane.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/rootfs_install.dart';
 
@@ -82,18 +81,11 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
       sortVersion: _sortVersion,
       onTap: _openServer,
       onLocal: () => _open(const LocalSource()),
-      onRootfs: _openRootfs,
-      onRemoveRootfs: _removeRootfs,
+      onRootfsOpen: _openRootfs,
+      onRootfsAdd: _addRootfs,
+      onRootfsRemove: _removeRootfs,
       onLongPress: (spi) =>
           ServerEditPage.route.go(context, args: SpiRequiredArgs(spi)),
-    ),
-    floatingActionButton: Builder(
-      builder: (ctx) => FloatingActionButton(
-        heroTag: 'sshAddServer',
-        onPressed: () => ServerEditPage.route.go(ctx),
-        tooltip: libL10n.add,
-        child: const Icon(Icons.add),
-      ),
     ),
   );
 
@@ -103,6 +95,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
   @override
   void initState() {
     super.initState();
+    Rootfs.removed.addListener(_onRootfsRemoved);
     // Both after the first frame, and in this order: a queued request is what
     // the user just asked for, and it should end up beside the tabs that were
     // already open rather than racing them.
@@ -114,6 +107,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
 
   @override
   void dispose() {
+    Rootfs.removed.removeListener(_onRootfsRemoved);
     _sessions.dispose();
     _sortVersion.dispose();
     super.dispose();
@@ -134,11 +128,12 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
         sideBuilder: (_) => _SideBar(
           sessions: _sessions,
           sortVersion: _sortVersion,
-          actions: [_sortBtn, _searchBtn, _historyBtn, _addBtn],
+          actions: [_sortBtn, _searchBtn, _historyBtn],
           onOpen: _openServer,
           onLocal: () => _open(const LocalSource()),
-          onRootfs: _openRootfs,
-          onRemoveRootfs: _removeRootfs,
+          onRootfsOpen: _openRootfs,
+          onRootfsAdd: _addRootfs,
+          onRootfsRemove: _removeRootfs,
           onEdit: (spi) =>
               ServerEditPage.route.go(context, args: SpiRequiredArgs(spi)),
           onSelect: _sessions.select,
@@ -185,15 +180,30 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
     // Both: the bar shows which tab is current *and* how the picker behind it
     // is sorted.
     listenable: Listenable.merge([_sessions, _sortVersion]),
+    // The wrapper is what the `Scaffold` measures, so it has to be told;
+    // its own default is a full toolbar.
+    preferSize: const Size.fromHeight(SessionTabBar.height),
     builder: () => SessionTabBar(
       names: _sessions.names,
       index: _sessions.index,
       onTap: _sessions.select,
       onClose: _confirmClose,
+      detailOf: _sessionAddr,
       sessionActions: _serverActions,
       leadingActions: [_sortBtn, _searchBtn, _historyBtn],
     ),
   );
+
+  /// What a session's row in the sheet says under the name: the machine the
+  /// shell is on. Nothing for a shell on this device — its name already says
+  /// so, and it has no address to give.
+  String? _sessionAddr(int index) {
+    final tab = _sessions.tabs.elementAtOrNull(index - 1);
+    return switch (tab?.data.page.args.source) {
+      ServerSource(:final spi) => spi.displayAddr,
+      _ => null,
+    };
+  }
 
   PreferredSizeWidget get _sessionBar => PreferredSizeListenBuilder(
     listenable: _sessions,
@@ -294,26 +304,64 @@ extension _Sessions on _SSHTabPageState {
     _sessions.select(_sessions.names.indexOf(tab.name));
   }
 
-  /// Opens a shell inside the Linux userland, installing it if this is the
-  /// first time.
+  /// Opens a shell in the system a chip names.
+  ///
+  /// Which one is picked on the page rather than asked for here: they can all
+  /// run at once, so it is a tap on the one wanted and not a question in the
+  /// way.
+  void _openRootfs(String profileId) =>
+      _open(LocalSource(rootfs: true, profileId: profileId));
+
+  /// Installs another system and opens a shell in it.
   ///
   /// The install is where the tap may stop: it downloads, and it can be
-  /// cancelled or fail. Only a rootfs that is actually there gets a tab.
-  Future<void> _openRootfs() async {
-    if (!await installRootfs(context)) return;
-    _open(const LocalSource(rootfs: true));
+  /// cancelled or fail. Only a system that is actually there gets a tab, which
+  /// is why the id comes back from the install rather than from the settings.
+  Future<void> _addRootfs() async {
+    final before = {for (final e in Rootfs.profiles) e.id};
+    // The chip says "install" with nothing there and "add" otherwise, and it
+    // has to mean both.
+    if (!await installRootfs(context, another: before.isNotEmpty)) return;
+    if (!mounted) return;
+    final added = Rootfs.profiles.firstWhereOrNull((e) => !before.contains(e.id));
+    // Nothing new means it was already there and the install returned early —
+    // the first system, opened by the chip that offered to install it.
+    //
+    // Null rather than an empty string: null is what every layer below reads
+    // as "whichever is selected", while "" is a profile name, and the engine
+    // answers -EINVAL to it.
+    final id = added?.id ?? Rootfs.selected?.id;
+    if (id == null) return;
+    _openRootfs(id);
   }
 
-  /// Deletes the Linux userland, and the terminals that were inside it.
+  /// Deletes one Linux system, and the terminals that were inside it.
   ///
   /// Their shells are already gone with the files they were running from, so
-  /// leaving the tabs up would leave dead terminals nobody asked to keep.
-  Future<void> _removeRootfs() async {
-    if (!await removeRootfs(context)) return;
+  /// leaving the tabs up would leave dead terminals nobody asked to keep. Tabs
+  /// in the *other* systems are untouched — that is the point of them being
+  /// separate.
+  Future<void> _removeRootfs(LinuxProfile target) async {
+    await removeRootfs(context, profile: target);
+  }
+
+  /// Closes the terminals that were running in a system that has been deleted.
+  ///
+  /// Their shells went with the files they were running from, so leaving the
+  /// tabs up leaves dead terminals nobody asked to keep. Driven by
+  /// `Rootfs.removed` rather than by the delete here, because the settings page
+  /// deletes too and only this page has the tabs.
+  void _onRootfsRemoved() {
+    final id = Rootfs.removed.value;
+    if (id == null || !mounted) return;
     for (final tab in [..._sessions.tabs]) {
-      if (tab.data.page.args.source == const LocalSource(rootfs: true)) {
-        _closeTab(tab.id);
-      }
+      final source = tab.data.page.args.source;
+      if (source is! LocalSource || !source.rootfs) continue;
+      // A tab that names no profile was opened in whichever was selected then.
+      // With that one gone the selection has moved, so it cannot be recovered
+      // here — such a tab is left alone rather than closed on a guess, and its
+      // shell reports what it finds.
+      if (source.profileId == id) _closeTab(tab.id);
     }
   }
 
@@ -407,13 +455,23 @@ extension _Sessions on _SSHTabPageState {
       // to reopen has cost nothing.
       final id = entry['sourceId'] ?? entry['serverId'];
       final TerminalSource source;
-      if (id == LocalSource.rootfsId) {
+      if (id is String && id.startsWith(LocalSource.rootfsId)) {
         // Only where there is one to enter. A rootfs the user deleted, or a
         // tab set restored onto a build without proot, would otherwise reopen
         // as a terminal that can only print an error.
         if (!Rootfs.isAvailable) continue;
         if (!Rootfs.isReady) continue;
-        source = const LocalSource(rootfs: true);
+        // A saved set from before profiles existed names no profile, and reads
+        // as "whichever is selected" — which is what it meant.
+        final profileId = LocalSource.profileIdOf(id);
+        // One that names a profile this device has not got is skipped like an
+        // unknown server: a backup restored onto another device is exactly how
+        // that happens.
+        if (profileId != null &&
+            !Rootfs.profiles.any((e) => e.id == profileId)) {
+          continue;
+        }
+        source = LocalSource(rootfs: true, profileId: profileId);
       } else if (id == const LocalSource().id) {
         // A tab set saved on a desktop can be restored on a phone — the same
         // backup, the same account — and iOS has no shell to give. Skipped
@@ -495,10 +553,6 @@ extension _Actions on _SSHTabPageState {
 
   /// The rail's own way to add a server. On one screen that is the picker's
   /// floating button; a rail has no room for one.
-  Widget get _addBtn => Btn.icon(text: libL10n.add, 
-    icon: const Icon(Icons.add, size: 18),
-    onTap: () => ServerEditPage.route.go(context),
-  );
 
   void _showSortMenu() {
     context.showRoundDialog(
