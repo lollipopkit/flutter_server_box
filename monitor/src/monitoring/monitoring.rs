@@ -277,16 +277,15 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
                     error!("Failed to store metrics: {}", e);
                 }
 
-                // Update velocity manager with network and CPU core data
-                if let Err(e) = app_state.velocity_manager.write().await.update_server_metrics(
+                // Update the bounded in-memory velocity history used by the
+                // rules engine and velocity API.
+                app_state.velocity_manager.write().await.update_server_metrics(
                     &metrics.server_name,
                     metrics.network.rx_bytes,
                     metrics.network.tx_bytes,
                     metrics.cpu_cores.clone(),
                     metrics.timestamp
-                ).await {
-                    error!("Failed to update velocity metrics: {}", e);
-                }
+                ).await;
 
                 // Check rules and send alerts with velocity data
                 if let Err(e) = crate::monitoring::rules::check_rules_with_velocity(&metrics, &app_state.config, &*app_state.velocity_manager.read().await).await {
@@ -442,10 +441,42 @@ fn build_status_script(system: SystemType) -> String {
     sbm_parser::script::build_script(
         system,
         &sbm_parser::script::ScriptOptions {
+            disabled: monitor_script_disabled(system),
             build_number: env!("CARGO_PKG_VERSION").to_string(),
-            ..Default::default()
         },
     )
+}
+
+/// Manifest commands the monitor still needs from the shared script.
+///
+/// Core status is sampled by `sbm_native`, and NVIDIA has its own targeted
+/// invocation above. Keeping every other manifest key disabled prevents an
+/// extended cycle from collecting CPU/memory/disk/network a second time and,
+/// on Windows, avoids the two one-second WMI samples for net and disk I/O.
+/// Custom commands are not manifest entries; `SbStatus` continues to read and
+/// run their directory even when every ordinary command in that function is
+/// disabled.
+fn monitor_script_command_needed(system: SystemType, key: &str) -> bool {
+    use sbm_parser::commands::{AMD, BATTERY, CONN, DISK_SMART, SENSORS};
+
+    match system {
+        SystemType::Linux => matches!(key, AMD | BATTERY | DISK_SMART | SENSORS),
+        SystemType::Bsd => matches!(key, DISK_SMART),
+        SystemType::Windows => matches!(key, AMD | BATTERY | CONN | DISK_SMART | SENSORS),
+    }
+}
+
+fn monitor_script_disabled(system: SystemType) -> Vec<String> {
+    let scope = match system {
+        SystemType::Linux => "Linux",
+        SystemType::Bsd => "BSD",
+        SystemType::Windows => "Windows",
+    };
+    sbm_parser::commands::commands(system)
+        .iter()
+        .filter(|spec| !monitor_script_command_needed(system, spec.key))
+        .map(|spec| format!("{scope}.{}", spec.key))
+        .collect()
 }
 
 /// Script location in the temp dir. `.ps1` is mandatory for `powershell -File`
@@ -476,12 +507,10 @@ fn ensure_script(path: &std::path::Path, content: &str) -> std::io::Result<()> {
     Ok(())
 }
 
-/// Shell functions the extended cycle runs. Both halves, because the fields
-/// this cycle exists for straddle the split: SMART and AMD are in
-/// `SbStatusExt`, while `sensors`/`battery` (and Windows' `conn`, which has no
-/// native path yet — see `collect_metrics`) are cheap enough for the app's
-/// poll and stayed in `SbStatus`. The rest of `SbStatus` is redundant here
-/// (`sbm_native` covers it every cycle) but costs only file reads.
+/// Shell functions the extended cycle runs. Both halves are needed because
+/// SMART and AMD are in `SbStatusExt`, while sensors/battery, Windows conn and
+/// custom commands live in `SbStatus`. `monitor_script_disabled` strips the
+/// native-covered commands from both functions before this script is written.
 const EXTENDED_FUNCS: [sbm_parser::script::ShellFunc; 2] =
     [sbm_parser::script::ShellFunc::StatusExt, sbm_parser::script::ShellFunc::Status];
 
@@ -1092,10 +1121,8 @@ pub fn parse_disk_metrics(segment: &str) -> Result<DiskMetrics> {
     Ok(aggregate_disks(SystemType::Linux, &sbm_parser::linux::parse_disk(segment)))
 }
 
-/// One cycle's rows are written in a single transaction: the `system_metrics`
-/// row and its `cpu_core_metrics` rows share a timestamp and are only
-/// meaningful together, and committing 1 + N_cores inserts as one write keeps
-/// the loop from holding the database lock across every core.
+/// Store the aggregate trend row used by history queries. Per-core samples
+/// stay in the current in-memory snapshot; no database consumer queried them.
 pub async fn store_metrics(db: &SqlitePool, metrics: &SystemMetrics) -> Result<()> {
     let memory_total = metrics.memory.total as i64;
     let memory_used = metrics.memory.used as i64;
@@ -1116,8 +1143,6 @@ pub async fn store_metrics(db: &SqlitePool, metrics: &SystemMetrics) -> Result<(
         metrics.diskio.iter().map(|d| d.sectors_write.max(0) * 512).sum();
     // First battery only — matches the home page card's existing convention
     let battery_percent: Option<f64> = metrics.batteries.first().and_then(|b| b.percent).map(|p| p as f64);
-
-    let mut tx = db.begin().await?;
 
     sqlx::query!(
         r#"
@@ -1146,36 +1171,8 @@ pub async fn store_metrics(db: &SqlitePool, metrics: &SystemMetrics) -> Result<(
         diskio_write_bytes,
         battery_percent
     )
-    .execute(&mut *tx)
+    .execute(db)
     .await?;
-
-    // Store CPU core data. usage_percent comes from adapt_cpu, which is the
-    // only place that knows the per-platform meaning of used/total; it is NULL
-    // on the first Linux cycle, before a delta baseline exists.
-    for (core_id, core_time) in metrics.cpu_cores.iter().enumerate() {
-        let core_id_i32 = core_id as i32;
-        let used_time_i64 = core_time.used as i64;
-        let total_time_i64 = core_time.total as i64;
-        let usage_percent = core_time.usage_percent;
-
-        sqlx::query!(
-            r#"
-            INSERT INTO cpu_core_metrics (
-                timestamp, server_name, core_id, used_time, total_time, usage_percent
-            ) VALUES (?, ?, ?, ?, ?, ?)
-            "#,
-            metrics.timestamp,
-            metrics.server_name,
-            core_id_i32,
-            used_time_i64,
-            total_time_i64,
-            usage_percent
-        )
-        .execute(&mut *tx)
-        .await?;
-    }
-
-    tx.commit().await?;
 
     Ok(())
 }
@@ -1435,16 +1432,77 @@ mod tests {
         assert_eq!(rate[0].write_bytes_per_sec, 256_000.0);
     }
 
+    #[test]
+    fn monitor_script_keeps_only_non_native_manifest_commands() {
+        use sbm_parser::commands::{AMD, BATTERY, CONN, DISK_SMART, SENSORS};
+        use sbm_parser::script::{cmd_marker, ShellFunc};
+
+        let cases: [(SystemType, &[&str]); 3] = [
+            (SystemType::Linux, &[BATTERY, AMD, SENSORS, DISK_SMART]),
+            (SystemType::Bsd, &[DISK_SMART]),
+            (SystemType::Windows, &[CONN, BATTERY, AMD, SENSORS, DISK_SMART]),
+        ];
+        for (system, expected) in cases {
+            let enabled: Vec<&str> = sbm_parser::commands::commands(system)
+                .iter()
+                .filter(|spec| monitor_script_command_needed(system, spec.key))
+                .map(|spec| spec.key)
+                .collect();
+            assert_eq!(enabled, expected, "{system:?}");
+
+            // Assert the generated script itself, not just its disabled list.
+            // Unix scripts carry Linux and BSD branches together, so inspect
+            // only the branch this monitor will execute.
+            let script = build_status_script(system);
+            let generated = match system {
+                SystemType::Windows => script,
+                SystemType::Linux | SystemType::Bsd => [
+                    unix_monitor_branch(&script, ShellFunc::Status, system),
+                    unix_monitor_branch(&script, ShellFunc::StatusExt, system),
+                ]
+                .join("\n"),
+            };
+            for spec in sbm_parser::commands::commands(system) {
+                assert_eq!(
+                    generated.contains(&cmd_marker(spec.key)),
+                    expected.contains(&spec.key),
+                    "{system:?} {} should {}be generated",
+                    spec.key,
+                    if expected.contains(&spec.key) { "" } else { "not " },
+                );
+            }
+        }
+    }
+
+    fn unix_monitor_branch(script: &str, func: sbm_parser::script::ShellFunc, system: SystemType) -> &str {
+        let start = script
+            .find(&format!("{}() {{", func.name()))
+            .expect("generated function");
+        let body = &script[start..];
+        let body = &body[..body.find("\n}\n").expect("function end")];
+        let (_, branches) = body
+            .split_once("\tif [ \"$macSign\" = \"\" ] && [ \"$bsdSign\" = \"\" ]; then\n")
+            .expect("Unix system branch");
+        let (linux, bsd) = branches.split_once("\n\telse\n").expect("Unix else branch");
+        let (bsd, _) = bsd.split_once("\n\tfi\n").expect("Unix branch end");
+        match system {
+            SystemType::Linux => linux,
+            SystemType::Bsd => bsd,
+            SystemType::Windows => unreachable!("Windows uses a different script"),
+        }
+    }
+
     /// The monitor's real collection path: run the generated script, split
-    /// output. Both shell functions run, so keys from either half come back.
+    /// output. Both shell functions run, but native-covered keys stay absent.
     #[cfg(unix)]
     #[tokio::test]
     async fn execute_commands_via_script_smoke() {
         let segments = execute_commands(system_type()).await.unwrap();
         let keys: Vec<&str> = segments.iter().map(|(k, _)| k.as_str()).collect();
-        assert!(keys.contains(&"time"), "keys: {keys:?}");
-        assert!(keys.contains(&"echo"));
         assert!(keys.contains(&"diskSmart"), "extended half missing");
+        for redundant in ["echo", "time", "net", "cpu", "mem", "disk", "nvidia"] {
+            assert!(!keys.contains(&redundant), "redundant {redundant} in {keys:?}");
+        }
     }
 
     /// Custom-command sections are picked out of the same output, keeping the

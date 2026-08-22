@@ -173,3 +173,37 @@ pub fn parse_script_segments(raw: String) -> Vec<ScriptSegment> {
         .map(|(key, value)| ScriptSegment { key, value })
         .collect()
 }
+
+/// Whether output contains a valid encoded built-in or custom segment marker.
+#[flutter_rust_bridge::frb(sync)]
+pub fn contains_script_segment(raw: String) -> bool {
+    sbm_parser::script::contains_script_segment(&raw)
+}
+
+/// Whether output contains a valid encoded built-in segment marker.
+#[flutter_rust_bridge::frb(sync)]
+pub fn contains_status_segment(raw: String) -> bool {
+    sbm_parser::script::contains_status_segment(&raw)
+}
+
+/// Build the exact marker line used by the shared script protocol.
+#[flutter_rust_bridge::frb(sync)]
+pub fn script_segment_marker(key: String, custom: bool) -> String {
+    if custom {
+        sbm_parser::script::custom_cmd_marker(&key)
+    } else {
+        sbm_parser::script::cmd_marker(&key)
+    }
+}
+
+/// Parsed-map key for one custom command's output.
+#[flutter_rust_bridge::frb(sync)]
+pub fn custom_result_key(name: String) -> String {
+    sbm_parser::script::custom_result_key(&name)
+}
+
+/// Return the custom-command name when `key` is in the shared namespace.
+#[flutter_rust_bridge::frb(sync)]
+pub fn custom_result_name(key: String) -> Option<String> {
+    sbm_parser::script::custom_result_name(&key).map(str::to_string)
+}

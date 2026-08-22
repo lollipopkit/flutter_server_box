@@ -7,7 +7,6 @@ use std::sync::Arc;
 use std::collections::HashMap;
 use tokio::sync::RwLock;
 use serde::{Deserialize, Serialize};
-use sqlx::SqlitePool;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VelocityData {
@@ -22,32 +21,27 @@ pub struct VelocityProcessor {
     network_series: NetworkTimeSeries,
     cpu_series: CpuTimeSeries,
     metrics_history: TimeSeries<VelocityData>,
-    db_pool: Arc<SqlitePool>,
-    server_name: String,
 }
 
 impl VelocityProcessor {
-    fn new(db_pool: Arc<SqlitePool>, server_name: String) -> Self {
+    fn new() -> Self {
         Self {
             network_series: NetworkTimeSeries::new(),
             cpu_series: CpuTimeSeries::new(),
             metrics_history: TimeSeries::new(1000), // Keep last 1000 velocity metrics
-            db_pool,
-            server_name,
         }
     }
 
-    /// One row per collection cycle. Advancing the two series separately and
-    /// persisting after each wrote two rows sharing a timestamp, the first
-    /// carrying the *previous* cycle's CPU reading — and it halved the usable
-    /// depth of the in-memory history ring.
-    pub async fn update(
+    /// One point per collection cycle. Advancing the two series separately
+    /// and recording after each used to add two points with one carrying the
+    /// previous cycle's CPU reading, halving the useful history depth.
+    pub fn update(
         &mut self,
         rx_bytes: u64,
         tx_bytes: u64,
         core_times: Vec<CpuCoreTime>,
         timestamp: DateTime<Utc>,
-    ) -> Result<()> {
+    ) {
         self.network_series.update(rx_bytes, tx_bytes, timestamp);
         self.cpu_series.update(core_times, timestamp);
 
@@ -58,10 +52,7 @@ impl VelocityProcessor {
             cpu_usage_percent: self.cpu_series.get_average_usage_percent(),
         };
 
-        self.store_velocity_data(&velocity_data).await?;
         self.metrics_history.add_point(velocity_data, timestamp);
-
-        Ok(())
     }
 
     pub async fn get_current_velocity(&self) -> Result<VelocityMetrics> {
@@ -97,37 +88,22 @@ impl VelocityProcessor {
         self.network_series.is_ready() && self.cpu_series.is_ready()
     }
 
-    async fn store_velocity_data(&self, data: &VelocityData) -> Result<()> {
-        sqlx::query!(
-            r#"
-            INSERT INTO velocity_metrics (
-                timestamp, server_name, network_rx_speed, network_tx_speed, cpu_usage_percent
-            ) VALUES (?, ?, ?, ?, ?)
-            "#,
-            data.timestamp,
-            self.server_name,
-            data.network_rx_speed,
-            data.network_tx_speed,
-            data.cpu_usage_percent
-        )
-        .execute(&*self.db_pool)
-        .await
-        .map_err(crate::utils::error::MonitorError::Database)?;
-        
-        Ok(())
-    }
 }
 
 pub struct VelocityManager {
     processors: HashMap<String, Arc<RwLock<VelocityProcessor>>>,
-    db_pool: Arc<SqlitePool>,
+}
+
+impl Default for VelocityManager {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl VelocityManager {
-    pub fn new(db_pool: Arc<SqlitePool>) -> Self {
+    pub fn new() -> Self {
         Self {
             processors: HashMap::new(),
-            db_pool,
         }
     }
 
@@ -151,9 +127,8 @@ impl VelocityManager {
 
 
     /// `timestamp` is the sampling instant of the cycle these values came from,
-    /// so velocity rows line up with the `system_metrics`/`cpu_core_metrics`
-    /// rows of the same cycle. Stamping `Utc::now()` here instead left every
-    /// table on a slightly different clock and made the histories unjoinable.
+    /// so the in-memory velocity history lines up with `system_metrics` rows
+    /// from the same cycle instead of being stamped on a second clock here.
     pub async fn update_server_metrics(
         &mut self,
         server_name: &str,
@@ -161,16 +136,16 @@ impl VelocityManager {
         tx_bytes: u64,
         core_times: Vec<CpuCoreTime>,
         timestamp: DateTime<Utc>,
-    ) -> Result<()> {
+    ) {
         let processor = if let Some(processor) = self.processors.get(server_name) {
             processor.clone()
         } else {
-            let processor = Arc::new(RwLock::new(VelocityProcessor::new(self.db_pool.clone(), server_name.to_string())));
+            let processor = Arc::new(RwLock::new(VelocityProcessor::new()));
             self.processors.insert(server_name.to_string(), processor.clone());
             processor
         };
 
-        processor.write().await.update(rx_bytes, tx_bytes, core_times, timestamp).await
+        processor.write().await.update(rx_bytes, tx_bytes, core_times, timestamp)
     }
 
     pub async fn get_server_velocity(&self, server_name: &str) -> Result<VelocityMetrics> {

@@ -54,11 +54,6 @@ MonitorMetrics _$MonitorMetricsFromJson(
           ?.map((e) => MonitorDiskIoPiece.fromJson(e as Map<String, dynamic>))
           .toList() ??
       const [],
-  diskioRate:
-      (json['diskio_rate'] as List<dynamic>?)
-          ?.map((e) => MonitorDiskIoRate.fromJson(e as Map<String, dynamic>))
-          .toList() ??
-      const [],
   batteries:
       (json['batteries'] as List<dynamic>?)
           ?.map((e) => MonitorBattery.fromJson(e as Map<String, dynamic>))
@@ -102,7 +97,6 @@ Map<String, dynamic> _$MonitorMetricsToJson(MonitorMetrics instance) =>
       'uptime': instance.uptime,
       'conn': instance.conn,
       'diskio': instance.diskio,
-      'diskio_rate': instance.diskioRate,
       'batteries': instance.batteries,
       'sensors': instance.sensors,
       'disk_smart': instance.diskSmart,
@@ -280,20 +274,6 @@ Map<String, dynamic> _$MonitorDiskIoPieceToJson(MonitorDiskIoPiece instance) =>
       'dev': instance.dev,
       'sectors_read': instance.sectorsRead,
       'sectors_write': instance.sectorsWrite,
-    };
-
-MonitorDiskIoRate _$MonitorDiskIoRateFromJson(Map<String, dynamic> json) =>
-    MonitorDiskIoRate(
-      dev: json['dev'] as String,
-      readBytesPerSec: (json['read_bytes_per_sec'] as num).toDouble(),
-      writeBytesPerSec: (json['write_bytes_per_sec'] as num).toDouble(),
-    );
-
-Map<String, dynamic> _$MonitorDiskIoRateToJson(MonitorDiskIoRate instance) =>
-    <String, dynamic>{
-      'dev': instance.dev,
-      'read_bytes_per_sec': instance.readBytesPerSec,
-      'write_bytes_per_sec': instance.writeBytesPerSec,
     };
 
 MonitorBattery _$MonitorBatteryFromJson(Map<String, dynamic> json) =>

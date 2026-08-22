@@ -515,6 +515,28 @@ fn unencoded_separator_in_output_is_data() {
     assert_eq!(map["host"], "SrvBoxSep.time\nSrvBoxCusCmdSep.x\nmyhost");
 }
 
+#[test]
+fn segment_detection_uses_the_same_encoded_markers_as_parsing() {
+    assert!(!script::contains_script_segment("SrvBoxSep.time\noutput"));
+    assert!(!script::contains_status_segment("SrvBoxSep.time\noutput"));
+
+    let status = section("time", "123");
+    assert!(script::contains_script_segment(&status));
+    assert!(script::contains_status_segment(&status));
+
+    let custom = custom_section("probe", "hello");
+    assert!(script::contains_script_segment(&custom));
+    assert!(!script::contains_status_segment(&custom));
+}
+
+#[test]
+fn custom_result_key_classification_round_trips() {
+    let key = script::custom_result_key("disk");
+    assert_eq!(script::custom_result_name(&key), Some("disk"));
+    assert_eq!(script::custom_result_name("disk"), None);
+    assert_eq!(script::custom_result_name("SrvBoxCusCmdSep."), None);
+}
+
 /// Likewise a marker whose payload is not decodable base64url
 #[test]
 fn undecodable_marker_is_data() {

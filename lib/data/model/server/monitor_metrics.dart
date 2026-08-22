@@ -33,7 +33,6 @@ class MonitorMetrics {
   final String? uptime;
   final MonitorConn? conn;
   final List<MonitorDiskIoPiece> diskio;
-  final List<MonitorDiskIoRate> diskioRate;
   final List<MonitorBattery> batteries;
   final List<MonitorSensorItem> sensors;
   final List<MonitorSmartSummary> diskSmart;
@@ -63,7 +62,6 @@ class MonitorMetrics {
     this.uptime,
     this.conn,
     this.diskio = const [],
-    this.diskioRate = const [],
     this.batteries = const [],
     this.sensors = const [],
     this.diskSmart = const [],
@@ -286,10 +284,9 @@ class MonitorConn {
 
 /// Cumulative per-device sector counters — same shape/semantics as
 /// `sbm_parser::types::DiskIoPiece`, used to drive the app's existing
-/// `DiskIO` (`TimeSeq`) delta computation. `diskio_rate` (below) is monitor's
-/// own precomputed rate, kept only for parity with the API response; the
-/// mapper feeds `diskio` (not `diskio_rate`) into `ss.diskIO.update()` so the
-/// app's rolling speed math stays the single source of truth.
+/// `DiskIO` (`TimeSeq`) delta computation. The monitor's additional
+/// `diskio_rate` JSON field is intentionally ignored so the app's rolling
+/// speed math stays the single source of truth.
 @JsonSerializable(fieldRename: FieldRename.snake)
 class MonitorDiskIoPiece {
   final String dev;
@@ -306,24 +303,6 @@ class MonitorDiskIoPiece {
       _$MonitorDiskIoPieceFromJson(json);
 
   Map<String, dynamic> toJson() => _$MonitorDiskIoPieceToJson(this);
-}
-
-@JsonSerializable(fieldRename: FieldRename.snake)
-class MonitorDiskIoRate {
-  final String dev;
-  final double readBytesPerSec;
-  final double writeBytesPerSec;
-
-  const MonitorDiskIoRate({
-    required this.dev,
-    required this.readBytesPerSec,
-    required this.writeBytesPerSec,
-  });
-
-  factory MonitorDiskIoRate.fromJson(Map<String, dynamic> json) =>
-      _$MonitorDiskIoRateFromJson(json);
-
-  Map<String, dynamic> toJson() => _$MonitorDiskIoRateToJson(this);
 }
 
 @JsonSerializable(fieldRename: FieldRename.snake)
