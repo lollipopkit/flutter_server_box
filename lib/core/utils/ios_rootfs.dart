@@ -338,9 +338,19 @@ abstract final class IosRootfs {
       // Says which, rather than naming a cause it does not know. The number
       // reaches here from two errno namespaces — the guest's for an unmount,
       // the host's for a rejected name — so this cannot claim to read it.
+      // The busy case names what to do about it, because there is something
+      // to do and no way for anyone to guess it. A session's task is not
+      // reaped when its shell exits — nothing in the engine waits for one —
+      // and the terminal it took as its controlling terminal is released only
+      // when it is. So the reference outlives the shell, no amount of waiting
+      // here clears it, and restarting the app is what does.
+      //
+      // TODO(engine): remove this advice when a session's terminal is
+      // released without waiting for a reaper. Until then it is the truth.
       throw StateError(
         err == _ebusy
-            ? 'The Linux system is still in use'
+            ? 'The Linux system is still in use. Restarting the app releases '
+                  'it.'
             : 'The Linux system could not be detached ($err)',
       );
     }

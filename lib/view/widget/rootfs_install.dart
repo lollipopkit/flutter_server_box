@@ -196,14 +196,43 @@ Future<bool> removeRootfs(BuildContext context, {LinuxProfile? profile}) async {
     actions: Btnx.cancelRedOk,
   );
   if (confirm != true) return false;
+  if (!context.mounted) return false;
+
+  // Shown because this is not instant and has no business looking like it is:
+  // the engine has to let go of the system's filesystems before the tree can
+  // go, which means waiting on a shell to take SIGHUP and exit, and then
+  // deleting a directory of a few hundred megabytes. Without it a tap did
+  // nothing visible for seconds and then either succeeded silently or
+  // produced an error about something the user had not been told was
+  // happening.
+  //
+  // No answer to give and nothing to cancel: stopping halfway is what leaves
+  // a tree with its `/dev` half unmounted, so there is no barrier dismiss
+  // either. Closed below, whatever happened.
+  unawaited(
+    context.showRoundDialog(
+      title: libL10n.delete,
+      child: const SizedBox(
+        height: 48,
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      barrierDismiss: false,
+      actions: const [],
+    ),
+  );
+
   try {
     await Rootfs.removeProfile(target.id);
   } catch (e, s) {
     // Refused rather than half-done: the tree is still there, and so is
     // whatever was using it. Deleting it anyway is what froze the app.
     Loggers.app.warning('Remove ${target.id}', e, s);
-    if (context.mounted) Toast.error('${libL10n.fail}: $e');
+    if (context.mounted) {
+      context.popDialog();
+      Toast.error('${libL10n.fail}: $e');
+    }
     return false;
   }
+  if (context.mounted) context.popDialog();
   return true;
 }
