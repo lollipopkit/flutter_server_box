@@ -10,6 +10,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:server_box/core/utils/guest_path.dart';
 import 'package:server_box/core/utils/linux_seed.dart';
+import 'package:server_box/core/utils/oci_image.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
 
 /// A Linux userland on iOS, and what it takes to get one.
@@ -230,7 +231,7 @@ abstract final class IosRootfs {
         );
       }
 
-      await _extract(file, dir, onProgress: onProgress);
+      await _extract(file, dir, distro: distro, onProgress: onProgress);
       // Without these `apk` reaches nothing: the guest's sockets work and an
       // address literal is fetched fine, but there is no resolver, so every
       // mirror is a "temporary error" and every package is missing.
@@ -328,14 +329,46 @@ abstract final class IosRootfs {
     await scan();
   }
 
+  /// Puts the downloaded rootfs on disk, whichever shape it came in.
+  ///
+  /// [LinuxDistro.compression] and [LinuxDistro.layout] are two axes because
+  /// they are two decisions: what decompresses the download, and whether what
+  /// falls out is the filesystem or an image describing one.
   static Future<void> _extract(
     File archiveFile,
     Directory into, {
+    required LinuxDistro distro,
     void Function(double? progress)? onProgress,
   }) async {
     final bytes = await archiveFile.readAsBytes();
-    final archive = TarDecoder().decodeBytes(GZipDecoder().decodeBytes(bytes));
+    final outer = TarDecoder().decodeBytes(
+      decompressRootfs(bytes, distro.compression),
+    );
 
+    switch (distro.layout) {
+      case LinuxRootfsLayout.plain:
+        await _unpackTar(outer, into, onProgress: onProgress);
+      case LinuxRootfsLayout.oci:
+        // In order, and each over the last: a later layer's copy of a path
+        // replaces an earlier one's, and its whiteouts delete what earlier
+        // layers put there.
+        for (final layer in ociLayers(outer)) {
+          await _unpackTar(
+            TarDecoder().decodeBytes(ociLayerTar(layer)),
+            into,
+            applyWhiteouts: true,
+            onProgress: onProgress,
+          );
+        }
+    }
+  }
+
+  static Future<void> _unpackTar(
+    Archive archive,
+    Directory into, {
+    bool applyWhiteouts = false,
+    void Function(double? progress)? onProgress,
+  }) async {
     var done = 0;
     for (final entry in archive) {
       done++;
@@ -343,6 +376,30 @@ abstract final class IosRootfs {
         onProgress?.call(0.9 + (done / archive.length) * 0.1);
       }
       final path = into.path.joinPath(entry.name);
+
+      if (applyWhiteouts) {
+        final mark = ociWhiteout(entry.name.split('/').last);
+        if (mark != null) {
+          final parent = Directory(File(path).parent.path);
+          if (mark.opaque) {
+            if (await parent.exists()) {
+              await for (final child in parent.list(followLinks: false)) {
+                await child.delete(recursive: true);
+              }
+            }
+          } else {
+            final target = parent.path.joinPath(mark.deletes!);
+            final dir = Directory(target);
+            if (await dir.exists()) {
+              await dir.delete(recursive: true);
+            } else {
+              final file = File(target);
+              if (await file.exists()) await file.delete();
+            }
+          }
+          continue;
+        }
+      }
 
       // Links as links, never followed. Under `realfs` a guest symlink is
       // resolved inside the guest, so `/bin/sh -> /bin/busybox` means the
@@ -357,6 +414,13 @@ abstract final class IosRootfs {
         continue;
       }
       if (entry.isDirectory) {
+        // The tarball's mode is deliberately not applied. Rocky ships 17
+        // directories at 0555, `/usr/bin` and `/usr/lib` among them, and
+        // `realfs` hands the host's mode straight to the guest — where the
+        // host process is this app rather than root, so uid 0 in the guest
+        // buys nothing and a package manager cannot create its temp files.
+        // Created at the default 0755 instead, which is the one difference
+        // between an image that can install packages here and one that cannot.
         await Directory(path).create(recursive: true);
         continue;
       }

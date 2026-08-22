@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:archive/archive.dart';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:fl_lib/fl_lib.dart';
@@ -7,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/utils/guest_path.dart';
 import 'package:server_box/core/utils/linux_seed.dart';
+import 'package:server_box/core/utils/oci_image.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
 
 /// A Linux userland on Android, and what it takes to get one.
@@ -218,20 +220,7 @@ abstract final class AndroidRootfs {
         );
       }
 
-      // The system's own tar, not a Dart one. It is a system binary so it may
-      // execute, it is far faster on a few thousand files, and — the part that
-      // matters — it restores the symlinks that make `/bin/sh` a name for
-      // busybox. A rootfs whose links became copies is a rootfs of one
-      // program pretending to be two hundred.
-      final untar = await Process.run('/system/bin/tar', [
-        'xzf',
-        archive,
-        '-C',
-        root,
-      ]);
-      if (untar.exitCode != 0) {
-        throw StateError('Could not unpack the rootfs: ${untar.stderr}');
-      }
+      await _unpack(archive, root, distro: distro);
 
       await seedResolvConf(root, nameservers: linuxNameservers());
       await seedRepositories(root, distro: distro, mirror: mirror);
@@ -252,6 +241,152 @@ abstract final class AndroidRootfs {
     } finally {
       final leftover = File(archive);
       if (await leftover.exists()) await leftover.delete();
+    }
+  }
+
+  /// Puts the downloaded rootfs on disk, whichever shape it came in.
+  ///
+  /// The writing is done by the system's own tar, not a Dart one. It is a
+  /// system binary so it may execute, it is far faster on a few thousand
+  /// files, and — the part that matters — it restores the symlinks that make
+  /// `/bin/sh` a name for busybox. A rootfs whose links became copies is a
+  /// rootfs of one program pretending to be two hundred.
+  ///
+  /// It is only ever handed a plain or gzipped tar, though. Anything else is
+  /// decompressed here first, so nothing depends on which compressors a given
+  /// device's toybox happens to have been built with — `-J` in particular is
+  /// not something to discover the absence of on a user's phone.
+  static Future<void> _unpack(
+    String archivePath,
+    String root, {
+    required LinuxDistro distro,
+  }) async {
+    switch (distro.layout) {
+      case LinuxRootfsLayout.plain:
+        if (distro.compression == LinuxRootfsCompression.gzip) {
+          await _tar(archivePath, root, gzip: true);
+        } else {
+          await _withTemp(
+            '$archivePath.tar',
+            decompressRootfs(
+              await File(archivePath).readAsBytes(),
+              distro.compression,
+            ),
+            (path) => _tar(path, root, gzip: false),
+          );
+        }
+      case LinuxRootfsLayout.oci:
+        final image = TarDecoder().decodeBytes(
+          decompressRootfs(
+            await File(archivePath).readAsBytes(),
+            distro.compression,
+          ),
+        );
+        var n = 0;
+        for (final layer in ociLayers(image)) {
+          await _withTemp('$archivePath.layer${n++}', ociLayerTar(layer), (
+            path,
+          ) async {
+            await _tar(path, root, gzip: false);
+            // Between layers, not at the end: a marker in this layer deletes
+            // what the one below it wrote, and the layer above may put the
+            // same path back.
+            await _applyWhiteouts(root);
+          });
+        }
+    }
+    await _makeDirsWritable(root);
+  }
+
+  /// Writes [bytes] to [path], runs [use], and removes it either way.
+  static Future<void> _withTemp(
+    String path,
+    List<int> bytes,
+    Future<void> Function(String path) use,
+  ) async {
+    final file = File(path);
+    await file.writeAsBytes(bytes);
+    try {
+      await use(path);
+    } finally {
+      if (await file.exists()) await file.delete();
+    }
+  }
+
+  static Future<void> _tar(
+    String archivePath,
+    String root, {
+    required bool gzip,
+  }) async {
+    final res = await Process.run('/system/bin/tar', [
+      gzip ? 'xzf' : 'xf',
+      archivePath,
+      '-C',
+      root,
+    ]);
+    if (res.exitCode != 0) {
+      throw StateError('Could not unpack the rootfs: ${res.stderr}');
+    }
+  }
+
+  /// Acts on the whiteout markers tar has just written out as ordinary files.
+  ///
+  /// It writes them as files because that is what they are in the archive;
+  /// only a reader of the image knows one means "delete this". iOS acts on
+  /// them while unpacking, which it can because it walks the entries itself —
+  /// this is the same rule reached from the other side, sharing
+  /// [ociWhiteout] so the two cannot disagree about what a marker is.
+  static Future<void> _applyWhiteouts(String root) async {
+    final markers = <String>[];
+    await for (final entry in Directory(
+      root,
+    ).list(recursive: true, followLinks: false)) {
+      final name = entry.path.split(Platform.pathSeparator).last;
+      if (name.startsWith('.wh.')) markers.add(entry.path);
+    }
+    for (final path in markers) {
+      final mark = ociWhiteout(path.split(Platform.pathSeparator).last);
+      if (mark == null) continue;
+      final parent = File(path).parent;
+      if (mark.opaque) {
+        await for (final child in parent.list(followLinks: false)) {
+          if (child.path == path) continue;
+          await child.delete(recursive: true);
+        }
+      } else {
+        final target = parent.path.joinPath(mark.deletes!);
+        final dir = Directory(target);
+        if (await dir.exists()) {
+          await dir.delete(recursive: true);
+        } else {
+          final file = File(target);
+          if (await file.exists()) await file.delete();
+        }
+      }
+      final marker = File(path);
+      if (await marker.exists()) await marker.delete();
+    }
+  }
+
+  /// Gives every directory back its owner-write bit.
+  ///
+  /// Rocky ships 17 of them at 0555, `/usr/bin` and `/usr/lib` among them.
+  /// proot presents the guest as root but the kernel still checks the app's
+  /// real uid, so a package manager cannot create its temp files there and
+  /// every install fails partway through unpacking — `rpm` reports it as
+  /// `cpio: open failed`, which reads as a broken download.
+  ///
+  /// Not needed on iOS, which creates directories itself and never applies the
+  /// recorded mode; here tar does apply it, so this undoes that much.
+  static Future<void> _makeDirsWritable(String root) async {
+    const ownerWrite = 0x80; // S_IWUSR
+    await for (final entry in Directory(
+      root,
+    ).list(recursive: true, followLinks: false)) {
+      if (entry is! Directory) continue;
+      final mode = (await entry.stat()).mode;
+      if (mode & ownerWrite != 0) continue;
+      chmodGuestFile(entry.path, (mode & 0xfff) | ownerWrite);
     }
   }
 

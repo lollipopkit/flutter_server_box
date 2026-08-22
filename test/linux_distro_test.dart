@@ -42,11 +42,32 @@ void main() {
 
     test('builds its tarball URL under the mirror it is given', () {
       for (final distro in LinuxDistro.values) {
+        if (!distro.rootfsFollowsMirror) continue;
         expect(
           distro.rootfsUrl('https://mirror.example/x'),
           startsWith('https://mirror.example/x/'),
           reason: '${distro.id} must honour a mirror, or the setting does '
               'nothing',
+        );
+      }
+    });
+
+    test('says so when it cannot honour the mirror for its tarball', () {
+      // The exception has to be declared rather than discovered. Ubuntu's base
+      // tarballs are on cdimage and its packages on archive, so one mirror
+      // string cannot name both — and a distribution that quietly ignored the
+      // setting would look identical to one that honoured a broken one.
+      for (final distro in LinuxDistro.values) {
+        if (distro.rootfsFollowsMirror) continue;
+        final url = distro.rootfsUrl('https://mirror.example/x');
+        expect(url, isNot(contains('mirror.example')), reason: distro.id);
+        expect(Uri.parse(url).isScheme('https'), isTrue, reason: distro.id);
+        // The setting still has to reach the packages, which is the half it
+        // was actually set for.
+        expect(
+          distro.repositories('https://mirror.example/x').content,
+          contains('https://mirror.example/x'),
+          reason: distro.id,
         );
       }
     });
@@ -82,6 +103,105 @@ void main() {
     });
   });
 
+  group('how a download is packed', () {
+    test('the file name matches the compression each declares', () {
+      // These two are read before anything looks at the bytes, so a mismatch
+      // is a decoder fed the wrong format rather than a clear failure.
+      for (final distro in LinuxDistro.values) {
+        expect(
+          distro.rootfsUrl(distro.defaultMirror),
+          endsWith(switch (distro.compression) {
+            LinuxRootfsCompression.gzip => '.tar.gz',
+            LinuxRootfsCompression.xz => '.tar.xz',
+          }),
+          reason: distro.id,
+        );
+      }
+    });
+
+    test('only Rocky is an image layout', () {
+      expect(LinuxDistro.alpine.layout, LinuxRootfsLayout.plain);
+      expect(LinuxDistro.ubuntu.layout, LinuxRootfsLayout.plain);
+      // Rocky publishes no plain rootfs tarball, only an OCI image.
+      expect(LinuxDistro.rocky.layout, LinuxRootfsLayout.oci);
+      expect(LinuxDistro.rocky.compression, LinuxRootfsCompression.xz);
+    });
+  });
+
+  group("Ubuntu's sources", () {
+    test('are deb822, which is what 26.04 reads', () {
+      // 26.04 ships `sources.list.d/ubuntu.sources` and an empty
+      // `sources.list`; writing the one-line form to the old path would leave
+      // both in play.
+      final repo = LinuxDistro.ubuntu.repositories('https://m.test/ubuntu');
+      expect(repo.path, 'etc/apt/sources.list.d/ubuntu.sources');
+      expect(repo.content, startsWith('Types: deb\n'));
+    });
+
+    test('name the keyring the image already carries', () {
+      // Without it apt rejects the release file it just fetched, which reads
+      // as a broken mirror rather than a missing setting.
+      expect(
+        LinuxDistro.ubuntu.repositories('https://m.test/ubuntu').content,
+        contains('Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg'),
+      );
+    });
+
+    test('take security from the mirror too, since it is a pocket of it', () {
+      expect(
+        LinuxDistro.ubuntu.repositories('https://m.test/ubuntu').content,
+        contains('resolute-security'),
+      );
+    });
+  });
+
+  group("Rocky's repos", () {
+    test('pin a dated build rather than the moving .latest. file', () {
+      // The same directory offers `Rocky-9-Container-Base.latest.…`, whose
+      // bytes change whenever Rocky rebuilds. The pinned digest does not, so
+      // every install would start failing until the app shipped an update.
+      final url = LinuxDistro.rocky.rootfsUrl(LinuxDistro.rocky.defaultMirror);
+      expect(url, isNot(contains('.latest.')));
+      expect(url, contains('9.8-20260525.0'));
+    });
+
+    test('leave no dnf variable unexpanded', () {
+      // `$basearch` and `$releasever` are dnf's, not Dart's. Written into a
+      // Dart string they would either interpolate to nothing or survive
+      // verbatim, and a baseurl carrying a literal `$basearch` is a silent 404
+      // at the first `dnf install` rather than an error here.
+      final repo = LinuxDistro.rocky.repositories('https://m.test/rocky');
+      expect(repo.path, 'etc/yum.repos.d/rocky.repo');
+      expect(repo.content, isNot(contains(r'$')));
+      expect(repo.content, contains('aarch64'));
+    });
+
+    test('replace the mirrorlist repos an install pulls from', () {
+      final content = LinuxDistro.rocky
+          .repositories('https://m.test/rocky')
+          .content;
+      for (final section in ['[baseos]', '[appstream]', '[crb]']) {
+        expect(content, contains(section));
+      }
+      // Whatever it writes must not reintroduce the service it replaces.
+      expect(content, isNot(contains('mirrorlist')));
+      // CRB is off by default on Rocky; enabling it here would be a change
+      // nobody asked for.
+      expect(content, contains('enabled=0'));
+    });
+
+    test('keep signature checking against the key in the image', () {
+      final content = LinuxDistro.rocky
+          .repositories('https://m.test/rocky')
+          .content;
+      expect(content, contains('gpgcheck=1'));
+      expect(
+        content,
+        contains('gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-Rocky-9'),
+      );
+    });
+  });
+
   group('the marker', () {
     test('round-trips what was installed', () {
       const profile = LinuxProfile(
@@ -96,6 +216,25 @@ void main() {
       expect(read.distro, LinuxDistro.alpine);
       expect(read.version, '3.22.5');
       expect(read.label, 'Build box');
+    });
+
+    test('round-trips every distribution, not just the first one', () {
+      // The marker is read by builds later than the one that wrote it, and a
+      // tree read as the wrong distribution gets the wrong package manager's
+      // files written into it.
+      for (final distro in LinuxDistro.values) {
+        final profile = LinuxProfile(
+          id: 'id-${distro.id}',
+          distro: distro,
+          version: distro.version,
+          label: 'A ${distro.label}',
+        );
+        final read = LinuxProfile.decode(profile.id, profile.encode());
+
+        expect(read.distro, distro, reason: distro.id);
+        expect(read.version, distro.version, reason: distro.id);
+        expect(read.label, 'A ${distro.label}', reason: distro.id);
+      }
     });
 
     test('takes the id from the directory, never from the file', () {
