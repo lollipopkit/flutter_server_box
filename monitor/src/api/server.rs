@@ -183,6 +183,34 @@ struct ErrorResponse {
     error: String,
 }
 
+fn unauthorized_response() -> HttpResponse {
+    HttpResponse::Unauthorized().json(&ErrorResponse {
+        error: "Invalid or missing token".to_string(),
+    })
+}
+
+/// Require a full panel JWT and return its claims. The early response stays
+/// identical across handlers, while the macro makes endpoints that need the
+/// subject just as explicit as endpoints that only need authentication.
+macro_rules! require_jwt {
+    ($req:expr, $app_state:expr) => {{
+        match verify_auth($req, &$app_state.config.get_jwt_secret()) {
+            Ok(claims) => claims,
+            Err(_) => return Ok(unauthorized_response()),
+        }
+    }};
+}
+
+/// Require either a full panel JWT or a paired Watch read token.
+macro_rules! require_read_access {
+    ($req:expr, $app_state:expr) => {{
+        match verify_read_auth($req, $app_state).await {
+            Ok(subject) => subject,
+            Err(_) => return Ok(unauthorized_response()),
+        }
+    }};
+}
+
 pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
     let server_config = app_state.config.get_server();
     let bind_addr = format!("{}:{}", server_config.host, server_config.port);
@@ -429,14 +457,7 @@ async fn issue_watch_token(
     app_state: web::types::State<Arc<AppState>>,
     payload: web::types::Json<WatchTokenRequest>,
 ) -> Result<HttpResponse> {
-    let claims = match verify_auth(&req, &app_state.config.get_jwt_secret()) {
-        Ok(claims) => claims,
-        Err(_) => {
-            return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
-                error: "Invalid or missing token".to_string(),
-            }));
-        }
-    };
+    let claims = require_jwt!(&req, &app_state);
     let client_id = validate_watch_client_id(&payload.client_id)?;
     let token = format!("sbw_{}", crate::utils::secrets::random_hex(32)?);
     let token_hash = watch_token_hash(&token);
@@ -464,14 +485,7 @@ async fn revoke_watch_token(
     app_state: web::types::State<Arc<AppState>>,
     payload: web::types::Json<WatchTokenRequest>,
 ) -> Result<HttpResponse> {
-    let claims = match verify_auth(&req, &app_state.config.get_jwt_secret()) {
-        Ok(claims) => claims,
-        Err(_) => {
-            return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
-                error: "Invalid or missing token".to_string(),
-            }));
-        }
-    };
+    let claims = require_jwt!(&req, &app_state);
     let client_id = validate_watch_client_id(&payload.client_id)?;
     sqlx::query("DELETE FROM watch_tokens WHERE subject = ? AND client_id = ?")
         .bind(&claims.sub)
@@ -511,12 +525,7 @@ async fn get_status(
     req: HttpRequest,
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse> {
-    // Verify JWT token
-    if verify_read_auth(&req, &app_state).await.is_err() {
-        return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
-            error: "Invalid or missing token".to_string(),
-        }));
-    }
+    require_read_access!(&req, &app_state);
     touch_viewer_heartbeat(&app_state).await;
 
     let metrics = app_state.current_metrics.read().await;
@@ -558,12 +567,7 @@ async fn get_metrics(
     req: HttpRequest,
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse> {
-    // Verify JWT token
-    if verify_read_auth(&req, &app_state).await.is_err() {
-        return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
-            error: "Invalid or missing token".to_string(),
-        }));
-    }
+    require_read_access!(&req, &app_state);
     touch_viewer_heartbeat(&app_state).await;
 
     let metrics = app_state.current_metrics.read().await;
@@ -612,11 +616,7 @@ struct RemoteAccessView {
 }
 
 async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
-    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
-        return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
-            error: "Invalid or missing token".to_string(),
-        }));
-    }
+    require_jwt!(&req, &app_state);
     let platform = monitoring::system_type();
     let capabilities = monitoring::effective_capabilities(platform);
     let secure = ws::is_secure_transport(&req, app_state.tls_active);
@@ -642,15 +642,7 @@ async fn issue_ws_ticket(
     app_state: web::types::State<Arc<AppState>>,
     payload: web::types::Json<TicketRequest>,
 ) -> Result<HttpResponse> {
-
-    let claims = match verify_auth(&req, &app_state.config.get_jwt_secret()) {
-        Ok(claims) => claims,
-        Err(_) => {
-            return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
-                error: "Invalid or missing token".to_string(),
-            }));
-        }
-    };
+    let claims = require_jwt!(&req, &app_state);
 
     let remote_ip = audit::peer_ip(&req);
     if payload.into_inner().purpose != Purpose::Terminal {
@@ -729,11 +721,7 @@ struct SettingsView {
 const SETTINGS_LIVE_FIELDS: &[&str] = &["extended_interval_secs", "idle_pause_enabled", "idle_pause_threshold_secs"];
 
 async fn get_settings(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
-    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
-        return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
-            error: "Invalid or missing token".to_string(),
-        }));
-    }
+    require_jwt!(&req, &app_state);
 
     let file_config = match config_file::read() {
         Ok(c) => c,
@@ -774,11 +762,7 @@ async fn update_settings(
     app_state: web::types::State<Arc<AppState>>,
     payload: web::types::Json<SettingsPayload>,
 ) -> Result<HttpResponse> {
-    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
-        return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
-            error: "Invalid or missing token".to_string(),
-        }));
-    }
+    require_jwt!(&req, &app_state);
     let payload = payload.into_inner();
 
     if payload.interval_seconds < 1 {
@@ -855,14 +839,7 @@ async fn disable_full_access(
     req: HttpRequest,
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse> {
-    let claims = match verify_auth(&req, &app_state.config.get_jwt_secret()) {
-        Ok(claims) => claims,
-        Err(_) => {
-            return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
-                error: "Invalid or missing token".to_string(),
-            }));
-        }
-    };
+    let claims = require_jwt!(&req, &app_state);
 
     let _config_guard = app_state.config_write.lock().await;
     let mut config = match config_file::read() {
@@ -900,11 +877,7 @@ struct CardOrderPayload {
 }
 
 async fn get_card_order(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
-    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
-        return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
-            error: "Invalid or missing token".to_string(),
-        }));
-    }
+    require_jwt!(&req, &app_state);
     let file_config = match config_file::read() {
         Ok(c) => c,
         Err(e) => {
@@ -920,11 +893,7 @@ async fn update_card_order(
     app_state: web::types::State<Arc<AppState>>,
     payload: web::types::Json<CardOrderPayload>,
 ) -> Result<HttpResponse> {
-    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
-        return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
-            error: "Invalid or missing token".to_string(),
-        }));
-    }
+    require_jwt!(&req, &app_state);
     let _config_guard = app_state.config_write.lock().await;
 
     let mut config = match config_file::read() {
@@ -966,11 +935,7 @@ async fn get_metrics_history(
     req: HttpRequest,
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse> {
-    if verify_read_auth(&req, &app_state).await.is_err() {
-        return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
-            error: "Invalid or missing token".to_string(),
-        }));
-    }
+    require_read_access!(&req, &app_state);
 
     let minutes: i64 = req
         .query_string()
@@ -1035,12 +1000,7 @@ async fn get_velocity(
     req: HttpRequest,
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse> {
-    // Verify JWT token
-    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
-        return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
-            error: "Invalid or missing token".to_string(),
-        }));
-    }
+    require_jwt!(&req, &app_state);
 
     let server_name = app_state.config.get_server_name();
 
@@ -1089,12 +1049,7 @@ async fn get_velocity_history(
     req: HttpRequest,
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse> {
-    // Verify JWT token
-    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
-        return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
-            error: "Invalid or missing token".to_string(),
-        }));
-    }
+    require_jwt!(&req, &app_state);
 
     let query = web::types::Query::<serde_json::Value>::from_query(req.query_string())
         .unwrap_or_else(|_| web::types::Query(serde_json::Value::Object(serde_json::Map::new())));
