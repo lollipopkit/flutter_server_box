@@ -12,7 +12,6 @@ import 'package:server_box/data/helper/ssh_decoder.dart';
 import 'package:server_box/data/helper/system_detector.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
-import 'package:server_box/data/model/app/scripts/script_consts.dart';
 import 'package:server_box/data/model/app/scripts/shell_func.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
 import 'package:server_box/data/model/server/connect_credential.dart';
@@ -959,9 +958,7 @@ class ServerNotifier extends _$ServerNotifier {
       //
       // Empty output is only a failure if the server was asked for anything.
       // A host with every status command disabled legitimately returns nothing.
-      final hasSegment =
-          raw.contains(ScriptConstants.separator) ||
-          raw.contains(ScriptConstants.customCmdSep);
+      final hasSegment = ffi.containsScriptSegment(raw: raw);
       if (!hasSegment && _hasEnabledStatusCommands(spi, state.status.system)) {
         if (Stores.setting.keepStatusWhenErr.fetch()) {
           // Keep previous server status when error occurs
@@ -1085,7 +1082,7 @@ class ServerNotifier extends _$ServerNotifier {
       // *new* one would find them still within the interval and merge them
       // into its status.
       if (!_isRefreshCurrent(operation, spi)) return _extendedRaw;
-      if (raw.contains(ScriptConstants.separator)) _extendedRaw = raw;
+      if (ffi.containsStatusSegment(raw: raw)) _extendedRaw = raw;
     } catch (e, s) {
       Loggers.app.warning('Extended status for ${spi.name} failed', e, s);
     }

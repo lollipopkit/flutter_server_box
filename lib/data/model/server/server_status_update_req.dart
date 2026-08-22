@@ -18,6 +18,7 @@ import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/temp.dart';
 import 'package:server_box/data/res/status.dart';
 import 'package:server_box/src/rust/api/parser.dart' as ffi;
+import 'package:server_box/src/rust/api/script.dart' as script_ffi;
 
 class ServerStatusUpdateReq {
   final ServerStatus ss;
@@ -78,10 +79,10 @@ Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
   // commands live on the server now, so their names and their order are only
   // knowable from the output.
   _apply('custom', () {
-    const prefix = '${ScriptConstants.customCmdSep}.';
     for (final e in req.parsedOutput.entries) {
-      if (!e.key.startsWith(prefix)) continue;
-      ss.customCmds[e.key.substring(prefix.length)] = e.value;
+      final name = script_ffi.customResultName(key: e.key);
+      if (name == null) continue;
+      ss.customCmds[name] = e.value;
     }
   });
 
