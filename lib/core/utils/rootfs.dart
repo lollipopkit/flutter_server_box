@@ -86,6 +86,40 @@ abstract final class Rootfs {
     return profile.version != current.version;
   }
 
+  /// What an install would put on the device, as one answer rather than two
+  /// that could disagree.
+  ///
+  /// Three cases, and the middle one is the whole reason this is not written
+  /// inline at the call site:
+  ///
+  /// - replacing [into]: its own distribution, and the newest build of the
+  ///   series already there. Never another series — an install replaces the
+  ///   tree and destroys everything in it, so crossing that line would be a
+  ///   migration wearing an update's clothes. If that series is gone from the
+  ///   manifest there is nothing to update to, so the preferred release is
+  ///   the only remaining answer and the caller's dialog names it.
+  /// - [picked] by the user: taken as given, distribution and release
+  ///   together. They arrive together because a release does not name its
+  ///   distribution, and pairing a release from one with a distribution read
+  ///   back out of a setting is how they come to disagree.
+  /// - neither: the distribution the settings point at, and its preferred
+  ///   release.
+  static ({LinuxDistro distro, RootfsRelease release}) target({
+    LinuxProfile? into,
+    ({LinuxDistro distro, RootfsRelease release})? picked,
+  }) {
+    if (into != null) {
+      final distro = into.distro;
+      return (
+        distro: distro,
+        release: distro.info.newestIn(into.branch) ?? distro.preferred,
+      );
+    }
+    if (picked != null) return picked;
+    final distro = nextDistro;
+    return (distro: distro, release: distro.preferred);
+  }
+
   /// How many terminals are open in [profile], where that can be asked.
   ///
   /// iOS only: its sessions live in one engine that can be asked. Android runs

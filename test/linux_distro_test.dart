@@ -433,6 +433,74 @@ void main() {
     });
   });
 
+  group('what an install would put on the device', () {
+    LinuxProfile of(LinuxDistro distro, String version, String branch) =>
+        LinuxProfile(
+          id: distro.id,
+          distro: distro,
+          version: version,
+          label: distro.label,
+          branch: branch,
+        );
+
+    test('a pick is taken as given, distribution and release together', () {
+      final release = LinuxDistro.ubuntu.releases.last;
+      final target = Rootfs.target(
+        picked: (distro: LinuxDistro.ubuntu, release: release),
+      );
+
+      expect(target.distro, LinuxDistro.ubuntu);
+      expect(target.release, same(release));
+      // Not the preferred one. Choosing 24.04 and being given 26.04 is the
+      // failure this pairing exists to make impossible.
+      expect(target.release, isNot(same(LinuxDistro.ubuntu.preferred)));
+    });
+
+    test('a replacement stays in the series already installed', () {
+      // An install replaces the tree and destroys everything in it, so
+      // answering with a different series would be a migration wearing an
+      // update's clothes — and it would be doing it to someone who tapped a
+      // button labelled "update".
+      for (final distro in LinuxDistro.values) {
+        for (final release in distro.releases) {
+          final target = Rootfs.target(
+            into: of(distro, '0.0.1', release.branch),
+          );
+
+          expect(target.distro, distro);
+          expect(target.release.branch, release.branch, reason: distro.id);
+          expect(target.release.version, release.version, reason: distro.id);
+        }
+      }
+    });
+
+    test('a replacement ignores what was picked for something else', () {
+      // Both can be set: the settings page picks for a new system, and the
+      // same function answers for the update button. The profile wins.
+      final target = Rootfs.target(
+        into: of(LinuxDistro.ubuntu, '24.04.1', 'noble'),
+        picked: (
+          distro: LinuxDistro.alpine,
+          release: LinuxDistro.alpine.preferred,
+        ),
+      );
+
+      expect(target.distro, LinuxDistro.ubuntu);
+      expect(target.release.branch, 'noble');
+    });
+
+    test('a system whose series is gone falls back to the preferred one', () {
+      // Nothing to update to. The dialog names what it would install, so the
+      // user sees that this is a different release before answering — which
+      // is why this answers at all rather than throwing.
+      final target = Rootfs.target(
+        into: of(LinuxDistro.alpine, '3.19.1', 'v3.19'),
+      );
+
+      expect(target.release, same(LinuxDistro.alpine.preferred));
+    });
+  });
+
   group('the marker', () {
     test('round-trips what was installed', () {
       const profile = LinuxProfile(

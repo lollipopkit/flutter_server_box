@@ -203,14 +203,12 @@ extension _Linux on _AppSettingsPageState {
       if (label == null || !mounted) return;
     }
 
+    // What a *later* install with nothing picked would default to, which is
+    // the only thing this setting decides. What is being installed now is
+    // passed, not read back out of here.
     _setting.linuxDistro.put(distro.id);
     // Another, beside whatever is there — not "one if there is none".
-    await installRootfs(
-      context,
-      release: picked.release,
-      another: true,
-      label: label,
-    );
+    await installRootfs(context, picked: picked, another: true, label: label);
     refresh();
   }
 

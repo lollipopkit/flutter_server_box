@@ -28,7 +28,7 @@ import 'package:server_box/data/res/store.dart';
 Future<bool> installRootfs(
   BuildContext context, {
   LinuxProfile? into,
-  RootfsRelease? release,
+  ({LinuxDistro distro, RootfsRelease release})? picked,
   bool another = false,
   String? label,
 }) async {
@@ -57,15 +57,11 @@ Future<bool> installRootfs(
   if (!await _confirmBeta(context)) return present || selected != null;
   if (!context.mounted) return false;
 
-  final distro = into?.distro ?? Rootfs.nextDistro;
-
-  // Which release. Replacing an existing system stays in its own series —
-  // that is what makes it a replacement rather than a migration — so it takes
-  // the newest build of the one already installed. A fresh install takes what
-  // the caller chose, or the preferred one when nobody chose.
-  final chosen = into == null
-      ? (release ?? distro.preferred)
-      : (distro.info.newestIn(into.branch) ?? distro.preferred);
+  // What is being installed, decided in one place — see `Rootfs.target` for
+  // why a replacement never crosses into another series.
+  final target = Rootfs.target(into: into, picked: picked);
+  final distro = target.distro;
+  final chosen = target.release;
 
   final confirm = await context.showRoundDialog<bool>(
     // Capitalised: the shared string is a verb used mid-sentence elsewhere,
