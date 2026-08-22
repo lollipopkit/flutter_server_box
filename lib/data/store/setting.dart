@@ -529,6 +529,37 @@ class SettingStore extends SqliteStore {
     false,
   );
 
+  /// The highest rootfs-manifest serial this device has accepted.
+  ///
+  /// A signature stays valid for as long as the key does, so verifying one
+  /// does not make it current. Refusing a serial below this is what stops an
+  /// old signed manifest being replayed to pin a device to a rootfs whose
+  /// problems are known.
+  ///
+  /// Device-local bookkeeping, so it does not stamp the sync clock: which
+  /// manifest a phone has seen is not an edit anyone made.
+  late final rootfsManifestSerial = propertyDefault(
+    'rootfsManifestSerial',
+    0,
+    updateLastModified: false,
+  );
+
+  /// The last manifest that verified, and its signature, base64.
+  ///
+  /// Both, because the cache is re-verified when it is read rather than
+  /// trusted for having once been verified — it sits in app storage, and
+  /// re-checking 64 bytes costs nothing next to believing whatever is there.
+  late final rootfsManifestCache = propertyDefault(
+    'rootfsManifestCache',
+    '',
+    updateLastModified: false,
+  );
+  late final rootfsManifestCacheSig = propertyDefault(
+    'rootfsManifestCacheSig',
+    '',
+    updateLastModified: false,
+  );
+
   /// Hide the Linux beta warning, which is asked before an install.
   ///
   /// Separate from [portForwardBetaWarned] rather than one flag for every beta
