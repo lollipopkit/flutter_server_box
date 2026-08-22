@@ -57,6 +57,13 @@ Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/rel
 
 - [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) 是安装在你服务器上的 agent。不打开 ServerBox app 时仍需工作的功能都依赖它 —— **推送服务**、**桌面小部件** 和 **手表 app**；它同时也是添加服务器的第二种方式：app 可以经 HTTP 而不是 SSH 访问它，适用于不便暴露 SSH 端口的主机，并且图表在 app 首次连接前就已有历史数据。它自己还提供一个网页面板。安装方法和各个远程访问开关的含义详见其[中文文档](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/README_zh.md)。  
 - **常见问题** 可以在 [app wiki](https://github.com/lollipopkit/flutter_server_box/wiki/主页) 查看。
+- **让 AI agent 帮你？** 本仓库带了一份 skill：安装和使用 app、部署与配置 monitor agent、搭建 Flutter + Rust + Node 开发环境，以及能解释掉大部分「这台服务器为什么不能做 X」的那几条事实。用下面的命令装进你用的 agent：
+
+  ```sh
+  npx skills add lollipopkit/flutter_server_box
+  ```
+
+  内容在 [`.claude/skills/serverbox-onboarding`](.claude/skills/serverbox-onboarding)，装之前可以先读它到底会告诉你的 agent 什么。
 
 反馈前须知：
 

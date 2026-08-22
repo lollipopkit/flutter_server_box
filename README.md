@@ -53,6 +53,13 @@ Please only download pkgs from the source that **you trust**!
 
 - [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) is an agent you install on your servers. It is required for anything that has to work while the app is closed — **message push**, **home widgets** and the **watch app** — and it is also a second way to add a server: the app can reach it over HTTP instead of SSH, which suits hosts whose SSH port you would rather not expose, and gives charts a history from before the app ever connected. It serves a web panel of its own too. See its [README](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/README.md) for setup and for what each remote-access switch grants.
 - **Common issues** can be found in [app wiki](https://github.com/lollipopkit/flutter_server_box/wiki).
+- **Asking an AI agent?** This repository ships a skill that orients one: installing and using the app, deploying and configuring the monitor agent, bootstrapping the Flutter + Rust + Node environment, and the few facts that explain most "why can't I do X on this server" questions. Add it to whichever agent you use with
+
+  ```sh
+  npx skills add lollipopkit/flutter_server_box
+  ```
+
+  The source is [`.claude/skills/serverbox-onboarding`](.claude/skills/serverbox-onboarding), so you can read what it will tell your agent before installing it.
 
 Before you open an issue, please read the following:
 
