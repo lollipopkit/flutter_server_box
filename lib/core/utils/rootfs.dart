@@ -8,6 +8,7 @@ import 'package:server_box/core/utils/ios_rootfs.dart';
 import 'package:server_box/core/utils/linux_seed.dart';
 import 'package:server_box/core/utils/rootfs_manifest_source.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
+import 'package:server_box/data/model/app/linux_distros.dart';
 
 /// The Linux system this app can offer, whichever way it gets one.
 ///
@@ -54,8 +55,23 @@ abstract final class Rootfs {
 
   /// Whether [profile] is older than what this build would install. Per
   /// profile, since they are of different distributions and different ages.
-  static bool isOutdated(LinuxProfile profile) =>
-      isAndroid && AndroidRootfs.isProfileOutdated(profile);
+  ///
+  /// This used to answer `isAndroid && …`, and that was right when it was
+  /// written: `IosRootfs.version` was a compile-time constant then, so iOS did
+  /// not record what was actually on disk and could not answer the question at
+  /// all. Both platforms have written a versioned marker since profiles
+  /// arrived, and what answers it — two fields of a [LinuxProfile] compared —
+  /// has nothing platform-specific in it. The gate was residue, and it meant
+  /// iOS never offered an update for a system that had one.
+  ///
+  /// False when the manifest no longer describes the distribution. There is
+  /// nothing to offer as an update, and asking for a version would throw
+  /// rather than guess at one.
+  static bool isOutdated(LinuxProfile profile) {
+    final described = LinuxDistros.describe(profile.distro);
+    if (described == null) return false;
+    return profile.version != described.version;
+  }
 
   /// Locates both, so a caller does not have to ask which platform it is on.
   static Future<void> prepare() async {

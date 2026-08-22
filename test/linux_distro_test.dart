@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/utils/rootfs.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/linux_distros.dart';
 import 'package:server_box/data/model/app/rootfs_manifest.dart';
@@ -254,6 +255,54 @@ void main() {
         content,
         contains('gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-Rocky-9'),
       );
+    });
+  });
+
+  group('whether a profile is outdated', () {
+    LinuxProfile of(LinuxDistro distro, String version) => LinuxProfile(
+      id: distro.id,
+      distro: distro,
+      version: version,
+      label: distro.label,
+    );
+
+    test('it is the version, not the platform, that decides', () {
+      // This answered `isAndroid && …` until the gate was found to be residue.
+      // It was right when written — IosRootfs.version was a compile-time
+      // constant then, so iOS recorded nothing about what was on disk — and
+      // wrong ever since profiles started carrying a versioned marker on both
+      // platforms. iOS never offered an update for a system that had one.
+      //
+      // Nothing here is platform-specific, which is the point: the same two
+      // fields decide it wherever the test runs.
+      for (final distro in LinuxDistro.values) {
+        expect(Rootfs.isOutdated(of(distro, distro.version)), isFalse,
+            reason: '${distro.id} matches what would be installed');
+        expect(Rootfs.isOutdated(of(distro, '0.0.1')), isTrue,
+            reason: '${distro.id} is older than what would be installed');
+      }
+    });
+
+    test('a distribution the manifest no longer describes is not outdated', () {
+      // A marker outlives any manifest that stops describing its distribution.
+      // There is nothing to offer as an update, and asking for a version would
+      // throw rather than guess.
+      LinuxDistros.adoptForTest(
+        RootfsManifest.parse(
+          File('assets/rootfs_manifest.json')
+              .readAsStringSync()
+              .replaceFirst('"rocky": {', '"rocky-gone": {'),
+        ),
+      );
+      addTearDown(() {
+        LinuxDistros.adoptForTest(
+          RootfsManifest.parse(
+            File('assets/rootfs_manifest.json').readAsStringSync(),
+          ),
+        );
+      });
+
+      expect(Rootfs.isOutdated(of(LinuxDistro.rocky, '0.0.1')), isFalse);
     });
   });
 

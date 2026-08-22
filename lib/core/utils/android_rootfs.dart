@@ -130,16 +130,6 @@ abstract final class AndroidRootfs {
     return _profiles.firstWhereOrNull((e) => e.id == id) ?? _profiles.first;
   }
 
-  /// Whether [profile] is an older release than this build would install.
-  ///
-  /// Per profile, because they are of different distributions and of different
-  /// ages. Not acted on by itself: replacing one means downloading it again and
-  /// losing everything `apk add` put in the old tree, which is the user's call.
-  ///
-  /// A version of `0` is what a marker written before versions reads as.
-  static bool isProfileOutdated(LinuxProfile profile) =>
-      profile.version != profile.distro.version;
-
   /// Locates proot and the rootfs. Call once, before anything asks.
   static Future<void> prepare() async {
     if (!isAndroid) return;
