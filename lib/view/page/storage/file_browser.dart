@@ -19,7 +19,6 @@ import 'package:server_box/view/page/storage/file_pane.dart';
 import 'package:server_box/view/page/storage/send_to.dart';
 import 'package:server_box/view/page/storage/transfer_announce.dart';
 import 'package:server_box/view/widget/omit_start_text.dart';
-import 'package:server_box/view/widget/page_issue.dart';
 import 'package:server_box/view/widget/unix_perm.dart';
 
 /// What an injected action is allowed to do to the browser it sits in.
@@ -853,6 +852,17 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
 
     final actions = <Widget>[
       ...?widget.args.extraActions?.call(this),
+      // The same menu a right-click on the directory gives — new folder, new
+      // file, and bringing one in from outside — where it can be seen. It was
+      // reachable only by secondary tap, which a phone does not have, so on
+      // every mobile build the one visible `+` in this tab belonged to the
+      // *server* list and adding a file had no button at all.
+      if (!widget.args.isPickFile && !widget.args.isPickDir)
+        Btn.icon(
+          text: libL10n.add,
+          icon: const Icon(Icons.add),
+          onTap: () => showContextMenu(context, _createActions),
+        ),
       _buildViewBtn(),
       Btn.icon(text: libL10n.search, icon: const Icon(Icons.search), onTap: _showSearch),
       if (isDesktop)
@@ -1231,9 +1241,16 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
             ).cardx;
           }
           if (items.isEmpty) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Center(child: Text(libL10n.empty, style: UIs.textGrey)),
+            // The mark this tab uses for an empty surface, not a word. The row
+            // above says where you are and how to leave; a sentence here would
+            // be describing what the reader is already looking at.
+            //
+            // The failed *search* below keeps its words: "nothing matched" and
+            // "this place is empty" are different things, and only one of them
+            // is a state of the directory.
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 32),
+              child: EmptyMark(icon: Icons.folder_open),
             );
           }
           return _buildEntry(items[index - up], narrow: narrow);

@@ -249,9 +249,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentMonitorOptional => 'Monitor 代理（可选）';
 
   @override
-  String get atLeastOneTab => '至少需要选择一个标签';
-
-  @override
   String get authFailTip => '认证失败，请检查连接信息是否正确';
 
   @override
@@ -425,6 +422,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get discoverySettings => '发现设置';
 
   @override
+  String get distro => '发行版';
+
+  @override
+  String distroSwitchTip(Object from, Object to) {
+    return '用 $to 替换 $from。$from 里装过的所有东西都会被删除,然后下载并解包 $to。';
+  }
+
+  @override
   String get diskHealth => '磁盘健康';
 
   @override
@@ -460,7 +465,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get doubleColumnTip => '此选项仅用于启用该功能，是否生效取决于设备宽度';
 
   @override
-  String get editVirtKeys => '编辑虚拟按键';
+  String get editVirtKeys => '虚拟按键';
 
   @override
   String get editorHighlightTip => '代码高亮功能可能影响性能，可选择关闭。';
@@ -495,7 +500,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fileDirGoneTip => '它已被删除或重命名。使用下方的按钮返回、回到主目录，或跳转到其他位置。';
 
   @override
-  String get fullScreen => '全屏模式';
+  String get fullScreen => '全屏';
 
   @override
   String get fullScreenJitter => '全屏模式抖动';
@@ -649,6 +654,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get letterCacheTip => '开启后，输入内容会经过普通输入法，这样可避免部分系统在终端弹出安全键盘';
 
   @override
+  String get linuxShellTip =>
+      '交互式终端用什么 shell 启动。Alpine 没有 chsh,系统里也没有东西读 /etc/passwd,所以只有这里说了算。一次性命令仍然走 /bin/sh,因为 app 和 Agent 写的是 POSIX。留空恢复 /bin/sh。';
+
+  @override
+  String get linuxNetTip =>
+      'Linux 系统及其软件包从哪里下载,以及写入其中的 DNS 服务器。留空恢复默认值。保存时会一并改写已安装系统中的对应文件。';
+
+  @override
   String madeWithLove(Object myGithub) {
     return '用❤️制作 by $myGithub';
   }
@@ -663,6 +676,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String mismatchSystem(Object system) {
     return '系统不匹配：$system';
   }
+
+  @override
+  String get mirror => '镜像';
 
   @override
   String get needRestart => '需要重启 App';
@@ -959,7 +975,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sshHostKeyType => 'SSH 主机密钥类型';
 
   @override
-  String get sshKnownHostKeys => '已信任的主机密钥';
+  String get sshKnownHostKeys => '已信任的主机';
 
   @override
   String get sshKnownHostKeysTip => '本 app 已接受的主机密钥。删掉一条,下次连接时会重新询问。';
@@ -1059,6 +1075,36 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtKeyHelpSFTP => '在 SFTP 中打开当前路径。';
+
+  @override
+  String get virtKeyHelpSnippet => '选择一个代码片段并在当前终端执行。';
+
+  @override
+  String get virtKeyHelpTmux => '在 tmux 的 session 和 window 之间切换。';
+
+  @override
+  String get virtKeyIntroActions => '快捷操作';
+
+  @override
+  String get virtKeyIntroActionsTip => '这些键不输入字符，而是打开对应功能。长按可查看说明。';
+
+  @override
+  String get virtKeyIntroCustomizeTip => '在终端设置里可以调整顺序，或隐藏用不到的键。';
+
+  @override
+  String get virtKeyIntroModifiers => '修饰键';
+
+  @override
+  String get virtKeyIntroModifiersTip => '点一下开启，再按键盘上的字母。开启状态只作用于下一个键。';
+
+  @override
+  String get virtKeyIntroNav => '光标移动';
+
+  @override
+  String get virtKeyIntroNavTip => '这些键移动光标。长按方向键可连续触发。';
+
+  @override
+  String get virtKeyIntroSelect => '终端有内容可滚动时，横向拖动即可选中文字。';
 
   @override
   String get waitConnection => '请等待连接建立';
@@ -1549,9 +1595,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get agentMonitorOptional => 'Monitor 代理（選填）';
 
   @override
-  String get atLeastOneTab => '至少需要選擇一個標籤';
-
-  @override
   String get authFailTip => '認證失敗，請檢查連線資訊是否正確';
 
   @override
@@ -1725,6 +1768,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get discoverySettings => '發現設定';
 
   @override
+  String get distro => '發行版';
+
+  @override
+  String distroSwitchTip(Object from, Object to) {
+    return '以 $to 取代 $from。$from 裡安裝過的所有東西都會被刪除,然後下載並解壓 $to。';
+  }
+
+  @override
   String get diskHealth => '磁碟健康';
 
   @override
@@ -1760,7 +1811,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get doubleColumnTip => '此選項僅用於啟用此功能，是否生效取決於裝置寬度';
 
   @override
-  String get editVirtKeys => '編輯虛擬按鍵';
+  String get editVirtKeys => '虛擬按鍵';
 
   @override
   String get editorHighlightTip => '程式碼高亮功能可能影響效能，可選擇性關閉。';
@@ -1795,7 +1846,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get fileDirGoneTip => '它已被刪除或重新命名。使用下方的按鈕返回、回到主目錄，或跳轉到其他位置。';
 
   @override
-  String get fullScreen => '全螢幕模式';
+  String get fullScreen => '全螢幕';
 
   @override
   String get fullScreenJitter => '全螢幕模式抖動';
@@ -1949,6 +2000,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get letterCacheTip => '開啟後，輸入內容會經過一般輸入法，這樣可避免部分系統在終端彈出安全鍵盤。';
 
   @override
+  String get linuxShellTip =>
+      '互動式終端使用什麼 shell 啟動。Alpine 沒有 chsh,系統裡也沒有東西讀 /etc/passwd,所以只有這裡說了算。一次性命令仍然走 /bin/sh,因為 app 和 Agent 寫的是 POSIX。留空可恢復 /bin/sh。';
+
+  @override
+  String get linuxNetTip =>
+      'Linux 系統及其套件從何處下載,以及寫入其中的 DNS 伺服器。留空可恢復預設值。儲存時會一併改寫已安裝系統中的對應檔案。';
+
+  @override
   String madeWithLove(Object myGithub) {
     return '用❤️製作 by $myGithub';
   }
@@ -1963,6 +2022,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String mismatchSystem(Object system) {
     return '系統不匹配：$system';
   }
+
+  @override
+  String get mirror => '鏡像';
 
   @override
   String get needRestart => '需要重開 App';
@@ -2259,7 +2321,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get sshHostKeyType => 'SSH 主機金鑰類型';
 
   @override
-  String get sshKnownHostKeys => '已信任的主機金鑰';
+  String get sshKnownHostKeys => '已信任的主機';
 
   @override
   String get sshKnownHostKeysTip => '本 app 已接受的主機金鑰。刪掉一條,下次連線時會重新詢問。';
@@ -2359,6 +2421,36 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtKeyHelpSFTP => '在 SFTP 中打開目前路徑。';
+
+  @override
+  String get virtKeyHelpSnippet => '選擇一個程式碼片段並在目前終端機執行。';
+
+  @override
+  String get virtKeyHelpTmux => '在 tmux 的 session 和 window 之間切換。';
+
+  @override
+  String get virtKeyIntroActions => '快捷操作';
+
+  @override
+  String get virtKeyIntroActionsTip => '這些鍵不輸入字元，而是開啟對應功能。長按可檢視說明。';
+
+  @override
+  String get virtKeyIntroCustomizeTip => '在終端機設定裡可以調整順序，或隱藏用不到的鍵。';
+
+  @override
+  String get virtKeyIntroModifiers => '修飾鍵';
+
+  @override
+  String get virtKeyIntroModifiersTip => '點一下開啟，再按鍵盤上的字母。開啟狀態只作用於下一個鍵。';
+
+  @override
+  String get virtKeyIntroNav => '游標移動';
+
+  @override
+  String get virtKeyIntroNavTip => '這些鍵移動游標。長按方向鍵可連續觸發。';
+
+  @override
+  String get virtKeyIntroSelect => '終端機有內容可捲動時，橫向拖曳即可選取文字。';
 
   @override
   String get waitConnection => '請等待連線建立';

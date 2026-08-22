@@ -645,9 +645,12 @@ async fn issue_ws_ticket(
     let claims = require_jwt!(&req, &app_state);
 
     let remote_ip = audit::peer_ip(&req);
-    if payload.into_inner().purpose != Purpose::Terminal {
-        unreachable!("Purpose only has the terminal variant");
-    }
+    // The purpose is read and dropped: `Purpose` has one variant, so there is
+    // nothing to branch on. It used to be compared and the mismatch declared
+    // `unreachable!()` — a panic guarding a value that arrives in a request
+    // body, which a second variant would have turned into a way to kill the
+    // worker with a POST. Everything below names `Purpose::Terminal` outright.
+    let _ = payload.into_inner();
     let available = app_state
         .remote_access
         .terminal

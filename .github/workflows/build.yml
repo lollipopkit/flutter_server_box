@@ -331,6 +331,22 @@ jobs:
           fi
 
           echo "BUILD_NUMBER=$build" >> "$GITHUB_ENV"
+      - name: Turn the Linux engine on
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Untracked by design. ios/Flutter/Ish.xcconfig defaults SBM_ISH to
+          # 0 so that a checkout which has not built the engine cannot link
+          # one that is not there; CI opts in the way a development machine
+          # does rather than by moving that default.
+          #
+          # The libraries themselves are fetched by the Runner target, through
+          # scripts/ensure-ish-libs.sh: the release the fork publishes for the
+          # revision the gitlink names. Nothing is built here, and no toolchain
+          # is installed — if that download has no release to find, the gitlink
+          # points at an unpublished revision and the build says so.
+          printf 'SBM_ISH = 1\n' > ios/Flutter/IshLocal.xcconfig
       - name: Build (unsigned)
         shell: bash
         run: |

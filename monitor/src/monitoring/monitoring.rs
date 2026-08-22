@@ -595,20 +595,67 @@ async fn command_output_with_timeout(
     let process_group = child.id();
     let stdout = child.stdout.take().expect("stdout was requested as piped");
     let stderr = child.stderr.take().expect("stderr was requested as piped");
-    let stdout = tokio::spawn(async move {
-        let mut bytes = Vec::new();
-        let mut stdout = stdout.take(MAX_COMMAND_OUTPUT_BYTES + 1);
-        stdout.read_to_end(&mut bytes).await.map(|_| bytes)
+    // Whichever pipe fills first says so, and the wait below stops waiting.
+    // `take` ends the reader at the cap and leaves the pipe undrained, so a
+    // child that keeps writing blocks on a full pipe and never exits: without
+    // this, `child.wait()` ran to the full timeout and the segment was then
+    // discarded as a timeout rather than reported as too much output. A wide
+    // `smartctl` sweep or `nvidia-smi -q -x` on a many-GPU host reaches it.
+    let (overflow_tx, overflow_rx) = tokio::sync::oneshot::channel::<()>();
+    let overflow_tx = std::sync::Arc::new(std::sync::Mutex::new(Some(overflow_tx)));
+    let announce = {
+        let overflow_tx = overflow_tx.clone();
+        move || {
+            if let Ok(mut slot) = overflow_tx.lock()
+                && let Some(tx) = slot.take()
+            {
+                let _ = tx.send(());
+            }
+        }
+    };
+    let stdout = tokio::spawn({
+        let announce = announce.clone();
+        async move {
+            let mut bytes = Vec::new();
+            let mut stdout = stdout.take(MAX_COMMAND_OUTPUT_BYTES + 1);
+            let read = stdout.read_to_end(&mut bytes).await.map(|_| bytes);
+            if read.as_ref().is_ok_and(|b| b.len() as u64 > MAX_COMMAND_OUTPUT_BYTES) {
+                announce();
+            }
+            read
+        }
     });
     let stderr = tokio::spawn(async move {
         let mut bytes = Vec::new();
         let mut stderr = stderr.take(MAX_COMMAND_OUTPUT_BYTES + 1);
-        stderr.read_to_end(&mut bytes).await.map(|_| bytes)
+        let read = stderr.read_to_end(&mut bytes).await.map(|_| bytes);
+        if read.as_ref().is_ok_and(|b| b.len() as u64 > MAX_COMMAND_OUTPUT_BYTES) {
+            announce();
+        }
+        read
     });
     let stdout_abort = stdout.abort_handle();
     let stderr_abort = stderr.abort_handle();
 
-    let status = match timeout_at(deadline, child.wait()).await {
+    let waited = tokio::select! {
+        // Biased so a child that both overflowed and exited is reported as
+        // overflow, which is the more useful of the two.
+        biased;
+        _ = overflow_rx => {
+            tracing::warn!(
+                "{label} produced more than {MAX_COMMAND_OUTPUT_BYTES} bytes and was terminated"
+            );
+            terminate_command(&mut child, process_group)?;
+            stdout_abort.abort();
+            stderr_abort.abort();
+            tokio::spawn(async move { let _ = child.wait().await; });
+            return Err(std::io::Error::other(format!(
+                "{label} produced more than {MAX_COMMAND_OUTPUT_BYTES} bytes of output"
+            )));
+        }
+        waited = timeout_at(deadline, child.wait()) => waited,
+    };
+    let status = match waited {
         Ok(status) => status?,
         Err(_) => {
             tracing::warn!("{label} exceeded {} seconds and was terminated", command_timeout.as_secs());
@@ -1456,23 +1503,49 @@ mod tests {
 
     #[tokio::test]
     async fn an_external_command_cannot_silently_truncate_output() {
+        // Comfortably over the cap rather than one byte over it. At exactly
+        // `MAX + 1` the reader reaches its `take` limit in the same moment the
+        // child finishes writing and exits, so the two things this races —
+        // the overflow and the wait — become ready together, and the test
+        // stops being about either. Well over, the reader hits the cap while
+        // the child is still writing and then blocks on a full pipe, which is
+        // the case the announcement exists for.
+        const OVER_CAP: usize = 4 * 1024 * 1024;
+        let ps_write = format!(
+            "$out = [Console]::OpenStandardOutput(); $bytes = New-Object byte[] {OVER_CAP}; $out.Write($bytes, 0, $bytes.Length)"
+        );
+
         let command = if cfg!(windows) {
             let mut command = TokioCommand::new("powershell");
-            command.args([
-                "-NoProfile",
-                "-Command",
-                "$out = [Console]::OpenStandardOutput(); $bytes = New-Object byte[] 1048577; $out.Write($bytes, 0, $bytes.Length)",
-            ]);
+            command.args(["-NoProfile", "-Command", &ps_write]);
             command
         } else {
             let mut command = TokioCommand::new("sh");
-            command.args(["-c", "head -c 1048577 /dev/zero"]);
+            command.args(["-c", &format!("head -c {OVER_CAP} /dev/zero")]);
             command
         };
 
-        let error = command_output_with_timeout(command, "test output", Duration::from_secs(5))
-            .await
-            .unwrap_err();
+        // Generous, because the number is not the subject. What is asserted is
+        // that too much output is *reported* as too much; how long this
+        // machine takes to start a process and move four megabytes is the CI
+        // runner's business. Measured at 179 ms on an idle Windows box against
+        // a 5-second budget, which windows-latest still exceeded often enough
+        // to fail three of five runs — and which 70 runs here, twelve of them
+        // concurrent, never reproduced. Detection that is actually broken
+        // fails this just the same, only later.
+        //
+        // Says what it got instead of `unwrap_err`, which reported only
+        // "Ok value: None" and did not separate a child that wrote nothing
+        // from one that wrote enough and was never noticed.
+        let error =
+            match command_output_with_timeout(command, "test output", Duration::from_secs(30)).await
+            {
+                Err(error) => error,
+                Ok(output) => panic!(
+                    "expected an overflow error, got {:?}",
+                    output.map(|o| (o.status, o.stdout.len(), o.stderr.len()))
+                ),
+            };
 
         assert!(error.to_string().contains("more than"));
     }

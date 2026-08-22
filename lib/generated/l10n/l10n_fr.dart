@@ -268,9 +268,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get agentMonitorOptional => 'Agent monitor (facultatif)';
 
   @override
-  String get atLeastOneTab => 'Au moins un onglet doit être sélectionné';
-
-  @override
   String get authFailTip =>
       'Échec de l\'authentification. Veuillez vérifier si le mot de passe/clé/hôte/utilisateur, etc., est incorrect.';
 
@@ -461,6 +458,14 @@ class AppLocalizationsFr extends AppLocalizations {
   String get discoverySettings => 'Paramètres de découverte';
 
   @override
+  String get distro => 'Distribution';
+
+  @override
+  String distroSwitchTip(Object from, Object to) {
+    return 'Remplacer $from par $to. Tout ce qui a été installé dans $from est supprimé, et $to est téléchargé et décompressé à la place.';
+  }
+
+  @override
   String get diskHealth => 'Santé du disque';
 
   @override
@@ -498,7 +503,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Cette option n\'active que la fonctionnalité, qu\'elle puisse être activée dépend de la largeur de l\'appareil.';
 
   @override
-  String get editVirtKeys => 'Modifier les touches virtuelles';
+  String get editVirtKeys => 'Touches virtuelles';
 
   @override
   String get editorHighlightTip =>
@@ -537,7 +542,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Il a été supprimé ou renommé. Utilisez la barre du bas pour revenir en arrière, aller au dossier personnel ou vous rendre ailleurs.';
 
   @override
-  String get fullScreen => 'Mode plein écran';
+  String get fullScreen => 'Plein écran';
 
   @override
   String get fullScreenJitter => 'Secousse en plein écran';
@@ -703,6 +708,14 @@ class AppLocalizationsFr extends AppLocalizations {
       'Lorsqu\'elle est activée, la saisie passe par l\'IME normal, ce qui peut éviter les invites de clavier sécurisé dans le terminal sur certains systèmes.';
 
   @override
+  String get linuxShellTip =>
+      'Ce que lance un terminal interactif. Alpine n\'a pas de chsh et rien dans le système ne lit /etc/passwd : cela seul décide. Une commande ponctuelle passe toujours par /bin/sh, car l\'app et l\'Agent écrivent du POSIX. Laisser vide pour rétablir /bin/sh.';
+
+  @override
+  String get linuxNetTip =>
+      'D\'où le système Linux et ses paquets sont téléchargés, et les serveurs DNS qui y sont inscrits. Laisser vide pour rétablir la valeur par défaut. L\'enregistrement réécrit aussi les deux dans un système déjà installé.';
+
+  @override
   String madeWithLove(Object myGithub) {
     return 'Fabriqué avec ❤️ par $myGithub';
   }
@@ -717,6 +730,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String mismatchSystem(Object system) {
     return 'Système non correspondant : $system';
   }
+
+  @override
+  String get mirror => 'Miroir';
 
   @override
   String get needRestart => 'Nécessite un redémarrage de l\'application';
@@ -1039,7 +1055,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get sshHostKeyType => 'Type de clé d\'hôte SSH';
 
   @override
-  String get sshKnownHostKeys => 'Clés d\'hôte connues';
+  String get sshKnownHostKeys => 'Hôtes connus';
 
   @override
   String get sshKnownHostKeysTip =>
@@ -1152,6 +1168,43 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get virtKeyHelpSFTP => 'Ouvrir le répertoire actuel en SFTP.';
+
+  @override
+  String get virtKeyHelpSnippet =>
+      'Choisir un extrait et l\'exécuter dans ce terminal.';
+
+  @override
+  String get virtKeyHelpTmux =>
+      'Passer d\'une session ou fenêtre tmux à une autre.';
+
+  @override
+  String get virtKeyIntroActions => 'Raccourcis';
+
+  @override
+  String get virtKeyIntroActionsTip =>
+      'Ces touches n\'écrivent rien, elles ouvrent quelque chose. Maintenez-en une pour lire ce qu\'elle fait.';
+
+  @override
+  String get virtKeyIntroCustomizeTip =>
+      'Les réglages du terminal permettent de les réordonner ou de masquer celles dont vous ne vous servez jamais.';
+
+  @override
+  String get virtKeyIntroModifiers => 'Modificateurs';
+
+  @override
+  String get virtKeyIntroModifiersTip =>
+      'Touchez-en une pour l\'armer, puis une lettre du clavier. Elle ne vaut que pour cette touche-là.';
+
+  @override
+  String get virtKeyIntroNav => 'Navigation';
+
+  @override
+  String get virtKeyIntroNavTip =>
+      'Ces touches déplacent le curseur. Maintenez une flèche pour la répéter.';
+
+  @override
+  String get virtKeyIntroSelect =>
+      'Tant que le terminal a de quoi défiler, un glissement latéral sélectionne du texte.';
 
   @override
   String get waitConnection =>

@@ -1,5 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/data/res/store.dart';
@@ -86,7 +87,7 @@ class _KnownHostsPageState extends State<KnownHostsPage> {
     final body = _grouped.isEmpty
         ? Center(child: Text(libL10n.empty, style: UIs.textGrey))
         : ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 7),
+            padding: context.padBottom(const EdgeInsets.all(7)),
             children: [
               CardX(
                 child: Padding(

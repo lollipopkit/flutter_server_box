@@ -31,6 +31,10 @@ final class _TopBar extends ConsumerWidget implements PreferredSizeWidget {
         child: const Padding(
           padding: EdgeInsets.symmetric(horizontal: 7, vertical: 3),
           child: Row(
+            // As wide as the name and the cog. [Flexible] hands down loose
+            // constraints, so a row left at `max` took the whole width the
+            // tags had not claimed and the ripple was drawn across all of it.
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(BuildData.name, style: TextStyle(fontSize: 19)),
               SizedBox(width: 5),

@@ -1,5 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/res/store.dart';
@@ -50,14 +51,17 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Not the bottom: the list takes that as padding of its own, so it can be
+    // scrolled through rather than cutting the page short of it.
     final body = SafeArea(
+      bottom: false,
       child: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(7),
             child: _buildOneLineVirtKey().cardx,
           ),
-          Expanded(child: _buildBody()),
+          Expanded(child: _buildBody(context)),
         ],
       ),
     );
@@ -75,10 +79,10 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(BuildContext context) {
     return ReorderableListView.builder(
       key: const PageStorageKey('virt_key'),
-      padding: const EdgeInsets.all(7),
+      padding: context.padBottom(const EdgeInsets.all(7)),
       buildDefaultDragHandles: false,
       itemCount: _order.length,
       proxyDecorator: reorderProxyDecorator,

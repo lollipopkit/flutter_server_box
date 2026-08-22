@@ -1,0 +1,12 @@
+# sqlx hashes each migration file's bytes and records the checksum in the
+# agent's `_sqlx_migrations` table. `migrate!` embeds those bytes at compile
+# time, so a checkout that converted line endings produces a binary whose
+# checksums disagree with the ones an earlier build already recorded, and the
+# migrator refuses to start rather than run against a database it cannot
+# account for.
+#
+# Windows checkouts are where this bites: `Rust tests (windows-latest)` failed
+# `shipped_migrations_keep_their_checksums` because CRLF changed migration 1's
+# SHA-384 from ac7a765b… to 1ca2d91b…. Pin the bytes so every platform hashes
+# the same file.
+monitor/migrations/*.sql text eol=lf

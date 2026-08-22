@@ -8,7 +8,6 @@ import 'package:server_box/data/model/server/systemd.dart';
 import 'package:server_box/data/provider/systemd.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
-import 'package:server_box/view/widget/page_issue.dart';
 
 final class SystemdPage extends ConsumerStatefulWidget {
   final SpiRequiredArgs args;

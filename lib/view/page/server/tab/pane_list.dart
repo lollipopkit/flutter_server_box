@@ -23,8 +23,12 @@ extension _PaneList on _ServerPageState {
         tooltip: libL10n.add,
         child: const Icon(Icons.add),
       ),
+      // With nothing selected there is no detail pane, so `AdaptivePanes`
+      // hands this the whole width: what a wide window shows when the tab is
+      // empty is this, not a rail beside something. So the same mark as the
+      // narrow layout, rather than a rail's worth of text.
       body: filtered.isEmpty
-          ? Center(child: Text(libL10n.empty, textAlign: TextAlign.center))
+          ? const EmptyPane(icon: BoxIcons.bx_server)
           : ListView.builder(
               controller: _scrollController,
               // Room at the bottom for the add button to float over.

@@ -9,7 +9,6 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/store/entity_store.dart';
 import 'package:server_box/view/page/ssh/snippet_run.dart';
-import 'package:server_box/view/widget/page_columns.dart';
 
 final class SnippetEditPageArgs {
   final Snippet? snippet;

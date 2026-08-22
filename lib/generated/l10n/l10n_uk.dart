@@ -263,9 +263,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get agentMonitorOptional => 'Агент monitor (необов\'язково)';
 
   @override
-  String get atLeastOneTab => 'Потрібно вибрати принаймні одну вкладку';
-
-  @override
   String get authFailTip =>
       'Авторизація не вдалася, будь ласка, перевірте правильність облікових даних';
 
@@ -456,6 +453,14 @@ class AppLocalizationsUk extends AppLocalizations {
   String get discoverySettings => 'Налаштування виявлення';
 
   @override
+  String get distro => 'Дистрибутив';
+
+  @override
+  String distroSwitchTip(Object from, Object to) {
+    return 'Замінити $from на $to. Усе, що встановлено всередині $from, буде видалено, а замість нього буде завантажено й розпаковано $to.';
+  }
+
+  @override
   String get diskHealth => 'Стан диска';
 
   @override
@@ -493,7 +498,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Ця опція лише активує функцію, чи можна її насправді включити, залежить від ширини пристрою';
 
   @override
-  String get editVirtKeys => 'Редагувати віртуальні клавіші';
+  String get editVirtKeys => 'Віртуальні клавіші';
 
   @override
   String get editorHighlightTip =>
@@ -532,7 +537,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Її видалено або перейменовано. Скористайтеся панеллю внизу, щоб повернутися, перейти до домівки або в інше місце.';
 
   @override
-  String get fullScreen => 'Повноекранний режим';
+  String get fullScreen => 'Повний екран';
 
   @override
   String get fullScreenJitter => 'Тремтіння в повноекранному режимі';
@@ -698,6 +703,14 @@ class AppLocalizationsUk extends AppLocalizations {
       'Коли параметр увімкнено, введення проходить через звичайний IME, що на деяких системах дає змогу уникнути запитів захищеної клавіатури в терміналі.';
 
   @override
+  String get linuxShellTip =>
+      'Чим запускається інтерактивний термінал. В Alpine немає chsh, і ніщо в системі не читає /etc/passwd, тож вирішує лише це. Разові команди й далі виконуються через /bin/sh, бо застосунок і Agent пишуть POSIX. Залиште порожнім, щоб повернути /bin/sh.';
+
+  @override
+  String get linuxNetTip =>
+      'Звідки завантажуються система Linux і її пакунки та які DNS-сервери в неї записуються. Залиште порожнім, щоб відновити типове значення. Збереження також перезаписує обидва у вже встановленій системі.';
+
+  @override
   String madeWithLove(Object myGithub) {
     return 'Зроблено з ❤️ від $myGithub';
   }
@@ -713,6 +726,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String mismatchSystem(Object system) {
     return 'Невідповідна система: $system';
   }
+
+  @override
+  String get mirror => 'Дзеркало';
 
   @override
   String get needRestart => 'Необхідно перезапустити застосунок';
@@ -1032,7 +1048,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get sshHostKeyType => 'Тип ключа хоста SSH';
 
   @override
-  String get sshKnownHostKeys => 'Відомі ключі хостів';
+  String get sshKnownHostKeys => 'Відомі хости';
 
   @override
   String get sshKnownHostKeysTip =>
@@ -1141,6 +1157,42 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get virtKeyHelpSFTP => 'Відкрити поточний каталог у SFTP.';
+
+  @override
+  String get virtKeyHelpSnippet =>
+      'Вибрати сніпет і виконати його в цьому терміналі.';
+
+  @override
+  String get virtKeyHelpTmux => 'Перемикання між сесіями та вікнами tmux.';
+
+  @override
+  String get virtKeyIntroActions => 'Швидкі дії';
+
+  @override
+  String get virtKeyIntroActionsTip =>
+      'Ці клавіші нічого не вводять, а відкривають потрібне. Утримуйте клавішу, щоб прочитати, що вона робить.';
+
+  @override
+  String get virtKeyIntroCustomizeTip =>
+      'У налаштуваннях термінала їх можна переставити або приховати ті, якими ви не користуєтесь.';
+
+  @override
+  String get virtKeyIntroModifiers => 'Модифікатори';
+
+  @override
+  String get virtKeyIntroModifiersTip =>
+      'Натисніть одну, щоб увімкнути, потім літеру на клавіатурі. Вона діє рівно на одну клавішу.';
+
+  @override
+  String get virtKeyIntroNav => 'Переміщення курсора';
+
+  @override
+  String get virtKeyIntroNavTip =>
+      'Ці клавіші рухають курсор. Утримуйте стрілку, щоб повторювати її.';
+
+  @override
+  String get virtKeyIntroSelect =>
+      'Поки в терміналі є що прокручувати, перетягування вбік виділяє текст.';
 
   @override
   String get waitConnection =>

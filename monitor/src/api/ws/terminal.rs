@@ -931,6 +931,31 @@ pub fn start_reaper(sessions: Arc<SessionStore>, interval: Duration) {
 
 #[cfg(test)]
 mod tests {
+    /// The ticket parser, which reads a query string by hand on a security
+    /// boundary.
+    ///
+    /// These came with `query_param` from the tunnel endpoint and were lost
+    /// when it was deleted; the function was copied and the tests were not.
+    /// What they pin is what a hand-rolled parser gets wrong: matching a name
+    /// that merely contains the one asked for, and taking a bare key as a
+    /// value. Switching `key == name` to `ends_with` passes every other test
+    /// in this file.
+    #[test]
+    fn query_param_reads_the_named_value() {
+        assert_eq!(query_param("ticket=abc", "ticket").as_deref(), Some("abc"));
+        assert_eq!(
+            query_param("a=1&ticket=abc&b=2", "ticket").as_deref(),
+            Some("abc")
+        );
+        assert_eq!(query_param("a=1&b=2", "ticket"), None);
+        assert_eq!(query_param("", "ticket"), None);
+        // A bare key is not a value
+        assert_eq!(query_param("ticket", "ticket"), None);
+        // Must not match on a suffix or prefix of the name
+        assert_eq!(query_param("myticket=abc", "ticket"), None);
+        assert_eq!(query_param("ticketx=abc", "ticket"), None);
+    }
+
     use super::*;
 
     fn parse(json: &str) -> ClientMsg {

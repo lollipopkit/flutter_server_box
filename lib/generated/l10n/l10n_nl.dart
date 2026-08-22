@@ -263,10 +263,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get agentMonitorOptional => 'monitor-agent (optioneel)';
 
   @override
-  String get atLeastOneTab =>
-      'Er moet minimaal één tabblad worden geselecteerd';
-
-  @override
   String get authFailTip =>
       'Authenticatie mislukt, controleer of het wachtwoord/sleutel/host/gebruiker, enz., incorrect zijn.';
 
@@ -455,6 +451,14 @@ class AppLocalizationsNl extends AppLocalizations {
   String get discoverySettings => 'Ontdekkingsinstellingen';
 
   @override
+  String get distro => 'Distributie';
+
+  @override
+  String distroSwitchTip(Object from, Object to) {
+    return '$from vervangen door $to. Alles wat in $from is geïnstalleerd wordt verwijderd, en $to wordt in plaats daarvan gedownload en uitgepakt.';
+  }
+
+  @override
   String get diskHealth => 'Schijfgezondheid';
 
   @override
@@ -492,7 +496,7 @@ class AppLocalizationsNl extends AppLocalizations {
       'Deze optie schakelt alleen de functie in, of deze daadwerkelijk kan worden ingeschakeld, hangt af van de breedte van het apparaat';
 
   @override
-  String get editVirtKeys => 'Virtuele toetsen bewerken';
+  String get editVirtKeys => 'Virtuele toetsen';
 
   @override
   String get editorHighlightTip =>
@@ -531,7 +535,7 @@ class AppLocalizationsNl extends AppLocalizations {
       'Hij is verwijderd of hernoemd. Gebruik de balk onderaan om terug te gaan, naar home te springen of ergens anders heen te gaan.';
 
   @override
-  String get fullScreen => 'Volledig schermmodus';
+  String get fullScreen => 'Volledig scherm';
 
   @override
   String get fullScreenJitter => 'Volledig scherm trilling';
@@ -697,6 +701,14 @@ class AppLocalizationsNl extends AppLocalizations {
       'Wanneer dit is ingeschakeld, gaat invoer via de normale IME, wat op sommige systemen beveiligde toetsenbordmeldingen in de terminal kan vermijden.';
 
   @override
+  String get linuxShellTip =>
+      'Wat een interactieve terminal start. Alpine heeft geen chsh en niets in het systeem leest /etc/passwd, dus alleen dit bepaalt het. Losse opdrachten draaien nog steeds onder /bin/sh, omdat de app en de Agent POSIX schrijven. Laat leeg om /bin/sh te herstellen.';
+
+  @override
+  String get linuxNetTip =>
+      'Waar het Linux-systeem en zijn pakketten vandaan komen, en welke DNS-servers erin worden geschreven. Laat leeg om de standaardwaarde te herstellen. Bij opslaan worden beide ook in een al geïnstalleerd systeem herschreven.';
+
+  @override
   String madeWithLove(Object myGithub) {
     return 'Gemaakt met ❤️ door $myGithub';
   }
@@ -711,6 +723,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String mismatchSystem(Object system) {
     return 'Niet-overeenkomend systeem: $system';
   }
+
+  @override
+  String get mirror => 'Mirror';
 
   @override
   String get needRestart => 'App moet opnieuw worden gestart';
@@ -1030,7 +1045,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get sshHostKeyType => 'Type SSH-hostsleutel';
 
   @override
-  String get sshKnownHostKeys => 'Bekende hostsleutels';
+  String get sshKnownHostKeys => 'Bekende hosts';
 
   @override
   String get sshKnownHostKeysTip =>
@@ -1141,6 +1156,42 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get virtKeyHelpSFTP => 'Huidige map openen in SFTP.';
+
+  @override
+  String get virtKeyHelpSnippet =>
+      'Kies een snippet en voer het uit in deze terminal.';
+
+  @override
+  String get virtKeyHelpTmux => 'Wissel tussen tmux-sessies en -vensters.';
+
+  @override
+  String get virtKeyIntroActions => 'Snelkoppelingen';
+
+  @override
+  String get virtKeyIntroActionsTip =>
+      'Deze toetsen typen niets, ze openen iets. Houd er een ingedrukt om te lezen wat hij doet.';
+
+  @override
+  String get virtKeyIntroCustomizeTip =>
+      'In de terminalinstellingen kun je ze herschikken of verbergen wat je nooit gebruikt.';
+
+  @override
+  String get virtKeyIntroModifiers => 'Modificatietoetsen';
+
+  @override
+  String get virtKeyIntroModifiersTip =>
+      'Tik er een aan om hem in te schakelen en tik daarna een letter op het toetsenbord. Hij geldt voor die ene toets.';
+
+  @override
+  String get virtKeyIntroNav => 'Navigatie';
+
+  @override
+  String get virtKeyIntroNavTip =>
+      'Deze toetsen verplaatsen de cursor. Houd een pijltoets ingedrukt om hem te herhalen.';
+
+  @override
+  String get virtKeyIntroSelect =>
+      'Zolang de terminal iets te scrollen heeft, selecteer je tekst door opzij te slepen.';
 
   @override
   String get waitConnection =>

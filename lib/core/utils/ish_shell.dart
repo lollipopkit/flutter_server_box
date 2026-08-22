@@ -1,8 +1,10 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:fl_lib/fl_lib.dart';
+
 import 'package:server_box/core/utils/ios_rootfs.dart';
+import 'package:server_box/core/utils/linux_seed.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 
 /// [ShellBackend] over the Linux guest on iOS.
@@ -19,7 +21,12 @@ import 'package:server_box/data/model/server/shell_backend.dart';
 /// already does — and how the Android rootfs behaves too, from the other
 /// direction.
 class IshShellBackend implements ShellBackend {
-  IshShellBackend();
+  IshShellBackend({this.profileId});
+
+  /// Which installed system this backend's sessions run in, or null for the
+  /// selected one. The machine holds them all at once, so two backends with
+  /// different ids are two systems running side by side.
+  final String? profileId;
 
   /// Whether this build can open one at all — see [IosRootfs.isAvailable],
   /// which is false whenever the engine was stripped from the build.
@@ -54,16 +61,23 @@ class IshShellBackend implements ShellBackend {
   _IshSession _start(String? command, int width, int height) {
     if (_closed) throw StateError('This guest has been closed');
 
-    // The machine, once. -EEXIST means it is already up — from an earlier
-    // terminal, or from the Agent — and that is not an error: it is the
-    // machine, and this is another process on it.
-    final booted = IosRootfs.boot();
+    // The machine, once, whichever system asked for it first. -EEXIST means it
+    // is already up — from an earlier terminal, or from the Agent — and that is
+    // not an error: it is the machine, and this is another process on it.
+    // Attaching this system is `open`'s own job.
+    final booted = IosRootfs.boot(profileId: profileId);
     if (booted < 0 && booted != IosRootfs.alreadyBooted) {
       throw StateError('The Linux guest did not start ($booted)');
     }
 
     final id = IosRootfs.open(
       command: command,
+      // Interactive only: `_start` is also how `execute` runs a one-shot
+      // command, and that one has to stay POSIX. See `linuxShell`.
+      profileId: profileId,
+      shell: command == null
+          ? linuxShell(IosRootfs.rootOf(profileId ?? IosRootfs.selected?.id))
+          : '',
       columns: width > 0 ? width : 80,
       rows: height > 0 ? height : 25,
     );
@@ -94,7 +108,7 @@ class IshShellBackend implements ShellBackend {
 /// One console on the guest.
 class _IshSession implements ShellSession {
   _IshSession(this.id, {required this.onClosed}) {
-    _poll = Timer.periodic(_interval, (_) => _drain());
+    _schedule(_busyInterval);
   }
 
   /// Its handle in the engine — a process there, with a pty of its own.
@@ -108,24 +122,66 @@ class _IshSession implements ShellSession {
   /// non-blocking read on a timer costs one FFI call a frame and needs no port
   /// plumbing; if that ever shows up in a profile, the answer is a native
   /// thread posting to a `SendPort`, not a longer timeout here.
-  static const _interval = Duration(milliseconds: 16);
+  static const _busyInterval = Duration(milliseconds: 16);
+
+  /// What the same poll costs once the console has gone quiet.
+  ///
+  /// A shell sits at a prompt for minutes at a time, and this timer does not
+  /// stop when the terminal leaves the screen — it belongs to the session, not
+  /// to the page. So a rate chosen for a burst of output was being paid by
+  /// every frame in the app, on whatever tab happened to be in front. At a
+  /// prompt nothing is waiting on the extra rounds: what they return is empty.
+  static const _idleInterval = Duration(milliseconds: 120);
+
+  /// Empty reads before the interval relaxes. One is an ordinary gap between
+  /// two writes; a run of them is a session with nothing to say.
+  static const _quietRounds = 8;
 
   final _output = StreamController<Uint8List>.broadcast();
   Timer? _poll;
+  var _quiet = 0;
   final _done = Completer<void>();
+
+  void _schedule(Duration delay) => _poll = Timer(delay, _drain);
 
   void _drain() {
     // Zero, so this returns whatever is there and no more. The wait, if any,
     // is the timer's.
-    final chunk = IosRootfs.read(id, timeout: Duration.zero);
+    final Uint8List? chunk;
+    try {
+      chunk = IosRootfs.read(id, timeout: Duration.zero);
+    } catch (e, s) {
+      // `read` throws when the engine answers -EBUSY: a guest thread died
+      // holding the output lock. That is this read, not this session — the
+      // lock is released when that thread is reaped. Rearming is the whole
+      // point: the one-shot timer only re-arms at the end of this method, so
+      // letting the throw escape left `_poll` null and the terminal silent
+      // for good, with `done` never completing and the session never removed.
+      Loggers.app.warning('ish read', e, s);
+      // Idle rather than busy: the throw says there is nothing readable now,
+      // which is the idle condition, and a lock held by a thread waiting to be
+      // reaped is not released any sooner for being asked 60 times a second.
+      _schedule(_idleInterval);
+      return;
+    }
     if (chunk == null) {
       // This session ended — its shell exited, or its command finished. The
       // machine is untouched; only this process on it is over.
       _finish();
       return;
     }
-    if (chunk.isEmpty) return;
-    _output.add(Uint8List.fromList(utf8.encode(chunk)));
+    if (chunk.isEmpty) {
+      if (_quiet < _quietRounds) _quiet++;
+    } else {
+      // Back to the fast rate on the first byte, so the answer to a keystroke
+      // is not held up by however long the session had been quiet.
+      _quiet = 0;
+      // Straight through. The terminal decodes UTF-8 itself and carries the
+      // state to do it across chunk boundaries, which is more than can be done
+      // here where each read is a separate call.
+      _output.add(chunk);
+    }
+    _schedule(_quiet >= _quietRounds ? _idleInterval : _busyInterval);
   }
 
   void _finish() {
@@ -150,8 +206,9 @@ class _IshSession implements ShellSession {
   void write(List<int> data) {
     // As typed. The guest's line discipline is what turns a carriage return
     // into a newline, so passing the bytes through is both simpler and the
-    // only thing that makes Enter work.
-    IosRootfs.write(id, utf8.decode(data, allowMalformed: true));
+    // only thing that makes Enter work — and it is now literal: these used to
+    // be decoded to a `String` and re-encoded on the other side.
+    IosRootfs.write(id, data);
   }
 
   @override

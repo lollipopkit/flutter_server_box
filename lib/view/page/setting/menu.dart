@@ -70,70 +70,84 @@ const settingsTabsKey = ValueKey('settings_tabs');
 ///
 /// A narrow window has no room for a column beside the content, and a drawer
 /// hides where you are the moment you have gone there. This shows the level you
-/// are on, floating over the foot of the content, with the way back out at the
-/// leading end of it.
+/// are on, floating over the foot of the content.
+///
+/// Only the level: the way back out is the title bar's own button, which is
+/// where every other page in the app puts it. A second one here was the same
+/// move twice on one screen.
 final class _SettingsTabs extends StatelessWidget {
   /// The level being shown, which is the root or one branch's children.
   final List<SettingsNode> nodes;
 
   final String? selectedId;
-  final bool canGoBack;
   final void Function(SettingsNode node) onTap;
-  final VoidCallback onBack;
 
   const _SettingsTabs({
     super.key,
     required this.nodes,
     required this.selectedId,
-    required this.canGoBack,
     required this.onTap,
-    required this.onBack,
   });
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final radius = BorderRadius.circular(_kTabsHeight / 2);
 
+    final row = SizedBox(
+      height: _kTabsHeight,
+      child: Row(
+        // As wide as what is on it. A level of two tabs is a short bar.
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(width: 4),
+          for (final node in nodes)
+            _TabButton(
+              icon: node.icon,
+              label: node.title,
+              // A branch counts as on while what is showing is inside it.
+              selected: node.flattened.any((e) => e.id == selectedId),
+              onTap: () => onTap(node),
+            ),
+          const SizedBox(width: 4),
+        ],
+      ),
+    );
+
+    // Translucent and blurring what goes behind it, because the content runs
+    // the full height of the page and passes under here rather than stopping
+    // above it. Opaque, the bar sat in a band of bare background and read as a
+    // second bottom bar instead of as something over the page.
+    //
+    // The shadow is outside the clip: inside, the rounded rect that keeps the
+    // blur in would cut it off.
+    //
+    // An elevation and not a single `BoxShadow`: one soft shadow at 16% is
+    // visible over the content on a full page and invisible over the bare
+    // background of a short one, which is where it was first noticed. What
+    // Flutter draws for an elevation carries far enough to read either way.
     final bar = Material(
-      key: settingsTabsKey,
-      elevation: 6,
-      color: scheme.surfaceContainerHigh,
-      shadowColor: Colors.black.withValues(alpha: 0.3),
-      borderRadius: BorderRadius.circular(_kTabsHeight / 2),
-      clipBehavior: Clip.antiAlias,
-      // Around the row rather than inside it, so the bar itself is what springs
-      // between one level's width and the next. Inside, the overshoot would be
-      // a gap opening at the end of a bar that had already stopped growing.
-      child: AnimatedSize(
-        duration: Durations.medium2,
-        curve: _kTabsCurve,
-        alignment: Alignment.centerLeft,
-        child: SizedBox(
-          height: _kTabsHeight,
-          child: Row(
-            // As wide as what is on it. A level of two tabs is a short bar.
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (canGoBack) ...[
-                _TabButton(
-                  icon: Icons.arrow_back,
-                  onTap: onBack,
-                  tooltip: libL10n.goBackQ,
-                ),
-                const VerticalDivider(width: 1, indent: 12, endIndent: 12),
-              ],
-              const SizedBox(width: 4),
-              for (final node in nodes)
-                _TabButton(
-                  icon: node.icon,
-                  label: node.title,
-                  // A branch counts as on while what is showing is inside it,
-                  // which is what says where the way back leads.
-                  selected: node.flattened.any((e) => e.id == selectedId),
-                  onTap: () => onTap(node),
-                ),
-              const SizedBox(width: 4),
-            ],
+      color: Colors.transparent,
+      elevation: 8,
+      shadowColor: Colors.black.withValues(alpha: 0.34),
+      borderRadius: radius,
+      child: ClipRRect(
+        borderRadius: radius,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Material(
+            key: settingsTabsKey,
+            color: scheme.surfaceContainerHigh.withValues(alpha: 0.72),
+            // Around the row rather than inside it, so the bar itself is what
+            // springs between one level's width and the next. Inside, the
+            // overshoot would be a gap opening at the end of a bar that had
+            // already stopped growing.
+            child: AnimatedSize(
+              duration: Durations.medium2,
+              curve: _kTabsCurve,
+              alignment: Alignment.centerLeft,
+              child: row,
+            ),
           ),
         ),
       ),
@@ -161,17 +175,19 @@ final class _TabButton extends StatelessWidget {
   final String? label;
   final bool selected;
   final VoidCallback? onTap;
-  final String? tooltip;
 
   const _TabButton({
     required this.icon,
     this.label,
     this.selected = false,
     this.onTap,
-    this.tooltip,
   });
 
   /// The pill behind the icon, at the measurements `NavigationBar` uses.
+  ///
+  /// It sizes the icon's background and nothing else. The label below is left
+  /// to its own width, so a tab is as wide as its name — the pill only sets
+  /// how narrow a short one can get.
   static const _indicator = Size(56, 30);
 
   @override
@@ -179,10 +195,13 @@ final class _TabButton extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final color = selected ? scheme.onSecondaryContainer : scheme.onSurfaceVariant;
 
-    final button = InkWell(
+    return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2),
+        // Wider than it was. The label used to sit in a fixed box and centre
+        // itself in it, which left a gap either side whatever it said; now it
+        // reaches the edges of its tab, and two of them need keeping apart.
+        padding: const EdgeInsets.symmetric(horizontal: 8),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -202,19 +221,21 @@ final class _TabButton extends StatelessWidget {
             ),
             if (label != null) ...[
               const SizedBox(height: 3),
-              SizedBox(
-                width: _indicator.width + 6,
-                child: Text(
-                  label!,
-                  maxLines: 1,
-                  textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11,
-                    height: 1.1,
-                    fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                    color: color,
-                  ),
+              // Unconstrained: a tab is as wide as its own name. Held to the
+              // pill's width these ellipsed — they are section names, not the
+              // one or two words a bottom bar carries, and several languages
+              // spell them longer still. The bar already scrolls sideways when
+              // a level does not fit across the window, so the room is there
+              // to be taken.
+              Text(
+                label!,
+                maxLines: 1,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11,
+                  height: 1.1,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                  color: color,
                 ),
               ),
             ],
@@ -222,10 +243,6 @@ final class _TabButton extends StatelessWidget {
         ),
       ),
     );
-
-    final tooltip_ = tooltip;
-    if (tooltip_ == null) return button;
-    return Tooltip(message: tooltip_, child: button);
   }
 }
 

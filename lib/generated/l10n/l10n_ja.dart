@@ -251,9 +251,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get agentMonitorOptional => 'monitor エージェント（任意）';
 
   @override
-  String get atLeastOneTab => '少なくとも1つのタブを選択する必要があります';
-
-  @override
   String get authFailTip => '認証に失敗しました。パスワード/鍵/ホスト/ユーザーなどが間違っていないか確認してください。';
 
   @override
@@ -432,6 +429,14 @@ class AppLocalizationsJa extends AppLocalizations {
   String get discoverySettings => '発見設定';
 
   @override
+  String get distro => 'ディストリビューション';
+
+  @override
+  String distroSwitchTip(Object from, Object to) {
+    return '$from を $to に置き換えます。$from の中にインストールしたものはすべて削除され、代わりに $to をダウンロードして展開します。';
+  }
+
+  @override
   String get diskHealth => 'ディスクの健康状態';
 
   @override
@@ -468,7 +473,7 @@ class AppLocalizationsJa extends AppLocalizations {
       'このオプションは機能を有効にするだけで、実際に有効にできるかどうかはデバイスの幅に依存します';
 
   @override
-  String get editVirtKeys => '仮想キーを編集';
+  String get editVirtKeys => '仮想キー';
 
   @override
   String get editorHighlightTip =>
@@ -506,7 +511,7 @@ class AppLocalizationsJa extends AppLocalizations {
       '削除されたか名前が変更されました。下のバーで戻る、ホームへ移動、または別の場所へ移動してください。';
 
   @override
-  String get fullScreen => 'フルスクリーンモード';
+  String get fullScreen => 'フルスクリーン';
 
   @override
   String get fullScreenJitter => 'フルスクリーンモードのジッター';
@@ -663,6 +668,14 @@ class AppLocalizationsJa extends AppLocalizations {
       '有効にすると入力内容は通常のIMEを経由し、一部のシステムでターミナルにセキュアキーボードの案内が表示されるのを避けられます。';
 
   @override
+  String get linuxShellTip =>
+      '対話型ターミナルが起動するシェル。Alpine に chsh はなく、システム内で /etc/passwd を読むものもないため、決めるのはここだけです。単発のコマンドは引き続き /bin/sh で実行されます（アプリと Agent が書くのは POSIX のため）。空にすると /bin/sh に戻ります。';
+
+  @override
+  String get linuxNetTip =>
+      'Linux システムとそのパッケージのダウンロード元、および書き込まれる DNS サーバー。空にすると既定値に戻ります。保存すると、インストール済みのシステムのファイルも書き換えられます。';
+
+  @override
   String madeWithLove(Object myGithub) {
     return '$myGithubによって❤️で作成済み';
   }
@@ -677,6 +690,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String mismatchSystem(Object system) {
     return 'システムが一致しません: $system';
   }
+
+  @override
+  String get mirror => 'ミラー';
 
   @override
   String get needRestart => 'アプリを再起動する必要があります';
@@ -978,7 +994,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sshHostKeyType => 'SSH ホストキーの種類';
 
   @override
-  String get sshKnownHostKeys => '既知のホストキー';
+  String get sshKnownHostKeys => '既知のホスト';
 
   @override
   String get sshKnownHostKeysTip => 'このアプリが受け入れたホストキー。削除すると次回接続時に再度確認されます。';
@@ -1081,6 +1097,38 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get virtKeyHelpSFTP => '現在のパスでSFTPを開く。';
+
+  @override
+  String get virtKeyHelpSnippet => 'スニペットを選んで、このターミナルで実行します。';
+
+  @override
+  String get virtKeyHelpTmux => 'tmux のセッションとウィンドウを切り替えます。';
+
+  @override
+  String get virtKeyIntroActions => 'ショートカット';
+
+  @override
+  String get virtKeyIntroActionsTip => 'これらは文字を入力せず、機能を開きます。長押しすると説明を読めます。';
+
+  @override
+  String get virtKeyIntroCustomizeTip => 'ターミナル設定で並べ替えたり、使わないキーを隠したりできます。';
+
+  @override
+  String get virtKeyIntroModifiers => '修飾キー';
+
+  @override
+  String get virtKeyIntroModifiersTip =>
+      'タップして有効にしてから、キーボードの文字をタップします。有効なのは次の 1 キーだけです。';
+
+  @override
+  String get virtKeyIntroNav => 'カーソル移動';
+
+  @override
+  String get virtKeyIntroNavTip => 'これらはカーソルを動かします。矢印キーは長押しで連続入力できます。';
+
+  @override
+  String get virtKeyIntroSelect =>
+      'ターミナルにスクロールできる内容があるときは、横にドラッグするとテキストを選択できます。';
 
   @override
   String get waitConnection => '接続の確立を待ってください';

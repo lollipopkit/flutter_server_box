@@ -7,6 +7,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/android_rootfs.dart';
 import 'package:server_box/core/utils/ios_rootfs.dart';
 import 'package:server_box/core/utils/rootfs.dart';
+import 'package:server_box/data/model/app/linux_distro.dart';
 
 /// Puts a Linux userland on this device, asking first.
 ///
@@ -14,38 +15,50 @@ import 'package:server_box/core/utils/rootfs.dart';
 ///
 /// This is a download of executable code, so it says so before starting rather
 /// than fetching several megabytes on a tap. What makes it safe to run is in
-/// [AndroidRootfs]: the release is pinned and its digest is checked.
-Future<bool> installRootfs(BuildContext context) async {
-  // Both platforms fetch the same Alpine release; what differs is what they do
-  // with it — Android unpacks a rootfs for proot, iOS a tree for the engine —
-  // and neither difference reaches this dialog.
+/// `LinuxDistro`: the release is pinned and its digest is checked.
+///
+/// TODO(distribution residue; remove when a second one ships): `rootfsInstallTip`
+/// and `rootfsUpdateTip` name Alpine in all fifteen locales. Both are accurate
+/// while it is the only installable one, and both need a `{distro}` placeholder
+/// the moment that stops being true.
+Future<bool> installRootfs(
+  BuildContext context, {
+  LinuxProfile? into,
+  bool another = false,
+  String? label,
+}) async {
+  // Both platforms fetch the same release of the same distribution; what
+  // differs is what they do with it — Android unpacks a rootfs for proot, iOS a
+  // tree for the engine — and neither difference reaches this dialog.
   final present = isIOS
       ? await IosRootfs.isInstalled
       : await AndroidRootfs.isInstalled;
-  // Asked once, on the way in, and answered either way: a rootfs that is
-  // merely old still works, so declining leaves it running rather than
-  // blocking the terminal that was actually being opened.
-  final replacing = present && !isIOS && AndroidRootfs.isOutdated;
-  if (present && !replacing) return true;
+  final selected = Rootfs.selected;
+  // This early return is for the one caller that means "there has to be one to
+  // enter": a terminal was opened and had nothing to open into. Adding another
+  // and replacing one both mean to install *although* something is there, and
+  // both were silently doing nothing.
+  //
+  // An outdated one is still one, so the terminal path does not offer to
+  // replace it: that means downloading the release again and losing everything
+  // installed in the old tree, which is a decision and not something to raise
+  // in the way of opening a terminal.
+  if (present && into == null && !another) return true;
   if (!context.mounted) return false;
 
+  final distro = into?.distro ?? Rootfs.nextDistro;
   final confirm = await context.showRoundDialog<bool>(
     // Capitalised: the shared string is a verb used mid-sentence elsewhere,
     // and a dialog title is not mid-sentence.
-    title: replacing ? libL10n.update : libL10n.install.capitalize,
+    title: into == null ? libL10n.install.capitalize : libL10n.update,
     child: Text(
-      replacing
-          ? context.l10n.rootfsUpdateTip(
-              AndroidRootfs.installedVersion ?? '',
-              AndroidRootfs.version,
-            )
-          : context.l10n.rootfsInstallTip(Rootfs.version),
+      into == null
+          ? context.l10n.rootfsInstallTip(distro.version)
+          : context.l10n.rootfsUpdateTip(into.version, distro.version),
     ),
     actions: Btnx.cancelOk,
   );
-  // An old rootfs is still a rootfs. Saying no here opens the one that is
-  // already there, which is what "not forced" has to mean.
-  if (confirm != true) return present;
+  if (confirm != true) return present || selected != null;
   if (!context.mounted) return false;
 
   final progress = ValueNotifier<double?>(null);
@@ -90,18 +103,13 @@ Future<bool> installRootfs(BuildContext context) async {
   );
 
   try {
-    if (isIOS) {
-      await IosRootfs.install(
-        onProgress: (value) => progress.value = value,
-        cancel: cancel,
-      );
-    } else {
-      await AndroidRootfs.install(
-        onProgress: (value) => progress.value = value,
-        cancel: cancel,
-        replace: replacing,
-      );
-    }
+    await Rootfs.install(
+      distro: distro,
+      into: into,
+      label: label,
+      onProgress: (value) => progress.value = value,
+      cancel: cancel,
+    );
     if (context.mounted) context.popDialog();
     return true;
   } catch (e, s) {
@@ -116,21 +124,27 @@ Future<bool> installRootfs(BuildContext context) async {
   }
 }
 
-/// Removes the Linux userland, asking first.
+/// Removes one Linux system, asking first.
 ///
 /// Everything installed inside it goes too, which is why this asks in the same
-/// words as deleting anything else.
-Future<bool> removeRootfs(BuildContext context) async {
+/// words as deleting anything else. The others are untouched.
+Future<bool> removeRootfs(BuildContext context, {LinuxProfile? profile}) async {
+  final target = profile ?? Rootfs.selected;
+  if (target == null) return false;
   final confirm = await context.showRoundDialog<bool>(
     title: libL10n.attention,
-    child: Text(libL10n.askContinue('${libL10n.delete} Alpine')),
+    child: Text(libL10n.askContinue('${libL10n.delete} ${target.label}')),
     actions: Btnx.cancelRedOk,
   );
   if (confirm != true) return false;
-  if (isIOS) {
-    await IosRootfs.remove();
-  } else {
-    await AndroidRootfs.remove();
+  try {
+    await Rootfs.removeProfile(target.id);
+  } catch (e, s) {
+    // Refused rather than half-done: the tree is still there, and so is
+    // whatever was using it. Deleting it anyway is what froze the app.
+    Loggers.app.warning('Remove ${target.id}', e, s);
+    if (context.mounted) Toast.error('${libL10n.fail}: $e');
+    return false;
   }
   return true;
 }

@@ -8,13 +8,11 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
-import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/storage/file_pane.dart';
 import 'package:server_box/view/page/storage/local.dart';
 import 'package:server_box/view/page/storage/send_to.dart';
 import 'package:server_box/view/page/storage/server_file.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
-import 'package:server_box/view/widget/empty_pane.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 
 /// Every open file browser, one tab each, plus a picker at the head of the
@@ -203,7 +201,7 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
           sessions: _sessions,
           searching: _railSearching,
           onSearchDone: () => setStateSafe(() => _railSearching = false),
-          actions: [_searchBtn(inRail: true), _addBtn],
+          actions: [_searchBtn(inRail: true)],
           onLocal: _openLocal,
           onServer: _openRemote,
           onSelect: _sessions.select,
@@ -306,18 +304,22 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
 
   PreferredSizeWidget get _tabBar => PreferredSizeListenBuilder(
     listenable: _sessions,
+    // The wrapper is what the `Scaffold` measures, so it has to be told;
+    // its own default is a full toolbar.
+    preferSize: const Size.fromHeight(SessionTabBar.height),
     builder: () => SessionTabBar(
       names: _sessions.names,
       index: _sessions.index,
       leadingIcon: MingCute.folder_fill,
       onTap: _sessions.select,
       onClose: _close,
+      detailOf: _sessionPath,
       // One widget that follows whichever session is showing, rather than a
       // list the bar would have to rebuild itself to keep current.
       sessionActions: [_SessionActions(sessions: _sessions)],
       // The same two the rail carries. On one screen the picker is a tab
       // rather than a column, and these act on what it lists.
-      leadingActions: [_searchBtn(inRail: false), _addBtn],
+      leadingActions: [_searchBtn(inRail: false)],
     ),
   );
 
@@ -328,6 +330,11 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
       actions: [_SessionActions(sessions: _sessions)],
     ),
   );
+
+  /// What a session's row in the sheet says under the name: where that browser
+  /// is. Two tabs on one server are told apart by this and by nothing else.
+  String? _sessionPath(int index) =>
+      _sessions.tabs.elementAtOrNull(index - 1)?.data.path;
 }
 
 extension _Sessions on _FileTabPageState {
@@ -454,13 +461,6 @@ extension _Actions on _FileTabPageState {
       if (!inRail) return _showSearch();
       setStateSafe(() => _railSearching = !_railSearching);
     },
-  );
-
-  /// A server this app does not know about yet cannot be browsed, and the rail
-  /// is where someone looking for it would look.
-  Widget get _addBtn => Btn.icon(text: libL10n.add, 
-    icon: const Icon(Icons.add, size: 18),
-    onTap: () => ServerEditPage.route.go(context),
   );
 
   void _showSearch() {

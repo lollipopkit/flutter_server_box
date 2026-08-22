@@ -131,6 +131,13 @@ extension _Init on SSHPageState {
 
   Future<void> _showHelp() async {
     if (Stores.setting.sshTermHelpShown.fetch()) return;
+    // Where there are virtual keys, the walkthrough says all of this and says
+    // it beside the keys it is naming. This paragraph is what a desktop gets
+    // instead, having no such row to point at.
+    if (_virtKeysHeight > 0 && !Stores.setting.virtKeyIntroShown.fetch()) {
+      Stores.setting.sshTermHelpShown.put(true);
+      return;
+    }
 
     return await context.showRoundDialog(
       title: libL10n.doc,

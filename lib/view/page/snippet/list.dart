@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/view/page/snippet/edit.dart';
-import 'package:server_box/view/widget/empty_pane.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 
 class SnippetListPage extends ConsumerStatefulWidget {
@@ -90,24 +89,9 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
         onTagChanged: (tag) => _tag.value = tag,
         initTag: _tag.value,
         onSearch: () => _search(filtered),
+        onAdd: () => _edit(null, split),
       ),
       body: _buildSnippetList(filtered, split),
-      // Beside a pane it is the small one the server rail uses, over a list
-      // that leaves room for it — rather than a second row of buttons under
-      // the bar, which no other pane has.
-      floatingActionButton: split
-          ? FloatingActionButton.small(
-              heroTag: 'snippetAddPane',
-              tooltip: libL10n.add,
-              onPressed: () => _edit(null, true),
-              child: const Icon(Icons.add),
-            )
-          : FloatingActionButton(
-              heroTag: 'snippetAdd',
-              tooltip: libL10n.add,
-              onPressed: () => _edit(null, false),
-              child: const Icon(Icons.add),
-            ),
     );
   }
 
@@ -226,12 +210,14 @@ final class _SnippetBar extends StatelessWidget implements PreferredSizeWidget {
   final String initTag;
   final void Function(String) onTagChanged;
   final VoidCallback onSearch;
+  final VoidCallback onAdd;
 
   const _SnippetBar({
     required this.tags,
     required this.initTag,
     required this.onTagChanged,
     required this.onSearch,
+    required this.onAdd,
   });
 
   @override
@@ -250,6 +236,16 @@ final class _SnippetBar extends StatelessWidget implements PreferredSizeWidget {
             text: libL10n.search,
             icon: const Icon(Icons.search, size: 20),
             onTap: onSearch,
+          ),
+          // Beside search rather than floating over the list, which is where
+          // every other page of this app puts the same action. A button that
+          // sits on top of the content also covers the last row of it, and
+          // needed two of itself — one size for a pane and another for a full
+          // width — for nothing the bar has to think about.
+          Btn.icon(
+            text: libL10n.add,
+            icon: const Icon(Icons.add, size: 20),
+            onTap: onAdd,
           ),
         ],
       ),

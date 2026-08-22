@@ -13,7 +13,6 @@ extension _App on _AppSettingsPageState {
       _buildThemeMode(),
       _buildAppColor(),
       _buildCheckUpdate(),
-      _buildHomeTabs(),
       PlatformPublicSettings.buildBioAuth,
       ?androidSettings,
       ?specific,
@@ -85,15 +84,6 @@ extension _App on _AppSettingsPageState {
   }
 
   Widget? _buildPlatformSetting() {
-    if (isIOS) {
-      return ListTile(
-        leading: const Icon(MingCute.apple_fill),
-        title: Text('iOS ${libL10n.setting}'),
-        trailing: const Icon(Icons.keyboard_arrow_right),
-        onTap: () => IosSettingsPage.route.go(context),
-      );
-    }
-
     // The App Store build's one standing entry about the DMG build. The line
     // in the update dialog is asked to go away and does; this one stays, so
     // there is somewhere to read the whole thing afterwards.
@@ -385,17 +375,6 @@ extension _App on _AppSettingsPageState {
           await SystemUIs.updateTitleBarStyle(hideTitleBar: value);
         },
       ),
-    );
-  }
-
-  Widget _buildHomeTabs() {
-    return ListTile(
-      leading: const Icon(Icons.tab),
-      title: Text(l10n.homeTabs),
-      trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: () {
-        HomeTabsConfigPage.route.go(context);
-      },
     );
   }
 

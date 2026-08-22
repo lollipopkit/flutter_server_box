@@ -265,9 +265,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get agentMonitorOptional => 'monitor aracısı (isteğe bağlı)';
 
   @override
-  String get atLeastOneTab => 'En az bir sekme seçilmelidir';
-
-  @override
   String get authFailTip =>
       'Kimlik doğrulama başarısız oldu, lütfen kimlik bilgilerinin doğru olup olmadığını kontrol edin';
 
@@ -457,6 +454,14 @@ class AppLocalizationsTr extends AppLocalizations {
   String get discoverySettings => 'Keşif Ayarları';
 
   @override
+  String get distro => 'Dağıtım';
+
+  @override
+  String distroSwitchTip(Object from, Object to) {
+    return '$from yerine $to kurulur. $from içine kurulmuş her şey silinir ve yerine $to indirilip açılır.';
+  }
+
+  @override
   String get diskHealth => 'Disk sağlığı';
 
   @override
@@ -494,7 +499,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu seçenek yalnızca özelliği etkinleştirir, gerçekten etkinleşip etkinleşmeyeceği cihazın genişliğine bağlıdır';
 
   @override
-  String get editVirtKeys => 'Sanal tuşları düzenle';
+  String get editVirtKeys => 'Sanal tuşlar';
 
   @override
   String get editorHighlightTip =>
@@ -533,7 +538,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'Silinmiş veya adı değiştirilmiş. Geri dönmek, ana klasöre gitmek ya da başka bir yere geçmek için alttaki çubuğu kullanın.';
 
   @override
-  String get fullScreen => 'Tam ekran modu';
+  String get fullScreen => 'Tam ekran';
 
   @override
   String get fullScreenJitter => 'Tam ekran titreşim';
@@ -699,6 +704,14 @@ class AppLocalizationsTr extends AppLocalizations {
       'Etkinleştirildiğinde giriş normal IME üzerinden yapılır; bu da bazı sistemlerde terminalde güvenli klavye istemlerini önleyebilir.';
 
   @override
+  String get linuxShellTip =>
+      'Etkileşimli terminalin neyi çalıştıracağı. Alpine\'de chsh yok ve sistemde /etc/passwd okuyan bir şey de yok, dolayısıyla kararı yalnızca bu verir. Tek seferlik komutlar yine /bin/sh ile çalışır, çünkü uygulama ve Agent POSIX yazar. Varsayılana dönmek için boş bırakın.';
+
+  @override
+  String get linuxNetTip =>
+      'Linux sisteminin ve paketlerinin nereden indirileceği ve içine yazılacak DNS sunucuları. Varsayılana dönmek için boş bırakın. Kaydetmek, kurulu bir sistemdeki her ikisini de yeniden yazar.';
+
+  @override
   String madeWithLove(Object myGithub) {
     return '$myGithub tarafından ❤️ ile yapıldı';
   }
@@ -713,6 +726,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String mismatchSystem(Object system) {
     return 'Eşleşmeyen sistem: $system';
   }
+
+  @override
+  String get mirror => 'Yansı';
 
   @override
   String get needRestart => 'Uygulamanın yeniden başlatılması gerekiyor';
@@ -1031,7 +1047,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sshHostKeyType => 'SSH ana bilgisayar anahtarı türü';
 
   @override
-  String get sshKnownHostKeys => 'Bilinen ana makine anahtarları';
+  String get sshKnownHostKeys => 'Bilinen ana makineler';
 
   @override
   String get sshKnownHostKeysTip =>
@@ -1140,6 +1156,43 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get virtKeyHelpSFTP => 'Mevcut dizini SFTP\'de aç.';
+
+  @override
+  String get virtKeyHelpSnippet =>
+      'Bir parçacık seçip bu terminalde çalıştırır.';
+
+  @override
+  String get virtKeyHelpTmux =>
+      'tmux oturumları ve pencereleri arasında geçiş yapar.';
+
+  @override
+  String get virtKeyIntroActions => 'Kısayollar';
+
+  @override
+  String get virtKeyIntroActionsTip =>
+      'Bu tuşlar yazmaz, bir şey açar. Ne yaptığını okumak için birine basılı tutun.';
+
+  @override
+  String get virtKeyIntroCustomizeTip =>
+      'Terminal ayarlarından sıralarını değiştirebilir, hiç kullanmadıklarınızı gizleyebilirsiniz.';
+
+  @override
+  String get virtKeyIntroModifiers => 'Değiştirici tuşlar';
+
+  @override
+  String get virtKeyIntroModifiersTip =>
+      'Birine dokunup etkinleştirin, sonra klavyeden bir harfe dokunun. Yalnızca o tek tuş için geçerlidir.';
+
+  @override
+  String get virtKeyIntroNav => 'İmleç hareketi';
+
+  @override
+  String get virtKeyIntroNavTip =>
+      'Bu tuşlar imleci hareket ettirir. Yön tuşunu basılı tutarsanız yinelenir.';
+
+  @override
+  String get virtKeyIntroSelect =>
+      'Terminalde kaydırılacak bir şey olduğu sürece, yana sürükleyerek metin seçebilirsiniz.';
 
   @override
   String get waitConnection => 'Lütfen bağlantının kurulmasını bekleyin.';

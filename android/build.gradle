@@ -30,6 +30,28 @@ subprojects {
     project.evaluationDependsOn(':app')
 }
 
+// `wakelock_plus`' pigeon output carries no `package` declaration, so its
+// `Wakelock.kt` reaches the generated types with `import IsEnabledMessage` —
+// an import from the root package, which Kotlin 2.2 rejects. Every published
+// version from 1.3.2 to 1.7.0 is written that way, so there is nothing to
+// upgrade to, and Flutter's Gradle plugin refuses a KGP below 2.2.20, so
+// there is nothing to downgrade to either. Compiling that one module at the
+// 2.1 language level accepts the import again.
+//
+// Scoped to the module rather than applied in `allprojects`: the app's own
+// Kotlin has no reason to be held at an older language level.
+//
+// TODO: delete once wakelock_plus regenerates with a package declaration.
+subprojects {
+    if (project.name == 'wakelock_plus') {
+        tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+            compilerOptions {
+                languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_1)
+            }
+        }
+    }
+}
+
 tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }
