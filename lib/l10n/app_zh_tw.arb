@@ -406,7 +406,7 @@
   "syncAppSettings": "同步 App 設定",
   "syncAppSettingsTip": "將主題、版面配置、編輯器、終端等裝置偏好一併納入自動同步。",
   "menuGitHubRepository": "GitHub 儲存庫",
-  "portForwardBeta": "此功能仍在 Beta 測試階段，不保證可正常運作。",
+  "betaTip": "此功能仍在 Beta 測試階段，不保證可正常運作。",
   "portForward_startPrompt": "新增一條連接埠轉發規則以開始",
   "portForward_localHost": "本機主機",
   "portForward_localPort": "本機連接埠",

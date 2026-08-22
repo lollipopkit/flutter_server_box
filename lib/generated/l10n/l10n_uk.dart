@@ -1233,7 +1233,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Виявлено емуляцію Podman Docker. Будь ласка, переключіться на Podman у налаштуваннях.';
 
   @override
-  String get portForwardBeta =>
+  String get betaTip =>
       'Функція ще в бета-тестуванні. Її роботу не гарантовано.';
 
   @override

@@ -8,6 +8,7 @@ import 'package:server_box/core/utils/android_rootfs.dart';
 import 'package:server_box/core/utils/ios_rootfs.dart';
 import 'package:server_box/core/utils/rootfs.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
+import 'package:server_box/data/res/store.dart';
 
 /// Puts a Linux userland on this device, asking first.
 ///
@@ -44,6 +45,12 @@ Future<bool> installRootfs(
   // installed in the old tree, which is a decision and not something to raise
   // in the way of opening a terminal.
   if (present && into == null && !another) return true;
+  if (!context.mounted) return false;
+
+  // Before anything is downloaded, because this is where the feature is first
+  // met: a system has to be installed before it can be entered, so a warning
+  // here is one nobody reaches a Linux shell without having seen.
+  if (!await _confirmBeta(context)) return present || selected != null;
   if (!context.mounted) return false;
 
   final distro = into?.distro ?? Rootfs.nextDistro;
@@ -122,6 +129,47 @@ Future<bool> installRootfs(
   } finally {
     progress.dispose();
   }
+}
+
+/// Says that the Linux feature is beta, once, and lets it be dismissed for
+/// good. Returns whether to go on.
+///
+/// Its own dialog rather than a line added to the install confirmation: that
+/// one asks about downloading a particular release, and answering it yes is
+/// not the same as having read this.
+///
+/// The flag is written only when the answer is yes. A box ticked on a dialog
+/// that was then cancelled has agreed to nothing, and writing on the tick — as
+/// the port forward warning does, where there is nothing to cancel — would
+/// suppress a warning the user backed out of.
+Future<bool> _confirmBeta(BuildContext context) async {
+  if (Stores.setting.linuxBetaWarned.fetch()) return true;
+  var noMore = false;
+  final ok = await context.showRoundDialog<bool>(
+    title: libL10n.attention,
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(child: Text(context.l10n.betaTip)),
+        UIs.height13,
+        StatefulBuilder(
+          builder: (_, setState) => Row(
+            children: [
+              Checkbox(
+                value: noMore,
+                onChanged: (v) => setState(() => noMore = v ?? false),
+              ),
+              Text(l10n.noPromptAgain),
+            ],
+          ),
+        ),
+      ],
+    ),
+    actions: Btnx.cancelOk,
+  );
+  if (ok != true) return false;
+  if (noMore) Stores.setting.linuxBetaWarned.put(true);
+  return true;
 }
 
 /// Removes one Linux system, asking first.

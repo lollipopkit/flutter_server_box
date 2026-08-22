@@ -1142,7 +1142,7 @@ class AppLocalizationsZh extends AppLocalizations {
       '检测到 Podman Docker 仿真。请在设置中切换到 Podman。';
 
   @override
-  String get portForwardBeta => '此功能仍在测试阶段，不保证功能可用性。';
+  String get betaTip => '此功能仍在测试阶段，不保证功能可用性。';
 
   @override
   String get portForward_startPrompt => '添加端口映射规则以开始使用';
@@ -2488,7 +2488,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       '檢測到 Podman Docker 仿真。請在設定中切換到 Podman。';
 
   @override
-  String get portForwardBeta => '此功能仍在 Beta 測試階段，不保證可正常運作。';
+  String get betaTip => '此功能仍在 Beta 測試階段，不保證可正常運作。';
 
   @override
   String get portForward_startPrompt => '新增一條連接埠轉發規則以開始';

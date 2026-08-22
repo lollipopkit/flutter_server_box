@@ -1230,7 +1230,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Emulasi Podman Docker terdeteksi. Silakan beralih ke Podman di pengaturan.';
 
   @override
-  String get portForwardBeta =>
+  String get betaTip =>
       'Fitur ini masih dalam uji beta. Fungsinya belum dijamin.';
 
   @override

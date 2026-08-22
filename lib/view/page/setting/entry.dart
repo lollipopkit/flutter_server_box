@@ -212,7 +212,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           if (Rootfs.isAvailable)
             SettingsNode.leaf(
               id: 'terminal.linux',
-              title: 'Linux',
+              // Not localized, and not searched for either: the id above is
+              // what the settings search matches on, and "Linux" is the same
+              // word in every locale this ships in.
+              title: 'Linux (Beta)',
               icon: Icons.layers_outlined,
               page: () => const AppSettingsPage(section: SettingsSection.linux),
             ),

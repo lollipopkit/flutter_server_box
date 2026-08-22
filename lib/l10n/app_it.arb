@@ -382,7 +382,7 @@
   "sshConnectionModeUseSystem": "Usa l'SSH di sistema",
   "syncAppSettings": "Sincronizza le impostazioni dell'app",
   "syncAppSettingsTip": "Includi tema, layout, editor, terminale e altre preferenze del dispositivo nella sincronizzazione automatica.",
-  "portForwardBeta": "Questa funzione è ancora in beta. Il funzionamento non è garantito.",
+  "betaTip": "Questa funzione è ancora in beta. Il funzionamento non è garantito.",
   "portForward_startPrompt": "Aggiungi una regola di port forwarding per iniziare",
   "portForward_localHost": "Host locale",
   "portForward_localPort": "Porta locale",

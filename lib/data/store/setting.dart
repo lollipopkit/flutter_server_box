@@ -529,6 +529,13 @@ class SettingStore extends SqliteStore {
     false,
   );
 
+  /// Hide the Linux beta warning, which is asked before an install.
+  ///
+  /// Separate from [portForwardBetaWarned] rather than one flag for every beta
+  /// feature: dismissing the warning on one says nothing about having read the
+  /// other, and the two are not the same risk.
+  late final linuxBetaWarned = propertyDefault('linuxBetaWarned', false);
+
   late final sshPageSortBy = propertyDefault('sshPageSortBy', 0);
   late final sshPageSortAsc = propertyDefault('sshPageSortAsc', true);
 

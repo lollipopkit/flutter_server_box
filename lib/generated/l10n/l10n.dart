@@ -2211,11 +2211,11 @@ abstract class AppLocalizations {
   /// **'Podman Docker emulation detected. Please switch to Podman in settings.'**
   String get podmanDockerEmulationDetected;
 
-  /// No description provided for @portForwardBeta.
+  /// No description provided for @betaTip.
   ///
   /// In en, this message translates to:
   /// **'This feature is still in beta testing. Functionality is not guaranteed.'**
-  String get portForwardBeta;
+  String get betaTip;
 
   /// No description provided for @portForward_startPrompt.
   ///

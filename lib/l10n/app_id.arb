@@ -379,7 +379,7 @@
   "syncAppSettings": "Sinkronkan pengaturan aplikasi",
   "syncAppSettingsTip": "Sertakan tema, tata letak, editor, terminal, dan preferensi perangkat lain dalam sinkronisasi otomatis.",
   "menuGitHubRepository": "Repositori GitHub",
-  "portForwardBeta": "Fitur ini masih dalam uji beta. Fungsinya belum dijamin.",
+  "betaTip": "Fitur ini masih dalam uji beta. Fungsinya belum dijamin.",
   "portForward_startPrompt": "Tambahkan aturan penerusan porta untuk memulai",
   "portForward_localHost": "Host lokal",
   "portForward_localPort": "Porta lokal",

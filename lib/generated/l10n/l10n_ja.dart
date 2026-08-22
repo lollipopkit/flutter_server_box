@@ -1167,7 +1167,7 @@ class AppLocalizationsJa extends AppLocalizations {
       'Podman Docker エミュレーションが検出されました。設定で Podman に切り替えてください。';
 
   @override
-  String get portForwardBeta => 'この機能はまだベータ版です。動作は保証されません。';
+  String get betaTip => 'この機能はまだベータ版です。動作は保証されません。';
 
   @override
   String get portForward_startPrompt => 'ポート転送のルールを追加して始めましょう';

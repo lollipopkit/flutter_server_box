@@ -379,7 +379,7 @@
   "syncAppSettings": "Uygulama ayarlarını eşitle",
   "syncAppSettingsTip": "Tema, düzen, düzenleyici, terminal ve diğer cihaz tercihlerini otomatik eşitlemeye dâhil et.",
   "menuGitHubRepository": "GitHub deposu",
-  "portForwardBeta": "Bu özellik hâlâ beta aşamasında. İşleyişi garanti edilmez.",
+  "betaTip": "Bu özellik hâlâ beta aşamasında. İşleyişi garanti edilmez.",
   "portForward_startPrompt": "Başlamak için bir port yönlendirme kuralı ekle",
   "portForward_localHost": "Yerel ana makine",
   "portForward_localPort": "Yerel port",

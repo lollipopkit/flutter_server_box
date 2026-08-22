@@ -1232,7 +1232,7 @@ class AppLocalizationsNl extends AppLocalizations {
       'Podman Docker-emulatie gedetecteerd. Schakel over naar Podman in de instellingen.';
 
   @override
-  String get portForwardBeta =>
+  String get betaTip =>
       'Deze functie is nog in bèta. De werking wordt niet gegarandeerd.';
 
   @override

@@ -379,7 +379,7 @@
   "syncAppSettings": "Synchroniser les réglages de l'app",
   "syncAppSettingsTip": "Inclure le thème, la disposition, l'éditeur, le terminal et les autres préférences de l'appareil dans la synchronisation automatique.",
   "menuGitHubRepository": "Dépôt GitHub",
-  "portForwardBeta": "Cette fonctionnalité est encore en bêta. Son fonctionnement n'est pas garanti.",
+  "betaTip": "Cette fonctionnalité est encore en bêta. Son fonctionnement n'est pas garanti.",
   "portForward_startPrompt": "Ajoute une règle de redirection de port pour commencer",
   "portForward_localHost": "Hôte local",
   "portForward_localPort": "Port local",

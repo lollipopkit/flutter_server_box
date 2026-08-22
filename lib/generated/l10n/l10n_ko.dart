@@ -1171,7 +1171,7 @@ class AppLocalizationsKo extends AppLocalizations {
       'Podman Docker 에뮬레이션이 감지되었습니다. 설정에서 Podman으로 전환해 주세요.';
 
   @override
-  String get portForwardBeta => '이 기능은 아직 베타 테스트 중입니다. 정상 동작이 보장되지 않습니다.';
+  String get betaTip => '이 기능은 아직 베타 테스트 중입니다. 정상 동작이 보장되지 않습니다.';
 
   @override
   String get portForward_startPrompt => '포트 포워딩 규칙을 추가하여 시작하세요';

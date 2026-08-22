@@ -30,12 +30,30 @@ extension _Linux on _AppSettingsPageState {
       listenable: _setting.linuxProfile.listenable(),
       builder: (_) => Column(
         children: [
+          _buildLinuxBeta(),
           _buildLinuxProfiles(),
           _buildLinuxShell(),
           _buildLinuxMirror(),
           _buildLinuxDns(),
         ].nonNulls.map((e) => CardX(child: e)).toList(),
       ),
+    );
+  }
+
+  /// That this is beta, at the top of the page that manages it.
+  ///
+  /// A row of its own rather than a suffix on the title. The settings list that
+  /// reached here already says "Linux (Beta)", and what a suffix cannot say is
+  /// the part that matters — that nothing here is guaranteed to work.
+  ///
+  /// Stays after the warning before an install has been dismissed: that one is
+  /// asked once and can be turned off, and this page would then be the only
+  /// place left that says it.
+  Widget _buildLinuxBeta() {
+    return ListTile(
+      leading: const Icon(Icons.science_outlined, size: _kIconSize),
+      title: const Text('Beta'),
+      subtitle: Text(l10n.betaTip, style: UIs.textGrey),
     );
   }
 

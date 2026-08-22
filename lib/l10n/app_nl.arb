@@ -379,7 +379,7 @@
   "syncAppSettings": "App-instellingen synchroniseren",
   "syncAppSettingsTip": "Thema, indeling, editor, terminal en andere apparaatvoorkeuren meenemen in de automatische synchronisatie.",
   "menuGitHubRepository": "GitHub-repository",
-  "portForwardBeta": "Deze functie is nog in bèta. De werking wordt niet gegarandeerd.",
+  "betaTip": "Deze functie is nog in bèta. De werking wordt niet gegarandeerd.",
   "portForward_startPrompt": "Voeg een poortdoorstuurregel toe om te beginnen",
   "portForward_localHost": "Lokale host",
   "portForward_localPort": "Lokale poort",

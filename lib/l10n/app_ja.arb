@@ -379,7 +379,7 @@
   "syncAppSettings": "アプリ設定を同期",
   "syncAppSettingsTip": "テーマ、レイアウト、エディター、ターミナルなど端末ごとの設定も自動同期に含めます。",
   "menuGitHubRepository": "GitHub リポジトリ",
-  "portForwardBeta": "この機能はまだベータ版です。動作は保証されません。",
+  "betaTip": "この機能はまだベータ版です。動作は保証されません。",
   "portForward_startPrompt": "ポート転送のルールを追加して始めましょう",
   "portForward_localHost": "ローカルホスト",
   "portForward_localPort": "ローカルポート",
