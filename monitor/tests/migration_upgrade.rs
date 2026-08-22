@@ -138,3 +138,72 @@ async fn the_audit_log_is_cleaned_up_by_the_retention_service() {
     );
     assert_eq!(rows[0].get::<String, _>("kind"), "terminal");
 }
+
+#[tokio::test]
+async fn unused_metric_tables_and_policies_are_removed_on_upgrade() {
+    let pool = pool().await;
+    sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+
+    // Recreate the pre-008 state with real rows, then mark only migration 008
+    // pending. This exercises the same upgrade path as an existing agent.
+    sqlx::query(
+        "CREATE TABLE velocity_metrics (id INTEGER PRIMARY KEY, timestamp DATETIME, server_name TEXT)",
+    )
+    .execute(&pool)
+    .await
+    .unwrap();
+    sqlx::query(
+        "CREATE TABLE cpu_core_metrics (id INTEGER PRIMARY KEY, timestamp DATETIME, server_name TEXT)",
+    )
+    .execute(&pool)
+    .await
+    .unwrap();
+    sqlx::query("INSERT INTO velocity_metrics VALUES (1, CURRENT_TIMESTAMP, 'host')")
+        .execute(&pool)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO cpu_core_metrics VALUES (1, CURRENT_TIMESTAMP, 'host')")
+        .execute(&pool)
+        .await
+        .unwrap();
+    sqlx::query(
+        "INSERT INTO retention_policies (table_name, retention_days) VALUES ('velocity_metrics', 30), ('cpu_core_metrics', 7)",
+    )
+    .execute(&pool)
+    .await
+    .unwrap();
+    sqlx::query("DELETE FROM _sqlx_migrations WHERE version = 8")
+        .execute(&pool)
+        .await
+        .unwrap();
+
+    sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+
+    for table in ["velocity_metrics", "cpu_core_metrics"] {
+        let exists: Option<String> = sqlx::query_scalar(
+            "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
+        )
+        .bind(table)
+        .fetch_optional(&pool)
+        .await
+        .unwrap();
+        assert!(exists.is_none(), "{table} should be dropped");
+
+        let policy: Option<i64> = sqlx::query_scalar(
+            "SELECT retention_days FROM retention_policies WHERE table_name = ?",
+        )
+        .bind(table)
+        .fetch_optional(&pool)
+        .await
+        .unwrap();
+        assert!(policy.is_none(), "{table} policy should be removed");
+    }
+
+    let system_metrics_exists: Option<String> = sqlx::query_scalar(
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'system_metrics'",
+    )
+    .fetch_optional(&pool)
+    .await
+    .unwrap();
+    assert_eq!(system_metrics_exists.as_deref(), Some("system_metrics"));
+}

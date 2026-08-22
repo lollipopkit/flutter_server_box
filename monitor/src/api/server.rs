@@ -105,8 +105,7 @@ pub struct AppState {
 
 impl AppState {
     pub fn new(config: Arc<Config>, db: SqlitePool) -> Arc<Self> {
-        let db_arc = Arc::new(db.clone());
-        let velocity_manager = Arc::new(RwLock::new(VelocityManager::new(db_arc)));
+        let velocity_manager = Arc::new(RwLock::new(VelocityManager::new()));
         let live_settings = Arc::new(RwLock::new(LiveSettings::from_config(&config.get_monitoring())));
         let tls_active = config.get_server().tls.is_some();
         let remote_access = config

@@ -277,16 +277,15 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
                     error!("Failed to store metrics: {}", e);
                 }
 
-                // Update velocity manager with network and CPU core data
-                if let Err(e) = app_state.velocity_manager.write().await.update_server_metrics(
+                // Update the bounded in-memory velocity history used by the
+                // rules engine and velocity API.
+                app_state.velocity_manager.write().await.update_server_metrics(
                     &metrics.server_name,
                     metrics.network.rx_bytes,
                     metrics.network.tx_bytes,
                     metrics.cpu_cores.clone(),
                     metrics.timestamp
-                ).await {
-                    error!("Failed to update velocity metrics: {}", e);
-                }
+                ).await;
 
                 // Check rules and send alerts with velocity data
                 if let Err(e) = crate::monitoring::rules::check_rules_with_velocity(&metrics, &app_state.config, &*app_state.velocity_manager.read().await).await {
@@ -1075,10 +1074,8 @@ pub fn parse_disk_metrics(segment: &str) -> Result<DiskMetrics> {
     Ok(aggregate_disks(SystemType::Linux, &sbm_parser::linux::parse_disk(segment)))
 }
 
-/// One cycle's rows are written in a single transaction: the `system_metrics`
-/// row and its `cpu_core_metrics` rows share a timestamp and are only
-/// meaningful together, and committing 1 + N_cores inserts as one write keeps
-/// the loop from holding the database lock across every core.
+/// Store the aggregate trend row used by history queries. Per-core samples
+/// stay in the current in-memory snapshot; no database consumer queried them.
 pub async fn store_metrics(db: &SqlitePool, metrics: &SystemMetrics) -> Result<()> {
     let memory_total = metrics.memory.total as i64;
     let memory_used = metrics.memory.used as i64;
@@ -1099,8 +1096,6 @@ pub async fn store_metrics(db: &SqlitePool, metrics: &SystemMetrics) -> Result<(
         metrics.diskio.iter().map(|d| d.sectors_write.max(0) * 512).sum();
     // First battery only — matches the home page card's existing convention
     let battery_percent: Option<f64> = metrics.batteries.first().and_then(|b| b.percent).map(|p| p as f64);
-
-    let mut tx = db.begin().await?;
 
     sqlx::query!(
         r#"
@@ -1129,36 +1124,8 @@ pub async fn store_metrics(db: &SqlitePool, metrics: &SystemMetrics) -> Result<(
         diskio_write_bytes,
         battery_percent
     )
-    .execute(&mut *tx)
+    .execute(db)
     .await?;
-
-    // Store CPU core data. usage_percent comes from adapt_cpu, which is the
-    // only place that knows the per-platform meaning of used/total; it is NULL
-    // on the first Linux cycle, before a delta baseline exists.
-    for (core_id, core_time) in metrics.cpu_cores.iter().enumerate() {
-        let core_id_i32 = core_id as i32;
-        let used_time_i64 = core_time.used as i64;
-        let total_time_i64 = core_time.total as i64;
-        let usage_percent = core_time.usage_percent;
-
-        sqlx::query!(
-            r#"
-            INSERT INTO cpu_core_metrics (
-                timestamp, server_name, core_id, used_time, total_time, usage_percent
-            ) VALUES (?, ?, ?, ?, ?, ?)
-            "#,
-            metrics.timestamp,
-            metrics.server_name,
-            core_id_i32,
-            used_time_i64,
-            total_time_i64,
-            usage_percent
-        )
-        .execute(&mut *tx)
-        .await?;
-    }
-
-    tx.commit().await?;
 
     Ok(())
 }
