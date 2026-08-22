@@ -126,23 +126,32 @@ actor LiveActivityManager {
             return
         }
 
-        // Whoever asked second waits for the first request rather than making
-        // one of its own, and then applies *its own* payload to the result.
-        // The request in flight carries the older one, so taking its content
-        // would show what this call has already replaced.
-        if let pending, pending.generation == generation {
-            _ = await pending.task.value
+        // Whoever asked second waits for the request in flight rather than
+        // making one of its own, and then applies *its own* payload to the
+        // result. The request in flight carries the older one, so taking its
+        // content would show what this call has already replaced.
+        //
+        // A loop, because waiting is a suspension and what is in `pending`
+        // when this resumes need not be what it waited on. A request from a
+        // lifetime `stop` has already ended, so its result is not this
+        // caller's — but reading `pending` once and taking that as "nothing in
+        // flight" asked for an activity beside whichever request another
+        // caller had installed meanwhile. Two Live Activities for one
+        // terminal, and only the later of them in `current`.
+        while let inFlight = pending {
+            _ = await inFlight.task.value
+            guard inFlight.generation == generation else {
+                // Dropped if nothing has replaced it, because this re-reads
+                // `pending`: a finished request left there is one the next
+                // turn would wait on again, and again.
+                if pending?.tag == inFlight.tag { pending = nil }
+                continue
+            }
             if let activity = updatableActivity() {
                 let content = ActivityContent(state: Self.contentState(from: payload), staleDate: nil)
                 await apply(content, to: activity)
             }
             return
-        }
-        // A request from a lifetime `stop` has already ended. Waiting for it
-        // keeps the two from racing for the slot, but its result is not this
-        // caller's — that one is being ended by whoever made it. Ask again.
-        if let pending {
-            _ = await pending.task.value
         }
 
         let mine = generation

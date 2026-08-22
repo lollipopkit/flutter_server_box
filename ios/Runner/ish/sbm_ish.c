@@ -192,7 +192,7 @@ static struct session sessions[SBM_MAX_SESSIONS];
 static pthread_mutex_t sessions_lock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t sessions_wrote = PTHREAD_COND_INITIALIZER;
 
-static pid_t_ close_session(int session_id);
+static pid_t_ close_session(int session_id, const char *profile);
 
 /// The session a tty belongs to, or -1. Called from the guest's threads.
 static int session_of(struct tty *tty) {
@@ -452,8 +452,17 @@ static int make_dev(const char *profile) {
 
     // Where the pty slaves appear. Its mount point has to exist first, since
     // `/dev` is a filesystem that was empty a moment ago.
+    //
+    // Checked like the `/dev` mount above: a session is a pty, so a system
+    // without this is one whose terminal cannot open. Discarding the result
+    // let the attach report success and left the failure to be met later, as
+    // a shell that would not start.
     generic_mkdirat(AT_PWD, GUEST("/%s/dev/pts", profile), 0755);
-    do_mount(&devptsfs, "devpts", GUEST("/%s/dev/pts", profile), "", 0);
+    err = do_mount(&devptsfs, "devpts", GUEST("/%s/dev/pts", profile), "", 0);
+    if (err < 0) {
+        syslog(LOG_ERR, "sbm_ish: %s has no /dev/pts (%d)", profile, err);
+        return err;
+    }
 
     // Not device nodes but expected to be there, and cheap to be right about:
     // a shell's `>/dev/stdout`, a script's `/dev/fd/3`, and anything that
@@ -629,12 +638,21 @@ int sbm_ish_attach(const char *profile) {
     // shell following one before it is mounted gets "nonexistent directory".
     snprintf(path, sizeof(path), "/%s/proc", profile);
     generic_mkdirat(AT_PWD, path, 0755);
-    do_mount(&procfs, "proc", path, "", 0);
+    int err = do_mount(&procfs, "proc", path, "", 0);
+    if (err < 0) {
+        // Same rollback as below, and for the same reason: nothing recorded
+        // the profile yet, so what this mounted has to go back before the
+        // next attach reaches the sweep at the top.
+        syslog(LOG_ERR, "sbm_ish: %s has no /proc (%d)", profile, err);
+        unmount_profile(profile);
+        pthread_mutex_unlock(&attached_lock);
+        return err;
+    }
     // Recorded only once the system is actually mounted. Attaching is
     // idempotent by name, so a half-built profile written here is one nothing
     // ever retries: every later attach sees the name and returns 0, and the
     // session opens onto a `/dev` that was never mounted.
-    int err = make_dev(profile);
+    err = make_dev(profile);
     if (err < 0) {
         // What was mounted above goes back with it. If it will not, say so and
         // leave it: the profile is not recorded either way, so the next attach
@@ -688,12 +706,7 @@ int sbm_ish_detach(const char *profile) {
     //
     // Signalled, not waited for: the caller retries, which is where the time
     // for a shell to take SIGHUP and exit belongs — this holds `attached_lock`.
-    for (int i = 0; i < SBM_MAX_SESSIONS; i++) {
-        pthread_mutex_lock(&sessions_lock);
-        bool mine = sessions[i].used && strcmp(sessions[i].profile, profile) == 0;
-        pthread_mutex_unlock(&sessions_lock);
-        if (mine) close_session(i);
-    }
+    for (int i = 0; i < SBM_MAX_SESSIONS; i++) close_session(i, profile);
 
     pthread_mutex_lock(&attached_lock);
     int err = unmount_profile(profile);
@@ -1026,16 +1039,27 @@ int sbm_ish_exit_code(int session_id) {
 
 /// Ends one session: gives the tty back and hangs its process group up.
 ///
-/// Returns the pid it signalled, or 0 if the slot was already free. Split out
-/// of [sbm_ish_close] because [sbm_ish_detach] has to do the same thing to
-/// every session in a system before it can unmount anything that system holds.
-static pid_t_ close_session(int session_id) {
+/// Returns the pid it signalled, or 0 if the slot was already free or belongs
+/// to another system. Split out of [sbm_ish_close] because [sbm_ish_detach]
+/// has to do the same thing to every session in a system before it can unmount
+/// anything that system holds.
+///
+/// `profile` names the system this may close, or NULL for any. It is checked
+/// here rather than by the caller because a slot is reused: reading `used` and
+/// `profile` under one hold of the lock and then closing under another leaves
+/// a window in which `sbm_ish_open` takes the freed slot for a different
+/// system, and the detach hangs up a session that has nothing to do with it.
+static pid_t_ close_session(int session_id, const char *profile) {
     pthread_mutex_lock(&sessions_lock);
     struct session *session = &sessions[session_id];
-    pid_t_ pid = session->used ? session->pid : 0;
-    struct tty *tty = session->used ? session->tty : NULL;
-    session->used = false;
-    session->tty = NULL;
+    bool mine = session->used &&
+                (profile == NULL || strcmp(session->profile, profile) == 0);
+    pid_t_ pid = mine ? session->pid : 0;
+    struct tty *tty = mine ? session->tty : NULL;
+    if (mine) {
+        session->used = false;
+        session->tty = NULL;
+    }
     pthread_mutex_unlock(&sessions_lock);
 
     // `pty_open_fake` hands over a reference, and forgetting the pointer is
@@ -1061,7 +1085,7 @@ static pid_t_ close_session(int session_id) {
 
 void sbm_ish_close(int session_id) {
     if (session_id < 0 || session_id >= SBM_MAX_SESSIONS) return;
-    close_session(session_id);
+    close_session(session_id, NULL);
 }
 
 #endif // SBM_ISH_ENABLED
