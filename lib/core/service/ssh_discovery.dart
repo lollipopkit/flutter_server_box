@@ -302,7 +302,11 @@ class SshDiscoveryService {
         );
       }
     } else if (_isLinux) {
-      final s = await _run('/usr/bin/avahi-browse', ['-rat', '_ssh._tcp']);
+      // By name, resolved on PATH, the way `ip` above is. An absolute
+      // /usr/bin is a guess about the filesystem rather than about the tool —
+      // and it is wrong on NixOS, where nothing but /bin/sh and /usr/bin/env
+      // live at an FHS path.
+      final s = await _run('avahi-browse', ['-rat', '_ssh._tcp']);
       if (s != null) {
         for (final ip in _avahiAddressRegExp.allMatches(s).map((m) => m.group(1)!).where((e) => e.isNotEmpty)) {
           final parsed = InternetAddress.tryParse(ip);
