@@ -10,6 +10,7 @@ import 'package:server_box/core/utils/guest_path.dart';
 import 'package:server_box/core/utils/linux_seed.dart';
 import 'package:server_box/core/utils/oci_image.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
+import 'package:server_box/data/model/app/rootfs_manifest.dart';
 
 /// A Linux userland on Android, and what it takes to get one.
 ///
@@ -170,6 +171,7 @@ abstract final class AndroidRootfs {
   /// moved. Everything installed into the old one goes with it.
   static Future<LinuxProfile> install({
     required LinuxDistro distro,
+    RootfsRelease? release,
     LinuxProfile? into,
     String? label,
     void Function(double? progress)? onProgress,
@@ -185,6 +187,8 @@ abstract final class AndroidRootfs {
         into?.id ?? LinuxProfile.nextId(distro, _profiles.map((e) => e.id));
     final root = container.joinPath(id);
     final mirror = linuxMirror(distro);
+    // Read once, for the reason the mirror is.
+    final chosen = release ?? distro.preferred;
 
     final dir = Directory(root);
     // Whatever a previous attempt left. A rootfs is only ever complete or
@@ -195,7 +199,7 @@ abstract final class AndroidRootfs {
     final archive = root.joinPath('rootfs.tar.gz');
     try {
       await Dio().download(
-        distro.rootfsUrl(mirror),
+        chosen.source.urlOn(mirror, distro.defaultMirror),
         archive,
         cancelToken: cancel,
         onReceiveProgress: (got, total) =>
@@ -203,22 +207,28 @@ abstract final class AndroidRootfs {
       );
 
       final digest = await _sha256Of(File(archive));
-      if (digest != distro.sha256) {
+      if (digest != chosen.source.sha256) {
         throw StateError(
           'The rootfs did not match its digest and was discarded. '
-          'Expected ${distro.sha256}, got $digest.',
+          'Expected ${chosen.source.sha256}, got $digest.',
         );
       }
 
-      await _unpack(archive, root, distro: distro);
+      await _unpack(archive, root, source: chosen.source);
 
       await seedResolvConf(root, nameservers: linuxNameservers());
-      await seedRepositories(root, distro: distro, mirror: mirror);
+      await seedRepositories(
+        root,
+        distro: distro,
+        release: chosen,
+        mirror: mirror,
+      );
       await seedChsh(root, force: true);
       final profile = LinuxProfile(
         id: id,
         distro: distro,
-        version: distro.version,
+        version: chosen.version,
+        branch: chosen.branch,
         label: label ?? into?.label ?? distro.label,
       );
       await File(root.joinPath(LinuxProfile.marker)).writeAsString(profile.encode());
@@ -249,18 +259,18 @@ abstract final class AndroidRootfs {
   static Future<void> _unpack(
     String archivePath,
     String root, {
-    required LinuxDistro distro,
+    required RootfsSource source,
   }) async {
-    switch (distro.layout) {
+    switch (source.layout) {
       case LinuxRootfsLayout.plain:
-        if (distro.compression == LinuxRootfsCompression.gzip) {
+        if (source.compression == LinuxRootfsCompression.gzip) {
           await _tar(archivePath, root, gzip: true);
         } else {
           await _withTemp(
             '$archivePath.tar',
             decompressRootfs(
               await File(archivePath).readAsBytes(),
-              distro.compression,
+              source.compression,
             ),
             (path) => _tar(path, root, gzip: false),
           );
@@ -269,7 +279,7 @@ abstract final class AndroidRootfs {
         final image = TarDecoder().decodeBytes(
           decompressRootfs(
             await File(archivePath).readAsBytes(),
-            distro.compression,
+            source.compression,
           ),
         );
         var n = 0;

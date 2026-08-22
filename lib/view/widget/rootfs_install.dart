@@ -8,6 +8,7 @@ import 'package:server_box/core/utils/android_rootfs.dart';
 import 'package:server_box/core/utils/ios_rootfs.dart';
 import 'package:server_box/core/utils/rootfs.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
+import 'package:server_box/data/model/app/rootfs_manifest.dart';
 import 'package:server_box/data/res/store.dart';
 
 /// Puts a Linux userland on this device, asking first.
@@ -27,6 +28,7 @@ import 'package:server_box/data/res/store.dart';
 Future<bool> installRootfs(
   BuildContext context, {
   LinuxProfile? into,
+  RootfsRelease? release,
   bool another = false,
   String? label,
 }) async {
@@ -56,6 +58,15 @@ Future<bool> installRootfs(
   if (!context.mounted) return false;
 
   final distro = into?.distro ?? Rootfs.nextDistro;
+
+  // Which release. Replacing an existing system stays in its own series —
+  // that is what makes it a replacement rather than a migration — so it takes
+  // the newest build of the one already installed. A fresh install takes what
+  // the caller chose, or the preferred one when nobody chose.
+  final chosen = into == null
+      ? (release ?? distro.preferred)
+      : (distro.info.newestIn(into.branch) ?? distro.preferred);
+
   final confirm = await context.showRoundDialog<bool>(
     // Capitalised: the shared string is a verb used mid-sentence elsewhere,
     // and a dialog title is not mid-sentence.
@@ -64,13 +75,13 @@ Future<bool> installRootfs(
       into == null
           ? context.l10n.rootfsInstallTip(
               distro.label,
-              distro.version,
-              distro.approxDownloadMb,
+              chosen.version,
+              chosen.source.sizeMb,
             )
           : context.l10n.rootfsUpdateTip(
               distro.label,
               into.version,
-              distro.version,
+              chosen.version,
               distro.packageManager,
             ),
     ),
@@ -123,6 +134,7 @@ Future<bool> installRootfs(
   try {
     await Rootfs.install(
       distro: distro,
+      release: chosen,
       into: into,
       label: label,
       onProgress: (value) => progress.value = value,

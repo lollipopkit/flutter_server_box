@@ -9,6 +9,7 @@ import 'package:server_box/core/utils/linux_seed.dart';
 import 'package:server_box/core/utils/rootfs_manifest_source.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/linux_distros.dart';
+import 'package:server_box/data/model/app/rootfs_manifest.dart';
 
 /// The Linux system this app can offer, whichever way it gets one.
 ///
@@ -67,10 +68,22 @@ abstract final class Rootfs {
   /// False when the manifest no longer describes the distribution. There is
   /// nothing to offer as an update, and asking for a version would throw
   /// rather than guess at one.
+  ///
+  /// Within the series and never across it. An update replaces the tree and
+  /// destroys everything installed in it, so offering 26.04 to someone
+  /// running 24.04 would be a migration wearing an update's clothes. What it
+  /// answers is "there is a newer build of the release you chose".
   static bool isOutdated(LinuxProfile profile) {
     final described = LinuxDistros.describe(profile.distro);
     if (described == null) return false;
-    return profile.version != described.version;
+    // A marker written before the series was recorded says nothing about
+    // which one it is, so it is compared against the preferred release —
+    // which is what every build did when there was only one.
+    final current = profile.branch.isEmpty
+        ? described.preferred
+        : described.newestIn(profile.branch);
+    if (current == null) return false;
+    return profile.version != current.version;
   }
 
   /// How many terminals are open in [profile], where that can be asked.
@@ -139,6 +152,7 @@ abstract final class Rootfs {
   /// Downloads and unpacks a new system of [distro], beside whatever is there.
   static Future<LinuxProfile> install({
     required LinuxDistro distro,
+    RootfsRelease? release,
     LinuxProfile? into,
     String? label,
     void Function(double? progress)? onProgress,
@@ -147,6 +161,7 @@ abstract final class Rootfs {
     return isAndroid
         ? AndroidRootfs.install(
             distro: distro,
+            release: release,
             into: into,
             label: label,
             onProgress: onProgress,
@@ -154,6 +169,7 @@ abstract final class Rootfs {
           )
         : IosRootfs.install(
             distro: distro,
+            release: release,
             into: into,
             label: label,
             onProgress: onProgress,

@@ -103,7 +103,7 @@ void main() {
       await IosRootfs.extractForTest(
         tarball,
         into,
-        distro: LinuxDistro.ubuntu,
+        source: LinuxDistro.ubuntu.preferred.source,
       );
 
       // What the shell walks to run `ls`, one hop at a time. Each is a
@@ -145,7 +145,11 @@ void main() {
         ),
       );
 
-      await IosRootfs.extractForTest(tarball, into, distro: LinuxDistro.ubuntu);
+      await IosRootfs.extractForTest(
+        tarball,
+        into,
+        source: LinuxDistro.ubuntu.preferred.source,
+      );
 
       final decoder = TarDecoder();
       decoder.decodeBytes(GZipDecoder().decodeBytes(tarball.readAsBytesSync()));

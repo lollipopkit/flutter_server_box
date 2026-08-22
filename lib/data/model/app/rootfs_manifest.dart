@@ -17,12 +17,15 @@
 /// a missing or unrecognised field throws rather than defaulting, because a
 /// default here would be a silent answer to "which bytes".
 ///
-/// TODO(manifest rollout): the fetch, the signature check and the serial
-/// rollback guard are not here yet. Until they are, the only manifest read is
-/// the bundled asset, which is as trustworthy as the binary that carries it.
+/// The fetch, the signature check and the serial rollback guard are in
+/// `RootfsManifestSource` and `RootfsManifestTrust`; this file is only the
+/// shape and the parsing, and it is reached with bytes that have already been
+/// verified or that came out of the binary.
 library;
 
 import 'dart:convert';
+
+import 'package:fl_lib/fl_lib.dart';
 
 import 'package:server_box/data/model/app/linux_distro.dart';
 
@@ -78,6 +81,19 @@ class RootfsSource {
     );
   }
 
+  /// [url], with [defaultMirror] swapped for [mirror].
+  ///
+  /// The manifest carries the URL already built against the default, so
+  /// honouring a different one means replacing that prefix. A source that
+  /// does not follow the mirror is left alone — Ubuntu's base tarballs are on
+  /// `cdimage` and its packages on `archive`, and one mirror string cannot
+  /// name both.
+  String urlOn(String mirror, String defaultMirror) {
+    if (!followsMirror || mirror == defaultMirror) return url;
+    if (!url.startsWith(defaultMirror)) return url;
+    return '$mirror${url.substring(defaultMirror.length)}';
+  }
+
   /// [sizeBytes] as whole megabytes, never rounded down.
   ///
   /// Understating a download is the failure that matters: the dialog is
@@ -86,27 +102,22 @@ class RootfsSource {
   int get sizeMb => (sizeBytes + 1048575) ~/ 1048576;
 }
 
-/// One installable system.
-class RootfsDistro {
-  /// Matches a [LinuxDistro] name. It is written into every installed
-  /// system's marker file, so it outlives the manifest that introduced it.
-  final String id;
-
-  final String label;
+/// One release of a distribution: a version, and where to get it.
+class RootfsRelease {
   final String version;
 
-  /// What the package manager reads as its release: a suite name for apt, a
+  /// What the package manager reads as its release — a suite name for apt, a
   /// branch for apk, a major version for dnf.
+  ///
+  /// Also what decides whether one release is an update of another. 24.04.3
+  /// and 24.04.4 are both `noble` and one replaces the other; 26.04 is
+  /// `resolute` and does not. An update destroys everything installed in the
+  /// tree it replaces, so crossing that line silently would be worse than
+  /// never offering one.
   final String branch;
 
-  /// `apk`, `apt`, `dnf`. Named when a system is about to be replaced,
-  /// because what that destroys is whatever this put there.
-  final String packageManager;
-
-  final String defaultMirror;
-
   /// The repacked artifact, or null when nothing has been repacked for this
-  /// one yet. Preferred over [upstream] when present.
+  /// release yet. Preferred over [upstream] when present.
   final RootfsSource? rootfs;
 
   /// The distribution's own file. Always present: it records where the
@@ -114,13 +125,9 @@ class RootfsDistro {
   /// repository falls back to.
   final RootfsSource upstream;
 
-  const RootfsDistro({
-    required this.id,
-    required this.label,
+  const RootfsRelease({
     required this.version,
     required this.branch,
-    required this.packageManager,
-    required this.defaultMirror,
     required this.rootfs,
     required this.upstream,
   });
@@ -128,16 +135,11 @@ class RootfsDistro {
   /// What to download.
   RootfsSource get source => rootfs ?? upstream;
 
-  factory RootfsDistro.fromJson(String id, Map<String, dynamic> json) {
-    final where = 'distros.$id';
+  factory RootfsRelease.fromJson(Map<String, dynamic> json, String where) {
     final repacked = json['rootfs'];
-    return RootfsDistro(
-      id: id,
-      label: _string(json, 'label', where),
+    return RootfsRelease(
       version: _string(json, 'version', where),
       branch: _string(json, 'branch', where),
-      packageManager: _string(json, 'package_manager', where),
-      defaultMirror: _mirror(json, 'default_mirror', where),
       rootfs: repacked == null
           ? null
           : RootfsSource.fromJson(
@@ -152,12 +154,88 @@ class RootfsDistro {
   }
 }
 
+/// One installable system, in every release this build is offered.
+class RootfsDistro {
+  /// Matches a [LinuxDistro] name. It is written into every installed
+  /// system's marker file, so it outlives the manifest that introduced it.
+  final String id;
+
+  final String label;
+
+  /// `apk`, `apt`, `dnf`. Named when a system is about to be replaced,
+  /// because what that destroys is whatever this put there.
+  final String packageManager;
+
+  final String defaultMirror;
+
+  /// Every release offered, in the order the manifest gives them. The first
+  /// is what a plain install gets; the rest are offered beside it.
+  ///
+  /// Ordered by the manifest rather than sorted here, so a list someone is
+  /// reading does not rearrange itself when it is refetched, and so which one
+  /// is recommended stays a decision that repository makes.
+  final List<RootfsRelease> releases;
+
+  const RootfsDistro({
+    required this.id,
+    required this.label,
+    required this.packageManager,
+    required this.defaultMirror,
+    required this.releases,
+  });
+
+  /// What an install gets when nothing else is chosen.
+  RootfsRelease get preferred => releases.first;
+
+  /// The release named [version], or null.
+  RootfsRelease? release(String version) =>
+      releases.firstWhereOrNull((e) => e.version == version);
+
+  /// The newest release in [branch] — which is the only thing an installed
+  /// one can be updated to.
+  ///
+  /// Newest meaning first, for the reason [releases] is not sorted: the order
+  /// is the manifest's to decide.
+  RootfsRelease? newestIn(String branch) =>
+      releases.firstWhereOrNull((e) => e.branch == branch);
+
+  factory RootfsDistro.fromJson(String id, Map<String, dynamic> json) {
+    final where = 'distros.$id';
+    final releases = json['releases'];
+    if (releases is! List || releases.isEmpty) {
+      throw RootfsManifestException('$where.releases is empty');
+    }
+    final parsed = [
+      for (var i = 0; i < releases.length; i++)
+        RootfsRelease.fromJson(
+          _asMap(releases[i], '$where.releases[$i]'),
+          '$where.releases[$i]',
+        ),
+    ];
+    // A series names one release, and [newestIn] is asked which one an
+    // installed system can be updated to. Two of them would make that answer
+    // depend on the order the file happened to be written in, and the picker
+    // would show one row hiding another.
+    final branches = parsed.map((e) => e.branch).toSet();
+    if (branches.length != parsed.length) {
+      throw RootfsManifestException('$where has two releases of one series');
+    }
+    return RootfsDistro(
+      id: id,
+      label: _string(json, 'label', where),
+      packageManager: _string(json, 'package_manager', where),
+      defaultMirror: _mirror(json, 'default_mirror', where),
+      releases: parsed,
+    );
+  }
+}
+
 /// A whole manifest.
 class RootfsManifest {
   /// The shape of this file. A manifest declaring a schema this build does
   /// not know is refused rather than read partially — the fields it would
   /// skip could be the ones that matter.
-  static const supportedSchema = 1;
+  static const supportedSchema = 2;
 
   final int schema;
 

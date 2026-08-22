@@ -75,26 +75,18 @@ enum LinuxDistro {
     return it;
   }
 
-  /// The release this build would install.
-  String get version => info.version;
+  /// Where [release] (or the preferred one) is fetched from, on [mirror].
+  String rootfsUrl(String mirror, {RootfsRelease? release}) =>
+      (release ?? preferred).source.urlOn(mirror, defaultMirror);
 
-  /// The branch the packages come from, which is not the same as [version]:
-  /// the rootfs is one release off a branch that keeps moving under it.
-  ///
-  /// Ubuntu's is the suite name rather than a number, which is what apt reads,
-  /// and Rocky's is the major version its repository tree is laid out under.
-  String get branch => info.branch;
+  /// Every release offered, in the order the manifest gives them.
+  List<RootfsRelease> get releases => info.releases;
 
-  /// Where this is fetched from when the user has named no mirror.
-  ///
-  /// The *package* host. For Alpine and Rocky it serves the rootfs too, so
-  /// [rootfsUrl] builds on it; Ubuntu publishes its base tarballs on
-  /// `cdimage.ubuntu.com` and its packages on `archive.ubuntu.com`, and the
-  /// mirror someone sets is the one they want packages from.
-  String get defaultMirror => info.defaultMirror;
+  /// What a plain install gets. The rest are offered beside it.
+  RootfsRelease get preferred => info.preferred;
 
-  /// Roughly how large [rootfsUrl] is, in megabytes, never rounded down.
-  int get approxDownloadMb => info.source.sizeMb;
+  /// The release this build would install when nothing else is chosen.
+  String get version => preferred.version;
 
   /// What installs software inside it.
   ///
@@ -103,39 +95,15 @@ enum LinuxDistro {
   /// command they have never typed.
   String get packageManager => info.packageManager;
 
-  /// Whether [rootfsUrl] is built under the mirror it is given.
+  /// Where this is fetched from when the user has named no mirror.
   ///
-  /// False for Ubuntu, whose base tarballs and packages are on different
-  /// hosts — one mirror string cannot name both, and the one a person sets is
-  /// the one they want packages from. Stated rather than left as a quirk,
-  /// because a distribution quietly ignoring the setting looks identical to
-  /// one honouring a broken value.
-  bool get rootfsFollowsMirror => info.source.followsMirror;
-
-  /// How the bytes at [rootfsUrl] are compressed.
-  LinuxRootfsCompression get compression => info.source.compression;
-
-  /// What is inside once it is decompressed.
-  LinuxRootfsLayout get layout => info.source.layout;
-
-  /// The digest of what [rootfsUrl] answers, whatever mirror serves it.
-  String get sha256 => info.source.sha256;
-
-  /// The arm64 rootfs, on [mirror] where the distribution allows it.
-  ///
-  /// arm64 alone, on both platforms: proot ships for it and nothing else, and
-  /// the ish-arm64 engine interprets the architecture it runs on.
-  ///
-  /// The manifest carries the URL already built against the default mirror, so
-  /// honouring a different one means swapping that prefix. A distribution
-  /// whose rootfs and packages are on different hosts is left alone — see
-  /// [rootfsFollowsMirror].
-  String rootfsUrl(String mirror) {
-    final url = info.source.url;
-    if (!rootfsFollowsMirror || mirror == defaultMirror) return url;
-    if (!url.startsWith(defaultMirror)) return url;
-    return '$mirror${url.substring(defaultMirror.length)}';
-  }
+  /// The *package* host, and one per distribution rather than per release:
+  /// Ubuntu's suites all live on the same archive. For Alpine and Rocky it
+  /// serves the rootfs too, so [rootfsUrl] builds on it; Ubuntu publishes its
+  /// base tarballs on `cdimage.ubuntu.com` and its packages on
+  /// `archive.ubuntu.com`, and the mirror someone sets is the one they want
+  /// packages from.
+  String get defaultMirror => info.defaultMirror;
 
   /// The file this system's package manager reads, and what to put in it.
   ///
@@ -161,7 +129,16 @@ enum LinuxDistro {
   /// returning a list rather than a file. The variables are written out —
   /// `aarch64` rather than `$basearch` — because there is only one
   /// architecture here and an unexpanded one would be a silent 404.
-  ({String path, String content}) repositories(String mirror) => switch (this) {
+  ({String path, String content}) repositories(
+    String mirror, {
+    RootfsRelease? release,
+  }) {
+    final branch = (release ?? preferred).branch;
+    return _repositories(mirror, branch);
+  }
+
+  ({String path, String content}) _repositories(String mirror, String branch) =>
+      switch (this) {
     LinuxDistro.alpine => (
       path: 'etc/apk/repositories',
       content: '$mirror/$branch/main\n$mirror/$branch/community\n',
@@ -238,6 +215,19 @@ final class LinuxProfile {
   final String id;
   final LinuxDistro distro;
 
+  /// Which release series this was installed from — apt's suite, apk's
+  /// branch, dnf's major version.
+  ///
+  /// Recorded because it is what decides whether an update is an update.
+  /// 24.04.3 and 24.04.4 are both `noble` and one replaces the other; 26.04
+  /// is `resolute` and replacing one with the other would destroy everything
+  /// installed in it while calling itself an update.
+  ///
+  /// Empty for a system installed before this was written down. Such a
+  /// profile is compared against the distribution's preferred release, which
+  /// is what every build did before there was more than one.
+  final String branch;
+
   /// What was unpacked. Empty for an install from a build whose marker carried
   /// no version.
   final String version;
@@ -251,26 +241,37 @@ final class LinuxProfile {
     required this.distro,
     required this.version,
     required this.label,
+    this.branch = '',
   });
 
-  LinuxProfile copyWith({String? label, String? version}) => LinuxProfile(
-    id: id,
-    distro: distro,
-    version: version ?? this.version,
-    label: label ?? this.label,
-  );
+  LinuxProfile copyWith({String? label, String? version, String? branch}) =>
+      LinuxProfile(
+        id: id,
+        distro: distro,
+        version: version ?? this.version,
+        label: label ?? this.label,
+        branch: branch ?? this.branch,
+      );
 
-  /// Three lines: the distribution, the version, then the label.
+  /// Four lines: the distribution, the version, the label, then the release
+  /// series.
   ///
   /// Written by `install`, read when the container is scanned. A file rather
   /// than a setting, because it describes the tree and has to go when the tree
   /// does — a setting would outlive a directory deleted from under the app and
   /// claim an install that is not there.
-  /// The label is flattened on the way out: it is the one field a user types,
-  /// and a newline in it would write a fourth line that [decode] reads as a
-  /// truncated name.
+  ///
+  /// The series is last so that a marker written by a build that had no such
+  /// thing still reads correctly — [decode] takes what is there.
+  ///
+  /// The label is flattened on the way out. It is the one field a user types,
+  /// and a newline in it used to write a fourth line that [decode] read as a
+  /// truncated name; now that a fourth line means something, it would be read
+  /// as a release series instead.
   String encode() =>
-      '${distro.id}\n$version\n${label.replaceAll(RegExp(r'[\r\n]+'), ' ')}\n';
+      '${distro.id}\n$version\n'
+      '${label.replaceAll(RegExp(r'[\r\n]+'), ' ')}\n'
+      '$branch\n';
 
   /// The reverse, and every shape a build ever wrote.
   ///
@@ -293,11 +294,16 @@ final class LinuxProfile {
     final label = lines.length >= 3 && lines[2].isNotEmpty
         ? lines[2]
         : distro.label;
+    // Absent in every marker written before releases were a thing, which is
+    // most of them. Empty rather than guessed: the caller reads it as "this
+    // one predates the question" and falls back to the preferred release.
+    final branch = lines.length >= 4 ? lines[3] : '';
     return LinuxProfile(
       id: id,
       distro: distro,
       version: version,
       label: label,
+      branch: branch,
     );
   }
 

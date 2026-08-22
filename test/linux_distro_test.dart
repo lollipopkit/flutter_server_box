@@ -34,13 +34,46 @@ void main() {
       for (final distro in LinuxDistro.values) {
         expect(distro.label, isNotEmpty, reason: '${distro.id} label');
         expect(distro.version, isNotEmpty, reason: '${distro.id} version');
-        expect(
-          distro.sha256,
-          hasLength(64),
-          reason: '${distro.id} has to pin a sha256 — the tarball is '
-              'executable code, and the digest is what makes downloading it '
-              'different from running whatever the connection returned',
-        );
+        expect(distro.releases, isNotEmpty, reason: '${distro.id} releases');
+        // Every release, not just the preferred one. A second release is
+        // installable the moment the manifest lists it, so an unpinned one is
+        // reachable without anything here changing.
+        for (final release in distro.releases) {
+          final where = '${distro.id} ${release.version}';
+          expect(release.version, isNotEmpty, reason: where);
+          expect(release.branch, isNotEmpty, reason: '$where branch');
+          expect(
+            release.source.sha256,
+            hasLength(64),
+            reason: '$where has to pin a sha256 — the tarball is executable '
+                'code, and the digest is what makes downloading it different '
+                'from running whatever the connection returned',
+          );
+        }
+      }
+    });
+
+    test('offers no two releases of one series', () {
+      // Two builds of `noble` in the list would be one picker row replacing
+      // another, and `newestIn` answering with whichever the manifest happened
+      // to put last. The repository publishes one build per series and this is
+      // what says so.
+      for (final distro in LinuxDistro.values) {
+        final branches = distro.releases.map((e) => e.branch).toList();
+        expect(branches.toSet(), hasLength(branches.length), reason: distro.id);
+        final versions = distro.releases.map((e) => e.version).toList();
+        expect(versions.toSet(), hasLength(versions.length), reason: distro.id);
+      }
+    });
+
+    test('takes its preferred release as the first listed', () {
+      // Order in the manifest is the offer: the first is what a plain install
+      // gets. Sorting here instead would mean the app deciding which of two
+      // releases is newer from their version strings, which is a comparison
+      // no two distributions spell the same way.
+      for (final distro in LinuxDistro.values) {
+        expect(distro.preferred, distro.releases.first, reason: distro.id);
+        expect(distro.version, distro.releases.first.version);
       }
     });
 
@@ -58,13 +91,15 @@ void main() {
 
     test('builds its tarball URL under the mirror it is given', () {
       for (final distro in LinuxDistro.values) {
-        if (!distro.rootfsFollowsMirror) continue;
-        expect(
-          distro.rootfsUrl('https://mirror.example/x'),
-          startsWith('https://mirror.example/x/'),
-          reason: '${distro.id} must honour a mirror, or the setting does '
-              'nothing',
-        );
+        for (final release in distro.releases) {
+          if (!release.source.followsMirror) continue;
+          expect(
+            distro.rootfsUrl('https://mirror.example/x', release: release),
+            startsWith('https://mirror.example/x/'),
+            reason: '${distro.id} ${release.version} must honour a mirror, or '
+                'the setting does nothing',
+          );
+        }
       }
     });
 
@@ -74,17 +109,26 @@ void main() {
       // string cannot name both — and a distribution that quietly ignored the
       // setting would look identical to one that honoured a broken one.
       for (final distro in LinuxDistro.values) {
-        if (distro.rootfsFollowsMirror) continue;
-        final url = distro.rootfsUrl('https://mirror.example/x');
-        expect(url, isNot(contains('mirror.example')), reason: distro.id);
-        expect(Uri.parse(url).isScheme('https'), isTrue, reason: distro.id);
-        // The setting still has to reach the packages, which is the half it
-        // was actually set for.
-        expect(
-          distro.repositories('https://mirror.example/x').content,
-          contains('https://mirror.example/x'),
-          reason: distro.id,
-        );
+        for (final release in distro.releases) {
+          if (release.source.followsMirror) continue;
+          final where = '${distro.id} ${release.version}';
+          final url = distro.rootfsUrl(
+            'https://mirror.example/x',
+            release: release,
+          );
+          expect(url, isNot(contains('mirror.example')), reason: where);
+          expect(Uri.parse(url).isScheme('https'), isTrue, reason: where);
+          // The setting still has to reach the packages, which is the half it
+          // was actually set for.
+          expect(
+            distro.repositories(
+              'https://mirror.example/x',
+              release: release,
+            ).content,
+            contains('https://mirror.example/x'),
+            reason: where,
+          );
+        }
       }
     });
 
@@ -95,6 +139,22 @@ void main() {
         expect(repo.path.startsWith('/'), isFalse, reason: 'joined to a root');
         expect(repo.content, contains('https://mirror.example/x'));
         expect(repo.content, endsWith('\n'));
+      }
+    });
+
+    test('writes the repositories of the release being installed', () {
+      // The one thing a second release of a distribution changes that is not
+      // just a URL. A system unpacked from `noble` with `resolute` sources in
+      // it installs packages built against a different libc version and finds
+      // out at the first upgrade.
+      for (final distro in LinuxDistro.values) {
+        for (final release in distro.releases) {
+          expect(
+            distro.repositories('https://m.test/x', release: release).content,
+            contains(release.branch),
+            reason: '${distro.id} ${release.version} → ${release.branch}',
+          );
+        }
       }
     });
 
@@ -134,20 +194,41 @@ void main() {
         final actual = measured[distro];
         expect(actual, isNotNull, reason: '${distro.id} has no measured size');
         expect(
-          distro.approxDownloadMb,
+          distro.preferred.source.sizeMb,
           greaterThanOrEqualTo(actual!.ceil()),
           reason: distro.id,
         );
       }
     });
 
+    test('every release states its own size', () {
+      // Told before anything is fetched, and read off the release the user
+      // picked rather than off the distribution. Two releases of one system
+      // are not the same download — 24.04 is a third of 26.04 — and a number
+      // taken from the preferred one would be wrong for every other row.
+      for (final distro in LinuxDistro.values) {
+        for (final release in distro.releases) {
+          expect(
+            release.source.sizeBytes,
+            greaterThan(0),
+            reason: '${distro.id} ${release.version}',
+          );
+          expect(release.source.sizeMb, greaterThan(0));
+        }
+      }
+    });
+
     test('the three sizes are not interchangeable', () {
       // The string used to say "about 3 MB" for whichever was installed, which
       // was true of Alpine alone. If they were all close this would not matter.
-      expect(LinuxDistro.ubuntu.approxDownloadMb,
-          greaterThan(LinuxDistro.alpine.approxDownloadMb * 5));
-      expect(LinuxDistro.rocky.approxDownloadMb,
-          greaterThan(LinuxDistro.ubuntu.approxDownloadMb * 2));
+      expect(
+        LinuxDistro.ubuntu.preferred.source.sizeMb,
+        greaterThan(LinuxDistro.alpine.preferred.source.sizeMb * 5),
+      );
+      expect(
+        LinuxDistro.rocky.preferred.source.sizeMb,
+        greaterThan(LinuxDistro.ubuntu.preferred.source.sizeMb * 2),
+      );
     });
 
     test('each names the package manager it actually ships', () {
@@ -164,23 +245,34 @@ void main() {
       // These two are read before anything looks at the bytes, so a mismatch
       // is a decoder fed the wrong format rather than a clear failure.
       for (final distro in LinuxDistro.values) {
-        expect(
-          distro.rootfsUrl(distro.defaultMirror),
-          endsWith(switch (distro.compression) {
-            LinuxRootfsCompression.gzip => '.tar.gz',
-            LinuxRootfsCompression.xz => '.tar.xz',
-          }),
-          reason: distro.id,
-        );
+        for (final release in distro.releases) {
+          expect(
+            distro.rootfsUrl(distro.defaultMirror, release: release),
+            endsWith(switch (release.source.compression) {
+              LinuxRootfsCompression.gzip => '.tar.gz',
+              LinuxRootfsCompression.xz => '.tar.xz',
+            }),
+            reason: '${distro.id} ${release.version}',
+          );
+        }
       }
     });
 
     test('only Rocky is an image layout', () {
-      expect(LinuxDistro.alpine.layout, LinuxRootfsLayout.plain);
-      expect(LinuxDistro.ubuntu.layout, LinuxRootfsLayout.plain);
+      expect(
+        LinuxDistro.alpine.preferred.source.layout,
+        LinuxRootfsLayout.plain,
+      );
+      expect(
+        LinuxDistro.ubuntu.preferred.source.layout,
+        LinuxRootfsLayout.plain,
+      );
       // Rocky publishes no plain rootfs tarball, only an OCI image.
-      expect(LinuxDistro.rocky.layout, LinuxRootfsLayout.oci);
-      expect(LinuxDistro.rocky.compression, LinuxRootfsCompression.xz);
+      expect(LinuxDistro.rocky.preferred.source.layout, LinuxRootfsLayout.oci);
+      expect(
+        LinuxDistro.rocky.preferred.source.compression,
+        LinuxRootfsCompression.xz,
+      );
     });
   });
 
@@ -259,12 +351,14 @@ void main() {
   });
 
   group('whether a profile is outdated', () {
-    LinuxProfile of(LinuxDistro distro, String version) => LinuxProfile(
-      id: distro.id,
-      distro: distro,
-      version: version,
-      label: distro.label,
-    );
+    LinuxProfile of(LinuxDistro distro, String version, {String branch = ''}) =>
+        LinuxProfile(
+          id: distro.id,
+          distro: distro,
+          version: version,
+          label: distro.label,
+          branch: branch,
+        );
 
     test('it is the version, not the platform, that decides', () {
       // This answered `isAndroid && …` until the gate was found to be residue.
@@ -304,6 +398,39 @@ void main() {
 
       expect(Rootfs.isOutdated(of(LinuxDistro.rocky, '0.0.1')), isFalse);
     });
+
+    test('an older series is not an outdated one', () {
+      // The distinction the whole `branch` field exists for. Someone who
+      // installed 24.04 chose 24.04; offering them 26.04 as an *update* would
+      // destroy everything in the system while calling it a version bump. The
+      // newest build of their own series is the only thing that is an update.
+      for (final distro in LinuxDistro.values) {
+        for (final release in distro.releases) {
+          expect(
+            Rootfs.isOutdated(
+              of(distro, release.version, branch: release.branch),
+            ),
+            isFalse,
+            reason: '${distro.id} ${release.version} is current in its series',
+          );
+          expect(
+            Rootfs.isOutdated(of(distro, '0.0.1', branch: release.branch)),
+            isTrue,
+            reason: '${distro.id} 0.0.1 is behind ${release.branch}',
+          );
+        }
+      }
+    });
+
+    test('a series the manifest no longer carries is not outdated', () {
+      // A system installed from a release that has since been dropped. There
+      // is no newer build of it to offer, and comparing it against a series it
+      // is not in would answer "outdated" for something nothing can update.
+      expect(
+        Rootfs.isOutdated(of(LinuxDistro.alpine, '3.19.1', branch: 'v3.19')),
+        isFalse,
+      );
+    });
   });
 
   group('the marker', () {
@@ -339,6 +466,51 @@ void main() {
         expect(read.version, distro.version, reason: distro.id);
         expect(read.label, 'A ${distro.label}', reason: distro.id);
       }
+    });
+
+    test('carries the release series it was installed from', () {
+      // Written as a fourth line, and read back as the thing that decides
+      // whether a later release is an update of this one.
+      const profile = LinuxProfile(
+        id: 'ubuntu',
+        distro: LinuxDistro.ubuntu,
+        version: '24.04.4',
+        label: 'Ubuntu',
+        branch: 'noble',
+      );
+      final read = LinuxProfile.decode(profile.id, profile.encode());
+
+      expect(read.branch, 'noble');
+      expect(read.version, '24.04.4');
+      expect(read.label, 'Ubuntu');
+    });
+
+    test('reads a three-line marker as a system of no known series', () {
+      // What every build before this one wrote. Empty rather than guessed at:
+      // the caller reads it as "this one predates the question" and falls back
+      // to the preferred release, which is what those builds did.
+      final read = LinuxProfile.decode('alpine', 'alpine\n3.22.5\nBuild box\n');
+
+      expect(read.branch, isEmpty);
+      expect(read.label, 'Build box');
+    });
+
+    test('does not read a newline in a label as a series', () {
+      // The label is the one field a user types. Before there was a fourth
+      // line a newline in it made the name look truncated; now it would be
+      // read as a release series, and the system would compare itself against
+      // one that does not exist.
+      const profile = LinuxProfile(
+        id: 'alpine',
+        distro: LinuxDistro.alpine,
+        version: '3.22.5',
+        label: 'Build\nbox',
+        branch: 'v3.22',
+      );
+      final read = LinuxProfile.decode(profile.id, profile.encode());
+
+      expect(read.label, 'Build box');
+      expect(read.branch, 'v3.22');
     });
 
     test('takes the id from the directory, never from the file', () {

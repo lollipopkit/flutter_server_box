@@ -62,10 +62,28 @@ void main() {
         (root['distros'] as Map<String, dynamic>)['rocky']
             as Map<String, dynamic>;
 
+    /// Rocky's first release, which is where the per-release fields are.
+    Map<String, dynamic> release(Map<String, dynamic> root) =>
+        (rocky(root)['releases'] as List).first as Map<String, dynamic>;
+
+    Map<String, dynamic> upstream(Map<String, dynamic> root) =>
+        release(root)['upstream'] as Map<String, dynamic>;
+
     test('a schema from a later build', () {
       // Read partially, the fields it skipped could be the ones that matter.
       expect(
-        () => RootfsManifest.parse(edited((r) => r['schema'] = 2)),
+        () => RootfsManifest.parse(edited((r) => r['schema'] = 3)),
+        throwsA(isA<RootfsManifestException>()),
+      );
+    });
+
+    test('the schema this build replaced, which reads nothing like it', () {
+      // Schema 1 held one release per distribution, inline. Read as 2 it has
+      // no `releases` at all, and the fields it does have sit a level up from
+      // where they are now — so a device that cached one before updating gets
+      // a refusal rather than a distribution with no releases in it.
+      expect(
+        () => RootfsManifest.parse(edited((r) => r['schema'] = 1)),
         throwsA(isA<RootfsManifestException>()),
       );
     });
@@ -76,7 +94,7 @@ void main() {
       for (final bad in ['', 'deadbeef', 'Z' * 64, '3FBC6285' * 8]) {
         expect(
           () => RootfsManifest.parse(
-            edited((r) => (rocky(r)['upstream'] as Map)['sha256'] = bad),
+            edited((r) => upstream(r)['sha256'] = bad),
           ),
           throwsA(isA<RootfsManifestException>()),
           reason: 'accepted $bad',
@@ -87,13 +105,13 @@ void main() {
     test('a layout or compression this build cannot unpack', () {
       expect(
         () => RootfsManifest.parse(
-          edited((r) => (rocky(r)['upstream'] as Map)['layout'] = 'squashfs'),
+          edited((r) => upstream(r)['layout'] = 'squashfs'),
         ),
         throwsA(isA<RootfsManifestException>()),
       );
       expect(
         () => RootfsManifest.parse(
-          edited((r) => (rocky(r)['upstream'] as Map)['compression'] = 'zstd'),
+          edited((r) => upstream(r)['compression'] = 'zstd'),
         ),
         throwsA(isA<RootfsManifestException>()),
       );
@@ -103,7 +121,7 @@ void main() {
       for (final bad in <Object>[0, -1, '35094845']) {
         expect(
           () => RootfsManifest.parse(
-            edited((r) => (rocky(r)['upstream'] as Map)['size_bytes'] = bad),
+            edited((r) => upstream(r)['size_bytes'] = bad),
           ),
           throwsA(isA<RootfsManifestException>()),
           reason: 'accepted $bad',
@@ -132,11 +150,9 @@ void main() {
     test('a missing field, rather than defaulting it', () {
       for (final key in [
         'label',
-        'version',
-        'branch',
         'package_manager',
         'default_mirror',
-        'upstream',
+        'releases',
       ]) {
         expect(
           () => RootfsManifest.parse(edited((r) => rocky(r).remove(key))),
@@ -144,6 +160,41 @@ void main() {
           reason: 'defaulted a missing $key',
         );
       }
+      for (final key in ['version', 'branch', 'upstream']) {
+        expect(
+          () => RootfsManifest.parse(edited((r) => release(r).remove(key))),
+          throwsA(isA<RootfsManifestException>()),
+          reason: 'defaulted a missing $key',
+        );
+      }
+    });
+
+    test('a distribution with no releases in it', () {
+      // Nothing to install and nothing to compare an installed system
+      // against. `preferred` would have no first element to answer with, so
+      // this has to be refused here rather than thrown from a getter later.
+      expect(
+        () => RootfsManifest.parse(
+          edited((r) => rocky(r)['releases'] = <dynamic>[]),
+        ),
+        throwsA(isA<RootfsManifestException>()),
+      );
+    });
+
+    test('two releases of one series', () {
+      // Which of them a system is running would then be undecidable, and
+      // `newestIn` would answer with whichever came last in the file.
+      expect(
+        () => RootfsManifest.parse(
+          edited((r) {
+            final list = rocky(r)['releases'] as List;
+            final copy = json.decode(json.encode(list.first));
+            (copy as Map<String, dynamic>)['version'] = '9.9';
+            list.add(copy);
+          }),
+        ),
+        throwsA(isA<RootfsManifestException>()),
+      );
     });
 
     test('no distributions at all', () {
@@ -176,11 +227,11 @@ void main() {
     test('a size in bytes rounds up to whole megabytes', () {
       // Never down: the dialog is answered before anything is fetched, and
       // understating a download is the direction that costs someone data.
-      final rocky = bundled.distros['rocky']!.source;
+      final rocky = bundled.distros['rocky']!.preferred.source;
       expect(rocky.sizeBytes, 84701720);
       expect(rocky.sizeMb, 81);
-      expect(bundled.distros['alpine']!.source.sizeMb, 4);
-      expect(bundled.distros['ubuntu']!.source.sizeMb, 34);
+      expect(bundled.distros['alpine']!.preferred.source.sizeMb, 4);
+      expect(bundled.distros['ubuntu']!.preferred.source.sizeMb, 34);
     });
   });
 }

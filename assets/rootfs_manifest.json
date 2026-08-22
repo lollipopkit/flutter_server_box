@@ -5,60 +5,114 @@
     "app and is the floor: it is used on a first run, with no network, or",
     "when the fetched one fails verification. Being part of the binary it is",
     "as trustworthy as the app itself, so valid_until does not apply to it.",
-    "Each entry may carry a 'rootfs' block, which is the repacked artifact",
-    "that repository publishes, and always carries 'upstream', which is the",
-    "distribution's own file. Absent 'rootfs' means nothing has been repacked",
-    "for it yet and upstream is what gets downloaded."
+    "",
+    "A distribution carries several releases. The first is what a plain",
+    "install gets; the rest are offered beside it. `branch` is what the",
+    "package manager reads as its release, and it is also what decides",
+    "whether one release is an update of another: 24.04.3 and 24.04.4 are",
+    "both `noble` and one replaces the other, while 26.04 is not.",
+    "",
+    "Each release may carry a 'rootfs' block, the repacked artifact that",
+    "repository publishes, and always carries 'upstream', the distribution's",
+    "own file. Absent 'rootfs' means nothing has been repacked for it yet."
   ],
-  "schema": 1,
+  "schema": 2,
   "serial": 1,
   "generated_at": "2026-08-22T00:00:00Z",
   "valid_until": "2027-08-22T00:00:00Z",
   "distros": {
     "alpine": {
       "label": "Alpine",
-      "version": "3.22.5",
-      "branch": "v3.22",
       "package_manager": "apk",
       "default_mirror": "https://dl-cdn.alpinelinux.org/alpine",
-      "upstream": {
-        "url": "https://dl-cdn.alpinelinux.org/alpine/v3.22/releases/aarch64/alpine-minirootfs-3.22.5-aarch64.tar.gz",
-        "sha256": "3fbc6285032ed46821b511292633d7b2a6306a2e254f590e92bdafff56cf2f70",
-        "size_bytes": 3966256,
-        "layout": "plain",
-        "compression": "gzip",
-        "follows_mirror": true
-      }
+      "releases": [
+        {
+          "version": "3.22.5",
+          "branch": "v3.22",
+          "upstream": {
+            "url": "https://dl-cdn.alpinelinux.org/alpine/v3.22/releases/aarch64/alpine-minirootfs-3.22.5-aarch64.tar.gz",
+            "sha256": "3fbc6285032ed46821b511292633d7b2a6306a2e254f590e92bdafff56cf2f70",
+            "size_bytes": 3966256,
+            "layout": "plain",
+            "compression": "gzip",
+            "follows_mirror": true
+          }
+        },
+        {
+          "version": "3.21.7",
+          "branch": "v3.21",
+          "upstream": {
+            "url": "https://dl-cdn.alpinelinux.org/alpine/v3.21/releases/aarch64/alpine-minirootfs-3.21.7-aarch64.tar.gz",
+            "sha256": "d1d1a3fae5f4d6146e9742790a47fcb116199622cfb8439f218a4d5fbe5000da",
+            "size_bytes": 3850805,
+            "layout": "plain",
+            "compression": "gzip",
+            "follows_mirror": true
+          }
+        }
+      ]
     },
     "ubuntu": {
       "label": "Ubuntu",
-      "version": "26.04",
-      "branch": "resolute",
       "package_manager": "apt",
       "default_mirror": "https://archive.ubuntu.com/ubuntu",
-      "upstream": {
-        "url": "https://cdimage.ubuntu.com/ubuntu-base/releases/26.04/release/ubuntu-base-26.04-base-arm64.tar.gz",
-        "sha256": "b2b46a37324ea1954e93f293fe6d7c2241daf2fc298c4022e6e4caceeed74cab",
-        "size_bytes": 35094845,
-        "layout": "plain",
-        "compression": "gzip",
-        "follows_mirror": false
-      }
+      "releases": [
+        {
+          "version": "26.04",
+          "branch": "resolute",
+          "upstream": {
+            "url": "https://cdimage.ubuntu.com/ubuntu-base/releases/26.04/release/ubuntu-base-26.04-base-arm64.tar.gz",
+            "sha256": "b2b46a37324ea1954e93f293fe6d7c2241daf2fc298c4022e6e4caceeed74cab",
+            "size_bytes": 35094845,
+            "layout": "plain",
+            "compression": "gzip",
+            "follows_mirror": false
+          }
+        },
+        {
+          "version": "24.04.4",
+          "branch": "noble",
+          "upstream": {
+            "url": "https://cdimage.ubuntu.com/ubuntu-base/releases/24.04/release/ubuntu-base-24.04.4-base-arm64.tar.gz",
+            "sha256": "04207713ece899c3740823d33690441ad3a7f0ded1101aca744e2b0f37ac7ff2",
+            "size_bytes": 29870567,
+            "layout": "plain",
+            "compression": "gzip",
+            "follows_mirror": false
+          }
+        }
+      ]
     },
     "rocky": {
       "label": "Rocky Linux",
-      "version": "9.8",
-      "branch": "9",
       "package_manager": "dnf",
       "default_mirror": "https://dl.rockylinux.org/pub/rocky",
-      "upstream": {
-        "url": "https://dl.rockylinux.org/pub/rocky/9/images/aarch64/Rocky-9-Container-Base-9.8-20260525.0.aarch64.oci.tar.xz",
-        "sha256": "254dc06377bb63a5ab390cea33c2f26d71c4e0ff6ae1bc8a0fb0fbb86d992e89",
-        "size_bytes": 84701720,
-        "layout": "oci",
-        "compression": "xz",
-        "follows_mirror": true
-      }
+      "releases": [
+        {
+          "version": "9.8",
+          "branch": "9",
+          "upstream": {
+            "url": "https://dl.rockylinux.org/pub/rocky/9/images/aarch64/Rocky-9-Container-Base-9.8-20260525.0.aarch64.oci.tar.xz",
+            "sha256": "254dc06377bb63a5ab390cea33c2f26d71c4e0ff6ae1bc8a0fb0fbb86d992e89",
+            "size_bytes": 84701720,
+            "layout": "oci",
+            "compression": "xz",
+            "follows_mirror": true
+          }
+        },
+        {
+          "version": "10.2",
+          "branch": "10",
+          "upstream": {
+            "url": "https://dl.rockylinux.org/pub/rocky/10/images/aarch64/Rocky-10-Container-Base-10.2-20260525.0.aarch64.oci.tar.xz",
+            "sha256": "995350a80651f2867e399196288d17704f13b1035fb78e4bf56ba74a2d7775d7",
+            "size_bytes": 84677224,
+            "layout": "oci",
+            "compression": "xz",
+            "follows_mirror": true
+          }
+        }
+      ]
     }
   }
 }

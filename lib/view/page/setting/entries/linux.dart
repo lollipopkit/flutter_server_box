@@ -189,10 +189,9 @@ extension _Linux on _AppSettingsPageState {
   /// toggles it, so the one tap available deselected the only item and the
   /// dialog closed having chosen nothing.
   Future<void> _addProfile() async {
-    final distro = LinuxDistro.values.length == 1
-        ? LinuxDistro.values.single
-        : await _pickDistro();
-    if (distro == null || !mounted) return;
+    final picked = await _pickRelease();
+    if (picked == null || !mounted) return;
+    final distro = picked.distro;
 
     // Two of one distribution would both be called "Alpine", and this list is
     // the only thing that tells them apart. Asked only when that is true: the
@@ -206,7 +205,12 @@ extension _Linux on _AppSettingsPageState {
 
     _setting.linuxDistro.put(distro.id);
     // Another, beside whatever is there — not "one if there is none".
-    await installRootfs(context, another: true, label: label);
+    await installRootfs(
+      context,
+      release: picked.release,
+      another: true,
+      label: label,
+    );
     refresh();
   }
 
@@ -262,27 +266,90 @@ extension _Linux on _AppSettingsPageState {
     Future.delayed(const Duration(seconds: 1), ctrl.dispose);
   }
 
-  /// Which distribution to install, as a list of actions.
+  /// Which distribution to install, and then which release of it.
   ///
-  /// Each row *is* the install: tapping one starts it. Not a selection to be
-  /// confirmed afterwards — nothing here is current, so there is no value to
-  /// change, and marking one would say otherwise.
-  Future<LinuxDistro?> _pickDistro() {
-    return context.showRoundDialog<LinuxDistro>(
-      title: l10n.distro,
+  /// Two steps rather than one flat list. A flat one is shorter to read while
+  /// there are few, and stops being so the moment a distribution carries more
+  /// than one or two releases — at which point the same three words repeat
+  /// down the page and the version becomes the only thing distinguishing
+  /// them. Splitting it asks the two questions in the order they are actually
+  /// decided: which system, then how old.
+  ///
+  /// Each row of the first step *is* a step, not a selection to be confirmed:
+  /// nothing here is current, so there is no value to change and marking one
+  /// would say otherwise. The second step marks the preferred release,
+  /// because there the question is which of several, and one of them is
+  /// recommended.
+  Future<({LinuxDistro distro, RootfsRelease release})?> _pickRelease() async {
+    final distros = LinuxDistros.installable;
+    final distro = distros.length == 1
+        ? distros.single
+        : await context.showRoundDialog<LinuxDistro>(
+            title: l10n.distro,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final it in distros)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(it.label),
+                    // What a tap gets you if you go no further, and how many
+                    // other answers are behind it.
+                    subtitle: Text(
+                      it.releases.length == 1
+                          ? it.preferred.version
+                          : '${it.preferred.version} '
+                                '· ${it.releases.length}',
+                      style: UIs.textGrey,
+                    ),
+                    trailing: it.releases.length == 1
+                        ? null
+                        : const Icon(Icons.keyboard_arrow_right),
+                    onTap: () => context.popDialog(it),
+                  ),
+              ],
+            ),
+          );
+    if (distro == null || !mounted) return null;
+
+    // One release is not a question. Asking it anyway would be a dialog whose
+    // only answer is the one already shown on the row that opened it.
+    if (distro.releases.length == 1) {
+      return (distro: distro, release: distro.preferred);
+    }
+
+    final release = await context.showRoundDialog<RootfsRelease>(
+      title: distro.label,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          for (final distro in LinuxDistros.installable)
+          for (final release in distro.releases)
             ListTile(
               contentPadding: EdgeInsets.zero,
-              title: Text(distro.label),
-              subtitle: Text(distro.version, style: UIs.textGrey),
-              onTap: () => context.popDialog(distro),
+              leading: Icon(
+                release == distro.preferred
+                    ? Icons.radio_button_checked
+                    : Icons.radio_button_unchecked,
+                size: _kIconSize,
+              ),
+              title: Text(release.version),
+              // The series, which is what the package manager will call this
+              // release and what decides whether a later one is an update of
+              // it rather than a different system.
+              subtitle: Text(release.branch, style: UIs.textGrey),
+              trailing: Text(
+                '${release.source.sizeMb} MB',
+                style: UIs.text13Grey,
+              ),
+              onTap: () => context.popDialog(release),
             ),
         ],
       ),
     );
+    // Returned together with the distribution it belongs to. A release does
+    // not name one, and looking it back up would be searching the manifest for
+    // something this function already had.
+    return release == null ? null : (distro: distro, release: release);
   }
 
   /// The selected system's shell, which is a file inside it rather than a

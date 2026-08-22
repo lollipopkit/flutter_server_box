@@ -13,6 +13,7 @@ import 'package:server_box/core/utils/guest_path.dart';
 import 'package:server_box/core/utils/linux_seed.dart';
 import 'package:server_box/core/utils/oci_image.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
+import 'package:server_box/data/model/app/rootfs_manifest.dart';
 
 /// A Linux userland on iOS, and what it takes to get one.
 ///
@@ -170,6 +171,7 @@ abstract final class IosRootfs {
   /// which the second deletes out from under the first.
   static Future<LinuxProfile> install({
     required LinuxDistro distro,
+    RootfsRelease? release,
     LinuxProfile? into,
     String? label,
     void Function(double? progress)? onProgress,
@@ -181,6 +183,7 @@ abstract final class IosRootfs {
     _installing = true;
     return _install(
       distro: distro,
+      release: release,
       into: into,
       label: label,
       onProgress: onProgress,
@@ -192,6 +195,7 @@ abstract final class IosRootfs {
 
   static Future<LinuxProfile> _install({
     required LinuxDistro distro,
+    RootfsRelease? release,
     LinuxProfile? into,
     String? label,
     void Function(double? progress)? onProgress,
@@ -207,6 +211,10 @@ abstract final class IosRootfs {
     // checked against one distribution and the repositories written for
     // another.
     final mirror = linuxMirror(distro);
+    // Read once for the same reason the mirror is: a release chosen while a
+    // refetched manifest replaced it underneath would have the digest checked
+    // against one file and the repositories written for another.
+    final chosen = release ?? distro.preferred;
 
     final dir = Directory(root);
     // Reinstalling in place deletes the tree, so the engine has to let go of
@@ -219,7 +227,7 @@ abstract final class IosRootfs {
     final archivePath = root.joinPath('rootfs.tar.gz');
     try {
       await Dio().download(
-        distro.rootfsUrl(mirror),
+        chosen.source.urlOn(mirror, distro.defaultMirror),
         archivePath,
         cancelToken: cancel,
         // The download is most of the wait, so it owns most of the bar; the
@@ -230,27 +238,33 @@ abstract final class IosRootfs {
 
       final file = File(archivePath);
       final digest = (await sha256.bind(file.openRead()).first).toString();
-      if (digest != distro.sha256) {
+      if (digest != chosen.source.sha256) {
         throw StateError(
           'The system did not match its digest and was discarded. '
-          'Expected ${distro.sha256}, got $digest.',
+          'Expected ${chosen.source.sha256}, got $digest.',
         );
       }
 
-      await _extract(file, dir, distro: distro, onProgress: onProgress);
+      await _extract(file, dir, source: chosen.source, onProgress: onProgress);
       // Without these `apk` reaches nothing: the guest's sockets work and an
       // address literal is fetched fine, but there is no resolver, so every
       // mirror is a "temporary error" and every package is missing.
       // Measured on a device by `integration_test/ios_load_test.dart`.
       await seedResolvConf(root, nameservers: linuxNameservers());
-      await seedRepositories(root, distro: distro, mirror: mirror);
+      await seedRepositories(
+        root,
+        distro: distro,
+        release: chosen,
+        mirror: mirror,
+      );
       await seedChsh(root, force: true);
       // Last, for the reason Android's marker is last: it is the record that
       // this finished, so anything that threw above must not leave one.
       final profile = LinuxProfile(
         id: id,
         distro: distro,
-        version: distro.version,
+        version: chosen.version,
+        branch: chosen.branch,
         label: label ?? into?.label ?? distro.label,
       );
       await File(root.joinPath(LinuxProfile.marker)).writeAsString(profile.encode());
@@ -367,23 +381,23 @@ abstract final class IosRootfs {
   static Future<void> extractForTest(
     File archiveFile,
     Directory into, {
-    required LinuxDistro distro,
+    required RootfsSource source,
     void Function(double? progress)? onProgress,
-  }) => _extract(archiveFile, into, distro: distro, onProgress: onProgress);
+  }) => _extract(archiveFile, into, source: source, onProgress: onProgress);
 
   static Future<void> _extract(
     File archiveFile,
     Directory into, {
-    required LinuxDistro distro,
+    required RootfsSource source,
     void Function(double? progress)? onProgress,
   }) async {
     final bytes = await archiveFile.readAsBytes();
     final outerDecoder = TarDecoder();
     final outer = outerDecoder.decodeBytes(
-      decompressRootfs(bytes, distro.compression),
+      decompressRootfs(bytes, source.compression),
     );
 
-    switch (distro.layout) {
+    switch (source.layout) {
       case LinuxRootfsLayout.plain:
         await _unpackTar(outer, outerDecoder, into, onProgress: onProgress);
       case LinuxRootfsLayout.oci:

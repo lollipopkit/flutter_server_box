@@ -16,6 +16,7 @@ import 'dart:io';
 import 'package:ffi/ffi.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
+import 'package:server_box/data/model/app/rootfs_manifest.dart';
 import 'package:server_box/data/res/default.dart';
 import 'package:server_box/data/res/store.dart';
 
@@ -423,8 +424,12 @@ Future<void> seedRepositories(
   String root, {
   required LinuxDistro distro,
   required String mirror,
+  RootfsRelease? release,
 }) async {
-  final repo = distro.repositories(mirror);
+  // The release decides the branch, and the branch is what the package
+  // manager reads as its own: writing `resolute` into a 24.04 tree would have
+  // apt fetching one release's packages into another's filesystem.
+  final repo = distro.repositories(mirror, release: release);
   final file = File(root.joinPath(repo.path));
   await file.parent.create(recursive: true);
   await file.writeAsString(repo.content);
