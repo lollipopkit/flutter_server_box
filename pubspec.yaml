@@ -12,6 +12,12 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
+  # Reading an OCI image layout and unpacking a rootfs — see
+  # `lib/core/utils/oci_image.dart`. Direct because this code imports it: as a
+  # transitive one it is whatever some other package happens to want, and a
+  # tar reader deciding what a hard link is has already cost this app a
+  # release.
+  archive: ^4.1.0
   choice: ^2.3.2
   dio: ^5.2.1
   pinenacl: ^0.6.0

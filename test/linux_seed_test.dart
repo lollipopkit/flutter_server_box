@@ -29,7 +29,7 @@ void main() {
   setUpAll(() {
     LinuxDistros.adoptForTest(
       RootfsManifest.parse(
-        File('assets/rootfs_manifest.json').readAsStringSync(),
+        File(LinuxDistros.bundledAsset).readAsStringSync(),
       ),
     );
   });

@@ -23,11 +23,13 @@
 /// with what it had.
 library;
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart';
 import 'package:server_box/data/model/app/linux_distros.dart';
 import 'package:server_box/data/model/app/rootfs_manifest.dart';
 import 'package:server_box/data/model/app/rootfs_manifest_trust.dart';
@@ -59,13 +61,38 @@ abstract final class RootfsManifestSource {
     }
   }
 
+  /// The fetch in flight, if there is one.
+  ///
+  /// Two overlapping refreshes are two fetches racing to commit, and the one
+  /// that finishes last wins — which need not be the one that started last. A
+  /// slower fetch of an *older* manifest would then be adopted over a newer
+  /// one and, worse, would write its lower serial over the high-water mark
+  /// that the replay guard is. Reached from the settings page, so entering it
+  /// twice in quick succession is all it takes.
+  ///
+  /// Joined rather than queued: a second caller wants a fresh manifest, and
+  /// the one already being fetched is that.
+  static Future<bool>? _inFlight;
+
   /// Fetches, verifies and adopts if it is newer. Answers whether it changed.
   ///
   /// Every failure is the same failure as far as the caller is concerned —
   /// what was in force stays in force. They are logged apart because "no
   /// network" and "a signature that did not verify" want very different
   /// reactions from whoever reads the log.
-  static Future<bool> refresh({Dio? dio}) async {
+  static Future<bool> refresh({Dio? dio}) {
+    final running = _inFlight;
+    if (running != null) return running;
+    final started = _refresh(dio: dio);
+    _inFlight = started;
+    return started.whenComplete(() {
+      // Only if it is still ours. A caller that started the next one already
+      // owns the slot by then.
+      if (identical(_inFlight, started)) _inFlight = null;
+    });
+  }
+
+  static Future<bool> _refresh({Dio? dio}) async {
     final client = dio ?? Dio();
     final Uint8List source;
     final Uint8List signature;
@@ -93,11 +120,19 @@ abstract final class RootfsManifestSource {
       return false;
     }
 
-    // Recorded even when the bundled copy is newer, because it is the highest
-    // *accepted* serial that a replay has to beat, not the one in force.
-    Stores.setting.rootfsManifestSerial.put(fetched.serial);
+    // The cache first and the serial last, because these are three writes and
+    // the app can be killed between them. In this order an interruption
+    // leaves a cache newer than the recorded high-water mark, which is
+    // harmless — it still verifies, and it is still something this device
+    // accepted. The other order leaves the mark ahead of the cache, so the
+    // next launch reads a manifest the guard would now refuse.
+    //
+    // The serial is recorded even when the bundled copy is newer, because it
+    // is the highest *accepted* serial that a replay has to beat, not the one
+    // in force.
     Stores.setting.rootfsManifestCache.put(base64Encode(source));
     Stores.setting.rootfsManifestCacheSig.put(base64Encode(signature));
+    Stores.setting.rootfsManifestSerial.put(fetched.serial);
 
     if (fetched.serial <= LinuxDistros.current.serial) return false;
     LinuxDistros.adopt(fetched);
@@ -131,11 +166,24 @@ abstract final class RootfsManifestSource {
     }
   }
 
+  /// Visible so a test can point it at a server of its own. [manifestUrl] is
+  /// absolute, so a `baseUrl` on the Dio handed to [refresh] does not redirect
+  /// it — a test written that way fetches GitHub and proves nothing.
+  @visibleForTesting
+  static Future<Uint8List> getForTest(Dio dio, String url) => _get(dio, url);
+
+  /// At most [_maxBytes] of [url], and never more held than that.
+  ///
+  /// Read as a stream and counted as it arrives, so a server answering with a
+  /// gigabyte is stopped at the limit rather than after it. Buffering first
+  /// and checking the length afterwards meant whoever served the manifest
+  /// decided how much memory this app used — and that is a URL a device
+  /// fetches on its own, with no one watching.
   static Future<Uint8List> _get(Dio dio, String url) async {
-    final res = await dio.get<List<int>>(
+    final res = await dio.get<ResponseBody>(
       url,
       options: Options(
-        responseType: ResponseType.bytes,
+        responseType: ResponseType.stream,
         // Anything but 200 is not a manifest, including the redirects GitHub
         // uses for `releases/latest` — dio follows those itself.
         validateStatus: (code) => code == 200,
@@ -143,13 +191,26 @@ abstract final class RootfsManifestSource {
         sendTimeout: const Duration(seconds: 20),
       ),
     );
-    final bytes = res.data;
-    if (bytes == null || bytes.isEmpty) {
-      throw StateError('$url answered nothing');
+    final body = res.data;
+    if (body == null) throw StateError('$url answered nothing');
+
+    final builder = BytesBuilder(copy: false);
+    final chunks = StreamIterator(body.stream);
+    try {
+      while (await chunks.moveNext()) {
+        builder.add(chunks.current);
+        if (builder.length > _maxBytes) {
+          throw StateError(
+            '$url answered more than $_maxBytes bytes, which is not one',
+          );
+        }
+      }
+    } finally {
+      // Whatever ended the loop, the connection is done with. Left open, a
+      // refused oversize response goes on being received.
+      await chunks.cancel();
     }
-    if (bytes.length > _maxBytes) {
-      throw StateError('$url answered ${bytes.length} bytes, which is not one');
-    }
-    return Uint8List.fromList(bytes);
+    if (builder.isEmpty) throw StateError('$url answered nothing');
+    return builder.takeBytes();
   }
 }

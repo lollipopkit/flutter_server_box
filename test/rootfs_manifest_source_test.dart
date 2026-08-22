@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -61,6 +62,89 @@ void main() {
   }
 
   group('refresh', () {
+    test('a body far larger than a manifest is refused while it arrives', () async {
+      // Over a real socket, because a fake adapter cannot express the thing
+      // under test: its stream ignores backpressure, so the producer runs to
+      // completion whatever the consumer does, and a chunk count measures the
+      // fake rather than the code.
+      //
+      // A refusal on its own proves nothing either — megabytes of zeros fail
+      // the signature check just as well, so a test that looked only at the
+      // result passed happily while the whole body was read into memory
+      // first. What separates the two is *when*: this server sends more than
+      // the cap and then stalls, so a reader that stops at the cap answers at
+      // once and one that waits for the end waits for the receive timeout.
+      // `ensureInitialized` above installs Flutter's HttpOverrides, which
+      // answers every request 400 without a socket being opened. A real one
+      // is the whole point here, so this test asks for the real client back.
+      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      addTearDown(() => server.close(force: true));
+      unawaited(() async {
+        await for (final request in server) {
+          try {
+            for (var i = 0; i < 6; i++) {
+              request.response.add(Uint8List(64 * 1024));
+              await request.response.flush();
+            }
+            // And then nothing, for as long as anyone is listening.
+            await Completer<void>().future;
+          } catch (_) {
+            // The client hung up, which is the point.
+          }
+        }
+      }());
+
+      final watch = Stopwatch()..start();
+      await HttpOverrides.runWithHttpOverrides(() async {
+        await expectLater(
+          RootfsManifestSource.getForTest(
+            Dio(),
+            'http://${server.address.address}:${server.port}/manifest.json',
+          ),
+          throwsStateError,
+        );
+      }, _RealHttp());
+      watch.stop();
+
+      // The receive timeout is 20s. Anything near it means the read ran on
+      // waiting for the end of a body that never ends.
+      expect(
+        watch.elapsed,
+        lessThan(const Duration(seconds: 5)),
+        reason: 'refused while the body was still arriving',
+      );
+    });
+
+    test('two overlapping refreshes are one fetch', () async {
+      // Two racing to commit, and the one finishing last wins — which need not
+      // be the one that started last. A slower fetch of an older manifest
+      // would be adopted over a newer one, and would write its lower serial
+      // over the high-water mark the replay guard is. Entering the Linux
+      // settings page twice in quick succession is all it takes.
+      final dio = _Counting(fakeDio(body: signed, sig: signature));
+
+      final results = await Future.wait([
+        RootfsManifestSource.refresh(dio: dio),
+        RootfsManifestSource.refresh(dio: dio),
+      ]);
+
+      expect(results, [false, false]);
+      // Two requests — the manifest and its signature — not four.
+      expect(dio.requests, 2);
+      expect(Stores.setting.rootfsManifestSerial.fetch(), 1);
+    });
+
+    test('and a later one still fetches', () async {
+      // Joined while it is running, not memoised. A page entered again
+      // tomorrow has to be able to see a newer manifest.
+      final dio = _Counting(fakeDio(body: signed, sig: signature));
+
+      await RootfsManifestSource.refresh(dio: dio);
+      await RootfsManifestSource.refresh(dio: dio);
+
+      expect(dio.requests, 4);
+    });
+
     test('a fetch that cannot happen leaves what was in force', () async {
       final before = LinuxDistros.current.serial;
       final changed = await RootfsManifestSource.refresh(
@@ -170,6 +254,42 @@ void main() {
 }
 
 /// Answers the two URLs the source asks for, and nothing else.
+/// A Dio that counts what it was asked for, wrapping [inner]'s adapter.
+class _Counting with DioMixin implements Dio {
+  _Counting(Dio inner) {
+    options = inner.options;
+    httpClientAdapter = _Counter(inner.httpClientAdapter, this);
+  }
+
+  int requests = 0;
+}
+
+class _Counter implements HttpClientAdapter {
+  _Counter(this.inner, this.owner);
+
+  final HttpClientAdapter inner;
+  final _Counting owner;
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) {
+    owner.requests++;
+    return inner.fetch(options, requestStream, cancelFuture);
+  }
+
+  @override
+  void close({bool force = false}) => inner.close(force: force);
+}
+
+/// The default `HttpOverrides`, which is to say none at all: its inherited
+/// `createHttpClient` builds a real client. Overriding the method to call
+/// `HttpClient()` instead would re-enter whichever override is in force and
+/// recurse until the stack ran out — which is what it did.
+class _RealHttp extends HttpOverrides {}
+
 class _Adapter implements HttpClientAdapter {
   _Adapter({this.body, this.sig, this.error});
 

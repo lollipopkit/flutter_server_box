@@ -874,7 +874,11 @@ int sbm_ish_boot(const char *rootfs, const char *profile) {
 int sbm_ish_open(const char *profile, const char *shell, const char *command,
                  int columns, int rows) {
     if (!booted) return -ENOTCONN;
-    if (profile == NULL || profile[0] == '\0') return -EINVAL;
+    // The same check `sbm_ish_sessions` and `sbm_ish_detach` apply. A weaker
+    // one here would accept a name those two answer `-EINVAL` for, so a
+    // session opened under it would be invisible to both.
+    int checked = check_profile(profile);
+    if (checked < 0) return checked;
 
     bool interactive = command == NULL || command[0] == '\0';
     // The guest has no `login` and nothing reads `/etc/passwd`, so which shell
@@ -895,6 +899,14 @@ int sbm_ish_open(const char *profile, const char *shell, const char *command,
     memset(session, 0, sizeof(*session));
     session->used = true;
     session->exit_code = -1;
+    // Named in the same lock hold that reserves it. `used` is what makes the
+    // slot visible to `sbm_ish_sessions` and `close_session`, and both then
+    // ask which profile it belongs to — so a slot reserved under an empty name
+    // is one that is counted by nobody and hung up by nobody, while the mounts
+    // it is about to take are held all the same. What that cost: deleting a
+    // system while a terminal in it was opening read as "no sessions", went
+    // ahead, and failed at the unmount with `EBUSY`.
+    snprintf(session->profile, sizeof(session->profile), "%s", profile);
     pthread_mutex_unlock(&sessions_lock);
 
     // A task of its own, under init. Everything from here happens as that
@@ -931,7 +943,6 @@ int sbm_ish_open(const char *profile, const char *shell, const char *command,
     pthread_mutex_lock(&sessions_lock);
     session->tty = tty;
     session->pid = current->pid;
-    snprintf(session->profile, sizeof(session->profile), "%s", profile);
     pthread_mutex_unlock(&sessions_lock);
 
     err = attach_stdio(tty);
@@ -977,8 +988,10 @@ int sbm_ish_open(const char *profile, const char *shell, const char *command,
     return index;
 
 fail:
+    // The name goes with the reservation, since the two were taken together.
     pthread_mutex_lock(&sessions_lock);
     session->used = false;
+    session->profile[0] = '\0';
     pthread_mutex_unlock(&sessions_lock);
     return err;
 }

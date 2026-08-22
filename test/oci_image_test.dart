@@ -189,6 +189,77 @@ void main() {
 
       expect(() => ociLayers(image), throwsStateError);
     });
+
+    test('says so when the manifest names no layers at all', () {
+      // Read as an empty list this was a rootfs that unpacked to nothing and
+      // reported success — a system installed with no files in it, found at
+      // the first command rather than here.
+      final image = imageWith(layers: const []);
+
+      expect(() => ociLayers(image), throwsStateError);
+    });
+
+    test('says so when the manifest is an index rather than an image', () {
+      // What a multi-architecture image looks like: the blob the index points
+      // at names further manifests, one per platform, and has no `layers`.
+      // Following it as if it were an image is how a build ends up unpacking
+      // nothing.
+      final index = json.encode({
+        'schemaVersion': 2,
+        'manifests': [
+          {
+            'mediaType': 'application/vnd.oci.image.manifest.v1+json',
+            'digest': digestOf('inner'),
+            'platform': {'architecture': 'arm64', 'os': 'linux'},
+          },
+        ],
+      });
+      final image = Archive()
+        ..add(ArchiveFile.string('index.json', json.encode({
+          'schemaVersion': 2,
+          'manifests': [
+            {
+              'mediaType': 'application/vnd.oci.image.index.v1+json',
+              'digest': digestOf('manifest'),
+            },
+          ],
+        })))
+        ..add(blob('manifest', utf8.encode(index)));
+
+      expect(() => ociLayers(image), throwsStateError);
+    });
+  });
+
+  group("a layer's media type", () {
+    Archive of(String mediaType) => imageWith(
+      layers: [(name: 'l', bytes: const [1], mediaType: mediaType)],
+    );
+
+    test("Docker's own spelling of a gzipped layer is one", () {
+      // `…tar.gzip`, which is what Docker wrote before the OCI media types
+      // existed. It ends in neither `+gzip` nor `+zstd`, so a check written
+      // around those two read it as an uncompressed tar and handed gzip bytes
+      // to the tar decoder.
+      expect(
+        ociLayers(of('application/vnd.docker.image.rootfs.diff.tar.gzip'))
+            .single
+            .compression,
+        LinuxRootfsCompression.gzip,
+      );
+    });
+
+    test('an unrecognised one is refused, not assumed to be a plain tar', () {
+      // The one wrong way to be wrong here. Whatever those bytes are, they are
+      // not what the decoder is about to be told they are.
+      for (final type in const [
+        'application/vnd.oci.image.layer.v1.tar+zstd',
+        'application/vnd.docker.image.rootfs.diff.tar.zstd',
+        'application/octet-stream',
+        '',
+      ]) {
+        expect(() => ociLayers(of(type)), throwsStateError, reason: type);
+      }
+    });
   });
 
   group('ociWhiteout', () {

@@ -24,7 +24,7 @@ void main() {
   setUpAll(() {
     LinuxDistros.adoptForTest(
       RootfsManifest.parse(
-        File('assets/rootfs_manifest.json').readAsStringSync(),
+        File(LinuxDistros.bundledAsset).readAsStringSync(),
       ),
     );
   });
@@ -296,10 +296,19 @@ void main() {
     });
 
     test('take security from the mirror too, since it is a pocket of it', () {
-      expect(
-        LinuxDistro.ubuntu.repositories('https://m.test/ubuntu').content,
-        contains('resolute-security'),
-      );
+      // Derived from the release rather than spelled out: the suite moves
+      // whenever the preferred release does, and a hardcoded `resolute` would
+      // have to be edited to keep a test passing that is not about which
+      // suite it is.
+      for (final release in LinuxDistro.ubuntu.releases) {
+        expect(
+          LinuxDistro.ubuntu
+              .repositories('https://m.test/ubuntu', release: release)
+              .content,
+          contains('${release.branch}-security'),
+          reason: release.version,
+        );
+      }
     });
   });
 
@@ -339,14 +348,22 @@ void main() {
     });
 
     test('keep signature checking against the key in the image', () {
-      final content = LinuxDistro.rocky
-          .repositories('https://m.test/rocky')
-          .content;
-      expect(content, contains('gpgcheck=1'));
-      expect(
-        content,
-        contains('gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-Rocky-9'),
-      );
+      // The key file is named for the major version, so it is read off the
+      // release for the reason Ubuntu's suite is: which one is preferred is
+      // not what this test is about.
+      for (final release in LinuxDistro.rocky.releases) {
+        final content = LinuxDistro.rocky
+            .repositories('https://m.test/rocky', release: release)
+            .content;
+        expect(content, contains('gpgcheck=1'), reason: release.version);
+        expect(
+          content,
+          contains(
+            'gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-Rocky-${release.branch}',
+          ),
+          reason: release.version,
+        );
+      }
     });
   });
 
@@ -383,7 +400,7 @@ void main() {
       // throw rather than guess.
       LinuxDistros.adoptForTest(
         RootfsManifest.parse(
-          File('assets/rootfs_manifest.json')
+          File(LinuxDistros.bundledAsset)
               .readAsStringSync()
               .replaceFirst('"rocky": {', '"rocky-gone": {'),
         ),
@@ -391,7 +408,7 @@ void main() {
       addTearDown(() {
         LinuxDistros.adoptForTest(
           RootfsManifest.parse(
-            File('assets/rootfs_manifest.json').readAsStringSync(),
+            File(LinuxDistros.bundledAsset).readAsStringSync(),
           ),
         );
       });

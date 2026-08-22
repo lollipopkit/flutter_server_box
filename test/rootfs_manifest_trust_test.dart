@@ -67,9 +67,11 @@ void main() {
     // What an attacker who could rewrite the file but not the key would do:
     // keep it valid JSON, point a download somewhere else.
     final edited = Uint8List.fromList(
-      String.fromCharCodes(source)
-          .replaceFirst('dl-cdn.alpinelinux.org', 'mirror.attacker.test')
-          .codeUnits,
+      utf8.encode(
+        utf8
+            .decode(source)
+            .replaceFirst('dl-cdn.alpinelinux.org', 'mirror.attacker.test'),
+      ),
     );
     expect(
       () => RootfsManifestTrust.verify(

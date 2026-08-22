@@ -76,7 +76,19 @@ abstract final class RootfsManifestTrust {
       throw const RootfsManifestException('the signature does not match');
     }
 
-    final manifest = RootfsManifest.parse(String.fromCharCodes(source));
+    // Decoded as UTF-8, which is what the file is. `String.fromCharCodes`
+    // reads each byte as a code point, so anything outside ASCII becomes a
+    // different string — and the bytes that were signed are not the bytes that
+    // get parsed. Every manifest published so far happens to be ASCII, which
+    // is what kept it invisible; a distribution label with an accent in it is
+    // all it would take.
+    final String text;
+    try {
+      text = utf8.decode(source);
+    } on FormatException catch (e) {
+      throw RootfsManifestException('it is not UTF-8: ${e.message}');
+    }
+    final manifest = RootfsManifest.parse(text);
 
     if (previousSerial != null && manifest.serial < previousSerial) {
       throw RootfsManifestException(

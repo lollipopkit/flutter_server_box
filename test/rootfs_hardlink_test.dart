@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -28,19 +29,44 @@ import 'package:server_box/data/model/app/rootfs_manifest.dart';
 void main() {
   test('a hard link is not the same shape as a symbolic one', () {
     // The distinction this rests on, asserted against the reader rather than
-    // assumed. If a future version of `archive` stopped setting `symbolicLink`
-    // for hard links, the unpacker's special case would be dead code — and if
-    // it stopped exposing the type flag, the special case could not be written
-    // at all.
-    final archive = Archive();
-    final tar = TarEncoder().encodeBytes(
-      archive..add(ArchiveFile.string('usr/bin/coreutils', 'x')),
-    );
+    // assumed. If a future version of `archive` stopped setting
+    // `nameOfLinkedFile` for hard links, the unpacker's special case would be
+    // dead code — and if it stopped exposing the type flag, the special case
+    // could not be written at all.
+    //
+    // Written entry by entry because `TarEncoder` cannot emit a hard link: it
+    // knows directories, symbolic links and files, so encoding one through it
+    // would produce a symbolic link and this test would be asserting the
+    // failure it exists to catch.
+    TarFile entry(String name, String type, {String? target}) => TarFile()
+      ..filename = name
+      ..mode = 0x1ed
+      ..lastModTime = 0
+      ..typeFlag = type
+      ..nameOfLinkedFile = target
+      ..fileSize = 0;
+
+    final out = OutputMemoryStream();
+    entry('usr/bin/coreutils', TarFile.normalFile).write(out);
+    entry('usr/bin/ls', TarFile.hardLink, target: 'usr/bin/coreutils')
+        .write(out);
+    entry('bin', TarFile.symbolicLink, target: 'usr/bin').write(out);
+    out.writeBytes(Uint8List(1024)); // the two empty blocks that end a tar
+    out.flush();
 
     final decoder = TarDecoder();
-    decoder.decodeBytes(tar);
-    expect(decoder.files, isNotEmpty);
-    expect(decoder.files.first.typeFlag, TarFile.normalFile);
+    decoder.decodeBytes(out.getBytes());
+    final byName = {for (final f in decoder.files) f.filename: f};
+
+    expect(byName['usr/bin/coreutils']!.typeFlag, TarFile.normalFile);
+    // The two link shapes, told apart by the flag and by nothing else: both
+    // carry a link name, which is why reading one as the other was possible.
+    // A hard link's target is a path from the root of the archive; a symbolic
+    // link's resolves against its own directory.
+    expect(byName['usr/bin/ls']!.typeFlag, TarFile.hardLink);
+    expect(byName['usr/bin/ls']!.nameOfLinkedFile, 'usr/bin/coreutils');
+    expect(byName['bin']!.typeFlag, TarFile.symbolicLink);
+    expect(byName['bin']!.nameOfLinkedFile, 'usr/bin');
   });
 
   group('the real Ubuntu rootfs', () {
@@ -85,26 +111,33 @@ void main() {
       into = await Directory.systemTemp.createTemp('rootfs_unpack_test');
     });
 
-    tearDown(() async {
-      if (await into.exists()) await into.delete(recursive: true);
-    });
-
-    test('leaves a coreutils applet that resolves to a real binary', () async {
+    /// Both tests below need the same three things, and neither is about any
+    /// of them: the tarball being present, a manifest being in force, and the
+    /// unpack having happened. Returns the directory it landed in, or null
+    /// when there is nothing to unpack.
+    Future<Directory?> unpacked(Directory into) async {
       if (!tarball.existsSync()) {
         markTestSkipped('no ${tarball.path}');
-        return;
+        return null;
       }
       LinuxDistros.adoptForTest(
-        RootfsManifest.parse(
-          File('assets/rootfs_manifest.json').readAsStringSync(),
-        ),
+        RootfsManifest.parse(File(LinuxDistros.bundledAsset).readAsStringSync()),
       );
-
       await IosRootfs.extractForTest(
         tarball,
         into,
         source: LinuxDistro.ubuntu.preferred.source,
       );
+      return into;
+    }
+
+
+    tearDown(() async {
+      if (await into.exists()) await into.delete(recursive: true);
+    });
+
+    test('leaves a coreutils applet that resolves to a real binary', () async {
+      if (await unpacked(into) == null) return;
 
       // What the shell walks to run `ls`, one hop at a time. Each is a
       // separate way for the unpack to have gone wrong.
@@ -135,21 +168,7 @@ void main() {
     });
 
     test('every hard link in the archive landed as a file', () async {
-      if (!tarball.existsSync()) {
-        markTestSkipped('no ${tarball.path}');
-        return;
-      }
-      LinuxDistros.adoptForTest(
-        RootfsManifest.parse(
-          File('assets/rootfs_manifest.json').readAsStringSync(),
-        ),
-      );
-
-      await IosRootfs.extractForTest(
-        tarball,
-        into,
-        source: LinuxDistro.ubuntu.preferred.source,
-      );
+      if (await unpacked(into) == null) return;
 
       final decoder = TarDecoder();
       decoder.decodeBytes(GZipDecoder().decodeBytes(tarball.readAsBytesSync()));

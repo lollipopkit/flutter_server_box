@@ -138,6 +138,29 @@ void main() {
       );
     });
 
+    test('a timestamp that names no timezone', () {
+      // `DateTime.parse` reads one without a `Z` or an offset as *local*, so
+      // `valid_until` would mean a different instant in every timezone — and
+      // it is what decides whether a fetched manifest has expired. A rollback
+      // window that opens by flying west is not one.
+      for (final key in ['generated_at', 'valid_until']) {
+        expect(
+          () => RootfsManifest.parse(
+            edited((r) => r[key] = '2027-02-18T00:00:00'),
+          ),
+          throwsA(isA<RootfsManifestException>()),
+          reason: key,
+        );
+      }
+      // An explicit offset is an instant, so it is accepted.
+      expect(
+        RootfsManifest.parse(
+          edited((r) => r['valid_until'] = '2027-02-18T08:00:00+08:00'),
+        ).validUntil,
+        DateTime.utc(2027, 2, 18),
+      );
+    });
+
     test('a mirror that is not http(s)', () {
       expect(
         () => RootfsManifest.parse(
@@ -227,11 +250,69 @@ void main() {
     test('a size in bytes rounds up to whole megabytes', () {
       // Never down: the dialog is answered before anything is fetched, and
       // understating a download is the direction that costs someone data.
-      final rocky = bundled.distros['rocky']!.preferred.source;
-      expect(rocky.sizeBytes, 84701720);
-      expect(rocky.sizeMb, 81);
-      expect(bundled.distros['alpine']!.preferred.source.sizeMb, 4);
-      expect(bundled.distros['ubuntu']!.preferred.source.sizeMb, 34);
+      //
+      // The property, over every source in the file, rather than three
+      // numbers copied out of it — those go stale the next time a pin moves,
+      // and a test that has to be edited to keep passing is one nobody reads
+      // the failure of. One fixed pair below covers the boundary itself.
+      for (final distro in bundled.distros.values) {
+        for (final release in distro.releases) {
+          for (final source in [release.source, release.upstream]) {
+            final where = '${distro.id} ${release.version}';
+            expect(
+              source.sizeMb * 1048576,
+              greaterThanOrEqualTo(source.sizeBytes),
+              reason: '$where is understated',
+            );
+            expect(
+              (source.sizeMb - 1) * 1048576,
+              lessThan(source.sizeBytes),
+              reason: '$where is rounded up further than it needs',
+            );
+          }
+        }
+      }
+    });
+
+    test('and a byte over a megabyte is two', () {
+      // The boundary itself, stated rather than derived, since the property
+      // above holds for any rounding that never goes down.
+      const of = RootfsSource(
+        url: 'https://m.test/x',
+        sha256:
+            '0000000000000000000000000000000000000000000000000000000000000000',
+        sizeBytes: 1048577,
+        layout: LinuxRootfsLayout.plain,
+        compression: LinuxRootfsCompression.gzip,
+        followsMirror: false,
+      );
+
+      expect(of.sizeMb, 2);
+    });
+
+    test('a mirror is swapped on a path boundary, not on a prefix', () {
+      // `…/pub/rocky` is a prefix of `…/pub/rockyfoo/x`. Swapped there, the
+      // result is a URL made of two hosts' paths — the one case where
+      // honouring a mirror fetches something nobody named.
+      const source = RootfsSource(
+        url: 'https://dl.test/pub/rockyfoo/9/x.tar.xz',
+        sha256:
+            '0000000000000000000000000000000000000000000000000000000000000000',
+        sizeBytes: 1,
+        layout: LinuxRootfsLayout.plain,
+        compression: LinuxRootfsCompression.gzip,
+        followsMirror: true,
+      );
+
+      expect(
+        source.urlOn('https://m.test/rocky', 'https://dl.test/pub/rocky'),
+        source.url,
+      );
+      // And the ordinary case still is swapped.
+      expect(
+        source.urlOn('https://m.test/x', 'https://dl.test/pub/rockyfoo'),
+        'https://m.test/x/9/x.tar.xz',
+      );
     });
   });
 }

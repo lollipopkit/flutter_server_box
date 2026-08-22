@@ -12,15 +12,14 @@
 /// choose the manifest chooses what runs on the device. That is why the
 /// fetched copy is signed and the public key is compiled in: the app decides
 /// which key, the repository decides the contents, and a mirror still only
-/// decides where the bytes come from. Verification lives in the layer that
-/// fetches; this file is the shape and the parsing, and it parses strictly —
-/// a missing or unrecognised field throws rather than defaulting, because a
-/// default here would be a silent answer to "which bytes".
+/// decides where the bytes come from.
 ///
 /// The fetch, the signature check and the serial rollback guard are in
-/// `RootfsManifestSource` and `RootfsManifestTrust`; this file is only the
-/// shape and the parsing, and it is reached with bytes that have already been
-/// verified or that came out of the binary.
+/// `RootfsManifestSource` and `RootfsManifestTrust`. This file is the shape
+/// and the parsing, reached with bytes that have already been verified or that
+/// came out of the binary — and it parses strictly, because a missing or
+/// unrecognised field defaulted here would be a silent answer to "which
+/// bytes".
 library;
 
 import 'dart:convert';
@@ -90,7 +89,12 @@ class RootfsSource {
   /// name both.
   String urlOn(String mirror, String defaultMirror) {
     if (!followsMirror || mirror == defaultMirror) return url;
-    if (!url.startsWith(defaultMirror)) return url;
+    // On a path boundary, not on a prefix. `…/pub/rocky` is a prefix of
+    // `…/pub/rockyfoo/x`, and swapping it there would build a URL out of two
+    // hosts' paths — the one case where honouring a mirror fetches something
+    // nobody named.
+    final prefix = '$defaultMirror/';
+    if (!url.startsWith(prefix)) return url;
     return '$mirror${url.substring(defaultMirror.length)}';
   }
 
@@ -354,8 +358,20 @@ bool _bool(Map<String, dynamic> json, String key, String where) {
   throw RootfsManifestException('$where.$key is not a boolean');
 }
 
+/// An instant, which means one carrying a zone.
+///
+/// `DateTime.parse` reads a string with no `Z` and no offset as *local* time,
+/// so `2027-02-18T00:00:00` is a different instant in every timezone — and
+/// `valid_until` is what decides whether a fetched manifest has expired.
+/// A manifest that meant one thing in Auckland and another in Los Angeles
+/// would be a rollback window that opens by flying west.
 DateTime _time(Map<String, dynamic> json, String key, String where) {
   final value = _string(json, key, where);
+  if (!RegExp(r'(?:Z|[+-]\d{2}:?\d{2})$').hasMatch(value)) {
+    throw RootfsManifestException(
+      '$where.$key names no timezone, so it is not an instant: $value',
+    );
+  }
   final parsed = DateTime.tryParse(value);
   if (parsed == null) {
     throw RootfsManifestException('$where.$key is not a timestamp');

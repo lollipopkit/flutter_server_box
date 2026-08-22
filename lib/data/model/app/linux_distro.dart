@@ -50,11 +50,15 @@ enum LinuxDistro {
 
   /// What the user sees. A proper noun, so it is not localized.
   ///
-  /// The one getter here that never throws. A system installed by an earlier
-  /// build carries its distribution's name in a marker file, and that name
-  /// outlives any manifest that stops describing it — so a profile whose
-  /// distribution has been dropped still has something to be called.
-  String get label => LinuxDistros.describe(this)?.label ?? _fallbackLabel;
+  /// The one getter here that never throws, which is why it checks whether a
+  /// manifest has been loaded at all rather than asking for one. A system
+  /// installed by an earlier build carries its distribution's name in a marker
+  /// file, and that name outlives any manifest that stops describing it — so a
+  /// profile whose distribution has been dropped still has something to be
+  /// called, and so does one read before `Rootfs.prepare` has run.
+  String get label => LinuxDistros.isLoaded
+      ? (LinuxDistros.describe(this)?.label ?? _fallbackLabel)
+      : _fallbackLabel;
 
   String get _fallbackLabel => switch (this) {
     LinuxDistro.alpine => 'Alpine',

@@ -454,6 +454,13 @@ abstract final class IosRootfs {
     void Function(double? progress)? onProgress,
   }) async {
     final hardLinks = _hardLinks(decoder);
+    // What this layer writes, which is what an opaque marker spares. Built up
+    // front because the archive is not obliged to put the marker before the
+    // entries it applies to, so "has it been written yet" is not the same
+    // question as "does this layer write it".
+    final written = applyWhiteouts
+        ? ociLayerPaths(archive.map((e) => e.name))
+        : const <String>{};
     // Applied after everything is written, because an archive may name a link
     // before the file it points at. Ours is sorted and does not, but upstream's
     // ordering is upstream's business.
@@ -470,9 +477,19 @@ abstract final class IosRootfs {
         final mark = ociWhiteout(entry.name.split('/').last);
         if (mark != null) {
           final parent = Directory(File(path).parent.path);
+          final directory = ociParent(entry.name);
           if (mark.opaque) {
             if (await parent.exists()) {
               await for (final child in parent.list(followLinks: false)) {
+                // Only what the layers below put here. A sibling this layer
+                // writes stays: the marker hides what is underneath it, and
+                // deleting the layer's own contents would empty a directory
+                // the layer exists to fill.
+                final name = child.path.split(Platform.pathSeparator).last;
+                final sibling = directory.isEmpty
+                    ? name
+                    : '$directory/$name';
+                if (written.contains(sibling)) continue;
                 await child.delete(recursive: true);
               }
             }

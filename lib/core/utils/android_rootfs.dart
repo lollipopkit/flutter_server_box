@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:archive/archive.dart';
@@ -287,11 +288,15 @@ abstract final class AndroidRootfs {
           await _withTemp('$archivePath.layer${n++}', ociLayerTar(layer), (
             path,
           ) async {
+            // What this layer writes, asked of the archive rather than of the
+            // tree: after extraction the two are indistinguishable, and the
+            // difference is exactly what an opaque marker turns on.
+            final written = ociLayerPaths(await _tarList(path));
             await _tar(path, root, gzip: false);
             // Between layers, not at the end: a marker in this layer deletes
             // what the one below it wrote, and the layer above may put the
             // same path back.
-            await _applyWhiteouts(root);
+            await _applyWhiteouts(root, written);
           });
         }
     }
@@ -311,6 +316,21 @@ abstract final class AndroidRootfs {
     } finally {
       if (await file.exists()) await file.delete();
     }
+  }
+
+  /// The names in [archivePath], as the archive spells them.
+  ///
+  /// Asked of the same tar that unpacks it, so the two cannot disagree about
+  /// what is in there. Cheaper than it looks — this reads headers and skips
+  /// the data — and it replaces a recursive walk of the whole extracted tree.
+  static Future<List<String>> _tarList(String archivePath) async {
+    final res = await Process.run('/system/bin/tar', ['tf', archivePath]);
+    if (res.exitCode != 0) {
+      throw StateError('Could not read the rootfs layer: ${res.stderr}');
+    }
+    return LineSplitter.split(res.stdout as String)
+        .where((e) => e.isNotEmpty)
+        .toList();
   }
 
   static Future<void> _tar(
@@ -336,21 +356,27 @@ abstract final class AndroidRootfs {
   /// them while unpacking, which it can because it walks the entries itself —
   /// this is the same rule reached from the other side, sharing
   /// [ociWhiteout] so the two cannot disagree about what a marker is.
-  static Future<void> _applyWhiteouts(String root) async {
-    final markers = <String>[];
-    await for (final entry in Directory(
-      root,
-    ).list(recursive: true, followLinks: false)) {
-      final name = entry.path.split(Platform.pathSeparator).last;
-      if (name.startsWith('.wh.')) markers.add(entry.path);
-    }
-    for (final path in markers) {
-      final mark = ociWhiteout(path.split(Platform.pathSeparator).last);
+  ///
+  /// [written] is what this layer's archive contains, which is both where the
+  /// markers are found and what an opaque one spares.
+  static Future<void> _applyWhiteouts(String root, Set<String> written) async {
+    for (final relative in written) {
+      final mark = ociWhiteout(relative.split('/').last);
       if (mark == null) continue;
+      final path = root.joinPath(relative);
       final parent = File(path).parent;
       if (mark.opaque) {
+        if (!await parent.exists()) continue;
+        final directory = ociParent(relative);
         await for (final child in parent.list(followLinks: false)) {
           if (child.path == path) continue;
+          // Only what the layers below put here. A sibling this layer writes
+          // stays — the marker hides what is underneath it, and deleting the
+          // layer's own contents would empty a directory the layer exists to
+          // fill.
+          final name = child.path.split(Platform.pathSeparator).last;
+          final sibling = directory.isEmpty ? name : '$directory/$name';
+          if (written.contains(sibling)) continue;
           await child.delete(recursive: true);
         }
       } else {
