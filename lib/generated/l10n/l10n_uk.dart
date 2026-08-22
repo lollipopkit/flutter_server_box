@@ -889,8 +889,13 @@ class AppLocalizationsUk extends AppLocalizations {
   String get remotePath => 'Віддалений шлях';
 
   @override
-  String rootfsUpdateTip(Object installed, Object latest) {
-    return 'Встановлено Alpine $installed, доступна версія $latest. Оновлення завантажить його знову та замінить контейнер: усе, що було встановлено всередині через apk, буде втрачено. Якщо пропустити, поточний контейнер працюватиме далі.';
+  String rootfsUpdateTip(
+    Object distro,
+    Object installed,
+    Object latest,
+    Object pm,
+  ) {
+    return 'Встановлено $distro $installed, доступна версія $latest. Оновлення завантажить його знову та замінить контейнер: усе, що було встановлено всередині через $pm, буде втрачено. Якщо пропустити, поточний контейнер працюватиме далі.';
   }
 
   @override
@@ -898,8 +903,8 @@ class AppLocalizationsUk extends AppLocalizations {
       'Користувацьке середовище Linux на цьому пристрої';
 
   @override
-  String rootfsInstallTip(Object version) {
-    return 'Завантажити Alpine Linux $version (близько 3 МБ) і розпакувати на цьому пристрої. Це дає застосунку оболонку з менеджером пакунків; її можна будь-коли видалити.';
+  String rootfsInstallTip(Object distro, Object version, Object size) {
+    return 'Завантажити $distro $version (близько $size МБ) і розпакувати на цьому пристрої. Це дає застосунку оболонку з менеджером пакунків; її можна будь-коли видалити.';
   }
 
   @override

@@ -103,6 +103,46 @@ void main() {
     });
   });
 
+  group('what the install dialog is told', () {
+    test('the size is never smaller than the download', () {
+      // The dialog is answered before anything is fetched, so this number is
+      // pinned rather than measured. Measured once, against what the servers
+      // report: 3.8, 33.5 and 80.8 MB. Rounding down would understate a
+      // download on a metered connection.
+      const measured = {
+        LinuxDistro.alpine: 3.8,
+        LinuxDistro.ubuntu: 33.5,
+        LinuxDistro.rocky: 80.8,
+      };
+      for (final distro in LinuxDistro.values) {
+        final actual = measured[distro];
+        expect(actual, isNotNull, reason: '${distro.id} has no measured size');
+        expect(
+          distro.approxDownloadMb,
+          greaterThanOrEqualTo(actual!.ceil()),
+          reason: distro.id,
+        );
+      }
+    });
+
+    test('the three sizes are not interchangeable', () {
+      // The string used to say "about 3 MB" for whichever was installed, which
+      // was true of Alpine alone. If they were all close this would not matter.
+      expect(LinuxDistro.ubuntu.approxDownloadMb,
+          greaterThan(LinuxDistro.alpine.approxDownloadMb * 5));
+      expect(LinuxDistro.rocky.approxDownloadMb,
+          greaterThan(LinuxDistro.ubuntu.approxDownloadMb * 2));
+    });
+
+    test('each names the package manager it actually ships', () {
+      // Told to someone whose system is about to be replaced, so it has to be
+      // the command they have been typing.
+      expect(LinuxDistro.alpine.packageManager, 'apk');
+      expect(LinuxDistro.ubuntu.packageManager, 'apt');
+      expect(LinuxDistro.rocky.packageManager, 'dnf');
+    });
+  });
+
   group('how a download is packed', () {
     test('the file name matches the compression each declares', () {
       // These two are read before anything looks at the bytes, so a mismatch

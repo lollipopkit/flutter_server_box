@@ -886,16 +886,21 @@ class AppLocalizationsPt extends AppLocalizations {
   String get remotePath => 'Caminho remoto';
 
   @override
-  String rootfsUpdateTip(Object installed, Object latest) {
-    return 'O Alpine $installed está instalado e o $latest está disponível. Atualizar baixa tudo de novo e substitui o contêiner: perde-se tudo o que foi instalado dentro dele com o apk. Se você pular, o atual continua funcionando.';
+  String rootfsUpdateTip(
+    Object distro,
+    Object installed,
+    Object latest,
+    Object pm,
+  ) {
+    return 'O $distro $installed está instalado e o $latest está disponível. Atualizar baixa tudo de novo e substitui o contêiner: perde-se tudo o que foi instalado dentro dele com o $pm. Se você pular, o atual continua funcionando.';
   }
 
   @override
   String get rootfsSubtitle => 'Um espaço de usuário Linux neste dispositivo';
 
   @override
-  String rootfsInstallTip(Object version) {
-    return 'Baixa o Alpine Linux $version (cerca de 3 MB) e o descompacta neste dispositivo. Dá a este app um shell com gerenciador de pacotes, e pode ser excluído a qualquer momento.';
+  String rootfsInstallTip(Object distro, Object version, Object size) {
+    return 'Baixa o $distro $version (cerca de $size MB) e o descompacta neste dispositivo. Dá a este app um shell com gerenciador de pacotes, e pode ser excluído a qualquer momento.';
   }
 
   @override

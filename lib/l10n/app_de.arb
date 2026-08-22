@@ -160,15 +160,17 @@
   "rememberPwdInMem": "Passwort im Speicher behalten",
   "rememberPwdInMemTip": "Für Container, Aufhängen usw.",
   "remotePath": "Entfernte Pfade",
-  "rootfsUpdateTip": "Alpine {installed} ist installiert, {latest} ist verfügbar. Beim Aktualisieren wird es erneut heruntergeladen und der Container ersetzt: Alles, was darin mit apk installiert wurde, geht verloren. Beim Überspringen bleibt der aktuelle Container nutzbar.",
+  "rootfsUpdateTip": "{distro} {installed} ist installiert, {latest} ist verfügbar. Beim Aktualisieren wird es erneut heruntergeladen und der Container ersetzt: Alles, was darin mit {pm} installiert wurde, geht verloren. Beim Überspringen bleibt der aktuelle Container nutzbar.",
   "@rootfsUpdateTip": {
     "placeholders": {
+      "distro": {},
       "installed": {},
-      "latest": {}
+      "latest": {},
+      "pm": {}
     }
   },
   "rootfsSubtitle": "Eine Linux-Userland-Umgebung auf diesem Gerät",
-  "rootfsInstallTip": "Alpine Linux {version} (etwa 3 MB) herunterladen und auf diesem Gerät entpacken. Es gibt dieser App eine Shell mit Paketmanager und kann jederzeit gelöscht werden.",
+  "rootfsInstallTip": "{distro} {version} (etwa {size} MB) herunterladen und auf diesem Gerät entpacken. Es gibt dieser App eine Shell mit Paketmanager und kann jederzeit gelöscht werden.",
   "nameAlreadyExistsFmt": "„{name}“ existiert bereits",
   "sameIdServerExist": "Ein Server mit derselben ID existiert bereits",
   "second": "s",

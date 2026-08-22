@@ -890,16 +890,21 @@ class AppLocalizationsTr extends AppLocalizations {
   String get remotePath => 'Uzak yol';
 
   @override
-  String rootfsUpdateTip(Object installed, Object latest) {
-    return 'Alpine $installed kurulu ve $latest mevcut. Güncelleme onu yeniden indirir ve konteyneri değiştirir: içine apk ile kurulmuş her şey kaybolur. Bunu atlarsanız mevcut olan çalışmaya devam eder.';
+  String rootfsUpdateTip(
+    Object distro,
+    Object installed,
+    Object latest,
+    Object pm,
+  ) {
+    return '$distro $installed kurulu ve $latest mevcut. Güncelleme onu yeniden indirir ve konteyneri değiştirir: içine $pm ile kurulmuş her şey kaybolur. Bunu atlarsanız mevcut olan çalışmaya devam eder.';
   }
 
   @override
   String get rootfsSubtitle => 'Bu cihazdaki bir Linux kullanıcı alanı';
 
   @override
-  String rootfsInstallTip(Object version) {
-    return 'Alpine Linux $version (yaklaşık 3 MB) indirilir ve bu cihazda açılır. Bu uygulamaya paket yöneticisi olan bir kabuk sağlar ve istediğiniz zaman silinebilir.';
+  String rootfsInstallTip(Object distro, Object version, Object size) {
+    return '$distro $version (yaklaşık $size MB) indirilir ve bu cihazda açılır. Bu uygulamaya paket yöneticisi olan bir kabuk sağlar ve istediğiniz zaman silinebilir.';
   }
 
   @override

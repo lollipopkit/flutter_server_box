@@ -160,15 +160,17 @@
   "rememberPwdInMem": "Şifreyi bellekte hatırla",
   "rememberPwdInMemTip": "Konteynerler, askıya alma vb. için kullanılır.",
   "remotePath": "Uzak yol",
-  "rootfsUpdateTip": "Alpine {installed} kurulu ve {latest} mevcut. Güncelleme onu yeniden indirir ve konteyneri değiştirir: içine apk ile kurulmuş her şey kaybolur. Bunu atlarsanız mevcut olan çalışmaya devam eder.",
+  "rootfsUpdateTip": "{distro} {installed} kurulu ve {latest} mevcut. Güncelleme onu yeniden indirir ve konteyneri değiştirir: içine {pm} ile kurulmuş her şey kaybolur. Bunu atlarsanız mevcut olan çalışmaya devam eder.",
   "@rootfsUpdateTip": {
     "placeholders": {
+      "distro": {},
       "installed": {},
-      "latest": {}
+      "latest": {},
+      "pm": {}
     }
   },
   "rootfsSubtitle": "Bu cihazdaki bir Linux kullanıcı alanı",
-  "rootfsInstallTip": "Alpine Linux {version} (yaklaşık 3 MB) indirilir ve bu cihazda açılır. Bu uygulamaya paket yöneticisi olan bir kabuk sağlar ve istediğiniz zaman silinebilir.",
+  "rootfsInstallTip": "{distro} {version} (yaklaşık {size} MB) indirilir ve bu cihazda açılır. Bu uygulamaya paket yöneticisi olan bir kabuk sağlar ve istediğiniz zaman silinebilir.",
   "nameAlreadyExistsFmt": "\"{name}\" zaten mevcut",
   "sameIdServerExist": "Aynı kimliğe sahip bir sunucu zaten mevcut",
   "second": "s",

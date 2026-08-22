@@ -160,15 +160,17 @@
   "rememberPwdInMem": "Ingat kata sandi di dalam memori",
   "rememberPwdInMemTip": "Digunakan untuk kontainer, menangguhkan, dll.",
   "remotePath": "Jalur jarak jauh",
-  "rootfsUpdateTip": "Alpine {installed} terpasang dan {latest} tersedia. Memperbarui akan mengunduhnya lagi dan mengganti kontainer: semua yang dipasang di dalamnya dengan apk akan hilang. Jika dilewati, yang sekarang tetap berfungsi.",
+  "rootfsUpdateTip": "{distro} {installed} terpasang dan {latest} tersedia. Memperbarui akan mengunduhnya lagi dan mengganti kontainer: semua yang dipasang di dalamnya dengan {pm} akan hilang. Jika dilewati, yang sekarang tetap berfungsi.",
   "@rootfsUpdateTip": {
     "placeholders": {
+      "distro": {},
       "installed": {},
-      "latest": {}
+      "latest": {},
+      "pm": {}
     }
   },
   "rootfsSubtitle": "Lingkungan pengguna Linux di perangkat ini",
-  "rootfsInstallTip": "Unduh Alpine Linux {version} (sekitar 3 MB) dan ekstrak di perangkat ini. Ini memberi aplikasi ini shell dengan manajer paket, dan dapat dihapus kapan saja.",
+  "rootfsInstallTip": "Unduh {distro} {version} (sekitar {size} MB) dan ekstrak di perangkat ini. Ini memberi aplikasi ini shell dengan manajer paket, dan dapat dihapus kapan saja.",
   "nameAlreadyExistsFmt": "\"{name}\" sudah ada",
   "sameIdServerExist": "Server dengan ID yang sama sudah ada",
   "second": "S",

@@ -18,10 +18,12 @@ import 'package:server_box/data/res/store.dart';
 /// than fetching several megabytes on a tap. What makes it safe to run is in
 /// `LinuxDistro`: the release is pinned and its digest is checked.
 ///
-/// TODO(distribution residue; remove when a second one ships): `rootfsInstallTip`
-/// and `rootfsUpdateTip` name Alpine in all fifteen locales. Both are accurate
-/// while it is the only installable one, and both need a `{distro}` placeholder
-/// the moment that stops being true.
+/// The size is named because the three differ by more than an order of
+/// magnitude — 4 MB against 81 — and "several megabytes" is only true of one
+/// of them. So is the package manager in the update warning: what replacing a
+/// system destroys is whatever installed things inside it, and telling someone
+/// running Ubuntu that they will lose what `apk` put there names a command
+/// they have never typed.
 Future<bool> installRootfs(
   BuildContext context, {
   LinuxProfile? into,
@@ -60,8 +62,17 @@ Future<bool> installRootfs(
     title: into == null ? libL10n.install.capitalize : libL10n.update,
     child: Text(
       into == null
-          ? context.l10n.rootfsInstallTip(distro.version)
-          : context.l10n.rootfsUpdateTip(into.version, distro.version),
+          ? context.l10n.rootfsInstallTip(
+              distro.label,
+              distro.version,
+              distro.approxDownloadMb,
+            )
+          : context.l10n.rootfsUpdateTip(
+              distro.label,
+              into.version,
+              distro.version,
+              distro.packageManager,
+            ),
     ),
     actions: Btnx.cancelOk,
   );

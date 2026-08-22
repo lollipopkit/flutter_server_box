@@ -160,15 +160,17 @@
   "rememberPwdInMem": "メモリにパスワードを記憶する",
   "rememberPwdInMemTip": "コンテナ、一時停止などに使用されます。",
   "remotePath": "リモートパス",
-  "rootfsUpdateTip": "Alpine {installed} がインストールされており、{latest} が利用できます。更新すると再度ダウンロードしてコンテナを置き換えるため、その中に apk でインストールしたものはすべて失われます。更新しない場合、現在のものはそのまま使えます。",
+  "rootfsUpdateTip": "{distro} {installed} がインストールされており、{latest} が利用できます。更新すると再度ダウンロードしてコンテナを置き換えるため、その中に {pm} でインストールしたものはすべて失われます。更新しない場合、現在のものはそのまま使えます。",
   "@rootfsUpdateTip": {
     "placeholders": {
+      "distro": {},
       "installed": {},
-      "latest": {}
+      "latest": {},
+      "pm": {}
     }
   },
   "rootfsSubtitle": "この端末上の Linux ユーザーランド",
-  "rootfsInstallTip": "Alpine Linux {version}(約 3 MB)をダウンロードし、この端末に展開します。パッケージマネージャー付きのシェルをこのアプリに提供し、いつでも削除できます。",
+  "rootfsInstallTip": "{distro} {version}(約 {size} MB)をダウンロードし、この端末に展開します。パッケージマネージャー付きのシェルをこのアプリに提供し、いつでも削除できます。",
   "nameAlreadyExistsFmt": "「{name}」は既に存在します",
   "sameIdServerExist": "同じIDのサーバーが既に存在します",
   "second": "秒",

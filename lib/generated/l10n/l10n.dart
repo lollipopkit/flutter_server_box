@@ -1650,8 +1650,13 @@ abstract class AppLocalizations {
   /// No description provided for @rootfsUpdateTip.
   ///
   /// In en, this message translates to:
-  /// **'Alpine {installed} is installed and {latest} is available. Updating downloads it again and replaces the container: anything installed inside it with apk is lost. The current one keeps working if you skip this.'**
-  String rootfsUpdateTip(Object installed, Object latest);
+  /// **'{distro} {installed} is installed and {latest} is available. Updating downloads it again and replaces the container: anything installed inside it with {pm} is lost. The current one keeps working if you skip this.'**
+  String rootfsUpdateTip(
+    Object distro,
+    Object installed,
+    Object latest,
+    Object pm,
+  );
 
   /// No description provided for @rootfsSubtitle.
   ///
@@ -1662,8 +1667,8 @@ abstract class AppLocalizations {
   /// No description provided for @rootfsInstallTip.
   ///
   /// In en, this message translates to:
-  /// **'Download Alpine Linux {version} (about 3 MB) and unpack it on this device. It gives this app a shell with a package manager, and can be deleted at any time.'**
-  String rootfsInstallTip(Object version);
+  /// **'Download {distro} {version} (about {size} MB) and unpack it on this device. It gives this app a shell with a package manager, and can be deleted at any time.'**
+  String rootfsInstallTip(Object distro, Object version, Object size);
 
   /// No description provided for @sameIdServerExist.
   ///

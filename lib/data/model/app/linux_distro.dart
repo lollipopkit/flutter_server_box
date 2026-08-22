@@ -89,6 +89,32 @@ enum LinuxDistro {
     LinuxDistro.rocky => 'https://dl.rockylinux.org/pub/rocky',
   };
 
+  /// Roughly how large [rootfsUrl] is, in megabytes.
+  ///
+  /// Pinned beside [sha256] rather than read from a `Content-Length`, because
+  /// the dialog that shows it is answered before anything is fetched. Worth
+  /// showing at all because these are not close: 4 MB against 81 is the
+  /// difference between a tap and a decision on a metered connection.
+  ///
+  /// Rounded up from what the servers report — 3.8, 33.5 and 80.8 — so the
+  /// number is never smaller than the download.
+  int get approxDownloadMb => switch (this) {
+    LinuxDistro.alpine => 4,
+    LinuxDistro.ubuntu => 34,
+    LinuxDistro.rocky => 81,
+  };
+
+  /// What installs software inside it.
+  ///
+  /// Named in the update warning, because what replacing a system destroys is
+  /// whatever this put there. Saying `apk` to someone running Ubuntu names a
+  /// command they have never typed.
+  String get packageManager => switch (this) {
+    LinuxDistro.alpine => 'apk',
+    LinuxDistro.ubuntu => 'apt',
+    LinuxDistro.rocky => 'dnf',
+  };
+
   /// Whether [rootfsUrl] is built under the mirror it is given.
   ///
   /// True everywhere but Ubuntu, which publishes its base tarballs on

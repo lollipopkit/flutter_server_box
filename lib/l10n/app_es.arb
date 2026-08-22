@@ -160,15 +160,17 @@
   "rememberPwdInMem": "Recordar contraseña en la memoria",
   "rememberPwdInMemTip": "Utilizado para contenedores, suspensión, etc.",
   "remotePath": "Ruta remota",
-  "rootfsUpdateTip": "Alpine {installed} está instalado y {latest} está disponible. Actualizar lo descarga de nuevo y reemplaza el contenedor: se pierde todo lo que se haya instalado dentro con apk. Si lo omites, el actual sigue funcionando.",
+  "rootfsUpdateTip": "{distro} {installed} está instalado y {latest} está disponible. Actualizar lo descarga de nuevo y reemplaza el contenedor: se pierde todo lo que se haya instalado dentro con {pm}. Si lo omites, el actual sigue funcionando.",
   "@rootfsUpdateTip": {
     "placeholders": {
+      "distro": {},
       "installed": {},
-      "latest": {}
+      "latest": {},
+      "pm": {}
     }
   },
   "rootfsSubtitle": "Un espacio de usuario Linux en este dispositivo",
-  "rootfsInstallTip": "Descarga Alpine Linux {version} (unos 3 MB) y lo descomprime en este dispositivo. Le da a esta app un shell con gestor de paquetes, y se puede eliminar en cualquier momento.",
+  "rootfsInstallTip": "Descarga {distro} {version} (unos {size} MB) y lo descomprime en este dispositivo. Le da a esta app un shell con gestor de paquetes, y se puede eliminar en cualquier momento.",
   "nameAlreadyExistsFmt": "«{name}» ya existe",
   "sameIdServerExist": "Ya existe un servidor con el mismo ID",
   "second": "Segundo",
