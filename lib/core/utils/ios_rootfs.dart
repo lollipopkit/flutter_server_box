@@ -29,6 +29,11 @@ import 'package:server_box/data/model/app/linux_distro.dart';
 /// build without it is one edit away, should App Store review object — and
 /// [isAvailable] is how everything else asks, exactly as on Android.
 abstract final class IosRootfs {
+  /// The guest's `EBUSY`, which is what an unmount answers while something
+  /// still holds the mount. Negative already: `kernel/errno.h` defines the
+  /// guest's errnos that way.
+  static const _ebusy = -16;
+
   /// Every system unpacked in the container, in the order their directories
   /// come back.
   ///
@@ -316,13 +321,27 @@ abstract final class IosRootfs {
     // Waiting here rather than inside the engine keeps it off the main
     // isolate: `detach` is a blocking call, and looping it in C would hold
     // both the app and `attached_lock` for as long as it took.
+    //
+    // Retrying is only worth it for the one error that time fixes. `detach`
+    // answers `_EBUSY` (-16) while something still holds a mount, and anything
+    // else — a name it will not accept, a machine that was never booted — will
+    // say the same thing on the tenth attempt as on the first. Ten identical
+    // failures then became "still in use", which was how deleting a system
+    // that had been installed but never opened became impossible.
     var err = detach(id);
-    for (var i = 0; err < 0 && i < 10; i++) {
+    for (var i = 0; err == _ebusy && i < 10; i++) {
       await Future<void>.delayed(const Duration(milliseconds: 200));
       err = detach(id);
     }
     if (err < 0) {
-      throw StateError('The Linux system is still in use ($err)');
+      // Says which, rather than naming a cause it does not know. The number
+      // reaches here from two errno namespaces — the guest's for an unmount,
+      // the host's for a rejected name — so this cannot claim to read it.
+      throw StateError(
+        err == _ebusy
+            ? 'The Linux system is still in use'
+            : 'The Linux system could not be detached ($err)',
+      );
     }
     final dir = Directory(root);
     if (await dir.exists()) await dir.delete(recursive: true);

@@ -684,8 +684,17 @@ int sbm_ish_attach(const char *profile) {
 /// reports that rather than forcing it: a session still running in the system
 /// is a reason not to pull its `/dev` out from under it. The caller closes
 /// those first.
+///
+/// An unbooted machine answers 0, not an error. What this promises is that the
+/// profile is not mounted afterwards, and a kernel that never started has
+/// nothing mounted in it — the promise is already kept. Answering `-ENOTCONN`
+/// there read as a failure to the one caller that matters: deleting a system
+/// that had been installed but never opened became impossible, because the
+/// delete waits for a detach that could only ever fail. Reported from a device
+/// as "The Linux system is still in use (-57)", which is `-ENOTCONN` on Darwin
+/// and says nothing about anything being in use.
 int sbm_ish_detach(const char *profile) {
-    if (!booted) return -ENOTCONN;
+    if (!booted) return 0;
     int checked = check_profile(profile);
     if (checked < 0) return checked;
 
