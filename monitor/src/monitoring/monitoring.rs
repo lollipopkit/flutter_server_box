@@ -1435,6 +1435,7 @@ mod tests {
     #[test]
     fn monitor_script_keeps_only_non_native_manifest_commands() {
         use sbm_parser::commands::{AMD, BATTERY, CONN, DISK_SMART, SENSORS};
+        use sbm_parser::script::{cmd_marker, ShellFunc};
 
         let cases: [(SystemType, &[&str]); 3] = [
             (SystemType::Linux, &[BATTERY, AMD, SENSORS, DISK_SMART]),
@@ -1448,6 +1449,46 @@ mod tests {
                 .map(|spec| spec.key)
                 .collect();
             assert_eq!(enabled, expected, "{system:?}");
+
+            // Assert the generated script itself, not just its disabled list.
+            // Unix scripts carry Linux and BSD branches together, so inspect
+            // only the branch this monitor will execute.
+            let script = build_status_script(system);
+            let generated = match system {
+                SystemType::Windows => script,
+                SystemType::Linux | SystemType::Bsd => [
+                    unix_monitor_branch(&script, ShellFunc::Status, system),
+                    unix_monitor_branch(&script, ShellFunc::StatusExt, system),
+                ]
+                .join("\n"),
+            };
+            for spec in sbm_parser::commands::commands(system) {
+                assert_eq!(
+                    generated.contains(&cmd_marker(spec.key)),
+                    expected.contains(&spec.key),
+                    "{system:?} {} should {}be generated",
+                    spec.key,
+                    if expected.contains(&spec.key) { "" } else { "not " },
+                );
+            }
+        }
+    }
+
+    fn unix_monitor_branch(script: &str, func: sbm_parser::script::ShellFunc, system: SystemType) -> &str {
+        let start = script
+            .find(&format!("{}() {{", func.name()))
+            .expect("generated function");
+        let body = &script[start..];
+        let body = &body[..body.find("\n}\n").expect("function end")];
+        let (_, branches) = body
+            .split_once("\tif [ \"$macSign\" = \"\" ] && [ \"$bsdSign\" = \"\" ]; then\n")
+            .expect("Unix system branch");
+        let (linux, bsd) = branches.split_once("\n\telse\n").expect("Unix else branch");
+        let (bsd, _) = bsd.split_once("\n\tfi\n").expect("Unix branch end");
+        match system {
+            SystemType::Linux => linux,
+            SystemType::Bsd => bsd,
+            SystemType::Windows => unreachable!("Windows uses a different script"),
         }
     }
 

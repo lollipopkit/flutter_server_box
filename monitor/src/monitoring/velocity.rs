@@ -94,6 +94,12 @@ pub struct VelocityManager {
     processors: HashMap<String, Arc<RwLock<VelocityProcessor>>>,
 }
 
+impl Default for VelocityManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl VelocityManager {
     pub fn new() -> Self {
         Self {
