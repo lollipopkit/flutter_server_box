@@ -307,6 +307,44 @@ void chmodGuestFile(String path, int mode) {
   }
 }
 
+/// `link`, for the same reason [chmodGuestFile] exists: `dart:io` offers only
+/// symbolic links, and a rootfs is full of hard ones.
+///
+/// Ubuntu 26.04 ships uutils coreutils as one 10 MB multi-call binary with 115
+/// hard links pointing at it, and Perl adds another. Turning those into copies
+/// would cost a gigabyte; turning them into symlinks is what the tar reader
+/// already did by accident, and it produced links pointing nowhere — see the
+/// unpacking code. A real hard link is what the archive asked for and costs
+/// nothing.
+///
+/// Returns whether it worked. Failure is worth handling rather than throwing:
+/// the caller has a correct fallback, and a system missing `ls` is worse than
+/// one whose `ls` is a symlink.
+bool linkGuestFile(String target, String path) {
+  final link = _link;
+  if (link == null) return false;
+  final targetPtr = target.toNativeUtf8();
+  final pathPtr = path.toNativeUtf8();
+  try {
+    return link(targetPtr.cast(), pathPtr.cast()) == 0;
+  } catch (_) {
+    return false;
+  } finally {
+    malloc.free(targetPtr);
+    malloc.free(pathPtr);
+  }
+}
+
+final _link = () {
+  try {
+    return DynamicLibrary.process().lookupFunction<
+        Int Function(Pointer<Char>, Pointer<Char>),
+        int Function(Pointer<Char>, Pointer<Char>)>('link');
+  } catch (_) {
+    return null;
+  }
+}();
+
 final _chmod = () {
   try {
     final process = DynamicLibrary.process();

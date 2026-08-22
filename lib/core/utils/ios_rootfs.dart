@@ -7,6 +7,7 @@ import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:ffi/ffi.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:meta/meta.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:server_box/core/utils/guest_path.dart';
 import 'package:server_box/core/utils/linux_seed.dart';
@@ -353,6 +354,17 @@ abstract final class IosRootfs {
   /// [LinuxDistro.compression] and [LinuxDistro.layout] are two axes because
   /// they are two decisions: what decompresses the download, and whether what
   /// falls out is the filesystem or an image describing one.
+  /// Visible so a test can unpack a real distribution's tarball and look at
+  /// what landed. Hard links, symbolic links and modes are all things whose
+  /// failure looks like a working install until something tries to run.
+  @visibleForTesting
+  static Future<void> extractForTest(
+    File archiveFile,
+    Directory into, {
+    required LinuxDistro distro,
+    void Function(double? progress)? onProgress,
+  }) => _extract(archiveFile, into, distro: distro, onProgress: onProgress);
+
   static Future<void> _extract(
     File archiveFile,
     Directory into, {
@@ -360,20 +372,23 @@ abstract final class IosRootfs {
     void Function(double? progress)? onProgress,
   }) async {
     final bytes = await archiveFile.readAsBytes();
-    final outer = TarDecoder().decodeBytes(
+    final outerDecoder = TarDecoder();
+    final outer = outerDecoder.decodeBytes(
       decompressRootfs(bytes, distro.compression),
     );
 
     switch (distro.layout) {
       case LinuxRootfsLayout.plain:
-        await _unpackTar(outer, into, onProgress: onProgress);
+        await _unpackTar(outer, outerDecoder, into, onProgress: onProgress);
       case LinuxRootfsLayout.oci:
         // In order, and each over the last: a later layer's copy of a path
         // replaces an earlier one's, and its whiteouts delete what earlier
         // layers put there.
         for (final layer in ociLayers(outer)) {
+          final decoder = TarDecoder();
           await _unpackTar(
-            TarDecoder().decodeBytes(ociLayerTar(layer)),
+            decoder.decodeBytes(ociLayerTar(layer)),
+            decoder,
             into,
             applyWhiteouts: true,
             onProgress: onProgress,
@@ -382,12 +397,47 @@ abstract final class IosRootfs {
     }
   }
 
+  /// Which entries were hard links, by name, with what they point at.
+  ///
+  /// The tar reader hands a hard link and a symbolic link to the caller in the
+  /// same shape — it sets `symbolicLink` from the header's link name for both,
+  /// because both carry one — so the only way to tell them apart is the type
+  /// flag, which lives on the decoder's own entries rather than on the archive
+  /// it builds.
+  ///
+  /// Getting this wrong is not a broken file, it is a link pointing nowhere. A
+  /// hard link's target is a path from the root of the archive; read as a
+  /// symbolic link it resolves relative to the link's own directory instead.
+  /// Ubuntu 26.04 ships uutils coreutils as one binary with 115 hard links to
+  /// it, so `/usr/bin/ls` became a symlink to a symlink to nothing and the
+  /// shell answered `ls: not found` in a system that had `ls`.
+  static Map<String, String> _hardLinks(TarDecoder decoder) {
+    final links = <String, String>{};
+    for (final file in decoder.files) {
+      if (file.typeFlag != TarFile.hardLink) continue;
+      final target = file.nameOfLinkedFile;
+      if (target == null || target.isEmpty) continue;
+      links[_tarPath(file.filename)] = _tarPath(target);
+    }
+    return links;
+  }
+
+  /// A tar entry's name without the `./` a great many archives prefix it with.
+  static String _tarPath(String name) =>
+      name.startsWith('./') ? name.substring(2) : name;
+
   static Future<void> _unpackTar(
     Archive archive,
+    TarDecoder decoder,
     Directory into, {
     bool applyWhiteouts = false,
     void Function(double? progress)? onProgress,
   }) async {
+    final hardLinks = _hardLinks(decoder);
+    // Applied after everything is written, because an archive may name a link
+    // before the file it points at. Ours is sorted and does not, but upstream's
+    // ordering is upstream's business.
+    final pending = <String, String>{};
     var done = 0;
     for (final entry in archive) {
       done++;
@@ -425,6 +475,14 @@ abstract final class IosRootfs {
       // guest's busybox; written as a copy of whatever the host has at that
       // path it is the wrong file, and skipped it is no file — which is how an
       // earlier attempt booted with no `/bin/sh` to run.
+      // Hard links first: the reader marks them symbolic, so asking whether
+      // this is a symlink would answer yes for both.
+      final hardTarget = hardLinks[_tarPath(entry.name)];
+      if (hardTarget != null) {
+        pending[path] = into.path.joinPath(hardTarget);
+        continue;
+      }
+
       if (entry.isSymbolicLink) {
         final link = Link(path);
         await link.parent.create(recursive: true);
@@ -459,6 +517,39 @@ abstract final class IosRootfs {
       // which is the same refusal that put an interpreter on this platform.
       chmodGuestFile(path, entry.mode & 0xfff);
     }
+
+    for (final entry in pending.entries) {
+      final path = entry.key;
+      final target = entry.value;
+      await File(path).parent.create(recursive: true);
+      final existing = File(path);
+      if (await existing.exists()) await existing.delete();
+      if (linkGuestFile(target, path)) continue;
+      // A symlink is the fallback, not the intent: same file, one more
+      // indirection, and it costs nothing where a copy would cost a gigabyte.
+      // Relative to the link's own directory, which is what a symlink means
+      // and what reading the hard link as one got wrong in the first place.
+      final rel = _relativeTo(File(path).parent.path, target);
+      final link = Link(path);
+      if (await link.exists()) await link.delete();
+      await link.create(rel);
+    }
+  }
+
+  /// [target] as a path from [from], both absolute.
+  static String _relativeTo(String from, String target) {
+    final fromParts = from.split(Platform.pathSeparator)..removeWhere((e) => e.isEmpty);
+    final toParts = target.split(Platform.pathSeparator)..removeWhere((e) => e.isEmpty);
+    var shared = 0;
+    while (shared < fromParts.length &&
+        shared < toParts.length &&
+        fromParts[shared] == toParts[shared]) {
+      shared++;
+    }
+    return [
+      ...List.filled(fromParts.length - shared, '..'),
+      ...toParts.sublist(shared),
+    ].join('/');
   }
 
   /// The host path a guest path names, or null when it names nothing inside.
