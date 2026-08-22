@@ -121,10 +121,16 @@ in
       after = [ "network.target" ];
       wantedBy = [ "multi-user.target" ];
 
-      # The collection script shells out to ordinary tools. Giving it the
-      # system profile rather than a curated list on purpose: which tools are
-      # asked for is `sbm_parser`'s command manifest, and it changes there.
-      path = with pkgs; [ coreutils procps util-linux ];
+      # The collection script shells out to ordinary tools, and `bash` is here
+      # because it is the one that provides `sh` — coreutils does not. Without
+      # it the agent fails every cycle with "Status script error: No such file
+      # or directory", which is exactly the failure `install.sh` had on this
+      # distribution: the interpreter, not the script.
+      #
+      # The rest is what `sbm_parser`'s command manifest asks for. It is a list
+      # rather than the whole system profile so that a service does not quietly
+      # depend on whatever the operator happens to have installed.
+      path = with pkgs; [ bash coreutils procps util-linux ];
 
       serviceConfig = {
         Type = "simple";

@@ -56,9 +56,15 @@ flutter_rust_bridge version parity — without changing anything.
 make run                    # or run from the IDE
 make gen                    # after touching @freezed / @JsonSerializable / @riverpod / ARB
 make analyze                # flutter analyze lib test integration_test
+cargo build -p sbm_ffi      # before `make test`: one suite loads this dylib
 make test                   # flutter test
 cargo test --workspace      # sbm_parser, sbm_native, sbm_ffi, monitor
 ```
+
+`cargo build -p sbm_ffi` is not optional before `flutter test`, and it is not
+skipped when missing: `test/frb_parser_test.dart` throws
+`sbm_ffi native library not found` and the suite fails. CI builds it between
+analyzing and testing for the same reason.
 
 `make gen` is `build_runner build --delete-conflicting-outputs` followed by
 `flutter gen-l10n`. New user-facing strings go into `lib/l10n/app_en.arb`
@@ -168,6 +174,7 @@ make build PLATFORM=<android|ios|macos|linux|windows>   # dart run fl_build -p .
 
 ```sh
 make analyze
+cargo build -p sbm_ffi
 make test
 cargo test --workspace
 cd monitor/frontend && npm run test && npm run check   # only if you touched the panel

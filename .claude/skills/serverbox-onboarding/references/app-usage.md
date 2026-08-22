@@ -41,10 +41,16 @@ depends on what the agent's operator enabled.
 |---|---|---|
 | Status, charts | yes | yes, plus stored history |
 | Terminal | yes | `full_access` **and** `[remote_access.terminal] enabled` **and** secure transport |
-| Commands, processes, systemd, containers, snippets, power | yes | the same three |
+| Commands, processes, systemd, containers, snippets, power | yes | `full_access` **and** secure transport |
 | File browsing | SFTP | `[remote_access.fs]` with `roots` set |
 | SFTP transfers, port forwarding | yes | never — add the same machine over SSH as a second server |
 | Push alerts, home widgets, watch app | not available | yes |
+
+Those are two different gates, not one. The terminal is a websocket
+(`/api/v1/terminal/ws`) and is the only thing `[remote_access.terminal]`
+governs; everything else goes through `POST /api/v1/exec`, which asks for
+`full_access` and nothing more. So an agent with `full_access` on and the
+terminal switch off runs commands and refuses shells.
 
 A button that is not on screen usually means the agent said it would refuse —
 the app does not show controls that would answer 403. `monitor-deploy.md`

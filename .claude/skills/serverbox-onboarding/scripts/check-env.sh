@@ -35,9 +35,23 @@ ok()   { printf '%s  ok  %s %s\n' "$C_OK" "$C_OFF" "$1"; }
 warn() { printf '%s warn %s %s\n' "$C_WARN" "$C_OFF" "$1"; }
 bad()  { printf '%s FAIL %s %s\n' "$C_BAD" "$C_OFF" "$1"; FAILED=1; }
 
-# Numeric dotted-version comparison; missing components count as 0.
+# Dotted-version comparison, missing components counting as 0, and a
+# prerelease ranking below the release it precedes.
+#
+# The last part is the whole reason this is not three lines. `pub` reads these
+# constraints as semver, where 3.44.9-0.1.pre is *older* than 3.44.9 — so a
+# beta-channel Flutter fails `pub get` against `flutter: ">=3.44.9"`. Comparing
+# only the numeric part reports that install as ok and leaves the actual
+# failure to be met later, with a message about version solving rather than
+# about the channel.
 ver_ge() {
     [ "$(awk -v a="$1" -v b="$2" 'BEGIN {
+        # Split the prerelease suffix off each side; what is left is numeric.
+        ia = index(a, "-"); pa = (ia > 0) ? substr(a, ia + 1) : ""
+        ib = index(b, "-"); pb = (ib > 0) ? substr(b, ib + 1) : ""
+        if (ia > 0) a = substr(a, 1, ia - 1)
+        if (ib > 0) b = substr(b, 1, ib - 1)
+
         na = split(a, x, "."); nb = split(b, y, ".")
         n = (na > nb) ? na : nb
         for (i = 1; i <= n; i++) {
@@ -46,6 +60,9 @@ ver_ge() {
             if (va > vb) { print 1; exit }
             if (va < vb) { print 0; exit }
         }
+        # Numerically equal. A prerelease loses to a release; two prereleases
+        # are not ranked against each other, which no check here needs.
+        if (pa != "" && pb == "") { print 0; exit }
         print 1
     }')" = "1" ]
 }
@@ -61,7 +78,9 @@ want_flutter=$(sed -n 's/^ *flutter: *">= *\([0-9.]*\)".*/\1/p' "$ROOT/pubspec.y
 want_dart=$(sed -n 's/^ *sdk: *">= *\([0-9.]*\)".*/\1/p' "$ROOT/pubspec.yaml" | head -1)
 
 if command -v flutter >/dev/null 2>&1; then
-    have_flutter=$(flutter --version 2>/dev/null | sed -n 's/^Flutter \([0-9][0-9.]*\).*/\1/p' | head -1)
+    # The prerelease suffix is kept: `ver_ge` needs it, and dropping it here is
+    # what made a beta SDK compare equal to the stable release it precedes.
+    have_flutter=$(flutter --version 2>/dev/null | sed -n 's/^Flutter \([0-9][0-9.]*\(-[0-9A-Za-z.]*\)\{0,1\}\).*/\1/p' | head -1)
     if [ -z "$have_flutter" ]; then
         warn "flutter found but its version could not be parsed"
     elif [ -n "$want_flutter" ] && ! ver_ge "$have_flutter" "$want_flutter"; then
@@ -74,7 +93,7 @@ else
 fi
 
 if command -v dart >/dev/null 2>&1; then
-    have_dart=$(dart --version 2>&1 | sed -n 's/.*version: *\([0-9][0-9.]*\).*/\1/p' | head -1)
+    have_dart=$(dart --version 2>&1 | sed -n 's/.*version: *\([0-9][0-9.]*\(-[0-9A-Za-z.]*\)\{0,1\}\).*/\1/p' | head -1)
     if [ -n "$want_dart" ] && [ -n "$have_dart" ] && ! ver_ge "$have_dart" "$want_dart"; then
         bad "dart $have_dart is older than the required $want_dart"
     else

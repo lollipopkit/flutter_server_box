@@ -145,4 +145,7 @@ project and `libL10n` for the strings `fl_lib` already has. Prefer an existing
 | The agent's API surface, remote access model, panel | `monitor/CLAUDE.md` |
 | Rules for changing this codebase | `CLAUDE.md` |
 
-Every path above has a `zh/` counterpart under `docs/src/content/docs/zh/`.
+The `docs/src/content/docs/` pages above each have a `zh/` counterpart, and
+`scripts/check-locale-parity.mjs` fails the build when one is missing. The two
+`CLAUDE.md` files are not documentation pages and have no translation — they
+are instructions for whoever is changing the code.
