@@ -9,8 +9,8 @@
         "compression": "gzip",
         "follows_mirror": false,
         "layout": "plain",
-        "sha256": "ed454523232ffc676764167fe20151422f2640b03d29dd139774ac9566da6f38",
-        "size_bytes": 3975428,
+        "sha256": "420b3594e9c9dba339c3a9b53ba2639d9c3f9b30a61c12859ec43c2e21103b4b",
+        "size_bytes": 3978497,
         "url": "https://github.com/lollipopkit/shellbox-rootfs/releases/download/v2026.08.22/alpine-3.22.5-arm64.tar.gz"
       },
       "upstream": {
@@ -32,8 +32,8 @@
         "compression": "xz",
         "follows_mirror": false,
         "layout": "plain",
-        "sha256": "e03b49e8441882d7264ba6c1e90de0b93c89aaee9b83f5511d72325de5f9c7b3",
-        "size_bytes": 51069340,
+        "sha256": "ba39cc544578f15994fafe1f6931ebe2efee5005237b11d213f40e40ea8be28e",
+        "size_bytes": 51082448,
         "url": "https://github.com/lollipopkit/shellbox-rootfs/releases/download/v2026.08.22/rocky-9.8-arm64.tar.xz"
       },
       "upstream": {
@@ -55,8 +55,8 @@
         "compression": "gzip",
         "follows_mirror": false,
         "layout": "plain",
-        "sha256": "95baf7ec0378738fc67bddd111493925baf24e87703ae91c4baf23b1440ee245",
-        "size_bytes": 34075932,
+        "sha256": "1907331fc809bec3aa8445bc6df3d562d05b84bdc249c255e432201e1645898c",
+        "size_bytes": 34126602,
         "url": "https://github.com/lollipopkit/shellbox-rootfs/releases/download/v2026.08.22/ubuntu-26.04-arm64.tar.gz"
       },
       "upstream": {
@@ -70,8 +70,8 @@
       "version": "26.04"
     }
   },
-  "generated_at": "2026-08-22T00:00:00Z",
+  "generated_at": "2026-08-22T12:52:34Z",
   "schema": 1,
   "serial": 2,
-  "valid_until": "2027-02-18T00:00:00Z"
+  "valid_until": "2027-02-18T12:52:34Z"
 }
