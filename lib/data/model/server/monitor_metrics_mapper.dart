@@ -212,9 +212,8 @@ void _applyMore(ServerStatus ss, MonitorMetrics m) {
 
 /// Feeds monitor's cumulative `diskio` (same cumulative-sector semantics as
 /// `sbm_parser::types::DiskIoPiece`) into the app's existing `DiskIO` delta
-/// machinery — NOT `diskio_rate`, which is monitor's own precomputed rate
-/// kept only for its history storage. Reusing the same delta path the SSH
-/// path already uses keeps rate computation single-sourced.
+/// machinery. Reusing the same delta path the SSH path already uses keeps
+/// rate computation single-sourced.
 void _applyDiskIO(ServerStatus ss, MonitorMetrics m, int time) {
   if (m.diskio.isEmpty) return;
   final pieces = m.diskio

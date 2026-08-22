@@ -8,7 +8,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/shell_quote.dart' as sh;
 import 'package:server_box/data/model/app/error.dart';
-import 'package:server_box/data/model/app/scripts/script_consts.dart';
 import 'package:server_box/data/model/container/image.dart';
 import 'package:server_box/data/model/container/ps.dart';
 import 'package:server_box/data/model/container/type.dart';
@@ -23,6 +22,7 @@ final _dockerNotFound = RegExp(
   r"command not found|Unknown command|Command '\w+' not found",
 );
 final _podmanEmulationMsg = 'Emulate Docker CLI using podman';
+const _containerSeparatorPrefix = 'SrvBoxContainerSep';
 
 // Forwarder to the canonical quoter so part files can reference it inside
 // extension method bodies (imported top-level names are not visible there).
@@ -430,7 +430,7 @@ class ContainerNotifier extends _$ContainerNotifier {
       ],
     };
 
-    final separator = '${ScriptConstants.separator}_'
+    final separator = '${_containerSeparatorPrefix}_'
         '${DateTime.now().microsecondsSinceEpoch}_$refreshGeneration';
     final cmd = _wrap(
       ContainerCmdType.execSelected(
@@ -939,7 +939,7 @@ const _jsonFmt = '--format "{{json .}}"';
 /// stderr first, since that is where a shell puts the reason. The separators
 /// the script echoes between its commands are dropped: they are this app's own
 /// scaffolding, and a page whose entire explanation was
-/// `SrvBoxSep_1786614816321254_0` twice over told the user nothing.
+/// `SrvBoxContainerSep_1786614816321254_0` twice over told the user nothing.
 String? userFacingOutput(String stderr, String stdout) {
   for (final stream in [stderr, stdout]) {
     final lines = <String>[];
@@ -952,7 +952,7 @@ String? userFacingOutput(String stderr, String stdout) {
     for (final line in stream.split('\n')) {
       final trimmed = line.trim();
       if (trimmed.isEmpty) continue;
-      if (trimmed.startsWith(ScriptConstants.separator)) continue;
+      if (trimmed.startsWith(_containerSeparatorPrefix)) continue;
       if (!seen.add(trimmed)) continue;
       lines.add(trimmed);
     }
@@ -1017,7 +1017,7 @@ enum ContainerCmdType {
   static String execSelected(
     Iterable<ContainerCmdType> types,
     ContainerType type, {
-    String separator = ScriptConstants.separator,
+    String separator = _containerSeparatorPrefix,
   }) {
     final commands = types
         .map((e) => e.exec(type))

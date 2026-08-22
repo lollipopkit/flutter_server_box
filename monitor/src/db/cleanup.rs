@@ -36,8 +36,6 @@ impl DataCleanupService {
     /// size cap (allowlist, same injection rationale as POLICY_TABLES)
     const SIZE_CAPPED_TABLES: &'static [&'static str] = &[
         "system_metrics",
-        "velocity_metrics",
-        "cpu_core_metrics",
         "network_totals",
         "component_metrics",
         "rule_executions",
@@ -98,8 +96,6 @@ impl DataCleanupService {
     /// injection; system_metrics/alerts are governed explicitly by DataRetentionConfig
     /// and excluded here
     const POLICY_TABLES: &'static [&'static str] = &[
-        "velocity_metrics",
-        "cpu_core_metrics",
         "network_totals",
         "enhanced_alerts",
         "component_metrics",

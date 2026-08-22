@@ -29,9 +29,6 @@ String parseWindowsNetSpeedJson({required String raw}) =>
 List<CommandSpec> commandSpecs({required String system}) =>
     RustLib.instance.api.crateApiParserCommandSpecs(system: system);
 
-/// Output segment separator (`SrvBoxSep`)
-String separator() => RustLib.instance.api.crateApiParserSeparator();
-
 /// Collection command, single source of truth shared with the app's script generation
 class CommandSpec {
   final String key;

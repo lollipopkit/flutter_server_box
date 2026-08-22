@@ -3,9 +3,9 @@ import 'package:server_box/data/res/build_data.dart';
 
 /// Path constants and per-connection script directory state.
 ///
-/// Script content, dividers, headers, and output splitting live in the shared
-/// Rust library (sbm_parser::script, see the shared-parser design); only path/filename
-/// conventions and Flutter-connection state remain here.
+/// Script content, markers, headers, and output splitting live in the shared
+/// Rust library (`sbm_parser::script`); only path/filename conventions and
+/// Flutter-connection state remain here.
 // TODO(migration): residue of the Dart script layer — reevaluate once the app
 // endpoints move fully onto the FFI script API.
 class ScriptConstants {
@@ -21,22 +21,6 @@ class ScriptConstants {
   static const String scriptDirHomeWindows =
       r'$env:USERPROFILE/.config/server_box';
   static const String scriptDirTmpWindows = r'$env:TEMP/server_box';
-
-  /// Output segment separator (mirrors sbm_parser commands::SEPARATOR); also
-  /// used by container/systemd providers for their own command segmenting
-  static const String separator = 'SrvBoxSep';
-
-  /// Custom-command segment separator (mirrors sbm_parser
-  /// script::CUSTOM_CMD_SEPARATOR)
-  static const String customCmdSep = 'SrvBoxCusCmdSep';
-
-  /// Key a custom command's output is filed under by
-  /// `sbm_parser::script::parse_script_output`. Namespaced because custom
-  /// command names come from the user: one called `cpu` would otherwise
-  /// overwrite the built-in section of that name.
-  ///
-  /// Locked against the Rust implementation by `test/frb_parser_test.dart`.
-  static String customResultKey(String cmdName) => '$customCmdSep.$cmdName';
 
   // Path separators
   static const String unixPathSeparator = '/';

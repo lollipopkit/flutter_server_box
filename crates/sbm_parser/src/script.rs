@@ -154,6 +154,18 @@ pub fn custom_result_key(name: &str) -> String {
     format!("{CUSTOM_CMD_SEPARATOR}.{name}")
 }
 
+/// The custom-command name encoded in a parsed result key.
+///
+/// Keeping this next to [`custom_result_key`] makes classification use the
+/// same namespace that produced the key instead of mirroring its prefix in
+/// every consumer.
+pub fn custom_result_name(key: &str) -> Option<&str> {
+    let name = key
+        .strip_prefix(CUSTOM_CMD_SEPARATOR)?
+        .strip_prefix('.')?;
+    (!name.is_empty()).then_some(name)
+}
+
 /// Shell functions exposed by the generated script. Names and flags are wire
 /// format: `sh script.sh -s` dispatches to `SbStatus`, etc.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -483,14 +495,7 @@ pub fn parse_script_segments(raw: &str) -> Vec<(String, String)> {
 
     for line in raw.split('\n') {
         let line = line.strip_suffix('\r').unwrap_or(line);
-        let marker = line
-            .strip_prefix(&sep_prefix)
-            .and_then(decode_marker_name)
-            .or_else(|| {
-                line.strip_prefix(&custom_prefix)
-                    .and_then(decode_marker_name)
-                    .map(|name| custom_result_key(&name))
-            });
+        let marker = marker_key(line, &sep_prefix, &custom_prefix);
         match marker {
             Some(key) => {
                 flush(&mut current, &mut buf, &mut result);
@@ -506,6 +511,45 @@ pub fn parse_script_segments(raw: &str) -> Vec<(String, String)> {
     flush(&mut current, &mut buf, &mut result);
 
     result
+}
+
+fn marker_key(line: &str, sep_prefix: &str, custom_prefix: &str) -> Option<String> {
+    line.strip_prefix(sep_prefix)
+        .and_then(decode_marker_name)
+        .or_else(|| {
+            line.strip_prefix(custom_prefix)
+                .and_then(decode_marker_name)
+                .map(|name| custom_result_key(&name))
+        })
+}
+
+/// Whether output contains at least one valid built-in or custom segment.
+///
+/// Only encoded marker lines count, matching [`parse_script_segments`]. A
+/// command is free to print text such as `SrvBoxSep.cpu` without turning an
+/// otherwise invalid response into a status sample.
+pub fn contains_script_segment(raw: &str) -> bool {
+    let sep_prefix = format!("{SEPARATOR}.");
+    let custom_prefix = format!("{CUSTOM_CMD_SEPARATOR}.");
+    raw.split('\n').any(|line| {
+        let line = line.strip_suffix('\r').unwrap_or(line);
+        marker_key(line, &sep_prefix, &custom_prefix).is_some()
+    })
+}
+
+/// Whether output contains at least one valid built-in segment marker.
+///
+/// The extended-status cache uses this stricter form because custom commands
+/// belong to the ordinary status function and must not replace cached SMART
+/// or AMD output on their own.
+pub fn contains_status_segment(raw: &str) -> bool {
+    let sep_prefix = format!("{SEPARATOR}.");
+    raw.split('\n').any(|line| {
+        let line = line.strip_suffix('\r').unwrap_or(line);
+        line.strip_prefix(&sep_prefix)
+            .and_then(decode_marker_name)
+            .is_some()
+    })
 }
 
 // ---------- internal: shared filtering ----------

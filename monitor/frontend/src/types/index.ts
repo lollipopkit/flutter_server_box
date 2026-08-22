@@ -14,6 +14,7 @@ export interface SystemMetrics {
   disk: DiskMetrics;
   network: NetworkMetrics;
   temperature?: number;
+  temps?: TempReading[];
   sys?: string;
   cpu_brand?: string;
   // Detail lists are absent on older agents; treat as optional
@@ -35,6 +36,11 @@ export interface SystemMetrics {
   /// Output of the user's custom commands, in the order they run in.
   /// Refreshed on the extended cycle, like the fields above it.
   custom_cmds?: CustomCmdOutput[];
+}
+
+export interface TempReading {
+  device: string;
+  value: number;
 }
 
 export interface CustomCmdOutput {
@@ -98,6 +104,9 @@ export interface RemoteAccess {
   /// Whether a shell can be opened straight from this panel session, with no
   /// SSH credentials. Absent on agents predating the feature.
   full_access?: boolean
+  /// Whether the agent's confined file API is available. Absent on agents
+  /// predating remote file access.
+  files?: boolean
 }
 
 export type WsTicketPurpose = 'terminal'
