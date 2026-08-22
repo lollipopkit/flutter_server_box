@@ -299,7 +299,30 @@ abstract final class IosRootfs {
     if (root == null) return;
     // Before the directory goes: its `/dev` is a fakefs whose database lives
     // inside it, and the engine keeps the name attached until told otherwise.
-    detach(id);
+    //
+    // And only if that worked. Deleting the tree under a mount that is still
+    // live takes the database with it, and the next thing the engine reads
+    // through that mount is a sqlite I/O error — which it answers with
+    // `die()`, parking whichever thread asked. Seen on a device as the whole
+    // app freezing a few seconds after a system was deleted.
+    // Retried, because the usual reason this fails is that it was asked too
+    // soon. Closing a terminal hangs its process up; the shell then has to be
+    // scheduled, take the signal and exit before the pty it held stops
+    // counting against `/dev/pts`, and deleting the system is one tap later.
+    // Measured on a device: the first attempt answers `_EBUSY` and names
+    // `/alpine/dev/pts`.
+    //
+    // Waiting here rather than inside the engine keeps it off the main
+    // isolate: `detach` is a blocking call, and looping it in C would hold
+    // both the app and `attached_lock` for as long as it took.
+    var err = detach(id);
+    for (var i = 0; err < 0 && i < 10; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+      err = detach(id);
+    }
+    if (err < 0) {
+      throw StateError('The Linux system is still in use ($err)');
+    }
     final dir = Directory(root);
     if (await dir.exists()) await dir.delete(recursive: true);
     await scan();

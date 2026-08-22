@@ -179,6 +179,10 @@ struct session {
     bool used;
     struct tty *tty;
     pid_t_ pid;
+    /// Which system it is running in, so that taking that system down can end
+    /// what is inside it. Deleting one used to leave its processes running and
+    /// holding its `/dev/pts`, which is why the unmount answered `_EBUSY`.
+    char profile[64];
     int exit_code;
     char data[SBM_OUTPUT_CAPACITY];
     size_t head, tail;
@@ -187,6 +191,8 @@ struct session {
 static struct session sessions[SBM_MAX_SESSIONS];
 static pthread_mutex_t sessions_lock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t sessions_wrote = PTHREAD_COND_INITIALIZER;
+
+static pid_t_ close_session(int session_id);
 
 /// The session a tty belongs to, or -1. Called from the guest's threads.
 static int session_of(struct tty *tty) {
@@ -531,7 +537,13 @@ static int unmount_profile(const char *profile) {
     for (size_t i = 0; i < sizeof(mount_points) / sizeof(mount_points[0]); i++) {
         snprintf(path, sizeof(path), "/%s/%s", profile, mount_points[i]);
         int one = do_umount(path);
-        if (one < 0 && one != _EINVAL && err == 0) err = one;
+        if (one < 0 && one != _EINVAL) {
+            // Which one, because the caller's error says only that something
+            // would not go. `_EBUSY` means a reference is still out on that
+            // mount, and which mount it is says who is holding it.
+            syslog(LOG_ERR, "sbm_ish: %s will not unmount (%d)", path, one);
+            if (err == 0) err = one;
+        }
     }
     return err;
 }
@@ -595,10 +607,21 @@ int sbm_ish_attach(const char *profile) {
     // whatever is holding it would hide that.
     int stale = unmount_profile(profile);
     if (stale < 0) {
+        // Something is holding one of them, which is `_EBUSY` and means the
+        // system is live: mounted, and with a process still in it. Record it
+        // and answer 0 rather than mounting a second set over the first.
+        //
+        // Not a refusal, which is what this did at first and what turned a
+        // recoverable state into a permanent one — a profile whose mounts
+        // could not be swept could never be opened again, for the life of the
+        // process. If the sweep took some of them down before meeting the one
+        // that would not go, this leaves a system missing those; that is a
+        // worse system, where refusing was no system at all.
+        snprintf(attached[slot], sizeof(attached[slot]), "%s", profile);
         pthread_mutex_unlock(&attached_lock);
-        syslog(LOG_ERR, "sbm_ish: %s still has mounts that will not go (%d)",
-               profile, stale);
-        return stale;
+        syslog(LOG_ERR, "sbm_ish: %s still has mounts in use (%d); taken as "
+               "attached rather than mounted over", profile, stale);
+        return 0;
     }
 
     char path[MAX_PATH];
@@ -654,24 +677,63 @@ int sbm_ish_detach(const char *profile) {
     // attach running alongside this reads the name as still attached, returns
     // without mounting anything, and hands back a system whose filesystems are
     // being pulled out underneath it.
+    // What is running in it goes first. Nothing else ends these: closing a
+    // terminal tab closes *that* session, and deleting a system from the
+    // settings page closes none — so the shell carried on holding the pty that
+    // keeps `/dev/pts` busy, every unmount answered `_EBUSY`, and the delete
+    // that followed took the tree out from under a live mount.
+    //
+    // Read from the device as `session 0 pid 2 used=1 task=alive`, at the
+    // moment a system whose terminal had been closed refused to detach.
+    //
+    // Signalled, not waited for: the caller retries, which is where the time
+    // for a shell to take SIGHUP and exit belongs — this holds `attached_lock`.
+    for (int i = 0; i < SBM_MAX_SESSIONS; i++) {
+        pthread_mutex_lock(&sessions_lock);
+        bool mine = sessions[i].used && strcmp(sessions[i].profile, profile) == 0;
+        pthread_mutex_unlock(&sessions_lock);
+        if (mine) close_session(i);
+    }
+
     pthread_mutex_lock(&attached_lock);
     int err = unmount_profile(profile);
 
-    // The name goes whatever happened, and before the lock does. `attached`
-    // means "mounted by us and believed good", and after a detach that failed
-    // partway neither half of that holds: some of the mounts are gone. Leaving
-    // the name would have the next attach find it and answer 0 for a system
-    // missing its `/dev/pts`. Clearing it sends that attach through the
-    // rollback at the top, which either takes the rest down and mounts afresh
-    // or refuses — both of which are answers, where returning 0 was not.
-    for (int i = 0; i < SBM_MAX_PROFILES; i++) {
-        if (strcmp(attached[i], profile) == 0) { attached[i][0] = '\0'; break; }
+    // The name stays when the unmounts did not all take. `_EBUSY` is what
+    // `do_umount` answers while something still holds a mount, so a detach
+    // that fails that way has left the system mounted and *in use* — the
+    // truest thing the table can then say is that it is attached.
+    //
+    // Clearing it regardless was tried and was worse. Closing a terminal only
+    // hangs its process up, and the task is not reaped, so a `/dev/pts` it
+    // held can still be busy when the system is deleted a moment later. That
+    // detach failed, the name went anyway, and every later attach found
+    // mounts it could not take down and refused — the system could not be
+    // opened again for the life of the process, and only restarting the app
+    // cleared it. Reported from a device as a terminal that printed
+    // "Execute: Shell" and then nothing.
+    if (err == 0) {
+        for (int i = 0; i < SBM_MAX_PROFILES; i++) {
+            if (strcmp(attached[i], profile) == 0) { attached[i][0] = '\0'; break; }
+        }
     }
     pthread_mutex_unlock(&attached_lock);
 
     if (err < 0) {
-        syslog(LOG_ERR, "sbm_ish: %s did not detach (%d); what is left of its "
-               "mounts stays until an attach can take them down", profile, err);
+        syslog(LOG_ERR, "sbm_ish: %s did not detach (%d); it stays attached, "
+               "because what would not unmount is still in use", profile, err);
+        // Who is holding it. `sbm_ish_close` leaves `pid` behind when it
+        // clears `used`, so this can say whether the process a closed session
+        // hung up has actually gone — a task that is still there is still
+        // holding the pty that keeps `/dev/pts` busy.
+        pthread_mutex_lock(&sessions_lock);
+        for (int i = 0; i < SBM_MAX_SESSIONS; i++) {
+            if (sessions[i].pid == 0) continue;
+            struct task *task = pid_get_task(sessions[i].pid);
+            syslog(LOG_ERR, "sbm_ish:   session %d pid %d used=%d task=%s",
+                   i, sessions[i].pid, sessions[i].used,
+                   task == NULL ? "gone" : "alive");
+        }
+        pthread_mutex_unlock(&sessions_lock);
     }
     return err;
 }
@@ -833,6 +895,7 @@ int sbm_ish_open(const char *profile, const char *shell, const char *command,
     pthread_mutex_lock(&sessions_lock);
     session->tty = tty;
     session->pid = current->pid;
+    snprintf(session->profile, sizeof(session->profile), "%s", profile);
     pthread_mutex_unlock(&sessions_lock);
 
     err = attach_stdio(tty);
@@ -961,14 +1024,31 @@ int sbm_ish_exit_code(int session_id) {
     return code;
 }
 
-void sbm_ish_close(int session_id) {
-    if (session_id < 0 || session_id >= SBM_MAX_SESSIONS) return;
+/// Ends one session: gives the tty back and hangs its process group up.
+///
+/// Returns the pid it signalled, or 0 if the slot was already free. Split out
+/// of [sbm_ish_close] because [sbm_ish_detach] has to do the same thing to
+/// every session in a system before it can unmount anything that system holds.
+static pid_t_ close_session(int session_id) {
     pthread_mutex_lock(&sessions_lock);
     struct session *session = &sessions[session_id];
     pid_t_ pid = session->used ? session->pid : 0;
+    struct tty *tty = session->used ? session->tty : NULL;
     session->used = false;
     session->tty = NULL;
     pthread_mutex_unlock(&sessions_lock);
+
+    // `pty_open_fake` hands over a reference, and forgetting the pointer is
+    // not the same as giving it back. Without this the pty stayed registered
+    // for the life of the process, `/dev/pts` was never idle, and so every
+    // `sbm_ish_detach` answered `_EBUSY` — which is how deleting a system
+    // came to pull its `/dev` database out from under a mount that was still
+    // live, and the sqlite error that followed reached `die()`.
+    if (tty != NULL) {
+        lock(&ttys_lock);
+        tty_release(tty);
+        unlock(&ttys_lock);
+    }
 
     // Hung up, not killed. A shell ignores SIGTERM by design and takes SIGHUP
     // as its terminal going away, which is what has happened.
@@ -976,6 +1056,12 @@ void sbm_ish_close(int session_id) {
         struct task *task = pid_get_task(pid);
         if (task != NULL) send_group_signal(task->group->pgid, SIGHUP_, SIGINFO_NIL);
     }
+    return pid;
+}
+
+void sbm_ish_close(int session_id) {
+    if (session_id < 0 || session_id >= SBM_MAX_SESSIONS) return;
+    close_session(session_id);
 }
 
 #endif // SBM_ISH_ENABLED

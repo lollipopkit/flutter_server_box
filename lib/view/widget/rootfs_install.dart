@@ -137,6 +137,14 @@ Future<bool> removeRootfs(BuildContext context, {LinuxProfile? profile}) async {
     actions: Btnx.cancelRedOk,
   );
   if (confirm != true) return false;
-  await Rootfs.removeProfile(target.id);
+  try {
+    await Rootfs.removeProfile(target.id);
+  } catch (e, s) {
+    // Refused rather than half-done: the tree is still there, and so is
+    // whatever was using it. Deleting it anyway is what froze the app.
+    Loggers.app.warning('Remove ${target.id}', e, s);
+    if (context.mounted) Toast.error('${libL10n.fail}: $e');
+    return false;
+  }
   return true;
 }
