@@ -72,6 +72,22 @@ detect_init
 # it even for the default mode.
 resolve_target() {
 if [ "$INIT" = "systemd" ]; then
+    if [ "$MODE" = "system" ] && [ -e /etc/NIXOS ]; then
+        # /etc/systemd/system is a read-only symlink into the store here, so a
+        # system service cannot be installed imperatively by anyone, root
+        # included. Said before the attempt rather than after: the failure is
+        # otherwise a bare "Read-only file system" from the unit write, which
+        # reads as a broken installer rather than as the wrong tool.
+        echo "NixOS keeps /etc/systemd/system in the read-only store, so a"
+        echo "system service cannot be installed this way."
+        echo
+        echo "  Use the module in monitor/nix/module.nix instead:"
+        echo "    imports = [ /path/to/monitor/nix/module.nix ];"
+        echo "    services.server-box-monitor.enable = true;"
+        echo
+        echo "  Or drop --system: the user service works here unchanged."
+        exit 1
+    fi
     if [ "$MODE" = "system" ]; then
         APP_DIR="/opt/server-box-monitor"
         UNIT="/etc/systemd/system/$SERVICE"
@@ -380,6 +396,19 @@ install_service() {
         # remote-access summary and its security warnings. docker-compose.yaml
         # already defaults to info.
         echo "Environment=RUST_LOG=info"
+        # The agent collects by running ordinary tools — `sh` first, then
+        # whatever the command manifest asks for: cat, df, uptime, lsblk.
+        # A unit that sets no PATH gets systemd's compiled-in one, and that is
+        # a per-distribution value: on most it is the FHS list below and this
+        # line changes nothing, but NixOS builds systemd with its own store
+        # path instead, so the service saw *only* systemd's own bin directory.
+        # `sh` was then not on PATH at all and every cycle failed with
+        # "Status script error: No such file or directory (os error 2)" —
+        # measured on NixOS 25.11, where /bin/sh exists but /bin does not.
+        #
+        # The NixOS entry first and the rest unchanged: a directory that does
+        # not exist costs nothing to have on PATH.
+        echo "Environment=PATH=/run/current-system/sw/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
         if [ "$MODE" = "system" ]; then
             echo "User=root"
         fi
