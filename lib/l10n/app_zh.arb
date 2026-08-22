@@ -271,6 +271,7 @@
       "pm": {}
     }
   },
+  "linuxSystemInUse": "{name} 还有终端开着。请先关闭,再删除这个系统。",
   "rootfsSubtitle": "本机上的 Linux 用户空间",
   "rootfsInstallTip": "下载 {distro} {version}(约 {size} MB)并解压到本机。它为本 App 提供一个带包管理器的 shell,可随时删除。",
   "@rootfsInstallTip": {

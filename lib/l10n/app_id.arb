@@ -169,6 +169,7 @@
       "pm": {}
     }
   },
+  "linuxSystemInUse": "{name} masih memiliki terminal terbuka. Tutup dulu sebelum menghapus sistem.",
   "rootfsSubtitle": "Lingkungan pengguna Linux di perangkat ini",
   "rootfsInstallTip": "Unduh {distro} {version} (sekitar {size} MB) dan ekstrak di perangkat ini. Ini memberi aplikasi ini shell dengan manajer paket, dan dapat dihapus kapan saja.",
   "nameAlreadyExistsFmt": "\"{name}\" sudah ada",

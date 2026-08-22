@@ -898,6 +898,11 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String linuxSystemInUse(Object name) {
+    return '$name hat noch ein Terminal offen. Schließen Sie es, bevor Sie das System löschen.';
+  }
+
+  @override
   String get rootfsSubtitle => 'Eine Linux-Userland-Umgebung auf diesem Gerät';
 
   @override

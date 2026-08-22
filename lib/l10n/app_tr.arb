@@ -169,6 +169,7 @@
       "pm": {}
     }
   },
+  "linuxSystemInUse": "{name} için hâlâ açık bir terminal var. Sistemi silmeden önce kapatın.",
   "rootfsSubtitle": "Bu cihazdaki bir Linux kullanıcı alanı",
   "rootfsInstallTip": "{distro} {version} (yaklaşık {size} MB) indirilir ve bu cihazda açılır. Bu uygulamaya paket yöneticisi olan bir kabuk sağlar ve istediğiniz zaman silinebilir.",
   "nameAlreadyExistsFmt": "\"{name}\" zaten mevcut",

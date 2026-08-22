@@ -899,6 +899,11 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String linuxSystemInUse(Object name) {
+    return 'У $name ещё открыт терминал. Закройте его, прежде чем удалять систему.';
+  }
+
+  @override
   String get rootfsSubtitle =>
       'Пользовательское окружение Linux на этом устройстве';
 

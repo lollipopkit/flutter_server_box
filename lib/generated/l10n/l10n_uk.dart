@@ -899,6 +899,11 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String linuxSystemInUse(Object name) {
+    return 'У $name ще відкритий термінал. Закрийте його, перш ніж видаляти систему.';
+  }
+
+  @override
   String get rootfsSubtitle =>
       'Користувацьке середовище Linux на цьому пристрої';
 

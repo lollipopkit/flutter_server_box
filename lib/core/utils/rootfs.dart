@@ -73,6 +73,15 @@ abstract final class Rootfs {
     return profile.version != described.version;
   }
 
+  /// How many terminals are open in [profile], where that can be asked.
+  ///
+  /// iOS only: its sessions live in one engine that can be asked. Android runs
+  /// each in its own proot process and keeps no such list, and answering 0
+  /// there means the delete goes ahead as it always has — which is also what
+  /// it does when the engine is absent.
+  static int openSessions(LinuxProfile profile) =>
+      isAndroid ? 0 : IosRootfs.openSessions(profile.id);
+
   /// Locates both, so a caller does not have to ask which platform it is on.
   static Future<void> prepare() async {
     await RootfsManifestSource.loadLocal();

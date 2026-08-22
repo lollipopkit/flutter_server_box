@@ -904,6 +904,11 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String linuxSystemInUse(Object name) {
+    return '$name ha ancora un terminale aperto. Chiudilo prima di eliminare il sistema.';
+  }
+
+  @override
   String get rootfsSubtitle => 'Uno spazio utente Linux su questo dispositivo';
 
   @override

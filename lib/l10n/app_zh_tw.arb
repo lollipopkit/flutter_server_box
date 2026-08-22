@@ -271,6 +271,7 @@
       "pm": {}
     }
   },
+  "linuxSystemInUse": "{name} 還有終端開著。請先關閉,再刪除這個系統。",
   "rootfsSubtitle": "本機上的 Linux 使用者空間",
   "rootfsInstallTip": "下載 {distro} {version}(約 {size} MB)並解壓到本機。它為本 App 提供一個帶套件管理器的 shell,可隨時刪除。",
   "@rootfsInstallTip": {

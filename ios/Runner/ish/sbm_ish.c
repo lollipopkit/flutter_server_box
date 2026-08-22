@@ -13,6 +13,7 @@ int sbm_ish_boot(const char *rootfs, const char *profile) {
 }
 int sbm_ish_attach(const char *profile) { (void)profile; return -1; }
 int sbm_ish_detach(const char *profile) { (void)profile; return -1; }
+int sbm_ish_sessions(const char *profile) { (void)profile; return 0; }
 int sbm_ish_open(const char *profile, const char *shell, const char *command,
                  int columns, int rows) {
     (void)profile; (void)shell; (void)command; (void)columns; (void)rows;
@@ -693,6 +694,19 @@ int sbm_ish_attach(const char *profile) {
 /// delete waits for a detach that could only ever fail. Reported from a device
 /// as "The Linux system is still in use (-57)", which is `-ENOTCONN` on Darwin
 /// and says nothing about anything being in use.
+int sbm_ish_sessions(const char *profile) {
+    if (!booted) return 0;
+    if (check_profile(profile) < 0) return 0;
+    int count = 0;
+    pthread_mutex_lock(&sessions_lock);
+    for (int i = 0; i < SBM_MAX_SESSIONS; i++) {
+        if (sessions[i].used && strcmp(sessions[i].profile, profile) == 0)
+            count++;
+    }
+    pthread_mutex_unlock(&sessions_lock);
+    return count;
+}
+
 int sbm_ish_detach(const char *profile) {
     if (!booted) return 0;
     int checked = check_profile(profile);
@@ -1087,7 +1101,24 @@ static pid_t_ close_session(int session_id, const char *profile) {
     // as its terminal going away, which is what has happened.
     if (pid > 0) {
         struct task *task = pid_get_task(pid);
-        if (task != NULL) send_group_signal(task->group->pgid, SIGHUP_, SIGINFO_NIL);
+        if (task != NULL) {
+            send_group_signal(task->group->pgid, SIGHUP_, SIGINFO_NIL);
+            // And the terminal is given up here rather than left to the task's
+            // teardown. Every session from `become_new_init_child` is a session
+            // leader, so opening its stdio takes the pty as a controlling
+            // terminal and the group holds a reference — one that
+            // `task_leave_session` returns only when the task is reaped.
+            //
+            // Nothing reaps these. The engine waits for no task, and the
+            // auto-reap path needs a parent that ignores SIGCHLD, which init
+            // does not. So the reference outlived the shell by the life of the
+            // process: the pty stayed allocated, `/dev/pts` could never be
+            // unmounted, and a system a terminal had ever been opened in could
+            // never be detached. Reported from a device as a Linux system that
+            // could not be deleted until the app was restarted, and as a retry
+            // loop waiting for something that was never going to happen.
+            tty_disown(task->group);
+        }
     }
     return pid;
 }

@@ -190,6 +190,22 @@ Future<bool> _confirmBeta(BuildContext context) async {
 Future<bool> removeRootfs(BuildContext context, {LinuxProfile? profile}) async {
   final target = profile ?? Rootfs.selected;
   if (target == null) return false;
+
+  // Asked before the confirmation, not after. Detaching hangs up whatever is
+  // running in the system, which is the right last resort and the wrong
+  // surprise: a shell someone left a half-typed command in is not something to
+  // close on their behalf. And it is what the delete would fail on anyway —
+  // the engine cannot unmount a `/dev/pts` a session still holds — so this
+  // turns an error after the fact into something to do first.
+  if (Rootfs.openSessions(target) > 0) {
+    await context.showRoundDialog(
+      title: libL10n.attention,
+      child: Text(context.l10n.linuxSystemInUse(target.label)),
+      actions: [Btnx.okRed],
+    );
+    return false;
+  }
+
   final confirm = await context.showRoundDialog<bool>(
     title: libL10n.attention,
     child: Text(libL10n.askContinue('${libL10n.delete} ${target.label}')),

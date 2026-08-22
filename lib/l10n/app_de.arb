@@ -169,6 +169,7 @@
       "pm": {}
     }
   },
+  "linuxSystemInUse": "{name} hat noch ein Terminal offen. Schließen Sie es, bevor Sie das System löschen.",
   "rootfsSubtitle": "Eine Linux-Userland-Umgebung auf diesem Gerät",
   "rootfsInstallTip": "{distro} {version} (etwa {size} MB) herunterladen und auf diesem Gerät entpacken. Es gibt dieser App eine Shell mit Paketmanager und kann jederzeit gelöscht werden.",
   "nameAlreadyExistsFmt": "„{name}“ existiert bereits",

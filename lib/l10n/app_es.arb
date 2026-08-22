@@ -169,6 +169,7 @@
       "pm": {}
     }
   },
+  "linuxSystemInUse": "{name} todavía tiene una terminal abierta. Ciérrala antes de eliminar el sistema.",
   "rootfsSubtitle": "Un espacio de usuario Linux en este dispositivo",
   "rootfsInstallTip": "Descarga {distro} {version} (unos {size} MB) y lo descomprime en este dispositivo. Le da a esta app un shell con gestor de paquetes, y se puede eliminar en cualquier momento.",
   "nameAlreadyExistsFmt": "«{name}» ya existe",

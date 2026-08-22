@@ -169,6 +169,7 @@
       "pm": {}
     }
   },
+  "linuxSystemInUse": "{name} のターミナルがまだ開いています。閉じてからシステムを削除してください。",
   "rootfsSubtitle": "この端末上の Linux ユーザーランド",
   "rootfsInstallTip": "{distro} {version}(約 {size} MB)をダウンロードし、この端末に展開します。パッケージマネージャー付きのシェルをこのアプリに提供し、いつでも削除できます。",
   "nameAlreadyExistsFmt": "「{name}」は既に存在します",

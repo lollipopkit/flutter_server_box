@@ -169,6 +169,7 @@
       "pm": {}
     }
   },
+  "linuxSystemInUse": "{name} a encore un terminal ouvert. Fermez-le avant de supprimer le système.",
   "rootfsSubtitle": "Un espace utilisateur Linux sur cet appareil",
   "rootfsInstallTip": "Télécharge {distro} {version} (environ {size} Mo) et le décompresse sur cet appareil. Il donne à cette application un shell avec gestionnaire de paquets, et peut être supprimé à tout moment.",
   "nameAlreadyExistsFmt": "« {name} » existe déjà",

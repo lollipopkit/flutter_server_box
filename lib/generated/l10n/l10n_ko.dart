@@ -850,6 +850,11 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String linuxSystemInUse(Object name) {
+    return '$name의 터미널이 아직 열려 있습니다. 닫은 뒤에 시스템을 삭제하세요.';
+  }
+
+  @override
   String get rootfsSubtitle => '이 기기의 Linux 사용자 공간';
 
   @override

@@ -897,6 +897,11 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String linuxSystemInUse(Object name) {
+    return '$name heeft nog een terminal open. Sluit die voordat je het systeem verwijdert.';
+  }
+
+  @override
   String get rootfsSubtitle => 'Een Linux-userland op dit apparaat';
 
   @override

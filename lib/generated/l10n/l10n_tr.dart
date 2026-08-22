@@ -900,6 +900,11 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String linuxSystemInUse(Object name) {
+    return '$name için hâlâ açık bir terminal var. Sistemi silmeden önce kapatın.';
+  }
+
+  @override
   String get rootfsSubtitle => 'Bu cihazdaki bir Linux kullanıcı alanı';
 
   @override

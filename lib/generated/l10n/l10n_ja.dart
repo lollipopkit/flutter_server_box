@@ -849,6 +849,11 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String linuxSystemInUse(Object name) {
+    return '$name のターミナルがまだ開いています。閉じてからシステムを削除してください。';
+  }
+
+  @override
   String get rootfsSubtitle => 'この端末上の Linux ユーザーランド';
 
   @override

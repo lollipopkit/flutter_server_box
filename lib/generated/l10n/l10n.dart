@@ -1658,6 +1658,12 @@ abstract class AppLocalizations {
     Object pm,
   );
 
+  /// No description provided for @linuxSystemInUse.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} still has a terminal open. Close it before deleting the system.'**
+  String linuxSystemInUse(Object name);
+
   /// No description provided for @rootfsSubtitle.
   ///
   /// In en, this message translates to:

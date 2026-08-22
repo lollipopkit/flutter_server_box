@@ -338,19 +338,15 @@ abstract final class IosRootfs {
       // Says which, rather than naming a cause it does not know. The number
       // reaches here from two errno namespaces — the guest's for an unmount,
       // the host's for a rejected name — so this cannot claim to read it.
-      // The busy case names what to do about it, because there is something
-      // to do and no way for anyone to guess it. A session's task is not
-      // reaped when its shell exits — nothing in the engine waits for one —
-      // and the terminal it took as its controlling terminal is released only
-      // when it is. So the reference outlives the shell, no amount of waiting
-      // here clears it, and restarting the app is what does.
-      //
-      // TODO(engine): remove this advice when a session's terminal is
-      // released without waiting for a reaper. Until then it is the truth.
+      // No advice attached any more. It used to say to restart the app, which
+      // was true while a session's terminal was released only when its task
+      // was reaped and nothing reaped one — `close_session` gives it up at
+      // hangup now (ShellBox #27), so a system that is genuinely busy has
+      // something running in it rather than something left over from a
+      // terminal that is already closed.
       throw StateError(
         err == _ebusy
-            ? 'The Linux system is still in use. Restarting the app releases '
-                  'it.'
+            ? 'The Linux system is still in use'
             : 'The Linux system could not be detached ($err)',
       );
     }
@@ -638,6 +634,27 @@ abstract final class IosRootfs {
   /// the caller closes those first. Logged rather than thrown: a delete the
   /// user asked for goes ahead either way, and what is left is a mount that
   /// outlives the tree until the app restarts.
+  /// How many terminals are open in [profileId].
+  ///
+  /// Asked before offering to delete a system. Detaching one hangs up whatever
+  /// is running in it — right as a last resort, wrong as a surprise: a shell
+  /// someone left a half-typed command in is not something to close on their
+  /// behalf without saying so.
+  ///
+  /// The engine's count rather than a tally of the app's own backends, because
+  /// this is the same list that decides whether the unmount can succeed. A
+  /// session the app had lost track of would still hold the filesystem.
+  static int openSessions(String profileId) {
+    final sessions = _sessions;
+    if (sessions == null) return 0;
+    final pointer = profileId.toNativeUtf8();
+    try {
+      return sessions(pointer.cast());
+    } finally {
+      malloc.free(pointer);
+    }
+  }
+
   static int detach(String profileId) {
     final detach = _detach;
     if (detach == null) return -1;
@@ -813,6 +830,10 @@ abstract final class IosRootfs {
   static final _attach = _look(
     'sbm_ish_attach',
     (p) => p.lookupFunction<Int Function(Pointer<Char>), int Function(Pointer<Char>)>('sbm_ish_attach'),
+  );
+  static final _sessions = _look(
+    'sbm_ish_sessions',
+    (p) => p.lookupFunction<Int Function(Pointer<Char>), int Function(Pointer<Char>)>('sbm_ish_sessions'),
   );
   static final _detach = _look(
     'sbm_ish_detach',

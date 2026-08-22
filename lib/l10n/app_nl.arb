@@ -169,6 +169,7 @@
       "pm": {}
     }
   },
+  "linuxSystemInUse": "{name} heeft nog een terminal open. Sluit die voordat je het systeem verwijdert.",
   "rootfsSubtitle": "Een Linux-userland op dit apparaat",
   "rootfsInstallTip": "Download {distro} {version} (ongeveer {size} MB) en pak het uit op dit apparaat. Het geeft deze app een shell met pakketbeheerder en kan op elk moment worden verwijderd.",
   "nameAlreadyExistsFmt": "'{name}' bestaat al",

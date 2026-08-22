@@ -302,6 +302,12 @@
       "pm": {}
     }
   },
+  "linuxSystemInUse": "{name} still has a terminal open. Close it before deleting the system.",
+  "@linuxSystemInUse": {
+    "placeholders": {
+      "name": {}
+    }
+  },
   "rootfsSubtitle": "A Linux userland on this device",
   "rootfsInstallTip": "Download {distro} {version} (about {size} MB) and unpack it on this device. It gives this app a shell with a package manager, and can be deleted at any time.",
   "@rootfsInstallTip": {

@@ -891,6 +891,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String linuxSystemInUse(Object name) {
+    return '$name still has a terminal open. Close it before deleting the system.';
+  }
+
+  @override
   String get rootfsSubtitle => 'A Linux userland on this device';
 
   @override

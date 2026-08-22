@@ -899,6 +899,11 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String linuxSystemInUse(Object name) {
+    return '$name masih memiliki terminal terbuka. Tutup dulu sebelum menghapus sistem.';
+  }
+
+  @override
   String get rootfsSubtitle => 'Lingkungan pengguna Linux di perangkat ini';
 
   @override
