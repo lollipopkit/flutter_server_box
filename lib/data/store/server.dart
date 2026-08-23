@@ -1,5 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:meta/meta.dart';
+import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -135,6 +136,18 @@ class ServerStore extends EntityStore<Spi> {
               ip: row['wol_ip'] as String? ?? '',
               pwd: row['wol_pwd'] as String?,
             ),
+      // Keyed off the address, which is the one field a BMC cannot be reached
+      // without. A row carrying an address but no `bmc_cred_id` — because the
+      // account it named was deleted, which sets this to null rather than
+      // taking the server with it — comes back incomplete, so the editor shows
+      // it and nothing tries to log in.
+      bmc: row['bmc_addr'] == null
+          ? null
+          : BmcCfg(
+              addr: row['bmc_addr'] as String,
+              credId: row['bmc_cred_id'] as String?,
+              certSha256: row['bmc_cert_sha256'] as String?,
+            ),
       custom: _customOf(row, cmds),
     );
   }
@@ -181,6 +194,7 @@ class ServerStore extends EntityStore<Spi> {
   void write(Spi item) {
     final ssh = item.ssh;
     final monitor = item.monitorHttp;
+    final bmc = item.bmc;
     final custom = item.custom;
     const columns = [
       'id', 'name', 'auto_connect', 'system_type',
@@ -189,6 +203,7 @@ class ServerStore extends EntityStore<Spi> {
       'monitor_addr', 'monitor_user', 'monitor_pwd', 'monitor_ignore_cert',
       'monitor_allow_insecure',
       'wol_mac', 'wol_ip', 'wol_pwd',
+      'bmc_addr', 'bmc_cred_id', 'bmc_cert_sha256',
       'pve_addr', 'pve_ignore_cert', 'pve_pwd', 'prefer_temp_dev',
       'temp_is_celsius', 'logo_url', 'net_dev', 'script_dir',
     ];
@@ -213,6 +228,9 @@ class ServerStore extends EntityStore<Spi> {
       item.wolCfg?.mac,
       item.wolCfg?.ip,
       item.wolCfg?.pwd,
+      bmc?.addr,
+      bmc?.credId,
+      bmc?.certSha256,
       custom?.pveAddr,
       (custom?.pveIgnoreCert ?? false) ? 1 : 0,
       custom?.pvePwd,

@@ -6,6 +6,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:redfish/redfish.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/jump_chain.dart';
@@ -13,6 +14,8 @@ import 'package:server_box/core/utils/server_dedup.dart';
 import 'package:server_box/core/utils/ssh_config.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
+import 'package:server_box/data/model/server/bmc_cfg.dart';
+import 'package:server_box/data/model/server/bmc_credential.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/discovery_result.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
@@ -20,9 +23,11 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
+import 'package:server_box/data/provider/bmc_credential.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/page/bmc_credential/edit.dart';
 import 'package:server_box/view/page/private_key/edit.dart';
 import 'package:server_box/view/page/server/custom_cmds.dart';
 import 'package:server_box/view/widget/ssh_discovery/dialog.dart';
@@ -62,6 +67,22 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   final _monitorPwdCtrl = TextEditingController();
   final _preferTempDevCtrl = TextEditingController();
   final _logoUrlCtrl = TextEditingController();
+  final _bmcAddrCtrl = TextEditingController();
+
+  /// Which `BmcCredential` this server logs in with, by id.
+  ///
+  /// An id rather than a user and a password, because a rack shares one
+  /// account and this page is where twenty servers would otherwise each get
+  /// their own copy of it.
+  final _bmcCredId = ValueNotifier<String?>(null);
+
+  /// The certificate fingerprint the user has reviewed, or null.
+  ///
+  /// Not a text field: nobody types a fingerprint. It is set by the review
+  /// step, which reads what the BMC actually presents — see `cert_pin.dart`
+  /// for why that has to be a separate step from enforcing it.
+  final _bmcCert = ValueNotifier<String?>(null);
+
   final _wolMacCtrl = TextEditingController();
   final _wolIpCtrl = TextEditingController();
   final _wolPwdCtrl = TextEditingController();
@@ -133,6 +154,9 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     _passwordController.dispose();
     _preferTempDevCtrl.dispose();
     _logoUrlCtrl.dispose();
+    _bmcAddrCtrl.dispose();
+    _bmcCredId.dispose();
+    _bmcCert.dispose();
     _wolMacCtrl.dispose();
     _wolIpCtrl.dispose();
     _wolPwdCtrl.dispose();

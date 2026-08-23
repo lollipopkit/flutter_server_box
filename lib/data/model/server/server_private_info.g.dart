@@ -24,6 +24,9 @@ _Spi _$SpiFromJson(Map<String, dynamic> json) => _Spi(
   wolCfg: json['wolCfg'] == null
       ? null
       : WakeOnLanCfg.fromJson(json['wolCfg'] as Map<String, dynamic>),
+  bmc: json['bmc'] == null
+      ? null
+      : BmcCfg.fromJson(json['bmc'] as Map<String, dynamic>),
   envs: (json['envs'] as Map<String, dynamic>?)?.map(
     (k, e) => MapEntry(k, e as String),
   ),
@@ -45,6 +48,7 @@ Map<String, dynamic> _$SpiToJson(_Spi instance) => <String, dynamic>{
   'autoConnect': instance.autoConnect,
   'custom': ?instance.custom,
   'wolCfg': ?instance.wolCfg,
+  'bmc': ?instance.bmc,
   'envs': ?instance.envs,
   'id': instance.id,
   'customSystemType': ?_$SystemTypeEnumMap[instance.customSystemType],

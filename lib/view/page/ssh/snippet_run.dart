@@ -206,9 +206,8 @@ class _SnippetRunView extends StatefulWidget {
   State<_SnippetRunView> createState() => _SnippetRunViewState();
 }
 
-class _SnippetRunViewState extends State<_SnippetRunView>
-    with TickerProviderStateMixin {
-  late final _controller = TerminalController(vsync: this);
+class _SnippetRunViewState extends State<_SnippetRunView> {
+  late final _controller = TerminalController();
   final _focusNode = FocusNode();
 
   TerminalSession get _sess => widget.session;

@@ -26,17 +26,11 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get askAiEndpointTip =>
-      'Вкажіть базову URL-адресу сервісу або повний ендпоінт Chat Completions чи Responses. ServerBox доповнить шлях відповідно до вибраного протоколу.';
+      'Домен або повний URL. Шлях доповнюється за обраним протоколом.';
 
   @override
   String get askAiProtocolTip =>
-      '«Авто» використовує Responses для офіційного ендпоінта OpenAI і Chat Completions для сумісних постачальників.';
-
-  @override
-  String get askAiProtocolChatCompletions => 'Chat Completions';
-
-  @override
-  String get askAiProtocolResponses => 'Responses';
+      'Авто пробує Responses, потім Chat Completions.';
 
   @override
   String get askAiCommandInserted => 'Команду вставлено в термінал';
@@ -56,25 +50,15 @@ class AppLocalizationsUk extends AppLocalizations {
   String get askAiNoResponse => 'Відповідь відсутня';
 
   @override
-  String get askAiAgentTitle => 'SSH-агент';
-
-  @override
   String get askAiAgentWelcome => 'Що зробимо на цьому сервері?';
-
-  @override
-  String get askAiAgentWelcomeTip =>
-      'Попросіть діагностику або задачу. Агент пропонує по одній команді й чекає на вашу перевірку, перш ніж щось змінювати.';
 
   @override
   String get askAiAgentPromptHint =>
       'Попросіть агента щось перевірити або виправити…';
 
   @override
-  String get askAiAgentSend => 'Надіслати агентові';
-
-  @override
   String get askAiAnalyzeSelectionPrompt =>
-      'Проаналізуйте виділений вивід термінала, поясніть, що сталося, і запропонуйте найбезпечніший наступний крок, якщо потрібна дія.';
+      'Проаналізуй виділений вивід термінала й поясни, що сталося';
 
   @override
   String get askAiTerminalContext => 'Контекст термінала';
@@ -87,7 +71,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get askAiReviewBeforeContinuing =>
-      'Спершу перевірте або відхиліть запропоновану команду';
+      'Спершу перевірте або відхиліть поточну пропозицію';
 
   @override
   String get askAiApproveRun => 'Схвалити й виконати';
@@ -118,7 +102,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get askAiHighRiskConfirmBody =>
-      'Ця команда може видалити дані, зупинити служби або бути важкою для скасування. Уважно перевірте її перед запуском.';
+      'Команда може внести зміни, які важко скасувати. Перевірте уважно.';
 
   @override
   String get askAiNoCommandOutput => 'Команда завершилася без виводу.';
@@ -136,18 +120,18 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get askAiAutoRunSafeCommandsTip =>
-      'Автоматичний запуск лише тоді, коли і модель, і локальні перевірки безпеки визначають команду як таку, що лише читає. Команди, які змінюють систему, все одно потребують перевірки.';
+      'Виконується, лише коли і модель, і локальна перевірка вважають команду лише для читання';
 
   @override
   String get askAiSendOnEnter => 'Enter надсилає';
 
   @override
   String get askAiSendOnEnterTip =>
-      'Enter надсилає повідомлення, Shift+Enter переносить рядок. Якщо вимкнено, навпаки: Enter переносить рядок, а надсилає Cmd/Ctrl+Enter.';
+      'Enter надсилає, Shift+Enter — новий рядок. Вимк.: Enter — новий рядок, Cmd/Ctrl+Enter надсилає.';
 
   @override
   String get askAiApiKeyOptional =>
-      'Необов\'язково для локальних ендпоінтів і ендпоінтів без автентифікації';
+      'Залиште порожнім для локального або без автентифікації';
 
   @override
   String get askAiHistory => 'Історія розмов';
@@ -156,13 +140,13 @@ class AppLocalizationsUk extends AppLocalizations {
   String get askAiNewConversation => 'Нова розмова';
 
   @override
-  String get askAiNoHistory => 'Для цього сервера немає збережених розмов';
+  String get askAiNoHistory => 'Збережених розмов ще немає';
 
   @override
   String get askAiNoHistoryMessages => 'Повідомлень ще немає';
 
   @override
-  String get askAiUntitledConversation => 'Нова розмова';
+  String get askAiUntitledConversation => 'Без назви';
 
   @override
   String get askAiRenameConversation => 'Перейменувати розмову';
@@ -172,7 +156,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get askAiDeleteConversationTip =>
-      'Розмову буде видалено з цього пристрою без можливості відновлення.';
+      'Видаляє її з цього пристрою. Скасувати не можна.';
 
   @override
   String get askAiClearHistoryTitle =>
@@ -180,21 +164,17 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get askAiClearHistoryTip =>
-      'Усі розмови агента, збережені для цього сервера, буде видалено з цього пристрою.';
+      'Усі збережені розмови агента для цього сервера буде видалено.';
 
   @override
-  String get askAiRestoredReview =>
-      'Відновлено з історії. Перевірте ще раз перед запуском; сама вона ніколи не виконається.';
-
-  @override
-  String get agentTitle => 'Агент';
+  String get askAiRestoredReview => 'Команда з історії. Перевірте її ще раз';
 
   @override
   String get agentWelcome => 'Що зробимо на ваших серверах?';
 
   @override
   String get agentWelcomeTip =>
-      'Попросіть діагностику або експлуатаційну задачу. Агент використовує поточний стан ServerBox і пропонує по одній дії на перевірку.';
+      'Хай агент з’ясує проблему або виконає завдання';
 
   @override
   String get agentPromptHint =>
@@ -218,9 +198,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get agentToolWriteFile => 'Запис файлу';
-
-  @override
-  String get agentToolServerBox => 'ServerBox';
 
   @override
   String get agentToolFailed => 'Не вдалося виконати інструмент.';
@@ -247,7 +224,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get agentSshConnectTip =>
-      'Агент хоче відкрити SSH-підключення. Введіть пароль тут, а не в розмові: там він збережеться й буде надісланий моделі.';
+      'Агенту потрібне SSH-з’єднання. Введіть пароль тут';
 
   @override
   String get agentAdHocSessions => 'Тимчасові підключення';
@@ -257,14 +234,13 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get agentSaveServerTip =>
-      'Цей хост і введений пароль будуть збережені на цьому пристрої.';
+      'Цей хост і введений пароль зберігаються на цьому пристрої';
 
   @override
   String get agentMonitorOptional => 'Агент monitor (необов\'язково)';
 
   @override
-  String get authFailTip =>
-      'Авторизація не вдалася, будь ласка, перевірте правильність облікових даних';
+  String get authFailTip => 'Не вдалося автентифікуватися. Перевірте дані';
 
   @override
   String get autoBackupConflict =>
@@ -311,14 +287,14 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get monitorHttpsRequired =>
-      'Віддалені агенти моніторингу потребують HTTPS; HTTP дозволено лише для адрес зворотного зв’язку.';
+      'Віддаленому агенту monitor потрібен HTTPS, якщо для нього не дозволено HTTP.';
 
   @override
-  String get monitorAllowInsecureHttp => 'Allow insecure HTTP';
+  String get monitorAllowInsecureHttp => 'Дозволити HTTP';
 
   @override
   String get monitorAllowInsecureHttpTip =>
-      'Only enable for a trusted private network with transport encryption outside HTTP, such as Tailscale. The agent must also explicitly allow plaintext file access. Credentials and file contents may otherwise be exposed.';
+      'Лише в довіреній приватній мережі, що сама шифрує транспорт, наприклад Tailscale';
 
   @override
   String get backupTip =>
@@ -533,8 +509,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get fileDirGone => 'Цієї теки більше немає';
 
   @override
-  String get fileDirGoneTip =>
-      'Її видалено або перейменовано. Скористайтеся панеллю внизу, щоб повернутися, перейти до домівки або в інше місце.';
+  String get fileDirGoneTip => 'Його видалено або перейменовано';
 
   @override
   String get fullScreen => 'Повний екран';
@@ -548,9 +523,6 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get fullScreenTip =>
       'Чи слід увімкнути повноекранний режим під час повороту пристрою в горизонтальне положення? Ця опція стосується лише вкладки сервера.';
-
-  @override
-  String get githubGist => 'GitHub Gist';
 
   @override
   String get githubGistIdOptional => 'ID Gist (необов\'язково)';
@@ -583,22 +555,22 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get macDmgBody =>
-      'App Store вимагає, щоб застосунок працював у пісочниці, а процес у пісочниці не може відкрити псевдотермінал. Тому у збірці з App Store немає термінала на цьому Mac і не можна виконати тут сніпет чи команду агента. Збірка DMG — той самий застосунок, підписаний без пісочниці, і має обидва.\n\nЗбірка з App Store працює далі й далі оновлюється. Згодом оновлення можуть припинитися.\n\nДві збірки тримають дані в різних місцях. Збірка DMG копіює їх під час першого запуску, тож сервери, ключі та історія переїжджають з вами. Якщо не вдасться, вона про це скаже, і можна перенести файл резервної копії («Резервна копія» в налаштуваннях).';
+      'App Store вимагає запускати застосунок у пісочниці, а з пісочниці не відкрити термінал. Версія DMG може.\n\nВерсія з App Store може перестати оновлюватися.';
 
   @override
   String get macDmgImportDenied =>
-      'macOS не дозволив читати дані раніше встановленої збірки. Надайте повний доступ до диска й відкрийте застосунок знову або експортуйте там резервну копію й відновіть її тут.';
+      'macOS не дозволив прочитати дані попередньої версії';
 
   @override
-  String get macDmgImported => 'Дані раніше встановленої збірки імпортовано.';
+  String get macDmgImported => 'Дані попередньої версії імпортовано';
 
   @override
   String get macDmgImportFailed =>
-      'Не вдалося прочитати дані раніше встановленої збірки. Експортуйте там резервну копію й відновіть її тут.';
+      'Не вдалося прочитати дані попередньої версії';
 
   @override
   String get macDmgTip =>
-      'Термінал на цьому Mac і запуск сніпетів на ньому є лише у збірці DMG.';
+      'Локальний термінал і запуск сніпетів локально (версія DMG)';
 
   @override
   String get macDmgTitle => 'Збірка DMG';
@@ -625,8 +597,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get unusedTaggedImages => 'Невикористовувані з тегами';
 
   @override
-  String get pruneDanglingImagesTip =>
-      'Видаляє лише висячі образи (шари без тегів).';
+  String get pruneDanglingImagesTip => 'Видаляє лише висячі образи.';
 
   @override
   String get pruneUnusedImagesTip =>
@@ -704,11 +675,10 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get linuxShellTip =>
-      'Чим запускається інтерактивний термінал. В Alpine немає chsh, і ніщо в системі не читає /etc/passwd, тож вирішує лише це. Разові команди й далі виконуються через /bin/sh, бо застосунок і Agent пишуть POSIX. Залиште порожнім, щоб повернути /bin/sh.';
+      'З якої оболонки запускається термінал. Порожньо — повернути /bin/sh.';
 
   @override
-  String get linuxNetTip =>
-      'Звідки завантажуються система Linux і її пакунки та які DNS-сервери в неї записуються. Залиште порожнім, щоб відновити типове значення. Збереження також перезаписує обидва у вже встановленій системі.';
+  String get linuxNetTip => 'DNS-сервери. Порожньо — повернути типові значення';
 
   @override
   String madeWithLove(Object myGithub) {
@@ -781,8 +751,99 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String get bmcPowerOnAction => 'Увімкнути';
+
+  @override
+  String get bmcShutdown => 'Вимкнути';
+
+  @override
+  String get bmcForceOff => 'Примусово вимкнути';
+
+  @override
+  String get restart => 'Перезапустити';
+
+  @override
+  String get bmcPowerCycle => 'Повне перезавантаження живлення';
+
+  @override
+  String bmcPowerConfirm(String server, String resetType) {
+    return 'Надіслати на $server? Сервісу буде надіслано «$resetType»';
+  }
+
+  @override
+  String get bmcPowerDone => 'Стан живлення змінився';
+
+  @override
+  String get bmcPowerAccepted =>
+      'Прийнято, але стан живлення не змінився. М’яка операція залежить від ОС';
+
+  @override
+  String get bmcPowerUnsupported => 'Ця служба нічого не дозволяє для цієї дії';
+
+  @override
+  String get bmcUnauthorized => 'BMC відхилив обліковий запис';
+
+  @override
+  String get bmcAccountMissing => 'Для цього BMC не задано обліковий запис';
+
+  @override
+  String get bmcPowerOn => 'Увімкнено';
+
+  @override
+  String get bmcPowerOff => 'Вимкнено';
+
+  @override
+  String get bmcCertRejected =>
+      'Сертифікат відхилено — перевірте його в налаштуваннях сервера';
+
+  @override
+  String get bmcNotAService => 'За цією адресою немає служби Redfish';
+
+  @override
+  String get bmcNoSystem => 'Служба не повідомляє про жодну систему';
+
+  @override
+  String get bmcSensorsTruncated => 'Показано лише перші датчики';
+
+  @override
+  String get bmcMultipleSystems => 'Показано лише першу систему';
+
+  @override
+  String get bmcTip =>
+      'BMC — окремий комп\'ютер на материнській платі, доступний тоді, коли операційна система хоста недоступна. Налаштований тут, він повідомляє стан живлення та показання апаратних датчиків, поки сервер вимкнено або він завис. Потрібен Redfish, він є в більшості серверного обладнання приблизно з 2016 року.';
+
+  @override
+  String get bmcCert => 'Сертифікат';
+
+  @override
+  String get bmcCertPinned => 'Перевірено та закріплено';
+
+  @override
+  String get bmcCertUnreviewed =>
+      'Ще не перевірено — торкніться, щоб побачити сертифікат';
+
+  @override
+  String get bmcCertReview =>
+      'Самопідписаний сертифікат. Звірте його перед прийняттям. Далі довіряють лише йому.';
+
+  @override
+  String get bmcCertChanged => 'Сертифікат не збігається. Перевірте.';
+
+  @override
+  String get bmcCertExpired => 'Прострочений.';
+
+  @override
+  String bmcCertWas(String fingerprint) {
+    return 'Прийнято раніше: $fingerprint';
+  }
+
+  @override
+  String get bmcAddrInvalid =>
+      'Адреса BMC має бути URL, наприклад https://10.0.0.9';
+
+  @override
   String get proxyCommandSandboxed =>
-      'Ця збірка працює в пісочниці: команда бачить порожній домашній каталог замість вашого, тож усе, що читає ~/.ssh (ssh -W, cloudflared), зазнає невдачі — найчастіше як тайм-аут із назвою не того хоста. Команди, які використовують лише мережу, працюють. У збірці DMG пісочниці немає.';
+      'Ця збірка працює в пісочниці: команда отримує порожній home, не ваш, тому все, що читає ~/.ssh, падає. Версія DMG — ні.';
 
   @override
   String privateKeyFileUnreadable(String path, String reason) {
@@ -895,12 +956,12 @@ class AppLocalizationsUk extends AppLocalizations {
     Object latest,
     Object pm,
   ) {
-    return 'Встановлено $distro $installed, доступна версія $latest. Оновлення завантажить його знову та замінить контейнер: усе, що було встановлено всередині через $pm, буде втрачено. Якщо пропустити, поточний контейнер працюватиме далі.';
+    return 'Встановлено $distro $installed, доступний $latest. Оновлення замінить весь контейнер: дані $pm буде втрачено';
   }
 
   @override
   String linuxSystemInUse(Object name) {
-    return 'У $name ще відкритий термінал. Закрийте його, перш ніж видаляти систему.';
+    return 'Закрийте термінали на $name, перш ніж видаляти';
   }
 
   @override
@@ -909,7 +970,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String rootfsInstallTip(Object distro, Object version, Object size) {
-    return 'Завантажити $distro $version (близько $size МБ) і розпакувати на цьому пристрої. Це дає застосунку оболонку з менеджером пакунків; її можна будь-коли видалити.';
+    return 'Завантажує $distro $version (близько $size МБ) і розпаковує на пристрої.';
   }
 
   @override
@@ -920,7 +981,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get serverFilesUnavailableTip =>
-      'Доступно через SSH цього сервера або через агент monitor з увімкненим файловим API.';
+      'Потрібен SSH до цього сервера або встановлений server_box_monitor з увімкненим файловим API.';
 
   @override
   String get back => 'Назад';
@@ -930,9 +991,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get homeDir => 'Домівка';
-
-  @override
-  String get selectItem => 'Вибрати';
 
   @override
   String selected(Object count) {
@@ -956,14 +1014,14 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get shareServerRiskTip =>
-      'Цей QR-код містить параметри підключення до сервера у відкритому вигляді, зокрема паролі. Будь-хто, хто його відсканує або сфотографує, зможе підключитися до цього сервера.';
+      'Цей QR-код містить налаштування підключення відкритим текстом. Будь-хто, хто його відсканує чи сфотографує, зможе підключитися.';
 
   @override
   String get sftpDlPrepare => 'Підготовка до підключення...';
 
   @override
   String get sftpEditorTip =>
-      'Якщо порожньо, використовуйте вбудований редактор файлів програми. Якщо є значення, використовуйте редактор віддаленого сервера, наприклад, `vim` (рекомендується автоматично визначити відповідно до `EDITOR`).';
+      'Порожньо — вбудований редактор. Наприклад `vim` (краще брати з `EDITOR`).';
 
   @override
   String get sftpRmrDirSummary =>
@@ -973,9 +1031,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get sftpSSHConnected => 'SFTP підключено';
 
   @override
-  String get sftp => 'SFTP';
-
-  @override
   String get sftpShowFoldersFirst => 'Спочатку відображати директорії';
 
   @override
@@ -983,7 +1038,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get specifyDevTip =>
-      'Наприклад, статистика мережевого трафіку за замовчуванням є для всіх пристроїв. Ви можете вказати певний пристрій тут.';
+      'Мережевий трафік типово рахується по всіх пристроях; вкажіть один тут';
 
   @override
   String get tempIsCelsiusTip =>
@@ -1061,8 +1116,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get sshKnownHostKeys => 'Відомі хости';
 
   @override
-  String get sshKnownHostKeysTip =>
-      'Ключі хостів, які прийняв цей застосунок. Видаліть один, щоб наступного разу спитали знову.';
+  String get sshKnownHostKeysTip => 'Ключі хостів, які прийняв цей застосунок';
 
   @override
   String sshHostKeyNewDesc(Object serverName) {
@@ -1119,9 +1173,6 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get syncAppSettingsTip =>
       'Включити тему, компонування, редактор, термінал та інші налаштування пристрою в автоматичну синхронізацію.';
-
-  @override
-  String get system => 'Система';
 
   @override
   String get termFontSizeTip =>
@@ -1375,9 +1426,6 @@ class AppLocalizationsUk extends AppLocalizations {
       'Інша операція з контейнером уже виконується';
 
   @override
-  String get systemd => 'Systemd';
-
-  @override
   String processCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -1415,7 +1463,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get watchServersTip =>
-      'Годинник сам звертається до агента monitor цих серверів, тому вибрати можна лише сервери з налаштованим monitor.';
+      'Годинник сам звертається до monitor, тому доступні лише сервери з ним.';
 
   @override
   String get watchNoMonitorServer =>
@@ -1478,14 +1526,43 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'Дозволяє Агенту працювати на машині, де запущено ServerBox, а не лише на серверах. Тут ніщо не виконується без нагляду: кожна команда потребує перевірки.';
+      'Дозволяє агенту працювати на машині, де запущено ServerBox. Навіть команди лише для читання перевіряються';
 
   @override
   String get agentLocalExecRootfsTip =>
-      'Дозволяє Агенту працювати на цьому пристрої, усередині контейнера Alpine Linux, який встановлює ServerBox. Він не бачить файлову систему самого пристрою, дані застосунку та ваші файли. Кожна команда все одно потребує перевірки.';
+      'Дозволяє агенту працювати локально, у межах контейнера Linux, встановленого ServerBox';
 
   @override
   String macDmgImportedPartly(String path) {
     return 'Дані раніше встановленої збірки імпортовано. Завантажені файли залишилися в $path.';
   }
+
+  @override
+  String get bmcAccount => 'Обліковий запис';
+
+  @override
+  String get bmcAccountUnset =>
+      'Не вибрано — торкніться, щоб вибрати або створити';
+
+  @override
+  String bmcAccountShared(int count) {
+    return 'Використовується на $count серверах';
+  }
+
+  @override
+  String get bmcAccounts => 'Облікові записи BMC';
+
+  @override
+  String get bmcAccountSharedTip => 'Зміна тут вплине на всі з них.';
+
+  @override
+  String bmcAccountInUse(int count) {
+    return 'Його використовують $count серверів. Адреса залишиться, обліковий запис — ні.';
+  }
+
+  @override
+  String get bmcStaleWrite => 'BMC змінився під час запису. Спробуйте ще раз.';
+
+  @override
+  String get send => 'Надіслати';
 }

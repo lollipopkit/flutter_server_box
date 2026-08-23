@@ -19,6 +19,9 @@ dependencies:
   # release.
   archive: ^4.1.0
   choice: ^2.3.2
+  # SHA-256 of a certificate's DER form, for the BMC's pinned certificate.
+  # `X509Certificate` only offers sha1 ready made.
+  crypto: ^3.0.0
   dio: ^5.2.1
   pinenacl: ^0.6.0
   dynamic_color: ^1.6.6
@@ -66,6 +69,10 @@ dependencies:
       ref: main
   xterm:
     path: packages/xterm
+  # Extracted from this app — see `docs/principles/bmc.md`. A path dependency
+  # like the other vendored packages; not on pub.dev while the API is moving.
+  redfish:
+    path: packages/redfish
   computer:
     git:
       url: https://github.com/lollipopkit/dart_computer

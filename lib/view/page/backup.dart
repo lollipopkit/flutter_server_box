@@ -725,7 +725,7 @@ extension on _BackupPageState {
     final nodeToken = FocusNode();
     final appL10n = context.l10n;
     final result = await context.showRoundDialog<bool>(
-      title: appL10n.githubGist,
+      title: 'GitHub Gist',
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

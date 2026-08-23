@@ -63,10 +63,10 @@ final class _AppAboutPageState extends State<_AppAboutPage>
             data:
                 '''
 #### Contributors
-${GithubIds.contributors.map((e) => e.markdownLink).join(' ')}
+${GithubIds.contributors.map((e) => e.prsMarkdownLink).join(' ')}
 
 #### Participants
-${GithubIds.participants.map((e) => e.markdownLink).join(' ')}
+${GithubIds.participants.map((e) => e.issuesMarkdownLink).join(' ')}
 
 #### My other apps
 [GPT Box](https://github.com/lollipopkit/flutter_gpt_box)

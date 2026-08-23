@@ -422,7 +422,7 @@ extension _Actions on _SftpPageState {
         children: [
           Btn.tile(
             icon: const Icon(Icons.open_in_new),
-            text: l10n.system,
+            text: libL10n.system,
             onTap: () => context.popDialog(1),
           ),
           Btn.tile(

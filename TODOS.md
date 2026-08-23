@@ -71,6 +71,104 @@ server 不再发起 JSON-RPC 请求、Roots / Sampling / Logging 都已废弃。
   威胁模型,但这些工具够得到你**每一台**服务器,所以要明说,不能默认开。
 - app 得开着。这不是一个后台服务。
 
+## Agent 的两套界面是复制出来的
+
+终端里的 Agent(`lib/view/page/ssh/page/ask_ai.dart`,`part of page.dart`)和 Agent
+标签页(`lib/view/page/agent/`)是两份独立实现。实测重合(去空白去注释,只算长度 > 25 的行):
+
+| 对比 | 重合 |
+| --- | --- |
+| `agent/view.dart`(1334 行) vs `ssh/page/ask_ai.dart`(1444 行) | 100 行,23% |
+| `agent/history.dart`(258) vs `ssh/page/agent_history.dart`(384) | 18 行,20% |
+| `agent/shell.dart` vs `ask_ai.dart` | 14 行,9% |
+
+100 行里 81 行是实质逻辑,不是 `padding:` 那类噪声。重复的是:
+
+- 自动滚动 —— `_scheduleAutoScroll`,连 `maxScrollExtent - 96` 这个阈值都一样
+- Enter / Cmd+Enter 发送的按键判断,含 `numpadEnter` 分支
+- 错误文案映射 —— `AskAiNetworkException`、`invalidBaseUrl`
+- 配置字段标签 —— `AskAiConfigField.baseUrl => libL10n.apiEndpoint`
+- 会话增删改 —— 重命名对话框、删除确认、无标题回退
+- 空状态、复制到剪贴板、加载指示器
+
+**provider 层只共享了一半。** `data/provider/ai/ask_ai.dart`(配置、异常、字段枚举)两边
+都用;`agent_session.dart` / `agent_shell.dart` / `global_agent_tools.dart` /
+`adhoc_ssh.dart` 是全局那套自己的。所以是 provider 分了一半、view 整个复制了一遍。
+
+真正不同的只有两点:作用域(一台服务器 vs 全局)和工具集。其余是同一个东西写了两遍。
+
+**l10n 的前缀和位置对不上,别据此判断归属。** `askAi*` 源自终端里最早的 "Ask AI",但
+Agent 标签页也在用它(`askAiNewConversation`、`askAiUntitledConversation`、
+`askAiDeleteConversationTip` 三棵文件树都引用)。现状是 `askAi*` 是共用词汇,`agent*`
+是全局 Agent 特有的那几条(`agentWelcomeTip`、`agentClearHistoryTip`、
+`agentLocalExecTip`)。所以 `askAiClearHistoryTip` 和 `agentClearHistoryTip` 不是重复,
+是「这台服务器的」和「全局的」两句不同的话。
+
+重构的形状:把那 81 行抽成共享的 widget / mixin,两棵树各自只留作用域和工具集的差异。
+量级不小,不适合塞进正在进行的分支。
+
+## BMC:IPMI 这半没做,以及它该放在哪个仓库
+
+**状态(2026-08-23):没开始。** #1316 只做 Redfish,`crates/` 下没有任何 IPMI 代码,
+`ipmi-rs` 没引入。app 侧已有的 `BmcCfg` / `BmcCredential` / BMC 卡片 / 电源意图协商
+都是协议无关的,IPMI 进来是在同一套配置后面加第二种协议,`BmcCfg` 需要多一个 protocol
+字段。
+
+### 为什么还要 IPMI
+
+覆盖面的方向和直觉相反:几乎每台支持 Redfish 的 BMC 也支持 IPMI,反过来不成立。
+没有可用 Redfish 的那一段正好是 homelab 的常见硬件:
+
+| 硬件 | Redfish | IPMI |
+| --- | --- | --- |
+| Supermicro X9 | 无 | 有 |
+| Supermicro X10(3.x 固件) | 有,schema 停在 1.0.1 | 有 |
+| iDRAC7/8 < 2.30.30.30 | 无 | 有 |
+| iDRAC7/8 >= 2.30.30.30 | 只读 inventory + 电源 | 有 |
+| iLO4 | pre-1.0 的 REST,不合规 | 有 |
+| iDRAC9+ / iLO5+ / X11+ | 完整 | 有,常默认关闭 |
+
+另一头:iDRAC10 没有移除 IPMI over LAN,但 Dell 把「怎么禁用它」写在 Security
+Configuration Guide 里。所以新机器上会遇到「协议在、端口不通」。
+
+### crate
+
+`ipmi-rs` / `ipmi-rs-core`(2026-07 仍在更新,下载量最高)。同类还有 `ipmi`、
+`ruipmi`、`rust-ipmi`。`fishtank` 是个同时支持 IPMI 和 Redfish 的 BMC TUI,值得读它
+怎么把两种协议归一到一套抽象——app 侧要做同样的事。
+
+**`ipmi-rs` 同时支持 unix-file 和 RMCP。** 这条决定了它的位置:monitor agent 装在物理机
+上可以直接读 `/dev/ipmi0` 走 in-band,用户不配地址、不填密码、BMC 在隔离 VLAN 上也无所谓,
+机箱温度、风扇、SEL 就有了。Redfish 没有对应路径。而 monitor 用 `ipmi-rs` 是直接用,
+不经过 Dart。
+
+### 真正的工作量不是 binding
+
+三处不是「一层绑定」:
+
+1. **session 是有状态的。** `ipmi-rs` 的 `Ipmi<T>` 持有 RMCP+ 会话:session id、序列号、
+   认证状态。FRB 传不了这个值,要么 `RustOpaque`,要么 Rust 侧持 handle 发 id 给 Dart。
+   而 CLAUDE.md 写的 FFI 边界原则是「不持有可变状态」,`sbm_parser` 那套是纯函数。所以
+   binding 恰好是新状态进来的地方,生命周期(谁关、hot restart 之后怎么办)是主要工作。
+2. **API 面要选。** 电源控制 4 条命令很薄;传感器要枚举 SDR 再做读数换算(线性化、单位、
+   容差),那是 IPMI 的主体也是价值所在。选哪些、怎么建模,是用起来才知道的。
+3. **发行。** 独立包要给没装 Rust 的人用就得预编译产物 + `hook/build.dart` 下载 +
+   六个 target 的 CI 矩阵。这比 binding 本身工作量大,且全是基础设施。
+
+### 独立发 pub.dev 包,还是留在仓库里
+
+pub.dev 上没有任何 Redfish 包;IPMI 只有一个 `dart_ipmi`,而它名不副实——174 行,打的是
+AMI MegaRAC web 控制台的私有 REST(`/api/session`、`/api/actions/power`、
+`/api/chassis-status`),不是 IPMI 也不是 Redfish,依赖 `http` + `requests`,最后提交
+2023-12,pubspec 里还带一个指向 git commit 的 `dependency_overrides`。名字被它占了,
+新包要换名。
+
+**倾向:先在仓库内做(`crates/sbm_ipmi` + `sbm_ffi` 的 api 模块),API 稳定后再抽出去。**
+理由是代价不对称:先内后外是搬一个 crate 加个 build hook;先发包再重新设计,是一个
+已经有用户的 API 要 breaking change,而且要负责支持他们。而这个仓库已经有 Rust
+workspace、钉好的 flutter_rust_bridge、`hook/build.dart` + `native_toolchain_rust`、
+`rust-toolchain.toml` 里列全的 target 和 CI,加一个 crate 的基础设施成本接近零。
+
 ## monitor:relay 模式(不强制暴露公网端口)
 
 目前要从局域网外访问 `monitor` 面板,必须把 agent 的端口暴露到公网(端口转发/

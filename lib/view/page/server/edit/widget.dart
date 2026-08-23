@@ -189,6 +189,7 @@ extension _Widgets on _ServerEditPageState {
         _buildStorageCollection(),
         _buildDisabledCmdTypes(),
         _buildCustomDev(),
+        _buildBmc(),
         _buildWOLs(),
       ],
     );
@@ -267,7 +268,7 @@ extension _Widgets on _ServerEditPageState {
     return _systemType.listenVal((val) {
       return ListTile(
         leading: Icon(MingCute.laptop_2_line),
-        title: Text(l10n.system),
+        title: Text(libL10n.system),
         trailing: PopupMenu<SystemType?>(
           initialValue: val,
           items: [
@@ -592,6 +593,123 @@ extension _Widgets on _ServerEditPageState {
         }).cardx,
       ],
     );
+  }
+
+  Widget _buildBmc() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const CenterGreyTitle('BMC (Redfish)'),
+        // A row of its own rather than a suffix on the title, the same shape
+        // the Linux page uses: what a suffix cannot say is the part that
+        // matters, which is that nothing here is guaranteed. This is where
+        // someone decides to turn it on, so it is where the warning belongs.
+        ListTile(
+          leading: const Icon(Icons.science_outlined),
+          title: const Text('Beta'),
+          subtitle: Text(l10n.betaTip, style: UIs.textGrey),
+        ).cardx,
+        ListTile(
+          leading: const Icon(BoxIcons.bxs_help_circle),
+          title: TipText(libL10n.about, l10n.bmcTip),
+        ).cardx,
+        Input(
+          controller: _bmcAddrCtrl,
+          type: TextInputType.url,
+          label: libL10n.addr,
+          icon: MingCute.web_line,
+          hint: 'https://10.0.0.9',
+          suggestion: false,
+        ),
+        _buildBmcAccount(),
+        _buildBmcCert(),
+      ],
+    );
+  }
+
+  /// Which account this server's BMC is opened with.
+  ///
+  /// A picker rather than a user and a password field, because the account is
+  /// shared: BMCs are provisioned a rack at a time, so the same credentials
+  /// open twenty of them. Typed per server, a rotation means twenty edits and
+  /// no way to tell which one was missed.
+  ///
+  /// The subtitle says how many servers point at the record, since editing it
+  /// here changes what all of them use.
+  Widget _buildBmcAccount() {
+    return _bmcCredId.listenVal((id) {
+      // Watched rather than fetched: editing the account from the page this
+      // tile opens has to be visible here when it returns.
+      final creds = ref.watch(bmcCredentialProvider).creds;
+      final cred = creds.firstWhereOrNull((e) => e.id == id);
+      final shared = cred == null
+          ? 0
+          : ref.read(bmcCredentialProvider.notifier).serversUsing(cred.id);
+      return ListTile(
+        leading: Icon(
+          cred == null ? Icons.person_off_outlined : Icons.person,
+          color: cred == null ? Colors.orange : null,
+        ),
+        title: Text(l10n.bmcAccount),
+        subtitle: Text(
+          switch (cred) {
+            null => l10n.bmcAccountUnset,
+            final c when shared > 1 =>
+              '${c.name} (${c.user}) - ${l10n.bmcAccountShared(shared)}',
+            final c => '${c.name} (${c.user})',
+          },
+          style: UIs.textGrey,
+        ),
+        trailing: cred == null
+            ? const Icon(Icons.keyboard_arrow_right)
+            : IconButton(
+                icon: const Icon(Icons.edit),
+                // Awaited, and the result read back. That page can delete the
+                // account, and leaving without doing so left `_bmcCredId`
+                // naming a row that is gone: the tile rebuilt as "none picked"
+                // from the provider while the value behind it did not move, so
+                // the two disagreed with nothing on screen to say so, and Save
+                // took a foreign key error out of the editor.
+                onPressed: () async {
+                  await BmcCredentialEditPage.route.go(
+                    context,
+                    args: BmcCredentialEditPageArgs(cred: cred),
+                  );
+                  if (!mounted) return;
+                  final live = ref.read(bmcCredentialProvider).creds;
+                  if (!live.any((e) => e.id == cred.id)) {
+                    _bmcCredId.value = null;
+                  }
+                },
+              ),
+        onTap: _onTapBmcAccount,
+      ).cardx;
+    });
+  }
+
+  /// The certificate the BMC presents, and whether it has been reviewed.
+  ///
+  /// A step of its own because it has to be: the TLS callbacks that decide
+  /// whether to accept a certificate are synchronous, so the question cannot be
+  /// put to anyone from inside them. Reviewing here means the check at request
+  /// time answers by itself, with nothing to interrupt — see `cert_pin.dart`.
+  Widget _buildBmcCert() {
+    return _bmcCert.listenVal((pinned) {
+      final has = pinned?.isNotEmpty == true;
+      return ListTile(
+        leading: Icon(
+          has ? Icons.verified_user : Icons.gpp_maybe,
+          color: has ? null : Colors.orange,
+        ),
+        title: Text(l10n.bmcCert),
+        subtitle: Text(
+          has ? l10n.bmcCertPinned : l10n.bmcCertUnreviewed,
+          style: UIs.textGrey,
+        ),
+        trailing: const Icon(Icons.keyboard_arrow_right),
+        onTap: _onTapBmcCert,
+      ).cardx;
+    });
   }
 
   Widget _buildWOLs() {
