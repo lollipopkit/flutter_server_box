@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/data/model/server/bmc_credential.dart';
+import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
 
 part 'bmc_credential.freezed.dart';
@@ -64,11 +67,39 @@ class BmcCredentialNotifier extends _$BmcCredentialNotifier {
 
   /// Deletes the account. The servers that used it keep their address and lose
   /// the account — `ON DELETE SET NULL`, not cascade.
+  ///
+  /// Those servers are cleared here rather than left to the foreign key, which
+  /// on its own is not enough twice over. It writes the column directly, so
+  /// `updated_at` and `rev` do not move and the clearing never travels: a
+  /// peer's next sync reads the row as unchanged and puts the dangling id
+  /// back. And it is invisible to this process, since [ServerStore] answers
+  /// from a cache this delete does not touch — the next save of an affected
+  /// server would send the id back to a row that is gone and take a foreign
+  /// key error out of the editor.
+  ///
+  /// The key action stays as the backstop for a row written by anything that
+  /// does not come through here.
   Future<void> delete(BmcCredential cred) async {
+    final affected = Stores.server
+        .fetch()
+        .where((spi) => spi.bmc?.credId == cred.id)
+        .toList();
+
+    for (final spi in affected) {
+      Stores.server.update(
+        spi,
+        spi.copyWith(bmc: spi.bmc!.copyWith(credId: null)),
+      );
+    }
+
     Stores.bmcCredential.delete(cred);
     state = state.copyWith(
       creds: state.creds.where((e) => e.id != cred.id).toList(),
     );
+
+    if (affected.isNotEmpty) {
+      unawaited(ref.read(serversProvider.notifier).reload());
+    }
     bakSync.sync(milliDelay: 1000);
   }
 

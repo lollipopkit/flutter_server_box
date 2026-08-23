@@ -78,7 +78,13 @@ extension _Actions on _ServerEditPageState {
   /// in one of them.
   Future<void> _onTapBmcAccount() async {
     final creds = ref.read(bmcCredentialProvider).creds;
-    final picked = await context.showPickSingleDialog<String>(
+    final current = _bmcCredId.value;
+    // `showPickDialog` rather than `showPickSingleDialog`, which answers null
+    // for a dialog that was dismissed *and* for one whose selection was
+    // cleared. Those have to be told apart here, or dismissing would silently
+    // unset the account. This one answers null only for a dismissal, and an
+    // empty list for a clear.
+    final picked = await context.showPickDialog<String>(
       title: l10n.bmcAccount,
       items: [...creds.map((e) => e.id), _kNewBmcCred],
       display: (id) {
@@ -86,12 +92,20 @@ extension _Actions on _ServerEditPageState {
         final cred = creds.firstWhereOrNull((e) => e.id == id);
         return cred == null ? id : '${cred.name} (${cred.user})';
       },
-      initial: _bmcCredId.value,
+      multi: false,
+      initial: current == null ? null : [current],
+      // An address with no account is a state the whole stack models: the
+      // column is nullable, the key action sets it null, `isComplete` answers
+      // false to it and the tile has a string for it. Without this there was
+      // no way back to it once an account had been picked, short of deleting
+      // the address and the reviewed certificate with it.
+      clearable: true,
     );
     if (picked == null || !mounted) return;
 
-    if (picked != _kNewBmcCred) {
-      _bmcCredId.value = picked;
+    final choice = picked.firstOrNull;
+    if (choice != _kNewBmcCred) {
+      _bmcCredId.value = choice;
       return;
     }
     final created = await BmcCredentialEditPage.route.go(context);
@@ -459,7 +473,12 @@ extension _Actions on _ServerEditPageState {
             certSha256: _bmcCert.value,
           );
     if (bmc != null && !bmc.isComplete) {
-      Toast.error(libL10n.fail, body: l10n.bmcAddrInvalid);
+      // Which half is missing, since `isComplete` is both and reporting either
+      // as a bad address sent the user back to retype one that was fine.
+      Toast.error(
+        libL10n.fail,
+        body: bmc.uri == null ? l10n.bmcAddrInvalid : l10n.bmcAccountUnset,
+      );
       return;
     }
 

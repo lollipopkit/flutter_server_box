@@ -655,10 +655,23 @@ extension _Widgets on _ServerEditPageState {
             ? const Icon(Icons.keyboard_arrow_right)
             : IconButton(
                 icon: const Icon(Icons.edit),
-                onPressed: () => BmcCredentialEditPage.route.go(
-                  context,
-                  args: BmcCredentialEditPageArgs(cred: cred),
-                ),
+                // Awaited, and the result read back. That page can delete the
+                // account, and leaving without doing so left `_bmcCredId`
+                // naming a row that is gone: the tile rebuilt as "none picked"
+                // from the provider while the value behind it did not move, so
+                // the two disagreed with nothing on screen to say so, and Save
+                // took a foreign key error out of the editor.
+                onPressed: () async {
+                  await BmcCredentialEditPage.route.go(
+                    context,
+                    args: BmcCredentialEditPageArgs(cred: cred),
+                  );
+                  if (!mounted) return;
+                  final live = ref.read(bmcCredentialProvider).creds;
+                  if (!live.any((e) => e.id == cred.id)) {
+                    _bmcCredId.value = null;
+                  }
+                },
               ),
         onTap: _onTapBmcAccount,
       ).cardx;
