@@ -2054,12 +2054,6 @@ abstract class AppLocalizations {
   /// **'The SSH host key changed for {serverName}. Only continue if you trust this server.'**
   String sshHostKeyChangedDesc(Object serverName);
 
-  /// No description provided for @sshHostKeyFingerprint.
-  ///
-  /// In en, this message translates to:
-  /// **'Fingerprint (SHA256): {fingerprint}'**
-  String sshHostKeyFingerprint(Object fingerprint);
-
   /// Label for the SSH host key type displayed in the host key verification dialog.
   ///
   /// In en, this message translates to:

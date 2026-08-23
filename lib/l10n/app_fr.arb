@@ -240,7 +240,6 @@
   "sshConfigImportTip": "Proposer de lire ~/.ssh/config lors de la première création de serveur",
   "sshConfigImported": "{count} serveurs importés depuis la configuration SSH",
   "sshHostKeyChangedDesc": "La clé d'hôte SSH de {serverName} a changé. Ne continuez que si vous faites confiance à ce serveur.",
-  "sshHostKeyFingerprint": "Empreinte (SHA256) : {fingerprint}",
   "sshHostKeyType": "Type de clé d'hôte SSH",
   "sshKnownHostKeys": "Hôtes connus",
   "sshKnownHostKeysTip": "Les clés d’hôte que cette app a acceptées",

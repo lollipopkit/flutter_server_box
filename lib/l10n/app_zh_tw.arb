@@ -341,7 +341,6 @@
   "sshConfigImportTip": "在建立第一個伺服器時提示讀取 ~/.ssh/config",
   "sshConfigImported": "已從SSH設定匯入{count}個伺服器",
   "sshHostKeyChangedDesc": "伺服器 {serverName} 的 SSH 主機金鑰已變更，僅在信任該伺服器時繼續。",
-  "sshHostKeyFingerprint": "指紋（SHA256）：{fingerprint}",
   "sshHostKeyType": "SSH 主機金鑰類型",
   "sshKnownHostKeys": "已信任的主機",
   "sshKnownHostKeysTip": "本 app 已接受的主機金鑰",

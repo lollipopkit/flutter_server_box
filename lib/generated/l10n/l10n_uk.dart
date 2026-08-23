@@ -1136,11 +1136,6 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String sshHostKeyFingerprint(Object fingerprint) {
-    return 'Відбиток (SHA256): $fingerprint';
-  }
-
-  @override
   String get sshHostKeyType => 'Тип ключа хоста SSH';
 
   @override

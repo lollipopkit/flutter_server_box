@@ -1132,11 +1132,6 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String sshHostKeyFingerprint(Object fingerprint) {
-    return 'Parmak izi (SHA256): $fingerprint';
-  }
-
-  @override
   String get sshHostKeyType => 'SSH ana bilgisayar anahtarı türü';
 
   @override

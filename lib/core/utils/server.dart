@@ -668,7 +668,12 @@ Future<bool> _showHostKeyDialog(
         SelectableText('${libL10n.server}: ${info.spi.name}'),
         SelectableText('${libL10n.addr}: $hostLine'),
         SelectableText('${l10n.sshHostKeyType}: ${info.keyType}'),
-        SelectableText(l10n.sshHostKeyFingerprint(info.fingerprint)),
+        // Verbatim, which is the whole point of it: this is character for
+        // character what `ssh-keygen -l` prints on the server, so it can be
+        // compared against that without anyone having to strip a label off
+        // first. It names its own algorithm, so a `(SHA256)` around it said
+        // SHA256 twice.
+        SelectableText(info.fingerprint),
         if (info.previousFingerprint != null) ...[
           const SizedBox(height: 12),
           SelectableText(

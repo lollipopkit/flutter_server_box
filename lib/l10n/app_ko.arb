@@ -286,7 +286,6 @@
   "sshConfigImportTip": "첫 서버 생성 시 ~/.ssh/config 읽기 안내",
   "sshConfigImported": "SSH 설정에서 서버 {count}개를 가져왔습니다",
   "sshHostKeyChangedDesc": "{serverName}의 SSH 호스트 키가 변경되었습니다. 이 서버를 신뢰하는 경우에만 계속 진행하세요.",
-  "sshHostKeyFingerprint": "지문 (SHA256): {fingerprint}",
   "sshHostKeyType": "SSH 호스트 키 유형",
   "sshKnownHostKeys": "알려진 호스트",
   "sshKnownHostKeysTip": "이 앱이 수락한 호스트 키",

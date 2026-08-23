@@ -1131,11 +1131,6 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String sshHostKeyFingerprint(Object fingerprint) {
-    return 'Sidik jari (SHA256): $fingerprint';
-  }
-
-  @override
   String get sshHostKeyType => 'Jenis kunci host SSH';
 
   @override

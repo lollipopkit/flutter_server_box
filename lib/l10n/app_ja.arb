@@ -240,7 +240,6 @@
   "sshConfigImportTip": "初回サーバー作成時に~/.ssh/configの読み取りを促す",
   "sshConfigImported": "SSH設定から{count}個のサーバーをインポートしました",
   "sshHostKeyChangedDesc": "{serverName} の SSH ホスト鍵が変更されました。このサーバーを信頼できる場合のみ続行してください。",
-  "sshHostKeyFingerprint": "フィンガープリント (SHA256): {fingerprint}",
   "sshHostKeyType": "SSH ホストキーの種類",
   "sshKnownHostKeys": "既知のホスト",
   "sshKnownHostKeysTip": "このアプリが受け入れたホスト鍵",

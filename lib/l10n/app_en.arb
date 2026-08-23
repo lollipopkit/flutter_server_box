@@ -414,7 +414,6 @@
   "sshConfigImportTip": "Prompt to read ~/.ssh/config on first server creation",
   "sshConfigImported": "Imported {count} servers from SSH config",
   "sshHostKeyChangedDesc": "The SSH host key changed for {serverName}. Only continue if you trust this server.",
-  "sshHostKeyFingerprint": "Fingerprint (SHA256): {fingerprint}",
   "sshHostKeyType": "SSH host key type",
   "sshKnownHostKeys": "Known hosts",
   "sshKnownHostKeysTip": "The host keys this app has accepted",

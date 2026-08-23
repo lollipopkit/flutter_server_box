@@ -240,7 +240,6 @@
   "sshConfigImportTip": "Prompt om ~/.ssh/config te lezen bij het aanmaken van de eerste server",
   "sshConfigImported": "{count} servers geïmporteerd uit SSH-configuratie",
   "sshHostKeyChangedDesc": "De SSH-hostsleutel voor {serverName} is gewijzigd. Ga alleen verder als u deze server vertrouwt.",
-  "sshHostKeyFingerprint": "Vingerafdruk (SHA256): {fingerprint}",
   "sshHostKeyType": "Type SSH-hostsleutel",
   "sshKnownHostKeys": "Bekende hosts",
   "sshKnownHostKeysTip": "De hostsleutels die deze app heeft geaccepteerd",

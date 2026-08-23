@@ -1051,11 +1051,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String sshHostKeyFingerprint(Object fingerprint) {
-    return '指纹（SHA256）：$fingerprint';
-  }
-
-  @override
   String get sshHostKeyType => 'SSH 主机密钥类型';
 
   @override
@@ -2499,11 +2494,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String sshHostKeyChangedDesc(Object serverName) {
     return '伺服器 $serverName 的 SSH 主機金鑰已變更，僅在信任該伺服器時繼續。';
-  }
-
-  @override
-  String sshHostKeyFingerprint(Object fingerprint) {
-    return '指紋（SHA256）：$fingerprint';
   }
 
   @override

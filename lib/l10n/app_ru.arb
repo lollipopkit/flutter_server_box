@@ -240,7 +240,6 @@
   "sshConfigImportTip": "Предложение прочитать ~/.ssh/config при создании первого сервера",
   "sshConfigImported": "Импортировано {count} серверов из SSH-конфигурации",
   "sshHostKeyChangedDesc": "SSH-ключ хоста для {serverName} изменился. Продолжайте только если доверяете этому серверу.",
-  "sshHostKeyFingerprint": "Отпечаток (SHA256): {fingerprint}",
   "sshHostKeyType": "Тип ключа хоста SSH",
   "sshKnownHostKeys": "Известные хосты",
   "sshKnownHostKeysTip": "Ключи хостов, принятые этим приложением",
