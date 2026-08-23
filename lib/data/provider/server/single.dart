@@ -120,9 +120,13 @@ class ServerNotifier extends _$ServerNotifier {
 
     // Cache timeout in memory; the DB read per poll is replaced by this.
     _cachedTimeout = Stores.setting.timeout.fetch();
-    Stores.setting.timeout.listenable().addListener(() {
+    final timeoutListenable = Stores.setting.timeout.listenable();
+    void timeoutListener() {
       _cachedTimeout = Stores.setting.timeout.fetch();
-    });
+    }
+
+    timeoutListenable.addListener(timeoutListener);
+    ref.onDispose(() => timeoutListenable.removeListener(timeoutListener));
 
     final serverNotifier = ref.read(serversProvider);
     final spi = serverNotifier.servers[serverId];

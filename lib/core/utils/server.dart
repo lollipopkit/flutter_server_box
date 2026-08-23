@@ -408,6 +408,12 @@ List<Spi> _resolveJumpCandidates({
 
 bool _isJumpFailoverError(Object error) {
   final errStr = error.toString().toLowerCase();
+  // Exclude auth failures that also contain "too many" (e.g. "too many authentication failures").
+  if (errStr.contains('auth') ||
+      errStr.contains('permission denied') ||
+      errStr.contains('access denied')) {
+    return false;
+  }
   return errStr.contains('timed out') ||
       errStr.contains('timeout') ||
       errStr.contains('connection refused') ||
@@ -422,9 +428,9 @@ bool _isJumpFailoverError(Object error) {
       errStr.contains('proxycommand exited') ||
       errStr.contains('proxycommand timed out') ||
       errStr.contains('channel open failed') ||
-      errStr.contains('session') && errStr.contains('failed') ||
       errStr.contains('maxsessions') ||
-      errStr.contains('too many');
+      (errStr.contains('too many') && errStr.contains('session')) ||
+      (errStr.contains('session') && errStr.contains('failed') && !errStr.contains('auth'));
 }
 
 @visibleForTesting
