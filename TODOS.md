@@ -298,6 +298,10 @@ agent 的那条完整路径。
 跑一次那个 workflow 就能解开。在那之前,离线包那条路(`SBM_INSTALL_PKG=<目录或 tarball>`)
 是唯一能装成的方式,它本身也是内网服务器需要的。
 
+2026-08-23 在一台 NixOS 25.11 aarch64 上实跑确认了这条:`./install.sh install` 第一句
+就是那个错,连发行版兼容性都没机会暴露。所以任何"monitor 在 X 上能不能装"的问题,
+现在都问不出结果 —— 先发一次 release,或者先构一个离线包。
+
 ## macOS 两套产物:App Store 版什么时候停更
 
 自动导入已在真机上验过:keychain 两个 build 通用,容器读取不弹窗。剩下的是一个决定
