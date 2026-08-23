@@ -396,7 +396,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
 
     if (notify) {
       setState(apply);
-      _scheduleAutoScroll(force: true);
+      scheduleAgentAutoScroll(_scrollController, force: true);
     } else {
       apply();
     }
@@ -480,7 +480,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       await _persistConversation();
       if (!mounted) return;
       _startStream();
-      _scheduleAutoScroll(force: true);
+      scheduleAgentAutoScroll(_scrollController, force: true);
     } finally {
       _submissionInFlight = false;
     }
@@ -513,7 +513,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
           onError: (Object error, StackTrace stackTrace) {
             if (!mounted) return;
             setState(() {
-              _error = _describeError(error);
+              _error = describeAgentError(context, error);
               _isStreaming = false;
               _streamingContent = null;
               _pendingCommand = null;
@@ -536,7 +536,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       setState(() {
         _streamingContent = (_streamingContent ?? '') + event.delta;
       });
-      _scheduleAutoScroll();
+      scheduleAgentAutoScroll(_scrollController);
       return;
     }
     if (event is AskAiToolSuggestion) {
@@ -549,7 +549,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
     if (event is AskAiStreamError) {
       _subscription?.cancel();
       setState(() {
-        _error = _describeError(event.error);
+        _error = describeAgentError(context, event.error);
         _isStreaming = false;
         _streamingContent = null;
         _pendingCommand = null;
@@ -581,7 +581,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
     });
     await _persistConversation();
     if (!mounted) return;
-    _scheduleAutoScroll(force: true);
+    scheduleAgentAutoScroll(_scrollController, force: true);
 
     if (command != null &&
         shouldAutoRunAgentCommand(
@@ -596,47 +596,6 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
         }
       });
     }
-  }
-
-  void _scheduleAutoScroll({bool force = false}) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_scrollController.hasClients) return;
-      final position = _scrollController.position;
-      if (!force && position.pixels < position.maxScrollExtent - 96) return;
-      _scrollController.animateTo(
-        position.maxScrollExtent,
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOutCubic,
-      );
-    });
-  }
-
-  String _describeError(Object error) {
-    final l10n = context.l10n;
-    if (error is AskAiConfigException) {
-      if (error.missingFields.isEmpty) {
-        return error.hasInvalidBaseUrl
-            ? '${libL10n.invalidUrl}: ${error.invalidBaseUrl}'
-            : error.toString();
-      }
-      final locale = Localizations.maybeLocaleOf(context);
-      final separator = switch (locale?.languageCode) {
-        'zh' || 'ja' => '、',
-        _ => ', ',
-      };
-      final fields = error.missingFields
-          .map(
-            (field) => switch (field) {
-              AskAiConfigField.baseUrl => libL10n.apiEndpoint,
-              AskAiConfigField.apiKey => libL10n.apiKey,
-              AskAiConfigField.model => libL10n.askAiModel,
-            },
-          )
-          .join(separator);
-      return l10n.askAiConfigMissing(fields);
-    }
-    if (error is AskAiNetworkException) return error.message;
-    return error.toString();
   }
 
   Future<void> _runPendingCommand({bool autoApproved = false}) async {
@@ -679,7 +638,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       result = await widget.onCommandRun(command);
     } catch (error) {
       if (!mounted) return;
-      final message = _describeError(error);
+      final message = describeAgentError(context, error);
       setState(() {
         _history.add(
           AskAiFunctionOutputItem(
@@ -701,7 +660,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
         await _persistConversation();
       } catch (persistError) {
         if (!mounted) return;
-        setState(() => _error = _describeError(persistError));
+        setState(() => _error = describeAgentError(context, persistError));
       }
       return;
     }
@@ -724,11 +683,11 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       await _persistConversation();
     } catch (persistError) {
       if (!mounted) return;
-      setState(() => _error = _describeError(persistError));
+      setState(() => _error = describeAgentError(context, persistError));
       return;
     }
     if (!mounted) return;
-    _scheduleAutoScroll(force: true);
+    scheduleAgentAutoScroll(_scrollController, force: true);
     if (!result.cancelled) _startStream();
   }
 
@@ -788,12 +747,6 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       _pendingCommandRestored = false;
       _chatEntries.add(_ChatEntry.notice(context.l10n.askAiInterrupted));
     });
-  }
-
-  Future<void> _copyText(String text) async {
-    if (text.trim().isEmpty) return;
-    await Clipboard.setData(ClipboardData(text: text));
-    if (mounted) Toast.success(libL10n.success);
   }
 
   Widget _buildHeader(BuildContext context, ThemeData theme) {
@@ -993,7 +946,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
                 child: IconButton(
                   tooltip: libL10n.copy,
                   visualDensity: VisualDensity.compact,
-                  onPressed: () => _copyText(entry.content ?? ''),
+                  onPressed: () => copyAgentText(entry.content ?? ''),
                   icon: const Icon(Icons.copy, size: 17),
                 ),
               ),
@@ -1233,7 +1186,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
                 child: Text(context.l10n.askAiDecline),
               ),
               TextButton.icon(
-                onPressed: _isWorking ? null : () => _copyText(command.command),
+                onPressed: _isWorking ? null : () => copyAgentText(command.command),
                 icon: const Icon(Icons.copy, size: 17),
                 label: Text(libL10n.copy),
               ),
@@ -1259,23 +1212,13 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
   /// A bare Enter mid-composition belongs to the IME, which uses it to accept
   /// a candidate; a modified one never does, so only the bare form gives way.
   KeyEventResult _handleComposerKey(KeyEvent event, bool canSend) {
-    if (event is! KeyDownEvent) return KeyEventResult.ignored;
-    if (event.logicalKey != LogicalKeyboardKey.enter &&
-        event.logicalKey != LogicalKeyboardKey.numpadEnter) {
+    if (!composerKeySends(
+      event,
+      composing: !_inputController.value.composing.isCollapsed,
+      sendOnEnter: Stores.setting.askAiSendOnEnter.fetch(),
+    )) {
       return KeyEventResult.ignored;
     }
-
-    final keys = HardwareKeyboard.instance;
-    final withModifier = keys.isMetaPressed || keys.isControlPressed;
-    final sends = Stores.setting.askAiSendOnEnter.fetch()
-        ? !keys.isShiftPressed
-        : withModifier;
-    if (!sends) return KeyEventResult.ignored;
-
-    if (!withModifier && !_inputController.value.composing.isCollapsed) {
-      return KeyEventResult.ignored;
-    }
-
     if (canSend) _submitPrompt(_inputController.text);
     // Handled either way: the key meant "send", and letting it through would
     // leave a line break behind whenever there was nothing to send.
@@ -1300,34 +1243,9 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
             const SizedBox(height: 8),
           ],
           if (_error != null) ...[
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.errorContainer,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    color: theme.colorScheme.onErrorContainer,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      _error!,
-                      style: TextStyle(
-                        color: theme.colorScheme.onErrorContainer,
-                      ),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: _isWorking ? null : _startStream,
-                    child: Text(libL10n.retry),
-                  ),
-                ],
-              ),
+            AgentErrorBanner(
+              message: _error!,
+              onRetry: _isWorking ? null : _startStream,
             ),
             const SizedBox(height: 8),
           ],
