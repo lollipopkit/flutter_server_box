@@ -23,7 +23,7 @@ mixin _$Spi {
 /// monitor-only server had to invent an address and a user named
 /// `monitor` to satisfy them.
  SshCredential? get ssh;/// Reach this server via a `monitor` instance's HTTP API. A peer of
-/// [ssh]; a server may carry either, both, or neither.
+/// [ssh]; a server may carry either one, or neither.
  MonitorHttpCredential? get monitorHttp; List<String>? get tags; bool get autoConnect; ServerCustom? get custom; WakeOnLanCfg? get wolCfg;/// This server's BMC, or null when it has none configured. A side channel
 /// beside [wolCfg], not a way of reaching the host — see `BmcCfg`.
  BmcCfg? get bmc;/// It only applies to SSH terminal.
@@ -243,7 +243,7 @@ class _Spi extends Spi {
 /// `monitor` to satisfy them.
 @override final  SshCredential? ssh;
 /// Reach this server via a `monitor` instance's HTTP API. A peer of
-/// [ssh]; a server may carry either, both, or neither.
+/// [ssh]; a server may carry either one, or neither.
 @override final  MonitorHttpCredential? monitorHttp;
  final  List<String>? _tags;
 @override List<String>? get tags {

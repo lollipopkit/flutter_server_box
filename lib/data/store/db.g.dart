@@ -587,6 +587,48 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _bmcAddrMeta = const VerificationMeta(
+    'bmcAddr',
+  );
+  @override
+  late final GeneratedColumn<String> bmcAddr = GeneratedColumn<String>(
+    'bmc_addr',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _bmcUserMeta = const VerificationMeta(
+    'bmcUser',
+  );
+  @override
+  late final GeneratedColumn<String> bmcUser = GeneratedColumn<String>(
+    'bmc_user',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _bmcPwdMeta = const VerificationMeta('bmcPwd');
+  @override
+  late final GeneratedColumn<String> bmcPwd = GeneratedColumn<String>(
+    'bmc_pwd',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _bmcCertSha256Meta = const VerificationMeta(
+    'bmcCertSha256',
+  );
+  @override
+  late final GeneratedColumn<String> bmcCertSha256 = GeneratedColumn<String>(
+    'bmc_cert_sha256',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _pveAddrMeta = const VerificationMeta(
     'pveAddr',
   );
@@ -703,6 +745,10 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
     wolMac,
     wolIp,
     wolPwd,
+    bmcAddr,
+    bmcUser,
+    bmcPwd,
+    bmcCertSha256,
     pveAddr,
     pveIgnoreCert,
     pvePwd,
@@ -881,6 +927,33 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
         wolPwd.isAcceptableOrUnknown(data['wol_pwd']!, _wolPwdMeta),
       );
     }
+    if (data.containsKey('bmc_addr')) {
+      context.handle(
+        _bmcAddrMeta,
+        bmcAddr.isAcceptableOrUnknown(data['bmc_addr']!, _bmcAddrMeta),
+      );
+    }
+    if (data.containsKey('bmc_user')) {
+      context.handle(
+        _bmcUserMeta,
+        bmcUser.isAcceptableOrUnknown(data['bmc_user']!, _bmcUserMeta),
+      );
+    }
+    if (data.containsKey('bmc_pwd')) {
+      context.handle(
+        _bmcPwdMeta,
+        bmcPwd.isAcceptableOrUnknown(data['bmc_pwd']!, _bmcPwdMeta),
+      );
+    }
+    if (data.containsKey('bmc_cert_sha256')) {
+      context.handle(
+        _bmcCertSha256Meta,
+        bmcCertSha256.isAcceptableOrUnknown(
+          data['bmc_cert_sha256']!,
+          _bmcCertSha256Meta,
+        ),
+      );
+    }
     if (data.containsKey('pve_addr')) {
       context.handle(
         _pveAddrMeta,
@@ -1035,6 +1108,22 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
         DriftSqlType.string,
         data['${effectivePrefix}wol_pwd'],
       ),
+      bmcAddr: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}bmc_addr'],
+      ),
+      bmcUser: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}bmc_user'],
+      ),
+      bmcPwd: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}bmc_pwd'],
+      ),
+      bmcCertSha256: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}bmc_cert_sha256'],
+      ),
       pveAddr: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}pve_addr'],
@@ -1105,6 +1194,21 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
   final String? wolMac;
   final String? wolIp;
   final String? wolPwd;
+
+  /// The BMC, a side channel beside the Wake-on-LAN fields above.
+  ///
+  /// Deliberately outside the SSH/monitor constraint below: a BMC is not a way
+  /// of reaching the host, so it neither satisfies that requirement nor
+  /// conflicts with either side of it. A server may carry one alongside SSH or
+  /// alongside a monitor agent.
+  ///
+  /// [bmcCertSha256] is what the user reviewed, not what a CA said — see
+  /// `BmcCfg.certSha256`. Null means nothing has been reviewed and a
+  /// connection is refused rather than trusted.
+  final String? bmcAddr;
+  final String? bmcUser;
+  final String? bmcPwd;
+  final String? bmcCertSha256;
   final String? pveAddr;
   final bool pveIgnoreCert;
   final String? pvePwd;
@@ -1136,6 +1240,10 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     this.wolMac,
     this.wolIp,
     this.wolPwd,
+    this.bmcAddr,
+    this.bmcUser,
+    this.bmcPwd,
+    this.bmcCertSha256,
     this.pveAddr,
     required this.pveIgnoreCert,
     this.pvePwd,
@@ -1203,6 +1311,18 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     }
     if (!nullToAbsent || wolPwd != null) {
       map['wol_pwd'] = Variable<String>(wolPwd);
+    }
+    if (!nullToAbsent || bmcAddr != null) {
+      map['bmc_addr'] = Variable<String>(bmcAddr);
+    }
+    if (!nullToAbsent || bmcUser != null) {
+      map['bmc_user'] = Variable<String>(bmcUser);
+    }
+    if (!nullToAbsent || bmcPwd != null) {
+      map['bmc_pwd'] = Variable<String>(bmcPwd);
+    }
+    if (!nullToAbsent || bmcCertSha256 != null) {
+      map['bmc_cert_sha256'] = Variable<String>(bmcCertSha256);
     }
     if (!nullToAbsent || pveAddr != null) {
       map['pve_addr'] = Variable<String>(pveAddr);
@@ -1285,6 +1405,18 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       wolPwd: wolPwd == null && nullToAbsent
           ? const Value.absent()
           : Value(wolPwd),
+      bmcAddr: bmcAddr == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bmcAddr),
+      bmcUser: bmcUser == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bmcUser),
+      bmcPwd: bmcPwd == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bmcPwd),
+      bmcCertSha256: bmcCertSha256 == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bmcCertSha256),
       pveAddr: pveAddr == null && nullToAbsent
           ? const Value.absent()
           : Value(pveAddr),
@@ -1338,6 +1470,10 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       wolMac: serializer.fromJson<String?>(json['wolMac']),
       wolIp: serializer.fromJson<String?>(json['wolIp']),
       wolPwd: serializer.fromJson<String?>(json['wolPwd']),
+      bmcAddr: serializer.fromJson<String?>(json['bmcAddr']),
+      bmcUser: serializer.fromJson<String?>(json['bmcUser']),
+      bmcPwd: serializer.fromJson<String?>(json['bmcPwd']),
+      bmcCertSha256: serializer.fromJson<String?>(json['bmcCertSha256']),
       pveAddr: serializer.fromJson<String?>(json['pveAddr']),
       pveIgnoreCert: serializer.fromJson<bool>(json['pveIgnoreCert']),
       pvePwd: serializer.fromJson<String?>(json['pvePwd']),
@@ -1374,6 +1510,10 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       'wolMac': serializer.toJson<String?>(wolMac),
       'wolIp': serializer.toJson<String?>(wolIp),
       'wolPwd': serializer.toJson<String?>(wolPwd),
+      'bmcAddr': serializer.toJson<String?>(bmcAddr),
+      'bmcUser': serializer.toJson<String?>(bmcUser),
+      'bmcPwd': serializer.toJson<String?>(bmcPwd),
+      'bmcCertSha256': serializer.toJson<String?>(bmcCertSha256),
       'pveAddr': serializer.toJson<String?>(pveAddr),
       'pveIgnoreCert': serializer.toJson<bool>(pveIgnoreCert),
       'pvePwd': serializer.toJson<String?>(pvePwd),
@@ -1408,6 +1548,10 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     Value<String?> wolMac = const Value.absent(),
     Value<String?> wolIp = const Value.absent(),
     Value<String?> wolPwd = const Value.absent(),
+    Value<String?> bmcAddr = const Value.absent(),
+    Value<String?> bmcUser = const Value.absent(),
+    Value<String?> bmcPwd = const Value.absent(),
+    Value<String?> bmcCertSha256 = const Value.absent(),
     Value<String?> pveAddr = const Value.absent(),
     bool? pveIgnoreCert,
     Value<String?> pvePwd = const Value.absent(),
@@ -1445,6 +1589,12 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     wolMac: wolMac.present ? wolMac.value : this.wolMac,
     wolIp: wolIp.present ? wolIp.value : this.wolIp,
     wolPwd: wolPwd.present ? wolPwd.value : this.wolPwd,
+    bmcAddr: bmcAddr.present ? bmcAddr.value : this.bmcAddr,
+    bmcUser: bmcUser.present ? bmcUser.value : this.bmcUser,
+    bmcPwd: bmcPwd.present ? bmcPwd.value : this.bmcPwd,
+    bmcCertSha256: bmcCertSha256.present
+        ? bmcCertSha256.value
+        : this.bmcCertSha256,
     pveAddr: pveAddr.present ? pveAddr.value : this.pveAddr,
     pveIgnoreCert: pveIgnoreCert ?? this.pveIgnoreCert,
     pvePwd: pvePwd.present ? pvePwd.value : this.pvePwd,
@@ -1500,6 +1650,12 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       wolMac: data.wolMac.present ? data.wolMac.value : this.wolMac,
       wolIp: data.wolIp.present ? data.wolIp.value : this.wolIp,
       wolPwd: data.wolPwd.present ? data.wolPwd.value : this.wolPwd,
+      bmcAddr: data.bmcAddr.present ? data.bmcAddr.value : this.bmcAddr,
+      bmcUser: data.bmcUser.present ? data.bmcUser.value : this.bmcUser,
+      bmcPwd: data.bmcPwd.present ? data.bmcPwd.value : this.bmcPwd,
+      bmcCertSha256: data.bmcCertSha256.present
+          ? data.bmcCertSha256.value
+          : this.bmcCertSha256,
       pveAddr: data.pveAddr.present ? data.pveAddr.value : this.pveAddr,
       pveIgnoreCert: data.pveIgnoreCert.present
           ? data.pveIgnoreCert.value
@@ -1542,6 +1698,10 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           ..write('wolMac: $wolMac, ')
           ..write('wolIp: $wolIp, ')
           ..write('wolPwd: $wolPwd, ')
+          ..write('bmcAddr: $bmcAddr, ')
+          ..write('bmcUser: $bmcUser, ')
+          ..write('bmcPwd: $bmcPwd, ')
+          ..write('bmcCertSha256: $bmcCertSha256, ')
           ..write('pveAddr: $pveAddr, ')
           ..write('pveIgnoreCert: $pveIgnoreCert, ')
           ..write('pvePwd: $pvePwd, ')
@@ -1578,6 +1738,10 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     wolMac,
     wolIp,
     wolPwd,
+    bmcAddr,
+    bmcUser,
+    bmcPwd,
+    bmcCertSha256,
     pveAddr,
     pveIgnoreCert,
     pvePwd,
@@ -1613,6 +1777,10 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           other.wolMac == this.wolMac &&
           other.wolIp == this.wolIp &&
           other.wolPwd == this.wolPwd &&
+          other.bmcAddr == this.bmcAddr &&
+          other.bmcUser == this.bmcUser &&
+          other.bmcPwd == this.bmcPwd &&
+          other.bmcCertSha256 == this.bmcCertSha256 &&
           other.pveAddr == this.pveAddr &&
           other.pveIgnoreCert == this.pveIgnoreCert &&
           other.pvePwd == this.pvePwd &&
@@ -1646,6 +1814,10 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
   final Value<String?> wolMac;
   final Value<String?> wolIp;
   final Value<String?> wolPwd;
+  final Value<String?> bmcAddr;
+  final Value<String?> bmcUser;
+  final Value<String?> bmcPwd;
+  final Value<String?> bmcCertSha256;
   final Value<String?> pveAddr;
   final Value<bool> pveIgnoreCert;
   final Value<String?> pvePwd;
@@ -1677,6 +1849,10 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     this.wolMac = const Value.absent(),
     this.wolIp = const Value.absent(),
     this.wolPwd = const Value.absent(),
+    this.bmcAddr = const Value.absent(),
+    this.bmcUser = const Value.absent(),
+    this.bmcPwd = const Value.absent(),
+    this.bmcCertSha256 = const Value.absent(),
     this.pveAddr = const Value.absent(),
     this.pveIgnoreCert = const Value.absent(),
     this.pvePwd = const Value.absent(),
@@ -1709,6 +1885,10 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     this.wolMac = const Value.absent(),
     this.wolIp = const Value.absent(),
     this.wolPwd = const Value.absent(),
+    this.bmcAddr = const Value.absent(),
+    this.bmcUser = const Value.absent(),
+    this.bmcPwd = const Value.absent(),
+    this.bmcCertSha256 = const Value.absent(),
     this.pveAddr = const Value.absent(),
     this.pveIgnoreCert = const Value.absent(),
     this.pvePwd = const Value.absent(),
@@ -1742,6 +1922,10 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     Expression<String>? wolMac,
     Expression<String>? wolIp,
     Expression<String>? wolPwd,
+    Expression<String>? bmcAddr,
+    Expression<String>? bmcUser,
+    Expression<String>? bmcPwd,
+    Expression<String>? bmcCertSha256,
     Expression<String>? pveAddr,
     Expression<bool>? pveIgnoreCert,
     Expression<String>? pvePwd,
@@ -1775,6 +1959,10 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
       if (wolMac != null) 'wol_mac': wolMac,
       if (wolIp != null) 'wol_ip': wolIp,
       if (wolPwd != null) 'wol_pwd': wolPwd,
+      if (bmcAddr != null) 'bmc_addr': bmcAddr,
+      if (bmcUser != null) 'bmc_user': bmcUser,
+      if (bmcPwd != null) 'bmc_pwd': bmcPwd,
+      if (bmcCertSha256 != null) 'bmc_cert_sha256': bmcCertSha256,
       if (pveAddr != null) 'pve_addr': pveAddr,
       if (pveIgnoreCert != null) 'pve_ignore_cert': pveIgnoreCert,
       if (pvePwd != null) 'pve_pwd': pvePwd,
@@ -1809,6 +1997,10 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     Value<String?>? wolMac,
     Value<String?>? wolIp,
     Value<String?>? wolPwd,
+    Value<String?>? bmcAddr,
+    Value<String?>? bmcUser,
+    Value<String?>? bmcPwd,
+    Value<String?>? bmcCertSha256,
     Value<String?>? pveAddr,
     Value<bool>? pveIgnoreCert,
     Value<String?>? pvePwd,
@@ -1841,6 +2033,10 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
       wolMac: wolMac ?? this.wolMac,
       wolIp: wolIp ?? this.wolIp,
       wolPwd: wolPwd ?? this.wolPwd,
+      bmcAddr: bmcAddr ?? this.bmcAddr,
+      bmcUser: bmcUser ?? this.bmcUser,
+      bmcPwd: bmcPwd ?? this.bmcPwd,
+      bmcCertSha256: bmcCertSha256 ?? this.bmcCertSha256,
       pveAddr: pveAddr ?? this.pveAddr,
       pveIgnoreCert: pveIgnoreCert ?? this.pveIgnoreCert,
       pvePwd: pvePwd ?? this.pvePwd,
@@ -1923,6 +2119,18 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     if (wolPwd.present) {
       map['wol_pwd'] = Variable<String>(wolPwd.value);
     }
+    if (bmcAddr.present) {
+      map['bmc_addr'] = Variable<String>(bmcAddr.value);
+    }
+    if (bmcUser.present) {
+      map['bmc_user'] = Variable<String>(bmcUser.value);
+    }
+    if (bmcPwd.present) {
+      map['bmc_pwd'] = Variable<String>(bmcPwd.value);
+    }
+    if (bmcCertSha256.present) {
+      map['bmc_cert_sha256'] = Variable<String>(bmcCertSha256.value);
+    }
     if (pveAddr.present) {
       map['pve_addr'] = Variable<String>(pveAddr.value);
     }
@@ -1975,6 +2183,10 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
           ..write('wolMac: $wolMac, ')
           ..write('wolIp: $wolIp, ')
           ..write('wolPwd: $wolPwd, ')
+          ..write('bmcAddr: $bmcAddr, ')
+          ..write('bmcUser: $bmcUser, ')
+          ..write('bmcPwd: $bmcPwd, ')
+          ..write('bmcCertSha256: $bmcCertSha256, ')
           ..write('pveAddr: $pveAddr, ')
           ..write('pveIgnoreCert: $pveIgnoreCert, ')
           ..write('pvePwd: $pvePwd, ')
@@ -7251,6 +7463,10 @@ typedef $$ServersTableCreateCompanionBuilder =
       Value<String?> wolMac,
       Value<String?> wolIp,
       Value<String?> wolPwd,
+      Value<String?> bmcAddr,
+      Value<String?> bmcUser,
+      Value<String?> bmcPwd,
+      Value<String?> bmcCertSha256,
       Value<String?> pveAddr,
       Value<bool> pveIgnoreCert,
       Value<String?> pvePwd,
@@ -7284,6 +7500,10 @@ typedef $$ServersTableUpdateCompanionBuilder =
       Value<String?> wolMac,
       Value<String?> wolIp,
       Value<String?> wolPwd,
+      Value<String?> bmcAddr,
+      Value<String?> bmcUser,
+      Value<String?> bmcPwd,
+      Value<String?> bmcCertSha256,
       Value<String?> pveAddr,
       Value<bool> pveIgnoreCert,
       Value<String?> pvePwd,
@@ -7617,6 +7837,26 @@ class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
 
   ColumnFilters<String> get wolPwd => $composableBuilder(
     column: $table.wolPwd,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get bmcAddr => $composableBuilder(
+    column: $table.bmcAddr,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get bmcUser => $composableBuilder(
+    column: $table.bmcUser,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get bmcPwd => $composableBuilder(
+    column: $table.bmcPwd,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get bmcCertSha256 => $composableBuilder(
+    column: $table.bmcCertSha256,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -8047,6 +8287,26 @@ class $$ServersTableOrderingComposer extends Composer<_$AppDb, $ServersTable> {
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get bmcAddr => $composableBuilder(
+    column: $table.bmcAddr,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get bmcUser => $composableBuilder(
+    column: $table.bmcUser,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get bmcPwd => $composableBuilder(
+    column: $table.bmcPwd,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get bmcCertSha256 => $composableBuilder(
+    column: $table.bmcCertSha256,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get pveAddr => $composableBuilder(
     column: $table.pveAddr,
     builder: (column) => ColumnOrderings(column),
@@ -8202,6 +8462,20 @@ class $$ServersTableAnnotationComposer
 
   GeneratedColumn<String> get wolPwd =>
       $composableBuilder(column: $table.wolPwd, builder: (column) => column);
+
+  GeneratedColumn<String> get bmcAddr =>
+      $composableBuilder(column: $table.bmcAddr, builder: (column) => column);
+
+  GeneratedColumn<String> get bmcUser =>
+      $composableBuilder(column: $table.bmcUser, builder: (column) => column);
+
+  GeneratedColumn<String> get bmcPwd =>
+      $composableBuilder(column: $table.bmcPwd, builder: (column) => column);
+
+  GeneratedColumn<String> get bmcCertSha256 => $composableBuilder(
+    column: $table.bmcCertSha256,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get pveAddr =>
       $composableBuilder(column: $table.pveAddr, builder: (column) => column);
@@ -8571,6 +8845,10 @@ class $$ServersTableTableManager
                 Value<String?> wolMac = const Value.absent(),
                 Value<String?> wolIp = const Value.absent(),
                 Value<String?> wolPwd = const Value.absent(),
+                Value<String?> bmcAddr = const Value.absent(),
+                Value<String?> bmcUser = const Value.absent(),
+                Value<String?> bmcPwd = const Value.absent(),
+                Value<String?> bmcCertSha256 = const Value.absent(),
                 Value<String?> pveAddr = const Value.absent(),
                 Value<bool> pveIgnoreCert = const Value.absent(),
                 Value<String?> pvePwd = const Value.absent(),
@@ -8602,6 +8880,10 @@ class $$ServersTableTableManager
                 wolMac: wolMac,
                 wolIp: wolIp,
                 wolPwd: wolPwd,
+                bmcAddr: bmcAddr,
+                bmcUser: bmcUser,
+                bmcPwd: bmcPwd,
+                bmcCertSha256: bmcCertSha256,
                 pveAddr: pveAddr,
                 pveIgnoreCert: pveIgnoreCert,
                 pvePwd: pvePwd,
@@ -8635,6 +8917,10 @@ class $$ServersTableTableManager
                 Value<String?> wolMac = const Value.absent(),
                 Value<String?> wolIp = const Value.absent(),
                 Value<String?> wolPwd = const Value.absent(),
+                Value<String?> bmcAddr = const Value.absent(),
+                Value<String?> bmcUser = const Value.absent(),
+                Value<String?> bmcPwd = const Value.absent(),
+                Value<String?> bmcCertSha256 = const Value.absent(),
                 Value<String?> pveAddr = const Value.absent(),
                 Value<bool> pveIgnoreCert = const Value.absent(),
                 Value<String?> pvePwd = const Value.absent(),
@@ -8666,6 +8952,10 @@ class $$ServersTableTableManager
                 wolMac: wolMac,
                 wolIp: wolIp,
                 wolPwd: wolPwd,
+                bmcAddr: bmcAddr,
+                bmcUser: bmcUser,
+                bmcPwd: bmcPwd,
+                bmcCertSha256: bmcCertSha256,
                 pveAddr: pveAddr,
                 pveIgnoreCert: pveIgnoreCert,
                 pvePwd: pvePwd,

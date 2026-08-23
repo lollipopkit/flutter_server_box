@@ -87,6 +87,21 @@ class Servers extends Table with SyncMeta {
   TextColumn get wolIp => text().nullable()();
   TextColumn get wolPwd => text().nullable()();
 
+  /// The BMC, a side channel beside the Wake-on-LAN fields above.
+  ///
+  /// Deliberately outside the SSH/monitor constraint below: a BMC is not a way
+  /// of reaching the host, so it neither satisfies that requirement nor
+  /// conflicts with either side of it. A server may carry one alongside SSH or
+  /// alongside a monitor agent.
+  ///
+  /// [bmcCertSha256] is what the user reviewed, not what a CA said — see
+  /// `BmcCfg.certSha256`. Null means nothing has been reviewed and a
+  /// connection is refused rather than trusted.
+  TextColumn get bmcAddr => text().nullable()();
+  TextColumn get bmcUser => text().nullable()();
+  TextColumn get bmcPwd => text().nullable()();
+  TextColumn get bmcCertSha256 => text().nullable()();
+
   TextColumn get pveAddr => text().nullable()();
   BoolColumn get pveIgnoreCert => boolean().withDefault(const Constant(false))();
   TextColumn get pvePwd => text().nullable()();

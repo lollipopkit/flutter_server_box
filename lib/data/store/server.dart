@@ -1,5 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:meta/meta.dart';
+import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -135,6 +136,18 @@ class ServerStore extends EntityStore<Spi> {
               ip: row['wol_ip'] as String? ?? '',
               pwd: row['wol_pwd'] as String?,
             ),
+      // Keyed off the address, which is the one field a BMC cannot be reached
+      // without. A row carrying an address but no account comes back with an
+      // empty user, which `BmcCfg.isComplete` answers false to — so it is
+      // shown in the editor and not connected to.
+      bmc: row['bmc_addr'] == null
+          ? null
+          : BmcCfg(
+              addr: row['bmc_addr'] as String,
+              user: row['bmc_user'] as String? ?? '',
+              pwd: row['bmc_pwd'] as String?,
+              certSha256: row['bmc_cert_sha256'] as String?,
+            ),
       custom: _customOf(row, cmds),
     );
   }
@@ -181,6 +194,7 @@ class ServerStore extends EntityStore<Spi> {
   void write(Spi item) {
     final ssh = item.ssh;
     final monitor = item.monitorHttp;
+    final bmc = item.bmc;
     final custom = item.custom;
     const columns = [
       'id', 'name', 'auto_connect', 'system_type',
@@ -189,6 +203,7 @@ class ServerStore extends EntityStore<Spi> {
       'monitor_addr', 'monitor_user', 'monitor_pwd', 'monitor_ignore_cert',
       'monitor_allow_insecure',
       'wol_mac', 'wol_ip', 'wol_pwd',
+      'bmc_addr', 'bmc_user', 'bmc_pwd', 'bmc_cert_sha256',
       'pve_addr', 'pve_ignore_cert', 'pve_pwd', 'prefer_temp_dev',
       'temp_is_celsius', 'logo_url', 'net_dev', 'script_dir',
     ];
@@ -213,6 +228,10 @@ class ServerStore extends EntityStore<Spi> {
       item.wolCfg?.mac,
       item.wolCfg?.ip,
       item.wolCfg?.pwd,
+      bmc?.addr,
+      bmc?.user,
+      bmc?.pwd,
+      bmc?.certSha256,
       custom?.pveAddr,
       (custom?.pveIgnoreCert ?? false) ? 1 : 0,
       custom?.pvePwd,

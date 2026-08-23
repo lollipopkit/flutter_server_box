@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -11,6 +12,11 @@ import 'package:server_box/data/model/server/wol_cfg.dart';
 import 'package:server_box/data/store/server.dart';
 
 import 'helpers/test_db.dart';
+
+/// SHA-256 of a DER certificate, lowercase hex: 64 characters, which is what
+/// `certFingerprint` produces and what the column has to hold intact.
+const _fingerprint =
+    '9c1185a5c5e9fc54612808977ee8f548b2258d31ddadef8e3b1e1b06a1a1e2b7';
 
 /// A [Spi] is six tables now, so the question is whether it survives being
 /// taken apart and put back together.
@@ -89,6 +95,65 @@ void main() {
     expect(got.monitorHttp?.addr, 'http://h:3770');
     expect(got.monitorHttp?.pwd, 'p');
     expect(got.monitorHttp?.allowInsecure, isTrue);
+  });
+
+  group('the BMC side channel', () {
+    const withBmc = Spi(
+      id: 'metal',
+      name: 'r730',
+      ssh: SshCredential(ip: '10.0.0.2', port: 22, user: 'root'),
+      bmc: BmcCfg(
+        addr: 'https://10.0.0.9',
+        user: 'ADMIN',
+        pwd: 'calvin',
+        certSha256: _fingerprint,
+      ),
+    );
+
+    test('round trips beside the SSH credential rather than instead of it', () {
+      store.put(withBmc);
+      store.invalidate();
+
+      final got = store.fetchOneRaw('metal')!;
+      // Both, on one record: a BMC is not a way of reaching the host, so it
+      // neither satisfies the SSH-or-monitor requirement nor conflicts with it.
+      expect(got.ssh?.ip, '10.0.0.2');
+      expect(got.bmc?.addr, 'https://10.0.0.9');
+      expect(got.bmc?.user, 'ADMIN');
+      expect(got.bmc?.pwd, 'calvin');
+      expect(got.bmc?.certSha256, _fingerprint);
+    });
+
+    test('a server without one reads back as having none', () {
+      store.put(rich);
+      store.invalidate();
+      expect(store.fetchOneRaw('srv-1')!.bmc, isNull);
+    });
+
+    test('clearing the pinned certificate is stored, not ignored', () {
+      store.put(withBmc);
+      store.update(
+        withBmc,
+        withBmc.copyWith(bmc: withBmc.bmc!.copyWith(certSha256: null)),
+      );
+      store.invalidate();
+
+      final got = store.fetchOneRaw('metal')!;
+      expect(got.bmc?.addr, 'https://10.0.0.9');
+      expect(
+        got.bmc?.certSha256,
+        isNull,
+        reason: 'un-reviewing a certificate has to reach the column, or the '
+            'next connection trusts one the user withdrew',
+      );
+    });
+
+    test('removing the BMC removes it', () {
+      store.put(withBmc);
+      store.update(withBmc, withBmc.copyWith(bmc: null));
+      store.invalidate();
+      expect(store.fetchOneRaw('metal')!.bmc, isNull);
+    });
   });
 
   test('what an update drops is really dropped', () {
