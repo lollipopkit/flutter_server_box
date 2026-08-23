@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:crypto/crypto.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/foundation.dart';
 import 'package:pinenacl/ed25519.dart' as ed25519;
@@ -180,4 +181,78 @@ SecureRandom _seededRandom() {
         Uint8List.fromList(List<int>.generate(32, (_) => secure.nextInt(256))),
       ),
     );
+}
+
+/// What a stored private key says about itself.
+@immutable
+class SshKeyDigest {
+  const SshKeyDigest({this.keyType, this.fingerprint, this.comment});
+
+  /// `ssh-ed25519`, `ssh-rsa`, … Taken from the public key rather than the PEM
+  /// header, which only names the container it is in — every modern key says
+  /// `OPENSSH` there whatever it holds.
+  final String? keyType;
+
+  /// `SHA256:…`, in the form `ssh-keygen -l` prints: the digest base64'd with
+  /// its padding removed.
+  final String? fingerprint;
+
+  /// Null when the key is encrypted, and for the older PEM forms that have no
+  /// such field. The comment lives inside the part that gets encrypted, while
+  /// the public key does not — which is why a locked key can still be
+  /// fingerprinted.
+  final String? comment;
+
+  bool get isEmpty => keyType == null && fingerprint == null && comment == null;
+}
+
+/// Reads [pem] for what can be shown about it in a list.
+///
+/// Never throws and never asks for a passphrase: this is for a subtitle, and a
+/// key that cannot be read is one whose subtitle is empty, not an error.
+SshKeyDigest describeSshKey(String pem) {
+  try {
+    final decoded = SSHPem.decode(pem);
+    if (decoded.type == 'OPENSSH PRIVATE KEY') {
+      final pairs = OpenSSHKeyPairs.decode(decoded.content);
+      final blob = pairs.publicKeys.isEmpty ? null : pairs.publicKeys.first;
+      // Read without opening anything: `publicKeys` sits outside the encrypted
+      // blob, so this works for a key nobody has unlocked.
+      return SshKeyDigest(
+        keyType: blob == null ? null : SSHHostKey.getType(blob),
+        fingerprint: blob == null ? null : sshKeyFingerprint(blob),
+        comment: pairs.isEncrypted ? null : _commentOf(pairs.getPrivateKeys()),
+      );
+    }
+    // The older forms keep no public key of their own, so there is nothing to
+    // read without opening the key — which is not something a list may do.
+    if (SSHKeyPair.isEncryptedPem(pem)) return const SshKeyDigest();
+    final blob = SSHKeyPair.fromPem(pem).first.toPublicKey().encode();
+    return SshKeyDigest(
+      keyType: SSHHostKey.getType(blob),
+      fingerprint: sshKeyFingerprint(blob),
+    );
+  } catch (_) {
+    return const SshKeyDigest();
+  }
+}
+
+/// The fingerprint of an encoded public key, as `ssh-keygen -l` prints it.
+String sshKeyFingerprint(Uint8List publicKeyBlob) {
+  final digest = sha256.convert(publicKeyBlob).bytes;
+  // Unpadded, which is what OpenSSH prints — a trailing `=` would make the
+  // string not match what the server's own tooling shows.
+  final encoded = base64.encode(digest).replaceAll('=', '');
+  return 'SHA256:$encoded';
+}
+
+String? _commentOf(List<SSHKeyPair> pairs) {
+  if (pairs.isEmpty) return null;
+  final comment = switch (pairs.first) {
+    OpenSSHEd25519KeyPair(:final comment) => comment,
+    OpenSSHRsaKeyPair(:final comment) => comment,
+    OpenSSHEcdsaKeyPair(:final comment) => comment,
+    _ => null,
+  };
+  return comment == null || comment.trim().isEmpty ? null : comment.trim();
 }

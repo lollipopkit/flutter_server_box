@@ -147,6 +147,74 @@ void main() {
       isNot(pair.toPem(passphrase: passphrase)),
     );
   });
+
+  group('describeSshKey', () {
+    test('the fingerprint is the one ssh-keygen prints', () {
+      for (final algorithm in SshKeyAlgorithm.values) {
+        final key = generate(algorithm, comment: 'phone');
+        final dir = Directory.systemTemp.createTempSync('sb-fp-');
+        addTearDown(() => dir.deleteSync(recursive: true));
+        final file = File('${dir.path}/id')..writeAsStringSync(key.privatePem);
+        Process.runSync('chmod', ['600', file.path]);
+
+        final result = Process.runSync(sshKeygen!, ['-l', '-f', file.path]);
+        expect(result.exitCode, 0, reason: '${result.stderr}');
+        // `-l` prints `<bits> SHA256:… <comment> (<TYPE>)`.
+        final printed = (result.stdout as String).trim().split(' ')[1];
+        expect(
+          describeSshKey(key.privatePem).fingerprint,
+          printed,
+          reason: '${algorithm.name}: a fingerprint that does not match what '
+              'the server side prints is worse than none',
+        );
+      }
+    }, skip: sshKeygen == null ? 'ssh-keygen not on PATH' : null);
+
+    test('reads the type and comment of an open key', () {
+      final key = generate(SshKeyAlgorithm.ed25519, comment: 'phone');
+      final digest = describeSshKey(key.privatePem);
+      expect(digest.keyType, 'ssh-ed25519');
+      expect(digest.comment, 'phone');
+      expect(digest.isEmpty, isFalse);
+    });
+
+    test('a locked key still has a fingerprint, and no comment', () {
+      // The public key sits outside the encrypted blob and the comment does
+      // not, so a list can identify a key nobody has unlocked.
+      final key = generate(
+        SshKeyAlgorithm.ed25519,
+        comment: 'phone',
+        pass: passphrase,
+      );
+      final digest = describeSshKey(key.privatePem);
+      expect(digest.keyType, 'ssh-ed25519');
+      expect(digest.fingerprint, startsWith('SHA256:'));
+      expect(digest.comment, isNull);
+    });
+
+    test('a locked key fingerprints the same as the open one', () {
+      final plain = generate(SshKeyAlgorithm.ed25519, comment: 'phone');
+      final pair = SSHKeyPair.fromPem(plain.privatePem).single
+          as OpenSSHKeyPair;
+      final locked = pair.toPem(passphrase: passphrase);
+      expect(
+        describeSshKey(locked).fingerprint,
+        describeSshKey(plain.privatePem).fingerprint,
+      );
+    });
+
+    test('an empty comment is absent rather than blank', () {
+      final key = generate(SshKeyAlgorithm.ed25519, comment: '  ');
+      expect(describeSshKey(key.privatePem).comment, isNull);
+    });
+
+    test('anything unreadable says nothing rather than throwing', () {
+      // This runs while building a list row.
+      for (final input in ['', 'not a pem', '-----BEGIN X-----\nzz\n-----END X-----']) {
+        expect(describeSshKey(input).isEmpty, isTrue, reason: input);
+      }
+    });
+  });
 }
 
 String? _whichSshKeygen() {

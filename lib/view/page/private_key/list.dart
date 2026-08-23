@@ -5,6 +5,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/utils/ssh_keygen.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/res/store.dart';
@@ -82,9 +83,28 @@ class _PrivateKeyListState extends ConsumerState<PrivateKeysListPage>
   }
 
   Widget _buildKeyItem(PrivateKeyInfo item) {
+    // Read per build rather than stored: the fingerprint is a function of the
+    // key, and a copy of it in the record would be one more thing that can
+    // disagree with what is actually there. It is a hash of a few hundred
+    // bytes, over a list of a handful of keys.
+    final digest = describeSshKey(item.key);
+    // The comment is absent for a key that is encrypted — it is inside the
+    // part that gets encrypted, unlike the public key the fingerprint comes
+    // from. `type` is the fallback for a key that reads as neither.
+    final lines = [
+      ?digest.fingerprint,
+      ?digest.comment,
+      if (digest.isEmpty) item.type ?? libL10n.unknown,
+    ];
     return ListTile(
       title: Text(item.name),
-      subtitle: Text(item.type ?? libL10n.unknown, style: UIs.textGrey),
+      subtitle: Text(
+        lines.join('\n'),
+        style: UIs.textGrey,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      ),
+      isThreeLine: lines.length > 1,
       onTap: () => PrivateKeyEditPage.route.go(
         context,
         args: PrivateKeyEditPageArgs(pki: item),
