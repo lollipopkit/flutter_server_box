@@ -814,6 +814,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get bmcUnauthorized => 'BMC menolak akun ini';
 
   @override
+  String get bmcAccountMissing => 'Tidak ada akun yang diatur untuk BMC ini';
+
+  @override
   String get bmcPowerOn => 'Menyala';
 
   @override
@@ -831,6 +834,9 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get bmcSensorsTruncated => 'Hanya sensor pertama yang ditampilkan';
+
+  @override
+  String get bmcMultipleSystems => 'Hanya sistem pertama yang ditampilkan';
 
   @override
   String get bmcTip =>

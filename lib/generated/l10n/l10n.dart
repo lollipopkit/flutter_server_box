@@ -1527,6 +1527,12 @@ abstract class AppLocalizations {
   /// **'The BMC refused the account'**
   String get bmcUnauthorized;
 
+  /// No description provided for @bmcAccountMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'No account is set for this BMC'**
+  String get bmcAccountMissing;
+
   /// No description provided for @bmcPowerOn.
   ///
   /// In en, this message translates to:
@@ -1562,6 +1568,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Only the first sensors are shown'**
   String get bmcSensorsTruncated;
+
+  /// No description provided for @bmcMultipleSystems.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the first system is shown'**
+  String get bmcMultipleSystems;
 
   /// No description provided for @bmcTip.
   ///

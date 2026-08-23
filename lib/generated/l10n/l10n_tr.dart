@@ -815,6 +815,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get bmcUnauthorized => 'BMC hesabı reddetti';
 
   @override
+  String get bmcAccountMissing => 'Bu BMC için hesap ayarlanmamış';
+
+  @override
   String get bmcPowerOn => 'Açık';
 
   @override
@@ -832,6 +835,9 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get bmcSensorsTruncated => 'Yalnızca ilk sensörler gösteriliyor';
+
+  @override
+  String get bmcMultipleSystems => 'Yalnızca ilk sistem gösteriliyor';
 
   @override
   String get bmcTip =>

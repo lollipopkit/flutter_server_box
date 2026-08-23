@@ -761,6 +761,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get bmcUnauthorized => 'BMC 拒绝了这个账号';
 
   @override
+  String get bmcAccountMissing => '此 BMC 未设置账号';
+
+  @override
   String get bmcPowerOn => '已开机';
 
   @override
@@ -777,6 +780,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get bmcSensorsTruncated => '只显示了前面若干个传感器';
+
+  @override
+  String get bmcMultipleSystems => '仅显示第一个系统';
 
   @override
   String get bmcTip =>
@@ -2222,6 +2228,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get bmcUnauthorized => 'BMC 拒絕了這個帳號';
 
   @override
+  String get bmcAccountMissing => '此 BMC 未設定帳號';
+
+  @override
   String get bmcPowerOn => '已開機';
 
   @override
@@ -2238,6 +2247,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get bmcSensorsTruncated => '只顯示了前面若干個感測器';
+
+  @override
+  String get bmcMultipleSystems => '僅顯示第一個系統';
 
   @override
   String get bmcTip =>

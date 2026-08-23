@@ -814,6 +814,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get bmcUnauthorized => 'BMC відхилив обліковий запис';
 
   @override
+  String get bmcAccountMissing => 'Для цього BMC не задано обліковий запис';
+
+  @override
   String get bmcPowerOn => 'Увімкнено';
 
   @override
@@ -831,6 +834,9 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get bmcSensorsTruncated => 'Показано лише перші датчики';
+
+  @override
+  String get bmcMultipleSystems => 'Показано лише першу систему';
 
   @override
   String get bmcTip =>

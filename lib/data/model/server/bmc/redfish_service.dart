@@ -102,6 +102,15 @@ enum RedfishFailure {
   /// The account was refused.
   unauthorized,
 
+  /// No account to log in with: the id names nothing, or the record it names
+  /// has no user.
+  ///
+  /// Distinct from [unauthorized], which this used to be reported as. The two
+  /// call for opposite things — "the BMC rejected what you gave it" sends the
+  /// user to change a password that was never wrong, when what happened is
+  /// that the account was deleted out from under a server that still names it.
+  noCredential,
+
   /// Nothing answered, or answered with something that is not a resource.
   unreachable,
 }
@@ -138,10 +147,14 @@ class RedfishDiscovery {
       throw const RedfishException(RedfishFailure.notAService);
     }
 
-    final systems = await _members(root.systems);
-    final chassis_ = await _members(root.chassis);
+    // Independent GETs against a device where one takes seconds, so they are
+    // not made to wait for each other.
+    final [systems, chassisPaths] = await Future.wait([
+      _members(root.systems),
+      _members(root.chassis),
+    ]);
     final systemPath = systems.firstOrNull;
-    final chassisPath = chassis_.firstOrNull;
+    final chassisPath = chassisPaths.firstOrNull;
 
     if (systemPath == null) {
       throw const RedfishException(RedfishFailure.noSystem);

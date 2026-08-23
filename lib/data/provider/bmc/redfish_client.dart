@@ -106,9 +106,13 @@ class RedfishClient implements RedfishTransport {
     // compare against before clearing it — comparing against the raw
     // `_doLogin()` never matches, and the field is then never cleared at all.
     late final Future<void> attempt;
-    attempt = _doLogin().catchError((Object e) {
+    attempt = _doLogin().catchError((Object e, StackTrace s) {
       if (identical(_login, attempt)) _login = null;
-      throw e;
+      // `throw e` would replace the failure's stack with this closure's, so a
+      // rejected certificate or a timeout would be logged against
+      // `_ensureLogin` rather than against `_doLogin`/`_sessionsPath`, where
+      // it happened.
+      Error.throwWithStackTrace(e, s);
     });
     return _login = attempt;
   }
@@ -178,6 +182,12 @@ class RedfishClient implements RedfishTransport {
   Future<void> post(String path, Map<String, dynamic> body) async {
     if (_closed) throw StateError('This RedfishClient is closed');
     await _ensureLogin();
+    // Again after the await. `close()` can run while a login is in flight —
+    // `BmcNotifier` disposes into it — and it completes the DELETE and drops
+    // `_dio` and `_token`. Resuming here would then find a null `_dio`, have
+    // `_session()` build a fresh one nobody will ever close, and send
+    // `X-Auth-Token: null` against the session that was just released.
+    if (_closed) throw StateError('This RedfishClient is closed');
     final Response<Map<String, dynamic>> res;
     try {
       res = await _session().postUri<Map<String, dynamic>>(
@@ -200,7 +210,12 @@ class RedfishClient implements RedfishTransport {
     bool authenticated = true,
   }) async {
     if (_closed) throw StateError('This RedfishClient is closed');
-    if (authenticated) await _ensureLogin();
+    if (authenticated) {
+      await _ensureLogin();
+      // See `post`: closing during the login leaves this resuming against a
+      // released session with a rebuilt client nobody owns.
+      if (_closed) throw StateError('This RedfishClient is closed');
+    }
 
     final Response<Map<String, dynamic>> res;
     try {

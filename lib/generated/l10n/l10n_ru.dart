@@ -815,6 +815,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get bmcUnauthorized => 'BMC отклонил учётную запись';
 
   @override
+  String get bmcAccountMissing => 'Для этого BMC не задана учётная запись';
+
+  @override
   String get bmcPowerOn => 'Включён';
 
   @override
@@ -832,6 +835,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get bmcSensorsTruncated => 'Показаны только первые датчики';
+
+  @override
+  String get bmcMultipleSystems => 'Показана только первая система';
 
   @override
   String get bmcTip =>

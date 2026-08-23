@@ -2,13 +2,16 @@ import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+// `select` is an extension on ProviderListenable, which riverpod_annotation
+// does not re-export.
+import 'package:riverpod/riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/data/model/server/bmc/redfish.dart';
 import 'package:server_box/data/model/server/bmc/redfish_sensors.dart';
 import 'package:server_box/data/model/server/bmc/redfish_service.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/bmc/redfish_client.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/provider/bmc_credential.dart';
 
 part 'bmc.freezed.dart';
 part 'bmc.g.dart';
@@ -117,9 +120,21 @@ class BmcNotifier extends _$BmcNotifier {
     // foreign key sets `bmc_cred_id` to null rather than taking the server
     // with it, so `isComplete` above is about the id being *named*, and this is
     // about the record still being there.
-    final cred = Stores.bmcCredential.fetchOne(cfg.credId);
+    //
+    // Watched rather than read once. An account is a record several servers
+    // share, so rotating its password from the account page has to reach a
+    // detail page that is already open; a snapshot kept the old password and
+    // its session, and every poll after the BMC expired that session failed
+    // until the page was disposed. Narrowed to this one account, or editing an
+    // unrelated one would tear this server's polling down and re-run discovery.
+    final credId = cfg.credId!;
+    final cred = ref.watch(
+      bmcCredentialProvider.select(
+        (state) => state.creds.firstWhereOrNull((e) => e.id == credId),
+      ),
+    );
     if (cred == null || !cred.isComplete) {
-      return const BmcState(failure: RedfishFailure.unauthorized);
+      return const BmcState(failure: RedfishFailure.noCredential);
     }
 
     _client = RedfishClient(cfg, cred);

@@ -1477,6 +1477,19 @@ ${err.message ?? 'null'}
       );
     }
 
+    // The same reason, for the same kind of cut: discovery takes the first of
+    // each collection, so a blade enclosure showed node 1's power state with
+    // nothing to say the other nodes existed — and a power action there
+    // targets that node alone.
+    if (bmc.topology?.hasMultipleSystems == true) {
+      children.add(
+        ListTile(
+          dense: true,
+          title: Text(l10n.bmcMultipleSystems, style: UIs.text13Grey),
+        ),
+      );
+    }
+
     return CardX(
       child: ExpandTile(
         leading: const Icon(Icons.developer_board, size: 17),
@@ -1570,6 +1583,7 @@ ${err.message ?? 'null'}
       switch (failure) {
         RedfishFailure.certificateRejected => l10n.bmcCertRejected,
         RedfishFailure.unauthorized => l10n.bmcUnauthorized,
+        RedfishFailure.noCredential => l10n.bmcAccountMissing,
         RedfishFailure.notAService => l10n.bmcNotAService,
         RedfishFailure.noSystem => l10n.bmcNoSystem,
         // Names the resource, because it is an answer about one resource

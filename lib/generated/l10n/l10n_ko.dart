@@ -774,6 +774,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get bmcUnauthorized => 'BMC가 이 계정을 거부했습니다';
 
   @override
+  String get bmcAccountMissing => '이 BMC에 계정이 설정되지 않았습니다';
+
+  @override
   String get bmcPowerOn => '전원 켜짐';
 
   @override
@@ -790,6 +793,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get bmcSensorsTruncated => '앞쪽 센서만 표시됩니다';
+
+  @override
+  String get bmcMultipleSystems => '첫 번째 시스템만 표시됩니다';
 
   @override
   String get bmcTip =>

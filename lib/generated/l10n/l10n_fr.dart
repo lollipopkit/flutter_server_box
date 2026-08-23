@@ -822,6 +822,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get bmcUnauthorized => 'Le BMC a refusé le compte';
 
   @override
+  String get bmcAccountMissing => 'Aucun compte n\'est défini pour ce BMC';
+
+  @override
   String get bmcPowerOn => 'Sous tension';
 
   @override
@@ -839,6 +842,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get bmcSensorsTruncated => 'Seuls les premiers capteurs sont affichés';
+
+  @override
+  String get bmcMultipleSystems => 'Seul le premier système est affiché';
 
   @override
   String get bmcTip =>

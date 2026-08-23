@@ -775,6 +775,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get bmcUnauthorized => 'BMC がこのアカウントを拒否しました';
 
   @override
+  String get bmcAccountMissing => 'この BMC にアカウントが設定されていません';
+
+  @override
   String get bmcPowerOn => '電源オン';
 
   @override
@@ -791,6 +794,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get bmcSensorsTruncated => '先頭のセンサーのみ表示しています';
+
+  @override
+  String get bmcMultipleSystems => '最初のシステムのみ表示しています';
 
   @override
   String get bmcTip =>
