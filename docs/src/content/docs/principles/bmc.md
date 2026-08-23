@@ -173,6 +173,34 @@ An intent — "restart this machine" — is therefore mapped onto whatever the
 service allows, with a fallback chain, and an intent with nothing to map onto
 is not offered in the UI at all.
 
+### `ResetType` may be a name the specification does not have
+
+An H3C R5350 G6 advertises `ForcePowerCycle`, which is not in the Redfish
+`ResetType` enum, and advertises nothing else that cuts power. Matching only
+the standard names meant the power-cycle intent fell through to
+`ForceRestart` — a different operation, under a button that said power cycle.
+
+So the candidate list per intent carries vendor names as fallbacks, after the
+standard ones. Measured, not read: this is the kind of thing that only appears
+when a real machine answers.
+
+### A sensor with nothing to say may not say null
+
+The specification suggests `null` for a sensor that has no reading. Some
+firmware sends a sentinel instead. The same H3C reports `4294967295` —
+`0xFFFFFFFF`, unsigned -1 — for every temperature it cannot read, which was 18
+of its 20. Taken at face value that reaches the UI as `4294967295 Cel`.
+
+Readings are therefore filtered by plausibility rather than by matching known
+sentinels: the next vendor's is `65535` or `127`, and a list of them is always
+one short. Nothing real falls in the gaps — a chassis sensor below absolute
+zero or above a thousand degrees is not a reading, and no fan turns at four
+billion RPM.
+
+The limit is deliberate. `-1` is a sentinel for some firmware and is also what
+a cold inlet reads, so it is kept: deleting a real measurement to hide a fake
+one is the worse of the two mistakes, and the only one nobody can see.
+
 ### HPE iLO's graceful operations are advisory
 
 HPE documents that the behaviour of `GracefulShutdown` and `GracefulRestart`

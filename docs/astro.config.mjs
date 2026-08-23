@@ -58,6 +58,7 @@ export default defineConfig({
 						{ label: 'Monitor Agent', translations: { zh: 'Monitor Agent' }, slug: 'advanced/monitor-agent' },
 						{ label: 'Agent', translations: { zh: 'Agent' }, slug: 'advanced/agent' },
 						{ label: 'Terminal on This Device', translations: { zh: '本机终端' }, slug: 'advanced/local-terminal' },
+						{ label: 'BMC (Redfish)', translations: { zh: 'BMC(Redfish)' }, slug: 'advanced/bmc' },
 						{ label: 'Bulk Import Servers', translations: { zh: '批量导入服务器' }, slug: 'advanced/bulk-import' },
 						{ label: 'Widget Setup', translations: { zh: '小组件设置' }, slug: 'advanced/widgets' },
 						{ label: 'Custom Commands', translations: { zh: '自定义命令' }, slug: 'advanced/custom-commands' },
