@@ -2,12 +2,12 @@ part of 'page.dart';
 
 extension _AgentHistoryActions on _AskAiPanelState {
   Future<void> _showConversationHistory() async {
-    if (_isWorking) return;
+    if (ref.read(agentSessionProvider(widget.serverId)).isWorking) return;
 
     Widget historyView() => _AgentHistoryView(
       serverId: widget.serverId,
-      onNew: _beginNewConversation,
-      onSelect: _activateConversation,
+      onNew: _notifier.beginNewConversation,
+      onSelect: _notifier.activateConversation,
       onRename: _renameConversation,
       onDelete: _deleteConversation,
       onClear: _clearConversationHistory,
@@ -47,28 +47,9 @@ extension _AgentHistoryActions on _AskAiPanelState {
     );
   }
 
-  Future<void> _beginNewConversation() async {
-    if (_isWorking) return;
-    final conversation = Stores.agentConversation.create(
-      serverId: widget.serverId,
-      protocol: _resolvedConfiguredProtocol(),
-      providerBaseUrl: Stores.setting.askAiBaseUrl.fetch(),
-      model: Stores.setting.askAiModel.fetch(),
-    );
-    _restoreConversation(conversation);
-  }
-
-  Future<void> _activateConversation(AgentConversation conversation) async {
-    if (_isWorking || conversation.serverId != widget.serverId) return;
-    if (!Stores.agentConversation.setActive(
-      widget.serverId,
-      conversation.id,
-    )) {
-      return;
-    }
-    _restoreConversation(conversation);
-  }
-
+  /// The three that ask before they act stay here; the rest are the session's
+  /// own methods, passed straight through. A confirmation is a dialog, and the
+  /// session has no `BuildContext` to put one on.
   Future<void> _renameConversation(AgentConversation conversation) async {
     final controller = TextEditingController(text: conversation.title)
       ..selection = TextSelection(
@@ -93,8 +74,7 @@ extension _AgentHistoryActions on _AskAiPanelState {
         ],
       );
       if (title == null || title.trim().isEmpty) return;
-      if (!Stores.agentConversation.rename(conversation.id, title)) return;
-      _refreshConversationMetadata(conversation.id);
+      await _notifier.renameConversation(conversation.id, title);
     } finally {
       controller.dispose();
     }
@@ -113,16 +93,7 @@ extension _AgentHistoryActions on _AskAiPanelState {
       ],
     );
     if (confirmed != true || !mounted) return;
-    final deletingCurrent = _conversation?.id == conversation.id;
-    Stores.agentConversation.deleteConversation(
-      widget.serverId,
-      conversation.id,
-    );
-    if (deletingCurrent) {
-      _restoreConversation(
-        Stores.agentConversation.fetchActive(widget.serverId),
-      );
-    }
+    await _notifier.deleteConversation(conversation.id);
   }
 
   Future<void> _clearConversationHistory() async {
@@ -138,8 +109,7 @@ extension _AgentHistoryActions on _AskAiPanelState {
       ],
     );
     if (confirmed != true || !mounted) return;
-    Stores.agentConversation.clearServer(widget.serverId);
-    _restoreConversation(null);
+    await _notifier.clearConversationHistory();
   }
 }
 

@@ -37,7 +37,7 @@ void main() {
     toolName: 'run_shell_command',
   );
 
-  group('replayGlobalAgentTimeline', () {
+  group('replayAgentTimeline', () {
     test('replays messages, tool results, declines and the pending call', () {
       const result = AgentToolExecutionResult(
         toolName: 'run_shell_command',
@@ -47,7 +47,7 @@ void main() {
         duration: Duration(milliseconds: 25),
         data: {'stdout': 'up 3 days', 'exit_code': 0},
       );
-      final replay = replayGlobalAgentTimeline([
+      final replay = replayAgentTimeline([
         const AskAiMessageItem.user('Check the server.'),
         const AskAiReasoningItem(rawResponseItem: {'type': 'reasoning'}),
         const AskAiMessageItem.assistant('I will inspect it.'),
@@ -83,7 +83,7 @@ void main() {
     });
 
     test('carries no localized text, only the reason for a notice', () {
-      final replay = replayGlobalAgentTimeline([
+      final replay = replayAgentTimeline([
         const AskAiFunctionCallItem(command: declinedCommand),
         AskAiFunctionOutputItem(
           callId: declinedCommand.id,
@@ -99,7 +99,7 @@ void main() {
     });
 
     test('renders unparsable function output as a raw notice', () {
-      final replay = replayGlobalAgentTimeline([
+      final replay = replayAgentTimeline([
         const AskAiFunctionCallItem(command: pendingCommand),
         const AskAiFunctionOutputItem(
           callId: 'call-pending',
@@ -123,7 +123,7 @@ void main() {
         succeeded: true,
         duration: Duration.zero,
       );
-      final replay = replayGlobalAgentTimeline([
+      final replay = replayAgentTimeline([
         const AskAiFunctionCallItem(command: first),
         AskAiFunctionOutputItem(
           callId: first.id,
@@ -140,7 +140,7 @@ void main() {
     });
 
     test('an empty conversation replays to nothing pending', () {
-      final replay = replayGlobalAgentTimeline(const []);
+      final replay = replayAgentTimeline(const []);
       expect(replay.entries, isEmpty);
       expect(replay.pending, isNull);
     });
@@ -255,7 +255,7 @@ void main() {
         overrides: [askAiRepositoryProvider.overrideWithValue(repository)],
       );
       addTearDown(container.dispose);
-      final notifier = container.read(agentSessionProvider.notifier);
+      final notifier = container.read(globalAgentSessionProvider.notifier);
 
       final first = notifier.submitPrompt('inspect the server');
       final second = notifier.submitPrompt('duplicate submission');

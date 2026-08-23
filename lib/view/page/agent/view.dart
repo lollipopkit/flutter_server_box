@@ -2,18 +2,17 @@ import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/provider/ai/adhoc_ssh.dart';
 import 'package:server_box/data/provider/ai/agent_session.dart';
-import 'package:server_box/data/provider/ai/ask_ai.dart';
 import 'package:server_box/data/provider/ai/global_agent_tools.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/agent/history.dart';
+import 'package:server_box/view/widget/agent_common.dart';
 
 /// Width the scrollbar of a scrollable output box keeps at its right edge.
 ///
@@ -128,8 +127,8 @@ class AgentHeaderActions extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final session = ref.watch(agentSessionProvider);
-    final notifier = ref.read(agentSessionProvider.notifier);
+    final session = ref.watch(globalAgentSessionProvider);
+    final notifier = ref.read(globalAgentSessionProvider.notifier);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -219,8 +218,8 @@ class _AdHocSessionsButton extends ConsumerWidget {
 /// The conversation: its timeline and the box you type into.
 ///
 /// More than one of these can be on screen at once — the tab and the floating
-/// shell — and they show the same [agentSessionProvider]. What belongs to each
-/// separately is only what is being typed and where it is scrolled to.
+/// shell — and they show the same [globalAgentSessionProvider]. What belongs
+/// to each separately is only what is being typed and where it is scrolled to.
 class AgentConversationView extends ConsumerStatefulWidget {
   const AgentConversationView({
     super.key,
@@ -251,7 +250,7 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
   final _scrollController = ScrollController();
   final _inputController = TextEditingController();
 
-  AgentSession get _notifier => ref.read(agentSessionProvider.notifier);
+  AgentSession get _notifier => ref.read(globalAgentSessionProvider.notifier);
 
   String? get _localeHint =>
       Localizations.maybeLocaleOf(context)?.toLanguageTag();
@@ -269,26 +268,11 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
   /// the modifier doing the sending — the two habits people bring to a chat
   /// box, and the setting that picks between them.
   KeyEventResult _handleComposerKey(FocusNode node, KeyEvent event) {
-    if (event is! KeyDownEvent) return KeyEventResult.ignored;
-    if (event.logicalKey != LogicalKeyboardKey.enter &&
-        event.logicalKey != LogicalKeyboardKey.numpadEnter) {
-      return KeyEventResult.ignored;
-    }
-    final keys = HardwareKeyboard.instance;
-    final withModifier = keys.isMetaPressed || keys.isControlPressed;
-    final sends = Stores.setting.askAiSendOnEnter.fetch()
-        ? !keys.isShiftPressed
-        : withModifier;
-    if (!sends) return KeyEventResult.ignored;
-
-    // Mid-composition a bare Enter belongs to the IME, which is using it to
-    // accept a candidate; taking it would send half a word in every language
-    // that needs one to type at all. Only a bare one: no IME commits on
-    // Cmd/Ctrl+Enter, and Android keeps the word being typed in a composing
-    // range at all times, so guarding the modifier form too swallowed the
-    // send shortcut for the whole of a sentence.
-    if (withModifier) return _sendAndConsume();
-    if (!_inputController.value.composing.isCollapsed) {
+    if (!composerKeySends(
+      event,
+      composing: !_inputController.value.composing.isCollapsed,
+      sendOnEnter: Stores.setting.askAiSendOnEnter.fetch(),
+    )) {
       return KeyEventResult.ignored;
     }
     return _sendAndConsume();
@@ -298,7 +282,7 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
     // A turn is running, so there is nothing to send yet. Let the key through
     // rather than eating it: the box stays usable while an answer streams, and
     // a keystroke that neither sends nor types anything simply disappears.
-    if (ref.read(agentSessionProvider).isWorking) return KeyEventResult.ignored;
+    if (ref.read(globalAgentSessionProvider).isWorking) return KeyEventResult.ignored;
     unawaited(_submitPrompt(_inputController.text));
     // Handled either way from here: the key meant "send", and letting it
     // through would leave a line break behind whenever there was nothing to
@@ -351,57 +335,7 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
     await _notifier.runPendingTool();
   }
 
-  Future<void> _copyText(String text) async {
-    if (text.trim().isEmpty) return;
-    await Clipboard.setData(ClipboardData(text: text));
-    if (mounted) Toast.success(libL10n.success);
-  }
-
-  void _scheduleAutoScroll({bool force = false}) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_scrollController.hasClients) return;
-      final position = _scrollController.position;
-      if (!force && position.pixels < position.maxScrollExtent - 96) return;
-      _scrollController.animateTo(
-        position.maxScrollExtent,
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOutCubic,
-      );
-    });
-  }
-
   // -------------------------------------------------------------------- utils
-
-  String _describeError(BuildContext context, Object error) {
-    final l10n = context.l10n;
-    if (error is AgentNoResponse) return l10n.askAiNoResponse;
-    if (error is AskAiConfigException) {
-      if (error.missingFields.isEmpty) {
-        return error.hasInvalidBaseUrl
-            ? '${libL10n.invalidUrl}: ${error.invalidBaseUrl}'
-            : error.toString();
-      }
-      final fields = error.missingFields
-          .map(
-            (field) => switch (field) {
-              AskAiConfigField.baseUrl => libL10n.apiEndpoint,
-              AskAiConfigField.apiKey => libL10n.apiKey,
-              AskAiConfigField.model => libL10n.askAiModel,
-            },
-          )
-          .join(', ');
-      return l10n.askAiConfigMissing(fields);
-    }
-    if (error is AskAiNetworkException) return error.message;
-    return error.toString();
-  }
-
-  String _noticeText(BuildContext context, AgentNoticeKind kind) {
-    return switch (kind) {
-      AgentNoticeKind.declined => context.l10n.askAiActionDeclined,
-      AgentNoticeKind.interrupted => context.l10n.askAiInterrupted,
-    };
-  }
 
   ({String label, IconData icon, Color color}) _riskInfo(
     BuildContext context,
@@ -476,7 +410,7 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
   /// list — so the line is a label there and names the conversation anyway.
   Widget _buildHeader(BuildContext context) {
     final compact = widget.compact;
-    final session = ref.watch(agentSessionProvider);
+    final session = ref.watch(globalAgentSessionProvider);
     final conversations = session.conversations;
     final activeId = session.conversation?.id;
     final at = conversations.indexWhere((e) => e.id == activeId);
@@ -633,10 +567,20 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
       AgentNoticeEntry(:final kind) => _buildNotice(
         context,
         theme,
-        _noticeText(context, kind),
+        agentNoticeText(context, kind),
       ),
       AgentRawNoticeEntry(:final text) => _buildNotice(context, theme, text),
       AgentToolResultEntry() => _buildToolResultCard(context, theme, entry),
+      // Written only by a terminal Agent, which is a different scope and so a
+      // different session. Shown as the output rather than dropped, because
+      // "cannot appear here" is a claim about storage that this switch is not
+      // in a position to make — a restored backup decides what is in a
+      // conversation, not this page.
+      AgentShellResultEntry(:final result) => _buildNotice(
+        context,
+        theme,
+        result.displayOutput,
+      ),
     };
   }
 
@@ -822,7 +766,7 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
                     borderRadius: BorderRadius.circular(8),
                     child: InkWell(
                       borderRadius: BorderRadius.circular(8),
-                      onTap: () => _copyText(output),
+                      onTap: () => copyAgentText(output),
                       child: Padding(
                         padding: const EdgeInsets.all(_outputCopyPad),
                         child: Icon(
@@ -1078,38 +1022,11 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (error != null) ...[
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.errorContainer,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        color: theme.colorScheme.onErrorContainer,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          _describeError(context, error),
-                          style: TextStyle(
-                            color: theme.colorScheme.onErrorContainer,
-                          ),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: session.isWorking
-                            ? null
-                            : () => _notifier.startStream(
-                                localeHint: _localeHint,
-                              ),
-                        child: Text(libL10n.retry),
-                      ),
-                    ],
-                  ),
+                AgentErrorBanner(
+                  message: describeAgentError(context, error),
+                  onRetry: session.isWorking
+                      ? null
+                      : () => _notifier.startStream(localeHint: _localeHint),
                 ),
                 const SizedBox(height: 8),
               ],
@@ -1225,19 +1142,19 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final session = ref.watch(agentSessionProvider);
+    final session = ref.watch(globalAgentSessionProvider);
     final compact = widget.compact;
 
     // Following the state rather than scrolling wherever this view last
     // appended something: the session moves on its own, so a turn started here
     // keeps going while the view is off screen and comes back further along
     // than it was left.
-    ref.listen(agentSessionProvider, (previous, next) {
+    ref.listen(globalAgentSessionProvider, (previous, next) {
       final settled =
           previous?.timeline.length != next.timeline.length ||
           previous?.pendingTool != next.pendingTool;
       if (settled || previous?.streamingContent != next.streamingContent) {
-        _scheduleAutoScroll(force: settled);
+        scheduleAgentAutoScroll(_scrollController, force: settled);
       }
     });
 

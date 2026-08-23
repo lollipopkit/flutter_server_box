@@ -53,7 +53,7 @@ class AgentHistoryPanel extends ConsumerStatefulWidget {
 }
 
 class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
-  AgentSession get _notifier => ref.read(agentSessionProvider.notifier);
+  AgentSession get _notifier => ref.read(globalAgentSessionProvider.notifier);
 
   // ------------------------------------------------------------------ actions
 
@@ -135,7 +135,7 @@ class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final session = ref.watch(agentSessionProvider);
+    final session = ref.watch(globalAgentSessionProvider);
     final conversations = session.conversations;
     final activeId = session.conversation?.id;
     // The same rail as the terminal and file tabs: a right-aligned row of
