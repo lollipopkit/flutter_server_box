@@ -24,6 +24,10 @@ dependencies:
   crypto: ^3.0.0
   dio: ^5.2.1
   pinenacl: ^0.6.0
+  # ECDSA and RSA key generation for the in-app keygen. Ed25519 comes from
+  # pinenacl; dartssh2 does the OpenSSH serialisation for all three. Already
+  # here transitively through dartssh2 — named so the import is legal.
+  pointycastle: ^4.0.0
   dynamic_color: ^1.6.6
   equatable: ^2.1.0
   easy_isolate: ^1.3.0
