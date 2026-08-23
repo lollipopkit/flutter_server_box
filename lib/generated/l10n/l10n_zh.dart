@@ -24,12 +24,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiAwaitingResponse => '等待 AI 响应...';
 
   @override
-  String get askAiEndpointTip =>
-      '填写服务根地址，或完整的 Chat Completions/Responses 地址。ServerBox 会根据所选协议自动补全路径。';
+  String get askAiEndpointTip => '填写域名或完整地址。会根据所选协议自动补全路径。';
 
   @override
-  String get askAiProtocolTip =>
-      '自动模式对 OpenAI 官方接口使用 Responses，对兼容服务使用 Chat Completions。';
+  String get askAiProtocolTip => '自动模式会尝试 Responses / Chat Completions。';
 
   @override
   String get askAiProtocolChatCompletions => 'Chat Completions';
@@ -61,18 +59,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiAgentWelcome => '想在这台服务器上做什么？';
 
   @override
-  String get askAiAgentWelcomeTip =>
-      '可以让 Agent 诊断问题或完成任务。Agent 每次只提出一条命令，并在更改系统前等待审核。';
-
-  @override
   String get askAiAgentPromptHint => '让 Agent 检查或修复问题……';
 
   @override
   String get askAiAgentSend => '发送给 Agent';
 
   @override
-  String get askAiAnalyzeSelectionPrompt =>
-      '分析选中的终端内容，解释发生了什么；如果需要操作，请提出最安全的下一步。';
+  String get askAiAnalyzeSelectionPrompt => '分析选中的终端内容，解释发生了什么';
 
   @override
   String get askAiTerminalContext => '终端上下文';
@@ -84,7 +77,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiReviewAction => '审核建议命令';
 
   @override
-  String get askAiReviewBeforeContinuing => '请先审核或拒绝当前建议命令';
+  String get askAiReviewBeforeContinuing => '请先审核或拒绝当前建议';
 
   @override
   String get askAiApproveRun => '批准并执行';
@@ -114,7 +107,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiHighRiskConfirmTitle => '执行高风险命令？';
 
   @override
-  String get askAiHighRiskConfirmBody => '此命令可能删除数据、停止服务或造成难以撤销的更改，请在执行前仔细检查。';
+  String get askAiHighRiskConfirmBody => '此命令可能造成难以撤销的更改，请仔细检查。';
 
   @override
   String get askAiNoCommandOutput => '命令已完成，没有输出。';
@@ -129,18 +122,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiAutoRunSafeCommands => '自动执行只读命令';
 
   @override
-  String get askAiAutoRunSafeCommandsTip =>
-      '仅当模型与本地安全检查都判定命令为只读时自动执行；会更改系统的命令仍需人工审核。';
+  String get askAiAutoRunSafeCommandsTip => '仅当模型与本地安全检查都判定命令为只读时自动执行';
 
   @override
   String get askAiSendOnEnter => 'Enter 发送';
 
   @override
   String get askAiSendOnEnterTip =>
-      'Enter 发送消息，Shift+Enter 换行。关闭后互换：Enter 换行，Cmd/Ctrl+Enter 发送。';
+      'Enter 发送消息，Shift+Enter 换行。关闭后：Enter 换行，Cmd/Ctrl+Enter 发送。';
 
   @override
-  String get askAiApiKeyOptional => '本地或无需认证的接口可留空';
+  String get askAiApiKeyOptional => '本地或无需认证可留空';
 
   @override
   String get askAiHistory => '对话历史';
@@ -149,7 +141,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiNewConversation => '新建对话';
 
   @override
-  String get askAiNoHistory => '这台服务器还没有已保存的对话';
+  String get askAiNoHistory => '还没有已保存的对话';
 
   @override
   String get askAiNoHistoryMessages => '暂无消息';
@@ -164,16 +156,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiDeleteConversationTitle => '删除这个对话？';
 
   @override
-  String get askAiDeleteConversationTip => '此操作会从本机删除该对话，且无法撤销。';
+  String get askAiDeleteConversationTip => '从本机删除该对话，无法撤销。';
 
   @override
   String get askAiClearHistoryTitle => '清空这台服务器的 Agent 历史？';
 
   @override
-  String get askAiClearHistoryTip => '本机为这台服务器保存的所有 Agent 对话都会被删除。';
+  String get askAiClearHistoryTip => '这台服务器保存的所有 Agent 对话都会被删除。';
 
   @override
-  String get askAiRestoredReview => '此命令来自历史记录，请重新审核；恢复后绝不会自动执行。';
+  String get askAiRestoredReview => '此命令来自历史记录，请重新审核';
 
   @override
   String get agentTitle => 'Agent';
@@ -182,8 +174,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentWelcome => '想对你的服务器做些什么？';
 
   @override
-  String get agentWelcomeTip =>
-      '可以让 Agent 诊断问题或执行运维任务。它会读取 ServerBox 的实时状态，并一次提出一个需要审核的操作。';
+  String get agentWelcomeTip => '可以让 Agent 诊断问题或执行运维任务';
 
   @override
   String get agentPromptHint => '让 Agent 检查或操作你的服务器……';
@@ -233,8 +224,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentAuthMethod => '认证方式';
 
   @override
-  String get agentSshConnectTip =>
-      'Agent 想建立一个 SSH 连接。请在此处输入密码，不要输入到对话里——那会被保存下来并发送给模型。';
+  String get agentSshConnectTip => 'Agent 想建立 SSH 连接, 请在此输入密码';
 
   @override
   String get agentAdHocSessions => '临时连接';
@@ -243,13 +233,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentSaveServerTitle => '保存为服务器';
 
   @override
-  String get agentSaveServerTip => '这台主机和你输入的密码将保存在本设备上。';
+  String get agentSaveServerTip => '这台主机和你输入的密码将保存在本设备上';
 
   @override
   String get agentMonitorOptional => 'Monitor 代理（可选）';
 
   @override
-  String get authFailTip => '认证失败，请检查连接信息是否正确';
+  String get authFailTip => '认证失败，请检查信息是否正确';
 
   @override
   String get autoBackupConflict => '仅可启用一个自动备份任务';
@@ -291,14 +281,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get remoteBackupPasswordRequired => '远程备份需要非空的备份密码';
 
   @override
-  String get monitorHttpsRequired => '远程监控代理必须使用 HTTPS，除非该连接已明确允许不安全 HTTP。';
+  String get monitorHttpsRequired => '远程监控代理必须使用 HTTPS，除非该连接已允许 HTTP。';
 
   @override
-  String get monitorAllowInsecureHttp => '允许不安全 HTTP';
+  String get monitorAllowInsecureHttp => '允许 HTTP';
 
   @override
   String get monitorAllowInsecureHttpTip =>
-      '仅应在 HTTP 之外具备传输加密的可信私有网络中开启，例如 Tailscale。代理也必须明确允许明文文件访问；否则凭据和文件内容可能暴露。';
+      '仅应在 HTTP 之外具备传输加密的可信私有网络中开启，例如 Tailscale';
 
   @override
   String get backupTip => '导出数据可通过密码加密，请妥善保管。';
@@ -497,7 +487,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fileDirGone => '此文件夹已不存在';
 
   @override
-  String get fileDirGoneTip => '它已被删除或重命名。使用下方的按钮返回、回到主目录，或跳转到其他位置。';
+  String get fileDirGoneTip => '已被删除或重命名';
 
   @override
   String get fullScreen => '全屏';
@@ -543,20 +533,19 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get macDmgBody =>
-      'App Store 要求本应用沙盒运行,而沙盒进程打不开伪终端。所以 App Store 版没有本机终端,也不能在本机运行 snippet 或 Agent 命令。DMG 版是同一个应用,签名时没有沙盒,这两项都有。\n\nApp Store 版仍然可用、仍在更新,以后可能停止更新。\n\n两个版本的数据存放位置不同。DMG 版首次启动会把数据复制过来,服务器、密钥、历史都会带上。复制失败时会明确告知,那时可以改用备份文件迁移(设置里的「备份」)。';
+      'App Store 要求本应用沙盒运行,而沙盒内无法开启终端。DMG 版可以开启。\n\nApp Store 版以后可能停止更新。';
 
   @override
-  String get macDmgImportDenied =>
-      'macOS 不允许读取此前安装版本的数据。可授予完全磁盘访问权限后重新打开本应用,或在那个版本里导出备份,再在这里恢复。';
+  String get macDmgImportDenied => 'macOS 不允许读取此前安装版本的数据';
 
   @override
-  String get macDmgImported => '已导入此前安装版本的数据。';
+  String get macDmgImported => '已导入此前安装版本的数据';
 
   @override
-  String get macDmgImportFailed => '读不到此前安装版本的数据。请在那个版本里导出备份,再在这里恢复。';
+  String get macDmgImportFailed => '读不到此前安装版本的数据';
 
   @override
-  String get macDmgTip => '本机终端、在本机运行 snippet,只有 DMG 版有。';
+  String get macDmgTip => '本机终端、在本机运行 snippet(DMG 版)';
 
   @override
   String get macDmgTitle => 'DMG 版';
@@ -583,7 +572,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get unusedTaggedImages => '未使用标记';
 
   @override
-  String get pruneDanglingImagesTip => '仅移除悬空镜像（未标记的镜像层）。';
+  String get pruneDanglingImagesTip => '仅移除悬空镜像。';
 
   @override
   String get pruneUnusedImagesTip => '同时移除未被任何容器使用的已标记镜像。';
@@ -654,12 +643,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get letterCacheTip => '开启后，输入内容会经过普通输入法，这样可避免部分系统在终端弹出安全键盘';
 
   @override
-  String get linuxShellTip =>
-      '交互式终端用什么 shell 启动。Alpine 没有 chsh,系统里也没有东西读 /etc/passwd,所以只有这里说了算。一次性命令仍然走 /bin/sh,因为 app 和 Agent 写的是 POSIX。留空恢复 /bin/sh。';
+  String get linuxShellTip => '终端用什么 shell 启动。留空恢复 /bin/sh。';
 
   @override
-  String get linuxNetTip =>
-      'Linux 系统及其软件包从哪里下载,以及写入其中的 DNS 服务器。留空恢复默认值。保存时会一并改写已安装系统中的对应文件。';
+  String get linuxNetTip => 'DNS 服务器。留空恢复默认值';
 
   @override
   String madeWithLove(Object myGithub) {
@@ -744,15 +731,14 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String bmcPowerConfirm(String server, String resetType) {
-    return '要对 $server 执行吗?将向该服务发送 \"$resetType\"——这是它为此操作允许的类型。';
+    return '要对 $server 执行吗?将向该服务发送 \"$resetType\"';
   }
 
   @override
   String get bmcPowerDone => '电源状态已改变';
 
   @override
-  String get bmcPowerAccepted =>
-      '已接受,但电源状态还没有改变。graceful 操作取决于操作系统,而有些服务并不区分它。';
+  String get bmcPowerAccepted => '已接受,但电源状态还没有改变。graceful 操作取决于操作系统';
 
   @override
   String get bmcPowerUnsupported => '该服务不允许这个操作的任何类型';
@@ -795,18 +781,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get bmcCertPinned => '已确认并钉住';
 
   @override
-  String get bmcCertUnreviewed => '尚未确认——点击查看 BMC 提供的证书';
+  String get bmcCertUnreviewed => '尚未确认——点击查看证书';
 
   @override
-  String get bmcCertReview =>
-      'BMC 用的是自签证书,没有任何机构为它背书。请和 BMC 自己的网页界面上显示的对比一遍。接受之后,只有这一张证书会被信任。';
+  String get bmcCertReview => '接收到自签证书, 请对比确认。接受之后,只有这一张证书会被信任。';
 
   @override
-  String get bmcCertChanged =>
-      '这不是之前接受过的那张证书。BMC 重新生成证书或升级固件时会这样——但被中间人劫持时看起来也是这样。接受前请核对。';
+  String get bmcCertChanged => '证书不一致。请核对。';
 
   @override
-  String get bmcCertExpired => '这张证书已超出有效期。';
+  String get bmcCertExpired => '已过期。';
 
   @override
   String bmcCertWas(String fingerprint) {
@@ -818,7 +802,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get proxyCommandSandboxed =>
-      '此版本运行在沙盒中:命令看到的是一个空的家目录,而不是你的,所以任何读取 ~/.ssh 的命令(ssh -W、cloudflared)都会失败,而且常常表现为指向错误主机的超时。只用网络的命令仍然可用。DMG 版没有沙盒。';
+      '此版本运行在沙盒中:命令拿到的是空的家目录,读 ~/.ssh 的命令会失败。DMG 版没有沙盒。';
 
   @override
   String privateKeyFileUnreadable(String path, String reason) {
@@ -918,12 +902,12 @@ class AppLocalizationsZh extends AppLocalizations {
     Object latest,
     Object pm,
   ) {
-    return '已安装 $distro $installed,现有 $latest。更新会重新下载并替换整个容器:里面用 $pm 装过的东西都会丢失。跳过的话,现在这个照常可用。';
+    return '已安装 $distro $installed,现有 $latest。更新会重新下载并替换整个容器: $pm 数据会丢失';
   }
 
   @override
   String linuxSystemInUse(Object name) {
-    return '$name 还有终端开着。请先关闭,再删除这个系统。';
+    return '请先关闭 $name 上的终端, 再删除';
   }
 
   @override
@@ -931,7 +915,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String rootfsInstallTip(Object distro, Object version, Object size) {
-    return '下载 $distro $version(约 $size MB)并解压到本机。它为本 App 提供一个带包管理器的 shell,可随时删除。';
+    return '下载 $distro $version(约 $size MB)并解压到本机。';
   }
 
   @override
@@ -942,7 +926,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get serverFilesUnavailableTip =>
-      '需要能连上这台服务器的 SSH,或者它的 monitor agent 开启了文件 API。';
+      '需要能连上这台服务器的 SSH,或者安装 server_box_monitor 并开启文件 API。';
 
   @override
   String get back => '返回';
@@ -977,15 +961,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get serverTabRequired => '服务器标签不能被移除';
 
   @override
-  String get shareServerRiskTip =>
-      '此二维码以明文包含服务器的连接设置，其中有密码。任何扫描或拍下它的人都能连接到这台服务器。';
+  String get shareServerRiskTip => '此二维码以明文包含服务器的连接设置。任何扫描或拍下它的人都能连接到这台服务器。';
 
   @override
   String get sftpDlPrepare => '准备连接至服务器...';
 
   @override
   String get sftpEditorTip =>
-      '如果为空, 使用App内置的文件编辑器. 如果有值, 这是用远程服务器的编辑器, 例如 `vim` (建议根据 `EDITOR` 自动获取).';
+      '如果为空, 使用App内置的文件编辑器.  例如 `vim` (建议根据 `EDITOR` 自动获取).';
 
   @override
   String get sftpRmrDirSummary => '在 SFTP 中使用 `rm -r` 来删除文件夹';
@@ -1003,7 +986,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get specifyDev => '指定设备';
 
   @override
-  String get specifyDevTip => '例如网络流量统计默认是所有设备，你可以在这里指定特定的设备';
+  String get specifyDevTip => '网络流量默认统计所有设备，可以在这里指定特定设备';
 
   @override
   String get tempIsCelsiusTip =>
@@ -1077,7 +1060,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sshKnownHostKeys => '已信任的主机';
 
   @override
-  String get sshKnownHostKeysTip => '本 app 已接受的主机密钥。删掉一条,下次连接时会重新询问。';
+  String get sshKnownHostKeysTip => '本 app 已接受的主机密钥';
 
   @override
   String sshHostKeyNewDesc(Object serverName) {
@@ -1378,8 +1361,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get watchServers => '手表上的服务器';
 
   @override
-  String get watchServersTip =>
-      '手表自己向 monitor agent 取数据，所以只能选择已配置 monitor 的服务器。';
+  String get watchServersTip => '手表独立向 monitor 取数据，所以只能选择已配置 monitor 的服务器。';
 
   @override
   String get watchNoMonitorServer => '没有服务器配置了 monitor';
@@ -1436,12 +1418,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentLocalExec => '在本机执行命令';
 
   @override
-  String get agentLocalExecTip =>
-      '允许 Agent 在运行 ServerBox 的这台机器上工作，而不只是服务器。这里没有无人值守：再只读的命令也需要审核。app 的数据、你的密钥和文件都在这台机器上。';
+  String get agentLocalExecTip => '允许 Agent 在运行 ServerBox 的这台机器上工作。只读的命令也需要审核';
 
   @override
   String get agentLocalExecRootfsTip =>
-      '让 Agent 在本机操作,范围限于 ServerBox 安装的 Alpine Linux 容器内。它看不到手机本身的文件系统、App 的数据和你的文件。每条命令仍然需要审核。';
+      '让 Agent 在本机操作,范围限于 ServerBox 安装的 Linux 容器内';
 
   @override
   String macDmgImportedPartly(String path) {
@@ -1494,12 +1475,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get askAiAwaitingResponse => '等待 AI 回應...';
 
   @override
-  String get askAiEndpointTip =>
-      '填寫服務根位址，或完整的 Chat Completions/Responses 位址。ServerBox 會依所選協議自動補全路徑。';
+  String get askAiEndpointTip => '填寫網域或完整位址。會根據所選協定自動補全路徑。';
 
   @override
-  String get askAiProtocolTip =>
-      '自動模式對 OpenAI 官方介面使用 Responses，對相容服務使用 Chat Completions。';
+  String get askAiProtocolTip => '自動模式會嘗試 Responses / Chat Completions。';
 
   @override
   String get askAiProtocolChatCompletions => 'Chat Completions';
@@ -1531,18 +1510,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get askAiAgentWelcome => '想在這台伺服器上做什麼？';
 
   @override
-  String get askAiAgentWelcomeTip =>
-      '可以讓 Agent 診斷問題或完成工作。Agent 每次只提出一條指令，並在變更系統前等待審核。';
-
-  @override
   String get askAiAgentPromptHint => '讓 Agent 檢查或修復問題……';
 
   @override
   String get askAiAgentSend => '傳送給 Agent';
 
   @override
-  String get askAiAnalyzeSelectionPrompt =>
-      '分析選取的終端機內容，解釋發生了什麼；如果需要操作，請提出最安全的下一步。';
+  String get askAiAnalyzeSelectionPrompt => '分析選取的終端內容，解釋發生了什麼';
 
   @override
   String get askAiTerminalContext => '終端機內容';
@@ -1554,7 +1528,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get askAiReviewAction => '審核建議指令';
 
   @override
-  String get askAiReviewBeforeContinuing => '請先審核或拒絕目前的建議指令';
+  String get askAiReviewBeforeContinuing => '請先審核或拒絕目前建議';
 
   @override
   String get askAiApproveRun => '核准並執行';
@@ -1584,7 +1558,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get askAiHighRiskConfirmTitle => '執行高風險指令？';
 
   @override
-  String get askAiHighRiskConfirmBody => '此指令可能刪除資料、停止服務或造成難以復原的變更，請在執行前仔細檢查。';
+  String get askAiHighRiskConfirmBody => '此命令可能造成難以撤銷的變更，請仔細檢查。';
 
   @override
   String get askAiNoCommandOutput => '指令已完成，沒有輸出。';
@@ -1599,18 +1573,17 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get askAiAutoRunSafeCommands => '自動執行唯讀指令';
 
   @override
-  String get askAiAutoRunSafeCommandsTip =>
-      '僅當模型與本機安全檢查都判定指令為唯讀時自動執行；會變更系統的指令仍需人工審核。';
+  String get askAiAutoRunSafeCommandsTip => '僅當模型與本機安全檢查都判定命令為唯讀時自動執行';
 
   @override
   String get askAiSendOnEnter => 'Enter 傳送';
 
   @override
   String get askAiSendOnEnterTip =>
-      'Enter 傳送訊息，Shift+Enter 換行。關閉後互換：Enter 換行，Cmd/Ctrl+Enter 傳送。';
+      'Enter 傳送訊息，Shift+Enter 換行。關閉後：Enter 換行，Cmd/Ctrl+Enter 傳送。';
 
   @override
-  String get askAiApiKeyOptional => '本機或不需驗證的介面可留空';
+  String get askAiApiKeyOptional => '本機或無需認證可留空';
 
   @override
   String get askAiHistory => '對話歷史';
@@ -1619,7 +1592,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get askAiNewConversation => '新增對話';
 
   @override
-  String get askAiNoHistory => '這台伺服器尚無已儲存的對話';
+  String get askAiNoHistory => '還沒有已儲存的對話';
 
   @override
   String get askAiNoHistoryMessages => '暫無訊息';
@@ -1634,16 +1607,16 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get askAiDeleteConversationTitle => '刪除這個對話？';
 
   @override
-  String get askAiDeleteConversationTip => '此操作會從本機刪除該對話，且無法復原。';
+  String get askAiDeleteConversationTip => '從本機刪除該對話，無法復原。';
 
   @override
   String get askAiClearHistoryTitle => '清除這台伺服器的 Agent 歷史？';
 
   @override
-  String get askAiClearHistoryTip => '本機為這台伺服器儲存的所有 Agent 對話都會被刪除。';
+  String get askAiClearHistoryTip => '這台伺服器儲存的所有 Agent 對話都會被刪除。';
 
   @override
-  String get askAiRestoredReview => '此指令來自歷史記錄，請重新審核；恢復後絕不會自動執行。';
+  String get askAiRestoredReview => '此命令來自歷史紀錄，請重新審核';
 
   @override
   String get agentTitle => 'Agent';
@@ -1652,8 +1625,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get agentWelcome => '想對你的伺服器做些什麼？';
 
   @override
-  String get agentWelcomeTip =>
-      '可以讓 Agent 診斷問題或執行維運工作。它會讀取 ServerBox 的即時狀態，並一次提出一個需要審核的操作。';
+  String get agentWelcomeTip => '可以讓 Agent 診斷問題或執行維運任務';
 
   @override
   String get agentPromptHint => '讓 Agent 檢查或操作你的伺服器……';
@@ -1703,8 +1675,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get agentAuthMethod => '認證方式';
 
   @override
-  String get agentSshConnectTip =>
-      'Agent 想建立一個 SSH 連線。請在此處輸入密碼，不要輸入到對話裡——那會被保存下來並傳送給模型。';
+  String get agentSshConnectTip => 'Agent 想建立 SSH 連線，請在此輸入密碼';
 
   @override
   String get agentAdHocSessions => '暫時連線';
@@ -1713,13 +1684,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get agentSaveServerTitle => '儲存為伺服器';
 
   @override
-  String get agentSaveServerTip => '這台主機和你輸入的密碼將儲存在本裝置上。';
+  String get agentSaveServerTip => '這台主機和你輸入的密碼將儲存在本裝置上';
 
   @override
   String get agentMonitorOptional => 'Monitor 代理（選填）';
 
   @override
-  String get authFailTip => '認證失敗，請檢查連線資訊是否正確';
+  String get authFailTip => '認證失敗，請檢查資訊是否正確';
 
   @override
   String get autoBackupConflict => '僅能啟用一項自動備份任務';
@@ -1761,14 +1732,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get remoteBackupPasswordRequired => '遠端備份需要非空的備份密碼';
 
   @override
-  String get monitorHttpsRequired => '遠端監控代理必須使用 HTTPS，除非該連線已明確允許不安全 HTTP。';
+  String get monitorHttpsRequired => '遠端監控代理必須使用 HTTPS，除非該連線已允許 HTTP。';
 
   @override
-  String get monitorAllowInsecureHttp => '允許不安全 HTTP';
+  String get monitorAllowInsecureHttp => '允許 HTTP';
 
   @override
   String get monitorAllowInsecureHttpTip =>
-      '僅應在 HTTP 之外具備傳輸加密的可信私有網路中開啟，例如 Tailscale。代理也必須明確允許明文檔案存取；否則憑證和檔案內容可能暴露。';
+      '僅應在 HTTP 之外具備傳輸加密的可信私有網路中開啟，例如 Tailscale';
 
   @override
   String get backupTip => '匯出的資料可透過密碼加密，請妥善保管。';
@@ -1967,7 +1938,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get fileDirGone => '此資料夾已不存在';
 
   @override
-  String get fileDirGoneTip => '它已被刪除或重新命名。使用下方的按鈕返回、回到主目錄，或跳轉到其他位置。';
+  String get fileDirGoneTip => '已被刪除或重新命名';
 
   @override
   String get fullScreen => '全螢幕';
@@ -2013,20 +1984,19 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get macDmgBody =>
-      'App Store 要求本應用程式在沙盒中執行,而沙盒程序無法開啟虛擬終端機。所以 App Store 版沒有本機終端機,也無法在本機執行 snippet 或 Agent 指令。DMG 版是同一個應用程式,簽章時未啟用沙盒,這兩項都有。\n\nApp Store 版仍可使用、仍在更新,日後可能停止更新。\n\n兩個版本的資料存放位置不同。DMG 版首次啟動會將資料複製過來,伺服器、金鑰、紀錄都會帶上。複製失敗時會明確告知,屆時可改用備份檔遷移(設定中的「備份」)。';
+      'App Store 要求本應用沙盒執行，而沙盒內無法開啟終端。DMG 版可以開啟。\n\nApp Store 版以後可能停止更新。';
 
   @override
-  String get macDmgImportDenied =>
-      'macOS 不允許讀取先前安裝版本的資料。可授予完全取用磁碟權限後重新開啟本應用程式,或在該版本中匯出備份再於此處還原。';
+  String get macDmgImportDenied => 'macOS 不允許讀取此前安裝版本的資料';
 
   @override
-  String get macDmgImported => '已匯入先前安裝版本的資料。';
+  String get macDmgImported => '已匯入此前安裝版本的資料';
 
   @override
-  String get macDmgImportFailed => '讀不到先前安裝版本的資料。請在該版本中匯出備份,再於此處還原。';
+  String get macDmgImportFailed => '讀不到此前安裝版本的資料';
 
   @override
-  String get macDmgTip => '本機終端機、在本機執行 snippet,只有 DMG 版有。';
+  String get macDmgTip => '本機終端、在本機執行 snippet（DMG 版）';
 
   @override
   String get macDmgTitle => 'DMG 版';
@@ -2053,7 +2023,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get unusedTaggedImages => '未使用標記';
 
   @override
-  String get pruneDanglingImagesTip => '僅移除懸空映像檔（未標記的映像層）。';
+  String get pruneDanglingImagesTip => '僅移除懸空映像。';
 
   @override
   String get pruneUnusedImagesTip => '同時移除未被任何容器使用的已標記映像檔。';
@@ -2124,12 +2094,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get letterCacheTip => '開啟後，輸入內容會經過一般輸入法，這樣可避免部分系統在終端彈出安全鍵盤。';
 
   @override
-  String get linuxShellTip =>
-      '互動式終端使用什麼 shell 啟動。Alpine 沒有 chsh,系統裡也沒有東西讀 /etc/passwd,所以只有這裡說了算。一次性命令仍然走 /bin/sh,因為 app 和 Agent 寫的是 POSIX。留空可恢復 /bin/sh。';
+  String get linuxShellTip => '終端用什麼 shell 啟動。留空恢復 /bin/sh。';
 
   @override
-  String get linuxNetTip =>
-      'Linux 系統及其套件從何處下載,以及寫入其中的 DNS 伺服器。留空可恢復預設值。儲存時會一併改寫已安裝系統中的對應檔案。';
+  String get linuxNetTip => 'DNS 伺服器。留空恢復預設值';
 
   @override
   String madeWithLove(Object myGithub) {
@@ -2214,15 +2182,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String bmcPowerConfirm(String server, String resetType) {
-    return '要對 $server 執行嗎?將向該服務傳送 \"$resetType\"——這是它為此操作允許的類型。';
+    return '要對 $server 執行嗎？將向該服務傳送 \"$resetType\"';
   }
 
   @override
   String get bmcPowerDone => '電源狀態已改變';
 
   @override
-  String get bmcPowerAccepted =>
-      '已接受,但電源狀態還沒有改變。graceful 操作取決於作業系統,而有些服務並不區分它。';
+  String get bmcPowerAccepted => '已接受，但電源狀態還沒有改變。graceful 操作取決於作業系統';
 
   @override
   String get bmcPowerUnsupported => '該服務不允許這個操作的任何類型';
@@ -2265,18 +2232,16 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get bmcCertPinned => '已確認並釘住';
 
   @override
-  String get bmcCertUnreviewed => '尚未確認——點擊查看 BMC 提供的憑證';
+  String get bmcCertUnreviewed => '尚未確認——點擊查看憑證';
 
   @override
-  String get bmcCertReview =>
-      'BMC 用的是自簽憑證,沒有任何機構為它背書。請和 BMC 自己的網頁介面上顯示的對比一遍。接受之後,只有這一張憑證會被信任。';
+  String get bmcCertReview => '接收到自簽憑證，請對比確認。接受之後，只有這一張憑證會被信任。';
 
   @override
-  String get bmcCertChanged =>
-      '這不是之前接受過的那張憑證。BMC 重新產生憑證或升級韌體時會這樣——但被中間人劫持時看起來也是這樣。接受前請核對。';
+  String get bmcCertChanged => '憑證不一致。請核對。';
 
   @override
-  String get bmcCertExpired => '這張憑證已超出有效期。';
+  String get bmcCertExpired => '已過期。';
 
   @override
   String bmcCertWas(String fingerprint) {
@@ -2288,7 +2253,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get proxyCommandSandboxed =>
-      '此版本執行於沙盒中:命令看到的是一個空的家目錄,而不是你的,因此任何讀取 ~/.ssh 的命令(ssh -W、cloudflared)都會失敗,且常常表現為指向錯誤主機的逾時。只用網路的命令仍然可用。DMG 版沒有沙盒。';
+      '此版本執行在沙盒中:命令拿到的是空的家目錄，讀 ~/.ssh 的命令會失敗。DMG 版沒有沙盒。';
 
   @override
   String privateKeyFileUnreadable(String path, String reason) {
@@ -2388,12 +2353,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
     Object latest,
     Object pm,
   ) {
-    return '已安裝 $distro $installed,現有 $latest。更新會重新下載並替換整個容器:裡面用 $pm 裝過的東西都會遺失。跳過的話,現在這個照常可用。';
+    return '已安裝 $distro $installed，現有 $latest。更新會重新下載並替換整個容器：$pm 資料會遺失';
   }
 
   @override
   String linuxSystemInUse(Object name) {
-    return '$name 還有終端開著。請先關閉,再刪除這個系統。';
+    return '請先關閉 $name 上的終端，再刪除';
   }
 
   @override
@@ -2401,7 +2366,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String rootfsInstallTip(Object distro, Object version, Object size) {
-    return '下載 $distro $version(約 $size MB)並解壓到本機。它為本 App 提供一個帶套件管理器的 shell,可隨時刪除。';
+    return '下載 $distro $version（約 $size MB）並解壓到本機。';
   }
 
   @override
@@ -2412,7 +2377,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get serverFilesUnavailableTip =>
-      '需要能連上這台伺服器的 SSH,或者它的 monitor agent 開啟了檔案 API。';
+      '需要能連上這台伺服器的 SSH，或者安裝 server_box_monitor 並開啟檔案 API。';
 
   @override
   String get back => '返回';
@@ -2448,14 +2413,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get shareServerRiskTip =>
-      '此二維碼以明文包含伺服器的連線設定，其中有密碼。任何掃描或拍下它的人都能連線到這台伺服器。';
+      '此 QR Code 以明文包含伺服器的連線設定。任何掃描或拍下它的人都能連線到這台伺服器。';
 
   @override
   String get sftpDlPrepare => '準備連線至伺服器...';
 
   @override
   String get sftpEditorTip =>
-      '如果為空, 使用App內建的檔案編輯器。如果有值, 則使用遠端伺服器的編輯器, 例如 `vim`（建議根據 `EDITOR` 自動獲取）。';
+      '如果為空，使用 App 內建的檔案編輯器。 例如 `vim`（建議根據 `EDITOR` 自動取得）。';
 
   @override
   String get sftpRmrDirSummary => '在 SFTP 中使用 `rm -r` 來刪除檔案夾';
@@ -2473,7 +2438,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get specifyDev => '指定裝置';
 
   @override
-  String get specifyDevTip => '例如網路流量統計預設是所有裝置，你可以在這裡指定特定的裝置。';
+  String get specifyDevTip => '網路流量預設統計所有裝置，可以在這裡指定特定裝置';
 
   @override
   String get tempIsCelsiusTip =>
@@ -2547,7 +2512,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get sshKnownHostKeys => '已信任的主機';
 
   @override
-  String get sshKnownHostKeysTip => '本 app 已接受的主機金鑰。刪掉一條,下次連線時會重新詢問。';
+  String get sshKnownHostKeysTip => '本 app 已接受的主機金鑰';
 
   @override
   String sshHostKeyNewDesc(Object serverName) {
@@ -2848,8 +2813,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get watchServers => '手錶上的伺服器';
 
   @override
-  String get watchServersTip =>
-      '手錶自己向 monitor agent 取資料，因此只能選擇已設定 monitor 的伺服器。';
+  String get watchServersTip => '手錶獨立向 monitor 取資料，所以只能選擇已設定 monitor 的伺服器。';
 
   @override
   String get watchNoMonitorServer => '沒有伺服器設定了 monitor';
@@ -2906,12 +2870,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get agentLocalExec => '在本機執行命令';
 
   @override
-  String get agentLocalExecTip =>
-      '允許 Agent 在執行 ServerBox 的這台機器上工作，而不只是伺服器。這裡沒有無人值守：再唯讀的指令也需要審核。app 的資料、你的金鑰和檔案都在這台機器上。';
+  String get agentLocalExecTip => '允許 Agent 在執行 ServerBox 的這台機器上工作。唯讀的命令也需要審核';
 
   @override
   String get agentLocalExecRootfsTip =>
-      '讓 Agent 在本機操作,範圍限於 ServerBox 安裝的 Alpine Linux 容器內。它看不到手機本身的檔案系統、App 的資料和你的檔案。每條命令仍然需要審核。';
+      '讓 Agent 在本機操作，範圍限於 ServerBox 安裝的 Linux 容器內';
 
   @override
   String macDmgImportedPartly(String path) {

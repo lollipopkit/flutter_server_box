@@ -26,11 +26,11 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get askAiEndpointTip =>
-      'Voer een basis-URL van de dienst in of een volledig Chat Completions- of Responses-endpoint. ServerBox vult het pad aan volgens het gekozen protocol.';
+      'Een domein of volledige URL. Het pad volgt uit het gekozen protocol.';
 
   @override
   String get askAiProtocolTip =>
-      'Auto gebruikt Responses voor het officiële OpenAI-endpoint en Chat Completions voor compatibele aanbieders.';
+      'Auto probeert Responses, daarna Chat Completions.';
 
   @override
   String get askAiProtocolChatCompletions => 'Chat Completions';
@@ -62,10 +62,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get askAiAgentWelcome => 'Wat gaan we op deze server doen?';
 
   @override
-  String get askAiAgentWelcomeTip =>
-      'Vraag om een diagnose of een taak. De agent stelt één commando tegelijk voor en wacht op je beoordeling voordat er iets verandert.';
-
-  @override
   String get askAiAgentPromptHint =>
       'Vraag de agent om iets te onderzoeken of te herstellen...';
 
@@ -74,7 +70,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get askAiAnalyzeSelectionPrompt =>
-      'Analyseer de geselecteerde terminalinhoud, leg uit wat er is gebeurd en stel de veiligste volgende stap voor als er actie nodig is.';
+      'Analyseer de geselecteerde terminaluitvoer en leg uit wat er gebeurde';
 
   @override
   String get askAiTerminalContext => 'Terminalcontext';
@@ -87,7 +83,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get askAiReviewBeforeContinuing =>
-      'Beoordeel of weiger eerst het voorgestelde commando';
+      'Beoordeel of weiger eerst de huidige suggestie';
 
   @override
   String get askAiApproveRun => 'Goedkeuren en uitvoeren';
@@ -118,7 +114,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get askAiHighRiskConfirmBody =>
-      'Dit commando kan gegevens verwijderen, diensten stoppen of anderszins moeilijk ongedaan te maken zijn. Beoordeel het zorgvuldig voordat je het uitvoert.';
+      'Dit commando kan wijzigingen maken die lastig terug te draaien zijn. Controleer het goed.';
 
   @override
   String get askAiNoCommandOutput => 'Commando voltooid zonder uitvoer.';
@@ -136,18 +132,18 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get askAiAutoRunSafeCommandsTip =>
-      'Alleen automatisch uitvoeren wanneer zowel het model als de lokale veiligheidscontroles het commando als alleen-lezen aanmerken. Commando\'s die het systeem wijzigen moeten nog steeds beoordeeld worden.';
+      'Draait alleen als model én lokale controle het alleen-lezen noemen';
 
   @override
   String get askAiSendOnEnter => 'Enter verstuurt';
 
   @override
   String get askAiSendOnEnterTip =>
-      'Enter verstuurt het bericht, Shift+Enter begint een nieuwe regel. Uit draait het om: Enter begint een nieuwe regel en Cmd/Ctrl+Enter verstuurt.';
+      'Enter verstuurt, Shift+Enter nieuwe regel. Uit: Enter nieuwe regel, Cmd/Ctrl+Enter verstuurt.';
 
   @override
   String get askAiApiKeyOptional =>
-      'Optioneel voor lokale of niet-geverifieerde endpoints';
+      'Leeg laten voor lokaal of zonder authenticatie';
 
   @override
   String get askAiHistory => 'Gespreksgeschiedenis';
@@ -156,13 +152,13 @@ class AppLocalizationsNl extends AppLocalizations {
   String get askAiNewConversation => 'Nieuw gesprek';
 
   @override
-  String get askAiNoHistory => 'Geen opgeslagen gesprekken voor deze server';
+  String get askAiNoHistory => 'Nog geen opgeslagen gesprekken';
 
   @override
   String get askAiNoHistoryMessages => 'Nog geen berichten';
 
   @override
-  String get askAiUntitledConversation => 'Nieuw gesprek';
+  String get askAiUntitledConversation => 'Naamloos';
 
   @override
   String get askAiRenameConversation => 'Gesprek hernoemen';
@@ -172,7 +168,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get askAiDeleteConversationTip =>
-      'Hiermee wordt het gesprek van dit apparaat verwijderd; dit kan niet ongedaan worden gemaakt.';
+      'Verwijdert het van dit apparaat. Kan niet ongedaan worden gemaakt.';
 
   @override
   String get askAiClearHistoryTitle =>
@@ -180,11 +176,11 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get askAiClearHistoryTip =>
-      'Alle voor deze server opgeslagen agentgesprekken worden van dit apparaat verwijderd.';
+      'Alle opgeslagen Agent-gesprekken van deze server worden verwijderd.';
 
   @override
   String get askAiRestoredReview =>
-      'Hersteld uit de geschiedenis. Beoordeel het opnieuw voordat je het uitvoert; het wordt nooit automatisch uitgevoerd.';
+      'Dit commando komt uit de geschiedenis. Beoordeel het opnieuw';
 
   @override
   String get agentTitle => 'Agent';
@@ -194,7 +190,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get agentWelcomeTip =>
-      'Vraag om een diagnose of een beheertaak. De agent gebruikt de actuele ServerBox-status en stelt één beoordeelde actie tegelijk voor.';
+      'Laat de Agent een probleem onderzoeken of een taak uitvoeren';
 
   @override
   String get agentPromptHint =>
@@ -247,7 +243,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get agentSshConnectTip =>
-      'De agent wil een SSH-verbinding openen. Typ het wachtwoord hier, nooit in het gesprek, waar het bewaard en naar het model gestuurd zou worden.';
+      'De Agent wil een SSH-verbinding. Voer het wachtwoord hier in';
 
   @override
   String get agentAdHocSessions => 'Tijdelijke verbindingen';
@@ -257,14 +253,13 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get agentSaveServerTip =>
-      'Deze host en het ingevoerde wachtwoord worden op dit apparaat opgeslagen.';
+      'Deze host en het ingevoerde wachtwoord worden op dit apparaat bewaard';
 
   @override
   String get agentMonitorOptional => 'monitor-agent (optioneel)';
 
   @override
-  String get authFailTip =>
-      'Authenticatie mislukt, controleer of het wachtwoord/sleutel/host/gebruiker, enz., incorrect zijn.';
+  String get authFailTip => 'Authenticatie mislukt. Controleer de gegevens';
 
   @override
   String get autoBackupConflict =>
@@ -310,14 +305,14 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get monitorHttpsRequired =>
-      'Externe monitoragents vereisen HTTPS; HTTP is alleen toegestaan op loopback-adressen.';
+      'Een externe monitor-agent vereist HTTPS, tenzij HTTP is toegestaan.';
 
   @override
-  String get monitorAllowInsecureHttp => 'Allow insecure HTTP';
+  String get monitorAllowInsecureHttp => 'HTTP toestaan';
 
   @override
   String get monitorAllowInsecureHttpTip =>
-      'Only enable for a trusted private network with transport encryption outside HTTP, such as Tailscale. The agent must also explicitly allow plaintext file access. Credentials and file contents may otherwise be exposed.';
+      'Alleen op een vertrouwd privénetwerk dat het transport zelf versleutelt, zoals Tailscale';
 
   @override
   String get backupTip =>
@@ -531,8 +526,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get fileDirGone => 'Deze map is er niet meer';
 
   @override
-  String get fileDirGoneTip =>
-      'Hij is verwijderd of hernoemd. Gebruik de balk onderaan om terug te gaan, naar home te springen of ergens anders heen te gaan.';
+  String get fileDirGoneTip => 'Het is verwijderd of hernoemd';
 
   @override
   String get fullScreen => 'Volledig scherm';
@@ -580,23 +574,22 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get macDmgBody =>
-      'De App Store eist dat deze app in een sandbox draait, en een sandboxproces kan geen pseudo-terminal openen. Daarom heeft de App Store-versie geen terminal op deze Mac en kan er geen snippet of agent-commando draaien. De DMG-versie is dezelfde app, zonder sandbox ondertekend, en kan het wel.\n\nDe App Store-versie werkt nog en krijgt nog updates. Later kan dat ophouden.\n\nBeide versies bewaren hun gegevens op verschillende plekken. De DMG-versie kopieert ze bij de eerste start, dus servers, sleutels en geschiedenis gaan mee. Lukt dat niet, dan meldt hij dat en kun je in plaats daarvan een back-upbestand meenemen (Back-up, in instellingen).';
+      'De App Store vereist een sandbox, en een sandbox kan geen terminal openen. De DMG-versie wel.\n\nDe App Store-versie wordt mogelijk niet meer bijgewerkt.';
 
   @override
   String get macDmgImportDenied =>
-      'macOS stond het lezen van de gegevens van de eerder geïnstalleerde versie niet toe. Geef volledige schijftoegang en open de app opnieuw, of exporteer daar een back-up en zet die hier terug.';
+      'macOS liet de gegevens van de vorige versie niet lezen';
 
   @override
-  String get macDmgImported =>
-      'Gegevens van de eerder geïnstalleerde versie geïmporteerd.';
+  String get macDmgImported => 'Gegevens van de vorige versie geïmporteerd';
 
   @override
   String get macDmgImportFailed =>
-      'Kon de gegevens van de eerder geïnstalleerde versie niet lezen. Exporteer daar een back-up en zet die hier terug.';
+      'Kon de gegevens van de vorige versie niet lezen';
 
   @override
   String get macDmgTip =>
-      'Een terminal op deze Mac, en snippets erop draaien, bestaan alleen in de DMG-versie.';
+      'Lokale terminal en snippets lokaal uitvoeren (DMG-versie)';
 
   @override
   String get macDmgTitle => 'DMG-versie';
@@ -623,8 +616,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get unusedTaggedImages => 'Ongebruikte tags';
 
   @override
-  String get pruneDanglingImagesTip =>
-      'Verwijder alleen bungelende images (lagen zonder tag).';
+  String get pruneDanglingImagesTip => 'Verwijdert alleen loshangende images.';
 
   @override
   String get pruneUnusedImagesTip =>
@@ -702,11 +694,10 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get linuxShellTip =>
-      'Wat een interactieve terminal start. Alpine heeft geen chsh en niets in het systeem leest /etc/passwd, dus alleen dit bepaalt het. Losse opdrachten draaien nog steeds onder /bin/sh, omdat de app en de Agent POSIX schrijven. Laat leeg om /bin/sh te herstellen.';
+      'Met welke shell een terminal start. Leeg herstelt /bin/sh.';
 
   @override
-  String get linuxNetTip =>
-      'Waar het Linux-systeem en zijn pakketten vandaan komen, en welke DNS-servers erin worden geschreven. Laat leeg om de standaardwaarde te herstellen. Bij opslaan worden beide ook in een al geïnstalleerd systeem herschreven.';
+  String get linuxNetTip => 'DNS-servers. Leeg herstelt de standaardwaarden';
 
   @override
   String madeWithLove(Object myGithub) {
@@ -795,7 +786,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String bmcPowerConfirm(String server, String resetType) {
-    return 'Dit naar $server sturen? De service krijgt \"$resetType\", wat hij voor deze actie toestaat.';
+    return 'Naar $server sturen? De service krijgt \"$resetType\"';
   }
 
   @override
@@ -803,7 +794,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get bmcPowerAccepted =>
-      'Geaccepteerd, maar de voedingsstatus is nog niet gewijzigd. Een nette operatie hangt af van het besturingssysteem, en sommige services maken er geen onderscheid in.';
+      'Geaccepteerd, maar de energiestatus is niet gewijzigd. Een nette operatie hangt van het besturingssysteem af';
 
   @override
   String get bmcPowerUnsupported =>
@@ -849,19 +840,18 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get bmcCertUnreviewed =>
-      'Nog niet gecontroleerd — tik om te zien wat de BMC aanbiedt';
+      'Nog niet beoordeeld — tik om het certificaat te zien';
 
   @override
   String get bmcCertReview =>
-      'BMC\'s gebruiken zelfondertekende certificaten, dus niets staat in voor dit exemplaar. Vergelijk het met wat de webinterface van de BMC toont. Na acceptatie wordt alleen precies dit certificaat vertrouwd.';
+      'Een zelfondertekend certificaat. Vergelijk het voor je accepteert. Daarna wordt alleen dit vertrouwd.';
 
   @override
   String get bmcCertChanged =>
-      'Dit is niet het certificaat dat eerder is geaccepteerd. Dat gebeurt wanneer de BMC zijn certificaat opnieuw aanmaakt of zijn firmware wordt bijgewerkt — maar zo zou onderschepping er ook uitzien. Controleer het voordat u accepteert.';
+      'Het certificaat komt niet overeen. Controleer het.';
 
   @override
-  String get bmcCertExpired =>
-      'Dit certificaat valt buiten zijn geldigheidsdata.';
+  String get bmcCertExpired => 'Verlopen.';
 
   @override
   String bmcCertWas(String fingerprint) {
@@ -874,7 +864,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get proxyCommandSandboxed =>
-      'Deze build draait in een sandbox: de opdracht ziet een lege thuismap in plaats van die van jou, dus alles wat ~/.ssh leest (ssh -W, cloudflared) mislukt, vaak als een time-out die de verkeerde host noemt. Opdrachten die alleen het netwerk gebruiken werken wel. De DMG-versie heeft geen sandbox.';
+      'Deze versie draait in een sandbox: het commando krijgt een lege home, niet die van jou, dus alles wat ~/.ssh leest faalt. De DMG-versie niet.';
 
   @override
   String privateKeyFileUnreadable(String path, String reason) {
@@ -987,12 +977,12 @@ class AppLocalizationsNl extends AppLocalizations {
     Object latest,
     Object pm,
   ) {
-    return '$distro $installed is geïnstalleerd en $latest is beschikbaar. Bijwerken downloadt het opnieuw en vervangt de container: alles wat daarin met $pm is geïnstalleerd, gaat verloren. Als je dit overslaat, blijft de huidige gewoon werken.';
+    return '$distro $installed is geïnstalleerd, $latest is beschikbaar. Bijwerken vervangt de hele container: $pm-gegevens gaan verloren';
   }
 
   @override
   String linuxSystemInUse(Object name) {
-    return '$name heeft nog een terminal open. Sluit die voordat je het systeem verwijdert.';
+    return 'Sluit de terminals op $name voordat je het verwijdert';
   }
 
   @override
@@ -1000,7 +990,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String rootfsInstallTip(Object distro, Object version, Object size) {
-    return 'Download $distro $version (ongeveer $size MB) en pak het uit op dit apparaat. Het geeft deze app een shell met pakketbeheerder en kan op elk moment worden verwijderd.';
+    return 'Downloadt $distro $version (ongeveer $size MB) en pakt het uit op dit apparaat.';
   }
 
   @override
@@ -1011,7 +1001,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get serverFilesUnavailableTip =>
-      'Bereikbaar via de SSH van deze server, of via een monitor-agent met zijn bestands-API ingeschakeld.';
+      'Vereist SSH naar deze server, of server_box_monitor met de bestands-API aan.';
 
   @override
   String get back => 'Terug';
@@ -1047,14 +1037,14 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get shareServerRiskTip =>
-      'Deze QR-code bevat de verbindingsinstellingen van de server in leesbare tekst, inclusief wachtwoorden. Iedereen die hem scant of fotografeert kan verbinding maken met deze server.';
+      'Deze QR-code bevat de verbindingsinstellingen in leesbare tekst. Wie hem scant of fotografeert, kan verbinden.';
 
   @override
   String get sftpDlPrepare => 'Voorbereiden om verbinding te maken...';
 
   @override
   String get sftpEditorTip =>
-      'Indien leeg, gebruik de ingebouwde bestandseditor van de app. Indien een waarde aanwezig is, gebruik de editor van de externe server, bijvoorbeeld `vim` (aanbevolen om automatisch te detecteren volgens `EDITOR`).';
+      'Leeg gebruikt de ingebouwde editor. Bijvoorbeeld `vim` (lezen uit `EDITOR` aangeraden).';
 
   @override
   String get sftpRmrDirSummary =>
@@ -1074,7 +1064,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get specifyDevTip =>
-      'Bijvoorbeeld, netwerkverkeersstatistieken zijn standaard voor alle apparaten. Hier kunt u een specifiek apparaat opgeven.';
+      'Netwerkverkeer telt standaard alle apparaten; noem er hier één';
 
   @override
   String get tempIsCelsiusTip =>
@@ -1153,7 +1143,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get sshKnownHostKeysTip =>
-      'Hostsleutels die deze app heeft geaccepteerd. Verwijder er een om er bij de volgende verbinding opnieuw naar gevraagd te worden.';
+      'De hostsleutels die deze app heeft geaccepteerd';
 
   @override
   String sshHostKeyNewDesc(Object serverName) {
@@ -1502,7 +1492,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get watchServersTip =>
-      'De watch haalt deze servers zelf op bij hun monitor-agent, dus alleen servers met een geconfigureerde monitor zijn te kiezen.';
+      'De horloge haalt de gegevens zelf bij de monitor op, dus alleen servers met een monitor zijn kiesbaar.';
 
   @override
   String get watchNoMonitorServer =>
@@ -1564,11 +1554,11 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'Laat de Agent werken op de machine waarop ServerBox draait, niet alleen op servers. Hier draait niets onbeheerd: elke opdracht moet worden beoordeeld.';
+      'Laat de Agent werken op de machine waarop ServerBox draait. Ook alleen-lezen commando’s worden beoordeeld';
 
   @override
   String get agentLocalExecRootfsTip =>
-      'Laat de Agent op dit apparaat werken, binnen de Alpine Linux-container die ServerBox installeert. Hij kan het bestandssysteem van het toestel, de gegevens van de app en jouw bestanden niet zien. Elke opdracht moet nog steeds worden beoordeeld.';
+      'Laat de Agent lokaal werken, beperkt tot de Linux-container die ServerBox installeerde';
 
   @override
   String macDmgImportedPartly(String path) {

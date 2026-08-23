@@ -25,12 +25,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get askAiAwaitingResponse => 'AI 응답 대기 중...';
 
   @override
-  String get askAiEndpointTip =>
-      '전체 Chat Completions 엔드포인트 또는 서비스 기본 URL을 입력하세요. 주소가 /v1로 끝나면 앱이 자동으로 /chat/completions를 추가합니다.';
+  String get askAiEndpointTip => '도메인 또는 전체 URL. 경로는 선택한 프로토콜에 따라 채워집니다.';
 
   @override
   String get askAiProtocolTip =>
-      '자동은 공식 OpenAI 엔드포인트에는 Responses를, 호환 제공자에는 Chat Completions를 사용합니다.';
+      '자동은 Responses를 먼저, 그다음 Chat Completions를 시도합니다.';
 
   @override
   String get askAiProtocolChatCompletions => 'Chat Completions';
@@ -62,18 +61,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get askAiAgentWelcome => '이 서버에서 무엇을 할까요?';
 
   @override
-  String get askAiAgentWelcomeTip =>
-      '진단이나 작업을 요청하세요. 에이전트는 한 번에 하나의 명령을 제안하고 변경 전에 검토를 기다립니다.';
-
-  @override
   String get askAiAgentPromptHint => '에이전트에게 점검이나 수정을 요청하세요...';
 
   @override
   String get askAiAgentSend => '에이전트에게 보내기';
 
   @override
-  String get askAiAnalyzeSelectionPrompt =>
-      '선택한 터미널 내용을 분석해 무슨 일이 있었는지 설명하고, 조치가 필요하면 가장 안전한 다음 단계를 제안하세요.';
+  String get askAiAnalyzeSelectionPrompt => '선택한 터미널 출력을 분석하고 무슨 일이 있었는지 설명해 줘';
 
   @override
   String get askAiTerminalContext => '터미널 컨텍스트';
@@ -85,7 +79,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get askAiReviewAction => '제안된 명령 검토';
 
   @override
-  String get askAiReviewBeforeContinuing => '먼저 제안된 명령을 검토하거나 거부하세요';
+  String get askAiReviewBeforeContinuing => '먼저 현재 제안을 검토하거나 거부하세요';
 
   @override
   String get askAiApproveRun => '승인 후 실행';
@@ -116,7 +110,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get askAiHighRiskConfirmBody =>
-      '이 명령은 데이터를 지우거나 서비스를 중지하는 등 되돌리기 어려울 수 있습니다. 실행 전에 꼼꼼히 확인하세요.';
+      '이 명령은 되돌리기 어려운 변경을 할 수 있습니다. 잘 확인하세요.';
 
   @override
   String get askAiNoCommandOutput => '명령이 출력 없이 끝났습니다.';
@@ -131,18 +125,17 @@ class AppLocalizationsKo extends AppLocalizations {
   String get askAiAutoRunSafeCommands => '읽기 전용 명령 자동 실행';
 
   @override
-  String get askAiAutoRunSafeCommandsTip =>
-      '모델과 로컬 안전 검사 모두가 읽기 전용으로 판단한 경우에만 자동 실행합니다. 시스템을 바꾸는 명령은 여전히 검토가 필요합니다.';
+  String get askAiAutoRunSafeCommandsTip => '모델과 로컬 검사가 모두 읽기 전용이라고 판단할 때만 실행';
 
   @override
   String get askAiSendOnEnter => 'Enter로 보내기';
 
   @override
   String get askAiSendOnEnterTip =>
-      'Enter로 메시지를 보내고 Shift+Enter로 줄을 바꿉니다. 끄면 반대가 되어 Enter가 줄바꿈, Cmd/Ctrl+Enter가 전송입니다.';
+      'Enter로 전송, Shift+Enter로 줄바꿈. 끄면: Enter로 줄바꿈, Cmd/Ctrl+Enter로 전송.';
 
   @override
-  String get askAiApiKeyOptional => '로컬이거나 인증이 없는 엔드포인트에서는 선택 사항';
+  String get askAiApiKeyOptional => '로컬이거나 인증이 필요 없으면 비워 두세요';
 
   @override
   String get askAiHistory => '대화 기록';
@@ -151,13 +144,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get askAiNewConversation => '새 대화';
 
   @override
-  String get askAiNoHistory => '이 서버에 저장된 대화가 없습니다';
+  String get askAiNoHistory => '저장된 대화가 아직 없습니다';
 
   @override
   String get askAiNoHistoryMessages => '아직 메시지가 없습니다';
 
   @override
-  String get askAiUntitledConversation => '새 대화';
+  String get askAiUntitledConversation => '제목 없음';
 
   @override
   String get askAiRenameConversation => '대화 이름 바꾸기';
@@ -166,17 +159,16 @@ class AppLocalizationsKo extends AppLocalizations {
   String get askAiDeleteConversationTitle => '이 대화를 삭제할까요?';
 
   @override
-  String get askAiDeleteConversationTip => '대화가 이 기기에서 삭제되며 되돌릴 수 없습니다.';
+  String get askAiDeleteConversationTip => '이 기기에서 삭제합니다. 되돌릴 수 없습니다.';
 
   @override
   String get askAiClearHistoryTitle => '이 서버의 에이전트 기록을 지울까요?';
 
   @override
-  String get askAiClearHistoryTip => '이 서버에 저장된 모든 에이전트 대화가 이 기기에서 삭제됩니다.';
+  String get askAiClearHistoryTip => '이 서버에 저장된 Agent 대화가 모두 삭제됩니다.';
 
   @override
-  String get askAiRestoredReview =>
-      '기록에서 복원했습니다. 실행 전에 다시 확인하세요. 저절로 실행되지는 않습니다.';
+  String get askAiRestoredReview => '이 명령은 기록에서 가져온 것입니다. 다시 검토하세요';
 
   @override
   String get agentTitle => '에이전트';
@@ -185,8 +177,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get agentWelcome => '서버들에서 무엇을 할까요?';
 
   @override
-  String get agentWelcomeTip =>
-      '진단이나 운영 작업을 요청하세요. 에이전트는 ServerBox의 현재 상태를 사용해 검토가 필요한 작업을 하나씩 제안합니다.';
+  String get agentWelcomeTip => 'Agent에게 문제 진단이나 운영 작업을 맡길 수 있습니다';
 
   @override
   String get agentPromptHint => '에이전트에게 서버 점검이나 조작을 요청하세요...';
@@ -236,8 +227,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get agentAuthMethod => '인증 방식';
 
   @override
-  String get agentSshConnectTip =>
-      '에이전트가 SSH 연결을 열려고 합니다. 비밀번호는 여기에 입력하세요. 대화에 입력하면 그대로 저장되고 모델로 전송됩니다.';
+  String get agentSshConnectTip => 'Agent가 SSH 연결을 원합니다. 여기에 비밀번호를 입력하세요';
 
   @override
   String get agentAdHocSessions => '임시 연결';
@@ -246,13 +236,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get agentSaveServerTitle => '서버로 저장';
 
   @override
-  String get agentSaveServerTip => '이 호스트와 입력한 비밀번호가 이 기기에 저장됩니다.';
+  String get agentSaveServerTip => '이 호스트와 입력한 비밀번호는 이 기기에 저장됩니다';
 
   @override
   String get agentMonitorOptional => 'monitor 에이전트(선택)';
 
   @override
-  String get authFailTip => '인증에 실패했습니다. 자격 증명이 올바른지 확인해 주세요.';
+  String get authFailTip => '인증에 실패했습니다. 정보를 확인하세요';
 
   @override
   String get autoBackupConflict => '자동 백업은 한 번에 하나만 활성화할 수 있습니다.';
@@ -297,14 +287,14 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get monitorHttpsRequired =>
-      'Remote monitor agents require HTTPS; HTTP is allowed only on loopback.';
+      '원격 monitor 에이전트에는 HTTPS가 필요합니다. HTTP를 허용한 경우는 예외입니다.';
 
   @override
-  String get monitorAllowInsecureHttp => 'Allow insecure HTTP';
+  String get monitorAllowInsecureHttp => 'HTTP 허용';
 
   @override
   String get monitorAllowInsecureHttpTip =>
-      'Only enable for a trusted private network with transport encryption outside HTTP, such as Tailscale. The agent must also explicitly allow plaintext file access. Credentials and file contents may otherwise be exposed.';
+      'HTTP 외에 전송 자체가 암호화되는 신뢰할 수 있는 사설망에서만. 예를 들어 Tailscale';
 
   @override
   String get backupTip => '내보낸 데이터는 비밀번호로 암호화할 수 있습니다.\n안전하게 보관해 주세요.';
@@ -506,8 +496,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get fileDirGone => '이 폴더는 더 이상 없습니다';
 
   @override
-  String get fileDirGoneTip =>
-      '삭제되었거나 이름이 바뀌었습니다. 아래 막대에서 뒤로 가기, 홈, 또는 다른 위치로 이동하세요.';
+  String get fileDirGoneTip => '삭제되었거나 이름이 바뀌었습니다';
 
   @override
   String get fullScreen => '전체 화면';
@@ -554,21 +543,19 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get macDmgBody =>
-      'App Store는 이 앱을 샌드박스에서 실행하도록 요구하며, 샌드박스 프로세스는 의사 터미널을 열 수 없습니다. 그래서 App Store 버전에는 이 Mac의 터미널이 없고, 여기서 스니펫이나 에이전트 명령도 실행할 수 없습니다. DMG 버전은 같은 앱을 샌드박스 없이 서명한 것으로, 둘 다 됩니다.\n\nApp Store 버전은 계속 동작하고 계속 업데이트됩니다. 나중에 업데이트가 끝날 수 있습니다.\n\n두 버전은 데이터를 서로 다른 곳에 둡니다. DMG 버전은 첫 실행에서 그것을 복사하므로 서버, 키, 기록이 함께 옮겨집니다. 실패하면 그렇게 알려 주며, 대신 백업 파일로 옮길 수 있습니다(설정의 \'백업\').';
+      'App Store는 이 앱을 샌드박스에서 실행하도록 요구하며, 샌드박스에서는 터미널을 열 수 없습니다. DMG 버전은 가능합니다.\n\nApp Store 버전은 이후 업데이트가 중단될 수 있습니다.';
 
   @override
-  String get macDmgImportDenied =>
-      'macOS가 이전에 설치된 버전의 데이터 읽기를 허용하지 않았습니다. 전체 디스크 접근 권한을 준 뒤 앱을 다시 열거나, 그쪽에서 백업을 내보내 여기서 복원하세요.';
+  String get macDmgImportDenied => 'macOS가 이전 버전의 데이터를 읽도록 허용하지 않았습니다';
 
   @override
-  String get macDmgImported => '이전에 설치된 버전의 데이터를 가져왔습니다.';
+  String get macDmgImported => '이전 버전의 데이터를 가져왔습니다';
 
   @override
-  String get macDmgImportFailed =>
-      '이전에 설치된 버전의 데이터를 읽지 못했습니다. 그쪽에서 백업을 내보낸 뒤 여기서 복원하세요.';
+  String get macDmgImportFailed => '이전 버전의 데이터를 읽지 못했습니다';
 
   @override
-  String get macDmgTip => '이 Mac의 터미널과 이 Mac에서 스니펫 실행은 DMG 버전에만 있습니다.';
+  String get macDmgTip => '로컬 터미널과 로컬 snippet 실행 (DMG 버전)';
 
   @override
   String get macDmgTitle => 'DMG 버전';
@@ -595,7 +582,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get unusedTaggedImages => '사용하지 않는 태그 이미지';
 
   @override
-  String get pruneDanglingImagesTip => '태그가 없는 댕글링 이미지만 제거합니다.';
+  String get pruneDanglingImagesTip => '댕글링 이미지만 제거합니다.';
 
   @override
   String get pruneUnusedImagesTip => '어떤 컨테이너에서도 사용하지 않는 태그 이미지도 제거합니다.';
@@ -667,12 +654,10 @@ class AppLocalizationsKo extends AppLocalizations {
       '이 옵션을 켜면 입력 내용이 일반 IME를 거치며, 일부 시스템에서는 터미널의 보안 키보드 안내를 피할 수 있습니다.';
 
   @override
-  String get linuxShellTip =>
-      '대화형 터미널이 실행하는 셸입니다. Alpine에는 chsh가 없고 시스템에서 /etc/passwd를 읽는 것도 없으므로 이 설정만이 결정합니다. 일회성 명령은 계속 /bin/sh로 실행됩니다. 앱과 Agent가 POSIX를 쓰기 때문입니다. 비워 두면 /bin/sh로 돌아갑니다.';
+  String get linuxShellTip => '터미널을 시작할 셸. 비우면 /bin/sh로 돌아갑니다.';
 
   @override
-  String get linuxNetTip =>
-      'Linux 시스템과 패키지를 내려받을 위치, 그리고 기록되는 DNS 서버입니다. 비워 두면 기본값으로 돌아갑니다. 저장하면 이미 설치된 시스템의 파일도 다시 씁니다.';
+  String get linuxNetTip => 'DNS 서버. 비우면 기본값으로 돌아갑니다';
 
   @override
   String madeWithLove(Object myGithub) {
@@ -757,7 +742,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String bmcPowerConfirm(String server, String resetType) {
-    return '$server에 실행할까요? 서비스에 \"$resetType\"을(를) 보냅니다. 이 작업에 대해 허용된 유형입니다.';
+    return '$server에 실행할까요? 서비스에 \"$resetType\"을 보냅니다';
   }
 
   @override
@@ -765,7 +750,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get bmcPowerAccepted =>
-      '수락되었지만 전원 상태는 아직 바뀌지 않았습니다. graceful 동작은 OS에 달려 있고, 이를 구분하지 않는 서비스도 있습니다.';
+      '접수되었지만 전원 상태는 아직 바뀌지 않았습니다. graceful 동작은 OS에 달려 있습니다';
 
   @override
   String get bmcPowerUnsupported => '이 서비스는 해당 작업에 대해 아무것도 허용하지 않습니다';
@@ -808,18 +793,16 @@ class AppLocalizationsKo extends AppLocalizations {
   String get bmcCertPinned => '확인 후 고정됨';
 
   @override
-  String get bmcCertUnreviewed => '아직 확인하지 않음 — 탭하여 BMC가 제시하는 인증서 보기';
+  String get bmcCertUnreviewed => '아직 확인하지 않음 — 눌러서 인증서 보기';
 
   @override
-  String get bmcCertReview =>
-      'BMC는 자체 서명 인증서를 쓰므로 이를 보증하는 곳이 없습니다. BMC 자체 웹 화면에 표시된 것과 대조해 보세요. 수락하면 이 인증서만 신뢰됩니다.';
+  String get bmcCertReview => '자체 서명 인증서입니다. 수락하기 전에 대조하세요. 이후에는 이 인증서만 신뢰합니다.';
 
   @override
-  String get bmcCertChanged =>
-      '이전에 수락한 인증서가 아닙니다. BMC가 인증서를 새로 만들거나 펌웨어를 업데이트할 때도 이렇게 되지만, 가로채기가 일어날 때도 똑같아 보입니다. 수락하기 전에 확인하세요.';
+  String get bmcCertChanged => '인증서가 일치하지 않습니다. 확인하세요.';
 
   @override
-  String get bmcCertExpired => '이 인증서는 유효 기간을 벗어났습니다.';
+  String get bmcCertExpired => '만료되었습니다.';
 
   @override
   String bmcCertWas(String fingerprint) {
@@ -831,7 +814,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get proxyCommandSandboxed =>
-      '이 빌드는 샌드박스에서 실행됩니다. 명령이 보는 홈 디렉터리는 실제 홈이 아니라 비어 있는 것이라서 ~/.ssh를 읽는 명령(ssh -W, cloudflared)은 실패하며, 대개 엉뚱한 호스트의 시간 초과로 나타납니다. 네트워크만 쓰는 명령은 그대로 동작합니다. DMG 버전에는 샌드박스가 없습니다.';
+      '이 빌드는 샌드박스에서 실행됩니다: 명령이 받는 home은 비어 있어 당신 것이 아니며, ~/.ssh를 읽는 것은 모두 실패합니다. DMG 버전은 아닙니다.';
 
   @override
   String privateKeyFileUnreadable(String path, String reason) {
@@ -935,12 +918,12 @@ class AppLocalizationsKo extends AppLocalizations {
     Object latest,
     Object pm,
   ) {
-    return '$distro $installed이(가) 설치되어 있고 $latest을(를) 사용할 수 있습니다. 업데이트하면 다시 내려받아 컨테이너를 교체하므로 그 안에 $pm로 설치한 것은 모두 사라집니다. 건너뛰면 지금 것을 그대로 쓸 수 있습니다.';
+    return '$distro $installed이(가) 설치되어 있고 $latest가 있습니다. 업데이트는 컨테이너 전체를 교체합니다: $pm 데이터가 사라집니다';
   }
 
   @override
   String linuxSystemInUse(Object name) {
-    return '$name의 터미널이 아직 열려 있습니다. 닫은 뒤에 시스템을 삭제하세요.';
+    return '$name의 터미널을 닫은 뒤 삭제하세요';
   }
 
   @override
@@ -948,7 +931,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String rootfsInstallTip(Object distro, Object version, Object size) {
-    return '$distro $version(약 $size MB)을 내려받아 이 기기에 풉니다. 패키지 관리자가 있는 셸을 이 앱에 제공하며, 언제든지 삭제할 수 있습니다.';
+    return '$distro $version(약 $size MB)을 내려받아 이 기기에 풉니다.';
   }
 
   @override
@@ -959,7 +942,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get serverFilesUnavailableTip =>
-      '이 서버의 SSH에 연결할 수 있거나, monitor 에이전트의 파일 API가 켜져 있어야 합니다.';
+      '이 서버에 대한 SSH가 필요하거나, server_box_monitor를 설치하고 파일 API를 켜야 합니다.';
 
   @override
   String get back => '뒤로';
@@ -995,14 +978,14 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get shareServerRiskTip =>
-      '이 QR 코드에는 비밀번호를 포함한 서버 연결 설정이 평문으로 들어 있습니다. 스캔하거나 촬영한 사람은 누구나 이 서버에 접속할 수 있습니다.';
+      '이 QR 코드는 서버 접속 설정을 평문으로 담고 있습니다. 스캔하거나 촬영한 사람은 누구나 접속할 수 있습니다.';
 
   @override
   String get sftpDlPrepare => '연결 준비 중...';
 
   @override
   String get sftpEditorTip =>
-      '비어 있으면 앱 내장 파일 편집기를 사용합니다. 값이 있으면 원격 서버의 편집기(예: `vim`)를 사용합니다 (`EDITOR`에 따라 자동 감지 권장).';
+      '비우면 내장 편집기를 씁니다. 예를 들어 `vim`(`EDITOR`에서 읽는 것을 권장).';
 
   @override
   String get sftpRmrDirSummary => 'SFTP에서 `rm -r`을 사용하여 폴더를 삭제합니다.';
@@ -1020,8 +1003,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get specifyDev => '장치 지정';
 
   @override
-  String get specifyDevTip =>
-      '예를 들어, 네트워크 트래픽 통계는 기본적으로 모든 장치를 대상으로 합니다. 여기서 특정 장치를 지정할 수 있습니다.';
+  String get specifyDevTip => '네트워크 트래픽은 기본적으로 모든 장치를 합칩니다. 여기서 지정할 수 있습니다';
 
   @override
   String get tempIsCelsiusTip =>
@@ -1097,7 +1079,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sshKnownHostKeys => '알려진 호스트';
 
   @override
-  String get sshKnownHostKeysTip => '이 앱이 수락한 호스트 키입니다. 삭제하면 다음 연결 시 다시 확인합니다.';
+  String get sshKnownHostKeysTip => '이 앱이 수락한 호스트 키';
 
   @override
   String sshHostKeyNewDesc(Object serverName) {
@@ -1419,7 +1401,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get watchServersTip =>
-      '워치가 각 서버의 monitor 에이전트에서 직접 가져오므로, monitor가 설정된 서버만 선택할 수 있습니다.';
+      '시계는 스스로 monitor에서 가져오므로 monitor가 있는 서버만 고를 수 있습니다.';
 
   @override
   String get watchNoMonitorServer => 'monitor 에이전트가 설정된 서버가 없습니다';
@@ -1478,11 +1460,11 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'ServerBox가 실행 중인 기기에서도 Agent가 작업할 수 있게 합니다. 여기서는 자동 실행되지 않으며, 모든 명령에 확인이 필요합니다.';
+      'ServerBox가 실행 중인 이 기기에서 Agent가 작업하게 합니다. 읽기 전용 명령도 검토가 필요합니다';
 
   @override
   String get agentLocalExecRootfsTip =>
-      'ServerBox가 설치하는 Alpine Linux 컨테이너 안에서 Agent가 이 기기에서 작업할 수 있게 합니다. 기기 자체의 파일 시스템, 앱 데이터, 사용자 파일은 볼 수 없습니다. 모든 명령에는 여전히 확인이 필요합니다.';
+      'Agent를 로컬에서 동작하게 하며, 범위는 ServerBox가 설치한 Linux 컨테이너 안으로 제한됩니다';
 
   @override
   String macDmgImportedPartly(String path) {

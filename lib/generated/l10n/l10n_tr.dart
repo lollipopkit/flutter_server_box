@@ -26,11 +26,11 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get askAiEndpointTip =>
-      'Bir servis temel URL\'si ya da tam bir Chat Completions veya Responses uç noktası gir. ServerBox yolu seçilen protokole göre tamamlar.';
+      'Alan adı veya tam URL. Yol, seçtiğin protokole göre tamamlanır.';
 
   @override
   String get askAiProtocolTip =>
-      'Otomatik, resmî OpenAI uç noktası için Responses\'ı, uyumlu sağlayıcılar için Chat Completions\'ı kullanır.';
+      'Otomatik önce Responses, sonra Chat Completions dener.';
 
   @override
   String get askAiProtocolChatCompletions => 'Chat Completions';
@@ -63,10 +63,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get askAiAgentWelcome => 'Bu sunucuda ne yapalım?';
 
   @override
-  String get askAiAgentWelcomeTip =>
-      'Bir teşhis ya da görev iste. Agent her seferinde tek bir komut önerir ve değişiklik yapmadan önce onayını bekler.';
-
-  @override
   String get askAiAgentPromptHint =>
       'Agent\'tan bir şeyi incelemesini veya düzeltmesini iste...';
 
@@ -75,7 +71,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get askAiAnalyzeSelectionPrompt =>
-      'Seçilen terminal içeriğini incele, ne olduğunu açıkla ve işlem gerekiyorsa en güvenli sonraki adımı öner.';
+      'Seçili terminal çıktısını incele ve ne olduğunu açıkla';
 
   @override
   String get askAiTerminalContext => 'Terminal bağlamı';
@@ -88,7 +84,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get askAiReviewBeforeContinuing =>
-      'Önce önerilen komutu incele ya da reddet';
+      'Önce mevcut öneriyi incele ya da reddet';
 
   @override
   String get askAiApproveRun => 'Onayla ve çalıştır';
@@ -120,7 +116,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get askAiHighRiskConfirmBody =>
-      'Bu komut veri silebilir, servisleri durdurabilir ya da geri alınması zor olabilir. Çalıştırmadan önce dikkatle incele.';
+      'Bu komut geri alması zor değişiklikler yapabilir. Dikkatle kontrol et.';
 
   @override
   String get askAiNoCommandOutput => 'Komut çıktı üretmeden tamamlandı.';
@@ -138,18 +134,18 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get askAiAutoRunSafeCommandsTip =>
-      'Yalnızca hem model hem de yerel güvenlik denetimleri komutu salt okunur olarak sınıflandırdığında otomatik çalıştırılır. Sistemi değiştiren komutlar yine incelenmelidir.';
+      'Yalnızca hem model hem yerel kontrol salt okunur derse çalışır';
 
   @override
   String get askAiSendOnEnter => 'Enter gönderir';
 
   @override
   String get askAiSendOnEnterTip =>
-      'Enter mesajı gönderir, Shift+Enter yeni satır açar. Kapalıyken yer değiştirir: Enter yeni satır açar, Cmd/Ctrl+Enter gönderir.';
+      'Enter gönderir, Shift+Enter yeni satır. Kapalı: Enter yeni satır, Cmd/Ctrl+Enter gönderir.';
 
   @override
   String get askAiApiKeyOptional =>
-      'Yerel veya kimlik doğrulaması olmayan uç noktalar için isteğe bağlı';
+      'Yerel ya da kimlik doğrulaması gerekmiyorsa boş bırak';
 
   @override
   String get askAiHistory => 'Konuşma geçmişi';
@@ -158,13 +154,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get askAiNewConversation => 'Yeni konuşma';
 
   @override
-  String get askAiNoHistory => 'Bu sunucu için kayıtlı konuşma yok';
+  String get askAiNoHistory => 'Henüz kayıtlı konuşma yok';
 
   @override
   String get askAiNoHistoryMessages => 'Henüz mesaj yok';
 
   @override
-  String get askAiUntitledConversation => 'Yeni konuşma';
+  String get askAiUntitledConversation => 'Adsız';
 
   @override
   String get askAiRenameConversation => 'Konuşmayı yeniden adlandır';
@@ -173,8 +169,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get askAiDeleteConversationTitle => 'Bu konuşma silinsin mi?';
 
   @override
-  String get askAiDeleteConversationTip =>
-      'Konuşma bu cihazdan kaldırılır ve geri alınamaz.';
+  String get askAiDeleteConversationTip => 'Bu cihazdan siler. Geri alınamaz.';
 
   @override
   String get askAiClearHistoryTitle =>
@@ -182,11 +177,10 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get askAiClearHistoryTip =>
-      'Bu sunucu için kaydedilmiş tüm Agent konuşmaları bu cihazdan kaldırılır.';
+      'Bu sunucu için kayıtlı tüm Agent konuşmaları silinecek.';
 
   @override
-  String get askAiRestoredReview =>
-      'Geçmişten geri yüklendi. Çalıştırmadan önce yeniden incele; kendiliğinden asla çalışmaz.';
+  String get askAiRestoredReview => 'Bu komut geçmişten geldi. Yeniden incele';
 
   @override
   String get agentTitle => 'Agent';
@@ -196,7 +190,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get agentWelcomeTip =>
-      'Bir teşhis ya da işletim görevi iste. Agent, ServerBox\'ın anlık durumunu kullanır ve her seferinde incelenecek tek bir eylem önerir.';
+      'Agent bir sorunu inceleyebilir ya da bir işi yapabilir';
 
   @override
   String get agentPromptHint =>
@@ -249,7 +243,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get agentSshConnectTip =>
-      'Agent bir SSH bağlantısı açmak istiyor. Parolayı buraya yaz, konuşmaya yazma; orada saklanır ve modele gönderilir.';
+      'Agent bir SSH bağlantısı istiyor. Parolayı buraya gir';
 
   @override
   String get agentAdHocSessions => 'Geçici bağlantılar';
@@ -259,14 +253,13 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get agentSaveServerTip =>
-      'Bu sunucu ve girdiğin parola bu cihazda saklanacak.';
+      'Bu host ve girdiğin parola bu cihazda saklanır';
 
   @override
   String get agentMonitorOptional => 'monitor aracısı (isteğe bağlı)';
 
   @override
-  String get authFailTip =>
-      'Kimlik doğrulama başarısız oldu, lütfen kimlik bilgilerinin doğru olup olmadığını kontrol edin';
+  String get authFailTip => 'Kimlik doğrulama başarısız. Bilgileri kontrol et';
 
   @override
   String get autoBackupConflict =>
@@ -312,14 +305,14 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get monitorHttpsRequired =>
-      'Uzak izleme aracıları HTTPS gerektirir; HTTP\'ye yalnızca geri döngü adreslerinde izin verilir.';
+      'Uzak monitor ajanı HTTPS ister, HTTP’ye izin verilmediyse.';
 
   @override
-  String get monitorAllowInsecureHttp => 'Allow insecure HTTP';
+  String get monitorAllowInsecureHttp => 'HTTP’ye izin ver';
 
   @override
   String get monitorAllowInsecureHttpTip =>
-      'Only enable for a trusted private network with transport encryption outside HTTP, such as Tailscale. The agent must also explicitly allow plaintext file access. Credentials and file contents may otherwise be exposed.';
+      'Yalnızca taşımayı kendisi şifreleyen güvenilir özel ağlarda, örneğin Tailscale';
 
   @override
   String get backupTip =>
@@ -534,8 +527,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get fileDirGone => 'Bu klasör artık burada değil';
 
   @override
-  String get fileDirGoneTip =>
-      'Silinmiş veya adı değiştirilmiş. Geri dönmek, ana klasöre gitmek ya da başka bir yere geçmek için alttaki çubuğu kullanın.';
+  String get fileDirGoneTip => 'Silinmiş ya da adı değişmiş';
 
   @override
   String get fullScreen => 'Tam ekran';
@@ -583,23 +575,20 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get macDmgBody =>
-      'App Store bu uygulamanın kum havuzunda çalışmasını zorunlu kılıyor ve kum havuzundaki bir süreç sözde terminal açamıyor. Bu yüzden App Store sürümünde bu Mac için terminal yok; burada snippet ya da agent komutu da çalıştıramaz. DMG sürümü aynı uygulamanın kum havuzu olmadan imzalanmış hâli ve ikisini de yapabiliyor.\n\nApp Store sürümü çalışmaya ve güncellenmeye devam ediyor. İleride güncellenmesi sona erebilir.\n\nİki sürüm verilerini farklı yerlerde tutar. DMG sürümü ilk açılışında bunları kopyalar; sunucular, anahtarlar ve geçmiş sizinle gelir. Bu olmazsa bunu söyler, o zaman bir yedek dosyasıyla taşıyabilirsiniz (ayarlardaki Yedek).';
+      'App Store bu uygulamanın kum havuzunda çalışmasını ister ve kum havuzu terminal açamaz. DMG sürümü açabilir.\n\nApp Store sürümü ileride güncellenmeyebilir.';
 
   @override
-  String get macDmgImportDenied =>
-      'macOS, daha önce kurulu sürümün verilerinin okunmasına izin vermedi. Tam Disk Erişimi verip uygulamayı yeniden açın ya da orada bir yedek dışa aktarıp burada geri yükleyin.';
+  String get macDmgImportDenied => 'macOS önceki sürümün verisini okutmadı';
 
   @override
-  String get macDmgImported =>
-      'Daha önce kurulu sürümün verileri içe aktarıldı.';
+  String get macDmgImported => 'Önceki sürümün verisi içe aktarıldı';
 
   @override
-  String get macDmgImportFailed =>
-      'Daha önce kurulu sürümün verileri okunamadı. Orada bir yedek dışa aktarıp burada geri yükleyin.';
+  String get macDmgImportFailed => 'Önceki sürümün verisi okunamadı';
 
   @override
   String get macDmgTip =>
-      'Bu Mac\'te terminal ve burada snippet çalıştırma yalnızca DMG sürümünde var.';
+      'Yerel terminal ve snippet’leri yerelde çalıştırma (DMG sürümü)';
 
   @override
   String get macDmgTitle => 'DMG sürümü';
@@ -626,8 +615,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get unusedTaggedImages => 'Kullanılmayan etiketliler';
 
   @override
-  String get pruneDanglingImagesTip =>
-      'Yalnızca askıdaki görüntüleri (etiketsiz katmanları) kaldırır.';
+  String get pruneDanglingImagesTip => 'Yalnızca boşta kalan imajları siler.';
 
   @override
   String get pruneUnusedImagesTip =>
@@ -705,11 +693,10 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get linuxShellTip =>
-      'Etkileşimli terminalin neyi çalıştıracağı. Alpine\'de chsh yok ve sistemde /etc/passwd okuyan bir şey de yok, dolayısıyla kararı yalnızca bu verir. Tek seferlik komutlar yine /bin/sh ile çalışır, çünkü uygulama ve Agent POSIX yazar. Varsayılana dönmek için boş bırakın.';
+      'Terminalin hangi kabukla açılacağı. Boş bırakınca /bin/sh’a döner.';
 
   @override
-  String get linuxNetTip =>
-      'Linux sisteminin ve paketlerinin nereden indirileceği ve içine yazılacak DNS sunucuları. Varsayılana dönmek için boş bırakın. Kaydetmek, kurulu bir sistemdeki her ikisini de yeniden yazar.';
+  String get linuxNetTip => 'DNS sunucuları. Boş bırakınca varsayılana döner';
 
   @override
   String madeWithLove(Object myGithub) {
@@ -797,7 +784,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String bmcPowerConfirm(String server, String resetType) {
-    return 'Bu $server sunucusuna gönderilsin mi? Hizmete \"$resetType\" istenecek; bu eylem için izin verdiği tür budur.';
+    return '$server için gönderilsin mi? Servise \"$resetType\" istenecek';
   }
 
   @override
@@ -805,7 +792,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get bmcPowerAccepted =>
-      'Kabul edildi, ancak güç durumu henüz değişmedi. Nazik bir işlem işletim sistemine bağlıdır ve bazı hizmetler bunu ayırt etmez.';
+      'Kabul edildi ama güç durumu değişmedi. Nazik işlem işletim sistemine bağlı';
 
   @override
   String get bmcPowerUnsupported =>
@@ -851,18 +838,17 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get bmcCertUnreviewed =>
-      'Henüz incelenmedi — BMC\'nin sunduğunu görmek için dokunun';
+      'Henüz incelenmedi — sertifikayı görmek için dokun';
 
   @override
   String get bmcCertReview =>
-      'BMC\'ler kendinden imzalı sertifika kullanır, dolayısıyla bunun için kefil olan bir taraf yoktur. BMC\'nin kendi web arayüzünde görünenle karşılaştırın. Kabul edildikten sonra yalnızca tam olarak bu sertifikaya güvenilir.';
+      'Kendinden imzalı bir sertifika. Kabul etmeden önce karşılaştır. Sonrasında yalnızca bu güvenilir.';
 
   @override
-  String get bmcCertChanged =>
-      'Bu, daha önce kabul edilen sertifika değil. BMC sertifikasını yeniden ürettiğinde ya da bellenimi güncellendiğinde böyle olur — ama bir araya girme de tam olarak böyle görünür. Kabul etmeden önce doğrulayın.';
+  String get bmcCertChanged => 'Sertifika eşleşmiyor. Kontrol et.';
 
   @override
-  String get bmcCertExpired => 'Bu sertifika geçerlilik tarihlerinin dışında.';
+  String get bmcCertExpired => 'Süresi dolmuş.';
 
   @override
   String bmcCertWas(String fingerprint) {
@@ -875,7 +861,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get proxyCommandSandboxed =>
-      'Bu sürüm bir kum havuzunda çalışır: komut sizinki yerine boş bir ev dizini görür, bu yüzden ~/.ssh okuyan her şey (ssh -W, cloudflared) başarısız olur ve çoğu zaman yanlış sunucuyu adlandıran bir zaman aşımı olarak görünür. Yalnızca ağı kullanan komutlar çalışmaya devam eder. DMG sürümünde kum havuzu yoktur.';
+      'Bu sürüm kum havuzunda çalışır: komut boş bir home alır, seninkini değil, bu yüzden ~/.ssh okuyan her şey başarısız olur. DMG sürümü çalışmaz.';
 
   @override
   String privateKeyFileUnreadable(String path, String reason) {
@@ -989,12 +975,12 @@ class AppLocalizationsTr extends AppLocalizations {
     Object latest,
     Object pm,
   ) {
-    return '$distro $installed kurulu ve $latest mevcut. Güncelleme onu yeniden indirir ve konteyneri değiştirir: içine $pm ile kurulmuş her şey kaybolur. Bunu atlarsanız mevcut olan çalışmaya devam eder.';
+    return '$distro $installed kurulu, $latest var. Güncelleme tüm konteyneri değiştirir: $pm verisi kaybolur';
   }
 
   @override
   String linuxSystemInUse(Object name) {
-    return '$name için hâlâ açık bir terminal var. Sistemi silmeden önce kapatın.';
+    return 'Silmeden önce $name üzerindeki terminalleri kapat';
   }
 
   @override
@@ -1002,7 +988,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String rootfsInstallTip(Object distro, Object version, Object size) {
-    return '$distro $version (yaklaşık $size MB) indirilir ve bu cihazda açılır. Bu uygulamaya paket yöneticisi olan bir kabuk sağlar ve istediğiniz zaman silinebilir.';
+    return '$distro $version (yaklaşık $size MB) indirir ve bu cihaza açar.';
   }
 
   @override
@@ -1013,7 +999,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get serverFilesUnavailableTip =>
-      'Bu sunucunun SSH\'ı üzerinden ya da dosya API\'si açık bir monitor aracısı üzerinden erişilebilir.';
+      'Bu sunucuya SSH ya da dosya API’si açık server_box_monitor gerekir.';
 
   @override
   String get back => 'Geri';
@@ -1049,14 +1035,14 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get shareServerRiskTip =>
-      'Bu QR kod, parolalar dahil olmak üzere sunucunun bağlantı ayarlarını düz metin olarak içerir. Kodu tarayan veya fotoğraflayan herkes bu sunucuya bağlanabilir.';
+      'Bu QR kod bağlantı ayarlarını düz metin olarak taşır. Tarayan ya da fotoğraflayan herkes bağlanabilir.';
 
   @override
   String get sftpDlPrepare => 'Bağlantı hazırlanıyor...';
 
   @override
   String get sftpEditorTip =>
-      'Boşsa, uygulamanın yerleşik dosya düzenleyicisi kullanılır. Bir değer varsa, uzak sunucunun düzenleyicisi kullanılır, örn. `vim` (otomatik olarak `EDITOR`\'a göre algılanması önerilir).';
+      'Boşsa yerleşik düzenleyici kullanılır. Örneğin `vim` (`EDITOR`’dan okumak önerilir).';
 
   @override
   String get sftpRmrDirSummary =>
@@ -1076,7 +1062,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get specifyDevTip =>
-      'Örneğin, ağ trafiği istatistikleri varsayılan olarak tüm cihazlar içindir. Burada belirli bir cihaz belirtebilirsiniz.';
+      'Ağ trafiği varsayılan olarak tüm aygıtları sayar; burada birini belirt';
 
   @override
   String get tempIsCelsiusTip =>
@@ -1154,7 +1140,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get sshKnownHostKeysTip =>
-      'Bu uygulamanın kabul ettiği ana makine anahtarları. Birini silerseniz bir sonraki bağlantıda tekrar sorulur.';
+      'Bu uygulamanın kabul ettiği host anahtarları';
 
   @override
   String sshHostKeyNewDesc(Object serverName) {
@@ -1491,7 +1477,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get watchServersTip =>
-      'Saat bu sunucuları doğrudan monitor aracısından okur, bu yüzden yalnızca monitor yapılandırılmış sunucular seçilebilir.';
+      'Saat veriyi monitor’dan kendisi alır, bu yüzden yalnızca monitor’u olan sunucular seçilebilir.';
 
   @override
   String get watchNoMonitorServer =>
@@ -1553,11 +1539,11 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'Agent\'ın yalnızca sunucularda değil, ServerBox\'ın çalıştığı makinede de çalışmasına izin verir. Burada hiçbir şey gözetimsiz çalışmaz: her komut inceleme gerektirir.';
+      'Agent’ın ServerBox’ın çalıştığı makinede çalışmasına izin verir. Salt okunur komutlar da incelenir';
 
   @override
   String get agentLocalExecRootfsTip =>
-      'Agent\'ın bu cihazda, ServerBox\'ın kurduğu Alpine Linux konteyneri içinde çalışmasına izin verir. Cihazın kendi dosya sistemini, uygulamanın verilerini veya dosyalarınızı göremez. Her komut yine de inceleme gerektirir.';
+      'Agent’ın yerelde, ServerBox’ın kurduğu Linux konteynerinin içinde çalışmasına izin verir';
 
   @override
   String macDmgImportedPartly(String path) {

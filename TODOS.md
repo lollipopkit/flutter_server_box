@@ -71,6 +71,42 @@ server 不再发起 JSON-RPC 请求、Roots / Sampling / Logging 都已废弃。
   威胁模型,但这些工具够得到你**每一台**服务器,所以要明说,不能默认开。
 - app 得开着。这不是一个后台服务。
 
+## Agent 的两套界面是复制出来的
+
+终端里的 Agent(`lib/view/page/ssh/page/ask_ai.dart`,`part of page.dart`)和 Agent
+标签页(`lib/view/page/agent/`)是两份独立实现。实测重合(去空白去注释,只算长度 > 25 的行):
+
+| 对比 | 重合 |
+| --- | --- |
+| `agent/view.dart`(1334 行) vs `ssh/page/ask_ai.dart`(1444 行) | 100 行,23% |
+| `agent/history.dart`(258) vs `ssh/page/agent_history.dart`(384) | 18 行,20% |
+| `agent/shell.dart` vs `ask_ai.dart` | 14 行,9% |
+
+100 行里 81 行是实质逻辑,不是 `padding:` 那类噪声。重复的是:
+
+- 自动滚动 —— `_scheduleAutoScroll`,连 `maxScrollExtent - 96` 这个阈值都一样
+- Enter / Cmd+Enter 发送的按键判断,含 `numpadEnter` 分支
+- 错误文案映射 —— `AskAiNetworkException`、`invalidBaseUrl`
+- 配置字段标签 —— `AskAiConfigField.baseUrl => libL10n.apiEndpoint`
+- 会话增删改 —— 重命名对话框、删除确认、无标题回退
+- 空状态、复制到剪贴板、加载指示器
+
+**provider 层只共享了一半。** `data/provider/ai/ask_ai.dart`(配置、异常、字段枚举)两边
+都用;`agent_session.dart` / `agent_shell.dart` / `global_agent_tools.dart` /
+`adhoc_ssh.dart` 是全局那套自己的。所以是 provider 分了一半、view 整个复制了一遍。
+
+真正不同的只有两点:作用域(一台服务器 vs 全局)和工具集。其余是同一个东西写了两遍。
+
+**l10n 的前缀和位置对不上,别据此判断归属。** `askAi*` 源自终端里最早的 "Ask AI",但
+Agent 标签页也在用它(`askAiNewConversation`、`askAiUntitledConversation`、
+`askAiDeleteConversationTip` 三棵文件树都引用)。现状是 `askAi*` 是共用词汇,`agent*`
+是全局 Agent 特有的那几条(`agentWelcomeTip`、`agentClearHistoryTip`、
+`agentLocalExecTip`)。所以 `askAiClearHistoryTip` 和 `agentClearHistoryTip` 不是重复,
+是「这台服务器的」和「全局的」两句不同的话。
+
+重构的形状:把那 81 行抽成共享的 widget / mixin,两棵树各自只留作用域和工具集的差异。
+量级不小,不适合塞进正在进行的分支。
+
 ## BMC:IPMI 这半没做,以及它该放在哪个仓库
 
 **状态(2026-08-23):没开始。** #1316 只做 Redfish,`crates/` 下没有任何 IPMI 代码,

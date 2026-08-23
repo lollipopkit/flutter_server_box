@@ -156,13 +156,13 @@ abstract class AppLocalizations {
   /// No description provided for @askAiEndpointTip.
   ///
   /// In en, this message translates to:
-  /// **'Enter a service base URL or a full Chat Completions or Responses endpoint. ServerBox completes the path for the selected protocol.'**
+  /// **'Enter a domain or a full URL. The path is completed from the protocol you pick.'**
   String get askAiEndpointTip;
 
   /// No description provided for @askAiProtocolTip.
   ///
   /// In en, this message translates to:
-  /// **'Auto uses Responses for the official OpenAI endpoint and Chat Completions for compatible providers.'**
+  /// **'Auto tries Responses, then Chat Completions.'**
   String get askAiProtocolTip;
 
   /// No description provided for @askAiProtocolChatCompletions.
@@ -219,12 +219,6 @@ abstract class AppLocalizations {
   /// **'What should we do on this server?'**
   String get askAiAgentWelcome;
 
-  /// No description provided for @askAiAgentWelcomeTip.
-  ///
-  /// In en, this message translates to:
-  /// **'Ask for a diagnosis or a task. The Agent proposes one command at a time and waits for review before making changes.'**
-  String get askAiAgentWelcomeTip;
-
   /// No description provided for @askAiAgentPromptHint.
   ///
   /// In en, this message translates to:
@@ -240,7 +234,7 @@ abstract class AppLocalizations {
   /// No description provided for @askAiAnalyzeSelectionPrompt.
   ///
   /// In en, this message translates to:
-  /// **'Analyze the selected terminal content, explain what happened, and propose the safest next step if action is needed.'**
+  /// **'Analyse the selected terminal output and explain what happened'**
   String get askAiAnalyzeSelectionPrompt;
 
   /// No description provided for @askAiTerminalContext.
@@ -264,7 +258,7 @@ abstract class AppLocalizations {
   /// No description provided for @askAiReviewBeforeContinuing.
   ///
   /// In en, this message translates to:
-  /// **'Review or decline the proposed command first'**
+  /// **'Review or decline the current suggestion first'**
   String get askAiReviewBeforeContinuing;
 
   /// No description provided for @askAiApproveRun.
@@ -324,7 +318,7 @@ abstract class AppLocalizations {
   /// No description provided for @askAiHighRiskConfirmBody.
   ///
   /// In en, this message translates to:
-  /// **'This command may delete data, stop services, or otherwise be difficult to undo. Review it carefully before running.'**
+  /// **'This command may make changes that are hard to undo. Check it carefully.'**
   String get askAiHighRiskConfirmBody;
 
   /// No description provided for @askAiNoCommandOutput.
@@ -354,7 +348,7 @@ abstract class AppLocalizations {
   /// No description provided for @askAiAutoRunSafeCommandsTip.
   ///
   /// In en, this message translates to:
-  /// **'Only auto-run when both the model and local safety checks classify the command as read-only. Commands that change the system still require review.'**
+  /// **'Runs only when both the model and the local check call it read-only'**
   String get askAiAutoRunSafeCommandsTip;
 
   /// No description provided for @askAiSendOnEnter.
@@ -366,13 +360,13 @@ abstract class AppLocalizations {
   /// No description provided for @askAiSendOnEnterTip.
   ///
   /// In en, this message translates to:
-  /// **'Enter sends the message, Shift+Enter starts a new line. Off swaps them: Enter starts a new line and Cmd/Ctrl+Enter sends.'**
+  /// **'Enter sends, Shift+Enter for a new line. Off: Enter for a new line, Cmd/Ctrl+Enter sends.'**
   String get askAiSendOnEnterTip;
 
   /// No description provided for @askAiApiKeyOptional.
   ///
   /// In en, this message translates to:
-  /// **'Optional for local or unauthenticated endpoints'**
+  /// **'Leave empty for local or unauthenticated'**
   String get askAiApiKeyOptional;
 
   /// No description provided for @askAiHistory.
@@ -390,7 +384,7 @@ abstract class AppLocalizations {
   /// No description provided for @askAiNoHistory.
   ///
   /// In en, this message translates to:
-  /// **'No saved conversations for this server'**
+  /// **'No saved conversations yet'**
   String get askAiNoHistory;
 
   /// No description provided for @askAiNoHistoryMessages.
@@ -402,7 +396,7 @@ abstract class AppLocalizations {
   /// No description provided for @askAiUntitledConversation.
   ///
   /// In en, this message translates to:
-  /// **'New conversation'**
+  /// **'Untitled'**
   String get askAiUntitledConversation;
 
   /// No description provided for @askAiRenameConversation.
@@ -420,7 +414,7 @@ abstract class AppLocalizations {
   /// No description provided for @askAiDeleteConversationTip.
   ///
   /// In en, this message translates to:
-  /// **'This removes the conversation from this device and cannot be undone.'**
+  /// **'Deletes it from this device. Cannot be undone.'**
   String get askAiDeleteConversationTip;
 
   /// No description provided for @askAiClearHistoryTitle.
@@ -432,13 +426,13 @@ abstract class AppLocalizations {
   /// No description provided for @askAiClearHistoryTip.
   ///
   /// In en, this message translates to:
-  /// **'All Agent conversations saved for this server will be removed from this device.'**
+  /// **'Every saved Agent conversation for this server will be deleted.'**
   String get askAiClearHistoryTip;
 
   /// No description provided for @askAiRestoredReview.
   ///
   /// In en, this message translates to:
-  /// **'Restored from history. Review it again before running; it will never run automatically.'**
+  /// **'This command came from history. Review it again'**
   String get askAiRestoredReview;
 
   /// No description provided for @agentTitle.
@@ -456,7 +450,7 @@ abstract class AppLocalizations {
   /// No description provided for @agentWelcomeTip.
   ///
   /// In en, this message translates to:
-  /// **'Ask for a diagnosis or an operational task. The Agent uses live ServerBox state and proposes one reviewed action at a time.'**
+  /// **'Have the Agent diagnose a problem or carry out a task'**
   String get agentWelcomeTip;
 
   /// No description provided for @agentPromptHint.
@@ -552,7 +546,7 @@ abstract class AppLocalizations {
   /// No description provided for @agentSshConnectTip.
   ///
   /// In en, this message translates to:
-  /// **'The Agent wants to open an SSH connection. Type the password here — never into the conversation, where it would be stored and sent to the model.'**
+  /// **'The Agent wants an SSH connection. Enter the password here'**
   String get agentSshConnectTip;
 
   /// No description provided for @agentAdHocSessions.
@@ -570,7 +564,7 @@ abstract class AppLocalizations {
   /// No description provided for @agentSaveServerTip.
   ///
   /// In en, this message translates to:
-  /// **'This host and the password you entered will be stored on this device.'**
+  /// **'This host and the password you enter are saved on this device'**
   String get agentSaveServerTip;
 
   /// No description provided for @agentMonitorOptional.
@@ -582,7 +576,7 @@ abstract class AppLocalizations {
   /// No description provided for @authFailTip.
   ///
   /// In en, this message translates to:
-  /// **'Authentication failed, please check whether credentials are correct'**
+  /// **'Authentication failed. Check the details'**
   String get authFailTip;
 
   /// No description provided for @autoBackupConflict.
@@ -666,19 +660,19 @@ abstract class AppLocalizations {
   /// No description provided for @monitorHttpsRequired.
   ///
   /// In en, this message translates to:
-  /// **'Remote monitor agents require HTTPS unless this connection explicitly allows insecure HTTP.'**
+  /// **'A remote monitor agent needs HTTPS, unless HTTP is allowed for it.'**
   String get monitorHttpsRequired;
 
   /// No description provided for @monitorAllowInsecureHttp.
   ///
   /// In en, this message translates to:
-  /// **'Allow insecure HTTP'**
+  /// **'Allow HTTP'**
   String get monitorAllowInsecureHttp;
 
   /// No description provided for @monitorAllowInsecureHttpTip.
   ///
   /// In en, this message translates to:
-  /// **'Only enable for a trusted private network with transport encryption outside HTTP, such as Tailscale. The agent must also explicitly allow plaintext file access. Credentials and file contents may otherwise be exposed.'**
+  /// **'Only on a trusted private network that encrypts the transport itself, such as Tailscale'**
   String get monitorAllowInsecureHttpTip;
 
   /// No description provided for @backupTip.
@@ -1038,7 +1032,7 @@ abstract class AppLocalizations {
   /// No description provided for @fileDirGoneTip.
   ///
   /// In en, this message translates to:
-  /// **'It was deleted or renamed. Use the bar below to go back, go home, or jump elsewhere.'**
+  /// **'It was deleted or renamed'**
   String get fileDirGoneTip;
 
   /// No description provided for @fullScreen.
@@ -1128,31 +1122,31 @@ abstract class AppLocalizations {
   /// No description provided for @macDmgBody.
   ///
   /// In en, this message translates to:
-  /// **'The App Store requires this app to be sandboxed, and a sandboxed process cannot open a pseudo-terminal. So the App Store build has no terminal on this Mac and cannot run a snippet or an agent command here. The DMG build is the same app signed without the sandbox, and has both.\n\nThe App Store build still works and still updates. It may stop being updated later.\n\nThe two builds keep their data in different places. The DMG build copies it over on its first launch, so servers, keys and history come along. If that fails it says so, and you can carry a backup file across instead (Backup, in settings).'**
+  /// **'The App Store requires this app to be sandboxed, and a sandbox cannot open a terminal. The DMG build can.\n\nThe App Store build may stop being updated.'**
   String get macDmgBody;
 
   /// No description provided for @macDmgImportDenied.
   ///
   /// In en, this message translates to:
-  /// **'macOS did not allow reading the data of the previously installed build. Grant Full Disk Access and reopen the app, or export a backup there and restore it here.'**
+  /// **'macOS would not let this read the previous build’s data'**
   String get macDmgImportDenied;
 
   /// No description provided for @macDmgImported.
   ///
   /// In en, this message translates to:
-  /// **'Imported the data of the previously installed build.'**
+  /// **'Imported the previous build’s data'**
   String get macDmgImported;
 
   /// No description provided for @macDmgImportFailed.
   ///
   /// In en, this message translates to:
-  /// **'Could not read the data of the previously installed build. Export a backup there, then restore it here.'**
+  /// **'Could not read the previous build’s data'**
   String get macDmgImportFailed;
 
   /// No description provided for @macDmgTip.
   ///
   /// In en, this message translates to:
-  /// **'A terminal on this Mac, and running snippets on it, exist only in the DMG build.'**
+  /// **'Local terminal and running snippets locally (DMG build)'**
   String get macDmgTip;
 
   /// No description provided for @macDmgTitle.
@@ -1206,7 +1200,7 @@ abstract class AppLocalizations {
   /// No description provided for @pruneDanglingImagesTip.
   ///
   /// In en, this message translates to:
-  /// **'Only remove dangling images (untagged layers).'**
+  /// **'Removes dangling images only.'**
   String get pruneDanglingImagesTip;
 
   /// No description provided for @pruneUnusedImagesTip.
@@ -1338,13 +1332,13 @@ abstract class AppLocalizations {
   /// No description provided for @linuxShellTip.
   ///
   /// In en, this message translates to:
-  /// **'What an interactive terminal runs. Alpine has no chsh and nothing in the system reads /etc/passwd, so this is the only thing that decides. A one-shot command still runs under /bin/sh, because the app and the Agent write POSIX. Leave empty to restore /bin/sh.'**
+  /// **'Which shell a terminal starts. Empty restores /bin/sh.'**
   String get linuxShellTip;
 
   /// No description provided for @linuxNetTip.
   ///
   /// In en, this message translates to:
-  /// **'Where the Linux system and its packages are downloaded from, and the DNS servers written into it. Leave empty to restore the default. Saving also rewrites both in a system that is already installed.'**
+  /// **'DNS servers. Empty restores the defaults'**
   String get linuxNetTip;
 
   /// No description provided for @madeWithLove.
@@ -1500,7 +1494,7 @@ abstract class AppLocalizations {
   /// No description provided for @bmcPowerConfirm.
   ///
   /// In en, this message translates to:
-  /// **'Send this to {server}? The service will be asked for \"{resetType}\", which is what it allows for this action.'**
+  /// **'Send this to {server}? The service will be asked for \"{resetType}\"'**
   String bmcPowerConfirm(String server, String resetType);
 
   /// No description provided for @bmcPowerDone.
@@ -1512,7 +1506,7 @@ abstract class AppLocalizations {
   /// No description provided for @bmcPowerAccepted.
   ///
   /// In en, this message translates to:
-  /// **'Accepted, but the power state has not changed yet. A graceful operation depends on the OS, and some services do not distinguish it.'**
+  /// **'Accepted, but the power state has not changed. A graceful operation depends on the OS'**
   String get bmcPowerAccepted;
 
   /// No description provided for @bmcPowerUnsupported.
@@ -1596,25 +1590,25 @@ abstract class AppLocalizations {
   /// No description provided for @bmcCertUnreviewed.
   ///
   /// In en, this message translates to:
-  /// **'Not reviewed yet — tap to see what the BMC presents'**
+  /// **'Not reviewed yet — tap to see the certificate'**
   String get bmcCertUnreviewed;
 
   /// No description provided for @bmcCertReview.
   ///
   /// In en, this message translates to:
-  /// **'BMCs use self-signed certificates, so nothing vouches for this one. Compare it against what the BMC\'s own web interface shows. Once accepted, only this exact certificate is trusted.'**
+  /// **'A self-signed certificate. Compare it before accepting. Only this exact one is trusted afterwards.'**
   String get bmcCertReview;
 
   /// No description provided for @bmcCertChanged.
   ///
   /// In en, this message translates to:
-  /// **'This is not the certificate that was accepted before. That happens when the BMC\'s certificate is regenerated or its firmware is updated — and it is also what an interception would look like. Check it before accepting.'**
+  /// **'The certificate does not match. Check it.'**
   String get bmcCertChanged;
 
   /// No description provided for @bmcCertExpired.
   ///
   /// In en, this message translates to:
-  /// **'This certificate is outside its validity dates.'**
+  /// **'Expired.'**
   String get bmcCertExpired;
 
   /// No description provided for @bmcCertWas.
@@ -1632,7 +1626,7 @@ abstract class AppLocalizations {
   /// No description provided for @proxyCommandSandboxed.
   ///
   /// In en, this message translates to:
-  /// **'This build runs in a sandbox: the command sees an empty home directory instead of yours, so anything reading ~/.ssh (ssh -W, cloudflared) fails — often as a timeout naming the wrong host. Commands that only use the network still work. The DMG build has no sandbox.'**
+  /// **'This build is sandboxed: the command gets an empty home, not yours, so anything reading ~/.ssh fails. The DMG build is not.'**
   String get proxyCommandSandboxed;
 
   /// No description provided for @privateKeyFileUnreadable.
@@ -1812,7 +1806,7 @@ abstract class AppLocalizations {
   /// No description provided for @rootfsUpdateTip.
   ///
   /// In en, this message translates to:
-  /// **'{distro} {installed} is installed and {latest} is available. Updating downloads it again and replaces the container: anything installed inside it with {pm} is lost. The current one keeps working if you skip this.'**
+  /// **'{distro} {installed} is installed; {latest} is available. Updating replaces the whole container: {pm} data is lost'**
   String rootfsUpdateTip(
     Object distro,
     Object installed,
@@ -1823,7 +1817,7 @@ abstract class AppLocalizations {
   /// No description provided for @linuxSystemInUse.
   ///
   /// In en, this message translates to:
-  /// **'{name} still has a terminal open. Close it before deleting the system.'**
+  /// **'Close the terminals on {name} before deleting it'**
   String linuxSystemInUse(Object name);
 
   /// No description provided for @rootfsSubtitle.
@@ -1835,7 +1829,7 @@ abstract class AppLocalizations {
   /// No description provided for @rootfsInstallTip.
   ///
   /// In en, this message translates to:
-  /// **'Download {distro} {version} (about {size} MB) and unpack it on this device. It gives this app a shell with a package manager, and can be deleted at any time.'**
+  /// **'Downloads {distro} {version} (about {size} MB) and unpacks it on this device.'**
   String rootfsInstallTip(Object distro, Object version, Object size);
 
   /// No description provided for @sameIdServerExist.
@@ -1853,7 +1847,7 @@ abstract class AppLocalizations {
   /// No description provided for @serverFilesUnavailableTip.
   ///
   /// In en, this message translates to:
-  /// **'Reachable either through this server\'s SSH, or through a monitor agent with its file API switched on.'**
+  /// **'Needs SSH to this server, or server_box_monitor installed with its file API on.'**
   String get serverFilesUnavailableTip;
 
   /// No description provided for @back.
@@ -1919,7 +1913,7 @@ abstract class AppLocalizations {
   /// No description provided for @shareServerRiskTip.
   ///
   /// In en, this message translates to:
-  /// **'This QR code contains the server\'s connection settings in plain text, passwords included. Anyone who scans or photographs it can connect to this server.'**
+  /// **'This QR code holds the server’s connection settings in clear text. Anyone who scans or photographs it can connect.'**
   String get shareServerRiskTip;
 
   /// No description provided for @sftpDlPrepare.
@@ -1931,7 +1925,7 @@ abstract class AppLocalizations {
   /// No description provided for @sftpEditorTip.
   ///
   /// In en, this message translates to:
-  /// **'If empty, use the built-in file editor of the app. If a value is present, use the remote server’s editor, e.g., `vim` (recommended to automatically detect according to `EDITOR`).'**
+  /// **'Empty uses the built-in editor. For example `vim` (reading `EDITOR` is suggested).'**
   String get sftpEditorTip;
 
   /// No description provided for @sftpRmrDirSummary.
@@ -1967,7 +1961,7 @@ abstract class AppLocalizations {
   /// No description provided for @specifyDevTip.
   ///
   /// In en, this message translates to:
-  /// **'For example, network traffic statistics are by default for all devices. You can specify a particular device here.'**
+  /// **'Network traffic counts every device by default; name one here instead'**
   String get specifyDevTip;
 
   /// No description provided for @tempIsCelsiusTip.
@@ -2081,7 +2075,7 @@ abstract class AppLocalizations {
   /// No description provided for @sshKnownHostKeysTip.
   ///
   /// In en, this message translates to:
-  /// **'Host keys this app has accepted. Forget one to be asked about it again the next time you connect.'**
+  /// **'The host keys this app has accepted'**
   String get sshKnownHostKeysTip;
 
   /// No description provided for @sshHostKeyNewDesc.
@@ -2633,7 +2627,7 @@ abstract class AppLocalizations {
   /// No description provided for @watchServersTip.
   ///
   /// In en, this message translates to:
-  /// **'The watch reads these servers from their monitor agent by itself, so only servers with one configured can be picked.'**
+  /// **'The watch fetches from the monitor on its own, so only servers with one can be picked.'**
   String get watchServersTip;
 
   /// No description provided for @watchNoMonitorServer.
@@ -2741,13 +2735,13 @@ abstract class AppLocalizations {
   /// No description provided for @agentLocalExecTip.
   ///
   /// In en, this message translates to:
-  /// **'Lets the Agent work on the machine ServerBox is running on, not only on servers. Nothing runs here unattended: every command needs review, however read-only it looks. This is where the app\'s data, your keys and your files are.'**
+  /// **'Lets the Agent work on the machine running ServerBox. Even read-only commands are reviewed'**
   String get agentLocalExecTip;
 
   /// No description provided for @agentLocalExecRootfsTip.
   ///
   /// In en, this message translates to:
-  /// **'Lets the Agent work on this device, inside the Alpine Linux container ServerBox installs. It cannot see the phone\'s own filesystem, the app\'s data or your files. Every command still needs review.'**
+  /// **'Lets the Agent work locally, confined to the Linux container ServerBox installed'**
   String get agentLocalExecRootfsTip;
 
   /// No description provided for @macDmgImportedPartly.

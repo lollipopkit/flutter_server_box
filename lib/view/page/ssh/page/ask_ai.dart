@@ -946,7 +946,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
           ),
           const SizedBox(height: 6),
           Text(
-            context.l10n.askAiAgentWelcomeTip,
+            context.l10n.agentWelcomeTip,
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
