@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:logging/logging.dart';
+import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/bmc_credential.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
@@ -13,6 +14,7 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
+import 'package:server_box/data/provider/bmc_credential.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/snippet.dart';
@@ -81,7 +83,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     // is a child of one. Merging a store before the one it points at would drop
     // every record whose foreign key has not arrived yet.
     final keysChanged = Stores.key.merge(keys, force: force);
-    Stores.bmcCredential.merge(bmcCredentials, force: force);
+    final credsChanged = Stores.bmcCredential.merge(bmcCredentials, force: force);
     final serversChanged = Stores.server.merge(
       _serversWithRestoredIds(),
       force: force,
@@ -112,6 +114,9 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       GlobalRef.gRef?.read(snippetProvider.notifier).reload();
     }
     if (keysChanged) GlobalRef.gRef?.read(privateKeyProvider.notifier).reload();
+    if (credsChanged) {
+      GlobalRef.gRef?.read(bmcCredentialProvider.notifier).reload();
+    }
 
     _loggerV2.info('Merge completed');
   }
@@ -201,15 +206,15 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
   Map<String, Object?> _serversWithRestoredIds() {
     final keyIds = _restoredIds(
       keys,
-      (json) => PrivateKeyInfo.fromJson(json).id,
-      (json) => Stores.key.fetchByName(PrivateKeyInfo.fromJson(json).name)?.id,
+      PrivateKeyInfo.fromJson,
+      (key) => key.id,
+      (key) => Stores.key.fetchByName(key.name)?.id,
     );
     final credIds = _restoredIds(
       bmcCredentials,
-      (json) => BmcCredential.fromJson(json).id,
-      (json) => Stores.bmcCredential
-          .fetchByName(BmcCredential.fromJson(json).name)
-          ?.id,
+      BmcCredential.fromJson,
+      (cred) => cred.id,
+      (cred) => Stores.bmcCredential.fetchByName(cred.name)?.id,
     );
     if (keyIds.isEmpty && credIds.isEmpty) return spis;
 
@@ -225,18 +230,22 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
   /// A record that will not decode is skipped rather than failing the restore:
   /// `merge` skips it too, so leaving its server reference untouched is what
   /// makes the foreign key reject exactly the matching malformed record.
-  Map<String, String> _restoredIds(
+  /// [decode] runs once per record; [idOf] and [localIdOf] are handed the
+  /// result. Passing them the raw map instead made each of them decode it
+  /// again, which is two decodes per record for one lookup.
+  Map<String, String> _restoredIds<T>(
     Map<String, Object?> store,
-    String Function(Map<String, dynamic>) idOf,
-    String? Function(Map<String, dynamic>) localIdOf,
+    T Function(Map<String, dynamic>) decode,
+    String Function(T) idOf,
+    String? Function(T) localIdOf,
   ) {
     final out = <String, String>{};
     for (final entry in store.entries) {
       if (_isInternalStoreKey(entry.key) || entry.value is! Map) continue;
       try {
-        final json = Map<String, dynamic>.from(entry.value as Map);
-        final restored = localIdOf(json);
-        if (restored != null) out[idOf(json)] = restored;
+        final record = decode(Map<String, dynamic>.from(entry.value as Map));
+        final restored = localIdOf(record);
+        if (restored != null) out[idOf(record)] = restored;
       } catch (_) {
         continue;
       }
@@ -324,10 +333,12 @@ Object? _toEncodable(Object? value) {
     final PortForwardConfig forward => forward.toJson(),
     final ServerCustom custom => custom.toJson(),
     final WakeOnLanCfg wolCfg => wolCfg.toJson(),
-    // Nested on Spi. Both were missing, so backing up a server that used
-    // either threw instead of producing a file.
+    // Nested on Spi. All three were missing, so backing up a server that used
+    // any of them threw instead of producing a file. `_$SpiToJson` emits the
+    // object itself for each, so every one of them has to be named here.
     final SshCredential ssh => ssh.toJson(),
     final MonitorHttpCredential monitor => monitor.toJson(),
+    final BmcCfg bmc => bmc.toJson(),
     _ => throw UnsupportedError(
       'Cannot JSON-encode ${value.runtimeType}: missing supported toJson()',
     ),
