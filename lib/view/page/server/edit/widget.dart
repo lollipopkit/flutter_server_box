@@ -600,6 +600,15 @@ extension _Widgets on _ServerEditPageState {
       mainAxisSize: MainAxisSize.min,
       children: [
         const CenterGreyTitle('BMC (Redfish)'),
+        // A row of its own rather than a suffix on the title, the same shape
+        // the Linux page uses: what a suffix cannot say is the part that
+        // matters, which is that nothing here is guaranteed. This is where
+        // someone decides to turn it on, so it is where the warning belongs.
+        ListTile(
+          leading: const Icon(Icons.science_outlined),
+          title: const Text('Beta'),
+          subtitle: Text(l10n.betaTip, style: UIs.textGrey),
+        ).cardx,
         ListTile(
           leading: const Icon(BoxIcons.bxs_help_circle),
           title: TipText(libL10n.about, l10n.bmcTip),

@@ -1493,7 +1493,12 @@ ${err.message ?? 'null'}
     return CardX(
       child: ExpandTile(
         leading: const Icon(Icons.developer_board, size: 17),
-        title: const Text('BMC'),
+        // A suffix here and the full sentence in the editor, which is the
+        // arrangement the Linux pages already use: the list that reaches the
+        // feature carries the marker, and the place where it is turned on
+        // carries the reason. Repeating `betaTip` on a card that is expanded
+        // every time the page opens would make it wallpaper.
+        title: const Text('BMC (Beta)'),
         subtitle: subtitle,
         initiallyExpanded: _getInitExpand(children.length),
         children: children,

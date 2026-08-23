@@ -3,6 +3,16 @@ title: BMC (Redfish)
 description: Reach a server's baseboard management controller when the host is not answering
 ---
 
+:::caution[Beta]
+Reading — power state and sensors — has been verified against exactly one
+machine, and power control against none by anything automated. Both work; how
+much of the hardware in the world they work on is not yet known. See
+[Hardware this has run against](/docs/principles/bmc/#hardware-this-has-run-against).
+
+Treat the power operations the way you would treat a physical button on a
+machine you are not standing next to.
+:::
+
 A BMC is a small computer on the server's motherboard with its own power rail
 and its own network port. It answers while the host is off, hung, or has no
 operating system on it at all — which is the one thing SSH and a monitor agent
@@ -10,7 +20,7 @@ cannot do.
 
 ServerBox talks to it over **Redfish**, the HTTPS API most enterprise hardware
 from roughly 2016 on provides. Older machines that only speak IPMI are not
-supported; see [How it works](/principles/bmc/) for why that line is where it
+supported; see [How it works](/docs/principles/bmc/) for why that line is where it
 is.
 
 ## What it gives you
