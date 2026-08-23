@@ -8,13 +8,13 @@ import 'helpers/spi_fixture.dart';
 HostKeyPromptInfo _info({
   String id = 'srv-1',
   String keyType = 'ssh-ed25519',
-  String fingerprintHex = 'aa:bb:cc',
+  // OpenSSH form, which is the only one this carries now.
+  String fingerprint = 'SHA256:q7vMq7vMq7vMq7vMq7vMq7vMq7vMq7vMq7vMq7vMq7s',
 }) {
   return HostKeyPromptInfo(
     spi: spiFixture(name: 'srv', id: id, ip: '192.0.2.1', user: 'tester'),
     keyType: keyType,
-    fingerprintHex: fingerprintHex,
-    fingerprintBase64: 'q7vM',
+    fingerprint: fingerprint,
     isMismatch: false,
   );
 }
@@ -84,7 +84,7 @@ void main() {
       return stale.future;
     });
     final second = promptHostKeyExclusively(
-      _info(fingerprintHex: 'dd:ee:ff'),
+      _info(fingerprint: 'SHA256:BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'),
       () {
         shown.add('dd:ee:ff');
         return Future.value(false);

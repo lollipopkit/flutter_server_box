@@ -405,14 +405,10 @@ class HostKeyPromptInfo {
   HostKeyPromptInfo({
     required this.spi,
     required this.keyType,
-    String? fingerprint,
-    @Deprecated('Use fingerprint') String? fingerprintHex,
-    @Deprecated('Use fingerprint') String? fingerprintBase64,
+    required this.fingerprint,
     required this.isMismatch,
-    String? previousFingerprint,
-    @Deprecated('Use previousFingerprint') String? previousFingerprintHex,
-  }) : fingerprint = fingerprint ?? fingerprintHex ?? fingerprintBase64 ?? '',
-       previousFingerprint = previousFingerprint ?? previousFingerprintHex;
+    this.previousFingerprint,
+  });
 
   final Spi spi;
   final String keyType;
@@ -420,15 +416,6 @@ class HostKeyPromptInfo {
   final String fingerprint;
   final bool isMismatch;
   final String? previousFingerprint;
-
-  @Deprecated('Use fingerprint')
-  String get fingerprintHex => fingerprint;
-
-  @Deprecated('Use fingerprint')
-  String get fingerprintBase64 => fingerprint;
-
-  @Deprecated('Use previousFingerprint')
-  String? get previousFingerprintHex => previousFingerprint;
 }
 
 /// What `onVerifyHostKey` decides, and what it writes down when it decides it.
@@ -681,7 +668,7 @@ Future<bool> _showHostKeyDialog(
         SelectableText('${libL10n.server}: ${info.spi.name}'),
         SelectableText('${libL10n.addr}: $hostLine'),
         SelectableText('${l10n.sshHostKeyType}: ${info.keyType}'),
-        SelectableText(l10n.sshHostKeyFingerprintMd5Hex(info.fingerprint)),
+        SelectableText(l10n.sshHostKeyFingerprint(info.fingerprint)),
         if (info.previousFingerprint != null) ...[
           const SizedBox(height: 12),
           SelectableText(

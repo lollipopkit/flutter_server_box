@@ -1071,12 +1071,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String sshHostKeyFingerprintMd5Base64(Object fingerprint) {
-    return '지문 (MD5 base64): $fingerprint';
-  }
-
-  @override
-  String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
+  String sshHostKeyFingerprint(Object fingerprint) {
     return '지문 (SHA256): $fingerprint';
   }
 

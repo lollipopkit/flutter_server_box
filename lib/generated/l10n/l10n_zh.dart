@@ -1051,12 +1051,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String sshHostKeyFingerprintMd5Base64(Object fingerprint) {
-    return '指纹（MD5 Base64）：$fingerprint';
-  }
-
-  @override
-  String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
+  String sshHostKeyFingerprint(Object fingerprint) {
     return '指纹（SHA256）：$fingerprint';
   }
 
@@ -2507,12 +2502,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String sshHostKeyFingerprintMd5Base64(Object fingerprint) {
-    return '指紋（MD5 Base64）：$fingerprint';
-  }
-
-  @override
-  String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
+  String sshHostKeyFingerprint(Object fingerprint) {
     return '指紋（SHA256）：$fingerprint';
   }
 

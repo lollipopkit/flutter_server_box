@@ -83,11 +83,15 @@ class TransferStaging {
 
 class TransferHostKeyAccepted {
   final String storageKey;
-  final String fingerprintHex;
+
+  /// OpenSSH-style, `SHA256:<base64-without-padding>` — the same string
+  /// `HostKeyPromptInfo.fingerprint` carries. Was `fingerprintHex` back when
+  /// it held colon-separated hex, and the name outlived the format.
+  final String fingerprint;
 
   const TransferHostKeyAccepted({
     required this.storageKey,
-    required this.fingerprintHex,
+    required this.fingerprint,
   });
 }
 
@@ -117,11 +121,11 @@ Future<SSHClient> _connectSsh(
     onKeyboardInteractive: (server, request) =>
         _requestKeyboardInteractive(mainSendPort, server, request),
     onHostKeyPrompt: (info) => _requestHostKey(mainSendPort, info),
-    onHostKeyAccepted: (storageKey, fingerprintHex) {
+    onHostKeyAccepted: (storageKey, fingerprint) {
       mainSendPort.send(
         TransferHostKeyAccepted(
           storageKey: storageKey,
-          fingerprintHex: fingerprintHex,
+          fingerprint: fingerprint,
         ),
       );
     },
@@ -246,7 +250,7 @@ class FileTransferWorker {
       case final TransferHostKeyAccepted accepted:
         await persistHostKeyFingerprint(
           accepted.storageKey,
-          accepted.fingerprintHex,
+          accepted.fingerprint,
         );
         return;
       default:
