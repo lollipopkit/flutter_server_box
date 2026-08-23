@@ -199,7 +199,14 @@ abstract final class SSHConfig {
           jumpHost = _extractJumpHost(value);
           break;
         case 'proxycommand':
-          proxyCommand = value;
+          if (value.length > 4096) {
+            Loggers.app.warning(
+              'SSH config host $currentHost ProxyCommand too long, skipping',
+            );
+            proxyCommand = null;
+          } else {
+            proxyCommand = value;
+          }
           break;
       }
     }

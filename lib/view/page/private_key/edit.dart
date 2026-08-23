@@ -267,8 +267,15 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
 
   void _onTapSave() async {
     final name = _nameController.text;
+    final rawKey = _keyController.text.trim();
+    if (rawKey.length > Miscs.privateKeyMaxSize * 4) {
+      Toast.error(
+        l10n.fileTooLarge('key', rawKey.length.bytes2Str, Miscs.privateKeyMaxSize.bytes2Str),
+      );
+      return;
+    }
     final key = _normalizePrivateKey(
-      _standardizeLineSeparators(_keyController.text.trim()),
+      _standardizeLineSeparators(rawKey),
     );
     final pwd = _pwdController.text;
     if (name.isEmpty || key.isEmpty) {
