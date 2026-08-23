@@ -11,6 +11,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/proxy_command_socket.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/core/utils/ssh_config.dart';
+import 'package:server_box/core/utils/ssh_key_unlock.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
@@ -39,6 +40,21 @@ String decryptPem(List<String> args) {
 }
 
 enum GenSSHClientStatus { socket, key, pwd }
+
+/// What to call a key when asking the person about it.
+///
+/// [keyRef] is an id for a key the store holds and a path for one the user's
+/// own `~/.ssh` holds, so the lookup missing is not a failure — the path is
+/// already the name. Guarded because this is also reached from the transfer
+/// isolate, which has no stores; there the reference is the best that can be
+/// said.
+String privateKeyDisplayName(String keyRef) {
+  try {
+    return Stores.key.fetchOne(keyRef)?.name ?? keyRef;
+  } catch (_) {
+    return keyRef;
+  }
+}
 
 String getPrivateKey(String id) {
   final pki = Stores.key.fetchOne(id);
@@ -318,6 +334,15 @@ Future<SSHClient> _authenticatedClient({
   }
 
   onStatus?.call(GenSSHClientStatus.key);
+  // A key stored encrypted is opened here, once per key per run. Nothing
+  // happens for a key that is not — including one already opened before it was
+  // handed to another isolate, which is why the transfer path can reach this
+  // line with no screen to ask on.
+  privateKey = await PrivateKeyUnlock.open(
+    privateKey,
+    cacheKey: keyRef,
+    keyName: privateKeyDisplayName(keyRef),
+  );
   return SSHClient(
     socket,
     username: ssh.user,

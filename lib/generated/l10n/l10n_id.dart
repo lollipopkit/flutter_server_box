@@ -575,6 +575,42 @@ class AppLocalizationsId extends AppLocalizations {
   String get showHiddenFiles => 'Tampilkan berkas tersembunyi';
 
   @override
+  String get sshKeyAlgorithm => 'Algoritme';
+
+  @override
+  String get sshKeyComment => 'Komentar';
+
+  @override
+  String get sshKeyGenerate => 'Buat pasangan kunci';
+
+  @override
+  String get sshKeyGenerating => 'Membuat…';
+
+  @override
+  String sshKeyLockedFmt(String name) {
+    return 'Kunci privat [$name] belum dibuka.';
+  }
+
+  @override
+  String get sshKeyPassphraseTip =>
+      'Opsional. Kunci dengan frasa sandi disimpan terenkripsi, dan frasa itu diminta saat koneksi pertama memakai kunci ini.';
+
+  @override
+  String get sshKeyPassphraseWrong => 'Frasa sandi salah.';
+
+  @override
+  String get sshKeyPublicKey => 'Kunci publik';
+
+  @override
+  String get sshKeyPublicKeyTip =>
+      'Tambahkan baris ini ke ~/.ssh/authorized_keys di server.';
+
+  @override
+  String sshKeyUnlockTip(String name) {
+    return 'Masukkan frasa sandi untuk kunci privat [$name].';
+  }
+
+  @override
   String get unused => 'Tidak terpakai';
 
   @override

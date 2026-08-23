@@ -175,6 +175,30 @@
   "macDmgTip": "Local terminal and running snippets locally (DMG build)",
   "macDmgTitle": "DMG build",
   "showHiddenFiles": "Show hidden files",
+  "sshKeyAlgorithm": "Algorithm",
+  "sshKeyComment": "Comment",
+  "sshKeyGenerate": "Generate key pair",
+  "sshKeyGenerating": "Generating…",
+  "sshKeyLockedFmt": "The private key [{name}] was not unlocked.",
+  "@sshKeyLockedFmt": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "sshKeyPassphraseTip": "Optional. A key with a passphrase is stored encrypted, and you are asked for it the first time a connection uses the key.",
+  "sshKeyPassphraseWrong": "Wrong passphrase.",
+  "sshKeyPublicKey": "Public key",
+  "sshKeyPublicKeyTip": "Append this line to ~/.ssh/authorized_keys on the server.",
+  "sshKeyUnlockTip": "Enter the passphrase for the private key [{name}].",
+  "@sshKeyUnlockTip": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "unused": "Unused",
   "dangling": "Dangling",
   "pruneUnusedImages": "Prune unused images",

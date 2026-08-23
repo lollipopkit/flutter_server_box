@@ -1,12 +1,15 @@
 import 'dart:io';
 
 import 'package:computer/computer.dart';
+import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/server.dart';
+import 'package:server_box/core/utils/ssh_key_unlock.dart';
+import 'package:server_box/core/utils/ssh_keygen.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/res/misc.dart';
@@ -101,6 +104,11 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
     final actions = pki != null
         ? [
             IconButton(
+              tooltip: l10n.sshKeyPublicKey,
+              onPressed: () => _showPublicKey(pki),
+              icon: const Icon(Icons.public),
+            ),
+            IconButton(
               tooltip: libL10n.delete,
               onPressed: () async {
                 // The dialog answers; the page acts on the answer. See the
@@ -115,6 +123,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
                   actions: Btn.ok(red: true).toList,
                 );
                 if (confirmed != true || !context.mounted) return;
+                PrivateKeyUnlock.forget(pki.id);
                 await _notifier.delete(pki);
                 context.pop();
               },
@@ -123,6 +132,52 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
           ]
         : null;
     return CustomAppBar(title: Text(libL10n.edit), actions: actions);
+  }
+
+  /// Derives the public half and offers it for copying.
+  ///
+  /// Derived rather than stored: only the private key is kept, and the public
+  /// key is a function of it. For an encrypted key this is the same unlock a
+  /// connection does, so it asks once and both paths share the answer.
+  Future<void> _showPublicKey(PrivateKeyInfo pki) async {
+    String line;
+    try {
+      final opened = await PrivateKeyUnlock.open(
+        pki.key,
+        cacheKey: pki.id,
+        keyName: pki.name,
+      );
+      line = publicKeyLine(SSHKeyPair.fromPem(opened).first, pki.name);
+    } catch (e) {
+      Toast.error(e.toString());
+      return;
+    }
+    if (!mounted) return;
+    await context.showRoundDialog(
+      title: l10n.sshKeyPublicKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.sshKeyPublicKeyTip, style: UIs.textGrey),
+          const SizedBox(height: 12),
+          SelectableText(
+            line,
+            style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () async {
+            await Clipboard.setData(ClipboardData(text: line));
+            Toast.success(libL10n.success);
+          },
+          child: Text(libL10n.copy),
+        ),
+        TextButton(onPressed: context.popDialog, child: Text(libL10n.ok)),
+      ],
+    );
   }
 
   String _standardizeLineSeparators(String value) {
@@ -278,15 +333,27 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
     FocusScope.of(context).unfocus();
     _loading.value = SizedLoading.medium;
     try {
-      final decrypted = await Computer.shared.start(decryptPem, [key, pwd]);
+      // Stored as it was given. An encrypted key stays encrypted — the
+      // passphrase is what protects it, and stripping it here left every
+      // imported key lying in the database in the clear.
+      //
+      // A passphrase typed alongside it is checked rather than applied: a typo
+      // found now says so on this page, where it can be fixed, instead of at
+      // the next connection as a key that will not open.
+      if (pwd.isNotEmpty && PrivateKeyUnlock.isLocked(key)) {
+        await Computer.shared.start(decryptPem, [key, pwd]);
+      }
       // The id of the record being edited: renaming a key must not detach the
       // servers pointing at it, which is what happened when the two were one
       // value.
       final pki = PrivateKeyInfo(
         id: this.pki?.id ?? ShortId.generate(),
         name: name,
-        key: decrypted,
+        key: key,
       );
+      // The bytes may have changed under an id that has not, so whatever was
+      // opened for it no longer describes what is stored.
+      PrivateKeyUnlock.forget(pki.id);
       final originPki = this.pki;
       if (originPki != null) {
         await _notifier.update(originPki, pki);

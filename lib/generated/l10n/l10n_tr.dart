@@ -576,6 +576,42 @@ class AppLocalizationsTr extends AppLocalizations {
   String get showHiddenFiles => 'Gizli dosyaları göster';
 
   @override
+  String get sshKeyAlgorithm => 'Algoritma';
+
+  @override
+  String get sshKeyComment => 'Açıklama';
+
+  @override
+  String get sshKeyGenerate => 'Anahtar çifti oluştur';
+
+  @override
+  String get sshKeyGenerating => 'Oluşturuluyor…';
+
+  @override
+  String sshKeyLockedFmt(String name) {
+    return '[$name] özel anahtarının kilidi açılmadı.';
+  }
+
+  @override
+  String get sshKeyPassphraseTip =>
+      'İsteğe bağlı. Parola belirlenen anahtar şifreli saklanır ve bir bağlantı anahtarı ilk kez kullandığında parola sorulur.';
+
+  @override
+  String get sshKeyPassphraseWrong => 'Parola yanlış.';
+
+  @override
+  String get sshKeyPublicKey => 'Genel anahtar';
+
+  @override
+  String get sshKeyPublicKeyTip =>
+      'Bu satırı sunucudaki ~/.ssh/authorized_keys dosyasına ekleyin.';
+
+  @override
+  String sshKeyUnlockTip(String name) {
+    return '[$name] özel anahtarının parolasını girin.';
+  }
+
+  @override
   String get unused => 'Kullanılmıyor';
 
   @override

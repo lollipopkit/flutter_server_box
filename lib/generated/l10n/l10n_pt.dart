@@ -577,6 +577,42 @@ class AppLocalizationsPt extends AppLocalizations {
   String get showHiddenFiles => 'Mostrar ficheiros ocultos';
 
   @override
+  String get sshKeyAlgorithm => 'Algoritmo';
+
+  @override
+  String get sshKeyComment => 'Comentário';
+
+  @override
+  String get sshKeyGenerate => 'Gerar par de chaves';
+
+  @override
+  String get sshKeyGenerating => 'A gerar…';
+
+  @override
+  String sshKeyLockedFmt(String name) {
+    return 'A chave privada [$name] não foi desbloqueada.';
+  }
+
+  @override
+  String get sshKeyPassphraseTip =>
+      'Opcional. Uma chave com frase-passe é guardada cifrada e esta é pedida na primeira vez que uma ligação a usa.';
+
+  @override
+  String get sshKeyPassphraseWrong => 'Frase-passe incorreta.';
+
+  @override
+  String get sshKeyPublicKey => 'Chave pública';
+
+  @override
+  String get sshKeyPublicKeyTip =>
+      'Acrescente esta linha a ~/.ssh/authorized_keys no servidor.';
+
+  @override
+  String sshKeyUnlockTip(String name) {
+    return 'Introduza a frase-passe da chave privada [$name].';
+  }
+
+  @override
   String get unused => 'Não utilizado';
 
   @override

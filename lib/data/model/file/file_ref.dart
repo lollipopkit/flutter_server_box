@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/utils/jump_chain.dart';
 import 'package:server_box/core/utils/server.dart';
+import 'package:server_box/core/utils/ssh_key_unlock.dart';
 import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -222,5 +223,34 @@ class SshTransferCreds {
   String? jumpPrivateKey;
   Map<String, Spi>? jumpSpisById;
   Map<String, String>? privateKeysByKeyId;
+
+  /// Opens any key in this bundle that is stored encrypted.
+  ///
+  /// Not in the constructor, for two reasons that point the same way: asking
+  /// for a passphrase is a dialog and the constructor is synchronous, and the
+  /// isolate this bundle is *for* has no screen to ask on. A key that is still
+  /// locked when it crosses can only fail over there, with nothing to say why.
+  ///
+  /// Awaited once, where the transfer starts. A key already opened this run
+  /// costs nothing here.
+  Future<void> unlockKeys() async {
+    final keys = privateKeysByKeyId;
+    if (keys == null) return;
+    for (final ref in keys.keys.toList()) {
+      final pem = keys[ref]!;
+      if (!PrivateKeyUnlock.isLocked(pem)) continue;
+      keys[ref] = await PrivateKeyUnlock.open(
+        pem,
+        cacheKey: ref,
+        keyName: privateKeyDisplayName(ref),
+      );
+    }
+    // The two hold the same string for the main server's key, so the copy
+    // outside the map has to be moved along with it.
+    final mainRef = spi.ssh?.keyRef;
+    if (mainRef != null) privateKey = keys[mainRef] ?? privateKey;
+    final jumpRef = jumpSpi?.ssh?.keyRef;
+    if (jumpRef != null) jumpPrivateKey = keys[jumpRef] ?? jumpPrivateKey;
+  }
   Map<String, String>? knownHostFingerprints;
 }

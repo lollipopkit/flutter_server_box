@@ -1,10 +1,8 @@
 import 'dart:convert';
 import 'dart:math';
-import 'dart:typed_data';
 
-import 'package:computer/computer.dart';
 import 'package:dartssh2/dartssh2.dart';
-import 'package:meta/meta.dart';
+import 'package:flutter/foundation.dart';
 import 'package:pinenacl/ed25519.dart' as ed25519;
 import 'package:pointycastle/export.dart';
 
@@ -59,7 +57,7 @@ Future<GeneratedSshKey> generateSshKey({
   required String comment,
   String? passphrase,
 }) async {
-  final result = await Computer.shared.start(generateSshKeyPair, [
+  final result = await compute(generateSshKeyPair, [
     algorithm.name,
     comment,
     passphrase ?? '',
@@ -69,9 +67,9 @@ Future<GeneratedSshKey> generateSshKey({
 
 /// The isolate half of [generateSshKey].
 ///
-/// Top-level and stringly-typed for the same reason `decryptPem` is: a
-/// [Computer] task is a closure sent to another isolate, and what crosses has
-/// to be a plain value.
+/// Top-level and stringly-typed for the same reason `decryptPem` is: what goes
+/// to another isolate is sent, not captured, so it has to be a plain value and
+/// a plain function.
 ///
 /// [args] : [algorithm name, comment, passphrase — empty for none]
 /// Returns: [private PEM, public key line]
@@ -99,8 +97,11 @@ List<String> generateSshKeyPair(List<String> args) {
 /// the algorithm that was asked for, so the line cannot disagree with the bytes
 /// beside it — and an RSA pair is the case that would: it signs as
 /// `rsa-sha2-256` while its public key is still `ssh-rsa`.
-@visibleForTesting
-String publicKeyLine(OpenSSHKeyPair pair, String comment) {
+///
+/// Takes any [SSHKeyPair], not only the OpenSSH ones this file makes: the same
+/// line is what a key imported in the older `RSA PRIVATE KEY` form needs, and
+/// deriving it is the only way to see the public half of a key the app holds.
+String publicKeyLine(SSHKeyPair pair, String comment) {
   final blob = pair.toPublicKey().encode();
   final line = '${SSHHostKey.getType(blob)} ${base64.encode(blob)}';
   final trimmed = comment.trim();

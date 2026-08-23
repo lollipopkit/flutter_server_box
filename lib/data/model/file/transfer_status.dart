@@ -130,6 +130,12 @@ class FileTransferStatus {
 
   Future<void> _initWorker() async {
     try {
+      // Before the bundle crosses: the isolate has no screen to ask a
+      // passphrase on, so a key stored encrypted has to be opened on this side
+      // or it fails over there with nothing to say why.
+      for (final ref in [job.from, job.to]) {
+        if (ref is SftpFileRef) await ref.creds.unlockKeys();
+      }
       await worker!.init();
     } catch (e, s) {
       Loggers.app.warning('Failed to initialize the transfer worker', e, s);

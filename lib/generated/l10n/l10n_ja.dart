@@ -544,6 +544,42 @@ class AppLocalizationsJa extends AppLocalizations {
   String get showHiddenFiles => '隠しファイルを表示';
 
   @override
+  String get sshKeyAlgorithm => 'アルゴリズム';
+
+  @override
+  String get sshKeyComment => 'コメント';
+
+  @override
+  String get sshKeyGenerate => '鍵ペアを生成';
+
+  @override
+  String get sshKeyGenerating => '生成中…';
+
+  @override
+  String sshKeyLockedFmt(String name) {
+    return '秘密鍵 [$name] のロックが解除されていません。';
+  }
+
+  @override
+  String get sshKeyPassphraseTip =>
+      '任意。パスフレーズを設定すると秘密鍵は暗号化して保存され、接続でこの鍵を最初に使うときに入力を求められます。';
+
+  @override
+  String get sshKeyPassphraseWrong => 'パスフレーズが違います。';
+
+  @override
+  String get sshKeyPublicKey => '公開鍵';
+
+  @override
+  String get sshKeyPublicKeyTip =>
+      'この行をサーバーの ~/.ssh/authorized_keys に追記してください。';
+
+  @override
+  String sshKeyUnlockTip(String name) {
+    return '秘密鍵 [$name] のパスフレーズを入力してください。';
+  }
+
+  @override
   String get unused => '未使用';
 
   @override

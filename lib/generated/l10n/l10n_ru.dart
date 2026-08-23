@@ -580,6 +580,42 @@ class AppLocalizationsRu extends AppLocalizations {
   String get showHiddenFiles => 'Показывать скрытые файлы';
 
   @override
+  String get sshKeyAlgorithm => 'Алгоритм';
+
+  @override
+  String get sshKeyComment => 'Комментарий';
+
+  @override
+  String get sshKeyGenerate => 'Создать пару ключей';
+
+  @override
+  String get sshKeyGenerating => 'Создание…';
+
+  @override
+  String sshKeyLockedFmt(String name) {
+    return 'Закрытый ключ [$name] не разблокирован.';
+  }
+
+  @override
+  String get sshKeyPassphraseTip =>
+      'Необязательно. Ключ с парольной фразой хранится в зашифрованном виде, и она запрашивается при первом использовании ключа.';
+
+  @override
+  String get sshKeyPassphraseWrong => 'Неверная парольная фраза.';
+
+  @override
+  String get sshKeyPublicKey => 'Открытый ключ';
+
+  @override
+  String get sshKeyPublicKeyTip =>
+      'Добавьте эту строку в ~/.ssh/authorized_keys на сервере.';
+
+  @override
+  String sshKeyUnlockTip(String name) {
+    return 'Введите парольную фразу закрытого ключа [$name].';
+  }
+
+  @override
   String get unused => 'Не используется';
 
   @override

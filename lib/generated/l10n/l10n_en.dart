@@ -569,6 +569,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get showHiddenFiles => 'Show hidden files';
 
   @override
+  String get sshKeyAlgorithm => 'Algorithm';
+
+  @override
+  String get sshKeyComment => 'Comment';
+
+  @override
+  String get sshKeyGenerate => 'Generate key pair';
+
+  @override
+  String get sshKeyGenerating => 'Generating…';
+
+  @override
+  String sshKeyLockedFmt(String name) {
+    return 'The private key [$name] was not unlocked.';
+  }
+
+  @override
+  String get sshKeyPassphraseTip =>
+      'Optional. A key with a passphrase is stored encrypted, and you are asked for it the first time a connection uses the key.';
+
+  @override
+  String get sshKeyPassphraseWrong => 'Wrong passphrase.';
+
+  @override
+  String get sshKeyPublicKey => 'Public key';
+
+  @override
+  String get sshKeyPublicKeyTip =>
+      'Append this line to ~/.ssh/authorized_keys on the server.';
+
+  @override
+  String sshKeyUnlockTip(String name) {
+    return 'Enter the passphrase for the private key [$name].';
+  }
+
+  @override
   String get unused => 'Unused';
 
   @override

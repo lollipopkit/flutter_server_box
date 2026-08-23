@@ -543,6 +543,41 @@ class AppLocalizationsKo extends AppLocalizations {
   String get showHiddenFiles => '숨김 파일 표시';
 
   @override
+  String get sshKeyAlgorithm => '알고리즘';
+
+  @override
+  String get sshKeyComment => '설명';
+
+  @override
+  String get sshKeyGenerate => '키 쌍 생성';
+
+  @override
+  String get sshKeyGenerating => '생성 중…';
+
+  @override
+  String sshKeyLockedFmt(String name) {
+    return '개인 키 [$name]의 잠금이 해제되지 않았습니다.';
+  }
+
+  @override
+  String get sshKeyPassphraseTip =>
+      '선택 사항. 암호를 설정하면 개인 키가 암호화되어 저장되며, 연결에서 이 키를 처음 사용할 때 입력을 요구합니다.';
+
+  @override
+  String get sshKeyPassphraseWrong => '암호가 올바르지 않습니다.';
+
+  @override
+  String get sshKeyPublicKey => '공개 키';
+
+  @override
+  String get sshKeyPublicKeyTip => '이 줄을 서버의 ~/.ssh/authorized_keys에 추가하세요.';
+
+  @override
+  String sshKeyUnlockTip(String name) {
+    return '개인 키 [$name]의 암호를 입력하세요.';
+  }
+
+  @override
   String get unused => '미사용';
 
   @override
