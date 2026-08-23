@@ -47,21 +47,38 @@ class Spi {
 
 final class BmcCfg {
   String addr;          // https://...
+  String? credId;       // → BmcCredential,多台服务器共用
+  String? certSha256;   // 用户审阅后钉住 —— 见下
+}
+
+class BmcCredential {   // 独立的表,独立的 sync root
+  String id;            // 生成的;不是名字
+  String name;          // 唯一,选择器里显示的就是它
   String user;
   String? pwd;
-  String? certSha256;   // 首次见到时钉住 —— 见下
 }
 ```
 
 嵌套而不是像 PVE 那三个设置一样平铺在 `ServerCustom` 里:平铺表达不了「没配置」,而这正是当初把 SSH
 那些字段抽成 `SshCredential` 的原因。
 
+账户是独立记录,按 id 引用。BMC 是整机架一起开的,共用一个目录服务或同一个出厂密码,所以常态是多台服务器
+对一个账户——存在每台服务器上就意味着一台机器填一遍、轮换密码时一台机器改一遍,而且除了「某台机器不响应了」
+之外没有办法知道漏了哪台。引用是 `ON DELETE SET NULL`:删掉账户不能把用它的服务器一起删掉。
+
+留在 `BmcCfg` 上的是属于单台设备的东西。地址是显然的;证书指纹没那么显然:两个 BMC 不可能出示同一张证书,
+指纹放在共享记录里等于拿第一台的指纹去验第二台,也就是这个校验根本没发生。
+
+共用**账户**不等于共用**同一个 BMC**。若干台 guest 跑在同一台物理机上时,它们指向的是同一个设备——在其中
+任何一台上执行电源操作会切掉全部,而读回来的 `PowerState` 是宿主机的而不是 guest 的。那是 host/guest 关系,
+不是存储问题,这里不建模。
+
 ## 分层
 
 这样切是为了让值得测的那一半不需要一台服务器。
 
 ```
-BmcCfg                    用户配置的东西
+BmcCfg + BmcCredential    用户配置的东西
   ↓
 RedfishClient             传输层:TLS 信任、会话生命周期、GET/POST
   ↓

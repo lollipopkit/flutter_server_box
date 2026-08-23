@@ -58,9 +58,15 @@ class Spi {
 
 final class BmcCfg {
   String addr;          // https://...
+  String? credId;       // → BmcCredential, shared between servers
+  String? certSha256;   // reviewed and pinned — see below
+}
+
+class BmcCredential {   // its own table, its own sync root
+  String id;            // generated; never the name
+  String name;          // unique, what the picker lists
   String user;
   String? pwd;
-  String? certSha256;   // pinned on first sight — see below
 }
 ```
 
@@ -68,12 +74,31 @@ Nested rather than flat fields on `ServerCustom` (where PVE's three settings
 live): flat cannot express "not configured", which is the same reason the SSH
 fields were extracted into `SshCredential`.
 
+The account is a record of its own, referenced by id. BMCs are provisioned a
+rack at a time and answer to one directory or one factory password, so the
+normal case is many servers to one account — stored per server it would be
+typed once per machine and, on a rotation, changed once per machine, with no
+way to tell whether one was missed except by a machine that stops answering.
+The reference is `ON DELETE SET NULL`: losing an account must not lose the
+servers that used it.
+
+What stays on `BmcCfg` is what belongs to one device. The address, obviously —
+and the certificate fingerprint, less obviously: two BMCs never present the
+same certificate, so a fingerprint on a shared record would be the first
+device's used to verify the second, which is the check not happening at all.
+
+A shared *account* is not a shared *BMC*. Several servers that are guests of
+one physical host would be pointing at one device, where a power action on any
+of them cuts all of them and the reported `PowerState` is the host's rather
+than the guest's. That is a host/guest relation, not a storage question, and it
+is not modelled here.
+
 ## Layers
 
 The split exists so that the half worth testing does not need a server.
 
 ```
-BmcCfg                    what the user configured
+BmcCfg + BmcCredential    what the user configured
   ↓
 RedfishClient             transport: TLS trust, session lifetime, GET/POST
   ↓
