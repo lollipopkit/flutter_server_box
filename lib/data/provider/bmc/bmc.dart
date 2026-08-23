@@ -109,6 +109,18 @@ class BmcNotifier extends _$BmcNotifier {
   /// and the one already running is about to publish it.
   var _refreshing = false;
 
+  /// Set while a power operation and the confirmation after it hold the client.
+  ///
+  /// Separate from [_refreshing] rather than the same flag: `refresh` clears
+  /// its own in a `finally`, and a refresh that happens to finish during a
+  /// power operation would clear a flag it did not set — reopening the window
+  /// this closes for the rest of a confirmation that runs up to two minutes
+  /// against a timer that fires every one.
+  ///
+  /// `power` does not skip when a refresh is running. It is what the user
+  /// asked for, and the reads it races are reads.
+  var _powering = false;
+
   @override
   BmcState build(Spi spi) {
     final cfg = spi.bmc;
@@ -168,7 +180,7 @@ class BmcNotifier extends _$BmcNotifier {
   /// several round trips this device can least afford.
   Future<void> refresh() async {
     final client = _client;
-    if (client == null || _refreshing) return;
+    if (client == null || _refreshing || _powering) return;
     final generation = _generation;
     _refreshing = true;
 
@@ -240,16 +252,21 @@ class BmcNotifier extends _$BmcNotifier {
     if (client == null || request == null) return BmcPowerResult.notSupported;
 
     final before = state.powerState;
+    _powering = true;
     try {
-      await client.post(request.target, request.body);
-    } catch (e) {
-      Loggers.app.warning('BMC ${request.resetType} refused', e);
-      return BmcPowerResult.failed;
-    }
+      try {
+        await client.post(request.target, request.body);
+      } catch (e) {
+        Loggers.app.warning('BMC ${request.resetType} refused', e);
+        return BmcPowerResult.failed;
+      }
 
-    return await _awaitPowerChange(client, before, intent)
-        ? BmcPowerResult.confirmed
-        : BmcPowerResult.accepted;
+      return await _awaitPowerChange(client, before, intent)
+          ? BmcPowerResult.confirmed
+          : BmcPowerResult.accepted;
+    } finally {
+      _powering = false;
+    }
   }
 
   /// Where [intent] should leave the machine.
