@@ -2743,6 +2743,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Imported the data of the previously installed build. Downloaded files were left where they were, in {path}.'**
   String macDmgImportedPartly(String path);
+
+  /// No description provided for @bmcAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get bmcAccount;
+
+  /// No description provided for @bmcAccountUnset.
+  ///
+  /// In en, this message translates to:
+  /// **'None picked - tap to choose or create one'**
+  String get bmcAccountUnset;
+
+  /// No description provided for @bmcAccountShared.
+  ///
+  /// In en, this message translates to:
+  /// **'Used by {count} servers'**
+  String bmcAccountShared(int count);
 }
 
 class _AppLocalizationsDelegate

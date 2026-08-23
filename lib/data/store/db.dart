@@ -42,6 +42,34 @@ class PrivateKeys extends Table with SyncMeta {
   Set<Column> get primaryKey => {id};
 }
 
+/// A BMC account, referenced by the servers whose BMC it opens.
+///
+/// A table rather than columns on `server`, which is what separates it from
+/// the SSH and monitor credentials below: those are one-to-one, this is not.
+/// BMCs are provisioned a rack at a time and answer to one directory or one
+/// factory password, so the normal case is many servers to one account —
+/// stored per server it would be typed once per machine and, on a rotation,
+/// changed once per machine.
+///
+/// The address and the pinned certificate stay on `server`. Both belong to one
+/// device: two BMCs never present the same certificate, so a fingerprint here
+/// would be the first device's, used to verify the second.
+@DataClassName('BmcCredentialRow')
+class BmcCredentials extends Table with SyncMeta {
+  @override
+  String get tableName => 'bmc_credential';
+  @override
+  bool get withoutRowId => true;
+
+  TextColumn get id => text()();
+  TextColumn get name => text().unique()();
+  TextColumn get user => text()();
+  TextColumn get pwd => text().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 /// The SSH and monitor credentials are columns rather than tables of their
 /// own: both are one-to-one and neither is ever read without the server.
 ///
@@ -98,9 +126,14 @@ class Servers extends Table with SyncMeta {
   /// `BmcCfg.certSha256`. Null means nothing has been reviewed and a
   /// connection is refused rather than trusted.
   TextColumn get bmcAddr => text().nullable()();
-  TextColumn get bmcUser => text().nullable()();
-  TextColumn get bmcPwd => text().nullable()();
   TextColumn get bmcCertSha256 => text().nullable()();
+
+  /// Deleting an account must not delete the servers that used it; it must
+  /// leave them with an address and nothing to log in with, which the editor
+  /// can then say. Same rule as [sshKeyId].
+  TextColumn get bmcCredId => text()
+      .nullable()
+      .references(BmcCredentials, #id, onDelete: KeyAction.setNull)();
 
   TextColumn get pveAddr => text().nullable()();
   BoolColumn get pveIgnoreCert => boolean().withDefault(const Constant(false))();

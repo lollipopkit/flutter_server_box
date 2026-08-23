@@ -20,6 +20,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/cert_pin.dart';
 import 'package:server_box/data/model/server/bmc/redfish_service.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
+import 'package:server_box/data/model/server/bmc_credential.dart';
 import 'package:server_box/data/provider/bmc/redfish_client.dart';
 
 /// A Redfish service, as far as this test needs one.
@@ -138,8 +139,12 @@ void main() {
 
   tearDown(() => bmc.close());
 
-  BmcCfg cfg({String? pin, String pwd = 'right'}) =>
-      BmcCfg(addr: bmc.url, user: 'admin', pwd: pwd, certSha256: pin);
+  BmcCfg cfg({String? pin}) =>
+      BmcCfg(addr: bmc.url, credId: 'cred-1', certSha256: pin);
+
+  /// The account, which is a record of its own now — see `BmcCredential`.
+  BmcCredential cred({String pwd = 'right'}) =>
+      BmcCredential(id: 'cred-1', name: 'lab', user: 'admin', pwd: pwd);
 
   group('the certificate', () {
     test('fetchServerCert reads it without sending anything', () async {
@@ -153,7 +158,7 @@ void main() {
     });
 
     test('an unreviewed certificate is refused, not trusted on first use', () async {
-      final client = RedfishClient(cfg());
+      final client = RedfishClient(cfg(), cred());
       addTearDown(client.close);
 
       await expectLater(
@@ -172,7 +177,7 @@ void main() {
 
     test('a certificate that is not the pinned one is refused', () async {
       final wrong = 'a' * 64;
-      final client = RedfishClient(cfg(pin: wrong));
+      final client = RedfishClient(cfg(pin: wrong), cred());
       addTearDown(client.close);
 
       await expectLater(
@@ -183,7 +188,7 @@ void main() {
     });
 
     test('the reviewed certificate is accepted', () async {
-      final client = RedfishClient(cfg(pin: fingerprint));
+      final client = RedfishClient(cfg(pin: fingerprint), cred());
       addTearDown(client.close);
 
       final root = await client.probe();
@@ -193,7 +198,7 @@ void main() {
 
   group('sessions', () {
     test('a probe costs no session', () async {
-      final client = RedfishClient(cfg(pin: fingerprint));
+      final client = RedfishClient(cfg(pin: fingerprint), cred());
       addTearDown(client.close);
 
       await client.probe();
@@ -203,7 +208,7 @@ void main() {
     test('concurrent reads share one login', () async {
       // Without a shared login in flight, a page fetching two resources at
       // once creates two sessions and gives back one. BMCs allow few.
-      final client = RedfishClient(cfg(pin: fingerprint));
+      final client = RedfishClient(cfg(pin: fingerprint), cred());
       addTearDown(client.close);
 
       await Future.wait([
@@ -217,7 +222,7 @@ void main() {
     });
 
     test('close gives the session back', () async {
-      final client = RedfishClient(cfg(pin: fingerprint));
+      final client = RedfishClient(cfg(pin: fingerprint), cred());
       await client.get('/redfish/v1/Systems/1');
       expect(bmc.sessionsCreated, hasLength(1));
 
@@ -227,7 +232,7 @@ void main() {
     });
 
     test('close is safe twice, and after a failure', () async {
-      final client = RedfishClient(cfg(pin: fingerprint));
+      final client = RedfishClient(cfg(pin: fingerprint), cred());
       await client.get('/redfish/v1/Systems/1');
       await client.close();
       await client.close();
@@ -235,7 +240,7 @@ void main() {
     });
 
     test('a client that never logged in still closes', () async {
-      final client = RedfishClient(cfg(pin: fingerprint));
+      final client = RedfishClient(cfg(pin: fingerprint), cred());
       await client.close();
       expect(bmc.sessionsDeleted, isEmpty);
     });
@@ -243,7 +248,7 @@ void main() {
 
   group('answers that mean something', () {
     test('wrong credentials are unauthorized, not unreachable', () async {
-      final client = RedfishClient(cfg(pin: fingerprint, pwd: 'wrong'));
+      final client = RedfishClient(cfg(pin: fingerprint), cred(pwd: 'wrong'));
       addTearDown(client.close);
 
       await expectLater(
@@ -259,7 +264,7 @@ void main() {
     });
 
     test('a licensed-only resource is forbidden, and names itself', () async {
-      final client = RedfishClient(cfg(pin: fingerprint));
+      final client = RedfishClient(cfg(pin: fingerprint), cred());
       addTearDown(client.close);
 
       await expectLater(
@@ -277,7 +282,7 @@ void main() {
     test('walks the service and stops where it runs out', () async {
       // The chassis collection is empty here, which costs the sensors and must
       // not cost the system
-      final client = RedfishClient(cfg(pin: fingerprint));
+      final client = RedfishClient(cfg(pin: fingerprint), cred());
       addTearDown(client.close);
 
       final topology = await RedfishDiscovery(client).run();

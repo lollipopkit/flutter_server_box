@@ -36,6 +36,7 @@ import 'package:server_box/data/model/server/bmc/redfish.dart';
 import 'package:server_box/data/model/server/bmc/redfish_sensors.dart';
 import 'package:server_box/data/model/server/bmc/redfish_service.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
+import 'package:server_box/data/model/server/bmc_credential.dart';
 import 'package:server_box/data/provider/bmc/redfish_client.dart';
 
 String? _env(String key) {
@@ -66,18 +67,28 @@ void main() {
   final user = _env('SBM_E2E_BMC_USER') ?? '';
   final pwd = _env('SBM_E2E_BMC_PWD');
 
+  /// The account, which is a shared record rather than fields on the config —
+  /// see `BmcCredential`. Not stored by this test: it never opens a database.
+  final cred = BmcCredential(
+    id: 'e2e',
+    name: 'e2e',
+    user: user,
+    pwd: pwd,
+  );
+
   late RedfishClient client;
   late RedfishTopology topology;
 
   setUpAll(() async {
-    final probe = BmcCfg(addr: url, user: user);
+    final probe = BmcCfg(addr: url);
     final uri = probe.uri;
+    final port = probe.port;
     expect(uri, isNotNull, reason: 'SBM_E2E_BMC_URL must be a URL');
 
     // Read the certificate and pin it, as the edit page does. Not from config:
     // a self-signed certificate is something someone looks at, not something
     // written down in advance.
-    final cert = await fetchServerCert(uri!.host, probe.port);
+    final cert = await fetchServerCert(uri!.host, port!);
     // ignore: avoid_print
     print('certificate: ${cert.subject} — ${cert.prettyFingerprint}');
     if (cert.isExpired) {
@@ -86,7 +97,8 @@ void main() {
     }
 
     client = RedfishClient(
-      BmcCfg(addr: url, user: user, pwd: pwd, certSha256: cert.fingerprint),
+      BmcCfg(addr: url, credId: cred.id, certSha256: cert.fingerprint),
+      cred,
     );
     addTearDown(client.close);
 
@@ -211,10 +223,11 @@ void main() {
 
     final cert = await fetchServerCert(
       Uri.parse(url).host,
-      BmcCfg(addr: url, user: user).port,
+      BmcCfg(addr: url).port!,
     );
     final second = RedfishClient(
-      BmcCfg(addr: url, user: user, pwd: pwd, certSha256: cert.fingerprint),
+      BmcCfg(addr: url, credId: cred.id, certSha256: cert.fingerprint),
+      cred,
     );
     addTearDown(second.close);
 

@@ -15,15 +15,21 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/utils/cert_pin.dart';
 import 'package:server_box/data/model/server/bmc/redfish_service.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
+import 'package:server_box/data/model/server/bmc_credential.dart';
 
 /// Reaches one BMC's Redfish service.
 ///
 /// Holds a session, so it is worth keeping and it must be [close]d. See the
 /// note on [_login] for what happens if it is not.
 class RedfishClient implements RedfishTransport {
-  RedfishClient(this.cfg);
+  RedfishClient(this.cfg, this.cred);
 
+  /// Where this device is, and which certificate it is allowed to present.
   final BmcCfg cfg;
+
+  /// The account to log in with, which several servers may share — so it
+  /// arrives beside [cfg] rather than inside it. See `BmcCredential`.
+  final BmcCredential cred;
 
   Dio? _dio;
 
@@ -96,7 +102,7 @@ class RedfishClient implements RedfishTransport {
     final sessions = await _sessionsPath();
     final res = await _session().postUri<Map<String, dynamic>>(
       Uri.parse(sessions),
-      data: {'UserName': cfg.user, 'Password': cfg.pwd ?? ''},
+      data: {'UserName': cred.user, 'Password': cred.pwd ?? ''},
     );
 
     final code = res.statusCode ?? 0;

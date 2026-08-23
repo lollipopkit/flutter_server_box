@@ -1441,6 +1441,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String macDmgImportedPartly(String path) {
     return '已导入此前安装版本的数据。下载的文件仍在原处:$path。';
   }
+
+  @override
+  String get bmcAccount => '账户';
+
+  @override
+  String get bmcAccountUnset => '未选择 — 点击选择或新建';
+
+  @override
+  String bmcAccountShared(int count) {
+    return '$count 台服务器在用';
+  }
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -2879,5 +2890,16 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String macDmgImportedPartly(String path) {
     return '已匯入先前安裝版本的資料。下載的檔案仍在原處:$path。';
+  }
+
+  @override
+  String get bmcAccount => '帳戶';
+
+  @override
+  String get bmcAccountUnset => '未選擇 — 點擊選擇或新增';
+
+  @override
+  String bmcAccountShared(int count) {
+    return '$count 台伺服器在用';
   }
 }

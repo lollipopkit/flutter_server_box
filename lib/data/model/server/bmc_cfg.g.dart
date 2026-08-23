@@ -8,14 +8,12 @@ part of 'bmc_cfg.dart';
 
 BmcCfg _$BmcCfgFromJson(Map<String, dynamic> json) => BmcCfg(
   addr: json['addr'] as String,
-  user: json['user'] as String,
-  pwd: json['pwd'] as String?,
+  credId: json['credId'] as String?,
   certSha256: json['certSha256'] as String?,
 );
 
 Map<String, dynamic> _$BmcCfgToJson(BmcCfg instance) => <String, dynamic>{
   'addr': instance.addr,
-  'user': instance.user,
-  'pwd': ?instance.pwd,
+  'credId': ?instance.credId,
   'certSha256': ?instance.certSha256,
 };

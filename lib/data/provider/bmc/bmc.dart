@@ -8,6 +8,7 @@ import 'package:server_box/data/model/server/bmc/redfish_sensors.dart';
 import 'package:server_box/data/model/server/bmc/redfish_service.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/bmc/redfish_client.dart';
+import 'package:server_box/data/res/store.dart';
 
 part 'bmc.freezed.dart';
 part 'bmc.g.dart';
@@ -112,7 +113,16 @@ class BmcNotifier extends _$BmcNotifier {
 
     if (cfg == null || !cfg.isComplete) return const BmcState();
 
-    _client = RedfishClient(cfg);
+    // The account may have been deleted since this server was configured: the
+    // foreign key sets `bmc_cred_id` to null rather than taking the server
+    // with it, so `isComplete` above is about the id being *named*, and this is
+    // about the record still being there.
+    final cred = Stores.bmcCredential.fetchOne(cfg.credId);
+    if (cred == null || !cred.isComplete) {
+      return const BmcState(failure: RedfishFailure.unauthorized);
+    }
+
+    _client = RedfishClient(cfg, cred);
     unawaited(refresh());
     _timer = Timer.periodic(_pollInterval, (_) => unawaited(refresh()));
 

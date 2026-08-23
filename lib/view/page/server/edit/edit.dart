@@ -14,6 +14,7 @@ import 'package:server_box/core/utils/ssh_config.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
+import 'package:server_box/data/model/server/bmc_credential.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/discovery_result.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
@@ -64,8 +65,13 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   final _preferTempDevCtrl = TextEditingController();
   final _logoUrlCtrl = TextEditingController();
   final _bmcAddrCtrl = TextEditingController();
-  final _bmcUserCtrl = TextEditingController();
-  final _bmcPwdCtrl = TextEditingController();
+
+  /// Which `BmcCredential` this server logs in with, by id.
+  ///
+  /// An id rather than a user and a password, because a rack shares one
+  /// account and this page is where twenty servers would otherwise each get
+  /// their own copy of it.
+  final _bmcCredId = ValueNotifier<String?>(null);
 
   /// The certificate fingerprint the user has reviewed, or null.
   ///
@@ -146,8 +152,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     _preferTempDevCtrl.dispose();
     _logoUrlCtrl.dispose();
     _bmcAddrCtrl.dispose();
-    _bmcUserCtrl.dispose();
-    _bmcPwdCtrl.dispose();
+    _bmcCredId.dispose();
     _bmcCert.dispose();
     _wolMacCtrl.dispose();
     _wolIpCtrl.dispose();

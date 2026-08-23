@@ -1568,4 +1568,15 @@ class AppLocalizationsNl extends AppLocalizations {
   String macDmgImportedPartly(String path) {
     return 'De gegevens van de eerder geïnstalleerde versie zijn geïmporteerd. Gedownloade bestanden zijn achtergebleven in $path.';
   }
+
+  @override
+  String get bmcAccount => 'Account';
+
+  @override
+  String get bmcAccountUnset => 'None picked - tap to choose or create one';
+
+  @override
+  String bmcAccountShared(int count) {
+    return 'Used by $count servers';
+  }
 }

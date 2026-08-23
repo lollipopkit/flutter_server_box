@@ -3,6 +3,13 @@ part of 'edit.dart';
 /// Only permit ipv4 / ipv6 / domain chars (including IPv6 zone identifier like %en0)
 final _hostReg = RegExp(r'^[a-zA-Z0-9\.\-_:%;]+$');
 
+/// The BMC account picker's "create a new one" entry.
+///
+/// A sentinel in the same list as the ids, rather than a second button:
+/// the picker takes one list, and a value `ShortId` cannot produce is
+/// cheaper than a wrapper type for one entry.
+const _kNewBmcCred = '\u0000new';
+
 extension _Discovery on _ServerEditPageState {
   /// Sweeps the network and fills this form in from what is picked.
   ///
@@ -61,6 +68,112 @@ extension _Actions on _ServerEditPageState {
     _hasStoredSudoPassword.value = value != null && value.isNotEmpty;
   }
 
+  /// Picks, creates or edits the account this server's BMC is opened with.
+  ///
+  /// Editing one from here changes it for every server pointing at it, which
+  /// is the point of it being a record — and why the picker says how many that
+  /// is before offering the edit.
+  Future<void> _onTapBmcAccount() async {
+    final creds = Stores.bmcCredential.fetch();
+    final picked = await context.showPickSingleDialog<String>(
+      title: l10n.bmcAccount,
+      items: [...creds.map((e) => e.id), _kNewBmcCred],
+      display: (id) {
+        if (id == _kNewBmcCred) return '+ ${libL10n.add}';
+        final cred = Stores.bmcCredential.fetchOne(id);
+        return cred == null ? id : '${cred.name} (${cred.user})';
+      },
+      initial: _bmcCredId.value,
+    );
+    if (picked == null || !mounted) return;
+
+    if (picked != _kNewBmcCred) {
+      _bmcCredId.value = picked;
+      return;
+    }
+    final created = await _editBmcCred(null);
+    if (created != null) _bmcCredId.value = created.id;
+  }
+
+  /// The name/user/password dialog, for a new account or an existing one.
+  ///
+  /// Returns what was saved, or null if the dialog was dismissed. The name is
+  /// `UNIQUE` in the schema, so a collision comes back as a
+  /// [DuplicateNameException] from the store rather than from a check this
+  /// dialog would have to remember to make.
+  Future<BmcCredential?> _editBmcCred(BmcCredential? existing) async {
+    final nameCtrl = TextEditingController(text: existing?.name ?? '');
+    final userCtrl = TextEditingController(text: existing?.user ?? '');
+    final pwdCtrl = TextEditingController(text: existing?.pwd ?? '');
+
+    final ok = await context.showRoundDialog<bool>(
+      title: existing == null ? libL10n.add : libL10n.edit,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Input(
+            controller: nameCtrl,
+            label: libL10n.name,
+            icon: Icons.label_outline,
+            hint: 'rack-a',
+            suggestion: false,
+            autoFocus: true,
+          ),
+          Input(
+            controller: userCtrl,
+            label: libL10n.user,
+            icon: Icons.person,
+            hint: 'ADMIN',
+            suggestion: false,
+          ),
+          Input(
+            controller: pwdCtrl,
+            label: libL10n.pwd,
+            icon: Icons.password,
+            obscureText: true,
+            suggestion: false,
+          ),
+        ],
+      ),
+      actions: Btnx.cancelOk,
+    );
+    // The dialog answered; this page acts on the answer — see the dialog rules
+    // in CLAUDE.md. The controllers are disposed here rather than by a tree
+    // that no longer holds them.
+    final name = nameCtrl.text.trim();
+    final user = userCtrl.text.trim();
+    final pwd = pwdCtrl.text.selfNotEmptyOrNull;
+    nameCtrl.dispose();
+    userCtrl.dispose();
+    pwdCtrl.dispose();
+    if (ok != true || !mounted) return null;
+
+    if (name.isEmpty || user.isEmpty) {
+      Toast.error(libL10n.fail, body: libL10n.empty);
+      return null;
+    }
+
+    final saved =
+        existing?.copyWith(name: name, user: user, pwd: pwd) ??
+        BmcCredential(
+          id: ShortId.generate(),
+          name: name,
+          user: user,
+          pwd: pwd,
+        );
+    try {
+      if (existing == null) {
+        Stores.bmcCredential.put(saved);
+      } else {
+        Stores.bmcCredential.update(existing, saved);
+      }
+    } catch (e) {
+      Toast.error(libL10n.fail, body: '$e');
+      return null;
+    }
+    return saved;
+  }
+
   /// Fetches the certificate the BMC presents, shows it, and pins it if the
   /// user agrees.
   ///
@@ -69,19 +182,17 @@ extension _Actions on _ServerEditPageState {
   /// That is what makes it safe to accept any certificate for this one step,
   /// and it is the only step that does.
   Future<void> _onTapBmcCert() async {
-    final cfg = BmcCfg(
-      addr: _bmcAddrCtrl.text.trim(),
-      user: _bmcUserCtrl.text.trim(),
-    );
+    final cfg = BmcCfg(addr: _bmcAddrCtrl.text.trim());
     final uri = cfg.uri;
-    if (uri == null) {
+    final port = cfg.port;
+    if (uri == null || port == null) {
       Toast.error(libL10n.fail, body: l10n.bmcAddrInvalid);
       return;
     }
 
     final CertInfo info;
     try {
-      info = await fetchServerCert(uri.host, cfg.port);
+      info = await fetchServerCert(uri.host, port);
     } catch (e) {
       Toast.error(libL10n.fail, body: '$e');
       return;
@@ -100,7 +211,7 @@ extension _Actions on _ServerEditPageState {
         children: [
           Text(changed ? l10n.bmcCertChanged : l10n.bmcCertReview),
           const SizedBox(height: 12),
-          SelectableText('${libL10n.addr}: ${uri.host}:${cfg.port}'),
+          SelectableText('${libL10n.addr}: ${uri.host}:$port'),
           SelectableText('Subject: ${info.subject}'),
           SelectableText('Issuer: ${info.issuer}'),
           SelectableText('SHA-256: ${info.prettyFingerprint}'),
@@ -417,8 +528,7 @@ extension _Actions on _ServerEditPageState {
         ? null
         : BmcCfg(
             addr: bmcAddr,
-            user: _bmcUserCtrl.text.trim(),
-            pwd: _bmcPwdCtrl.text.selfNotEmptyOrNull,
+            credId: _bmcCredId.value,
             certSha256: _bmcCert.value,
           );
     if (bmc != null && !bmc.isComplete) {
@@ -621,8 +731,7 @@ extension _Utils on _ServerEditPageState {
     final bmc = spi.bmc;
     if (bmc != null) {
       _bmcAddrCtrl.text = bmc.addr;
-      _bmcUserCtrl.text = bmc.user;
-      _bmcPwdCtrl.text = bmc.pwd ?? '';
+      _bmcCredId.value = bmc.credId;
       _bmcCert.value = bmc.certSha256;
     }
 

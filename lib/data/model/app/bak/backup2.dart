@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:logging/logging.dart';
+import 'package:server_box/data/model/server/bmc_credential.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
@@ -53,6 +54,11 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     /// their own, so it defaults rather than being required — an older backup
     /// has to keep decoding.
     @Default(<String, Object?>{}) Map<String, Object?> portForwards,
+
+    /// Same reason as [portForwards]: no file written before BMC support has
+    /// one. A server whose `bmc.credId` names an account this map does not
+    /// carry restores with the address and no account, which the editor shows.
+    @Default(<String, Object?>{}) Map<String, Object?> bmcCredentials,
   }) = _BackupV2;
 
   /// Must stay a single expression with a cascade, not a block body.
@@ -70,13 +76,14 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     _validateRestorableTypedStores();
     _loggerV2.info('Merging...');
 
-    // Ordered by what references what: a server names a private key, a snippet
-    // and a port forward name a server, and a container host is a child of one.
-    // Merging a store before the one it points at would drop every record whose
-    // foreign key has not arrived yet.
+    // Ordered by what references what: a server names a private key and a BMC
+    // account, a snippet and a port forward name a server, and a container host
+    // is a child of one. Merging a store before the one it points at would drop
+    // every record whose foreign key has not arrived yet.
     final keysChanged = Stores.key.merge(keys, force: force);
+    Stores.bmcCredential.merge(bmcCredentials, force: force);
     final serversChanged = Stores.server.merge(
-      _serversWithRestoredKeyIds(),
+      _serversWithRestoredIds(),
       force: force,
     );
     final snippetsChanged = Stores.snippet.merge(snippets, force: force);
@@ -124,6 +131,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       spis: Stores.server.getAllMap(),
       snippets: Stores.snippet.getAllMap(),
       keys: Stores.key.getAllMap(),
+      bmcCredentials: Stores.bmcCredential.getAllMap(),
       portForwards: Stores.portForward.getAllMap(),
       container: Stores.container.getAllMap(),
       history: _backupStore(Stores.history),
@@ -178,39 +186,69 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     _validateRestorableStore('snippets', snippets);
     _validateRestorableStore('keys', keys);
     _validateRestorableStore('portForwards', portForwards);
+    _validateRestorableStore('bmcCredentials', bmcCredentials);
   }
 
   /// A pre-table backup identifies a private key by its name. When that name
   /// already exists locally, [PrivateKeyStore.reconcile] correctly keeps the
-  /// local generated id; the server's old name reference must follow it before
-  /// the foreign key can accept the server row.
-  Map<String, Object?> _serversWithRestoredKeyIds() {
-    final keyIds = <String, String>{};
-    for (final entry in keys.entries) {
-      if (_isInternalStoreKey(entry.key) || entry.value is! Map) continue;
-      try {
-        final incoming = PrivateKeyInfo.fromJson(
-          Map<String, dynamic>.from(entry.value as Map),
-        );
-        final restored = Stores.key.fetchByName(incoming.name);
-        if (restored != null) keyIds[incoming.id] = restored.id;
-      } catch (_) {
-        // `merge` skips malformed key records too; leave its server reference
-        // untouched so its foreign key rejects the matching malformed record.
-      }
-    }
-    if (keyIds.isEmpty) return spis;
+  /// local generated id; the server's old reference must follow it before the
+  /// foreign key can accept the server row.
+  ///
+  /// [BmcCredentialStore.reconcile] does the same thing for the same reason,
+  /// so `bmc.credId` needs the same treatment — restoring one backup twice
+  /// would otherwise leave every server pointing at an account id that the
+  /// second restore did not create.
+  Map<String, Object?> _serversWithRestoredIds() {
+    final keyIds = _restoredIds(
+      keys,
+      (json) => PrivateKeyInfo.fromJson(json).id,
+      (json) => Stores.key.fetchByName(PrivateKeyInfo.fromJson(json).name)?.id,
+    );
+    final credIds = _restoredIds(
+      bmcCredentials,
+      (json) => BmcCredential.fromJson(json).id,
+      (json) => Stores.bmcCredential
+          .fetchByName(BmcCredential.fromJson(json).name)
+          ?.id,
+    );
+    if (keyIds.isEmpty && credIds.isEmpty) return spis;
 
     return {
       for (final entry in spis.entries)
-        entry.key: _serverWithRestoredKeyId(entry.value, keyIds),
+        entry.key: _serverWithRestoredIds(entry.value, keyIds, credIds),
     };
+  }
+
+  /// Backup id -> local id, for the records of [store] whose name already
+  /// exists here.
+  ///
+  /// A record that will not decode is skipped rather than failing the restore:
+  /// `merge` skips it too, so leaving its server reference untouched is what
+  /// makes the foreign key reject exactly the matching malformed record.
+  Map<String, String> _restoredIds(
+    Map<String, Object?> store,
+    String Function(Map<String, dynamic>) idOf,
+    String? Function(Map<String, dynamic>) localIdOf,
+  ) {
+    final out = <String, String>{};
+    for (final entry in store.entries) {
+      if (_isInternalStoreKey(entry.key) || entry.value is! Map) continue;
+      try {
+        final json = Map<String, dynamic>.from(entry.value as Map);
+        final restored = localIdOf(json);
+        if (restored != null) out[idOf(json)] = restored;
+      } catch (_) {
+        continue;
+      }
+    }
+    return out;
   }
 }
 
-Object? _serverWithRestoredKeyId(
+Object? _serverWithRestoredIds(
   Object? value,
   Map<String, String> keyIds,
+  Map<String, String> credIds,
 ) {
   if (value is! Map) return value;
   final server = Map<String, Object?>.from(value);
@@ -222,6 +260,13 @@ Object? _serverWithRestoredKeyId(
       final id = server[key];
       if (id is String && keyIds.containsKey(id)) server[key] = keyIds[id];
     }
+  }
+  final bmc = server['bmc'];
+  if (bmc is Map) {
+    final restored = Map<String, Object?>.from(bmc);
+    final id = restored['credId'];
+    if (id is String && credIds.containsKey(id)) restored['credId'] = credIds[id];
+    server['bmc'] = restored;
   }
   return server;
 }

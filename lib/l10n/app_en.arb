@@ -573,5 +573,15 @@
         "type": "String"
       }
     }
+  },
+  "bmcAccount": "Account",
+  "bmcAccountUnset": "None picked - tap to choose or create one",
+  "bmcAccountShared": "Used by {count} servers",
+  "@bmcAccountShared": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }

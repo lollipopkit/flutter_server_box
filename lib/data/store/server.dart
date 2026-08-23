@@ -137,15 +137,15 @@ class ServerStore extends EntityStore<Spi> {
               pwd: row['wol_pwd'] as String?,
             ),
       // Keyed off the address, which is the one field a BMC cannot be reached
-      // without. A row carrying an address but no account comes back with an
-      // empty user, which `BmcCfg.isComplete` answers false to — so it is
-      // shown in the editor and not connected to.
+      // without. A row carrying an address but no `bmc_cred_id` — because the
+      // account it named was deleted, which sets this to null rather than
+      // taking the server with it — comes back incomplete, so the editor shows
+      // it and nothing tries to log in.
       bmc: row['bmc_addr'] == null
           ? null
           : BmcCfg(
               addr: row['bmc_addr'] as String,
-              user: row['bmc_user'] as String? ?? '',
-              pwd: row['bmc_pwd'] as String?,
+              credId: row['bmc_cred_id'] as String?,
               certSha256: row['bmc_cert_sha256'] as String?,
             ),
       custom: _customOf(row, cmds),
@@ -203,7 +203,7 @@ class ServerStore extends EntityStore<Spi> {
       'monitor_addr', 'monitor_user', 'monitor_pwd', 'monitor_ignore_cert',
       'monitor_allow_insecure',
       'wol_mac', 'wol_ip', 'wol_pwd',
-      'bmc_addr', 'bmc_user', 'bmc_pwd', 'bmc_cert_sha256',
+      'bmc_addr', 'bmc_cred_id', 'bmc_cert_sha256',
       'pve_addr', 'pve_ignore_cert', 'pve_pwd', 'prefer_temp_dev',
       'temp_is_celsius', 'logo_url', 'net_dev', 'script_dir',
     ];
@@ -229,8 +229,7 @@ class ServerStore extends EntityStore<Spi> {
       item.wolCfg?.ip,
       item.wolCfg?.pwd,
       bmc?.addr,
-      bmc?.user,
-      bmc?.pwd,
+      bmc?.credId,
       bmc?.certSha256,
       custom?.pveAddr,
       (custom?.pveIgnoreCert ?? false) ? 1 : 0,

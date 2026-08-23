@@ -3,12 +3,14 @@ import 'dart:convert';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
+import 'package:server_box/data/model/server/bmc_credential.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
+import 'package:server_box/data/store/bmc_credential.dart';
 import 'package:server_box/data/store/server.dart';
 
 import 'helpers/test_db.dart';
@@ -98,17 +100,30 @@ void main() {
   });
 
   group('the BMC side channel', () {
+    late BmcCredentialStore creds;
+
+    const cred = BmcCredential(
+      id: 'cred-1',
+      name: 'rack-a',
+      user: 'ADMIN',
+      pwd: 'calvin',
+    );
+
     const withBmc = Spi(
       id: 'metal',
       name: 'r730',
       ssh: SshCredential(ip: '10.0.0.2', port: 22, user: 'root'),
       bmc: BmcCfg(
         addr: 'https://10.0.0.9',
-        user: 'ADMIN',
-        pwd: 'calvin',
+        credId: 'cred-1',
         certSha256: _fingerprint,
       ),
     );
+
+    setUp(() {
+      creds = BmcCredentialStore.forTest();
+      creds.put(cred);
+    });
 
     test('round trips beside the SSH credential rather than instead of it', () {
       store.put(withBmc);
@@ -119,9 +134,50 @@ void main() {
       // neither satisfies the SSH-or-monitor requirement nor conflicts with it.
       expect(got.ssh?.ip, '10.0.0.2');
       expect(got.bmc?.addr, 'https://10.0.0.9');
-      expect(got.bmc?.user, 'ADMIN');
-      expect(got.bmc?.pwd, 'calvin');
+      expect(got.bmc?.credId, 'cred-1');
       expect(got.bmc?.certSha256, _fingerprint);
+    });
+
+    test('an account that does not exist is refused by the schema', () {
+      // Rather than stored and discovered at connect time. The whole point of
+      // the reference being a foreign key.
+      expect(
+        () => store.put(
+          withBmc.copyWith(bmc: withBmc.bmc!.copyWith(credId: 'gone')),
+        ),
+        throwsA(anything),
+      );
+    });
+
+    test('several servers share one account', () {
+      store.put(withBmc);
+      store.put(withBmc.copyWith(
+        id: 'metal-2',
+        name: 'r730-b',
+        ssh: const SshCredential(ip: '10.0.0.3', port: 22, user: 'root'),
+        bmc: const BmcCfg(addr: 'https://10.0.0.10', credId: 'cred-1'),
+      ));
+      store.invalidate();
+
+      // The reason it is a table: one password, rotated in one place.
+      expect(creds.serversUsing('cred-1'), 2);
+      expect(store.fetchOneRaw('metal')!.bmc?.credId, 'cred-1');
+      expect(store.fetchOneRaw('metal-2')!.bmc?.credId, 'cred-1');
+    });
+
+    test('deleting the account keeps the servers that used it', () {
+      store.put(withBmc);
+      creds.deleteById('cred-1');
+      store.invalidate();
+
+      final got = store.fetchOneRaw('metal');
+      // `ON DELETE SET NULL`, not cascade: losing an account must not lose the
+      // server. What is left is an address with nothing to log in with, which
+      // `isComplete` answers false to and the editor can say.
+      expect(got, isNotNull);
+      expect(got!.bmc?.addr, 'https://10.0.0.9');
+      expect(got.bmc?.credId, isNull);
+      expect(got.bmc?.isComplete, isFalse);
     });
 
     test('a server without one reads back as having none', () {

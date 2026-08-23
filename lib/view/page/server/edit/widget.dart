@@ -612,24 +612,46 @@ extension _Widgets on _ServerEditPageState {
           hint: 'https://10.0.0.9',
           suggestion: false,
         ),
-        Input(
-          controller: _bmcUserCtrl,
-          type: TextInputType.text,
-          label: libL10n.user,
-          icon: Icons.person,
-          suggestion: false,
-        ),
-        Input(
-          controller: _bmcPwdCtrl,
-          type: TextInputType.text,
-          obscureText: true,
-          label: libL10n.pwd,
-          icon: Icons.password,
-          suggestion: false,
-        ),
+        _buildBmcAccount(),
         _buildBmcCert(),
       ],
     );
+  }
+
+  /// Which account this server's BMC is opened with.
+  ///
+  /// A picker rather than a user and a password field, because the account is
+  /// shared: BMCs are provisioned a rack at a time, so the same credentials
+  /// open twenty of them. Typed per server, a rotation means twenty edits and
+  /// no way to tell which one was missed.
+  ///
+  /// The subtitle says how many servers point at the record, since editing it
+  /// here changes what all of them use.
+  Widget _buildBmcAccount() {
+    return _bmcCredId.listenVal((id) {
+      final cred = Stores.bmcCredential.fetchOne(id);
+      final shared = cred == null
+          ? 0
+          : Stores.bmcCredential.serversUsing(cred.id);
+      return ListTile(
+        leading: Icon(
+          cred == null ? Icons.person_off_outlined : Icons.person,
+          color: cred == null ? Colors.orange : null,
+        ),
+        title: Text(l10n.bmcAccount),
+        subtitle: Text(
+          switch (cred) {
+            null => l10n.bmcAccountUnset,
+            final c when shared > 1 =>
+              '${c.name} (${c.user}) - ${l10n.bmcAccountShared(shared)}',
+            final c => '${c.name} (${c.user})',
+          },
+          style: UIs.textGrey,
+        ),
+        trailing: const Icon(Icons.keyboard_arrow_right),
+        onTap: _onTapBmcAccount,
+      ).cardx;
+    });
   }
 
   /// The certificate the BMC presents, and whether it has been reviewed.

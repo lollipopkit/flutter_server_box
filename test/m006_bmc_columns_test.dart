@@ -2,6 +2,10 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/store/migrations/m006_bmc_columns.dart';
 
+/// The columns the step adds to `server`. The account itself is a table, not a
+/// column: see `BmcCredential`.
+const _added = ['bmc_addr', 'bmc_cert_sha256', 'bmc_cred_id'];
+
 void main() {
   setUp(SqliteDb.openInMemory);
   tearDown(SqliteDb.close);
@@ -15,7 +19,12 @@ void main() {
     );
   }
 
-  test('adds the four BMC columns without changing existing rows', () async {
+  List<String> serverColumns() => SqliteDb.instance
+      .select('PRAGMA table_info(server);')
+      .map((column) => column['name'] as String)
+      .toList();
+
+  test('adds the account table and the columns naming one device', () async {
     createV6Server();
     SqliteDb.instance.execute(
       "INSERT INTO server VALUES ('srv-1', 'prod', '10.0.0.1', NULL);",
@@ -26,39 +35,59 @@ void main() {
     final row = SqliteDb.instance.select('SELECT * FROM server;').single;
     expect(row['name'], 'prod');
     expect(row['ssh_ip'], '10.0.0.1');
-    // A server that had no BMC before the migration still has none after it.
-    // The columns exist; nothing was invented to fill them.
-    expect(row['bmc_addr'], isNull);
-    expect(row['bmc_user'], isNull);
-    expect(row['bmc_pwd'], isNull);
-    expect(row['bmc_cert_sha256'], isNull);
+    // A server that had no BMC before still has none after. The columns exist;
+    // nothing was invented to fill them.
+    for (final column in _added) {
+      expect(row[column], isNull, reason: column);
+    }
+
+    expect(
+      SqliteDb.instance.select(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='bmc_credential';",
+      ),
+      hasLength(1),
+    );
   });
 
-  test('runs again after being interrupted between the ALTERs', () async {
+  test('the account reference carries its foreign key', () async {
     createV6Server();
-    // What a process stopping mid-step leaves: the first two columns committed,
-    // the version not yet recorded, so the whole migration runs again. Without
-    // the per-column check the retry fails on `duplicate column name`, and the
-    // step can never finish.
+    await const BmcColumnsMigration().apply();
+
+    // Added by `ALTER TABLE`, which is the one place the schema could end up
+    // differing from what Drift creates on a fresh install — and the
+    // difference would be silent: `ON DELETE SET NULL` not firing, so deleting
+    // an account leaves every server that used it pointing at a row that is
+    // gone.
+    final fks = SqliteDb.instance.select('PRAGMA foreign_key_list(server);');
+    final toCredential = fks.where((fk) => fk['table'] == 'bmc_credential');
+    expect(toCredential, hasLength(1));
+    expect(toCredential.single['from'], 'bmc_cred_id');
+    expect(toCredential.single['to'], 'id');
+    expect(toCredential.single['on_delete'], 'SET NULL');
+  });
+
+  test('runs again after being interrupted partway', () async {
+    createV6Server();
+    // What a process stopping mid-step leaves: the table and the first column
+    // committed, the version not yet recorded, so the whole migration runs
+    // again. Without the guards the retry fails on `duplicate column name`,
+    // and the step can never finish.
+    SqliteDb.instance.execute(
+      'CREATE TABLE bmc_credential (id TEXT NOT NULL PRIMARY KEY, '
+      'name TEXT NOT NULL UNIQUE, user TEXT NOT NULL, pwd TEXT, '
+      'updated_at INTEGER NOT NULL DEFAULT 0, rev INTEGER NOT NULL DEFAULT 0'
+      ') WITHOUT ROWID;',
+    );
     SqliteDb.instance.execute('ALTER TABLE server ADD COLUMN bmc_addr TEXT;');
-    SqliteDb.instance.execute('ALTER TABLE server ADD COLUMN bmc_user TEXT;');
 
     await const BmcColumnsMigration().apply();
 
-    final columns = SqliteDb.instance
-        .select('PRAGMA table_info(server);')
-        .map((column) => column['name'] as String)
-        .toList();
-    for (final expected in const [
-      'bmc_addr',
-      'bmc_user',
-      'bmc_pwd',
-      'bmc_cert_sha256',
-    ]) {
+    final columns = serverColumns();
+    for (final column in _added) {
       expect(
-        columns.where((c) => c == expected),
+        columns.where((c) => c == column),
         hasLength(1),
-        reason: '$expected should exist exactly once',
+        reason: '$column should exist exactly once',
       );
     }
   });
@@ -68,10 +97,6 @@ void main() {
     await const BmcColumnsMigration().apply();
     await const BmcColumnsMigration().apply();
 
-    final columns = SqliteDb.instance
-        .select('PRAGMA table_info(server);')
-        .map((column) => column['name'] as String)
-        .where((name) => name.startsWith('bmc_'));
-    expect(columns, hasLength(4));
+    expect(serverColumns().where((c) => c.startsWith('bmc_')), hasLength(3));
   });
 }
