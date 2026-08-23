@@ -83,6 +83,18 @@ let
 
     nativeBuildInputs = [ nodejs npmHooks.npmConfigHook ];
 
+    # `npm run build` otherwise runs the panel's own `prebuild`, `npm install
+    # --prefix ../../packages/webui`, immediately after the offline install
+    # below has already produced that directory. Measured in the sandbox it
+    # reports "up to date" and does not fail, since `npm ci` has already written
+    # the tree the lock file describes — so this flag is about not depending on
+    # npm reaching that conclusion, with no registry to fall back on the day it
+    # does not. `--ignore-scripts` on `npm run` drops only `prebuild`/
+    # `postbuild`; `build` itself still runs, and the `npm run typesafe-i18n`
+    # inside it inherits the flag through `npm_config_ignore_scripts` and has no
+    # pre/post script of its own.
+    npmBuildFlags = [ "--ignore-scripts" ];
+
     # Offline, from the cache above, standing in for the `prebuild` script.
     preBuild = ''
       # Writable first: the source arrives from the store, and buildNpmPackage
