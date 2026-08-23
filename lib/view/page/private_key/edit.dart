@@ -224,7 +224,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
               if (path == null) return;
 
               final file = File(path);
-              if (!file.existsSync()) {
+              if (!await file.exists()) {
                 Toast.show(libL10n.notExistFmt(path));
                 return;
               }
