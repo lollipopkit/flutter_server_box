@@ -48,7 +48,7 @@ class BackupService {
     if (!isEncrypted) {
       try {
         final (backup, err) = await context.showLoadingDialog(
-          fn: () => Computer.shared.start(MergeableUtils.fromJsonString, text),
+          fn: () => _decodeOnIsolate(text, null),
         );
         if (err != null || backup == null) return;
 
@@ -65,10 +65,7 @@ class BackupService {
     if (savedPassword != null && savedPassword.isNotEmpty) {
       try {
         final (backup, err) = await context.showLoadingDialog(
-          fn: () => Computer.shared.start(
-            (args) => MergeableUtils.fromJsonString(args.$1, args.$2),
-            (text, savedPassword),
-          ),
+          fn: () => _decodeOnIsolate(text, savedPassword),
         );
         if (err == null && backup != null) {
           await _confirmAndRestore(context, backup);
@@ -94,10 +91,7 @@ class BackupService {
 
       try {
         final (backup, err) = await context.showLoadingDialog(
-          fn: () => Computer.shared.start(
-            (args) => MergeableUtils.fromJsonString(args.$1, args.$2),
-            (text, password),
-          ),
+          fn: () => _decodeOnIsolate(text, password),
         );
         if (err != null || backup == null) continue;
 
@@ -157,6 +151,19 @@ class BackupService {
           },
         ),
       ],
+    );
+  }
+
+  static Future<(dynamic, String)?> _decodeOnIsolate(
+    String text,
+    String? password,
+  ) {
+    if (password == null) {
+      return Computer.shared.start(MergeableUtils.fromJsonString, text);
+    }
+    return Computer.shared.start(
+      (args) => MergeableUtils.fromJsonString(args.$1, args.$2),
+      (text, password),
     );
   }
 
