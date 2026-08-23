@@ -274,15 +274,4 @@ abstract final class HiveImport {
       }
     }
   }
-
-  static Future<void> _dropPlaintextIndexAsync(String dir) async {
-    for (final suffix in const ['.hive', '.lock']) {
-      final file = File(dir.joinPath('conn_stats_index$suffix'));
-      try {
-        if (await file.exists()) await file.delete();
-      } catch (e, s) {
-        Loggers.app.warning('Could not delete ${file.path}', e, s);
-      }
-    }
-  }
 }
