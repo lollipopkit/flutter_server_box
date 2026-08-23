@@ -8,6 +8,19 @@ on:
         required: false
         type: boolean
         default: false
+      jobs:
+        # Comma-separated rather than a `choice`, which allows only one value,
+        # and there is no multi-select for `workflow_dispatch`. Empty means all,
+        # so the tag-push path is unaffected and so is dispatching without
+        # thinking about it.
+        #
+        # Unknown names are refused rather than ignored — see `Check job
+        # selection`. A typo that silently builds nothing looks exactly like a
+        # workflow that is broken.
+        description: 'What to run: android,ios,linux,windows,macos,monitor (empty = all)'
+        required: false
+        type: string
+        default: ''
   push:
     tags:
       - "v*"
@@ -63,6 +76,41 @@ jobs:
             echo "BuildData.build must match tag ${GITHUB_REF_NAME}; got ${build_data}."
             exit 1
           fi
+      - name: Check job selection
+        if: inputs.jobs != ''
+        shell: bash
+        # Through the environment, not `${{ }}` inside the script: an
+        # expression is substituted into the source before bash parses it, so
+        # a value containing a quote or a `;` would run as code. Only someone
+        # with write access can dispatch this, which lowers the stakes and does
+        # not change what the code says.
+        env:
+          REQUESTED: ${{ inputs.jobs }}
+        run: |
+          set -euo pipefail
+
+          # Every job gates itself with `contains(inputs.jobs, '<name>')`, which
+          # answers false for a name nobody knows — so a typo skips everything
+          # and reports success. This is the only place that can tell the
+          # difference between "build nothing" and "build something misspelled".
+          known="android ios linux windows macos monitor"
+          bad=()
+          IFS=',' read -ra requested <<< "$REQUESTED"
+          # `:-` because `set -u` makes an empty array an error to expand. The
+          # step's own `if` already skips an empty value, so this is only about
+          # not depending on that guard staying correct.
+          for raw in "${requested[@]:-}"; do
+            name="$(echo "$raw" | tr -d '[:space:]')"
+            [[ -z "$name" ]] && continue
+            [[ " $known " == *" $name "* ]] || bad+=("$name")
+          done
+
+          if (( ${#bad[@]} )); then
+            echo "Unknown job(s): ${bad[*]}"
+            echo "Valid names: $known"
+            exit 1
+          fi
+          echo "Running: $REQUESTED"
       - name: Check locked dependencies
         shell: bash
         run: |
@@ -74,7 +122,9 @@ jobs:
 
   verifyMacOS:
     name: Verify macOS release
-    if: github.event_name == 'workflow_dispatch' && inputs.release != true
+    if: >-
+      github.event_name == 'workflow_dispatch' && inputs.release != true
+      && (inputs.jobs == '' || contains(inputs.jobs, 'macos'))
     needs: reproducibilityCheck
     runs-on: macos-latest
     timeout-minutes: 45
@@ -160,7 +210,9 @@ jobs:
 
   verifyMonitor:
     name: Verify monitor ${{ matrix.platform }}-${{ matrix.arch }}
-    if: github.event_name == 'workflow_dispatch' && inputs.release != true
+    if: >-
+      github.event_name == 'workflow_dispatch' && inputs.release != true
+      && (inputs.jobs == '' || contains(inputs.jobs, 'monitor'))
     needs: reproducibilityCheck
     strategy:
       fail-fast: false
@@ -211,6 +263,8 @@ jobs:
 
   buildAndroid:
     name: Build android
+    if: >-
+      github.event_name != 'workflow_dispatch' || inputs.jobs == '' || contains(inputs.jobs, 'android')
     needs: reproducibilityCheck
     runs-on: ubuntu-latest
     permissions:
@@ -303,6 +357,8 @@ jobs:
 
   buildIOS:
     name: Build ios
+    if: >-
+      github.event_name != 'workflow_dispatch' || inputs.jobs == '' || contains(inputs.jobs, 'ios')
     needs: reproducibilityCheck
     runs-on: macos-latest
     permissions:
@@ -376,6 +432,8 @@ jobs:
 
   buildLinux:
     name: Build linux
+    if: >-
+      github.event_name != 'workflow_dispatch' || inputs.jobs == '' || contains(inputs.jobs, 'linux')
     needs: reproducibilityCheck
     permissions:
       contents: write
@@ -446,6 +504,8 @@ jobs:
 
   buildWindows:
     name: Build windows
+    if: >-
+      github.event_name != 'workflow_dispatch' || inputs.jobs == '' || contains(inputs.jobs, 'windows')
     needs: reproducibilityCheck
     runs-on: windows-latest
     permissions:
