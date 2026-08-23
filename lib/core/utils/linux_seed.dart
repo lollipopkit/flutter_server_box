@@ -149,6 +149,17 @@ String linuxShell(String? root) {
   }
 }
 
+/// Async variant of [linuxShell] that avoids blocking the UI thread.
+Future<String> linuxShellAsync(String? root) async {
+  if (root == null) return Defaults.linuxShell;
+  try {
+    final raw = (await File(root.joinPath(shellConfPath)).readAsString()).trim();
+    return isShellPathValid(raw) ? raw : Defaults.linuxShell;
+  } catch (_) {
+    return Defaults.linuxShell;
+  }
+}
+
 /// Records [shell] as [root]'s, or restores the default when it is empty.
 Future<void> setLinuxShell(String root, String shell) async {
   final file = File(root.joinPath(shellConfPath));

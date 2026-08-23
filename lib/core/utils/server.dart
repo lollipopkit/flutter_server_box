@@ -82,8 +82,54 @@ String? resolvePrivateKey(SshCredential ssh) {
 
   final expanded = SSHConfig.expandHome(keyPath);
   try {
-    return File(expanded).readAsStringSync();
+    final file = File(expanded);
+    // Guard against unbounded key files on the main isolate.
+    try {
+      final size = file.statSync().size;
+      if (size > 1024 * 1024) {
+        throw SSHErr(
+          type: SSHErrType.noPrivateKey,
+          message: l10n.privateKeyFileUnreadable(expanded, 'File too large ($size bytes)'),
+        );
+      }
+    } catch (_) {
+      // statSync failure is non-fatal; let read attempt decide.
+    }
+    return file.readAsStringSync();
   } catch (e) {
+    if (e is SSHErr) rethrow;
+    throw SSHErr(
+      type: SSHErrType.noPrivateKey,
+      message: l10n.privateKeyFileUnreadable(expanded, '$e'),
+    );
+  }
+}
+
+/// Async variant of [resolvePrivateKey] for callers that can await.
+Future<String?> resolvePrivateKeyAsync(SshCredential ssh) async {
+  final keyId = ssh.keyId;
+  if (keyId != null) return getPrivateKey(keyId);
+  final keyPath = ssh.keyPath;
+  if (keyPath == null) return null;
+  if (Pfs.isMacSandboxed) {
+    throw SSHErr(
+      type: SSHErrType.noPrivateKey,
+      message: l10n.privateKeyFileSandboxed(keyPath),
+    );
+  }
+  final expanded = SSHConfig.expandHome(keyPath);
+  try {
+    final file = File(expanded);
+    final stat = await file.stat();
+    if (stat.size > 1024 * 1024) {
+      throw SSHErr(
+        type: SSHErrType.noPrivateKey,
+        message: l10n.privateKeyFileUnreadable(expanded, 'File too large (${stat.size} bytes)'),
+      );
+    }
+    return await file.readAsString();
+  } catch (e) {
+    if (e is SSHErr) rethrow;
     throw SSHErr(
       type: SSHErrType.noPrivateKey,
       message: l10n.privateKeyFileUnreadable(expanded, '$e'),
