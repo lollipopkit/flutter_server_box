@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:logging/logging.dart';
+import 'package:server_box/data/model/server/bmc_cfg.dart';
+import 'package:server_box/data/model/server/bmc_credential.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
@@ -12,6 +14,7 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
+import 'package:server_box/data/provider/bmc_credential.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/snippet.dart';
@@ -53,6 +56,11 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     /// their own, so it defaults rather than being required — an older backup
     /// has to keep decoding.
     @Default(<String, Object?>{}) Map<String, Object?> portForwards,
+
+    /// Same reason as [portForwards]: no file written before BMC support has
+    /// one. A server whose `bmc.credId` names an account this map does not
+    /// carry restores with the address and no account, which the editor shows.
+    @Default(<String, Object?>{}) Map<String, Object?> bmcCredentials,
   }) = _BackupV2;
 
   /// Must stay a single expression with a cascade, not a block body.
@@ -70,13 +78,14 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     _validateRestorableTypedStores();
     _loggerV2.info('Merging...');
 
-    // Ordered by what references what: a server names a private key, a snippet
-    // and a port forward name a server, and a container host is a child of one.
-    // Merging a store before the one it points at would drop every record whose
-    // foreign key has not arrived yet.
+    // Ordered by what references what: a server names a private key and a BMC
+    // account, a snippet and a port forward name a server, and a container host
+    // is a child of one. Merging a store before the one it points at would drop
+    // every record whose foreign key has not arrived yet.
     final keysChanged = Stores.key.merge(keys, force: force);
+    final credsChanged = Stores.bmcCredential.merge(bmcCredentials, force: force);
     final serversChanged = Stores.server.merge(
-      _serversWithRestoredKeyIds(),
+      _serversWithRestoredIds(),
       force: force,
     );
     final snippetsChanged = Stores.snippet.merge(snippets, force: force);
@@ -105,6 +114,9 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       GlobalRef.gRef?.read(snippetProvider.notifier).reload();
     }
     if (keysChanged) GlobalRef.gRef?.read(privateKeyProvider.notifier).reload();
+    if (credsChanged) {
+      GlobalRef.gRef?.read(bmcCredentialProvider.notifier).reload();
+    }
 
     _loggerV2.info('Merge completed');
   }
@@ -124,6 +136,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       spis: Stores.server.getAllMap(),
       snippets: Stores.snippet.getAllMap(),
       keys: Stores.key.getAllMap(),
+      bmcCredentials: Stores.bmcCredential.getAllMap(),
       portForwards: Stores.portForward.getAllMap(),
       container: Stores.container.getAllMap(),
       history: _backupStore(Stores.history),
@@ -178,39 +191,73 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     _validateRestorableStore('snippets', snippets);
     _validateRestorableStore('keys', keys);
     _validateRestorableStore('portForwards', portForwards);
+    _validateRestorableStore('bmcCredentials', bmcCredentials);
   }
 
   /// A pre-table backup identifies a private key by its name. When that name
   /// already exists locally, [PrivateKeyStore.reconcile] correctly keeps the
-  /// local generated id; the server's old name reference must follow it before
-  /// the foreign key can accept the server row.
-  Map<String, Object?> _serversWithRestoredKeyIds() {
-    final keyIds = <String, String>{};
-    for (final entry in keys.entries) {
-      if (_isInternalStoreKey(entry.key) || entry.value is! Map) continue;
-      try {
-        final incoming = PrivateKeyInfo.fromJson(
-          Map<String, dynamic>.from(entry.value as Map),
-        );
-        final restored = Stores.key.fetchByName(incoming.name);
-        if (restored != null) keyIds[incoming.id] = restored.id;
-      } catch (_) {
-        // `merge` skips malformed key records too; leave its server reference
-        // untouched so its foreign key rejects the matching malformed record.
-      }
-    }
-    if (keyIds.isEmpty) return spis;
+  /// local generated id; the server's old reference must follow it before the
+  /// foreign key can accept the server row.
+  ///
+  /// [BmcCredentialStore.reconcile] does the same thing for the same reason,
+  /// so `bmc.credId` needs the same treatment — restoring one backup twice
+  /// would otherwise leave every server pointing at an account id that the
+  /// second restore did not create.
+  Map<String, Object?> _serversWithRestoredIds() {
+    final keyIds = _restoredIds(
+      keys,
+      PrivateKeyInfo.fromJson,
+      (key) => key.id,
+      (key) => Stores.key.fetchByName(key.name)?.id,
+    );
+    final credIds = _restoredIds(
+      bmcCredentials,
+      BmcCredential.fromJson,
+      (cred) => cred.id,
+      (cred) => Stores.bmcCredential.fetchByName(cred.name)?.id,
+    );
+    if (keyIds.isEmpty && credIds.isEmpty) return spis;
 
     return {
       for (final entry in spis.entries)
-        entry.key: _serverWithRestoredKeyId(entry.value, keyIds),
+        entry.key: _serverWithRestoredIds(entry.value, keyIds, credIds),
     };
+  }
+
+  /// Backup id -> local id, for the records of [store] whose name already
+  /// exists here.
+  ///
+  /// A record that will not decode is skipped rather than failing the restore:
+  /// `merge` skips it too, so leaving its server reference untouched is what
+  /// makes the foreign key reject exactly the matching malformed record.
+  /// [decode] runs once per record; [idOf] and [localIdOf] are handed the
+  /// result. Passing them the raw map instead made each of them decode it
+  /// again, which is two decodes per record for one lookup.
+  Map<String, String> _restoredIds<T>(
+    Map<String, Object?> store,
+    T Function(Map<String, dynamic>) decode,
+    String Function(T) idOf,
+    String? Function(T) localIdOf,
+  ) {
+    final out = <String, String>{};
+    for (final entry in store.entries) {
+      if (_isInternalStoreKey(entry.key) || entry.value is! Map) continue;
+      try {
+        final record = decode(Map<String, dynamic>.from(entry.value as Map));
+        final restored = localIdOf(record);
+        if (restored != null) out[idOf(record)] = restored;
+      } catch (_) {
+        continue;
+      }
+    }
+    return out;
   }
 }
 
-Object? _serverWithRestoredKeyId(
+Object? _serverWithRestoredIds(
   Object? value,
   Map<String, String> keyIds,
+  Map<String, String> credIds,
 ) {
   if (value is! Map) return value;
   final server = Map<String, Object?>.from(value);
@@ -222,6 +269,13 @@ Object? _serverWithRestoredKeyId(
       final id = server[key];
       if (id is String && keyIds.containsKey(id)) server[key] = keyIds[id];
     }
+  }
+  final bmc = server['bmc'];
+  if (bmc is Map) {
+    final restored = Map<String, Object?>.from(bmc);
+    final id = restored['credId'];
+    if (id is String && credIds.containsKey(id)) restored['credId'] = credIds[id];
+    server['bmc'] = restored;
   }
   return server;
 }
@@ -279,10 +333,12 @@ Object? _toEncodable(Object? value) {
     final PortForwardConfig forward => forward.toJson(),
     final ServerCustom custom => custom.toJson(),
     final WakeOnLanCfg wolCfg => wolCfg.toJson(),
-    // Nested on Spi. Both were missing, so backing up a server that used
-    // either threw instead of producing a file.
+    // Nested on Spi. All three were missing, so backing up a server that used
+    // any of them threw instead of producing a file. `_$SpiToJson` emits the
+    // object itself for each, so every one of them has to be named here.
     final SshCredential ssh => ssh.toJson(),
     final MonitorHttpCredential monitor => monitor.toJson(),
+    final BmcCfg bmc => bmc.toJson(),
     _ => throw UnsupportedError(
       'Cannot JSON-encode ${value.runtimeType}: missing supported toJson()',
     ),

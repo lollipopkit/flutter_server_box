@@ -195,12 +195,7 @@ class _AgentHistoryViewState extends State<_AgentHistoryView> {
       TimeOfDay.fromDateTime(local),
       alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(context),
     );
-    final protocol = switch (conversation.protocol) {
-      AskAiProtocol.responses => context.l10n.askAiProtocolResponses,
-      AskAiProtocol.chatCompletions =>
-        context.l10n.askAiProtocolChatCompletions,
-      AskAiProtocol.auto => libL10n.auto,
-    };
+    final protocol = conversation.protocol.vendorName ?? libL10n.auto;
     return '$date $time · $protocol · ${conversation.model}';
   }
 

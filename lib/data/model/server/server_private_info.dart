@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
@@ -57,6 +58,10 @@ abstract class Spi with _$Spi {
     @Default(true) bool autoConnect,
     ServerCustom? custom,
     WakeOnLanCfg? wolCfg,
+
+    /// This server's BMC, or null when it has none configured. A side channel
+    /// beside [wolCfg], not a way of reaching the host — see `BmcCfg`.
+    BmcCfg? bmc,
 
     /// It only applies to SSH terminal.
     Map<String, String>? envs,

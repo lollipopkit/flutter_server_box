@@ -62,7 +62,8 @@ abstract final class SchemaVersion {
   /// v5: entities out of `kv` and into tables with columns, foreign keys
   ///     and per-row sync metadata
   /// v6: per-monitor explicit permission for plaintext HTTP on trusted networks
-  static const current = 6;
+  /// v7: the BMC side channel's columns on `server`
+  static const current = 7;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

@@ -26,17 +26,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get askAiEndpointTip =>
-      'Enter a service base URL or a full Chat Completions or Responses endpoint. ServerBox completes the path for the selected protocol.';
+      'Enter a domain or a full URL. The path is completed from the protocol you pick.';
 
   @override
-  String get askAiProtocolTip =>
-      'Auto uses Responses for the official OpenAI endpoint and Chat Completions for compatible providers.';
-
-  @override
-  String get askAiProtocolChatCompletions => 'Chat Completions';
-
-  @override
-  String get askAiProtocolResponses => 'Responses';
+  String get askAiProtocolTip => 'Auto tries Responses, then Chat Completions.';
 
   @override
   String get askAiCommandInserted => 'Command inserted into terminal';
@@ -57,25 +50,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get askAiNoResponse => 'No response';
 
   @override
-  String get askAiAgentTitle => 'SSH Agent';
-
-  @override
   String get askAiAgentWelcome => 'What should we do on this server?';
-
-  @override
-  String get askAiAgentWelcomeTip =>
-      'Ask for a diagnosis or a task. The Agent proposes one command at a time and waits for review before making changes.';
 
   @override
   String get askAiAgentPromptHint =>
       'Ask the Agent to inspect or fix something...';
 
   @override
-  String get askAiAgentSend => 'Send to Agent';
-
-  @override
   String get askAiAnalyzeSelectionPrompt =>
-      'Analyze the selected terminal content, explain what happened, and propose the safest next step if action is needed.';
+      'Analyse the selected terminal output and explain what happened';
 
   @override
   String get askAiTerminalContext => 'Terminal context';
@@ -88,7 +71,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get askAiReviewBeforeContinuing =>
-      'Review or decline the proposed command first';
+      'Review or decline the current suggestion first';
 
   @override
   String get askAiApproveRun => 'Approve & run';
@@ -119,7 +102,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get askAiHighRiskConfirmBody =>
-      'This command may delete data, stop services, or otherwise be difficult to undo. Review it carefully before running.';
+      'This command may make changes that are hard to undo. Check it carefully.';
 
   @override
   String get askAiNoCommandOutput => 'Command completed without output.';
@@ -136,18 +119,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get askAiAutoRunSafeCommandsTip =>
-      'Only auto-run when both the model and local safety checks classify the command as read-only. Commands that change the system still require review.';
+      'Runs only when both the model and the local check call it read-only';
 
   @override
   String get askAiSendOnEnter => 'Enter sends';
 
   @override
   String get askAiSendOnEnterTip =>
-      'Enter sends the message, Shift+Enter starts a new line. Off swaps them: Enter starts a new line and Cmd/Ctrl+Enter sends.';
+      'Enter sends, Shift+Enter for a new line. Off: Enter for a new line, Cmd/Ctrl+Enter sends.';
 
   @override
-  String get askAiApiKeyOptional =>
-      'Optional for local or unauthenticated endpoints';
+  String get askAiApiKeyOptional => 'Leave empty for local or unauthenticated';
 
   @override
   String get askAiHistory => 'Conversation history';
@@ -156,13 +138,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get askAiNewConversation => 'New conversation';
 
   @override
-  String get askAiNoHistory => 'No saved conversations for this server';
+  String get askAiNoHistory => 'No saved conversations yet';
 
   @override
   String get askAiNoHistoryMessages => 'No messages yet';
 
   @override
-  String get askAiUntitledConversation => 'New conversation';
+  String get askAiUntitledConversation => 'Untitled';
 
   @override
   String get askAiRenameConversation => 'Rename conversation';
@@ -172,28 +154,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get askAiDeleteConversationTip =>
-      'This removes the conversation from this device and cannot be undone.';
+      'Deletes it from this device. Cannot be undone.';
 
   @override
   String get askAiClearHistoryTitle => 'Clear this server\'s Agent history?';
 
   @override
   String get askAiClearHistoryTip =>
-      'All Agent conversations saved for this server will be removed from this device.';
+      'Every saved Agent conversation for this server will be deleted.';
 
   @override
   String get askAiRestoredReview =>
-      'Restored from history. Review it again before running; it will never run automatically.';
-
-  @override
-  String get agentTitle => 'Agent';
+      'This command came from history. Review it again';
 
   @override
   String get agentWelcome => 'What should we do across your servers?';
 
   @override
   String get agentWelcomeTip =>
-      'Ask for a diagnosis or an operational task. The Agent uses live ServerBox state and proposes one reviewed action at a time.';
+      'Have the Agent diagnose a problem or carry out a task';
 
   @override
   String get agentPromptHint =>
@@ -217,9 +196,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get agentToolWriteFile => 'Write file';
-
-  @override
-  String get agentToolServerBox => 'ServerBox';
 
   @override
   String get agentToolFailed => 'Tool execution failed.';
@@ -246,7 +222,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get agentSshConnectTip =>
-      'The Agent wants to open an SSH connection. Type the password here — never into the conversation, where it would be stored and sent to the model.';
+      'The Agent wants an SSH connection. Enter the password here';
 
   @override
   String get agentAdHocSessions => 'Temporary connections';
@@ -256,14 +232,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get agentSaveServerTip =>
-      'This host and the password you entered will be stored on this device.';
+      'This host and the password you enter are saved on this device';
 
   @override
   String get agentMonitorOptional => 'Monitor agent (optional)';
 
   @override
-  String get authFailTip =>
-      'Authentication failed, please check whether credentials are correct';
+  String get authFailTip => 'Authentication failed. Check the details';
 
   @override
   String get autoBackupConflict =>
@@ -309,14 +284,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get monitorHttpsRequired =>
-      'Remote monitor agents require HTTPS unless this connection explicitly allows insecure HTTP.';
+      'A remote monitor agent needs HTTPS, unless HTTP is allowed for it.';
 
   @override
-  String get monitorAllowInsecureHttp => 'Allow insecure HTTP';
+  String get monitorAllowInsecureHttp => 'Allow HTTP';
 
   @override
   String get monitorAllowInsecureHttpTip =>
-      'Only enable for a trusted private network with transport encryption outside HTTP, such as Tailscale. The agent must also explicitly allow plaintext file access. Credentials and file contents may otherwise be exposed.';
+      'Only on a trusted private network that encrypts the transport itself, such as Tailscale';
 
   @override
   String get backupTip =>
@@ -526,8 +501,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fileDirGone => 'This folder is no longer here';
 
   @override
-  String get fileDirGoneTip =>
-      'It was deleted or renamed. Use the bar below to go back, go home, or jump elsewhere.';
+  String get fileDirGoneTip => 'It was deleted or renamed';
 
   @override
   String get fullScreen => 'Full screen';
@@ -541,9 +515,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get fullScreenTip =>
       'Should full-screen mode be enabled when the device is rotated to landscape mode? This option only applies to the server tab.';
-
-  @override
-  String get githubGist => 'GitHub Gist';
 
   @override
   String get githubGistIdOptional => 'Gist ID (optional)';
@@ -575,23 +546,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get macDmgBody =>
-      'The App Store requires this app to be sandboxed, and a sandboxed process cannot open a pseudo-terminal. So the App Store build has no terminal on this Mac and cannot run a snippet or an agent command here. The DMG build is the same app signed without the sandbox, and has both.\n\nThe App Store build still works and still updates. It may stop being updated later.\n\nThe two builds keep their data in different places. The DMG build copies it over on its first launch, so servers, keys and history come along. If that fails it says so, and you can carry a backup file across instead (Backup, in settings).';
+      'The App Store requires this app to be sandboxed, and a sandbox cannot open a terminal. The DMG build can.\n\nThe App Store build may stop being updated.';
 
   @override
   String get macDmgImportDenied =>
-      'macOS did not allow reading the data of the previously installed build. Grant Full Disk Access and reopen the app, or export a backup there and restore it here.';
+      'macOS would not let this read the previous build’s data';
 
   @override
-  String get macDmgImported =>
-      'Imported the data of the previously installed build.';
+  String get macDmgImported => 'Imported the previous build’s data';
 
   @override
-  String get macDmgImportFailed =>
-      'Could not read the data of the previously installed build. Export a backup there, then restore it here.';
+  String get macDmgImportFailed => 'Could not read the previous build’s data';
 
   @override
   String get macDmgTip =>
-      'A terminal on this Mac, and running snippets on it, exist only in the DMG build.';
+      'Local terminal and running snippets locally (DMG build)';
 
   @override
   String get macDmgTitle => 'DMG build';
@@ -618,8 +587,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unusedTaggedImages => 'Unused tagged';
 
   @override
-  String get pruneDanglingImagesTip =>
-      'Only remove dangling images (untagged layers).';
+  String get pruneDanglingImagesTip => 'Removes dangling images only.';
 
   @override
   String get pruneUnusedImagesTip =>
@@ -697,11 +665,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get linuxShellTip =>
-      'What an interactive terminal runs. Alpine has no chsh and nothing in the system reads /etc/passwd, so this is the only thing that decides. A one-shot command still runs under /bin/sh, because the app and the Agent write POSIX. Leave empty to restore /bin/sh.';
+      'Which shell a terminal starts. Empty restores /bin/sh.';
 
   @override
-  String get linuxNetTip =>
-      'Where the Linux system and its packages are downloaded from, and the DNS servers written into it. Leave empty to restore the default. Saving also rewrites both in a system that is already installed.';
+  String get linuxNetTip => 'DNS servers. Empty restores the defaults';
 
   @override
   String madeWithLove(Object myGithub) {
@@ -773,8 +740,100 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get bmcPowerOnAction => 'Power on';
+
+  @override
+  String get bmcShutdown => 'Shut down';
+
+  @override
+  String get bmcForceOff => 'Force off';
+
+  @override
+  String get restart => 'Restart';
+
+  @override
+  String get bmcPowerCycle => 'Power cycle';
+
+  @override
+  String bmcPowerConfirm(String server, String resetType) {
+    return 'Send this to $server? The service will be asked for \"$resetType\"';
+  }
+
+  @override
+  String get bmcPowerDone => 'The power state changed';
+
+  @override
+  String get bmcPowerAccepted =>
+      'Accepted, but the power state has not changed. A graceful operation depends on the OS';
+
+  @override
+  String get bmcPowerUnsupported =>
+      'This service allows nothing for that action';
+
+  @override
+  String get bmcUnauthorized => 'The BMC refused the account';
+
+  @override
+  String get bmcAccountMissing => 'No account is set for this BMC';
+
+  @override
+  String get bmcPowerOn => 'Powered on';
+
+  @override
+  String get bmcPowerOff => 'Powered off';
+
+  @override
+  String get bmcCertRejected =>
+      'Certificate refused — review it in the server settings';
+
+  @override
+  String get bmcNotAService => 'No Redfish service at this address';
+
+  @override
+  String get bmcNoSystem => 'The service reports no system';
+
+  @override
+  String get bmcSensorsTruncated => 'Only the first sensors are shown';
+
+  @override
+  String get bmcMultipleSystems => 'Only the first system is shown';
+
+  @override
+  String get bmcTip =>
+      'The BMC is a separate computer on the motherboard, reachable when the host OS is not. Configured here, it can report power state and hardware sensors while the server is off or hung. Needs Redfish, which most enterprise hardware from about 2016 on has.';
+
+  @override
+  String get bmcCert => 'Certificate';
+
+  @override
+  String get bmcCertPinned => 'Reviewed and pinned';
+
+  @override
+  String get bmcCertUnreviewed =>
+      'Not reviewed yet — tap to see the certificate';
+
+  @override
+  String get bmcCertReview =>
+      'A self-signed certificate. Compare it before accepting. Only this exact one is trusted afterwards.';
+
+  @override
+  String get bmcCertChanged => 'The certificate does not match. Check it.';
+
+  @override
+  String get bmcCertExpired => 'Expired.';
+
+  @override
+  String bmcCertWas(String fingerprint) {
+    return 'Previously accepted: $fingerprint';
+  }
+
+  @override
+  String get bmcAddrInvalid =>
+      'The BMC address must be a URL, e.g. https://10.0.0.9';
+
+  @override
   String get proxyCommandSandboxed =>
-      'This build runs in a sandbox: the command sees an empty home directory instead of yours, so anything reading ~/.ssh (ssh -W, cloudflared) fails — often as a timeout naming the wrong host. Commands that only use the network still work. The DMG build has no sandbox.';
+      'This build is sandboxed: the command gets an empty home, not yours, so anything reading ~/.ssh fails. The DMG build is not.';
 
   @override
   String privateKeyFileUnreadable(String path, String reason) {
@@ -887,12 +946,12 @@ class AppLocalizationsEn extends AppLocalizations {
     Object latest,
     Object pm,
   ) {
-    return '$distro $installed is installed and $latest is available. Updating downloads it again and replaces the container: anything installed inside it with $pm is lost. The current one keeps working if you skip this.';
+    return '$distro $installed is installed; $latest is available. Updating replaces the whole container: $pm data is lost';
   }
 
   @override
   String linuxSystemInUse(Object name) {
-    return '$name still has a terminal open. Close it before deleting the system.';
+    return 'Close the terminals on $name before deleting it';
   }
 
   @override
@@ -900,7 +959,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String rootfsInstallTip(Object distro, Object version, Object size) {
-    return 'Download $distro $version (about $size MB) and unpack it on this device. It gives this app a shell with a package manager, and can be deleted at any time.';
+    return 'Downloads $distro $version (about $size MB) and unpacks it on this device.';
   }
 
   @override
@@ -911,7 +970,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get serverFilesUnavailableTip =>
-      'Reachable either through this server\'s SSH, or through a monitor agent with its file API switched on.';
+      'Needs SSH to this server, or server_box_monitor installed with its file API on.';
 
   @override
   String get back => 'Back';
@@ -921,9 +980,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeDir => 'Home';
-
-  @override
-  String get selectItem => 'Select';
 
   @override
   String selected(Object count) {
@@ -947,23 +1003,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shareServerRiskTip =>
-      'This QR code contains the server\'s connection settings in plain text, passwords included. Anyone who scans or photographs it can connect to this server.';
+      'This QR code holds the server’s connection settings in clear text. Anyone who scans or photographs it can connect.';
 
   @override
   String get sftpDlPrepare => 'Preparing to connect...';
 
   @override
   String get sftpEditorTip =>
-      'If empty, use the built-in file editor of the app. If a value is present, use the remote server’s editor, e.g., `vim` (recommended to automatically detect according to `EDITOR`).';
+      'Empty uses the built-in editor. For example `vim` (reading `EDITOR` is suggested).';
 
   @override
   String get sftpRmrDirSummary => 'Use `rm -r` to delete a folder in SFTP.';
 
   @override
   String get sftpSSHConnected => 'SFTP Connected';
-
-  @override
-  String get sftp => 'SFTP';
 
   @override
   String get sftpShowFoldersFirst => 'Display folders first';
@@ -973,7 +1026,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get specifyDevTip =>
-      'For example, network traffic statistics are by default for all devices. You can specify a particular device here.';
+      'Network traffic counts every device by default; name one here instead';
 
   @override
   String get tempIsCelsiusTip =>
@@ -1050,8 +1103,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sshKnownHostKeys => 'Known hosts';
 
   @override
-  String get sshKnownHostKeysTip =>
-      'Host keys this app has accepted. Forget one to be asked about it again the next time you connect.';
+  String get sshKnownHostKeysTip => 'The host keys this app has accepted';
 
   @override
   String sshHostKeyNewDesc(Object serverName) {
@@ -1108,9 +1160,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get syncAppSettingsTip =>
       'Include theme, layout, editor, terminal and other device preferences in automatic sync.';
-
-  @override
-  String get system => 'System';
 
   @override
   String get termFontSizeTip =>
@@ -1360,9 +1409,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Another container operation is already in progress';
 
   @override
-  String get systemd => 'Systemd';
-
-  @override
   String processCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -1398,7 +1444,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get watchServersTip =>
-      'The watch reads these servers from their monitor agent by itself, so only servers with one configured can be picked.';
+      'The watch fetches from the monitor on its own, so only servers with one can be picked.';
 
   @override
   String get watchNoMonitorServer => 'No server has a monitor agent configured';
@@ -1459,14 +1505,44 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'Lets the Agent work on the machine ServerBox is running on, not only on servers. Nothing runs here unattended: every command needs review, however read-only it looks. This is where the app\'s data, your keys and your files are.';
+      'Lets the Agent work on the machine running ServerBox. Even read-only commands are reviewed';
 
   @override
   String get agentLocalExecRootfsTip =>
-      'Lets the Agent work on this device, inside the Alpine Linux container ServerBox installs. It cannot see the phone\'s own filesystem, the app\'s data or your files. Every command still needs review.';
+      'Lets the Agent work locally, confined to the Linux container ServerBox installed';
 
   @override
   String macDmgImportedPartly(String path) {
     return 'Imported the data of the previously installed build. Downloaded files were left where they were, in $path.';
   }
+
+  @override
+  String get bmcAccount => 'Account';
+
+  @override
+  String get bmcAccountUnset => 'None picked - tap to choose or create one';
+
+  @override
+  String bmcAccountShared(int count) {
+    return 'Used by $count servers';
+  }
+
+  @override
+  String get bmcAccounts => 'BMC accounts';
+
+  @override
+  String get bmcAccountSharedTip =>
+      'Editing this changes what all of them use.';
+
+  @override
+  String bmcAccountInUse(int count) {
+    return '$count servers use it. They keep their address and lose the account.';
+  }
+
+  @override
+  String get bmcStaleWrite =>
+      'The BMC changed while this was being written. Try again.';
+
+  @override
+  String get send => 'Send';
 }

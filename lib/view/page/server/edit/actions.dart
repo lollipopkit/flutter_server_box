@@ -3,6 +3,13 @@ part of 'edit.dart';
 /// Only permit ipv4 / ipv6 / domain chars (including IPv6 zone identifier like %en0)
 final _hostReg = RegExp(r'^[a-zA-Z0-9\.\-_:%;]+$');
 
+/// The BMC account picker's "create a new one" entry.
+///
+/// A sentinel in the same list as the ids, rather than a second button:
+/// the picker takes one list, and a value `ShortId` cannot produce is
+/// cheaper than a wrapper type for one entry.
+const _kNewBmcCred = '\u0000new';
+
 extension _Discovery on _ServerEditPageState {
   /// Sweeps the network and fills this form in from what is picked.
   ///
@@ -59,6 +66,112 @@ extension _Actions on _ServerEditPageState {
     _pendingSudoPassword = value;
     _sudoPasswordDirty = true;
     _hasStoredSudoPassword.value = value != null && value.isNotEmpty;
+  }
+
+  /// Picks the account this server's BMC is opened with, or opens the editor
+  /// for a new one.
+  ///
+  /// Creating and editing are the account page's job, reached from here and
+  /// from the account list — the same arrangement the private key picker
+  /// already uses. A dialog owned by this page would be a second copy of that
+  /// form, and the delete and the "used by N servers" warning would only exist
+  /// in one of them.
+  Future<void> _onTapBmcAccount() async {
+    final creds = ref.read(bmcCredentialProvider).creds;
+    final current = _bmcCredId.value;
+    // `showPickDialog` rather than `showPickSingleDialog`, which answers null
+    // for a dialog that was dismissed *and* for one whose selection was
+    // cleared. Those have to be told apart here, or dismissing would silently
+    // unset the account. This one answers null only for a dismissal, and an
+    // empty list for a clear.
+    final picked = await context.showPickDialog<String>(
+      title: l10n.bmcAccount,
+      items: [...creds.map((e) => e.id), _kNewBmcCred],
+      display: (id) {
+        if (id == _kNewBmcCred) return '+ ${libL10n.add}';
+        final cred = creds.firstWhereOrNull((e) => e.id == id);
+        return cred == null ? id : '${cred.name} (${cred.user})';
+      },
+      multi: false,
+      initial: current == null ? null : [current],
+      // An address with no account is a state the whole stack models: the
+      // column is nullable, the key action sets it null, `isComplete` answers
+      // false to it and the tile has a string for it. Without this there was
+      // no way back to it once an account had been picked, short of deleting
+      // the address and the reviewed certificate with it.
+      clearable: true,
+    );
+    if (picked == null || !mounted) return;
+
+    final choice = picked.firstOrNull;
+    if (choice != _kNewBmcCred) {
+      _bmcCredId.value = choice;
+      return;
+    }
+    final created = await BmcCredentialEditPage.route.go(context);
+    // Whatever the page saved, or null if it was left without saving. Read
+    // rather than assumed: the picker must not point at a record that does not
+    // exist, which the foreign key would refuse at save time anyway.
+    if (created is BmcCredential) _bmcCredId.value = created.id;
+  }
+
+  /// Fetches the certificate the BMC presents, shows it, and pins it if the
+  /// user agrees.
+  ///
+  /// The connection here sends nothing — it exists only to read what the far
+  /// end offers — so an impostor at that address learns no password from it.
+  /// That is what makes it safe to accept any certificate for this one step,
+  /// and it is the only step that does.
+  Future<void> _onTapBmcCert() async {
+    final cfg = BmcCfg(addr: _bmcAddrCtrl.text.trim());
+    final uri = cfg.uri;
+    final port = cfg.port;
+    if (uri == null || port == null) {
+      Toast.error(libL10n.fail, body: l10n.bmcAddrInvalid);
+      return;
+    }
+
+    final CertInfo info;
+    try {
+      info = await fetchServerCert(uri.host, port);
+    } catch (e) {
+      Toast.error(libL10n.fail, body: '$e');
+      return;
+    }
+    if (!mounted) return;
+
+    final pinned = _bmcCert.value;
+    final changed = pinned != null && pinned != info.fingerprint;
+
+    final accepted = await context.showRoundDialog<bool>(
+      title: l10n.bmcCert,
+      barrierDismiss: false,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(changed ? l10n.bmcCertChanged : l10n.bmcCertReview),
+          const SizedBox(height: 12),
+          SelectableText('${libL10n.addr}: ${uri.host}:$port'),
+          SelectableText('Subject: ${info.subject}'),
+          SelectableText('Issuer: ${info.issuer}'),
+          SelectableText('SHA-256: ${info.prettyFingerprint}'),
+          if (info.isExpired) ...[
+            const SizedBox(height: 8),
+            Text(l10n.bmcCertExpired, style: const TextStyle(color: Colors.orange)),
+          ],
+          if (changed) ...[
+            const SizedBox(height: 8),
+            SelectableText(l10n.bmcCertWas(pinned)),
+          ],
+        ],
+      ),
+      actions: Btnx.cancelOk,
+    );
+    // The dialog answers; this page acts on the answer and this page is what
+    // holds the field — see the dialog rules in CLAUDE.md
+    if (accepted != true) return;
+    _bmcCert.value = info.fingerprint;
   }
 
   Future<void> _onTapSudoPassword() async {
@@ -349,6 +462,26 @@ extension _Actions on _ServerEditPageState {
       }
     }
 
+    // An address alone is not enough to reach a BMC, and a half-filled one
+    // would poll forever against nothing — so it is all or nothing
+    final bmcAddr = _bmcAddrCtrl.text.trim();
+    final bmc = bmcAddr.isEmpty
+        ? null
+        : BmcCfg(
+            addr: bmcAddr,
+            credId: _bmcCredId.value,
+            certSha256: _bmcCert.value,
+          );
+    if (bmc != null && !bmc.isComplete) {
+      // Which half is missing, since `isComplete` is both and reporting either
+      // as a bad address sent the user back to retype one that was fine.
+      Toast.error(
+        libL10n.fail,
+        body: bmc.uri == null ? l10n.bmcAddrInvalid : l10n.bmcAccountUnset,
+      );
+      return;
+    }
+
     final spi = Spi(
       name: _nameController.text.isEmpty
           ? (ssh?.ip ?? monitorHttp?.addr ?? '')
@@ -358,6 +491,7 @@ extension _Actions on _ServerEditPageState {
       autoConnect: _autoConnect.value,
       custom: custom,
       wolCfg: wol,
+      bmc: bmc,
       monitorHttp: monitorHttp,
       envs: _env.value.isEmpty ? null : _env.value,
       id: _serverId,
@@ -538,6 +672,13 @@ extension _Utils on _ServerEditPageState {
       _monitorPwdCtrl.text = monitorHttp.pwd ?? '';
       _monitorIgnoreCert.value = monitorHttp.ignoreCert;
       _monitorAllowInsecure.value = monitorHttp.allowInsecure;
+    }
+
+    final bmc = spi.bmc;
+    if (bmc != null) {
+      _bmcAddrCtrl.text = bmc.addr;
+      _bmcCredId.value = bmc.credId;
+      _bmcCert.value = bmc.certSha256;
     }
 
     final wol = spi.wolCfg;

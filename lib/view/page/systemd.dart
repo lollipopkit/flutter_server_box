@@ -39,7 +39,7 @@ final class _SystemdPageState extends ConsumerState<SystemdPage> {
     return Scaffold(
       appBar: CustomAppBar(
         centerTitle: true,
-        title: TwoLineText(up: l10n.systemd, down: widget.args.spi.name),
+        title: TwoLineText(up: 'Systemd', down: widget.args.spi.name),
         actions: isDesktop
             ? [
                 Btn.icon(text: libL10n.refresh, 

@@ -5,6 +5,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/app/tab.dart';
+import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -86,6 +87,57 @@ void main() {
       expect(decoded['snippets']['snippet']['script'], Snippet.example.script);
       expect(decoded['keys']['key'], isA<Map>());
       expect(decoded['keys']['key']['private_key'], contains('OPENSSH'));
+    });
+
+    test('serializes every object nested on a server', () {
+      // `_$SpiToJson` emits these three as the objects themselves, so each one
+      // has to be named in `_toEncodable` or the whole backup throws. `bmc`
+      // was not, which took out manual export and every auto-sync from the
+      // moment one server had a BMC address.
+      final backup = BackupV2(
+        version: BackupV2.formatVer,
+        date: 1,
+        spis: {
+          'srv-1': const Spi(
+            id: 'srv-1',
+            name: 'prod',
+            ssh: SshCredential(ip: '10.0.0.1', keyId: 'work'),
+            bmc: BmcCfg(
+              addr: 'https://10.0.0.9',
+              credId: 'cred-1',
+              certSha256: 'ab12',
+            ),
+          ),
+        },
+        snippets: const {},
+        keys: const {},
+        container: const {},
+        history: const {},
+        settings: const {},
+      );
+
+      final decoded =
+          json.decode(backup.toJsonString()) as Map<String, dynamic>;
+      final spi = decoded['spis']['srv-1'] as Map<String, dynamic>;
+
+      expect(spi['ssh'], isA<Map>());
+      expect(spi['ssh']['ip'], '10.0.0.1');
+      expect(spi['bmc'], isA<Map>());
+      expect(spi['bmc']['addr'], 'https://10.0.0.9');
+      expect(spi['bmc']['credId'], 'cred-1');
+      expect(spi['bmc']['certSha256'], 'ab12');
+
+      // Through the reader the app uses, so the round trip is the assertion
+      // rather than the shape alone.
+      final reread = BackupV2.fromJsonString(backup.toJsonString());
+      final restored = Spi.fromJson(
+        Map<String, dynamic>.from(reread.spis['srv-1'] as Map),
+      );
+      expect(restored.bmc, const BmcCfg(
+        addr: 'https://10.0.0.9',
+        credId: 'cred-1',
+        certSha256: 'ab12',
+      ));
     });
 
     test('serializes enum values by name', () {

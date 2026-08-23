@@ -26,17 +26,10 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get askAiEndpointTip =>
-      'Inserisci un URL di base del servizio o un endpoint completo Chat Completions o Responses. ServerBox completa il percorso in base al protocollo scelto.';
+      'Un dominio o un URL completo. Il percorso viene completato dal protocollo scelto.';
 
   @override
-  String get askAiProtocolTip =>
-      'Auto usa Responses per l\'endpoint ufficiale di OpenAI e Chat Completions per i provider compatibili.';
-
-  @override
-  String get askAiProtocolChatCompletions => 'Chat Completions';
-
-  @override
-  String get askAiProtocolResponses => 'Responses';
+  String get askAiProtocolTip => 'Auto prova Responses, poi Chat Completions.';
 
   @override
   String get askAiCommandInserted => 'Comando inserito nel terminale';
@@ -57,25 +50,15 @@ class AppLocalizationsIt extends AppLocalizations {
   String get askAiNoResponse => 'Nessuna risposta';
 
   @override
-  String get askAiAgentTitle => 'Agente SSH';
-
-  @override
   String get askAiAgentWelcome => 'Cosa facciamo su questo server?';
-
-  @override
-  String get askAiAgentWelcomeTip =>
-      'Chiedi una diagnosi o un\'attività. L\'Agente propone un comando alla volta e attende la tua revisione prima di apportare modifiche.';
 
   @override
   String get askAiAgentPromptHint =>
       'Chiedi all\'Agente di esaminare o sistemare qualcosa...';
 
   @override
-  String get askAiAgentSend => 'Invia all\'Agente';
-
-  @override
   String get askAiAnalyzeSelectionPrompt =>
-      'Analizza il contenuto selezionato del terminale, spiega cosa è successo e proponi il passo successivo più sicuro se serve intervenire.';
+      'Analizza l’output selezionato del terminale e spiega cosa è successo';
 
   @override
   String get askAiTerminalContext => 'Contesto del terminale';
@@ -88,7 +71,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get askAiReviewBeforeContinuing =>
-      'Prima rivedi o rifiuta il comando proposto';
+      'Prima esamina o rifiuta il suggerimento attuale';
 
   @override
   String get askAiApproveRun => 'Approva ed esegui';
@@ -120,7 +103,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get askAiHighRiskConfirmBody =>
-      'Questo comando può eliminare dati, arrestare servizi o essere difficile da annullare. Rivedilo con attenzione prima di eseguirlo.';
+      'Questo comando può fare modifiche difficili da annullare. Controllalo bene.';
 
   @override
   String get askAiNoCommandOutput => 'Il comando è terminato senza output.';
@@ -138,18 +121,18 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get askAiAutoRunSafeCommandsTip =>
-      'Esecuzione automatica solo quando sia il modello sia i controlli di sicurezza locali classificano il comando come di sola lettura. I comandi che modificano il sistema richiedono comunque una revisione.';
+      'Viene eseguito solo se modello e controllo locale lo dicono di sola lettura';
 
   @override
   String get askAiSendOnEnter => 'Invio invia';
 
   @override
   String get askAiSendOnEnterTip =>
-      'Invio invia il messaggio, Maiusc+Invio va a capo. Se disattivato si invertono: Invio va a capo e Cmd/Ctrl+Invio invia.';
+      'Invio invia, Maiusc+Invio a capo. Disattivato: Invio a capo, Cmd/Ctrl+Invio invia.';
 
   @override
   String get askAiApiKeyOptional =>
-      'Facoltativa per endpoint locali o senza autenticazione';
+      'Lascia vuoto per locale o senza autenticazione';
 
   @override
   String get askAiHistory => 'Cronologia conversazioni';
@@ -158,14 +141,13 @@ class AppLocalizationsIt extends AppLocalizations {
   String get askAiNewConversation => 'Nuova conversazione';
 
   @override
-  String get askAiNoHistory =>
-      'Nessuna conversazione salvata per questo server';
+  String get askAiNoHistory => 'Nessuna conversazione salvata';
 
   @override
   String get askAiNoHistoryMessages => 'Ancora nessun messaggio';
 
   @override
-  String get askAiUntitledConversation => 'Nuova conversazione';
+  String get askAiUntitledConversation => 'Senza titolo';
 
   @override
   String get askAiRenameConversation => 'Rinomina conversazione';
@@ -175,7 +157,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get askAiDeleteConversationTip =>
-      'La conversazione verrà rimossa da questo dispositivo e non sarà possibile annullare.';
+      'La elimina da questo dispositivo. Non annullabile.';
 
   @override
   String get askAiClearHistoryTitle =>
@@ -183,21 +165,18 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get askAiClearHistoryTip =>
-      'Tutte le conversazioni dell\'Agente salvate per questo server verranno rimosse da questo dispositivo.';
+      'Tutte le conversazioni Agent salvate per questo server saranno eliminate.';
 
   @override
   String get askAiRestoredReview =>
-      'Ripristinato dalla cronologia. Rivedilo di nuovo prima di eseguirlo; non verrà mai eseguito da solo.';
-
-  @override
-  String get agentTitle => 'Agente';
+      'Questo comando viene dalla cronologia. Riesaminalo';
 
   @override
   String get agentWelcome => 'Cosa facciamo sui tuoi server?';
 
   @override
   String get agentWelcomeTip =>
-      'Chiedi una diagnosi o un\'attività operativa. L\'Agente usa lo stato attuale di ServerBox e propone un\'azione da rivedere alla volta.';
+      'Lascia che l’Agent diagnostichi un problema o svolga un’attività';
 
   @override
   String get agentPromptHint =>
@@ -225,9 +204,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get agentToolWriteFile => 'Scrivi file';
 
   @override
-  String get agentToolServerBox => 'ServerBox';
-
-  @override
   String get agentToolFailed => 'Esecuzione dello strumento non riuscita.';
 
   @override
@@ -252,7 +228,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get agentSshConnectTip =>
-      'L\'Agente vuole aprire una connessione SSH. Digita qui la password, mai nella conversazione, dove verrebbe salvata e inviata al modello.';
+      'L’Agent vuole una connessione SSH. Inserisci qui la password';
 
   @override
   String get agentAdHocSessions => 'Connessioni temporanee';
@@ -262,14 +238,13 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get agentSaveServerTip =>
-      'Questo host e la password digitata verranno salvati su questo dispositivo.';
+      'Questo host e la password inserita sono salvati su questo dispositivo';
 
   @override
   String get agentMonitorOptional => 'Agente monitor (facoltativo)';
 
   @override
-  String get authFailTip =>
-      'Autenticazione fallita, verifica se le credenziali sono corrette';
+  String get authFailTip => 'Autenticazione fallita. Controlla i dati';
 
   @override
   String get autoBackupConflict =>
@@ -315,14 +290,14 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get monitorHttpsRequired =>
-      'Remote monitor agents require HTTPS; HTTP is allowed only on loopback.';
+      'Un agente monitor remoto richiede HTTPS, salvo che HTTP sia consentito.';
 
   @override
-  String get monitorAllowInsecureHttp => 'Allow insecure HTTP';
+  String get monitorAllowInsecureHttp => 'Consenti HTTP';
 
   @override
   String get monitorAllowInsecureHttpTip =>
-      'Only enable for a trusted private network with transport encryption outside HTTP, such as Tailscale. The agent must also explicitly allow plaintext file access. Credentials and file contents may otherwise be exposed.';
+      'Solo su una rete privata fidata che cifra da sé il trasporto, come Tailscale';
 
   @override
   String get backupTip =>
@@ -537,8 +512,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get fileDirGone => 'Questa cartella non è più qui';
 
   @override
-  String get fileDirGoneTip =>
-      'È stata eliminata o rinominata. Usa la barra in basso per tornare indietro, andare alla home o spostarti altrove.';
+  String get fileDirGoneTip => 'È stato eliminato o rinominato';
 
   @override
   String get fullScreen => 'Schermo intero';
@@ -552,9 +526,6 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get fullScreenTip =>
       'La modalità a schermo intero deve essere abilitata quando il dispositivo viene ruotato in modalità orizzontale? Questa opzione si applica solo alla scheda server.';
-
-  @override
-  String get githubGist => 'GitHub Gist';
 
   @override
   String get githubGistIdOptional => 'ID del Gist (facoltativo)';
@@ -586,23 +557,22 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get macDmgBody =>
-      'L\'App Store richiede che questa app giri in sandbox, e un processo in sandbox non può aprire uno pseudo-terminale. Per questo la versione App Store non ha un terminale su questo Mac e non può eseguirvi snippet o comandi dell\'agent. La versione DMG è la stessa app firmata senza sandbox, e li ha.\n\nLa versione App Store continua a funzionare e ad aggiornarsi. Più avanti gli aggiornamenti potrebbero finire.\n\nLe due versioni tengono i dati in posti diversi. La versione DMG li copia al primo avvio, così server, chiavi e cronologia vengono con te. Se non riesce te lo dice, e puoi migrare con un file di backup (Backup, nelle impostazioni).';
+      'L’App Store richiede che questa app sia in sandbox, e una sandbox non può aprire un terminale. La versione DMG sì.\n\nLa versione App Store potrebbe non essere più aggiornata.';
 
   @override
   String get macDmgImportDenied =>
-      'macOS non ha consentito di leggere i dati della versione installata in precedenza. Concedi Accesso completo al disco e riapri l\'app, oppure esporta lì un backup e ripristinalo qui.';
+      'macOS non ha permesso di leggere i dati della versione precedente';
 
   @override
-  String get macDmgImported =>
-      'Dati della versione installata in precedenza importati.';
+  String get macDmgImported => 'Dati della versione precedente importati';
 
   @override
   String get macDmgImportFailed =>
-      'Impossibile leggere i dati della versione installata in precedenza. Esporta lì un backup e ripristinalo qui.';
+      'Impossibile leggere i dati della versione precedente';
 
   @override
   String get macDmgTip =>
-      'Il terminale su questo Mac e l\'esecuzione di snippet qui esistono solo nella versione DMG.';
+      'Terminale locale ed esecuzione locale degli snippet (versione DMG)';
 
   @override
   String get macDmgTitle => 'Versione DMG';
@@ -629,8 +599,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get unusedTaggedImages => 'Etichettate inutilizzate';
 
   @override
-  String get pruneDanglingImagesTip =>
-      'Rimuove solo le immagini orfane (layer senza tag).';
+  String get pruneDanglingImagesTip => 'Rimuove solo le immagini orfane.';
 
   @override
   String get pruneUnusedImagesTip =>
@@ -708,11 +677,10 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get linuxShellTip =>
-      'Cosa avvia un terminale interattivo. Alpine non ha chsh e nulla nel sistema legge /etc/passwd, quindi decide solo questo. I comandi singoli continuano a girare con /bin/sh, perché l\'app e l\'Agent scrivono POSIX. Lascia vuoto per ripristinare /bin/sh.';
+      'Con quale shell parte un terminale. Vuoto ripristina /bin/sh.';
 
   @override
-  String get linuxNetTip =>
-      'Da dove vengono scaricati il sistema Linux e i suoi pacchetti, e i server DNS scritti al suo interno. Lascia vuoto per ripristinare il valore predefinito. Il salvataggio riscrive entrambi anche in un sistema già installato.';
+  String get linuxNetTip => 'Server DNS. Vuoto ripristina i valori predefiniti';
 
   @override
   String madeWithLove(Object myGithub) {
@@ -785,8 +753,100 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String get bmcPowerOnAction => 'Accendi';
+
+  @override
+  String get bmcShutdown => 'Spegni';
+
+  @override
+  String get bmcForceOff => 'Spegnimento forzato';
+
+  @override
+  String get restart => 'Riavvia';
+
+  @override
+  String get bmcPowerCycle => 'Ciclo di alimentazione';
+
+  @override
+  String bmcPowerConfirm(String server, String resetType) {
+    return 'Inviare a $server? Al servizio verrà chiesto \"$resetType\"';
+  }
+
+  @override
+  String get bmcPowerDone => 'Lo stato di alimentazione è cambiato';
+
+  @override
+  String get bmcPowerAccepted =>
+      'Accettato, ma lo stato di alimentazione non è cambiato. Un’operazione graduale dipende dal sistema operativo';
+
+  @override
+  String get bmcPowerUnsupported =>
+      'Questo servizio non consente nulla per quell\'azione';
+
+  @override
+  String get bmcUnauthorized => 'Il BMC ha rifiutato l\'account';
+
+  @override
+  String get bmcAccountMissing => 'Nessun account impostato per questo BMC';
+
+  @override
+  String get bmcPowerOn => 'Acceso';
+
+  @override
+  String get bmcPowerOff => 'Spento';
+
+  @override
+  String get bmcCertRejected =>
+      'Certificato rifiutato — verificalo nelle impostazioni del server';
+
+  @override
+  String get bmcNotAService => 'Nessun servizio Redfish a questo indirizzo';
+
+  @override
+  String get bmcNoSystem => 'Il servizio non riporta alcun sistema';
+
+  @override
+  String get bmcSensorsTruncated => 'Sono mostrati solo i primi sensori';
+
+  @override
+  String get bmcMultipleSystems => 'Viene mostrato solo il primo sistema';
+
+  @override
+  String get bmcTip =>
+      'Il BMC è un computer a sé sulla scheda madre, raggiungibile quando il sistema operativo dell\'host non lo è. Configurato qui, riporta stato di alimentazione e sensori hardware mentre il server è spento o bloccato. Richiede Redfish, presente sulla maggior parte dell\'hardware enterprise dal 2016 circa.';
+
+  @override
+  String get bmcCert => 'Certificato';
+
+  @override
+  String get bmcCertPinned => 'Verificato e fissato';
+
+  @override
+  String get bmcCertUnreviewed =>
+      'Non ancora verificato — tocca per vedere il certificato';
+
+  @override
+  String get bmcCertReview =>
+      'Un certificato autofirmato. Confrontalo prima di accettarlo. Dopo si fida solo di quello.';
+
+  @override
+  String get bmcCertChanged => 'Il certificato non corrisponde. Controllalo.';
+
+  @override
+  String get bmcCertExpired => 'Scaduto.';
+
+  @override
+  String bmcCertWas(String fingerprint) {
+    return 'Accettato in precedenza: $fingerprint';
+  }
+
+  @override
+  String get bmcAddrInvalid =>
+      'L\'indirizzo del BMC deve essere un URL, ad es. https://10.0.0.9';
+
+  @override
   String get proxyCommandSandboxed =>
-      'Questa build gira in una sandbox: il comando vede una home vuota anziché la tua, quindi tutto ciò che legge ~/.ssh (ssh -W, cloudflared) fallisce, spesso come timeout che nomina l\'host sbagliato. I comandi che usano solo la rete continuano a funzionare. La versione DMG non ha sandbox.';
+      'Questa versione è in sandbox: il comando riceve una home vuota, non la tua, quindi fallisce tutto ciò che legge ~/.ssh. La versione DMG no.';
 
   @override
   String privateKeyFileUnreadable(String path, String reason) {
@@ -900,12 +960,12 @@ class AppLocalizationsIt extends AppLocalizations {
     Object latest,
     Object pm,
   ) {
-    return '$distro $installed è installato ed è disponibile $latest. L\'aggiornamento lo scarica di nuovo e sostituisce il container: tutto ciò che vi è stato installato con $pm viene perso. Saltando l\'aggiornamento, quello attuale continua a funzionare.';
+    return '$distro $installed è installato, $latest è disponibile. L’aggiornamento sostituisce l’intero container: i dati $pm vanno persi';
   }
 
   @override
   String linuxSystemInUse(Object name) {
-    return '$name ha ancora un terminale aperto. Chiudilo prima di eliminare il sistema.';
+    return 'Chiudi i terminali su $name prima di eliminarlo';
   }
 
   @override
@@ -913,7 +973,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String rootfsInstallTip(Object distro, Object version, Object size) {
-    return 'Scarica $distro $version (circa $size MB) e lo decomprime su questo dispositivo. Fornisce a questa app una shell con gestore di pacchetti e può essere eliminato in qualsiasi momento.';
+    return 'Scarica $distro $version (circa $size MB) e lo estrae su questo dispositivo.';
   }
 
   @override
@@ -924,7 +984,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get serverFilesUnavailableTip =>
-      'Raggiungibile tramite l\'SSH di questo server o tramite un agente monitor con la sua API dei file attiva.';
+      'Richiede SSH verso questo server, o server_box_monitor con la sua API file attiva.';
 
   @override
   String get back => 'Indietro';
@@ -934,9 +994,6 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get homeDir => 'Home';
-
-  @override
-  String get selectItem => 'Seleziona';
 
   @override
   String selected(Object count) {
@@ -960,14 +1017,14 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get shareServerRiskTip =>
-      'Questo codice QR contiene le impostazioni di connessione del server in chiaro, password incluse. Chiunque lo scansioni o lo fotografi può connettersi a questo server.';
+      'Questo codice QR contiene le impostazioni di connessione in chiaro. Chi lo scansiona o fotografa può connettersi.';
 
   @override
   String get sftpDlPrepare => 'Preparazione alla connessione...';
 
   @override
   String get sftpEditorTip =>
-      'Se vuoto, usa l\'editor di file integrato dell\'app. Se è presente un valore, usa l\'editor del server remoto, ad es. `vim` (si consiglia di rilevare automaticamente secondo `EDITOR`).';
+      'Vuoto usa l’editor integrato. Per esempio `vim` (consigliato leggere `EDITOR`).';
 
   @override
   String get sftpRmrDirSummary =>
@@ -977,9 +1034,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get sftpSSHConnected => 'SFTP connesso';
 
   @override
-  String get sftp => 'SFTP';
-
-  @override
   String get sftpShowFoldersFirst => 'Mostra prima le cartelle';
 
   @override
@@ -987,7 +1041,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get specifyDevTip =>
-      'Ad esempio, le statistiche del traffico di rete sono per impostazione predefinita per tutti i dispositivi. Puoi specificare un dispositivo particolare qui.';
+      'Il traffico di rete conta tutti i dispositivi; indicane uno qui';
 
   @override
   String get tempIsCelsiusTip =>
@@ -1066,7 +1120,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get sshKnownHostKeysTip =>
-      'Chiavi host accettate da questa app. Eliminane una per essere interrogato di nuovo alla prossima connessione.';
+      'Le chiavi host che questa app ha accettato';
 
   @override
   String sshHostKeyNewDesc(Object serverName) {
@@ -1125,9 +1179,6 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get syncAppSettingsTip =>
       'Includi tema, layout, editor, terminale e altre preferenze del dispositivo nella sincronizzazione automatica.';
-
-  @override
-  String get system => 'Sistema';
 
   @override
   String get termFontSizeTip =>
@@ -1379,9 +1430,6 @@ class AppLocalizationsIt extends AppLocalizations {
       'È già in corso un\'altra operazione sul container';
 
   @override
-  String get systemd => 'Systemd';
-
-  @override
   String processCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -1417,7 +1465,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get watchServersTip =>
-      'L\'orologio interroga da solo l\'agente monitor di questi server, quindi si possono scegliere solo i server con monitor configurato.';
+      'L’orologio interroga il monitor da solo, quindi si possono scegliere solo i server che ne hanno uno.';
 
   @override
   String get watchNoMonitorServer =>
@@ -1481,14 +1529,44 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'Consente all\'Agent di operare sulla macchina su cui gira ServerBox, non solo sui server. Qui nulla viene eseguito senza supervisione: ogni comando richiede revisione.';
+      'Lascia che l’Agent lavori sulla macchina che esegue ServerBox. Anche i comandi di sola lettura sono esaminati';
 
   @override
   String get agentLocalExecRootfsTip =>
-      'Consente all\'Agent di operare su questo dispositivo, all\'interno del container Alpine Linux installato da ServerBox. Non può vedere il file system del telefono, i dati dell\'app o i tuoi file. Ogni comando richiede comunque revisione.';
+      'Lascia che l’Agent lavori in locale, limitato al container Linux installato da ServerBox';
 
   @override
   String macDmgImportedPartly(String path) {
     return 'Dati della versione installata in precedenza importati. I file scaricati sono rimasti in $path.';
   }
+
+  @override
+  String get bmcAccount => 'Account';
+
+  @override
+  String get bmcAccountUnset =>
+      'Nessuno selezionato: tocca per sceglierne o crearne uno';
+
+  @override
+  String bmcAccountShared(int count) {
+    return 'Usato da $count server';
+  }
+
+  @override
+  String get bmcAccounts => 'Account BMC';
+
+  @override
+  String get bmcAccountSharedTip => 'Modificarlo cambia ciò che usano tutti.';
+
+  @override
+  String bmcAccountInUse(int count) {
+    return '$count server lo usano. Mantengono l\'indirizzo e perdono l\'account.';
+  }
+
+  @override
+  String get bmcStaleWrite =>
+      'Il BMC è cambiato durante la scrittura. Riprova.';
+
+  @override
+  String get send => 'Invia';
 }

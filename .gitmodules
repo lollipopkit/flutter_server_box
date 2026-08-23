@@ -34,3 +34,6 @@
 	path = packages/flutter_pty
 	url = https://github.com/lollipopkit/flutter_pty
 	branch = main
+[submodule "packages/redfish"]
+	path = packages/redfish
+	url = git@github.com:lollipopkit/redfish.git

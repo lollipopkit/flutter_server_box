@@ -77,7 +77,7 @@ class MacOSMenuBarManager {
       AppTab.ssh: libL10n.terminal,
       AppTab.file: libL10n.file,
       AppTab.snippet: libL10n.snippet,
-      AppTab.agent: l10n.agentTitle,
+      AppTab.agent: 'Agent',
     };
     for (var i = 0; i < homeTabs.length; i++) {
       final tab = homeTabs[i];

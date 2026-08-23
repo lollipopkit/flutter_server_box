@@ -11,6 +11,7 @@ import 'package:server_box/data/provider/ai/agent_session.dart';
 import 'package:server_box/data/provider/ai/ask_ai.dart';
 import 'package:server_box/data/provider/ai/global_agent_tools.dart';
 import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/agent/history.dart';
 
@@ -441,7 +442,7 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
       'run_shell_command' => context.l10n.agentToolShell,
       'read_file' => context.l10n.agentToolReadFile,
       'write_file' => context.l10n.agentToolWriteFile,
-      'serverbox' => context.l10n.agentToolServerBox,
+      'serverbox' => BuildData.name,
       'ssh_connect' => context.l10n.agentToolSshConnect,
       'ssh_disconnect' => context.l10n.agentToolSshDisconnect,
       _ => toolName,
@@ -481,7 +482,7 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
     final at = conversations.indexWhere((e) => e.id == activeId);
 
     final title = at < 0
-        ? context.l10n.agentTitle
+        ? 'Agent'
         : (conversations[at].title.isEmpty
               ? context.l10n.askAiUntitledConversation
               : conversations[at].title);
@@ -556,7 +557,7 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
               _toolChip(
                 theme,
                 Icons.dns_outlined,
-                context.l10n.agentToolServerBox,
+                BuildData.name,
               ),
             ],
           ),
@@ -1192,7 +1193,7 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
                             : ValueListenableBuilder(
                                 valueListenable: _inputController,
                                 builder: (_, value, _) => IconButton.filled(
-                                  tooltip: context.l10n.askAiAgentSend,
+                                  tooltip: context.l10n.send,
                                   onPressed:
                                       canSendWhatever &&
                                           value.text.trim().isNotEmpty

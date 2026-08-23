@@ -342,6 +342,389 @@ class PrivateKeysCompanion extends UpdateCompanion<PrivateKeyRow> {
   }
 }
 
+class $BmcCredentialsTable extends BmcCredentials
+    with TableInfo<$BmcCredentialsTable, BmcCredentialRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $BmcCredentialsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _revMeta = const VerificationMeta('rev');
+  @override
+  late final GeneratedColumn<int> rev = GeneratedColumn<int>(
+    'rev',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  static const VerificationMeta _userMeta = const VerificationMeta('user');
+  @override
+  late final GeneratedColumn<String> user = GeneratedColumn<String>(
+    'user',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _pwdMeta = const VerificationMeta('pwd');
+  @override
+  late final GeneratedColumn<String> pwd = GeneratedColumn<String>(
+    'pwd',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [updatedAt, rev, id, name, user, pwd];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'bmc_credential';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<BmcCredentialRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    if (data.containsKey('rev')) {
+      context.handle(
+        _revMeta,
+        rev.isAcceptableOrUnknown(data['rev']!, _revMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('user')) {
+      context.handle(
+        _userMeta,
+        user.isAcceptableOrUnknown(data['user']!, _userMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userMeta);
+    }
+    if (data.containsKey('pwd')) {
+      context.handle(
+        _pwdMeta,
+        pwd.isAcceptableOrUnknown(data['pwd']!, _pwdMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  BmcCredentialRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BmcCredentialRow(
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      rev: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}rev'],
+      )!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      user: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user'],
+      )!,
+      pwd: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pwd'],
+      ),
+    );
+  }
+
+  @override
+  $BmcCredentialsTable createAlias(String alias) {
+    return $BmcCredentialsTable(attachedDatabase, alias);
+  }
+
+  @override
+  bool get withoutRowId => true;
+}
+
+class BmcCredentialRow extends DataClass
+    implements Insertable<BmcCredentialRow> {
+  final int updatedAt;
+  final int rev;
+  final String id;
+  final String name;
+  final String user;
+  final String? pwd;
+  const BmcCredentialRow({
+    required this.updatedAt,
+    required this.rev,
+    required this.id,
+    required this.name,
+    required this.user,
+    this.pwd,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['updated_at'] = Variable<int>(updatedAt);
+    map['rev'] = Variable<int>(rev);
+    map['id'] = Variable<String>(id);
+    map['name'] = Variable<String>(name);
+    map['user'] = Variable<String>(user);
+    if (!nullToAbsent || pwd != null) {
+      map['pwd'] = Variable<String>(pwd);
+    }
+    return map;
+  }
+
+  BmcCredentialsCompanion toCompanion(bool nullToAbsent) {
+    return BmcCredentialsCompanion(
+      updatedAt: Value(updatedAt),
+      rev: Value(rev),
+      id: Value(id),
+      name: Value(name),
+      user: Value(user),
+      pwd: pwd == null && nullToAbsent ? const Value.absent() : Value(pwd),
+    );
+  }
+
+  factory BmcCredentialRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BmcCredentialRow(
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
+      rev: serializer.fromJson<int>(json['rev']),
+      id: serializer.fromJson<String>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      user: serializer.fromJson<String>(json['user']),
+      pwd: serializer.fromJson<String?>(json['pwd']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'updatedAt': serializer.toJson<int>(updatedAt),
+      'rev': serializer.toJson<int>(rev),
+      'id': serializer.toJson<String>(id),
+      'name': serializer.toJson<String>(name),
+      'user': serializer.toJson<String>(user),
+      'pwd': serializer.toJson<String?>(pwd),
+    };
+  }
+
+  BmcCredentialRow copyWith({
+    int? updatedAt,
+    int? rev,
+    String? id,
+    String? name,
+    String? user,
+    Value<String?> pwd = const Value.absent(),
+  }) => BmcCredentialRow(
+    updatedAt: updatedAt ?? this.updatedAt,
+    rev: rev ?? this.rev,
+    id: id ?? this.id,
+    name: name ?? this.name,
+    user: user ?? this.user,
+    pwd: pwd.present ? pwd.value : this.pwd,
+  );
+  BmcCredentialRow copyWithCompanion(BmcCredentialsCompanion data) {
+    return BmcCredentialRow(
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      rev: data.rev.present ? data.rev.value : this.rev,
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      user: data.user.present ? data.user.value : this.user,
+      pwd: data.pwd.present ? data.pwd.value : this.pwd,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BmcCredentialRow(')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rev: $rev, ')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('user: $user, ')
+          ..write('pwd: $pwd')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(updatedAt, rev, id, name, user, pwd);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BmcCredentialRow &&
+          other.updatedAt == this.updatedAt &&
+          other.rev == this.rev &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.user == this.user &&
+          other.pwd == this.pwd);
+}
+
+class BmcCredentialsCompanion extends UpdateCompanion<BmcCredentialRow> {
+  final Value<int> updatedAt;
+  final Value<int> rev;
+  final Value<String> id;
+  final Value<String> name;
+  final Value<String> user;
+  final Value<String?> pwd;
+  const BmcCredentialsCompanion({
+    this.updatedAt = const Value.absent(),
+    this.rev = const Value.absent(),
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.user = const Value.absent(),
+    this.pwd = const Value.absent(),
+  });
+  BmcCredentialsCompanion.insert({
+    this.updatedAt = const Value.absent(),
+    this.rev = const Value.absent(),
+    required String id,
+    required String name,
+    required String user,
+    this.pwd = const Value.absent(),
+  }) : id = Value(id),
+       name = Value(name),
+       user = Value(user);
+  static Insertable<BmcCredentialRow> custom({
+    Expression<int>? updatedAt,
+    Expression<int>? rev,
+    Expression<String>? id,
+    Expression<String>? name,
+    Expression<String>? user,
+    Expression<String>? pwd,
+  }) {
+    return RawValuesInsertable({
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rev != null) 'rev': rev,
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (user != null) 'user': user,
+      if (pwd != null) 'pwd': pwd,
+    });
+  }
+
+  BmcCredentialsCompanion copyWith({
+    Value<int>? updatedAt,
+    Value<int>? rev,
+    Value<String>? id,
+    Value<String>? name,
+    Value<String>? user,
+    Value<String?>? pwd,
+  }) {
+    return BmcCredentialsCompanion(
+      updatedAt: updatedAt ?? this.updatedAt,
+      rev: rev ?? this.rev,
+      id: id ?? this.id,
+      name: name ?? this.name,
+      user: user ?? this.user,
+      pwd: pwd ?? this.pwd,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    if (rev.present) {
+      map['rev'] = Variable<int>(rev.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (user.present) {
+      map['user'] = Variable<String>(user.value);
+    }
+    if (pwd.present) {
+      map['pwd'] = Variable<String>(pwd.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BmcCredentialsCompanion(')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rev: $rev, ')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('user: $user, ')
+          ..write('pwd: $pwd')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -587,6 +970,42 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _bmcAddrMeta = const VerificationMeta(
+    'bmcAddr',
+  );
+  @override
+  late final GeneratedColumn<String> bmcAddr = GeneratedColumn<String>(
+    'bmc_addr',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _bmcCertSha256Meta = const VerificationMeta(
+    'bmcCertSha256',
+  );
+  @override
+  late final GeneratedColumn<String> bmcCertSha256 = GeneratedColumn<String>(
+    'bmc_cert_sha256',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _bmcCredIdMeta = const VerificationMeta(
+    'bmcCredId',
+  );
+  @override
+  late final GeneratedColumn<String> bmcCredId = GeneratedColumn<String>(
+    'bmc_cred_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES bmc_credential (id) ON DELETE SET NULL',
+    ),
+  );
   static const VerificationMeta _pveAddrMeta = const VerificationMeta(
     'pveAddr',
   );
@@ -703,6 +1122,9 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
     wolMac,
     wolIp,
     wolPwd,
+    bmcAddr,
+    bmcCertSha256,
+    bmcCredId,
     pveAddr,
     pveIgnoreCert,
     pvePwd,
@@ -881,6 +1303,27 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
         wolPwd.isAcceptableOrUnknown(data['wol_pwd']!, _wolPwdMeta),
       );
     }
+    if (data.containsKey('bmc_addr')) {
+      context.handle(
+        _bmcAddrMeta,
+        bmcAddr.isAcceptableOrUnknown(data['bmc_addr']!, _bmcAddrMeta),
+      );
+    }
+    if (data.containsKey('bmc_cert_sha256')) {
+      context.handle(
+        _bmcCertSha256Meta,
+        bmcCertSha256.isAcceptableOrUnknown(
+          data['bmc_cert_sha256']!,
+          _bmcCertSha256Meta,
+        ),
+      );
+    }
+    if (data.containsKey('bmc_cred_id')) {
+      context.handle(
+        _bmcCredIdMeta,
+        bmcCredId.isAcceptableOrUnknown(data['bmc_cred_id']!, _bmcCredIdMeta),
+      );
+    }
     if (data.containsKey('pve_addr')) {
       context.handle(
         _pveAddrMeta,
@@ -1035,6 +1478,18 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
         DriftSqlType.string,
         data['${effectivePrefix}wol_pwd'],
       ),
+      bmcAddr: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}bmc_addr'],
+      ),
+      bmcCertSha256: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}bmc_cert_sha256'],
+      ),
+      bmcCredId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}bmc_cred_id'],
+      ),
       pveAddr: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}pve_addr'],
@@ -1105,6 +1560,24 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
   final String? wolMac;
   final String? wolIp;
   final String? wolPwd;
+
+  /// The BMC, a side channel beside the Wake-on-LAN fields above.
+  ///
+  /// Deliberately outside the SSH/monitor constraint below: a BMC is not a way
+  /// of reaching the host, so it neither satisfies that requirement nor
+  /// conflicts with either side of it. A server may carry one alongside SSH or
+  /// alongside a monitor agent.
+  ///
+  /// [bmcCertSha256] is what the user reviewed, not what a CA said — see
+  /// `BmcCfg.certSha256`. Null means nothing has been reviewed and a
+  /// connection is refused rather than trusted.
+  final String? bmcAddr;
+  final String? bmcCertSha256;
+
+  /// Deleting an account must not delete the servers that used it; it must
+  /// leave them with an address and nothing to log in with, which the editor
+  /// can then say. Same rule as [sshKeyId].
+  final String? bmcCredId;
   final String? pveAddr;
   final bool pveIgnoreCert;
   final String? pvePwd;
@@ -1136,6 +1609,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     this.wolMac,
     this.wolIp,
     this.wolPwd,
+    this.bmcAddr,
+    this.bmcCertSha256,
+    this.bmcCredId,
     this.pveAddr,
     required this.pveIgnoreCert,
     this.pvePwd,
@@ -1203,6 +1679,15 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     }
     if (!nullToAbsent || wolPwd != null) {
       map['wol_pwd'] = Variable<String>(wolPwd);
+    }
+    if (!nullToAbsent || bmcAddr != null) {
+      map['bmc_addr'] = Variable<String>(bmcAddr);
+    }
+    if (!nullToAbsent || bmcCertSha256 != null) {
+      map['bmc_cert_sha256'] = Variable<String>(bmcCertSha256);
+    }
+    if (!nullToAbsent || bmcCredId != null) {
+      map['bmc_cred_id'] = Variable<String>(bmcCredId);
     }
     if (!nullToAbsent || pveAddr != null) {
       map['pve_addr'] = Variable<String>(pveAddr);
@@ -1285,6 +1770,15 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       wolPwd: wolPwd == null && nullToAbsent
           ? const Value.absent()
           : Value(wolPwd),
+      bmcAddr: bmcAddr == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bmcAddr),
+      bmcCertSha256: bmcCertSha256 == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bmcCertSha256),
+      bmcCredId: bmcCredId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bmcCredId),
       pveAddr: pveAddr == null && nullToAbsent
           ? const Value.absent()
           : Value(pveAddr),
@@ -1338,6 +1832,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       wolMac: serializer.fromJson<String?>(json['wolMac']),
       wolIp: serializer.fromJson<String?>(json['wolIp']),
       wolPwd: serializer.fromJson<String?>(json['wolPwd']),
+      bmcAddr: serializer.fromJson<String?>(json['bmcAddr']),
+      bmcCertSha256: serializer.fromJson<String?>(json['bmcCertSha256']),
+      bmcCredId: serializer.fromJson<String?>(json['bmcCredId']),
       pveAddr: serializer.fromJson<String?>(json['pveAddr']),
       pveIgnoreCert: serializer.fromJson<bool>(json['pveIgnoreCert']),
       pvePwd: serializer.fromJson<String?>(json['pvePwd']),
@@ -1374,6 +1871,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       'wolMac': serializer.toJson<String?>(wolMac),
       'wolIp': serializer.toJson<String?>(wolIp),
       'wolPwd': serializer.toJson<String?>(wolPwd),
+      'bmcAddr': serializer.toJson<String?>(bmcAddr),
+      'bmcCertSha256': serializer.toJson<String?>(bmcCertSha256),
+      'bmcCredId': serializer.toJson<String?>(bmcCredId),
       'pveAddr': serializer.toJson<String?>(pveAddr),
       'pveIgnoreCert': serializer.toJson<bool>(pveIgnoreCert),
       'pvePwd': serializer.toJson<String?>(pvePwd),
@@ -1408,6 +1908,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     Value<String?> wolMac = const Value.absent(),
     Value<String?> wolIp = const Value.absent(),
     Value<String?> wolPwd = const Value.absent(),
+    Value<String?> bmcAddr = const Value.absent(),
+    Value<String?> bmcCertSha256 = const Value.absent(),
+    Value<String?> bmcCredId = const Value.absent(),
     Value<String?> pveAddr = const Value.absent(),
     bool? pveIgnoreCert,
     Value<String?> pvePwd = const Value.absent(),
@@ -1445,6 +1948,11 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     wolMac: wolMac.present ? wolMac.value : this.wolMac,
     wolIp: wolIp.present ? wolIp.value : this.wolIp,
     wolPwd: wolPwd.present ? wolPwd.value : this.wolPwd,
+    bmcAddr: bmcAddr.present ? bmcAddr.value : this.bmcAddr,
+    bmcCertSha256: bmcCertSha256.present
+        ? bmcCertSha256.value
+        : this.bmcCertSha256,
+    bmcCredId: bmcCredId.present ? bmcCredId.value : this.bmcCredId,
     pveAddr: pveAddr.present ? pveAddr.value : this.pveAddr,
     pveIgnoreCert: pveIgnoreCert ?? this.pveIgnoreCert,
     pvePwd: pvePwd.present ? pvePwd.value : this.pvePwd,
@@ -1500,6 +2008,11 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       wolMac: data.wolMac.present ? data.wolMac.value : this.wolMac,
       wolIp: data.wolIp.present ? data.wolIp.value : this.wolIp,
       wolPwd: data.wolPwd.present ? data.wolPwd.value : this.wolPwd,
+      bmcAddr: data.bmcAddr.present ? data.bmcAddr.value : this.bmcAddr,
+      bmcCertSha256: data.bmcCertSha256.present
+          ? data.bmcCertSha256.value
+          : this.bmcCertSha256,
+      bmcCredId: data.bmcCredId.present ? data.bmcCredId.value : this.bmcCredId,
       pveAddr: data.pveAddr.present ? data.pveAddr.value : this.pveAddr,
       pveIgnoreCert: data.pveIgnoreCert.present
           ? data.pveIgnoreCert.value
@@ -1542,6 +2055,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           ..write('wolMac: $wolMac, ')
           ..write('wolIp: $wolIp, ')
           ..write('wolPwd: $wolPwd, ')
+          ..write('bmcAddr: $bmcAddr, ')
+          ..write('bmcCertSha256: $bmcCertSha256, ')
+          ..write('bmcCredId: $bmcCredId, ')
           ..write('pveAddr: $pveAddr, ')
           ..write('pveIgnoreCert: $pveIgnoreCert, ')
           ..write('pvePwd: $pvePwd, ')
@@ -1578,6 +2094,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     wolMac,
     wolIp,
     wolPwd,
+    bmcAddr,
+    bmcCertSha256,
+    bmcCredId,
     pveAddr,
     pveIgnoreCert,
     pvePwd,
@@ -1613,6 +2132,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           other.wolMac == this.wolMac &&
           other.wolIp == this.wolIp &&
           other.wolPwd == this.wolPwd &&
+          other.bmcAddr == this.bmcAddr &&
+          other.bmcCertSha256 == this.bmcCertSha256 &&
+          other.bmcCredId == this.bmcCredId &&
           other.pveAddr == this.pveAddr &&
           other.pveIgnoreCert == this.pveIgnoreCert &&
           other.pvePwd == this.pvePwd &&
@@ -1646,6 +2168,9 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
   final Value<String?> wolMac;
   final Value<String?> wolIp;
   final Value<String?> wolPwd;
+  final Value<String?> bmcAddr;
+  final Value<String?> bmcCertSha256;
+  final Value<String?> bmcCredId;
   final Value<String?> pveAddr;
   final Value<bool> pveIgnoreCert;
   final Value<String?> pvePwd;
@@ -1677,6 +2202,9 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     this.wolMac = const Value.absent(),
     this.wolIp = const Value.absent(),
     this.wolPwd = const Value.absent(),
+    this.bmcAddr = const Value.absent(),
+    this.bmcCertSha256 = const Value.absent(),
+    this.bmcCredId = const Value.absent(),
     this.pveAddr = const Value.absent(),
     this.pveIgnoreCert = const Value.absent(),
     this.pvePwd = const Value.absent(),
@@ -1709,6 +2237,9 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     this.wolMac = const Value.absent(),
     this.wolIp = const Value.absent(),
     this.wolPwd = const Value.absent(),
+    this.bmcAddr = const Value.absent(),
+    this.bmcCertSha256 = const Value.absent(),
+    this.bmcCredId = const Value.absent(),
     this.pveAddr = const Value.absent(),
     this.pveIgnoreCert = const Value.absent(),
     this.pvePwd = const Value.absent(),
@@ -1742,6 +2273,9 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     Expression<String>? wolMac,
     Expression<String>? wolIp,
     Expression<String>? wolPwd,
+    Expression<String>? bmcAddr,
+    Expression<String>? bmcCertSha256,
+    Expression<String>? bmcCredId,
     Expression<String>? pveAddr,
     Expression<bool>? pveIgnoreCert,
     Expression<String>? pvePwd,
@@ -1775,6 +2309,9 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
       if (wolMac != null) 'wol_mac': wolMac,
       if (wolIp != null) 'wol_ip': wolIp,
       if (wolPwd != null) 'wol_pwd': wolPwd,
+      if (bmcAddr != null) 'bmc_addr': bmcAddr,
+      if (bmcCertSha256 != null) 'bmc_cert_sha256': bmcCertSha256,
+      if (bmcCredId != null) 'bmc_cred_id': bmcCredId,
       if (pveAddr != null) 'pve_addr': pveAddr,
       if (pveIgnoreCert != null) 'pve_ignore_cert': pveIgnoreCert,
       if (pvePwd != null) 'pve_pwd': pvePwd,
@@ -1809,6 +2346,9 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     Value<String?>? wolMac,
     Value<String?>? wolIp,
     Value<String?>? wolPwd,
+    Value<String?>? bmcAddr,
+    Value<String?>? bmcCertSha256,
+    Value<String?>? bmcCredId,
     Value<String?>? pveAddr,
     Value<bool>? pveIgnoreCert,
     Value<String?>? pvePwd,
@@ -1841,6 +2381,9 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
       wolMac: wolMac ?? this.wolMac,
       wolIp: wolIp ?? this.wolIp,
       wolPwd: wolPwd ?? this.wolPwd,
+      bmcAddr: bmcAddr ?? this.bmcAddr,
+      bmcCertSha256: bmcCertSha256 ?? this.bmcCertSha256,
+      bmcCredId: bmcCredId ?? this.bmcCredId,
       pveAddr: pveAddr ?? this.pveAddr,
       pveIgnoreCert: pveIgnoreCert ?? this.pveIgnoreCert,
       pvePwd: pvePwd ?? this.pvePwd,
@@ -1923,6 +2466,15 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     if (wolPwd.present) {
       map['wol_pwd'] = Variable<String>(wolPwd.value);
     }
+    if (bmcAddr.present) {
+      map['bmc_addr'] = Variable<String>(bmcAddr.value);
+    }
+    if (bmcCertSha256.present) {
+      map['bmc_cert_sha256'] = Variable<String>(bmcCertSha256.value);
+    }
+    if (bmcCredId.present) {
+      map['bmc_cred_id'] = Variable<String>(bmcCredId.value);
+    }
     if (pveAddr.present) {
       map['pve_addr'] = Variable<String>(pveAddr.value);
     }
@@ -1975,6 +2527,9 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
           ..write('wolMac: $wolMac, ')
           ..write('wolIp: $wolIp, ')
           ..write('wolPwd: $wolPwd, ')
+          ..write('bmcAddr: $bmcAddr, ')
+          ..write('bmcCertSha256: $bmcCertSha256, ')
+          ..write('bmcCredId: $bmcCredId, ')
           ..write('pveAddr: $pveAddr, ')
           ..write('pveIgnoreCert: $pveIgnoreCert, ')
           ..write('pvePwd: $pvePwd, ')
@@ -6761,6 +7316,7 @@ abstract class _$AppDb extends GeneratedDatabase {
   _$AppDb(QueryExecutor e) : super(e);
   $AppDbManager get managers => $AppDbManager(this);
   late final $PrivateKeysTable privateKeys = $PrivateKeysTable(this);
+  late final $BmcCredentialsTable bmcCredentials = $BmcCredentialsTable(this);
   late final $ServersTable servers = $ServersTable(this);
   late final $ServerTagsTable serverTags = $ServerTagsTable(this);
   late final $ServerEnvsTable serverEnvs = $ServerEnvsTable(this);
@@ -6793,6 +7349,7 @@ abstract class _$AppDb extends GeneratedDatabase {
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     privateKeys,
+    bmcCredentials,
     servers,
     serverTags,
     serverEnvs,
@@ -6817,6 +7374,13 @@ abstract class _$AppDb extends GeneratedDatabase {
     WritePropagation(
       on: TableUpdateQuery.onTableName(
         'private_key',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('server', kind: UpdateKind.update)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'bmc_credential',
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('server', kind: UpdateKind.update)],
@@ -7227,6 +7791,325 @@ typedef $$PrivateKeysTableProcessedTableManager =
       PrivateKeyRow,
       PrefetchHooks Function({bool serversRefs})
     >;
+typedef $$BmcCredentialsTableCreateCompanionBuilder =
+    BmcCredentialsCompanion Function({
+      Value<int> updatedAt,
+      Value<int> rev,
+      required String id,
+      required String name,
+      required String user,
+      Value<String?> pwd,
+    });
+typedef $$BmcCredentialsTableUpdateCompanionBuilder =
+    BmcCredentialsCompanion Function({
+      Value<int> updatedAt,
+      Value<int> rev,
+      Value<String> id,
+      Value<String> name,
+      Value<String> user,
+      Value<String?> pwd,
+    });
+
+final class $$BmcCredentialsTableReferences
+    extends BaseReferences<_$AppDb, $BmcCredentialsTable, BmcCredentialRow> {
+  $$BmcCredentialsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static MultiTypedResultKey<$ServersTable, List<ServerRow>> _serversRefsTable(
+    _$AppDb db,
+  ) => MultiTypedResultKey.fromTable(
+    db.servers,
+    aliasName: 'bmc_credential__id__server__bmc_cred_id',
+  );
+
+  $$ServersTableProcessedTableManager get serversRefs {
+    final manager = $$ServersTableTableManager(
+      $_db,
+      $_db.servers,
+    ).filter((f) => f.bmcCredId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_serversRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$BmcCredentialsTableFilterComposer
+    extends Composer<_$AppDb, $BmcCredentialsTable> {
+  $$BmcCredentialsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get rev => $composableBuilder(
+    column: $table.rev,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get user => $composableBuilder(
+    column: $table.user,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get pwd => $composableBuilder(
+    column: $table.pwd,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> serversRefs(
+    Expression<bool> Function($$ServersTableFilterComposer f) f,
+  ) {
+    final $$ServersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.bmcCredId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableFilterComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$BmcCredentialsTableOrderingComposer
+    extends Composer<_$AppDb, $BmcCredentialsTable> {
+  $$BmcCredentialsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get rev => $composableBuilder(
+    column: $table.rev,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get user => $composableBuilder(
+    column: $table.user,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get pwd => $composableBuilder(
+    column: $table.pwd,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$BmcCredentialsTableAnnotationComposer
+    extends Composer<_$AppDb, $BmcCredentialsTable> {
+  $$BmcCredentialsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get rev =>
+      $composableBuilder(column: $table.rev, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get user =>
+      $composableBuilder(column: $table.user, builder: (column) => column);
+
+  GeneratedColumn<String> get pwd =>
+      $composableBuilder(column: $table.pwd, builder: (column) => column);
+
+  Expression<T> serversRefs<T extends Object>(
+    Expression<T> Function($$ServersTableAnnotationComposer a) f,
+  ) {
+    final $$ServersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.bmcCredId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$BmcCredentialsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDb,
+          $BmcCredentialsTable,
+          BmcCredentialRow,
+          $$BmcCredentialsTableFilterComposer,
+          $$BmcCredentialsTableOrderingComposer,
+          $$BmcCredentialsTableAnnotationComposer,
+          $$BmcCredentialsTableCreateCompanionBuilder,
+          $$BmcCredentialsTableUpdateCompanionBuilder,
+          (BmcCredentialRow, $$BmcCredentialsTableReferences),
+          BmcCredentialRow,
+          PrefetchHooks Function({bool serversRefs})
+        > {
+  $$BmcCredentialsTableTableManager(_$AppDb db, $BmcCredentialsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$BmcCredentialsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$BmcCredentialsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$BmcCredentialsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> updatedAt = const Value.absent(),
+                Value<int> rev = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> user = const Value.absent(),
+                Value<String?> pwd = const Value.absent(),
+              }) => BmcCredentialsCompanion(
+                updatedAt: updatedAt,
+                rev: rev,
+                id: id,
+                name: name,
+                user: user,
+                pwd: pwd,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> updatedAt = const Value.absent(),
+                Value<int> rev = const Value.absent(),
+                required String id,
+                required String name,
+                required String user,
+                Value<String?> pwd = const Value.absent(),
+              }) => BmcCredentialsCompanion.insert(
+                updatedAt: updatedAt,
+                rev: rev,
+                id: id,
+                name: name,
+                user: user,
+                pwd: pwd,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$BmcCredentialsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({serversRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (serversRefs) db.servers],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (serversRefs)
+                    await $_getPrefetchedData<
+                      BmcCredentialRow,
+                      $BmcCredentialsTable,
+                      ServerRow
+                    >(
+                      currentTable: table,
+                      referencedTable: $$BmcCredentialsTableReferences
+                          ._serversRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$BmcCredentialsTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).serversRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.bmcCredId == item.id),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$BmcCredentialsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDb,
+      $BmcCredentialsTable,
+      BmcCredentialRow,
+      $$BmcCredentialsTableFilterComposer,
+      $$BmcCredentialsTableOrderingComposer,
+      $$BmcCredentialsTableAnnotationComposer,
+      $$BmcCredentialsTableCreateCompanionBuilder,
+      $$BmcCredentialsTableUpdateCompanionBuilder,
+      (BmcCredentialRow, $$BmcCredentialsTableReferences),
+      BmcCredentialRow,
+      PrefetchHooks Function({bool serversRefs})
+    >;
 typedef $$ServersTableCreateCompanionBuilder =
     ServersCompanion Function({
       Value<int> updatedAt,
@@ -7251,6 +8134,9 @@ typedef $$ServersTableCreateCompanionBuilder =
       Value<String?> wolMac,
       Value<String?> wolIp,
       Value<String?> wolPwd,
+      Value<String?> bmcAddr,
+      Value<String?> bmcCertSha256,
+      Value<String?> bmcCredId,
       Value<String?> pveAddr,
       Value<bool> pveIgnoreCert,
       Value<String?> pvePwd,
@@ -7284,6 +8170,9 @@ typedef $$ServersTableUpdateCompanionBuilder =
       Value<String?> wolMac,
       Value<String?> wolIp,
       Value<String?> wolPwd,
+      Value<String?> bmcAddr,
+      Value<String?> bmcCertSha256,
+      Value<String?> bmcCredId,
       Value<String?> pveAddr,
       Value<bool> pveIgnoreCert,
       Value<String?> pvePwd,
@@ -7309,6 +8198,23 @@ final class $$ServersTableReferences
       $_db.privateKeys,
     ).filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_sshKeyIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $BmcCredentialsTable _bmcCredIdTable(_$AppDb db) =>
+      db.bmcCredentials.createAlias('server__bmc_cred_id__bmc_credential__id');
+
+  $$BmcCredentialsTableProcessedTableManager? get bmcCredId {
+    final $_column = $_itemColumn<String>('bmc_cred_id');
+    if ($_column == null) return null;
+    final manager = $$BmcCredentialsTableTableManager(
+      $_db,
+      $_db.bmcCredentials,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_bmcCredIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: [item]),
@@ -7620,6 +8526,16 @@ class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get bmcAddr => $composableBuilder(
+    column: $table.bmcAddr,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get bmcCertSha256 => $composableBuilder(
+    column: $table.bmcCertSha256,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get pveAddr => $composableBuilder(
     column: $table.pveAddr,
     builder: (column) => ColumnFilters(column),
@@ -7674,6 +8590,29 @@ class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
           }) => $$PrivateKeysTableFilterComposer(
             $db: $db,
             $table: $db.privateKeys,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$BmcCredentialsTableFilterComposer get bmcCredId {
+    final $$BmcCredentialsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bmcCredId,
+      referencedTable: $db.bmcCredentials,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BmcCredentialsTableFilterComposer(
+            $db: $db,
+            $table: $db.bmcCredentials,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -8047,6 +8986,16 @@ class $$ServersTableOrderingComposer extends Composer<_$AppDb, $ServersTable> {
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get bmcAddr => $composableBuilder(
+    column: $table.bmcAddr,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get bmcCertSha256 => $composableBuilder(
+    column: $table.bmcCertSha256,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get pveAddr => $composableBuilder(
     column: $table.pveAddr,
     builder: (column) => ColumnOrderings(column),
@@ -8101,6 +9050,29 @@ class $$ServersTableOrderingComposer extends Composer<_$AppDb, $ServersTable> {
           }) => $$PrivateKeysTableOrderingComposer(
             $db: $db,
             $table: $db.privateKeys,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$BmcCredentialsTableOrderingComposer get bmcCredId {
+    final $$BmcCredentialsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bmcCredId,
+      referencedTable: $db.bmcCredentials,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BmcCredentialsTableOrderingComposer(
+            $db: $db,
+            $table: $db.bmcCredentials,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -8203,6 +9175,14 @@ class $$ServersTableAnnotationComposer
   GeneratedColumn<String> get wolPwd =>
       $composableBuilder(column: $table.wolPwd, builder: (column) => column);
 
+  GeneratedColumn<String> get bmcAddr =>
+      $composableBuilder(column: $table.bmcAddr, builder: (column) => column);
+
+  GeneratedColumn<String> get bmcCertSha256 => $composableBuilder(
+    column: $table.bmcCertSha256,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get pveAddr =>
       $composableBuilder(column: $table.pveAddr, builder: (column) => column);
 
@@ -8247,6 +9227,29 @@ class $$ServersTableAnnotationComposer
           }) => $$PrivateKeysTableAnnotationComposer(
             $db: $db,
             $table: $db.privateKeys,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$BmcCredentialsTableAnnotationComposer get bmcCredId {
+    final $$BmcCredentialsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bmcCredId,
+      referencedTable: $db.bmcCredentials,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BmcCredentialsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.bmcCredentials,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -8524,6 +9527,7 @@ class $$ServersTableTableManager
           ServerRow,
           PrefetchHooks Function({
             bool sshKeyId,
+            bool bmcCredId,
             bool serverTagsRefs,
             bool serverEnvsRefs,
             bool serverDisabledCmdsRefs,
@@ -8571,6 +9575,9 @@ class $$ServersTableTableManager
                 Value<String?> wolMac = const Value.absent(),
                 Value<String?> wolIp = const Value.absent(),
                 Value<String?> wolPwd = const Value.absent(),
+                Value<String?> bmcAddr = const Value.absent(),
+                Value<String?> bmcCertSha256 = const Value.absent(),
+                Value<String?> bmcCredId = const Value.absent(),
                 Value<String?> pveAddr = const Value.absent(),
                 Value<bool> pveIgnoreCert = const Value.absent(),
                 Value<String?> pvePwd = const Value.absent(),
@@ -8602,6 +9609,9 @@ class $$ServersTableTableManager
                 wolMac: wolMac,
                 wolIp: wolIp,
                 wolPwd: wolPwd,
+                bmcAddr: bmcAddr,
+                bmcCertSha256: bmcCertSha256,
+                bmcCredId: bmcCredId,
                 pveAddr: pveAddr,
                 pveIgnoreCert: pveIgnoreCert,
                 pvePwd: pvePwd,
@@ -8635,6 +9645,9 @@ class $$ServersTableTableManager
                 Value<String?> wolMac = const Value.absent(),
                 Value<String?> wolIp = const Value.absent(),
                 Value<String?> wolPwd = const Value.absent(),
+                Value<String?> bmcAddr = const Value.absent(),
+                Value<String?> bmcCertSha256 = const Value.absent(),
+                Value<String?> bmcCredId = const Value.absent(),
                 Value<String?> pveAddr = const Value.absent(),
                 Value<bool> pveIgnoreCert = const Value.absent(),
                 Value<String?> pvePwd = const Value.absent(),
@@ -8666,6 +9679,9 @@ class $$ServersTableTableManager
                 wolMac: wolMac,
                 wolIp: wolIp,
                 wolPwd: wolPwd,
+                bmcAddr: bmcAddr,
+                bmcCertSha256: bmcCertSha256,
+                bmcCredId: bmcCredId,
                 pveAddr: pveAddr,
                 pveIgnoreCert: pveIgnoreCert,
                 pvePwd: pvePwd,
@@ -8686,6 +9702,7 @@ class $$ServersTableTableManager
           prefetchHooksCallback:
               ({
                 sshKeyId = false,
+                bmcCredId = false,
                 serverTagsRefs = false,
                 serverEnvsRefs = false,
                 serverDisabledCmdsRefs = false,
@@ -8736,6 +9753,19 @@ class $$ServersTableTableManager
                                         ._sshKeyIdTable(db),
                                     referencedColumn: $$ServersTableReferences
                                         ._sshKeyIdTable(db)
+                                        .id,
+                                  )
+                                  as T;
+                        }
+                        if (bmcCredId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.bmcCredId,
+                                    referencedTable: $$ServersTableReferences
+                                        ._bmcCredIdTable(db),
+                                    referencedColumn: $$ServersTableReferences
+                                        ._bmcCredIdTable(db)
                                         .id,
                                   )
                                   as T;
@@ -8977,6 +10007,7 @@ typedef $$ServersTableProcessedTableManager =
       ServerRow,
       PrefetchHooks Function({
         bool sshKeyId,
+        bool bmcCredId,
         bool serverTagsRefs,
         bool serverEnvsRefs,
         bool serverDisabledCmdsRefs,
@@ -13858,6 +14889,8 @@ class $AppDbManager {
   $AppDbManager(this._db);
   $$PrivateKeysTableTableManager get privateKeys =>
       $$PrivateKeysTableTableManager(_db, _db.privateKeys);
+  $$BmcCredentialsTableTableManager get bmcCredentials =>
+      $$BmcCredentialsTableTableManager(_db, _db.bmcCredentials);
   $$ServersTableTableManager get servers =>
       $$ServersTableTableManager(_db, _db.servers);
   $$ServerTagsTableTableManager get serverTags =>

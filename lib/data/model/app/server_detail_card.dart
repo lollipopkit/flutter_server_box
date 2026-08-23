@@ -20,6 +20,7 @@ enum ServerDetailCards {
   temp(FontAwesome.temperature_empty_solid),
   battery(Icons.battery_full),
   pve(BoxIcons.bxs_dashboard, sinceBuild: 818),
+  bmc(Icons.developer_board, sinceBuild: 1491),
   custom(Icons.code, sinceBuild: 825);
 
   final int? sinceBuild;
@@ -46,6 +47,7 @@ enum ServerDetailCards {
     temp => libL10n.temperature,
     battery => libL10n.battery,
     pve => 'PVE',
+    bmc => 'BMC',
     custom => libL10n.cmd,
   };
 
@@ -61,6 +63,15 @@ enum ServerDetailCards {
       final list = prop.fetch();
       if (!list.contains(pve.name)) {
         list.add(pve.name);
+        prop.put(list);
+      }
+    }
+
+    if (cur >= bmc.sinceBuild!) {
+      final prop = Stores.setting.detailCardOrder;
+      final list = prop.fetch();
+      if (!list.contains(bmc.name)) {
+        list.add(bmc.name);
         prop.put(list);
       }
     }

@@ -1,7 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
-import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/view/page/agent/agent.dart';
 import 'package:server_box/view/page/server/tab/tab.dart';
@@ -48,7 +47,7 @@ extension AppTabViewX on AppTab {
       ),
       AppTab.agent => NavigationDestination(
         icon: const Icon(Icons.auto_awesome_outlined),
-        label: l10n.agentTitle,
+        label: 'Agent',
         selectedIcon: const Icon(Icons.auto_awesome),
       ),
     };
@@ -78,7 +77,7 @@ extension AppTabViewX on AppTab {
       ),
       AppTab.agent => NavigationRailDestination(
         icon: const Icon(Icons.auto_awesome_outlined),
-        label: Text(l10n.agentTitle),
+        label: Text('Agent'),
         selectedIcon: const Icon(Icons.auto_awesome),
       ),
     };

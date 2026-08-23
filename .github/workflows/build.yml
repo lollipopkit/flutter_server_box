@@ -8,6 +8,19 @@ on:
         required: false
         type: boolean
         default: false
+      jobs:
+        # Comma-separated rather than a `choice`, which allows only one value,
+        # and there is no multi-select for `workflow_dispatch`. Empty means all,
+        # so the tag-push path is unaffected and so is dispatching without
+        # thinking about it.
+        #
+        # Unknown names are refused rather than ignored — see `Check job
+        # selection`. A typo that silently builds nothing looks exactly like a
+        # workflow that is broken.
+        description: 'What to run: android,ios,linux,windows,macos,monitor (empty = all; monitor is verification only)'
+        required: false
+        type: string
+        default: ''
   push:
     tags:
       - "v*"
@@ -24,6 +37,14 @@ jobs:
   reproducibilityCheck:
     name: Reproducibility check
     runs-on: ubuntu-latest
+    outputs:
+      # The selection, canonicalised once and matched exactly by every job
+      # below. Wrapped in commas so `contains(..., ',linux,')` cannot match a
+      # substring of another name, and so the jobs never see the raw input —
+      # which is what let `an droid` validate (whitespace was stripped before
+      # the check) and then match nothing (it was not stripped afterwards),
+      # skipping every job while reporting success.
+      selected: ${{ steps.selection.outputs.selected }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -63,6 +84,70 @@ jobs:
             echo "BuildData.build must match tag ${GITHUB_REF_NAME}; got ${build_data}."
             exit 1
           fi
+      - name: Check job selection
+        id: selection
+        shell: bash
+        # Through the environment, not `${{ }}` inside the script: an
+        # expression is substituted into the source before bash parses it, so
+        # a value containing a quote or a `;` would run as code. Only someone
+        # with write access can dispatch this, which lowers the stakes and does
+        # not change what the code says.
+        env:
+          REQUESTED: ${{ inputs.jobs }}
+          IS_DISPATCH: ${{ github.event_name == 'workflow_dispatch' }}
+          IS_RELEASE: ${{ inputs.release }}
+        run: |
+          set -euo pipefail
+
+          known="android ios linux windows macos monitor"
+          # `monitor` verifies a cross-build and publishes nothing, so its own
+          # `if` refuses a release run. Selecting it for one would validate,
+          # match nothing and finish green having built nothing at all.
+          verify_only="monitor"
+
+          if [[ "$IS_DISPATCH" != "true" || -z "${REQUESTED//[[:space:]]/}" ]]; then
+            # A tag push, or a dispatch that named nothing: everything runs.
+            selected="$known"
+          else
+            selected=""
+            bad=()
+            not_for_release=()
+            IFS=',' read -ra requested <<< "$REQUESTED"
+            for raw in "${requested[@]:-}"; do
+              # Trimmed at the ends only. Whitespace *inside* a token is a typo
+              # (`an droid`), not something to silently repair into a name the
+              # user did not type.
+              name="${raw#"${raw%%[![:space:]]*}"}"
+              name="${name%"${name##*[![:space:]]}"}"
+              [[ -z "$name" ]] && continue
+              if [[ " $known " != *" $name "* ]]; then bad+=("$name"); continue; fi
+              if [[ "$IS_RELEASE" == "true" && " $verify_only " == *" $name "* ]]; then
+                not_for_release+=("$name"); continue
+              fi
+              selected="$selected $name"
+            done
+
+            if (( ${#bad[@]} )); then
+              echo "Unknown job(s): ${bad[*]}"
+              echo "Valid names: $known"
+              exit 1
+            fi
+            if (( ${#not_for_release[@]} )); then
+              echo "Not available on a release run: ${not_for_release[*]}"
+              echo "Those verify a build rather than publish one."
+              exit 1
+            fi
+            if [[ -z "${selected//[[:space:]]/}" ]]; then
+              # Only reachable from a value that is all separators, such as
+              # `,` or `, ,` — which would otherwise pass and build nothing.
+              echo "No jobs selected. Leave the field empty to run all of them."
+              exit 1
+            fi
+          fi
+
+          canonical=",$(echo "$selected" | tr -s '[:space:]' ',' | sed 's/^,//;s/,$//'),"
+          echo "selected=$canonical" >> "$GITHUB_OUTPUT"
+          echo "Running:$selected"
       - name: Check locked dependencies
         shell: bash
         run: |
@@ -72,12 +157,20 @@ jobs:
         shell: bash
         run: scripts/release/patch-jni-build-id.sh
 
-  verifyMacOS:
-    name: Verify macOS release
-    if: github.event_name == 'workflow_dispatch' && inputs.release != true
+  buildMacOS:
+    name: Build macos
+    # A tag builds everything, unconditionally. The selector exists to narrow
+    # a manual dispatch; letting it decide the release path would mean an empty
+    # or unemitted output skips every job and reports success — which is the
+    # failure this whole mechanism is meant to prevent.
+    if: >-
+      github.ref_type == 'tag'
+      || contains(needs.reproducibilityCheck.outputs.selected, ',macos,')
     needs: reproducibilityCheck
     runs-on: macos-latest
     timeout-minutes: 45
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -93,6 +186,16 @@ jobs:
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
       - name: Install dependencies
         run: flutter pub get
+      - name: Resolve build number
+        shell: bash
+        run: |
+          set -euo pipefail
+          build="$(sed -n -E 's/.*static const int build = ([0-9]+);/\1/p' lib/data/res/build_data.dart | head -n 1)"
+          if [[ -z "$build" ]]; then
+            echo "BuildData.build not found in lib/data/res/build_data.dart"
+            exit 1
+          fi
+          echo "BUILD_NUMBER=$build" >> "$GITHUB_ENV"
       - name: Sign locally
         shell: bash
         run: |
@@ -124,7 +227,10 @@ jobs:
           </plist>
           EOF
       - name: Build release
-        run: flutter build macos --release
+        run: |
+          flutter build macos --release \
+            --build-number="${BUILD_NUMBER}" \
+            --build-name="1.0.${BUILD_NUMBER}"
       - name: Verify release launch
         shell: bash
         run: |
@@ -157,10 +263,46 @@ jobs:
           done
 
           cat "$log_file"
+      # Ad-hoc signed, like the unsigned IPA: the artifact is for looking at,
+      # not for handing to someone. macOS will refuse to open it without the
+      # user overriding Gatekeeper, and the name has to say so — `spctl` is
+      # expected to fail here, which is why the script only warns.
+      - name: Package dmg
+        shell: bash
+        env:
+          # `APP_NAME` is the *bundle* name and has a space in it. The
+          # workflow-level `env` sets it to `ServerBox`, which reaches every
+          # step — without this override `ditto` would stage the app into the
+          # DMG under a name it does not have, and the volume would differ from
+          # what `make package-dmg` produces locally.
+          APP_NAME: Server Box
+          APP_ASSET_NAME: ${{ env.APP_NAME }}
+          APP_PATH: build/macos/Build/Products/Release/Server Box.app
+          DMG_BASENAME: ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_NoSign
+        run: bash scripts/release/package-dmg-from-xcarchive.sh
+      - name: Upload artifacts
+        if: inputs.release != true && github.ref_type != 'tag'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-macos
+          path: build/artifacts/*.dmg
+          if-no-files-found: error
+          retention-days: 14
+      - name: Create Release
+        if: inputs.release == true || github.ref_type == 'tag'
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
+        with:
+          tag_name: v1.0.${{ env.BUILD_NUMBER }}
+          files: |
+            build/artifacts/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_NoSign.dmg
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   verifyMonitor:
     name: Verify monitor ${{ matrix.platform }}-${{ matrix.arch }}
-    if: github.event_name == 'workflow_dispatch' && inputs.release != true
+    if: >-
+      github.event_name == 'workflow_dispatch' && inputs.release != true
+      && contains(needs.reproducibilityCheck.outputs.selected, ',monitor,')
     needs: reproducibilityCheck
     strategy:
       fail-fast: false
@@ -211,6 +353,9 @@ jobs:
 
   buildAndroid:
     name: Build android
+    if: >-
+      github.ref_type == 'tag'
+      || contains(needs.reproducibilityCheck.outputs.selected, ',android,')
     needs: reproducibilityCheck
     runs-on: ubuntu-latest
     permissions:
@@ -303,6 +448,9 @@ jobs:
 
   buildIOS:
     name: Build ios
+    if: >-
+      github.ref_type == 'tag'
+      || contains(needs.reproducibilityCheck.outputs.selected, ',ios,')
     needs: reproducibilityCheck
     runs-on: macos-latest
     permissions:
@@ -376,6 +524,9 @@ jobs:
 
   buildLinux:
     name: Build linux
+    if: >-
+      github.ref_type == 'tag'
+      || contains(needs.reproducibilityCheck.outputs.selected, ',linux,')
     needs: reproducibilityCheck
     permissions:
       contents: write
@@ -446,6 +597,9 @@ jobs:
 
   buildWindows:
     name: Build windows
+    if: >-
+      github.ref_type == 'tag'
+      || contains(needs.reproducibilityCheck.outputs.selected, ',windows,')
     needs: reproducibilityCheck
     runs-on: windows-latest
     permissions:

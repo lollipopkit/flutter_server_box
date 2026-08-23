@@ -114,11 +114,7 @@ extension _AI on _AppSettingsPageState {
   /// other "pick one of these" row on this page behaves — a `PopupMenuButton`
   /// wrapped around a tile was the only one that dropped a menu instead.
   Widget _buildAskAiProtocol(AppLocalizations l10n) {
-    String label(AskAiProtocol protocol) => switch (protocol) {
-      AskAiProtocol.auto => libL10n.auto,
-      AskAiProtocol.chatCompletions => l10n.askAiProtocolChatCompletions,
-      AskAiProtocol.responses => l10n.askAiProtocolResponses,
-    };
+    String label(AskAiProtocol protocol) => protocol.vendorName ?? libL10n.auto;
 
     return ListTile(
       leading: const Icon(Icons.swap_calls_outlined, size: _kIconSize),

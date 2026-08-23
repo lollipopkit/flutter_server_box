@@ -42,6 +42,34 @@ class PrivateKeys extends Table with SyncMeta {
   Set<Column> get primaryKey => {id};
 }
 
+/// A BMC account, referenced by the servers whose BMC it opens.
+///
+/// A table rather than columns on `server`, which is what separates it from
+/// the SSH and monitor credentials below: those are one-to-one, this is not.
+/// BMCs are provisioned a rack at a time and answer to one directory or one
+/// factory password, so the normal case is many servers to one account —
+/// stored per server it would be typed once per machine and, on a rotation,
+/// changed once per machine.
+///
+/// The address and the pinned certificate stay on `server`. Both belong to one
+/// device: two BMCs never present the same certificate, so a fingerprint here
+/// would be the first device's, used to verify the second.
+@DataClassName('BmcCredentialRow')
+class BmcCredentials extends Table with SyncMeta {
+  @override
+  String get tableName => 'bmc_credential';
+  @override
+  bool get withoutRowId => true;
+
+  TextColumn get id => text()();
+  TextColumn get name => text().unique()();
+  TextColumn get user => text()();
+  TextColumn get pwd => text().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 /// The SSH and monitor credentials are columns rather than tables of their
 /// own: both are one-to-one and neither is ever read without the server.
 ///
@@ -86,6 +114,26 @@ class Servers extends Table with SyncMeta {
   TextColumn get wolMac => text().nullable()();
   TextColumn get wolIp => text().nullable()();
   TextColumn get wolPwd => text().nullable()();
+
+  /// The BMC, a side channel beside the Wake-on-LAN fields above.
+  ///
+  /// Deliberately outside the SSH/monitor constraint below: a BMC is not a way
+  /// of reaching the host, so it neither satisfies that requirement nor
+  /// conflicts with either side of it. A server may carry one alongside SSH or
+  /// alongside a monitor agent.
+  ///
+  /// [bmcCertSha256] is what the user reviewed, not what a CA said — see
+  /// `BmcCfg.certSha256`. Null means nothing has been reviewed and a
+  /// connection is refused rather than trusted.
+  TextColumn get bmcAddr => text().nullable()();
+  TextColumn get bmcCertSha256 => text().nullable()();
+
+  /// Deleting an account must not delete the servers that used it; it must
+  /// leave them with an address and nothing to log in with, which the editor
+  /// can then say. Same rule as [sshKeyId].
+  TextColumn get bmcCredId => text()
+      .nullable()
+      .references(BmcCredentials, #id, onDelete: KeyAction.setNull)();
 
   TextColumn get pveAddr => text().nullable()();
   BoolColumn get pveIgnoreCert => boolean().withDefault(const Constant(false))();
@@ -458,6 +506,13 @@ class SyncStates extends Table {
 @DriftDatabase(
   tables: [
     PrivateKeys,
+    // Named rather than left to be pulled in by `Servers.bmcCredId`. Drift does
+    // follow that reference today, so the table is created either way, but a
+    // schema that exists only as a side effect of a foreign key disappears from
+    // fresh installs the moment the key is changed — while every migrated
+    // install keeps it, so the failure would be `no such table` on new devices
+    // alone.
+    BmcCredentials,
     Servers,
     ServerTags,
     ServerEnvs,
@@ -497,6 +552,11 @@ class AppDb extends _$AppDb {
   /// Indexes the read patterns need, which the table definitions do not carry.
   static const _indexes = [
     'CREATE INDEX IF NOT EXISTS idx_server_key ON server(ssh_key_id);',
+    // Same read as `ssh_key_id`: "how many servers use this account", asked
+    // once per row of the account list and on every rebuild of the server
+    // editor. It also serves the ON DELETE SET NULL, which without it scans
+    // `server` once per deleted account.
+    'CREATE INDEX IF NOT EXISTS idx_server_bmc_cred ON server(bmc_cred_id);',
     'CREATE INDEX IF NOT EXISTS idx_server_tag_tag ON server_tag(tag);',
     'CREATE INDEX IF NOT EXISTS idx_server_jump_target ON server_jump(jump_id);',
     'CREATE INDEX IF NOT EXISTS idx_snippet_tag_tag ON snippet_tag(tag);',

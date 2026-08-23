@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:get_it/get_it.dart';
 import 'package:server_box/data/store/agent_conversation.dart';
+import 'package:server_box/data/store/bmc_credential.dart';
 import 'package:server_box/data/store/connection_stats.dart';
 import 'package:server_box/data/store/container.dart';
 import 'package:server_box/data/store/entity_store.dart';
@@ -20,6 +21,7 @@ abstract final class Stores {
   static ServerStore get server => getIt<ServerStore>();
   static ContainerStore get container => getIt<ContainerStore>();
   static PrivateKeyStore get key => getIt<PrivateKeyStore>();
+  static BmcCredentialStore get bmcCredential => getIt<BmcCredentialStore>();
   static SnippetStore get snippet => getIt<SnippetStore>();
   static HistoryStore get history => getIt<HistoryStore>();
   static AgentConversationStore get agentConversation =>
@@ -41,7 +43,8 @@ abstract final class Stores {
   ///
   /// `container` is absent because its rows are children of `server`: changing
   /// a container host stamps the server that owns it.
-  static List<EntityStore> get _entityStores => [server, key, snippet, portForward];
+  static List<EntityStore> get _entityStores =>
+      [server, key, bmcCredential, snippet, portForward];
 
   static Future<void> init() async {
     getIt.registerLazySingleton<SettingStore>(() => SettingStore.instance);
@@ -49,6 +52,9 @@ abstract final class Stores {
     getIt.registerLazySingleton<ContainerStore>(() => ContainerStore.instance);
     getIt.registerLazySingleton<PrivateKeyStore>(
       () => PrivateKeyStore.instance,
+    );
+    getIt.registerLazySingleton<BmcCredentialStore>(
+      () => BmcCredentialStore.instance,
     );
     getIt.registerLazySingleton<SnippetStore>(() => SnippetStore.instance);
     getIt.registerLazySingleton<HistoryStore>(() => HistoryStore.instance);

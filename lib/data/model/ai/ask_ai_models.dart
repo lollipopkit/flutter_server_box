@@ -4,7 +4,26 @@ import 'package:meta/meta.dart';
 import 'package:server_box/core/utils/local_exec.dart';
 
 /// API protocol used for one Agent conversation.
-enum AskAiProtocol { auto, chatCompletions, responses }
+enum AskAiProtocol {
+  auto,
+  chatCompletions,
+  responses;
+
+  /// What the vendor calls it, or null for [auto], which is a word rather
+  /// than a name and belongs to whoever is displaying it.
+  ///
+  /// Not localised: these are two OpenAI API surfaces, spelled this way in
+  /// every language's documentation. A translated one is a word nobody could
+  /// search for.
+  ///
+  /// On the enum rather than at the two call sites, which had the same switch
+  /// written out twice.
+  String? get vendorName => switch (this) {
+    AskAiProtocol.auto => null,
+    AskAiProtocol.chatCompletions => 'Chat Completions',
+    AskAiProtocol.responses => 'Responses',
+  };
+}
 
 AskAiProtocol parseAskAiProtocol(Object? value) {
   final name = value?.toString();
