@@ -595,5 +595,6 @@
         "type": "int"
       }
     }
-  }
+  },
+  "bmcStaleWrite": "The BMC changed while this was being written. Try again."
 }

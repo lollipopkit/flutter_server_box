@@ -1592,6 +1592,10 @@ ${err.message ?? 'null'}
         RedfishFailure.noSystem => l10n.bmcNoSystem,
         // Names the resource, because it is an answer about one resource
         RedfishFailure.forbidden => '${libL10n.fail}: ${detail ?? ''}',
+        // Retrying after a fresh read is the fix, so it is worth saying that
+        // rather than showing a generic failure — this is what a change made
+        // through the BMC's own web interface in the meantime looks like.
+        RedfishFailure.preconditionRequired => l10n.bmcStaleWrite,
         RedfishFailure.unreachable => detail ?? libL10n.fail,
       };
 

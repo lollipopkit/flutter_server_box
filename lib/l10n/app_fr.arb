@@ -460,5 +460,6 @@
   "bmcAccountShared": "Utilisé par {count} serveurs",
   "bmcAccounts": "Comptes BMC",
   "bmcAccountSharedTip": "Le modifier change ce que tous utilisent.",
-  "bmcAccountInUse": "{count} serveurs l'utilisent. Ils gardent leur adresse et perdent le compte."
+  "bmcAccountInUse": "{count} serveurs l'utilisent. Ils gardent leur adresse et perdent le compte.",
+  "bmcStaleWrite": "Le BMC a changé pendant l'écriture. Réessaie."
 }

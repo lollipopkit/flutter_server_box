@@ -1604,4 +1604,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String bmcAccountInUse(int count) {
     return 'Её используют $count серверов. Адрес останется, учётная запись — нет.';
   }
+
+  @override
+  String get bmcStaleWrite =>
+      'BMC изменился во время записи. Повторите попытку.';
 }

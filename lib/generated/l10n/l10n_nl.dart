@@ -1598,4 +1598,8 @@ class AppLocalizationsNl extends AppLocalizations {
   String bmcAccountInUse(int count) {
     return '$count servers gebruiken het. Ze houden hun adres en verliezen het account.';
   }
+
+  @override
+  String get bmcStaleWrite =>
+      'De BMC is gewijzigd tijdens het schrijven. Probeer opnieuw.';
 }

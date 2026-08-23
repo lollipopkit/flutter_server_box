@@ -460,5 +460,6 @@
   "bmcAccountShared": "{count} 台のサーバーで使用中",
   "bmcAccounts": "BMC アカウント",
   "bmcAccountSharedTip": "ここでの変更はすべてに反映されます。",
-  "bmcAccountInUse": "{count} 台のサーバーが使用中です。アドレスは残り、アカウントは失われます。"
+  "bmcAccountInUse": "{count} 台のサーバーが使用中です。アドレスは残り、アカウントは失われます。",
+  "bmcStaleWrite": "書き込み中に BMC が変更されました。再試行してください。"
 }

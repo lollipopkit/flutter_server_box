@@ -460,5 +460,6 @@
   "bmcAccountShared": "{count} sunucuda kullanılıyor",
   "bmcAccounts": "BMC hesapları",
   "bmcAccountSharedTip": "Burada düzenlemek hepsinin kullandığını değiştirir.",
-  "bmcAccountInUse": "{count} sunucu kullanıyor. Adresleri kalır, hesabı kaybederler."
+  "bmcAccountInUse": "{count} sunucu kullanıyor. Adresleri kalır, hesabı kaybederler.",
+  "bmcStaleWrite": "Yazma sırasında BMC değişti. Tekrar dene."
 }

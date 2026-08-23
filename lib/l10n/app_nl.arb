@@ -460,5 +460,6 @@
   "bmcAccountShared": "Gebruikt door {count} servers",
   "bmcAccounts": "BMC-accounts",
   "bmcAccountSharedTip": "Dit bewerken verandert wat ze allemaal gebruiken.",
-  "bmcAccountInUse": "{count} servers gebruiken het. Ze houden hun adres en verliezen het account."
+  "bmcAccountInUse": "{count} servers gebruiken het. Ze houden hun adres en verliezen het account.",
+  "bmcStaleWrite": "De BMC is gewijzigd tijdens het schrijven. Probeer opnieuw."
 }

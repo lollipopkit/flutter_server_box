@@ -1469,6 +1469,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String bmcAccountInUse(int count) {
     return '$count 台服务器在用。它们会保留地址，但失去账户。';
   }
+
+  @override
+  String get bmcStaleWrite => 'BMC 上的内容在写入期间被改动过，请重试。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -2936,4 +2939,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String bmcAccountInUse(int count) {
     return '$count 台伺服器在用。它們會保留位址，但失去帳戶。';
   }
+
+  @override
+  String get bmcStaleWrite => 'BMC 上的內容在寫入期間被改動過，請重試。';
 }

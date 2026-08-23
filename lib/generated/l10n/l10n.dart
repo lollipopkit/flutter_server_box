@@ -2791,6 +2791,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} servers use it. They keep their address and lose the account.'**
   String bmcAccountInUse(int count);
+
+  /// No description provided for @bmcStaleWrite.
+  ///
+  /// In en, this message translates to:
+  /// **'The BMC changed while this was being written. Try again.'**
+  String get bmcStaleWrite;
 }
 
 class _AppLocalizationsDelegate

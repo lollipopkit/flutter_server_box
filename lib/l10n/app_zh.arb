@@ -5,7 +5,7 @@
   "added2List": "已添加至任务列表",
   "askAi": "问 AI",
   "askAiAwaitingResponse": "等待 AI 响应...",
-  "askAiEndpointTip": "填写服务根地址，或完整的 Chat Completions/Responses 地址。ServerBox 会根据所选协议自动补全路径。",
+  "askAiEndpointTip": "填写域名完整的 Chat Completions/Responses 地址。ServerBox 会根据所选协议自动补全路径。",
   "askAiProtocolTip": "自动模式对 OpenAI 官方接口使用 Responses，对兼容服务使用 Chat Completions。",
   "askAiProtocolChatCompletions": "Chat Completions",
   "askAiProtocolResponses": "Responses",
@@ -476,5 +476,6 @@
   "bmcAccountShared": "{count} 台服务器在用",
   "bmcAccounts": "BMC 账户",
   "bmcAccountSharedTip": "在这里修改会改变所有这些服务器使用的账户。",
-  "bmcAccountInUse": "{count} 台服务器在用。它们会保留地址，但失去账户。"
+  "bmcAccountInUse": "{count} 台服务器在用。它们会保留地址，但失去账户。",
+  "bmcStaleWrite": "BMC 上的内容在写入期间被改动过，请重试。"
 }

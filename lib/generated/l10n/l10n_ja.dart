@@ -1506,4 +1506,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String bmcAccountInUse(int count) {
     return '$count 台のサーバーが使用中です。アドレスは残り、アカウントは失われます。';
   }
+
+  @override
+  String get bmcStaleWrite => '書き込み中に BMC が変更されました。再試行してください。';
 }

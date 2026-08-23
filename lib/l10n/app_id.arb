@@ -460,5 +460,6 @@
   "bmcAccountShared": "Dipakai oleh {count} server",
   "bmcAccounts": "Akun BMC",
   "bmcAccountSharedTip": "Mengubahnya mengubah yang dipakai semuanya.",
-  "bmcAccountInUse": "{count} server memakainya. Alamatnya tetap, akunnya hilang."
+  "bmcAccountInUse": "{count} server memakainya. Alamatnya tetap, akunnya hilang.",
+  "bmcStaleWrite": "BMC berubah saat proses tulis. Coba lagi."
 }

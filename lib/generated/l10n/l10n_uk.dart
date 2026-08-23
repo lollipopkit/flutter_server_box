@@ -1603,4 +1603,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String bmcAccountInUse(int count) {
     return 'Її використовують $count серверів. Адреса залишиться, обліковий запис — ні.';
   }
+
+  @override
+  String get bmcStaleWrite => 'BMC змінився під час запису. Спробуйте ще раз.';
 }

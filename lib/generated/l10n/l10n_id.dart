@@ -1588,4 +1588,7 @@ class AppLocalizationsId extends AppLocalizations {
   String bmcAccountInUse(int count) {
     return '$count server memakainya. Alamatnya tetap, akunnya hilang.';
   }
+
+  @override
+  String get bmcStaleWrite => 'BMC berubah saat proses tulis. Coba lagi.';
 }

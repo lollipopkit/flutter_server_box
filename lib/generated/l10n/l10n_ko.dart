@@ -1510,4 +1510,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String bmcAccountInUse(int count) {
     return '$count대의 서버가 사용 중입니다. 주소는 남고 계정은 사라집니다.';
   }
+
+  @override
+  String get bmcStaleWrite => '쓰는 동안 BMC가 변경되었습니다. 다시 시도하세요.';
 }

@@ -1586,4 +1586,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String bmcAccountInUse(int count) {
     return '$count sunucu kullanıyor. Adresleri kalır, hesabı kaybederler.';
   }
+
+  @override
+  String get bmcStaleWrite => 'Yazma sırasında BMC değişti. Tekrar dene.';
 }

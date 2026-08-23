@@ -469,5 +469,6 @@
   "bmcAccountShared": "{count}대의 서버에서 사용 중",
   "bmcAccounts": "BMC 계정",
   "bmcAccountSharedTip": "여기서 수정하면 모두에게 적용됩니다.",
-  "bmcAccountInUse": "{count}대의 서버가 사용 중입니다. 주소는 남고 계정은 사라집니다."
+  "bmcAccountInUse": "{count}대의 서버가 사용 중입니다. 주소는 남고 계정은 사라집니다.",
+  "bmcStaleWrite": "쓰는 동안 BMC가 변경되었습니다. 다시 시도하세요."
 }
