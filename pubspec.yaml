@@ -69,6 +69,10 @@ dependencies:
       ref: main
   xterm:
     path: packages/xterm
+  # Extracted from this app — see `docs/principles/bmc.md`. A path dependency
+  # like the other vendored packages; not on pub.dev while the API is moving.
+  redfish:
+    path: packages/redfish
   computer:
     git:
       url: https://github.com/lollipopkit/dart_computer

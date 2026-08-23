@@ -11,7 +11,7 @@ responses and a local TLS server: enough to be sure of the decisions, not
 enough to be sure of a machine.
 
 Power control has never been performed by anything automated, deliberately.
-See the header of `test/bmc_power_test.dart`.
+See the header of `packages/redfish/test/power_test.dart`.
 :::
 
 Every other way this app reaches a server needs the host operating system to be
@@ -296,7 +296,7 @@ Everything above is verified against recorded vendor responses and a local TLS
 server, which settles the decisions and settles nothing about a machine. Two
 things are left to a person.
 
-**The read half** is `test/bmc_redfish_e2e_test.dart`, opt-in and read-only. It
+**The read half** is `packages/redfish/test/e2e_test.dart`, opt-in and read-only. It
 skips silently unless the workspace-root `.env` carries:
 
 ```

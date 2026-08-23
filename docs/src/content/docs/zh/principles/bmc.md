@@ -8,7 +8,7 @@ Phase 1 已经实现,读取部分已经对着真实固件跑过——见[跑过�
 下面其余每一条厂商差异仍然是对着录下来的响应和一台本地 TLS 服务器处理的:足以确信那些**判断**,
 不足以确信一台**机器**。
 
-电源控制从未由任何自动化执行过,这是刻意的。见 `test/bmc_power_test.dart` 的头注释。
+电源控制从未由任何自动化执行过,这是刻意的。见 `packages/redfish/test/power_test.dart` 的头注释。
 :::
 
 这个 App 够到服务器的其他每一条路,都要求主机操作系统还活着。SSH 需要 sshd,monitor agent 是机器上的
@@ -80,15 +80,13 @@ class BmcCredential {   // 独立的表,独立的 sync root
 这样切是为了让值得测的那一半不需要一台服务器。
 
 ```
-BmcCfg + BmcCredential    用户配置的东西
+BmcCfg + BmcCredential    用户配置的东西                本 app
   ↓
-RedfishClient             传输层:TLS 信任、会话生命周期、GET/POST
+RedfishClient             TLS 信任、会话、GET/POST      package:redfish
+RedfishDiscovery          一次性发现:id、传感器模型      package:redfish
+resources / sensors       JSON → 模型,不做 IO           package:redfish
   ↓
-RedfishService            一次性发现并缓存:哪些 id、哪套 schema
-  ↓
-redfish/*.dart(纯函数)    JSON → 类型化模型,不做 IO
-  ↓
-BmcNotifier(riverpod)     状态,以及它自己的轮询周期
+BmcNotifier(riverpod)     状态,以及它自己的轮询周期      本 app
 ```
 
 只有 `RedfishClient` 碰网络。它下面的每一层都是「拿一个解析好的 JSON map,返回一个模型」,这让厂商差异
@@ -237,7 +235,7 @@ Supermicro X11–X13 与 X14 的对比(传感器模型切换点)、HPE iLO 的�
 上面所有内容都是对着录下来的厂商响应和一台本地 TLS 服务器验证的——这确定了那些**判断**,没有确定任何
 一台**机器**。剩下两件事需要人来做。
 
-**读的那一半**是 `test/bmc_redfish_e2e_test.dart`,opt-in、只读。工作区根的 `.env` 里没有下面这些就静默跳过:
+**读的那一半**是 `packages/redfish/test/e2e_test.dart`,opt-in、只读。工作区根的 `.env` 里没有下面这些就静默跳过:
 
 ```
 SBM_E2E_BMC_URL=https://10.0.0.9

@@ -1,16 +1,13 @@
 import 'dart:async';
 
-import 'package:fl_lib/fl_lib.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
 // `select` is an extension on ProviderListenable, which riverpod_annotation
 // does not re-export.
+import 'package:fl_lib/fl_lib.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:redfish/redfish.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:server_box/data/model/server/bmc/redfish.dart';
-import 'package:server_box/data/model/server/bmc/redfish_sensors.dart';
-import 'package:server_box/data/model/server/bmc/redfish_service.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/provider/bmc/redfish_client.dart';
 import 'package:server_box/data/provider/bmc_credential.dart';
 
 part 'bmc.freezed.dart';
@@ -137,7 +134,15 @@ class BmcNotifier extends _$BmcNotifier {
       return const BmcState(failure: RedfishFailure.noCredential);
     }
 
-    _client = RedfishClient(cfg, cred);
+    // Plain values, not this app's records: the client is `package:redfish`
+    // now and knows nothing about how anything here is stored.
+    _client = RedfishClient(
+      baseUrl: cfg.addr,
+      user: cred.user,
+      password: cred.pwd,
+      pinnedCertSha256: cfg.certSha256,
+      onWarning: (message, error) => Loggers.app.warning('BMC: $message', error),
+    );
     unawaited(refresh());
     _timer = Timer.periodic(_pollInterval, (_) => unawaited(refresh()));
 
