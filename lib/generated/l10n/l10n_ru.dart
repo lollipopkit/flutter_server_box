@@ -762,7 +762,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get bmcForceOff => 'Принудительно выключить';
 
   @override
-  String get bmcRestart => 'Перезапустить';
+  String get restart => 'Перезапустить';
 
   @override
   String get bmcPowerCycle => 'Полный перезапуск питания';
@@ -996,9 +996,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get homeDir => 'Домашняя папка';
 
   @override
-  String get selectItem => 'Выбрать';
-
-  @override
   String selected(Object count) {
     return 'Выбрано: $count';
   }
@@ -1179,9 +1176,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get syncAppSettingsTip =>
       'Включить тему, макет, редактор, терминал и другие настройки устройства в автоматическую синхронизацию.';
-
-  @override
-  String get system => 'Система';
 
   @override
   String get termFontSizeTip =>

@@ -705,7 +705,7 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   List<ContextMenuAction> _entryActions(FileEntry entry, String full) => [
     ContextMenuAction(
       icon: Icons.checklist,
-      text: l10n.selectItem,
+      text: libL10n.select,
       onTap: () => _toggle(entry),
     ),
     ContextMenuAction(

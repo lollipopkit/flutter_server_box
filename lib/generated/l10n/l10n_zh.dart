@@ -703,7 +703,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get bmcForceOff => '强制断电';
 
   @override
-  String get bmcRestart => '重启';
+  String get restart => '重启';
 
   @override
   String get bmcPowerCycle => '冷重启';
@@ -917,9 +917,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeDir => '主目录';
 
   @override
-  String get selectItem => '选择';
-
-  @override
   String selected(Object count) {
     return '已选 $count 项';
   }
@@ -1088,9 +1085,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get syncAppSettingsTip => '在自动同步中包含主题、布局、编辑器、终端等设备偏好设置。';
-
-  @override
-  String get system => '系统';
 
   @override
   String get termFontSizeTip => '此设置会影响终端大小（宽和高）。可以在终端页面缩放来调整当前会话的字体大小';
@@ -2130,7 +2124,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get bmcForceOff => '強制斷電';
 
   @override
-  String get bmcRestart => '重新啟動';
+  String get restart => '重新啟動';
 
   @override
   String get bmcPowerCycle => '冷重新啟動';
@@ -2344,9 +2338,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get homeDir => '主目錄';
 
   @override
-  String get selectItem => '選擇';
-
-  @override
   String selected(Object count) {
     return '已選 $count 項';
   }
@@ -2516,9 +2507,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get syncAppSettingsTip => '將主題、版面配置、編輯器、終端等裝置偏好一併納入自動同步。';
-
-  @override
-  String get system => '系統';
 
   @override
   String get termFontSizeTip => '此設定將影響終端機大小（寬度和高度）。您可以在終端機頁面縮放，來調整目前會話的字型大小。';

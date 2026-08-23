@@ -165,6 +165,9 @@
   "homeWidgetUrlConfig": "Config home widget url",
   "ignoreCert": "Ignore certificate",
   "image": "Image",
+  "@image": {
+    "description": "A container image, as in Docker. NOT a picture — do not replace this with libL10n.image, whose German is \"Bild\" and Japanese \"画像\"."
+  },
   "macDmgBody": "The App Store requires this app to be sandboxed, and a sandbox cannot open a terminal. The DMG build can.\n\nThe App Store build may stop being updated.",
   "macDmgImportDenied": "macOS would not let this read the previous build’s data",
   "macDmgImported": "Imported the previous build’s data",
@@ -241,7 +244,7 @@
   "bmcPowerOnAction": "Power on",
   "bmcShutdown": "Shut down",
   "bmcForceOff": "Force off",
-  "bmcRestart": "Restart",
+  "restart": "Restart",
   "bmcPowerCycle": "Power cycle",
   "bmcPowerConfirm": "Send this to {server}? The service will be asked for \"{resetType}\"",
   "@bmcPowerConfirm": {
@@ -359,7 +362,6 @@
   "back": "Back",
   "history": "History",
   "homeDir": "Home",
-  "selectItem": "Select",
   "selected": "{count} selected",
   "sendTo": "Send to…",
   "serverDetailOrder": "Detail page widget order",
@@ -413,7 +415,6 @@
   "switchTo": "Switch to {val}",
   "syncAppSettings": "Sync app settings",
   "syncAppSettingsTip": "Include theme, layout, editor, terminal and other device preferences in automatic sync.",
-  "system": "System",
   "termFontSizeTip": "This setting will affect the terminal size (width and height). You can zoom in on the terminal page to adjust the font size of the current session.",
   "textScalerTip": "1.0 => 100% (original size), only works on server page part of the font, not recommended to change.",
   "times": "Times",

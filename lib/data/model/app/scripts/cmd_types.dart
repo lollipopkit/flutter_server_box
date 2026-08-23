@@ -1,7 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
-import 'package:server_box/core/extension/context/locale.dart';
 
 /// Enum representing different command types for various systems
 enum CmdTypeSys {
@@ -118,7 +117,7 @@ enum WindowsStatusCmdType implements ShellCmdType {
 /// Extensions for StatusCmdType
 extension StatusCmdTypeX on StatusCmdType {
   String get i18n => switch (this) {
-    StatusCmdType.sys => l10n.system,
+    StatusCmdType.sys => libL10n.system,
     StatusCmdType.host => libL10n.host,
     StatusCmdType.uptime => libL10n.uptime,
     StatusCmdType.battery => libL10n.battery,

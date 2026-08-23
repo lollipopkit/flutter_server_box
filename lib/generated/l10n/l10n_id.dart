@@ -756,7 +756,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get bmcForceOff => 'Paksa mati';
 
   @override
-  String get bmcRestart => 'Mulai ulang';
+  String get restart => 'Mulai ulang';
 
   @override
   String get bmcPowerCycle => 'Siklus daya';
@@ -990,9 +990,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get homeDir => 'Beranda';
 
   @override
-  String get selectItem => 'Pilih';
-
-  @override
   String selected(Object count) {
     return '$count dipilih';
   }
@@ -1172,9 +1169,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get syncAppSettingsTip =>
       'Sertakan tema, tata letak, editor, terminal, dan preferensi perangkat lain dalam sinkronisasi otomatis.';
-
-  @override
-  String get system => 'Sistem';
 
   @override
   String get termFontSizeTip =>

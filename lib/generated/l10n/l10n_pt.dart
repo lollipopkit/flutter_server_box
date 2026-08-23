@@ -758,7 +758,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get bmcForceOff => 'Forçar desligamento';
 
   @override
-  String get bmcRestart => 'Reiniciar';
+  String get restart => 'Reiniciar';
 
   @override
   String get bmcPowerCycle => 'Ciclo de energia';
@@ -990,9 +990,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get homeDir => 'Pasta pessoal';
 
   @override
-  String get selectItem => 'Selecionar';
-
-  @override
   String selected(Object count) {
     return '$count selecionados';
   }
@@ -1173,9 +1170,6 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get syncAppSettingsTip =>
       'Incluir tema, layout, editor, terminal e outras preferências do dispositivo na sincronização automática.';
-
-  @override
-  String get system => 'Sistema';
 
   @override
   String get termFontSizeTip =>

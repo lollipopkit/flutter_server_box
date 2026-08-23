@@ -715,7 +715,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get bmcForceOff => '強制電源オフ';
 
   @override
-  String get bmcRestart => '再起動';
+  String get restart => '再起動';
 
   @override
   String get bmcPowerCycle => '電源の入れ直し';
@@ -932,9 +932,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeDir => 'ホーム';
 
   @override
-  String get selectItem => '選択';
-
-  @override
   String selected(Object count) {
     return '$count 件選択';
   }
@@ -1106,9 +1103,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get syncAppSettingsTip => 'テーマ、レイアウト、エディター、ターミナルなど端末ごとの設定も自動同期に含めます。';
-
-  @override
-  String get system => 'システム';
 
   @override
   String get termFontSizeTip =>

@@ -760,7 +760,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get bmcForceOff => 'Примусово вимкнути';
 
   @override
-  String get bmcRestart => 'Перезапустити';
+  String get restart => 'Перезапустити';
 
   @override
   String get bmcPowerCycle => 'Повне перезавантаження живлення';
@@ -993,9 +993,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get homeDir => 'Домівка';
 
   @override
-  String get selectItem => 'Вибрати';
-
-  @override
   String selected(Object count) {
     return 'Вибрано: $count';
   }
@@ -1176,9 +1173,6 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get syncAppSettingsTip =>
       'Включити тему, компонування, редактор, термінал та інші налаштування пристрою в автоматичну синхронізацію.';
-
-  @override
-  String get system => 'Система';
 
   @override
   String get termFontSizeTip =>

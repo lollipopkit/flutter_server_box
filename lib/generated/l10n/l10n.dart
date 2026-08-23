@@ -1071,7 +1071,7 @@ abstract class AppLocalizations {
   /// **'Ignore certificate'**
   String get ignoreCert;
 
-  /// No description provided for @image.
+  /// A container image, as in Docker. NOT a picture — do not replace this with libL10n.image, whose German is "Bild" and Japanese "画像".
   ///
   /// In en, this message translates to:
   /// **'Image'**
@@ -1437,11 +1437,11 @@ abstract class AppLocalizations {
   /// **'Force off'**
   String get bmcForceOff;
 
-  /// No description provided for @bmcRestart.
+  /// No description provided for @restart.
   ///
   /// In en, this message translates to:
   /// **'Restart'**
-  String get bmcRestart;
+  String get restart;
 
   /// No description provided for @bmcPowerCycle.
   ///
@@ -1826,12 +1826,6 @@ abstract class AppLocalizations {
   /// **'Home'**
   String get homeDir;
 
-  /// No description provided for @selectItem.
-  ///
-  /// In en, this message translates to:
-  /// **'Select'**
-  String get selectItem;
-
   /// No description provided for @selected.
   ///
   /// In en, this message translates to:
@@ -2113,12 +2107,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Include theme, layout, editor, terminal and other device preferences in automatic sync.'**
   String get syncAppSettingsTip;
-
-  /// No description provided for @system.
-  ///
-  /// In en, this message translates to:
-  /// **'System'**
-  String get system;
 
   /// No description provided for @termFontSizeTip.
   ///

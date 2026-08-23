@@ -714,7 +714,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get bmcForceOff => '강제 종료';
 
   @override
-  String get bmcRestart => '재시작';
+  String get restart => '재시작';
 
   @override
   String get bmcPowerCycle => '전원 재투입';
@@ -933,9 +933,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeDir => '홈';
 
   @override
-  String get selectItem => '선택';
-
-  @override
   String selected(Object count) {
     return '$count개 선택됨';
   }
@@ -1109,9 +1106,6 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get syncAppSettingsTip =>
       '자동 동기화에 테마, 레이아웃, 편집기, 터미널 등 기타 기기 환경설정을 포함합니다.';
-
-  @override
-  String get system => '시스템';
 
   @override
   String get termFontSizeTip =>

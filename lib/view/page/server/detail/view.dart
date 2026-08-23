@@ -1571,7 +1571,7 @@ ${err.message ?? 'null'}
     PowerIntent.on => l10n.bmcPowerOnAction,
     PowerIntent.gracefulShutdown => l10n.bmcShutdown,
     PowerIntent.forceOff => l10n.bmcForceOff,
-    PowerIntent.restart => l10n.bmcRestart,
+    PowerIntent.restart => l10n.restart,
     PowerIntent.powerCycle => l10n.bmcPowerCycle,
   };
 

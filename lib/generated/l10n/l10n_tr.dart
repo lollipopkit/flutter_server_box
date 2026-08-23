@@ -756,7 +756,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get bmcForceOff => 'Zorla kapat';
 
   @override
-  String get bmcRestart => 'Yeniden başlat';
+  String get restart => 'Yeniden başlat';
 
   @override
   String get bmcPowerCycle => 'Güç döngüsü';
@@ -990,9 +990,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get homeDir => 'Ana klasör';
 
   @override
-  String get selectItem => 'Seç';
-
-  @override
   String selected(Object count) {
     return '$count seçildi';
   }
@@ -1173,9 +1170,6 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get syncAppSettingsTip =>
       'Tema, düzen, düzenleyici, terminal ve diğer cihaz tercihlerini otomatik eşitlemeye dâhil et.';
-
-  @override
-  String get system => 'Sistem';
 
   @override
   String get termFontSizeTip =>

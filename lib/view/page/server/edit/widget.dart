@@ -268,7 +268,7 @@ extension _Widgets on _ServerEditPageState {
     return _systemType.listenVal((val) {
       return ListTile(
         leading: Icon(MingCute.laptop_2_line),
-        title: Text(l10n.system),
+        title: Text(libL10n.system),
         trailing: PopupMenu<SystemType?>(
           initialValue: val,
           items: [
