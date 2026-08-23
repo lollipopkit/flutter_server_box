@@ -185,6 +185,14 @@ Future<SSHClient> genClient(
           'Invalid jump chain: cycle detected at ${spi.name} ($currentServerId)',
     );
   }
+  // Also detect address-level cycles for cloned servers.
+  final addrKey = 'addr:${ssh.ip}:${ssh.port}';
+  if (!chainVisitedServerIds.add(addrKey)) {
+    throw SSHErr(
+      type: SSHErrType.connect,
+      message: 'Invalid jump chain: address cycle at ${ssh.ip}:${ssh.port}',
+    );
+  }
 
   onStatus?.call(GenSSHClientStatus.socket);
 
@@ -412,7 +420,11 @@ bool _isJumpFailoverError(Object error) {
       errStr.contains('failed host lookup') ||
       errStr.contains('forwardlocal') ||
       errStr.contains('proxycommand exited') ||
-      errStr.contains('proxycommand timed out');
+      errStr.contains('proxycommand timed out') ||
+      errStr.contains('channel open failed') ||
+      errStr.contains('session') && errStr.contains('failed') ||
+      errStr.contains('maxsessions') ||
+      errStr.contains('too many');
 }
 
 @visibleForTesting
@@ -740,6 +752,13 @@ Future<void> ensureKnownHostKey(
       type: SSHErrType.connect,
       message:
           'Invalid jump chain: cycle detected at ${spi.name} ($currentServerId)',
+    );
+  }
+  final addrKey2 = 'addr:${ssh.ip}:${ssh.port}';
+  if (!chainVisitedServerIds.add(addrKey2)) {
+    throw SSHErr(
+      type: SSHErrType.connect,
+      message: 'Invalid jump chain: address cycle at ${ssh.ip}:${ssh.port}',
     );
   }
 
