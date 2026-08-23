@@ -55,6 +55,7 @@ String agentNoticeText(BuildContext context, AgentNoticeKind kind) =>
     switch (kind) {
       AgentNoticeKind.declined => context.l10n.askAiActionDeclined,
       AgentNoticeKind.interrupted => context.l10n.askAiInterrupted,
+      AgentNoticeKind.inserted => context.l10n.askAiCommandInserted,
     };
 
 /// Copies [text], and says so.

@@ -15,7 +15,7 @@ extension _AskAi on SSHPageState {
         label: context.l10n.askAi,
         onPressed: () {
           state.hideToolbar();
-          _showAskAiPanel(selection, autoStart: true);
+          _showAskAiPanel(autoStart: true);
         },
       ),
     ];
@@ -30,10 +30,39 @@ extension _AskAi on SSHPageState {
     return _sess.outputTail.trim();
   }
 
-  Future<void> _showAskAiPanel(
-    String terminalContext, {
-    required bool autoStart,
-  }) async {
+  /// Makes this terminal reachable by the Agent session scoped to its server.
+  ///
+  /// Done by the page rather than by the panel, because the two have different
+  /// lifetimes on purpose: closing the panel does not end a turn, so a command
+  /// approved before it closed still has a terminal to run in. What ends the
+  /// reach is the tab going away.
+  ///
+  /// The closures are what is handed over, never the terminal — a session that
+  /// held the controller could reach one this page has already disposed.
+  void _attachAgentHost() {
+    final spi = widget.args.spi;
+    // A terminal on this device has no server to scope a conversation to. The
+    // app-wide Agent is what reaches it, through `LocalTarget`.
+    if (spi == null) return;
+    final host = TerminalAgentHost(
+      serverName: spi.name,
+      // Read per turn, not captured: this session outlives any one panel, and
+      // by the next turn the screen has moved on.
+      readContext: () => _recentTerminalContext,
+      run: _runAiCommand,
+      insert: _insertAiCommand,
+      cancel: _cancelAiCommand,
+    );
+    final hosts = ref.read(agentScopeHostsProvider)..register(spi.id, host);
+    _releaseAgentHost = () => hosts.unregister(spi.id, host);
+  }
+
+  /// Opens the Agent for this terminal's server.
+  ///
+  /// Takes no terminal context: what gets sent is read from the terminal when
+  /// a turn starts, through the host this page registered, so a session that
+  /// outlives this panel is never sending a screen from an earlier one.
+  Future<void> _showAskAiPanel({required bool autoStart}) async {
     if (!mounted) return;
     final localeHint = Localizations.maybeLocaleOf(context)?.toLanguageTag();
     // The width this page has, not the window's. On anything but a phone the
@@ -54,7 +83,6 @@ extension _AskAi on SSHPageState {
     if (spi == null) return;
 
     Widget panel(BuildContext panelContext) => _AskAiPanel(
-      terminalContext: terminalContext,
       serverId: spi.id,
       serverName: spi.name,
       localeHint: localeHint,
@@ -64,9 +92,6 @@ extension _AskAi on SSHPageState {
       // itself it is a side panel — since a sheet's context measures the
       // sheet.
       placement: placement,
-      onCommandInsert: _insertAiCommand,
-      onCommandRun: _runAiCommand,
-      onCommandCancel: _cancelAiCommand,
     );
 
     if (placement == AskAiPanelPlacement.bottomSheet) {
@@ -227,122 +252,62 @@ extension _AskAi on SSHPageState {
     if (session != null) await _terminateAiCommandSession(session);
   }
 }
-
+/// The Agent for one server, shown beside its terminal.
+///
+/// A view onto [agentSessionProvider] and nothing more: the conversation, the
+/// turn it is in the middle of and the proposal awaiting review all live in
+/// that session, scoped to [serverId] — the same scope the conversations are
+/// stored under. This panel had its own copy of that state machine until the
+/// two drifted apart in three places; what is left here is what a panel is
+/// for, which is layout, scrolling and what is being typed.
 class _AskAiPanel extends ConsumerStatefulWidget {
   const _AskAiPanel({
-    required this.terminalContext,
     required this.serverId,
     required this.serverName,
     required this.localeHint,
     required this.autoStart,
     required this.placement,
-    required this.onCommandInsert,
-    required this.onCommandRun,
-    required this.onCommandCancel,
   });
 
-  final String terminalContext;
   final String serverId;
   final String serverName;
   final String? localeHint;
   final bool autoStart;
   final AskAiPanelPlacement placement;
-  final ValueChanged<String> onCommandInsert;
-  final Future<AskAiCommandResult> Function(AskAiCommand command) onCommandRun;
-  final Future<void> Function() onCommandCancel;
 
   @override
   ConsumerState<_AskAiPanel> createState() => _AskAiPanelState();
 }
 
-enum _ChatEntryType { user, assistant, result, notice }
-
-class _ChatEntry {
-  const _ChatEntry._({
-    required this.type,
-    this.content,
-    this.command,
-    this.result,
-    this.autoApproved = false,
-  });
-
-  const _ChatEntry.user(String content)
-    : this._(type: _ChatEntryType.user, content: content);
-
-  const _ChatEntry.assistant(String content)
-    : this._(type: _ChatEntryType.assistant, content: content);
-
-  const _ChatEntry.result(
-    AskAiCommand command,
-    AskAiCommandResult result, {
-    bool autoApproved = false,
-  }) : this._(
-         type: _ChatEntryType.result,
-         command: command,
-         result: result,
-         autoApproved: autoApproved,
-       );
-
-  const _ChatEntry.notice(String content)
-    : this._(type: _ChatEntryType.notice, content: content);
-
-  final _ChatEntryType type;
-  final String? content;
-  final AskAiCommand? command;
-  final AskAiCommandResult? result;
-  final bool autoApproved;
-}
-
 class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
-  StreamSubscription<AskAiEvent>? _subscription;
-  final _chatEntries = <_ChatEntry>[];
-  final _history = <AskAiConversationItem>[];
   final _scrollController = ScrollController();
   final _inputController = TextEditingController();
-  late AskAiProtocol _protocol;
-  AgentConversation? _conversation;
-  AskAiCommand? _pendingCommand;
-  String? _streamingContent;
-  String? _error;
-  bool _isStreaming = false;
-  bool _isExecuting = false;
-  bool _turnCompleted = false;
-  bool _historyInitialized = false;
-  bool _pendingCommandRestored = false;
-  bool _submissionInFlight = false;
-  int _autoRunCount = 0;
+  bool _autoStarted = false;
 
-  bool get _isWorking =>
-      _submissionInFlight || _isStreaming || _isExecuting;
+  AgentSession get _notifier =>
+      ref.read(agentSessionProvider(widget.serverId).notifier);
 
   @override
   void initState() {
     super.initState();
-    _protocol = _resolvedConfiguredProtocol();
     _inputController.addListener(_handleInputChanged);
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_historyInitialized) return;
-    _historyInitialized = true;
-    _restoreConversation(
-      Stores.agentConversation.fetchActive(widget.serverId),
-      notify: false,
-    );
-    if (widget.autoStart) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        _submitPrompt(context.l10n.askAiAnalyzeSelectionPrompt);
-      });
-    }
+    if (_autoStarted || !widget.autoStart) return;
+    _autoStarted = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _submitPrompt(context.l10n.askAiAnalyzeSelectionPrompt);
+    });
   }
 
   @override
   void dispose() {
-    _subscription?.cancel();
-    if (_isExecuting) widget.onCommandCancel();
+    // Nothing about the conversation is torn down here. A turn belongs to the
+    // session, which outlives this panel on purpose: closing it used to cancel
+    // whatever was streaming, which is not what closing a window means.
     _scrollController.dispose();
     _inputController
       ..removeListener(_handleInputChanged)
@@ -354,255 +319,23 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
     if (mounted) setState(() {});
   }
 
-  AskAiProtocol _resolvedConfiguredProtocol() {
-    return AskAiRepository.resolveProtocol(
-      configured: parseAskAiProtocol(Stores.setting.askAiProtocol.fetch()),
-      endpoint: Stores.setting.askAiBaseUrl.fetch(),
-    );
-  }
-
-  void _restoreConversation(
-    AgentConversation? conversation, {
-    bool notify = true,
-  }) {
-    final replay = AgentConversationReplay.fromItems(
-      conversation?.items ?? const [],
-    );
-
-    void apply() {
-      final restoredProtocol = conversation?.protocol;
-      _subscription?.cancel();
-      _conversation = conversation;
-      _protocol =
-          restoredProtocol == null || restoredProtocol == AskAiProtocol.auto
-          ? _resolvedConfiguredProtocol()
-          : restoredProtocol;
-      _history
-        ..clear()
-        ..addAll(conversation?.items ?? const []);
-      _chatEntries
-        ..clear()
-        ..addAll(replay.entries.map(_chatEntryFromReplay));
-      _pendingCommand = replay.pendingCommand;
-      _pendingCommandRestored = replay.pendingCommand != null;
-      _streamingContent = null;
-      _error = null;
-      _isStreaming = false;
-      _isExecuting = false;
-      _turnCompleted = false;
-      _autoRunCount = 0;
-      _inputController.clear();
-    }
-
-    if (notify) {
-      setState(apply);
-      scheduleAgentAutoScroll(_scrollController, force: true);
-    } else {
-      apply();
-    }
-  }
-
-  _ChatEntry _chatEntryFromReplay(AgentConversationReplayEntry entry) {
-    return switch (entry.type) {
-      AgentConversationReplayEntryType.user => _ChatEntry.user(
-        entry.content ?? '',
-      ),
-      AgentConversationReplayEntryType.assistant => _ChatEntry.assistant(
-        entry.content ?? '',
-      ),
-      AgentConversationReplayEntryType.commandResult => _ChatEntry.result(
-        entry.command!,
-        entry.result!,
-      ),
-      AgentConversationReplayEntryType.declined => _ChatEntry.notice(
-        context.l10n.askAiActionDeclined,
-      ),
-      AgentConversationReplayEntryType.inserted => _ChatEntry.notice(
-        context.l10n.askAiCommandInserted,
-      ),
-      AgentConversationReplayEntryType.notice => _ChatEntry.notice(
-        entry.content ?? '',
-      ),
-    };
-  }
-
-  Future<AgentConversation> _ensureConversation() async {
-    final existing = _conversation;
-    if (existing != null) return existing;
-    final created = Stores.agentConversation.create(
-      serverId: widget.serverId,
-      protocol: _protocol,
-      providerBaseUrl: Stores.setting.askAiBaseUrl.fetch(),
-      model: Stores.setting.askAiModel.fetch(),
-    );
-    _conversation = created;
-    return created;
-  }
-
-  Future<void> _persistConversation() async {
-    final conversation = await _ensureConversation();
-    final trimmed = AgentConversationStore.trimItemsForStorage(_history);
-    final updated = conversation.copyWith(
-      updatedAt: DateTime.now(),
-      protocol: _protocol,
-      items: trimmed,
-    );
-    if (!Stores.agentConversation.save(updated)) return;
-    _conversation = Stores.agentConversation.fetch(updated.id) ?? updated;
-    if (trimmed.length != _history.length) {
-      _history
-        ..clear()
-        ..addAll(trimmed);
-    }
-  }
-
-  void _refreshConversationMetadata(String conversationId) {
-    if (_conversation?.id != conversationId || !mounted) return;
-    setState(() {
-      _conversation = Stores.agentConversation.fetch(conversationId);
-    });
-  }
-
   Future<void> _submitPrompt(String prompt) async {
-    final text = prompt.trim();
-    if (text.isEmpty || _isWorking || _pendingCommand != null) return;
-    _submissionInFlight = true;
-    try {
-      await _ensureConversation();
-      if (!mounted) return;
-      final message = AskAiMessageItem.user(text);
-      setState(() {
-        _history.add(message);
-        _chatEntries.add(_ChatEntry.user(text));
-        _inputController.clear();
-        _autoRunCount = 0;
-      });
-      await _persistConversation();
-      if (!mounted) return;
-      _startStream();
-      scheduleAgentAutoScroll(_scrollController, force: true);
-    } finally {
-      _submissionInFlight = false;
-    }
+    final taken = await _notifier.submitPrompt(
+      prompt,
+      localeHint: widget.localeHint,
+    );
+    // Only once it was taken: a prompt refused because a turn is already
+    // running is still in the box, and emptying it would lose what was typed.
+    if (taken && mounted) _inputController.clear();
   }
 
-  void _startStream() {
-    _subscription?.cancel();
-    setState(() {
-      _isStreaming = true;
-      _turnCompleted = false;
-      _error = null;
-      _streamingContent = '';
-    });
-
-    _subscription = ref
-        .read(askAiRepositoryProvider)
-        .ask(
-          terminalContext: widget.terminalContext,
-          serverName: widget.serverName,
-          localeHint: widget.localeHint,
-          conversation: List.unmodifiable(_history),
-          protocol: _protocol,
-        )
-        .asyncMap((event) async {
-          await _handleEvent(event);
-          return event;
-        })
-        .listen(
-          (_) {},
-          onError: (Object error, StackTrace stackTrace) {
-            if (!mounted) return;
-            setState(() {
-              _error = describeAgentError(context, error);
-              _isStreaming = false;
-              _streamingContent = null;
-              _pendingCommand = null;
-            });
-          },
-          onDone: () {
-            if (!mounted || _turnCompleted) return;
-            setState(() {
-              _isStreaming = false;
-              _streamingContent = null;
-            });
-          },
-          cancelOnError: true,
-        );
-  }
-
-  Future<void> _handleEvent(AskAiEvent event) async {
-    if (!mounted) return;
-    if (event is AskAiContentDelta) {
-      setState(() {
-        _streamingContent = (_streamingContent ?? '') + event.delta;
-      });
-      scheduleAgentAutoScroll(_scrollController);
-      return;
-    }
-    if (event is AskAiToolSuggestion) {
-      setState(() {
-        _pendingCommand ??= event.command;
-        _pendingCommandRestored = false;
-      });
-      return;
-    }
-    if (event is AskAiStreamError) {
-      _subscription?.cancel();
-      setState(() {
-        _error = describeAgentError(context, event.error);
-        _isStreaming = false;
-        _streamingContent = null;
-        _pendingCommand = null;
-      });
-      return;
-    }
-    if (event is! AskAiCompleted || _turnCompleted) return;
-
-    final text = event.fullText.trim().isNotEmpty
-        ? event.fullText
-        : (_streamingContent ?? '');
-    final command = event.commands.isEmpty
-        ? _pendingCommand
-        : event.commands.first;
-    setState(() {
-      _turnCompleted = true;
-      _isStreaming = false;
-      _streamingContent = null;
-      _pendingCommand = command;
-      _pendingCommandRestored = false;
-      _protocol = event.protocol;
-      _history.addAll(event.outputItems);
-      if (text.trim().isNotEmpty) {
-        _chatEntries.add(_ChatEntry.assistant(text));
-      }
-      if (text.trim().isEmpty && command == null) {
-        _error = context.l10n.askAiNoResponse;
-      }
-    });
-    await _persistConversation();
-    if (!mounted) return;
-    scheduleAgentAutoScroll(_scrollController, force: true);
-
-    if (command != null &&
-        shouldAutoRunAgentCommand(
-          command: command,
-          enabled: Stores.setting.askAiAutoRunSafeCommands.fetch(),
-          restored: _pendingCommandRestored,
-          runCount: _autoRunCount,
-        )) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && identical(_pendingCommand, command)) {
-          _runPendingCommand(autoApproved: true);
-        }
-      });
-    }
-  }
-
-  Future<void> _runPendingCommand({bool autoApproved = false}) async {
-    final command = _pendingCommand;
-    if (command == null || _isWorking) return;
-
-    if (!autoApproved && command.risk == AskAiCommandRisk.destructive) {
+  /// Runs the pending command, asking first when it is the kind that cannot be
+  /// undone.
+  ///
+  /// The asking is here rather than in the session because it is a dialog, and
+  /// the session has no `BuildContext` to put one on.
+  Future<void> _runPendingCommand(AskAiCommand command) async {
+    if (command.risk == AskAiCommandRisk.destructive) {
       final confirmed = await context.showRoundDialog<bool>(
         title: context.l10n.askAiHighRiskConfirmTitle,
         child: Column(
@@ -627,143 +360,35 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       );
       if (confirmed != true || !mounted) return;
     }
-
-    setState(() {
-      _isExecuting = true;
-      _error = null;
-      if (autoApproved) _autoRunCount++;
-    });
-    AskAiCommandResult result;
-    try {
-      result = await widget.onCommandRun(command);
-    } catch (error) {
-      if (!mounted) return;
-      final message = describeAgentError(context, error);
-      setState(() {
-        _history.add(
-          AskAiFunctionOutputItem(
-            callId: command.id,
-            output: AskAiCommandResult(
-              command: command.command,
-              stdout: '',
-              stderr: message,
-              duration: Duration.zero,
-            ).toToolMessage(),
-          ),
-        );
-        _pendingCommand = null;
-        _pendingCommandRestored = false;
-        _error = message;
-        _isExecuting = false;
-      });
-      try {
-        await _persistConversation();
-      } catch (persistError) {
-        if (!mounted) return;
-        setState(() => _error = describeAgentError(context, persistError));
-      }
-      return;
-    }
-    if (!mounted) return;
-    setState(() {
-      _history.add(
-        AskAiFunctionOutputItem(
-          callId: command.id,
-          output: result.toToolMessage(),
-        ),
-      );
-      _chatEntries.add(
-        _ChatEntry.result(command, result, autoApproved: autoApproved),
-      );
-      _pendingCommand = null;
-      _pendingCommandRestored = false;
-      _isExecuting = false;
-    });
-    try {
-      await _persistConversation();
-    } catch (persistError) {
-      if (!mounted) return;
-      setState(() => _error = describeAgentError(context, persistError));
-      return;
-    }
-    if (!mounted) return;
-    scheduleAgentAutoScroll(_scrollController, force: true);
-    if (!result.cancelled) _startStream();
-  }
-
-  Future<void> _declinePendingCommand() async {
-    final command = _pendingCommand;
-    if (command == null || _isWorking) return;
-    final message = context.l10n.askAiActionDeclined;
-    setState(() {
-      _history.add(
-        AskAiFunctionOutputItem(
-          callId: command.id,
-          output: encodeAgentConversationToolAction(
-            AgentConversationToolAction.declined,
-          ),
-        ),
-      );
-      _chatEntries.add(_ChatEntry.notice(message));
-      _pendingCommand = null;
-      _pendingCommandRestored = false;
-    });
-    await _persistConversation();
+    await _notifier.runPendingTool();
   }
 
   Future<void> _insertPendingCommand() async {
-    final command = _pendingCommand;
-    if (command == null || _isWorking) return;
-    widget.onCommandInsert(command.command);
-    final message = context.l10n.askAiCommandInserted;
-    setState(() {
-      _history.add(
-        AskAiFunctionOutputItem(
-          callId: command.id,
-          output: encodeAgentConversationToolAction(
-            AgentConversationToolAction.inserted,
-          ),
-        ),
-      );
-      _chatEntries.add(_ChatEntry.notice(message));
-      _pendingCommand = null;
-      _pendingCommandRestored = false;
-    });
-    await _persistConversation();
-    Toast.show(message);
-  }
-
-  Future<void> _stopWork() async {
-    if (_isExecuting) {
-      await widget.onCommandCancel();
-      return;
+    if (await _notifier.insertPendingTool()) {
+      Toast.show(context.l10n.askAiCommandInserted);
     }
-    if (!_isStreaming) return;
-    _subscription?.cancel();
-    setState(() {
-      _isStreaming = false;
-      _streamingContent = null;
-      _pendingCommand = null;
-      _pendingCommandRestored = false;
-      _chatEntries.add(_ChatEntry.notice(context.l10n.askAiInterrupted));
-    });
   }
 
-  Widget _buildHeader(BuildContext context, ThemeData theme) {
+  Widget _buildHeader(
+    BuildContext context,
+    ThemeData theme,
+    AgentSessionState session,
+  ) {
     final compact = MediaQuery.sizeOf(context).width < 480;
     final status = switch ((
-      _isExecuting,
-      _isStreaming,
-      _pendingCommand != null,
+      session.isExecuting,
+      session.isStreaming,
+      session.pendingTool != null,
     )) {
       (true, _, _) => libL10n.running,
       (_, true, _) => libL10n.thinking,
       (_, _, true) => context.l10n.askAiReviewNeeded,
       _ => libL10n.ready,
     };
-    final statusColor = _pendingCommand != null
+    final statusColor = session.pendingTool != null
         ? theme.colorScheme.tertiary
         : theme.colorScheme.primary;
+    final title = session.conversation?.title.trim() ?? '';
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 8, 10),
       child: Row(
@@ -789,8 +414,8 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
                   ),
                 ),
                 Text(
-                  _conversation?.title.trim().isNotEmpty == true
-                      ? '${widget.serverName} · ${_conversation!.title}'
+                  title.isNotEmpty
+                      ? '${widget.serverName} · $title'
                       : widget.serverName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -826,13 +451,13 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
             ),
           IconButton(
             tooltip: context.l10n.askAiHistory,
-            onPressed: _isWorking ? null : _showConversationHistory,
+            onPressed: session.isWorking ? null : _showConversationHistory,
             icon: const Icon(Icons.history),
           ),
-          if (_isWorking)
+          if (session.isWorking)
             IconButton(
               tooltip: libL10n.stop,
-              onPressed: _stopWork,
+              onPressed: _notifier.stopWork,
               icon: const Icon(Icons.stop_circle_outlined),
             ),
           IconButton(
@@ -846,7 +471,13 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
   }
 
   Widget _buildTerminalContext(BuildContext context, ThemeData theme) {
-    final content = widget.terminalContext.trim();
+    // What the next turn would send, read now — the same getter the session
+    // reads through its host. Showing the screen as it was when this panel
+    // opened would be a disclosure of something else.
+    final content = ref
+        .read(agentScopeHostsProvider)[widget.serverId]
+        .terminalContext
+        .trim();
     if (content.isEmpty) return const SizedBox.shrink();
     final preview = content.replaceAll(RegExp(r'\s+'), ' ').trim();
     return Container(
@@ -910,13 +541,34 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
     );
   }
 
-  Widget _buildChatEntry(
+  Widget _buildTimelineEntry(
     BuildContext context,
     ThemeData theme,
-    _ChatEntry entry,
+    AgentTimelineEntry entry,
   ) {
-    return switch (entry.type) {
-      _ChatEntryType.user => Align(
+    Widget notice(String text) => Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.info_outline,
+          size: 15,
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+        const SizedBox(width: 6),
+        Flexible(
+          child: Text(
+            text,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ],
+    );
+
+    return switch (entry) {
+      AgentUserEntry(:final content) => Align(
         alignment: Alignment.centerRight,
         child: Container(
           constraints: const BoxConstraints(maxWidth: 460),
@@ -925,10 +577,10 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
             color: theme.colorScheme.primaryContainer,
             borderRadius: BorderRadius.circular(14),
           ),
-          child: SelectableText(entry.content ?? ''),
+          child: SelectableText(content),
         ),
       ),
-      _ChatEntryType.assistant => Align(
+      AgentAssistantEntry(:final content) => Align(
         alignment: Alignment.centerLeft,
         child: Container(
           constraints: const BoxConstraints(maxWidth: 520),
@@ -940,13 +592,13 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SimpleMarkdown(data: entry.content ?? ''),
+              SimpleMarkdown(data: content),
               Align(
                 alignment: Alignment.centerRight,
                 child: IconButton(
                   tooltip: libL10n.copy,
                   visualDensity: VisualDensity.compact,
-                  onPressed: () => copyAgentText(entry.content ?? ''),
+                  onPressed: () => copyAgentText(content),
                   icon: const Icon(Icons.copy, size: 17),
                 ),
               ),
@@ -954,37 +606,23 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
           ),
         ),
       ),
-      _ChatEntryType.result => _buildCommandResult(context, theme, entry),
-      _ChatEntryType.notice => Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.info_outline,
-            size: 15,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-          const SizedBox(width: 6),
-          Flexible(
-            child: Text(
-              entry.content ?? '',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-        ],
-      ),
+      AgentShellResultEntry() => _buildCommandResult(context, theme, entry),
+      // Written only by the app-wide Agent, whose tools are not all shells.
+      // Reachable here through a restored backup, and shown as its own summary
+      // rather than forced into a shell result's shape.
+      AgentToolResultEntry(:final result) => notice(result.summary),
+      AgentNoticeEntry(:final kind) => notice(agentNoticeText(context, kind)),
+      AgentRawNoticeEntry(:final text) => notice(text),
     };
   }
 
   Widget _buildCommandResult(
     BuildContext context,
     ThemeData theme,
-    _ChatEntry entry,
+    AgentShellResultEntry entry,
   ) {
-    final command = entry.command!;
-    final result = entry.result!;
+    final command = entry.command;
+    final result = entry.result;
     final output = result.displayOutput;
     final color = result.succeeded
         ? theme.colorScheme.primary
@@ -1045,8 +683,12 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
     );
   }
 
-  Widget _buildStreamingBubble(BuildContext context, ThemeData theme) {
-    final content = _streamingContent?.trim() ?? '';
+  Widget _buildStreamingBubble(
+    BuildContext context,
+    ThemeData theme,
+    AgentSessionState session,
+  ) {
+    final content = session.streamingContent?.trim() ?? '';
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
@@ -1069,15 +711,19 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
                   Text(context.l10n.askAiAwaitingResponse),
                 ],
               )
-            : SimpleMarkdown(data: _streamingContent!),
+            : SimpleMarkdown(data: content),
       ),
     );
   }
 
-  Widget _buildProposalCard(BuildContext context, ThemeData theme) {
-    final command = _pendingCommand!;
-    final risk = command.risk;
-    final (label, color, icon) = switch (risk) {
+  Widget _buildProposalCard(
+    BuildContext context,
+    ThemeData theme,
+    AgentSessionState session,
+  ) {
+    final command = session.pendingTool!;
+    final working = session.isWorking;
+    final (label, color, icon) = switch (command.risk) {
       AskAiCommandRisk.readOnly => (
         context.l10n.askAiRiskReadOnly,
         theme.colorScheme.primary,
@@ -1159,7 +805,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
             const SizedBox(height: 8),
             Text(command.description, style: theme.textTheme.bodySmall),
           ],
-          if (_pendingCommandRestored) ...[
+          if (session.pendingToolRestored) ...[
             const SizedBox(height: 8),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1182,21 +828,23 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
             alignment: WrapAlignment.end,
             children: [
               TextButton(
-                onPressed: _isWorking ? null : _declinePendingCommand,
+                onPressed: working ? null : _notifier.declinePendingTool,
                 child: Text(context.l10n.askAiDecline),
               ),
               TextButton.icon(
-                onPressed: _isWorking ? null : () => copyAgentText(command.command),
+                onPressed: working
+                    ? null
+                    : () => copyAgentText(command.command),
                 icon: const Icon(Icons.copy, size: 17),
                 label: Text(libL10n.copy),
               ),
               OutlinedButton.icon(
-                onPressed: _isWorking ? null : _insertPendingCommand,
+                onPressed: working ? null : _insertPendingCommand,
                 icon: const Icon(Icons.keyboard_return, size: 17),
                 label: Text(context.l10n.askAiInsertTerminal),
               ),
               FilledButton.icon(
-                onPressed: _isWorking ? null : _runPendingCommand,
+                onPressed: working ? null : () => _runPendingCommand(command),
                 icon: const Icon(Icons.play_arrow, size: 18),
                 label: Text(context.l10n.askAiApproveRun),
               ),
@@ -1225,27 +873,34 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
     return KeyEventResult.handled;
   }
 
-  Widget _buildComposer(BuildContext context, ThemeData theme) {
+  Widget _buildComposer(
+    BuildContext context,
+    ThemeData theme,
+    AgentSessionState session,
+  ) {
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
     final canSend =
-        !_isWorking &&
-        _pendingCommand == null &&
+        !session.isWorking &&
+        session.pendingTool == null &&
         _inputController.text.trim().isNotEmpty;
     final sendOnEnter = Stores.setting.askAiSendOnEnter.fetch();
+    final error = session.error;
     return AnimatedPadding(
       duration: const Duration(milliseconds: 120),
       padding: EdgeInsets.fromLTRB(12, 8, 12, 12 + bottomInset),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (_pendingCommand != null) ...[
-            _buildProposalCard(context, theme),
+          if (session.pendingTool != null) ...[
+            _buildProposalCard(context, theme, session),
             const SizedBox(height: 8),
           ],
-          if (_error != null) ...[
+          if (error != null) ...[
             AgentErrorBanner(
-              message: _error!,
-              onRetry: _isWorking ? null : _startStream,
+              message: describeAgentError(context, error),
+              onRetry: session.isWorking
+                  ? null
+                  : () => _notifier.startStream(localeHint: widget.localeHint),
             ),
             const SizedBox(height: 8),
           ],
@@ -1262,7 +917,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
                     controller: _inputController,
                     minLines: 1,
                     maxLines: 5,
-                    hint: _pendingCommand == null
+                    hint: session.pendingTool == null
                         ? context.l10n.askAiAgentPromptHint
                         : context.l10n.askAiReviewBeforeContinuing,
                     // On every keyboard, soft ones included — same reasoning as
@@ -1304,11 +959,27 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final provider = agentSessionProvider(widget.serverId);
+    final session = ref.watch(provider);
+
+    // Following the state rather than scrolling wherever this panel last
+    // appended something: the session moves on its own, so a turn started here
+    // keeps going while the panel is closed and comes back further along than
+    // it was left.
+    ref.listen(provider, (previous, next) {
+      final settled =
+          previous?.timeline.length != next.timeline.length ||
+          previous?.pendingTool != next.pendingTool;
+      if (settled || previous?.streamingContent != next.streamingContent) {
+        scheduleAgentAutoScroll(_scrollController, force: settled);
+      }
+    });
+
     final content = Material(
       color: theme.colorScheme.surface,
       child: Column(
         children: [
-          _buildHeader(context, theme),
+          _buildHeader(context, theme, session),
           // The app's one line — see [Hairline]. This panel sits beside the
           // terminal, so its rules meet that column's edge.
           Divider(
@@ -1324,13 +995,13 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
                 children: [
                   _buildTerminalContext(context, theme),
-                  if (_chatEntries.isEmpty && !_isStreaming)
-                    _buildEmptyState(context, theme),
-                  for (final entry in _chatEntries) ...[
-                    _buildChatEntry(context, theme, entry),
+                  if (session.isEmpty) _buildEmptyState(context, theme),
+                  for (final entry in session.timeline) ...[
+                    _buildTimelineEntry(context, theme, entry),
                     const SizedBox(height: 10),
                   ],
-                  if (_isStreaming) _buildStreamingBubble(context, theme),
+                  if (session.isStreaming)
+                    _buildStreamingBubble(context, theme, session),
                 ],
               ),
             ),
@@ -1340,7 +1011,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
             thickness: Hairline.thickness,
             color: Hairline.color(context),
           ),
-          _buildComposer(context, theme),
+          _buildComposer(context, theme, session),
         ],
       ),
     );

@@ -127,8 +127,8 @@ class AgentHeaderActions extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final session = ref.watch(agentSessionProvider);
-    final notifier = ref.read(agentSessionProvider.notifier);
+    final session = ref.watch(globalAgentSessionProvider);
+    final notifier = ref.read(globalAgentSessionProvider.notifier);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -218,8 +218,8 @@ class _AdHocSessionsButton extends ConsumerWidget {
 /// The conversation: its timeline and the box you type into.
 ///
 /// More than one of these can be on screen at once — the tab and the floating
-/// shell — and they show the same [agentSessionProvider]. What belongs to each
-/// separately is only what is being typed and where it is scrolled to.
+/// shell — and they show the same [globalAgentSessionProvider]. What belongs
+/// to each separately is only what is being typed and where it is scrolled to.
 class AgentConversationView extends ConsumerStatefulWidget {
   const AgentConversationView({
     super.key,
@@ -250,7 +250,7 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
   final _scrollController = ScrollController();
   final _inputController = TextEditingController();
 
-  AgentSession get _notifier => ref.read(agentSessionProvider.notifier);
+  AgentSession get _notifier => ref.read(globalAgentSessionProvider.notifier);
 
   String? get _localeHint =>
       Localizations.maybeLocaleOf(context)?.toLanguageTag();
@@ -282,7 +282,7 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
     // A turn is running, so there is nothing to send yet. Let the key through
     // rather than eating it: the box stays usable while an answer streams, and
     // a keystroke that neither sends nor types anything simply disappears.
-    if (ref.read(agentSessionProvider).isWorking) return KeyEventResult.ignored;
+    if (ref.read(globalAgentSessionProvider).isWorking) return KeyEventResult.ignored;
     unawaited(_submitPrompt(_inputController.text));
     // Handled either way from here: the key meant "send", and letting it
     // through would leave a line break behind whenever there was nothing to
@@ -410,7 +410,7 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
   /// list — so the line is a label there and names the conversation anyway.
   Widget _buildHeader(BuildContext context) {
     final compact = widget.compact;
-    final session = ref.watch(agentSessionProvider);
+    final session = ref.watch(globalAgentSessionProvider);
     final conversations = session.conversations;
     final activeId = session.conversation?.id;
     final at = conversations.indexWhere((e) => e.id == activeId);
@@ -571,6 +571,16 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
       ),
       AgentRawNoticeEntry(:final text) => _buildNotice(context, theme, text),
       AgentToolResultEntry() => _buildToolResultCard(context, theme, entry),
+      // Written only by a terminal Agent, which is a different scope and so a
+      // different session. Shown as the output rather than dropped, because
+      // "cannot appear here" is a claim about storage that this switch is not
+      // in a position to make — a restored backup decides what is in a
+      // conversation, not this page.
+      AgentShellResultEntry(:final result) => _buildNotice(
+        context,
+        theme,
+        result.displayOutput,
+      ),
     };
   }
 
@@ -1132,14 +1142,14 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final session = ref.watch(agentSessionProvider);
+    final session = ref.watch(globalAgentSessionProvider);
     final compact = widget.compact;
 
     // Following the state rather than scrolling wherever this view last
     // appended something: the session moves on its own, so a turn started here
     // keeps going while the view is off screen and comes back further along
     // than it was left.
-    ref.listen(agentSessionProvider, (previous, next) {
+    ref.listen(globalAgentSessionProvider, (previous, next) {
       final settled =
           previous?.timeline.length != next.timeline.length ||
           previous?.pendingTool != next.pendingTool;

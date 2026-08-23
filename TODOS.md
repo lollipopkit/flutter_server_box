@@ -71,33 +71,46 @@ server 不再发起 JSON-RPC 请求、Roots / Sampling / Logging 都已废弃。
   威胁模型,但这些工具够得到你**每一台**服务器,所以要明说,不能默认开。
 - app 得开着。这不是一个后台服务。
 
-## Agent 的两套界面:共享层已抽,剩下的是渲染
+## Agent 的两套界面:逻辑已合并,渲染仍是两份
 
 终端里的 Agent(`lib/view/page/ssh/page/ask_ai.dart`,`part of page.dart`)和 Agent
-标签页(`lib/view/page/agent/`)仍是两份实现。第一轮抽离已完成
-(`lib/view/widget/agent_common.dart`),重合从 100/426 行(23%)降到 65/386(16%)。
+标签页(`lib/view/page/agent/`)现在跑同一个循环。
 
-已共享:错误文案、通知文案、复制、自动滚动、Enter 发送的按键决策、错误横幅。
+**第一轮**抽出共享层 `lib/view/widget/agent_common.dart`:错误文案、通知文案、复制、
+自动滚动、Enter 发送的按键决策、错误横幅。抽的时候发现两份**已经漂移**,共享版取并集:
 
-抽的时候发现两份**已经漂移**,共享版取的是并集:
-
-- `_describeError`:终端会按语言选分隔符(zh/ja 用 `、`),标签页写死 `', '`;标签页
-  认得 `AgentNoResponse`,终端不认。同一个错误在两个界面上显示得不一样。
-- 按键处理:两边都修过「对带修饰键的形式也做 IME 守卫会吞掉发送快捷键」这个 bug,
-  但写法不同。
+- `_describeError`:终端按语言选分隔符(zh/ja 用 `、`),标签页写死 `', '`;标签页认得
+  `AgentNoResponse`,终端不认。同一个错误在两个界面上显示得不一样。
+- 按键处理:两边都修过「对带修饰键的形式也做 IME 守卫会吞掉发送快捷键」,写法不同。
 - 横幅圆角一个 12 一个 10,统一取 12。
 
-`composerKeySends` 原本直接读 `Stores.setting`,测试写不出来——改成把设置当参数传入
-才成了纯函数。`test/agent_common_test.dart` 9 个用例,这些逻辑此前两边都没有测试。
+`composerKeySends` 原本直接读 `Stores.setting`,测试写不出来——改成把设置当参数传入才
+成了纯函数。`test/agent_common_test.dart` 9 个用例,这些逻辑此前两边都没有测试。
 
-**剩下的 65 行重合是渲染**:`_buildComposer`、`_buildHeader`、`_buildProposalCard`、
-`_buildEmptyState` 四个同名方法,结构相似但各自嵌在不同的 state 里(一个有待审核命令、
-一个没有;一个有服务器作用域、一个没有)。要继续抽得先把它们从 State 里拆出来变成接
-参数的 widget,量级比这一轮大,收益比这一轮小。
+**第二轮**合并逻辑层。两边本来就调同一个 `askAiRepository.ask()`,状态机逐字段同构
+(`pendingTool` 和 `_pendingCommand` 都是 `AskAiCommand?`),存储也早就按 `serverId`
+分作用域——全局那套传哨兵 `globalAgentConversationScope`,终端传 `spi.id`。所以
+`AgentSession` 改成按作用域 keyed 的 family,终端面板的 12 个 State 字段全部删除,
+`AgentConversationReplay` 整个删除(与 `replayAgentTimeline` 重复)。
 
-provider 层仍是一半共享:`data/provider/ai/ask_ai.dart` 两边都用,
-`agent_session.dart` / `agent_shell.dart` / `global_agent_tools.dart` /
-`adhoc_ssh.dart` 是全局那套自己的。
+差异集中在 `AgentScopeHost`(`data/provider/ai/agent_scope.dart`)的四件事:机器名、
+终端内容、工具集、谁执行批准后的命令。终端页面在 `initState` 注册 `TerminalAgentHost`,
+`dispose` 注销;注册表是普通对象而非 provider state,因为 build 期间不能改 provider,
+而且 host 不能被缓存。
+
+顺带修掉的行为差异:
+
+- 关掉终端面板不再中断这一轮。此前 `dispose` 里 `_subscription?.cancel()`,而
+  `AgentSession` 的注释明确写着 widget 生命周期不该结束一轮。
+- 终端里 decline 之后现在会继续一轮(与标签页一致)。此前终端只记录不继续。
+- 终端上下文改为每轮开始时现读,此前是开面板时的快照。
+
+净减 ~200 行,新增 `test/agent_scope_test.dart` 7 个用例。
+
+**剩下的是渲染**,四个同名 `_build*` 方法结构相似而取值全不同(图标、尺寸、间距、
+字体档位都不一样;标签页的提案卡有工具图标和风险信息,终端的有「插入到终端」)。
+`_buildProposalCard` 逐行比对 156 行里重合 47 行(30%),但最长连续相同块只有 7 行。
+抽成一个多参数 widget 只是转发,不是收益。
 
 ## BMC:IPMI 这半没做,以及它该放在哪个仓库
 

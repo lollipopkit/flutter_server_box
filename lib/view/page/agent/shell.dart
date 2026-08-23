@@ -12,8 +12,8 @@ import 'package:server_box/view/page/agent/view.dart';
 ///
 /// Mounted by the home page above its `PageView` rather than inside any tab,
 /// because the point of it is to not belong to one. What it shows is the same
-/// [agentSessionProvider] the Agent tab shows — this is a second window onto
-/// one conversation, not a second conversation.
+/// [globalAgentSessionProvider] the Agent tab shows — this is a second window
+/// onto one conversation, not a second conversation.
 ///
 /// Two renderings: a panel you drag around a desktop window, and a pill that
 /// clings to the edge of a phone and opens upwards. Same content in both.
@@ -416,7 +416,7 @@ class _PhoneShellState extends ConsumerState<_PhoneShell>
     final padding = MediaQuery.paddingOf(context);
     const margin = AgentShellGeometry.margin;
     final working = ref.watch(
-      agentSessionProvider.select((session) => session.isWorking),
+      globalAgentSessionProvider.select((session) => session.isWorking),
     );
 
     final travel = AgentShellGeometry.pillTravelFor(

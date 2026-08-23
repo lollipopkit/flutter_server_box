@@ -13,13 +13,13 @@ import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/ai/agent_conversation.dart';
-import 'package:server_box/data/model/ai/agent_conversation_replay.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
-import 'package:server_box/data/provider/ai/ask_ai.dart';
+import 'package:server_box/data/provider/ai/agent_scope.dart';
+import 'package:server_box/data/provider/ai/agent_session.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/provider/virtual_keyboard.dart';
@@ -30,7 +30,6 @@ import 'package:server_box/data/ssh/session_manager.dart';
 import 'package:server_box/data/ssh/terminal_session.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/data/ssh/tmux/tmux_export.dart';
-import 'package:server_box/data/store/agent_conversation.dart';
 import 'package:server_box/view/page/agent/history.dart';
 import 'package:server_box/view/page/ssh/ask_ai_layout.dart';
 import 'package:server_box/view/page/ssh/page/virt_key_intro.dart';
@@ -206,6 +205,13 @@ class SSHPageState extends ConsumerState<SSHPage>
   /// cannot do — see [ShellBackend.supportsExec].
   SSHSession? _aiCommandSession;
   bool _aiCommandCancelled = false;
+
+  /// Takes this terminal out of reach of its Agent session, run on dispose.
+  ///
+  /// A closure rather than a call in `dispose`, because unregistering needs the
+  /// notifier and `ref` is not usable once the state is going away. Captured
+  /// while it still is — see [_attachAgentHost].
+  VoidCallback? _releaseAgentHost;
   Timer? _discontinuityTimer;
   static const _connectionCheckInterval = Duration(seconds: 60);
   static const _connectionCheckTimeout = Duration(seconds: 10);
@@ -235,11 +241,12 @@ class SSHPageState extends ConsumerState<SSHPage>
   Future<void> pickSnippetFromToolbar() => _pickSnippet();
 
   Future<void> openAgentFromToolbar() =>
-      _showAskAiPanel(_recentTerminalContext, autoStart: false);
+      _showAskAiPanel(autoStart: false);
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _releaseAgentHost?.call();
     _virtKeyLongPressTimer?.cancel();
     final introListener = _introVisibilityListener;
     if (introListener != null) {
@@ -284,6 +291,7 @@ class SSHPageState extends ConsumerState<SSHPage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _attachAgentHost();
     _initStoredCfg();
     _reloadVirtKeys();
     Stores.setting.horizonVirtKey.listenable().addListener(
