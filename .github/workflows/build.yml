@@ -17,7 +17,7 @@ on:
         # Unknown names are refused rather than ignored — see `Check job
         # selection`. A typo that silently builds nothing looks exactly like a
         # workflow that is broken.
-        description: 'What to run: android,ios,linux,windows,macos,monitor (empty = all; macos/monitor are verification only)'
+        description: 'What to run: android,ios,linux,windows,macos,monitor (empty = all; monitor is verification only)'
         required: false
         type: string
         default: ''
@@ -100,10 +100,10 @@ jobs:
           set -euo pipefail
 
           known="android ios linux windows macos monitor"
-          # The two verification jobs exist only for a non-release dispatch —
-          # see their own `if`. Selecting one for a release run would validate,
+          # `monitor` verifies a cross-build and publishes nothing, so its own
+          # `if` refuses a release run. Selecting it for one would validate,
           # match nothing and finish green having built nothing at all.
-          verify_only="macos monitor"
+          verify_only="monitor"
 
           if [[ "$IS_DISPATCH" != "true" || -z "${REQUESTED//[[:space:]]/}" ]]; then
             # A tag push, or a dispatch that named nothing: everything runs.
@@ -157,14 +157,20 @@ jobs:
         shell: bash
         run: scripts/release/patch-jni-build-id.sh
 
-  verifyMacOS:
-    name: Verify macOS release
+  buildMacOS:
+    name: Build macos
+    # A tag builds everything, unconditionally. The selector exists to narrow
+    # a manual dispatch; letting it decide the release path would mean an empty
+    # or unemitted output skips every job and reports success — which is the
+    # failure this whole mechanism is meant to prevent.
     if: >-
-      github.event_name == 'workflow_dispatch' && inputs.release != true
-      && contains(needs.reproducibilityCheck.outputs.selected, ',macos,')
+      github.ref_type == 'tag'
+      || contains(needs.reproducibilityCheck.outputs.selected, ',macos,')
     needs: reproducibilityCheck
     runs-on: macos-latest
     timeout-minutes: 45
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -180,6 +186,16 @@ jobs:
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
       - name: Install dependencies
         run: flutter pub get
+      - name: Resolve build number
+        shell: bash
+        run: |
+          set -euo pipefail
+          build="$(sed -n -E 's/.*static const int build = ([0-9]+);/\1/p' lib/data/res/build_data.dart | head -n 1)"
+          if [[ -z "$build" ]]; then
+            echo "BuildData.build not found in lib/data/res/build_data.dart"
+            exit 1
+          fi
+          echo "BUILD_NUMBER=$build" >> "$GITHUB_ENV"
       - name: Sign locally
         shell: bash
         run: |
@@ -211,7 +227,10 @@ jobs:
           </plist>
           EOF
       - name: Build release
-        run: flutter build macos --release
+        run: |
+          flutter build macos --release \
+            --build-number="${BUILD_NUMBER}" \
+            --build-name="1.0.${BUILD_NUMBER}"
       - name: Verify release launch
         shell: bash
         run: |
@@ -244,6 +263,34 @@ jobs:
           done
 
           cat "$log_file"
+      # Ad-hoc signed, like the unsigned IPA: the artifact is for looking at,
+      # not for handing to someone. macOS will refuse to open it without the
+      # user overriding Gatekeeper, and the name has to say so — `spctl` is
+      # expected to fail here, which is why the script only warns.
+      - name: Package dmg
+        shell: bash
+        env:
+          APP_ASSET_NAME: ${{ env.APP_NAME }}
+          APP_PATH: build/macos/Build/Products/Release/Server Box.app
+          DMG_BASENAME: ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_NoSign
+        run: bash scripts/release/package-dmg-from-xcarchive.sh
+      - name: Upload artifacts
+        if: inputs.release != true && github.ref_type != 'tag'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-macos
+          path: build/artifacts/*.dmg
+          if-no-files-found: error
+          retention-days: 14
+      - name: Create Release
+        if: inputs.release == true || github.ref_type == 'tag'
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
+        with:
+          tag_name: v1.0.${{ env.BUILD_NUMBER }}
+          files: |
+            build/artifacts/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_NoSign.dmg
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   verifyMonitor:
     name: Verify monitor ${{ matrix.platform }}-${{ matrix.arch }}
@@ -300,7 +347,9 @@ jobs:
 
   buildAndroid:
     name: Build android
-    if: contains(needs.reproducibilityCheck.outputs.selected, ',android,')
+    if: >-
+      github.ref_type == 'tag'
+      || contains(needs.reproducibilityCheck.outputs.selected, ',android,')
     needs: reproducibilityCheck
     runs-on: ubuntu-latest
     permissions:
@@ -393,7 +442,9 @@ jobs:
 
   buildIOS:
     name: Build ios
-    if: contains(needs.reproducibilityCheck.outputs.selected, ',ios,')
+    if: >-
+      github.ref_type == 'tag'
+      || contains(needs.reproducibilityCheck.outputs.selected, ',ios,')
     needs: reproducibilityCheck
     runs-on: macos-latest
     permissions:
@@ -467,7 +518,9 @@ jobs:
 
   buildLinux:
     name: Build linux
-    if: contains(needs.reproducibilityCheck.outputs.selected, ',linux,')
+    if: >-
+      github.ref_type == 'tag'
+      || contains(needs.reproducibilityCheck.outputs.selected, ',linux,')
     needs: reproducibilityCheck
     permissions:
       contents: write
@@ -538,7 +591,9 @@ jobs:
 
   buildWindows:
     name: Build windows
-    if: contains(needs.reproducibilityCheck.outputs.selected, ',windows,')
+    if: >-
+      github.ref_type == 'tag'
+      || contains(needs.reproducibilityCheck.outputs.selected, ',windows,')
     needs: reproducibilityCheck
     runs-on: windows-latest
     permissions:
