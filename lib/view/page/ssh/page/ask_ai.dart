@@ -364,9 +364,13 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
   }
 
   Future<void> _insertPendingCommand() async {
-    if (await _notifier.insertPendingTool()) {
-      Toast.show(context.l10n.askAiCommandInserted);
-    }
+    // Read before the await, not behind a `mounted` check after it. Inserting
+    // persists, and this panel can be dismissed while it does — `context.l10n`
+    // on a deactivated element throws. The toast itself needs no context and
+    // still belongs on screen either way: the command reached the terminal's
+    // input line, and whether this panel is still open does not change that.
+    final message = context.l10n.askAiCommandInserted;
+    if (await _notifier.insertPendingTool()) Toast.show(message);
   }
 
   Widget _buildHeader(
