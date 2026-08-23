@@ -29,10 +29,6 @@ enum SshKeyAlgorithm {
     ecdsaP256 => 'ecdsa-sha2-nistp256',
     rsa2048 || rsa4096 => 'ssh-rsa',
   };
-
-  /// Roughly how long generating one takes, which is the only reason a person
-  /// would want to know: RSA searches for primes and the others do not.
-  bool get isSlow => this == rsa2048 || this == rsa4096;
 }
 
 /// A key pair that has just been made, in the two forms it is needed in.
@@ -206,11 +202,22 @@ class SshKeyDigest {
   bool get isEmpty => keyType == null && fingerprint == null && comment == null;
 }
 
+/// Remembers what each key said, keyed by the key itself.
+///
+/// This is called while building a list row, so once per key per frame. It is
+/// not only a hash: for a key that is not encrypted it decodes the private
+/// blob, which for RSA-4096 means reading six mpints into BigInts. Bounded by
+/// the number of keys, and a changed key is a different string.
+final _describeCache = <String, SshKeyDigest>{};
+
 /// Reads [pem] for what can be shown about it in a list.
 ///
 /// Never throws and never asks for a passphrase: this is for a subtitle, and a
 /// key that cannot be read is one whose subtitle is empty, not an error.
-SshKeyDigest describeSshKey(String pem) {
+SshKeyDigest describeSshKey(String pem) =>
+    _describeCache[pem] ??= _describeSshKey(pem);
+
+SshKeyDigest _describeSshKey(String pem) {
   try {
     final decoded = SSHPem.decode(pem);
     if (decoded.type == 'OPENSSH PRIVATE KEY') {

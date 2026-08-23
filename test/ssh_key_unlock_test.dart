@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/ssh_key_unlock.dart';
 import 'package:server_box/core/utils/ssh_keygen.dart';
@@ -146,32 +148,6 @@ void main() {
     expect(PrivateKeyUnlock.isOpened('k'), isFalse);
   });
 
-  group('openedOrNull', () {
-    test('answers null for a locked key nobody has opened', () {
-      // What the transfer path reads: it cannot ask, so it has to be able to
-      // tell "not opened" from "needs no opening".
-      expect(
-        PrivateKeyUnlock.openedOrNull(lockedPem, cacheKey: 'k'),
-        isNull,
-      );
-      expect(
-        PrivateKeyUnlock.openedOrNull(plainPem, cacheKey: 'k'),
-        plainPem,
-      );
-    });
-
-    test('answers the opened key once it has been opened', () async {
-      PrivateKeyUnlock.promptOverrideForTesting =
-          ({required keyName, required retry}) async => passphrase;
-      final opened = await PrivateKeyUnlock.open(
-        lockedPem,
-        cacheKey: 'k',
-        keyName: 'k',
-      );
-      expect(PrivateKeyUnlock.openedOrNull(lockedPem, cacheKey: 'k'), opened);
-    });
-  });
-
   test('forget makes the next connection ask again', () async {
     var asked = 0;
     PrivateKeyUnlock.promptOverrideForTesting = ({required keyName, required retry}) async {
@@ -185,6 +161,92 @@ void main() {
     PrivateKeyUnlock.forget('k');
     await PrivateKeyUnlock.open(lockedPem, cacheKey: 'k', keyName: 'k');
     expect(asked, 2);
+  });
+
+  test('a refusal is remembered, so the poller does not ask again', () async {
+    var asked = 0;
+    PrivateKeyUnlock.promptOverrideForTesting =
+        ({required keyName, required retry}) async {
+          asked++;
+          return null;
+        };
+
+    for (var i = 0; i < 3; i++) {
+      await expectLater(
+        PrivateKeyUnlock.open(lockedPem, cacheKey: 'k', keyName: 'k'),
+        throwsA(isA<SSHErr>()),
+      );
+    }
+    // Reconnects are on a timer. Asking once per poll, per server sharing the
+    // key, is a dialog nobody can get out of.
+    expect(asked, 1);
+
+    // Editing the key is what offers it again.
+    PrivateKeyUnlock.forget('k');
+    await expectLater(
+      PrivateKeyUnlock.open(lockedPem, cacheKey: 'k', keyName: 'k'),
+      throwsA(isA<SSHErr>()),
+    );
+    expect(asked, 2);
+  });
+
+  test('an empty passphrase is not a guess', () async {
+    final answers = ['', '', passphrase];
+    var asked = 0;
+    PrivateKeyUnlock.promptOverrideForTesting =
+        ({required keyName, required retry}) async {
+          // Never a retry: nothing was guessed yet, so saying "wrong
+          // passphrase" would be reporting a failure that did not happen.
+          expect(retry, isFalse);
+          return answers[asked++];
+        };
+
+    final opened = await PrivateKeyUnlock.open(
+      lockedPem,
+      cacheKey: 'k',
+      keyName: 'k',
+    );
+    expect(PrivateKeyUnlock.isLocked(opened), isFalse);
+    expect(asked, 3, reason: 'the two empty answers cost no attempts');
+  });
+
+  test('editing a key mid-prompt does not let the old answer land', () async {
+    // The dialog is up when the key is replaced. Its answer describes bytes
+    // that are no longer stored, and caching it would authenticate every later
+    // connection with the key that was just replaced.
+    final released = Completer<void>();
+    PrivateKeyUnlock.promptOverrideForTesting =
+        ({required keyName, required retry}) async {
+          await released.future;
+          return passphrase;
+        };
+
+    final pending = PrivateKeyUnlock.open(
+      lockedPem,
+      cacheKey: 'k',
+      keyName: 'k',
+    );
+    PrivateKeyUnlock.forget('k');
+    released.complete();
+    await pending;
+
+    expect(PrivateKeyUnlock.isOpened('k'), isFalse);
+  });
+
+  test('remember seeds what the import page already verified', () async {
+    var asked = 0;
+    PrivateKeyUnlock.promptOverrideForTesting =
+        ({required keyName, required retry}) async {
+          asked++;
+          return passphrase;
+        };
+
+    PrivateKeyUnlock.remember('k', plainPem);
+    expect(
+      await PrivateKeyUnlock.open(lockedPem, cacheKey: 'k', keyName: 'k'),
+      plainPem,
+    );
+    expect(asked, 0, reason: 'the passphrase was typed seconds ago');
   });
 
   test('unreadable input is not locked, so it fails where it is parsed', () {

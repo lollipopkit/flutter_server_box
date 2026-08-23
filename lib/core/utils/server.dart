@@ -345,7 +345,11 @@ Future<SSHClient> _authenticatedClient({
   );
   return SSHClient(
     socket,
-    username: ssh.user,
+    // The same fallback user the password branch above uses. Key auth read
+    // `ssh.user` regardless, so a server reached through its `alterUrl` — which
+    // is where `alterUser` comes from — authenticated as the primary host's
+    // user and failed with a permission error naming neither.
+    username: alterUser ?? ssh.user,
     // Must use [compute] here, instead of [Computer.shared.start]
     identities: await compute(loadIdentity, privateKey),
     onPasswordRequest: ssh.pwd?.isNotEmpty == true ? () => ssh.pwd : null,

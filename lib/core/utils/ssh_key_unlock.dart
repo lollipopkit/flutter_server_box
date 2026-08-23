@@ -34,6 +34,21 @@ abstract final class PrivateKeyUnlock {
   /// one at the same moment produce one dialog rather than a stack of them.
   static final _inFlight = <String, Future<String>>{};
 
+  /// Keys whose prompt was refused, or answered wrongly until it gave up.
+  ///
+  /// Without this, a refusal is forgotten the moment it happens and the next
+  /// reconnect asks again — and the status poller reconnects on a timer, so
+  /// declining once means a dialog per poll per server sharing the key.
+  /// Cleared by [forget], which is what editing the key does.
+  static final _declined = <String>{};
+
+  /// Bumped by [forget]. An ask already on screen when the key is replaced
+  /// answers for bytes that are no longer stored, and dropping it from
+  /// [_inFlight] only stops *new* callers joining it — the one already running
+  /// still returns, and would otherwise put the old key in the cache for every
+  /// connection after it.
+  static final _generation = <String, int>{};
+
   /// How many times a wrong passphrase may be given before the attempt is
   /// abandoned. Not a security limit — the person can start again — it is what
   /// stops a loop with no way out when the dialog cannot be shown.
@@ -71,6 +86,10 @@ abstract final class PrivateKeyUnlock {
     final already = _opened[cacheKey];
     if (already != null) return already;
 
+    // Asked and refused already. Reported the same way, without putting the
+    // same dialog up again.
+    if (_declined.contains(cacheKey)) throw _locked(keyName);
+
     final inFlight = _inFlight[cacheKey];
     if (inFlight != null) return inFlight;
 
@@ -83,28 +102,49 @@ abstract final class PrivateKeyUnlock {
     }
   }
 
-  /// The opened form of [pem] if there is one, and [pem] itself when it needs
-  /// no opening.
-  ///
-  /// Null means "locked, and nobody has opened it". For the callers that build
-  /// credentials for another isolate from a synchronous context and so cannot
-  /// ask — they report that rather than handing over a key that will fail
-  /// somewhere with no screen to say so.
-  static String? openedOrNull(String pem, {required String cacheKey}) {
-    if (!isLocked(pem)) return pem;
-    return _opened[cacheKey];
-  }
-
   /// Forgets an opened key, which the next connection will ask for again.
   ///
   /// Called when the key changes or goes away: the passphrase held here is for
   /// the bytes that were there when it was given.
-  static void forget(String cacheKey) => _opened.remove(cacheKey);
+  static void forget(String cacheKey) {
+    _opened.remove(cacheKey);
+    _declined.remove(cacheKey);
+    // The ask still running was for the bytes that have just been replaced, so
+    // its answer must not land in the cache afterwards.
+    _inFlight.remove(cacheKey);
+    _generation[cacheKey] = (_generation[cacheKey] ?? 0) + 1;
+  }
 
-  static void forgetAll() => _opened.clear();
+  static void forgetAll() {
+    // Bumped, not cleared: clearing would reset every generation to zero and
+    // let an ask that is still running match again — which is the whole thing
+    // this counter exists to stop. A restore replaces every key at once, so
+    // every one of them has a dialog that may be up.
+    for (final key in {..._opened.keys, ..._inFlight.keys, ..._generation.keys}) {
+      _generation[key] = (_generation[key] ?? 0) + 1;
+    }
+    _opened.clear();
+    _declined.clear();
+    _inFlight.clear();
+  }
+
+  /// Records a key already known to be open, so the next connection does not
+  /// ask for a passphrase that was just typed.
+  ///
+  /// The import page verifies the passphrase it was given; throwing that away
+  /// and asking again seconds later is the same question twice.
+  static void remember(String cacheKey, String openedPem) {
+    _declined.remove(cacheKey);
+    _opened[cacheKey] = openedPem;
+  }
 
   @visibleForTesting
   static bool isOpened(String cacheKey) => _opened.containsKey(cacheKey);
+
+  static SSHErr _locked(String keyName) => SSHErr(
+    type: SSHErrType.noPrivateKey,
+    message: l10n.sshKeyLockedFmt(keyName),
+  );
 
   static Future<String> _ask(
     String pem, {
@@ -113,14 +153,23 @@ abstract final class PrivateKeyUnlock {
   }) async {
     final prompt = promptOverrideForTesting ?? _showDialog;
 
-    for (var attempt = 0; attempt < maxAttempts; attempt++) {
-      final passphrase = await prompt(keyName: keyName, retry: attempt > 0);
+    final generation = _generation[cacheKey] ?? 0;
+    var guesses = 0;
+    var rounds = 0;
+    // Two counters: an empty field is not a guess — `open` is only reached for
+    // a key that needs a passphrase, so the empty string cannot be the right
+    // one and spending an attempt and a full bcrypt round on it would be
+    // punishing a slip. The outer bound is what stops a dialog that keeps
+    // answering empty from looping for ever.
+    while (guesses < maxAttempts && rounds < maxAttempts * 3) {
+      rounds++;
+      final passphrase = await prompt(keyName: keyName, retry: guesses > 0);
       if (passphrase == null) {
-        throw SSHErr(
-          type: SSHErrType.noPrivateKey,
-          message: l10n.sshKeyLockedFmt(keyName),
-        );
+        _declined.add(cacheKey);
+        throw _locked(keyName);
       }
+      if (passphrase.isEmpty) continue;
+      guesses++;
 
       try {
         // On another isolate: bcrypt_pbkdf is deliberately slow, which is the
@@ -130,7 +179,13 @@ abstract final class PrivateKeyUnlock {
         // is not in the transfer isolate — which reaches this file through
         // `genClient` — nor under `flutter test`.
         final opened = await compute(decryptPem, [pem, passphrase]);
-        _opened[cacheKey] = opened;
+        // Cached only if the key is still the one this was asked about. The
+        // caller gets it either way — it passed those bytes in — but a later
+        // connection reads whatever is stored now, and must not be handed the
+        // key that was replaced while this dialog was up.
+        if ((_generation[cacheKey] ?? 0) == generation) {
+          _opened[cacheKey] = opened;
+        }
         return opened;
       } on SSHKeyDecryptError {
         // Round again, saying so. Any other failure is not about the
@@ -139,10 +194,8 @@ abstract final class PrivateKeyUnlock {
       }
     }
 
-    throw SSHErr(
-      type: SSHErrType.noPrivateKey,
-      message: l10n.sshKeyLockedFmt(keyName),
-    );
+    _declined.add(cacheKey);
+    throw _locked(keyName);
   }
 
   static Future<String?> _showDialog({

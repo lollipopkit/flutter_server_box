@@ -12,11 +12,19 @@ void main() {
   setUp(SqliteDb.openInMemory);
   tearDown(SqliteDb.close);
 
-  /// The v7 shape: no comment column.
+  /// The v7 shape.
+  ///
+  /// Column for column what a v7 release wrote, `updated_at` and `rev`
+  /// included: `PrivateKeys` mixes in `SyncMeta`, so those two come first in
+  /// the real table. A hand-written shape missing them would let this pass
+  /// while saying nothing about the state sync depends on — and a positional
+  /// INSERT below would bind to the wrong columns.
   void createV7PrivateKey() {
     SqliteDb.instance.execute(
       'CREATE TABLE private_key ('
-      'id TEXT PRIMARY KEY, name TEXT NOT NULL UNIQUE, key TEXT NOT NULL'
+      'updated_at INTEGER NOT NULL DEFAULT 0, rev INTEGER NOT NULL DEFAULT 0, '
+      'id TEXT NOT NULL PRIMARY KEY, name TEXT NOT NULL UNIQUE, '
+      'key TEXT NOT NULL'
       ') WITHOUT ROWID;',
     );
   }
@@ -29,7 +37,8 @@ void main() {
   test('adds the column and leaves the keys alone', () async {
     createV7PrivateKey();
     SqliteDb.instance.execute(
-      "INSERT INTO private_key VALUES ('k-1', 'laptop', '-----BEGIN X-----');",
+      'INSERT INTO private_key (updated_at, rev, id, name, key) '
+      "VALUES (1700000000, 3, 'k-1', 'laptop', '-----BEGIN X-----');",
     );
 
     await const PrivateKeyCommentMigration().apply();
@@ -39,6 +48,10 @@ void main() {
     expect(row['id'], 'k-1');
     expect(row['name'], 'laptop');
     expect(row['key'], '-----BEGIN X-----');
+    // The columns sync reads. An ALTER TABLE leaves them alone, and a step
+    // that reset either would make every key look freshly edited to a peer.
+    expect(row['updated_at'], 1700000000);
+    expect(row['rev'], 3);
     // Null, not the name and not an empty string: null is what means "whatever
     // the key itself says", and an empty string would read as "no comment" and
     // strip the label off every key that had one.
@@ -57,12 +70,14 @@ void main() {
   test('a table that already has the column is left as it is', () async {
     SqliteDb.instance.execute(
       'CREATE TABLE private_key ('
-      'id TEXT PRIMARY KEY, name TEXT NOT NULL UNIQUE, key TEXT NOT NULL, '
-      'comment TEXT'
+      'updated_at INTEGER NOT NULL DEFAULT 0, rev INTEGER NOT NULL DEFAULT 0, '
+      'id TEXT NOT NULL PRIMARY KEY, name TEXT NOT NULL UNIQUE, '
+      'key TEXT NOT NULL, comment TEXT'
       ') WITHOUT ROWID;',
     );
     SqliteDb.instance.execute(
-      "INSERT INTO private_key VALUES ('k-1', 'laptop', 'pem', 'me@host');",
+      'INSERT INTO private_key (updated_at, rev, id, name, key, comment) '
+      "VALUES (0, 0, 'k-1', 'laptop', 'pem', 'me@host');",
     );
 
     await const PrivateKeyCommentMigration().apply();

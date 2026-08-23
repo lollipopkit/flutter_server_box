@@ -142,6 +142,13 @@ class _PrivateKeyGeneratePageState
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(l10n.sshKeyPassphraseTip, style: UIs.textGrey),
         ),
+        // RSA searches for primes and takes seconds on a phone. A spinning
+        // button with nothing beside it reads as a button that did not work.
+        if (_working)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Text(l10n.sshKeyGenerating, style: UIs.textGrey),
+          ),
       ],
     );
   }
@@ -204,13 +211,14 @@ class _PrivateKeyGeneratePageState
     FocusScope.of(context).unfocus();
     setState(() => _working = true);
     try {
-      final comment = _commentController.text.trim();
+      final typed = _commentController.text.trim();
+      // The name is what the person will recognise it by, and an OpenSSH
+      // comment with nothing in it tells whoever reads `authorized_keys` later
+      // nothing about where the key came from.
+      final comment = typed.isEmpty ? name : typed;
       final key = await generateSshKey(
         algorithm: _algorithm,
-        // The name is what the person will recognise it by, and an OpenSSH
-        // comment with nothing in it tells whoever reads `authorized_keys`
-        // later nothing about where the key came from.
-        comment: comment.isEmpty ? name : comment,
+        comment: comment,
         passphrase: _pwdController.text.isEmpty ? null : _pwdController.text,
       );
       await ref
@@ -220,6 +228,12 @@ class _PrivateKeyGeneratePageState
               id: ShortId.generate(),
               name: name,
               key: key.privatePem,
+              // Stored as well as written into the key. For a key with a
+              // passphrase the copy inside it cannot be read back — it is in
+              // the part that gets encrypted — so without this the list would
+              // show no comment and the public key line offered later would
+              // not be the one that was just copied.
+              comment: comment,
             ),
           );
       if (!mounted) return;

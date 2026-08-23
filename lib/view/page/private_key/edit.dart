@@ -1,8 +1,8 @@
 import 'dart:io';
 
-import 'package:computer/computer.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -156,8 +156,10 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
       );
       line = publicKeyLine(
         SSHKeyPair.fromPem(opened).first,
-        // What the list shows, and what the server will see beside the key.
-        pki.comment ?? describeSshKey(pki.key).comment ?? pki.name,
+        // Read from `opened`, not from the stored bytes: for an encrypted key
+        // the comment is inside the part that was just decrypted, and asking
+        // the locked form yields nothing.
+        pki.comment ?? describeSshKey(opened).comment ?? pki.name,
       );
     } catch (e) {
       Toast.error(e.toString());
@@ -359,12 +361,18 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
       // passphrase is what protects it, and stripping it here left every
       // imported key lying in the database in the clear.
       //
+      // Parsed either way, which is what rejects a key that is not one. The
+      // old code got that for free from always decrypting; guarding the call
+      // on "is it encrypted" lost it, because `isLocked` answers false for
+      // anything it cannot read rather than throwing.
+      //
       // A passphrase typed alongside it is checked rather than applied: a typo
       // found now says so on this page, where it can be fixed, instead of at
       // the next connection as a key that will not open.
-      if (pwd.isNotEmpty && PrivateKeyUnlock.isLocked(key)) {
-        await Computer.shared.start(decryptPem, [key, pwd]);
-      }
+      //
+      // `compute`, not `Computer.shared`, for the same reason the unlocker
+      // uses it: one that has to be turned on cannot be called from a test.
+      final opened = await compute(decryptPem, [key, pwd]);
       // The id of the record being edited: renaming a key must not detach the
       // servers pointing at it, which is what happened when the two were one
       // value.
@@ -378,8 +386,13 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
         comment: comment.isEmpty ? null : comment,
       );
       // The bytes may have changed under an id that has not, so whatever was
-      // opened for it no longer describes what is stored.
+      // opened for it no longer describes what is stored — and then the
+      // passphrase just verified is put back, rather than asking for it again
+      // seconds later on the first connection.
       PrivateKeyUnlock.forget(pki.id);
+      if (pwd.isNotEmpty && opened != key) {
+        PrivateKeyUnlock.remember(pki.id, opened);
+      }
       final originPki = this.pki;
       if (originPki != null) {
         await _notifier.update(originPki, pki);

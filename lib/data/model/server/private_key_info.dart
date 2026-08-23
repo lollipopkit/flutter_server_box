@@ -46,16 +46,12 @@ class PrivateKeyInfo {
     String? id,
     String? name,
     String? key,
-    // Positional-ish: `null` means "leave it", and clearing is what
-    // `clearComment` is for — a nullable field cannot say both with one
-    // parameter.
     String? comment,
-    bool clearComment = false,
   }) => PrivateKeyInfo(
     id: id ?? this.id,
     name: name ?? this.name,
     key: key ?? this.key,
-    comment: clearComment ? null : (comment ?? this.comment),
+    comment: comment ?? this.comment,
   );
 
   String? get type {

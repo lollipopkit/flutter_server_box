@@ -224,6 +224,8 @@ class SshTransferCreds {
   Map<String, Spi>? jumpSpisById;
   Map<String, String>? privateKeysByKeyId;
 
+  Map<String, String>? knownHostFingerprints;
+
   /// Opens any key in this bundle that is stored encrypted.
   ///
   /// Not in the constructor, for two reasons that point the same way: asking
@@ -252,5 +254,4 @@ class SshTransferCreds {
     final jumpRef = jumpSpi?.ssh?.keyRef;
     if (jumpRef != null) jumpPrivateKey = keys[jumpRef] ?? jumpPrivateKey;
   }
-  Map<String, String>? knownHostFingerprints;
 }
