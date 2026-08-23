@@ -565,7 +565,7 @@ class SSHPageState extends ConsumerState<SSHPage>
       if (widget.args.spi != null)
         IconButton(
           onPressed: openAgentFromToolbar,
-          tooltip: l10n.askAiAgentTitle,
+          tooltip: 'SSH Agent',
           icon: const Icon(Icons.auto_awesome),
         ),
       IconButton(

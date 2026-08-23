@@ -2,7 +2,6 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:responsive_framework/responsive_framework.dart';
-import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/provider/ai/agent_session.dart';
 import 'package:server_box/data/provider/ai/agent_shell.dart';
@@ -106,7 +105,7 @@ class _WindowButtons extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         IconButton(
-          tooltip: collapsed ? context.l10n.agentTitle : libL10n.fold,
+          tooltip: collapsed ? 'Agent' : libL10n.fold,
           visualDensity: VisualDensity.compact,
           onPressed: collapsed ? shell.expand : shell.collapse,
           // A chevron is a thin glyph in a wide box: at the size the solid
@@ -270,7 +269,7 @@ class _DesktopShellState extends ConsumerState<_DesktopShell> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  context.l10n.agentTitle,
+                  'Agent',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.titleSmall?.copyWith(
@@ -594,7 +593,7 @@ class _PhoneShellState extends ConsumerState<_PhoneShell>
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    context.l10n.agentTitle,
+                    'Agent',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.titleSmall?.copyWith(

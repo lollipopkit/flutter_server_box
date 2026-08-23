@@ -33,12 +33,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Auto mencoba Responses, lalu Chat Completions.';
 
   @override
-  String get askAiProtocolChatCompletions => 'Chat Completions';
-
-  @override
-  String get askAiProtocolResponses => 'Responses';
-
-  @override
   String get askAiCommandInserted => 'Perintah dimasukkan ke terminal';
 
   @override
@@ -56,17 +50,11 @@ class AppLocalizationsId extends AppLocalizations {
   String get askAiNoResponse => 'Tidak ada respons';
 
   @override
-  String get askAiAgentTitle => 'Agent SSH';
-
-  @override
   String get askAiAgentWelcome => 'Apa yang akan kita lakukan di server ini?';
 
   @override
   String get askAiAgentPromptHint =>
       'Minta Agent memeriksa atau memperbaiki sesuatu...';
-
-  @override
-  String get askAiAgentSend => 'Kirim ke Agent';
 
   @override
   String get askAiAnalyzeSelectionPrompt =>
@@ -181,9 +169,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get askAiRestoredReview => 'Perintah ini dari riwayat. Tinjau lagi';
 
   @override
-  String get agentTitle => 'Agent';
-
-  @override
   String get agentWelcome => 'Apa yang akan kita lakukan di server Anda?';
 
   @override
@@ -213,9 +198,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get agentToolWriteFile => 'Tulis berkas';
-
-  @override
-  String get agentToolServerBox => 'ServerBox';
 
   @override
   String get agentToolFailed => 'Eksekusi alat gagal.';
@@ -539,9 +521,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get fullScreenTip =>
       'Apakah mode layar penuh diaktifkan ketika perangkat diputar ke modus lanskap? Opsi ini hanya berlaku untuk tab server.';
-
-  @override
-  String get githubGist => 'GitHub Gist';
 
   @override
   String get githubGistIdOptional => 'ID Gist (opsional)';
@@ -1051,9 +1030,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get sftpSSHConnected => 'Sftp terhubung';
 
   @override
-  String get sftp => 'SFTP';
-
-  @override
   String get sftpShowFoldersFirst => 'Folder ditampilkan lebih dulu';
 
   @override
@@ -1446,9 +1422,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Operasi kontainer lain sedang berlangsung';
 
   @override
-  String get systemd => 'Systemd';
-
-  @override
   String processCount(int count) {
     return '$count proses';
   }
@@ -1578,4 +1551,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get bmcStaleWrite => 'BMC berubah saat proses tulis. Coba lagi.';
+
+  @override
+  String get send => 'Kirim';
 }

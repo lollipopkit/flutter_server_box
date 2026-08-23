@@ -32,12 +32,6 @@ class AppLocalizationsKo extends AppLocalizations {
       '자동은 Responses를 먼저, 그다음 Chat Completions를 시도합니다.';
 
   @override
-  String get askAiProtocolChatCompletions => 'Chat Completions';
-
-  @override
-  String get askAiProtocolResponses => 'Responses';
-
-  @override
   String get askAiCommandInserted => '명령어가 터미널에 삽입되었습니다';
 
   @override
@@ -55,16 +49,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get askAiNoResponse => '응답 없음';
 
   @override
-  String get askAiAgentTitle => 'SSH 에이전트';
-
-  @override
   String get askAiAgentWelcome => '이 서버에서 무엇을 할까요?';
 
   @override
   String get askAiAgentPromptHint => '에이전트에게 점검이나 수정을 요청하세요...';
-
-  @override
-  String get askAiAgentSend => '에이전트에게 보내기';
 
   @override
   String get askAiAnalyzeSelectionPrompt => '선택한 터미널 출력을 분석하고 무슨 일이 있었는지 설명해 줘';
@@ -171,9 +159,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get askAiRestoredReview => '이 명령은 기록에서 가져온 것입니다. 다시 검토하세요';
 
   @override
-  String get agentTitle => '에이전트';
-
-  @override
   String get agentWelcome => '서버들에서 무엇을 할까요?';
 
   @override
@@ -199,9 +184,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get agentToolWriteFile => '파일 쓰기';
-
-  @override
-  String get agentToolServerBox => 'ServerBox';
 
   @override
   String get agentToolFailed => '도구 실행에 실패했습니다.';
@@ -510,9 +492,6 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get fullScreenTip =>
       '기기를 가로 모드로 회전할 때 전체 화면 모드를 활성화하시겠습니까? 이 옵션은 서버 탭에만 적용됩니다.';
-
-  @override
-  String get githubGist => 'GitHub Gist';
 
   @override
   String get githubGistIdOptional => 'Gist ID (선택 사항)';
@@ -994,9 +973,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sftpSSHConnected => 'SFTP 연결됨';
 
   @override
-  String get sftp => 'SFTP';
-
-  @override
   String get sftpShowFoldersFirst => '폴더 우선 표시';
 
   @override
@@ -1373,9 +1349,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get containerOperationInProgress => '다른 컨테이너 작업이 이미 진행 중입니다';
 
   @override
-  String get systemd => 'Systemd';
-
-  @override
   String processCount(int count) {
     return '프로세스 $count개';
   }
@@ -1495,4 +1468,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get bmcStaleWrite => '쓰는 동안 BMC가 변경되었습니다. 다시 시도하세요.';
+
+  @override
+  String get send => '보내기';
 }

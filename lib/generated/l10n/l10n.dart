@@ -165,18 +165,6 @@ abstract class AppLocalizations {
   /// **'Auto tries Responses, then Chat Completions.'**
   String get askAiProtocolTip;
 
-  /// No description provided for @askAiProtocolChatCompletions.
-  ///
-  /// In en, this message translates to:
-  /// **'Chat Completions'**
-  String get askAiProtocolChatCompletions;
-
-  /// No description provided for @askAiProtocolResponses.
-  ///
-  /// In en, this message translates to:
-  /// **'Responses'**
-  String get askAiProtocolResponses;
-
   /// No description provided for @askAiCommandInserted.
   ///
   /// In en, this message translates to:
@@ -207,12 +195,6 @@ abstract class AppLocalizations {
   /// **'No response'**
   String get askAiNoResponse;
 
-  /// No description provided for @askAiAgentTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'SSH Agent'**
-  String get askAiAgentTitle;
-
   /// No description provided for @askAiAgentWelcome.
   ///
   /// In en, this message translates to:
@@ -224,12 +206,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ask the Agent to inspect or fix something...'**
   String get askAiAgentPromptHint;
-
-  /// No description provided for @askAiAgentSend.
-  ///
-  /// In en, this message translates to:
-  /// **'Send to Agent'**
-  String get askAiAgentSend;
 
   /// No description provided for @askAiAnalyzeSelectionPrompt.
   ///
@@ -435,12 +411,6 @@ abstract class AppLocalizations {
   /// **'This command came from history. Review it again'**
   String get askAiRestoredReview;
 
-  /// No description provided for @agentTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Agent'**
-  String get agentTitle;
-
   /// No description provided for @agentWelcome.
   ///
   /// In en, this message translates to:
@@ -494,12 +464,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Write file'**
   String get agentToolWriteFile;
-
-  /// No description provided for @agentToolServerBox.
-  ///
-  /// In en, this message translates to:
-  /// **'ServerBox'**
-  String get agentToolServerBox;
 
   /// No description provided for @agentToolFailed.
   ///
@@ -1058,12 +1022,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Should full-screen mode be enabled when the device is rotated to landscape mode? This option only applies to the server tab.'**
   String get fullScreenTip;
-
-  /// No description provided for @githubGist.
-  ///
-  /// In en, this message translates to:
-  /// **'GitHub Gist'**
-  String get githubGist;
 
   /// No description provided for @githubGistIdOptional.
   ///
@@ -1940,12 +1898,6 @@ abstract class AppLocalizations {
   /// **'SFTP Connected'**
   String get sftpSSHConnected;
 
-  /// No description provided for @sftp.
-  ///
-  /// In en, this message translates to:
-  /// **'SFTP'**
-  String get sftp;
-
   /// No description provided for @sftpShowFoldersFirst.
   ///
   /// In en, this message translates to:
@@ -2576,12 +2528,6 @@ abstract class AppLocalizations {
   /// **'Another container operation is already in progress'**
   String get containerOperationInProgress;
 
-  /// No description provided for @systemd.
-  ///
-  /// In en, this message translates to:
-  /// **'Systemd'**
-  String get systemd;
-
   /// No description provided for @processCount.
   ///
   /// In en, this message translates to:
@@ -2791,6 +2737,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The BMC changed while this was being written. Try again.'**
   String get bmcStaleWrite;
+
+  /// No description provided for @send.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get send;
 }
 
 class _AppLocalizationsDelegate

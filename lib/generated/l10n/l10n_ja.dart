@@ -31,12 +31,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get askAiProtocolTip => '自動は Responses、次に Chat Completions を試します。';
 
   @override
-  String get askAiProtocolChatCompletions => 'Chat Completions';
-
-  @override
-  String get askAiProtocolResponses => 'Responses';
-
-  @override
   String get askAiCommandInserted => 'コマンドをターミナルに挿入しました';
 
   @override
@@ -54,16 +48,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get askAiNoResponse => '応答なし';
 
   @override
-  String get askAiAgentTitle => 'SSH エージェント';
-
-  @override
   String get askAiAgentWelcome => 'このサーバーで何をしますか？';
 
   @override
   String get askAiAgentPromptHint => 'エージェントに調査や修正を依頼…';
-
-  @override
-  String get askAiAgentSend => 'エージェントに送信';
 
   @override
   String get askAiAnalyzeSelectionPrompt => '選択したターミナル出力を分析し、何が起きたか説明して';
@@ -170,9 +158,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get askAiRestoredReview => 'このコマンドは履歴からのものです。もう一度確認してください';
 
   @override
-  String get agentTitle => 'エージェント';
-
-  @override
   String get agentWelcome => 'サーバー全体で何をしますか？';
 
   @override
@@ -198,9 +183,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get agentToolWriteFile => 'ファイルを書く';
-
-  @override
-  String get agentToolServerBox => 'ServerBox';
 
   @override
   String get agentToolFailed => 'ツールの実行に失敗しました。';
@@ -511,9 +493,6 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get fullScreenTip =>
       'デバイスが横向きに回転したときにフルスクリーンモードを有効にしますか？このオプションはサーバータブにのみ適用されます。';
-
-  @override
-  String get githubGist => 'GitHub Gist';
 
   @override
   String get githubGistIdOptional => 'Gist ID（任意）';
@@ -993,9 +972,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sftpSSHConnected => 'SFTPに接続されました...';
 
   @override
-  String get sftp => 'SFTP';
-
-  @override
   String get sftpShowFoldersFirst => 'フォルダーを先に表示';
 
   @override
@@ -1369,9 +1345,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get containerOperationInProgress => '別のコンテナ操作がすでに実行中です';
 
   @override
-  String get systemd => 'Systemd';
-
-  @override
   String processCount(int count) {
     return '$count 件のプロセス';
   }
@@ -1491,4 +1464,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get bmcStaleWrite => '書き込み中に BMC が変更されました。再試行してください。';
+
+  @override
+  String get send => '送信';
 }

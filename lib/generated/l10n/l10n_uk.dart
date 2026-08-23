@@ -33,12 +33,6 @@ class AppLocalizationsUk extends AppLocalizations {
       'Авто пробує Responses, потім Chat Completions.';
 
   @override
-  String get askAiProtocolChatCompletions => 'Chat Completions';
-
-  @override
-  String get askAiProtocolResponses => 'Responses';
-
-  @override
   String get askAiCommandInserted => 'Команду вставлено в термінал';
 
   @override
@@ -56,17 +50,11 @@ class AppLocalizationsUk extends AppLocalizations {
   String get askAiNoResponse => 'Відповідь відсутня';
 
   @override
-  String get askAiAgentTitle => 'SSH-агент';
-
-  @override
   String get askAiAgentWelcome => 'Що зробимо на цьому сервері?';
 
   @override
   String get askAiAgentPromptHint =>
       'Попросіть агента щось перевірити або виправити…';
-
-  @override
-  String get askAiAgentSend => 'Надіслати агентові';
 
   @override
   String get askAiAnalyzeSelectionPrompt =>
@@ -182,9 +170,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get askAiRestoredReview => 'Команда з історії. Перевірте її ще раз';
 
   @override
-  String get agentTitle => 'Агент';
-
-  @override
   String get agentWelcome => 'Що зробимо на ваших серверах?';
 
   @override
@@ -213,9 +198,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get agentToolWriteFile => 'Запис файлу';
-
-  @override
-  String get agentToolServerBox => 'ServerBox';
 
   @override
   String get agentToolFailed => 'Не вдалося виконати інструмент.';
@@ -541,9 +523,6 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get fullScreenTip =>
       'Чи слід увімкнути повноекранний режим під час повороту пристрою в горизонтальне положення? Ця опція стосується лише вкладки сервера.';
-
-  @override
-  String get githubGist => 'GitHub Gist';
 
   @override
   String get githubGistIdOptional => 'ID Gist (необов\'язково)';
@@ -1055,9 +1034,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get sftpSSHConnected => 'SFTP підключено';
 
   @override
-  String get sftp => 'SFTP';
-
-  @override
   String get sftpShowFoldersFirst => 'Спочатку відображати директорії';
 
   @override
@@ -1456,9 +1432,6 @@ class AppLocalizationsUk extends AppLocalizations {
       'Інша операція з контейнером уже виконується';
 
   @override
-  String get systemd => 'Systemd';
-
-  @override
   String processCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -1595,4 +1568,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get bmcStaleWrite => 'BMC змінився під час запису. Спробуйте ще раз.';
+
+  @override
+  String get send => 'Надіслати';
 }

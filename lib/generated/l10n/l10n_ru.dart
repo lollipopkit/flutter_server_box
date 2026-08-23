@@ -33,12 +33,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Авто пробует Responses, затем Chat Completions.';
 
   @override
-  String get askAiProtocolChatCompletions => 'Chat Completions';
-
-  @override
-  String get askAiProtocolResponses => 'Responses';
-
-  @override
   String get askAiCommandInserted => 'Команда вставлена в терминал';
 
   @override
@@ -57,17 +51,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get askAiNoResponse => 'Нет ответа';
 
   @override
-  String get askAiAgentTitle => 'SSH-агент';
-
-  @override
   String get askAiAgentWelcome => 'Что сделаем на этом сервере?';
 
   @override
   String get askAiAgentPromptHint =>
       'Попросите агента что-нибудь проверить или починить…';
-
-  @override
-  String get askAiAgentSend => 'Отправить агенту';
 
   @override
   String get askAiAnalyzeSelectionPrompt =>
@@ -184,9 +172,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Команда взята из истории. Проверьте её снова';
 
   @override
-  String get agentTitle => 'Агент';
-
-  @override
   String get agentWelcome => 'Что сделаем на ваших серверах?';
 
   @override
@@ -215,9 +200,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get agentToolWriteFile => 'Запись файла';
-
-  @override
-  String get agentToolServerBox => 'ServerBox';
 
   @override
   String get agentToolFailed => 'Не удалось выполнить инструмент.';
@@ -543,9 +525,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get fullScreenTip =>
       'Следует ли включить полноэкранный режим, когда устройство поворачивается в альбомный режим? Эта опция применяется только к вкладке сервера.';
-
-  @override
-  String get githubGist => 'GitHub Gist';
 
   @override
   String get githubGistIdOptional => 'ID Gist (необязательно)';
@@ -1059,9 +1038,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sftpSSHConnected => 'SFTP подключен...';
 
   @override
-  String get sftp => 'SFTP';
-
-  @override
   String get sftpShowFoldersFirst => 'Показывать папки в начале';
 
   @override
@@ -1459,9 +1435,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Уже выполняется другая операция с контейнером';
 
   @override
-  String get systemd => 'Systemd';
-
-  @override
   String processCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -1599,4 +1572,7 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get bmcStaleWrite =>
       'BMC изменился во время записи. Повторите попытку.';
+
+  @override
+  String get send => 'Отправить';
 }

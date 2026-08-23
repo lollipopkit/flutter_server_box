@@ -33,12 +33,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'Auto prueba Responses y luego Chat Completions.';
 
   @override
-  String get askAiProtocolChatCompletions => 'Chat Completions';
-
-  @override
-  String get askAiProtocolResponses => 'Responses';
-
-  @override
   String get askAiCommandInserted => 'Comando insertado en el terminal';
 
   @override
@@ -57,17 +51,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get askAiNoResponse => 'Sin respuesta';
 
   @override
-  String get askAiAgentTitle => 'Agente SSH';
-
-  @override
   String get askAiAgentWelcome => '¿Qué hacemos en este servidor?';
 
   @override
   String get askAiAgentPromptHint =>
       'Pide al Agente que revise o arregle algo...';
-
-  @override
-  String get askAiAgentSend => 'Enviar al Agente';
 
   @override
   String get askAiAnalyzeSelectionPrompt =>
@@ -185,9 +173,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'Este comando viene del historial. Revísalo otra vez';
 
   @override
-  String get agentTitle => 'Agente';
-
-  @override
   String get agentWelcome => '¿Qué hacemos en tus servidores?';
 
   @override
@@ -218,9 +203,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get agentToolWriteFile => 'Escribir archivo';
-
-  @override
-  String get agentToolServerBox => 'ServerBox';
 
   @override
   String get agentToolFailed => 'Falló la ejecución de la herramienta.';
@@ -545,9 +527,6 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get fullScreenTip =>
       '¿Debe habilitarse el modo de pantalla completa cuando el dispositivo se rote al modo horizontal? Esta opción solo se aplica a la pestaña del servidor.';
-
-  @override
-  String get githubGist => 'GitHub Gist';
 
   @override
   String get githubGistIdOptional => 'ID del Gist (opcional)';
@@ -1067,9 +1046,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get sftpSSHConnected => 'SFTP conectado...';
 
   @override
-  String get sftp => 'SFTP';
-
-  @override
   String get sftpShowFoldersFirst => 'Mostrar carpetas primero';
 
   @override
@@ -1467,9 +1443,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'Ya hay otra operación de contenedor en curso';
 
   @override
-  String get systemd => 'Systemd';
-
-  @override
   String processCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -1607,4 +1580,7 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get bmcStaleWrite =>
       'El BMC cambió mientras se escribía. Inténtalo de nuevo.';
+
+  @override
+  String get send => 'Enviar';
 }

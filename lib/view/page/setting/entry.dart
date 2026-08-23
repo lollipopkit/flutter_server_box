@@ -244,7 +244,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         children: [
           SettingsNode.leaf(
             id: 'file.sftp',
-            title: l10n.sftp,
+            title: 'SFTP',
             icon: Icons.cloud_outlined,
             page: () => const AppSettingsPage(section: SettingsSection.sftp),
           ),

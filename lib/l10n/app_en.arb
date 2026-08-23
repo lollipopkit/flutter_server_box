@@ -7,17 +7,13 @@
   "askAiAwaitingResponse": "Waiting for AI response...",
   "askAiEndpointTip": "Enter a domain or a full URL. The path is completed from the protocol you pick.",
   "askAiProtocolTip": "Auto tries Responses, then Chat Completions.",
-  "askAiProtocolChatCompletions": "Chat Completions",
-  "askAiProtocolResponses": "Responses",
   "askAiCommandInserted": "Command inserted into terminal",
   "askAiConfigMissing": "Please configure {fields} in Settings.",
   "askAiDisclaimer": "AI may be incorrect. Review carefully before applying.",
   "askAiInsertTerminal": "Insert into terminal",
   "askAiNoResponse": "No response",
-  "askAiAgentTitle": "SSH Agent",
   "askAiAgentWelcome": "What should we do on this server?",
   "askAiAgentPromptHint": "Ask the Agent to inspect or fix something...",
-  "askAiAgentSend": "Send to Agent",
   "askAiAnalyzeSelectionPrompt": "Analyse the selected terminal output and explain what happened",
   "askAiTerminalContext": "Terminal context",
   "askAiReviewNeeded": "Review",
@@ -52,7 +48,6 @@
   "askAiClearHistoryTitle": "Clear this server's Agent history?",
   "askAiClearHistoryTip": "Every saved Agent conversation for this server will be deleted.",
   "askAiRestoredReview": "This command came from history. Review it again",
-  "agentTitle": "Agent",
   "agentWelcome": "What should we do across your servers?",
   "agentWelcomeTip": "Have the Agent diagnose a problem or carry out a task",
   "agentPromptHint": "Ask the Agent to inspect or operate your servers...",
@@ -62,7 +57,6 @@
   "agentToolShell": "Shell",
   "agentToolReadFile": "Read file",
   "agentToolWriteFile": "Write file",
-  "agentToolServerBox": "ServerBox",
   "agentToolFailed": "Tool execution failed.",
   "agentToolCallsFmt": "{count} tool calls",
   "agentFloat": "Float over other tabs",
@@ -162,7 +156,6 @@
   "fullScreenJitter": "Full screen jitter",
   "fullScreenJitterHelp": "To avoid screen burn-in",
   "fullScreenTip": "Should full-screen mode be enabled when the device is rotated to landscape mode? This option only applies to the server tab.",
-  "githubGist": "GitHub Gist",
   "githubGistIdOptional": "Gist ID (optional)",
   "githubGistToken": "GitHub Gist token",
   "githubGistTokenEmpty": "Token is empty",
@@ -378,7 +371,6 @@
   "sftpEditorTip": "Empty uses the built-in editor. For example `vim` (reading `EDITOR` is suggested).",
   "sftpRmrDirSummary": "Use `rm -r` to delete a folder in SFTP.",
   "sftpSSHConnected": "SFTP Connected",
-  "sftp": "SFTP",
   "sftpShowFoldersFirst": "Display folders first",
   "specifyDev": "Specify device",
   "specifyDevTip": "Network traffic counts every device by default; name one here instead",
@@ -525,7 +517,6 @@
     }
   },
   "containerOperationInProgress": "Another container operation is already in progress",
-  "systemd": "Systemd",
   "processCount": "{count, plural, one{1 process} other{{count} processes}}",
   "@processCount": {
     "placeholders": {
@@ -595,5 +586,6 @@
       }
     }
   },
-  "bmcStaleWrite": "The BMC changed while this was being written. Try again."
+  "bmcStaleWrite": "The BMC changed while this was being written. Try again.",
+  "send": "Send"
 }

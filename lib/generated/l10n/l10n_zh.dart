@@ -30,12 +30,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiProtocolTip => '自动模式会尝试 Responses / Chat Completions。';
 
   @override
-  String get askAiProtocolChatCompletions => 'Chat Completions';
-
-  @override
-  String get askAiProtocolResponses => 'Responses';
-
-  @override
   String get askAiCommandInserted => '命令已插入终端';
 
   @override
@@ -53,16 +47,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiNoResponse => '无回复内容';
 
   @override
-  String get askAiAgentTitle => 'SSH Agent';
-
-  @override
   String get askAiAgentWelcome => '想在这台服务器上做什么？';
 
   @override
   String get askAiAgentPromptHint => '让 Agent 检查或修复问题……';
-
-  @override
-  String get askAiAgentSend => '发送给 Agent';
 
   @override
   String get askAiAnalyzeSelectionPrompt => '分析选中的终端内容，解释发生了什么';
@@ -168,9 +156,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiRestoredReview => '此命令来自历史记录，请重新审核';
 
   @override
-  String get agentTitle => 'Agent';
-
-  @override
   String get agentWelcome => '想对你的服务器做些什么？';
 
   @override
@@ -196,9 +181,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get agentToolWriteFile => '写入文件';
-
-  @override
-  String get agentToolServerBox => 'ServerBox';
 
   @override
   String get agentToolFailed => '工具执行失败。';
@@ -500,9 +482,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get fullScreenTip => '当设备旋转为横屏时，是否开启全屏模式。此选项仅作用于服务器 Tab 页。';
-
-  @override
-  String get githubGist => 'GitHub Gist';
 
   @override
   String get githubGistIdOptional => 'Gist ID（可选）';
@@ -977,9 +956,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sftpSSHConnected => 'SFTP 已连接';
 
   @override
-  String get sftp => 'SFTP';
-
-  @override
   String get sftpShowFoldersFirst => '文件夹显示在前';
 
   @override
@@ -1335,9 +1311,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get containerOperationInProgress => '另一个容器操作正在进行中';
 
   @override
-  String get systemd => 'Systemd';
-
-  @override
   String processCount(int count) {
     return '$count 个进程';
   }
@@ -1453,6 +1426,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get bmcStaleWrite => 'BMC 上的内容在写入期间被改动过，请重试。';
+
+  @override
+  String get send => '发送';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -1481,12 +1457,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get askAiProtocolTip => '自動模式會嘗試 Responses / Chat Completions。';
 
   @override
-  String get askAiProtocolChatCompletions => 'Chat Completions';
-
-  @override
-  String get askAiProtocolResponses => 'Responses';
-
-  @override
   String get askAiCommandInserted => '指令已插入終端機';
 
   @override
@@ -1504,16 +1474,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get askAiNoResponse => '無回覆內容';
 
   @override
-  String get askAiAgentTitle => 'SSH Agent';
-
-  @override
   String get askAiAgentWelcome => '想在這台伺服器上做什麼？';
 
   @override
   String get askAiAgentPromptHint => '讓 Agent 檢查或修復問題……';
-
-  @override
-  String get askAiAgentSend => '傳送給 Agent';
 
   @override
   String get askAiAnalyzeSelectionPrompt => '分析選取的終端內容，解釋發生了什麼';
@@ -1619,9 +1583,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get askAiRestoredReview => '此命令來自歷史紀錄，請重新審核';
 
   @override
-  String get agentTitle => 'Agent';
-
-  @override
   String get agentWelcome => '想對你的伺服器做些什麼？';
 
   @override
@@ -1647,9 +1608,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get agentToolWriteFile => '寫入檔案';
-
-  @override
-  String get agentToolServerBox => 'ServerBox';
 
   @override
   String get agentToolFailed => '工具執行失敗。';
@@ -1951,9 +1909,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get fullScreenTip => '當設備旋轉為橫向時，是否開啟全螢幕模式？此選項僅適用於伺服器分頁。';
-
-  @override
-  String get githubGist => 'GitHub Gist';
 
   @override
   String get githubGistIdOptional => 'Gist ID（選填）';
@@ -2429,9 +2384,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get sftpSSHConnected => 'SFTP 已連線';
 
   @override
-  String get sftp => 'SFTP';
-
-  @override
   String get sftpShowFoldersFirst => '資料夾顯示在前';
 
   @override
@@ -2787,9 +2739,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get containerOperationInProgress => '另一個容器操作正在進行中';
 
   @override
-  String get systemd => 'Systemd';
-
-  @override
   String processCount(int count) {
     return '$count 個處理程序';
   }
@@ -2905,4 +2854,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get bmcStaleWrite => 'BMC 上的內容在寫入期間被改動過，請重試。';
+
+  @override
+  String get send => '傳送';
 }

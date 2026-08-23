@@ -830,7 +830,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  context.l10n.askAiAgentTitle,
+                  'SSH Agent',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -1362,7 +1362,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
               ),
               const SizedBox(width: 8),
               IconButton.filled(
-                tooltip: context.l10n.askAiAgentSend,
+                tooltip: context.l10n.send,
                 onPressed: canSend
                     ? () => _submitPrompt(_inputController.text)
                     : null,

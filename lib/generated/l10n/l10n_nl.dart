@@ -33,12 +33,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Auto probeert Responses, daarna Chat Completions.';
 
   @override
-  String get askAiProtocolChatCompletions => 'Chat Completions';
-
-  @override
-  String get askAiProtocolResponses => 'Responses';
-
-  @override
   String get askAiCommandInserted => 'Commando in terminal ingevoegd';
 
   @override
@@ -56,17 +50,11 @@ class AppLocalizationsNl extends AppLocalizations {
   String get askAiNoResponse => 'Geen reactie';
 
   @override
-  String get askAiAgentTitle => 'SSH-agent';
-
-  @override
   String get askAiAgentWelcome => 'Wat gaan we op deze server doen?';
 
   @override
   String get askAiAgentPromptHint =>
       'Vraag de agent om iets te onderzoeken of te herstellen...';
-
-  @override
-  String get askAiAgentSend => 'Naar de agent sturen';
 
   @override
   String get askAiAnalyzeSelectionPrompt =>
@@ -183,9 +171,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Dit commando komt uit de geschiedenis. Beoordeel het opnieuw';
 
   @override
-  String get agentTitle => 'Agent';
-
-  @override
   String get agentWelcome => 'Wat gaan we op je servers doen?';
 
   @override
@@ -214,9 +199,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get agentToolWriteFile => 'Bestand schrijven';
-
-  @override
-  String get agentToolServerBox => 'ServerBox';
 
   @override
   String get agentToolFailed => 'Uitvoeren van het hulpmiddel is mislukt.';
@@ -540,9 +522,6 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get fullScreenTip =>
       'Moet de volledig schermmodus worden ingeschakeld wanneer het apparaat naar de liggende modus wordt gedraaid? Deze optie is alleen van toepassing op het servertabblad.';
-
-  @override
-  String get githubGist => 'GitHub Gist';
 
   @override
   String get githubGistIdOptional => 'Gist-ID (optioneel)';
@@ -1054,9 +1033,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get sftpSSHConnected => 'SFTP Verbonden';
 
   @override
-  String get sftp => 'SFTP';
-
-  @override
   String get sftpShowFoldersFirst => 'Mappen eerst weergeven';
 
   @override
@@ -1454,9 +1430,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Er wordt al een andere containerbewerking uitgevoerd';
 
   @override
-  String get systemd => 'Systemd';
-
-  @override
   String processCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -1592,4 +1565,7 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get bmcStaleWrite =>
       'De BMC is gewijzigd tijdens het schrijven. Probeer opnieuw.';
+
+  @override
+  String get send => 'Verzenden';
 }

@@ -33,12 +33,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Otomatik önce Responses, sonra Chat Completions dener.';
 
   @override
-  String get askAiProtocolChatCompletions => 'Chat Completions';
-
-  @override
-  String get askAiProtocolResponses => 'Responses';
-
-  @override
   String get askAiCommandInserted => 'Komut terminale eklendi';
 
   @override
@@ -57,17 +51,11 @@ class AppLocalizationsTr extends AppLocalizations {
   String get askAiNoResponse => 'Yanıt yok';
 
   @override
-  String get askAiAgentTitle => 'SSH Agent';
-
-  @override
   String get askAiAgentWelcome => 'Bu sunucuda ne yapalım?';
 
   @override
   String get askAiAgentPromptHint =>
       'Agent\'tan bir şeyi incelemesini veya düzeltmesini iste...';
-
-  @override
-  String get askAiAgentSend => 'Agent\'a gönder';
 
   @override
   String get askAiAnalyzeSelectionPrompt =>
@@ -183,9 +171,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get askAiRestoredReview => 'Bu komut geçmişten geldi. Yeniden incele';
 
   @override
-  String get agentTitle => 'Agent';
-
-  @override
   String get agentWelcome => 'Sunucularında ne yapalım?';
 
   @override
@@ -214,9 +199,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get agentToolWriteFile => 'Dosya yaz';
-
-  @override
-  String get agentToolServerBox => 'ServerBox';
 
   @override
   String get agentToolFailed => 'Araç çalıştırılamadı.';
@@ -541,9 +523,6 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get fullScreenTip =>
       'Cihaz yatay moda döndürüldüğünde tam ekran modu etkinleştirilsin mi? Bu seçenek yalnızca sunucu sekmesi için geçerlidir.';
-
-  @override
-  String get githubGist => 'GitHub Gist';
 
   @override
   String get githubGistIdOptional => 'Gist kimliği (isteğe bağlı)';
@@ -1052,9 +1031,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sftpSSHConnected => 'SFTP Bağlandı';
 
   @override
-  String get sftp => 'SFTP';
-
-  @override
   String get sftpShowFoldersFirst => 'Önce klasörleri göster';
 
   @override
@@ -1446,9 +1422,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Başka bir konteyner işlemi zaten devam ediyor';
 
   @override
-  String get systemd => 'Systemd';
-
-  @override
   String processCount(int count) {
     return '$count işlem';
   }
@@ -1575,4 +1548,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get bmcStaleWrite => 'Yazma sırasında BMC değişti. Tekrar dene.';
+
+  @override
+  String get send => 'Gönder';
 }
