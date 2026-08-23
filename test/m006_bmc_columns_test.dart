@@ -66,6 +66,46 @@ void main() {
     expect(toCredential.single['on_delete'], 'SET NULL');
   });
 
+  test('deleting an account keeps the servers that used it', () async {
+    createV6Server();
+    await const BmcColumnsMigration().apply();
+
+    // The previous test reads the declaration; this one runs it. A REFERENCES
+    // clause on ADD COLUMN is accepted whether or not the pragma that enforces
+    // it is on, so the declaration being right is not the same fact as the
+    // action firing.
+    SqliteDb.instance.execute('PRAGMA foreign_keys = ON;');
+    SqliteDb.instance.execute(
+      'INSERT INTO bmc_credential (id, name, user, pwd) '
+      "VALUES ('cred-1', 'rack-a', 'admin', 'pw');",
+    );
+    SqliteDb.instance.execute(
+      'INSERT INTO server (id, name, bmc_addr, bmc_cred_id) '
+      "VALUES ('srv-1', 'prod', 'https://10.0.0.9', 'cred-1');",
+    );
+
+    SqliteDb.instance.execute("DELETE FROM bmc_credential WHERE id = 'cred-1';");
+
+    final row = SqliteDb.instance.select('SELECT * FROM server;').single;
+    expect(row['id'], 'srv-1', reason: 'the server outlives the account');
+    expect(row['bmc_addr'], 'https://10.0.0.9', reason: 'and keeps its address');
+    expect(row['bmc_cred_id'], isNull);
+  });
+
+  test('the lookup by account is indexed', () async {
+    createV6Server();
+    await const BmcColumnsMigration().apply();
+
+    // `db.dart` lists this index too, but that list runs from Drift's
+    // `onCreate` and so only ever reaches a database being created. Without it
+    // here, an upgrading install differs from a fresh one and "how many
+    // servers use this account" is a full scan on every rebuild of the editor.
+    final indexes = SqliteDb.instance
+        .select('PRAGMA index_list(server);')
+        .map((row) => row['name'] as String);
+    expect(indexes, contains('idx_server_bmc_cred'));
+  });
+
   test('runs again after being interrupted partway', () async {
     createV6Server();
     // What a process stopping mid-step leaves: the table and the first column

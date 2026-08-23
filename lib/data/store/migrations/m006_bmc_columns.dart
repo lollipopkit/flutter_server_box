@@ -11,7 +11,9 @@ import 'package:server_box/data/store/schema.dart';
 /// Written by hand rather than left to Drift, which owns the DDL but only for
 /// a database being *created*: an install already at v6 has a `server` table
 /// Drift will not revisit, and `createTables` is `IF NOT EXISTS` throughout.
-/// The two must agree, which `tables_schema_test.dart` is what checks.
+/// The two must agree, and `m006_bmc_columns_test.dart` is what checks it —
+/// `tables_schema_test.dart` only ever sees a freshly created schema and never
+/// runs this step.
 ///
 /// Each statement is guarded, so the step is safe to run again after a process
 /// stops partway — the version is recorded only once every statement has run,
@@ -58,5 +60,12 @@ CREATE TABLE IF NOT EXISTS bmc_credential (
       if (columns.contains(column)) continue;
       db.execute('ALTER TABLE server ADD COLUMN $column $type;');
     }
+
+    // The index list in `db.dart` runs from Drift's `onCreate`, which only
+    // fires for a database being created, so an upgrading install would never
+    // get this one. Same statement, so the two installs end up alike.
+    db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_server_bmc_cred ON server(bmc_cred_id);',
+    );
   }
 }

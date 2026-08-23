@@ -506,6 +506,13 @@ class SyncStates extends Table {
 @DriftDatabase(
   tables: [
     PrivateKeys,
+    // Named rather than left to be pulled in by `Servers.bmcCredId`. Drift does
+    // follow that reference today, so the table is created either way, but a
+    // schema that exists only as a side effect of a foreign key disappears from
+    // fresh installs the moment the key is changed — while every migrated
+    // install keeps it, so the failure would be `no such table` on new devices
+    // alone.
+    BmcCredentials,
     Servers,
     ServerTags,
     ServerEnvs,
@@ -545,6 +552,11 @@ class AppDb extends _$AppDb {
   /// Indexes the read patterns need, which the table definitions do not carry.
   static const _indexes = [
     'CREATE INDEX IF NOT EXISTS idx_server_key ON server(ssh_key_id);',
+    // Same read as `ssh_key_id`: "how many servers use this account", asked
+    // once per row of the account list and on every rebuild of the server
+    // editor. It also serves the ON DELETE SET NULL, which without it scans
+    // `server` once per deleted account.
+    'CREATE INDEX IF NOT EXISTS idx_server_bmc_cred ON server(bmc_cred_id);',
     'CREATE INDEX IF NOT EXISTS idx_server_tag_tag ON server_tag(tag);',
     'CREATE INDEX IF NOT EXISTS idx_server_jump_target ON server_jump(jump_id);',
     'CREATE INDEX IF NOT EXISTS idx_snippet_tag_tag ON snippet_tag(tag);',
