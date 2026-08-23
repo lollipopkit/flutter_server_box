@@ -270,6 +270,12 @@ jobs:
       - name: Package dmg
         shell: bash
         env:
+          # `APP_NAME` is the *bundle* name and has a space in it. The
+          # workflow-level `env` sets it to `ServerBox`, which reaches every
+          # step — without this override `ditto` would stage the app into the
+          # DMG under a name it does not have, and the volume would differ from
+          # what `make package-dmg` produces locally.
+          APP_NAME: Server Box
           APP_ASSET_NAME: ${{ env.APP_NAME }}
           APP_PATH: build/macos/Build/Products/Release/Server Box.app
           DMG_BASENAME: ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_NoSign
