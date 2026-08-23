@@ -3,17 +3,17 @@ title: 代码生成
 description: 使用 build_runner 进行代码生成
 ---
 
-Server Box 大量使用代码生成技术来处理模型、状态管理和序列化。
+Server Box 广泛使用代码生成来处理模型、状态管理和序列化。
 
 ## 何时运行代码生成
 
-在修改以下内容后需要运行：
+修改以下内容后，需要运行相应的生成器：
 
 - 带有 `@freezed` 注解的模型
 - 带有 `@JsonSerializable` 的类
-- Hive 模型
+- 当前生成适配器列表中的 Hive 适配器源码（不是冻结的旧版读取器）
 - 带有 `@riverpod` 的 Provider
-- 本地化文件 (ARB 文件)
+- 本地化文件（ARB 文件）
 
 ## 运行代码生成
 
@@ -38,7 +38,7 @@ dart run build_runner build --delete-conflicting-outputs
 
 ### Freezed (`*.freezed.dart`)
 
-具有联合类型 (Union types) 的不可变数据模型：
+包含联合类型（Union types）的不可变数据模型：
 
 ```dart
 @freezed
@@ -80,9 +80,9 @@ class MyNotifier extends _$MyNotifier {
 }
 ```
 
-### Hive 适配器 (`*.g.dart`)
+### Hive 适配器（`*.g.dart`）
 
-为 Hive 模型 (hive_ce) 自动生成：
+生成的 Hive 适配器覆盖当前的适配器列表：
 
 ```dart
 @HiveType(typeId: 0)
@@ -91,6 +91,11 @@ class ServerModel {
   final String id;
 }
 ```
+
+`lib/hive/legacy_adapters.dart` 中的适配器是有意冻结的读取器。不要根据当前模型
+重新生成它们，也不要将包含新增字段的模型加入生成适配器列表：新增的非空字段可能让旧版本
+写入的 box 无法打开。只有当已发布版本实际写入的字节需要变化时，才应更新冻结读取器和
+对应的迁移测试。
 
 
 ## Rust 绑定 (flutter_rust_bridge)
@@ -114,5 +119,5 @@ flutter gen-l10n
 ## 提示
 
 - 使用 `--delete-conflicting-outputs` 避免冲突
-- 如果生成文件已被本仓库跟踪，请继续提交这些生成文件
+- 如果生成文件已被本仓库纳入版本控制，请将其提交
 - **切勿**手动编辑生成的文件

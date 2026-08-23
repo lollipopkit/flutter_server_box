@@ -1,3 +1,10 @@
+/* Layer order, declared before anything creates one, because a layer's
+   priority is fixed by where its name first appears. Unlayered rules beat
+   every layer, so this file's own component styles — which are unlayered —
+   still win over a utility class, and only the reset below is moved out of
+   their way. */
+@layer theme, base, utilities;
+
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap');
 
 /* Shared UI library: tailwind utilities only (no preflight — this site ships
@@ -48,12 +55,18 @@
   }
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+/* In a layer, so that a utility class can override it. Unlayered, `padding: 0`
+   on `*` beat `.px-6` in `@layer utilities` no matter the specificity — which
+   is how every shared component lost its padding while keeping its background
+   and its radius, since the reset sets neither of those. */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
 }
 
 html {
@@ -161,7 +174,10 @@ body {
 
 .language-switcher select:focus-visible,
 .nav-cta:focus-visible,
-.site-nav a:focus-visible,
+.site-nav a:focus-visible {
+  outline: 2px solid var(--ring-blue);
+  outline-offset: 2px;
+}
 
 .sr-only {
   position: absolute;

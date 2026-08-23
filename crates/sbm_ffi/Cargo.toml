@@ -4,10 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [lib]
+name = "sbm_ffi"
 crate-type = ["cdylib", "staticlib"]
 
 [dependencies]
-flutter_rust_bridge = "=2.12.0"
+flutter_rust_bridge = "=2.13.0-beta.6"
 sbm_parser = { path = "../sbm_parser" }
 serde_json = "1.0"
 

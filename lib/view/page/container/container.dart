@@ -18,8 +18,6 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/view/page/container/resource_views.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
-import 'package:server_box/view/widget/page_columns.dart';
-import 'package:server_box/view/widget/page_issue.dart';
 
 part 'actions.dart';
 part 'types.dart';

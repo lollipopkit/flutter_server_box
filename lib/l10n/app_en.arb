@@ -76,7 +76,6 @@
   "agentSaveServerTitle": "Save as a server",
   "agentSaveServerTip": "This host and the password you entered will be stored on this device.",
   "agentMonitorOptional": "Monitor agent (optional)",
-  "atLeastOneTab": "At least one tab must be selected",
   "authFailTip": "Authentication failed, please check whether credentials are correct",
   "autoBackupConflict": "Only one automatic backup can be turned on at the same time.",
   "autoConnect": "Auto connect",
@@ -90,6 +89,10 @@
   "backupPasswordSet": "Backup password set",
   "backupPasswordTip": "Set a password to encrypt backup files. Leave empty to disable encryption.",
   "backupPasswordWrong": "Incorrect backup password",
+  "remoteBackupPasswordRequired": "Remote backups require a non-empty backup password",
+  "monitorHttpsRequired": "Remote monitor agents require HTTPS unless this connection explicitly allows insecure HTTP.",
+  "monitorAllowInsecureHttp": "Allow insecure HTTP",
+  "monitorAllowInsecureHttpTip": "Only enable for a trusted private network with transport encryption outside HTTP, such as Tailscale. The agent must also explicitly allow plaintext file access. Credentials and file contents may otherwise be exposed.",
   "backupTip": "The exported data can be encrypted with password. \nPlease keep it safe.",
   "icloudBackupStatusTitle": "Backup status",
   "icloudBackupStatusLoading": "Loading iCloud backup status...",
@@ -127,6 +130,14 @@
   "discoverSshServers": "Discover SSH Servers",
   "discoveryFailed": "Discovery failed",
   "discoverySettings": "Discovery Settings",
+  "distro": "Distribution",
+  "distroSwitchTip": "Replace {from} with {to}. Everything installed inside {from} is deleted, and {to} is downloaded and unpacked in its place.",
+  "@distroSwitchTip": {
+    "placeholders": {
+      "from": {},
+      "to": {}
+    }
+  },
   "diskHealth": "Disk Health",
   "displayCpuIndex": "Display CPU index",
   "dl2Local": "Download {fileName} to local?",
@@ -137,7 +148,7 @@
   "dockerStatistics": "Docker Statistics",
   "doubleColumnMode": "Double column mode",
   "doubleColumnTip": "This option only enables the feature, whether it can actually be enabled depends on the width of the device",
-  "editVirtKeys": "Edit virtual keys",
+  "editVirtKeys": "Virtual keys",
   "editorHighlightTip": "The current code highlighting performance is not ideal and can be optionally turned off to improve.",
   "enableMdns": "Enable mDNS",
   "enableMdnsDesc": "Use mDNS/Bonjour to discover SSH services",
@@ -148,7 +159,7 @@
   "fileTooLarge": "File '{file}' too large {size}, max {sizeMax}",
   "fileDirGone": "This folder is no longer here",
   "fileDirGoneTip": "It was deleted or renamed. Use the bar below to go back, go home, or jump elsewhere.",
-  "fullScreen": "Full screen mode",
+  "fullScreen": "Full screen",
   "fullScreenJitter": "Full screen jitter",
   "fullScreenJitterHelp": "To avoid screen burn-in",
   "fullScreenTip": "Should full-screen mode be enabled when the device is rotated to landscape mode? This option only applies to the server tab.",
@@ -192,6 +203,12 @@
       "jumpIds": {}
     }
   },
+  "nameAlreadyExistsFmt": "\"{name}\" already exists",
+  "@nameAlreadyExistsFmt": {
+    "placeholders": {
+      "name": {}
+    }
+  },
   "noJumpServerAvailable": "No jump server available.",
   "jumpServerAndProxyCommandCannotBeUsedTogether": "Jump server and ProxyCommand cannot be used together.",
   "keepForeground": "Keep app foreground!",
@@ -202,6 +219,8 @@
   "lastSuccess": "Last Success",
   "letterCache": "Normal keyboard input",
   "letterCacheTip": "When enabled, input goes through the regular IME, which can avoid secure keyboard prompts in the terminal on some systems.",
+  "linuxShellTip": "What an interactive terminal runs. Alpine has no chsh and nothing in the system reads /etc/passwd, so this is the only thing that decides. A one-shot command still runs under /bin/sh, because the app and the Agent write POSIX. Leave empty to restore /bin/sh.",
+  "linuxNetTip": "Where the Linux system and its packages are downloaded from, and the DNS servers written into it. Leave empty to restore the default. Saving also rewrites both in a system that is already installed.",
   "madeWithLove": "Made with ❤️ by {myGithub}",
   "maxConcurrency": "Max Concurrency",
   "maxRetryCount": "Number of server reconnections",
@@ -211,6 +230,7 @@
       "system": {}
     }
   },
+  "mirror": "Mirror",
   "needRestart": "App needs to be restarted",
   "netViewType": "Network view type",
   "newContainer": "New container",
@@ -315,18 +335,28 @@
   "rememberPwdInMem": "Remember password in memory",
   "rememberPwdInMemTip": "Used for containers, suspending, etc.",
   "remotePath": "Remote path",
-  "rootfsUpdateTip": "Alpine {installed} is installed and {latest} is available. Updating downloads it again and replaces the container: anything installed inside it with apk is lost. The current one keeps working if you skip this.",
+  "rootfsUpdateTip": "{distro} {installed} is installed and {latest} is available. Updating downloads it again and replaces the container: anything installed inside it with {pm} is lost. The current one keeps working if you skip this.",
   "@rootfsUpdateTip": {
     "placeholders": {
+      "distro": {},
       "installed": {},
-      "latest": {}
+      "latest": {},
+      "pm": {}
+    }
+  },
+  "linuxSystemInUse": "{name} still has a terminal open. Close it before deleting the system.",
+  "@linuxSystemInUse": {
+    "placeholders": {
+      "name": {}
     }
   },
   "rootfsSubtitle": "A Linux userland on this device",
-  "rootfsInstallTip": "Download Alpine Linux {version} (about 3 MB) and unpack it on this device. It gives this app a shell with a package manager, and can be deleted at any time.",
+  "rootfsInstallTip": "Download {distro} {version} (about {size} MB) and unpack it on this device. It gives this app a shell with a package manager, and can be deleted at any time.",
   "@rootfsInstallTip": {
     "placeholders": {
-      "version": {}
+      "distro": {},
+      "version": {},
+      "size": {}
     }
   },
   "sameIdServerExist": "A server with the same ID already exists",
@@ -366,9 +396,9 @@
   "sshConfigImported": "Imported {count} servers from SSH config",
   "sshHostKeyChangedDesc": "The SSH host key changed for {serverName}. Only continue if you trust this server.",
   "sshHostKeyFingerprintMd5Base64": "Fingerprint (MD5 base64): {fingerprint}",
-  "sshHostKeyFingerprintMd5Hex": "Fingerprint (MD5 hex): {fingerprint}",
+  "sshHostKeyFingerprintMd5Hex": "Fingerprint (SHA256): {fingerprint}",
   "sshHostKeyType": "SSH host key type",
-  "sshKnownHostKeys": "Known host keys",
+  "sshKnownHostKeys": "Known hosts",
   "sshKnownHostKeysTip": "Host keys this app has accepted. Forget one to be asked about it again the next time you connect.",
   "@sshHostKeyType": {
     "description": "Label for the SSH host key type displayed in the host key verification dialog."
@@ -405,6 +435,16 @@
   "virtKeyHelpClipboard": "Copy to the clipboard if the selected terminal is not empty, otherwise paste the content of the clipboard to the terminal.",
   "virtKeyHelpIME": "Turn on/off the keyboard",
   "virtKeyHelpSFTP": "Open current directory in SFTP.",
+  "virtKeyHelpSnippet": "Pick a snippet and run it in this terminal.",
+  "virtKeyHelpTmux": "Switch between tmux sessions and windows.",
+  "virtKeyIntroActions": "Shortcuts",
+  "virtKeyIntroActionsTip": "These open something instead of typing. Hold one to read what it does.",
+  "virtKeyIntroCustomizeTip": "Reorder these keys, or hide the ones you never reach for, in the terminal settings.",
+  "virtKeyIntroModifiers": "Modifiers",
+  "virtKeyIntroModifiersTip": "Tap one to arm it, then tap a letter on the keyboard. It stays on for that one key.",
+  "virtKeyIntroNav": "Navigation",
+  "virtKeyIntroNavTip": "These move the cursor. Hold an arrow to repeat it.",
+  "virtKeyIntroSelect": "Drag sideways over the terminal to select text, whenever it has something to scroll.",
   "waitConnection": "Please wait for the connection to be established.",
   "wakeLock": "Keep awake",
   "watchNotPaired": "No paired Apple Watch",
@@ -416,7 +456,7 @@
   "writeScriptTip": "After connecting to the server, a script will be written to `~/.config/server_box` \n | `/tmp/server_box` to monitor the system status. You can review the script content.",
   "menuGitHubRepository": "GitHub Repository",
   "podmanDockerEmulationDetected": "Podman Docker emulation detected. Please switch to Podman in settings.",
-  "portForwardBeta": "This feature is still in beta testing. Functionality is not guaranteed.",
+  "betaTip": "This feature is still in beta testing. Functionality is not guaranteed.",
   "portForward_startPrompt": "Add a port forward rule to get started",
   "portForward_localHost": "Local Host",
   "portForward_localPort": "Local Port",

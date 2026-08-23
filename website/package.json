@@ -8,7 +8,7 @@
     "typesafe-i18n": "typesafe-i18n --no-watch",
     "_comment_prebuild": "@serverbox/webui is a file: dependency, so an install here only symlinks it — webui's own dependencies (clsx, tailwind-merge, tailwind-variants) are never fetched, and vite bundles from its source. Without them the build dies on `Rolldown failed to resolve import \"clsx\" from packages/webui/src/utils.ts`, which is what Cloudflare Pages hit: it builds from a clean clone, where nothing has installed them already. npm, not bun, because packages/webui is what carries the lockfile. Same prebuild as monitor/frontend, for the same reason.",
     "prebuild": "npm install --prefix ../packages/webui",
-    "build": "bun run typesafe-i18n && vite build",
+    "build": "npm run typesafe-i18n && vite build",
     "preview": "vite preview"
   },
   "devDependencies": {

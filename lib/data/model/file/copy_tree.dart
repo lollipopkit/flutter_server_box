@@ -112,11 +112,22 @@ Future<void> runCopy(
 
   for (final dir in plan.dirs) {
     checkCancelled();
-    // Already there is not a failure: a destination may well contain a
-    // directory of the same name, and the point is that the path exists.
+    final existing = await dest.stat(dir);
+    if (existing != null) {
+      if (!existing.isDir) {
+        throw StateError('Copy destination exists and is not a directory: $dir');
+      }
+      continue;
+    }
     try {
       await dest.mkdir(dir);
-    } catch (_) {}
+    } catch (e, s) {
+      // A concurrent creator is the only mkdir failure that is harmless.
+      // Re-stat rather than interpreting backend-specific error strings.
+      final raced = await dest.stat(dir);
+      if (raced?.isDir == true) continue;
+      Error.throwWithStackTrace(e, s);
+    }
   }
 
   var transferred = 0;

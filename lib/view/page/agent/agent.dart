@@ -30,27 +30,29 @@ class _AgentPageState extends ConsumerState<AgentPage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final theme = Theme.of(context);
 
     // The same judgement, width and seam as the server list and the terminal
     // tabs: whether a list gets a column of its own is a property of the
     // window, not of the page that happens to be in it.
-    return Material(
-      color: theme.colorScheme.surface,
-      child: SbPaneList(
-        // The column is there from the start, empty or not — the same as the
-        // terminal and file tabs, and for the reason they settled on. Folding
-        // it away until there was a conversation to list saved 320pt of a
-        // window wide enough not to need saving, and cost this tab a second
-        // layout: it greeted a wide window as one column, then rearranged
-        // itself into two the moment anything was said. Read from the outside
-        // it was the Agent tab refusing to split at a width where every other
-        // tab had.
-        sideBuilder: (_) => const AgentHistoryPanel(inSheet: false),
-        builder: (_, split) => AgentConversationView(
-          compact: !split,
-          headerTrailing: const _FloatToggle(),
-        ),
+    //
+    // And no `Material` of its own, for the same reason those two don't have
+    // one: the tab shows the `Scaffold`'s background, which is the slot
+    // `toAmoled` overrides. Painting `colorScheme.surface` here instead —
+    // which that extension leaves alone — made this the one tab that stayed
+    // Material grey under an AMOLED theme.
+    return SbPaneList(
+      // The column is there from the start, empty or not — the same as the
+      // terminal and file tabs, and for the reason they settled on. Folding
+      // it away until there was a conversation to list saved 320pt of a
+      // window wide enough not to need saving, and cost this tab a second
+      // layout: it greeted a wide window as one column, then rearranged
+      // itself into two the moment anything was said. Read from the outside
+      // it was the Agent tab refusing to split at a width where every other
+      // tab had.
+      sideBuilder: (_) => const AgentHistoryPanel(inSheet: false),
+      builder: (_, split) => AgentConversationView(
+        compact: !split,
+        headerTrailing: const _FloatToggle(),
       ),
     );
   }

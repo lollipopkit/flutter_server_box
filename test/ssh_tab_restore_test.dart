@@ -1,11 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:server_box/core/utils/local_shell.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
@@ -18,6 +17,7 @@ import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/ssh/tab.dart';
 
 import 'helpers/spi_fixture.dart';
+import 'helpers/test_db.dart';
 
 /// What comes back when the app is opened again.
 ///
@@ -29,44 +29,28 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late Directory tempDir;
-  late Box<dynamic> settingBox;
-  late Box<dynamic> serverBox;
-  late Box<dynamic> keyBox;
-  late Box<dynamic> historyBox;
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-sshtab-');
-    Hive.init(tempDir.path);
-    // In memory, all four. This page writes its tab set on every change, and
-    // a real file write started inside a `testWidgets` body completes on a
-    // callback that zone is no longer pumping — so the box's write lock is
-    // never released and `close()` in `tearDown` blocks for ever, with no
-    // failure and no output to say which file did it.
-    settingBox = await Hive.openBox<dynamic>('setting_test', bytes: Uint8List(0));
-    serverBox = await Hive.openBox<dynamic>('server_test', bytes: Uint8List(0));
-    keyBox = await Hive.openBox<dynamic>('key_test', bytes: Uint8List(0));
-    historyBox = await Hive.openBox<dynamic>(
-      'history_test',
-      bytes: Uint8List(0),
-    );
-    getIt.registerSingleton<SettingStore>(SettingStore.forBox(settingBox));
-    getIt.registerSingleton<ServerStore>(ServerStore.forBox(serverBox));
-    getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore.forBox(keyBox));
-    getIt.registerSingleton<HistoryStore>(HistoryStore.forBox(historyBox));
+    await openTestDb();
+      // In memory: this tree writes as it builds, and a test has no
+      // business leaving a database behind.
+    getIt.registerSingleton<SettingStore>(SettingStore.forTest());
+    getIt.registerSingleton<ServerStore>(ServerStore.forTest());
+    getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore.forTest());
+    getIt.registerSingleton<HistoryStore>(HistoryStore.forTest());
   });
 
   tearDown(() async {
     await getIt.reset();
-    await settingBox.close();
-    await serverBox.close();
-    await keyBox.close();
-    await historyBox.close();
+    await SqliteDb.close();
     await tempDir.delete(recursive: true);
   });
 
   /// Writes a saved tab set, as a previous run would have left it.
-  void saveTabs(List<Map<String, dynamic>> tabs) =>
-      Stores.history.sshTabs.put(jsonEncode(tabs));
+  Future<void> saveTabs(List<Map<String, dynamic>> tabs) async {
+    Stores.history.sshTabs.put(jsonEncode(tabs));
+  }
 
   /// The tab set as the page wrote it back.
   ///
@@ -112,7 +96,7 @@ void main() {
     // state would go with it.
     final spi = spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u');
     Stores.server.put(spi);
-    saveTabs([
+    await saveTabs([
       {'sourceId': 'srv-1', 'tmuxSession': 'work', 'tmuxWindow': 0},
       {'sourceId': 'srv-1', 'tmuxSession': 'work', 'tmuxWindow': 3},
     ]);
@@ -132,7 +116,7 @@ void main() {
     // others with it.
     final spi = spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u');
     Stores.server.put(spi);
-    saveTabs([
+    await saveTabs([
       {'sourceId': 'srv-1'},
       {'sourceId': 'srv-gone'},
     ]);
@@ -175,7 +159,7 @@ void main() {
     // same account — so this entry is skipped rather than opened as a terminal
     // that can only fail when its pty is asked for. Which way it goes is the
     // platform's answer, so the test asks the same question the page does.
-    saveTabs([
+    await saveTabs([
       {'sourceId': const LocalSource().id},
     ]);
 
@@ -196,7 +180,7 @@ void main() {
     // The tab is remembered; starting it is a decision, and arriving on this
     // tab is not one.
     if (!LocalShellBackend.isSupported) return;
-    saveTabs([
+    await saveTabs([
       {'sourceId': const LocalSource().id},
     ]);
 
@@ -217,7 +201,7 @@ void main() {
     // The other half: passing over the local shell must not turn restoring
     // into a set of tabs that all sit there closed.
     Stores.server.put(spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u'));
-    saveTabs([
+    await saveTabs([
       {'sourceId': const LocalSource().id},
       {'sourceId': 'srv-1'},
     ]);

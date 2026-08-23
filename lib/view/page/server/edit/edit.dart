@@ -24,10 +24,8 @@ import 'package:server_box/data/model/server/wol_cfg.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
-import 'package:server_box/data/store/server.dart';
 import 'package:server_box/view/page/private_key/edit.dart';
 import 'package:server_box/view/page/server/custom_cmds.dart';
-import 'package:server_box/view/widget/page_columns.dart';
 import 'package:server_box/view/widget/ssh_discovery/dialog.dart';
 
 part 'actions.dart';
@@ -106,6 +104,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   final _jumpServers = <String>[].vn;
   final _pveIgnoreCert = ValueNotifier(false);
   final _monitorIgnoreCert = ValueNotifier(false);
+  final _monitorAllowInsecure = ValueNotifier(false);
 
   /// Connection method for this server: SSH+shell (false) or monitor's HTTP
   /// API (true) — mutually exclusive, see the switch at the top of the form.
@@ -174,6 +173,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     _jumpServers.dispose();
     _pveIgnoreCert.dispose();
     _monitorIgnoreCert.dispose();
+    _monitorAllowInsecure.dispose();
     _useMonitorHttp.dispose();
     _tempIsCelsius.dispose();
     _env.dispose();

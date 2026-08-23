@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/chan.dart';
+import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/service/watch_sync.dart';
 import 'package:server_box/core/utils/misc.dart';
@@ -8,7 +9,13 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/store.dart';
 
 class IosSettingsPage extends StatefulWidget {
-  const IosSettingsPage({super.key});
+  /// Whether it is being shown inside the settings pane rather than pushed.
+  ///
+  /// The pane already names what it is showing, in the one bar the page has;
+  /// a second one under it would say it twice.
+  final bool embedded;
+
+  const IosSettingsPage({super.key, this.embedded = false});
 
   @override
   State<IosSettingsPage> createState() => _IosSettingsPageState();
@@ -51,18 +58,20 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final body = ListView(
+      padding: context.padBottom(const EdgeInsets.symmetric(horizontal: 17)),
+      children: [
+        _buildPushToken(),
+        _buildAutoUpdateHomeWidget(),
+        _buildAccessoryWidgetServer(),
+        _buildWatchApp(),
+        _buildWatchLegacyUrls(),
+      ].nonNulls.map((e) => CardX(child: e)).toList(),
+    );
+    if (widget.embedded) return body;
     return Scaffold(
       appBar: CustomAppBar(title: const Text('iOS')),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 17),
-        children: [
-          _buildPushToken(),
-          _buildAutoUpdateHomeWidget(),
-          _buildAccessoryWidgetServer(),
-          _buildWatchApp(),
-          _buildWatchLegacyUrls(),
-        ].nonNulls.map((e) => CardX(child: e)).toList(),
-      ),
+      body: body,
     );
   }
 
@@ -168,7 +177,7 @@ extension _Actions on _IosSettingsPageState {
 
   Spi? get _accessoryServer {
     final id = Stores.setting.accessoryWidgetServerId.fetch();
-    return id.isEmpty ? null : Stores.server.get<Spi>(id);
+    return id.isEmpty ? null : Stores.server.fetchOneRaw(id);
   }
 
   void _onTapAccessoryWidgetServer() async {
@@ -231,8 +240,7 @@ extension _Actions on _IosSettingsPageState {
       ...selectedIds.where(pickedIds.contains),
       ...pickedIds.where((id) => !selectedIds.contains(id)),
     ];
-    Stores.setting.watchServerIds.put(next);
-    await WatchSync.instance.push();
+    await WatchSync.instance.updateSelection(next);
     _refresh();
   }
 

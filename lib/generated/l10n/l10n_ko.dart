@@ -252,9 +252,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get agentMonitorOptional => 'monitor 에이전트(선택)';
 
   @override
-  String get atLeastOneTab => '최소 하나의 탭을 선택해야 합니다';
-
-  @override
   String get authFailTip => '인증에 실패했습니다. 자격 증명이 올바른지 확인해 주세요.';
 
   @override
@@ -293,6 +290,21 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get backupPasswordWrong => '백업 비밀번호가 올바르지 않습니다';
+
+  @override
+  String get remoteBackupPasswordRequired =>
+      'Remote backups require a non-empty backup password';
+
+  @override
+  String get monitorHttpsRequired =>
+      'Remote monitor agents require HTTPS; HTTP is allowed only on loopback.';
+
+  @override
+  String get monitorAllowInsecureHttp => 'Allow insecure HTTP';
+
+  @override
+  String get monitorAllowInsecureHttpTip =>
+      'Only enable for a trusted private network with transport encryption outside HTTP, such as Tailscale. The agent must also explicitly allow plaintext file access. Credentials and file contents may otherwise be exposed.';
 
   @override
   String get backupTip => '내보낸 데이터는 비밀번호로 암호화할 수 있습니다.\n안전하게 보관해 주세요.';
@@ -418,6 +430,14 @@ class AppLocalizationsKo extends AppLocalizations {
   String get discoverySettings => '검색 설정';
 
   @override
+  String get distro => '배포판';
+
+  @override
+  String distroSwitchTip(Object from, Object to) {
+    return '$from을(를) $to(으)로 바꿉니다. $from 안에 설치한 것은 모두 삭제되고, 그 자리에 $to을(를) 내려받아 풉니다.';
+  }
+
+  @override
   String get diskHealth => '디스크 상태';
 
   @override
@@ -453,7 +473,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get doubleColumnTip => '이 옵션은 기능만 활성화하며, 실제 적용 여부는 기기의 너비에 따라 다릅니다';
 
   @override
-  String get editVirtKeys => '가상 키 편집';
+  String get editVirtKeys => '가상 키';
 
   @override
   String get editorHighlightTip =>
@@ -490,7 +510,7 @@ class AppLocalizationsKo extends AppLocalizations {
       '삭제되었거나 이름이 바뀌었습니다. 아래 막대에서 뒤로 가기, 홈, 또는 다른 위치로 이동하세요.';
 
   @override
-  String get fullScreen => '전체 화면 모드';
+  String get fullScreen => '전체 화면';
 
   @override
   String get fullScreenJitter => '전체 화면 지터';
@@ -610,6 +630,11 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String nameAlreadyExistsFmt(Object name) {
+    return '\'$name\'은(는) 이미 존재합니다';
+  }
+
+  @override
   String get noJumpServerAvailable => '사용 가능한 점프 서버가 없습니다.';
 
   @override
@@ -642,6 +667,14 @@ class AppLocalizationsKo extends AppLocalizations {
       '이 옵션을 켜면 입력 내용이 일반 IME를 거치며, 일부 시스템에서는 터미널의 보안 키보드 안내를 피할 수 있습니다.';
 
   @override
+  String get linuxShellTip =>
+      '대화형 터미널이 실행하는 셸입니다. Alpine에는 chsh가 없고 시스템에서 /etc/passwd를 읽는 것도 없으므로 이 설정만이 결정합니다. 일회성 명령은 계속 /bin/sh로 실행됩니다. 앱과 Agent가 POSIX를 쓰기 때문입니다. 비워 두면 /bin/sh로 돌아갑니다.';
+
+  @override
+  String get linuxNetTip =>
+      'Linux 시스템과 패키지를 내려받을 위치, 그리고 기록되는 DNS 서버입니다. 비워 두면 기본값으로 돌아갑니다. 저장하면 이미 설치된 시스템의 파일도 다시 씁니다.';
+
+  @override
   String madeWithLove(Object myGithub) {
     return '$myGithub이(가) ❤️로 만들었습니다';
   }
@@ -656,6 +689,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String mismatchSystem(Object system) {
     return '시스템이 일치하지 않습니다: $system';
   }
+
+  @override
+  String get mirror => '미러';
 
   @override
   String get needRestart => '앱을 다시 시작해야 합니다';
@@ -887,16 +923,26 @@ class AppLocalizationsKo extends AppLocalizations {
   String get remotePath => '원격 경로';
 
   @override
-  String rootfsUpdateTip(Object installed, Object latest) {
-    return 'Alpine $installed이(가) 설치되어 있고 $latest을(를) 사용할 수 있습니다. 업데이트하면 다시 내려받아 컨테이너를 교체하므로 그 안에 apk로 설치한 것은 모두 사라집니다. 건너뛰면 지금 것을 그대로 쓸 수 있습니다.';
+  String rootfsUpdateTip(
+    Object distro,
+    Object installed,
+    Object latest,
+    Object pm,
+  ) {
+    return '$distro $installed이(가) 설치되어 있고 $latest을(를) 사용할 수 있습니다. 업데이트하면 다시 내려받아 컨테이너를 교체하므로 그 안에 $pm로 설치한 것은 모두 사라집니다. 건너뛰면 지금 것을 그대로 쓸 수 있습니다.';
+  }
+
+  @override
+  String linuxSystemInUse(Object name) {
+    return '$name의 터미널이 아직 열려 있습니다. 닫은 뒤에 시스템을 삭제하세요.';
   }
 
   @override
   String get rootfsSubtitle => '이 기기의 Linux 사용자 공간';
 
   @override
-  String rootfsInstallTip(Object version) {
-    return 'Alpine Linux $version(약 3 MB)을 내려받아 이 기기에 풉니다. 패키지 관리자가 있는 셸을 이 앱에 제공하며, 언제든지 삭제할 수 있습니다.';
+  String rootfsInstallTip(Object distro, Object version, Object size) {
+    return '$distro $version(약 $size MB)을 내려받아 이 기기에 풉니다. 패키지 관리자가 있는 셸을 이 앱에 제공하며, 언제든지 삭제할 수 있습니다.';
   }
 
   @override
@@ -1035,14 +1081,14 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
-    return '지문 (MD5 hex): $fingerprint';
+    return '지문 (SHA256): $fingerprint';
   }
 
   @override
   String get sshHostKeyType => 'SSH 호스트 키 유형';
 
   @override
-  String get sshKnownHostKeys => '알려진 호스트 키';
+  String get sshKnownHostKeys => '알려진 호스트';
 
   @override
   String get sshKnownHostKeysTip => '이 앱이 수락한 호스트 키입니다. 삭제하면 다음 연결 시 다시 확인합니다.';
@@ -1149,6 +1195,39 @@ class AppLocalizationsKo extends AppLocalizations {
   String get virtKeyHelpSFTP => '현재 디렉토리를 SFTP로 열기.';
 
   @override
+  String get virtKeyHelpSnippet => '스니펫을 골라 이 터미널에서 실행합니다.';
+
+  @override
+  String get virtKeyHelpTmux => 'tmux 세션과 창을 전환합니다.';
+
+  @override
+  String get virtKeyIntroActions => '바로가기';
+
+  @override
+  String get virtKeyIntroActionsTip =>
+      '이 키들은 문자를 입력하지 않고 기능을 엽니다. 길게 누르면 설명을 볼 수 있습니다.';
+
+  @override
+  String get virtKeyIntroCustomizeTip =>
+      '터미널 설정에서 순서를 바꾸거나, 쓰지 않는 키를 숨길 수 있습니다.';
+
+  @override
+  String get virtKeyIntroModifiers => '조합 키';
+
+  @override
+  String get virtKeyIntroModifiersTip =>
+      '한 번 눌러 켠 다음 키보드의 글자를 누르세요. 바로 다음 한 키에만 적용됩니다.';
+
+  @override
+  String get virtKeyIntroNav => '커서 이동';
+
+  @override
+  String get virtKeyIntroNavTip => '이 키들은 커서를 옮깁니다. 방향키를 길게 누르면 반복됩니다.';
+
+  @override
+  String get virtKeyIntroSelect => '터미널에 스크롤할 내용이 있으면 가로로 끌어 텍스트를 선택할 수 있습니다.';
+
+  @override
   String get waitConnection => '연결이 설정될 때까지 기다려 주세요.';
 
   @override
@@ -1185,7 +1264,7 @@ class AppLocalizationsKo extends AppLocalizations {
       'Podman Docker 에뮬레이션이 감지되었습니다. 설정에서 Podman으로 전환해 주세요.';
 
   @override
-  String get portForwardBeta => '이 기능은 아직 베타 테스트 중입니다. 정상 동작이 보장되지 않습니다.';
+  String get betaTip => '이 기능은 아직 베타 테스트 중입니다. 정상 동작이 보장되지 않습니다.';
 
   @override
   String get portForward_startPrompt => '포트 포워딩 규칙을 추가하여 시작하세요';

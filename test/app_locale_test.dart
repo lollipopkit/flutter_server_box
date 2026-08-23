@@ -1,31 +1,25 @@
-import 'dart:io';
-
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:server_box/app.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-
-  late Directory tempDir;
-  late Box<dynamic> box;
   late SettingStore setting;
 
   setUp(() async {
-    tempDir = await Directory.systemTemp.createTemp('server-box-app-test-');
-    Hive.init(tempDir.path);
-    box = await Hive.openBox<dynamic>('setting_test');
-    setting = SettingStore.forBox(box);
+    SqliteDb.openInMemory();
+    setting = SettingStore.forTest();
     getIt.registerSingleton<SettingStore>(setting);
     FlutterSecureStorage.setMockInitialValues({});
   });
 
   tearDown(() async {
     await getIt.reset();
+    await SqliteDb.close();
   });
 
   testWidgets('updates the onboarding locale when the setting changes', (

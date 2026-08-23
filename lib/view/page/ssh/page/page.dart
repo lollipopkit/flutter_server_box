@@ -33,7 +33,7 @@ import 'package:server_box/data/ssh/tmux/tmux_export.dart';
 import 'package:server_box/data/store/agent_conversation.dart';
 import 'package:server_box/view/page/agent/history.dart';
 import 'package:server_box/view/page/ssh/ask_ai_layout.dart';
-import 'package:server_box/view/page/ssh/page/clipboard_chord.dart';
+import 'package:server_box/view/page/ssh/page/virt_key_intro.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
 import 'package:server_box/view/widget/tmux_session_selector.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -165,6 +165,35 @@ class SSHPageState extends ConsumerState<SSHPage>
   double _virtKeysHeight = 0;
   bool _horizonVirtKeys = false;
 
+  /// Which step of the virtual keys walkthrough is showing, or null when it is
+  /// not running — which is every time but the first.
+  int? _introStep;
+
+  /// Built once when the walkthrough starts rather than on every frame, so the
+  /// step being shown cannot change out from under the dots counting it.
+  List<VirtKeyIntroStep>? _introSteps;
+
+  /// Held only while waiting for this page to become the visible tab, so it
+  /// can be taken off again if the tab is closed first.
+  VoidCallback? _introVisibilityListener;
+
+  /// Moves the walkthrough, or ends it with a null [step].
+  ///
+  /// Here rather than in the [_VirtKey] extension the rest of it lives in:
+  /// `setState` is protected and an extension is not a subclass, so this is
+  /// the one line of it that has to be on the class.
+  void setIntroStep(int? step, {List<VirtKeyIntroStep>? steps}) {
+    if (!mounted) return;
+    setState(() {
+      _introStep = step;
+      if (step == null) {
+        _introSteps = null;
+      } else if (steps != null) {
+        _introSteps = steps;
+      }
+    });
+  }
+
   bool _isDark = false;
   Timer? _virtKeyLongPressTimer;
 
@@ -214,6 +243,10 @@ class SSHPageState extends ConsumerState<SSHPage>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _virtKeyLongPressTimer?.cancel();
+    final introListener = _introVisibilityListener;
+    if (introListener != null) {
+      widget.args.visibleListenable?.removeListener(introListener);
+    }
     final aiCommandSession = _aiCommandSession;
     if (aiCommandSession != null) {
       unawaited(_terminateAiCommandSession(aiCommandSession));
@@ -344,6 +377,11 @@ class SSHPageState extends ConsumerState<SSHPage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
+    final bgImage = Stores.setting.sshBgImage.fetch();
+    final bgFile = bgImage.isEmpty ? null : File(bgImage);
+    final hasBg = bgFile != null && bgFile.existsSync();
+
     Widget child = PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -351,6 +389,11 @@ class SSHPageState extends ConsumerState<SSHPage>
         _handleEscKeyOrBackButton();
       },
       child: Scaffold(
+        // One background for the whole page. Transparent over a picture, and
+        // otherwise the `Scaffold`'s own colour — which is what the terminal
+        // is drawn on either way, since [TerminalView] is given
+        // `backgroundOpacity: 0` and paints none of its own.
+        backgroundColor: hasBg ? Colors.transparent : null,
         appBar: widget.args.notFromTab
             ? CustomAppBar(
                 leading: BackButton(onPressed: context.pop),
@@ -359,10 +402,20 @@ class SSHPageState extends ConsumerState<SSHPage>
                 actions: _buildAppBarActions(),
               )
             : null,
-        body: _buildBody(),
+        body: _buildBody(hasBg),
         bottomNavigationBar: isDesktop ? null : _buildBottom(),
       ),
     );
+
+    // Behind the `Scaffold` and not inside the body: the virtual keys are a bar
+    // under it, and a picture that stops where the terminal does leaves them on
+    // a colour of their own.
+    if (hasBg) {
+      child = Stack(
+        fit: StackFit.expand,
+        children: [..._buildBackground(bgFile), child],
+      );
+    }
 
     if (isIOS) {
       child = AnnotatedRegion(
@@ -373,47 +426,44 @@ class SSHPageState extends ConsumerState<SSHPage>
     return child;
   }
 
-  Widget _buildBody() {
-    final letterCache = Stores.setting.letterCache.fetch();
-    final bgImage = Stores.setting.sshBgImage.fetch();
+  /// The picture the page is drawn on, bottom layer first.
+  ///
+  /// Only called when there is one — see [build], which is also where it is
+  /// put in the tree.
+  List<Widget> _buildBackground(File file) {
     final opacity = Stores.setting.sshBgOpacity.fetch();
     final blur = Stores.setting.sshBlurRadius.fetch();
-    final file = File(bgImage);
-    final hasBg = bgImage.isNotEmpty && file.existsSync();
+    return [
+      Positioned.fill(
+        child: Image.file(
+          file,
+          fit: BoxFit.cover,
+          errorBuilder: (_, _, _) => const SizedBox(),
+        ),
+      ),
+      if (blur > 0)
+        Positioned.fill(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+            child: const SizedBox(),
+          ),
+        ),
+      Positioned.fill(
+        child: ColoredBox(
+          color: _terminalTheme.background.withValues(alpha: opacity),
+        ),
+      ),
+    ];
+  }
+
+  Widget _buildBody(bool hasBg) {
+    final letterCache = Stores.setting.letterCache.fetch();
     final theme = hasBg
         ? _terminalTheme.copyWith(background: Colors.transparent)
         : _terminalTheme;
-    final children = <Widget>[];
-    if (hasBg) {
-      children.add(
-        Positioned.fill(
-          child: Image.file(
-            file,
-            fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => const SizedBox(),
-          ),
-        ),
-      );
-      if (blur > 0) {
-        children.add(
-          Positioned.fill(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-              child: const SizedBox(),
-            ),
-          ),
-        );
-      }
-      children.add(
-        Positioned.fill(
-          child: ColoredBox(
-            color: _terminalTheme.background.withValues(alpha: opacity),
-          ),
-        ),
-      );
-    }
-    children.add(
-      Padding(
+    final terminal = SizedBox(
+      height: double.infinity,
+      child: Padding(
         padding: EdgeInsets.only(left: _horizonPadding, right: _horizonPadding),
         child: TerminalView(
           _terminal,
@@ -447,9 +497,24 @@ class SSHPageState extends ConsumerState<SSHPage>
       ),
     );
 
-    return SizedBox(
-      height: double.infinity,
-      child: Stack(children: children),
+    final step = _introStep;
+    final steps = _introSteps;
+    if (step == null || steps == null || step >= steps.length) return terminal;
+    // Over the terminal and no further: the keys the walkthrough is pointing
+    // at are the `Scaffold`'s bottom bar, outside this body, and so stay lit
+    // while everything it says to look at is dimmed.
+    return Stack(
+      children: [
+        terminal,
+        Positioned.fill(
+          child: VirtKeyIntro(
+            step: step,
+            steps: steps,
+            onStep: setIntroStep,
+            onDone: _endVirtKeyIntro,
+          ),
+        ),
+      ],
     );
   }
 
@@ -463,19 +528,29 @@ class SSHPageState extends ConsumerState<SSHPage>
         padding: _media.viewInsets,
         duration: const Duration(milliseconds: 23),
         curve: Curves.fastOutSlowIn,
-        child: Container(
-          color: _terminalTheme.background,
-          height: _virtKeysHeight,
-          child: Consumer(
-            builder: (context, ref, child) {
-              final virtKeyState = ref.watch(virtKeyboardProvider);
-              final virtKeyNotifier = ref.read(virtKeyboardProvider.notifier);
+        // No colour of its own: the keys are part of the page and sit on
+        // whatever it is drawn on. Painting the terminal theme's background
+        // here put a strip of another colour under the terminal, which is not
+        // drawn on that colour at all.
+        //
+        // Lit but not live while the walkthrough runs: it is describing these,
+        // and a tap meant as "let me look at that one" would arm a modifier or
+        // open SFTP over the top of it.
+        child: IgnorePointer(
+          ignoring: _introStep != null,
+          child: SizedBox(
+            height: _virtKeysHeight,
+            child: Consumer(
+              builder: (context, ref, child) {
+                final virtKeyState = ref.watch(virtKeyboardProvider);
+                final virtKeyNotifier = ref.read(virtKeyboardProvider.notifier);
 
-              // Set the terminal input handler
-              _terminal.inputHandler = virtKeyNotifier;
+                // Set the terminal input handler
+                _terminal.inputHandler = virtKeyNotifier;
 
-              return _buildVirtualKey(virtKeyState, virtKeyNotifier);
-            },
+                return _buildVirtualKey(virtKeyState, virtKeyNotifier);
+              },
+            ),
           ),
         ),
       ),
@@ -639,8 +714,20 @@ class SSHPageState extends ConsumerState<SSHPage>
             ),
           );
 
+    // While the walkthrough is on a step, only the keys it is about stay lit.
+    // The row itself is never dimmed — it is the thing being pointed at.
+    final group = _introGroup;
+    final lit = group == null || item.group == group;
+
     return InkWell(
       onTap: () => _doVirtualKey(item, virtKeyNotifier),
+      // Held rather than tapped, and only where there is something to say —
+      // null otherwise, so a key with no help does not answer a hold with a
+      // splash and nothing else. The arrows are out either way: a hold there
+      // repeats the key, and their label is already the whole answer.
+      onLongPress: item.canLongPress || item.help == null
+          ? null
+          : () => _showVirtKeyHelp(item),
       onTapDown: (details) {
         if (item.canLongPress) {
           _virtKeyLongPressTimer = Timer.periodic(
@@ -651,12 +738,17 @@ class SSHPageState extends ConsumerState<SSHPage>
       },
       onTapCancel: () => _virtKeyLongPressTimer?.cancel(),
       onTapUp: (_) => _virtKeyLongPressTimer?.cancel(),
-      child: SizedBox(
-        width: virtKeyWidth,
-        height: _horizonVirtKeys
-            ? _virtKeysHeight
-            : _virtKeysHeight / _virtKeysList.length,
-        child: Center(child: child),
+      child: AnimatedOpacity(
+        opacity: lit ? 1 : 0.25,
+        duration: Durations.medium1,
+        curve: Curves.easeOut,
+        child: SizedBox(
+          width: virtKeyWidth,
+          height: _horizonVirtKeys
+              ? _virtKeysHeight
+              : _virtKeysHeight / _virtKeysList.length,
+          child: Center(child: child),
+        ),
       ),
     );
   }
@@ -676,7 +768,10 @@ class SSHPageState extends ConsumerState<SSHPage>
     if (!mounted) return;
     final text = value?.text;
     if (text == null) return;
-    _terminal.textInput(text);
+    // `paste`, not `textInput`: it brackets the text when the program asked for
+    // that (DECSET 2004), which is what stops an editor auto-indenting every
+    // line of it and a shell running the newlines as commands.
+    _terminal.paste(text);
     _terminalController.clearSelection();
   }
 
@@ -844,6 +939,9 @@ class SSHPageState extends ConsumerState<SSHPage>
   @override
   FutureOr<void> afterFirstLayout(BuildContext context) async {
     await _showHelp();
+    // After the dialog, and after nothing else: it points at the key row, so
+    // it has to be the only thing on screen when it runs.
+    _startVirtKeyIntroWhenVisible();
     await _initTerminal();
 
     if (Stores.setting.sshWakeLock.fetch()) WakelockPlus.enable();

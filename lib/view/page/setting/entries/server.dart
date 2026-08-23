@@ -15,8 +15,6 @@ extension _Server on _AppSettingsPageState {
         _buildServerLogoUrl(),
         _buildServerFuncBtns(),
         _buildNetViewType(),
-        _buildServerSeq(),
-        _buildServerDetailCardSeq(),
         _buildConnectionStats(),
         _buildDeleteServers(),
         _buildCpuView(),
@@ -142,24 +140,6 @@ extension _Server on _AppSettingsPageState {
       title: Text(l10n.serverFuncBtns),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () => ServerFuncBtnsOrderPage.route.go(context),
-    );
-  }
-
-  Widget _buildServerSeq() {
-    return ListTile(
-      leading: const Icon(OctIcons.sort_desc, size: _kIconSize),
-      title: Text(l10n.serverOrder),
-      trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: () => ServerOrderPage.route.go(context),
-    );
-  }
-
-  Widget _buildServerDetailCardSeq() {
-    return ListTile(
-      leading: const Icon(OctIcons.sort_desc, size: _kIconSize),
-      title: Text(l10n.serverDetailOrder),
-      trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: () => ServerDetailOrderPage.route.go(context),
     );
   }
 

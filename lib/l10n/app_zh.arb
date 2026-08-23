@@ -76,7 +76,6 @@
   "agentSaveServerTitle": "保存为服务器",
   "agentSaveServerTip": "这台主机和你输入的密码将保存在本设备上。",
   "agentMonitorOptional": "Monitor 代理（可选）",
-  "atLeastOneTab": "至少需要选择一个标签",
   "authFailTip": "认证失败，请检查连接信息是否正确",
   "autoBackupConflict": "仅可启用一个自动备份任务",
   "autoConnect": "自动连接",
@@ -90,6 +89,10 @@
   "backupPasswordSet": "备份密码已设置",
   "backupPasswordTip": "设置密码以加密备份文件。留空则禁用加密。",
   "backupPasswordWrong": "备份密码错误",
+  "remoteBackupPasswordRequired": "远程备份需要非空的备份密码",
+  "monitorHttpsRequired": "远程监控代理必须使用 HTTPS，除非该连接已明确允许不安全 HTTP。",
+  "monitorAllowInsecureHttp": "允许不安全 HTTP",
+  "monitorAllowInsecureHttpTip": "仅应在 HTTP 之外具备传输加密的可信私有网络中开启，例如 Tailscale。代理也必须明确允许明文文件访问；否则凭据和文件内容可能暴露。",
   "backupTip": "导出数据可通过密码加密，请妥善保管。",
   "icloudBackupStatusTitle": "备份状态",
   "icloudBackupStatusLoading": "正在读取 iCloud 备份状态...",
@@ -127,6 +130,14 @@
   "discoverSshServers": "发现SSH服务器",
   "discoveryFailed": "发现失败",
   "discoverySettings": "发现设置",
+  "distro": "发行版",
+  "distroSwitchTip": "用 {to} 替换 {from}。{from} 里装过的所有东西都会被删除,然后下载并解包 {to}。",
+  "@distroSwitchTip": {
+    "placeholders": {
+      "from": {},
+      "to": {}
+    }
+  },
   "diskHealth": "磁盘健康",
   "displayCpuIndex": "显示 CPU 索引",
   "dl2Local": "下载 {fileName} 到本地？",
@@ -137,7 +148,7 @@
   "dockerStatistics": "Docker 统计",
   "doubleColumnMode": "双列模式",
   "doubleColumnTip": "此选项仅用于启用该功能，是否生效取决于设备宽度",
-  "editVirtKeys": "编辑虚拟按键",
+  "editVirtKeys": "虚拟按键",
   "editorHighlightTip": "代码高亮功能可能影响性能，可选择关闭。",
   "enableMdns": "启用mDNS",
   "enableMdnsDesc": "使用mDNS/Bonjour发现SSH服务",
@@ -148,7 +159,7 @@
   "fileTooLarge": "文件 '{file}' 过大 '{size}'，超过了 {sizeMax}",
   "fileDirGone": "此文件夹已不存在",
   "fileDirGoneTip": "它已被删除或重命名。使用下方的按钮返回、回到主目录，或跳转到其他位置。",
-  "fullScreen": "全屏模式",
+  "fullScreen": "全屏",
   "fullScreenJitter": "全屏模式抖动",
   "fullScreenJitterHelp": "用于防止屏幕烧屏",
   "fullScreenTip": "当设备旋转为横屏时，是否开启全屏模式。此选项仅作用于服务器 Tab 页。",
@@ -195,6 +206,8 @@
   "lastSuccess": "最后成功",
   "letterCache": "普通键盘输入",
   "letterCacheTip": "开启后，输入内容会经过普通输入法，这样可避免部分系统在终端弹出安全键盘",
+  "linuxShellTip": "交互式终端用什么 shell 启动。Alpine 没有 chsh,系统里也没有东西读 /etc/passwd,所以只有这里说了算。一次性命令仍然走 /bin/sh,因为 app 和 Agent 写的是 POSIX。留空恢复 /bin/sh。",
+  "linuxNetTip": "Linux 系统及其软件包从哪里下载,以及写入其中的 DNS 服务器。留空恢复默认值。保存时会一并改写已安装系统中的对应文件。",
   "madeWithLove": "用❤️制作 by {myGithub}",
   "maxConcurrency": "最大并发数",
   "maxRetryCount": "服务器尝试重连次数",
@@ -204,6 +217,7 @@
       "system": {}
     }
   },
+  "mirror": "镜像",
   "needRestart": "需要重启 App",
   "netViewType": "网络视图类型",
   "newContainer": "新建容器",
@@ -273,20 +287,26 @@
   "rememberPwdInMem": "在内存中记住密码",
   "rememberPwdInMemTip": "用于容器、挂起等",
   "remotePath": "远端路径",
-  "rootfsUpdateTip": "已安装 Alpine {installed},现有 {latest}。更新会重新下载并替换整个容器:里面用 apk 装过的东西都会丢失。跳过的话,现在这个照常可用。",
+  "rootfsUpdateTip": "已安装 {distro} {installed},现有 {latest}。更新会重新下载并替换整个容器:里面用 {pm} 装过的东西都会丢失。跳过的话,现在这个照常可用。",
   "@rootfsUpdateTip": {
     "placeholders": {
+      "distro": {},
       "installed": {},
-      "latest": {}
+      "latest": {},
+      "pm": {}
     }
   },
+  "linuxSystemInUse": "{name} 还有终端开着。请先关闭,再删除这个系统。",
   "rootfsSubtitle": "本机上的 Linux 用户空间",
-  "rootfsInstallTip": "下载 Alpine Linux {version}(约 3 MB)并解压到本机。它为本 App 提供一个带包管理器的 shell,可随时删除。",
+  "rootfsInstallTip": "下载 {distro} {version}(约 {size} MB)并解压到本机。它为本 App 提供一个带包管理器的 shell,可随时删除。",
   "@rootfsInstallTip": {
     "placeholders": {
-      "version": {}
+      "distro": {},
+      "version": {},
+      "size": {}
     }
   },
+  "nameAlreadyExistsFmt": "「{name}」已存在",
   "sameIdServerExist": "已存在相同 id 的服务器",
   "second": "秒",
   "serverFilesUnavailableTip": "需要能连上这台服务器的 SSH,或者它的 monitor agent 开启了文件 API。",
@@ -320,9 +340,9 @@
   "sshConfigImported": "从 SSH 配置导入了 {count} 个服务器",
   "sshHostKeyChangedDesc": "服务器 {serverName} 的 SSH 主机密钥已更改，仅在信任该服务器时继续。",
   "sshHostKeyFingerprintMd5Base64": "指纹（MD5 Base64）：{fingerprint}",
-  "sshHostKeyFingerprintMd5Hex": "指纹（MD5 十六进制）：{fingerprint}",
+  "sshHostKeyFingerprintMd5Hex": "指纹（SHA256）：{fingerprint}",
   "sshHostKeyType": "SSH 主机密钥类型",
-  "sshKnownHostKeys": "已信任的主机密钥",
+  "sshKnownHostKeys": "已信任的主机",
   "sshKnownHostKeysTip": "本 app 已接受的主机密钥。删掉一条,下次连接时会重新询问。",
   "sshHostKeyNewDesc": "收到来自 {serverName} 的新 SSH 主机密钥，在信任前请检查指纹。",
   "sshHostKeyStoredFingerprint": "已存储的指纹：{fingerprint}",
@@ -356,6 +376,16 @@
   "virtKeyHelpClipboard": "如果终端有选中字符，则复制选中字符至剪切板，否则粘贴剪切板内容至终端。",
   "virtKeyHelpIME": "打开/关闭键盘",
   "virtKeyHelpSFTP": "在 SFTP 中打开当前路径。",
+  "virtKeyHelpSnippet": "选择一个代码片段并在当前终端执行。",
+  "virtKeyHelpTmux": "在 tmux 的 session 和 window 之间切换。",
+  "virtKeyIntroActions": "快捷操作",
+  "virtKeyIntroActionsTip": "这些键不输入字符，而是打开对应功能。长按可查看说明。",
+  "virtKeyIntroCustomizeTip": "在终端设置里可以调整顺序，或隐藏用不到的键。",
+  "virtKeyIntroModifiers": "修饰键",
+  "virtKeyIntroModifiersTip": "点一下开启，再按键盘上的字母。开启状态只作用于下一个键。",
+  "virtKeyIntroNav": "光标移动",
+  "virtKeyIntroNavTip": "这些键移动光标。长按方向键可连续触发。",
+  "virtKeyIntroSelect": "终端有内容可滚动时，横向拖动即可选中文字。",
   "waitConnection": "请等待连接建立",
   "wakeLock": "保持唤醒",
   "watchNotPaired": "没有已配对的 Apple Watch",
@@ -367,7 +397,7 @@
   "writeScriptTip": "在连接服务器后，会向 `~/.config/server_box` \n | `/tmp/server_box` 写入脚本来监测系统状态，你可以审查脚本内容。",
   "menuGitHubRepository": "GitHub 仓库",
   "podmanDockerEmulationDetected": "检测到 Podman Docker 仿真。请在设置中切换到 Podman。",
-  "portForwardBeta": "此功能仍在测试阶段，不保证功能可用性。",
+  "betaTip": "此功能仍在测试阶段，不保证功能可用性。",
   "portForward_startPrompt": "添加端口映射规则以开始使用",
   "portForward_localHost": "本地主机",
   "portForward_localPort": "本地端口",

@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:json_annotation/json_annotation.dart';
@@ -7,15 +6,18 @@ import 'package:logging/logging.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
-import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 
 part 'backup.g.dart';
 
-const backupFormatVersion = 1;
-
 final _logger = Logger('Backup');
 
+/// The first backup format, kept for reading only.
+///
+/// The app writes [BackupV2]; this exists so a file from a build old enough to
+/// have written it can still be restored. It carries one timestamp for the
+/// whole file rather than one per record, which is why a merge here can only
+/// take or leave each store whole.
 @JsonSerializable()
 class Backup implements Mergeable {
   // backup format version
@@ -45,29 +47,6 @@ class Backup implements Mergeable {
 
   Map<String, dynamic> toJson() => _$BackupToJson(this);
 
-  static Future<Backup> loadFromStore() async {
-    final lastModTime = Stores.lastModTime;
-    return Backup(
-      version: backupFormatVersion,
-      date: DateTime.now().toString().split('.').firstOrNull ?? '',
-      spis: Stores.server.fetch(),
-      snippets: Stores.snippet.fetch(),
-      keys: Stores.key.fetch(),
-      container: Stores.container.getAllMap(),
-      lastModTime: lastModTime,
-      history: Stores.history.getAllMap(),
-      settings: Stores.setting.getAllMap(),
-    );
-  }
-
-  static Future<String> backup([String? name]) async {
-    final bak = await Backup.loadFromStore();
-    final result = _diyEncrypt(json.encode(bak.toJson()));
-    final path = Paths.doc.joinPath(name ?? Miscs.bakFileName);
-    await File(path).writeAsString(result);
-    return path;
-  }
-
   @override
   Future<void> merge({bool force = false}) async {
     final curTime = Stores.lastModTime;
@@ -78,134 +57,27 @@ class Backup implements Mergeable {
       return;
     }
 
-    // Snippets
-    if (force) {
-      for (final s in snippets) {
-        Stores.snippet.box.put(s.name, s);
-      }
-    } else {
-      final nowSnippets = Stores.snippet.box.keys.toSet();
-      final bakSnippets = snippets.map((e) => e.name).toSet();
-      final newSnippets = bakSnippets.difference(nowSnippets);
-      final delSnippets = nowSnippets.difference(bakSnippets);
-      final updateSnippets = nowSnippets.intersection(bakSnippets);
-      for (final s in newSnippets) {
-        Stores.snippet.box.put(s, snippets.firstWhere((e) => e.name == s));
-      }
-      for (final s in delSnippets) {
-        Stores.snippet.box.delete(s);
-      }
-      for (final s in updateSnippets) {
-        Stores.snippet.box.put(s, snippets.firstWhere((e) => e.name == s));
-      }
-    }
+    // One transaction for the whole merge. Per-key commits would leave a
+    // restore that was interrupted — process killed, device out of battery —
+    // with servers deleted whose replacements were never written, and no way to
+    // tell that had happened.
+    //
+    // Whole stores rather than per record: this format carries one timestamp
+    // for the entire file, so there is nothing to compare a single record
+    // against. Ordered by what references what — a server names a private key,
+    // and a snippet names a server.
+    SqliteStore.transact(() {
+      Stores.key.replaceAll(keys);
+      Stores.server.replaceAll(spis);
+      Stores.snippet.replaceAll(snippets);
+      Stores.container.restoreLegacyMap(container);
+      _restoreInto(Stores.history, history, force: force);
 
-    // ServerPrivateInfo
-    if (force) {
-      for (final s in spis) {
-        Stores.server.box.put(s.id, s);
+      final settings_ = settings;
+      if (settings_ != null) {
+        _restoreInto(Stores.setting, settings_, force: force);
       }
-    } else {
-      final nowSpis = Stores.server.box.keys.toSet();
-      final bakSpis = spis.map((e) => e.id).toSet();
-      final newSpis = bakSpis.difference(nowSpis);
-      final delSpis = nowSpis.difference(bakSpis);
-      final updateSpis = nowSpis.intersection(bakSpis);
-      for (final s in newSpis) {
-        Stores.server.box.put(s, spis.firstWhere((e) => e.id == s));
-      }
-      for (final s in delSpis) {
-        Stores.server.box.delete(s);
-      }
-      for (final s in updateSpis) {
-        Stores.server.box.put(s, spis.firstWhere((e) => e.id == s));
-      }
-    }
-
-    // PrivateKeyInfo
-    if (force) {
-      for (final s in keys) {
-        Stores.key.box.put(s.id, s);
-      }
-    } else {
-      final nowKeys = Stores.key.box.keys.toSet();
-      final bakKeys = keys.map((e) => e.id).toSet();
-      final newKeys = bakKeys.difference(nowKeys);
-      final delKeys = nowKeys.difference(bakKeys);
-      final updateKeys = nowKeys.intersection(bakKeys);
-      for (final s in newKeys) {
-        Stores.key.box.put(s, keys.firstWhere((e) => e.id == s));
-      }
-      for (final s in delKeys) {
-        Stores.key.box.delete(s);
-      }
-      for (final s in updateKeys) {
-        Stores.key.box.put(s, keys.firstWhere((e) => e.id == s));
-      }
-    }
-
-    // History
-    if (force) {
-      Stores.history.box.putAll(history);
-    } else {
-      final nowHistory = Stores.history.box.keys.toSet();
-      final bakHistory = history.keys.toSet();
-      final newHistory = bakHistory.difference(nowHistory);
-      final delHistory = nowHistory.difference(bakHistory);
-      final updateHistory = nowHistory.intersection(bakHistory);
-      for (final s in newHistory) {
-        Stores.history.box.put(s, history[s]);
-      }
-      for (final s in delHistory) {
-        Stores.history.box.delete(s);
-      }
-      for (final s in updateHistory) {
-        Stores.history.box.put(s, history[s]);
-      }
-    }
-
-    // Container
-    if (force) {
-      Stores.container.box.putAll(container);
-    } else {
-      final nowContainer = Stores.container.box.keys.toSet();
-      final bakContainer = container.keys.toSet();
-      final newContainer = bakContainer.difference(nowContainer);
-      final delContainer = nowContainer.difference(bakContainer);
-      final updateContainer = nowContainer.intersection(bakContainer);
-      for (final s in newContainer) {
-        Stores.container.box.put(s, container[s]);
-      }
-      for (final s in delContainer) {
-        Stores.container.box.delete(s);
-      }
-      for (final s in updateContainer) {
-        Stores.container.box.put(s, container[s]);
-      }
-    }
-
-    // Settings
-    final settings_ = settings;
-    if (settings_ != null) {
-      if (force) {
-        Stores.setting.box.putAll(settings_);
-      } else {
-        final nowSettings = Stores.setting.box.keys.toSet();
-        final bakSettings = settings_.keys.toSet();
-        final newSettings = bakSettings.difference(nowSettings);
-        final delSettings = nowSettings.difference(bakSettings);
-        final updateSettings = nowSettings.intersection(bakSettings);
-        for (final s in newSettings) {
-          Stores.setting.box.put(s, settings_[s]);
-        }
-        for (final s in delSettings) {
-          Stores.setting.box.delete(s);
-        }
-        for (final s in updateSettings) {
-          Stores.setting.box.put(s, settings_[s]);
-        }
-      }
-    }
+    });
 
     Provider.reload();
     RNodes.app.notify();
@@ -217,8 +89,40 @@ class Backup implements Mergeable {
       Backup.fromJson(json.decode(_diyDecrypt(raw)));
 }
 
-String _diyEncrypt(String raw) =>
-    json.encode(raw.codeUnits.map((e) => e * 2 + 1).toList(growable: false));
+/// Writes one section of a backup into the key-value store it came from.
+///
+/// [force] replaces what is there; otherwise the store is also made to *stop*
+/// holding whatever the backup does not, which is what makes a delete on one
+/// device reach another.
+///
+/// Nothing here stamps `lastUpdateTs`, which is what writing straight to the
+/// Hive box used to achieve. A restore is not an edit: marking every restored
+/// key as changed now would leave the merged copy looking newer than the backup
+/// it came from, and the next sync would push it straight back out.
+///
+/// Uses `keys()` rather than every key in the store, so the internal
+/// `lastUpdateTs` entry is not one of the ones deleted for being absent from
+/// the backup — `getAllMap` leaves it out of the backup by the same rule, so
+/// the box-level version deleted it on every non-forced merge.
+void _restoreInto(
+  SqliteStore store,
+  Map<String, Object?> incoming, {
+  required bool force,
+}) {
+  if (!force) {
+    for (final key in store.keys().difference(incoming.keys.toSet())) {
+      store.remove(key, updateLastUpdateTsOnRemove: false);
+    }
+  }
+  for (final entry in incoming.entries) {
+    final value = entry.value;
+    if (value == null) {
+      store.remove(entry.key, updateLastUpdateTsOnRemove: false);
+      continue;
+    }
+    store.set(entry.key, value, updateLastUpdateTsOnSet: false);
+  }
+}
 
 String _diyDecrypt(String raw) {
   try {

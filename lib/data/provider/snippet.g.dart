@@ -41,7 +41,7 @@ final class SnippetNotifierProvider
   }
 }
 
-String _$snippetNotifierHash() => r'46297b84ec6497e5c454be6ffe32330b37c6a465';
+String _$snippetNotifierHash() => r'a6dd4f1bf7d3df445cdaf696df5312c143d35e15';
 
 abstract class _$SnippetNotifier extends $Notifier<SnippetState> {
   SnippetState build();

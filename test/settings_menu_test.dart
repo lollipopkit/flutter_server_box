@@ -1,18 +1,17 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/generated/l10n/lib_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive_ce/hive.dart';
-import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/setting/entry.dart';
+
+import 'helpers/test_db.dart';
 
 /// One tree, two ways of walking it.
 ///
@@ -24,25 +23,20 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late Directory tempDir;
-  late Box<dynamic> settingBox;
-  late Box<dynamic> serverBox;
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-settings-');
-    Hive.init(tempDir.path);
+    await openTestDb();
     // In memory: a real write started in a `testWidgets` body never lets go of
     // the box's lock, and this page writes on nearly every switch.
-    settingBox = await Hive.openBox<dynamic>('setting_test', bytes: Uint8List(0));
-    serverBox = await Hive.openBox<dynamic>('server_test', bytes: Uint8List(0));
-    getIt.registerSingleton<SettingStore>(SettingStore.forBox(settingBox));
+    getIt.registerSingleton<SettingStore>(SettingStore.forTest());
     // The server order page reads it as soon as it is shown.
-    getIt.registerSingleton<ServerStore>(ServerStore.forBox(serverBox));
+    getIt.registerSingleton<ServerStore>(ServerStore.forTest());
   });
 
   tearDown(() async {
     await getIt.reset();
-    await settingBox.close();
-    await serverBox.close();
+    await SqliteDb.close();
     await tempDir.delete(recursive: true);
   });
 
@@ -55,11 +49,9 @@ void main() {
   Finder tabRow(String title) =>
       find.descendant(of: find.byKey(settingsTabsKey), matching: find.text(title));
 
-  /// The way back out. Absent at the root, where there is nowhere to go.
-  final backTab = find.descendant(
-    of: find.byKey(settingsTabsKey),
-    matching: find.byIcon(Icons.arrow_back),
-  );
+  /// The way back out, which is the title bar's own button and the only one on
+  /// the screen — the tabs show the level and nothing else.
+  final backBtn = find.byType(BackButton);
 
   String barTitle(WidgetTester tester) => tester
       .widget<Text>(
@@ -118,7 +110,7 @@ void main() {
     expect(menuRow(libL10n.file), findsOneWidget);
     expect(menuRow(libL10n.about), findsOneWidget);
     // The one level of nesting there is stays shut until asked for.
-    expect(menuRow(l10n.serverOrder), findsNothing);
+    expect(menuRow(libL10n.sequence), findsNothing);
     expect(find.byKey(settingsTabsKey), findsNothing);
   });
 
@@ -148,7 +140,7 @@ void main() {
     await tester.tap(menuRow(libL10n.server));
     await settle(tester);
 
-    expect(menuRow(l10n.serverOrder), findsOneWidget);
+    expect(menuRow(libL10n.sequence), findsOneWidget);
     // The bar names what it named: the branch opened, it did not select.
     expect(barTitle(tester), before);
   });
@@ -158,10 +150,10 @@ void main() {
 
     await tester.tap(menuRow(libL10n.server));
     await settle(tester);
-    await tester.tap(menuRow(l10n.serverOrder));
+    await tester.tap(menuRow(libL10n.sequence));
     await settle(tester);
 
-    expect(barTitle(tester), l10n.serverOrder);
+    expect(barTitle(tester), libL10n.sequence);
     // Embedded, so it dropped the bar it has when pushed — one page, one bar.
     expect(find.byType(AppBar), findsOneWidget);
   });
@@ -202,10 +194,19 @@ void main() {
     await settle(tester, 20);
 
     expect(find.byKey(settingsTabsKey), findsOneWidget);
-    expect(tabRow(l10n.serverOrder), findsOneWidget);
+    expect(tabRow(libL10n.sequence), findsOneWidget);
     // What is first inside it, rather than a row of tabs with none of them on.
-    expect(barTitle(tester), libL10n.setting);
-    expect(backTab, findsOneWidget);
+    expect(barTitle(tester), libL10n.general);
+    // One way back, in the bar at the top. A second at the foot was the same
+    // move twice on one screen.
+    expect(backBtn, findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(settingsTabsKey),
+        matching: find.byIcon(Icons.arrow_back),
+      ),
+      findsNothing,
+    );
   });
 
   testWidgets('the tabs rise into place rather than appearing', (tester) async {
@@ -247,7 +248,7 @@ void main() {
 
     await tester.tap(menuRow(libL10n.server));
     await settle(tester, 20);
-    await tester.tap(backTab);
+    await tester.tap(backBtn);
     await settle(tester, 20);
 
     expect(barTitle(tester), libL10n.setting);
@@ -262,7 +263,7 @@ void main() {
     await settle(tester, 20);
     final four = tester.getSize(find.byKey(settingsTabsKey)).width;
 
-    await tester.tap(backTab);
+    await tester.tap(backBtn);
     await settle(tester, 20);
     await tester.tap(menuRow(libL10n.file));
     await settle(tester, 20);
@@ -289,8 +290,8 @@ void main() {
 
     // Filled rather than only recoloured — a shade of grey against another is
     // not a state at a glance.
-    expect(fillOf(libL10n.setting), scheme.secondaryContainer);
-    expect(fillOf(l10n.serverOrder), isNull);
+    expect(fillOf(libL10n.general), scheme.secondaryContainer);
+    expect(fillOf(libL10n.sequence), isNull);
   });
 
   testWidgets('the leaves of a level sit side by side, and drag between', (
@@ -300,14 +301,14 @@ void main() {
     await tester.tap(menuRow(libL10n.server));
     await settle(tester, 20);
 
-    expect(barTitle(tester), libL10n.setting);
+    expect(barTitle(tester), libL10n.general);
 
     // Dragging the content is the same move as tapping the next tab, which is
     // what putting them side by side promises.
     await tester.drag(find.byType(PageView), const Offset(-400, 0));
     await settle(tester, 20);
 
-    expect(barTitle(tester), l10n.serverOrder);
+    expect(barTitle(tester), libL10n.sequence);
   });
 
   testWidgets('the list and the level are pages of one navigator', (tester) async {
@@ -326,7 +327,7 @@ void main() {
     // comes from.
     expect(contentNav().pages.length, 2);
 
-    await tester.tap(backTab);
+    await tester.tap(backBtn);
     await settle(tester, 20);
     expect(contentNav().pages.length, 1);
   });

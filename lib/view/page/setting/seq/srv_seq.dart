@@ -2,6 +2,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';
@@ -45,7 +46,9 @@ class _ServerOrderPageState extends ConsumerState<ServerOrderPage> {
       });
     });
 
-    final body = SafeArea(child: _buildBody());
+    // Not the bottom: the list takes that as padding of its own, so it can
+    // be scrolled through rather than cutting the page short of it.
+    final body = SafeArea(bottom: false, child: _buildBody(context));
     if (widget.embedded) return body;
     return Scaffold(
       appBar: CustomAppBar(title: Text(l10n.serverOrder)),
@@ -53,7 +56,7 @@ class _ServerOrderPageState extends ConsumerState<ServerOrderPage> {
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(BuildContext context) {
     final serverState = ref.watch(serversProvider);
     final order = _order;
 
@@ -62,7 +65,7 @@ class _ServerOrderPageState extends ConsumerState<ServerOrderPage> {
     }
     return ReorderableListView.builder(
       footer: const SizedBox(height: 77),
-      onReorderItem: (oldIndex, newIndex) {
+      onReorderItem: (oldIndex, newIndex) async {
         final targetIndex = newIndex;
         if (targetIndex == oldIndex) {
           return;
@@ -75,9 +78,9 @@ class _ServerOrderPageState extends ConsumerState<ServerOrderPage> {
         setState(() {
           _order = newOrder;
         });
-        ref.read(serversProvider.notifier).updateServerOrder(newOrder);
+        await ref.read(serversProvider.notifier).updateServerOrder(newOrder);
       },
-      padding: const EdgeInsets.all(8),
+      padding: context.padBottom(const EdgeInsets.all(8)),
       buildDefaultDragHandles: false,
       itemBuilder: (_, idx) {
         final id = order[idx];

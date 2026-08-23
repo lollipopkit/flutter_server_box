@@ -67,7 +67,6 @@ message = "Alert: {{message}}"
         // neither shell nor file access should be something a user turns on by
         // accident.
         let remote = config.get_remote_access();
-        assert!(!remote.tunnel.enabled);
         assert!(!remote.terminal.enabled);
         assert!(!remote.terminal.allow_insecure);
         assert!(!remote.fs.enabled);

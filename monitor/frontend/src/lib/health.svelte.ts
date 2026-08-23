@@ -4,30 +4,58 @@
 
 import { probe } from './probe'
 import { servers } from './servers.svelte'
+import { forEachConcurrent } from './concurrency'
 
 const INTERVAL_MS = 15_000
+const MAX_CONCURRENT = 4
 
 class HealthStore {
   /// undefined = not probed yet, then reachable true/false
   status = $state<Record<string, boolean | undefined>>({})
 
-  #timer: ReturnType<typeof setInterval> | undefined
+  #timer: ReturnType<typeof setTimeout> | undefined
+  #controllers = new Set<AbortController>()
+  #generation = 0
 
   start() {
-    void this.#tick()
-    this.#timer = setInterval(() => void this.#tick(), INTERVAL_MS)
+    this.stop()
+    const generation = ++this.#generation
+    void this.#tick(generation)
   }
 
   stop() {
-    clearInterval(this.#timer)
+    this.#generation += 1
+    clearTimeout(this.#timer)
+    this.#timer = undefined
+    for (const controller of this.#controllers) controller.abort()
+    this.#controllers.clear()
   }
 
-  async #tick() {
-    await Promise.all(
-      servers.list.map(async (s) => {
-        this.status[s.id] = (await probe(s.url)) === 'healthy'
-      }),
-    )
+  async #tick(generation: number) {
+    const entries = [...servers.list]
+    try {
+      await forEachConcurrent(entries, MAX_CONCURRENT, async (server) => {
+        if (generation !== this.#generation) return
+        const controller = new AbortController()
+        this.#controllers.add(controller)
+        try {
+          const reachable = (await probe(server.url, controller.signal)) === 'healthy'
+          if (generation === this.#generation) this.status[server.id] = reachable
+        } finally {
+          this.#controllers.delete(controller)
+        }
+      })
+      if (generation === this.#generation) {
+        const currentIds = new Set(entries.map((entry) => entry.id))
+        for (const id of Object.keys(this.status)) {
+          if (!currentIds.has(id)) delete this.status[id]
+        }
+      }
+    } finally {
+      if (generation === this.#generation) {
+        this.#timer = setTimeout(() => void this.#tick(generation), INTERVAL_MS)
+      }
+    }
   }
 }
 

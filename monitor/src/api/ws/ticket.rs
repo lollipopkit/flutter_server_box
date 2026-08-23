@@ -5,7 +5,7 @@
 //! string would write it into ntex's access log on every connection, and it
 //! stays valid for 24 hours. Instead the client exchanges its JWT — over an
 //! ordinary authenticated `POST` — for a ticket that is single-use, expires in
-//! seconds, and is bound to one purpose.
+//! seconds, and is bound to the terminal endpoint.
 //!
 //! The app takes the same path even though it *could* send a header: one
 //! mechanism to audit and get right rather than two, at the cost of one extra
@@ -33,13 +33,10 @@ const MAX_LIVE: usize = 256;
 const ID_BYTES: usize = 16;
 const SECRET_BYTES: usize = 32;
 
-/// What a ticket authorises. A ticket minted for the terminal cannot open a
-/// tunnel and vice versa, so a leak in one path can't be redirected into the
-/// other.
+/// The only WebSocket endpoint the agent exposes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Purpose {
-    Tunnel,
     Terminal,
 }
 
@@ -57,8 +54,8 @@ pub struct TicketStore {
 }
 
 /// Why a ticket was refused. Deliberately not surfaced to the client in
-/// detail — every failure answers the same 401, since distinguishing
-/// "expired" from "wrong purpose" tells a prober how far they got.
+/// detail — every failure answers the same 401, so a prober cannot tell how
+/// far it got.
 #[derive(Debug, PartialEq, Eq)]
 pub enum TicketError {
     Malformed,
@@ -180,21 +177,11 @@ mod tests {
     #[test]
     fn a_ticket_works_exactly_once() {
         let store = TicketStore::new();
-        let ticket = store.issue(Purpose::Tunnel, "admin").unwrap();
-        assert_eq!(store.consume(&ticket, Purpose::Tunnel).unwrap(), "admin");
-        assert_eq!(
-            store.consume(&ticket, Purpose::Tunnel),
-            Err(TicketError::Unknown)
-        );
-    }
-
-    #[test]
-    fn purpose_is_binding() {
-        let store = TicketStore::new();
         let ticket = store.issue(Purpose::Terminal, "admin").unwrap();
+        assert_eq!(store.consume(&ticket, Purpose::Terminal).unwrap(), "admin");
         assert_eq!(
-            store.consume(&ticket, Purpose::Tunnel),
-            Err(TicketError::WrongPurpose)
+            store.consume(&ticket, Purpose::Terminal),
+            Err(TicketError::Unknown)
         );
     }
 
@@ -202,9 +189,9 @@ mod tests {
     fn expiry_is_enforced() {
         let store = TicketStore::new();
         let now = Instant::now();
-        let ticket = store.issue_at(Purpose::Tunnel, "admin", now).unwrap();
+        let ticket = store.issue_at(Purpose::Terminal, "admin", now).unwrap();
         assert_eq!(
-            store.consume_at(&ticket, Purpose::Tunnel, now + TTL + Duration::from_secs(1)),
+            store.consume_at(&ticket, Purpose::Terminal, now + TTL + Duration::from_secs(1)),
             Err(TicketError::Expired)
         );
     }
@@ -212,17 +199,17 @@ mod tests {
     #[test]
     fn a_wrong_secret_burns_the_ticket() {
         let store = TicketStore::new();
-        let ticket = store.issue(Purpose::Tunnel, "admin").unwrap();
+        let ticket = store.issue(Purpose::Terminal, "admin").unwrap();
         let (id, _) = ticket.split_once('.').unwrap();
         let forged = format!("{id}.{}", "0".repeat(SECRET_BYTES * 2));
 
         assert_eq!(
-            store.consume(&forged, Purpose::Tunnel),
+            store.consume(&forged, Purpose::Terminal),
             Err(TicketError::BadSecret)
         );
         // Guessing the secret gets one shot, not unlimited attempts
         assert_eq!(
-            store.consume(&ticket, Purpose::Tunnel),
+            store.consume(&ticket, Purpose::Terminal),
             Err(TicketError::Unknown)
         );
     }
@@ -230,13 +217,13 @@ mod tests {
     #[test]
     fn malformed_input_is_rejected_without_touching_the_store() {
         let store = TicketStore::new();
-        let ticket = store.issue(Purpose::Tunnel, "admin").unwrap();
+        let ticket = store.issue(Purpose::Terminal, "admin").unwrap();
         assert_eq!(
-            store.consume("no-separator", Purpose::Tunnel),
+            store.consume("no-separator", Purpose::Terminal),
             Err(TicketError::Malformed)
         );
         assert_eq!(store.len(), 1);
-        assert!(store.consume(&ticket, Purpose::Tunnel).is_ok());
+        assert!(store.consume(&ticket, Purpose::Terminal).is_ok());
     }
 
     #[test]
@@ -244,12 +231,12 @@ mod tests {
         let store = TicketStore::new();
         let now = Instant::now();
         for _ in 0..10 {
-            store.issue_at(Purpose::Tunnel, "admin", now).unwrap();
+            store.issue_at(Purpose::Terminal, "admin", now).unwrap();
         }
         assert_eq!(store.len(), 10);
 
         store
-            .issue_at(Purpose::Tunnel, "admin", now + TTL + Duration::from_secs(1))
+            .issue_at(Purpose::Terminal, "admin", now + TTL + Duration::from_secs(1))
             .unwrap();
         assert_eq!(store.len(), 1, "expired tickets should not accumulate");
     }
@@ -259,16 +246,16 @@ mod tests {
         let store = TicketStore::new();
         let now = Instant::now();
         for _ in 0..MAX_LIVE {
-            store.issue_at(Purpose::Tunnel, "admin", now).unwrap();
+            store.issue_at(Purpose::Terminal, "admin", now).unwrap();
         }
-        assert!(store.issue_at(Purpose::Tunnel, "admin", now).is_err());
+        assert!(store.issue_at(Purpose::Terminal, "admin", now).is_err());
     }
 
     #[test]
     fn tickets_are_unique_and_long_enough_to_be_unguessable() {
         let store = TicketStore::new();
-        let a = store.issue(Purpose::Tunnel, "admin").unwrap();
-        let b = store.issue(Purpose::Tunnel, "admin").unwrap();
+        let a = store.issue(Purpose::Terminal, "admin").unwrap();
+        let b = store.issue(Purpose::Terminal, "admin").unwrap();
         assert_ne!(a, b);
 
         let (id, secret) = a.split_once('.').unwrap();

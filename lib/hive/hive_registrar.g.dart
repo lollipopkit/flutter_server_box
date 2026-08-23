@@ -10,19 +10,14 @@ import 'package:server_box/hive/hive_adapters.dart';
 extension HiveRegistrar on HiveInterface {
   void registerAdapters() {
     registerAdapter(AppTabAdapter());
-    registerAdapter(BmcCfgAdapter());
     registerAdapter(ConnectionResultAdapter());
     registerAdapter(ConnectionStatAdapter());
-    registerAdapter(MonitorHttpCredentialAdapter());
     registerAdapter(NetViewTypeAdapter());
     registerAdapter(PortForwardConfigAdapter());
     registerAdapter(PortForwardTypeAdapter());
-    registerAdapter(PrivateKeyInfoAdapter());
     registerAdapter(ServerConnectionStatsAdapter());
     registerAdapter(ServerCustomAdapter());
     registerAdapter(ServerFuncBtnAdapter());
-    registerAdapter(SnippetAdapter());
-    registerAdapter(SpiAdapter());
     registerAdapter(SshCredentialAdapter());
     registerAdapter(SystemTypeAdapter());
     registerAdapter(VirtKeyAdapter());
@@ -33,19 +28,14 @@ extension HiveRegistrar on HiveInterface {
 extension IsolatedHiveRegistrar on IsolatedHiveInterface {
   void registerAdapters() {
     registerAdapter(AppTabAdapter());
-    registerAdapter(BmcCfgAdapter());
     registerAdapter(ConnectionResultAdapter());
     registerAdapter(ConnectionStatAdapter());
-    registerAdapter(MonitorHttpCredentialAdapter());
     registerAdapter(NetViewTypeAdapter());
     registerAdapter(PortForwardConfigAdapter());
     registerAdapter(PortForwardTypeAdapter());
-    registerAdapter(PrivateKeyInfoAdapter());
     registerAdapter(ServerConnectionStatsAdapter());
     registerAdapter(ServerCustomAdapter());
     registerAdapter(ServerFuncBtnAdapter());
-    registerAdapter(SnippetAdapter());
-    registerAdapter(SpiAdapter());
     registerAdapter(SshCredentialAdapter());
     registerAdapter(SystemTypeAdapter());
     registerAdapter(VirtKeyAdapter());

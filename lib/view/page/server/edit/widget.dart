@@ -94,7 +94,9 @@ extension _Widgets on _ServerEditPageState {
                 final item = pkis[index];
                 return ChoiceChipX<int>(
                   key: ValueKey(index),
-                  label: item.id,
+                  // The name, not the id: an id is generated now, so this
+                  // chip showed the user a `ShortId`.
+                  label: item.name,
                   state: state,
                   value: index,
                   onSelected: (idx, on) {
@@ -475,6 +477,21 @@ extension _Widgets on _ServerEditPageState {
               value: v,
               onChanged: (val) {
                 _monitorIgnoreCert.value = val;
+              },
+            ),
+          ),
+        ).cardx,
+        ListTile(
+          leading: const Icon(Icons.warning_amber_rounded),
+          title: TipText(
+            l10n.monitorAllowInsecureHttp,
+            l10n.monitorAllowInsecureHttpTip,
+          ),
+          trailing: _monitorAllowInsecure.listenVal(
+            (v) => Switch(
+              value: v,
+              onChanged: (val) {
+                _monitorAllowInsecure.value = val;
               },
             ),
           ),

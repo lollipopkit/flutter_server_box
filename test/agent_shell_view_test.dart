@@ -1,11 +1,7 @@
-import 'dart:io';
-import 'dart:typed_data';
-
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/provider/ai/agent_session.dart';
@@ -16,6 +12,8 @@ import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/agent/shell.dart';
 import 'package:server_box/view/page/agent/view.dart';
+
+import 'helpers/test_db.dart';
 
 /// An [AgentSession] frozen at one state, as in `agent_view_test.dart`: these
 /// tests are about the window the conversation is shown in, not about the
@@ -29,38 +27,21 @@ class _FixedSession extends AgentSession {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late Directory tempDir;
-  late Box<dynamic> settingBox;
-  late Box<dynamic> conversationBox;
 
   setUp(() async {
-    tempDir = await Directory.systemTemp.createTemp('server-box-agent-shell-');
-    Hive.init(tempDir.path);
-    // In memory rather than on disk. A widget test body runs in a fake-async
-    // zone; a real file write started there completes on a callback that zone
-    // is no longer pumping, so the box's write lock is never released and
-    // closing it in `tearDown` blocks — which hangs the whole run, not just
-    // this file. The shell persists its mode the moment it changes, so every
-    // test here writes.
-    settingBox = await Hive.openBox<dynamic>(
-      'setting_test',
-      bytes: Uint8List(0),
-    );
-    conversationBox = await Hive.openBox<dynamic>(
-      'agent_conversation_test',
-      bytes: Uint8List(0),
-    );
-    getIt.registerSingleton<SettingStore>(SettingStore.forBox(settingBox));
+    await openTestDb();
+    // In memory rather than on disk: the shell persists its mode the moment it
+    // changes, so every test here writes, and none of them should leave a
+    // database behind.
+    getIt.registerSingleton<SettingStore>(SettingStore.forTest());
     getIt.registerSingleton<AgentConversationStore>(
-      AgentConversationStore.forBox(conversationBox),
+      AgentConversationStore.forTest(),
     );
   });
 
   tearDown(() async {
     await getIt.reset();
-    await settingBox.close();
-    await conversationBox.close();
-    await tempDir.delete(recursive: true);
+    await SqliteDb.close();
   });
 
   /// Past the end of whatever is running.

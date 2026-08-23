@@ -4,6 +4,10 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:xterm/core.dart';
 
+/// The three kinds of virtual key, which is what the walkthrough steps
+/// through. See [VirtKeyX.group].
+enum VirtKeyGroup { modifiers, navigation, shortcuts }
+
 enum VirtualKeyFunc {
   toggleIME,
   backspace,
@@ -195,7 +199,36 @@ extension VirtKeyX on VirtKey {
     VirtKey.clipboard => l10n.virtKeyHelpClipboard,
     VirtKey.sudo => l10n.trySudo,
     VirtKey.ime => l10n.virtKeyHelpIME,
+    VirtKey.snippet => l10n.virtKeyHelpSnippet,
+    VirtKey.tmux => l10n.virtKeyHelpTmux,
     _ => null,
+  };
+
+  /// What kind of key this is, for the walkthrough that runs once over the
+  /// row.
+  ///
+  /// Three kinds and not seventeen keys: a tour with a step per key is a
+  /// punishment, and what a newcomer needs is which of these *type* something,
+  /// which move the cursor, and which open a page instead. Punctuation and the
+  /// function keys belong to none — they are what they say.
+  VirtKeyGroup? get group => switch (this) {
+    VirtKey.esc ||
+    VirtKey.tab ||
+    VirtKey.ctrl ||
+    VirtKey.alt ||
+    VirtKey.shift => VirtKeyGroup.modifiers,
+    VirtKey.up ||
+    VirtKey.down ||
+    VirtKey.left ||
+    VirtKey.right ||
+    VirtKey.home ||
+    VirtKey.end ||
+    VirtKey.pgup ||
+    VirtKey.pgdn => VirtKeyGroup.navigation,
+    // Defined by what it does rather than by a second list to keep in step:
+    // a key with a [func] leaves the terminal, which is the whole of what
+    // sets these apart.
+    _ => func == null ? null : VirtKeyGroup.shortcuts,
   };
 
   /// - [saveDefaultIfErr] if the stored raw values is invalid, save default order to store

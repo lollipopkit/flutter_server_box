@@ -7,9 +7,16 @@
 // never had one, which is what the Dart side is already written against.
 
 bool sbm_ish_available(void) { return false; }
-int sbm_ish_boot(const char *rootfs) { (void)rootfs; return -1; }
-int sbm_ish_open(const char *command, int columns, int rows) {
-    (void)command; (void)columns; (void)rows;
+
+int sbm_ish_boot(const char *rootfs, const char *profile) {
+    (void)rootfs; (void)profile; return -1;
+}
+int sbm_ish_attach(const char *profile) { (void)profile; return -1; }
+int sbm_ish_detach(const char *profile) { (void)profile; return -1; }
+int sbm_ish_sessions(const char *profile) { (void)profile; return 0; }
+int sbm_ish_open(const char *profile, const char *shell, const char *command,
+                 int columns, int rows) {
+    (void)profile; (void)shell; (void)command; (void)columns; (void)rows;
     return -1;
 }
 int sbm_ish_read(int session, char *buffer, int length, int timeout_ms) {
@@ -49,6 +56,10 @@ void sbm_ish_close(int session) { (void)session; }
 #include "fs/fake-db.h"
 #include "fs/real.h"
 #include "fs/tty.h"
+
+// `kernel/uname.c` defines it and no header declares it. The engine's own
+// tests reach it this way too.
+extern const char *uname_hostname_override;
 
 // — Surviving a guest fault ————————————————————————————————————————
 //
@@ -169,6 +180,10 @@ struct session {
     bool used;
     struct tty *tty;
     pid_t_ pid;
+    /// Which system it is running in, so that taking that system down can end
+    /// what is inside it. Deleting one used to leave its processes running and
+    /// holding its `/dev/pts`, which is why the unmount answered `_EBUSY`.
+    char profile[64];
     int exit_code;
     char data[SBM_OUTPUT_CAPACITY];
     size_t head, tail;
@@ -177,6 +192,8 @@ struct session {
 static struct session sessions[SBM_MAX_SESSIONS];
 static pthread_mutex_t sessions_lock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t sessions_wrote = PTHREAD_COND_INITIALIZER;
+
+static pid_t_ close_session(int session_id, const char *profile);
 
 /// The session a tty belongs to, or -1. Called from the guest's threads.
 static int session_of(struct tty *tty) {
@@ -293,10 +310,28 @@ static bool booted;
 static char *rootfs_path;
 
 static void guest_exited(struct task *task, int code) {
+    // `code` is the raw wait(2) status word, and only a normal exit puts the
+    // code in the high byte: a guest killed by a signal carries the signal in
+    // the low 7 bits and nothing above them (`kernel/exit.c` calls
+    // `do_exit_group(sig)` for that, against `do_exit(status << 8)` for
+    // `_exit`). So `code >> 8` alone answered 0 for every death by signal —
+    // indistinguishable from success, which is what `ExecResult.exitCode == 0`
+    // means to every caller on the Dart side.
+    //
+    // 128 + signal is what a shell reports for the same thing, so a caller
+    // that already knows what 143 means needs no telling. It also stays
+    // positive, which this field requires: `sbm_ish_exit_code` answers with a
+    // negative value while a session is still running, and Dart reads that as
+    // "no exit code yet".
+    //
+    // Masked with 0x7f rather than 0xff because 0x80 is the core-dump bit.
+    // Nothing in iSH sets it today, so the two agree; the narrower mask is the
+    // one that keeps agreeing if that changes.
+    int status = (code & 0x7f) ? 128 + (code & 0x7f) : code >> 8;
     pthread_mutex_lock(&sessions_lock);
     for (int i = 0; i < SBM_MAX_SESSIONS; i++) {
         if (sessions[i].used && sessions[i].pid == task->pid) {
-            sessions[i].exit_code = code >> 8;
+            sessions[i].exit_code = status;
             break;
         }
     }
@@ -316,9 +351,21 @@ static void guest_exited(struct task *task, int code) {
 /// Only the root row is written here. The nodes themselves are created through
 /// the kernel afterwards, so how a path is spelled in that table stays the
 /// kernel's business rather than something this file has to guess.
-static int make_dev_db(char *data_out, size_t data_len) {
+///
+/// TODO: delete the schema and the root row below in favour of the engine's
+/// `fake_db_create(dir)` (`kernel/fs.h`), which writes both from the one copy
+/// in `fs/fake-schema.c` that `tools/fakefsify` also uses. Compared against it:
+/// the directory modes agree (0755), nothing else goes into `meta.db`, and the
+/// `pragma journal_mode=wal` here is redundant because `fake_db_init` sets it
+/// on every mount. Keep the `access()` guard when switching — `fake_db_create`
+/// runs bare `create table`, so a second call on an existing database fails.
+/// Waiting on ShellBox PR #10 (`feat/sbm-api-harness`); the function does not
+/// exist at the current gitlink.
+static int make_dev_db(const char *profile, char *data_out, size_t data_len) {
     char dir[MAX_PATH];
-    snprintf(dir, sizeof(dir), "%s/.dev", rootfs_path);
+    // Beside the tree it belongs to, so that deleting a profile takes its
+    // `/dev` with it rather than leaving a database nothing will ever mount.
+    snprintf(dir, sizeof(dir), "%s/%s/.dev", rootfs_path, profile);
     mkdir(dir, 0755);
     snprintf(data_out, data_len, "%s/data", dir);
     mkdir(data_out, 0755);
@@ -364,50 +411,388 @@ static int make_dev_db(char *data_out, size_t data_len) {
     return 0;
 }
 
-/// Everything a userland expects to find at `/dev`.
-static void make_dev(void) {
+/// Everything a userland expects to find at `/dev`, for one profile.
+///
+/// Paths are spelled from the *machine* root — `/alpine/dev`, not `/dev` —
+/// because this runs as init, which lives at the machine root and mounts for
+/// every profile. A session sees them as `/dev`, since it is rooted at its own
+/// subtree. Doing it by prefix rather than by chrooting init keeps this off any
+/// path where two profiles being attached at once could see each other's root.
+/// Returns 0, or a negative errno if the system has no usable `/dev`.
+///
+/// Only the two steps everything below rests on are reported: the database and
+/// the mount that makes it `/dev`. A `mknod` that fails leaves one node
+/// missing, which is a worse `/dev` rather than an absent one; a failed mount
+/// leaves an empty directory that every path below writes into the *host*
+/// tree instead.
+static int make_dev(const char *profile) {
+    char path[MAX_PATH];
+#define GUEST(...) (snprintf(path, sizeof(path), __VA_ARGS__), path)
+
     // The mount point first: a minirootfs unpacked without root may have no
     // `/dev` at all, since the device nodes in the tarball are what create it.
-    generic_mkdirat(AT_PWD, "/dev", 0755);
+    generic_mkdirat(AT_PWD, GUEST("/%s/dev", profile), 0755);
 
     char data_path[MAX_PATH];
-    if (make_dev_db(data_path, sizeof(data_path)) < 0) return;
-    do_mount(&fakefs, data_path, "/dev", "", 0);
+    int err = make_dev_db(profile, data_path, sizeof(data_path));
+    if (err < 0) return err;
+    err = do_mount(&fakefs, data_path, GUEST("/%s/dev", profile), "", 0);
+    if (err < 0) {
+        syslog(LOG_ERR, "sbm_ish: %s has no /dev (%d)", profile, err);
+        return err;
+    }
 
-    generic_mknodat(AT_PWD, "/dev/null", S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_NULL_MINOR));
-    generic_mknodat(AT_PWD, "/dev/zero", S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_ZERO_MINOR));
-    generic_mknodat(AT_PWD, "/dev/full", S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_FULL_MINOR));
-    generic_mknodat(AT_PWD, "/dev/random", S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_RANDOM_MINOR));
-    generic_mknodat(AT_PWD, "/dev/urandom", S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_URANDOM_MINOR));
-    generic_mknodat(AT_PWD, "/dev/tty", S_IFCHR | 0666, dev_make(TTY_ALTERNATE_MAJOR, DEV_TTY_MINOR));
-    generic_mknodat(AT_PWD, "/dev/console", S_IFCHR | 0666, dev_make(TTY_ALTERNATE_MAJOR, DEV_CONSOLE_MINOR));
-    generic_mknodat(AT_PWD, "/dev/ptmx", S_IFCHR | 0666, dev_make(TTY_ALTERNATE_MAJOR, DEV_PTMX_MINOR));
+    generic_mknodat(AT_PWD, GUEST("/%s/dev/null", profile), S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_NULL_MINOR));
+    generic_mknodat(AT_PWD, GUEST("/%s/dev/zero", profile), S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_ZERO_MINOR));
+    generic_mknodat(AT_PWD, GUEST("/%s/dev/full", profile), S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_FULL_MINOR));
+    generic_mknodat(AT_PWD, GUEST("/%s/dev/random", profile), S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_RANDOM_MINOR));
+    generic_mknodat(AT_PWD, GUEST("/%s/dev/urandom", profile), S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_URANDOM_MINOR));
+    generic_mknodat(AT_PWD, GUEST("/%s/dev/tty", profile), S_IFCHR | 0666, dev_make(TTY_ALTERNATE_MAJOR, DEV_TTY_MINOR));
+    generic_mknodat(AT_PWD, GUEST("/%s/dev/console", profile), S_IFCHR | 0666, dev_make(TTY_ALTERNATE_MAJOR, DEV_CONSOLE_MINOR));
+    generic_mknodat(AT_PWD, GUEST("/%s/dev/ptmx", profile), S_IFCHR | 0666, dev_make(TTY_ALTERNATE_MAJOR, DEV_PTMX_MINOR));
 
     // Where the pty slaves appear. Its mount point has to exist first, since
     // `/dev` is a filesystem that was empty a moment ago.
-    generic_mkdirat(AT_PWD, "/dev/pts", 0755);
-    do_mount(&devptsfs, "devpts", "/dev/pts", "", 0);
+    //
+    // Checked like the `/dev` mount above: a session is a pty, so a system
+    // without this is one whose terminal cannot open. Discarding the result
+    // let the attach report success and left the failure to be met later, as
+    // a shell that would not start.
+    generic_mkdirat(AT_PWD, GUEST("/%s/dev/pts", profile), 0755);
+    err = do_mount(&devptsfs, "devpts", GUEST("/%s/dev/pts", profile), "", 0);
+    if (err < 0) {
+        syslog(LOG_ERR, "sbm_ish: %s has no /dev/pts (%d)", profile, err);
+        return err;
+    }
 
     // Not device nodes but expected to be there, and cheap to be right about:
     // a shell's `>/dev/stdout`, a script's `/dev/fd/3`, and anything that
     // writes to `/dev/shm` all fail without them.
-    generic_symlinkat("/proc/self/fd", AT_PWD, "/dev/fd");
-    generic_symlinkat("/proc/self/fd/0", AT_PWD, "/dev/stdin");
-    generic_symlinkat("/proc/self/fd/1", AT_PWD, "/dev/stdout");
-    generic_symlinkat("/proc/self/fd/2", AT_PWD, "/dev/stderr");
-    generic_mkdirat(AT_PWD, "/dev/shm", 01777);
-    do_mount(&tmpfs, "shm", "/dev/shm", "", 0);
+    // The *targets* keep no prefix: they are followed from inside the session,
+    // which is rooted at this profile, so `/proc/self/fd` is already its own.
+    generic_symlinkat("/proc/self/fd", AT_PWD, GUEST("/%s/dev/fd", profile));
+    generic_symlinkat("/proc/self/fd/0", AT_PWD, GUEST("/%s/dev/stdin", profile));
+    generic_symlinkat("/proc/self/fd/1", AT_PWD, GUEST("/%s/dev/stdout", profile));
+    generic_symlinkat("/proc/self/fd/2", AT_PWD, GUEST("/%s/dev/stderr", profile));
+    // A directory, where a `tmpfs` would be the obvious choice. `tmpfs_umount`
+    // is unimplemented in the engine — `fs/tmp.c` answers it with
+    // `TODO("tmpfs umount")`, which is `die()` — and this app's `die_handler`
+    // parks the calling thread with every signal blocked rather than letting
+    // `abort()` take the app. The thread that detaches a system is the one
+    // running Dart, so mounting one here froze the whole app the first time a
+    // system was detached, with no crash and nothing in the log.
+    //
+    // Nothing is lost that a caller can see: `/dev` is a fakefs over an
+    // ordinary directory, so a 01777 directory inside it is writable by
+    // everything that expects `/dev/shm` to be. The difference is that what is
+    // written there is on disk rather than in memory, and goes when the system
+    // does rather than when the app does.
+    generic_mkdirat(AT_PWD, GUEST("/%s/dev/shm", profile), 01777);
+#undef GUEST
+    return 0;
+}
+
+/// Which profiles have had their filesystems mounted, so that mounting is done
+/// once and asking is cheap.
+///
+/// A fixed table rather than a list: the count is the number of Linux systems
+/// a person keeps on a phone, and a bounded array cannot fail to allocate on
+/// the path that opens a terminal.
+#define SBM_MAX_PROFILES 8
+static char attached[SBM_MAX_PROFILES][64];
+static pthread_mutex_t attached_lock = PTHREAD_MUTEX_INITIALIZER;
+
+/// Whether `profile` names a directory directly under the machine root.
+///
+/// `..` matters here as much as `/` does, and is the reason this is one
+/// function rather than a check repeated at each entry point: every path below
+/// is built as `/<profile>/...`, and `..` normalizes that straight back to the
+/// machine root — reaching outside the container without ever writing a slash.
+/// `.` resolves to the container itself, which is not a system either.
+static int check_profile(const char *profile) {
+    if (profile == NULL || profile[0] == '\0') return -EINVAL;
+    if (strchr(profile, '/') != NULL) return -EINVAL;
+    if (strcmp(profile, ".") == 0 || strcmp(profile, "..") == 0) return -EINVAL;
+    if (strlen(profile) >= sizeof(attached[0])) return -ENAMETOOLONG;
+    return 0;
+}
+
+static bool is_attached(const char *profile) {
+    for (int i = 0; i < SBM_MAX_PROFILES; i++)
+        if (strcmp(attached[i], profile) == 0) return true;
+    return false;
+}
+
+/// Everything [sbm_ish_attach] and [make_dev] mount, innermost first:
+/// `/dev/pts` is inside `/dev`, and the outer one cannot go while it holds it.
+///
+/// `dev/shm` is not here because nothing mounts one any more — see [make_dev].
+/// It was, and unmounting it is what froze the app.
+static const char *const mount_points[] = { "dev/pts", "dev", "proc" };
+
+/// Takes one profile's filesystems down. Returns 0, or the first real failure.
+///
+/// `do_umount` answers `_EINVAL` for a point that carries nothing and `_EBUSY`
+/// while something still holds one — those are its only two errors. The first
+/// is not a failure here: an attach may have stopped partway, and unmounting
+/// twice has to be safe.
+///
+/// The constants in `kernel/errno.h` are already negative, so this compares
+/// against `_EINVAL` rather than negating it. Negating gave `+22`, which no
+/// error equals, and the exemption never applied — every detach of a profile
+/// whose mounts were not all present reported failure.
+static int unmount_profile(const char *profile) {
+    char path[MAX_PATH];
+    int err = 0;
+    for (size_t i = 0; i < sizeof(mount_points) / sizeof(mount_points[0]); i++) {
+        snprintf(path, sizeof(path), "/%s/%s", profile, mount_points[i]);
+        int one = do_umount(path);
+        if (one < 0 && one != _EINVAL) {
+            // Which one, because the caller's error says only that something
+            // would not go. `_EBUSY` means a reference is still out on that
+            // mount, and which mount it is says who is holding it.
+            syslog(LOG_ERR, "sbm_ish: %s will not unmount (%d)", path, one);
+            if (err == 0) err = one;
+        }
+    }
+    return err;
+}
+
+/// Points `current` at one profile's subtree, the way `chroot` would.
+///
+/// Safe to do to a task from `become_new_init_child`: `construct_task` gives
+/// each one its own `fs_info` (`kernel/init.c:107`) rather than sharing init's,
+/// so nothing else sees this.
+static int enter_profile(const char *profile) {
+    char path[MAX_PATH];
+    snprintf(path, sizeof(path), "/%s", profile);
+    struct fd *dir = generic_open(path, O_RDONLY_, 0);
+    if (IS_ERR(dir)) return (int)PTR_ERR(dir);
+    lock(&current->fs->lock);
+    fd_close(current->fs->root);
+    current->fs->root = dir;
+    unlock(&current->fs->lock);
+
+    // The working directory too. It still points at the machine root, which is
+    // no longer a place this task can name — every relative path would resolve
+    // outside its own filesystem.
+    struct fd *pwd = generic_open("/", O_RDONLY_, 0);
+    if (IS_ERR(pwd)) return (int)PTR_ERR(pwd);
+    fs_chdir(current->fs, pwd);
+    return 0;
 }
 
 bool sbm_ish_available(void) { return true; }
 
-int sbm_ish_boot(const char *rootfs) {
-    if (rootfs == NULL) return -EINVAL;
+/// Mounts one profile's filesystems. Idempotent, and the only thing that has
+/// to happen before a session can be opened in it.
+///
+/// Separate from [sbm_ish_boot] because the machine is one and the profiles are
+/// many: the kernel starts once, and each system is attached to it the first
+/// time something wants a terminal in it.
+int sbm_ish_attach(const char *profile) {
+    if (!booted) return -ENOTCONN;
+    int checked = check_profile(profile);
+    if (checked < 0) return checked;
+
+    pthread_mutex_lock(&attached_lock);
+    if (is_attached(profile)) {
+        pthread_mutex_unlock(&attached_lock);
+        return 0;
+    }
+    int slot = -1;
+    for (int i = 0; i < SBM_MAX_PROFILES; i++)
+        if (attached[i][0] == '\0') { slot = i; break; }
+    if (slot < 0) {
+        pthread_mutex_unlock(&attached_lock);
+        return -EMFILE;
+    }
+
+    // Anything still mounted here is left over from an attempt that failed or
+    // from a detach that could not finish — this profile is not in the table,
+    // so nothing considers it attached. `do_mount` does not ask whether a
+    // point already carries a mount and would stack a second one on top, one
+    // per attempt, with only the innermost reachable to unmount. Refuse rather
+    // than stack: a point that will not go is `_EBUSY`, and mounting over
+    // whatever is holding it would hide that.
+    int stale = unmount_profile(profile);
+    if (stale < 0) {
+        // Something is holding one of them, which is `_EBUSY` and means the
+        // system is live: mounted, and with a process still in it. Record it
+        // and answer 0 rather than mounting a second set over the first.
+        //
+        // Not a refusal, which is what this did at first and what turned a
+        // recoverable state into a permanent one — a profile whose mounts
+        // could not be swept could never be opened again, for the life of the
+        // process. If the sweep took some of them down before meeting the one
+        // that would not go, this leaves a system missing those; that is a
+        // worse system, where refusing was no system at all.
+        snprintf(attached[slot], sizeof(attached[slot]), "%s", profile);
+        pthread_mutex_unlock(&attached_lock);
+        syslog(LOG_ERR, "sbm_ish: %s still has mounts in use (%d); taken as "
+               "attached rather than mounted over", profile, stale);
+        return 0;
+    }
+
+    char path[MAX_PATH];
+    // `/proc` first: `/dev/stdout` and friends are symlinks into it, and a
+    // shell following one before it is mounted gets "nonexistent directory".
+    snprintf(path, sizeof(path), "/%s/proc", profile);
+    generic_mkdirat(AT_PWD, path, 0755);
+    int err = do_mount(&procfs, "proc", path, "", 0);
+    if (err < 0) {
+        // Same rollback as below, and for the same reason: nothing recorded
+        // the profile yet, so what this mounted has to go back before the
+        // next attach reaches the sweep at the top.
+        syslog(LOG_ERR, "sbm_ish: %s has no /proc (%d)", profile, err);
+        unmount_profile(profile);
+        pthread_mutex_unlock(&attached_lock);
+        return err;
+    }
+    // Recorded only once the system is actually mounted. Attaching is
+    // idempotent by name, so a half-built profile written here is one nothing
+    // ever retries: every later attach sees the name and returns 0, and the
+    // session opens onto a `/dev` that was never mounted.
+    err = make_dev(profile);
+    if (err < 0) {
+        // What was mounted above goes back with it. If it will not, say so and
+        // leave it: the profile is not recorded either way, so the next attach
+        // reaches the rollback above and tries again before mounting anything.
+        int undone = unmount_profile(profile);
+        if (undone < 0) {
+            syslog(LOG_ERR, "sbm_ish: %s did not roll back (%d); its mounts stay "
+                   "until an attach can take them down", profile, undone);
+        }
+        pthread_mutex_unlock(&attached_lock);
+        return err;
+    }
+
+    snprintf(attached[slot], sizeof(attached[slot]), "%s", profile);
+    pthread_mutex_unlock(&attached_lock);
+    return 0;
+}
+
+/// Unmounts one system's filesystems and forgets it.
+///
+/// Returns 0, or a negative errno. Needed because [sbm_ish_attach] is
+/// idempotent by name: without this, deleting a system or reinstalling one in
+/// place left the name attached, so the next attach did nothing and the fresh
+/// tree was handed the previous one's `/dev` — a fakefs whose database had been
+/// deleted along with the old directory. It also frees the slot, which is one
+/// of eight.
+///
+/// `do_umount` answers `EBUSY` while anything still holds the mount, and this
+/// reports that rather than forcing it: a session still running in the system
+/// is a reason not to pull its `/dev` out from under it. The caller closes
+/// those first.
+///
+/// An unbooted machine answers 0, not an error. What this promises is that the
+/// profile is not mounted afterwards, and a kernel that never started has
+/// nothing mounted in it — the promise is already kept. Answering `-ENOTCONN`
+/// there read as a failure to the one caller that matters: deleting a system
+/// that had been installed but never opened became impossible, because the
+/// delete waits for a detach that could only ever fail. Reported from a device
+/// as "The Linux system is still in use (-57)", which is `-ENOTCONN` on Darwin
+/// and says nothing about anything being in use.
+int sbm_ish_sessions(const char *profile) {
+    if (!booted) return 0;
+    if (check_profile(profile) < 0) return 0;
+    int count = 0;
+    pthread_mutex_lock(&sessions_lock);
+    for (int i = 0; i < SBM_MAX_SESSIONS; i++) {
+        if (sessions[i].used && strcmp(sessions[i].profile, profile) == 0)
+            count++;
+    }
+    pthread_mutex_unlock(&sessions_lock);
+    return count;
+}
+
+int sbm_ish_detach(const char *profile) {
+    if (!booted) return 0;
+    int checked = check_profile(profile);
+    if (checked < 0) return checked;
+
+    // The unmounts under the lock as well as the slot, because the two are one
+    // decision. `sbm_ish_attach` holds it across its own mounts and answers 0
+    // for a name it finds in the table — so with the unmounts outside it, an
+    // attach running alongside this reads the name as still attached, returns
+    // without mounting anything, and hands back a system whose filesystems are
+    // being pulled out underneath it.
+    // What is running in it goes first. Nothing else ends these: closing a
+    // terminal tab closes *that* session, and deleting a system from the
+    // settings page closes none — so the shell carried on holding the pty that
+    // keeps `/dev/pts` busy, every unmount answered `_EBUSY`, and the delete
+    // that followed took the tree out from under a live mount.
+    //
+    // Read from the device as `session 0 pid 2 used=1 task=alive`, at the
+    // moment a system whose terminal had been closed refused to detach.
+    //
+    // Signalled, not waited for: the caller retries, which is where the time
+    // for a shell to take SIGHUP and exit belongs — this holds `attached_lock`.
+    for (int i = 0; i < SBM_MAX_SESSIONS; i++) close_session(i, profile);
+
+    pthread_mutex_lock(&attached_lock);
+    int err = unmount_profile(profile);
+
+    // The name stays when the unmounts did not all take. `_EBUSY` is what
+    // `do_umount` answers while something still holds a mount, so a detach
+    // that fails that way has left the system mounted and *in use* — the
+    // truest thing the table can then say is that it is attached.
+    //
+    // Clearing it regardless was tried and was worse. Closing a terminal only
+    // hangs its process up, and the task is not reaped, so a `/dev/pts` it
+    // held can still be busy when the system is deleted a moment later. That
+    // detach failed, the name went anyway, and every later attach found
+    // mounts it could not take down and refused — the system could not be
+    // opened again for the life of the process, and only restarting the app
+    // cleared it. Reported from a device as a terminal that printed
+    // "Execute: Shell" and then nothing.
+    if (err == 0) {
+        for (int i = 0; i < SBM_MAX_PROFILES; i++) {
+            if (strcmp(attached[i], profile) == 0) { attached[i][0] = '\0'; break; }
+        }
+    }
+    pthread_mutex_unlock(&attached_lock);
+
+    if (err < 0) {
+        syslog(LOG_ERR, "sbm_ish: %s did not detach (%d); it stays attached, "
+               "because what would not unmount is still in use", profile, err);
+        // Who is holding it. `sbm_ish_close` leaves `pid` behind when it
+        // clears `used`, so this can say whether the process a closed session
+        // hung up has actually gone — a task that is still there is still
+        // holding the pty that keeps `/dev/pts` busy.
+        pthread_mutex_lock(&sessions_lock);
+        for (int i = 0; i < SBM_MAX_SESSIONS; i++) {
+            if (sessions[i].pid == 0) continue;
+            struct task *task = pid_get_task(sessions[i].pid);
+            syslog(LOG_ERR, "sbm_ish:   session %d pid %d used=%d task=%s",
+                   i, sessions[i].pid, sessions[i].used,
+                   task == NULL ? "gone" : "alive");
+        }
+        pthread_mutex_unlock(&sessions_lock);
+    }
+    return err;
+}
+
+int sbm_ish_boot(const char *rootfs, const char *profile) {
+    if (rootfs == NULL || profile == NULL || profile[0] == '\0') return -EINVAL;
     if (booted) return -EEXIST;
 
     install_crash_handler();
     // Otherwise `die()` calls abort(), and the app goes with the guest.
     die_handler = park_on_die;
+
+    // What the guest answers to `uname -n`, and so what its prompt shows.
+    // Without this it is the host's nodename, which on iOS is the device name:
+    // something the user typed, usually containing their own, and reaching the
+    // guest's environment and anything it writes out. It is also not a
+    // hostname — the field is 65 bytes and `do_uname` truncates to fit, so a
+    // name with any multi-byte character in the wrong place is cut mid-
+    // codepoint and shows up as replacement marks.
+    //
+    // One value for the machine rather than one per system: the kernel is
+    // shared, and this is a single global in it.
+    uname_hostname_override = "serverbox";
 
     // An ordinary directory tree, mounted by `realfs`: guest paths resolved
     // against a root fd, with nothing stored beside them. Installing a
@@ -428,20 +813,44 @@ int sbm_ish_boot(const char *rootfs) {
     if (IS_ERR(root_fd)) return (int)PTR_ERR(root_fd);
     fs_chdir(current->fs, root_fd);
 
-    // `/proc` first: `/dev/stdout` and friends are symlinks into it, and a
-    // shell following one before it is mounted gets "nonexistent directory".
-    generic_mkdirat(AT_PWD, "/proc", 0755);
-    do_mount(&procfs, "proc", "/proc", "", 0);
-    make_dev();
     exit_hook = guest_exited;
 
-    // Init is a shell in a loop. `kernel/exit.c` ends the *host process* when
-    // init dies, so init must not be anything a user can end — and when their
-    // shell exits they get another one, which is what closing a terminal does
-    // on any other machine.
+    // The machine is up from here, which is what `sbm_ish_attach` requires.
+    booted = true;
+    err = sbm_ish_attach(profile);
+    if (err < 0) { booted = false; return err; }
+
+    // Init lives inside a profile rather than at the machine root, because the
+    // machine root is a container of trees and holds no `/bin/sh` to exec —
+    // nor the loader that shell names as its interpreter. Which profile is
+    // arbitrary: init only sleeps. It keeps an fd to that directory, so
+    // deleting the profile later leaves init running against an unlinked
+    // directory, which is a thing Unix permits and nothing here reads again.
+    err = enter_profile(profile);
+    if (err < 0) { booted = false; return err; }
+
+    // Init has to exist and must never exit — `kernel/exit.c` ends the *host
+    // process* when it does. It does not have to do anything else, and it must
+    // not: a terminal is `sbm_ish_open`, which makes a child of init with a
+    // pty of its own, so a shell started here is one nobody can reach.
+    //
+    // This was `while :; do /bin/sh; done`. Init has no tty and no stdin, so
+    // each of those shells read EOF and exited at once and the loop started
+    // another — a fork/exec storm, inside an interpreter, for as long as the
+    // machine was up. That is what made the whole app slow from the moment
+    // Alpine was opened, and closing the last terminal did not stop it,
+    // because the machine deliberately stays up.
+    //
+    // The sleep is wrapped in a loop rather than left bare so that a signal
+    // cutting it short cannot end init. 2^31-1 seconds is 68 years; the fork
+    // per wakeup is the only work this process ever does.
     char argv[512];
+    const char *parts[] = {
+        "/bin/sh",
+        "-c",
+        "while :; do sleep 2147483647; done",
+    };
     size_t position = 0;
-    const char *parts[] = { "/bin/sh", "-c", "while :; do /bin/sh; done" };
     for (size_t i = 0; i < 3; i++) {
         size_t length = strlen(parts[i]) + 1;
         memcpy(argv + position, parts[i], length);
@@ -456,17 +865,26 @@ int sbm_ish_boot(const char *rootfs) {
                         "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin") + 1;
 
     err = do_execve("/bin/sh", 3, argv, environment);
-    if (err < 0) return err;
+    if (err < 0) { booted = false; return err; }
     task_start(current);
 
-    booted = true;
     return 0;
 }
 
-int sbm_ish_open(const char *command, int columns, int rows) {
+int sbm_ish_open(const char *profile, const char *shell, const char *command,
+                 int columns, int rows) {
     if (!booted) return -ENOTCONN;
+    // The same check `sbm_ish_sessions` and `sbm_ish_detach` apply. A weaker
+    // one here would accept a name those two answer `-EINVAL` for, so a
+    // session opened under it would be invisible to both.
+    int checked = check_profile(profile);
+    if (checked < 0) return checked;
 
     bool interactive = command == NULL || command[0] == '\0';
+    // The guest has no `login` and nothing reads `/etc/passwd`, so which shell
+    // a session gets is decided here and nowhere else — which is also why
+    // Alpine having no `chsh` does not matter.
+    if (shell == NULL || shell[0] == '\0') shell = "/bin/sh";
 
     pthread_mutex_lock(&sessions_lock);
     int index = -1;
@@ -481,11 +899,27 @@ int sbm_ish_open(const char *command, int columns, int rows) {
     memset(session, 0, sizeof(*session));
     session->used = true;
     session->exit_code = -1;
+    // Named in the same lock hold that reserves it. `used` is what makes the
+    // slot visible to `sbm_ish_sessions` and `close_session`, and both then
+    // ask which profile it belongs to — so a slot reserved under an empty name
+    // is one that is counted by nobody and hung up by nobody, while the mounts
+    // it is about to take are held all the same. What that cost: deleting a
+    // system while a terminal in it was opening read as "no sessions", went
+    // ahead, and failed at the unmount with `EBUSY`.
+    snprintf(session->profile, sizeof(session->profile), "%s", profile);
     pthread_mutex_unlock(&sessions_lock);
 
     // A task of its own, under init. Everything from here happens as that
     // task, on this thread, until `task_start` gives it one.
     int err = become_new_init_child();
+    if (err < 0) goto fail;
+
+    // Before anything opens a path. `attach_stdio` names `/dev/pts/N`, and
+    // that has to mean *this* profile's devpts rather than whichever one init
+    // happens to be rooted at.
+    err = sbm_ish_attach(profile);
+    if (err < 0) goto fail;
+    err = enter_profile(profile);
     if (err < 0) goto fail;
 
     struct tty *tty = pty_open_fake(&sbm_pty_driver);
@@ -522,26 +956,42 @@ int sbm_ish_open(const char *command, int columns, int rows) {
     written += snprintf(environment + written, sizeof(environment) - written,
                         "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin") + 1;
 
-    char argv[4096];
-    size_t position = 0;
-    const char *parts[3] = { "/bin/sh", "-c", command };
-    int count = interactive ? 1 : 3;
-    for (int i = 0; i < count; i++) {
-        size_t length = strlen(parts[i]) + 1;
-        if (position + length >= sizeof(argv) - 1) { err = -E2BIG; goto fail; }
-        memcpy(argv + position, parts[i], length);
-        position += length;
-    }
-    argv[position] = '\0';
+    // Built twice at most: a shell the setting names but the guest does not
+    // have would otherwise be a terminal that opens and immediately dies, with
+    // the reason visible nowhere. The setting is checked before it is stored,
+    // so reaching the fallback means the guest changed under it — `apk del`
+    // on whatever it named.
+    for (int attempt = 0; attempt < 2; attempt++) {
+        char argv[4096];
+        size_t position = 0;
+        const char *parts[3] = { shell, "-c", command };
+        int count = interactive ? 1 : 3;
+        bool too_long = false;
+        for (int i = 0; i < count; i++) {
+            size_t length = strlen(parts[i]) + 1;
+            if (position + length >= sizeof(argv) - 1) { too_long = true; break; }
+            memcpy(argv + position, parts[i], length);
+            position += length;
+        }
+        if (too_long) { err = -E2BIG; goto fail; }
+        argv[position] = '\0';
 
-    err = do_execve("/bin/sh", count, argv, environment);
+        err = do_execve(shell, count, argv, environment);
+        if (err >= 0) break;
+        if (attempt == 1 || strcmp(shell, "/bin/sh") == 0) goto fail;
+        syslog(LOG_ERR, "sbm_ish: %s did not exec (%d); falling back to /bin/sh",
+               shell, err);
+        shell = "/bin/sh";
+    }
     if (err < 0) goto fail;
     task_start(current);
     return index;
 
 fail:
+    // The name goes with the reservation, since the two were taken together.
     pthread_mutex_lock(&sessions_lock);
     session->used = false;
+    session->profile[0] = '\0';
     pthread_mutex_unlock(&sessions_lock);
     return err;
 }
@@ -623,21 +1073,72 @@ int sbm_ish_exit_code(int session_id) {
     return code;
 }
 
-void sbm_ish_close(int session_id) {
-    if (session_id < 0 || session_id >= SBM_MAX_SESSIONS) return;
+/// Ends one session: gives the tty back and hangs its process group up.
+///
+/// Returns the pid it signalled, or 0 if the slot was already free or belongs
+/// to another system. Split out of [sbm_ish_close] because [sbm_ish_detach]
+/// has to do the same thing to every session in a system before it can unmount
+/// anything that system holds.
+///
+/// `profile` names the system this may close, or NULL for any. It is checked
+/// here rather than by the caller because a slot is reused: reading `used` and
+/// `profile` under one hold of the lock and then closing under another leaves
+/// a window in which `sbm_ish_open` takes the freed slot for a different
+/// system, and the detach hangs up a session that has nothing to do with it.
+static pid_t_ close_session(int session_id, const char *profile) {
     pthread_mutex_lock(&sessions_lock);
     struct session *session = &sessions[session_id];
-    pid_t_ pid = session->used ? session->pid : 0;
-    session->used = false;
-    session->tty = NULL;
+    bool mine = session->used &&
+                (profile == NULL || strcmp(session->profile, profile) == 0);
+    pid_t_ pid = mine ? session->pid : 0;
+    struct tty *tty = mine ? session->tty : NULL;
+    if (mine) {
+        session->used = false;
+        session->tty = NULL;
+    }
     pthread_mutex_unlock(&sessions_lock);
+
+    // `pty_open_fake` hands over a reference, and forgetting the pointer is
+    // not the same as giving it back. Without this the pty stayed registered
+    // for the life of the process, `/dev/pts` was never idle, and so every
+    // `sbm_ish_detach` answered `_EBUSY` — which is how deleting a system
+    // came to pull its `/dev` database out from under a mount that was still
+    // live, and the sqlite error that followed reached `die()`.
+    if (tty != NULL) {
+        lock(&ttys_lock);
+        tty_release(tty);
+        unlock(&ttys_lock);
+    }
 
     // Hung up, not killed. A shell ignores SIGTERM by design and takes SIGHUP
     // as its terminal going away, which is what has happened.
     if (pid > 0) {
         struct task *task = pid_get_task(pid);
-        if (task != NULL) send_group_signal(task->group->pgid, SIGHUP_, SIGINFO_NIL);
+        if (task != NULL) {
+            send_group_signal(task->group->pgid, SIGHUP_, SIGINFO_NIL);
+            // And the terminal is given up here rather than left to the task's
+            // teardown. Every session from `become_new_init_child` is a session
+            // leader, so opening its stdio takes the pty as a controlling
+            // terminal and the group holds a reference — one that
+            // `task_leave_session` returns only when the task is reaped.
+            //
+            // Nothing reaps these. The engine waits for no task, and the
+            // auto-reap path needs a parent that ignores SIGCHLD, which init
+            // does not. So the reference outlived the shell by the life of the
+            // process: the pty stayed allocated, `/dev/pts` could never be
+            // unmounted, and a system a terminal had ever been opened in could
+            // never be detached. Reported from a device as a Linux system that
+            // could not be deleted until the app was restarted, and as a retry
+            // loop waiting for something that was never going to happen.
+            tty_disown(task->group);
+        }
     }
+    return pid;
+}
+
+void sbm_ish_close(int session_id) {
+    if (session_id < 0 || session_id >= SBM_MAX_SESSIONS) return;
+    close_session(session_id, NULL);
 }
 
 #endif // SBM_ISH_ENABLED

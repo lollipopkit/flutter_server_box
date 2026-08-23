@@ -264,9 +264,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get agentMonitorOptional => 'Agen monitor (opsional)';
 
   @override
-  String get atLeastOneTab => 'Setidaknya satu tab harus dipilih';
-
-  @override
   String get authFailTip =>
       'Otentikasi gagal, silakan periksa apakah kata sandi/kunci/host/pengguna, dll, salah.';
 
@@ -307,6 +304,21 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get backupPasswordWrong => 'Kata sandi cadangan salah';
+
+  @override
+  String get remoteBackupPasswordRequired =>
+      'Remote backups require a non-empty backup password';
+
+  @override
+  String get monitorHttpsRequired =>
+      'Remote monitor agents require HTTPS; HTTP is allowed only on loopback.';
+
+  @override
+  String get monitorAllowInsecureHttp => 'Allow insecure HTTP';
+
+  @override
+  String get monitorAllowInsecureHttpTip =>
+      'Only enable for a trusted private network with transport encryption outside HTTP, such as Tailscale. The agent must also explicitly allow plaintext file access. Credentials and file contents may otherwise be exposed.';
 
   @override
   String get backupTip =>
@@ -440,6 +452,14 @@ class AppLocalizationsId extends AppLocalizations {
   String get discoverySettings => 'Pengaturan Penemuan';
 
   @override
+  String get distro => 'Distribusi';
+
+  @override
+  String distroSwitchTip(Object from, Object to) {
+    return 'Ganti $from dengan $to. Semua yang terpasang di dalam $from akan dihapus, dan $to diunduh serta diekstrak sebagai gantinya.';
+  }
+
+  @override
   String get diskHealth => 'Kesehatan disk';
 
   @override
@@ -477,7 +497,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Opsi ini hanya mengaktifkan fitur, apakah itu benar-benar dapat diaktifkan tergantung pada lebar perangkat';
 
   @override
-  String get editVirtKeys => 'Edit kunci virtual';
+  String get editVirtKeys => 'Kunci virtual';
 
   @override
   String get editorHighlightTip =>
@@ -516,7 +536,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Folder ini dihapus atau diganti nama. Gunakan bilah di bawah untuk kembali, ke beranda, atau menuju tempat lain.';
 
   @override
-  String get fullScreen => 'Mode Layar Penuh';
+  String get fullScreen => 'Layar penuh';
 
   @override
   String get fullScreenJitter => 'Jitter layar penuh';
@@ -644,6 +664,11 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String nameAlreadyExistsFmt(Object name) {
+    return '\"$name\" sudah ada';
+  }
+
+  @override
   String get noJumpServerAvailable => 'Tidak ada jump server yang tersedia.';
 
   @override
@@ -677,6 +702,14 @@ class AppLocalizationsId extends AppLocalizations {
       'Saat diaktifkan, input akan melalui IME biasa, yang dapat menghindari prompt keyboard aman di terminal pada beberapa sistem.';
 
   @override
+  String get linuxShellTip =>
+      'Yang dijalankan terminal interaktif. Alpine tidak punya chsh dan tidak ada di sistem yang membaca /etc/passwd, jadi hanya ini yang menentukan. Perintah sekali jalan tetap berjalan dengan /bin/sh, karena aplikasi dan Agent menulis POSIX. Kosongkan untuk mengembalikan /bin/sh.';
+
+  @override
+  String get linuxNetTip =>
+      'Dari mana sistem Linux dan paketnya diunduh, serta server DNS yang ditulis ke dalamnya. Kosongkan untuk mengembalikan nilai bawaan. Menyimpan juga menulis ulang keduanya pada sistem yang sudah terpasang.';
+
+  @override
   String madeWithLove(Object myGithub) {
     return 'Dibuat dengan ❤️ oleh $myGithub';
   }
@@ -691,6 +724,9 @@ class AppLocalizationsId extends AppLocalizations {
   String mismatchSystem(Object system) {
     return 'Sistem tidak cocok: $system';
   }
+
+  @override
+  String get mirror => 'Mirror';
 
   @override
   String get needRestart => 'Perlu memulai ulang aplikasi';
@@ -940,16 +976,26 @@ class AppLocalizationsId extends AppLocalizations {
   String get remotePath => 'Jalur jarak jauh';
 
   @override
-  String rootfsUpdateTip(Object installed, Object latest) {
-    return 'Alpine $installed terpasang dan $latest tersedia. Memperbarui akan mengunduhnya lagi dan mengganti kontainer: semua yang dipasang di dalamnya dengan apk akan hilang. Jika dilewati, yang sekarang tetap berfungsi.';
+  String rootfsUpdateTip(
+    Object distro,
+    Object installed,
+    Object latest,
+    Object pm,
+  ) {
+    return '$distro $installed terpasang dan $latest tersedia. Memperbarui akan mengunduhnya lagi dan mengganti kontainer: semua yang dipasang di dalamnya dengan $pm akan hilang. Jika dilewati, yang sekarang tetap berfungsi.';
+  }
+
+  @override
+  String linuxSystemInUse(Object name) {
+    return '$name masih memiliki terminal terbuka. Tutup dulu sebelum menghapus sistem.';
   }
 
   @override
   String get rootfsSubtitle => 'Lingkungan pengguna Linux di perangkat ini';
 
   @override
-  String rootfsInstallTip(Object version) {
-    return 'Unduh Alpine Linux $version (sekitar 3 MB) dan ekstrak di perangkat ini. Ini memberi aplikasi ini shell dengan manajer paket, dan dapat dihapus kapan saja.';
+  String rootfsInstallTip(Object distro, Object version, Object size) {
+    return 'Unduh $distro $version (sekitar $size MB) dan ekstrak di perangkat ini. Ini memberi aplikasi ini shell dengan manajer paket, dan dapat dihapus kapan saja.';
   }
 
   @override
@@ -1089,14 +1135,14 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
-    return 'Sidik jari (MD5 hex): $fingerprint';
+    return 'Sidik jari (SHA256): $fingerprint';
   }
 
   @override
   String get sshHostKeyType => 'Jenis kunci host SSH';
 
   @override
-  String get sshKnownHostKeys => 'Kunci host yang dikenal';
+  String get sshKnownHostKeys => 'Host dikenal';
 
   @override
   String get sshKnownHostKeysTip =>
@@ -1208,6 +1254,42 @@ class AppLocalizationsId extends AppLocalizations {
   String get virtKeyHelpSFTP => 'Buka direktori saat ini di SFTP.';
 
   @override
+  String get virtKeyHelpSnippet =>
+      'Pilih sebuah snippet dan jalankan di terminal ini.';
+
+  @override
+  String get virtKeyHelpTmux => 'Berpindah antar sesi dan jendela tmux.';
+
+  @override
+  String get virtKeyIntroActions => 'Pintasan';
+
+  @override
+  String get virtKeyIntroActionsTip =>
+      'Tombol-tombol ini tidak mengetik, melainkan membuka sesuatu. Tahan salah satunya untuk membaca fungsinya.';
+
+  @override
+  String get virtKeyIntroCustomizeTip =>
+      'Di pengaturan terminal kamu bisa mengubah urutannya, atau menyembunyikan yang tidak pernah dipakai.';
+
+  @override
+  String get virtKeyIntroModifiers => 'Tombol pengubah';
+
+  @override
+  String get virtKeyIntroModifiersTip =>
+      'Ketuk satu untuk mengaktifkannya, lalu ketuk huruf di papan ketik. Berlaku untuk satu tombol itu saja.';
+
+  @override
+  String get virtKeyIntroNav => 'Navigasi';
+
+  @override
+  String get virtKeyIntroNavTip =>
+      'Tombol-tombol ini menggerakkan kursor. Tahan tombol panah untuk mengulanginya.';
+
+  @override
+  String get virtKeyIntroSelect =>
+      'Selama terminal masih bisa digulir, seret ke samping untuk memilih teks.';
+
+  @override
   String get waitConnection => 'Harap tunggu koneksi akan dibuat.';
 
   @override
@@ -1245,7 +1327,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Emulasi Podman Docker terdeteksi. Silakan beralih ke Podman di pengaturan.';
 
   @override
-  String get portForwardBeta =>
+  String get betaTip =>
       'Fitur ini masih dalam uji beta. Fungsinya belum dijamin.';
 
   @override

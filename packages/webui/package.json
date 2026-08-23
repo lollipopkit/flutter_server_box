@@ -18,10 +18,10 @@
   "dependencies": {
     "clsx": "^2.1.1",
     "tailwind-merge": "^3.5.0",
-    "tailwind-variants": "^3.2.2"
+    "tailwind-variants": "^3.3.1"
   },
   "devDependencies": {
-    "svelte": "^5.56.0",
-    "typescript": "^5.9.0"
+    "svelte": "^5.56.9",
+    "typescript": "^7.0.2"
   }
 }

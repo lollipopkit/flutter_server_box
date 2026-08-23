@@ -13,6 +13,7 @@ import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/service/watch_sync.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/core/utils/rootfs.dart';
+import 'package:server_box/core/utils/rootfs_manifest_source.dart';
 import 'package:server_box/core/utils/sandbox_import.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
@@ -20,11 +21,11 @@ import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
-import 'package:server_box/data/store/migrations/m002_nest_ssh.dart';
+import 'package:server_box/data/store/migrations/m004_kv_to_tables.dart';
+import 'package:server_box/data/store/migrations/m005_monitor_insecure_http.dart';
 import 'package:server_box/data/store/schema.dart';
-import 'package:server_box/data/store/server.dart';
 import 'package:server_box/hive/hive_registrar.g.dart';
-import 'package:server_box/hive/spi_legacy_adapter.dart';
+import 'package:server_box/hive/legacy_adapters.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
 Future<void> main() async {
@@ -130,15 +131,20 @@ Future<void> _initData() async {
     dirs: const {PathDir.img, PathDir.font},
   );
 
+  // Only so `HiveImport` can read the boxes an upgrading install still has.
+  // Nothing writes Hive any more.
+  //
+  // TODO: drop this, `lib/hive/` and the `hive_ce*` dependencies together with
+  // `HiveImport`, once no supported install can still be on Hive.
   await Hive.initFlutter();
   Hive.registerAdapters();
-  // Reads pre-v3 server records, which the generated SpiAdapter no longer
-  // understands (it owns a new typeId and the nested layout).
-  // TODO: drop together with SpiNestSshMigration once no install can still be
-  // on schema v2.
-  Hive.registerAdapter(SpiLegacyAdapter());
+  // Reads every released server-record layout. The generated adapters no
+  // longer own the frozen type IDs because nothing writes Hive any more.
+  registerHiveLegacyAdapters();
 
   await PrefStore.shared.init(); // Call this before accessing any store
+  await SecureStoreProps.migrateLegacyPrefs();
+  await Future.wait([Webdav.initShared(), GistRs.initShared()]);
 
   // Before a box is opened, because it rewrites the files they are made of.
   // After the preferences, because the data it copies may be encrypted with a
@@ -154,11 +160,12 @@ Future<void> _initData() async {
     // start empty — an app that opens with nothing in it can still be told
     // what happened, one that does not open cannot.
     Loggers.app.warning('Stores.init after sandbox import', e, s);
-    // Closed before the files are deleted. `Stores.init` may have opened
-    // several boxes before the one that threw, and unlinking a `.hive` out
-    // from under a live handle is undefined at best: on Windows the delete
-    // fails outright and the copy stays, so the retry below reopens exactly
-    // the data that just failed to open.
+    // Closed before the files are deleted. `Stores.init` may have got as far as
+    // opening the database, or several boxes, before the one that threw, and
+    // unlinking a file out from under a live handle is undefined at best: on
+    // Windows the delete fails outright and the copy stays, so the retry below
+    // reopens exactly the data that just failed to open.
+    await SqliteDb.close();
     await Hive.close();
     await getIt.reset();
     await SandboxImport.undo();
@@ -200,6 +207,19 @@ Future<void> _doPlatformRelated() async {
     Loggers.app.warning('Failed to locate the Linux rootfs', e, s);
   }
 
+  // Which releases are installable is data that moves on the distributions'
+  // schedule, so it is fetched rather than compiled in. Not awaited: what
+  // `prepare` just adopted already works, and this only ever replaces it with
+  // something newer that verified.
+  //
+  // Gated on the build carrying an engine at all. Most do not — iOS ships with
+  // the switch off and Android needs a proot this repository does not contain —
+  // and a request per launch for a feature that cannot be used is one nobody
+  // asked for.
+  if (Rootfs.isAvailable) {
+    unawaited(RootfsManifestSource.refresh());
+  }
+
   // The watch app used to learn about servers only while the user sat on the
   // iOS settings page. Pushing at launch is what makes a freshly installed or
   // restored watch configure itself.
@@ -230,12 +250,23 @@ Future<void> _doDbMigrate() async {
   // its current type. Throws SchemaTooNewException when the data was written
   // by a newer build — that must not be swallowed, since continuing would let
   // this build overwrite records whose shape it doesn't understand.
-  await SchemaVersion.migrate(const [SpiNestSshMigration()]);
+  //
+  // The list is empty as of v4: `HiveImport` brings every install straight to
+  // `current` while copying, because a pre-v3 record only exists as a Hive
+  // value and that is the one pass that reads one. The call stays for the
+  // downgrade check it performs, and for the next step that does exist.
+  await SchemaVersion.migrate(const [
+    KvToTablesMigration(),
+    MonitorInsecureHttpMigration(),
+  ]);
 
-  // Then the app-level fixups, which read records as `Spi`.
-  ServerStore.instance.migrateIds();
-  // After the stores are up: it decides against `Stores.key`, not by shape.
-  ServerStore.instance.migrateIdentityFilePaths();
+  // No app-level fixups follow. `migrateIds` and `migrateIdentityFilePaths`
+  // both scanned every server on every launch to repair a record only an
+  // upgrading install can hold; both are part of `KvToTablesMigration` now,
+  // which is the one pass that sees that shape. Neither could have run after
+  // it in any case — an empty `Spi.id` has nowhere to live once the id is a
+  // primary key, and mapping the old private key ids would have turned an
+  // `IdentityFile` path into a null before anything could recognise it.
 
   // Pick up sync history written under the pre-v3 remote filename. Runs at
   // most once per remote and is best-effort — see `inheritLegacyRemote`.

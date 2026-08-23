@@ -50,15 +50,13 @@ struct WatchServer: Codable, Identifiable, Hashable {
     /// Base address of the agent for `.monitor`, the full status URL for
     /// `.legacy`.
     let addr: String
-    let user: String?
     let ignoreCert: Bool
 
-    init(id: String, name: String, kind: Kind, addr: String, user: String? = nil, ignoreCert: Bool = false) {
+    init(id: String, name: String, kind: Kind, addr: String, ignoreCert: Bool = false) {
         self.id = id
         self.name = name
         self.kind = kind
         self.addr = addr
-        self.user = user
         self.ignoreCert = ignoreCert
     }
 }

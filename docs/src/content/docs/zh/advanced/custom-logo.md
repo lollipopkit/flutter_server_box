@@ -3,11 +3,11 @@ title: 自定义服务器 Logo
 description: 为服务器卡片使用自定义图标
 ---
 
-通过图片 URL 在服务器卡片上显示自定义 Logo。
+使用图片 URL 在服务器卡片上显示自定义 Logo。
 
 ## 设置步骤
 
-1. 服务器设置 → 自定义 Logo
+1. 服务器设置 → **Logo URL**
 2. 输入图片 URL
 
 ## URL 占位符
@@ -16,36 +16,37 @@ description: 为服务器卡片使用自定义图标
 
 自动替换为检测到的发行版：
 
-```
+```text
 https://example.com/{DIST}.png
 ```
 
-将变为：`debian.png`, `ubuntu.png`, `arch.png` 等。
+实际请求的文件名为 `debian.png`、`ubuntu.png`、`arch.png` 等。如果无法识别系统，
+`{DIST}` 会保持不变；需要回退时请提供通用 URL，或不要使用此占位符。
 
 ### {BRIGHT} - 主题
 
 自动替换为当前主题：
 
-```
+```text
 https://example.com/{BRIGHT}.png
 ```
 
-将变为：`light.png` 或 `dark.png`。
+实际请求的文件名为 `light.png` 或 `dark.png`。
 
 ### 组合使用
 
-```
+```text
 https://example.com/{DIST}-{BRIGHT}.png
 ```
 
-将变为：`debian-light.png`, `ubuntu-dark.png` 等。
+实际请求的文件名为 `debian-light.png`、`ubuntu-dark.png` 等。
 
 ## 提示
 
 - 使用 PNG 或 SVG 格式
 - 建议尺寸：64x64 到 128x128 像素
 - 使用 HTTPS URL
-- 保持文件体积较小
+- 控制文件大小
 
 ## 支持的发行版
 

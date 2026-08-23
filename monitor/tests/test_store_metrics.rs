@@ -1,7 +1,8 @@
 use anyhow::Result;
 use chrono::Utc;
-use server_box_monitor::monitoring::monitoring::{
-    DiskMetrics, MemoryMetrics, NetworkMetrics, SwapMetrics, SystemMetrics,
+use server_box_monitor::monitoring::{
+    timeseries::CpuCoreTime, DiskMetrics, MemoryMetrics, NetworkMetrics,
+    SwapMetrics, SystemMetrics,
 };
 use sqlx::{Row, SqlitePool};
 
@@ -17,7 +18,9 @@ fn sample_metrics() -> SystemMetrics {
         extended_updated_at: Utc::now(),
         server_name: "test-server".to_string(),
         cpu_usage: 12.5,
-        cpu_cores: vec![],
+        // The per-core table was removed. A non-empty snapshot proves storage
+        // does not still attempt to write it.
+        cpu_cores: vec![CpuCoreTime { used: 25, total: 100, usage_percent: Some(25.0) }],
         memory: MemoryMetrics { total: 100, used: 50, free: 50, usage_percent: 50.0 },
         swap: SwapMetrics { total: 0, used: 0, usage_percent: 0.0 },
         disk: DiskMetrics { total: 100, used: 50, free: 50, usage_percent: 50.0 },
@@ -68,7 +71,7 @@ async fn store_metrics_writes_diskio_and_battery_columns() -> Result<()> {
     let pool = setup_test_db().await?;
     let metrics = sample_metrics();
 
-    server_box_monitor::monitoring::monitoring::store_metrics(&pool, &metrics).await?;
+    server_box_monitor::monitoring::store_metrics(&pool, &metrics).await?;
 
     let row = sqlx::query("SELECT diskio_read_bytes, diskio_write_bytes, battery_percent FROM system_metrics")
         .fetch_one(&pool)

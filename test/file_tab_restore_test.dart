@@ -1,11 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/history.dart';
 import 'package:server_box/data/store/private_key.dart';
@@ -15,6 +14,7 @@ import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/storage/tab.dart';
 
 import 'helpers/spi_fixture.dart';
+import 'helpers/test_db.dart';
 
 /// What the file tab reopens with.
 ///
@@ -32,25 +32,16 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late Directory tempDir;
-  late Box<dynamic> settingBox;
-  late Box<dynamic> serverBox;
-  late Box<dynamic> keyBox;
-  late Box<dynamic> historyBox;
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-filetab-');
-    Hive.init(tempDir.path);
-    // In memory: this page saves on every change, and a file write started in
-    // a `testWidgets` body never releases the box's lock — `close()` in
-    // `tearDown` then hangs the whole run with no output.
-    settingBox = await Hive.openBox<dynamic>('setting_test', bytes: Uint8List(0));
-    serverBox = await Hive.openBox<dynamic>('server_test', bytes: Uint8List(0));
-    keyBox = await Hive.openBox<dynamic>('key_test', bytes: Uint8List(0));
-    historyBox = await Hive.openBox<dynamic>('history_test', bytes: Uint8List(0));
-    getIt.registerSingleton<SettingStore>(SettingStore.forBox(settingBox));
-    getIt.registerSingleton<ServerStore>(ServerStore.forBox(serverBox));
-    getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore.forBox(keyBox));
-    getIt.registerSingleton<HistoryStore>(HistoryStore.forBox(historyBox));
+    await openTestDb();
+      // In memory: this tree writes as it builds, and a test has no
+      // business leaving a database behind.
+    getIt.registerSingleton<SettingStore>(SettingStore.forTest());
+    getIt.registerSingleton<ServerStore>(ServerStore.forTest());
+    getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore.forTest());
+    getIt.registerSingleton<HistoryStore>(HistoryStore.forTest());
     // A restored server session opens its browser, which now connects rather
     // than reporting that it is not connected — so an unreachable fixture
     // leaves a timer running. One second, pumped past below.
@@ -59,15 +50,13 @@ void main() {
 
   tearDown(() async {
     await getIt.reset();
-    await settingBox.close();
-    await serverBox.close();
-    await keyBox.close();
-    await historyBox.close();
+    await SqliteDb.close();
     await tempDir.delete(recursive: true);
   });
 
-  void saveTabs(List<Map<String, dynamic>> tabs) =>
-      Stores.history.fileTabs.put(jsonEncode(tabs));
+  Future<void> saveTabs(List<Map<String, dynamic>> tabs) async {
+    Stores.history.fileTabs.put(jsonEncode(tabs));
+  }
 
   /// The tab set as the page wrote it back — one entry per session.
   ///
@@ -117,7 +106,7 @@ void main() {
   testWidgets('a saved local session comes back in its directory', (
     tester,
   ) async {
-    saveTabs([
+    await saveTabs([
       {'kind': 'local', 'path': '/tmp/somewhere'},
     ]);
 
@@ -132,7 +121,7 @@ void main() {
   ) async {
     // The line this existed for.
     Stores.server.put(spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u'));
-    saveTabs([
+    await saveTabs([
       {'kind': 'server', 'serverId': 'srv-1', 'path': '/var/log'},
     ]);
 
@@ -147,7 +136,7 @@ void main() {
     // Not an error tab, and not a crash out of the loop that would take the
     // others with it.
     Stores.server.put(spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u'));
-    saveTabs([
+    await saveTabs([
       {'kind': 'server', 'serverId': 'srv-1', 'path': '/etc'},
       {'kind': 'server', 'serverId': 'srv-gone', 'path': '/etc'},
     ]);
@@ -159,7 +148,7 @@ void main() {
 
   testWidgets('everything gone falls back to this device', (tester) async {
     // Rather than the empty page this tab no longer opens with.
-    saveTabs([
+    await saveTabs([
       {'kind': 'server', 'serverId': 'srv-gone', 'path': '/etc'},
     ]);
 
@@ -173,7 +162,7 @@ void main() {
   ) async {
     // The migration residue the restore path carries a TODO for: local was
     // implied by the absence of a server id.
-    saveTabs([
+    await saveTabs([
       {'path': '/tmp/old'},
     ]);
 

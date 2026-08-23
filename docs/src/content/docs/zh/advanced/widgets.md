@@ -12,15 +12,16 @@ description: 在主屏幕上添加服务器状态小组件
 安装完成后，你的服务器应具备：
 - HTTP/HTTPS 端点
 - `/status` API 接口
-- 可选的身份验证
+- 可选的身份验证。`/status` 是旧版的免认证接口；需要 bearer 或 watch token 的认证
+  `/api/v1/status` 不能由只提供 URL 的小组件使用。
 
 ## URL 格式
 
-```
+```text
 https://your-server.com/status
 ```
 
-必须以 `/status` 结尾。
+必须以 `/status` 结尾。只提供 URL 的小组件不能使用需要 bearer 或 watch token 的认证端点。
 
 ## iOS 小组件
 
@@ -58,7 +59,7 @@ https://your-server.com/status
 ## watchOS
 
 手表自己向 monitor agent 取数据，因此只能显示已配置 monitor 的服务器。请先在
-服务器的编辑页里配置 agent —— 作为连接方式，或与 SSH 并存。
+服务器的编辑页将 agent 设为连接方式，不要同时配置 SSH。
 
 ### 设置步骤
 

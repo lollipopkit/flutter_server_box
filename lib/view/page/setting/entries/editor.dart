@@ -1,7 +1,7 @@
 part of '../entry.dart';
 
 extension _Editor on _AppSettingsPageState {
-  Future<void> _pickEditorTheme(HiveProp<String> property) async {
+  Future<void> _pickEditorTheme(SqliteProp<String> property) async {
     final selected = await context.showPickSingleDialog(
       title: libL10n.theme,
       items: themeMap.keys.toList(),
@@ -102,7 +102,7 @@ extension _Editor on _AppSettingsPageState {
     );
   }
 
-  void _showFontFamilyDialog(HiveProp<String> property) {
+  void _showFontFamilyDialog(SqliteProp<String> property) {
     showTextSettingDialog(
       title: libL10n.font,
       initialValue: property.fetch() ?? '',
@@ -113,7 +113,7 @@ extension _Editor on _AppSettingsPageState {
     );
   }
 
-  void _showFontSizeDialog(HiveProp<double> property) {
+  void _showFontSizeDialog(SqliteProp<double> property) {
     final ctrl = TextEditingController(text: property.fetch().toString());
     void onSave() {
       context.popDialog();

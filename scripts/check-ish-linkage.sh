@@ -10,9 +10,9 @@
 #
 # Why this is a script and not a line in a document
 # -------------------------------------------------
-# The obvious check is wrong. All eight `sbm_ish_*` functions are exported
-# whichever way the switch is set: Dart looks them up by name, so they carry
-# `used` and default visibility, and at SBM_ISH = 0 they are still there as
+# The obvious check is wrong. Every `sbm_ish_*` function is exported whichever
+# way the switch is set: Dart looks them up by name, so they carry `used` and
+# default visibility, and at SBM_ISH = 0 they are still there as
 # two-instruction stubs. Searching a stripped build for `sbm_ish_boot` finds
 # it. That was the documented procedure until it was run.
 #
@@ -22,14 +22,20 @@
 #
 # The `on` case is not symmetry. The first build made with the switch on had no
 # engine in it at all: nothing in the app calls those functions, so the linker
-# dead-stripped all eight and the engine with them, and the result was a 58 KB
-# binary that failed at runtime rather than at build time. `used` fixed it, and
-# this is what stops it coming back.
+# dead-stripped every one of them and the engine with them, and the result was
+# a 58 KB binary that failed at runtime rather than at build time. `used` fixed
+# it, and this is what stops it coming back.
+#
+# How many there should be is counted from the header rather than written down.
+# It was written down, as 8, and the ninth — `sbm_ish_attach`, which entering
+# one of several installed systems needs — turned this check red on a build
+# that was correct.
 
 set -euo pipefail
 
 BINARY="${1:-}"
 EXPECT="${2:-}"
+HEADER="$(cd "$(dirname "$0")/.." && pwd)/ios/Runner/ish/sbm_ish.h"
 
 die() { printf '\033[0;31merror:\033[0m %s\n' "$*" >&2; exit 1; }
 log() { printf '\033[0;34m==>\033[0m %s\n' "$*"; }
@@ -41,6 +47,10 @@ case "$EXPECT" in on|off) ;; *) die "second argument is 'on' or 'off', got '$EXP
 # `|| true` throughout: grep exits 1 on no match, which is a valid answer here
 # and must not end the script under `set -e`.
 exported="$(nm -gU "$BINARY" 2>/dev/null | grep -c '_sbm_ish_' || true)"
+# The declarations, which are the contract Dart resolves against. Counted here
+# so that adding one to the header is the whole of adding one.
+expected="$(grep -c '^SBM_ISH_EXPORT' "$HEADER" || true)"
+[ "$expected" -gt 0 ] || die "no SBM_ISH_EXPORT declarations in $HEADER"
 internals="$(nm -a "$BINARY" 2>/dev/null |
   grep -cE 'xX_main_Xx|mount_root|pty_open_fake|generic_openat|do_execve' || true)"
 engine_strings="$(LC_ALL=C strings - "$BINARY" 2>/dev/null |
@@ -60,11 +70,14 @@ pass() { printf '\033[0;32m  ✓\033[0m %s\n' "$*"; }
 
 # Both ways round. Dart resolves these by name in the running process, so their
 # absence is a runtime failure with no build-time symptom.
-if [ "$exported" -eq 8 ]; then
-  pass "all eight sbm_ish_* are exported"
+if [ "$exported" -eq "$expected" ]; then
+  pass "all $expected sbm_ish_* are exported"
 else
-  fail "$exported of 8 sbm_ish_* exported — Dart resolves these by name, and the
-       linker dead-strips them without `used`"
+  # `used` in single quotes, which are literal inside a double-quoted string.
+  # It was in backticks once, and inside double quotes that is command
+  # substitution: every failure printed "used: command not found" first.
+  fail "$exported of $expected sbm_ish_* exported — Dart resolves these by name,
+       and the linker dead-strips them without 'used'"
 fi
 
 if [ "$EXPECT" = on ]; then

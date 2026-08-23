@@ -229,9 +229,11 @@ class _ServerPageState extends ConsumerState<ServerPage>
   }
 
   Widget _buildBodySmall({required List<String> filtered}) {
-    if (filtered.isEmpty) {
-      return Center(child: Text(libL10n.empty, textAlign: TextAlign.center));
-    }
+    // The same mark the terminal, file and snippet tabs show with nothing
+    // open. A tab with no servers in it is the one place a new install starts,
+    // and it said "Empty" — a word for a list that could have had something in
+    // it, on a page where the thing to do is the button floating over it.
+    if (filtered.isEmpty) return const EmptyPane(icon: BoxIcons.bx_server);
 
     // Cards are as tall as what they have to say — a server that has not
     // connected is one line, one that has is several charts. Splitting them

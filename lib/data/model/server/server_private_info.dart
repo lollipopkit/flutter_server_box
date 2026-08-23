@@ -16,8 +16,7 @@ part 'server_private_info.g.dart';
 
 enum SpiValidationError {
   jumpServerAndProxyCommandConflict,
-
-
+  sshAndMonitorHttpConflict,
 }
 
 class SpiValidationException implements Exception {
@@ -53,7 +52,7 @@ abstract class Spi with _$Spi {
     SshCredential? ssh,
 
     /// Reach this server via a `monitor` instance's HTTP API. A peer of
-    /// [ssh]; a server may carry either, both, or neither.
+    /// [ssh]; a server may carry either one, or neither.
     MonitorHttpCredential? monitorHttp,
     List<String>? tags,
     @Default(true) bool autoConnect,
@@ -129,6 +128,9 @@ extension Spix on Spi {
 
   SpiValidationError? validate() {
     final s = ssh;
+    if (s != null && monitorHttp != null) {
+      return SpiValidationError.sshAndMonitorHttpConflict;
+    }
     if (s == null) return null;
     final hasJumpServer = s.resolvedJumpIds.isNotEmpty;
     final proxy = s.proxyCommand;
@@ -153,9 +155,7 @@ extension Spix on Spi {
     // A tunneled server has no address of its own — showing `user@:22` would
     // be noise, and showing `127.0.0.1` would be wrong on every such server
     if (s != null) return '${s.user}@${s.ip}:${s.port}';
-    final monitor = monitorHttp?.addr;
-    if (monitor != null && s != null) return '${s.user}@$monitor';
-    return monitor ?? id;
+    return monitorHttp?.addr ?? id;
   }
 
   /// This server's monitor agent, or null when it has none configured.

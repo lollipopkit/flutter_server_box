@@ -3,7 +3,7 @@ title: Architecture Overview
 description: High-level application architecture
 ---
 
-Server Box follows a layered architecture with clear separation of concerns.
+Server Box separates presentation, business logic, data access, and external integrations.
 
 ## Architecture Layers
 
@@ -23,7 +23,7 @@ Server Box follows a layered architecture with clear separation of concerns.
 ┌─────────────────────────────────────────────────┐
 │           Data Access Layer                     │
 │         lib/data/store/, lib/data/model/        │
-│  - Hive Stores, Data Models                     │
+│  - SQLite Stores, Data Models                   │
 └─────────────────────────────────────────────────┘
                       ↓
 ┌─────────────────────────────────────────────────┐
@@ -40,20 +40,20 @@ Server Box follows a layered architecture with clear separation of concerns.
 A server is reached either over SSH or through a monitor agent's HTTP API. The
 two are mutually exclusive: a monitor server carries no SSH credential.
 
-What each one can do is asked through `ServerCapabilities`, so a feature that
-needs a shell never has to know which transport provides one:
+`ServerCapabilities` describes what each connection can do. Features that need
+a shell can use that interface without knowing which transport provides it:
 
 | | SSH | Monitor agent |
 |---|---|---|
 | Status, charts | yes | yes |
-| Stored history | no — sampled while the app is open | yes — the agent has been sampling all along |
+| Stored history | no, sampled while the app is open | yes, the agent has been sampling all along |
 | Commands (processes, systemd, containers, power) | yes | with the agent's `full_access` grant |
 | Terminal | yes | with `full_access` |
 | File browsing | yes, over SFTP | with the agent's file API, confined to its configured roots |
 | SFTP transfers, port forwarding | yes | no |
 
-SFTP and port forwarding are absent on a monitor server because the agent has
-no endpoint that relays a connection to an address the app names.
+SFTP and port forwarding are not available through a monitor agent because the
+agent has no endpoint that relays a connection to an address chosen by the app.
 
 ## Application Foundation
 
@@ -80,7 +80,7 @@ void main() {
 
 ### Home Page
 
-`HomePage` serves as navigation hub:
+`HomePage` is the navigation hub:
 - **Tabbed Interface**: Server, SSH, File, Snippet
 - **State Management**: Per-tab state
 - **Navigation**: Feature access
@@ -92,22 +92,19 @@ void main() {
 **Why Riverpod?**
 - Compile-time safety
 - Easy testing
-- No Build context dependency
+- No `BuildContext` dependency
 - Works across platforms
 
 **Provider Types Used:**
-- `StateProvider`: Simple mutable state
+- `NotifierProvider`: Mutable state with methods
 - `AsyncNotifierProvider`: Loading/error/data states
 - `StreamProvider`: Real-time data streams
 - Future providers: One-time async operations
 
-### Data Persistence: Hive CE
+### Data Persistence: SQLite
 
-**Why Hive CE?**
-- No native code dependencies
-- Fast key-value storage
-- Type-safe with code generation
-- Follow the existing model pattern; some tracked models still use explicit field annotations
+The app stores data in one encrypted SQLite database, `store.db`. Key-value
+storage is used for settings and history; related records use entity tables.
 
 **Stores:**
 - `SettingStore`: App preferences
@@ -121,8 +118,8 @@ void main() {
 **Benefits:**
 - Compile-time immutability
 - Union types for state
-- Built-in JSON serialization
-- CopyWith extensions
+- JSON serialization when configured
+- `copyWith` methods
 
 ## Cross-Platform Strategy
 
@@ -132,9 +129,9 @@ Flutter plugins provide platform integration:
 
 | Platform | Integration Method |
 |----------|-------------------|
-| iOS | CocoaPods, Swift/Obj-C |
+| iOS | Swift Package Manager, Swift/Obj-C |
 | Android | Gradle, Kotlin/Java |
-| macOS | CocoaPods, Swift |
+| macOS | Swift Package Manager, Swift |
 | Linux | CMake, C++ |
 | Windows | CMake, C++ |
 
@@ -218,13 +215,15 @@ Through a monitor agent:
 ```
 1. Timer triggers →
 2. Provider calls the agent's /api/v1/metrics →
-3. The agent has already parsed it — with the same Rust crate →
+3. `MonitorMetrics.fromJson` decodes the JSON and `applyMonitorMetrics` maps it to `ServerStatus` →
 4. State updated →
 5. UI rebuilds with new data
 ```
 
-Both ends parse with `sbm_parser`, which is why the two paths produce the same
-`ServerStatus`.
+The SSH path parses command output through the FFI-backed `sbm_parser`; the
+monitor path consumes the agent's JSON contract and maps it locally. They feed
+the same `ServerStatus` shape, but they are not the same parser or guaranteed to
+have identical field semantics.
 
 ### User Action Flow
 
@@ -240,8 +239,8 @@ Both ends parse with `sbm_parser`, which is why the two paths produce the same
 
 ### Data Protection
 
-- **Passwords / SSH Keys**: Stored in AES-encrypted Hive boxes; the encryption
-  key itself is kept in the platform secure storage (Keychain/Keystore)
+- **Passwords / SSH Keys**: Stored in the encrypted SQLite database; the
+  encryption key itself is kept in platform secure storage (Keychain/Keystore)
 - **Host Fingerprints**: Stored securely
 - **Session Data**: Not persisted
 
@@ -249,4 +248,4 @@ Both ends parse with `sbm_parser`, which is why the two paths produce the same
 
 - **Host Key Verification**: MITM detection
 - **Encryption**: Standard SSH encryption
-- **No Plain Text**: Sensitive data never stored plain
+- **No Plain Text**: Sensitive data is not stored in plain text

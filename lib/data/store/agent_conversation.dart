@@ -1,28 +1,34 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:fl_lib/fl_lib.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:meta/meta.dart';
 import 'package:server_box/data/model/ai/agent_conversation.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
+import 'package:sqlite3/sqlite3.dart';
 
-class AgentConversationStore extends HiveStore {
-  AgentConversationStore._()
-    : super(
-        'agent_conversation',
-        updateLastUpdateTsOnClear: false,
-        updateLastUpdateTsOnRemove: false,
-        updateLastUpdateTsOnSet: false,
-      );
+/// Agent conversations, one row each, plus which one is open per server.
+///
+/// Tables rather than a K-V store because both reads are per server: "every
+/// conversation for this server, newest first" was a scan of every conversation
+/// in the app followed by an in-memory sort, and the 30-per-server cap was that
+/// same scan again. Both are indexed queries here.
+///
+/// The conversation stays one JSON column. Nothing queries inside the item list
+/// — it is read whole or not at all — and the two fields that are queried are
+/// lifted out beside it.
+///
+/// Left out of backup and sync on purpose: these may contain terminal output
+/// and reasoning.
+class AgentConversationStore {
+  AgentConversationStore._();
 
+  /// A second instance over the same tables.
+  ///
+  /// The table names are fixed by the schema now, so isolation between tests
+  /// comes from `SqliteDb.openInMemory()` being fresh per test.
   @visibleForTesting
-  AgentConversationStore.forBox(Box<dynamic> testBox)
-    : super(
-        'agent_conversation_test',
-        updateLastUpdateTsOnClear: false,
-        updateLastUpdateTsOnRemove: false,
-        updateLastUpdateTsOnSet: false,
-      ) {
-    box = testBox;
-  }
+  AgentConversationStore.forTest();
 
   static final instance = AgentConversationStore._();
 
@@ -30,22 +36,38 @@ class AgentConversationStore extends HiveStore {
   static const maxItemsPerConversation = 240;
   static const maxCharactersPerConversation = 512000;
 
-  static const _conversationPrefix = 'conversation::';
-  static const _activePrefix = 'active::';
+  Database get _db => SqliteDb.instance;
+
+  static const _conv = 'agent_conversation';
+  static const _active = 'agent_active_conversation';
+
+  final _changes = StreamController<void>.broadcast();
+
+  /// Fires after any write here.
+  ///
+  /// What `box.watch()` was: a view showing the conversation list has to notice
+  /// a write it did not make itself, and every write goes through this class.
+  Stream<void> watch() => _changes.stream;
 
   List<AgentConversation> fetchForServer(String serverId) {
-    final conversations = <AgentConversation>[];
-    for (final key in box.keys) {
-      if (key is! String || !key.startsWith(_conversationPrefix)) continue;
-      final conversation = _conversationFromValue(box.get(key));
-      if (conversation?.serverId == serverId) conversations.add(conversation!);
+    final rows = _db.select(
+      'SELECT data FROM $_conv WHERE server_id = ? ORDER BY updated_at DESC;',
+      [serverId],
+    );
+    final result = <AgentConversation>[];
+    for (final row in rows) {
+      final conversation = _decode(row['data'] as String);
+      if (conversation != null) result.add(conversation);
     }
-    conversations.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-    return conversations;
+    return result;
   }
 
   AgentConversation? fetch(String conversationId) {
-    return _conversationFromValue(box.get(_conversationKey(conversationId)));
+    final rows = _db.select('SELECT data FROM $_conv WHERE id = ?;', [
+      conversationId,
+    ]);
+    if (rows.isEmpty) return null;
+    return _decode(rows.single['data'] as String);
   }
 
   AgentConversation? fetchActive(String serverId) {
@@ -56,8 +78,13 @@ class AgentConversationStore extends HiveStore {
   }
 
   String? activeConversationId(String serverId) {
-    final value = box.get(_activeKey(serverId));
-    return value is String && value.isNotEmpty ? value : null;
+    final rows = _db.select(
+      'SELECT conversation_id FROM $_active WHERE server_id = ?;',
+      [serverId],
+    );
+    if (rows.isEmpty) return null;
+    final value = rows.single['conversation_id'] as String;
+    return value.isNotEmpty ? value : null;
   }
 
   AgentConversation create({
@@ -89,32 +116,33 @@ class AgentConversationStore extends HiveStore {
       title: _normalizeTitle(conversation.title, conversation.items),
       items: trimItemsForStorage(conversation.items),
     );
-    final saved = set(
-      _conversationKey(normalized.id),
-      normalized.toJson(),
-      updateLastUpdateTsOnSet: false,
-    );
-    if (!saved) return false;
-    if (setActive) {
-      set(
-        _activeKey(normalized.serverId),
-        normalized.id,
-        updateLastUpdateTsOnSet: false,
-      );
+    // One unit, and the caller treats `false` as "not saved". Three statements
+    // otherwise: a conversation could be stored but not made active, or stored
+    // without the over-cap ones being dropped, and the caller would be told it
+    // failed while part of it stood.
+    try {
+      SqliteStore.transact(() {
+        _upsert(normalized);
+        if (setActive) _setActiveRow(normalized.serverId, normalized.id);
+        _pruneServer(normalized.serverId);
+      });
+    } catch (e) {
+      dprint('Saving AgentConversation', e);
+      return false;
     }
-    _pruneServer(normalized.serverId);
+    // After it commits, so nothing is told to re-read a state that was undone.
+    _changes.add(null);
     return true;
   }
 
   bool setActive(String serverId, String conversationId) {
     final conversation = fetch(conversationId);
     if (conversation == null || conversation.serverId != serverId) return false;
-    return set(
-      _activeKey(serverId),
-      conversationId,
-      updateLastUpdateTsOnSet: false,
-    );
+    _setActiveRow(serverId, conversationId);
+    _changes.add(null);
+    return true;
   }
+
 
   bool rename(String conversationId, String title) {
     final conversation = fetch(conversationId);
@@ -128,24 +156,30 @@ class AgentConversationStore extends HiveStore {
   void deleteConversation(String serverId, String conversationId) {
     final conversation = fetch(conversationId);
     if (conversation == null || conversation.serverId != serverId) return;
-    remove(_conversationKey(conversationId), updateLastUpdateTsOnRemove: false);
-    if (activeConversationId(serverId) != conversationId) return;
-    final remaining = fetchForServer(serverId);
-    if (remaining.isEmpty) {
-      remove(_activeKey(serverId), updateLastUpdateTsOnRemove: false);
-    } else {
-      setActive(serverId, remaining.first.id);
-    }
+    // Asked before the delete: the active row references the conversation and
+    // cascades with it, so afterwards there is nothing left to compare.
+    final wasActive = activeConversationId(serverId) == conversationId;
+    // One unit: the delete cascades the active row away, so committing it
+    // without the replacement would leave the server with none.
+    SqliteStore.transact(() {
+      _db.execute('DELETE FROM $_conv WHERE id = ?;', [conversationId]);
+      if (wasActive) {
+        final remaining = fetchForServer(serverId);
+        if (remaining.isNotEmpty) _setActiveRow(serverId, remaining.first.id);
+      }
+    });
+
+    // Exactly once, whichever way this returns. Deleting a conversation that
+    // was not the active one used to return before notifying at all, leaving
+    // the list showing a row that is gone; promoting a replacement notified
+    // twice, because `setActive` notifies too.
+    _changes.add(null);
   }
 
+  /// The active row goes with the conversations it references, by cascade.
   void clearServer(String serverId) {
-    for (final conversation in fetchForServer(serverId)) {
-      remove(
-        _conversationKey(conversation.id),
-        updateLastUpdateTsOnRemove: false,
-      );
-    }
-    remove(_activeKey(serverId), updateLastUpdateTsOnRemove: false);
+    _db.execute('DELETE FROM $_conv WHERE server_id = ?;', [serverId]);
+    _changes.add(null);
   }
 
   static List<AskAiConversationItem> trimItemsForStorage(
@@ -175,14 +209,18 @@ class AgentConversationStore extends HiveStore {
     return List.unmodifiable(items.sublist(start));
   }
 
+  /// Drops everything past the newest [maxConversationsPerServer] for a server.
+  ///
+  /// One statement, where the K-V version read and decoded every conversation
+  /// in the app on every save to find out which ones were past the cap.
   void _pruneServer(String serverId) {
-    final conversations = fetchForServer(serverId);
-    for (final conversation in conversations.skip(maxConversationsPerServer)) {
-      remove(
-        _conversationKey(conversation.id),
-        updateLastUpdateTsOnRemove: false,
-      );
-    }
+    _db.execute(
+      'DELETE FROM $_conv WHERE server_id = ? AND id NOT IN ('
+      '  SELECT id FROM $_conv WHERE server_id = ? '
+      '  ORDER BY updated_at DESC LIMIT ?'
+      ');',
+      [serverId, serverId, maxConversationsPerServer],
+    );
   }
 
   static int _nextUserMessage(List<AskAiConversationItem> items, int start) {
@@ -246,15 +284,40 @@ class AgentConversationStore extends HiveStore {
     return '';
   }
 
-  static String _conversationKey(String id) => '$_conversationPrefix$id';
-  static String _activeKey(String serverId) => '$_activePrefix$serverId';
+  void _upsert(AgentConversation conversation) {
+    _db.execute(
+      'INSERT INTO $_conv (id, server_id, updated_at, data) VALUES (?, ?, ?, ?) '
+      'ON CONFLICT (id) DO UPDATE SET server_id = excluded.server_id, '
+      'updated_at = excluded.updated_at, data = excluded.data;',
+      [
+        conversation.id,
+        conversation.serverId,
+        conversation.updatedAt.millisecondsSinceEpoch,
+        json.encode(conversation.toJson()),
+      ],
+    );
+  }
 
-  static AgentConversation? _conversationFromValue(Object? value) {
-    if (value is! Map) return null;
+  void _setActiveRow(String serverId, String conversationId) {
+    _db.execute(
+      'INSERT INTO $_active (server_id, conversation_id) VALUES (?, ?) '
+      'ON CONFLICT (server_id) DO UPDATE SET '
+      'conversation_id = excluded.conversation_id;',
+      [serverId, conversationId],
+    );
+  }
+
+  static AgentConversation? _decode(String data) {
     try {
-      final conversation = AgentConversation.fromJson(
-        Map<String, dynamic>.from(value),
-      );
+      return _fromMap(json.decode(data) as Map<String, dynamic>);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static AgentConversation? _fromMap(Map<String, dynamic> map) {
+    try {
+      final conversation = AgentConversation.fromJson(map);
       if (conversation.id.isEmpty || conversation.serverId.isEmpty) return null;
       return conversation;
     } catch (_) {

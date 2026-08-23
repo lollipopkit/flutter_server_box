@@ -239,6 +239,8 @@ extension _Actions on _ServerEditPageState {
     switch (error) {
       case SpiValidationError.jumpServerAndProxyCommandConflict:
         return l10n.jumpServerAndProxyCommandCannotBeUsedTogether;
+      case SpiValidationError.sshAndMonitorHttpConflict:
+        return libL10n.invalid;
     }
   }
 
@@ -354,6 +356,7 @@ extension _Actions on _ServerEditPageState {
         user: _monitorUserCtrl.text.selfNotEmptyOrNull,
         pwd: _monitorPwdCtrl.text.selfNotEmptyOrNull,
         ignoreCert: _monitorIgnoreCert.value,
+        allowInsecure: _monitorAllowInsecure.value,
       );
     }
 
@@ -448,16 +451,16 @@ extension _Actions on _ServerEditPageState {
     }
 
     if (this.spi == null) {
-      final existsIds = ServerStore.instance.box.keys;
+      final existsIds = Stores.server.keys();
       if (existsIds.contains(spi.id)) {
         Toast.show('${l10n.sameIdServerExist}: ${spi.id}');
         return;
       }
       if (!await _persistPendingSudoPassword()) return;
-      ref.read(serversProvider.notifier).addServer(spi);
+      await ref.read(serversProvider.notifier).addServer(spi);
     } else {
       if (!await _persistPendingSudoPassword()) return;
-      ref.read(serversProvider.notifier).updateServer(this.spi!, spi);
+      await ref.read(serversProvider.notifier).updateServer(this.spi!, spi);
     }
 
     context.pop();
@@ -612,6 +615,7 @@ extension _Utils on _ServerEditPageState {
       _monitorUserCtrl.text = monitorHttp.user ?? '';
       _monitorPwdCtrl.text = monitorHttp.pwd ?? '';
       _monitorIgnoreCert.value = monitorHttp.ignoreCert;
+      _monitorAllowInsecure.value = monitorHttp.allowInsecure;
     }
 
     final bmc = spi.bmc;

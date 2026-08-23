@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/res/store.dart';
@@ -14,6 +13,7 @@ import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/storage/file_browser.dart';
 
+import 'helpers/test_db.dart';
 
 /// A filesystem that is a map, so a browser test is about the browser.
 class _MapBackend implements FileBackend {
@@ -96,18 +96,16 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late Directory tempDir;
-  late Box<dynamic> settingBox;
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-browser-');
-    Hive.init(tempDir.path);
-    settingBox = await Hive.openBox<dynamic>('setting_test');
-    getIt.registerSingleton<SettingStore>(SettingStore.forBox(settingBox));
+    await openTestDb();
+    getIt.registerSingleton<SettingStore>(SettingStore.forTest());
   });
 
   tearDown(() async {
     await getIt.reset();
-    await settingBox.close();
+    await SqliteDb.close();
     await tempDir.delete(recursive: true);
   });
 

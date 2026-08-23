@@ -115,8 +115,8 @@ class TerminalSession {
     if (_backend != null) return;
     // Nothing to adopt on this device: there is no connection anybody else
     // could be holding, so the shell this session opens is its own.
-    if (source case LocalSource(:final rootfs)) {
-      _backend = _localBackend(rootfs);
+    if (source case final LocalSource local) {
+      _backend = _localBackend(local);
       _ownsBackend = true;
       return;
     }
@@ -142,8 +142,8 @@ class TerminalSession {
     BuildContext? context,
   }) async {
     _ownsBackend = true;
-    if (source case LocalSource(:final rootfs)) {
-      return _backend = _localBackend(rootfs);
+    if (source case final LocalSource local) {
+      return _backend = _localBackend(local);
     }
 
     final agent = _grantedBackend(granted);
@@ -166,9 +166,14 @@ class TerminalSession {
   /// through the same pty a host shell uses, and iOS has no process to start at
   /// all, so its guest is an interpreter with a console of its own. The page
   /// above knows neither.
-  ShellBackend _localBackend(bool rootfs) {
-    if (rootfs && isIOS) return IshShellBackend();
-    return LocalShellBackend(inRootfs: rootfs);
+  ShellBackend _localBackend(LocalSource local) {
+    if (local.rootfs && isIOS) {
+      return IshShellBackend(profileId: local.profileId);
+    }
+    return LocalShellBackend(
+      inRootfs: local.rootfs,
+      profileId: local.profileId,
+    );
   }
 
   /// The agent's own shell, when the agent said it allows one.

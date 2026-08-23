@@ -244,7 +244,7 @@ class FileTransferWorker {
         );
         return;
       case final TransferHostKeyAccepted accepted:
-        persistHostKeyFingerprint(
+        await persistHostKeyFingerprint(
           accepted.storageKey,
           accepted.fingerprintHex,
         );

@@ -10,7 +10,7 @@ page, refreshed with the rest of the status.
 
 Each command is a **file in a directory on the server**
 (`~/.config/server_box/custom_cmds`), and that directory is the only copy. The
-app does not keep its own — it reads the directory when you open the editor and
+app does not keep its own copy. It reads the directory when you open the editor and
 writes it back when you save.
 
 Two consequences:
@@ -18,12 +18,12 @@ Two consequences:
 - **The server has to be reachable to edit them.** The editor says so instead of
   collecting changes that would have nowhere to go.
 - **The same set is shared.** A monitor agent's web panel edits the same
-  directory, and the app's status script reads it, so all three agree without
-  anything being synchronised.
+  directory, and the app's status script reads it. All three use the same
+  directory; no synchronization step is required.
 
 ## Editing
 
-1. Server settings → **Custom Command** → **Edit**
+1. Open the server's edit page and choose **Custom commands** → **Edit**
 2. Add, rename, edit or reorder entries
 3. Save
 
@@ -60,7 +60,7 @@ ps aux | sort -rk 3 | head -5
 uptime | awk -F'load average:' '{print $2}'
 ```
 
-**Keep them fast** — under a second or so. They run on every status refresh.
+**Keep execution time low.** Commands run on every status refresh.
 
 **Limit the output:**
 
@@ -70,10 +70,12 @@ tail -20 /var/log/syslog
 
 ## Security
 
-Commands run as the account the app reaches the server with — the SSH user, or
+Commands run as the account the app reaches the server with: the SSH user, or
 the account a monitor agent runs as. On a monitor server, editing them at all
-requires the agent's `full_access` grant, because adding a file to that
-directory arranges for code to run on every refresh.
+requires the agent's `full_access` grant. The grant is usable only when the
+agent's terminal capability is enabled and the request meets its secure-transport
+or explicit `allow_insecure` requirement, because adding a file to that directory
+arranges for code to run on every refresh.
 
 Avoid commands that change system state.
 
@@ -81,5 +83,5 @@ Avoid commands that change system state.
 
 Earlier versions stored these as a JSON object in the server's own settings.
 Those entries are carried through untouched when you edit anything else on the
-server, and move to the server's directory on the first connection. Nothing
-writes the old location any more.
+server, and move to the server's directory on the first connection. The app no
+longer writes to the old location.

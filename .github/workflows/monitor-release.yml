@@ -17,8 +17,7 @@ on:
         default: false
 
 permissions:
-  contents: write
-  packages: write
+  contents: read
 
 env:
   IMAGE: ghcr.io/${{ github.repository_owner }}/server-box-monitor
@@ -33,7 +32,7 @@ jobs:
       tag: monitor-v${{ steps.version.outputs.version }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
 
@@ -69,11 +68,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 24
           cache: npm
@@ -86,7 +85,7 @@ jobs:
           npm run build
 
       - name: Upload dist
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: monitor-frontend-dist
           path: monitor/frontend/dist
@@ -125,7 +124,7 @@ jobs:
       SQLX_OFFLINE: "true"
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
 
@@ -138,7 +137,7 @@ jobs:
       - name: Add Rust target
         run: rustup target add ${{ matrix.target }}
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           key: ${{ matrix.target }}
 
@@ -147,7 +146,7 @@ jobs:
         run: cargo build -p server_box_monitor --release --target ${{ matrix.target }}
 
       - name: Download frontend dist
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: monitor-frontend-dist
           path: monitor/frontend/dist
@@ -177,7 +176,7 @@ jobs:
           fi
 
       - name: Upload package
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: monitor-pkg-${{ matrix.platform }}-${{ matrix.arch }}
           path: |
@@ -189,7 +188,7 @@ jobs:
       # The Linux musl binary is reused in the Docker image, avoiding a second build
       - name: Upload raw bin for Docker
         if: matrix.platform == 'linux'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: monitor-bin-linux-${{ matrix.arch }}
           path: target/${{ matrix.target }}/release/server_box_monitor
@@ -200,20 +199,23 @@ jobs:
     name: Publish image to ghcr.io
     needs: [meta, frontend, native]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
 
       - name: Download frontend dist
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: monitor-frontend-dist
           path: monitor/frontend/dist
 
       - name: Download linux bins
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           pattern: monitor-bin-linux-*
           path: dist/bins
@@ -227,7 +229,7 @@ jobs:
           mv dist/bins/monitor-bin-linux-arm64/server_box_monitor dist/docker/arm64/
 
       - name: Login to ghcr.io
-        uses: docker/login-action@v4
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -246,11 +248,11 @@ jobs:
           fi
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
 
       # COPY prebuilt artifacts only; multi-arch images without QEMU
       - name: Build and push
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
         with:
           context: .
           file: monitor/Dockerfile.ci
@@ -269,9 +271,11 @@ jobs:
     name: Create GitHub Release
     needs: [meta, native, docker]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Download packages
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           pattern: monitor-pkg-*
           path: packages
@@ -283,7 +287,7 @@ jobs:
         run: sha256sum *.tar.gz *.zip > SHA256SUMS
 
       - name: Create Release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
         with:
           tag_name: ${{ needs.meta.outputs.tag }}
           name: Monitor ${{ needs.meta.outputs.tag }}

@@ -61,11 +61,11 @@ ISH_SOURCE_DIR = $(SRCROOT)/../third_party/ish-arm64
 // the switch off the compiler and the linker are told nothing at all about the
 // engine.
 ISH_PREPROCESSOR_0 = SBM_ISH_ENABLED=0
-ISH_PREPROCESSOR_1 = SBM_ISH_ENABLED=1 ENGINE_ASBESTOS=1 GUEST_ARM64=1 LOG_HANDLER_DPRINTF=1
+ISH_PREPROCESSOR_1 = SBM_ISH_ENABLED=1 GUEST_ARM64=1 LOG_HANDLER_DPRINTF=1
 ISH_LDFLAGS_0 =
 ISH_LDFLAGS_1 = -lsqlite3 $(ISH_BUILD_DIR)/libish.a $(ISH_BUILD_DIR)/libish_emu.a $(ISH_BUILD_DIR)/libfakefs.a
 ISH_HEADER_PATHS_0 =
-ISH_HEADER_PATHS_1 = $(ISH_SOURCE_DIR) $(ISH_BUILD_DIR) $(ISH_BUILD_DIR)/ish.p $(ISH_SOURCE_DIR)/vdso/arm64 $(ISH_BUILD_DIR)/vdso/arm64
+ISH_HEADER_PATHS_1 = $(ISH_SOURCE_DIR) $(ISH_BUILD_DIR) $(ISH_SOURCE_DIR)/vdso/arm64 $(ISH_BUILD_DIR)/vdso/arm64
 
 // The engine's headers use file-scope `static_assert`, which is C11. Meson
 // builds it with `-std=gnu11`; Xcode's default is older, and there the same

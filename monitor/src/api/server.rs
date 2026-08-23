@@ -8,12 +8,11 @@ use crate::{
         session::SessionStore,
         terminal::{start_reaper, terminal_ws},
         ticket::{Purpose, TicketRequest, TicketResponse, TicketStore},
-        tunnel::{TunnelCount, tunnel_ws},
     },
     core::config::Config,
     core::config_file,
     core::remote_access::RemoteAccess,
-    monitoring::monitoring::{self, LiveSettings, SystemMetrics},
+    monitoring::{self, LiveSettings, SystemMetrics},
     monitoring::size::Size,
     monitoring::velocity::{NetworkSpeedInfo, VelocityAnalysisResponse, VelocityManager},
     utils::error::{MonitorError, Result},
@@ -23,6 +22,7 @@ use ntex::web::{self, App, HttpRequest, HttpResponse, HttpServer, middleware::Lo
 use ntex_files::Files;
 use sbm_parser::{SystemType, capabilities::Capabilities};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use sqlx::SqlitePool;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, OnceLock};
@@ -31,6 +31,7 @@ use tokio::sync::{Mutex, RwLock, Semaphore};
 use tracing::info;
 
 const MAX_CONCURRENT_PASSWORD_CHECKS: usize = 4;
+const WATCH_TOKEN_LIFETIME: chrono::Duration = chrono::Duration::days(90);
 
 fn password_check_limit() -> &'static Arc<Semaphore> {
     static LIMIT: OnceLock<Arc<Semaphore>> = OnceLock::new();
@@ -75,7 +76,7 @@ pub struct AppState {
     pub last_viewer_seen: Arc<RwLock<chrono::DateTime<chrono::Utc>>>,
     /// Resolved remote-access settings (capacities filled in from physical
     /// memory at startup — see `core::remote_access`). A snapshot, like
-    /// `config`: turning the tunnel or terminal on is a restart-level change,
+    /// `config`: turning the terminal on is a restart-level change,
     /// not something a running process should pick up mid-session.
     pub remote_access: Arc<RemoteAccess>,
     /// Whether this process terminates TLS itself. Decided once at startup
@@ -83,8 +84,6 @@ pub struct AppState {
     /// to re-derive it.
     pub tls_active: bool,
     pub tickets: Arc<TicketStore>,
-    /// Live tunnel count, for `remote_access.tunnel.max_conns`.
-    pub tunnel_count: Arc<TunnelCount>,
     /// Terminal sessions, which outlive the WebSockets driving them so a
     /// reconnect can rejoin the same shell — see `api::ws::session`.
     pub sessions: Arc<SessionStore>,
@@ -106,8 +105,7 @@ pub struct AppState {
 
 impl AppState {
     pub fn new(config: Arc<Config>, db: SqlitePool) -> Arc<Self> {
-        let db_arc = Arc::new(db.clone());
-        let velocity_manager = Arc::new(RwLock::new(VelocityManager::new(db_arc)));
+        let velocity_manager = Arc::new(RwLock::new(VelocityManager::new()));
         let live_settings = Arc::new(RwLock::new(LiveSettings::from_config(&config.get_monitoring())));
         let tls_active = config.get_server().tls.is_some();
         let remote_access = config
@@ -122,7 +120,6 @@ impl AppState {
             remote_access: Arc::new(remote_access),
             tls_active,
             tickets: Arc::new(TicketStore::new()),
-            tunnel_count: Arc::new(Default::default()),
             sessions,
             login_throttle: Arc::new(LoginThrottle::new()),
             full_access_off: Arc::new(AtomicBool::new(false)),
@@ -159,6 +156,17 @@ struct LoginResponse {
     token: String,
 }
 
+#[derive(Deserialize)]
+struct WatchTokenRequest {
+    client_id: String,
+}
+
+#[derive(Serialize)]
+struct WatchTokenResponse {
+    token: String,
+    expires_at: i64,
+}
+
 #[derive(Serialize)]
 struct StatusResponse {
     name: String,
@@ -173,6 +181,34 @@ struct StatusResponse {
 #[derive(Serialize)]
 struct ErrorResponse {
     error: String,
+}
+
+fn unauthorized_response() -> HttpResponse {
+    HttpResponse::Unauthorized().json(&ErrorResponse {
+        error: "Invalid or missing token".to_string(),
+    })
+}
+
+/// Require a full panel JWT and return its claims. The early response stays
+/// identical across handlers, while the macro makes endpoints that need the
+/// subject just as explicit as endpoints that only need authentication.
+macro_rules! require_jwt {
+    ($req:expr, $app_state:expr) => {{
+        match verify_auth($req, &$app_state.config.get_jwt_secret()) {
+            Ok(claims) => claims,
+            Err(_) => return Ok(unauthorized_response()),
+        }
+    }};
+}
+
+/// Require either a full panel JWT or a paired Watch read token.
+macro_rules! require_read_access {
+    ($req:expr, $app_state:expr) => {{
+        match verify_read_auth($req, $app_state).await {
+            Ok(subject) => subject,
+            Err(_) => return Ok(unauthorized_response()),
+        }
+    }};
 }
 
 pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
@@ -199,11 +235,15 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
             .service(
                 web::scope("/api/v1")
                     .route("/login", web::post().to(login))
+                    .service(
+                        web::resource("/watch-token")
+                            .route(web::post().to(issue_watch_token))
+                            .route(web::delete().to(revoke_watch_token)),
+                    )
                     .route("/status", web::get().to(get_status))
                     .route("/metrics", web::get().to(get_metrics))
                     .route("/capabilities", web::get().to(get_capabilities))
                     .route("/ws-ticket", web::post().to(issue_ws_ticket))
-                    .route("/tunnel/ws", web::get().to(tunnel_ws))
                     .route("/terminal/ws", web::get().to(terminal_ws))
                     .service(
                         // Its own payload limit: ntex allows 32 KiB by
@@ -396,6 +436,65 @@ async fn login(
     }))
 }
 
+/// Lowercase hex of the SHA-256, which is what the `watch_tokens` rows already
+/// hold — `hex::encode` writes the same bytes the `{:x}` of digest 0.10 did.
+fn watch_token_hash(token: &str) -> String {
+    hex::encode(Sha256::digest(token.as_bytes()))
+}
+
+fn validate_watch_client_id(client_id: &str) -> Result<&str> {
+    let client_id = client_id.trim();
+    if client_id.is_empty() || client_id.len() > 128 {
+        return Err(MonitorError::Parse(
+            "watch token client_id must be 1..=128 characters".to_string(),
+        ));
+    }
+    Ok(client_id)
+}
+
+async fn issue_watch_token(
+    req: HttpRequest,
+    app_state: web::types::State<Arc<AppState>>,
+    payload: web::types::Json<WatchTokenRequest>,
+) -> Result<HttpResponse> {
+    let claims = require_jwt!(&req, &app_state);
+    let client_id = validate_watch_client_id(&payload.client_id)?;
+    let token = format!("sbw_{}", crate::utils::secrets::random_hex(32)?);
+    let token_hash = watch_token_hash(&token);
+    let now = chrono::Utc::now().timestamp();
+    let expires_at = (chrono::Utc::now() + WATCH_TOKEN_LIFETIME).timestamp();
+    sqlx::query(
+        "INSERT INTO watch_tokens(subject, client_id, token_hash, created_at, expires_at) \
+         VALUES (?, ?, ?, ?, ?) \
+         ON CONFLICT(subject, client_id) DO UPDATE SET \
+         token_hash = excluded.token_hash, created_at = excluded.created_at, \
+         expires_at = excluded.expires_at",
+    )
+    .bind(&claims.sub)
+    .bind(client_id)
+    .bind(token_hash)
+    .bind(now)
+    .bind(expires_at)
+    .execute(&app_state.db)
+    .await?;
+    Ok(HttpResponse::Ok().json(&WatchTokenResponse { token, expires_at }))
+}
+
+async fn revoke_watch_token(
+    req: HttpRequest,
+    app_state: web::types::State<Arc<AppState>>,
+    payload: web::types::Json<WatchTokenRequest>,
+) -> Result<HttpResponse> {
+    let claims = require_jwt!(&req, &app_state);
+    let client_id = validate_watch_client_id(&payload.client_id)?;
+    sqlx::query("DELETE FROM watch_tokens WHERE subject = ? AND client_id = ?")
+        .bind(&claims.sub)
+        .bind(client_id)
+        .execute(&app_state.db)
+        .await?;
+    Ok(HttpResponse::Ok().json(&serde_json::json!({ "status": "revoked" })))
+}
+
 // TODO: Go-compat endpoint (matches the legacy GET /status response format, unauthenticated); remove once flutter_server_box migrates
 async fn get_status_compat(
     app_state: web::types::State<Arc<AppState>>,
@@ -426,12 +525,7 @@ async fn get_status(
     req: HttpRequest,
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse> {
-    // Verify JWT token
-    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
-        return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
-            error: "Invalid or missing token".to_string(),
-        }));
-    }
+    require_read_access!(&req, &app_state);
     touch_viewer_heartbeat(&app_state).await;
 
     let metrics = app_state.current_metrics.read().await;
@@ -473,12 +567,7 @@ async fn get_metrics(
     req: HttpRequest,
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse> {
-    // Verify JWT token
-    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
-        return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
-            error: "Invalid or missing token".to_string(),
-        }));
-    }
+    require_read_access!(&req, &app_state);
     touch_viewer_heartbeat(&app_state).await;
 
     let metrics = app_state.current_metrics.read().await;
@@ -512,12 +601,10 @@ struct CapabilitiesView {
 /// Which remote-access paths this agent will actually accept, as opposed to
 /// what the config asks for: `terminal` already accounts for the transport
 /// check, so the panel can hide the entry rather than offer something that
-/// answers 403. `secure` is reported separately so it can explain *why*.
+/// answers 403.
 #[derive(Serialize)]
 struct RemoteAccessView {
-    tunnel: bool,
     terminal: bool,
-    secure: bool,
     /// Whether a shell can be opened without SSH credentials. The panel only
     /// offers that entry when this is true — and, being a UI decision, it is
     /// re-checked server-side when the request actually arrives.
@@ -529,11 +616,7 @@ struct RemoteAccessView {
 }
 
 async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
-    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
-        return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
-            error: "Invalid or missing token".to_string(),
-        }));
-    }
+    require_jwt!(&req, &app_state);
     let platform = monitoring::system_type();
     let capabilities = monitoring::effective_capabilities(platform);
     let secure = ws::is_secure_transport(&req, app_state.tls_active);
@@ -541,11 +624,9 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
         capabilities,
         platform,
         remote_access: RemoteAccessView {
-            tunnel: app_state.remote_access.tunnel.enabled,
             terminal: app_state.remote_access.terminal.available(secure),
-            secure,
             full_access: app_state.full_access_allowed(secure),
-            files: app_state.remote_access.fs.available(),
+            files: app_state.remote_access.fs.available(secure),
         },
     }))
 }
@@ -554,49 +635,44 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
 /// authorises one WebSocket upgrade — see `api::ws::ticket` for why the
 /// upgrade can't just carry the JWT.
 ///
-/// Refuses to mint a ticket for a path that isn't open, so a client finds out
-/// here rather than at a failed handshake.
+/// Refuses to mint a ticket while the terminal is unavailable, so a client
+/// finds out here rather than at a failed handshake.
 async fn issue_ws_ticket(
     req: HttpRequest,
     app_state: web::types::State<Arc<AppState>>,
     payload: web::types::Json<TicketRequest>,
 ) -> Result<HttpResponse> {
+    let claims = require_jwt!(&req, &app_state);
 
-    let claims = match verify_auth(&req, &app_state.config.get_jwt_secret()) {
-        Ok(claims) => claims,
-        Err(_) => {
-            return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
-                error: "Invalid or missing token".to_string(),
-            }));
-        }
-    };
-
-    let purpose = payload.into_inner().purpose;
     let remote_ip = audit::peer_ip(&req);
-    let available = match purpose {
-        Purpose::Tunnel => app_state.remote_access.tunnel.enabled,
-        Purpose::Terminal => app_state
-            .remote_access
-            .terminal.available(ws::is_secure_transport(&req, app_state.tls_active)),
-    };
+    // The purpose is read and dropped: `Purpose` has one variant, so there is
+    // nothing to branch on. It used to be compared and the mismatch declared
+    // `unreachable!()` — a panic guarding a value that arrives in a request
+    // body, which a second variant would have turned into a way to kill the
+    // worker with a POST. Everything below names `Purpose::Terminal` outright.
+    let _ = payload.into_inner();
+    let available = app_state
+        .remote_access
+        .terminal
+        .available(ws::is_secure_transport(&req, app_state.tls_active));
     if !available {
         Event::new(Kind::Ticket, Action::Denied, Outcome::Denied)
             .subject(&claims.sub)
             .remote_ip(remote_ip)
-            .detail(format!("{purpose:?} not available"))
+            .detail("terminal not available")
             .record(&app_state.db)
             .await;
         return Ok(HttpResponse::Forbidden().json(&ErrorResponse {
-            error: "Remote access is not enabled for this purpose".to_string(),
+            error: "The terminal is not available".to_string(),
         }));
     }
 
-    match app_state.tickets.issue(purpose, &claims.sub) {
+    match app_state.tickets.issue(Purpose::Terminal, &claims.sub) {
         Ok(ticket) => {
             Event::new(Kind::Ticket, Action::Open, Outcome::Ok)
                 .subject(&claims.sub)
                 .remote_ip(remote_ip)
-                .detail(format!("{purpose:?}"))
+                .detail("terminal")
                 .record(&app_state.db)
                 .await;
             Ok(HttpResponse::Ok()
@@ -648,11 +724,7 @@ struct SettingsView {
 const SETTINGS_LIVE_FIELDS: &[&str] = &["extended_interval_secs", "idle_pause_enabled", "idle_pause_threshold_secs"];
 
 async fn get_settings(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
-    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
-        return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
-            error: "Invalid or missing token".to_string(),
-        }));
-    }
+    require_jwt!(&req, &app_state);
 
     let file_config = match config_file::read() {
         Ok(c) => c,
@@ -693,16 +765,17 @@ async fn update_settings(
     app_state: web::types::State<Arc<AppState>>,
     payload: web::types::Json<SettingsPayload>,
 ) -> Result<HttpResponse> {
-    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
-        return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
-            error: "Invalid or missing token".to_string(),
-        }));
-    }
+    require_jwt!(&req, &app_state);
     let payload = payload.into_inner();
 
     if payload.interval_seconds < 1 {
         return Ok(HttpResponse::BadRequest()
             .json(&ErrorResponse { error: "interval_seconds must be at least 1".to_string() }));
+    }
+    if let Some(retention) = &payload.data_retention
+        && let Err(error) = retention.validate()
+    {
+        return Ok(HttpResponse::BadRequest().json(&ErrorResponse { error }));
     }
     for rule in &payload.rules {
         if let Err(e) = validate_threshold_format(&rule.threshold) {
@@ -769,14 +842,7 @@ async fn disable_full_access(
     req: HttpRequest,
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse> {
-    let claims = match verify_auth(&req, &app_state.config.get_jwt_secret()) {
-        Ok(claims) => claims,
-        Err(_) => {
-            return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
-                error: "Invalid or missing token".to_string(),
-            }));
-        }
-    };
+    let claims = require_jwt!(&req, &app_state);
 
     let _config_guard = app_state.config_write.lock().await;
     let mut config = match config_file::read() {
@@ -814,11 +880,7 @@ struct CardOrderPayload {
 }
 
 async fn get_card_order(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
-    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
-        return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
-            error: "Invalid or missing token".to_string(),
-        }));
-    }
+    require_jwt!(&req, &app_state);
     let file_config = match config_file::read() {
         Ok(c) => c,
         Err(e) => {
@@ -834,11 +896,7 @@ async fn update_card_order(
     app_state: web::types::State<Arc<AppState>>,
     payload: web::types::Json<CardOrderPayload>,
 ) -> Result<HttpResponse> {
-    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
-        return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
-            error: "Invalid or missing token".to_string(),
-        }));
-    }
+    require_jwt!(&req, &app_state);
     let _config_guard = app_state.config_write.lock().await;
 
     let mut config = match config_file::read() {
@@ -880,11 +938,7 @@ async fn get_metrics_history(
     req: HttpRequest,
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse> {
-    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
-        return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
-            error: "Invalid or missing token".to_string(),
-        }));
-    }
+    require_read_access!(&req, &app_state);
 
     let minutes: i64 = req
         .query_string()
@@ -949,12 +1003,7 @@ async fn get_velocity(
     req: HttpRequest,
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse> {
-    // Verify JWT token
-    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
-        return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
-            error: "Invalid or missing token".to_string(),
-        }));
-    }
+    require_jwt!(&req, &app_state);
 
     let server_name = app_state.config.get_server_name();
 
@@ -1003,12 +1052,7 @@ async fn get_velocity_history(
     req: HttpRequest,
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse> {
-    // Verify JWT token
-    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
-        return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
-            error: "Invalid or missing token".to_string(),
-        }));
-    }
+    require_jwt!(&req, &app_state);
 
     let query = web::types::Query::<serde_json::Value>::from_query(req.query_string())
         .unwrap_or_else(|_| web::types::Query(serde_json::Value::Object(serde_json::Map::new())));
@@ -1047,7 +1091,7 @@ async fn touch_viewer_heartbeat(app_state: &AppState) {
     *app_state.last_viewer_seen.write().await = chrono::Utc::now();
 }
 
-pub(crate) fn verify_auth(req: &HttpRequest, jwt_secret: &str) -> Result<Claims> {
+fn bearer_token(req: &HttpRequest) -> Result<&str> {
     let auth_header = req
         .headers()
         .get("Authorization")
@@ -1065,8 +1109,32 @@ pub(crate) fn verify_auth(req: &HttpRequest, jwt_secret: &str) -> Result<Claims>
         ));
     }
 
-    let token = &auth_header[7..];
-    auth::verify_token(token, jwt_secret)
+    Ok(&auth_header[7..])
+}
+
+pub(crate) fn verify_auth(req: &HttpRequest, jwt_secret: &str) -> Result<Claims> {
+    auth::verify_token(bearer_token(req)?, jwt_secret)
+}
+
+async fn verify_read_auth(req: &HttpRequest, app_state: &AppState) -> Result<String> {
+    let token = bearer_token(req)?;
+    if let Ok(claims) = auth::verify_token(token, &app_state.config.get_jwt_secret()) {
+        return Ok(claims.sub);
+    }
+    verify_watch_token(&app_state.db, token, chrono::Utc::now().timestamp()).await
+}
+
+async fn verify_watch_token(db: &SqlitePool, token: &str, now: i64) -> Result<String> {
+    let token_hash = watch_token_hash(token);
+    let subject = sqlx::query_scalar::<_, String>(
+        "SELECT subject FROM watch_tokens WHERE token_hash = ? AND expires_at > ?",
+    )
+    .bind(token_hash)
+    .bind(now)
+    .fetch_optional(db)
+    .await?
+    .ok_or_else(|| MonitorError::Auth("Invalid or expired token".to_string()))?;
+    Ok(subject)
 }
 
 fn format_bytes(bytes: u64) -> String {
@@ -1083,5 +1151,66 @@ fn format_bytes(bytes: u64) -> String {
         format!("{} {}", bytes, UNITS[unit_index])
     } else {
         format!("{:.1} {}", size, UNITS[unit_index])
+    }
+}
+
+#[cfg(test)]
+mod watch_token_tests {
+    use super::*;
+    use sqlx::sqlite::SqlitePoolOptions;
+
+    async fn pool() -> SqlitePool {
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        sqlx::query(
+            "CREATE TABLE watch_tokens (\
+             subject TEXT NOT NULL, client_id TEXT NOT NULL, \
+             token_hash TEXT NOT NULL UNIQUE, created_at INTEGER NOT NULL, \
+             expires_at INTEGER NOT NULL, PRIMARY KEY(subject, client_id))",
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+        pool
+    }
+
+    /// The published SHA-256 of `abc`, so the row below is seeded with a value
+    /// this crate did not produce. Hashing the token through
+    /// `watch_token_hash` on both sides would agree with itself whatever the
+    /// encoding became, and an agent's `watch_tokens` rows outlive the build
+    /// that wrote them: a change there invalidates every paired watch, silently.
+    const TOKEN: &str = "abc";
+    const TOKEN_HASH: &str =
+        "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
+
+    #[tokio::test]
+    async fn watch_tokens_are_hashed_expiring_and_revocable() {
+        let pool = pool().await;
+        let token = TOKEN;
+        assert_eq!(watch_token_hash(token), TOKEN_HASH);
+        sqlx::query(
+            "INSERT INTO watch_tokens(subject, client_id, token_hash, created_at, expires_at) \
+             VALUES (?, ?, ?, ?, ?)",
+        )
+        .bind("admin")
+        .bind("watch:one")
+        .bind(TOKEN_HASH)
+        .bind(10_i64)
+        .bind(20_i64)
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        assert_eq!(verify_watch_token(&pool, token, 19).await.unwrap(), "admin");
+        assert!(verify_watch_token(&pool, token, 20).await.is_err());
+        sqlx::query("DELETE FROM watch_tokens WHERE client_id = ?")
+            .bind("watch:one")
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert!(verify_watch_token(&pool, token, 19).await.is_err());
     }
 }

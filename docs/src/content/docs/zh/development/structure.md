@@ -3,7 +3,7 @@ title: 项目结构
 description: 了解 Server Box 的代码库结构
 ---
 
-Server Box 项目是一个 monorepo：Flutter 应用位于仓库根目录，与 Rust workspace 和服务端监控共存。
+Server Box 项目是一个单一仓库（monorepo）：Flutter 应用位于仓库根目录，并与 Rust workspace、服务端监控共存。
 
 ## Monorepo 布局
 
@@ -13,8 +13,8 @@ flutter_server_box/
 ├── crates/
 │   ├── sbm_parser/    # 共享状态解析库（单一事实来源，
 │   │                  # App 经 FFI 使用，monitor 直接依赖）
-│   ├── sbm_ffi/       # flutter_rust_bridge 绑定 crate + cargokit
-│   │                  # Flutter 插件壳（同一目录）
+│   ├── sbm_ffi/       # flutter_rust_bridge 绑定 crate
+│   │                  # 原生构建集成
 │   └── sbm_native/    # 各平台原生采样（仅 monitor 使用）
 ├── monitor/           # 服务端监控（Rust 服务 + Svelte 前端）
 ├── packages/          # Vendor 的 Dart fork（path 依赖），以及
@@ -32,7 +32,7 @@ lib/
 ├── data/              # 数据层
 │   ├── model/         # 按功能划分的数据模型
 │   ├── provider/      # Riverpod provider
-│   ├── store/         # 本地存储 (Hive)
+│   ├── store/         # 本地存储 (SQLite)
 │   ├── helper/        # 数据层辅助工具
 │   ├── res/           # 资源与常量
 │   └── ssh/           # SSH 会话管理
@@ -41,7 +41,7 @@ lib/
 │   └── widget/        # 可复用组件
 ├── generated/         # 生成的本地化代码
 ├── l10n/              # 本地化 ARB 文件
-├── hive/              # Hive 适配器
+├── hive/              # 用于迁移的旧版 Hive 适配器
 └── src/rust/          # 生成的 flutter_rust_bridge 绑定（勿手改）
 ```
 
@@ -75,7 +75,7 @@ lib/
 
 ### 存储 (`lib/data/store/`)
 
-基于 Hive 的本地存储：
+基于 SQLite 的本地存储：
 
 - 服务器存储
 - 设置存储
@@ -111,7 +111,7 @@ lib/
 
 ## Packages 目录 (`/packages/`)
 
-包含依赖项的自定义分支，在 `pubspec.yaml` 中以 path 引用：
+包含依赖项的自定义 fork，在 `pubspec.yaml` 中以 path 引用：
 
 - `dartssh2/` - SSH 库
 - `xterm/` - 终端模拟器
@@ -121,17 +121,19 @@ lib/
 - `plain_notification_token/` - 推送 token 插件
 - `watch_connectivity/` - Apple Watch 通信
 
-其中有一个目录不是 Dart fork：`webui/`(`@serverbox/webui`)是一个 Svelte 包，
-提供共享的 UI 基础组件与 design token，`monitor/frontend` 和 `website/` 都以
+其中有一个目录不是 Dart fork：`webui/`（`@serverbox/webui`）是一个 Svelte 包，
+提供共享的 UI 基础组件和设计令牌（design token），`monitor/frontend` 和 `website/` 都以
 `file:` 依赖引用它。
 
 ## Rust 侧
 
-- `crates/sbm_parser/` - 将命令原始输出解析为结构化服务器状态。
-  App(经 FFI)与 monitor 共用,两端解析行为始终一致。
+- `crates/sbm_parser/` - 将命令原始输出解析为结构化服务器状态。App 的 SSH 路径经
+  FFI 使用它；monitor 的原生采样也会在需要时使用其中的平台解析器。App 通过 monitor
+  HTTP 获取的数据则由 `MonitorMetrics.fromJson` 和本地映射器转换，两条 App 路径共享
+  `ServerStatus` 形状，但不是同一个解析流程。
 - `crates/sbm_native/` - 各平台的原生采样，仅 monitor 使用。它通过 syscall 或
   procfs 直接读取 cpu/内存/swap/磁盘/网络/uptime，不执行 shell 命令。App 不依赖
   它：App 通过 SSH 采集，无法在远程主机上执行 syscall。
-- `crates/sbm_ffi/` - `sbm_parser` 的 flutter_rust_bridge 薄封装。
-  生成的 Dart 侧位于 `lib/src/rust/`。
-- `monitor/` - 独立的监控服务,文档见 `monitor/README_zh.md`。
+- `crates/sbm_ffi/` - `sbm_parser` 的 flutter_rust_bridge 绑定，生成的 Dart 侧位于
+  `lib/src/rust/`。
+- `monitor/` - 独立的监控服务，文档见 `monitor/README_zh.md`。

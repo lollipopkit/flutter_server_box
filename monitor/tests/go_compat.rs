@@ -4,7 +4,7 @@
 //! Each test names the Go semantics it covers; see the threshold.rs module comment for the two deliberate divergences (Go-side bugs).
 
 use server_box_monitor::core::config::Config;
-use server_box_monitor::monitoring::monitoring::{
+use server_box_monitor::monitoring::{
     parse_disk_metrics, DiskMetrics, MemoryMetrics, NetworkMetrics, SwapMetrics, SystemMetrics,
 };
 use server_box_monitor::monitoring::push::PushRateLimiter;
@@ -129,7 +129,8 @@ fn test_go_config_json_normalize() {
             {"type": "net", "threshold": ">10m/s", "matcher": "eth0-in"}
         ],
         "pushes": [
-            {"type": "webhook", "name": "QQ Group", "iface": {"url": "http://localhost:5700", "method": "POST"}}
+            {"type": "webhook", "name": "QQ Group", "iface": {"url": "http://localhost:5700", "method": "POST", "body": {"message": "{{name}} {{msg}}"}, "code": 202, "body_regex": "accepted"}},
+            {"type": "server_chan", "name": "ServerChan", "iface": {"sckey": "SCT123", "title": "{{name}}", "desp": "{{msg}}", "code": 201}}
         ]
     }"#;
     let mut config: Config = serde_json::from_str(json).unwrap();
@@ -148,13 +149,20 @@ fn test_go_config_json_normalize() {
     assert_eq!(rules[1].matcher, "eth0-in");
 
     let pushes = config.get_push();
-    assert_eq!(pushes.len(), 1);
+    assert_eq!(pushes.len(), 2);
     assert_eq!(pushes[0].push_type, "webhook");
     assert_eq!(pushes[0].name, "QQ Group");
     assert_eq!(
         pushes[0].config.get("url").and_then(|v| v.as_str()),
         Some("http://localhost:5700")
     );
+    assert!(pushes[0].config.get("body").is_some());
+    assert_eq!(pushes[0].config.get("legacy_go_format").and_then(|v| v.as_bool()), Some(true));
+    assert_eq!(pushes[0].config.get("expected_http_status").and_then(|v| v.as_integer()), Some(202));
+    assert_eq!(pushes[1].push_type, "serverchan");
+    assert_eq!(pushes[1].config.get("legacy_go_format").and_then(|v| v.as_bool()), Some(true));
+    assert_eq!(pushes[1].config.get("sc_key").and_then(|v| v.as_str()), Some("SCT123"));
+    assert_eq!(pushes[1].config.get("expected_http_status").and_then(|v| v.as_integer()), Some(201));
 }
 
 /// Go res.go defaults: interval 7s, rate "1/1m". `name` intentionally

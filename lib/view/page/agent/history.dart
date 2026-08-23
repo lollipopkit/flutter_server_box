@@ -84,7 +84,7 @@ class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
         ],
       );
       if (title == null || title.isEmpty || !mounted) return;
-      _notifier.renameConversation(conversation.id, title);
+      await _notifier.renameConversation(conversation.id, title);
     } finally {
       controller.dispose();
     }
@@ -108,7 +108,7 @@ class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
     // when the row was built: an auto-approved tool can start while the
     // confirmation is on screen, and it would go on to append its result to
     // whichever conversation is active by then.
-    _notifier.deleteConversation(conversation.id);
+    await _notifier.deleteConversation(conversation.id);
   }
 
   Future<void> _clear() async {
@@ -125,7 +125,7 @@ class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
       ],
     );
     if (confirmed != true || !mounted) return;
-    _notifier.clearConversationHistory();
+    await _notifier.clearConversationHistory();
   }
 
   // -------------------------------------------------------------------- utils
@@ -146,8 +146,14 @@ class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
     // The timestamp went with the second line, which is [SideBarTile]'s own
     // trade-off: at two lines a row a rail stops being something you can take
     // in at a glance, and the conversation beside it says when it was.
+    // Transparent rather than `colorScheme.surface`: in a column this rail
+    // shows the `Scaffold`'s background like the terminal and file rails do,
+    // and in a sheet it shows the sheet's. Both are slots `toAmoled`
+    // overrides and `colorScheme.surface` is not, so painting that here left
+    // the rail Material grey under an AMOLED theme while the page beside it
+    // went black.
     return Material(
-      color: theme.colorScheme.surface,
+      type: MaterialType.transparency,
       child: ListView(
         padding: const EdgeInsets.only(bottom: 12),
         children: [
@@ -175,8 +181,8 @@ class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
                   tooltip: context.l10n.askAiNewConversation,
                   onPressed: session.isWorking
                       ? null
-                      : () {
-                          _notifier.beginNewConversation();
+                      : () async {
+                          await _notifier.beginNewConversation();
                           _closeIfSheet();
                         },
                   icon: const Icon(Icons.add, size: agentHeaderIconSize),
@@ -205,8 +211,8 @@ class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
                 selected: conversation.id == activeId,
                 onTap: session.isWorking
                     ? null
-                    : () {
-                        _notifier.activateConversation(conversation);
+                    : () async {
+                        await _notifier.activateConversation(conversation);
                         _closeIfSheet();
                       },
                 // The row's own tap is already refused while a tool is

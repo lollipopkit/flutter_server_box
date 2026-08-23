@@ -43,6 +43,9 @@ sqlx = { version = "0.9", features = [
 # rust_crypto instead of aws_lc_rs: pure Rust, no cmake/assembly dependency for static musl builds
 jsonwebtoken = { version = "11.0", default-features = false, features = ["rust_crypto"] }
 bcrypt = "0.19"
+# sha2 0.11 returns a `hybrid_array::Array`, which has no `LowerHex` — hence hex
+sha2 = "0.11"
+hex = "0.4"
 
 # Configuration
 dotenvy = "0.15"
@@ -53,7 +56,7 @@ rpassword = "7"
 
 # HTTP client for push notifications
 # rustls instead of native-tls: consistent with sqlx, static musl builds without OpenSSL
-reqwest = { version = "0.13", default-features = false, features = ["json", "rustls", "charset", "http2"] }
+reqwest = { version = "0.13", default-features = false, features = ["json", "rustls", "charset", "http2", "stream"] }
 
 # SSH client for the browser terminal. `ring` rather than the default
 # aws-lc-rs, matching the backend rustls and jsonwebtoken are configured with,
@@ -100,6 +103,8 @@ clap = { version = "4.6", features = ["derive", "env"] }
 hostname = "0.4.2"
 async-stream = "0.3.6"
 futures = "0.3.34"
+# Advisory process-wide lock for custom-command directory replacements.
+fs2 = "0.4"
 
 # Reading the user's login shell out of the passwd database. `$SHELL` is no
 # substitute for a service: it reports whatever launched the agent, not what

@@ -3,14 +3,20 @@ title: Building
 description: Build instructions for different platforms
 ---
 
-Server Box uses a custom build system (`fl_build`) for cross-platform builds.
+The project uses `fl_build` to build the supported platforms.
 
 ## Prerequisites
 
 - Flutter SDK (stable channel)
-- Platform-specific tools (Xcode for iOS, Android Studio for Android)
-- Rust toolchain (required: the status parser is a Rust crate built into the app
-  via flutter_rust_bridge/cargokit on every platform)
+- Platform toolchains (Xcode for iOS, Android Studio for Android)
+- Rust toolchain (required: the `crates/sbm_ffi` Rust crate is built into the app
+  by the Dart build hook through `flutter_rust_bridge_hooks` and native assets)
+
+Initialize the bundled Git submodules before fetching Dart dependencies:
+
+```bash
+git submodule update --init --recursive
+```
 
 ## Development Build
 
@@ -22,7 +28,7 @@ flutter run
 flutter run -d <device-id>
 ```
 
-## Production Build
+## Release Build
 
 The project uses `fl_build` for building:
 
@@ -48,7 +54,6 @@ dart run fl_build -p ios
 
 Requires:
 - macOS with Xcode
-- CocoaPods
 - Apple Developer account for signing
 
 ### Android
@@ -93,7 +98,7 @@ cd monitor
 # Backend
 cargo build --release
 
-# Panel — served by the agent itself when frontend/dist exists
+# Panel, served by the agent itself when frontend/dist exists
 cd frontend && npm install && npm run build
 ```
 
@@ -114,7 +119,7 @@ The `make.dart` script handles:
 
 ## Troubleshooting
 
-### Clean Build
+### Clean build
 
 ```bash
 flutter clean
@@ -122,9 +127,9 @@ dart run build_runner build --delete-conflicting-outputs
 flutter pub get
 ```
 
-### Version Mismatch
+### Dependency version mismatch
 
-Ensure all dependencies are compatible:
+If dependency resolution reports a version conflict, run:
 ```bash
 flutter pub upgrade
 ```

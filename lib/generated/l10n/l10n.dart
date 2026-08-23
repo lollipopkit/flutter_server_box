@@ -579,12 +579,6 @@ abstract class AppLocalizations {
   /// **'Monitor agent (optional)'**
   String get agentMonitorOptional;
 
-  /// No description provided for @atLeastOneTab.
-  ///
-  /// In en, this message translates to:
-  /// **'At least one tab must be selected'**
-  String get atLeastOneTab;
-
   /// No description provided for @authFailTip.
   ///
   /// In en, this message translates to:
@@ -662,6 +656,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Incorrect backup password'**
   String get backupPasswordWrong;
+
+  /// No description provided for @remoteBackupPasswordRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote backups require a non-empty backup password'**
+  String get remoteBackupPasswordRequired;
+
+  /// No description provided for @monitorHttpsRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote monitor agents require HTTPS unless this connection explicitly allows insecure HTTP.'**
+  String get monitorHttpsRequired;
+
+  /// No description provided for @monitorAllowInsecureHttp.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow insecure HTTP'**
+  String get monitorAllowInsecureHttp;
+
+  /// No description provided for @monitorAllowInsecureHttpTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Only enable for a trusted private network with transport encryption outside HTTP, such as Tailscale. The agent must also explicitly allow plaintext file access. Credentials and file contents may otherwise be exposed.'**
+  String get monitorAllowInsecureHttpTip;
 
   /// No description provided for @backupTip.
   ///
@@ -885,6 +903,18 @@ abstract class AppLocalizations {
   /// **'Discovery Settings'**
   String get discoverySettings;
 
+  /// No description provided for @distro.
+  ///
+  /// In en, this message translates to:
+  /// **'Distribution'**
+  String get distro;
+
+  /// No description provided for @distroSwitchTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace {from} with {to}. Everything installed inside {from} is deleted, and {to} is downloaded and unpacked in its place.'**
+  String distroSwitchTip(Object from, Object to);
+
   /// No description provided for @diskHealth.
   ///
   /// In en, this message translates to:
@@ -948,7 +978,7 @@ abstract class AppLocalizations {
   /// No description provided for @editVirtKeys.
   ///
   /// In en, this message translates to:
-  /// **'Edit virtual keys'**
+  /// **'Virtual keys'**
   String get editVirtKeys;
 
   /// No description provided for @editorHighlightTip.
@@ -1014,7 +1044,7 @@ abstract class AppLocalizations {
   /// No description provided for @fullScreen.
   ///
   /// In en, this message translates to:
-  /// **'Full screen mode'**
+  /// **'Full screen'**
   String get fullScreen;
 
   /// No description provided for @fullScreenJitter.
@@ -1239,6 +1269,12 @@ abstract class AppLocalizations {
   /// **'Jump servers not found for {serverName}: {jumpIds}'**
   String jumpServersNotFoundFmt(Object serverName, Object jumpIds);
 
+  /// No description provided for @nameAlreadyExistsFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" already exists'**
+  String nameAlreadyExistsFmt(Object name);
+
   /// No description provided for @noJumpServerAvailable.
   ///
   /// In en, this message translates to:
@@ -1299,6 +1335,18 @@ abstract class AppLocalizations {
   /// **'When enabled, input goes through the regular IME, which can avoid secure keyboard prompts in the terminal on some systems.'**
   String get letterCacheTip;
 
+  /// No description provided for @linuxShellTip.
+  ///
+  /// In en, this message translates to:
+  /// **'What an interactive terminal runs. Alpine has no chsh and nothing in the system reads /etc/passwd, so this is the only thing that decides. A one-shot command still runs under /bin/sh, because the app and the Agent write POSIX. Leave empty to restore /bin/sh.'**
+  String get linuxShellTip;
+
+  /// No description provided for @linuxNetTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Where the Linux system and its packages are downloaded from, and the DNS servers written into it. Leave empty to restore the default. Saving also rewrites both in a system that is already installed.'**
+  String get linuxNetTip;
+
   /// No description provided for @madeWithLove.
   ///
   /// In en, this message translates to:
@@ -1322,6 +1370,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Mismatch system: {system}'**
   String mismatchSystem(Object system);
+
+  /// No description provided for @mirror.
+  ///
+  /// In en, this message translates to:
+  /// **'Mirror'**
+  String get mirror;
 
   /// No description provided for @needRestart.
   ///
@@ -1746,8 +1800,19 @@ abstract class AppLocalizations {
   /// No description provided for @rootfsUpdateTip.
   ///
   /// In en, this message translates to:
-  /// **'Alpine {installed} is installed and {latest} is available. Updating downloads it again and replaces the container: anything installed inside it with apk is lost. The current one keeps working if you skip this.'**
-  String rootfsUpdateTip(Object installed, Object latest);
+  /// **'{distro} {installed} is installed and {latest} is available. Updating downloads it again and replaces the container: anything installed inside it with {pm} is lost. The current one keeps working if you skip this.'**
+  String rootfsUpdateTip(
+    Object distro,
+    Object installed,
+    Object latest,
+    Object pm,
+  );
+
+  /// No description provided for @linuxSystemInUse.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} still has a terminal open. Close it before deleting the system.'**
+  String linuxSystemInUse(Object name);
 
   /// No description provided for @rootfsSubtitle.
   ///
@@ -1758,8 +1823,8 @@ abstract class AppLocalizations {
   /// No description provided for @rootfsInstallTip.
   ///
   /// In en, this message translates to:
-  /// **'Download Alpine Linux {version} (about 3 MB) and unpack it on this device. It gives this app a shell with a package manager, and can be deleted at any time.'**
-  String rootfsInstallTip(Object version);
+  /// **'Download {distro} {version} (about {size} MB) and unpack it on this device. It gives this app a shell with a package manager, and can be deleted at any time.'**
+  String rootfsInstallTip(Object distro, Object version, Object size);
 
   /// No description provided for @sameIdServerExist.
   ///
@@ -1986,7 +2051,7 @@ abstract class AppLocalizations {
   /// No description provided for @sshHostKeyFingerprintMd5Hex.
   ///
   /// In en, this message translates to:
-  /// **'Fingerprint (MD5 hex): {fingerprint}'**
+  /// **'Fingerprint (SHA256): {fingerprint}'**
   String sshHostKeyFingerprintMd5Hex(Object fingerprint);
 
   /// Label for the SSH host key type displayed in the host key verification dialog.
@@ -1998,7 +2063,7 @@ abstract class AppLocalizations {
   /// No description provided for @sshKnownHostKeys.
   ///
   /// In en, this message translates to:
-  /// **'Known host keys'**
+  /// **'Known hosts'**
   String get sshKnownHostKeys;
 
   /// No description provided for @sshKnownHostKeysTip.
@@ -2181,6 +2246,66 @@ abstract class AppLocalizations {
   /// **'Open current directory in SFTP.'**
   String get virtKeyHelpSFTP;
 
+  /// No description provided for @virtKeyHelpSnippet.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a snippet and run it in this terminal.'**
+  String get virtKeyHelpSnippet;
+
+  /// No description provided for @virtKeyHelpTmux.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch between tmux sessions and windows.'**
+  String get virtKeyHelpTmux;
+
+  /// No description provided for @virtKeyIntroActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Shortcuts'**
+  String get virtKeyIntroActions;
+
+  /// No description provided for @virtKeyIntroActionsTip.
+  ///
+  /// In en, this message translates to:
+  /// **'These open something instead of typing. Hold one to read what it does.'**
+  String get virtKeyIntroActionsTip;
+
+  /// No description provided for @virtKeyIntroCustomizeTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Reorder these keys, or hide the ones you never reach for, in the terminal settings.'**
+  String get virtKeyIntroCustomizeTip;
+
+  /// No description provided for @virtKeyIntroModifiers.
+  ///
+  /// In en, this message translates to:
+  /// **'Modifiers'**
+  String get virtKeyIntroModifiers;
+
+  /// No description provided for @virtKeyIntroModifiersTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap one to arm it, then tap a letter on the keyboard. It stays on for that one key.'**
+  String get virtKeyIntroModifiersTip;
+
+  /// No description provided for @virtKeyIntroNav.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigation'**
+  String get virtKeyIntroNav;
+
+  /// No description provided for @virtKeyIntroNavTip.
+  ///
+  /// In en, this message translates to:
+  /// **'These move the cursor. Hold an arrow to repeat it.'**
+  String get virtKeyIntroNavTip;
+
+  /// No description provided for @virtKeyIntroSelect.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag sideways over the terminal to select text, whenever it has something to scroll.'**
+  String get virtKeyIntroSelect;
+
   /// No description provided for @waitConnection.
   ///
   /// In en, this message translates to:
@@ -2247,11 +2372,11 @@ abstract class AppLocalizations {
   /// **'Podman Docker emulation detected. Please switch to Podman in settings.'**
   String get podmanDockerEmulationDetected;
 
-  /// No description provided for @portForwardBeta.
+  /// No description provided for @betaTip.
   ///
   /// In en, this message translates to:
   /// **'This feature is still in beta testing. Functionality is not guaranteed.'**
-  String get portForwardBeta;
+  String get betaTip;
 
   /// No description provided for @portForward_startPrompt.
   ///

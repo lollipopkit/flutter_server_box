@@ -1,14 +1,64 @@
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/app/tab.dart';
+import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
+import 'package:server_box/data/model/server/ssh_credential.dart';
+import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/schema.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('BackupV2 JSON encoding', () {
+    test('a typed port forward encodes, and comes back the same', () {
+      // `PortForwardConfig` is the one freezed model with no `.g.dart`, so its
+      // `toJson` is hand-written — and `_toEncodable` did not know the type at
+      // all, which threw the moment a backup carried one.
+      const forward = PortForwardConfig(
+        id: 'pf-1',
+        serverId: 'srv-1',
+        name: 'postgres',
+        type: PortForwardType.remote,
+        localHost: '127.0.0.1',
+        localPort: 15432,
+        remoteHost: '10.0.0.50',
+        remotePort: 5432,
+      );
+      final backup = BackupV2(
+        version: BackupV2.formatVer,
+        date: 1,
+        spis: const {},
+        snippets: const {},
+        keys: const {},
+        portForwards: const {'pf-1': forward},
+        container: const {},
+        history: const {},
+        settings: const {},
+      );
+
+      final encoded = backup.toJsonString();
+      final decoded = json.decode(encoded) as Map<String, dynamic>;
+      final raw = (decoded['portForwards'] as Map)['pf-1'] as Map;
+      expect(raw['type'], 'remote', reason: 'the enum by name, not its index');
+      expect(raw['remotePort'], 5432);
+
+      // Through the reader the app actually uses, not just `fromJson`.
+      final reread = BackupV2.fromJsonString(encoded);
+      expect(
+        PortForwardConfig.fromJson(
+          Map<String, dynamic>.from(reread.portForwards['pf-1'] as Map),
+        ),
+        forward,
+      );
+    });
+
     test('serializes typed store objects as JSON objects', () {
       final backup = BackupV2(
         version: BackupV2.formatVer,
@@ -18,6 +68,7 @@ void main() {
         keys: {
           'key': const PrivateKeyInfo(
             id: 'key',
+            name: 'key',
             key: '-----BEGIN OPENSSH PRIVATE KEY-----\nkey',
           ),
         },
@@ -124,13 +175,115 @@ void main() {
       expect(backup.spis['__lkpt_lastUpdateTs'], 'legacy timestamp metadata');
     });
   });
+
+  group('BackupV2 store export', () {
+    late Directory tempDir;
+
+    setUpAll(() async {
+      tempDir = await Directory.systemTemp.createTemp('sbm-backup-v2-');
+      Paths.doc = tempDir.path;
+    });
+
+    tearDownAll(() async => tempDir.delete(recursive: true));
+
+    setUp(() async {
+      SqliteDb.openInMemory();
+      await Stores.init();
+    });
+
+    tearDown(() async {
+      await getIt.reset();
+      await SqliteDb.close();
+    });
+
+    test('keeps timestamps but excludes device-local markers', () async {
+      const importMarker = '${StoreDefaults.prefixKey}hiveImported';
+      Stores.setting.set(importMarker, true, updateLastUpdateTsOnSet: false);
+      Stores.setting.timeout.put(11);
+
+      final backup = await BackupV2.loadFromStore();
+
+      expect(backup.settings.containsKey(importMarker), isFalse);
+      expect(backup.settings.containsKey(Stores.setting.schemaVersion.key), isFalse);
+      expect(backup.settings.containsKey(Stores.setting.lastUpdateTsKey), isTrue);
+      expect(backup.settings['timeOut'], 11);
+    });
+
+    test('does not apply device-local markers from an older backup', () async {
+      const importMarker = '${StoreDefaults.prefixKey}hiveImported';
+      Stores.setting.set(importMarker, true, updateLastUpdateTsOnSet: false);
+      final originalSchema = SchemaVersion.stored;
+
+      final backup = BackupV2(
+        version: BackupV2.formatVer,
+        date: 1,
+        spis: const {},
+        snippets: const {},
+        keys: const {},
+        container: const {},
+        history: const {},
+        settings: {
+          importMarker: false,
+          Stores.setting.schemaVersion.key: 2,
+          Stores.setting.lastUpdateTsKey: <String, int>{},
+        },
+      );
+      await backup.merge(force: true);
+
+      expect(Stores.setting.get<bool>(importMarker), isTrue);
+      expect(SchemaVersion.stored, originalSchema);
+    });
+
+    test('rewrites a legacy key-name server reference to the local key id',
+        () async {
+      Stores.key.put(const PrivateKeyInfo(
+        id: 'generated-local-id',
+        name: 'work',
+        key: 'LOCAL',
+      ));
+      final server = const Spi(
+        id: 'srv-1',
+        name: 'prod',
+        ssh: SshCredential(
+          ip: '10.0.0.1',
+          keyId: 'work',
+        ),
+      );
+      final backup = BackupV2(
+        version: BackupV2.formatVer,
+        date: 1,
+        spis: {
+          'srv-1': json.decode(json.encode(
+            server.toJson(),
+            toEncodable: (value) => (value as dynamic).toJson(),
+          )),
+        },
+        snippets: const {},
+        keys: const {
+          'work': {'id': 'work', 'private_key': 'BACKUP'},
+        },
+        container: const {},
+        history: const {},
+        settings: const {},
+      );
+
+      await backup.merge(force: true);
+
+      expect(Stores.server.fetchOneRaw('srv-1')?.ssh?.keyId,
+          'generated-local-id');
+    });
+  });
 }
 
 final class _NotJsonEncodable {}
 
 final class _ThrowingPrivateKeyInfo extends PrivateKeyInfo {
   const _ThrowingPrivateKeyInfo()
-    : super(id: 'bad', key: '-----BEGIN OPENSSH PRIVATE KEY-----\nbad');
+    : super(
+        id: 'bad',
+        name: 'bad',
+        key: '-----BEGIN OPENSSH PRIVATE KEY-----\nbad',
+      );
 
   @override
   Map<String, dynamic> toJson() => throw StateError('broken toJson');

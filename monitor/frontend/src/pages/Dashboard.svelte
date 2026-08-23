@@ -32,7 +32,6 @@
   import { fly } from 'svelte/transition'
   import type { HistoryPoint } from '../types'
 
-  const status = new Poller(api.getStatus, 5000)
   const metrics = new Poller(api.getMetrics, 5000)
 
   // Platform-only, doesn't change per-sample — fetched once per server
@@ -94,38 +93,40 @@
     { label: '7d', minutes: 7 * 24 * 60 },
   ]
   let rangeMinutes = $state(60)
-  let history = $state<HistoryPoint[]>([])
-  let historyError = $state<string | null>(null)
-
-  async function loadHistory(minutes: number) {
-    try {
-      history = await api.getHistory(minutes)
-      historyError = null
-    } catch (e) {
-      historyError = e instanceof Error ? e.message : String(e)
-    }
-  }
-
-  // Refetches on range change (and once authenticated)
-  $effect(() => {
-    if (servers.authenticated) void loadHistory(rangeMinutes)
-  })
-
-  let historyTimer: ReturnType<typeof setInterval> | undefined
+  let requestedHistoryMinutes = 60
+  const historyPoller = new Poller(
+    (signal) => api.getHistory(requestedHistoryMinutes, signal),
+    60_000,
+  )
+  const history = $derived(historyPoller.data ?? ([] as HistoryPoint[]))
+  const historyError = $derived(historyPoller.error)
 
   // Polling (and the 401 it'd draw) only makes sense once this server has a
   // session; toggling auth state starts/stops it instead of an unconditional
   // onMount, so a freshly-added, not-yet-logged-in server stays quiet
   $effect(() => {
-    if (servers.authenticated) {
-      status.start()
+    const serverId = servers.currentId
+    if (serverId && servers.authenticated) {
+      metrics.reset()
       metrics.start()
-      historyTimer = setInterval(() => void loadHistory(rangeMinutes), 60_000)
     }
     return () => {
-      status.stop()
       metrics.stop()
-      clearInterval(historyTimer)
+    }
+  })
+
+  // History additionally depends on the selected range. Restarting aborts
+  // the old request so a slow 7d response cannot overwrite a newer 1h view.
+  $effect(() => {
+    const serverId = servers.currentId
+    const minutes = rangeMinutes
+    requestedHistoryMinutes = minutes
+    if (serverId && servers.authenticated) {
+      historyPoller.reset()
+      historyPoller.start()
+    }
+    return () => {
+      historyPoller.stop()
     }
   })
 
@@ -140,7 +141,7 @@
     { label: $LL.up(), color: '#ec4899', values: history.map((p) => p.net_tx_speed) },
   ])
 
-  const error = $derived(status.error ?? metrics.error)
+  const error = $derived(metrics.error)
   // Agent reachability (unauthenticated /health ping, always running via
   // Sidebar) — independent of whether this browser is logged in yet, so an
   // address-only entry with no credentials doesn't read as "disconnected"
@@ -170,7 +171,6 @@
   // otherwise the address/id.
   const headerName = $derived(
     m?.server_name ??
-      status.data?.name ??
       (servers.current?.id === 'local'
         ? $LL.thisServer()
         : servers.current
@@ -211,7 +211,7 @@
   })
 </script>
 
-{#if servers.authenticated && status.loading && metrics.loading}
+{#if servers.authenticated && metrics.loading}
   <div class="min-h-screen flex items-center justify-center">
     <Spinner size="lg" />
   </div>

@@ -114,7 +114,7 @@ async fn the_audit_log_is_cleaned_up_by_the_retention_service() {
     .execute(&pool)
     .await
     .unwrap();
-    sqlx::query("INSERT INTO access_log (kind, action, result) VALUES ('tunnel','open','ok')")
+    sqlx::query("INSERT INTO access_log (kind, action, result) VALUES ('terminal','open','ok')")
         .execute(&pool)
         .await
         .unwrap();
@@ -136,5 +136,137 @@ async fn the_audit_log_is_cleaned_up_by_the_retention_service() {
         1,
         "an entry older than its retention policy must be collected"
     );
-    assert_eq!(rows[0].get::<String, _>("kind"), "tunnel");
+    assert_eq!(rows[0].get::<String, _>("kind"), "terminal");
+}
+
+#[tokio::test]
+async fn unused_metric_tables_and_policies_are_removed_on_upgrade() {
+    let pool = pool().await;
+    sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+
+    // Recreate the pre-008 state with real rows, then mark only migration 008
+    // pending. This exercises the same upgrade path as an existing agent.
+    sqlx::query(
+        "CREATE TABLE velocity_metrics (id INTEGER PRIMARY KEY, timestamp DATETIME, server_name TEXT)",
+    )
+    .execute(&pool)
+    .await
+    .unwrap();
+    sqlx::query(
+        "CREATE TABLE cpu_core_metrics (id INTEGER PRIMARY KEY, timestamp DATETIME, server_name TEXT)",
+    )
+    .execute(&pool)
+    .await
+    .unwrap();
+    sqlx::query("INSERT INTO velocity_metrics VALUES (1, CURRENT_TIMESTAMP, 'host')")
+        .execute(&pool)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO cpu_core_metrics VALUES (1, CURRENT_TIMESTAMP, 'host')")
+        .execute(&pool)
+        .await
+        .unwrap();
+    sqlx::query(
+        "INSERT INTO retention_policies (table_name, retention_days) VALUES ('velocity_metrics', 30), ('cpu_core_metrics', 7)",
+    )
+    .execute(&pool)
+    .await
+    .unwrap();
+    sqlx::query("DELETE FROM _sqlx_migrations WHERE version = 8")
+        .execute(&pool)
+        .await
+        .unwrap();
+
+    sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+
+    for table in ["velocity_metrics", "cpu_core_metrics"] {
+        let exists: Option<String> = sqlx::query_scalar(
+            "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
+        )
+        .bind(table)
+        .fetch_optional(&pool)
+        .await
+        .unwrap();
+        assert!(exists.is_none(), "{table} should be dropped");
+
+        let policy: Option<i64> = sqlx::query_scalar(
+            "SELECT retention_days FROM retention_policies WHERE table_name = ?",
+        )
+        .bind(table)
+        .fetch_optional(&pool)
+        .await
+        .unwrap();
+        assert!(policy.is_none(), "{table} policy should be removed");
+    }
+
+    let system_metrics_exists: Option<String> = sqlx::query_scalar(
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'system_metrics'",
+    )
+    .fetch_optional(&pool)
+    .await
+    .unwrap();
+    assert_eq!(system_metrics_exists.as_deref(), Some("system_metrics"));
+}
+
+/// The bytes of a migration that has already run somewhere are frozen.
+///
+/// `Migrator::run` compares the checksum embedded in the binary against the one
+/// `_sqlx_migrations` recorded when the file was first applied. Editing a
+/// shipped migration — even a comment, even to correct it — changes that
+/// checksum, and every agent that already applied it then refuses to start with
+/// `VersionMismatch`, which is not something an operator can fix from the
+/// outside.
+///
+/// The test above cannot catch that: it starts from an empty database and
+/// replays the *current* files, so the checksum it records is always the new
+/// one. This pins them instead. A failure here means a file that has run
+/// somewhere was edited — restore it and put the change in a new migration.
+/// Adding a migration is expected to add a line.
+#[test]
+fn shipped_migrations_keep_their_checksums() {
+    let pinned: &[(i64, &str)] = &[
+        (1, "ac7a765b2d29d0b1e0b55180fca0fe9c582a84ca8ff15e12f1cdac60eb1879009c86603dfb2bbe9efda4046921c86a5a"),
+        (2, "995500f86fcaba8e42845c708779f6e154be1d9df4627d1acbd7a5d6a445f414f6ac0c4002ba41b07c2830681abacfe9"),
+        (3, "33f9861299257235c1fe0bc1bbce5b9f98386e1333c9da2ed636c572e37acef2266948b4e05c052bcf402b53c6a0b393"),
+        (4, "1afb432633d79277bebc544db394282237b0f286f1a31514fc7279e7993dbde19389553a521b8346b6661f03b0582a73"),
+        (5, "a7cf936c175f498f26c2277f92e6a782a5831e1a3269ef9477876949e5aa3e041e06e95c0544d709536cd7a1e2fafec2"),
+        (6, "bc1d80ef7f88751b0bb2a64974a7efb928301cd61740cfe77d9e2306a8f71d8cfbdd24a2e2e5dc2e5b9094755b9e03f9"),
+        (7, "d7726fdbe4fad21ac01dc6b9a3058550aa138829baff1e0968a259f33e9b182e60bc4b658e0227fd4418a3c0fbd0a1f5"),
+        (8, "9961008300f34069365756a67bc45c596baaf1290ddf9825198377feeafe11901c08603bbcabcb14f2df943eacebe054"),
+    ];
+    let migrator = sqlx::migrate!("./migrations");
+    let mut seen = std::collections::BTreeMap::new();
+    for m in migrator.iter() {
+        seen.insert(m.version, hex(&m.checksum));
+    }
+    for (version, checksum) in pinned {
+        let actual = seen
+            .get(version)
+            .unwrap_or_else(|| panic!("migration {version} is gone; it has run in the field"));
+        assert_eq!(
+            actual, checksum,
+            "migration {version} was edited after shipping. Its checksum is what \
+             every agent that applied it recorded; changing it makes them refuse \
+             to start. Restore the file and add a new migration instead."
+        );
+    }
+
+    // Otherwise the list above is a subset and a migration added tomorrow is
+    // pinned by nothing: this test would pass while the checksum it should be
+    // guarding went unrecorded.
+    assert_eq!(
+        seen.len(),
+        pinned.len(),
+        "a migration ships without a pinned checksum. Add its version and \
+         checksum to the list above; embedded = {:?}",
+        seen.keys().collect::<Vec<_>>()
+    );
+}
+
+fn hex(bytes: &[u8]) -> String {
+    use std::fmt::Write;
+    bytes.iter().fold(String::new(), |mut s, b| {
+        let _ = write!(s, "{b:02x}");
+        s
+    })
 }

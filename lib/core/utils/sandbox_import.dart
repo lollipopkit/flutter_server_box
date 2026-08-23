@@ -156,7 +156,7 @@ abstract final class SandboxImport {
     final destNames = await _names(dest) ?? const <String>[];
     if (destNames.contains(doneMarker)) return SandboxImportResult.skipped;
     final resuming = destNames.contains(busyMarker);
-    if (!resuming && destNames.any(_isBox)) return SandboxImportResult.skipped;
+    if (!resuming && destNames.any(_isData)) return SandboxImportResult.skipped;
 
     final List<String> srcNames;
     try {
@@ -176,7 +176,7 @@ abstract final class SandboxImport {
       return SandboxImportResult.notFound;
     }
 
-    if (!srcNames.any(_isBox)) return SandboxImportResult.notFound;
+    if (!srcNames.any(_isData)) return SandboxImportResult.notFound;
 
     // Before deciding whether the boxes are readable: an old enough install
     // keeps the key here, and that copy is as good as the keychain's.
@@ -286,7 +286,23 @@ abstract final class SandboxImport {
     }
   }
 
-  static bool _isBox(String name) => name.endsWith('.hive');
+  /// Whether [name] is a file this app keeps its data in.
+  ///
+  /// Both engines, because an install can be on either: a Hive box until it has
+  /// launched the build that migrates, the SQLite database afterwards. Deciding
+  /// "this install already has data" or "the container has data" on `.hive`
+  /// alone stopped being true the moment anything shipped on SQLite, and
+  /// `_clear` skipping the database is what made the recovery in `main.dart`
+  /// reopen the very file that had just failed to open.
+  static bool _isData(String name) =>
+      name.endsWith('.hive') || name == SqliteDb.fileName;
+
+  /// [_isData], plus the files SQLite keeps beside the database.
+  ///
+  /// Only for deleting. A `-wal` on its own is not data, but leaving one behind
+  /// next to a database that was removed is worse than removing both.
+  static bool _isDataOrSidecar(String name) =>
+      _isData(name) || name.startsWith('${SqliteDb.fileName}-');
 
   static String _parentOf(String path) {
     final parts = path.split(Pfs.seperator)..removeLast();
@@ -301,11 +317,7 @@ abstract final class SandboxImport {
     final entities = await _names(dir);
     if (entities == null) return;
     for (final name in entities) {
-      if (!_isBox(name) &&
-          !name.endsWith('.lock') &&
-          !name.startsWith('app.db')) {
-        continue;
-      }
+      if (!_isDataOrSidecar(name) && !name.endsWith('.lock')) continue;
       try {
         await File(dir.path.joinPath(name)).delete();
       } catch (e) {
@@ -372,8 +384,11 @@ abstract final class SandboxImport {
         // database open, not to the database. Carried across it describes a
         // WAL index that no longer exists, and sqlite either rebuilds it or
         // refuses — the first is wasted, the second is a broken app. It is
-        // rebuilt from `app.db-wal`, which does come across.
-        if (name.endsWith('.db-shm')) continue;
+        // rebuilt from the `-wal`, which does come across.
+        //
+        // By exact name, not by suffix: a file of the user's own that happens
+        // to end in `-shm` is theirs and should come across.
+        if (name == '${SqliteDb.fileName}-shm') continue;
 
         await entity.copy(dest.path.joinPath(name));
         _copiedBytes += await entity.length();

@@ -12,11 +12,18 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
+  # Reading an OCI image layout and unpacking a rootfs — see
+  # `lib/core/utils/oci_image.dart`. Direct because this code imports it: as a
+  # transitive one it is whatever some other package happens to want, and a
+  # tar reader deciding what a hard link is has already cost this app a
+  # release.
+  archive: ^4.1.0
   choice: ^2.3.2
   # SHA-256 of a certificate's DER form, for the BMC's pinned certificate.
   # `X509Certificate` only offers sha1 ready made.
   crypto: ^3.0.0
   dio: ^5.2.1
+  pinenacl: ^0.6.0
   dynamic_color: ^1.6.6
   equatable: ^2.1.0
   easy_isolate: ^1.3.0
@@ -27,7 +34,6 @@ dependencies:
   flutter_highlight: ^0.7.0
   flutter_displaymode: ^0.7.0
   flutter_markdown_plus: ^1.0.12
-  flutter_pty: ^0.4.2
   flutter_svg: ^2.2.1
   fl_chart: ^1.2.0
   freezed_annotation: ^3.0.0
@@ -41,6 +47,14 @@ dependencies:
   responsive_framework: ^1.5.1
   riverpod: ^3.2.1
   riverpod_annotation: ^4.0.2
+  # Direct, though `SqliteStore` lives in fl_lib: `hooks.user_defines` below is
+  # only honoured for this package's own dependencies, and the Hive migration
+  # opens the database from here too.
+  sqlite3: ^3.5.1
+  # Storage layer over the same encrypted connection: `NativeDatabase.opened`
+  # takes the `sqlite3` Database this app already opens and keys itself, so
+  # sqlite3mc and the build-hook bundling below are untouched.
+  drift: ^2.34.3
   wakelock_plus: ^1.7.0
   wake_on_lan: ^4.1.1+3
   webdav_client_plus: ^2.0.0
@@ -65,9 +79,14 @@ dependencies:
     path: packages/plain_notification_token
   fl_lib:
     path: packages/fl_lib
-  sbm_ffi:
-    path: crates/sbm_ffi
-  flutter_rust_bridge: 2.12.0
+  # Forked to swap five per-platform build integrations for one build hook,
+  # which is what takes the last pod out of the iOS and macOS builds.
+  flutter_pty:
+    path: packages/flutter_pty
+  flutter_rust_bridge: 2.13.0-beta.6
+  # Drives the build hook below. `sbm_ffi` is no longer a Flutter plugin — the
+  # hook compiles the crate directly, so there is nothing to depend on.
+  flutter_rust_bridge_hooks: 2.13.0-beta.6
   desktop_drop: ^0.7.1
 
 dev_dependencies:
@@ -76,6 +95,10 @@ dev_dependencies:
   flutter_native_splash: ^2.1.6
   hive_ce_generator: ^1.11.0
   build_runner: ^2.4.15
+  drift_dev: ^2.34.0
+  # drift_dev 2.34.0 still calls DartPlaceholder.when(), removed by sqlparser
+  # 0.44.6. Keep its companion parser at the last compatible release.
+  sqlparser: 0.44.5
   flutter_lints: ^6.0.0
   json_serializable: ^6.13.0
   freezed: ^3.0.0
@@ -86,12 +109,26 @@ dev_dependencies:
   fl_build:
     path: packages/fl_build
 
+# Which SQLite gets compiled into the app. Only the root package can set this —
+# a dependency cannot supply its own defaults — so it lives here even though
+# every caller is in fl_lib.
+#
+# `sqlite3mc` rather than `sqlcipher`: both encrypt the whole file, keys and
+# indexes included, but SQLCipher links OpenSSL on Windows, Linux and Android,
+# where SQLite3MultipleCiphers carries its cipher implementations in its own
+# source and needs nothing installed on any of the five platforms.
+hooks:
+  user_defines:
+    sqlite3:
+      source: sqlite3mc
+
 flutter:
   generate: true
   uses-material-design: true
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/app_icon.png
+    - assets/rootfs_manifest.json
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
   # fonts:

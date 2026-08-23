@@ -264,9 +264,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get agentMonitorOptional => 'Агент monitor (необязательно)';
 
   @override
-  String get atLeastOneTab => 'Должна быть выбрана хотя бы одна вкладка';
-
-  @override
   String get authFailTip =>
       'Аутентификация не удалась, пожалуйста, проверьте, правильны ли пароль/ключ/хост/пользователь и т.д.';
 
@@ -308,6 +305,21 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get backupPasswordWrong => 'Неверный пароль резервной копии';
+
+  @override
+  String get remoteBackupPasswordRequired =>
+      'Для удалённых резервных копий требуется непустой пароль резервного копирования';
+
+  @override
+  String get monitorHttpsRequired =>
+      'Для удалённых агентов мониторинга требуется HTTPS; HTTP разрешён только для loopback-адресов.';
+
+  @override
+  String get monitorAllowInsecureHttp => 'Allow insecure HTTP';
+
+  @override
+  String get monitorAllowInsecureHttpTip =>
+      'Only enable for a trusted private network with transport encryption outside HTTP, such as Tailscale. The agent must also explicitly allow plaintext file access. Credentials and file contents may otherwise be exposed.';
 
   @override
   String get backupTip =>
@@ -441,6 +453,14 @@ class AppLocalizationsRu extends AppLocalizations {
   String get discoverySettings => 'Настройки обнаружения';
 
   @override
+  String get distro => 'Дистрибутив';
+
+  @override
+  String distroSwitchTip(Object from, Object to) {
+    return 'Заменить $from на $to. Всё, что установлено внутри $from, будет удалено, а вместо него будет загружен и распакован $to.';
+  }
+
+  @override
   String get diskHealth => 'Состояние диска';
 
   @override
@@ -478,7 +498,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Эта опция лишь включает функцию; фактическое применение зависит от ширины устройства';
 
   @override
-  String get editVirtKeys => 'Редактировать виртуальные клавиши';
+  String get editVirtKeys => 'Виртуальные клавиши';
 
   @override
   String get editorHighlightTip =>
@@ -517,7 +537,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Она удалена или переименована. Используйте панель внизу, чтобы вернуться, перейти в домашнюю папку или в другое место.';
 
   @override
-  String get fullScreen => 'Полноэкранный режим';
+  String get fullScreen => 'Полный экран';
 
   @override
   String get fullScreenJitter => 'Вибрация в полноэкранном режиме';
@@ -645,6 +665,11 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String nameAlreadyExistsFmt(Object name) {
+    return '«$name» уже существует';
+  }
+
+  @override
   String get noJumpServerAvailable => 'Нет доступного промежуточного сервера.';
 
   @override
@@ -678,6 +703,14 @@ class AppLocalizationsRu extends AppLocalizations {
       'Когда параметр включен, ввод проходит через обычный IME, что на некоторых системах позволяет избежать запросов защищенной клавиатуры в терминале.';
 
   @override
+  String get linuxShellTip =>
+      'Чем запускается интерактивный терминал. В Alpine нет chsh, и ничто в системе не читает /etc/passwd, поэтому решает только это. Разовые команды по-прежнему выполняются через /bin/sh, так как приложение и Agent пишут POSIX. Оставьте пустым, чтобы вернуть /bin/sh.';
+
+  @override
+  String get linuxNetTip =>
+      'Откуда загружаются система Linux и её пакеты и какие DNS-серверы в неё записываются. Оставьте пустым, чтобы вернуть значение по умолчанию. При сохранении оба перезаписываются и в уже установленной системе.';
+
+  @override
   String madeWithLove(Object myGithub) {
     return 'Создано с ❤️ by $myGithub';
   }
@@ -693,6 +726,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String mismatchSystem(Object system) {
     return 'Несоответствующая система: $system';
   }
+
+  @override
+  String get mirror => 'Зеркало';
 
   @override
   String get needRestart => 'Требуется перезапуск приложения';
@@ -940,8 +976,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get remotePath => 'Удаленный путь';
 
   @override
-  String rootfsUpdateTip(Object installed, Object latest) {
-    return 'Установлен Alpine $installed, доступна версия $latest. Обновление загрузит его заново и заменит контейнер: всё, что было установлено внутри через apk, будет потеряно. Если пропустить, текущий контейнер продолжит работать.';
+  String rootfsUpdateTip(
+    Object distro,
+    Object installed,
+    Object latest,
+    Object pm,
+  ) {
+    return 'Установлен $distro $installed, доступна версия $latest. Обновление загрузит его заново и заменит контейнер: всё, что было установлено внутри через $pm, будет потеряно. Если пропустить, текущий контейнер продолжит работать.';
+  }
+
+  @override
+  String linuxSystemInUse(Object name) {
+    return 'У $name ещё открыт терминал. Закройте его, прежде чем удалять систему.';
   }
 
   @override
@@ -949,8 +995,8 @@ class AppLocalizationsRu extends AppLocalizations {
       'Пользовательское окружение Linux на этом устройстве';
 
   @override
-  String rootfsInstallTip(Object version) {
-    return 'Загрузить Alpine Linux $version (около 3 МБ) и распаковать на этом устройстве. Это даёт приложению оболочку с пакетным менеджером; её можно удалить в любой момент.';
+  String rootfsInstallTip(Object distro, Object version, Object size) {
+    return 'Загрузить $distro $version (около $size МБ) и распаковать на этом устройстве. Это даёт приложению оболочку с пакетным менеджером; её можно удалить в любой момент.';
   }
 
   @override
@@ -1092,14 +1138,14 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
-    return 'Отпечаток (MD5 hex): $fingerprint';
+    return 'Отпечаток (SHA256): $fingerprint';
   }
 
   @override
   String get sshHostKeyType => 'Тип ключа хоста SSH';
 
   @override
-  String get sshKnownHostKeys => 'Известные ключи хостов';
+  String get sshKnownHostKeys => 'Известные хосты';
 
   @override
   String get sshKnownHostKeysTip =>
@@ -1211,6 +1257,42 @@ class AppLocalizationsRu extends AppLocalizations {
   String get virtKeyHelpSFTP => 'Открыть текущий путь в SFTP.';
 
   @override
+  String get virtKeyHelpSnippet =>
+      'Выбрать сниппет и выполнить его в этом терминале.';
+
+  @override
+  String get virtKeyHelpTmux => 'Переключение между сессиями и окнами tmux.';
+
+  @override
+  String get virtKeyIntroActions => 'Быстрые действия';
+
+  @override
+  String get virtKeyIntroActionsTip =>
+      'Эти клавиши ничего не вводят, а открывают нужное. Удерживайте клавишу, чтобы прочитать, что она делает.';
+
+  @override
+  String get virtKeyIntroCustomizeTip =>
+      'В настройках терминала их можно переставить или скрыть те, которыми вы не пользуетесь.';
+
+  @override
+  String get virtKeyIntroModifiers => 'Модификаторы';
+
+  @override
+  String get virtKeyIntroModifiersTip =>
+      'Нажмите одну, чтобы включить, затем букву на клавиатуре. Она действует ровно на одну клавишу.';
+
+  @override
+  String get virtKeyIntroNav => 'Перемещение курсора';
+
+  @override
+  String get virtKeyIntroNavTip =>
+      'Эти клавиши двигают курсор. Удерживайте стрелку, чтобы повторять её.';
+
+  @override
+  String get virtKeyIntroSelect =>
+      'Пока в терминале есть что прокручивать, перетаскивание вбок выделяет текст.';
+
+  @override
   String get waitConnection => 'Пожалуйста, дождитесь установки соединения';
 
   @override
@@ -1248,7 +1330,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Обнаружена эмуляция Podman Docker. Пожалуйста, переключитесь на Podman в настройках.';
 
   @override
-  String get portForwardBeta =>
+  String get betaTip =>
       'Функция ещё в бета-тестировании. Её работа не гарантируется.';
 
   @override

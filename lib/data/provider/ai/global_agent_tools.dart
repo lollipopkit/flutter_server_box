@@ -1311,9 +1311,9 @@ class GlobalAgentToolService {
         // Wraps rather than replaces the default, which is what writes the
         // key to storage. Only called when the user was actually asked, so a
         // host already known reports no fingerprint.
-        onHostKeyAccepted: (storageKey, hex) {
+        onHostKeyAccepted: (storageKey, hex) async {
           fingerprint = hex;
-          persistHostKeyFingerprint(storageKey, hex);
+          await persistHostKeyFingerprint(storageKey, hex);
         },
       );
       // `genClient` hands back a client before it has authenticated; without
@@ -1447,7 +1447,7 @@ class GlobalAgentToolService {
     _ref
         .read(adHocSshSessionsProvider.notifier)
         .close(sessionId, keepHostKey: true);
-    _ref.read(serversProvider.notifier).addServer(spi);
+    await _ref.read(serversProvider.notifier).addServer(spi);
 
     return AgentToolExecutionResult(
       toolName: proposal.toolName,

@@ -6,6 +6,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
@@ -18,8 +19,23 @@ import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:webdav_client_plus/webdav_client_plus.dart';
 
+/// Which half of the page to show.
+///
+/// The two halves answer different questions — "keep this somewhere else" and
+/// "bring something in" — and only ever shared a page because both are about
+/// moving data. The settings menu lists them as two rows, so each opens on its
+/// own.
+enum BackupSection { sync, import }
+
 class BackupPage extends ConsumerStatefulWidget {
-  const BackupPage({super.key});
+  /// Null shows both, side by side, under one heading each.
+  ///
+  /// That is the standalone [route], which the DMG notice opens directly: there
+  /// is no menu around it to say which half you are looking at, so it says so
+  /// itself. Inside the settings page the row that opened it already has.
+  final BackupSection? section;
+
+  const BackupPage({super.key, this.section});
 
   @override
   ConsumerState<BackupPage> createState() => _BackupPageState();
@@ -52,28 +68,43 @@ final class _BackupPageState extends ConsumerState<BackupPage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return Scaffold(body: SafeArea(child: _buildBody));
+
+    final section = widget.section;
+    if (section == null) return Scaffold(body: SafeArea(child: _buildBody));
+
+    // Shown in the settings content pane, which brings the Scaffold and the
+    // bar. No heading either, for the reason [AppSettingsPage] gives: the menu
+    // names the group and the bar repeats it, so a third would be one too many.
+    return ListView(
+      padding: context.padBottom(MultiList.kOuterPadding),
+      children: switch (section) {
+        BackupSection.sync => _syncTiles,
+        BackupSection.import => _importTiles,
+      },
+    );
   }
+
+  List<Widget> get _syncTiles => [
+    _buildTip,
+    _buildBakPwd,
+    if (isICloudSupported) _buildIcloud,
+    _buildWebdav,
+    _buildGist,
+    _buildFile,
+    _buildClipboard,
+  ];
+
+  List<Widget> get _importTiles => [
+    _buildBulkImportServers,
+    _buildImportSnippet,
+  ];
 
   Widget get _buildBody {
     return MultiList(
       widthDivider: 2,
       children: [
-        [
-          CenterGreyTitle(libL10n.sync),
-          _buildTip,
-          _buildBakPwd,
-          if (isICloudSupported) _buildIcloud,
-          _buildWebdav,
-          _buildGist,
-          _buildFile,
-          _buildClipboard,
-        ],
-        [
-          CenterGreyTitle(libL10n.import),
-          _buildBulkImportServers,
-          _buildImportSnippet,
-        ],
+        [CenterGreyTitle(libL10n.sync), ..._syncTiles],
+        [CenterGreyTitle(libL10n.import), ..._importTiles],
       ],
     );
   }
@@ -256,7 +287,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
                 if (p0) {
                   final url = PrefProps.webdavUrl.get();
                   final user = PrefProps.webdavUser.get();
-                  final pwd = PrefProps.webdavPwd.get();
+                  final pwd = await SecureStoreProps.webdavPwd.read();
 
                   final anyNull = url == null || user == null || pwd == null;
                   if (anyNull) {
@@ -333,7 +364,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
                   if (!ok) return false;
                 }
                 if (p0) {
-                  final token = PrefProps.githubToken.get();
+                  final token = await SecureStoreProps.githubToken.read();
                   // Allow empty gistId (will create one on first upload)
                   final hasToken = token != null && token.isNotEmpty;
                   if (!hasToken) {
@@ -553,7 +584,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
         if (confirmed != true || !context.mounted) return;
         final notifier = ref.read(snippetProvider.notifier);
         for (final snippet in snippets) {
-          notifier.add(snippet);
+          await notifier.add(snippet);
         }
         context.pop();
       },
@@ -619,9 +650,13 @@ extension on _BackupPageState {
       final ok = await _ensureBakPwd(context);
       if (!ok) return;
       final savedPassword = await SecureStoreProps.bakPwd.read();
+      if (savedPassword == null || savedPassword.isEmpty) {
+        Toast.show(l10n.backupPassword);
+        return;
+      }
       await BackupV2.backup(
         bakName,
-        savedPassword?.isEmpty == true ? null : savedPassword,
+        savedPassword,
       );
       await Webdav.shared.upload(relativePath: bakName);
       Loggers.app.info('Upload webdav backup success');
@@ -664,9 +699,13 @@ extension on _BackupPageState {
       final ok = await _ensureBakPwd(context);
       if (!ok) return;
       final savedPassword = await SecureStoreProps.bakPwd.read();
+      if (savedPassword == null || savedPassword.isEmpty) {
+        Toast.show(l10n.backupPassword);
+        return;
+      }
       await BackupV2.backup(
         bakName,
-        savedPassword?.isEmpty == true ? null : savedPassword,
+        savedPassword,
       );
       await GistRs.shared.upload(relativePath: bakName);
       Loggers.app.info('Upload gist backup success');
@@ -679,7 +718,9 @@ extension on _BackupPageState {
   }
 
   Future<void> _onTapGistSetting(BuildContext context) async {
-    final tokenCtrl = TextEditingController(text: PrefProps.githubToken.get());
+    final tokenCtrl = TextEditingController(
+      text: await SecureStoreProps.githubToken.read(),
+    );
     final gistIdCtrl = TextEditingController(text: PrefProps.gistId.get());
     final nodeToken = FocusNode();
     final appL10n = context.l10n;
@@ -715,7 +756,8 @@ extension on _BackupPageState {
         );
         Toast.success(libL10n.success);
 
-        await PrefProps.githubToken.set(token_);
+        await SecureStoreProps.githubToken.write(token_);
+        GistRs.shared.token = token_;
         if (gistId_.isEmpty) {
           await PrefProps.gistId.remove();
         } else {
@@ -733,7 +775,9 @@ extension on _BackupPageState {
   Future<void> _onTapWebdavSetting(BuildContext context) async {
     final url = TextEditingController(text: PrefProps.webdavUrl.get());
     final user = TextEditingController(text: PrefProps.webdavUser.get());
-    final pwd = TextEditingController(text: PrefProps.webdavPwd.get());
+    final pwd = TextEditingController(
+      text: await SecureStoreProps.webdavPwd.read(),
+    );
     final nodeUser = FocusNode();
     final nodePwd = FocusNode();
     final result = await context.showRoundDialog<bool>(
@@ -780,9 +824,9 @@ extension on _BackupPageState {
           user: user_,
           pwd: pwd_,
         );
-        PrefProps.webdavUrl.set(url_);
-        PrefProps.webdavUser.set(user_);
-        PrefProps.webdavPwd.set(pwd_);
+        await PrefProps.webdavUrl.set(url_);
+        await PrefProps.webdavUser.set(user_);
+        await SecureStoreProps.webdavPwd.write(pwd_);
       } catch (e, s) {
         context.showErrDialog(e, s, 'Webdav');
       }
@@ -852,33 +896,30 @@ extension on _BackupPageState {
     final saved = await SecureStoreProps.bakPwd.read();
     if (saved != null && saved.isNotEmpty) return true;
 
-    // Show dialog asking if user wants to set password or continue without
+    // Remote backups contain credentials and private keys, so encryption is
+    // mandatory rather than an optional warning.
     final result = await context.showRoundDialog<bool>(
       title: l10n.backupPassword,
       child: Text(l10n.backupPasswordTip, style: UIs.textGrey),
       actions: [
         TextButton(
-          onPressed: () => context.popDialog(true),
+          onPressed: () => context.popDialog(false),
           child: Text(libL10n.cancel),
         ),
         TextButton(
-          onPressed: () => context.popDialog(false),
+          onPressed: () => context.popDialog(true),
           child: Text(libL10n.setting),
         ),
       ],
     );
 
     if (result == true) {
-      // Continue without password
-      return true;
-    } else if (result == false) {
-      // User wants to set password
       await _onTapSetBakPwd(context);
       final savedAfterSetting = await SecureStoreProps.bakPwd.read();
       return savedAfterSetting != null && savedAfterSetting.isNotEmpty;
     }
 
-    return false; // User cancelled the dialog
+    return false;
   }
 }
 

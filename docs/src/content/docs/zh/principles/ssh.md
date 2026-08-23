@@ -3,10 +3,10 @@ title: SSH 连接
 description: SSH 连接是如何建立和管理的
 ---
 
-了解 Server Box 中的 SSH 连接机制。
+本页介绍 Server Box 如何建立和管理 SSH 连接。
 
 本页描述以 SSH 方式添加的服务器。服务器也可以通过 monitor agent 的 HTTP API
-添加,那种情况下它不携带任何 SSH 凭据,本页内容都不适用。
+添加。在这种情况下，该服务器不携带任何 SSH 凭据，本页内容均不适用。
 
 ## 连接流程
 
@@ -47,22 +47,22 @@ final class SshCredential {
 ```dart
 Future<SSHClient> genClient(Spi spi) async {
   final ssh = spi.ssh!;
-  // 1. 建立 socket
-  var socket = await connect(ssh.ip, ssh.port);
-
-  // 2. 如果失败，尝试备用 URL
-  if (socket == null && ssh.alterUrl != null) {
-    socket = await connect(ssh.alterUrl, ssh.port);
-  }
-
-  if (socket == null) {
-    throw ConnectionException('Unable to connect');
+  // 1. 建立 socket；失败后使用解析出的备用主机、用户和端口。
+  SSHSocket? socket;
+  var alterUser = ssh.user;
+  try {
+    socket = await connect(ssh.ip, ssh.port);
+  } catch (_) {
+    if (ssh.alterUrl == null) rethrow;
+    final (alterHost, parsedUser, alterPort) = ssh.parseAlterUrl();
+    socket = await connect(alterHost, alterPort);
+    alterUser = parsedUser;
   }
 
   // 3. 身份验证
   final client = SSHClient(
-    socket: socket,
-    username: ssh.user,
+    socket: socket!,
+    username: alterUser,
     onPasswordRequest: () => ssh.pwd,
     onIdentityRequest: () => loadKey(ssh.keyId),
   );
@@ -76,11 +76,11 @@ Future<SSHClient> genClient(Spi spi) async {
 
 ### 第三步：socket 从哪里来
 
-`genClient` 在三种来源中解析出一种,其上层(`SSHSocket` 以上)在三种情况下完全一致:
+`genClient` 会从三种来源中选择一种。在这三种情况下，`SSHSocket` 以上的处理方式完全一致：
 
-**直连** —— 默认方式,`SSHSocket.connect(ip, port)`,失败时回退到 `alterUrl`。
+**直连**：默认方式，使用 `SSHSocket.connect(ip, port)`，失败时回退到 `alterUrl`。
 
-**跳板机** —— 递归连接后做本地转发：
+**跳板机**：递归连接后做本地转发：
 
 ```dart
 for (final jumpId in spi.resolvedJumpIds) {
@@ -89,7 +89,7 @@ for (final jumpId in spi.resolvedJumpIds) {
 }
 ```
 
-**ProxyCommand** —— 仅桌面端,因为它需要启动一个进程：
+**ProxyCommand**：仅桌面端可用，因为它需要启动一个进程：
 
 ```dart
 if (ssh.proxyCommand != null) {
@@ -110,7 +110,7 @@ if (ssh.proxyCommand != null) {
 onPasswordRequest: () => ssh.pwd
 ```
 
-- 密码以加密形式存储在 Hive 中
+- 密码以加密形式存储在 SQLite 中
 - 连接时解密
 - 发送到服务器进行验证
 
@@ -119,7 +119,7 @@ onPasswordRequest: () => ssh.pwd
 ```dart
 onIdentityRequest: () async {
   final key = await PrivateKeyStore.get(ssh.keyId);
-  return decyptPem(key.pem, key.password);
+  return decryptPem(key.pem, key.password);
 }
 ```
 
@@ -148,7 +148,7 @@ onUserInfoRequest: (instructions) async {
 
 ### 为什么要验证主机密钥？
 
-通过确保连接的是同一个服务器，防止**中间人 (MITM)** 攻击。
+通过比对服务器主机密钥，帮助检测可能的**中间人（MITM）**攻击。
 
 ### 存储格式
 
@@ -164,46 +164,25 @@ my-server::ecdsa-sha2-nistp256
 
 ### 指纹格式
 
-**MD5 十六进制：**
-```text
-aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99
-```
-
-**Base64：**
+当前显示和存储的是 OpenSSH SHA-256 格式：
 ```text
 SHA256:AbCdEf1234567890...=
 ```
+读取旧版存储值时会先进行规范化。
 
 ### 验证流程
 
 ```dart
-Future<void> verifyHostKey(SSHClient client, Spi spi) async {
-  final key = await client.hostKey;
-  final keyType = key.type;
-  final fingerprint = md5Hex(key); // 或 base64
-
-  final stored = SettingStore.sshKnownHostFingerprints
-      ['${spi.id}::$keyType'];
-
-  if (stored == null) {
-    // 新主机 - 提示用户
-    final trust = await promptUser(
-      '未知主机',
-      '指纹: $fingerprint',
-    );
-    if (trust) {
-      SettingStore.sshKnownHostFingerprints
-          ['${spi.id}::$keyType'] = fingerprint;
-    }
-  } else if (stored != fingerprint) {
-    // 已更改 - 警告用户
-    await warnUser(
-      '主机密钥已更改！',
-      '可能存在中间人攻击',
-    );
-  }
-}
+Future<bool> verifyHostKey(
+  HostKeyVerifier verifier,
+  String keyType,
+  Uint8List fingerprintBytes,
+) => verifier(keyType, fingerprintBytes);
 ```
+
+`HostKeyVerifier` 会将收到的指纹与 `spi.id::keyType` 下存储的值比较。未知密钥只有
+在用户接受提示后才会信任。密钥不匹配时必须再次明确确认；拒绝会返回 `false`，SSH
+连接也会因此被拒绝。接受的值会持久化，供后续连接使用。
 
 ## 会话管理
 
@@ -221,9 +200,9 @@ class ServerProvider {
 }
 ```
 
-### 心跳检测 (Keep-Alive)
+### 连接保活（Keep-Alive）
 
-在闲置期间维持连接：
+客户端在空闲期间发送保活消息：
 
 ```dart
 Timer.periodic(

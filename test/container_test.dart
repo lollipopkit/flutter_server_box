@@ -854,7 +854,7 @@ not-json
   group('userFacingOutput', () {
     test('prefers what stderr said', () {
       expect(
-        userFacingOutput('sh: docker: not found', 'SrvBoxSep_1_0'),
+        userFacingOutput('sh: docker: not found', 'SrvBoxContainerSep_1_0'),
         'sh: docker: not found',
       );
     });
@@ -863,14 +863,14 @@ not-json
       // The whole explanation a user got used to be exactly this and nothing
       // else, which named neither the command nor the reason.
       expect(
-        userFacingOutput('', 'SrvBoxSep_1786614816321254_0\nSrvBoxSep_1786614816321254_0'),
+        userFacingOutput('', 'SrvBoxContainerSep_1786614816321254_0\nSrvBoxContainerSep_1786614816321254_0'),
         isNull,
       );
     });
 
     test('keeps real stdout when stderr is empty', () {
       expect(
-        userFacingOutput('', 'SrvBoxSep_1_0\npermission denied\n'),
+        userFacingOutput('', 'SrvBoxContainerSep_1_0\npermission denied\n'),
         'permission denied',
       );
     });

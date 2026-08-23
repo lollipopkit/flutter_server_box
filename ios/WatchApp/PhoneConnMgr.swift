@@ -113,12 +113,8 @@ final class PhoneConnMgr: NSObject, ObservableObject, WCSessionDelegate {
         guard let parsed = Self.parse(payload) else { return }
 
         DispatchQueue.main.async {
-            for (id, password) in parsed.passwords {
-                WatchStore.setPassword(password, for: id)
-                // The password is not part of a server's identity, so a client
-                // cached against an otherwise unchanged server would keep using
-                // a token minted with the old one.
-                MonitorClient.forget(id: id)
+            for (id, token) in parsed.tokens {
+                WatchStore.setToken(token, for: id)
             }
             WatchStore.setServers(parsed.servers)
             self.servers = parsed.servers
@@ -130,13 +126,13 @@ final class PhoneConnMgr: NSObject, ObservableObject, WCSessionDelegate {
 
     /// Payload shape (`WatchSync.buildPayload` on the phone):
     ///
-    ///     {"v": 2,
-    ///      "servers": [{"id", "name", "addr", "user", "pwd", "ignoreCert"}],
+    ///     {"v": 3,
+    ///      "servers": [{"id", "name", "addr", "token", "ignoreCert"}],
     ///      "urls": ["http://host:3770/status"]}
     ///
     /// `urls` is the pre-v2 shape and is still accepted so an install that has
     /// not been migrated on the phone keeps working.
-    static func parse(_ payload: [String: Any]) -> (servers: [WatchServer], passwords: [String: String])? {
+    static func parse(_ payload: [String: Any]) -> (servers: [WatchServer], tokens: [String: String])? {
         let rawServers = payload["servers"] as? [[String: Any]]
         let rawUrls = payload["urls"] as? [String]
         // Distinguishes "the phone says there are none" from "this isn't a
@@ -144,7 +140,7 @@ final class PhoneConnMgr: NSObject, ObservableObject, WCSessionDelegate {
         if rawServers == nil, rawUrls == nil { return nil }
 
         var servers: [WatchServer] = []
-        var passwords: [String: String] = [:]
+        var tokens: [String: String] = [:]
 
         for entry in rawServers ?? [] {
             guard let id = entry["id"] as? String,
@@ -157,13 +153,12 @@ final class PhoneConnMgr: NSObject, ObservableObject, WCSessionDelegate {
                     name: entry["name"] as? String ?? addr,
                     kind: .monitor,
                     addr: addr,
-                    user: entry["user"] as? String,
                     ignoreCert: entry["ignoreCert"] as? Bool ?? false
                 )
             )
-            // Absent means "no password", which has to clear a stored one
-            // rather than leave the previous credential in place.
-            passwords[id] = entry["pwd"] as? String ?? ""
+            // Absent means "no token", which clears a stored one rather than
+            // leave a revoked credential in place.
+            tokens[id] = entry["token"] as? String ?? ""
         }
 
         // TODO: drop with `WatchServer.Kind.legacy`.
@@ -171,6 +166,6 @@ final class PhoneConnMgr: NSObject, ObservableObject, WCSessionDelegate {
             servers.append(.legacy(url: url))
         }
 
-        return (servers, passwords)
+        return (servers, tokens)
     }
 }

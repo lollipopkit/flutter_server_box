@@ -13,7 +13,6 @@ extension _App on _AppSettingsPageState {
       _buildThemeMode(),
       _buildAppColor(),
       _buildCheckUpdate(),
-      _buildHomeTabs(),
       PlatformPublicSettings.buildBioAuth,
       ?androidSettings,
       ?specific,
@@ -85,15 +84,6 @@ extension _App on _AppSettingsPageState {
   }
 
   Widget? _buildPlatformSetting() {
-    if (isIOS) {
-      return ListTile(
-        leading: const Icon(MingCute.apple_fill),
-        title: Text('iOS ${libL10n.setting}'),
-        trailing: const Icon(Icons.keyboard_arrow_right),
-        onTap: () => IosSettingsPage.route.go(context),
-      );
-    }
-
     // The App Store build's one standing entry about the DMG build. The line
     // in the update dialog is asked to go away and does; this one stays, so
     // there is somewhere to read the whole thing afterwards.
@@ -388,17 +378,6 @@ extension _App on _AppSettingsPageState {
     );
   }
 
-  Widget _buildHomeTabs() {
-    return ListTile(
-      leading: const Icon(Icons.tab),
-      title: Text(l10n.homeTabs),
-      trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: () {
-        HomeTabsConfigPage.route.go(context);
-      },
-    );
-  }
-
   Widget _buildEditRawSettings() {
     return ListTile(
       title: const Text('(Dev) Edit raw json'),
@@ -494,14 +473,49 @@ extension _App on _AppSettingsPageState {
             return;
           }
           final encrypted = Cryptor.encrypt(json.encode(newSettings), pwd);
-          Stores.setting.box.put(encryptedKey, encrypted);
+          // Not stamping `lastUpdateTs`, which is what going straight to the
+          // box used to do.
+          //
+          // TODO: decide whether that was intentional. Editing the raw settings
+          // is a user edit, so leaving the timestamps alone means sync will not
+          // carry it to another device until something else is changed.
+          Stores.setting.set(
+            encryptedKey,
+            encrypted,
+            updateLastUpdateTsOnSet: false,
+          );
         } else {
-          Stores.setting.box.putAll(newSettings);
-          final newKeys = newSettings.keys.toSet();
-          final removedKeys = initialKeys.where((e) => !newKeys.contains(e));
-          for (final key in removedKeys) {
-            Stores.setting.box.delete(key);
+          // One transaction, as `Backup.merge` does: this rewrites the whole
+          // settings store, and half of an edit is not a state to leave behind.
+          SqliteStore.transact(() {
+          for (final entry in newSettings.entries) {
+            final value = entry.value;
+            // A key set to null means "clear this". Skipping it instead left
+            // the previous value in place, and the key being present kept it
+            // out of `removedKeys` below too — so the edit reported success and
+            // changed nothing.
+            if (value == null) {
+              Stores.setting.remove(entry.key, updateLastUpdateTsOnRemove: false);
+              continue;
+            }
+            Stores.setting.set(
+              entry.key,
+              value as Object,
+              updateLastUpdateTsOnSet: false,
+            );
           }
+          final newKeys = newSettings.keys.toSet();
+          // Internal keys are shown by the editor (it reads with
+          // `includeInternalKeys: true`) but are not the user's to delete: one
+          // of them records that the Hive import already ran, and dropping it
+          // makes the next launch copy the retained boxes back over everything.
+          final removedKeys = initialKeys.where(
+            (e) => !newKeys.contains(e) && !Stores.setting.isInternalKey(e),
+          );
+          for (final key in removedKeys) {
+            Stores.setting.remove(key, updateLastUpdateTsOnRemove: false);
+          }
+          });
         }
       } catch (e, trace) {
         context.showRoundDialog(

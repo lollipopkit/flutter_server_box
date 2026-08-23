@@ -190,7 +190,7 @@ pub async fn terminal_ws(
         return deny("origin", HttpResponse::Unauthorized().finish()).await;
     }
 
-    let Some(raw_ticket) = super::tunnel::query_param(req.query_string(), "ticket") else {
+    let Some(raw_ticket) = query_param(req.query_string(), "ticket") else {
         return deny("no ticket", HttpResponse::Unauthorized().finish()).await;
     };
     let Ok(subject) = app_state.tickets.consume(&raw_ticket, Purpose::Terminal) else {
@@ -216,6 +216,17 @@ pub async fn terminal_ws(
         }),
     )
     .await
+}
+
+/// First value of `name` in a query string.
+///
+/// Tickets are opaque hex values, so this intentionally avoids percent
+/// decoding and its alternate spellings.
+fn query_param(query: &str, name: &str) -> Option<String> {
+    query.split('&').find_map(|pair| {
+        let (key, value) = pair.split_once('=')?;
+        (key == name).then(|| value.to_string())
+    })
 }
 
 /// Everything about the connection that outlives a single frame.
@@ -283,8 +294,8 @@ fn handler(
                     on_input(&phase, data.to_vec()).await;
                     Ok(None)
                 }
-                // Terminal input is a byte stream like the tunnel's, so
-                // fragments go through in order without reassembly
+                // Terminal input is a byte stream, so fragments go through in
+                // order without reassembly.
                 Frame::Continuation(Item::FirstBinary(data) | Item::Continue(data) | Item::Last(data)) => {
                     on_input(&phase, data.to_vec()).await;
                     Ok(None)
@@ -920,6 +931,31 @@ pub fn start_reaper(sessions: Arc<SessionStore>, interval: Duration) {
 
 #[cfg(test)]
 mod tests {
+    /// The ticket parser, which reads a query string by hand on a security
+    /// boundary.
+    ///
+    /// These came with `query_param` from the tunnel endpoint and were lost
+    /// when it was deleted; the function was copied and the tests were not.
+    /// What they pin is what a hand-rolled parser gets wrong: matching a name
+    /// that merely contains the one asked for, and taking a bare key as a
+    /// value. Switching `key == name` to `ends_with` passes every other test
+    /// in this file.
+    #[test]
+    fn query_param_reads_the_named_value() {
+        assert_eq!(query_param("ticket=abc", "ticket").as_deref(), Some("abc"));
+        assert_eq!(
+            query_param("a=1&ticket=abc&b=2", "ticket").as_deref(),
+            Some("abc")
+        );
+        assert_eq!(query_param("a=1&b=2", "ticket"), None);
+        assert_eq!(query_param("", "ticket"), None);
+        // A bare key is not a value
+        assert_eq!(query_param("ticket", "ticket"), None);
+        // Must not match on a suffix or prefix of the name
+        assert_eq!(query_param("myticket=abc", "ticket"), None);
+        assert_eq!(query_param("ticketx=abc", "ticket"), None);
+    }
+
     use super::*;
 
     fn parse(json: &str) -> ClientMsg {

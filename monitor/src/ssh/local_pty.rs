@@ -394,7 +394,7 @@ mod tests {
         // message and closes
         for name in NON_SHELLS {
             assert!(
-                NON_SHELLS.contains(&name),
+                NON_SHELLS.contains(name),
                 "sanity: {name} is in the refusal list"
             );
         }

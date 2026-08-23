@@ -12,20 +12,21 @@
 library;
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/data/model/app/error.dart';
-import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
+import 'package:server_box/data/store/migrations/m004_kv_to_tables.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
 
 import 'helpers/spi_fixture.dart';
+import 'helpers/test_db.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -67,103 +68,124 @@ void main() {
     });
   });
 
-  group('migrateIdentityFilePaths', () {
-    late Directory tempDir;
-    late Box<dynamic> serverBox;
-    late Box<dynamic> keyBox;
+  /// The move used to be a scan of every server on every launch. It is part of
+  /// `KvToTablesMigration` now, and it had to be: that step remaps the private
+  /// key ids, so a `keyId` naming no key becomes a null there — and after that
+  /// there is nothing left to recognise as a path.
+  group('the key migration', () {
     late ServerStore servers;
     late PrivateKeyStore keys;
 
     setUp(() async {
-      tempDir = await Directory.systemTemp.createTemp('identity-file-');
-      Hive.init(tempDir.path);
-      // In memory: a real write started in a test body completes on a callback
-      // the fake-async zone is no longer pumping, and `close()` then blocks
-      serverBox = await Hive.openBox<dynamic>('server_test', bytes: Uint8List(0));
-      keyBox = await Hive.openBox<dynamic>('key_test', bytes: Uint8List(0));
-      servers = ServerStore.forBox(serverBox);
-      keys = PrivateKeyStore.forBox(keyBox);
+      // In memory: this tree writes as it builds, and a test has no
+      // business leaving a database behind.
+      await openTestDb();
+      servers = ServerStore.forTest();
+      keys = PrivateKeyStore.forTest();
     });
 
-    tearDown(() async {
-      await serverBox.close();
-      await keyBox.close();
-      await tempDir.delete(recursive: true);
-    });
+    tearDown(SqliteDb.close);
 
-    Spi reread(String id) => servers.get<Spi>(id)!;
-
-    test('a path that names no stored key moves to keyPath', () {
-      servers.put(
-        const Spi(
-          id: 'a',
-          name: 'imported',
-          ssh: SshCredential(ip: '10.0.0.1', keyId: '~/.ssh/id_ed25519'),
-        ),
+    /// One row of the shape m004 reads: the key-value layout m003 leaves.
+    void seed(String store, String key, Map<String, Object?> value) {
+      SqliteDb.instance.execute(
+        'INSERT INTO kv (store, key, value, updated_at) VALUES (?, ?, ?, 0);',
+        [store, key, json.encode(value)],
       );
+    }
 
-      servers.migrateIdentityFilePaths(keys: keys);
+    void seedServer(String id, {String? keyId, String? keyPath}) => seed(
+      'server',
+      id,
+      {
+        'id': id,
+        'name': 'srv $id',
+        'ssh': {
+          'ip': '10.0.0.1',
+          'port': 22,
+          'user': 'root',
+          'keyId': ?keyId,
+          'keyPath': ?keyPath,
+        },
+      },
+    );
+
+    /// The old shape: the key's id *was* its name.
+    void seedKey(String name) => seed('key', name, {'id': name, 'key': 'PEM'});
+
+    Future<void> migrate() => const KvToTablesMigration().apply();
+
+    Spi reread(String id) => servers.fetchOneRaw(id)!;
+
+    test('a path that names no stored key moves to keyPath', () async {
+      seedServer('a', keyId: '~/.ssh/id_ed25519');
+
+      await migrate();
 
       final ssh = reread('a').ssh!;
       expect(ssh.keyPath, '~/.ssh/id_ed25519');
       expect(ssh.keyId, isNull);
     });
 
-    test('a key id that looks like a path is left alone', () {
-      // A key's id is whatever the user typed for its name, so this is a real
+    test('a key id that looks like a path is left alone', () async {
+      // A key's id was whatever the user typed for its name, so this is a real
       // key and not the import bug — and moving it would break a working server
-      keys.put(const PrivateKeyInfo(id: 'keys/prod', key: 'PEM'));
-      servers.put(
-        const Spi(
-          id: 'b',
-          name: 'named oddly',
-          ssh: SshCredential(ip: '10.0.0.2', keyId: 'keys/prod'),
-        ),
-      );
+      seedKey('keys/prod');
+      seedServer('b', keyId: 'keys/prod');
 
-      servers.migrateIdentityFilePaths(keys: keys);
+      await migrate();
 
       final ssh = reread('b').ssh!;
-      expect(ssh.keyId, 'keys/prod');
       expect(ssh.keyPath, isNull);
+      // The id it points at is generated now, and it is the one the key got.
+      expect(ssh.keyId, keys.fetchByName('keys/prod')!.id);
     });
 
-    test('an ordinary key id is untouched', () {
-      keys.put(const PrivateKeyInfo(id: 'work', key: 'PEM'));
-      servers.put(
-        const Spi(
-          id: 'c',
-          name: 'normal',
-          ssh: SshCredential(ip: '10.0.0.3', keyId: 'work'),
-        ),
-      );
+    test('an ordinary key id follows the key to its new id', () async {
+      seedKey('work');
+      seedServer('c', keyId: 'work');
 
-      servers.migrateIdentityFilePaths(keys: keys);
+      await migrate();
 
-      expect(reread('c').ssh!.keyId, 'work');
+      final key = keys.fetchByName('work')!;
+      expect(key.id, isNot('work'), reason: 'an id is not a name');
+      expect(reread('c').ssh!.keyId, key.id);
       expect(reread('c').ssh!.keyPath, isNull);
     });
 
-    test('running it twice changes nothing further', () {
-      servers.put(
-        const Spi(
-          id: 'd',
-          name: 'imported',
-          ssh: SshCredential(ip: '10.0.0.4', keyId: '/abs/path/key'),
-        ),
-      );
+    test('a keyPath already set is not overwritten', () async {
+      seedServer('d', keyPath: '/abs/path/key');
 
-      servers.migrateIdentityFilePaths(keys: keys);
-      final once = reread('d');
-      servers.migrateIdentityFilePaths(keys: keys);
+      await migrate();
 
-      expect(reread('d'), once);
+      expect(reread('d').ssh!.keyPath, '/abs/path/key');
+      expect(reread('d').ssh!.keyId, isNull);
     });
 
-    test('a server with no SSH at all is skipped', () {
-      servers.put(const Spi(id: 'e', name: 'monitor only'));
-      servers.migrateIdentityFilePaths(keys: keys);
+    test('a monitor server has no SSH to look at', () async {
+      seed('server', 'e', {
+        'id': 'e',
+        'name': 'monitor only',
+        'monitorHttp': {'addr': 'https://10.0.0.9:3770'},
+      });
+
+      await migrate();
+
       expect(reread('e').ssh, isNull);
+    });
+
+    test('two keys that shared a name both survive, under one each', () async {
+      // Nothing enforced that the name was unique across the two places a key
+      // could be created, and it is the primary key of the table now.
+      seed('key', 'dup', {'id': 'dup', 'key': 'FIRST'});
+      seed('key', 'dup-2', {'id': 'dup', 'key': 'SECOND'});
+
+      await migrate();
+
+      final all = keys.fetch();
+      expect(all.length, 2);
+      expect(all.map((e) => e.id).toSet().length, 2);
+      expect(all.map((e) => e.name).toSet(), {'dup', 'dup (2)'});
     });
   });
 

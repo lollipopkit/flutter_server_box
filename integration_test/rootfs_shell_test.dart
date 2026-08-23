@@ -8,6 +8,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:server_box/core/utils/android_rootfs.dart';
 import 'package:server_box/core/utils/local_exec.dart';
 import 'package:server_box/core/utils/local_shell.dart';
+import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/misc.dart';
@@ -32,7 +33,12 @@ void main() {
     // A real install every run. A rootfs left by a previous run would let a
     // change to how one is unpacked pass untested for as long as the device
     // kept the old one.
-    await AndroidRootfs.remove();
+    // Every one of them: the install below adds a system rather than replacing
+    // one, so leaving any behind means the next run reads an old tree. A
+    // distribution id is not a profile id either — profile ids are generated.
+    for (final profile in AndroidRootfs.profiles.toList()) {
+      await AndroidRootfs.removeProfile(profile.id);
+    }
   });
 
   /// Everything [session] prints until it ends, or until [timeout] passes with
@@ -64,7 +70,7 @@ void main() {
 
     // Downloads on the first run, and is a no-op afterwards. Not in `setUpAll`:
     // installing *is* one of the things under test.
-    await AndroidRootfs.install();
+    await AndroidRootfs.install(distro: LinuxDistro.alpine);
     expect(await AndroidRootfs.isInstalled, isTrue);
 
     // What makes it a distribution rather than a directory of files.
@@ -118,7 +124,7 @@ void main() {
       markTestSkipped('this build carries no proot');
       return;
     }
-    await AndroidRootfs.install();
+    await AndroidRootfs.install(distro: LinuxDistro.alpine);
 
     // `ProcessExec`, not the terminal's backend: the Agent's shell tool goes
     // through this one, and the terminal working says nothing about it.
@@ -139,6 +145,21 @@ void main() {
     final android = await exec.run(r'ls /system >/dev/null 2>&1; echo rc=$?');
     expect(android.stdout.trim(), 'rc=1');
 
+    // A hard link resolves, which on Android it does not without proot's
+    // `--link2symlink`: the kernel refuses `link()` in an app's own data
+    // directory whatever `-0` tells the guest about being root. Asserted here
+    // rather than through `apk`, because the packages that carry hard links
+    // are the large ones — `apk add go` pulls 357 MB to reach a gcc whose
+    // `gcc-ar`, `gcc-nm`, `gcc-ranlib` and `ld.gold` are the only entries
+    // that fail. The package test below installs curl, which has none, and so
+    // said nothing about this for as long as it was broken.
+    final link = await exec.run(
+      'rm -f /tmp/hl-a /tmp/hl-b; echo hl > /tmp/hl-a && ln /tmp/hl-a /tmp/hl-b'
+      ' && cat /tmp/hl-b',
+    );
+    expect(link.stdout.trim(), 'hl');
+    expect(link.exitCode, 0);
+
     // The file tools resolve inside it too. They are `dart:io` on the host and
     // never enter the guest, so this mapping is the only thing that keeps them
     // in the same filesystem the commands see.
@@ -156,7 +177,7 @@ void main() {
       markTestSkipped('this build carries no proot');
       return;
     }
-    await AndroidRootfs.install();
+    await AndroidRootfs.install(distro: LinuxDistro.alpine);
 
     final backend = LocalShellBackend(inRootfs: true);
     addTearDown(backend.close);

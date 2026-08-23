@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:meta/meta.dart';
+import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
@@ -10,13 +10,13 @@ import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/res/default.dart';
 
-class SettingStore extends HiveStore {
+class SettingStore extends SqliteStore {
   SettingStore._() : super('setting');
 
+  /// A distinct store name, so a test on `SqliteDb.openInMemory()` cannot
+  /// collide with another test's rows.
   @visibleForTesting
-  SettingStore.forBox(Box<dynamic> testBox) : super('setting_test') {
-    box = testBox;
-  }
+  SettingStore.forTest() : super('setting_test');
 
   static final instance = SettingStore._();
 
@@ -103,6 +103,50 @@ class SettingStore extends HiveStore {
       return <String, String>{};
     },
   );
+
+  /// Which profile a terminal opens in, by `LinuxProfile.id`.
+  ///
+  /// Empty until something is chosen; the platform layer reads that as "the
+  /// first one installed". A profile and not a distribution, because two of the
+  /// same distribution can be installed side by side.
+  late final linuxProfile = propertyDefault('linuxProfile', '');
+
+  /// Which distribution a *new* profile would be of, by `LinuxDistro.id`.
+  ///
+  /// By name, never by index: an index silently changes meaning when a case is
+  /// inserted, and this outlives the build that wrote it. Read through
+  /// `linuxDistro()`, which falls back for a name no build knows.
+  late final linuxDistro = propertyDefault(
+    'linuxDistro',
+    LinuxDistro.alpine.id,
+  );
+
+  /// Each distribution's mirror, keyed by `LinuxDistro.id`.
+  ///
+  /// A map rather than one string, because a mirror of one distribution is not
+  /// a mirror of another — switching away and back would otherwise drop what
+  /// was typed. Absent means "the distribution's own default", so nothing here
+  /// pins a default against a release that moves it. Read and written through
+  /// `linuxMirror()` / `setLinuxMirror()`.
+  late final linuxMirrors = propertyDefault<Map<String, String>>(
+    'linuxMirrors',
+    const {},
+    fromObj: (raw) {
+      if (raw is Map) {
+        return raw.map(
+          (key, value) => MapEntry(key.toString(), value.toString()),
+        );
+      }
+      return <String, String>{};
+    },
+  );
+
+  /// The resolvers written into the guest's `/etc/resolv.conf`.
+  ///
+  /// Not per distribution: this is the network the device is on. Read through
+  /// `linuxNameservers()`, which is also what decides what counts as an address
+  /// in it.
+  late final linuxDns = propertyDefault('linuxDns', Defaults.linuxDns);
 
   // Editor theme
   late final editorTheme = propertyDefault('editorTheme', Defaults.editorTheme);
@@ -329,7 +373,26 @@ class SettingStore extends HiveStore {
   /// whatever the last unversioned release wrote, and that is v2 (Spi with a
   /// flat SSH layout plus `monitorHttp`). A fresh install overwrites this with
   /// [SchemaVersion.current] before any migration runs.
-  late final schemaVersion = propertyDefault('schemaVersion', 2);
+  ///
+  /// An **internal** key, so `getAllMap` leaves it out of a backup and `clear`
+  /// leaves it alone. Under a plain key it travelled: restoring a backup taken
+  /// on a device still on the previous release wrote that device's version
+  /// back, and the next launch found a version with no migration registered for
+  /// it and threw `SchemaTooNewException`'s counterpart — a `StateError` that
+  /// nothing catches.
+  ///
+  /// Being internal also means it never stamps `lastUpdateTs`, which it must
+  /// not: it describes this device's storage, so counting a migration writing
+  /// it as a user edit would make a device that has only just upgraded claim
+  /// the newer copy of everything at the next sync.
+  ///
+  /// TODO: drop `schemaVersion` from `removeRetiredKeys` once no install can
+  /// still carry the plain-key copy this replaced.
+  late final schemaVersion = propertyDefault(
+    '${StoreDefaults.prefixKey}schemaVersion',
+    2,
+    updateLastModified: false,
+  );
 
   /// Hide title bar on desktop
   late final hideTitleBar = propertyDefault('hideTitleBar', isDesktop);
@@ -342,6 +405,13 @@ class SettingStore extends HiveStore {
   late final editorSoftWrap = propertyDefault('editorSoftWrap', isIOS);
 
   late final sshTermHelpShown = propertyDefault('sshTermHelpShown', false);
+
+  /// Whether the walkthrough over the virtual keys has run.
+  ///
+  /// Separate from [sshTermHelpShown], which gates a dialog about the terminal
+  /// body and is the only guidance a desktop gets — there are no virtual keys
+  /// there to walk through.
+  late final virtKeyIntroShown = propertyDefault('virtKeyIntroShown', false);
 
   late final horizonVirtKey = propertyDefault('horizonVirtKey', false);
 
@@ -425,12 +495,17 @@ class SettingStore extends HiveStore {
   );
 
   /// Add Agent to the legacy default home tabs once.
+  ///
+  /// Written with `updateLastUpdateTsOnSet: false` throughout, as the Hive
+  /// version got by writing straight to the box: a migration this build runs on
+  /// its own is not an edit the user made, and counting it as one would have
+  /// every install claim a newer copy than whatever it last synced with.
   Future<void> migrateHomeTabsAgent() async {
     const key = 'homeTabs';
     const flagKey = 'homeTabsAgentMigrated';
-    if (box.get(flagKey) == true) return;
+    if (get<bool>(flagKey) == true) return;
 
-    final tabs = AppTab.parseAppTabsFromObj(box.get(key));
+    final tabs = AppTab.parseAppTabsFromObj(get<Object>(key));
     const legacyDefaultTabs = {
       AppTab.server,
       AppTab.ssh,
@@ -439,12 +514,13 @@ class SettingStore extends HiveStore {
     };
     if (tabs.length == legacyDefaultTabs.length &&
         tabs.toSet().containsAll(legacyDefaultTabs)) {
-      await box.put(
+      set(
         key,
         [...tabs, AppTab.agent].map((tab) => tab.name).toList(),
+        updateLastUpdateTsOnSet: false,
       );
     }
-    await box.put(flagKey, true);
+    set(flagKey, true, updateLastUpdateTsOnSet: false);
   }
 
   /// Hide port forward beta warning
@@ -452,6 +528,44 @@ class SettingStore extends HiveStore {
     'portForwardBetaWarned',
     false,
   );
+
+  /// The highest rootfs-manifest serial this device has accepted.
+  ///
+  /// A signature stays valid for as long as the key does, so verifying one
+  /// does not make it current. Refusing a serial below this is what stops an
+  /// old signed manifest being replayed to pin a device to a rootfs whose
+  /// problems are known.
+  ///
+  /// Device-local bookkeeping, so it does not stamp the sync clock: which
+  /// manifest a phone has seen is not an edit anyone made.
+  late final rootfsManifestSerial = propertyDefault(
+    'rootfsManifestSerial',
+    0,
+    updateLastModified: false,
+  );
+
+  /// The last manifest that verified, and its signature, base64.
+  ///
+  /// Both, because the cache is re-verified when it is read rather than
+  /// trusted for having once been verified — it sits in app storage, and
+  /// re-checking 64 bytes costs nothing next to believing whatever is there.
+  late final rootfsManifestCache = propertyDefault(
+    'rootfsManifestCache',
+    '',
+    updateLastModified: false,
+  );
+  late final rootfsManifestCacheSig = propertyDefault(
+    'rootfsManifestCacheSig',
+    '',
+    updateLastModified: false,
+  );
+
+  /// Hide the Linux beta warning, which is asked before an install.
+  ///
+  /// Separate from [portForwardBetaWarned] rather than one flag for every beta
+  /// feature: dismissing the warning on one says nothing about having read the
+  /// other, and the two are not the same risk.
+  late final linuxBetaWarned = propertyDefault('linuxBetaWarned', false);
 
   late final sshPageSortBy = propertyDefault('sshPageSortBy', 0);
   late final sshPageSortAsc = propertyDefault('sshPageSortAsc', true);
@@ -469,7 +583,16 @@ class SettingStore extends HiveStore {
   /// installs are cleaned without another migration flag becoming permanent
   /// state of its own.
   Future<void> removeRetiredKeys() async {
-    await box.deleteAll(const ['moveOutServerTabFuncBtns', 'forceSinglePane']);
+    for (final key in const [
+      'moveOutServerTabFuncBtns',
+      'forceSinglePane',
+      // The plain-key schema version. It moved to an internal key so that a
+      // backup stops carrying it; this drops the copy a Hive import brought
+      // across, which nothing reads and a backup would still export.
+      'schemaVersion',
+    ]) {
+      remove(key, updateLastUpdateTsOnRemove: false);
+    }
   }
 
   /// Migrate sshConnectionMode from old int values (-1/0/1) to bool.
@@ -477,8 +600,8 @@ class SettingStore extends HiveStore {
   void migrateSshConnectionMode() {
     const key = 'sshConnectionMode';
     const flagKey = 'sshConnectionModeMigrated';
-    if (box.get(flagKey) == true) return;
-    final raw = box.get(key);
+    if (get<bool>(flagKey) == true) return;
+    final raw = get<Object>(key);
     if (raw is int) {
       // -1 = auto, 0 = built-in, 1 = system SSH
       final bool value;
@@ -487,8 +610,8 @@ class SettingStore extends HiveStore {
       } else {
         value = raw != 0;
       }
-      box.put(key, value);
+      set(key, value, updateLastUpdateTsOnSet: false);
     }
-    box.put(flagKey, true);
+    set(flagKey, true, updateLastUpdateTsOnSet: false);
   }
 }

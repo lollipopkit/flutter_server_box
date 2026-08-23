@@ -1,11 +1,11 @@
 import 'dart:io';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/terminal_session.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
@@ -16,6 +16,7 @@ import 'package:xterm/core.dart';
 import 'package:xterm/ui.dart';
 
 import 'helpers/fake_shell.dart';
+import 'helpers/test_db.dart';
 
 /// Right-click in the terminal, which is copy or paste depending on nothing
 /// but whether anything is selected.
@@ -28,14 +29,12 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late Directory tempDir;
-  late Box<dynamic> settingBox;
   final clipboard = <String>[];
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-term-');
-    Hive.init(tempDir.path);
-    settingBox = await Hive.openBox<dynamic>('setting_test');
-    getIt.registerSingleton<SettingStore>(SettingStore.forBox(settingBox));
+    await openTestDb();
+    getIt.registerSingleton<SettingStore>(SettingStore.forTest());
 
     clipboard.clear();
     // The real channel would reach a platform that is not here. Recorded
@@ -57,7 +56,7 @@ void main() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(SystemChannels.platform, null);
     await getIt.reset();
-    await settingBox.close();
+    await SqliteDb.close();
     await tempDir.delete(recursive: true);
   });
 

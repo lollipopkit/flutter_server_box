@@ -34,14 +34,16 @@ on:
   push:
     branches: [ "main" ]
     paths: &macos_paths
-      # The Xcode project, the entitlements, the Podfile
+      # The Xcode project and the entitlements
       - 'macos/**'
-      # cargokit builds and links these into the app; nothing else in CI links
-      # the Rust library on macOS
+      # `hook/build.dart` is what compiles the Rust library into the app now,
+      # and nothing else in CI links it on macOS
+      - 'hook/**'
       - 'crates/**'
       - 'Cargo.toml'
       - 'Cargo.lock'
-      # A plugin added or moved changes what pod install resolves and links
+      # A dependency added or moved changes what the build hooks produce and
+      # what gets bundled
       - 'pubspec.yaml'
       - 'pubspec.lock'
       # The vendored packages are submodules, so a gitlink move here is a
@@ -66,18 +68,18 @@ jobs:
     timeout-minutes: 45
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 1
           submodules: recursive
           persist-credentials: false
 
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           channel: 'stable'
           flutter-version: ${{ env.FLUTTER_VERSION }}
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
 
       - name: Install dependencies
         run: flutter pub get

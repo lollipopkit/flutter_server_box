@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -113,10 +115,14 @@ const agentHeaderChevronSize = 26.0;
 /// it. Shared by the tab's header and the floating shell's title bar, which
 /// otherwise have nothing in common.
 class AgentHeaderActions extends ConsumerWidget {
-  const AgentHeaderActions({super.key, required this.showConversations});
+  const AgentHeaderActions({super.key, this.showConversations = false});
 
-  /// False beside the history column, where these would be a second copy of
-  /// the two buttons already at the top of it.
+  /// Whether to carry the history and new-conversation buttons.
+  ///
+  /// Only the floating shell does. The tab's own line names the conversation
+  /// and opens the list when tapped, so a history button beside it was a
+  /// second way to the same sheet and a plus was a third thing on a row that
+  /// never said which conversation you were in.
   final bool showConversations;
 
   @override
@@ -292,18 +298,23 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
     // rather than eating it: the box stays usable while an answer streams, and
     // a keystroke that neither sends nor types anything simply disappears.
     if (ref.read(agentSessionProvider).isWorking) return KeyEventResult.ignored;
-    _submitPrompt(_inputController.text);
+    unawaited(_submitPrompt(_inputController.text));
     // Handled either way from here: the key meant "send", and letting it
     // through would leave a line break behind whenever there was nothing to
     // send.
     return KeyEventResult.handled;
   }
 
-  void _submitPrompt(String prompt) {
+  Future<void> _submitPrompt(String prompt) async {
     // Emptied only once the session has taken it. It refuses while a turn is
     // running or a tool is waiting to be reviewed, and a box cleared anyway
     // would lose what was typed.
-    if (_notifier.submitPrompt(prompt, localeHint: _localeHint)) {
+    final submitted = await _notifier.submitPrompt(
+      prompt,
+      localeHint: _localeHint,
+    );
+    if (!mounted) return;
+    if (submitted) {
       _inputController.clear();
     }
   }
@@ -451,39 +462,53 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
 
   // -------------------------------------------------------------------- build
 
-  Widget _buildHeader(BuildContext context, ThemeData theme) {
+  /// The same line the terminal and file tabs carry: which conversation is on
+  /// screen, of how many, and the way to the rest.
+  ///
+  /// It used to be the app's name beside a badge, with a history button and a
+  /// new-conversation button on the right — three ways of saying "Agent" and
+  /// none of saying which conversation you were in. Tapping the line opens the
+  /// list, which is where switching, renaming, deleting and starting one all
+  /// already live.
+  ///
+  /// Beside the history column there is nothing to open — that column is the
+  /// list — so the line is a label there and names the conversation anyway.
+  Widget _buildHeader(BuildContext context) {
     final compact = widget.compact;
-    return Padding(
-      // Symmetric where the row ends with the title, so its ellipsis sits
-      // the same distance from the edge as the content below it. The
-      // narrower right side is for the buttons the compact layout keeps.
-      padding: EdgeInsets.fromLTRB(compact ? 12 : 20, 10, compact ? 8 : 20, 10),
+    final session = ref.watch(agentSessionProvider);
+    final conversations = session.conversations;
+    final activeId = session.conversation?.id;
+    final at = conversations.indexWhere((e) => e.id == activeId);
+
+    final title = at < 0
+        ? context.l10n.agentTitle
+        : (conversations[at].title.isEmpty
+              ? context.l10n.askAiUntitledConversation
+              : conversations[at].title);
+
+    return SizedBox(
+      height: SessionTabBar.height,
       child: Row(
         children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              Icons.auto_awesome,
-              color: theme.colorScheme.onPrimaryContainer,
-              size: agentHeaderIconSize,
-            ),
-          ),
-          const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              context.l10n.agentTitle,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+            child: SessionSwitcherLabel(
+              name: title,
+              // Nothing to count until this conversation is one of a set —
+              // before the first reply it is not saved yet.
+              position: at < 0 ? null : at + 1,
+              total: conversations.length,
+              icon: Icons.auto_awesome,
+              // Refused while a tool is running, for the reason the list's own
+              // rows are: switching away leaves the execution appending to
+              // whichever conversation is active by then.
+              onTap: compact && !session.isWorking
+                  ? () => showAgentHistorySheet(context)
+                  : null,
             ),
           ),
-          AgentHeaderActions(showConversations: compact),
+          const AgentHeaderActions(),
           ?widget.headerTrailing,
+          const SizedBox(width: 4),
         ],
       ),
     );
@@ -1003,7 +1028,7 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
                 TextButton(
                   onPressed: session.isWorking
                       ? null
-                      : _notifier.declinePendingTool,
+                      : () => unawaited(_notifier.declinePendingTool()),
                   child: Text(context.l10n.askAiDecline),
                 ),
                 const SizedBox(width: 8),
@@ -1258,7 +1283,7 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
     return Column(
       children: [
         if (widget.showHeader) ...[
-          _buildHeader(context, theme),
+          _buildHeader(context),
           // The same seam as the one beside the history column, which these
           // two meet at a corner: at full strength they read as a brighter
           // line than it, which is the pane looking like a window of its own.

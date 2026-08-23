@@ -7,7 +7,7 @@ description: SSH 终端的内部工作原理
 
 ## 字节从哪里来
 
-字节流之上只有一套实现 —— 同一个模拟器、同一套虚拟键盘、同样的标签页。之下，
+字节流之上只有一套实现，包括同一个模拟器、同一套虚拟键盘和同样的标签页。之下，
 `ShellBackend` 有四个实现：
 
 | 后端 | 字节来源 |
@@ -15,13 +15,13 @@ description: SSH 终端的内部工作原理
 | `SshShellBackend` | SSH channel；本页其余部分讲的就是它 |
 | `LocalShellBackend` | 本机的 shell；Android 上是 Alpine 容器内的 shell |
 | `IshShellBackend` | iOS 上的 Linux 解释器 |
-| `MonitorShellBackend` | monitor agent 的 `/terminal/ws` |
+| `MonitorShellBackend` | monitor agent 的 `/api/v1/terminal/ws` |
 
 调用方打开一个会话并向它写入，上层 UI 不会去问是四个中的哪一个应答的。前两个见
 [本机终端](/docs/zh/advanced/local-terminal/)，最后一个见
 [Monitor Agent](/docs/zh/advanced/monitor-agent/)。
 
-本页其余部分沿 SSH 这条路径展开 —— 它是最早的一条，其余几个是照着它的形状做的。
+本页其余部分介绍 SSH 路径。其他后端提供相同的接口。
 
 ## 架构概览
 
@@ -60,33 +60,17 @@ description: SSH 终端的内部工作原理
 
 ```dart
 Future<TerminalSession> createSession(Spi spi) async {
-  // 1. 获取 SSH 客户端
-  final client = await genClient(spi);
-
-  // 2. 创建 PTY
-  final pty = await client.openPty(
-    term: 'xterm-256color',
-    cols: 80,
-    rows: 24,
-  );
-
-  // 3. 初始化终端模拟器
-  final terminal = Terminal(
-    backend: PtyBackend(pty),
-  );
-
-  // 4. 设置调整尺寸处理程序
-  terminal.onResize.listen((size) {
-    pty.resize(size.cols, size.rows);
-  });
-
-  return TerminalSession(
-    terminal: terminal,
-    pty: pty,
-    client: client,
-  );
+  final session = TerminalSession(source: ServerSource(spi));
+  await session.connect();
+  final shell = await session.openShell();
+  if (shell == null) throw StateError('No shell backend');
+  session.bindForeground(shell);
+  return session;
 }
 ```
+
+会话的 backend 使用 `SSHPtyConfig` 创建 SSH PTY，并负责 shell 生命周期。同一个
+`TerminalSession` 形状也用于本机和 monitor agent backend。
 
 ### 2. 终端模拟
 
@@ -103,7 +87,7 @@ xterm.dart 分支提供：
 - 基于行的渲染
 - 双向文本支持
 - Unicode/Emoji 支持
-- 优化重绘
+- 减少不必要的重绘
 
 ### 3. 数据流向
 
@@ -169,7 +153,7 @@ class TerminalTabs {
 
 虚拟键盘是所有平台通用的 Flutter widget,渲染在终端上方
 (可用按键定义在 `lib/data/model/ssh/virtual_key.dart`),
-移动端与系统键盘同时显示。
+在移动端，虚拟键盘与系统键盘同时显示。
 
 ### 键盘按键
 
@@ -209,7 +193,7 @@ class TerminalDimensions {
 }
 ```
 
-### 捏合缩放 (Pinch-to-Zoom)
+### 捏合缩放（Pinch-to-Zoom）
 
 ```dart
 GestureDetector(
@@ -230,7 +214,7 @@ GestureDetector(
 ## 性能
 
 xterm.dart fork 使用自定义 painter 渲染,仅在终端内容更新时重绘;
-输出写入会先缓冲合并,再送入终端模拟器。
+输出会先缓冲并合并，再传给终端模拟器。
 
 ## 特色功能
 

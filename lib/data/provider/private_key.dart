@@ -22,7 +22,7 @@ class PrivateKeyNotifier extends _$PrivateKeyNotifier {
   }
 
   void reload() {
-    Stores.key.invalidateCache();
+    Stores.key.dropCache();
     final newState = _load();
     if (newState == state) return;
     state = newState;
@@ -33,31 +33,37 @@ class PrivateKeyNotifier extends _$PrivateKeyNotifier {
     return stateOrNull?.copyWith(keys: keys) ?? PrivateKeyState(keys: keys);
   }
 
-  void add(PrivateKeyInfo info) {
+  Future<void> add(PrivateKeyInfo info) async {
     final newKeys = [...state.keys, info];
-    state = state.copyWith(keys: newKeys);
     Stores.key.put(info);
-    bakSync.sync(milliDelay: 1000);
-  }
-
-  void delete(PrivateKeyInfo info) {
-    final newKeys = state.keys.where((e) => e.id != info.id).toList();
     state = state.copyWith(keys: newKeys);
-    Stores.key.delete(info);
     bakSync.sync(milliDelay: 1000);
   }
 
-  void update(PrivateKeyInfo old, PrivateKeyInfo newInfo) {
+  Future<void> delete(PrivateKeyInfo info) async {
+    final newKeys = state.keys.where((e) => e.id != info.id).toList();
+    Stores.key.delete(info);
+    state = state.copyWith(keys: newKeys);
+    bakSync.sync(milliDelay: 1000);
+  }
+
+  /// The id never changes, so this is one write either way. The branch that
+  /// deleted the old record existed because the id *was* the name — and with
+  /// ids equal it deleted the record it had just written.
+  Future<void> update(PrivateKeyInfo old, PrivateKeyInfo newInfo) async {
+    if (old.id != newInfo.id) {
+      // `EntityStore.update` refuses this; going straight to `put` would let a
+      // caller insert a second record under the name of the first.
+      throw ArgumentError('cannot change the id of a PrivateKeyInfo');
+    }
     final keys = [...state.keys];
     final idx = keys.indexWhere((e) => e.id == old.id);
     if (idx == -1) {
       keys.add(newInfo);
-      Stores.key.put(newInfo);
-      Stores.key.delete(old);
     } else {
       keys[idx] = newInfo;
-      Stores.key.put(newInfo);
     }
+    Stores.key.put(newInfo);
     state = state.copyWith(keys: keys);
     bakSync.sync(milliDelay: 1000);
   }

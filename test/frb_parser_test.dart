@@ -8,7 +8,6 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
-import 'package:server_box/data/model/app/scripts/script_consts.dart';
 import 'package:server_box/src/rust/api/parser.dart';
 import 'package:server_box/src/rust/api/script.dart' as script;
 
@@ -183,7 +182,6 @@ void main() {
       expect(specs, isNotEmpty, reason: system);
       expect(specs.map((s) => s.key), contains('cpu'));
     }
-    expect(separator(), 'SrvBoxSep');
   });
 
   test('buildScript smoke via FFI', () {
@@ -249,32 +247,45 @@ void main() {
   });
 
   test('parseScriptSegments round-trip via FFI', () async {
-    // Markers carry their name base64url-encoded so command output can never
-    // be mistaken for one; see sbm_parser::script::ENCODED_NAME_PREFIX.
-    String marker(String sep, String name) =>
-        '$sep.b64.${base64Url.encode(utf8.encode(name))}';
+    expect(
+      script.containsScriptSegment(raw: 'SrvBoxSep.time\nnot a marker'),
+      isFalse,
+    );
 
     final raw = [
-      marker(ScriptConstants.separator, 'time'), '123',
-      marker(ScriptConstants.customCmdSep, 'x'), 'hello',
+      script.scriptSegmentMarker(key: 'time', custom: false), '123',
+      script.scriptSegmentMarker(key: 'x', custom: true), 'hello',
       // A custom command named after a built-in section, plus output that
       // looks like an unencoded marker
-      marker(ScriptConstants.customCmdSep, 'time'), 'SrvBoxSep.host',
+      script.scriptSegmentMarker(key: 'time', custom: true), 'SrvBoxSep.host',
       '',
     ].join('\n');
 
+    expect(script.containsScriptSegment(raw: raw), isTrue);
+    expect(script.containsStatusSegment(raw: raw), isTrue);
+    expect(
+      script.containsStatusSegment(
+        raw: '${script.scriptSegmentMarker(key: 'x', custom: true)}\nhello',
+      ),
+      isFalse,
+    );
+
     final segments = await script.parseScriptSegments(raw: raw);
     final map = {for (final s in segments) s.key: s.value};
+    final customX = script.customResultKey(name: 'x');
+    final customTime = script.customResultKey(name: 'time');
     expect(map['time'], '123');
-    expect(map[ScriptConstants.customResultKey('x')], 'hello');
+    expect(map[customX], 'hello');
     // The namespaced key is what the app reads, and it did not clobber 'time'
-    expect(map[ScriptConstants.customResultKey('time')], 'SrvBoxSep.host');
+    expect(map[customTime], 'SrvBoxSep.host');
+    expect(script.customResultName(key: customX), 'x');
+    expect(script.customResultName(key: 'time'), isNull);
     // Order is preserved, which is the only record of how the user arranged
     // their custom commands once those live on the server.
     expect(segments.map((s) => s.key).toList(), [
       'time',
-      ScriptConstants.customResultKey('x'),
-      ScriptConstants.customResultKey('time'),
+      customX,
+      customTime,
     ]);
   });
 

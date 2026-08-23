@@ -9,7 +9,6 @@ import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/private_key/edit.dart';
-import 'package:server_box/view/widget/page_columns.dart';
 
 class PrivateKeysListPage extends ConsumerStatefulWidget {
   const PrivateKeysListPage({super.key});
@@ -50,7 +49,7 @@ class _PrivateKeyListState extends ConsumerState<PrivateKeysListPage>
 
   Widget _buildKeyItem(PrivateKeyInfo item) {
     return ListTile(
-      title: Text(item.id),
+      title: Text(item.name),
       subtitle: Text(item.type ?? libL10n.unknown, style: UIs.textGrey),
       onTap: () => PrivateKeyEditPage.route.go(
         context,
@@ -69,13 +68,14 @@ class _PrivateKeyListState extends ConsumerState<PrivateKeysListPage>
 extension on _PrivateKeyListState {
   void _autoAddSystemPriavteKey() async {
     // Only trigger on desktop platform and no private key saved
-    if (isDesktop && Stores.snippet.box.keys.isEmpty) {
+    if (isDesktop && Stores.key.keys().isEmpty) {
       final home = Pfs.homeDir;
       if (home == null) return;
       final idRsaFile = File(home.joinPath('.ssh/id_rsa'));
       if (!idRsaFile.existsSync()) return;
       final sysPk = PrivateKeyInfo(
-        id: 'system',
+        id: ShortId.generate(),
+        name: 'system',
         key: await idRsaFile.readAsString(),
       );
       context.showRoundDialog(

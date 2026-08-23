@@ -1,3 +1,4 @@
 rust_input: crate::api
 rust_root: crates/sbm_ffi/
 dart_output: lib/src/rust
+rust_format: false

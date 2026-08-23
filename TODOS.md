@@ -106,13 +106,66 @@ relay 服务,而不是(或者除了)在本地直接对外提供面板访问;面�
   决定放哪个 crate/仓库、怎么部署、TLS/域名怎么搞,这和现在"每个 agent 一个
   单体二进制"的假设不一样,是本仓库目前唯一的例外
 
-## sbm_ffi:Swift Package Manager 支持
+## 原生构建全部改走 Dart build hooks,CocoaPods 已移除(只验过 macOS / iOS)
 
-Flutter 3.44 起 SPM 是默认路径,`flutter build ios/macos` 会对 `sbm_ffi` 报
-"The following plugins do not support Swift Package Manager"。项目里其他 13 个
-plugin 都已走 SPM(见生成的 `FlutterGeneratedPluginSwiftPackage/Package.swift`),
-只剩 `sbm_ffi` 靠 CocoaPods —— `ios/Podfile.lock` 和 `macos/Podfile.lock` 里都只有
-它一个 pod。混合模式在 3.44 下可用,警告不阻塞构建,但 Flutter 声明未来会变成 error。
+**状态(2026-08-19):已合入。** cargokit 五个接入点和整个 `cargokit/` 目录已删,
+`crates/sbm_ffi` 不再是 Flutter plugin,改由根目录 `hook/build.dart` 编译。
+FRB 升到 `2.13.0-beta.6`(Rust 与 pubspec 两处)。
+
+已验证:macOS 与 iOS 构建通过,产物里有 `sbm_ffi.framework`,两个
+平台都不再有 `Podfile`。`flutter test test/frb_parser_test.dart`
+与 `cargo test --workspace` 通过。
+
+`flutter_pty` 也一起做了:`packages/flutter_pty` 是
+[TerminalStudio/flutter_pty](https://github.com/TerminalStudio/flutter_pty) 的
+fork,把同样的五个平台构建集成换成一个 `hook/build.dart`(用 `native_toolchain_c`)。
+上游最后一个版本是 0.4.2(2025-01),没有 `Package.swift`,唯一那个 SwiftPM PR
+(#21)只做了 macOS 且无人回应。
+
+**Android 已验证(2026-08-20,本机)。** `dart run fl_build -p android` 通过,产出
+`ServerBox_1491_{arm64,arm,amd64}.apk` 三个 split-per-abi 包。arm64 那个在 Android 16
+真机(arm64-v8a)和 arm64 模拟器上都装得上、跑得起来。`RustLib.init()` 在
+`main.dart:103`、`runApp` 之前,FRB 版本对不上会在这里抛异常——两台设备都正常启动,
+所以 `hook/build.dart` 给 `aarch64-linux-android` 编出的 dylib 是能加载的。
+
+**仍未验证:Linux / Windows。** 这两个平台原先走 cargokit 的 CMake,现在改走同一个
+hook,本机没跑过。各跑一次 `dart run fl_build -p <platform>`。
+
+**核对(2026-08-19):hook 路径在 CI 上一次都没跑过。** `build.yml` 只在 `v*` tag
+或手动 dispatch 时触发,最后一次是 v1.0.1491(08-18 05:23),而 `hook/build.dart`
+是 08-19 才随 #1317 合入的(`git cat-file -e v1.0.1491:hook/build.dart` 不存在)。
+所以那次里 windows / linux / ios 三个 success 走的还是 cargokit,不能拿来当验证。
+
+同一次的 Build android 失败,报 AGP 8.9.1 低于 Flutter 要求的 8.11.1。这个原因已经
+不在了:`android/settings.gradle` 在当天 15:00 由 #1234 升到 8.11.1,比那次构建晚
+十小时。本机构建已经能过,但 CI 上仍未跑过。打个 tag 或手动 dispatch 一次
+`build.yml`,五个平台一起就都验证了。
+
+**CocoaPods 已彻底移除。** `Podfile`、`Podfile.lock`、`Pods/`、xcconfig 里的
+`Pods-Runner` include、workspace 里的 `Pods.xcodeproj` 引用、两个 pbxproj 里所有
+Pods 条目都没了。原先担心的 "non-standard Podfile" 其实只是 Flutter 标准模板,
+没有自定义 pod 也没有额外逻辑。Watch app 和 widget extension 都验过在 iOS 产物里。
+
+两条注意事项:
+- **不要用 `flutter_rust_bridge_codegen integrate`。** 它是给新项目的脚手架:
+  在本仓库上跑会重新格式化 188 个文件、脚手架出一个新的 `rust/` crate、`hook/`、
+  `test_driver/`,并且把 7 个 submodule 也一起格式化。`generate` 是安全的
+  (它的 `dart fix` 只作用于生成目录,实测不外溢)。
+- **FRB 2.13.0 至今只有 beta。** native-assets 后端要求 `>= 2.13.0-beta.2`,
+  stable 仍停在 2.12.0。这是本项目目前唯一钉在 prerelease 上的依赖。
+
+以下是当初的分析,留作记录。
+
+## sbm_ffi:脱离 CocoaPods 的原分析
+
+Flutter 3.44 起 SPM 是默认路径。SPM 本身已经生效——13 个 plugin 走的是生成的
+`{ios,macos}/Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage/Package.swift`
+——剩下的走 CocoaPods 回退。**回退里有两个 pod,不是一个**:`sbm_ffi` 和
+`flutter_pty`(`~/.pub-cache/hosted/pub.dev/flutter_pty-0.4.2` 只有 podspec,
+没有 `Package.swift`)。两个 `Podfile.lock` 的 `DEPENDENCIES` 都列着这两个。
+
+时限不是 Flutter 定的:CocoaPods trunk 于 **2026-12-02 永久只读**,Flutter 声明
+回退会在那之后移除,具体日期未定。
 
 卡点:`crates/sbm_ffi/{ios,macos}/sbm_ffi.podspec` 靠 CocoaPods 的 `script_phase`
 调 `cargokit/build_pod.sh` 编 Rust,再用 `-force_load` 链接 `libsbm_ffi.a`。
@@ -125,17 +178,46 @@ plugin 都已走 SPM(见生成的 `FlutterGeneratedPluginSwiftPackage/Package.sw
 - cargokit 上游已于 2026-03-26 归档,irondash/cargokit#106 提了这件事,无人跟进
 - flutter_rust_bridge 的 SPM PR(fzyzcjy/flutter_rust_bridge#3315)未合并
 
-两条候选路线(都还没做):
-- **预编译 xcframework**:给 `crates/sbm_ffi/{ios,macos}/sbm_ffi/` 写 `Package.swift`,
-  用 `.binaryTarget` 指向预先构建好的 `sbm_ffi.xcframework`,cargo 编译移到
-  Makefile / fl_build 的 pre-build 步骤,绕开 sandbox。代价:在 Xcode 里直接 Run
-  不会重编 Rust,容易用到旧产物;要额外维护打包脚本和 `-force_load` 处理
-- **Dart native assets**:删掉 cargokit,改用 `hook/build.dart` +
-  `native_toolchain_rust`,五个平台统一,不再需要 podspec 或 Package.swift。代价:
-  Flutter native assets 仍是实验特性(`--enable-native-assets`),FRB 侧
-  `ExternalLibrary` 的加载方式(`frb_generated.dart` 的 `stem`/`ioDirectory`)要改
+**结论改为走 Dart build hooks**,不再等 SPM。原先记的"native assets 仍是实验
+特性(`--enable-native-assets`)"已不成立:build hooks 自 **Flutter 3.38 /
+Dart 3.10** 起 stable,无需任何 flag,本项目在 Flutter 3.47 / Dart 3.13。走 hooks
+意味着 sbm_ffi 既不需要 podspec 也不需要 `Package.swift`,五个平台统一,
+CocoaPods 那条时限对它不再适用。
 
-现状决定:先维持混合模式,等 FRB #3315 合并或 native assets 转正再动。
+做法:`flutter_rust_bridge_codegen integrate --integration-backend native-assets`
+生成 `crates/sbm_ffi/hook/build.dart`(经 `flutter_rust_bridge_hooks` 调
+`native_toolchain_rust`),删掉 cargokit 的 5 个接入点(`{ios,macos}` podspec、
+`{linux,windows}/CMakeLists.txt`、`android/build.gradle`)和 `cargokit/` 目录,
+`pubspec.yaml` 的五平台 `ffiPlugin: true` 声明随之去掉。另需新增
+`rust-toolchain.toml`(该后端要求钉具体 toolchain + targets,仓库现在没有);
+`crate-type = ["cdylib", "staticlib"]` 已经是对的。
+
+**未解的两件事:**
+- **后端只有 beta。** 要求 `flutter_rust_bridge_codegen >= 2.13.0-beta.2`,而
+  2.13.0 至今无 stable(最新 `2.13.0-beta.6`),stable 仍是项目现钉的 2.12.0
+  (`crates/sbm_ffi/Cargo.toml` 与 `pubspec.yaml` 两处)。要么接受 beta,要么等,
+  而 12-02 在前面
+- **`flutter_pty` 不在这条路上。** 它是普通 Flutter plugin 不是 FFI plugin,
+  hooks 解决不了。sbm_ffi 迁完 Podfile 仍删不掉,除非上游支持 SPM 或本地 fork
+
+被这条替代的旧路线(留作记录):预编译 xcframework + `.binaryTarget`。代价是在
+Xcode 里直接 Run 不会重编 Rust,容易用到旧产物,还要维护打包脚本和 `-force_load`。
+hooks 路线没有这些问题。
+
+## Android:wakelock_plus 把 Kotlin language version 钉在 2.1
+
+`wakelock_plus` 的 pigeon 输出 `WakelockPlusMessages.g.kt` 没有 `package` 声明,所以
+同目录的 `Wakelock.kt` 用 `import IsEnabledMessage` / `import ToggleMessage` 从 root
+package 导入。Kotlin 2.2 不接受这种导入,`:wakelock_plus:compileReleaseKotlin` 报
+unresolved reference,Android release 构建直接失败。
+
+两头都堵死:pub 上从 1.3.2 到最新的 1.7.0(2026-07-21)每个版本都是这么写的,降级
+这个包没用;把 KGP 降到 2.1.21 又会被 Flutter 的 gradle plugin 拒绝,它要求
+`>= 2.2.20`。
+
+现在的做法在 `android/build.gradle`:一个 `subprojects` 块,只对 `wakelock_plus` 这个
+module 把 `languageVersion` 设成 `KOTLIN_2_1`,app 自己的 Kotlin 不受影响。代码里已标
+TODO——上游哪天带着 package 声明重新生成,这段就该删。
 
 ## monitor:cpu_core_metrics / velocity_metrics 是只写表
 
@@ -216,6 +298,10 @@ agent 的那条完整路径。
 跑一次那个 workflow 就能解开。在那之前,离线包那条路(`SBM_INSTALL_PKG=<目录或 tarball>`)
 是唯一能装成的方式,它本身也是内网服务器需要的。
 
+2026-08-23 在一台 NixOS 25.11 aarch64 上实跑确认了这条:`./install.sh install` 第一句
+就是那个错,连发行版兼容性都没机会暴露。所以任何"monitor 在 X 上能不能装"的问题,
+现在都问不出结果 —— 先发一次 release,或者先构一个离线包。
+
 ## macOS 两套产物:App Store 版什么时候停更
 
 自动导入已在真机上验过:keychain 两个 build 通用,容器读取不弹窗。剩下的是一个决定
@@ -277,7 +363,173 @@ agent 的那条完整路径。
   被拒,是**整个 app 的下一次更新被卡住** —— 止血开关就是为这个存在的。这一条决定其余
   是否值得做完。
 
+## iOS:多个内核 / 真隔离
+
+多个 profile 同时运行走的是「一个内核多个 root」。如果要的是**互相隔离**,下面是
+2026-08-21 查过的结论,免得以后再问一遍。
+
+**同进程两个内核:能做,代价是引擎从此结构性分叉。** iSH 的内核状态是文件作用域全局:
+
+| 状态 | 位置 |
+| --- | --- |
+| 挂载表 | `fs/mount.c:212` `struct list mounts` |
+| tty 驱动表 | `fs/tty.c:12` `tty_drivers[256]` |
+| pid 表的锁 | `kernel/task.c:14` `pids_lock` |
+| pty 编号 | `fs/pty.c:148` `pty_reserve_next`,文件作用域 static |
+
+kernel/ 与 fs/ 下这一类大约六十几个。`current` 已经是 `__thread`
+(`kernel/task.c:11`),任务本身不是障碍。要多实例就得引入 `struct kernel*` 穿过上述
+每一处,并永远维护一个和上游分叉的 fork —— 而本仓库的 fork 现在还在往上游 rebase 修复。
+
+而且做完也不是隔离:两个内核共享宿主地址空间和宿主 fd,任一侧崩溃整个 app 一起走。
+
+**两个进程:iOS 上做不到。** App Store 应用不能 fork/exec —— 这正是当初要有这个解释器
+的原因。App Extension 是独立进程但由系统拉起,有自己的内存上限和生命周期,不是能跑
+Linux 的地方。
+
+所以 iOS 上真隔离拿不到,只能接受「一个内核多个 root」的后果:PID 空间共享、`/proc`
+互相看得见、网络共享、`/dev/pts` 编号全局。Android 侧 proot 每会话一个宿主进程,本来
+就是分开的。
+
+## 后台保活
+
+**iOS:能拿到约 30 秒,拿不到持续运行。**
+
+现在 `ios/Runner/Info-Debug.plist:69` 和 `Info-Release.plist:61` 的 `UIBackgroundModes`
+只有 `fetch`。各机制的实际约束:
+
+- `fetch` —— 系统调度的机会性短唤醒,几秒量级,时机不由 app 定
+- `beginBackgroundTask` —— 进后台约 30 秒宽限,然后进程被**挂起**。是冻结不是杀死,
+  会话状态还在、回前台能接着走;挂起期间不跑 CPU,guest 停在半条指令上。挂起中被
+  jetsam 回收时也不会先跑你的代码
+- `BGProcessingTask` —— 设备空闲、通常充电时跑,分钟级,系统排期
+- `audio` / `location` / `voip` 给持续执行,但都是干它们各自的事的;播静音音频按
+  2.5.4 会被拒
+- Live Activity(`ios/Runner/LiveActivityManager.swift`)不给后台执行权,是展示面
+
+**`BGContinuedProcessingTask`(iOS 26.0+)是目前唯一名正言顺的机制。** 以下都是从
+iPhoneOS26.5.sdk 的头文件读的:
+
+- `BGTaskRequest.h:134` —— "A request to begin a workload immediately, or shortly after
+  submission, which is allowed to continue running even if the app is backgrounded."
+- 必须用户发起,带 `title` / `subtitle`,系统给一个 Live Activity 展示进度
+  (`BGTask.h:136-142` 的 `updateTitle:subtitle:`)
+- 必须通过 `NSProgressReporting` 持续汇报进度,**看起来卡住的任务会被强制过期**
+  (`BGTask.h:124-126`)
+- `Queue` 策略下,用户从 app switcher 划掉 app 就取消(`BGTaskRequest.h:110-113`)
+- 基础用法不需要额外 entitlement,只有后台 GPU 需要
+  (`com.apple.developer.background-tasks.continued-processing.gpu`)
+
+它是**任务**不是**保活**:能托住「跑完这个编译」,托不住一个交互式 shell 干等。
+
+**目标设备的 iOS 版本是硬约束。** 手上验证用的 iPad Pro 11" 三代是 iOS 18.7.8,用不上
+这条。
+
+**Android:`bgRun` 的实际覆盖面没有核对过。** 设置项在 `lib/data/store/setting.dart:58`
+(默认 `isAndroid`),但它接的到底是什么、有没有前台服务和常驻通知,**尚未查证**。已知
+缺口是国产 ROM:前台服务 + 常驻通知只是及格线,还要处理各家的自启动白名单和电池优化
+豁免,否则仍然经常被杀。深度睡眠下被杀属于预期。
+
+## 终端:iOS 上按住一个键不重复
+
+按住 backspace 不会连续删,只能反复点。**iOS 这条路径不产生任何按键重复**,不是事件
+类型的问题。
+
+实测(2026-08-21,模拟器 lk17p,在 `_handleKeyEvent` 两处打时间戳):
+
+```
+60313 hw   KeyDownEvent Backspace
+60313 view KeyDownEvent Backspace
+64879 hw   KeyUpEvent   Backspace     ← 4566ms 之后
+```
+
+按住 4.5 秒,一个 Down 一个 Up,中间什么都没有。后续那串 Down/Up 成对、间隔约 160ms
+的是手点——真正的自动重复是**连续 Down 不带 Up**。
+
+连带结论:`packages/xterm/lib/src/terminal_view.dart:646` 里
+`event is! KeyRepeatEvent` 那半个条件在 iOS 上是死代码,`KeyRepeatEvent` 根本不会到。
+
+做法:自己做重复。KeyDown 起定时器(初始延迟约 500ms,之后约 40ms 一次),KeyUp、
+失焦、或另一个键按下时停。
+
+放哪儿有取舍:
+
+- **xterm fork(`terminal_view.dart`)** —— 覆盖所有终端,挨着 `_sendTerminalKey`,
+  重发路径现成;代价是又一处 fork 改动
+- **app 的 `_handleKeyEvent`** —— 不碰 fork,但**可打印字符走的是 IME 文本通道而不是
+  `keyInput`**,所以 `a` 和 backspace 要分两条路重发
+
+倾向 xterm,且先只做特殊键(backspace、方向键、Tab):终端里按住字母连打的需求远低于
+按住退格。
+
+未验证:真机(iPad + 硬件键盘)是否同样不重复。如果真机会重复,那这就是模拟器特有的,
+优先级要降。
+
 ## Hive → SQLite:分阶段做,以及加密怎么落
+
+**状态(2026-08-19):三个阶段都已合入。** 第三阶段超出了本节原来的计划,更正见
+下面「第二阶段」那段。
+
+**已在 Android 设备上验证(2026-08-20)。** 之前只有 `flutter test` 这一层证据。
+
+做法:模拟器 `pm clear` 之后,把 `test/fixtures/hive_v1466/` 的盒子放进
+`app_flutter/`,同时把测试用的那把 key(`Random(1)` 生成 32 字节再 base64url)以
+`flutter.hive_key` 写进 `shared_prefs/FlutterSharedPreferences.xml` ——
+`_HiveEnc._encryptionKey` 和 `_StoreSecret.read()` 在 secure storage 为空时都会回落到
+prefs,并顺手把它迁进 secure storage。然后直接用 1491 启动。
+
+结果和单元测试的期望逐项相同:`server` 5、`conn_stat` 120(五种 `ConnectionResult`
+各 24)、`private_key` 2、`snippet` 3(含 CJK/emoji 那条)、`port_forward` 2、
+`container_host` 2;子表 `server_tag` 4、`server_env` 2、`server_jump` 2、
+`server_custom_cmd` 2、`server_disabled_cmd` 2、`snippet_tag` 2;`kv` 里
+`setting` 19 + `history` 2;`__lkpt_schemaVersion` = 5、`__lkpt_hiveImported` = true;
+`conn_stats_index.hive` 已删除。五台服务器的形态(password auth、key auth、jump
+host、ProxyCommand、无可选字段)都落在对的列上。
+
+真机那半也走了一遍:线上 1466 的 APK(versionCode 146603)直接覆盖装成本地构建的
+149103,签名同证书所以不用卸载,启动无 crash、无 `SchemaTooNewException`,用户的数据
+还在。
+
+两条下次会用到的:
+
+- **测迁移不要先启动旧版本。** 先让 1466 跑一分半再升级,拿到的是 `server` 6、
+  `conn_stat` 18 —— 1466 在运行期间自己改写了盒子(`connection_stats_enc.hive` 从
+  15240 涨到 54897)。多出来那台 server 的来源原因未查明。
+- **`store.db` 和 Hive 用同一把 key**(`SecureStoreProps.hivePwd`,见
+  `fl_lib` 的 `_StoreSecret`)。所以只要 key 是自己植入的,就能把库 pull 下来用
+  `PRAGMA cipher = 'chacha20'` + `PRAGMA key = "x'<hex>'"` 打开数行数。真机上做不到
+  这一步:release 包 `debuggable=false`,`run-as` 被拒,又没有 root,`/data/data/`
+  完全读不到,只能看界面。库级核对需要可 root 的模拟器。
+
+已做:
+- `SqliteStore` 在 fl_lib(`store/sqlite.dart`),七个 K-V store 换过去,写入
+  一律 JSON,75 处 `.box.` 已收敛。
+- `connection_stats`(`conn_stat` 表)和 `agent_conversation`
+  (`agent_conversation` + `agent_active` 两表)已关系化,各带索引。
+  `conn_stats_index` 那个未加密的盒子随之消失,明文文件在导入时删除。
+- `HiveImport` 负责一次性导入并记 schema v4。
+- **实体表(#1322,m004)。** `server` / `private_key` / `snippet` /
+  `port_forward` 各自一张表,列表和 map 字段落到子表(`server_tag`、
+  `server_env`、`server_jump`、`snippet_tag`、`container_host` 等)。主键一律是
+  生成的 id,名字是带 `UNIQUE` 的普通列。DDL 由 Drift 声明
+  (`lib/data/store/db.dart`),查询手写且同步。`Tables.syncRoots` 是同步的单位。
+
+未做 / 遗留:
+- **`lib/hive/`、`hive_ce*` 依赖、`main.dart` 里的 `Hive.initFlutter()` 都还在。**
+  `@GenerateAdapters` 现在是 11 个类型,外加 `legacy_adapters.dart` 里冻结在
+  发布版写法上的 `Snippet` 和 `PrivateKeyInfo`(改动它们会让旧盒子打不开,
+  所以不再重新生成)。它们只用于一件事:让 `HiveImport` 读得懂旧盒子。没有任何
+  代码再往 Hive 写。这些要等到没有受支持的安装还停在 Hive 上才能删,`HiveImport`
+  和 `SpiLegacyAdapter` 同批(代码里已标 TODO)。
+- `~/Library/Application Support/ServerBox/app.db` 那批文件还躺在开发机上(见本节
+  末尾)。代码侧已经不认它了。
+
+**一处没有覆盖到的路径:v2 记录的导入。** `HiveImport` 会把 `LegacySpiV2`
+转成 `Spi`(原 `SpiNestSshMigration` 做的事),但没有测试跑过它 ——
+`SpiLegacyAdapter.write` 按设计抛异常,所以测试造不出 v2 的盒子,除非再注册
+一个只在测试里用的可写 adapter,而 Hive 按运行时类型解析写入,两个 adapter
+认领同一个类型会让行为取决于注册顺序。覆盖面是「装了 v3 版本之前的包、之后
+一直没启动过」的安装。`test/hive_import_test.dart` 覆盖的是 v3 那条路。
 
 想换的理由有三条:Hive 把整个盒子读进内存、compact 靠重写整个文件;它只加密 value,
 key 和盒子结构在文件里是明文;`hive_ce` 是社区接手的 fork。本机实测的盒子大小:
@@ -308,63 +560,130 @@ provider、backup、SFTP 页面、server 编辑页全被卷进去了。
   上一版的改动摊到 34 个文件,主要就是这一条带出来的。
 - **K-V blob → 关系化 schema**:不必须,而且只有少数 store 值得。
 
-第一阶段只动引擎,`Store` 接口不变,上层零改动:
+第一阶段只动引擎,`Store` 接口不变:
 
-```
-kv(store TEXT, key TEXT, value BLOB, updated_at INTEGER, PRIMARY KEY(store, key))
+```sql
+kv(store TEXT, key TEXT, value TEXT /* JSON */, updated_at INTEGER, PRIMARY KEY(store, key))
 ```
 
 `HiveStore` 换成 `SqliteStore`,`get`/`set`/`keys`/`clear`/`lastUpdateTs` 一一对应;
 `box.watch()` 换成自己发的 per-key 通知,`HivePropListenable` 那套 `_BoxListenerManager`
-逻辑可以整个搬过去。providers、backup、UI 一行不用改。
+逻辑可以整个搬过去。
+
+两条原先没算到的成本:
+
+- **`SqliteStore` 必须写在 fl_lib 里。** `Store` 是 `sealed class`
+  (`packages/fl_lib/lib/src/core/store/iface.dart`),sealed 限制子类与基类同一
+  library;`hive.dart` / `pref.dart` / `mock.dart` 都是 `part of 'iface.dart'`。
+  所以这是跨仓库改动,不是 app 内部的事。
+- **"上层零改动"只对 `Store` 的调用方成立,对直接摸 `box` 的地方不成立。**
+  `rg -n '\bbox\.' lib/` = 75 处 / 18 文件。其中 `data/model/app/bak/backup.dart`
+  独占 32 处,全是为了绕开 `lastUpdateTs` 而直接 `box.put/keys/delete/putAll`
+  ——这些改用已有的 `updateLastUpdateTsOnSet: false` 参数即可,不需要 box。
+  store 外部另有 5 处:`core/service/watch_sync.dart`(`box.watch()`)、
+  `view/page/server/edit/actions.dart`(`box.keys`)、
+  `view/page/setting/entries/app.dart`(备份加密,同 backup.dart)、
+  `data/store/migrations/m002_nest_ssh.dart`。
+
+序列化随之从 TypeAdapter 二进制换成 JSON。覆盖情况已逐个核对:9 个类都有
+`fromJson`(freezed 模型自带 `toJson`),7 个是 enum(按 name 存),setting 里的
+virt keys 本来就存 `List<int>`,`agent_conversation` 本来就存 JSON Map。
+
+**但 17 个 adapter 和 `lib/hive/` 没有删** —— 运行时不再用它们,`HiveImport`
+读旧盒子还要靠它们解码。删除时机见本节开头的"未做 / 遗留"。
 
 第二阶段只关系化真正需要 SQL 的:
 
-- **`connection_stats`**:现在为了做时间窗口查询,额外开了一个不加密的 `conn_stats_index`
-  盒子,外加手写的 `_rebuildIndexCore` / `_compactIfNeeded` / 每服务器 100 条上限。这一整套
-  在 SQL 里是一条 `DELETE WHERE timestamp < ?` 加一个索引。
-- **`agent_conversation`**:同理。
-- `setting` / `server` / `snippet` / `key` / `history` 留在 K-V。它们都在 10KB 以下,
-  关系化只换来迁移工作量——上一版的 diff 就是证据。
+- **`connection_stats`**:现在为了做时间窗口查询,额外开了一个 `conn_stats_index`
+  盒子,外加手写的 `_rebuildIndexCore` / `_updateIndex` / `_pruneExcessRecords` /
+  `_compactIfNeeded` / 每服务器 100 条上限。这一整套在 SQL 里是一条
+  `DELETE WHERE timestamp < ?` 加一个索引。
+  **那个索引盒子是未加密的**——`connection_stats.dart` 开它时没传 `encryptionCipher`,
+  本机实测 114 KB 明文存着 110 条 `<serverId>_<毫秒时间戳>`,比它索引的那个加密盒子
+  还大。这是目前唯一一处现存的泄露,关系化之后随表消失(整库加密,索引也在库内)。
+- **`agent_conversation`**:同理。`fetchForServer` 现在是全表扫加内存排序。
+- `setting` / `server` / `snippet` / `key` / `history` / `docker` / `port_forward`
+  留在 K-V。它们都在 10KB 以下,关系化只换来迁移工作量——上一版的 diff 就是证据。
 
-### 加密:两条路
+**最后这条是错的,#1322 推翻了它。** 留在 K-V 的只有 `setting` 和 `history`。
+`server` / `key` / `snippet` / `port_forward` / `docker` 都进了表,理由不是大小
+而是约束:私钥的主键曾经是它的名字,改名就把每台指向它的服务器断开,snippet 同理;
+删一台服务器要手写六处清理子记录,漏了四处。这些是 schema 能表达、K-V 表达不了的。
 
-两条都是 SQLCipher(整库加密,包括 key 和索引)。
+### 加密:`package:sqlite3` 3.x + build hooks
 
-- **`sqlcipher_flutter_libs` + `package:sqlite3`**:五个平台都支持;Linux 要 `libssl-dev`、
-  Windows 要 `choco install openssl`(CI 要改);iOS/macOS 装 SQLCipher pod,README 明确写
-  「依赖任何链接普通 sqlite3 的包都会出事」——目前 `pubspec.lock` 里干净,这条不成立,但
-  以后加依赖时要盯着。同步调用是原生的。
-- **Rust `rusqlite` + FRB**:`libsqlite3-sys` 的 `bundled-sqlcipher-vendored-openssl` 把
-  SQLCipher 和 OpenSSL 一起编进去,无系统依赖、无 pod,走现有的 cargokit 出五个平台的产物;
-  同步调用靠 `#[frb(sync)]`。代价:每次 K-V 操作过一次 FFI;而且 CLAUDE.md 写的 FFI 边界
-  原则是「不持有可变状态」,一个数据库连接正好是可变状态,要么破例要么专门论证。
-  注意 Windows 上必须用 vendored-openssl 那个 feature,`bundled-sqlcipher` 单独用只在 Unix
-  上成立。
+**`sqlcipher_flutter_libs` 这条路没了。** 它已废弃(最后版本 `0.7.0+eol`,0.7.0 起
+不再提供任何功能),README 要求改用 `package:sqlite3` 3.x。
 
-**倾向第一条**,而且不要 drift。不用 drift 的理由就是上面第二个决定:它是异步优先的,
-而异步化 `Store` 正是上一版把改动摊开的原因。
+替代方案比原方案好,原因是 CocoaPods:`package:sqlite3` 3.5.1 通过 **Dart build
+hooks** 打包 SQLite,不是 Flutter plugin,既不产生 podspec 也不需要 `Package.swift`。
+配置就是 pubspec 里一段:
 
-### 两个具体的点
+```yaml
+hooks:
+  user_defines:
+    sqlite3:
+      source: sqlite3mc
+```
 
-**密钥要用 raw key,不是 passphrase。** 上一版是 `PRAGMA key = '$escapedKey'`,SQLCipher 会
-把它当口令做 PBKDF2 派生(默认 256000 轮)。而 `SecureStoreProps.hivePwd` 里存的本来就是
+**选 `sqlite3mc` 而不是 `sqlcipher`。** 两者都是整库加密(包括 key 和索引),差别在
+依赖:`sqlcipher` 在 Windows / Linux / Android 链接 OpenSSL,CI 要装系统依赖;
+SQLite3MultipleCiphers 的 cipher 实现内置于源码("There is no direct dependency on
+external projects"),而且它的 cipher 列表里就有一个 SQLCipher 兼容的 AES-256 方案,
+日后要互操作可以切过去。新库没有历史包袱,默认方案即可。
+
+Rust `rusqlite` + FRB 那条路不再考虑:它要先等 sbm_ffi 迁完 build hooks 才能脱离
+CocoaPods(见上面那节),而且 CLAUDE.md 写的 FFI 边界原则是「不持有可变状态」,
+一个数据库连接正好是可变状态。
+
+不用 drift,理由是上面第二个决定:drift 是异步优先的,而异步化 `Store` 正是上一版
+把改动摊到 34 个文件的原因。
+
+**#1322 之后 drift 回来了,但只负责 DDL。** 表结构由它声明和创建,查询仍然是手写的
+同步 SQL(UI 在 build 里读 store),连接也不由它开——`SqliteDb` 开,加 cipher 和
+`foreign_keys` pragma(pragma 是 per connection 的),再把句柄交给 `createTables`。
+`AppDb.schemaVersion` 钉在 1 不动,版本由 `SchemaVersion` 管:要迁移的步骤是读 Hive
+盒子、重映射 id,不是 drift migration 能表达的东西。
+
+### 三个具体的点
+
+**密钥要用 raw key,不是 passphrase。** 上一版是 `PRAGMA key = '$escapedKey'`,会被
+当口令做 PBKDF2 派生(默认 256000 轮)。而 `SecureStoreProps.hivePwd` 里存的本来就是
 `Hive.generateSecureKey()` 产生的 32 字节随机密钥,直接用 `PRAGMA key = "x'<64位hex>'"`
 跳过派生,既快也没有降低强度。
 
 **迁移的形状。** 每个盒子一次,`Stores.init` 之前跑,用现有 cipher 打开 `*_enc.hive`
-逐 key 写进 `kv` 表;成功后**保留** `.hive` 文件若干版本再删,理由和 `SandboxImport` 一样
-——复制过的原件留着,出问题可回退,并且加 TODO 标记删除时机。`BackupV2` 是 JSON,
-和存储引擎无关,不受影响。
+逐 key 转 JSON 写进 `kv` 表;成功后**保留** `.hive` 文件若干版本再删,理由和
+`SandboxImport` 一样——复制过的原件留着,出问题可回退,并且加 TODO 标记删除时机。
+`BackupV2` 是 JSON,和存储引擎无关,不受影响。
+
+**迁移有顺序约束。** 新增 `SchemaVersion` v4 + `m003_hive_to_sqlite`。但 v2→v3 的
+`SpiNestSshMigration` 依赖 `SpiLegacyAdapter` 和 Hive 的 typeId 解码(它直接读
+`store.box`),所以 **m003 必须在 Hive 侧走完 v3 之后跑,m003 落地前不能删 Hive
+依赖**。实际次序:保留 Hive 只读能力 → m002 → m003 → 之后的版本里删 Hive。
+
+### 测试侧
+
+19 个测试文件引用 Hive。各 store 的 `forBox(Box<dynamic> testBox)` 测试构造器换成
+`sqlite3.openInMemory()`。这比 CLAUDE.md 里记的 Hive `bytes: Uint8List(0)` 干净,
+而且不会踩 fake-async 下写锁不释放、`flutter test` 整体挂死那个坑。
+
+落地的形状是 `test/helpers/test_db.dart` 的 `openTestDb()`(openInMemory +
+`foreign_keys` pragma + `createTables`)配各 store 的 `forTest()`。`forTest()` 不再
+换名字——名字由 schema 定死——它存在只是为了让单例的列表缓存不跨测试共享。
 
 ### 顺带要清的残留
 
 上一版分支从没发布,所以下面这些对真实用户不存在,只在开发机上:
 
 - `~/Library/Application Support/ServerBox/app.db` + `app.db-wal`(4KB / 1.7MB,Mar 7),
-  `sqlite3` 已经读不动了。
-- `lib/core/utils/sandbox_import.dart:306` 对 `app.db` 的特判,和 `:375` 跳过 `.db-shm` 的
-  那段——现在是死代码。这轮决定之后,要么删掉,要么改成指向新库。
+  `sqlite3` 已经读不动了。手动删,代码不会再碰它。
+- ~~`sandbox_import.dart` 里对 `app.db` 的特判和跳过 `.db-shm` 的那段是死代码~~
+  ——**已不成立(2026-08-19 核对)**。两处都改成了指向新库:`_isData` 判
+  `name == SqliteDb.fileName`(`store.db`),`_isDataOrSidecar` 判
+  `'${SqliteDb.fileName}-'` 前缀,跳过的是 `'${SqliteDb.fileName}-shm'` 且按精确名
+  而非后缀(用户自己的 `-shm` 文件要照常带过来)。`lib/` 里已经没有 `app.db` 这个
+  字符串。
 
 ## dartssh2:一次写入超过约 32 KiB 会挂住
 

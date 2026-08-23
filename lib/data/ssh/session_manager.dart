@@ -46,6 +46,8 @@ abstract final class TermSessionManager {
   static final Map<String, _Entry> _entries = {};
   static String? _activeId; // For iOS Live Activity
   static Timer? _updateTimer; // Timer for iOS Live Activity updates
+  static Future<void>? _syncing;
+  static bool _syncDirty = false;
   static const _updateInterval = Duration(
     seconds: 5,
   ); // 5-second update interval
@@ -137,7 +139,24 @@ abstract final class TermSessionManager {
     _sync();
   }
 
-  static Future<void> _sync() async {
+  static void _sync() {
+    _syncDirty = true;
+    _syncing ??= _drainSync();
+  }
+
+  static Future<void> _drainSync() async {
+    try {
+      while (_syncDirty) {
+        _syncDirty = false;
+        await _syncLatest();
+      }
+    } finally {
+      _syncing = null;
+      if (_syncDirty) _syncing = _drainSync();
+    }
+  }
+
+  static Future<void> _syncLatest() async {
     // Android: update foreground service notifications
     if (isAndroid) {
       final isRunning = await MethodChans.isServiceRunning();
@@ -167,7 +186,7 @@ abstract final class TermSessionManager {
         // Start timer if not already running
         _updateTimer ??= Timer.periodic(
           _updateInterval,
-          (_) => _updateLiveActivity(),
+          (_) => _sync(),
         );
         // Immediately update for immediate feedback
         await _updateLiveActivity();
@@ -192,14 +211,24 @@ abstract final class TermSessionManager {
       });
       await MethodChans.updateLiveActivity(payload);
     } else {
-      // Multiple connections: show connection count
+      // Several at once: the count in the title, and which ones under it.
+      //
+      // The subtitle used to be a fixed "Multiple SSH sessions active", which
+      // said SSH about whatever was open — two shells inside the Linux
+      // userland on this device included, where nothing is connected to
+      // anything. Their names say what they are without having to classify
+      // them, and the widget holds them to one line.
+      //
+      // The title here is ignored: `LiveActivityManager` localizes it, so that
+      // it follows the language the widget renders in rather than the one the
+      // app was in when this ran.
       final id = _activeId ?? _entries.keys.first;
       final entry = _entries[id];
       if (entry == null) return;
       final payload = jsonEncode({
         'id': 'multi_connections',
-        'title': '$connectionCount connections',
-        'subtitle': 'Multiple SSH sessions active',
+        'title': '$connectionCount',
+        'subtitle': _entries.values.map((e) => e.info.title).join(' · '),
         'startTimeMs': entry.info.startTimeMs,
         'status': TermSessionStatus.connected.toString(),
         'hasTerminal': entry.hasTerminalUI,
@@ -242,6 +271,8 @@ abstract final class TermSessionManager {
     // Cancel any running timers
     _updateTimer?.cancel();
     _updateTimer = null;
+
+    await _syncing;
 
     // Stop the Live Activity
     await MethodChans.stopLiveActivity();

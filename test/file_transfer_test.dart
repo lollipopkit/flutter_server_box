@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/model/file/transfer.dart';
 import 'package:server_box/data/model/file/transfer_status.dart';
@@ -16,6 +16,7 @@ import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 
 import 'helpers/spi_fixture.dart';
+import 'helpers/test_db.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -45,28 +46,20 @@ void main() {
 
   group('where a transfer runs', () {
     late Directory tempDir;
-    late Box<dynamic> settingBox;
-    late Box<dynamic> serverBox;
-    late Box<dynamic> keyBox;
 
     setUp(() async {
       tempDir = await Directory.systemTemp.createTemp('server-box-transfer-');
-      Hive.init(tempDir.path);
-      settingBox = await Hive.openBox<dynamic>('setting_test');
-      serverBox = await Hive.openBox<dynamic>('server_test');
-      keyBox = await Hive.openBox<dynamic>('key_test');
-      getIt.registerSingleton<SettingStore>(SettingStore.forBox(settingBox));
+      await openTestDb();
+      getIt.registerSingleton<SettingStore>(SettingStore.forTest());
       // Building an `SftpFileRef` reads keys and jump servers out of these,
       // which is the work these tests are checking happens on this side.
-      getIt.registerSingleton<ServerStore>(ServerStore.forBox(serverBox));
-      getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore.forBox(keyBox));
+      getIt.registerSingleton<ServerStore>(ServerStore.forTest());
+      getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore.forTest());
     });
 
     tearDown(() async {
       await getIt.reset();
-      await settingBox.close();
-      await serverBox.close();
-      await keyBox.close();
+    await SqliteDb.close();
       await tempDir.delete(recursive: true);
     });
 
@@ -327,7 +320,6 @@ void main() {
     test('an older agent grants nothing it was never asked about', () {
       // `/capabilities` without a `files` field at all.
       final granted = MonitorRemoteAccess.fromJson(const {
-        'tunnel': true,
         'terminal': true,
       });
 
