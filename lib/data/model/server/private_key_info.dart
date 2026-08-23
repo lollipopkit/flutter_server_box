@@ -2,6 +2,8 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'private_key_info.g.dart';
 
+const _unset = Object();
+
 @JsonSerializable()
 class PrivateKeyInfo {
   /// Generated, and what `SshCredential.keyId` points at.
@@ -42,16 +44,20 @@ class PrivateKeyInfo {
 
   Map<String, dynamic> toJson() => _$PrivateKeyInfoToJson(this);
 
+  /// [comment] is nullable and clearing it is a real thing to want, so `null`
+  /// has to mean "clear" rather than "leave alone" — the same sentinel
+  /// `AgentSessionState.copyWith` uses, for the same reason. The other three
+  /// are non-nullable and `null` can only mean "leave alone".
   PrivateKeyInfo copyWith({
     String? id,
     String? name,
     String? key,
-    String? comment,
+    Object? comment = _unset,
   }) => PrivateKeyInfo(
     id: id ?? this.id,
     name: name ?? this.name,
     key: key ?? this.key,
-    comment: comment ?? this.comment,
+    comment: identical(comment, _unset) ? this.comment : comment as String?,
   );
 
   String? get type {

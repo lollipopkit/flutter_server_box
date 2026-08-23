@@ -331,10 +331,6 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
             suggestion: false,
             onSubmitted: (_) => _onTapSave(),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Text(l10n.sshKeyPublicKeyTip, style: UIs.textGrey),
-          ),
           SizedBox(height: MediaQuery.of(context).size.height * 0.1),
           ValBuilder(
             listenable: _loading,

@@ -49,6 +49,7 @@ class _PrivateKeyGeneratePageState
     _nameController.dispose();
     _commentController.dispose();
     _pwdController.dispose();
+    _algorithmTile.dispose();
     super.dispose();
   }
 

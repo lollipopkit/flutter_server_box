@@ -202,20 +202,36 @@ class SshKeyDigest {
   bool get isEmpty => keyType == null && fingerprint == null && comment == null;
 }
 
-/// Remembers what each key said, keyed by the key itself.
+/// Remembers what each key said.
 ///
-/// This is called while building a list row, so once per key per frame. It is
-/// not only a hash: for a key that is not encrypted it decodes the private
-/// blob, which for RSA-4096 means reading six mpints into BigInts. Bounded by
-/// the number of keys, and a changed key is a different string.
+/// This is called while building a list row, so once per key per frame, and it
+/// is not only a hash: for a key that is not encrypted it decodes the private
+/// blob, which for RSA-4096 means reading six mpints into BigInts.
+///
+/// Keyed by a digest of the key rather than by the key. The value holds
+/// nothing secret, but a map keyed by the PEM would keep the private key
+/// reachable for the rest of the run — after the record was edited, and after
+/// it was deleted.
 final _describeCache = <String, SshKeyDigest>{};
+
+/// Enough for any plausible number of keys, and a bound rather than none: a
+/// key edited repeatedly is a new digest every time.
+const _describeCacheLimit = 32;
 
 /// Reads [pem] for what can be shown about it in a list.
 ///
 /// Never throws and never asks for a passphrase: this is for a subtitle, and a
 /// key that cannot be read is one whose subtitle is empty, not an error.
-SshKeyDigest describeSshKey(String pem) =>
-    _describeCache[pem] ??= _describeSshKey(pem);
+SshKeyDigest describeSshKey(String pem) {
+  final id = base64.encode(sha256.convert(utf8.encode(pem)).bytes);
+  final cached = _describeCache[id];
+  if (cached != null) return cached;
+  if (_describeCache.length >= _describeCacheLimit) {
+    // Insertion order, so this is the one seen longest ago.
+    _describeCache.remove(_describeCache.keys.first);
+  }
+  return _describeCache[id] = _describeSshKey(pem);
+}
 
 SshKeyDigest _describeSshKey(String pem) {
   try {

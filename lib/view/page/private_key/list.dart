@@ -37,39 +37,6 @@ class _PrivateKeyListState extends ConsumerState<PrivateKeysListPage>
     );
   }
 
-  /// Two ways to end up with a key here, asked before either page opens.
-  ///
-  /// The dialog answers with what to do and closes itself; this navigates. A
-  /// button that pushed the page from inside the dialog would be reaching for
-  /// the root navigator the dialog is on, not the one holding this page.
-  Future<void> _onTapAdd() async {
-    final generate = await context.showRoundDialog<bool>(
-      title: libL10n.add,
-      childBuilder: (dialogContext) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            leading: const Icon(Icons.vpn_key),
-            title: Text(l10n.sshKeyGenerate),
-            onTap: () => dialogContext.popDialog(true),
-          ),
-          ListTile(
-            leading: const Icon(Icons.file_open),
-            title: Text(libL10n.import),
-            onTap: () => dialogContext.popDialog(false),
-          ),
-        ],
-      ),
-      actions: const [],
-    );
-    if (generate == null || !mounted) return;
-    if (generate) {
-      PrivateKeyGeneratePage.route.go(context);
-    } else {
-      PrivateKeyEditPage.route.go(context);
-    }
-  }
-
   Widget _buildBody() {
     final privateKeyState = ref.watch(privateKeyProvider);
     final pkis = privateKeyState.keys;
@@ -122,6 +89,39 @@ class _PrivateKeyListState extends ConsumerState<PrivateKeysListPage>
 }
 
 extension on _PrivateKeyListState {
+  /// Two ways to end up with a key here, asked before either page opens.
+  ///
+  /// The dialog answers with what to do and closes itself; this navigates. A
+  /// button that pushed the page from inside the dialog would be reaching for
+  /// the root navigator the dialog is on, not the one holding this page.
+  Future<void> _onTapAdd() async {
+    final generate = await context.showRoundDialog<bool>(
+      title: libL10n.add,
+      childBuilder: (dialogContext) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.vpn_key),
+            title: Text(l10n.sshKeyGenerate),
+            onTap: () => dialogContext.popDialog(true),
+          ),
+          ListTile(
+            leading: const Icon(Icons.file_open),
+            title: Text(libL10n.import),
+            onTap: () => dialogContext.popDialog(false),
+          ),
+        ],
+      ),
+      actions: const [],
+    );
+    if (generate == null || !mounted) return;
+    if (generate) {
+      PrivateKeyGeneratePage.route.go(context);
+    } else {
+      PrivateKeyEditPage.route.go(context);
+    }
+  }
+
   void _autoAddSystemPriavteKey() async {
     // Only trigger on desktop platform and no private key saved
     if (isDesktop && Stores.key.keys().isEmpty) {

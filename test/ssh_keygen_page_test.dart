@@ -5,6 +5,7 @@ import 'package:fl_lib/generated/l10n/lib_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/utils/ssh_keygen.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/setting.dart';
@@ -73,7 +74,7 @@ void main() {
     // And the rest are not in the tree at all.
     expect(find.text('RSA 4096'), findsNothing);
     expect(find.text('ECDSA (P-256)'), findsNothing);
-    expect(find.byType(RadioListTile<Object?>), findsNothing);
+    expect(find.byType(RadioListTile<SshKeyAlgorithm>), findsNothing);
   });
 
   testWidgets('opening it shows every algorithm', (tester) async {
@@ -114,6 +115,6 @@ void main() {
     // made and the list has nothing more to say.
     expect(find.text('RSA 4096'), findsOneWidget);
     expect(find.text('Ed25519'), findsNothing);
-    expect(find.byType(RadioListTile<Object?>), findsNothing);
+    expect(find.byType(RadioListTile<SshKeyAlgorithm>), findsNothing);
   });
 }
