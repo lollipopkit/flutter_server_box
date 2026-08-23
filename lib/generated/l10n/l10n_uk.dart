@@ -1576,13 +1576,25 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get bmcAccount => 'Account';
+  String get bmcAccount => 'Обліковий запис';
 
   @override
-  String get bmcAccountUnset => 'None picked - tap to choose or create one';
+  String get bmcAccountUnset =>
+      'Не вибрано — торкніться, щоб вибрати або створити';
 
   @override
   String bmcAccountShared(int count) {
-    return 'Used by $count servers';
+    return 'Використовується на $count серверах';
+  }
+
+  @override
+  String get bmcAccounts => 'Облікові записи BMC';
+
+  @override
+  String get bmcAccountSharedTip => 'Зміна тут вплине на всі з них.';
+
+  @override
+  String bmcAccountInUse(int count) {
+    return 'Її використовують $count серверів. Адреса залишиться, обліковий запис — ні.';
   }
 }

@@ -583,5 +583,15 @@
         "type": "int"
       }
     }
+  },
+  "bmcAccounts": "BMC accounts",
+  "bmcAccountSharedTip": "Editing this changes what all of them use.",
+  "bmcAccountInUse": "{count} servers use it. They keep their address and lose the account.",
+  "@bmcAccountInUse": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }

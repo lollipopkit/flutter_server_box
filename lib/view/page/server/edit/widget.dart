@@ -629,10 +629,13 @@ extension _Widgets on _ServerEditPageState {
   /// here changes what all of them use.
   Widget _buildBmcAccount() {
     return _bmcCredId.listenVal((id) {
-      final cred = Stores.bmcCredential.fetchOne(id);
+      // Watched rather than fetched: editing the account from the page this
+      // tile opens has to be visible here when it returns.
+      final creds = ref.watch(bmcCredentialProvider).creds;
+      final cred = creds.firstWhereOrNull((e) => e.id == id);
       final shared = cred == null
           ? 0
-          : Stores.bmcCredential.serversUsing(cred.id);
+          : ref.read(bmcCredentialProvider.notifier).serversUsing(cred.id);
       return ListTile(
         leading: Icon(
           cred == null ? Icons.person_off_outlined : Icons.person,
@@ -648,7 +651,15 @@ extension _Widgets on _ServerEditPageState {
           },
           style: UIs.textGrey,
         ),
-        trailing: const Icon(Icons.keyboard_arrow_right),
+        trailing: cred == null
+            ? const Icon(Icons.keyboard_arrow_right)
+            : IconButton(
+                icon: const Icon(Icons.edit),
+                onPressed: () => BmcCredentialEditPage.route.go(
+                  context,
+                  args: BmcCredentialEditPageArgs(cred: cred),
+                ),
+              ),
         onTap: _onTapBmcAccount,
       ).cardx;
     });

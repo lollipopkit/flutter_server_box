@@ -68,19 +68,22 @@ extension _Actions on _ServerEditPageState {
     _hasStoredSudoPassword.value = value != null && value.isNotEmpty;
   }
 
-  /// Picks, creates or edits the account this server's BMC is opened with.
+  /// Picks the account this server's BMC is opened with, or opens the editor
+  /// for a new one.
   ///
-  /// Editing one from here changes it for every server pointing at it, which
-  /// is the point of it being a record — and why the picker says how many that
-  /// is before offering the edit.
+  /// Creating and editing are the account page's job, reached from here and
+  /// from the account list — the same arrangement the private key picker
+  /// already uses. A dialog owned by this page would be a second copy of that
+  /// form, and the delete and the "used by N servers" warning would only exist
+  /// in one of them.
   Future<void> _onTapBmcAccount() async {
-    final creds = Stores.bmcCredential.fetch();
+    final creds = ref.read(bmcCredentialProvider).creds;
     final picked = await context.showPickSingleDialog<String>(
       title: l10n.bmcAccount,
       items: [...creds.map((e) => e.id), _kNewBmcCred],
       display: (id) {
         if (id == _kNewBmcCred) return '+ ${libL10n.add}';
-        final cred = Stores.bmcCredential.fetchOne(id);
+        final cred = creds.firstWhereOrNull((e) => e.id == id);
         return cred == null ? id : '${cred.name} (${cred.user})';
       },
       initial: _bmcCredId.value,
@@ -91,87 +94,11 @@ extension _Actions on _ServerEditPageState {
       _bmcCredId.value = picked;
       return;
     }
-    final created = await _editBmcCred(null);
-    if (created != null) _bmcCredId.value = created.id;
-  }
-
-  /// The name/user/password dialog, for a new account or an existing one.
-  ///
-  /// Returns what was saved, or null if the dialog was dismissed. The name is
-  /// `UNIQUE` in the schema, so a collision comes back as a
-  /// [DuplicateNameException] from the store rather than from a check this
-  /// dialog would have to remember to make.
-  Future<BmcCredential?> _editBmcCred(BmcCredential? existing) async {
-    final nameCtrl = TextEditingController(text: existing?.name ?? '');
-    final userCtrl = TextEditingController(text: existing?.user ?? '');
-    final pwdCtrl = TextEditingController(text: existing?.pwd ?? '');
-
-    final ok = await context.showRoundDialog<bool>(
-      title: existing == null ? libL10n.add : libL10n.edit,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Input(
-            controller: nameCtrl,
-            label: libL10n.name,
-            icon: Icons.label_outline,
-            hint: 'rack-a',
-            suggestion: false,
-            autoFocus: true,
-          ),
-          Input(
-            controller: userCtrl,
-            label: libL10n.user,
-            icon: Icons.person,
-            hint: 'ADMIN',
-            suggestion: false,
-          ),
-          Input(
-            controller: pwdCtrl,
-            label: libL10n.pwd,
-            icon: Icons.password,
-            obscureText: true,
-            suggestion: false,
-          ),
-        ],
-      ),
-      actions: Btnx.cancelOk,
-    );
-    // The dialog answered; this page acts on the answer — see the dialog rules
-    // in CLAUDE.md. The controllers are disposed here rather than by a tree
-    // that no longer holds them.
-    final name = nameCtrl.text.trim();
-    final user = userCtrl.text.trim();
-    final pwd = pwdCtrl.text.selfNotEmptyOrNull;
-    nameCtrl.dispose();
-    userCtrl.dispose();
-    pwdCtrl.dispose();
-    if (ok != true || !mounted) return null;
-
-    if (name.isEmpty || user.isEmpty) {
-      Toast.error(libL10n.fail, body: libL10n.empty);
-      return null;
-    }
-
-    final saved =
-        existing?.copyWith(name: name, user: user, pwd: pwd) ??
-        BmcCredential(
-          id: ShortId.generate(),
-          name: name,
-          user: user,
-          pwd: pwd,
-        );
-    try {
-      if (existing == null) {
-        Stores.bmcCredential.put(saved);
-      } else {
-        Stores.bmcCredential.update(existing, saved);
-      }
-    } catch (e) {
-      Toast.error(libL10n.fail, body: '$e');
-      return null;
-    }
-    return saved;
+    final created = await BmcCredentialEditPage.route.go(context);
+    // Whatever the page saved, or null if it was left without saving. Read
+    // rather than assumed: the picker must not point at a record that does not
+    // exist, which the foreign key would refuse at save time anyway.
+    if (created is BmcCredential) _bmcCredId.value = created.id;
   }
 
   /// Fetches the certificate the BMC presents, shows it, and pins it if the

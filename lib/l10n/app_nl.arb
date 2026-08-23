@@ -452,5 +452,11 @@
   "agentLocalExec": "Opdrachten op dit apparaat uitvoeren",
   "agentLocalExecTip": "Laat de Agent werken op de machine waarop ServerBox draait, niet alleen op servers. Hier draait niets onbeheerd: elke opdracht moet worden beoordeeld.",
   "agentLocalExecRootfsTip": "Laat de Agent op dit apparaat werken, binnen de Alpine Linux-container die ServerBox installeert. Hij kan het bestandssysteem van het toestel, de gegevens van de app en jouw bestanden niet zien. Elke opdracht moet nog steeds worden beoordeeld.",
-  "macDmgImportedPartly": "De gegevens van de eerder geïnstalleerde versie zijn geïmporteerd. Gedownloade bestanden zijn achtergebleven in {path}."
+  "macDmgImportedPartly": "De gegevens van de eerder geïnstalleerde versie zijn geïmporteerd. Gedownloade bestanden zijn achtergebleven in {path}.",
+  "bmcAccount": "Account",
+  "bmcAccountUnset": "Geen gekozen — tik om er een te kiezen of aan te maken",
+  "bmcAccountShared": "Gebruikt door {count} servers",
+  "bmcAccounts": "BMC-accounts",
+  "bmcAccountSharedTip": "Dit bewerken verandert wat ze allemaal gebruiken.",
+  "bmcAccountInUse": "{count} servers gebruiken het. Ze houden hun adres en verliezen het account."
 }

@@ -452,5 +452,11 @@
   "agentLocalExec": "Jalankan perintah di perangkat ini",
   "agentLocalExecTip": "Memungkinkan Agent bekerja di mesin tempat ServerBox berjalan, bukan hanya di server. Tidak ada yang berjalan tanpa pengawasan di sini: setiap perintah perlu ditinjau.",
   "agentLocalExecRootfsTip": "Memungkinkan Agent bekerja di perangkat ini, di dalam kontainer Alpine Linux yang dipasang ServerBox. Ia tidak dapat melihat sistem berkas perangkat itu sendiri, data aplikasi, atau berkas Anda. Setiap perintah tetap perlu ditinjau.",
-  "macDmgImportedPartly": "Data dari versi yang terpasang sebelumnya telah diimpor. Berkas unduhan tetap berada di {path}."
+  "macDmgImportedPartly": "Data dari versi yang terpasang sebelumnya telah diimpor. Berkas unduhan tetap berada di {path}.",
+  "bmcAccount": "Akun",
+  "bmcAccountUnset": "Belum dipilih — ketuk untuk memilih atau membuat",
+  "bmcAccountShared": "Dipakai oleh {count} server",
+  "bmcAccounts": "Akun BMC",
+  "bmcAccountSharedTip": "Mengubahnya mengubah yang dipakai semuanya.",
+  "bmcAccountInUse": "{count} server memakainya. Alamatnya tetap, akunnya hilang."
 }

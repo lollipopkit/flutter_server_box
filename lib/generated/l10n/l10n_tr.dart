@@ -1559,13 +1559,25 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get bmcAccount => 'Account';
+  String get bmcAccount => 'Hesap';
 
   @override
-  String get bmcAccountUnset => 'None picked - tap to choose or create one';
+  String get bmcAccountUnset => 'Seçilmedi — seçmek veya oluşturmak için dokun';
 
   @override
   String bmcAccountShared(int count) {
-    return 'Used by $count servers';
+    return '$count sunucuda kullanılıyor';
+  }
+
+  @override
+  String get bmcAccounts => 'BMC hesapları';
+
+  @override
+  String get bmcAccountSharedTip =>
+      'Burada düzenlemek hepsinin kullandığını değiştirir.';
+
+  @override
+  String bmcAccountInUse(int count) {
+    return '$count sunucu kullanıyor. Adresleri kalır, hesabı kaybederler.';
   }
 }

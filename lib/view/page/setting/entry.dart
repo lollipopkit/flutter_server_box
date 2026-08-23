@@ -33,6 +33,7 @@ import 'package:server_box/data/res/url.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/backup.dart';
+import 'package:server_box/view/page/bmc_credential/list.dart';
 import 'package:server_box/view/page/private_key/list.dart';
 import 'package:server_box/view/page/server/connection_stats.dart';
 import 'package:server_box/view/page/setting/entries/home_tabs.dart';
@@ -286,6 +287,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         title: l10n.privateKey,
         icon: Icons.key_outlined,
         page: () => const PrivateKeysListPage(),
+      ),
+      SettingsNode.leaf(
+        id: 'bmcCredential',
+        title: l10n.bmcAccounts,
+        icon: Icons.dns_outlined,
+        page: () => const BmcCredentialsListPage(),
       ),
       SettingsNode.leaf(
         id: 'about',

@@ -1586,13 +1586,25 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get bmcAccount => 'Account';
+  String get bmcAccount => 'Cuenta';
 
   @override
-  String get bmcAccountUnset => 'None picked - tap to choose or create one';
+  String get bmcAccountUnset =>
+      'Ninguna seleccionada: toca para elegir o crear una';
 
   @override
   String bmcAccountShared(int count) {
-    return 'Used by $count servers';
+    return 'Usada por $count servidores';
+  }
+
+  @override
+  String get bmcAccounts => 'Cuentas de BMC';
+
+  @override
+  String get bmcAccountSharedTip => 'Editarla cambia lo que todos ellos usan.';
+
+  @override
+  String bmcAccountInUse(int count) {
+    return '$count servidores la usan. Conservan su dirección y pierden la cuenta.';
   }
 }

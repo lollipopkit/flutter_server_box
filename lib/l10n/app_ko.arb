@@ -461,5 +461,11 @@
   "agentLocalExec": "이 기기에서 명령 실행",
   "agentLocalExecTip": "ServerBox가 실행 중인 기기에서도 Agent가 작업할 수 있게 합니다. 여기서는 자동 실행되지 않으며, 모든 명령에 확인이 필요합니다.",
   "agentLocalExecRootfsTip": "ServerBox가 설치하는 Alpine Linux 컨테이너 안에서 Agent가 이 기기에서 작업할 수 있게 합니다. 기기 자체의 파일 시스템, 앱 데이터, 사용자 파일은 볼 수 없습니다. 모든 명령에는 여전히 확인이 필요합니다.",
-  "macDmgImportedPartly": "이전에 설치된 빌드의 데이터를 가져왔습니다. 다운로드한 파일은 {path}에 그대로 있습니다."
+  "macDmgImportedPartly": "이전에 설치된 빌드의 데이터를 가져왔습니다. 다운로드한 파일은 {path}에 그대로 있습니다.",
+  "bmcAccount": "계정",
+  "bmcAccountUnset": "선택되지 않음 — 탭하여 선택하거나 새로 만들기",
+  "bmcAccountShared": "{count}대의 서버에서 사용 중",
+  "bmcAccounts": "BMC 계정",
+  "bmcAccountSharedTip": "여기서 수정하면 모두에게 적용됩니다.",
+  "bmcAccountInUse": "{count}대의 서버가 사용 중입니다. 주소는 남고 계정은 사라집니다."
 }

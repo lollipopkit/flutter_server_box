@@ -1568,4 +1568,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String bmcAccountShared(int count) {
     return 'Used by $count servers';
   }
+
+  @override
+  String get bmcAccounts => 'BMC accounts';
+
+  @override
+  String get bmcAccountSharedTip =>
+      'Editing this changes what all of them use.';
+
+  @override
+  String bmcAccountInUse(int count) {
+    return '$count servers use it. They keep their address and lose the account.';
+  }
 }

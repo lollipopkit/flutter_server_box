@@ -452,5 +452,11 @@
   "agentLocalExec": "Befehle auf diesem Gerät ausführen",
   "agentLocalExecTip": "Erlaubt dem Agent, auf dem Gerät zu arbeiten, auf dem ServerBox läuft, nicht nur auf Servern. Hier läuft nichts unbeaufsichtigt: Jeder Befehl muss geprüft werden.",
   "agentLocalExecRootfsTip": "Erlaubt dem Agent, auf diesem Gerät zu arbeiten, innerhalb des von ServerBox installierten Alpine-Linux-Containers. Er sieht weder das Dateisystem des Telefons noch die Daten der App oder Ihre Dateien. Jeder Befehl muss trotzdem geprüft werden.",
-  "macDmgImportedPartly": "Die Daten der zuvor installierten Version wurden importiert. Heruntergeladene Dateien sind unter {path} geblieben."
+  "macDmgImportedPartly": "Die Daten der zuvor installierten Version wurden importiert. Heruntergeladene Dateien sind unter {path} geblieben.",
+  "bmcAccount": "Konto",
+  "bmcAccountUnset": "Keins ausgewählt – tippe, um eines zu wählen oder anzulegen",
+  "bmcAccountShared": "Von {count} Servern verwendet",
+  "bmcAccounts": "BMC-Konten",
+  "bmcAccountSharedTip": "Eine Änderung hier gilt für alle davon.",
+  "bmcAccountInUse": "{count} Server nutzen es. Sie behalten ihre Adresse und verlieren das Konto."
 }

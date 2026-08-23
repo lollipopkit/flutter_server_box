@@ -2761,6 +2761,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Used by {count} servers'**
   String bmcAccountShared(int count);
+
+  /// No description provided for @bmcAccounts.
+  ///
+  /// In en, this message translates to:
+  /// **'BMC accounts'**
+  String get bmcAccounts;
+
+  /// No description provided for @bmcAccountSharedTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Editing this changes what all of them use.'**
+  String get bmcAccountSharedTip;
+
+  /// No description provided for @bmcAccountInUse.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} servers use it. They keep their address and lose the account.'**
+  String bmcAccountInUse(int count);
 }
 
 class _AppLocalizationsDelegate

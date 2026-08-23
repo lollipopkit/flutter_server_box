@@ -471,5 +471,8 @@
   "macDmgImportedPartly": "已导入此前安装版本的数据。下载的文件仍在原处:{path}。",
   "bmcAccount": "账户",
   "bmcAccountUnset": "未选择 — 点击选择或新建",
-  "bmcAccountShared": "{count} 台服务器在用"
+  "bmcAccountShared": "{count} 台服务器在用",
+  "bmcAccounts": "BMC 账户",
+  "bmcAccountSharedTip": "在这里修改会改变所有这些服务器使用的账户。",
+  "bmcAccountInUse": "{count} 台服务器在用。它们会保留地址，但失去账户。"
 }

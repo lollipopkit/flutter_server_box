@@ -1484,13 +1484,24 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get bmcAccount => 'Account';
+  String get bmcAccount => '계정';
 
   @override
-  String get bmcAccountUnset => 'None picked - tap to choose or create one';
+  String get bmcAccountUnset => '선택되지 않음 — 탭하여 선택하거나 새로 만들기';
 
   @override
   String bmcAccountShared(int count) {
-    return 'Used by $count servers';
+    return '$count대의 서버에서 사용 중';
+  }
+
+  @override
+  String get bmcAccounts => 'BMC 계정';
+
+  @override
+  String get bmcAccountSharedTip => '여기서 수정하면 모두에게 적용됩니다.';
+
+  @override
+  String bmcAccountInUse(int count) {
+    return '$count대의 서버가 사용 중입니다. 주소는 남고 계정은 사라집니다.';
   }
 }

@@ -1,0 +1,78 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:server_box/core/sync.dart';
+import 'package:server_box/data/model/server/bmc_credential.dart';
+import 'package:server_box/data/res/store.dart';
+
+part 'bmc_credential.freezed.dart';
+part 'bmc_credential.g.dart';
+
+@freezed
+abstract class BmcCredentialState with _$BmcCredentialState {
+  const factory BmcCredentialState({
+    @Default(<BmcCredential>[]) List<BmcCredential> creds,
+  }) = _BmcCredentialState;
+}
+
+/// The BMC accounts, as a provider so the picker and the list page see the
+/// same set without either of them reloading the other.
+///
+/// The same shape as [PrivateKeyNotifier], which the accounts are the same kind
+/// of record as: named, shared between servers, and edited from two places.
+@Riverpod(keepAlive: true)
+class BmcCredentialNotifier extends _$BmcCredentialNotifier {
+  @override
+  BmcCredentialState build() => _load();
+
+  void reload() {
+    Stores.bmcCredential.dropCache();
+    final fresh = _load();
+    if (fresh == state) return;
+    state = fresh;
+  }
+
+  BmcCredentialState _load() {
+    final creds = Stores.bmcCredential.fetch();
+    return stateOrNull?.copyWith(creds: creds) ??
+        BmcCredentialState(creds: creds);
+  }
+
+  Future<void> add(BmcCredential cred) async {
+    Stores.bmcCredential.put(cred);
+    state = state.copyWith(creds: [...state.creds, cred]);
+    bakSync.sync(milliDelay: 1000);
+  }
+
+  /// The id never changes — see [PrivateKeyNotifier.update] for why that
+  /// matters. A rename is an `UPDATE` of one column, and every server pointing
+  /// at this account keeps pointing at it.
+  Future<void> update(BmcCredential old, BmcCredential fresh) async {
+    if (old.id != fresh.id) {
+      throw ArgumentError('cannot change the id of a BmcCredential');
+    }
+    final creds = [...state.creds];
+    final idx = creds.indexWhere((e) => e.id == old.id);
+    if (idx == -1) {
+      creds.add(fresh);
+    } else {
+      creds[idx] = fresh;
+    }
+    Stores.bmcCredential.put(fresh);
+    state = state.copyWith(creds: creds);
+    bakSync.sync(milliDelay: 1000);
+  }
+
+  /// Deletes the account. The servers that used it keep their address and lose
+  /// the account — `ON DELETE SET NULL`, not cascade.
+  Future<void> delete(BmcCredential cred) async {
+    Stores.bmcCredential.delete(cred);
+    state = state.copyWith(
+      creds: state.creds.where((e) => e.id != cred.id).toList(),
+    );
+    bakSync.sync(milliDelay: 1000);
+  }
+
+  /// How many servers point at [id], which the UI says before offering a
+  /// delete or an edit: both change what all of them use.
+  int serversUsing(String id) => Stores.bmcCredential.serversUsing(id);
+}
