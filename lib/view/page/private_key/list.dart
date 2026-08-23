@@ -88,12 +88,14 @@ class _PrivateKeyListState extends ConsumerState<PrivateKeysListPage>
     // disagree with what is actually there. It is a hash of a few hundred
     // bytes, over a list of a handful of keys.
     final digest = describeSshKey(item.key);
-    // The comment is absent for a key that is encrypted — it is inside the
-    // part that gets encrypted, unlike the public key the fingerprint comes
-    // from. `type` is the fallback for a key that reads as neither.
+    // The stored comment wins, and the key's own is the fallback — which is
+    // what a key imported or generated before anyone edited its label has.
+    // That one is absent for an encrypted key, since it sits inside the part
+    // that gets encrypted while the public key does not. `type` is left for a
+    // key that reads as neither.
     final lines = [
       ?digest.fingerprint,
-      ?digest.comment,
+      ?(item.comment ?? digest.comment),
       if (digest.isEmpty) item.type ?? libL10n.unknown,
     ];
     return ListTile(

@@ -11,6 +11,7 @@ PrivateKeyInfo _$PrivateKeyInfoFromJson(Map<String, dynamic> json) =>
       id: json['id'] as String,
       name: json['name'] as String,
       key: json['private_key'] as String,
+      comment: json['comment'] as String?,
     );
 
 Map<String, dynamic> _$PrivateKeyInfoToJson(PrivateKeyInfo instance) =>
@@ -18,4 +19,5 @@ Map<String, dynamic> _$PrivateKeyInfoToJson(PrivateKeyInfo instance) =>
       'id': instance.id,
       'name': instance.name,
       'private_key': instance.key,
+      'comment': instance.comment,
     };

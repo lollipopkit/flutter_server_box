@@ -18,10 +18,18 @@ class PrivateKeyInfo {
   @JsonKey(name: 'private_key')
   final String key;
 
+  /// What to put at the end of the public key line, when the user has said.
+  ///
+  /// Null means "whatever the key itself says" — see `describeSshKey`. Editing
+  /// it here rather than in the key is what keeps changing a label from
+  /// needing the passphrase and a rewrite of key material.
+  final String? comment;
+
   const PrivateKeyInfo({
     required this.id,
     required this.name,
     required this.key,
+    this.comment,
   });
 
   /// [name] falls back to [id] for a record written before they were separate:
@@ -34,12 +42,21 @@ class PrivateKeyInfo {
 
   Map<String, dynamic> toJson() => _$PrivateKeyInfoToJson(this);
 
-  PrivateKeyInfo copyWith({String? id, String? name, String? key}) =>
-      PrivateKeyInfo(
-        id: id ?? this.id,
-        name: name ?? this.name,
-        key: key ?? this.key,
-      );
+  PrivateKeyInfo copyWith({
+    String? id,
+    String? name,
+    String? key,
+    // Positional-ish: `null` means "leave it", and clearing is what
+    // `clearComment` is for — a nullable field cannot say both with one
+    // parameter.
+    String? comment,
+    bool clearComment = false,
+  }) => PrivateKeyInfo(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    key: key ?? this.key,
+    comment: clearComment ? null : (comment ?? this.comment),
+  );
 
   String? get type {
     final lines = key.split('\n');

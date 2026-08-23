@@ -34,6 +34,9 @@ class _PrivateKeyGeneratePageState
   final _commentController = TextEditingController();
   final _pwdController = TextEditingController();
 
+  /// Closes the algorithm list once a choice has been made.
+  final _algorithmTile = ExpansibleController();
+
   var _algorithm = SshKeyAlgorithm.ed25519;
   var _working = false;
 
@@ -77,29 +80,47 @@ class _PrivateKeyGeneratePageState
           icon: Icons.info,
           suggestion: true,
         ),
-        RadioGroup<SshKeyAlgorithm>(
-          groupValue: _algorithm,
-          onChanged: (value) {
-            // Guarded here rather than by a null `onChanged`: RadioGroup takes
-            // a non-nullable callback, and disabling the tiles while a key is
-            // being generated is what this is for.
-            if (_working || value == null) return;
-            setState(() => _algorithm = value);
-          },
-          child: Column(
-            children: [
-              for (final algorithm in SshKeyAlgorithm.values)
-                RadioListTile<SshKeyAlgorithm>(
-                  value: algorithm,
-                  enabled: !_working,
-                  title: Text(_algorithmLabel(algorithm)),
-                  subtitle: Text(
-                    _algorithmSubtitle(algorithm),
-                    style: UIs.textGrey,
-                  ),
-                ),
-            ],
-          ),
+        // Closed to begin with, showing what it is set to. There is a right
+        // answer here for almost everyone and it is the default; opening this
+        // is for the case where a server refuses it, not something to read on
+        // the way past.
+        ExpansionTile(
+          controller: _algorithmTile,
+          leading: const Icon(Icons.key),
+          title: Text(l10n.sshKeyAlgorithm),
+          subtitle: Text(_algorithmLabel(_algorithm), style: UIs.textGrey),
+          shape: const RoundedRectangleBorder(),
+          collapsedShape: const RoundedRectangleBorder(),
+          children: [
+            RadioGroup<SshKeyAlgorithm>(
+              groupValue: _algorithm,
+              onChanged: (value) {
+                // Guarded here rather than by a null `onChanged`: RadioGroup
+                // takes a non-nullable callback, and disabling the tiles while
+                // a key is being generated is what this is for.
+                if (_working || value == null) return;
+                setState(() => _algorithm = value);
+                // The choice is made, so the list has done its job — leaving
+                // it open would cover the rest of the form with four rows
+                // nobody is reading any more.
+                _algorithmTile.collapse();
+              },
+              child: Column(
+                children: [
+                  for (final algorithm in SshKeyAlgorithm.values)
+                    RadioListTile<SshKeyAlgorithm>(
+                      value: algorithm,
+                      enabled: !_working,
+                      title: Text(_algorithmLabel(algorithm)),
+                      subtitle: Text(
+                        _algorithmSubtitle(algorithm),
+                        style: UIs.textGrey,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
         ).cardx,
         Input(
           controller: _commentController,

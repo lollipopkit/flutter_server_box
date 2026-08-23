@@ -42,6 +42,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
   final _nameController = TextEditingController();
   final _keyController = TextEditingController();
   final _pwdController = TextEditingController();
+  final _commentController = TextEditingController();
   final _nameNode = FocusNode();
   final _keyNode = FocusNode();
   final _pwdNode = FocusNode();
@@ -60,6 +61,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
     _nameController.dispose();
     _keyController.dispose();
     _pwdController.dispose();
+    _commentController.dispose();
     _nameNode.dispose();
     _keyNode.dispose();
     _pwdNode.dispose();
@@ -73,6 +75,11 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
     if (pki != null) {
       _nameController.text = pki.name;
       _keyController.text = pki.key;
+      // The stored one if the label has been edited, otherwise whatever the
+      // key arrived with — which is absent for an encrypted key, since the
+      // key's own comment is inside the part that gets encrypted.
+      _commentController.text =
+          pki.comment ?? describeSshKey(pki.key).comment ?? '';
     } else {
       Clipboard.getData(_format).then((value) {
         if (value == null) return;
@@ -147,7 +154,11 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
         cacheKey: pki.id,
         keyName: pki.name,
       );
-      line = publicKeyLine(SSHKeyPair.fromPem(opened).first, pki.name);
+      line = publicKeyLine(
+        SSHKeyPair.fromPem(opened).first,
+        // What the list shows, and what the server will see beside the key.
+        pki.comment ?? describeSshKey(pki.key).comment ?? pki.name,
+      );
     } catch (e) {
       Toast.error(e.toString());
       return;
@@ -309,7 +320,18 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
             label: libL10n.pwd,
             icon: Icons.password,
             suggestion: false,
+          ),
+          Input(
+            controller: _commentController,
+            type: TextInputType.text,
+            label: l10n.sshKeyComment,
+            icon: Icons.comment,
+            suggestion: false,
             onSubmitted: (_) => _onTapSave(),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Text(l10n.sshKeyPublicKeyTip, style: UIs.textGrey),
           ),
           SizedBox(height: MediaQuery.of(context).size.height * 0.1),
           ValBuilder(
@@ -346,10 +368,14 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
       // The id of the record being edited: renaming a key must not detach the
       // servers pointing at it, which is what happened when the two were one
       // value.
+      final comment = _commentController.text.trim();
       final pki = PrivateKeyInfo(
         id: this.pki?.id ?? ShortId.generate(),
         name: name,
         key: key,
+        // Null rather than empty, so an untouched field goes on meaning
+        // "whatever the key itself says" instead of "no comment".
+        comment: comment.isEmpty ? null : comment,
       );
       // The bytes may have changed under an id that has not, so whatever was
       // opened for it no longer describes what is stored.
