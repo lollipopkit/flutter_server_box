@@ -840,7 +840,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get proxyCommandSandboxed =>
-      'Bu sürüm kum havuzunda çalışır: komut boş bir home alır, seninkini değil, bu yüzden ~/.ssh okuyan her şey başarısız olur. DMG sürümü çalışmaz.';
+      'Bu sürüm kum havuzunda çalışır: komut boş bir home alır, seninkini değil, bu yüzden ~/.ssh okuyan her şey başarısız olur. DMG sürümünde bu kısıtlama yok.';
 
   @override
   String privateKeyFileUnreadable(String path, String reason) {

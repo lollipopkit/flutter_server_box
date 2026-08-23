@@ -123,7 +123,6 @@ class SSHPageState extends ConsumerState<SSHPage>
     with
         AutomaticKeepAliveClientMixin,
         AfterLayoutMixin,
-        TickerProviderStateMixin,
         WidgetsBindingObserver {
   /// The tmux session this page attached to, kept for the reconnect that
   /// rebuilds the launch plan and reads it again.
@@ -152,9 +151,7 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   Terminal get _terminal => _sess.terminal;
 
-  late final TerminalController _terminalController = TerminalController(
-    vsync: this,
-  );
+  late final TerminalController _terminalController = TerminalController();
   final List<List<VirtKey>> _virtKeysList = [];
   late final _termKey =
       widget.args.terminalKey ?? GlobalKey<TerminalViewState>();

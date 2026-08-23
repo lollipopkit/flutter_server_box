@@ -1557,7 +1557,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String bmcAccountInUse(int count) {
-    return 'Її використовують $count серверів. Адреса залишиться, обліковий запис — ні.';
+    return 'Його використовують $count серверів. Адреса залишиться, обліковий запис — ні.';
   }
 
   @override

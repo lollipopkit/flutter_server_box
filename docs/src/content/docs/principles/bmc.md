@@ -100,7 +100,7 @@ is not modelled here.
 
 The split exists so that the half worth testing does not need a server.
 
-```
+```text
 BmcCfg + BmcCredential    what the user configured
   ↓
 RedfishClient             transport: TLS trust, session lifetime, GET/POST
@@ -299,7 +299,7 @@ things are left to a person.
 **The read half** is `packages/redfish/test/e2e_test.dart`, opt-in and read-only. It
 skips silently unless the workspace-root `.env` carries:
 
-```
+```bash
 SBM_E2E_BMC_URL=https://10.0.0.9
 SBM_E2E_BMC_USER=...
 SBM_E2E_BMC_PWD=...

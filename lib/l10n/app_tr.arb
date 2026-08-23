@@ -176,7 +176,7 @@
   "bmcCertExpired": "Süresi dolmuş.",
   "bmcCertWas": "Daha önce kabul edilen: {fingerprint}",
   "bmcAddrInvalid": "BMC adresi bir URL olmalı, örneğin https://10.0.0.9",
-  "proxyCommandSandboxed": "Bu sürüm kum havuzunda çalışır: komut boş bir home alır, seninkini değil, bu yüzden ~/.ssh okuyan her şey başarısız olur. DMG sürümü çalışmaz.",
+  "proxyCommandSandboxed": "Bu sürüm kum havuzunda çalışır: komut boş bir home alır, seninkini değil, bu yüzden ~/.ssh okuyan her şey başarısız olur. DMG sürümünde bu kısıtlama yok.",
   "privateKeyFileUnreadable": "Özel anahtar dosyası {path} okunamıyor: {reason}",
   "privateKeyFileSandboxed": "Bu sürüm kendi kapsayıcısı dışındaki dosyaları okuyamıyor, bu yüzden {path} konumundaki anahtara erişilemiyor. Anahtarı Ayarlar'dan içe aktarın ya da DMG sürümünü kullanın.",
   "pushToken": "Push belirteci",

@@ -97,6 +97,18 @@ class BmcNotifier extends _$BmcNotifier {
   /// tell that its answer is no longer wanted.
   var _generation = 0;
 
+  /// Whether a read is already going.
+  ///
+  /// The timer fires on a fixed period; a poll of a slow BMC can take longer
+  /// than that period, and `power()` holds the same client for up to two
+  /// minutes while it watches for the state to move. Both would otherwise
+  /// overlap this one — two discoveries, two sensor sweeps of up to 64
+  /// requests each, against a device that allows few of anything.
+  ///
+  /// A skip rather than a queue: what a poll produces is the current state,
+  /// and the one already running is about to publish it.
+  var _refreshing = false;
+
   @override
   BmcState build(Spi spi) {
     final cfg = spi.bmc;
@@ -156,8 +168,9 @@ class BmcNotifier extends _$BmcNotifier {
   /// several round trips this device can least afford.
   Future<void> refresh() async {
     final client = _client;
-    if (client == null) return;
+    if (client == null || _refreshing) return;
     final generation = _generation;
+    _refreshing = true;
 
     if (!state.isBusy) state = state.copyWith(isBusy: true);
 
@@ -194,6 +207,11 @@ class BmcNotifier extends _$BmcNotifier {
         failureDetail: '$e',
         isBusy: false,
       );
+    } finally {
+      // In a `finally` because the three branches above return early on a
+      // stale generation, and a flag left set there would stop this notifier
+      // ever polling again.
+      _refreshing = false;
     }
   }
 
@@ -229,19 +247,42 @@ class BmcNotifier extends _$BmcNotifier {
       return BmcPowerResult.failed;
     }
 
-    return await _awaitPowerChange(client, before)
+    return await _awaitPowerChange(client, before, intent)
         ? BmcPowerResult.confirmed
         : BmcPowerResult.accepted;
   }
 
-  /// Polls until the state settles somewhere other than where it started.
+  /// Where [intent] should leave the machine.
   ///
-  /// A transitional state does not count as arrival: `PoweringOff` is the
+  /// `restart` and `powerCycle` end where they started, which is why the
+  /// arrival test cannot be "the state differs from before": a machine that
+  /// finishes rebooting between two polls is only ever seen `on`, and was
+  /// reported as *accepted* — the weaker answer — for a restart that had in
+  /// fact happened.
+  static PowerState _expected(PowerIntent intent) => switch (intent) {
+    PowerIntent.on || PowerIntent.restart || PowerIntent.powerCycle =>
+      PowerState.on,
+    PowerIntent.gracefulShutdown || PowerIntent.forceOff => PowerState.off,
+  };
+
+  /// Polls until the machine has both moved and arrived where [intent] means
+  /// it to be.
+  ///
+  /// A transitional state does not count as arrival — `PoweringOff` is the
   /// machine on its way, and reporting that as done would be reporting the
-  /// request back rather than the result.
-  Future<bool> _awaitPowerChange(RedfishClient client, PowerState before) async {
+  /// request back rather than the result — but it does count as having moved,
+  /// which is the only evidence an operation ending where it began can leave.
+  Future<bool> _awaitPowerChange(
+    RedfishClient client,
+    PowerState before,
+    PowerIntent intent,
+  ) async {
     final generation = _generation;
     final deadline = DateTime.now().add(_powerConfirmTimeout);
+    // Whether the machine was ever seen anywhere other than where it started.
+    // For an intent that ends where it began, this is the whole of the
+    // evidence; for the others it is redundant with the state itself.
+    var moved = before != _expected(intent);
 
     while (DateTime.now().isBefore(deadline)) {
       await Future.delayed(_powerPollInterval);
@@ -253,7 +294,14 @@ class BmcNotifier extends _$BmcNotifier {
         );
         state = state.copyWith(topology: state.topology!.withSystem(system));
         final now = system.powerState;
-        if (now != before && !now.isTransitional) return true;
+        if (now.isTransitional) {
+          // On its way. Seeing this is itself the evidence a restart needs,
+          // since it will settle back where it started.
+          moved = true;
+          continue;
+        }
+        if (now != before) moved = true;
+        if (moved && now == _expected(intent)) return true;
       } catch (e) {
         // A machine on its way down stops answering, which is itself not an
         // answer about whether it got there

@@ -17,7 +17,7 @@ on:
         # Unknown names are refused rather than ignored — see `Check job
         # selection`. A typo that silently builds nothing looks exactly like a
         # workflow that is broken.
-        description: 'What to run: android,ios,linux,windows,macos,monitor (empty = all)'
+        description: 'What to run: android,ios,linux,windows,macos,monitor (empty = all; macos/monitor are verification only)'
         required: false
         type: string
         default: ''
@@ -37,6 +37,14 @@ jobs:
   reproducibilityCheck:
     name: Reproducibility check
     runs-on: ubuntu-latest
+    outputs:
+      # The selection, canonicalised once and matched exactly by every job
+      # below. Wrapped in commas so `contains(..., ',linux,')` cannot match a
+      # substring of another name, and so the jobs never see the raw input —
+      # which is what let `an droid` validate (whitespace was stripped before
+      # the check) and then match nothing (it was not stripped afterwards),
+      # skipping every job while reporting success.
+      selected: ${{ steps.selection.outputs.selected }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -77,7 +85,7 @@ jobs:
             exit 1
           fi
       - name: Check job selection
-        if: inputs.jobs != ''
+        id: selection
         shell: bash
         # Through the environment, not `${{ }}` inside the script: an
         # expression is substituted into the source before bash parses it, so
@@ -86,31 +94,60 @@ jobs:
         # not change what the code says.
         env:
           REQUESTED: ${{ inputs.jobs }}
+          IS_DISPATCH: ${{ github.event_name == 'workflow_dispatch' }}
+          IS_RELEASE: ${{ inputs.release }}
         run: |
           set -euo pipefail
 
-          # Every job gates itself with `contains(inputs.jobs, '<name>')`, which
-          # answers false for a name nobody knows — so a typo skips everything
-          # and reports success. This is the only place that can tell the
-          # difference between "build nothing" and "build something misspelled".
           known="android ios linux windows macos monitor"
-          bad=()
-          IFS=',' read -ra requested <<< "$REQUESTED"
-          # `:-` because `set -u` makes an empty array an error to expand. The
-          # step's own `if` already skips an empty value, so this is only about
-          # not depending on that guard staying correct.
-          for raw in "${requested[@]:-}"; do
-            name="$(echo "$raw" | tr -d '[:space:]')"
-            [[ -z "$name" ]] && continue
-            [[ " $known " == *" $name "* ]] || bad+=("$name")
-          done
+          # The two verification jobs exist only for a non-release dispatch —
+          # see their own `if`. Selecting one for a release run would validate,
+          # match nothing and finish green having built nothing at all.
+          verify_only="macos monitor"
 
-          if (( ${#bad[@]} )); then
-            echo "Unknown job(s): ${bad[*]}"
-            echo "Valid names: $known"
-            exit 1
+          if [[ "$IS_DISPATCH" != "true" || -z "${REQUESTED//[[:space:]]/}" ]]; then
+            # A tag push, or a dispatch that named nothing: everything runs.
+            selected="$known"
+          else
+            selected=""
+            bad=()
+            not_for_release=()
+            IFS=',' read -ra requested <<< "$REQUESTED"
+            for raw in "${requested[@]:-}"; do
+              # Trimmed at the ends only. Whitespace *inside* a token is a typo
+              # (`an droid`), not something to silently repair into a name the
+              # user did not type.
+              name="${raw#"${raw%%[![:space:]]*}"}"
+              name="${name%"${name##*[![:space:]]}"}"
+              [[ -z "$name" ]] && continue
+              if [[ " $known " != *" $name "* ]]; then bad+=("$name"); continue; fi
+              if [[ "$IS_RELEASE" == "true" && " $verify_only " == *" $name "* ]]; then
+                not_for_release+=("$name"); continue
+              fi
+              selected="$selected $name"
+            done
+
+            if (( ${#bad[@]} )); then
+              echo "Unknown job(s): ${bad[*]}"
+              echo "Valid names: $known"
+              exit 1
+            fi
+            if (( ${#not_for_release[@]} )); then
+              echo "Not available on a release run: ${not_for_release[*]}"
+              echo "Those verify a build rather than publish one."
+              exit 1
+            fi
+            if [[ -z "${selected//[[:space:]]/}" ]]; then
+              # Only reachable from a value that is all separators, such as
+              # `,` or `, ,` — which would otherwise pass and build nothing.
+              echo "No jobs selected. Leave the field empty to run all of them."
+              exit 1
+            fi
           fi
-          echo "Running: $REQUESTED"
+
+          canonical=",$(echo "$selected" | tr -s '[:space:]' ',' | sed 's/^,//;s/,$//'),"
+          echo "selected=$canonical" >> "$GITHUB_OUTPUT"
+          echo "Running:$selected"
       - name: Check locked dependencies
         shell: bash
         run: |
@@ -124,7 +161,7 @@ jobs:
     name: Verify macOS release
     if: >-
       github.event_name == 'workflow_dispatch' && inputs.release != true
-      && (inputs.jobs == '' || contains(inputs.jobs, 'macos'))
+      && contains(needs.reproducibilityCheck.outputs.selected, ',macos,')
     needs: reproducibilityCheck
     runs-on: macos-latest
     timeout-minutes: 45
@@ -212,7 +249,7 @@ jobs:
     name: Verify monitor ${{ matrix.platform }}-${{ matrix.arch }}
     if: >-
       github.event_name == 'workflow_dispatch' && inputs.release != true
-      && (inputs.jobs == '' || contains(inputs.jobs, 'monitor'))
+      && contains(needs.reproducibilityCheck.outputs.selected, ',monitor,')
     needs: reproducibilityCheck
     strategy:
       fail-fast: false
@@ -263,8 +300,7 @@ jobs:
 
   buildAndroid:
     name: Build android
-    if: >-
-      github.event_name != 'workflow_dispatch' || inputs.jobs == '' || contains(inputs.jobs, 'android')
+    if: contains(needs.reproducibilityCheck.outputs.selected, ',android,')
     needs: reproducibilityCheck
     runs-on: ubuntu-latest
     permissions:
@@ -357,8 +393,7 @@ jobs:
 
   buildIOS:
     name: Build ios
-    if: >-
-      github.event_name != 'workflow_dispatch' || inputs.jobs == '' || contains(inputs.jobs, 'ios')
+    if: contains(needs.reproducibilityCheck.outputs.selected, ',ios,')
     needs: reproducibilityCheck
     runs-on: macos-latest
     permissions:
@@ -432,8 +467,7 @@ jobs:
 
   buildLinux:
     name: Build linux
-    if: >-
-      github.event_name != 'workflow_dispatch' || inputs.jobs == '' || contains(inputs.jobs, 'linux')
+    if: contains(needs.reproducibilityCheck.outputs.selected, ',linux,')
     needs: reproducibilityCheck
     permissions:
       contents: write
@@ -504,8 +538,7 @@ jobs:
 
   buildWindows:
     name: Build windows
-    if: >-
-      github.event_name != 'workflow_dispatch' || inputs.jobs == '' || contains(inputs.jobs, 'windows')
+    if: contains(needs.reproducibilityCheck.outputs.selected, ',windows,')
     needs: reproducibilityCheck
     runs-on: windows-latest
     permissions:

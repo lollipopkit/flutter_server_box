@@ -105,7 +105,7 @@
   "pruneDanglingImages": "Rimuovi immagini orfane",
   "pruneImages": "Rimuovi immagini",
   "unusedTaggedImages": "Etichettate inutilizzate",
-  "pruneDanglingImagesTip": "Rimuove solo le immagini pendenti.",
+  "pruneDanglingImagesTip": "Rimuove solo le immagini orfane.",
   "pruneUnusedImagesTip": "Rimuove anche le immagini con tag non usate da alcun container.",
   "includeUnusedVolumesTip": "Rimuove anche i volumi non usati da alcun container.",
   "pruneCommandPreview": "Anteprima comando",

@@ -599,7 +599,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get unusedTaggedImages => 'Etichettate inutilizzate';
 
   @override
-  String get pruneDanglingImagesTip => 'Rimuove solo le immagini pendenti.';
+  String get pruneDanglingImagesTip => 'Rimuove solo le immagini orfane.';
 
   @override
   String get pruneUnusedImagesTip =>

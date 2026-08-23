@@ -448,7 +448,7 @@
   "bmcAccountShared": "Використовується на {count} серверах",
   "bmcAccounts": "Облікові записи BMC",
   "bmcAccountSharedTip": "Зміна тут вплине на всі з них.",
-  "bmcAccountInUse": "Її використовують {count} серверів. Адреса залишиться, обліковий запис — ні.",
+  "bmcAccountInUse": "Його використовують {count} серверів. Адреса залишиться, обліковий запис — ні.",
   "bmcStaleWrite": "BMC змінився під час запису. Спробуйте ще раз.",
   "monitorAllowInsecureHttp": "Дозволити HTTP",
   "monitorAllowInsecureHttpTip": "Лише в довіреній приватній мережі, що сама шифрує транспорт, наприклад Tailscale",

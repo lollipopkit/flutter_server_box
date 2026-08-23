@@ -67,6 +67,15 @@ enum ServerDetailCards {
       }
     }
 
+    if (cur >= bmc.sinceBuild!) {
+      final prop = Stores.setting.detailCardOrder;
+      final list = prop.fetch();
+      if (!list.contains(bmc.name)) {
+        list.add(bmc.name);
+        prop.put(list);
+      }
+    }
+
     if (cur >= custom.sinceBuild!) {
       final prop = Stores.setting.detailCardOrder;
       final list = prop.fetch();

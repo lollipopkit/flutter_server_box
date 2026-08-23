@@ -291,7 +291,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       SettingsNode.leaf(
         id: 'bmcCredential',
         title: l10n.bmcAccounts,
-        icon: Icons.dns_outlined,
+        icon: Icons.developer_board,
         page: () => const BmcCredentialsListPage(),
       ),
       SettingsNode.leaf(

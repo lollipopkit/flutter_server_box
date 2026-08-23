@@ -79,7 +79,7 @@ class BmcCredential {   // 独立的表,独立的 sync root
 
 这样切是为了让值得测的那一半不需要一台服务器。
 
-```
+```text
 BmcCfg + BmcCredential    用户配置的东西                本 app
   ↓
 RedfishClient             TLS 信任、会话、GET/POST      package:redfish
@@ -206,7 +206,7 @@ BMC 很慢,一次热数据抓取可能要好几秒。所以它有自己的周期
 ## 跑过的硬件
 
 就一台,这一点值得说准确:下表是**已经回应过**的机器,不是**支持列表**。本页其余内容来自厂商文档和
-录制的响应,那是另一种性质的把握——[厂商之间的差异](#厂商之间的差异)里标注为实测的那两条来自这里,
+录制的响应,那是另一种性质的把握——[各家有哪些不一样](#各家有哪些不一样)里标注为实测的那两条来自这里,
 而它们都是读多少文档也不会发现的。
 
 | | |
@@ -237,7 +237,7 @@ Supermicro X11–X13 与 X14 的对比(传感器模型切换点)、HPE iLO 的�
 
 **读的那一半**是 `packages/redfish/test/e2e_test.dart`,opt-in、只读。工作区根的 `.env` 里没有下面这些就静默跳过:
 
-```
+```bash
 SBM_E2E_BMC_URL=https://10.0.0.9
 SBM_E2E_BMC_USER=...
 SBM_E2E_BMC_PWD=...
