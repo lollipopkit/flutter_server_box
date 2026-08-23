@@ -71,6 +71,68 @@ server 不再发起 JSON-RPC 请求、Roots / Sampling / Logging 都已废弃。
   威胁模型,但这些工具够得到你**每一台**服务器,所以要明说,不能默认开。
 - app 得开着。这不是一个后台服务。
 
+## BMC:IPMI 这半没做,以及它该放在哪个仓库
+
+**状态(2026-08-23):没开始。** #1316 只做 Redfish,`crates/` 下没有任何 IPMI 代码,
+`ipmi-rs` 没引入。app 侧已有的 `BmcCfg` / `BmcCredential` / BMC 卡片 / 电源意图协商
+都是协议无关的,IPMI 进来是在同一套配置后面加第二种协议,`BmcCfg` 需要多一个 protocol
+字段。
+
+### 为什么还要 IPMI
+
+覆盖面的方向和直觉相反:几乎每台支持 Redfish 的 BMC 也支持 IPMI,反过来不成立。
+没有可用 Redfish 的那一段正好是 homelab 的常见硬件:
+
+| 硬件 | Redfish | IPMI |
+| --- | --- | --- |
+| Supermicro X9 | 无 | 有 |
+| Supermicro X10(3.x 固件) | 有,schema 停在 1.0.1 | 有 |
+| iDRAC7/8 < 2.30.30.30 | 无 | 有 |
+| iDRAC7/8 >= 2.30.30.30 | 只读 inventory + 电源 | 有 |
+| iLO4 | pre-1.0 的 REST,不合规 | 有 |
+| iDRAC9+ / iLO5+ / X11+ | 完整 | 有,常默认关闭 |
+
+另一头:iDRAC10 没有移除 IPMI over LAN,但 Dell 把「怎么禁用它」写在 Security
+Configuration Guide 里。所以新机器上会遇到「协议在、端口不通」。
+
+### crate
+
+`ipmi-rs` / `ipmi-rs-core`(2026-07 仍在更新,下载量最高)。同类还有 `ipmi`、
+`ruipmi`、`rust-ipmi`。`fishtank` 是个同时支持 IPMI 和 Redfish 的 BMC TUI,值得读它
+怎么把两种协议归一到一套抽象——app 侧要做同样的事。
+
+**`ipmi-rs` 同时支持 unix-file 和 RMCP。** 这条决定了它的位置:monitor agent 装在物理机
+上可以直接读 `/dev/ipmi0` 走 in-band,用户不配地址、不填密码、BMC 在隔离 VLAN 上也无所谓,
+机箱温度、风扇、SEL 就有了。Redfish 没有对应路径。而 monitor 用 `ipmi-rs` 是直接用,
+不经过 Dart。
+
+### 真正的工作量不是 binding
+
+三处不是「一层绑定」:
+
+1. **session 是有状态的。** `ipmi-rs` 的 `Ipmi<T>` 持有 RMCP+ 会话:session id、序列号、
+   认证状态。FRB 传不了这个值,要么 `RustOpaque`,要么 Rust 侧持 handle 发 id 给 Dart。
+   而 CLAUDE.md 写的 FFI 边界原则是「不持有可变状态」,`sbm_parser` 那套是纯函数。所以
+   binding 恰好是新状态进来的地方,生命周期(谁关、hot restart 之后怎么办)是主要工作。
+2. **API 面要选。** 电源控制 4 条命令很薄;传感器要枚举 SDR 再做读数换算(线性化、单位、
+   容差),那是 IPMI 的主体也是价值所在。选哪些、怎么建模,是用起来才知道的。
+3. **发行。** 独立包要给没装 Rust 的人用就得预编译产物 + `hook/build.dart` 下载 +
+   六个 target 的 CI 矩阵。这比 binding 本身工作量大,且全是基础设施。
+
+### 独立发 pub.dev 包,还是留在仓库里
+
+pub.dev 上没有任何 Redfish 包;IPMI 只有一个 `dart_ipmi`,而它名不副实——174 行,打的是
+AMI MegaRAC web 控制台的私有 REST(`/api/session`、`/api/actions/power`、
+`/api/chassis-status`),不是 IPMI 也不是 Redfish,依赖 `http` + `requests`,最后提交
+2023-12,pubspec 里还带一个指向 git commit 的 `dependency_overrides`。名字被它占了,
+新包要换名。
+
+**倾向:先在仓库内做(`crates/sbm_ipmi` + `sbm_ffi` 的 api 模块),API 稳定后再抽出去。**
+理由是代价不对称:先内后外是搬一个 crate 加个 build hook;先发包再重新设计,是一个
+已经有用户的 API 要 breaking change,而且要负责支持他们。而这个仓库已经有 Rust
+workspace、钉好的 flutter_rust_bridge、`hook/build.dart` + `native_toolchain_rust`、
+`rust-toolchain.toml` 里列全的 target 和 CI,加一个 crate 的基础设施成本接近零。
+
 ## monitor:relay 模式(不强制暴露公网端口)
 
 目前要从局域网外访问 `monitor` 面板,必须把 agent 的端口暴露到公网(端口转发/
