@@ -215,6 +215,38 @@ void main() {
     print('  watts: ${sensors.watts}');
   });
 
+  test('the service says whether it has more than one system', () async {
+    // A blade enclosure publishes one per node and only the first is shown, so
+    // this decides whether the UI has something to say. Printed rather than
+    // asserted: which one you are pointed at is not this test's business.
+    // ignore: avoid_print
+    print('multiple systems: ${topology.hasMultipleSystems}');
+    expect(topology.hasMultipleSystems, isA<bool>());
+  });
+
+  test('a certificate other than the pinned one is refused', () async {
+    // The enforcement half, against real TLS rather than the fake server in
+    // `redfish_client_test.dart`. The pin is deliberately wrong, so the
+    // handshake this makes must fail — if it succeeds, nothing was checked and
+    // every password this app sends to a BMC goes to whatever answered.
+    final wrong = RedfishClient(
+      BmcCfg(addr: url, credId: cred.id, certSha256: '0' * 64),
+      cred,
+    );
+    addTearDown(wrong.close);
+
+    await expectLater(
+      wrong.probe(),
+      throwsA(
+        isA<RedfishException>().having(
+          (e) => e.failure,
+          'failure',
+          RedfishFailure.certificateRejected,
+        ),
+      ),
+    );
+  });
+
   test('a session is created once and given back', () async {
     // The arithmetic that matters: BMCs allow few, and one that is never
     // deleted stays until it times out. Everything above shared one client and
@@ -233,5 +265,32 @@ void main() {
 
     final root = await second.probe();
     expect(root['@odata.id'] ?? root['RedfishVersion'], isNotNull);
+
+    // The count, not just "a second login worked". A BMC allows about four, so
+    // a client that leaks one per poll locks its operator out within the hour —
+    // and that failure looks like the device being broken rather than like this
+    // app. Skipped when the service does not let the collection be read, which
+    // some do not without a privilege this account may not have.
+    final sessionsPath = topology.root.sessions;
+    if (sessionsPath == null) {
+      // ignore: avoid_print
+      print('no sessions collection linked — accounting not checked');
+      return;
+    }
+    try {
+      final open = collectionMembers(await second.get(sessionsPath));
+      // ignore: avoid_print
+      print('sessions open while one client is connected: ${open.length}');
+      expect(
+        open.length,
+        lessThanOrEqualTo(2),
+        reason:
+            'one live client plus at most the one this read is using; more '
+            'means earlier runs left sessions behind',
+      );
+    } on RedfishException catch (e) {
+      // ignore: avoid_print
+      print('sessions collection not readable (${e.failure.name})');
+    }
   });
 }

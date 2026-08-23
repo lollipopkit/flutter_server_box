@@ -190,4 +190,91 @@ void main() {
       expect(sensorPathsFor(RedfishChassis.fromJson({})), isEmpty);
     });
   });
+
+  group('what an H3C R5350 G6 actually sends', () {
+    // Both taken from `test/bmc_redfish_e2e_test.dart` against real firmware,
+    // which is where each was found. Fixtures rather than the e2e test, so
+    // they run for everyone and on every change.
+
+    test('0xFFFFFFFF is no reading, not four billion degrees', () {
+      final sensors = BmcSensors.fromLegacy(
+        thermal: {
+          'Temperatures': [
+            // 18 of this machine's 20 temperature sensors read like this
+            {'Name': 'Inlet_Temp', 'ReadingCelsius': 4294967295},
+            {'Name': 'CPU1_Temp', 'ReadingCelsius': 4294967295},
+            {'Name': 'OCP_Temp', 'ReadingCelsius': 59},
+          ],
+          'Fans': [
+            {'Name': 'Fan1', 'Reading': 1050, 'ReadingUnits': 'RPM'},
+            {'Name': 'Fan9', 'Reading': 4294967295, 'ReadingUnits': 'RPM'},
+          ],
+        },
+      );
+
+      expect(
+        sensors.temperatures.map((e) => e.name),
+        ['OCP_Temp'],
+        reason: 'the sentinel is absence, and absence is not shown',
+      );
+      expect(sensors.temperatures.single.value, 59);
+      expect(sensors.fans.map((e) => e.name), ['Fan1']);
+    });
+
+    test('the other sentinels go the same way, and real readings do not', () {
+      // Filtered by plausibility rather than by a list of known sentinels,
+      // which is always one vendor short.
+      for (final sentinel in [4294967295, 65535, 0x7FFFFFFF]) {
+        final s = BmcSensors.fromLegacy(
+          thermal: {
+            'Temperatures': [
+              {'Name': 't', 'ReadingCelsius': sentinel},
+            ],
+          },
+        );
+        expect(s.temperatures, isEmpty, reason: 'sentinel $sentinel');
+      }
+
+      // The gap has to stay narrow enough to keep everything real — which is
+      // also the limit of this approach, and the reason it is a range rather
+      // than something cleverer. `-1` is used as a sentinel by some firmware
+      // and is also what a cold inlet reads, so it is kept: a filter that
+      // dropped it would delete a real measurement to hide a fake one, and
+      // only one of those two mistakes is visible to the person looking.
+      for (final real in [-40, -1, 0, 4, 59, 105]) {
+        final s = BmcSensors.fromLegacy(
+          thermal: {
+            'Temperatures': [
+              {'Name': 't', 'ReadingCelsius': real},
+            ],
+          },
+        );
+        expect(s.temperatures.single.value, real, reason: 'real $real');
+      }
+    });
+
+    test('a sentinel wattage is not a 4 GW chassis', () {
+      final s = BmcSensors.fromLegacy(
+        power: {
+          'PowerControl': [
+            {'PowerConsumedWatts': 4294967295},
+          ],
+        },
+      );
+      expect(s.watts, isNull);
+    });
+
+    test('the modern model filters the same way', () {
+      final s = BmcSensors.fromSensors([
+        {'Name': 'a', 'ReadingType': 'Temperature', 'Reading': 4294967295},
+        {'Name': 'b', 'ReadingType': 'Temperature', 'Reading': 42},
+        {'Name': 'Fan1', 'ReadingType': 'Rotational', 'Reading': 4294967295},
+        {'Name': 'Fan2', 'ReadingType': 'Rotational', 'Reading': 900},
+        {'Name': 'p', 'ReadingType': 'Power', 'Reading': 4294967295},
+      ]);
+      expect(s.temperatures.map((e) => e.name), ['b']);
+      expect(s.fans.map((e) => e.name), ['Fan2']);
+      expect(s.watts, isNull);
+    });
+  });
 }

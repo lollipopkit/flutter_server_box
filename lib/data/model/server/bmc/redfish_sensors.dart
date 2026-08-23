@@ -67,9 +67,14 @@ class BmcSensors {
     double? watts;
 
     for (final entry in _list(thermal?['Temperatures'])) {
-      final value = _num(entry['ReadingCelsius']);
-      // A sensor that is present but has nothing to say reports null, and a
-      // reading of 0 °C would be a lie rather than a gap
+      // A sensor that is present but has nothing to say reports null or a
+      // sentinel — see [_reading]. A reading of 0 °C would be a lie rather
+      // than a gap, so neither is turned into one.
+      final value = _reading(
+        entry['ReadingCelsius'],
+        min: _tempMin,
+        max: _tempMax,
+      );
       if (value == null) continue;
       temps.add(
         BmcReading(name: _name(entry), value: value, unit: 'Cel'),
@@ -78,7 +83,9 @@ class BmcSensors {
 
     for (final entry in _list(thermal?['Fans'])) {
       // `Reading` is current; `ReadingRPM` is what older services called it
-      final value = _num(entry['Reading']) ?? _num(entry['ReadingRPM']);
+      final value =
+          _reading(entry['Reading'], min: 0, max: _fanMax) ??
+          _reading(entry['ReadingRPM'], min: 0, max: _fanMax);
       if (value == null) continue;
       fans.add(
         BmcReading(
@@ -90,7 +97,11 @@ class BmcSensors {
     }
 
     for (final entry in _list(power?['PowerControl'])) {
-      watts ??= _num(entry['PowerConsumedWatts']);
+      watts ??= _reading(
+        entry['PowerConsumedWatts'],
+        min: 0,
+        max: _wattsMax,
+      );
     }
 
     return BmcSensors(temperatures: temps, fans: fans, watts: watts);
@@ -107,17 +118,24 @@ class BmcSensors {
     double? watts;
 
     for (final s in sensors) {
-      final value = _num(s['Reading']);
-      if (value == null) continue;
       final name = _name(s);
       final unit = s['ReadingUnits'] as String?;
+      // The bound depends on what is being measured, so the reading is taken
+      // per type rather than once up front.
+      final raw = s['Reading'];
       switch (s['ReadingType']) {
         case 'Temperature':
+          final value = _reading(raw, min: _tempMin, max: _tempMax);
+          if (value == null) continue;
           temps.add(BmcReading(name: name, value: value, unit: unit ?? 'Cel'));
         case 'Rotational':
         case 'Percent' when name.toLowerCase().contains('fan'):
+          final value = _reading(raw, min: 0, max: _fanMax);
+          if (value == null) continue;
           fans.add(BmcReading(name: name, value: value, unit: unit ?? 'RPM'));
         case 'Power':
+          final value = _reading(raw, min: 0, max: _wattsMax);
+          if (value == null) continue;
           // The chassis total, not every rail: a service reports several, and
           // the largest is the one that is about the whole machine
           if (watts == null || value > watts) watts = value;
@@ -140,6 +158,39 @@ class BmcSensors {
     final double d => d,
     _ => null,
   };
+
+  /// A reading, or null when the service is saying it has none.
+  ///
+  /// `null` is what the specification suggests for a sensor with nothing to
+  /// report, and some firmware does that. Others send a sentinel: an H3C
+  /// R5350 G6 reports `4294967295` — `0xFFFFFFFF`, unsigned -1 — for every
+  /// temperature it cannot read, which was 18 of its 20. Taken at face value
+  /// that reaches the detail card as `4294967295 Cel`.
+  ///
+  /// Filtered by plausibility rather than by matching known sentinels: the
+  /// next vendor's is `65535` or `-1` or `127`, and a list of them is a list
+  /// that is always one short. Nothing real falls in these gaps — a chassis
+  /// sensor below absolute zero or above a thousand degrees is not a reading,
+  /// and neither is a fan at four billion RPM.
+  static double? _reading(Object? raw, {required double min, required double max}) {
+    final value = _num(raw);
+    if (value == null) return null;
+    if (value.isNaN || value.isInfinite) return null;
+    if (value < min || value > max) return null;
+    return value;
+  }
+
+  /// Colder than absolute zero, or hotter than anything that would still be a
+  /// chassis.
+  static const _tempMin = -273.15;
+  static const _tempMax = 1000.0;
+
+  /// A fan reading is RPM or a percentage; neither is ever negative, and no
+  /// fan in a server turns this fast.
+  static const _fanMax = 100000.0;
+
+  /// A chassis drawing more than this is not one.
+  static const _wattsMax = 100000.0;
 
   static String _name(Map<String, dynamic> entry) =>
       entry['Name'] as String? ?? entry['MemberId'] as String? ?? '?';

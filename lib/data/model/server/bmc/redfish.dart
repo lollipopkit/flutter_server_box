@@ -193,7 +193,16 @@ enum PowerIntent {
     PowerIntent.gracefulShutdown => const ['GracefulShutdown'],
     PowerIntent.forceOff => const ['ForceOff'],
     PowerIntent.restart => const ['GracefulRestart', 'ForceRestart'],
-    PowerIntent.powerCycle => const ['PowerCycle', 'ForceRestart'],
+    // `ForcePowerCycle` is not in the Redfish `ResetType` enum, but an H3C
+    // R5350 G6 advertises it and nothing else that power-cycles. Without it
+    // the intent fell through to `ForceRestart`, which is a different
+    // operation — the machine restarts instead of losing power, and the button
+    // that said "power cycle" did not do one.
+    PowerIntent.powerCycle => const [
+      'PowerCycle',
+      'ForcePowerCycle',
+      'ForceRestart',
+    ],
   };
 }
 

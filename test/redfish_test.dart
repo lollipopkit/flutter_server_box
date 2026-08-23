@@ -443,6 +443,43 @@ void main() {
     });
   });
 
+  group('what real firmware advertises', () {
+    test('an H3C offering ForcePowerCycle gets a power cycle, not a restart', () {
+      // Read off an R5350 G6. `ForcePowerCycle` is not in the Redfish
+      // `ResetType` enum, so it was not a candidate and the intent fell
+      // through to `ForceRestart` — a different operation, under a button
+      // that said power cycle.
+      const allowed = [
+        'ForceOff',
+        'ForcePowerCycle',
+        'ForceRestart',
+        'GracefulShutdown',
+        'Nmi',
+        'On',
+      ];
+      expect(resolveResetType(PowerIntent.powerCycle, allowed), 'ForcePowerCycle');
+      // and the rest of that machine's negotiation, unchanged
+      expect(resolveResetType(PowerIntent.on, allowed), 'On');
+      expect(
+        resolveResetType(PowerIntent.gracefulShutdown, allowed),
+        'GracefulShutdown',
+      );
+      expect(resolveResetType(PowerIntent.forceOff, allowed), 'ForceOff');
+      expect(resolveResetType(PowerIntent.restart, allowed), 'ForceRestart');
+    });
+
+    test('the standard name still wins where a service has both', () {
+      expect(
+        resolveResetType(
+          PowerIntent.powerCycle,
+          const ['ForcePowerCycle', 'PowerCycle', 'ForceRestart'],
+        ),
+        'PowerCycle',
+        reason: 'the vendor extension is a fallback, not a preference',
+      );
+    });
+  });
+
   group('power state', () {
     test('knows which states are being passed through', () {
       expect(PowerState.poweringOn.isTransitional, isTrue);
