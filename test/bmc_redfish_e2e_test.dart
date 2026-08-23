@@ -13,6 +13,14 @@
 /// firmware in front of you actually presents, whether its ids are shaped the
 /// way the recorded ones are, and whether a session is really given back.
 ///
+/// **When it answers on a model that is not yet listed, add a row.** What has
+/// actually run is recorded under "Hardware this has run against" in
+/// `docs/principles/bmc.md`, and it is one machine — an H3C R5350 G6, which is
+/// where `ForcePowerCycle` and the `0xFFFFFFFF` sensor sentinel came from.
+/// Neither was findable by reading, and the next vendor's equivalent will not
+/// be either. A run that turns up nothing new is worth a row too: it is how
+/// the list stops being one machine.
+///
 /// Configuration, from the environment or the workspace-root `.env` (which is
 /// gitignored). Skipped silently when unset:
 ///

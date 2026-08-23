@@ -3,12 +3,15 @@ title: BMC (Redfish)
 description: How out-of-band management reaches a server whose OS is not answering
 ---
 
-:::caution[Untested against real hardware]
-Phase 1 is implemented. What has not happened yet is a run against an actual
-BMC — every vendor difference below is handled against recorded responses and a
-local TLS server, which is enough to be sure of the decisions and not enough to
-be sure of a machine. Power control in particular has never been performed by
-anything automated, deliberately: see the header of `test/bmc_power_test.dart`.
+:::caution[Read verified on one machine; power control on none]
+Phase 1 is implemented and the read half has been run against real firmware —
+see [Hardware this has run against](#hardware-this-has-run-against), which is
+one model. Every other vendor difference below is handled against recorded
+responses and a local TLS server: enough to be sure of the decisions, not
+enough to be sure of a machine.
+
+Power control has never been performed by anything automated, deliberately.
+See the header of `test/bmc_power_test.dart`.
 :::
 
 Every other way this app reaches a server needs the host operating system to be
@@ -255,6 +258,37 @@ afford.
 Not in Phase 1: the event log, storage inventory, boot device override, virtual
 media, and relaying Redfish through a monitor agent for BMCs on a management
 network a phone cannot route to.
+
+## Hardware this has run against
+
+One machine, and it is worth being exact about that: the table below is what
+has answered, not what is supported. Everything else in this page comes from
+vendor documentation and recorded responses, which is a different kind of
+confidence — the two entries under [What varies between
+vendors](#what-varies-between-vendors) marked as measured are the ones that
+came from here, and both were things no amount of reading had turned up.
+
+| | |
+| --- | --- |
+| Model | H3C R5350 G6 |
+| BIOS | 6.30.50 |
+| Redfish version | 1.15.1 |
+| `Vendor` / `Product` at the root | **both absent** — do not rely on them to identify a service |
+| System id | `Systems/1` |
+| Chassis id | `Chassis/1` |
+| Sensor model | legacy (`Thermal` + `Power`). `Sensors` is linked but `ThermalSubsystem` is not, so the modern model is not fully present and is correctly not used |
+| `ResetType` allowed | `ForceOff`, `ForcePowerCycle`, `ForceRestart`, `GracefulShutdown`, `Nmi`, `On` |
+| Temperatures | 20 reported, 18 of them the `0xFFFFFFFF` sentinel |
+| Fans | 8 positions, each reported twice with different readings — dual rotor, and the two share a name |
+| Chassis power | 48 W reported through `PowerControl` |
+| Sessions | one open while one client is connected; released on close |
+| Certificate | self-signed, within its validity dates |
+| Run | 2026-08-23 |
+
+What that does **not** cover, and what to add a row for when someone has one:
+Dell (`System.Embedded.1`), OpenBMC (`system`), Supermicro X11–X13 against X14
+(the sensor-model switch), HPE iLO's graceful operations, and any machine that
+publishes more than one system.
 
 ## Checking it against real hardware
 
