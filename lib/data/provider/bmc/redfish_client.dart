@@ -92,27 +92,54 @@ class RedfishClient implements RedfishTransport {
   /// Basic auth is not used for the fetches: a session is one credential
   /// exchange instead of one per request, and this makes several requests per
   /// poll. [probe] is the exception and needs no session at all.
+  ///
+  /// A *failed* login is not remembered. The field holds the login in flight so
+  /// that concurrent requests share one; a future that has already completed
+  /// with an error is not one in flight, and keeping it made the first failure
+  /// permanent — this client is held across polls, so every minute for the rest
+  /// of its life would re-throw that first error without a request being made.
+  /// One timeout on a device that takes seconds to answer was enough.
   Future<void> _ensureLogin() {
     final existing = _login;
     if (existing != null) return existing;
-    return _login = _doLogin();
+    // The field holds the *derived* future, so that is what the handler has to
+    // compare against before clearing it — comparing against the raw
+    // `_doLogin()` never matches, and the field is then never cleared at all.
+    late final Future<void> attempt;
+    attempt = _doLogin().catchError((Object e) {
+      if (identical(_login, attempt)) _login = null;
+      throw e;
+    });
+    return _login = attempt;
   }
 
   Future<void> _doLogin() async {
     final sessions = await _sessionsPath();
-    final res = await _session().postUri<Map<String, dynamic>>(
-      Uri.parse(sessions),
-      data: {'UserName': cred.user, 'Password': cred.pwd ?? ''},
-    );
+    final Response<Map<String, dynamic>> res;
+    try {
+      res = await _session().postUri<Map<String, dynamic>>(
+        Uri.parse(sessions),
+        data: {'UserName': cred.user, 'Password': cred.pwd ?? ''},
+      );
+    } on DioException catch (e) {
+      throw _asRedfish(e, sessions);
+    }
 
     final code = res.statusCode ?? 0;
     if (code == 401 || code == 403) {
       throw const RedfishException(RedfishFailure.unauthorized);
     }
+    // Anything else that is not a success is the service's problem, not the
+    // account's. Reporting a 500 as `unauthorized` told the user their password
+    // was wrong while the BMC was having a bad day — and it is the answer they
+    // would act on, by changing a password that was fine.
+    if (code >= 400) {
+      throw RedfishException(RedfishFailure.unreachable, 'HTTP $code at login');
+    }
     final token = res.headers.value('x-auth-token');
     if (token == null) {
       throw RedfishException(
-        RedfishFailure.unauthorized,
+        RedfishFailure.unreachable,
         'the service returned no token (HTTP $code)',
       );
     }
@@ -149,12 +176,22 @@ class RedfishClient implements RedfishTransport {
 
   @override
   Future<void> post(String path, Map<String, dynamic> body) async {
+    if (_closed) throw StateError('This RedfishClient is closed');
     await _ensureLogin();
-    final res = await _session().postUri<Map<String, dynamic>>(
-      Uri.parse(path),
-      data: body,
-      options: Options(headers: {'X-Auth-Token': _token}),
-    );
+    final Response<Map<String, dynamic>> res;
+    try {
+      res = await _session().postUri<Map<String, dynamic>>(
+        Uri.parse(path),
+        data: body,
+        options: Options(headers: {'X-Auth-Token': _token}),
+      );
+    } on DioException catch (e) {
+      // The same translation `_getJson` does. Without it a reset request that
+      // met a rejected certificate came back as a bare `DioException`, and the
+      // one failure worth naming reached the UI as an unrecognised error on the
+      // one path where the user is waiting for an answer.
+      throw _asRedfish(e, path);
+    }
     _throwForStatus(res.statusCode ?? 0, path);
   }
 
@@ -174,13 +211,7 @@ class RedfishClient implements RedfishTransport {
             : null,
       );
     } on DioException catch (e) {
-      // A rejected certificate is the failure most worth naming: everything
-      // else about it reads as an ordinary network fault.
-      if (e.type == DioExceptionType.badCertificate ||
-          e.error is HandshakeException) {
-        throw const RedfishException(RedfishFailure.certificateRejected);
-      }
-      throw RedfishException(RedfishFailure.unreachable, e.message);
+      throw _asRedfish(e, path);
     }
 
     _throwForStatus(res.statusCode ?? 0, path);
@@ -189,6 +220,19 @@ class RedfishClient implements RedfishTransport {
       throw RedfishException(RedfishFailure.notAService, 'no JSON at $path');
     }
     return data;
+  }
+
+  /// What a transport failure means, in the terms the rest of the app uses.
+  ///
+  /// A rejected certificate is the one worth naming: everything else about it
+  /// reads as an ordinary network fault, and the fix is a person looking at a
+  /// fingerprint rather than a network.
+  static RedfishException _asRedfish(DioException e, String path) {
+    if (e.type == DioExceptionType.badCertificate ||
+        e.error is HandshakeException) {
+      return const RedfishException(RedfishFailure.certificateRejected);
+    }
+    return RedfishException(RedfishFailure.unreachable, e.message ?? path);
   }
 
   static void _throwForStatus(int code, String path) {
@@ -213,6 +257,15 @@ class RedfishClient implements RedfishTransport {
   Future<void> close() async {
     if (_closed) return;
     _closed = true;
+
+    // A login still in flight is a session about to exist. Closing without
+    // waiting for it read `_sessionPath` as null, sent no DELETE, and left
+    // behind exactly the session this method exists to give back — on a device
+    // that allows about four of them. Its own failure is not this method's
+    // problem: there is then no session to release.
+    try {
+      await _login;
+    } catch (_) {}
 
     final path = _sessionPath;
     final token = _token;

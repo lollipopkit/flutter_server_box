@@ -251,6 +251,52 @@ void main() {
       );
     });
 
+    test('one system is not reported as several', () async {
+      final topology = await RedfishDiscovery(_FakeTransport(_dell())).run();
+      expect(topology.hasMultipleSystems, isFalse);
+    });
+
+    test('a chassis publishing several systems says so', () async {
+      // A blade enclosure is one Redfish service with one system per node.
+      // Only the first is shown, which is a stated limitation — but showing it
+      // silently reports one node's power state as if it were the enclosure's.
+      final resources = _dell();
+      resources['/redfish/v1/Systems'] = {
+        'Members': [
+          {'@odata.id': '/redfish/v1/Systems/System.Embedded.1'},
+          {'@odata.id': '/redfish/v1/Systems/System.Embedded.2'},
+        ],
+      };
+      final topology = await RedfishDiscovery(_FakeTransport(resources)).run();
+
+      expect(topology.hasMultipleSystems, isTrue);
+      expect(
+        topology.systemPath,
+        '/redfish/v1/Systems/System.Embedded.1',
+        reason: 'still the first; the flag is what makes that sayable',
+      );
+    });
+
+    test('re-reading the system keeps what discovery worked out', () async {
+      // A poll re-reads the system and nothing else. Rebuilding the topology
+      // field by field at that point dropped `hasMultipleSystems` back to
+      // false once a minute, which is why `withSystem` exists.
+      final resources = _dell();
+      resources['/redfish/v1/Systems'] = {
+        'Members': [
+          {'@odata.id': '/redfish/v1/Systems/System.Embedded.1'},
+          {'@odata.id': '/redfish/v1/Systems/System.Embedded.2'},
+        ],
+      };
+      final topology = await RedfishDiscovery(_FakeTransport(resources)).run();
+      final polled = topology.withSystem(topology.system!);
+
+      expect(polled.hasMultipleSystems, isTrue);
+      expect(polled.systemPath, topology.systemPath);
+      expect(polled.chassisPath, topology.chassisPath);
+      expect(polled.chassis, topology.chassis);
+    });
+
     test('a chassis that is refused costs the sensors and nothing else', () async {
       // Licensing gates parts of some services, so a 403 on one sub-resource
       // must not take the power half down with it

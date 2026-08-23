@@ -46,6 +46,17 @@ class _FakeBmc {
   final sessionsDeleted = <String>[];
 
   int logins = 0;
+
+  /// Held before a login is answered, so a test can close a client while one
+  /// is still in flight.
+  Duration loginDelay = Duration.zero;
+
+  /// Make this many logins fail with a 500 before any of them succeeds.
+  ///
+  /// A transient failure rather than a wrong password: the two are different
+  /// answers, and only this one is supposed to be recoverable.
+  int failLogins = 0;
+
   var _nextSession = 0;
 
   String get url => 'https://127.0.0.1:${_server.port}';
@@ -60,6 +71,13 @@ class _FakeBmc {
     if (req.method == 'POST' && path == '/redfish/v1/SessionService/Sessions') {
       logins++;
       final body = jsonDecode(await utf8.decoder.bind(req).join());
+      if (loginDelay > Duration.zero) await Future.delayed(loginDelay);
+      if (failLogins > 0) {
+        failLogins--;
+        res.statusCode = 500;
+        res.write('{}');
+        return res.close();
+      }
       if (body['Password'] != 'right') {
         res.statusCode = 401;
         res.write('{}');
@@ -239,11 +257,91 @@ void main() {
       expect(bmc.sessionsDeleted, hasLength(1));
     });
 
+    test('closing during a login still gives the session back', () async {
+      final client = RedfishClient(cfg(pin: fingerprint), cred());
+      bmc.loginDelay = const Duration(milliseconds: 300);
+
+      // Closing without waiting for a login in flight read the session path as
+      // null, sent no DELETE, and left behind exactly the session this is meant
+      // to release — on a device that allows about four of them.
+      final inFlight = client.get('/redfish/v1/Systems/1');
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      final closing = client.close();
+
+      await inFlight.catchError((Object _) => <String, dynamic>{});
+      await closing;
+
+      expect(bmc.sessionsCreated, hasLength(1));
+      expect(bmc.sessionsDeleted, bmc.sessionsCreated);
+    });
+
     test('a client that never logged in still closes', () async {
       final client = RedfishClient(cfg(pin: fingerprint), cred());
       await client.close();
       expect(bmc.sessionsDeleted, isEmpty);
     });
+  });
+
+  group('a failed login is not remembered', () {
+    test('the next request tries again', () async {
+      final client = RedfishClient(cfg(pin: fingerprint), cred());
+      addTearDown(client.close);
+
+      bmc.failLogins = 1;
+      await expectLater(
+        client.get('/redfish/v1/Systems/1'),
+        throwsA(isA<RedfishException>()),
+      );
+
+      // The client is held across polls, once a minute. Caching the failed
+      // future made the first failure permanent: every later poll re-threw it
+      // without a request being made, so a single timeout on a device that
+      // takes seconds to answer ended the connection for good.
+      final system = await client.get('/redfish/v1/Systems/1');
+      expect(system['Model'], 'Fake 1U');
+      expect(bmc.logins, 2);
+    });
+
+    test('a wrong password is still refused every time', () async {
+      // Retrying is about transport failures. An account the BMC rejects is an
+      // answer, and asking again with the same password is how a BMC locks it.
+      final client = RedfishClient(cfg(pin: fingerprint), cred(pwd: 'wrong'));
+      addTearDown(client.close);
+
+      for (var i = 0; i < 2; i++) {
+        await expectLater(
+          client.get('/redfish/v1/Systems/1'),
+          throwsA(
+            isA<RedfishException>().having(
+              (e) => e.failure,
+              'failure',
+              RedfishFailure.unauthorized,
+            ),
+          ),
+        );
+      }
+    });
+  });
+
+  group('a transport failure keeps its name', () {
+    test('a POST that cannot be sent is not a bare DioException', () async {
+      final client = RedfishClient(cfg(pin: fingerprint), cred());
+      addTearDown(client.close);
+      // Log in first, so the failure below is the POST's own and not the
+      // login's — which `_getJson` already translated.
+      await client.get('/redfish/v1/Systems/1');
+
+      await bmc.close();
+
+      // A machine being reset stops answering, which is the normal case for
+      // this call rather than an exotic one.
+      await expectLater(
+        client.post('/redfish/v1/Systems/1/Actions/ComputerSystem.Reset', {
+          'ResetType': 'ForceOff',
+        }),
+        throwsA(isA<RedfishException>()),
+      );
+    }, timeout: const Timeout(Duration(seconds: 30)));
   });
 
   group('answers that mean something', () {

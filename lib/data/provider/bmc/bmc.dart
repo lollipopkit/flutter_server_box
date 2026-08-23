@@ -147,13 +147,7 @@ class BmcNotifier extends _$BmcNotifier {
       final system = RedfishSystem.fromJson(
         await client.get(topology.systemPath!),
       );
-      final fresh = RedfishTopology(
-        root: topology.root,
-        systemPath: topology.systemPath,
-        chassisPath: topology.chassisPath,
-        system: system,
-        chassis: topology.chassis,
-      );
+      final fresh = topology.withSystem(system);
 
       final (sensors, truncated) = await _readSensors(client, topology);
       if (generation != _generation) return;
@@ -237,15 +231,7 @@ class BmcNotifier extends _$BmcNotifier {
         final system = RedfishSystem.fromJson(
           await client.get(state.topology!.systemPath!),
         );
-        state = state.copyWith(
-          topology: RedfishTopology(
-            root: state.topology!.root,
-            systemPath: state.topology!.systemPath,
-            chassisPath: state.topology!.chassisPath,
-            system: system,
-            chassis: state.topology!.chassis,
-          ),
-        );
+        state = state.copyWith(topology: state.topology!.withSystem(system));
         final now = system.powerState;
         if (now != before && !now.isTransitional) return true;
       } catch (e) {

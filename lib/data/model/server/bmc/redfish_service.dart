@@ -33,6 +33,7 @@ class RedfishTopology {
     required this.chassisPath,
     required this.system,
     required this.chassis,
+    this.hasMultipleSystems = false,
   });
 
   final RedfishRoot root;
@@ -54,9 +55,29 @@ class RedfishTopology {
   /// Which sensor model this chassis presents, or none.
   SensorModel get sensorModel => chassis?.model ?? SensorModel.none;
 
+  /// This topology with a freshly read [system].
+  ///
+  /// A poll re-reads the system and nothing else — power state is the point of
+  /// it — and this is what keeps that from being a full re-listing of every
+  /// field at each of the two call sites. It was, and adding
+  /// [hasMultipleSystems] would have silently reset it to false once a minute.
+  RedfishTopology withSystem(RedfishSystem system) => RedfishTopology(
+    root: root,
+    systemPath: systemPath,
+    chassisPath: chassisPath,
+    system: system,
+    chassis: chassis,
+    hasMultipleSystems: hasMultipleSystems,
+  );
+
   /// Set when the service offered more than one system, so the UI can say that
   /// only the first is shown rather than quietly showing one of several.
-  final bool hasMultipleSystems = false;
+  ///
+  /// It was a field initialised to `false` that the constructor did not take,
+  /// so it could not become true and the sentence above was a description of
+  /// nothing. A blade chassis publishing four systems showed the first with no
+  /// indication that the other three existed.
+  final bool hasMultipleSystems;
 }
 
 /// Why a service could not be read.
@@ -117,8 +138,10 @@ class RedfishDiscovery {
       throw const RedfishException(RedfishFailure.notAService);
     }
 
-    final systemPath = await _firstMember(root.systems);
-    final chassisPath = await _firstMember(root.chassis);
+    final systems = await _members(root.systems);
+    final chassis_ = await _members(root.chassis);
+    final systemPath = systems.firstOrNull;
+    final chassisPath = chassis_.firstOrNull;
 
     if (systemPath == null) {
       throw const RedfishException(RedfishFailure.noSystem);
@@ -143,16 +166,22 @@ class RedfishDiscovery {
       chassisPath: chassisPath,
       system: system,
       chassis: chassis,
+      hasMultipleSystems: systems.length > 1,
     );
   }
 
-  Future<String?> _firstMember(String? collectionPath) async {
-    if (collectionPath == null) return null;
+  /// Every member of a collection, or empty when it cannot be read.
+  ///
+  /// The whole list rather than the first of it, because how many there are is
+  /// itself an answer: a blade chassis publishes one system per node, and
+  /// showing the first without saying so reports one machine's power state as
+  /// if it were the enclosure's.
+  Future<List<String>> _members(String? collectionPath) async {
+    if (collectionPath == null) return const [];
     try {
-      final members = collectionMembers(await transport.get(collectionPath));
-      return members.isEmpty ? null : members.first;
+      return collectionMembers(await transport.get(collectionPath));
     } catch (_) {
-      return null;
+      return const [];
     }
   }
 }
