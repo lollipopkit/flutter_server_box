@@ -273,10 +273,16 @@ class ServersNotifier extends _$ServersNotifier {
   Future<void> addServer(Spi spi) async {
     spi.validateOrThrow();
 
+    final exists = state.servers.containsKey(spi.id);
     final newServers = Map<String, Spi>.from(state.servers);
     newServers[spi.id] = spi;
 
-    final newOrder = List<String>.from(state.serverOrder)..add(spi.id);
+    final newOrder = List<String>.from(state.serverOrder);
+    if (!exists) {
+      newOrder.add(spi.id);
+    } else {
+      Loggers.app.warning('addServer: id ${spi.id} already exists, updating in place');
+    }
     final newTags = _calculateTags(newServers);
     final newManualDisconnected = Set<String>.from(state.manualDisconnectedIds)
       ..remove(spi.id);
@@ -289,6 +295,16 @@ class ServersNotifier extends _$ServersNotifier {
       tags: newTags,
       manualDisconnectedIds: newManualDisconnected,
     );
+    // If the server already had a live notifier, refresh its Spi rather than
+    // leaving it stale with the old credentials.
+    if (exists) {
+      try {
+        ref.read(serverProvider(spi.id).notifier).updateSpi(spi);
+      } catch (_) {
+        // Provider may not have been created yet (keepAlive not yet built)
+        ref.invalidate(serverProvider(spi.id));
+      }
+    }
     unawaited(refresh(spi: spi));
     bakSync.sync(milliDelay: 1000);
   }
@@ -411,7 +427,50 @@ class ServersNotifier extends _$ServersNotifier {
     newSpi.validateOrThrow();
 
     if (old != newSpi) {
-      Stores.server.update(old, newSpi);
+      if (newSpi.id != old.id) {
+        // `EntityStore.update` explicitly rejects id changes; renaming must
+        // move dependent rows and handle sync metadata itself.
+        if (state.servers.containsKey(newSpi.id)) {
+          throw DuplicateNameException(newSpi.name);
+        }
+        // Move rows that reference the server by id before the old row is
+        // deleted (its CASCADE would otherwise delete them). Owned children
+        // like server_tag/env/jump etc. are recreated from newSpi itself via
+        // `put`, so they are not moved here.
+        try {
+          SqliteStore.transact(() {
+            final db = SqliteDb.instance;
+            for (final tbl in [
+              'known_host',
+              'container_host',
+              'container_runtime',
+              'port_forward',
+              'conn_stat',
+            ]) {
+              try {
+                db.execute('UPDATE $tbl SET server_id = ? WHERE server_id = ?;', [newSpi.id, old.id]);
+              } catch (_) {}
+            }
+            try {
+              db.execute('UPDATE snippet_auto_run_on SET server_id = ? WHERE server_id = ?;', [newSpi.id, old.id]);
+            } catch (_) {}
+            try {
+              db.execute('UPDATE agent_conversation SET server_id = ? WHERE server_id = ?;', [newSpi.id, old.id]);
+            } catch (_) {}
+            try {
+              db.execute('UPDATE server_jump SET jump_id = ? WHERE jump_id = ?;', [newSpi.id, old.id]);
+            } catch (_) {}
+          });
+        } catch (e, s) {
+          Loggers.app.warning('Failed to move server references for rename', e, s);
+        }
+        // Delete old tombstone + insert new. Use deleteById + put to get proper
+        // sync handling; the moves above ensure port_forwards etc. are not lost.
+        Stores.server.deleteById(old.id);
+        Stores.server.put(newSpi);
+      } else {
+        Stores.server.update(old, newSpi);
+      }
 
       final newServers = Map<String, Spi>.from(state.servers);
       final newOrder = List<String>.from(state.serverOrder);
@@ -427,6 +486,12 @@ class ServersNotifier extends _$ServersNotifier {
           newManualDisconnected.add(newSpi.id);
         }
         Stores.setting.serverOrder.put(newOrder);
+
+        // Preserve selection if the renamed server was selected
+        if (ref.read(serverSelectionProvider) == old.id) {
+          ref.read(serverSelectionProvider.notifier).select(newSpi.id);
+        }
+        ref.invalidate(serverProvider(old.id));
 
         // Update SSH session ID when server ID changes
         final oldSessionId = 'ssh_${old.id}';
