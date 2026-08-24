@@ -26,6 +26,7 @@
   "connectAll": "Tümünü bağla",
   "disconnectAll": "Tümünün bağlantısını kes",
   "distIcon": "Dağıtım işaretleri",
+  "distIconConsent": "Bunu açtığınızda bu işaretleri göstermeyi kendiniz seçmiş olursunuz; tek amacı bir sunucunun çalıştırdığı görünen dağıtımı belirtmektir.",
   "distIconIntroLegal": "Bu işaretler {fontLogos} kaynaklıdır. Bir işaret yalnızca bu cihazın uzak sistemden okuduğunu gösterir; bu bilgi yanlış veya güncelliğini yitirmiş olabilir ve bir türevi, yeniden derlemeyi ya da belirli bir sürümü de belirtmez. Sistem tanınamadığında veya işareti bulunmadığında bunun yerine nötr bir çizim gösterilir.\n\nHer işaret ilgili sahibinin ticari markasıdır ve burada yalnızca tanımladığı sisteme atıfta bulunmak için kullanılır.",
   "distIconTip": "Her sunucunun yanında, üzerinde çalıştığı görünen sistemin küçük bir işaretini göster",
   "navTabMenuTip": "İçindeki her şeyi tek seferde bağlamak veya bağlantısını kesmek için bir sekmeye uzun basın ya da sağ tıklayın.",

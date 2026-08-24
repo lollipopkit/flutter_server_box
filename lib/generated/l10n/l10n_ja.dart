@@ -272,6 +272,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get distIcon => 'ディストリビューション標識';
 
   @override
+  String get distIconConsent =>
+      'オンにすると、これらのマークを自分の意思で表示することになります。用途は、そのサーバーが動かしていると思われるディストリビューションを示すことだけです。';
+
+  @override
   String distIconIntroLegal(Object fontLogos) {
     return 'これらの標識は $fontLogos のものです。標識は本端末がリモートシステムから読み取った内容を示すにすぎず、その内容は誤っていたり古くなっていたりする可能性があり、派生版・再構築版・特定のバージョンを示すものでもありません。識別できない場合、または対応する標識がない場合は中立的な図形を表示します。\n\n各標識はそれぞれの所有者の商標であり、ここではそれが指すシステムを参照する目的でのみ使用しています。';
   }

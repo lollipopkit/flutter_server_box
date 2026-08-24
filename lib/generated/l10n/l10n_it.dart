@@ -294,6 +294,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get distIcon => 'Contrassegni di distribuzione';
 
   @override
+  String get distIconConsent =>
+      'Attivandola, scegli di mostrare questi marchi con il solo scopo di indicare quale distribuzione sembra essere in esecuzione su un server.';
+
+  @override
   String distIconIntroLegal(Object fontLogos) {
     return 'Questi contrassegni provengono da $fontLogos. Un contrassegno indica solo ciò che questo dispositivo ha letto dal sistema remoto, che può essere errato o non aggiornato, e non identifica un derivato, una ricompilazione né una versione specifica. Quando il sistema non può essere identificato, o il suo contrassegno non è incluso, viene disegnato un contorno neutro.\n\nOgni contrassegno è un marchio del rispettivo proprietario ed è usato qui solo per riferirsi al sistema che identifica.';
   }

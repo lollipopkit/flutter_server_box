@@ -199,8 +199,28 @@ extension _Server on _AppSettingsPageState {
       // the followable version lives.
       title: TipText(l10n.distIcon, distLegalPlain(l10n)),
       subtitle: Text(l10n.distIconTip, style: UIs.textGrey),
-      trailing: StoreSwitch(prop: _setting.showDistIcon),
+      trailing: StoreSwitch(
+        prop: _setting.showDistIcon,
+        validator: _confirmDistIcon,
+      ),
     );
+  }
+
+  /// Turning the marks on is a decision, so it is made once with the terms on
+  /// screen rather than silently.
+  ///
+  /// Only on the way on. Switching them off needs no agreement to anything,
+  /// and asking would turn "stop showing these" into a second decision.
+  ///
+  /// Returning false leaves the switch where it was — `StoreSwitch` treats the
+  /// validator as the gate and writes nothing when it declines.
+  ///
+  /// The intro page has the same switch and does not do this: the whole text
+  /// is already on that page beside it, and a dialog repeating what is visible
+  /// is one people learn to dismiss without reading.
+  Future<bool> _confirmDistIcon(bool enabling) async {
+    if (!enabling) return true;
+    return confirmDistIconTerms(context);
   }
 
   Widget _buildServerLogoUrl() {

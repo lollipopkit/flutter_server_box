@@ -269,6 +269,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get distIcon => '发行版标识';
 
   @override
+  String get distIconConsent => '开启即表示你自愿显示这些标识,且仅用于标识某台服务器可能运行的发行版。';
+
+  @override
   String distIconIntroLegal(Object fontLogos) {
     return '这些标识来自 $fontLogos, 仅表示本设备从远程系统读取到的信息,该信息可能有误或已过期,也不代表其衍生版本、重构版本或任何特定版本。无法识别、或未内置对应标识时,显示中性的通用图标。\n\n每个标识均为其各自所有者的商标,此处仅用于指代它所标识的系统。';
   }
@@ -1746,6 +1749,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get distIcon => '發行版標識';
+
+  @override
+  String get distIconConsent => '開啟即表示你自願顯示這些標識,且僅用於標識某台伺服器可能執行的發行版。';
 
   @override
   String distIconIntroLegal(Object fontLogos) {

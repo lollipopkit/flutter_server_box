@@ -26,6 +26,7 @@
   "connectAll": "Conectar todo",
   "disconnectAll": "Desconectar todo",
   "distIcon": "Marcas de distribución",
+  "distIconConsent": "Al activarlo, eliges mostrar estas marcas con el único fin de indicar qué distribución parece estar ejecutando un servidor.",
   "distIconIntroLegal": "Estas marcas provienen de {fontLogos}. Una marca solo indica lo que este dispositivo leyó del sistema remoto, lo cual puede ser incorrecto o estar desactualizado, y no identifica un derivado, una recompilación ni una versión concreta. Cuando el sistema no puede identificarse, o su marca no se incluye, se dibuja un contorno neutro en su lugar.\n\nCada marca es una marca registrada de su respectivo propietario y aquí se usa únicamente para referirse al sistema que identifica.",
   "distIconTip": "Mostrar junto a cada servidor una pequeña marca del sistema que parece estar ejecutando",
   "navTabMenuTip": "Mantén pulsada una pestaña, o haz clic derecho en ella, para conectar o desconectar de una vez todo lo que contiene.",

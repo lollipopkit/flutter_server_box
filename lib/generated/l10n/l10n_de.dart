@@ -293,6 +293,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get distIcon => 'Distributions-Kennzeichen';
 
   @override
+  String get distIconConsent =>
+      'Wenn Sie dies einschalten, entscheiden Sie sich dafür, diese Marken anzuzeigen – einzig zu dem Zweck, die Distribution zu kennzeichnen, die ein Server offenbar ausführt.';
+
+  @override
   String distIconIntroLegal(Object fontLogos) {
     return 'Diese Zeichen stammen aus $fontLogos. Ein Zeichen gibt nur wieder, was dieses Gerät vom entfernten System gelesen hat — das kann falsch oder veraltet sein —, und kennzeichnet weder eine Ableitung noch einen Rebuild oder eine bestimmte Version. Lässt sich das System nicht bestimmen oder wird sein Zeichen nicht mitgeliefert, erscheint stattdessen ein neutraler Umriss.\n\nJedes Zeichen ist eine Marke des jeweiligen Inhabers und wird hier nur verwendet, um auf das System zu verweisen, das es bezeichnet.';
   }

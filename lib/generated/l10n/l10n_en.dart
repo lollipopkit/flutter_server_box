@@ -288,6 +288,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get distIcon => 'Distribution marks';
 
   @override
+  String get distIconConsent =>
+      'By turning this on you are choosing to display these marks, for the single purpose of identifying which distribution a server appears to be running.';
+
+  @override
   String distIconIntroLegal(Object fontLogos) {
     return 'These marks come from $fontLogos. A mark says only what this device read from the remote system, which can be wrong or out of date, and identifies neither a derivative, a rebuild, nor any particular version. Where the system cannot be identified, or its mark is not shipped, a neutral outline is drawn instead.\n\nEach mark is a trademark of its respective owner and is used here only to refer to the system it identifies.';
   }

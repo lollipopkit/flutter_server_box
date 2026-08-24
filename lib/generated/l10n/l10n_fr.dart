@@ -297,6 +297,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get distIcon => 'Marques de distribution';
 
   @override
+  String get distIconConsent =>
+      'En activant cette option, vous choisissez d\'afficher ces marques, dans le seul but d\'indiquer la distribution qu\'un serveur semble exécuter.';
+
+  @override
   String distIconIntroLegal(Object fontLogos) {
     return 'Ces marques proviennent de $fontLogos. Une marque indique seulement ce que cet appareil a lu sur le système distant, ce qui peut être faux ou périmé, et ne désigne ni une dérivée, ni une reconstruction, ni une version particulière. Lorsque le système ne peut être identifié, ou que sa marque n’est pas fournie, un contour neutre est affiché à la place.\n\nChaque marque est une marque déposée de son propriétaire respectif et n’est utilisée ici que pour désigner le système qu’elle identifie.';
   }

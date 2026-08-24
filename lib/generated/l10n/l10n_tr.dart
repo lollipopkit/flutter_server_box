@@ -291,6 +291,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get distIcon => 'Dağıtım işaretleri';
 
   @override
+  String get distIconConsent =>
+      'Bunu açtığınızda bu işaretleri göstermeyi kendiniz seçmiş olursunuz; tek amacı bir sunucunun çalıştırdığı görünen dağıtımı belirtmektir.';
+
+  @override
   String distIconIntroLegal(Object fontLogos) {
     return 'Bu işaretler $fontLogos kaynaklıdır. Bir işaret yalnızca bu cihazın uzak sistemden okuduğunu gösterir; bu bilgi yanlış veya güncelliğini yitirmiş olabilir ve bir türevi, yeniden derlemeyi ya da belirli bir sürümü de belirtmez. Sistem tanınamadığında veya işareti bulunmadığında bunun yerine nötr bir çizim gösterilir.\n\nHer işaret ilgili sahibinin ticari markasıdır ve burada yalnızca tanımladığı sisteme atıfta bulunmak için kullanılır.';
   }

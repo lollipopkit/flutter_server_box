@@ -633,6 +633,12 @@ abstract class AppLocalizations {
   /// **'Distribution marks'**
   String get distIcon;
 
+  /// No description provided for @distIconConsent.
+  ///
+  /// In en, this message translates to:
+  /// **'By turning this on you are choosing to display these marks, for the single purpose of identifying which distribution a server appears to be running.'**
+  String get distIconConsent;
+
   /// No description provided for @distIconIntroLegal.
   ///
   /// In en, this message translates to:

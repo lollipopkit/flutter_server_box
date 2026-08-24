@@ -273,6 +273,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get distIcon => '배포판 표시';
 
   @override
+  String get distIconConsent =>
+      '켜면 이 마크를 자발적으로 표시하는 것이며, 그 용도는 해당 서버가 실행 중인 것으로 보이는 배포판을 나타내는 것뿐입니다.';
+
+  @override
   String distIconIntroLegal(Object fontLogos) {
     return '이 표시들은 $fontLogos에서 가져왔습니다. 표시는 이 기기가 원격 시스템에서 읽은 내용만을 나타내며, 그 내용은 틀리거나 오래된 것일 수 있고 파생본이나 재빌드, 특정 버전을 가리키지도 않습니다. 시스템을 식별할 수 없거나 해당 표시가 없으면 중립적인 도형을 표시합니다.\n\n각 표시는 해당 소유자의 상표이며, 여기서는 그것이 가리키는 시스템을 지칭하기 위해서만 사용됩니다.';
   }

@@ -1,6 +1,8 @@
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/dist.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
@@ -109,3 +111,37 @@ String distLegalMarkdown(AppLocalizations l10n) =>
 /// its own syntax.
 String distLegalPlain(AppLocalizations l10n) =>
     l10n.distIconIntroLegal('font-logos');
+
+/// Puts the terms up and answers whether the person accepted them.
+///
+/// Here rather than in the settings page because this is where the wording
+/// already lives, and because a page that is `part of entry.dart` cannot be
+/// pumped on its own — the decision is worth a test of its own.
+///
+/// Note what this is *not*: it does not change who is using the marks or under
+/// what doctrine. The app publisher still is, nominatively. What it does is
+/// stop the marks appearing without the person who turned them on having been
+/// shown what they are.
+Future<bool> confirmDistIconTerms(BuildContext context) async {
+  final l10n = context.l10n;
+  final agreed = await context.showRoundDialog<bool>(
+    title: l10n.distIcon,
+    child: SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Markdown, unlike the settings tip: a dialog can hold a link, and
+          // where the marks come from is worth being able to follow. No style
+          // sheet — a dialog reads at the default body size.
+          SimpleMarkdown(data: distLegalMarkdown(l10n)),
+          UIs.height13,
+          Text(l10n.distIconConsent),
+        ],
+      ),
+    ),
+    actions: Btnx.cancelOk,
+  );
+  // Dismissing by tapping outside is not agreement.
+  return agreed == true;
+}
