@@ -11,9 +11,9 @@ import 'package:server_box/data/store/schema.dart';
 /// Written by hand rather than left to Drift, which owns the DDL but only for
 /// a database being *created*: an install already at v10 has a schema Drift
 /// will not revisit, and `createTables` is `IF NOT EXISTS` throughout. The two
-/// have to agree — `m010_server_dist_test.dart` is what checks it, since
-/// `tables_schema_test.dart` only ever sees a freshly created schema and never
-/// runs this step.
+/// have to agree — the `the migration` group in `server_dist_store_test.dart`
+/// is what checks it, since `tables_schema_test.dart` only ever sees a freshly
+/// created schema and never runs this step.
 ///
 /// Nothing is backfilled. There is nothing to backfill from: the reading comes
 /// from a status poll, so every server fills its own row the first time it

@@ -49,8 +49,20 @@ final class FieldProp<T extends Object, F extends Object>
   @override
   Future<void> remove() => set(defaultValue);
 
+  /// One per property, not one per call.
+  ///
+  /// The house idiom is `Stores.setting.x.listenable().addListener(f)` in
+  /// `initState` and the same expression with `removeListener` in `dispose` —
+  /// two calls, and for a `SqliteProp` they pair up because its listenable
+  /// delegates to a map the *store* owns. `_FieldListenable` keeps its
+  /// wrappers itself, so a fresh one per call meant the removal looked in an
+  /// empty map and returned silently: the wrapper stayed registered on the
+  /// parent for the life of the process, holding a disposed `State` and
+  /// calling into it. The prop is `late final` on the store, so caching here
+  /// is per key.
   @override
-  ValueListenable<F> listenable() => _FieldListenable(this);
+  ValueListenable<F> listenable() => _listenable ??= _FieldListenable(this);
+  _FieldListenable<T, F>? _listenable;
 
   /// The three names `SqliteProp` keeps for backward compatibility. Every call
   /// site in the app uses them, so a field has to read like any other property

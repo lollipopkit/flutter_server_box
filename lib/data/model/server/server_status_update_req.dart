@@ -290,7 +290,11 @@ void _applyMore(ServerStatus ss, Map<String, dynamic> status) {
   }
   final osIdLike = status['os_id_like'] as List?;
   if (osIdLike != null && osIdLike.isNotEmpty) {
-    ss.osIdLike = osIdLike.cast<String>();
+    // `whereType`, not `cast`. A cast is a lazy view: a non-String element is
+    // found at the first iteration, which is `resolveDist` — reached from
+    // `DistIconOf` while the tree is building, so a malformed value would
+    // throw there instead of being caught by the section guard around this.
+    ss.osIdLike = osIdLike.whereType<String>().toList();
   }
   final host = status['host'] as String?;
   if (host != null && !host.contains(ScriptConstants.scriptFile)) {

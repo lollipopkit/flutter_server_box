@@ -95,6 +95,11 @@ abstract final class Stores {
     for (final store in _entityStores) {
       store.dropCache();
     }
+    // And the dist cache, for the same reason. It is not an `EntityStore` and
+    // so not in that list, but it is the same singleton holding the same kind
+    // of copy — and its `put` short-circuits on what the cache says, so a
+    // stale one would also stop the correct reading ever being written.
+    serverDist.dropCache();
 
     await Future.wait([
       ..._kvStores.map((store) => store.init()),
