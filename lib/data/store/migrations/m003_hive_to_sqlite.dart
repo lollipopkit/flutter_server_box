@@ -106,13 +106,13 @@ abstract final class HiveImport {
     // box encryption has only the plain files — and looking for `_enc` alone
     // read that device as a fresh install and dropped everything it had.
     // `_importBox` goes through `HiveStore`, so it handles either.
-    final present = _boxes.keys
-        .where(
-          (name) =>
-              File(dir.joinPath('${name}_enc.hive')).existsSync() ||
-              File(dir.joinPath('$name.hive')).existsSync(),
-        )
-        .toList();
+    final present = <String>[];
+    for (final name in _boxes.keys) {
+      if (await File(dir.joinPath('${name}_enc.hive')).exists() ||
+          await File(dir.joinPath('$name.hive')).exists()) {
+        present.add(name);
+      }
+    }
     if (present.isEmpty) {
       // A fresh install. Record the current layout so the migrator does not
       // walk it through steps written for data it never had.
