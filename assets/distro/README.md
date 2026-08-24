@@ -24,19 +24,11 @@ copyright subsists at all, and is not fine for an illustration. See
 "Which marks are shipped" below; it is why three glyphs that used to be here
 are not any more.
 
-## Tux
+Three of the shipped files carry a licence condition of their own — `tux.svg`,
+`nixos.svg` and `debian.svg`. They are honoured under "The three attribution
+conditions" below.
 
-`tux.svg` is Larry Ewing's penguin, and the permission he gave is not a
-public-domain dedication:
-
-> Permission to use and/or modify this image is granted provided you
-> acknowledge me lewing@isc.tamu.edu and The GIMP if someone asks.
-
-So: **this app's generic Linux mark is Tux, created by Larry Ewing
-(lewing@isc.tamu.edu) with The GIMP.** That sentence is the whole of what the
-condition asks for. It is worth keeping accurate — Tux is by far the most-drawn
-glyph here, standing in for every Linux whose flavour is not recognised and for
-every case that ships no mark of its own, which is most of them.
+## Naming and the enum
 
 Each file is named after its `Dist` case, which is also what `{DIST}` expands
 to in a custom logo URL — so `Dist.arch` is `arch.svg` and `{DIST}` is `arch`,
@@ -172,28 +164,48 @@ the thing is not readily identifiable without the mark, no more of the mark is
 used than needed, and nothing suggests sponsorship or endorsement. A 20px glyph
 in a row that also carries the server's own name and address meets all three.
 
-The set was checked one by one back when it was fifty-eight, and most of them publish
-no third-party trademark policy at all — for those, nominative use is simply
-the general rule. The ones that *do* publish something are recorded below,
-since the wording differs and one of them (CentOS) reads as a prohibition until
-the sentence is taken whole:
+All twelve were re-checked one at a time after the set was cut down, and every
+one of them has a source below. Where a project publishes nothing, the link is
+to whatever *is* authoritative about its mark rather than to nothing at all.
+
+| Glyph | Trademark | Copyright in the artwork |
+| --- | --- | --- |
+| alpine | [none published](https://alpinelinux.org/community/) | [PD-textlogo](https://commons.wikimedia.org/wiki/File:Alpine_Linux.svg) |
+| arch | [policy](https://terms.archlinux.org/docs/trademark-policy/) | no statement published |
+| centos | [guidelines](https://www.centos.org/legal/trademarks/) (Red Hat's marks) | no statement published |
+| debian | [policy](https://www.debian.org/trademark) | [LGPL-3+ / CC-BY-SA-3.0](https://www.debian.org/logos/) |
+| deepin | [EULA §2](https://www.deepin.org/en/agreement/end-user-license-agreement/) | no statement published |
+| fedora | [guidelines](https://fedoraproject.org/wiki/Legal:Trademark_guidelines) | no statement published |
+| mint | [FAQ, Licensing](https://linuxmint.com/faq.php) | no statement published |
+| nixos | none published | [CC BY 4.0](https://github.com/NixOS/branding) |
+| popos | [COSMIC policy](https://github.com/pop-os/cosmic-epoch/blob/master/TRADEMARK.md), [brand assets](https://github.com/system76/brand) | no statement published |
+| rocky | [policy](https://rockylinux.org/legal/trademarks) | no statement published |
+| ubuntu | [IP policy](https://canonical.com/legal/intellectual-property-policy) | no statement published |
+| wrt | [policy](https://openwrt.org/trademark) | no statement published |
+| *tux* | n/a — not a distribution | [Ewing, attribution required](https://commons.wikimedia.org/wiki/File:Tux.svg) |
+
+What each of them actually says, where the wording matters:
 
 - **Debian** — the [Open Use Logo](https://www.debian.org/logos/) is dual
-  licensed LGPL-3+ / CC-BY-SA-3.0, so even the artwork is free. The only one
-  where this question does not arise at all.
+  licensed LGPL-3+ *or* CC-BY-SA-3.0, and Debian says "to refer to Debian,
+  please prefer the open use logo". Attribution below.
+- **NixOS** — the [branding repository](https://github.com/NixOS/branding)
+  puts the logo under **CC BY 4.0**: shareable and adaptable "for any purpose,
+  including commercial use", provided credit, a licence link and a note of
+  changes. Attribution below. No separate trademark policy found.
+- **Linux Mint** — the [FAQ](https://linuxmint.com/faq.php) is explicit and
+  permissive: "You can use, promote and show Linux Mint, screenshots of Linux
+  Mint and the Linux Mint logo in articles, magazines, websites, books,
+  designs, movies, or any document as long as you don't pretend to be Linux
+  Mint and that you don't let people believe you are affiliated with Linux
+  Mint." The name is trademarked through the Linux Mark Institute.
 - **Fedora** — the [guidelines](https://fedoraproject.org/wiki/Legal:Trademark_guidelines)
   are "not intended to limit fair use of the Fedora Trademarks, i.e., the
   referential use of the trademarks in references to the goods or services with
   which these marks are used by Fedora".
-- **openSUSE** — the [guidelines](https://en.opensuse.org/openSUSE:Trademark_guidelines)
-  "acknowledge and support your right to make fair use of the openSUSE Marks"
-  and do not suggest permission is needed for it.
 - **OpenWrt** — the [policy](https://openwrt.org/trademark) permits "nominative
   fair use" to identify OpenWrt without implying endorsement, and permits
   making "true factual statements about OpenWrt".
-- **Arch** — the [policy](https://terms.archlinux.org/docs/trademark-policy/)
-  prohibits combined marks, implied endorsement and branding of modified
-  derivatives; none of those is this.
 - **Ubuntu** — Canonical's [IP policy](https://canonical.com/legal/intellectual-property-policy)
   says "if you are producing software for use with or on Ubuntu you may
   reference Ubuntu", subject to no implied endorsement. The "permission in
@@ -203,33 +215,120 @@ the sentence is taken whole:
   states that "fair use rights are not restricted" and that a mark may be used
   "to make true factual statements", provided nothing implies the owner
   endorses this app.
-- **Armbian** — [terms](https://armbian.com/terms) allow nominative use;
-  written permission is for merchandise, redistribution under the brand, and
-  commercial use of the logo. (No glyph shipped either way.)
-- **CentOS** — the [guidelines](https://www.centos.org/legal/trademarks/) do
-  say "you may use the Word Mark, but not the Logos", and the sentence has to
-  be read whole: it is about "where what you are distributing is modified
-  official CentOS source code or is a build compiled from modified official
-  CentOS source code". This app distributes no CentOS.
-- **Kali**, **Red Hat**, **Raspberry Pi** — all three reserve logo use to
-  written permission; see "Which marks are shipped". No glyph is shipped for
-  any of them.
-- **Alpine**, **deepin**, **CoreELEC** and the rest — no published third-party
-  trademark policy found. Nominative use is the general rule where a project
-  has not written one down.
+- **Arch** — the [policy](https://terms.archlinux.org/docs/trademark-policy/)
+  requires that "the Trademark declaration ( ™ ) must remain intact" and says
+  monochrome versions are acceptable — both of which this satisfies; the ™ is
+  part of `arch.svg` and is drawn with the rest of it. Its permitted-use
+  section is framed around non-commercial "discussion, development and
+  advocacy"; see the note on that below.
+- **CentOS** — the marks are **Red Hat's**, but this is a separate document
+  from Red Hat's own and it contains no blanket prohibition on the logo. The
+  "you may use the Word Mark, but not the Logos" sentence has to be read whole:
+  it is about "where what you are distributing is modified official CentOS
+  source code". This app distributes no CentOS. What it *does* say flatly is
+  quoted under "What would change the answer".
+- **Pop!_OS** — System76 publishes no policy for Pop!_OS itself; the nearest
+  written one is [COSMIC's](https://github.com/pop-os/cosmic-epoch/blob/master/TRADEMARK.md),
+  which lets third parties use the mark to refer to the thing so long as the
+  use is not misleading and implies no endorsement. Its
+  [brand repository](https://github.com/system76/brand) is where the assets
+  live and points at that document.
+- **deepin** — no standalone policy. The
+  [EULA](https://www.deepin.org/en/agreement/end-user-license-agreement/) says
+  "UnionTech Software and its affiliates have legal trademark rights to
+  '统信' '深度' 'UOS' 'deepin' '统信UOS' trademarks and logos", and its
+  redistribution clause requires a rebrand — the ordinary position that a code
+  licence carries no trademark licence. Nothing addresses referential display
+  either way.
+- **Alpine** — nothing published; the
+  [community page](https://alpinelinux.org/community/) is where a policy would
+  be if there were one. Wikimedia Commons files the logo as
+  [`PD-textlogo`](https://commons.wikimedia.org/wiki/File:Alpine_Linux.svg) —
+  "consists only of simple geometric shapes or text [...] does not meet the
+  threshold of originality needed for copyright protection" — with a trademark
+  warning attached, which is exactly how it is treated here.
 
-Several of those entries now describe a distribution that ships no glyph —
-openSUSE, Armbian and Rocky among them. They are kept because the policy is
-what was checked, and a mark can come back; what was read once should not have
-to be read again.
+Entries for marks that were dropped — openSUSE, Armbian, Kali, Red Hat,
+Raspberry Pi — are kept in the history of this file rather than here. What was
+read once should not have to be read again if a mark comes back.
+
+## Copyright in the drawing, per glyph
+
+Separate question from the one above, and the one this directory used to
+assume away. Ten of the twelve are geometry or letterforms — a triangle, a
+hexagon, an "f", an "LM", a swirl, a snowflake — and in the United States
+those attract no copyright at all: 37 CFR 202.1 excludes "familiar symbols or
+designs" and "mere variations of typographic ornamentation, lettering or
+coloring". The European bar is lower ("the author's own intellectual
+creation"), so thin copyright in a few of them is arguable rather than
+impossible; nothing here depends on winning that argument, because the two
+that carry an actual licence are attributed and the rest are used
+nominatively.
+
+None of the twelve is an illustration or a character. That was the point of
+withdrawing `rhel`, `raspbian` and `kali`, and of the wider cut after it.
+
+### The three attribution conditions
+
+**Tux** — `tux.svg` is Larry Ewing's penguin, and the permission he gave is
+not a public-domain dedication. His own page is gone; the wording is recorded
+on [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Tux.svg) and in
+[Wikipedia's article](https://en.wikipedia.org/wiki/Tux_(mascot)):
+
+> Permission to use and/or modify this image is granted provided you
+> acknowledge me lewing@isc.tamu.edu and The GIMP if someone asks.
+
+So: **the generic Linux mark in this app is Tux, created by Larry Ewing
+(lewing@isc.tamu.edu) with The GIMP.** It is the most-drawn glyph here,
+standing in for every Linux whose flavour is not recognised and for every case
+that ships no mark of its own.
+
+**NixOS** — CC BY 4.0 requires credit, a licence link, and a note of changes:
+
+> **The NixOS logo** — by the NixOS Project and contributors (Simon Frankau,
+> Tim Cuthbertson, Daniel Baker), from
+> <https://github.com/NixOS/branding>, licensed
+> [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). **Changed**: this
+> is font-logos' single-colour redraw, further stripped of `<metadata>` and
+> `<defs>`, and the app tints it at the point of drawing.
+
+**Debian** — the Open Use Logo under LGPL-3+ or CC-BY-SA-3.0:
+
+> **The Debian Open Use Logo** — © the Debian Project,
+> <https://www.debian.org/logos/>, used under CC-BY-SA-3.0. **Changed**: as
+> above. Debian asks that the image link to <https://www.debian.org/> where it
+> is used on a web page; this is an application, not a page, and the glyph is
+> not a link.
+
+Neither condition was met before this was checked, and neither costs anything
+to meet. Note the awkward half of it: font-logos redistributes both under the
+Unlicense, which is not a licence either upstream granted. A licence conveys
+only what the licensor holds, so the safe reading is that the conditions
+travel with the drawing, and they are honoured here directly.
 
 ## What would change the answer
 
-- Recolouring or reshaping a glyph. Several policies forbid modifying the mark,
-  and "no more of the mark than needed" cuts the other way once it is altered.
-  These are tinted with the row's own foreground colour, which is how an icon
-  font has always been drawn and is not a change to the mark's form.
+- **Recolouring — the sharpest of these, and it is not hypothetical.** Every
+  glyph is drawn through `ColorFilter.mode(tint, BlendMode.srcIn)`, taking the
+  row's foreground colour. CentOS's guidelines say, flatly and without a scope
+  clause: "You may not change any logo except to scale it. This means you may
+  not add elements to the logo, change the colors or proportions of the logo,
+  distort the logo, or combine the logo with other logos." Arch's policy says
+  the opposite for the same act — "monochrome versions are acceptable". The
+  position taken here is that a single-colour icon-font glyph tinted to the
+  surrounding text colour is not a recolouring of a *logo*; the file is already
+  monochrome, and a black glyph on a dark background is the alternative. That
+  is an argument, not a permission, and it is the one most likely to be wrong.
+- **"Non-commercial".** Arch frames permitted use around non-commercial
+  discussion, development and advocacy, and Linux Mint's own statements
+  restrict commercial use of its branding. This app is AGPL-3.0 and free, with
+  no purchase, subscription or paid tier of any kind — but it is distributed
+  through the App Store and Google Play, and whether that makes the use
+  "commercial" is genuinely arguable. Recorded rather than resolved.
 - Putting one on a store listing, a promotional page, or anywhere it reads as
-  "this app is affiliated with these projects".
+  "this app is affiliated with these projects". The screenshots are the thing
+  to watch here, not the app.
 - Shipping a distribution's own artwork rather than a redrawn glyph. That is a
   copyright question and the answer is usually no.
+- Any of the twelve publishing a policy where it currently publishes none —
+  Alpine, deepin and Pop!_OS are the three with nothing to read.

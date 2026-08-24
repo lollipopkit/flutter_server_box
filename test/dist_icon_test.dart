@@ -100,6 +100,33 @@ void main() {
       }
     });
 
+    /// Every mark that ships has to name where its terms were read.
+    ///
+    /// The whole justification for drawing sixty trademarks was checked once,
+    /// against each owner's own words; without this the next glyph gets added
+    /// without anyone reading anything, and the README quietly stops being
+    /// true of the directory it describes.
+    test('every shipped mark has a source in the README', () {
+      final readme = File('assets/distro/README.md').readAsStringSync();
+      final rows = {
+        for (final line in readme.split('\n'))
+          if (line.startsWith('| ') && line.contains('](http'))
+            line.split('|')[1].trim().replaceAll('*', ''): line,
+      };
+
+      for (final name in _shipped().map((f) => f.replaceAll('.svg', ''))) {
+        // `server.svg` is this app's own drawing and refers to nobody.
+        if (name == kServerIcon.split('/').last.replaceAll('.svg', '')) continue;
+        expect(
+          rows.keys,
+          contains(name),
+          reason:
+              '$name.svg ships with no row in the README table — record where '
+              'its trademark and licence terms were read before adding it',
+        );
+      }
+    });
+
     test('a distribution with no glyph is still a distribution', () {
       // The enum names every one it can identify; the glyph set is the subset
       // somebody will be looking at. Removing a case would break `{DIST}` in a

@@ -104,9 +104,14 @@ enum Dist {
   ///
   /// `armbian` and `coreelec` simply have no glyph in font-logos. They are not
   /// to be filled in from those projects' own sites: the files in
-  /// `assets/distro/` are redrawn glyphs released into the public domain, and
-  /// copying a project's own artwork is a copyright question with a different
-  /// answer.
+  /// `assets/distro/` are redrawn glyphs, and copying a project's own artwork
+  /// is a copyright question with a different answer.
+  ///
+  /// Three of the shipped files carry a licence condition even so — `tux.svg`
+  /// (Larry Ewing, acknowledgement on request), `nixos.svg` (CC BY 4.0) and
+  /// `debian.svg` (LGPL-3+ or CC-BY-SA-3.0). font-logos passes all of them on
+  /// under the Unlicense, which is not a licence either upstream granted, so
+  /// the conditions are honoured directly in `assets/distro/README.md`.
   ///
   /// `rhel`, `raspbian` and `kali` had a glyph and it was withdrawn. Each is
   /// two problems at once: the mark is an original illustration — Red Hat's
