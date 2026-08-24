@@ -96,7 +96,13 @@ mkdir -p "$WORK_DIR" "$OUT_DIR"
 
 fetch() {
   local url="$1" dest="$2" want="${3:-}"
-  [ -f "$dest" ] && return
+  if [ -f "$dest" ]; then
+    if [ -z "$want" ]; then return; fi
+    got="$(sha256 "$dest")"
+    if [ "$got" = "$want" ]; then return; fi
+    log "$(basename "$dest") digest mismatch (expected $want, got $got), re-fetching"
+    rm -f "$dest"
+  fi
   log "Fetching $(basename "$dest")"
   curl -fsSL --retry 3 -o "$dest" "$url"
   [ -n "$want" ] || return

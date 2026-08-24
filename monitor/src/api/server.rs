@@ -1059,7 +1059,12 @@ async fn get_velocity_history(
 
     let limit = query
         .get("limit")
-        .and_then(|v| v.as_u64())
+        .and_then(|v| {
+            v.as_u64().or_else(|| {
+                v.as_str()
+                    .and_then(|s| s.parse::<u64>().ok())
+            })
+        })
         .map(|l| l as usize);
 
     match app_state

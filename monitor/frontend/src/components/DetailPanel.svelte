@@ -22,7 +22,7 @@
   // that knows whether used/total are cumulative ticks (Linux, needs a delta)
   // or one-shot percentage pseudo-counters (Bsd/Windows, ratio is the value).
   // null until a baseline exists on the first Linux cycle.
-  const corePercents = $derived((m?.cpu_cores ?? []).map((c) => c.usage_percent ?? 0))
+  const corePercents = $derived((m?.cpu_cores ?? []).map((c) => c.usage_percent))
 
   // Detail pages backed by the slower extended collection cycle — see the
   // freshness note rendered for these below
@@ -138,13 +138,13 @@
 
 <!-- Compact per-core tile: index + percent on top, thin bar below. Sized to
      fit many columns so high core-count machines don't produce a page-long list. -->
-{#snippet coreTile(index: number, pct: number)}
+{#snippet coreTile(index: number, pct: number | null)}
   <div class="rounded-lg border border-line px-2.5 py-2">
     <div class="flex justify-between items-baseline gap-2 mb-1">
       <span class="text-xs text-faint-fg">{index}</span>
-      <span class="text-xs font-medium text-fg tabular-nums">{pct.toFixed(0)}%</span>
+      <span class="text-xs font-medium text-fg tabular-nums">{pct == null ? '--' : `${pct.toFixed(0)}%`}</span>
     </div>
-    {@render progressBar(pct)}
+    {@render progressBar(pct ?? 0)}
   </div>
 {/snippet}
 

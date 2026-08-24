@@ -232,6 +232,14 @@ fn should_run_extended(extended_due: bool, live: &LiveSettings, idle_secs: i64) 
     if !extended_due || !live.idle_pause_enabled {
         return extended_due;
     }
+    if idle_secs < 0 {
+        return true;
+    }
+    // Threshold as u64 would overflow i64 for values > i64::MAX; treat such
+    // large thresholds as effectively never-idle (always run when due).
+    if live.idle_pause_threshold_secs > i64::MAX as u64 {
+        return true;
+    }
     idle_secs < live.idle_pause_threshold_secs as i64
 }
 
@@ -767,8 +775,8 @@ fn compute_diskio_rate(
         .iter()
         .filter_map(|d| {
             let p = prev.diskio.iter().find(|p| p.dev == d.dev)?;
-            let read_delta = (d.sectors_read - p.sectors_read).max(0) as f64 * 512.0;
-            let write_delta = (d.sectors_write - p.sectors_write).max(0) as f64 * 512.0;
+            let read_delta = d.sectors_read.saturating_sub(p.sectors_read) as f64 * 512.0;
+            let write_delta = d.sectors_write.saturating_sub(p.sectors_write) as f64 * 512.0;
             Some(DiskIoRate {
                 dev: d.dev.clone(),
                 read_bytes_per_sec: read_delta / elapsed,

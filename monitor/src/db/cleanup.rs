@@ -32,14 +32,18 @@ impl DataCleanupService {
         Ok(())
     }
 
-    /// Time-series tables trimmed oldest-first when the database exceeds the
-    /// size cap (allowlist, same injection rationale as POLICY_TABLES)
+    /// Tables trimmed oldest-first when the database exceeds the size cap.
+    /// Includes metric tables plus audit/access logs that would otherwise
+    /// grow unbounded when retention is disabled; alert tables are handled
+    /// separately via their own retention.
     const SIZE_CAPPED_TABLES: &'static [&'static str] = &[
         "system_metrics",
         "network_totals",
         "component_metrics",
         "rule_executions",
         "performance_metrics",
+        "config_audit_log",
+        "access_log",
     ];
 
     /// Live data size: pages in use excluding the freelist, so deletions count
@@ -76,9 +80,10 @@ impl DataCleanupService {
                 deleted_round += deleted;
             }
             deleted_total += deleted_round;
-            // Nothing meaningful left to trim: schema/index overhead alone
-            // exceeds the cap; stop rather than spin
-            if deleted_round <= Self::SIZE_CAPPED_TABLES.len() as u64 {
+            // Only stop when nothing was deletable; a sparse table set can
+            // delete fewer than SIZE_CAPPED_TABLES rows yet still have rows
+            // left, so breaking on <= len() would leave the DB over cap.
+            if deleted_round == 0 {
                 break;
             }
         }
