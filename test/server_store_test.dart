@@ -99,6 +99,26 @@ void main() {
     expect(got.monitorHttp?.allowInsecure, isTrue);
   });
 
+  test('multiple IdentityFile paths survive the server table', () {
+    const paths = ['~/.ssh/work', '~/.ssh/personal'];
+    store.put(
+      const Spi(
+        id: 'multi-key',
+        name: 'multi-key',
+        ssh: SshCredential(
+          ip: 'host',
+          keyPath: '~/.ssh/work',
+          identityFiles: paths,
+        ),
+      ),
+    );
+    store.invalidate();
+
+    final ssh = store.fetchOneRaw('multi-key')!.ssh!;
+    expect(ssh.keyPath, paths.first);
+    expect(ssh.resolvedIdentityFiles, paths);
+  });
+
   group('the BMC side channel', () {
     late BmcCredentialStore creds;
 

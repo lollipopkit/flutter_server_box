@@ -26,6 +26,20 @@ List<SSHKeyPair> loadIdentity(String key) {
   return SSHKeyPair.fromPem(key);
 }
 
+List<SSHKeyPair> loadIdentities(List<String> keys) {
+  final identities = <SSHKeyPair>[];
+  Object? lastError;
+  for (final key in keys) {
+    try {
+      identities.addAll(SSHKeyPair.fromPem(key));
+    } catch (e) {
+      lastError = e;
+    }
+  }
+  if (identities.isEmpty && lastError != null) throw lastError;
+  return identities;
+}
+
 /// Decrypts an encrypted PEM private key.
 ///
 /// Must also be a top-level function because it is called via [Computer]
@@ -109,10 +123,17 @@ String _decodeCapped(String path, List<int> bytes) {
 /// report a failure to. `SshTransferCreds` calls it on the main isolate and
 /// hands the result across, because the transfer isolate has none of those.
 String? resolvePrivateKey(SshCredential ssh) {
+  final keys = resolvePrivateKeys(ssh);
+  return keys.isEmpty ? null : keys.values.first;
+}
+
+Map<String, String> resolvePrivateKeys(SshCredential ssh) {
   final keyId = ssh.keyId;
-  if (keyId != null) return getPrivateKey(keyId);
-  final keyPath = ssh.keyPath;
-  if (keyPath == null) return null;
+  if (keyId != null) {
+    return {SshCredential.keyRefForId(keyId): getPrivateKey(keyId)};
+  }
+  final keyPaths = ssh.resolvedIdentityFiles;
+  if (keyPaths.isEmpty) return const {};
 
   // Only ever reachable on desktop — `~/.ssh/config` import is the only writer
   // of `keyPath` — and not on one particular desktop build: the App Store one
@@ -121,54 +142,100 @@ String? resolvePrivateKey(SshCredential ssh) {
   if (Pfs.isMacSandboxed) {
     throw SSHErr(
       type: SSHErrType.noPrivateKey,
-      message: l10n.privateKeyFileSandboxed(keyPath),
+      message: l10n.privateKeyFileSandboxed(keyPaths.first),
     );
   }
 
-  final expanded = SSHConfig.expandHome(keyPath);
-  try {
-    final handle = File(expanded).openSync();
-    try {
-      return _decodeCapped(expanded, handle.readSync(_keyFileMaxSize + 1));
-    } finally {
-      handle.closeSync();
-    }
-  } catch (e) {
-    if (e is SSHErr) rethrow;
-    throw SSHErr(
-      type: SSHErrType.noPrivateKey,
-      message: l10n.privateKeyFileUnreadable(expanded, '$e'),
+  final keys = <String, String>{};
+  Object? lastError;
+  for (final keyPath in keyPaths) {
+    final expanded = SSHConfig.expandIdentityFile(
+      keyPath,
+      hostname: ssh.ip,
+      remoteUser: ssh.user,
     );
+    try {
+      final handle = File(expanded).openSync();
+      try {
+        keys['path:$keyPath'] = _decodeCapped(
+          expanded,
+          handle.readSync(_keyFileMaxSize + 1),
+        );
+      } finally {
+        handle.closeSync();
+      }
+    } catch (e) {
+      final error = e is SSHErr
+          ? e
+          : SSHErr(
+              type: SSHErrType.noPrivateKey,
+              message: l10n.privateKeyFileUnreadable(expanded, '$e'),
+            );
+      if (keyPaths.length == 1) {
+        throw error;
+      }
+      lastError = error;
+      Loggers.app.warning('Skipping unreadable IdentityFile $expanded', e);
+    }
   }
+  if (keys.isEmpty && lastError != null) throw lastError;
+  return keys;
 }
 
 /// Async variant of [resolvePrivateKey] for callers that can await.
 Future<String?> resolvePrivateKeyAsync(SshCredential ssh) async {
+  final keys = await resolvePrivateKeysAsync(ssh);
+  return keys.isEmpty ? null : keys.values.first;
+}
+
+Future<Map<String, String>> resolvePrivateKeysAsync(SshCredential ssh) async {
   final keyId = ssh.keyId;
-  if (keyId != null) return getPrivateKey(keyId);
-  final keyPath = ssh.keyPath;
-  if (keyPath == null) return null;
+  if (keyId != null) {
+    return {SshCredential.keyRefForId(keyId): getPrivateKey(keyId)};
+  }
+  final keyPaths = ssh.resolvedIdentityFiles;
+  if (keyPaths.isEmpty) return const {};
   if (Pfs.isMacSandboxed) {
     throw SSHErr(
       type: SSHErrType.noPrivateKey,
-      message: l10n.privateKeyFileSandboxed(keyPath),
+      message: l10n.privateKeyFileSandboxed(keyPaths.first),
     );
   }
-  final expanded = SSHConfig.expandHome(keyPath);
-  try {
-    final handle = await File(expanded).open();
+
+  final keys = <String, String>{};
+  Object? lastError;
+  for (final keyPath in keyPaths) {
+    final expanded = SSHConfig.expandIdentityFile(
+      keyPath,
+      hostname: ssh.ip,
+      remoteUser: ssh.user,
+    );
     try {
-      return _decodeCapped(expanded, await handle.read(_keyFileMaxSize + 1));
-    } finally {
-      await handle.close();
+      final handle = await File(expanded).open();
+      try {
+        keys['path:$keyPath'] = _decodeCapped(
+          expanded,
+          await handle.read(_keyFileMaxSize + 1),
+        );
+      } finally {
+        await handle.close();
+      }
+    } catch (e) {
+      final error = e is SSHErr
+          ? e
+          : SSHErr(
+              type: SSHErrType.noPrivateKey,
+              message: l10n.privateKeyFileUnreadable(expanded, '$e'),
+            );
+      if (keyPaths.length == 1) {
+        throw error;
+      }
+      lastError = error;
+      Loggers.app.warning('Skipping unreadable IdentityFile $expanded', e);
     }
-  } catch (e) {
-    if (e is SSHErr) rethrow;
-    throw SSHErr(
-      type: SSHErrType.noPrivateKey,
-      message: l10n.privateKeyFileUnreadable(expanded, '$e'),
-    );
   }
+  if (keys.isEmpty && lastError != null) throw lastError;
+  return keys;
 }
 
 Future<SSHClient> genClient(
@@ -325,6 +392,8 @@ Future<SSHClient> genClient(
         host: ssh.ip,
         port: ssh.port,
         user: ssh.user,
+        originalHost: spi.name,
+        jump: ssh.resolvedJumpIds.join(','),
         timeout: timeout,
       );
     }
@@ -358,6 +427,7 @@ Future<SSHClient> genClient(
       socket: socket,
       spi: spi,
       ssh: ssh,
+      timeout: timeout,
       alterUser: alterUser,
       privateKey: privateKey,
       privateKeysByKeyId: privateKeysByKeyId,
@@ -384,6 +454,7 @@ Future<SSHClient> _authenticatedClient({
   required SSHSocket socket,
   required Spi spi,
   required SshCredential ssh,
+  required Duration timeout,
   required String? alterUser,
   required String? privateKey,
   required Map<String, String>? privateKeysByKeyId,
@@ -391,8 +462,8 @@ Future<SSHClient> _authenticatedClient({
   required SSHKeyboardInteractiveHandler? onKeyboardInteractive,
   required HostKeyVerifier hostKeyVerifier,
 }) async {
-  final keyRef = ssh.keyRef;
-  if (keyRef == null) {
+  final keyRefs = ssh.keyRefs;
+  if (keyRefs.isEmpty) {
     onStatus?.call(GenSSHClientStatus.pwd);
     return SSHClient(
       socket,
@@ -402,16 +473,28 @@ Future<SSHClient> _authenticatedClient({
           ? null
           : (request) => onKeyboardInteractive(spi, request),
       onVerifyHostKey: hostKeyVerifier.call,
+      handshakeTimeout: timeout,
+      authTimeout: timeout,
     );
   }
-  // `keyRef` being non-null means one of the two key fields is set, so this
-  // either yields a key or throws saying why it could not. The null branch is
-  // unreachable and says so rather than handing `compute` a null.
-  privateKey ??= privateKeysByKeyId?[keyRef] ?? resolvePrivateKey(ssh);
-  if (privateKey == null) {
+  final keyMaterial = <String, String>{};
+  if (privateKey != null) keyMaterial[keyRefs.first] = privateKey;
+  if (privateKeysByKeyId != null) {
+    for (final ref in keyRefs) {
+      final pem = privateKeysByKeyId[ref];
+      if (pem != null) keyMaterial[ref] = pem;
+    }
+  } else if (privateKey == null || keyRefs.length > 1) {
+    for (final entry in resolvePrivateKeys(ssh).entries) {
+      keyMaterial.putIfAbsent(entry.key, () => entry.value);
+    }
+  }
+  if (keyMaterial.isEmpty) {
     throw SSHErr(
       type: SSHErrType.noPrivateKey,
-      message: l10n.privateKeyNotFoundFmt(ssh.keyId ?? ssh.keyPath ?? keyRef),
+      message: l10n.privateKeyNotFoundFmt(
+        ssh.keyId ?? ssh.keyPath ?? keyRefs.first,
+      ),
     );
   }
 
@@ -420,15 +503,20 @@ Future<SSHClient> _authenticatedClient({
   // happens for a key that is not — including one already opened before it was
   // handed to another isolate, which is why the transfer path can reach this
   // line with no screen to ask on.
-  privateKey = await PrivateKeyUnlock.open(
-    privateKey,
-    cacheKey: keyRef,
-    keyName: privateKeyDisplayName(keyRef),
-  );
+  final openedKeys = <String>[];
+  for (final entry in keyMaterial.entries) {
+    openedKeys.add(
+      await PrivateKeyUnlock.open(
+        entry.value,
+        cacheKey: entry.key,
+        keyName: privateKeyDisplayName(entry.key),
+      ),
+    );
+  }
   final List<SSHKeyPair> identities;
   try {
     // Must use [compute] here, instead of [Computer.shared.start]
-    identities = await compute(loadIdentity, privateKey);
+    identities = await compute(loadIdentities, openedKeys);
   } catch (e) {
     // A PEM that will not parse is a key problem and the caller has a category
     // for those. Left raw it arrived as whatever the parser threw — naming
@@ -437,7 +525,7 @@ Future<SSHClient> _authenticatedClient({
     throw SSHErr(
       type: SSHErrType.noPrivateKey,
       message: l10n.privateKeyFileUnreadable(
-        privateKeyDisplayName(keyRef),
+        privateKeyDisplayName(keyRefs.first),
         '$e',
       ),
     );
@@ -455,6 +543,8 @@ Future<SSHClient> _authenticatedClient({
         ? null
         : (request) => onKeyboardInteractive(spi, request),
     onVerifyHostKey: hostKeyVerifier.call,
+    handshakeTimeout: timeout,
+    authTimeout: timeout,
   );
 }
 

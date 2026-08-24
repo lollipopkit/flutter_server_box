@@ -222,6 +222,32 @@ void main() {
       );
     });
 
+    test('reads every configured IdentityFile in order', () {
+      final first = File('${tempDir.path}/first')..writeAsStringSync('FIRST');
+      final second = File('${tempDir.path}/second')
+        ..writeAsStringSync('SECOND');
+      final ssh = SshCredential(
+        ip: 'a',
+        keyPath: first.path,
+        identityFiles: [first.path, second.path],
+      );
+
+      expect(resolvePrivateKeys(ssh).values, ['FIRST', 'SECOND']);
+      expect(ssh.keyRefs, ['path:${first.path}', 'path:${second.path}']);
+    });
+
+    test('an unreadable IdentityFile does not hide a later usable key', () {
+      final usable = File('${tempDir.path}/usable')..writeAsStringSync('KEY');
+      final missing = '${tempDir.path}/missing';
+      final ssh = SshCredential(
+        ip: 'a',
+        keyPath: missing,
+        identityFiles: [missing, usable.path],
+      );
+
+      expect(resolvePrivateKeys(ssh).values, ['KEY']);
+    });
+
     test('a missing file fails naming it, not as a missing key id', () {
       final ssh = SshCredential(ip: 'a', keyPath: '${tempDir.path}/absent');
 
@@ -278,6 +304,31 @@ void main() {
   });
 
   group('genClient', () {
+    test('a stalled ProxyCommand handshake is bounded by timeout', () async {
+      final command = Platform.isWindows
+          ? 'ping -n 6 127.0.0.1 >NUL'
+          : 'sleep 5';
+      final spi = Spi(
+        id: 'stalled-proxy',
+        name: 'stalled-proxy',
+        ssh: SshCredential(
+          ip: 'example.com',
+          user: 'root',
+          proxyCommand: command,
+        ),
+      );
+
+      final client = await genClient(
+        spi,
+        timeout: const Duration(milliseconds: 200),
+      );
+      addTearDown(client.close);
+      await expectLater(
+        client.authenticated.timeout(const Duration(seconds: 2)),
+        throwsA(anything),
+      );
+    });
+
     test('a key it cannot read does not leave the socket open', () async {
       // The socket is opened before the key is resolved, and a caller that
       // gets a key error gets no handle to close it with. A status poll

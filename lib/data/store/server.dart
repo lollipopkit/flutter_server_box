@@ -21,6 +21,8 @@ import 'package:sqlite3/sqlite3.dart';
 /// [readAll] reads each child table once and groups in Dart, so the cost is
 /// the number of tables rather than the number of servers.
 class ServerStore extends EntityStore<Spi> {
+  static const _identityFilesPrefix = 'server-box:identity-files:';
+
   ServerStore._()
     : _portForwards = PortForwardStore.instance,
       _snippets = SnippetStore.instance,
@@ -112,6 +114,7 @@ class ServerStore extends EntityStore<Spi> {
     Map<String, String>? cmds,
   }) {
     final sshIp = row['ssh_ip'] as String?;
+    final identityFiles = _decodeIdentityFiles(row['ssh_key_path'] as String?);
     final monitorAddr = row['monitor_addr'] as String?;
     return Spi(
       id: row['id'] as String,
@@ -131,7 +134,8 @@ class ServerStore extends EntityStore<Spi> {
               user: row['ssh_user'] as String? ?? 'root',
               pwd: row['ssh_pwd'] as String?,
               keyId: row['ssh_key_id'] as String?,
-              keyPath: row['ssh_key_path'] as String?,
+              keyPath: identityFiles.$1,
+              identityFiles: identityFiles.$2,
               alterUrl: row['ssh_alter_url'] as String?,
               proxyCommand: row['ssh_proxy_command'] as String?,
               jumpId: jumps?.firstOrNull,
@@ -168,6 +172,34 @@ class ServerStore extends EntityStore<Spi> {
             ),
       custom: _customOf(row, cmds),
     );
+  }
+
+  static (String?, List<String>?) _decodeIdentityFiles(String? stored) {
+    if (stored == null || !stored.startsWith(_identityFilesPrefix)) {
+      return (stored, null);
+    }
+    try {
+      final decoded = jsonDecode(stored.substring(_identityFilesPrefix.length));
+      if (decoded is! List) return (stored, null);
+      final paths = decoded
+          .whereType<String>()
+          .where((e) => e.isNotEmpty)
+          .toList();
+      if (paths.isEmpty) return (null, null);
+      return (paths.first, paths);
+    } catch (_) {
+      // Preserve an old or manually edited literal rather than making its key
+      // disappear because it happens to share the reserved prefix.
+      return (stored, null);
+    }
+  }
+
+  static String? _encodeIdentityFiles(SshCredential? ssh) {
+    if (ssh == null) return null;
+    final paths = ssh.resolvedIdentityFiles;
+    if (paths.isEmpty) return null;
+    if (paths.length == 1) return paths.first;
+    return '$_identityFilesPrefix${jsonEncode(paths)}';
   }
 
   /// Null when the record says nothing beyond the defaults.
@@ -235,7 +267,7 @@ class ServerStore extends EntityStore<Spi> {
       ssh?.user,
       ssh?.pwd,
       ssh?.keyId,
-      ssh?.keyPath,
+      _encodeIdentityFiles(ssh),
       ssh?.alterUrl,
       ssh?.proxyCommand,
       monitor?.addr,

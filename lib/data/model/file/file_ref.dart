@@ -152,9 +152,10 @@ class SshTransferCreds {
     // happen here, where there is a filesystem the user granted and a UI to
     // report a refusal to. The isolate has neither.
     final ssh = spi.ssh;
-    if (ssh?.keyRef case final keyRef?) {
-      privateKey = resolvePrivateKey(ssh!);
-      if (privateKey != null) privateKeysByKeyId![keyRef] = privateKey!;
+    if (ssh != null && ssh.keyRefs.isNotEmpty) {
+      final keys = resolvePrivateKeys(ssh);
+      privateKeysByKeyId!.addAll(keys);
+      privateKey = keys[ssh.keyRefs.first];
     }
 
     final allServers = {
@@ -166,26 +167,24 @@ class SshTransferCreds {
     if (firstJumpId != null) {
       jumpSpi = jumpSpisById?[firstJumpId];
       final jumpSsh = jumpSpi?.ssh;
-      if (jumpSsh != null && jumpSsh.keyRef != null) {
+      if (jumpSsh != null && jumpSsh.keyRefs.isNotEmpty) {
         // A jump server whose key cannot be resolved is not fatal here: the
         // hop may authenticate by password, and failing the whole transfer at
         // queue time would take the other candidates with it.
-        jumpPrivateKey = _tryResolve(jumpSsh);
-        if (jumpPrivateKey != null) {
-          privateKeysByKeyId![jumpSsh.keyRef!] = jumpPrivateKey!;
-        }
+        final keys = _tryResolveAll(jumpSsh);
+        privateKeysByKeyId!.addAll(keys);
+        jumpPrivateKey = keys[jumpSsh.keyRefs.first];
       }
     }
 
     for (final jump in jumpSpisById?.values ?? const <Spi>[]) {
       final jumpSsh = jump.ssh;
-      final jumpKeyRef = jumpSsh?.keyRef;
-      if (jumpKeyRef == null || privateKeysByKeyId!.containsKey(jumpKeyRef)) {
+      final jumpKeyRefs = jumpSsh?.keyRefs ?? const <String>[];
+      if (jumpKeyRefs.isEmpty ||
+          jumpKeyRefs.every(privateKeysByKeyId!.containsKey)) {
         continue;
       }
-      final key = _tryResolve(jumpSsh!);
-      if (key == null) continue;
-      privateKeysByKeyId![jumpKeyRef] = key;
+      privateKeysByKeyId!.addAll(_tryResolveAll(jumpSsh!));
     }
 
     if (jumpSpisById != null && jumpSpisById!.isEmpty) jumpSpisById = null;
@@ -208,12 +207,12 @@ class SshTransferCreds {
   /// The target server's key is allowed to throw — a transfer to a host whose
   /// key is gone should say so at once. A jump server's is not: it may not need
   /// one, and one unusable candidate must not take the others with it.
-  static String? _tryResolve(SshCredential ssh) {
+  static Map<String, String> _tryResolveAll(SshCredential ssh) {
     try {
-      return resolvePrivateKey(ssh);
+      return resolvePrivateKeys(ssh);
     } catch (e) {
       Loggers.app.warning('Jump server key unavailable', e);
-      return null;
+      return const {};
     }
   }
 

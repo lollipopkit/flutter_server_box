@@ -12,15 +12,18 @@ import 'package:server_box/data/model/app/error.dart';
 class ProxyCommandSocket implements SSHSocket {
   ProxyCommandSocket._({
     required Process process,
+    required int? processGroupId,
     required Stream<Uint8List> stream,
     required IOSink sink,
     required Future<void> done,
   }) : _process = process,
+       _processGroupId = processGroupId,
        _stream = stream,
        _sink = sink,
        _done = done;
 
   final Process _process;
+  final int? _processGroupId;
   final Stream<Uint8List> _stream;
   final IOSink _sink;
   final Future<void> _done;
@@ -30,6 +33,8 @@ class ProxyCommandSocket implements SSHSocket {
     required String host,
     required int port,
     required String user,
+    required String originalHost,
+    required String jump,
     Duration? timeout,
   }) async {
     if (!isDesktop) {
@@ -50,17 +55,43 @@ class ProxyCommandSocket implements SSHSocket {
       host: host,
       port: port,
       user: user,
+      originalHost: originalHost,
+      jump: jump,
     );
     final shellCommand = _buildShellCommand(resolvedCommand);
 
     Loggers.app.info('Starting ProxyCommand for $user@$host:$port');
 
-    final process = await Process.start(
+    final processFuture = Process.start(
       shellCommand.executable,
       shellCommand.arguments,
-      mode: ProcessStartMode.normal,
+      // This creates a separate Unix session. The returned PID is the final
+      // fork rather than the session leader, so its actual PGID is queried
+      // below. Windows cleanup uses taskkill /T.
+      mode: ProcessStartMode.detachedWithStdio,
     );
-    final connectionReady = Completer<void>();
+    late final Process process;
+    try {
+      process = timeout == null
+          ? await processFuture
+          : await processFuture.timeout(timeout);
+    } on TimeoutException {
+      // Timing out this Future does not cancel process creation. Kill a child
+      // that appears later instead of leaving a detached proxy behind.
+      unawaited(
+        processFuture.then<void>((lateProcess) async {
+          final groupId = await _findProcessGroupId(lateProcess);
+          _killProcessTree(lateProcess, groupId);
+        }, onError: (_, _) {}),
+      );
+      throw SSHErr(
+        type: SSHErrType.connect,
+        message: _explain(
+          'ProxyCommand process start timed out after ${timeout!.inSeconds}s.',
+        ),
+      );
+    }
+    final processGroupId = await _findProcessGroupId(process);
     final stdoutController = StreamController<Uint8List>();
 
     process.stdout.listen(
@@ -75,15 +106,6 @@ class ProxyCommandSocket implements SSHSocket {
         stdoutController.close();
       },
     );
-    // The transport is the stdio pair, not an unsolicited banner. Commands
-    // like `ssh -W %h:%p` or `nc %h %p` wait for the caller's SSH handshake
-    // on stdin before emitting anything, so waiting for a first stdout chunk
-    // deadlocks: genClient cannot send the handshake until connect returns.
-    // Consider the socket ready as soon as the child is spawned; early exits
-    // will surface via stdoutController.done / process exit and the
-    // subsequent SSH handshake failure rather than via a hanging connect.
-    if (!connectionReady.isCompleted) connectionReady.complete();
-
     process.stderr
         .transform(utf8.decoder)
         .transform(const LineSplitter())
@@ -98,38 +120,6 @@ class ProxyCommandSocket implements SSHSocket {
           },
         );
 
-    // Early process exit before the handshake is still a connect failure,
-    // but surfacing it via connectionReady is now covered by the immediate
-    // completion above; the handshake will fail promptly when the stream
-    // closes.
-    unawaited(
-      process.exitCode.then((code) {
-        if (stdoutController.isClosed) return;
-        if (code != 0) {
-          // Non-zero exit after the stream is still open is worth surfacing
-          // on stderr for diagnostics, but not as a transport failure for
-          // the SSH handshake that may have already succeeded.
-          Loggers.app.warning('ProxyCommand exited with code $code');
-        }
-      }),
-    );
-
-    if (timeout != null) {
-      try {
-        await connectionReady.future.timeout(timeout);
-      } on TimeoutException {
-        _killProcessTree(process);
-        throw SSHErr(
-          type: SSHErrType.connect,
-          message: _explain(
-            'ProxyCommand timed out after ${timeout.inSeconds}s.',
-          ),
-        );
-      }
-    } else {
-      await connectionReady.future;
-    }
-
     // The SSH socket's lifecycle is the byte stream, not the helper process.
     // A proxy that keeps its process alive after closing the transport would
     // otherwise leave SSHSocket.done pending forever, while a shell that
@@ -139,6 +129,7 @@ class ProxyCommandSocket implements SSHSocket {
 
     return ProxyCommandSocket._(
       process: process,
+      processGroupId: processGroupId,
       stream: stdoutController.stream,
       sink: process.stdin,
       done: done,
@@ -179,7 +170,7 @@ class ProxyCommandSocket implements SSHSocket {
   /// Everything a hostname, an IPv4 or IPv6 literal, or a POSIX user name is
   /// made of, and nothing a shell reads as syntax. `%` is absent on purpose:
   /// a value carrying one could introduce a placeholder of its own.
-  static final _substitutable = RegExp(r'^[A-Za-z0-9._:@\-\[\]\\]*$');
+  static final _substitutable = RegExp(r'^[A-Za-z0-9._,@:\-\[\]\\]*$');
 
   /// Refuses a value that `/bin/sh` would not read as one word.
   ///
@@ -209,15 +200,36 @@ class ProxyCommandSocket implements SSHSocket {
     required String host,
     required int port,
     required String user,
+    required String originalHost,
+    required String jump,
   }) {
     const percentPlaceholder = '\u0000PERCENT\u0000';
     return command
         .replaceAll('%%', percentPlaceholder)
         .replaceAll('%h', checkSubstitutable('host', host))
+        .replaceAll('%n', checkSubstitutable('original host', originalHost))
         .replaceAll('%p', port.toString())
         .replaceAll('%r', checkSubstitutable('user', user))
+        .replaceAll('%j', checkSubstitutable('jump', jump))
         .replaceAll(percentPlaceholder, '%');
   }
+
+  @visibleForTesting
+  static String debugResolveCommand({
+    required String command,
+    required String host,
+    required int port,
+    required String user,
+    required String originalHost,
+    String jump = '',
+  }) => _resolveCommand(
+    command: command,
+    host: host,
+    port: port,
+    user: user,
+    originalHost: originalHost,
+    jump: jump,
+  );
 
   static ({String executable, List<String> arguments}) _buildShellCommand(
     String command,
@@ -237,17 +249,31 @@ class ProxyCommandSocket implements SSHSocket {
   @override
   Future<void> get done => _done;
 
-  static void _killProcessTree(Process process) {
+  static Future<int?> _findProcessGroupId(Process process) async {
+    if (Platform.isWindows) return null;
+    try {
+      final result = await Process.run('ps', [
+        '-o',
+        'pgid=',
+        '-p',
+        '${process.pid}',
+      ]).timeout(const Duration(seconds: 1));
+      if (result.exitCode != 0) return null;
+      return int.tryParse('${result.stdout}'.trim());
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static void _killProcessTree(Process process, int? processGroupId) {
     // Process.kill only signals the immediate child (usually /bin/sh); a
     // command like `ssh -W` or `nc` is a descendant and would be orphaned.
     // On Unix, try to kill the process group; fall back to the pid.
     try {
-      if (!Platform.isWindows) {
-        // Negative pid = process group (set via Process.start with detached?).
-        // Dart's Process does not expose pgroup, so attempt killPid with
-        // the child's pid; if the shell was started with setpgid, this may
-        // miss the group, but is still better than signalling only the shell.
-        Process.killPid(-process.pid);
+      if (Platform.isWindows) {
+        Process.runSync('taskkill', ['/PID', '${process.pid}', '/T', '/F']);
+      } else if (processGroupId != null) {
+        Process.killPid(-processGroupId);
       }
     } catch (_) {}
     process.kill(ProcessSignal.sigterm);
@@ -257,8 +283,8 @@ class ProxyCommandSocket implements SSHSocket {
         process.kill(ProcessSignal.sigkill);
       } catch (_) {}
       try {
-        if (!Platform.isWindows) {
-          Process.killPid(-process.pid, ProcessSignal.sigkill);
+        if (!Platform.isWindows && processGroupId != null) {
+          Process.killPid(-processGroupId, ProcessSignal.sigkill);
         }
       } catch (_) {}
     });
@@ -267,7 +293,7 @@ class ProxyCommandSocket implements SSHSocket {
   @override
   Future<void> close() async {
     // Kill first so a child that ignores stdin EOF does not block close().
-    _killProcessTree(_process);
+    _killProcessTree(_process, _processGroupId);
     try {
       await _sink.close().timeout(const Duration(seconds: 2));
     } catch (_) {}
@@ -277,8 +303,8 @@ class ProxyCommandSocket implements SSHSocket {
     // Ensure the process is gone even if the above timed out.
     _process.kill(ProcessSignal.sigkill);
     try {
-      if (!Platform.isWindows) {
-        Process.killPid(-_process.pid, ProcessSignal.sigkill);
+      if (!Platform.isWindows && _processGroupId != null) {
+        Process.killPid(-_processGroupId, ProcessSignal.sigkill);
       }
     } catch (_) {}
   }
@@ -288,7 +314,7 @@ class ProxyCommandSocket implements SSHSocket {
 
   @override
   void destroy() {
-    _killProcessTree(_process);
+    _killProcessTree(_process, _processGroupId);
   }
 
   @override

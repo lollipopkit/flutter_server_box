@@ -92,6 +92,8 @@ abstract class Spi with _$Spi {
       'user',
       'pwd',
       'pubKeyId',
+      'keyPath',
+      'identityFiles',
       'alterUrl',
       'jumpId',
       'jumpIds',

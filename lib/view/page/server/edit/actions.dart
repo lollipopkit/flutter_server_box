@@ -435,6 +435,11 @@ extension _Actions on _ServerEditPageState {
             // this page can type a path, and dropping it on save would take
             // away the only credential an imported server has
             keyPath: _keyIdx.value != null ? null : _keyPath.value,
+            identityFiles:
+                _keyIdx.value == null &&
+                    _keyPath.value == this.spi?.ssh?.keyPath
+                ? this.spi?.ssh?.identityFiles
+                : null,
             alterUrl: _altUrlController.text.selfNotEmptyOrNull,
             jumpId: _jumpServers.value.isEmpty
                 ? null

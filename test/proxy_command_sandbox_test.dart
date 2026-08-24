@@ -58,6 +58,20 @@ void main() {
   });
 
   group('what a placeholder may expand to', () {
+    test('all supported OpenSSH placeholders are expanded', () {
+      expect(
+        ProxyCommandSocket.debugResolveCommand(
+          command: 'proxy %% %h %n %p %r %j',
+          host: '10.0.0.1',
+          originalHost: 'prod',
+          port: 2222,
+          user: 'deploy',
+          jump: 'bastion',
+        ),
+        'proxy % 10.0.0.1 prod 2222 deploy bastion',
+      );
+    });
+
     test('the shapes a real host or user comes in are all allowed', () {
       for (final value in [
         'example.com',
