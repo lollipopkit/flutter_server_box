@@ -192,12 +192,40 @@ extension DistStringX on String {
     final lower = toLowerCase();
     for (final (dist, needles) in _matchers) {
       for (final needle in needles) {
-        if (lower.contains(needle)) return dist;
+        if (_containsWord(lower, needle)) return dist;
       }
     }
     return null;
   }
 }
+
+/// Whether [needle] appears in [haystack] as a word rather than as part of one.
+///
+/// Plain `contains` was the first version and read a distribution out of names
+/// that merely spell one inside another: "Details Linux" contains `tails`,
+/// "Linguix" contains `guix`, "Absolus" contains `solus`. Every one of those
+/// resolved, and the wrong mark is worse than none — it is a claim about a
+/// machine rather than an absence of one.
+///
+/// A boundary is anything that is not a letter or a digit, which is what makes
+/// the needles that carry punctuation work unchanged: `pop!_os` at the start of
+/// "Pop!_OS 22.04" is flanked by nothing and a space. Both sides are already
+/// lower-cased, so only `a-z0-9` count.
+bool _containsWord(String haystack, String needle) {
+  for (var from = 0;;) {
+    final at = haystack.indexOf(needle, from);
+    if (at < 0) return false;
+    final before = at == 0 ? null : haystack.codeUnitAt(at - 1);
+    final end = at + needle.length;
+    final after = end >= haystack.length ? null : haystack.codeUnitAt(end);
+    if (!_isWordChar(before) && !_isWordChar(after)) return true;
+    from = at + 1;
+  }
+}
+
+bool _isWordChar(int? unit) =>
+    unit != null &&
+    ((unit >= 0x30 && unit <= 0x39) || (unit >= 0x61 && unit <= 0x7a));
 
 /// `/etc/os-release`'s `ID=`, per distribution.
 ///
@@ -376,7 +404,24 @@ const _matchers = <(Dist, List<String>)>[
 
   // Everything with a name of its own.
   (Dist.debian, ['debian']),
-  (Dist.ubuntu, ['ubuntu']),
+  // The flavours by name as well. They all ship Ubuntu's own os-release, so
+  // `ID=ubuntu` is what identifies one in practice — these are for the prose
+  // path, where word matching no longer finds `ubuntu` inside `xubuntu`.
+  // Kubuntu has a case of its own and is asked before this one.
+  (
+    Dist.ubuntu,
+    [
+      'ubuntu',
+      'xubuntu',
+      'lubuntu',
+      'edubuntu',
+      'ubuntu mate',
+      'ubuntu-mate',
+      'ubuntu budgie',
+      'ubuntu studio',
+      'ubuntukylin',
+    ],
+  ),
   (Dist.centos, ['centos']),
   (Dist.fedora, ['fedora']),
   (Dist.opensuse, ['opensuse', 'suse linux enterprise', 'sles']),
@@ -388,7 +433,9 @@ const _matchers = <(Dist, List<String>)>[
   (Dist.solus, ['solus']),
   (Dist.slackware, ['slackware']),
   (Dist.mageia, ['mageia']),
-  (Dist.mandriva, ['mandriva']),
+  // Both spellings, explicitly. Word matching no longer finds `mandriva`
+  // inside `openmandriva`, which is what the substring version relied on.
+  (Dist.mandriva, ['openmandriva', 'mandriva']),
   (Dist.puppy, ['puppy linux']),
   (Dist.sabayon, ['sabayon']),
   (Dist.aosc, ['aosc']),

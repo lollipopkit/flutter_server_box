@@ -83,10 +83,15 @@ class ServerDistStore {
 
   /// Forgets one server's reading.
   ///
-  /// Deleting the server does this on its own — the foreign key cascades — so
-  /// this is for a server that is still there and whose reading is known to be
-  /// wrong.
+  /// The foreign key cascades, so deleting the server takes the *row* with it
+  /// — but not this in-memory copy of it, which is why `delServer` calls this
+  /// as well. Also for a server that is still there and whose reading is known
+  /// to be wrong.
+  ///
+  /// A no-op when there was nothing to forget, so a cleanup pass over ids that
+  /// mostly have no reading does not redraw every mark on screen once per id.
   void remove(String serverId) {
+    if (!_cache.containsKey(serverId)) return;
     _db.execute('DELETE FROM $_table WHERE server_id = ?;', [serverId]);
     _invalidate();
   }

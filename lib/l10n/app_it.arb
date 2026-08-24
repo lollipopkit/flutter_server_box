@@ -37,7 +37,7 @@
   "markUrlTip": "Il piccolo marchio accanto al nome di un server negli elenchi. Vuoto: nessuno.\n\nNon è la stessa immagine del logo",
   "navTabMenuTip": "Tieni premuta una scheda — o fai clic destro — per connettere o disconnettere in una volta tutto ciò che contiene.",
   "nTags": "{count} tag",
-  "remoteBackupPasswordRequired": "Remote backups require a non-empty backup password",
+  "remoteBackupPasswordRequired": "I backup remoti richiedono una password di backup non vuota",
   "monitorHttpsRequired": "Un agente monitor remoto richiede HTTPS, salvo che HTTP sia consentito.",
   "backupTip": "I dati esportati possono essere crittografati con password.\nConservali al sicuro.",
   "bgRun": "Esegui in background",

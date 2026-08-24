@@ -38,7 +38,7 @@
   "markUrlTip": "목록에서 서버 이름 옆에 표시되는 작은 마크. 비워 두면 표시하지 않습니다.\n\n로고와 같은 이미지가 아닙니다",
   "navTabMenuTip": "탭을 길게 누르거나 마우스 오른쪽 버튼으로 누르면 그 안의 모든 항목을 한 번에 연결하거나 끊을 수 있습니다.",
   "nTags": "태그 {count}개",
-  "remoteBackupPasswordRequired": "Remote backups require a non-empty backup password",
+  "remoteBackupPasswordRequired": "원격 백업에는 비어 있지 않은 백업 비밀번호가 필요합니다",
   "monitorHttpsRequired": "원격 monitor 에이전트에는 HTTPS가 필요합니다. HTTP를 허용한 경우는 예외입니다.",
   "backupTip": "내보낸 데이터는 비밀번호로 암호화할 수 있습니다.\n안전하게 보관해 주세요.",
   "icloudBackupStatusTitle": "백업 상태",

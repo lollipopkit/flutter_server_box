@@ -333,7 +333,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get remoteBackupPasswordRequired =>
-      'Remote backups require a non-empty backup password';
+      'Cadangan jarak jauh memerlukan kata sandi cadangan yang tidak kosong';
 
   @override
   String get monitorHttpsRequired =>

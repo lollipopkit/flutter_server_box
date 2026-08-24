@@ -37,7 +37,7 @@
   "markUrlTip": "Das kleine Zeichen neben dem Servernamen in Listen. Leer heißt: keins.\n\nNicht dasselbe Bild wie das Logo",
   "navTabMenuTip": "Tippe lange auf einen Tab – oder klicke ihn mit der rechten Maustaste an –, um alles darin auf einmal zu verbinden oder zu trennen.",
   "nTags": "{count} Tags",
-  "remoteBackupPasswordRequired": "Remote backups require a non-empty backup password",
+  "remoteBackupPasswordRequired": "Für entfernte Backups ist ein nicht leeres Backup-Passwort erforderlich",
   "monitorHttpsRequired": "Ein entfernter Monitor-Agent braucht HTTPS, sofern HTTP dafür nicht erlaubt ist.",
   "backupTip": "Die exportierten Daten können mit einem Passwort verschlüsselt werden. \nBitte sicher aufbewahren.",
   "bgRun": "Hintergrundaktualisierung",

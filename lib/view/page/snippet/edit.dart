@@ -7,7 +7,6 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/snippet.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/entity_store.dart';
 import 'package:server_box/view/page/ssh/snippet_run.dart';
 import 'package:server_box/view/widget/dist_icon.dart';
@@ -209,7 +208,7 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> {
       title: libL10n.server,
       items: spis,
       display: (spi) => spi.name,
-      avatar: (spi) => distIconOf(Stores.serverDist.get(spi.id), size: 17),
+      avatar: (spi) => distIcon(spi.id, size: 17),
     );
     if (chosen == null || !mounted) return;
 
@@ -302,7 +301,7 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> {
                 // ones with no live status, so nothing else here knows what
                 // they run.
                 avatar: (e) =>
-                    distIconOf(Stores.serverDist.get(e), size: 17),
+                    distIcon(e, size: 17),
                 initial: validServerIds,
                 clearable: true,
               );

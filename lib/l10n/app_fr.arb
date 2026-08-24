@@ -91,7 +91,7 @@
   "enableMdnsDesc": "Utiliser mDNS/Bonjour pour découvrir les services SSH",
   "envVars": "Variable d’environnement",
   "extraArgs": "Arguments supplémentaires",
-  "fallbackSshDest": "Destino SSH alternativo",
+  "fallbackSshDest": "Destination SSH de secours",
   "fdroidReleaseTip": "Si vous avez téléchargé cette application depuis F-Droid, il est recommandé de désactiver cette option.",
   "fileTooLarge": "Fichier '{file}' trop volumineux {size}, max {sizeMax}",
   "fileDirGone": "Ce dossier n'est plus là",

@@ -309,8 +309,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get remoteBackupPasswordRequired =>
-      'Remote backups require a non-empty backup password';
+  String get remoteBackupPasswordRequired => 'リモートバックアップには空でないバックアップパスワードが必要です';
 
   @override
   String get monitorHttpsRequired =>
@@ -1322,7 +1321,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get sponsor => '赞助';
+  String get sponsor => 'スポンサー';
 
   @override
   String get sortByJoinTime => '追加した順';

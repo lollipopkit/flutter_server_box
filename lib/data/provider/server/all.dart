@@ -338,6 +338,10 @@ class ServersNotifier extends _$ServersNotifier {
 
     Stores.setting.serverOrder.put(newOrder);
     Stores.server.deleteById(id);
+    // The row goes with the server — the foreign key cascades — but the whole
+    // map this store keeps in memory does not, so a list drawn afterwards read
+    // a mark for a server that no longer exists.
+    Stores.serverDist.remove(id);
     state = state.copyWith(
       servers: newServers,
       serverOrder: newOrder,

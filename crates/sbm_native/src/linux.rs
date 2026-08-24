@@ -222,19 +222,33 @@ unsafe extern "C" {
 ///
 /// Not filtered to one key: `parse_sys_version`, `parse_os_id` and
 /// `parse_os_id_like` each pick their own line out of this block.
+///
+/// The glob's output *is* filtered, to `PRETTY_NAME` alone, because the script
+/// pipes it through `grep ^PRETTY_NAME` and the two have to agree. Without
+/// that, a host with no os-release but an `/etc/<vendor>-release` carrying an
+/// `ID=` line reported a distribution here that the SSH path could not see —
+/// the same machine identified two ways depending on which was asked.
 fn os_release_block() -> String {
     let mut all = String::new();
     for path in ["/etc/os-release", "/usr/lib/os-release"] {
         all.push_str(&read(path));
         all.push('\n');
     }
-    if all.trim().is_empty()
-        && let Ok(entries) = fs::read_dir("/etc")
-    {
-        for entry in entries.flatten() {
-            let name = entry.file_name();
-            if name.to_string_lossy().ends_with("-release") {
-                all.push_str(&read(&entry.path().to_string_lossy()));
+    if !all.trim().is_empty() {
+        return all;
+    }
+
+    let Ok(entries) = fs::read_dir("/etc") else {
+        return all;
+    };
+    for entry in entries.flatten() {
+        let name = entry.file_name();
+        if !name.to_string_lossy().ends_with("-release") {
+            continue;
+        }
+        for line in read(&entry.path().to_string_lossy()).lines() {
+            if line.starts_with("PRETTY_NAME") {
+                all.push_str(line);
                 all.push('\n');
             }
         }

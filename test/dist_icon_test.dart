@@ -250,6 +250,51 @@ void main() {
     expect(''.dist, isNull);
   });
 
+  group('a name that merely spells another one inside it', () {
+    // The prose matcher works by looking for a name in a sentence, so the
+    // short entries are the dangerous ones. Every case here resolved to the
+    // wrong distribution when the match was a plain `contains`, and a wrong
+    // mark is worse than none: it is a claim about a machine rather than an
+    // absence of one.
+    test('is not read as that one', () {
+      expect('Details Linux'.dist, isNull, reason: 'de-tails');
+      expect('Linguix 1.0'.dist, isNull, reason: 'lin-guix');
+      expect('Absolus 3'.dist, isNull, reason: 'ab-solus');
+      expect('Retails Server'.dist, isNull, reason: 're-tails');
+      expect('Amxinux'.dist, isNull);
+    });
+
+    test('while the names themselves still are', () {
+      // The other half: a boundary rule that blocked these would be worse
+      // than the collisions it prevents.
+      expect('Tails 6.6'.dist, Dist.tails);
+      expect('Guix System'.dist, Dist.guix);
+      expect('Solus 4.5'.dist, Dist.solus);
+      // Punctuation counts as a boundary, which is what lets a needle carry
+      // its own — `pop!_os` is one word to this.
+      expect('Pop!_OS 22.04 LTS'.dist, Dist.popos);
+      expect('KDE neon 6.1'.dist, Dist.kdeneon);
+    });
+
+    test('and a flavour that spells its base inside itself still resolves', () {
+      // The other side of the trade. `xubuntu` no longer contains `ubuntu` as
+      // a word, so every flavour that was found that way is named outright —
+      // which is more honest anyway, since it says which ones are known.
+      expect('Xubuntu 20.04'.dist, Dist.ubuntu);
+      expect('Lubuntu 24.04'.dist, Dist.ubuntu);
+      expect('Ubuntu MATE 24.04'.dist, Dist.ubuntu);
+      // And one that is not listed reads as nothing rather than as Ubuntu.
+      expect('Fooubuntu 1.0'.dist, isNull);
+    });
+
+    test('and a name spelled inside another is listed in its own right', () {
+      // `mandriva` used to be found inside `openmandriva` by accident. Both
+      // are needles now, because relying on that was the bug above.
+      expect('OpenMandriva Lx 5.0'.dist, Dist.mandriva);
+      expect('Mandriva Linux 2011'.dist, Dist.mandriva);
+    });
+  });
+
   group('the os-release ids', () {
     // The same table `_byOsId` holds, written the other way round. `_byOsId` is
     // private, so this is what proves an entry is reachable — and a `const` map

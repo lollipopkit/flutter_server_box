@@ -551,7 +551,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get extraArgs => 'Arguments supplémentaires';
 
   @override
-  String get fallbackSshDest => 'Destino SSH alternativo';
+  String get fallbackSshDest => 'Destination SSH de secours';
 
   @override
   String get fdroidReleaseTip =>

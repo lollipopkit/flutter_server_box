@@ -175,4 +175,40 @@ void main() {
       expect(store.get('srv2'), Dist.alpine);
     });
   });
+
+  group('what a write announces', () {
+    late ServerDistStore store;
+
+    setUp(() async {
+      SqliteDb.openInMemory();
+      await createTables(SqliteDb.instance);
+      SqliteDb.instance.execute('PRAGMA foreign_keys = ON;');
+      SqliteDb.instance.execute(
+        "INSERT INTO server (id, name, ssh_ip) VALUES ('a', 'prod', '10.0.0.1');",
+      );
+      store = ServerDistStore.forTest();
+    });
+
+    tearDown(SqliteDb.close);
+
+    // The stream is what every mark on screen redraws from, so an event that
+    // says nothing changed is a redraw of every row for nothing.
+    test('forgetting a reading nothing has is silent', () async {
+      var events = 0;
+      final sub = store.changes.listen((_) => events++);
+      addTearDown(sub.cancel);
+
+      store.remove('never-seen');
+      await Future<void>.delayed(Duration.zero);
+      expect(events, 0);
+
+      // And forgetting one it does have is not.
+      store.put('a', Dist.debian);
+      await Future<void>.delayed(Duration.zero);
+      store.remove('a');
+      await Future<void>.delayed(Duration.zero);
+      expect(events, 2);
+      expect(store.get('a'), isNull);
+    });
+  });
 }

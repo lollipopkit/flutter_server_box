@@ -312,8 +312,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get remoteBackupPasswordRequired =>
-      'Remote backups require a non-empty backup password';
+  String get remoteBackupPasswordRequired => '원격 백업에는 비어 있지 않은 백업 비밀번호가 필요합니다';
 
   @override
   String get monitorHttpsRequired =>

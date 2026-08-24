@@ -37,7 +37,7 @@
   "markUrlTip": "Tanda kecil di samping nama server pada daftar. Kosong berarti tidak ada.\n\nBukan gambar yang sama dengan logo",
   "navTabMenuTip": "Tekan lama sebuah tab — atau klik kanan — untuk menghubungkan atau memutuskan semuanya sekaligus.",
   "nTags": "{count} tag",
-  "remoteBackupPasswordRequired": "Remote backups require a non-empty backup password",
+  "remoteBackupPasswordRequired": "Cadangan jarak jauh memerlukan kata sandi cadangan yang tidak kosong",
   "monitorHttpsRequired": "Agen monitor jarak jauh butuh HTTPS, kecuali HTTP diizinkan untuknya.",
   "backupTip": "Data yang diekspor dapat dienkripsi dengan kata sandi. \nHarap jaga keamanannya.",
   "bgRun": "Jalankan di Backgroud",

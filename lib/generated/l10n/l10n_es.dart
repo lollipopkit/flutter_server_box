@@ -339,7 +339,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get remoteBackupPasswordRequired =>
-      'Remote backups require a non-empty backup password';
+      'Las copias de seguridad remotas requieren una contraseña de copia no vacía';
 
   @override
   String get monitorHttpsRequired =>

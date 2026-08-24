@@ -37,7 +37,7 @@
   "markUrlTip": "La marca pequeña junto al nombre de un servidor en las listas. Vacío: ninguna.\n\nNo es la misma imagen que el logotipo",
   "navTabMenuTip": "Mantén pulsada una pestaña, o haz clic derecho en ella, para conectar o desconectar de una vez todo lo que contiene.",
   "nTags": "{count} etiquetas",
-  "remoteBackupPasswordRequired": "Remote backups require a non-empty backup password",
+  "remoteBackupPasswordRequired": "Las copias de seguridad remotas requieren una contraseña de copia no vacía",
   "monitorHttpsRequired": "Un agente de monitor remoto necesita HTTPS, salvo que se permita HTTP.",
   "backupTip": "Los datos exportados pueden ser encriptados con contraseña. \nPor favor guárdalos en un lugar seguro.",
   "bgRun": "Ejecución en segundo plano",
