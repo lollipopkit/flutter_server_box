@@ -584,15 +584,17 @@ Future<void> persistHostKeyFingerprint(
 /// nothing will ever look up again, and one entry per trial connection is a
 /// setting that only grows.
 void forgetHostKeyFingerprints(String serverId) {
-  try {
-    final prop = Stores.setting.sshKnownHostFingerprints;
-    final known = Map<String, String>.from(prop.get());
-    final updated = withoutHostKeysFor(known, serverId);
-    if (updated.length == known.length) return;
-    prop.put(updated);
-  } catch (e, stack) {
-    Loggers.app.warning('Forget SSH host key fingerprints failed', e, stack);
-  }
+  _hostKeyPersistence = _hostKeyPersistence.then((_) async {
+    try {
+      final prop = Stores.setting.sshKnownHostFingerprints;
+      final known = Map<String, String>.from(prop.get());
+      final updated = withoutHostKeysFor(known, serverId);
+      if (updated.length == known.length) return;
+      await prop.set(updated);
+    } catch (e, stack) {
+      Loggers.app.warning('Forget SSH host key fingerprints failed', e, stack);
+    }
+  });
 }
 
 /// [known] without the entries belonging to [serverId].
@@ -665,7 +667,16 @@ Future<bool> promptHostKeyExclusively(
 
   final entry = _PendingHostKeyPrompt(question);
   _pendingHostKeyPrompts[server] = entry;
-  final running = show();
+  Future<bool> running;
+  try {
+    running = show();
+  } catch (e, s) {
+    entry.answer.completeError(e, s);
+    if (identical(_pendingHostKeyPrompts[server], entry)) {
+      _pendingHostKeyPrompts.remove(server);
+    }
+    rethrow;
+  }
   entry.answer.complete(running);
   try {
     return await running;
@@ -932,12 +943,14 @@ Map<String, List<KnownHostKey>> groupHostKeysByServer(
 /// offered. A host that rotated one algorithm and kept another is the case
 /// this exists for.
 void forgetHostKey(String storageKey) {
-  try {
-    final prop = Stores.setting.sshKnownHostFingerprints;
-    final known = Map<String, String>.from(prop.get());
-    if (known.remove(storageKey) == null) return;
-    prop.put(known);
-  } catch (e, stack) {
-    Loggers.app.warning('Forget SSH host key failed', e, stack);
-  }
+  _hostKeyPersistence = _hostKeyPersistence.then((_) async {
+    try {
+      final prop = Stores.setting.sshKnownHostFingerprints;
+      final known = Map<String, String>.from(prop.get());
+      if (known.remove(storageKey) == null) return;
+      await prop.set(known);
+    } catch (e, stack) {
+      Loggers.app.warning('Forget SSH host key failed', e, stack);
+    }
+  });
 }
