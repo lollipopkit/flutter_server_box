@@ -8,6 +8,7 @@ import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:server_box/app.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/service/watch_sync.dart';
@@ -129,6 +130,16 @@ Future<void> _initData() async {
     bakName: Miscs.bakFileName,
     dirs: const {PathDir.img, PathDir.font},
   );
+
+  // `extended_image` caches under `getTemporaryDirectory()` and makes its own
+  // folder there with a plain `create()`, no `recursive`. On macOS that
+  // directory is `~/Library/Caches/<bundle id>`, which nothing has to have
+  // made yet — a fresh install, or a machine whose caches were swept. Every
+  // image then failed with `PathNotFoundException` and no fallback, which is
+  // what a server logo turning into an error in the log was.
+  //
+  // TODO: drop once extended_image_library creates its folder recursively.
+  await (await getTemporaryDirectory()).create(recursive: true);
 
   // Only so `HiveImport` can read the boxes an upgrading install still has.
   // Nothing writes Hive any more.

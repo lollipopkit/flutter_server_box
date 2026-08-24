@@ -202,7 +202,11 @@ extension _Server on _AppSettingsPageState {
   }
 
   Widget _buildServerLogoUrl() {
-    void onSave(String url) {
+    void onSave(String raw) {
+      // A GitHub page URL is rewritten to the one that serves the file. It is
+      // what the address bar gives you, and left alone it fetches HTML that
+      // reaches the decoder as `Invalid image data`.
+      final url = resolveLogoUrl(raw);
       if (url.isEmpty || !url.startsWith('http')) {
         _showInvalidUrlDialog();
         return;
@@ -226,14 +230,18 @@ extension _Server on _AppSettingsPageState {
                 autoFocus: true,
                 hint: 'https://example.com/logo.png',
                 icon: Icons.link,
-                maxLines: 2,
+                // One line, so the text sits in the middle of the field. A URL
+                // has nowhere to wrap anyway, and with room for two the single
+                // line it holds was drawn against the top with a blank line
+                // under it.
+                maxLines: 1,
                 suggestion: false,
                 onSubmitted: onSave,
               ),
               ListTile(
                 title: Text(libL10n.doc),
                 trailing: const Icon(Icons.open_in_new),
-                onTap: Urls.appWiki.launchUrl,
+                onTap: Urls.customLogoDoc.launchUrl,
               ),
             ],
           ),
