@@ -44,7 +44,7 @@ class ServersNotifier extends _$ServersNotifier {
     return _load();
   }
 
-  Future<void> reload() async {
+  Future<void> reload({bool refreshConnections = true}) async {
     Stores.server.dropCache();
     final newState = _load();
     final selectedId = ref.read(serverSelectionProvider);
@@ -52,8 +52,21 @@ class ServersNotifier extends _$ServersNotifier {
       ref.read(serverSelectionProvider.notifier).select(null);
     }
     if (newState == state) return;
+    final previousServers = state.servers;
     state = newState;
-    await refresh();
+    for (final entry in previousServers.entries) {
+      if (newState.servers.containsKey(entry.key)) continue;
+      final provider = serverProvider(entry.key);
+      if (ref.exists(provider)) ref.invalidate(provider);
+    }
+    for (final entry in newState.servers.entries) {
+      if (previousServers[entry.key] == entry.value) continue;
+      final provider = serverProvider(entry.key);
+      if (ref.exists(provider)) {
+        ref.read(provider.notifier).updateSpi(entry.value);
+      }
+    }
+    if (refreshConnections) await refresh();
   }
 
   ServersState _load() {
@@ -184,6 +197,7 @@ class ServersNotifier extends _$ServersNotifier {
         await serverNotifier.refresh();
       }
     }
+
     await Future.wait(
       List.generate(
         serversToRefresh.length.clamp(0, _maxConcurrentRefreshes).toInt(),
@@ -218,6 +232,7 @@ class ServersNotifier extends _$ServersNotifier {
       });
       state = state.copyWith(autoRefreshTimer: timer);
     }
+
     schedule();
   }
 
@@ -286,7 +301,9 @@ class ServersNotifier extends _$ServersNotifier {
     if (!exists) {
       newOrder.add(spi.id);
     } else {
-      Loggers.app.warning('addServer: id ${spi.id} already exists, updating in place');
+      Loggers.app.warning(
+        'addServer: id ${spi.id} already exists, updating in place',
+      );
     }
     final newTags = _calculateTags(newServers);
     final newManualDisconnected = Set<String>.from(state.manualDisconnectedIds)

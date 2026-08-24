@@ -51,7 +51,7 @@ class PrivateKeyNotifier extends _$PrivateKeyNotifier {
     try {
       // Avoid direct import cycle: lazy read via container.
       final serversNotifier = ref.read(serversProvider.notifier);
-      await serversNotifier.reload();
+      await serversNotifier.reload(refreshConnections: false);
     } catch (_) {}
     bakSync.sync(milliDelay: 1000);
   }

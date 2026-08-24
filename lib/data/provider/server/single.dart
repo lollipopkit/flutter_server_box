@@ -397,7 +397,11 @@ class ServerNotifier extends _$ServerNotifier {
       updateConnection(ServerConn.finished);
       TryLimiter.reset(sid);
     } catch (e, s) {
-      Loggers.app.warning('Get status via monitor for ${spi.name} failed', e, s);
+      Loggers.app.warning(
+        'Get status via monitor for ${spi.name} failed',
+        e,
+        s,
+      );
       // A failure belongs to the server it was fetched for. Edit a server's
       // address and the poll still running against the old one eventually
       // times out; without this it counted that timeout against the retry
@@ -528,7 +532,8 @@ class ServerNotifier extends _$ServerNotifier {
       final merged = [
         ...?onServer,
         for (final e in local.entries)
-          if (!existing.contains(e.key)) ffi.CustomCmd(name: e.key, cmd: e.value),
+          if (!existing.contains(e.key))
+            ffi.CustomCmd(name: e.key, cmd: e.value),
       ];
 
       final install = await exec.run(
@@ -543,10 +548,13 @@ class ServerNotifier extends _$ServerNotifier {
       if (custom == null) return;
       // Don't overwrite newer edits that happened while we were reading/installing.
       final current = ref.read(serversProvider).servers[spi.id];
-      if (current == null || current.custom?.cmds != spi.custom?.cmds) return;
+      if (current == null || current != spi) return;
       await ref
           .read(serversProvider.notifier)
-          .updateServer(current, current.copyWith(custom: custom.withoutCmds()));
+          .updateServer(
+            current,
+            current.copyWith(custom: custom.withoutCmds()),
+          );
       Loggers.app.info(
         'Migrated ${local.length} custom command(s) for ${spi.name}',
       );
@@ -576,7 +584,9 @@ class ServerNotifier extends _$ServerNotifier {
     final origSpi = state.spi;
     if (_scriptWritten) {
       final spi = state.spi;
-      if (spi.custom?.cmds?.isNotEmpty == true && gen == _operationGeneration && origSpi == spi) {
+      if (spi.custom?.cmds?.isNotEmpty == true &&
+          gen == _operationGeneration &&
+          origSpi == spi) {
         try {
           await _migrateCustomCmds(spi, state.status.system, exec);
         } catch (_) {}
@@ -679,6 +689,10 @@ class ServerNotifier extends _$ServerNotifier {
         try {
           client.close();
         } catch (_) {}
+      }
+      if (gen != _operationGeneration || origSpi != state.spi) {
+        Loggers.app.info('Discarded superseded shell connect for ${spi.name}');
+        rethrow;
       }
       TryLimiter.inc(_shellTryId);
       Loggers.app.warning('Connect shell for ${spi.name}', e, s);
