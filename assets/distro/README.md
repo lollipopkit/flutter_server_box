@@ -300,6 +300,27 @@ that ships no mark of its own.
 > is used on a web page; this is an application, not a page, and the glyph is
 > not a link.
 
+### Where a user sees them
+
+Not here. This file ships inside the app — `assets/distro/` is declared as a
+whole directory in `pubspec.yaml`, so `README.md` is bundled with the glyphs —
+but nothing renders it, and an acknowledgement nobody can reach is not one.
+
+CC BY 4.0 and CC-BY-SA-3.0 both ask for credit "in any reasonable manner based
+on the medium, means, and context". For an application that is the licence
+screen it already has: **Settings → About → License**, which is Flutter's
+`showLicensePage` over `LicenseRegistry`. That registry collects the LICENSE
+file of every package and nothing else, so assets are invisible to it until
+something registers them — `lib/data/model/server/dist_license.dart` does, and
+`test/dist_license_test.dart` fails if any of the three conditions stops being
+stated.
+
+Tux's condition is weaker ("if someone asks") and a file in the repository
+would arguably answer it. It is on that screen anyway, because the person most
+likely to ask is the one looking at the penguin.
+
+### Both were being missed
+
 Neither condition was met before this was checked, and neither costs anything
 to meet. Note the awkward half of it: font-logos redistributes both under the
 Unlicense, which is not a licence either upstream granted. A licence conveys
