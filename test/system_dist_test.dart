@@ -89,9 +89,19 @@ void main() {
     });
 
     test('String.dist extension detects OpenSUSE', () {
-      const input = 'opensuse leap 15.3';
+      // The base entry, which on a current release only SLES reaches: an
+      // ordinary openSUSE install reports itself as Leap or Tumbleweed, and
+      // each of those now has a glyph and a case of its own.
+      const input = 'suse linux enterprise server 15';
       final result = input.dist;
       expect(result, equals(Dist.opensuse));
+    });
+
+    test('and reads its two editions as themselves', () {
+      // A change in what `{DIST}` expands to: this was `opensuse` while the
+      // editions had no case to be told apart into.
+      expect('opensuse leap 15.3'.dist, equals(Dist.leap));
+      expect('opensuse tumbleweed'.dist, equals(Dist.tumbleweed));
     });
 
     test('String.dist extension detects Kali', () {

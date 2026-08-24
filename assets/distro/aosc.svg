@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.1"
+   id="svg2"
+   height="512"
+   width="512">
+  <title
+     id="title4445">Logo of Anthon OS4 Project</title>
+  <defs
+     id="defs4" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>Logo of Anthon OS4 Project</dc:title>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Junde Yi</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <cc:license
+           rdf:resource="http://creativecommons.org/publicdomain/zero/1.0/" />
+        <dc:date />
+        <dc:contributor>
+          <cc:Agent>
+            <dc:title>Jeff Bai, Icenowy Zheng, Junde Yi</dc:title>
+          </cc:Agent>
+        </dc:contributor>
+        <dc:publisher>
+          <cc:Agent>
+            <dc:title>Anthon Open Source Community </dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:description />
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/publicdomain/zero/1.0/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+  <g
+     transform="translate(0,12)"
+     id="layer2">
+    <path
+       id="path3558"
+       d="M 256,-4.686 A 248.68573,248.68573 0 0 0 7.314,244 248.68573,248.68573 0 0 0 256,492.686 248.68573,248.68573 0 0 0 504.686,244 248.68573,248.68573 0 0 0 256,-4.686 Z m 0,65.338 c 101.16252,0 183.17,82.08563 183.17,183.348 0,29.2803 -6.8702,56.95124 -19.064,81.504 l -83.432,-43.212 c 5.79574,-11.72609 9.042,-24.90425 9.042,-38.81999 0,-49.05908 -40.41008,-88.83601 -90.254,-88.83601 -0.73209,0 -1.46809,0.005 -2.196,0.022 l -6.19,-93.799999 c 2.96088,-0.142428 5.92788,-0.206 8.924,-0.206 z m -14.088,0.528 c 0.0385,-0.0031 0.0774,0.0031 0.116,0 l -0.584,0.322 -0.022,-0.276 c 0.16431,-0.0128 0.32557,-0.03361 0.49,-0.046 z M 94.744001,156.958 176.984,199.57 c -7.49227,12.94863 -11.776,27.93597 -11.776,43.90201 0,49.05904 40.41009,88.83599 90.254,88.83599 3.21127,0 6.38532,-0.16196 9.51,-0.48401 l 6.262,94.90401 c -5.02414,0.41423 -10.1031,0.62 -15.234,0.62 -101.16251,0 -183.17,-82.08564 -183.17,-183.348 0,-31.50401 7.931378,-61.14458 21.914001,-87.042 z" />
+  </g>
+  <g
+     transform="translate(0,-540.36218)"
+     id="layer1" />
+</svg>

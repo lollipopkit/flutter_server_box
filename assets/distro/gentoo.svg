@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   width="512"
+   height="512"
+   id="svg2"
+   version="1.0">
+  <title
+     id="title3032">Gentoo Logo Dark v1.0</title>
+  <defs
+     id="defs4" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>Gentoo Logo Dark v1.0</dc:title>
+        <dc:date>2011-06-03</dc:date>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Sebastian Pipping &lt;sping@gentoo.org&gt;</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:rights>
+          <cc:Agent>
+            <dc:title>Lennart Andre Rolland, Gentoo Foundation Inc.</dc:title>
+          </cc:Agent>
+        </dc:rights>
+        <dc:publisher>
+          <cc:Agent>
+            <dc:title>Gentoo Foundation Inc.</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:contributor>
+          <cc:Agent>
+            <dc:title>Lennart Andre Rolland for original vector version, idea for dark version and specific RGB value by unknown person</dc:title>
+          </cc:Agent>
+        </dc:contributor>
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/by-sa/2.5/" />
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/by-sa/2.5/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Notice" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Attribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#ShareAlike" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+  <g
+     id="layer2"
+     style="display:inline"
+     transform="translate(-25.69105,-136.02588)">
+    <path
+       d="M 212.03125 0.0625 C 202.87493 0.12755657 193.86211 0.94485937 185.1875 2.53125 C 92.4908 19.4834 27.273526 99.66472 21.75 152.5 C 19.039913 178.42335 33.010042 197.84168 40.71875 206.40625 C 61.552273 229.55282 103.08458 247.22621 129.78125 261.875 C 91.18621 294.78255 73.464335 310.85 56.03125 329.15625 C 29.94514 356.54894 11.58732 386.68499 11.53125 408.28125 C 11.511528 415.23755 10.388551 437.42689 19.4375 454.9375 C 22.840438 461.52254 32.524819 483.48219 61.6875 499.9375 C 80.326754 510.45488 106.8784 514.33509 132.875 510.625 C 213.33105 499.14273 321.07569 430.8931 397.96875 367.34375 C 446.97423 326.84248 482.80941 287.60598 493.15625 268.28125 C 501.5046 252.68908 502.43629 224.70743 497.59375 207.15625 C 483.83587 157.2925 371.99621 55.16909 280.5625 14.0625 C 259.61465 4.6447906 235.43073 -0.10375569 212.03125 0.0625 z M 211.875 1.5 C 236.85412 1.1518039 261.59072 6.9653969 283.21875 17.59375 C 357.06447 53.88267 481.79298 155.8628 491 207.15625 C 502.37863 270.54806 279.1196 442.18363 143.3125 468.96875 C 90.62569 479.31137 45.715115 482.11258 25.21875 426.46875 C 7.450976 378.23255 41.903325 342.95245 92.625 296.59375 C 113.68712 277.34335 130.48278 262.95874 155.75 241.625 C 157.20342 240.17159 34.034672 197.70018 30.09375 148.96875 C 26.042925 98.87834 105.33386 6.44883 206.875 1.65625 C 208.54174 1.5778281 210.20973 1.5232131 211.875 1.5 z M 209.5 12.59375 C 205.97685 12.647632 202.39857 12.862207 198.71875 13.25 C 148.85401 18.50492 139.29857 24.9161 94.125 59.09375 C 78.98489 70.54854 51.108579 98.43471 43.96875 131.5 C 41.249511 144.09307 44.461726 154.96893 53.53125 162.59375 C 82.572331 187.00886 131.18607 206.82095 171.0625 225.96875 C 182.74237 231.57715 174.99119 241.72532 156.15625 258.03125 C 108.62886 299.177 44.392194 349.27235 39.90625 387.4375 C 37.792365 405.42185 43.952306 429.86924 65.78125 442.375 C 91.28089 456.9837 144.21676 447.44325 179.5625 434.28125 C 231.21358 415.04749 299.04091 372.60094 352.90625 330.875 C 408.9194 287.48531 461.01759 232.36347 463.59375 223.375 C 466.75723 212.3373 466.41759 202.15882 460.3125 190.4375 C 450.72527 172.03084 437.91891 158.34032 424.15625 143.03125 C 387.22878 104.10047 348.15283 69.90154 301.40625 43.6875 C 270.81352 26.532061 243.55716 12.072894 209.5 12.59375 z M 233.0625 89.875 C 244.56071 90.012106 257.76201 93.677775 271.9375 100.53125 C 307.96244 117.94836 344.96587 163.70005 271.625 190.03125 C 251.6819 197.19133 188.43882 172.45617 190.375 138.6875 C 192.22786 105.95199 207.83705 90.58481 230.78125 89.90625 C 231.5324 89.884035 232.29595 89.86586 233.0625 89.875 z M 236.96875 119.0625 C 230.89236 119.27322 226.04751 121.01733 223.71875 124.625 C 211.83864 143.02942 217.23272 156.0528 228.25 164.375 C 232.34571 154.62597 274.19177 165.27333 274.0625 174.4375 C 274.50276 174.23064 274.88804 173.99889 275.21875 173.75 C 312.28813 145.85121 263.29979 118.14938 236.96875 119.0625 z "
+       id="path2973"
+       transform="translate(25.69105,136.02588)" />
+  </g>
+</svg>

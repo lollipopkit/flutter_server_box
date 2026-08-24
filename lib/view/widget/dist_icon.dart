@@ -60,13 +60,10 @@ class DistIconOf extends StatelessWidget {
         color ??
         IconTheme.of(context).color ??
         Theme.of(context).colorScheme.onSurface;
-    final path = dist?.iconPath;
-    if (path == null) {
-      // A distribution with no glyph, or a server not yet asked. The same
-      // outline either way: a row whose icon slot is empty reads as a broken
-      // row, and guessing at a distribution would be worse than saying nothing.
-      return Icon(Icons.dns_outlined, size: size, color: tint);
-    }
+    // A distribution with no glyph, or a server not yet asked: the generic
+    // penguin either way. A row whose icon slot is empty reads as a broken
+    // row, and guessing at a distribution would be worse than saying nothing.
+    final path = dist?.iconPath ?? kUnknownDistIcon;
     return SvgPicture.asset(
       path,
       width: size,
@@ -74,7 +71,7 @@ class DistIconOf extends StatelessWidget {
       colorFilter: ColorFilter.mode(tint, BlendMode.srcIn),
       // Named for the reader that speaks the row aloud: the glyph is the only
       // thing on it that says which distribution.
-      semanticsLabel: dist!.name,
+      semanticsLabel: dist?.name ?? 'linux',
     );
   }
 }

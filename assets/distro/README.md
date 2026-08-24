@@ -7,7 +7,7 @@ this repository ships none of those.
 
 ## Where these came from
 
-All eleven are taken verbatim from [font-logos](https://github.com/lukas-w/font-logos)
+All of them are taken verbatim from [font-logos](https://github.com/lukas-w/font-logos)
 (`vectors/`), renamed to match `Dist`'s enum names. font-logos is released into
 the public domain under the [Unlicense](https://github.com/lukas-w/font-logos/blob/master/LICENSE):
 
@@ -19,23 +19,18 @@ That is what makes it legal to *ship the files*. They are redrawn glyphs, not
 each project's own artwork, so no distribution's copyright is being copied
 here.
 
-| file | `Dist` | font-logos name |
-|------|--------|-----------------|
-| `alpine.svg`   | `alpine`   | `alpine` |
-| `arch.svg`     | `arch`     | `archlinux` |
-| `centos.svg`   | `centos`   | `centos` |
-| `debian.svg`   | `debian`   | `debian` |
-| `deepin.svg`   | `deepin`   | `deepin` |
-| `fedora.svg`   | `fedora`   | `fedora` |
-| `kali.svg`     | `kali`     | `kali-linux` |
-| `opensuse.svg` | `opensuse` | `opensuse` |
-| `rocky.svg`    | `rocky`    | `rocky-linux` |
-| `ubuntu.svg`   | `ubuntu`   | `ubuntu` |
-| `wrt.svg`      | `wrt`      | `openwrt` |
+Each file is named after its `Dist` case, which is also what `{DIST}` expands
+to in a custom logo URL — so `Dist.rhel` is `rhel.svg` and `{DIST}` is `rhel`,
+whatever font-logos happened to call it (`redhat`). `tux.svg` is the generic
+mark, drawn for a server that has not been asked yet.
 
-`armbian` and `coreelec` have no glyph in font-logos and fall back to a generic
-mark. Do not fill those two in from the projects' own sites: that would be
-copying their artwork, which is the one thing the table above avoids.
+To add one: find it in font-logos' `vectors/`, copy it in under the `Dist`
+name you are adding, add the case, and add a matcher. `test/dist_icon_test.dart`
+fails if any of the four is missing.
+
+`armbian` and `coreelec` have no glyph in font-logos and fall back to the
+generic mark. Do not fill those two in from the projects' own sites: that would
+be copying their artwork, which is the one thing this arrangement avoids.
 
 ## Why using them is allowed
 
@@ -53,8 +48,11 @@ the thing is not readily identifiable without the mark, no more of the mark is
 used than needed, and nothing suggests sponsorship or endorsement. A 20px glyph
 in a row that also carries the server's own name and address meets all three.
 
-Several projects say so in their own policies, which is worth recording since
-the wording differs:
+Sixty-one marks is a lot of projects to have checked, and most of them publish
+no third-party trademark policy at all — for those, nominative use is simply
+the general rule. The ones that *do* publish something are recorded below,
+since the wording differs and one of them (CentOS) reads as a prohibition until
+the sentence is taken whole:
 
 - **Debian** — the [Open Use Logo](https://www.debian.org/logos/) is dual
   licensed LGPL-3+ / CC-BY-SA-3.0, so even the artwork is free. The only one
@@ -92,9 +90,9 @@ the wording differs:
 - **Kali** — [OffSec's policy](https://www.kali.org/docs/policy/trademark/)
   reserves uses outside its scope to written permission and states no fair-use
   carve-out. Nominative use does not depend on one being offered.
-- **Alpine**, **deepin**, **CoreELEC** — no published third-party trademark
-  policy found. Nominative use is the general rule where a project has not
-  written one down.
+- **Alpine**, **deepin**, **CoreELEC** and the rest — no published third-party
+  trademark policy found. Nominative use is the general rule where a project
+  has not written one down.
 
 ## What would change the answer
 

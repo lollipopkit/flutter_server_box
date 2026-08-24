@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   width="512"
+   height="512"
+   id="svg2"
+   version="1.0">
+  <title
+     id="title3032">Gentoo Logo Dark v1.0</title>
+  <defs
+     id="defs4" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>Gentoo Logo Dark v1.0</dc:title>
+        <dc:date>2011-06-03</dc:date>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Sebastian Pipping &lt;sping@gentoo.org&gt;</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:rights>
+          <cc:Agent>
+            <dc:title>Lennart Andre Rolland, Gentoo Foundation Inc.</dc:title>
+          </cc:Agent>
+        </dc:rights>
+        <dc:publisher>
+          <cc:Agent>
+            <dc:title>Gentoo Foundation Inc.</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:contributor>
+          <cc:Agent>
+            <dc:title>Lennart Andre Rolland for original vector version, idea for dark version and specific RGB value by unknown person</dc:title>
+          </cc:Agent>
+        </dc:contributor>
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/by-sa/2.5/" />
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/by-sa/2.5/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Notice" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Attribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#ShareAlike" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+  <g
+     id="layer2"
+     style="display:inline"
+     transform="translate(-25.69105,-136.02588)">
+    <path
+       d="m 281.69105,136.15571 c -141.31319,0 -255.870165,114.55698 -255.870165,255.87017 0,141.31319 114.556975,255.87017 255.870165,255.87017 141.31319,0 255.87017,-114.55698 255.87017,-255.87017 0,-141.31319 -114.55698,-255.87017 -255.87017,-255.87017 z m 0,21.32252 c 107.4377,0 198.00417,72.2394 225.77878,170.79333 -23.9223,49.34229 -57.96197,93.76773 -99.41623,129.66754 -19.91415,17.24584 -41.65638,32.61976 -65.67334,43.44462 -24.01696,10.82487 -50.43388,16.96708 -76.73441,15.45883 -19.76012,-1.13318 -39.27993,-6.63756 -56.58462,-16.23177 45.86056,-24.85024 87.23971,-57.9831 121.11188,-97.65711 22.23302,-26.04121 41.68521,-55.63627 49.17505,-89.04815 3.74493,-16.70594 4.37955,-34.20184 0.87955,-50.96081 -3.49998,-16.75896 -11.24864,-32.72954 -22.975,-45.20373 -11.45596,-12.18652 -26.495,-20.81893 -42.61838,-25.26717 -16.12339,-4.44825 -33.28151,-4.79259 -49.73476,-1.78576 -32.9065,6.01366 -62.28601,25.1384 -85.84977,48.88186 -41.53456,41.85128 -67.21166,100.90427 -62.50161,159.67897 2.355,29.38735 12.20312,58.26418 29.07857,82.43817 3.76684,5.39598 7.908,10.5355 12.34041,15.40551 C 133.38322,505.6964 107.92858,511.82074 82.112326,515.27 59.947304,479.45445 47.143399,437.2404 47.143399,392.02588 c 0,-129.53709 105.010561,-234.54765 234.547651,-234.54765 z m 1.49257,47.38929 c 16.48779,0.0224 33.08756,5.01378 46.24321,14.95241 11.85258,8.95418 20.63501,21.69304 25.61367,35.68856 4.97867,13.9955 6.25633,29.19379 4.55769,43.95103 -3.3973,29.51446 -18.28649,56.58149 -36.27493,80.22595 -31.85077,41.86543 -74.18683,75.37368 -121.2718,98.82986 -4.81952,2.40092 -9.71541,4.68297 -14.63257,6.87651 -10.24533,-8.96562 -19.02669,-19.59937 -25.72029,-31.45071 -13.98649,-24.76375 -18.59885,-54.18066 -15.88526,-82.49148 2.71358,-28.31081 12.42915,-55.59647 25.48039,-80.86564 15.13235,-29.29847 35.75903,-57.05044 64.63387,-72.97629 14.43743,-7.96293 30.76825,-12.76255 47.25602,-12.7402 z M 514.1331,360.62848 c 1.37417,10.27104 2.1056,20.75028 2.1056,31.3974 0,129.53709 -105.01056,234.54765 -234.54765,234.54765 -72.74936,0 -137.76709,-33.11811 -180.78826,-85.10348 26.55388,-6.03093 52.50707,-14.69362 77.40072,-25.72029 10.88617,8.2906 22.90869,15.09037 35.68855,19.98986 36.80354,14.10959 78.58783,12.068 115.83456,-0.82624 37.24673,-12.89423 70.27619,-36.03797 99.06974,-62.95472 34.30058,-32.06482 63.22046,-69.85861 85.23674,-111.33018 z"
+       id="path2993" />
+  </g>
+</svg>

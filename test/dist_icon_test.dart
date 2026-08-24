@@ -1,9 +1,12 @@
-/// That every distribution claiming a glyph has one, and no more.
+/// That every distribution has a glyph, a matcher, and that the matchers are
+/// in an order that lets the specific ones win.
 ///
-/// The mapping is by enum name, so a renamed case or a moved file is a glyph
-/// that silently stops loading — `SvgPicture.asset` on a missing asset draws
-/// nothing rather than throwing, so every affected row would just lose its
-/// icon with no error anywhere.
+/// Three ways this goes wrong silently. A renamed case or moved file makes the
+/// glyph stop loading, and `SvgPicture.asset` on a missing asset draws nothing
+/// rather than throwing. A case added to the enum but not to `_matchers` never
+/// matches anything, so its glyph is unreachable. And a derivative listed
+/// *after* what it derives from reads as the parent, because "Kubuntu"
+/// contains "ubuntu".
 library;
 
 import 'dart:io';
@@ -11,73 +14,203 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/dist.dart';
 
-/// Read off disk, since a test binary has no asset bundle and the point is
-/// what is in the directory rather than what the manifest says about it.
-Set<String> _shipped() {
-  final dir = Directory('assets/distro');
-  return {
-    for (final f in dir.listSync())
-      if (f.path.endsWith('.svg')) f.uri.pathSegments.last,
-  };
-}
+/// Read off disk: a test binary has no asset bundle, and the point is what is
+/// in the directory rather than what the manifest says about it.
+Set<String> _shipped() => {
+  for (final f in Directory('assets/distro').listSync())
+    if (f.path.endsWith('.svg')) f.uri.pathSegments.last,
+};
 
 void main() {
-  test('every glyph a distribution names is actually there', () {
-    final shipped = _shipped();
-    for (final dist in Dist.values) {
-      final path = dist.iconPath;
-      if (path == null) continue;
-      expect(
-        shipped,
-        contains('${dist.name}.svg'),
-        reason: '$path is named by Dist.${dist.name} and has to exist',
-      );
-    }
-  });
-
-  test('and every file there is named by a distribution', () {
-    // The other direction: a file nothing points at is dead weight in the
-    // bundle, and usually a rename that only got done on one side.
-    final named = {
-      for (final dist in Dist.values)
-        if (dist.iconPath != null) '${dist.name}.svg',
-    };
-    expect(_shipped(), named);
-  });
-
-  test('the two without one say so rather than pointing at nothing', () {
-    // font-logos has no glyph for either. They are not to be filled in from
-    // those projects' own artwork — see assets/distro/README.md.
-    expect(Dist.armbian.iconPath, isNull);
-    expect(Dist.coreelec.iconPath, isNull);
-  });
-
-  test('a path is under the directory the pubspec ships', () {
-    // `assets/distro/` is registered as a directory, so a glyph placed
-    // anywhere else resolves at analysis time and fails at runtime.
-    for (final dist in Dist.values) {
-      final path = dist.iconPath;
-      if (path == null) continue;
-      expect(path, startsWith('assets/distro/'));
-    }
-  });
-
-  group('reading a distribution out of os-release', () {
-    test('matches the names the glyphs are filed under', () {
-      expect('Ubuntu 24.04.1 LTS'.dist, Dist.ubuntu);
-      expect('Debian GNU/Linux 12 (bookworm)'.dist, Dist.debian);
-      expect('Rocky Linux 9.4'.dist, Dist.rocky);
-      expect('openSUSE Tumbleweed'.dist, Dist.opensuse);
+  group('the glyphs', () {
+    test('every one a distribution names is actually there', () {
+      final shipped = _shipped();
+      for (final dist in Dist.values) {
+        final path = dist.iconPath;
+        if (path == null) continue;
+        expect(
+          shipped,
+          contains('${dist.name}.svg'),
+          reason: '$path is named by Dist.${dist.name} and has to exist',
+        );
+      }
     });
 
-    test('and iStoreOS is still OpenWrt, which has a glyph', () {
-      // The one entry in `_wrts`: a name that never contains "wrt".
+    test('and every file there is named by a distribution', () {
+      // The other direction: a file nothing points at is dead weight in the
+      // bundle, and usually a rename done on one side only.
+      final named = {
+        kUnknownDistIcon.split('/').last,
+        for (final dist in Dist.values)
+          if (dist.iconPath != null) '${dist.name}.svg',
+      };
+      expect(_shipped(), named);
+    });
+
+    test('the fallback is shipped too', () {
+      // Reached by every server that has not connected yet, which on a first
+      // run is all of them.
+      expect(_shipped(), contains(kUnknownDistIcon.split('/').last));
+    });
+
+    test('the two without one say so rather than pointing at nothing', () {
+      // font-logos has no glyph for either. They are not to be filled in from
+      // those projects' own artwork — see assets/distro/README.md.
+      expect(Dist.armbian.iconPath, isNull);
+      expect(Dist.coreelec.iconPath, isNull);
+    });
+
+    test('a path is under the directory the pubspec ships', () {
+      for (final dist in Dist.values) {
+        final path = dist.iconPath;
+        if (path == null) continue;
+        expect(path, startsWith('assets/distro/'));
+      }
+      expect(kUnknownDistIcon, startsWith('assets/distro/'));
+    });
+  });
+
+  group('the matchers', () {
+    // `_matchers` is private, so coverage is proven the way it matters: every
+    // case has to be reachable from a name a real machine reports. A case with
+    // no matcher, or one shadowed by an earlier entry, fails here.
+    test('every case is reachable from some real name', () {
+      // One `PRETTY_NAME` per case, written the way the distribution writes
+      // it. Anything unreachable here is a matcher that is missing, spelled
+      // wrong, or shadowed by an earlier entry.
+      const names = {
+        Dist.debian: 'Debian GNU/Linux 12 (bookworm)',
+        Dist.ubuntu: 'Ubuntu 24.04.1 LTS',
+        Dist.centos: 'CentOS Stream 9',
+        Dist.fedora: 'Fedora Linux 40 (Server Edition)',
+        Dist.opensuse: 'SUSE Linux Enterprise Server 15 SP6',
+        Dist.kali: 'Kali GNU/Linux Rolling',
+        Dist.wrt: 'OpenWrt 23.05.3',
+        Dist.armbian: 'Armbian 24.5.1 bookworm',
+        Dist.arch: 'Arch Linux',
+        Dist.alpine: 'Alpine Linux v3.20',
+        Dist.rocky: 'Rocky Linux 9.4 (Blue Onyx)',
+        Dist.deepin: 'Deepin 23',
+        Dist.coreelec: 'CoreELEC 21.1',
+        Dist.rhel: 'Red Hat Enterprise Linux 9.4 (Plow)',
+        Dist.almalinux: 'AlmaLinux 9.4 (Seafoam Ocelot)',
+        Dist.nobara: 'Nobara Linux 40',
+        Dist.devuan: 'Devuan GNU/Linux 5 (daedalus)',
+        Dist.raspbian: 'Raspbian GNU/Linux 11 (bullseye)',
+        Dist.mint: 'Linux Mint 21.3',
+        Dist.popos: 'Pop!_OS 22.04 LTS',
+        Dist.elementary: 'elementary OS 7.1',
+        Dist.zorin: 'Zorin OS 17',
+        Dist.mx: 'MX Linux 23',
+        Dist.kubuntu: 'Kubuntu 24.04',
+        Dist.kdeneon: 'KDE neon 6.1',
+        Dist.biglinux: 'BigLinux 24',
+        Dist.locos: 'LocOS Linux 24',
+        Dist.lxle: 'LXLE 18.04',
+        Dist.vanilla: 'Vanilla OS 2',
+        Dist.manjaro: 'Manjaro Linux',
+        Dist.endeavour: 'EndeavourOS',
+        Dist.artix: 'Artix Linux',
+        Dist.garuda: 'Garuda Linux',
+        Dist.cachyos: 'CachyOS',
+        Dist.arcolinux: 'ArcoLinux',
+        Dist.archcraft: 'Archcraft',
+        Dist.archlabs: 'ArchLabs Linux',
+        Dist.xerolinux: 'XeroLinux',
+        Dist.leap: 'openSUSE Leap 15.6',
+        Dist.tumbleweed: 'openSUSE Tumbleweed',
+        Dist.parrot: 'Parrot Security 6.1',
+        Dist.qubes: 'Qubes OS 4.2',
+        Dist.tails: 'Tails 6.6',
+        Dist.trisquel: 'Trisquel GNU/Linux 11',
+        Dist.parabola: 'Parabola GNU/Linux-libre',
+        Dist.hyperbola: 'Hyperbola GNU/Linux-libre 0.4',
+        Dist.guix: 'Guix System',
+        Dist.gentoo: 'Gentoo Linux',
+        Dist.nixos: 'NixOS 24.05 (Uakari)',
+        Dist.voidlinux: 'Void Linux',
+        Dist.solus: 'Solus 4.5',
+        Dist.slackware: 'Slackware 15.0',
+        Dist.mageia: 'Mageia 9',
+        Dist.mandriva: 'OpenMandriva Lx 5.0',
+        Dist.puppy: 'Puppy Linux 9.5',
+        Dist.sabayon: 'Sabayon Linux 19.03',
+        Dist.aosc: 'AOSC OS',
+        Dist.postmarketos: 'postmarketOS 24.06',
+        Dist.coreos: 'Fedora CoreOS 40',
+        Dist.freebsd: '14.1-RELEASE FreeBSD',
+        Dist.openbsd: '7.5 OpenBSD',
+        Dist.illumos: 'OpenIndiana Hipster 2024.04',
+      };
+
+      for (final dist in Dist.values) {
+        expect(
+          names.containsKey(dist),
+          isTrue,
+          reason: 'Dist.${dist.name} has no sample name here',
+        );
+        expect(
+          names[dist]!.dist,
+          dist,
+          reason: '"${names[dist]}" has to read as Dist.${dist.name}',
+        );
+      }
+    });
+  });
+
+  group('the order the derivatives are asked in', () {
+    test('a flavour is not read as the base it contains', () {
+      // Each of these contains its parent's name. Listed after it, every one
+      // of them would draw the parent's glyph.
+      expect('Kubuntu 24.04'.dist, Dist.kubuntu);
+      expect('Linux Mint 21.3'.dist, Dist.mint);
+      expect('openSUSE Leap 15.6'.dist, Dist.leap);
+      expect('openSUSE Tumbleweed'.dist, Dist.tumbleweed);
+      expect('Archcraft'.dist, Dist.archcraft);
+      expect('ArchLabs Linux'.dist, Dist.archlabs);
+      expect('ArcoLinux'.dist, Dist.arcolinux);
+    });
+
+    test('and the base is still read as itself', () {
+      expect('Ubuntu 24.04.1 LTS'.dist, Dist.ubuntu);
+      expect('openSUSE 13.2 (Harlequin)'.dist, Dist.opensuse);
+      expect('Arch Linux'.dist, Dist.arch);
+    });
+
+    test('Fedora CoreOS is CoreOS, not Fedora', () {
+      // Both names are in it, and what it runs like is CoreOS.
+      expect('Fedora CoreOS 40'.dist, Dist.coreos);
+    });
+  });
+
+  group('names that never contain the enum name', () {
+    test('which is why matching on that alone was dropped', () {
+      // Every one of these read as null before the matchers existed.
+      expect('Red Hat Enterprise Linux 9.4 (Plow)'.dist, Dist.rhel);
+      expect('Linux Mint 21.3'.dist, Dist.mint);
+      expect('Pop!_OS 22.04 LTS'.dist, Dist.popos);
+      expect('MX Linux 23'.dist, Dist.mx);
+      expect('KDE neon 6.1'.dist, Dist.kdeneon);
+      expect('Qubes OS 4.2'.dist, Dist.qubes);
+      expect('OpenMandriva Lx 5.0'.dist, Dist.mandriva);
+      expect('OpenIndiana Hipster 2024.04'.dist, Dist.illumos);
+    });
+
+    test('and the OpenWrt downstreams that carry neither name', () {
       expect('iStoreOS 22.03'.dist, Dist.wrt);
+      expect('ImmortalWrt 23.05'.dist, Dist.wrt);
+      expect('LEDE Reboot 17.01'.dist, Dist.wrt);
       expect(Dist.wrt.iconPath, isNotNull);
     });
 
-    test('something unrecognised is null, which draws the fallback', () {
-      expect('Some Unknown Linux'.dist, isNull);
+    test('SUSE Linux Enterprise reads as openSUSE, which is its glyph', () {
+      // No separate SLES glyph exists, and the chameleon is the right mark.
+      expect('SUSE Linux Enterprise Server 15 SP6'.dist, Dist.opensuse);
     });
+  });
+
+  test('something unrecognised is null, which draws the penguin', () {
+    expect('Some Unknown Linux'.dist, isNull);
+    expect(''.dist, isNull);
   });
 }

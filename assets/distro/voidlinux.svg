@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.1"
+   id="svg2"
+   height="512"
+   width="512"
+   sodipodi:docname="void.svg"
+   inkscape:version="">
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1601"
+     inkscape:window-height="1103"
+     id="namedview107"
+     showgrid="false"
+     inkscape:zoom="1.2581529"
+     inkscape:cx="45.166218"
+     inkscape:cy="200.10971"
+     inkscape:window-x="0"
+     inkscape:window-y="306"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg2" />
+  <title
+     id="title4445">Logo of Anthon OS4 Project</title>
+  <defs
+     id="defs4" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>Logo of Anthon OS4 Project</dc:title>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Junde Yi</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <cc:license
+           rdf:resource="http://creativecommons.org/publicdomain/zero/1.0/" />
+        <dc:date />
+        <dc:contributor>
+          <cc:Agent>
+            <dc:title>Jeff Bai, Icenowy Zheng, Junde Yi</dc:title>
+          </cc:Agent>
+        </dc:contributor>
+        <dc:publisher>
+          <cc:Agent>
+            <dc:title>Anthon Open Source Community </dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:description />
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/publicdomain/zero/1.0/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+  <g
+     transform="translate(0,-540.36218)"
+     id="layer1" />
+  <g
+     transform="matrix(2.3704376,0,0,2.3704376,-47.85329,6.519184)"
+     id="g197">
+    <path
+       inkscape:connector-curvature="0"
+       d="M 128.01682,0 C 105.98494,0.04678314 84.523372,7.0072685 66.657757,19.900168 l 23.902685,23.902684 c 11.277448,-6.898594 24.236288,-10.559734 37.456378,-10.582214 39.77241,-7.9e-5 72.01434,32.241846 72.01426,72.014262 -0.0318,13.21538 -3.69956,26.16719 -10.60151,37.43708 l 23.94799,23.94799 c 12.8888,-17.87595 19.8404,-39.34715 19.87417,-61.38507 C 233.25173,47.115274 186.13644,0 128.01682,0 Z"
+       id="path183" />
+    <path
+       inkscape:connector-curvature="0"
+       d="m 189.37588,190.56963 -23.90269,-23.90268 c -11.27745,6.89859 -24.23629,10.55974 -37.45637,10.58221 -39.772417,8e-5 -72.014343,-32.24185 -72.014264,-72.01426 0.03183,-13.215382 3.699547,-26.167196 10.60151,-37.437081 L 42.656067,43.849832 C 29.76725,61.725769 22.815686,83.196977 22.781918,105.2349 c 0,58.11962 47.115274,105.2349 105.234902,105.2349 22.03188,-0.0468 43.49344,-7.00726 61.35906,-19.90017 z"
+       id="path185" />
+    <circle
+       cx="128"
+       cy="105.2349"
+       r="33.503357"
+       id="circle187" />
+  </g>
+</svg>
