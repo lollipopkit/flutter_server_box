@@ -93,13 +93,29 @@ enum Dist {
 
   /// This one's own mark, or null when none is shipped for it.
   ///
-  /// Null in three cases, for two different reasons.
+  /// Null for most of them, for five different reasons — the enum recognises
+  /// every distribution it can name, and only the ones somebody will actually
+  /// be looking at carry a glyph.
+  ///
+  /// **A case is never removed**, whatever happens to its glyph: the name is
+  /// what `{DIST}` expands to in a custom logo URL, so a case that goes takes
+  /// a user's URL with it. Dropping a mark means adding the case to
+  /// `_withoutGlyph`, which is reversible and costs nothing.
   ///
   /// `armbian` and `coreelec` simply have no glyph in font-logos. They are not
   /// to be filled in from those projects' own sites: the files in
   /// `assets/distro/` are redrawn glyphs released into the public domain, and
   /// copying a project's own artwork is a copyright question with a different
   /// answer.
+  ///
+  /// `rhel`, `raspbian` and `kali` had a glyph and it was withdrawn. Each is
+  /// two problems at once: the mark is an original illustration — Red Hat's
+  /// Shadowman, the Raspberry Pi raspberry, Kali's dragon — so redrawing it
+  /// does not answer the copyright the way a triangle or a letterform does;
+  /// and each owner has published rules that reserve *logo* use to written
+  /// permission while allowing the word referentially. Nominative use does not
+  /// depend on a permission being offered, but these three are the ones on the
+  /// list most likely to be enforced. `assets/distro/README.md` quotes them.
   ///
   /// `macos` and `windows` are a decision rather than a gap. Apple's
   /// guidelines say the Apple Logo may not be used "for any other purpose
@@ -114,6 +130,12 @@ enum Dist {
   /// the FreeBSD FAQ says rights to the Daemon "must be sought from trademark
   /// owner Kirk McKusick". Redrawing a character is closer to a derivative
   /// work than redrawing a logo, so they get the outline too.
+  ///
+  /// The rest are simply not distributions anybody manages a server on: a
+  /// respin of something already in the set, a live system for one job, a
+  /// phone or set-top target, a project that has stopped, or one small enough
+  /// that no one will meet it. They are still recognised by name — only the
+  /// glyph is absent, so `{DIST}` and the identification keep working.
   ///
   /// Drawing one of the marks that *is* shipped, beside a server's name, is
   /// nominative use — a mark used to refer to the thing it identifies, which
@@ -133,13 +155,54 @@ enum Dist {
 
 /// Cases with no mark of their own. See [Dist.glyphPath] for why each is here.
 const _withoutGlyph = {
+  // No glyph exists for these in font-logos.
   Dist.armbian,
   Dist.coreelec,
+
+  // Withdrawn over their marks — see [Dist.glyphPath].
+  Dist.rhel,
+  Dist.raspbian,
+  Dist.kali,
   Dist.freebsd,
   Dist.openbsd,
   Dist.netbsd,
   Dist.macos,
   Dist.windows,
+
+  // Not shipped because nobody would meet one on a server, and a glyph nobody
+  // sees is bundle weight and one more mark to have justified. Respins of a
+  // distribution already in the set, single-purpose live systems, phone and
+  // set-top targets, discontinued projects, and the very small.
+  Dist.aosc,
+  Dist.archcraft,
+  Dist.archlabs,
+  Dist.arcolinux,
+  Dist.artix,
+  Dist.biglinux,
+  Dist.cachyos,
+  Dist.endeavour,
+  Dist.garuda,
+  Dist.guix,
+  Dist.hyperbola,
+  Dist.illumos,
+  Dist.kdeneon,
+  Dist.kubuntu,
+  Dist.locos,
+  Dist.lxle,
+  Dist.mageia,
+  Dist.mandriva,
+  Dist.nobara,
+  Dist.parabola,
+  Dist.parrot,
+  Dist.postmarketos,
+  Dist.puppy,
+  Dist.qubes,
+  Dist.sabayon,
+  Dist.solus,
+  Dist.tails,
+  Dist.trisquel,
+  Dist.vanilla,
+  Dist.xerolinux,
 };
 
 /// The ones that are not Linux, and so fall back to the neutral outline rather
@@ -154,7 +217,14 @@ const _notLinux = {
 };
 
 /// Some Linux whose flavour is not known. A penguin says that; a server
-/// outline would say only "a machine". From the same public-domain set.
+/// outline would say only "a machine".
+///
+/// The file comes from the same public-domain set as the rest, but the penguin
+/// in it does not: Tux is Larry Ewing's, and the permission he gave is "to use
+/// and/or modify this image [...] provided you acknowledge me
+/// lewing@isc.tamu.edu and The GIMP if someone asks" — not a public-domain
+/// dedication. `assets/distro/README.md` carries the acknowledgement, which is
+/// the whole of what that condition asks for.
 const kLinuxIcon = 'assets/distro/tux.svg';
 
 /// A machine, saying nothing about what runs on it.

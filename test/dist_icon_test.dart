@@ -84,6 +84,33 @@ void main() {
       expect(_shipped(), isNot(contains('openbsd.svg')));
     });
 
+    test('nor the three withdrawn over their owners reserving the logo', () {
+      // Each is an original illustration rather than a shape, so redrawing it
+      // leaves the copyright where it was; and each owner reserves *logo* use
+      // to written permission while allowing the word referentially. Red Hat:
+      // "These Guidelines do not give you any permission to use a Red Hat
+      // Logo". Raspberry Pi: the logo is for "the sale or distribution of
+      // genuine Raspberry Pi products". OffSec offers no fair-use carve-out.
+      for (final dist in [Dist.rhel, Dist.raspbian, Dist.kali]) {
+        expect(dist.glyphPath, isNull, reason: 'Dist.${dist.name}');
+        expect(_shipped(), isNot(contains('${dist.name}.svg')));
+        // Still recognised, still expands in a custom logo URL — only the
+        // shipped mark is gone.
+        expect(dist.iconPath, kLinuxIcon, reason: 'Dist.${dist.name}');
+      }
+    });
+
+    test('a distribution with no glyph is still a distribution', () {
+      // The enum names every one it can identify; the glyph set is the subset
+      // somebody will be looking at. Removing a case would break `{DIST}` in a
+      // user's custom logo URL, so dropping a mark never removes one.
+      expect(Dist.values.length, greaterThan(_shipped().length));
+      expect('Puppy Linux 9.5'.dist, Dist.puppy);
+      expect(resolveDist(osId: 'qubes'), Dist.qubes);
+      expect(Dist.puppy.glyphPath, isNull);
+      expect(Dist.puppy.iconPath, kLinuxIcon);
+    });
+
     test('a non-Linux falls back to the machine, not the penguin', () {
       for (final dist in [Dist.freebsd, Dist.openbsd, Dist.macos, Dist.windows]) {
         expect(dist.iconPath, kServerIcon, reason: 'Dist.${dist.name}');
