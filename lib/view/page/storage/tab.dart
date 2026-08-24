@@ -13,6 +13,7 @@ import 'package:server_box/view/page/storage/local.dart';
 import 'package:server_box/view/page/storage/send_to.dart';
 import 'package:server_box/view/page/storage/server_file.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
+import 'package:server_box/view/widget/dist_icon.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 
 /// Every open file browser, one tab each, plus a picker at the head of the
@@ -483,6 +484,7 @@ extension _Actions on _FileTabPageState {
           ];
         },
         builder: (ctx, spi) => ListTile(
+          leading: distIcon(spi.id),
           title: Text(spi.name),
           subtitle: Text(spi.displayAddr),
           trailing: const Icon(Icons.chevron_right),
@@ -533,6 +535,10 @@ class _PickPage extends ConsumerWidget {
           if (state.servers[id] case final spi? when _canBrowse(ref, spi))
             CardTile(
               key: ValueKey(id),
+              // The mark where the generic icon was, and the generic icon
+              // still behind it: `distIcon` answers null when marks are off,
+              // and `icon` is what that falls through to.
+              leading: distIcon(spi.id, size: 24),
               icon: Icons.dns,
               title: spi.name,
               subtitle: spi.displayAddr,
@@ -625,6 +631,7 @@ class _SideBar extends ConsumerWidget {
             if (state.servers[id] case final spi? when _canBrowse(ref, spi))
               SideBarTile(
                 key: ValueKey(id),
+                leading: distIcon(spi.id, size: 22),
                 title: spi.name,
                 onTap: () => onServer(spi),
               ),
@@ -754,6 +761,7 @@ class _RailSearchState extends ConsumerState<_RailSearch> {
                   itemCount: found.length,
                   itemBuilder: (_, i) => SideBarTile(
                     key: ValueKey(found[i].id),
+                    leading: distIcon(found[i].id, size: 22),
                     title: found[i].name,
                     onTap: () => widget.onPick(found[i]),
                   ),
