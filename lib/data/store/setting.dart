@@ -279,7 +279,7 @@ class SettingStore extends SqliteStore {
     'https://api.openai.com',
   );
   late final askAiApiKey = propertyDefault('askAiApiKey', '');
-  late final askAiModel = propertyDefault('askAiModel', 'gpt-5.4-mini');
+  late final askAiModel = propertyDefault('askAiModel', 'gpt-5.6-luna');
   late final askAiProtocol = propertyDefault('askAiProtocol', 'auto');
   late final askAiAutoRunSafeCommands = propertyDefault(
     'askAiAutoRunSafeCommands',
@@ -437,11 +437,27 @@ class SettingStore extends SqliteStore {
 
   /// For desktop only.
   /// Record the position and size of the window.
+  /// Stored as an object, not as a string holding one.
+  ///
+  /// `SqliteStore.set` encodes whatever `toObj` returns, so returning an
+  /// already-encoded string got it encoded a second time and the `value`
+  /// column held `"{\"size\":{\"width\":1324.0,...}}"`. Twice the bytes, and
+  /// the raw settings editor could only show it as one escaped line instead of
+  /// a value with fields.
+  ///
+  /// No migration: `WindowStateListener` writes on every move and resize, so
+  /// the row rewrites itself the first time the window is touched. The string
+  /// branch below is what reads it until then.
   late final windowState = property<WindowState>(
     'windowState',
-    fromObj: (raw) =>
-        WindowState.fromJson(jsonDecode(raw as String) as Map<String, dynamic>),
-    toObj: (state) => state == null ? null : jsonEncode(state.toJson()),
+    fromObj: (raw) => switch (raw) {
+      // TODO: delete the string branch once no install can still hold one.
+      final String s =>
+        WindowState.fromJson(jsonDecode(s) as Map<String, dynamic>),
+      final Map m => WindowState.fromJson(Map<String, dynamic>.from(m)),
+      _ => null,
+    },
+    toObj: (state) => state?.toJson(),
   );
 
   late final introVer = propertyDefault('introVer', 0);

@@ -303,7 +303,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     ];
   }
 
-  void _onSelect(SettingsNode node) => setState(() => _selectedId = node.id);
+  void _onSelect(SettingsNode node) {
+    _dropPushedPages();
+    setState(() => _selectedId = node.id);
+  }
 
   void _onToggle(SettingsNode node) {
     setState(() {
@@ -311,10 +314,31 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     });
   }
 
+  /// The navigator holding the right-hand side, so a selection can reach it.
+  final _contentNav = GlobalKey<NavigatorState>();
+
+  /// Discards anything pushed on top of the levels [_path] describes.
+  ///
+  /// The content navigator is driven declaratively — the pages come from the
+  /// selection — but a page inside it may push a route by hand: the raw
+  /// settings editor does, from `entries/app.dart`. A pushed route sits above
+  /// every declarative page, so changing the selection rebuilt the pages
+  /// underneath one and left it on screen. Tapping the menu looked like it did
+  /// nothing at all, and the editor stayed put whichever section was picked.
+  ///
+  /// `route.settings is Page` is what tells the two apart: the declarative ones
+  /// each come from a `MaterialPage`, and a hand-pushed one does not.
+  void _dropPushedPages() {
+    final nav = _contentNav.currentState;
+    if (nav == null) return;
+    nav.popUntil((route) => route.settings is Page);
+  }
+
   /// A tab is a tab: it shows something. Tapping a branch goes into it *and*
   /// selects what is first inside, rather than leaving a row of tabs with none
   /// of them on. The same applies to a row of the list.
   void _onTab(SettingsNode node) {
+    _dropPushedPages();
     setState(() {
       if (node.isLeaf && _path.isNotEmpty) {
         _selectedId = node.id;
@@ -503,6 +527,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     }
 
     return Navigator(
+      key: _contentNav,
       pages: [
         if (wide)
           MaterialPage<void>(

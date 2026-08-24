@@ -92,7 +92,7 @@ extension _AI on _AppSettingsPageState {
           prop: _setting.askAiModel,
           leading: const Icon(Icons.view_module, size: _kIconSize),
           title: libL10n.askAiModel,
-          hint: 'gpt-5.4-mini',
+          hint: 'gpt-5.6-luna',
           displayBuilder: (val) =>
               (val == null || val.isEmpty) ? libL10n.empty : val,
         ),

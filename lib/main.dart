@@ -277,7 +277,7 @@ Future<void> _initWindow() async {
   WindowFrameConfig.setShowCaption(hideTitleBar);
   await SystemUIs.initDesktopWindow(
     hideTitleBar: hideTitleBar,
-    size: windowState?.size ?? Size(947, 487),
+    size: windowState?.size ?? Size(1323, 817),
     position: windowState?.position,
     listener: WindowStateListener(windowStateProp),
   );
