@@ -420,18 +420,25 @@ pub const WINDOWS_INSTALL_EOF: &str = "SrvBoxSep.__install_eof__";
 fn shell_quote_unix(s: &str) -> String {
     format!("'{}'", s.replace('\'', "'\\''"))
 }
+fn shell_quote_ps(s: &str) -> String {
+    format!("'{}'", s.replace('\'', "''"))
+}
 
 pub fn install_command(system: SystemType, script_dir: &str, script_path: &str) -> String {
     match system {
-        SystemType::Windows => encoded_powershell_command(&format!(
-            "New-Item -ItemType Directory -Force -Path '{script_dir}' | Out-Null; \
+        SystemType::Windows => {
+            let qdir = shell_quote_ps(script_dir);
+            let qpath = shell_quote_ps(script_path);
+            encoded_powershell_command(&format!(
+                "New-Item -ItemType Directory -Force -Path {qdir} | Out-Null; \
 $sb = New-Object System.Text.StringBuilder; \
 while (($line = [System.Console]::In.ReadLine()) -ne $null) {{ \
 if ($line -eq '{WINDOWS_INSTALL_EOF}') {{ break }}; \
 [void]$sb.AppendLine($line) \
 }}; \
-Set-Content -Path '{script_path}' -Value $sb.ToString() -Encoding UTF8"
-        )),
+Set-Content -Path {qpath} -Value $sb.ToString() -Encoding UTF8"
+            ))
+        },
         _ => format!(
             "mkdir -p {}\ncat > {}\nchmod 755 {}\n",
             shell_quote_unix(script_dir),

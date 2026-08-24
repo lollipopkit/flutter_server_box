@@ -541,9 +541,12 @@ class ServerNotifier extends _$ServerNotifier {
 
       final custom = spi.custom;
       if (custom == null) return;
+      // Don't overwrite newer edits that happened while we were reading/installing.
+      final current = ref.read(serversProvider).servers[spi.id];
+      if (current == null || current.custom?.cmds != spi.custom?.cmds) return;
       await ref
           .read(serversProvider.notifier)
-          .updateServer(spi, spi.copyWith(custom: custom.withoutCmds()));
+          .updateServer(current, current.copyWith(custom: custom.withoutCmds()));
       Loggers.app.info(
         'Migrated ${local.length} custom command(s) for ${spi.name}',
       );
@@ -569,9 +572,11 @@ class ServerNotifier extends _$ServerNotifier {
   /// reporting an empty list on a server that has plenty of processes.
   Future<ServerExec> ensureScriptExec() async {
     final exec = await ensureExec();
+    final gen = _operationGeneration;
+    final origSpi = state.spi;
     if (_scriptWritten) {
       final spi = state.spi;
-      if (spi.custom?.cmds?.isNotEmpty == true) {
+      if (spi.custom?.cmds?.isNotEmpty == true && gen == _operationGeneration && origSpi == spi) {
         try {
           await _migrateCustomCmds(spi, state.status.system, exec);
         } catch (_) {}
@@ -616,9 +621,10 @@ class ServerNotifier extends _$ServerNotifier {
     // A monitor-only server reaches this path too, which is the point: what
     // carries the commands is `ServerExec`, not SSH, so both kinds of server
     // reach the same directory.
-    await _migrateCustomCmds(spi, system, exec);
-
-    _scriptWritten = true;
+    if (gen == _operationGeneration && origSpi == state.spi) {
+      await _migrateCustomCmds(spi, system, exec);
+      _scriptWritten = true;
+    }
     return exec;
   }
 
@@ -634,6 +640,8 @@ class ServerNotifier extends _$ServerNotifier {
     if (existing != null && !existing.isClosed) return existing;
 
     final spi = state.spi;
+    final gen = _operationGeneration;
+    final origSpi = spi;
     if (spi.ssh == null) {
       throw SSHErr(
         type: SSHErrType.connect,
@@ -655,6 +663,12 @@ class ServerNotifier extends _$ServerNotifier {
         onKeyboardInteractive: KeyboardInteractiveAuth.handle,
       );
       await client.authenticated;
+      if (gen != _operationGeneration || origSpi != state.spi) {
+        try {
+          client.close();
+        } catch (_) {}
+        throw StateError('superseded shell connect for ${origSpi.name}');
+      }
       TryLimiter.reset(_shellTryId);
       _setClient(client);
       return client;
