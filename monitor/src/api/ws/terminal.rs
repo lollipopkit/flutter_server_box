@@ -692,6 +692,18 @@ async fn attach(
     cols: u16,
     rows: u16,
 ) -> Option<Message> {
+    // Live revocation of full_access: a handle minted before DELETE
+    // /remote-access/full-access must not be reusable after it.
+    if ctx.state.full_access_off.load(std::sync::atomic::Ordering::Acquire) {
+        // Local shells are the ones gated by full_access; remote SSH shells
+        // remain usable. Without a per-session local flag we deny all
+        // re-attaches after the switch, which is the safe side for the
+        // reported issue (local shell continuing via handle).
+        return Some(error_frame(
+            "full_access_disabled",
+            "Full access has been disabled",
+        ));
+    }
     let session = match ctx.state.sessions.get(handle, &ctx.subject) {
         Ok(session) => session,
         Err(reason) => {

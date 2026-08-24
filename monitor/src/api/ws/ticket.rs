@@ -29,6 +29,7 @@ const TTL: Duration = Duration::from_secs(30);
 /// so this is a backstop against a buggy or hostile client looping on the
 /// issue endpoint, not a security boundary.
 const MAX_LIVE: usize = 256;
+const MAX_PER_SUBJECT: usize = 32;
 
 const ID_BYTES: usize = 16;
 const SECRET_BYTES: usize = 32;
@@ -101,6 +102,12 @@ impl TicketStore {
         if entries.len() >= MAX_LIVE {
             return Err(MonitorError::Auth(
                 "Too many outstanding WebSocket tickets".to_string(),
+            ));
+        }
+        let per_subject = entries.values().filter(|e| e.subject == subject).count();
+        if per_subject >= MAX_PER_SUBJECT {
+            return Err(MonitorError::Auth(
+                "Too many outstanding WebSocket tickets for this account".to_string(),
             ));
         }
 

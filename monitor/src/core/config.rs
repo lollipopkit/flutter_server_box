@@ -365,12 +365,13 @@ impl Config {
     /// Validates values that would otherwise be accepted by serde but make a
     /// runtime task unsafe or unusable.
     pub fn validate(&self) -> Result<()> {
-        if let Some(retention) = self
-            .monitoring
-            .as_ref()
-            .and_then(|monitoring| monitoring.data_retention.as_ref())
-        {
-            retention.validate().map_err(anyhow::Error::msg)?;
+        if let Some(monitoring) = self.monitoring.as_ref() {
+            if monitoring.interval_seconds == 0 {
+                anyhow::bail!("monitoring.interval_seconds must be >= 1");
+            }
+            if let Some(retention) = monitoring.data_retention.as_ref() {
+                retention.validate().map_err(anyhow::Error::msg)?;
+            }
         }
         Ok(())
     }
