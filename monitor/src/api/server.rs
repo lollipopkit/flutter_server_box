@@ -869,9 +869,10 @@ async fn disable_full_access(
     }
 
     app_state.full_access_off.store(true, Ordering::Release);
+    let closed = app_state.sessions.close_local();
     tracing::info!(
-        "Access without SSH disabled from the panel by {}",
-        claims.sub
+        "Access without SSH disabled from the panel by {}; closed {closed} local terminal sessions",
+        claims.sub,
     );
     Ok(HttpResponse::Ok().json(&serde_json::json!({ "status": "ok" })))
 }

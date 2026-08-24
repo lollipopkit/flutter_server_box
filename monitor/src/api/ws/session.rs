@@ -122,6 +122,23 @@ pub enum SessionOutput {
     Data(Vec<u8>),
     Exit(Option<u32>),
     Error(String),
+    FullAccessRevoked,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SessionAuth {
+    Ssh,
+    Local,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct AttachmentId(u64);
+
+struct AttachmentState {
+    next_id: u64,
+    current: Option<(AttachmentId, mpsc::Sender<SessionOutput>)>,
+    detached_at: Option<Instant>,
+    closed: bool,
 }
 
 pub struct Session {
@@ -129,15 +146,12 @@ pub struct Session {
     /// refused, so one user's ticket cannot pick up another's shell.
     pub subject: String,
     pub ssh_user: String,
+    pub auth: SessionAuth,
     secret: String,
     pub scrollback: Mutex<Scrollback>,
-    /// Feeds the SSH side. Dropping every clone of this ends the session.
+    /// Feeds the shell side. Dropping every clone of this ends the session.
     pub input: mpsc::Sender<SessionInput>,
-    /// Set while a WebSocket is attached; the reaper only counts down when it
-    /// is `None`.
-    pub attached: Mutex<Option<mpsc::Sender<SessionOutput>>>,
-    /// When the last WebSocket detached, for the reaper.
-    pub detached_at: Mutex<Option<Instant>>,
+    attachment: Mutex<AttachmentState>,
 }
 
 impl Session {
@@ -149,6 +163,7 @@ impl Session {
     pub fn new(
         subject: impl Into<String>,
         ssh_user: impl Into<String>,
+        auth: SessionAuth,
         scrollback_bytes: usize,
         input_queue: usize,
     ) -> (Self, mpsc::Receiver<SessionInput>) {
@@ -156,11 +171,16 @@ impl Session {
         let session = Self {
             subject: subject.into(),
             ssh_user: ssh_user.into(),
+            auth,
             secret: String::new(),
             scrollback: Mutex::new(Scrollback::new(scrollback_bytes)),
             input,
-            attached: Mutex::new(None),
-            detached_at: Mutex::new(None),
+            attachment: Mutex::new(AttachmentState {
+                next_id: 0,
+                current: None,
+                detached_at: None,
+                closed: false,
+            }),
         };
         (session, input_rx)
     }
@@ -175,14 +195,14 @@ impl Session {
         // sender as one atomic step. Otherwise output produced in between
         // would land in the buffer *after* the replay was computed and go to
         // a sender that is about to be replaced — visible to nobody.
-        let attached = self.attached.lock().unwrap_or_else(|e| e.into_inner());
+        let attachment = self.attachment.lock().unwrap_or_else(|e| e.into_inner());
         if let SessionOutput::Data(data) = &output {
             self.scrollback
                 .lock()
                 .unwrap_or_else(|e| e.into_inner())
                 .push(data);
         }
-        if let Some(tx) = attached.as_ref() {
+        if let Some((_, tx)) = attachment.current.as_ref() {
             // A full queue means the client stopped reading; the scrollback
             // already has the bytes, so dropping the live copy loses nothing
             // that a reattach can't recover.
@@ -201,23 +221,40 @@ impl Session {
         &self,
         since: u64,
         queue: usize,
-    ) -> (mpsc::Receiver<SessionOutput>, Replay, u64) {
-        let mut attached = self.attached.lock().unwrap_or_else(|e| e.into_inner());
+    ) -> Option<(AttachmentId, mpsc::Receiver<SessionOutput>, Replay, u64)> {
+        let mut attachment = self.attachment.lock().unwrap_or_else(|e| e.into_inner());
+        if attachment.closed {
+            return None;
+        }
         let (replay, start_seq) = {
             let scrollback = self.scrollback.lock().unwrap_or_else(|e| e.into_inner());
             (scrollback.replay_from(since), scrollback.start_seq())
         };
         let (tx, rx) = mpsc::channel(queue);
+        let id = AttachmentId(attachment.next_id);
+        attachment.next_id = attachment.next_id.wrapping_add(1);
         // Dropping the previous sender ends that connection's pump, which is
         // how a takeover releases the old socket
-        *attached = Some(tx);
-        *self.detached_at.lock().unwrap_or_else(|e| e.into_inner()) = None;
-        (rx, replay, start_seq)
+        attachment.current = Some((id, tx));
+        attachment.detached_at = None;
+        Some((id, rx, replay, start_seq))
     }
 
-    pub fn detach(&self) {
-        *self.attached.lock().unwrap_or_else(|e| e.into_inner()) = None;
-        *self.detached_at.lock().unwrap_or_else(|e| e.into_inner()) = Some(Instant::now());
+    pub fn detach(&self, id: AttachmentId) -> bool {
+        let mut attachment = self.attachment.lock().unwrap_or_else(|e| e.into_inner());
+        if !matches!(attachment.current.as_ref(), Some((current, _)) if *current == id) {
+            return false;
+        }
+        attachment.current = None;
+        attachment.detached_at = Some(Instant::now());
+        true
+    }
+
+    fn close(&self) -> Option<mpsc::Sender<SessionOutput>> {
+        let mut attachment = self.attachment.lock().unwrap_or_else(|e| e.into_inner());
+        attachment.closed = true;
+        attachment.detached_at = Some(Instant::now());
+        attachment.current.take().map(|(_, sender)| sender)
     }
 }
 
@@ -295,6 +332,36 @@ impl SessionStore {
             .remove(id);
     }
 
+    /// Removes and terminates every shell that bypassed SSH authentication.
+    pub fn close_local(&self) -> usize {
+        let local = {
+            let mut sessions = self.sessions.lock().unwrap_or_else(|e| e.into_inner());
+            let ids = sessions
+                .iter()
+                .filter(|(_, session)| session.auth == SessionAuth::Local)
+                .map(|(id, _)| id.clone())
+                .collect::<Vec<_>>();
+            ids.into_iter()
+                .filter_map(|id| sessions.remove(&id))
+                .collect::<Vec<_>>()
+        };
+
+        for session in &local {
+            if let Some(output) = session.close() {
+                let _ = output.try_send(SessionOutput::FullAccessRevoked);
+            }
+            if let Err(mpsc::error::TrySendError::Full(close)) =
+                session.input.try_send(SessionInput::Close)
+            {
+                let input = session.input.clone();
+                tokio::spawn(async move {
+                    let _ = input.send(close).await;
+                });
+            }
+        }
+        local.len()
+    }
+
     /// Drops sessions that have been unattached past the timeout.
     ///
     /// Returns how many went, so the caller can log a number rather than a
@@ -307,7 +374,11 @@ impl SessionStore {
         let mut sessions = self.sessions.lock().unwrap_or_else(|e| e.into_inner());
         let before = sessions.len();
         sessions.retain(|_, session| {
-            let detached_at = *session.detached_at.lock().unwrap_or_else(|e| e.into_inner());
+            let detached_at = session
+                .attachment
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .detached_at;
             match detached_at {
                 Some(at) => now.saturating_duration_since(at) < self.detached_timeout,
                 None => true,
@@ -333,7 +404,7 @@ mod tests {
     use super::*;
 
     fn session(subject: &str) -> Session {
-        Session::new(subject, "ops", 1024, 8).0
+        Session::new(subject, "ops", SessionAuth::Ssh, 1024, 8).0
     }
 
     #[test]
@@ -400,7 +471,8 @@ mod tests {
         let store = SessionStore::new(4, Duration::from_secs(300));
         let (_handle, session) = store.insert(session("admin")).unwrap().unwrap();
 
-        session.detach();
+        let (attachment, _, _, _) = session.attach(0, 1).unwrap();
+        session.detach(attachment);
         session.publish(SessionOutput::Data(b"while you were away".to_vec()));
 
         let sb = session.scrollback.lock().unwrap();
@@ -458,9 +530,9 @@ mod tests {
         let (_attached_handle, attached) = store.insert(session("admin")).unwrap().unwrap();
         let (_, detached) = store.insert(session("admin")).unwrap().unwrap();
 
-        let (tx, _rx) = mpsc::channel(1);
-        *attached.attached.lock().unwrap() = Some(tx);
-        detached.detach();
+        let _attached = attached.attach(0, 1).unwrap();
+        let (detached_id, _, _, _) = detached.attach(0, 1).unwrap();
+        detached.detach(detached_id);
 
         let now = Instant::now();
         assert_eq!(store.reap_at(now), 0, "nothing is stale yet");
@@ -476,5 +548,42 @@ mod tests {
         let (handle, _) = store.insert(session("admin")).unwrap().unwrap();
         store.remove(&handle);
         assert_eq!(store.len(), 0);
+    }
+
+    #[test]
+    fn a_stale_detach_cannot_clear_the_new_attachment() {
+        let session = session("admin");
+        let (old, _old_rx, _, _) = session.attach(0, 1).unwrap();
+        let (new, mut new_rx, _, _) = session.attach(0, 1).unwrap();
+
+        assert!(!session.detach(old));
+        session.publish(SessionOutput::Data(b"still attached".to_vec()));
+        assert!(matches!(
+            new_rx.try_recv(),
+            Ok(SessionOutput::Data(data)) if data == b"still attached"
+        ));
+        assert!(session.detach(new));
+    }
+
+    #[tokio::test]
+    async fn closing_local_sessions_leaves_ssh_sessions_running() {
+        let store = SessionStore::new(4, Duration::from_secs(300));
+        let (local, mut local_input) =
+            Session::new("admin", "local", SessionAuth::Local, 1024, 8);
+        let (ssh, mut ssh_input) = Session::new("admin", "ops", SessionAuth::Ssh, 1024, 8);
+        let (local_handle, local) = store.insert(local).unwrap().unwrap();
+        let (ssh_handle, ssh) = store.insert(ssh).unwrap().unwrap();
+        let (_, mut local_output, _, _) = local.attach(0, 1).unwrap();
+        let _ssh_attachment = ssh.attach(0, 1).unwrap();
+
+        assert_eq!(store.close_local(), 1);
+        assert_eq!(store.get(&local_handle, "admin").err(), Some(AttachError::Unknown));
+        assert!(store.get(&ssh_handle, "admin").is_ok());
+        assert!(matches!(local_input.recv().await, Some(SessionInput::Close)));
+        assert!(matches!(
+            local_output.recv().await,
+            Some(SessionOutput::FullAccessRevoked)
+        ));
+        assert!(ssh_input.try_recv().is_err());
     }
 }

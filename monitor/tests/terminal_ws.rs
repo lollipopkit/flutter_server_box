@@ -140,6 +140,18 @@ async fn a_ticket_works_only_once() {
 }
 
 #[ntex::test]
+async fn a_failed_upgrade_does_not_burn_the_ticket() {
+    let state = app_state(true, "127.0.0.1:22").await;
+    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let srv = test_server(state).await;
+    let path = format!("/api/v1/terminal/ws?ticket={ticket}");
+
+    let response = srv.get(&path).send().await.unwrap();
+    assert!(!response.status().is_success());
+    assert!(srv.ws_at(&path).await.is_ok());
+}
+
+#[ntex::test]
 async fn a_plaintext_listener_still_serves_a_loopback_client() {
     // The test client connects over loopback, which counts as secure even
     // without TLS — that is the reverse-proxy case, and it must keep working
@@ -395,6 +407,78 @@ async fn a_second_factor_prompt_is_forwarded_and_answerable() {
         .await
         .unwrap();
     assert_eq!(next_control(&io, &codec).await["type"], "ready");
+}
+
+#[ntex::test]
+async fn concurrent_answers_cannot_open_two_shells() {
+    let sshd = fake_sshd::start(true).await;
+    let state = app_state(true, &sshd).await;
+    let sessions = state.sessions.clone();
+    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let srv = test_server(state).await;
+    let (io, codec) = open_terminal(&srv, &ticket).await;
+
+    let open = serde_json::json!({
+        "type": "open",
+        "user": fake_sshd::USER,
+        "auth": {"kind": "interactive"},
+    });
+    io.send(ws::Message::Text(ByteString::from(open.to_string())), &codec)
+        .await
+        .unwrap();
+    assert_eq!(next_control(&io, &codec).await["type"], "prompt");
+
+    let answer = serde_json::json!({"type": "answer", "answers": [fake_sshd::PASSWORD]});
+    io.send(ws::Message::Text(ByteString::from(answer.to_string())), &codec)
+        .await
+        .unwrap();
+    io.send(ws::Message::Text(ByteString::from(answer.to_string())), &codec)
+        .await
+        .unwrap();
+
+    let replies = [next_control(&io, &codec).await, next_control(&io, &codec).await];
+    assert_eq!(
+        replies.iter().filter(|reply| reply["type"] == "ready").count(),
+        1
+    );
+    assert_eq!(
+        replies.iter().filter(|reply| reply["code"] == "bad_request").count(),
+        1
+    );
+    assert_eq!(sessions.len(), 1);
+}
+
+#[ntex::test]
+async fn concurrent_open_frames_create_only_one_session() {
+    let sshd = fake_sshd::start(false).await;
+    let state = app_state(true, &sshd).await;
+    let sessions = state.sessions.clone();
+    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let srv = test_server(state).await;
+    let (io, codec) = open_terminal(&srv, &ticket).await;
+    let open = serde_json::json!({
+        "type": "open",
+        "user": fake_sshd::USER,
+        "auth": {"kind": "password", "password": fake_sshd::PASSWORD},
+    });
+
+    io.send(ws::Message::Text(ByteString::from(open.to_string())), &codec)
+        .await
+        .unwrap();
+    io.send(ws::Message::Text(ByteString::from(open.to_string())), &codec)
+        .await
+        .unwrap();
+
+    let replies = [next_control(&io, &codec).await, next_control(&io, &codec).await];
+    assert_eq!(
+        replies.iter().filter(|reply| reply["type"] == "ready").count(),
+        1
+    );
+    assert_eq!(
+        replies.iter().filter(|reply| reply["code"] == "bad_request").count(),
+        1
+    );
+    assert_eq!(sessions.len(), 1);
 }
 
 #[ntex::test]
@@ -716,6 +800,68 @@ async fn turning_it_off_from_the_panel_applies_without_a_restart() {
         "full_access_disabled",
         "the switch must bind the running process, not just the config file"
     );
+}
+
+#[ntex::test]
+async fn turning_full_access_off_closes_an_existing_local_shell() {
+    let state = full_access_state(true).await;
+    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let srv = test_server(state.clone()).await;
+    let (io, codec) = open_terminal(&srv, &ticket).await;
+
+    io.send(
+        ws::Message::Text(ByteString::from_static(
+            r#"{"type":"open","user":"","auth":{"kind":"local"}}"#,
+        )),
+        &codec,
+    )
+    .await
+    .unwrap();
+    assert_eq!(next_control(&io, &codec).await["type"], "ready");
+
+    state
+        .full_access_off
+        .store(true, std::sync::atomic::Ordering::Release);
+    assert_eq!(state.sessions.close_local(), 1);
+    assert_eq!(next_control(&io, &codec).await["code"], "full_access_disabled");
+    assert!(state.sessions.is_empty());
+}
+
+#[ntex::test]
+async fn turning_full_access_off_does_not_strand_an_ssh_session() {
+    let sshd = fake_sshd::start(false).await;
+    let state = app_state(true, &sshd).await;
+    let first = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let srv = test_server(state.clone()).await;
+    let (io, codec, handle) = open_shell(&srv, &first).await;
+    read_until(&io, &codec, fake_sshd::BANNER).await;
+
+    state
+        .full_access_off
+        .store(true, std::sync::atomic::Ordering::Release);
+    assert_eq!(state.sessions.close_local(), 0);
+    drop(io);
+
+    let second = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let (io2, codec2) = open_terminal(&srv, &second).await;
+    io2.send(
+        ws::Message::Text(ByteString::from(
+            serde_json::json!({"type":"attach","session":handle,"since":0}).to_string(),
+        )),
+        &codec2,
+    )
+    .await
+    .unwrap();
+    assert_eq!(next_control(&io2, &codec2).await["type"], "ready");
+
+    io2.send(
+        ws::Message::Binary(ntex::util::Bytes::from_static(b"after-disable")),
+        &codec2,
+    )
+    .await
+    .unwrap();
+    let echoed = read_until(&io2, &codec2, b"after-disable").await;
+    assert!(echoed.windows(13).any(|window| window == b"after-disable"));
 }
 
 /// Builds a state with explicit capacity/timeout overrides, for the tests that

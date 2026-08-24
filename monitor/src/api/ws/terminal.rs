@@ -38,7 +38,9 @@ use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 
 use super::audit::{self, Action, Event, Kind, Outcome};
-use super::session::{Replay, Session, SessionInput, SessionOutput, SessionStore};
+use super::session::{
+    AttachmentId, Replay, Session, SessionAuth, SessionInput, SessionOutput, SessionStore,
+};
 use super::ticket::Purpose;
 use crate::api::server::AppState;
 use crate::ssh::client::{
@@ -193,9 +195,11 @@ pub async fn terminal_ws(
     let Some(raw_ticket) = query_param(req.query_string(), "ticket") else {
         return deny("no ticket", HttpResponse::Unauthorized().finish()).await;
     };
-    let Ok(subject) = app_state.tickets.consume(&raw_ticket, Purpose::Terminal) else {
+    let Ok(reservation) = app_state.tickets.reserve(&raw_ticket, Purpose::Terminal) else {
         return deny("ticket", HttpResponse::Unauthorized().finish()).await;
     };
+    let subject = reservation.subject().to_string();
+    let tickets = app_state.tickets.clone();
 
     let ctx = Rc::new(ConnCtx {
         state: app_state,
@@ -204,7 +208,7 @@ pub async fn terminal_ws(
         secure,
     });
 
-    ws::start::<_, _, &str, web::Error>(
+    let upgraded = ws::start::<_, _, &str, web::Error>(
         req,
         None,
         fn_factory_with_config(move |sink: WsSink| {
@@ -215,7 +219,13 @@ pub async fn terminal_ws(
             }
         }),
     )
-    .await
+    .await;
+    if upgraded.is_ok() {
+        tickets.commit(reservation);
+    } else {
+        tickets.rollback(reservation);
+    }
+    upgraded
 }
 
 /// First value of `name` in a query string.
@@ -245,6 +255,8 @@ enum Phase {
     /// Nothing has been claimed yet. No TCP connection has been made either:
     /// an unauthenticated socket must not be able to make the agent dial sshd.
     Idle,
+    /// An async open, attach, or authentication answer owns the connection.
+    Opening,
     /// Mid keyboard-interactive exchange, waiting on the browser's answers.
     Authenticating {
         ssh: Box<SshSession>,
@@ -255,12 +267,39 @@ enum Phase {
     },
     Running {
         session: Arc<Session>,
+        attachment: AttachmentId,
         /// Needed to drop the session from the store on an explicit close;
         /// the session itself doesn't know its own handle.
         handle: String,
     },
     /// Terminal state; further frames are ignored rather than acted on.
     Done,
+}
+
+fn claim_idle(phase: &Rc<RefCell<Phase>>) -> bool {
+    let previous = std::mem::replace(&mut *phase.borrow_mut(), Phase::Opening);
+    if matches!(previous, Phase::Idle) {
+        true
+    } else {
+        *phase.borrow_mut() = previous;
+        false
+    }
+}
+
+fn reset_opening(phase: &Rc<RefCell<Phase>>) {
+    let mut phase = phase.borrow_mut();
+    if matches!(*phase, Phase::Opening) {
+        *phase = Phase::Idle;
+    }
+}
+
+fn set_if_opening(phase: &Rc<RefCell<Phase>>, next: Phase) -> bool {
+    let mut phase = phase.borrow_mut();
+    if !matches!(*phase, Phase::Opening) {
+        return false;
+    }
+    *phase = next;
+    true
 }
 
 fn handler(
@@ -277,9 +316,10 @@ fn handler(
         let disconnect = sink.on_disconnect();
         spawn(async move {
             disconnect.await;
-            if let Phase::Running { session, .. } = &*phase.borrow() {
-                session.detach();
+            if let Phase::Running { session, attachment, .. } = &*phase.borrow() {
+                session.detach(*attachment);
             }
+            *phase.borrow_mut() = Phase::Done;
         });
     }
 
@@ -305,9 +345,10 @@ fn handler(
                 Frame::Close(_) => {
                     // A closing socket detaches; the session lives on for the
                     // configured grace period so a reconnect can pick it up
-                    if let Phase::Running { session, .. } = &*phase.borrow() {
-                        session.detach();
+                    if let Phase::Running { session, attachment, .. } = &*phase.borrow() {
+                        session.detach(*attachment);
                     }
+                    *phase.borrow_mut() = Phase::Done;
                     Ok(Some(Message::Close(Some(CloseCode::Normal.into()))))
                 }
                 Frame::Continuation(Item::FirstText(_)) => Ok(Some(Message::Close(Some(
@@ -343,7 +384,7 @@ async fn on_control(
 
     match msg {
         ClientMsg::Open { user, auth, cols, rows, term } => {
-            if !matches!(&*phase.borrow(), Phase::Idle) {
+            if !claim_idle(phase) {
                 return Some(error_frame("bad_request", "Session already started"));
             }
             match auth.into_credential() {
@@ -354,7 +395,7 @@ async fn on_control(
             }
         }
         ClientMsg::Attach { session, since, cols, rows } => {
-            if !matches!(&*phase.borrow(), Phase::Idle) {
+            if !claim_idle(phase) {
                 return Some(error_frame("bad_request", "Session already started"));
             }
             attach(ctx, sink, phase, &session, since, cols, rows).await
@@ -372,7 +413,7 @@ async fn on_control(
         }
         ClientMsg::Close => {
             let running = match &*phase.borrow() {
-                Phase::Running { session, handle } => Some((session.clone(), handle.clone())),
+                Phase::Running { session, handle, .. } => Some((session.clone(), handle.clone())),
                 _ => None,
             };
             if let Some((session, handle)) = running {
@@ -410,6 +451,7 @@ async fn open_local(
             .detail("full access disabled")
             .record(&ctx.state.db)
             .await;
+        reset_opening(phase);
         return Some(error_frame(
             "full_access_disabled",
             "This agent does not allow opening a terminal without SSH credentials",
@@ -425,6 +467,7 @@ async fn open_local(
                 .detail("spawn failed")
                 .record(&ctx.state.db)
                 .await;
+            reset_opening(phase);
             tracing::warn!("Could not start a local shell: {e}");
             return Some(error_frame("spawn_failed", &e.to_string()));
         }
@@ -434,6 +477,7 @@ async fn open_local(
     let (session, input_rx) = Session::new(
         &ctx.subject,
         &user,
+        SessionAuth::Local,
         ctx.state.remote_access.terminal.scrollback_bytes,
         INPUT_QUEUE,
     );
@@ -441,6 +485,7 @@ async fn open_local(
         Ok(Some(inserted)) => inserted,
         Ok(None) => {
             shell.kill();
+            reset_opening(phase);
             return Some(error_frame(
                 "at_capacity",
                 "Too many terminal sessions are already open",
@@ -448,13 +493,25 @@ async fn open_local(
         }
         Err(e) => {
             shell.kill();
+            reset_opening(phase);
             tracing::error!("Could not register terminal session: {e}");
             return Some(error_frame("internal", "Could not start the session"));
         }
     };
     let (handle, session) = inserted;
 
-    let (rx, _replay, _start) = session.attach(0, OUTPUT_QUEUE);
+    // Disabling full access can race the spawn above on another worker. Once
+    // registered, either this recheck rejects it or the disable sweep sees it.
+    if !ctx.state.full_access_allowed(secure) {
+        ctx.state.sessions.remove(&handle);
+        shell.kill();
+        reset_opening(phase);
+        return Some(error_frame(
+            "full_access_disabled",
+            "This agent does not allow opening a terminal without SSH credentials",
+        ));
+    }
+    let (attachment, rx, _replay, _start) = session.attach(0, OUTPUT_QUEUE).unwrap();
     drive_local_shell(
         shell,
         events,
@@ -465,10 +522,14 @@ async fn open_local(
     );
 
     // Before `ready`, for the reason given in `start_shell`
-    *phase.borrow_mut() = Phase::Running {
+    if !set_if_opening(phase, Phase::Running {
         session,
+        attachment,
         handle: handle.clone(),
-    };
+    }) {
+        ctx.state.sessions.remove(&handle);
+        return None;
+    }
     let _ = sink
         .send(ServerMsg::Ready { session: &handle, since: 0 }.frame())
         .await;
@@ -547,8 +608,16 @@ async fn open(
     let addr = &ctx.state.remote_access.ssh_addr;
     let mut ssh = match SshSession::connect(ctx.state.db.clone(), addr).await {
         Ok(ssh) => ssh,
-        Err(e) => return Some(fail(ctx, &user, &e).await),
+        Err(e) => {
+            reset_opening(phase);
+            return Some(fail(ctx, &user, &e).await);
+        }
     };
+
+    if !matches!(&*phase.borrow(), Phase::Opening) {
+        ssh.disconnect().await;
+        return None;
+    }
 
     match ssh.authenticate(&user, credential).await {
         Ok(AuthStep::Authenticated) => {
@@ -560,17 +629,25 @@ async fn open(
                 prompts: &prompts,
             }
             .frame();
-            *phase.borrow_mut() = Phase::Authenticating {
+            if !set_if_opening(phase, Phase::Authenticating {
                 ssh: Box::new(ssh),
                 user,
                 term,
                 cols,
                 rows,
-            };
+            }) {
+                return None;
+            }
             Some(frame)
         }
-        Ok(AuthStep::Failed) => Some(fail(ctx, &user, &SshError::AuthFailed).await),
-        Err(e) => Some(fail(ctx, &user, &e).await),
+        Ok(AuthStep::Failed) => {
+            reset_opening(phase);
+            Some(fail(ctx, &user, &SshError::AuthFailed).await)
+        }
+        Err(e) => {
+            reset_opening(phase);
+            Some(fail(ctx, &user, &e).await)
+        }
     }
 }
 
@@ -583,7 +660,7 @@ async fn answer(
     // Taken out in its own statement: a `match` keeps the scrutinee's
     // temporary alive for the whole expression, so borrowing again inside an
     // arm to put the phase back would panic.
-    let taken = std::mem::replace(&mut *phase.borrow_mut(), Phase::Idle);
+    let taken = std::mem::replace(&mut *phase.borrow_mut(), Phase::Opening);
     let (mut ssh, user, term, cols, rows) = match taken {
         Phase::Authenticating { ssh, user, term, cols, rows } => (ssh, user, term, cols, rows),
         other => {
@@ -602,11 +679,22 @@ async fn answer(
                 prompts: &prompts,
             }
             .frame();
-            *phase.borrow_mut() = Phase::Authenticating { ssh, user, term, cols, rows };
+            if !set_if_opening(
+                phase,
+                Phase::Authenticating { ssh, user, term, cols, rows },
+            ) {
+                return None;
+            }
             Some(frame)
         }
-        Ok(AuthStep::Failed) => Some(fail(ctx, &user, &SshError::AuthFailed).await),
-        Err(e) => Some(fail(ctx, &user, &e).await),
+        Ok(AuthStep::Failed) => {
+            reset_opening(phase);
+            Some(fail(ctx, &user, &SshError::AuthFailed).await)
+        }
+        Err(e) => {
+            reset_opening(phase);
+            Some(fail(ctx, &user, &e).await)
+        }
     }
 }
 
@@ -621,14 +709,27 @@ async fn start_shell(
     cols: u16,
     rows: u16,
 ) -> Option<Message> {
+    if !matches!(&*phase.borrow(), Phase::Opening) {
+        ssh.disconnect().await;
+        return None;
+    }
     let channel = match ssh.open_shell(&term, cols, rows).await {
         Ok(channel) => channel,
-        Err(e) => return Some(fail(ctx, &user, &e).await),
+        Err(e) => {
+            reset_opening(phase);
+            return Some(fail(ctx, &user, &e).await);
+        }
     };
+
+    if !matches!(&*phase.borrow(), Phase::Opening) {
+        ssh.disconnect().await;
+        return None;
+    }
 
     let (session, input_rx) = Session::new(
         &ctx.subject,
         &user,
+        SessionAuth::Ssh,
         ctx.state.remote_access.terminal.scrollback_bytes,
         INPUT_QUEUE,
     );
@@ -637,6 +738,7 @@ async fn start_shell(
         Ok(Some(inserted)) => inserted,
         Ok(None) => {
             ssh.disconnect().await;
+            reset_opening(phase);
             return Some(error_frame(
                 "at_capacity",
                 "Too many terminal sessions are already open",
@@ -644,13 +746,14 @@ async fn start_shell(
         }
         Err(e) => {
             ssh.disconnect().await;
+            reset_opening(phase);
             tracing::error!("Could not register terminal session: {e}");
             return Some(error_frame("internal", "Could not start the session"));
         }
     };
     let (handle, session) = inserted;
 
-    let (rx, _replay, _start) = session.attach(0, OUTPUT_QUEUE);
+    let (attachment, rx, _replay, _start) = session.attach(0, OUTPUT_QUEUE).unwrap();
     drive_shell(
         ssh,
         channel,
@@ -664,10 +767,14 @@ async fn start_shell(
     // frames concurrently, so a client that types the instant it sees `ready`
     // can have that frame handled while this one is still awaiting the audit
     // write below — and input arriving before the phase moves is dropped.
-    *phase.borrow_mut() = Phase::Running {
+    if !set_if_opening(phase, Phase::Running {
         session,
+        attachment,
         handle: handle.clone(),
-    };
+    }) {
+        ctx.state.sessions.remove(&handle);
+        return None;
+    }
     let _ = sink
         .send(ServerMsg::Ready { session: &handle, since: 0 }.frame())
         .await;
@@ -692,18 +799,6 @@ async fn attach(
     cols: u16,
     rows: u16,
 ) -> Option<Message> {
-    // Live revocation of full_access: a handle minted before DELETE
-    // /remote-access/full-access must not be reusable after it.
-    if ctx.state.full_access_off.load(std::sync::atomic::Ordering::Acquire) {
-        // Local shells are the ones gated by full_access; remote SSH shells
-        // remain usable. Without a per-session local flag we deny all
-        // re-attaches after the switch, which is the safe side for the
-        // reported issue (local shell continuing via handle).
-        return Some(error_frame(
-            "full_access_disabled",
-            "Full access has been disabled",
-        ));
-    }
     let session = match ctx.state.sessions.get(handle, &ctx.subject) {
         Ok(session) => session,
         Err(reason) => {
@@ -713,6 +808,7 @@ async fn attach(
                 .detail(format!("{reason:?}"))
                 .record(&ctx.state.db)
                 .await;
+            reset_opening(phase);
             // One answer for all three reasons: which one it was would tell
             // someone probing handles how close they got
             return Some(error_frame(
@@ -721,12 +817,27 @@ async fn attach(
             ));
         }
     };
+    if session.auth == SessionAuth::Local
+        && ctx.state.full_access_off.load(std::sync::atomic::Ordering::Acquire)
+    {
+        reset_opening(phase);
+        return Some(error_frame(
+            "full_access_disabled",
+            "Full access has been disabled",
+        ));
+    }
 
     // Installs this connection's sender and reads the replay in one step, so
     // nothing the shell emits can fall between the two and be seen by nobody.
     // Output produced from here on queues in `rx` until the pump starts below,
     // which keeps it behind the replay.
-    let (rx, replay, start_seq) = session.attach(since, OUTPUT_QUEUE);
+    let Some((attachment, rx, replay, start_seq)) = session.attach(since, OUTPUT_QUEUE) else {
+        reset_opening(phase);
+        return Some(error_frame(
+            "session_gone",
+            "That terminal session is no longer available",
+        ));
+    };
 
     // `since` in `ready` is the absolute position the byte stream that follows
     // begins at, which the client uses as its counter's new base. For a
@@ -743,10 +854,14 @@ async fn attach(
     };
 
     // Before `ready`, for the reason given in `start_shell`
-    *phase.borrow_mut() = Phase::Running {
+    if !set_if_opening(phase, Phase::Running {
         session: session.clone(),
+        attachment,
         handle: handle.to_string(),
-    };
+    }) {
+        session.detach(attachment);
+        return None;
+    }
     let _ = sink
         .send(ServerMsg::Ready { session: handle, since: resume_at }.frame())
         .await;
@@ -858,6 +973,22 @@ fn pump_output(sink: WsSink, mut rx: mpsc::Receiver<SessionOutput>) {
                 }
                 SessionOutput::Exit(status) => {
                     let _ = sink.send(ServerMsg::Exit { status }.frame()).await;
+                    let _ = sink
+                        .send(Message::Close(Some(CloseCode::Normal.into())))
+                        .await;
+                    superseded = false;
+                    break;
+                }
+                SessionOutput::FullAccessRevoked => {
+                    let _ = sink
+                        .send(
+                            ServerMsg::Error {
+                                code: "full_access_disabled",
+                                message: "Full access has been disabled",
+                            }
+                            .frame(),
+                        )
+                        .await;
                     let _ = sink
                         .send(Message::Close(Some(CloseCode::Normal.into())))
                         .await;
