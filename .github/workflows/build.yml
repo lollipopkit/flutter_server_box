@@ -50,6 +50,20 @@ jobs:
       # nothing, which `action-gh-release` reports as a warning and an empty
       # release rather than as a failure.
       appName: ${{ steps.appName.outputs.name }}
+      # The version every job names its artifacts after. Resolved once, here,
+      # because it was resolved in two jobs and used in six: Android, Linux and
+      # Windows renamed with an empty `BUILD_NUMBER`, so their globs looked for
+      # `*__*.apk` and their release paths for `v1.0.`, and
+      # `action-gh-release` reported a warning rather than a failure.
+      buildNumber: ${{ steps.buildNumber.outputs.build }}
+      # Whether this run publishes. `github.ref_type == 'tag'` alone was true
+      # of a manual dispatch against a tag with the release box unticked, which
+      # is the one case the box exists to say no to.
+      isRelease: ${{ steps.buildNumber.outputs.release }}
+    permissions:
+      # To open the release the platform jobs upload into. They used to each
+      # create it, which on a fresh tag is six jobs racing to make one thing.
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -176,6 +190,42 @@ jobs:
           fi
           echo "name=$name" >> "$GITHUB_OUTPUT"
           echo "app name: $name"
+      - name: Resolve build number
+        id: buildNumber
+        shell: bash
+        env:
+          IS_DISPATCH: ${{ github.event_name == 'workflow_dispatch' }}
+          WANTS_RELEASE: ${{ inputs.release }}
+        run: |
+          set -euo pipefail
+          build="$(sed -n -E 's/.*static const int build = ([0-9]+);/\1/p' lib/data/res/build_data.dart | head -n 1)"
+          if [[ -z "$build" ]]; then
+            echo "::error::BuildData.build not found in lib/data/res/build_data.dart"
+            exit 1
+          fi
+          echo "build=$build" >> "$GITHUB_OUTPUT"
+
+          # A tag push always releases; a dispatch only when asked. Tag *and*
+          # dispatch is the case the old condition got wrong.
+          release=false
+          if [[ "$WANTS_RELEASE" == 'true' ]]; then
+            release=true
+          elif [[ "$IS_DISPATCH" != 'true' && "$GITHUB_REF_TYPE" == 'tag' ]]; then
+            release=true
+          fi
+          echo "release=$release" >> "$GITHUB_OUTPUT"
+          echo "build $build, release $release"
+      # Opened here so the platform jobs only ever upload into a release that
+      # exists. Each of them used to create it, and on a fresh tag they all
+      # observe it missing at once: one wins and the others can take a conflict
+      # back, failing a build that succeeded or leaving a partial asset set.
+      - name: Open the release
+        if: steps.buildNumber.outputs.release == 'true'
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
+        with:
+          tag_name: v1.0.${{ steps.buildNumber.outputs.build }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   buildMacOS:
     name: Build macos
@@ -193,6 +243,7 @@ jobs:
     # nearest scope an expression on `needs` can be written in.
     env:
       APP_NAME: ${{ needs.reproducibilityCheck.outputs.appName }}
+      BUILD_NUMBER: ${{ needs.reproducibilityCheck.outputs.buildNumber }}
     runs-on: macos-latest
     timeout-minutes: 45
     permissions:
@@ -209,16 +260,6 @@ jobs:
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
       - name: Install dependencies
         run: flutter pub get
-      - name: Resolve build number
-        shell: bash
-        run: |
-          set -euo pipefail
-          build="$(sed -n -E 's/.*static const int build = ([0-9]+);/\1/p' lib/data/res/build_data.dart | head -n 1)"
-          if [[ -z "$build" ]]; then
-            echo "BuildData.build not found in lib/data/res/build_data.dart"
-            exit 1
-          fi
-          echo "BUILD_NUMBER=$build" >> "$GITHUB_ENV"
       - name: Sign locally
         shell: bash
         run: |
@@ -308,18 +349,21 @@ jobs:
           DMG_BASENAME: ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_NoSign
         run: bash scripts/release/package-dmg-from-xcarchive.sh
       - name: Upload artifacts
-        if: inputs.release != true && github.ref_type != 'tag'
+        if: needs.reproducibilityCheck.outputs.isRelease != 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-macos
           path: build/artifacts/*.dmg
           if-no-files-found: error
           retention-days: 14
-      - name: Create Release
-        if: inputs.release == true || github.ref_type == 'tag'
+      - name: Publish to the release
+        if: needs.reproducibilityCheck.outputs.isRelease == 'true'
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
         with:
           tag_name: v1.0.${{ env.BUILD_NUMBER }}
+          # A rename that did not fire, or an ABI that did not build, used to
+          # publish a release with whatever else happened to be there.
+          fail_on_unmatched_files: true
           files: |
             build/artifacts/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_NoSign.dmg
         env:
@@ -390,6 +434,7 @@ jobs:
     # nearest scope an expression on `needs` can be written in.
     env:
       APP_NAME: ${{ needs.reproducibilityCheck.outputs.appName }}
+      BUILD_NUMBER: ${{ needs.reproducibilityCheck.outputs.buildNumber }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -407,9 +452,16 @@ jobs:
           distribution: "zulu"
           java-version: "21"
       - name: Fetch secrets
+        # Through the environment, and quoted. Expanded into the script the way
+        # they were, a space or a shell metacharacter in either value is parsed
+        # as script rather than as part of the value.
+        env:
+          BASIC_AUTH: ${{ secrets.BASIC_AUTH }}
+          URL_PREFIX: ${{ secrets.URL_PREFIX }}
         run: |
-          curl --fail --show-error --location -u ${{ secrets.BASIC_AUTH }} -o android/app/app.key ${{ secrets.URL_PREFIX }}app.key
-          curl --fail --show-error --location -u ${{ secrets.BASIC_AUTH }} -o android/key.properties ${{ secrets.URL_PREFIX }}key.properties
+          set -euo pipefail
+          curl --fail --show-error --location -u "$BASIC_AUTH" -o android/app/app.key "${URL_PREFIX}app.key"
+          curl --fail --show-error --location -u "$BASIC_AUTH" -o android/key.properties "${URL_PREFIX}key.properties"
       - name: Patch JNI build-id
         run: |
           flutter pub get
@@ -424,11 +476,11 @@ jobs:
           export ANDROID_NDK_HOME="${ANDROID_NDK_LATEST_HOME:-${ANDROID_NDK_ROOT:-}}"
           scripts/build-proot-android.sh
       - name: Build (release)
-        if: inputs.release == true || github.ref_type == 'tag'
+        if: needs.reproducibilityCheck.outputs.isRelease == 'true'
         shell: bash
         run: dart run fl_build -bp -p android
       - name: Build (test)
-        if: inputs.release != true && github.ref_type != 'tag'
+        if: needs.reproducibilityCheck.outputs.isRelease != 'true'
         shell: bash
         run: dart run fl_build -p android
       # `useLegacyPackaging` off means nothing is extracted from the APK, so
@@ -457,18 +509,21 @@ jobs:
           # Remove original APKs copied by fl_build
           rm -f app-*-release.apk
       - name: Upload artifacts
-        if: inputs.release != true && github.ref_type != 'tag'
+        if: needs.reproducibilityCheck.outputs.isRelease != 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-android
           path: build/app/outputs/flutter-apk/*.apk
           if-no-files-found: error
           retention-days: 14
-      - name: Create Release
-        if: inputs.release == true || github.ref_type == 'tag'
+      - name: Publish to the release
+        if: needs.reproducibilityCheck.outputs.isRelease == 'true'
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
         with:
           tag_name: v1.0.${{ env.BUILD_NUMBER }}
+          # A rename that did not fire, or an ABI that did not build, used to
+          # publish a release with whatever else happened to be there.
+          fail_on_unmatched_files: true
           files: |
             build/app/outputs/flutter-apk/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_arm64.apk
             build/app/outputs/flutter-apk/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_arm.apk
@@ -488,6 +543,7 @@ jobs:
     # nearest scope an expression on `needs` can be written in.
     env:
       APP_NAME: ${{ needs.reproducibilityCheck.outputs.appName }}
+      BUILD_NUMBER: ${{ needs.reproducibilityCheck.outputs.buildNumber }}
     runs-on: macos-latest
     permissions:
       contents: write
@@ -500,18 +556,6 @@ jobs:
           fetch-depth: 0
       - name: Install Flutter
         uses: ./.github/actions/setup-flutter
-      - name: Resolve build number
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          build="$(sed -n -E 's/.*static const int build = ([0-9]+);/\1/p' lib/data/res/build_data.dart | head -n 1)"
-          if [[ -z "$build" ]]; then
-            echo "BuildData.build not found in lib/data/res/build_data.dart"
-            exit 1
-          fi
-
-          echo "BUILD_NUMBER=$build" >> "$GITHUB_ENV"
       - name: Turn the Linux engine on
         shell: bash
         run: |
@@ -534,22 +578,33 @@ jobs:
           flutter build ios --release --no-codesign \
             --build-number="${BUILD_NUMBER}" \
             --build-name="1.0.${BUILD_NUMBER}"
+      # The step above asked for the engine; this is what says it arrived. It
+      # cannot fail at build time — nothing in the app calls those functions, so
+      # a linker that dead-strips them produces an IPA that builds, installs and
+      # runs, with the terminal tab's Linux userland simply absent. Android has
+      # `Check proot shipped` for the same reason.
+      - name: Check the Linux engine linked
+        shell: bash
+        run: scripts/check-ish-linkage.sh build/ios/iphoneos/Runner.app/Runner on
       - name: Package ipa
         shell: bash
         run: APP_ASSET_NAME="${APP_NAME}" scripts/release/package-unsigned-ipa.sh
       - name: Upload artifacts
-        if: inputs.release != true && github.ref_type != 'tag'
+        if: needs.reproducibilityCheck.outputs.isRelease != 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-ios
           path: build/artifacts/*.ipa
           if-no-files-found: error
           retention-days: 14
-      - name: Create Release
-        if: inputs.release == true || github.ref_type == 'tag'
+      - name: Publish to the release
+        if: needs.reproducibilityCheck.outputs.isRelease == 'true'
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
         with:
           tag_name: v1.0.${{ env.BUILD_NUMBER }}
+          # A rename that did not fire, or an ABI that did not build, used to
+          # publish a release with whatever else happened to be there.
+          fail_on_unmatched_files: true
           files: |
             build/artifacts/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_NoSign.ipa
         env:
@@ -567,6 +622,7 @@ jobs:
     # nearest scope an expression on `needs` can be written in.
     env:
       APP_NAME: ${{ needs.reproducibilityCheck.outputs.appName }}
+      BUILD_NUMBER: ${{ needs.reproducibilityCheck.outputs.buildNumber }}
     permissions:
       contents: write
     strategy:
@@ -595,11 +651,11 @@ jobs:
           sudo apt install -y clang cmake ninja-build pkg-config libgtk-3-dev mesa-utils libvulkan-dev desktop-file-utils wget
           sudo apt install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libunwind-dev libsecret-1-dev
       - name: Build (release)
-        if: inputs.release == true || github.ref_type == 'tag'
+        if: needs.reproducibilityCheck.outputs.isRelease == 'true'
         shell: bash
         run: dart run fl_build -bp -p linux
       - name: Build (test)
-        if: inputs.release != true && github.ref_type != 'tag'
+        if: needs.reproducibilityCheck.outputs.isRelease != 'true'
         shell: bash
         run: dart run fl_build -p linux
       - name: Rename
@@ -614,18 +670,21 @@ jobs:
         run: |
           mv "${APP_NAME}_v1.0.${BUILD_NUMBER}_amd64.AppImage" "${APP_NAME}_v1.0.${BUILD_NUMBER}${{ matrix.release_suffix }}_amd64.AppImage"
       - name: Upload artifacts
-        if: inputs.release != true && github.ref_type != 'tag'
+        if: needs.reproducibilityCheck.outputs.isRelease != 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-linux${{ matrix.artifact_suffix }}
           path: "*.AppImage"
           if-no-files-found: error
           retention-days: 14
-      - name: Create Release
-        if: inputs.release == true || github.ref_type == 'tag'
+      - name: Publish to the release
+        if: needs.reproducibilityCheck.outputs.isRelease == 'true'
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
         with:
           tag_name: v1.0.${{ env.BUILD_NUMBER }}
+          # A rename that did not fire, or an ABI that did not build, used to
+          # publish a release with whatever else happened to be there.
+          fail_on_unmatched_files: true
           files: |
             ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}${{ matrix.release_suffix }}_amd64.AppImage
         env:
@@ -643,6 +702,7 @@ jobs:
     # nearest scope an expression on `needs` can be written in.
     env:
       APP_NAME: ${{ needs.reproducibilityCheck.outputs.appName }}
+      BUILD_NUMBER: ${{ needs.reproducibilityCheck.outputs.buildNumber }}
     runs-on: windows-latest
     permissions:
       contents: write
@@ -656,11 +716,11 @@ jobs:
       - name: Install Flutter
         uses: ./.github/actions/setup-flutter
       - name: Build (release)
-        if: inputs.release == true || github.ref_type == 'tag'
+        if: needs.reproducibilityCheck.outputs.isRelease == 'true'
         shell: bash
         run: dart run fl_build -bp -p windows
       - name: Build (test)
-        if: inputs.release != true && github.ref_type != 'tag'
+        if: needs.reproducibilityCheck.outputs.isRelease != 'true'
         shell: bash
         run: dart run fl_build -p windows
       - name: Rename
@@ -670,18 +730,21 @@ jobs:
             mv "$f" "${f/_${BUILD_NUMBER}_/_v1.0.${BUILD_NUMBER}_}"
           done
       - name: Upload artifacts
-        if: inputs.release != true && github.ref_type != 'tag'
+        if: needs.reproducibilityCheck.outputs.isRelease != 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-windows
           path: "*_windows_amd64.zip"
           if-no-files-found: error
           retention-days: 14
-      - name: Create Release
-        if: inputs.release == true || github.ref_type == 'tag'
+      - name: Publish to the release
+        if: needs.reproducibilityCheck.outputs.isRelease == 'true'
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
         with:
           tag_name: v1.0.${{ env.BUILD_NUMBER }}
+          # A rename that did not fire, or an ABI that did not build, used to
+          # publish a release with whatever else happened to be there.
+          fail_on_unmatched_files: true
           files: |
             ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_windows_amd64.zip
         env:
