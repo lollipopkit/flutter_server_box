@@ -258,8 +258,11 @@ pub fn install_custom_cmds_script(system: SystemType, cmds: &[(u32, String, Stri
                 ));
             }
             out.push_str(
-                "if (Test-Path $dir) { Remove-Item -Recurse -Force $dir }\n\
-                 Move-Item $tmp $dir\n",
+                "$bak = \"$dir.bak\"\n\
+                 if (Test-Path $bak) { Remove-Item -Recurse -Force $bak }\n\
+                 if (Test-Path $dir) { Rename-Item $dir $bak -Force }\n\
+                 Move-Item $tmp $dir\n\
+                 if (Test-Path $bak) { Remove-Item -Recurse -Force $bak }\n",
             );
             out
         }
@@ -268,7 +271,8 @@ pub fn install_custom_cmds_script(system: SystemType, cmds: &[(u32, String, Stri
                 "set -e\n\
                  d=\"{CUSTOM_CMD_DIR_UNIX}\"\n\
                  t=\"$d.new\"\n\
-                 rm -rf \"$t\"\n\
+                 b=\"$d.bak\"\n\
+                 rm -rf \"$t\" \"$b\"\n\
                  mkdir -p \"$t\"\n"
             );
             for (order, name, cmd) in cmds {
@@ -278,7 +282,11 @@ pub fn install_custom_cmds_script(system: SystemType, cmds: &[(u32, String, Stri
                     b64.encode(cmd)
                 ));
             }
-            out.push_str("rm -rf \"$d\"\nmv \"$t\" \"$d\"\n");
+            out.push_str(
+                "if [ -e \"$d\" ]; then mv \"$d\" \"$b\"; fi\n\
+                 mv \"$t\" \"$d\"\n\
+                 rm -rf \"$b\"\n",
+            );
             out
         }
     }
@@ -409,6 +417,10 @@ pub const WINDOWS_INSTALL_EOF: &str = "SrvBoxSep.__install_eof__";
 ///
 /// `test/windows_install_ssh_e2e_test.dart` is the regression test, over the
 /// same client the app uses.
+fn shell_quote_unix(s: &str) -> String {
+    format!("'{}'", s.replace('\'', "'\\''"))
+}
+
 pub fn install_command(system: SystemType, script_dir: &str, script_path: &str) -> String {
     match system {
         SystemType::Windows => encoded_powershell_command(&format!(
@@ -420,7 +432,12 @@ if ($line -eq '{WINDOWS_INSTALL_EOF}') {{ break }}; \
 }}; \
 Set-Content -Path '{script_path}' -Value $sb.ToString() -Encoding UTF8"
         )),
-        _ => format!("mkdir -p {script_dir}\ncat > {script_path}\nchmod 755 {script_path}\n"),
+        _ => format!(
+            "mkdir -p {}\ncat > {}\nchmod 755 {}\n",
+            shell_quote_unix(script_dir),
+            shell_quote_unix(script_path),
+            shell_quote_unix(script_path)
+        ),
     }
 }
 
@@ -464,7 +481,14 @@ pub fn exec_command(system: SystemType, script_path: &str, func: ShellFunc) -> S
 /// A trailing `\r` is stripped from each line before matching, so CRLF output
 /// (monitor running PowerShell locally) parses identically to LF output.
 pub fn parse_script_output(raw: &str) -> HashMap<String, String> {
-    parse_script_segments(raw).into_iter().collect()
+    let mut map = HashMap::new();
+    for (k, v) in parse_script_segments(raw) {
+        // Keep first value for duplicate keys: a custom command that prints
+        // a fake `SrvBoxSep.b64.<built-in>` marker must not overwrite the
+        // real built-in segment that preceded it.
+        map.entry(k).or_insert(v);
+    }
+    map
 }
 
 /// [`parse_script_output`], but in the order the script printed the sections.
@@ -488,7 +512,17 @@ pub fn parse_script_segments(raw: &str) -> Vec<(String, String)> {
                  buf: &mut String,
                  result: &mut Vec<(String, String)>| {
         if let Some(key) = current.take() {
-            result.push((key, buf.trim().to_string()));
+            // Preserve custom command output losslessly; only the final
+            // trailing newline added by the loop is removed. Previous
+            // `trim()` stripped leading/trailing blank lines.
+            let mut out = buf.clone();
+            if out.ends_with('\n') {
+                out.pop();
+            }
+            if out.ends_with('\r') {
+                out.pop();
+            }
+            result.push((key, out));
             buf.clear();
         }
     };
@@ -649,8 +683,8 @@ fn unix_custom_cmds(func: ShellFunc) -> String {
         "\nfor f in \"{CUSTOM_CMD_DIR_UNIX}\"/*; do\n\
          \t[ -f \"$f\" ] || continue\n\
          \tn=${{f##*/}}\n\
-         \techo \"{CUSTOM_CMD_SEPARATOR}.{ENCODED_NAME_PREFIX}${{n#*_}}\"\n\
-         \tif command -v timeout >/dev/null 2>&1; then timeout 5 sh \"$f\"; else sh \"$f\"; fi\n\
+         \tprintf '\\n%s\\n' \"{CUSTOM_CMD_SEPARATOR}.{ENCODED_NAME_PREFIX}${{n#*_}}\"\n\
+         \tif command -v timeout >/dev/null 2>&1; then timeout 5 sh \"$f\"; else sh \"$f\"; fi; printf '\\n'\n\
          done\n"
     )
 }

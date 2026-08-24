@@ -10,7 +10,7 @@ MonitorMetrics _$MonitorMetricsFromJson(
   Map<String, dynamic> json,
 ) => MonitorMetrics(
   timestamp: json['timestamp'] as String,
-  extendedUpdatedAt: json['extended_updated_at'] as String,
+  extendedUpdatedAt: json['extended_updated_at'] as String? ?? '',
   serverName: json['server_name'] as String,
   cpuUsage: (json['cpu_usage'] as num).toDouble(),
   cpuCores: (json['cpu_cores'] as List<dynamic>)

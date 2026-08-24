@@ -12,6 +12,7 @@ part 'monitor_metrics.g.dart';
 @JsonSerializable(fieldRename: FieldRename.snake)
 class MonitorMetrics {
   final String timestamp;
+  @JsonKey(defaultValue: '')
   final String extendedUpdatedAt;
   final String serverName;
   final double cpuUsage;
