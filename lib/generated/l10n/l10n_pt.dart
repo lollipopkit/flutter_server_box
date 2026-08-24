@@ -292,11 +292,11 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get distIconConsent =>
-      'Ao ativar, você escolhe exibir estas marcas com a única finalidade de indicar qual distribuição um servidor parece estar executando.';
+      'Apenas para indicar a distribuição que um servidor pode estar executando.';
 
   @override
   String get distIconIntroLegal =>
-      'Este aplicativo não inclui nenhuma marca de distribuição. Ao definir um endereço, a imagem é carregada de lá — a fonte é escolha sua e, enquanto você não escolher uma, nada é exibido. Uma marca indica apenas o que este dispositivo leu do sistema remoto, informação que pode estar errada ou desatualizada, e não identifica um derivado, uma recompilação nem uma versão específica.\n\nCada marca é uma marca registrada de seu respectivo proprietário e é usada aqui apenas para se referir ao sistema que identifica.';
+      'Uma marca indica apenas o que este dispositivo leu do sistema remoto, informação que pode estar errada ou desatualizada, e não identifica um derivado, uma recompilação nem uma versão específica. Quando não é possível identificar, é desenhado um ícone genérico.\n\nCada marca é uma marca registrada de seu respectivo proprietário e é usada aqui apenas para se referir ao sistema que identifica.';
 
   @override
   String get distIconTip =>
@@ -321,7 +321,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get markUrlTip =>
-      'A marca pequena ao lado do nome de um servidor nas listas. Vazio: nenhuma.\n\nNão é a mesma imagem do logotipo nem é desenhada do mesmo jeito: esta assume a cor do texto ao lado, para que uma coluna se leia como uma coluna. O logotipo fica como foi publicado.';
+      'A marca pequena ao lado do nome de um servidor nas listas. Vazio: nenhuma.\n\nNão é a mesma imagem do logotipo';
 
   @override
   String get navTabMenuTip =>

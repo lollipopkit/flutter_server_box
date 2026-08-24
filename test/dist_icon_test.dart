@@ -24,7 +24,7 @@ Set<String> _shipped() => {
 };
 
 void main() {
-  /// Five files, and every one of them a claim that somebody's licence permits
+  /// Four files, and every one of them a claim that somebody's licence permits
   /// shipping it. The claim is only as good as the record beside it, so the
   /// file, the enum, the README row and the in-app notice all have to agree —
   /// a mark added to four of the five is a mark shipped without one of them.
@@ -42,6 +42,17 @@ void main() {
       // A file nothing points at is bundle weight, and — worse here — a logo
       // being redistributed with nothing recording why that is allowed.
       expect(_shipped(), {for (final d in bundled) '${d.name}.svg'});
+    });
+
+    test('the set is what `markAsset` answers for, and nothing else', () {
+      // The literal set above is deliberate: derived from `Dist.markAsset` it
+      // would agree with whatever the code says, including when the code is
+      // wrong. This is the direction that catches a file shipped without a
+      // licence recorded for it.
+      expect(
+        {for (final d in Dist.values) if (d.markAsset != null) d},
+        bundled,
+      );
     });
 
     test('everything else has no mark and is not meant to', () {

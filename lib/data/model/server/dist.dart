@@ -4,10 +4,10 @@
 /// what `{DIST}` expands to in a custom logo URL. **Renaming one breaks every
 /// URL template pointing at it**, so a case is added, never renamed.
 ///
-/// The app ships no pictures. Recognising a distribution and drawing its mark
-/// are separate things, and only the first happens here — the second is an
-/// address the user configures, fetched at the point of drawing. See
-/// `lib/view/widget/dist_icon.dart` for why.
+/// Recognising a distribution and drawing its mark are separate things, and
+/// only the first happens here. Four marks ship with the app — see
+/// [markAsset] — and every other distribution is drawn from an address the
+/// user configures. See `lib/view/widget/dist_icon.dart`.
 enum Dist {
   // The original thirteen, in their original order, because these names have
   // been in users' logo URLs since before the rest of this list existed.

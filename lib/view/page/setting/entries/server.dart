@@ -189,11 +189,10 @@ extension _Server on _AppSettingsPageState {
   /// The mark beside each server: whether to draw one, where it comes from,
   /// and the names that disagree.
   ///
-  /// Collapsed, and three rows deep, because none of it applies to an install
-  /// that has not gone looking for it — the app ships no marks, so out of the
-  /// box the switch governs nothing and the other two are blank. Left expanded
-  /// it would be three rows of a feature most people never turn on, above the
-  /// settings they came for.
+  /// Collapsed, because none of it applies to an install that has not gone
+  /// looking for it: the switch is off by default, and the three addresses
+  /// under it are blank. Left expanded it would be four rows of a feature most
+  /// people never turn on, above the settings they came for.
   ///
   /// The tip on the title is the whole of the terms — plain, not markdown,
   /// because a tip is a text bubble and a link in one shows as its own syntax
@@ -238,7 +237,7 @@ extension _Server on _AppSettingsPageState {
         context.popDialog();
         return;
       }
-      if (!url.startsWith('http')) {
+      if (!isFetchableLogoUrl(url)) {
         _showInvalidUrlDialog();
         return;
       }
@@ -340,7 +339,7 @@ extension _Server on _AppSettingsPageState {
       // what the address bar gives you, and left alone it fetches HTML that
       // reaches the decoder as `Invalid image data`.
       final url = resolveLogoUrl(raw);
-      if (url.isEmpty || !url.startsWith('http')) {
+      if (!isFetchableLogoUrl(url)) {
         _showInvalidUrlDialog();
         return;
       }

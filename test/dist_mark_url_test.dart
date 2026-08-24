@@ -29,7 +29,9 @@ void main() {
 
   tearDown(() async {
     await GetIt.instance.reset();
-    SqliteDb.close();
+    // Awaited: it returns a future, and the next test's `openTestDb` would
+    // otherwise race a close still in flight.
+    await SqliteDb.close();
   });
 
   String? url({
@@ -143,15 +145,24 @@ void main() {
     });
   });
 
-  test('anything that is not http is refused', () {
-    // The value is user-entered and reaches an image loader.
+  test('anything that is not http or https is refused', () {
+    // The value is user-entered and reaches an image loader. Checked by
+    // scheme, not by prefix: the four letters of "http" begin a great many
+    // things that are not it.
     for (final bad in [
       'file:///etc/passwd',
       'javascript:alert(1)',
       'data:image/svg+xml,<svg/>',
       '/local/path.svg',
+      'httpx://elsewhere/a.svg',
+      'httpfoo:whatever',
     ]) {
       expect(url(mark: bad), isNull, reason: '$bad must not be fetched');
     }
+  });
+
+  test('and http and https are accepted', () {
+    expect(url(mark: 'http://ex.com/a.svg'), 'http://ex.com/a.svg');
+    expect(url(mark: 'HTTPS://ex.com/a.svg'), 'HTTPS://ex.com/a.svg');
   });
 }

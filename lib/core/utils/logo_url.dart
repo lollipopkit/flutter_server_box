@@ -29,3 +29,15 @@ String resolveLogoUrl(String url) {
 final _githubPage = RegExp(
   r'^https?://(?:www\.)?github\.com/([^/]+)/([^/]+)/(?:blob|tree)/([^/]+/.+)$',
 );
+
+/// Whether [url] is one this app will fetch: `http` or `https`, and nothing
+/// else.
+///
+/// By scheme, not by prefix. `startsWith('http')` — which is what this
+/// replaces — is also true of `httpx://`, `httpfoo:` and anything else that
+/// begins with those four letters, and the value is user-entered and ends up
+/// at an image loader.
+bool isFetchableLogoUrl(String url) {
+  final scheme = Uri.tryParse(url)?.scheme.toLowerCase();
+  return scheme == 'http' || scheme == 'https';
+}

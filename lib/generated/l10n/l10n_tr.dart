@@ -292,11 +292,11 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get distIconConsent =>
-      'Bunu açtığınızda bu işaretleri göstermeyi kendiniz seçmiş olursunuz; tek amacı bir sunucunun çalıştırdığı görünen dağıtımı belirtmektir.';
+      'Yalnızca bir sunucunun çalıştırıyor olabileceği dağıtımı belirtmek için.';
 
   @override
   String get distIconIntroLegal =>
-      'Bu uygulama hiçbir dağıtım işareti içermez. Bir adres belirlediğinizde görsel oradan yüklenir — kaynağı siz seçersiniz ve seçmediğiniz sürece hiçbir şey gösterilmez. Bir işaret yalnızca bu cihazın uzak sistemden okuduğunu belirtir; bu bilgi yanlış veya güncel olmayabilir ve bir türevi, yeniden derlemeyi ya da belirli bir sürümü göstermez.\n\nHer işaret ilgili sahibinin ticari markasıdır ve burada yalnızca işaret ettiği sistemi belirtmek için kullanılır.';
+      'Bir işaret yalnızca bu cihazın uzak sistemden okuduğunu belirtir; bu bilgi yanlış veya güncel olmayabilir ve bir türevi, yeniden derlemeyi ya da belirli bir sürümü göstermez. Belirlenemediğinde sade bir simge çizilir.\n\nHer işaret ilgili sahibinin ticari markasıdır ve burada yalnızca işaret ettiği sistemi belirtmek için kullanılır.';
 
   @override
   String get distIconTip =>
@@ -321,7 +321,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get markUrlTip =>
-      'Listelerde sunucu adının yanındaki küçük işaret. Boşsa hiçbiri çizilmez.\n\nLogoyla aynı görsel değil ve aynı şekilde de çizilmez: bu, yanındaki yazının rengini alır, böylece bir sütun tek sütun gibi okunur. Logo yayımlandığı hâliyle kalır.';
+      'Listelerde sunucu adının yanındaki küçük işaret. Boşsa hiçbiri çizilmez.\n\nLogoyla aynı görsel değil';
 
   @override
   String get navTabMenuTip =>

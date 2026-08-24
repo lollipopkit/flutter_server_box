@@ -294,11 +294,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get distIconConsent =>
-      'Wenn Sie dies einschalten, entscheiden Sie sich dafür, diese Marken anzuzeigen – einzig zu dem Zweck, die Distribution zu kennzeichnen, die ein Server offenbar ausführt.';
+      'Nur, um die Distribution zu kennzeichnen, die ein Server möglicherweise ausführt.';
 
   @override
   String get distIconIntroLegal =>
-      'Diese App liefert keine Distributionsmarken mit. Sobald Sie eine Adresse dafür angeben, wird das Bild von dort geladen — die Quelle wählen Sie, und bis Sie eine wählen, wird nichts angezeigt. Eine Marke sagt nur aus, was dieses Gerät vom entfernten System gelesen hat; das kann falsch oder veraltet sein und bezeichnet weder eine Ableitung noch einen Rebuild noch eine bestimmte Version.\n\nJede Marke ist ein Warenzeichen ihres jeweiligen Inhabers und wird hier nur verwendet, um auf das System zu verweisen, das sie bezeichnet.';
+      'Eine Marke sagt nur aus, was dieses Gerät vom entfernten System gelesen hat; das kann falsch oder veraltet sein und bezeichnet weder eine Ableitung noch einen Rebuild noch eine bestimmte Version. Lässt sie sich nicht bestimmen, wird ein schlichtes Symbol gezeichnet.\n\nJede Marke ist ein Warenzeichen ihres jeweiligen Inhabers und wird hier nur verwendet, um auf das System zu verweisen, das sie bezeichnet.';
 
   @override
   String get distIconTip =>
@@ -323,7 +323,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get markUrlTip =>
-      'Das kleine Zeichen neben dem Servernamen in Listen. Leer heißt: keins.\n\nNicht dasselbe Bild wie das Logo und nicht gleich gezeichnet: dieses nimmt die Farbe des Textes daneben an, damit eine Spalte davon als eine Spalte liest. Das Logo bleibt, wie es veröffentlicht wurde.';
+      'Das kleine Zeichen neben dem Servernamen in Listen. Leer heißt: keins.\n\nNicht dasselbe Bild wie das Logo';
 
   @override
   String get navTabMenuTip =>

@@ -19,7 +19,16 @@ import 'package:vector_graphics_compiler/vector_graphics_compiler.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  const bundled = {Dist.debian, Dist.gentoo, Dist.nixos, Dist.alpine};
+  // Derived here, unlike in `dist_icon_test.dart`: this asks whether each
+  // shipped file draws, so it has to follow whatever is shipped rather than a
+  // list that might not.
+  final bundled = Dist.values.where((d) => d.markAsset != null).toList();
+
+  test('there is something to check', () {
+    // A `markAsset` that answered null for everything would make every case
+    // below vacuous, and this file would pass by not running.
+    expect(bundled, isNotEmpty);
+  });
 
   for (final dist in bundled) {
     test('${dist.name} compiles to something with paths in it', () async {

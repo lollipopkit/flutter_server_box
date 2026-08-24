@@ -24,7 +24,8 @@ that also carries the server's own name and address meets all three.
 **Copyright in the artwork** is the hard one, and it is what this directory is
 short because of. A logo is somebody's drawing. Redistributing it needs a
 licence, and almost no project grants one — a trademark policy permitting
-referential use says nothing about copying the file. Five do:
+referential use says nothing about copying the file. Five projects do, and
+four of those five are here — the fifth is below:
 
 | Mark | Licence | Source |
 | --- | --- | --- |

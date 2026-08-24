@@ -34,7 +34,9 @@ void main() {
 
   tearDown(() async {
     await GetIt.instance.reset();
-    SqliteDb.close();
+    // Awaited: it returns a future, and the next test's `openTestDb` would
+    // otherwise race a close still in flight.
+    await SqliteDb.close();
   });
 
   Future<void> pump(WidgetTester tester, Dist? dist) => tester.pumpWidget(
@@ -99,7 +101,7 @@ void main() {
     expect(
       svg.colorFilter,
       isNotNull,
-      reason: 'the mark is drawn as published, in colour',
+      reason: 'no filter means the mark is drawn in its own colours',
     );
   });
 

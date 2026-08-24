@@ -292,11 +292,11 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get distIconConsent =>
-      'Door dit in te schakelen kiest u ervoor deze merktekens te tonen, met als enige doel aan te geven welke distributie een server lijkt te draaien.';
+      'Alleen om aan te geven welke distributie een server mogelijk draait.';
 
   @override
   String get distIconIntroLegal =>
-      'Deze app bevat geen distributiemerken. Zodra u er een adres voor instelt, wordt de afbeelding daarvandaan geladen — de bron kiest u zelf, en zolang u er geen kiest wordt er niets getoond. Een merkteken zegt alleen wat dit apparaat van het externe systeem heeft gelezen; dat kan onjuist of verouderd zijn en duidt geen afgeleide, herbouw of specifieke versie aan.\n\nElk merkteken is een handelsmerk van de betreffende eigenaar en wordt hier alleen gebruikt om te verwijzen naar het systeem dat het aanduidt.';
+      'Een merkteken zegt alleen wat dit apparaat van het externe systeem heeft gelezen; dat kan onjuist of verouderd zijn en duidt geen afgeleide, herbouw of specifieke versie aan. Kan het niet worden vastgesteld, dan wordt een neutraal pictogram getekend.\n\nElk merkteken is een handelsmerk van de betreffende eigenaar en wordt hier alleen gebruikt om te verwijzen naar het systeem dat het aanduidt.';
 
   @override
   String get distIconTip =>
@@ -321,7 +321,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get markUrlTip =>
-      'Het kleine teken naast een servernaam in lijsten. Leeg betekent geen.\n\nNiet dezelfde afbeelding als het logo en niet op dezelfde manier getekend: dit neemt de kleur van de tekst ernaast aan, zodat een kolom ervan als één kolom leest. Het logo blijft zoals het is gepubliceerd.';
+      'Het kleine teken naast een servernaam in lijsten. Leeg betekent geen.\n\nNiet dezelfde afbeelding als het logo';
 
   @override
   String get navTabMenuTip =>

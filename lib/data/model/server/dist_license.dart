@@ -4,9 +4,10 @@ import 'package:flutter/foundation.dart';
 /// them: Settings → About → License, which is Flutter's `showLicensePage` over
 /// [LicenseRegistry].
 ///
-/// Four of the five are under a Creative Commons licence, and every one of
-/// those asks for credit "in any reasonable manner based on the medium, means,
-/// and context". For an application that is the licence screen it already has.
+/// Three of the four are under a Creative Commons licence — Alpine's mark is
+/// simple enough that no copyright subsists in it — and every one of those
+/// asks for credit "in any reasonable manner based on the medium, means, and
+/// context". For an application that is the licence screen it already has.
 /// `LicenseRegistry` collects each package's LICENSE file and nothing else, so
 /// an asset is invisible to it until something registers one.
 ///

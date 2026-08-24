@@ -291,11 +291,11 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get distIconConsent =>
-      'Dengan mengaktifkannya, Anda memilih untuk menampilkan tanda-tanda ini, semata-mata untuk menunjukkan distribusi yang tampaknya dijalankan sebuah server.';
+      'Hanya untuk menunjukkan distribusi yang mungkin dijalankan sebuah server.';
 
   @override
   String get distIconIntroLegal =>
-      'Aplikasi ini tidak menyertakan tanda distribusi apa pun. Setelah Anda menetapkan alamatnya, gambar diambil dari sana — sumbernya Anda yang menentukan, dan selama belum ditentukan tidak ada yang ditampilkan. Sebuah tanda hanya menyatakan apa yang dibaca perangkat ini dari sistem jarak jauh, yang bisa saja keliru atau usang, dan tidak menandakan turunan, hasil bangun ulang, maupun versi tertentu.\n\nSetiap tanda adalah merek dagang pemiliknya masing-masing dan di sini hanya dipakai untuk merujuk pada sistem yang ditandainya.';
+      'Sebuah tanda hanya menyatakan apa yang dibaca perangkat ini dari sistem jarak jauh, yang bisa saja keliru atau usang, dan tidak menandakan turunan, hasil bangun ulang, maupun versi tertentu. Bila tidak dapat dikenali, ikon biasa yang digambar.\n\nSetiap tanda adalah merek dagang pemiliknya masing-masing dan di sini hanya dipakai untuk merujuk pada sistem yang ditandainya.';
 
   @override
   String get distIconTip =>
@@ -320,7 +320,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get markUrlTip =>
-      'Tanda kecil di samping nama server pada daftar. Kosong berarti tidak ada.\n\nBukan gambar yang sama dengan logo dan tidak digambar dengan cara yang sama: tanda ini mengambil warna teks di sebelahnya, sehingga satu kolom terbaca sebagai satu kolom. Logo dibiarkan seperti yang diterbitkan.';
+      'Tanda kecil di samping nama server pada daftar. Kosong berarti tidak ada.\n\nBukan gambar yang sama dengan logo';
 
   @override
   String get navTabMenuTip =>

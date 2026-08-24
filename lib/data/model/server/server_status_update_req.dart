@@ -118,7 +118,16 @@ ServerStatus _createWorkingStatus(ServerStatus source, SystemType system) {
     diskIO: DiskIO.copy(source.diskIO),
     diskSmart: const [],
     err: source.err,
-  );
+  )
+  // Carried, not reset. `_applyMore` only writes these when the response has
+  // them, on the stated grounds that a poll which could not read
+  // `/etc/os-release` should not throw away what the last one found — and that
+  // is only true if they start here. Without it every poll of a BSD, a Windows
+  // host or a Linux too old for that file cleared the distribution, so the
+  // mark beside its name blinked out and came back on the next successful
+  // read.
+  ..osId = source.osId
+  ..osIdLike = source.osIdLike;
 }
 
 List<SingleCpuCore> _coresFromJson(List cores) {

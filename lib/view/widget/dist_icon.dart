@@ -18,10 +18,10 @@ import 'package:server_box/generated/l10n/l10n.dart';
 
 /// The address a server's mark is fetched from, or null if there is none.
 ///
-/// **This app ships no distribution marks.** It works out which distribution a
-/// machine runs and expands that into an address the user configured; the
-/// picture at the other end is not this repository's, and it is fetched only
-/// because someone asked for it by writing the address down.
+/// Four marks ship with the app — the ones whose artwork carries a licence
+/// permitting it, see [Dist.markAsset] — and everything else is drawn from an
+/// address the user configured. This resolves that address; the shipped files
+/// are the fallback when there is none.
 ///
 /// **A mark is not the logo.** The logo is the large image at the top of a
 /// server's own page and comes from `serverLogoUrl`; this is the small one
@@ -31,8 +31,8 @@ import 'package:server_box/generated/l10n/l10n.dart';
 ///
 /// Null in three cases, all of which draw nothing: no address configured, an
 /// address that wants `{DIST}` for a machine whose distribution is not known,
-/// and one that is not http. The last is a guard rather than a nicety — the
-/// value is user-entered and reaches an image loader.
+/// and one whose scheme is neither http nor https. The last is a guard rather
+/// than a nicety — the value is user-entered and reaches an image loader.
 String? distMarkUrl({required Dist? dist, required bool dark}) {
   final configured = Stores.setting.serverMarkUrl.fetch();
   if (configured.isEmpty) return null;
@@ -43,7 +43,7 @@ String? distMarkUrl({required Dist? dist, required bool dark}) {
     url = url.replaceAll(_distToken, distFileName(dist));
   }
   url = url.replaceAll(_brightToken, dark ? 'dark' : 'light');
-  if (!url.startsWith('http')) return null;
+  if (!isFetchableLogoUrl(url)) return null;
   return url;
 }
 
@@ -197,9 +197,9 @@ class DistIconOf extends StatelessWidget {
       dark: Theme.of(context).brightness == Brightness.dark,
     );
     // No address: the mark shipped for this distribution, if there is one.
-    // Five have a logo whose licence permits redistribution — see
+    // Four have a logo whose licence permits redistribution — see
     // `Dist.markAsset`. An address, once set, wins over all of them: somebody
-    // who chose a collection wants it used for every row, not five exceptions.
+    // who chose a collection wants it used for every row, not four exceptions.
     if (url == null) {
       final asset = dist?.markAsset;
       if (asset == null) return _fallback(context);

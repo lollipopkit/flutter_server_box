@@ -244,6 +244,25 @@ Filesystem  1024-blocks   Used Available Capacity Mounted on
       expect(result.dist, Dist.mint);
     });
 
+    test('what a poll cannot read is kept, not cleared', () async {
+      // BSD, Windows, and any Linux too old for `/etc/os-release` answer with
+      // no identifiers at all. The mark beside a server's name is drawn from
+      // these, so losing them on every poll made it blink out and come back.
+      final first = await parse('ID=alpine\nPRETTY_NAME="Alpine Linux v3.20"\n');
+      expect(first.osId, 'alpine');
+
+      final second = await getStatus(
+        ServerStatusUpdateReq(
+          system: SystemType.linux,
+          ss: first,
+          parsedOutput: {StatusCmdType.sys.name: 'PRETTY_NAME="Something"'},
+        ),
+      );
+
+      expect(second.osId, 'alpine', reason: 'the last successful read stands');
+      expect(second.dist, Dist.alpine);
+    });
+
     test('a remote with no os-release still reads by its prose', () async {
       final result = await parse('PRETTY_NAME="Debian GNU/Linux 12 (bookworm)"\n');
 

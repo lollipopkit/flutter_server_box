@@ -298,11 +298,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get distIconConsent =>
-      'En activant cette option, vous choisissez d\'afficher ces marques, dans le seul but d\'indiquer la distribution qu\'un serveur semble exécuter.';
+      'Uniquement pour indiquer la distribution qu\'un serveur exécute peut-être.';
 
   @override
   String get distIconIntroLegal =>
-      'Cette application n\'intègre aucune marque de distribution. Une fois que vous indiquez une adresse, l\'image est chargée depuis celle-ci — la source est votre choix, et tant que vous n\'en choisissez pas, rien ne s\'affiche. Une marque indique seulement ce que cet appareil a lu sur le système distant, ce qui peut être erroné ou périmé, et ne désigne ni un dérivé, ni une reconstruction, ni une version particulière.\n\nChaque marque appartient à son propriétaire respectif et n\'est utilisée ici que pour désigner le système qu\'elle identifie.';
+      'Une marque indique seulement ce que cet appareil a lu sur le système distant, ce qui peut être erroné ou périmé, et ne désigne ni un dérivé, ni une reconstruction, ni une version particulière. Quand elle ne peut pas être déterminée, une icône neutre est affichée.\n\nChaque marque appartient à son propriétaire respectif et n\'est utilisée ici que pour désigner le système qu\'elle identifie.';
 
   @override
   String get distIconTip =>
@@ -327,7 +327,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get markUrlTip =>
-      'La petite marque à côté du nom d\'un serveur dans les listes. Vide : aucune.\n\nCe n\'est pas la même image que le logo, ni dessinée de la même façon : celle-ci prend la couleur du texte voisin, pour qu\'une colonne se lise comme une colonne. Le logo reste tel qu\'il est publié.';
+      'La petite marque à côté du nom d\'un serveur dans les listes. Vide : aucune.\n\nCe n\'est pas la même image que le logo';
 
   @override
   String get navTabMenuTip =>

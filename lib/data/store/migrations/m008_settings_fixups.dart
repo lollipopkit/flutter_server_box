@@ -75,7 +75,7 @@ class SettingsFixupsMigration implements SchemaMigration {
     if (raw is! int) return;
     // macOS defaults to the built-in client, everything else to the system one.
     final value = raw == -1 ? !isMacOS : raw != 0;
-    store.set(key, value, updateLastUpdateTsOnSet: false);
+    _write(store, key, value);
   }
 
   /// Adds Agent to the home tabs of an install still on the legacy default.
@@ -94,10 +94,18 @@ class SettingsFixupsMigration implements SchemaMigration {
     final tabs = AppTab.parseAppTabsFromObj(store.get<Object>(key));
     if (tabs.length != legacyDefaults.length) return;
     if (!tabs.toSet().containsAll(legacyDefaults)) return;
-    store.set(
-      key,
-      [...tabs, AppTab.agent].map((tab) => tab.name).toList(),
-      updateLastUpdateTsOnSet: false,
-    );
+    _write(store, key, [...tabs, AppTab.agent].map((tab) => tab.name).toList());
+  }
+
+  /// `set` answers `false` rather than throwing — a write that could not be
+  /// encoded or could not reach the database returns quietly.
+  ///
+  /// This step has no return value, so a quiet failure would let
+  /// `SchemaVersion.migrate` record the version and never look again: the
+  /// conversion is one pass over a record only an upgrading install holds.
+  /// Throwing leaves the version where it was, so the next launch retries.
+  static void _write(SettingStore store, String key, Object value) {
+    final ok = store.set(key, value, updateLastUpdateTsOnSet: false);
+    if (!ok) throw StateError('m008: writing "$key" failed');
   }
 }

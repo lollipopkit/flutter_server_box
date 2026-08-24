@@ -114,8 +114,14 @@ jobs:
           # and the Rust static library still link.
           emit macos "$shared|^macos/|^hook/|^crates/|^Cargo\.(toml|lock)$"
           # `crates/` because `flutter test` loads the FFI dylib and the
-          # generated bindings come from there
-          emit dart "$shared|^lib/|^test/|^integration_test/|^crates/|^Cargo\.(toml|lock)$|^analysis_options\.yaml$"
+          # generated bindings come from there.
+          #
+          # `macos/` because `test/macos_entitlements_test.dart` is a plain
+          # test and runs here — the `macOS build` job below says exactly that
+          # and then relies on it. Without this, a change to an entitlements
+          # file ran the 45-minute build and skipped the one test guarding what
+          # it changed.
+          emit dart "$shared|^lib/|^test/|^integration_test/|^crates/|^macos/|^Cargo\.(toml|lock)$|^analysis_options\.yaml$"
           emit frontend "$shared|^monitor/frontend/|^packages/webui/"
           emit docs "$shared|^docs/"
           emit website "$shared|^website/|^packages/webui/"

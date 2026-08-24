@@ -269,11 +269,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get distIcon => '发行版标识';
 
   @override
-  String get distIconConsent => '开启即表示你自愿显示这些标识,且仅用于标识某台服务器可能运行的发行版。';
+  String get distIconConsent => '仅用于标识某台服务器可能运行的发行版。';
 
   @override
   String get distIconIntroLegal =>
-      '本应用不内置任何发行版标识。设置图片地址后,标识从该地址加载 —— 来源由你选择,未设置则不显示。标识仅表示本设备从远程系统读取到的信息,该信息可能有误或已过期,也不代表其衍生版本、重构版本或任何特定版本。\n\n每个标识均为其各自所有者的商标,此处仅用于指代它所标识的系统。';
+      '标识仅表示本设备从远程系统读取到的信息,该信息可能有误或已过期,也不代表其衍生版本、重构版本或任何特定版本。识别不出时显示一个通用图标。\n\n每个标识均为其各自所有者的商标,此处仅用于指代它所标识的系统。';
 
   @override
   String get distIconTip => '在每台服务器旁显示一个小标识,表示它可能运行的系统';
@@ -295,8 +295,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get markUrl => '标识地址';
 
   @override
-  String get markUrlTip =>
-      '列表中服务器名字旁边的小标识。留空则不显示。\n\n和 Logo 不是同一张图,画法也不同:标识跟随旁边文字的颜色显示为单色,这样一列看起来才是一列。Logo 保持原色。';
+  String get markUrlTip => '列表中服务器名字旁边的小标识。留空则不显示。\n\n和 Logo 不是同一张图';
 
   @override
   String get navTabMenuTip => '长按标签栏图标（鼠标右键点击）可一次性连接或断开其中的全部内容。';
@@ -1770,11 +1769,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get distIcon => '發行版標識';
 
   @override
-  String get distIconConsent => '開啟即表示你自願顯示這些標識,且僅用於標識某台伺服器可能執行的發行版。';
+  String get distIconConsent => '僅用於標識某台伺服器可能執行的發行版。';
 
   @override
   String get distIconIntroLegal =>
-      '本應用不內建任何發行版標識。設定圖片位址後,標識從該位址載入 —— 來源由你選擇,未設定則不顯示。標識僅表示本裝置從遠端系統讀取到的資訊,該資訊可能有誤或已過期,也不代表其衍生版本、重構版本或任何特定版本。\n\n每個標識均為其各自所有者的商標,此處僅用於指代它所標識的系統。';
+      '標識僅表示本裝置從遠端系統讀取到的資訊,該資訊可能有誤或已過期,也不代表其衍生版本、重構版本或任何特定版本。識別不出時顯示一個通用圖示。\n\n每個標識均為其各自所有者的商標,此處僅用於指代它所標識的系統。';
 
   @override
   String get distIconTip => '在每台伺服器旁顯示一個小標識,表示它可能執行的系統';
@@ -1796,8 +1795,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get markUrl => '標識位址';
 
   @override
-  String get markUrlTip =>
-      '清單中伺服器名稱旁邊的小標識。留空則不顯示。\n\n和 Logo 不是同一張圖,畫法也不同:標識跟隨旁邊文字的顏色顯示為單色,這樣一列看起來才是一列。Logo 保持原色。';
+  String get markUrlTip => '清單中伺服器名稱旁邊的小標識。留空則不顯示。\n\n和 Logo 不是同一張圖';
 
   @override
   String get navTabMenuTip => '長按標籤列圖示（滑鼠右鍵點選）可一次連線或斷開其中的全部項目。';

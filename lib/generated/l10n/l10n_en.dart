@@ -289,11 +289,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get distIconConsent =>
-      'By turning this on you are choosing to display these marks, for the single purpose of identifying which distribution a server appears to be running.';
+      'Only to indicate the distribution a server may be running.';
 
   @override
   String get distIconIntroLegal =>
-      'This app ships no distribution marks. Once you set an address for them, the picture is fetched from there — the source is yours to choose, and until you choose one nothing is shown. A mark says only what this device read from the remote system, which can be wrong or out of date, and identifies neither a derivative, a rebuild, nor any particular version.\n\nEach mark is a trademark of its respective owner and is used only to refer to the system it identifies.';
+      'A mark says only what this device read from the remote system, which can be wrong or out of date, and identifies neither a derivative, a rebuild, nor any particular version. Where it cannot be identified, a plain icon is drawn.\n\nEach mark is a trademark of its respective owner and is used only to refer to the system it identifies.';
 
   @override
   String get distIconTip =>
@@ -318,7 +318,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get markUrlTip =>
-      'The small mark beside a server\'s name in lists. Empty means none is drawn.\n\nNot the same picture as the logo, and not drawn the same way: this one takes the colour of the text beside it, so a column of them reads as one column. The logo is left as published.';
+      'The small mark beside a server\'s name in lists. Empty means none is drawn.\n\nNot the same picture as the logo';
 
   @override
   String get navTabMenuTip =>
