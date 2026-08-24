@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:meta/meta.dart';
+import 'package:server_box/data/model/app/agent_shell_config.dart';
+import 'package:server_box/data/model/app/ask_ai_config.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/net_view.dart';
@@ -9,6 +11,7 @@ import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/res/default.dart';
+import 'package:server_box/data/store/field_prop.dart';
 
 class SettingStore extends SqliteStore {
   SettingStore._() : super('setting');
@@ -273,17 +276,58 @@ class SettingStore extends SqliteStore {
   /// Whether collapse UI items by default
   late final collapseUIDefault = propertyDefault('collapseUIDefault', true);
 
-  /// Terminal AI helper configuration
-  late final askAiBaseUrl = propertyDefault(
-    'askAiBaseUrl',
-    'https://api.openai.com',
+  /// Terminal AI helper configuration, as one row.
+  ///
+  /// Six keys before this. See [AskAiConfig] for what moved and why; the
+  /// per-field names below are [FieldProp]s onto it, so a caller reads and
+  /// writes one field with one field's type and hears about one field's
+  /// changes.
+  late final askAi = propertyDefault<AskAiConfig>(
+    'askAi',
+    const AskAiConfig(),
+    fromObj: (raw) =>
+        raw is Map ? AskAiConfig.fromJson(Map<String, dynamic>.from(raw)) : null,
+    toObj: (val) => val?.toJson(),
   );
-  late final askAiApiKey = propertyDefault('askAiApiKey', '');
-  late final askAiModel = propertyDefault('askAiModel', 'gpt-5.6-luna');
-  late final askAiProtocol = propertyDefault('askAiProtocol', 'auto');
-  late final askAiAutoRunSafeCommands = propertyDefault(
-    'askAiAutoRunSafeCommands',
-    false,
+
+  late final askAiBaseUrl = FieldProp<AskAiConfig, String>(
+    askAi,
+    'baseUrl',
+    read: (c) => c.baseUrl,
+    write: (c, v) => c.copyWith(baseUrl: v),
+  );
+  late final askAiApiKey = FieldProp<AskAiConfig, String>(
+    askAi,
+    'apiKey',
+    read: (c) => c.apiKey,
+    write: (c, v) => c.copyWith(apiKey: v),
+  );
+  late final askAiModel = FieldProp<AskAiConfig, String>(
+    askAi,
+    'model',
+    read: (c) => c.model,
+    write: (c, v) => c.copyWith(model: v),
+  );
+  late final askAiProtocol = FieldProp<AskAiConfig, String>(
+    askAi,
+    'protocol',
+    read: (c) => c.protocol,
+    write: (c, v) => c.copyWith(protocol: v),
+  );
+  late final askAiAutoRunSafeCommands = FieldProp<AskAiConfig, bool>(
+    askAi,
+    'autoRunSafeCommands',
+    read: (c) => c.autoRunSafeCommands,
+    write: (c, v) => c.copyWith(autoRunSafeCommands: v),
+  );
+
+  /// Enter sends the prompt and Shift+Enter starts a line. Off swaps them: a
+  /// line break is the plain key, and sending is the modifier or the button.
+  late final askAiSendOnEnter = FieldProp<AskAiConfig, bool>(
+    askAi,
+    'sendOnEnter',
+    read: (c) => c.sendOnEnter,
+    write: (c, v) => c.copyWith(sendOnEnter: v),
   );
 
   /// Whether the Agent may run commands on this device.
@@ -295,37 +339,75 @@ class SettingStore extends SqliteStore {
   ///
   /// Auto-running stays off here whatever [askAiAutoRunSafeCommands] says —
   /// that setting is about servers. See `AskAiCommand.canAutoRun`.
+  ///
+  /// Its own key, and outside [askAi] on purpose: that group is which provider
+  /// to talk to, and this is what the app will let the answer do to this
+  /// machine. A restore that carried a provider's configuration across should
+  /// not carry that with it.
   late final agentLocalExec = propertyDefault('agentLocalExec', false);
 
-  /// Enter sends the prompt and Shift+Enter starts a line. Off swaps them: a
-  /// line break is the plain key, and sending is the modifier or the button.
-  late final askAiSendOnEnter = propertyDefault('askAiSendOnEnter', true);
-
-  /// Whether the Agent follows you onto the other tabs, and how much of it
-  /// comes along. One of `AgentShellMode`'s names.
-  late final agentShellMode = propertyDefault('agentShellMode', 'hidden');
-
-  /// Where the floating Agent sits on a desktop window, and how big it is.
+  /// The floating Agent's placement and size, as one row.
   ///
-  /// A negative offset means "never placed", which the shell reads as its
-  /// default corner — a first run has no position to restore, and 0,0 is a
-  /// real position somebody may have dragged it to.
-  late final agentShellLeft = propertyDefault('agentShellLeft', -1.0);
-  late final agentShellTop = propertyDefault('agentShellTop', -1.0);
-  late final agentShellWidth = propertyDefault('agentShellWidth', 400.0);
-  late final agentShellHeight = propertyDefault('agentShellHeight', 560.0);
-
-  /// Which edge the collapsed pill clings to on a phone, and how far down it.
-  late final agentShellPillOnRight = propertyDefault(
-    'agentShellPillOnRight',
-    true,
+  /// Eight keys before this. See [AgentShellConfig] for the nesting; the
+  /// per-field names below are [FieldProp]s onto it.
+  late final agentShell = propertyDefault<AgentShellConfig>(
+    'agentShell',
+    const AgentShellConfig(),
+    fromObj: (raw) => raw is Map
+        ? AgentShellConfig.fromJson(Map<String, dynamic>.from(raw))
+        : null,
+    toObj: (val) => val?.toJson(),
   );
-  late final agentShellPillY = propertyDefault('agentShellPillY', 0.62);
 
-  /// How much of a phone screen the expanded Agent takes, as a fraction.
-  late final agentShellSheetHeight = propertyDefault(
-    'agentShellSheetHeight',
-    0.62,
+  late final agentShellMode = FieldProp<AgentShellConfig, String>(
+    agentShell,
+    'mode',
+    read: (c) => c.mode,
+    write: (c, v) => c.copyWith(mode: v),
+  );
+
+  late final agentShellLeft = FieldProp<AgentShellConfig, double>(
+    agentShell,
+    'window.left',
+    read: (c) => c.window.left,
+    write: (c, v) => c.copyWith(window: c.window.copyWith(left: v)),
+  );
+  late final agentShellTop = FieldProp<AgentShellConfig, double>(
+    agentShell,
+    'window.top',
+    read: (c) => c.window.top,
+    write: (c, v) => c.copyWith(window: c.window.copyWith(top: v)),
+  );
+  late final agentShellWidth = FieldProp<AgentShellConfig, double>(
+    agentShell,
+    'window.width',
+    read: (c) => c.window.width,
+    write: (c, v) => c.copyWith(window: c.window.copyWith(width: v)),
+  );
+  late final agentShellHeight = FieldProp<AgentShellConfig, double>(
+    agentShell,
+    'window.height',
+    read: (c) => c.window.height,
+    write: (c, v) => c.copyWith(window: c.window.copyWith(height: v)),
+  );
+
+  late final agentShellPillOnRight = FieldProp<AgentShellConfig, bool>(
+    agentShell,
+    'pill.onRight',
+    read: (c) => c.pill.onRight,
+    write: (c, v) => c.copyWith(pill: c.pill.copyWith(onRight: v)),
+  );
+  late final agentShellPillY = FieldProp<AgentShellConfig, double>(
+    agentShell,
+    'pill.y',
+    read: (c) => c.pill.y,
+    write: (c, v) => c.copyWith(pill: c.pill.copyWith(y: v)),
+  );
+  late final agentShellSheetHeight = FieldProp<AgentShellConfig, double>(
+    agentShell,
+    'pill.sheetHeight',
+    read: (c) => c.pill.sheetHeight,
+    write: (c, v) => c.copyWith(pill: c.pill.copyWith(sheetHeight: v)),
   );
 
   late final serverFuncBtns = listProperty(

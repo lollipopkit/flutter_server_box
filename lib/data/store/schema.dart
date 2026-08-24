@@ -67,7 +67,9 @@ abstract final class SchemaVersion {
   ///     opening the key to rewrite the copy inside it
   /// v9: the two settings fixups that gated themselves on their own
   ///     `xxxMigrated` flag key, now ordered steps like everything else
-  static const current = 9;
+  /// v10: the Agent shell's eight settings keys and the AI provider's six
+  ///      folded into one object row each
+  static const current = 10;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

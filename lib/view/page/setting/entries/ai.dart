@@ -5,7 +5,7 @@ extension _AI on _AppSettingsPageState {
   /// settings row that opens something: title, the current value under it, and
   /// a chevron saying there is more behind the tap.
   Widget _buildAskAiTextTile({
-    required SqliteProp<String> prop,
+    required StorePropDefault<String> prop,
     required Widget leading,
     required String title,
     required String hint,
@@ -137,18 +137,18 @@ extension _AI on _AppSettingsPageState {
   }
 
   Future<void> _showAskAiFieldDialog({
-    required SqliteProp<String> prop,
+    required StorePropDefault<String> prop,
     required String title,
     required String hint,
     String? description,
     bool obscure = false,
   }) async {
     return withTextFieldController((ctrl) async {
-      final fetched = prop.fetch();
-      if (fetched != null && fetched.isNotEmpty) ctrl.text = fetched;
+      final fetched = prop.get();
+      if (fetched.isNotEmpty) ctrl.text = fetched;
 
       void onSave() {
-        prop.put(ctrl.text.trim());
+        unawaited(prop.set(ctrl.text.trim()));
         context.popDialog();
       }
 
@@ -177,7 +177,10 @@ extension _AI on _AppSettingsPageState {
         actions: [
           TextButton(
             onPressed: () {
-              prop.delete();
+              // Back to the default rather than off the map: a grouped field
+              // has no row of its own to delete, and for these the default is
+              // what an absent row read as anyway.
+              unawaited(prop.remove());
               context.popDialog();
             },
             child: Text(libL10n.clear),
