@@ -355,4 +355,24 @@ class ServerStore extends EntityStore<Spi> {
     ]);
     touch(serverId);
   }
+
+  @override
+  void deleteById(String id) {
+    final pfIds = db
+        .select('SELECT id FROM port_forward WHERE server_id = ?;', [id])
+        .map((r) => r['id'] as String)
+        .toList();
+    SqliteStore.transact(() {
+      for (final pfId in pfIds) {
+        db.execute(
+          'INSERT OR REPLACE INTO tombstone (tbl, row_id, deleted_at) VALUES (?, ?, ?);',
+          ['port_forward', pfId, DateTimeX.timestamp],
+        );
+      }
+      db.execute('DELETE FROM port_forward WHERE server_id = ?;', [id]);
+      db.execute('DELETE FROM $table WHERE $idColumn = ?;', [id]);
+      synced.tombstone(id);
+    });
+    invalidate();
+  }
 }

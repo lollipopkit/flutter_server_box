@@ -337,6 +337,15 @@ abstract class EntityStore<T extends Object> {
           // Only a record the backup knew about and no longer holds is a
           // delete; one it never had a timestamp for says nothing.
           if (!known || bakTs == null) continue;
+          if (table == 'server') {
+            for (final row in db.select('SELECT id FROM port_forward WHERE server_id = ?;', [id])) {
+              final pfId = row['id'] as String;
+              db.execute(
+                'INSERT OR REPLACE INTO tombstone (tbl, row_id, deleted_at) VALUES (?, ?, ?);',
+                ['port_forward', pfId, at],
+              );
+            }
+          }
           db.execute('DELETE FROM $table WHERE $idColumn = ?;', [id]);
           synced.tombstone(id, at: at);
           changed = true;

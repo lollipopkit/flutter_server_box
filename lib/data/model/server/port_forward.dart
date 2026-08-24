@@ -32,7 +32,7 @@ abstract class PortForwardConfig with _$PortForwardConfig {
       final typeStr = json['type'] as String;
       type = PortForwardType.values.firstWhere(
         (e) => e.name == typeStr,
-        orElse: () => PortForwardType.local,
+        orElse: () => throw FormatException('unknown port forward type $typeStr'),
       );
     }
     return PortForwardConfig(

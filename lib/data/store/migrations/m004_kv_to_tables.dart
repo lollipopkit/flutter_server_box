@@ -147,7 +147,9 @@ class KvToTablesMigration implements SchemaMigration {
       }
 
       final id = ShortId.generate();
-      ids[oldId] = id;
+      // Duplicate legacy names must not clobber the first mapping: servers
+      // pointing at the first key would otherwise be rewritten to the second.
+      ids.putIfAbsent(oldId, () => id);
       _db.execute(
         'INSERT INTO private_key (id, name, key, updated_at) '
         'VALUES (?, ?, ?, ?);',
@@ -423,22 +425,33 @@ class KvToTablesMigration implements SchemaMigration {
       }
       const types = {'local', 'remote', 'dynamic'};
       final type = v['type'] as String?;
-      _db.execute(
-        'INSERT INTO port_forward (id, server_id, name, type, local_host, '
-        'local_port, remote_host, remote_port, updated_at) '
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);',
-        [
-          id,
-          serverId,
-          v['name'] as String? ?? id,
-          types.contains(type) ? type : 'local',
-          v['localHost'] as String?,
-          (v['localPort'] as num?)?.toInt() ?? 0,
-          v['remoteHost'] as String?,
-          (v['remotePort'] as num?)?.toInt(),
-          row.updatedAt,
-        ],
-      );
+      try {
+        _db.execute(
+          'INSERT INTO port_forward (id, server_id, name, type, local_host, '
+          'local_port, remote_host, remote_port, updated_at) '
+          'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);',
+          [
+            id,
+            serverId,
+            v['name'] as String? ?? id,
+            types.contains(type) ? type : 'local',
+            v['localHost'] as String?,
+            (v['localPort'] as num?)?.toInt() ?? 0,
+            v['remoteHost'] as String?,
+            (v['remotePort'] as num?)?.toInt(),
+            row.updatedAt,
+          ],
+        );
+      } on SqliteException catch (e) {
+        // Duplicate logical ids (e.g. two Hive keys `pf-a`/`pf-b` both with
+        // `id: 'pf-1'`) would otherwise abort the whole m004 transaction and
+        // strand every store. Keep the first occurrence and drop the duplicate.
+        if (e.extendedResultCode == 1555 || e.message.contains('UNIQUE')) {
+          Loggers.app.warning('m004: duplicate port_forward id "$id" dropped', e);
+          continue;
+        }
+        rethrow;
+      }
     }
   }
 

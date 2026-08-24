@@ -156,10 +156,13 @@ abstract final class HiveImport {
       // boxes remain unread: it holds no data that is not derivable from the
       // records and must not stay plaintext beside the encrypted database.
       _dropPlaintextIndex(dir);
-      // What did land is already in the current shape, so the version is set
-      // now: a launch in this state runs the migrator like any other, and the
-      // step for a shape this data no longer has must not be applied to it.
-      if (done.isNotEmpty) SchemaVersion.initAtHiveImport();
+      // Even when nothing succeeded we must advance the schema version away
+      // from the default 2, otherwise the subsequent SchemaVersion.migrate
+      // from 2 has no v2->v3/v3->v4 steps (HiveImport is supposed to establish
+      // v4) and the app crashes on every launch. Any future successful import
+      // of the still-unread boxes will land rows in kv at v4 shape; those
+      // rows will be picked up by the next m004 run via a re-entrant check.
+      SchemaVersion.initAtHiveImport();
       return;
     }
     if (hadWriteFailures) {
@@ -169,7 +172,7 @@ abstract final class HiveImport {
         'will retry failed boxes',
       );
       _dropPlaintextIndex(dir);
-      if (done.isNotEmpty) SchemaVersion.initAtHiveImport();
+      SchemaVersion.initAtHiveImport();
       return;
     }
 
