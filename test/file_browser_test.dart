@@ -84,7 +84,12 @@ class _MapBackend implements FileBackend {
   Future<FileEntry?> stat(String path) async => null;
 
   @override
-  Future<void> write(String path, Stream<List<int>> data, {int? size}) async {}
+  Future<void> write(
+    String path,
+    Stream<List<int>> data, {
+    int? size,
+    void Function(String staging)? onStaging,
+  }) async {}
 }
 
 FileEntry _dir(String name) => FileEntry(name: name, kind: FileKind.dir);

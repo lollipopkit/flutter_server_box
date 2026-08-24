@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:meta/meta.dart';
 
 /// What a directory listing can say about one entry.
@@ -72,6 +74,27 @@ bool isStagingOf(String name, String destination) {
   final base = slash < 0 ? destination : destination.substring(slash + 1);
   return name.startsWith('$base$kStagingSuffix');
 }
+
+/// Where to park a write to [destination] until it can be renamed into place.
+///
+/// The counter alone was unique only within the isolate holding it, and every
+/// transfer runs in a fresh one that starts it at zero — so two transfers to
+/// the same destination both picked `<name>.sb-part-0`, wrote into each
+/// other's bytes, and cleaned up each other's file. [_stagingToken] is drawn
+/// once per isolate from a source that does not repeat across them, which is
+/// what makes the two disagree; the counter then separates writes within one.
+String stagingNameFor(String destination) =>
+    '$destination$kStagingSuffix$_stagingToken-${_staging++}';
+
+var _staging = 0;
+
+/// Not `Random()`: its default seed is derived from the clock, and two
+/// isolates spawned in the same millisecond would draw the same token — the
+/// collision this exists to prevent.
+final _stagingToken = Random.secure()
+    .nextInt(1 << 32)
+    .toRadixString(36)
+    .padLeft(7, '0');
 
 /// The bits [FileEntry.mode] keeps: `rwxrwxrwx` plus setuid, setgid and
 /// sticky, and nothing above them.
@@ -167,7 +190,19 @@ abstract interface class FileBackend {
   /// and renames, so a transfer that dies halfway leaves no half-file under the
   /// name something else is about to open. [size] is a hint for progress and
   /// pre-allocation, not a contract.
-  Future<void> write(String path, Stream<List<int>> data, {int? size});
+  ///
+  /// [onStaging] is called with the path being staged onto, before anything is
+  /// written there, for the caller that has to clean up after a process this
+  /// side kills: `write` removes its own leftovers when it fails, and being
+  /// killed is not a failure it gets to handle. A backend that stages
+  /// somewhere this side cannot reach — the agent does its own — never calls
+  /// it, and there is correspondingly nothing here to remove.
+  Future<void> write(
+    String path,
+    Stream<List<int>> data, {
+    int? size,
+    void Function(String staging)? onStaging,
+  });
 
   /// Releases whatever this holds. A backend may be used again afterwards only
   /// if its own documentation says so.

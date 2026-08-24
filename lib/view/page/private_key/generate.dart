@@ -223,6 +223,12 @@ class _PrivateKeyGeneratePageState
         comment: comment,
         passphrase: _pwdController.text.isEmpty ? null : _pwdController.text,
       );
+      // RSA searches for primes and takes seconds, which is long enough to
+      // leave. Saving after that would put a key in the list whose public half
+      // was never shown — the half that has to reach the server for it to be
+      // any use — so a page that has gone drops the key instead. Making
+      // another costs only the wait.
+      if (!mounted) return;
       await ref
           .read(privateKeyProvider.notifier)
           .add(

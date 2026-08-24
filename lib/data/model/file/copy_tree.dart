@@ -133,10 +133,6 @@ Future<void> runCopy(
   var transferred = 0;
   for (final item in plan.items) {
     checkCancelled();
-    // Told before the write starts, so a caller whose process is about to be
-    // killed mid-file knows what to clean up. `write` removes its own staging
-    // on a normal failure; being killed is not one.
-    onStaging?.call(item.to);
     final counted = source.read(item.from).map((chunk) {
       checkCancelled();
       transferred += chunk.length;
@@ -145,7 +141,18 @@ Future<void> runCopy(
     });
     // `write` stages beside the destination and renames, so a file that dies
     // halfway leaves no half-file under the name something else opens.
-    await dest.write(item.to, counted, size: item.size);
+    //
+    // The staging path comes back from `write`, which is the only place that
+    // knows it, and it arrives before any byte is written there — so a caller
+    // whose process is about to be killed mid-file knows the one file to
+    // remove. `write` removes its own leftovers when it fails; being killed
+    // is not a failure it gets to handle.
+    await dest.write(
+      item.to,
+      counted,
+      size: item.size,
+      onStaging: onStaging,
+    );
   }
 }
 

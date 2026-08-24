@@ -98,12 +98,18 @@ class LocalFileBackend implements FileBackend {
       File(_native(path)).openRead(offset);
 
   @override
-  Future<void> write(String path, Stream<List<int>> data, {int? size}) async {
+  Future<void> write(
+    String path,
+    Stream<List<int>> data, {
+    int? size,
+    void Function(String staging)? onStaging,
+  }) async {
     final native = _native(path);
     // Beside the destination, not in a temp directory: a rename across
     // filesystems is a copy, and this one has to be the cheap kind for the
     // atomicity to be worth anything.
-    final staging = File('$native.${_stagingSuffix()}');
+    final staging = File(stagingNameFor(native));
+    onStaging?.call(staging.path);
     try {
       final sink = staging.openWrite();
       try {
@@ -133,10 +139,6 @@ class LocalFileBackend implements FileBackend {
 
   @override
   Future<void> close() async {}
-
-  static var _staging = 0;
-
-  String _stagingSuffix() => '${kStagingSuffix.substring(1)}${_staging++}';
 
   /// POSIX in, whatever this platform uses out.
   ///

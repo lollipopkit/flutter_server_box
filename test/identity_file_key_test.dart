@@ -32,6 +32,17 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('SshCredential', () {
+    test('the id-only reference is the one a connection unlocks under', () {
+      // The key editor invalidates and warms the unlock cache from an id it
+      // holds, with no credential to ask. It spelled that `<id>` while
+      // `genClient` unlocks under `keyRef`, so editing an encrypted key left
+      // the decrypted copy a connection was holding in place and the next
+      // connection authenticated with the key that had just been replaced.
+      const stored = SshCredential(ip: 'a', keyId: 'work');
+
+      expect(SshCredential.keyRefForId('work'), stored.keyRef);
+    });
+
     test('keyRef names whichever key is set, and tells them apart', () {
       const stored = SshCredential(ip: 'a', keyId: 'work');
       const onDisk = SshCredential(ip: 'a', keyPath: '~/.ssh/id_ed25519');

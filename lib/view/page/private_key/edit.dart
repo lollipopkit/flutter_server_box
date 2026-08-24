@@ -11,6 +11,7 @@ import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_key_unlock.dart';
 import 'package:server_box/core/utils/ssh_keygen.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
+import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/store/entity_store.dart';
@@ -130,7 +131,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
                   actions: Btn.ok(red: true).toList,
                 );
                 if (confirmed != true || !context.mounted) return;
-                PrivateKeyUnlock.forget(pki.id);
+                PrivateKeyUnlock.forget(SshCredential.keyRefForId(pki.id));
                 await _notifier.delete(pki);
                 context.pop();
               },
@@ -151,7 +152,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
     try {
       final opened = await PrivateKeyUnlock.open(
         pki.key,
-        cacheKey: pki.id,
+        cacheKey: SshCredential.keyRefForId(pki.id),
         keyName: pki.name,
       );
       line = publicKeyLine(
@@ -392,9 +393,10 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
       // opened for it no longer describes what is stored — and then the
       // passphrase just verified is put back, rather than asking for it again
       // seconds later on the first connection.
-      PrivateKeyUnlock.forget(pki.id);
+      final cacheKey = SshCredential.keyRefForId(pki.id);
+      PrivateKeyUnlock.forget(cacheKey);
       if (pwd.isNotEmpty && opened != key) {
-        PrivateKeyUnlock.remember(pki.id, opened);
+        PrivateKeyUnlock.remember(cacheKey, opened);
       }
       final originPki = this.pki;
       if (originPki != null) {

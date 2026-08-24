@@ -147,7 +147,12 @@ class KvToTablesMigration implements SchemaMigration {
       }
 
       final id = ShortId.generate();
-      ids[oldId] = id;
+      // The first row under a name wins the reference, and it is also the one
+      // that keeps the name unrenamed above — so a server that pointed at `X`
+      // ends up on the key still called `X`. Assigning unconditionally handed
+      // every such server to whichever duplicate happened to be read last,
+      // which is to say: to a key the user never chose, silently.
+      ids.putIfAbsent(oldId, () => id);
       _db.execute(
         'INSERT INTO private_key (id, name, key, updated_at) '
         'VALUES (?, ?, ?, ?);',
