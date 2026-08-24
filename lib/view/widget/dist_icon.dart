@@ -130,14 +130,29 @@ class DistIconOf extends StatelessWidget {
       dist: dist,
       dark: Theme.of(context).brightness == Brightness.dark,
     );
-    // A blank of the same size rather than nothing at all: a leading slot that
-    // collapses shifts the row's text sideways, and in a list where some
-    // servers are recognised and some are not, that is every other row moving.
-    if (url == null) return SizedBox.square(dimension: size);
+    // No address: the mark shipped for this distribution, if there is one.
+    // Five have a logo whose licence permits redistribution — see
+    // `Dist.markAsset`. An address, once set, wins over all of them: somebody
+    // who chose a collection wants it used for every row, not five exceptions.
+    if (url == null) {
+      final asset = dist?.markAsset;
+      // A blank of the same size rather than nothing at all: a leading slot
+      // that collapses shifts the row's text sideways, and in a list where
+      // some servers are recognised and some are not, that is every other row
+      // moving.
+      if (asset == null) return SizedBox.square(dimension: size);
+      return SvgPicture.asset(
+        asset,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        semanticsLabel: dist?.name,
+      );
+    }
 
-    // Not tinted, unlike the glyphs this replaces. The address points at a
-    // project's own artwork in whatever colours that project uses, and
-    // recolouring a logo is the thing several trademark policies name.
+    // Not tinted, here or above. These are projects' own artwork in the
+    // colours those projects use, and recolouring a logo is the thing several
+    // trademark policies name outright.
     return SizedBox.square(
       dimension: size,
       child: _isSvgUrl(url)

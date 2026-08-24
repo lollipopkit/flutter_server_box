@@ -137,6 +137,11 @@ flutter:
   assets:
     - assets/app_icon.png
     - assets/rootfs_manifest.json
+    # The directory, not each file: `Dist.markAsset` names them by enum name.
+    # Only distributions whose logo carries an explicit copyright licence are
+    # in there — see the README beside them, which Flutter leaves out because
+    # it only bundles files it can load.
+    - assets/distro/
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
   # fonts:

@@ -94,6 +94,22 @@ enum Dist {
   macos,
   windows;
 
+  /// The mark shipped for this distribution, or null for the great majority.
+  ///
+  /// Five files, and the list is short for one reason: these are the only
+  /// distributions whose *logo artwork* carries an explicit copyright licence
+  /// permitting redistribution. Trademark permission is a separate question
+  /// and a much easier one — nominative use covers showing a mark to say which
+  /// system a server runs — but shipping the file needs the copyright answered
+  /// too, and almost no project answers it.
+  ///
+  /// Ubuntu, Fedora, Arch and openSUSE are all absent for that reason and not
+  /// for want of asking; `assets/distro/README.md` quotes each licence and
+  /// records what the rejected ones say instead. Everything else is drawn from
+  /// the address the user configures, which is what `Dist` mostly exists for.
+  String? get markAsset =>
+      _bundled.contains(this) ? 'assets/distro/$name.svg' : null;
+
   /// Whether this is a Linux at all.
   ///
   /// Kept because the identification is worth having even where no picture is
@@ -101,6 +117,15 @@ enum Dist {
   /// say "not a Linux" should not have to enumerate them.
   bool get isLinux => !_notLinux.contains(this);
 }
+
+/// The distributions whose logo may be redistributed — see [Dist.markAsset].
+const _bundled = {
+  Dist.debian,
+  Dist.gentoo,
+  Dist.alpine,
+  Dist.rocky,
+  Dist.nixos,
+};
 
 /// The ones that are not Linux.
 const _notLinux = {

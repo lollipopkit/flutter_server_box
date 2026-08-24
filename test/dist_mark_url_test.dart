@@ -46,8 +46,20 @@ void main() {
 
   test('nothing configured fetches nothing', () {
     // The out-of-the-box state, and the one that matters: no address means no
-    // request, for any server, ever.
+    // request, for any server, ever. A shipped mark may still be drawn — that
+    // is an asset, not a fetch, and it is decided in `DistIconOf`.
     expect(url(), isNull);
+    expect(url(dist: Dist.debian), isNull, reason: 'a bundled one included');
+  });
+
+  test('an address wins over a bundled mark', () {
+    // Somebody who chose a collection wants it used for every row, not for
+    // fifty-eight of them with five exceptions drawn from the bundle.
+    expect(Dist.debian.markAsset, isNotNull, reason: 'debian is bundled');
+    expect(
+      url(mark: 'https://ex.com/{DIST}.svg', dist: Dist.debian),
+      'https://ex.com/debian.svg',
+    );
   });
 
   test('the template expands to the distribution', () {

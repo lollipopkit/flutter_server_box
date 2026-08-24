@@ -7,15 +7,93 @@
 /// a mistyped `ID=` in `_byOsId` is not a failure but a fall through to the
 /// prose match, which usually still answers — with the parent.
 ///
-/// Nothing here is about pictures: the app ships none. What a recognised
-/// distribution turns into is an address, and that is
-/// `test/dist_mark_url_test.dart`.
+/// The app ships five marks and fetches the rest from an address; what a
+/// recognised distribution turns into is `test/dist_mark_url_test.dart`.
 library;
+
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/dist.dart';
 
+/// Read off disk: a test binary has no asset bundle, and the point is what is
+/// in the directory rather than what the manifest says about it.
+Set<String> _shipped() => {
+  for (final f in Directory('assets/distro').listSync())
+    if (f.path.endsWith('.svg')) f.uri.pathSegments.last,
+};
+
 void main() {
+  /// Five files, and every one of them a claim that somebody's licence permits
+  /// shipping it. The claim is only as good as the record beside it, so the
+  /// file, the enum, the README row and the in-app notice all have to agree —
+  /// a mark added to four of the five is a mark shipped without one of them.
+  group('the shipped marks', () {
+    const bundled = {
+      Dist.debian,
+      Dist.gentoo,
+      Dist.rocky,
+      Dist.nixos,
+      Dist.alpine,
+    };
+
+    test('each one names a file that is there', () {
+      for (final dist in bundled) {
+        expect(dist.markAsset, isNotNull, reason: 'Dist.${dist.name}');
+        expect(_shipped(), contains('${dist.name}.svg'));
+      }
+    });
+
+    test('and every file there is named by one of them', () {
+      // A file nothing points at is bundle weight, and — worse here — a logo
+      // being redistributed with nothing recording why that is allowed.
+      expect(_shipped(), {for (final d in bundled) '${d.name}.svg'});
+    });
+
+    test('everything else has no mark and is not meant to', () {
+      // Ubuntu, Fedora, Arch and openSUSE are the ones people will ask about.
+      // Each permits referring to it and reserves the artwork; see README.md.
+      for (final dist in [
+        Dist.ubuntu,
+        Dist.fedora,
+        Dist.arch,
+        Dist.opensuse,
+        Dist.rhel,
+        Dist.kali,
+      ]) {
+        expect(dist.markAsset, isNull, reason: 'Dist.${dist.name}');
+      }
+    });
+
+    test('each has a row in the README recording its licence', () {
+      final readme = File('assets/distro/README.md').readAsStringSync();
+      for (final dist in bundled) {
+        expect(
+          readme,
+          contains('| ${dist.name} |'),
+          reason:
+              '${dist.name}.svg ships with no row in the README table — record '
+              'the licence that permits redistributing it before adding it',
+        );
+      }
+    });
+
+    test('and a notice in the app, which is where attribution is discharged', () {
+      // CC BY and CC BY-SA both ask for credit reachable by the recipient of
+      // the work. A README inside the bundle that nothing renders is not that.
+      final notices = File(
+        'lib/data/model/server/dist_license.dart',
+      ).readAsStringSync();
+      for (final dist in bundled) {
+        expect(
+          notices.toLowerCase(),
+          contains(dist.name),
+          reason: 'Dist.${dist.name} has no entry in the licence registry',
+        );
+      }
+    });
+  });
+
   group('the matchers', () {
     // `_matchers` is private, so coverage is proven the way it matters: every
     // case has to be reachable from a name a real machine reports. A case with

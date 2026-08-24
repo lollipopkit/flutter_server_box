@@ -18,6 +18,7 @@ import 'package:server_box/core/utils/rootfs_manifest_source.dart';
 import 'package:server_box/core/utils/sandbox_import.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
+import 'package:server_box/data/model/server/dist_license.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
@@ -103,6 +104,9 @@ Future<void> _initApp() async {
 
   // Shared parsing library (sbm_parser FFI, see the shared-parser design)
   await RustLib.init();
+  // Before anything can open the licence page. Cheap: the callback only runs
+  // when that page asks for it.
+  registerDistMarkLicenses();
   await _initData();
   _setupDebug();
   await _initWindow();
