@@ -285,6 +285,11 @@ class AppLocalizationsKo extends AppLocalizations {
       '탭을 길게 누르거나 마우스 오른쪽 버튼으로 누르면 그 안의 모든 항목을 한 번에 연결하거나 끊을 수 있습니다.';
 
   @override
+  String nTags(Object count) {
+    return '태그 $count개';
+  }
+
+  @override
   String get remoteBackupPasswordRequired =>
       'Remote backups require a non-empty backup password';
 
@@ -600,6 +605,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String sshKeyUnlockTip(String name) {
     return '개인 키 [$name]의 암호를 입력하세요.';
   }
+
+  @override
+  String get ungrouped => '그룹 없음';
 
   @override
   String get unused => '미사용';

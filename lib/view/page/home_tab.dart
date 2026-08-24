@@ -9,13 +9,6 @@ import 'package:server_box/view/page/ssh/tab.dart';
 import 'package:server_box/view/page/storage/tab.dart';
 import 'package:server_box/view/widget/conn_count_badge.dart';
 
-/// A tab's own menu, opened by a long press or a right-click on it.
-///
-/// The offset is where the pointer was, or null for a long press — which is
-/// what [showContextMenu] wants in order to open at the pointer or, with
-/// nothing under a finger to avoid, in the middle.
-typedef NavTabMenu = void Function(Offset? at);
-
 extension AppTabViewX on AppTab {
   Widget get page {
     return switch (this) {
@@ -69,7 +62,7 @@ extension AppTabViewX on AppTab {
   /// the whole cell. The destination still finds the bar's inherited
   /// information above the wrapper, and a long press anywhere on the item —
   /// icon, label, or the space around them — reaches the menu.
-  Widget navDestination({NavTabMenu? onMenu}) {
+  Widget navDestination({ContextMenuOpener? onMenu}) {
     return _withMenu(
       NavigationDestination(
         icon: _counted(icon),
@@ -85,7 +78,7 @@ extension AppTabViewX on AppTab {
   /// [NavigationRail.destinations] is typed, so there is nothing to wrap the
   /// item as a whole with. The icon and the label are the two widgets it does
   /// take, and between them they are everything the item draws.
-  NavigationRailDestination navRailDestination({NavTabMenu? onMenu}) {
+  NavigationRailDestination navRailDestination({ContextMenuOpener? onMenu}) {
     return NavigationRailDestination(
       icon: _withMenu(_counted(icon), onMenu),
       selectedIcon: _withMenu(_counted(selectedIcon), onMenu),
@@ -106,7 +99,7 @@ extension AppTabViewX on AppTab {
 /// Translucent, so the tap that switches tabs still reaches the ink response
 /// this sits inside. A long press wins the arena over that tap by holding past
 /// the timeout, which is what lets one target carry both.
-Widget _withMenu(Widget child, NavTabMenu? onMenu) {
+Widget _withMenu(Widget child, ContextMenuOpener? onMenu) {
   if (onMenu == null) return child;
   return GestureDetector(
     behavior: HitTestBehavior.translucent,

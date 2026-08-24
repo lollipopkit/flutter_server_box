@@ -532,7 +532,7 @@ extension _HomePageStateActions on _HomePageState {
 /// reachable from anywhere in the app. Turning everything off is most wanted
 /// from somewhere that is not the server list.
 extension _HomePageNav on _HomePageState {
-  NavTabMenu? _navMenuFor(AppTab tab) {
+  ContextMenuOpener? _navMenuFor(AppTab tab) {
     final l10n = context.l10n;
     final menu = switch (tab) {
       AppTab.server => (
@@ -614,47 +614,12 @@ extension _HomePageNav on _HomePageState {
     if (spot == null) return;
 
     _navGuideHandled = true;
-    await SpotlightGuide.show(
-      context,
-      spot: spot,
-      caption: (ctx, dismiss) => _NavGuideCard(onOk: dismiss),
-    );
+    // One step, so no title: a heading over a single sentence says it twice.
+    // The same card the terminal's key walkthrough uses — see [GuideView].
+    await GuideOverlay.show(context, [
+      GuideStep(body: context.l10n.navTabMenuTip, spot: spot),
+    ]);
     // Written when it has been seen through, not when it was scheduled.
     flag.put(true);
-  }
-}
-
-/// The guide's text, over the dimmed screen.
-///
-/// White rather than the theme's foreground: it is read against the scrim,
-/// which is dark in both themes.
-class _NavGuideCard extends StatelessWidget {
-  const _NavGuideCard({required this.onOk});
-
-  final VoidCallback onOk;
-
-  @override
-  Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 330),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.touch_app_outlined, size: 40, color: Colors.white),
-          UIs.height13,
-          Text(
-            context.l10n.navTabMenuTip,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 16,
-              height: 1.4,
-              color: Colors.white,
-            ),
-          ),
-          UIs.height13,
-          Btn.elevated(text: libL10n.ok, onTap: onOk),
-        ],
-      ),
-    );
   }
 }

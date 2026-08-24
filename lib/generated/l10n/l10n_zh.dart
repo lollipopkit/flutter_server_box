@@ -280,6 +280,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navTabMenuTip => '长按标签栏图标（鼠标右键点击）可一次性连接或断开其中的全部内容。';
 
   @override
+  String nTags(Object count) {
+    return '$count 个标签';
+  }
+
+  @override
   String get remoteBackupPasswordRequired => '远程备份需要非空的备份密码';
 
   @override
@@ -588,6 +593,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String sshKeyUnlockTip(String name) {
     return '请输入私钥 [$name] 的口令。';
   }
+
+  @override
+  String get ungrouped => '未分组';
 
   @override
   String get unused => '未使用';
@@ -1748,6 +1756,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get navTabMenuTip => '長按標籤列圖示（滑鼠右鍵點選）可一次連線或斷開其中的全部項目。';
 
   @override
+  String nTags(Object count) {
+    return '$count 個標籤';
+  }
+
+  @override
   String get remoteBackupPasswordRequired => '遠端備份需要非空的備份密碼';
 
   @override
@@ -2056,6 +2069,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String sshKeyUnlockTip(String name) {
     return '請輸入私密金鑰 [$name] 的通行密碼。';
   }
+
+  @override
+  String get ungrouped => '未分組';
 
   @override
   String get unused => '未使用';

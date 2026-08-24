@@ -303,6 +303,11 @@ class AppLocalizationsId extends AppLocalizations {
       'Tekan lama sebuah tab — atau klik kanan — untuk menghubungkan atau memutuskan semuanya sekaligus.';
 
   @override
+  String nTags(Object count) {
+    return '$count tag';
+  }
+
+  @override
   String get remoteBackupPasswordRequired =>
       'Remote backups require a non-empty backup password';
 
@@ -634,6 +639,9 @@ class AppLocalizationsId extends AppLocalizations {
   String sshKeyUnlockTip(String name) {
     return 'Masukkan frasa sandi untuk kunci privat [$name].';
   }
+
+  @override
+  String get ungrouped => 'Tanpa grup';
 
   @override
   String get unused => 'Tidak terpakai';

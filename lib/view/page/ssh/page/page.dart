@@ -513,9 +513,9 @@ class SSHPageState extends ConsumerState<SSHPage>
       children: [
         terminal,
         Positioned.fill(
-          child: VirtKeyIntro(
+          child: GuideView(
+            steps: [for (final step in steps) step.guide],
             step: step,
-            steps: steps,
             onStep: setIntroStep,
             onDone: _endVirtKeyIntro,
           ),

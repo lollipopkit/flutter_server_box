@@ -304,6 +304,11 @@ class AppLocalizationsNl extends AppLocalizations {
       'Houd een tabblad ingedrukt — of klik er met rechts op — om alles erin in één keer te verbinden of te verbreken.';
 
   @override
+  String nTags(Object count) {
+    return '$count tags';
+  }
+
+  @override
   String get remoteBackupPasswordRequired =>
       'Externe back-ups vereisen een niet-leeg back-upwachtwoord';
 
@@ -636,6 +641,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String sshKeyUnlockTip(String name) {
     return 'Voer de wachtwoordzin voor de privésleutel [$name] in.';
   }
+
+  @override
+  String get ungrouped => 'Zonder groep';
 
   @override
   String get unused => 'Ongebruikt';

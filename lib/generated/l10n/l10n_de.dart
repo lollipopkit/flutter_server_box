@@ -306,6 +306,11 @@ class AppLocalizationsDe extends AppLocalizations {
       'Tippe lange auf einen Tab – oder klicke ihn mit der rechten Maustaste an –, um alles darin auf einmal zu verbinden oder zu trennen.';
 
   @override
+  String nTags(Object count) {
+    return '$count Tags';
+  }
+
+  @override
   String get remoteBackupPasswordRequired =>
       'Remote backups require a non-empty backup password';
 
@@ -637,6 +642,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String sshKeyUnlockTip(String name) {
     return 'Passphrase für den privaten Schlüssel [$name] eingeben.';
   }
+
+  @override
+  String get ungrouped => 'Ohne Gruppe';
 
   @override
   String get unused => 'Ungenutzt';

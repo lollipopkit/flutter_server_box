@@ -307,6 +307,11 @@ class AppLocalizationsRu extends AppLocalizations {
       'Нажмите и удерживайте вкладку — или щёлкните правой кнопкой — чтобы подключить или отключить всё сразу.';
 
   @override
+  String nTags(Object count) {
+    return 'Тегов: $count';
+  }
+
+  @override
   String get remoteBackupPasswordRequired =>
       'Для удалённых резервных копий требуется непустой пароль резервного копирования';
 
@@ -639,6 +644,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String sshKeyUnlockTip(String name) {
     return 'Введите парольную фразу закрытого ключа [$name].';
   }
+
+  @override
+  String get ungrouped => 'Без группы';
 
   @override
   String get unused => 'Не используется';

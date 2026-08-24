@@ -651,6 +651,12 @@ abstract class AppLocalizations {
   /// **'Long press a tab — or right-click it — to connect or disconnect everything on it at once.'**
   String get navTabMenuTip;
 
+  /// No description provided for @nTags.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} Tags'**
+  String nTags(Object count);
+
   /// No description provided for @remoteBackupPasswordRequired.
   ///
   /// In en, this message translates to:
@@ -1220,6 +1226,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter the passphrase for the private key [{name}].'**
   String sshKeyUnlockTip(String name);
+
+  /// No description provided for @ungrouped.
+  ///
+  /// In en, this message translates to:
+  /// **'Ungrouped'**
+  String get ungrouped;
 
   /// No description provided for @unused.
   ///

@@ -307,6 +307,11 @@ class AppLocalizationsIt extends AppLocalizations {
       'Tieni premuta una scheda — o fai clic destro — per connettere o disconnettere in una volta tutto ciò che contiene.';
 
   @override
+  String nTags(Object count) {
+    return '$count tag';
+  }
+
+  @override
   String get remoteBackupPasswordRequired =>
       'Remote backups require a non-empty backup password';
 
@@ -640,6 +645,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String sshKeyUnlockTip(String name) {
     return 'Inserisci la passphrase della chiave privata [$name].';
   }
+
+  @override
+  String get ungrouped => 'Senza gruppo';
 
   @override
   String get unused => 'Inutilizzato';

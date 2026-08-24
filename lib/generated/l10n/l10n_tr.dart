@@ -304,6 +304,11 @@ class AppLocalizationsTr extends AppLocalizations {
       'İçindeki her şeyi tek seferde bağlamak veya bağlantısını kesmek için bir sekmeye uzun basın ya da sağ tıklayın.';
 
   @override
+  String nTags(Object count) {
+    return '$count etiket';
+  }
+
+  @override
   String get remoteBackupPasswordRequired =>
       'Uzak yedeklemeler için boş olmayan bir yedekleme parolası gerekir';
 
@@ -635,6 +640,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String sshKeyUnlockTip(String name) {
     return '[$name] özel anahtarının parolasını girin.';
   }
+
+  @override
+  String get ungrouped => 'Gruplandırılmamış';
 
   @override
   String get unused => 'Kullanılmıyor';

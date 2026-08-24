@@ -304,6 +304,11 @@ class AppLocalizationsUk extends AppLocalizations {
       'Натисніть і утримуйте вкладку — або клацніть правою кнопкою — щоб підключити чи відключити все одразу.';
 
   @override
+  String nTags(Object count) {
+    return 'Тегів: $count';
+  }
+
+  @override
   String get remoteBackupPasswordRequired =>
       'Для віддалених резервних копій потрібен непорожній пароль резервного копіювання';
 
@@ -638,6 +643,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String sshKeyUnlockTip(String name) {
     return 'Введіть парольну фразу закритого ключа [$name].';
   }
+
+  @override
+  String get ungrouped => 'Без групи';
 
   @override
   String get unused => 'Не використовується';

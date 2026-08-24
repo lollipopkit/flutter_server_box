@@ -283,6 +283,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get navTabMenuTip => 'タブを長押し（マウスは右クリック）すると、その中のすべてをまとめて接続・切断できます。';
 
   @override
+  String nTags(Object count) {
+    return '$count 個のタグ';
+  }
+
+  @override
   String get remoteBackupPasswordRequired =>
       'Remote backups require a non-empty backup password';
 
@@ -601,6 +606,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String sshKeyUnlockTip(String name) {
     return '秘密鍵 [$name] のパスフレーズを入力してください。';
   }
+
+  @override
+  String get ungrouped => '未分類';
 
   @override
   String get unused => '未使用';
