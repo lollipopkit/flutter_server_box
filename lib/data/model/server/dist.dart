@@ -96,15 +96,18 @@ enum Dist {
 
   /// The mark shipped for this distribution, or null for the great majority.
   ///
-  /// Five files, and the list is short for one reason: these are the only
-  /// distributions whose *logo artwork* carries an explicit copyright licence
-  /// permitting redistribution. Trademark permission is a separate question
-  /// and a much easier one — nominative use covers showing a mark to say which
-  /// system a server runs — but shipping the file needs the copyright answered
-  /// too, and almost no project answers it.
+  /// Four files, and the list is short for two reasons: the artwork has to
+  /// carry an explicit copyright licence permitting redistribution, and the
+  /// owner's own terms have to permit what this app does with it — which
+  /// includes drawing it in one colour.
   ///
-  /// Ubuntu, Fedora, Arch and openSUSE are all absent for that reason and not
-  /// for want of asking; `assets/distro/README.md` quotes each licence and
+  /// Trademark permission is a separate question and a much easier one —
+  /// nominative use covers showing a mark to say which system a server runs —
+  /// but shipping the file needs the copyright answered too, and almost no
+  /// project answers it.
+  ///
+  /// Ubuntu, Fedora, Arch and openSUSE are absent for the first reason and
+  /// Rocky for the second; `assets/distro/README.md` quotes each licence and
   /// records what the rejected ones say instead. Everything else is drawn from
   /// the address the user configures, which is what `Dist` mostly exists for.
   String? get markAsset =>
@@ -123,7 +126,6 @@ const _bundled = {
   Dist.debian,
   Dist.gentoo,
   Dist.alpine,
-  Dist.rocky,
   Dist.nixos,
 };
 

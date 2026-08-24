@@ -19,13 +19,7 @@ import 'package:vector_graphics_compiler/vector_graphics_compiler.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  const bundled = {
-    Dist.debian,
-    Dist.gentoo,
-    Dist.rocky,
-    Dist.nixos,
-    Dist.alpine,
-  };
+  const bundled = {Dist.debian, Dist.gentoo, Dist.nixos, Dist.alpine};
 
   for (final dist in bundled) {
     test('${dist.name} compiles to something with paths in it', () async {

@@ -18,7 +18,6 @@ void registerDistMarkLicenses() {
     yield const LicenseEntryWithLineBreaks([_package], _preamble);
     yield const LicenseEntryWithLineBreaks([_package], _debian);
     yield const LicenseEntryWithLineBreaks([_package], _gentoo);
-    yield const LicenseEntryWithLineBreaks([_package], _rocky);
     yield const LicenseEntryWithLineBreaks([_package], _nixos);
     yield const LicenseEntryWithLineBreaks([_package], _alpine);
   });
@@ -29,16 +28,20 @@ void registerDistMarkLicenses() {
 const _package = 'Distribution marks (assets/distro)';
 
 const _preamble = '''
-Five distribution logos are shipped with this app. They are the ones whose
-artwork carries an explicit copyright licence permitting redistribution; every
-other distribution's mark is fetched from an address the user configures, and
-none is bundled.
+Four distribution logos are shipped with this app. They are the ones whose
+artwork carries an explicit copyright licence permitting redistribution and
+whose owners do not forbid what is done with it here; every other
+distribution's mark is fetched from an address the user configures.
 
 Each is used only to refer to the system it identifies, which is nominative
 use. Each remains a trademark of its owner, and a copyright licence is not a
 trademark licence. The files are shipped as published — including their
 metadata, which is where some of them carry their own attribution — except
-where a file could not be parsed at all, which is noted with it below.''';
+where a file could not be parsed at all, which is noted with it below.
+
+Changed: all of them are drawn in a single colour, taking the colour of the
+text beside them. Each of the licences above permits modification; none of
+these four projects' own terms forbid it.''';
 
 const _debian = '''
 The Debian Open Use Logo — (c) the Debian Project.
@@ -62,13 +65,6 @@ https://www.gentoo.org/inside-gentoo/artwork/gentoo-logo.html
 Licensed under the Creative Commons Attribution-ShareAlike 2.5 License
 (https://creativecommons.org/licenses/by-sa/2.5/), which is the licence Gentoo
 states for the vector versions of its logo.''';
-
-const _rocky = '''
-The Rocky Linux icon — (c) the Rocky Enterprise Software Foundation.
-https://github.com/rocky-linux/branding
-
-Licensed under the Creative Commons Attribution-ShareAlike 4.0 International
-License (https://creativecommons.org/licenses/by-sa/4.0/).''';
 
 const _nixos = '''
 The NixOS logo — by the NixOS Project and contributors (Simon Frankau, Tim

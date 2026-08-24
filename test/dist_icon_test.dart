@@ -29,13 +29,7 @@ void main() {
   /// file, the enum, the README row and the in-app notice all have to agree —
   /// a mark added to four of the five is a mark shipped without one of them.
   group('the shipped marks', () {
-    const bundled = {
-      Dist.debian,
-      Dist.gentoo,
-      Dist.rocky,
-      Dist.nixos,
-      Dist.alpine,
-    };
+    const bundled = {Dist.debian, Dist.gentoo, Dist.nixos, Dist.alpine};
 
     test('each one names a file that is there', () {
       for (final dist in bundled) {
@@ -60,6 +54,11 @@ void main() {
         Dist.opensuse,
         Dist.rhel,
         Dist.kali,
+        // Rocky is the one dropped for a different reason: its licence does
+        // permit redistribution, and its trademark policy says the mark may
+        // not be altered "in any way" — which is what drawing it in one
+        // colour is.
+        Dist.rocky,
       ]) {
         expect(dist.markAsset, isNull, reason: 'Dist.${dist.name}');
       }

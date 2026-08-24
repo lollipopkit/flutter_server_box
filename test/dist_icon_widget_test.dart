@@ -88,6 +88,21 @@ void main() {
     expect(fallback(), findsNothing, reason: 'the mark, not a stand-in for it');
   });
 
+  testWidgets('and it is drawn in one colour', (tester) async {
+    // A column of full-colour logos at the size of a line of text reads as
+    // noise. Every mark takes the row's colour, and the fallback icons take
+    // the same one so the column stays a column.
+    await pump(tester, Dist.debian);
+    await tester.pump();
+
+    final svg = tester.widget<SvgPicture>(find.byType(SvgPicture));
+    expect(
+      svg.colorFilter,
+      isNotNull,
+      reason: 'the mark is drawn as published, in colour',
+    );
+  });
+
   group('switched off', () {
     // Off has to mean no pixels, not a blank of the same size: a leading slot
     // that holds a zero-sized box still reserves width in a `ListTile`, and a

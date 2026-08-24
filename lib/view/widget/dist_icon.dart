@@ -144,6 +144,22 @@ class DistIconOf extends StatelessWidget {
   final Dist? dist;
   final double size;
 
+  /// One colour for every mark, taken from the text beside it.
+  ///
+  /// The marks are drawn in a list, at the size of a line of text, next to
+  /// icons that all follow the row's colour; a column of full-colour logos at
+  /// 20px reads as noise rather than as information. Each of the four shipped
+  /// licences permits modification and none of those four projects forbids it
+  /// — Rocky's did, in as many words, which is why Rocky is no longer among
+  /// them. A fetched mark is whatever the user pointed at, and is treated the
+  /// same.
+  ColorFilter _tint(BuildContext context) =>
+      ColorFilter.mode(_tintColor(context), BlendMode.srcIn);
+
+  Color _tintColor(BuildContext context) =>
+      IconTheme.of(context).color ??
+      Theme.of(context).colorScheme.onSurfaceVariant;
+
   /// Drawn wherever there is no mark: no address and no shipped file, an
   /// address that could not be fetched, or a distribution nothing recognised.
   ///
@@ -158,15 +174,11 @@ class DistIconOf extends StatelessWidget {
   /// Windows, all of which `uname -or` reaches, so the penguin would be a
   /// guess and the machine is all that can be claimed.
   ///
-  /// Tinted, unlike the marks. Both are icons from the app's own set and
-  /// neither is anybody's trademark, so taking the row's colour is what they
-  /// should do — the reason the marks are left alone does not apply.
+  /// Takes the same colour as the marks, so a column of them is one column.
   Widget _fallback(BuildContext context) => Icon(
     dist?.isLinux == true ? MingCute.linux_fill : BoxIcons.bxs_server,
     size: size,
-    color:
-        IconTheme.of(context).color ??
-        Theme.of(context).colorScheme.onSurfaceVariant,
+    color: _tintColor(context),
   );
 
   @override
@@ -192,13 +204,11 @@ class DistIconOf extends StatelessWidget {
         width: size,
         height: size,
         fit: BoxFit.contain,
+        colorFilter: _tint(context),
         semanticsLabel: dist?.name,
       );
     }
 
-    // Not tinted, here or above. These are projects' own artwork in the
-    // colours those projects use, and recolouring a logo is the thing several
-    // trademark policies name outright.
     return SizedBox.square(
       dimension: size,
       child: _isSvgUrl(url)
@@ -207,6 +217,7 @@ class DistIconOf extends StatelessWidget {
               width: size,
               height: size,
               fit: BoxFit.contain,
+              colorFilter: _tint(context),
               // Named for the reader that speaks the row aloud: the mark is
               // the only thing on it that says which distribution.
               semanticsLabel: dist?.name,
@@ -222,6 +233,12 @@ class DistIconOf extends StatelessWidget {
               width: size,
               height: size,
               fit: BoxFit.contain,
+              // Same tint. On a raster it works off the alpha channel, so a
+              // PNG with a solid background becomes a solid block — a thing to
+              // know when configuring an address, not something to correct
+              // for here.
+              color: _tintColor(context),
+              colorBlendMode: BlendMode.srcIn,
               semanticLabel: dist?.name,
               // Blank while it loads, the outline if it fails. A broken-image
               // box on every row reads as the app being wrong; the outline

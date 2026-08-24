@@ -1,14 +1,17 @@
 # Distribution marks
 
-Five logos, shipped with the app and drawn beside a server's name when nothing
-else says where a mark comes from. Every other distribution is fetched from an
+Four logos, shipped with the app and drawn beside a server's name when nothing
+else says where a mark comes from — **in one colour**, taking the colour of the
+text beside them. A column of full-colour logos at the size of a line of text
+reads as noise rather than as information, and that single decision is half the
+reason this list is four and not five. Every other distribution is fetched from an
 address the user configures — `serverMarkUrl`, expanding `{DIST}` — and this
 directory has nothing to do with it.
 
-## Why five
+## Why four
 
-Two questions have to be answered before a logo can be *shipped*, and only one
-of them is easy.
+Three questions have to be answered before a logo can be *shipped* here, and
+only the first is easy.
 
 **Trademark** is the easy one. Showing a distribution's mark next to a server
 in order to say *this server runs that distribution* is nominative use — a mark
@@ -27,14 +30,22 @@ referential use says nothing about copying the file. Five do:
 | --- | --- | --- |
 | debian | [LGPL-3+ or CC BY-SA 3.0](https://www.debian.org/logos/) | `openlogo-nd.svg` |
 | gentoo | [CC BY-SA 2.5](https://www.gentoo.org/inside-gentoo/artwork/gentoo-logo.html) | `gentoo-signet.svg` |
-| rocky | [CC BY-SA 4.0](https://github.com/rocky-linux/branding) | `logo/src/icon-primary.svg` |
 | nixos | [CC BY 4.0](https://github.com/NixOS/nixos-artwork) | `logo/nix-snowflake-colours.svg` |
 | alpine | [no copyright subsists](https://commons.wikimedia.org/wiki/File:Alpine_Linux.svg) | `alpinelinux-logo-icon.svg` |
+
+(Rocky Linux was the fifth, under CC BY-SA 4.0. See below for why it is not.)
 
 Alpine is the odd one: its mark is simple geometry, which under 37 CFR 202.1
 attracts no copyright at all ("familiar symbols or designs"), so there is
 nothing to license. Wikimedia Commons files it as `PD-textlogo`. The trademark
 is still the Alpine Linux Development Team's.
+
+**Whether the owner permits altering it** is the third question, and it only
+came up once the marks were drawn in a single colour. Recolouring is a
+modification; every one of the licences above permits modification, but a
+trademark policy can still object to it. Of the five, one does — see Rocky
+below. Gentoo's guidelines restrict aspect ratio and shape and say nothing
+about colour; Debian, NixOS and Alpine publish nothing on the point.
 
 The four Creative Commons licences all require attribution. That is discharged
 in the app itself — Settings → About → License, registered by
@@ -63,6 +74,14 @@ reserves the artwork:
   at its root, but `logos/official/LICENSE` says, of the logos specifically:
   "These logos are all rights reserved." A repository-level licence is not a
   file-level one, and this is the only place so far where the two disagree.
+- **Rocky Linux** — the one dropped for the third question rather than the
+  second. Its artwork *is* free, CC BY-SA 4.0, and it was shipped here. But the
+  [trademark policy](https://rockylinux.org/legal/trademarks) says "You may not
+  alter or modify any of the Foundation Marks in any way", and drawing it in
+  one colour is altering it. Keeping it would have meant one colour logo in a
+  monochrome column, which reads as a bug; putting the column back to colour
+  for its sake would have meant every other mark reading as noise. So it goes,
+  and Rocky falls back to the penguin like Ubuntu does.
 - **Red Hat**, **Raspberry Pi**, **Kali** — all three reserve logo use to
   written permission outright, and their marks are illustrations rather than
   shapes, so redrawing would not have answered the copyright either.
@@ -70,7 +89,9 @@ reserves the artwork:
 ## Adding one
 
 Find a statement from the project that licenses the *artwork*, not the
-trademark, and permits redistribution. A CC licence, a GPL/LGPL, or a
+trademark, and permits redistribution — and then check that nothing in the
+project's own terms forbids drawing it in a single colour, which is how it will
+be drawn. A CC licence, a GPL/LGPL, or a
 below-the-threshold mark like Alpine's. If all you can find is a trademark
 policy, however permissive, the answer is no — leave it to the address the
 user configures.
