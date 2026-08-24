@@ -476,7 +476,8 @@ Future<void> _download(
 /// in the same millisecond, must not stage onto each other.
 var _staging = 0;
 
-String get _stagingSuffix => 'sb-part-${_staging++}';
+String get _stagingSuffix =>
+    'sb-part-${DateTime.now().microsecondsSinceEpoch}-${_staging++}-${Isolate.current.hashCode}';
 
 /// Renames [staging] over [path], deleting what is there if the server will
 /// not replace it itself. See `SftpFileBackend._replace`, which faces the same

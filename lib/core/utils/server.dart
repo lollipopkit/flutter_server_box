@@ -248,7 +248,9 @@ Future<SSHClient> genClient(
             visitedServerIds: {...chainVisitedServerIds},
           );
 
-          final forwarded = await jumpClient.forwardLocal(ssh.ip, ssh.port);
+          final forwarded = await jumpClient
+              .forwardLocal(ssh.ip, ssh.port)
+              .timeout(timeout, onTimeout: () => throw TimeoutException('forwardLocal timed out after ${timeout.inSeconds}s'));
           return _JumpForwardedSocket(forwarded, jumpClient);
         } catch (e, stack) {
           try {

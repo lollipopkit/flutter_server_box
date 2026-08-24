@@ -323,6 +323,7 @@ class PveNotifier extends _$PveNotifier {
 
   Future<void> submitTfaCode(String otp) async {
     final challenge = _pendingTfaChallenge;
+    final gen = _sessionGeneration;
     if (challenge == null) {
       throw PveErr(
         type: PveErrType.needTfa,
@@ -333,18 +334,18 @@ class PveNotifier extends _$PveNotifier {
       throw PveErr(type: PveErrType.needTfa, message: l10n.pveOtpCodeRequired);
     }
 
-    if (!ref.mounted) return;
+    if (!ref.mounted || gen != _sessionGeneration) return;
     state = state.copyWith(error: null, loadingStep: PveLoadingStep.loggingIn);
 
     try {
       await _loginWithTfaChallenge(challenge, otp.trim());
-      if (!ref.mounted) return;
+      if (!ref.mounted || gen != _sessionGeneration) return;
       state = state.copyWith(loadingStep: PveLoadingStep.fetchingData);
       await _getRelease();
-      if (!ref.mounted) return;
+      if (!ref.mounted || gen != _sessionGeneration) return;
       state = state.copyWith(isConnected: true);
       await list();
-      if (!ref.mounted) return;
+      if (!ref.mounted || gen != _sessionGeneration) return;
       if (state.error == null) {
         state = state.copyWith(error: null, loadingStep: PveLoadingStep.none);
       } else {
