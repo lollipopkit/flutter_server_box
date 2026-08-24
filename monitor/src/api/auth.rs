@@ -56,7 +56,10 @@ pub fn verify_password(password: &str, hash: &str) -> Result<bool> {
 /// always calling [`verify_password`]. An absent account is checked against
 /// [`DUMMY_PASSWORD_HASH`] and still always returns false.
 pub fn verify_login_password(password: &str, hash: Option<&str>) -> Result<bool> {
-    let matched = verify_password(password, hash.unwrap_or(DUMMY_PASSWORD_HASH))?;
+    let matched = match verify_password(password, hash.unwrap_or(DUMMY_PASSWORD_HASH)) {
+        Ok(v) => v,
+        Err(_) => false,
+    };
     Ok(hash.is_some() && matched)
 }
 

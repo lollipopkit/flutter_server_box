@@ -15,7 +15,7 @@
 
 use sbm_parser::types::{Disk, DiskIoPiece, Memory, NetIface, Swap, Temperatures};
 use sbm_parser::{types::CpuCore, ServerStatus};
-use sysinfo::{Components, Disks, Networks, System};
+use sysinfo::{Components, CpuRefreshKind, Disks, Networks, System};
 
 /// One scale for every synthetic CPU reading (0.01% precision). Matches the
 /// used/total tick convention every other platform's real counters use (see
@@ -34,8 +34,14 @@ pub struct State {
 
 impl Default for State {
     fn default() -> Self {
+        let mut system = System::new();
+        // sysinfo 0.39 separates CPU list and usage refresh. Without an
+        // explicit list refresh an initially empty System never populates
+        // system.cpus(), so the first usage refresh yields no cores and the
+        // second (primed) sample still reports empty/0.
+        system.refresh_cpu_list(CpuRefreshKind::everything());
         Self {
-            system: System::new(),
+            system,
             disks: Disks::new(),
             networks: Networks::new(),
             components: Components::new(),
@@ -109,6 +115,9 @@ pub fn total_memory() -> Option<u64> {
 }
 
 pub fn sample(state: &mut State) -> ServerStatus {
+    // Ensure CPU list is populated before usage refresh on every call;
+    // sysinfo may need list refresh to see hot-plugged cores.
+    state.system.refresh_cpu_list(CpuRefreshKind::everything());
     state.system.refresh_cpu_usage();
     state.system.refresh_memory();
     state.disks.refresh(true);
