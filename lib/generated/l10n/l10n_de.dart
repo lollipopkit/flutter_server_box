@@ -578,6 +578,45 @@ class AppLocalizationsDe extends AppLocalizations {
   String get showHiddenFiles => 'Versteckte Dateien anzeigen';
 
   @override
+  String get sshKeyAlgorithm => 'Algorithmus';
+
+  @override
+  String get sshKeyComment => 'Kommentar';
+
+  @override
+  String get sshKeyGenerate => 'Schlüsselpaar erzeugen';
+
+  @override
+  String get sshKeyGenerating => 'Wird erzeugt…';
+
+  @override
+  String sshKeyLockedFmt(String name) {
+    return 'Der private Schlüssel [$name] wurde nicht entsperrt.';
+  }
+
+  @override
+  String get sshKeyPassphraseTip =>
+      'Optional. Ein Schlüssel mit Passphrase wird verschlüsselt gespeichert und beim ersten Verbinden abgefragt.';
+
+  @override
+  String get sshKeyPassphraseWrong => 'Falsche Passphrase.';
+
+  @override
+  String get sshKeyPublicKey => 'Öffentlicher Schlüssel';
+
+  @override
+  String get sshKeyPublicKeyTip =>
+      'Diese Zeile an ~/.ssh/authorized_keys auf dem Server anhängen.';
+
+  @override
+  String get sshKeyRecommended => 'Empfohlen';
+
+  @override
+  String sshKeyUnlockTip(String name) {
+    return 'Passphrase für den privaten Schlüssel [$name] eingeben.';
+  }
+
+  @override
   String get unused => 'Ungenutzt';
 
   @override
@@ -1099,16 +1138,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String sshHostKeyChangedDesc(Object serverName) {
     return 'Der SSH-Hostschlüssel für $serverName hat sich geändert. Fahren Sie nur fort, wenn Sie diesem Server vertrauen.';
-  }
-
-  @override
-  String sshHostKeyFingerprintMd5Base64(Object fingerprint) {
-    return 'Fingerabdruck (MD5 Base64): $fingerprint';
-  }
-
-  @override
-  String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
-    return 'Fingerabdruck (SHA256): $fingerprint';
   }
 
   @override

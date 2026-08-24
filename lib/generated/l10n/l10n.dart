@@ -1119,6 +1119,72 @@ abstract class AppLocalizations {
   /// **'Show hidden files'**
   String get showHiddenFiles;
 
+  /// No description provided for @sshKeyAlgorithm.
+  ///
+  /// In en, this message translates to:
+  /// **'Algorithm'**
+  String get sshKeyAlgorithm;
+
+  /// No description provided for @sshKeyComment.
+  ///
+  /// In en, this message translates to:
+  /// **'Comment'**
+  String get sshKeyComment;
+
+  /// No description provided for @sshKeyGenerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate key pair'**
+  String get sshKeyGenerate;
+
+  /// No description provided for @sshKeyGenerating.
+  ///
+  /// In en, this message translates to:
+  /// **'Generating…'**
+  String get sshKeyGenerating;
+
+  /// No description provided for @sshKeyLockedFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'The private key [{name}] was not unlocked.'**
+  String sshKeyLockedFmt(String name);
+
+  /// No description provided for @sshKeyPassphraseTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional. A key with a passphrase is stored encrypted, and you are asked for it the first time a connection uses the key.'**
+  String get sshKeyPassphraseTip;
+
+  /// No description provided for @sshKeyPassphraseWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong passphrase.'**
+  String get sshKeyPassphraseWrong;
+
+  /// No description provided for @sshKeyPublicKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Public key'**
+  String get sshKeyPublicKey;
+
+  /// No description provided for @sshKeyPublicKeyTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Append this line to ~/.ssh/authorized_keys on the server.'**
+  String get sshKeyPublicKeyTip;
+
+  /// No description provided for @sshKeyRecommended.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended'**
+  String get sshKeyRecommended;
+
+  /// No description provided for @sshKeyUnlockTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the passphrase for the private key [{name}].'**
+  String sshKeyUnlockTip(String name);
+
   /// No description provided for @unused.
   ///
   /// In en, this message translates to:
@@ -1993,18 +2059,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The SSH host key changed for {serverName}. Only continue if you trust this server.'**
   String sshHostKeyChangedDesc(Object serverName);
-
-  /// No description provided for @sshHostKeyFingerprintMd5Base64.
-  ///
-  /// In en, this message translates to:
-  /// **'Fingerprint (MD5 base64): {fingerprint}'**
-  String sshHostKeyFingerprintMd5Base64(Object fingerprint);
-
-  /// No description provided for @sshHostKeyFingerprintMd5Hex.
-  ///
-  /// In en, this message translates to:
-  /// **'Fingerprint (SHA256): {fingerprint}'**
-  String sshHostKeyFingerprintMd5Hex(Object fingerprint);
 
   /// Label for the SSH host key type displayed in the host key verification dialog.
   ///

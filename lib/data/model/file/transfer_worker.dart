@@ -83,11 +83,15 @@ class TransferStaging {
 
 class TransferHostKeyAccepted {
   final String storageKey;
-  final String fingerprintHex;
+
+  /// OpenSSH-style, `SHA256:<base64-without-padding>` — the same string
+  /// `HostKeyPromptInfo.fingerprint` carries. Was `fingerprintHex` back when
+  /// it held colon-separated hex, and the name outlived the format.
+  final String fingerprint;
 
   const TransferHostKeyAccepted({
     required this.storageKey,
-    required this.fingerprintHex,
+    required this.fingerprint,
   });
 }
 
@@ -117,11 +121,11 @@ Future<SSHClient> _connectSsh(
     onKeyboardInteractive: (server, request) =>
         _requestKeyboardInteractive(mainSendPort, server, request),
     onHostKeyPrompt: (info) => _requestHostKey(mainSendPort, info),
-    onHostKeyAccepted: (storageKey, fingerprintHex) {
+    onHostKeyAccepted: (storageKey, fingerprint) {
       mainSendPort.send(
         TransferHostKeyAccepted(
           storageKey: storageKey,
-          fingerprintHex: fingerprintHex,
+          fingerprint: fingerprint,
         ),
       );
     },
@@ -246,7 +250,7 @@ class FileTransferWorker {
       case final TransferHostKeyAccepted accepted:
         await persistHostKeyFingerprint(
           accepted.storageKey,
-          accepted.fingerprintHex,
+          accepted.fingerprint,
         );
         return;
       default:
@@ -351,7 +355,7 @@ Future<void> _download(
     // Beside the destination, not under its name: a download that dies
     // halfway used to leave a truncated file where a whole one was expected,
     // and nothing about it said so.
-    staging = File('${to.path}.$_stagingSuffix');
+    staging = File(stagingNameFor(to.path));
     mainSendPort.send(TransferStaging(staging.path));
     final localFile = await staging.open(mode: FileMode.write);
 
@@ -389,9 +393,10 @@ Future<void> _download(
           });
         }
 
+        Future<int>? pending;
         try {
           resetIdleTimer();
-          final downloadFuture = openedRemoteFile.downloadToRandomAccess(
+          pending = openedRemoteFile.downloadToRandomAccess(
             localFile,
             length: length,
             offset: offset,
@@ -420,13 +425,24 @@ Future<void> _download(
             },
           );
           final segmentBytes = await Future.any([
-            downloadFuture,
+            pending,
             idleTimeout.future,
           ]);
 
           totalBytes += segmentBytes;
           chunkCount += (segmentBytes / _sftpChunkSize).ceil();
         } on TimeoutException {
+          // `Future.any` stops waiting; it does not stop the download, which
+          // goes on writing into `localFile` — the handle closed a few lines
+          // below and the file deleted after that. Closing the remote file is
+          // what ends the reads still in flight, and `ignore` is what keeps
+          // their failure from surfacing later as an unhandled asynchronous
+          // error with no transfer left to attach it to.
+          pending?.ignore();
+          try {
+            await openedRemoteFile.close();
+          } catch (_) {}
+          remoteFile = null;
           throw SftpError('Download timed out at offset=$offset');
         } finally {
           idleTimer?.cancel();
@@ -470,17 +486,9 @@ Future<void> _download(
   }
 }
 
-/// The name a half-finished transfer is parked under.
-///
-/// A counter rather than a timestamp: two transfers of the same file, started
-/// in the same millisecond, must not stage onto each other.
-var _staging = 0;
-
-String get _stagingSuffix => 'sb-part-${_staging++}';
-
-/// Renames [staging] over [path], deleting what is there if the server will
-/// not replace it itself. See `SftpFileBackend._replace`, which faces the same
-/// `SSH_FXP_RENAME` rule.
+/// Renames [staging] over [path], moving what is there out of the way if the
+/// server will not replace it itself. See `SftpFileBackend._replace`, which
+/// faces the same `SSH_FXP_RENAME` rule and does the same thing.
 Future<void> _replaceRemote(
   SftpClient sftp,
   String staging,
@@ -495,17 +503,30 @@ Future<void> _replaceRemote(
     failure = e;
   }
 
-  // Only "the destination is in the way" is worth a second attempt. Anything
-  // else — no permission, no such directory — is the rename's own answer, and
-  // deleting something on the strength of a misread would be worse than
-  // failing.
+  // Moved aside, never deleted first. A successful `stat` was being read as
+  // "the destination is in the way", but a server refuses a rename for
+  // permission, quota or policy reasons too, with the destination sitting
+  // there intact — and the remove that followed could succeed and destroy a
+  // good remote file on behalf of an upload that was never going to land.
+  final aside = stagingNameFor(path);
   try {
-    await withSftpOpTimeout('stat', sftp.stat(path), timeout);
+    await withSftpOpTimeout('rename', sftp.rename(path, aside), timeout);
   } catch (_) {
     throw failure;
   }
-  await withSftpOpTimeout('remove', sftp.remove(path), timeout);
-  await withSftpOpTimeout('rename', sftp.rename(staging, path), timeout);
+  try {
+    await withSftpOpTimeout('rename', sftp.rename(staging, path), timeout);
+  } catch (_) {
+    try {
+      await withSftpOpTimeout('rename', sftp.rename(aside, path), timeout);
+    } catch (_) {}
+    rethrow;
+  }
+  try {
+    await withSftpOpTimeout('remove', sftp.remove(aside), timeout);
+  } catch (_) {
+    // The replacement is done; a leftover beside it is not worth failing for.
+  }
 }
 
 Future<void> _discardRemote(SftpClient? sftp, String? staging) async {
@@ -564,7 +585,7 @@ Future<void> _upload(
     sftp = openedSftp;
     // Beside the destination rather than onto it. Truncating first meant a
     // failed upload replaced a good remote file with a partial one.
-    staging = '${to.path}.$_stagingSuffix';
+    staging = stagingNameFor(to.path);
     Loggers.app.info('Transfer upload opening remote file: $staging');
     final openedRemoteFile = await withSftpOpTimeout(
       'open remote file for upload',

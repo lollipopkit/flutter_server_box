@@ -205,10 +205,16 @@ class SftpFileBackend implements FileBackend {
   }
 
   @override
-  Future<void> write(String path, Stream<List<int>> data, {int? size}) async {
+  Future<void> write(
+    String path,
+    Stream<List<int>> data, {
+    int? size,
+    void Function(String staging)? onStaging,
+  }) async {
     // Beside the destination for the same reason as the local backend: a
     // rename on the far side is cheap and atomic only within one filesystem.
-    final staging = '$path.${_stagingSuffix()}';
+    final staging = stagingNameFor(path);
+    onStaging?.call(staging);
     var wrote = false;
     try {
       final file = await _bounded(
@@ -261,16 +267,38 @@ class SftpFileBackend implements FileBackend {
       failure = e;
     }
 
-    // Only "the destination is in the way" is worth a second attempt. If the
-    // path cannot even be stat'd, the rename failed for its own reasons and
-    // deleting something on the strength of a misread would be worse.
+    // Moved aside, never deleted first. Reading "the rename failed and the
+    // destination stats" as "the destination is in the way" was a guess: a
+    // server refuses a rename for permission, quota or policy reasons too,
+    // with the destination sitting there intact, and the remove that followed
+    // could well succeed and take a good file with it.
+    //
+    // Renaming the destination away asks the same question without betting on
+    // the answer — a refusal that was not about the destination refuses this
+    // too, and nothing has been lost. Only once the staged copy is in place
+    // does the old one go.
+    final aside = stagingNameFor(path);
     try {
-      if (await stat(path) == null) throw failure;
+      await _bounded('rename', _sftp.rename(path, aside));
     } catch (_) {
       throw failure;
     }
-    await _bounded('remove', _sftp.remove(path));
-    await _bounded('rename', _sftp.rename(staging, path));
+    try {
+      await _bounded('rename', _sftp.rename(staging, path));
+    } catch (_) {
+      // Put it back: losing the destination to a replacement that did not
+      // happen is the whole thing this path exists to avoid.
+      try {
+        await _bounded('rename', _sftp.rename(aside, path));
+      } catch (_) {}
+      rethrow;
+    }
+    try {
+      await _bounded('remove', _sftp.remove(aside));
+    } catch (_) {
+      // The replacement is done. A leftover beside it is visible in the
+      // browser and not worth failing a finished write for.
+    }
   }
 
   @override
@@ -278,10 +306,6 @@ class SftpFileBackend implements FileBackend {
 
   Future<T> _bounded<T>(String what, Future<T> future) =>
       timeout == null ? future : withSftpOpTimeout(what, future, timeout!);
-
-  static var _staging = 0;
-
-  static String _stagingSuffix() => '${kStagingSuffix.substring(1)}${_staging++}';
 
   /// `SSH_FX_NO_SUCH_FILE`, from the SFTP protocol.
   static const _sftpStatusNoSuchFile = 2;

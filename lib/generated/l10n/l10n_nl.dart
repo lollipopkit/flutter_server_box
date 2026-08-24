@@ -577,6 +577,45 @@ class AppLocalizationsNl extends AppLocalizations {
   String get showHiddenFiles => 'Verborgen bestanden tonen';
 
   @override
+  String get sshKeyAlgorithm => 'Algoritme';
+
+  @override
+  String get sshKeyComment => 'Opmerking';
+
+  @override
+  String get sshKeyGenerate => 'Sleutelpaar genereren';
+
+  @override
+  String get sshKeyGenerating => 'Bezig met genereren…';
+
+  @override
+  String sshKeyLockedFmt(String name) {
+    return 'De privésleutel [$name] is niet ontgrendeld.';
+  }
+
+  @override
+  String get sshKeyPassphraseTip =>
+      'Optioneel. Een sleutel met wachtwoordzin wordt versleuteld opgeslagen en wordt gevraagd zodra een verbinding de sleutel voor het eerst gebruikt.';
+
+  @override
+  String get sshKeyPassphraseWrong => 'Onjuiste wachtwoordzin.';
+
+  @override
+  String get sshKeyPublicKey => 'Publieke sleutel';
+
+  @override
+  String get sshKeyPublicKeyTip =>
+      'Voeg deze regel toe aan ~/.ssh/authorized_keys op de server.';
+
+  @override
+  String get sshKeyRecommended => 'Aanbevolen';
+
+  @override
+  String sshKeyUnlockTip(String name) {
+    return 'Voer de wachtwoordzin voor de privésleutel [$name] in.';
+  }
+
+  @override
   String get unused => 'Ongebruikt';
 
   @override
@@ -1096,16 +1135,6 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String sshHostKeyChangedDesc(Object serverName) {
     return 'De SSH-hostsleutel voor $serverName is gewijzigd. Ga alleen verder als u deze server vertrouwt.';
-  }
-
-  @override
-  String sshHostKeyFingerprintMd5Base64(Object fingerprint) {
-    return 'Vingerafdruk (MD5 Base64): $fingerprint';
-  }
-
-  @override
-  String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
-    return 'Vingerafdruk (SHA256): $fingerprint';
   }
 
   @override

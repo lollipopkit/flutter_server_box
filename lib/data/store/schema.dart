@@ -63,7 +63,9 @@ abstract final class SchemaVersion {
   ///     and per-row sync metadata
   /// v6: per-monitor explicit permission for plaintext HTTP on trusted networks
   /// v7: the BMC side channel's columns on `server`
-  static const current = 7;
+  /// v8: `private_key.comment`, so a key's label can be edited without
+  ///     opening the key to rewrite the copy inside it
+  static const current = 8;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

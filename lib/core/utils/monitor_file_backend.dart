@@ -93,7 +93,14 @@ class MonitorFileBackend implements FileBackend {
   }
 
   @override
-  Future<void> write(String path, Stream<List<int>> data, {int? size}) =>
+  Future<void> write(
+    String path,
+    Stream<List<int>> data, {
+    int? size,
+    // Never called: the staging happens inside the agent, under a name this
+    // side is not told and could not delete anyway.
+    void Function(String staging)? onStaging,
+  }) =>
       // Atomic on the agent's side: it stages beside the destination and
       // renames, which is the same contract the other two backends keep and
       // the reason this one does not have to stage anything itself.

@@ -345,7 +345,16 @@ abstract class EntityStore<T extends Object> {
 
         final raw = backupData[id];
         if (raw is! Map) continue;
-        final item = fromJson(Map<String, dynamic>.from(raw));
+        final json = Map<String, dynamic>.from(raw);
+        // A record written before ids existed carries none — the map key was
+        // its name and that was the whole of its identity. Every `fromJson`
+        // here requires an id, so such a record decoded to null and was
+        // skipped, which took the entire store with it: the pass that re-points
+        // a server at its key or its BMC account by name then had nothing to
+        // point at, and the server lost the reference or was skipped outright.
+        // `reconcile` is what turns the name back into this device's id.
+        if (json['id'] == null) json['id'] = id;
+        final item = fromJson(json);
         if (item == null) continue;
         try {
           final resolved = reconcile(item);
@@ -371,6 +380,13 @@ abstract class EntityStore<T extends Object> {
 
   /// Replaces everything with [items], for the v1 backup format, which carries
   /// no per-record timestamps and so can only be taken or left whole.
+  ///
+  /// Whole means whole: a write that fails takes the transaction with it. This
+  /// used to log the record and carry on, but it had already deleted
+  /// everything — so a backup whose records this schema cannot accept left the
+  /// user with the rows gone and only some of the replacements written, and a
+  /// warning in a log as the only sign. [merge] can afford to skip a record
+  /// because it never removes what it is not replacing; this cannot.
   bool replaceAll(Iterable<T> items) {
     SqliteStore.transact(() {
       for (final id in keys()) {
@@ -379,14 +395,10 @@ abstract class EntityStore<T extends Object> {
       db.execute('DELETE FROM $table;');
       final written = <T>[];
       for (final item in items) {
-        try {
-          final resolved = reconcile(item);
-          write(resolved);
-          written.add(resolved);
-          synced.stamp(idOf(resolved));
-        } on SqliteException catch (e) {
-          Loggers.app.warning('Restore skipped a $T', e);
-        }
+        final resolved = reconcile(item);
+        write(resolved);
+        written.add(resolved);
+        synced.stamp(idOf(resolved));
       }
       // Once every row exists — see [writeLinks].
       for (final item in written) {

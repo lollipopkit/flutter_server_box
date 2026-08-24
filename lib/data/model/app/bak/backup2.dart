@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:logging/logging.dart';
+import 'package:server_box/core/utils/ssh_key_unlock.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/bmc_credential.dart';
 import 'package:server_box/data/model/server/custom.dart';
@@ -83,6 +84,10 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     // is a child of one. Merging a store before the one it points at would drop
     // every record whose foreign key has not arrived yet.
     final keysChanged = Stores.key.merge(keys, force: force);
+    // A key whose bytes arrived from the other side is not the key that was
+    // opened here. Left in the cache, the next connection would authenticate
+    // with the one this merge replaced and say nothing about it.
+    if (keysChanged) PrivateKeyUnlock.forgetAll();
     final credsChanged = Stores.bmcCredential.merge(bmcCredentials, force: force);
     final serversChanged = Stores.server.merge(
       _serversWithRestoredIds(),

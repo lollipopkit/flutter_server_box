@@ -1,13 +1,17 @@
 import 'dart:io';
 
-import 'package:computer/computer.dart';
+import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/server.dart';
+import 'package:server_box/core/utils/ssh_key_unlock.dart';
+import 'package:server_box/core/utils/ssh_keygen.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
+import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/store/entity_store.dart';
@@ -39,6 +43,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
   final _nameController = TextEditingController();
   final _keyController = TextEditingController();
   final _pwdController = TextEditingController();
+  final _commentController = TextEditingController();
   final _nameNode = FocusNode();
   final _keyNode = FocusNode();
   final _pwdNode = FocusNode();
@@ -57,6 +62,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
     _nameController.dispose();
     _keyController.dispose();
     _pwdController.dispose();
+    _commentController.dispose();
     _nameNode.dispose();
     _keyNode.dispose();
     _pwdNode.dispose();
@@ -70,6 +76,11 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
     if (pki != null) {
       _nameController.text = pki.name;
       _keyController.text = pki.key;
+      // The stored one if the label has been edited, otherwise whatever the
+      // key arrived with — which is absent for an encrypted key, since the
+      // key's own comment is inside the part that gets encrypted.
+      _commentController.text =
+          pki.comment ?? describeSshKey(pki.key).comment ?? '';
     } else {
       Clipboard.getData(_format).then((value) {
         if (value == null) return;
@@ -101,6 +112,11 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
     final actions = pki != null
         ? [
             IconButton(
+              tooltip: l10n.sshKeyPublicKey,
+              onPressed: () => _showPublicKey(pki),
+              icon: const Icon(Icons.public),
+            ),
+            IconButton(
               tooltip: libL10n.delete,
               onPressed: () async {
                 // The dialog answers; the page acts on the answer. See the
@@ -115,6 +131,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
                   actions: Btn.ok(red: true).toList,
                 );
                 if (confirmed != true || !context.mounted) return;
+                PrivateKeyUnlock.forget(SshCredential.keyRefForId(pki.id));
                 await _notifier.delete(pki);
                 context.pop();
               },
@@ -123,6 +140,58 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
           ]
         : null;
     return CustomAppBar(title: Text(libL10n.edit), actions: actions);
+  }
+
+  /// Derives the public half and offers it for copying.
+  ///
+  /// Derived rather than stored: only the private key is kept, and the public
+  /// key is a function of it. For an encrypted key this is the same unlock a
+  /// connection does, so it asks once and both paths share the answer.
+  Future<void> _showPublicKey(PrivateKeyInfo pki) async {
+    String line;
+    try {
+      final opened = await PrivateKeyUnlock.open(
+        pki.key,
+        cacheKey: SshCredential.keyRefForId(pki.id),
+        keyName: pki.name,
+      );
+      line = publicKeyLine(
+        SSHKeyPair.fromPem(opened).first,
+        // Read from `opened`, not from the stored bytes: for an encrypted key
+        // the comment is inside the part that was just decrypted, and asking
+        // the locked form yields nothing.
+        pki.comment ?? describeSshKey(opened).comment ?? pki.name,
+      );
+    } catch (e) {
+      Toast.error(e.toString());
+      return;
+    }
+    if (!mounted) return;
+    await context.showRoundDialog(
+      title: l10n.sshKeyPublicKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.sshKeyPublicKeyTip, style: UIs.textGrey),
+          const SizedBox(height: 12),
+          SelectableText(
+            line,
+            style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () async {
+            await Clipboard.setData(ClipboardData(text: line));
+            Toast.success(libL10n.success);
+          },
+          child: Text(libL10n.copy),
+        ),
+        TextButton(onPressed: context.popDialog, child: Text(libL10n.ok)),
+      ],
+    );
   }
 
   String _standardizeLineSeparators(String value) {
@@ -254,6 +323,13 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
             label: libL10n.pwd,
             icon: Icons.password,
             suggestion: false,
+          ),
+          Input(
+            controller: _commentController,
+            type: TextInputType.text,
+            label: l10n.sshKeyComment,
+            icon: Icons.comment,
+            suggestion: false,
             onSubmitted: (_) => _onTapSave(),
           ),
           SizedBox(height: MediaQuery.of(context).size.height * 0.1),
@@ -285,15 +361,43 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
     FocusScope.of(context).unfocus();
     _loading.value = SizedLoading.medium;
     try {
-      final decrypted = await Computer.shared.start(decryptPem, [key, pwd]);
+      // Stored as it was given. An encrypted key stays encrypted — the
+      // passphrase is what protects it, and stripping it here left every
+      // imported key lying in the database in the clear.
+      //
+      // Parsed either way, which is what rejects a key that is not one. The
+      // old code got that for free from always decrypting; guarding the call
+      // on "is it encrypted" lost it, because `isLocked` answers false for
+      // anything it cannot read rather than throwing.
+      //
+      // A passphrase typed alongside it is checked rather than applied: a typo
+      // found now says so on this page, where it can be fixed, instead of at
+      // the next connection as a key that will not open.
+      //
+      // `compute`, not `Computer.shared`, for the same reason the unlocker
+      // uses it: one that has to be turned on cannot be called from a test.
+      final opened = await compute(decryptPem, [key, pwd]);
       // The id of the record being edited: renaming a key must not detach the
       // servers pointing at it, which is what happened when the two were one
       // value.
+      final comment = _commentController.text.trim();
       final pki = PrivateKeyInfo(
         id: this.pki?.id ?? ShortId.generate(),
         name: name,
-        key: decrypted,
+        key: key,
+        // Null rather than empty, so an untouched field goes on meaning
+        // "whatever the key itself says" instead of "no comment".
+        comment: comment.isEmpty ? null : comment,
       );
+      // The bytes may have changed under an id that has not, so whatever was
+      // opened for it no longer describes what is stored — and then the
+      // passphrase just verified is put back, rather than asking for it again
+      // seconds later on the first connection.
+      final cacheKey = SshCredential.keyRefForId(pki.id);
+      PrivateKeyUnlock.forget(cacheKey);
+      if (pwd.isNotEmpty && opened != key) {
+        PrivateKeyUnlock.remember(cacheKey, opened);
+      }
       final originPki = this.pki;
       if (originPki != null) {
         await _notifier.update(originPki, pki);

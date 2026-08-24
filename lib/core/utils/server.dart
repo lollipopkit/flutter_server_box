@@ -11,6 +11,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/proxy_command_socket.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/core/utils/ssh_config.dart';
+import 'package:server_box/core/utils/ssh_key_unlock.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
@@ -40,6 +41,21 @@ String decryptPem(List<String> args) {
 
 enum GenSSHClientStatus { socket, key, pwd }
 
+/// What to call a key when asking the person about it.
+///
+/// [keyRef] is an id for a key the store holds and a path for one the user's
+/// own `~/.ssh` holds, so the lookup missing is not a failure — the path is
+/// already the name. Guarded because this is also reached from the transfer
+/// isolate, which has no stores; there the reference is the best that can be
+/// said.
+String privateKeyDisplayName(String keyRef) {
+  try {
+    return Stores.key.fetchOne(keyRef)?.name ?? keyRef;
+  } catch (_) {
+    return keyRef;
+  }
+}
+
 String getPrivateKey(String id) {
   final pki = Stores.key.fetchOne(id);
   if (pki == null) {
@@ -49,6 +65,35 @@ String getPrivateKey(String id) {
     );
   }
   return pki.key;
+}
+
+/// Cap on a key file read off disk by path. Deliberately far above any real
+/// key — an RSA-4096 PEM is a few KB — because this reads a file the user
+/// already points OpenSSH at, and the point is only to keep a mistaken path
+/// from pulling an arbitrary file into memory on the main isolate.
+/// `Miscs.privateKeyMaxSize` is the tighter limit on what gets pasted into the
+/// store, which is a different question.
+const _keyFileMaxSize = 1024 * 1024;
+
+/// The key file's text, or a refusal if it did not stop inside the cap.
+///
+/// One bounded read off one open handle, rather than a stat followed by an
+/// unbounded read: between those two the path can be replaced — a symlink
+/// repointed, a file appended to — and the size that was checked is then not
+/// the size that is read. Asking for one byte past the cap is what tells the
+/// two cases apart without ever holding more than that.
+String _decodeCapped(String path, List<int> bytes) {
+  if (bytes.length > _keyFileMaxSize) {
+    throw SSHErr(
+      type: SSHErrType.noPrivateKey,
+      message: l10n.fileTooLarge(
+        path,
+        '>${_keyFileMaxSize.bytes2Str}',
+        _keyFileMaxSize.bytes2Str,
+      ),
+    );
+  }
+  return utf8.decode(bytes);
 }
 
 /// The PEM [ssh] authenticates with, or null when it has no key at all.
@@ -82,20 +127,12 @@ String? resolvePrivateKey(SshCredential ssh) {
 
   final expanded = SSHConfig.expandHome(keyPath);
   try {
-    final file = File(expanded);
-    // Guard against unbounded key files on the main isolate.
+    final handle = File(expanded).openSync();
     try {
-      final size = file.statSync().size;
-      if (size > 1024 * 1024) {
-        throw SSHErr(
-          type: SSHErrType.noPrivateKey,
-          message: l10n.privateKeyFileUnreadable(expanded, 'File too large ($size bytes)'),
-        );
-      }
-    } catch (_) {
-      // statSync failure is non-fatal; let read attempt decide.
+      return _decodeCapped(expanded, handle.readSync(_keyFileMaxSize + 1));
+    } finally {
+      handle.closeSync();
     }
-    return file.readAsStringSync();
   } catch (e) {
     if (e is SSHErr) rethrow;
     throw SSHErr(
@@ -119,15 +156,12 @@ Future<String?> resolvePrivateKeyAsync(SshCredential ssh) async {
   }
   final expanded = SSHConfig.expandHome(keyPath);
   try {
-    final file = File(expanded);
-    final stat = await file.stat();
-    if (stat.size > 1024 * 1024) {
-      throw SSHErr(
-        type: SSHErrType.noPrivateKey,
-        message: l10n.privateKeyFileUnreadable(expanded, 'File too large (${stat.size} bytes)'),
-      );
+    final handle = await File(expanded).open();
+    try {
+      return _decodeCapped(expanded, await handle.read(_keyFileMaxSize + 1));
+    } finally {
+      await handle.close();
     }
-    return await file.readAsString();
   } catch (e) {
     if (e is SSHErr) rethrow;
     throw SSHErr(
@@ -248,7 +282,8 @@ Future<SSHClient> genClient(
             visitedServerIds: {...chainVisitedServerIds},
           );
 
-          return await jumpClient.forwardLocal(ssh.ip, ssh.port);
+          final forwarded = await jumpClient.forwardLocal(ssh.ip, ssh.port);
+          return _JumpSocket(forwarded, jumpClient);
         } catch (e, stack) {
           jumpClient?.close();
           if (!_isJumpFailoverError(e)) {
@@ -372,17 +407,96 @@ Future<SSHClient> _authenticatedClient({
   }
 
   onStatus?.call(GenSSHClientStatus.key);
+  // A key stored encrypted is opened here, once per key per run. Nothing
+  // happens for a key that is not — including one already opened before it was
+  // handed to another isolate, which is why the transfer path can reach this
+  // line with no screen to ask on.
+  privateKey = await PrivateKeyUnlock.open(
+    privateKey,
+    cacheKey: keyRef,
+    keyName: privateKeyDisplayName(keyRef),
+  );
+  final List<SSHKeyPair> identities;
+  try {
+    // Must use [compute] here, instead of [Computer.shared.start]
+    identities = await compute(loadIdentity, privateKey);
+  } catch (e) {
+    // A PEM that will not parse is a key problem and the caller has a category
+    // for those. Left raw it arrived as whatever the parser threw — naming
+    // neither the key nor the server, and matching none of the handling every
+    // other key failure gets.
+    throw SSHErr(
+      type: SSHErrType.noPrivateKey,
+      message: l10n.privateKeyFileUnreadable(
+        privateKeyDisplayName(keyRef),
+        '$e',
+      ),
+    );
+  }
   return SSHClient(
     socket,
-    username: ssh.user,
-    // Must use [compute] here, instead of [Computer.shared.start]
-    identities: await compute(loadIdentity, privateKey),
+    // The same fallback user the password branch above uses. Key auth read
+    // `ssh.user` regardless, so a server reached through its `alterUrl` — which
+    // is where `alterUser` comes from — authenticated as the primary host's
+    // user and failed with a permission error naming neither.
+    username: alterUser ?? ssh.user,
+    identities: identities,
     onPasswordRequest: ssh.pwd?.isNotEmpty == true ? () => ssh.pwd : null,
     onUserInfoRequest: onKeyboardInteractive == null
         ? null
         : (request) => onKeyboardInteractive(spi, request),
     onVerifyHostKey: hostKeyVerifier.call,
   );
+}
+
+/// A forwarded channel that owns the jump connection carrying it.
+///
+/// `forwardLocal` hands back a channel and nothing else, so the authenticated
+/// jump client it came from had no owner: on success nobody held it — closing
+/// the target closed the channel and left the jump session, its socket and its
+/// process running until the far end timed them out — and on a target failure
+/// the socket was destroyed with the jump client still open. Every connection
+/// through a jump host leaked one, and a status poll that keeps failing on the
+/// target's host key leaked one per attempt.
+///
+/// Everything is the channel's; the only addition is that closing this closes
+/// the client behind it, which is the ownership the return type could not
+/// express.
+class _JumpSocket implements SSHSocket {
+  _JumpSocket(this._inner, this._jumpClient);
+
+  final SSHSocket _inner;
+  final SSHClient _jumpClient;
+
+  @override
+  Stream<Uint8List> get stream => _inner.stream;
+
+  @override
+  StreamSink<List<int>> get sink => _inner.sink;
+
+  @override
+  Future<void> get done => _inner.done;
+
+  @override
+  Future<void> close() async {
+    try {
+      await _inner.close();
+    } finally {
+      _jumpClient.close();
+    }
+  }
+
+  @override
+  void destroy() {
+    try {
+      _inner.destroy();
+    } finally {
+      _jumpClient.close();
+    }
+  }
+
+  @override
+  Future<void> flush() => _inner.flush();
 }
 
 typedef HostKeyPersistCallback =
@@ -440,14 +554,10 @@ class HostKeyPromptInfo {
   HostKeyPromptInfo({
     required this.spi,
     required this.keyType,
-    String? fingerprint,
-    @Deprecated('Use fingerprint') String? fingerprintHex,
-    @Deprecated('Use fingerprint') String? fingerprintBase64,
+    required this.fingerprint,
     required this.isMismatch,
-    String? previousFingerprint,
-    @Deprecated('Use previousFingerprint') String? previousFingerprintHex,
-  }) : fingerprint = fingerprint ?? fingerprintHex ?? fingerprintBase64 ?? '',
-       previousFingerprint = previousFingerprint ?? previousFingerprintHex;
+    this.previousFingerprint,
+  });
 
   final Spi spi;
   final String keyType;
@@ -455,15 +565,6 @@ class HostKeyPromptInfo {
   final String fingerprint;
   final bool isMismatch;
   final String? previousFingerprint;
-
-  @Deprecated('Use fingerprint')
-  String get fingerprintHex => fingerprint;
-
-  @Deprecated('Use fingerprint')
-  String get fingerprintBase64 => fingerprint;
-
-  @Deprecated('Use previousFingerprint')
-  String? get previousFingerprintHex => previousFingerprint;
 }
 
 /// What `onVerifyHostKey` decides, and what it writes down when it decides it.
@@ -557,7 +658,26 @@ Map<String, String> _loadKnownHostFingerprints() {
   }
 }
 
+/// One queue for every change to the remembered fingerprints.
+///
+/// Read-modify-write over a whole map, from callers that do not know about
+/// each other: an acceptance arriving from a transfer isolate, a forget from
+/// the settings page, a server being deleted. Interleaving two of those loses
+/// one of them, and when the pair is an acceptance and a forget, the one lost
+/// can be the forget — the queued write reads the map as it was before the
+/// pruning and puts the fingerprint the user just revoked straight back.
 Future<void> _hostKeyPersistence = Future.value();
+
+Future<void> _enqueueHostKeyWrite(String what, void Function() body) {
+  _hostKeyPersistence = _hostKeyPersistence.then((_) async {
+    try {
+      body();
+    } catch (e, stack) {
+      Loggers.app.warning('$what failed', e, stack);
+    }
+  });
+  return _hostKeyPersistence;
+}
 
 Future<void> persistHostKeyFingerprint(
   String storageKey,
@@ -583,34 +703,56 @@ Future<void> persistHostKeyFingerprint(
 /// For an ad-hoc connection that was never kept: it accepted a key under an id
 /// nothing will ever look up again, and one entry per trial connection is a
 /// setting that only grows.
-void forgetHostKeyFingerprints(String serverId) {
-  try {
-    final prop = Stores.setting.sshKnownHostFingerprints;
-    final known = Map<String, String>.from(prop.get());
-    final updated = withoutHostKeysFor(known, serverId);
-    if (updated.length == known.length) return;
-    prop.put(updated);
-  } catch (e, stack) {
-    Loggers.app.warning('Forget SSH host key fingerprints failed', e, stack);
-  }
+/// Queued behind any acceptance still waiting to be written — see
+/// [_hostKeyPersistence]. Awaiting the returned future is optional; joining the
+/// queue is not.
+Future<void> forgetHostKeyFingerprints(String serverId) =>
+    _enqueueHostKeyWrite('Forget SSH host key fingerprints', () {
+      final prop = Stores.setting.sshKnownHostFingerprints;
+      final known = Map<String, String>.from(prop.get());
+      final updated = withoutHostKeysFor(known, serverId);
+      if (updated.length == known.length) return;
+      prop.put(updated);
+    });
+
+/// A stored key read back as the server id and the key type it was built from.
+///
+/// The separator carries the whole of the correctness here, and which one to
+/// split on follows from what each half can contain. A key type is an SSH
+/// algorithm name — `ssh-ed25519`, `rsa-sha2-512` — and never holds a `::`,
+/// while an id can: one restored from a backup is whatever that file said.
+/// So the id is everything before the **last** separator.
+///
+/// It was the first one, which reads a key belonging to `a::b` as server `a`
+/// with the type `b::ssh-rsa`: listed under a server that is not its own, and
+/// forgetting the real `a` took it along with `a`'s.
+///
+/// A key with no separator at all is its whole self as the id and an empty
+/// type — unreadable rather than absent, and a list that dropped it would
+/// leave something trusted and invisible.
+@visibleForTesting
+(String serverId, String keyType) splitHostKeyStorageKey(String storageKey) {
+  final at = storageKey.lastIndexOf('::');
+  if (at < 0) return (storageKey, '');
+  return (storageKey.substring(0, at), storageKey.substring(at + 2));
 }
 
 /// [known] without the entries belonging to [serverId].
 ///
-/// Split out and pure because the separator carries the whole of the
-/// correctness here: keys are `<id>::<keyType>`, a host may have offered
-/// several types, and matching on the id alone would take every other server
-/// whose id happens to start with the same characters.
+/// Compared as a whole id rather than as a prefix, for the reason
+/// [splitHostKeyStorageKey] gives: `startsWith('$serverId::')` also matched
+/// every server whose id merely *begins* with this one followed by `::`, so
+/// forgetting `a` reached into `a::b`.
 @visibleForTesting
 Map<String, String> withoutHostKeysFor(
   Map<String, String> known,
   String serverId,
 ) {
   if (serverId.isEmpty) return known;
-  final prefix = '$serverId::';
   return {
     for (final entry in known.entries)
-      if (!entry.key.startsWith(prefix)) entry.key: entry.value,
+      if (splitHostKeyStorageKey(entry.key).$1 != serverId)
+        entry.key: entry.value,
   };
 }
 
@@ -716,7 +858,12 @@ Future<bool> _showHostKeyDialog(
         SelectableText('${libL10n.server}: ${info.spi.name}'),
         SelectableText('${libL10n.addr}: $hostLine'),
         SelectableText('${l10n.sshHostKeyType}: ${info.keyType}'),
-        SelectableText(l10n.sshHostKeyFingerprintMd5Hex(info.fingerprint)),
+        // Verbatim, which is the whole point of it: this is character for
+        // character what `ssh-keygen -l` prints on the server, so it can be
+        // compared against that without anyone having to strip a label off
+        // first. It names its own algorithm, so a `(SHA256)` around it said
+        // SHA256 twice.
+        SelectableText(info.fingerprint),
         if (info.previousFingerprint != null) ...[
           const SizedBox(height: 12),
           SelectableText(
@@ -805,9 +952,20 @@ Future<void> ensureKnownHostKey(
   }
 }
 
+/// Whether anything is remembered for [spi] at all.
+///
+/// Compared as a whole id, not as a prefix, for the reason
+/// [splitHostKeyStorageKey] gives: `startsWith('$id::')` also answered yes for
+/// server `a` on a key belonging to the distinct server `a::b`.
+///
+/// Any key type counts. Which one a connection ends up negotiating is not
+/// knowable without making it, so a server that offered `ssh-rsa` when this
+/// was remembered and negotiates `ssh-ed25519` now still reaches the prompt on
+/// the connection itself — the same prompt a first connection raises, in a
+/// flow that had hoped to have settled it here.
 bool _hasKnownHostFingerprintForSpi(Spi spi, Map<String, String> cache) {
-  final prefix = '${_hostIdentifier(spi)}::';
-  return cache.keys.any((key) => key.startsWith(prefix));
+  final id = _hostIdentifier(spi);
+  return cache.keys.any((key) => splitHostKeyStorageKey(key).$1 == id);
 }
 
 String _hostKeyStorageKey(Spi spi, String keyType) {
@@ -896,21 +1054,14 @@ class KnownHostKey {
 /// [known] read out as entries, grouped by the server they belong to.
 ///
 /// Pure, and split out for the same reason [withoutHostKeysFor] is: the
-/// separator is the whole of the correctness. A key type may itself contain no
-/// `::`, but an id could — so the split is on the **first** one, and everything
-/// after it is the type.
-///
-/// Entries whose key has no separator at all are kept under their whole string
-/// as the id and an empty type: they are unreadable rather than absent, and a
-/// list that silently dropped them would leave something trusted and invisible.
+/// separator is the whole of the correctness, and [splitHostKeyStorageKey] is
+/// where that decision lives so the two sides cannot disagree about it.
 Map<String, List<KnownHostKey>> groupHostKeysByServer(
   Map<String, String> known,
 ) {
   final grouped = <String, List<KnownHostKey>>{};
   for (final entry in known.entries) {
-    final at = entry.key.indexOf('::');
-    final serverId = at < 0 ? entry.key : entry.key.substring(0, at);
-    final keyType = at < 0 ? '' : entry.key.substring(at + 2);
+    final (serverId, keyType) = splitHostKeyStorageKey(entry.key);
     grouped.putIfAbsent(serverId, () => []).add(
       KnownHostKey(
         storageKey: entry.key,
@@ -931,13 +1082,10 @@ Map<String, List<KnownHostKey>> groupHostKeysByServer(
 /// Beside [forgetHostKeyFingerprints], which takes every type a server
 /// offered. A host that rotated one algorithm and kept another is the case
 /// this exists for.
-void forgetHostKey(String storageKey) {
-  try {
-    final prop = Stores.setting.sshKnownHostFingerprints;
-    final known = Map<String, String>.from(prop.get());
-    if (known.remove(storageKey) == null) return;
-    prop.put(known);
-  } catch (e, stack) {
-    Loggers.app.warning('Forget SSH host key failed', e, stack);
-  }
-}
+Future<void> forgetHostKey(String storageKey) =>
+    _enqueueHostKeyWrite('Forget SSH host key', () {
+      final prop = Stores.setting.sshKnownHostFingerprints;
+      final known = Map<String, String>.from(prop.get());
+      if (known.remove(storageKey) == null) return;
+      prop.put(known);
+    });
