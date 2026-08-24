@@ -38,6 +38,12 @@ class ProxyCommandSocket implements SSHSocket {
         message: 'ProxyCommand is only supported on desktop platforms.',
       );
     }
+    if (command.length > 4096) {
+      throw SSHErr(
+        type: SSHErrType.connect,
+        message: 'ProxyCommand too long (${command.length} chars, max 4096)',
+      );
+    }
 
     final resolvedCommand = _resolveCommand(
       command: command,

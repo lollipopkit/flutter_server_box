@@ -109,12 +109,24 @@ class ServerNotifier extends _$ServerNotifier {
   /// when the SPI's connection config changes.
   ServerDataSource? _source;
 
+  int _cachedTimeout = 5;
+
   @override
   ServerState build(String serverId) {
     ref.onDispose(() {
       unawaited(_disposePersistentShell());
       _source?.close();
     });
+
+    // Cache timeout in memory; the DB read per poll is replaced by this.
+    _cachedTimeout = Stores.setting.timeout.fetch();
+    final timeoutListenable = Stores.setting.timeout.listenable();
+    void timeoutListener() {
+      _cachedTimeout = Stores.setting.timeout.fetch();
+    }
+
+    timeoutListenable.addListener(timeoutListener);
+    ref.onDispose(() => timeoutListenable.removeListener(timeoutListener));
 
     final serverNotifier = ref.read(serversProvider);
     final spi = serverNotifier.servers[serverId];
@@ -124,6 +136,9 @@ class ServerNotifier extends _$ServerNotifier {
 
     return ServerState(spi: spi, status: InitStatus.status);
   }
+
+  Duration get _timeout =>
+      Duration(seconds: _cachedTimeout <= 0 ? 5 : _cachedTimeout);
 
   // Update connection status
   void updateConnection(ServerConn conn) {
@@ -619,7 +634,7 @@ class ServerNotifier extends _$ServerNotifier {
     try {
       final client = await genClient(
         spi,
-        timeout: Duration(seconds: Stores.setting.timeout.fetch()),
+        timeout: _timeout,
         onKeyboardInteractive: KeyboardInteractiveAuth.handle,
       );
       await client.authenticated;
@@ -716,7 +731,7 @@ class ServerNotifier extends _$ServerNotifier {
       try {
         final client = await genClient(
           spi,
-          timeout: Duration(seconds: Stores.setting.timeout.fetch()),
+          timeout: _timeout,
           onKeyboardInteractive: (server, request) {
             keyboardInteractiveRequested = true;
             if (!interactive) return null;
@@ -1110,11 +1125,7 @@ class ServerNotifier extends _$ServerNotifier {
 
     try {
       final shell = await _getPersistentShell();
-      final statusTimeoutSeconds = Stores.setting.timeout.fetch();
-      final statusTimeout = Duration(
-        seconds: statusTimeoutSeconds <= 0 ? 5 : statusTimeoutSeconds,
-      );
-      final result = await shell.run(statusCmd, timeout: statusTimeout);
+      final result = await shell.run(statusCmd, timeout: _timeout);
       return result.output;
     } on TimeoutException catch (e, s) {
       _usePersistentShellForStatus = false;

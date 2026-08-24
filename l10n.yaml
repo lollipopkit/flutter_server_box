@@ -2,4 +2,4 @@ arb-dir: lib/l10n
 template-arb-file: app_en.arb
 output-localization-file: l10n.dart
 output-dir: lib/generated/l10n
-untranslated-messages-file: untranlated.json
+untranslated-messages-file: untranslated.json

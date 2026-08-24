@@ -59,7 +59,7 @@ abstract final class SSHConfig {
 
   /// Parse SSH config file and return a list of Spi objects
   static Future<List<Spi>> parseConfig([String? configPath]) async {
-    final (file, exists) = configExists(configPath);
+    final (file, exists) = await configExistsAsync(configPath);
     if (!exists || file == null) {
       Loggers.app.info(
         'SSH config file does not exist at path: ${configPath ?? _defaultPath}',
@@ -67,6 +67,15 @@ abstract final class SSHConfig {
       return [];
     }
 
+    // Guard against unbounded config files.
+    const maxSize = 1024 * 1024; // 1 MB
+    final stat = await file.stat();
+    if (stat.size > maxSize) {
+      Loggers.app.warning(
+        'SSH config file too large (${stat.size} bytes), refusing to read',
+      );
+      return [];
+    }
     final content = await file.readAsString();
     return _parseSSHConfig(content);
   }
@@ -190,7 +199,14 @@ abstract final class SSHConfig {
           jumpHost = _extractJumpHost(value);
           break;
         case 'proxycommand':
-          proxyCommand = value;
+          if (value.length > 4096) {
+            Loggers.app.warning(
+              'SSH config host $currentHost ProxyCommand too long, skipping',
+            );
+            proxyCommand = null;
+          } else {
+            proxyCommand = value;
+          }
           break;
       }
     }
@@ -280,6 +296,27 @@ abstract final class SSHConfig {
     }
 
     dprint('SSH config file not found in any of the expected locations');
+    return (null, false);
+  }
+
+  /// Async variant of [configExists] that avoids blocking the UI thread.
+  static Future<(File?, bool)> configExistsAsync([String? configPath]) async {
+    if (configPath != null) {
+      final homePath = _homePath;
+      if (homePath == null) {
+        Loggers.app.warning(
+          'Cannot determine home directory for SSH config parsing.',
+        );
+        return (null, false);
+      }
+      final expandedPath = configPath.replaceFirst('~', homePath);
+      final file = File(expandedPath);
+      return (file, await file.exists());
+    }
+    for (final path in _possibleConfigPaths) {
+      final file = File(path);
+      if (await file.exists()) return (file, true);
+    }
     return (null, false);
   }
 }
