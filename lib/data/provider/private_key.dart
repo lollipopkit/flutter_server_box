@@ -2,6 +2,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
+import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
 
 part 'private_key.freezed.dart';
@@ -44,6 +45,14 @@ class PrivateKeyNotifier extends _$PrivateKeyNotifier {
     final newKeys = state.keys.where((e) => e.id != info.id).toList();
     Stores.key.delete(info);
     state = state.copyWith(keys: newKeys);
+    // DB cleared ssh_key_id via ON DELETE SET NULL, but in-memory Spis still
+    // hold the old keyId until reloaded; without this the editor sees
+    // _keyIdx == -1 and rejects a valid save.
+    try {
+      // Avoid direct import cycle: lazy read via container.
+      final serversNotifier = ref.read(serversProvider.notifier);
+      await serversNotifier.reload();
+    } catch (_) {}
     bakSync.sync(milliDelay: 1000);
   }
 

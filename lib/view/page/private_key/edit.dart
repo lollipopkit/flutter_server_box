@@ -72,10 +72,16 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
       _keyController.text = pki.key;
     } else {
       Clipboard.getData(_format).then((value) {
+        if (!mounted) return;
         if (value == null) return;
         final clipdata = value.text?.trim() ?? '';
         if (clipdata.startsWith('-----BEGIN') && clipdata.endsWith('-----')) {
-          _keyController.text = clipdata;
+          if (!mounted || _keyController.text.isNotEmpty) return;
+          try {
+            _keyController.text = clipdata;
+          } catch (_) {
+            // Controller may be disposed if page was popped.
+          }
         }
       });
     }
@@ -222,13 +228,31 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
             onPressed: () async {
               final path = await Pfs.pickFilePath();
               if (path == null) return;
+              if (!mounted) return;
 
               final file = File(path);
-              if (!await file.exists()) {
+              bool exists;
+              try {
+                exists = await file.exists();
+              } catch (e) {
+                if (!mounted) return;
+                Toast.error('${libL10n.fail}: $e');
+                return;
+              }
+              if (!mounted) return;
+              if (!exists) {
                 Toast.show(libL10n.notExistFmt(path));
                 return;
               }
-              final size = (await file.stat()).size;
+              int size;
+              try {
+                size = (await file.stat()).size;
+              } catch (e) {
+                if (!mounted) return;
+                Toast.error('${libL10n.fail}: $e');
+                return;
+              }
+              if (!mounted) return;
               if (size > Miscs.privateKeyMaxSize) {
                 Toast.show(
                   l10n.fileTooLarge(
@@ -240,9 +264,21 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
                 return;
               }
 
-              final content = await file.readAsString();
+              String content;
+              try {
+                content = await file.readAsString();
+              } catch (e) {
+                if (!mounted) return;
+                Toast.error('${libL10n.fail}: $e');
+                return;
+              }
+              if (!mounted) return;
               // dartssh2 accepts only LF (but not CRLF or CR)
-              _keyController.text = _standardizeLineSeparators(content.trim());
+              try {
+                _keyController.text = _standardizeLineSeparators(content.trim());
+              } catch (_) {
+                // Controller disposed.
+              }
             },
             child: Text(libL10n.file),
           ),
@@ -268,7 +304,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
   void _onTapSave() async {
     final name = _nameController.text;
     final rawKey = _keyController.text.trim();
-    if (rawKey.length > Miscs.privateKeyMaxSize * 4) {
+    if (rawKey.length > Miscs.privateKeyMaxSize) {
       Toast.error(
         l10n.fileTooLarge('key', rawKey.length.bytes2Str, Miscs.privateKeyMaxSize.bytes2Str),
       );
@@ -307,7 +343,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
       return;
     } catch (e) {
       Toast.error(e.toString());
-      rethrow;
+      return;
     } finally {
       // `decryptPem` runs on another isolate, so the page can be gone by the
       // time this runs — and `_loading` is disposed with it.

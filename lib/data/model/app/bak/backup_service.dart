@@ -50,12 +50,19 @@ class BackupService {
         final (backup, err) = await context.showLoadingDialog(
           fn: () => _decodeOnIsolate(text, null),
         );
-        if (err != null || backup == null) return;
+        if (err != null) {
+          if (context.mounted) context.showErrDialog(err, null, libL10n.restore);
+          return;
+        }
+        if (backup == null) {
+          if (context.mounted) context.showErrDialog('Empty backup', null, libL10n.restore);
+          return;
+        }
 
         await _confirmAndRestore(context, backup);
       } catch (e, s) {
         Loggers.app.warning('Import backup failed', e, s);
-        context.showErrDialog(e, s, libL10n.restore);
+        if (context.mounted) context.showErrDialog(e, s, libL10n.restore);
       }
       return;
     }
@@ -93,7 +100,33 @@ class BackupService {
         final (backup, err) = await context.showLoadingDialog(
           fn: () => _decodeOnIsolate(text, password),
         );
-        if (err != null || backup == null) continue;
+        if (err != null) {
+          final msg = err.toString().toLowerCase();
+          if (msg.contains('incorrect password') || msg.contains('failed to decrypt')) {
+            final retry = await context.showRoundDialog<bool>(
+              title: l10n.backupPasswordWrong,
+              child: Text(l10n.backupPasswordWrong),
+              actions: [
+                TextButton(
+                  onPressed: () => context.popDialog(false),
+                  child: Text(libL10n.cancel),
+                ),
+                TextButton(
+                  onPressed: () => context.popDialog(true),
+                  child: Text(libL10n.retry),
+                ),
+              ],
+            );
+            if (retry != true) return;
+            continue;
+          }
+          if (context.mounted) context.showErrDialog(err, null, libL10n.restore);
+          return;
+        }
+        if (backup == null) {
+          if (context.mounted) context.showErrDialog('Empty backup', null, libL10n.restore);
+          return;
+        }
 
         await _confirmAndRestore(context, backup);
         return;
