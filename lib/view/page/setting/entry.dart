@@ -355,6 +355,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   /// just left, and that branch is a tab here, lit to say so.
   void _onTabBack() {
     if (_path.isEmpty) return;
+    // The back button lives in the `Scaffold`'s app bar, outside the content
+    // navigator — so with the raw editor pushed on top it is still visible and
+    // still tappable, and rebuilding the pages underneath would leave the
+    // editor on screen describing a level that is no longer showing.
+    _dropPushedPages();
     setState(_path.removeLast);
   }
 
@@ -664,7 +669,9 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
     text: _setting.sshBlurRadius.fetch().toString(),
   );
   late final _textScalerCtrl = TextEditingController(
-    text: _setting.textFactor.toString(),
+    // `.fetch()`, as the three above: without it the field opened showing
+    // `Instance of 'SqlitePropDefault<double>'` and handed that to be parsed.
+    text: _setting.textFactor.fetch().toString(),
   );
   late final _serverLogoCtrl = TextEditingController(
     text: _setting.serverLogoUrl.fetch(),

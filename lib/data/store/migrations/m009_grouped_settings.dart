@@ -20,7 +20,17 @@ import 'package:server_box/data/store/setting.dart';
 ///
 /// Safe to run again on data it has already converted — which it has to be,
 /// since the version is recorded only after every statement has run. A second
-/// pass finds no old keys, takes nothing, and writes the same object back.
+/// pass finds no old keys, takes nothing, and writes nothing.
+///
+/// Run again after a **restore**, too, which is not a launch and not a version
+/// bump. A backup written before this release carries the fourteen old keys
+/// and no `askAi` or `agentShell`; `Mergeable.mergeStore` reads an absent key
+/// as a deletion, so a forced restore removes both grouped rows and writes the
+/// old ones back. `schemaVersion` is kept out of that by `_mergeDataForStore`
+/// and so stays at 10, meaning nothing would ever fold them again — the
+/// provider configuration and the Agent's placement would read as defaults
+/// with the real values sitting in rows no code looks at. `Backup.restore`
+/// and `BackupV2.merge` call [apply] for that reason.
 class GroupedSettingsMigration implements SchemaMigration {
   const GroupedSettingsMigration({SettingStore? store}) : _store = store;
 
@@ -55,8 +65,14 @@ class GroupedSettingsMigration implements SchemaMigration {
       sendOnEnter: read.boolean('askAiSendOnEnter'),
     );
 
-    if (!read.tookAnything) return;
-    store.set('askAi', config.toJson(), updateLastUpdateTsOnSet: false);
+    if (!read.sawAnything) return;
+    // Checked, not assumed: `SqliteStore.set` answers `false` on a failure to
+    // encode or to write rather than throwing. Removing the old keys after one
+    // of those would leave the values in neither shape, and the step is not
+    // run again once the version has moved.
+    if (!store.set('askAi', config.toJson(), updateLastUpdateTsOnSet: false)) {
+      return;
+    }
     read.removeAll();
   }
 
@@ -79,8 +95,13 @@ class GroupedSettingsMigration implements SchemaMigration {
       ),
     );
 
-    if (!read.tookAnything) return;
-    store.set('agentShell', grouped.toJson(), updateLastUpdateTsOnSet: false);
+    if (!read.sawAnything) return;
+    final written = store.set(
+      'agentShell',
+      grouped.toJson(),
+      updateLastUpdateTsOnSet: false,
+    );
+    if (!written) return;
     read.removeAll();
   }
 }
@@ -95,9 +116,16 @@ class _Reader {
   _Reader(this.store);
 
   final SettingStore store;
-  final _taken = <String>[];
 
-  bool get tookAnything => _taken.isNotEmpty;
+  /// Every old key that was there, whatever it held.
+  ///
+  /// Removal goes by this rather than by what was successfully read. A key of
+  /// the wrong type has no reader left once the field is served by the grouped
+  /// row, so leaving it behind is a row nothing looks at that every future
+  /// backup carries — and this step will not run again to reconsider it.
+  final _seen = <String>[];
+
+  bool get sawAnything => _seen.isNotEmpty;
 
   String? string(String key) => _take<String>(key);
 
@@ -110,15 +138,15 @@ class _Reader {
 
   T? _take<T extends Object>(String key) {
     final raw = store.get<Object>(key);
-    if (raw is! T) return null;
-    _taken.add(key);
-    return raw;
+    if (raw == null) return null;
+    _seen.add(key);
+    return raw is T ? raw : null;
   }
 
   /// After the grouped row is written, never before: a process that stops in
   /// between leaves the version unchanged, and the rerun needs these.
   void removeAll() {
-    for (final key in _taken) {
+    for (final key in _seen) {
       store.remove(key, updateLastUpdateTsOnRemove: false);
     }
   }

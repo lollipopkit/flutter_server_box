@@ -73,7 +73,13 @@ class _FieldListenable<T extends Object, F extends Object>
 
   final FieldProp<T, F> prop;
   final ValueListenable<T> _parent;
-  final _listeners = <VoidCallback, VoidCallback>{};
+
+  /// A list per callback, not one wrapper. `ValueListenable` lets the same
+  /// callback be added more than once and removed once per addition; keying a
+  /// single wrapper by it dropped the earlier one from this map while it was
+  /// still registered on the parent, so it could never be removed and held
+  /// this and the callback alive for the rest of the process.
+  final _wrappers = <VoidCallback, List<VoidCallback>>{};
 
   @override
   F get value => prop.get();
@@ -88,13 +94,15 @@ class _FieldListenable<T extends Object, F extends Object>
       listener();
     }
 
-    _listeners[listener] = onParent;
+    (_wrappers[listener] ??= []).add(onParent);
     _parent.addListener(onParent);
   }
 
   @override
   void removeListener(VoidCallback listener) {
-    final wrapped = _listeners.remove(listener);
-    if (wrapped != null) _parent.removeListener(wrapped);
+    final wrappers = _wrappers[listener];
+    if (wrappers == null || wrappers.isEmpty) return;
+    _parent.removeListener(wrappers.removeLast());
+    if (wrappers.isEmpty) _wrappers.remove(listener);
   }
 }

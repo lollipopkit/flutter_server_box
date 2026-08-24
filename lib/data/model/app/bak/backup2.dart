@@ -21,6 +21,7 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/migrations/m009_grouped_settings.dart';
 import 'package:server_box/data/store/schema.dart';
 
 part 'backup2.freezed.dart';
@@ -113,6 +114,15 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
           force: force,
         ),
     ]);
+
+    // A restore is neither a launch nor a version bump, so the migrator will
+    // not look at what just landed. A file written before the settings were
+    // grouped carries the old per-field keys and no grouped row, and
+    // `mergeStore` reads an absent key as a deletion — so without this the
+    // restore would take `askAi` and `agentShell` out and put fourteen rows
+    // nothing reads back in their place. Idempotent: a file that already has
+    // the grouped shape leaves it with nothing to fold.
+    await const GroupedSettingsMigration().apply();
 
     if (serversChanged) GlobalRef.gRef?.read(serversProvider.notifier).reload();
     if (snippetsChanged) {

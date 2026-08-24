@@ -134,7 +134,7 @@ void main() {
       expect(store.agentShell.get().window.width, 400.0);
     });
 
-    test('a key holding the wrong type is left out rather than taken',
+    test('a key holding the wrong type keeps the default but still goes',
         () async {
       store.set('agentShellWidth', 'not a number');
       store.set('agentShellHeight', 700.0);
@@ -146,8 +146,10 @@ void main() {
         store.agentShell.get().window.width,
         const AgentShellWindow().width,
       );
-      // Not taken, so not removed: something has to still be there to look at.
-      expect(store.get<Object>('agentShellWidth'), 'not a number');
+      // Removed all the same. Once the field is served by the grouped row the
+      // old key has no reader, this step will not run again to reconsider it,
+      // and every future backup would carry it.
+      expect(store.get<Object>('agentShellWidth'), isNull);
     });
   });
 
@@ -235,8 +237,9 @@ void main() {
     test('and fires when it changes', () async {
       final listenable = store.askAiModel.listenable();
       var fired = 0;
-      listenable.addListener(() => fired++);
-      addTearDown(() => listenable.removeListener(() {}));
+      void onChange() => fired++;
+      listenable.addListener(onChange);
+      addTearDown(() => listenable.removeListener(onChange));
 
       await store.askAiModel.set('some-model');
 
@@ -250,12 +253,35 @@ void main() {
       // was touched.
       final listenable = store.askAiModel.listenable();
       var fired = 0;
-      listenable.addListener(() => fired++);
+      void onChange() => fired++;
+      listenable.addListener(onChange);
+      addTearDown(() => listenable.removeListener(onChange));
 
       await store.askAiApiKey.set('sk-secret');
       await store.askAiBaseUrl.set('https://example.test');
 
       expect(fired, 0);
+    });
+
+    test('and the same callback added twice is removed twice', () async {
+      // `ValueListenable` allows it, and keying one wrapper per callback lost
+      // the first — it stayed registered on the store with no way to reach it.
+      final listenable = store.askAiModel.listenable();
+      var fired = 0;
+      void onChange() => fired++;
+      listenable.addListener(onChange);
+      listenable.addListener(onChange);
+
+      await store.askAiModel.set('a');
+      expect(fired, 2);
+
+      listenable.removeListener(onChange);
+      await store.askAiModel.set('b');
+      expect(fired, 3);
+
+      listenable.removeListener(onChange);
+      await store.askAiModel.set('c');
+      expect(fired, 3);
     });
 
     test('and a removed listener hears nothing', () async {

@@ -12,6 +12,7 @@ import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/res/default.dart';
 import 'package:server_box/data/store/field_prop.dart';
+import 'package:server_box/data/store/migrations/m008_settings_fixups.dart';
 
 class SettingStore extends SqliteStore {
   SettingStore._() : super('setting');
@@ -282,6 +283,14 @@ class SettingStore extends SqliteStore {
   /// per-field names below are [FieldProp]s onto it, so a caller reads and
   /// writes one field with one field's type and hears about one field's
   /// changes.
+  ///
+  /// One row is also one entry in `lastUpdateTs`, and sync resolves per entry.
+  /// So two devices editing *different* fields between syncs no longer both
+  /// win: the later write takes the whole object, and the other device's field
+  /// goes back to what this one had. That was per field before, and it is the
+  /// price of the grouping. It is the same trade [agentShell] makes, and the
+  /// reason to accept it is that these are provider settings changed on one
+  /// device at a time, not records edited in parallel.
   late final askAi = propertyDefault<AskAiConfig>(
     'askAi',
     const AskAiConfig(),
@@ -661,6 +670,26 @@ class SettingStore extends SqliteStore {
       'schemaVersion',
     ]) {
       remove(key, updateLastUpdateTsOnRemove: false);
+    }
+
+    // The flags `SettingsFixupsMigration` reads, dropped once it has had its
+    // pass. The version is what says so: this runs from `Stores.init`, before
+    // `SchemaVersion.migrate`, so removing them unconditionally would delete
+    // them in the very launch that has to read them. Past that version they
+    // have no reader, and a restore of an older backup writes them back long
+    // after the step could run again — which is why this is here rather than
+    // at the end of the step.
+    //
+    // TODO: delete with the flag reads in `SettingsFixupsMigration`.
+    if (schemaVersion.fetch() > SettingsFixupsMigration.appliedAt) {
+      remove(
+        SettingsFixupsMigration.sshFlagKey,
+        updateLastUpdateTsOnRemove: false,
+      );
+      remove(
+        SettingsFixupsMigration.homeTabsFlagKey,
+        updateLastUpdateTsOnRemove: false,
+      );
     }
   }
 }

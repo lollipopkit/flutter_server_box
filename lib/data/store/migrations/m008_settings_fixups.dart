@@ -20,13 +20,17 @@ import 'package:server_box/data/store/setting.dart';
 /// without the flag this step would put it back. The flag is what says this
 /// device has been asked once already.
 ///
-/// Removed at the end, rather than from `removeRetiredKeys`: that runs from
-/// `Stores.init`, which is before `SchemaVersion.migrate`, so leaving it there
-/// would delete the flags in the same launch that needed to read them.
+/// Reading only — the removal is `SettingStore.removeRetiredKeys`, gated on
+/// the version already being past this step. Deleting them here would have
+/// been wrong twice over. `SchemaVersion.migrate` records the version *after*
+/// `apply` returns, so a process that stopped in between would come back at v8
+/// with the flags gone, and this step would then read somebody who removed
+/// Agent as somebody who was never offered it. And a restore of an older
+/// backup writes the flags back long after this step can run again, so the
+/// removal has to live somewhere that runs on every launch.
 ///
-/// TODO: drop the flag reads and the removal below once no install can still
-/// be carrying them. A backup restored from before this release can, so not
-/// until backups of that vintage are out of circulation too.
+/// TODO: drop the flag reads here and the two keys from `removeRetiredKeys`
+/// once no install and no backup can still be carrying them.
 class SettingsFixupsMigration implements SchemaMigration {
   const SettingsFixupsMigration({SettingStore? store}) : _store = store;
 
@@ -35,8 +39,12 @@ class SettingsFixupsMigration implements SchemaMigration {
   /// an in-memory database has no rows under it.
   final SettingStore? _store;
 
+  /// The version this step converts *from*. Named so `removeRetiredKeys` can
+  /// ask whether the step has had its pass without repeating the number.
+  static const appliedAt = 8;
+
   @override
-  int get from => 8;
+  int get from => appliedAt;
 
   /// Written throughout with `updateLastUpdateTsOnSet: false`: a conversion
   /// this build performs on its own is not an edit the user made, and counting
@@ -47,11 +55,13 @@ class SettingsFixupsMigration implements SchemaMigration {
     final store = _store ?? SettingStore.instance;
     _migrateSshConnectionMode(store);
     _migrateHomeTabsAgent(store);
-    // Last, so a process that stops partway leaves the version unchanged and
-    // the flags still readable by the rerun.
-    store.remove(_sshFlagKey, updateLastUpdateTsOnRemove: false);
-    store.remove(_homeTabsFlagKey, updateLastUpdateTsOnRemove: false);
   }
+
+  /// TODO: delete with the flag reads below.
+  static const sshFlagKey = 'sshConnectionModeMigrated';
+
+  /// TODO: delete with the flag reads below.
+  static const homeTabsFlagKey = 'homeTabsAgentMigrated';
 
   /// `sshConnectionMode` was an int (-1 auto, 0 built-in, 1 system SSH) and is
   /// a bool.
@@ -59,7 +69,7 @@ class SettingsFixupsMigration implements SchemaMigration {
   /// Idempotent on its own: a value already converted is a bool and falls
   /// through untouched.
   static void _migrateSshConnectionMode(SettingStore store) {
-    if (store.get<bool>(_sshFlagKey) == true) return;
+    if (store.get<bool>(sshFlagKey) == true) return;
     const key = 'sshConnectionMode';
     final raw = store.get<Object>(key);
     if (raw is! int) return;
@@ -73,7 +83,7 @@ class SettingsFixupsMigration implements SchemaMigration {
   /// Idempotent on its own: it acts only when the tab set is exactly the four
   /// legacy defaults, which it no longer is once Agent has been added.
   static void _migrateHomeTabsAgent(SettingStore store) {
-    if (store.get<bool>(_homeTabsFlagKey) == true) return;
+    if (store.get<bool>(homeTabsFlagKey) == true) return;
     const key = 'homeTabs';
     const legacyDefaults = {
       AppTab.server,
@@ -90,10 +100,4 @@ class SettingsFixupsMigration implements SchemaMigration {
       updateLastUpdateTsOnSet: false,
     );
   }
-
-  /// TODO: delete with the flag reads above.
-  static const _sshFlagKey = 'sshConnectionModeMigrated';
-
-  /// TODO: delete with the flag reads above.
-  static const _homeTabsFlagKey = 'homeTabsAgentMigrated';
 }

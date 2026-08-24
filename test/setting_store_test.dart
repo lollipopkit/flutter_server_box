@@ -154,15 +154,58 @@ void main() {
     });
   });
 
-  test('the flags are removed once they have been read', () async {
-    store.set('homeTabsAgentMigrated', true);
-    store.set('sshConnectionModeMigrated', true);
+  group('retiring the flags', () {
+    test('the step itself leaves them alone', () async {
+      store.set('homeTabsAgentMigrated', true);
+      store.set('sshConnectionModeMigrated', true);
 
-    await migration.apply();
+      await migration.apply();
 
-    // One key per fixup, each exported by a backup and read by nothing else.
-    expect(store.get<bool>('homeTabsAgentMigrated'), isNull);
-    expect(store.get<bool>('sshConnectionModeMigrated'), isNull);
+      // `migrate` records the version *after* `apply` returns, so a process
+      // that stopped in between would come back at v8 with the flags gone —
+      // and this step would then read somebody who removed Agent as somebody
+      // who was never offered it.
+      expect(store.get<bool>('homeTabsAgentMigrated'), isTrue);
+      expect(store.get<bool>('sshConnectionModeMigrated'), isTrue);
+    });
+
+    test('and removeRetiredKeys drops them once the version has moved',
+        () async {
+      store.set('homeTabsAgentMigrated', true);
+      store.set('sshConnectionModeMigrated', true);
+      store.schemaVersion.put(SettingsFixupsMigration.appliedAt + 1);
+
+      await store.removeRetiredKeys();
+
+      // One key per fixup, each exported by a backup and read by nothing else.
+      expect(store.get<bool>('homeTabsAgentMigrated'), isNull);
+      expect(store.get<bool>('sshConnectionModeMigrated'), isNull);
+    });
+
+    test('but not before, since that launch still has to read them', () async {
+      // `removeRetiredKeys` runs from `Stores.init`, which is before
+      // `SchemaVersion.migrate`. Dropping them unconditionally would delete
+      // them in the very launch whose migration depends on them.
+      store.set('homeTabsAgentMigrated', true);
+      store.schemaVersion.put(SettingsFixupsMigration.appliedAt);
+
+      await store.removeRetiredKeys();
+
+      expect(store.get<bool>('homeTabsAgentMigrated'), isTrue);
+    });
+
+    test('and a restore that brings them back is cleaned up next launch',
+        () async {
+      // The reason this lives in removeRetiredKeys rather than at the tail of
+      // the step: an older backup writes the flags back long after the step
+      // can run again.
+      store.schemaVersion.put(SettingsFixupsMigration.appliedAt + 2);
+      store.set('sshConnectionModeMigrated', true);
+
+      await store.removeRetiredKeys();
+
+      expect(store.get<bool>('sshConnectionModeMigrated'), isNull);
+    });
   });
 
   test('none of it counts as a user edit', () async {

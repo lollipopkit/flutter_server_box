@@ -9,7 +9,7 @@ extension _AI on _AppSettingsPageState {
     required Widget leading,
     required String title,
     required String hint,
-    required String Function(String? value) displayBuilder,
+    required String Function(String value) displayBuilder,
     String? description,
     bool obscure = false,
   }) {
@@ -85,16 +85,14 @@ extension _AI on _AppSettingsPageState {
           title: libL10n.apiEndpoint,
           hint: 'https://api.openai.com',
           description: l10n.askAiEndpointTip,
-          displayBuilder: (val) =>
-              (val == null || val.isEmpty) ? libL10n.empty : val,
+          displayBuilder: (val) => val.isEmpty ? libL10n.empty : val,
         ),
         _buildAskAiTextTile(
           prop: _setting.askAiModel,
           leading: const Icon(Icons.view_module, size: _kIconSize),
           title: libL10n.askAiModel,
           hint: 'gpt-5.6-luna',
-          displayBuilder: (val) =>
-              (val == null || val.isEmpty) ? libL10n.empty : val,
+          displayBuilder: (val) => val.isEmpty ? libL10n.empty : val,
         ),
         _buildAskAiTextTile(
           prop: _setting.askAiApiKey,
@@ -102,9 +100,8 @@ extension _AI on _AppSettingsPageState {
           title: libL10n.apiKey,
           hint: 'sk-...',
           obscure: true,
-          displayBuilder: (val) => val?.isNotEmpty == true
-              ? libL10n.configured
-              : l10n.askAiApiKeyOptional,
+          displayBuilder: (val) =>
+              val.isNotEmpty ? libL10n.configured : l10n.askAiApiKeyOptional,
         ),
       ].map((e) => CardX(child: e)).toList(),
     );
@@ -136,6 +133,20 @@ extension _AI on _AppSettingsPageState {
     );
   }
 
+  /// Surfaces a write that did not land.
+  ///
+  /// `StoreProp.set` throws a `StateError` when the store answers `false`, and
+  /// the dialog closes before the future completes — so without this the only
+  /// sign is a line in the log.
+  static Future<void> _persist(Future<void> write) async {
+    try {
+      await write;
+    } catch (e, s) {
+      Loggers.app.warning('Saving a setting failed', e, s);
+      Toast.error('$e');
+    }
+  }
+
   Future<void> _showAskAiFieldDialog({
     required StorePropDefault<String> prop,
     required String title,
@@ -147,8 +158,12 @@ extension _AI on _AppSettingsPageState {
       final fetched = prop.get();
       if (fetched.isNotEmpty) ctrl.text = fetched;
 
+      // Reported rather than dropped: `StoreProp.set` throws when the write
+      // does not land, and unawaited that reaches the zone handler as a
+      // generic error while the dialog has already closed as though it
+      // worked. The old `put` could not fail, so this path is new.
       void onSave() {
-        unawaited(prop.set(ctrl.text.trim()));
+        unawaited(_persist(prop.set(ctrl.text.trim())));
         context.popDialog();
       }
 
@@ -180,7 +195,7 @@ extension _AI on _AppSettingsPageState {
               // Back to the default rather than off the map: a grouped field
               // has no row of its own to delete, and for these the default is
               // what an absent row read as anyway.
-              unawaited(prop.remove());
+              unawaited(_persist(prop.remove()));
               context.popDialog();
             },
             child: Text(libL10n.clear),

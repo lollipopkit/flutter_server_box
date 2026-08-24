@@ -8,6 +8,7 @@ import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/migrations/m009_grouped_settings.dart';
 
 part 'backup.g.dart';
 
@@ -85,6 +86,12 @@ class Backup implements Mergeable {
         _restoreInto(Stores.setting, settings_, force: force);
       }
     });
+
+    // Outside the transaction, and for the reason the v2 path does it too: a
+    // restore is neither a launch nor a version bump, so nothing else will
+    // look at what just landed. This format predates the grouped settings
+    // entirely, so its settings map is always the old per-field keys.
+    await const GroupedSettingsMigration().apply();
 
     Provider.reload();
     RNodes.app.notify();

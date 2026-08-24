@@ -286,6 +286,41 @@ void main() {
       expect(SchemaVersion.stored, originalSchema);
     });
 
+    test('regroups the settings a pre-grouping backup brings back', () async {
+      // A restore is neither a launch nor a version bump, so nothing else
+      // looks at what lands. This file carries the old per-field keys and no
+      // grouped row; `mergeStore` reads an absent key as a deletion, so a
+      // forced restore takes `askAi` and `agentShell` out and writes fourteen
+      // rows nothing reads in their place. `schemaVersion` is kept out of the
+      // merge, so it stays put and the migrator would never fold them again.
+      await Stores.setting.askAiModel.set('current-model');
+      await Stores.setting.agentShellWidth.set(999);
+
+      final backup = BackupV2(
+        version: BackupV2.formatVer,
+        date: 1,
+        spis: const {},
+        snippets: const {},
+        keys: const {},
+        container: const {},
+        history: const {},
+        settings: {
+          'askAiModel': 'from-backup',
+          'askAiApiKey': 'sk-from-backup',
+          'agentShellWidth': 321.0,
+          Stores.setting.lastUpdateTsKey: <String, int>{},
+        },
+      );
+      await backup.merge(force: true);
+
+      expect(Stores.setting.askAiModel.get(), 'from-backup');
+      expect(Stores.setting.askAiApiKey.get(), 'sk-from-backup');
+      expect(Stores.setting.agentShellWidth.get(), 321.0);
+      // And the old keys do not survive to be exported all over again.
+      expect(Stores.setting.get<Object>('askAiModel'), isNull);
+      expect(Stores.setting.get<Object>('agentShellWidth'), isNull);
+    });
+
     test('rewrites a legacy key-name server reference to the local key id',
         () async {
       Stores.key.put(const PrivateKeyInfo(
