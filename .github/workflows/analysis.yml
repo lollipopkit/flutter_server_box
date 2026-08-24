@@ -17,7 +17,7 @@ permissions:
   pull-requests: read
 
 env:
-  FLUTTER_VERSION: '3.47.0'
+  FLUTTER_VERSION: '3.47.1'
 
 jobs:
   # Which of the expensive jobs this diff can actually affect.
