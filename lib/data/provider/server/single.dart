@@ -116,6 +116,9 @@ class ServerNotifier extends _$ServerNotifier {
     ref.onDispose(() {
       unawaited(_disposePersistentShell());
       _source?.close();
+      try {
+        state.client?.close();
+      } catch (_) {}
     });
 
     // Cache timeout in memory; the DB read per poll is replaced by this.
@@ -390,6 +393,7 @@ class ServerNotifier extends _$ServerNotifier {
           Loggers.app.warning('Ask ${spi.name} what it allows', e, s);
         }
       }
+      if (!_isRefreshCurrent(operation, spi)) return;
       updateConnection(ServerConn.finished);
       TryLimiter.reset(sid);
     } catch (e, s) {
@@ -418,19 +422,23 @@ class ServerNotifier extends _$ServerNotifier {
   /// [ServerCapabilities.storedHistory], and once live samples exist — see
   /// [StatusHistory.seed].
   Future<void> seedHistory({int minutes = 60}) async {
-    final credential = ServerConnectCredential.fromSpi(state.spi);
+    final generation = _operationGeneration;
+    final spi = state.spi;
+    final credential = ServerConnectCredential.fromSpi(spi);
     if (!ServerCapabilities.of(credential).storedHistory) return;
     try {
       final samples = await _resolveSource(
         credential,
       ).fetchHistory(minutes: minutes);
+      if (!_isRefreshCurrent(generation, spi)) return;
       if (samples.isEmpty) return;
       state.status.history.seed(samples);
       // history is mutated in place, so hand out a fresh ServerStatus to make
       // the watchers rebuild
       updateStatus(_copyStatus(state.status));
     } catch (e, s) {
-      Loggers.app.warning('Seed history for ${state.spi.name}', e, s);
+      if (!_isRefreshCurrent(generation, spi)) return;
+      Loggers.app.warning('Seed history for ${spi.name}', e, s);
     }
   }
 
@@ -561,7 +569,15 @@ class ServerNotifier extends _$ServerNotifier {
   /// reporting an empty list on a server that has plenty of processes.
   Future<ServerExec> ensureScriptExec() async {
     final exec = await ensureExec();
-    if (_scriptWritten) return exec;
+    if (_scriptWritten) {
+      final spi = state.spi;
+      if (spi.custom?.cmds?.isNotEmpty == true) {
+        try {
+          await _migrateCustomCmds(spi, state.status.system, exec);
+        } catch (_) {}
+      }
+      return exec;
+    }
 
     final spi = state.spi;
     final system = state.status.system;
@@ -631,8 +647,9 @@ class ServerNotifier extends _$ServerNotifier {
       );
     }
 
+    SSHClient? client;
     try {
-      final client = await genClient(
+      client = await genClient(
         spi,
         timeout: _timeout,
         onKeyboardInteractive: KeyboardInteractiveAuth.handle,
@@ -642,6 +659,13 @@ class ServerNotifier extends _$ServerNotifier {
       _setClient(client);
       return client;
     } catch (e, s) {
+      // Authentication is awaited before _setClient, so a failure would leak
+      // the newly created client if we only close state.client.
+      if (client != null) {
+        try {
+          client.close();
+        } catch (_) {}
+      }
       TryLimiter.inc(_shellTryId);
       Loggers.app.warning('Connect shell for ${spi.name}', e, s);
       rethrow;

@@ -31,6 +31,7 @@ class MonitorHttpClient {
   Dio? _dio;
   String? _token;
   Future<void>? _loginFuture;
+  bool _disposed = false;
 
   String get _addr {
     final addr = monitor.addr.trim();
@@ -51,6 +52,7 @@ class MonitorHttpClient {
   }
 
   Dio _session() {
+    if (_disposed) throw StateError('MonitorHttpClient disposed');
     final existing = _dio;
     if (existing != null) return existing;
     final dio = Dio(
@@ -88,6 +90,7 @@ class MonitorHttpClient {
   }
 
   Future<void> _loginImpl() async {
+    if (_disposed) return;
     final user = monitor.user?.trim() ?? '';
     final pwd = monitor.pwd ?? '';
     try {
@@ -95,6 +98,7 @@ class MonitorHttpClient {
         '/api/v1/login',
         post: {'username': user, 'password': pwd},
       );
+      if (_disposed) return;
       final token = resp['token'] as String?;
       if (token == null || token.isEmpty) {
         throw const MonitorHttpErr(
@@ -105,6 +109,7 @@ class MonitorHttpClient {
       _token = token;
       _session().options.headers['Authorization'] = 'Bearer $token';
     } on DioException catch (e) {
+      if (_disposed) return;
       throw _toMonitorHttpErr(e);
     }
   }
@@ -473,6 +478,7 @@ class MonitorHttpClient {
   }
 
   void dispose() {
+    _disposed = true;
     _dio?.close(force: true);
     _dio = null;
     _token = null;
