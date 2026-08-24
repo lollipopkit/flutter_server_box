@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/dist.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
@@ -43,11 +42,7 @@ class DistIcon extends ConsumerWidget {
     // being polled right now it is what the cache is about to be set to.
     if (!Stores.setting.showDistIcon.fetch()) return const SizedBox.shrink();
 
-    final live = ref
-        .watch(serverProvider(serverId))
-        .status
-        .more[StatusCmdType.sys]
-        ?.dist;
+    final live = ref.watch(serverProvider(serverId)).status.dist;
     // Rebuilt when the cache changes, so a row drawn before the first poll
     // picks up the answer when it lands rather than staying neutral until
     // something else happens to rebuild it.

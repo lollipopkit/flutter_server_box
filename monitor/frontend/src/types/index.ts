@@ -16,6 +16,10 @@ export interface SystemMetrics {
   temperature?: number;
   temps?: TempReading[];
   sys?: string;
+  // /etc/os-release's ID= and ID_LIKE=. Linux only, and absent on agents
+  // predating them, where `sys` (its PRETTY_NAME line) is all there is.
+  os_id?: string;
+  os_id_like?: string[];
   cpu_brand?: string;
   // Detail lists are absent on older agents; treat as optional
   gpus?: GpuMetrics[];

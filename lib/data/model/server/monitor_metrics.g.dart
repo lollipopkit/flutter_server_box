@@ -29,6 +29,12 @@ MonitorMetrics _$MonitorMetricsFromJson(
           .toList() ??
       const [],
   sys: json['sys'] as String?,
+  osId: json['os_id'] as String?,
+  osIdLike:
+      (json['os_id_like'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const [],
   cpuBrand: json['cpu_brand'] as String?,
   gpus:
       (json['gpus'] as List<dynamic>?)
@@ -90,6 +96,8 @@ Map<String, dynamic> _$MonitorMetricsToJson(MonitorMetrics instance) =>
       'temperature': instance.temperature,
       'temps': instance.temps,
       'sys': instance.sys,
+      'os_id': instance.osId,
+      'os_id_like': instance.osIdLike,
       'cpu_brand': instance.cpuBrand,
       'gpus': instance.gpus,
       'disk_details': instance.diskDetails,

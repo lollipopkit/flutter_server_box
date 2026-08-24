@@ -165,14 +165,55 @@ const kLinuxIcon = 'assets/distro/tux.svg';
 /// nobody's mark.
 const kServerIcon = 'assets/distro/server.svg';
 
+/// Which distribution a machine is running, from everything it reported.
+///
+/// Three sources, asked in order of how much each is worth:
+///
+/// 1. **`osId`** — `/etc/os-release`'s `ID=`, the identifier that file defines
+///    for programs to match on. Exact equality, so there is no ordering to get
+///    right and no way for one distribution's id to be found inside another's.
+/// 2. **`sysVersion`** — the `PRETTY_NAME` prose, matched by substring. This
+///    was the only source until os-release was asked for, and it stays for two
+///    reasons: a remote too old to have that file, and a `monitor` agent
+///    predating the field, both of which report the prose alone.
+/// 3. **`osIdLike`** — `ID_LIKE=`, the base a derivative declares. Last
+///    because it names something other than what is installed: it is the right
+///    answer only when the first two have none, and then it is a better answer
+///    than nothing.
+///
+/// Ordering 2 before 3 matters: `ID_LIKE` is the *parent*, so a distribution
+/// the prose names outright is the more specific of the two. Ubuntu Core is
+/// the example — no `ID` this knows, `PRETTY_NAME="Ubuntu Core 22"`.
+///
+/// One consequence of preferring `ID` is worth stating: Fedora CoreOS sets
+/// `ID=fedora` and is read as Fedora, where the prose match read it as CoreOS.
+/// Both are true of it; the id is what the distribution itself says.
+Dist? resolveDist({
+  String? osId,
+  String? sysVersion,
+  List<String> osIdLike = const [],
+}) {
+  if (osId != null) {
+    final byId = _byOsId[osId.toLowerCase()];
+    if (byId != null) return byId;
+  }
+  final byProse = sysVersion?.dist;
+  if (byProse != null) return byProse;
+  for (final like in osIdLike) {
+    final byLike = _byOsId[like.toLowerCase()];
+    if (byLike != null) return byLike;
+  }
+  return null;
+}
+
 extension DistStringX on String {
   /// Which distribution this `PRETTY_NAME` line names, or null.
   ///
-  /// The input is `cat /etc/*-release | grep ^PRETTY_NAME`, so it is prose:
-  /// `PRETTY_NAME="Red Hat Enterprise Linux 9.4 (Plow)"`. Matching the enum's
-  /// own name against it worked only while every supported distribution
-  /// happened to be spelled as one lower-case word inside its own
-  /// `PRETTY_NAME` — `redhat`, `mint` and `popos` are three that never are.
+  /// The prose half of [resolveDist] — `PRETTY_NAME="Red Hat Enterprise Linux
+  /// 9.4 (Plow)"`. Matching the enum's own name against it worked only while
+  /// every supported distribution happened to be spelled as one lower-case
+  /// word inside its own `PRETTY_NAME` — `redhat`, `mint` and `popos` are
+  /// three that never are.
   Dist? get dist {
     final lower = toLowerCase();
     for (final (dist, needles) in _matchers) {
@@ -184,8 +225,115 @@ extension DistStringX on String {
   }
 }
 
+/// `/etc/os-release`'s `ID=`, per distribution.
+///
+/// A flat map and not an ordered list, which is the point of using this field:
+/// a missing entry means "not recognised", never "recognised as its base". The
+/// values are the ids the distributions set, so several map to one case
+/// (`archarm` is Arch on ARM; `sles` and `sled` are SUSE's two enterprise
+/// editions of openSUSE's chameleon).
+///
+/// **Not every case is here, and that is not a gap to fill by guessing.** A
+/// flavour that ships its parent's os-release unchanged has no id of its own —
+/// Kubuntu and LXLE both report `ID=ubuntu` — and one whose id nobody has
+/// confirmed is left to the prose matcher rather than written down wrong. A
+/// wrong entry here is worse than no entry: it is an exact match, so it wins
+/// over everything else.
+///
+/// A duplicated id cannot be written here at all — two equal keys in a `const`
+/// map is a compile error — and `test/dist_icon_test.dart` carries the same
+/// table the other way round, so an id that stops resolving is a failure
+/// rather than a mark that quietly goes generic.
+const _byOsId = <String, Dist>{
+  'debian': Dist.debian,
+  'ubuntu': Dist.ubuntu,
+  'centos': Dist.centos,
+  'fedora': Dist.fedora,
+  'kali': Dist.kali,
+  'alpine': Dist.alpine,
+  'rocky': Dist.rocky,
+  'deepin': Dist.deepin,
+  'coreelec': Dist.coreelec,
+
+  // SUSE's chameleon covers the enterprise editions and the older openSUSE
+  // releases, which predate the per-edition ids below.
+  'opensuse': Dist.opensuse,
+  'suse': Dist.opensuse,
+  'sles': Dist.opensuse,
+  'sled': Dist.opensuse,
+  'sles_sap': Dist.opensuse,
+  'opensuse-microos': Dist.opensuse,
+  'opensuse-leap': Dist.leap,
+  'opensuse-tumbleweed': Dist.tumbleweed,
+
+  // OpenWrt and the downstreams that rename themselves in it.
+  'openwrt': Dist.wrt,
+  'lede': Dist.wrt,
+  'immortalwrt': Dist.wrt,
+  'istoreos': Dist.wrt,
+
+  'rhel': Dist.rhel,
+  'almalinux': Dist.almalinux,
+  'nobara': Dist.nobara,
+
+  'devuan': Dist.devuan,
+  'raspbian': Dist.raspbian,
+  'linuxmint': Dist.mint,
+  'pop': Dist.popos,
+  'elementary': Dist.elementary,
+  'zorin': Dist.zorin,
+  'mx': Dist.mx,
+  'neon': Dist.kdeneon,
+  'biglinux': Dist.biglinux,
+  'vanilla': Dist.vanilla,
+
+  'arch': Dist.arch,
+  'archarm': Dist.arch,
+  'manjaro': Dist.manjaro,
+  'manjaro-arm': Dist.manjaro,
+  'endeavouros': Dist.endeavour,
+  'artix': Dist.artix,
+  'garuda': Dist.garuda,
+  'cachyos': Dist.cachyos,
+  'arcolinux': Dist.arcolinux,
+  'archcraft': Dist.archcraft,
+  'archlabs': Dist.archlabs,
+  'xerolinux': Dist.xerolinux,
+
+  'parrot': Dist.parrot,
+  'qubes': Dist.qubes,
+  'tails': Dist.tails,
+
+  'trisquel': Dist.trisquel,
+  'parabola': Dist.parabola,
+  'hyperbola': Dist.hyperbola,
+  'guix': Dist.guix,
+
+  'gentoo': Dist.gentoo,
+  'nixos': Dist.nixos,
+  'void': Dist.voidlinux,
+  'solus': Dist.solus,
+  'slackware': Dist.slackware,
+  'mageia': Dist.mageia,
+  'mandriva': Dist.mandriva,
+  'openmandriva': Dist.mandriva,
+  'sabayon': Dist.sabayon,
+  'aosc': Dist.aosc,
+  'postmarketos': Dist.postmarketos,
+
+  // Container Linux's own id, and Flatcar, its successor. Fedora CoreOS is
+  // absent on purpose — it reports `ID=fedora`, and there is no entry that
+  // could distinguish it without contradicting what it says of itself.
+  'coreos': Dist.coreos,
+  'flatcar': Dist.coreos,
+};
+
 /// What a `PRETTY_NAME` has to contain, per distribution, **most specific
 /// first**.
+///
+/// The fallback half of [resolveDist], for a remote with no `/etc/os-release`
+/// and for a `monitor` agent predating the field. It was the only half until
+/// then, and the reason it is no longer the first one asked is written here:
 ///
 /// The order carries meaning and is the whole of the correctness here. Every
 /// derivative has to be asked before what it derives from, because that is

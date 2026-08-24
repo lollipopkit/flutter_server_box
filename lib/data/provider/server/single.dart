@@ -18,7 +18,6 @@ import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/connection_stat.dart';
 import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
-import 'package:server_box/data/model/server/dist.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
@@ -163,7 +162,7 @@ class ServerNotifier extends _$ServerNotifier {
   /// — the pickers, the known-hosts page and the order page all hold only an
   /// id. See [ServerDistStore].
   void _rememberDist(ServerStatus status) {
-    final dist = status.more[StatusCmdType.sys]?.dist;
+    final dist = status.dist;
     if (dist == null) return;
     try {
       Stores.serverDist.put(state.spi.id, dist);
@@ -200,6 +199,8 @@ class ServerNotifier extends _$ServerNotifier {
       history: source.history,
     );
     status.amd = source.amd?.toList();
+    status.osId = source.osId;
+    status.osIdLike = source.osIdLike;
     status.batteries.addAll(source.batteries);
     status.more.addAll(source.more);
     status.sensors.addAll(source.sensors);

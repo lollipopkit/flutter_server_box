@@ -59,7 +59,7 @@ extension _PaneList on _ServerPageState {
       // reason `icon` is left null here — but this one differs per row and is
       // the thing being scanned for.
       leading: DistIconOf(
-        srv.status.more[StatusCmdType.sys]?.dist,
+        srv.status.dist,
         size: 17,
         color: selected
             ? Theme.of(context).colorScheme.primary

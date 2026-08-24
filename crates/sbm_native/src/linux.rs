@@ -213,13 +213,24 @@ unsafe extern "C" {
     fn kill_process_group(pid: i32, signal: i32) -> i32;
 }
 
-/// Concatenation of every `/etc/*-release` file, filtered to the
-/// `PRETTY_NAME=...` line — mirrors `cat /etc/*-release | grep ^PRETTY_NAME`.
-/// `parse_sys_version` requires exactly this one line (it errors on more
-/// than one `=` in its input), so the filter isn't optional here.
-fn release_pretty_name() -> String {
+/// What the shared script's `sys` command prints — see `commands::LINUX`.
+///
+/// `/etc/os-release` then `/usr/lib/os-release`, in that order because that is
+/// the precedence os-release specifies and `common::os_release_value` resolves
+/// a duplicated key by taking the first. The `/etc/*-release` glob is the same
+/// fallback the script has, for a system old enough to have no os-release.
+///
+/// Not filtered to one key: `parse_sys_version`, `parse_os_id` and
+/// `parse_os_id_like` each pick their own line out of this block.
+fn os_release_block() -> String {
     let mut all = String::new();
-    if let Ok(entries) = fs::read_dir("/etc") {
+    for path in ["/etc/os-release", "/usr/lib/os-release"] {
+        all.push_str(&read(path));
+        all.push('\n');
+    }
+    if all.trim().is_empty()
+        && let Ok(entries) = fs::read_dir("/etc")
+    {
         for entry in entries.flatten() {
             let name = entry.file_name();
             if name.to_string_lossy().ends_with("-release") {
@@ -228,7 +239,7 @@ fn release_pretty_name() -> String {
             }
         }
     }
-    all.lines().find(|l| l.starts_with("PRETTY_NAME")).unwrap_or("").to_string()
+    all
 }
 
 /// `/sys/class/thermal/thermal_zone*/{type,temp}`, sorted by zone directory
@@ -278,6 +289,8 @@ pub fn sample() -> ServerStatus {
     // No lsblk JSON attempt here (keeps this path to a single subprocess);
     // `parse_disk` falls back to the `df -k` table shape it already supports
     let disks: Vec<Disk> = linux::parse_disk(&disk_raw);
+    // Read once: three fields come out of the same block.
+    let os_release = os_release_block();
 
     ServerStatus {
         cpu: linux::parse_cpu(&read("/proc/stat")),
@@ -289,7 +302,9 @@ pub fn sample() -> ServerStatus {
         temps: linux::parse_temps(&temp_types, &temp_values, 1000.0),
         conn: linux::parse_conn(&read("/proc/net/snmp")),
         uptime: common::parse_uptime(&run("uptime", &[])),
-        sys: common::parse_sys_version(&release_pretty_name()),
+        sys: common::parse_sys_version(&os_release),
+        os_id: common::parse_os_id(&os_release),
+        os_id_like: common::parse_os_id_like(&os_release),
         host: common::parse_hostname(&read("/etc/hostname")),
         diskio: linux::parse_diskio(&read("/proc/diskstats")),
         ..ServerStatus::default()

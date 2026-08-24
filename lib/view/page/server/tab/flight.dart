@@ -105,7 +105,7 @@ extension _Flight on _ServerPageState {
     return SideBarTile(
       title: srv.spi.name,
       leading: DistIconOf(
-        srv.status.more[StatusCmdType.sys]?.dist,
+        srv.status.dist,
         size: 17,
         color: Theme.of(context).colorScheme.primary,
       ),

@@ -203,6 +203,13 @@ fn manifest_cmd(system: SystemType, key: &str) -> &'static str {
         .cmd
 }
 
+/// Whether a path exists on the remote, as a plain yes/no.
+fn has_file(host: &str, path: &str) -> bool {
+    ssh(host, &format!("[ -e \"{path}\" ] && echo yes || echo no"), None)
+        .map(|s| s.trim() == "yes")
+        .unwrap_or(false)
+}
+
 #[test]
 fn ssh_e2e_script_parse_matches_direct_commands() {
     let Some(host) = ssh_host() else {
@@ -299,12 +306,39 @@ fn ssh_e2e_script_parse_matches_direct_commands() {
         "cpu core count: script vs direct"
     );
 
-    let direct_sys = ssh(&host, manifest_cmd(system, commands::SYS), None).expect("direct sys");
+    let direct_sys_raw =
+        ssh(&host, manifest_cmd(system, commands::SYS), None).expect("direct sys");
     let direct_sys = match system {
-        SystemType::Bsd => sbm_parser::common::parse_hostname(&direct_sys),
-        _ => sbm_parser::common::parse_sys_version(&direct_sys),
+        SystemType::Bsd => sbm_parser::common::parse_hostname(&direct_sys_raw),
+        _ => sbm_parser::common::parse_sys_version(&direct_sys_raw),
     };
     assert_eq!(status.sys, direct_sys, "sys version: script vs direct");
+
+    // The same segment carries `/etc/os-release`'s `ID=` now, and that is what
+    // picks the distribution's mark. Worth asserting through the script rather
+    // than only against the parser: the command grew a pipe, an `||` and a
+    // quoted regex, all of which pass through script generation verbatim.
+    assert_eq!(
+        status.os_id,
+        sbm_parser::common::parse_os_id(&direct_sys_raw),
+        "os-release ID: script vs direct"
+    );
+    assert_eq!(
+        status.os_id_like,
+        sbm_parser::common::parse_os_id_like(&direct_sys_raw),
+        "os-release ID_LIKE: script vs direct"
+    );
+    if system == SystemType::Linux {
+        // Every Linux this app is likely to meet has the file; one that does
+        // not falls back to the prose, which the assertion above still covers.
+        let has_os_release =
+            has_file(&host, "/etc/os-release") || has_file(&host, "/usr/lib/os-release");
+        assert_eq!(
+            status.os_id.is_some(),
+            has_os_release,
+            "a remote with /etc/os-release has to report an ID"
+        );
+    }
 
     // On-demand segments (GPU/sensors/SMART/battery): what the test asserts
     // adapts to what the remote actually has — presence means the segment must

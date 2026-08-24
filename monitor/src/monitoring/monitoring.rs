@@ -65,6 +65,16 @@ pub struct SystemMetrics {
     pub temps: Vec<TempReading>,
     /// System version description (PRETTY_NAME / uname / OsName), if parsed
     pub sys: Option<String>,
+    /// `/etc/os-release`'s `ID=` — Linux only, and what a client should match
+    /// the distribution on rather than looking for substrings in [`sys`].
+    ///
+    /// [`sys`]: SystemMetrics::sys
+    #[serde(default)]
+    pub os_id: Option<String>,
+    /// `/etc/os-release`'s `ID_LIKE=`, closest base first. Only a derivative
+    /// declares one, so this is empty on most installs.
+    #[serde(default)]
+    pub os_id_like: Vec<String>,
     /// CPU model, e.g. "Apple M1 Pro" or "Intel(R) Core(TM) i7 (x8)" when
     /// several logical cores share one brand string; joined with ", " for
     /// the rare heterogeneous (multi-socket, differing model) case
@@ -881,6 +891,8 @@ fn adapt_status(
         temperature,
         temps,
         sys: status.sys.clone(),
+        os_id: status.os_id.clone(),
+        os_id_like: status.os_id_like.clone(),
         cpu_brand: format_cpu_brand(&status.cpu_brand),
         gpus,
         disk_details,

@@ -3,6 +3,7 @@ import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/battery.dart';
 import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
+import 'package:server_box/data/model/server/dist.dart';
 import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_status_update_req.dart';
@@ -208,6 +209,47 @@ Filesystem  1024-blocks   Used Available Capacity Mounted on
       expect(result.sensors.single.device, 'Probe');
       expect(result.diskSmart.single.device, '0');
       expect(result.diskSmart.single.temperature, 35);
+    });
+  });
+
+  /// The wiring between the parser's JSON and the fields the marks are drawn
+  /// from. Every failure here is silent: a key that stopped arriving leaves
+  /// `osId` null and the prose match answers instead, usually with the parent.
+  group('what the sys segment fills in', () {
+    Future<ServerStatus> parse(String sys) => getStatus(
+      ServerStatusUpdateReq(
+        system: SystemType.linux,
+        ss: InitStatus.status,
+        parsedOutput: {StatusCmdType.sys.name: sys},
+      ),
+    );
+
+    test('the os-release identifiers reach the status', () async {
+      final result = await parse(
+        'ID=linuxmint\nID_LIKE="ubuntu debian"\nPRETTY_NAME="Linux Mint 21.3"\n',
+      );
+
+      expect(result.osId, 'linuxmint');
+      expect(result.osIdLike, ['ubuntu', 'debian']);
+      // The prose stays what it was — it is the line the detail page shows.
+      expect(result.more[StatusCmdType.sys], 'Linux Mint 21.3');
+      expect(result.dist, Dist.mint);
+    });
+
+    test('and the id decides, not the prose', () async {
+      // A Mint install whose `PRETTY_NAME` still says Ubuntu — which is what
+      // several derivatives ship. Matching the prose reads it as the parent.
+      final result = await parse('ID=linuxmint\nPRETTY_NAME="Ubuntu 22.04.3 LTS"\n');
+
+      expect(result.dist, Dist.mint);
+    });
+
+    test('a remote with no os-release still reads by its prose', () async {
+      final result = await parse('PRETTY_NAME="Debian GNU/Linux 12 (bookworm)"\n');
+
+      expect(result.osId, isNull);
+      expect(result.osIdLike, isEmpty);
+      expect(result.dist, Dist.debian);
     });
   });
 }

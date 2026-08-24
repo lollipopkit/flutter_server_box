@@ -201,6 +201,15 @@ void _applyMore(ServerStatus ss, MonitorMetrics m) {
   if (sys != null && sys.isNotEmpty) {
     ss.more[StatusCmdType.sys] = sys;
   }
+  // Absent on an agent predating the field, where the prose is all there is;
+  // left as it was rather than cleared, for the same reason as the SSH path.
+  final osId = m.osId;
+  if (osId != null && osId.isNotEmpty) {
+    ss.osId = osId;
+  }
+  if (m.osIdLike.isNotEmpty) {
+    ss.osIdLike = m.osIdLike;
+  }
   if (m.serverName.isNotEmpty) {
     ss.more[StatusCmdType.host] = m.serverName;
   }

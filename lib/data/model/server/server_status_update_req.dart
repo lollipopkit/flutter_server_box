@@ -281,6 +281,17 @@ void _applyMore(ServerStatus ss, Map<String, dynamic> status) {
   if (sys != null && sys.isNotEmpty) {
     ss.more[StatusCmdType.sys] = sys;
   }
+  // Both absent on BSD and Windows, and on a Linux old enough to have no
+  // `/etc/os-release`; left as they were rather than cleared, so a poll that
+  // failed to read the file does not throw away what the last one found.
+  final osId = status['os_id'] as String?;
+  if (osId != null && osId.isNotEmpty) {
+    ss.osId = osId;
+  }
+  final osIdLike = status['os_id_like'] as List?;
+  if (osIdLike != null && osIdLike.isNotEmpty) {
+    ss.osIdLike = osIdLike.cast<String>();
+  }
   final host = status['host'] as String?;
   if (host != null && !host.contains(ScriptConstants.scriptFile)) {
     ss.more[StatusCmdType.host] = host;

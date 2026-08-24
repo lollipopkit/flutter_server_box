@@ -26,6 +26,14 @@ class MonitorMetrics {
   /// field, where [temperature] is the only reading available.
   final List<MonitorTempReading> temps;
   final String? sys;
+
+  /// `/etc/os-release`'s `ID=` on the agent's own machine, which is what picks
+  /// the distribution's mark. Null on Bsd/Windows agents, which have no such
+  /// file, and on agents predating the field — where [sys] is all there is.
+  final String? osId;
+
+  /// `/etc/os-release`'s `ID_LIKE=`, closest base first. See [osId].
+  final List<String> osIdLike;
   final String? cpuBrand;
   final List<MonitorGpuMetrics> gpus;
   final List<MonitorDiskDetail> diskDetails;
@@ -55,6 +63,8 @@ class MonitorMetrics {
     this.temperature,
     this.temps = const [],
     this.sys,
+    this.osId,
+    this.osIdLike = const [],
     this.cpuBrand,
     this.gpus = const [],
     this.diskDetails = const [],

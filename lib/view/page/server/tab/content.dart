@@ -19,7 +19,7 @@ extension on _ServerPageState {
                 // machine runs is the thing you scan a list of servers for,
                 // and it reads faster as a shape than as a word.
                 DistIconOf(
-                  s.status.more[StatusCmdType.sys]?.dist,
+                  s.status.dist,
                   size: 15,
                   color: Colors.grey,
                 ),

@@ -1,12 +1,13 @@
-/// That every distribution has a glyph, a matcher, and that the matchers are
-/// in an order that lets the specific ones win.
+/// That every distribution has a glyph, that the two ways of naming one both
+/// reach it, and that they are consulted in the right order.
 ///
-/// Three ways this goes wrong silently. A renamed case or moved file makes the
+/// Four ways this goes wrong silently. A renamed case or moved file makes the
 /// glyph stop loading, and `SvgPicture.asset` on a missing asset draws nothing
 /// rather than throwing. A case added to the enum but not to `_matchers` never
-/// matches anything, so its glyph is unreachable. And a derivative listed
-/// *after* what it derives from reads as the parent, because "Kubuntu"
-/// contains "ubuntu".
+/// matches anything, so its glyph is unreachable. A derivative listed *after*
+/// what it derives from reads as the parent, because "Kubuntu" contains
+/// "ubuntu". And a mistyped `ID=` in `_byOsId` is not a failure but a fall
+/// through to the prose match, which usually still answers — with the parent.
 library;
 
 import 'dart:io';
@@ -245,5 +246,191 @@ void main() {
   test('something unrecognised is null, which draws the penguin', () {
     expect('Some Unknown Linux'.dist, isNull);
     expect(''.dist, isNull);
+  });
+
+  group('the os-release ids', () {
+    // The same table `_byOsId` holds, written the other way round. `_byOsId` is
+    // private, so this is what proves an entry is reachable — and a `const` map
+    // cannot hold the same key twice, so nothing here can be shadowed.
+    const ids = {
+      'debian': Dist.debian,
+      'ubuntu': Dist.ubuntu,
+      'centos': Dist.centos,
+      'fedora': Dist.fedora,
+      'kali': Dist.kali,
+      'alpine': Dist.alpine,
+      'rocky': Dist.rocky,
+      'deepin': Dist.deepin,
+      'coreelec': Dist.coreelec,
+      'opensuse': Dist.opensuse,
+      'suse': Dist.opensuse,
+      'sles': Dist.opensuse,
+      'sled': Dist.opensuse,
+      'sles_sap': Dist.opensuse,
+      'opensuse-microos': Dist.opensuse,
+      'opensuse-leap': Dist.leap,
+      'opensuse-tumbleweed': Dist.tumbleweed,
+      'openwrt': Dist.wrt,
+      'lede': Dist.wrt,
+      'immortalwrt': Dist.wrt,
+      'istoreos': Dist.wrt,
+      'rhel': Dist.rhel,
+      'almalinux': Dist.almalinux,
+      'nobara': Dist.nobara,
+      'devuan': Dist.devuan,
+      'raspbian': Dist.raspbian,
+      'linuxmint': Dist.mint,
+      'pop': Dist.popos,
+      'elementary': Dist.elementary,
+      'zorin': Dist.zorin,
+      'mx': Dist.mx,
+      'neon': Dist.kdeneon,
+      'biglinux': Dist.biglinux,
+      'vanilla': Dist.vanilla,
+      'arch': Dist.arch,
+      'archarm': Dist.arch,
+      'manjaro': Dist.manjaro,
+      'manjaro-arm': Dist.manjaro,
+      'endeavouros': Dist.endeavour,
+      'artix': Dist.artix,
+      'garuda': Dist.garuda,
+      'cachyos': Dist.cachyos,
+      'arcolinux': Dist.arcolinux,
+      'archcraft': Dist.archcraft,
+      'archlabs': Dist.archlabs,
+      'xerolinux': Dist.xerolinux,
+      'parrot': Dist.parrot,
+      'qubes': Dist.qubes,
+      'tails': Dist.tails,
+      'trisquel': Dist.trisquel,
+      'parabola': Dist.parabola,
+      'hyperbola': Dist.hyperbola,
+      'guix': Dist.guix,
+      'gentoo': Dist.gentoo,
+      'nixos': Dist.nixos,
+      'void': Dist.voidlinux,
+      'solus': Dist.solus,
+      'slackware': Dist.slackware,
+      'mageia': Dist.mageia,
+      'mandriva': Dist.mandriva,
+      'openmandriva': Dist.mandriva,
+      'sabayon': Dist.sabayon,
+      'aosc': Dist.aosc,
+      'postmarketos': Dist.postmarketos,
+      'coreos': Dist.coreos,
+      'flatcar': Dist.coreos,
+    };
+
+    test('each one resolves to the distribution that sets it', () {
+      ids.forEach((id, dist) {
+        expect(
+          resolveDist(osId: id),
+          dist,
+          reason: 'ID=$id has to read as Dist.${dist.name}',
+        );
+      });
+    });
+
+    test('an id nothing knows is not answered with a guess', () {
+      // Silence here is the point of matching on `ID` at all: it is exact, so
+      // there is no near miss to fall into. What happens next is the prose.
+      expect(resolveDist(osId: 'frobnix'), isNull);
+    });
+
+    test('older Deepin capitalises its own id, and is still Deepin', () {
+      // `ID=Deepin` shipped for several releases. os-release restricts the
+      // field to lower case; the file does not always agree.
+      expect(resolveDist(osId: 'Deepin'), Dist.deepin);
+    });
+
+    test('a flavour that ships its parent os-release reads as the parent', () {
+      // Kubuntu and LXLE both set `ID=ubuntu`, so nothing here can tell them
+      // apart — and inventing an entry for them would be inventing a file.
+      expect(resolveDist(osId: 'ubuntu'), Dist.ubuntu);
+    });
+  });
+
+  group('which of the three sources wins', () {
+    test('the id beats the prose', () {
+      // The prose is what this used to match on, so a disagreement is the
+      // regression to catch: `ID` is the field written to be matched.
+      expect(
+        resolveDist(osId: 'rhel', sysVersion: 'Red Hat Enterprise Linux 9.4'),
+        Dist.rhel,
+      );
+      expect(
+        resolveDist(osId: 'linuxmint', sysVersion: 'Ubuntu 22.04.3 LTS'),
+        Dist.mint,
+      );
+    });
+
+    test('the prose beats ID_LIKE, which names the parent', () {
+      // Ubuntu Core: no `ID` this knows, and its base would answer if asked
+      // first. The prose names what is actually installed.
+      expect(
+        resolveDist(
+          osId: 'ubuntu-core',
+          sysVersion: 'Ubuntu Core 22',
+          osIdLike: const ['debian'],
+        ),
+        Dist.ubuntu,
+      );
+    });
+
+    test('ID_LIKE answers when nothing else does', () {
+      // A derivative nothing here has heard of. Its base is a better mark than
+      // the generic penguin, and the intro page says the mark is what the
+      // machine *may* be running.
+      expect(
+        resolveDist(
+          osId: 'frobnix',
+          sysVersion: 'Frobnix 1.0',
+          osIdLike: const ['debian'],
+        ),
+        Dist.debian,
+      );
+    });
+
+    test('and the closest base in ID_LIKE is the one taken', () {
+      // `ID_LIKE="ubuntu debian"` is ordered nearest-first, and Ubuntu is the
+      // more specific of the two.
+      expect(
+        resolveDist(osId: 'frobnix', osIdLike: const ['ubuntu', 'debian']),
+        Dist.ubuntu,
+      );
+      // An entry nothing knows is skipped rather than ending the search.
+      expect(
+        resolveDist(osId: 'frobnix', osIdLike: const ['nonesuch', 'debian']),
+        Dist.debian,
+      );
+    });
+
+    test('nothing at all is null, as before', () {
+      expect(resolveDist(), isNull);
+      expect(resolveDist(osIdLike: const ['nonesuch']), isNull);
+    });
+
+    test('a remote with no os-release still reads by its prose alone', () {
+      // The `/etc/*-release` fallback, and every `monitor` agent predating the
+      // field: `PRETTY_NAME` is the whole of what arrives.
+      expect(
+        resolveDist(sysVersion: 'Red Hat Enterprise Linux 9.4 (Plow)'),
+        Dist.rhel,
+      );
+      expect(resolveDist(sysVersion: 'iStoreOS 22.03'), Dist.wrt);
+    });
+
+    test('Fedora CoreOS is Fedora once it is asked by id', () {
+      // A deliberate change of answer, not a regression: it sets `ID=fedora`,
+      // with `coreos` only in `VARIANT_ID`. The prose match still reads the
+      // name, which is what an agent that sends nothing else falls back to.
+      expect(
+        resolveDist(osId: 'fedora', sysVersion: 'Fedora CoreOS 40'),
+        Dist.fedora,
+      );
+      expect(resolveDist(sysVersion: 'Fedora CoreOS 40'), Dist.coreos);
+      // Flatcar, its successor, has an id of its own and keeps the mark.
+      expect(resolveDist(osId: 'flatcar'), Dist.coreos);
+    });
   });
 }
