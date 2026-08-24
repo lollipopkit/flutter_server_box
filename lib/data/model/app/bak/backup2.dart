@@ -79,40 +79,88 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     _validateRestorableTypedStores();
     _loggerV2.info('Merging...');
 
-    // Ordered by what references what: a server names a private key and a BMC
-    // account, a snippet and a port forward name a server, and a container host
-    // is a child of one. Merging a store before the one it points at would drop
-    // every record whose foreign key has not arrived yet.
-    final keysChanged = Stores.key.merge(keys, force: force);
-    // A key whose bytes arrived from the other side is not the key that was
-    // opened here. Left in the cache, the next connection would authenticate
-    // with the one this merge replaced and say nothing about it.
-    if (keysChanged) PrivateKeyUnlock.forgetAll();
-    final credsChanged = Stores.bmcCredential.merge(bmcCredentials, force: force);
-    final serversChanged = Stores.server.merge(
-      _serversWithRestoredIds(),
-      force: force,
-    );
-    final snippetsChanged = Stores.snippet.merge(snippets, force: force);
-    Stores.portForward.merge(portForwards, force: force);
-    for (final entry in container.entries) {
-      if (entry.key.startsWith(StoreDefaults.prefixKey)) continue;
-      Stores.container.restoreOne(entry.key, entry.value);
-    }
+    late bool keysChanged;
+    late bool credsChanged;
+    late bool serversChanged;
+    late bool snippetsChanged;
+    late bool forwardsChanged;
+    late Set<String> historyNotifications;
+    late Set<String> settingNotifications;
 
-    await Future.wait([
-      Mergeable.mergeStore(
-        backupData: _mergeDataForStore(Stores.history, history),
-        store: Stores.history,
+    // Every store shares this SQLite connection. Keep the reference order, but
+    // commit the whole restore as one unit so a later failure cannot leave the
+    // earlier stores visible without it.
+    SqliteStore.transact(() {
+      keysChanged = Stores.key.merge(keys, force: force, notify: false);
+      credsChanged = Stores.bmcCredential.merge(
+        bmcCredentials,
         force: force,
-      ),
-      if (settings.isNotEmpty)
-        Mergeable.mergeStore(
-          backupData: _mergeDataForStore(Stores.setting, settings),
-          store: Stores.setting,
-          force: force,
-        ),
-    ]);
+        notify: false,
+      );
+      serversChanged = Stores.server.merge(
+        _serversWithRestoredIds(),
+        force: force,
+        notify: false,
+      );
+      snippetsChanged = Stores.snippet.merge(
+        snippets,
+        force: force,
+        notify: false,
+      );
+      forwardsChanged = Stores.portForward.merge(
+        portForwards,
+        force: force,
+        notify: false,
+      );
+
+      final containerIds = <String>{
+        for (final key in spis.keys)
+          if (!_isInternalStoreKey(key)) key,
+        for (final key in container.keys)
+          if (!_isInternalStoreKey(key)) key,
+      };
+      for (final serverId in containerIds) {
+        if (Stores.container.restoreOne(
+          serverId,
+          container[serverId] ?? const <String, Object?>{},
+          notify: false,
+        )) {
+          serversChanged = true;
+        }
+      }
+
+      historyNotifications = _mergeSqliteStore(
+        Stores.history,
+        _mergeDataForStore(Stores.history, history),
+        force: force,
+      );
+      settingNotifications = settings.isEmpty
+          ? const <String>{}
+          : _mergeSqliteStore(
+              Stores.setting,
+              _mergeDataForStore(Stores.setting, settings),
+              force: force,
+            );
+    });
+
+    // Notifications and provider reloads happen only after the outer
+    // transaction commits. A failed restore therefore has no observable half.
+    if (keysChanged) {
+      Stores.key.invalidate();
+      PrivateKeyUnlock.forgetAll();
+    }
+    if (credsChanged) Stores.bmcCredential.invalidate();
+    if (serversChanged) {
+      Stores.server.invalidate();
+      // A server tombstone cascades these rows even when their own merge pass
+      // has no later write to announce.
+      Stores.portForward.invalidate();
+      Stores.snippet.invalidate();
+    }
+    if (snippetsChanged && !serversChanged) Stores.snippet.invalidate();
+    if (forwardsChanged && !serversChanged) Stores.portForward.invalidate();
+    _notifySqliteStore(Stores.history, historyNotifications);
+    _notifySqliteStore(Stores.setting, settingNotifications);
 
     if (serversChanged) GlobalRef.gRef?.read(serversProvider.notifier).reload();
     if (snippetsChanged) {
@@ -182,8 +230,8 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     // never read, so a newer file was decoded by whatever reader happened to
     // accept its shape — silently dropping the fields it didn't know.
     final ver = map['version'];
-    if (ver is int && ver > formatVer) {
-      throw SchemaTooNewException(stored: ver, supported: formatVer);
+    if (ver is num && ver > formatVer) {
+      throw SchemaTooNewException(stored: ver.ceil(), supported: formatVer);
     }
 
     return BackupV2.fromJson(map);
@@ -279,7 +327,9 @@ Object? _serverWithRestoredIds(
   if (bmc is Map) {
     final restored = Map<String, Object?>.from(bmc);
     final id = restored['credId'];
-    if (id is String && credIds.containsKey(id)) restored['credId'] = credIds[id];
+    if (id is String && credIds.containsKey(id)) {
+      restored['credId'] = credIds[id];
+    }
     server['bmc'] = restored;
   }
   return server;
@@ -326,6 +376,150 @@ Map<String, Object?> _mergeDataForStore(
     result[entry.key] = entry.value;
   }
   return result;
+}
+
+/// Synchronous equivalent of `Mergeable.mergeStore` for the shared SQLite
+/// database. The caller owns the outer transaction and delivers [Set] as
+/// notifications only after commit.
+Set<String> _mergeSqliteStore(
+  SqliteStore store,
+  Map<String, Object?> backupData, {
+  required bool force,
+}) {
+  final incomingTimestamps = _kvTimestamps(
+    backupData[store.lastUpdateTsKey],
+    backupData.keys.where((key) => key != store.lastUpdateTsKey),
+  );
+  final timestamps = Map<String, int>.from(store.lastUpdateTs ?? const {});
+  final current = store.getAllMap(includeInternalKeys: true);
+  final currentKeys = current.keys
+      .where((key) => key != store.lastUpdateTsKey)
+      .toSet();
+  final backupKeys = backupData.keys
+      .where((key) => key != store.lastUpdateTsKey)
+      .toSet();
+  final notifications = <String>{};
+  var timestampDirty = false;
+
+  for (final key in {...backupKeys, ...currentKeys}) {
+    final backupTimestamp = incomingTimestamps[key] ?? 0;
+    final currentTimestamp = timestamps[key] ?? 0;
+    final backupHasKey = backupKeys.contains(key);
+    final currentHasKey = currentKeys.contains(key);
+
+    if (backupHasKey && !currentHasKey) {
+      if (!force && backupTimestamp <= currentTimestamp) continue;
+      final value = backupData[key];
+      if (value == null) continue;
+      _writeKv(store, key, value);
+      notifications.add(key);
+      if (!store.isInternalKey(key)) {
+        timestamps[key] = backupTimestamp;
+        timestampDirty = true;
+      }
+      continue;
+    }
+
+    if (!backupHasKey && currentHasKey) {
+      if (!force && backupTimestamp <= currentTimestamp) continue;
+      _deleteKv(store, key);
+      notifications.add(key);
+      if (!store.isInternalKey(key)) {
+        // Preserve the existing merge contract: a deletion keeps the local
+        // timestamp entry unless the backup supplied a newer tombstone.
+        timestamps[key] = backupTimestamp > currentTimestamp
+            ? backupTimestamp
+            : currentTimestamp;
+        timestampDirty = true;
+      }
+      continue;
+    }
+
+    if (!backupHasKey || !currentHasKey) continue;
+    if (!force && backupTimestamp <= currentTimestamp) continue;
+    final value = backupData[key];
+    if (value == current[key]) continue;
+    if (value == null) {
+      _deleteKv(store, key);
+    } else {
+      _writeKv(store, key, value);
+    }
+    notifications.add(key);
+    if (!store.isInternalKey(key)) {
+      timestamps[key] = backupTimestamp;
+      timestampDirty = true;
+    }
+  }
+
+  if (force && incomingTimestamps.isNotEmpty) {
+    final maxTimestamp = incomingTimestamps.values.reduce(
+      (left, right) => left > right ? left : right,
+    );
+    if (maxTimestamp > 0) {
+      for (final key in timestamps.keys) {
+        timestamps[key] = maxTimestamp;
+      }
+      timestampDirty = true;
+    }
+  }
+
+  if (timestampDirty) {
+    // KvStore persists the timestamp map as a JSON string inside the JSON
+    // value column; retain that wire shape for existing readers.
+    _writeKv(store, store.lastUpdateTsKey, json.encode(timestamps));
+    notifications.add(store.lastUpdateTsKey);
+  }
+  return notifications;
+}
+
+Map<String, int> _kvTimestamps(Object? raw, Iterable<String> recordKeys) {
+  Object? decoded = raw;
+  if (raw is String) {
+    try {
+      decoded = json.decode(raw);
+    } catch (_) {
+      decoded = int.tryParse(raw);
+    }
+  }
+  if (decoded is num) {
+    final timestamp = decoded.toInt();
+    return {for (final key in recordKeys) key: timestamp};
+  }
+  if (decoded is! Map) return const {};
+  return {
+    for (final entry in decoded.entries)
+      if (entry.key is String && entry.value is num)
+        entry.key as String: (entry.value as num).toInt(),
+  };
+}
+
+void _writeKv(SqliteStore store, String key, Object value) {
+  final encoded = json.encode(_toJsonValue(value));
+  SqliteDb.instance.execute(
+    'INSERT INTO kv (store, key, value, updated_at) VALUES (?, ?, ?, ?) '
+    'ON CONFLICT (store, key) DO UPDATE SET '
+    'value = excluded.value, updated_at = excluded.updated_at;',
+    [store.name, key, encoded, DateTimeX.timestamp],
+  );
+}
+
+void _deleteKv(SqliteStore store, String key) {
+  SqliteDb.instance.execute('DELETE FROM kv WHERE store = ? AND key = ?;', [
+    store.name,
+    key,
+  ]);
+}
+
+void _notifySqliteStore(SqliteStore store, Iterable<String> keys) {
+  for (final key in keys) {
+    final value = store.get<Object>(key);
+    final notified = value == null
+        ? store.remove(key, updateLastUpdateTsOnRemove: false)
+        : store.set(key, value, updateLastUpdateTsOnSet: false);
+    if (!notified) {
+      _loggerV2.warning('Failed to notify ${store.name}/$key after restore');
+    }
+  }
 }
 
 Object? _toEncodable(Object? value) {

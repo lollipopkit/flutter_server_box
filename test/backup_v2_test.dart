@@ -5,6 +5,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/app/tab.dart';
+import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
@@ -133,11 +134,14 @@ void main() {
       final restored = Spi.fromJson(
         Map<String, dynamic>.from(reread.spis['srv-1'] as Map),
       );
-      expect(restored.bmc, const BmcCfg(
-        addr: 'https://10.0.0.9',
-        credId: 'cred-1',
-        certSha256: 'ab12',
-      ));
+      expect(
+        restored.bmc,
+        const BmcCfg(
+          addr: 'https://10.0.0.9',
+          credId: 'cred-1',
+          certSha256: 'ab12',
+        ),
+      );
     });
 
     test('serializes enum values by name', () {
@@ -226,6 +230,33 @@ void main() {
 
       expect(backup.spis['__lkpt_lastUpdateTs'], 'legacy timestamp metadata');
     });
+
+    test(
+      'rejects a newer numeric version even when JSON decodes it as double',
+      () {
+        final raw = json.encode({
+          'version': 999.0,
+          'date': 1,
+          'spis': {},
+          'snippets': {},
+          'keys': {},
+          'container': {},
+          'history': {},
+          'settings': {},
+        });
+
+        expect(
+          () => BackupV2.fromJsonString(raw),
+          throwsA(
+            isA<SchemaTooNewException>().having(
+              (error) => error.stored,
+              'stored version',
+              999,
+            ),
+          ),
+        );
+      },
+    );
   });
 
   group('BackupV2 store export', () {
@@ -256,8 +287,14 @@ void main() {
       final backup = await BackupV2.loadFromStore();
 
       expect(backup.settings.containsKey(importMarker), isFalse);
-      expect(backup.settings.containsKey(Stores.setting.schemaVersion.key), isFalse);
-      expect(backup.settings.containsKey(Stores.setting.lastUpdateTsKey), isTrue);
+      expect(
+        backup.settings.containsKey(Stores.setting.schemaVersion.key),
+        isFalse,
+      );
+      expect(
+        backup.settings.containsKey(Stores.setting.lastUpdateTsKey),
+        isTrue,
+      );
       expect(backup.settings['timeOut'], 11);
     });
 
@@ -286,44 +323,142 @@ void main() {
       expect(SchemaVersion.stored, originalSchema);
     });
 
-    test('rewrites a legacy key-name server reference to the local key id',
-        () async {
-      Stores.key.put(const PrivateKeyInfo(
-        id: 'generated-local-id',
-        name: 'work',
-        key: 'LOCAL',
-      ));
-      final server = const Spi(
-        id: 'srv-1',
-        name: 'prod',
-        ssh: SshCredential(
-          ip: '10.0.0.1',
-          keyId: 'work',
-        ),
-      );
-      final backup = BackupV2(
-        version: BackupV2.formatVer,
-        date: 1,
-        spis: {
-          'srv-1': json.decode(json.encode(
+    test(
+      'rewrites a legacy key-name server reference to the local key id',
+      () async {
+        Stores.key.put(
+          const PrivateKeyInfo(
+            id: 'generated-local-id',
+            name: 'work',
+            key: 'LOCAL',
+          ),
+        );
+        final server = const Spi(
+          id: 'srv-1',
+          name: 'prod',
+          ssh: SshCredential(ip: '10.0.0.1', keyId: 'work'),
+        );
+        final backup = BackupV2(
+          version: BackupV2.formatVer,
+          date: 1,
+          spis: {
+            'srv-1': json.decode(
+              json.encode(
+                server.toJson(),
+                toEncodable: (value) => (value as dynamic).toJson(),
+              ),
+            ),
+          },
+          snippets: const {},
+          keys: const {
+            'work': {'id': 'work', 'private_key': 'BACKUP'},
+          },
+          container: const {},
+          history: const {},
+          settings: const {},
+        );
+
+        await backup.merge(force: true);
+
+        expect(
+          Stores.server.fetchOneRaw('srv-1')?.ssh?.keyId,
+          'generated-local-id',
+        );
+      },
+    );
+
+    test(
+      'rolls every store back when a later store cannot be written',
+      () async {
+        const original = Spi(
+          id: 'srv-atomic',
+          name: 'before',
+          ssh: SshCredential(ip: '10.0.0.1'),
+        );
+        Stores.server.put(original);
+        final replacement = original.copyWith(name: 'after');
+        final stored = json.decode(
+          json.encode(
+            replacement.toJson(),
+            toEncodable: (value) => (value as dynamic).toJson(),
+          ),
+        );
+        final backup = BackupV2(
+          version: BackupV2.formatVer,
+          date: 1,
+          spis: {'srv-atomic': stored},
+          snippets: const {},
+          keys: const {},
+          container: const {},
+          history: {'cannot-encode': _NotJsonEncodable()},
+          settings: const {},
+        );
+
+        await expectLater(
+          backup.merge(force: true),
+          throwsA(isA<UnsupportedError>()),
+        );
+        Stores.server.dropCache();
+        expect(Stores.server.fetchOneRaw('srv-atomic'), original);
+        expect(Stores.history.get<Object>('cannot-encode'), isNull);
+      },
+    );
+
+    test(
+      'container restore removes hosts and runtime omitted by the backup',
+      () async {
+        const server = Spi(
+          id: 'srv-container',
+          name: 'container-host',
+          ssh: SshCredential(ip: '10.0.0.2'),
+        );
+        Stores.server.put(server);
+        Stores.container.put(
+          server.id,
+          ContainerType.docker,
+          'tcp://old-docker:2375',
+        );
+        Stores.container.put(
+          server.id,
+          ContainerType.podman,
+          'tcp://old-podman:2375',
+        );
+        Stores.container.setType(ContainerType.podman, server.id);
+        final stored = json.decode(
+          json.encode(
             server.toJson(),
             toEncodable: (value) => (value as dynamic).toJson(),
-          )),
-        },
-        snippets: const {},
-        keys: const {
-          'work': {'id': 'work', 'private_key': 'BACKUP'},
-        },
-        container: const {},
-        history: const {},
-        settings: const {},
-      );
+          ),
+        );
+        final backup = BackupV2(
+          version: BackupV2.formatVer,
+          date: 1,
+          spis: {server.id: stored},
+          snippets: const {},
+          keys: const {},
+          container: const {
+            'srv-container': {'host_docker': 'tcp://new-docker:2375'},
+          },
+          history: const {},
+          settings: const {},
+        );
 
-      await backup.merge(force: true);
+        await backup.merge(force: true);
 
-      expect(Stores.server.fetchOneRaw('srv-1')?.ssh?.keyId,
-          'generated-local-id');
-    });
+        expect(
+          Stores.container.fetch(server.id, ContainerType.docker),
+          'tcp://new-docker:2375',
+        );
+        expect(Stores.container.fetch(server.id, ContainerType.podman), isNull);
+        expect(
+          SqliteDb.instance.select(
+            'SELECT count(*) AS n FROM container_runtime WHERE server_id = ?;',
+            [server.id],
+          ).single['n'],
+          0,
+        );
+      },
+    );
   });
 }
 

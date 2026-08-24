@@ -311,7 +311,11 @@ abstract class EntityStore<T extends Object> {
   ///
   /// Returns whether anything changed, which is what tells a provider to
   /// reload.
-  bool merge(Map<String, Object?> backupData, {required bool force}) {
+  bool merge(
+    Map<String, Object?> backupData, {
+    required bool force,
+    bool notify = true,
+  }) {
     final incoming = _timestampsOf(backupData[lastModKey]);
     final current = timestamps;
     final records = backupData.keys
@@ -338,7 +342,10 @@ abstract class EntityStore<T extends Object> {
           // delete; one it never had a timestamp for says nothing.
           if (!known || bakTs == null) continue;
           if (table == 'server') {
-            for (final row in db.select('SELECT id FROM port_forward WHERE server_id = ?;', [id])) {
+            for (final row in db.select(
+              'SELECT id FROM port_forward WHERE server_id = ?;',
+              [id],
+            )) {
               final pfId = row['id'] as String;
               db.execute(
                 'INSERT OR REPLACE INTO tombstone (tbl, row_id, deleted_at) VALUES (?, ?, ?);',
@@ -383,7 +390,10 @@ abstract class EntityStore<T extends Object> {
         writeLinks(item);
       }
     });
-    if (changed) invalidate();
+    if (changed) {
+      _cache = null;
+      if (notify && !_changes.isClosed) _changes.add(null);
+    }
     return changed;
   }
 

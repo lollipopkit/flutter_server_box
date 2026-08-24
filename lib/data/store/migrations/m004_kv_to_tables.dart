@@ -176,135 +176,35 @@ class KvToTablesMigration implements SchemaMigration {
       for (final row in _db.select('SELECT id FROM server;'))
         row['id'] as String: row['id'] as String,
     };
+    final usedIds = ids.values.toSet();
     final jumps = <String, List<String>>{};
 
     for (final row in _rows('server')) {
-      final v = row.value;
-      final stored = v['id'] as String?;
-      final id = stored != null && stored.isNotEmpty
-          ? stored
-          : ShortId.generate();
-      final ssh = v['ssh'] as Map?;
-      final monitor = v['monitorHttp'] as Map?;
-      final sshIp = ssh?['ip'] as String?;
-      final monitorAddr = monitor?['addr'] as String?;
+      try {
+        final migrated = SqliteStore.transact(
+          () => _migrateServerRow(row, keyIds, usedIds),
+        );
+        if (migrated == null) continue;
 
-      // The schema now says a server is reached one way or the other. A record
-      // with neither was already unusable — `genClient` had nothing to dial —
-      // and one with both was ambiguous. Neither can be represented, so say so
-      // rather than failing the whole migration.
-      final hasSsh = sshIp != null && sshIp.isNotEmpty;
-      final hasMonitor = monitorAddr != null && monitorAddr.isNotEmpty;
-      if (hasSsh == hasMonitor) {
+        usedIds.add(migrated.id);
+        ids[row.key] = migrated.id;
+        final stored = migrated.storedId;
+        if (stored != null && stored.isNotEmpty) {
+          // An embedded id is ambiguous when legacy data duplicated it. Keep
+          // references stable on the first row, while the row's kv key still
+          // resolves to the distinct id assigned to that exact record.
+          ids.putIfAbsent(stored, () => migrated.id);
+        }
+        if (migrated.jumps.isNotEmpty) {
+          jumps[migrated.id] = migrated.jumps;
+        }
+      } catch (e, s) {
         Loggers.app.warning(
-          'm004: server "$id" has ${hasSsh ? 'both' : 'neither'} SSH and '
-          'monitor; it could not be connected to and is dropped',
-        );
-        continue;
-      }
-
-      final custom = v['custom'] as Map? ?? const {};
-      final wol = v['wolCfg'] as Map?;
-
-      // A key id that names no key. If it looks like a path it is one: the
-      // `~/.ssh/config` import wrote `IdentityFile` into this field. Mapping it
-      // to null would be the only record that it ever existed.
-      // `pubKeyId` is what `SshCredential.toJson` calls it, kept from the
-      // flat pre-v3 layout. Reading `keyId` alone found nothing and detached
-      // every server from its key.
-      final oldKeyId = (ssh?['pubKeyId'] ?? ssh?['keyId']) as String?;
-      final newKeyId = keyIds[oldKeyId];
-      final keyPath = newKeyId == null && oldKeyId != null && _isPath(oldKeyId)
-          ? oldKeyId
-          : ssh?['keyPath'] as String?;
-
-      _db.execute(
-        'INSERT INTO server ('
-        'id, name, auto_connect, system_type, '
-        'ssh_ip, ssh_port, ssh_user, ssh_pwd, ssh_key_id, ssh_key_path, '
-        'ssh_alter_url, ssh_proxy_command, '
-        'monitor_addr, monitor_user, monitor_pwd, monitor_ignore_cert, '
-        'monitor_allow_insecure, '
-        'wol_mac, wol_ip, wol_pwd, '
-        'pve_addr, pve_ignore_cert, pve_pwd, prefer_temp_dev, '
-        'temp_is_celsius, logo_url, net_dev, script_dir, updated_at'
-        ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '
-        '?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
-        [
-          id,
-          v['name'] as String? ?? id,
-          _bool(v['autoConnect'], fallback: true),
-          v['customSystemType'] as String?,
-          hasSsh ? sshIp : null,
-          hasSsh ? ((ssh?['port'] as num?)?.toInt() ?? 22) : null,
-          hasSsh ? ((ssh?['user'] as String?) ?? 'root') : null,
-          ssh?['pwd'] as String?,
-          // Points at the new id, so renaming the key later cannot detach it.
-          newKeyId,
-          keyPath,
-          ssh?['alterUrl'] as String?,
-          ssh?['proxyCommand'] as String?,
-          hasMonitor ? monitorAddr : null,
-          monitor?['user'] as String?,
-          monitor?['pwd'] as String?,
-          hasMonitor ? _bool(monitor?['ignoreCert']) : null,
-          hasMonitor ? _bool(monitor?['allowInsecure']) : null,
-          wol?['mac'] as String?,
-          wol?['ip'] as String?,
-          wol?['pwd'] as String?,
-          custom['pveAddr'] as String?,
-          _bool(custom['pveIgnoreCert']),
-          custom['pvePwd'] as String?,
-          custom['preferTempDev'] as String?,
-          _bool(custom['tempIsCelsius'], fallback: true),
-          custom['logoUrl'] as String?,
-          custom['netDev'] as String?,
-          custom['scriptDir'] as String?,
-          row.updatedAt,
-        ],
-      );
-      ids[row.key] = id;
-      if (stored != null && stored.isNotEmpty) ids[stored] = id;
-
-      for (final tag in (v['tags'] as List? ?? const []).whereType<String>()) {
-        _db.execute('INSERT OR IGNORE INTO server_tag VALUES (?, ?);', [
-          id,
-          tag,
-        ]);
-      }
-      (v['envs'] as Map? ?? const {}).forEach((k, val) {
-        _db.execute('INSERT OR IGNORE INTO server_env VALUES (?, ?, ?);', [
-          id,
-          '$k',
-          '$val',
-        ]);
-      });
-      for (final cmd
-          in (v['disabledCmdTypes'] as List? ?? const []).whereType<String>()) {
-        _db.execute(
-          'INSERT OR IGNORE INTO server_disabled_cmd VALUES (?, ?);',
-          [id, cmd],
+          'm004: malformed server "${row.key}" was skipped',
+          e,
+          s,
         );
       }
-      (custom['cmds'] as Map? ?? const {}).forEach((k, val) {
-        _db.execute(
-          'INSERT OR IGNORE INTO server_custom_cmd VALUES (?, ?, ?);',
-          [id, '$k', '$val'],
-        );
-      });
-
-      // Held back: a jump host is a server, so the row it points at may not
-      // have been inserted yet — and its id may not be known yet either.
-      final ordered = <String>[
-        for (final j in [ssh?['jumpId'], ...?(ssh?['jumpIds'] as List?)])
-          if (j is String && j.isNotEmpty) j,
-      ];
-      final seen = <String>{};
-      final deduped = [
-        for (final j in ordered)
-          if (seen.add(j)) j,
-      ];
-      if (deduped.isNotEmpty) jumps[id] = deduped;
     }
 
     jumps.forEach((serverId, targets) {
@@ -329,6 +229,141 @@ class KvToTablesMigration implements SchemaMigration {
     });
 
     return ids;
+  }
+
+  ({String id, String? storedId, List<String> jumps})? _migrateServerRow(
+    ({String key, Map<String, dynamic> value, int updatedAt}) row,
+    Map<String, String> keyIds,
+    Set<String> usedIds,
+  ) {
+    final v = row.value;
+    final stored = v['id'] as String?;
+    var id = stored != null && stored.isNotEmpty ? stored : ShortId.generate();
+    if (usedIds.contains(id)) {
+      Loggers.app.warning(
+        'm004: duplicate server id "$id" on "${row.key}"; assigning a new id',
+      );
+      do {
+        id = ShortId.generate();
+      } while (usedIds.contains(id));
+    }
+
+    final ssh = v['ssh'] as Map?;
+    final monitor = v['monitorHttp'] as Map?;
+    final sshIp = ssh?['ip'] as String?;
+    final monitorAddr = monitor?['addr'] as String?;
+
+    // The schema now says a server is reached one way or the other. A record
+    // with neither was already unusable — `genClient` had nothing to dial —
+    // and one with both was ambiguous. Neither can be represented, so say so
+    // rather than failing the whole migration.
+    final hasSsh = sshIp != null && sshIp.isNotEmpty;
+    final hasMonitor = monitorAddr != null && monitorAddr.isNotEmpty;
+    if (hasSsh == hasMonitor) {
+      Loggers.app.warning(
+        'm004: server "$id" has ${hasSsh ? 'both' : 'neither'} SSH and '
+        'monitor; it could not be connected to and is dropped',
+      );
+      return null;
+    }
+
+    final custom = v['custom'] as Map? ?? const {};
+    final wol = v['wolCfg'] as Map?;
+
+    // A key id that names no key. If it looks like a path it is one: the
+    // `~/.ssh/config` import wrote `IdentityFile` into this field. Mapping it
+    // to null would be the only record that it ever existed.
+    final oldKeyId = (ssh?['pubKeyId'] ?? ssh?['keyId']) as String?;
+    final newKeyId = keyIds[oldKeyId];
+    final keyPath = newKeyId == null && oldKeyId != null && _isPath(oldKeyId)
+        ? oldKeyId
+        : ssh?['keyPath'] as String?;
+
+    _db.execute(
+      'INSERT INTO server ('
+      'id, name, auto_connect, system_type, '
+      'ssh_ip, ssh_port, ssh_user, ssh_pwd, ssh_key_id, ssh_key_path, '
+      'ssh_alter_url, ssh_proxy_command, '
+      'monitor_addr, monitor_user, monitor_pwd, monitor_ignore_cert, '
+      'monitor_allow_insecure, '
+      'wol_mac, wol_ip, wol_pwd, '
+      'pve_addr, pve_ignore_cert, pve_pwd, prefer_temp_dev, '
+      'temp_is_celsius, logo_url, net_dev, script_dir, updated_at'
+      ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '
+      '?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
+      [
+        id,
+        v['name'] as String? ?? id,
+        _bool(v['autoConnect'], fallback: true),
+        v['customSystemType'] as String?,
+        hasSsh ? sshIp : null,
+        hasSsh ? ((ssh?['port'] as num?)?.toInt() ?? 22) : null,
+        hasSsh ? ((ssh?['user'] as String?) ?? 'root') : null,
+        ssh?['pwd'] as String?,
+        newKeyId,
+        keyPath,
+        ssh?['alterUrl'] as String?,
+        ssh?['proxyCommand'] as String?,
+        hasMonitor ? monitorAddr : null,
+        monitor?['user'] as String?,
+        monitor?['pwd'] as String?,
+        hasMonitor ? _bool(monitor?['ignoreCert']) : null,
+        hasMonitor ? _bool(monitor?['allowInsecure']) : null,
+        wol?['mac'] as String?,
+        wol?['ip'] as String?,
+        wol?['pwd'] as String?,
+        custom['pveAddr'] as String?,
+        _bool(custom['pveIgnoreCert']),
+        custom['pvePwd'] as String?,
+        custom['preferTempDev'] as String?,
+        _bool(custom['tempIsCelsius'], fallback: true),
+        custom['logoUrl'] as String?,
+        custom['netDev'] as String?,
+        custom['scriptDir'] as String?,
+        row.updatedAt,
+      ],
+    );
+
+    for (final tag in (v['tags'] as List? ?? const []).whereType<String>()) {
+      _db.execute('INSERT OR IGNORE INTO server_tag VALUES (?, ?);', [id, tag]);
+    }
+    (v['envs'] as Map? ?? const {}).forEach((k, val) {
+      _db.execute('INSERT OR IGNORE INTO server_env VALUES (?, ?, ?);', [
+        id,
+        '$k',
+        '$val',
+      ]);
+    });
+    for (final cmd
+        in (v['disabledCmdTypes'] as List? ?? const []).whereType<String>()) {
+      _db.execute('INSERT OR IGNORE INTO server_disabled_cmd VALUES (?, ?);', [
+        id,
+        cmd,
+      ]);
+    }
+    (custom['cmds'] as Map? ?? const {}).forEach((k, val) {
+      _db.execute('INSERT OR IGNORE INTO server_custom_cmd VALUES (?, ?, ?);', [
+        id,
+        '$k',
+        '$val',
+      ]);
+    });
+
+    // Held back: a jump host is a server, so the row it points at may not have
+    // been inserted yet — and its id may not be known yet either.
+    final ordered = <String>[
+      for (final j in [ssh?['jumpId'], ...?(ssh?['jumpIds'] as List?)])
+        if (j is String && j.isNotEmpty) j,
+    ];
+    final seen = <String>{};
+    return (
+      id: id,
+      storedId: stored,
+      jumps: [
+        for (final jump in ordered)
+          if (seen.add(jump)) jump,
+      ],
+    );
   }
 
   /// Whether [value] is a filesystem path rather than a key id.

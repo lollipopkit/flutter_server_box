@@ -161,16 +161,42 @@ class ContainerStore {
   /// Writes one entry of [getAllMap] back. Skips a server that is not here:
   /// both tables have a foreign key, and a backup can name a server this
   /// device deleted.
-  void restoreOne(String serverId, Object? value) {
-    if (value is! Map) return;
-    if (!_known(serverId)) return;
-    for (final type in ContainerType.values) {
-      final host = value['host_${type.name}'];
-      if (host is String && host.isNotEmpty) put(serverId, type, host);
-    }
-    final runtime = ContainerType.values.firstWhereOrNull(
-      (e) => e.name == value['runtime'],
-    );
-    if (runtime != null) setType(runtime, serverId);
+  bool restoreOne(String serverId, Object? value, {bool notify = true}) {
+    if (value is! Map || !_known(serverId)) return false;
+
+    SqliteStore.transact(() {
+      // One backup entry is the complete state for this server. Rows absent
+      // from it were removed on the source device and must not survive here.
+      _db.execute('DELETE FROM container_host WHERE server_id = ?;', [
+        serverId,
+      ]);
+      _db.execute('DELETE FROM container_runtime WHERE server_id = ?;', [
+        serverId,
+      ]);
+
+      for (final type in ContainerType.values) {
+        final host = value['host_${type.name}'];
+        if (host is! String || host.isEmpty) continue;
+        _db.execute(
+          'INSERT INTO container_host (server_id, type, host) VALUES (?, ?, ?);',
+          [serverId, type.name, host],
+        );
+      }
+
+      final runtime = ContainerType.values.firstWhereOrNull(
+        (type) => type.name == value['runtime'],
+      );
+      if (runtime != null) {
+        // Presence in the backup means it was explicit on the source device,
+        // even when it happens to equal this device's current global default.
+        _db.execute(
+          'INSERT INTO container_runtime (server_id, type) VALUES (?, ?);',
+          [serverId, runtime.name],
+        );
+      }
+      Stores.server.synced.stamp(serverId);
+    });
+    if (notify) Stores.server.invalidate();
+    return true;
   }
 }
