@@ -31,7 +31,6 @@ permissions:
 env:
   APP_NAME: ServerBox
   BUILD_TAG: test-build-${{ github.run_number }}-${{ github.sha }}
-  FLUTTER_VERSION: "3.47.1"
 
 jobs:
   reproducibilityCheck:
@@ -53,10 +52,7 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
       - name: Install Flutter
-        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
-        with:
-          channel: "stable"
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+        uses: ./.github/actions/setup-flutter
       - name: Require tagged releases
         if: inputs.release == true && github.ref_type != 'tag'
         shell: bash
@@ -179,10 +175,7 @@ jobs:
           persist-credentials: false
           fetch-depth: 1
       - name: Install Flutter
-        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
-        with:
-          channel: "stable"
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+        uses: ./.github/actions/setup-flutter
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
       - name: Install dependencies
         run: flutter pub get
@@ -368,10 +361,7 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
       - name: Install Flutter
-        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
-        with:
-          channel: "stable"
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+        uses: ./.github/actions/setup-flutter
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: "zulu"
@@ -463,10 +453,7 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
       - name: Install Flutter
-        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
-        with:
-          channel: "stable"
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+        uses: ./.github/actions/setup-flutter
       - name: Resolve build number
         shell: bash
         run: |
@@ -549,10 +536,7 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
       - name: Install Flutter
-        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
-        with:
-          channel: 'stable'
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+        uses: ./.github/actions/setup-flutter
       - name: Install dependencies
         run: |
           sudo apt update
@@ -612,10 +596,7 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
       - name: Install Flutter
-        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
-        with:
-          channel: 'stable'
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+        uses: ./.github/actions/setup-flutter
       - name: Build (release)
         if: inputs.release == true || github.ref_type == 'tag'
         shell: bash
