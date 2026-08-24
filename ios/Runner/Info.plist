@@ -25,7 +25,7 @@
 		<key>LSRequiresIPhoneOS</key>
 		<true />
 		<key>NSLocationWhenInUseUsageDescription</key>
-		<string>ServerBox may access location metadata when importing photos or videos selected by you.</string>
+		<string>ServerBox may access location metadata embedded in files you choose to import.</string>
 		<key>UIApplicationSceneManifest</key>
 		<dict>
 			<key>UIApplicationSupportsMultipleScenes</key>

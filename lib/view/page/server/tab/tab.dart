@@ -134,6 +134,19 @@ class _ServerPageState extends ConsumerState<ServerPage>
   }
 
   @override
+  void deactivate() {
+    _timer?.cancel();
+    _timer = null;
+    super.deactivate();
+  }
+
+  @override
+  void activate() {
+    super.activate();
+    _startAvoidJitterTimer();
+  }
+
+  @override
   Widget build(BuildContext context) {
     super.build(context);
     // Listen to provider changes and update the ValueNotifier
@@ -184,10 +197,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
   }
 
   Widget _buildPortrait() {
-    // Watch serverOrder, tags, and servers to ensure filtered view rebuilds
-    // when individual server tags change without affecting the global tag set
     final serverOrder = ref.watch(serversProvider.select((s) => s.serverOrder));
-    ref.watch(serversProvider.select((s) => s.tags));
     final servers = ref.watch(serversProvider.select((s) => s.servers));
     final selected = ref.watch(serverSelectionProvider);
     final selectedSpi = selected == null ? null : servers[selected];
@@ -254,7 +264,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
 
   Widget _buildEachServerCard(ServerState srv) {
     final card = CardX(
-      key: Key(srv.spi.id + _tag.value),
+      key: ValueKey(srv.spi.id),
       // A context from inside the built tree, so the tap can ask whether a
       // detail pane is on screen. The state's own context is an ancestor of
       // the layout that installs the scope, and the lookup only goes up.

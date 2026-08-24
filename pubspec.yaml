@@ -24,7 +24,7 @@ dependencies:
   crypto: ^3.0.0
   dio: ^5.2.1
   pinenacl: ^0.6.0
-  dynamic_color: ^1.6.6
+  dynamic_color: ^2.1.0
   equatable: ^2.1.0
   easy_isolate: ^1.3.0
   extended_image: ^10.0.0
@@ -91,7 +91,7 @@ dependencies:
   # Drives the build hook below. `sbm_ffi` is no longer a Flutter plugin — the
   # hook compiles the crate directly, so there is nothing to depend on.
   flutter_rust_bridge_hooks: 2.13.0-beta.6
-  desktop_drop: ^0.7.1
+  desktop_drop: ^0.8.0
 
 dev_dependencies:
   integration_test:

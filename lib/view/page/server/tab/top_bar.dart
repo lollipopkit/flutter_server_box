@@ -44,32 +44,7 @@ final class _TopBar extends ConsumerWidget implements PreferredSizeWidget {
         ),
       );
     } else {
-      final servers = ref.watch(serversProvider);
-      final order = servers.serverOrder;
-      var connected = 0;
-      for (final id in order) {
-        final conn = ref.watch(
-          serverProvider(id).select((value) => value.conn),
-        );
-        if (conn.index >= ServerConn.connected.index) connected++;
-      }
-      final total = order.length;
-      final connectionText = '$connected/$total ${context.libL10n.conn}';
-      leading = MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: Tooltip(
-          message: context.l10n.connectionStats,
-          child: InkWell(
-            onTap: () => ConnectionStatsPage.route.go(context),
-            child: Text(
-              connectionText,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ),
-      );
+      leading = _ConnectionCountText();
     }
 
     return Padding(
@@ -98,4 +73,34 @@ final class _TopBar extends ConsumerWidget implements PreferredSizeWidget {
 
   @override
   Size get preferredSize => const Size.fromHeight(TagSwitcher.kTagBtnHeight);
+}
+
+final class _ConnectionCountText extends ConsumerWidget {
+  const _ConnectionCountText();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final order = ref.watch(serversProvider.select((s) => s.serverOrder));
+    var connected = 0;
+    for (final id in order) {
+      final conn = ref.watch(serverProvider(id).select((v) => v.conn));
+      if (conn.index >= ServerConn.connected.index) connected++;
+    }
+    final text = '$connected/${order.length} ${context.libL10n.conn}';
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: Tooltip(
+        message: context.l10n.connectionStats,
+        child: InkWell(
+          onTap: () => ConnectionStatsPage.route.go(context),
+          child: Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+        ),
+      ),
+    );
+  }
 }

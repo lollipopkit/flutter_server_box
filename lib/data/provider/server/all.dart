@@ -7,12 +7,14 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/service/watch_sync.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/core/utils/refresh_interval.dart';
+import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/provider/port_forward_provider.dart';
+import 'package:server_box/data/provider/server/selection.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
@@ -313,6 +315,14 @@ class ServersNotifier extends _$ServersNotifier {
     );
     await _clearSudoPasswordOverrideBestEffort(id);
 
+    // Deselect if the deleted server was selected, and invalidate its provider
+    // so the keepAlive notifier (PersistentShell, Pve socket) is disposed.
+    if (ref.read(serverSelectionProvider) == id) {
+      ref.read(serverSelectionProvider.notifier).select(null);
+    }
+    ref.invalidate(serverProvider(id));
+    forgetHostKeyFingerprints(id);
+
     // Remove SSH session when server is deleted
     final sessionId = 'ssh_$id';
     TermSessionManager.remove(sessionId);
@@ -349,6 +359,11 @@ class ServersNotifier extends _$ServersNotifier {
     Stores.setting.serverOrder.put([]);
     state = const ServersState();
     await Future.wait(serverIds.map(_clearSudoPasswordOverrideBestEffort));
+    for (final id in serverIds) {
+      ref.invalidate(serverProvider(id));
+      forgetHostKeyFingerprints(id);
+    }
+    ref.read(serverSelectionProvider.notifier).select(null);
     bakSync.sync(milliDelay: 1000);
   }
 
