@@ -101,10 +101,7 @@ List<String> parseContainerRunArgs(String raw) {
   return args.toList(growable: false);
 }
 
-List<ContainerImg> parseContainerImagesOutput(
-  String raw,
-  ContainerType type,
-) {
+List<ContainerImg> parseContainerImagesOutput(String raw, ContainerType type) {
   final trimmed = raw.trim();
   final images = <ContainerImg>[];
   for (final row in _containerImageRows(trimmed)) {
@@ -169,9 +166,7 @@ Iterable<String> _completeJsonObjects(String raw) sync* {
   }
 }
 
-List<({String id, String raw})> parseContainerStatsRows(
-  Iterable<String> rows,
-) {
+List<({String id, String raw})> parseContainerStatsRows(Iterable<String> rows) {
   final parsed = <({String id, String raw})>[];
   for (final row in rows) {
     if (row.trim().isEmpty) continue;
@@ -196,7 +191,8 @@ String? findContainerStatsRow(
   final id = containerId?.trim();
   if (id == null || id.isEmpty) return null;
   for (final row in rows) {
-    final prefixMatch = id.length >= 12 &&
+    final prefixMatch =
+        id.length >= 12 &&
         row.id.length >= 12 &&
         (id.startsWith(row.id) || row.id.startsWith(id));
     if (id == row.id || prefixMatch) return row.raw;
@@ -227,26 +223,24 @@ String buildContainerSystemPruneCmd({
   return 'system prune $flags';
 }
 
+enum ContainerRefreshTarget { containers, images }
+
 @freezed
 abstract class ContainerState with _$ContainerState {
   const factory ContainerState({
     @Default(null) List<ContainerPs>? items,
     @Default(null) List<ContainerImg>? images,
     @Default(null) String? version,
-    @Default(null) ContainerErr? error,
+    @Default(null) ContainerErr? containersError,
+    @Default(null) ContainerErr? imagesError,
     @Default(null) String? runLog,
     @Default(ContainerType.docker) ContainerType type,
     @Default(false) bool isBusy,
   }) = _ContainerState;
 }
 
-enum ContainerRefreshTarget { containers, images }
-
 @riverpod
 class ContainerNotifier extends _$ContainerNotifier {
-  var sudoCompleter = Completer<bool>();
-  // Per-target completers to avoid cross-target reuse: a successful ps probe
-  // must not suppress the images probe.
   final _sudoCompleters = <ContainerRefreshTarget, Completer<bool>>{
     for (final t in ContainerRefreshTarget.values) t: Completer<bool>(),
   };
@@ -263,11 +257,7 @@ class ContainerNotifier extends _$ContainerNotifier {
   ({ContainerRefreshTarget target, bool isAuto})? _pendingRefresh;
 
   @override
-  ContainerState build(
-    String userName,
-    String hostId,
-    BuildContext context,
-  ) {
+  ContainerState build(String userName, String hostId, BuildContext context) {
     final type = Stores.container.getType(hostId);
     return ContainerState(type: type);
   }
@@ -289,7 +279,8 @@ class ContainerNotifier extends _$ContainerNotifier {
     _resetSudoProbe();
     state = state.copyWith(
       type: type,
-      error: null,
+      containersError: null,
+      imagesError: null,
       runLog: null,
       items: null,
       images: null,
@@ -306,7 +297,6 @@ class ContainerNotifier extends _$ContainerNotifier {
   }
 
   int _resetSudoProbe() {
-    sudoCompleter = Completer<bool>();
     for (final t in ContainerRefreshTarget.values) {
       _sudoCompleters[t] = Completer<bool>();
     }
@@ -321,9 +311,7 @@ class ContainerNotifier extends _$ContainerNotifier {
     final pending = _pendingRefresh;
     _pendingRefresh = (
       target: target,
-      isAuto: pending?.target == target
-          ? isAuto && pending!.isAuto
-          : isAuto,
+      isAuto: pending?.target == target ? isAuto && pending!.isAuto : isAuto,
     );
   }
 
@@ -335,6 +323,7 @@ class ContainerNotifier extends _$ContainerNotifier {
     Completer<bool> completer,
     ContainerType type,
     ContainerRefreshTarget target,
+    String? containerHost,
   ) async {
     /// Podman is rootless
     if (type == ContainerType.podman) {
@@ -350,7 +339,10 @@ class ContainerNotifier extends _$ContainerNotifier {
         ContainerRefreshTarget.images => ContainerCmdType.images,
       };
       final exec = await ref.read(serverProvider(hostId).notifier).ensureExec();
-      final res = await exec.run(_wrap(probe.exec(type)));
+      final res = await exec.run(
+        _wrap(probe.exec(type), type: type, containerHost: containerHost),
+      );
+      if (completer.isCompleted) return;
       if (res.combined.toLowerCase().contains('permission denied')) {
         return completer.complete(true);
       }
@@ -363,15 +355,11 @@ class ContainerNotifier extends _$ContainerNotifier {
     }
   }
 
-  Future<void> refreshContainers({bool isAuto = false}) => refresh(
-    ContainerRefreshTarget.containers,
-    isAuto: isAuto,
-  );
+  Future<void> refreshContainers({bool isAuto = false}) =>
+      refresh(ContainerRefreshTarget.containers, isAuto: isAuto);
 
-  Future<void> refreshImages({bool isAuto = false}) => refresh(
-    ContainerRefreshTarget.images,
-    isAuto: isAuto,
-  );
+  Future<void> refreshImages({bool isAuto = false}) =>
+      refresh(ContainerRefreshTarget.images, isAuto: isAuto);
 
   Future<void> refresh(
     ContainerRefreshTarget target, {
@@ -385,6 +373,7 @@ class ContainerNotifier extends _$ContainerNotifier {
     _refreshing = true;
     final refreshGeneration = generation ?? _refreshGeneration;
     final type = state.type;
+    final containerHost = Stores.container.fetch(hostId, type);
     // The error is left alone until something replaces it. Clearing it here
     // put the page back to a full-screen spinner for the length of every
     // refresh — and with auto-refresh on, a server with no runtime flashed
@@ -396,17 +385,8 @@ class ContainerNotifier extends _$ContainerNotifier {
     if (!isAuto) state = state.copyWith(isBusy: true);
 
     final sudo = _sudoCompleters[target]!;
-    if (!sudo.isCompleted) unawaited(_requiresSudo(sudo, type, target));
-    // Keep legacy completer in sync for external callers that still read it.
-    if (!sudoCompleter.isCompleted && sudo.isCompleted) {
-      try {
-        sudoCompleter.complete(await sudo.future);
-      } catch (_) {}
-    } else if (!sudo.isCompleted && sudoCompleter.isCompleted) {
-      // If legacy was completed, propagate to per-target as well.
-      try {
-        sudo.complete(await sudoCompleter.future);
-      } catch (_) {}
+    if (!sudo.isCompleted) {
+      unawaited(_requiresSudo(sudo, type, target, containerHost));
     }
 
     final needSudo = await sudo.future;
@@ -449,15 +429,14 @@ class ContainerNotifier extends _$ContainerNotifier {
       ],
     };
 
-    final separator = '${_containerSeparatorPrefix}_'
+    final separator =
+        '${_containerSeparatorPrefix}_'
         '${DateTime.now().microsecondsSinceEpoch}_$refreshGeneration';
     final cmd = _wrap(
-      ContainerCmdType.execSelected(
-        commands,
-        type,
-        separator: separator,
-      ),
+      ContainerCmdType.execSelected(commands, type, separator: separator),
       sudo: needSudo,
+      type: type,
+      containerHost: containerHost,
     );
     int? code;
     String raw = '';
@@ -484,6 +463,18 @@ class ContainerNotifier extends _$ContainerNotifier {
         },
       );
       (code, raw, errOut) = (result.exitCode, result.stdout, result.stderr);
+      if (result.outputIncomplete) {
+        if (_isStaleRefresh(refreshGeneration)) return;
+        _setRefreshError(
+          target,
+          ContainerErr(
+            type: ContainerErrType.unknown,
+            message: userFacingOutput(errOut, raw) ?? libL10n.fail,
+          ),
+        );
+        await _finishRefresh(refreshGeneration);
+        return;
+      }
     } catch (e, trace) {
       if (_isStaleRefresh(refreshGeneration)) return;
       Loggers.app.warning('Container refresh execution failed', e, trace);
@@ -564,7 +555,7 @@ class ContainerNotifier extends _$ContainerNotifier {
     }
 
     /// Detect Podman not installed when using Podman mode
-    if (state.type == ContainerType.podman &&
+    if (type == ContainerType.podman &&
         (errOut.contains('podman: not found') ||
             raw.contains('podman: not found'))) {
       _setRefreshError(
@@ -602,7 +593,7 @@ class ContainerNotifier extends _$ContainerNotifier {
     // failure on screen through a retry that only reproduced it — and here
     // rather than in the version branch below, which is skipped once the
     // version is cached, so a recovered server kept showing a dead daemon.
-    if (state.error != null) state = state.copyWith(error: null);
+    _clearRefreshError(target);
 
     // Parse version only until it has been cached for the selected runtime.
     final verRaw = output[ContainerCmdType.version];
@@ -611,12 +602,11 @@ class ContainerNotifier extends _$ContainerNotifier {
         final version = json.decode(verRaw)['Client']['Version'];
         state = state.copyWith(version: version);
       } catch (e, trace) {
-        if (state.error == null) {
-          state = state.copyWith(
-            error: ContainerErr(
-              type: ContainerErrType.invalidVersion,
-              message: '$e',
-            ),
+        if (_refreshError(target) == null) {
+          _setRefreshError(
+            target,
+            ContainerErr(type: ContainerErrType.invalidVersion, message: '$e'),
+            clearData: false,
           );
         }
         Loggers.app.warning('Container version failed', e, trace);
@@ -629,6 +619,7 @@ class ContainerNotifier extends _$ContainerNotifier {
       try {
         if (type == ContainerType.docker) {
           final lines = psRaw.split('\n');
+
           /// Due to the fetched data is not in json format, skip table header
           final headerIdx = lines.indexWhere((element) {
             return element.trimLeft().startsWith('CONTAINER ID');
@@ -648,10 +639,10 @@ class ContainerNotifier extends _$ContainerNotifier {
           state = state.copyWith(items: parsePodmanPsOutput(psRaw));
         }
       } catch (e, trace) {
-        if (state.error == null) {
-          state = state.copyWith(
-            items: null,
-            error: ContainerErr(type: ContainerErrType.parsePs, message: '$e'),
+        if (_refreshError(target) == null) {
+          _setRefreshError(
+            target,
+            ContainerErr(type: ContainerErrType.parsePs, message: '$e'),
           );
         }
         Loggers.app.warning('Container ps failed', e, trace);
@@ -678,12 +669,11 @@ class ContainerNotifier extends _$ContainerNotifier {
             }
           }
         } catch (e, trace) {
-          if (state.error == null) {
-            state = state.copyWith(
-              error: ContainerErr(
-                type: ContainerErrType.parseStats,
-                message: '$e',
-              ),
+          if (_refreshError(target) == null) {
+            _setRefreshError(
+              target,
+              ContainerErr(type: ContainerErrType.parseStats, message: '$e'),
+              clearData: false,
             );
           }
           Loggers.app.warning('Parse container stats: $statsRaw', e, trace);
@@ -696,13 +686,10 @@ class ContainerNotifier extends _$ContainerNotifier {
         final images = parseContainerImagesOutput(imageRaw, type);
         state = state.copyWith(images: images);
       } catch (e, trace) {
-        if (state.error == null) {
-          state = state.copyWith(
-            images: null,
-            error: ContainerErr(
-              type: ContainerErrType.parseImages,
-              message: '$e',
-            ),
+        if (_refreshError(target) == null) {
+          _setRefreshError(
+            target,
+            ContainerErr(type: ContainerErrType.parseImages, message: '$e'),
           );
         }
         Loggers.app.warning('Container images failed', e, trace);
@@ -720,16 +707,35 @@ class ContainerNotifier extends _$ContainerNotifier {
     await _refreshPendingIfNeeded(generation);
   }
 
-  void _setRefreshError(ContainerRefreshTarget target, ContainerErr error) {
+  ContainerErr? _refreshError(ContainerRefreshTarget target) =>
+      switch (target) {
+        ContainerRefreshTarget.containers => state.containersError,
+        ContainerRefreshTarget.images => state.imagesError,
+      };
+
+  void _clearRefreshError(ContainerRefreshTarget target) {
     state = switch (target) {
       ContainerRefreshTarget.containers => state.copyWith(
-          items: null,
-          error: error,
-        ),
+        containersError: null,
+      ),
+      ContainerRefreshTarget.images => state.copyWith(imagesError: null),
+    };
+  }
+
+  void _setRefreshError(
+    ContainerRefreshTarget target,
+    ContainerErr error, {
+    bool clearData = true,
+  }) {
+    state = switch (target) {
+      ContainerRefreshTarget.containers => state.copyWith(
+        items: clearData ? null : state.items,
+        containersError: error,
+      ),
       ContainerRefreshTarget.images => state.copyWith(
-          images: null,
-          error: error,
-        ),
+        images: clearData ? null : state.images,
+        imagesError: error,
+      ),
     };
   }
 
@@ -749,17 +755,15 @@ class ContainerNotifier extends _$ContainerNotifier {
     );
   }
 
-  Future<ContainerErr?> stop(String id) async =>
-      await run(
-        'stop ${shellSingleQuote(id)}',
-        refreshTarget: ContainerRefreshTarget.containers,
-      );
+  Future<ContainerErr?> stop(String id) async => await run(
+    'stop ${shellSingleQuote(id)}',
+    refreshTarget: ContainerRefreshTarget.containers,
+  );
 
-  Future<ContainerErr?> start(String id) async =>
-      await run(
-        'start ${shellSingleQuote(id)}',
-        refreshTarget: ContainerRefreshTarget.containers,
-      );
+  Future<ContainerErr?> start(String id) async => await run(
+    'start ${shellSingleQuote(id)}',
+    refreshTarget: ContainerRefreshTarget.containers,
+  );
 
   Future<ContainerErr?> delete(String id, bool force) async {
     if (force) {
@@ -774,11 +778,10 @@ class ContainerNotifier extends _$ContainerNotifier {
     );
   }
 
-  Future<ContainerErr?> restart(String id) async =>
-      await run(
-        'restart ${shellSingleQuote(id)}',
-        refreshTarget: ContainerRefreshTarget.containers,
-      );
+  Future<ContainerErr?> restart(String id) async => await run(
+    'restart ${shellSingleQuote(id)}',
+    refreshTarget: ContainerRefreshTarget.containers,
+  );
 
   Future<ContainerErr?> startAll(Iterable<String> ids) async =>
       await _runBulk('start', ids);
@@ -792,10 +795,7 @@ class ContainerNotifier extends _$ContainerNotifier {
   Future<ContainerErr?> _runBulk(String action, Iterable<String> ids) async {
     final cmd = buildContainerBulkCmd(action, ids);
     if (cmd == null) return null;
-    return await run(
-      cmd,
-      refreshTarget: ContainerRefreshTarget.containers,
-    );
+    return await run(cmd, refreshTarget: ContainerRefreshTarget.containers);
   }
 
   Future<ContainerErr?> pruneImages({bool allUnused = false}) async =>
@@ -844,7 +844,9 @@ class ContainerNotifier extends _$ContainerNotifier {
     }
     state = state.copyWith(runLog: '');
 
+    final generation = _refreshGeneration;
     final type = state.type;
+    final containerHost = Stores.container.fetch(hostId, type);
     cmd = switch (type) {
       ContainerType.docker => 'docker $cmd',
       ContainerType.podman => 'podman $cmd',
@@ -853,14 +855,14 @@ class ContainerNotifier extends _$ContainerNotifier {
     final target = refreshTarget ?? ContainerRefreshTarget.containers;
     final sudo = _sudoCompleters[target]!;
     if (!sudo.isCompleted) {
-      unawaited(_requiresSudo(sudo, type, target));
+      unawaited(_requiresSudo(sudo, type, target, containerHost));
     }
     final needSudo = await sudo.future;
-    if (!ref.mounted) return null;
+    if (_isStaleRefresh(generation)) return null;
     String? password;
     if (needSudo) {
       password = await _getSudoPassword();
-      if (!ref.mounted) return null;
+      if (_isStaleRefresh(generation)) return null;
       if (password == null) {
         await _finishRun();
         return ContainerErr(
@@ -870,28 +872,32 @@ class ContainerNotifier extends _$ContainerNotifier {
       }
     }
 
-    int? code;
+    late final ExecResult result;
+    void appendOutput(String data) {
+      if (!_isStaleRefresh(generation)) {
+        state = state.copyWith(runLog: '${state.runLog}$data');
+      }
+    }
+
     try {
       final exec = await ref.read(serverProvider(hostId).notifier).ensureExec();
-      final result = await exec.runWithSudo(
-        _wrap(cmd, sudo: needSudo),
+      if (_isStaleRefresh(generation)) return null;
+      result = await exec.runWithSudo(
+        _wrap(cmd, sudo: needSudo, type: type, containerHost: containerHost),
         password: password,
-        onStdout: (data) {
-          if (ref.mounted) {
-            state = state.copyWith(runLog: '${state.runLog}$data');
-          }
-        },
+        onStdout: appendOutput,
+        onStderr: appendOutput,
       );
-      code = result.exitCode;
     } catch (e, trace) {
+      if (_isStaleRefresh(generation)) return null;
       Loggers.app.warning('Container command execution failed', e, trace);
-      if (ref.mounted) await _finishRun();
+      await _finishRun();
       return ContainerErr(type: ContainerErrType.unknown, message: '$e');
     }
 
-    if (!ref.mounted) return null;
+    if (_isStaleRefresh(generation)) return null;
 
-    if (needSudo && code == kSudoPasswordRejected) {
+    if (needSudo && result.exitCode == kSudoPasswordRejected) {
       _cachedPassword = null;
       await _finishRun();
       return ContainerErr(
@@ -899,23 +905,22 @@ class ContainerNotifier extends _$ContainerNotifier {
         message: l10n.containerSudoPasswordIncorrect,
       );
     }
-    if (code != 0) {
-      // Preserve diagnostics: missing runtime should be actionable, not generic.
-      final combined = (code == 127 || (state.runLog?.contains(_dockerNotFound) ?? false))
-          ? state.runLog ?? ''
-          : '';
-      if (code == 127 || combined.contains(_dockerNotFound)) {
+    final detail =
+        userFacingOutput(result.stderr, result.stdout) ?? libL10n.fail;
+    if (result.outputIncomplete) {
+      await _finishRun();
+      return ContainerErr(type: ContainerErrType.unknown, message: detail);
+    }
+    if (result.exitCode != 0) {
+      if (result.exitCode == 127 || detail.contains(_dockerNotFound)) {
         await _finishRun();
         return ContainerErr(
           type: ContainerErrType.notInstalled,
-          message: combined.isNotEmpty ? combined : libL10n.fail,
+          message: detail,
         );
       }
       await _finishRun();
-      return ContainerErr(
-        type: ContainerErrType.unknown,
-        message: libL10n.fail,
-      );
+      return ContainerErr(type: ContainerErrType.unknown, message: detail);
     }
     await _finishRun(refreshTarget: refreshTarget);
     return null;
@@ -940,21 +945,26 @@ class ContainerNotifier extends _$ContainerNotifier {
   }) async {
     final generation = _refreshGeneration;
     final type = state.type;
-    final sudo = sudoCompleter;
-    if (!sudo.isCompleted) unawaited(_requiresSudo(sudo, type, target));
+    final containerHost = Stores.container.fetch(hostId, type);
+    final sudo = _sudoCompleters[target]!;
+    if (!sudo.isCompleted) {
+      unawaited(_requiresSudo(sudo, type, target, containerHost));
+    }
     final needSudo = await sudo.future;
     if (_isStaleRefresh(generation)) return null;
-    return _wrap(cmd, sudo: needSudo);
+    return _wrap(cmd, sudo: needSudo, type: type, containerHost: containerHost);
   }
 
   /// Wrap commands with the container runtime host environment variable.
   String _wrap(
     String cmd, {
     bool sudo = false,
+    required ContainerType type,
+    required String? containerHost,
   }) => buildContainerRuntimeCommand(
     command: cmd,
-    type: state.type,
-    containerHost: Stores.container.fetch(hostId, state.type),
+    type: type,
+    containerHost: containerHost,
     sudo: sudo,
   );
 }
@@ -1023,12 +1033,14 @@ enum ContainerCmdType {
     final baseCmd = switch (this) {
       ContainerCmdType.version => '${type.name} version $_jsonFmt',
       ContainerCmdType.ps => switch (type) {
-        ContainerType.docker => '${type.name} ps -a --format '
-            '"{{.ID}}\\t{{.Status}}\\t{{.Names}}\\t{{.Image}}\\t'
-            '{{.Label \\"com.docker.compose.project\\"}}\\t'
-            '{{.Label \\"com.docker.compose.project.working_dir\\"}}"',
-        ContainerType.podman => '${type.name} ps -a --format '
-            '"{{json .}}\\t{{.Status}}"',
+        ContainerType.docker =>
+          '${type.name} ps -a --format '
+              '"{{.ID}}\\t{{.Status}}\\t{{.Names}}\\t{{.Image}}\\t'
+              '{{.Label \\"com.docker.compose.project\\"}}\\t'
+              '{{.Label \\"com.docker.compose.project.working_dir\\"}}"',
+        ContainerType.podman =>
+          '${type.name} ps -a --format '
+              '"{{json .}}\\t{{.Status}}"',
       },
       ContainerCmdType.stats => '${type.name} stats --no-stream $_jsonFmt',
       ContainerCmdType.images => '${type.name} image ls --digests $_jsonFmt',
@@ -1046,9 +1058,7 @@ enum ContainerCmdType {
     ContainerType type, {
     String separator = _containerSeparatorPrefix,
   }) {
-    final commands = types
-        .map((e) => e.exec(type))
-        .join('\necho $separator\n');
+    final commands = types.map((e) => e.exec(type)).join('\necho $separator\n');
 
     return 'sh -c \'${commands.replaceAll("'", "'\\''")}\'';
   }
