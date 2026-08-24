@@ -294,14 +294,14 @@ class AppLocalizationsKo extends AppLocalizations {
   String get logoUrl => '로고 주소';
 
   @override
-  String get logoUrlTip => '서버 상세 페이지 상단의 큰 이미지.';
+  String get logoUrlTip => '서버 상세 페이지 상단의 큰 이미지. 원래 색 그대로 표시합니다.';
 
   @override
   String get markUrl => '마크 주소';
 
   @override
   String get markUrlTip =>
-      '목록에서 서버 이름 옆에 표시되는 작은 마크. 비워 두면 표시하지 않습니다.\n\n로고와 같은 이미지가 아닙니다. 전체 너비에서 보기 좋은 그림도 20px에서는 뭉개집니다.';
+      '목록에서 서버 이름 옆에 표시되는 작은 마크. 비워 두면 표시하지 않습니다.\n\n로고와 다른 이미지이고 그리는 방식도 다릅니다. 마크는 옆 글자와 같은 색의 단색으로 그려져 한 열이 한 덩어리로 보입니다. 로고는 원래 색 그대로입니다.';
 
   @override
   String get navTabMenuTip =>

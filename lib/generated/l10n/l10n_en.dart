@@ -311,14 +311,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get logoUrlTip =>
-      'The large image at the top of a server\'s own page.';
+      'The large image at the top of a server\'s own page, drawn in its own colours.';
 
   @override
   String get markUrl => 'Mark URL';
 
   @override
   String get markUrlTip =>
-      'The small mark beside a server\'s name in lists. Empty means none is drawn.\n\nNot the same picture as the logo: artwork that reads at full width is a smudge at 20px.';
+      'The small mark beside a server\'s name in lists. Empty means none is drawn.\n\nNot the same picture as the logo, and not drawn the same way: this one takes the colour of the text beside it, so a column of them reads as one column. The logo is left as published.';
 
   @override
   String get navTabMenuTip =>

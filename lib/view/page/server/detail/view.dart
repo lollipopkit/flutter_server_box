@@ -447,6 +447,18 @@ ${err.message ?? 'null'}
     );
   }
 
+  /// The large image at the top of a server's page, as published.
+  ///
+  /// **Not tinted, and that is the difference from the mark.** The small one
+  /// beside a server's name in a list is drawn in the row's colour, because a
+  /// column of full-colour logos at the size of a line of text reads as noise
+  /// (`DistIconOf`). Here there is one image, at a size where the colours are
+  /// what makes it recognisable, and nothing to be consistent with.
+  ///
+  /// The consequence is worth keeping in mind before unifying the two: what
+  /// may be drawn here is a wider set than what may be drawn there. Recolouring
+  /// is a modification, and at least one project — Rocky Linux — forbids
+  /// altering its mark "in any way", which is why no mark ships for it.
   Widget? _buildLogo(ServerState si) {
     final logoUrl = si.getLogoUrl(context);
     // Null, not an empty placeholder: the wrapping Padding was laid out either

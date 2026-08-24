@@ -313,14 +313,15 @@ class AppLocalizationsPt extends AppLocalizations {
   String get logoUrl => 'URL do logotipo';
 
   @override
-  String get logoUrlTip => 'A imagem grande no topo da página de um servidor.';
+  String get logoUrlTip =>
+      'A imagem grande no topo da página de um servidor, nas cores originais.';
 
   @override
   String get markUrl => 'URL da marca';
 
   @override
   String get markUrlTip =>
-      'A marca pequena ao lado do nome de um servidor nas listas. Vazio: nenhuma.\n\nNão é a mesma imagem do logotipo: o que se lê em largura total vira um borrão a 20 px.';
+      'A marca pequena ao lado do nome de um servidor nas listas. Vazio: nenhuma.\n\nNão é a mesma imagem do logotipo nem é desenhada do mesmo jeito: esta assume a cor do texto ao lado, para que uma coluna se leia como uma coluna. O logotipo fica como foi publicado.';
 
   @override
   String get navTabMenuTip =>

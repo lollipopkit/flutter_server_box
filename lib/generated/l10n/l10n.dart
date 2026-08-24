@@ -672,7 +672,7 @@ abstract class AppLocalizations {
   /// No description provided for @logoUrlTip.
   ///
   /// In en, this message translates to:
-  /// **'The large image at the top of a server\'s own page.'**
+  /// **'The large image at the top of a server\'s own page, drawn in its own colours.'**
   String get logoUrlTip;
 
   /// No description provided for @markUrl.
@@ -684,7 +684,7 @@ abstract class AppLocalizations {
   /// No description provided for @markUrlTip.
   ///
   /// In en, this message translates to:
-  /// **'The small mark beside a server\'s name in lists. Empty means none is drawn.\n\nNot the same picture as the logo: artwork that reads at full width is a smudge at 20px.'**
+  /// **'The small mark beside a server\'s name in lists. Empty means none is drawn.\n\nNot the same picture as the logo, and not drawn the same way: this one takes the colour of the text beside it, so a column of them reads as one column. The logo is left as published.'**
   String get markUrlTip;
 
   /// No description provided for @navTabMenuTip.

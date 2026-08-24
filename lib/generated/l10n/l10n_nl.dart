@@ -314,14 +314,14 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get logoUrlTip =>
-      'De grote afbeelding boven aan de pagina van een server.';
+      'De grote afbeelding boven aan de pagina van een server, in de eigen kleuren.';
 
   @override
   String get markUrl => 'Merkteken-URL';
 
   @override
   String get markUrlTip =>
-      'Het kleine teken naast een servernaam in lijsten. Leeg betekent geen.\n\nNiet dezelfde afbeelding als het logo: wat op volle breedte leesbaar is, is bij 20 px een vlek.';
+      'Het kleine teken naast een servernaam in lijsten. Leeg betekent geen.\n\nNiet dezelfde afbeelding als het logo en niet op dezelfde manier getekend: dit neemt de kleur van de tekst ernaast aan, zodat een kolom ervan als één kolom leest. Het logo blijft zoals het is gepubliceerd.';
 
   @override
   String get navTabMenuTip =>

@@ -293,14 +293,14 @@ class AppLocalizationsJa extends AppLocalizations {
   String get logoUrl => 'ロゴの URL';
 
   @override
-  String get logoUrlTip => 'サーバー詳細ページの上部に出る大きな画像。';
+  String get logoUrlTip => 'サーバー詳細ページの上部に出る大きな画像。元の色のまま表示します。';
 
   @override
   String get markUrl => 'マークの URL';
 
   @override
   String get markUrlTip =>
-      '一覧でサーバー名の横に出る小さなマーク。空なら表示しません。\n\nロゴとは別の画像です。全幅で見て良い絵は 20px では潰れます。';
+      '一覧でサーバー名の横に出る小さなマーク。空なら表示しません。\n\nロゴとは別の画像で、描き方も違います。マークは隣の文字と同じ色の単色で描かれ、一列がひとまとまりに見えます。ロゴはそのままの色です。';
 
   @override
   String get navTabMenuTip => 'タブを長押し（マウスは右クリック）すると、その中のすべてをまとめて接続・切断できます。';

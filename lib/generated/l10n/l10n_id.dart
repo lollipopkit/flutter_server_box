@@ -312,14 +312,15 @@ class AppLocalizationsId extends AppLocalizations {
   String get logoUrl => 'URL logo';
 
   @override
-  String get logoUrlTip => 'Gambar besar di bagian atas halaman sebuah server.';
+  String get logoUrlTip =>
+      'Gambar besar di bagian atas halaman sebuah server, dengan warna aslinya.';
 
   @override
   String get markUrl => 'URL tanda';
 
   @override
   String get markUrlTip =>
-      'Tanda kecil di samping nama server pada daftar. Kosong berarti tidak ada.\n\nBukan gambar yang sama dengan logo: karya yang terbaca pada lebar penuh menjadi noda pada 20px.';
+      'Tanda kecil di samping nama server pada daftar. Kosong berarti tidak ada.\n\nBukan gambar yang sama dengan logo dan tidak digambar dengan cara yang sama: tanda ini mengambil warna teks di sebelahnya, sehingga satu kolom terbaca sebagai satu kolom. Logo dibiarkan seperti yang diterbitkan.';
 
   @override
   String get navTabMenuTip =>

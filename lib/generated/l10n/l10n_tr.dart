@@ -314,14 +314,14 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get logoUrlTip =>
-      'Bir sunucunun kendi sayfasının üstündeki büyük görsel.';
+      'Bir sunucunun kendi sayfasının üstündeki büyük görsel, kendi renkleriyle.';
 
   @override
   String get markUrl => 'İşaret adresi';
 
   @override
   String get markUrlTip =>
-      'Listelerde sunucu adının yanındaki küçük işaret. Boşsa hiçbiri çizilmez.\n\nLogoyla aynı görsel değil: tam genişlikte okunan bir çizim 20 pikselde lekeye döner.';
+      'Listelerde sunucu adının yanındaki küçük işaret. Boşsa hiçbiri çizilmez.\n\nLogoyla aynı görsel değil ve aynı şekilde de çizilmez: bu, yanındaki yazının rengini alır, böylece bir sütun tek sütun gibi okunur. Logo yayımlandığı hâliyle kalır.';
 
   @override
   String get navTabMenuTip =>

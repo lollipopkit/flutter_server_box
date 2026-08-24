@@ -146,6 +146,10 @@ class DistIconOf extends StatelessWidget {
 
   /// One colour for every mark, taken from the text beside it.
   ///
+  /// The mark only. The large logo on a server's own page is drawn as
+  /// published — see `_buildLogo` in `view/page/server/detail/view.dart`,
+  /// which says why the two differ.
+  ///
   /// The marks are drawn in a list, at the size of a line of text, next to
   /// icons that all follow the row's colour; a column of full-colour logos at
   /// 20px reads as noise rather than as information. Each of the four shipped

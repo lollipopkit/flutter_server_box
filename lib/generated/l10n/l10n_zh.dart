@@ -289,14 +289,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get logoUrl => 'Logo 地址';
 
   @override
-  String get logoUrlTip => '服务器详情页顶部的大图。';
+  String get logoUrlTip => '服务器详情页顶部的大图,按原色显示。';
 
   @override
   String get markUrl => '标识地址';
 
   @override
   String get markUrlTip =>
-      '列表中服务器名字旁边的小标识。留空则不显示。\n\n和「Logo」不是同一张图:在整幅宽度下好看的图,缩到 20px 就是一团。';
+      '列表中服务器名字旁边的小标识。留空则不显示。\n\n和 Logo 不是同一张图,画法也不同:标识跟随旁边文字的颜色显示为单色,这样一列看起来才是一列。Logo 保持原色。';
 
   @override
   String get navTabMenuTip => '长按标签栏图标（鼠标右键点击）可一次性连接或断开其中的全部内容。';
@@ -1790,14 +1790,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get logoUrl => 'Logo 位址';
 
   @override
-  String get logoUrlTip => '伺服器詳情頁頂部的大圖。';
+  String get logoUrlTip => '伺服器詳情頁頂部的大圖,按原色顯示。';
 
   @override
   String get markUrl => '標識位址';
 
   @override
   String get markUrlTip =>
-      '清單中伺服器名稱旁邊的小標識。留空則不顯示。\n\n和「Logo」不是同一張圖:在整幅寬度下好看的圖,縮到 20px 就是一團。';
+      '清單中伺服器名稱旁邊的小標識。留空則不顯示。\n\n和 Logo 不是同一張圖,畫法也不同:標識跟隨旁邊文字的顏色顯示為單色,這樣一列看起來才是一列。Logo 保持原色。';
 
   @override
   String get navTabMenuTip => '長按標籤列圖示（滑鼠右鍵點選）可一次連線或斷開其中的全部項目。';

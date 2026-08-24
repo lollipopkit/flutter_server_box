@@ -315,14 +315,15 @@ class AppLocalizationsDe extends AppLocalizations {
   String get logoUrl => 'Logo-URL';
 
   @override
-  String get logoUrlTip => 'Das große Bild oben auf der Seite eines Servers.';
+  String get logoUrlTip =>
+      'Das große Bild oben auf der Seite eines Servers, in seinen eigenen Farben.';
 
   @override
   String get markUrl => 'Marken-URL';
 
   @override
   String get markUrlTip =>
-      'Das kleine Zeichen neben dem Servernamen in Listen. Leer heißt: keins.\n\nNicht dasselbe Bild wie das Logo: Grafik, die in voller Breite funktioniert, ist bei 20 px ein Fleck.';
+      'Das kleine Zeichen neben dem Servernamen in Listen. Leer heißt: keins.\n\nNicht dasselbe Bild wie das Logo und nicht gleich gezeichnet: dieses nimmt die Farbe des Textes daneben an, damit eine Spalte davon als eine Spalte liest. Das Logo bleibt, wie es veröffentlicht wurde.';
 
   @override
   String get navTabMenuTip =>

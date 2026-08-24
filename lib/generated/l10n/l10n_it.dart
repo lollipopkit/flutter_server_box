@@ -317,14 +317,14 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get logoUrlTip =>
-      'L\'immagine grande in cima alla pagina di un server.';
+      'L\'immagine grande in cima alla pagina di un server, nei suoi colori originali.';
 
   @override
   String get markUrl => 'URL del marchio';
 
   @override
   String get markUrlTip =>
-      'Il piccolo marchio accanto al nome di un server negli elenchi. Vuoto: nessuno.\n\nNon è la stessa immagine del logo: ciò che si legge a tutta larghezza a 20 px è una macchia.';
+      'Il piccolo marchio accanto al nome di un server negli elenchi. Vuoto: nessuno.\n\nNon è la stessa immagine del logo né è disegnata allo stesso modo: questa assume il colore del testo accanto, così una colonna si legge come una colonna. Il logo resta come pubblicato.';
 
   @override
   String get navTabMenuTip =>
