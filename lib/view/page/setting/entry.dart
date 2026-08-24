@@ -44,7 +44,6 @@ import 'package:server_box/view/page/setting/platform/platform_pub.dart';
 import 'package:server_box/view/page/setting/seq/known_hosts.dart';
 // Still reached on its own from the server settings page, which links straight
 // at it rather than at the tabs.
-import 'package:server_box/view/page/setting/seq/srv_func_seq.dart';
 import 'package:server_box/view/page/setting/seq/srv_orders.dart';
 import 'package:server_box/view/page/setting/seq/virt_key.dart';
 import 'package:server_box/view/widget/dist_icon.dart';

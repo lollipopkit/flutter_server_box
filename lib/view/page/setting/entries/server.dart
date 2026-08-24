@@ -14,7 +14,6 @@ extension _Server on _AppSettingsPageState {
       children: [
         _buildDistIcon(),
         _buildServerLogoUrl(),
-        _buildServerFuncBtns(),
         _buildNetViewType(),
         _buildConnectionStats(),
         _buildDeleteServers(),
@@ -128,20 +127,6 @@ extension _Server on _AppSettingsPageState {
     _setting.textFactor.put(val);
     RNodes.app.notify();
     context.popDialog();
-  }
-
-  /// Desktop and tablet only: below the width threshold there is only ever
-  /// one column, so the switch would claim to change something it cannot.
-  /// Order only. There was a switch above it for whether the buttons lived on
-  /// the server card or the detail page; they float over the detail page now,
-  /// which works on either layout, so there is nothing left to choose.
-  Widget _buildServerFuncBtns() {
-    return ListTile(
-      leading: const Icon(BoxIcons.bxs_joystick_button, size: _kIconSize),
-      title: Text(l10n.serverFuncBtns),
-      trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: () => ServerFuncBtnsOrderPage.route.go(context),
-    );
   }
 
   Widget _buildDoubleColumnServersPage() {
