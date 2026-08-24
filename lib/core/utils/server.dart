@@ -82,8 +82,54 @@ String? resolvePrivateKey(SshCredential ssh) {
 
   final expanded = SSHConfig.expandHome(keyPath);
   try {
-    return File(expanded).readAsStringSync();
+    final file = File(expanded);
+    // Guard against unbounded key files on the main isolate.
+    try {
+      final size = file.statSync().size;
+      if (size > 1024 * 1024) {
+        throw SSHErr(
+          type: SSHErrType.noPrivateKey,
+          message: l10n.privateKeyFileUnreadable(expanded, 'File too large ($size bytes)'),
+        );
+      }
+    } catch (_) {
+      // statSync failure is non-fatal; let read attempt decide.
+    }
+    return file.readAsStringSync();
   } catch (e) {
+    if (e is SSHErr) rethrow;
+    throw SSHErr(
+      type: SSHErrType.noPrivateKey,
+      message: l10n.privateKeyFileUnreadable(expanded, '$e'),
+    );
+  }
+}
+
+/// Async variant of [resolvePrivateKey] for callers that can await.
+Future<String?> resolvePrivateKeyAsync(SshCredential ssh) async {
+  final keyId = ssh.keyId;
+  if (keyId != null) return getPrivateKey(keyId);
+  final keyPath = ssh.keyPath;
+  if (keyPath == null) return null;
+  if (Pfs.isMacSandboxed) {
+    throw SSHErr(
+      type: SSHErrType.noPrivateKey,
+      message: l10n.privateKeyFileSandboxed(keyPath),
+    );
+  }
+  final expanded = SSHConfig.expandHome(keyPath);
+  try {
+    final file = File(expanded);
+    final stat = await file.stat();
+    if (stat.size > 1024 * 1024) {
+      throw SSHErr(
+        type: SSHErrType.noPrivateKey,
+        message: l10n.privateKeyFileUnreadable(expanded, 'File too large (${stat.size} bytes)'),
+      );
+    }
+    return await file.readAsString();
+  } catch (e) {
+    if (e is SSHErr) rethrow;
     throw SSHErr(
       type: SSHErrType.noPrivateKey,
       message: l10n.privateKeyFileUnreadable(expanded, '$e'),
@@ -137,6 +183,14 @@ Future<SSHClient> genClient(
       type: SSHErrType.connect,
       message:
           'Invalid jump chain: cycle detected at ${spi.name} ($currentServerId)',
+    );
+  }
+  // Also detect address-level cycles for cloned servers.
+  final addrKey = 'addr:${ssh.ip}:${ssh.port}';
+  if (!chainVisitedServerIds.add(addrKey)) {
+    throw SSHErr(
+      type: SSHErrType.connect,
+      message: 'Invalid jump chain: address cycle at ${ssh.ip}:${ssh.port}',
     );
   }
 
@@ -354,6 +408,12 @@ List<Spi> _resolveJumpCandidates({
 
 bool _isJumpFailoverError(Object error) {
   final errStr = error.toString().toLowerCase();
+  // Exclude auth failures that also contain "too many" (e.g. "too many authentication failures").
+  if (errStr.contains('auth') ||
+      errStr.contains('permission denied') ||
+      errStr.contains('access denied')) {
+    return false;
+  }
   return errStr.contains('timed out') ||
       errStr.contains('timeout') ||
       errStr.contains('connection refused') ||
@@ -366,7 +426,11 @@ bool _isJumpFailoverError(Object error) {
       errStr.contains('failed host lookup') ||
       errStr.contains('forwardlocal') ||
       errStr.contains('proxycommand exited') ||
-      errStr.contains('proxycommand timed out');
+      errStr.contains('proxycommand timed out') ||
+      errStr.contains('channel open failed') ||
+      errStr.contains('maxsessions') ||
+      (errStr.contains('too many') && errStr.contains('session')) ||
+      (errStr.contains('session') && errStr.contains('failed') && !errStr.contains('auth'));
 }
 
 @visibleForTesting
@@ -694,6 +758,13 @@ Future<void> ensureKnownHostKey(
       type: SSHErrType.connect,
       message:
           'Invalid jump chain: cycle detected at ${spi.name} ($currentServerId)',
+    );
+  }
+  final addrKey2 = 'addr:${ssh.ip}:${ssh.port}';
+  if (!chainVisitedServerIds.add(addrKey2)) {
+    throw SSHErr(
+      type: SSHErrType.connect,
+      message: 'Invalid jump chain: address cycle at ${ssh.ip}:${ssh.port}',
     );
   }
 

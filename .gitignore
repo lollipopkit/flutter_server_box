@@ -31,6 +31,11 @@ node_modules/
 .pub-cache/
 .pub/
 /build/
+ios/build/
+android/build/
+windows/build/
+linux/build/
+macos/build/
 # `make coverage` output. Was committed once and then went stale for a year,
 # naming files that have since moved.
 /coverage/
@@ -64,7 +69,7 @@ test.dart
 linux.AppDir
 **/*.AppImage
 
-untranlated.json
+untranslated.json
 
 .vscode/settings.json
 more_build_data.json
