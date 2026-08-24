@@ -1,10 +1,12 @@
-/// Turning the marks on puts the terms up first, and a "no" is a no.
+/// The terms that go up before a mark address is saved.
 ///
-/// Two ways this breaks and still looks right on screen: the dialog stops
-/// being shown, so the setting flips with nothing on screen to have read; or
-/// the answer is collected and the setting is written anyway. The dialog is
-/// [confirmDistIconTerms] and the gate is `StoreSwitch`'s `validator`, which
-/// writes nothing when it declines — both are exercised here.
+/// The gate moved when the on/off switch did: there is no switch any more, so
+/// the moment worth asking at is the one where an address is set and marks
+/// start appearing. `_buildServerMarkUrl` calls this; what it must not do is
+/// ask when the address is being *cleared*, which is how marks are turned off.
+///
+/// What can break silently: the dialog stops carrying the terms, or it returns
+/// agreement for an answer that was not one — a dismissal, or a cancel.
 library;
 
 import 'package:fl_lib/fl_lib.dart';
@@ -12,16 +14,12 @@ import 'package:fl_lib/generated/l10n/lib_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
-import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/widget/dist_icon.dart';
 
-import 'helpers/test_db.dart';
-
-/// The tile's shape: the same switch over the same property, behind the same
-/// gate. The tile itself is `part of entry.dart` and cannot be built without
-/// the whole settings page, so this is the closest thing that stays a unit.
-Widget _app(SettingStore setting, {void Function()? onAsk}) => MaterialApp(
+/// A button that asks, and a label showing what came back — so "what the user
+/// tapped" and "what the caller was told" are two separate observations.
+Widget _app(void Function(bool) onAnswer) => MaterialApp(
   locale: const Locale('en'),
   localizationsDelegates: const [
     LibLocalizations.delegate,
@@ -34,13 +32,9 @@ Widget _app(SettingStore setting, {void Function()? onAsk}) => MaterialApp(
       context.setLibL10n();
       return Scaffold(
         body: Center(
-          child: StoreSwitch(
-            prop: setting.showDistIcon,
-            validator: (enabling) async {
-              if (!enabling) return true;
-              onAsk?.call();
-              return confirmDistIconTerms(context);
-            },
+          child: TextButton(
+            onPressed: () async => onAnswer(await confirmDistIconTerms(context)),
+            child: const Text('ask'),
           ),
         ),
       );
@@ -51,70 +45,55 @@ Widget _app(SettingStore setting, {void Function()? onAsk}) => MaterialApp(
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late SettingStore setting;
-
-  setUp(() async {
-    await openTestDb();
-    setting = SettingStore.forTest()..init();
-  });
-
-  tearDown(SqliteDb.close);
-
-  testWidgets('the terms go up, and nothing is written until answered', (
-    tester,
-  ) async {
-    setting.showDistIcon.put(false);
-    await tester.pumpWidget(_app(setting));
-
-    await tester.tap(find.byType(Switch));
+  testWidgets('the terms and the choice are both on screen', (tester) async {
+    await tester.pumpWidget(_app((_) {}));
+    await tester.tap(find.text('ask'));
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.byType(AlertDialog), findsOneWidget);
-    // The sentence that makes it a choice rather than a notice, and the terms
-    // it is a choice about.
+    // The sentence that makes it a choice rather than a notice...
     expect(find.text(app_locale.l10n.distIconConsent), findsOneWidget);
-    // And the terms themselves, not just the sentence about them.
+    // ...and the terms it is a choice about.
     expect(find.textContaining('trademark'), findsOneWidget);
-    expect(
-      setting.showDistIcon.fetch(),
-      isFalse,
-      reason: 'nothing may be written while the question is still on screen',
-    );
+  });
 
+  testWidgets('accepting answers yes', (tester) async {
+    bool? answer;
+    await tester.pumpWidget(_app((v) => answer = v));
+    await tester.tap(find.text('ask'));
+    await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.text(libL10n.ok));
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.byType(AlertDialog), findsNothing);
-    expect(setting.showDistIcon.fetch(), isTrue);
+    expect(answer, isTrue);
   });
 
-  testWidgets('declining leaves them off', (tester) async {
-    // The failure worth catching: collecting an answer and ignoring it.
-    setting.showDistIcon.put(false);
-    await tester.pumpWidget(_app(setting));
-
-    await tester.tap(find.byType(Switch));
+  testWidgets('cancelling answers no', (tester) async {
+    // The failure worth catching: collecting an answer and reporting the
+    // opposite, which would save the address anyway.
+    bool? answer;
+    await tester.pumpWidget(_app((v) => answer = v));
+    await tester.tap(find.text('ask'));
     await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.text(libL10n.cancel));
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.byType(AlertDialog), findsNothing);
-    expect(setting.showDistIcon.fetch(), isFalse);
+    expect(answer, isFalse);
   });
 
-  testWidgets('switching them off asks nothing', (tester) async {
-    // Agreement is to displaying the marks. Stopping needs agreement to
-    // nothing, and a dialog there would make "no longer show these" a second
-    // decision to get through.
-    setting.showDistIcon.put(true);
-    var asked = false;
-    await tester.pumpWidget(_app(setting, onAsk: () => asked = true));
-
-    await tester.tap(find.byType(Switch));
+  testWidgets('and dismissing it is not agreement', (tester) async {
+    // Tapping outside pops nothing, so the dialog answers null. Read as `true`
+    // that would be consent nobody gave.
+    bool? answer;
+    await tester.pumpWidget(_app((v) => answer = v));
+    await tester.tap(find.text('ask'));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tapAt(const Offset(10, 10));
     await tester.pump(const Duration(milliseconds: 300));
 
-    expect(asked, isFalse);
     expect(find.byType(AlertDialog), findsNothing);
-    expect(setting.showDistIcon.fetch(), isFalse);
+    expect(answer, isFalse);
   });
 }

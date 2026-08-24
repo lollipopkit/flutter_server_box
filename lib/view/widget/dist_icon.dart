@@ -18,19 +18,18 @@ import 'package:server_box/generated/l10n/l10n.dart';
 /// picture at the other end is not this repository's, and it is fetched only
 /// because someone asked for it by writing the address down.
 ///
-/// [override] is the per-server address (`Spi.custom.logoUrl`), which wins over
-/// the global setting exactly as it does for the large logo on the detail page.
+/// **A mark is not the logo.** The logo is the large image at the top of a
+/// server's own page and comes from `serverLogoUrl`; this is the small one
+/// beside its name in a list, and comes from `serverMarkUrl`. Two addresses
+/// because they want two pictures: artwork that reads at full width is a
+/// smudge at 20px, and an icon that works at 20px is lost on a detail page.
 ///
 /// Null in three cases, all of which draw nothing: no address configured, an
 /// address that wants `{DIST}` for a machine whose distribution is not known,
 /// and one that is not http. The last is a guard rather than a nicety — the
 /// value is user-entered and reaches an image loader.
-String? distMarkUrl({
-  required Dist? dist,
-  String? override,
-  required bool dark,
-}) {
-  final configured = override ?? Stores.setting.serverLogoUrl.fetch();
+String? distMarkUrl({required Dist? dist, required bool dark}) {
+  final configured = Stores.setting.serverMarkUrl.fetch();
   if (configured.isEmpty) return null;
 
   var url = resolveLogoUrl(configured);
@@ -94,30 +93,23 @@ class DistIcon extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (!Stores.setting.showDistIcon.fetch()) {
-      return SizedBox.square(dimension: size);
-    }
-
     // Read off the map rather than `serverProvider(id)`, which throws for an
     // id it does not know — the known-hosts page lists ids of servers that may
     // since have been deleted.
-    final spi = ref.watch(serversProvider).servers[serverId];
+    final known = ref.watch(serversProvider).servers.containsKey(serverId);
     // The live reading first: it is the newer of the two, and on a server
     // being polled right now it is what the cache is about to be set to.
-    final live = spi == null
-        ? null
-        : ref.watch(serverProvider(serverId)).status.dist;
+    final live = known
+        ? ref.watch(serverProvider(serverId)).status.dist
+        : null;
 
     // Rebuilt when the cache changes, so a row drawn before the first poll
     // picks up the answer when it lands rather than staying blank until
     // something else happens to rebuild it.
     return StreamBuilder<void>(
       stream: Stores.serverDist.changes,
-      builder: (_, _) => DistIconOf(
-        live ?? Stores.serverDist.get(serverId),
-        logoUrl: spi?.custom?.logoUrl,
-        size: size,
-      ),
+      builder: (_, _) =>
+          DistIconOf(live ?? Stores.serverDist.get(serverId), size: size),
     );
   }
 }
@@ -127,23 +119,15 @@ class DistIcon extends ConsumerWidget {
 /// Split out so a widget test, and any code path that has the `Dist` in hand,
 /// does not need a provider scope with a server in it.
 class DistIconOf extends StatelessWidget {
-  const DistIconOf(this.dist, {super.key, this.size = 20, this.logoUrl});
+  const DistIconOf(this.dist, {super.key, this.size = 20});
 
   final Dist? dist;
   final double size;
 
-  /// The per-server address, when the caller has one.
-  final String? logoUrl;
-
   @override
   Widget build(BuildContext context) {
-    if (!Stores.setting.showDistIcon.fetch()) {
-      return SizedBox.square(dimension: size);
-    }
-
     final url = distMarkUrl(
       dist: dist,
-      override: logoUrl,
       dark: Theme.of(context).brightness == Brightness.dark,
     );
     // A blank of the same size rather than nothing at all: a leading slot that

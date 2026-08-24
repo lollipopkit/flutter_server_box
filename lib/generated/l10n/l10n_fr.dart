@@ -316,6 +316,19 @@ class AppLocalizationsFr extends AppLocalizations {
       'Uniquement pour une distribution dont le fichier porte un autre nom là où vous hébergez les marques. La clé est le nom utilisé par cette application ; la valeur est le nom à récupérer. Laissez vide tant qu\'aucune marque ne manque.';
 
   @override
+  String get logoUrl => 'URL du logo';
+
+  @override
+  String get logoUrlTip => 'La grande image en haut de la page d\'un serveur.';
+
+  @override
+  String get markUrl => 'URL de la marque';
+
+  @override
+  String get markUrlTip =>
+      'La petite marque à côté du nom d\'un serveur dans les listes. Vide : aucune.\n\nCe n\'est pas la même image que le logo : une illustration lisible en pleine largeur devient une tache à 20 px.';
+
+  @override
   String get navTabMenuTip =>
       'Appuyez longuement sur un onglet — ou faites un clic droit — pour connecter ou déconnecter d\'un coup tout ce qu\'il contient.';
 

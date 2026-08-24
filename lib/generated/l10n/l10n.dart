@@ -663,6 +663,30 @@ abstract class AppLocalizations {
   /// **'Only for a distribution whose file is named something else where you host the marks. The key is the name this app uses; the value is the name to fetch. Leave it empty unless a mark is missing.'**
   String get distNameMapTip;
 
+  /// No description provided for @logoUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Logo URL'**
+  String get logoUrl;
+
+  /// No description provided for @logoUrlTip.
+  ///
+  /// In en, this message translates to:
+  /// **'The large image at the top of a server\'s own page.'**
+  String get logoUrlTip;
+
+  /// No description provided for @markUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark URL'**
+  String get markUrl;
+
+  /// No description provided for @markUrlTip.
+  ///
+  /// In en, this message translates to:
+  /// **'The small mark beside a server\'s name in lists. Empty means none is drawn.\n\nNot the same picture as the logo: artwork that reads at full width is a smudge at 20px.'**
+  String get markUrlTip;
+
   /// No description provided for @navTabMenuTip.
   ///
   /// In en, this message translates to:

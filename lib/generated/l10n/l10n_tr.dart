@@ -310,6 +310,20 @@ class AppLocalizationsTr extends AppLocalizations {
       'Yalnızca işaretleri barındırdığınız yerde dosyası başka adla duran bir dağıtım için. Anahtar, bu uygulamanın kullandığı ad; değer ise indirilecek ad. Eksik bir işaret olmadıkça boş bırakın.';
 
   @override
+  String get logoUrl => 'Logo adresi';
+
+  @override
+  String get logoUrlTip =>
+      'Bir sunucunun kendi sayfasının üstündeki büyük görsel.';
+
+  @override
+  String get markUrl => 'İşaret adresi';
+
+  @override
+  String get markUrlTip =>
+      'Listelerde sunucu adının yanındaki küçük işaret. Boşsa hiçbiri çizilmez.\n\nLogoyla aynı görsel değil: tam genişlikte okunan bir çizim 20 pikselde lekeye döner.';
+
+  @override
   String get navTabMenuTip =>
       'İçindeki her şeyi tek seferde bağlamak veya bağlantısını kesmek için bir sekmeye uzun basın ya da sağ tıklayın.';
 

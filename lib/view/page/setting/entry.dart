@@ -700,6 +700,9 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
   late final _serverLogoCtrl = TextEditingController(
     text: _setting.serverLogoUrl.fetch(),
   );
+  late final _serverMarkCtrl = TextEditingController(
+    text: _setting.serverMarkUrl.fetch(),
+  );
 
   @override
   void initState() {
@@ -724,6 +727,7 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
     _sshBlurCtrl.dispose();
     _textScalerCtrl.dispose();
     _serverLogoCtrl.dispose();
+    _serverMarkCtrl.dispose();
     super.dispose();
   }
 

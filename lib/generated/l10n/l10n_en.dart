@@ -307,6 +307,20 @@ class AppLocalizationsEn extends AppLocalizations {
       'Only for a distribution whose file is named something else where you host the marks. The key is the name this app uses; the value is the name to fetch. Leave it empty unless a mark is missing.';
 
   @override
+  String get logoUrl => 'Logo URL';
+
+  @override
+  String get logoUrlTip =>
+      'The large image at the top of a server\'s own page.';
+
+  @override
+  String get markUrl => 'Mark URL';
+
+  @override
+  String get markUrlTip =>
+      'The small mark beside a server\'s name in lists. Empty means none is drawn.\n\nNot the same picture as the logo: artwork that reads at full width is a smudge at 20px.';
+
+  @override
   String get navTabMenuTip =>
       'Long press a tab — or right-click it — to connect or disconnect everything on it at once.';
 

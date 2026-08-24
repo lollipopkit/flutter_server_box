@@ -310,6 +310,20 @@ class AppLocalizationsNl extends AppLocalizations {
       'Alleen voor een distributie waarvan het bestand anders heet op de plek waar u de merktekens host. De sleutel is de naam die deze app gebruikt; de waarde is de naam die opgehaald wordt. Laat het leeg zolang er geen merkteken ontbreekt.';
 
   @override
+  String get logoUrl => 'Logo-URL';
+
+  @override
+  String get logoUrlTip =>
+      'De grote afbeelding boven aan de pagina van een server.';
+
+  @override
+  String get markUrl => 'Merkteken-URL';
+
+  @override
+  String get markUrlTip =>
+      'Het kleine teken naast een servernaam in lijsten. Leeg betekent geen.\n\nNiet dezelfde afbeelding als het logo: wat op volle breedte leesbaar is, is bij 20 px een vlek.';
+
+  @override
   String get navTabMenuTip =>
       'Houd een tabblad ingedrukt — of klik er met rechts op — om alles erin in één keer te verbinden of te verbreken.';
 

@@ -291,6 +291,19 @@ class AppLocalizationsKo extends AppLocalizations {
       '마크를 두는 곳의 파일 이름이 이 앱이 쓰는 이름과 다른 배포판에만 사용합니다. 키는 이 앱이 쓰는 이름, 값은 실제로 가져올 이름입니다. 빠진 마크가 없다면 비워 두세요.';
 
   @override
+  String get logoUrl => '로고 주소';
+
+  @override
+  String get logoUrlTip => '서버 상세 페이지 상단의 큰 이미지.';
+
+  @override
+  String get markUrl => '마크 주소';
+
+  @override
+  String get markUrlTip =>
+      '목록에서 서버 이름 옆에 표시되는 작은 마크. 비워 두면 표시하지 않습니다.\n\n로고와 같은 이미지가 아닙니다. 전체 너비에서 보기 좋은 그림도 20px에서는 뭉개집니다.';
+
+  @override
   String get navTabMenuTip =>
       '탭을 길게 누르거나 마우스 오른쪽 버튼으로 누르면 그 안의 모든 항목을 한 번에 연결하거나 끊을 수 있습니다.';
 

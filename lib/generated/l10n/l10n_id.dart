@@ -309,6 +309,19 @@ class AppLocalizationsId extends AppLocalizations {
       'Hanya untuk distribusi yang nama berkasnya berbeda di tempat Anda menaruh tanda-tanda itu. Kuncinya adalah nama yang dipakai aplikasi ini; nilainya adalah nama yang akan diambil. Biarkan kosong selama tidak ada tanda yang hilang.';
 
   @override
+  String get logoUrl => 'URL logo';
+
+  @override
+  String get logoUrlTip => 'Gambar besar di bagian atas halaman sebuah server.';
+
+  @override
+  String get markUrl => 'URL tanda';
+
+  @override
+  String get markUrlTip =>
+      'Tanda kecil di samping nama server pada daftar. Kosong berarti tidak ada.\n\nBukan gambar yang sama dengan logo: karya yang terbaca pada lebar penuh menjadi noda pada 20px.';
+
+  @override
   String get navTabMenuTip =>
       'Tekan lama sebuah tab — atau klik kanan — untuk menghubungkan atau memutuskan semuanya sekaligus.';
 

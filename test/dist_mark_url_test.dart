@@ -34,15 +34,14 @@ void main() {
 
   String? url({
     Dist? dist = Dist.debian,
-    String? override,
     bool dark = false,
-    String global = '',
+    String mark = '',
     Map<String, String> names = const {},
   }) {
     GetIt.instance<SettingStore>()
-      ..serverLogoUrl.put(global)
+      ..serverMarkUrl.put(mark)
       ..distNameMap.put(names);
-    return distMarkUrl(dist: dist, override: override, dark: dark);
+    return distMarkUrl(dist: dist, dark: dark);
   }
 
   test('nothing configured fetches nothing', () {
@@ -53,7 +52,7 @@ void main() {
 
   test('the template expands to the distribution', () {
     expect(
-      url(global: 'https://ex.com/{DIST}.svg', dist: Dist.rhel),
+      url(mark: 'https://ex.com/{DIST}.svg', dist: Dist.rhel),
       'https://ex.com/rhel.svg',
     );
   });
@@ -61,38 +60,39 @@ void main() {
   test('a template with no distribution to put in it draws nothing', () {
     // Rather than requesting the literal `{DIST}`, which is a 404 per row and
     // a line in somebody's server log.
-    expect(url(global: 'https://ex.com/{DIST}.svg', dist: null), isNull);
+    expect(url(mark: 'https://ex.com/{DIST}.svg', dist: null), isNull);
   });
 
   test('an address without the token works for a server with no distribution', () {
     // A single fixed image is a legitimate thing to configure, and it does not
     // depend on recognising anything.
-    expect(url(global: 'https://ex.com/one.png', dist: null), 'https://ex.com/one.png');
+    expect(url(mark: 'https://ex.com/one.png', dist: null), 'https://ex.com/one.png');
   });
 
   test('{BRIGHT} follows the theme', () {
     expect(
-      url(global: 'https://ex.com/{DIST}-{BRIGHT}.svg', dark: true),
+      url(mark: 'https://ex.com/{DIST}-{BRIGHT}.svg', dark: true),
       'https://ex.com/debian-dark.svg',
     );
     expect(
-      url(global: 'https://ex.com/{DIST}-{BRIGHT}.svg'),
+      url(mark: 'https://ex.com/{DIST}-{BRIGHT}.svg'),
       'https://ex.com/debian-light.svg',
     );
   });
 
-  test("a server's own address wins over the global one", () {
-    expect(
-      url(global: 'https://global/{DIST}.svg', override: 'https://mine/{DIST}.png'),
-      'https://mine/{DIST}.png'.replaceAll('{DIST}', 'debian'),
-    );
+  test('the logo address is a different setting and is not used here', () {
+    // A mark is not the logo: the logo is the large image on a server's own
+    // page. Reading `serverLogoUrl` here would put a full-width picture in a
+    // 20px slot on every row, and emptying the mark would not stop it.
+    GetIt.instance<SettingStore>().serverLogoUrl.put('https://logo/{DIST}.png');
+    expect(url(), isNull);
   });
 
   test('a GitHub page address is rewritten to the one that serves bytes', () {
     // What the address bar gives you. Left alone it fetches HTML, which the
     // decoder reports as invalid image data and says nothing about why.
     expect(
-      url(global: 'https://github.com/o/r/blob/main/i/{DIST}.svg'),
+      url(mark: 'https://github.com/o/r/blob/main/i/{DIST}.svg'),
       'https://raw.githubusercontent.com/o/r/main/i/debian.svg',
     );
   });
@@ -103,7 +103,7 @@ void main() {
     test('replace what {DIST} expands to, for the ones listed', () {
       expect(
         url(
-          global: 'https://ex.com/{DIST}.svg',
+          mark: 'https://ex.com/{DIST}.svg',
           dist: Dist.rhel,
           names: const {'rhel': 'redhat'},
         ),
@@ -115,7 +115,7 @@ void main() {
       // The normal case: a handful of exceptions, sixty-odd untouched.
       expect(
         url(
-          global: 'https://ex.com/{DIST}.svg',
+          mark: 'https://ex.com/{DIST}.svg',
           dist: Dist.debian,
           names: const {'rhel': 'redhat', 'arch': 'archlinux'},
         ),
@@ -125,7 +125,7 @@ void main() {
 
     test('an entry for something not installed changes nothing', () {
       expect(
-        url(global: 'https://ex.com/{DIST}.svg', names: const {'nope': 'x'}),
+        url(mark: 'https://ex.com/{DIST}.svg', names: const {'nope': 'x'}),
         'https://ex.com/debian.svg',
       );
     });
@@ -139,7 +139,7 @@ void main() {
       'data:image/svg+xml,<svg/>',
       '/local/path.svg',
     ]) {
-      expect(url(global: bad), isNull, reason: '$bad must not be fetched');
+      expect(url(mark: bad), isNull, reason: '$bad must not be fetched');
     }
   });
 }

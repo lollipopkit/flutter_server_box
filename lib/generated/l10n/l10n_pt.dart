@@ -310,6 +310,19 @@ class AppLocalizationsPt extends AppLocalizations {
       'Apenas para uma distribuição cujo arquivo tenha outro nome onde você hospeda as marcas. A chave é o nome que este aplicativo usa; o valor é o nome a ser buscado. Deixe vazio enquanto nenhuma marca estiver faltando.';
 
   @override
+  String get logoUrl => 'URL do logotipo';
+
+  @override
+  String get logoUrlTip => 'A imagem grande no topo da página de um servidor.';
+
+  @override
+  String get markUrl => 'URL da marca';
+
+  @override
+  String get markUrlTip =>
+      'A marca pequena ao lado do nome de um servidor nas listas. Vazio: nenhuma.\n\nNão é a mesma imagem do logotipo: o que se lê em largura total vira um borrão a 20 px.';
+
+  @override
   String get navTabMenuTip =>
       'Toque e segure uma aba — ou clique com o botão direito — para conectar ou desconectar tudo nela de uma vez.';
 

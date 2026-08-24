@@ -312,6 +312,19 @@ class AppLocalizationsDe extends AppLocalizations {
       'Nur für eine Distribution, deren Datei dort, wo Sie die Marken ablegen, anders heißt. Der Schlüssel ist der Name, den diese App verwendet; der Wert ist der Name, der abgerufen werden soll. Lassen Sie es leer, solange keine Marke fehlt.';
 
   @override
+  String get logoUrl => 'Logo-URL';
+
+  @override
+  String get logoUrlTip => 'Das große Bild oben auf der Seite eines Servers.';
+
+  @override
+  String get markUrl => 'Marken-URL';
+
+  @override
+  String get markUrlTip =>
+      'Das kleine Zeichen neben dem Servernamen in Listen. Leer heißt: keins.\n\nNicht dasselbe Bild wie das Logo: Grafik, die in voller Breite funktioniert, ist bei 20 px ein Fleck.';
+
+  @override
   String get navTabMenuTip =>
       'Tippe lange auf einen Tab – oder klicke ihn mit der rechten Maustaste an –, um alles darin auf einmal zu verbinden oder zu trennen.';
 

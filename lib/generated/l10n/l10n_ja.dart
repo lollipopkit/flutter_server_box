@@ -290,6 +290,19 @@ class AppLocalizationsJa extends AppLocalizations {
       'マークの置き場でファイル名がこのアプリの呼び方と違うディストリビューションにだけ使います。キーはこのアプリが使う名前、値は実際に取得する名前です。表示できないマークがなければ設定は不要です。';
 
   @override
+  String get logoUrl => 'ロゴの URL';
+
+  @override
+  String get logoUrlTip => 'サーバー詳細ページの上部に出る大きな画像。';
+
+  @override
+  String get markUrl => 'マークの URL';
+
+  @override
+  String get markUrlTip =>
+      '一覧でサーバー名の横に出る小さなマーク。空なら表示しません。\n\nロゴとは別の画像です。全幅で見て良い絵は 20px では潰れます。';
+
+  @override
   String get navTabMenuTip => 'タブを長押し（マウスは右クリック）すると、その中のすべてをまとめて接続・切断できます。';
 
   @override

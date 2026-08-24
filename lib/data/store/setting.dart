@@ -633,13 +633,20 @@ class SettingStore extends SqliteStore {
     },
   );
 
-  /// Whether to draw a distribution's mark beside each server.
+  /// Where the small mark beside a server's name is fetched from.
   ///
-  /// On by default, which shows nothing until [serverLogoUrl] (or a server's
-  /// own `logoUrl`) says where a mark comes from — this app ships none. So the
-  /// switch is not what decides whether marks appear; it is how to stop them
-  /// in the list while keeping the large logo on the detail page.
-  late final showDistIcon = propertyDefault('showDistIcon', true);
+  /// Separate from [serverLogoUrl], which is the large image on a server's own
+  /// page, because the two are different pictures: artwork that reads at full
+  /// width is a smudge at 20px, and an icon that works at 20px is lost on a
+  /// detail page. Both take `{DIST}` and `{BRIGHT}`.
+  ///
+  /// Empty means no mark is drawn, which is the default and was the point of
+  /// shipping none. There is no separate on/off switch: an empty address is
+  /// the off position, and a second gate over it governed nothing.
+  ///
+  /// TODO: `showDistIcon` was that switch and is no longer read. The key stays
+  /// in the `setting` kv table on installs that wrote it; nothing looks at it.
+  late final serverMarkUrl = propertyDefault('serverMarkUrl', '');
 
   /// Hide port forward beta warning
   late final portForwardBetaWarned = propertyDefault(
