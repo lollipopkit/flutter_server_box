@@ -47,6 +47,10 @@ class ServersNotifier extends _$ServersNotifier {
   Future<void> reload() async {
     Stores.server.dropCache();
     final newState = _load();
+    final selectedId = ref.read(serverSelectionProvider);
+    if (selectedId != null && !newState.servers.containsKey(selectedId)) {
+      ref.read(serverSelectionProvider.notifier).select(null);
+    }
     if (newState == state) return;
     state = newState;
     await refresh();
@@ -434,41 +438,7 @@ class ServersNotifier extends _$ServersNotifier {
         if (state.servers.containsKey(newSpi.id)) {
           throw DuplicateNameException(newSpi.name);
         }
-        // Move rows that reference the server by id before the old row is
-        // deleted (its CASCADE would otherwise delete them). Owned children
-        // like server_tag/env/jump etc. are recreated from newSpi itself via
-        // `put`, so they are not moved here.
-        try {
-          SqliteStore.transact(() {
-            final db = SqliteDb.instance;
-            for (final tbl in [
-              'known_host',
-              'container_host',
-              'container_runtime',
-              'port_forward',
-              'conn_stat',
-            ]) {
-              try {
-                db.execute('UPDATE $tbl SET server_id = ? WHERE server_id = ?;', [newSpi.id, old.id]);
-              } catch (_) {}
-            }
-            try {
-              db.execute('UPDATE snippet_auto_run_on SET server_id = ? WHERE server_id = ?;', [newSpi.id, old.id]);
-            } catch (_) {}
-            try {
-              db.execute('UPDATE agent_conversation SET server_id = ? WHERE server_id = ?;', [newSpi.id, old.id]);
-            } catch (_) {}
-            try {
-              db.execute('UPDATE server_jump SET jump_id = ? WHERE jump_id = ?;', [newSpi.id, old.id]);
-            } catch (_) {}
-          });
-        } catch (e, s) {
-          Loggers.app.warning('Failed to move server references for rename', e, s);
-        }
-        // Delete old tombstone + insert new. Use deleteById + put to get proper
-        // sync handling; the moves above ensure port_forwards etc. are not lost.
-        Stores.server.deleteById(old.id);
-        Stores.server.put(newSpi);
+        Stores.server.rename(old, newSpi);
       } else {
         Stores.server.update(old, newSpi);
       }

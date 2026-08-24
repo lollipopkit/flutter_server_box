@@ -49,6 +49,11 @@ class AgentConversationStore {
   /// a write it did not make itself, and every write goes through this class.
   Stream<void> watch() => _changes.stream;
 
+  /// Announces a transaction performed by another store over these tables.
+  void notifyExternalChange() {
+    if (!_changes.isClosed) _changes.add(null);
+  }
+
   List<AgentConversation> fetchForServer(String serverId) {
     final rows = _db.select(
       'SELECT data FROM $_conv WHERE server_id = ? ORDER BY updated_at DESC;',
@@ -142,7 +147,6 @@ class AgentConversationStore {
     _changes.add(null);
     return true;
   }
-
 
   bool rename(String conversationId, String title) {
     final conversation = fetch(conversationId);

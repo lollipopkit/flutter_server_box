@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:meta/meta.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
@@ -7,7 +9,10 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
+import 'package:server_box/data/store/agent_conversation.dart';
 import 'package:server_box/data/store/entity_store.dart';
+import 'package:server_box/data/store/port_forward.dart';
+import 'package:server_box/data/store/snippet.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 /// Servers, as rows in `server` plus the child tables hanging off it.
@@ -16,13 +21,26 @@ import 'package:sqlite3/sqlite3.dart';
 /// [readAll] reads each child table once and groups in Dart, so the cost is
 /// the number of tables rather than the number of servers.
 class ServerStore extends EntityStore<Spi> {
-  ServerStore._();
+  ServerStore._()
+    : _portForwards = PortForwardStore.instance,
+      _snippets = SnippetStore.instance,
+      _conversations = AgentConversationStore.instance;
 
   /// See [PrivateKeyStore.forTest].
   @visibleForTesting
-  ServerStore.forTest();
+  ServerStore.forTest({
+    PortForwardStore? portForwards,
+    SnippetStore? snippets,
+    AgentConversationStore? conversations,
+  }) : _portForwards = portForwards,
+       _snippets = snippets,
+       _conversations = conversations;
 
   static final instance = ServerStore._();
+
+  final PortForwardStore? _portForwards;
+  final SnippetStore? _snippets;
+  final AgentConversationStore? _conversations;
 
   @override
   String get table => 'server';
@@ -340,20 +358,26 @@ class ServerStore extends EntityStore<Spi> {
   };
 
   void trustHost(String serverId, String keyType, String fingerprint) {
-    db.execute('INSERT OR REPLACE INTO known_host VALUES (?, ?, ?);', [
-      serverId,
-      keyType,
-      fingerprint,
-    ]);
-    touch(serverId);
+    SqliteStore.transact(() {
+      db.execute('INSERT OR REPLACE INTO known_host VALUES (?, ?, ?);', [
+        serverId,
+        keyType,
+        fingerprint,
+      ]);
+      synced.stamp(serverId);
+    });
+    invalidate();
   }
 
   void forgetHost(String serverId, String keyType) {
-    db.execute('DELETE FROM known_host WHERE server_id = ? AND key_type = ?;', [
-      serverId,
-      keyType,
-    ]);
-    touch(serverId);
+    SqliteStore.transact(() {
+      db.execute(
+        'DELETE FROM known_host WHERE server_id = ? AND key_type = ?;',
+        [serverId, keyType],
+      );
+      synced.stamp(serverId);
+    });
+    invalidate();
   }
 
   @override
@@ -362,17 +386,148 @@ class ServerStore extends EntityStore<Spi> {
         .select('SELECT id FROM port_forward WHERE server_id = ?;', [id])
         .map((r) => r['id'] as String)
         .toList();
+    final snippetIds = _referencingIds(
+      'SELECT snippet_id AS id FROM snippet_auto_run_on WHERE server_id = ?;',
+      id,
+    );
+    final jumpOwnerIds = _referencingIds(
+      'SELECT server_id AS id FROM server_jump WHERE jump_id = ?;',
+      id,
+    );
     SqliteStore.transact(() {
+      final at = DateTimeX.timestamp;
       for (final pfId in pfIds) {
         db.execute(
           'INSERT OR REPLACE INTO tombstone (tbl, row_id, deleted_at) VALUES (?, ?, ?);',
-          ['port_forward', pfId, DateTimeX.timestamp],
+          ['port_forward', pfId, at],
         );
+      }
+      final snippetSync = SyncedTable('snippet');
+      for (final snippetId in snippetIds) {
+        snippetSync.stamp(snippetId, at: at);
+      }
+      for (final ownerId in jumpOwnerIds) {
+        if (ownerId != id) synced.stamp(ownerId, at: at);
       }
       db.execute('DELETE FROM port_forward WHERE server_id = ?;', [id]);
       db.execute('DELETE FROM $table WHERE $idColumn = ?;', [id]);
-      synced.tombstone(id);
+      synced.tombstone(id, at: at);
     });
     invalidate();
+    if (pfIds.isNotEmpty) _portForwards?.invalidate();
+    if (snippetIds.isNotEmpty) _snippets?.invalidate();
   }
+
+  /// Changes a server's stable id without exposing a state in which either
+  /// the parent or one of its dependent rows is missing.
+  void rename(Spi old, Spi replacement) {
+    if (old.id == replacement.id) {
+      update(old, replacement);
+      return;
+    }
+    if (db.select('SELECT 1 FROM server WHERE id = ?;', [
+      replacement.id,
+    ]).isNotEmpty) {
+      throw StateError('server id already exists: ${replacement.id}');
+    }
+
+    final snippetIds = _referencingIds(
+      'SELECT snippet_id AS id FROM snippet_auto_run_on WHERE server_id = ?;',
+      old.id,
+    );
+    final portForwardIds = _referencingIds(
+      'SELECT id FROM port_forward WHERE server_id = ?;',
+      old.id,
+    );
+    final jumpOwnerIds = _referencingIds(
+      'SELECT server_id AS id FROM server_jump WHERE jump_id = ?;',
+      old.id,
+    );
+
+    try {
+      SqliteStore.transact(() {
+        final at = DateTimeX.timestamp;
+        // Free a same-name replacement without deleting the old parent first.
+        db.execute('UPDATE server SET name = ? WHERE id = ?;', [
+          '__server_rename_${ShortId.generate()}',
+          old.id,
+        ]);
+        write(replacement);
+        writeLinks(replacement);
+
+        for (final table in const [
+          'known_host',
+          'container_host',
+          'container_runtime',
+          'port_forward',
+          'conn_stat',
+        ]) {
+          db.execute('UPDATE $table SET server_id = ? WHERE server_id = ?;', [
+            replacement.id,
+            old.id,
+          ]);
+        }
+        db.execute(
+          'UPDATE snippet_auto_run_on SET server_id = ? WHERE server_id = ?;',
+          [replacement.id, old.id],
+        );
+        db.execute('UPDATE server_jump SET jump_id = ? WHERE jump_id = ?;', [
+          replacement.id,
+          old.id,
+        ]);
+
+        for (final row in db.select(
+          'SELECT id, data FROM agent_conversation WHERE server_id = ?;',
+          [old.id],
+        )) {
+          final data = json.decode(row['data'] as String);
+          if (data is! Map) {
+            throw const FormatException('agent conversation is not an object');
+          }
+          final updated = Map<String, Object?>.from(data)
+            ..['server_id'] = replacement.id;
+          db.execute(
+            'UPDATE agent_conversation SET server_id = ?, data = ? WHERE id = ?;',
+            [replacement.id, json.encode(updated), row['id']],
+          );
+        }
+        db.execute(
+          'UPDATE agent_active_conversation SET server_id = ? WHERE server_id = ?;',
+          [replacement.id, old.id],
+        );
+
+        final snippetSync = SyncedTable('snippet');
+        for (final snippetId in snippetIds) {
+          snippetSync.stamp(snippetId, at: at);
+        }
+        final forwardSync = SyncedTable('port_forward');
+        for (final forwardId in portForwardIds) {
+          forwardSync.stamp(forwardId, at: at);
+        }
+        for (final ownerId in jumpOwnerIds) {
+          if (ownerId != old.id) synced.stamp(ownerId, at: at);
+        }
+
+        db.execute('DELETE FROM server WHERE id = ?;', [old.id]);
+        synced.tombstone(old.id, at: at);
+        synced.stamp(replacement.id, at: at);
+      });
+    } on SqliteException catch (e) {
+      if (e.extendedResultCode == 2067) {
+        throw DuplicateNameException(replacement.name);
+      }
+      rethrow;
+    }
+
+    invalidate();
+    if (portForwardIds.isNotEmpty) _portForwards?.invalidate();
+    if (snippetIds.isNotEmpty) _snippets?.invalidate();
+    _conversations?.notifyExternalChange();
+  }
+
+  List<String> _referencingIds(String sql, String serverId) => db
+      .select(sql, [serverId])
+      .map((row) => row['id'] as String)
+      .toSet()
+      .toList();
 }
