@@ -13,8 +13,6 @@ extension _Server on _AppSettingsPageState {
     return Column(
       children: [
         _buildDistIcon(),
-        _buildServerLogoUrl(),
-        _buildDistNameMap(),
         _buildNetViewType(),
         _buildConnectionStats(),
         _buildDeleteServers(),
@@ -188,20 +186,38 @@ extension _Server on _AppSettingsPageState {
     );
   }
 
-  /// The mark beside each server, and what it is.
+  /// The mark beside each server: whether to draw one, where it comes from,
+  /// and the names that disagree.
   ///
-  /// The tip is the whole of the terms — plain, not markdown, because a tip is
-  /// a text bubble and a link in one shows as its own syntax with nothing to
-  /// tap. The same text goes up in full when the switch is turned on.
+  /// Collapsed, and three rows deep, because none of it applies to an install
+  /// that has not gone looking for it — the app ships no marks, so out of the
+  /// box the switch governs nothing and the other two are blank. Left expanded
+  /// it would be three rows of a feature most people never turn on, above the
+  /// settings they came for.
+  ///
+  /// The tip on the title is the whole of the terms — plain, not markdown,
+  /// because a tip is a text bubble and a link in one shows as its own syntax
+  /// with nothing to tap. The same text goes up in full when the switch is
+  /// turned on.
   Widget _buildDistIcon() {
-    return ListTile(
+    return ExpandTile(
       leading: const Icon(Icons.dns_outlined),
       title: TipText(l10n.distIcon, distLegalPlain(l10n)),
-      subtitle: Text(l10n.distIconTip, style: UIs.textGrey),
-      trailing: StoreSwitch(
-        prop: _setting.showDistIcon,
-        validator: _confirmDistIcon,
-      ),
+      initiallyExpanded: false,
+      children: [
+        ListTile(
+          // The tip doubles as this row's title: inside a section already
+          // called "Distribution marks", repeating the name says nothing,
+          // while what the switch does is the thing worth reading.
+          title: Text(l10n.distIconTip),
+          trailing: StoreSwitch(
+            prop: _setting.showDistIcon,
+            validator: _confirmDistIcon,
+          ),
+        ),
+        _buildServerLogoUrl(),
+        _buildDistNameMap(),
+      ],
     );
   }
 
