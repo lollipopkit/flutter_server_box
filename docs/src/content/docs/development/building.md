@@ -111,11 +111,9 @@ app's own releases. Docker is in `monitor/Dockerfile`.
 
 ## Pre/Post Build
 
-The `make.dart` script handles:
-
-- Metadata generation
-- Version string updates
-- Platform-specific configurations
+`fl_build` regenerates `lib/data/res/build_data.dart` on every build, deriving
+the build number from the Git history, and writes the matching version into the
+Xcode configs. `fl_build.json` is what names the app for it.
 
 ## Troubleshooting
 

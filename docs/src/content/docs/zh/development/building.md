@@ -110,11 +110,8 @@ Docker 见 `monitor/Dockerfile`。
 
 ## 构建前/后处理
 
-`make.dart` 脚本负责处理：
-
-- 元数据生成
-- 版本字符串更新
-- 平台特定的配置
+`fl_build` 在每次构建时重新生成 `lib/data/res/build_data.dart`，构建号由 Git
+历史推导，并把对应版本写进 Xcode 配置。`fl_build.json` 负责告诉它应用叫什么。
 
 ## 故障排除
 

@@ -188,12 +188,12 @@ Custom build system for:
 ### Build Process
 
 ```
-make.dart (version) → fl_build (build) → Platform output
+fl_build (build) → Platform output
 ```
 
-1. **Pre-build**: Calculate version from Git
-2. **Build**: Compile for target platform
-3. **Post-build**: Package and sign
+1. **Build**: derive the build number from the Git history, compile for the
+   target platform
+2. **Post-build**: Package and sign
 
 ## Data Flow Example
 

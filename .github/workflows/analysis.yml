@@ -24,11 +24,16 @@ jobs:
   # tests (windows-latest)` (~7-9 min, most of it a cold compile). A docs-only
   # or Dart-only PR paid both for nothing.
   #
-  # Asks GitHub for the PR's own file list rather than diffing refs: no
-  # checkout, no fetch depth to get wrong, and no merge-base to compute against
-  # a base branch that may have moved since. On a push to main it answers
-  # "everything" — that is the ref releases are cut from, and narrowing what
-  # runs there trades away the wrong thing.
+  # Asks GitHub for the file list rather than diffing refs: no checkout, no
+  # fetch depth to get wrong, and no merge-base to compute against a base
+  # branch that may have moved since. A pull request has one of its own; a push
+  # is the range it pushed.
+  #
+  # On a push to main every filter answers "everything" — that is the ref
+  # releases are cut from, and narrowing what runs there trades away the wrong
+  # thing. `macos` is the one exception, and is answered honestly on both: 45
+  # minutes on a macOS runner for a diff that cannot reach the macOS product is
+  # not belt-and-braces, it is only the queue.
   changes:
     name: What changed
     runs-on: ubuntu-latest
@@ -48,19 +53,37 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [[ "${{ github.event_name }}" != 'pull_request' ]]; then
-            printf 'rust=true\nish=true\nmacos=true\ndart=true\nfrontend=true\ndocs=true\nwebsite=true\n' >> "$GITHUB_OUTPUT"
-            echo "not a pull request: running everything"
-            exit 0
-          fi
+          # Which filters are answered from the diff. Everything, on a pull
+          # request; on anything else only the ones named here, and the rest
+          # run unconditionally.
+          strict=' rust ish macos dart frontend docs website '
 
-          files="$(gh api --paginate \
-            "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" \
-            --jq '.[].filename')"
+          if [[ "${{ github.event_name }}" == 'pull_request' ]]; then
+            files="$(gh api --paginate \
+              "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" \
+              --jq '.[].filename')"
+          else
+            strict=' macos '
+            base='${{ github.event.before }}'
+            # A branch's first push has no `before` to compare against, and a
+            # force-push leaves one that is no longer an ancestor. Either way
+            # there is no diff to be had, so nothing is narrowed.
+            if [[ "$base" =~ ^0*$ ]] || ! files="$(gh api --paginate \
+              "repos/${{ github.repository }}/compare/$base...${{ github.sha }}" \
+              --jq '.files[].filename')"; then
+              strict=''
+              files=''
+              echo "no diff to read: running everything"
+            fi
+          fi
           echo "changed files:"
           echo "$files"
 
           emit() {
+            if [[ "$strict" != *" $1 "* ]]; then
+              echo "$1=true" >> "$GITHUB_OUTPUT"
+              return
+            fi
             if grep -qE "$2" <<< "$files"; then
               echo "$1=true" >> "$GITHUB_OUTPUT"
             else
