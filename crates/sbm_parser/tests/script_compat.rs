@@ -73,6 +73,17 @@ fn custom_cmd_installer_replaces_the_directory() {
         assert!(install.contains(&script::custom_cmd_file_name(200, "hostile")));
         // Written aside and moved, so a poll sees one set or the other.
         assert!(install.contains(".new"));
+        match system {
+            SystemType::Windows => {
+                assert!(install.contains("$ErrorActionPreference = 'Stop'"));
+                assert!(install.contains("Rename-Item $bak $dir -Force"));
+            }
+            SystemType::Linux => {
+                assert!(install.contains("if ! mv \"$t\" \"$d\""));
+                assert!(install.contains("mv \"$b\" \"$d\""));
+            }
+            SystemType::Bsd => unreachable!(),
+        }
         // The script reads the same place the installer writes. Nothing else
         // keeps those two in step — they are separate strings in separate
         // functions, and disagreeing would mean commands that install fine and
@@ -606,6 +617,66 @@ fn e2e_unix_status_script_runs() {
     assert!(map.contains_key("echo"));
     let sign = &map["echo"];
     assert!(sign.contains("__linux") || sign.contains("__bsd"), "echo: {sign}");
+}
+
+/// A command that prints no newline must not inherit the separator newline
+/// written before the next custom command's marker.
+#[cfg(unix)]
+#[test]
+fn consecutive_custom_commands_do_not_add_a_blank_line() {
+    use std::process::Command;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    let nonce = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let home = std::env::temp_dir().join(format!(
+        "sbm_custom_cmd_test_{}_{}",
+        std::process::id(),
+        nonce
+    ));
+    let commands = home.join(".config/server_box/custom_cmds");
+    std::fs::create_dir_all(&commands).unwrap();
+    std::fs::write(
+        commands.join(script::custom_cmd_file_name(100, "first")),
+        "printf x",
+    )
+    .unwrap();
+    std::fs::write(
+        commands.join(script::custom_cmd_file_name(200, "second")),
+        "printf y",
+    )
+    .unwrap();
+
+    let status = home.join("status.sh");
+    std::fs::write(
+        &status,
+        build_script(
+            SystemType::Linux,
+            &ScriptOptions {
+                build_number: "test".into(),
+                ..Default::default()
+            },
+        ),
+    )
+    .unwrap();
+    let output = Command::new("sh")
+        .arg(&status)
+        .arg("-s")
+        .env("HOME", &home)
+        .output()
+        .unwrap();
+    std::fs::remove_dir_all(&home).ok();
+
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let parsed = parse_script_output(&String::from_utf8(output.stdout).unwrap());
+    assert_eq!(parsed[&script::custom_result_key("first")], "x");
+    assert_eq!(parsed[&script::custom_result_key("second")], "y");
 }
 
 /// The convention both ends of the migration have to agree on: the app writes

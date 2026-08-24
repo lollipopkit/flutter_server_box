@@ -244,7 +244,8 @@ pub fn install_custom_cmds_script(system: SystemType, cmds: &[(u32, String, Stri
     match system {
         SystemType::Windows => {
             let mut out = format!(
-                "$dir = {CUSTOM_CMD_DIR_WINDOWS}\n\
+                "$ErrorActionPreference = 'Stop'\n\
+                 $dir = {CUSTOM_CMD_DIR_WINDOWS}\n\
                  $tmp = \"$dir.new\"\n\
                  if (Test-Path $tmp) {{ Remove-Item -Recurse -Force $tmp }}\n\
                  New-Item -ItemType Directory -Force -Path $tmp | Out-Null\n"
@@ -261,7 +262,13 @@ pub fn install_custom_cmds_script(system: SystemType, cmds: &[(u32, String, Stri
                 "$bak = \"$dir.bak\"\n\
                  if (Test-Path $bak) { Remove-Item -Recurse -Force $bak }\n\
                  if (Test-Path $dir) { Rename-Item $dir $bak -Force }\n\
-                 Move-Item $tmp $dir\n\
+                 try {\n\
+                 \x20 Move-Item $tmp $dir -ErrorAction Stop\n\
+                 } catch {\n\
+                 \x20 if (Test-Path $dir) { Remove-Item -Recurse -Force $dir }\n\
+                 \x20 if (Test-Path $bak) { Rename-Item $bak $dir -Force }\n\
+                 \x20 throw\n\
+                 }\n\
                  if (Test-Path $bak) { Remove-Item -Recurse -Force $bak }\n",
             );
             out
@@ -284,7 +291,11 @@ pub fn install_custom_cmds_script(system: SystemType, cmds: &[(u32, String, Stri
             }
             out.push_str(
                 "if [ -e \"$d\" ]; then mv \"$d\" \"$b\"; fi\n\
-                 mv \"$t\" \"$d\"\n\
+                 if ! mv \"$t\" \"$d\"; then\n\
+                 \x20 rm -rf \"$d\"\n\
+                 \x20 if [ -e \"$b\" ]; then mv \"$b\" \"$d\"; fi\n\
+                 \x20 exit 1\n\
+                 fi\n\
                  rm -rf \"$b\"\n",
             );
             out
@@ -534,7 +545,7 @@ pub fn parse_script_segments(raw: &str) -> Vec<(String, String)> {
         }
     };
 
-    for line in raw.split('\n') {
+    for line in raw.split_terminator('\n') {
         let line = line.strip_suffix('\r').unwrap_or(line);
         let marker = marker_key(line, &sep_prefix, &custom_prefix);
         match marker {
@@ -690,7 +701,7 @@ fn unix_custom_cmds(func: ShellFunc) -> String {
         "\nfor f in \"{CUSTOM_CMD_DIR_UNIX}\"/*; do\n\
          \t[ -f \"$f\" ] || continue\n\
          \tn=${{f##*/}}\n\
-         \tprintf '\\n%s\\n' \"{CUSTOM_CMD_SEPARATOR}.{ENCODED_NAME_PREFIX}${{n#*_}}\"\n\
+         \tprintf '%s\\n' \"{CUSTOM_CMD_SEPARATOR}.{ENCODED_NAME_PREFIX}${{n#*_}}\"\n\
          \tif command -v timeout >/dev/null 2>&1; then timeout 5 sh \"$f\"; else sh \"$f\"; fi; printf '\\n'\n\
          done\n"
     )

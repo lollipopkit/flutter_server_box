@@ -30,6 +30,9 @@ pub struct State {
     components: Components,
     /// sysinfo's first CPU reading has no prior sample to diff against
     primed: bool,
+    /// Refreshing the CPU list resets sysinfo's usage baseline, so only do it
+    /// when this cheap topology signal changes.
+    cpu_count_hint: usize,
 }
 
 impl Default for State {
@@ -40,14 +43,20 @@ impl Default for State {
         // system.cpus(), so the first usage refresh yields no cores and the
         // second (primed) sample still reports empty/0.
         system.refresh_cpu_list(CpuRefreshKind::everything());
+        let cpu_count_hint = logical_cpu_count().unwrap_or_else(|| system.cpus().len());
         Self {
             system,
             disks: Disks::new(),
             networks: Networks::new(),
             components: Components::new(),
             primed: false,
+            cpu_count_hint,
         }
     }
+}
+
+fn logical_cpu_count() -> Option<usize> {
+    std::thread::available_parallelism().ok().map(usize::from)
 }
 
 /// Groups per-logical-core brand strings into (name, count), matching
@@ -115,9 +124,13 @@ pub fn total_memory() -> Option<u64> {
 }
 
 pub fn sample(state: &mut State) -> ServerStatus {
-    // Ensure CPU list is populated before usage refresh on every call;
-    // sysinfo may need list refresh to see hot-plugged cores.
-    state.system.refresh_cpu_list(CpuRefreshKind::everything());
+    let current_cpu_count = logical_cpu_count().unwrap_or(state.cpu_count_hint);
+    let topology_changed =
+        state.system.cpus().is_empty() || current_cpu_count != state.cpu_count_hint;
+    if topology_changed {
+        state.system.refresh_cpu_list(CpuRefreshKind::everything());
+        state.cpu_count_hint = current_cpu_count;
+    }
     state.system.refresh_cpu_usage();
     state.system.refresh_memory();
     state.disks.refresh(true);
@@ -128,7 +141,7 @@ pub fn sample(state: &mut State) -> ServerStatus {
     state.primed = true;
     // No delta baseline yet — leave cpu empty this cycle rather than report
     // a misleading single-sample reading, matching macos_cpu's prior behavior
-    let cpu = if first_call { Vec::new() } else { cpu_cores(&state.system) };
+    let cpu = if first_call || topology_changed { Vec::new() } else { cpu_cores(&state.system) };
 
     let total_mem = state.system.total_memory();
     let mem = (total_mem > 0).then(|| Memory {
@@ -144,27 +157,40 @@ pub fn sample(state: &mut State) -> ServerStatus {
         cached: 0,
     });
 
-    // macOS/APFS: separate volumes in one container (e.g. "/" and
-    // "/System/Volumes/Data") report the SAME `name()` ("Macintosh HD") and
-    // identical space totals — sysinfo doesn't collapse these itself. A
-    // per-name dedup (first occurrence wins, same as the seen-path pattern
-    // monitor's flatten_disks uses for the script-sourced platforms) keeps
-    // both `disks` and `diskio` from carrying duplicate entries, which the
-    // frontend keys each row by (`d.path` / `d.dev`) — a duplicate key is a
-    // hard Svelte runtime error that breaks the disk detail page entirely.
-    let mut seen_names = std::collections::HashSet::new();
-    let unique_disks: Vec<_> =
-        state.disks.list().iter().filter(|d| seen_names.insert(d.name().to_owned())).collect();
-
-    let disks: Vec<Disk> = unique_disks
+    // Volume labels are not identifiers: APFS commonly gives multiple mounts
+    // the same name. Preserve every filesystem and qualify duplicate labels
+    // with their mount point so frontend keys remain unique without dropping
+    // real rows.
+    let mut name_counts = std::collections::HashMap::new();
+    for disk in state.disks.list() {
+        *name_counts.entry(disk.name().to_owned()).or_insert(0usize) += 1;
+    }
+    let keyed_disks: Vec<_> = state
+        .disks
+        .list()
         .iter()
-        .map(|d| {
+        .map(|disk| {
+            let name = disk.name().to_string_lossy().into_owned();
+            let mount = disk.mount_point().to_string_lossy().into_owned();
+            let id = if name.is_empty() {
+                mount.clone()
+            } else if name_counts.get(disk.name()).copied().unwrap_or(0) > 1 {
+                format!("{name} ({mount})")
+            } else {
+                name
+            };
+            (disk, id)
+        })
+        .collect();
+
+    let disks: Vec<Disk> = keyed_disks
+        .iter()
+        .map(|(d, id)| {
             let total_kb = d.total_space() / 1024;
             let avail_kb = d.available_space() / 1024;
             let used_kb = total_kb.saturating_sub(avail_kb);
             Disk {
-                // Volume label ("Macintosh HD"), not a device path — see module doc
-                path: d.name().to_string_lossy().into_owned(),
+                path: id.clone(),
                 mount: d.mount_point().to_string_lossy().into_owned(),
                 fs_type: Some(d.file_system().to_string_lossy().into_owned()),
                 used_percent: disk_used_percent(used_kb, total_kb),
@@ -176,12 +202,12 @@ pub fn sample(state: &mut State) -> ServerStatus {
         })
         .collect();
 
-    let diskio: Vec<DiskIoPiece> = unique_disks
+    let diskio: Vec<DiskIoPiece> = keyed_disks
         .iter()
-        .map(|d| {
+        .map(|(d, id)| {
             let usage = d.usage();
             DiskIoPiece {
-                dev: d.name().to_string_lossy().into_owned(),
+                dev: id.clone(),
                 // Genuinely cumulative (sysinfo's total_*_bytes), unlike the
                 // Windows script path's diskio which is a rate mislabeled as
                 // sectors (see ServerStatus.diskio's doc comment) — this
@@ -273,6 +299,21 @@ mod tests {
         assert!(!status.cpu_brand.is_empty(), "expected at least one cpu_brand entry");
     }
 
+    #[test]
+    fn topology_refresh_suppresses_the_reset_usage_sample() {
+        let mut state = State::default();
+        sample(&mut state);
+        state.primed = true;
+        state.cpu_count_hint = 0;
+
+        let refreshed = sample(&mut state);
+        assert!(refreshed.cpu.is_empty());
+
+        std::thread::sleep(std::time::Duration::from_millis(250));
+        let next = sample(&mut state);
+        assert!(!next.cpu.is_empty());
+    }
+
     /// macOS/APFS volumes sharing a container (e.g. "/" and
     /// "/System/Volumes/Data") report identical sysinfo `name()`s — the
     /// frontend keys disk/diskio rows by exactly that value, so a duplicate
@@ -281,6 +322,9 @@ mod tests {
     fn disks_and_diskio_have_unique_keys() {
         let mut state = State::default();
         let status = sample(&mut state);
+
+        assert_eq!(status.disks.len(), state.disks.list().len());
+        assert_eq!(status.diskio.len(), state.disks.list().len());
 
         let disk_paths: Vec<&str> = status.disks.iter().map(|d| d.path.as_str()).collect();
         let mut unique_paths = disk_paths.clone();
