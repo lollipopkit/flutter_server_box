@@ -272,9 +272,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get distIconConsent => '开启即表示你自愿显示这些标识,且仅用于标识某台服务器可能运行的发行版。';
 
   @override
-  String distIconIntroLegal(Object fontLogos) {
-    return '这些标识来自 $fontLogos, 仅表示本设备从远程系统读取到的信息,该信息可能有误或已过期,也不代表其衍生版本、重构版本或任何特定版本。无法识别、或未内置对应标识时,显示中性的通用图标。\n\n每个标识均为其各自所有者的商标,此处仅用于指代它所标识的系统。';
-  }
+  String get distIconIntroLegal =>
+      '本应用不内置任何发行版标识。设置图片地址后,标识从该地址加载 —— 来源由你选择,未设置则不显示。标识仅表示本设备从远程系统读取到的信息,该信息可能有误或已过期,也不代表其衍生版本、重构版本或任何特定版本。\n\n每个标识均为其各自所有者的商标,此处仅用于指代它所标识的系统。';
 
   @override
   String get distIconTip => '在每台服务器旁显示一个小标识,表示它可能运行的系统';
@@ -1754,9 +1753,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get distIconConsent => '開啟即表示你自願顯示這些標識,且僅用於標識某台伺服器可能執行的發行版。';
 
   @override
-  String distIconIntroLegal(Object fontLogos) {
-    return '這些標識來自 $fontLogos,僅表示本裝置從遠端系統讀取到的資訊,該資訊可能有誤或已過期,也不代表其衍生版本、重構版本或任何特定版本。無法識別、或未內建對應標識時,顯示中性的通用圖示。\n\n每個標識均為其各自所有者的商標,此處僅用於指代它所標識的系統。';
-  }
+  String get distIconIntroLegal =>
+      '本應用不內建任何發行版標識。設定圖片位址後,標識從該位址載入 —— 來源由你選擇,未設定則不顯示。標識僅表示本裝置從遠端系統讀取到的資訊,該資訊可能有誤或已過期,也不代表其衍生版本、重構版本或任何特定版本。\n\n每個標識均為其各自所有者的商標,此處僅用於指代它所標識的系統。';
 
   @override
   String get distIconTip => '在每台伺服器旁顯示一個小標識,表示它可能執行的系統';

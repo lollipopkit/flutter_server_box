@@ -73,7 +73,8 @@ void main() {
     // The sentence that makes it a choice rather than a notice, and the terms
     // it is a choice about.
     expect(find.text(app_locale.l10n.distIconConsent), findsOneWidget);
-    expect(find.textContaining('font-logos'), findsOneWidget);
+    // And the terms themselves, not just the sentence about them.
+    expect(find.textContaining('trademark'), findsOneWidget);
     expect(
       setting.showDistIcon.fetch(),
       isFalse,

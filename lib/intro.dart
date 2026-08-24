@@ -8,7 +8,6 @@ final class _IntroPage extends StatelessWidget {
   static const _builders = {
     1: _buildAppSettings,
     2: _buildBackupPasswordMigration,
-    3: _buildDistIcons,
   };
 
   @override
@@ -94,48 +93,6 @@ final class _IntroPage extends StatelessWidget {
           title: TipText(l10n.letterCache, l10n.letterCacheTip),
           trailing: StoreSwitch(prop: _setting.letterCache),
         ).cardx,
-        UIs.height77,
-      ],
-    );
-  }
-
-  /// What the marks beside each server are, and what they are not.
-  ///
-  /// A page of its own rather than one more switch on the settings page: what
-  /// needs saying is that a mark is *this device's reading* of a remote
-  /// system, not a claim about it — and that the projects whose marks these
-  /// refer to have nothing to do with this app. A one-line subtitle cannot
-  /// carry that, and a user who is going to see sixty trademarks in their
-  /// server list should be told where they came from before they do.
-  static Widget _buildDistIcons(BuildContext ctx, double padTop) {
-    final l10n = ctx.l10n;
-
-    return _introList(
-      children: [
-        SizedBox(height: padTop),
-        IntroPage.title(text: l10n.distIcon, big: true),
-        SizedBox(height: padTop * 0.5),
-        Text(
-          l10n.distIconTip,
-          style: const TextStyle(fontSize: 16),
-          textAlign: TextAlign.center,
-        ),
-        SizedBox(height: padTop * 0.5),
-        ListTile(
-          leading: const Icon(Icons.dns_outlined),
-          title: Text(l10n.distIcon),
-          trailing: StoreSwitch(prop: _setting.showDistIcon),
-        ).cardx,
-        Padding(
-          padding: const EdgeInsets.fromLTRB(13, 13, 13, 0),
-          // Markdown, so the source of the marks is a link somebody can follow
-          // rather than a name they have to search for. `SimpleMarkdown` opens
-          // it; see `distLegalMarkdown` for why the URL is not in the string.
-          child: SimpleMarkdown(
-            data: distLegalMarkdown(l10n),
-            styleSheet: MarkdownStyleSheet(p: UIs.text13Grey),
-          ),
-        ),
         UIs.height77,
       ],
     );

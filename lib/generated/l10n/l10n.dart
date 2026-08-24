@@ -642,8 +642,8 @@ abstract class AppLocalizations {
   /// No description provided for @distIconIntroLegal.
   ///
   /// In en, this message translates to:
-  /// **'These marks come from {fontLogos}. A mark says only what this device read from the remote system, which can be wrong or out of date, and identifies neither a derivative, a rebuild, nor any particular version. Where the system cannot be identified, or its mark is not shipped, a neutral outline is drawn instead.\n\nEach mark is a trademark of its respective owner and is used here only to refer to the system it identifies.'**
-  String distIconIntroLegal(Object fontLogos);
+  /// **'This app ships no distribution marks. Once you set an address for them, the picture is fetched from there — the source is yours to choose, and until you choose one nothing is shown. A mark says only what this device read from the remote system, which can be wrong or out of date, and identifies neither a derivative, a rebuild, nor any particular version.\n\nEach mark is a trademark of its respective owner and is used only to refer to the system it identifies.'**
+  String get distIconIntroLegal;
 
   /// No description provided for @distIconTip.
   ///

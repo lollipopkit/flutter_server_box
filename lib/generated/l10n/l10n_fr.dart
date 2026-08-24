@@ -301,9 +301,8 @@ class AppLocalizationsFr extends AppLocalizations {
       'En activant cette option, vous choisissez d\'afficher ces marques, dans le seul but d\'indiquer la distribution qu\'un serveur semble exécuter.';
 
   @override
-  String distIconIntroLegal(Object fontLogos) {
-    return 'Ces marques proviennent de $fontLogos. Une marque indique seulement ce que cet appareil a lu sur le système distant, ce qui peut être faux ou périmé, et ne désigne ni une dérivée, ni une reconstruction, ni une version particulière. Lorsque le système ne peut être identifié, ou que sa marque n’est pas fournie, un contour neutre est affiché à la place.\n\nChaque marque est une marque déposée de son propriétaire respectif et n’est utilisée ici que pour désigner le système qu’elle identifie.';
-  }
+  String get distIconIntroLegal =>
+      'Cette application n\'intègre aucune marque de distribution. Une fois que vous indiquez une adresse, l\'image est chargée depuis celle-ci — la source est votre choix, et tant que vous n\'en choisissez pas, rien ne s\'affiche. Une marque indique seulement ce que cet appareil a lu sur le système distant, ce qui peut être erroné ou périmé, et ne désigne ni un dérivé, ni une reconstruction, ni une version particulière.\n\nChaque marque appartient à son propriétaire respectif et n\'est utilisée ici que pour désigner le système qu\'elle identifie.';
 
   @override
   String get distIconTip =>

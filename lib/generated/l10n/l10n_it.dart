@@ -298,9 +298,8 @@ class AppLocalizationsIt extends AppLocalizations {
       'Attivandola, scegli di mostrare questi marchi con il solo scopo di indicare quale distribuzione sembra essere in esecuzione su un server.';
 
   @override
-  String distIconIntroLegal(Object fontLogos) {
-    return 'Questi contrassegni provengono da $fontLogos. Un contrassegno indica solo ciò che questo dispositivo ha letto dal sistema remoto, che può essere errato o non aggiornato, e non identifica un derivato, una ricompilazione né una versione specifica. Quando il sistema non può essere identificato, o il suo contrassegno non è incluso, viene disegnato un contorno neutro.\n\nOgni contrassegno è un marchio del rispettivo proprietario ed è usato qui solo per riferirsi al sistema che identifica.';
-  }
+  String get distIconIntroLegal =>
+      'Questa app non include alcun marchio di distribuzione. Quando imposti un indirizzo, l\'immagine viene caricata da lì: la fonte la scegli tu e, finché non ne scegli una, non viene mostrato nulla. Un marchio indica solo ciò che questo dispositivo ha letto dal sistema remoto, informazione che può essere errata o non aggiornata, e non identifica né un derivato, né una ricompilazione, né una versione specifica.\n\nOgni marchio appartiene al rispettivo proprietario ed è usato qui solo per riferirsi al sistema che identifica.';
 
   @override
   String get distIconTip =>

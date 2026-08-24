@@ -99,7 +99,7 @@ extension _Flight on _ServerPageState {
   /// that was just opened, and it would otherwise arrive plain and change
   /// colour a frame later. The distribution mark is here for the same reason:
   /// both ends of the trip carry one — the card beside its name, the row in
-  /// the rail's leading column — and a form without it makes the glyph blink
+  /// the rail's leading column — and a form without it makes the mark blink
   /// out halfway across and back at the end.
   Widget _flightRow(ServerState srv) {
     return SideBarTile(
@@ -107,7 +107,6 @@ extension _Flight on _ServerPageState {
       leading: DistIconOf(
         srv.status.dist,
         size: 17,
-        color: Theme.of(context).colorScheme.primary,
       ),
       selected: true,
       live: srv.conn == ServerConn.finished,

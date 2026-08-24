@@ -91,7 +91,7 @@ void main() {
     test('String.dist extension detects OpenSUSE', () {
       // The base entry, which on a current release only SLES reaches: an
       // ordinary openSUSE install reports itself as Leap or Tumbleweed, and
-      // each of those now has a glyph and a case of its own.
+      // each of those now has a case of its own.
       const input = 'suse linux enterprise server 15';
       final result = input.dist;
       expect(result, equals(Dist.opensuse));

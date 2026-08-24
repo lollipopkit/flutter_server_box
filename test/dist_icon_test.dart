@@ -1,219 +1,21 @@
-/// That every distribution has a glyph, that the two ways of naming one both
-/// reach it, and that they are consulted in the right order.
+/// That a distribution is recognised, and that the three ways of naming one
+/// are consulted in the right order.
 ///
-/// Four ways this goes wrong silently. A renamed case or moved file makes the
-/// glyph stop loading, and `SvgPicture.asset` on a missing asset draws nothing
-/// rather than throwing. A case added to the enum but not to `_matchers` never
-/// matches anything, so its glyph is unreachable. A derivative listed *after*
-/// what it derives from reads as the parent, because "Kubuntu" contains
-/// "ubuntu". And a mistyped `ID=` in `_byOsId` is not a failure but a fall
-/// through to the prose match, which usually still answers — with the parent.
+/// Three ways this goes wrong silently. A case added to the enum but not to
+/// `_matchers` never matches anything. A derivative listed *after* what it
+/// derives from reads as the parent, because "Kubuntu" contains "ubuntu". And
+/// a mistyped `ID=` in `_byOsId` is not a failure but a fall through to the
+/// prose match, which usually still answers — with the parent.
+///
+/// Nothing here is about pictures: the app ships none. What a recognised
+/// distribution turns into is an address, and that is
+/// `test/dist_mark_url_test.dart`.
 library;
-
-import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/dist.dart';
 
-/// Read off disk: a test binary has no asset bundle, and the point is what is
-/// in the directory rather than what the manifest says about it.
-Set<String> _shipped() => {
-  for (final f in Directory('assets/distro').listSync())
-    if (f.path.endsWith('.svg')) f.uri.pathSegments.last,
-};
-
 void main() {
-  group('the glyphs', () {
-    test('every one a distribution names is actually there', () {
-      final shipped = _shipped();
-      for (final dist in Dist.values) {
-        final path = dist.glyphPath;
-        if (path == null) continue;
-        expect(
-          shipped,
-          contains('${dist.name}.svg'),
-          reason: '$path is named by Dist.${dist.name} and has to exist',
-        );
-      }
-    });
-
-    test('and every file there is named by a distribution', () {
-      // The other direction: a file nothing points at is dead weight in the
-      // bundle, and usually a rename done on one side only.
-      final named = {
-        kLinuxIcon.split('/').last,
-        kServerIcon.split('/').last,
-        for (final dist in Dist.values)
-          if (dist.glyphPath != null) '${dist.name}.svg',
-      };
-      expect(_shipped(), named);
-    });
-
-    test('both fallbacks are shipped too', () {
-      // One or the other is reached by every server that has not connected
-      // yet, which on a first run is all of them.
-      expect(_shipped(), contains(kLinuxIcon.split('/').last));
-      expect(_shipped(), contains(kServerIcon.split('/').last));
-    });
-
-    test('the ones with no mark of their own say so', () {
-      // Two have no glyph in font-logos; the rest are a decision. See
-      // Dist.glyphPath and assets/distro/README.md.
-      for (final dist in [
-        Dist.armbian,
-        Dist.coreelec,
-        Dist.freebsd,
-        Dist.openbsd,
-        Dist.netbsd,
-        Dist.macos,
-        Dist.windows,
-      ]) {
-        expect(dist.glyphPath, isNull, reason: 'Dist.${dist.name}');
-      }
-    });
-
-    test('and Apple and Microsoft marks are not shipped at all', () {
-      // Apple: the logo may not be used "for any other purpose except
-      // pursuant to an express written trademark license". Microsoft requires
-      // a licence for any Windows logo. Neither is a fair-use question.
-      expect(_shipped(), isNot(contains('macos.svg')));
-      expect(_shipped(), isNot(contains('windows.svg')));
-      expect(_shipped(), isNot(contains('apple.svg')));
-      // Nor the BSD characters, which are copyrighted rather than geometric.
-      expect(_shipped(), isNot(contains('freebsd.svg')));
-      expect(_shipped(), isNot(contains('openbsd.svg')));
-    });
-
-    test('nor the three withdrawn over their owners reserving the logo', () {
-      // Each is an original illustration rather than a shape, so redrawing it
-      // leaves the copyright where it was; and each owner reserves *logo* use
-      // to written permission while allowing the word referentially. Red Hat:
-      // "These Guidelines do not give you any permission to use a Red Hat
-      // Logo". Raspberry Pi: the logo is for "the sale or distribution of
-      // genuine Raspberry Pi products". OffSec offers no fair-use carve-out.
-      for (final dist in [Dist.rhel, Dist.raspbian, Dist.kali]) {
-        expect(dist.glyphPath, isNull, reason: 'Dist.${dist.name}');
-        expect(_shipped(), isNot(contains('${dist.name}.svg')));
-        // Still recognised, still expands in a custom logo URL — only the
-        // shipped mark is gone.
-        expect(dist.iconPath, kLinuxIcon, reason: 'Dist.${dist.name}');
-      }
-    });
-
-    /// Every mark that ships has to name where its terms were read.
-    ///
-    /// The whole justification for drawing sixty trademarks was checked once,
-    /// against each owner's own words; without this the next glyph gets added
-    /// without anyone reading anything, and the README quietly stops being
-    /// true of the directory it describes.
-    test('every shipped mark has a source in the README', () {
-      final readme = File('assets/distro/README.md').readAsStringSync();
-      final rows = {
-        for (final line in readme.split('\n'))
-          if (line.startsWith('| ') && line.contains('](http'))
-            line.split('|')[1].trim().replaceAll('*', ''): line,
-      };
-
-      for (final name in _shipped().map((f) => f.replaceAll('.svg', ''))) {
-        // `server.svg` is this app's own drawing and refers to nobody.
-        if (name == kServerIcon.split('/').last.replaceAll('.svg', '')) continue;
-        expect(
-          rows.keys,
-          contains(name),
-          reason:
-              '$name.svg ships with no row in the README table — record where '
-              'its trademark and licence terms were read before adding it',
-        );
-      }
-    });
-
-    test('a distribution with no glyph is still a distribution', () {
-      // The enum names every one it can identify; the glyph set is the subset
-      // somebody will be looking at. Removing a case would break `{DIST}` in a
-      // user's custom logo URL, so dropping a mark never removes one.
-      expect(Dist.values.length, greaterThan(_shipped().length));
-      expect('Puppy Linux 9.5'.dist, Dist.puppy);
-      expect(resolveDist(osId: 'qubes'), Dist.qubes);
-      expect(Dist.puppy.glyphPath, isNull);
-      expect(Dist.puppy.iconPath, kLinuxIcon);
-    });
-
-    test('a non-Linux falls back to the machine, not the penguin', () {
-      for (final dist in [Dist.freebsd, Dist.openbsd, Dist.macos, Dist.windows]) {
-        expect(dist.iconPath, kServerIcon, reason: 'Dist.${dist.name}');
-        expect(dist.isLinux, isFalse);
-      }
-      // And a Linux with no glyph still gets the penguin.
-      expect(Dist.armbian.iconPath, kLinuxIcon);
-      expect(Dist.coreelec.iconPath, kLinuxIcon);
-    });
-
-    test('every case has something to draw', () {
-      for (final dist in Dist.values) {
-        expect(dist.iconPath, startsWith('assets/distro/'));
-      }
-    });
-
-    /// What `scripts/normalize_distro_svg.dart` exists to remove.
-    ///
-    /// flutter_svg draws none of it and logs `unhandled element <metadata/>`
-    /// once per run for the trouble. Left here because the files are otherwise
-    /// verbatim from font-logos, so a glyph added by copying one in brings it
-    /// back — and the only symptom is a line in a debug console.
-    group('the files are normalised', () {
-      final shipped = Directory('assets/distro')
-          .listSync()
-          .whereType<File>()
-          .where((f) => f.path.endsWith('.svg'));
-
-      test('no <metadata>, which describes the wrong work anyway', () {
-        // Inherited from whatever document each glyph was traced in, and it
-        // does not follow the tracing: `elementary.svg` carried Gentoo's,
-        // `voidlinux.svg` carried AOSC's, `artix.svg` claimed CC BY-NC-SA.
-        // None of that is the licence this directory rests on — see README.md.
-        for (final file in shipped) {
-          expect(
-            file.readAsStringSync(),
-            isNot(contains('<metadata')),
-            reason: '${file.path}: run dart run scripts/normalize_distro_svg.dart',
-          );
-        }
-      });
-
-      test('no <defs>, and nothing left pointing into one', () {
-        for (final file in shipped) {
-          final svg = file.readAsStringSync();
-          expect(
-            svg,
-            isNot(contains('<defs')),
-            reason: '${file.path}: run dart run scripts/normalize_distro_svg.dart',
-          );
-          // The removal is only safe because nothing referenced what was in
-          // there. A `url(#…)` surviving it would be a glyph drawing part of
-          // itself in the wrong colour, or not at all.
-          expect(
-            RegExp(r'url\(#|href="#').hasMatch(svg),
-            isFalse,
-            reason: '${file.path} references an id that is no longer defined',
-          );
-        }
-      });
-
-      test('no CSS, which flutter_svg does not apply', () {
-        // `puppy.svg` was the one: a `<style>` block whose `.fil9 {fill:black}`
-        // was the only rule any drawn element used, plus four gradients named
-        // by classes nothing carried. A `class` with no stylesheet is inert in
-        // every renderer, so both go — see the script for the guard that stops
-        // a rule with real effect being dropped silently.
-        for (final file in shipped) {
-          final svg = file.readAsStringSync();
-          expect(svg, isNot(contains('<style')), reason: file.path);
-          expect(svg, isNot(contains('class="')), reason: file.path);
-        }
-      });
-    });
-  });
-
   group('the matchers', () {
     // `_matchers` is private, so coverage is proven the way it matters: every
     // case has to be reachable from a name a real machine reports. A case with
@@ -308,7 +110,7 @@ void main() {
   group('the order the derivatives are asked in', () {
     test('a flavour is not read as the base it contains', () {
       // Each of these contains its parent's name. Listed after it, every one
-      // of them would draw the parent's glyph.
+      // of them would read as the parent.
       expect('Kubuntu 24.04'.dist, Dist.kubuntu);
       expect('Linux Mint 21.3'.dist, Dist.mint);
       expect('openSUSE Leap 15.6'.dist, Dist.leap);
@@ -347,16 +149,15 @@ void main() {
       expect('iStoreOS 22.03'.dist, Dist.wrt);
       expect('ImmortalWrt 23.05'.dist, Dist.wrt);
       expect('LEDE Reboot 17.01'.dist, Dist.wrt);
-      expect(Dist.wrt.glyphPath, isNotNull);
     });
 
-    test('SUSE Linux Enterprise reads as openSUSE, which is its glyph', () {
-      // No separate SLES glyph exists, and the chameleon is the right mark.
+    test('SUSE Linux Enterprise reads as openSUSE', () {
+      // There is no separate SLES case, and openSUSE is the closest true one.
       expect('SUSE Linux Enterprise Server 15 SP6'.dist, Dist.opensuse);
     });
   });
 
-  test('something unrecognised is null, which draws the penguin', () {
+  test('something unrecognised is null, and nothing is drawn', () {
     expect('Some Unknown Linux'.dist, isNull);
     expect(''.dist, isNull);
   });

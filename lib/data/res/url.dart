@@ -13,8 +13,4 @@ abstract final class Urls {
   /// like. The wiki this used to point at says nothing about either.
   static const customLogoDoc = '$docs/advanced/custom-logo/';
 
-  /// Where the distribution marks come from, and the licence that lets this
-  /// app ship them. Named here rather than in fifteen translations, which is
-  /// why `distIconIntroLegal` takes it as a placeholder.
-  static const fontLogos = 'https://github.com/lukas-w/font-logos';
 }

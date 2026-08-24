@@ -294,9 +294,8 @@ class AppLocalizationsId extends AppLocalizations {
       'Dengan mengaktifkannya, Anda memilih untuk menampilkan tanda-tanda ini, semata-mata untuk menunjukkan distribusi yang tampaknya dijalankan sebuah server.';
 
   @override
-  String distIconIntroLegal(Object fontLogos) {
-    return 'Tanda-tanda ini berasal dari $fontLogos. Sebuah tanda hanya menyatakan apa yang dibaca perangkat ini dari sistem jarak jauh, yang bisa saja keliru atau usang, dan tidak menunjukkan turunan, hasil build ulang, maupun versi tertentu. Bila sistem tidak dapat dikenali, atau tandanya tidak disertakan, sebuah garis netral digambar sebagai gantinya.\n\nSetiap tanda adalah merek dagang pemiliknya masing-masing dan digunakan di sini hanya untuk merujuk pada sistem yang ditandainya.';
-  }
+  String get distIconIntroLegal =>
+      'Aplikasi ini tidak menyertakan tanda distribusi apa pun. Setelah Anda menetapkan alamatnya, gambar diambil dari sana — sumbernya Anda yang menentukan, dan selama belum ditentukan tidak ada yang ditampilkan. Sebuah tanda hanya menyatakan apa yang dibaca perangkat ini dari sistem jarak jauh, yang bisa saja keliru atau usang, dan tidak menandakan turunan, hasil bangun ulang, maupun versi tertentu.\n\nSetiap tanda adalah merek dagang pemiliknya masing-masing dan di sini hanya dipakai untuk merujuk pada sistem yang ditandainya.';
 
   @override
   String get distIconTip =>

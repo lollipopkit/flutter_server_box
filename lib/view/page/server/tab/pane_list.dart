@@ -61,9 +61,6 @@ extension _PaneList on _ServerPageState {
       leading: DistIconOf(
         srv.status.dist,
         size: 17,
-        color: selected
-            ? Theme.of(context).colorScheme.primary
-            : Theme.of(context).colorScheme.onSurfaceVariant,
       ),
       selected: selected,
       // The same mark the terminal rail uses for a running shell: this one is

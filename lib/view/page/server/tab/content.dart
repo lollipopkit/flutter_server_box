@@ -21,7 +21,6 @@ extension on _ServerPageState {
                 DistIconOf(
                   s.status.dist,
                   size: 15,
-                  color: Colors.grey,
                 ),
                 const SizedBox(width: 6),
                 Flexible(

@@ -295,9 +295,8 @@ class AppLocalizationsNl extends AppLocalizations {
       'Door dit in te schakelen kiest u ervoor deze merktekens te tonen, met als enige doel aan te geven welke distributie een server lijkt te draaien.';
 
   @override
-  String distIconIntroLegal(Object fontLogos) {
-    return 'Deze tekens komen uit $fontLogos. Een teken geeft alleen weer wat dit apparaat van het externe systeem heeft gelezen — dat kan onjuist of verouderd zijn — en duidt geen afgeleide, herbouw of specifieke versie aan. Kan het systeem niet worden vastgesteld, of wordt het teken niet meegeleverd, dan verschijnt een neutrale omtrek.\n\nElk teken is een handelsmerk van de betreffende eigenaar en wordt hier alleen gebruikt om te verwijzen naar het systeem dat het aanduidt.';
-  }
+  String get distIconIntroLegal =>
+      'Deze app bevat geen distributiemerken. Zodra u er een adres voor instelt, wordt de afbeelding daarvandaan geladen — de bron kiest u zelf, en zolang u er geen kiest wordt er niets getoond. Een merkteken zegt alleen wat dit apparaat van het externe systeem heeft gelezen; dat kan onjuist of verouderd zijn en duidt geen afgeleide, herbouw of specifieke versie aan.\n\nElk merkteken is een handelsmerk van de betreffende eigenaar en wordt hier alleen gebruikt om te verwijzen naar het systeem dat het aanduidt.';
 
   @override
   String get distIconTip =>

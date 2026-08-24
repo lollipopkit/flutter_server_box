@@ -1,59 +1,105 @@
+import 'package:extended_image/extended_image.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/utils/logo_url.dart';
 import 'package:server_box/data/model/server/dist.dart';
+import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
-import 'package:server_box/data/res/url.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 
-/// Which distribution a server runs, as a glyph beside its name.
+/// The address a server's mark is fetched from, or null if there is none.
 ///
-/// Nothing in a `Spi` says what is installed on the far end — it is observed,
-/// not configured — so this reads the live status when there is one and the
-/// cache when there is not. The cache is what makes the mark appear on rows
-/// that never hold a status: the known-hosts page, the order page, and every
-/// picker showing a server that is not currently connected.
+/// **This app ships no distribution marks.** It works out which distribution a
+/// machine runs and expands that into an address the user configured; the
+/// picture at the other end is not this repository's, and it is fetched only
+/// because someone asked for it by writing the address down.
 ///
-/// A server this device has never polled has neither, and draws the fallback,
-/// as do the distributions with no mark of their own.
+/// [override] is the per-server address (`Spi.custom.logoUrl`), which wins over
+/// the global setting exactly as it does for the large logo on the detail page.
 ///
-/// Single-colour on purpose. These are redrawn glyphs, not each project's own
-/// artwork; see `assets/distro/README.md` for where they come from and why
-/// using them here needs nobody's permission.
+/// Null in three cases, all of which draw nothing: no address configured, an
+/// address that wants `{DIST}` for a machine whose distribution is not known,
+/// and one that is not http. The last is a guard rather than a nicety — the
+/// value is user-entered and reaches an image loader.
+String? distMarkUrl({
+  required Dist? dist,
+  String? override,
+  required bool dark,
+}) {
+  final configured = override ?? Stores.setting.serverLogoUrl.fetch();
+  if (configured.isEmpty) return null;
+
+  var url = resolveLogoUrl(configured);
+  if (url.contains(_distToken)) {
+    if (dist == null) return null;
+    url = url.replaceAll(_distToken, dist.name);
+  }
+  url = url.replaceAll(_brightToken, dark ? 'dark' : 'light');
+  if (!url.startsWith('http')) return null;
+  return url;
+}
+
+/// Whether the address names an SVG, which needs a different loader.
+///
+/// The path rather than the whole string: a query or a fragment after it is
+/// common on a CDN and says nothing about the format.
+bool _isSvgUrl(String url) {
+  final path = Uri.tryParse(url)?.path.toLowerCase() ?? url.toLowerCase();
+  return path.endsWith('.svg');
+}
+
+const _distToken = '{DIST}';
+const _brightToken = '{BRIGHT}';
+
+/// Which distribution a server runs, as the mark its own project publishes —
+/// fetched from wherever the person using this app pointed it.
+///
+/// Nothing in a `Spi` says what is installed on the far end; it is observed,
+/// not configured. So this reads the live status when there is one and the
+/// cache when there is not, which is what lets a mark appear on rows that
+/// never hold a status: the known-hosts page, the order page, and every picker
+/// showing a server that is not currently connected.
+///
+/// Draws nothing at all when there is no address, which out of the box is
+/// every server. That is the arrangement, not a gap — see [distMarkUrl].
 class DistIcon extends ConsumerWidget {
-  const DistIcon(this.serverId, {super.key, this.size = 20, this.color});
+  const DistIcon(this.serverId, {super.key, this.size = 20});
 
   /// `Spi.id`. An id and not a `Dist`, so a caller holding only the record it
-  /// is listing does not have to reach for the status itself — which most of
-  /// them are, since the pickers list servers that may never have connected.
+  /// is listing does not have to reach for the status itself.
   final String serverId;
 
   final double size;
 
-  /// Defaults to the row's own foreground colour, at the weight an icon in a
-  /// list is drawn at. Tinting is not a change to the mark: an icon font has
-  /// always taken the colour it is set in.
-  final Color? color;
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (!Stores.setting.showDistIcon.fetch()) {
+      return SizedBox.square(dimension: size);
+    }
+
+    // Read off the map rather than `serverProvider(id)`, which throws for an
+    // id it does not know — the known-hosts page lists ids of servers that may
+    // since have been deleted.
+    final spi = ref.watch(serversProvider).servers[serverId];
     // The live reading first: it is the newer of the two, and on a server
     // being polled right now it is what the cache is about to be set to.
-    if (!Stores.setting.showDistIcon.fetch()) return const SizedBox.shrink();
+    final live = spi == null
+        ? null
+        : ref.watch(serverProvider(serverId)).status.dist;
 
-    final live = ref.watch(serverProvider(serverId)).status.dist;
     // Rebuilt when the cache changes, so a row drawn before the first poll
-    // picks up the answer when it lands rather than staying neutral until
+    // picks up the answer when it lands rather than staying blank until
     // something else happens to rebuild it.
     return StreamBuilder<void>(
       stream: Stores.serverDist.changes,
       builder: (_, _) => DistIconOf(
         live ?? Stores.serverDist.get(serverId),
+        logoUrl: spi?.custom?.logoUrl,
         size: size,
-        color: color,
       ),
     );
   }
@@ -64,64 +110,79 @@ class DistIcon extends ConsumerWidget {
 /// Split out so a widget test, and any code path that has the `Dist` in hand,
 /// does not need a provider scope with a server in it.
 class DistIconOf extends StatelessWidget {
-  const DistIconOf(this.dist, {super.key, this.size = 20, this.color});
+  const DistIconOf(this.dist, {super.key, this.size = 20, this.logoUrl});
 
   final Dist? dist;
   final double size;
-  final Color? color;
+
+  /// The per-server address, when the caller has one.
+  final String? logoUrl;
 
   @override
   Widget build(BuildContext context) {
-    // Nothing at all when it is off, rather than the neutral outline: the
-    // point of turning it off is that the rows carry no mark, and a column of
-    // identical outlines is still a column.
-    if (!Stores.setting.showDistIcon.fetch()) return const SizedBox.shrink();
+    if (!Stores.setting.showDistIcon.fetch()) {
+      return SizedBox.square(dimension: size);
+    }
 
-    final tint =
-        color ??
-        IconTheme.of(context).color ??
-        Theme.of(context).colorScheme.onSurface;
-    // Nothing known at all draws the neutral outline rather than a penguin:
-    // a server that has not been asked may not be running Linux, and the
-    // penguin would be a guess. A distribution that *is* known but has no mark
-    // of its own picks its own fallback — see `Dist.iconPath`.
-    final path = dist?.iconPath ?? kServerIcon;
-    return SvgPicture.asset(
-      path,
-      width: size,
-      height: size,
-      colorFilter: ColorFilter.mode(tint, BlendMode.srcIn),
-      // Named for the reader that speaks the row aloud: the glyph is the only
-      // thing on it that says which distribution.
-      semanticsLabel: dist?.name ?? 'server',
+    final url = distMarkUrl(
+      dist: dist,
+      override: logoUrl,
+      dark: Theme.of(context).brightness == Brightness.dark,
+    );
+    // A blank of the same size rather than nothing at all: a leading slot that
+    // collapses shifts the row's text sideways, and in a list where some
+    // servers are recognised and some are not, that is every other row moving.
+    if (url == null) return SizedBox.square(dimension: size);
+
+    // Not tinted, unlike the glyphs this replaces. The address points at a
+    // project's own artwork in whatever colours that project uses, and
+    // recolouring a logo is the thing several trademark policies name.
+    return SizedBox.square(
+      dimension: size,
+      child: _isSvgUrl(url)
+          ? SvgPicture.network(
+              url,
+              width: size,
+              height: size,
+              fit: BoxFit.contain,
+              // Named for the reader that speaks the row aloud: the mark is
+              // the only thing on it that says which distribution.
+              semanticsLabel: dist?.name,
+              placeholderBuilder: (_) => SizedBox.square(dimension: size),
+            )
+          : ExtendedImage.network(
+              url,
+              cache: true,
+              width: size,
+              height: size,
+              fit: BoxFit.contain,
+              semanticLabel: dist?.name,
+              // Nothing while it loads and nothing if it fails. A broken-image
+              // box on every row reads as the app being wrong, and the address
+              // is the user's to fix.
+              loadStateChanged: (state) =>
+                  state.extendedImageLoadState == LoadState.completed
+                  ? null
+                  : SizedBox.square(dimension: size),
+            ),
     );
   }
 }
 
-/// The notice about where the marks come from, as markdown.
+/// What the marks are and what they are not.
 ///
-/// The string takes the source's name as a placeholder so that the URL lives
-/// in one place — here — rather than in each translation, where fifteen copies
-/// would have to be kept in step. This form is for somewhere that renders
-/// markdown and can open a link; [distLegalPlain] is for somewhere that cannot.
-String distLegalMarkdown(AppLocalizations l10n) =>
-    l10n.distIconIntroLegal('[font-logos](${Urls.fontLogos})');
+/// One string, used in both a markdown slot and a plain one — it carries no
+/// link any more, because there is no bundled source to point at.
+String distLegalMarkdown(AppLocalizations l10n) => l10n.distIconIntroLegal;
 
-/// The same notice for a plain-text slot, where a markdown link would show as
-/// its own syntax.
-String distLegalPlain(AppLocalizations l10n) =>
-    l10n.distIconIntroLegal('font-logos');
+/// The same notice for a plain-text slot.
+String distLegalPlain(AppLocalizations l10n) => l10n.distIconIntroLegal;
 
 /// Puts the terms up and answers whether the person accepted them.
 ///
 /// Here rather than in the settings page because this is where the wording
 /// already lives, and because a page that is `part of entry.dart` cannot be
 /// pumped on its own — the decision is worth a test of its own.
-///
-/// Note what this is *not*: it does not change who is using the marks or under
-/// what doctrine. The app publisher still is, nominatively. What it does is
-/// stop the marks appearing without the person who turned them on having been
-/// shown what they are.
 Future<bool> confirmDistIconTerms(BuildContext context) async {
   final l10n = context.l10n;
   final agreed = await context.showRoundDialog<bool>(
@@ -131,9 +192,6 @@ Future<bool> confirmDistIconTerms(BuildContext context) async {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Markdown, unlike the settings tip: a dialog can hold a link, and
-          // where the marks come from is worth being able to follow. No style
-          // sheet — a dialog reads at the default body size.
           SimpleMarkdown(data: distLegalMarkdown(l10n)),
           UIs.height13,
           Text(l10n.distIconConsent),

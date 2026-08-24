@@ -1,8 +1,13 @@
-/// A distribution this app can recognise and draw a mark for.
+/// A distribution this app can recognise.
 ///
 /// The name of each case is part of the app's contract with its users: it is
 /// what `{DIST}` expands to in a custom logo URL. **Renaming one breaks every
 /// URL template pointing at it**, so a case is added, never renamed.
+///
+/// The app ships no pictures. Recognising a distribution and drawing its mark
+/// are separate things, and only the first happens here — the second is an
+/// address the user configures, fetched at the point of drawing. See
+/// `lib/view/widget/dist_icon.dart` for why.
 enum Dist {
   // The original thirteen, in their original order, because these names have
   // been in users' logo URLs since before the rest of this list existed.
@@ -69,8 +74,7 @@ enum Dist {
   // Independent lineages.
   gentoo,
   nixos,
-  // `void` is a Dart keyword, so the glyph and the {DIST} value are both
-  // `voidlinux`.
+  // `void` is a Dart keyword, so the {DIST} value is `voidlinux`.
   voidlinux,
   solus,
   slackware,
@@ -82,8 +86,7 @@ enum Dist {
   postmarketos,
   coreos,
 
-  // Not Linux, but a server all the same, and `uname -or` names them. None of
-  // these carries a mark of its own — see [glyphPath].
+  // Not Linux, but a server all the same, and `uname -or` names them.
   freebsd,
   openbsd,
   netbsd,
@@ -91,145 +94,15 @@ enum Dist {
   macos,
   windows;
 
-  /// This one's own mark, or null when none is shipped for it.
+  /// Whether this is a Linux at all.
   ///
-  /// Null for most of them, for five different reasons — the enum recognises
-  /// every distribution it can name, and only the ones somebody will actually
-  /// be looking at carry a glyph.
-  ///
-  /// **A case is never removed**, whatever happens to its glyph: the name is
-  /// what `{DIST}` expands to in a custom logo URL, so a case that goes takes
-  /// a user's URL with it. Dropping a mark means adding the case to
-  /// `_withoutGlyph`, which is reversible and costs nothing.
-  ///
-  /// `armbian` and `coreelec` simply have no glyph in font-logos. They are not
-  /// to be filled in from those projects' own sites: the files in
-  /// `assets/distro/` are redrawn glyphs, and copying a project's own artwork
-  /// is a copyright question with a different answer.
-  ///
-  /// Three of the shipped files carry a licence condition even so — `tux.svg`
-  /// (Larry Ewing, acknowledgement on request), `nixos.svg` (CC BY 4.0) and
-  /// `debian.svg` (LGPL-3+ or CC-BY-SA-3.0). font-logos passes all of them on
-  /// under the Unlicense, which is not a licence either upstream granted, so
-  /// the conditions are honoured directly in `assets/distro/README.md`.
-  ///
-  /// `rhel`, `raspbian` and `kali` had a glyph and it was withdrawn. Each is
-  /// two problems at once: the mark is an original illustration — Red Hat's
-  /// Shadowman, the Raspberry Pi raspberry, Kali's dragon — so redrawing it
-  /// does not answer the copyright the way a triangle or a letterform does;
-  /// and each owner has published rules that reserve *logo* use to written
-  /// permission while allowing the word referentially. Nominative use does not
-  /// depend on a permission being offered, but these three are the ones on the
-  /// list most likely to be enforced. `assets/distro/README.md` quotes them.
-  ///
-  /// `macos` and `windows` are a decision rather than a gap. Apple's
-  /// guidelines say the Apple Logo may not be used "for any other purpose
-  /// except pursuant to an express written trademark license from Apple", and
-  /// Microsoft requires a licence for any Windows logo. Both permit the *word*
-  /// referentially and neither permits the mark, which is the opposite of how
-  /// the Linux projects are written. So those two get the neutral outline.
-  ///
-  /// `freebsd`, `openbsd` and `netbsd` are the same decision for a different
-  /// reason: the marks a glyph set carries for them are the BSD Daemon and
-  /// Puffy, which are copyrighted *characters* rather than geometric logos —
-  /// the FreeBSD FAQ says rights to the Daemon "must be sought from trademark
-  /// owner Kirk McKusick". Redrawing a character is closer to a derivative
-  /// work than redrawing a logo, so they get the outline too.
-  ///
-  /// The rest — most of the enum — carry no mark for a reason that is not
-  /// legal at all: a glyph earns its place only if the person scanning a list
-  /// of servers will meet that distribution often enough to learn its shape.
-  /// A dozen do. AlmaLinux, Gentoo, openSUSE and Void are perfectly good
-  /// server distributions and are in this group anyway; the line is
-  /// recognisability, not merit.
-  ///
-  /// They are all still *identified* — by `ID=` and by name — so `{DIST}`
-  /// still expands and the status page still names them. Only the picture is
-  /// absent, and putting one back is a line in [_withoutGlyph] plus the file.
-  ///
-  /// Drawing one of the marks that *is* shipped, beside a server's name, is
-  /// nominative use — a mark used to refer to the thing it identifies, which
-  /// is what makes it legal without any project's permission.
-  /// `assets/distro/README.md` records each project's policy and the wording
-  /// it rests on; read it before adding a glyph, recolouring one, or using
-  /// these anywhere that could read as an affiliation.
-  String? get glyphPath =>
-      _withoutGlyph.contains(this) ? null : 'assets/distro/$name.svg';
-
-  /// Always something to draw: this one's own mark, or the right fallback.
-  String get iconPath => glyphPath ?? (isLinux ? kLinuxIcon : kServerIcon);
-
-  /// Whether this is a Linux at all, which is what picks the fallback.
+  /// Kept because the identification is worth having even where no picture is
+  /// drawn: `uname -or` names the BSDs and Darwin, and a caller that wants to
+  /// say "not a Linux" should not have to enumerate them.
   bool get isLinux => !_notLinux.contains(this);
 }
 
-/// Cases with no mark of their own. See [Dist.glyphPath] for why each is here.
-const _withoutGlyph = {
-  // No glyph exists for these in font-logos.
-  Dist.armbian,
-  Dist.coreelec,
-
-  // Withdrawn over their marks — see [Dist.glyphPath].
-  Dist.rhel,
-  Dist.raspbian,
-  Dist.kali,
-  Dist.freebsd,
-  Dist.openbsd,
-  Dist.netbsd,
-  Dist.macos,
-  Dist.windows,
-
-  // Not shipped because a mark is only worth carrying for a distribution the
-  // person reading the list will actually meet. Everything below is still
-  // identified by name and by `ID=`; it draws the fallback its own family
-  // picks — the penguin for a Linux, the outline for `illumos`.
-  Dist.almalinux,
-  Dist.aosc,
-  Dist.archcraft,
-  Dist.archlabs,
-  Dist.arcolinux,
-  Dist.artix,
-  Dist.biglinux,
-  Dist.cachyos,
-  Dist.coreos,
-  Dist.devuan,
-  Dist.elementary,
-  Dist.endeavour,
-  Dist.garuda,
-  Dist.gentoo,
-  Dist.guix,
-  Dist.hyperbola,
-  Dist.illumos,
-  Dist.kdeneon,
-  Dist.kubuntu,
-  Dist.leap,
-  Dist.locos,
-  Dist.lxle,
-  Dist.mageia,
-  Dist.mandriva,
-  Dist.manjaro,
-  Dist.mx,
-  Dist.nobara,
-  Dist.opensuse,
-  Dist.parabola,
-  Dist.parrot,
-  Dist.postmarketos,
-  Dist.puppy,
-  Dist.qubes,
-  Dist.sabayon,
-  Dist.slackware,
-  Dist.solus,
-  Dist.tails,
-  Dist.trisquel,
-  Dist.tumbleweed,
-  Dist.vanilla,
-  Dist.voidlinux,
-  Dist.xerolinux,
-  Dist.zorin,
-};
-
-/// The ones that are not Linux, and so fall back to the neutral outline rather
-/// than to a penguin.
+/// The ones that are not Linux.
 const _notLinux = {
   Dist.freebsd,
   Dist.openbsd,
@@ -238,25 +111,6 @@ const _notLinux = {
   Dist.macos,
   Dist.windows,
 };
-
-/// Some Linux whose flavour is not known. A penguin says that; a server
-/// outline would say only "a machine".
-///
-/// The file comes from the same public-domain set as the rest, but the penguin
-/// in it does not: Tux is Larry Ewing's, and the permission he gave is "to use
-/// and/or modify this image [...] provided you acknowledge me
-/// lewing@isc.tamu.edu and The GIMP if someone asks" — not a public-domain
-/// dedication. `assets/distro/README.md` carries the acknowledgement, which is
-/// the whole of what that condition asks for.
-const kLinuxIcon = 'assets/distro/tux.svg';
-
-/// A machine, saying nothing about what runs on it.
-///
-/// Drawn for the BSDs, macOS and Windows — see [Dist.glyphPath] — and for a
-/// server that has not been asked yet, where a penguin would be a guess.
-/// Drawn by hand for this app rather than taken from anywhere, so it carries
-/// nobody's mark.
-const kServerIcon = 'assets/distro/server.svg';
 
 /// Which distribution a machine is running, from everything it reported.
 ///
@@ -324,7 +178,7 @@ extension DistStringX on String {
 /// a missing entry means "not recognised", never "recognised as its base". The
 /// values are the ids the distributions set, so several map to one case
 /// (`archarm` is Arch on ARM; `sles` and `sled` are SUSE's two enterprise
-/// editions of openSUSE's chameleon).
+/// editions of openSUSE).
 ///
 /// **Not every case is here, and that is not a gap to fill by guessing.** A
 /// flavour that ships its parent's os-release unchanged has no id of its own —
@@ -336,7 +190,7 @@ extension DistStringX on String {
 /// A duplicated id cannot be written here at all — two equal keys in a `const`
 /// map is a compile error — and `test/dist_icon_test.dart` carries the same
 /// table the other way round, so an id that stops resolving is a failure
-/// rather than a mark that quietly goes generic.
+/// rather than a `{DIST}` that quietly expands to nothing.
 const _byOsId = <String, Dist>{
   'debian': Dist.debian,
   'ubuntu': Dist.ubuntu,
@@ -348,7 +202,7 @@ const _byOsId = <String, Dist>{
   'deepin': Dist.deepin,
   'coreelec': Dist.coreelec,
 
-  // SUSE's chameleon covers the enterprise editions and the older openSUSE
+  // The plain openSUSE case covers the enterprise editions and the older
   // releases, which predate the per-edition ids below.
   'opensuse': Dist.opensuse,
   'suse': Dist.opensuse,
@@ -432,8 +286,8 @@ const _byOsId = <String, Dist>{
 /// derivative has to be asked before what it derives from, because that is
 /// usually a superstring: "Kubuntu 24.04" contains "ubuntu", "openSUSE Leap
 /// 15.6" contains "opensuse", "Archcraft" contains "arch". Asked the other way
-/// round, each of those reads as its parent and the derivative's glyph is
-/// never drawn.
+/// round, each of those reads as its parent, and `{DIST}` expands to the wrong
+/// name.
 ///
 /// A needle is matched with `contains`, so short ones are dangerous: `void`
 /// alone matches "Devoid", `mx` matches any name with those letters adjacent.
@@ -441,7 +295,7 @@ const _byOsId = <String, Dist>{
 ///
 /// `test/dist_icon_test.dart` asserts that every case appears here exactly
 /// once, which is what catches a case added to the enum and forgotten here —
-/// it would otherwise never match anything and silently draw the generic mark.
+/// it would otherwise never match anything at all.
 const _matchers = <(Dist, List<String>)>[
   // Ubuntu flavours, before Ubuntu.
   (Dist.kubuntu, ['kubuntu']),
