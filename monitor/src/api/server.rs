@@ -379,38 +379,55 @@ async fn login(
 ) -> Result<HttpResponse> {
     let peer_ip = http_req.peer_addr().map(|addr| addr.ip());
 
-    // Checked before touching the database, so a guessing loop can't keep
-    // spending bcrypt verifications (~100ms each) on this process.
-    if let Some(wait) = app_state.login_throttle.check(peer_ip, &req.username) {
-        let seconds = wait.as_secs().max(1);
-        return Ok(HttpResponse::TooManyRequests()
-            .header(RETRY_AFTER, seconds.to_string())
-            .json(&ErrorResponse {
-                error: format!("Too many failed attempts; retry in {seconds}s"),
-            }));
-    }
+    // Reserve under the throttle lock before touching the database or bcrypt,
+    // so concurrent guesses cannot all pass the same pre-failure snapshot.
+    let attempt = match app_state.login_throttle.begin(peer_ip, &req.username) {
+        Ok(attempt) => attempt,
+        Err(wait) => {
+            let seconds = wait.as_secs().max(1);
+            return Ok(HttpResponse::TooManyRequests()
+                .header(RETRY_AFTER, seconds.to_string())
+                .json(&ErrorResponse {
+                    error: format!("Too many failed attempts; retry in {seconds}s"),
+                }));
+        }
+    };
 
     // Verify user credentials
-    let user = sqlx::query!(
+    let user = match sqlx::query!(
         "SELECT id, username, password_hash FROM users WHERE username = ?",
         req.username
     )
     .fetch_optional(&app_state.db)
-    .await?;
+    .await
+    {
+        Ok(user) => user,
+        Err(error) => {
+            app_state.login_throttle.cancel(attempt);
+            return Err(error.into());
+        }
+    };
 
     // A missing account must cost the same bcrypt verification as a wrong
     // password, or response timing turns the login endpoint into a username
     // oracle even though both paths return the same status and throttle key.
-    let password_matches = verify_login_password_off_worker(
+    let password_matches = match verify_login_password_off_worker(
         req.password.clone(),
         user.as_ref().map(|user| user.password_hash.clone()),
     )
-    .await?;
+    .await
+    {
+        Ok(matched) => matched,
+        Err(error) => {
+            app_state.login_throttle.cancel(attempt);
+            return Err(error);
+        }
+    };
 
     if let Some(user) = user
         && password_matches
     {
-        app_state.login_throttle.record_success(peer_ip, &req.username);
+        app_state.login_throttle.record_success(attempt);
 
         // Update last login
         sqlx::query!(
@@ -429,7 +446,7 @@ async fn login(
     // One counter for both "no such user" and "wrong password": tracking them
     // separately would let an attacker tell the two apart by how quickly they
     // get throttled.
-    app_state.login_throttle.record_failure(peer_ip, &req.username);
+    app_state.login_throttle.record_failure(attempt);
 
     Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
         error: "Invalid credentials".to_string(),
@@ -707,7 +724,7 @@ async fn issue_ws_ticket(
 #[derive(Serialize, Deserialize)]
 struct SettingsPayload {
     interval_seconds: u64,
-    /// `null` = follow `interval_seconds` (see `LiveSettings`)
+    /// `null` = `interval_seconds * 10`, with a 120-second floor
     extended_interval_secs: Option<u64>,
     idle_pause_enabled: bool,
     /// `null` = `interval_seconds * 4`

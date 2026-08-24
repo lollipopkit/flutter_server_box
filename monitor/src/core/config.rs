@@ -245,8 +245,8 @@ pub struct DataRetentionConfig {
     pub metrics_days: u32,
     pub alerts_days: u32,
     pub cleanup_interval_hours: u32,
-    /// Hard cap on the SQLite file size; oldest time-series rows are dropped
-    /// until the database fits (0 disables the cap)
+    /// Hard cap on live SQLite pages; oldest time-series rows are dropped
+    /// until the live data fits (0 disables the cap)
     #[serde(default = "default_max_db_size_mb")]
     pub max_db_size_mb: u64,
 }
@@ -255,7 +255,11 @@ impl DataRetentionConfig {
     /// A zero duration makes Tokio's interval tick continuously, turning
     /// retention into a database-consuming busy loop.
     pub fn validate(&self) -> std::result::Result<(), String> {
-        if self.cleanup_interval_hours < 1 {
+        if self.metrics_days < 1 {
+            Err("data_retention.metrics_days must be at least 1".to_string())
+        } else if self.alerts_days < 1 {
+            Err("data_retention.alerts_days must be at least 1".to_string())
+        } else if self.cleanup_interval_hours < 1 {
             Err("data_retention.cleanup_interval_hours must be at least 1".to_string())
         } else {
             Ok(())
@@ -515,6 +519,18 @@ impl Config {
 
         let path = self.jwt_secret_path();
         if path.exists() {
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+
+                let permissions = fs::metadata(&path)
+                    .with_context(|| format!("Failed to inspect {}", path.display()))?
+                    .permissions();
+                if permissions.mode() & 0o077 != 0 {
+                    fs::set_permissions(&path, fs::Permissions::from_mode(0o600))
+                        .with_context(|| format!("Failed to chmod {}", path.display()))?;
+                }
+            }
             let secret = fs::read_to_string(&path)
                 .with_context(|| format!("Failed to read {}", path.display()))?
                 .trim()
@@ -837,5 +853,36 @@ impl Default for Config {
             ]),
             legacy: LegacyGoConfig::default(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn oversized_go_durations_are_rejected_without_overflowing() {
+        assert_eq!(parse_go_duration("18446744073709551615h"), None);
+        assert_eq!(parse_go_duration("18446744073709551615m"), None);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn an_existing_jwt_secret_is_restricted_before_use() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let dir = tempfile::tempdir().unwrap();
+        let db = dir.path().join("monitor.db");
+        let secret_path = dir.path().join("jwt.secret");
+        fs::write(&secret_path, "a".repeat(96)).unwrap();
+        fs::set_permissions(&secret_path, fs::Permissions::from_mode(0o644)).unwrap();
+
+        let mut config = Config::default();
+        config.database_url = Some(format!("sqlite:{}", db.display()));
+        config.jwt_secret = None;
+        config.resolve_jwt_secret().unwrap();
+
+        let mode = fs::metadata(secret_path).unwrap().permissions().mode();
+        assert_eq!(mode & 0o777, 0o600);
     }
 }

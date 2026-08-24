@@ -47,7 +47,7 @@ impl DataCleanupService {
     ];
 
     /// Live data size: pages in use excluding the freelist, so deletions count
-    /// immediately without waiting for VACUUM (the scheduler vacuums afterwards)
+    /// immediately without requiring a blocking full-database VACUUM.
     async fn live_db_bytes(&self) -> Result<u64> {
         let page_count: i64 = sqlx::query_scalar("PRAGMA page_count").fetch_one(&self.pool).await?;
         let freelist: i64 = sqlx::query_scalar("PRAGMA freelist_count").fetch_one(&self.pool).await?;
@@ -56,7 +56,7 @@ impl DataCleanupService {
     }
 
     /// Enforce `max_db_size_mb`: while over the cap, drop the oldest ~10% of
-    /// each time-series table. Bounded iterations; 0 disables the cap.
+    /// each time-series table. Zero disables the cap.
     pub async fn enforce_db_size_limit(&self) -> Result<u64> {
         let max_bytes = self.config.max_db_size_mb.saturating_mul(1024 * 1024);
         if max_bytes == 0 {
@@ -64,7 +64,7 @@ impl DataCleanupService {
         }
 
         let mut deleted_total = 0u64;
-        for _ in 0..10 {
+        loop {
             let size = self.live_db_bytes().await?;
             if size <= max_bytes {
                 break;
@@ -126,6 +126,13 @@ impl DataCleanupService {
             let Some(&table) = Self::POLICY_TABLES.iter().find(|t| **t == table_name) else {
                 continue;
             };
+            if retention_days <= 0 {
+                warn!(
+                    "Ignoring invalid retention policy for {}: {} days",
+                    table, retention_days
+                );
+                continue;
+            }
             let cutoff = Utc::now() - Duration::days(retention_days);
             // Table name comes from the &'static str allowlist above; injection is impossible
             let deleted = sqlx::query(sqlx::AssertSqlSafe(format!(
@@ -279,9 +286,6 @@ pub async fn start_cleanup_scheduler(
                 error!("Failed to cleanup expired data: {}", e);
             }
             
-            if let Err(e) = cleanup_service.vacuum_database().await {
-                warn!("Failed to vacuum database: {}", e);
-            }
         }
     });
 

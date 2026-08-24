@@ -313,12 +313,14 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
 }
 
 pub fn system_type() -> SystemType {
-    if cfg!(target_os = "windows") {
-        SystemType::Windows
-    } else if cfg!(target_os = "macos") {
-        SystemType::Bsd
-    } else {
-        SystemType::Linux
+    system_type_for(std::env::consts::OS)
+}
+
+fn system_type_for(os: &str) -> SystemType {
+    match os {
+        "windows" => SystemType::Windows,
+        "macos" | "freebsd" | "openbsd" | "netbsd" | "dragonfly" => SystemType::Bsd,
+        _ => SystemType::Linux,
     }
 }
 
@@ -372,7 +374,13 @@ async fn collect_metrics(
     if extended_due {
         let segments = execute_commands(system).await?;
         custom_cmds = custom_cmd_outputs(&segments);
-        let raw: HashMap<String, String> = segments.into_iter().collect();
+        // Built-in probes run before custom commands. Keep the first value for
+        // each section so custom output cannot forge a later built-in marker
+        // and replace the real reading.
+        let mut raw = HashMap::new();
+        for (key, value) in segments {
+            raw.entry(key).or_insert(value);
+        }
         let extended = sbm_parser::parse_status(system, &raw);
         status.amd = extended.amd;
         status.sensors = extended.sensors;
@@ -1528,6 +1536,29 @@ mod tests {
         assert_eq!(out[0].name, "second");
         assert_eq!(out[0].output, "b");
         assert_eq!(out[1].name, "first");
+    }
+
+    #[test]
+    fn supported_bsd_targets_use_the_native_bsd_backend() {
+        for os in ["macos", "freebsd", "openbsd", "netbsd", "dragonfly"] {
+            assert_eq!(system_type_for(os), SystemType::Bsd, "{os}");
+        }
+        assert_eq!(system_type_for("linux"), SystemType::Linux);
+        assert_eq!(system_type_for("windows"), SystemType::Windows);
+    }
+
+    #[test]
+    fn first_builtin_segment_wins_over_a_custom_spoof() {
+        let segments = vec![
+            ("host".to_string(), "real-host".to_string()),
+            (sbm_parser::script::custom_result_key("bad"), "output".to_string()),
+            ("host".to_string(), "forged-host".to_string()),
+        ];
+        let mut raw = HashMap::new();
+        for (key, value) in segments {
+            raw.entry(key).or_insert(value);
+        }
+        assert_eq!(raw.get("host").map(String::as_str), Some("real-host"));
     }
 
     #[tokio::test]
