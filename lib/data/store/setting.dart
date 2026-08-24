@@ -510,35 +510,6 @@ class SettingStore extends SqliteStore {
     },
   );
 
-  /// Add Agent to the legacy default home tabs once.
-  ///
-  /// Written with `updateLastUpdateTsOnSet: false` throughout, as the Hive
-  /// version got by writing straight to the box: a migration this build runs on
-  /// its own is not an edit the user made, and counting it as one would have
-  /// every install claim a newer copy than whatever it last synced with.
-  Future<void> migrateHomeTabsAgent() async {
-    const key = 'homeTabs';
-    const flagKey = 'homeTabsAgentMigrated';
-    if (get<bool>(flagKey) == true) return;
-
-    final tabs = AppTab.parseAppTabsFromObj(get<Object>(key));
-    const legacyDefaultTabs = {
-      AppTab.server,
-      AppTab.ssh,
-      AppTab.file,
-      AppTab.snippet,
-    };
-    if (tabs.length == legacyDefaultTabs.length &&
-        tabs.toSet().containsAll(legacyDefaultTabs)) {
-      set(
-        key,
-        [...tabs, AppTab.agent].map((tab) => tab.name).toList(),
-        updateLastUpdateTsOnSet: false,
-      );
-    }
-    set(flagKey, true, updateLastUpdateTsOnSet: false);
-  }
-
   /// Hide port forward beta warning
   late final portForwardBetaWarned = propertyDefault(
     'portForwardBetaWarned',
@@ -609,25 +580,5 @@ class SettingStore extends SqliteStore {
     ]) {
       remove(key, updateLastUpdateTsOnRemove: false);
     }
-  }
-
-  /// Migrate sshConnectionMode from old int values (-1/0/1) to bool.
-  /// Call once after store initialization.
-  void migrateSshConnectionMode() {
-    const key = 'sshConnectionMode';
-    const flagKey = 'sshConnectionModeMigrated';
-    if (get<bool>(flagKey) == true) return;
-    final raw = get<Object>(key);
-    if (raw is int) {
-      // -1 = auto, 0 = built-in, 1 = system SSH
-      final bool value;
-      if (raw == -1) {
-        value = !isMacOS; // macOS default built-in, others default system SSH
-      } else {
-        value = raw != 0;
-      }
-      set(key, value, updateLastUpdateTsOnSet: false);
-    }
-    set(flagKey, true, updateLastUpdateTsOnSet: false);
   }
 }

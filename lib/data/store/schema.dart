@@ -65,7 +65,9 @@ abstract final class SchemaVersion {
   /// v7: the BMC side channel's columns on `server`
   /// v8: `private_key.comment`, so a key's label can be edited without
   ///     opening the key to rewrite the copy inside it
-  static const current = 8;
+  /// v9: the two settings fixups that gated themselves on their own
+  ///     `xxxMigrated` flag key, now ordered steps like everything else
+  static const current = 9;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

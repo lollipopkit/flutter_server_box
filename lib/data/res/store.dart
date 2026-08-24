@@ -102,10 +102,6 @@ abstract final class Stores {
     await HiveImport.runIfNeeded();
 
     await setting.removeRetiredKeys();
-
-    // Migrate sshConnectionMode from old int values to bool
-    setting.migrateSshConnectionMode();
-    await setting.migrateHomeTabsAgent();
   }
 
   static int get lastModTime {
