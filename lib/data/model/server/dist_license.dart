@@ -36,8 +36,9 @@ none is bundled.
 
 Each is used only to refer to the system it identifies, which is nominative
 use. Each remains a trademark of its owner, and a copyright licence is not a
-trademark licence. The files are shipped unmodified — including their metadata,
-which is where some of them carry their own attribution.''';
+trademark licence. The files are shipped as published — including their
+metadata, which is where some of them carry their own attribution — except
+where a file could not be parsed at all, which is noted with it below.''';
 
 const _debian = '''
 The Debian Open Use Logo — (c) the Debian Project.
@@ -47,7 +48,12 @@ Dual licensed under the GNU Lesser General Public License version 3 or later,
 or the Creative Commons Attribution-ShareAlike 3.0 Unported License
 (https://creativecommons.org/licenses/by-sa/3.0/). Used here under the latter.
 Debian asks that the image link to https://www.debian.org/ where it is used on
-a web page; this is an application, not a page, and the mark is not a link.''';
+a web page; this is an application, not a page, and the mark is not a link.
+
+Changed: the file as published is an Adobe Illustrator export whose DTD entity
+declarations and Adobe namespace attributes stop it being parsed here. Those
+were expanded and removed. The drawing is untouched — every path is
+byte-identical to the published file.''';
 
 const _gentoo = '''
 The Gentoo "g" signet — (c) Gentoo Foundation and Lennart Andre Rolland.

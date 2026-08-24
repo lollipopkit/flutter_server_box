@@ -80,8 +80,33 @@ in `dist.dart`, add a row to the table above, and add its notice to
 `dist_license.dart`. `test/dist_icon_test.dart` fails if any of those is
 missing.
 
-**Ship the file unmodified.** Not tidied, not recoloured, not stripped of its
-metadata — under CC BY-SA a modified file is an adaptation and carries the
-share-alike obligation, and the metadata is where some of these carry their own
-attribution. flutter_svg logs `unhandled element <metadata/>` once per run for
-the trouble, which is the right trade.
+**Ship the file unmodified**, as far as it will go. Not tidied, not
+recoloured, not stripped of its metadata — under CC BY-SA a modified file is an
+adaptation and carries the share-alike obligation, and the metadata is where
+some of these carry their own attribution. flutter_svg logs
+`unhandled element <metadata/>` once per run for the trouble, which is the
+right trade.
+
+**Then check it draws**, because "unmodified" is not the same as "works".
+`debian.svg` is a 2001 Adobe Illustrator export and did not: the parser strips
+namespaces before reading attribute names, so `xmlns:x="http://ns.adobe.com/…"`
+arrives as an attribute called `x` and its value goes to `double.parse`. It
+threw on load and flutter_svg drew an empty box — no exception reaching the
+app, nothing in the log, just a gap where the swirl should be. What fixed it is
+recorded with the file below.
+
+`test/dist_asset_render_test.dart` compiles each of these the way flutter_svg
+does and fails if one yields no geometry or no paint. It is the only test here
+that would have caught that, and four others passed straight through it: the
+file existed, the enum named it, the README listed it and the widget built.
+
+## Changes made to the files
+
+- **debian.svg** — the DTD's entity declarations expanded in place and dropped,
+  and Illustrator's `xmlns:x`/`xmlns:i`/`xmlns:graph`/`xmlns:a` declarations and
+  the `i:`-namespaced attributes under them removed. Nothing else: the twelve
+  `d=` path strings are byte-identical to what Debian publishes, and the two
+  render the same. Debian offers the logo under LGPL-3+ *or* CC BY-SA 3.0, and
+  either permits this so long as the change is stated — which is what this line
+  is for, and why it is repeated in the in-app notice.
+- The other four are byte-identical to their sources.
