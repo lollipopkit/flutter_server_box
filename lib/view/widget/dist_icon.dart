@@ -137,7 +137,10 @@ class DistIcon extends ConsumerWidget {
 /// [DistIcon] for a caller that already knows the distribution.
 ///
 /// Split out so a widget test, and any code path that has the `Dist` in hand,
-/// does not need a provider scope with a server in it.
+/// does not need a provider scope with a server in it. Prefer [DistIcon] where
+/// there is a server id: it also reads the cache, so a mark is drawn for a
+/// server that has been seen before but not yet polled — which is every server
+/// for the first few seconds after a restart.
 class DistIconOf extends StatelessWidget {
   const DistIconOf(this.dist, {super.key, this.size = 20});
 

@@ -14,11 +14,40 @@ import 'package:server_box/data/store/migrations/m010_server_dist.dart';
 import 'package:server_box/data/store/server_dist.dart';
 import 'package:server_box/data/store/tables.dart';
 
-/// The columns of a table, as SQLite reports them.
-List<(String name, String type, bool notNull)> _columns(String table) => [
-  for (final row in SqliteDb.instance.select('PRAGMA table_info($table);'))
-    (row['name'] as String, row['type'] as String, (row['notnull'] as int) == 1),
-];
+/// What SQLite reports about a table: its columns *and* its constraints.
+///
+/// The constraints are the half that matters here and the half a column list
+/// cannot see. The whole delete story — a row going when its server does —
+/// rests on `REFERENCES server(id) ON DELETE CASCADE`, and a primary key is
+/// what stops two readings for one server. Hand-written DDL that dropped
+/// either would have matched Drift's on `PRAGMA table_info`'s first three
+/// fields and left the migration's version of the table quietly weaker.
+({
+  List<(String, String, bool, int)> columns,
+  List<(String, String, String, String)> foreignKeys,
+})
+_schemaOf(String table) => (
+  columns: [
+    for (final row in SqliteDb.instance.select('PRAGMA table_info($table);'))
+      (
+        row['name'] as String,
+        row['type'] as String,
+        (row['notnull'] as int) == 1,
+        row['pk'] as int,
+      ),
+  ],
+  foreignKeys: [
+    for (final row in SqliteDb.instance.select(
+      'PRAGMA foreign_key_list($table);',
+    ))
+      (
+        row['table'] as String,
+        row['from'] as String,
+        row['to'] as String,
+        row['on_delete'] as String,
+      ),
+  ],
+);
 
 void main() {
   group('the migration', () {
@@ -32,8 +61,13 @@ void main() {
     test('creates a table Drift would have created identically', () async {
       // Drift's version, from a fresh install.
       await createTables(SqliteDb.instance);
-      final fromDrift = _columns('server_dist');
-      expect(fromDrift, isNotEmpty, reason: 'Drift has to make it at all');
+      final fromDrift = _schemaOf('server_dist');
+      expect(fromDrift.columns, isNotEmpty, reason: 'Drift has to make it');
+      expect(
+        fromDrift.foreignKeys,
+        contains(('server', 'server_id', 'id', 'CASCADE')),
+        reason: 'the cascade is what makes a deleted server take its row',
+      );
 
       // The migration's version, on a database that has the parent but not it.
       SqliteDb.close();
@@ -42,22 +76,24 @@ void main() {
       SqliteDb.instance.execute('DROP TABLE server_dist;');
       await const ServerDistMigration().apply();
 
-      expect(
-        _columns('server_dist'),
-        fromDrift,
-        reason: 'an upgrading install only ever gets the migration\'s version',
-      );
+      // Field by field: a record holding lists compares them by identity.
+      final fromMigration = _schemaOf('server_dist');
+      const why = 'an upgrading install only ever gets this version';
+      expect(fromMigration.columns, fromDrift.columns, reason: why);
+      expect(fromMigration.foreignKeys, fromDrift.foreignKeys, reason: why);
     });
 
     test('and running it again on the table it made changes nothing', () async {
       await createTables(SqliteDb.instance);
-      final before = _columns('server_dist');
+      final before = _schemaOf('server_dist');
 
       // The version is recorded only once apply() returns, so a process that
       // stops in between runs this again on the next launch.
       await const ServerDistMigration().apply();
 
-      expect(_columns('server_dist'), before);
+      final after = _schemaOf('server_dist');
+      expect(after.columns, before.columns);
+      expect(after.foreignKeys, before.foreignKeys);
     });
   });
 

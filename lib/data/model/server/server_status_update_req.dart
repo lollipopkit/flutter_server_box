@@ -296,14 +296,22 @@ void _applyMore(ServerStatus ss, Map<String, dynamic> status) {
   final osId = status['os_id'] as String?;
   if (osId != null && osId.isNotEmpty) {
     ss.osId = osId;
-  }
-  final osIdLike = status['os_id_like'] as List?;
-  if (osIdLike != null && osIdLike.isNotEmpty) {
+    // Written together, and only here. An `ID_LIKE` that came back empty is
+    // two different things depending on why: the file said the distribution
+    // declares no parent, or the file was never read. `os_id` is the evidence
+    // of which — it is only ever set by a successful read — so the parent is
+    // replaced when there was one to replace it with, and left alone when the
+    // whole section is missing. Without this, a host that stopped being a
+    // derivative kept the parent it used to declare, and `resolveDist` fell
+    // through to it whenever the new id was one this build does not know.
+    //
     // `whereType`, not `cast`. A cast is a lazy view: a non-String element is
     // found at the first iteration, which is `resolveDist` — reached from
     // `DistIconOf` while the tree is building, so a malformed value would
     // throw there instead of being caught by the section guard around this.
-    ss.osIdLike = osIdLike.whereType<String>().toList();
+    ss.osIdLike =
+        (status['os_id_like'] as List?)?.whereType<String>().toList() ??
+        const [];
   }
   final host = status['host'] as String?;
   if (host != null && !host.contains(ScriptConstants.scriptFile)) {

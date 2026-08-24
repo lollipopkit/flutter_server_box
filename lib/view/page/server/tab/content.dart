@@ -21,7 +21,7 @@ extension on _ServerPageState {
                 //
                 // The gap goes with it. Marks switched off has to mean no
                 // pixels, and a six-pixel indent on every row is pixels.
-                ...?switch (distIconOf(s.status.dist, size: 15)) {
+                ...?switch (distIcon(s.spi.id, size: 15)) {
                   final mark? => [mark, const SizedBox(width: 6)],
                   null => null,
                 },

@@ -93,7 +93,7 @@ void main() {
 
   tearDown(() async {
     await getIt.reset();
-    SqliteDb.close();
+    await SqliteDb.close();
   });
 
   testWidgets('a pushed page goes when another section is picked', (

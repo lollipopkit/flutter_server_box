@@ -231,10 +231,22 @@ unsafe extern "C" {
 fn os_release_block() -> String {
     let mut all = String::new();
     for path in ["/etc/os-release", "/usr/lib/os-release"] {
-        all.push_str(&read(path));
-        all.push('\n');
+        for line in read(path).lines() {
+            if line.starts_with("ID=")
+                || line.starts_with("ID_LIKE=")
+                || line.starts_with("PRETTY_NAME=")
+            {
+                all.push_str(line);
+                all.push('\n');
+            }
+        }
     }
-    if !all.trim().is_empty() {
+    // On what the filter kept, not on whether the files existed. The script is
+    // `grep … || cat /etc/*-release | grep ^PRETTY_NAME`, so it falls back
+    // whenever the first grep printed nothing — including for an appliance
+    // whose `/etc/os-release` exists and holds none of these three keys, where
+    // stopping at "the file was there" reported no system at all.
+    if !all.is_empty() {
         return all;
     }
 

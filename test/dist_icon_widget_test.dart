@@ -133,6 +133,32 @@ void main() {
     });
   });
 
+  testWidgets('an address this app will not fetch falls back to the mark', (
+    tester,
+  ) async {
+    // A value stored before the scheme was checked, or typed by hand. It is
+    // refused rather than handed to the image loader — and refusing it puts
+    // the row back where it would be with no address at all, which for a
+    // distribution that ships one is its mark rather than an icon.
+    for (final rejected in ['httpx://elsewhere/{DIST}.svg', 'httpfoo:{DIST}']) {
+      GetIt.instance<SettingStore>().serverMarkUrl.put(rejected);
+      await pump(tester, Dist.debian);
+      await tester.pump();
+
+      expect(find.byType(SvgPicture), findsOneWidget, reason: rejected);
+      expect(fallback(), findsNothing, reason: rejected);
+      expect(penguin(), findsNothing, reason: rejected);
+    }
+  });
+
+  testWidgets('and for one with no mark, the icon', (tester) async {
+    GetIt.instance<SettingStore>().serverMarkUrl.put('httpx://elsewhere/a.svg');
+    await pump(tester, Dist.ubuntu);
+    await tester.pump();
+
+    expect(penguin(), findsOneWidget);
+  });
+
   testWidgets('an address that cannot name a file leaves the outline', (
     tester,
   ) async {

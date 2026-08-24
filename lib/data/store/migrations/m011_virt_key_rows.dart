@@ -42,6 +42,11 @@ class VirtKeyRowsMigration implements SchemaMigration {
     // `updateLastUpdateTsOnSet: false`: a conversion this build performs on
     // its own is not an edit the user made, and counting it as one would have
     // every install claim a newer copy than whatever it last synced with.
-    store.set(key, 1, updateLastUpdateTsOnSet: false);
+    // `set` answers false rather than throwing, and this step has no return
+    // value — a quiet failure would let `SchemaVersion.migrate` record v12 and
+    // never come back, leaving `horizonVirtKey` set and `virtKeyRows` absent.
+    if (!store.set(key, 1, updateLastUpdateTsOnSet: false)) {
+      throw StateError('m011: writing "$key" failed');
+    }
   }
 }

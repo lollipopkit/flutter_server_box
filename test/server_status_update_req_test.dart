@@ -263,6 +263,31 @@ Filesystem  1024-blocks   Used Available Capacity Mounted on
       expect(second.dist, Dist.alpine);
     });
 
+    test('a parent it stopped declaring is not kept', () async {
+      // A derivative that becomes a distribution of its own answers with an
+      // empty `ID_LIKE`, which is an answer rather than a silence. Kept, it
+      // would be what `resolveDist` fell through to whenever the new id was
+      // one this build does not know.
+      final first = await parse(
+        'ID=frobnix\nID_LIKE="ubuntu debian"\nPRETTY_NAME="Frobnix 1.0"\n',
+      );
+      expect(first.osIdLike, ['ubuntu', 'debian']);
+      expect(first.dist, Dist.ubuntu, reason: 'via the parent');
+
+      final second = await getStatus(
+        ServerStatusUpdateReq(
+          system: SystemType.linux,
+          ss: first,
+          parsedOutput: {
+            StatusCmdType.sys.name: 'ID=frobnix\nPRETTY_NAME="Frobnix 2.0"\n',
+          },
+        ),
+      );
+
+      expect(second.osIdLike, isEmpty);
+      expect(second.dist, isNull, reason: 'it declares no parent any more');
+    });
+
     test('a remote with no os-release still reads by its prose', () async {
       final result = await parse('PRETTY_NAME="Debian GNU/Linux 12 (bookworm)"\n');
 

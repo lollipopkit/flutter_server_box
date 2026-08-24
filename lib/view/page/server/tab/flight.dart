@@ -104,7 +104,7 @@ extension _Flight on _ServerPageState {
   Widget _flightRow(ServerState srv) {
     return SideBarTile(
       title: srv.spi.name,
-      leading: distIconOf(srv.status.dist, size: 17),
+      leading: distIcon(srv.spi.id, size: 17),
       selected: true,
       live: srv.conn == ServerConn.finished,
     );
