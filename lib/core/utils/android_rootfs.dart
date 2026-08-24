@@ -177,6 +177,28 @@ abstract final class AndroidRootfs {
     String? label,
     void Function(double? progress)? onProgress,
     CancelToken? cancel,
+  }) {
+    if (_installing) {
+      return Future.error(StateError('An install is already running'));
+    }
+    _installing = true;
+    return _install(
+      distro: distro,
+      release: release,
+      into: into,
+      label: label,
+      onProgress: onProgress,
+      cancel: cancel,
+    ).whenComplete(() => _installing = false);
+  }
+
+  static Future<LinuxProfile> _install({
+    required LinuxDistro distro,
+    RootfsRelease? release,
+    LinuxProfile? into,
+    String? label,
+    void Function(double? progress)? onProgress,
+    CancelToken? cancel,
   }) async {
     final container = _container;
     if (container == null) {
@@ -433,29 +455,54 @@ abstract final class AndroidRootfs {
   /// with a switch pending, the repositories file apt or apk is about to read
   /// still belongs to the tree that is there.
   static Future<void> applyNetSettings() async {
-    for (final profile in _profiles) {
+    final snapshot = List<LinuxProfile>.from(_profiles);
+    for (final profile in snapshot) {
+      // Skip profiles that were removed concurrently.
+      if (!_profiles.any((e) => e.id == profile.id)) continue;
       final root = rootOf(profile.id);
       if (root == null) continue;
+      if (!await Directory(root).exists()) continue;
       await seedResolvConf(
         root,
         nameservers: linuxNameservers(),
         overwrite: true,
       );
+      // Between the two seeds a concurrent deletion can remove the tree;
+      // re-check before recreating repository paths that would resurrect it.
+      if (!_profiles.any((e) => e.id == profile.id)) continue;
+      if (!await Directory(root).exists()) continue;
+      // Preserve the installed release series rather than the current
+      // preferred one, so a profile installed on noble is not silently
+      // rewritten to resolute after a manifest update.
+      final release = profile.branch.isEmpty
+          ? null
+          : profile.distro.info.releases
+              .firstWhereOrNull((r) => r.branch == profile.branch);
       await seedRepositories(
         root,
         distro: profile.distro,
+        release: release,
         mirror: linuxMirror(profile.distro),
       );
     }
   }
+
+  static bool _installing = false;
 
   /// Removes one rootfs and everything in it. The others stay.
   static Future<void> removeProfile(String id) async {
     // A known id, before a recursive delete is built from it. `rootOf` only
     // joins a path, so anything the caller passes becomes one.
     if (!_profiles.any((e) => e.id == id)) return;
+    if (_installing) {
+      throw StateError('An install is already running');
+    }
     final root = rootOf(id);
     if (root == null) return;
+    // Remove from the cached list before the filesystem delete so a
+    // concurrent applyNetSettings that is mid-iteration skips this profile
+    // and does not recreate its repository file after the tree was removed.
+    _profiles.removeWhere((e) => e.id == id);
     final dir = Directory(root);
     if (await dir.exists()) await dir.delete(recursive: true);
     await scan();

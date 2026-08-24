@@ -218,8 +218,20 @@ abstract final class IosRootfs {
 
     final dir = Directory(root);
     // Reinstalling in place deletes the tree, so the engine has to let go of
-    // what it mounted from it first.
-    if (into != null) detach(id);
+    // what it mounted from it first. Only delete if detach succeeded;
+    // EBUSY means a session still holds the mount and deleting underneath
+    // it parks the engine.
+    if (into != null) {
+      final err = detach(id);
+      if (err == _ebusy) {
+        throw StateError('The Linux system is still in use');
+      }
+      if (err < 0 && err != alreadyBooted) {
+        // Non-busy detach errors still block safe deletion; rethrow as StateError
+        // so caller sees a consistent message rather than a partial delete.
+        throw StateError('The Linux system could not be detached ($err)');
+      }
+    }
     // A userland is complete or absent; there is no repairing half of one.
     if (await dir.exists()) await dir.delete(recursive: true);
     await dir.create(recursive: true);
@@ -301,17 +313,27 @@ abstract final class IosRootfs {
   /// network and apply to all of them, and a mirror belongs to a distribution
   /// so each profile of it wants the new one too.
   static Future<void> applyNetSettings() async {
-    for (final profile in _profiles) {
+    final snapshot = List<LinuxProfile>.from(_profiles);
+    for (final profile in snapshot) {
+      if (byId(profile.id) == null) continue;
       final root = rootOf(profile.id);
       if (root == null) continue;
+      if (!await Directory(root).exists()) continue;
       await seedResolvConf(
         root,
         nameservers: linuxNameservers(),
         overwrite: true,
       );
+      if (byId(profile.id) == null) continue;
+      if (!await Directory(root).exists()) continue;
+      final release = profile.branch.isEmpty
+          ? null
+          : profile.distro.info.releases
+              .firstWhereOrNull((r) => r.branch == profile.branch);
       await seedRepositories(
         root,
         distro: profile.distro,
+        release: release,
         mirror: linuxMirror(profile.distro),
       );
     }
@@ -322,6 +344,9 @@ abstract final class IosRootfs {
     // A known id, before a recursive delete is built from it. `rootOf` only
     // joins a path, so anything the caller passes becomes one.
     if (byId(id) == null) return;
+    if (_installing) {
+      throw StateError('An install is already running');
+    }
     final root = rootOf(id);
     if (root == null) return;
     // Before the directory goes: its `/dev` is a fakefs whose database lives
@@ -370,6 +395,10 @@ abstract final class IosRootfs {
             : 'The Linux system could not be detached ($err)',
       );
     }
+    // Remove from cache before the recursive delete so a concurrent
+    // applyNetSettings mid-iteration skips this profile and does not
+    // recreate its repository file after the tree was removed.
+    _profiles.removeWhere((e) => e.id == id);
     final dir = Directory(root);
     if (await dir.exists()) await dir.delete(recursive: true);
     await scan();
@@ -461,6 +490,24 @@ abstract final class IosRootfs {
   static String _tarPath(String name) =>
       name.startsWith('./') ? name.substring(2) : name;
 
+  static bool _isSafeTarEntry(String name) {
+    final sanitized = _tarPath(name);
+    if (sanitized.isEmpty) return false;
+    if (sanitized.startsWith('/')) return false;
+    // Lexical check: no segment may be '..' that escapes the root.
+    final parts = <String>[];
+    for (final seg in sanitized.split('/')) {
+      if (seg.isEmpty || seg == '.') continue;
+      if (seg == '..') {
+        if (parts.isEmpty) return false;
+        parts.removeLast();
+      } else {
+        parts.add(seg);
+      }
+    }
+    return true;
+  }
+
   static Future<void> _unpackTar(
     Archive archive,
     TarDecoder decoder,
@@ -486,7 +533,11 @@ abstract final class IosRootfs {
       if (done % 200 == 0) {
         onProgress?.call(0.9 + (done / archive.length) * 0.1);
       }
-      final path = into.path.joinPath(entry.name);
+      if (!_isSafeTarEntry(entry.name)) {
+        Loggers.app.warning('Skipping unsafe tar entry: ${entry.name}');
+        continue;
+      }
+      final path = into.path.joinPath(_tarPath(entry.name));
 
       if (applyWhiteouts) {
         final mark = ociWhiteout(entry.name.split('/').last);
@@ -531,6 +582,10 @@ abstract final class IosRootfs {
       // this is a symlink would answer yes for both.
       final hardTarget = hardLinks[_tarPath(entry.name)];
       if (hardTarget != null) {
+        if (!_isSafeTarEntry(hardTarget)) {
+          Loggers.app.warning('Skipping unsafe hardlink target: $hardTarget');
+          continue;
+        }
         pending[path] = into.path.joinPath(hardTarget);
         continue;
       }
