@@ -9,19 +9,6 @@
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
    xmlns:cc="http://creativecommons.org/ns#"
    xmlns:dc="http://purl.org/dc/elements/1.1/">
-  <defs
-     id="defs5498" />
-  <metadata
-     id="metadata5594">
-    <rdf:RDF>
-      <cc:Work
-         rdf:about="">
-        <dc:format>image/svg+xml</dc:format>
-        <dc:type
-           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-      </cc:Work>
-    </rdf:RDF>
-  </metadata>
   <path
      d="m 219.33737,198.08776 h -0.0239 c -15.97169,0 -28.97857,-12.98891 -28.99549,-28.94959 -0.0239,-16.01383 12.98515,-29.02203 28.97134,-29.03898 15.99581,0 29.0003,12.98891 29.01959,28.94958 0,16.01386 -12.9851,29.02448 -28.97129,29.0414 v 0 z"
      id="path3042-0-6-4" />

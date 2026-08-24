@@ -7,8 +7,9 @@ this repository ships none of those.
 
 ## Where these came from
 
-All of them are taken verbatim from [font-logos](https://github.com/lukas-w/font-logos)
-(`vectors/`), renamed to match `Dist`'s enum names. font-logos is released into
+All of them are taken from [font-logos](https://github.com/lukas-w/font-logos)
+(`vectors/`), renamed to match `Dist`'s enum names and put through the
+normalisation below — the drawing is untouched. font-logos is released into
 the public domain under the [Unlicense](https://github.com/lukas-w/font-logos/blob/master/LICENSE):
 
 > Anyone is free to copy, modify, publish, use, compile, sell, or distribute
@@ -25,8 +26,40 @@ whatever font-logos happened to call it (`redhat`). `tux.svg` is the generic
 mark, drawn for a server that has not been asked yet.
 
 To add one: find it in font-logos' `vectors/`, copy it in under the `Dist`
-name you are adding, add the case, and add a matcher. `test/dist_icon_test.dart`
-fails if any of the four is missing.
+name you are adding, run `dart run scripts/normalize_distro_svg.dart`, add the
+case, and add an `ID=` entry or a matcher. `test/dist_icon_test.dart` fails if
+any of them is missing.
+
+## The normalisation, and why the files are not byte-identical
+
+`scripts/normalize_distro_svg.dart` strips two elements from every file:
+`<metadata>` and `<defs>`. flutter_svg draws neither and says so once per app
+run — `unhandled element <metadata/>; Picture key: Svg loader` — which is how
+this was noticed at all.
+
+Removing `<defs>` is safe here because nothing referenced what was in it: these
+are single-colour glyphs and the app tints them flat, so the gradients,
+patterns and `inkscape:perspective` nodes in there were already unreachable.
+The script refuses to remove a `<defs>` that *is* referenced, and refuses one
+whose `<style>` has a rule some element still carries, so a future glyph with
+real CSS is reported rather than silently flattened. `puppy.svg` was that case
+once: a stylesheet whose only live rule was `.fil9 {fill:black}`, resolved into
+a `fill` attribute by hand before the block was dropped.
+
+`<metadata>` is worth a note of its own, because deleting a licence block
+normally is not something to do lightly. **In this set it does not describe the
+file it is in.** It is Inkscape RDF inherited from whatever document each glyph
+was traced in: `elementary.svg` carried *Gentoo's* ("Gentoo Logo Dark v1.0",
+Sebastian Pipping, Gentoo Foundation Inc.), `voidlinux.svg` carried *AOSC's*
+("Logo of Anthon OS4 Project"), and `artix.svg` claimed CC BY-NC-SA 4.0 —
+non-commercial, on a file whose actual licence is the Unlicense above. None of
+it is a grant this repository relies on, and shipping a file that misattributes
+itself is worse than shipping one carrying no metadata at all.
+
+Provenance is still checkable, just not with a plain `diff`: run the
+normalisation over font-logos' own copy and compare that. Each of the files
+checked this way — `debian`, `nixos`, `gentoo`, `elementary`, `artix`, `aosc`,
+`puppy` — was byte-identical to upstream before the step.
 
 Two fallbacks. `tux.svg` is drawn for a Linux whose flavour is not known;
 `server.svg` — drawn by hand for this app, so it carries nobody's mark — is
@@ -74,7 +107,7 @@ the thing is not readily identifiable without the mark, no more of the mark is
 used than needed, and nothing suggests sponsorship or endorsement. A 20px glyph
 in a row that also carries the server's own name and address meets all three.
 
-Sixty-one marks is a lot of projects to have checked, and most of them publish
+Fifty-eight marks is a lot of projects to have checked, and most of them publish
 no third-party trademark policy at all — for those, nominative use is simply
 the general rule. The ones that *do* publish something are recorded below,
 since the wording differs and one of them (CentOS) reads as a prohibition until

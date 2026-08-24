@@ -35,48 +35,6 @@
      inkscape:current-layer="svg2" />
   <title
      id="title4445">Logo of Anthon OS4 Project</title>
-  <defs
-     id="defs4" />
-  <metadata
-     id="metadata7">
-    <rdf:RDF>
-      <cc:Work
-         rdf:about="">
-        <dc:format>image/svg+xml</dc:format>
-        <dc:type
-           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title>Logo of Anthon OS4 Project</dc:title>
-        <dc:creator>
-          <cc:Agent>
-            <dc:title>Junde Yi</dc:title>
-          </cc:Agent>
-        </dc:creator>
-        <cc:license
-           rdf:resource="http://creativecommons.org/publicdomain/zero/1.0/" />
-        <dc:date />
-        <dc:contributor>
-          <cc:Agent>
-            <dc:title>Jeff Bai, Icenowy Zheng, Junde Yi</dc:title>
-          </cc:Agent>
-        </dc:contributor>
-        <dc:publisher>
-          <cc:Agent>
-            <dc:title>Anthon Open Source Community </dc:title>
-          </cc:Agent>
-        </dc:publisher>
-        <dc:description />
-      </cc:Work>
-      <cc:License
-         rdf:about="http://creativecommons.org/publicdomain/zero/1.0/">
-        <cc:permits
-           rdf:resource="http://creativecommons.org/ns#Reproduction" />
-        <cc:permits
-           rdf:resource="http://creativecommons.org/ns#Distribution" />
-        <cc:permits
-           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
-      </cc:License>
-    </rdf:RDF>
-  </metadata>
   <g
      transform="translate(0,-540.36218)"
      id="layer1" />

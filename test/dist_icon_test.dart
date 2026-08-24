@@ -99,6 +99,65 @@ void main() {
         expect(dist.iconPath, startsWith('assets/distro/'));
       }
     });
+
+    /// What `scripts/normalize_distro_svg.dart` exists to remove.
+    ///
+    /// flutter_svg draws none of it and logs `unhandled element <metadata/>`
+    /// once per run for the trouble. Left here because the files are otherwise
+    /// verbatim from font-logos, so a glyph added by copying one in brings it
+    /// back — and the only symptom is a line in a debug console.
+    group('the files are normalised', () {
+      final shipped = Directory('assets/distro')
+          .listSync()
+          .whereType<File>()
+          .where((f) => f.path.endsWith('.svg'));
+
+      test('no <metadata>, which describes the wrong work anyway', () {
+        // Inherited from whatever document each glyph was traced in, and it
+        // does not follow the tracing: `elementary.svg` carried Gentoo's,
+        // `voidlinux.svg` carried AOSC's, `artix.svg` claimed CC BY-NC-SA.
+        // None of that is the licence this directory rests on — see README.md.
+        for (final file in shipped) {
+          expect(
+            file.readAsStringSync(),
+            isNot(contains('<metadata')),
+            reason: '${file.path}: run dart run scripts/normalize_distro_svg.dart',
+          );
+        }
+      });
+
+      test('no <defs>, and nothing left pointing into one', () {
+        for (final file in shipped) {
+          final svg = file.readAsStringSync();
+          expect(
+            svg,
+            isNot(contains('<defs')),
+            reason: '${file.path}: run dart run scripts/normalize_distro_svg.dart',
+          );
+          // The removal is only safe because nothing referenced what was in
+          // there. A `url(#…)` surviving it would be a glyph drawing part of
+          // itself in the wrong colour, or not at all.
+          expect(
+            RegExp(r'url\(#|href="#').hasMatch(svg),
+            isFalse,
+            reason: '${file.path} references an id that is no longer defined',
+          );
+        }
+      });
+
+      test('no CSS, which flutter_svg does not apply', () {
+        // `puppy.svg` was the one: a `<style>` block whose `.fil9 {fill:black}`
+        // was the only rule any drawn element used, plus four gradients named
+        // by classes nothing carried. A `class` with no stylesheet is inert in
+        // every renderer, so both go — see the script for the guard that stops
+        // a rule with real effect being dropped silently.
+        for (final file in shipped) {
+          final svg = file.readAsStringSync();
+          expect(svg, isNot(contains('<style')), reason: file.path);
+          expect(svg, isNot(contains('class="')), reason: file.path);
+        }
+      });
+    });
   });
 
   group('the matchers', () {
