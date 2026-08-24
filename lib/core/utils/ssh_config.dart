@@ -214,19 +214,79 @@ abstract final class SSHConfig {
     // Add the last server
     addServer();
 
+    // Resolve textual ProxyJump aliases (e.g. `ProxyJump bastion` or
+    // `ProxyJump user@bastion:2222`) to the imported server's generated id.
+    // genClient only resolves jumpIds via server IDs, so leaving a hostname
+    // there makes the jump silently ignored or produces a missing-jump error.
+    if (servers.isNotEmpty) {
+      final byName = {for (final s in servers) s.name: s.id};
+      final byHostname = <String, String>{};
+      for (final s in servers) {
+        final ip = s.ssh?.ip;
+        if (ip != null && ip.isNotEmpty) byHostname[ip] = s.id;
+      }
+      for (var i = 0; i < servers.length; i++) {
+        final jump = servers[i].ssh?.jumpId;
+        if (jump == null) continue;
+        final host = _jumpHostPart(jump);
+        final targetId = byName[host] ?? byHostname[host] ?? byName[jump] ?? byHostname[jump];
+        if (targetId != null && targetId != servers[i].id) {
+          final old = servers[i];
+          servers[i] = old.copyWith(
+            ssh: old.ssh!.copyWith(jumpId: targetId, jumpIds: null),
+          );
+        } else if (byName.containsKey(host) || byHostname.containsKey(host)) {
+          // Already an id match, leave as is.
+        } else {
+          // No matching imported host for the alias. Keep the raw value so
+          // genClient can surface a missing-jump error rather than silently
+          // connecting directly, and log for visibility.
+          Loggers.app.info(
+            'SSH config ProxyJump "$jump" has no matching Host entry among imported servers; '
+            'leaving as jump identifier for genClient to report',
+          );
+        }
+      }
+    }
+
     return servers;
+  }
+
+  static String _jumpHostPart(String value) {
+    var host = value.trim();
+    // First entry of a comma-separated ProxyJump list
+    host = host.split(',').first.trim();
+    // First whitespace-separated token (covers "host -p 2222" variants)
+    host = host.split(RegExp(r'\s+')).first;
+    // Strip user@
+    final at = host.lastIndexOf('@');
+    if (at != -1 && at + 1 < host.length) host = host.substring(at + 1);
+    // Strip :port
+    final colon = host.lastIndexOf(':');
+    if (colon != -1) {
+      final portPart = host.substring(colon + 1);
+      if (int.tryParse(portPart) != null) host = host.substring(0, colon);
+    }
+    // Strip surrounding brackets for IPv6 literals
+    if (host.startsWith('[') && host.endsWith(']') && host.length > 2) {
+      host = host.substring(1, host.length - 1);
+    }
+    return host;
   }
 
   /// Extract jump host from ProxyJump or ProxyCommand
   static String? _extractJumpHost(String value) {
-    if (value.isEmpty) return null;
-    // For ProxyJump, the format is usually: user@host:port
-    // For ProxyCommand, it's more complex and might need custom parsing
-    if (value.contains('@')) {
-      final parts = value.split(' ');
-      return parts.isNotEmpty ? parts[0] : null;
-    }
-    return null;
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return null;
+    if (trimmed.toLowerCase() == 'none') return null;
+    // ProxyJump may be "host", "user@host:port", or a comma-separated list.
+    // Take the first entry's first token so "bastion" and "user@bastion:2222"
+    // are both captured; alias resolution to a generated id happens after all
+    // hosts are parsed.
+    final firstComma = trimmed.split(',').first.trim();
+    final firstToken = firstComma.split(RegExp(r'\s+')).first.trim();
+    if (firstToken.isEmpty) return null;
+    return firstToken;
   }
 
   static String _stripInlineComment(String line) {

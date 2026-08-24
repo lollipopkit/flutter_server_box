@@ -248,9 +248,12 @@ Future<SSHClient> genClient(
             visitedServerIds: {...chainVisitedServerIds},
           );
 
-          return await jumpClient.forwardLocal(ssh.ip, ssh.port);
+          final forwarded = await jumpClient.forwardLocal(ssh.ip, ssh.port);
+          return _JumpForwardedSocket(forwarded, jumpClient);
         } catch (e, stack) {
-          jumpClient?.close();
+          try {
+            await jumpClient?.close();
+          } catch (_) {}
           if (!_isJumpFailoverError(e)) {
             rethrow;
           }
@@ -953,4 +956,67 @@ void forgetHostKey(String storageKey) {
       Loggers.app.warning('Forget SSH host key failed', e, stack);
     }
   });
+}
+
+/// An [SSHSocket] that owns the jump [SSHClient] that created it.
+///
+/// `SSHClient.forwardLocal` returns a channel socket but does not transfer
+/// ownership of the jump client that carries it. If the caller only closes
+/// the forwarded socket, the jump SSH session (and its underlying direct
+/// socket) remains allocated for every connection. This wrapper closes the
+/// jump client when the forwarded socket is closed/destroyed or when its
+/// stream completes.
+class _JumpForwardedSocket implements SSHSocket {
+  _JumpForwardedSocket(this._inner, this._jumpClient) {
+    _inner.done.then((_) => _jumpClient.close(), onError: (_) => _jumpClient.close());
+  }
+
+  final SSHSocket _inner;
+  final SSHClient _jumpClient;
+
+  @override
+  Stream<Uint8List> get stream => _inner.stream;
+
+  @override
+  StreamSink<List<int>> get sink => _inner.sink;
+
+  @override
+  Future<void> get done => _inner.done.then((_) async {
+        // Ensure the jump client is closed when the forwarded channel ends;
+        // done is idempotent so awaiting close multiple times is safe.
+        try {
+          await _jumpClient.close();
+        } catch (_) {}
+      }, onError: (e, s) async {
+        try {
+          await _jumpClient.close();
+        } catch (_) {}
+        Error.throwWithStackTrace(e, s);
+      });
+
+  @override
+  Future<void> close() async {
+    try {
+      await _inner.close();
+    } finally {
+      try {
+        await _jumpClient.close();
+      } catch (_) {}
+    }
+  }
+
+  @override
+  void destroy() {
+    try {
+      _inner.destroy();
+    } finally {
+      _jumpClient.close();
+    }
+  }
+
+  @override
+  Future<void> flush() => _inner.flush();
+
+  @override
+  String toString() => '_JumpForwardedSocket($_inner via $_jumpClient)';
 }
