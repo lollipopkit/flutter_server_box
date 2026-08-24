@@ -164,3 +164,11 @@ flutter_native_splash:
     - "ios/Runner/Info-Profile.plist"
     - "ios/Runner/Info-Release.plist"
   android12: true
+
+# What `fl_build` names the artifacts it produces, and the `BuildData.name` it
+# generates — which is the name the app itself draws. Here rather than in an
+# `fl_build.json` of its own, which is a file for one key. CI reads this same
+# line, so the name it publishes assets under cannot drift from the name the
+# build gave them.
+fl_build:
+  appName: ServerBox

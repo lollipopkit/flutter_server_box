@@ -113,7 +113,8 @@ app's own releases. Docker is in `monitor/Dockerfile`.
 
 `fl_build` regenerates `lib/data/res/build_data.dart` on every build, deriving
 the build number from the Git history, and writes the matching version into the
-Xcode configs. `fl_build.json` is what names the app for it.
+Xcode configs. The `fl_build:` section of `pubspec.yaml` is what names the app
+for it.
 
 ## Troubleshooting
 

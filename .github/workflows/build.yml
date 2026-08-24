@@ -43,11 +43,12 @@ jobs:
       # the check) and then match nothing (it was not stripped afterwards),
       # skipping every job while reporting success.
       selected: ${{ steps.selection.outputs.selected }}
-      # What the artifacts are called, read from the one file that says so.
-      # `fl_build` names the files it produces after it, and the steps below
-      # name the files they publish — a second copy here that drifted would
-      # publish a release whose asset paths match nothing, which
-      # `action-gh-release` reports as a warning and an empty release.
+      # What the artifacts are called, read from the one line that says so —
+      # `fl_build:` in pubspec.yaml. `fl_build` names the files it produces
+      # after it and the steps below name the files they publish, so a second
+      # copy here that drifted would publish a release whose asset paths match
+      # nothing, which `action-gh-release` reports as a warning and an empty
+      # release rather than as a failure.
       appName: ${{ steps.appName.outputs.name }}
     steps:
       - name: Checkout
@@ -162,7 +163,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          name="$(jq -er .appName fl_build.json)"
+          # `yq eval`, which is mikefarah's — the one on the Linux runner
+          # images, and the one the Flutter setup action calls the same way.
+          # It only installs its own for Windows, which is where it is missing.
+          name="$(yq eval '.fl_build.appName' pubspec.yaml)"
+          # An absent key reads back as the string `null`, and a release named
+          # after it would publish under `null_v1.0.<n>_arm64.apk` rather than
+          # fail.
+          if [[ -z "$name" || "$name" == 'null' ]]; then
+            echo "::error::pubspec.yaml has no fl_build.appName"
+            exit 1
+          fi
           echo "name=$name" >> "$GITHUB_OUTPUT"
           echo "app name: $name"
 
@@ -176,7 +187,8 @@ jobs:
       github.ref_type == 'tag'
       || contains(needs.reproducibilityCheck.outputs.selected, ',macos,')
     needs: reproducibilityCheck
-    # From `fl_build.json`, by way of the job above — see its `appName`
+    # From pubspec.yaml's `fl_build:`, by way of the job above — see its
+    # `appName`
     # output. Job level rather than workflow level because that is the
     # nearest scope an expression on `needs` can be written in.
     env:
@@ -372,7 +384,8 @@ jobs:
       github.ref_type == 'tag'
       || contains(needs.reproducibilityCheck.outputs.selected, ',android,')
     needs: reproducibilityCheck
-    # From `fl_build.json`, by way of the job above — see its `appName`
+    # From pubspec.yaml's `fl_build:`, by way of the job above — see its
+    # `appName`
     # output. Job level rather than workflow level because that is the
     # nearest scope an expression on `needs` can be written in.
     env:
@@ -469,7 +482,8 @@ jobs:
       github.ref_type == 'tag'
       || contains(needs.reproducibilityCheck.outputs.selected, ',ios,')
     needs: reproducibilityCheck
-    # From `fl_build.json`, by way of the job above — see its `appName`
+    # From pubspec.yaml's `fl_build:`, by way of the job above — see its
+    # `appName`
     # output. Job level rather than workflow level because that is the
     # nearest scope an expression on `needs` can be written in.
     env:
@@ -547,7 +561,8 @@ jobs:
       github.ref_type == 'tag'
       || contains(needs.reproducibilityCheck.outputs.selected, ',linux,')
     needs: reproducibilityCheck
-    # From `fl_build.json`, by way of the job above — see its `appName`
+    # From pubspec.yaml's `fl_build:`, by way of the job above — see its
+    # `appName`
     # output. Job level rather than workflow level because that is the
     # nearest scope an expression on `needs` can be written in.
     env:
@@ -622,7 +637,8 @@ jobs:
       github.ref_type == 'tag'
       || contains(needs.reproducibilityCheck.outputs.selected, ',windows,')
     needs: reproducibilityCheck
-    # From `fl_build.json`, by way of the job above — see its `appName`
+    # From pubspec.yaml's `fl_build:`, by way of the job above — see its
+    # `appName`
     # output. Job level rather than workflow level because that is the
     # nearest scope an expression on `needs` can be written in.
     env:
