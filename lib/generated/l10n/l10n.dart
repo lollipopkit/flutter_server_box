@@ -615,6 +615,18 @@ abstract class AppLocalizations {
   /// **'Incorrect backup password'**
   String get backupPasswordWrong;
 
+  /// No description provided for @connectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect all'**
+  String get connectAll;
+
+  /// No description provided for @disconnectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect all'**
+  String get disconnectAll;
+
   /// No description provided for @distIcon.
   ///
   /// In en, this message translates to:
@@ -632,6 +644,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Show a small mark beside each server for the system it appears to be running.'**
   String get distIconTip;
+
+  /// No description provided for @navTabMenuTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Long press a tab — or right-click it — to connect or disconnect everything on it at once.'**
+  String get navTabMenuTip;
 
   /// No description provided for @remoteBackupPasswordRequired.
   ///

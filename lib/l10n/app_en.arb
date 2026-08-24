@@ -82,6 +82,8 @@
   "backupPasswordSet": "Backup password set",
   "backupPasswordTip": "Set a password to encrypt backup files. Leave empty to disable encryption.",
   "backupPasswordWrong": "Incorrect backup password",
+  "connectAll": "Connect all",
+  "disconnectAll": "Disconnect all",
   "distIcon": "Distribution marks",
   "distIconIntroLegal": "These marks come from {fontLogos}. A mark says only what this device read from the remote system, which can be wrong or out of date, and identifies neither a derivative, a rebuild, nor any particular version. Where the system cannot be identified, or its mark is not shipped, a neutral outline is drawn instead.\n\nEach mark is a trademark of its respective owner and is used here only to refer to the system it identifies.",
   "@distIconIntroLegal": {
@@ -90,6 +92,7 @@
     }
   },
   "distIconTip": "Show a small mark beside each server for the system it appears to be running.",
+  "navTabMenuTip": "Long press a tab — or right-click it — to connect or disconnect everything on it at once.",
   "remoteBackupPasswordRequired": "Remote backups require a non-empty backup password",
   "monitorHttpsRequired": "A remote monitor agent needs HTTPS, unless HTTP is allowed for it.",
   "monitorAllowInsecureHttp": "Allow HTTP",

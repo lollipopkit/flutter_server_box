@@ -263,6 +263,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get backupPasswordWrong => 'バックアップパスワードが間違っています';
 
   @override
+  String get connectAll => 'すべて接続';
+
+  @override
+  String get disconnectAll => 'すべて切断';
+
+  @override
   String get distIcon => 'ディストリビューション標識';
 
   @override
@@ -272,6 +278,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get distIconTip => '各サーバーの横に、動作していると思われるシステムの小さな標識を表示します';
+
+  @override
+  String get navTabMenuTip => 'タブを長押し（マウスは右クリック）すると、その中のすべてをまとめて接続・切断できます。';
 
   @override
   String get remoteBackupPasswordRequired =>

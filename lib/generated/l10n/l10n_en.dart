@@ -279,6 +279,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backupPasswordWrong => 'Incorrect backup password';
 
   @override
+  String get connectAll => 'Connect all';
+
+  @override
+  String get disconnectAll => 'Disconnect all';
+
+  @override
   String get distIcon => 'Distribution marks';
 
   @override
@@ -289,6 +295,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get distIconTip =>
       'Show a small mark beside each server for the system it appears to be running.';
+
+  @override
+  String get navTabMenuTip =>
+      'Long press a tab — or right-click it — to connect or disconnect everything on it at once.';
 
   @override
   String get remoteBackupPasswordRequired =>

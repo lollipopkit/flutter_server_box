@@ -102,7 +102,13 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
     // already open rather than racing them.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _restoreTabs();
-      if (mounted) _drainRequests();
+      if (!mounted) return;
+      _drainRequests();
+      // Also here and not only from the listener: a flag set before this tab
+      // was ever built is not a *change* by the time the listener exists, so
+      // nothing would fire and the request would stand for good — after which
+      // asking again would set a value it already had, and change nothing.
+      _drainCloseAll();
     });
   }
 
@@ -118,6 +124,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
   Widget build(BuildContext context) {
     super.build(context);
     ref.listen(terminalRequestsProvider, (_, _) => _drainRequests());
+    ref.listen(terminalCloseAllRequestProvider, (_, _) => _drainCloseAll());
     return ListenBuilder(
       listenable: _sessions,
       builder: () => SbPaneList(
@@ -385,6 +392,24 @@ extension _Sessions on _SSHTabPageState {
     // decided to keep.
     if (mounted) FocusScope.of(context).unfocus();
     _closeTab(tab.id);
+  }
+
+  /// Closes every terminal, when something has asked for it.
+  ///
+  /// No confirmation here. The ask comes from the tab strip's own menu, which
+  /// confirms before it gets this far; this end only knows that the answer was
+  /// yes.
+  void _drainCloseAll() {
+    if (!ref.read(terminalCloseAllRequestProvider)) return;
+    ref.read(terminalCloseAllRequestProvider.notifier).done();
+
+    // Copied, because closing a tab is what mutates the list being walked.
+    final ids = [for (final tab in _sessions.tabs) tab.id];
+    if (ids.isEmpty) return;
+    if (mounted) FocusScope.of(context).unfocus();
+    for (final id in ids) {
+      _closeTab(id);
+    }
   }
 
   /// Opens everything queued for this tab and empties the queue.

@@ -282,6 +282,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get backupPasswordWrong => 'Yanlış yedekleme parolası';
 
   @override
+  String get connectAll => 'Tümünü bağla';
+
+  @override
+  String get disconnectAll => 'Tümünün bağlantısını kes';
+
+  @override
   String get distIcon => 'Dağıtım işaretleri';
 
   @override
@@ -292,6 +298,10 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get distIconTip =>
       'Her sunucunun yanında, üzerinde çalıştığı görünen sistemin küçük bir işaretini göster';
+
+  @override
+  String get navTabMenuTip =>
+      'İçindeki her şeyi tek seferde bağlamak veya bağlantısını kesmek için bir sekmeye uzun basın ya da sağ tıklayın.';
 
   @override
   String get remoteBackupPasswordRequired =>

@@ -171,17 +171,48 @@ class ServersNotifier extends _$ServersNotifier {
       TryLimiter.reset(id);
     }
 
+    await _refreshEach(serversToRefresh.map((e) => e.key).toList());
+  }
+
+  /// Connects every server, the ones taken down by hand included.
+  ///
+  /// [refresh] passes over those on purpose — a poll on a timer is not allowed
+  /// to undo a disconnect the user asked for — and it also passes over a
+  /// server whose `autoConnect` is off. Asking for all of them is the one case
+  /// where both of those are the point, so this forgets what was closed by
+  /// hand and connects the lot.
+  ///
+  /// Non-interactive, like the timer's refresh and unlike opening one server:
+  /// a keyboard-interactive prompt per machine would be a stack of dialogs
+  /// nobody asked for. Those servers keep the lock on their card, which is
+  /// where answering one at a time belongs.
+  Future<void> connectAll() async {
+    final ids = state.servers.keys.toList();
+    if (ids.isEmpty) return;
+    state = state.copyWith(manualDisconnectedIds: const <String>{});
+    for (final id in ids) {
+      TryLimiter.reset(id);
+    }
+    await _refreshEach(ids);
+  }
+
+  /// Refreshes [ids], a few at a time.
+  ///
+  /// The cap is what keeps a list of thirty machines from opening thirty
+  /// connections at once; the workers share one cursor rather than a slice
+  /// each, so a slow server holds up nothing but itself.
+  Future<void> _refreshEach(List<String> ids) async {
     var next = 0;
     Future<void> worker() async {
-      while (next < serversToRefresh.length) {
-        final entry = serversToRefresh[next++];
-        final serverNotifier = ref.read(serverProvider(entry.key).notifier);
+      while (next < ids.length) {
+        final serverNotifier = ref.read(serverProvider(ids[next++]).notifier);
         await serverNotifier.refresh();
       }
     }
+
     await Future.wait(
       List.generate(
-        serversToRefresh.length.clamp(0, _maxConcurrentRefreshes).toInt(),
+        ids.length.clamp(0, _maxConcurrentRefreshes).toInt(),
         (_) => worker(),
       ),
     );

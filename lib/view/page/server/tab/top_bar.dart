@@ -1,6 +1,6 @@
 part of 'tab.dart';
 
-final class _TopBar extends ConsumerWidget implements PreferredSizeWidget {
+final class _TopBar extends StatelessWidget implements PreferredSizeWidget {
   final ValueNotifier<Set<String>> tags;
   final void Function(String) onTagChanged;
   final String initTag;
@@ -12,7 +12,7 @@ final class _TopBar extends ConsumerWidget implements PreferredSizeWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final breakpoints = ResponsiveBreakpoints.of(context);
     final isMobile = breakpoints.isMobile;
     final padding = EdgeInsets.only(
@@ -20,32 +20,44 @@ final class _TopBar extends ConsumerWidget implements PreferredSizeWidget {
       right: isMobile ? 0 : 16,
     );
 
-    final Widget leading;
-    if (isMobile) {
-      // Keep this btn. For issue #657.
-      leading = InkWell(
-        borderRadius: BorderRadius.circular(13),
-        onTap: () {
-          SettingsPage.route.go(context);
-        },
-        child: const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-          child: Row(
-            // As wide as the name and the cog. [Flexible] hands down loose
-            // constraints, so a row left at `max` took the whole width the
-            // tags had not claimed and the ripple was drawn across all of it.
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(BuildData.name, style: TextStyle(fontSize: 19)),
-              SizedBox(width: 5),
-              Icon(Icons.settings, size: 17),
-            ],
-          ),
-        ),
-      );
-    } else {
-      leading = _ConnectionCountText();
+    final tagSwitcher = TagSwitcher(
+      tags: tags,
+      onTagChanged: onTagChanged,
+      initTag: initTag,
+      singleLine: true,
+      reversed: true,
+    );
+
+    // Nothing before the tags on a wide window. What stood there was the
+    // connection count, a heading counting the very cards under it; it says
+    // more over the tab's own icon, where it can be read from any tab — see
+    // `ConnCountBadge`. The settings button below is a phone's only way in,
+    // which is why that one stays.
+    if (!isMobile) {
+      return Padding(padding: padding, child: tagSwitcher);
     }
+
+    // Keep this btn. For issue #657.
+    final leading = InkWell(
+      borderRadius: BorderRadius.circular(13),
+      onTap: () {
+        SettingsPage.route.go(context);
+      },
+      child: const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        child: Row(
+          // As wide as the name and the cog. [Flexible] hands down loose
+          // constraints, so a row left at `max` took the whole width the
+          // tags had not claimed and the ripple was drawn across all of it.
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(BuildData.name, style: TextStyle(fontSize: 19)),
+            SizedBox(width: 5),
+            Icon(Icons.settings, size: 17),
+          ],
+        ),
+      ),
+    );
 
     return Padding(
       padding: padding,
@@ -58,14 +70,8 @@ final class _TopBar extends ConsumerWidget implements PreferredSizeWidget {
           // sized to its own text takes the row past its width and the tags
           // beside it have nothing left to shrink into.
           Flexible(child: leading),
-          SizedBox(width: isMobile ? 30 : 16),
-          TagSwitcher(
-            tags: tags,
-            onTagChanged: onTagChanged,
-            initTag: initTag,
-            singleLine: true,
-            reversed: true,
-          ).expanded(),
+          const SizedBox(width: 30),
+          tagSwitcher.expanded(),
         ],
       ),
     );
@@ -73,34 +79,4 @@ final class _TopBar extends ConsumerWidget implements PreferredSizeWidget {
 
   @override
   Size get preferredSize => const Size.fromHeight(TagSwitcher.kTagBtnHeight);
-}
-
-final class _ConnectionCountText extends ConsumerWidget {
-  const _ConnectionCountText();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final order = ref.watch(serversProvider.select((s) => s.serverOrder));
-    var connected = 0;
-    for (final id in order) {
-      final conn = ref.watch(serverProvider(id).select((v) => v.conn));
-      if (conn.index >= ServerConn.connected.index) connected++;
-    }
-    final text = '$connected/${order.length} ${context.libL10n.conn}';
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: Tooltip(
-        message: context.l10n.connectionStats,
-        child: InkWell(
-          onTap: () => ConnectionStatsPage.route.go(context),
-          child: Text(
-            text,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-          ),
-        ),
-      ),
-    );
-  }
 }

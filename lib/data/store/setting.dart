@@ -616,6 +616,15 @@ class SettingStore extends SqliteStore {
     false,
   );
 
+  /// Whether the one-off guide over the tab strip has been shown.
+  ///
+  /// The bulk actions there open on a long press or a right-click, and neither
+  /// leaves a mark on screen — nothing about the strip says the menu exists.
+  /// A version flag would show it again after every update; what is wanted is
+  /// once per install, so this is set the first time it is dismissed and never
+  /// read again.
+  late final navTabMenuGuided = propertyDefault('navTabMenuGuided', false);
+
   /// The highest rootfs-manifest serial this device has accepted.
   ///
   /// A signature stays valid for as long as the key does, so verifying one

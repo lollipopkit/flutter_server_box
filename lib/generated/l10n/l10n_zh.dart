@@ -260,6 +260,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get backupPasswordWrong => '备份密码错误';
 
   @override
+  String get connectAll => '全部连接';
+
+  @override
+  String get disconnectAll => '全部断开';
+
+  @override
   String get distIcon => '发行版标识';
 
   @override
@@ -269,6 +275,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get distIconTip => '在每台服务器旁显示一个小标识,表示它可能运行的系统';
+
+  @override
+  String get navTabMenuTip => '长按标签栏图标（鼠标右键点击）可一次性连接或断开其中的全部内容。';
 
   @override
   String get remoteBackupPasswordRequired => '远程备份需要非空的备份密码';
@@ -1719,6 +1728,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get backupPasswordWrong => '備份密碼錯誤';
 
   @override
+  String get connectAll => '全部連線';
+
+  @override
+  String get disconnectAll => '全部斷開';
+
+  @override
   String get distIcon => '發行版標識';
 
   @override
@@ -1728,6 +1743,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get distIconTip => '在每台伺服器旁顯示一個小標識,表示它可能執行的系統';
+
+  @override
+  String get navTabMenuTip => '長按標籤列圖示（滑鼠右鍵點選）可一次連線或斷開其中的全部項目。';
 
   @override
   String get remoteBackupPasswordRequired => '遠端備份需要非空的備份密碼';

@@ -285,6 +285,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get backupPasswordWrong => 'Неверный пароль резервной копии';
 
   @override
+  String get connectAll => 'Подключить все';
+
+  @override
+  String get disconnectAll => 'Отключить все';
+
+  @override
   String get distIcon => 'Значки дистрибутивов';
 
   @override
@@ -295,6 +301,10 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get distIconTip =>
       'Показывать рядом с каждым сервером небольшой значок системы, которая на нём предположительно работает';
+
+  @override
+  String get navTabMenuTip =>
+      'Нажмите и удерживайте вкладку — или щёлкните правой кнопкой — чтобы подключить или отключить всё сразу.';
 
   @override
   String get remoteBackupPasswordRequired =>

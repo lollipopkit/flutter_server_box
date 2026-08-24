@@ -284,6 +284,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get backupPasswordWrong => 'Falsches Backup-Passwort';
 
   @override
+  String get connectAll => 'Alle verbinden';
+
+  @override
+  String get disconnectAll => 'Alle trennen';
+
+  @override
   String get distIcon => 'Distributions-Kennzeichen';
 
   @override
@@ -294,6 +300,10 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get distIconTip =>
       'Neben jedem Server ein kleines Zeichen für das System anzeigen, das er offenbar ausführt';
+
+  @override
+  String get navTabMenuTip =>
+      'Tippe lange auf einen Tab – oder klicke ihn mit der rechten Maustaste an –, um alles darin auf einmal zu verbinden oder zu trennen.';
 
   @override
   String get remoteBackupPasswordRequired =>

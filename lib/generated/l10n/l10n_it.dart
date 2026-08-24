@@ -285,6 +285,12 @@ class AppLocalizationsIt extends AppLocalizations {
   String get backupPasswordWrong => 'Password di backup errata';
 
   @override
+  String get connectAll => 'Connetti tutti';
+
+  @override
+  String get disconnectAll => 'Disconnetti tutti';
+
+  @override
   String get distIcon => 'Contrassegni di distribuzione';
 
   @override
@@ -295,6 +301,10 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get distIconTip =>
       'Mostra accanto a ogni server un piccolo contrassegno del sistema che sembra eseguire';
+
+  @override
+  String get navTabMenuTip =>
+      'Tieni premuta una scheda — o fai clic destro — per connettere o disconnettere in una volta tutto ciò che contiene.';
 
   @override
   String get remoteBackupPasswordRequired =>

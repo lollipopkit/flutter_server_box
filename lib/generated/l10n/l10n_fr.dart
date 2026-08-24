@@ -288,6 +288,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get backupPasswordWrong => 'Mot de passe de sauvegarde incorrect';
 
   @override
+  String get connectAll => 'Tout connecter';
+
+  @override
+  String get disconnectAll => 'Tout déconnecter';
+
+  @override
   String get distIcon => 'Marques de distribution';
 
   @override
@@ -298,6 +304,10 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get distIconTip =>
       'Afficher à côté de chaque serveur une petite marque du système qu’il semble exécuter';
+
+  @override
+  String get navTabMenuTip =>
+      'Appuyez longuement sur un onglet — ou faites un clic droit — pour connecter ou déconnecter d\'un coup tout ce qu\'il contient.';
 
   @override
   String get remoteBackupPasswordRequired =>

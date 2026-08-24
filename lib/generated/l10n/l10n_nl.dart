@@ -282,6 +282,12 @@ class AppLocalizationsNl extends AppLocalizations {
   String get backupPasswordWrong => 'Onjuist back-up wachtwoord';
 
   @override
+  String get connectAll => 'Alles verbinden';
+
+  @override
+  String get disconnectAll => 'Alles verbreken';
+
+  @override
   String get distIcon => 'Distributiemarkeringen';
 
   @override
@@ -292,6 +298,10 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get distIconTip =>
       'Toon naast elke server een klein teken van het systeem dat er lijkt te draaien';
+
+  @override
+  String get navTabMenuTip =>
+      'Houd een tabblad ingedrukt — of klik er met rechts op — om alles erin in één keer te verbinden of te verbreken.';
 
   @override
   String get remoteBackupPasswordRequired =>

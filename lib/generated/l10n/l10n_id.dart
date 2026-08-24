@@ -281,6 +281,12 @@ class AppLocalizationsId extends AppLocalizations {
   String get backupPasswordWrong => 'Kata sandi cadangan salah';
 
   @override
+  String get connectAll => 'Hubungkan semua';
+
+  @override
+  String get disconnectAll => 'Putuskan semua';
+
+  @override
   String get distIcon => 'Tanda distribusi';
 
   @override
@@ -291,6 +297,10 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get distIconTip =>
       'Tampilkan tanda kecil di samping setiap server untuk sistem yang tampaknya dijalankannya';
+
+  @override
+  String get navTabMenuTip =>
+      'Tekan lama sebuah tab — atau klik kanan — untuk menghubungkan atau memutuskan semuanya sekaligus.';
 
   @override
   String get remoteBackupPasswordRequired =>

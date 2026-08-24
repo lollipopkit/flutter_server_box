@@ -325,6 +325,89 @@ abstract class _$TerminalRequests extends $Notifier<List<TerminalRequest>> {
   }
 }
 
+/// A standing request to close every terminal.
+///
+/// The tab that owns the sessions is the only thing that can close them, and
+/// it is built when first visited — so this is a flag it drains, the same
+/// arrangement [TerminalRequests] has, rather than a call. A request left
+/// standing because that tab has never been built closes nothing when it
+/// finally is, which is right: a tab nobody has opened has no sessions.
+
+@ProviderFor(TerminalCloseAllRequest)
+final terminalCloseAllRequestProvider = TerminalCloseAllRequestProvider._();
+
+/// A standing request to close every terminal.
+///
+/// The tab that owns the sessions is the only thing that can close them, and
+/// it is built when first visited — so this is a flag it drains, the same
+/// arrangement [TerminalRequests] has, rather than a call. A request left
+/// standing because that tab has never been built closes nothing when it
+/// finally is, which is right: a tab nobody has opened has no sessions.
+final class TerminalCloseAllRequestProvider
+    extends $NotifierProvider<TerminalCloseAllRequest, bool> {
+  /// A standing request to close every terminal.
+  ///
+  /// The tab that owns the sessions is the only thing that can close them, and
+  /// it is built when first visited — so this is a flag it drains, the same
+  /// arrangement [TerminalRequests] has, rather than a call. A request left
+  /// standing because that tab has never been built closes nothing when it
+  /// finally is, which is right: a tab nobody has opened has no sessions.
+  TerminalCloseAllRequestProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'terminalCloseAllRequestProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$terminalCloseAllRequestHash();
+
+  @$internal
+  @override
+  TerminalCloseAllRequest create() => TerminalCloseAllRequest();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$terminalCloseAllRequestHash() =>
+    r'2cf3ab0878b0e36015786c6f2675a9a98fde5b9a';
+
+/// A standing request to close every terminal.
+///
+/// The tab that owns the sessions is the only thing that can close them, and
+/// it is built when first visited — so this is a flag it drains, the same
+/// arrangement [TerminalRequests] has, rather than a call. A request left
+/// standing because that tab has never been built closes nothing when it
+/// finally is, which is right: a tab nobody has opened has no sessions.
+
+abstract class _$TerminalCloseAllRequest extends $Notifier<bool> {
+  bool build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<bool, bool>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<bool, bool>,
+              bool,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 /// Servers waiting for a file browser. Same reasoning as [TerminalRequests].
 
 @ProviderFor(SftpRequests)

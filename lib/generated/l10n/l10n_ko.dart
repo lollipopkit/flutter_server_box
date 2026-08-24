@@ -264,6 +264,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get backupPasswordWrong => '백업 비밀번호가 올바르지 않습니다';
 
   @override
+  String get connectAll => '모두 연결';
+
+  @override
+  String get disconnectAll => '모두 연결 해제';
+
+  @override
   String get distIcon => '배포판 표시';
 
   @override
@@ -273,6 +279,10 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get distIconTip => '각 서버 옆에 실행 중으로 보이는 시스템의 작은 표시를 보여줍니다';
+
+  @override
+  String get navTabMenuTip =>
+      '탭을 길게 누르거나 마우스 오른쪽 버튼으로 누르면 그 안의 모든 항목을 한 번에 연결하거나 끊을 수 있습니다.';
 
   @override
   String get remoteBackupPasswordRequired =>

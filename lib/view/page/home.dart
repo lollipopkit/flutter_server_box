@@ -5,8 +5,10 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:icons_plus/icons_plus.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 import 'package:server_box/core/chan.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/core/utils/desktop_shortcuts.dart';
 import 'package:server_box/data/model/app/tab.dart';
@@ -58,6 +60,17 @@ class _HomePageState extends ConsumerState<HomePage>
 
   late final _notifier = ref.read(serversProvider.notifier);
   late List<AppTab> _tabs = Stores.setting.homeTabs.fetch();
+
+  /// The tab strip, whichever of the two is on screen. Only one is built at a
+  /// time — the bar on a phone, the rail beside a window — so one key covers
+  /// both, and it is null exactly when there is no strip to point at.
+  final _navKey = GlobalKey();
+
+  /// Whether the guide over that strip has been dealt with this launch.
+  ///
+  /// The stored flag is only written once the guide has been dismissed, so
+  /// something has to stop a second attempt while the first is still up.
+  bool _navGuideHandled = false;
 
   @override
   void dispose() {
@@ -298,12 +311,15 @@ class _HomePageState extends ConsumerState<HomePage>
       builder: (context, child) {
         if (_isServerFullscreenMode) return UIs.placeholder;
         return NavigationBar(
+          key: _navKey,
           selectedIndex: _selectIndex.value,
           height: kBottomNavigationBarHeight * 1.1,
           animationDuration: const Duration(milliseconds: 250),
           onDestinationSelected: _onDestinationSelected,
           labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
-          destinations: _tabs.map((tab) => tab.navDestination).toList(),
+          destinations: [
+            for (final tab in _tabs) tab.navDestination(onMenu: _navMenuFor(tab)),
+          ],
         );
       },
     );
@@ -318,6 +334,7 @@ class _HomePageState extends ConsumerState<HomePage>
             builder: (context, _) {
               if (_isServerFullscreenMode) return UIs.placeholder;
               return NavigationRail(
+                key: _navKey,
                 extended: extended,
                 minExtendedWidth: 150,
                 leading: extended ? const SizedBox(height: 20) : null,
@@ -326,9 +343,10 @@ class _HomePageState extends ConsumerState<HomePage>
                     ? NavigationRailLabelType.none
                     : NavigationRailLabelType.all,
                 selectedIndex: _selectIndex.value,
-                destinations: _tabs
-                    .map((tab) => tab.navRailDestination)
-                    .toList(),
+                destinations: [
+                  for (final tab in _tabs)
+                    tab.navRailDestination(onMenu: _navMenuFor(tab)),
+                ],
                 onDestinationSelected: _onDestinationSelected,
               );
             },
@@ -394,6 +412,13 @@ class _HomePageState extends ConsumerState<HomePage>
     // it could not — see [SandboxImport].
     unawaited(SandboxImportNotice.showIfNeeded(context));
     unawaited(MethodChans.updateHomeWidget());
+
+    // Before the refresh and not after it: that call waits on every server's
+    // connection, and one machine that is slow to answer would hold the guide
+    // back for as long as it takes to time out. The strip it points at is
+    // already laid out — this runs after the first frame.
+    unawaited(_maybeShowNavGuide());
+
     await _notifier.refresh();
 
     bakSync.sync(milliDelay: 1000);
@@ -404,7 +429,15 @@ class _HomePageState extends ConsumerState<HomePage>
       if (LocalAuthPage.route.alreadyIn) return;
       LocalAuthPage.route.go(
         context,
-        args: LocalAuthPageArgs(onAuthSuccess: () => _shouldAuth = false),
+        args: LocalAuthPageArgs(
+          onAuthSuccess: () {
+            _shouldAuth = false;
+            // The other place the guide can start from. On a device that locks
+            // the app, the home page is never current at the end of the first
+            // layout, and the guide would be skipped every launch forever.
+            unawaited(_maybeShowNavGuide());
+          },
+        ),
       );
     }
   }
@@ -485,5 +518,143 @@ extension _HomePageStateActions on _HomePageState {
       unawaited(_notifier.startAutoRefresh());
       unawaited(_notifier.refresh());
     }
+  }
+}
+
+/// What a tab can be told to do to everything it holds.
+///
+/// Two tabs hold a set of live things — the servers, and the terminals — and
+/// acting on all of them one row at a time is the tedious part of having more
+/// than a few. The rest of the tabs hold records: a snippet is not connected
+/// to anything, and a menu with nothing in it is worse than no menu.
+///
+/// On the tab and not on the page it opens, because that is the one control
+/// reachable from anywhere in the app. Turning everything off is most wanted
+/// from somewhere that is not the server list.
+extension _HomePageNav on _HomePageState {
+  NavTabMenu? _navMenuFor(AppTab tab) {
+    final l10n = context.l10n;
+    final menu = switch (tab) {
+      AppTab.server => (
+        title: libL10n.server,
+        actions: [
+          ContextMenuAction(
+            text: l10n.connectAll,
+            icon: MingCute.link_3_line,
+            onTap: () => unawaited(_notifier.connectAll()),
+          ),
+          ContextMenuAction(
+            text: l10n.disconnectAll,
+            icon: MingCute.unlink_2_line,
+            destructive: true,
+            onTap: _notifier.closeServer,
+          ),
+        ],
+      ),
+      AppTab.ssh => (
+        title: libL10n.terminal,
+        actions: [
+          ContextMenuAction(
+            text: l10n.disconnectAll,
+            icon: MingCute.unlink_2_line,
+            destructive: true,
+            onTap: () => unawaited(_confirmCloseAllTerminals()),
+          ),
+        ],
+      ),
+      _ => null,
+    };
+    if (menu == null) return null;
+    return (at) => showContextMenu(context, menu.actions, title: menu.title, at: at);
+  }
+
+  /// Asked first, unlike disconnecting servers.
+  ///
+  /// A server that was disconnected reconnects with the entry above it and is
+  /// back where it was. A terminal that was closed takes its scrollback with
+  /// it, and whatever was still running in it.
+  Future<void> _confirmCloseAllTerminals() async {
+    final ok = await context.showRoundDialog<bool>(
+      title: libL10n.attention,
+      child: Text(
+        libL10n.askContinue('${libL10n.close} ${libL10n.all} ${libL10n.terminal}'),
+      ),
+      actions: Btnx.okReds,
+    );
+    if (ok != true) return;
+    // The tab that owns the sessions does the closing; see
+    // [TerminalCloseAllRequest] for why it cannot be called directly.
+    ref.read(terminalCloseAllRequestProvider.notifier).go();
+  }
+
+  /// Points at the tab strip, once per install.
+  ///
+  /// The menu above opens on a long press or a right-click and leaves no mark
+  /// on screen — nothing about the strip says it is there. Everything else in
+  /// this app that hides behind a long press has a visible way in as well;
+  /// this one does not, because the tab's own tap already means "go there".
+  Future<void> _maybeShowNavGuide() async {
+    if (_navGuideHandled) return;
+    final flag = Stores.setting.navTabMenuGuided;
+    if (flag.fetch()) return;
+    if (!mounted) return;
+    // Nothing to act on in bulk yet. Someone who has just installed this has
+    // enough in front of them without being told about a shortcut for a list
+    // they have not made.
+    if (ref.read(serversProvider).serverOrder.isEmpty) return;
+    // The overlay goes above every route, so it would cover the lock screen,
+    // an update notice or the sandbox-import dialog rather than wait for it.
+    // Skipping leaves the guide for the next launch.
+    if (ModalRoute.of(context)?.isCurrent != true) return;
+
+    final overlay = Overlay.maybeOf(context, rootOverlay: true);
+    if (overlay == null) return;
+    // Null when the strip is not built — fullscreen mode takes it away.
+    final spot = rectInOverlay(_navKey.currentContext, overlay);
+    if (spot == null) return;
+
+    _navGuideHandled = true;
+    await SpotlightGuide.show(
+      context,
+      spot: spot,
+      caption: (ctx, dismiss) => _NavGuideCard(onOk: dismiss),
+    );
+    // Written when it has been seen through, not when it was scheduled.
+    flag.put(true);
+  }
+}
+
+/// The guide's text, over the dimmed screen.
+///
+/// White rather than the theme's foreground: it is read against the scrim,
+/// which is dark in both themes.
+class _NavGuideCard extends StatelessWidget {
+  const _NavGuideCard({required this.onOk});
+
+  final VoidCallback onOk;
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 330),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.touch_app_outlined, size: 40, color: Colors.white),
+          UIs.height13,
+          Text(
+            context.l10n.navTabMenuTip,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 16,
+              height: 1.4,
+              color: Colors.white,
+            ),
+          ),
+          UIs.height13,
+          Btn.elevated(text: libL10n.ok, onTap: onOk),
+        ],
+      ),
+    );
   }
 }
