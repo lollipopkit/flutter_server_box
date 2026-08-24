@@ -29,7 +29,6 @@ permissions:
   contents: read
 
 env:
-  APP_NAME: ServerBox
   BUILD_TAG: test-build-${{ github.run_number }}-${{ github.sha }}
 
 jobs:
@@ -44,6 +43,12 @@ jobs:
       # the check) and then match nothing (it was not stripped afterwards),
       # skipping every job while reporting success.
       selected: ${{ steps.selection.outputs.selected }}
+      # What the artifacts are called, read from the one file that says so.
+      # `fl_build` names the files it produces after it, and the steps below
+      # name the files they publish — a second copy here that drifted would
+      # publish a release whose asset paths match nothing, which
+      # `action-gh-release` reports as a warning and an empty release.
+      appName: ${{ steps.appName.outputs.name }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -152,6 +157,14 @@ jobs:
       - name: Check JNI build-id patch
         shell: bash
         run: scripts/release/patch-jni-build-id.sh
+      - name: Read the app name
+        id: appName
+        shell: bash
+        run: |
+          set -euo pipefail
+          name="$(jq -er .appName fl_build.json)"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "app name: $name"
 
   buildMacOS:
     name: Build macos
@@ -163,6 +176,11 @@ jobs:
       github.ref_type == 'tag'
       || contains(needs.reproducibilityCheck.outputs.selected, ',macos,')
     needs: reproducibilityCheck
+    # From `fl_build.json`, by way of the job above — see its `appName`
+    # output. Job level rather than workflow level because that is the
+    # nearest scope an expression on `needs` can be written in.
+    env:
+      APP_NAME: ${{ needs.reproducibilityCheck.outputs.appName }}
     runs-on: macos-latest
     timeout-minutes: 45
     permissions:
@@ -263,11 +281,15 @@ jobs:
       - name: Package dmg
         shell: bash
         env:
-          # `APP_NAME` is the *bundle* name and has a space in it. The
-          # workflow-level `env` sets it to `ServerBox`, which reaches every
-          # step — without this override `ditto` would stage the app into the
-          # DMG under a name it does not have, and the volume would differ from
+          # `APP_NAME` is the *bundle* name and has a space in it. The job's
+          # own `env` sets it to `ServerBox`, which reaches every step —
+          # without this override `ditto` would stage the app into the DMG
+          # under a name it does not have, and the volume would differ from
           # what `make package-dmg` produces locally.
+          #
+          # The two `${{ env.APP_NAME }}` below still read `ServerBox`: what a
+          # step's `env` block is evaluated against is the workflow's and the
+          # job's, never its own.
           APP_NAME: Server Box
           APP_ASSET_NAME: ${{ env.APP_NAME }}
           APP_PATH: build/macos/Build/Products/Release/Server Box.app
@@ -350,6 +372,11 @@ jobs:
       github.ref_type == 'tag'
       || contains(needs.reproducibilityCheck.outputs.selected, ',android,')
     needs: reproducibilityCheck
+    # From `fl_build.json`, by way of the job above — see its `appName`
+    # output. Job level rather than workflow level because that is the
+    # nearest scope an expression on `needs` can be written in.
+    env:
+      APP_NAME: ${{ needs.reproducibilityCheck.outputs.appName }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -442,6 +469,11 @@ jobs:
       github.ref_type == 'tag'
       || contains(needs.reproducibilityCheck.outputs.selected, ',ios,')
     needs: reproducibilityCheck
+    # From `fl_build.json`, by way of the job above — see its `appName`
+    # output. Job level rather than workflow level because that is the
+    # nearest scope an expression on `needs` can be written in.
+    env:
+      APP_NAME: ${{ needs.reproducibilityCheck.outputs.appName }}
     runs-on: macos-latest
     permissions:
       contents: write
@@ -515,6 +547,11 @@ jobs:
       github.ref_type == 'tag'
       || contains(needs.reproducibilityCheck.outputs.selected, ',linux,')
     needs: reproducibilityCheck
+    # From `fl_build.json`, by way of the job above — see its `appName`
+    # output. Job level rather than workflow level because that is the
+    # nearest scope an expression on `needs` can be written in.
+    env:
+      APP_NAME: ${{ needs.reproducibilityCheck.outputs.appName }}
     permissions:
       contents: write
     strategy:
@@ -585,6 +622,11 @@ jobs:
       github.ref_type == 'tag'
       || contains(needs.reproducibilityCheck.outputs.selected, ',windows,')
     needs: reproducibilityCheck
+    # From `fl_build.json`, by way of the job above — see its `appName`
+    # output. Job level rather than workflow level because that is the
+    # nearest scope an expression on `needs` can be written in.
+    env:
+      APP_NAME: ${{ needs.reproducibilityCheck.outputs.appName }}
     runs-on: windows-latest
     permissions:
       contents: write
