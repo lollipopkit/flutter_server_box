@@ -245,6 +245,11 @@ enum ContainerRefreshTarget { containers, images }
 @riverpod
 class ContainerNotifier extends _$ContainerNotifier {
   var sudoCompleter = Completer<bool>();
+  // Per-target completers to avoid cross-target reuse: a successful ps probe
+  // must not suppress the images probe.
+  final _sudoCompleters = <ContainerRefreshTarget, Completer<bool>>{
+    for (final t in ContainerRefreshTarget.values) t: Completer<bool>(),
+  };
   String? _cachedPassword;
   var _refreshGeneration = 0;
 
@@ -302,6 +307,9 @@ class ContainerNotifier extends _$ContainerNotifier {
 
   int _resetSudoProbe() {
     sudoCompleter = Completer<bool>();
+    for (final t in ContainerRefreshTarget.values) {
+      _sudoCompleters[t] = Completer<bool>();
+    }
     _pendingRefresh = null;
     // Whatever was running is now stale and will return without finishing, so
     // the guard has to be lifted here or nothing could ever refresh again.
@@ -387,8 +395,19 @@ class ContainerNotifier extends _$ContainerNotifier {
     // itself.
     if (!isAuto) state = state.copyWith(isBusy: true);
 
-    final sudo = sudoCompleter;
+    final sudo = _sudoCompleters[target]!;
     if (!sudo.isCompleted) unawaited(_requiresSudo(sudo, type, target));
+    // Keep legacy completer in sync for external callers that still read it.
+    if (!sudoCompleter.isCompleted && sudo.isCompleted) {
+      try {
+        sudoCompleter.complete(await sudo.future);
+      } catch (_) {}
+    } else if (!sudo.isCompleted && sudoCompleter.isCompleted) {
+      // If legacy was completed, propagate to per-target as well.
+      try {
+        sudo.complete(await sudoCompleter.future);
+      } catch (_) {}
+    }
 
     final needSudo = await sudo.future;
     if (_isStaleRefresh(refreshGeneration)) return;
@@ -448,6 +467,7 @@ class ContainerNotifier extends _$ContainerNotifier {
     // script echoes between commands.
     String errOut = '';
     var isPodmanEmulation = false;
+    final podmanBuffer = StringBuffer();
     try {
       // Asked for rather than held: a server reached over its monitor agent
       // has no connection sitting there until something needs one, and a
@@ -457,7 +477,8 @@ class ContainerNotifier extends _$ContainerNotifier {
         cmd,
         password: password,
         onStderr: (data) {
-          if (data.contains(_podmanEmulationMsg)) {
+          podmanBuffer.write(data);
+          if (podmanBuffer.toString().contains(_podmanEmulationMsg)) {
             isPodmanEmulation = true;
           }
         },
@@ -829,15 +850,10 @@ class ContainerNotifier extends _$ContainerNotifier {
       ContainerType.podman => 'podman $cmd',
     };
 
-    final sudo = sudoCompleter;
+    final target = refreshTarget ?? ContainerRefreshTarget.containers;
+    final sudo = _sudoCompleters[target]!;
     if (!sudo.isCompleted) {
-      unawaited(
-        _requiresSudo(
-          sudo,
-          type,
-          refreshTarget ?? ContainerRefreshTarget.containers,
-        ),
-      );
+      unawaited(_requiresSudo(sudo, type, target));
     }
     final needSudo = await sudo.future;
     if (!ref.mounted) return null;
@@ -884,6 +900,17 @@ class ContainerNotifier extends _$ContainerNotifier {
       );
     }
     if (code != 0) {
+      // Preserve diagnostics: missing runtime should be actionable, not generic.
+      final combined = (code == 127 || (state.runLog?.contains(_dockerNotFound) ?? false))
+          ? state.runLog ?? ''
+          : '';
+      if (code == 127 || combined.contains(_dockerNotFound)) {
+        await _finishRun();
+        return ContainerErr(
+          type: ContainerErrType.notInstalled,
+          message: combined.isNotEmpty ? combined : libL10n.fail,
+        );
+      }
       await _finishRun();
       return ContainerErr(
         type: ContainerErrType.unknown,

@@ -252,7 +252,7 @@ Future<SSHClient> genClient(
           return _JumpForwardedSocket(forwarded, jumpClient);
         } catch (e, stack) {
           try {
-            await jumpClient?.close();
+            jumpClient?.close();
           } catch (_) {}
           if (!_isJumpFailoverError(e)) {
             rethrow;
@@ -981,15 +981,13 @@ class _JumpForwardedSocket implements SSHSocket {
   StreamSink<List<int>> get sink => _inner.sink;
 
   @override
-  Future<void> get done => _inner.done.then((_) async {
-        // Ensure the jump client is closed when the forwarded channel ends;
-        // done is idempotent so awaiting close multiple times is safe.
+  Future<void> get done => _inner.done.then((_) {
         try {
-          await _jumpClient.close();
+          _jumpClient.close();
         } catch (_) {}
-      }, onError: (e, s) async {
+      }, onError: (e, s) {
         try {
-          await _jumpClient.close();
+          _jumpClient.close();
         } catch (_) {}
         Error.throwWithStackTrace(e, s);
       });
@@ -1000,7 +998,7 @@ class _JumpForwardedSocket implements SSHSocket {
       await _inner.close();
     } finally {
       try {
-        await _jumpClient.close();
+        _jumpClient.close();
       } catch (_) {}
     }
   }

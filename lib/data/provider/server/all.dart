@@ -18,6 +18,7 @@ import 'package:server_box/data/provider/server/selection.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
+import 'package:server_box/data/store/entity_store.dart';
 
 part 'all.freezed.dart';
 part 'all.g.dart';
