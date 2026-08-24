@@ -80,7 +80,13 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
   /// which is what a page swiped sideways is.
   Widget _buildVirtKeyRows() {
     final rows = (_enabled.length / kVirtKeysPerRow).ceil();
-    final value = Stores.setting.virtKeyRows.fetch();
+    // What the terminal will actually do with the stored number, which is not
+    // always the number: a count at or above the rows there are shows all of
+    // them, the same as 0. The store keeps what was asked for, so turning keys
+    // back on restores it, but the row has to say what is in force rather than
+    // what would be if there were more keys.
+    final stored = Stores.setting.virtKeyRows.fetch();
+    final effective = stored >= rows ? 0 : stored;
     return ListTile(
       title: Text(l10n.virtKeyRows),
       subtitle: Text(l10n.virtKeyRowsTip, style: UIs.textGrey),
@@ -89,10 +95,10 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
       // turned on and off in the list under it.
       enabled: rows > 1,
       trailing: Text(
-        value <= 0 ? libL10n.all : '$value',
+        effective <= 0 ? libL10n.all : '$effective',
         style: UIs.text15,
       ),
-      onTap: () => _pickVirtKeyRows(rows, value),
+      onTap: () => _pickVirtKeyRows(rows, effective),
     );
   }
 
@@ -102,8 +108,10 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
     final picked = await context.showPickSingleDialog<int>(
       title: l10n.virtKeyRows,
       items: [0, for (var i = 1; i < rows; i++) i],
-      display: (value) => value <= 0 ? libL10n.all : '$value',
+      // The effective value, so the dialog opens on the entry the row above
+      // shows. A stored count no longer in the list would open it on nothing.
       initial: current,
+    display: (value) => value <= 0 ? libL10n.all : '$value',
     );
     if (picked == null) return;
     Stores.setting.virtKeyRows.put(picked);

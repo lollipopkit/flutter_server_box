@@ -4,7 +4,7 @@
 // answer — a real rootfs entered through proot — has nothing to enter it with.
 // ish-arm64 is an interpreter instead: guest AArch64 dispatched to
 // pre-compiled native gadgets, no machine code written at runtime, and no
-// guest binary ever handed to the kernel. See TODOS.md, "本机 shell 与 rootfs", stage 4.
+// guest binary ever handed to the kernel.
 //
 // ## The switch
 //

@@ -9,6 +9,7 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/migrations/m009_grouped_settings.dart';
+import 'package:server_box/data/store/migrations/m011_virt_key_rows.dart';
 
 part 'backup.g.dart';
 
@@ -90,8 +91,10 @@ class Backup implements Mergeable {
     // Outside the transaction, and for the reason the v2 path does it too: a
     // restore is neither a launch nor a version bump, so nothing else will
     // look at what just landed. This format predates the grouped settings
-    // entirely, so its settings map is always the old per-field keys.
+    // entirely, so its settings map is always the old per-field keys — and,
+    // being older still, the pre-`virtKeyRows` switch as well.
     await const GroupedSettingsMigration().apply();
+    await const VirtKeyRowsMigration().apply();
 
     Provider.reload();
     RNodes.app.notify();

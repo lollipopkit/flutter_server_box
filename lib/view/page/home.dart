@@ -427,17 +427,20 @@ class _HomePageState extends ConsumerState<HomePage>
   void _goAuth() {
     if (Stores.setting.useBioAuth.fetch()) {
       if (LocalAuthPage.route.alreadyIn) return;
-      LocalAuthPage.route.go(
-        context,
-        args: LocalAuthPageArgs(
-          onAuthSuccess: () {
-            _shouldAuth = false;
-            // The other place the guide can start from. On a device that locks
-            // the app, the home page is never current at the end of the first
-            // layout, and the guide would be skipped every launch forever.
-            unawaited(_maybeShowNavGuide());
-          },
-        ),
+      // The route's own future, not `onAuthSuccess`. That callback runs from
+      // inside `context.pop()`, while the lock screen is still the route the
+      // navigator answers with — so the guide's "is the home page current"
+      // check would say no and skip it every launch, on exactly the devices
+      // this branch exists for. The future completes once the pop has.
+      unawaited(
+        LocalAuthPage.route
+            .go(
+              context,
+              args: LocalAuthPageArgs(
+                onAuthSuccess: () => _shouldAuth = false,
+              ),
+            )
+            .then((_) => _maybeShowNavGuide()),
       );
     }
   }

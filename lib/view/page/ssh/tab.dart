@@ -103,12 +103,16 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _restoreTabs();
       if (!mounted) return;
-      _drainRequests();
-      // Also here and not only from the listener: a flag set before this tab
-      // was ever built is not a *change* by the time the listener exists, so
+      // Here and not only from the listener: a flag set before this tab was
+      // ever built is not a *change* by the time the listener exists, so
       // nothing would fire and the request would stand for good — after which
       // asking again would set a value it already had, and change nothing.
+      //
+      // Before the queue, not after it. Both can be standing at once — close
+      // every terminal, then open one from a server's row — and draining them
+      // the other way round closed the terminal that was just asked for.
       _drainCloseAll();
+      _drainRequests();
     });
   }
 

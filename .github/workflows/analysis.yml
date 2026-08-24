@@ -316,8 +316,7 @@ jobs:
   # ship with are guarded by `test/macos_entitlements_test.dart`, which is a
   # plain test and runs in `check` below; what is left for a macOS runner is
   # whether the project and the Rust static library still link.  The
-  # running-app half needs a machine, and is listed in TODOS.md with the rest
-  # of what does.
+  # running-app half needs a machine, and has nowhere in CI to run.
   #
   # This was a workflow of its own until it moved here, because `paths:` is a
   # workflow-level filter and "only when macos/** changed" had nowhere else to

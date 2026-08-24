@@ -22,6 +22,7 @@ import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/migrations/m009_grouped_settings.dart';
+import 'package:server_box/data/store/migrations/m011_virt_key_rows.dart';
 import 'package:server_box/data/store/schema.dart';
 
 part 'backup2.freezed.dart';
@@ -122,7 +123,15 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     // restore would take `askAi` and `agentShell` out and put fourteen rows
     // nothing reads back in their place. Idempotent: a file that already has
     // the grouped shape leaves it with nothing to fold.
+    //
+    // Every settings migration that reads a key a backup can carry belongs
+    // here for the same reason, not only the newest one. `virtKeyRows` is
+    // the other: a file written before it restores `horizonVirtKey` and no
+    // `virtKeyRows`, and the next launch's `removeRetiredKeys` — which sees
+    // a `schemaVersion` the merge left past that step — deletes the old key
+    // without anything having read it.
     await const GroupedSettingsMigration().apply();
+    await const VirtKeyRowsMigration().apply();
 
     if (serversChanged) GlobalRef.gRef?.read(serversProvider.notifier).reload();
     if (snippetsChanged) {

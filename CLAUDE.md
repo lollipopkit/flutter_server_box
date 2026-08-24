@@ -167,7 +167,7 @@ either way, and this app verifies the host key itself in every case.
 
 ### Build System
 
-- Uses custom `fl_build` package for cross-platform building; `fl_build.json` names the app for it
+- Uses custom `fl_build` package for cross-platform building; the `fl_build:` section of `pubspec.yaml` names the app for it
 - `fl_build` **regenerates `lib/data/res/build_data.dart` from scratch** on every build — anything not fed to it is dropped. That is why the remote script's version is `ScriptConstants.version` and not a `BuildData` field: it was a second hand-maintained copy in `make.dart` (now gone) with a test holding the two level
 - Supports building for multiple platforms with platform-specific configurations
 - Many dependencies are custom forks hosted on GitHub (dartssh2, xterm, fl_lib, etc.)

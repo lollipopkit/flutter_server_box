@@ -22,7 +22,7 @@ class ScriptConstants {
   /// and then a hand-maintained number in *two* files with a test holding them
   /// level, because `fl_build` regenerates `BuildData` and drops anything it
   /// was not fed.
-  static const int version = 74;
+  static const int version = 75;
 
   static const String scriptFile = 'srvboxm_v$version.sh';
   static const String scriptFileWindows = 'srvboxm_v$version.ps1';

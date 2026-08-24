@@ -42,8 +42,6 @@ import 'package:server_box/view/page/setting/entries/home_tabs.dart';
 import 'package:server_box/view/page/setting/platform/ios.dart';
 import 'package:server_box/view/page/setting/platform/platform_pub.dart';
 import 'package:server_box/view/page/setting/seq/known_hosts.dart';
-// Still reached on its own from the server settings page, which links straight
-// at it rather than at the tabs.
 import 'package:server_box/view/page/setting/seq/srv_orders.dart';
 import 'package:server_box/view/page/setting/seq/virt_key.dart';
 import 'package:server_box/view/widget/dist_icon.dart';
@@ -90,7 +88,7 @@ const _kMenuWidth = 232.0;
 /// making the pane a narrow strip in the middle of a wide window — and it is
 /// also what lets the pages here that are a grid rather than a list keep two
 /// columns.
-const _kContentMaxWidth = 1000.0;
+const _kContentMaxWidth = 900.0;
 
 class _SettingsPageState extends ConsumerState<SettingsPage> {
   /// Which branches are open in the wide menu. Nothing to start with, so it

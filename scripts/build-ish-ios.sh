@@ -255,5 +255,5 @@ Built. To use them, set `SBM_ISH = 1` — in an untracked ios/Flutter/
 IshLocal.xcconfig rather than in the tracked file — and rebuild.
 
 Not done by this script: the device work that only hands can do — thermals
-under Instruments, and App Store review. See TODOS.md.
+under Instruments, and App Store review.
 NOTE

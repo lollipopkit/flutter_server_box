@@ -2,12 +2,16 @@ part of 'page.dart';
 
 extension _VirtKey on SSHPageState {
   void _reloadVirtKeys() {
+    final pagesBefore = _virtKeyPages.length;
     _virtKeyRows = Stores.setting.virtKeyRows.fetch();
     _initVirtKeys();
     _updateVirtKeysHeight();
-    // Back to the first page: the one that was showing may not exist any more,
-    // and the dots are what the swipe is measured against.
-    _virtKeyPage.value = 0;
+    // Only when the count changed, which is exactly when the `PageView` is
+    // rebuilt from its key and starts at the first page again. Resetting
+    // unconditionally moved the dots while the strip stayed where it was — a
+    // key turned on or off within the same number of rows left page two
+    // showing under a lit first dot.
+    if (_virtKeyPages.length != pagesBefore) _virtKeyPage.value = 0;
   }
 
   /// Runs the walkthrough over the keys, once ever — on the terminal that is
