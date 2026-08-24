@@ -54,6 +54,17 @@ extension _PaneList on _ServerPageState {
   }) {
     final tile = SideBarTile(
       title: srv.spi.name,
+      // The distribution, in the column the rail keeps for a mark. A list of
+      // servers reads faster without the *same* icon down the side of it — the
+      // reason `icon` is left null here — but this one differs per row and is
+      // the thing being scanned for.
+      leading: DistIconOf(
+        srv.status.more[StatusCmdType.sys]?.dist,
+        size: 17,
+        color: selected
+            ? Theme.of(context).colorScheme.primary
+            : Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
       selected: selected,
       // The same mark the terminal rail uses for a running shell: this one is
       // connected and has something to show.

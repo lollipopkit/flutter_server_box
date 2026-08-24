@@ -137,6 +137,10 @@ flutter:
   assets:
     - assets/app_icon.png
     - assets/rootfs_manifest.json
+    # The directory, not each file: `Dist.iconPath` names them by enum name, so
+    # adding a glyph is dropping a file in. The README beside them is not an
+    # asset and is left out by Flutter, which only takes files it can load.
+    - assets/distro/
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
   # fonts:

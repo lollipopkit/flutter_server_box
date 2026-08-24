@@ -15,6 +15,15 @@ extension on _ServerPageState {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Before the name, at the size of it: which distribution a
+                // machine runs is the thing you scan a list of servers for,
+                // and it reads faster as a shape than as a word.
+                DistIconOf(
+                  s.status.more[StatusCmdType.sys]?.dist,
+                  size: 15,
+                  color: Colors.grey,
+                ),
+                const SizedBox(width: 6),
                 Flexible(
                   child: Text(
                     s.spi.name,

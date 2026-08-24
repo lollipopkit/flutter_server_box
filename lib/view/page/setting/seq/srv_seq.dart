@@ -7,6 +7,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/view/page/setting/seq/reorder_proxy_decorator.dart';
+import 'package:server_box/view/widget/dist_icon.dart';
 
 class ServerOrderPage extends ConsumerStatefulWidget {
     /// Whether it is being shown inside the settings pane rather than pushed.
@@ -108,15 +109,15 @@ class _ServerOrderPageState extends ConsumerState<ServerOrderPage> {
       return const SizedBox();
     }
 
-    final name = spi.name.characters.firstOrNull ?? '?';
-
     return ListTile(
       title: Text(
         spi.name,
         style: const TextStyle(fontWeight: FontWeight.w500),
       ),
       subtitle: Text(spi.oldId, style: UIs.textGrey),
-      leading: CircleAvatar(child: Text(name)),
+      // The distribution rather than the name's first letter, which said
+      // nothing a row already showing the name did not.
+      leading: DistIcon(spi.id, size: 22),
       trailing: ReorderableDragStartListener(
         index: index,
         child: const Icon(Icons.drag_handle),

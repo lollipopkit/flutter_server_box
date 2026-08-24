@@ -331,6 +331,7 @@ class _SideBarState extends ConsumerState<_SideBar> {
               SideBarTile(
                 key: ValueKey(id),
                 title: spi.name,
+                leading: DistIcon(spi.id, size: 17),
                 // Always a new shell, never a jump to one that is already
                 // open: the section above is where switching happens, and a
                 // second shell on one server is an ordinary thing to want.
@@ -359,6 +360,7 @@ class _ServerTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return CardX(
       child: ListTile(
+        leading: DistIcon(spi.id, size: 26),
         title: Text(spi.name, style: UIs.text18, maxLines: 2, overflow: TextOverflow.ellipsis),
         subtitle: Text(
           spi.displayAddr,
