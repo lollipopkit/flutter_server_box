@@ -242,7 +242,7 @@ export class TerminalSession {
       // a 401 and App is showing the login screen, so retrying would spin
       // against a dead token. With no session to rejoin there is likewise
       // nothing a retry could recover.
-      const refused = e instanceof ApiError && e.status === 401
+      const refused = e instanceof ApiError && (e.status === 401 || e.status === 429)
       if (refused || !this.handle) {
         this.fail(e instanceof Error ? e.message : 'Could not authorise the terminal')
       } else {

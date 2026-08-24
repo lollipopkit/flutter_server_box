@@ -106,9 +106,13 @@ impl TicketStore {
         }
         let per_subject = entries.values().filter(|e| e.subject == subject).count();
         if per_subject >= MAX_PER_SUBJECT {
-            return Err(MonitorError::Auth(
-                "Too many outstanding WebSocket tickets for this account".to_string(),
-            ));
+            return Err(MonitorError::Quota {
+                message: format!(
+                    "Too many outstanding WebSocket tickets for this account; retry after {} seconds",
+                    TTL.as_secs()
+                ),
+                retry_after_secs: TTL.as_secs(),
+            });
         }
 
         entries.insert(
@@ -260,6 +264,22 @@ mod tests {
         assert!(store
             .issue_at(Purpose::Terminal, "extra", now)
             .is_err());
+    }
+
+    #[test]
+    fn outstanding_tickets_are_capped_per_subject() {
+        let store = TicketStore::new();
+        let now = Instant::now();
+        for _ in 0..MAX_PER_SUBJECT {
+            store.issue_at(Purpose::Terminal, "admin", now).unwrap();
+        }
+        assert!(matches!(
+            store.issue_at(Purpose::Terminal, "admin", now),
+            Err(MonitorError::Quota { retry_after_secs, .. }) if retry_after_secs == TTL.as_secs()
+        ));
+        assert!(store
+            .issue_at(Purpose::Terminal, "someone-else", now)
+            .is_ok());
     }
 
     #[test]

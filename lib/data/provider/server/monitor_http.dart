@@ -360,13 +360,11 @@ class MonitorHttpClient {
     Stream<List<int>> data, {
     int? size,
   }) async {
-    // Logged in *before* the body is touched, rather than relying on
-    // `_authed`'s retry: that retry calls the request again, and a second
-    // attempt would re-listen a stream `File.openRead` only allows one
-    // listener on. Everything else here builds a fresh body and can be
-    // replayed; this cannot, so it must not have to be.
-    if (_token == null) await _login();
-    return _authed(() async {
+    // Validate or refresh the token with a replayable request before touching
+    // this one-shot body. `_authed` cannot safely retry the PUT itself: a
+    // `File.openRead()` stream has already been consumed by the first attempt.
+    await _authed(() => _object('/api/v1/fs/roots'));
+    try {
       await _session().put<dynamic>(
         '/api/v1/fs/write',
         queryParameters: {'path': path},
@@ -381,7 +379,9 @@ class MonitorHttpClient {
           },
         ),
       );
-    });
+    } on DioException catch (e) {
+      throw _toMonitorHttpErr(e);
+    }
   }
 
   Future<void> fsMkdir(String path) =>

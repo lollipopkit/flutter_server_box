@@ -734,8 +734,8 @@ fn parse_go_duration(s: &str) -> Option<std::time::Duration> {
     let num: u64 = num.parse().ok()?;
     let secs = match unit {
         "s" => num,
-        "m" => num * 60,
-        "h" => num * 3600,
+        "m" => num.checked_mul(60)?,
+        "h" => num.checked_mul(3600)?,
         _ => return None,
     };
     Some(std::time::Duration::from_secs(secs))

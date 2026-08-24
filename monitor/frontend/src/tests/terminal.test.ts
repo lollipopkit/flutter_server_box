@@ -249,6 +249,18 @@ describe('TerminalSession', () => {
     expect(session.error).toBe('Session expired')
   })
 
+  it('does not retry when the ticket quota is exhausted', async () => {
+    const { session, socket } = await connected(renderer)
+
+    ticketMock.mockRejectedValueOnce(new FakeApiError('Retry after 30 seconds', 429))
+    socket.close()
+    session.reconnectNow()
+
+    await vi.waitFor(() => expect(session.phase).toBe('closed'))
+    expect(session.error).toBe('Retry after 30 seconds')
+    expect(ticketMock).toHaveBeenCalledTimes(2)
+  })
+
   it('sets the counter from ready rather than adding to it', async () => {
     // A truncated replay resumes at the buffer's start, which is ahead of
     // where the client was; adding would double-count the replay that follows

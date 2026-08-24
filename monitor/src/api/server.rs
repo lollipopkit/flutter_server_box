@@ -685,9 +685,17 @@ async fn issue_ws_ticket(
                 .detail("issue failed")
                 .record(&app_state.db)
                 .await;
-            Ok(HttpResponse::ServiceUnavailable().json(&ErrorResponse {
-                error: e.to_string(),
-            }))
+            match e {
+                MonitorError::Quota {
+                    message,
+                    retry_after_secs,
+                } => Ok(HttpResponse::TooManyRequests()
+                    .header(RETRY_AFTER, retry_after_secs.to_string())
+                    .json(&ErrorResponse { error: message })),
+                other => Ok(HttpResponse::ServiceUnavailable().json(&ErrorResponse {
+                    error: other.to_string(),
+                })),
+            }
         }
     }
 }
