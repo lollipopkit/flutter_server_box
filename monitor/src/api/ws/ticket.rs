@@ -252,10 +252,14 @@ mod tests {
     fn outstanding_tickets_are_capped() {
         let store = TicketStore::new();
         let now = Instant::now();
-        for _ in 0..MAX_LIVE {
-            store.issue_at(Purpose::Terminal, "admin", now).unwrap();
+        for i in 0..MAX_LIVE {
+            store
+                .issue_at(Purpose::Terminal, &format!("user{i}"), now)
+                .unwrap();
         }
-        assert!(store.issue_at(Purpose::Terminal, "admin", now).is_err());
+        assert!(store
+            .issue_at(Purpose::Terminal, "extra", now)
+            .is_err());
     }
 
     #[test]
