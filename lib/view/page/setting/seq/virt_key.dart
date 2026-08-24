@@ -38,10 +38,16 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
   }
 
   void _loadData() {
-    final keys = prop.fetch();
+    // Through [VirtKeyX.loadFromStore], which is where an index this build
+    // cannot name is dropped. Read straight out of the store, one such index —
+    // a restore from a newer build — reached `VirtKey.values[key]` below and
+    // threw while the list was building, so the page came up as a red box
+    // rather than as a list missing a row.
+    final keys = VirtKeyX.loadFromStore().map((e) => e.index).toList();
     final disabled = disabledProp.fetch();
     _order = List<int>.from(keys);
     for (final d in disabled) {
+      if (d < 0 || d >= VirtKey.values.length) continue;
       if (!_order.contains(d)) {
         _order.add(d);
       }

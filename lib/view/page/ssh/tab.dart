@@ -514,10 +514,16 @@ extension _Sessions on _SSHTabPageState {
         if (spi == null) continue;
         source = ServerSource(spi);
       }
+      // Tested rather than cast. `as String?` throws on a value that is
+      // neither — a number where a name was expected — and the throw leaves the
+      // loop, which is the whole-set abort the entry-by-entry reads above
+      // exist to prevent.
+      final tmuxSession = entry['tmuxSession'];
+      final tmuxWindow = entry['tmuxWindow'];
       _open(
         source,
-        tmuxSession: entry['tmuxSession'] as String?,
-        tmuxWindow: entry['tmuxWindow'] as int?,
+        tmuxSession: tmuxSession is String ? tmuxSession : null,
+        tmuxWindow: tmuxWindow is int ? tmuxWindow : null,
         select: false,
       );
       restored++;

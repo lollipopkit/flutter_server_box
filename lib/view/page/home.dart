@@ -490,25 +490,35 @@ extension _HomePageStateActions on _HomePageState {
     if (!mounted || newTabs == _tabs) return;
 
     final previousIndex = _selectIndex.value;
-    final clampedIndex = newTabs.isEmpty
-        ? 0
-        : previousIndex.clamp(0, newTabs.length - 1);
+    // Which tab was open, not where it was. Dragging Files above Terminal in
+    // the settings page moved neither of them under the user — position 2 was
+    // kept and whatever now sits there was shown instead, which reads as the
+    // reorder having opened a page at random.
+    final previousTab = previousIndex >= 0 && previousIndex < _tabs.length
+        ? _tabs[previousIndex]
+        : null;
+    final moved = previousTab == null ? -1 : newTabs.indexOf(previousTab);
+    // It is gone from the set, so there is nothing to follow: stay where the
+    // index points, which is the nearest thing to not moving.
+    final nextIndex = moved >= 0
+        ? moved
+        : (newTabs.isEmpty ? 0 : previousIndex.clamp(0, newTabs.length - 1));
 
     // ignore: invalid_use_of_protected_member
     setState(() {
       _tabs = newTabs;
-      _selectIndex.value = clampedIndex;
-      _tabIndex.put(clampedIndex);
+      _selectIndex.value = nextIndex;
+      _tabIndex.put(nextIndex);
     });
 
     // The index alone does not say which tab it is any more — the list under
     // it just changed — and it may well not have moved.
     _publishCurrentTab();
 
-    if (clampedIndex != previousIndex && _pageController.hasClients) {
+    if (nextIndex != previousIndex && _pageController.hasClients) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!_pageController.hasClients) return;
-        _pageController.jumpToPage(clampedIndex);
+        _pageController.jumpToPage(nextIndex);
       });
     }
   }

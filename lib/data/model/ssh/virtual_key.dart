@@ -240,14 +240,32 @@ extension VirtKeyX on VirtKey {
     _ => func == null ? null : VirtKeyGroup.shortcuts,
   };
 
-  /// - [saveDefaultIfErr] if the stored raw values is invalid, save default order to store
-  static List<VirtKey> loadFromStore({bool saveDefaultIfErr = true}) {
+  /// The user's order, with anything this build cannot name left out.
+  ///
+  /// An index outside the enum is a key added by a newer build — a restored
+  /// backup, or a downgrade — and there is nothing here to draw for it. It used
+  /// to reset the whole order to the default, so one unknown entry threw away
+  /// an arrangement that was otherwise entirely readable; and the settings page
+  /// indexed the same list without the guard, so it threw while building.
+  ///
+  /// Only what was dropped is written back, and only when something was: the
+  /// unknown key is then gone for good, which is the price of not carrying an
+  /// index nothing can render. An empty result is a stored value that says
+  /// nothing at all, and falls back to the default without being saved over.
+  /// [persistRepairs] off reads without writing, for a caller that only wants
+  /// to know what is stored.
+  static List<VirtKey> loadFromStore({bool persistRepairs = true}) {
     try {
       final ints = Stores.setting.sshVirtKeys.fetch();
-      return ints.map((e) => VirtKey.values[e]).toList();
-    } on RangeError {
-      final ints = defaultOrder.map((e) => e.index).toList();
-      Stores.setting.sshVirtKeys.put(ints);
+      final keys = [
+        for (final e in ints)
+          if (e >= 0 && e < VirtKey.values.length) VirtKey.values[e],
+      ];
+      if (keys.isEmpty) return defaultOrder;
+      if (persistRepairs && keys.length != ints.length) {
+        Stores.setting.sshVirtKeys.put(keys.map((e) => e.index).toList());
+      }
+      return keys;
     } catch (e, s) {
       Loggers.app.warning('Failed to load sshVirtKeys', e, s);
     }

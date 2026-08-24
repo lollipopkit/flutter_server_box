@@ -137,14 +137,23 @@ void main() {
       expect(store.get<bool>('sshConnectionMode'), isTrue);
     });
 
-    test('an install that already ran the flag version is not touched', () async {
+    test('an int is converted even where the flag says it was done', () async {
+      // The flag answers "has this device been offered it already", which is
+      // the tab set's question, not this one — there is nothing here for the
+      // user to have undone. An `int` is a value written before the
+      // conversion, whatever any flag says.
+      //
+      // Reading the flag made the answer wrong on the path that needs this
+      // most: a restore of a pre-v9 file writes the flag back *alongside* the
+      // int, so the step declared itself done over a value it had never seen,
+      // and `sshConnectionMode` stayed an int that
+      // `propertyDefault('sshConnectionMode', false)` cannot read.
       store.set('sshConnectionModeMigrated', true);
       store.set('sshConnectionMode', 0);
 
       await migration.apply();
 
-      // Still the int it was: the flag says this device has had its pass.
-      expect(store.get<Object>('sshConnectionMode'), 0);
+      expect(store.get<bool>('sshConnectionMode'), isFalse);
     });
 
     test('nothing stored is nothing to do', () async {

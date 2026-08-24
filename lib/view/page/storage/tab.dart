@@ -422,7 +422,11 @@ extension _Sessions on _FileTabPageState {
     var restored = 0;
     for (final entry in entries) {
       if (entry is! Map) continue;
-      final path = entry['path'] as String?;
+      // Tested rather than cast: `as String?` throws on a value that is neither
+      // and takes every remaining tab with it, which is what reading each entry
+      // on its own is meant to avoid.
+      final rawPath = entry['path'];
+      final path = rawPath is String ? rawPath : null;
       final serverId = entry['serverId'];
       // A record written before `kind` existed says nothing, and local was
       // implied by the absence of a server. Both shapes read the same way.

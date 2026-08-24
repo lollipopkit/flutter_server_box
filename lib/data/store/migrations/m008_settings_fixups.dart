@@ -12,13 +12,19 @@ import 'package:server_box/data/store/setting.dart';
 /// ordered against the others or against the steps in this directory. There is
 /// a version number for this, so these use it.
 ///
-/// The flags are still read here, and correctness rests on it. Each body is
+/// One flag is still read here, and correctness rests on it. Each body is
 /// idempotent against data it has already converted — one acts only on an
-/// `int`, the other only on the exact legacy tab set — but "already converted"
-/// is not the same question as "already offered". Somebody who took Agent
-/// *back out* of their home tabs is left holding exactly the legacy four, and
-/// without the flag this step would put it back. The flag is what says this
-/// device has been asked once already.
+/// `int`, the other only on the exact legacy tab set — but for the tab set
+/// "already converted" is not the same question as "already offered". Somebody
+/// who took Agent *back out* of their home tabs is left holding exactly the
+/// legacy four, and without the flag this step would put it back. The flag is
+/// what says this device has been asked once already. The `int` has no such
+/// second question and is converted whenever one is found.
+///
+/// Both halves run again after a restore, from [Backup.restore] and
+/// [BackupV2.merge], for the reason recorded there: a file older than this step
+/// carries the shape it converts, and the version has long since moved past the
+/// point where the migrator would look.
 ///
 /// Reading only — the removal is `SettingStore.removeRetiredKeys`, gated on
 /// the version already being past this step. Deleting them here would have
@@ -66,10 +72,14 @@ class SettingsFixupsMigration implements SchemaMigration {
   /// `sshConnectionMode` was an int (-1 auto, 0 built-in, 1 system SSH) and is
   /// a bool.
   ///
-  /// Idempotent on its own: a value already converted is a bool and falls
-  /// through untouched.
+  /// Ungated, unlike the tab set below. The flag answers "has this device been
+  /// offered it already", which only matters where the user can undo what the
+  /// step did; there is nothing to undo here — an int is a value written before
+  /// the conversion, whatever any flag says, and a bool falls through
+  /// untouched. Reading the flag made the answer wrong on the one path that
+  /// needs this most: a restore brings the flag back alongside the int, so the
+  /// step declared itself done over a value it had never seen.
   static void _migrateSshConnectionMode(SettingStore store) {
-    if (store.get<bool>(sshFlagKey) == true) return;
     const key = 'sshConnectionMode';
     final raw = store.get<Object>(key);
     if (raw is! int) return;

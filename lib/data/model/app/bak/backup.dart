@@ -8,6 +8,7 @@ import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/migrations/m008_settings_fixups.dart';
 import 'package:server_box/data/store/migrations/m009_grouped_settings.dart';
 import 'package:server_box/data/store/migrations/m011_virt_key_rows.dart';
 
@@ -92,7 +93,11 @@ class Backup implements Mergeable {
     // restore is neither a launch nor a version bump, so nothing else will
     // look at what just landed. This format predates the grouped settings
     // entirely, so its settings map is always the old per-field keys — and,
-    // being older still, the pre-`virtKeyRows` switch as well.
+    // being older still, the pre-`virtKeyRows` switch and the `int`
+    // `sshConnectionMode` as well.
+    //
+    // In version order, which is the order the migrator would have run them in.
+    await const SettingsFixupsMigration().apply();
     await const GroupedSettingsMigration().apply();
     await const VirtKeyRowsMigration().apply();
 

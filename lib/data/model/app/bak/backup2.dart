@@ -21,6 +21,7 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/migrations/m008_settings_fixups.dart';
 import 'package:server_box/data/store/migrations/m009_grouped_settings.dart';
 import 'package:server_box/data/store/migrations/m011_virt_key_rows.dart';
 import 'package:server_box/data/store/schema.dart';
@@ -126,10 +127,15 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     //
     // Every settings migration that reads a key a backup can carry belongs
     // here for the same reason, not only the newest one. `virtKeyRows` is
-    // the other: a file written before it restores `horizonVirtKey` and no
+    // one other: a file written before it restores `horizonVirtKey` and no
     // `virtKeyRows`, and the next launch's `removeRetiredKeys` — which sees
     // a `schemaVersion` the merge left past that step — deletes the old key
-    // without anything having read it.
+    // without anything having read it. `sshConnectionMode` is the third: a
+    // file older than v9 carries it as the `int` it used to be, which
+    // `propertyDefault('sshConnectionMode', false)` cannot read at all.
+    //
+    // In version order, which is the order the migrator would have run them in.
+    await const SettingsFixupsMigration().apply();
     await const GroupedSettingsMigration().apply();
     await const VirtKeyRowsMigration().apply();
 

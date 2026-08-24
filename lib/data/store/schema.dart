@@ -88,13 +88,31 @@ abstract final class SchemaVersion {
   /// build. Callers must treat that as fatal for anything that writes — see
   /// the class doc.
   static Future<void> migrate(List<SchemaMigration> migrations) async {
+    // Before anything about *this* install is consulted, because what it
+    // catches is a disagreement in the list itself and every install has the
+    // same list. Built by hand rather than with a collection-for, which kept
+    // the last of two steps claiming one version and dropped the other with
+    // nothing said — and the gap check below only notices when the loss leaves
+    // a version this install has to cross, so whether anyone found out
+    // depended on where the install happened to be.
+    final byFrom = <int, SchemaMigration>{};
+    for (final m in migrations) {
+      final clash = byFrom[m.from];
+      if (clash != null) {
+        throw StateError(
+          'Two schema migrations from v${m.from}: '
+          '${clash.runtimeType} and ${m.runtimeType}',
+        );
+      }
+      byFrom[m.from] = m;
+    }
+
     final from = stored;
     if (from == current) return;
     if (from > current) {
       throw SchemaTooNewException(stored: from, supported: current);
     }
 
-    final byFrom = {for (final m in migrations) m.from: m};
     for (var v = from; v < current; v++) {
       final step = byFrom[v];
       if (step == null) {
