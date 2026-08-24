@@ -209,7 +209,10 @@ extension _Server on _AppSettingsPageState {
   Widget _buildDistIcon() {
     return ListTile(
       leading: const Icon(Icons.dns_outlined),
-      title: TipText(l10n.distIcon, l10n.distIconIntroLegal),
+      // Plain, not markdown: a tip is a text bubble, and a link in it would
+      // show as its own syntax with nothing to tap. The intro page is where
+      // the followable version lives.
+      title: TipText(l10n.distIcon, distLegalPlain(l10n)),
       subtitle: Text(l10n.distIconTip, style: UIs.textGrey),
       trailing: StoreSwitch(prop: _setting.showDistIcon),
     );

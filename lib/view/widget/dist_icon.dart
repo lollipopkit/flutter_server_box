@@ -5,6 +5,8 @@ import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/dist.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/res/url.dart';
+import 'package:server_box/generated/l10n/l10n.dart';
 
 /// Which distribution a server runs, as a glyph beside its name.
 ///
@@ -98,3 +100,17 @@ class DistIconOf extends StatelessWidget {
     );
   }
 }
+
+/// The notice about where the marks come from, as markdown.
+///
+/// The string takes the source's name as a placeholder so that the URL lives
+/// in one place — here — rather than in each translation, where fifteen copies
+/// would have to be kept in step. This form is for somewhere that renders
+/// markdown and can open a link; [distLegalPlain] is for somewhere that cannot.
+String distLegalMarkdown(AppLocalizations l10n) =>
+    l10n.distIconIntroLegal('[font-logos](${Urls.fontLogos})');
+
+/// The same notice for a plain-text slot, where a markdown link would show as
+/// its own syntax.
+String distLegalPlain(AppLocalizations l10n) =>
+    l10n.distIconIntroLegal('font-logos');

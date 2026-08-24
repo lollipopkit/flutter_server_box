@@ -113,7 +113,7 @@ final class _IntroPage extends StatelessWidget {
     return _introList(
       children: [
         SizedBox(height: padTop),
-        IntroPage.title(text: l10n.distIconIntroTitle, big: true),
+        IntroPage.title(text: l10n.distIcon, big: true),
         SizedBox(height: padTop * 0.5),
         Text(
           l10n.distIconTip,
@@ -124,14 +124,16 @@ final class _IntroPage extends StatelessWidget {
         ListTile(
           leading: const Icon(Icons.dns_outlined),
           title: Text(l10n.distIcon),
-          subtitle: Text(l10n.distIconTip, style: UIs.textGrey),
           trailing: StoreSwitch(prop: _setting.showDistIcon),
         ).cardx,
         Padding(
           padding: const EdgeInsets.fromLTRB(13, 13, 13, 0),
-          child: Text(
-            l10n.distIconIntroLegal,
-            style: UIs.text13Grey,
+          // Markdown, so the source of the marks is a link somebody can follow
+          // rather than a name they have to search for. `SimpleMarkdown` opens
+          // it; see `distLegalMarkdown` for why the URL is not in the string.
+          child: SimpleMarkdown(
+            data: distLegalMarkdown(l10n),
+            styleSheet: MarkdownStyleSheet(p: UIs.text13Grey),
           ),
         ),
         UIs.height77,

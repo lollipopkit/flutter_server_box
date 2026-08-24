@@ -288,11 +288,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get distIcon => 'Contrassegni di distribuzione';
 
   @override
-  String get distIconIntroLegal =>
-      'I contrassegni provengono da font-logos, ridisegnati e rilasciati nel pubblico dominio. Non sono le grafiche dei progetti a cui si riferiscono; nessun progetto ha esaminato o approvato questa app, né è associato ad essa.\n\nUn contrassegno indica solo ciò che questo dispositivo ha letto dal sistema remoto, che può essere errato o non aggiornato. Non identifica un derivato, una ricompilazione né una versione specifica. Quando il sistema non può essere identificato, o il suo contrassegno non è incluso, viene disegnato un contorno neutro.\n\nOgni contrassegno è un marchio del rispettivo proprietario ed è usato qui solo per riferirsi al sistema che identifica.';
-
-  @override
-  String get distIconIntroTitle => 'Contrassegni di distribuzione';
+  String distIconIntroLegal(Object fontLogos) {
+    return 'Questi contrassegni provengono da $fontLogos. Un contrassegno indica solo ciò che questo dispositivo ha letto dal sistema remoto, che può essere errato o non aggiornato, e non identifica un derivato, una ricompilazione né una versione specifica. Quando il sistema non può essere identificato, o il suo contrassegno non è incluso, viene disegnato un contorno neutro.\n\nOgni contrassegno è un marchio del rispettivo proprietario ed è usato qui solo per riferirsi al sistema che identifica.';
+  }
 
   @override
   String get distIconTip =>

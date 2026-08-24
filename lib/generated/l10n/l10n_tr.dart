@@ -285,11 +285,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get distIcon => 'Dağıtım işaretleri';
 
   @override
-  String get distIconIntroLegal =>
-      'İşaretler font-logos’tan alınmış, yeniden çizilerek kamu malı olarak yayımlanmış görsellerdir. Atıfta bulundukları projelerin kendi görselleri değildir; hiçbir proje bu uygulamayı incelemiş, onaylamış ya da başka bir şekilde onunla ilişkili değildir.\n\nBir işaret yalnızca bu cihazın uzak sistemden okuduğunu gösterir; bu bilgi yanlış veya güncelliğini yitirmiş olabilir. Bir türevi, yeniden derlemeyi ya da belirli bir sürümü belirtmez. Sistem tanınamadığında veya işareti bulunmadığında bunun yerine nötr bir çizim gösterilir.\n\nHer işaret ilgili sahibinin ticari markasıdır ve burada yalnızca tanımladığı sisteme atıfta bulunmak için kullanılır.';
-
-  @override
-  String get distIconIntroTitle => 'Dağıtım işaretleri';
+  String distIconIntroLegal(Object fontLogos) {
+    return 'Bu işaretler $fontLogos kaynaklıdır. Bir işaret yalnızca bu cihazın uzak sistemden okuduğunu gösterir; bu bilgi yanlış veya güncelliğini yitirmiş olabilir ve bir türevi, yeniden derlemeyi ya da belirli bir sürümü de belirtmez. Sistem tanınamadığında veya işareti bulunmadığında bunun yerine nötr bir çizim gösterilir.\n\nHer işaret ilgili sahibinin ticari markasıdır ve burada yalnızca tanımladığı sisteme atıfta bulunmak için kullanılır.';
+  }
 
   @override
   String get distIconTip =>

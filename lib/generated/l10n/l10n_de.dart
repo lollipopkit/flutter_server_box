@@ -287,11 +287,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get distIcon => 'Distributions-Kennzeichen';
 
   @override
-  String get distIconIntroLegal =>
-      'Die Zeichen stammen aus font-logos, nachgezeichnet und in die Gemeinfreiheit entlassen. Sie sind nicht die Grafiken der Projekte, auf die sie verweisen; kein Projekt hat diese App geprüft, befürwortet oder steht anderweitig mit ihr in Verbindung.\n\nEin Zeichen gibt nur wieder, was dieses Gerät vom entfernten System gelesen hat — das kann falsch oder veraltet sein. Es kennzeichnet weder eine Ableitung noch einen Rebuild oder eine bestimmte Version. Lässt sich das System nicht bestimmen oder wird sein Zeichen nicht mitgeliefert, erscheint stattdessen ein neutraler Umriss.\n\nJedes Zeichen ist eine Marke des jeweiligen Inhabers und wird hier nur verwendet, um auf das System zu verweisen, das es bezeichnet.';
-
-  @override
-  String get distIconIntroTitle => 'Distributions-Kennzeichen';
+  String distIconIntroLegal(Object fontLogos) {
+    return 'Diese Zeichen stammen aus $fontLogos. Ein Zeichen gibt nur wieder, was dieses Gerät vom entfernten System gelesen hat — das kann falsch oder veraltet sein —, und kennzeichnet weder eine Ableitung noch einen Rebuild oder eine bestimmte Version. Lässt sich das System nicht bestimmen oder wird sein Zeichen nicht mitgeliefert, erscheint stattdessen ein neutraler Umriss.\n\nJedes Zeichen ist eine Marke des jeweiligen Inhabers und wird hier nur verwendet, um auf das System zu verweisen, das es bezeichnet.';
+  }
 
   @override
   String get distIconTip =>

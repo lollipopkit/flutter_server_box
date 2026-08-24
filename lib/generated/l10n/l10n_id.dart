@@ -284,11 +284,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get distIcon => 'Tanda distribusi';
 
   @override
-  String get distIconIntroLegal =>
-      'Tanda-tanda ini berasal dari font-logos, digambar ulang dan dilepas ke domain publik. Ini bukan karya seni proyek yang dirujuknya; tidak ada proyek yang meninjau, mendukung, atau berkaitan dengan aplikasi ini.\n\nSebuah tanda hanya menyatakan apa yang dibaca perangkat ini dari sistem jarak jauh, yang bisa saja keliru atau usang. Tanda itu tidak menunjukkan turunan, hasil build ulang, maupun versi tertentu. Bila sistem tidak dapat dikenali, atau tandanya tidak disertakan, sebuah garis netral digambar sebagai gantinya.\n\nSetiap tanda adalah merek dagang pemiliknya masing-masing dan digunakan di sini hanya untuk merujuk pada sistem yang ditandainya.';
-
-  @override
-  String get distIconIntroTitle => 'Tanda distribusi';
+  String distIconIntroLegal(Object fontLogos) {
+    return 'Tanda-tanda ini berasal dari $fontLogos. Sebuah tanda hanya menyatakan apa yang dibaca perangkat ini dari sistem jarak jauh, yang bisa saja keliru atau usang, dan tidak menunjukkan turunan, hasil build ulang, maupun versi tertentu. Bila sistem tidak dapat dikenali, atau tandanya tidak disertakan, sebuah garis netral digambar sebagai gantinya.\n\nSetiap tanda adalah merek dagang pemiliknya masing-masing dan digunakan di sini hanya untuk merujuk pada sistem yang ditandainya.';
+  }
 
   @override
   String get distIconTip =>

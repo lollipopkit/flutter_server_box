@@ -282,11 +282,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get distIcon => 'Distribution marks';
 
   @override
-  String get distIconIntroLegal =>
-      'The marks are redrawn glyphs from font-logos, released into the public domain. They are not the artwork of the projects they refer to, and no project has reviewed, endorsed or is otherwise associated with this app.\n\nA mark says only what this device read from the remote system, which can be wrong or out of date. It does not identify a derivative, a rebuild, or any particular version. Where the system cannot be identified, or where its mark is not shipped, a neutral outline is drawn instead.\n\nEach mark is a trademark of its respective owner and is used here only to refer to the system it identifies.';
-
-  @override
-  String get distIconIntroTitle => 'Distribution marks';
+  String distIconIntroLegal(Object fontLogos) {
+    return 'These marks come from $fontLogos. A mark says only what this device read from the remote system, which can be wrong or out of date, and identifies neither a derivative, a rebuild, nor any particular version. Where the system cannot be identified, or its mark is not shipped, a neutral outline is drawn instead.\n\nEach mark is a trademark of its respective owner and is used here only to refer to the system it identifies.';
+  }
 
   @override
   String get distIconTip =>

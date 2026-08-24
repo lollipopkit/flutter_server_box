@@ -285,11 +285,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get distIcon => 'Distributiemarkeringen';
 
   @override
-  String get distIconIntroLegal =>
-      'De tekens komen uit font-logos, opnieuw getekend en vrijgegeven in het publieke domein. Het is niet het beeldmateriaal van de projecten waarnaar ze verwijzen; geen enkel project heeft deze app beoordeeld of onderschreven, of is er anderszins aan verbonden.\n\nEen teken geeft alleen weer wat dit apparaat van het externe systeem heeft gelezen, en dat kan onjuist of verouderd zijn. Het duidt geen afgeleide, herbouw of specifieke versie aan. Kan het systeem niet worden vastgesteld, of wordt het teken niet meegeleverd, dan verschijnt een neutrale omtrek.\n\nElk teken is een handelsmerk van de betreffende eigenaar en wordt hier alleen gebruikt om te verwijzen naar het systeem dat het aanduidt.';
-
-  @override
-  String get distIconIntroTitle => 'Distributiemarkeringen';
+  String distIconIntroLegal(Object fontLogos) {
+    return 'Deze tekens komen uit $fontLogos. Een teken geeft alleen weer wat dit apparaat van het externe systeem heeft gelezen — dat kan onjuist of verouderd zijn — en duidt geen afgeleide, herbouw of specifieke versie aan. Kan het systeem niet worden vastgesteld, of wordt het teken niet meegeleverd, dan verschijnt een neutrale omtrek.\n\nElk teken is een handelsmerk van de betreffende eigenaar en wordt hier alleen gebruikt om te verwijzen naar het systeem dat het aanduidt.';
+  }
 
   @override
   String get distIconTip =>

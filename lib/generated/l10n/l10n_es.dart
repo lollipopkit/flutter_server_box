@@ -290,11 +290,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get distIcon => 'Marcas de distribución';
 
   @override
-  String get distIconIntroLegal =>
-      'Las marcas provienen de font-logos, redibujadas y liberadas al dominio público. No son las ilustraciones de los proyectos a los que se refieren; ningún proyecto ha revisado ni respaldado esta aplicación, ni está asociado a ella.\n\nUna marca solo indica lo que este dispositivo leyó del sistema remoto, lo cual puede ser incorrecto o estar desactualizado. No identifica un derivado, una recompilación ni una versión concreta. Cuando el sistema no puede identificarse, o su marca no se incluye, se dibuja un contorno neutro en su lugar.\n\nCada marca es una marca registrada de su respectivo propietario y aquí se usa únicamente para referirse al sistema que identifica.';
-
-  @override
-  String get distIconIntroTitle => 'Marcas de distribución';
+  String distIconIntroLegal(Object fontLogos) {
+    return 'Estas marcas provienen de $fontLogos. Una marca solo indica lo que este dispositivo leyó del sistema remoto, lo cual puede ser incorrecto o estar desactualizado, y no identifica un derivado, una recompilación ni una versión concreta. Cuando el sistema no puede identificarse, o su marca no se incluye, se dibuja un contorno neutro en su lugar.\n\nCada marca es una marca registrada de su respectivo propietario y aquí se usa únicamente para referirse al sistema que identifica.';
+  }
 
   @override
   String get distIconTip =>
