@@ -798,9 +798,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get noPromptAgain => 'No volver a preguntar';
 
   @override
-  String get onlyOneLine => 'Mostrar solo en una línea (desplazable)';
-
-  @override
   String get openLastPath => 'Abrir el último camino';
 
   @override
@@ -1328,6 +1325,13 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get virtKeyIntroSelect =>
       'Mientras la terminal tenga contenido que desplazar, arrastra en horizontal para seleccionar texto.';
+
+  @override
+  String get virtKeyRows => 'Filas visibles a la vez';
+
+  @override
+  String get virtKeyRowsTip =>
+      'El resto va en una página aparte, que se desliza lateralmente.';
 
   @override
   String get waitConnection =>

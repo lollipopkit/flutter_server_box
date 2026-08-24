@@ -789,9 +789,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get noPromptAgain => 'Niet meer vragen';
 
   @override
-  String get onlyOneLine => 'Alleen als één regel weergeven (scrollbaar)';
-
-  @override
   String get openLastPath => 'Open het laatste pad';
 
   @override
@@ -1315,6 +1312,13 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get virtKeyIntroSelect =>
       'Zolang de terminal iets te scrollen heeft, selecteer je tekst door opzij te slepen.';
+
+  @override
+  String get virtKeyRows => 'Rijen tegelijk zichtbaar';
+
+  @override
+  String get virtKeyRowsTip =>
+      'De rest staat op een eigen pagina, die je opzij veegt.';
 
   @override
   String get waitConnection =>

@@ -794,9 +794,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get noPromptAgain => 'Больше не спрашивать';
 
   @override
-  String get onlyOneLine => 'Отображать только в одной строке (прокручивается)';
-
-  @override
   String get openLastPath => 'Открыть последний путь';
 
   @override
@@ -1317,6 +1314,13 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get virtKeyIntroSelect =>
       'Пока в терминале есть что прокручивать, перетаскивание вбок выделяет текст.';
+
+  @override
+  String get virtKeyRows => 'Строк показывать сразу';
+
+  @override
+  String get virtKeyRowsTip =>
+      'Остальные — на отдельной странице, пролистываемой вбок.';
 
   @override
   String get waitConnection => 'Пожалуйста, дождитесь установки соединения';

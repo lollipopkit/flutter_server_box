@@ -13,6 +13,7 @@ import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/res/default.dart';
 import 'package:server_box/data/store/field_prop.dart';
 import 'package:server_box/data/store/migrations/m008_settings_fixups.dart';
+import 'package:server_box/data/store/migrations/m011_virt_key_rows.dart';
 
 class SettingStore extends SqliteStore {
   SettingStore._() : super('setting');
@@ -504,7 +505,13 @@ class SettingStore extends SqliteStore {
   /// there to walk through.
   late final virtKeyIntroShown = propertyDefault('virtKeyIntroShown', false);
 
-  late final horizonVirtKey = propertyDefault('horizonVirtKey', false);
+  /// How many rows of virtual keys the terminal shows at once, 0 for all.
+  ///
+  /// Rows past that go on a page of their own, swiped sideways. It replaced a
+  /// switch meaning "one row, scrolled sideways", which is this set to 1 —
+  /// with the difference that a swipe now lands on whole rows rather than
+  /// leaving the row halfway between two keys. See [VirtKeyRowsMigration].
+  late final virtKeyRows = propertyDefault('virtKeyRows', 0);
 
   /// general wake lock
   late final generalWakeLock = propertyDefault('generalWakeLock', false);
@@ -708,6 +715,15 @@ class SettingStore extends SqliteStore {
         SettingsFixupsMigration.homeTabsFlagKey,
         updateLastUpdateTsOnRemove: false,
       );
+    }
+
+    // The switch `virtKeyRows` replaced, for the same reason and on the same
+    // terms: the step that reads it runs after this does, and a restore of an
+    // older backup writes it back long after that step can run again.
+    //
+    // TODO: delete with the read in `VirtKeyRowsMigration`.
+    if (schemaVersion.fetch() > VirtKeyRowsMigration.appliedAt) {
+      remove(VirtKeyRowsMigration.legacyKey, updateLastUpdateTsOnRemove: false);
     }
   }
 }

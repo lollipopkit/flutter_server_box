@@ -794,9 +794,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get noPromptAgain => 'Non chiedere di nuovo';
 
   @override
-  String get onlyOneLine => 'Visualizza solo come una riga (scorrevole)';
-
-  @override
   String get openLastPath => 'Apri l\'ultimo percorso';
 
   @override
@@ -1322,6 +1319,13 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get virtKeyIntroSelect =>
       'Finché il terminale ha qualcosa da scorrere, trascinando in orizzontale selezioni il testo.';
+
+  @override
+  String get virtKeyRows => 'Righe mostrate insieme';
+
+  @override
+  String get virtKeyRowsTip =>
+      'Il resto va su una pagina a parte, che si scorre lateralmente.';
 
   @override
   String get waitConnection => 'Attendi che la connessione venga stabilita.';

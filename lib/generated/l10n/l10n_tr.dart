@@ -788,9 +788,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get noPromptAgain => 'Tekrar sorma';
 
   @override
-  String get onlyOneLine => 'Yalnızca tek satır olarak göster (kaydırılabilir)';
-
-  @override
   String get openLastPath => 'Son yolu aç';
 
   @override
@@ -1311,6 +1308,13 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get virtKeyIntroSelect =>
       'Terminalde kaydırılacak bir şey olduğu sürece, yana sürükleyerek metin seçebilirsiniz.';
+
+  @override
+  String get virtKeyRows => 'Aynı anda gösterilen satır';
+
+  @override
+  String get virtKeyRowsTip =>
+      'Kalanlar yana kaydırılan ayrı bir sayfada yer alır.';
 
   @override
   String get waitConnection => 'Lütfen bağlantının kurulmasını bekleyin.';

@@ -792,9 +792,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get noPromptAgain => 'Більше не запитувати';
 
   @override
-  String get onlyOneLine => 'Відображати лише в один рядок (прокрутка)';
-
-  @override
   String get openLastPath => 'Відкрити останній шлях';
 
   @override
@@ -1313,6 +1310,13 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get virtKeyIntroSelect =>
       'Поки в терміналі є що прокручувати, перетягування вбік виділяє текст.';
+
+  @override
+  String get virtKeyRows => 'Рядків показувати одразу';
+
+  @override
+  String get virtKeyRowsTip =>
+      'Решта — на окремій сторінці, яку гортають убік.';
 
   @override
   String get waitConnection =>

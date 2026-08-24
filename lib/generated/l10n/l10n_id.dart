@@ -787,10 +787,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get noPromptAgain => 'Jangan tanya lagi';
 
   @override
-  String get onlyOneLine =>
-      'Hanya tampilkan sebagai satu baris (dapat digulir)';
-
-  @override
   String get openLastPath => 'Buka jalur terakhir';
 
   @override
@@ -1310,6 +1306,13 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get virtKeyIntroSelect =>
       'Selama terminal masih bisa digulir, seret ke samping untuk memilih teks.';
+
+  @override
+  String get virtKeyRows => 'Baris yang tampil sekaligus';
+
+  @override
+  String get virtKeyRowsTip =>
+      'Sisanya berada di halaman tersendiri, digeser ke samping.';
 
   @override
   String get waitConnection => 'Harap tunggu koneksi akan dibuat.';

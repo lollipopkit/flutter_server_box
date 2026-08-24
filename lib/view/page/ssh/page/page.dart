@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:dartssh2/dartssh2.dart';
@@ -119,6 +120,12 @@ class SSHPage extends ConsumerStatefulWidget {
 
 const _horizonPadding = 7.0;
 
+/// How tall one row of virtual keys is.
+const _kVirtKeyRowHeight = 37.0;
+
+/// And the dots under them, when there is more than one page of rows.
+const _kVirtKeyDotsHeight = 9.0;
+
 class SSHPageState extends ConsumerState<SSHPage>
     with
         AutomaticKeepAliveClientMixin,
@@ -160,7 +167,16 @@ class SSHPageState extends ConsumerState<SSHPage>
   late TerminalStyle _terminalStyle;
   late TerminalTheme _terminalTheme;
   double _virtKeysHeight = 0;
-  bool _horizonVirtKeys = false;
+
+  /// How many rows of keys to show at once, 0 for all of them. The rest go on
+  /// pages of their own — see [_virtKeyPages].
+  int _virtKeyRows = 0;
+
+  /// Which of those pages is showing, for the dots under them.
+  ///
+  /// A notifier rather than state: the page changes on every swipe, and the
+  /// terminal above has no reason to rebuild when it does.
+  final _virtKeyPage = ValueNotifier(0);
 
   /// Which step of the virtual keys walkthrough is showing, or null when it is
   /// not running — which is every time but the first.
@@ -188,6 +204,9 @@ class SSHPageState extends ConsumerState<SSHPage>
       } else if (steps != null) {
         _introSteps = steps;
       }
+      // Starting and ending it both change how many rows are on screen — see
+      // [_virtKeyPages] — and the strip is as tall as what it shows.
+      _updateVirtKeysHeight();
     });
   }
 
@@ -257,12 +276,13 @@ class SSHPageState extends ConsumerState<SSHPage>
       unawaited(_terminateAiCommandSession(aiCommandSession));
     }
     _terminalController.dispose();
+    _virtKeyPage.dispose();
     _discontinuityTimer?.cancel();
     // Not `close`: the connection may be the status poller's, shared with the
     // rest of the app, and a terminal going away is not a reason to hang it up.
     _sess.dispose();
     _removeVisibilityListener();
-    Stores.setting.horizonVirtKey.listenable().removeListener(
+    Stores.setting.virtKeyRows.listenable().removeListener(
       _handleVirtKeySettingsChanged,
     );
     Stores.setting.sshVirtKeys.listenable().removeListener(
@@ -294,7 +314,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     _attachAgentHost();
     _initStoredCfg();
     _reloadVirtKeys();
-    Stores.setting.horizonVirtKey.listenable().addListener(
+    Stores.setting.virtKeyRows.listenable().addListener(
       _handleVirtKeySettingsChanged,
     );
     Stores.setting.sshVirtKeys.listenable().addListener(
@@ -641,44 +661,47 @@ class SSHPageState extends ConsumerState<SSHPage>
   ) {
     final count = _virtKeysList.firstOrNull?.length ?? 0;
     if (count == 0) return UIs.placeholder;
+    final pages = _virtKeyPages;
+
     return LayoutBuilder(
       builder: (_, cons) {
         final virtKeyWidth = cons.maxWidth / count;
-        if (_horizonVirtKeys) {
-          return SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: _virtKeysList
-                  .expand((e) => e)
-                  .map(
-                    (e) => _buildVirtKeyItem(
-                      e,
+
+        Widget pageOf(List<List<VirtKey>> rows) => Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final row in rows)
+              Row(
+                children: [
+                  for (final key in row)
+                    _buildVirtKeyItem(
+                      key,
                       virtKeyWidth,
                       virtKeyState,
                       virtKeyNotifier,
                     ),
-                  )
-                  .toList(),
-            ),
-          );
-        }
-        final rows = _virtKeysList
-            .map(
-              (e) => Row(
-                children: e
-                    .map(
-                      (e) => _buildVirtKeyItem(
-                        e,
-                        virtKeyWidth,
-                        virtKeyState,
-                        virtKeyNotifier,
-                      ),
-                    )
-                    .toList(),
+                ],
               ),
-            )
-            .toList();
-        return Column(mainAxisSize: MainAxisSize.min, children: rows);
+          ],
+        );
+
+        if (pages.length == 1) return pageOf(pages.first);
+
+        return Column(
+          children: [
+            Expanded(
+              child: PageView(
+                // Keyed by how many pages there are, so a page count that
+                // shrinks — a key turned off in the settings — starts a fresh
+                // view rather than leaving the old one scrolled past its end.
+                key: ValueKey(pages.length),
+                onPageChanged: (page) => _virtKeyPage.value = page,
+                children: [for (final page in pages) pageOf(page)],
+              ),
+            ),
+            _buildVirtKeyDots(pages.length),
+          ],
+        );
       },
     );
   }
@@ -750,10 +773,41 @@ class SSHPageState extends ConsumerState<SSHPage>
         curve: Curves.easeOut,
         child: SizedBox(
           width: virtKeyWidth,
-          height: _horizonVirtKeys
-              ? _virtKeysHeight
-              : _virtKeysHeight / _virtKeysList.length,
+          height: _kVirtKeyRowHeight,
           child: Center(child: child),
+        ),
+      ),
+    );
+  }
+
+  /// How far through the pages of keys, when there is more than one.
+  ///
+  /// A row of keys says nothing about there being another row behind it, and
+  /// the strip is too short to spend on anything wordier than this.
+  Widget _buildVirtKeyDots(int count) {
+    final scheme = Theme.of(context).colorScheme;
+    return SizedBox(
+      height: _kVirtKeyDotsHeight,
+      child: ValueListenableBuilder(
+        valueListenable: _virtKeyPage,
+        builder: (_, current, _) => Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            for (var i = 0; i < count; i++)
+              AnimatedContainer(
+                duration: Durations.short3,
+                curve: Curves.easeOut,
+                margin: const EdgeInsets.symmetric(horizontal: 2),
+                width: i == current ? 13 : 5,
+                height: 3,
+                decoration: BoxDecoration(
+                  color: i == current
+                      ? scheme.primary
+                      : scheme.outlineVariant,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -928,18 +982,41 @@ class SSHPageState extends ConsumerState<SSHPage>
         .firstWhere((line) => line.isNotEmpty, orElse: () => '');
   }
 
+  /// The rows of keys, split into what is shown at once.
+  ///
+  /// One page holding everything when [_virtKeyRows] is 0 or covers the lot,
+  /// which is the default and what a short set of keys gets whatever the
+  /// setting says. Splitting on whole rows rather than on keys is the point of
+  /// the paging: a sideways scroll used to leave the row halfway between two
+  /// keys, and nothing said how much further it went.
+  List<List<List<VirtKey>>> get _virtKeyPages {
+    // Every row while the walkthrough runs. It is about these keys, and a step
+    // naming a kind of them cannot point at one that is on a page behind this.
+    final perPage = _introStep == null ? _virtKeyRows : 0;
+    if (perPage <= 0 || perPage >= _virtKeysList.length) {
+      return [_virtKeysList];
+    }
+    return [
+      for (var at = 0; at < _virtKeysList.length; at += perPage)
+        _virtKeysList.sublist(
+          at,
+          math.min(at + perPage, _virtKeysList.length),
+        ),
+    ];
+  }
+
   void _updateVirtKeysHeight() {
-    if (!isMobile) {
+    if (!isMobile || _virtKeysList.isEmpty) {
       _virtKeysHeight = 0;
       return;
     }
-    if (_virtKeysList.isEmpty) {
-      _virtKeysHeight = 0;
-    } else if (_horizonVirtKeys) {
-      _virtKeysHeight = 37;
-    } else {
-      _virtKeysHeight = 37.0 * _virtKeysList.length;
-    }
+    final pages = _virtKeyPages;
+    // As tall as the tallest page, which is the first: only the last can be
+    // short, and a strip that changed height as it was swiped would move the
+    // terminal above it.
+    _virtKeysHeight =
+        _kVirtKeyRowHeight * pages.first.length +
+        (pages.length > 1 ? _kVirtKeyDotsHeight : 0);
   }
 
   @override

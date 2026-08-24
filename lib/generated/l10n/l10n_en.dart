@@ -781,9 +781,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noPromptAgain => 'Do not prompt again';
 
   @override
-  String get onlyOneLine => 'Only display as one line (scrollable)';
-
-  @override
   String get openLastPath => 'Open the last path';
 
   @override
@@ -1300,6 +1297,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get virtKeyIntroSelect =>
       'Drag sideways over the terminal to select text, whenever it has something to scroll.';
+
+  @override
+  String get virtKeyRows => 'Rows shown at once';
+
+  @override
+  String get virtKeyRowsTip =>
+      'The rest go on a page of their own, swiped sideways.';
 
   @override
   String get waitConnection =>

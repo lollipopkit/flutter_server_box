@@ -747,9 +747,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get noPromptAgain => '再度確認しない';
 
   @override
-  String get onlyOneLine => '一行のみ表示（スクロール可能）';
-
-  @override
   String get openLastPath => '最後のパスを開く';
 
   @override
@@ -1237,6 +1234,12 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get virtKeyIntroSelect =>
       'ターミナルにスクロールできる内容があるときは、横にドラッグするとテキストを選択できます。';
+
+  @override
+  String get virtKeyRows => '同時に表示する行数';
+
+  @override
+  String get virtKeyRowsTip => '残りは別のページに置かれ、横にスワイプして切り替えます。';
 
   @override
   String get waitConnection => '接続の確立を待ってください';

@@ -2,9 +2,12 @@ part of 'page.dart';
 
 extension _VirtKey on SSHPageState {
   void _reloadVirtKeys() {
-    _horizonVirtKeys = Stores.setting.horizonVirtKey.fetch();
+    _virtKeyRows = Stores.setting.virtKeyRows.fetch();
     _initVirtKeys();
     _updateVirtKeysHeight();
+    // Back to the first page: the one that was showing may not exist any more,
+    // and the dots are what the swipe is measured against.
+    _virtKeyPage.value = 0;
   }
 
   /// Runs the walkthrough over the keys, once ever — on the terminal that is
@@ -222,12 +225,10 @@ extension _VirtKey on SSHPageState {
     final virtKeys = VirtKeyX.loadFromStore()
         .where((key) => !disabled.contains(key.index))
         .toList();
-    for (int len = 0; len < virtKeys.length; len += 7) {
-      if (len + 7 > virtKeys.length) {
-        _virtKeysList.add(virtKeys.sublist(len));
-      } else {
-        _virtKeysList.add(virtKeys.sublist(len, len + 7));
-      }
+    for (var at = 0; at < virtKeys.length; at += kVirtKeysPerRow) {
+      _virtKeysList.add(
+        virtKeys.sublist(at, math.min(at + kVirtKeysPerRow, virtKeys.length)),
+      );
     }
   }
 }

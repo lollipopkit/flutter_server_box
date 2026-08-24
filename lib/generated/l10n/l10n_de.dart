@@ -791,9 +791,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get noPromptAgain => 'Nicht mehr nachfragen';
 
   @override
-  String get onlyOneLine => 'Nur als eine Zeile anzeigen (scrollbar)';
-
-  @override
   String get openLastPath => 'Öffnen Sie den letzten Pfad';
 
   @override
@@ -1321,6 +1318,13 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get virtKeyIntroSelect =>
       'Solange das Terminal etwas zu scrollen hat, wählt seitliches Ziehen Text aus.';
+
+  @override
+  String get virtKeyRows => 'Gleichzeitig sichtbare Zeilen';
+
+  @override
+  String get virtKeyRowsTip =>
+      'Der Rest liegt auf einer eigenen Seite, die zur Seite gewischt wird.';
 
   @override
   String get waitConnection =>

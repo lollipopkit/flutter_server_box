@@ -799,10 +799,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get noPromptAgain => 'Ne pas demander à nouveau';
 
   @override
-  String get onlyOneLine =>
-      'Afficher uniquement en une seule ligne (défilement)';
-
-  @override
   String get openLastPath => 'Ouvrir le dernier chemin';
 
   @override
@@ -1328,6 +1324,13 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get virtKeyIntroSelect =>
       'Tant que le terminal a de quoi défiler, un glissement latéral sélectionne du texte.';
+
+  @override
+  String get virtKeyRows => 'Lignes affichées à la fois';
+
+  @override
+  String get virtKeyRowsTip =>
+      'Le reste passe sur une page à part, que l\'on fait défiler latéralement.';
 
   @override
   String get waitConnection =>

@@ -790,9 +790,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get noPromptAgain => 'Não perguntar novamente';
 
   @override
-  String get onlyOneLine => 'Exibir apenas como uma linha (rolável)';
-
-  @override
   String get openLastPath => 'Abrir o último caminho';
 
   @override
@@ -1312,6 +1309,13 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get virtKeyIntroSelect =>
       'Enquanto o terminal tiver algo a rolar, arraste na horizontal para selecionar texto.';
+
+  @override
+  String get virtKeyRows => 'Linhas exibidas de uma vez';
+
+  @override
+  String get virtKeyRowsTip =>
+      'O restante fica em uma página própria, deslizada para o lado.';
 
   @override
   String get waitConnection => 'Por favor, aguarde a conexão ser estabelecida';

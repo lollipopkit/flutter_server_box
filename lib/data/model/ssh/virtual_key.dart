@@ -4,6 +4,15 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:xterm/core.dart';
 
+/// How many virtual keys go in one row.
+///
+/// Fixed rather than measured: a key is as wide as the row divided by this, so
+/// the same key is in the same place on every phone and the row does not
+/// reflow when the window does. It is also what the settings page counts rows
+/// with, which is why it is here rather than beside the terminal that draws
+/// them.
+const kVirtKeysPerRow = 7;
+
 /// The three kinds of virtual key, which is what the walkthrough steps
 /// through. See [VirtKeyX.group].
 enum VirtKeyGroup { modifiers, navigation, shortcuts }

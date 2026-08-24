@@ -82,6 +82,16 @@ const _kMenuBreakpoint = 800.0;
 /// How wide the menu is when it is beside the content.
 const _kMenuWidth = 232.0;
 
+/// How wide the content beside that menu is allowed to get.
+///
+/// Left to fill a desktop window, a settings row put its label against one
+/// edge and its control against the other, a hand's width apart, and stopped
+/// reading as one thing. Two [PageColumns] columns' worth stops that without
+/// making the pane a narrow strip in the middle of a wide window — and it is
+/// also what lets the pages here that are a grid rather than a list keep two
+/// columns.
+const _kContentMaxWidth = 1000.0;
+
 class _SettingsPageState extends ConsumerState<SettingsPage> {
   /// Which branches are open in the wide menu. Nothing to start with, so it
   /// opens as a list of subjects rather than as everything there is.
@@ -519,9 +529,24 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     //
     // The `Scaffold`'s colour and not `colorScheme.surface`: that is the slot
     // `toAmoled` overrides, and the surface one it leaves alone.
+    // The cap goes on what is *in* the page, never on the page. A route
+    // sliding in is as wide as the pane; a navigator inside a narrower box
+    // slides the whole transition inside that box, so the page appeared to
+    // come out of a panel in the middle rather than in from the edge.
+    //
+    // The `Material` stays full width for the same reason — it is the
+    // background the transition is drawn against.
     Widget opaque(Widget child) => Material(
       color: Theme.of(context).scaffoldBackgroundColor,
-      child: child,
+      // Told to expand inside the cap: a `Center` hands down loose
+      // constraints, under which a page's list takes the height of its
+      // content rather than the height of the pane.
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: _kContentMaxWidth),
+          child: SizedBox.expand(child: child),
+        ),
+      ),
     );
 
     Widget pagesOf(String id, List<SettingsNode> level) {

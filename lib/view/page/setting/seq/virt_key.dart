@@ -59,7 +59,7 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
         children: [
           Padding(
             padding: const EdgeInsets.all(7),
-            child: _buildOneLineVirtKey().cardx,
+            child: _buildVirtKeyRows().cardx,
           ),
           Expanded(child: _buildBody(context)),
         ],
@@ -72,11 +72,42 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
     );
   }
 
-  Widget _buildOneLineVirtKey() {
+  /// How many rows of keys the terminal shows at once.
+  ///
+  /// The switch this replaced said "one row, scrolled sideways", which was the
+  /// only alternative to all of them. What anyone actually wants is a strip a
+  /// chosen number of rows tall, and the keys that do not fit within reach —
+  /// which is what a page swiped sideways is.
+  Widget _buildVirtKeyRows() {
+    final rows = (_enabled.length / kVirtKeysPerRow).ceil();
+    final value = Stores.setting.virtKeyRows.fetch();
     return ListTile(
-      title: Text(l10n.onlyOneLine),
-      trailing: StoreSwitch(prop: Stores.setting.horizonVirtKey),
+      title: Text(l10n.virtKeyRows),
+      subtitle: Text(l10n.virtKeyRowsTip, style: UIs.textGrey),
+      // Nothing to page while every row already fits. The row stays rather
+      // than going away, so it does not appear and disappear as keys are
+      // turned on and off in the list under it.
+      enabled: rows > 1,
+      trailing: Text(
+        value <= 0 ? libL10n.all : '$value',
+        style: UIs.text15,
+      ),
+      onTap: () => _pickVirtKeyRows(rows, value),
     );
+  }
+
+  Future<void> _pickVirtKeyRows(int rows, int current) async {
+    // 0 is "all of them", and so is the row count itself — offering both would
+    // be two entries doing one thing.
+    final picked = await context.showPickSingleDialog<int>(
+      title: l10n.virtKeyRows,
+      items: [0, for (var i = 1; i < rows; i++) i],
+      display: (value) => value <= 0 ? libL10n.all : '$value',
+      initial: current,
+    );
+    if (picked == null) return;
+    Stores.setting.virtKeyRows.put(picked);
+    if (mounted) setState(() {});
   }
 
   Widget _buildBody(BuildContext context) {

@@ -1485,12 +1485,6 @@ abstract class AppLocalizations {
   /// **'Do not prompt again'**
   String get noPromptAgain;
 
-  /// No description provided for @onlyOneLine.
-  ///
-  /// In en, this message translates to:
-  /// **'Only display as one line (scrollable)'**
-  String get onlyOneLine;
-
   /// No description provided for @openLastPath.
   ///
   /// In en, this message translates to:
@@ -2353,6 +2347,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Drag sideways over the terminal to select text, whenever it has something to scroll.'**
   String get virtKeyIntroSelect;
+
+  /// No description provided for @virtKeyRows.
+  ///
+  /// In en, this message translates to:
+  /// **'Rows shown at once'**
+  String get virtKeyRows;
+
+  /// No description provided for @virtKeyRowsTip.
+  ///
+  /// In en, this message translates to:
+  /// **'The rest go on a page of their own, swiped sideways.'**
+  String get virtKeyRowsTip;
 
   /// No description provided for @waitConnection.
   ///

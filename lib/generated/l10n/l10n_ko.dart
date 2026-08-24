@@ -746,9 +746,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get noPromptAgain => '다시 묻지 않기';
 
   @override
-  String get onlyOneLine => '한 줄로만 표시 (스크롤 가능)';
-
-  @override
   String get openLastPath => '마지막 경로 열기';
 
   @override
@@ -1241,6 +1238,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get virtKeyIntroSelect => '터미널에 스크롤할 내용이 있으면 가로로 끌어 텍스트를 선택할 수 있습니다.';
+
+  @override
+  String get virtKeyRows => '한 번에 표시할 줄 수';
+
+  @override
+  String get virtKeyRowsTip => '나머지는 별도의 페이지에 놓이며 옆으로 밀어 넘깁니다.';
 
   @override
   String get waitConnection => '연결이 설정될 때까지 기다려 주세요.';

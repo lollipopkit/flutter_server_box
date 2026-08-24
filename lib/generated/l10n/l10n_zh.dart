@@ -733,9 +733,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noPromptAgain => '不再提示';
 
   @override
-  String get onlyOneLine => '仅显示为一行（可滚动）';
-
-  @override
   String get openLastPath => '打开上次的路径';
 
   @override
@@ -1212,6 +1209,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtKeyIntroSelect => '终端有内容可滚动时，横向拖动即可选中文字。';
+
+  @override
+  String get virtKeyRows => '同时显示的行数';
+
+  @override
+  String get virtKeyRowsTip => '其余的放在单独一页，横向滑动切换。';
 
   @override
   String get waitConnection => '请等待连接建立';
@@ -2209,9 +2212,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get noPromptAgain => '不再提示';
 
   @override
-  String get onlyOneLine => '僅顯示為一行（可捲動）';
-
-  @override
   String get openLastPath => '打開上次的路徑';
 
   @override
@@ -2689,6 +2689,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtKeyIntroSelect => '終端機有內容可捲動時，橫向拖曳即可選取文字。';
+
+  @override
+  String get virtKeyRows => '同時顯示的列數';
+
+  @override
+  String get virtKeyRowsTip => '其餘的放在單獨一頁，橫向滑動切換。';
 
   @override
   String get waitConnection => '請等待連線建立';
