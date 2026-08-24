@@ -131,65 +131,69 @@ class ProcessExec extends LocalExec {
     // is what the ternary below says. The one that used to stand here chose
     // between `shell` and `shell`.
     final guest = inRootfs
-        ? AndroidRootfs.enter(command: entry ?? script)
+        ? await AndroidRootfs.enter(command: entry ?? script)
         : null;
     if (inRootfs && guest == null) {
       throw StateError('There is no Linux userland on this device to run in.');
     }
-    final process = await Process.start(
-      guest?.executable ?? shell,
-      guest?.arguments ?? (entry == null ? [flag, script] : [flag, entry]),
-      // The guest's own PATH and home, or Android's name for a directory that
-      // does not exist inside it and a shell that finds none of its own tools.
-      environment: guest == null
-          ? env
-          : {...AndroidRootfs.environment, ...?env},
-      // Added to, not replaced: a command here runs on the user's own machine
-      // and is written expecting the PATH they have.
-      includeParentEnvironment: true,
-    );
-
-    var cancelled = false;
-    unawaited(
-      cancel?.then((_) {
-        cancelled = true;
-        _kill(process);
-      }),
-    );
-
-    final out = StringBuffer();
-    final err = StringBuffer();
-    const decoder = Utf8Decoder(allowMalformed: true);
-    final outDone = decoder.bind(process.stdout).forEach((chunk) {
-      out.write(chunk);
-      onStdout?.call(chunk);
-    });
-    final errDone = decoder.bind(process.stderr).forEach((chunk) {
-      err.write(chunk);
-      onStderr?.call(chunk);
-    });
-
-    if (stdin != null) process.stdin.write(stdin);
-    if (entry != null) process.stdin.write('$script\n');
-    // Closed either way: a command that reads stdin would otherwise wait for
-    // input nobody is going to send.
     try {
-      await process.stdin.close();
-    } catch (_) {
-      // The process exited before reading anything, which is not this call's
-      // failure — the exit code below is the answer.
+      final process = await Process.start(
+        guest?.executable ?? shell,
+        guest?.arguments ?? (entry == null ? [flag, script] : [flag, entry]),
+        // The guest's own PATH and home, or Android's name for a directory that
+        // does not exist inside it and a shell that finds none of its own tools.
+        environment: guest == null
+            ? env
+            : {...AndroidRootfs.environment, ...?env},
+        // Added to, not replaced: a command here runs on the user's own machine
+        // and is written expecting the PATH they have.
+        includeParentEnvironment: true,
+      );
+
+      var cancelled = false;
+      unawaited(
+        cancel?.then((_) {
+          cancelled = true;
+          _kill(process);
+        }),
+      );
+
+      final out = StringBuffer();
+      final err = StringBuffer();
+      const decoder = Utf8Decoder(allowMalformed: true);
+      final outDone = decoder.bind(process.stdout).forEach((chunk) {
+        out.write(chunk);
+        onStdout?.call(chunk);
+      });
+      final errDone = decoder.bind(process.stderr).forEach((chunk) {
+        err.write(chunk);
+        onStderr?.call(chunk);
+      });
+
+      if (stdin != null) process.stdin.write(stdin);
+      if (entry != null) process.stdin.write('$script\n');
+      // Closed either way: a command that reads stdin would otherwise wait for
+      // input nobody is going to send.
+      try {
+        await process.stdin.close();
+      } catch (_) {
+        // The process exited before reading anything, which is not this call's
+        // failure — the exit code below is the answer.
+      }
+
+      final exitCode = await process.exitCode;
+      await Future.wait([outDone, errDone]);
+
+      return ExecResult(
+        // A cancelled command has no exit code worth reporting: it was killed,
+        // and the signal's number is not what the caller asked about.
+        exitCode: cancelled ? null : exitCode,
+        stdout: out.toString(),
+        stderr: err.toString(),
+      );
+    } finally {
+      guest?.release();
     }
-
-    final exitCode = await process.exitCode;
-    await Future.wait([outDone, errDone]);
-
-    return ExecResult(
-      // A cancelled command has no exit code worth reporting: it was killed,
-      // and the signal's number is not what the caller asked about.
-      exitCode: cancelled ? null : exitCode,
-      stdout: out.toString(),
-      stderr: err.toString(),
-    );
   }
 
   /// Ends the process.

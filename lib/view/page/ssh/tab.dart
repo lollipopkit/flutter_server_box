@@ -354,6 +354,10 @@ extension _Sessions on _SSHTabPageState {
   void _onRootfsRemoved() {
     final id = Rootfs.removed.value;
     if (id == null || !mounted) return;
+    // The picker and rail read Rootfs.profiles synchronously. They are cached
+    // widgets, so closing matching tabs alone does not rebuild their profile
+    // chips after a deletion from Settings.
+    _sortVersion.notify();
     for (final tab in [..._sessions.tabs]) {
       final source = tab.data.page.args.source;
       if (source is! LocalSource || !source.rootfs) continue;

@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:dio/dio.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
@@ -120,14 +118,10 @@ abstract final class Rootfs {
     return (distro: distro, release: distro.preferred);
   }
 
-  /// How many terminals are open in [profile], where that can be asked.
-  ///
-  /// iOS only: its sessions live in one engine that can be asked. Android runs
-  /// each in its own proot process and keeps no such list, and answering 0
-  /// there means the delete goes ahead as it always has — which is also what
-  /// it does when the engine is absent.
-  static int openSessions(LinuxProfile profile) =>
-      isAndroid ? 0 : IosRootfs.openSessions(profile.id);
+  /// How many terminals or commands are holding [profile] open.
+  static int openSessions(LinuxProfile profile) => isAndroid
+      ? AndroidRootfs.openSessions(profile.id)
+      : IosRootfs.openSessions(profile.id);
 
   /// Locates both, so a caller does not have to ask which platform it is on.
   static Future<void> prepare() async {
@@ -150,15 +144,10 @@ abstract final class Rootfs {
   /// The id is a path and stays put: renaming a directory out from under a
   /// running session would be the one thing a label change must not do.
   static Future<void> rename(LinuxProfile profile, String label) async {
-    final root = rootOf(profile.id);
-    if (root == null) return;
-    await File(
-      root.joinPath(LinuxProfile.marker),
-    ).writeAsString(profile.copyWith(label: label).encode());
     if (isAndroid) {
-      await AndroidRootfs.scan();
+      await AndroidRootfs.rename(profile, label);
     } else {
-      await IosRootfs.scan();
+      await IosRootfs.rename(profile, label);
     }
   }
 

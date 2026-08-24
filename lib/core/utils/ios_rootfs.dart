@@ -12,6 +12,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:server_box/core/utils/guest_path.dart';
 import 'package:server_box/core/utils/linux_seed.dart';
 import 'package:server_box/core/utils/oci_image.dart';
+import 'package:server_box/core/utils/rootfs_lifecycle.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/rootfs_manifest.dart';
 
@@ -31,6 +32,19 @@ import 'package:server_box/data/model/app/rootfs_manifest.dart';
 /// build without it is one edit away, should App Store review object — and
 /// [isAvailable] is how everything else asks, exactly as on Android.
 abstract final class IosRootfs {
+  static final _lifecycle = RootfsLifecycle();
+  static bool _mutating = false;
+
+  static Future<T> _mutate<T>(Future<T> Function() action) =>
+      _lifecycle.run(() async {
+        _mutating = true;
+        try {
+          return await action();
+        } finally {
+          _mutating = false;
+        }
+      });
+
   /// The guest's `EBUSY`, which is what an unmount answers while something
   /// still holds the mount. Negative already: `kernel/errno.h` defines the
   /// guest's errnos that way.
@@ -150,7 +164,6 @@ abstract final class IosRootfs {
       ..addAll(found);
   }
 
-
   /// Downloads and unpacks a system of [distro] as a profile of its own.
   ///
   /// Returns what it installed. Every other profile is left alone — this is how
@@ -176,22 +189,16 @@ abstract final class IosRootfs {
     String? label,
     void Function(double? progress)? onProgress,
     CancelToken? cancel,
-  }) {
-    if (_installing) {
-      return Future.error(StateError('An install is already running'));
-    }
-    _installing = true;
-    return _install(
+  }) => _mutate(
+    () => _install(
       distro: distro,
       release: release,
       into: into,
       label: label,
       onProgress: onProgress,
       cancel: cancel,
-    ).whenComplete(() => _installing = false);
-  }
-
-  static bool _installing = false;
+    ),
+  );
 
   static Future<LinuxProfile> _install({
     required LinuxDistro distro,
@@ -205,7 +212,8 @@ abstract final class IosRootfs {
     if (container == null) throw StateError('IosRootfs.prepare was not called');
     await scan();
 
-    final id = into?.id ?? LinuxProfile.nextId(distro, _profiles.map((e) => e.id));
+    final id =
+        into?.id ?? LinuxProfile.nextId(distro, _profiles.map((e) => e.id));
     final root = container.joinPath(id);
     // Read once, so that a setting changed mid-download cannot have the digest
     // checked against one distribution and the repositories written for
@@ -285,7 +293,9 @@ abstract final class IosRootfs {
         branch: chosen.branch,
         label: label ?? into?.label ?? distro.label,
       );
-      await File(root.joinPath(LinuxProfile.marker)).writeAsString(profile.encode());
+      await File(
+        root.joinPath(LinuxProfile.marker),
+      ).writeAsString(profile.encode());
       await scan();
       return profile;
     } catch (_) {
@@ -312,7 +322,9 @@ abstract final class IosRootfs {
   /// Every profile, not only the selected one: the resolvers are the device's
   /// network and apply to all of them, and a mirror belongs to a distribution
   /// so each profile of it wants the new one too.
-  static Future<void> applyNetSettings() async {
+  static Future<void> applyNetSettings() => _mutate(_applyNetSettings);
+
+  static Future<void> _applyNetSettings() async {
     final snapshot = List<LinuxProfile>.from(_profiles);
     for (final profile in snapshot) {
       if (byId(profile.id) == null) continue;
@@ -328,8 +340,10 @@ abstract final class IosRootfs {
       if (!await Directory(root).exists()) continue;
       final release = profile.branch.isEmpty
           ? null
-          : profile.distro.info.releases
-              .firstWhereOrNull((r) => r.branch == profile.branch);
+          : profile.distro.info.releases.firstWhereOrNull(
+              (r) => r.branch == profile.branch,
+            );
+      if (profile.branch.isNotEmpty && release == null) continue;
       await seedRepositories(
         root,
         distro: profile.distro,
@@ -339,14 +353,25 @@ abstract final class IosRootfs {
     }
   }
 
+  static Future<void> rename(LinuxProfile profile, String label) =>
+      _mutate(() async {
+        if (byId(profile.id) == null) return;
+        final root = rootOf(profile.id);
+        if (root == null) return;
+        await File(
+          root.joinPath(LinuxProfile.marker),
+        ).writeAsString(profile.copyWith(label: label).encode());
+        await scan();
+      });
+
   /// Removes one system and everything in it. The others stay.
-  static Future<void> removeProfile(String id) async {
+  static Future<void> removeProfile(String id) =>
+      _mutate(() => _removeProfile(id));
+
+  static Future<void> _removeProfile(String id) async {
     // A known id, before a recursive delete is built from it. `rootOf` only
     // joins a path, so anything the caller passes becomes one.
     if (byId(id) == null) return;
-    if (_installing) {
-      throw StateError('An install is already running');
-    }
     final root = rootOf(id);
     if (root == null) return;
     // Before the directory goes: its `/dev` is a fakefs whose database lives
@@ -490,22 +515,69 @@ abstract final class IosRootfs {
   static String _tarPath(String name) =>
       name.startsWith('./') ? name.substring(2) : name;
 
-  static bool _isSafeTarEntry(String name) {
+  static List<String>? _safeTarParts(String name) {
     final sanitized = _tarPath(name);
-    if (sanitized.isEmpty) return false;
-    if (sanitized.startsWith('/')) return false;
+    if (sanitized.isEmpty || sanitized.startsWith('/')) return null;
     // Lexical check: no segment may be '..' that escapes the root.
     final parts = <String>[];
     for (final seg in sanitized.split('/')) {
       if (seg.isEmpty || seg == '.') continue;
       if (seg == '..') {
-        if (parts.isEmpty) return false;
+        if (parts.isEmpty) return null;
         parts.removeLast();
       } else {
         parts.add(seg);
       }
     }
-    return true;
+    return parts.isEmpty ? null : parts;
+  }
+
+  static bool _isSafeTarEntry(String name) => _safeTarParts(name) != null;
+
+  static bool _hasTarLinkAncestor(List<String> parts, Set<String> links) {
+    for (var i = 1; i < parts.length; i++) {
+      if (links.contains(parts.take(i).join('/'))) return true;
+    }
+    return false;
+  }
+
+  /// Resolves an archive member one component at a time without ever asking
+  /// the host filesystem to traverse a symlinked parent.
+  static Future<String> _safeTarTarget(Directory into, String name) async {
+    final parts = _safeTarParts(name);
+    if (parts == null) throw StateError('Unsafe tar entry: $name');
+    var parent = into.path;
+    for (final segment in parts.take(parts.length - 1)) {
+      parent = parent.joinPath(segment);
+      switch (await FileSystemEntity.type(parent, followLinks: false)) {
+        case FileSystemEntityType.notFound:
+          await Directory(parent).create();
+          break;
+        case FileSystemEntityType.directory:
+          break;
+        case FileSystemEntityType.link:
+          throw StateError('Tar entry has a symlinked parent: $name');
+        default:
+          throw StateError('Tar entry has a non-directory parent: $name');
+      }
+    }
+    return parent.joinPath(parts.last);
+  }
+
+  static Future<void> _removeTarTarget(String path) async {
+    switch (await FileSystemEntity.type(path, followLinks: false)) {
+      case FileSystemEntityType.notFound:
+        return;
+      case FileSystemEntityType.directory:
+        await Directory(path).delete(recursive: true);
+        return;
+      case FileSystemEntityType.link:
+        await Link(path).delete();
+        return;
+      default:
+        await File(path).delete();
+        return;
+    }
   }
 
   static Future<void> _unpackTar(
@@ -516,6 +588,12 @@ abstract final class IosRootfs {
     void Function(double? progress)? onProgress,
   }) async {
     final hardLinks = _hardLinks(decoder);
+    final symbolicLinks = <String>{};
+    for (final entry in archive) {
+      if (!entry.isSymbolicLink) continue;
+      final parts = _safeTarParts(entry.name);
+      if (parts != null) symbolicLinks.add(parts.join('/'));
+    }
     // What this layer writes, which is what an opaque marker spares. Built up
     // front because the archive is not obliged to put the marker before the
     // entries it applies to, so "has it been written yet" is not the same
@@ -526,7 +604,8 @@ abstract final class IosRootfs {
     // Applied after everything is written, because an archive may name a link
     // before the file it points at. Ours is sorted and does not, but upstream's
     // ordering is upstream's business.
-    final pending = <String, String>{};
+    final pendingHardLinks = <String, String>{};
+    final pendingSymlinks = <String, String>{};
     var done = 0;
     for (final entry in archive) {
       done++;
@@ -537,7 +616,11 @@ abstract final class IosRootfs {
         Loggers.app.warning('Skipping unsafe tar entry: ${entry.name}');
         continue;
       }
-      final path = into.path.joinPath(_tarPath(entry.name));
+      final entryParts = _safeTarParts(entry.name)!;
+      if (_hasTarLinkAncestor(entryParts, symbolicLinks)) {
+        throw StateError('Tar entry has a symlinked parent: ${entry.name}');
+      }
+      final path = await _safeTarTarget(into, entry.name);
 
       if (applyWhiteouts) {
         final mark = ociWhiteout(entry.name.split('/').last);
@@ -552,22 +635,14 @@ abstract final class IosRootfs {
                 // deleting the layer's own contents would empty a directory
                 // the layer exists to fill.
                 final name = child.path.split(Platform.pathSeparator).last;
-                final sibling = directory.isEmpty
-                    ? name
-                    : '$directory/$name';
+                final sibling = directory.isEmpty ? name : '$directory/$name';
                 if (written.contains(sibling)) continue;
                 await child.delete(recursive: true);
               }
             }
           } else {
             final target = parent.path.joinPath(mark.deletes!);
-            final dir = Directory(target);
-            if (await dir.exists()) {
-              await dir.delete(recursive: true);
-            } else {
-              final file = File(target);
-              if (await file.exists()) await file.delete();
-            }
+            await _removeTarTarget(target);
           }
           continue;
         }
@@ -586,19 +661,26 @@ abstract final class IosRootfs {
           Loggers.app.warning('Skipping unsafe hardlink target: $hardTarget');
           continue;
         }
-        pending[path] = into.path.joinPath(hardTarget);
+        if (_hasTarLinkAncestor(_safeTarParts(hardTarget)!, symbolicLinks)) {
+          throw StateError(
+            'Hardlink target has a symlinked parent: $hardTarget',
+          );
+        }
+        pendingHardLinks[_tarPath(entry.name)] = hardTarget;
         continue;
       }
 
       if (entry.isSymbolicLink) {
-        final link = Link(path);
-        await link.parent.create(recursive: true);
-        if (await link.exists()) await link.delete();
-        await link.create(entry.symbolicLink!);
+        pendingSymlinks[_tarPath(entry.name)] = entry.symbolicLink!;
         continue;
       }
       if (entry.isDirectory) {
-        await Directory(path).create(recursive: true);
+        final type = await FileSystemEntity.type(path, followLinks: false);
+        if (type != FileSystemEntityType.directory &&
+            type != FileSystemEntityType.notFound) {
+          await _removeTarTarget(path);
+        }
+        await Directory(path).create();
         // The tarball's mode, with owner rwx forced on. `realfs` hands the
         // host's mode straight to the guest, and the host process is this app
         // rather than root — so uid 0 in the guest buys nothing, and Rocky's
@@ -622,7 +704,10 @@ abstract final class IosRootfs {
         continue;
       }
       final file = File(path);
-      await file.parent.create(recursive: true);
+      if (await FileSystemEntity.type(path, followLinks: false) !=
+          FileSystemEntityType.notFound) {
+        await _removeTarTarget(path);
+      }
       await file.writeAsBytes(entry.readBytes() ?? const []);
       // The mode the tarball recorded. It matters more here than under
       // `fakefs`: `realfs` reports the host's mode to the guest, so a busybox
@@ -633,12 +718,16 @@ abstract final class IosRootfs {
       chmodGuestFile(path, entry.mode & 0xfff);
     }
 
-    for (final entry in pending.entries) {
-      final path = entry.key;
-      final target = entry.value;
-      await File(path).parent.create(recursive: true);
-      final existing = File(path);
-      if (await existing.exists()) await existing.delete();
+    for (final entry in pendingHardLinks.entries) {
+      final path = await _safeTarTarget(into, entry.key);
+      final target = await _safeTarTarget(into, entry.value);
+      if (await FileSystemEntity.type(target, followLinks: false) !=
+          FileSystemEntityType.file) {
+        throw StateError(
+          'Hardlink target is not a regular file: ${entry.value}',
+        );
+      }
+      await _removeTarTarget(path);
       if (linkGuestFile(target, path)) continue;
       // A symlink is the fallback, not the intent: same file, one more
       // indirection, and it costs nothing where a copy would cost a gigabyte.
@@ -646,15 +735,24 @@ abstract final class IosRootfs {
       // and what reading the hard link as one got wrong in the first place.
       final rel = _relativeTo(File(path).parent.path, target);
       final link = Link(path);
-      if (await link.exists()) await link.delete();
       await link.create(rel);
+    }
+
+    // Last, so a link in this layer cannot become the parent through which a
+    // later regular file or hard-link fallback is written.
+    for (final entry in pendingSymlinks.entries) {
+      final path = await _safeTarTarget(into, entry.key);
+      await _removeTarTarget(path);
+      await Link(path).create(entry.value);
     }
   }
 
   /// [target] as a path from [from], both absolute.
   static String _relativeTo(String from, String target) {
-    final fromParts = from.split(Platform.pathSeparator)..removeWhere((e) => e.isEmpty);
-    final toParts = target.split(Platform.pathSeparator)..removeWhere((e) => e.isEmpty);
+    final fromParts = from.split(Platform.pathSeparator)
+      ..removeWhere((e) => e.isEmpty);
+    final toParts = target.split(Platform.pathSeparator)
+      ..removeWhere((e) => e.isEmpty);
     var shared = 0;
     while (shared < fromParts.length &&
         shared < toParts.length &&
@@ -691,7 +789,9 @@ abstract final class IosRootfs {
   /// would have to move it or remove it.
   static Future<void> prepare() async {
     if (!Platform.isIOS) return;
-    _container = (await getApplicationSupportDirectory()).path.joinPath('linux');
+    _container = (await getApplicationSupportDirectory()).path.joinPath(
+      'linux',
+    );
     await scan();
     for (final profile in _profiles) {
       final root = rootOf(profile.id);
@@ -723,7 +823,13 @@ abstract final class IosRootfs {
     final boot = _boot;
     final container = _container;
     final id = profileId ?? selected?.id;
-    if (boot == null || container == null || id == null) return -1;
+    if (_mutating ||
+        boot == null ||
+        container == null ||
+        id == null ||
+        byId(id) == null) {
+      return -1;
+    }
     final pointer = container.toNativeUtf8();
     final profile = id.toNativeUtf8();
     try {
@@ -806,7 +912,7 @@ abstract final class IosRootfs {
   }) {
     final open = _open;
     final id = profileId ?? selected?.id;
-    if (open == null || id == null) return -1;
+    if (_mutating || open == null || id == null || byId(id) == null) return -1;
     final profile = id.toNativeUtf8();
     final shellPointer = shell.toNativeUtf8();
     final pointer = (command ?? '').toNativeUtf8();
@@ -918,7 +1024,10 @@ abstract final class IosRootfs {
       ? DynamicLibrary.process()
       : null;
 
-  static T? _look<T extends Function>(String name, T Function(DynamicLibrary) f) {
+  static T? _look<T extends Function>(
+    String name,
+    T Function(DynamicLibrary) f,
+  ) {
     final process = _process;
     if (process == null) return null;
     try {
@@ -930,46 +1039,83 @@ abstract final class IosRootfs {
 
   static final _available = _look(
     'sbm_ish_available',
-    (p) => p.lookupFunction<Bool Function(), bool Function()>('sbm_ish_available'),
+    (p) =>
+        p.lookupFunction<Bool Function(), bool Function()>('sbm_ish_available'),
   );
   static final _boot = _look(
     'sbm_ish_boot',
-    (p) => p.lookupFunction<Int Function(Pointer<Char>, Pointer<Char>), int Function(Pointer<Char>, Pointer<Char>)>('sbm_ish_boot'),
+    (p) =>
+        p.lookupFunction<
+          Int Function(Pointer<Char>, Pointer<Char>),
+          int Function(Pointer<Char>, Pointer<Char>)
+        >('sbm_ish_boot'),
   );
   static final _attach = _look(
     'sbm_ish_attach',
-    (p) => p.lookupFunction<Int Function(Pointer<Char>), int Function(Pointer<Char>)>('sbm_ish_attach'),
+    (p) =>
+        p.lookupFunction<
+          Int Function(Pointer<Char>),
+          int Function(Pointer<Char>)
+        >('sbm_ish_attach'),
   );
   static final _sessions = _look(
     'sbm_ish_sessions',
-    (p) => p.lookupFunction<Int Function(Pointer<Char>), int Function(Pointer<Char>)>('sbm_ish_sessions'),
+    (p) =>
+        p.lookupFunction<
+          Int Function(Pointer<Char>),
+          int Function(Pointer<Char>)
+        >('sbm_ish_sessions'),
   );
   static final _detach = _look(
     'sbm_ish_detach',
-    (p) => p.lookupFunction<Int Function(Pointer<Char>), int Function(Pointer<Char>)>('sbm_ish_detach'),
+    (p) =>
+        p.lookupFunction<
+          Int Function(Pointer<Char>),
+          int Function(Pointer<Char>)
+        >('sbm_ish_detach'),
   );
   static final _open = _look(
     'sbm_ish_open',
-    (p) => p.lookupFunction<Int Function(Pointer<Char>, Pointer<Char>, Pointer<Char>, Int, Int), int Function(Pointer<Char>, Pointer<Char>, Pointer<Char>, int, int)>('sbm_ish_open'),
+    (p) =>
+        p.lookupFunction<
+          Int Function(Pointer<Char>, Pointer<Char>, Pointer<Char>, Int, Int),
+          int Function(Pointer<Char>, Pointer<Char>, Pointer<Char>, int, int)
+        >('sbm_ish_open'),
   );
   static final _read = _look(
     'sbm_ish_read',
-    (p) => p.lookupFunction<Int Function(Int, Pointer<Char>, Int, Int), int Function(int, Pointer<Char>, int, int)>('sbm_ish_read'),
+    (p) =>
+        p.lookupFunction<
+          Int Function(Int, Pointer<Char>, Int, Int),
+          int Function(int, Pointer<Char>, int, int)
+        >('sbm_ish_read'),
   );
   static final _write = _look(
     'sbm_ish_write',
-    (p) => p.lookupFunction<Int Function(Int, Pointer<Char>, Int), int Function(int, Pointer<Char>, int)>('sbm_ish_write'),
+    (p) =>
+        p.lookupFunction<
+          Int Function(Int, Pointer<Char>, Int),
+          int Function(int, Pointer<Char>, int)
+        >('sbm_ish_write'),
   );
   static final _resize = _look(
     'sbm_ish_resize',
-    (p) => p.lookupFunction<Void Function(Int, Int, Int), void Function(int, int, int)>('sbm_ish_resize'),
+    (p) =>
+        p.lookupFunction<
+          Void Function(Int, Int, Int),
+          void Function(int, int, int)
+        >('sbm_ish_resize'),
   );
   static final _exitCode = _look(
     'sbm_ish_exit_code',
-    (p) => p.lookupFunction<Int Function(Int), int Function(int)>('sbm_ish_exit_code'),
+    (p) => p.lookupFunction<Int Function(Int), int Function(int)>(
+      'sbm_ish_exit_code',
+    ),
   );
   static final _close = _look(
     'sbm_ish_close',
-    (p) => p.lookupFunction<Void Function(Int), void Function(int)>('sbm_ish_close'),
+    (p) => p.lookupFunction<Void Function(Int), void Function(int)>(
+      'sbm_ish_close',
+    ),
   );
 }

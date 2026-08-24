@@ -15,6 +15,16 @@ void main() {
   final onPosix = !Platform.isWindows;
 
   group('running a command', () {
+    test(
+      'a missing rootfs fails closed instead of using the host shell',
+      () async {
+        await expectLater(
+          const ProcessExec(inRootfs: true).run('echo must-not-run'),
+          throwsA(isA<StateError>()),
+        );
+      },
+    );
+
     test('its output and exit code come back', () async {
       final result = await exec.run('echo hello');
 

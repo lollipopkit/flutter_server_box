@@ -105,14 +105,25 @@ class LocalShellBackend implements ShellBackend {
     required int height,
     Map<String, String>? environment,
   }) async {
-    final guest = inRootfs ? AndroidRootfs.enter(profileId: profileId) : null;
-    return _start(
-      guest?.executable ?? shellPath,
-      arguments: guest?.arguments ?? const [],
-      width: width,
-      height: height,
-      environment: environment,
-    );
+    final guest = inRootfs
+        ? await AndroidRootfs.enter(profileId: profileId)
+        : null;
+    if (inRootfs && guest == null) {
+      throw StateError('The selected Linux system is no longer available.');
+    }
+    try {
+      return _start(
+        guest?.executable ?? shellPath,
+        arguments: guest?.arguments ?? const [],
+        width: width,
+        height: height,
+        environment: environment,
+        onDone: guest?.release,
+      );
+    } catch (_) {
+      guest?.release();
+      rethrow;
+    }
   }
 
   @override
@@ -123,19 +134,28 @@ class LocalShellBackend implements ShellBackend {
     Map<String, String>? environment,
   }) async {
     final guest = inRootfs
-        ? AndroidRootfs.enter(command: command, profileId: profileId)
+        ? await AndroidRootfs.enter(command: command, profileId: profileId)
         : null;
-    return _start(
-      guest?.executable ?? shellPath,
-      arguments:
-          guest?.arguments ??
-          // `/C` on Windows, where `cmd` spells the same idea differently and
-          // taking the POSIX form would run nothing at all.
-          [Platform.isWindows ? '/C' : '-c', command],
-      width: width,
-      height: height,
-      environment: environment,
-    );
+    if (inRootfs && guest == null) {
+      throw StateError('The selected Linux system is no longer available.');
+    }
+    try {
+      return _start(
+        guest?.executable ?? shellPath,
+        arguments:
+            guest?.arguments ??
+            // `/C` on Windows, where `cmd` spells the same idea differently and
+            // taking the POSIX form would run nothing at all.
+            [Platform.isWindows ? '/C' : '-c', command],
+        width: width,
+        height: height,
+        environment: environment,
+        onDone: guest?.release,
+      );
+    } catch (_) {
+      guest?.release();
+      rethrow;
+    }
   }
 
   _LocalShellSession _start(
@@ -144,6 +164,7 @@ class LocalShellBackend implements ShellBackend {
     required int width,
     required int height,
     Map<String, String>? environment,
+    void Function()? onDone,
   }) {
     if (_closed) {
       throw StateError('This local shell backend is closed');
@@ -170,7 +191,12 @@ class LocalShellBackend implements ShellBackend {
       ),
     );
     _sessions.add(session);
-    unawaited(session.done.whenComplete(() => _sessions.remove(session)));
+    unawaited(
+      session.done.whenComplete(() {
+        _sessions.remove(session);
+        onDone?.call();
+      }),
+    );
     return session;
   }
 

@@ -12,6 +12,7 @@ import 'package:server_box/core/utils/adhoc_ssh_prompt.dart';
 import 'package:server_box/core/utils/local_exec.dart';
 import 'package:server_box/core/utils/rootfs.dart';
 import 'package:server_box/core/utils/server.dart';
+import 'package:server_box/core/utils/shell_quote.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/core/utils/ssh_exec.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
@@ -1086,18 +1087,21 @@ class GlobalAgentToolService {
     return host;
   }
 
-  /// The same two tools on this device, over `dart:io` instead of SFTP.
+  /// The same two tools on this device.
   ///
-  /// Not `cat` and `tee` through the shell: those would go through the same
-  /// review as any other command, and reading a file is not a command. Same
-  /// limits as the remote ones, so a model gets one answer whichever machine
-  /// it asked about.
+  /// Host files use `dart:io`. Guest files run a fixed, quoted helper inside
+  /// the guest instead: resolving a host path and opening it later leaves a
+  /// check/use window where a concurrent guest command can swap a parent for
+  /// an outside symlink. Same limits as the remote tools either way.
   Future<AgentToolExecutionResult> _readLocalFile(
     AskAiCommand proposal,
     Stopwatch watch,
     String path,
     LocalExec exec,
   ) async {
+    if (exec.inRootfs) {
+      return _readGuestFile(proposal, watch, path, exec);
+    }
     final file = File(await _localPath(path, exec));
     if (!await file.exists()) {
       throw StateError('No such file on this device: $path');
@@ -1109,6 +1113,68 @@ class GlobalAgentToolService {
     final data = truncated
         ? await _firstBytes(file, _maxReadBytes)
         : await file.readAsBytes();
+    return AgentToolExecutionResult(
+      toolName: proposal.toolName,
+      serverId: null,
+      summary: truncated
+          ? 'Read the first $_maxReadBytes bytes of $path on this device.'
+          : 'Read $path on this device.',
+      succeeded: true,
+      duration: watch.elapsed,
+      truncated: truncated,
+      data: {
+        'path': path,
+        'size_bytes': size,
+        'content': utf8.decode(data, allowMalformed: true),
+      },
+    );
+  }
+
+  Future<AgentToolExecutionResult> _readGuestFile(
+    AskAiCommand proposal,
+    Stopwatch watch,
+    String path,
+    LocalExec exec,
+  ) async {
+    final quoted = shellSingleQuote(path);
+    final result = await exec.run(
+      'p=$quoted\n'
+      r'if [ ! -f "$p" ]; then exit 44; fi'
+      '\n'
+      r'size=$(wc -c < "$p") || exit'
+      '\n'
+      r'''printf '%s\n' "$size"'''
+      '\n'
+      'head -c $_maxReadBytes "\$p" | base64 | tr -d "\\n"\n'
+      r'''printf '\n' ''',
+    );
+    if (result.outputIncomplete) {
+      throw StateError('The Linux userland returned incomplete file data.');
+    }
+    if (result.exitCode == 44) {
+      throw StateError('No such file on this device: $path');
+    }
+    if (result.exitCode != 0) {
+      throw StateError(
+        result.stderr.trim().isEmpty
+            ? 'Could not read $path inside the Linux userland.'
+            : result.stderr.trim(),
+      );
+    }
+
+    final separator = result.stdout.indexOf('\n');
+    if (separator <= 0) {
+      throw StateError('The Linux userland returned malformed file data.');
+    }
+    final size = int.tryParse(result.stdout.substring(0, separator).trim());
+    if (size == null || size < 0) {
+      throw StateError('The Linux userland returned an invalid file size.');
+    }
+    final encoded = result.stdout.substring(separator + 1).trim();
+    final data = encoded.isEmpty
+        ? Uint8List(0)
+        : Uint8List.fromList(base64.decode(encoded));
+    final truncated = size > _maxReadBytes;
     return AgentToolExecutionResult(
       toolName: proposal.toolName,
       serverId: null,
@@ -1147,6 +1213,9 @@ class GlobalAgentToolService {
         'File content exceeds the $_maxWriteBytes byte Agent limit.',
       );
     }
+    if (exec.inRootfs) {
+      return _writeGuestFile(proposal, watch, path, bytes, exec);
+    }
     final host = await _localPath(path, exec, forWrite: true);
     // Written beside the target and moved onto it, the way the remote one is:
     // a write that fails halfway leaves the original file rather than half of
@@ -1164,6 +1233,44 @@ class GlobalAgentToolService {
         }
       }
       rethrow;
+    }
+    return AgentToolExecutionResult(
+      toolName: proposal.toolName,
+      serverId: null,
+      summary: 'Wrote ${bytes.length} bytes to $path on this device.',
+      succeeded: true,
+      duration: watch.elapsed,
+      data: {'path': path, 'bytes_written': bytes.length},
+    );
+  }
+
+  Future<AgentToolExecutionResult> _writeGuestFile(
+    AskAiCommand proposal,
+    Stopwatch watch,
+    String path,
+    Uint8List bytes,
+    LocalExec exec,
+  ) async {
+    final quoted = shellSingleQuote(path);
+    final suffix = ShortId.generate();
+    final result = await exec.run(
+      'p=$quoted\n'
+      'tmp="\$p.$suffix.tmp"\n'
+      r'''trap 'rm -f -- "$tmp"' EXIT HUP INT TERM'''
+      '\n'
+      r'''base64 -d > "$tmp"'''
+      '\n'
+      r'''mv -f -- "$tmp" "$p"'''
+      '\n'
+      'trap - EXIT HUP INT TERM',
+      stdin: base64.encode(bytes),
+    );
+    if (result.outputIncomplete || result.exitCode != 0) {
+      throw StateError(
+        result.stderr.trim().isEmpty
+            ? 'Could not write $path inside the Linux userland.'
+            : result.stderr.trim(),
+      );
     }
     return AgentToolExecutionResult(
       toolName: proposal.toolName,
