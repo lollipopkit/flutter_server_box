@@ -12,6 +12,7 @@ extension _Server on _AppSettingsPageState {
   Widget _buildServer() {
     return Column(
       children: [
+        _buildDistIcon(),
         _buildServerLogoUrl(),
         _buildServerFuncBtns(),
         _buildNetViewType(),
@@ -198,6 +199,19 @@ extension _Server on _AppSettingsPageState {
           trailing: StoreSwitch(prop: _setting.displayCpuIndex),
         ),
       ],
+    );
+  }
+
+  /// The mark beside each server, and where it comes from.
+  ///
+  /// The tip is the short form; the intro page carries the whole of it, which
+  /// is why this leads there rather than repeating it in a subtitle.
+  Widget _buildDistIcon() {
+    return ListTile(
+      leading: const Icon(Icons.dns_outlined),
+      title: TipText(l10n.distIcon, l10n.distIconIntroLegal),
+      subtitle: Text(l10n.distIconTip, style: UIs.textGrey),
+      trailing: StoreSwitch(prop: _setting.showDistIcon),
     );
   }
 

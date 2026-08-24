@@ -26,7 +26,7 @@ void main() {
     test('every one a distribution names is actually there', () {
       final shipped = _shipped();
       for (final dist in Dist.values) {
-        final path = dist.iconPath;
+        final path = dist.glyphPath;
         if (path == null) continue;
         expect(
           shipped,
@@ -40,33 +40,63 @@ void main() {
       // The other direction: a file nothing points at is dead weight in the
       // bundle, and usually a rename done on one side only.
       final named = {
-        kUnknownDistIcon.split('/').last,
+        kLinuxIcon.split('/').last,
+        kServerIcon.split('/').last,
         for (final dist in Dist.values)
-          if (dist.iconPath != null) '${dist.name}.svg',
+          if (dist.glyphPath != null) '${dist.name}.svg',
       };
       expect(_shipped(), named);
     });
 
-    test('the fallback is shipped too', () {
-      // Reached by every server that has not connected yet, which on a first
-      // run is all of them.
-      expect(_shipped(), contains(kUnknownDistIcon.split('/').last));
+    test('both fallbacks are shipped too', () {
+      // One or the other is reached by every server that has not connected
+      // yet, which on a first run is all of them.
+      expect(_shipped(), contains(kLinuxIcon.split('/').last));
+      expect(_shipped(), contains(kServerIcon.split('/').last));
     });
 
-    test('the two without one say so rather than pointing at nothing', () {
-      // font-logos has no glyph for either. They are not to be filled in from
-      // those projects' own artwork — see assets/distro/README.md.
-      expect(Dist.armbian.iconPath, isNull);
-      expect(Dist.coreelec.iconPath, isNull);
-    });
-
-    test('a path is under the directory the pubspec ships', () {
-      for (final dist in Dist.values) {
-        final path = dist.iconPath;
-        if (path == null) continue;
-        expect(path, startsWith('assets/distro/'));
+    test('the ones with no mark of their own say so', () {
+      // Two have no glyph in font-logos; the rest are a decision. See
+      // Dist.glyphPath and assets/distro/README.md.
+      for (final dist in [
+        Dist.armbian,
+        Dist.coreelec,
+        Dist.freebsd,
+        Dist.openbsd,
+        Dist.netbsd,
+        Dist.macos,
+        Dist.windows,
+      ]) {
+        expect(dist.glyphPath, isNull, reason: 'Dist.${dist.name}');
       }
-      expect(kUnknownDistIcon, startsWith('assets/distro/'));
+    });
+
+    test('and Apple and Microsoft marks are not shipped at all', () {
+      // Apple: the logo may not be used "for any other purpose except
+      // pursuant to an express written trademark license". Microsoft requires
+      // a licence for any Windows logo. Neither is a fair-use question.
+      expect(_shipped(), isNot(contains('macos.svg')));
+      expect(_shipped(), isNot(contains('windows.svg')));
+      expect(_shipped(), isNot(contains('apple.svg')));
+      // Nor the BSD characters, which are copyrighted rather than geometric.
+      expect(_shipped(), isNot(contains('freebsd.svg')));
+      expect(_shipped(), isNot(contains('openbsd.svg')));
+    });
+
+    test('a non-Linux falls back to the machine, not the penguin', () {
+      for (final dist in [Dist.freebsd, Dist.openbsd, Dist.macos, Dist.windows]) {
+        expect(dist.iconPath, kServerIcon, reason: 'Dist.${dist.name}');
+        expect(dist.isLinux, isFalse);
+      }
+      // And a Linux with no glyph still gets the penguin.
+      expect(Dist.armbian.iconPath, kLinuxIcon);
+      expect(Dist.coreelec.iconPath, kLinuxIcon);
+    });
+
+    test('every case has something to draw', () {
+      for (final dist in Dist.values) {
+        expect(dist.iconPath, startsWith('assets/distro/'));
+      }
     });
   });
 
@@ -140,7 +170,10 @@ void main() {
         Dist.coreos: 'Fedora CoreOS 40',
         Dist.freebsd: '14.1-RELEASE FreeBSD',
         Dist.openbsd: '7.5 OpenBSD',
+        Dist.netbsd: '10.0 NetBSD',
         Dist.illumos: 'OpenIndiana Hipster 2024.04',
+        Dist.macos: 'Darwin 24.0.0',
+        Dist.windows: 'Microsoft Windows Server 2022',
       };
 
       for (final dist in Dist.values) {
@@ -200,7 +233,7 @@ void main() {
       expect('iStoreOS 22.03'.dist, Dist.wrt);
       expect('ImmortalWrt 23.05'.dist, Dist.wrt);
       expect('LEDE Reboot 17.01'.dist, Dist.wrt);
-      expect(Dist.wrt.iconPath, isNotNull);
+      expect(Dist.wrt.glyphPath, isNotNull);
     });
 
     test('SUSE Linux Enterprise reads as openSUSE, which is its glyph', () {

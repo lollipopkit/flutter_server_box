@@ -4,6 +4,7 @@ import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/widget/dist_icon.dart';
 
 /// Every host key this app has accepted, and a way to take one back.
 ///
@@ -112,7 +113,10 @@ class _KnownHostsPageState extends State<KnownHostsPage> {
 
   Widget _buildServer(String serverId, List<KnownHostKey> keys) {
     return ExpandTile(
-      leading: const Icon(Icons.dns),
+      // From the cache, since this page holds ids and nothing else: a known
+      // host is a server that connected at some point, so there is usually a
+      // reading for it even though no status is live here.
+      leading: DistIconOf(Stores.serverDist.get(serverId), size: 24),
       title: Text(_label(serverId)),
       subtitle: Text(
         '${keys.length} ${l10n.sshHostKeyType}',

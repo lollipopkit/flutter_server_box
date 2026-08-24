@@ -4,6 +4,7 @@ import 'package:server_box/data/store/migrations/m006_bmc_columns.dart';
 import 'package:server_box/data/store/migrations/m007_private_key_comment.dart';
 import 'package:server_box/data/store/migrations/m008_settings_fixups.dart';
 import 'package:server_box/data/store/migrations/m009_grouped_settings.dart';
+import 'package:server_box/data/store/migrations/m010_server_dist.dart';
 import 'package:server_box/data/store/schema.dart';
 
 /// Every migration, ordered, in the one place that names them.
@@ -20,4 +21,5 @@ const kSchemaMigrations = <SchemaMigration>[
   PrivateKeyCommentMigration(),
   SettingsFixupsMigration(),
   GroupedSettingsMigration(),
+  ServerDistMigration(),
 ];

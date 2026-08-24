@@ -100,6 +100,7 @@ void main() {
     db.execute(
       "INSERT INTO conn_stat VALUES ('cs', 'srv', 'srv', 1, 'success', '', 5);",
     );
+    db.execute("INSERT INTO server_dist VALUES ('srv', 'debian', 1);");
 
     db.execute("DELETE FROM server WHERE id = 'srv';");
 
@@ -111,6 +112,10 @@ void main() {
       'known_host',
       'port_forward',
       'conn_stat',
+      // The cache of what each server was last seen running: keyed by the
+      // server and cascading with it, so a deleted server leaves no reading
+      // nothing can read.
+      'server_dist',
     ]) {
       expect(
         db.select('SELECT count(*) AS n FROM $t;').single['n'],

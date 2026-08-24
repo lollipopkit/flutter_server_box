@@ -28,9 +28,35 @@ To add one: find it in font-logos' `vectors/`, copy it in under the `Dist`
 name you are adding, add the case, and add a matcher. `test/dist_icon_test.dart`
 fails if any of the four is missing.
 
-`armbian` and `coreelec` have no glyph in font-logos and fall back to the
-generic mark. Do not fill those two in from the projects' own sites: that would
-be copying their artwork, which is the one thing this arrangement avoids.
+Two fallbacks. `tux.svg` is drawn for a Linux whose flavour is not known;
+`server.svg` — drawn by hand for this app, so it carries nobody's mark — is
+drawn for a machine that has not been asked yet, and for the cases below.
+
+Seven cases ship no mark of their own, for three different reasons:
+
+- **armbian**, **coreelec** — font-logos simply has no glyph. Do not fill them
+  in from the projects' own sites: that would be copying their artwork, which
+  is the one thing this arrangement avoids.
+- **macos**, **windows** — a decision, not a gap. Apple's
+  [guidelines](https://www.apple.com/legal/intellectual-property/guidelinesfor3rdparties.html)
+  say the Apple Logo may not be used "on or in connection with web sites,
+  products, packaging, manuals, promotional/advertising materials, or for any
+  other purpose except pursuant to an express written trademark license from
+  Apple". Microsoft's
+  [Windows trademark guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks)
+  require a licence for any Windows logo, which is not generally available to
+  app developers. Both permit the *word* referentially and neither permits the
+  mark, which is the opposite of how the Linux projects are written. A glyph
+  set having an `apple.svg` does not change that: the Unlicense answers the
+  copyright in the redrawn file, not Apple's trademark.
+- **freebsd**, **openbsd**, **netbsd** — the marks a glyph set carries for
+  these are the BSD Daemon and Puffy, which are copyrighted *characters*
+  rather than geometric logos. The [FreeBSD Trademark Usage FAQ](https://freebsdfoundation.org/legal/trademark-usage-terms-and-conditions/freebsd-trademark-usage-faq/)
+  says rights to the Daemon "must be sought from trademark owner Kirk
+  McKusick". Redrawing a character is closer to a derivative work than
+  redrawing a logo, so these get the neutral outline. The FreeBSD Foundation's
+  own policy would allow nominative use of its *logo*; that is a separate
+  question from the Daemon, and this sidesteps both.
 
 ## Why using them is allowed
 

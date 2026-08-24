@@ -82,39 +82,88 @@ enum Dist {
   postmarketos,
   coreos,
 
-  // Not Linux, but a server all the same, and `uname -or` names them.
+  // Not Linux, but a server all the same, and `uname -or` names them. None of
+  // these carries a mark of its own — see [glyphPath].
   freebsd,
   openbsd,
-  illumos;
+  netbsd,
+  illumos,
+  macos,
+  windows;
 
-  /// The single-colour glyph marking this one, or null when none is shipped.
+  /// This one's own mark, or null when none is shipped for it.
   ///
-  /// Null only for `armbian` and `coreelec`, which font-logos has no glyph
-  /// for. They are not to be filled in from those projects' own sites: the
-  /// files in `assets/distro/` are redrawn glyphs released into the public
-  /// domain, and copying a project's own artwork is a copyright question with
-  /// a different answer. Callers draw the generic mark instead.
+  /// Null in three cases, for two different reasons.
   ///
-  /// Drawing one of these beside a server's name is nominative use — a mark
-  /// used to refer to the thing it identifies, which is what makes it legal
-  /// without any project's permission. `assets/distro/README.md` records each
-  /// project's policy and the wording it rests on; read it before adding a
-  /// glyph, recolouring one, or using these anywhere that could read as an
-  /// affiliation.
-  String? get iconPath =>
-      _withoutIcon.contains(this) ? null : 'assets/distro/$name.svg';
+  /// `armbian` and `coreelec` simply have no glyph in font-logos. They are not
+  /// to be filled in from those projects' own sites: the files in
+  /// `assets/distro/` are redrawn glyphs released into the public domain, and
+  /// copying a project's own artwork is a copyright question with a different
+  /// answer.
+  ///
+  /// `macos` and `windows` are a decision rather than a gap. Apple's
+  /// guidelines say the Apple Logo may not be used "for any other purpose
+  /// except pursuant to an express written trademark license from Apple", and
+  /// Microsoft requires a licence for any Windows logo. Both permit the *word*
+  /// referentially and neither permits the mark, which is the opposite of how
+  /// the Linux projects are written. So those two get the neutral outline.
+  ///
+  /// `freebsd`, `openbsd` and `netbsd` are the same decision for a different
+  /// reason: the marks a glyph set carries for them are the BSD Daemon and
+  /// Puffy, which are copyrighted *characters* rather than geometric logos —
+  /// the FreeBSD FAQ says rights to the Daemon "must be sought from trademark
+  /// owner Kirk McKusick". Redrawing a character is closer to a derivative
+  /// work than redrawing a logo, so they get the outline too.
+  ///
+  /// Drawing one of the marks that *is* shipped, beside a server's name, is
+  /// nominative use — a mark used to refer to the thing it identifies, which
+  /// is what makes it legal without any project's permission.
+  /// `assets/distro/README.md` records each project's policy and the wording
+  /// it rests on; read it before adding a glyph, recolouring one, or using
+  /// these anywhere that could read as an affiliation.
+  String? get glyphPath =>
+      _withoutGlyph.contains(this) ? null : 'assets/distro/$name.svg';
+
+  /// Always something to draw: this one's own mark, or the right fallback.
+  String get iconPath => glyphPath ?? (isLinux ? kLinuxIcon : kServerIcon);
+
+  /// Whether this is a Linux at all, which is what picks the fallback.
+  bool get isLinux => !_notLinux.contains(this);
 }
 
-/// The two with no glyph. Named the short way round, since almost every case
-/// has one.
-const _withoutIcon = {Dist.armbian, Dist.coreelec};
+/// Cases with no mark of their own. See [Dist.glyphPath] for why each is here.
+const _withoutGlyph = {
+  Dist.armbian,
+  Dist.coreelec,
+  Dist.freebsd,
+  Dist.openbsd,
+  Dist.netbsd,
+  Dist.macos,
+  Dist.windows,
+};
 
-/// The generic Linux mark, for a server not yet asked and for the two above.
+/// The ones that are not Linux, and so fall back to the neutral outline rather
+/// than to a penguin.
+const _notLinux = {
+  Dist.freebsd,
+  Dist.openbsd,
+  Dist.netbsd,
+  Dist.illumos,
+  Dist.macos,
+  Dist.windows,
+};
+
+/// Some Linux whose flavour is not known. A penguin says that; a server
+/// outline would say only "a machine". From the same public-domain set.
+const kLinuxIcon = 'assets/distro/tux.svg';
+
+/// A machine, saying nothing about what runs on it.
 ///
-/// A penguin rather than a server outline: what is being said is "some Linux
-/// whose flavour is not known", and Tux is what says that. From the same
-/// public-domain set as the rest.
-const kUnknownDistIcon = 'assets/distro/tux.svg';
+/// Drawn for the BSDs, macOS and Windows — see [Dist.glyphPath] — and for a
+/// server that has not been asked yet, where a penguin would be a guess.
+/// Drawn by hand for this app rather than taken from anywhere, so it carries
+/// nobody's mark.
+const kServerIcon = 'assets/distro/server.svg';
 
 extension DistStringX on String {
   /// Which distribution this `PRETTY_NAME` line names, or null.
@@ -228,7 +277,11 @@ const _matchers = <(Dist, List<String>)>[
   (Dist.coreelec, ['coreelec']),
   (Dist.freebsd, ['freebsd']),
   (Dist.openbsd, ['openbsd']),
+  (Dist.netbsd, ['netbsd']),
   (Dist.illumos, ['illumos', 'openindiana', 'smartos']),
+  // `uname -or` on Darwin, and the marker the Windows path reports.
+  (Dist.macos, ['darwin', 'macos', 'mac os']),
+  (Dist.windows, ['windows', 'microsoft']),
 
   // OpenWrt last of the Linuxes: its own name is checked here, and the
   // downstreams that never carry it follow. iStoreOS is one such.

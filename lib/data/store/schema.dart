@@ -69,7 +69,9 @@ abstract final class SchemaVersion {
   ///     `xxxMigrated` flag key, now ordered steps like everything else
   /// v10: the Agent shell's eight settings keys and the AI provider's six
   ///      folded into one object row each
-  static const current = 10;
+  /// v11: `server_dist`, caching what each server was last seen running so a
+  ///      row can draw its mark without a live status
+  static const current = 11;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

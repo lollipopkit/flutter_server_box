@@ -601,6 +601,15 @@ class SettingStore extends SqliteStore {
     },
   );
 
+  /// Whether to draw a distribution's mark beside each server.
+  ///
+  /// On by default: it is what makes a list of machines readable at a glance,
+  /// and the marks are redrawn public-domain glyphs used to refer to the
+  /// systems they identify — see `assets/distro/README.md`. Off draws nothing
+  /// at all rather than the neutral outline, for anyone who would rather the
+  /// rows carried no mark.
+  late final showDistIcon = propertyDefault('showDistIcon', true);
+
   /// Hide port forward beta warning
   late final portForwardBetaWarned = propertyDefault(
     'portForwardBetaWarned',

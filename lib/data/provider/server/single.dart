@@ -18,6 +18,7 @@ import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/connection_stat.dart';
 import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
+import 'package:server_box/data/model/server/dist.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
@@ -148,6 +149,29 @@ class ServerNotifier extends _$ServerNotifier {
   // Update server status
   void updateStatus(ServerStatus status) {
     state = state.copyWith(status: status);
+    _rememberDist(status);
+  }
+
+  /// Files what this poll said the machine is running.
+  ///
+  /// Here rather than in the parser, because this is the one place that knows
+  /// *which server* a status belongs to. Written on every poll but only
+  /// reaches the database when the answer changed, so a server polled every
+  /// few seconds writes once and then never again.
+  ///
+  /// The reading is what lets a row draw the right mark without a live status
+  /// — the pickers, the known-hosts page and the order page all hold only an
+  /// id. See [ServerDistStore].
+  void _rememberDist(ServerStatus status) {
+    final dist = status.more[StatusCmdType.sys]?.dist;
+    if (dist == null) return;
+    try {
+      Stores.serverDist.put(state.spi.id, dist);
+    } catch (e, s) {
+      // A cache, so a failure to write one is not a failure to poll: the row
+      // draws the neutral mark and the next poll tries again.
+      Loggers.app.warning('Caching the distribution of ${state.spi.name}', e, s);
+    }
   }
 
   ServerStatus _copyStatus(

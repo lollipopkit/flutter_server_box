@@ -424,6 +424,45 @@ class ConnStats extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// What each server was last seen running, so a row can show its mark before
+/// the machine has been asked again.
+///
+/// A cache and not a field of the record: the distribution is a fact about the
+/// far end, observed rather than configured, and a server the user has just
+/// added has none until it connects. Keeping it here means the pickers, the
+/// known-hosts page and the order page can all draw the right mark without
+/// holding a live status — which none of them does.
+///
+/// One row per server, keyed by the server, cascading with it: a cache entry
+/// for a server that no longer exists is a row nothing can ever read.
+///
+/// No sync columns, and deliberately not a sync root. What this device last
+/// observed is not an edit anybody made, and a peer's observation is not more
+/// authoritative than this one's — syncing it would let a stale reading from
+/// another device overwrite a fresh one here.
+@DataClassName('ServerDistRow')
+class ServerDists extends Table {
+  @override
+  String get tableName => 'server_dist';
+  @override
+  bool get withoutRowId => true;
+
+  TextColumn get serverId =>
+      text().references(Servers, #id, onDelete: KeyAction.cascade)();
+
+  /// A `Dist` name. By name, never by index — an index silently changes
+  /// meaning when a case is inserted, and this outlives the build that wrote
+  /// it. A name no build knows reads back as null, which draws the fallback.
+  TextColumn get dist => text()();
+
+  /// When it was last seen, so a reading can be aged out if that is ever
+  /// wanted. Nothing reads it yet.
+  IntColumn get updatedAt => integer()();
+
+  @override
+  Set<Column> get primaryKey => {serverId};
+}
+
 /// `data` stays JSON: a conversation is an ordered log of heterogeneous items
 /// read only ever whole, never queried by field. Columns would buy nothing and
 /// cost a migration for every new item kind.
@@ -539,6 +578,7 @@ class SyncStates extends Table {
     ContainerHosts,
     ContainerRuntimes,
     ConnStats,
+    ServerDists,
     AgentConversations,
     AgentActiveConversations,
     Tombstones,

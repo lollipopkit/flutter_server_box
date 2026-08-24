@@ -10,6 +10,7 @@ import 'package:server_box/data/store/migrations/m003_hive_to_sqlite.dart';
 import 'package:server_box/data/store/port_forward.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
+import 'package:server_box/data/store/server_dist.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/data/store/snippet.dart';
 import 'package:server_box/data/store/tables.dart';
@@ -29,6 +30,10 @@ abstract final class Stores {
   static ConnectionStatsStore get connectionStats =>
       getIt<ConnectionStatsStore>();
   static PortForwardStore get portForward => getIt<PortForwardStore>();
+
+  /// What each server was last seen running. A cache of an observation, not a
+  /// record anyone edits — see [ServerDistStore].
+  static ServerDistStore get serverDist => getIt<ServerDistStore>();
 
   /// The key-value stores whose contents count as something the user changed.
   ///
@@ -60,6 +65,9 @@ abstract final class Stores {
     getIt.registerLazySingleton<HistoryStore>(() => HistoryStore.instance);
     getIt.registerLazySingleton<AgentConversationStore>(
       () => AgentConversationStore.instance,
+    );
+    getIt.registerLazySingleton<ServerDistStore>(
+      () => ServerDistStore.instance,
     );
     getIt.registerLazySingleton<ConnectionStatsStore>(
       () => ConnectionStatsStore.instance,
