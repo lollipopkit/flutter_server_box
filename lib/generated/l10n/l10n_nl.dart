@@ -303,6 +303,13 @@ class AppLocalizationsNl extends AppLocalizations {
       'Toon naast elke server een klein teken van het systeem dat er lijkt te draaien';
 
   @override
+  String get distNameMap => 'Naamtoewijzing';
+
+  @override
+  String get distNameMapTip =>
+      'Alleen voor een distributie waarvan het bestand anders heet op de plek waar u de merktekens host. De sleutel is de naam die deze app gebruikt; de waarde is de naam die opgehaald wordt. Laat het leeg zolang er geen merkteken ontbreekt.';
+
+  @override
   String get navTabMenuTip =>
       'Houd een tabblad ingedrukt — of klik er met rechts op — om alles erin in één keer te verbinden of te verbreken.';
 

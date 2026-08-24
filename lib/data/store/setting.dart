@@ -608,6 +608,31 @@ class SettingStore extends SqliteStore {
     },
   );
 
+  /// What `{DIST}` expands to, for a distribution whose file is named
+  /// something else wherever the marks are hosted.
+  ///
+  /// Keyed by `Dist`'s own case name, which is the value `{DIST}` carries by
+  /// default. Absent means "use the case name", so this holds only the
+  /// disagreements — an empty map is the normal state.
+  ///
+  /// It exists because there is no correct table to ship. The names belong to
+  /// whichever collection the user pointed at: font-logos calls Arch
+  /// `archlinux` and RHEL `redhat`, another set will call them something else,
+  /// and a table baked in here would be right for one of them and wrong for
+  /// the rest. Edited by hand in the settings' key-value editor.
+  late final distNameMap = propertyDefault<Map<String, String>>(
+    'distNameMap',
+    const {},
+    fromObj: (raw) {
+      if (raw is Map) {
+        return raw.map(
+          (key, value) => MapEntry(key.toString(), value.toString()),
+        );
+      }
+      return <String, String>{};
+    },
+  );
+
   /// Whether to draw a distribution's mark beside each server.
   ///
   /// On by default, which shows nothing until [serverLogoUrl] (or a server's

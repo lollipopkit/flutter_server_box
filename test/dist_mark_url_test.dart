@@ -37,8 +37,11 @@ void main() {
     String? override,
     bool dark = false,
     String global = '',
+    Map<String, String> names = const {},
   }) {
-    GetIt.instance<SettingStore>().serverLogoUrl.put(global);
+    GetIt.instance<SettingStore>()
+      ..serverLogoUrl.put(global)
+      ..distNameMap.put(names);
     return distMarkUrl(dist: dist, override: override, dark: dark);
   }
 
@@ -92,6 +95,40 @@ void main() {
       url(global: 'https://github.com/o/r/blob/main/i/{DIST}.svg'),
       'https://raw.githubusercontent.com/o/r/main/i/debian.svg',
     );
+  });
+
+  group('the name overrides', () {
+    // No table is shipped: the file names belong to whichever collection the
+    // user pointed at, so a mapping right for one is wrong for the next.
+    test('replace what {DIST} expands to, for the ones listed', () {
+      expect(
+        url(
+          global: 'https://ex.com/{DIST}.svg',
+          dist: Dist.rhel,
+          names: const {'rhel': 'redhat'},
+        ),
+        'https://ex.com/redhat.svg',
+      );
+    });
+
+    test('and leave every other distribution alone', () {
+      // The normal case: a handful of exceptions, sixty-odd untouched.
+      expect(
+        url(
+          global: 'https://ex.com/{DIST}.svg',
+          dist: Dist.debian,
+          names: const {'rhel': 'redhat', 'arch': 'archlinux'},
+        ),
+        'https://ex.com/debian.svg',
+      );
+    });
+
+    test('an entry for something not installed changes nothing', () {
+      expect(
+        url(global: 'https://ex.com/{DIST}.svg', names: const {'nope': 'x'}),
+        'https://ex.com/debian.svg',
+      );
+    });
   });
 
   test('anything that is not http is refused', () {

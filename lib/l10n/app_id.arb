@@ -29,6 +29,8 @@
   "distIconConsent": "Dengan mengaktifkannya, Anda memilih untuk menampilkan tanda-tanda ini, semata-mata untuk menunjukkan distribusi yang tampaknya dijalankan sebuah server.",
   "distIconIntroLegal": "Aplikasi ini tidak menyertakan tanda distribusi apa pun. Setelah Anda menetapkan alamatnya, gambar diambil dari sana — sumbernya Anda yang menentukan, dan selama belum ditentukan tidak ada yang ditampilkan. Sebuah tanda hanya menyatakan apa yang dibaca perangkat ini dari sistem jarak jauh, yang bisa saja keliru atau usang, dan tidak menandakan turunan, hasil bangun ulang, maupun versi tertentu.\n\nSetiap tanda adalah merek dagang pemiliknya masing-masing dan di sini hanya dipakai untuk merujuk pada sistem yang ditandainya.",
   "distIconTip": "Tampilkan tanda kecil di samping setiap server untuk sistem yang tampaknya dijalankannya",
+  "distNameMap": "Pemetaan nama",
+  "distNameMapTip": "Hanya untuk distribusi yang nama berkasnya berbeda di tempat Anda menaruh tanda-tanda itu. Kuncinya adalah nama yang dipakai aplikasi ini; nilainya adalah nama yang akan diambil. Biarkan kosong selama tidak ada tanda yang hilang.",
   "navTabMenuTip": "Tekan lama sebuah tab — atau klik kanan — untuk menghubungkan atau memutuskan semuanya sekaligus.",
   "nTags": "{count} tag",
   "remoteBackupPasswordRequired": "Remote backups require a non-empty backup password",

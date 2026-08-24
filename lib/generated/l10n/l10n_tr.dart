@@ -303,6 +303,13 @@ class AppLocalizationsTr extends AppLocalizations {
       'Her sunucunun yanında, üzerinde çalıştığı görünen sistemin küçük bir işaretini göster';
 
   @override
+  String get distNameMap => 'Ad eşleştirme';
+
+  @override
+  String get distNameMapTip =>
+      'Yalnızca işaretleri barındırdığınız yerde dosyası başka adla duran bir dağıtım için. Anahtar, bu uygulamanın kullandığı ad; değer ise indirilecek ad. Eksik bir işaret olmadıkça boş bırakın.';
+
+  @override
   String get navTabMenuTip =>
       'İçindeki her şeyi tek seferde bağlamak veya bağlantısını kesmek için bir sekmeye uzun basın ya da sağ tıklayın.';
 

@@ -300,6 +300,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Show a small mark beside each server for the system it appears to be running.';
 
   @override
+  String get distNameMap => 'Name overrides';
+
+  @override
+  String get distNameMapTip =>
+      'Only for a distribution whose file is named something else where you host the marks. The key is the name this app uses; the value is the name to fetch. Leave it empty unless a mark is missing.';
+
+  @override
   String get navTabMenuTip =>
       'Long press a tab — or right-click it — to connect or disconnect everything on it at once.';
 

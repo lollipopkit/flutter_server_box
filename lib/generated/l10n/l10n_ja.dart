@@ -283,6 +283,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get distIconTip => '各サーバーの横に、動作していると思われるシステムの小さな標識を表示します';
 
   @override
+  String get distNameMap => '名前の対応付け';
+
+  @override
+  String get distNameMapTip =>
+      'マークの置き場でファイル名がこのアプリの呼び方と違うディストリビューションにだけ使います。キーはこのアプリが使う名前、値は実際に取得する名前です。表示できないマークがなければ設定は不要です。';
+
+  @override
   String get navTabMenuTip => 'タブを長押し（マウスは右クリック）すると、その中のすべてをまとめて接続・切断できます。';
 
   @override

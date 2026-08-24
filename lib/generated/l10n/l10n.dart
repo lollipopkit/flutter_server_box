@@ -651,6 +651,18 @@ abstract class AppLocalizations {
   /// **'Show a small mark beside each server for the system it appears to be running.'**
   String get distIconTip;
 
+  /// No description provided for @distNameMap.
+  ///
+  /// In en, this message translates to:
+  /// **'Name overrides'**
+  String get distNameMap;
+
+  /// No description provided for @distNameMapTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Only for a distribution whose file is named something else where you host the marks. The key is the name this app uses; the value is the name to fetch. Leave it empty unless a mark is missing.'**
+  String get distNameMapTip;
+
   /// No description provided for @navTabMenuTip.
   ///
   /// In en, this message translates to:

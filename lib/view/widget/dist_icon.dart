@@ -36,12 +36,29 @@ String? distMarkUrl({
   var url = resolveLogoUrl(configured);
   if (url.contains(_distToken)) {
     if (dist == null) return null;
-    url = url.replaceAll(_distToken, dist.name);
+    url = url.replaceAll(_distToken, distFileName(dist));
   }
   url = url.replaceAll(_brightToken, dark ? 'dark' : 'light');
   if (!url.startsWith('http')) return null;
   return url;
 }
+
+/// What `{DIST}` becomes for [dist] — its own case name unless the user has
+/// said otherwise.
+///
+/// The case name is the app's published contract and cannot change. But it
+/// only matches the file names of the collection it was written against, and
+/// the collection is now the user's choice: font-logos names Arch `archlinux`
+/// and RHEL `redhat`, so somebody pointing `{DIST}` at it needs those two
+/// renamed and the other sixty-odd left alone.
+///
+/// No table is shipped for this on purpose. There is no single right one — a
+/// mapping correct for one collection is wrong for the next — and a wrong
+/// entry would be worse than none, since it silently fetches the wrong logo
+/// rather than nothing. `Stores.setting.distNameMap` is where the exceptions
+/// go, edited by hand.
+String distFileName(Dist dist) =>
+    Stores.setting.distNameMap.fetch()[dist.name] ?? dist.name;
 
 /// Whether the address names an SVG, which needs a different loader.
 ///

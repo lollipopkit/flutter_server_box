@@ -29,6 +29,8 @@
   "distIconConsent": "Al activarlo, eliges mostrar estas marcas con el único fin de indicar qué distribución parece estar ejecutando un servidor.",
   "distIconIntroLegal": "Esta aplicación no incluye ninguna marca de distribución. Cuando indicas una dirección, la imagen se carga desde ahí: la fuente la eliges tú, y hasta que no elijas una no se muestra nada. Una marca solo indica lo que este dispositivo leyó del sistema remoto, información que puede ser errónea o estar desactualizada, y no identifica ni un derivado, ni una recompilación, ni una versión concreta.\n\nCada marca es una marca registrada de su respectivo propietario y aquí solo se usa para referirse al sistema que identifica.",
   "distIconTip": "Mostrar junto a cada servidor una pequeña marca del sistema que parece estar ejecutando",
+  "distNameMap": "Correspondencia de nombres",
+  "distNameMapTip": "Solo para una distribución cuyo archivo se llame de otro modo donde alojes las marcas. La clave es el nombre que usa esta aplicación; el valor es el nombre que se debe descargar. Déjalo vacío mientras no falte ninguna marca.",
   "navTabMenuTip": "Mantén pulsada una pestaña, o haz clic derecho en ella, para conectar o desconectar de una vez todo lo que contiene.",
   "nTags": "{count} etiquetas",
   "remoteBackupPasswordRequired": "Remote backups require a non-empty backup password",

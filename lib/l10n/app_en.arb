@@ -88,6 +88,8 @@
   "distIconConsent": "By turning this on you are choosing to display these marks, for the single purpose of identifying which distribution a server appears to be running.",
   "distIconIntroLegal": "This app ships no distribution marks. Once you set an address for them, the picture is fetched from there — the source is yours to choose, and until you choose one nothing is shown. A mark says only what this device read from the remote system, which can be wrong or out of date, and identifies neither a derivative, a rebuild, nor any particular version.\n\nEach mark is a trademark of its respective owner and is used only to refer to the system it identifies.",
   "distIconTip": "Show a small mark beside each server for the system it appears to be running.",
+  "distNameMap": "Name overrides",
+  "distNameMapTip": "Only for a distribution whose file is named something else where you host the marks. The key is the name this app uses; the value is the name to fetch. Leave it empty unless a mark is missing.",
   "navTabMenuTip": "Long press a tab — or right-click it — to connect or disconnect everything on it at once.",
   "nTags": "{count} Tags",
   "remoteBackupPasswordRequired": "Remote backups require a non-empty backup password",

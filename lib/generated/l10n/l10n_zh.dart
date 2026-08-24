@@ -279,6 +279,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get distIconTip => '在每台服务器旁显示一个小标识,表示它可能运行的系统';
 
   @override
+  String get distNameMap => '名称映射';
+
+  @override
+  String get distNameMapTip =>
+      '仅用于「托管处的文件名和本应用使用的名称对不上」的发行版。键是本应用使用的名称,值是实际要取的名称。没有缺图就不用填。';
+
+  @override
   String get navTabMenuTip => '长按标签栏图标（鼠标右键点击）可一次性连接或断开其中的全部内容。';
 
   @override
@@ -1758,6 +1765,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get distIconTip => '在每台伺服器旁顯示一個小標識,表示它可能執行的系統';
+
+  @override
+  String get distNameMap => '名稱對應';
+
+  @override
+  String get distNameMapTip =>
+      '僅用於「託管處的檔名和本應用使用的名稱對不上」的發行版。鍵是本應用使用的名稱,值是實際要取的名稱。沒有缺圖就不用填。';
 
   @override
   String get navTabMenuTip => '長按標籤列圖示（滑鼠右鍵點選）可一次連線或斷開其中的全部項目。';

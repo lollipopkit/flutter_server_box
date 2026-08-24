@@ -302,6 +302,13 @@ class AppLocalizationsId extends AppLocalizations {
       'Tampilkan tanda kecil di samping setiap server untuk sistem yang tampaknya dijalankannya';
 
   @override
+  String get distNameMap => 'Pemetaan nama';
+
+  @override
+  String get distNameMapTip =>
+      'Hanya untuk distribusi yang nama berkasnya berbeda di tempat Anda menaruh tanda-tanda itu. Kuncinya adalah nama yang dipakai aplikasi ini; nilainya adalah nama yang akan diambil. Biarkan kosong selama tidak ada tanda yang hilang.';
+
+  @override
   String get navTabMenuTip =>
       'Tekan lama sebuah tab — atau klik kanan — untuk menghubungkan atau memutuskan semuanya sekaligus.';
 

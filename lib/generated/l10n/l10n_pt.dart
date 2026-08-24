@@ -303,6 +303,13 @@ class AppLocalizationsPt extends AppLocalizations {
       'Mostrar ao lado de cada servidor uma pequena marca do sistema que ele parece executar';
 
   @override
+  String get distNameMap => 'Correspondência de nomes';
+
+  @override
+  String get distNameMapTip =>
+      'Apenas para uma distribuição cujo arquivo tenha outro nome onde você hospeda as marcas. A chave é o nome que este aplicativo usa; o valor é o nome a ser buscado. Deixe vazio enquanto nenhuma marca estiver faltando.';
+
+  @override
   String get navTabMenuTip =>
       'Toque e segure uma aba — ou clique com o botão direito — para conectar ou desconectar tudo nela de uma vez.';
 

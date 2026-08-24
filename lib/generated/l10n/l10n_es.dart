@@ -308,6 +308,13 @@ class AppLocalizationsEs extends AppLocalizations {
       'Mostrar junto a cada servidor una pequeña marca del sistema que parece estar ejecutando';
 
   @override
+  String get distNameMap => 'Correspondencia de nombres';
+
+  @override
+  String get distNameMapTip =>
+      'Solo para una distribución cuyo archivo se llame de otro modo donde alojes las marcas. La clave es el nombre que usa esta aplicación; el valor es el nombre que se debe descargar. Déjalo vacío mientras no falte ninguna marca.';
+
+  @override
   String get navTabMenuTip =>
       'Mantén pulsada una pestaña, o haz clic derecho en ella, para conectar o desconectar de una vez todo lo que contiene.';
 

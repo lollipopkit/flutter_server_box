@@ -305,6 +305,13 @@ class AppLocalizationsDe extends AppLocalizations {
       'Neben jedem Server ein kleines Zeichen für das System anzeigen, das er offenbar ausführt';
 
   @override
+  String get distNameMap => 'Namenszuordnung';
+
+  @override
+  String get distNameMapTip =>
+      'Nur für eine Distribution, deren Datei dort, wo Sie die Marken ablegen, anders heißt. Der Schlüssel ist der Name, den diese App verwendet; der Wert ist der Name, der abgerufen werden soll. Lassen Sie es leer, solange keine Marke fehlt.';
+
+  @override
   String get navTabMenuTip =>
       'Tippe lange auf einen Tab – oder klicke ihn mit der rechten Maustaste an –, um alles darin auf einmal zu verbinden oder zu trennen.';
 

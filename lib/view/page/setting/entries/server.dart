@@ -14,6 +14,7 @@ extension _Server on _AppSettingsPageState {
       children: [
         _buildDistIcon(),
         _buildServerLogoUrl(),
+        _buildDistNameMap(),
         _buildNetViewType(),
         _buildConnectionStats(),
         _buildDeleteServers(),
@@ -187,21 +188,52 @@ extension _Server on _AppSettingsPageState {
     );
   }
 
-  /// The mark beside each server, and where it comes from.
+  /// The mark beside each server, and what it is.
   ///
-  /// The tip is the short form; the intro page carries the whole of it, which
-  /// is why this leads there rather than repeating it in a subtitle.
+  /// The tip is the whole of the terms — plain, not markdown, because a tip is
+  /// a text bubble and a link in one shows as its own syntax with nothing to
+  /// tap. The same text goes up in full when the switch is turned on.
   Widget _buildDistIcon() {
     return ListTile(
       leading: const Icon(Icons.dns_outlined),
-      // Plain, not markdown: a tip is a text bubble, and a link in it would
-      // show as its own syntax with nothing to tap. The intro page is where
-      // the followable version lives.
       title: TipText(l10n.distIcon, distLegalPlain(l10n)),
       subtitle: Text(l10n.distIconTip, style: UIs.textGrey),
       trailing: StoreSwitch(
         prop: _setting.showDistIcon,
         validator: _confirmDistIcon,
+      ),
+    );
+  }
+
+  /// The exceptions to `{DIST}` — see [distFileName].
+  ///
+  /// A key-value editor rather than a picker over `Dist.values`: the keys are
+  /// the app's own case names and the values are whatever the collection the
+  /// user chose happens to call those files. Only the disagreements are
+  /// written down, so the list is normally empty and is a handful at most.
+  Widget _buildDistNameMap() {
+    return ValBuilder(
+      listenable: _setting.distNameMap.listenable(),
+      builder: (map) => ListTile(
+        leading: const Icon(Icons.swap_horiz),
+        title: TipText(l10n.distNameMap, l10n.distNameMapTip),
+        subtitle: Text(
+          // The count, not the pairs: a subtitle listing them would be a line
+          // of `arch=archlinux, rhel=redhat, …` that elides after two.
+          map.isEmpty ? libL10n.empty : '${map.length}',
+          style: UIs.textGrey,
+        ),
+        trailing: const Icon(Icons.keyboard_arrow_right),
+        onTap: () async {
+          final result = await KvEditor.route.go(
+            context,
+            KvEditorArgs(data: Map.of(map)),
+          );
+          // Null is a back-button, which is not the same as saving an empty
+          // map — that is how every override is cleared.
+          if (result == null) return;
+          _setting.distNameMap.put(result);
+        },
       ),
     );
   }

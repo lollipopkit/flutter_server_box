@@ -29,6 +29,8 @@
   "distIconConsent": "Bunu açtığınızda bu işaretleri göstermeyi kendiniz seçmiş olursunuz; tek amacı bir sunucunun çalıştırdığı görünen dağıtımı belirtmektir.",
   "distIconIntroLegal": "Bu uygulama hiçbir dağıtım işareti içermez. Bir adres belirlediğinizde görsel oradan yüklenir — kaynağı siz seçersiniz ve seçmediğiniz sürece hiçbir şey gösterilmez. Bir işaret yalnızca bu cihazın uzak sistemden okuduğunu belirtir; bu bilgi yanlış veya güncel olmayabilir ve bir türevi, yeniden derlemeyi ya da belirli bir sürümü göstermez.\n\nHer işaret ilgili sahibinin ticari markasıdır ve burada yalnızca işaret ettiği sistemi belirtmek için kullanılır.",
   "distIconTip": "Her sunucunun yanında, üzerinde çalıştığı görünen sistemin küçük bir işaretini göster",
+  "distNameMap": "Ad eşleştirme",
+  "distNameMapTip": "Yalnızca işaretleri barındırdığınız yerde dosyası başka adla duran bir dağıtım için. Anahtar, bu uygulamanın kullandığı ad; değer ise indirilecek ad. Eksik bir işaret olmadıkça boş bırakın.",
   "navTabMenuTip": "İçindeki her şeyi tek seferde bağlamak veya bağlantısını kesmek için bir sekmeye uzun basın ya da sağ tıklayın.",
   "nTags": "{count} etiket",
   "remoteBackupPasswordRequired": "Uzak yedeklemeler için boş olmayan bir yedekleme parolası gerekir",
