@@ -116,6 +116,7 @@ abstract final class HiveImport {
     if (present.isEmpty) {
       // A fresh install. Record the current layout so the migrator does not
       // walk it through steps written for data it never had.
+      _dropPlaintextIndex(dir);
       SchemaVersion.initFresh();
       Stores.setting.set(_markerKey, true);
       return;
@@ -129,10 +130,15 @@ abstract final class HiveImport {
     );
 
     var copied = 0;
+    var hadWriteFailures = false;
     for (final name in pending) {
       final result = await _importBox(name, _boxes[name]!);
       copied += result.copied;
-      if (result.opened) done.add(name);
+      if (result.opened && !result.hadWriteFailures) {
+        done.add(name);
+      } else if (result.hadWriteFailures) {
+        hadWriteFailures = true;
+      }
     }
 
     final unread = present.where((name) => !done.contains(name)).toList();
@@ -146,9 +152,23 @@ abstract final class HiveImport {
         'Imported $copied rows from Hive; $unread unread, '
         'left to the next launch',
       );
+      // Remove the plaintext index when possible even while some encrypted
+      // boxes remain unread: it holds no data that is not derivable from the
+      // records and must not stay plaintext beside the encrypted database.
+      _dropPlaintextIndex(dir);
       // What did land is already in the current shape, so the version is set
       // now: a launch in this state runs the migrator like any other, and the
       // step for a shape this data no longer has must not be applied to it.
+      if (done.isNotEmpty) SchemaVersion.initAtHiveImport();
+      return;
+    }
+    if (hadWriteFailures) {
+      _setDoneBoxes(done);
+      Loggers.app.warning(
+        'Imported $copied rows from Hive; some rows failed to persist, '
+        'will retry failed boxes',
+      );
+      _dropPlaintextIndex(dir);
       if (done.isNotEmpty) SchemaVersion.initAtHiveImport();
       return;
     }
@@ -174,7 +194,7 @@ abstract final class HiveImport {
   static void _setDoneBoxes(Set<String> names) =>
       Stores.setting.set(_doneKey, names.toList());
 
-  static Future<({bool opened, int copied})> _importBox(
+  static Future<({bool opened, int copied, bool hadWriteFailures})> _importBox(
     String name,
     bool Function(String, Object) into,
   ) async {
@@ -185,10 +205,11 @@ abstract final class HiveImport {
       // One box that will not open must not stop the others: the alternative is
       // an install that keeps all of its data and can reach none of it.
       Loggers.app.warning('Hive box "$name" did not open; skipped', e, s);
-      return (opened: false, copied: 0);
+      return (opened: false, copied: 0, hadWriteFailures: false);
     }
 
     var copied = 0;
+    var hadWriteFailures = false;
     try {
       // One transaction per box. A connection-stats box can hold thousands of
       // rows, and a commit each would be thousands of durability barriers.
@@ -210,6 +231,7 @@ abstract final class HiveImport {
           if (ok) {
             copied++;
           } else {
+            hadWriteFailures = true;
             Loggers.app.warning(
               'Could not import "$name/$key" (${value.runtimeType})',
             );
@@ -222,7 +244,7 @@ abstract final class HiveImport {
     } finally {
       await legacy.box.close();
     }
-    return (opened: true, copied: copied);
+    return (opened: true, copied: copied, hadWriteFailures: hadWriteFailures);
   }
 
   /// A record that a released build wrote, as the JSON that build produced.
