@@ -131,11 +131,16 @@ enum Dist {
   /// owner Kirk McKusick". Redrawing a character is closer to a derivative
   /// work than redrawing a logo, so they get the outline too.
   ///
-  /// The rest are simply not distributions anybody manages a server on: a
-  /// respin of something already in the set, a live system for one job, a
-  /// phone or set-top target, a project that has stopped, or one small enough
-  /// that no one will meet it. They are still recognised by name — only the
-  /// glyph is absent, so `{DIST}` and the identification keep working.
+  /// The rest — most of the enum — carry no mark for a reason that is not
+  /// legal at all: a glyph earns its place only if the person scanning a list
+  /// of servers will meet that distribution often enough to learn its shape.
+  /// A dozen do. AlmaLinux, Gentoo, openSUSE and Void are perfectly good
+  /// server distributions and are in this group anyway; the line is
+  /// recognisability, not merit.
+  ///
+  /// They are all still *identified* — by `ID=` and by name — so `{DIST}`
+  /// still expands and the status page still names them. Only the picture is
+  /// absent, and putting one back is a line in [_withoutGlyph] plus the file.
   ///
   /// Drawing one of the marks that *is* shipped, beside a server's name, is
   /// nominative use — a mark used to refer to the thing it identifies, which
@@ -169,10 +174,11 @@ const _withoutGlyph = {
   Dist.macos,
   Dist.windows,
 
-  // Not shipped because nobody would meet one on a server, and a glyph nobody
-  // sees is bundle weight and one more mark to have justified. Respins of a
-  // distribution already in the set, single-purpose live systems, phone and
-  // set-top targets, discontinued projects, and the very small.
+  // Not shipped because a mark is only worth carrying for a distribution the
+  // person reading the list will actually meet. Everything below is still
+  // identified by name and by `ID=`; it draws the fallback its own family
+  // picks — the penguin for a Linux, the outline for `illumos`.
+  Dist.almalinux,
   Dist.aosc,
   Dist.archcraft,
   Dist.archlabs,
@@ -180,29 +186,41 @@ const _withoutGlyph = {
   Dist.artix,
   Dist.biglinux,
   Dist.cachyos,
+  Dist.coreos,
+  Dist.devuan,
+  Dist.elementary,
   Dist.endeavour,
   Dist.garuda,
+  Dist.gentoo,
   Dist.guix,
   Dist.hyperbola,
   Dist.illumos,
   Dist.kdeneon,
   Dist.kubuntu,
+  Dist.leap,
   Dist.locos,
   Dist.lxle,
   Dist.mageia,
   Dist.mandriva,
+  Dist.manjaro,
+  Dist.mx,
   Dist.nobara,
+  Dist.opensuse,
   Dist.parabola,
   Dist.parrot,
   Dist.postmarketos,
   Dist.puppy,
   Dist.qubes,
   Dist.sabayon,
+  Dist.slackware,
   Dist.solus,
   Dist.tails,
   Dist.trisquel,
+  Dist.tumbleweed,
   Dist.vanilla,
+  Dist.voidlinux,
   Dist.xerolinux,
+  Dist.zorin,
 };
 
 /// The ones that are not Linux, and so fall back to the neutral outline rather

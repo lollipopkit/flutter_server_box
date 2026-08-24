@@ -1214,7 +1214,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtKeyRows => '同时显示的行数';
 
   @override
-  String get virtKeyRowsTip => '其余的放在单独一页，横向滑动切换。';
+  String get virtKeyRowsTip => '超出单页的可横向滑动切换';
 
   @override
   String get waitConnection => '请等待连接建立';

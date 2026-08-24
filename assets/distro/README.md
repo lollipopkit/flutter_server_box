@@ -77,8 +77,9 @@ will not be flattened quietly.
 `<metadata>` is worth a note of its own, because deleting a licence block
 normally is not something to do lightly. **In this set it does not describe the
 file it is in.** It is Inkscape RDF inherited from whatever document each glyph
-was traced in: `elementary.svg` carries *Gentoo's* ("Gentoo Logo Dark v1.0",
-Sebastian Pipping, Gentoo Foundation Inc.), `voidlinux.svg` carries *AOSC's*
+was traced in — measured over the fifty-eight files that were here when this
+was found: `elementary.svg` carried *Gentoo's* ("Gentoo Logo Dark v1.0",
+Sebastian Pipping, Gentoo Foundation Inc.), `voidlinux.svg` carried *AOSC's*
 ("Logo of Anthon OS4 Project"), and `artix.svg` claimed CC BY-NC-SA 4.0 —
 non-commercial, on a file whose actual licence is the Unlicense above. None of
 it is a grant this repository relies on, and shipping a file that misattributes
@@ -97,25 +98,25 @@ drawn for a machine that has not been asked yet, and for the cases below.
 
 ## Which marks are shipped
 
-Twenty-five distributions have a glyph. Every other `Dist` case is recognised
-by name and draws `tux.svg` or `server.svg`. The reasons divide five ways.
+Twelve distributions have a glyph. Every other `Dist` case is recognised by
+name and draws `tux.svg` or `server.svg`. The reasons divide four ways.
 
-**Shipped** — what somebody manages a server on, plus the desktop
-distributions common enough that a person will have one machine of:
+**Shipped** — the ones a person scanning a list of servers meets often enough
+to learn the shape of:
 
-> almalinux · alpine · arch · centos · coreos · debian · deepin · devuan ·
-> elementary · fedora · gentoo · leap · manjaro · mint · mx · nixos ·
-> opensuse · popos · rocky · slackware · tumbleweed · ubuntu · voidlinux ·
-> wrt · zorin
+> alpine · arch · centos · debian · deepin · fedora · mint · nixos · popos ·
+> rocky · ubuntu · wrt
 
 **Not shipped**, for four reasons:
 
-- **The great majority** — no glyph because nobody would meet one on a server,
-  and a glyph nobody sees is bundle weight plus one more mark to have
-  justified. Respins of a distribution already in the list (the Arch and
-  Ubuntu families), single-purpose live systems, phone and set-top targets,
-  projects that have stopped, and the very small. `Dist` still identifies all
-  of them; only the picture is absent.
+- **Most of the enum**, and for a reason that is not legal at all: a mark is
+  only worth carrying if it will be recognised, and a column of shapes nobody
+  can tell apart is no better than a column of penguins. AlmaLinux, Gentoo,
+  openSUSE, Slackware, Void and Devuan are perfectly good server
+  distributions and are in this group anyway — the line drawn here is
+  recognisability, not merit, and it is a judgement call that can be moved.
+  Everything in it is still *identified*, by `ID=` and by name, so `{DIST}`
+  still expands and the status card still names it. Only the picture is gone.
 - **armbian**, **coreelec** — font-logos simply has no glyph. Do not fill them
   in from the projects' own sites: that would be copying their artwork, which
   is the one thing this arrangement avoids.
@@ -171,7 +172,7 @@ the thing is not readily identifiable without the mark, no more of the mark is
 used than needed, and nothing suggests sponsorship or endorsement. A 20px glyph
 in a row that also carries the server's own name and address meets all three.
 
-Twenty-five is few enough to have checked one by one, and most of them publish
+The set was checked one by one back when it was fifty-eight, and most of them publish
 no third-party trademark policy at all — for those, nominative use is simply
 the general rule. The ones that *do* publish something are recorded below,
 since the wording differs and one of them (CentOS) reads as a prohibition until
@@ -216,6 +217,11 @@ the sentence is taken whole:
 - **Alpine**, **deepin**, **CoreELEC** and the rest — no published third-party
   trademark policy found. Nominative use is the general rule where a project
   has not written one down.
+
+Several of those entries now describe a distribution that ships no glyph —
+openSUSE, Armbian and Rocky among them. They are kept because the policy is
+what was checked, and a mark can come back; what was read once should not have
+to be read again.
 
 ## What would change the answer
 
