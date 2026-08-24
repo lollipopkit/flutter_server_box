@@ -32,6 +32,17 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('SshCredential', () {
+    test('the id-only reference is the one a connection unlocks under', () {
+      // The key editor invalidates and warms the unlock cache from an id it
+      // holds, with no credential to ask. It spelled that `<id>` while
+      // `genClient` unlocks under `keyRef`, so editing an encrypted key left
+      // the decrypted copy a connection was holding in place and the next
+      // connection authenticated with the key that had just been replaced.
+      const stored = SshCredential(ip: 'a', keyId: 'work');
+
+      expect(SshCredential.keyRefForId('work'), stored.keyRef);
+    });
+
     test('keyRef names whichever key is set, and tells them apart', () {
       const stored = SshCredential(ip: 'a', keyId: 'work');
       const onDisk = SshCredential(ip: 'a', keyPath: '~/.ssh/id_ed25519');
@@ -229,6 +240,40 @@ void main() {
 
     test('no key configured is not an error', () {
       expect(resolvePrivateKey(const SshCredential(ip: 'a')), isNull);
+    });
+
+    // The size check threw inside a `catch (_)` meant for a failed stat, so
+    // the file it had just rejected was read into memory on the next line
+    test('a file past the size cap is refused, not read anyway', () {
+      final file = File('${tempDir.path}/huge')
+        ..writeAsStringSync('x' * (1024 * 1024 + 1));
+
+      final ssh = SshCredential(ip: 'a', keyPath: file.path);
+      expect(
+        () => resolvePrivateKey(ssh),
+        throwsA(
+          predicate(
+            (e) => e.toString().contains('${tempDir.path}/huge'),
+            'names the file it refused',
+          ),
+        ),
+      );
+    });
+
+    test('and the async loader refuses it too', () async {
+      final file = File('${tempDir.path}/huge')
+        ..writeAsStringSync('x' * (1024 * 1024 + 1));
+
+      final ssh = SshCredential(ip: 'a', keyPath: file.path);
+      await expectLater(
+        resolvePrivateKeyAsync(ssh),
+        throwsA(
+          predicate(
+            (e) => e.toString().contains('${tempDir.path}/huge'),
+            'names the file it refused',
+          ),
+        ),
+      );
     });
   });
 

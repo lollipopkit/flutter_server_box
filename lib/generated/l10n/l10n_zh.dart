@@ -533,6 +533,43 @@ class AppLocalizationsZh extends AppLocalizations {
   String get showHiddenFiles => '显示隐藏文件';
 
   @override
+  String get sshKeyAlgorithm => '算法';
+
+  @override
+  String get sshKeyComment => '备注';
+
+  @override
+  String get sshKeyGenerate => '生成密钥对';
+
+  @override
+  String get sshKeyGenerating => '生成中…';
+
+  @override
+  String sshKeyLockedFmt(String name) {
+    return '私钥 [$name] 未解锁。';
+  }
+
+  @override
+  String get sshKeyPassphraseTip => '可选。设置口令后，私钥将加密存储，每次连接首次使用该密钥时会要求输入。';
+
+  @override
+  String get sshKeyPassphraseWrong => '口令错误。';
+
+  @override
+  String get sshKeyPublicKey => '公钥';
+
+  @override
+  String get sshKeyPublicKeyTip => '将此行追加到服务器的 ~/.ssh/authorized_keys。';
+
+  @override
+  String get sshKeyRecommended => '推荐';
+
+  @override
+  String sshKeyUnlockTip(String name) {
+    return '请输入私钥 [$name] 的口令。';
+  }
+
+  @override
   String get unused => '未使用';
 
   @override
@@ -1014,16 +1051,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String sshHostKeyChangedDesc(Object serverName) {
     return '服务器 $serverName 的 SSH 主机密钥已更改，仅在信任该服务器时继续。';
-  }
-
-  @override
-  String sshHostKeyFingerprintMd5Base64(Object fingerprint) {
-    return '指纹（MD5 Base64）：$fingerprint';
-  }
-
-  @override
-  String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
-    return '指纹（SHA256）：$fingerprint';
   }
 
   @override
@@ -1954,6 +1981,43 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get showHiddenFiles => '顯示隱藏檔案';
 
   @override
+  String get sshKeyAlgorithm => '演算法';
+
+  @override
+  String get sshKeyComment => '備註';
+
+  @override
+  String get sshKeyGenerate => '產生金鑰對';
+
+  @override
+  String get sshKeyGenerating => '產生中…';
+
+  @override
+  String sshKeyLockedFmt(String name) {
+    return '私密金鑰 [$name] 未解鎖。';
+  }
+
+  @override
+  String get sshKeyPassphraseTip => '選填。設定通行密碼後，私密金鑰將加密儲存，每次連線首次使用該金鑰時會要求輸入。';
+
+  @override
+  String get sshKeyPassphraseWrong => '通行密碼錯誤。';
+
+  @override
+  String get sshKeyPublicKey => '公開金鑰';
+
+  @override
+  String get sshKeyPublicKeyTip => '將此行附加到伺服器的 ~/.ssh/authorized_keys。';
+
+  @override
+  String get sshKeyRecommended => '推薦';
+
+  @override
+  String sshKeyUnlockTip(String name) {
+    return '請輸入私密金鑰 [$name] 的通行密碼。';
+  }
+
+  @override
   String get unused => '未使用';
 
   @override
@@ -2436,16 +2500,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String sshHostKeyChangedDesc(Object serverName) {
     return '伺服器 $serverName 的 SSH 主機金鑰已變更，僅在信任該伺服器時繼續。';
-  }
-
-  @override
-  String sshHostKeyFingerprintMd5Base64(Object fingerprint) {
-    return '指紋（MD5 Base64）：$fingerprint';
-  }
-
-  @override
-  String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
-    return '指紋（SHA256）：$fingerprint';
   }
 
   @override

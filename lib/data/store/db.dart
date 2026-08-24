@@ -38,6 +38,18 @@ class PrivateKeys extends Table with SyncMeta {
   TextColumn get name => text().unique()();
   TextColumn get key => text()();
 
+  /// The OpenSSH comment to put at the end of the public key line.
+  ///
+  /// Held here rather than rewritten into the key: the key file carries its own
+  /// copy, inside the part that gets encrypted, so changing that one means
+  /// opening the key and writing it out again — a passphrase prompt and a
+  /// rewrite of key material, to edit a label.
+  ///
+  /// Null for a key stored before this column, and for one whose comment has
+  /// never been edited. The key's own comment is read in that case, which is
+  /// what keeps an imported key showing what it arrived with.
+  TextColumn get comment => text().nullable()();
+
   @override
   Set<Column> get primaryKey => {id};
 }

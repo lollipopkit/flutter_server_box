@@ -74,11 +74,15 @@ class _KnownHostsPageState extends State<KnownHostsPage> {
       actions: Btnx.cancelRedOk,
     );
     if (ok != true) return;
+    // Awaited: the forget is queued behind any acceptance still being written,
+    // so reloading without waiting would read the map as it was before the
+    // pruning and put the row straight back on screen.
     if (storageKey != null) {
-      forgetHostKey(storageKey);
+      await forgetHostKey(storageKey);
     } else {
-      forgetHostKeyFingerprints(serverId!);
+      await forgetHostKeyFingerprints(serverId!);
     }
+    if (!mounted) return;
     setState(_reload);
   }
 

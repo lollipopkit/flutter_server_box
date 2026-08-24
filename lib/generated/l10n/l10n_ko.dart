@@ -543,6 +543,44 @@ class AppLocalizationsKo extends AppLocalizations {
   String get showHiddenFiles => '숨김 파일 표시';
 
   @override
+  String get sshKeyAlgorithm => '알고리즘';
+
+  @override
+  String get sshKeyComment => '설명';
+
+  @override
+  String get sshKeyGenerate => '키 쌍 생성';
+
+  @override
+  String get sshKeyGenerating => '생성 중…';
+
+  @override
+  String sshKeyLockedFmt(String name) {
+    return '개인 키 [$name]의 잠금이 해제되지 않았습니다.';
+  }
+
+  @override
+  String get sshKeyPassphraseTip =>
+      '선택 사항. 암호를 설정하면 개인 키가 암호화되어 저장되며, 연결에서 이 키를 처음 사용할 때 입력을 요구합니다.';
+
+  @override
+  String get sshKeyPassphraseWrong => '암호가 올바르지 않습니다.';
+
+  @override
+  String get sshKeyPublicKey => '공개 키';
+
+  @override
+  String get sshKeyPublicKeyTip => '이 줄을 서버의 ~/.ssh/authorized_keys에 추가하세요.';
+
+  @override
+  String get sshKeyRecommended => '권장';
+
+  @override
+  String sshKeyUnlockTip(String name) {
+    return '개인 키 [$name]의 암호를 입력하세요.';
+  }
+
+  @override
   String get unused => '미사용';
 
   @override
@@ -1033,16 +1071,6 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String sshHostKeyChangedDesc(Object serverName) {
     return '$serverName의 SSH 호스트 키가 변경되었습니다. 이 서버를 신뢰하는 경우에만 계속 진행하세요.';
-  }
-
-  @override
-  String sshHostKeyFingerprintMd5Base64(Object fingerprint) {
-    return '지문 (MD5 base64): $fingerprint';
-  }
-
-  @override
-  String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
-    return '지문 (SHA256): $fingerprint';
   }
 
   @override

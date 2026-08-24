@@ -147,8 +147,11 @@ class KvToTablesMigration implements SchemaMigration {
       }
 
       final id = ShortId.generate();
-      // Duplicate legacy names must not clobber the first mapping: servers
-      // pointing at the first key would otherwise be rewritten to the second.
+      // The first row under a name wins the reference, and it is also the one
+      // that keeps the name unrenamed above — so a server that pointed at `X`
+      // ends up on the key still called `X`. Assigning unconditionally handed
+      // every such server to whichever duplicate happened to be read last,
+      // which is to say: to a key the user never chose, silently.
       ids.putIfAbsent(oldId, () => id);
       _db.execute(
         'INSERT INTO private_key (id, name, key, updated_at) '
@@ -272,17 +275,16 @@ class KvToTablesMigration implements SchemaMigration {
       });
       for (final cmd
           in (v['disabledCmdTypes'] as List? ?? const []).whereType<String>()) {
-        _db.execute('INSERT OR IGNORE INTO server_disabled_cmd VALUES (?, ?);', [
-          id,
-          cmd,
-        ]);
+        _db.execute(
+          'INSERT OR IGNORE INTO server_disabled_cmd VALUES (?, ?);',
+          [id, cmd],
+        );
       }
       (custom['cmds'] as Map? ?? const {}).forEach((k, val) {
-        _db.execute('INSERT OR IGNORE INTO server_custom_cmd VALUES (?, ?, ?);', [
-          id,
-          '$k',
-          '$val',
-        ]);
+        _db.execute(
+          'INSERT OR IGNORE INTO server_custom_cmd VALUES (?, ?, ?);',
+          [id, '$k', '$val'],
+        );
       });
 
       // Held back: a jump host is a server, so the row it points at may not
@@ -402,10 +404,10 @@ class KvToTablesMigration implements SchemaMigration {
           in (v['autoRunOn'] as List? ?? const []).whereType<String>()) {
         final serverId = serverIds[target];
         if (serverId == null) continue;
-        _db.execute('INSERT OR IGNORE INTO snippet_auto_run_on VALUES (?, ?);', [
-          id,
-          serverId,
-        ]);
+        _db.execute(
+          'INSERT OR IGNORE INTO snippet_auto_run_on VALUES (?, ?);',
+          [id, serverId],
+        );
       }
     }
     return renamed;
@@ -447,7 +449,10 @@ class KvToTablesMigration implements SchemaMigration {
         // `id: 'pf-1'`) would otherwise abort the whole m004 transaction and
         // strand every store. Keep the first occurrence and drop the duplicate.
         if (e.extendedResultCode == 1555 || e.message.contains('UNIQUE')) {
-          Loggers.app.warning('m004: duplicate port_forward id "$id" dropped', e);
+          Loggers.app.warning(
+            'm004: duplicate port_forward id "$id" dropped',
+            e,
+          );
           continue;
         }
         rethrow;
@@ -619,11 +624,10 @@ class KvToTablesMigration implements SchemaMigration {
 
     active.forEach((serverId, conversationId) {
       // The active row references a real conversation now.
-      final exists = _db
-          .select('SELECT 1 FROM agent_conversation WHERE id = ?;', [
-            conversationId,
-          ])
-          .isNotEmpty;
+      final exists = _db.select(
+        'SELECT 1 FROM agent_conversation WHERE id = ?;',
+        [conversationId],
+      ).isNotEmpty;
       if (!exists) return;
       _db.execute(
         'INSERT INTO agent_active_conversation (server_id, conversation_id) '
@@ -655,9 +659,7 @@ class KvToTablesMigration implements SchemaMigration {
       return;
     }
 
-    final rewritten = [
-      for (final entry in entries) ?resolve(entry),
-    ];
+    final rewritten = [for (final entry in entries) ?resolve(entry)];
     if (rewritten.length == entries.length &&
         rewritten.indexed.every((e) => e.$2 == entries[e.$1])) {
       return;

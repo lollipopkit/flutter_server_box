@@ -175,6 +175,31 @@
   "macDmgTip": "Local terminal and running snippets locally (DMG build)",
   "macDmgTitle": "DMG build",
   "showHiddenFiles": "Show hidden files",
+  "sshKeyAlgorithm": "Algorithm",
+  "sshKeyComment": "Comment",
+  "sshKeyGenerate": "Generate key pair",
+  "sshKeyGenerating": "Generating…",
+  "sshKeyLockedFmt": "The private key [{name}] was not unlocked.",
+  "@sshKeyLockedFmt": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "sshKeyPassphraseTip": "Optional. A key with a passphrase is stored encrypted, and you are asked for it the first time a connection uses the key.",
+  "sshKeyPassphraseWrong": "Wrong passphrase.",
+  "sshKeyPublicKey": "Public key",
+  "sshKeyPublicKeyTip": "Append this line to ~/.ssh/authorized_keys on the server.",
+  "sshKeyRecommended": "Recommended",
+  "sshKeyUnlockTip": "Enter the passphrase for the private key [{name}].",
+  "@sshKeyUnlockTip": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "unused": "Unused",
   "dangling": "Dangling",
   "pruneUnusedImages": "Prune unused images",
@@ -390,8 +415,6 @@
   "sshConfigImportTip": "Prompt to read ~/.ssh/config on first server creation",
   "sshConfigImported": "Imported {count} servers from SSH config",
   "sshHostKeyChangedDesc": "The SSH host key changed for {serverName}. Only continue if you trust this server.",
-  "sshHostKeyFingerprintMd5Base64": "Fingerprint (MD5 base64): {fingerprint}",
-  "sshHostKeyFingerprintMd5Hex": "Fingerprint (SHA256): {fingerprint}",
   "sshHostKeyType": "SSH host key type",
   "sshKnownHostKeys": "Known hosts",
   "sshKnownHostKeysTip": "The host keys this app has accepted",

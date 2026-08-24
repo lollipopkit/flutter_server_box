@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:logging/logging.dart';
+import 'package:server_box/core/utils/ssh_key_unlock.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
@@ -66,6 +67,12 @@ class Backup implements Mergeable {
     // for the entire file, so there is nothing to compare a single record
     // against. Ordered by what references what — a server names a private key,
     // and a snippet names a server.
+    // Every stored key is about to be replaced by whatever the file holds, so
+    // nothing opened this run describes what is in the database any more. A
+    // stale entry here is not a stale display — it is a connection that goes on
+    // authenticating with the key the restore just removed.
+    PrivateKeyUnlock.forgetAll();
+
     SqliteStore.transact(() {
       Stores.key.replaceAll(keys);
       Stores.server.replaceAll(spis);

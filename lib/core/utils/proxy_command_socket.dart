@@ -176,6 +176,34 @@ class ProxyCommandSocket implements SSHSocket {
   static String debugExplain(String message, {required bool sandboxed}) =>
       _explainFor(message, sandboxed: sandboxed);
 
+  /// Everything a hostname, an IPv4 or IPv6 literal, or a POSIX user name is
+  /// made of, and nothing a shell reads as syntax. `%` is absent on purpose:
+  /// a value carrying one could introduce a placeholder of its own.
+  static final _substitutable = RegExp(r'^[A-Za-z0-9._:@\-\[\]\\]*$');
+
+  /// Refuses a value that `/bin/sh` would not read as one word.
+  ///
+  /// The expansion below is textual and the result is handed to `sh -c`, so a
+  /// host of `h; curl … | sh` is a local command that runs before anything has
+  /// been authenticated. That the ProxyCommand itself is the user's own is not
+  /// the answer: the address it expands is not necessarily — it arrives from
+  /// an imported `~/.ssh/config`, a restored backup or a synced peer.
+  ///
+  /// Rejected rather than quoted. Quoting correctly means knowing which
+  /// context the placeholder sits in — bare, inside `"…"`, inside `'…'` — and
+  /// guessing that wrong is how a quoting fix becomes the next injection.
+  /// Nothing that names a real host or user is refused here.
+  @visibleForTesting
+  static String checkSubstitutable(String what, String value) {
+    if (_substitutable.hasMatch(value)) return value;
+    throw SSHErr(
+      type: SSHErrType.connect,
+      message:
+          'ProxyCommand cannot use this $what: "$value" contains characters '
+          'a shell would read as syntax.',
+    );
+  }
+
   static String _resolveCommand({
     required String command,
     required String host,
@@ -183,22 +211,11 @@ class ProxyCommandSocket implements SSHSocket {
     required String user,
   }) {
     const percentPlaceholder = '\u0000PERCENT\u0000';
-    // Host/user/port are untrusted connection fields; interpolating them
-    // raw into `/bin/sh -c` or `cmd /C` would let shell metacharacters in a
-    // malicious imported config execute additional commands.
-    String shellQuote(String value) {
-      if (Platform.isWindows) {
-        // Double-quote for cmd.exe; escape inner double quotes by doubling.
-        return '"${value.replaceAll('"', '""')}"';
-      }
-      return "'${value.replaceAll("'", "'\\''")}'";
-    }
-
     return command
         .replaceAll('%%', percentPlaceholder)
-        .replaceAll('%h', shellQuote(host))
+        .replaceAll('%h', checkSubstitutable('host', host))
         .replaceAll('%p', port.toString())
-        .replaceAll('%r', shellQuote(user))
+        .replaceAll('%r', checkSubstitutable('user', user))
         .replaceAll(percentPlaceholder, '%');
   }
 
@@ -240,7 +257,9 @@ class ProxyCommandSocket implements SSHSocket {
         process.kill(ProcessSignal.sigkill);
       } catch (_) {}
       try {
-        if (!Platform.isWindows) Process.killPid(-process.pid, ProcessSignal.sigkill);
+        if (!Platform.isWindows) {
+          Process.killPid(-process.pid, ProcessSignal.sigkill);
+        }
       } catch (_) {}
     });
   }
@@ -258,7 +277,9 @@ class ProxyCommandSocket implements SSHSocket {
     // Ensure the process is gone even if the above timed out.
     _process.kill(ProcessSignal.sigkill);
     try {
-      if (!Platform.isWindows) Process.killPid(-_process.pid, ProcessSignal.sigkill);
+      if (!Platform.isWindows) {
+        Process.killPid(-_process.pid, ProcessSignal.sigkill);
+      }
     } catch (_) {}
   }
 

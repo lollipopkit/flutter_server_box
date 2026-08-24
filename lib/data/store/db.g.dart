@@ -59,8 +59,26 @@ class $PrivateKeysTable extends PrivateKeys
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _commentMeta = const VerificationMeta(
+    'comment',
+  );
   @override
-  List<GeneratedColumn> get $columns => [updatedAt, rev, id, name, key];
+  late final GeneratedColumn<String> comment = GeneratedColumn<String>(
+    'comment',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    updatedAt,
+    rev,
+    id,
+    name,
+    key,
+    comment,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -106,6 +124,12 @@ class $PrivateKeysTable extends PrivateKeys
     } else if (isInserting) {
       context.missing(_keyMeta);
     }
+    if (data.containsKey('comment')) {
+      context.handle(
+        _commentMeta,
+        comment.isAcceptableOrUnknown(data['comment']!, _commentMeta),
+      );
+    }
     return context;
   }
 
@@ -135,6 +159,10 @@ class $PrivateKeysTable extends PrivateKeys
         DriftSqlType.string,
         data['${effectivePrefix}key'],
       )!,
+      comment: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}comment'],
+      ),
     );
   }
 
@@ -153,12 +181,25 @@ class PrivateKeyRow extends DataClass implements Insertable<PrivateKeyRow> {
   final String id;
   final String name;
   final String key;
+
+  /// The OpenSSH comment to put at the end of the public key line.
+  ///
+  /// Held here rather than rewritten into the key: the key file carries its own
+  /// copy, inside the part that gets encrypted, so changing that one means
+  /// opening the key and writing it out again — a passphrase prompt and a
+  /// rewrite of key material, to edit a label.
+  ///
+  /// Null for a key stored before this column, and for one whose comment has
+  /// never been edited. The key's own comment is read in that case, which is
+  /// what keeps an imported key showing what it arrived with.
+  final String? comment;
   const PrivateKeyRow({
     required this.updatedAt,
     required this.rev,
     required this.id,
     required this.name,
     required this.key,
+    this.comment,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -168,6 +209,9 @@ class PrivateKeyRow extends DataClass implements Insertable<PrivateKeyRow> {
     map['id'] = Variable<String>(id);
     map['name'] = Variable<String>(name);
     map['key'] = Variable<String>(key);
+    if (!nullToAbsent || comment != null) {
+      map['comment'] = Variable<String>(comment);
+    }
     return map;
   }
 
@@ -178,6 +222,9 @@ class PrivateKeyRow extends DataClass implements Insertable<PrivateKeyRow> {
       id: Value(id),
       name: Value(name),
       key: Value(key),
+      comment: comment == null && nullToAbsent
+          ? const Value.absent()
+          : Value(comment),
     );
   }
 
@@ -192,6 +239,7 @@ class PrivateKeyRow extends DataClass implements Insertable<PrivateKeyRow> {
       id: serializer.fromJson<String>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       key: serializer.fromJson<String>(json['key']),
+      comment: serializer.fromJson<String?>(json['comment']),
     );
   }
   @override
@@ -203,6 +251,7 @@ class PrivateKeyRow extends DataClass implements Insertable<PrivateKeyRow> {
       'id': serializer.toJson<String>(id),
       'name': serializer.toJson<String>(name),
       'key': serializer.toJson<String>(key),
+      'comment': serializer.toJson<String?>(comment),
     };
   }
 
@@ -212,12 +261,14 @@ class PrivateKeyRow extends DataClass implements Insertable<PrivateKeyRow> {
     String? id,
     String? name,
     String? key,
+    Value<String?> comment = const Value.absent(),
   }) => PrivateKeyRow(
     updatedAt: updatedAt ?? this.updatedAt,
     rev: rev ?? this.rev,
     id: id ?? this.id,
     name: name ?? this.name,
     key: key ?? this.key,
+    comment: comment.present ? comment.value : this.comment,
   );
   PrivateKeyRow copyWithCompanion(PrivateKeysCompanion data) {
     return PrivateKeyRow(
@@ -226,6 +277,7 @@ class PrivateKeyRow extends DataClass implements Insertable<PrivateKeyRow> {
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
       key: data.key.present ? data.key.value : this.key,
+      comment: data.comment.present ? data.comment.value : this.comment,
     );
   }
 
@@ -236,13 +288,14 @@ class PrivateKeyRow extends DataClass implements Insertable<PrivateKeyRow> {
           ..write('rev: $rev, ')
           ..write('id: $id, ')
           ..write('name: $name, ')
-          ..write('key: $key')
+          ..write('key: $key, ')
+          ..write('comment: $comment')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(updatedAt, rev, id, name, key);
+  int get hashCode => Object.hash(updatedAt, rev, id, name, key, comment);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -251,7 +304,8 @@ class PrivateKeyRow extends DataClass implements Insertable<PrivateKeyRow> {
           other.rev == this.rev &&
           other.id == this.id &&
           other.name == this.name &&
-          other.key == this.key);
+          other.key == this.key &&
+          other.comment == this.comment);
 }
 
 class PrivateKeysCompanion extends UpdateCompanion<PrivateKeyRow> {
@@ -260,12 +314,14 @@ class PrivateKeysCompanion extends UpdateCompanion<PrivateKeyRow> {
   final Value<String> id;
   final Value<String> name;
   final Value<String> key;
+  final Value<String?> comment;
   const PrivateKeysCompanion({
     this.updatedAt = const Value.absent(),
     this.rev = const Value.absent(),
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.key = const Value.absent(),
+    this.comment = const Value.absent(),
   });
   PrivateKeysCompanion.insert({
     this.updatedAt = const Value.absent(),
@@ -273,6 +329,7 @@ class PrivateKeysCompanion extends UpdateCompanion<PrivateKeyRow> {
     required String id,
     required String name,
     required String key,
+    this.comment = const Value.absent(),
   }) : id = Value(id),
        name = Value(name),
        key = Value(key);
@@ -282,6 +339,7 @@ class PrivateKeysCompanion extends UpdateCompanion<PrivateKeyRow> {
     Expression<String>? id,
     Expression<String>? name,
     Expression<String>? key,
+    Expression<String>? comment,
   }) {
     return RawValuesInsertable({
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -289,6 +347,7 @@ class PrivateKeysCompanion extends UpdateCompanion<PrivateKeyRow> {
       if (id != null) 'id': id,
       if (name != null) 'name': name,
       if (key != null) 'key': key,
+      if (comment != null) 'comment': comment,
     });
   }
 
@@ -298,6 +357,7 @@ class PrivateKeysCompanion extends UpdateCompanion<PrivateKeyRow> {
     Value<String>? id,
     Value<String>? name,
     Value<String>? key,
+    Value<String?>? comment,
   }) {
     return PrivateKeysCompanion(
       updatedAt: updatedAt ?? this.updatedAt,
@@ -305,6 +365,7 @@ class PrivateKeysCompanion extends UpdateCompanion<PrivateKeyRow> {
       id: id ?? this.id,
       name: name ?? this.name,
       key: key ?? this.key,
+      comment: comment ?? this.comment,
     );
   }
 
@@ -326,6 +387,9 @@ class PrivateKeysCompanion extends UpdateCompanion<PrivateKeyRow> {
     if (key.present) {
       map['key'] = Variable<String>(key.value);
     }
+    if (comment.present) {
+      map['comment'] = Variable<String>(comment.value);
+    }
     return map;
   }
 
@@ -336,7 +400,8 @@ class PrivateKeysCompanion extends UpdateCompanion<PrivateKeyRow> {
           ..write('rev: $rev, ')
           ..write('id: $id, ')
           ..write('name: $name, ')
-          ..write('key: $key')
+          ..write('key: $key, ')
+          ..write('comment: $comment')
           ..write(')'))
         .toString();
   }
@@ -7502,6 +7567,7 @@ typedef $$PrivateKeysTableCreateCompanionBuilder =
       required String id,
       required String name,
       required String key,
+      Value<String?> comment,
     });
 typedef $$PrivateKeysTableUpdateCompanionBuilder =
     PrivateKeysCompanion Function({
@@ -7510,6 +7576,7 @@ typedef $$PrivateKeysTableUpdateCompanionBuilder =
       Value<String> id,
       Value<String> name,
       Value<String> key,
+      Value<String?> comment,
     });
 
 final class $$PrivateKeysTableReferences
@@ -7567,6 +7634,11 @@ class $$PrivateKeysTableFilterComposer
 
   ColumnFilters<String> get key => $composableBuilder(
     column: $table.key,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get comment => $composableBuilder(
+    column: $table.comment,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -7629,6 +7701,11 @@ class $$PrivateKeysTableOrderingComposer
     column: $table.key,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get comment => $composableBuilder(
+    column: $table.comment,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$PrivateKeysTableAnnotationComposer
@@ -7654,6 +7731,9 @@ class $$PrivateKeysTableAnnotationComposer
 
   GeneratedColumn<String> get key =>
       $composableBuilder(column: $table.key, builder: (column) => column);
+
+  GeneratedColumn<String> get comment =>
+      $composableBuilder(column: $table.comment, builder: (column) => column);
 
   Expression<T> serversRefs<T extends Object>(
     Expression<T> Function($$ServersTableAnnotationComposer a) f,
@@ -7714,12 +7794,14 @@ class $$PrivateKeysTableTableManager
                 Value<String> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<String> key = const Value.absent(),
+                Value<String?> comment = const Value.absent(),
               }) => PrivateKeysCompanion(
                 updatedAt: updatedAt,
                 rev: rev,
                 id: id,
                 name: name,
                 key: key,
+                comment: comment,
               ),
           createCompanionCallback:
               ({
@@ -7728,12 +7810,14 @@ class $$PrivateKeysTableTableManager
                 required String id,
                 required String name,
                 required String key,
+                Value<String?> comment = const Value.absent(),
               }) => PrivateKeysCompanion.insert(
                 updatedAt: updatedAt,
                 rev: rev,
                 id: id,
                 name: name,
                 key: key,
+                comment: comment,
               ),
           withReferenceMapper: (p0) => p0
               .map(

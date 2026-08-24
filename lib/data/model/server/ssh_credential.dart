@@ -115,10 +115,20 @@ final class SshCredential {
   /// only as long as it does — so the shape of these strings is free to change.
   String? get keyRef {
     final id = keyId;
-    if (id != null) return 'id:$id';
+    if (id != null) return keyRefForId(id);
     final path = keyPath;
     return path == null ? null : 'path:$path';
   }
+
+  /// The same reference for a stored key named by its id alone.
+  ///
+  /// A function because two places have to arrive at the same string and never
+  /// did: a connection unlocks under [keyRef], while the key editor invalidated
+  /// and warmed the cache under the bare id. Editing an encrypted key therefore
+  /// left the decrypted copy a connection was holding untouched, so the next
+  /// connection authenticated with the key that had just been replaced — and
+  /// the passphrase verified on save warmed an entry nothing ever read.
+  static String keyRefForId(String id) => 'id:$id';
 
   /// Parses [alterUrl] into its (ip, user, port) parts. Throws [SSHErr] on any
   /// malformed input rather than guessing — the value is user-entered and a

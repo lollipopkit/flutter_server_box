@@ -30,7 +30,7 @@ class PrivateKeyStore extends EntityStore<PrivateKeyInfo> {
 
   @override
   List<PrivateKeyInfo> readAll() => db
-      .select('SELECT id, name, key FROM private_key ORDER BY name;')
+      .select('SELECT id, name, key, comment FROM private_key ORDER BY name;')
       .map(_fromRow)
       .toList();
 
@@ -38,11 +38,14 @@ class PrivateKeyStore extends EntityStore<PrivateKeyInfo> {
     id: row['id'] as String,
     name: row['name'] as String,
     key: row['key'] as String,
+    comment: row['comment'] as String?,
   );
 
   @override
-  void write(PrivateKeyInfo item) =>
-      upsert(const ['id', 'name', 'key'], [item.id, item.name, item.key]);
+  void write(PrivateKeyInfo item) => upsert(
+    const ['id', 'name', 'key', 'comment'],
+    [item.id, item.name, item.key, item.comment],
+  );
 
   @override
   String? nameOf(PrivateKeyInfo item) => item.name;

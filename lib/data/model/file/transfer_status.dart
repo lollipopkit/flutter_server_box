@@ -91,38 +91,33 @@ class FileTransferStatus {
   /// copy running.
   bool get _cancelled => _disposed;
 
-  /// Removes a staged copy the transfer did not get to rename.
+  /// Removes the staged copy this transfer did not get to rename.
   ///
   /// Only where this device is the destination. Killing an isolate skips the
-  /// cleanup its own `catch` would have done, and a `.sb-part-N` nobody
+  /// cleanup its own `catch` would have done, and a `.sb-part-…` nobody
   /// deletes is worse than the partial file this staging replaced.
   ///
-  /// Swept by name rather than deleted by path: the backend picks the staging
-  /// name inside `write`, and the two sides agree on the pattern rather than
-  /// on the whole string. Two transfers staging the same destination are
-  /// already writing over each other.
+  /// The one path the transfer reported, not every name in the directory that
+  /// looks like one. Sweeping by pattern deleted a *sibling* transfer's file
+  /// whenever two of them targeted the same basename — and for a download it
+  /// swept nothing at all, because what arrives here is already the staging
+  /// path and no file is a staged copy of that. Every backend that stages
+  /// somewhere this side can reach now reports where, before it writes a byte.
   ///
   /// A cancelled *upload* leaves one on the server, which this side cannot
   /// reach without opening the connection again. It is at least visible in the
   /// browser, beside the file it was going to become.
   void _discardStaging() {
-    final destination = stagingPath;
-    if (destination == null || job.to is! LocalFileRef) return;
+    final staging = stagingPath;
+    if (staging == null || job.to is! LocalFileRef) return;
     stagingPath = null;
-    unawaited(_sweep(destination));
+    unawaited(_remove(staging));
   }
 
-  static Future<void> _sweep(String destination) async {
+  static Future<void> _remove(String staging) async {
     try {
-      final native = LocalFileBackend.nativePath(destination);
-      final dir = File(native).parent;
-      if (!await dir.exists()) return;
-      await for (final entity in dir.list(followLinks: false)) {
-        final name = entity.path.split(Platform.pathSeparator).last;
-        if (entity is File && isStagingOf(name, destination)) {
-          await entity.delete();
-        }
-      }
+      final file = File(LocalFileBackend.nativePath(staging));
+      if (await file.exists()) await file.delete();
     } catch (e, s) {
       Loggers.app.warning('Failed to clean up after a cancelled transfer', e, s);
     }
@@ -130,6 +125,18 @@ class FileTransferStatus {
 
   Future<void> _initWorker() async {
     try {
+      // Before the bundle crosses: the isolate has no screen to ask a
+      // passphrase on, so a key stored encrypted has to be opened on this side
+      // or it fails over there with nothing to say why.
+      for (final ref in [job.from, job.to]) {
+        if (ref is SftpFileRef) await ref.creds.unlockKeys();
+      }
+      // Unlocking asks for a passphrase, so this await lasts as long as
+      // somebody takes to answer it — plenty of time to cancel. `dispose` has
+      // already killed a worker that was never started; going on would spawn a
+      // fresh isolate for a transfer that is no longer in the list, and it
+      // would run to completion with nothing watching it.
+      if (_disposed) return;
       await worker!.init();
     } catch (e, s) {
       Loggers.app.warning('Failed to initialize the transfer worker', e, s);

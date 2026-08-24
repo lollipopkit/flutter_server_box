@@ -58,13 +58,27 @@ void main() {
       expect(grouped['abcdef'], hasLength(1));
     });
 
-    test('the split is on the first separator, not the last', () {
-      // A key type carries no `::`, but nothing stops an id from having one,
-      // and taking the last would move part of the id into the type.
+    test('the split is on the last separator, not the first', () {
+      // A key type is an SSH algorithm name and carries no `::`, while an id
+      // restored from a backup is whatever that file said — so the id is
+      // everything before the last one. Taking the first read this as server
+      // `a` with the type `b::ssh-rsa`, which is a server it does not belong
+      // to and a type that is not one.
       final grouped = groupHostKeysByServer({'a::b::ssh-rsa': 'ff'});
 
-      expect(grouped.keys, ['a']);
-      expect(grouped['a']!.single.keyType, 'b::ssh-rsa');
+      expect(grouped.keys, ['a::b']);
+      expect(grouped['a::b']!.single.keyType, 'ssh-rsa');
+    });
+
+    test('and forgetting one id does not reach into another that extends it',
+        () {
+      // The same mistake from the other side: `startsWith('a::')` is true of
+      // `a::b::ssh-rsa`, so forgetting server `a` took the distinct server
+      // `a::b`'s key with it.
+      const nested = {'a::ssh-rsa': 'aa', 'a::b::ssh-rsa': 'bb'};
+
+      expect(withoutHostKeysFor(nested, 'a'), {'a::b::ssh-rsa': 'bb'});
+      expect(withoutHostKeysFor(nested, 'a::b'), {'a::ssh-rsa': 'aa'});
     });
 
     test('an entry with no separator is kept, not dropped', () {

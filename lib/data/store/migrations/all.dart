@@ -1,6 +1,7 @@
 import 'package:server_box/data/store/migrations/m004_kv_to_tables.dart';
 import 'package:server_box/data/store/migrations/m005_monitor_insecure_http.dart';
 import 'package:server_box/data/store/migrations/m006_bmc_columns.dart';
+import 'package:server_box/data/store/migrations/m007_private_key_comment.dart';
 import 'package:server_box/data/store/schema.dart';
 
 /// Every migration, ordered, in the one place that names them.
@@ -24,4 +25,5 @@ const kSchemaMigrations = <SchemaMigration>[
   KvToTablesMigration(),
   MonitorInsecureHttpMigration(),
   BmcColumnsMigration(),
+  PrivateKeyCommentMigration(),
 ];
