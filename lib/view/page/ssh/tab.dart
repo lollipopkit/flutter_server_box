@@ -624,7 +624,7 @@ extension _Actions on _SSHTabPageState {
           ];
         },
         builder: (ctx, spi) => ListTile(
-          leading: DistIcon(spi.id, size: 22),
+          leading: distIcon(spi.id, size: 22),
           title: Text(spi.name),
           subtitle: Text(spi.displayAddr),
           trailing: const Icon(Icons.chevron_right),

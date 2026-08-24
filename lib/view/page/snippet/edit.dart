@@ -209,7 +209,7 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> {
       title: libL10n.server,
       items: spis,
       display: (spi) => spi.name,
-      avatar: (spi) => DistIconOf(Stores.serverDist.get(spi.id), size: 17),
+      avatar: (spi) => distIconOf(Stores.serverDist.get(spi.id), size: 17),
     );
     if (chosen == null || !mounted) return;
 
@@ -302,7 +302,7 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> {
                 // ones with no live status, so nothing else here knows what
                 // they run.
                 avatar: (e) =>
-                    DistIconOf(Stores.serverDist.get(e), size: 17),
+                    distIconOf(Stores.serverDist.get(e), size: 17),
                 initial: validServerIds,
                 clearable: true,
               );

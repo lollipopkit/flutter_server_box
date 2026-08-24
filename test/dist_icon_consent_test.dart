@@ -1,12 +1,16 @@
 /// The terms that go up before a mark address is saved.
 ///
-/// The gate moved when the on/off switch did: there is no switch any more, so
-/// the moment worth asking at is the one where an address is set and marks
-/// start appearing. `_buildServerMarkUrl` calls this; what it must not do is
-/// ask when the address is being *cleared*, which is how marks are turned off.
+/// Shown when the marks switch is turned on, and not when it is turned off:
+/// stopping is agreement to nothing.
 ///
-/// What can break silently: the dialog stops carrying the terms, or it returns
-/// agreement for an answer that was not one — a dismissal, or a cancel.
+/// The terms are `assets/distro/README.md` itself, so they cannot drift from
+/// the record of which licence permits shipping which mark. The accept button
+/// waits three seconds — a dialog whose only button is already under the thumb
+/// is one that gets dismissed without a glance.
+///
+/// What can break silently: the terms stop being carried, the pause stops
+/// being enforced, or agreement is reported for an answer that was not one —
+/// a dismissal, or a cancel.
 library;
 
 import 'package:fl_lib/fl_lib.dart';
@@ -45,16 +49,39 @@ Widget _app(void Function(bool) onAnswer) => MaterialApp(
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('the terms and the choice are both on screen', (tester) async {
+  testWidgets('the README is what goes up', (tester) async {
     await tester.pumpWidget(_app((_) {}));
     await tester.tap(find.text('ask'));
     await tester.pump(const Duration(milliseconds: 300));
+    // The asset load is a future; give it a frame to land.
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.byType(AlertDialog), findsOneWidget);
-    // The sentence that makes it a choice rather than a notice...
-    expect(find.text(app_locale.l10n.distIconConsent), findsOneWidget);
-    // ...and the terms it is a choice about.
-    expect(find.textContaining('trademark'), findsOneWidget);
+    // Lines only the README has, so a fallback to the short notice fails here.
+    expect(find.textContaining('CC BY-SA'), findsWidgets);
+    expect(find.textContaining('nominative use'), findsWidgets);
+  });
+
+  testWidgets('and the accept button waits before it can be pressed', (
+    tester,
+  ) async {
+    // Three seconds. The countdown is on the label so the wait is explained
+    // rather than looking like a dead button.
+    bool? answer;
+    await tester.pumpWidget(_app((v) => answer = v));
+    await tester.tap(find.text('ask'));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    final ok = find.byType(TextButton).last;
+    expect(tester.widget<TextButton>(ok).onPressed, isNull);
+    await tester.tap(ok);
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(answer, isNull, reason: 'a tap during the pause answers nothing');
+    expect(find.byType(AlertDialog), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 3));
+    expect(tester.widget<TextButton>(find.byType(TextButton).last).onPressed,
+        isNotNull);
   });
 
   testWidgets('accepting answers yes', (tester) async {
@@ -62,8 +89,10 @@ void main() {
     await tester.pumpWidget(_app((v) => answer = v));
     await tester.tap(find.text('ask'));
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.text(libL10n.ok));
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(seconds: 3));
+    await tester.tap(find.byType(TextButton).last);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.byType(AlertDialog), findsNothing);
     expect(answer, isTrue);
@@ -77,7 +106,8 @@ void main() {
     await tester.tap(find.text('ask'));
     await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.text(libL10n.cancel));
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.byType(AlertDialog), findsNothing);
     expect(answer, isFalse);
@@ -91,7 +121,8 @@ void main() {
     await tester.tap(find.text('ask'));
     await tester.pump(const Duration(milliseconds: 300));
     await tester.tapAt(const Offset(10, 10));
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.byType(AlertDialog), findsNothing);
     expect(answer, isFalse);

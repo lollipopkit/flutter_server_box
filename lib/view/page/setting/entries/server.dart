@@ -203,9 +203,18 @@ extension _Server on _AppSettingsPageState {
     return ExpandTile(
       leading: const Icon(Icons.dns_outlined),
       title: TipText(l10n.distIcon, distLegalPlain(l10n)),
-      subtitle: Text(l10n.distIconTip, style: UIs.textGrey),
       initiallyExpanded: false,
       children: [
+        ListTile(
+          // The tip doubles as this row's title: inside a section already
+          // called "Distribution marks", repeating the name says nothing,
+          // while what the switch does is the thing worth reading.
+          title: Text(l10n.distIconTip),
+          trailing: StoreSwitch(
+            prop: _setting.showDistMark,
+            validator: _confirmDistIcon,
+          ),
+        ),
         _buildServerMarkUrl(),
         _buildServerLogoUrl(),
         _buildDistNameMap(),
@@ -220,7 +229,7 @@ extension _Server on _AppSettingsPageState {
   /// shipping pictures — it was a second gate over an address that was already
   /// blank by default.
   Widget _buildServerMarkUrl() {
-    Future<void> onSave(String raw) async {
+    void onSave(String raw) {
       final url = resolveLogoUrl(raw);
       // Emptying it is how marks are turned off, so it is the one value that
       // skips both the validation and the terms.
@@ -233,10 +242,6 @@ extension _Server on _AppSettingsPageState {
         _showInvalidUrlDialog();
         return;
       }
-      // Asked here rather than at a switch: this is the moment marks start
-      // appearing, and the first moment there is anything to agree about.
-      if (!await _confirmDistIcon()) return;
-      if (!context.mounted) return;
       _setting.serverMarkUrl.put(url);
       context.popDialog();
     }
@@ -319,9 +324,15 @@ extension _Server on _AppSettingsPageState {
   /// Putting marks on the rows is a decision, so it is made once with the
   /// terms on screen rather than silently.
   ///
-  /// Only on the way on: clearing the address needs agreement to nothing, and
-  /// asking there would turn "stop showing these" into a second decision.
-  Future<bool> _confirmDistIcon() => confirmDistIconTerms(context);
+  /// Only on the way on. Turning them off is agreement to nothing, and asking
+  /// there would turn "stop showing these" into a second decision to get past.
+  ///
+  /// Returning false leaves the switch where it was — `StoreSwitch` treats the
+  /// validator as the gate and writes nothing when it declines.
+  Future<bool> _confirmDistIcon(bool enabling) async {
+    if (!enabling) return true;
+    return confirmDistIconTerms(context);
+  }
 
   Widget _buildServerLogoUrl() {
     void onSave(String raw) {

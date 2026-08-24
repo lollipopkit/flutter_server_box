@@ -117,7 +117,7 @@ class _ServerOrderPageState extends ConsumerState<ServerOrderPage> {
       subtitle: Text(spi.oldId, style: UIs.textGrey),
       // The distribution rather than the name's first letter, which said
       // nothing a row already showing the name did not.
-      leading: DistIcon(spi.id, size: 22),
+      leading: distIcon(spi.id, size: 22),
       trailing: ReorderableDragStartListener(
         index: index,
         child: const Icon(Icons.drag_handle),

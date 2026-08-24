@@ -58,10 +58,7 @@ extension _PaneList on _ServerPageState {
       // servers reads faster without the *same* icon down the side of it — the
       // reason `icon` is left null here — but this one differs per row and is
       // the thing being scanned for.
-      leading: DistIconOf(
-        srv.status.dist,
-        size: 17,
-      ),
+      leading: distIconOf(srv.status.dist, size: 17),
       selected: selected,
       // The same mark the terminal rail uses for a running shell: this one is
       // connected and has something to show.

@@ -27,6 +27,9 @@ void main() {
     GetIt.instance.registerSingleton<SettingStore>(
       SettingStore.forTest()..init(),
     );
+    // Off by default, and every case below is about what is drawn when it is
+    // on. The off case has a group of its own.
+    GetIt.instance<SettingStore>().showDistMark.put(true);
   });
 
   tearDown(() async {
@@ -83,6 +86,34 @@ void main() {
 
     expect(find.byType(SvgPicture), findsOneWidget);
     expect(fallback(), findsNothing, reason: 'the mark, not a stand-in for it');
+  });
+
+  group('switched off', () {
+    // Off has to mean no pixels, not a blank of the same size: a leading slot
+    // that holds a zero-sized box still reserves width in a `ListTile`, and a
+    // six-pixel gap in a row is six pixels. So the answer is null and the
+    // caller leaves the slot out — which is what `distIcon`/`distIconOf` are
+    // for, and why every call site goes through them.
+    setUp(() => GetIt.instance<SettingStore>().showDistMark.put(false));
+
+    test('nothing is offered to draw, for any distribution', () {
+      expect(distIconOf(null), isNull);
+      expect(distIconOf(Dist.ubuntu), isNull);
+      // Not even one with a mark shipped for it.
+      expect(distIconOf(Dist.debian), isNull);
+      expect(distIcon('some-id'), isNull);
+    });
+
+    testWidgets('and the widget itself draws nothing if reached anyway', (
+      tester,
+    ) async {
+      // Belt and braces: a caller that builds `DistIconOf` directly — a test,
+      // or a call site added without the helper — still draws no icon.
+      await pump(tester, Dist.debian);
+      expect(fallback(), findsNothing);
+      expect(penguin(), findsNothing);
+      expect(find.byType(SvgPicture), findsNothing);
+    });
   });
 
   testWidgets('an address that cannot name a file leaves the outline', (

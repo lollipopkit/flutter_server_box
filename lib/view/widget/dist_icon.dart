@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:extended_image/extended_image.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:icons_plus/icons_plus.dart';
@@ -72,6 +76,19 @@ bool _isSvgUrl(String url) {
 const _distToken = '{DIST}';
 const _brightToken = '{BRIGHT}';
 
+/// The mark for a server, or **null** when marks are switched off.
+///
+/// Null rather than an empty widget, and that is the whole point: a
+/// zero-sized box still occupies a `leading` slot, and `ListTile` reserves
+/// width for one whatever it holds. Off has to mean no pixels, so the decision
+/// belongs to the caller — every one of them omits the slot on null.
+Widget? distIcon(String serverId, {double size = 20}) =>
+    Stores.setting.showDistMark.fetch() ? DistIcon(serverId, size: size) : null;
+
+/// [distIcon] for a caller that already knows the distribution.
+Widget? distIconOf(Dist? dist, {double size = 20}) =>
+    Stores.setting.showDistMark.fetch() ? DistIconOf(dist, size: size) : null;
+
 /// Which distribution a server runs, as the mark its own project publishes —
 /// fetched from wherever the person using this app pointed it.
 ///
@@ -94,6 +111,8 @@ class DistIcon extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (!Stores.setting.showDistMark.fetch()) return const SizedBox.shrink();
+
     // Read off the map rather than `serverProvider(id)`, which throws for an
     // id it does not know — the known-hosts page lists ids of servers that may
     // since have been deleted.
@@ -152,6 +171,11 @@ class DistIconOf extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Belt and braces. Every call site goes through `distIconOf`, which answers
+    // null and lets the slot be omitted — but a widget built directly must not
+    // draw a mark the switch says is off.
+    if (!Stores.setting.showDistMark.fetch()) return const SizedBox.shrink();
+
     final url = distMarkUrl(
       dist: dist,
       dark: Theme.of(context).brightness == Brightness.dark,
@@ -224,26 +248,105 @@ String distLegalPlain(AppLocalizations l10n) => l10n.distIconIntroLegal;
 
 /// Puts the terms up and answers whether the person accepted them.
 ///
-/// Here rather than in the settings page because this is where the wording
-/// already lives, and because a page that is `part of entry.dart` cannot be
-/// pumped on its own — the decision is worth a test of its own.
+/// The terms are `assets/distro/README.md` itself, rendered as markdown — the
+/// same file that records, per shipped mark, which licence permits shipping it
+/// and what the four rejected ones say instead. A paraphrase would be a second
+/// thing to keep true; this way there is one.
+///
+/// Capped in height and scrollable, because it is long. And the accept button
+/// waits [_kReadPause] before it can be pressed: the point of putting this up
+/// is that somebody looks at it, and a dialog whose only button is already
+/// under the thumb is one that gets dismissed without a glance.
 Future<bool> confirmDistIconTerms(BuildContext context) async {
   final l10n = context.l10n;
   final agreed = await context.showRoundDialog<bool>(
     title: l10n.distIcon,
-    child: SingleChildScrollView(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SimpleMarkdown(data: distLegalMarkdown(l10n)),
-          UIs.height13,
-          Text(l10n.distIconConsent),
-        ],
-      ),
+    childBuilder: (ctx) => ConstrainedBox(
+      // Half the window, so the dialog never grows past what it can scroll
+      // inside — and on a phone in landscape it is the height that runs out.
+      constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(ctx).height * 0.5),
+      child: SingleChildScrollView(child: _DistTerms(l10n: l10n)),
     ),
-    actions: Btnx.cancelOk,
+    actionsBuilder: (_) => [Btn.cancel(), const _DelayedOk()],
   );
   // Dismissing by tapping outside is not agreement.
   return agreed == true;
+}
+
+/// How long the accept button stays out of reach.
+const _kReadPause = Duration(seconds: 3);
+
+/// The README, or the short notice if it cannot be read.
+///
+/// It is an asset, so reading it is a future; a `FutureBuilder` rather than
+/// loading it before the dialog opens, which would leave a gap between the tap
+/// and anything appearing.
+class _DistTerms extends StatelessWidget {
+  const _DistTerms({required this.l10n});
+
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<String>(
+      future: rootBundle.loadString('assets/distro/README.md'),
+      builder: (_, snapshot) {
+        // The short notice while it loads and if it fails. Never nothing:
+        // an empty dialog with a countdown on its button is a puzzle.
+        final data = snapshot.data ?? distLegalMarkdown(l10n);
+        return SimpleMarkdown(
+          data: data,
+          styleSheet: MarkdownStyleSheet(
+            p: UIs.text13Grey,
+            h1: UIs.text15Bold,
+            h2: UIs.text13Bold,
+            tableBody: UIs.text12Grey,
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// An OK button that cannot be pressed for [_kReadPause], counting down.
+///
+/// Its own widget so the timer lives with the thing it disables, and so the
+/// dialog around it stays a plain `showRoundDialog` call.
+class _DelayedOk extends StatefulWidget {
+  const _DelayedOk();
+
+  @override
+  State<_DelayedOk> createState() => _DelayedOkState();
+}
+
+class _DelayedOkState extends State<_DelayedOk> {
+  Timer? _timer;
+  int _left = _kReadPause.inSeconds;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) return;
+      setState(() => _left--);
+      if (_left <= 0) t.cancel();
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ready = _left <= 0;
+    return TextButton(
+      // Null, not a no-op: a button that looks pressable and does nothing is
+      // worse than one that looks unavailable.
+      onPressed: ready ? () => Navigator.of(context).pop(true) : null,
+      child: Text(ready ? libL10n.ok : '${libL10n.ok} ($_left)'),
+    );
+  }
 }

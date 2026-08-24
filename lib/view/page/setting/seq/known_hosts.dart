@@ -116,7 +116,7 @@ class _KnownHostsPageState extends State<KnownHostsPage> {
       // From the cache, since this page holds ids and nothing else: a known
       // host is a server that connected at some point, so there is usually a
       // reading for it even though no status is live here.
-      leading: DistIconOf(Stores.serverDist.get(serverId), size: 24),
+      leading: distIconOf(Stores.serverDist.get(serverId), size: 24),
       title: Text(_label(serverId)),
       subtitle: Text(
         '${keys.length} ${l10n.sshHostKeyType}',

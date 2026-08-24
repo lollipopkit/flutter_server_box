@@ -18,11 +18,13 @@ extension on _ServerPageState {
                 // Before the name, at the size of it: which distribution a
                 // machine runs is the thing you scan a list of servers for,
                 // and it reads faster as a shape than as a word.
-                DistIconOf(
-                  s.status.dist,
-                  size: 15,
-                ),
-                const SizedBox(width: 6),
+                //
+                // The gap goes with it. Marks switched off has to mean no
+                // pixels, and a six-pixel indent on every row is pixels.
+                ...?switch (distIconOf(s.status.dist, size: 15)) {
+                  final mark? => [mark, const SizedBox(width: 6)],
+                  null => null,
+                },
                 Flexible(
                   child: Text(
                     s.spi.name,

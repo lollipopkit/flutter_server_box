@@ -640,13 +640,27 @@ class SettingStore extends SqliteStore {
   /// width is a smudge at 20px, and an icon that works at 20px is lost on a
   /// detail page. Both take `{DIST}` and `{BRIGHT}`.
   ///
-  /// Empty means no mark is drawn, which is the default and was the point of
-  /// shipping none. There is no separate on/off switch: an empty address is
-  /// the off position, and a second gate over it governed nothing.
-  ///
-  /// TODO: `showDistIcon` was that switch and is no longer read. The key stays
-  /// in the `setting` kv table on installs that wrote it; nothing looks at it.
+  /// Empty means the marks shipped with the app are used where there are any,
+  /// and the fallback icon everywhere else. See [showDistMark] for the switch
+  /// that governs whether any of it is drawn at all.
   late final serverMarkUrl = propertyDefault('serverMarkUrl', '');
+
+  /// Whether to draw a mark beside a server's name at all.
+  ///
+  /// **Off by default.** Five distributions' logos ship with the app and the
+  /// rest fall back to an icon, so this is the difference between a column of
+  /// marks and no column — not, as an earlier version of it was, a second gate
+  /// over an address that was already blank. Turning it on shows the terms
+  /// first; turning it off is agreement to nothing and asks nothing.
+  ///
+  /// Off means *nothing*, not a blank of the same size: the callers ask for
+  /// `distIcon(...)`, which answers null, and leave the slot out entirely.
+  ///
+  /// A new key rather than the old `showDistIcon`, which defaulted to on and
+  /// would have carried that answer past the terms for anyone who had it
+  /// stored. TODO: the old key sits unread in the `setting` table on installs
+  /// that wrote it; nothing looks at it.
+  late final showDistMark = propertyDefault('showDistMark', false);
 
   /// Hide port forward beta warning
   late final portForwardBetaWarned = propertyDefault(
