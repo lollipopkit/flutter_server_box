@@ -562,6 +562,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sshKeyPublicKeyTip => '将此行追加到服务器的 ~/.ssh/authorized_keys。';
 
   @override
+  String get sshKeyRecommended => '推荐';
+
+  @override
   String sshKeyUnlockTip(String name) {
     return '请输入私钥 [$name] 的口令。';
   }
@@ -2005,6 +2008,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get sshKeyPublicKeyTip => '將此行附加到伺服器的 ~/.ssh/authorized_keys。';
+
+  @override
+  String get sshKeyRecommended => '推薦';
 
   @override
   String sshKeyUnlockTip(String name) {

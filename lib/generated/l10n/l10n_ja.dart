@@ -575,6 +575,9 @@ class AppLocalizationsJa extends AppLocalizations {
       'この行をサーバーの ~/.ssh/authorized_keys に追記してください。';
 
   @override
+  String get sshKeyRecommended => '推奨';
+
+  @override
   String sshKeyUnlockTip(String name) {
     return '秘密鍵 [$name] のパスフレーズを入力してください。';
   }

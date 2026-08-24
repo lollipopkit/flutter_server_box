@@ -108,6 +108,7 @@
   "sshKeyPassphraseWrong": "Frasa sandi salah.",
   "sshKeyPublicKey": "Kunci publik",
   "sshKeyPublicKeyTip": "Tambahkan baris ini ke ~/.ssh/authorized_keys di server.",
+  "sshKeyRecommended": "Disarankan",
   "sshKeyUnlockTip": "Masukkan frasa sandi untuk kunci privat [{name}].",
   "unused": "Tidak terpakai",
   "dangling": "Menggantung",

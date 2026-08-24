@@ -573,6 +573,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sshKeyPublicKeyTip => '이 줄을 서버의 ~/.ssh/authorized_keys에 추가하세요.';
 
   @override
+  String get sshKeyRecommended => '권장';
+
+  @override
   String sshKeyUnlockTip(String name) {
     return '개인 키 [$name]의 암호를 입력하세요.';
   }

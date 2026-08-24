@@ -1173,6 +1173,12 @@ abstract class AppLocalizations {
   /// **'Append this line to ~/.ssh/authorized_keys on the server.'**
   String get sshKeyPublicKeyTip;
 
+  /// No description provided for @sshKeyRecommended.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended'**
+  String get sshKeyRecommended;
+
   /// No description provided for @sshKeyUnlockTip.
   ///
   /// In en, this message translates to:

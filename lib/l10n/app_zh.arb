@@ -181,6 +181,7 @@
   "sshKeyPassphraseWrong": "口令错误。",
   "sshKeyPublicKey": "公钥",
   "sshKeyPublicKeyTip": "将此行追加到服务器的 ~/.ssh/authorized_keys。",
+  "sshKeyRecommended": "推荐",
   "sshKeyUnlockTip": "请输入私钥 [{name}] 的口令。",
   "unused": "未使用",
   "dangling": "悬空",

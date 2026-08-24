@@ -108,6 +108,7 @@
   "sshKeyPassphraseWrong": "Parola yanlış.",
   "sshKeyPublicKey": "Genel anahtar",
   "sshKeyPublicKeyTip": "Bu satırı sunucudaki ~/.ssh/authorized_keys dosyasına ekleyin.",
+  "sshKeyRecommended": "Önerilen",
   "sshKeyUnlockTip": "[{name}] özel anahtarının parolasını girin.",
   "unused": "Kullanılmıyor",
   "dangling": "Askıda",

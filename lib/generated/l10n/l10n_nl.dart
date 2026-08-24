@@ -608,6 +608,9 @@ class AppLocalizationsNl extends AppLocalizations {
       'Voeg deze regel toe aan ~/.ssh/authorized_keys op de server.';
 
   @override
+  String get sshKeyRecommended => 'Aanbevolen';
+
+  @override
   String sshKeyUnlockTip(String name) {
     return 'Voer de wachtwoordzin voor de privésleutel [$name] in.';
   }

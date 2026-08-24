@@ -606,6 +606,9 @@ class AppLocalizationsId extends AppLocalizations {
       'Tambahkan baris ini ke ~/.ssh/authorized_keys di server.';
 
   @override
+  String get sshKeyRecommended => 'Disarankan';
+
+  @override
   String sshKeyUnlockTip(String name) {
     return 'Masukkan frasa sandi untuk kunci privat [$name].';
   }

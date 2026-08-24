@@ -609,6 +609,9 @@ class AppLocalizationsDe extends AppLocalizations {
       'Diese Zeile an ~/.ssh/authorized_keys auf dem Server anhängen.';
 
   @override
+  String get sshKeyRecommended => 'Empfohlen';
+
+  @override
   String sshKeyUnlockTip(String name) {
     return 'Passphrase für den privaten Schlüssel [$name] eingeben.';
   }

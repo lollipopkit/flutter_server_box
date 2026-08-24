@@ -600,6 +600,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Append this line to ~/.ssh/authorized_keys on the server.';
 
   @override
+  String get sshKeyRecommended => 'Recommended';
+
+  @override
   String sshKeyUnlockTip(String name) {
     return 'Enter the passphrase for the private key [$name].';
   }

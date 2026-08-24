@@ -67,6 +67,14 @@ String getPrivateKey(String id) {
   return pki.key;
 }
 
+/// Cap on a key file read off disk by path. Deliberately far above any real
+/// key — an RSA-4096 PEM is a few KB — because this reads a file the user
+/// already points OpenSSH at, and the point is only to keep a mistaken path
+/// from pulling an arbitrary file into memory on the main isolate.
+/// `Miscs.privateKeyMaxSize` is the tighter limit on what gets pasted into the
+/// store, which is a different question.
+const _keyFileMaxSize = 1024 * 1024;
+
 /// The PEM [ssh] authenticates with, or null when it has no key at all.
 ///
 /// Two sources that are not interchangeable, which is the whole point of them
@@ -102,14 +110,21 @@ String? resolvePrivateKey(SshCredential ssh) {
     // Guard against unbounded key files on the main isolate.
     try {
       final size = file.statSync().size;
-      if (size > 1024 * 1024) {
+      if (size > _keyFileMaxSize) {
         throw SSHErr(
           type: SSHErrType.noPrivateKey,
-          message: l10n.privateKeyFileUnreadable(expanded, 'File too large ($size bytes)'),
+          message: l10n.fileTooLarge(
+            expanded,
+            size.bytes2Str,
+            _keyFileMaxSize.bytes2Str,
+          ),
         );
       }
-    } catch (_) {
-      // statSync failure is non-fatal; let read attempt decide.
+    } catch (e) {
+      // A failed stat is non-fatal — let the read attempt decide. The size
+      // check above is not: rethrowing is what stops an oversized file going
+      // on to be read into memory anyway.
+      if (e is SSHErr) rethrow;
     }
     return file.readAsStringSync();
   } catch (e) {
@@ -137,10 +152,14 @@ Future<String?> resolvePrivateKeyAsync(SshCredential ssh) async {
   try {
     final file = File(expanded);
     final stat = await file.stat();
-    if (stat.size > 1024 * 1024) {
+    if (stat.size > _keyFileMaxSize) {
       throw SSHErr(
         type: SSHErrType.noPrivateKey,
-        message: l10n.privateKeyFileUnreadable(expanded, 'File too large (${stat.size} bytes)'),
+        message: l10n.fileTooLarge(
+          expanded,
+          stat.size.bytes2Str,
+          _keyFileMaxSize.bytes2Str,
+        ),
       );
     }
     return await file.readAsString();

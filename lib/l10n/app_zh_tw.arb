@@ -181,6 +181,7 @@
   "sshKeyPassphraseWrong": "通行密碼錯誤。",
   "sshKeyPublicKey": "公開金鑰",
   "sshKeyPublicKeyTip": "將此行附加到伺服器的 ~/.ssh/authorized_keys。",
+  "sshKeyRecommended": "推薦",
   "sshKeyUnlockTip": "請輸入私密金鑰 [{name}] 的通行密碼。",
   "unused": "未使用",
   "dangling": "懸空",

@@ -607,6 +607,9 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu satırı sunucudaki ~/.ssh/authorized_keys dosyasına ekleyin.';
 
   @override
+  String get sshKeyRecommended => 'Önerilen';
+
+  @override
   String sshKeyUnlockTip(String name) {
     return '[$name] özel anahtarının parolasını girin.';
   }

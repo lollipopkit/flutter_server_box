@@ -108,6 +108,7 @@
   "sshKeyPassphraseWrong": "パスフレーズが違います。",
   "sshKeyPublicKey": "公開鍵",
   "sshKeyPublicKeyTip": "この行をサーバーの ~/.ssh/authorized_keys に追記してください。",
+  "sshKeyRecommended": "推奨",
   "sshKeyUnlockTip": "秘密鍵 [{name}] のパスフレーズを入力してください。",
   "unused": "未使用",
   "dangling": "未タグ",

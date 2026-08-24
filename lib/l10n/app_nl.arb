@@ -108,6 +108,7 @@
   "sshKeyPassphraseWrong": "Onjuiste wachtwoordzin.",
   "sshKeyPublicKey": "Publieke sleutel",
   "sshKeyPublicKeyTip": "Voeg deze regel toe aan ~/.ssh/authorized_keys op de server.",
+  "sshKeyRecommended": "Aanbevolen",
   "sshKeyUnlockTip": "Voer de wachtwoordzin voor de privésleutel [{name}] in.",
   "unused": "Ongebruikt",
   "dangling": "Bungelend",

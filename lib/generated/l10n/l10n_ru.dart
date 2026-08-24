@@ -611,6 +611,9 @@ class AppLocalizationsRu extends AppLocalizations {
       'Добавьте эту строку в ~/.ssh/authorized_keys на сервере.';
 
   @override
+  String get sshKeyRecommended => 'Рекомендуется';
+
+  @override
   String sshKeyUnlockTip(String name) {
     return 'Введите парольную фразу закрытого ключа [$name].';
   }

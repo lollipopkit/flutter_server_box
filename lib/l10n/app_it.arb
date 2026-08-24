@@ -108,6 +108,7 @@
   "sshKeyPassphraseWrong": "Passphrase errata.",
   "sshKeyPublicKey": "Chiave pubblica",
   "sshKeyPublicKeyTip": "Aggiungi questa riga a ~/.ssh/authorized_keys sul server.",
+  "sshKeyRecommended": "Consigliato",
   "sshKeyUnlockTip": "Inserisci la passphrase della chiave privata [{name}].",
   "unused": "Inutilizzato",
   "dangling": "Orfana",

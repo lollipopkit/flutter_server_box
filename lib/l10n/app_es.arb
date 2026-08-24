@@ -108,6 +108,7 @@
   "sshKeyPassphraseWrong": "Frase de contraseña incorrecta.",
   "sshKeyPublicKey": "Clave pública",
   "sshKeyPublicKeyTip": "Añade esta línea a ~/.ssh/authorized_keys en el servidor.",
+  "sshKeyRecommended": "Recomendado",
   "sshKeyUnlockTip": "Introduce la frase de contraseña de la clave privada [{name}].",
   "unused": "Sin usar",
   "dangling": "Colgante",

@@ -191,6 +191,7 @@
   "sshKeyPassphraseWrong": "Wrong passphrase.",
   "sshKeyPublicKey": "Public key",
   "sshKeyPublicKeyTip": "Append this line to ~/.ssh/authorized_keys on the server.",
+  "sshKeyRecommended": "Recommended",
   "sshKeyUnlockTip": "Enter the passphrase for the private key [{name}].",
   "@sshKeyUnlockTip": {
     "placeholders": {

@@ -195,10 +195,11 @@ class _PrivateKeyGeneratePageState
     SshKeyAlgorithm.rsa4096 => 'RSA 4096',
   };
 
-  /// Why someone would pick this one. Untranslated on purpose: they are
-  /// algorithm names and the one English word among them is the default.
+  /// Why someone would pick this one. The identifiers stay as they are — they
+  /// are what a server names in its config, not prose — while the line for the
+  /// default is a sentence and is translated.
   String _algorithmSubtitle(SshKeyAlgorithm algorithm) => switch (algorithm) {
-    SshKeyAlgorithm.ed25519 => 'Recommended',
+    SshKeyAlgorithm.ed25519 => l10n.sshKeyRecommended,
     SshKeyAlgorithm.ecdsaP256 => 'ecdsa-sha2-nistp256',
     SshKeyAlgorithm.rsa2048 || SshKeyAlgorithm.rsa4096 => 'ssh-rsa',
   };

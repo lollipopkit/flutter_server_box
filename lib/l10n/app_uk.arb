@@ -108,6 +108,7 @@
   "sshKeyPassphraseWrong": "Неправильна парольна фраза.",
   "sshKeyPublicKey": "Відкритий ключ",
   "sshKeyPublicKeyTip": "Додайте цей рядок до ~/.ssh/authorized_keys на сервері.",
+  "sshKeyRecommended": "Рекомендовано",
   "sshKeyUnlockTip": "Введіть парольну фразу закритого ключа [{name}].",
   "unused": "Не використовується",
   "dangling": "Висячий",
