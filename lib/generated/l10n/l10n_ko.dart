@@ -264,22 +264,17 @@ class AppLocalizationsKo extends AppLocalizations {
   String get backupPasswordWrong => '백업 비밀번호가 올바르지 않습니다';
 
   @override
-  String get distIcon => 'Distribution marks';
-
-  @override
-  String get distIconIntroBody =>
-      'ServerBox can show a small mark beside each server for the system it appears to be running, so a list of machines can be read at a glance.';
+  String get distIcon => '배포판 표시';
 
   @override
   String get distIconIntroLegal =>
-      'The marks are redrawn glyphs from font-logos, released into the public domain. They are not the artwork of the projects they refer to, and no project has reviewed, endorsed or is otherwise associated with this app.\n\nA mark says only what this device read from the remote system, which can be wrong or out of date. It does not identify a derivative, a rebuild, or any particular version. Where the system cannot be identified, or where its mark is not shipped, a neutral outline is drawn instead.\n\nEach mark is a trademark of its respective owner and is used here only to refer to the system it identifies.';
+      '이 표시들은 font-logos에서 가져온 것으로, 다시 그려져 퍼블릭 도메인으로 공개된 도형입니다. 각 프로젝트 자체의 아트워크가 아니며, 어떤 프로젝트도 이 앱을 검토하거나 보증하지 않았고 이 앱과 관련이 없습니다.\n\n표시는 이 기기가 원격 시스템에서 읽은 내용만을 나타내며, 그 내용은 틀리거나 오래된 것일 수 있습니다. 파생본이나 재빌드, 특정 버전을 가리키지 않습니다. 시스템을 식별할 수 없거나 해당 표시가 없으면 중립적인 도형을 표시합니다.\n\n각 표시는 해당 소유자의 상표이며, 여기서는 그것이 가리키는 시스템을 지칭하기 위해서만 사용됩니다.';
 
   @override
-  String get distIconIntroTitle => 'Distribution marks';
+  String get distIconIntroTitle => '배포판 표시';
 
   @override
-  String get distIconTip =>
-      'Show a small mark beside each server for the system it appears to be running.';
+  String get distIconTip => '각 서버 옆에 실행 중으로 보이는 시스템의 작은 표시를 보여줍니다';
 
   @override
   String get remoteBackupPasswordRequired =>

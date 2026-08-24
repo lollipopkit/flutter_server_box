@@ -2,6 +2,63 @@
 
 不在排期内的想法和已知缺口,先记在这里,免得丢了。
 
+## 发行版识别:改读 `os-release` 的 `ID=`,不再匹配 `PRETTY_NAME` 的散文
+
+**状态(2026-08-24):没开始。** `Dist` 已经扩到 63 个 case,识别仍是子串匹配。
+
+### 现状和它的问题
+
+`crates/sbm_parser/src/commands.rs` 的 `SYS` 是
+`cat /etc/*-release | grep ^PRETTY_NAME`,所以送到 `DistStringX.dist` 的是一行给人看
+的散文:`PRETTY_NAME="Red Hat Enterprise Linux 9.4 (Plow)"`。
+
+原来的实现是 `lower.contains(dist.name)`,只在「发行版在自己的 `PRETTY_NAME` 里恰好被
+拼成一个小写单词」时成立。扩到 63 个之后不成立的有一批:`rhel`、`mint`、`popos`、
+`mx`、`kdeneon`、`qubes`、`mandriva`、`illumos`。所以改成了
+`lib/data/model/server/dist.dart` 里的 `_matchers` —— 一个有序的
+`(Dist, List<String>)` 列表,每个 case 带自己的匹配关键词。
+
+**顺序是语义**:衍生版必须排在基础版之前,因为后者通常是前者的子串(`Kubuntu` 含
+`ubuntu`,`openSUSE Leap` 含 `opensuse`,`Archcraft` 含 `arch`)。写的时候就踩了一次
+——`coreos` 排在 `fedora` 之后,`Fedora CoreOS 40` 读成了 Fedora,是
+`test/dist_icon_test.dart` 抓到的。
+
+这套能用,但它的正确性靠一个人工维护的顺序,而不是靠数据本身。
+
+### 正确的做法
+
+`/etc/os-release` 的 `ID=` 就是为机器读设计的标准化标识符:`ID=rhel`、`ID=linuxmint`、
+`ID=pop`、`ID=opensuse-leap`、`ID=opensuse-tumbleweed`、`ID=manjaro`。精确相等匹配,
+没有顺序依赖也没有子串误判。
+
+`ID` 仍然需要一张到 `Dist` 的映射表(`pop` → `popos`、`opensuse-leap` → `leap`),但那
+是一张 map 而不是一个有序列表,漏一条的后果是「识别不出」而不是「识别成别的」。
+
+`ID_LIKE=` 还能给出降级路径:`ID=raspbian ID_LIKE=debian`,不认识 `ID` 时可以按
+`ID_LIKE` 画基础版的标。现在的实现没有这个能力。
+
+### 代价:要动 Rust,而且 `sys` 有第二个用途
+
+`SYS` 的输出不只是拿来识别发行版的,它还**显示**在详情页的「系统」卡片
+(`cmd_types.dart:120` 把 `StatusCmdType.sys` 映射成 `libL10n.system`)—— 那里要的正是
+`PRETTY_NAME` 这句人话。所以不能简单换成 `ID`,得两个都要。
+
+具体影响面:
+
+- `crates/sbm_parser/src/commands.rs` 的 `SYS`,大约改成
+  `cat /etc/os-release 2>/dev/null | grep -E '^(ID|PRETTY_NAME)=' || cat /etc/*-release | grep ^PRETTY_NAME`
+- `crates/sbm_parser/tests/dart_compat.rs` 锁定了命令清单,要一起改
+- `monitor` 用同一份 manifest,它的解析侧也要认新格式
+- Dart 侧 `_applyMore` 收到的 `more[sys]` 从一行变成两行,显示那一侧要取
+  `PRETTY_NAME` 那行,不能整段显示
+- **旧 monitor 只会返回 `PRETTY_NAME`**,所以 `ID` 缺失时必须回落到现有的子串匹配 ——
+  `_matchers` 不能删,只能降级成兜底
+
+### 顺带
+
+`Dist` 的 case 名是和用户的契约(`{DIST}` 在自定义 logo URL 里展开成它),所以这件事
+不能改名,只能加。这条已经写在 `dist.dart` 的类注释里。
+
 ## ServerBox 作为 MCP server:把内置 Agent 的工具借给本机的 CLI agent
 
 想法:app 启动时在本机起一个 MCP server,把 `globalAgentToolDefinitions` 那六个工具

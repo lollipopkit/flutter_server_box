@@ -282,22 +282,18 @@ class AppLocalizationsTr extends AppLocalizations {
   String get backupPasswordWrong => 'Yanlış yedekleme parolası';
 
   @override
-  String get distIcon => 'Distribution marks';
-
-  @override
-  String get distIconIntroBody =>
-      'ServerBox can show a small mark beside each server for the system it appears to be running, so a list of machines can be read at a glance.';
+  String get distIcon => 'Dağıtım işaretleri';
 
   @override
   String get distIconIntroLegal =>
-      'The marks are redrawn glyphs from font-logos, released into the public domain. They are not the artwork of the projects they refer to, and no project has reviewed, endorsed or is otherwise associated with this app.\n\nA mark says only what this device read from the remote system, which can be wrong or out of date. It does not identify a derivative, a rebuild, or any particular version. Where the system cannot be identified, or where its mark is not shipped, a neutral outline is drawn instead.\n\nEach mark is a trademark of its respective owner and is used here only to refer to the system it identifies.';
+      'İşaretler font-logos’tan alınmış, yeniden çizilerek kamu malı olarak yayımlanmış görsellerdir. Atıfta bulundukları projelerin kendi görselleri değildir; hiçbir proje bu uygulamayı incelemiş, onaylamış ya da başka bir şekilde onunla ilişkili değildir.\n\nBir işaret yalnızca bu cihazın uzak sistemden okuduğunu gösterir; bu bilgi yanlış veya güncelliğini yitirmiş olabilir. Bir türevi, yeniden derlemeyi ya da belirli bir sürümü belirtmez. Sistem tanınamadığında veya işareti bulunmadığında bunun yerine nötr bir çizim gösterilir.\n\nHer işaret ilgili sahibinin ticari markasıdır ve burada yalnızca tanımladığı sisteme atıfta bulunmak için kullanılır.';
 
   @override
-  String get distIconIntroTitle => 'Distribution marks';
+  String get distIconIntroTitle => 'Dağıtım işaretleri';
 
   @override
   String get distIconTip =>
-      'Show a small mark beside each server for the system it appears to be running.';
+      'Her sunucunun yanında, üzerinde çalıştığı görünen sistemin küçük bir işaretini göster';
 
   @override
   String get remoteBackupPasswordRequired =>

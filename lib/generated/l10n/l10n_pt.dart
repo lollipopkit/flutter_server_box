@@ -282,22 +282,18 @@ class AppLocalizationsPt extends AppLocalizations {
   String get backupPasswordWrong => 'Senha de backup incorreta';
 
   @override
-  String get distIcon => 'Distribution marks';
-
-  @override
-  String get distIconIntroBody =>
-      'ServerBox can show a small mark beside each server for the system it appears to be running, so a list of machines can be read at a glance.';
+  String get distIcon => 'Marcas de distribuição';
 
   @override
   String get distIconIntroLegal =>
-      'The marks are redrawn glyphs from font-logos, released into the public domain. They are not the artwork of the projects they refer to, and no project has reviewed, endorsed or is otherwise associated with this app.\n\nA mark says only what this device read from the remote system, which can be wrong or out of date. It does not identify a derivative, a rebuild, or any particular version. Where the system cannot be identified, or where its mark is not shipped, a neutral outline is drawn instead.\n\nEach mark is a trademark of its respective owner and is used here only to refer to the system it identifies.';
+      'As marcas vêm do font-logos, redesenhadas e liberadas para o domínio público. Não são a arte dos projetos a que se referem; nenhum projeto revisou ou endossou este aplicativo, nem está associado a ele.\n\nUma marca indica apenas o que este dispositivo leu do sistema remoto, o que pode estar errado ou desatualizado. Não identifica um derivado, uma recompilação nem uma versão específica. Quando o sistema não pode ser identificado, ou sua marca não é incluída, um contorno neutro é desenhado no lugar.\n\nCada marca é uma marca registrada de seu respectivo proprietário e aqui é usada apenas para se referir ao sistema que identifica.';
 
   @override
-  String get distIconIntroTitle => 'Distribution marks';
+  String get distIconIntroTitle => 'Marcas de distribuição';
 
   @override
   String get distIconTip =>
-      'Show a small mark beside each server for the system it appears to be running.';
+      'Mostrar ao lado de cada servidor uma pequena marca do sistema que ele parece executar';
 
   @override
   String get remoteBackupPasswordRequired =>

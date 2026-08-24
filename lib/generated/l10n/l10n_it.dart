@@ -285,22 +285,18 @@ class AppLocalizationsIt extends AppLocalizations {
   String get backupPasswordWrong => 'Password di backup errata';
 
   @override
-  String get distIcon => 'Distribution marks';
-
-  @override
-  String get distIconIntroBody =>
-      'ServerBox can show a small mark beside each server for the system it appears to be running, so a list of machines can be read at a glance.';
+  String get distIcon => 'Contrassegni di distribuzione';
 
   @override
   String get distIconIntroLegal =>
-      'The marks are redrawn glyphs from font-logos, released into the public domain. They are not the artwork of the projects they refer to, and no project has reviewed, endorsed or is otherwise associated with this app.\n\nA mark says only what this device read from the remote system, which can be wrong or out of date. It does not identify a derivative, a rebuild, or any particular version. Where the system cannot be identified, or where its mark is not shipped, a neutral outline is drawn instead.\n\nEach mark is a trademark of its respective owner and is used here only to refer to the system it identifies.';
+      'I contrassegni provengono da font-logos, ridisegnati e rilasciati nel pubblico dominio. Non sono le grafiche dei progetti a cui si riferiscono; nessun progetto ha esaminato o approvato questa app, né è associato ad essa.\n\nUn contrassegno indica solo ciò che questo dispositivo ha letto dal sistema remoto, che può essere errato o non aggiornato. Non identifica un derivato, una ricompilazione né una versione specifica. Quando il sistema non può essere identificato, o il suo contrassegno non è incluso, viene disegnato un contorno neutro.\n\nOgni contrassegno è un marchio del rispettivo proprietario ed è usato qui solo per riferirsi al sistema che identifica.';
 
   @override
-  String get distIconIntroTitle => 'Distribution marks';
+  String get distIconIntroTitle => 'Contrassegni di distribuzione';
 
   @override
   String get distIconTip =>
-      'Show a small mark beside each server for the system it appears to be running.';
+      'Mostra accanto a ogni server un piccolo contrassegno del sistema che sembra eseguire';
 
   @override
   String get remoteBackupPasswordRequired =>

@@ -116,7 +116,7 @@ final class _IntroPage extends StatelessWidget {
         IntroPage.title(text: l10n.distIconIntroTitle, big: true),
         SizedBox(height: padTop * 0.5),
         Text(
-          l10n.distIconIntroBody,
+          l10n.distIconTip,
           style: const TextStyle(fontSize: 16),
           textAlign: TextAlign.center,
         ),

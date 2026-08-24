@@ -263,10 +263,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get distIcon => '发行版标识';
 
   @override
-  String get distIconIntroBody =>
-      'ServerBox 可以在每台服务器旁显示一个小标识,表示它可能运行的系统,便于一眼扫过整个列表。';
-
-  @override
   String get distIconIntroLegal =>
       '这些标识来自 font-logos,是重新绘制并释入公有领域的图形,并非各项目自身的美术资源。任何项目都未审核、未背书本应用,也与本应用无关联。\n\n标识仅表示本设备从远程系统读取到的信息,该信息可能有误或已过期,也不代表其衍生版本、重构版本或任何特定版本。无法识别、或未内置对应标识时,显示中性的通用图标。\n\n每个标识均为其各自所有者的商标,此处仅用于指代它所标识的系统。';
 
@@ -274,7 +270,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get distIconIntroTitle => '发行版标识';
 
   @override
-  String get distIconTip => '在每台服务器旁显示一个小标识,表示它可能运行的系统。';
+  String get distIconTip => '在每台服务器旁显示一个小标识,表示它可能运行的系统';
 
   @override
   String get remoteBackupPasswordRequired => '远程备份需要非空的备份密码';
@@ -1723,6 +1719,19 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get backupPasswordWrong => '備份密碼錯誤';
+
+  @override
+  String get distIcon => '發行版標識';
+
+  @override
+  String get distIconIntroLegal =>
+      '這些標識來自 font-logos,是重新繪製並釋入公有領域的圖形,並非各專案自身的美術資源。任何專案都未稽核、未背書本應用,也與本應用無關聯。\n\n標識僅表示本裝置從遠端系統讀取到的資訊,該資訊可能有誤或已過期,也不代表其衍生版本、重構版本或任何特定版本。無法識別、或未內建對應標識時,顯示中性的通用圖示。\n\n每個標識均為其各自所有者的商標,此處僅用於指代它所標識的系統。';
+
+  @override
+  String get distIconIntroTitle => '發行版標識';
+
+  @override
+  String get distIconTip => '在每台伺服器旁顯示一個小標識,表示它可能執行的系統';
 
   @override
   String get remoteBackupPasswordRequired => '遠端備份需要非空的備份密碼';

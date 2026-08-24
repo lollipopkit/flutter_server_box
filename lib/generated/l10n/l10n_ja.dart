@@ -263,22 +263,17 @@ class AppLocalizationsJa extends AppLocalizations {
   String get backupPasswordWrong => 'バックアップパスワードが間違っています';
 
   @override
-  String get distIcon => 'Distribution marks';
-
-  @override
-  String get distIconIntroBody =>
-      'ServerBox can show a small mark beside each server for the system it appears to be running, so a list of machines can be read at a glance.';
+  String get distIcon => 'ディストリビューション標識';
 
   @override
   String get distIconIntroLegal =>
-      'The marks are redrawn glyphs from font-logos, released into the public domain. They are not the artwork of the projects they refer to, and no project has reviewed, endorsed or is otherwise associated with this app.\n\nA mark says only what this device read from the remote system, which can be wrong or out of date. It does not identify a derivative, a rebuild, or any particular version. Where the system cannot be identified, or where its mark is not shipped, a neutral outline is drawn instead.\n\nEach mark is a trademark of its respective owner and is used here only to refer to the system it identifies.';
+      'これらの標識は font-logos のもので、描き直されパブリックドメインに提供された図形です。各プロジェクト自身の素材ではなく、いずれのプロジェクトも本アプリを確認・承認しておらず、本アプリとは無関係です。\n\n標識は本端末がリモートシステムから読み取った内容を示すにすぎず、その内容は誤っていたり古くなっていたりする可能性があります。派生版・再構築版・特定のバージョンを示すものではありません。識別できない場合、または対応する標識がない場合は中立的な図形を表示します。\n\n各標識はそれぞれの所有者の商標であり、ここではそれが指すシステムを参照する目的でのみ使用しています。';
 
   @override
-  String get distIconIntroTitle => 'Distribution marks';
+  String get distIconIntroTitle => 'ディストリビューション標識';
 
   @override
-  String get distIconTip =>
-      'Show a small mark beside each server for the system it appears to be running.';
+  String get distIconTip => '各サーバーの横に、動作していると思われるシステムの小さな標識を表示します';
 
   @override
   String get remoteBackupPasswordRequired =>

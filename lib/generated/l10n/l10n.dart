@@ -621,12 +621,6 @@ abstract class AppLocalizations {
   /// **'Distribution marks'**
   String get distIcon;
 
-  /// No description provided for @distIconIntroBody.
-  ///
-  /// In en, this message translates to:
-  /// **'ServerBox can show a small mark beside each server for the system it appears to be running, so a list of machines can be read at a glance.'**
-  String get distIconIntroBody;
-
   /// No description provided for @distIconIntroLegal.
   ///
   /// In en, this message translates to:
