@@ -169,7 +169,13 @@ class KvToTablesMigration implements SchemaMigration {
   /// everything written since 1155, and for anything older the field is empty
   /// and the key is `user@ip:port` — which other records point at.
   Map<String, String> _migrateServers(Map<String, String> keyIds) {
-    final ids = <String, String>{};
+    // A later retry may contain only a child box: earlier boxes have already
+    // been consumed into tables. Keep those server ids resolvable so retried
+    // children are not dropped as references to missing servers.
+    final ids = <String, String>{
+      for (final row in _db.select('SELECT id FROM server;'))
+        row['id'] as String: row['id'] as String,
+    };
     final jumps = <String, List<String>>{};
 
     for (final row in _rows('server')) {

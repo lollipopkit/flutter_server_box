@@ -215,35 +215,49 @@ abstract final class HiveImport {
     var hadWriteFailures = false;
     try {
       // One transaction per box. A connection-stats box can hold thousands of
-      // rows, and a commit each would be thousands of durability barriers.
-      SqliteStore.transact(() {
-      for (final key in legacy.box.keys) {
-        if (key is! String) continue;
-        // Per record, because reading one goes through a `TypeAdapter`: a value
-        // written under a typeId this build no longer registers, or a truncated
-        // one, throws. Letting that escape would fail the launch — and fail it
-        // again on every launch after, since the marker stays unwritten. The
-        // v2 -> v3 migration this replaced caught per record for the same
-        // reason.
-        try {
-          final raw = legacy.box.get(key);
-          if (raw == null) continue;
+      // rows, and a commit each would be thousands of durability barriers. A
+      // destination failure rolls the whole box back: m004 can consume and
+      // delete successful kv rows later in this launch, so retrying a box that
+      // partly committed would reinsert those rows on the next launch.
+      try {
+        copied = SqliteStore.transact(() {
+          var boxCopied = 0;
+          for (final key in legacy.box.keys) {
+            if (key is! String) continue;
+            // Permanent legacy corruption costs that record, not every later
+            // launch. A destination write failure is different and rolls the
+            // box back for a clean retry.
+            try {
+              final raw = legacy.box.get(key);
+              if (raw == null) continue;
 
-          final value = _fromLegacy(raw) ?? raw;
-          final ok = into(key, _jsonSafe(value as Object));
-          if (ok) {
-            copied++;
-          } else {
-            hadWriteFailures = true;
-            Loggers.app.warning(
-              'Could not import "$name/$key" (${value.runtimeType})',
-            );
+              final value = _fromLegacy(raw) ?? raw;
+              final safe = _jsonSafe(value as Object);
+              json.encode(safe);
+              final ok = into(key, safe);
+              if (!ok) {
+                Loggers.app.warning(
+                  'Could not import "$name/$key" (${value.runtimeType})',
+                );
+                throw const _BoxWriteFailure();
+              }
+              boxCopied++;
+            } on _BoxWriteFailure {
+              rethrow;
+            } catch (e, s) {
+              Loggers.app.warning(
+                'Skipping unreadable record "$name/$key"',
+                e,
+                s,
+              );
+            }
           }
-        } catch (e, s) {
-          Loggers.app.warning('Skipping unreadable record "$name/$key"', e, s);
-        }
+          return boxCopied;
+        });
+      } on _BoxWriteFailure {
+        copied = 0;
+        hadWriteFailures = true;
       }
-      });
     } finally {
       await legacy.box.close();
     }
@@ -299,4 +313,8 @@ abstract final class HiveImport {
       }
     }
   }
+}
+
+class _BoxWriteFailure implements Exception {
+  const _BoxWriteFailure();
 }
