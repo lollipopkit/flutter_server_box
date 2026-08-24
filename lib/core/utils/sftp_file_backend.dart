@@ -216,12 +216,14 @@ class SftpFileBackend implements FileBackend {
     final staging = stagingNameFor(path);
     onStaging?.call(staging);
     var wrote = false;
+    var replacementOutcomeUnknown = false;
     try {
       final file = await _bounded(
         'open for write',
         _sftp.open(
           staging,
-          mode: SftpFileOpenMode.create |
+          mode:
+              SftpFileOpenMode.create |
               SftpFileOpenMode.write |
               SftpFileOpenMode.truncate,
         ),
@@ -238,9 +240,17 @@ class SftpFileBackend implements FileBackend {
         } catch (_) {}
         rethrow;
       }
-      await _replace(staging, path);
+      try {
+        await _replace(staging, path);
+      } on TimeoutException {
+        replacementOutcomeUnknown = true;
+        try {
+          await _sftp.close();
+        } catch (_) {}
+        rethrow;
+      }
     } catch (_) {
-      if (wrote) {
+      if (wrote && !replacementOutcomeUnknown) {
         try {
           await _sftp.remove(staging);
         } catch (_) {
@@ -259,46 +269,13 @@ class SftpFileBackend implements FileBackend {
   /// first. That is a moment where neither file is in place, and it is still
   /// better than truncating the destination before the bytes have arrived.
   Future<void> _replace(String staging, String path) async {
-    final Object failure;
-    try {
-      await _bounded('rename', _sftp.rename(staging, path));
-      return;
-    } catch (e) {
-      failure = e;
-    }
-
-    // Moved aside, never deleted first. Reading "the rename failed and the
-    // destination stats" as "the destination is in the way" was a guess: a
-    // server refuses a rename for permission, quota or policy reasons too,
-    // with the destination sitting there intact, and the remove that followed
-    // could well succeed and take a good file with it.
-    //
-    // Renaming the destination away asks the same question without betting on
-    // the answer — a refusal that was not about the destination refuses this
-    // too, and nothing has been lost. Only once the staged copy is in place
-    // does the old one go.
-    final aside = stagingNameFor(path);
-    try {
-      await _bounded('rename', _sftp.rename(path, aside));
-    } catch (_) {
-      throw failure;
-    }
-    try {
-      await _bounded('rename', _sftp.rename(staging, path));
-    } catch (_) {
-      // Put it back: losing the destination to a replacement that did not
-      // happen is the whole thing this path exists to avoid.
-      try {
-        await _bounded('rename', _sftp.rename(aside, path));
-      } catch (_) {}
-      rethrow;
-    }
-    try {
-      await _bounded('remove', _sftp.remove(aside));
-    } catch (_) {
-      // The replacement is done. A leftover beside it is visible in the
-      // browser and not worth failing a finished write for.
-    }
+    await replaceSftpPath(
+      staging: staging,
+      destination: path,
+      aside: stagingNameFor(path),
+      rename: (from, to) => _bounded('rename', _sftp.rename(from, to)),
+      remove: (target) => _bounded('remove', _sftp.remove(target)),
+    );
   }
 
   @override

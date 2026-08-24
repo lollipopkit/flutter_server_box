@@ -31,11 +31,71 @@ Future<SftpClient> withSftpSessionOpenTimeout(
   } on TimeoutException catch (e, s) {
     unawaited(
       future.then((client) => client.close()).catchError((Object closeError) {
-        Loggers.app.warning('Failed to close timed out SFTP session', closeError);
+        Loggers.app.warning(
+          'Failed to close timed out SFTP session',
+          closeError,
+        );
       }),
     );
     final error = TimeoutException('SFTP $operation timed out', timeout);
     Loggers.app.warning(error.message, e, s);
     throw error;
+  }
+}
+
+typedef SftpRename = Future<void> Function(String from, String to);
+typedef SftpRemove = Future<void> Function(String path);
+
+/// Replaces [destination] with [staging] without deleting the old path first.
+///
+/// A timed-out rename is still running underneath `Future.timeout`, so its
+/// outcome is unknown. In that case no second rename, rollback, or cleanup may
+/// race it; the caller should close the owning SFTP session before deciding
+/// what can be cleaned up.
+Future<void> replaceSftpPath({
+  required String staging,
+  required String destination,
+  required String aside,
+  required SftpRename rename,
+  required SftpRemove remove,
+}) async {
+  late final Object firstFailure;
+  late final StackTrace firstStack;
+  try {
+    await rename(staging, destination);
+    return;
+  } on TimeoutException {
+    rethrow;
+  } catch (e, s) {
+    firstFailure = e;
+    firstStack = s;
+  }
+
+  try {
+    await rename(destination, aside);
+  } on TimeoutException {
+    rethrow;
+  } catch (_) {
+    Error.throwWithStackTrace(firstFailure, firstStack);
+  }
+
+  try {
+    await rename(staging, destination);
+  } on TimeoutException {
+    rethrow;
+  } catch (e, s) {
+    try {
+      await rename(aside, destination);
+    } on TimeoutException {
+      rethrow;
+    } catch (_) {}
+    Error.throwWithStackTrace(e, s);
+  }
+
+  try {
+    await remove(aside);
+  } catch (_) {
+    // The replacement is complete. A visible leftover is safer than turning a
+    // successful write into a failure.
   }
 }

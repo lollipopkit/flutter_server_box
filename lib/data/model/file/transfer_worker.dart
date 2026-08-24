@@ -190,23 +190,41 @@ class FileTransferWorker {
   final Function(Object event) onNotify;
   final FileTransfer job;
 
-  final worker = Worker();
+  final Worker worker;
+  bool _disposed = false;
+  bool _workerDisposed = false;
 
-  FileTransferWorker({required this.onNotify, required this.job});
+  FileTransferWorker({
+    required this.onNotify,
+    required this.job,
+    Worker? worker,
+  }) : worker = worker ?? Worker();
 
   void dispose() {
+    if (_disposed) return;
+    _disposed = true;
+    _disposeWorker();
+  }
+
+  void _disposeWorker() {
+    if (_workerDisposed || !worker.isInitialized) return;
+    _workerDisposed = true;
     worker.dispose();
   }
 
   /// Initiate the worker (new thread) and start listen from messages between
   /// the threads
   Future<void> init() async {
-    if (worker.isInitialized) worker.dispose();
+    if (_disposed) return;
     await worker.init(
       mainMessageHandler,
       isolateMessageHandler,
       errorHandler: print,
     );
+    if (_disposed) {
+      _disposeWorker();
+      return;
+    }
     worker.sendMessage(job);
   }
 
@@ -500,38 +518,15 @@ Future<void> _replaceRemote(
   String path,
   Duration timeout,
 ) async {
-  final Object failure;
-  try {
-    await withSftpOpTimeout('rename', sftp.rename(staging, path), timeout);
-    return;
-  } catch (e) {
-    failure = e;
-  }
-
-  // Moved aside, never deleted first. A successful `stat` was being read as
-  // "the destination is in the way", but a server refuses a rename for
-  // permission, quota or policy reasons too, with the destination sitting
-  // there intact — and the remove that followed could succeed and destroy a
-  // good remote file on behalf of an upload that was never going to land.
-  final aside = stagingNameFor(path);
-  try {
-    await withSftpOpTimeout('rename', sftp.rename(path, aside), timeout);
-  } catch (_) {
-    throw failure;
-  }
-  try {
-    await withSftpOpTimeout('rename', sftp.rename(staging, path), timeout);
-  } catch (_) {
-    try {
-      await withSftpOpTimeout('rename', sftp.rename(aside, path), timeout);
-    } catch (_) {}
-    rethrow;
-  }
-  try {
-    await withSftpOpTimeout('remove', sftp.remove(aside), timeout);
-  } catch (_) {
-    // The replacement is done; a leftover beside it is not worth failing for.
-  }
+  await replaceSftpPath(
+    staging: staging,
+    destination: path,
+    aside: stagingNameFor(path),
+    rename: (from, to) =>
+        withSftpOpTimeout('rename', sftp.rename(from, to), timeout),
+    remove: (target) =>
+        withSftpOpTimeout('remove', sftp.remove(target), timeout),
+  );
 }
 
 Future<void> _discardRemote(SftpClient? sftp, String? staging) async {
@@ -563,6 +558,7 @@ Future<void> _upload(
   SftpClient? sftp;
   SftpFile? remoteFile;
   String? staging;
+  var replacementOutcomeUnknown = false;
   Object? error;
   StackTrace? stackTrace;
 
@@ -633,7 +629,12 @@ Future<void> _upload(
     // is about to stop existing.
     await remoteFile.close();
     remoteFile = null;
-    await _replaceRemote(openedSftp, staging, to.path, _prepareTimeout(job));
+    try {
+      await _replaceRemote(openedSftp, staging, to.path, _prepareTimeout(job));
+    } on TimeoutException {
+      replacementOutcomeUnknown = true;
+      rethrow;
+    }
     staging = null;
 
     mainSendPort.send(watch.elapsed);
@@ -642,12 +643,20 @@ Future<void> _upload(
     error = e;
     stackTrace = s;
   } finally {
-    await _discardRemote(sftp, staging);
-    await _closeSftpResources(
-      remoteFile: remoteFile,
-      sftp: sftp,
-      client: client,
-    );
+    if (replacementOutcomeUnknown) {
+      await _closeSftpResources(
+        remoteFile: remoteFile,
+        sftp: sftp,
+        client: client,
+      );
+    } else {
+      await _discardRemote(sftp, staging);
+      await _closeSftpResources(
+        remoteFile: remoteFile,
+        sftp: sftp,
+        client: client,
+      );
+    }
   }
 
   if (error != null) {
