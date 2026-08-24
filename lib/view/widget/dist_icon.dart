@@ -3,6 +3,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/logo_url.dart';
 import 'package:server_box/data/model/server/dist.dart';
@@ -124,6 +125,23 @@ class DistIconOf extends StatelessWidget {
   final Dist? dist;
   final double size;
 
+  /// A machine, saying nothing about what runs on it.
+  ///
+  /// Drawn wherever there is no mark: no address and no shipped file, an
+  /// address that could not be fetched, or a distribution nothing recognised.
+  /// A blank of the same size would keep the row from shifting just as well,
+  /// but it reads as something missing; an outline reads as "not known", which
+  /// is the truth.
+  ///
+  /// Tinted, unlike the marks. This one is an icon from the app's own set and
+  /// is nobody's trademark, so taking the row's colour is what it should do.
+  Widget _fallback(BuildContext context) => Icon(
+    BoxIcons.bxs_server,
+    size: size,
+    color: IconTheme.of(context).color ??
+        Theme.of(context).colorScheme.onSurfaceVariant,
+  );
+
   @override
   Widget build(BuildContext context) {
     final url = distMarkUrl(
@@ -136,11 +154,7 @@ class DistIconOf extends StatelessWidget {
     // who chose a collection wants it used for every row, not five exceptions.
     if (url == null) {
       final asset = dist?.markAsset;
-      // A blank of the same size rather than nothing at all: a leading slot
-      // that collapses shifts the row's text sideways, and in a list where
-      // some servers are recognised and some are not, that is every other row
-      // moving.
-      if (asset == null) return SizedBox.square(dimension: size);
+      if (asset == null) return _fallback(context);
       return SvgPicture.asset(
         asset,
         width: size,
@@ -164,7 +178,11 @@ class DistIconOf extends StatelessWidget {
               // Named for the reader that speaks the row aloud: the mark is
               // the only thing on it that says which distribution.
               semanticsLabel: dist?.name,
+              // Blank while it loads rather than the outline: a fallback that
+              // appears and is replaced a moment later reads as a glitch, and
+              // most of these come from a cache and never draw this at all.
               placeholderBuilder: (_) => SizedBox.square(dimension: size),
+              errorBuilder: (_, _, _) => _fallback(context),
             )
           : ExtendedImage.network(
               url,
@@ -173,13 +191,15 @@ class DistIconOf extends StatelessWidget {
               height: size,
               fit: BoxFit.contain,
               semanticLabel: dist?.name,
-              // Nothing while it loads and nothing if it fails. A broken-image
-              // box on every row reads as the app being wrong, and the address
-              // is the user's to fix.
-              loadStateChanged: (state) =>
-                  state.extendedImageLoadState == LoadState.completed
-                  ? null
-                  : SizedBox.square(dimension: size),
+              // Blank while it loads, the outline if it fails. A broken-image
+              // box on every row reads as the app being wrong; the outline
+              // reads as "not known", which is what a failed address means.
+              loadStateChanged: (state) => switch (state
+                  .extendedImageLoadState) {
+                LoadState.completed => null,
+                LoadState.failed => _fallback(context),
+                LoadState.loading => SizedBox.square(dimension: size),
+              },
             ),
     );
   }
