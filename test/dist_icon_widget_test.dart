@@ -38,21 +38,43 @@ void main() {
     MaterialApp(home: Scaffold(body: Center(child: DistIconOf(dist)))),
   );
 
+  /// A machine — what is drawn when it is not even known to be a Linux.
   Finder fallback() => find.byIcon(BoxIcons.bxs_server);
 
-  testWidgets('a distribution nothing recognised draws the outline', (
+  /// A penguin — what is drawn for a Linux with no mark of its own.
+  Finder penguin() => find.byIcon(MingCute.linux_fill);
+
+  testWidgets('a distribution nothing recognised draws the machine', (
     tester,
   ) async {
+    // Not the penguin: `uname -or` reaches the BSDs, macOS and Windows too, so
+    // a machine that has not been identified is not known to be a Linux.
     await pump(tester, null);
     expect(fallback(), findsOneWidget);
+    expect(penguin(), findsNothing);
   });
 
-  testWidgets('and so does one recognised but not shipped', (tester) async {
+  testWidgets('a Linux with no mark of its own draws the penguin', (
+    tester,
+  ) async {
     // Ubuntu is the case people will meet: identified perfectly well, and its
-    // logo is not ours to ship. Out of the box that is an outline, not a gap.
+    // logo is not ours to ship. That is not the same as not knowing, and the
+    // row should not say it is.
     expect(Dist.ubuntu.markAsset, isNull, reason: 'the premise of this test');
+    expect(Dist.ubuntu.isLinux, isTrue);
     await pump(tester, Dist.ubuntu);
-    expect(fallback(), findsOneWidget);
+    expect(penguin(), findsOneWidget);
+  });
+
+  testWidgets('and a recognised non-Linux draws the machine', (tester) async {
+    // macOS and the BSDs are identified by name and are not Linux; a penguin
+    // there would be wrong rather than merely uninformative.
+    for (final dist in [Dist.macos, Dist.freebsd, Dist.windows]) {
+      expect(dist.isLinux, isFalse, reason: 'Dist.${dist.name}');
+      await pump(tester, dist);
+      expect(fallback(), findsOneWidget, reason: 'Dist.${dist.name}');
+      expect(penguin(), findsNothing, reason: 'Dist.${dist.name}');
+    }
   });
 
   testWidgets('a shipped mark is drawn instead of the outline', (tester) async {

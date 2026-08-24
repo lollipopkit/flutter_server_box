@@ -125,20 +125,28 @@ class DistIconOf extends StatelessWidget {
   final Dist? dist;
   final double size;
 
-  /// A machine, saying nothing about what runs on it.
-  ///
   /// Drawn wherever there is no mark: no address and no shipped file, an
   /// address that could not be fetched, or a distribution nothing recognised.
-  /// A blank of the same size would keep the row from shifting just as well,
-  /// but it reads as something missing; an outline reads as "not known", which
-  /// is the truth.
   ///
-  /// Tinted, unlike the marks. This one is an icon from the app's own set and
-  /// is nobody's trademark, so taking the row's colour is what it should do.
+  /// A blank of the same size would keep the row from shifting just as well,
+  /// but it reads as something missing; an icon reads as "not known", which is
+  /// the truth.
+  ///
+  /// Two of them, because there are two different things not to know. A
+  /// distribution that *was* recognised and simply has no mark here — Ubuntu
+  /// is the case most people will meet — is a Linux for certain, and a penguin
+  /// says so. One that was not recognised at all might be a BSD, macOS or
+  /// Windows, all of which `uname -or` reaches, so the penguin would be a
+  /// guess and the machine is all that can be claimed.
+  ///
+  /// Tinted, unlike the marks. Both are icons from the app's own set and
+  /// neither is anybody's trademark, so taking the row's colour is what they
+  /// should do — the reason the marks are left alone does not apply.
   Widget _fallback(BuildContext context) => Icon(
-    BoxIcons.bxs_server,
+    dist?.isLinux == true ? MingCute.linux_fill : BoxIcons.bxs_server,
     size: size,
-    color: IconTheme.of(context).color ??
+    color:
+        IconTheme.of(context).color ??
         Theme.of(context).colorScheme.onSurfaceVariant,
   );
 
