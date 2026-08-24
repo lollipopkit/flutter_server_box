@@ -21,7 +21,9 @@ class BackupService {
         Toast.success(libL10n.success);
       }
     } catch (e, s) {
-      context.showErrDialog(e, s, libL10n.backup);
+      if (context.mounted) {
+        context.showErrDialog(e, s, libL10n.backup);
+      }
     }
   }
 
@@ -36,7 +38,9 @@ class BackupService {
       return;
     }
 
-    await restoreFromText(context, text);
+    if (context.mounted) {
+      await restoreFromText(context, text);
+    }
   }
 
   /// Handle restore from text with decryption support
@@ -51,14 +55,23 @@ class BackupService {
           fn: () => _decodeOnIsolate(text, null),
         );
         if (err != null) {
-          if (context.mounted) context.showErrDialog(err, null, libL10n.restore);
+          if (context.mounted) {
+            context.showErrDialog(err, null, libL10n.restore);
+          }
           return;
         }
         if (backup == null) {
-          if (context.mounted) context.showErrDialog('Empty backup', null, libL10n.restore);
+          if (context.mounted) {
+            context.showErrDialog(
+              '${libL10n.empty}: ${libL10n.backup}',
+              null,
+              libL10n.restore,
+            );
+          }
           return;
         }
 
+        if (!context.mounted) return;
         await _confirmAndRestore(context, backup);
       } catch (e, s) {
         Loggers.app.warning('Import backup failed', e, s);
@@ -69,12 +82,14 @@ class BackupService {
 
     // Try with saved password first
     final savedPassword = await SecureStoreProps.bakPwd.read();
+    if (!context.mounted) return;
     if (savedPassword != null && savedPassword.isNotEmpty) {
       try {
         final (backup, err) = await context.showLoadingDialog(
           fn: () => _decodeOnIsolate(text, savedPassword),
         );
         if (err == null && backup != null) {
+          if (!context.mounted) return;
           await _confirmAndRestore(context, backup);
           return;
         }
@@ -89,20 +104,24 @@ class BackupService {
 
     // Prompt for password with retry logic
     while (true) {
+      if (!context.mounted) return;
       password = await _showPasswordDialog(
         context,
         title: libL10n.pwd,
         hint: l10n.backupEncrypted,
       );
+      if (!context.mounted) return;
       if (password == null) return; // User cancelled
 
       try {
         final (backup, err) = await context.showLoadingDialog(
           fn: () => _decodeOnIsolate(text, password),
         );
+        if (!context.mounted) return;
         if (err != null) {
           final msg = err.toString().toLowerCase();
-          if (msg.contains('incorrect password') || msg.contains('failed to decrypt')) {
+          if (msg.contains('incorrect password') ||
+              msg.contains('failed to decrypt')) {
             final retry = await context.showRoundDialog<bool>(
               title: l10n.backupPasswordWrong,
               child: Text(l10n.backupPasswordWrong),
@@ -120,17 +139,24 @@ class BackupService {
             if (retry != true) return;
             continue;
           }
-          if (context.mounted) context.showErrDialog(err, null, libL10n.restore);
+          if (context.mounted) {
+            context.showErrDialog(err, null, libL10n.restore);
+          }
           return;
         }
         if (backup == null) {
-          if (context.mounted) context.showErrDialog('Empty backup', null, libL10n.restore);
+          context.showErrDialog(
+            '${libL10n.empty}: ${libL10n.backup}',
+            null,
+            libL10n.restore,
+          );
           return;
         }
 
         await _confirmAndRestore(context, backup);
         return;
       } catch (e) {
+        if (!context.mounted) return;
         if (e.toString().contains('incorrect password') ||
             e.toString().contains('Failed to decrypt')) {
           final retry = await context.showRoundDialog<bool>(
@@ -151,7 +177,9 @@ class BackupService {
           continue; // Try again
         } else {
           // Other error, show and exit
-          context.showErrDialog(e, null, libL10n.restore);
+          if (context.mounted) {
+            context.showErrDialog(e, null, libL10n.restore);
+          }
           return;
         }
       }
@@ -163,6 +191,7 @@ class BackupService {
     BuildContext context,
     (dynamic, String) backup,
   ) async {
+    if (!context.mounted) return;
     await context.showRoundDialog(
       title: libL10n.restore,
       child: Text(
@@ -176,8 +205,10 @@ class BackupService {
           onTap: () async {
             try {
               await backup.$1.merge(force: true);
+              if (!context.mounted) return;
               context.popDialog();
             } catch (e, s) {
+              if (!context.mounted) return;
               context.popDialog();
               context.showErrDialog(e, s, libL10n.restore);
             }

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dartssh2/dartssh2.dart';
@@ -20,6 +21,40 @@ const _format = 'text/plain';
 final _whitespaceRegex = RegExp(r'\s+');
 final _pemBeginRegex = RegExp(r'^-----BEGIN ([A-Z0-9 ]+)-----$');
 final _pemEndRegex = RegExp(r'^-----END ([A-Z0-9 ]+)-----$');
+
+int privateKeyUtf8Length(String value) => utf8.encode(value).length;
+
+String standardizePrivateKeyLineSeparators(String value) {
+  return value.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
+}
+
+/// Normalizes PEM body whitespace and ensures a trailing newline.
+String normalizePrivateKeyText(String key) {
+  final lines = key.split('\n');
+  if (lines.length < 3) return key;
+
+  final header = lines.first;
+  final footer = lines.last;
+  final headerMatch = _pemBeginRegex.firstMatch(header);
+  final footerMatch = _pemEndRegex.firstMatch(footer);
+  if (headerMatch == null || footerMatch == null) return key;
+  if (headerMatch.group(1) != footerMatch.group(1)) return key;
+
+  final bodyLines = lines.sublist(1, lines.length - 1);
+  final hasMetadataHeaders = bodyLines.any(
+    (line) => line.contains(':') && !line.startsWith('-----'),
+  );
+  if (hasMetadataHeaders) return key.endsWith('\n') ? key : '$key\n';
+
+  final cleanBody = bodyLines.join('').replaceAll(_whitespaceRegex, '');
+  final buffer = StringBuffer()..writeln(header);
+  for (var i = 0; i < cleanBody.length; i += 64) {
+    final end = (i + 64 < cleanBody.length) ? i + 64 : cleanBody.length;
+    buffer.writeln(cleanBody.substring(i, end));
+  }
+  buffer.writeln(footer);
+  return buffer.toString();
+}
 
 final class PrivateKeyEditPageArgs {
   final PrivateKeyInfo? pki;
@@ -200,67 +235,6 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
     );
   }
 
-  String _standardizeLineSeparators(String value) {
-    return value.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
-  }
-
-  /// Normalizes the private key format:
-  /// - Removes whitespace from Base64 content (spaces, tabs, etc.)
-  /// - Ensures the key ends with a newline
-  String _normalizePrivateKey(String key) {
-    final lines = key.split('\n');
-    // Guard: need at least header + body + footer (3 lines) for valid PEM
-    if (lines.length < 3) return key;
-
-    final header = lines.first;
-    final footer = lines.last;
-
-    // Validate PEM boundaries before mutating input
-    final headerMatch = _pemBeginRegex.firstMatch(header);
-    final footerMatch = _pemEndRegex.firstMatch(footer);
-    if (headerMatch == null || footerMatch == null) {
-      return key;
-    }
-
-    // Ensure header and footer labels match
-    final headerLabel = headerMatch.group(1);
-    final footerLabel = footerMatch.group(1);
-    if (headerLabel != footerLabel) {
-      return key;
-    }
-
-    // Extract Base64 content (everything between header and footer)
-    final bodyLines = lines.sublist(1, lines.length - 1);
-
-    // Check for RFC 1421 metadata headers (e.g., Proc-Type, DEK-Info)
-    // These appear in encrypted PEM keys and must be preserved
-    final hasMetadataHeaders = bodyLines.any(
-      (line) => line.contains(':') && !line.startsWith('-----'),
-    );
-
-    if (hasMetadataHeaders) {
-      // For encrypted keys, preserve structure and just ensure trailing newline
-      if (!key.endsWith('\n')) {
-        return '$key\n';
-      }
-      return key;
-    }
-
-    // Remove all whitespace from Base64 content
-    final cleanBody = bodyLines.join('').replaceAll(_whitespaceRegex, '');
-
-    // Rebuild the key with standard formatting (64 chars per line)
-    final buffer = StringBuffer();
-    buffer.writeln(header);
-    for (var i = 0; i < cleanBody.length; i += 64) {
-      final end = (i + 64 < cleanBody.length) ? i + 64 : cleanBody.length;
-      buffer.writeln(cleanBody.substring(i, end));
-    }
-    buffer.writeln(footer);
-
-    return buffer.toString();
-  }
-
   Widget _buildFAB() {
     return FloatingActionButton(
       tooltip: libL10n.save,
@@ -271,124 +245,142 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
 
   Widget _buildBody() {
     return PageColumns(
-        children: [
-          Input(
-            autoFocus: true,
-            controller: _nameController,
-            type: TextInputType.text,
-            node: _nameNode,
-            onSubmitted: (_) => _focusScope.requestFocus(_keyNode),
-            label: libL10n.name,
-            icon: Icons.info,
-            suggestion: true,
-          ),
-          Input(
-            controller: _keyController,
-            minLines: 3,
-            maxLines: 10,
-            type: TextInputType.text,
-            node: _keyNode,
-            onSubmitted: (_) => _focusScope.requestFocus(_pwdNode),
-            label: l10n.privateKey,
-            icon: Icons.vpn_key,
-            suggestion: false,
-          ),
-          TextButton(
-            onPressed: () async {
-              final path = await Pfs.pickFilePath();
-              if (path == null) return;
-              if (!mounted) return;
+      children: [
+        Input(
+          autoFocus: true,
+          controller: _nameController,
+          type: TextInputType.text,
+          node: _nameNode,
+          onSubmitted: (_) => _focusScope.requestFocus(_keyNode),
+          label: libL10n.name,
+          icon: Icons.info,
+          suggestion: true,
+        ),
+        Input(
+          controller: _keyController,
+          minLines: 3,
+          maxLines: 10,
+          type: TextInputType.text,
+          node: _keyNode,
+          onSubmitted: (_) => _focusScope.requestFocus(_pwdNode),
+          label: l10n.privateKey,
+          icon: Icons.vpn_key,
+          suggestion: false,
+        ),
+        TextButton(
+          onPressed: () async {
+            final path = await Pfs.pickFilePath();
+            if (path == null) return;
+            if (!mounted) return;
 
-              final file = File(path);
-              bool exists;
-              try {
-                exists = await file.exists();
-              } catch (e) {
-                if (!mounted) return;
-                Toast.error('${libL10n.fail}: $e');
-                return;
-              }
+            final file = File(path);
+            bool exists;
+            try {
+              exists = await file.exists();
+            } catch (e) {
               if (!mounted) return;
-              if (!exists) {
-                Toast.show(libL10n.notExistFmt(path));
-                return;
-              }
-              int size;
-              try {
-                size = (await file.stat()).size;
-              } catch (e) {
-                if (!mounted) return;
-                Toast.error('${libL10n.fail}: $e');
-                return;
-              }
+              Toast.error('${libL10n.fail}: $e');
+              return;
+            }
+            if (!mounted) return;
+            if (!exists) {
+              Toast.show(libL10n.notExistFmt(path));
+              return;
+            }
+            int size;
+            try {
+              size = (await file.stat()).size;
+            } catch (e) {
               if (!mounted) return;
-              if (size > Miscs.privateKeyMaxSize) {
-                Toast.show(
-                  l10n.fileTooLarge(
-                    path,
-                    size.bytes2Str,
-                    Miscs.privateKeyMaxSize.bytes2Str,
-                  ),
-                );
-                return;
-              }
+              Toast.error('${libL10n.fail}: $e');
+              return;
+            }
+            if (!mounted) return;
+            if (size > Miscs.privateKeyMaxSize) {
+              Toast.show(
+                l10n.fileTooLarge(
+                  path,
+                  size.bytes2Str,
+                  Miscs.privateKeyMaxSize.bytes2Str,
+                ),
+              );
+              return;
+            }
 
-              String content;
-              try {
-                content = await file.readAsString();
-              } catch (e) {
-                if (!mounted) return;
-                Toast.error('${libL10n.fail}: $e');
-                return;
-              }
+            String content;
+            try {
+              content = await file.readAsString();
+            } catch (e) {
               if (!mounted) return;
-              // dartssh2 accepts only LF (but not CRLF or CR)
-              try {
-                _keyController.text = _standardizeLineSeparators(content.trim());
-              } catch (_) {
-                // Controller disposed.
-              }
-            },
-            child: Text(libL10n.file),
-          ),
-          Input(
-            controller: _pwdController,
-            type: TextInputType.text,
-            node: _pwdNode,
-            obscureText: true,
-            label: libL10n.pwd,
-            icon: Icons.password,
-            suggestion: false,
-          ),
-          Input(
-            controller: _commentController,
-            type: TextInputType.text,
-            label: l10n.sshKeyComment,
-            icon: Icons.comment,
-            suggestion: false,
-            onSubmitted: (_) => _onTapSave(),
-          ),
-          SizedBox(height: MediaQuery.of(context).size.height * 0.1),
-          ValBuilder(
-            listenable: _loading,
-            builder: (val) => val ?? UIs.placeholder,
-          ),
-        ],
+              Toast.error('${libL10n.fail}: $e');
+              return;
+            }
+            if (!mounted) return;
+            // dartssh2 accepts only LF (but not CRLF or CR)
+            try {
+              _keyController.text = standardizePrivateKeyLineSeparators(
+                content.trim(),
+              );
+            } catch (_) {
+              // Controller disposed.
+            }
+          },
+          child: Text(libL10n.file),
+        ),
+        Input(
+          controller: _pwdController,
+          type: TextInputType.text,
+          node: _pwdNode,
+          obscureText: true,
+          label: libL10n.pwd,
+          icon: Icons.password,
+          suggestion: false,
+        ),
+        Input(
+          controller: _commentController,
+          type: TextInputType.text,
+          label: l10n.sshKeyComment,
+          icon: Icons.comment,
+          suggestion: false,
+          onSubmitted: (_) => _onTapSave(),
+        ),
+        SizedBox(height: MediaQuery.of(context).size.height * 0.1),
+        ValBuilder(
+          listenable: _loading,
+          builder: (val) => val ?? UIs.placeholder,
+        ),
+      ],
     );
   }
 
   void _onTapSave() async {
     final name = _nameController.text;
     final rawKey = _keyController.text.trim();
-    if (rawKey.length > Miscs.privateKeyMaxSize) {
+    final rawSize = privateKeyUtf8Length(rawKey);
+    if (rawSize > Miscs.privateKeyMaxSize) {
       Toast.error(
-        l10n.fileTooLarge('key', rawKey.length.bytes2Str, Miscs.privateKeyMaxSize.bytes2Str),
+        l10n.fileTooLarge(
+          'key',
+          rawSize.bytes2Str,
+          Miscs.privateKeyMaxSize.bytes2Str,
+        ),
       );
       return;
     }
-    final key = _normalizePrivateKey(
-      _standardizeLineSeparators(rawKey),
+    final key = normalizePrivateKeyText(
+      standardizePrivateKeyLineSeparators(rawKey),
     );
+    final normalizedSize = privateKeyUtf8Length(key);
+    if (normalizedSize > Miscs.privateKeyMaxSize) {
+      Toast.error(
+        l10n.fileTooLarge(
+          'key',
+          normalizedSize.bytes2Str,
+          Miscs.privateKeyMaxSize.bytes2Str,
+        ),
+      );
+      return;
+    }
     final pwd = _pwdController.text;
     if (name.isEmpty || key.isEmpty) {
       Toast.show(libL10n.empty);

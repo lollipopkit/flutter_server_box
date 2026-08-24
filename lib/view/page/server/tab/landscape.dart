@@ -9,10 +9,7 @@ extension on _ServerPageState {
         return Padding(
           // Avoid display cutout
           padding: EdgeInsets.all(offsetValue.abs()),
-          child: Transform.translate(
-            offset: offset,
-            child: child,
-          ),
+          child: Transform.translate(offset: offset, child: child),
         );
       },
       // Never split: this layout is one card at a time across the whole
@@ -27,7 +24,8 @@ extension on _ServerPageState {
             Positioned(
               top: 0,
               left: 0,
-              child: IconButton(tooltip: libL10n.setting, 
+              child: IconButton(
+                tooltip: libL10n.setting,
                 onPressed: () => SettingsPage.route.go(context),
                 icon: const Icon(Icons.settings, color: Colors.grey),
               ),
@@ -59,7 +57,10 @@ extension on _ServerPageState {
       final ctrl = _landscapeController;
       if (ctrl != null && ctrl.hasClients) {
         final current = ctrl.page?.round();
-        if (current != null && current != targetIdx && current >= 0 && current < order.length) {
+        if (current != null &&
+            current != targetIdx &&
+            current >= 0 &&
+            current < order.length) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted && _landscapeController == ctrl && ctrl.hasClients) {
               ctrl.jumpToPage(targetIdx);
@@ -67,7 +68,14 @@ extension on _ServerPageState {
           });
         }
       }
-    } else if (seen == null && order.isNotEmpty) {
+    } else if (seen != null) {
+      final ctrl = _landscapeController;
+      final page = ctrl != null && ctrl.hasClients
+          ? ctrl.page?.round()
+          : ctrl?.initialPage;
+      final index = (page ?? 0).clamp(0, order.length - 1).toInt();
+      _landscapeSeenId = order[index];
+    } else {
       _landscapeSeenId = order.first;
     }
 
@@ -77,7 +85,9 @@ extension on _ServerPageState {
       final page = _landscapeController!.page;
       if (page != null && page.round() >= order.length) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted && _landscapeController != null && _landscapeController!.hasClients) {
+          if (mounted &&
+              _landscapeController != null &&
+              _landscapeController!.hasClients) {
             _landscapeController!.jumpToPage(order.length - 1);
           }
         });
