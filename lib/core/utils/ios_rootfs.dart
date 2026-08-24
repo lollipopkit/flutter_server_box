@@ -226,7 +226,13 @@ abstract final class IosRootfs {
 
     final archivePath = root.joinPath('rootfs.tar.gz');
     try {
-      await Dio().download(
+      final dio = Dio(
+        BaseOptions(
+          connectTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(minutes: 10),
+        ),
+      );
+      await dio.download(
         chosen.source.urlOn(mirror, distro.defaultMirror),
         archivePath,
         cancelToken: cancel,
@@ -391,6 +397,11 @@ abstract final class IosRootfs {
     required RootfsSource source,
     void Function(double? progress)? onProgress,
   }) async {
+    final stat = await archiveFile.stat();
+    const maxArchiveSize = 1024 * 1024 * 1024; // 1 GB
+    if (stat.size > maxArchiveSize) {
+      throw StateError('Rootfs archive too large (${stat.size} bytes)');
+    }
     final bytes = await archiveFile.readAsBytes();
     final outerDecoder = TarDecoder();
     final outer = outerDecoder.decodeBytes(

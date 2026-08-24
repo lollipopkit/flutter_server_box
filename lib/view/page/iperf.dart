@@ -24,9 +24,9 @@ class _IPerfPageState extends State<IPerfPage> {
 
   @override
   void dispose() {
-    super.dispose();
     _hostCtrl.dispose();
     _portCtrl.dispose();
+    super.dispose();
   }
 
   @override

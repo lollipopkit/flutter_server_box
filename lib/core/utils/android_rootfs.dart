@@ -199,7 +199,13 @@ abstract final class AndroidRootfs {
 
     final archive = root.joinPath('rootfs.tar.gz');
     try {
-      await Dio().download(
+      final dio = Dio(
+        BaseOptions(
+          connectTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(minutes: 10),
+        ),
+      );
+      await dio.download(
         chosen.source.urlOn(mirror, distro.defaultMirror),
         archive,
         cancelToken: cancel,
