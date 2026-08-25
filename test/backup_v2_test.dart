@@ -671,7 +671,7 @@ void main() {
       expect(
         SqliteDb.instance
             .select(
-              "SELECT count(*) AS n FROM kv "
+              'SELECT count(*) AS n FROM kv '
               "WHERE store = 'setting' AND key = 'sshConnectionMode';",
             )
             .single['n'],

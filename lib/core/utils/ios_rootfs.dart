@@ -640,7 +640,7 @@ abstract final class IosRootfs {
       }
       final entryParts = _safeTarParts(entry.name)!;
       if (_hasTarLinkAncestor(entryParts, symbolicLinks)) {
-        throw StateError('Tar entry has a symlinked parent: ${entry.name}');
+        throw StateError('${libL10n.invalid}: ${libL10n.path} (${entry.name})');
       }
       final path = await _safeTarTarget(into, entry.name);
 
@@ -683,9 +683,7 @@ abstract final class IosRootfs {
           throw StateError('${libL10n.invalid}: ${libL10n.path} ($hardTarget)');
         }
         if (_hasTarLinkAncestor(_safeTarParts(hardTarget)!, symbolicLinks)) {
-          throw StateError(
-            'Hardlink target has a symlinked parent: $hardTarget',
-          );
+          throw StateError('${libL10n.invalid}: ${libL10n.path} ($hardTarget)');
         }
         pendingHardLinks[_tarPath(entry.name)] = hardTarget;
         continue;
@@ -751,7 +749,7 @@ abstract final class IosRootfs {
       if (await FileSystemEntity.type(target, followLinks: false) !=
           FileSystemEntityType.file) {
         throw StateError(
-          'Hardlink target is not a regular file: ${entry.value}',
+          '${libL10n.invalid}: ${libL10n.file} (${entry.value})',
         );
       }
       await _removeTarTarget(path);
