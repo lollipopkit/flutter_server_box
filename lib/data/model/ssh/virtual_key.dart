@@ -207,8 +207,12 @@ extension VirtKeyX on VirtKey {
     // browser, in the files tab.
     VirtKey.sftp => spi != null,
     // Inserts the password stored for this server. There is none for a shell
-    // that is not on one, and none worth inserting for a session already root.
-    VirtKey.sudo => spi != null && !spi.isRoot,
+    // that is not on one, none worth inserting for a session already root, and
+    // none at all on a server reached only through its monitor agent — `Spi.ssh`
+    // is where the password lives, and a monitor server carries no
+    // `SshCredential`. `isRoot` alone answered false for those, so the key was
+    // drawn on a terminal where tapping it could only show an empty result.
+    VirtKey.sudo => spi?.ssh != null && !spi!.isRoot,
     // Needs a channel that does not echo what is written into it, which only
     // an SSH exec channel is: a shell on this device runs in a pseudo-terminal,
     // and a monitor agent carries no exec channel at all.

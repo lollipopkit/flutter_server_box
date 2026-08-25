@@ -315,4 +315,37 @@ void main() {
       );
     });
   });
+
+  group('ordering two release versions', () {
+    test('is by number, segment by segment', () {
+      expect(compareRootfsVersions('24.04.4', '24.04.3'), greaterThan(0));
+      expect(compareRootfsVersions('24.04.3', '24.04.4'), lessThan(0));
+      expect(compareRootfsVersions('24.04.3', '24.04.3'), 0);
+      // Not by text, which would put 10 before 9.
+      expect(compareRootfsVersions('3.10', '3.9'), greaterThan(0));
+      // A missing segment is a zero, so a release precedes its own point
+      // releases rather than sorting after them.
+      expect(compareRootfsVersions('24.04.1', '24.04'), greaterThan(0));
+      expect(compareRootfsVersions('24.04', '24.04.0'), 0);
+    });
+
+    test('and an update is only ever offered upwards', () {
+      // What this is for. `isOutdated` asked whether the two versions were
+      // *different*, and a manifest can describe an older release than what is
+      // installed — a fetched one that fails verification falls back to the
+      // copy compiled into the build. Installing over a profile destroys the
+      // tree, so "different" meant a downgrade that took everything with it.
+      expect(compareRootfsVersions('24.04.3', '24.04.4'), lessThan(0));
+      expect(compareRootfsVersions('24.04.4', '24.04.4'), 0);
+    });
+
+    test('a scheme it cannot read is left in one piece rather than guessed', () {
+      // Total either way: what matters is that it does not report an unknown
+      // pair as an upgrade in both directions.
+      final forward = compareRootfsVersions('edge', 'v3');
+      final back = compareRootfsVersions('v3', 'edge');
+      expect(forward, isNot(0));
+      expect(forward.isNegative, isNot(back.isNegative));
+    });
+  });
 }

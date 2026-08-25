@@ -47,6 +47,18 @@ class SftpFileBackend implements FileBackend {
   /// inside a transfer that has its own progress to show.
   final Duration? timeout;
 
+  /// What bounds a step of a *transfer*, as opposed to an operation.
+  ///
+  /// The same distinction the SCP backend draws, and the same floor: a command
+  /// answers at once or not at all, while a transfer is bounded by the gap
+  /// between bytes — and five seconds of silence on a slow link is a slow
+  /// link, not a stall. See [SftpIdleWatchdog].
+  Duration? get _streamTimeout {
+    final bound = timeout;
+    if (bound == null) return null;
+    return bound < SftpIdleWatchdog.minIdle ? SftpIdleWatchdog.minIdle : bound;
+  }
+
   /// Whatever the SSH account can reach, which sshd decides per path rather
   /// than by a list anything here could enumerate.
   @override
@@ -83,21 +95,48 @@ class SftpFileBackend implements FileBackend {
 
   @override
   Future<FileEntry?> stat(String path) async {
-    final SftpFileAttrs attrs;
+    // Asked without following, first. Following answered for whatever the link
+    // points at — reporting a symlink as its target's kind, and a link to
+    // nowhere as *absent*, which is what a caller reads as "free to create
+    // something here" before it writes over the link. [list] has always
+    // reported links as links, and so do the local and SCP backends; this is
+    // the same question and now gives the same answer.
+    final SftpFileAttrs linkless;
     try {
-      attrs = await _bounded('stat', _sftp.stat(path));
+      linkless = await _bounded('stat', _sftp.stat(path, followLink: false));
     } on SftpStatusError catch (e) {
       // Only "no such file" is absence. A refusal is a refusal, and turning it
       // into null would tell a caller it is free to create something there.
       if (e.code == _sftpStatusNoSuchFile) return null;
       rethrow;
     }
+    if (!linkless.isSymbolicLink) {
+      return FileEntry(
+        name: _basename(path),
+        kind: _kindOf(linkless),
+        size: linkless.size,
+        modified: _timeOf(linkless.modifyTime),
+        mode: _permOf(linkless),
+      );
+    }
+    // Only the *kind* comes from the link itself. A copy of it moves the
+    // target's bytes, so sizing it by the link would declare a length no read
+    // of it produces — and the local backend, which has answered this way all
+    // along, is what the two are being made to agree with. A link to nowhere
+    // has none of the three, which is the case that used to read as absent.
+    SftpFileAttrs? target;
+    try {
+      target = await _bounded('stat', _sftp.stat(path));
+    } catch (_) {
+      // Dangling, or a target this account cannot reach. Either way there is
+      // nothing to report about it, and the link is still there.
+    }
     return FileEntry(
       name: _basename(path),
-      kind: _kindOf(attrs),
-      size: attrs.size,
-      modified: _timeOf(attrs.modifyTime),
-      mode: _permOf(attrs),
+      kind: FileKind.link,
+      size: target?.size,
+      modified: _timeOf(target?.modifyTime),
+      mode: target == null ? null : _permOf(target),
     );
   }
 
@@ -205,9 +244,15 @@ class SftpFileBackend implements FileBackend {
       _sftp.open(path, mode: SftpFileOpenMode.read),
     );
     try {
-      // Not bounded: a slow transfer is not a stalled one, and the caller
-      // watching bytes arrive is better placed to decide it has given up.
-      yield* file.read(offset: offset);
+      // Bounded by the gap between chunks, not by the length of the read: a
+      // slow transfer is not a stalled one, and the same five seconds that is
+      // generous for a `stat` would abort every large file over a bad link.
+      // Unbounded is what it was, and a server that accepted the channel and
+      // then said nothing left this stream — and the isolate around it — alive
+      // for as long as the process was.
+      final idle = _streamTimeout;
+      final bytes = file.read(offset: offset);
+      yield* idle == null ? bytes : bytes.timeout(idle);
     } finally {
       await file.close();
     }
@@ -237,7 +282,21 @@ class SftpFileBackend implements FileBackend {
       );
       wrote = true;
       try {
-        await file.write(data.map(Uint8List.fromList)).done;
+        // Bounded the same way [read] is, and for the same reason: `done`
+        // resolves when the server has taken everything, and a server that
+        // stops acknowledging never resolves it. `onProgress` is the only
+        // sign of life there is, so it is what restarts the clock.
+        final idle = _streamTimeout;
+        final watchdog = idle == null ? null : SftpIdleWatchdog('write', idle);
+        try {
+          final writer = file.write(
+            data.map(Uint8List.fromList),
+            onProgress: watchdog == null ? null : (_) => watchdog.beat(),
+          );
+          await (watchdog == null ? writer.done : watchdog.guard(writer.done));
+        } finally {
+          watchdog?.cancel();
+        }
         await file.close();
       } catch (_) {
         // As in the local backend: a close that complains about a handle the

@@ -76,11 +76,18 @@ class ForegroundService : Service() {
                 return START_NOT_STICKY
             }
 
+            // A null intent is the system restarting this service after killing
+            // the process, which is exactly what START_STICKY asks it to do.
+            // Stopping here threw that contract away: the one case the sticky
+            // restart exists for — a backgrounded app with a session open —
+            // ended with no service, no notification and a process free to be
+            // frozen, and nothing left running to notice. The placeholder is
+            // what re-enters the foreground; Dart re-states the session list
+            // through `updateSessions` as soon as an engine is up.
             if (intent == null) {
-                Log.w("ForegroundService", "onStartCommand called with null intent")
-                // Don't call stopForegroundService() here as we haven't started foreground yet
-                stopSelf()
-                return START_NOT_STICKY
+                Log.w("ForegroundService", "Restarted with a null intent; going foreground with a placeholder")
+                ensureForeground(createMergedNotification(0, emptyList(), emptyList()))
+                return START_STICKY
             }
 
             val action = intent.action
@@ -279,6 +286,15 @@ class ForegroundService : Service() {
             // notification of a backgrounded app and take away the only thing
             // keeping it out of the freezer. Whatever was last shown stands.
             logError("Failed to parse payload", e)
+            // Except when nothing has been shown yet. This is reached through
+            // `startForegroundService`, which gives the service a few seconds
+            // to call `startForeground` before the system kills it for not —
+            // so returning here on the *first* payload left a service that
+            // reports itself running, never entered the foreground, and takes
+            // the app down with a ForegroundServiceDidNotStartInTime.
+            if (!isFgStarted) {
+                ensureForeground(createMergedNotification(0, emptyList(), emptyList()))
+            }
             return
         }
 

@@ -89,6 +89,21 @@ void main() {
       expect(command, startsWith("find '/tmp/it'\\''s here' "));
       expect(command, contains('-mindepth 1 -maxdepth 1'));
     });
+
+    test('a metadata read that fails fails the command', () {
+      // It used to run `stat` three times and print the record regardless, so a
+      // host whose `stat` has no `-c`, or a directory readable but not
+      // searchable, came back as exit 0 with every size and mode blank — and a
+      // failure is what offers the user sudo.
+      final command = shellListCommand('/etc');
+
+      expect(command, contains(r'if meta=$(stat -c "%a %s %Y" "$path")'));
+      expect(command, contains('exit 1'));
+      // Except where the file itself went away, which `find` naming something
+      // /proc has since reaped does all the time. That is not an error and does
+      // not take the rest of the listing with it.
+      expect(command, contains('continue'));
+    });
   });
 
   group('the shell stat', () {
@@ -139,6 +154,16 @@ void main() {
       // Neither can be mistaken for a filename the command might have printed.
       expect(parseShellFileRecords(kShellStatAbsentMark), isEmpty);
       expect(parseShellFileRecords(kShellStatDeniedMark), isEmpty);
+    });
+
+    test('a trailing slash does not empty the name', () {
+      // `${path##*/}` expands to nothing for `/etc/ssh/`, so the entry came
+      // back with no name at all — where SFTP and the local backend both
+      // answer `ssh` for the same path. The root keeps its one slash.
+      expect(shellStatCommand('/etc/ssh/'), startsWith("path='/etc/ssh'"));
+      expect(shellStatCommand('/etc/ssh///'), startsWith("path='/etc/ssh'"));
+      expect(shellStatCommand('/'), startsWith("path='/'"));
+      expect(shellStatCommand('/etc/ssh'), startsWith("path='/etc/ssh'"));
     });
   });
 

@@ -25,7 +25,7 @@ const _sftpChunkSize = 32 * 1024;
 
 const _sftpDownloadMaxPendingRequests = 64;
 
-const _sftpDownloadMinIdleTimeout = Duration(seconds: 60);
+const _sftpMinIdleTimeout = Duration(seconds: 60);
 
 const _sftpUploadMaxBytesOnTheWire = _sftpChunkSize * 64;
 
@@ -100,11 +100,11 @@ class TransferHostKeyAccepted {
 Duration _prepareTimeout(FileTransfer job) =>
     sftpOperationTimeout(job.timeoutSeconds);
 
-Duration _downloadIdleTimeout(FileTransfer job) {
+Duration _idleTimeout(FileTransfer job) {
   final seconds = job.timeoutSeconds;
   final timeout = Duration(seconds: seconds <= 0 ? 60 : seconds);
-  return timeout < _sftpDownloadMinIdleTimeout
-      ? _sftpDownloadMinIdleTimeout
+  return timeout < _sftpMinIdleTimeout
+      ? _sftpMinIdleTimeout
       : timeout;
 }
 
@@ -376,7 +376,7 @@ Future<void> _download(
       final dlWatch = Stopwatch()..start();
       Loggers.app.info('Transfer download start size=$size');
 
-      final timeout = _downloadIdleTimeout(job);
+      final timeout = _idleTimeout(job);
 
       while (offset < size) {
         final remaining = size - offset;
@@ -609,9 +609,16 @@ Future<void> _upload(
       'chunk=$_sftpChunkSize, maxBytes=$_sftpUploadMaxBytesOnTheWire',
     );
     var lastProgress = -1;
+    // The download beside this one has been bounded by the gap between its
+    // chunks all along; the upload was not, so a server that accepted the
+    // channel and then stopped acknowledging left `done` pending forever and
+    // no configured timeout ever reached it — the isolate stayed alive, and
+    // the staged file with it.
+    final watchdog = SftpIdleWatchdog('upload', _idleTimeout(job));
     final writer = openedRemoteFile.write(
       localFile,
       onProgress: (total) {
+        watchdog.beat();
         if (localLen == 0) return;
         final progress = (total / localLen * 100).round();
         if (progress != lastProgress) {
@@ -627,7 +634,20 @@ Future<void> _upload(
       chunkSize: _sftpChunkSize,
       maxBytesOnTheWire: _sftpUploadMaxBytesOnTheWire,
     );
-    await writer.done;
+    try {
+      await watchdog.guard(writer.done);
+    } on TimeoutException {
+      // `Future.any` stops waiting; it does not stop the write, which goes on
+      // holding the remote file. Closing it is what ends the requests still in
+      // flight — the `finally` below then removes the staging file — and the
+      // download path stops the same way for the same reason.
+      writer.done.ignore();
+      try {
+        await openedRemoteFile.close();
+      } catch (_) {}
+      remoteFile = null;
+      rethrow;
+    }
     // Closed before the rename: a server need not see a handle to a path that
     // is about to stop existing.
     await remoteFile.close();

@@ -126,7 +126,7 @@ void main() {
       final destPath = '${tempDir.path}/nested/dest.bin';
       await Directory('${tempDir.path}/nested').create();
 
-      final done = Completer<void>();
+      final done = Completer<bool>();
       final status = FileTransferStatus(
         job: FileTransfer(
           from: LocalFileRef(source.path),
@@ -153,7 +153,7 @@ void main() {
       File('${tempDir.path}/src/one.txt').writeAsStringSync('hello');
       File('${tempDir.path}/src/deep/two.txt').writeAsStringSync('world');
 
-      final done = Completer<void>();
+      final done = Completer<bool>();
       final status = FileTransferStatus(
         job: FileTransfer(
           from: LocalFileRef('${tempDir.path}/src'),
@@ -198,6 +198,7 @@ void main() {
             .writeAsBytesSync(List<int>.filled(64 * 1024, 7));
       }
 
+      final done = Completer<bool>();
       final status = FileTransferStatus(
         job: FileTransfer(
           from: LocalFileRef('${tempDir.path}/src'),
@@ -205,6 +206,7 @@ void main() {
           isDir: true,
         ),
         notifyListeners: () {},
+        completer: done,
       );
 
       // Once it is moving, pull the plug.
@@ -224,6 +226,16 @@ void main() {
       );
       // And it is not reported as a failure: the user asked for this.
       expect(status.error, isNull);
+      // Which is exactly why the completer has to say so itself. A cancelled
+      // transfer carries no error and, once cancelled, no row either — so a
+      // caller reading only those two read this as a success, renamed a
+      // staging file that was never finished over its destination, and opened
+      // an editor on a download that never arrived.
+      expect(
+        await done.future.timeout(const Duration(seconds: 5)),
+        isFalse,
+        reason: 'the completer answers whether it finished',
+      );
       // Nothing half-written left under a final name.
       final left = Directory('${tempDir.path}/dst')
           .listSync()
@@ -239,8 +251,8 @@ void main() {
       File('${tempDir.path}/a').writeAsStringSync('a');
       File('${tempDir.path}/b').writeAsStringSync('b');
 
-      final firstDone = Completer<void>();
-      final secondDone = Completer<void>();
+      final firstDone = Completer<bool>();
+      final secondDone = Completer<bool>();
       final first = FileTransferStatus(
         job: FileTransfer(
           from: LocalFileRef('${tempDir.path}/a'),

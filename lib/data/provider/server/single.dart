@@ -656,6 +656,14 @@ class ServerNotifier extends _$ServerNotifier {
       );
     }
 
+    // Read before connecting and checked after, as every await in the refresh
+    // paths already does. Authenticating takes as long as the far side and the
+    // user take, and editing the server or disconnecting it bumps this — so
+    // without the check the client that eventually arrived was installed into
+    // the state of a server that is now somewhere else entirely, and the next
+    // caller ran its commands on the old host.
+    final generation = _operationGeneration;
+
     try {
       final client = await genClient(
         spi,
@@ -663,11 +671,24 @@ class ServerNotifier extends _$ServerNotifier {
         onKeyboardInteractive: KeyboardInteractiveAuth.handle,
       );
       await client.authenticated;
+      if (!_isRefreshCurrent(generation, spi)) {
+        client.close();
+        throw SSHErr(
+          type: SSHErrType.connect,
+          message: '${spi.name} changed while connecting',
+        );
+      }
       TryLimiter.reset(_shellTryId);
       _setClient(client);
       return client;
     } catch (e, s) {
-      TryLimiter.inc(_shellTryId);
+      // Not counted when it is this server that moved: the limiter is keyed on
+      // an id an edit keeps, so charging a superseded attempt to it would stop
+      // the *corrected* server reconnecting. `_failSsh` skips it for the same
+      // reason.
+      if (_isRefreshCurrent(generation, spi)) {
+        TryLimiter.inc(_shellTryId);
+      }
       Loggers.app.warning('Connect shell for ${spi.name}', e, s);
       rethrow;
     }

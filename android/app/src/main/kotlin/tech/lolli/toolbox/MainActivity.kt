@@ -316,6 +316,20 @@ class MainActivity: FlutterFragmentActivity() {
         if (requestCode == 123) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 android.util.Log.i("MainActivity", "Notification permission granted")
+                // `reqPerm` is asynchronous and `startService`/`updateSessions`
+                // test the permission the moment after asking for it, so the
+                // first attempt is always refused and nothing retries it. With
+                // a session already open and no further lifecycle change
+                // coming, the service stayed stopped and the process was free
+                // to be frozen — despite the user having just said yes. Telling
+                // Dart is what makes it ask again.
+                if (::channel.isInitialized) {
+                    try {
+                        channel.invokeMethod("notificationPermissionGranted", null)
+                    } catch (e: Exception) {
+                        android.util.Log.e("MainActivity", "Failed to report the grant: ${e.message}")
+                    }
+                }
             } else {
                 android.util.Log.w("MainActivity", "Notification permission denied")
                 // Optionally inform user about the limitation

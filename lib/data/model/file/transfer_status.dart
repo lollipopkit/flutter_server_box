@@ -41,7 +41,17 @@ class FileTransferStatus {
 
   final FileTransfer job;
   final void Function() notifyListeners;
-  final Completer? completer;
+
+  /// Answered with whether the transfer *finished*, for a caller that has
+  /// something to do next with what it moved.
+  ///
+  /// It used to be answered `true` no matter how the transfer ended, and a
+  /// cancelled one is removed from the list — so the caller's other check,
+  /// "does this row carry an error", found no row and read the cancellation as
+  /// a success. `_uploadViaSudo` then renamed a staging file that was never
+  /// fully written over the destination, and the editor opened a download that
+  /// had not arrived.
+  final Completer<bool>? completer;
 
   /// Null for a transfer that runs on this isolate, which is the pairs with no
   /// crypto in them.
@@ -80,7 +90,7 @@ class FileTransferStatus {
     worker?.dispose();
     if (unfinished) _discardStaging();
     if (completer?.isCompleted == false) {
-      completer?.complete(true);
+      completer?.complete(!unfinished);
     }
   }
 
@@ -171,6 +181,12 @@ class FileTransferStatus {
         plan,
         source,
         dest,
+        // As the isolate path reports it, and for the same reason: `write`
+        // cleans up after its own failures, and a cancellation is not one of
+        // them. Without this a local copy stopped part-way left its
+        // `.sb-part-…` beside the destination, which is the thing staging was
+        // introduced to avoid.
+        onStaging: (path) => onNotify(TransferStaging(path)),
         cancelled: () => _cancelled,
         onProgress: (transferred) => onNotify(
           FileTransferProgress(

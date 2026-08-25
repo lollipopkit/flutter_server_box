@@ -69,6 +69,13 @@ abstract final class Rootfs {
   /// nothing to offer as an update, and asking for a version would throw
   /// rather than guess at one.
   ///
+  /// Newer, not merely different. The manifest in hand can describe an older
+  /// release than the one installed — a fetched one that fails verification
+  /// falls back to the copy compiled in, which is as old as the build — and
+  /// "different" then offered an update whose install replaces the tree with an
+  /// *earlier* release and destroys everything in it. A pair of versions this
+  /// cannot order is left alone for the same reason.
+  ///
   /// Within the series and never across it. An update replaces the tree and
   /// destroys everything installed in it, so offering 26.04 to someone
   /// running 24.04 would be a migration wearing an update's clothes. What it
@@ -83,7 +90,7 @@ abstract final class Rootfs {
         ? described.preferred
         : described.newestIn(profile.branch);
     if (current == null) return false;
-    return profile.version != current.version;
+    return compareRootfsVersions(current.version, profile.version) > 0;
   }
 
   /// What an install would put on the device, as one answer rather than two

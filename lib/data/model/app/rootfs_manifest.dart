@@ -106,6 +106,34 @@ class RootfsSource {
   int get sizeMb => (sizeBytes + 1048575) ~/ 1048576;
 }
 
+/// Orders two release versions: positive when [a] is newer than [b].
+///
+/// Dotted and numeric — `24.04.3`, `3.20.1`, `41` — compared segment by
+/// segment, with a missing segment counting as zero so `24.04` precedes
+/// `24.04.1`. A segment that is not a number falls back to comparing the text,
+/// which keeps the order total without pretending to understand a scheme
+/// nothing here has seen.
+///
+/// Exists because "is this profile outdated" was asked as "is it a different
+/// version", and different includes newer — see [Rootfs.isOutdated].
+int compareRootfsVersions(String a, String b) {
+  final left = a.split('.');
+  final right = b.split('.');
+  for (var i = 0; i < left.length || i < right.length; i++) {
+    final l = i < left.length ? left[i] : '0';
+    final r = i < right.length ? right[i] : '0';
+    if (l == r) continue;
+    final ln = int.tryParse(l);
+    final rn = int.tryParse(r);
+    if (ln != null && rn != null) {
+      if (ln != rn) return ln.compareTo(rn);
+      continue;
+    }
+    return l.compareTo(r);
+  }
+  return 0;
+}
+
 /// One release of a distribution: a version, and where to get it.
 class RootfsRelease {
   final String version;

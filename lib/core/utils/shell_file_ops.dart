@@ -28,7 +28,10 @@ String shellListCommand(String path) =>
     '-mindepth 1 -maxdepth 1 '
     '-exec sh -c \''
     'for path do '
-    '${_emitRecord('path')}'
+    // A file that is gone by the time its metadata is read is simply not
+    // reported: `find` names what was there a moment ago, and /proc and /tmp
+    // churn under any listing.
+    '${_emitRecord('path', onVanished: 'continue')}'
     'done'
     '\' sh {} +';
 
@@ -48,7 +51,7 @@ String shellListCommand(String path) =>
 /// no answer at all, and a `stat` that cannot say "nothing there" is one that
 /// fails every copy into a directory that does not exist yet.
 String shellStatCommand(String path) {
-  final quoted = shellSingleQuote(path);
+  final quoted = shellSingleQuote(_withoutTrailingSlash(path));
   return 'path=$quoted; '
       // The parent, by string rather than by `dirname`, which is one more
       // process and one more thing a minimal system may not have. `/foo` and
@@ -57,10 +60,27 @@ String shellStatCommand(String path) {
       // `-e` alone answers no for a symlink to nowhere, which is still an entry
       // somebody can see, rename and delete.
       'if [ -e "\$path" ] || [ -L "\$path" ]; then '
-      '${_emitRecord('path')}'
+      // Same answer as the branch below, for the same path that reaches it a
+      // moment later: something was there when the test ran and is not there
+      // now, which is an absence rather than a failure to look.
+      '${_emitRecord('path', onVanished: 'printf "%s" $kShellStatAbsentMark; exit $kShellStatAbsent')}'
       'elif [ ! -d "\$dir" ] || [ -x "\$dir" ]; then '
       'printf "%s" $kShellStatAbsentMark; exit $kShellStatAbsent; '
       'else printf "%s" $kShellStatDeniedMark; exit $kShellStatDenied; fi';
+}
+
+/// [path] without the trailing separators that carry no meaning.
+///
+/// `${path##*/}` — which is how the entry's name is derived — expands to
+/// *nothing* for `/dir/`, so a stat spelled with a trailing slash came back as
+/// a [FileEntry] with an empty name where SFTP and the local backend both
+/// answer `dir`. The root keeps its one slash, being all it is.
+String _withoutTrailingSlash(String path) {
+  var end = path.length;
+  while (end > 1 && path[end - 1] == '/') {
+    end--;
+  }
+  return path.substring(0, end);
 }
 
 /// What [shellStatCommand] prints when there is nothing at the path.
@@ -85,12 +105,20 @@ const kShellStatDenied = 13;
 /// Shared so a listing and a stat cannot drift apart in what they report or in
 /// what order — the parser is one function and would read a changed field
 /// silently as the field that used to be there.
-String _emitRecord(String variable) {
+///
+/// [onVanished] is what to run when the metadata could not be read *and* the
+/// path is no longer there. The two callers answer that differently and neither
+/// answer is an error; a path that is still there is, and says so by failing —
+/// see below.
+String _emitRecord(String variable, {required String onVanished}) {
   final ref = '"\$$variable"';
   return 'name=\${$variable##*/}; '
-      'perm=\$(stat -c %a $ref); '
-      'size=\$(stat -c %s $ref); '
-      'mtime=\$(stat -c %Y $ref); '
+      // One `stat` where there were three. Three processes per entry is three
+      // times the cost on exactly the machines this backend exists for, and it
+      // made three separate failures out of one question.
+      'if meta=\$(stat -c "%a %s %Y" $ref); then '
+      'perm=\${meta%% *}; rest=\${meta#* }; '
+      'size=\${rest%% *}; mtime=\${rest##* }; '
       'type=u; '
       '[ -d $ref ] && type=d; '
       '[ -f $ref ] && type=f; '
@@ -98,7 +126,17 @@ String _emitRecord(String variable) {
       // and would otherwise answer for whatever it points at.
       '[ -L $ref ] && type=l; '
       'printf "%s\\0%s\\0%s\\0%s\\0%s\\0" '
-      '"\$name" "\$perm" "\$type" "\$size" "\$mtime"; ';
+      '"\$name" "\$perm" "\$type" "\$size" "\$mtime"; '
+      // Anything still there whose metadata could not be read fails the whole
+      // command, which is the point: the record used to be printed regardless,
+      // with `stat`'s error on stderr and an exit status of zero over it. A
+      // directory readable but not searchable lists every name and stats none
+      // of them, and that came back as a successful listing with every size and
+      // mode blank — where a failure is what offers the user sudo, and a host
+      // whose `stat` has no `-c` at all would say so instead of quietly
+      // answering nothing about every file on it.
+      'elif [ -e $ref ] || [ -L $ref ]; then exit 1; '
+      'else $onVanished; fi; ';
 }
 
 /// Every entry [shellListCommand] or [shellStatCommand] printed.

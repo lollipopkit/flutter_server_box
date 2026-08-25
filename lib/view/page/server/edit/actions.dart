@@ -412,6 +412,18 @@ extension _Actions on _ServerEditPageState {
       );
     }
 
+    // Resolved before the credential is built, and by index into a list that
+    // may have changed since this page was opened: `elementAt` threw a
+    // RangeError out of save when the chosen key had been deleted from another
+    // pane meanwhile, which is a red screen where the page should be saying
+    // which field is wrong.
+    final keyIdx = _keyIdx.value;
+    final keys = ref.read(privateKeyProvider).keys;
+    if (keyIdx != null && keyIdx >= keys.length) {
+      Toast.show('${libL10n.invalid}: ${libL10n.key}');
+      return;
+    }
+
     // In monitor mode the SSH form is hidden and a monitor server carries no
     // SSH credential at all: it is reached through its agent, and nothing here
     // would have anywhere to go. Previously these fields were required, which
@@ -424,17 +436,11 @@ extension _Actions on _ServerEditPageState {
             port: int.tryParse(_portController.text) ?? 22,
             user: _usernameController.text,
             pwd: _passwordController.text.selfNotEmptyOrNull,
-            keyId: _keyIdx.value != null
-                ? ref
-                      .read(privateKeyProvider)
-                      .keys
-                      .elementAt(_keyIdx.value!)
-                      .id
-                : null,
+            keyId: keyIdx != null ? keys.elementAt(keyIdx).id : null,
             // Carried through rather than rebuilt from the form: nothing on
             // this page can type a path, and dropping it on save would take
             // away the only credential an imported server has
-            keyPath: _keyIdx.value != null ? null : _keyPath.value,
+            keyPath: keyIdx != null ? null : _keyPath.value,
             alterUrl: _altUrlController.text.selfNotEmptyOrNull,
             jumpId: _jumpServers.value.isEmpty
                 ? null

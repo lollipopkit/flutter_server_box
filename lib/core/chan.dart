@@ -235,9 +235,11 @@ abstract final class MethodChans {
   /// Currently handles:
   /// - `disconnectSession` with argument map {id: string}
   /// - `stopAllConnections` with no arguments
+  /// - `notificationPermissionGranted` with no arguments
   static void registerHandler(
     Future<void> Function(String id) onDisconnect, [
     VoidCallback? onStopAll,
+    VoidCallback? onNotificationPermissionGranted,
   ]) {
     _channel.setMethodCallHandler((call) async {
       switch (call.method) {
@@ -250,6 +252,14 @@ abstract final class MethodChans {
           return;
         case 'stopAllConnections':
           onStopAll?.call();
+          return;
+        // Android asks for the permission asynchronously, so the call that
+        // triggered the prompt has already been refused by the time the user
+        // answers it. This is the only edge that says the answer was yes, and
+        // without acting on it the foreground service stays stopped until
+        // something else happens to sync — see [startService].
+        case 'notificationPermissionGranted':
+          onNotificationPermissionGranted?.call();
           return;
         default:
           return;

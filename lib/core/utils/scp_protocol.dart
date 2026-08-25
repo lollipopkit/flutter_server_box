@@ -461,11 +461,23 @@ final class _ScpSession {
     final size = secondSpace < 0
         ? null
         : int.tryParse(line.substring(firstSpace + 1, secondSpace));
-    if (size == null || size < 0) {
+    // Every field, not only the one that gets used. A login banner or a
+    // `.profile` that echoes something arrives in this stream ahead of the
+    // protocol, and a line of it starting with `C` that happens to carry a
+    // number between two spaces was taken for a header — after which that many
+    // bytes of the banner are read as the file's contents and the transfer
+    // arrives looking whole. An `scp` header has an octal mode and a name.
+    if (size == null ||
+        size < 0 ||
+        !_fileMode.hasMatch(line.substring(0, firstSpace)) ||
+        secondSpace + 1 >= line.length) {
       throw ScpException('scp: unreadable file header: C$line');
     }
     return size;
   }
+
+  /// `0644`, as `scp` writes it: `%04o` of the permission bits.
+  static final _fileMode = RegExp(r'^[0-7]{4,5}$');
 
   /// What a non-zero control byte means, as a message worth showing.
   ///
@@ -498,8 +510,21 @@ final class _ScpSession {
 
   /// Closes this side and waits for `scp` to report how it went.
   Future<void> finish() async {
-    await _channel.closeInput();
-    final code = await _channel.exitCode(timeout: timeout ?? _exitWait);
+    // Bounded like every other step, and by the same fallback as the wait
+    // below rather than by [timeout], which may be null. Sending EOF is a
+    // write like any other — a peer that has stopped reading its stdin leaves
+    // it pending — and it was the one step of a transfer no configured timeout
+    // reached, so a stall here held the channel, the remote `scp` and the
+    // staged destination for as long as the process lived.
+    final bound = timeout ?? _exitWait;
+    await _channel.closeInput().timeout(
+      bound,
+      onTimeout: () => throw TimeoutException(
+        'scp timed out closing the remote side\'s input',
+        bound,
+      ),
+    );
+    final code = await _channel.exitCode(timeout: bound);
     if (code != null && code != 0) {
       final said = utf8.decode(_stderr.toBytes(), allowMalformed: true).trim();
       throw ScpException(said.isNotEmpty ? said : 'scp exited with $code');

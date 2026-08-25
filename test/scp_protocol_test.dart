@@ -210,6 +210,32 @@ void main() {
       );
     });
 
+    test('a header with no mode or no name is not a header', () async {
+      // Only the size was ever read out of the `C` line, and only the size was
+      // checked — so a banner beginning with `C` that happened to carry a
+      // number between two spaces was taken for one, and that many bytes of it
+      // were then read as the file's contents. A transfer that arrives looking
+      // whole is worse than one that fails.
+      for (final line in [
+        'Cxxxx 3 hosts\n', // a mode that is not octal
+        'C0999 3 hosts\n', // digits, but not octal ones
+        'C0644 3 \n', // no name
+        'Configuring 3 things\n', // the shape a banner actually takes
+      ]) {
+        final remote = _FakeScp();
+        remote.onWrite = (r, _) {
+          r.replyText(line);
+          r.endOutput();
+        };
+
+        await expectLater(
+          scpRead(remote, '/etc/hosts').toList(),
+          throwsA(isA<ScpException>()),
+          reason: line.trim(),
+        );
+      }
+    });
+
     test('an offset drops the bytes before it', () async {
       // The protocol cannot start anywhere but zero, so the whole file comes
       // across and the head of it is discarded here.

@@ -18,7 +18,26 @@ String _safeLocalPathPart(String part) {
   final isReservedDeviceName = RegExp(
     r'^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$',
   ).hasMatch(baseName);
-  return isReservedDeviceName ? '_$safe' : safe;
+  if (isReservedDeviceName) safe = '_$safe';
+  // Every reserved character became the same `_`, so `a:b` and `a?b` — both
+  // valid names on the server — mapped to one local file, and downloading the
+  // second replaced the first with nothing said. The tag is what makes the
+  // mapping reversible enough to be distinct; it is only added where something
+  // was actually changed, so an ordinary name is still filed under itself.
+  return safe == part ? safe : '$safe-${_partTag(part)}';
+}
+
+/// A short, stable tag for [part], to tell apart two names that flatten to one.
+///
+/// FNV-1a over the code units: it needs to be the same on every launch and on
+/// every platform, which `hashCode` does not promise, and it is not protecting
+/// anything — a collision here costs a download, not a secret.
+String _partTag(String part) {
+  var hash = 0x811c9dc5;
+  for (final unit in part.codeUnits) {
+    hash = ((hash ^ unit) * 0x01000193) & 0xFFFFFFFF;
+  }
+  return hash.toRadixString(36).padLeft(7, '0');
 }
 
 String? _getDecompressCmd(String filename) {

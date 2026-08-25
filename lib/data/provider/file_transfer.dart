@@ -33,7 +33,10 @@ class FileTransferNotifier extends _$FileTransferNotifier {
     }
   }
 
-  int add(FileTransfer job, {Completer? completer}) {
+  /// [completer] is answered when the transfer ends, with whether it finished.
+  /// A cancellation removes the row, so a caller that read [get] alone could
+  /// not tell one from a success.
+  int add(FileTransfer job, {Completer<bool>? completer}) {
     final status = FileTransferStatus(
       notifyListeners: _notifyUpdated,
       completer: completer,

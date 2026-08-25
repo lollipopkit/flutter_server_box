@@ -81,5 +81,15 @@ void main() {
       expect(VirtKey.sftp.worksOn(spi), isTrue);
       expect(VirtKey.snippet.worksOn(spi), isTrue);
     });
+
+    test('and nothing to insert a sudo password from', () {
+      // The password the key inserts lives on `Spi.ssh`, and a monitor server
+      // carries no `SshCredential` at all. `isRoot` reads `ssh?.isRoot ?? false`
+      // so it answers false here, which used to be enough to draw the key —
+      // another dead button, on the one kind of session that has no password to
+      // offer.
+      expect(_monitor().ssh, isNull);
+      expect(VirtKey.sudo.worksOn(_monitor()), isFalse);
+    });
   });
 }

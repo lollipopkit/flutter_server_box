@@ -541,7 +541,7 @@ extension _Actions on _SftpPageState {
 
     final staging = '/tmp/serverbox-upload-'
         '${DateTime.now().microsecondsSinceEpoch}-$name';
-    final completer = Completer<void>();
+    final completer = Completer<bool>();
     final reqId = ref
         .read(fileTransferProvider.notifier)
         .add(
@@ -557,14 +557,20 @@ extension _Actions on _SftpPageState {
       // business and not this dialog's.
       timeout: null,
       fn: () async {
-        await completer.future;
+        // The two checks answer different questions. A failed transfer leaves
+        // its error on the row; a cancelled one takes the row with it, and
+        // only the completer's own answer says so. Renaming after either would
+        // put a partial file — or nothing at all — over the destination as
+        // root.
+        final finished = await completer.future;
         final status = ref.read(fileTransferProvider.notifier).get(reqId);
         if (status?.error != null) throw status!.error!;
+        if (!finished) return false;
         await _sudoHelper.rename(staging, remote, password: pwd);
         return true;
       },
     );
-    if (moved != null && err == null) {
+    if (moved == true && err == null) {
       _sudoMode.value = true;
       return true;
     }
@@ -712,7 +718,7 @@ extension _Edit on _SftpPageState {
       return err == null;
     }
 
-    final completer = Completer<void>();
+    final completer = Completer<bool>();
     final id = ref
         .read(fileTransferProvider.notifier)
         .add(
@@ -722,20 +728,22 @@ extension _Edit on _SftpPageState {
           ),
           completer: completer,
         );
-    final (_, err) = await context.showLoadingDialog(
+    final (opened, err) = await context.showLoadingDialog(
       timeout: null,
       fn: () async {
-        await completer.future;
         // The completer says "this transfer is over", not "it worked":
-        // `dispose()` completes it on failure too. Without this, a download
-        // that failed opened the editor on a file that was missing or left
-        // over from a previous session — and saving it uploaded that back.
+        // `dispose()` answers it on failure and on cancellation too. Without
+        // both checks, a download that failed opened the editor on a file that
+        // was missing or left over from a previous session — and saving it
+        // uploaded that back. A cancelled one leaves no row to carry the
+        // error, which is what the completer's own answer is for.
+        final finished = await completer.future;
         final status = ref.read(fileTransferProvider.notifier).get(id);
         if (status?.error != null) throw status!.error!;
-        return true;
+        return finished;
       },
     );
-    return err == null;
+    return opened == true && err == null;
   }
 
   Future<void> _saveBack(

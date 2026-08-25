@@ -63,6 +63,10 @@ abstract final class TermSessionManager {
           // Stop all connections when notification "Stop All" is pressed
           stopAllConnections();
         },
+        // The first attempt to start the service raised the permission prompt
+        // and was refused by the same call, because asking is asynchronous.
+        // This is the answer arriving, and syncing is what asks again.
+        _sync,
       );
     }
     if (isIOS) {

@@ -264,8 +264,13 @@ final class SshCredential {
     keyId,
     keyPath,
     alterUrl,
-    jumpId,
-    Object.hashAll(jumpIds ?? const []),
+    // [resolvedJumpIds], as [isSameAs] compares them, and not the two raw
+    // fields it is derived from. Old storage and an import write [jumpId]
+    // while everything since writes [jumpIds], so the same single jump server
+    // has two spellings — which `==` calls equal and this used to hash
+    // differently, breaking the one thing hashing has to promise. A credential
+    // put into a `Set` under one spelling was then not found under the other.
+    Object.hashAll(resolvedJumpIds),
     proxyCommand,
     fileTransport,
   );

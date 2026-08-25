@@ -69,11 +69,32 @@ class ScpFileBackend implements FileBackend {
   /// has to mean "stop".
   final _open = <ScpChannel>{};
 
+  /// Whether [close] has been called. Once it has, this backend opens nothing
+  /// more.
+  ///
+  /// Registering a channel is not enough on its own: opening one is itself an
+  /// `await`, and a `close` that landed during it found [_open] empty and left
+  /// the channel that arrived afterwards running with nobody holding it. That
+  /// is the exact case `close` exists for — a caller that bounded a `write`
+  /// with `.timeout` and gave up — so it is the one that must not slip through.
+  var _closed = false;
+
+  /// [opening] once it has arrived, registered so [close] can end it.
+  Future<ScpChannel> _opened(Future<ScpChannel> opening) async {
+    final channel = await opening;
+    if (_closed) {
+      channel.close();
+      throw const ScpShellException('The connection was closed');
+    }
+    _open.add(channel);
+    return channel;
+  }
+
   Future<T> _through<T>(
-    ScpChannel channel,
+    Future<ScpChannel> opening,
     Future<T> Function(ScpChannel channel) run,
   ) async {
-    _open.add(channel);
+    final channel = await _opened(opening);
     try {
       return await run(channel);
     } finally {
@@ -191,8 +212,7 @@ class ScpFileBackend implements FileBackend {
   Stream<List<int>> read(String path, {int offset = 0}) async* {
     // Opened when the stream is listened to rather than when it is built, so a
     // caller that never reads never starts a process on the far side.
-    final channel = await SshScpChannel.source(_client, path);
-    _open.add(channel);
+    final channel = await _opened(SshScpChannel.source(_client, path));
     try {
       yield* scpRead(channel, path, offset: offset, timeout: _streamTimeout);
     } finally {
@@ -215,7 +235,7 @@ class ScpFileBackend implements FileBackend {
     try {
       if (size != null) {
         await _through(
-          await SshScpChannel.sink(_client, staging),
+          SshScpChannel.sink(_client, staging),
           (channel) => scpWrite(
             channel,
             staging,
@@ -232,26 +252,18 @@ class ScpFileBackend implements FileBackend {
       // fail when the destination exists and only some servers replace it,
       // while `rename(2)` — which is what `mv` does within one directory —
       // always has.
-      final quoted = shellSingleQuote(path);
-      await _run(
-        'rename',
-        // The guard is not paranoia: `mv file dir` moves the file *into* the
-        // directory, so replacing a path that turned out to be one would
-        // quietly leave the staged copy sitting inside it under a name nobody
-        // asked for. The other two backends fail on this because a rename onto
-        // a directory is refused; `mv` succeeds, so it has to be asked first.
-        // In the same command, so it costs no extra round trip.
-        //
-        // No `! -L` exception. A symlink to a directory is one `mv` follows on
-        // some systems and replaces on others, and neither is what "write this
-        // file" asked for.
-        'if [ -d $quoted ]; then '
-        // The path goes through `printf`'s argument, still single-quoted, and
-        // never into a double-quoted string: a filename may contain `"`, `$`
-        // or a backtick, and the message is the one place it would otherwise
-        // be read as shell.
-        'printf "%s: is a directory\\n" $quoted >&2; exit 1; fi; '
-        'mv -- ${shellSingleQuote(staging)} $quoted',
+      //
+      // Shared with [rename], so the guard below cannot be in one and not the
+      // other, and escalated for the same reason [rename] is: the bytes are
+      // already across by now, and a destination directory this user may not
+      // write to is precisely what sudo is offered for. Without it an upload
+      // into a root-owned directory staged its copy, carried the mode over and
+      // then failed on the last step with no way forward.
+      final command = shellRenameCommand(staging, path);
+      await runWithEscalation(
+        escalation: escalation,
+        normal: () => _run('rename', command),
+        sudoCommand: () => command,
       );
     } catch (_) {
       try {
@@ -295,7 +307,7 @@ class ScpFileBackend implements FileBackend {
       }
       final length = await spool.length();
       await _through(
-        await SshScpChannel.sink(_client, staging),
+        SshScpChannel.sink(_client, staging),
         (channel) => scpWrite(
           channel,
           staging,
@@ -322,6 +334,7 @@ class ScpFileBackend implements FileBackend {
   /// the same thing by closing its channel.
   @override
   Future<void> close() async {
+    _closed = true;
     for (final channel in _open.toList()) {
       try {
         channel.close();
@@ -333,11 +346,28 @@ class ScpFileBackend implements FileBackend {
   }
 
   /// Runs [command] and answers what it printed, or throws what it said.
+  ///
+  /// Success is proved rather than inferred. Reading it off the exit status
+  /// alone cannot work here — some hosts, dropbear among them, close the
+  /// channel without an exit-status message, and that is most of the reason
+  /// this backend exists — while treating a missing status as success unless
+  /// something was written to stderr is a guess that a silent failure passes:
+  /// a `mkdir`, `mv` or `chmod` that did nothing then reported that it had.
+  /// So the command appends a marker of its own, which only runs if the
+  /// command before it succeeded, and its absence is the failure.
   Future<String> _run(String what, String command) async {
-    final result = await _exec(what, command);
-    if (!result.succeeded) throw ScpShellException(result.describe(what));
-    return result.stdout;
+    final result = await _exec(what, '{ $command; } && printf "%s" $_okMark');
+    final said = result.stdout;
+    final code = result.code;
+    if (!said.endsWith(_okMark) || (code != null && code != 0)) {
+      throw ScpShellException(result.describe(what));
+    }
+    return said.substring(0, said.length - _okMark.length);
   }
+
+  /// What [_run] appends to a command that worked. Not a word anybody types,
+  /// because a listing's output is checked for it.
+  static const _okMark = '__sb_ok__';
 
   Future<_ShellResult> _exec(String what, String command) async {
     final session = await _client.execute(command);
@@ -393,12 +423,6 @@ final class _ShellResult {
   final int? code;
   final String stdout;
   final String stderr;
-
-  /// A null code is not a failure. Some hosts — dropbear among them, which is
-  /// most of the reason this backend exists — close the channel without an
-  /// exit-status message, and reading that as an error would fail every
-  /// operation on them.
-  bool get succeeded => code == 0 || (code == null && stderr.trim().isEmpty);
 
   String describe(String what) {
     final said = stderr.trim();

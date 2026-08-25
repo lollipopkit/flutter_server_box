@@ -125,8 +125,13 @@ Future<void> carryModeToStaging(
     final existing = await backend.stat(destination);
     // Nothing there is the ordinary case: a file being created for the first
     // time has no mode to keep. A directory is one the rename is about to fail
-    // on anyway.
-    if (existing == null || existing.isDir) return;
+    // on anyway. A symlink is replaced *as a link* by the rename, so what the
+    // new file inherits would be the link's own bits — `0777` on most systems,
+    // which is not permissions being kept but a world-writable file being
+    // created.
+    if (existing == null || existing.isDir || existing.kind == FileKind.link) {
+      return;
+    }
     final mode = existing.mode;
     if (mode == null) return;
     await backend.chmod(staging, mode);
