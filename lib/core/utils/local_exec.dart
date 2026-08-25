@@ -138,9 +138,13 @@ class ProcessExec extends LocalExec {
       throw StateError('There is no Linux userland on this device to run in.');
     }
     try {
+      final executable = guest?.executable ?? shell;
+      final arguments =
+          guest?.arguments ?? (entry == null ? [flag, script] : [flag, entry]);
+      final setsid = cancel == null ? null : _setsidPath;
       final process = await Process.start(
-        guest?.executable ?? shell,
-        guest?.arguments ?? (entry == null ? [flag, script] : [flag, entry]),
+        setsid ?? executable,
+        setsid == null ? arguments : [executable, ...arguments],
         // The guest's own PATH and home, or Android's name for a directory that
         // does not exist inside it and a shell that finds none of its own tools.
         environment: guest == null
@@ -150,12 +154,13 @@ class ProcessExec extends LocalExec {
         // and is written expecting the PATH they have.
         includeParentEnvironment: true,
       );
+      final processGroupId = setsid == null ? null : process.pid;
 
       var cancelled = false;
       unawaited(
         cancel?.then((_) {
           cancelled = true;
-          ProcessTree.terminate(process, null);
+          ProcessTree.terminate(process, processGroupId);
         }),
       );
 
@@ -197,3 +202,11 @@ class ProcessExec extends LocalExec {
     }
   }
 }
+
+final String? _setsidPath = () {
+  if (!Platform.isLinux) return null;
+  for (final path in const ['/usr/bin/setsid', '/bin/setsid']) {
+    if (File(path).existsSync()) return path;
+  }
+  return null;
+}();
