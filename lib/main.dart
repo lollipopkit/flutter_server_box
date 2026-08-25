@@ -8,6 +8,7 @@ import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:server_box/app.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/service/watch_sync.dart';
@@ -17,6 +18,7 @@ import 'package:server_box/core/utils/rootfs_manifest_source.dart';
 import 'package:server_box/core/utils/sandbox_import.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
+import 'package:server_box/data/model/server/dist_license.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
@@ -102,6 +104,9 @@ Future<void> _initApp() async {
 
   // Shared parsing library (sbm_parser FFI, see the shared-parser design)
   await RustLib.init();
+  // Before anything can open the licence page. Cheap: the callback only runs
+  // when that page asks for it.
+  registerDistMarkLicenses();
   await _initData();
   _setupDebug();
   await _initWindow();
@@ -129,6 +134,16 @@ Future<void> _initData() async {
     bakName: Miscs.bakFileName,
     dirs: const {PathDir.img, PathDir.font},
   );
+
+  // `extended_image` caches under `getTemporaryDirectory()` and makes its own
+  // folder there with a plain `create()`, no `recursive`. On macOS that
+  // directory is `~/Library/Caches/<bundle id>`, which nothing has to have
+  // made yet — a fresh install, or a machine whose caches were swept. Every
+  // image then failed with `PathNotFoundException` and no fallback, which is
+  // what a server logo turning into an error in the log was.
+  //
+  // TODO: drop once extended_image_library creates its folder recursively.
+  await (await getTemporaryDirectory()).create(recursive: true);
 
   // Only so `HiveImport` can read the boxes an upgrading install still has.
   // Nothing writes Hive any more.
@@ -235,6 +250,18 @@ Future<void> _doPlatformRelated() async {
 
 // It may contains some async heavy funcs.
 Future<void> _doDbMigrate() async {
+  // Storage layout first: it must finish before anything decodes a record as
+  // its current type. Throws SchemaTooNewException when the data was written
+  // by a newer build — that must not be swallowed, since continuing would let
+  // this build overwrite records whose shape it doesn't understand.
+  //
+  // First in this function, and not after the feature bump below, because that
+  // refusal is only worth anything if nothing has been written yet. Run second,
+  // it left `autoAddNewCards`, `autoAddNewFuncs` and a rewritten `lastVer`
+  // behind on a database it then declined to touch — so a downgrade destroyed
+  // exactly the settings the refusal exists to protect.
+  await SchemaVersion.migrate(kSchemaMigrations);
+
   final lastVer = Stores.setting.lastVer.fetch();
   const newVer = BuildData.build;
   // It's only the version upgrade trigger logic.
@@ -244,17 +271,6 @@ Future<void> _doDbMigrate() async {
     ServerFuncBtn.autoAddNewFuncs(lastVer, newVer);
     Stores.setting.lastVer.put(newVer);
   }
-
-  // Storage layout first: it must finish before anything decodes a record as
-  // its current type. Throws SchemaTooNewException when the data was written
-  // by a newer build — that must not be swallowed, since continuing would let
-  // this build overwrite records whose shape it doesn't understand.
-  //
-  // The list is empty as of v4: `HiveImport` brings every install straight to
-  // `current` while copying, because a pre-v3 record only exists as a Hive
-  // value and that is the one pass that reads one. The call stays for the
-  // downgrade check it performs, and for the next step that does exist.
-  await SchemaVersion.migrate(kSchemaMigrations);
 
   // No app-level fixups follow. `migrateIds` and `migrateIdentityFilePaths`
   // both scanned every server on every launch to repair a record only an
@@ -277,7 +293,7 @@ Future<void> _initWindow() async {
   WindowFrameConfig.setShowCaption(hideTitleBar);
   await SystemUIs.initDesktopWindow(
     hideTitleBar: hideTitleBar,
-    size: windowState?.size ?? Size(947, 487),
+    size: windowState?.size ?? Size(1323, 817),
     position: windowState?.position,
     listener: WindowStateListener(windowStateProp),
   );

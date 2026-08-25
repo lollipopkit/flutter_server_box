@@ -121,6 +121,19 @@ void main() {
     expect(status['host'], 'myhost');
   });
 
+  // The two keys `ServerStatus.osId`/`osIdLike` are read out of, which the app
+  // takes from this JSON by name — a rename on the Rust side would otherwise
+  // show up as marks silently reverting to the prose match.
+  test('sys section carries the os-release identifiers', () async {
+    final status = await parseViaFfi({
+      'sys':
+          'ID=linuxmint\nID_LIKE="ubuntu debian"\nPRETTY_NAME="Linux Mint 21.3"\n',
+    });
+    expect(status['os_id'], 'linuxmint');
+    expect(status['os_id_like'], ['ubuntu', 'debian']);
+    expect(status['sys'], 'Linux Mint 21.3');
+  });
+
   test('batteries/sensors/gpu/smart sections', () async {
     final battery = await File(
       'crates/sbm_parser/tests/fixtures/power_supply.txt',

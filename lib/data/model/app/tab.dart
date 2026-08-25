@@ -16,16 +16,23 @@ enum AppTab {
   agent;
 
   /// Helper function to parse AppTab list from stored object
+  ///
+  /// A repeat is dropped rather than kept. The home page is a list of pages
+  /// indexed by position and a nav bar of the same length, so a value naming
+  /// one tab twice — a restore of a record another build wrote, an edit by
+  /// hand — puts the same page on screen twice and leaves "which position is
+  /// Terminal" without an answer. First occurrence wins, so the order the user
+  /// arranged is what survives.
   static List<AppTab> parseAppTabsFromObj(dynamic val) {
     if (val is List) {
-      final tabs = <AppTab>[];
+      final tabs = <AppTab>{};
       for (final e in val) {
         final tab = _parseAppTabFromElement(e);
         if (tab != null) {
           tabs.add(tab);
         }
       }
-      if (tabs.isNotEmpty) return tabs;
+      if (tabs.isNotEmpty) return tabs.toList();
     }
     return AppTab.values;
   }

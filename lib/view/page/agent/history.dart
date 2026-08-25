@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/ai/agent_conversation.dart';
-import 'package:server_box/data/model/app/menu/base.dart';
 import 'package:server_box/data/provider/ai/agent_session.dart';
 import 'package:server_box/view/page/agent/view.dart';
 
@@ -220,39 +219,34 @@ class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
                 // being worked in clears the timeline the execution is about
                 // to append its output to — and the execution keeps going,
                 // since nothing but the stop button ends one.
-                trailing: PopupMenu<_HistoryAction>(
-                  enabled: !session.isWorking,
-                  items: [
-                    PopMenu.build(
-                      _HistoryAction.rename,
-                      Icons.drive_file_rename_outline,
-                      context.l10n.askAiRenameConversation,
-                      iconSize: _kMenuIconSize,
-                    ),
-                    PopMenu.build(
-                      _HistoryAction.delete,
-                      Icons.delete_outline,
-                      libL10n.delete,
-                      iconSize: _kMenuIconSize,
-                    ),
-                  ],
-                  onSelected: (action) async {
-                    if (action == _HistoryAction.rename) {
-                      await _rename(conversation);
-                    } else {
-                      await _delete(conversation);
-                    }
-                  },
-                ),
+                menuEnabled: !session.isWorking,
+                onMenu: (at) => _showRowMenu(conversation, at),
               ),
         ],
       ),
     );
   }
+
+  void _showRowMenu(AgentConversation conversation, Offset? at) {
+    showContextMenu(
+      context,
+      [
+        ContextMenuAction(
+          text: context.l10n.askAiRenameConversation,
+          icon: Icons.drive_file_rename_outline,
+          onTap: () => _rename(conversation),
+        ),
+        ContextMenuAction(
+          text: libL10n.delete,
+          icon: Icons.delete_outline,
+          destructive: true,
+          onTap: () => _delete(conversation),
+        ),
+      ],
+      title: conversation.title.isEmpty
+          ? context.l10n.askAiUntitledConversation
+          : conversation.title,
+      at: at,
+    );
+  }
 }
-
-/// Smaller than a menu's default 24: this menu opens from a rail barely wider
-/// than the words in it, and an icon that size takes the room the label needs.
-const _kMenuIconSize = 18.0;
-
-enum _HistoryAction { rename, delete }

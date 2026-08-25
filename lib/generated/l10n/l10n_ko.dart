@@ -264,8 +264,55 @@ class AppLocalizationsKo extends AppLocalizations {
   String get backupPasswordWrong => '백업 비밀번호가 올바르지 않습니다';
 
   @override
-  String get remoteBackupPasswordRequired =>
-      'Remote backups require a non-empty backup password';
+  String get connectAll => '모두 연결';
+
+  @override
+  String get disconnectAll => '모두 연결 해제';
+
+  @override
+  String get distIcon => '배포판 표시';
+
+  @override
+  String get distIconConsent => '해당 서버가 실행 중일 수 있는 배포판을 나타내는 데에만 사용됩니다.';
+
+  @override
+  String get distIconIntroLegal =>
+      '마크는 이 기기가 원격 시스템에서 읽은 내용만을 나타내며, 그 정보는 틀리거나 오래되었을 수 있고 파생판·재빌드·특정 버전을 뜻하지도 않습니다. 알 수 없을 때는 일반 아이콘을 표시합니다.\n\n각 마크는 해당 소유자의 상표이며, 여기서는 그것이 가리키는 시스템을 지칭하는 데에만 사용됩니다.';
+
+  @override
+  String get distIconTip => '각 서버 옆에 실행 중으로 보이는 시스템의 작은 표시를 보여줍니다';
+
+  @override
+  String get distNameMap => '이름 매핑';
+
+  @override
+  String get distNameMapTip =>
+      '마크를 두는 곳의 파일 이름이 이 앱이 쓰는 이름과 다른 배포판에만 사용합니다. 키는 이 앱이 쓰는 이름, 값은 실제로 가져올 이름입니다. 빠진 마크가 없다면 비워 두세요.';
+
+  @override
+  String get logoUrl => '로고 주소';
+
+  @override
+  String get logoUrlTip => '서버 상세 페이지 상단의 큰 이미지. 원래 색 그대로 표시합니다.';
+
+  @override
+  String get markUrl => '마크 주소';
+
+  @override
+  String get markUrlTip =>
+      '목록에서 서버 이름 옆에 표시되는 작은 마크. 비워 두면 표시하지 않습니다.\n\n로고와 같은 이미지가 아닙니다';
+
+  @override
+  String get navTabMenuTip =>
+      '탭을 길게 누르거나 마우스 오른쪽 버튼으로 누르면 그 안의 모든 항목을 한 번에 연결하거나 끊을 수 있습니다.';
+
+  @override
+  String nTags(Object count) {
+    return '태그 $count개';
+  }
+
+  @override
+  String get remoteBackupPasswordRequired => '원격 백업에는 비어 있지 않은 백업 비밀번호가 필요합니다';
 
   @override
   String get monitorHttpsRequired =>
@@ -581,6 +628,9 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get ungrouped => '그룹 없음';
+
+  @override
   String get unused => '미사용';
 
   @override
@@ -715,9 +765,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get noPromptAgain => '다시 묻지 않기';
-
-  @override
-  String get onlyOneLine => '한 줄로만 표시 (스크롤 가능)';
 
   @override
   String get openLastPath => '마지막 경로 열기';
@@ -1212,6 +1259,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get virtKeyIntroSelect => '터미널에 스크롤할 내용이 있으면 가로로 끌어 텍스트를 선택할 수 있습니다.';
+
+  @override
+  String get virtKeyRows => '한 번에 표시할 줄 수';
+
+  @override
+  String get virtKeyRowsTip => '나머지는 별도의 페이지에 놓이며 옆으로 밀어 넘깁니다.';
 
   @override
   String get waitConnection => '연결이 설정될 때까지 기다려 주세요.';

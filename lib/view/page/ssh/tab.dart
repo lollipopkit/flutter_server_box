@@ -17,6 +17,7 @@ import 'package:server_box/data/ssh/terminal_session.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
+import 'package:server_box/view/widget/dist_icon.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/rootfs_install.dart';
 
@@ -101,7 +102,17 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
     // already open rather than racing them.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _restoreTabs();
-      if (mounted) _drainRequests();
+      if (!mounted) return;
+      // Here and not only from the listener: a flag set before this tab was
+      // ever built is not a *change* by the time the listener exists, so
+      // nothing would fire and the request would stand for good — after which
+      // asking again would set a value it already had, and change nothing.
+      //
+      // Before the queue, not after it. Both can be standing at once — close
+      // every terminal, then open one from a server's row — and draining them
+      // the other way round closed the terminal that was just asked for.
+      _drainCloseAll();
+      _drainRequests();
     });
   }
 
@@ -117,6 +128,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
   Widget build(BuildContext context) {
     super.build(context);
     ref.listen(terminalRequestsProvider, (_, _) => _drainRequests());
+    ref.listen(terminalCloseAllRequestProvider, (_, _) => _drainCloseAll());
     return ListenBuilder(
       listenable: _sessions,
       builder: () => SbPaneList(
@@ -386,6 +398,24 @@ extension _Sessions on _SSHTabPageState {
     _closeTab(tab.id);
   }
 
+  /// Closes every terminal, when something has asked for it.
+  ///
+  /// No confirmation here. The ask comes from the tab strip's own menu, which
+  /// confirms before it gets this far; this end only knows that the answer was
+  /// yes.
+  void _drainCloseAll() {
+    if (!ref.read(terminalCloseAllRequestProvider)) return;
+    ref.read(terminalCloseAllRequestProvider.notifier).done();
+
+    // Copied, because closing a tab is what mutates the list being walked.
+    final ids = [for (final tab in _sessions.tabs) tab.id];
+    if (ids.isEmpty) return;
+    if (mounted) FocusScope.of(context).unfocus();
+    for (final id in ids) {
+      _closeTab(id);
+    }
+  }
+
   /// Opens everything queued for this tab and empties the queue.
   void _drainRequests() {
     final pending = ref.read(terminalRequestsProvider);
@@ -484,10 +514,16 @@ extension _Sessions on _SSHTabPageState {
         if (spi == null) continue;
         source = ServerSource(spi);
       }
+      // Tested rather than cast. `as String?` throws on a value that is
+      // neither — a number where a name was expected — and the throw leaves the
+      // loop, which is the whole-set abort the entry-by-entry reads above
+      // exist to prevent.
+      final tmuxSession = entry['tmuxSession'];
+      final tmuxWindow = entry['tmuxWindow'];
       _open(
         source,
-        tmuxSession: entry['tmuxSession'] as String?,
-        tmuxWindow: entry['tmuxWindow'] as int?,
+        tmuxSession: tmuxSession is String ? tmuxSession : null,
+        tmuxWindow: tmuxWindow is int ? tmuxWindow : null,
         select: false,
       );
       restored++;
@@ -594,6 +630,7 @@ extension _Actions on _SSHTabPageState {
           ];
         },
         builder: (ctx, spi) => ListTile(
+          leading: distIcon(spi.id, size: 22),
           title: Text(spi.name),
           subtitle: Text(spi.displayAddr),
           trailing: const Icon(Icons.chevron_right),

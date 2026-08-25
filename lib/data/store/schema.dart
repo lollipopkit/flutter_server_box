@@ -65,7 +65,19 @@ abstract final class SchemaVersion {
   /// v7: the BMC side channel's columns on `server`
   /// v8: `private_key.comment`, so a key's label can be edited without
   ///     opening the key to rewrite the copy inside it
-  static const current = 8;
+  /// v9: the two settings fixups that gated themselves on their own
+  ///     `xxxMigrated` flag key, now ordered steps like everything else
+  /// v10: the Agent shell's eight settings keys and the AI provider's six
+  ///      folded into one object row each
+  /// v11: `server_dist`, caching what each server was last seen running so a
+  ///      row can draw its mark without a live status
+  /// v12: `horizonVirtKey`, a switch meaning one row of virtual keys, becomes
+  ///      `virtKeyRows`, a count of how many rows to show at once
+  /// v13: the trusted host keys v5 moved into `known_host` put back into the
+  ///      setting the app actually reads
+  /// v14: the virtual keys' order and hidden set by name rather than by enum
+  ///      index
+  static const current = 14;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the
@@ -80,13 +92,31 @@ abstract final class SchemaVersion {
   /// build. Callers must treat that as fatal for anything that writes — see
   /// the class doc.
   static Future<void> migrate(List<SchemaMigration> migrations) async {
+    // Before anything about *this* install is consulted, because what it
+    // catches is a disagreement in the list itself and every install has the
+    // same list. Built by hand rather than with a collection-for, which kept
+    // the last of two steps claiming one version and dropped the other with
+    // nothing said — and the gap check below only notices when the loss leaves
+    // a version this install has to cross, so whether anyone found out
+    // depended on where the install happened to be.
+    final byFrom = <int, SchemaMigration>{};
+    for (final m in migrations) {
+      final clash = byFrom[m.from];
+      if (clash != null) {
+        throw StateError(
+          'Two schema migrations from v${m.from}: '
+          '${clash.runtimeType} and ${m.runtimeType}',
+        );
+      }
+      byFrom[m.from] = m;
+    }
+
     final from = stored;
     if (from == current) return;
     if (from > current) {
       throw SchemaTooNewException(stored: from, supported: current);
     }
 
-    final byFrom = {for (final m in migrations) m.from: m};
     for (var v = from; v < current; v++) {
       final step = byFrom[v];
       if (step == null) {

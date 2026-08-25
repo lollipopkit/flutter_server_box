@@ -11,6 +11,7 @@ import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/data/store/history.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
+import 'package:server_box/data/store/server_dist.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
@@ -36,6 +37,8 @@ void main() {
       // In memory: this tree writes as it builds, and a test has no
       // business leaving a database behind.
     getIt.registerSingleton<SettingStore>(SettingStore.forTest());
+    // The rail draws each server's distribution mark, which reads this.
+    getIt.registerSingleton<ServerDistStore>(ServerDistStore.forTest());
     getIt.registerSingleton<ServerStore>(ServerStore.forTest());
     getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore.forTest());
     getIt.registerSingleton<HistoryStore>(HistoryStore.forTest());

@@ -97,10 +97,14 @@ extension _Flight on _ServerPageState {
   ///
   /// Drawn selected, because a card only ever flies into the rail as the thing
   /// that was just opened, and it would otherwise arrive plain and change
-  /// colour a frame later.
+  /// colour a frame later. The distribution mark is here for the same reason:
+  /// both ends of the trip carry one — the card beside its name, the row in
+  /// the rail's leading column — and a form without it makes the mark blink
+  /// out halfway across and back at the end.
   Widget _flightRow(ServerState srv) {
     return SideBarTile(
       title: srv.spi.name,
+      leading: distIcon(srv.spi.id, size: 17),
       selected: true,
       live: srv.conn == ServerConn.finished,
     );

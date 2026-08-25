@@ -285,6 +285,57 @@ class AppLocalizationsRu extends AppLocalizations {
   String get backupPasswordWrong => 'Неверный пароль резервной копии';
 
   @override
+  String get connectAll => 'Подключить все';
+
+  @override
+  String get disconnectAll => 'Отключить все';
+
+  @override
+  String get distIcon => 'Значки дистрибутивов';
+
+  @override
+  String get distIconConsent =>
+      'Только чтобы обозначить дистрибутив, который может работать на сервере.';
+
+  @override
+  String get distIconIntroLegal =>
+      'Знак говорит лишь о том, что это устройство прочитало с удалённой системы; эти сведения могут быть неверными или устаревшими и не обозначают ни производную сборку, ни пересборку, ни какую-либо конкретную версию. Если определить не удалось, рисуется обычный значок.\n\nКаждый знак является товарным знаком своего владельца и используется здесь только для указания на систему, которую он обозначает.';
+
+  @override
+  String get distIconTip =>
+      'Показывать рядом с каждым сервером небольшой значок системы, которая на нём предположительно работает';
+
+  @override
+  String get distNameMap => 'Сопоставление имён';
+
+  @override
+  String get distNameMapTip =>
+      'Только для дистрибутива, у которого файл там, где вы размещаете знаки, называется иначе. Ключ — имя, которое использует это приложение, значение — имя, которое нужно загрузить. Оставьте пустым, пока ни один знак не пропадает.';
+
+  @override
+  String get logoUrl => 'Адрес логотипа';
+
+  @override
+  String get logoUrlTip =>
+      'Большое изображение вверху страницы сервера, в его собственных цветах.';
+
+  @override
+  String get markUrl => 'Адрес знака';
+
+  @override
+  String get markUrlTip =>
+      'Маленький знак рядом с именем сервера в списках. Пусто — не показывать.\n\nЭто не то же изображение, что логотип';
+
+  @override
+  String get navTabMenuTip =>
+      'Нажмите и удерживайте вкладку — или щёлкните правой кнопкой — чтобы подключить или отключить всё сразу.';
+
+  @override
+  String nTags(Object count) {
+    return 'Тегов: $count';
+  }
+
+  @override
   String get remoteBackupPasswordRequired =>
       'Для удалённых резервных копий требуется непустой пароль резервного копирования';
 
@@ -619,6 +670,9 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get ungrouped => 'Без группы';
+
+  @override
   String get unused => 'Не используется';
 
   @override
@@ -762,9 +816,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get noPromptAgain => 'Больше не спрашивать';
-
-  @override
-  String get onlyOneLine => 'Отображать только в одной строке (прокручивается)';
 
   @override
   String get openLastPath => 'Открыть последний путь';
@@ -1208,7 +1259,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get termFontSizeTip =>
-      'Эта настройка повлияет на размер терминала (ширина и высота). Вы можете масштабировать страницу терминала, чтобы调整 размер шрифта текущей сессии.';
+      'Эта настройка повлияет на размер терминала (ширина и высота). Вы можете масштабировать страницу терминала, чтобы изменить размер шрифта текущей сессии.';
 
   @override
   String get textScalerTip =>
@@ -1287,6 +1338,13 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get virtKeyIntroSelect =>
       'Пока в терминале есть что прокручивать, перетаскивание вбок выделяет текст.';
+
+  @override
+  String get virtKeyRows => 'Строк показывать сразу';
+
+  @override
+  String get virtKeyRowsTip =>
+      'Остальные — на отдельной странице, пролистываемой вбок.';
 
   @override
   String get waitConnection => 'Пожалуйста, дождитесь установки соединения';

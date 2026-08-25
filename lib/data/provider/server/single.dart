@@ -148,6 +148,29 @@ class ServerNotifier extends _$ServerNotifier {
   // Update server status
   void updateStatus(ServerStatus status) {
     state = state.copyWith(status: status);
+    _rememberDist(status);
+  }
+
+  /// Files what this poll said the machine is running.
+  ///
+  /// Here rather than in the parser, because this is the one place that knows
+  /// *which server* a status belongs to. Written on every poll but only
+  /// reaches the database when the answer changed, so a server polled every
+  /// few seconds writes once and then never again.
+  ///
+  /// The reading is what lets a row draw the right mark without a live status
+  /// — the pickers, the known-hosts page and the order page all hold only an
+  /// id. See [ServerDistStore].
+  void _rememberDist(ServerStatus status) {
+    final dist = status.dist;
+    if (dist == null) return;
+    try {
+      Stores.serverDist.put(state.spi.id, dist);
+    } catch (e, s) {
+      // A cache, so a failure to write one is not a failure to poll: the row
+      // draws the neutral mark and the next poll tries again.
+      Loggers.app.warning('Caching the distribution of ${state.spi.name}', e, s);
+    }
   }
 
   ServerStatus _copyStatus(
@@ -176,6 +199,8 @@ class ServerNotifier extends _$ServerNotifier {
       history: source.history,
     );
     status.amd = source.amd?.toList();
+    status.osId = source.osId;
+    status.osIdLike = source.osIdLike;
     status.batteries.addAll(source.batteries);
     status.more.addAll(source.more);
     status.sensors.addAll(source.sensors);

@@ -16,9 +16,6 @@ permissions:
   # For the `changes` job's file list. Read-only, and only for this repo.
   pull-requests: read
 
-env:
-  FLUTTER_VERSION: '3.47.0'
-
 jobs:
   # Which of the expensive jobs this diff can actually affect.
   #
@@ -27,17 +24,23 @@ jobs:
   # tests (windows-latest)` (~7-9 min, most of it a cold compile). A docs-only
   # or Dart-only PR paid both for nothing.
   #
-  # Asks GitHub for the PR's own file list rather than diffing refs: no
-  # checkout, no fetch depth to get wrong, and no merge-base to compute against
-  # a base branch that may have moved since. On a push to main it answers
-  # "everything" — that is the ref releases are cut from, and narrowing what
-  # runs there trades away the wrong thing.
+  # Asks GitHub for the file list rather than diffing refs: no checkout, no
+  # fetch depth to get wrong, and no merge-base to compute against a base
+  # branch that may have moved since. A pull request has one of its own; a push
+  # is the range it pushed.
+  #
+  # On a push to main every filter answers "everything" — that is the ref
+  # releases are cut from, and narrowing what runs there trades away the wrong
+  # thing. `macos` is the one exception, and is answered honestly on both: 45
+  # minutes on a macOS runner for a diff that cannot reach the macOS product is
+  # not belt-and-braces, it is only the queue.
   changes:
     name: What changed
     runs-on: ubuntu-latest
     outputs:
       rust: ${{ steps.filter.outputs.rust }}
       ish: ${{ steps.filter.outputs.ish }}
+      macos: ${{ steps.filter.outputs.macos }}
       dart: ${{ steps.filter.outputs.dart }}
       frontend: ${{ steps.filter.outputs.frontend }}
       docs: ${{ steps.filter.outputs.docs }}
@@ -50,19 +53,37 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [[ "${{ github.event_name }}" != 'pull_request' ]]; then
-            printf 'rust=true\nish=true\ndart=true\nfrontend=true\ndocs=true\nwebsite=true\n' >> "$GITHUB_OUTPUT"
-            echo "not a pull request: running everything"
-            exit 0
-          fi
+          # Which filters are answered from the diff. Everything, on a pull
+          # request; on anything else only the ones named here, and the rest
+          # run unconditionally.
+          strict=' rust ish macos dart frontend docs website '
 
-          files="$(gh api --paginate \
-            "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" \
-            --jq '.[].filename')"
+          if [[ "${{ github.event_name }}" == 'pull_request' ]]; then
+            files="$(gh api --paginate \
+              "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" \
+              --jq '.[].filename')"
+          else
+            strict=' macos '
+            base='${{ github.event.before }}'
+            # A branch's first push has no `before` to compare against, and a
+            # force-push leaves one that is no longer an ancestor. Either way
+            # there is no diff to be had, so nothing is narrowed.
+            if [[ "$base" =~ ^0*$ ]] || ! files="$(gh api --paginate \
+              "repos/${{ github.repository }}/compare/$base...${{ github.sha }}" \
+              --jq '.files[].filename')"; then
+              strict=''
+              files=''
+              echo "no diff to read: running everything"
+            fi
+          fi
           echo "changed files:"
           echo "$files"
 
           emit() {
+            if [[ "$strict" != *" $1 "* ]]; then
+              echo "$1=true" >> "$GITHUB_OUTPUT"
+              return
+            fi
             if grep -qE "$2" <<< "$files"; then
               echo "$1=true" >> "$GITHUB_OUTPUT"
             else
@@ -75,16 +96,39 @@ jobs:
           # turns everything on — the filters are the thing under test then —
           # and `packages/` are the submodules the app is built from, so a
           # gitlink move there is a source change to all of it.
-          shared='^\.github/workflows/analysis\.yml$|^pubspec\.(yaml|lock)$|^packages/'
+          #
+          # `.github/actions/` and `build.yml` are here for a reason of the same
+          # kind and were missed: `setup-flutter` is the composite action every
+          # job below starts with, so a broken SDK pin in it would have been
+          # merged after only the always-on reproducibility job, and `build.yml`
+          # does not run on a pull request at all — so its own changes were
+          # reaching main with nothing having compiled anything.
+          shared='^\.github/(workflows/(analysis|build)\.yml$|actions/)|^pubspec\.(yaml|lock)$|^packages/'
 
           emit rust "$shared|^crates/|^monitor/|^Cargo\.(toml|lock)$"
           # The engine, the scripts that build and check it, and everything the
           # iOS app links: this is the only job that compiles either the engine
           # or `flutter build ios` at all
           emit ish "$shared|^third_party/|^scripts/(build-ish-ios|check-ish-linkage)\.sh$|^ios/|^crates/sbm_ffi/"
+          # The Xcode project and the entitlements, plus everything that is
+          # compiled into the product: `hook/build.dart` is what builds the Rust
+          # library into the app, and nothing else in CI links it on macOS.
+          #
+          # `lib/` is deliberately absent. `check` runs `flutter analyze` and
+          # `flutter test` on every Dart change, so a change there that would
+          # fail to compile fails there first, minutes earlier and on a cheaper
+          # runner. What only a macOS runner can answer is whether the project
+          # and the Rust static library still link.
+          emit macos "$shared|^macos/|^hook/|^crates/|^Cargo\.(toml|lock)$"
           # `crates/` because `flutter test` loads the FFI dylib and the
-          # generated bindings come from there
-          emit dart "$shared|^lib/|^test/|^integration_test/|^crates/|^Cargo\.(toml|lock)$|^analysis_options\.yaml$"
+          # generated bindings come from there.
+          #
+          # `macos/` because `test/macos_entitlements_test.dart` is a plain
+          # test and runs here — the `macOS build` job below says exactly that
+          # and then relies on it. Without this, a change to an entitlements
+          # file ran the 45-minute build and skipped the one test guarding what
+          # it changed.
+          emit dart "$shared|^lib/|^test/|^integration_test/|^crates/|^macos/|^Cargo\.(toml|lock)$|^analysis_options\.yaml$"
           emit frontend "$shared|^monitor/frontend/|^packages/webui/"
           emit docs "$shared|^docs/"
           emit website "$shared|^website/|^packages/webui/"
@@ -100,10 +144,7 @@ jobs:
           submodules: recursive
           persist-credentials: false
 
-      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
-        with:
-          channel: 'stable'
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+      - uses: ./.github/actions/setup-flutter
 
       - name: Check Android split-build reproducibility
         shell: bash
@@ -239,10 +280,7 @@ jobs:
           submodules: recursive
           persist-credentials: false
 
-      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
-        with:
-          channel: 'stable'
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+      - uses: ./.github/actions/setup-flutter
 
       # meson and ninja build the engine; llvm because the guest VDSO targets
       # Linux, which Apple's clang cannot; lld because Homebrew ships it apart
@@ -276,6 +314,85 @@ jobs:
           flutter build ios --release --no-codesign
           scripts/check-ish-linkage.sh build/ios/iphoneos/Runner.app/Runner off
 
+  # That the unsandboxed macOS product still builds, entitlements and all.
+  #
+  # It was written to run `integration_test` on a macOS device — the questions
+  # only a running app can answer: where this build's data goes, whether the
+  # keychain hands over the box key, whether `defaults` reads the other build's
+  # preferences. It never once passed. A hosted runner has no session for the
+  # app's output to be read from, so every file fails at load with "The log
+  # reader stopped unexpectedly, or never started", and the launch itself hits
+  # flutter/flutter#176850 ("Failed to foreground app; open returned 1"), which
+  # is open and reproduces on ordinary desktops too.
+  #
+  # So this builds instead of pretending to test. The entitlements the products
+  # ship with are guarded by `test/macos_entitlements_test.dart`, which is a
+  # plain test and runs in `check` below; what is left for a macOS runner is
+  # whether the project and the Rust static library still link.  The
+  # running-app half needs a machine, and has nowhere in CI to run.
+  #
+  # This was a workflow of its own until it moved here, because `paths:` is a
+  # workflow-level filter and "only when macos/** changed" had nowhere else to
+  # live. The `changes` job above is that filter, per job, so it does now.
+  macosBuild:
+    name: macOS build
+    needs: changes
+    if: needs.changes.outputs.macos == 'true'
+    runs-on: macos-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 1
+          submodules: recursive
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-flutter
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # No signing identity here, and none needed: the app is signed ad-hoc so
+      # it can run at all. The entitlements go with it — trimmed to the ones
+      # that do not need a provisioning profile, keeping the only one these
+      # tests are about.
+      - name: Sign locally
+        run: |
+          set -euo pipefail
+          project=macos/Runner.xcodeproj/project.pbxproj
+          sed -i '' \
+            -e 's/CODE_SIGN_IDENTITY = "Apple Development";/CODE_SIGN_IDENTITY = "-";/' \
+            -e 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/' \
+            -e 's/DEVELOPMENT_TEAM = BA88US33G6;/DEVELOPMENT_TEAM = "";/' \
+            "$project"
+          cat > macos/Runner/DebugProfile.entitlements <<'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+          	<key>com.apple.security.app-sandbox</key>
+          	<false/>
+          	<key>com.apple.security.cs.allow-jit</key>
+          	<true/>
+          	<key>com.apple.security.network.client</key>
+          	<true/>
+          	<key>com.apple.security.network.server</key>
+          	<true/>
+          	<key>com.apple.security.files.user-selected.read-write</key>
+          	<true/>
+          </dict>
+          </plist>
+          EOF
+
+      # `test/macos_entitlements_test.dart` is what guards the entitlements the
+      # products actually ship with; it runs in `check`, on a checkout the step
+      # above has not rewritten.
+      - name: Build the unsandboxed app
+        run: flutter build macos --debug
+
   check:
     needs: changes
     if: needs.changes.outputs.dart == 'true'
@@ -288,10 +405,7 @@ jobs:
           submodules: recursive
           persist-credentials: false
       
-      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
-        with:
-          channel: 'stable'
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+      - uses: ./.github/actions/setup-flutter
 
       - name: Install dependencies
         run: flutter pub get

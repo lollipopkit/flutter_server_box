@@ -279,6 +279,57 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backupPasswordWrong => 'Incorrect backup password';
 
   @override
+  String get connectAll => 'Connect all';
+
+  @override
+  String get disconnectAll => 'Disconnect all';
+
+  @override
+  String get distIcon => 'Distribution marks';
+
+  @override
+  String get distIconConsent =>
+      'Only to indicate the distribution a server may be running.';
+
+  @override
+  String get distIconIntroLegal =>
+      'A mark says only what this device read from the remote system, which can be wrong or out of date, and identifies neither a derivative, a rebuild, nor any particular version. Where it cannot be identified, a plain icon is drawn.\n\nEach mark is a trademark of its respective owner and is used only to refer to the system it identifies.';
+
+  @override
+  String get distIconTip =>
+      'Show a small mark beside each server for the system it appears to be running.';
+
+  @override
+  String get distNameMap => 'Name overrides';
+
+  @override
+  String get distNameMapTip =>
+      'Only for a distribution whose file is named something else where you host the marks. The key is the name this app uses; the value is the name to fetch. Leave it empty unless a mark is missing.';
+
+  @override
+  String get logoUrl => 'Logo URL';
+
+  @override
+  String get logoUrlTip =>
+      'The large image at the top of a server\'s own page, drawn in its own colours.';
+
+  @override
+  String get markUrl => 'Mark URL';
+
+  @override
+  String get markUrlTip =>
+      'The small mark beside a server\'s name in lists. Empty means none is drawn.\n\nNot the same picture as the logo';
+
+  @override
+  String get navTabMenuTip =>
+      'Long press a tab — or right-click it — to connect or disconnect everything on it at once.';
+
+  @override
+  String nTags(Object count) {
+    return '$count Tags';
+  }
+
+  @override
   String get remoteBackupPasswordRequired =>
       'Remote backups require a non-empty backup password';
 
@@ -608,6 +659,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get ungrouped => 'Ungrouped';
+
+  @override
   String get unused => 'Unused';
 
   @override
@@ -749,9 +803,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noPromptAgain => 'Do not prompt again';
-
-  @override
-  String get onlyOneLine => 'Only display as one line (scrollable)';
 
   @override
   String get openLastPath => 'Open the last path';
@@ -1270,6 +1321,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get virtKeyIntroSelect =>
       'Drag sideways over the terminal to select text, whenever it has something to scroll.';
+
+  @override
+  String get virtKeyRows => 'Rows shown at once';
+
+  @override
+  String get virtKeyRowsTip =>
+      'The rest go on a page of their own, swiped sideways.';
 
   @override
   String get waitConnection =>

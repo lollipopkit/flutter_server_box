@@ -65,6 +65,16 @@ pub struct SystemMetrics {
     pub temps: Vec<TempReading>,
     /// System version description (PRETTY_NAME / uname / OsName), if parsed
     pub sys: Option<String>,
+    /// `/etc/os-release`'s `ID=` — Linux only, and what a client should match
+    /// the distribution on rather than looking for substrings in [`sys`].
+    ///
+    /// [`sys`]: SystemMetrics::sys
+    #[serde(default)]
+    pub os_id: Option<String>,
+    /// `/etc/os-release`'s `ID_LIKE=`, closest base first. Only a derivative
+    /// declares one, so this is empty on most installs.
+    #[serde(default)]
+    pub os_id_like: Vec<String>,
     /// CPU model, e.g. "Apple M1 Pro" or "Intel(R) Core(TM) i7 (x8)" when
     /// several logical cores share one brand string; joined with ", " for
     /// the rare heterogeneous (multi-socket, differing model) case
@@ -187,6 +197,15 @@ pub struct GpuMetrics {
     pub memory_total: i64,
     /// Unit of the memory figures as reported by the tool (MiB usually)
     pub memory_unit: String,
+    /// Which tool reported it: `nvidia` or `amd`.
+    ///
+    /// The two lists are flattened into one here, and without this the
+    /// consumer cannot tell them apart again — the app draws them under
+    /// separate headings, and had to drop them all rather than guess.
+    /// `Option`, and skipped when absent, so a client written against the
+    /// older shape still decodes.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub vendor: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -232,7 +251,13 @@ fn should_run_extended(extended_due: bool, live: &LiveSettings, idle_secs: i64) 
     if !extended_due || !live.idle_pause_enabled {
         return extended_due;
     }
-    idle_secs < live.idle_pause_threshold_secs as i64
+    // Saturating, not `as i64`. The threshold is a `u64` a config file or a
+    // `PUT /settings` supplies, and one above `i64::MAX` wraps to a negative
+    // number — so the largest threshold anyone could ask for, meaning "almost
+    // never pause", became a comparison nothing satisfies and paused the
+    // extended cycle permanently.
+    let threshold = i64::try_from(live.idle_pause_threshold_secs).unwrap_or(i64::MAX);
+    idle_secs < threshold
 }
 
 pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
@@ -345,7 +370,27 @@ async fn collect_metrics(
     native_state: &mut sbm_native::NativeState,
 ) -> Result<SystemMetrics> {
     let system = system_type();
-    let mut status = sbm_native::sample(native_state, system);
+    // Off the reactor. `sample` is synchronous and does real IO — procfs and
+    // sysfs reads on Linux, and on the sysinfo backends a `statvfs` per mount.
+    // Called straight from here it blocks a tokio worker thread for as long as
+    // that takes, on the same runtime that serves the HTTP API; a mount that
+    // does not answer blocks it indefinitely. On the blocking pool the cost of
+    // that is one pooled thread and an empty disk list.
+    //
+    // The state has to go with it, since a blocking task cannot borrow. It
+    // comes back on the far side; if the task panicked it stays at its default
+    // and the next cycle starts a fresh one, which costs the CPU delta for one
+    // sample.
+    let mut owned_state = std::mem::take(native_state);
+    let (mut status, returned_state) = tokio::task::spawn_blocking(move || {
+        let status = sbm_native::sample(&mut owned_state, system);
+        (status, owned_state)
+    })
+    .await
+    .map_err(|e| {
+        crate::utils::error::MonitorError::Monitoring(format!("Native sampling failed: {e}"))
+    })?;
+    *native_state = returned_state;
 
     // Not part of sbm_native: neither a pure syscall nor worth bundling into
     // the shared script (a single targeted `nvidia-smi` call, same output
@@ -361,29 +406,52 @@ async fn collect_metrics(
     // `GetExtendedTcpTable` FFI) so it rides along on the same schedule;
     // Linux/native already fills `status.conn` and this leaves it alone.
     let mut custom_cmds = Vec::new();
+    // Whether the extended half landed, which is a different question from
+    // whether it was due, and the one everything below actually wants.
+    //
+    // The failure used to propagate out of this function, and the loop logs a
+    // collection error and moves on — so a script that could not run took the
+    // whole cycle with it, including the cpu/mem/disk/net `sbm_native` had
+    // already sampled and which had nothing to do with the script. Two ways to
+    // get there, both persistent rather than one-off: `ensure_script` cannot
+    // write the file (a read-only or absent home directory, which is the shape
+    // a hardened service unit has), and any one function exceeding
+    // MAX_COMMAND_OUTPUT_BYTES — the wide `smartctl` sweep `command_output`
+    // already names. Either one left a hole in the history every extended
+    // cycle for as long as the process ran.
+    let mut extended_ran = false;
     if extended_due {
-        let segments = execute_commands(system).await?;
-        custom_cmds = custom_cmd_outputs(&segments);
-        let raw: HashMap<String, String> = segments.into_iter().collect();
-        let extended = sbm_parser::parse_status(system, &raw);
-        status.amd = extended.amd;
-        status.sensors = extended.sensors;
-        status.batteries = extended.batteries;
-        status.disk_smart = extended.disk_smart;
-        if status.conn.is_none() {
-            status.conn = extended.conn;
+        match execute_commands(system).await {
+            Ok(segments) => {
+                custom_cmds = custom_cmd_outputs(&segments);
+                let raw: HashMap<String, String> = segments.into_iter().collect();
+                let extended = sbm_parser::parse_status(system, &raw);
+                status.amd = extended.amd;
+                status.sensors = extended.sensors;
+                status.batteries = extended.batteries;
+                status.disk_smart = extended.disk_smart;
+                if status.conn.is_none() {
+                    status.conn = extended.conn;
+                }
+                extended_ran = true;
+            }
+            // Left as not-due rather than as done: `carry_forward` then keeps
+            // the last amd/sensors/battery/SMART reading, `extended_updated_at`
+            // goes on reporting when that reading was actually taken, and the
+            // custom commands are not read as having been deleted.
+            Err(e) => error!("Extended collection failed, keeping core metrics: {e}"),
         }
     }
 
     let prev = prev_cpu.take();
     *prev_cpu = summary_core(&status.cpu).cloned();
     let mut metrics =
-        adapt_status(system, status, config, prev.as_ref(), prev_metrics, extended_due);
+        adapt_status(system, status, config, prev.as_ref(), prev_metrics, extended_ran);
     // Not `carry_forward`: an empty result on an extended cycle is the user
     // having deleted their commands, and carrying the old output forward
     // would leave deleted commands on the page for as long as the process
     // runs. Only a cycle that did not run the script keeps the previous set.
-    metrics.custom_cmds = if extended_due {
+    metrics.custom_cmds = if extended_ran {
         custom_cmds
     } else {
         prev_metrics.map(|p| p.custom_cmds.clone()).unwrap_or_default()
@@ -724,6 +792,26 @@ fn terminate_process_group(_process_group: Option<u32>) -> bool {
     {
         return true;
     }
+    // Windows has no group to signal, and `start_kill` — which is all this
+    // used to fall back to — ends the process that was spawned and nothing it
+    // spawned in turn. A `powershell -File` running the status script leaves
+    // whatever it started (smartctl, a battery query) alive and holding the
+    // pipes it inherited, so the reader that timed out cannot finish and the
+    // next extended cycle starts another one beside it. `taskkill /T` walks
+    // the tree by parent PID, which is the relationship Windows does keep.
+    //
+    // Not awaited, and still answers `false`: this runs on a path where the
+    // caller has stopped reading, and `terminate_command`'s own `start_kill`
+    // stays as the guarantee about the direct child.
+    #[cfg(windows)]
+    if let Some(id) = _process_group {
+        let _ = std::process::Command::new("taskkill")
+            .args(["/T", "/F", "/PID", &id.to_string()])
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn();
+    }
     false
 }
 
@@ -827,6 +915,7 @@ fn adapt_status(
             memory_used: g.memory.used,
             memory_total: g.memory.total,
             memory_unit: g.memory.unit.clone(),
+            vendor: Some("nvidia".to_string()),
         })
         .chain(amd.iter().map(|g| GpuMetrics {
             name: g.name.clone(),
@@ -836,6 +925,7 @@ fn adapt_status(
             memory_used: g.memory.used,
             memory_total: g.memory.total,
             memory_unit: g.memory.unit.clone(),
+            vendor: Some("amd".to_string()),
         }))
         .collect();
 
@@ -881,6 +971,8 @@ fn adapt_status(
         temperature,
         temps,
         sys: status.sys.clone(),
+        os_id: status.os_id.clone(),
+        os_id_like: status.os_id_like.clone(),
         cpu_brand: format_cpu_brand(&status.cpu_brand),
         gpus,
         disk_details,
@@ -1270,6 +1362,23 @@ mod tests {
         assert!(should_run_extended(true, &live, 29), "just under the threshold: still runs");
         assert!(!should_run_extended(true, &live, 30), "at the threshold: idle");
         assert!(!should_run_extended(true, &live, 999), "well past: idle");
+    }
+
+    /// The threshold is a `u64` out of a config file or a settings PUT, and the
+    /// comparison is in `i64`. `as i64` wraps past `i64::MAX`, so the largest
+    /// value anyone could enter — "effectively never pause" — turned into a
+    /// negative threshold that no idle time is below, pausing the extended
+    /// cycle for good.
+    #[test]
+    fn should_run_extended_does_not_wrap_a_huge_threshold() {
+        let live = live_settings(true, u64::MAX);
+        assert!(should_run_extended(true, &live, 0));
+        assert!(should_run_extended(true, &live, i64::MAX - 1));
+
+        // And one just past the signed range, which is where it first went
+        // wrong rather than at u64::MAX.
+        let live = live_settings(true, i64::MAX as u64 + 1);
+        assert!(should_run_extended(true, &live, 86_400));
     }
 
     fn empty_status() -> ServerStatus {

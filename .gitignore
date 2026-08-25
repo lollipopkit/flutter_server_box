@@ -72,7 +72,6 @@ linux.AppDir
 untranslated.json
 
 .vscode/settings.json
-more_build_data.json
 trans.txt
 android/app/.cxx
 .env.release
@@ -106,3 +105,8 @@ android/app/.cxx
 
 # Local switch for the iOS Linux engine — see ios/Flutter/Ish.xcconfig.
 /ios/Flutter/IshLocal.xcconfig
+
+# The working scratchpad for what is not done yet. Kept on disk, out of the
+# history: it churns every session, and what belongs in the repo is the TODO
+# beside the code it is about.
+/TODOS.md

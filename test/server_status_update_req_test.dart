@@ -3,6 +3,7 @@ import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/battery.dart';
 import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
+import 'package:server_box/data/model/server/dist.dart';
 import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_status_update_req.dart';
@@ -208,6 +209,91 @@ Filesystem  1024-blocks   Used Available Capacity Mounted on
       expect(result.sensors.single.device, 'Probe');
       expect(result.diskSmart.single.device, '0');
       expect(result.diskSmart.single.temperature, 35);
+    });
+  });
+
+  /// The wiring between the parser's JSON and the fields the marks are drawn
+  /// from. Every failure here is silent: a key that stopped arriving leaves
+  /// `osId` null and the prose match answers instead, usually with the parent.
+  group('what the sys segment fills in', () {
+    Future<ServerStatus> parse(String sys) => getStatus(
+      ServerStatusUpdateReq(
+        system: SystemType.linux,
+        ss: InitStatus.status,
+        parsedOutput: {StatusCmdType.sys.name: sys},
+      ),
+    );
+
+    test('the os-release identifiers reach the status', () async {
+      final result = await parse(
+        'ID=linuxmint\nID_LIKE="ubuntu debian"\nPRETTY_NAME="Linux Mint 21.3"\n',
+      );
+
+      expect(result.osId, 'linuxmint');
+      expect(result.osIdLike, ['ubuntu', 'debian']);
+      // The prose stays what it was — it is the line the detail page shows.
+      expect(result.more[StatusCmdType.sys], 'Linux Mint 21.3');
+      expect(result.dist, Dist.mint);
+    });
+
+    test('and the id decides, not the prose', () async {
+      // A Mint install whose `PRETTY_NAME` still says Ubuntu — which is what
+      // several derivatives ship. Matching the prose reads it as the parent.
+      final result = await parse('ID=linuxmint\nPRETTY_NAME="Ubuntu 22.04.3 LTS"\n');
+
+      expect(result.dist, Dist.mint);
+    });
+
+    test('what a poll cannot read is kept, not cleared', () async {
+      // BSD, Windows, and any Linux too old for `/etc/os-release` answer with
+      // no identifiers at all. The mark beside a server's name is drawn from
+      // these, so losing them on every poll made it blink out and come back.
+      final first = await parse('ID=alpine\nPRETTY_NAME="Alpine Linux v3.20"\n');
+      expect(first.osId, 'alpine');
+
+      final second = await getStatus(
+        ServerStatusUpdateReq(
+          system: SystemType.linux,
+          ss: first,
+          parsedOutput: {StatusCmdType.sys.name: 'PRETTY_NAME="Something"'},
+        ),
+      );
+
+      expect(second.osId, 'alpine', reason: 'the last successful read stands');
+      expect(second.dist, Dist.alpine);
+    });
+
+    test('a parent it stopped declaring is not kept', () async {
+      // A derivative that becomes a distribution of its own answers with an
+      // empty `ID_LIKE`, which is an answer rather than a silence. Kept, it
+      // would be what `resolveDist` fell through to whenever the new id was
+      // one this build does not know.
+      final first = await parse(
+        'ID=frobnix\nID_LIKE="ubuntu debian"\nPRETTY_NAME="Frobnix 1.0"\n',
+      );
+      expect(first.osIdLike, ['ubuntu', 'debian']);
+      expect(first.dist, Dist.ubuntu, reason: 'via the parent');
+
+      final second = await getStatus(
+        ServerStatusUpdateReq(
+          system: SystemType.linux,
+          ss: first,
+          parsedOutput: {
+            StatusCmdType.sys.name: 'ID=frobnix\nPRETTY_NAME="Frobnix 2.0"\n',
+          },
+        ),
+      );
+
+      expect(second.osIdLike, isEmpty);
+      expect(second.dist, isNull, reason: 'it declares no parent any more');
+    });
+
+    test('a remote with no os-release still reads by its prose', () async {
+      final result = await parse('PRETTY_NAME="Debian GNU/Linux 12 (bookworm)"\n');
+
+      expect(result.osId, isNull);
+      expect(result.osIdLike, isEmpty);
+      expect(result.dist, Dist.debian);
     });
   });
 }

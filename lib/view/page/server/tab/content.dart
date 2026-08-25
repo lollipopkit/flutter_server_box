@@ -15,6 +15,16 @@ extension on _ServerPageState {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Before the name, at the size of it: which distribution a
+                // machine runs is the thing you scan a list of servers for,
+                // and it reads faster as a shape than as a word.
+                //
+                // The gap goes with it. Marks switched off has to mean no
+                // pixels, and a six-pixel indent on every row is pixels.
+                ...?switch (distIcon(s.spi.id, size: 15)) {
+                  final mark? => [mark, const SizedBox(width: 6)],
+                  null => null,
+                },
                 Flexible(
                   child: Text(
                     s.spi.name,

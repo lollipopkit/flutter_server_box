@@ -1,5 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
+import 'package:server_box/data/model/server/amd.dart';
 import 'package:server_box/data/model/server/battery.dart';
 import 'package:server_box/data/model/server/conn.dart';
 import 'package:server_box/data/model/server/cpu.dart';
@@ -8,6 +9,7 @@ import 'package:server_box/data/model/server/disk_smart.dart';
 import 'package:server_box/data/model/server/memory.dart';
 import 'package:server_box/data/model/server/monitor_metrics.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
+import 'package:server_box/data/model/server/nvdia.dart';
 import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/server.dart';
 
@@ -32,6 +34,7 @@ ServerStatus applyMonitorMetrics(ServerStatus ss, MonitorMetrics m) {
   _apply('disk', () => _applyDisks(ss, m));
   _apply('net', () => _applyNet(ss, m, time));
   _apply('temps', () => _applyTemps(ss, m));
+  _apply('gpu', () => _applyGpus(ss, m));
   _apply('conn', () => _applyConn(ss, m));
   _apply('more', () => _applyMore(ss, m));
   _apply('diskio', () => _applyDiskIO(ss, m, time));
@@ -75,17 +78,8 @@ const _kCpuScale = 1000;
 /// time lands in `user` because monitor carries no user/sys/nice/iowait/irq/
 /// softirq breakdown; those stay 0, as they already do on the Windows path.
 void _applyCpu(ServerStatus ss, MonitorMetrics m) {
-  if (m.cpuCores.isEmpty) return;
-
-  // Every core needs a reading. The agent reports null on its first Linux
-  // cycle (no baseline yet) and on builds predating the field — keep the
-  // previous sample instead of accumulating a fabricated 0.
-  final percents = <double>[];
-  for (final c in m.cpuCores) {
-    final p = c.usagePercent;
-    if (p == null) return;
-    percents.add(p.clamp(0.0, 100.0));
-  }
+  final percents = _cpuPercents(m);
+  if (percents == null) return;
 
   // Index 0 of the previous sample is the "cpu" summary; per-core starts at 1
   final prev = ss.cpu.now;
@@ -108,8 +102,33 @@ void _applyCpu(ServerStatus ss, MonitorMetrics m) {
   final brand = m.cpuBrand;
   if (brand != null && brand.isNotEmpty) {
     ss.cpu.brand.clear();
-    ss.cpu.brand[brand] = m.cpuCores.length;
+    ss.cpu.brand[brand] = percents.length;
   }
+}
+
+/// One reading per core, or null when this sample says nothing usable.
+///
+/// The per-core list is preferred; an agent that predates it reports only the
+/// aggregate `cpu_usage`, and a single synthetic core carrying that is what
+/// keeps the top-line percentage moving instead of the page showing the last
+/// figure a newer agent happened to send. Which is what returning early on an
+/// empty list did: `ss.cpu` kept its previous sample, and the history buffer
+/// then recorded that stale percentage as the current one.
+///
+/// Null, not an empty list, when a core has no reading at all: the agent
+/// reports that on its first Linux cycle, before it has a baseline, and
+/// accumulating a fabricated 0 would draw a dip that never happened.
+List<double>? _cpuPercents(MonitorMetrics m) {
+  if (m.cpuCores.isEmpty) {
+    return [m.cpuUsage.clamp(0.0, 100.0)];
+  }
+  final percents = <double>[];
+  for (final c in m.cpuCores) {
+    final p = c.usagePercent;
+    if (p == null) return null;
+    percents.add(p.clamp(0.0, 100.0));
+  }
+  return percents;
 }
 
 /// monitor reports memory, swap and disk sizes in **bytes**
@@ -139,20 +158,43 @@ void _applySwap(ServerStatus ss, MonitorMetrics m) {
   );
 }
 
+/// The per-mount list where the agent sends one, and the aggregate otherwise.
+///
+/// An agent predating `disk_details` reports only totals, and mapping the
+/// detail list alone left those servers showing no disks at all rather than
+/// the one figure they do report. The synthetic entry is named `/` because
+/// that is what the aggregate is a total of, and nothing downstream reads a
+/// mount as a path to anything.
 void _applyDisks(ServerStatus ss, MonitorMetrics m) {
-  ss.disk = m.diskDetails
-      .map(
-        (d) => Disk(
-          path: d.path,
-          fsTyp: d.fsType,
-          mount: d.mount,
-          usedPercent: d.usagePercent.round(),
-          used: BigInt.from(_toKib(d.used)),
-          size: BigInt.from(_toKib(d.total)),
-          avail: BigInt.from(_toKib(d.total - d.used)),
-        ),
-      )
-      .toList();
+  if (m.diskDetails.isEmpty) {
+    final total = m.disk.total;
+    ss.disk = total <= 0
+        ? const []
+        : [
+            Disk(
+              path: '/',
+              mount: '/',
+              usedPercent: m.disk.usagePercent.round(),
+              used: BigInt.from(_toKib(m.disk.used)),
+              size: BigInt.from(_toKib(total)),
+              avail: BigInt.from(_toKib(m.disk.free)),
+            ),
+          ];
+  } else {
+    ss.disk = m.diskDetails
+        .map(
+          (d) => Disk(
+            path: d.path,
+            fsTyp: d.fsType,
+            mount: d.mount,
+            usedPercent: d.usagePercent.round(),
+            used: BigInt.from(_toKib(d.used)),
+            size: BigInt.from(_toKib(d.total)),
+            avail: BigInt.from(_toKib(d.total - d.used)),
+          ),
+        )
+        .toList();
+  }
   try {
     ss.diskUsage = ss.disk.isEmpty ? null : DiskUsage.parse(ss.disk);
   } catch (e, s) {
@@ -190,6 +232,60 @@ void _applyTemps(ServerStatus ss, MonitorMetrics m) {
   ss.temps.setAll({'cpu_thermal': t});
 }
 
+/// The agent's flattened `gpus`, split back into the two lists the status page
+/// draws.
+///
+/// It was decoded and then dropped: a server reached over the agent showed no
+/// GPU card at all, while the same machine over SSH showed every one of them.
+/// Which list a card belongs in is [MonitorGpuMetrics.isAmd].
+///
+/// `fanSpeed` and `clockSpeed` are 0 because the agent carries neither — the
+/// same kind of known, stated loss as SMART's `rawData`. Null rather than an
+/// empty list when the agent reports none, since that is what the status page
+/// reads as "this machine has no card".
+void _applyGpus(ServerStatus ss, MonitorMetrics m) {
+  if (m.gpus.isEmpty) {
+    ss.nvidia = null;
+    ss.amd = null;
+    return;
+  }
+  final nvidia = <NvidiaSmiItem>[];
+  final amd = <AmdSmiItem>[];
+  for (final g in m.gpus) {
+    if (g.isAmd) {
+      amd.add(
+        AmdSmiItem(
+          name: g.name,
+          temp: g.temperature,
+          power: g.power,
+          memory: AmdSmiMem(g.memoryTotal, g.memoryUsed, g.memoryUnit, const []),
+          utilization: g.usagePercent.round(),
+          fanSpeed: 0,
+          clockSpeed: 0,
+        ),
+      );
+    } else {
+      nvidia.add(
+        NvidiaSmiItem(
+          name: g.name,
+          temp: g.temperature,
+          power: g.power,
+          memory: NvidiaSmiMem(
+            g.memoryTotal,
+            g.memoryUsed,
+            g.memoryUnit,
+            const [],
+          ),
+          percent: g.usagePercent.round(),
+          fanSpeed: 0,
+        ),
+      );
+    }
+  }
+  ss.nvidia = nvidia.isEmpty ? null : nvidia;
+  ss.amd = amd.isEmpty ? null : amd;
+}
+
 void _applyConn(ServerStatus ss, MonitorMetrics m) {
   final conn = m.conn;
   if (conn == null) return;
@@ -200,6 +296,19 @@ void _applyMore(ServerStatus ss, MonitorMetrics m) {
   final sys = m.sys;
   if (sys != null && sys.isNotEmpty) {
     ss.more[StatusCmdType.sys] = sys;
+  }
+  // Absent on an agent predating the field, where the prose is all there is;
+  // left as it was rather than cleared, for the same reason as the SSH path.
+  final osId = m.osId;
+  if (osId != null && osId.isNotEmpty) {
+    ss.osId = osId;
+    // Written together and only here, exactly as the SSH path does it: an
+    // empty `os_id_like` means "declares no parent" when `os_id` is there to
+    // say the file was read, and "nothing was read" when it is not. Assigned
+    // rather than skipped-when-empty, or a host that stopped being a
+    // derivative kept the parent it used to declare and `resolveDist` fell
+    // through to it whenever the new id was one this build does not know.
+    ss.osIdLike = m.osIdLike;
   }
   if (m.serverName.isNotEmpty) {
     ss.more[StatusCmdType.host] = m.serverName;

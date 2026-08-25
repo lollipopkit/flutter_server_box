@@ -5,8 +5,10 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:icons_plus/icons_plus.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 import 'package:server_box/core/chan.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/core/utils/desktop_shortcuts.dart';
 import 'package:server_box/data/model/app/tab.dart';
@@ -37,15 +39,15 @@ class _HomePageState extends ConsumerState<HomePage>
         AfterLayoutMixin,
         WidgetsBindingObserver,
         GlobalRef {
-  /// Which tab to come back to.
+  /// Which tab to come back to, by [AppTab.name] — see [_rememberTab].
   ///
-  /// A store, not `RestorableInt`. Flutter's restoration is dead in this app —
+  /// A store, not a `Restorable*`. Flutter's restoration is dead in this app —
   /// `restoreState` runs, registration succeeds, the value reads back within
   /// the session, and a relaunch has nothing, because the route
   /// `MaterialApp.home` builds hands its subtree no bucket
-  /// (`test/restoration_bucket_test.dart`). So this always came back 0, and
-  /// nothing said so.
-  final _tabIndex = Stores.history.homeTabIndex;
+  /// (`test/restoration_bucket_test.dart`). So this always came back to the
+  /// first tab, and nothing said so.
+  final _lastTab = Stores.history.homeTab;
 
   late final PageController _pageController;
 
@@ -58,6 +60,17 @@ class _HomePageState extends ConsumerState<HomePage>
 
   late final _notifier = ref.read(serversProvider.notifier);
   late List<AppTab> _tabs = Stores.setting.homeTabs.fetch();
+
+  /// The tab strip, whichever of the two is on screen. Only one is built at a
+  /// time — the bar on a phone, the rail beside a window — so one key covers
+  /// both, and it is null exactly when there is no strip to point at.
+  final _navKey = GlobalKey();
+
+  /// Whether the guide over that strip has been dealt with this launch.
+  ///
+  /// The stored flag is only written once the guide has been dismissed, so
+  /// something has to stop a second attempt while the first is still up.
+  bool _navGuideHandled = false;
 
   @override
   void dispose() {
@@ -119,6 +132,34 @@ class _HomePageState extends ConsumerState<HomePage>
   void reassemble() {
     super.reassemble();
     _publishCurrentTab();
+  }
+
+  /// Files the tab at [index] as where the app was left.
+  ///
+  /// By name. A position stops meaning the same thing the moment the tabs are
+  /// reordered or one is hidden, and the reorder is a setting the user makes
+  /// between launches.
+  void _rememberTab(int index) {
+    if (index < 0 || index >= _tabs.length) return;
+    _lastTab.put(_tabs[index].name);
+  }
+
+  /// Where to reopen, or null to leave it on the first tab.
+  ///
+  /// A name this build cannot place, or a tab since hidden, is nothing to go
+  /// back to rather than a position to clamp.
+  int? _savedTabIndex() {
+    final name = _lastTab.fetch();
+    if (name.isNotEmpty) {
+      final at = _tabs.indexWhere((tab) => tab.name == name);
+      return at < 0 ? null : at;
+    }
+    // TODO: delete with `HistoryStore.homeTabIndex`. An install upgrading from
+    // a build that stored the position has one and no name; reading it once
+    // is what keeps that launch on the tab it was left on.
+    final saved = Stores.history.homeTabIndex.fetch();
+    if (saved < 0 || saved >= _tabs.length) return null;
+    return saved;
   }
 
   /// Tells [currentHomeTabProvider] where the app ended up.
@@ -230,7 +271,7 @@ class _HomePageState extends ConsumerState<HomePage>
                 FocusScope.of(context).unfocus();
                 if (!_switchingPage) {
                   _selectIndex.value = value;
-                  _tabIndex.put(value);
+                  _rememberTab(value);
                 }
                 _syncFullscreenSystemUi();
               },
@@ -298,12 +339,15 @@ class _HomePageState extends ConsumerState<HomePage>
       builder: (context, child) {
         if (_isServerFullscreenMode) return UIs.placeholder;
         return NavigationBar(
+          key: _navKey,
           selectedIndex: _selectIndex.value,
           height: kBottomNavigationBarHeight * 1.1,
           animationDuration: const Duration(milliseconds: 250),
           onDestinationSelected: _onDestinationSelected,
           labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
-          destinations: _tabs.map((tab) => tab.navDestination).toList(),
+          destinations: [
+            for (final tab in _tabs) tab.navDestination(onMenu: _navMenuFor(tab)),
+          ],
         );
       },
     );
@@ -318,6 +362,7 @@ class _HomePageState extends ConsumerState<HomePage>
             builder: (context, _) {
               if (_isServerFullscreenMode) return UIs.placeholder;
               return NavigationRail(
+                key: _navKey,
                 extended: extended,
                 minExtendedWidth: 150,
                 leading: extended ? const SizedBox(height: 20) : null,
@@ -326,9 +371,10 @@ class _HomePageState extends ConsumerState<HomePage>
                     ? NavigationRailLabelType.none
                     : NavigationRailLabelType.all,
                 selectedIndex: _selectIndex.value,
-                destinations: _tabs
-                    .map((tab) => tab.navRailDestination)
-                    .toList(),
+                destinations: [
+                  for (final tab in _tabs)
+                    tab.navRailDestination(onMenu: _navMenuFor(tab)),
+                ],
                 onDestinationSelected: _onDestinationSelected,
               );
             },
@@ -365,8 +411,8 @@ class _HomePageState extends ConsumerState<HomePage>
     // Auth required for first launch
     // Where it was left, if that is still a tab: the enabled set is a setting
     // and may have shrunk since.
-    final saved = _tabIndex.fetch();
-    if (saved >= 0 && saved < _tabs.length) {
+    final saved = _savedTabIndex();
+    if (saved != null) {
       _selectIndex.value = saved;
       if (_pageController.hasClients) {
         _pageController.jumpToPage(saved);
@@ -394,6 +440,13 @@ class _HomePageState extends ConsumerState<HomePage>
     // it could not — see [SandboxImport].
     unawaited(SandboxImportNotice.showIfNeeded(context));
     unawaited(MethodChans.updateHomeWidget());
+
+    // Before the refresh and not after it: that call waits on every server's
+    // connection, and one machine that is slow to answer would hold the guide
+    // back for as long as it takes to time out. The strip it points at is
+    // already laid out — this runs after the first frame.
+    unawaited(_maybeShowNavGuide());
+
     await _notifier.refresh();
 
     bakSync.sync(milliDelay: 1000);
@@ -402,9 +455,20 @@ class _HomePageState extends ConsumerState<HomePage>
   void _goAuth() {
     if (Stores.setting.useBioAuth.fetch()) {
       if (LocalAuthPage.route.alreadyIn) return;
-      LocalAuthPage.route.go(
-        context,
-        args: LocalAuthPageArgs(onAuthSuccess: () => _shouldAuth = false),
+      // The route's own future, not `onAuthSuccess`. That callback runs from
+      // inside `context.pop()`, while the lock screen is still the route the
+      // navigator answers with — so the guide's "is the home page current"
+      // check would say no and skip it every launch, on exactly the devices
+      // this branch exists for. The future completes once the pop has.
+      unawaited(
+        LocalAuthPage.route
+            .go(
+              context,
+              args: LocalAuthPageArgs(
+                onAuthSuccess: () => _shouldAuth = false,
+              ),
+            )
+            .then((_) => _maybeShowNavGuide()),
       );
     }
   }
@@ -413,7 +477,7 @@ class _HomePageState extends ConsumerState<HomePage>
     if (_selectIndex.value == index) return;
     if (index < 0 || index >= _tabs.length) return;
     _selectIndex.value = index;
-    _tabIndex.put(index);
+    _rememberTab(index);
     _switchingPage = true;
     _pageController.animateToPage(
       index,
@@ -454,25 +518,35 @@ extension _HomePageStateActions on _HomePageState {
     if (!mounted || newTabs == _tabs) return;
 
     final previousIndex = _selectIndex.value;
-    final clampedIndex = newTabs.isEmpty
-        ? 0
-        : previousIndex.clamp(0, newTabs.length - 1);
+    // Which tab was open, not where it was. Dragging Files above Terminal in
+    // the settings page moved neither of them under the user — position 2 was
+    // kept and whatever now sits there was shown instead, which reads as the
+    // reorder having opened a page at random.
+    final previousTab = previousIndex >= 0 && previousIndex < _tabs.length
+        ? _tabs[previousIndex]
+        : null;
+    final moved = previousTab == null ? -1 : newTabs.indexOf(previousTab);
+    // It is gone from the set, so there is nothing to follow: stay where the
+    // index points, which is the nearest thing to not moving.
+    final nextIndex = moved >= 0
+        ? moved
+        : (newTabs.isEmpty ? 0 : previousIndex.clamp(0, newTabs.length - 1));
 
     // ignore: invalid_use_of_protected_member
     setState(() {
       _tabs = newTabs;
-      _selectIndex.value = clampedIndex;
-      _tabIndex.put(clampedIndex);
+      _selectIndex.value = nextIndex;
+      _rememberTab(nextIndex);
     });
 
     // The index alone does not say which tab it is any more — the list under
     // it just changed — and it may well not have moved.
     _publishCurrentTab();
 
-    if (clampedIndex != previousIndex && _pageController.hasClients) {
+    if (nextIndex != previousIndex && _pageController.hasClients) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!_pageController.hasClients) return;
-        _pageController.jumpToPage(clampedIndex);
+        _pageController.jumpToPage(nextIndex);
       });
     }
   }
@@ -485,5 +559,108 @@ extension _HomePageStateActions on _HomePageState {
       unawaited(_notifier.startAutoRefresh());
       unawaited(_notifier.refresh());
     }
+  }
+}
+
+/// What a tab can be told to do to everything it holds.
+///
+/// Two tabs hold a set of live things — the servers, and the terminals — and
+/// acting on all of them one row at a time is the tedious part of having more
+/// than a few. The rest of the tabs hold records: a snippet is not connected
+/// to anything, and a menu with nothing in it is worse than no menu.
+///
+/// On the tab and not on the page it opens, because that is the one control
+/// reachable from anywhere in the app. Turning everything off is most wanted
+/// from somewhere that is not the server list.
+extension _HomePageNav on _HomePageState {
+  ContextMenuOpener? _navMenuFor(AppTab tab) {
+    final l10n = context.l10n;
+    final menu = switch (tab) {
+      AppTab.server => (
+        title: libL10n.server,
+        actions: [
+          ContextMenuAction(
+            text: l10n.connectAll,
+            icon: MingCute.link_3_line,
+            onTap: () => unawaited(_notifier.connectAll()),
+          ),
+          ContextMenuAction(
+            text: l10n.disconnectAll,
+            icon: MingCute.unlink_2_line,
+            destructive: true,
+            onTap: _notifier.closeServer,
+          ),
+        ],
+      ),
+      AppTab.ssh => (
+        title: libL10n.terminal,
+        actions: [
+          ContextMenuAction(
+            text: l10n.disconnectAll,
+            icon: MingCute.unlink_2_line,
+            destructive: true,
+            onTap: () => unawaited(_confirmCloseAllTerminals()),
+          ),
+        ],
+      ),
+      _ => null,
+    };
+    if (menu == null) return null;
+    return (at) => showContextMenu(context, menu.actions, title: menu.title, at: at);
+  }
+
+  /// Asked first, unlike disconnecting servers.
+  ///
+  /// A server that was disconnected reconnects with the entry above it and is
+  /// back where it was. A terminal that was closed takes its scrollback with
+  /// it, and whatever was still running in it.
+  Future<void> _confirmCloseAllTerminals() async {
+    final ok = await context.showRoundDialog<bool>(
+      title: libL10n.attention,
+      child: Text(
+        libL10n.askContinue('${libL10n.close} ${libL10n.all} ${libL10n.terminal}'),
+      ),
+      actions: Btnx.okReds,
+    );
+    if (ok != true) return;
+    // The tab that owns the sessions does the closing; see
+    // [TerminalCloseAllRequest] for why it cannot be called directly.
+    ref.read(terminalCloseAllRequestProvider.notifier).go();
+  }
+
+  /// Points at the tab strip, once per install.
+  ///
+  /// The menu above opens on a long press or a right-click and leaves no mark
+  /// on screen — nothing about the strip says it is there. Everything else in
+  /// this app that hides behind a long press has a visible way in as well;
+  /// this one does not, because the tab's own tap already means "go there".
+  Future<void> _maybeShowNavGuide() async {
+    if (_navGuideHandled) return;
+    final flag = Stores.setting.navTabMenuGuided;
+    if (flag.fetch()) return;
+    if (!mounted) return;
+    // Nothing to act on in bulk yet. Someone who has just installed this has
+    // enough in front of them without being told about a shortcut for a list
+    // they have not made.
+    if (ref.read(serversProvider).serverOrder.isEmpty) return;
+    // The overlay goes above every route, so it would cover the lock screen,
+    // an update notice or the sandbox-import dialog rather than wait for it.
+    // Skipping leaves the guide for the next launch.
+    if (ModalRoute.of(context)?.isCurrent != true) return;
+
+    final overlay = Overlay.maybeOf(context, rootOverlay: true);
+    if (overlay == null) return;
+    // Null when the strip is not built — fullscreen mode takes it away.
+    final spot = rectInOverlay(_navKey.currentContext, overlay);
+    if (spot == null) return;
+
+    _navGuideHandled = true;
+    // One step, so no title: a heading over a single sentence says it twice.
+    // The same card the terminal's key walkthrough uses — see [GuideView].
+    await GuideOverlay.show(context, [
+      GuideStep(body: context.l10n.navTabMenuTip, spot: spot),
+    ]);
+    // Written when it has been seen through, not when it was scheduled.
+    flag.put(true);
   }
 }

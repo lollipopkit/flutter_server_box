@@ -281,8 +281,59 @@ class AppLocalizationsId extends AppLocalizations {
   String get backupPasswordWrong => 'Kata sandi cadangan salah';
 
   @override
+  String get connectAll => 'Hubungkan semua';
+
+  @override
+  String get disconnectAll => 'Putuskan semua';
+
+  @override
+  String get distIcon => 'Tanda distribusi';
+
+  @override
+  String get distIconConsent =>
+      'Hanya untuk menunjukkan distribusi yang mungkin dijalankan sebuah server.';
+
+  @override
+  String get distIconIntroLegal =>
+      'Sebuah tanda hanya menyatakan apa yang dibaca perangkat ini dari sistem jarak jauh, yang bisa saja keliru atau usang, dan tidak menandakan turunan, hasil bangun ulang, maupun versi tertentu. Bila tidak dapat dikenali, ikon biasa yang digambar.\n\nSetiap tanda adalah merek dagang pemiliknya masing-masing dan di sini hanya dipakai untuk merujuk pada sistem yang ditandainya.';
+
+  @override
+  String get distIconTip =>
+      'Tampilkan tanda kecil di samping setiap server untuk sistem yang tampaknya dijalankannya';
+
+  @override
+  String get distNameMap => 'Pemetaan nama';
+
+  @override
+  String get distNameMapTip =>
+      'Hanya untuk distribusi yang nama berkasnya berbeda di tempat Anda menaruh tanda-tanda itu. Kuncinya adalah nama yang dipakai aplikasi ini; nilainya adalah nama yang akan diambil. Biarkan kosong selama tidak ada tanda yang hilang.';
+
+  @override
+  String get logoUrl => 'URL logo';
+
+  @override
+  String get logoUrlTip =>
+      'Gambar besar di bagian atas halaman sebuah server, dengan warna aslinya.';
+
+  @override
+  String get markUrl => 'URL tanda';
+
+  @override
+  String get markUrlTip =>
+      'Tanda kecil di samping nama server pada daftar. Kosong berarti tidak ada.\n\nBukan gambar yang sama dengan logo';
+
+  @override
+  String get navTabMenuTip =>
+      'Tekan lama sebuah tab — atau klik kanan — untuk menghubungkan atau memutuskan semuanya sekaligus.';
+
+  @override
+  String nTags(Object count) {
+    return '$count tag';
+  }
+
+  @override
   String get remoteBackupPasswordRequired =>
-      'Remote backups require a non-empty backup password';
+      'Cadangan jarak jauh memerlukan kata sandi cadangan yang tidak kosong';
 
   @override
   String get monitorHttpsRequired =>
@@ -614,6 +665,9 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String get ungrouped => 'Tanpa grup';
+
+  @override
   String get unused => 'Tidak terpakai';
 
   @override
@@ -755,10 +809,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get noPromptAgain => 'Jangan tanya lagi';
-
-  @override
-  String get onlyOneLine =>
-      'Hanya tampilkan sebagai satu baris (dapat digulir)';
 
   @override
   String get openLastPath => 'Buka jalur terakhir';
@@ -1280,6 +1330,13 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get virtKeyIntroSelect =>
       'Selama terminal masih bisa digulir, seret ke samping untuk memilih teks.';
+
+  @override
+  String get virtKeyRows => 'Baris yang tampil sekaligus';
+
+  @override
+  String get virtKeyRowsTip =>
+      'Sisanya berada di halaman tersendiri, digeser ke samping.';
 
   @override
   String get waitConnection => 'Harap tunggu koneksi akan dibuat.';

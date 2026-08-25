@@ -6410,6 +6410,272 @@ class ConnStatsCompanion extends UpdateCompanion<ConnStatRow> {
   }
 }
 
+class $ServerDistsTable extends ServerDists
+    with TableInfo<$ServerDistsTable, ServerDistRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ServerDistsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _serverIdMeta = const VerificationMeta(
+    'serverId',
+  );
+  @override
+  late final GeneratedColumn<String> serverId = GeneratedColumn<String>(
+    'server_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES server (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _distMeta = const VerificationMeta('dist');
+  @override
+  late final GeneratedColumn<String> dist = GeneratedColumn<String>(
+    'dist',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [serverId, dist, updatedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'server_dist';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ServerDistRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('server_id')) {
+      context.handle(
+        _serverIdMeta,
+        serverId.isAcceptableOrUnknown(data['server_id']!, _serverIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_serverIdMeta);
+    }
+    if (data.containsKey('dist')) {
+      context.handle(
+        _distMeta,
+        dist.isAcceptableOrUnknown(data['dist']!, _distMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_distMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {serverId};
+  @override
+  ServerDistRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ServerDistRow(
+      serverId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}server_id'],
+      )!,
+      dist: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}dist'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ServerDistsTable createAlias(String alias) {
+    return $ServerDistsTable(attachedDatabase, alias);
+  }
+
+  @override
+  bool get withoutRowId => true;
+}
+
+class ServerDistRow extends DataClass implements Insertable<ServerDistRow> {
+  final String serverId;
+
+  /// A `Dist` name. By name, never by index — an index silently changes
+  /// meaning when a case is inserted, and this outlives the build that wrote
+  /// it. A name no build knows reads back as null, which draws the fallback.
+  final String dist;
+
+  /// When it was last seen, so a reading can be aged out if that is ever
+  /// wanted. Nothing reads it yet.
+  final int updatedAt;
+  const ServerDistRow({
+    required this.serverId,
+    required this.dist,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['server_id'] = Variable<String>(serverId);
+    map['dist'] = Variable<String>(dist);
+    map['updated_at'] = Variable<int>(updatedAt);
+    return map;
+  }
+
+  ServerDistsCompanion toCompanion(bool nullToAbsent) {
+    return ServerDistsCompanion(
+      serverId: Value(serverId),
+      dist: Value(dist),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory ServerDistRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ServerDistRow(
+      serverId: serializer.fromJson<String>(json['serverId']),
+      dist: serializer.fromJson<String>(json['dist']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'serverId': serializer.toJson<String>(serverId),
+      'dist': serializer.toJson<String>(dist),
+      'updatedAt': serializer.toJson<int>(updatedAt),
+    };
+  }
+
+  ServerDistRow copyWith({String? serverId, String? dist, int? updatedAt}) =>
+      ServerDistRow(
+        serverId: serverId ?? this.serverId,
+        dist: dist ?? this.dist,
+        updatedAt: updatedAt ?? this.updatedAt,
+      );
+  ServerDistRow copyWithCompanion(ServerDistsCompanion data) {
+    return ServerDistRow(
+      serverId: data.serverId.present ? data.serverId.value : this.serverId,
+      dist: data.dist.present ? data.dist.value : this.dist,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ServerDistRow(')
+          ..write('serverId: $serverId, ')
+          ..write('dist: $dist, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(serverId, dist, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ServerDistRow &&
+          other.serverId == this.serverId &&
+          other.dist == this.dist &&
+          other.updatedAt == this.updatedAt);
+}
+
+class ServerDistsCompanion extends UpdateCompanion<ServerDistRow> {
+  final Value<String> serverId;
+  final Value<String> dist;
+  final Value<int> updatedAt;
+  const ServerDistsCompanion({
+    this.serverId = const Value.absent(),
+    this.dist = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  ServerDistsCompanion.insert({
+    required String serverId,
+    required String dist,
+    required int updatedAt,
+  }) : serverId = Value(serverId),
+       dist = Value(dist),
+       updatedAt = Value(updatedAt);
+  static Insertable<ServerDistRow> custom({
+    Expression<String>? serverId,
+    Expression<String>? dist,
+    Expression<int>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (serverId != null) 'server_id': serverId,
+      if (dist != null) 'dist': dist,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  ServerDistsCompanion copyWith({
+    Value<String>? serverId,
+    Value<String>? dist,
+    Value<int>? updatedAt,
+  }) {
+    return ServerDistsCompanion(
+      serverId: serverId ?? this.serverId,
+      dist: dist ?? this.dist,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (serverId.present) {
+      map['server_id'] = Variable<String>(serverId.value);
+    }
+    if (dist.present) {
+      map['dist'] = Variable<String>(dist.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ServerDistsCompanion(')
+          ..write('serverId: $serverId, ')
+          ..write('dist: $dist, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $AgentConversationsTable extends AgentConversations
     with TableInfo<$AgentConversationsTable, AgentConversationRow> {
   @override
@@ -7402,6 +7668,7 @@ abstract class _$AppDb extends GeneratedDatabase {
   late final $ContainerRuntimesTable containerRuntimes =
       $ContainerRuntimesTable(this);
   late final $ConnStatsTable connStats = $ConnStatsTable(this);
+  late final $ServerDistsTable serverDists = $ServerDistsTable(this);
   late final $AgentConversationsTable agentConversations =
       $AgentConversationsTable(this);
   late final $AgentActiveConversationsTable agentActiveConversations =
@@ -7429,6 +7696,7 @@ abstract class _$AppDb extends GeneratedDatabase {
     containerHosts,
     containerRuntimes,
     connStats,
+    serverDists,
     agentConversations,
     agentActiveConversations,
     tombstones,
@@ -7547,6 +7815,13 @@ abstract class _$AppDb extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('conn_stat', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'server',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('server_dist', kind: UpdateKind.delete)],
     ),
     WritePropagation(
       on: TableUpdateQuery.onTableName(
@@ -8495,6 +8770,24 @@ final class $$ServersTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<$ServerDistsTable, List<ServerDistRow>>
+  _serverDistsRefsTable(_$AppDb db) => MultiTypedResultKey.fromTable(
+    db.serverDists,
+    aliasName: 'server__id__server_dist__server_id',
+  );
+
+  $$ServerDistsTableProcessedTableManager get serverDistsRefs {
+    final manager = $$ServerDistsTableTableManager(
+      $_db,
+      $_db.serverDists,
+    ).filter((f) => f.serverId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_serverDistsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
@@ -8947,6 +9240,31 @@ class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
           }) => $$ConnStatsTableFilterComposer(
             $db: $db,
             $table: $db.connStats,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> serverDistsRefs(
+    Expression<bool> Function($$ServerDistsTableFilterComposer f) f,
+  ) {
+    final $$ServerDistsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.serverDists,
+      getReferencedColumn: (t) => t.serverId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServerDistsTableFilterComposer(
+            $db: $db,
+            $table: $db.serverDists,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -9594,6 +9912,31 @@ class $$ServersTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> serverDistsRefs<T extends Object>(
+    Expression<T> Function($$ServerDistsTableAnnotationComposer a) f,
+  ) {
+    final $$ServerDistsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.serverDists,
+      getReferencedColumn: (t) => t.serverId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServerDistsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.serverDists,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$ServersTableTableManager
@@ -9622,6 +9965,7 @@ class $$ServersTableTableManager
             bool containerHostsRefs,
             bool containerRuntimesRefs,
             bool connStatsRefs,
+            bool serverDistsRefs,
           })
         > {
   $$ServersTableTableManager(_$AppDb db, $ServersTable table)
@@ -9797,6 +10141,7 @@ class $$ServersTableTableManager
                 containerHostsRefs = false,
                 containerRuntimesRefs = false,
                 connStatsRefs = false,
+                serverDistsRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -9811,6 +10156,7 @@ class $$ServersTableTableManager
                     if (containerHostsRefs) db.containerHosts,
                     if (containerRuntimesRefs) db.containerRuntimes,
                     if (connStatsRefs) db.connStats,
+                    if (serverDistsRefs) db.serverDists,
                   ],
                   addJoins:
                       <
@@ -10069,6 +10415,27 @@ class $$ServersTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (serverDistsRefs)
+                        await $_getPrefetchedData<
+                          ServerRow,
+                          $ServersTable,
+                          ServerDistRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ServersTableReferences
+                              ._serverDistsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ServersTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).serverDistsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.serverId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -10102,6 +10469,7 @@ typedef $$ServersTableProcessedTableManager =
         bool containerHostsRefs,
         bool containerRuntimesRefs,
         bool connStatsRefs,
+        bool serverDistsRefs,
       })
     >;
 typedef $$ServerTagsTableCreateCompanionBuilder =
@@ -14108,6 +14476,279 @@ typedef $$ConnStatsTableProcessedTableManager =
       ConnStatRow,
       PrefetchHooks Function({bool serverId})
     >;
+typedef $$ServerDistsTableCreateCompanionBuilder =
+    ServerDistsCompanion Function({
+      required String serverId,
+      required String dist,
+      required int updatedAt,
+    });
+typedef $$ServerDistsTableUpdateCompanionBuilder =
+    ServerDistsCompanion Function({
+      Value<String> serverId,
+      Value<String> dist,
+      Value<int> updatedAt,
+    });
+
+final class $$ServerDistsTableReferences
+    extends BaseReferences<_$AppDb, $ServerDistsTable, ServerDistRow> {
+  $$ServerDistsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $ServersTable _serverIdTable(_$AppDb db) =>
+      db.servers.createAlias('server_dist__server_id__server__id');
+
+  $$ServersTableProcessedTableManager get serverId {
+    final $_column = $_itemColumn<String>('server_id')!;
+
+    final manager = $$ServersTableTableManager(
+      $_db,
+      $_db.servers,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_serverIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$ServerDistsTableFilterComposer
+    extends Composer<_$AppDb, $ServerDistsTable> {
+  $$ServerDistsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get dist => $composableBuilder(
+    column: $table.dist,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ServersTableFilterComposer get serverId {
+    final $$ServersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableFilterComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ServerDistsTableOrderingComposer
+    extends Composer<_$AppDb, $ServerDistsTable> {
+  $$ServerDistsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get dist => $composableBuilder(
+    column: $table.dist,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ServersTableOrderingComposer get serverId {
+    final $$ServersTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableOrderingComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ServerDistsTableAnnotationComposer
+    extends Composer<_$AppDb, $ServerDistsTable> {
+  $$ServerDistsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get dist =>
+      $composableBuilder(column: $table.dist, builder: (column) => column);
+
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  $$ServersTableAnnotationComposer get serverId {
+    final $$ServersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ServerDistsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDb,
+          $ServerDistsTable,
+          ServerDistRow,
+          $$ServerDistsTableFilterComposer,
+          $$ServerDistsTableOrderingComposer,
+          $$ServerDistsTableAnnotationComposer,
+          $$ServerDistsTableCreateCompanionBuilder,
+          $$ServerDistsTableUpdateCompanionBuilder,
+          (ServerDistRow, $$ServerDistsTableReferences),
+          ServerDistRow,
+          PrefetchHooks Function({bool serverId})
+        > {
+  $$ServerDistsTableTableManager(_$AppDb db, $ServerDistsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ServerDistsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ServerDistsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ServerDistsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> serverId = const Value.absent(),
+                Value<String> dist = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+              }) => ServerDistsCompanion(
+                serverId: serverId,
+                dist: dist,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                required String serverId,
+                required String dist,
+                required int updatedAt,
+              }) => ServerDistsCompanion.insert(
+                serverId: serverId,
+                dist: dist,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$ServerDistsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({serverId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (serverId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.serverId,
+                                referencedTable: $$ServerDistsTableReferences
+                                    ._serverIdTable(db),
+                                referencedColumn: $$ServerDistsTableReferences
+                                    ._serverIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ServerDistsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDb,
+      $ServerDistsTable,
+      ServerDistRow,
+      $$ServerDistsTableFilterComposer,
+      $$ServerDistsTableOrderingComposer,
+      $$ServerDistsTableAnnotationComposer,
+      $$ServerDistsTableCreateCompanionBuilder,
+      $$ServerDistsTableUpdateCompanionBuilder,
+      (ServerDistRow, $$ServerDistsTableReferences),
+      ServerDistRow,
+      PrefetchHooks Function({bool serverId})
+    >;
 typedef $$AgentConversationsTableCreateCompanionBuilder =
     AgentConversationsCompanion Function({
       required String id,
@@ -15003,6 +15644,8 @@ class $AppDbManager {
       $$ContainerRuntimesTableTableManager(_db, _db.containerRuntimes);
   $$ConnStatsTableTableManager get connStats =>
       $$ConnStatsTableTableManager(_db, _db.connStats);
+  $$ServerDistsTableTableManager get serverDists =>
+      $$ServerDistsTableTableManager(_db, _db.serverDists);
   $$AgentConversationsTableTableManager get agentConversations =>
       $$AgentConversationsTableTableManager(_db, _db.agentConversations);
   $$AgentActiveConversationsTableTableManager get agentActiveConversations =>

@@ -72,7 +72,25 @@ pub const LINUX: &[CommandSpec] = &[
     CommandSpec { key: ECHO, cmd: "echo __linux" },
     CommandSpec { key: TIME, cmd: "date +%s" },
     CommandSpec { key: NET, cmd: "cat /proc/net/dev" },
-    CommandSpec { key: SYS, cmd: "cat /etc/*-release | grep ^PRETTY_NAME" },
+    CommandSpec {
+        key: SYS,
+        // Three keys, not one. `PRETTY_NAME` is prose written for a person and
+        // is what the status page shows; `ID` is os-release's machine-readable
+        // identifier and is what picks the distribution's mark, which used to
+        // be guessed by looking for substrings in the prose. `ID_LIKE` names
+        // the base a derivative nothing recognises is built on.
+        //
+        // Both files are read, in the order os-release specifies — a system
+        // that has only `/usr/lib/os-release` is answered, and one where
+        // `/etc/os-release` is the usual symlink to it just prints each key
+        // twice, which the parser resolves by taking the first.
+        //
+        // The old `/etc/*-release` glob stays as the fallback for a remote
+        // with no os-release at all (CentOS 6 and older, some appliances);
+        // there it finds only a `PRETTY_NAME`, and the mark falls back to
+        // matching the prose exactly as before.
+        cmd: "cat /etc/os-release /usr/lib/os-release 2>/dev/null | grep -E '^(ID|ID_LIKE|PRETTY_NAME)=' || cat /etc/*-release 2>/dev/null | grep ^PRETTY_NAME",
+    },
     CommandSpec { key: CPU, cmd: "cat /proc/stat | grep cpu" },
     CommandSpec { key: UPTIME, cmd: "uptime" },
     CommandSpec { key: CONN, cmd: "cat /proc/net/snmp" },

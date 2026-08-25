@@ -5,7 +5,8 @@
 //! Each test names its corresponding Dart case.
 
 use sbm_parser::types::*;
-use sbm_parser::{bsd, linux, windows};
+use sbm_parser::{bsd, commands, linux, windows, SystemType};
+use std::collections::HashMap;
 
 // ---------- CPU:cpu_test.dart ----------
 
@@ -1061,6 +1062,121 @@ fn sys_version_and_hostname() {
     assert_eq!(parse_sys_version("no equals here"), None);
     assert_eq!(parse_hostname("  myhost \n").as_deref(), Some("myhost"));
     assert_eq!(parse_hostname("   "), None);
+}
+
+/// The `sys` command prints three keys now, and the two new ones are what
+/// picks a distribution's mark — `PRETTY_NAME` is only what a person reads.
+#[test]
+fn os_release_keys() {
+    use sbm_parser::common::*;
+    let raw = "ID=linuxmint\nID_LIKE=\"ubuntu debian\"\nPRETTY_NAME=\"Linux Mint 21.3\"\n";
+
+    assert_eq!(parse_os_id(raw).as_deref(), Some("linuxmint"));
+    assert_eq!(parse_os_id_like(raw), vec!["ubuntu", "debian"]);
+    assert_eq!(parse_sys_version(raw).as_deref(), Some("Linux Mint 21.3"));
+}
+
+/// An empty `ID_LIKE` is written out rather than omitted — NixOS 25.11 does,
+/// measured — and must not become a base named "".
+#[test]
+fn os_release_empty_id_like() {
+    use sbm_parser::common::*;
+    let raw = "ID=nixos\nID_LIKE=\"\"\nPRETTY_NAME=\"NixOS 25.11 (Xantusia)\"\n";
+
+    assert_eq!(parse_os_id(raw).as_deref(), Some("nixos"));
+    assert_eq!(parse_os_id_like(raw), Vec::<String>::new());
+}
+
+/// A double-quoted value is shell-quoted, so its backslash escapes are not
+/// part of the value. They used to reach the status card as written.
+#[test]
+fn os_release_unescapes_double_quoted() {
+    use sbm_parser::common::*;
+    let raw = "PRETTY_NAME=\"Foo \\\"Bar\\\" Linux \\\\ 1.0\"\n";
+    assert_eq!(
+        parse_sys_version(raw).as_deref(),
+        Some(r#"Foo "Bar" Linux \ 1.0"#)
+    );
+
+    // Only the four the shell escapes. Everything else keeps its backslash,
+    // the way the shell leaves it.
+    assert_eq!(
+        parse_sys_version("PRETTY_NAME=\"a\\nb\"\n").as_deref(),
+        Some(r"a\nb")
+    );
+
+    // Single quotes have no escapes in shell, and none here.
+    assert_eq!(
+        parse_sys_version("PRETTY_NAME='a\\nb'\n").as_deref(),
+        Some(r"a\nb")
+    );
+}
+
+/// `ID` must not be found inside `ID_LIKE`: the prefix alone matches, and
+/// reading `_LIKE=debian` as this machine's own id would name a distribution
+/// that does not exist.
+#[test]
+fn os_release_id_is_not_id_like() {
+    use sbm_parser::common::*;
+    assert_eq!(parse_os_id("ID_LIKE=debian\n").as_deref(), None);
+    assert_eq!(parse_os_id_like("ID=debian\n"), Vec::<String>::new());
+}
+
+/// `/etc/os-release` is usually a symlink to `/usr/lib/os-release`, so the
+/// command prints every key twice. os-release gives `/etc` precedence, which
+/// here is the first occurrence.
+#[test]
+fn os_release_first_occurrence_wins() {
+    use sbm_parser::common::*;
+    let raw = "ID=rhel\nPRETTY_NAME=\"RHEL 9.4\"\nID=fedora\nPRETTY_NAME=\"Fedora 40\"\n";
+
+    assert_eq!(parse_os_id(raw).as_deref(), Some("rhel"));
+    assert_eq!(parse_sys_version(raw).as_deref(), Some("RHEL 9.4"));
+}
+
+/// A remote too old for os-release answers through the `/etc/*-release`
+/// fallback, which has only the prose line. Everything else stays absent
+/// rather than becoming a wrong guess.
+#[test]
+fn os_release_absent_leaves_only_pretty_name() {
+    use sbm_parser::common::*;
+    let raw = "PRETTY_NAME=\"Debian GNU/Linux 12 (bookworm)\"\n";
+
+    assert_eq!(parse_sys_version(raw).as_deref(), Some("Debian GNU/Linux 12 (bookworm)"));
+    assert_eq!(parse_os_id(raw), None);
+    assert_eq!(parse_os_id_like(raw), Vec::<String>::new());
+}
+
+/// Unquoted values are legal, and the whole block reaches the parser through
+/// `parse_status`, not just the isolated helpers.
+#[test]
+fn os_release_through_parse_status() {
+    let raw = HashMap::from([(
+        commands::SYS.to_string(),
+        "ID=alpine\nPRETTY_NAME=Alpine Linux v3.20\n".to_string(),
+    )]);
+    let status = sbm_parser::parse_status(SystemType::Linux, &raw);
+
+    assert_eq!(status.os_id.as_deref(), Some("alpine"));
+    assert_eq!(status.sys.as_deref(), Some("Alpine Linux v3.20"));
+}
+
+/// Bsd and Windows have no os-release, and their `sys` command output must not
+/// be mined for one — `uname -or` prints `24.5.0 Darwin`, which has no `=` in
+/// it at all, but a future command's output might.
+#[test]
+fn os_id_is_linux_only() {
+    for (system, sys) in [
+        (SystemType::Bsd, "24.5.0 Darwin"),
+        (SystemType::Windows, "Microsoft Windows 11 Pro"),
+    ] {
+        let raw = HashMap::from([(commands::SYS.to_string(), sys.to_string())]);
+        let status = sbm_parser::parse_status(system, &raw);
+
+        assert_eq!(status.sys.as_deref(), Some(sys));
+        assert_eq!(status.os_id, None);
+        assert!(status.os_id_like.is_empty());
+    }
 }
 
 #[test]

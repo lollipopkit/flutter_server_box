@@ -42,6 +42,31 @@ void main() {
     expect(AppTab.parseAppTabsFromObj(['unknown']), AppTab.values);
   });
 
+  test('names one tab twice and gets it once, in the order it first appeared', () {
+    // The home page indexes its pages and its nav bar by position, so a repeat
+    // puts the same page on screen twice and leaves "which position is
+    // Terminal" without an answer — which is also what the reorder handler
+    // asks when the set changes under it.
+    final tabs = AppTab.parseAppTabsFromObj([
+      'ssh',
+      'server',
+      'ssh',
+      'file',
+      'server',
+    ]);
+
+    expect(tabs, [AppTab.ssh, AppTab.server, AppTab.file]);
+  });
+
+  test('and mixes the ways a tab can be named without repeating it', () {
+    // A record written by a build that stored indices, merged with one that
+    // stored names: the same tab, said two ways.
+    expect(
+      AppTab.parseAppTabsFromObj(['server', AppTab.server.index, AppTab.server]),
+      [AppTab.server],
+    );
+  });
+
   test('offers Agent when only the legacy home tabs are selected', () {
     final available = availableHomeTabs(const [
       AppTab.server,

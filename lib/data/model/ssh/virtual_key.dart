@@ -4,6 +4,15 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:xterm/core.dart';
 
+/// How many virtual keys go in one row.
+///
+/// Fixed rather than measured: a key is as wide as the row divided by this, so
+/// the same key is in the same place on every phone and the row does not
+/// reflow when the window does. It is also what the settings page counts rows
+/// with, which is why it is here rather than beside the terminal that draws
+/// them.
+const kVirtKeysPerRow = 7;
+
 /// The three kinds of virtual key, which is what the walkthrough steps
 /// through. See [VirtKeyX.group].
 enum VirtKeyGroup { modifiers, navigation, shortcuts }
@@ -211,12 +220,14 @@ extension VirtKeyX on VirtKey {
   /// punishment, and what a newcomer needs is which of these *type* something,
   /// which move the cursor, and which open a page instead. Punctuation and the
   /// function keys belong to none — they are what they say.
+  ///
+  /// Esc and Tab belong to none either, and used to be counted as modifiers.
+  /// The step's text tells the reader to tap one to arm it and then tap a
+  /// letter, which is true of exactly the three keys [toggleable] answers yes
+  /// to; Esc and Tab send a character and are done. Highlighted under that
+  /// sentence they taught something that is not so.
   VirtKeyGroup? get group => switch (this) {
-    VirtKey.esc ||
-    VirtKey.tab ||
-    VirtKey.ctrl ||
-    VirtKey.alt ||
-    VirtKey.shift => VirtKeyGroup.modifiers,
+    VirtKey.ctrl || VirtKey.alt || VirtKey.shift => VirtKeyGroup.modifiers,
     VirtKey.up ||
     VirtKey.down ||
     VirtKey.left ||
@@ -231,14 +242,45 @@ extension VirtKeyX on VirtKey {
     _ => func == null ? null : VirtKeyGroup.shortcuts,
   };
 
-  /// - [saveDefaultIfErr] if the stored raw values is invalid, save default order to store
-  static List<VirtKey> loadFromStore({bool saveDefaultIfErr = true}) {
+  /// The key of that name, or null for one this build has no case for.
+  static VirtKey? byName(String name) =>
+      VirtKey.values.firstWhereOrNull((key) => key.name == name);
+
+  /// The user's order, with anything this build cannot name left out.
+  ///
+  /// A name outside the enum is a key added by a newer build — a restored
+  /// backup, or a downgrade — and there is nothing here to draw for it. It used
+  /// to reset the whole order to the default, so one unknown entry threw away
+  /// an arrangement that was otherwise entirely readable; and the settings page
+  /// indexed the same list without the guard, so it threw while building.
+  ///
+  /// A repeat is dropped too, keeping the first. A key can only be in one
+  /// place, so a stored order naming one twice drew two copies of it — each
+  /// with the same `ValueKey`, and each toggling the same modifier — and the
+  /// settings page offered two rows for the one key. Reachable from a merged
+  /// backup and from a reorder interrupted midway, neither of which the reader
+  /// can tell apart from a list that was always right.
+  ///
+  /// Only what was dropped is written back, and only when something was: the
+  /// unknown key is then gone for good, which is the price of not carrying a
+  /// name nothing can render. An empty result is a stored value that says
+  /// nothing at all, and falls back to the default without being saved over.
+  /// [persistRepairs] off reads without writing, for a caller that only wants
+  /// to know what is stored.
+  static List<VirtKey> loadFromStore({bool persistRepairs = true}) {
     try {
-      final ints = Stores.setting.sshVirtKeys.fetch();
-      return ints.map((e) => VirtKey.values[e]).toList();
-    } on RangeError {
-      final ints = defaultOrder.map((e) => e.index).toList();
-      Stores.setting.sshVirtKeys.put(ints);
+      final names = Stores.setting.sshVirtKeys.fetch();
+      final seen = <VirtKey>{};
+      final keys = [
+        for (final name in names)
+          if (byName(name) case final key?)
+            if (seen.add(key)) key,
+      ];
+      if (keys.isEmpty) return defaultOrder;
+      if (persistRepairs && keys.length != names.length) {
+        Stores.setting.sshVirtKeys.put(keys.map((e) => e.name).toList());
+      }
+      return keys;
     } catch (e, s) {
       Loggers.app.warning('Failed to load sshVirtKeys', e, s);
     }

@@ -282,8 +282,59 @@ class AppLocalizationsPt extends AppLocalizations {
   String get backupPasswordWrong => 'Senha de backup incorreta';
 
   @override
+  String get connectAll => 'Conectar tudo';
+
+  @override
+  String get disconnectAll => 'Desconectar tudo';
+
+  @override
+  String get distIcon => 'Marcas de distribuição';
+
+  @override
+  String get distIconConsent =>
+      'Apenas para indicar a distribuição que um servidor pode estar executando.';
+
+  @override
+  String get distIconIntroLegal =>
+      'Uma marca indica apenas o que este dispositivo leu do sistema remoto, informação que pode estar errada ou desatualizada, e não identifica um derivado, uma recompilação nem uma versão específica. Quando não é possível identificar, é desenhado um ícone genérico.\n\nCada marca é uma marca registrada de seu respectivo proprietário e é usada aqui apenas para se referir ao sistema que identifica.';
+
+  @override
+  String get distIconTip =>
+      'Mostrar ao lado de cada servidor uma pequena marca do sistema que ele parece executar';
+
+  @override
+  String get distNameMap => 'Correspondência de nomes';
+
+  @override
+  String get distNameMapTip =>
+      'Apenas para uma distribuição cujo arquivo tenha outro nome onde você hospeda as marcas. A chave é o nome que este aplicativo usa; o valor é o nome a ser buscado. Deixe vazio enquanto nenhuma marca estiver faltando.';
+
+  @override
+  String get logoUrl => 'URL do logotipo';
+
+  @override
+  String get logoUrlTip =>
+      'A imagem grande no topo da página de um servidor, nas cores originais.';
+
+  @override
+  String get markUrl => 'URL da marca';
+
+  @override
+  String get markUrlTip =>
+      'A marca pequena ao lado do nome de um servidor nas listas. Vazio: nenhuma.\n\nNão é a mesma imagem do logotipo';
+
+  @override
+  String get navTabMenuTip =>
+      'Toque e segure uma aba — ou clique com o botão direito — para conectar ou desconectar tudo nela de uma vez.';
+
+  @override
+  String nTags(Object count) {
+    return '$count tags';
+  }
+
+  @override
   String get remoteBackupPasswordRequired =>
-      'Remote backups require a non-empty backup password';
+      'Backups remotos exigem uma senha de backup não vazia';
 
   @override
   String get monitorHttpsRequired =>
@@ -616,6 +667,9 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get ungrouped => 'Sem grupo';
+
+  @override
   String get unused => 'Não utilizado';
 
   @override
@@ -758,9 +812,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get noPromptAgain => 'Não perguntar novamente';
-
-  @override
-  String get onlyOneLine => 'Exibir apenas como uma linha (rolável)';
 
   @override
   String get openLastPath => 'Abrir o último caminho';
@@ -1282,6 +1333,13 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get virtKeyIntroSelect =>
       'Enquanto o terminal tiver algo a rolar, arraste na horizontal para selecionar texto.';
+
+  @override
+  String get virtKeyRows => 'Linhas exibidas de uma vez';
+
+  @override
+  String get virtKeyRowsTip =>
+      'O restante fica em uma página própria, deslizada para o lado.';
 
   @override
   String get waitConnection => 'Por favor, aguarde a conexão ser estabelecida';

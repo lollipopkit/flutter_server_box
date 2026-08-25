@@ -10,12 +10,14 @@ MonitorMetrics _$MonitorMetricsFromJson(
   Map<String, dynamic> json,
 ) => MonitorMetrics(
   timestamp: json['timestamp'] as String,
-  extendedUpdatedAt: json['extended_updated_at'] as String,
+  extendedUpdatedAt: json['extended_updated_at'] as String?,
   serverName: json['server_name'] as String,
   cpuUsage: (json['cpu_usage'] as num).toDouble(),
-  cpuCores: (json['cpu_cores'] as List<dynamic>)
-      .map((e) => MonitorCpuCoreTime.fromJson(e as Map<String, dynamic>))
-      .toList(),
+  cpuCores:
+      (json['cpu_cores'] as List<dynamic>?)
+          ?.map((e) => MonitorCpuCoreTime.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
   memory: MonitorMemoryMetrics.fromJson(json['memory'] as Map<String, dynamic>),
   swap: MonitorSwapMetrics.fromJson(json['swap'] as Map<String, dynamic>),
   disk: MonitorDiskMetrics.fromJson(json['disk'] as Map<String, dynamic>),
@@ -29,6 +31,12 @@ MonitorMetrics _$MonitorMetricsFromJson(
           .toList() ??
       const [],
   sys: json['sys'] as String?,
+  osId: json['os_id'] as String?,
+  osIdLike:
+      (json['os_id_like'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const [],
   cpuBrand: json['cpu_brand'] as String?,
   gpus:
       (json['gpus'] as List<dynamic>?)
@@ -90,6 +98,8 @@ Map<String, dynamic> _$MonitorMetricsToJson(MonitorMetrics instance) =>
       'temperature': instance.temperature,
       'temps': instance.temps,
       'sys': instance.sys,
+      'os_id': instance.osId,
+      'os_id_like': instance.osIdLike,
       'cpu_brand': instance.cpuBrand,
       'gpus': instance.gpus,
       'disk_details': instance.diskDetails,
@@ -206,6 +216,7 @@ MonitorGpuMetrics _$MonitorGpuMetricsFromJson(Map<String, dynamic> json) =>
       memoryUsed: (json['memory_used'] as num).toInt(),
       memoryTotal: (json['memory_total'] as num).toInt(),
       memoryUnit: json['memory_unit'] as String,
+      vendor: json['vendor'] as String?,
     );
 
 Map<String, dynamic> _$MonitorGpuMetricsToJson(MonitorGpuMetrics instance) =>
@@ -217,6 +228,7 @@ Map<String, dynamic> _$MonitorGpuMetricsToJson(MonitorGpuMetrics instance) =>
       'memory_used': instance.memoryUsed,
       'memory_total': instance.memoryTotal,
       'memory_unit': instance.memoryUnit,
+      'vendor': instance.vendor,
     };
 
 MonitorDiskDetail _$MonitorDiskDetailFromJson(Map<String, dynamic> json) =>

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
@@ -14,6 +15,7 @@ import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/linux_seed.dart';
 import 'package:server_box/core/utils/local_exec.dart';
+import 'package:server_box/core/utils/logo_url.dart';
 import 'package:server_box/core/utils/rootfs.dart';
 import 'package:server_box/core/utils/rootfs_manifest_source.dart';
 import 'package:server_box/core/utils/server_dedup.dart';
@@ -40,11 +42,9 @@ import 'package:server_box/view/page/setting/entries/home_tabs.dart';
 import 'package:server_box/view/page/setting/platform/ios.dart';
 import 'package:server_box/view/page/setting/platform/platform_pub.dart';
 import 'package:server_box/view/page/setting/seq/known_hosts.dart';
-// Still reached on its own from the server settings page, which links straight
-// at it rather than at the tabs.
-import 'package:server_box/view/page/setting/seq/srv_func_seq.dart';
 import 'package:server_box/view/page/setting/seq/srv_orders.dart';
 import 'package:server_box/view/page/setting/seq/virt_key.dart';
+import 'package:server_box/view/widget/dist_icon.dart';
 import 'package:server_box/view/widget/dmg_notice.dart';
 import 'package:server_box/view/widget/rootfs_install.dart';
 
@@ -79,6 +79,16 @@ const _kMenuBreakpoint = 800.0;
 
 /// How wide the menu is when it is beside the content.
 const _kMenuWidth = 232.0;
+
+/// How wide the content beside that menu is allowed to get.
+///
+/// Left to fill a desktop window, a settings row put its label against one
+/// edge and its control against the other, a hand's width apart, and stopped
+/// reading as one thing. Two [PageColumns] columns' worth stops that without
+/// making the pane a narrow strip in the middle of a wide window — and it is
+/// also what lets the pages here that are a grid rather than a list keep two
+/// columns.
+const _kContentMaxWidth = 900.0;
 
 class _SettingsPageState extends ConsumerState<SettingsPage> {
   /// Which branches are open in the wide menu. Nothing to start with, so it
@@ -303,7 +313,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     ];
   }
 
-  void _onSelect(SettingsNode node) => setState(() => _selectedId = node.id);
+  void _onSelect(SettingsNode node) {
+    _dropPushedPages();
+    setState(() => _selectedId = node.id);
+  }
 
   void _onToggle(SettingsNode node) {
     setState(() {
@@ -311,10 +324,31 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     });
   }
 
+  /// The navigator holding the right-hand side, so a selection can reach it.
+  final _contentNav = GlobalKey<NavigatorState>();
+
+  /// Discards anything pushed on top of the levels [_path] describes.
+  ///
+  /// The content navigator is driven declaratively — the pages come from the
+  /// selection — but a page inside it may push a route by hand: the raw
+  /// settings editor does, from `entries/app.dart`. A pushed route sits above
+  /// every declarative page, so changing the selection rebuilt the pages
+  /// underneath one and left it on screen. Tapping the menu looked like it did
+  /// nothing at all, and the editor stayed put whichever section was picked.
+  ///
+  /// `route.settings is Page` is what tells the two apart: the declarative ones
+  /// each come from a `MaterialPage`, and a hand-pushed one does not.
+  void _dropPushedPages() {
+    final nav = _contentNav.currentState;
+    if (nav == null) return;
+    nav.popUntil((route) => route.settings is Page);
+  }
+
   /// A tab is a tab: it shows something. Tapping a branch goes into it *and*
   /// selects what is first inside, rather than leaving a row of tabs with none
   /// of them on. The same applies to a row of the list.
   void _onTab(SettingsNode node) {
+    _dropPushedPages();
     setState(() {
       if (node.isLeaf && _path.isNotEmpty) {
         _selectedId = node.id;
@@ -330,6 +364,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   /// just left, and that branch is a tab here, lit to say so.
   void _onTabBack() {
     if (_path.isEmpty) return;
+    // The back button lives in the `Scaffold`'s app bar, outside the content
+    // navigator — so with the raw editor pushed on top it is still visible and
+    // still tappable, and rebuilding the pages underneath would leave the
+    // editor on screen describing a level that is no longer showing.
+    _dropPushedPages();
     setState(_path.removeLast);
   }
 
@@ -488,9 +527,24 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     //
     // The `Scaffold`'s colour and not `colorScheme.surface`: that is the slot
     // `toAmoled` overrides, and the surface one it leaves alone.
+    // The cap goes on what is *in* the page, never on the page. A route
+    // sliding in is as wide as the pane; a navigator inside a narrower box
+    // slides the whole transition inside that box, so the page appeared to
+    // come out of a panel in the middle rather than in from the edge.
+    //
+    // The `Material` stays full width for the same reason — it is the
+    // background the transition is drawn against.
     Widget opaque(Widget child) => Material(
       color: Theme.of(context).scaffoldBackgroundColor,
-      child: child,
+      // Told to expand inside the cap: a `Center` hands down loose
+      // constraints, under which a page's list takes the height of its
+      // content rather than the height of the pane.
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: _kContentMaxWidth),
+          child: SizedBox.expand(child: child),
+        ),
+      ),
     );
 
     Widget pagesOf(String id, List<SettingsNode> level) {
@@ -503,6 +557,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     }
 
     return Navigator(
+      key: _contentNav,
       pages: [
         if (wide)
           MaterialPage<void>(
@@ -638,10 +693,15 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
     text: _setting.sshBlurRadius.fetch().toString(),
   );
   late final _textScalerCtrl = TextEditingController(
-    text: _setting.textFactor.toString(),
+    // `.fetch()`, as the three above: without it the field opened showing
+    // `Instance of 'SqlitePropDefault<double>'` and handed that to be parsed.
+    text: _setting.textFactor.fetch().toString(),
   );
   late final _serverLogoCtrl = TextEditingController(
     text: _setting.serverLogoUrl.fetch(),
+  );
+  late final _serverMarkCtrl = TextEditingController(
+    text: _setting.serverMarkUrl.fetch(),
   );
 
   @override
@@ -667,6 +727,7 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
     _sshBlurCtrl.dispose();
     _textScalerCtrl.dispose();
     _serverLogoCtrl.dispose();
+    _serverMarkCtrl.dispose();
     super.dispose();
   }
 

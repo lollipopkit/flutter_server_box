@@ -9,6 +9,7 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/store/entity_store.dart';
 import 'package:server_box/view/page/ssh/snippet_run.dart';
+import 'package:server_box/view/widget/dist_icon.dart';
 
 final class SnippetEditPageArgs {
   final Snippet? snippet;
@@ -207,6 +208,7 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> {
       title: libL10n.server,
       items: spis,
       display: (spi) => spi.name,
+      avatar: (spi) => distIcon(spi.id, size: 17),
     );
     if (chosen == null || !mounted) return;
 
@@ -295,6 +297,11 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> {
                 title: l10n.autoRun,
                 items: ref.read(serversProvider).serverOrder,
                 display: (e) => ref.read(serversProvider).servers[e]?.name ?? e,
+                // From the cache: the dialog lists every server, including
+                // ones with no live status, so nothing else here knows what
+                // they run.
+                avatar: (e) =>
+                    distIcon(e, size: 17),
                 initial: validServerIds,
                 clearable: true,
               );
