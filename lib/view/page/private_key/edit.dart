@@ -267,66 +267,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
           icon: Icons.vpn_key,
           suggestion: false,
         ),
-        TextButton(
-          onPressed: () async {
-            final path = await Pfs.pickFilePath();
-            if (path == null) return;
-            if (!mounted) return;
-
-            final file = File(path);
-            bool exists;
-            try {
-              exists = await file.exists();
-            } catch (e) {
-              if (!mounted) return;
-              Toast.error('${libL10n.fail}: $e');
-              return;
-            }
-            if (!mounted) return;
-            if (!exists) {
-              Toast.show(libL10n.notExistFmt(path));
-              return;
-            }
-            int size;
-            try {
-              size = (await file.stat()).size;
-            } catch (e) {
-              if (!mounted) return;
-              Toast.error('${libL10n.fail}: $e');
-              return;
-            }
-            if (!mounted) return;
-            if (size > Miscs.privateKeyMaxSize) {
-              Toast.show(
-                l10n.fileTooLarge(
-                  path,
-                  size.bytes2Str,
-                  Miscs.privateKeyMaxSize.bytes2Str,
-                ),
-              );
-              return;
-            }
-
-            String content;
-            try {
-              content = await file.readAsString();
-            } catch (e) {
-              if (!mounted) return;
-              Toast.error('${libL10n.fail}: $e');
-              return;
-            }
-            if (!mounted) return;
-            // dartssh2 accepts only LF (but not CRLF or CR)
-            try {
-              _keyController.text = standardizePrivateKeyLineSeparators(
-                content.trim(),
-              );
-            } catch (_) {
-              // Controller disposed.
-            }
-          },
-          child: Text(libL10n.file),
-        ),
+        TextButton(onPressed: _onTapPickFile, child: Text(libL10n.file)),
         Input(
           controller: _pwdController,
           type: TextInputType.text,
@@ -447,5 +388,62 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
     }
     if (!mounted) return;
     context.pop();
+  }
+}
+
+extension _Actions on _PrivateKeyEditPageState {
+  Future<void> _onTapPickFile() async {
+    final path = await Pfs.pickFilePath();
+    if (path == null || !mounted) return;
+
+    final file = File(path);
+    bool exists;
+    try {
+      exists = await file.exists();
+    } catch (e) {
+      if (!mounted) return;
+      Toast.error('${libL10n.fail}: $e');
+      return;
+    }
+    if (!mounted) return;
+    if (!exists) {
+      Toast.show(libL10n.notExistFmt(path));
+      return;
+    }
+    int size;
+    try {
+      size = (await file.stat()).size;
+    } catch (e) {
+      if (!mounted) return;
+      Toast.error('${libL10n.fail}: $e');
+      return;
+    }
+    if (!mounted) return;
+    if (size > Miscs.privateKeyMaxSize) {
+      Toast.show(
+        l10n.fileTooLarge(
+          path,
+          size.bytes2Str,
+          Miscs.privateKeyMaxSize.bytes2Str,
+        ),
+      );
+      return;
+    }
+
+    String content;
+    try {
+      content = await file.readAsString();
+    } catch (e) {
+      if (!mounted) return;
+      Toast.error('${libL10n.fail}: $e');
+      return;
+    }
+    if (!mounted) return;
+    // dartssh2 accepts only LF (but not CRLF or CR)
+    try {
+      _keyController.text = standardizePrivateKeyLineSeparators(content.trim());
+    } catch (_) {
+      // Controller disposed.
+    }
   }
 }

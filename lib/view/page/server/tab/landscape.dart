@@ -42,8 +42,13 @@ extension on _ServerPageState {
 
     if (order.isEmpty) {
       _landscapeSeenId = null;
-      _landscapeController?.dispose();
+      final controller = _landscapeController;
       _landscapeController = null;
+      if (controller != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          controller.dispose();
+        });
+      }
       return Center(child: Text(libL10n.empty, textAlign: TextAlign.center));
     }
 

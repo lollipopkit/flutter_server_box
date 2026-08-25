@@ -87,29 +87,8 @@ class _IPerfPageState extends State<IPerfPage> {
   Widget _buildFAB() {
     return FloatingActionButton(
       heroTag: 'iperf',
+      onPressed: _onTapSend,
       child: const Icon(Icons.send),
-      onPressed: () {
-        final rawHost = _hostCtrl.text.trim();
-        final port = _portCtrl.text.trim();
-        if (rawHost.isEmpty || port.isEmpty) {
-          Toast.show(libL10n.empty);
-          return;
-        }
-        final host = normalizeIperfHost(rawHost);
-        if (host == null) {
-          Toast.error(l10n.invalidHostFormat);
-          return;
-        }
-        if (!isValidIperfPort(port)) {
-          Toast.error('${libL10n.invalid}: ${libL10n.port}');
-          return;
-        }
-        final args = SshPageArgs(
-          source: ServerSource(widget.args.spi),
-          initCmd: buildIperfClientCommand(host, port),
-        );
-        SSHPage.route.go(context, args);
-      },
     );
   }
 
@@ -132,5 +111,30 @@ class _IPerfPageState extends State<IPerfPage> {
         ),
       ],
     );
+  }
+}
+
+extension _Actions on _IPerfPageState {
+  void _onTapSend() {
+    final rawHost = _hostCtrl.text.trim();
+    final port = _portCtrl.text.trim();
+    if (rawHost.isEmpty || port.isEmpty) {
+      Toast.show(libL10n.empty);
+      return;
+    }
+    final host = normalizeIperfHost(rawHost);
+    if (host == null) {
+      Toast.error(l10n.invalidHostFormat);
+      return;
+    }
+    if (!isValidIperfPort(port)) {
+      Toast.error('${libL10n.invalid}: ${libL10n.port}');
+      return;
+    }
+    final args = SshPageArgs(
+      source: ServerSource(widget.args.spi),
+      initCmd: buildIperfClientCommand(host, port),
+    );
+    SSHPage.route.go(context, args);
   }
 }
