@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:path/path.dart' as p;
 
 /// The host path a guest path names, or null when it names nothing inside.
@@ -138,18 +139,32 @@ Future<File> rootfsFileForWrite(
     String resolved;
     try {
       final linkTarget = await Link(target).target();
-      final candidate = p.isAbsolute(linkTarget)
-          ? p.normalize(linkTarget)
-          : p.normalize(p.join(parent, linkTarget));
-      resolved = await File(candidate).resolveSymbolicLinks();
-    } catch (e) {
-      throw StateError(
-        'Rootfs write target link cannot be resolved: $guestPath',
-      );
+      final guestCandidate = linkTarget.startsWith('/')
+          ? p.joinAll([
+              base,
+              ...p.posix
+                  .normalize(linkTarget)
+                  .split('/')
+                  .where((part) => part.isNotEmpty && part != '.'),
+            ])
+          : null;
+      final candidate =
+          guestCandidate ??
+          (p.isAbsolute(linkTarget)
+              ? p.normalize(linkTarget)
+              : p.normalize(p.join(parent, linkTarget)));
+      try {
+        resolved = await File(candidate).resolveSymbolicLinks();
+      } on FileSystemException {
+        if (guestCandidate == null || !p.isAbsolute(linkTarget)) rethrow;
+        resolved = await File(p.normalize(linkTarget)).resolveSymbolicLinks();
+      }
+    } catch (_) {
+      throw StateError('${libL10n.fail}: ${libL10n.path} ($guestPath)');
     }
     final separator = Platform.pathSeparator;
     if (resolved != base && !resolved.startsWith('$base$separator')) {
-      throw StateError('Rootfs write target link escapes the root: $guestPath');
+      throw StateError('${libL10n.invalid}: ${libL10n.path} ($guestPath)');
     }
     await Link(target).delete();
   } else if (type == FileSystemEntityType.link ||

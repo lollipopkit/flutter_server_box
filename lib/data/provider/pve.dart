@@ -45,6 +45,9 @@ class PveNotifier extends _$PveNotifier {
   Future<void>? _initFuture;
   int _sessionGeneration = 0;
 
+  @visibleForTesting
+  Future<void> Function()? forwardForTest;
+
   String get addrValue => addr!;
 
   SSHClient get _client {
@@ -171,26 +174,32 @@ class PveNotifier extends _$PveNotifier {
       active = _initSession();
       state = state.copyWith(loadingStep: PveLoadingStep.forwarding);
       await _forward(generation);
-      if (!_isActiveSession(generation, active)) return;
+      if (_abortStaleInit(generation, active)) return;
       state = state.copyWith(loadingStep: PveLoadingStep.loggingIn);
       await _login(generation, active);
-      if (!_isActiveSession(generation, active)) return;
+      if (_abortStaleInit(generation, active)) return;
       state = state.copyWith(loadingStep: PveLoadingStep.fetchingData);
       await _getRelease(generation, active);
-      if (!_isActiveSession(generation, active)) return;
+      if (_abortStaleInit(generation, active)) return;
       state = state.copyWith(isConnected: true);
       await _list(generation, active);
-      if (!_isActiveSession(generation, active)) return;
+      if (_abortStaleInit(generation, active)) return;
       state = state.copyWith(loadingStep: PveLoadingStep.none);
     } on PveErr catch (e) {
-      if (!_isActiveInit(generation)) return;
+      if (!_isActiveInit(generation)) {
+        _scheduleInitAfterStale(generation);
+        return;
+      }
       if (e.type != PveErrType.needTfa) {
         await _closeSession(clearPendingTfa: true);
         if (!ref.mounted) return;
       }
       state = state.copyWith(error: e, loadingStep: PveLoadingStep.none);
     } catch (e, s) {
-      if (!_isActiveInit(generation)) return;
+      if (!_isActiveInit(generation)) {
+        _scheduleInitAfterStale(generation);
+        return;
+      }
       Loggers.app.warning('PVE init failed', e, s);
       final error = _toPveErr(e);
       if (active != null) {
@@ -214,7 +223,33 @@ class PveNotifier extends _$PveNotifier {
     return _isActiveInit(generation) && identical(_session, active);
   }
 
+  bool _abortStaleInit(int generation, Dio active) {
+    if (_isActiveSession(generation, active)) return false;
+    _scheduleInitAfterStale(generation);
+    return true;
+  }
+
+  void _scheduleInitAfterStale(int generation) {
+    if (generation == _sessionGeneration) return;
+    final current = _initFuture;
+    if (current == null) return;
+    unawaited(_initAfter(current));
+  }
+
+  Future<void> _initAfter(Future<void> current) async {
+    await current;
+    if (!ref.mounted) return;
+    final client = ref.read(serverProvider(spiParam.id)).client;
+    if (client == null || client.isClosed) return;
+    await _init();
+  }
+
   Future<void> _forward(int generation) async {
+    final forwardOverride = forwardForTest;
+    if (forwardOverride != null) {
+      await forwardOverride();
+      return;
+    }
     final url = Uri.parse(addrValue);
     if (_localPort == 0) {
       final serverSocket = await ServerSocket.bind('localhost', 0);
@@ -620,7 +655,6 @@ class PveNotifier extends _$PveNotifier {
       _pendingTfaChallenge = null;
     }
     _sessionGeneration++;
-    _initFuture = null;
     _session?.close(force: true);
     _session = null;
     final serverSocket = _serverSocket;

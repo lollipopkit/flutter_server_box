@@ -247,7 +247,9 @@ abstract final class IosRootfs {
       if (err < 0 && err != alreadyBooted) {
         // Non-busy detach errors still block safe deletion; rethrow as StateError
         // so caller sees a consistent message rather than a partial delete.
-        throw StateError('The Linux system could not be detached ($err)');
+        throw StateError(
+          '${libL10n.fail}: ${libL10n.close} (${libL10n.system}: $err)',
+        );
       }
     }
     // A userland is complete or absent; there is no repairing half of one.

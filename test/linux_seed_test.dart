@@ -115,6 +115,20 @@ void main() {
       },
     );
 
+    test('resolves an absolute final symlink inside the guest root', () async {
+      await Directory('${root.path}/etc').create(recursive: true);
+      await Directory('${root.path}/run').create();
+      final target = File('${root.path}/run/resolv.conf')
+        ..writeAsStringSync('nameserver 192.168.1.1\n');
+      final link = Link(resolv().path)..createSync('/run/resolv.conf');
+
+      await seedResolvConf(root.path, nameservers: const ['8.8.8.8']);
+
+      expect(link.existsSync(), isFalse);
+      expect(resolv().readAsStringSync(), 'nameserver 8.8.8.8\n');
+      expect(target.readAsStringSync(), 'nameserver 192.168.1.1\n');
+    });
+
     test('is written for a userland unpacked before it existed', () async {
       // What an install from an older build looks like: a complete tree, with
       // an `etc` full of everything the tarball ships and no resolver in it.

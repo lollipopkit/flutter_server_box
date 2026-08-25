@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:dartssh2/dartssh2.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -210,6 +212,72 @@ void main() {
       }
     });
   });
+
+  test('a client replacement reconnects after the stale init exits', () async {
+    const spi = Spi(
+      name: 'pve',
+      id: 'pve-reconnect-id',
+      custom: ServerCustom(pveAddr: 'https://pve.example.com:8006'),
+    );
+    final firstSocket = _IdleSshSocket();
+    final secondSocket = _IdleSshSocket();
+    final firstClient = SSHClient(firstSocket, username: 'first');
+    final secondClient = SSHClient(secondSocket, username: 'second');
+    final initial = ServerState(
+      spi: spi,
+      status: InitStatus.status,
+      client: firstClient,
+    );
+    final container = ProviderContainer(
+      overrides: [
+        serverProvider(
+          spi.id,
+        ).overrideWith(() => _MutableServerNotifier(initial)),
+      ],
+    );
+    final provider = pveProvider(spi);
+    final subscription = container.listen(provider, (_, _) {});
+    final notifier = container.read(provider.notifier);
+    final server =
+        container.read(serverProvider(spi.id).notifier)
+            as _MutableServerNotifier;
+    final firstStarted = Completer<void>();
+    final releaseFirst = Completer<void>();
+    final secondStarted = Completer<void>();
+    final releaseSecond = Completer<void>();
+    var starts = 0;
+    notifier.forwardForTest = () async {
+      starts++;
+      if (starts == 1) {
+        firstStarted.complete();
+        await releaseFirst.future;
+      } else {
+        secondStarted.complete();
+        await releaseSecond.future;
+      }
+    };
+
+    try {
+      await firstStarted.future.timeout(const Duration(seconds: 2));
+      server.replaceClient(secondClient);
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      expect(starts, 1, reason: 'the replacement must not overlap stale init');
+
+      releaseFirst.complete();
+      await secondStarted.future.timeout(const Duration(seconds: 2));
+      expect(starts, 2);
+    } finally {
+      subscription.close();
+      container.dispose();
+      if (!releaseFirst.isCompleted) releaseFirst.complete();
+      if (!releaseSecond.isCompleted) releaseSecond.complete();
+      firstClient.close();
+      secondClient.close();
+      firstSocket.destroy();
+      secondSocket.destroy();
+    }
+  });
 }
 
 class _StatusAdapter implements HttpClientAdapter {
@@ -229,4 +297,47 @@ class _StatusAdapter implements HttpClientAdapter {
 
   @override
   void close({bool force = false}) => closed = true;
+}
+
+class _MutableServerNotifier extends ServerNotifier {
+  _MutableServerNotifier(this.initial);
+
+  final ServerState initial;
+
+  @override
+  ServerState build(String serverId) => initial;
+
+  void replaceClient(SSHClient client) {
+    state = state.copyWith(client: client);
+  }
+}
+
+class _IdleSshSocket implements SSHSocket {
+  final _incoming = StreamController<Uint8List>();
+  final _outgoing = StreamController<List<int>>();
+  final _done = Completer<void>();
+
+  @override
+  Stream<Uint8List> get stream => _incoming.stream;
+
+  @override
+  StreamSink<List<int>> get sink => _outgoing.sink;
+
+  @override
+  Future<void> get done => _done.future;
+
+  @override
+  Future<void> close() async {
+    if (!_done.isCompleted) _done.complete();
+    await _incoming.close();
+    await _outgoing.close();
+  }
+
+  @override
+  void destroy() {
+    unawaited(close());
+  }
+
+  @override
+  Future<void> flush() => Future.value();
 }

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:archive/archive.dart';
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/android_rootfs.dart';
 import 'package:server_box/core/utils/ios_rootfs.dart';
@@ -97,10 +98,36 @@ void main() {
         nameservers: const ['1.1.1.1'],
         overwrite: true,
       ),
-      throwsA(isA<StateError>()),
+      throwsA(
+        isA<StateError>().having(
+          (error) => error.message,
+          'message',
+          allOf(contains(libL10n.invalid), contains(libL10n.path)),
+        ),
+      ),
     );
 
     expect(await outsideFile.readAsString(), 'outside');
+  });
+
+  test('post-install seeds localize an unresolved final symlink', () async {
+    await Directory('${root.path}/etc').create();
+    await Link('${root.path}/etc/resolv.conf').create('../missing/resolv.conf');
+
+    await expectLater(
+      seedResolvConf(
+        root.path,
+        nameservers: const ['1.1.1.1'],
+        overwrite: true,
+      ),
+      throwsA(
+        isA<StateError>().having(
+          (error) => error.message,
+          'message',
+          allOf(contains(libL10n.fail), contains(libL10n.path)),
+        ),
+      ),
+    );
   });
 
   test(
