@@ -9,7 +9,12 @@ abstract final class PlatformPublicSettings {
   /// neither platform channel implements this there.
   ///
   /// The native side keeps its own copy, so the switch has to push as well as
-  /// store — `callback` runs before the write and skips it on failure.
+  /// store.
+  ///
+  /// A `validator` and not a `callback`: the push is what actually covers the
+  /// app, so if the platform refuses it the switch has to stay where it was.
+  /// Written the other way the preference was stored anyway, and the user was
+  /// left reading "on" off a switch that had covered nothing.
   static Widget? get buildPrivacyBlur {
     if (!isIOS && !isAndroid) return null;
     return ListTile(
@@ -18,7 +23,11 @@ abstract final class PlatformPublicSettings {
       subtitle: Text(l10n.privacyBlurTip, style: UIs.textGrey),
       trailing: StoreSwitch(
         prop: Stores.setting.privacyBlur,
-        callback: MethodChans.setPrivacyBlur,
+        validator: (val) async {
+          final ok = await MethodChans.setPrivacyBlur(val);
+          if (!ok) Toast.error(libL10n.fail);
+          return ok;
+        },
       ),
     );
   }

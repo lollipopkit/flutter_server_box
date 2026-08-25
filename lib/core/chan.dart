@@ -92,12 +92,19 @@ abstract final class MethodChans {
   /// Pushed on change *and* at launch: the native side answers this from its
   /// own persisted copy, which a reinstall or a restored backup leaves saying
   /// something different from the (synced) settings store.
-  static Future<void> setPrivacyBlur(bool enabled) async {
-    if (!isIOS && !isAndroid) return;
+  ///
+  /// Answers whether the native side took it, rather than throwing, so that the
+  /// launch-time push can ignore a failure while the switch does not. Storing a
+  /// preference the platform never received would leave the user told they are
+  /// covered when they are not.
+  static Future<bool> setPrivacyBlur(bool enabled) async {
+    if (!isIOS && !isAndroid) return true;
     try {
       await _channel.invokeMethod('setPrivacyBlur', enabled);
+      return true;
     } catch (e, s) {
       Loggers.app.warning('Failed to set privacy blur', e, s);
+      return false;
     }
   }
 

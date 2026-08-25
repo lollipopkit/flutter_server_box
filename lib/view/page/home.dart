@@ -462,33 +462,37 @@ class _HomePageState extends ConsumerState<HomePage>
   }
 
   void _goAuth() {
-    if (Stores.setting.useBioAuth.fetch()) {
-      if (LocalAuthPage.route.alreadyIn) return;
-      // Before the push, not after the route resolves. On iOS the cover is a
-      // view over the Flutter window, so it is *above* every route drawn inside
-      // it — leaving it up would hide the lock screen instead of protecting it,
-      // and swallow the taps meant for it. Releasing it here costs at most the
-      // frames between this and the route appearing, and in practice the
-      // channel round trip outlasts the push.
-      _releasePrivacyCover();
-      // The route's own future, not `onAuthSuccess`. That callback runs from
-      // inside `context.pop()`, while the lock screen is still the route the
-      // navigator answers with — so the guide's "is the home page current"
-      // check would say no and skip it every launch, on exactly the devices
-      // this branch exists for. The future completes once the pop has.
-      unawaited(
-        LocalAuthPage.route
-            .go(
-              context,
-              args: LocalAuthPageArgs(
-                onAuthSuccess: () => _shouldAuth = false,
-              ),
-            )
-            .then((_) => _maybeShowNavGuide()),
-      );
-    } else {
-      _releasePrivacyCover();
-    }
+    // First, and on every path out of here. On iOS the cover is a view over the
+    // Flutter window, so it is *above* every route drawn inside it — left up it
+    // would hide the lock screen instead of protecting it. Releasing it before
+    // the push costs at most the frames until the route appears, and in
+    // practice the channel round trip outlasts the push.
+    //
+    // The path that matters is the early return below. Backgrounding *from* the
+    // lock screen and coming back re-locks the cover and lands here, where
+    // `alreadyIn` is true — and skipping this left the cover over that screen
+    // with nothing that would ever take it off, since the next trip out and
+    // back returns at exactly the same place.
+    _releasePrivacyCover();
+
+    if (!Stores.setting.useBioAuth.fetch()) return;
+    if (LocalAuthPage.route.alreadyIn) return;
+
+    // The route's own future, not `onAuthSuccess`. That callback runs from
+    // inside `context.pop()`, while the lock screen is still the route the
+    // navigator answers with — so the guide's "is the home page current"
+    // check would say no and skip it every launch, on exactly the devices
+    // this branch exists for. The future completes once the pop has.
+    unawaited(
+      LocalAuthPage.route
+          .go(
+            context,
+            args: LocalAuthPageArgs(
+              onAuthSuccess: () => _shouldAuth = false,
+            ),
+          )
+          .then((_) => _maybeShowNavGuide()),
+    );
   }
 
   /// Let the native privacy cover come off, now that either the lock screen is
