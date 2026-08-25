@@ -53,6 +53,7 @@ List<String> parseContainerRunArgs(String raw) {
   final current = StringBuffer();
   String? quote;
   var escaping = false;
+  var escapingInDoubleQuotes = false;
   var tokenStarted = false;
 
   void finishToken() {
@@ -65,9 +66,18 @@ List<String> parseContainerRunArgs(String raw) {
   for (final rune in raw.runes) {
     final char = String.fromCharCode(rune);
     if (escaping) {
-      current.write(char);
+      if (escapingInDoubleQuotes &&
+          char != r'$' &&
+          char != '`' &&
+          char != '"' &&
+          char != r'\' &&
+          char != '\n') {
+        current.write(r'\');
+      }
+      if (char != '\n' || !escapingInDoubleQuotes) current.write(char);
       tokenStarted = true;
       escaping = false;
+      escapingInDoubleQuotes = false;
       continue;
     }
     if (quote != null) {
@@ -75,6 +85,7 @@ List<String> parseContainerRunArgs(String raw) {
         quote = null;
       } else if (char == r'\' && quote == '"') {
         escaping = true;
+        escapingInDoubleQuotes = true;
       } else {
         current.write(char);
       }
@@ -293,11 +304,13 @@ class ContainerNotifier extends _$ContainerNotifier {
 
   void resetSudoProbe() {
     _resetSudoProbe();
-    state = state.copyWith(isBusy: false);
+    state = state.copyWith(isBusy: false, runLog: null);
   }
 
   int _resetSudoProbe() {
     for (final t in ContainerRefreshTarget.values) {
+      final previous = _sudoCompleters[t];
+      if (previous != null && !previous.isCompleted) previous.complete(false);
       _sudoCompleters[t] = Completer<bool>();
     }
     _pendingRefresh = null;

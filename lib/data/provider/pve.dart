@@ -165,9 +165,10 @@ class PveNotifier extends _$PveNotifier {
 
   Future<void> _initImpl() async {
     final generation = _sessionGeneration;
+    Dio? active;
     try {
       if (!ref.mounted) return;
-      final active = _initSession();
+      active = _initSession();
       state = state.copyWith(loadingStep: PveLoadingStep.forwarding);
       await _forward(generation);
       if (!_isActiveSession(generation, active)) return;
@@ -183,12 +184,23 @@ class PveNotifier extends _$PveNotifier {
       state = state.copyWith(loadingStep: PveLoadingStep.none);
     } on PveErr catch (e) {
       if (!_isActiveInit(generation)) return;
+      if (e.type != PveErrType.needTfa) {
+        await _closeSession(clearPendingTfa: true);
+        if (!ref.mounted) return;
+      }
       state = state.copyWith(error: e, loadingStep: PveLoadingStep.none);
     } catch (e, s) {
       if (!_isActiveInit(generation)) return;
       Loggers.app.warning('PVE init failed', e, s);
+      final error = _toPveErr(e);
+      if (active != null) {
+        await _closeSession(clearPendingTfa: true);
+        if (!ref.mounted) return;
+      }
       state = state.copyWith(
-        error: _toPveErr(e),
+        error: error,
+        isConnected: false,
+        isBusy: false,
         loadingStep: PveLoadingStep.none,
       );
     }
@@ -506,6 +518,10 @@ class PveNotifier extends _$PveNotifier {
 
   PveErr _toPveErr(Object e) {
     if (e is PveErr) return e;
+    if (e is DioException &&
+        (e.response?.statusCode == 401 || e.response?.statusCode == 403)) {
+      return PveErr(type: PveErrType.loginFailed, message: e.toString());
+    }
     if (_isConnectionFailure(e)) {
       return PveErr(type: PveErrType.net, message: e.toString());
     }
@@ -524,7 +540,12 @@ class PveNotifier extends _$PveNotifier {
       return true;
     }
     if (e is DioException) {
-      if (e.type == DioExceptionType.connectionError) return true;
+      if (e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        return true;
+      }
       final inner = e.error;
       return inner != null && _isConnectionFailure(inner);
     }

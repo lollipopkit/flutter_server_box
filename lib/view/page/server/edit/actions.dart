@@ -158,7 +158,10 @@ extension _Actions on _ServerEditPageState {
           SelectableText('SHA-256: ${info.prettyFingerprint}'),
           if (info.isExpired) ...[
             const SizedBox(height: 8),
-            Text(l10n.bmcCertExpired, style: const TextStyle(color: Colors.orange)),
+            Text(
+              l10n.bmcCertExpired,
+              style: const TextStyle(color: Colors.orange),
+            ),
           ],
           if (changed) ...[
             const SizedBox(height: 8),
@@ -335,6 +338,9 @@ extension _Actions on _ServerEditPageState {
 
   void _onSave() async {
     final useMonitorHttp = _useMonitorHttp.value;
+    final selectedKey = _keyIdx.value == null
+        ? null
+        : ref.read(privateKeyProvider).keys.elementAtOrNull(_keyIdx.value!);
 
     // SSH host/auth/jump-chain fields are hidden (and irrelevant) in
     // monitor-HTTP mode — skip their validation/defaulting entirely.
@@ -352,7 +358,7 @@ extension _Actions on _ServerEditPageState {
       // Either key source counts. A server imported with an IdentityFile has
       // a key and no password, and asking it to confirm "no authentication"
       // on every save would be asking about something that is not true.
-      final hasKey = _keyIdx.value != null || _keyPath.value != null;
+      final hasKey = selectedKey != null || _keyPath.value != null;
       if (!hasKey && _passwordController.text.isEmpty) {
         final ok = await context.showRoundDialog<bool>(
           title: libL10n.attention,
@@ -424,17 +430,11 @@ extension _Actions on _ServerEditPageState {
             port: int.tryParse(_portController.text) ?? 22,
             user: _usernameController.text,
             pwd: _passwordController.text.selfNotEmptyOrNull,
-            keyId: _keyIdx.value != null
-                ? ref
-                      .read(privateKeyProvider)
-                      .keys
-                      .elementAt(_keyIdx.value!)
-                      .id
-                : null,
+            keyId: selectedKey?.id,
             // Carried through rather than rebuilt from the form: nothing on
             // this page can type a path, and dropping it on save would take
             // away the only credential an imported server has
-            keyPath: _keyIdx.value != null ? null : _keyPath.value,
+            keyPath: selectedKey != null ? null : _keyPath.value,
             identityFiles:
                 _keyIdx.value == null &&
                     _keyPath.value == this.spi?.ssh?.keyPath

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/migrations/m004_kv_to_tables.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/hive/legacy_adapters.dart';
 import 'package:server_box/hive/spi_legacy_adapter.dart';
@@ -96,6 +97,7 @@ abstract final class HiveImport {
   /// not be read is retried until it can.
   static Future<void> runIfNeeded() async {
     if (Stores.setting.get<bool>(_markerKey) == true) return;
+    final schemaAtStart = SchemaVersion.stored;
 
     // The same directory `HiveStore.init` opens from, asked of it rather than
     // recomputed: the macOS sandbox and the mobile platforms each answer this
@@ -162,7 +164,7 @@ abstract final class HiveImport {
       // v4) and the app crashes on every launch. Any future successful import
       // of the still-unread boxes will land rows in kv at v4 shape; those
       // rows will be picked up by the next m004 run via a re-entrant check.
-      SchemaVersion.initAtHiveImport();
+      await _prepareSchemaAfterImport(schemaAtStart, copied);
       return;
     }
     if (hadWriteFailures) {
@@ -172,7 +174,7 @@ abstract final class HiveImport {
         'will retry failed boxes',
       );
       _dropPlaintextIndex(dir);
-      SchemaVersion.initAtHiveImport();
+      await _prepareSchemaAfterImport(schemaAtStart, copied);
       return;
     }
 
@@ -183,9 +185,25 @@ abstract final class HiveImport {
     // the v2 -> v3 step used to do in place. What has landed is the layout of
     // the build that dropped Hive, not the current one — the steps after this
     // still have to run over it.
-    SchemaVersion.initAtHiveImport();
+    await _prepareSchemaAfterImport(schemaAtStart, copied);
     Stores.setting.set(_markerKey, true);
     Stores.setting.remove(_doneKey);
+  }
+
+  static Future<void> _prepareSchemaAfterImport(
+    int schemaAtStart,
+    int copied,
+  ) async {
+    if (schemaAtStart <= SchemaVersion.hiveImportProduces) {
+      SchemaVersion.initAtHiveImport();
+      return;
+    }
+    if (copied > 0) {
+      // A box that became readable after the normal migration chain completed
+      // lands in the old v4 kv shape. Convert only those late rows without
+      // moving an already-current database back to v4 and replaying m005+.
+      await const KvToTablesMigration().apply();
+    }
   }
 
   static Set<String> _doneBoxes() {

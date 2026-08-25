@@ -227,4 +227,21 @@ void main() {
       reason: 'the migration completes and consumes the legacy store',
     );
   });
+
+  test('a malformed private key does not block valid keys', () async {
+    seed('key', 'broken', {
+      'id': <String>['not', 'a', 'string'],
+      'private_key': 'BROKEN',
+    });
+    seed('key', 'healthy', {'id': 'healthy', 'private_key': 'PRIVATE'});
+
+    await const KvToTablesMigration().apply();
+
+    final keys = SqliteDb.instance.select(
+      'SELECT name, key FROM private_key ORDER BY name;',
+    );
+    expect(keys, hasLength(1));
+    expect(keys.single['name'], 'healthy');
+    expect(keys.single['key'], 'PRIVATE');
+  });
 }

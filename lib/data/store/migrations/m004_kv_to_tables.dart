@@ -134,30 +134,43 @@ class KvToTablesMigration implements SchemaMigration {
     final ids = <String, String>{};
     final names = <String>{};
     for (final row in _rows('key')) {
-      final oldId = row.value['id'] as String? ?? row.key;
-      // `private_key` is what the released model's `toJson` called it.
-      final key = (row.value['private_key'] ?? row.value['key']) as String?;
-      if (key == null) continue;
+      try {
+        final storedId = row.value['id'];
+        if (storedId != null && storedId is! String) {
+          throw const FormatException('private-key id is not a string');
+        }
+        final oldId = (storedId as String?) ?? row.key;
+        // `private_key` is what the released model's `toJson` called it.
+        final rawKey = row.value['private_key'] ?? row.value['key'];
+        if (rawKey == null) continue;
+        if (rawKey is! String) {
+          throw const FormatException('private-key payload is not a string');
+        }
 
-      // The old key was the name, and nothing enforced that it was unique
-      // across the two places one could be created.
-      var name = oldId;
-      for (var n = 2; !names.add(name); n++) {
-        name = '$oldId ($n)';
+        // The old key was the name, and nothing enforced that it was unique
+        // across the two places one could be created.
+        var name = oldId;
+        for (var n = 2; !names.add(name); n++) {
+          name = '$oldId ($n)';
+        }
+
+        final id = ShortId.generate();
+        // The first row under a name wins the reference, and it is also the one
+        // that keeps the name unrenamed above — so a server that pointed at `X`
+        // ends up on the key still called `X`.
+        ids.putIfAbsent(oldId, () => id);
+        _db.execute(
+          'INSERT INTO private_key (id, name, key, updated_at) '
+          'VALUES (?, ?, ?, ?);',
+          [id, name, rawKey, row.updatedAt],
+        );
+      } catch (e, s) {
+        Loggers.app.warning(
+          'm004: malformed private key "${row.key}" was skipped',
+          e,
+          s,
+        );
       }
-
-      final id = ShortId.generate();
-      // The first row under a name wins the reference, and it is also the one
-      // that keeps the name unrenamed above — so a server that pointed at `X`
-      // ends up on the key still called `X`. Assigning unconditionally handed
-      // every such server to whichever duplicate happened to be read last,
-      // which is to say: to a key the user never chose, silently.
-      ids.putIfAbsent(oldId, () => id);
-      _db.execute(
-        'INSERT INTO private_key (id, name, key, updated_at) '
-        'VALUES (?, ?, ?, ?);',
-        [id, name, key, row.updatedAt],
-      );
     }
     return ids;
   }

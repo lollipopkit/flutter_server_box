@@ -245,8 +245,7 @@ final class SshCredential {
     keyId,
     Object.hashAll(resolvedIdentityFiles),
     alterUrl,
-    jumpId,
-    Object.hashAll(jumpIds ?? const []),
+    Object.hashAll(resolvedJumpIds),
     proxyCommand,
   );
 }

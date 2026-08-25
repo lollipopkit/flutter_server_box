@@ -342,6 +342,20 @@ abstract class EntityStore<T extends Object> {
           // delete; one it never had a timestamp for says nothing.
           if (!known || bakTs == null) continue;
           if (table == 'server') {
+            final snippetIds = db
+                .select(
+                  'SELECT snippet_id AS id FROM snippet_auto_run_on WHERE server_id = ?;',
+                  [id],
+                )
+                .map((row) => row['id'] as String)
+                .toSet();
+            final jumpOwnerIds = db
+                .select(
+                  'SELECT server_id AS id FROM server_jump WHERE jump_id = ?;',
+                  [id],
+                )
+                .map((row) => row['id'] as String)
+                .toSet();
             for (final row in db.select(
               'SELECT id FROM port_forward WHERE server_id = ?;',
               [id],
@@ -351,6 +365,13 @@ abstract class EntityStore<T extends Object> {
                 'INSERT OR REPLACE INTO tombstone (tbl, row_id, deleted_at) VALUES (?, ?, ?);',
                 ['port_forward', pfId, at],
               );
+            }
+            final snippetSync = SyncedTable('snippet');
+            for (final snippetId in snippetIds) {
+              snippetSync.stamp(snippetId, at: at);
+            }
+            for (final ownerId in jumpOwnerIds) {
+              if (ownerId != id) synced.stamp(ownerId, at: at);
             }
           }
           db.execute('DELETE FROM $table WHERE $idColumn = ?;', [id]);
