@@ -339,13 +339,31 @@ void main() {
       expect(compareRootfsVersions('24.04.4', '24.04.4'), 0);
     });
 
-    test('a scheme it cannot read is left in one piece rather than guessed', () {
-      // Total either way: what matters is that it does not report an unknown
-      // pair as an upgrade in both directions.
-      final forward = compareRootfsVersions('edge', 'v3');
-      final back = compareRootfsVersions('v3', 'edge');
-      expect(forward, isNot(0));
-      expect(forward.isNegative, isNot(back.isNegative));
+    test('a scheme it cannot read gets no answer at all', () {
+      // Null, not a comparison of the text. Ordering these by their first
+      // letters is a guess, and what the caller does with a positive answer is
+      // replace the tree and destroy everything in it — so half the guesses
+      // would be the downgrade this function exists to prevent.
+      expect(compareRootfsVersions('edge', 'v3'), isNull);
+      expect(compareRootfsVersions('v3', 'edge'), isNull);
+      expect(compareRootfsVersions('24.04.3', '24.04.edge'), isNull);
+
+      // Which makes it outdated in neither direction: `isOutdated` asks for an
+      // ordering and a greater one, and null is neither.
+      bool outdated(String manifest, String installed) {
+        final order = compareRootfsVersions(manifest, installed);
+        return order != null && order > 0;
+      }
+
+      expect(outdated('edge', 'v3'), isFalse);
+      expect(outdated('v3', 'edge'), isFalse);
+    });
+
+    test('but two profiles on the same unreadable scheme are the same', () {
+      // Identical text needs no ordering to be equal, so this is not a guess
+      // and does not have to be refused.
+      expect(compareRootfsVersions('edge', 'edge'), 0);
+      expect(compareRootfsVersions('v3.20', 'v3.20'), 0);
     });
   });
 }

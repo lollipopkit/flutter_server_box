@@ -106,30 +106,36 @@ class RootfsSource {
   int get sizeMb => (sizeBytes + 1048575) ~/ 1048576;
 }
 
-/// Orders two release versions: positive when [a] is newer than [b].
+/// Orders two release versions: positive when [a] is newer than [b], and null
+/// when there is no saying.
 ///
 /// Dotted and numeric — `24.04.3`, `3.20.1`, `41` — compared segment by
 /// segment, with a missing segment counting as zero so `24.04` precedes
-/// `24.04.1`. A segment that is not a number falls back to comparing the text,
-/// which keeps the order total without pretending to understand a scheme
-/// nothing here has seen.
+/// `24.04.1`. Two segments that differ and are not both numbers make the pair
+/// incomparable, which is what null says.
+///
+/// Null rather than a comparison of the text. What the caller does with a
+/// positive answer is replace a tree and destroy everything installed in it, so
+/// ordering `edge` against `v3` by their first letters is a guess that points
+/// at a downgrade half the time — the failure this function was written to
+/// prevent, in a subtler form. A scheme this has not seen gets no answer at
+/// all.
 ///
 /// Exists because "is this profile outdated" was asked as "is it a different
-/// version", and different includes newer — see [Rootfs.isOutdated].
-int compareRootfsVersions(String a, String b) {
+/// version", and different includes older — see [Rootfs.isOutdated].
+int? compareRootfsVersions(String a, String b) {
   final left = a.split('.');
   final right = b.split('.');
   for (var i = 0; i < left.length || i < right.length; i++) {
     final l = i < left.length ? left[i] : '0';
     final r = i < right.length ? right[i] : '0';
+    // Identical text needs no ordering, whatever scheme it is in: two profiles
+    // both on `edge` are the same release, and saying so is not a guess.
     if (l == r) continue;
     final ln = int.tryParse(l);
     final rn = int.tryParse(r);
-    if (ln != null && rn != null) {
-      if (ln != rn) return ln.compareTo(rn);
-      continue;
-    }
-    return l.compareTo(r);
+    if (ln == null || rn == null) return null;
+    if (ln != rn) return ln.compareTo(rn);
   }
   return 0;
 }

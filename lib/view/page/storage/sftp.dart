@@ -248,6 +248,19 @@ extension _Open on _SftpPageState {
       sftpOperationTimeout(Stores.setting.timeout.fetch());
 
   Future<_SftpStart> _open() async {
+    // [_current], not `_spi`, and read once for everything below. The page
+    // holds the server as it was when the route was pushed, and a tab outlives
+    // an edit — so opening has to use the settings the editor just wrote, on
+    // this attempt and on every retry.
+    //
+    // Once, because it was three separate decisions and only one of them was
+    // made this way: the transport came from `_current` while the sudo helper
+    // and the home-directory guess still came off the snapshot. Changing a
+    // server's SSH user and pressing Retry then opened the protocol the user
+    // had chosen and asked for a password labelled with the account they had
+    // just moved away from.
+    final spi = _current;
+
     // `ensureShellClient`, not `state.client`: pressing a server's file button
     // is asking to reach it, so a server that is merely not connected yet
     // connects rather than reporting that it is not connected — and Retry
@@ -260,12 +273,12 @@ extension _Open on _SftpPageState {
     // open hit that null every time. As a failure of `_open` it lands in the
     // error branch this page already draws.
     final client = await ref
-        .read(serverProvider(_spi.id).notifier)
+        .read(serverProvider(spi.id).notifier)
         .ensureShellClient();
     _client = client;
     _sudoHelper = SftpSudoHelper(
       client: client,
-      spi: _spi,
+      spi: spi,
       contextProvider: () => mounted ? context : null,
     );
     _escalation = _SudoEscalation(
@@ -274,18 +287,13 @@ extension _Open on _SftpPageState {
       contextProvider: () => mounted ? context : null,
     );
 
-    // [_current], not `_spi`: the page holds the server as it was when the
-    // route was pushed, and the editor writes the transport into the store. A
-    // tab left open across an edit would otherwise keep opening the protocol
-    // the user just changed away from, on every retry, until the page was
-    // rebuilt.
     final backend = await openSshFileBackend(
       _client,
-      transport: _current.ssh?.fileTransport ?? SshFileTransport.sftp,
+      transport: spi.ssh?.fileTransport ?? SshFileTransport.sftp,
       escalation: _escalation,
       timeout: _opTimeout,
     );
-    final home = await _homeDir();
+    final home = await _homeDir(spi);
     return _SftpStart(
       backend: backend,
       home: home,
@@ -325,8 +333,12 @@ extension _Open on _SftpPageState {
 
   /// Asked of the server rather than assumed: a user's home is wherever
   /// `passwd` says it is, and only the guess is `/home/<user>`.
-  Future<String> _homeDir() async {
-    final user = _spi.ssh?.user ?? '';
+  ///
+  /// [spi] is passed in rather than read off the page, which held the snapshot
+  /// the tab was opened with: after an edit the fallback named the old user's
+  /// home even though the connection was the new user's.
+  Future<String> _homeDir(Spi spi) async {
+    final user = spi.ssh?.user ?? '';
     final fallback = user == 'root' ? '/root' : '/home/$user';
     try {
       final result = await _client.run(
