@@ -42,6 +42,7 @@
   "backupTip": "Os dados exportados podem ser criptografados com senha. \nPor favor, guarde-os com segurança.",
   "bgRun": "Execução em segundo plano",
   "bgRunTip": "Este interruptor indica que o programa tentará rodar em segundo plano, mas a capacidade de fazer isso depende das permissões concedidas. No Android nativo, desative a 'Otimização de bateria' para este app, no MIUI, altere a estratégia de economia de energia para 'Sem restrições'.",
+  "bgRunNeedsNotification": "Correr em segundo plano precisa de uma notificação permanente, e esta app não tem permissão de notificações. Toca para a conceder.",
   "clearAllStatsContent": "Tem certeza de que deseja limpar todas as estatísticas de conexão do servidor? Esta ação não pode ser desfeita.",
   "clearAllStatsTitle": "Limpar todas as estatísticas",
   "clearServerStatsContent": "Tem certeza de que deseja limpar as estatísticas de conexão para o servidor \"{serverName}\"? Esta ação não pode ser desfeita.",

@@ -247,8 +247,14 @@ class ForegroundService : Service() {
         }
 
         val sessions = mutableListOf<SessionItem>()
+        // Whether the app still needs the process kept out of the freezer even
+        // with nothing connected — see `TermSessionManager._serviceWanted`.
+        // Without this an empty list meant "stop being a foreground service",
+        // which is exactly what a backgrounded app can never undo.
+        var keepAlive = false
         try {
             val obj = JSONObject(payload)
+            keepAlive = obj.optBoolean("keepAlive", false)
             val arr: JSONArray = obj.optJSONArray("sessions") ?: JSONArray()
             for (i in 0 until arr.length()) {
                 val s = arr.optJSONObject(i) ?: continue
@@ -265,9 +271,15 @@ class ForegroundService : Service() {
             logError("Failed to parse payload", e)
         }
 
-        // Clear if empty
+        // Nothing connected. Either stand down, or stay foreground with a
+        // placeholder so the app is still running when something can be
+        // connected again.
         if (sessions.isEmpty()) {
-            clearAll()
+            if (!keepAlive) {
+                clearAll()
+                return
+            }
+            ensureForeground(createMergedNotification(0, emptyList(), emptyList()))
             return
         }
 

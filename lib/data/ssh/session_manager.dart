@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:server_box/core/chan.dart';
+import 'package:server_box/data/res/store.dart';
 
 enum TermSessionStatus {
   connecting,
@@ -156,24 +157,61 @@ abstract final class TermSessionManager {
     }
   }
 
+  /// Whether the app is out of the foreground, as `home.dart` reports it.
+  ///
+  /// Set on `inactive` rather than on `paused`, which is the whole reason this
+  /// exists: `inactive` is delivered while the activity is still visible, and
+  /// that is the last moment Android 12+ allows an app to *start* a foreground
+  /// service. By `paused` the app is background and the call is refused.
+  static var _backgrounded = false;
+
+  static void setBackgrounded(bool value) {
+    if (_backgrounded == value) return;
+    _backgrounded = value;
+    _sync();
+  }
+
+  /// Whether the process must stay out of the freezer right now.
+  ///
+  /// Two reasons, either of which is enough. Something is connected, which is
+  /// what the notification is *for*. Or the app is in the background with
+  /// [SettingStore.bgRun] on, which is what that switch has always said it
+  /// means — "the program will try to run in the background" — and never did:
+  /// it only kept the poll timer scheduled, and a frozen process runs no
+  /// timers.
+  ///
+  /// The zero-connection case is deliberate. Dropping the service the moment
+  /// the last connection goes is what made a background disconnect permanent:
+  /// the app cannot start a foreground service from the background, so nothing
+  /// was left running to reconnect with. Keeping it means a notification while
+  /// backgrounded even with nothing connected, which is the cost of being able
+  /// to come back.
+  static bool get _serviceWanted =>
+      _entries.isNotEmpty ||
+      (_backgrounded && Stores.setting.bgRun.fetch());
+
   static Future<void> _syncLatest() async {
     // Android: update foreground service notifications
     if (isAndroid) {
       final isRunning = await MethodChans.isServiceRunning();
-      if (_entries.isEmpty) {
-        if (isRunning) {
-          MethodChans.stopService();
-        }
-        await MethodChans.updateSessions(jsonEncode({'sessions': []}));
-      } else {
-        if (!isRunning) {
-          MethodChans.startService();
-        }
-        final payload = jsonEncode({
-          'sessions': _entries.values.map((e) => e.info.toJson()).toList(),
-        });
-        await MethodChans.updateSessions(payload);
+      final wanted = _serviceWanted;
+      if (wanted && !isRunning) {
+        MethodChans.startService();
+      } else if (!wanted && isRunning && !_backgrounded) {
+        // Never while backgrounded, even when nothing is left to keep alive:
+        // stopping is the one direction that cannot be undone from there.
+        MethodChans.stopService();
       }
+      await MethodChans.updateSessions(
+        jsonEncode({
+          'sessions': _entries.values.map((e) => e.info.toJson()).toList(),
+          // Tells the service that an empty list is not the same as "nothing
+          // to do". Without it the native side cancels its notification, which
+          // drops the process out of the foreground exactly when it is
+          // background and cannot get back in.
+          'keepAlive': wanted,
+        }),
+      );
     }
 
     // iOS: manage Live Activity timer

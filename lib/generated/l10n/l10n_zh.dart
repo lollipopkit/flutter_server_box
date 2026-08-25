@@ -358,6 +358,9 @@ class AppLocalizationsZh extends AppLocalizations {
       '此开关只代表程序会尝试在后台运行，具体能否后台运行取决于是否开启了权限。原生 Android 请关闭本 App 的“电池优化”，MIUI / HyperOS 请将省电策略改为“无限制”。';
 
   @override
+  String get bgRunNeedsNotification => '后台运行需要一条常驻通知,而本应用当前无通知权限。点击去开启通知权限。';
+
+  @override
   String get clearAllStatsContent => '确定要清空所有服务器的连接统计数据吗？此操作无法撤销。';
 
   @override
@@ -1870,6 +1873,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get bgRunTip =>
       '此開關僅代表程式會嘗試於背景執行，能否成功取決於系統權限。在原生 Android 上，請關閉本應用的「電池最佳化」；在 MIUI / HyperOS 上，請將省電策略調整為「無限制」。';
+
+  @override
+  String get bgRunNeedsNotification => '背景執行需要一條常駐通知，而本應用目前沒有通知權限。點擊前往開啟通知權限。';
 
   @override
   String get clearAllStatsContent => '確定要清空所有伺服器的連線統計資料嗎？此操作無法撤銷。';

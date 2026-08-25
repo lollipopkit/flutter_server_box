@@ -224,6 +224,22 @@ extension _Init on SSHPageState {
     );
   }
 
+  /// Asks the far side whether it is still there.
+  ///
+  /// [immediate] means "answer now" — a resume, or the page becoming visible —
+  /// rather than waiting for the timer's turn.
+  ///
+  /// It used to also mean "one missed reply is the verdict", which is the worst
+  /// rule at the worst moment. A resume is when the radio is coldest, and
+  /// `home.dart` starts a refresh of every configured server on the same frame;
+  /// an SSH handshake is pure Dart on this isolate, so each server that cannot
+  /// be reached costs a connect timeout of this isolate's attention. A few of
+  /// those in the list were enough to push one ping past its ten seconds and
+  /// close a session that was fine — which is how "I have servers that don't
+  /// connect" turned into "switching apps drops my shell" (#1287).
+  ///
+  /// It now asks as many times as the timer would before concluding anything.
+  /// It just does not wait a minute between the tries.
   Future<void> _checkConnectionHealth({bool immediate = false}) async {
     if (!mounted || _backend == null) return;
     if (_isCheckingConnection) {
@@ -233,21 +249,37 @@ extension _Init on SSHPageState {
     _isCheckingConnection = true;
 
     try {
-      await _backend!.ping().timeout(SSHPageState._connectionCheckTimeout);
-      _missedKeepAliveCount = 0;
-      if (_reportedDisconnected) {
-        _reportedDisconnected = false;
-        TermSessionManager.updateStatus(
-          _sessionId,
-          TermSessionStatus.connected,
-        );
+      final attempts = immediate ? SSHPageState._maxKeepAliveFailures : 1;
+      Object? lastError;
+      StackTrace? lastStackTrace;
+      for (var attempt = 0; attempt < attempts; attempt++) {
+        if (attempt > 0) {
+          // Only ever paid by a link that is slow. One that is gone says so at
+          // once, and the check below leaves the loop without waiting.
+          await Future.delayed(SSHPageState._connectionCheckRetryDelay);
+          if (!mounted || _backend == null) return;
+        }
+        try {
+          await _backend!.ping().timeout(SSHPageState._connectionCheckTimeout);
+          _missedKeepAliveCount = 0;
+          if (_reportedDisconnected) {
+            _reportedDisconnected = false;
+            TermSessionManager.updateStatus(
+              _sessionId,
+              TermSessionStatus.connected,
+            );
+          }
+          return;
+        } on Object catch (error, stackTrace) {
+          lastError = error;
+          lastStackTrace = stackTrace;
+          // The transport itself says it is gone. Nothing to wait for.
+          if (_backend?.isClosed ?? true) break;
+        }
       }
-    } on TimeoutException catch (error) {
-      _handleConnectionCheckFailure(error, immediate: immediate);
-    } on Object catch (error, stackTrace) {
       _handleConnectionCheckFailure(
-        error,
-        stackTrace: stackTrace,
+        lastError ?? StateError('SSH keep-alive did not run'),
+        stackTrace: lastStackTrace,
         immediate: immediate,
       );
     } finally {
@@ -285,32 +317,35 @@ extension _Init on SSHPageState {
     _writeLn('\n\n${libL10n.disconnected}\r\n');
     TermSessionManager.updateStatus(_sessionId, TermSessionStatus.disconnected);
 
-    final sessionName = _tmuxCurrentSession;
-    // Check if we have any tmux session to recover
-    if (sessionName != null && sessionName.isNotEmpty) {
-      final restored = await _tryReconnectTmux(sessionName);
-      if (!mounted) return;
-      if (restored) {
-        _disconnectDialogOpen = false;
-        _reportedDisconnected = false;
-        return;
-      }
+    // Always, not only when there is a tmux session to re-attach. Reconnecting
+    // was gated on that because tmux is what makes a shell's *state* survive,
+    // but a link that dropped while the app was in someone's pocket is the
+    // ordinary case and it has no tmux — and being asked "go back?" is not an
+    // answer to it. A fresh shell on the same server is; the reconnect path
+    // already opened one as its own fallback for a tmux session that had gone.
+    final restored = await _tryReconnect(tmuxSession: _tmuxCurrentSession);
+    if (!mounted) return;
+    if (restored) {
+      _disconnectDialogOpen = false;
+      _reportedDisconnected = false;
+      return;
     }
 
-    // Reconnect failed/cancelled, or no tmux to restore -> ask whether to leave.
+    // Reconnect failed or was cancelled -> ask whether to leave.
     unawaited(_showDisconnectDialog());
   }
 
-  /// Re-establish SSH and re-attach the previous tmux [sessionName]
-  /// (+ window), showing a cancellable progress dialog while reconnecting.
+  /// Re-establish SSH, re-attaching [tmuxSession] when there is one, and
+  /// showing a cancellable progress dialog while it runs.
+  ///
   /// Returns `true` when the terminal was restored.
-  Future<bool> _tryReconnectTmux(String sessionName) async {
+  Future<bool> _tryReconnect({String? tmuxSession}) async {
     _reconnectCancelled = false;
     if (mounted) {
       _showReconnectingDialog(onCancel: () => _reconnectCancelled = true);
     }
     try {
-      return await _reconnectAndAttachTmux(sessionName);
+      return await _reconnect(tmuxSession: tmuxSession);
     } catch (e, st) {
       Loggers.app.warning('SSH reconnect threw', e, st);
       _closeFailedReconnectClient();
@@ -376,14 +411,14 @@ extension _Init on SSHPageState {
     _setupDiscontinuityTimer();
   }
 
-  /// Reconnect SSH after a connection loss and re-attach the previous tmux
-  /// session+window.
+  /// Reconnect SSH after a connection loss, re-attaching [tmuxSession] when
+  /// there is one to re-attach.
   ///
   /// Returns `true` when a usable terminal was restored (either the tmux
   /// session was re-attached or, as a fallback, a raw shell was opened). Returns
   /// `false` only when the SSH transport itself could not be re-established, in
   /// which case the caller falls back to the disconnect prompt.
-  Future<bool> _reconnectAndAttachTmux(String sessionName) async {
+  Future<bool> _reconnect({String? tmuxSession}) async {
     // Tear down the stale SSH session/client first.
     _sess.closeBackend();
 
@@ -428,27 +463,29 @@ extension _Init on SSHPageState {
       return false;
     }
 
-    if (await _reattachTmux(sessionName: sessionName)) {
+    if (tmuxSession != null && tmuxSession.isNotEmpty) {
+      if (await _reattachTmux(sessionName: tmuxSession)) {
+        if (!mounted || _reconnectCancelled) {
+          _closeFailedReconnectClient();
+          return false;
+        }
+        _setupDiscontinuityTimer();
+        widget.args.focusNode?.requestFocus();
+        return true;
+      }
       if (!mounted || _reconnectCancelled) {
         _closeFailedReconnectClient();
         return false;
       }
-      _setupDiscontinuityTimer();
-      widget.args.focusNode?.requestFocus();
-      return true;
-    }
-    if (!mounted || _reconnectCancelled) {
-      _closeFailedReconnectClient();
-      return false;
-    }
 
-    // tmux wasn't restorable (unavailable or session gone) — fall back to a
-    // raw shell so the terminal remains usable instead of being left blank.
-    _logTmuxInfo(
-      'Previous tmux session "$sessionName" no longer available, '
-      'falling back to a raw shell',
-    );
-    _clearTmuxState();
+      // tmux wasn't restorable (unavailable or session gone) — fall back to a
+      // raw shell so the terminal remains usable instead of being left blank.
+      _logTmuxInfo(
+        'Previous tmux session "$tmuxSession" no longer available, '
+        'falling back to a raw shell',
+      );
+      _clearTmuxState();
+    }
 
     final shell = await _sess.openShell();
     if (shell == null || !mounted || _reconnectCancelled) {

@@ -795,6 +795,12 @@ abstract class AppLocalizations {
   /// **'This switch only means the program will try to run in the background. Whether it can run in the background depends on whether the permission is enabled or not. For AOSP-based Android ROMs, please disable \"Battery Optimization\" in this app. For MIUI / HyperOS, please change the power saving policy to \"Unlimited\".'**
   String get bgRunTip;
 
+  /// No description provided for @bgRunNeedsNotification.
+  ///
+  /// In en, this message translates to:
+  /// **'Running in the background needs an ongoing notification, and this app has no notification permission. Tap to allow notifications.'**
+  String get bgRunNeedsNotification;
+
   /// No description provided for @clearAllStatsContent.
   ///
   /// In en, this message translates to:

@@ -391,6 +391,10 @@ class AppLocalizationsPt extends AppLocalizations {
       'Este interruptor indica que o programa tentará rodar em segundo plano, mas a capacidade de fazer isso depende das permissões concedidas. No Android nativo, desative a \'Otimização de bateria\' para este app, no MIUI, altere a estratégia de economia de energia para \'Sem restrições\'.';
 
   @override
+  String get bgRunNeedsNotification =>
+      'Correr em segundo plano precisa de uma notificação permanente, e esta app não tem permissão de notificações. Toca para a conceder.';
+
+  @override
   String get clearAllStatsContent =>
       'Tem certeza de que deseja limpar todas as estatísticas de conexão do servidor? Esta ação não pode ser desfeita.';
 

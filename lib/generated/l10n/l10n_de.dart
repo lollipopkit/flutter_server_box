@@ -392,6 +392,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Dieser Schalter bedeutet nur, dass die App versuchen wird, im Hintergrund zu laufen. Ob sie im Hintergrund laufen kann, hängt davon ab, ob die Berechtigungen aktiviert sind oder nicht. Bei nativem Android deaktivieren Sie bitte \"Batterieoptimierung\" in dieser App, und bei miui ändern Sie bitte die Energiesparrichtlinie auf \"Unbegrenzt\".';
 
   @override
+  String get bgRunNeedsNotification =>
+      'Das Laufen im Hintergrund braucht eine dauerhafte Benachrichtigung, und diese App hat keine Benachrichtigungsberechtigung. Zum Erlauben antippen.';
+
+  @override
   String get clearAllStatsContent =>
       'Sind Sie sicher, dass Sie alle Server-Verbindungsstatistiken löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.';
 

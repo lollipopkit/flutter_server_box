@@ -235,6 +235,11 @@ class SSHPageState extends ConsumerState<SSHPage>
   static const _connectionCheckInterval = Duration(seconds: 60);
   static const _connectionCheckTimeout = Duration(seconds: 10);
   static const _maxKeepAliveFailures = 3;
+
+  /// Between the tries of one check that cannot wait for the next interval —
+  /// see `_checkConnectionHealth`. Short enough that a genuinely dead session
+  /// is still reported within a few seconds of coming back.
+  static const _connectionCheckRetryDelay = Duration(seconds: 2);
   int _missedKeepAliveCount = 0;
   bool _isCheckingConnection = false;
   bool _hasPendingImmediateCheck = false;

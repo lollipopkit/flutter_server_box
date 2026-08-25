@@ -397,6 +397,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Cette option signifie seulement que le programme essaiera de s\'exécuter en arrière-plan, que cela soit possible dépend de l\'autorisation activée ou non. Pour Android natif, veuillez désactiver l\'« Optimisation de la batterie » dans cette application, et pour MIUI, veuillez changer la politique d\'économie d\'énergie en « Illimité ».';
 
   @override
+  String get bgRunNeedsNotification =>
+      'Fonctionner en arrière-plan demande une notification permanente, et cette app n\'a pas la permission de notification. Touchez pour l\'accorder.';
+
+  @override
   String get clearAllStatsContent =>
       'Êtes-vous sûr de vouloir effacer toutes les statistiques de connexion des serveurs ? Cette action ne peut pas être annulée.';
 

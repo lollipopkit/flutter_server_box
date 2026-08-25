@@ -126,6 +126,30 @@ class MainActivity: FlutterFragmentActivity() {
                     "isServiceRunning" -> {
                         result.success(ForegroundService.isRunning)
                     }
+                    // Whether this app may post notifications at all. Without
+                    // it there is no foreground service, and without that the
+                    // system freezes the process the moment it is backgrounded
+                    // — so "run in the background" is a switch that cannot do
+                    // what it says. The settings page reads this to say so.
+                    "notificationsAllowed" -> {
+                        result.success(notificationsAllowed())
+                    }
+                    "openNotificationSettings" -> {
+                        try {
+                            val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                                    .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, packageName)
+                            } else {
+                                Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                    .setData(android.net.Uri.fromParts("package", packageName, null))
+                            }
+                            startActivity(intent)
+                            result.success(null)
+                        } catch (e: Exception) {
+                            android.util.Log.e("MainActivity", "Failed to open notification settings: ${e.message}")
+                            result.error("SETTINGS_ERROR", e.message, null)
+                        }
+                    }
                     "setPrivacyBlur" -> {
                         privacyCoverEnabled = method.arguments as? Boolean ?: false
                         if (!privacyCoverEnabled) applyPrivacyCover(false)

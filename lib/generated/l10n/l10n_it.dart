@@ -394,6 +394,10 @@ class AppLocalizationsIt extends AppLocalizations {
       'Questa opzione significa solo che il programma cercherà di eseguire in background. Se può eseguire in background dipende dal fatto che il permesso sia abilitato o meno. Per le ROM Android basate su AOSP, disabilita \"Ottimizzazione batteria\" in questa app. Per MIUI/HyperOS, cambia la politica di risparmio energetico su \"Illimitato\".';
 
   @override
+  String get bgRunNeedsNotification =>
+      'Restare in esecuzione in background richiede una notifica permanente, e questa app non ha il permesso per le notifiche. Tocca per concederlo.';
+
+  @override
   String get clearAllStatsContent =>
       'Sei sicuro di voler cancellare tutte le statistiche di connessione del server? Questa azione non può essere annullata.';
 

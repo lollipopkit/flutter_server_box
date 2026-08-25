@@ -22,15 +22,22 @@ abstract final class MethodChans {
     }
   }
 
-  /// Issue #662
+  /// Puts the Android process in the foreground, so the system stops treating
+  /// it as cached and freezing it (#662, #1287).
+  ///
+  /// Ungated. It used to return here unless `fgService` was true — a setting
+  /// whose switch was commented out of the Android settings page and then
+  /// deleted with it, so it was false for every install and both of these did
+  /// nothing at all. What kept the service alive instead was [updateSessions],
+  /// which starts it as a side effect; the moment the session list went empty
+  /// that side effect went the other way and the process lost its foreground
+  /// status with nothing able to give it back. Whether the service is wanted
+  /// is `TermSessionManager`'s decision, and it is the only caller.
   static void startService() {
-    if (Stores.setting.fgService.fetch() != true) return;
     _channel.invokeMethod('startService');
   }
 
-  /// Issue #662
   static void stopService() {
-    if (Stores.setting.fgService.fetch() != true) return;
     _channel.invokeMethod('stopService');
   }
 
@@ -153,6 +160,37 @@ abstract final class MethodChans {
       await _channel.invokeMethod('updateSessions', payload);
     } catch (e, s) {
       Loggers.app.warning('Failed to update Android sessions', e, s);
+    }
+  }
+
+  /// Whether Android will let this app post notifications.
+  ///
+  /// Read by the settings page rather than acted on: without the permission
+  /// there is no foreground service, and without that the system freezes the
+  /// process as soon as it is backgrounded — so `bgRun` is a switch that cannot
+  /// keep its promise, and saying nothing about it leaves the user with a
+  /// connection that drops for no reason they can see (#1287).
+  ///
+  /// True off Android, where the question does not arise.
+  static Future<bool> notificationsAllowed() async {
+    if (!isAndroid) return true;
+    try {
+      return await _channel.invokeMethod('notificationsAllowed') == true;
+    } catch (e, s) {
+      Loggers.app.warning('Failed to read the notification permission', e, s);
+      // Assumed granted: a failure here is this app's, and reporting it as the
+      // user's problem would send them to a settings page to fix nothing.
+      return true;
+    }
+  }
+
+  /// Opens this app's notification settings, for the case above.
+  static Future<void> openNotificationSettings() async {
+    if (!isAndroid) return;
+    try {
+      await _channel.invokeMethod('openNotificationSettings');
+    } catch (e, s) {
+      Loggers.app.warning('Failed to open the notification settings', e, s);
     }
   }
 

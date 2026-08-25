@@ -32,9 +32,45 @@ extension _App on _AppSettingsPageState {
   }
 
   Widget _buildBgRun() {
-    return ListTile(
-      title: TipText(l10n.bgRun, l10n.bgRunTip),
-      trailing: StoreSwitch(prop: Stores.setting.bgRun),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ListTile(
+          title: TipText(l10n.bgRun, l10n.bgRunTip),
+          trailing: StoreSwitch(prop: Stores.setting.bgRun),
+        ),
+        _buildBgRunPermission(),
+      ],
+    );
+  }
+
+  /// Says so when the switch above cannot do what it says.
+  ///
+  /// Running in the background means holding a foreground service, and a
+  /// foreground service means a notification — so an app whose notifications
+  /// are turned off is frozen the moment it leaves the screen, and every
+  /// connection dies with nothing on screen explaining it (#1287). Shown only
+  /// in that case: a row saying "this is fine" on every other device is noise.
+  Widget _buildBgRunPermission() {
+    return FutureWidget(
+      future: MethodChans.notificationsAllowed(),
+      loading: UIs.placeholder,
+      error: (_, _) => UIs.placeholder,
+      success: (allowed) {
+        if (allowed != false) return UIs.placeholder;
+        return ListTile(
+          leading: Icon(Icons.notifications_off, color: UIs.primaryColor),
+          title: TipText(libL10n.permission, l10n.bgRunNeedsNotification),
+          trailing: const Icon(Icons.keyboard_arrow_right),
+          onTap: () async {
+            await MethodChans.openNotificationSettings();
+            // Read again on the way back: the point of sending someone there
+            // is that they change it, and a row still saying it is off would
+            // make them wonder whether it took.
+            setStateSafe(() {});
+          },
+        );
+      },
     );
   }
 

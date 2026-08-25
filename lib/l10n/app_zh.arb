@@ -112,6 +112,7 @@
   "icloudBackupStatusSummary": "最后备份：{lastModified}\n状态：{remoteState}",
   "bgRun": "后台运行",
   "bgRunTip": "此开关只代表程序会尝试在后台运行，具体能否后台运行取决于是否开启了权限。原生 Android 请关闭本 App 的“电池优化”，MIUI / HyperOS 请将省电策略改为“无限制”。",
+  "bgRunNeedsNotification": "后台运行需要一条常驻通知,而本应用当前无通知权限。点击去开启通知权限。",
   "clearAllStatsContent": "确定要清空所有服务器的连接统计数据吗？此操作无法撤销。",
   "clearAllStatsTitle": "清空所有统计",
   "clearServerStatsContent": "确定要清空服务器 \"{serverName}\" 的连接统计数据吗？此操作无法撤销。",

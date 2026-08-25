@@ -42,6 +42,7 @@
   "backupTip": "Data yang diekspor dapat dienkripsi dengan kata sandi. \nHarap jaga keamanannya.",
   "bgRun": "Jalankan di Backgroud",
   "bgRunTip": "Sakelar ini hanya berarti aplikasi akan mencoba berjalan di latar belakang, apakah aplikasi dapat berjalan di latar belakang tergantung pada apakah izin diaktifkan atau tidak. Untuk Android asli, nonaktifkan \"Pengoptimalan Baterai\" di aplikasi ini, dan untuk miui, ubah kebijakan penghematan daya ke \"Tidak Terbatas\".",
+  "bgRunNeedsNotification": "Berjalan di latar belakang butuh notifikasi permanen, dan aplikasi ini tidak punya izin notifikasi. Ketuk untuk memberikannya.",
   "clearAllStatsContent": "Apakah Anda yakin ingin menghapus semua statistik koneksi server? Tindakan ini tidak dapat dibatalkan.",
   "clearAllStatsTitle": "Hapus Semua Statistik",
   "clearServerStatsContent": "Apakah Anda yakin ingin menghapus statistik koneksi untuk server \"{serverName}\"? Tindakan ini tidak dapat dibatalkan.",
