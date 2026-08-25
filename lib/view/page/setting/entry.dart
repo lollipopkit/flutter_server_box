@@ -613,6 +613,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     final space = level == null ? 0.0 : _kTabsHeight + _kTabsMargin * 2;
 
     return Stack(
+      // Nothing here should reach past the floor of this box — the page is
+      // pushed into the home tab's navigator, and the `Scaffold` paints its
+      // bottom bar after the body, so anything that does is covered rather than
+      // shown. `none` only keeps the clip from being what cuts it: the bar
+      // carries its own margin, so it stops short of the floor on its own.
+      clipBehavior: Clip.none,
       children: [
         MediaQuery(
           data: mediaQuery.copyWith(
@@ -624,10 +630,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         ),
         // Edge to edge, and the bar centres itself within that: it is as wide
         // as the level it is showing, and only scrolls when that is too wide.
+        //
+        // Flush with the floor, because the gap the bar stands in is padding
+        // inside it now. Lifting it from here as well would move it up by that
+        // much again, and put the shadow back outside the clip it just left.
         Positioned(
           left: 0,
           right: 0,
-          bottom: _kTabsMargin,
+          bottom: 0,
           child: AnimatedSwitcher(
             duration: Durations.medium2,
             // Springs up past its place and settles, as displacement does
