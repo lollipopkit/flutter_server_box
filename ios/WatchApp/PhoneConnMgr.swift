@@ -107,12 +107,30 @@ final class PhoneConnMgr: NSObject, ObservableObject, WCSessionDelegate {
 
     // MARK: - Payload
 
+    /// The `ts` of the newest payload applied.
+    ///
+    /// Only ever touched on the main queue, which is also where it is compared.
+    private var appliedAt: Int64 = 0
+
     /// Applies a payload from the phone, ignoring one that carries no server
-    /// list at all (an empty reply, or a message about something else).
+    /// list at all (an empty reply, or a message about something else), and one
+    /// that has been overtaken.
+    ///
+    /// Nothing orders the three ways a payload arrives: a `userInfo` is queued
+    /// and delivered whenever it can be, the application context holds only the
+    /// latest, and a reply to `requestData` races both. An older one landing
+    /// last used to overwrite a newer selection, which then stood until the
+    /// phone next pushed.
     private func ingest(_ payload: [String: Any]) {
         guard let parsed = Self.parse(payload) else { return }
+        let stamp = (payload["ts"] as? NSNumber)?.int64Value ?? 0
 
         DispatchQueue.main.async {
+            // A phone that predates the stamp sends none; there is nothing to
+            // order those by, so they apply as they always did.
+            if stamp != 0 && stamp < self.appliedAt { return }
+            self.appliedAt = max(self.appliedAt, stamp)
+
             for (id, token) in parsed.tokens {
                 WatchStore.setToken(token, for: id)
             }

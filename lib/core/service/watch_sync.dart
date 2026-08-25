@@ -158,6 +158,7 @@ final class WatchSync {
       tokens: tokens,
       // TODO: drop with `SettingStore.watchLegacyUrls`.
       legacyUrls: Stores.setting.watchLegacyUrls.fetch(),
+      stamp: DateTime.now().millisecondsSinceEpoch,
     );
   }
 
@@ -281,11 +282,14 @@ final class WatchSync {
   /// servers the user explicitly picked for the watch. `urls` is the pre-v2 shape and
   /// is still emitted so a watch app that has not updated yet keeps working.
   @visibleForTesting
+  /// [stamp] orders this against the other payloads in flight, and is passed in
+  /// rather than read here so that this stays a pure function.
   static Map<String, dynamic> payloadFrom({
     required List<String> selectedIds,
     required Spi? Function(String id) lookup,
     required Map<String, String> tokens,
     required List<String> legacyUrls,
+    required int stamp,
   }) {
     final servers = <Map<String, dynamic>>[];
     for (final id in selectedIds) {
@@ -308,6 +312,13 @@ final class WatchSync {
 
     return {
       'v': _payloadVersion,
+      // When this was built, so the watch can tell a stale delivery from a
+      // fresh one. WatchConnectivity orders nothing between a queued userInfo,
+      // the application context and a reply to `requestData`, so a payload that
+      // had been sitting in the queue could land last and undo a newer
+      // selection. A watch that predates this ignores the key, and a payload
+      // without it is applied as before.
+      'ts': stamp,
       'servers': servers,
       // TODO: drop with `SettingStore.watchLegacyUrls`.
       'urls': legacyUrls,

@@ -32,12 +32,14 @@ void main() {
     List<Spi> servers = const [],
     Map<String, String> tokens = const {},
     List<String> legacyUrls = const [],
+    int stamp = 1,
   }) {
     return WatchSync.payloadFrom(
       selectedIds: selectedIds,
       lookup: (id) => servers.where((e) => e.id == id).firstOrNull,
       tokens: tokens,
       legacyUrls: legacyUrls,
+      stamp: stamp,
     );
   }
 
@@ -161,5 +163,15 @@ void main() {
 
     expect(result['urls'], ['http://10.0.0.2:3770/status']);
     expect(result['servers'], isEmpty);
+  });
+
+  test('carries the stamp the watch orders deliveries by', () {
+    // WatchConnectivity orders nothing between a queued userInfo, the
+    // application context and a reply to `requestData`, so the watch drops a
+    // payload older than the one it has already applied. Without this it can
+    // only be told what arrived last, which is not the same as what is current.
+    final result = payload(selectedIds: const [], stamp: 1737000000000);
+
+    expect(result['ts'], 1737000000000);
   });
 }
