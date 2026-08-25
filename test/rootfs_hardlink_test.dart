@@ -263,7 +263,7 @@ void main() {
       // other, which a copy would not be.
       target.writeAsStringSync('changed');
       expect(applet.readAsStringSync(), 'changed');
-    });
+    }, skip: Platform.isWindows);
 
     test('answers false rather than throwing when it cannot', () async {
       // The caller has a fallback and a system missing `ls` is worse than one
