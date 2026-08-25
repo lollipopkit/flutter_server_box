@@ -478,6 +478,6 @@
   "monitorAllowInsecureHttp": "Дозволити HTTP",
   "monitorAllowInsecureHttpTip": "Лише в довіреній приватній мережі, що сама шифрує транспорт, наприклад Tailscale",
   "send": "Надіслати",
-  "privacyBlur": "Розмиття для приватності",
-  "privacyBlurTip": "Розмивати вміст програми в перемикачі"
+  "privacyBlur": "Приватність у фоні",
+  "privacyBlurTip": "Приховувати вміст програми в перемикачі"
 }

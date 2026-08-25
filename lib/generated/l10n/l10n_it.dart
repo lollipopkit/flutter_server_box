@@ -1658,8 +1658,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get send => 'Invia';
 
   @override
-  String get privacyBlur => 'Sfocatura privacy';
+  String get privacyBlur => 'Privacy in background';
 
   @override
-  String get privacyBlurTip => 'Sfoca il contenuto dell\'app nel selettore app';
+  String get privacyBlurTip =>
+      'Nascondi il contenuto dell\'app nel selettore app';
 }

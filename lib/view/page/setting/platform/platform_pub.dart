@@ -1,8 +1,28 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:server_box/core/chan.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/store.dart';
 
 abstract final class PlatformPublicSettings {
+  /// Mobile only: there is no app switcher card to hide on a desktop, and
+  /// neither platform channel implements this there.
+  ///
+  /// The native side keeps its own copy, so the switch has to push as well as
+  /// store — `callback` runs before the write and skips it on failure.
+  static Widget? get buildPrivacyBlur {
+    if (!isIOS && !isAndroid) return null;
+    return ListTile(
+      leading: const Icon(Icons.blur_on),
+      title: Text(l10n.privacyBlur),
+      subtitle: Text(l10n.privacyBlurTip, style: UIs.textGrey),
+      trailing: StoreSwitch(
+        prop: Stores.setting.privacyBlur,
+        callback: MethodChans.setPrivacyBlur,
+      ),
+    );
+  }
+
   static Widget get buildBioAuth {
     return ExpandTile(
       leading: const Icon(Icons.fingerprint),

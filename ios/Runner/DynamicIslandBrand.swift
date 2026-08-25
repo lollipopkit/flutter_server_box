@@ -50,7 +50,6 @@ final class DynamicIslandBrand {
         self.window = window
         self.controller = controller
         applyStoredColors()
-        UserDefaults.standard.set("\(window.frame) lvl=\(window.windowLevel.rawValue) hidden=\(window.isHidden)", forKey: "dbg_install")
     }
 
     /// Take the app's current theme colors, as ARGB.
@@ -155,7 +154,6 @@ private final class BrandViewController: UIViewController {
         super.viewWillLayoutSubviews()
 
         let safeTop = view.safeAreaInsets.top
-        UserDefaults.standard.set("safeTop=\(safeTop) bounds=\(view.bounds)", forKey: "dbg_layout")
         let hasIsland = safeTop >= Island.minSafeAreaTop
         badge.isHidden = !hasIsland
         guard hasIsland else { return }

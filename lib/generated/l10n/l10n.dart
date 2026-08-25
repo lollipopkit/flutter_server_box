@@ -2885,13 +2885,13 @@ abstract class AppLocalizations {
   /// No description provided for @privacyBlur.
   ///
   /// In en, this message translates to:
-  /// **'Privacy blur'**
+  /// **'Background privacy'**
   String get privacyBlur;
 
   /// No description provided for @privacyBlurTip.
   ///
   /// In en, this message translates to:
-  /// **'Blur the app\'s content in the app switcher'**
+  /// **'Hide app content in the app switcher'**
   String get privacyBlurTip;
 }
 

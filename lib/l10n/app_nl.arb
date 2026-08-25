@@ -478,6 +478,6 @@
   "monitorAllowInsecureHttp": "HTTP toestaan",
   "monitorAllowInsecureHttpTip": "Alleen op een vertrouwd privénetwerk dat het transport zelf versleutelt, zoals Tailscale",
   "send": "Verzenden",
-  "privacyBlur": "Privacyvervaging",
-  "privacyBlurTip": "Vervaag de inhoud van de app in de app-switcher"
+  "privacyBlur": "Privacy op de achtergrond",
+  "privacyBlurTip": "Verberg de app-inhoud in de app-switcher"
 }

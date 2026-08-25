@@ -485,6 +485,6 @@
   "bmcAccountInUse": "{count} 台伺服器在用。它們會保留位址，但失去帳戶。",
   "bmcStaleWrite": "BMC 上的內容在寫入期間被改動過，請重試。",
   "send": "傳送",
-  "privacyBlur": "隱私模糊",
-  "privacyBlurTip": "在多工介面模糊應用內容"
+  "privacyBlur": "背景隱私保護",
+  "privacyBlurTip": "在多工介面隱藏應用內容"
 }

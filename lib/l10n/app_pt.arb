@@ -478,6 +478,6 @@
   "monitorAllowInsecureHttp": "Permitir HTTP",
   "monitorAllowInsecureHttpTip": "Apenas numa rede privada de confiança que cifre o transporte, como a Tailscale",
   "send": "Enviar",
-  "privacyBlur": "Desfoque de privacidade",
-  "privacyBlurTip": "Desfocar o conteúdo do app no alternador de apps"
+  "privacyBlur": "Privacidade em segundo plano",
+  "privacyBlurTip": "Ocultar o conteúdo do app no alternador"
 }

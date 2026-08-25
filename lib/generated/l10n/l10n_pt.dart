@@ -1647,9 +1647,8 @@ class AppLocalizationsPt extends AppLocalizations {
   String get send => 'Enviar';
 
   @override
-  String get privacyBlur => 'Desfoque de privacidade';
+  String get privacyBlur => 'Privacidade em segundo plano';
 
   @override
-  String get privacyBlurTip =>
-      'Desfocar o conteúdo do app no alternador de apps';
+  String get privacyBlurTip => 'Ocultar o conteúdo do app no alternador';
 }

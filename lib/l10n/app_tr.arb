@@ -478,6 +478,6 @@
   "monitorAllowInsecureHttp": "HTTP’ye izin ver",
   "monitorAllowInsecureHttpTip": "Yalnızca taşımayı kendisi şifreleyen güvenilir özel ağlarda, örneğin Tailscale",
   "send": "Gönder",
-  "privacyBlur": "Gizlilik bulanıklığı",
-  "privacyBlurTip": "Uygulama değiştiricide içeriği bulanıklaştır"
+  "privacyBlur": "Arka planda gizlilik",
+  "privacyBlurTip": "Uygulama değiştiricide içeriği gizle"
 }

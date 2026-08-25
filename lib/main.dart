@@ -240,9 +240,12 @@ Future<void> _doPlatformRelated() async {
   if (isIOS) {
     unawaited(WatchSync.instance.init());
     unawaited(MethodChans.syncAccessoryWidgetUrl());
-    unawaited(
-      MethodChans.setPrivacyBlur(Stores.setting.privacyBlur.fetch()),
-    );
+  }
+
+  // Both platforms keep their own copy of this, which a reinstall or a restored
+  // backup leaves disagreeing with the settings store.
+  if (isIOS || isAndroid) {
+    unawaited(MethodChans.setPrivacyBlur(Stores.setting.privacyBlur.fetch()));
   }
 
   final serversCount = Stores.server.keys().length;

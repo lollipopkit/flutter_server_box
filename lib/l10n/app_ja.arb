@@ -478,6 +478,6 @@
   "monitorAllowInsecureHttp": "HTTP を許可",
   "monitorAllowInsecureHttpTip": "HTTP 以外で通信自体が暗号化される信頼できるプライベートネットワークでのみ。たとえば Tailscale",
   "send": "送信",
-  "privacyBlur": "プライバシーぼかし",
-  "privacyBlurTip": "Appスイッチャーで内容をぼかす"
+  "privacyBlur": "バックグラウンドのプライバシー",
+  "privacyBlurTip": "Appスイッチャーで内容を隠す"
 }

@@ -1665,9 +1665,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get send => 'Envoyer';
 
   @override
-  String get privacyBlur => 'Flou de confidentialité';
+  String get privacyBlur => 'Confidentialité en arrière-plan';
 
   @override
-  String get privacyBlurTip =>
-      'Flouter le contenu de l\'app dans le sélecteur d\'apps';
+  String get privacyBlurTip => 'Masquer le contenu dans le sélecteur d\'apps';
 }

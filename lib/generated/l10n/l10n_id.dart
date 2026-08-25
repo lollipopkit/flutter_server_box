@@ -1636,8 +1636,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get send => 'Kirim';
 
   @override
-  String get privacyBlur => 'Buram privasi';
+  String get privacyBlur => 'Privasi latar belakang';
 
   @override
-  String get privacyBlurTip => 'Buramkan konten aplikasi di pengalih aplikasi';
+  String get privacyBlurTip =>
+      'Sembunyikan konten aplikasi di pengalih aplikasi';
 }

@@ -1548,8 +1548,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get send => '보내기';
 
   @override
-  String get privacyBlur => '개인정보 블러';
+  String get privacyBlur => '백그라운드 개인정보 보호';
 
   @override
-  String get privacyBlurTip => '앱 전환기에서 앱 내용을 흐리게 표시';
+  String get privacyBlurTip => '앱 전환기에서 앱 내용 숨기기';
 }

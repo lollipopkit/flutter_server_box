@@ -478,6 +478,6 @@
   "monitorAllowInsecureHttp": "Izinkan HTTP",
   "monitorAllowInsecureHttpTip": "Hanya di jaringan privat tepercaya yang mengenkripsi transportnya sendiri, misalnya Tailscale",
   "send": "Kirim",
-  "privacyBlur": "Buram privasi",
-  "privacyBlurTip": "Buramkan konten aplikasi di pengalih aplikasi"
+  "privacyBlur": "Privasi latar belakang",
+  "privacyBlurTip": "Sembunyikan konten aplikasi di pengalih aplikasi"
 }

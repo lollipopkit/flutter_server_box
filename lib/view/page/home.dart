@@ -188,11 +188,14 @@ class _HomePageState extends ConsumerState<HomePage>
               _goAuth();
             } else {
               _shouldAuth = false;
+              _releasePrivacyCover();
             }
             _pausedTime = null;
           } else {
             _goAuth();
           }
+        } else {
+          _releasePrivacyCover();
         }
         final serverNotifier = _notifier;
         unawaited(serverNotifier.startAutoRefresh());
@@ -204,6 +207,12 @@ class _HomePageState extends ConsumerState<HomePage>
         _lastFullscreenMode = null;
         _pausedTime = DateTime.now();
         _shouldAuth = true;
+        // Decided here rather than on the way back: the native cover comes off
+        // the moment the app is frontmost, which is several frames before
+        // Flutter hears about it and can push the lock screen.
+        if (Stores.setting.useBioAuth.fetch()) {
+          unawaited(MethodChans.setPrivacyBlurLocked(true));
+        }
         if (!(isAndroid && Stores.setting.bgRun.fetch())) {
           _notifier.stopAutoRefresh();
         }
@@ -455,6 +464,13 @@ class _HomePageState extends ConsumerState<HomePage>
   void _goAuth() {
     if (Stores.setting.useBioAuth.fetch()) {
       if (LocalAuthPage.route.alreadyIn) return;
+      // Before the push, not after the route resolves. On iOS the cover is a
+      // view over the Flutter window, so it is *above* every route drawn inside
+      // it — leaving it up would hide the lock screen instead of protecting it,
+      // and swallow the taps meant for it. Releasing it here costs at most the
+      // frames between this and the route appearing, and in practice the
+      // channel round trip outlasts the push.
+      _releasePrivacyCover();
       // The route's own future, not `onAuthSuccess`. That callback runs from
       // inside `context.pop()`, while the lock screen is still the route the
       // navigator answers with — so the guide's "is the home page current"
@@ -470,7 +486,15 @@ class _HomePageState extends ConsumerState<HomePage>
             )
             .then((_) => _maybeShowNavGuide()),
       );
+    } else {
+      _releasePrivacyCover();
     }
+  }
+
+  /// Let the native privacy cover come off, now that either the lock screen is
+  /// about to take over or it was established that none is coming.
+  void _releasePrivacyCover() {
+    unawaited(MethodChans.setPrivacyBlurLocked(false));
   }
 
   void _onDestinationSelected(int index) {

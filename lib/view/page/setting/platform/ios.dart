@@ -62,7 +62,6 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
       padding: context.padBottom(const EdgeInsets.symmetric(horizontal: 17)),
       children: [
         _buildPushToken(),
-        _buildPrivacyBlur(),
         _buildAutoUpdateHomeWidget(),
         _buildAccessoryWidgetServer(),
         _buildWatchApp(),
@@ -106,19 +105,6 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
             maxLines: 1,
           );
         },
-      ),
-    );
-  }
-
-  /// The native side keeps its own copy of this, so the switch has to push as
-  /// well as store — `callback` runs before the write and skips it on failure.
-  Widget _buildPrivacyBlur() {
-    return ListTile(
-      title: Text(l10n.privacyBlur),
-      subtitle: Text(l10n.privacyBlurTip, style: UIs.textGrey),
-      trailing: StoreSwitch(
-        prop: Stores.setting.privacyBlur,
-        callback: MethodChans.setPrivacyBlur,
       ),
     );
   }

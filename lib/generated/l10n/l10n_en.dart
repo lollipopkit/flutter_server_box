@@ -1634,8 +1634,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get send => 'Send';
 
   @override
-  String get privacyBlur => 'Privacy blur';
+  String get privacyBlur => 'Background privacy';
 
   @override
-  String get privacyBlurTip => 'Blur the app\'s content in the app switcher';
+  String get privacyBlurTip => 'Hide app content in the app switcher';
 }

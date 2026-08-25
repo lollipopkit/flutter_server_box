@@ -1543,8 +1543,8 @@ class AppLocalizationsJa extends AppLocalizations {
   String get send => '送信';
 
   @override
-  String get privacyBlur => 'プライバシーぼかし';
+  String get privacyBlur => 'バックグラウンドのプライバシー';
 
   @override
-  String get privacyBlurTip => 'Appスイッチャーで内容をぼかす';
+  String get privacyBlurTip => 'Appスイッチャーで内容を隠す';
 }

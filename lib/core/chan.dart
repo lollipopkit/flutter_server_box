@@ -80,18 +80,48 @@ abstract final class MethodChans {
     }
   }
 
-  /// Tell the native side whether to blur the app once it leaves the
-  /// foreground, hiding its content in the app switcher.
+  /// Tell the native side whether to cover the app once it leaves the
+  /// foreground, hiding its content from the app switcher.
+  ///
+  /// What "cover" means differs by platform, and deliberately so. iOS lays a
+  /// real blur over the Flutter window. Android sets `FLAG_SECURE` instead:
+  /// Flutter draws into a `SurfaceView` that `RenderEffect` cannot reach, and
+  /// anything that has to render a frame races the system's recents capture,
+  /// which the flag does not.
   ///
   /// Pushed on change *and* at launch: the native side answers this from its
-  /// own `UserDefaults` copy, which a reinstall or a restored backup leaves
-  /// saying something different from the (synced) settings store.
+  /// own persisted copy, which a reinstall or a restored backup leaves saying
+  /// something different from the (synced) settings store.
   static Future<void> setPrivacyBlur(bool enabled) async {
-    if (!isIOS) return;
+    if (!isIOS && !isAndroid) return;
     try {
       await _channel.invokeMethod('setPrivacyBlur', enabled);
     } catch (e, s) {
       Loggers.app.warning('Failed to set privacy blur', e, s);
+    }
+  }
+
+  /// Hold the cover in place after the app comes forward, until Flutter has
+  /// decided whether a biometric lock is coming.
+  ///
+  /// Without it the cover comes off the moment the app is frontmost, and the
+  /// real UI is on screen for however many frames it takes Flutter to hear
+  /// about the lifecycle change at all.
+  ///
+  /// Cleared just before the lock screen is pushed — on iOS the cover is a view
+  /// over the whole Flutter window, so it would otherwise hide that screen
+  /// rather than protect it.
+  static bool? _privacyBlurLocked;
+
+  static Future<void> setPrivacyBlurLocked(bool locked) async {
+    if (!isIOS && !isAndroid) return;
+    if (_privacyBlurLocked == locked) return;
+    _privacyBlurLocked = locked;
+    try {
+      await _channel.invokeMethod('setPrivacyBlurLocked', locked);
+    } catch (e, s) {
+      _privacyBlurLocked = null;
+      Loggers.app.warning('Failed to set privacy blur lock', e, s);
     }
   }
 

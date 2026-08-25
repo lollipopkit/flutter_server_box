@@ -1654,8 +1654,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get send => 'Надіслати';
 
   @override
-  String get privacyBlur => 'Розмиття для приватності';
+  String get privacyBlur => 'Приватність у фоні';
 
   @override
-  String get privacyBlurTip => 'Розмивати вміст програми в перемикачі';
+  String get privacyBlurTip => 'Приховувати вміст програми в перемикачі';
 }

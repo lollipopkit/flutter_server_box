@@ -21,7 +21,7 @@ import ActivityKit
         ) { note in
             guard let scene = note.object as? UIWindowScene else { return }
             DynamicIslandBrand.shared.install(in: scene)
-            PrivacyBlur.shared.hide()
+            PrivacyBlur.shared.hideIfUnlocked()
         }
 
         // `willDeactivate` and not `didEnterBackground`: the switcher snapshot
@@ -107,6 +107,9 @@ import ActivityKit
                 result(nil)
             case "setPrivacyBlur":
                 PrivacyBlur.shared.isEnabled = call.arguments as? Bool ?? false
+                result(nil)
+            case "setPrivacyBlurLocked":
+                PrivacyBlur.shared.setLocked(call.arguments as? Bool ?? false)
                 result(nil)
             case "setAccessoryWidgetUrl":
                 // The accessory families can't carry the intent configuration
