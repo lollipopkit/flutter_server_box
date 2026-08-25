@@ -335,6 +335,14 @@ extension _Server on _AppSettingsPageState {
 
   Widget _buildServerLogoUrl() {
     void onSave(String raw) {
+      // Emptying the field clears it. An empty string is not a fetchable URL,
+      // so it was refused as invalid — and unset is the state this starts in
+      // and shows as [libL10n.empty], which left no way back to it.
+      if (raw.trim().isEmpty) {
+        _setting.serverLogoUrl.put('');
+        context.popDialog();
+        return;
+      }
       // A GitHub page URL is rewritten to the one that serves the file. It is
       // what the address bar gives you, and left alone it fetches HTML that
       // reaches the decoder as `Invalid image data`.

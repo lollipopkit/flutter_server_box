@@ -355,6 +355,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         return;
       }
       _path.add(node);
+      // Unfolded in the wide menu too. The two navigations share [_selectedId]
+      // but not their shape, and only the menu's own toggle used to write here
+      // — so a branch entered while narrow was still folded if the window then
+      // grew, leaving the page on screen with no row anywhere pointing at it.
+      _expanded.add(node.id);
       final leaf = node.firstLeaf;
       if (leaf != null) _selectedId = leaf.id;
     });
