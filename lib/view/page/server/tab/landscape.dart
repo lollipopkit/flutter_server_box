@@ -79,7 +79,7 @@ extension _Widgets on _ServerPageState {
   }
 }
 
-extension _Actions on _ServerPageState {
+extension _LandscapeActions on _ServerPageState {
   void _clearLandscapeController() {
     _landscapeSeenId = null;
     final controller = _landscapeController;
