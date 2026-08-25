@@ -146,4 +146,73 @@ void main() {
       'docs',
     );
   });
+
+  group('dot segments cannot walk out of the root', () {
+    // Containment is a string prefix, so before these resolved, every one of
+    // the paths below passed that test while naming somewhere else — the
+    // backend is what resolves them, and it answered outside the root.
+
+    test('a target that climbs back out is refused', () {
+      final path = BrowsePath(root: '/home/me');
+
+      expect(path.goTo('/home/me/../outside'), isFalse);
+      expect(path.path, '/home/me');
+
+      expect(path.goTo('/home/me/../../etc'), isFalse);
+      expect(path.path, '/home/me');
+    });
+
+    test('a target that comes back inside is allowed, and is resolved', () {
+      final path = BrowsePath(root: '/home/me');
+
+      expect(path.goTo('/home/me/logs/../docs'), isTrue);
+      expect(path.path, '/home/me/docs');
+    });
+
+    test('. is dropped rather than kept as a component', () {
+      final path = BrowsePath(root: '/home/me');
+
+      expect(path.goTo('/home/me/./docs/.'), isTrue);
+      expect(path.path, '/home/me/docs');
+    });
+
+    test('an initial path that resolves outside lands at the root', () {
+      final path = BrowsePath(root: '/home/me', initial: '/home/me/../etc');
+
+      expect(path.path, '/home/me');
+    });
+
+    test('a root of its own is resolved too', () {
+      expect(BrowsePath(root: '/home/me/../me').root, '/home/me');
+    });
+
+    test('.. at the top stays at the top instead of escaping', () {
+      expect(BrowsePath(root: '/..').root, '/');
+      expect(BrowsePath(root: '/../../etc').root, '/etc');
+    });
+
+    test('entering a listed name is checked like any other move', () {
+      // A listing is not a trusted source of names: a server is free to answer
+      // with `..`, and this used to move there without asking.
+      final path = BrowsePath(root: '/home/me');
+
+      path.enter('..');
+      expect(path.path, '/home/me');
+
+      path.enter('docs');
+      expect(path.path, '/home/me/docs');
+
+      path.enter('..');
+      expect(path.path, '/home/me');
+    });
+
+    test('a windows root keeps its shape', () {
+      final path = BrowsePath(root: r'C:\Users\me');
+
+      expect(path.root, 'C:/Users/me');
+      expect(path.goTo('C:/Users/me/../../Windows'), isFalse);
+      expect(path.goTo('C:/Users/me/Documents'), isTrue);
+      expect(path.path, 'C:/Users/me/Documents');
+    });
+  });
 }

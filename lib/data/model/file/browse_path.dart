@@ -60,7 +60,10 @@ class BrowsePath {
     return _path.substring(slash + 1);
   }
 
-  void enter(String child) => _moveTo(join(_path, child));
+  /// Through [goTo], so that the name is normalized and checked like any other
+  /// destination. A listing is not a trusted source of names — a server is free
+  /// to answer with `..`, and moving there unchecked left the root behind.
+  void enter(String child) => goTo(join(_path, child));
 
   void goUp() {
     if (!canGoUp) return;
@@ -83,16 +86,32 @@ class BrowsePath {
   static String join(String dir, String child) =>
       dir.endsWith('/') ? '$dir$child' : '$dir/$child';
 
-  /// Trailing slashes off, `\` in, `/` out.
+  /// Trailing slashes off, `\` in, `/` out, `.` and `..` resolved.
   ///
   /// A Windows root arrives as `C:\Users\me\Documents` and has to become a
   /// path this can split on; the local backend turns it back at the other end.
+  ///
+  /// Resolving the dot segments is what makes [_isWithin] mean anything. That
+  /// test is a string prefix, so `/home/me/../../etc` passed it while naming
+  /// somewhere else entirely — every backend resolves the path it is handed,
+  /// and the answer was outside the root the browser was confined to.
   static String _normalize(String path) {
-    var value = path.replaceAll(r'\', '/');
-    while (value.length > 1 && value.endsWith('/')) {
-      value = value.substring(0, value.length - 1);
+    final value = path.replaceAll(r'\', '/');
+    final absolute = value.startsWith('/');
+    final segments = <String>[];
+    for (final segment in value.split('/')) {
+      if (segment.isEmpty || segment == '.') continue;
+      if (segment == '..') {
+        // Dropped at the top rather than allowed to walk off it: there is no
+        // place above what was given, and the result is read literally.
+        if (segments.isNotEmpty) segments.removeLast();
+        continue;
+      }
+      segments.add(segment);
     }
-    return value.isEmpty ? '/' : value;
+    final joined = segments.join('/');
+    if (absolute) return '/$joined';
+    return joined.isEmpty ? '/' : joined;
   }
 
   /// Whether [path] is [root] or sits under it.
