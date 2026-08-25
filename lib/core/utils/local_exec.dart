@@ -6,6 +6,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/utils/android_rootfs.dart';
 import 'package:server_box/core/utils/ish_exec.dart';
 import 'package:server_box/core/utils/local_shell.dart';
+import 'package:server_box/core/utils/process_tree.dart';
 import 'package:server_box/core/utils/rootfs.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/res/store.dart';
@@ -154,7 +155,7 @@ class ProcessExec extends LocalExec {
       unawaited(
         cancel?.then((_) {
           cancelled = true;
-          _kill(process);
+          ProcessTree.terminate(process, null);
         }),
       );
 
@@ -194,29 +195,5 @@ class ProcessExec extends LocalExec {
     } finally {
       guest?.release();
     }
-  }
-
-  /// Ends the process.
-  ///
-  /// Only the process, unlike the terminal's pty. `Process.start` does not make
-  /// the child a session leader, so its pid is not a group id — signalling
-  /// `-pid` would reach whatever group the *app* is in. A shell running one
-  /// command execs it rather than forking, so this reaches the real work in
-  /// the ordinary case; a script that backgrounds something outlives this, and
-  /// there is no safe way from here to find it.
-  void _kill(Process process) {
-    if (!process.kill()) return;
-    // For a script that trapped the first one. Nothing is reading it any more.
-    final sigkill = Timer(const Duration(seconds: 3), () {
-      try {
-        process.kill(ProcessSignal.sigkill);
-      } catch (_) {
-        // Already gone, which is the point.
-      }
-    });
-    // Cancelled when the process goes on its own, which is the ordinary case.
-    // Left running, the timer held this closure — and the `Process` with it —
-    // for three seconds past every cancelled command.
-    process.exitCode.whenComplete(sigkill.cancel).ignore();
   }
 }

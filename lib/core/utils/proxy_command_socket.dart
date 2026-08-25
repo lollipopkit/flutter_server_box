@@ -7,6 +7,7 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:meta/meta.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/utils/process_tree.dart';
 import 'package:server_box/data/model/app/error.dart';
 
 class ProxyCommandSocket implements SSHSocket {
@@ -80,8 +81,8 @@ class ProxyCommandSocket implements SSHSocket {
       // that appears later instead of leaving a detached proxy behind.
       unawaited(
         processFuture.then<void>((lateProcess) async {
-          final groupId = await _findProcessGroupId(lateProcess);
-          _killProcessTree(lateProcess, groupId);
+          final groupId = await ProcessTree.groupId(lateProcess);
+          ProcessTree.terminate(lateProcess, groupId);
         }, onError: (_, _) {}),
       );
       throw SSHErr(
@@ -91,7 +92,7 @@ class ProxyCommandSocket implements SSHSocket {
         ),
       );
     }
-    final processGroupId = await _findProcessGroupId(process);
+    final processGroupId = await ProcessTree.groupId(process);
     final stdoutController = StreamController<Uint8List>();
 
     process.stdout.listen(
@@ -255,51 +256,10 @@ class ProxyCommandSocket implements SSHSocket {
   @override
   Future<void> get done => _done;
 
-  static Future<int?> _findProcessGroupId(Process process) async {
-    if (Platform.isWindows) return null;
-    try {
-      final result = await Process.run('ps', [
-        '-o',
-        'pgid=',
-        '-p',
-        '${process.pid}',
-      ]).timeout(const Duration(seconds: 1));
-      if (result.exitCode != 0) return null;
-      return int.tryParse('${result.stdout}'.trim());
-    } catch (_) {
-      return null;
-    }
-  }
-
-  static void _killProcessTree(Process process, int? processGroupId) {
-    // Process.kill only signals the immediate child (usually /bin/sh); a
-    // command like `ssh -W` or `nc` is a descendant and would be orphaned.
-    // On Unix, try to kill the process group; fall back to the pid.
-    try {
-      if (Platform.isWindows) {
-        Process.runSync('taskkill', ['/PID', '${process.pid}', '/T', '/F']);
-      } else if (processGroupId != null) {
-        Process.killPid(-processGroupId);
-      }
-    } catch (_) {}
-    process.kill(ProcessSignal.sigterm);
-    // Give it a moment before SIGKILL
-    Future.delayed(const Duration(milliseconds: 200), () {
-      try {
-        process.kill(ProcessSignal.sigkill);
-      } catch (_) {}
-      try {
-        if (!Platform.isWindows && processGroupId != null) {
-          Process.killPid(-processGroupId, ProcessSignal.sigkill);
-        }
-      } catch (_) {}
-    });
-  }
-
   @override
   Future<void> close() async {
     // Kill first so a child that ignores stdin EOF does not block close().
-    _killProcessTree(_process, _processGroupId);
+    ProcessTree.terminate(_process, _processGroupId);
     try {
       await _sink.close().timeout(const Duration(seconds: 2));
     } catch (_) {}
@@ -320,7 +280,7 @@ class ProxyCommandSocket implements SSHSocket {
 
   @override
   void destroy() {
-    _killProcessTree(_process, _processGroupId);
+    ProcessTree.terminate(_process, _processGroupId);
   }
 
   @override

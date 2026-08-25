@@ -44,7 +44,8 @@ const ENCODED_NAME_PREFIX: &str = "b64.";
 pub const CUSTOM_CMD_DIR_UNIX: &str = "$HOME/.config/server_box/custom_cmds";
 
 /// The Windows form of [`CUSTOM_CMD_DIR_UNIX`], as a PowerShell expression.
-pub const CUSTOM_CMD_DIR_WINDOWS: &str = "(Join-Path $env:USERPROFILE '.config\\server_box\\custom_cmds')";
+pub const CUSTOM_CMD_DIR_WINDOWS: &str =
+    "(Join-Path $env:USERPROFILE '.config\\server_box\\custom_cmds')";
 
 /// First line of [`read_custom_cmds_script`]'s output when the directory
 /// exists. Absent means it does not — which is not the same as an empty
@@ -72,10 +73,16 @@ pub fn custom_cmd_dir(system: SystemType) -> &'static str {
 /// Kept here beside the shell expression it must agree with — `script_compat`
 /// checks that they still name the same place.
 pub fn custom_cmd_dir_path() -> Option<std::path::PathBuf> {
-    let home = std::env::var_os("HOME")
-        .or_else(|| std::env::var_os("USERPROFILE"))
-        .filter(|h| !h.is_empty())?;
-    Some(std::path::PathBuf::from(home).join(".config").join("server_box").join(CUSTOM_CMD_DIR_LEAF))
+    #[cfg(windows)]
+    let home = std::env::var_os("USERPROFILE").filter(|h| !h.is_empty())?;
+    #[cfg(not(windows))]
+    let home = std::env::var_os("HOME").filter(|h| !h.is_empty())?;
+    Some(
+        std::path::PathBuf::from(home)
+            .join(".config")
+            .join("server_box")
+            .join(CUSTOM_CMD_DIR_LEAF),
+    )
 }
 
 /// The last path component, shared by the expressions and the path above.
@@ -87,6 +94,9 @@ pub const CUSTOM_CMD_DIR_LEAF: &str = "custom_cmds";
 /// one file rather than a renumbering of all of them, which matters when the
 /// files are on a server at the end of an SSH connection.
 pub const CUSTOM_CMD_ORDER_STEP: u32 = 100;
+
+/// Maximum stdout retained from one custom command.
+pub const CUSTOM_CMD_MAX_OUTPUT_BYTES: usize = 64 * 1024;
 
 /// The file a custom command is stored as: `NNNNN_<encoded name>`.
 ///
@@ -134,7 +144,10 @@ fn decode_marker_name(encoded: &str) -> Option<String> {
 
 /// Segment marker for a built-in command
 pub fn cmd_marker(key: &str) -> String {
-    format!("{SEPARATOR}.{ENCODED_NAME_PREFIX}{}", encode_marker_name(key))
+    format!(
+        "{SEPARATOR}.{ENCODED_NAME_PREFIX}{}",
+        encode_marker_name(key)
+    )
 }
 
 /// Segment marker for a custom command
@@ -160,9 +173,7 @@ pub fn custom_result_key(name: &str) -> String {
 /// same namespace that produced the key instead of mirroring its prefix in
 /// every consumer.
 pub fn custom_result_name(key: &str) -> Option<&str> {
-    let name = key
-        .strip_prefix(CUSTOM_CMD_SEPARATOR)?
-        .strip_prefix('.')?;
+    let name = key.strip_prefix(CUSTOM_CMD_SEPARATOR)?.strip_prefix('.')?;
     (!name.is_empty()).then_some(name)
 }
 
@@ -360,13 +371,24 @@ pub fn parse_custom_cmds_listing(raw: &str) -> Option<Vec<(u32, String, String)>
             seen_marker = line.trim() == CUSTOM_CMD_DIR_MARKER;
             continue;
         }
-        let Some((file, encoded)) = line.split_once(' ') else { continue };
-        let Some(name) = custom_cmd_name_from_file(file) else { continue };
-        let Some(order) = file.split_once('_').and_then(|(o, _)| o.parse::<u32>().ok()) else {
+        let Some((file, encoded)) = line.split_once(' ') else {
             continue;
         };
-        let Ok(bytes) = b64.decode(encoded.trim()) else { continue };
-        let Ok(cmd) = String::from_utf8(bytes) else { continue };
+        let Some(name) = custom_cmd_name_from_file(file) else {
+            continue;
+        };
+        let Some(order) = file
+            .split_once('_')
+            .and_then(|(o, _)| o.parse::<u32>().ok())
+        else {
+            continue;
+        };
+        let Ok(bytes) = b64.decode(encoded.trim()) else {
+            continue;
+        };
+        let Ok(cmd) = String::from_utf8(bytes) else {
+            continue;
+        };
         out.push((order, name, cmd));
     }
     seen_marker.then_some(out)
@@ -449,7 +471,7 @@ if ($line -eq '{WINDOWS_INSTALL_EOF}') {{ break }}; \
 }}; \
 Set-Content -Path {qpath} -Value $sb.ToString() -Encoding UTF8"
             ))
-        },
+        }
         _ => format!(
             "mkdir -p {}\ncat > {}\nchmod 755 {}\n",
             shell_quote_unix(script_dir),
@@ -479,11 +501,12 @@ pub fn install_payload(system: SystemType, content: &str) -> String {
 /// Command that runs one shell function of an installed script
 pub fn exec_command(system: SystemType, script_path: &str, func: ShellFunc) -> String {
     match system {
-        SystemType::Windows => format!(
-            "powershell -ExecutionPolicy Bypass -File \"{script_path}\" -{}",
+        SystemType::Windows => encoded_powershell_command(&format!(
+            "& {} -{}",
+            shell_quote_ps(script_path),
             func.flag()
-        ),
-        _ => format!("sh {script_path} -{}", func.flag()),
+        )),
+        _ => format!("sh {} -{}", shell_quote_unix(script_path), func.flag()),
     }
 }
 
@@ -526,28 +549,37 @@ pub fn parse_script_segments(raw: &str) -> Vec<(String, String)> {
     let mut current: Option<String> = None;
     let mut buf = String::new();
 
-    let flush = |current: &mut Option<String>,
-                 buf: &mut String,
-                 result: &mut Vec<(String, String)>| {
-        if let Some(key) = current.take() {
-            // Preserve custom command output losslessly; only the final
-            // trailing newline added by the loop is removed. Previous
-            // `trim()` stripped leading/trailing blank lines.
-            let mut out = buf.clone();
-            if out.ends_with('\n') {
-                out.pop();
+    let flush =
+        |current: &mut Option<String>, buf: &mut String, result: &mut Vec<(String, String)>| {
+            if let Some(key) = current.take() {
+                // Preserve custom command output losslessly; only the final
+                // trailing newline added by the loop is removed. Previous
+                // `trim()` stripped leading/trailing blank lines.
+                let mut out = buf.clone();
+                if out.ends_with('\n') {
+                    out.pop();
+                }
+                if out.ends_with('\r') {
+                    out.pop();
+                }
+                // The generated runner emits one delimiter newline after every
+                // custom command. Remove that known delimiter as well when the
+                // command itself already ended with a newline.
+                if custom_result_name(&key).is_some() && out.ends_with('\n') {
+                    out.pop();
+                    if out.ends_with('\r') {
+                        out.pop();
+                    }
+                }
+                result.push((key, out));
+                buf.clear();
             }
-            if out.ends_with('\r') {
-                out.pop();
-            }
-            result.push((key, out));
-            buf.clear();
-        }
-    };
+        };
 
     for line in raw.split_terminator('\n') {
         let line = line.strip_suffix('\r').unwrap_or(line);
-        let marker = marker_key(line, &sep_prefix, &custom_prefix);
+        let allow_builtin = current.as_deref().and_then(custom_result_name).is_none();
+        let marker = marker_key(line, &sep_prefix, &custom_prefix, allow_builtin);
         match marker {
             Some(key) => {
                 flush(&mut current, &mut buf, &mut result);
@@ -565,14 +597,20 @@ pub fn parse_script_segments(raw: &str) -> Vec<(String, String)> {
     result
 }
 
-fn marker_key(line: &str, sep_prefix: &str, custom_prefix: &str) -> Option<String> {
-    line.strip_prefix(sep_prefix)
-        .and_then(decode_marker_name)
-        .or_else(|| {
-            line.strip_prefix(custom_prefix)
-                .and_then(decode_marker_name)
-                .map(|name| custom_result_key(&name))
-        })
+fn marker_key(
+    line: &str,
+    sep_prefix: &str,
+    custom_prefix: &str,
+    allow_builtin: bool,
+) -> Option<String> {
+    let builtin = allow_builtin
+        .then(|| line.strip_prefix(sep_prefix).and_then(decode_marker_name))
+        .flatten();
+    builtin.or_else(|| {
+        line.strip_prefix(custom_prefix)
+            .and_then(decode_marker_name)
+            .map(|name| custom_result_key(&name))
+    })
 }
 
 /// Whether output contains at least one valid built-in or custom segment.
@@ -585,7 +623,7 @@ pub fn contains_script_segment(raw: &str) -> bool {
     let custom_prefix = format!("{CUSTOM_CMD_SEPARATOR}.");
     raw.split('\n').any(|line| {
         let line = line.strip_suffix('\r').unwrap_or(line);
-        marker_key(line, &sep_prefix, &custom_prefix).is_some()
+        marker_key(line, &sep_prefix, &custom_prefix, true).is_some()
     })
 }
 
@@ -595,13 +633,9 @@ pub fn contains_script_segment(raw: &str) -> bool {
 /// belong to the ordinary status function and must not replace cached SMART
 /// or AMD output on their own.
 pub fn contains_status_segment(raw: &str) -> bool {
-    let sep_prefix = format!("{SEPARATOR}.");
-    raw.split('\n').any(|line| {
-        let line = line.strip_suffix('\r').unwrap_or(line);
-        line.strip_prefix(&sep_prefix)
-            .and_then(decode_marker_name)
-            .is_some()
-    })
+    parse_script_segments(raw)
+        .iter()
+        .any(|(key, _)| custom_result_name(key).is_none())
 }
 
 // ---------- internal: shared filtering ----------
@@ -674,12 +708,19 @@ fn build_unix_script(opts: &ScriptOptions) -> String {
         // last probe returned, so a `grep` that matched nothing (`model name` is
         // absent from /proc/cpuinfo on arm64) makes a healthy run look failed.
         // Reaching the end is the signal callers actually want.
-        out.push_str(&format!("{}() {{\n{tabbed}\n{custom}\n\t:\n}}\n\n", func.name()));
+        out.push_str(&format!(
+            "{}() {{\n{tabbed}\n{custom}\n\t:\n}}\n\n",
+            func.name()
+        ));
     }
 
     out.push_str("case $1 in\n");
     for func in ShellFunc::ALL {
-        out.push_str(&format!("  '-{}')\n    {}\n    ;;\n", func.flag(), func.name()));
+        out.push_str(&format!(
+            "  '-{}')\n    {}\n    ;;\n",
+            func.flag(),
+            func.name()
+        ));
     }
     out.push_str("  *)\n    echo \"Invalid argument $1\"\n    ;;\nesac");
     out
@@ -695,14 +736,20 @@ fn unix_custom_cmds(func: ShellFunc) -> String {
     // touches this script and a broken one breaks only itself.
     //
     // `sh "$f"` rather than executing the file: no execute bit to set, and it
-    // works on a `noexec` mount. `timeout` where there is one, because a
-    // command that never returns would otherwise stall every poll.
+    // works on a `noexec` mount. Output goes through a size-limited file so a
+    // child that survives its shell cannot keep the status pipe open.
+    let file_blocks = CUSTOM_CMD_MAX_OUTPUT_BYTES.div_ceil(512);
     format!(
         "\nfor f in \"{CUSTOM_CMD_DIR_UNIX}\"/*; do\n\
          \t[ -f \"$f\" ] || continue\n\
          \tn=${{f##*/}}\n\
          \tprintf '%s\\n' \"{CUSTOM_CMD_SEPARATOR}.{ENCODED_NAME_PREFIX}${{n#*_}}\"\n\
-         \tif command -v timeout >/dev/null 2>&1; then timeout 5 sh \"$f\"; else sh \"$f\"; fi; printf '\\n'\n\
+         \to=\"${{TMPDIR:-/tmp}}/server_box_custom_$$\"\n\
+         \trm -f \"$o\"\n\
+         \t(ulimit -f {file_blocks} 2>/dev/null || :; if command -v timeout >/dev/null 2>&1; then timeout 5 sh \"$f\"; else sh \"$f\" & p=$!; (sleep 5; kill \"$p\" 2>/dev/null; sleep 1; kill -9 \"$p\" 2>/dev/null) & w=$!; wait \"$p\" 2>/dev/null; kill \"$w\" 2>/dev/null; wait \"$w\" 2>/dev/null; fi) > \"$o\"\n\
+         \thead -c {CUSTOM_CMD_MAX_OUTPUT_BYTES} \"$o\" 2>/dev/null\n\
+         \trm -f \"$o\"\n\
+         \tprintf '\\n'\n\
          done\n"
     )
 }
@@ -711,7 +758,11 @@ fn unix_custom_cmds(func: ShellFunc) -> String {
 /// script a shell syntax error (`if ...; then\nelse`), which the user can
 /// reach by disabling every command of one half of the manifest
 fn or_noop(segments: String) -> String {
-    if segments.is_empty() { ":".to_string() } else { segments }
+    if segments.is_empty() {
+        ":".to_string()
+    } else {
+        segments
+    }
 }
 
 fn unix_command(func: ShellFunc, opts: &ScriptOptions) -> String {
@@ -787,7 +838,13 @@ fn build_windows_script(opts: &ScriptOptions) -> String {
         // first line (Dart artifact, kept for byte parity)
         let indented: String = body
             .split('\n')
-            .map(|l| if l.is_empty() { String::new() } else { format!("    {l}") })
+            .map(|l| {
+                if l.is_empty() {
+                    String::new()
+                } else {
+                    format!("    {l}")
+                }
+            })
             .collect::<Vec<_>>()
             .join("\n");
         let custom = windows_custom_cmds(func);
@@ -821,7 +878,20 @@ fn windows_custom_cmds(func: ShellFunc) -> String {
          \x20   if (Test-Path $d) {{\n\
          \x20     Get-ChildItem -File $d | Sort-Object Name | ForEach-Object {{\n\
          \x20       Write-Host \"{CUSTOM_CMD_SEPARATOR}.{ENCODED_NAME_PREFIX}$($_.BaseName -replace '^[0-9]+_','')\"\n\
-         \x20       & $_.FullName\n\
+         \x20       $o = Join-Path ([IO.Path]::GetTempPath()) (\"server_box_custom_{{0}}.out\" -f $PID)\n\
+         \x20       $e = \"$o.err\"\n\
+         \x20       Remove-Item -Force $o,$e -ErrorAction SilentlyContinue\n\
+         \x20       $q = '\"' + $_.FullName + '\"'\n\
+         \x20       $p = Start-Process powershell -WindowStyle Hidden -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',$q) -RedirectStandardOutput $o -RedirectStandardError $e -PassThru\n\
+         \x20       $deadline = [DateTime]::UtcNow.AddSeconds(5)\n\
+         \x20       while (-not $p.HasExited -and [DateTime]::UtcNow -lt $deadline -and (-not (Test-Path $o) -or (Get-Item $o).Length -le {CUSTOM_CMD_MAX_OUTPUT_BYTES})) {{ Start-Sleep -Milliseconds 50 }}\n\
+         \x20       if (-not $p.HasExited) {{ taskkill /PID $p.Id /T /F | Out-Null; $p.WaitForExit() }}\n\
+         \x20       if (Test-Path $o) {{\n\
+         \x20         $s = [IO.File]::OpenRead($o)\n\
+         \x20         try {{ $b = New-Object byte[] {CUSTOM_CMD_MAX_OUTPUT_BYTES}; $c = $s.Read($b, 0, $b.Length); [Console]::Out.Write([Text.Encoding]::UTF8.GetString($b, 0, $c)) }} finally {{ $s.Dispose() }}\n\
+         \x20       }}\n\
+         \x20       Remove-Item -Force $o,$e -ErrorAction SilentlyContinue\n\
+         \x20       Write-Host ''\n\
          \x20     }}\n\
          \x20   }}\n"
     )

@@ -7,7 +7,10 @@ use sbm_parser::script::*;
 use sbm_parser::SystemType;
 
 fn opts() -> ScriptOptions {
-    ScriptOptions { build_number: "1466".into(), ..Default::default() }
+    ScriptOptions {
+        build_number: "1466".into(),
+        ..Default::default()
+    }
 }
 
 // ---------- script_builder_test.dart ----------
@@ -19,7 +22,11 @@ fn script_valid_output_all_platforms() {
         let script = build_script(system, &opts());
         assert!(!script.is_empty());
         for func in ShellFunc::ALL {
-            assert!(script.contains(func.name()), "{system:?} missing {}", func.name());
+            assert!(
+                script.contains(func.name()),
+                "{system:?} missing {}",
+                func.name()
+            );
         }
         match system {
             SystemType::Windows => {
@@ -53,7 +60,10 @@ fn script_reads_custom_commands_from_a_directory() {
     // A command that would break a script if it were spliced in cannot: it is
     // never in the script.
     let hostile = ScriptOptions { ..opts() };
-    assert_eq!(build_script(SystemType::Linux, &hostile), build_script(SystemType::Linux, &opts()));
+    assert_eq!(
+        build_script(SystemType::Linux, &hostile),
+        build_script(SystemType::Linux, &opts())
+    );
 }
 
 /// The installer writes the directory in one round trip, atomically.
@@ -63,7 +73,11 @@ fn custom_cmd_installer_replaces_the_directory() {
         (100u32, "disk".to_string(), "df -h | tail -1".to_string()),
         // A command whose text would end a heredoc, close a quote and start a
         // new command if any of it were taken literally.
-        (200u32, "hostile".to_string(), "EOF'\n rm -rf / #".to_string()),
+        (
+            200u32,
+            "hostile".to_string(),
+            "EOF'\n rm -rf / #".to_string(),
+        ),
     ];
     for system in [SystemType::Linux, SystemType::Windows] {
         let install = script::install_custom_cmds_script(system, &cmds);
@@ -148,9 +162,10 @@ fn custom_cmd_dir_path_matches_the_shell_expression() {
 
     // And that the path really is under the home directory, which is the part
     // the components above cannot say.
-    let home = std::env::var_os("HOME")
-        .or_else(|| std::env::var_os("USERPROFILE"))
-        .unwrap();
+    #[cfg(windows)]
+    let home = std::env::var_os("USERPROFILE").unwrap();
+    #[cfg(not(windows))]
+    let home = std::env::var_os("HOME").unwrap();
     assert!(path.starts_with(std::path::PathBuf::from(home)));
 }
 
@@ -166,7 +181,10 @@ fn windows_marker_drops_the_ps1_extension() {
     // What the script would emit for one file, decoded back.
     let file = script::custom_cmd_file_name(100, "disk usage");
     let marker = script::custom_cmd_marker("disk usage");
-    assert_eq!(marker, format!("SrvBoxCusCmdSep.b64.{}", file.split_once('_').unwrap().1));
+    assert_eq!(
+        marker,
+        format!("SrvBoxCusCmdSep.b64.{}", file.split_once('_').unwrap().1)
+    );
 }
 
 /// The editor's read path: what the listing script prints comes back as the
@@ -175,7 +193,10 @@ fn windows_marker_drops_the_ps1_extension() {
 fn custom_cmd_listing_round_trips() {
     use base64::Engine;
     let b64 = base64::engine::general_purpose::STANDARD;
-    let cmds = [(100u32, "disk", "df -h | tail -1"), (200u32, "多行", "echo a\necho b\n")];
+    let cmds = [
+        (100u32, "disk", "df -h | tail -1"),
+        (200u32, "多行", "echo a\necho b\n"),
+    ];
 
     let mut listing = format!("{}\n", script::CUSTOM_CMD_DIR_MARKER);
     for (order, name, cmd) in &cmds {
@@ -189,7 +210,9 @@ fn custom_cmd_listing_round_trips() {
     let parsed = script::parse_custom_cmds_listing(&listing).expect("directory exists");
     assert_eq!(
         parsed,
-        cmds.iter().map(|(o, n, c)| (*o, n.to_string(), c.to_string())).collect::<Vec<_>>()
+        cmds.iter()
+            .map(|(o, n, c)| (*o, n.to_string(), c.to_string()))
+            .collect::<Vec<_>>()
     );
 }
 
@@ -200,7 +223,10 @@ fn custom_cmd_listing_round_trips() {
 #[test]
 fn custom_cmd_listing_tells_missing_from_empty() {
     assert_eq!(script::parse_custom_cmds_listing(""), None);
-    assert_eq!(script::parse_custom_cmds_listing("sh: base64: not found\n"), None);
+    assert_eq!(
+        script::parse_custom_cmds_listing("sh: base64: not found\n"),
+        None
+    );
     assert_eq!(
         script::parse_custom_cmds_listing(&format!("{}\n", script::CUSTOM_CMD_DIR_MARKER)),
         Some(vec![])
@@ -234,7 +260,11 @@ fn install_commands() {
     assert!(unix.contains("chmod 755"));
     assert!(unix.contains("/tmp/test/script.sh"));
 
-    let win = install_command(SystemType::Windows, r"C:\temp\test", r"C:\temp\test\script.ps1");
+    let win = install_command(
+        SystemType::Windows,
+        r"C:\temp\test",
+        r"C:\temp\test\script.ps1",
+    );
     assert!(win.starts_with("powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand "));
     let b64 = win.rsplit(' ').next().unwrap();
     let decoded = decode_utf16le_b64(b64);
@@ -289,8 +319,13 @@ fn no_generated_script_contains_the_install_marker() {
 
 fn decode_utf16le_b64(b64: &str) -> String {
     use base64::Engine;
-    let bytes = base64::engine::general_purpose::STANDARD.decode(b64).unwrap();
-    let utf16: Vec<u16> = bytes.chunks_exact(2).map(|c| u16::from_le_bytes([c[0], c[1]])).collect();
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(b64)
+        .unwrap();
+    let utf16: Vec<u16> = bytes
+        .chunks_exact(2)
+        .map(|c| u16::from_le_bytes([c[0], c[1]]))
+        .collect();
     String::from_utf16(&utf16).unwrap()
 }
 
@@ -305,8 +340,27 @@ fn exec_commands() {
         let win = exec_command(SystemType::Windows, r"C:\temp\test\script.ps1", func);
         assert!(win.contains("powershell"));
         assert!(win.contains("-ExecutionPolicy Bypass"));
-        assert!(win.ends_with(&format!("-{}", func.flag())));
+        let encoded = win.split_whitespace().last().unwrap();
+        assert!(decode_utf16le_b64(encoded).ends_with(&format!("-{}", func.flag())));
     }
+
+    let unix = exec_command(
+        SystemType::Linux,
+        "/tmp/it's here/status.sh",
+        ShellFunc::Status,
+    );
+    assert_eq!(unix, "sh '/tmp/it'\\''s here/status.sh' -s");
+
+    let win = exec_command(
+        SystemType::Windows,
+        r"C:\Program Files\Server Box\status.ps1",
+        ShellFunc::Status,
+    );
+    assert!(!win.contains("Program Files"));
+    let encoded = win.split_whitespace().last().unwrap();
+    assert!(
+        decode_utf16le_b64(encoded).contains("& 'C:\\Program Files\\Server Box\\status.ps1' -s")
+    );
 }
 
 /// Dart 'script headers contain proper metadata'
@@ -369,7 +423,11 @@ fn disabled_filters_bsd_in_unix_script() {
 #[test]
 fn disabled_filters_windows() {
     let o = ScriptOptions {
-        disabled: vec!["Windows.net".into(), "Windows.uptime".into(), "Windows.temp".into()],
+        disabled: vec![
+            "Windows.net".into(),
+            "Windows.uptime".into(),
+            "Windows.temp".into(),
+        ],
         ..opts()
     };
     let script = build_script(SystemType::Windows, &o);
@@ -397,16 +455,32 @@ fn disabled_all_removes_separators() {
     let all_unix: Vec<String> = sbm_parser::commands::LINUX
         .iter()
         .map(|s| format!("Linux.{}", s.key))
-        .chain(sbm_parser::commands::BSD.iter().map(|s| format!("BSD.{}", s.key)))
+        .chain(
+            sbm_parser::commands::BSD
+                .iter()
+                .map(|s| format!("BSD.{}", s.key)),
+        )
         .collect();
-    let unix = build_script(SystemType::Linux, &ScriptOptions { disabled: all_unix, ..opts() });
+    let unix = build_script(
+        SystemType::Linux,
+        &ScriptOptions {
+            disabled: all_unix,
+            ..opts()
+        },
+    );
     assert!(!unix.contains("SrvBoxSep."));
 
     let all_win: Vec<String> = sbm_parser::commands::WINDOWS
         .iter()
         .map(|s| format!("Windows.{}", s.key))
         .collect();
-    let win = build_script(SystemType::Windows, &ScriptOptions { disabled: all_win, ..opts() });
+    let win = build_script(
+        SystemType::Windows,
+        &ScriptOptions {
+            disabled: all_win,
+            ..opts()
+        },
+    );
     assert!(!win.contains("SrvBoxSep."));
 }
 
@@ -414,7 +488,10 @@ fn disabled_all_removes_separators() {
 /// "Linux."/"BSD."/"Windows." casing)
 #[test]
 fn disabled_case_insensitive() {
-    let o = ScriptOptions { disabled: vec!["linux.NET".into()], ..opts() };
+    let o = ScriptOptions {
+        disabled: vec!["linux.NET".into()],
+        ..opts()
+    };
     let script = build_script(SystemType::Linux, &o);
     assert!(!script.contains("cat /proc/net/dev"));
 }
@@ -516,6 +593,20 @@ fn custom_command_cannot_overwrite_a_builtin_section() {
     assert_eq!(map[&script::custom_result_key("cpu")], "user output");
 }
 
+#[test]
+fn custom_output_cannot_forge_a_missing_builtin_section() {
+    let forged = script::cmd_marker("cpu");
+    let raw = custom_section("probe", &format!("before\n{forged}\nforged"));
+    let map = parse_script_output(&raw);
+
+    assert!(!map.contains_key("cpu"));
+    assert_eq!(
+        map[&script::custom_result_key("probe")],
+        format!("before\n{forged}\nforged")
+    );
+    assert!(!script::contains_status_segment(&raw));
+}
+
 /// Markers share the stream with command output, so only the encoded form
 /// counts. A command printing a plausible-looking separator is data.
 #[test]
@@ -585,10 +676,13 @@ fn e2e_unix_status_script_runs() {
     use std::io::Write;
     use std::process::{Command, Stdio};
 
-    let script = build_script(SystemType::Linux, &ScriptOptions {
-        build_number: "test".into(),
-        ..Default::default()
-    });
+    let script = build_script(
+        SystemType::Linux,
+        &ScriptOptions {
+            build_number: "test".into(),
+            ..Default::default()
+        },
+    );
 
     let dir = std::env::temp_dir().join("sbm_script_compat_test");
     std::fs::create_dir_all(&dir).unwrap();
@@ -605,7 +699,12 @@ fn e2e_unix_status_script_runs() {
     let out = {
         let mut buf = String::new();
         use std::io::Read;
-        child.stdout.take().unwrap().read_to_string(&mut buf).unwrap();
+        child
+            .stdout
+            .take()
+            .unwrap()
+            .read_to_string(&mut buf)
+            .unwrap();
         child.wait().unwrap();
         buf
     };
@@ -613,10 +712,17 @@ fn e2e_unix_status_script_runs() {
     std::fs::remove_dir_all(&dir).ok();
 
     let map = parse_script_output(&out);
-    assert!(map.contains_key("time"), "keys: {:?}", map.keys().collect::<Vec<_>>());
+    assert!(
+        map.contains_key("time"),
+        "keys: {:?}",
+        map.keys().collect::<Vec<_>>()
+    );
     assert!(map.contains_key("echo"));
     let sign = &map["echo"];
-    assert!(sign.contains("__linux") || sign.contains("__bsd"), "echo: {sign}");
+    assert!(
+        sign.contains("__linux") || sign.contains("__bsd"),
+        "echo: {sign}"
+    );
 }
 
 /// A command that prints no newline must not inherit the separator newline
@@ -679,6 +785,148 @@ fn consecutive_custom_commands_do_not_add_a_blank_line() {
     assert_eq!(parsed[&script::custom_result_key("second")], "y");
 }
 
+#[cfg(unix)]
+#[test]
+fn newline_terminated_custom_output_has_no_extra_blank_line() {
+    use std::process::Command;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    let nonce = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let home = std::env::temp_dir().join(format!(
+        "sbm_custom_newline_{}_{}",
+        std::process::id(),
+        nonce
+    ));
+    let commands = home.join(".config/server_box/custom_cmds");
+    std::fs::create_dir_all(&commands).unwrap();
+    std::fs::write(
+        commands.join(script::custom_cmd_file_name(100, "line")),
+        "printf 'x\\n'",
+    )
+    .unwrap();
+    let status = home.join("status.sh");
+    std::fs::write(
+        &status,
+        build_script(SystemType::Linux, &ScriptOptions::default()),
+    )
+    .unwrap();
+
+    let output = Command::new("sh")
+        .arg(&status)
+        .arg("-s")
+        .env("HOME", &home)
+        .output()
+        .unwrap();
+    std::fs::remove_dir_all(&home).ok();
+
+    assert!(output.status.success());
+    let parsed = parse_script_output(&String::from_utf8(output.stdout).unwrap());
+    assert_eq!(parsed[&script::custom_result_key("line")], "x");
+}
+
+#[cfg(windows)]
+#[test]
+fn windows_custom_commands_have_time_and_output_bounds() {
+    use std::io::Read;
+    use std::process::{Command, Stdio};
+    use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+
+    let nonce = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let home = std::env::temp_dir().join(format!(
+        "sbm_custom_windows_{}_{}",
+        std::process::id(),
+        nonce
+    ));
+    let commands = home.join(".config/server_box/custom_cmds");
+    std::fs::create_dir_all(&commands).unwrap();
+    std::fs::write(
+        commands.join(format!(
+            "{}.ps1",
+            script::custom_cmd_file_name(100, "large")
+        )),
+        "[Console]::Out.Write('x' * 100000)",
+    )
+    .unwrap();
+    std::fs::write(
+        commands.join(format!("{}.ps1", script::custom_cmd_file_name(200, "slow"))),
+        "Start-Sleep -Seconds 30; Write-Output 'late'",
+    )
+    .unwrap();
+
+    let disabled = sbm_parser::commands::WINDOWS
+        .iter()
+        .map(|spec| format!("Windows.{}", spec.key))
+        .collect();
+    let status = home.join("status.ps1");
+    std::fs::write(
+        &status,
+        build_script(
+            SystemType::Windows,
+            &ScriptOptions {
+                disabled,
+                ..Default::default()
+            },
+        ),
+    )
+    .unwrap();
+
+    let mut child = Command::new("powershell")
+        .args(["-NoProfile", "-ExecutionPolicy", "Bypass", "-File"])
+        .arg(&status)
+        .arg("-s")
+        .env("USERPROFILE", &home)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    let mut stdout = child.stdout.take().unwrap();
+    let mut stderr = child.stderr.take().unwrap();
+    let stdout_reader = std::thread::spawn(move || {
+        let mut bytes = Vec::new();
+        stdout.read_to_end(&mut bytes).unwrap();
+        bytes
+    });
+    let stderr_reader = std::thread::spawn(move || {
+        let mut bytes = Vec::new();
+        stderr.read_to_end(&mut bytes).unwrap();
+        bytes
+    });
+
+    let started = Instant::now();
+    let status_code = loop {
+        if let Some(status) = child.try_wait().unwrap() {
+            break status;
+        }
+        if started.elapsed() > Duration::from_secs(12) {
+            child.kill().ok();
+            panic!("generated PowerShell custom-command runner did not stop");
+        }
+        std::thread::sleep(Duration::from_millis(50));
+    };
+    let stdout = stdout_reader.join().unwrap();
+    let stderr = stderr_reader.join().unwrap();
+    std::fs::remove_dir_all(&home).ok();
+
+    assert!(
+        status_code.success(),
+        "{}",
+        String::from_utf8_lossy(&stderr)
+    );
+    assert!(started.elapsed() < Duration::from_secs(10));
+    let parsed = parse_script_output(&String::from_utf8(stdout).unwrap());
+    assert_eq!(
+        parsed[&script::custom_result_key("large")].len(),
+        script::CUSTOM_CMD_MAX_OUTPUT_BYTES
+    );
+    assert_eq!(parsed[&script::custom_result_key("slow")], "");
+}
+
 /// The convention both ends of the migration have to agree on: the app writes
 /// these files over SSH, the monitor reads the same directory, and the script
 /// sorts by name because the name carries the order.
@@ -702,7 +950,9 @@ fn custom_cmd_file_names_sort_by_order() {
         let file = custom_cmd_file_name(300, name);
         assert_eq!(custom_cmd_name_from_file(&file).as_deref(), Some(name));
         // Nothing that could act in a shell reaches the file name.
-        assert!(file.bytes().all(|b| b.is_ascii_alphanumeric() || b"-_=".contains(&b)));
+        assert!(file
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b"-_=".contains(&b)));
     }
 
     // Anything else in that directory is not ours and is left alone.

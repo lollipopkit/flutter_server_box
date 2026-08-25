@@ -1096,7 +1096,10 @@ class ServerNotifier extends _$ServerNotifier {
         force: interactive,
         operation: operation,
       );
-      final combined = extended.isEmpty ? raw : '$raw\n$extended';
+      // Built-in markers are trusted only before the first custom section;
+      // custom output may contain marker-looking text. Extended status has no
+      // custom commands, so put it first and leave custom output last.
+      final combined = extended.isEmpty ? raw : '$extended\n$raw';
 
       // Same conversion contract as the monitor path: raw transport output in,
       // ServerStatus (plus a trend sample) out
