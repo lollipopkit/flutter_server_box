@@ -935,10 +935,10 @@ abstract final class IosRootfs {
     final open = _open;
     final id = profileId ?? selected?.id;
     if (_mutating || open == null || id == null || byId(id) == null) return -1;
+    final environmentBytes = _environmentBlock(environment);
     final profile = id.toNativeUtf8();
     final shellPointer = shell.toNativeUtf8();
     final pointer = (command ?? '').toNativeUtf8();
-    final environmentBytes = _environmentBlock(environment);
     final environmentPointer = malloc<Uint8>(environmentBytes.length);
     environmentPointer
         .asTypedList(environmentBytes.length)

@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:path/path.dart' as p;
+
 /// The host path a guest path names, or null when it names nothing inside.
 ///
 /// The Agent's file tools are `dart:io` on the host — they never enter the
@@ -86,7 +88,11 @@ Future<String?> resolveWithinRoot(
 /// extraction. A tar member may already occupy one of those final paths with
 /// a symlink, so an ordinary [File.writeAsString] would follow it outside the
 /// tree even when every parent is confined.
-Future<File> rootfsFileForWrite(String root, String guestPath) async {
+Future<File> rootfsFileForWrite(
+  String root,
+  String guestPath, {
+  bool replaceFinalSymlink = false,
+}) async {
   if (!guestPath.startsWith('/')) {
     throw ArgumentError.value(guestPath, 'guestPath', 'must be absolute');
   }
@@ -128,7 +134,25 @@ Future<File> rootfsFileForWrite(String root, String guestPath) async {
 
   final target = '$parent${Platform.pathSeparator}${parts.last}';
   final type = await FileSystemEntity.type(target, followLinks: false);
-  if (type == FileSystemEntityType.link ||
+  if (type == FileSystemEntityType.link && replaceFinalSymlink) {
+    String resolved;
+    try {
+      final linkTarget = await Link(target).target();
+      final candidate = p.isAbsolute(linkTarget)
+          ? p.normalize(linkTarget)
+          : p.normalize(p.join(parent, linkTarget));
+      resolved = await File(candidate).resolveSymbolicLinks();
+    } catch (e) {
+      throw StateError(
+        'Rootfs write target link cannot be resolved: $guestPath',
+      );
+    }
+    final separator = Platform.pathSeparator;
+    if (resolved != base && !resolved.startsWith('$base$separator')) {
+      throw StateError('Rootfs write target link escapes the root: $guestPath');
+    }
+    await Link(target).delete();
+  } else if (type == FileSystemEntityType.link ||
       type == FileSystemEntityType.directory) {
     throw StateError('Rootfs write target is not a regular file: $guestPath');
   }

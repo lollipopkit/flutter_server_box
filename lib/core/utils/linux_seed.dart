@@ -424,7 +424,11 @@ Future<void> seedResolvConf(
   required List<String> nameservers,
   bool overwrite = false,
 }) async {
-  final conf = await rootfsFileForWrite(root, '/etc/resolv.conf');
+  final conf = await rootfsFileForWrite(
+    root,
+    '/etc/resolv.conf',
+    replaceFinalSymlink: true,
+  );
   if (!overwrite && await conf.exists()) return;
   await conf.writeAsString(nameservers.map((e) => 'nameserver $e\n').join());
 }
