@@ -124,8 +124,28 @@ final class WatchSync {
     }
   }
 
+  /// Strictly increasing, and read where a snapshot is taken.
+  ///
+  /// Seeded from the clock so that it keeps rising across a restart, where a
+  /// counter starting again at zero would look older than everything the watch
+  /// had already applied. Bumped by hand when the clock has not moved, so two
+  /// snapshots taken in the same millisecond are still ordered.
+  @visibleForTesting
+  static int nextRevision() {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    _revision = now > _revision ? now : _revision + 1;
+    return _revision;
+  }
+
+  static int _revision = 0;
+
   /// What the watch app is told to display.
   Future<Map<String, dynamic>> buildPayload() async {
+    // Taken with the snapshot rather than with the result. Issuing tokens is a
+    // network round trip per server, so two builds overlap easily — and stamped
+    // at the end, the slower one finished last carrying the *newer* number
+    // while holding the *older* selection, which is exactly backwards.
+    final revision = nextRevision();
     final selectedIds = Stores.setting.watchServerIds.fetch();
     final existingTokens = await _existingTokens();
     final tokens = reusableTokens(
@@ -158,7 +178,7 @@ final class WatchSync {
       tokens: tokens,
       // TODO: drop with `SettingStore.watchLegacyUrls`.
       legacyUrls: Stores.setting.watchLegacyUrls.fetch(),
-      stamp: DateTime.now().millisecondsSinceEpoch,
+      stamp: revision,
     );
   }
 

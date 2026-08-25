@@ -174,4 +174,34 @@ void main() {
 
     expect(result['ts'], 1737000000000);
   });
+
+  group('the revision snapshots are stamped with', () {
+    test('never repeats, even called faster than the clock moves', () {
+      // The watch treats an equal revision as already seen, so two snapshots
+      // sharing one would silently drop the second. A thousand in a row take
+      // well under a millisecond.
+      final seen = [for (var i = 0; i < 1000; i++) WatchSync.nextRevision()];
+
+      expect(seen.toSet().length, seen.length);
+    });
+
+    test('increases, so a later snapshot always outranks an earlier one', () {
+      // Which is the whole point: the payload built from the newer selection
+      // has to win regardless of which one finishes its token requests first.
+      final first = WatchSync.nextRevision();
+      final second = WatchSync.nextRevision();
+      final third = WatchSync.nextRevision();
+
+      expect(second, greaterThan(first));
+      expect(third, greaterThan(second));
+    });
+
+    test('starts from the clock, so a restart does not look like the past', () {
+      // A counter from zero would be older than everything the watch had
+      // already applied, and every payload after a relaunch would be dropped.
+      final before = DateTime.now().millisecondsSinceEpoch;
+
+      expect(WatchSync.nextRevision(), greaterThanOrEqualTo(before));
+    });
+  });
 }

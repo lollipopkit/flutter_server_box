@@ -128,7 +128,12 @@ final class PhoneConnMgr: NSObject, ObservableObject, WCSessionDelegate {
         DispatchQueue.main.async {
             // A phone that predates the stamp sends none; there is nothing to
             // order those by, so they apply as they always did.
-            if stamp != 0 && stamp < self.appliedAt { return }
+            //
+            // Equal counts as seen. The phone's revision strictly increases per
+            // snapshot, so the same one arriving twice is the same payload
+            // reaching here by two of the routes above, and applying it again
+            // only costs a widget reload.
+            if stamp != 0 && stamp <= self.appliedAt { return }
             self.appliedAt = max(self.appliedAt, stamp)
 
             for (id, token) in parsed.tokens {
