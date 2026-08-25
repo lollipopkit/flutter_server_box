@@ -125,6 +125,8 @@ export interface DiskIoMetrics {
   dev: string;
   sectors_read: number;
   sectors_write: number;
+  sectors_read_exact?: string;
+  sectors_write_exact?: string;
 }
 
 export interface DiskIoRate {
@@ -180,6 +182,8 @@ export interface IfaceMetrics {
   name: string;
   rx_bytes: number;
   tx_bytes: number;
+  rx_bytes_exact?: string;
+  tx_bytes_exact?: string;
 }
 
 export interface MemoryMetrics {
@@ -205,6 +209,8 @@ export interface DiskMetrics {
 export interface NetworkMetrics {
   rx_bytes: number;
   tx_bytes: number;
+  rx_bytes_exact?: string;
+  tx_bytes_exact?: string;
 }
 
 export interface StatusResponse {

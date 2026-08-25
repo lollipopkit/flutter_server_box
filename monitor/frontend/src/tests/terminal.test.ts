@@ -261,6 +261,61 @@ describe('TerminalSession', () => {
     expect(ticketMock).toHaveBeenCalledTimes(2)
   })
 
+  it('ignores disconnect callbacks from a replaced socket', async () => {
+    const { session, socket: first } = await connected(renderer)
+    first.close()
+
+    session.reconnectNow()
+    await vi.waitFor(() => expect(FakeSocket.instances.length).toBe(2))
+    const second = FakeSocket.latest()
+    second.onopen?.()
+    second.control({ type: 'ready', session: 'abc.def', since: 0 })
+
+    first.onerror?.()
+    first.onclose?.()
+
+    expect(session.phase).toBe('running')
+    session.input('x')
+    expect(second.binary).toHaveLength(1)
+  })
+
+  it('ignores a ticket that completes after a newer reconnect attempt', async () => {
+    const { session, socket } = await connected(renderer)
+    let resolveStale!: (value: { ticket: string; expires_in: number }) => void
+    ticketMock.mockImplementationOnce(
+      () => new Promise((resolve) => (resolveStale = resolve)),
+    )
+
+    socket.close()
+    session.reconnectNow()
+    await vi.waitFor(() => expect(ticketMock).toHaveBeenCalledTimes(2))
+
+    session.reconnectNow()
+    await vi.waitFor(() => expect(FakeSocket.instances.length).toBe(2))
+    resolveStale({ ticket: 'stale.secret', expires_in: 30 })
+    await Promise.resolve()
+
+    expect(FakeSocket.instances).toHaveLength(2)
+    expect(FakeSocket.latest().url).not.toContain('stale.secret')
+  })
+
+  it('does not let an old render completion advance a new connection', async () => {
+    const { session, socket: first } = await connected(renderer)
+    first.output('old')
+    first.close()
+
+    session.reconnectNow()
+    await vi.waitFor(() => expect(FakeSocket.instances.length).toBe(2))
+    const second = FakeSocket.latest()
+    second.onopen?.()
+    second.control({ type: 'ready', session: 'abc.def', since: 0 })
+    second.output('new')
+
+    renderer.flush()
+    session.flush()
+    expect(JSON.parse(window.sessionStorage.getItem('terminal.session')!).rendered).toBe(3)
+  })
+
   it('sets the counter from ready rather than adding to it', async () => {
     // A truncated replay resumes at the buffer's start, which is ahead of
     // where the client was; adding would double-count the replay that follows

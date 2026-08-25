@@ -80,12 +80,27 @@
         case 'name':
           return dir * a.name.localeCompare(b.name)
         case 'rx':
-          return dir * (a.rx_bytes - b.rx_bytes)
+          return dir * compareCounters(a.rx_bytes_exact, a.rx_bytes, b.rx_bytes_exact, b.rx_bytes)
         case 'tx':
-          return dir * (a.tx_bytes - b.tx_bytes)
+          return dir * compareCounters(a.tx_bytes_exact, a.tx_bytes, b.tx_bytes_exact, b.tx_bytes)
       }
     }),
   )
+
+  function compareCounters(
+    aExact: string | undefined,
+    aFallback: number,
+    bExact: string | undefined,
+    bFallback: number,
+  ): number {
+    const a = BigInt(aExact ?? Math.trunc(aFallback))
+    const b = BigInt(bExact ?? Math.trunc(bFallback))
+    return a < b ? -1 : a > b ? 1 : 0
+  }
+
+  function sectorBytes(exact: string | undefined, fallback: number): number | bigint {
+    return exact === undefined ? fallback * 512 : BigInt(exact) * 512n
+  }
 </script>
 
 {#snippet sortTh(label: string, active: boolean, dir: 1 | -1, align: 'left' | 'right', onclick: () => void)}
@@ -252,7 +267,7 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-line">
-            {#each sortedDisks as d (d.path)}
+            {#each sortedDisks as d (`${d.path}\u0000${d.mount}`)}
               <tr>
                 <td class="py-2 pr-4 align-top">
                   <div
@@ -296,7 +311,7 @@
                 <td class="py-2 pr-4">
                   <span class="block truncate" title={d.dev}>{d.dev}</span>
                   <span class="block text-xs text-faint-fg truncate">
-                    {$LL.read()} {fmtBytes(d.sectors_read * 512)} · {$LL.write()} {fmtBytes(d.sectors_write * 512)}
+                    {$LL.read()} {fmtBytes(sectorBytes(d.sectors_read_exact, d.sectors_read))} · {$LL.write()} {fmtBytes(sectorBytes(d.sectors_write_exact, d.sectors_write))}
                   </span>
                 </td>
                 <td class="py-2 text-right whitespace-nowrap text-muted-fg">
@@ -337,10 +352,10 @@
                   <span class="block truncate" title={iface.name}>{iface.name}</span>
                 </td>
                 <td class="py-2 text-right whitespace-nowrap text-muted-fg">
-                  {fmtBytes(iface.rx_bytes)}
+                  {fmtBytes(iface.rx_bytes_exact ?? iface.rx_bytes)}
                 </td>
                 <td class="py-2 pl-4 text-right whitespace-nowrap text-muted-fg">
-                  {fmtBytes(iface.tx_bytes)}
+                  {fmtBytes(iface.tx_bytes_exact ?? iface.tx_bytes)}
                 </td>
               </tr>
             {/each}
@@ -367,12 +382,12 @@
     <LineChart
       {labels}
       series={[
-        { label: $LL.battery(), color: '#84cc16', values: history.map((p) => p.battery_percent ?? 0) },
+        { label: $LL.battery(), color: '#84cc16', values: history.map((p) => p.battery_percent ?? null) },
       ]}
       yMax={100}
       format={fmtPercent}
     />
-    {#each m?.batteries ?? [] as battery, i (battery.name ?? i)}
+    {#each m?.batteries ?? [] as battery, i (`${battery.name ?? 'battery'}-${i}`)}
       <Card>
         <div class="flex items-center justify-between gap-2 mb-3">
           <h3 class="text-sm font-semibold text-fg-strong truncate">

@@ -6,7 +6,7 @@
   export interface ChartSeries {
     label: string
     color: string
-    values: number[]
+    values: (number | null)[]
   }
 
   interface Props {
@@ -34,7 +34,12 @@
   const plotH = H - PAD.top - PAD.bottom
 
   const effectiveMax = $derived(
-    yMax ?? Math.max(1, ...series.flatMap((s) => s.values)) * 1.1,
+    yMax ??
+      Math.max(
+        1,
+        ...series.flatMap((s) => s.values.filter((v): v is number => v !== null)),
+      ) *
+        1.1,
   )
 
   // Whether this range's endpoints fall on different calendar days — once
@@ -59,8 +64,19 @@
     return PAD.top + plotH - (Math.min(Math.max(v, 0), effectiveMax) / effectiveMax) * plotH
   }
 
-  function points(values: number[]): string {
-    return values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ')
+  function segments(values: (number | null)[]): string[] {
+    const result: string[] = []
+    let current: string[] = []
+    values.forEach((v, i) => {
+      if (v === null) {
+        if (current.length > 0) result.push(current.join(' '))
+        current = []
+      } else {
+        current.push(`${x(i).toFixed(1)},${y(v).toFixed(1)}`)
+      }
+    })
+    if (current.length > 0) result.push(current.join(' '))
+    return result
   }
 
   const gridFractions = [0, 0.25, 0.5, 0.75, 1]
@@ -100,7 +116,9 @@
         <span class="w-2.5 h-2.5 rounded-full mr-1.5" style="background: {s.color}"></span>
         {s.label}:&nbsp;
         <span class="font-medium text-fg-strong">
-          {labels.length > 0 ? format(s.values[readoutIndex] ?? 0) : '--'}
+          {labels.length > 0 && s.values[readoutIndex] != null
+            ? format(s.values[readoutIndex])
+            : '--'}
         </span>
       </span>
     {/each}
@@ -142,14 +160,16 @@
       {/each}
 
       {#each series as s (s.label)}
-        <polyline
-          points={points(s.values)}
-          fill="none"
-          stroke={s.color}
-          stroke-width="1.5"
-          stroke-linejoin="round"
-          vector-effect="non-scaling-stroke"
-        />
+        {#each segments(s.values) as segment, i (`${s.label}-${i}`)}
+          <polyline
+            points={segment}
+            fill="none"
+            stroke={s.color}
+            stroke-width="1.5"
+            stroke-linejoin="round"
+            vector-effect="non-scaling-stroke"
+          />
+        {/each}
       {/each}
 
       {#if hoverIndex !== null}
