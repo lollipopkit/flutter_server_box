@@ -83,7 +83,9 @@ class _IPerfPageState extends State<IPerfPage> {
       floatingActionButton: _buildFAB(),
     );
   }
+}
 
+extension _Widgets on _IPerfPageState {
   Widget _buildFAB() {
     return FloatingActionButton(
       heroTag: 'iperf',

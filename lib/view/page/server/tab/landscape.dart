@@ -1,6 +1,6 @@
 part of 'tab.dart';
 
-extension on _ServerPageState {
+extension _Widgets on _ServerPageState {
   Widget _buildLandscape() {
     return ValueListenableBuilder<double>(
       valueListenable: _offsetNotifier,
@@ -41,17 +41,57 @@ extension on _ServerPageState {
     final order = serverState.serverOrder;
 
     if (order.isEmpty) {
-      _landscapeSeenId = null;
-      final controller = _landscapeController;
-      _landscapeController = null;
-      if (controller != null) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          controller.dispose();
-        });
-      }
+      _clearLandscapeController();
       return Center(child: Text(libL10n.empty, textAlign: TextAlign.center));
     }
 
+    _syncLandscapeSelection(order);
+    final controller = _landscapePageController(order.length);
+
+    return PageView.builder(
+      controller: controller,
+      key: ValueKey(order.join(',')),
+      itemCount: order.length,
+      onPageChanged: (idx) => _onLandscapePageChanged(idx, order),
+      itemBuilder: (_, idx) {
+        final id = order[idx];
+        final srv = ref.watch(serverProvider(id));
+
+        final title = _buildServerCardTitle(srv);
+        final List<Widget> children = [
+          title,
+          _buildNormalCard(srv.status, srv.spi),
+        ];
+
+        return KeyedSubtree(
+          key: ValueKey(id),
+          child: _getCardNoti(id).listenVal((_) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: children,
+            );
+          }),
+        );
+      },
+    );
+  }
+}
+
+extension _Actions on _ServerPageState {
+  void _clearLandscapeController() {
+    _landscapeSeenId = null;
+    final controller = _landscapeController;
+    _landscapeController = null;
+    if (controller != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        controller.dispose();
+      });
+    }
+  }
+
+  void _syncLandscapeSelection(List<String> order) {
     // Keep the same server in view when order mutates (reorder/delete).
     // PageView is index-based, so without this a reorder silently switches
     // the visible server. Track by id and jump the controller to that id's
@@ -83,51 +123,27 @@ extension on _ServerPageState {
     } else {
       _landscapeSeenId = order.first;
     }
+  }
 
+  PageController _landscapePageController(int itemCount) {
     _landscapeController ??= PageController();
     // Clamp controller if order shrank
     if (_landscapeController!.hasClients) {
       final page = _landscapeController!.page;
-      if (page != null && page.round() >= order.length) {
+      if (page != null && page.round() >= itemCount) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted &&
               _landscapeController != null &&
               _landscapeController!.hasClients) {
-            _landscapeController!.jumpToPage(order.length - 1);
+            _landscapeController!.jumpToPage(itemCount - 1);
           }
         });
       }
     }
+    return _landscapeController!;
+  }
 
-    return PageView.builder(
-      controller: _landscapeController,
-      key: ValueKey(order.join(',')),
-      itemCount: order.length,
-      onPageChanged: (idx) {
-        if (idx >= 0 && idx < order.length) _landscapeSeenId = order[idx];
-      },
-      itemBuilder: (_, idx) {
-        final id = order[idx];
-        final srv = ref.watch(serverProvider(id));
-
-        final title = _buildServerCardTitle(srv);
-        final List<Widget> children = [
-          title,
-          _buildNormalCard(srv.status, srv.spi),
-        ];
-
-        return KeyedSubtree(
-          key: ValueKey(id),
-          child: _getCardNoti(id).listenVal((_) {
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: children,
-            );
-          }),
-        );
-      },
-    );
+  void _onLandscapePageChanged(int index, List<String> order) {
+    if (index >= 0 && index < order.length) _landscapeSeenId = order[index];
   }
 }

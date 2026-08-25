@@ -62,9 +62,7 @@ Future<bool> installRootfs(
   final target = Rootfs.target(into: into, picked: picked);
   if (target == null) {
     if (context.mounted) {
-      Toast.error(
-        'This Linux release is no longer available for an in-place update.',
-      );
+      Toast.error(libL10n.notAvailable);
     }
     return present || selected != null;
   }

@@ -293,7 +293,9 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
       ],
     );
   }
+}
 
+extension _Actions on _PrivateKeyEditPageState {
   void _onTapSave() async {
     final name = _nameController.text;
     final rawKey = _keyController.text.trim();
@@ -389,9 +391,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
     if (!mounted) return;
     context.pop();
   }
-}
 
-extension _Actions on _PrivateKeyEditPageState {
   Future<void> _onTapPickFile() async {
     final path = await Pfs.pickFilePath();
     if (path == null || !mounted) return;
