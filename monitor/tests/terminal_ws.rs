@@ -487,19 +487,34 @@ async fn a_reconnect_replays_only_what_was_missed() {
     let state = app_state(true, &sshd).await;
     let first = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let second = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let sessions = state.sessions.clone();
     let srv = test_server(state).await;
 
     let (io, codec, handle) = open_shell(&srv, &first).await;
     let seen = read_until(&io, &codec, fake_sshd::BANNER).await;
     let rendered = seen.len() as u64;
+    let session = sessions.get(&handle, "admin").unwrap();
 
     // Produce output the first connection will not see
+    const MISSED: &[u8] = b"missed-while-away";
     io.send(
-        ws::Message::Binary(ntex::util::Bytes::from_static(b"missed-while-away")),
+        ws::Message::Binary(ntex::util::Bytes::from_static(MISSED)),
         &codec,
     )
     .await
     .unwrap();
+    for _ in 0..50 {
+        let received = session.scrollback.lock().unwrap().next_seq()
+            >= rendered + MISSED.len() as u64;
+        if received {
+            break;
+        }
+        ntex::time::sleep(Duration::from_millis(10)).await;
+    }
+    assert!(
+        session.scrollback.lock().unwrap().next_seq() >= rendered + MISSED.len() as u64,
+        "the echo must reach scrollback before the connection is dropped"
+    );
     // Drop the connection without a close frame, like a network drop
     drop(io);
     ntex::time::sleep(Duration::from_millis(200)).await;
@@ -517,9 +532,9 @@ async fn a_reconnect_replays_only_what_was_missed() {
     .await
     .unwrap();
 
-    let replayed = read_until(&io2, &codec2, b"missed-while-away").await;
+    let replayed = read_until(&io2, &codec2, MISSED).await;
     assert!(
-        replayed.windows(17).any(|w| w == b"missed-while-away"),
+        replayed.windows(MISSED.len()).any(|w| w == MISSED),
         "output produced while disconnected must be replayed"
     );
     assert!(
@@ -889,7 +904,7 @@ async fn tuned_state(
 }
 
 #[ntex::test]
-async fn an_outage_longer_than_the_buffer_resets_and_says_so() {
+async fn an_outage_longer_than_the_buffer_reports_and_replays() {
     // A scrollback small enough that a single command's output overruns it,
     // which is the only way to reach the truncated path end to end
     let sshd = fake_sshd::start(false).await;
@@ -940,7 +955,7 @@ async fn an_outage_longer_than_the_buffer_resets_and_says_so() {
     .unwrap();
 
     let mut saw_truncated = false;
-    let mut saw_reset = false;
+    let mut saw_replay = false;
     for _ in 0..6 {
         match timeout(Duration::from_secs(5), io3.recv(&codec3)).await {
             Ok(Ok(Some(ws::Frame::Text(data)))) => {
@@ -950,18 +965,24 @@ async fn an_outage_longer_than_the_buffer_resets_and_says_so() {
                 }
             }
             Ok(Ok(Some(ws::Frame::Binary(data)))) => {
-                if data.starts_with(b"\x1bc") {
-                    saw_reset = true;
-                }
+                assert!(
+                    saw_truncated,
+                    "the client must reset before rendering the truncated replay"
+                );
+                assert!(
+                    !data.starts_with(b"\x1bc"),
+                    "the frontend owns the reset so replay bytes stay unchanged"
+                );
+                saw_replay = true;
             }
             _ => break,
         }
-        if saw_truncated && saw_reset {
+        if saw_truncated && saw_replay {
             break;
         }
     }
-    assert!(saw_reset, "a client whose position is gone must be reset");
-    assert!(saw_truncated, "and told that output was lost");
+    assert!(saw_truncated, "the client must be told that output was lost");
+    assert!(saw_replay, "the surviving scrollback must still be replayed");
 }
 
 #[ntex::test]
