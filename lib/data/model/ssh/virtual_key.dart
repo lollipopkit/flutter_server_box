@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:xterm/core.dart';
 
@@ -191,6 +192,30 @@ extension VirtKeyX on VirtKey {
     VirtKey.tmux => VirtualKeyFunc.tmuxSwitch,
     VirtKey.ime => VirtualKeyFunc.toggleIME,
     _ => null,
+  };
+
+  /// Whether a terminal on [spi] can do what this key does — null for a shell
+  /// on this device, including the Linux systems installed in it.
+  ///
+  /// Four of these keys act on a *server*, and on a shell that is not on one
+  /// they returned without a word: the strip drew them, they took a tap, and
+  /// nothing happened. Answered here beside the rest of what a key is, rather
+  /// than in the page that draws them, so the toolbar and the strip cannot
+  /// come to different conclusions about the same button.
+  bool worksOn(Spi? spi) => switch (this) {
+    // Opens the files of the server this shell is on. This device has its own
+    // browser, in the files tab.
+    VirtKey.sftp => spi != null,
+    // Inserts the password stored for this server. There is none for a shell
+    // that is not on one, and none worth inserting for a session already root.
+    VirtKey.sudo => spi != null && !spi.isRoot,
+    // Needs a channel that does not echo what is written into it, which only
+    // an SSH exec channel is: a shell on this device runs in a pseudo-terminal,
+    // and a monitor agent carries no exec channel at all.
+    VirtKey.tmux => spi?.ssh != null,
+    // Everything else is the terminal's own — keys, modifiers, the clipboard,
+    // the IME, and snippets, which are a script typed into whatever is there.
+    _ => true,
   };
 
   bool get toggleable => switch (this) {

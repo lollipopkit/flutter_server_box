@@ -160,6 +160,9 @@ abstract final class Rootfs {
     } else {
       await IosRootfs.scan();
     }
+    // A label is what a row is titled by, so this changes the list as surely
+    // as installing one does.
+    changed.value++;
   }
 
   /// The id of the system deleted most recently.
@@ -168,6 +171,15 @@ abstract final class Rootfs {
   /// of them holds the sessions that were running inside. A notifier rather
   /// than a callback, because what listens outlives any one deletion.
   static final removed = ValueNotifier<String?>(null);
+
+  /// Bumped whenever the set of installed systems changes.
+  ///
+  /// [removed] says *which* one went, for the listener that closes the tabs
+  /// that were inside it. This says only that the list is different, which is
+  /// what a page drawing one row per system needs — and installing one
+  /// notified nothing at all, so a picker went on showing the list it happened
+  /// to be built with.
+  static final changed = ValueNotifier(0);
 
   /// Deletes one system and everything in it. The others stay.
   ///
@@ -181,6 +193,7 @@ abstract final class Rootfs {
     // After the tree is gone, so a listener that closes tabs cannot race the
     // deletion it is reacting to.
     removed.value = id;
+    changed.value++;
   }
 
   /// Downloads and unpacks a new system of [distro], beside whatever is there.
@@ -191,9 +204,9 @@ abstract final class Rootfs {
     String? label,
     void Function(double? progress)? onProgress,
     CancelToken? cancel,
-  }) {
-    return isAndroid
-        ? AndroidRootfs.install(
+  }) async {
+    final installed = isAndroid
+        ? await AndroidRootfs.install(
             distro: distro,
             release: release,
             into: into,
@@ -201,7 +214,7 @@ abstract final class Rootfs {
             onProgress: onProgress,
             cancel: cancel,
           )
-        : IosRootfs.install(
+        : await IosRootfs.install(
             distro: distro,
             release: release,
             into: into,
@@ -209,5 +222,7 @@ abstract final class Rootfs {
             onProgress: onProgress,
             cancel: cancel,
           );
+    changed.value++;
+    return installed;
   }
 }

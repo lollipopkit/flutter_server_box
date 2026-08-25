@@ -123,37 +123,18 @@ extension _VirtKey on SSHPageState {
         await _onClipboardAction();
         break;
       case VirtualKeyFunc.snippet:
-        // Before the picker, not after it: a snippet's script is written
-        // against a server, and browsing tags to choose one that is then
-        // silently dropped is worse than the button doing nothing.
-        final snippetSpi = widget.args.spi;
-        if (snippetSpi == null) return;
-        final snippetState = ref.read(snippetProvider);
-        final snippets = await context.showPickWithTagDialog<Snippet>(
-          title: libL10n.snippet,
-          tags: snippetState.tags.vn,
-          itemsBuilder: (e) {
-            if (e == TagSwitcher.kDefaultTag) {
-              return snippetState.snippets;
-            }
-            return snippetState.snippets
-                .where((element) => element.tags?.contains(e) ?? false)
-                .toList();
-          },
-          display: (e) => e.name,
-        );
-        if (snippets == null || snippets.isEmpty) return;
-
-        final snippet = snippets.firstOrNull;
-        if (snippet == null) return;
-        snippet.runInTerm(_terminal, snippetSpi);
+        // The toolbar's picker, not a copy of it. The copy that used to be
+        // here returned without a word when there was no server, so the key
+        // did nothing at all on a shell on this device — while the button two
+        // rows up ran the snippets that name no server perfectly well.
+        await _pickSnippet();
         break;
       case VirtualKeyFunc.file:
-        // Before anything is typed. SFTP is a file browser on a server and
-        // this device already has one, so on a local shell there is nothing to
-        // open — and asking afterwards meant echoing a probe command into the
-        // user's session, polling for three seconds, and then giving up in
-        // silence.
+        // Before anything is typed. This opens the files of the server the
+        // shell is on, and this device has its own browser in the files tab —
+        // so the key is not offered on a local shell at all (see
+        // `_virtKeyWorksHere`) rather than echoing a probe command into the
+        // session, polling for three seconds and giving up in silence.
         final fileSpi = widget.args.spi;
         if (fileSpi == null) return;
         // get $PWD from SSH session with unique markers
@@ -212,7 +193,11 @@ extension _VirtKey on SSHPageState {
         }
 
         final args = SftpPageArgs(spi: fileSpi, initPath: initPath);
-        SftpPage.route.go(context, args);
+        // `ServerFilePage`, not `SftpPage`: it is the one place that decides
+        // how a server's files are reached, so this key now works on a server
+        // reached through its monitor agent — which has files and no SFTP, and
+        // where opening the SFTP page directly could only fail.
+        ServerFilePage.route.go(context, args);
         break;
       case VirtualKeyFunc.sudoPassword:
         await _insertSudoPassword();
@@ -226,8 +211,15 @@ extension _VirtKey on SSHPageState {
   void _initVirtKeys() {
     _virtKeysList.clear();
     final disabled = Stores.setting.sshVirtKeysDisabled.fetch().toSet();
+    // Filtered by what this session can do, not only by what the user hid.
+    // Read from the server behind the terminal rather than from a connection
+    // that may not be up yet: both questions are settled before the first key
+    // is drawn, and a key that appeared once something connected would be a
+    // strip rearranging itself under the user's thumb.
+    final spi = widget.args.spi;
     final virtKeys = VirtKeyX.loadFromStore()
         .where((key) => !disabled.contains(key.name))
+        .where((key) => key.worksOn(spi))
         .toList();
     for (var at = 0; at < virtKeys.length; at += kVirtKeysPerRow) {
       _virtKeysList.add(
