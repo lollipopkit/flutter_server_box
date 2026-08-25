@@ -1,8 +1,37 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:server_box/core/chan.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/store.dart';
 
 abstract final class PlatformPublicSettings {
+  /// Mobile only: there is no app switcher card to hide on a desktop, and
+  /// neither platform channel implements this there.
+  ///
+  /// The native side keeps its own copy, so the switch has to push as well as
+  /// store.
+  ///
+  /// A `validator` and not a `callback`: the push is what actually covers the
+  /// app, so if the platform refuses it the switch has to stay where it was.
+  /// Written the other way the preference was stored anyway, and the user was
+  /// left reading "on" off a switch that had covered nothing.
+  static Widget? get buildPrivacyBlur {
+    if (!isIOS && !isAndroid) return null;
+    return ListTile(
+      leading: const Icon(Icons.blur_on),
+      title: Text(l10n.privacyBlur),
+      subtitle: Text(l10n.privacyBlurTip, style: UIs.textGrey),
+      trailing: StoreSwitch(
+        prop: Stores.setting.privacyBlur,
+        validator: (val) async {
+          final ok = await MethodChans.setPrivacyBlur(val);
+          if (!ok) Toast.error(libL10n.fail);
+          return ok;
+        },
+      ),
+    );
+  }
+
   static Widget get buildBioAuth {
     return ExpandTile(
       leading: const Icon(Icons.fingerprint),

@@ -477,5 +477,7 @@
   "bmcStaleWrite": "Der BMC hat sich während des Schreibens geändert. Bitte erneut versuchen.",
   "monitorAllowInsecureHttp": "HTTP erlauben",
   "monitorAllowInsecureHttpTip": "Nur in einem vertrauenswürdigen privaten Netz, das den Transport selbst verschlüsselt, etwa Tailscale",
-  "send": "Senden"
+  "send": "Senden",
+  "privacyBlur": "Datenschutz im Hintergrund",
+  "privacyBlurTip": "App-Inhalt in der App-Übersicht verbergen"
 }

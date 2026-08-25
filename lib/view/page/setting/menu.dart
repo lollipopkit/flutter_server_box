@@ -51,6 +51,10 @@ final class SettingsNode {
 }
 
 /// Height of the floating tab bar, and the gap around it.
+///
+/// The gap is carried by the bar's own padding rather than by where it is
+/// placed, so that its shadow falls inside the scroll view that clips it. The
+/// two shadows are written to stay within this much — see where they are built.
 const _kTabsHeight = 56.0;
 const _kTabsMargin = 12.0;
 
@@ -155,10 +159,20 @@ final class _SettingsTabs extends StatelessWidget {
 
     // Centred while it fits and scrolled when it does not: the first level has
     // more tabs than a phone is wide, and the levels under it have three.
+    //
+    // The vertical padding is the room the shadow needs. A scroll view clips to
+    // its viewport, and this one's viewport is as tall as the bar exactly — so
+    // the shadow was cut off above and below while the sides, which have the
+    // width of the page to spread into, kept theirs. Padding grows the viewport
+    // instead of turning the clip off, which the horizontal axis still needs:
+    // a level too wide for the phone has to scroll out of sight, not spill.
+    //
+    // It is padding here rather than an offset on the `Positioned` that places
+    // this, so the bar sits where it always did — see [_kTabsMargin].
     return LayoutBuilder(
       builder: (context, constraints) => SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: _kTabsMargin),
+        padding: const EdgeInsets.all(_kTabsMargin),
         child: ConstrainedBox(
           constraints: BoxConstraints(
             minWidth: math.max(0, constraints.maxWidth - _kTabsMargin * 2),

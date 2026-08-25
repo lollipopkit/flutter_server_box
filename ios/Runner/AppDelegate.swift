@@ -9,6 +9,34 @@ import ActivityKit
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
+        // No scene is connected yet at this point, and the scene delegate is
+        // `FlutterSceneDelegate` (see UIApplicationSceneManifest), so there is
+        // no subclass of ours to hook. Observing is what gets a UIWindowScene to
+        // work with. Both fire again on every foreground, and both calls are
+        // idempotent.
+        NotificationCenter.default.addObserver(
+            forName: UIScene.didActivateNotification,
+            object: nil,
+            queue: .main
+        ) { note in
+            guard let scene = note.object as? UIWindowScene else { return }
+            DynamicIslandBrand.shared.install(in: scene)
+            PrivacyBlur.shared.hideIfUnlocked()
+        }
+
+        // `willDeactivate` and not `didEnterBackground`: the switcher snapshot
+        // is taken between the two, and by the latter it is already on file.
+        // The cost is that a pulled-down notification centre or a system alert
+        // also blurs for as long as it is up.
+        NotificationCenter.default.addObserver(
+            forName: UIScene.willDeactivateNotification,
+            object: nil,
+            queue: .main
+        ) { note in
+            guard let scene = note.object as? UIWindowScene else { return }
+            PrivacyBlur.shared.show(in: scene)
+        }
+
         return super.application(application, didFinishLaunchingWithOptions: launchOptions)
     }
 
@@ -70,6 +98,19 @@ import ActivityKit
                 } else {
                     result(nil)
                 }
+            case "setIslandBrandColors":
+                if let args = call.arguments as? [String: Any],
+                   let bg = args["bg"] as? Int,
+                   let fg = args["fg"] as? Int {
+                    DynamicIslandBrand.shared.setColors(background: bg, foreground: fg)
+                }
+                result(nil)
+            case "setPrivacyBlur":
+                PrivacyBlur.shared.isEnabled = call.arguments as? Bool ?? false
+                result(nil)
+            case "setPrivacyBlurLocked":
+                PrivacyBlur.shared.setLocked(call.arguments as? Bool ?? false)
+                result(nil)
             case "setAccessoryWidgetUrl":
                 // The accessory families can't carry the intent configuration
                 // the home-screen ones use, so they read this key instead —

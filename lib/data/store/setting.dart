@@ -208,6 +208,20 @@ class SettingStore extends SqliteStore {
     isIOS,
   );
 
+  /// Hide the app's content once it leaves the foreground, so the app
+  /// switcher's card does not leave server names or terminal output readable.
+  /// Mobile only.
+  ///
+  /// iOS blurs the window; Android sets `FLAG_SECURE`, which blanks the recents
+  /// thumbnail instead — Flutter draws into a `SurfaceView` that no in-process
+  /// blur can reach, and a cover that has to render a frame races the system's
+  /// capture.
+  ///
+  /// The native side keeps its own copy — a cold launch can reach the switcher
+  /// before Dart has pushed anything — so a change here has to go through
+  /// [MethodChans.setPrivacyBlur], and every launch re-pushes.
+  late final privacyBlur = propertyDefault('privacyBlur', false);
+
   /// Servers the watch app may show, by [Spi.id], in display order.
   ///
   /// The watch used to be configured by a list of URLs living only inside the

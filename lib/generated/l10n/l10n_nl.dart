@@ -1649,4 +1649,10 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get send => 'Verzenden';
+
+  @override
+  String get privacyBlur => 'Privacy op de achtergrond';
+
+  @override
+  String get privacyBlurTip => 'Verberg de app-inhoud in de app-switcher';
 }

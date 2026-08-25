@@ -1502,6 +1502,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get send => '发送';
+
+  @override
+  String get privacyBlur => '后台隐私保护';
+
+  @override
+  String get privacyBlurTip => '在多任务界面隐藏应用内容';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -3003,4 +3009,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get send => '傳送';
+
+  @override
+  String get privacyBlur => '背景隱私保護';
+
+  @override
+  String get privacyBlurTip => '在多工介面隱藏應用內容';
 }

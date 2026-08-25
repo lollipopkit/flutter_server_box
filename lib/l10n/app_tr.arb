@@ -477,5 +477,7 @@
   "bmcStaleWrite": "Yazma sırasında BMC değişti. Tekrar dene.",
   "monitorAllowInsecureHttp": "HTTP’ye izin ver",
   "monitorAllowInsecureHttpTip": "Yalnızca taşımayı kendisi şifreleyen güvenilir özel ağlarda, örneğin Tailscale",
-  "send": "Gönder"
+  "send": "Gönder",
+  "privacyBlur": "Arka planda gizlilik",
+  "privacyBlurTip": "Uygulama değiştiricide içeriği gizle"
 }

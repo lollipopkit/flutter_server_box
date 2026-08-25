@@ -242,6 +242,12 @@ Future<void> _doPlatformRelated() async {
     unawaited(MethodChans.syncAccessoryWidgetUrl());
   }
 
+  // Both platforms keep their own copy of this, which a reinstall or a restored
+  // backup leaves disagreeing with the settings store.
+  if (isIOS || isAndroid) {
+    unawaited(MethodChans.setPrivacyBlur(Stores.setting.privacyBlur.fetch()));
+  }
+
   final serversCount = Stores.server.keys().length;
   await Computer.shared.turnOn(
     workersCount: (serversCount / 3).round() + 1,

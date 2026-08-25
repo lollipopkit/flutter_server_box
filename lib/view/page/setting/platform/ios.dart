@@ -135,7 +135,12 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
   }
 
   Widget _buildWatchApp() {
-    final count = Stores.setting.watchServerIds.fetch().length;
+    // Counted against the servers that can still be shown, for the same reason
+    // as [_accessoryServer]: a selected id outlives the monitor configuration
+    // that made it selectable, and `buildPayload` already skips those — so the
+    // raw length was a number the watch would never agree with.
+    final selected = Stores.setting.watchServerIds.fetch().toSet();
+    final count = _monitorServers.where((e) => selected.contains(e.id)).length;
     return ListTile(
       title: const Text('Watch app'),
       subtitle: FutureWidget<bool>(
@@ -175,9 +180,18 @@ extension _Actions on _IosSettingsPageState {
   List<Spi> get _monitorServers =>
       Stores.server.fetch().where((e) => e.monitor != null).toList();
 
+  /// The chosen server, but only while it can still serve the widget.
+  ///
+  /// A server whose monitor configuration was removed stays in this setting —
+  /// nothing clears it, and there is no single place a removal passes through
+  /// that could. The widget already ends up empty, because the URL is derived
+  /// from the monitor; naming the server here was the last thing still saying
+  /// it was configured.
   Spi? get _accessoryServer {
     final id = Stores.setting.accessoryWidgetServerId.fetch();
-    return id.isEmpty ? null : Stores.server.fetchOneRaw(id);
+    if (id.isEmpty) return null;
+    final spi = Stores.server.fetchOneRaw(id);
+    return spi?.monitor == null ? null : spi;
   }
 
   void _onTapAccessoryWidgetServer() async {

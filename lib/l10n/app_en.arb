@@ -627,5 +627,7 @@
     }
   },
   "bmcStaleWrite": "The BMC changed while this was being written. Try again.",
-  "send": "Send"
+  "send": "Send",
+  "privacyBlur": "Background privacy",
+  "privacyBlurTip": "Hide app content in the app switcher"
 }

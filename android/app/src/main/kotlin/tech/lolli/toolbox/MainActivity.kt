@@ -4,6 +4,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.view.WindowManager
 import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -50,6 +51,58 @@ class MainActivity: FlutterFragmentActivity() {
 
     private companion object {
         const val ARG_DISABLE_IMPELLER = "--enable-impeller=false"
+        const val PRIVACY_PREFS = "privacy_cover"
+        const val KEY_PRIVACY_COVER = "enabled"
+    }
+
+    // --- Privacy cover ------------------------------------------------------
+    //
+    // FLAG_SECURE rather than a view laid over the content: the recents
+    // thumbnail is captured by the system around onPause, and anything that has
+    // to render a frame first may not be up in time. The flag is applied by the
+    // window compositor, so there is no race to lose.
+    //
+    // This is not the same thing the iOS side does. There a blur really covers
+    // the pixels; here the running UI is untouched and only the recents
+    // thumbnail and screenshots are blocked. Flutter renders into a SurfaceView,
+    // whose contents live on a separate surface that RenderEffect does not
+    // reach, so an in-app blur would mean PixelCopy plus an async round trip —
+    // exactly the race this avoids.
+
+    private val privacyPrefs by lazy {
+        getSharedPreferences(PRIVACY_PREFS, Context.MODE_PRIVATE)
+    }
+
+    /// Set from Dart while the biometric lock is pending, so that coming back to
+    /// the foreground does not clear the flag before the lock screen is up.
+    private var privacyLocked = false
+    private var isForeground = false
+
+    private var privacyCoverEnabled: Boolean
+        get() = privacyPrefs.getBoolean(KEY_PRIVACY_COVER, false)
+        set(value) = privacyPrefs.edit().putBoolean(KEY_PRIVACY_COVER, value).apply()
+
+    private fun applyPrivacyCover(on: Boolean) {
+        if (on) {
+            window.setFlags(
+                WindowManager.LayoutParams.FLAG_SECURE,
+                WindowManager.LayoutParams.FLAG_SECURE,
+            )
+        } else {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        isForeground = false
+        if (privacyCoverEnabled) applyPrivacyCover(true)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        isForeground = true
+        if (!privacyLocked) applyPrivacyCover(false)
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -72,6 +125,18 @@ class MainActivity: FlutterFragmentActivity() {
                     }
                     "isServiceRunning" -> {
                         result.success(ForegroundService.isRunning)
+                    }
+                    "setPrivacyBlur" -> {
+                        privacyCoverEnabled = method.arguments as? Boolean ?: false
+                        if (!privacyCoverEnabled) applyPrivacyCover(false)
+                        result.success(null)
+                    }
+                    "setPrivacyBlurLocked" -> {
+                        privacyLocked = method.arguments as? Boolean ?: false
+                        // Only while frontmost: clearing it in the background
+                        // would undo the cover on the recents thumbnail itself.
+                        if (!privacyLocked && isForeground) applyPrivacyCover(false)
+                        result.success(null)
                     }
                     "startService" -> {
                         try {
