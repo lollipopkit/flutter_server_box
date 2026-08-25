@@ -477,5 +477,7 @@
   "bmcStaleWrite": "BMC изменился во время записи. Повторите попытку.",
   "monitorAllowInsecureHttp": "Разрешить HTTP",
   "monitorAllowInsecureHttpTip": "Только в доверенной частной сети, которая сама шифрует транспорт, например Tailscale",
-  "send": "Отправить"
+  "send": "Отправить",
+  "privacyBlur": "Размытие для приватности",
+  "privacyBlurTip": "Размывать содержимое приложения в переключателе"
 }

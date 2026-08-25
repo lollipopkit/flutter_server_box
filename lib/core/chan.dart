@@ -59,6 +59,42 @@ abstract final class MethodChans {
     }
   }
 
+  /// Last pair pushed by [setIslandBrandColors], so that rebuilding the theme —
+  /// which happens on every `MaterialApp` build — does not cross the channel
+  /// each time.
+  static (int, int)? _islandBrandColors;
+
+  /// Colors for the app name drawn behind the Dynamic Island, as ARGB.
+  ///
+  /// Follows the theme rather than being fixed, so the badge in a screenshot
+  /// matches the app the screenshot is of.
+  static Future<void> setIslandBrandColors(int bg, int fg) async {
+    if (!isIOS) return;
+    if (_islandBrandColors == (bg, fg)) return;
+    _islandBrandColors = (bg, fg);
+    try {
+      await _channel.invokeMethod('setIslandBrandColors', {'bg': bg, 'fg': fg});
+    } catch (e, s) {
+      _islandBrandColors = null;
+      Loggers.app.warning('Failed to set island brand colors', e, s);
+    }
+  }
+
+  /// Tell the native side whether to blur the app once it leaves the
+  /// foreground, hiding its content in the app switcher.
+  ///
+  /// Pushed on change *and* at launch: the native side answers this from its
+  /// own `UserDefaults` copy, which a reinstall or a restored backup leaves
+  /// saying something different from the (synced) settings store.
+  static Future<void> setPrivacyBlur(bool enabled) async {
+    if (!isIOS) return;
+    try {
+      await _channel.invokeMethod('setPrivacyBlur', enabled);
+    } catch (e, s) {
+      Loggers.app.warning('Failed to set privacy blur', e, s);
+    }
+  }
+
   /// Re-derive the accessory widget's URL from the chosen server.
   ///
   /// Run at launch as well as on change: the App Group container goes away

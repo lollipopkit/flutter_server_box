@@ -240,6 +240,9 @@ Future<void> _doPlatformRelated() async {
   if (isIOS) {
     unawaited(WatchSync.instance.init());
     unawaited(MethodChans.syncAccessoryWidgetUrl());
+    unawaited(
+      MethodChans.setPrivacyBlur(Stores.setting.privacyBlur.fetch()),
+    );
   }
 
   final serversCount = Stores.server.keys().length;

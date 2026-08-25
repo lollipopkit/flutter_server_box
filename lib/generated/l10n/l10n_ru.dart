@@ -1656,4 +1656,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get send => 'Отправить';
+
+  @override
+  String get privacyBlur => 'Размытие для приватности';
+
+  @override
+  String get privacyBlurTip =>
+      'Размывать содержимое приложения в переключателе';
 }

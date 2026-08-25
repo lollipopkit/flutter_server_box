@@ -477,5 +477,7 @@
   "bmcStaleWrite": "De BMC is gewijzigd tijdens het schrijven. Probeer opnieuw.",
   "monitorAllowInsecureHttp": "HTTP toestaan",
   "monitorAllowInsecureHttpTip": "Alleen op een vertrouwd privénetwerk dat het transport zelf versleutelt, zoals Tailscale",
-  "send": "Verzenden"
+  "send": "Verzenden",
+  "privacyBlur": "Privacyvervaging",
+  "privacyBlurTip": "Vervaag de inhoud van de app in de app-switcher"
 }

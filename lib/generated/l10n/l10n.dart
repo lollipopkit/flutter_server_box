@@ -2881,6 +2881,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Send'**
   String get send;
+
+  /// No description provided for @privacyBlur.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy blur'**
+  String get privacyBlur;
+
+  /// No description provided for @privacyBlurTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Blur the app\'s content in the app switcher'**
+  String get privacyBlurTip;
 }
 
 class _AppLocalizationsDelegate

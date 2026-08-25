@@ -491,5 +491,7 @@
   "bmcAccountSharedTip": "在这里修改会改变所有这些服务器使用的账户。",
   "bmcAccountInUse": "{count} 台服务器在用。它们会保留地址，但失去账户。",
   "bmcStaleWrite": "BMC 上的内容在写入期间被改动过，请重试。",
-  "send": "发送"
+  "send": "发送",
+  "privacyBlur": "隐私模糊",
+  "privacyBlurTip": "在多任务界面模糊应用内容"
 }

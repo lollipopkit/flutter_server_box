@@ -1632,4 +1632,10 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get send => 'Gönder';
+
+  @override
+  String get privacyBlur => 'Gizlilik bulanıklığı';
+
+  @override
+  String get privacyBlurTip => 'Uygulama değiştiricide içeriği bulanıklaştır';
 }

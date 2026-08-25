@@ -486,5 +486,7 @@
   "bmcStaleWrite": "쓰는 동안 BMC가 변경되었습니다. 다시 시도하세요.",
   "monitorAllowInsecureHttp": "HTTP 허용",
   "monitorAllowInsecureHttpTip": "HTTP 외에 전송 자체가 암호화되는 신뢰할 수 있는 사설망에서만. 예를 들어 Tailscale",
-  "send": "보내기"
+  "send": "보내기",
+  "privacyBlur": "개인정보 블러",
+  "privacyBlurTip": "앱 전환기에서 앱 내용을 흐리게 표시"
 }

@@ -477,5 +477,7 @@
   "bmcStaleWrite": "書き込み中に BMC が変更されました。再試行してください。",
   "monitorAllowInsecureHttp": "HTTP を許可",
   "monitorAllowInsecureHttpTip": "HTTP 以外で通信自体が暗号化される信頼できるプライベートネットワークでのみ。たとえば Tailscale",
-  "send": "送信"
+  "send": "送信",
+  "privacyBlur": "プライバシーぼかし",
+  "privacyBlurTip": "Appスイッチャーで内容をぼかす"
 }

@@ -1656,4 +1656,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get send => 'Senden';
+
+  @override
+  String get privacyBlur => 'Datenschutz-Weichzeichner';
+
+  @override
+  String get privacyBlurTip =>
+      'App-Inhalt in der App-Übersicht unkenntlich machen';
 }
