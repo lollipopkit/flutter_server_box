@@ -1142,7 +1142,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get sshFileTransportTip =>
-      'SFTP convient à tout matériel récent. Choisissez SCP pour un hôte ancien ou embarqué dont le serveur SSH n\'a pas de sous-système SFTP : il ne lui faut qu\'un shell et la commande `scp`.';
+      'SFTP convient à tout matériel récent. Choisissez SCP pour un hôte ancien ou embarqué dont le serveur SSH n\'a pas de sous-système SFTP : il lui faut la commande `scp` et un shell disposant aussi des utilitaires de fichiers usuels (`find`, `stat`, `mv`, `chmod`).';
 
   @override
   String get specifyDev => 'Spécifier l\'appareil';

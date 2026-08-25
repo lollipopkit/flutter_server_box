@@ -238,7 +238,7 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
 
   Future<List<FileEntry>> _list() async {
     final listed = _path.path;
-    final entries = await backend.list(listed);
+    final entries = _named(await backend.list(listed));
     // Here rather than at each move: this is where the browser learns the
     // directory really opened.
     //
@@ -513,6 +513,33 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   }
 
   String _fullPath(FileEntry entry) => BrowsePath.join(_path.path, entry.name);
+
+  /// The entries whose names are names, dropping any that are paths.
+  ///
+  /// `FileEntry.name` is documented as the last component and never a path, and
+  /// every backend the app ships honours that. This is the boundary where that
+  /// stops being a convention and starts being enforced, because everything
+  /// downstream joins the name onto the directory being shown: an entry called
+  /// `../outside` would make rename, delete, chmod and send-to act above the
+  /// root the browser is confined to, which `BrowsePath` guards only for
+  /// *navigation*. A listing is the far side's answer, and the far side is not
+  /// always the far side one meant to be talking to.
+  List<FileEntry> _named(List<FileEntry> entries) {
+    final safe = <FileEntry>[];
+    for (final entry in entries) {
+      final name = entry.name;
+      if (name.isEmpty ||
+          name == '.' ||
+          name == '..' ||
+          name.contains('/') ||
+          name.contains(r'\')) {
+        Loggers.app.warning('Dropping a listing entry that is a path: $name');
+        continue;
+      }
+      safe.add(entry);
+    }
+    return safe;
+  }
 
   // ------------------------------------------------------------------ actions
 
@@ -869,9 +896,14 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   Future<List<FileEntry>> _matching(String query) async {
     final entries = await _entries;
     final needle = query.toLowerCase();
+    // The same visibility rule the listing uses. Searching the raw listing
+    // meant a query could surface — and open — the dotfiles the user had
+    // asked not to see, which is a filter that only holds until someone types.
+    final hidden = Stores.setting.showHiddenFiles.fetch();
     return [
       for (final entry in entries)
-        if (entry.name.toLowerCase().contains(needle)) entry,
+        if (hidden || !entry.name.startsWith('.'))
+          if (entry.name.toLowerCase().contains(needle)) entry,
     ];
   }
 

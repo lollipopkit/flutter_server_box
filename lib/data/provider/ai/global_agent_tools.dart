@@ -1051,7 +1051,12 @@ class GlobalAgentToolService {
       if (entry.isDir) throw StateError('$path is a directory, not a file.');
       final size = entry.size;
       final bytes = BytesBuilder(copy: false);
-      await for (final chunk in backend.read(path)) {
+      // Bounded per chunk. The SFTP path this replaced read with an explicit
+      // `.timeout(_sftpTimeout)`, and the backends do not bound a read of
+      // their own — deliberately, since a transfer watches its own progress —
+      // so without this a remote that stops sending holds the Agent's turn
+      // open with nothing able to end it.
+      await for (final chunk in backend.read(path).timeout(_sftpTimeout)) {
         bytes.add(chunk);
         // One byte past the limit is enough to know it was exceeded, and
         // stopping here is what keeps a log file the model asked for from
@@ -1122,10 +1127,16 @@ class GlobalAgentToolService {
     LocalExec exec,
   ) async {
     final file = File(await _localPath(path, exec));
-    if (!await file.exists()) {
+    final int size;
+    try {
+      // Asked by doing it, not by `exists()` first. That probe answers false
+      // both for a file that is not there and for one under a directory this
+      // process may not traverse, so a refusal was reported to the model as an
+      // absence — and a model told a file does not exist goes and creates it.
+      size = await file.length();
+    } on PathNotFoundException {
       throw StateError('No such file on this device: $path');
     }
-    final size = await file.length();
     final truncated = size > _maxReadBytes;
     // Only what is going to be shown. A log the size of memory is a plausible
     // thing to point this at.

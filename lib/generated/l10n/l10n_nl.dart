@@ -1132,7 +1132,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get sshFileTransportTip =>
-      'SFTP past bij alles wat actueel is. Kies SCP voor een oude of embedded host waarvan de SSH-server geen SFTP-subsysteem heeft: die heeft alleen een shell en het commando `scp` nodig.';
+      'SFTP past bij alles wat actueel is. Kies SCP voor een oude of embedded host waarvan de SSH-server geen SFTP-subsysteem heeft: die heeft het commando `scp` nodig en een shell met ook de gebruikelijke bestandstools (`find`, `stat`, `mv`, `chmod`).';
 
   @override
   String get specifyDev => 'Apparaat specificeren';

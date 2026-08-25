@@ -92,6 +92,11 @@ abstract class Spi with _$Spi {
       'user',
       'pwd',
       'pubKeyId',
+      // Missing from this list, so a flat record carrying one decoded with no
+      // key at all — silently turning an `IdentityFile` credential into
+      // password auth. Listed whether or not any release wrote it flat: the
+      // cost of naming a key nothing carries is nothing.
+      'keyPath',
       'alterUrl',
       'jumpId',
       'jumpIds',

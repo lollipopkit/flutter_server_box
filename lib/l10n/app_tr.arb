@@ -245,7 +245,7 @@
   "sftpSSHConnected": "SFTP Bağlandı",
   "sftpShowFoldersFirst": "Önce klasörleri göster",
   "sftpUnavailableUseScp": "Birçok gömülü cihazda olduğu gibi bu makinede SFTP alt sistemi yoksa, sunucu ayarlarından dosya aktarımını SCP yapın.",
-  "sshFileTransportTip": "Güncel her cihaz için SFTP uygundur. SSH sunucusunda SFTP alt sistemi bulunmayan eski ya da gömülü bir makine için SCP seçin: ona yalnızca bir kabuk ve `scp` komutu yeter.",
+  "sshFileTransportTip": "Güncel her cihaz için SFTP uygundur. SSH sunucusunda SFTP alt sistemi bulunmayan eski ya da gömülü bir makine için SCP seçin: `scp` komutunun yanı sıra `find`, `stat`, `mv`, `chmod` gibi olağan dosya araçlarına sahip bir kabuk ortamı gerekir.",
   "specifyDev": "Cihazı belirt",
   "specifyDevTip": "Ağ trafiği varsayılan olarak tüm aygıtları sayar; burada birini belirt",
   "spentTime": "Harcanan süre: {time}",

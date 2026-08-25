@@ -1128,7 +1128,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get sshFileTransportTip =>
-      'SFTP cocok untuk perangkat masa kini. Pilih SCP untuk host lama atau tertanam yang server SSH-nya tidak punya subsistem SFTP: ia hanya butuh shell dan perintah `scp`.';
+      'SFTP cocok untuk perangkat masa kini. Pilih SCP untuk host lama atau tertanam yang server SSH-nya tidak punya subsistem SFTP: ia butuh perintah `scp` dan shell yang juga punya utilitas berkas umum (`find`, `stat`, `mv`, `chmod`).';
 
   @override
   String get specifyDev => 'Tentukan perangkat';

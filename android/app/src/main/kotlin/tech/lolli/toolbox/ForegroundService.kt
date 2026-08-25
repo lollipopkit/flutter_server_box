@@ -268,7 +268,12 @@ class ForegroundService : Service() {
                 }
             }
         } catch (e: Exception) {
+            // Not read as "no sessions, no keep-alive", which is what falling
+            // through would mean: one corrupt message would then cancel the
+            // notification of a backgrounded app and take away the only thing
+            // keeping it out of the freezer. Whatever was last shown stands.
             logError("Failed to parse payload", e)
+            return
         }
 
         // Nothing connected. Either stand down, or stay foreground with a
@@ -276,7 +281,14 @@ class ForegroundService : Service() {
         // connected again.
         if (sessions.isEmpty()) {
             if (!keepAlive) {
+                // Both, in this order. `clearAll` only cancels the notification
+                // and forgets that `startForeground` was called; on its own it
+                // leaves a START_STICKY service running with nothing to show
+                // for it, which the system may restart and which makes
+                // `isServiceRunning` answer true for a process that is no
+                // longer foreground-protected.
                 clearAll()
+                stopForegroundService()
                 return
             }
             ensureForeground(createMergedNotification(0, emptyList(), emptyList()))

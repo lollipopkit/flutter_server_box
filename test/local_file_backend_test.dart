@@ -63,6 +63,31 @@ void main() {
       expect(entry.kind, FileKind.file);
       expect(entry.size, 5);
     });
+
+    test('reports a link as a link, not as what it points at', () async {
+      // The same answer `list` gives. Following meant the two disagreed about
+      // the same path, and a caller acting on the difference — deleting, or
+      // replacing — acted on the target instead of the link.
+      await File(at('a.txt')).writeAsString('hello');
+      await Link(at('l')).create(at('a.txt'));
+
+      final entry = await backend.stat(at('l'));
+
+      expect(entry!.kind, FileKind.link);
+      expect(entry.linkTarget, at('a.txt'));
+    });
+
+    test('a link to nowhere is still something, not nothing', () async {
+      // Reported as absent, it read as "free to create something here" — and
+      // the something would have replaced a link the user could see listed.
+      await Link(at('broken')).create(at('gone'));
+
+      final entry = await backend.stat(at('broken'));
+
+      expect(entry, isNotNull);
+      expect(entry!.kind, FileKind.link);
+      expect(entry.size, isNull);
+    });
   });
 
   group('remove', () {

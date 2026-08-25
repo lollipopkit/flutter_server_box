@@ -32,14 +32,21 @@ String shellListCommand(String path) =>
     'done'
     '\' sh {} +';
 
-/// One path, or an exit code saying why not.
+/// One path, or a marker saying why not.
 ///
-/// [kShellStatAbsent] and [kShellStatDenied] are the two answers a caller has
-/// to tell apart: "nothing there" invites creating something, and "you may not
-/// look" does not. The shell cannot simply report whether `stat` worked —
-/// a path under a directory this user cannot search fails exactly like one that
-/// was never there — so the parent is tested separately, and only a parent this
-/// user *can* search makes an absence an absence.
+/// Absence and refusal are the two answers a caller has to tell apart:
+/// "nothing there" invites creating something, and "you may not look" does not.
+/// The shell cannot simply report whether `stat` worked — a path under a
+/// directory this user cannot search fails exactly like one that was never
+/// there — so the parent is tested separately, and only a parent this user
+/// *can* search makes an absence an absence.
+///
+/// Both are said twice, on stdout as [kShellStatAbsentMark] /
+/// [kShellStatDeniedMark] and as an exit code. The exit code alone was not
+/// enough: a host that closes the channel without an exit-status message —
+/// which is the kind of host this backend exists for — leaves the caller with
+/// no answer at all, and a `stat` that cannot say "nothing there" is one that
+/// fails every copy into a directory that does not exist yet.
 String shellStatCommand(String path) {
   final quoted = shellSingleQuote(path);
   return 'path=$quoted; '
@@ -51,15 +58,26 @@ String shellStatCommand(String path) {
       // somebody can see, rename and delete.
       'if [ -e "\$path" ] || [ -L "\$path" ]; then '
       '${_emitRecord('path')}'
-      'elif [ ! -d "\$dir" ] || [ -x "\$dir" ]; then exit $kShellStatAbsent; '
-      'else exit $kShellStatDenied; fi';
+      'elif [ ! -d "\$dir" ] || [ -x "\$dir" ]; then '
+      'printf "%s" $kShellStatAbsentMark; exit $kShellStatAbsent; '
+      'else printf "%s" $kShellStatDeniedMark; exit $kShellStatDenied; fi';
 }
+
+/// What [shellStatCommand] prints when there is nothing at the path.
+///
+/// Not a word anyone would type: it is compared against the whole of stdout,
+/// and a filename could otherwise be mistaken for it.
+const kShellStatAbsentMark = '__sb_absent__';
+
+/// What [shellStatCommand] prints when it could not look: a directory on the
+/// way is not searchable by this user, so whether anything is there is
+/// unanswerable.
+const kShellStatDeniedMark = '__sb_denied__';
 
 /// [shellStatCommand] found nothing at the path.
 const kShellStatAbsent = 44;
 
-/// [shellStatCommand] could not look: a directory on the way is not
-/// searchable by this user, so whether anything is there is unanswerable.
+/// [shellStatCommand] could not look.
 const kShellStatDenied = 13;
 
 /// The five fields for the path in shell variable [variable].

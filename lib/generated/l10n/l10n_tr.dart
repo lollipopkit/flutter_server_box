@@ -1130,7 +1130,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get sshFileTransportTip =>
-      'Güncel her cihaz için SFTP uygundur. SSH sunucusunda SFTP alt sistemi bulunmayan eski ya da gömülü bir makine için SCP seçin: ona yalnızca bir kabuk ve `scp` komutu yeter.';
+      'Güncel her cihaz için SFTP uygundur. SSH sunucusunda SFTP alt sistemi bulunmayan eski ya da gömülü bir makine için SCP seçin: `scp` komutunun yanı sıra `find`, `stat`, `mv`, `chmod` gibi olağan dosya araçlarına sahip bir kabuk ortamı gerekir.';
 
   @override
   String get specifyDev => 'Cihazı belirt';

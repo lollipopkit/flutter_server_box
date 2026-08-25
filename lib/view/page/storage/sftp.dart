@@ -245,9 +245,15 @@ extension _Open on _SftpPageState {
       contextProvider: () => mounted ? context : null,
     );
 
+    // Read from the provider, not from `_spi`: the page holds the server as it
+    // was when the route was pushed, and the editor writes the transport into
+    // the store. A tab left open across an edit would otherwise keep opening
+    // the protocol the user just changed away from, on every retry, until the
+    // page was rebuilt.
+    final current = ref.read(serverProvider(_spi.id)).spi;
     final backend = await openSshFileBackend(
       _client,
-      transport: _spi.ssh?.fileTransport ?? SshFileTransport.sftp,
+      transport: current.ssh?.fileTransport ?? SshFileTransport.sftp,
       escalation: _escalation,
       timeout: _opTimeout,
     );
@@ -255,8 +261,13 @@ extension _Open on _SftpPageState {
     return _SftpStart(
       backend: backend,
       home: home,
+      // Checked like the other three. The file tab restores a session by
+      // passing its saved directory as `initPath`, and one that has since been
+      // deleted or become unreadable opened the browser straight onto a
+      // listing error with nothing to press — for as long as the tab was
+      // remembered, which is every launch.
       path:
-          widget.args.initPath ??
+          await _openable(backend, widget.args.initPath) ??
           await _lastPath(backend) ??
           await _openable(backend, home) ??
           '/',
@@ -274,7 +285,8 @@ extension _Open on _SftpPageState {
   ///
   /// `/` is the last resort rather than a failure. It is the same place the
   /// browser's root already is, so going up from anywhere reaches it anyway.
-  Future<String?> _openable(FileBackend backend, String path) async {
+  Future<String?> _openable(FileBackend backend, String? path) async {
+    if (path == null) return null;
     try {
       await backend.list(path);
       return path;

@@ -192,7 +192,15 @@ Future<void> scpWrite(
     await scp.expectAck();
 
     var sent = 0;
-    await for (final chunk in data) {
+    // Bounded, because `timeout` otherwise covered only the half of this that
+    // waits on the *far* side. A producer that opens the staging channel and
+    // then stalls — a source backend reading from a link that went away — left
+    // this waiting forever with a remote `scp -t` holding a staging file open,
+    // and no amount of configured timeout applied to it. `Stream.timeout`
+    // restarts on every event, so what it bounds is the gap between chunks
+    // rather than the length of the transfer.
+    final bounded = timeout == null ? data : data.timeout(timeout);
+    await for (final chunk in bounded) {
       if (sent + chunk.length > size) {
         throw ScpException(
           'scp: $path: more than the $size bytes this transfer declared',
@@ -384,10 +392,19 @@ final class _ScpSession {
   /// messages with. The newline is consumed and not returned.
   Future<String> _readLine() async {
     final out = BytesBuilder(copy: false);
-    while (out.length < _maxControlLine) {
+    while (true) {
       final byte = await _readByte();
       if (byte == null || byte == 0x0A) break;
       out.addByte(byte);
+      if (out.length >= _maxControlLine) {
+        // Not returned as if it were a line. Stopping quietly at the limit
+        // leaves the rest of the header in the stream, where the bytes after
+        // it are then read as file contents — a transfer that arrives shifted
+        // rather than one that fails.
+        throw ScpException(
+          'scp: a control line ran past $_maxControlLine bytes without ending',
+        );
+      }
     }
     return utf8.decode(out.takeBytes(), allowMalformed: true);
   }

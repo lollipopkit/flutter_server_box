@@ -1047,7 +1047,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sshFileTransportTip =>
-      '常规设备用 SFTP。老旧或嵌入式设备的 SSH 服务没有 SFTP 子系统,选 SCP:它只需要 shell 和 scp 命令。';
+      '常规设备用 SFTP。老旧或嵌入式设备的 SSH 服务没有 SFTP 子系统,选 SCP:它只需要 scp 命令,以及带有 find、stat、mv、chmod 等常用文件命令的 shell 环境。';
 
   @override
   String get specifyDev => '指定设备';
@@ -2565,7 +2565,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get sshFileTransportTip =>
-      '一般裝置用 SFTP。老舊或嵌入式裝置的 SSH 服務沒有 SFTP 子系統，請選 SCP：它只需要 shell 與 scp 指令。';
+      '一般裝置用 SFTP。老舊或嵌入式裝置的 SSH 服務沒有 SFTP 子系統，請選 SCP：它只需要 scp 指令，以及帶有 find、stat、mv、chmod 等常用檔案指令的 shell 環境。';
 
   @override
   String get specifyDev => '指定裝置';

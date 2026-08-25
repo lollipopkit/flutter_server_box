@@ -85,8 +85,20 @@ abstract final class TermSessionManager {
     // Clear all entries
     _entries.clear();
     _activeId = null;
+    // And stand down, rather than letting the keep-alive put the notification
+    // straight back: pressing Stop All in the background would otherwise clear
+    // every session and then start the service again for [_backgrounded], so
+    // the one control the notification offers would appear not to work.
+    _stoodDown = true;
     _sync();
   }
+
+  /// Whether the user has asked, from the notification, to be left alone.
+  ///
+  /// Cleared on the next resume, not on the next connection: it is an answer
+  /// about this trip to the background, and coming back to the app is what
+  /// ends that.
+  static var _stoodDown = false;
 
   /// Add a session record and push update to Android.
   static void add({
@@ -168,6 +180,9 @@ abstract final class TermSessionManager {
   static void setBackgrounded(bool value) {
     if (_backgrounded == value) return;
     _backgrounded = value;
+    // Coming back to the app ends a stand-down: it was an answer about being
+    // in the background, and the user is not there any more.
+    if (!value) _stoodDown = false;
     _sync();
   }
 
@@ -188,7 +203,7 @@ abstract final class TermSessionManager {
   /// to come back.
   static bool get _serviceWanted =>
       _entries.isNotEmpty ||
-      (_backgrounded && Stores.setting.bgRun.fetch());
+      (_backgrounded && !_stoodDown && Stores.setting.bgRun.fetch());
 
   static Future<void> _syncLatest() async {
     // Android: update foreground service notifications

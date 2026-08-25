@@ -2063,7 +2063,7 @@ abstract class AppLocalizations {
   /// No description provided for @sshFileTransportTip.
   ///
   /// In en, this message translates to:
-  /// **'SFTP suits anything current. Choose SCP for an old or embedded host whose SSH server has no SFTP subsystem: it needs only a shell and the `scp` command.'**
+  /// **'SFTP suits anything current. Choose SCP for an old or embedded host whose SSH server has no SFTP subsystem: it needs the `scp` command and a shell that also has the usual file utilities (`find`, `stat`, `mv`, `chmod`).'**
   String get sshFileTransportTip;
 
   /// No description provided for @specifyDev.

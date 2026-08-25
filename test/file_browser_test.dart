@@ -114,7 +114,11 @@ void main() {
     await tempDir.delete(recursive: true);
   });
 
-  Future<void> pump(WidgetTester tester, FileBackend backend) async {
+  Future<void> pump(
+    WidgetTester tester,
+    FileBackend backend, {
+    String root = '/',
+  }) async {
     await tester.binding.setSurfaceSize(const Size(1200, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
@@ -123,7 +127,7 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: FileBrowserPage(
-            args: FileBrowserArgs(backend: backend, root: '/'),
+            args: FileBrowserArgs(backend: backend, root: root),
           ),
         ),
       ),
@@ -780,6 +784,46 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('archive'), findsOneWidget);
+    });
+
+    testWidgets('and nothing the listing itself is hiding', (tester) async {
+      // The filter used to hold only until someone typed: search read the raw
+      // listing, so a query surfaced — and opened — the dotfiles the setting
+      // says not to show.
+      await pump(tester, _MapBackend({
+        '/': [_file('.bash_history'), _file('bash_notes.txt')],
+      }));
+
+      await tester.tap(find.byIcon(Icons.search));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'bash');
+      await tester.pumpAndSettle();
+
+      expect(find.text('bash_notes.txt'), findsOneWidget);
+      expect(find.text('.bash_history'), findsNothing);
+    });
+  });
+
+  group('an entry whose name is not a name', () {
+    testWidgets('is left out of the listing entirely', (tester) async {
+      // `FileEntry.name` is the last component and never a path, and every
+      // backend here honours that. The browser joins it onto the directory
+      // being shown, so an entry that did not would make delete, rename and
+      // chmod act above the root — which `BrowsePath` guards for navigation
+      // and could not guard for this.
+      final backend = _MapBackend({
+        '/home/me': [
+          _file('notes.txt'),
+          _file('../../etc/shadow'),
+          _dir('..'),
+        ],
+      });
+
+      await pump(tester, backend, root: '/home/me');
+
+      expect(find.text('notes.txt'), findsOneWidget);
+      expect(find.text('../../etc/shadow'), findsNothing);
+      expect(find.text('..'), findsNothing);
     });
   });
 

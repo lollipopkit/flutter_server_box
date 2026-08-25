@@ -397,7 +397,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get bgRunNeedsNotification =>
-      'Ejecutarse en segundo plano necesita una notificación permanente, y esta app no tiene permiso de notificaciones. Toca para concederlo.';
+      'Para ejecutarse en segundo plano hace falta una notificación permanente, y esta app no tiene permiso de notificaciones. Toca para concederlo.';
 
   @override
   String get clearAllStatsContent =>
@@ -1145,7 +1145,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get sshFileTransportTip =>
-      'SFTP sirve para cualquier equipo actual. Elige SCP para un host antiguo o embebido cuyo servidor SSH no tiene subsistema SFTP: solo necesita un shell y el comando `scp`.';
+      'SFTP sirve para cualquier equipo actual. Elige SCP para un host antiguo o embebido cuyo servidor SSH no tiene subsistema SFTP: necesita el comando `scp` y un shell que además tenga las utilidades de archivos habituales (`find`, `stat`, `mv`, `chmod`).';
 
   @override
   String get specifyDev => 'Especificar dispositivo';

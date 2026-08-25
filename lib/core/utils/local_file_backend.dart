@@ -40,16 +40,32 @@ class LocalFileBackend implements FileBackend {
   @override
   Future<FileEntry?> stat(String path) async {
     final native = _native(path);
+    // Asked without following, first. `FileStat.stat` follows a link and so
+    // answered for whatever it points at — reporting a symlink as its target's
+    // kind, and a link to nowhere as *absent*, which is what a caller reads as
+    // "free to create something here". [list] has always reported links as
+    // links; this is the same question and now gives the same answer.
+    final linkless = await FileSystemEntity.type(native, followLinks: false);
+    if (linkless == FileSystemEntityType.notFound) return null;
+
     final stat = await FileStat.stat(native);
-    // `FileStat.stat` answers `notFound` both for something absent and for a
-    // path whose parent cannot be traversed. Only the first is null here; the
-    // second surfaces when the caller does something with it.
-    if (stat.type == FileSystemEntityType.notFound) return null;
+    final kind = linkless == FileSystemEntityType.link
+        ? FileKind.link
+        : _kindOf(stat.type);
     return FileEntry(
       name: p.basename(native),
-      kind: _kindOf(stat.type),
-      size: stat.size < 0 ? null : stat.size,
-      modified: stat.modified,
+      kind: kind,
+      // A dangling link has no size or time worth reporting: the numbers in a
+      // `notFound` stat are the ones the OS did not fill in.
+      size: stat.type == FileSystemEntityType.notFound || stat.size < 0
+          ? null
+          : stat.size,
+      modified: stat.type == FileSystemEntityType.notFound
+          ? null
+          : stat.modified,
+      linkTarget: linkless == FileSystemEntityType.link
+          ? await _targetOf(Link(native))
+          : null,
     );
   }
 

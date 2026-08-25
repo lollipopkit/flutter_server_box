@@ -126,6 +126,20 @@ void main() {
       expect(command, contains('exit $kShellStatAbsent'));
       expect(command, contains('exit $kShellStatDenied'));
     });
+
+    test('and says them on stdout as well', () {
+      final command = shellStatCommand('/etc/shadow');
+
+      // The exit code alone is not enough: a host that closes the channel
+      // without an exit-status message leaves the caller with no answer, and a
+      // stat that cannot say "nothing there" fails every copy into a directory
+      // that does not exist yet.
+      expect(command, contains(kShellStatAbsentMark));
+      expect(command, contains(kShellStatDeniedMark));
+      // Neither can be mistaken for a filename the command might have printed.
+      expect(parseShellFileRecords(kShellStatAbsentMark), isEmpty);
+      expect(parseShellFileRecords(kShellStatDeniedMark), isEmpty);
+    });
   });
 
   group('modeStr', () {

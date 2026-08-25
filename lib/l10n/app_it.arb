@@ -246,7 +246,7 @@
   "sftpSSHConnected": "SFTP connesso",
   "sftpShowFoldersFirst": "Mostra prima le cartelle",
   "sftpUnavailableUseScp": "Se questo host non ha il sottosistema SFTP, come molti dispositivi embedded, imposta il trasferimento file su SCP nelle impostazioni del server.",
-  "sshFileTransportTip": "SFTP va bene per qualsiasi macchina attuale. Scegli SCP per un host vecchio o embedded il cui server SSH non ha il sottosistema SFTP: gli bastano una shell e il comando `scp`.",
+  "sshFileTransportTip": "SFTP va bene per qualsiasi macchina attuale. Scegli SCP per un host vecchio o embedded il cui server SSH non ha il sottosistema SFTP: gli serve il comando `scp` e una shell che abbia anche le solite utilità per i file (`find`, `stat`, `mv`, `chmod`).",
   "specifyDev": "Specifica dispositivo",
   "specifyDevTip": "Il traffico di rete conta tutti i dispositivi; indicane uno qui",
   "spentTime": "Tempo impiegato: {time}",

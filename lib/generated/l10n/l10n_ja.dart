@@ -1065,7 +1065,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get sshFileTransportTip =>
-      '最近の機器なら SFTP。SSH サーバーに SFTP サブシステムがない古い機器や組み込み機器では SCP を選んでください。シェルと `scp` コマンドだけで動きます。';
+      '最近の機器なら SFTP。SSH サーバーに SFTP サブシステムがない古い機器や組み込み機器では SCP を選んでください。`scp` コマンドと、`find`・`stat`・`mv`・`chmod` など一般的なファイル操作コマンドが揃った shell 環境が必要です。';
 
   @override
   String get specifyDev => 'デバイスを指定';

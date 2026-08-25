@@ -1133,7 +1133,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get sshFileTransportTip =>
-      'SFTP підходить для будь-якого сучасного пристрою. SCP — для старого чи вбудованого хоста, у SSH-сервера якого немає підсистеми SFTP: йому потрібні лише оболонка й команда `scp`.';
+      'SFTP підходить для будь-якого сучасного пристрою. SCP — для старого чи вбудованого хоста, у SSH-сервера якого немає підсистеми SFTP: йому потрібна команда `scp` і оболонка, у якій є й звичайні файлові утиліти (`find`, `stat`, `mv`, `chmod`).';
 
   @override
   String get specifyDev => 'Вказати пристрій';

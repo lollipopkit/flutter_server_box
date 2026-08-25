@@ -437,9 +437,14 @@ extension _Sessions on _FileTabPageState {
         _openLocal(initialPath: path, select: false);
       } else {
         final spi = servers[serverId];
-        // A server can be deleted, or switched to a connection that cannot
-        // carry SFTP, while a tab on it is still remembered.
-        if (spi == null || !_canBrowse(ref, spi)) continue;
+        // Only "the server is gone". It used to also require `_canBrowse`,
+        // which for a monitor server is the agent's own answer and is false
+        // until the first poll comes back — so restoring on the first frame
+        // dropped those tabs, and the `_save()` below then wrote the shortened
+        // list back and lost them for good. `ServerFilePage` already says so
+        // when a server genuinely cannot serve files, which is the right place
+        // for an answer that arrives later than this.
+        if (spi == null) continue;
         _openRemote(spi, initialPath: path, select: false);
       }
       restored++;

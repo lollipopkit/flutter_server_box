@@ -346,7 +346,7 @@
   "sftpSSHConnected": "SFTP 已連線",
   "sftpShowFoldersFirst": "資料夾顯示在前",
   "sftpUnavailableUseScp": "如果這台裝置沒有 SFTP 子系統（不少嵌入式裝置如此），請在伺服器設定裡把檔案傳輸改為 SCP。",
-  "sshFileTransportTip": "一般裝置用 SFTP。老舊或嵌入式裝置的 SSH 服務沒有 SFTP 子系統，請選 SCP：它只需要 shell 與 scp 指令。",
+  "sshFileTransportTip": "一般裝置用 SFTP。老舊或嵌入式裝置的 SSH 服務沒有 SFTP 子系統，請選 SCP：它只需要 scp 指令，以及帶有 find、stat、mv、chmod 等常用檔案指令的 shell 環境。",
   "specifyDev": "指定裝置",
   "specifyDevTip": "網路流量預設統計所有裝置，可以在這裡指定特定裝置",
   "spentTime": "耗時：{time}",

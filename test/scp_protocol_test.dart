@@ -197,6 +197,19 @@ void main() {
       );
     });
 
+    test('a header that never ends is refused, not half-read', () async {
+      // Stopping quietly at the limit would leave the rest of the header in
+      // the stream, where the bytes after it are read as file contents — a
+      // transfer that arrives shifted rather than one that fails.
+      final remote = _FakeScp();
+      remote.onWrite = (r, _) => r.replyText('C0644 10 ${'a' * 5000}');
+
+      await expectLater(
+        scpRead(remote, '/tmp/x').toList(),
+        throwsA(isA<ScpException>()),
+      );
+    });
+
     test('an offset drops the bytes before it', () async {
       // The protocol cannot start anywhere but zero, so the whole file comes
       // across and the head of it is discarded here.
@@ -323,6 +336,26 @@ void main() {
             contains('Permission denied'),
           ),
         ),
+      );
+    });
+
+    test('a producer that stalls does not hold the transfer open', () async {
+      // The timeout used to cover only the half of this that waits on the far
+      // side, so a source that opened the channel and then stopped emitting
+      // left the write pending forever with a remote `scp -t` holding its
+      // staging file.
+      final remote = sink();
+
+      await expectLater(
+        scpWrite(
+          remote,
+          '/tmp/x',
+          // Never completes, and never emits.
+          StreamController<List<int>>().stream,
+          size: 4,
+          timeout: const Duration(milliseconds: 200),
+        ),
+        throwsA(isA<TimeoutException>()),
       );
     });
 

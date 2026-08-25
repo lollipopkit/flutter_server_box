@@ -43,17 +43,17 @@ extension _Init on SSHPageState {
   }
 
   void _onForegroundSessionDone(ShellSession session) {
-    // When the SSH transport closed unexpectedly (e.g. toggling WiFi) while a
-    // tmux session was attached, the server-side tmux session survives. Route
-    // this to the existing reconnect logic instead of tearing the tab down, so
-    // the tab isn't removed when WiFi comes back. Normal session end (shell
-    // exit) and user-initiated disconnect keep the transport open, so they
-    // still remove the tab via the path below.
+    // A transport that closed under the session is a connection loss, not the
+    // end of one — route it to the reconnect path rather than tearing the tab
+    // down. Normal session end (shell exit) and user-initiated disconnect
+    // leave the transport open, so they still take the path below.
+    //
+    // This used to require a tmux session, back when reconnecting only knew
+    // how to re-attach one. It no longer does: a raw shell reconnects to a
+    // fresh shell, which is the ordinary case for a link that dropped while
+    // the app was in someone's pocket.
     final transportClosed = _backend != null && _backend!.isClosed;
-    if (mounted &&
-        transportClosed &&
-        _tmuxCurrentSession != null &&
-        _tmuxCurrentSession!.isNotEmpty) {
+    if (mounted && transportClosed) {
       unawaited(_onConnectionLossSuspected());
       return;
     }

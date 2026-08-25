@@ -211,6 +211,12 @@ class FileTransferStatus {
   };
 
   void onNotify(dynamic event) {
+    // Nothing after the end. Killing a worker does not recall the messages it
+    // already sent, so a cancelled transfer could still be handed a progress
+    // update or a stage — and would publish it, moving a row that is no longer
+    // in the list and completing a completer that has already been answered.
+    if (_disposed) return;
+
     var shouldDispose = false;
     switch (event) {
       case final FileTransferStage val:

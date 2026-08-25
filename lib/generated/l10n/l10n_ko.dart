@@ -1067,7 +1067,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get sshFileTransportTip =>
-      '요즘 장비는 SFTP를 쓰세요. SSH 서버에 SFTP 하위 시스템이 없는 오래된 장비나 임베디드 장비는 SCP를 고르면 됩니다. 셸과 `scp` 명령만 있으면 됩니다.';
+      '요즘 장비는 SFTP를 쓰세요. SSH 서버에 SFTP 하위 시스템이 없는 오래된 장비나 임베디드 장비는 SCP를 고르면 됩니다. `scp` 명령과, `find`·`stat`·`mv`·`chmod` 같은 일반적인 파일 명령이 갖춰진 셸 환경이 필요합니다.';
 
   @override
   String get specifyDev => '장치 지정';

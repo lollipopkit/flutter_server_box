@@ -147,9 +147,16 @@ class SftpFileBackend implements FileBackend {
         (true, true) => 'rm -r -- ${shellSingleQuote(path)}',
         (true, false) => 'rmdir -- ${shellSingleQuote(path)}',
         (false, _) => 'rm -f -- ${shellSingleQuote(path)}',
-        // Never stat'd, because this user could not. `-r` covers a directory
-        // and `-f` a file, and one of the two is what is there.
-        (null, _) => 'rm -rf -- ${shellSingleQuote(path)}',
+        // Never stat'd, because this user could not, so the shell decides
+        // where the file is. `rm -rf` was here for both cases and turned a
+        // delete the user asked to be non-recursive into one that took a whole
+        // tree — a stat this account was refused is not consent for that.
+        (null, true) => 'rm -rf -- ${shellSingleQuote(path)}',
+        (null, false) =>
+          'if [ -d ${shellSingleQuote(path)} ] && '
+              '[ ! -L ${shellSingleQuote(path)} ]; '
+              'then rmdir -- ${shellSingleQuote(path)}; '
+              'else rm -f -- ${shellSingleQuote(path)}; fi',
       },
     );
   }

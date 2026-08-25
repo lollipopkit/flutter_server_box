@@ -336,6 +336,17 @@ extension _Widgets on _ServerEditPageState {
   /// the first. Nobody has to come here unless SFTP does not work, and the
   /// browser's own failure says so when it does not.
   Widget _buildFileTransport() {
+    // Nothing to set on a monitor server: saving one writes `ssh: null`, so a
+    // choice made here would be accepted, saved and discarded without a word.
+    // The two fields above it have the same shape and the same problem; this
+    // one is new, so it does not add to it.
+    return _useMonitorHttp.listenVal((useHttp) {
+      if (useHttp) return UIs.placeholder;
+      return _buildFileTransportTile();
+    });
+  }
+
+  Widget _buildFileTransportTile() {
     return _fileTransport.listenVal((val) {
       return ListTile(
         leading: const Icon(MingCute.transfer_2_line),

@@ -89,16 +89,22 @@ class ScpFileBackend implements FileBackend {
   @override
   Future<FileEntry?> stat(String path) async {
     final result = await _exec('stat', shellStatCommand(path));
-    // The output first, and the exit code only if there is none: a host that
-    // reports no exit status at all still printed the record, and refusing to
-    // read it would make every operation that stats first fail on such a host.
+    // What the command said, before what the channel said: a host that reports
+    // no exit status at all still printed its answer, and reading only the
+    // exit code would leave every such host unable to say "nothing there" —
+    // which is the answer a copy into a directory that does not exist yet
+    // depends on.
     final entries = parseShellFileRecords(result.stdout);
     if (entries.isNotEmpty) return entries.first;
+
+    final said = result.stdout.trim();
     // Absent is null; anything else — including a directory on the way this
     // user may not search — is an error, because a caller that reads a refusal
     // as "nothing there" goes on to create something over it.
-    if (result.code == kShellStatAbsent) return null;
-    if (result.code == kShellStatDenied) {
+    if (said == kShellStatAbsentMark || result.code == kShellStatAbsent) {
+      return null;
+    }
+    if (said == kShellStatDeniedMark || result.code == kShellStatDenied) {
       throw ScpShellException('Permission denied: $path');
     }
     throw ScpShellException(result.describe('stat'));
@@ -196,9 +202,22 @@ class ScpFileBackend implements FileBackend {
       // fail when the destination exists and only some servers replace it,
       // while `rename(2)` — which is what `mv` does within one directory —
       // always has.
+      final quoted = shellSingleQuote(path);
       await _run(
         'rename',
-        'mv -- ${shellSingleQuote(staging)} ${shellSingleQuote(path)}',
+        // The guard is not paranoia: `mv file dir` moves the file *into* the
+        // directory, so replacing a path that turned out to be one would
+        // quietly leave the staged copy sitting inside it under a name nobody
+        // asked for. The other two backends fail on this because a rename onto
+        // a directory is refused; `mv` succeeds, so it has to be asked first.
+        // In the same command, so it costs no extra round trip.
+        'if [ -d $quoted ] && [ ! -L $quoted ]; then '
+        // The path goes through `printf`'s argument, still single-quoted, and
+        // never into a double-quoted string: a filename may contain `"`, `$`
+        // or a backtick, and the message is the one place it would otherwise
+        // be read as shell.
+        'printf "%s: is a directory\\n" $quoted >&2; exit 1; fi; '
+        'mv -- ${shellSingleQuote(staging)} $quoted',
       );
     } catch (_) {
       try {
@@ -223,9 +242,14 @@ class ScpFileBackend implements FileBackend {
     try {
       final sink = spool.openWrite();
       try {
-        await sink.addStream(data.map(
+        // Bounded like the sized path's own `await for`: this runs before SCP
+        // is involved at all, so nothing else here would ever notice a
+        // producer that stopped emitting.
+        final source = data.map(
           (chunk) => chunk is Uint8List ? chunk : Uint8List.fromList(chunk),
-        ));
+        );
+        final bound = _streamTimeout;
+        await sink.addStream(bound == null ? source : source.timeout(bound));
         await sink.close();
       } catch (_) {
         // Closing a sink whose stream failed throws "File closed", which would

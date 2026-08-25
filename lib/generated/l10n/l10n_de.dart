@@ -1131,11 +1131,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get sftpUnavailableUseScp =>
-      'Wenn dieser Host kein SFTP-Subsystem hat, wie viele eingebettete Geräte, stell die Dateiübertragung in den Servereinstellungen auf SCP.';
+      'Wenn dieser Host kein SFTP-Subsystem hat, wie es bei vielen eingebetteten Geräten der Fall ist, stell die Dateiübertragung in den Servereinstellungen auf SCP.';
 
   @override
   String get sshFileTransportTip =>
-      'SFTP passt für alles Aktuelle. SCP ist für alte oder eingebettete Hosts, deren SSH-Server kein SFTP-Subsystem hat: es braucht nur eine Shell und den Befehl `scp`.';
+      'SFTP passt für alles Aktuelle. SCP ist für alte oder eingebettete Hosts, deren SSH-Server kein SFTP-Subsystem hat: es braucht den Befehl `scp` und eine Shell, die auch die üblichen Datei-Werkzeuge mitbringt (`find`, `stat`, `mv`, `chmod`).';
 
   @override
   String get specifyDev => 'Gerät angeben';
