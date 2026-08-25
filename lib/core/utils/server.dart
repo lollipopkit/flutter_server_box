@@ -122,12 +122,15 @@ String _decodeCapped(String path, List<int> bytes) {
 /// Runs where there are stores, a filesystem the user granted, and a UI to
 /// report a failure to. `SshTransferCreds` calls it on the main isolate and
 /// hands the result across, because the transfer isolate has none of those.
-String? resolvePrivateKey(SshCredential ssh) {
-  final keys = resolvePrivateKeys(ssh);
+String? resolvePrivateKey(SshCredential ssh, {String? originalHost}) {
+  final keys = resolvePrivateKeys(ssh, originalHost: originalHost);
   return keys.isEmpty ? null : keys.values.first;
 }
 
-Map<String, String> resolvePrivateKeys(SshCredential ssh) {
+Map<String, String> resolvePrivateKeys(
+  SshCredential ssh, {
+  String? originalHost,
+}) {
   final keyId = ssh.keyId;
   if (keyId != null) {
     return {SshCredential.keyRefForId(keyId): getPrivateKey(keyId)};
@@ -153,6 +156,8 @@ Map<String, String> resolvePrivateKeys(SshCredential ssh) {
       keyPath,
       hostname: ssh.ip,
       remoteUser: ssh.user,
+      originalHost: originalHost,
+      port: ssh.port,
     );
     try {
       final handle = File(expanded).openSync();
@@ -462,8 +467,7 @@ Future<SSHClient> _authenticatedClient({
   required SSHKeyboardInteractiveHandler? onKeyboardInteractive,
   required HostKeyVerifier hostKeyVerifier,
 }) async {
-  final keyRefs = ssh.keyRefs;
-  if (keyRefs.isEmpty) {
+  SSHClient passwordClient() {
     onStatus?.call(GenSSHClientStatus.pwd);
     return SSHClient(
       socket,
@@ -477,6 +481,11 @@ Future<SSHClient> _authenticatedClient({
       authTimeout: timeout,
     );
   }
+
+  final keyRefs = ssh.keyRefs;
+  if (keyRefs.isEmpty) {
+    return passwordClient();
+  }
   final keyMaterial = <String, String>{};
   if (privateKey != null) keyMaterial[keyRefs.first] = privateKey;
   if (privateKeysByKeyId != null) {
@@ -485,11 +494,25 @@ Future<SSHClient> _authenticatedClient({
       if (pem != null) keyMaterial[ref] = pem;
     }
   } else if (privateKey == null || keyRefs.length > 1) {
-    for (final entry in resolvePrivateKeys(ssh).entries) {
-      keyMaterial.putIfAbsent(entry.key, () => entry.value);
+    try {
+      for (final entry in resolvePrivateKeys(
+        ssh,
+        originalHost: spi.name,
+      ).entries) {
+        keyMaterial.putIfAbsent(entry.key, () => entry.value);
+      }
+    } catch (e, s) {
+      if (ssh.pwd?.isNotEmpty != true) rethrow;
+      Loggers.app.warning(
+        'SSH key unavailable for ${spi.name}; falling back to password',
+        e,
+        s,
+      );
+      return passwordClient();
     }
   }
   if (keyMaterial.isEmpty) {
+    if (ssh.pwd?.isNotEmpty == true) return passwordClient();
     throw SSHErr(
       type: SSHErrType.noPrivateKey,
       message: l10n.privateKeyNotFoundFmt(

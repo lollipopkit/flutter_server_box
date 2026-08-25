@@ -80,7 +80,6 @@ void main() {
         'fe80::1',
         'my-host_01.internal',
         'root',
-        'ad\\user',
         'user@realm',
       ]) {
         expect(
@@ -107,6 +106,7 @@ void main() {
         "h'",
         'h"',
         'h%p',
+        r'ad\user',
       ]) {
         expect(
           () => ProxyCommandSocket.checkSubstitutable('host', value),

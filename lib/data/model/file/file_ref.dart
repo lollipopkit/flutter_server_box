@@ -5,7 +5,6 @@ import 'package:server_box/core/utils/ssh_key_unlock.dart';
 import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/res/store.dart';
 
 /// One end of a transfer: somewhere files live, and a path in it.
@@ -51,8 +50,7 @@ final class LocalFileRef extends FileRef {
       LocalFileRef(path.joinPath(name, separator: '/'));
 
   @override
-  bool operator ==(Object other) =>
-      other is LocalFileRef && other.path == path;
+  bool operator ==(Object other) => other is LocalFileRef && other.path == path;
 
   @override
   int get hashCode => Object.hash(LocalFileRef, path);
@@ -79,8 +77,10 @@ final class SftpFileRef extends FileRef {
 
   /// Always `/`: the far side is a Linux-like system, whatever this device is.
   @override
-  SftpFileRef child(String name) =>
-      SftpFileRef(creds: creds, path: path.joinPath(name, separator: '/'));
+  SftpFileRef child(String name) => SftpFileRef(
+    creds: creds,
+    path: path.joinPath(name, separator: '/'),
+  );
 
   @override
   bool operator ==(Object other) =>
@@ -101,7 +101,11 @@ final class SftpFileRef extends FileRef {
 /// pure Dart, so a transfer with this at either end does not peg the UI
 /// thread the way an SSH one would.
 final class MonitorFileRef extends FileRef {
-  const MonitorFileRef({required this.spi, required this.monitor, required this.path});
+  const MonitorFileRef({
+    required this.spi,
+    required this.monitor,
+    required this.path,
+  });
 
   factory MonitorFileRef.forServer(Spi spi, String path) {
     final credential = ServerConnectCredential.fromSpi(spi);
@@ -153,9 +157,17 @@ class SshTransferCreds {
     // report a refusal to. The isolate has neither.
     final ssh = spi.ssh;
     if (ssh != null && ssh.keyRefs.isNotEmpty) {
-      final keys = resolvePrivateKeys(ssh);
-      privateKeysByKeyId!.addAll(keys);
-      privateKey = keys[ssh.keyRefs.first];
+      try {
+        final keys = resolvePrivateKeys(ssh, originalHost: spi.name);
+        privateKeysByKeyId!.addAll(keys);
+        privateKey = keys[ssh.keyRefs.first];
+      } catch (e) {
+        if (ssh.pwd?.isNotEmpty != true) rethrow;
+        Loggers.app.warning(
+          'Transfer key unavailable for ${spi.name}; using password',
+          e,
+        );
+      }
     }
 
     final allServers = {
@@ -171,7 +183,7 @@ class SshTransferCreds {
         // A jump server whose key cannot be resolved is not fatal here: the
         // hop may authenticate by password, and failing the whole transfer at
         // queue time would take the other candidates with it.
-        final keys = _tryResolveAll(jumpSsh);
+        final keys = _tryResolveAll(jumpSpi!);
         privateKeysByKeyId!.addAll(keys);
         jumpPrivateKey = keys[jumpSsh.keyRefs.first];
       }
@@ -184,7 +196,7 @@ class SshTransferCreds {
           jumpKeyRefs.every(privateKeysByKeyId!.containsKey)) {
         continue;
       }
-      privateKeysByKeyId!.addAll(_tryResolveAll(jumpSsh!));
+      privateKeysByKeyId!.addAll(_tryResolveAll(jump));
     }
 
     if (jumpSpisById != null && jumpSpisById!.isEmpty) jumpSpisById = null;
@@ -207,9 +219,9 @@ class SshTransferCreds {
   /// The target server's key is allowed to throw — a transfer to a host whose
   /// key is gone should say so at once. A jump server's is not: it may not need
   /// one, and one unusable candidate must not take the others with it.
-  static Map<String, String> _tryResolveAll(SshCredential ssh) {
+  static Map<String, String> _tryResolveAll(Spi spi) {
     try {
-      return resolvePrivateKeys(ssh);
+      return resolvePrivateKeys(spi.ssh!, originalHost: spi.name);
     } catch (e) {
       Loggers.app.warning('Jump server key unavailable', e);
       return const {};

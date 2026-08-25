@@ -106,19 +106,25 @@ class ProxyCommandSocket implements SSHSocket {
         stdoutController.close();
       },
     );
-    process.stderr
-        .transform(utf8.decoder)
-        .transform(const LineSplitter())
-        .listen(
-          (line) => Loggers.app.warning('ProxyCommand stderr: $line'),
-          onError: (error, stackTrace) {
-            Loggers.app.warning(
-              'ProxyCommand stderr stream error',
-              error,
-              stackTrace,
-            );
-          },
+    process.stderr.listen(
+      (data) {
+        const maxLoggedBytes = 4096;
+        final capped = data.length <= maxLoggedBytes
+            ? data
+            : data.sublist(0, maxLoggedBytes);
+        final message = utf8.decode(capped, allowMalformed: true).trimRight();
+        if (message.isEmpty) return;
+        final suffix = data.length > maxLoggedBytes ? ' [truncated]' : '';
+        Loggers.app.warning('ProxyCommand stderr: $message$suffix');
+      },
+      onError: (error, stackTrace) {
+        Loggers.app.warning(
+          'ProxyCommand stderr stream error',
+          error,
+          stackTrace,
         );
+      },
+    );
 
     // The SSH socket's lifecycle is the byte stream, not the helper process.
     // A proxy that keeps its process alive after closing the transport would
@@ -170,7 +176,7 @@ class ProxyCommandSocket implements SSHSocket {
   /// Everything a hostname, an IPv4 or IPv6 literal, or a POSIX user name is
   /// made of, and nothing a shell reads as syntax. `%` is absent on purpose:
   /// a value carrying one could introduce a placeholder of its own.
-  static final _substitutable = RegExp(r'^[A-Za-z0-9._,@:\-\[\]\\]*$');
+  static final _substitutable = RegExp(r'^[A-Za-z0-9._,@:\-\[\]]*$');
 
   /// Refuses a value that `/bin/sh` would not read as one word.
   ///

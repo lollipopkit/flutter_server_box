@@ -32,6 +32,14 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('SshCredential', () {
+    test('legacy and current jump forms share equality and hash code', () {
+      const legacy = SshCredential(ip: 'a', jumpId: 'jump');
+      const current = SshCredential(ip: 'a', jumpIds: ['jump']);
+
+      expect(legacy, current);
+      expect(legacy.hashCode, current.hashCode);
+    });
+
     test('the id-only reference is the one a connection unlocks under', () {
       // The key editor invalidates and warms the unlock cache from an id it
       // holds, with no credential to ask. It spelled that `<id>` while
@@ -105,21 +113,18 @@ void main() {
       );
     }
 
-    void seedServer(String id, {String? keyId, String? keyPath}) => seed(
-      'server',
-      id,
-      {
-        'id': id,
-        'name': 'srv $id',
-        'ssh': {
-          'ip': '10.0.0.1',
-          'port': 22,
-          'user': 'root',
-          'keyId': ?keyId,
-          'keyPath': ?keyPath,
-        },
-      },
-    );
+    void seedServer(String id, {String? keyId, String? keyPath}) =>
+        seed('server', id, {
+          'id': id,
+          'name': 'srv $id',
+          'ssh': {
+            'ip': '10.0.0.1',
+            'port': 22,
+            'user': 'root',
+            'keyId': ?keyId,
+            'keyPath': ?keyPath,
+          },
+        });
 
     /// The old shape: the key's id *was* its name.
     void seedKey(String name) => seed('key', name, {'id': name, 'key': 'PEM'});
@@ -323,10 +328,42 @@ void main() {
         timeout: const Duration(milliseconds: 200),
       );
       addTearDown(client.close);
+      var watchdogTimedOut = false;
       await expectLater(
-        client.authenticated.timeout(const Duration(seconds: 2)),
+        client.authenticated.timeout(
+          const Duration(seconds: 2),
+          onTimeout: () {
+            watchdogTimedOut = true;
+            throw StateError('test watchdog timed out');
+          },
+        ),
         throwsA(anything),
       );
+      expect(watchdogTimedOut, isFalse);
+    });
+
+    test('an unavailable key falls back to the configured password', () async {
+      final server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+      addTearDown(server.close);
+      final accepted = Completer<Socket>();
+      server.listen((socket) {
+        if (!accepted.isCompleted) accepted.complete(socket);
+      });
+
+      final spi = spiFixture(
+        name: 'password fallback',
+        id: 'password-fallback',
+        ip: server.address.address,
+        port: server.port,
+        keyPath: '/definitely/not/here/id_ed25519',
+        pwd: 'secret',
+      );
+      final client = await genClient(spi);
+      addTearDown(client.close);
+      final socket = await accepted.future;
+      addTearDown(socket.destroy);
+
+      expect(client, isNotNull);
     });
 
     test('a key it cannot read does not leave the socket open', () async {

@@ -36,6 +36,8 @@ abstract final class SSHConfig {
     String path, {
     required String hostname,
     required String remoteUser,
+    String? originalHost,
+    int port = 22,
   }) {
     final home = _homePath ?? '';
     final localUser =
@@ -46,6 +48,8 @@ abstract final class SSHConfig {
         .replaceAll('%d', home)
         .replaceAll('%u', localUser)
         .replaceAll('%h', hostname)
+        .replaceAll('%n', originalHost ?? hostname)
+        .replaceAll('%p', '$port')
         .replaceAll('%r', remoteUser)
         .replaceAll(escapedPercent, '%');
     return _expandTilde(expanded);
@@ -255,25 +259,52 @@ abstract final class SSHConfig {
       final jumpIds = <String>[];
       for (final raw in specs) {
         final spec = _parseJumpSpec(raw);
-        final base = byName[spec.host] ?? byHostname[spec.host];
-        if (base == null || base.id == servers[i].id) {
+        var base = byName[spec.host] ?? byHostname[spec.host];
+        if (base == null) {
+          if (spec.host.isEmpty || spec.host == servers[i].name) {
+            Loggers.app.warning(
+              'SSH config ProxyJump "$raw" has no usable host',
+            );
+            continue;
+          }
+          final cacheKey = [
+            'direct',
+            spec.host,
+            spec.user ?? '',
+            spec.port ?? '',
+          ].join('\u0000');
+          base = derived.putIfAbsent(
+            cacheKey,
+            () => Spi(
+              id: ShortId.generate(),
+              name: raw,
+              ssh: SshCredential(
+                ip: spec.host,
+                user: spec.user ?? 'root',
+                port: spec.port ?? 22,
+              ),
+            ),
+          );
+        }
+        if (base.id == servers[i].id) {
           Loggers.app.warning(
-            'SSH config ProxyJump "$raw" has no matching imported Host',
+            'SSH config ProxyJump "$raw" points back to its own Host',
           );
           continue;
         }
+        final resolvedBase = base;
         if (spec.user == null && spec.port == null) {
-          jumpIds.add(base.id);
+          jumpIds.add(resolvedBase.id);
           continue;
         }
         final cacheKey =
-            '${base.id}\u0000${spec.user ?? ''}\u0000${spec.port ?? ''}';
+            '${resolvedBase.id}\u0000${spec.user ?? ''}\u0000${spec.port ?? ''}';
         final override = derived.putIfAbsent(cacheKey, () {
-          final baseSsh = base.ssh!;
-          return base.copyWith(
+          final baseSsh = resolvedBase.ssh!;
+          return resolvedBase.copyWith(
             id: ShortId.generate(),
             name:
-                '${base.name} (${spec.user ?? baseSsh.user}@${spec.port ?? baseSsh.port})',
+                '${resolvedBase.name} (${spec.user ?? baseSsh.user}@${spec.port ?? baseSsh.port})',
             ssh: baseSsh.copyWith(
               user: spec.user ?? baseSsh.user,
               port: spec.port ?? baseSsh.port,
@@ -293,6 +324,19 @@ abstract final class SSHConfig {
     }
     servers.removeWhere((server) => invalidJumpOwners.contains(server.id));
     servers.addAll(derived.values);
+    final validIds = servers.map((server) => server.id).toSet();
+    for (var i = 0; i < servers.length; i++) {
+      final ssh = servers[i].ssh;
+      if (ssh == null || ssh.resolvedJumpIds.isEmpty) continue;
+      final filtered = ssh.resolvedJumpIds.where(validIds.contains).toList();
+      if (filtered.length == ssh.resolvedJumpIds.length) continue;
+      servers[i] = servers[i].copyWith(
+        ssh: ssh.copyWith(
+          jumpId: filtered.firstOrNull,
+          jumpIds: filtered.isEmpty ? null : filtered,
+        ),
+      );
+    }
     return servers;
   }
 

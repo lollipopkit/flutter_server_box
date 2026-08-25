@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:meta/meta.dart';
 
@@ -27,6 +29,14 @@ class _ListHistory {
   }
 
   void clear() => _store.set(_name, const <String>[]);
+
+  void replace(String oldValue, String newValue) {
+    final history = all;
+    final index = history.indexOf(oldValue);
+    if (index < 0) return;
+    history[index] = newValue;
+    _store.set(_name, history.toSet().toList());
+  }
 }
 
 class _MapHistory {
@@ -60,6 +70,46 @@ class HistoryStore extends SqliteStore {
   HistoryStore.forTest() : super('history_test');
 
   static final instance = HistoryStore._();
+
+  final Map<String, String> _serverIdAliases = {};
+
+  String resolveSshServerId(String id) {
+    var current = id;
+    final seen = <String>{};
+    while (seen.add(current)) {
+      final next = _serverIdAliases[current];
+      if (next == null) break;
+      current = next;
+    }
+    return current;
+  }
+
+  void renameSshServer(String oldId, String newId) {
+    for (final entry in _serverIdAliases.entries.toList()) {
+      if (entry.value == oldId) _serverIdAliases[entry.key] = newId;
+    }
+    _serverIdAliases[oldId] = newId;
+    sshServerHistory.replace(oldId, newId);
+
+    final saved = sshTabs.fetch();
+    if (saved.isEmpty) return;
+    try {
+      final decoded = jsonDecode(saved);
+      if (decoded is! List) return;
+      var changed = false;
+      for (final entry in decoded.whereType<Map>()) {
+        for (final key in const ['sourceId', 'serverId']) {
+          if (entry[key] == oldId) {
+            entry[key] = newId;
+            changed = true;
+          }
+        }
+      }
+      if (changed) sshTabs.put(jsonEncode(decoded));
+    } catch (e, s) {
+      Loggers.app.warning('Failed to rewrite renamed SSH tab state', e, s);
+    }
+  }
 
   late final sftpGoPath = _ListHistory(store: this, name: 'sftpPath');
 

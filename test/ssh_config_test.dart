@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:server_box/core/utils/ssh_config.dart';
 
-
 void main() {
   group('SSHConfig Tests', () {
     late Directory tempDir;
@@ -224,11 +223,13 @@ Host keyserver
           '';
       expect(
         SSHConfig.expandIdentityFile(
-          r'keys/%h-%r-%u-%%',
+          r'keys/%h-%n-%p-%r-%u-%%',
           hostname: 'prod.example.com',
+          originalHost: 'prod',
+          port: 2200,
           remoteUser: 'deploy',
         ),
-        'keys/prod.example.com-deploy-$localUser-%',
+        'keys/prod.example.com-prod-2200-deploy-$localUser-%',
       );
     });
 
@@ -363,6 +364,45 @@ Host target
       expect(target.ssh?.resolvedJumpIds, [override.id, second.id]);
       expect(override.ssh?.user, 'jumpuser');
       expect(override.ssh?.port, 2200);
+    });
+
+    test('imports a direct ProxyJump host specification', () async {
+      await configFile.writeAsString('''
+Host target
+  HostName target.example.com
+  ProxyJump deploy@bastion.example.com:2200
+''');
+
+      final servers = await SSHConfig.parseConfig(configFile.path);
+      final target = servers.firstWhere((e) => e.name == 'target');
+      final jump = servers.firstWhere(
+        (e) => e.id == target.ssh!.resolvedJumpIds.single,
+      );
+      expect(jump.ssh?.ip, 'bastion.example.com');
+      expect(jump.ssh?.user, 'deploy');
+      expect(jump.ssh?.port, 2200);
+    });
+
+    test('removes references to an invalid ProxyJump owner', () async {
+      await configFile.writeAsString('''
+Host broken
+  HostName broken.example.com
+  ProxyJump broken
+
+Host target
+  HostName target.example.com
+  ProxyJump broken,direct.example.com
+''');
+
+      final servers = await SSHConfig.parseConfig(configFile.path);
+      expect(servers.where((e) => e.name == 'broken'), isEmpty);
+      final target = servers.firstWhere((e) => e.name == 'target');
+      final jumps = target.ssh!.resolvedJumpIds;
+      expect(jumps, hasLength(1));
+      expect(
+        servers.firstWhere((e) => e.id == jumps.single).ssh?.ip,
+        'direct.example.com',
+      );
     });
 
     test('parseConfig returns empty list for non-existent file', () async {

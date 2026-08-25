@@ -474,23 +474,9 @@ class ServersNotifier extends _$ServersNotifier {
           newManualDisconnected.add(newSpi.id);
         }
         Stores.setting.serverOrder.put(newOrder);
-
-        // Preserve selection if the renamed server was selected
-        if (ref.read(serverSelectionProvider) == old.id) {
-          ref.read(serverSelectionProvider.notifier).select(newSpi.id);
-        }
-        ref.invalidate(serverProvider(old.id));
-
-        // Update SSH session ID when server ID changes
-        final oldSessionId = 'ssh_${old.id}';
-        TermSessionManager.remove(oldSessionId);
-        // Session will be re-added when reconnecting if necessary
-        await _clearSudoPasswordOverrideBestEffort(old.id);
+        Stores.history.renameSshServer(old.id, newSpi.id);
       } else {
         newServers[old.id] = newSpi;
-        // Update SPI in the corresponding IndividualServerNotifier
-        final serverNotifier = ref.read(serverProvider(old.id).notifier);
-        serverNotifier.updateSpi(newSpi);
       }
 
       final newTags = _calculateTags(newServers);
@@ -500,6 +486,22 @@ class ServersNotifier extends _$ServersNotifier {
         tags: newTags,
         manualDisconnectedIds: newManualDisconnected,
       );
+
+      if (newSpi.id != old.id) {
+        // Publish the replacement before selection or async cleanup can make
+        // consumers rebuild against the deleted id.
+        if (ref.read(serverSelectionProvider) == old.id) {
+          ref.read(serverSelectionProvider.notifier).select(newSpi.id);
+        }
+        ref.invalidate(serverProvider(old.id));
+
+        final oldSessionId = 'ssh_${old.id}';
+        TermSessionManager.remove(oldSessionId);
+        await _clearSudoPasswordOverrideBestEffort(old.id);
+      } else {
+        final serverNotifier = ref.read(serverProvider(old.id).notifier);
+        serverNotifier.updateSpi(newSpi);
+      }
 
       // Only reconnect if neccessary
       if (newSpi.shouldReconnect(old)) {

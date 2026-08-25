@@ -50,10 +50,11 @@ class _SshSession {
   /// restored but never looked at has no state of its own yet.
   Map<String, dynamic> toRestorable() {
     final live = pageKey.currentState;
+    final sourceId = live?.widget.args.source.id ?? page.args.source.id;
     return {
       // The source's id, not a server's: this device has one too, and it is
       // what tells the two apart when the set is reopened.
-      'sourceId': live?.widget.args.source.id ?? page.args.source.id,
+      'sourceId': Stores.history.resolveSshServerId(sourceId),
       'tmuxSession': live?.tmuxCurrentSession ?? page.args.tmuxSession,
       'tmuxWindow': live?.tmuxCurrentWindow ?? page.args.tmuxWindow,
     };
@@ -323,7 +324,9 @@ extension _Sessions on _SSHTabPageState {
     // has to mean both.
     if (!await installRootfs(context, another: before.isNotEmpty)) return;
     if (!mounted) return;
-    final added = Rootfs.profiles.firstWhereOrNull((e) => !before.contains(e.id));
+    final added = Rootfs.profiles.firstWhereOrNull(
+      (e) => !before.contains(e.id),
+    );
     // Nothing new means it was already there and the install returned early —
     // the first system, opened by the chip that offered to install it.
     //
@@ -528,29 +531,34 @@ extension _Actions on _SSHTabPageState {
 
   /// Opens the agent on the terminal that is on screen, the same way the
   /// snippet picker beside it works.
-  Widget get _agentBtn => Btn.icon(text: l10n.askAi, 
+  Widget get _agentBtn => Btn.icon(
+    text: l10n.askAi,
     icon: const Icon(Icons.auto_awesome, size: 18),
     onTap: () =>
         _sessions.current?.data.pageKey.currentState?.openAgentFromToolbar(),
   );
 
-  Widget get _snippetBtn => Btn.icon(text: libL10n.snippet, 
+  Widget get _snippetBtn => Btn.icon(
+    text: libL10n.snippet,
     icon: const Icon(Icons.code, size: 18),
     onTap: () =>
         _sessions.current?.data.pageKey.currentState?.pickSnippetFromToolbar(),
   );
 
-  Widget get _sortBtn => Btn.icon(text: libL10n.sort, 
+  Widget get _sortBtn => Btn.icon(
+    text: libL10n.sort,
     icon: Icon(_SortOrder.stored.icon, size: 18),
     onTap: _showSortMenu,
   );
 
-  Widget get _searchBtn => Btn.icon(text: libL10n.search, 
+  Widget get _searchBtn => Btn.icon(
+    text: libL10n.search,
     icon: const Icon(Icons.search, size: 18),
     onTap: _showSearch,
   );
 
-  Widget get _historyBtn => Btn.icon(text: l10n.history, 
+  Widget get _historyBtn => Btn.icon(
+    text: l10n.history,
     icon: const Icon(Icons.history, size: 18),
     onTap: _showHistory,
   );
