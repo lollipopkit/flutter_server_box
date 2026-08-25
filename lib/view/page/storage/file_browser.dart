@@ -1225,34 +1225,54 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     // registers an inherited-widget dependency, and doing that inside
     // `itemBuilder` did it for every visible entry, every rebuild.
     final narrow = MediaQuery.sizeOf(context).width < 350;
+    const padding = EdgeInsets.symmetric(vertical: 10, horizontal: 13);
+
+    Widget upTile() => ListTile(
+      leading: const Icon(Icons.arrow_upward),
+      title: const Text('..'),
+      onTap: () => _go(_path.goUp),
+    ).cardx;
+
+    // An empty directory still has to say so, and still has to be leavable.
+    //
+    // The mark this tab uses for an empty surface, not a word. The row above
+    // says where you are and how to leave; a sentence here would be describing
+    // what the reader is already looking at.
+    //
+    // The failed *search* below keeps its words: "nothing matched" and "this
+    // place is empty" are different things, and only one of them is a state of
+    // the directory.
+    //
+    // `SliverFillRemaining` and not another list item: as an item it took the
+    // height of the icon and sat at the top of the list, which reads as the
+    // first entry of a directory that has none. This centres it in whatever is
+    // left under the `..` row.
+    if (items.isEmpty) {
+      return FadeIn(
+        key: ValueKey(_path.path),
+        child: CustomScrollView(
+          slivers: [
+            if (up == 1)
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(13, 10, 13, 0),
+                sliver: SliverToBoxAdapter(child: upTile()),
+              ),
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(child: EmptyMark(icon: Icons.folder_open)),
+            ),
+          ],
+        ),
+      );
+    }
+
     return FadeIn(
       key: ValueKey(_path.path),
       child: ListView.builder(
-        // One more than there is, when there is nothing: an empty directory
-        // still has to say so, and still has to be leavable.
-        itemCount: items.isEmpty ? up + 1 : items.length + up,
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 13),
+        itemCount: items.length + up,
+        padding: padding,
         itemBuilder: (context, index) {
-          if (up == 1 && index == 0) {
-            return ListTile(
-              leading: const Icon(Icons.arrow_upward),
-              title: const Text('..'),
-              onTap: () => _go(_path.goUp),
-            ).cardx;
-          }
-          if (items.isEmpty) {
-            // The mark this tab uses for an empty surface, not a word. The row
-            // above says where you are and how to leave; a sentence here would
-            // be describing what the reader is already looking at.
-            //
-            // The failed *search* below keeps its words: "nothing matched" and
-            // "this place is empty" are different things, and only one of them
-            // is a state of the directory.
-            return const Padding(
-              padding: EdgeInsets.symmetric(vertical: 32),
-              child: EmptyMark(icon: Icons.folder_open),
-            );
-          }
+          if (up == 1 && index == 0) return upTile();
           return _buildEntry(items[index - up], narrow: narrow);
         },
       ),
