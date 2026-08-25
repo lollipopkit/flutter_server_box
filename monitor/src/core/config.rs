@@ -89,6 +89,32 @@ pub struct TlsConfig {
     pub key_path: String,
 }
 
+#[derive(Default)]
+struct EnvOverrides {
+    database_url: Option<String>,
+    host: Option<String>,
+    port: Option<String>,
+    tls_cert: Option<String>,
+    tls_key: Option<String>,
+    jwt_secret: Option<String>,
+    cors_origins: Option<String>,
+}
+
+impl EnvOverrides {
+    fn read() -> Self {
+        let value = |name| env::var(name).ok().filter(|s| !s.is_empty());
+        Self {
+            database_url: value("DATABASE_URL"),
+            host: value("SBM_HOST"),
+            port: value("SBM_PORT"),
+            tls_cert: value("SBM_TLS_CERT"),
+            tls_key: value("SBM_TLS_KEY"),
+            jwt_secret: value("JWT_SECRET"),
+            cors_origins: value("SBM_CORS_ORIGINS"),
+        }
+    }
+}
+
 /// Stated once, here, rather than at each of the places that used to build a
 /// `ServerConfig` by hand — they had drifted apart on whether the environment
 /// is read at all.
@@ -313,7 +339,7 @@ impl Config {
             
             // Convert from Go format if needed
             config.normalize()?;
-            config.apply_env_overrides();
+            config.apply_env_overrides()?;
             config.validate()?;
             return Ok(config);
         } else if let Some(json_path) = legacy_json_path() {
@@ -323,7 +349,7 @@ impl Config {
 
             // Convert from Go format if needed
             config.normalize()?;
-            config.apply_env_overrides();
+            config.apply_env_overrides()?;
             config.validate()?;
 
             // One-way migration to config.toml so subsequent starts take the
@@ -354,7 +380,7 @@ impl Config {
 
         // Create default config
         let mut config = Self::default();
-        config.apply_env_overrides();
+        config.apply_env_overrides()?;
         config.validate()?;
 
         // Save default config as TOML
@@ -457,6 +483,18 @@ impl Config {
         // to look for the same answer.
         self.legacy = LegacyGoConfig::default();
 
+        // Older releases accepted zero here as "keep the shortest possible
+        // history". Preserve their ability to start while keeping validation
+        // strict for every other invalid duration.
+        if let Some(retention) = self
+            .monitoring
+            .as_mut()
+            .and_then(|monitoring| monitoring.data_retention.as_mut())
+        {
+            retention.metrics_days = retention.metrics_days.max(1);
+            retention.alerts_days = retention.alerts_days.max(1);
+        }
+
         Ok(())
     }
 
@@ -479,20 +517,52 @@ impl Config {
         self.database_url.clone().unwrap_or_else(|| "sqlite:serverbox_monitor.db".to_string())
     }
 
-    /// Environment variable overrides (take precedence over config files); empty values count as unset
-    fn apply_env_overrides(&mut self) {
-        if let Some(secret) = env::var("JWT_SECRET").ok().filter(|s| !s.is_empty()) {
+    /// Environment variable overrides (take precedence over config files);
+    /// empty values count as unset.
+    fn apply_env_overrides(&mut self) -> Result<()> {
+        self.apply_overrides(EnvOverrides::read())
+    }
+
+    fn apply_overrides(&mut self, overrides: EnvOverrides) -> Result<()> {
+        if let Some(database_url) = overrides.database_url {
+            self.database_url = Some(database_url);
+        }
+        if let Some(secret) = overrides.jwt_secret {
             self.jwt_secret = Some(secret);
         }
-        if let Some(origins) = env::var("SBM_CORS_ORIGINS").ok().filter(|s| !s.is_empty()) {
-            let mut server = self.get_server();
+
+        let mut server = self.get_server();
+        let mut server_changed = false;
+        if let Some(host) = overrides.host {
+            server.host = host;
+            server_changed = true;
+        }
+        if let Some(port) = overrides.port {
+            server.port = port
+                .parse()
+                .with_context(|| format!("Invalid SBM_PORT value {port:?}"))?;
+            server_changed = true;
+        }
+        match (overrides.tls_cert, overrides.tls_key) {
+            (Some(cert_path), Some(key_path)) => {
+                server.tls = Some(TlsConfig { cert_path, key_path });
+                server_changed = true;
+            }
+            (None, None) => {}
+            _ => anyhow::bail!("SBM_TLS_CERT and SBM_TLS_KEY must be provided together"),
+        }
+        if let Some(origins) = overrides.cors_origins {
             server.cors_allowed_origins = origins
                 .split(',')
                 .map(|o| o.trim().trim_end_matches('/').to_string())
                 .filter(|o| !o.is_empty())
                 .collect();
+            server_changed = true;
+        }
+        if server_changed {
             self.server = Some(server);
         }
+        Ok(())
     }
 
     /// JWT secret resolution; must be called once at serve startup:
@@ -864,6 +934,62 @@ mod tests {
     fn oversized_go_durations_are_rejected_without_overflowing() {
         assert_eq!(parse_go_duration("18446744073709551615h"), None);
         assert_eq!(parse_go_duration("18446744073709551615m"), None);
+    }
+
+    #[test]
+    fn environment_overrides_file_database_and_server_settings() {
+        let mut config = Config::default();
+        config.database_url = Some("sqlite:file.db".to_string());
+        config.server = Some(ServerConfig {
+            host: "file-host".to_string(),
+            port: 3770,
+            tls: None,
+            name: None,
+            cors_allowed_origins: Vec::new(),
+            card_order: Vec::new(),
+        });
+
+        config
+            .apply_overrides(EnvOverrides {
+                database_url: Some("sqlite:env.db".to_string()),
+                host: Some("127.0.0.1".to_string()),
+                port: Some("4770".to_string()),
+                tls_cert: Some("cert.pem".to_string()),
+                tls_key: Some("key.pem".to_string()),
+                ..Default::default()
+            })
+            .unwrap();
+
+        assert_eq!(config.get_database_url(), "sqlite:env.db");
+        let server = config.get_server();
+        assert_eq!(server.host, "127.0.0.1");
+        assert_eq!(server.port, 4770);
+        let tls = server.tls.unwrap();
+        assert_eq!(tls.cert_path, "cert.pem");
+        assert_eq!(tls.key_path, "key.pem");
+    }
+
+    #[test]
+    fn legacy_zero_retention_days_are_normalized() {
+        let mut config = Config::default();
+        let retention = config
+            .monitoring
+            .as_mut()
+            .and_then(|monitoring| monitoring.data_retention.as_mut())
+            .unwrap();
+        retention.metrics_days = 0;
+        retention.alerts_days = 0;
+
+        config.normalize().unwrap();
+
+        let retention = config
+            .monitoring
+            .as_ref()
+            .and_then(|monitoring| monitoring.data_retention.as_ref())
+            .unwrap();
+        assert_eq!(retention.metrics_days, 1);
+        assert_eq!(retention.alerts_days, 1);
+        config.validate().unwrap();
     }
 
     #[cfg(unix)]

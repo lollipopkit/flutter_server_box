@@ -180,8 +180,8 @@ pub const fn full_access_default() -> bool {
 
 /// Reads the `SBM_FULL_ACCESS` override.
 ///
-/// Env beats the config file, matching how the rest of monitor's settings
-/// behave for container deployments where editing a file is awkward.
+/// Env normally beats the config file, matching how the rest of monitor's
+/// settings behave for container deployments where editing a file is awkward.
 fn full_access_from_env() -> Option<bool> {
     match std::env::var("SBM_FULL_ACCESS").ok()?.trim().to_ascii_lowercase().as_str() {
         "1" | "true" | "yes" | "on" => Some(true),
@@ -192,6 +192,17 @@ fn full_access_from_env() -> Option<bool> {
             );
             None
         }
+    }
+}
+
+fn resolve_full_access(configured: Option<bool>, from_env: Option<bool>) -> bool {
+    // An explicit file-level denial is sticky because the panel's disable
+    // endpoint can only persist to that file. Environment may still disable a
+    // configured grant, but it cannot silently reopen access the user closed.
+    if configured == Some(false) {
+        false
+    } else {
+        from_env.or(configured).unwrap_or_else(full_access_default)
     }
 }
 
@@ -224,9 +235,7 @@ impl RemoteAccessConfig {
 
         RemoteAccess {
             ssh_addr: self.ssh_addr.clone(),
-            full_access: full_access_from_env()
-                .or(self.full_access)
-                .unwrap_or_else(full_access_default),
+            full_access: resolve_full_access(self.full_access, full_access_from_env()),
             terminal: Terminal {
                 enabled: self.terminal.enabled,
                 max_sessions: self.terminal.max_sessions.filter(|&n| n > 0).unwrap_or(slots),
@@ -543,6 +552,13 @@ mod tests {
 
         let disabled = resolved(None);
         assert!(!disabled.terminal.available(true));
+    }
+
+    #[test]
+    fn explicit_file_denial_cannot_be_reopened_by_the_environment() {
+        assert!(!resolve_full_access(Some(false), Some(true)));
+        assert!(!resolve_full_access(Some(true), Some(false)));
+        assert!(resolve_full_access(Some(true), None));
     }
 
     #[test]

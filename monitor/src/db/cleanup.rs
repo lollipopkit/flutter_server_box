@@ -4,6 +4,8 @@ use tracing::{info, warn, error};
 use chrono::{Duration, Utc};
 use crate::core::config::DataRetentionConfig;
 
+const MIN_AUDIT_ROWS: i64 = 100;
+
 pub struct DataCleanupService {
     pool: SqlitePool,
     config: DataRetentionConfig,
@@ -42,6 +44,7 @@ impl DataCleanupService {
         "component_metrics",
         "rule_executions",
         "performance_metrics",
+        "alerts",
         "config_audit_log",
         "access_log",
     ];
@@ -71,13 +74,16 @@ impl DataCleanupService {
             }
             let mut deleted_round = 0u64;
             for table in Self::SIZE_CAPPED_TABLES {
-                let deleted = sqlx::query(sqlx::AssertSqlSafe(format!(
-                    "DELETE FROM {table} WHERE rowid IN                      (SELECT rowid FROM {table} ORDER BY timestamp LIMIT                       (SELECT count(*) / 10 + 1 FROM {table}))"
-                )))
-                .execute(&self.pool)
-                .await?
-                .rows_affected();
+                let keep = if matches!(*table, "config_audit_log" | "access_log") {
+                    MIN_AUDIT_ROWS
+                } else {
+                    0
+                };
+                let deleted = self.trim_oldest(table, keep).await?;
                 deleted_round += deleted;
+                if self.live_db_bytes().await? <= max_bytes {
+                    break;
+                }
             }
             deleted_total += deleted_round;
             // Only stop when nothing was deletable; a sparse table set can
@@ -95,6 +101,15 @@ impl DataCleanupService {
             );
         }
         Ok(deleted_total)
+    }
+
+    async fn trim_oldest(&self, table: &'static str, keep: i64) -> Result<u64> {
+        Ok(sqlx::query(sqlx::AssertSqlSafe(format!(
+            "DELETE FROM {table} WHERE rowid IN              (SELECT rowid FROM {table} ORDER BY timestamp LIMIT               (SELECT MIN(count(*) / 10 + 1, MAX(count(*) - {keep}, 0)) FROM {table}))"
+        )))
+        .execute(&self.pool)
+        .await?
+        .rows_affected())
     }
 
     /// Cleanup driven by retention_policies. Table names are allowlisted against SQL
@@ -275,19 +290,74 @@ pub async fn start_cleanup_scheduler(
     );
 
     tokio::spawn(async move {
-        let mut interval = tokio::time::interval(
-            tokio::time::Duration::from_secs(config.cleanup_interval_hours as u64 * 3600)
+        let cleanup_period =
+            tokio::time::Duration::from_secs(config.cleanup_interval_hours as u64 * 3600);
+        let vacuum_period = cleanup_period.saturating_mul(7);
+        let mut interval = tokio::time::interval(cleanup_period);
+        let mut vacuum = tokio::time::interval_at(
+            tokio::time::Instant::now() + vacuum_period,
+            vacuum_period,
         );
         
         loop {
-            interval.tick().await;
-            
-            if let Err(e) = cleanup_service.cleanup_expired_data().await {
-                error!("Failed to cleanup expired data: {}", e);
+            tokio::select! {
+                _ = interval.tick() => {
+                    if let Err(e) = cleanup_service.cleanup_expired_data().await {
+                        error!("Failed to cleanup expired data: {}", e);
+                    }
+                }
+                _ = vacuum.tick() => {
+                    if let Err(e) = cleanup_service.vacuum_database().await {
+                        error!("Failed to vacuum database: {}", e);
+                    }
+                }
             }
-            
         }
     });
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sqlx::sqlite::SqlitePoolOptions;
+
+    #[tokio::test]
+    async fn size_cap_includes_alerts_and_preserves_recent_audit_rows() {
+        assert!(DataCleanupService::SIZE_CAPPED_TABLES.contains(&"alerts"));
+
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        sqlx::query(
+            "CREATE TABLE config_audit_log (timestamp INTEGER NOT NULL)",
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+        for timestamp in 0..150 {
+            sqlx::query("INSERT INTO config_audit_log (timestamp) VALUES (?)")
+                .bind(timestamp)
+                .execute(&pool)
+                .await
+                .unwrap();
+        }
+
+        let cleanup = DataCleanupService::new(pool.clone(), DataRetentionConfig::default());
+        while cleanup
+            .trim_oldest("config_audit_log", MIN_AUDIT_ROWS)
+            .await
+            .unwrap()
+            > 0
+        {}
+
+        let remaining: i64 = sqlx::query_scalar("SELECT count(*) FROM config_audit_log")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(remaining, MIN_AUDIT_ROWS);
+    }
 }
