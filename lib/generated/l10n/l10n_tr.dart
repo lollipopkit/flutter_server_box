@@ -1121,6 +1121,14 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sftpShowFoldersFirst => 'Önce klasörleri göster';
 
   @override
+  String get sftpUnavailableUseScp =>
+      'Birçok gömülü cihazda olduğu gibi bu makinede SFTP alt sistemi yoksa, sunucu ayarlarından dosya aktarımını SCP yapın.';
+
+  @override
+  String get sshFileTransportTip =>
+      'Güncel her cihaz için SFTP uygundur. SSH sunucusunda SFTP alt sistemi bulunmayan eski ya da gömülü bir makine için SCP seçin: ona yalnızca bir kabuk ve `scp` komutu yeter.';
+
+  @override
   String get specifyDev => 'Cihazı belirt';
 
   @override

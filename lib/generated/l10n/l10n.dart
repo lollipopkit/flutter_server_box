@@ -2048,6 +2048,18 @@ abstract class AppLocalizations {
   /// **'Display folders first'**
   String get sftpShowFoldersFirst;
 
+  /// No description provided for @sftpUnavailableUseScp.
+  ///
+  /// In en, this message translates to:
+  /// **'If this host has no SFTP subsystem, as many embedded devices do not, set its file transfer to SCP in the server settings.'**
+  String get sftpUnavailableUseScp;
+
+  /// No description provided for @sshFileTransportTip.
+  ///
+  /// In en, this message translates to:
+  /// **'SFTP suits anything current. Choose SCP for an old or embedded host whose SSH server has no SFTP subsystem: it needs only a shell and the `scp` command.'**
+  String get sshFileTransportTip;
+
   /// No description provided for @specifyDev.
   ///
   /// In en, this message translates to:

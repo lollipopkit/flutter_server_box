@@ -243,6 +243,8 @@
   "sftpRmrDirSummary": "Gebruik `rm -r` om een map te verwijderen in SFTP.",
   "sftpSSHConnected": "SFTP Verbonden",
   "sftpShowFoldersFirst": "Mappen eerst weergeven",
+  "sftpUnavailableUseScp": "Heeft deze host geen SFTP-subsysteem, zoals veel embedded apparaten, zet de bestandsoverdracht dan op SCP in de serverinstellingen.",
+  "sshFileTransportTip": "SFTP past bij alles wat actueel is. Kies SCP voor een oude of embedded host waarvan de SSH-server geen SFTP-subsysteem heeft: die heeft alleen een shell en het commando `scp` nodig.",
   "specifyDev": "Apparaat specificeren",
   "specifyDevTip": "Netwerkverkeer telt standaard alle apparaten; noem er hier één",
   "spentTime": "Gebruikte tijd: {time}",

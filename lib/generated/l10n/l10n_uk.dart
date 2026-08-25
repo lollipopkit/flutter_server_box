@@ -1124,6 +1124,14 @@ class AppLocalizationsUk extends AppLocalizations {
   String get sftpShowFoldersFirst => 'Спочатку відображати директорії';
 
   @override
+  String get sftpUnavailableUseScp =>
+      'Якщо цей хост не має підсистеми SFTP, як багато вбудованих пристроїв, змініть передавання файлів на SCP в налаштуваннях сервера.';
+
+  @override
+  String get sshFileTransportTip =>
+      'SFTP підходить для будь-якого сучасного пристрою. SCP — для старого чи вбудованого хоста, у SSH-сервера якого немає підсистеми SFTP: йому потрібні лише оболонка й команда `scp`.';
+
+  @override
   String get specifyDev => 'Вказати пристрій';
 
   @override

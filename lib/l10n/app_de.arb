@@ -243,6 +243,8 @@
   "sftpRmrDirSummary": "Verwenden Sie \"rm -r\", um das Verzeichnis in SFTP zu löschen.",
   "sftpSSHConnected": "SFTP Verbunden",
   "sftpShowFoldersFirst": "Ordner zuerst anzeigen",
+  "sftpUnavailableUseScp": "Wenn dieser Host kein SFTP-Subsystem hat, wie viele eingebettete Geräte, stell die Dateiübertragung in den Servereinstellungen auf SCP.",
+  "sshFileTransportTip": "SFTP passt für alles Aktuelle. SCP ist für alte oder eingebettete Hosts, deren SSH-Server kein SFTP-Subsystem hat: es braucht nur eine Shell und den Befehl `scp`.",
   "specifyDev": "Gerät angeben",
   "specifyDevTip": "Der Netzwerkverkehr zählt standardmäßig alle Geräte; hier eines angeben",
   "spentTime": "Benötigte Zeit: {time}",

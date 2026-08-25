@@ -148,7 +148,7 @@ Future<String?> _pickDir(BuildContext context, _Place place) => switch (place) {
 FileRef serverFileRef(WidgetRef ref, Spi spi, String path) {
   final caps = ref.read(serverProvider(spi.id)).capabilities;
   return caps.byteStream
-      ? SftpFileRef.forServer(spi, path)
+      ? SshFileRef.forServer(spi, path)
       : MonitorFileRef.forServer(spi, path);
 }
 

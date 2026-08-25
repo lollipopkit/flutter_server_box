@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
-import 'package:meta/meta.dart';
 import 'package:server_box/core/utils/sftp_escalation.dart';
 import 'package:server_box/core/utils/sftp_timeout.dart';
+import 'package:server_box/core/utils/shell_file_ops.dart';
 import 'package:server_box/core/utils/shell_quote.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 
@@ -75,11 +75,10 @@ class SftpFileBackend implements FileBackend {
       ];
     },
     // A directory this user may not list is the case sudo exists for, so
-    // reading escalates like writing does. `find` rather than `ls` because its
-    // output is a fixed number of NUL-separated fields per entry, and so
-    // survives names with spaces, quotes and newlines in them.
-    sudoCommand: () => listCommand(path),
-    fromOutput: parseListOutput,
+    // reading escalates like writing does. The command is `shell_file_ops`',
+    // shared with the SCP backend, which has no protocol for a listing at all.
+    sudoCommand: () => shellListCommand(path),
+    fromOutput: parseShellFileRecords,
   );
 
   @override
@@ -238,6 +237,7 @@ class SftpFileBackend implements FileBackend {
         } catch (_) {}
         rethrow;
       }
+      await carryModeToStaging(this, staging, path);
       await _replace(staging, path);
     } catch (_) {
       if (wrote) {
@@ -309,62 +309,6 @@ class SftpFileBackend implements FileBackend {
 
   /// `SSH_FX_NO_SUCH_FILE`, from the SFTP protocol.
   static const _sftpStatusNoSuchFile = 2;
-
-  /// One directory level, as five NUL-terminated fields per entry.
-  ///
-  /// `-mindepth 1 -maxdepth 1` is this directory and no deeper; `-exec … {} +`
-  /// hands the whole batch to one shell rather than starting one per file.
-  @visibleForTesting
-  static String listCommand(String path) =>
-      'find ${shellSingleQuote(path)} '
-      '-mindepth 1 -maxdepth 1 '
-      '-exec sh -c \''
-      'for path do '
-      'name=\${path##*/}; '
-      'perm=\$(stat -c %a "\$path"); '
-      'size=\$(stat -c %s "\$path"); '
-      'mtime=\$(stat -c %Y "\$path"); '
-      'type=u; '
-      '[ -d "\$path" ] && type=d; '
-      '[ -f "\$path" ] && type=f; '
-      // Last, so a link is reported as a link: the two tests above follow it
-      // and would otherwise answer for whatever it points at.
-      '[ -L "\$path" ] && type=l; '
-      'printf "%s\\0%s\\0%s\\0%s\\0%s\\0" "\$name" "\$perm" "\$type" "\$size" "\$mtime"; '
-      'done'
-      '\' sh {} +';
-
-  @visibleForTesting
-  static List<FileEntry> parseListOutput(String output) {
-    // Split, not filtered. The command prints five NUL-terminated fields per
-    // entry and an empty one is still a field — `stat -c %a` printing nothing
-    // used to be dropped, and from that entry onward names were read out of
-    // the perm column and sizes out of the mtime column. A silently
-    // rearranged listing is worse than a short one.
-    final parts = output.split('\u0000');
-    // The command's own trailing NUL leaves one empty string at the end.
-    if (parts.isNotEmpty && parts.last.isEmpty) parts.removeLast();
-    final entries = <FileEntry>[];
-    for (var i = 0; i + 4 < parts.length; i += 5) {
-      final perm = int.tryParse(parts[i + 1], radix: 8);
-      final kind = switch (parts[i + 2]) {
-        'd' => FileKind.dir,
-        'l' => FileKind.link,
-        'f' => FileKind.file,
-        _ => FileKind.other,
-      };
-      entries.add(
-        FileEntry(
-          name: parts[i],
-          kind: kind,
-          size: kind == FileKind.file ? int.tryParse(parts[i + 3]) : null,
-          modified: _timeOf(int.tryParse(parts[i + 4])),
-          mode: perm,
-        ),
-      );
-    }
-    return entries;
-  }
 
   static FileEntry _entryOf(SftpName name) => FileEntry(
     name: name.filename,

@@ -77,7 +77,9 @@ abstract final class SchemaVersion {
   ///      setting the app actually reads
   /// v14: the virtual keys' order and hidden set by name rather than by enum
   ///      index
-  static const current = 14;
+  /// v15: `server.ssh_file_transport`, so a host with no SFTP subsystem can be
+  ///      told to move its files over `scp` instead
+  static const current = 15;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

@@ -1121,6 +1121,14 @@ class AppLocalizationsPt extends AppLocalizations {
   String get sftpShowFoldersFirst => 'Mostrar pastas primeiro';
 
   @override
+  String get sftpUnavailableUseScp =>
+      'Se este host não tiver subsistema SFTP, como acontece em muitos dispositivos embarcados, mude a transferência de ficheiros para SCP nas definições do servidor.';
+
+  @override
+  String get sshFileTransportTip =>
+      'SFTP serve para qualquer equipamento atual. Escolha SCP para um host antigo ou embarcado cujo servidor SSH não tem subsistema SFTP: basta-lhe uma shell e o comando `scp`.';
+
+  @override
   String get specifyDev => 'Especificar dispositivo';
 
   @override

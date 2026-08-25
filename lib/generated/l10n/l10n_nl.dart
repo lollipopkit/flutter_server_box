@@ -1123,6 +1123,14 @@ class AppLocalizationsNl extends AppLocalizations {
   String get sftpShowFoldersFirst => 'Mappen eerst weergeven';
 
   @override
+  String get sftpUnavailableUseScp =>
+      'Heeft deze host geen SFTP-subsysteem, zoals veel embedded apparaten, zet de bestandsoverdracht dan op SCP in de serverinstellingen.';
+
+  @override
+  String get sshFileTransportTip =>
+      'SFTP past bij alles wat actueel is. Kies SCP voor een oude of embedded host waarvan de SSH-server geen SFTP-subsysteem heeft: die heeft alleen een shell en het commando `scp` nodig.';
+
+  @override
   String get specifyDev => 'Apparaat specificeren';
 
   @override

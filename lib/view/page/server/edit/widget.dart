@@ -182,6 +182,7 @@ extension _Widgets on _ServerEditPageState {
         ),
         _buildAltUrl(),
         _buildProxyCommand(),
+        _buildFileTransport(),
         _buildScriptDir(),
         _buildEnvs(),
         _buildPVEs(),
@@ -325,6 +326,31 @@ extension _Widgets on _ServerEditPageState {
         ).cardx,
       ],
     );
+  }
+
+  /// Which protocol this server's files move over.
+  ///
+  /// Offered rather than probed: opening an SFTP session and falling back when
+  /// it fails would take a link that dropped, or an account that was locked,
+  /// for a host with no subsystem — and answer the second failure instead of
+  /// the first. Nobody has to come here unless SFTP does not work, and the
+  /// browser's own failure says so when it does not.
+  Widget _buildFileTransport() {
+    return _fileTransport.listenVal((val) {
+      return ListTile(
+        leading: const Icon(MingCute.transfer_2_line),
+        title: TipText(libL10n.file, l10n.sshFileTransportTip),
+        trailing: PopupMenu<SshFileTransport>(
+          initialValue: val,
+          items: const [
+            PopupMenuItem(value: SshFileTransport.sftp, child: Text('SFTP')),
+            PopupMenuItem(value: SshFileTransport.scp, child: Text('SCP')),
+          ],
+          onSelected: (value) => _fileTransport.value = value,
+          child: Text(val == SshFileTransport.scp ? 'SCP' : 'SFTP'),
+        ),
+      ).cardx;
+    });
   }
 
   Widget _buildPVEs() {

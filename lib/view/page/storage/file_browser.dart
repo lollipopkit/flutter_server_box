@@ -311,7 +311,7 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   ///
   /// Matched by asking whether this directory's own ref, with the arriving
   /// name on the end, *is* where the transfer was going. That answers "the
-  /// same place" rather than "the same string": an [SftpFileRef] carries the
+  /// same place" rather than "the same string": an [SshFileRef] carries the
   /// server it is on, so a file landing in `/tmp` on another host does not
   /// reload `/tmp` here.
   void _refreshOnArrival(FileTransferState transfers) {

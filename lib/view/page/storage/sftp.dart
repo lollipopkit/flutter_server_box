@@ -9,15 +9,16 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/core/utils/local_files.dart';
 import 'package:server_box/core/utils/sftp_escalation.dart';
-import 'package:server_box/core/utils/sftp_file_backend.dart';
 import 'package:server_box/core/utils/sftp_sudo.dart';
 import 'package:server_box/core/utils/sftp_timeout.dart';
 import 'package:server_box/core/utils/shell_quote.dart';
+import 'package:server_box/core/utils/ssh_file_backend.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/file/file_issue.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/model/file/transfer.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/provider/file_transfer.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/misc.dart';
@@ -64,9 +65,11 @@ final class SftpPageArgs {
 
 /// A server's files.
 ///
-/// A [FileBrowserPage] over [SftpFileBackend], plus what only a server has:
+/// A [FileBrowserPage] over whichever backend this server's SSH connection
+/// carries — SFTP, or `scp` and a shell — plus what only a server has:
 /// somewhere to escalate to, an archive that can be unpacked in place, an
-/// editor that has to fetch the file first, and a transfer queue.
+/// editor that has to fetch the file first, and a transfer queue. None of that
+/// depends on which protocol is underneath, which is why one page serves both.
 class SftpPage extends ConsumerStatefulWidget {
   final SftpPageArgs args;
 
@@ -135,6 +138,10 @@ class _SftpPageState extends ConsumerState<SftpPage> {
             FileIssue.denied => libL10n.permissionDenied,
             _ => l10n.serverUnreachable,
           },
+          // Only for the one failure it can do anything about. A host with no
+          // SFTP subsystem fails here on every visit and nothing else in the
+          // app mentions that there is another way — see `SftpUnavailable`.
+          explain: e is SftpUnavailable ? l10n.sftpUnavailableUseScp : null,
           detail: '$e',
           onRetry: _retry,
         ),
@@ -162,7 +169,7 @@ class _SftpPageState extends ConsumerState<SftpPage> {
                   : UIs.placeholder,
             ),
             pathHistory: const _GotoHistory(),
-            refOf: (path) => SftpFileRef.forServer(_spi, path),
+            refOf: (path) => SshFileRef.forServer(_spi, path),
             onOpenFile: _openFile,
           ),
         );
@@ -197,7 +204,7 @@ class _SftpStart {
     required this.path,
   });
 
-  final SftpFileBackend backend;
+  final FileBackend backend;
 
   /// This user's home directory, as the server reports it.
   final String home;
@@ -238,8 +245,9 @@ extension _Open on _SftpPageState {
       contextProvider: () => mounted ? context : null,
     );
 
-    final backend = await SftpFileBackend.connect(
+    final backend = await openSshFileBackend(
       _client,
+      transport: _spi.ssh?.fileTransport ?? SshFileTransport.sftp,
       escalation: _escalation,
       timeout: _opTimeout,
     );
@@ -266,7 +274,7 @@ extension _Open on _SftpPageState {
   ///
   /// `/` is the last resort rather than a failure. It is the same place the
   /// browser's root already is, so going up from anywhere reaches it anyway.
-  Future<String?> _openable(SftpFileBackend backend, String path) async {
+  Future<String?> _openable(FileBackend backend, String path) async {
     try {
       await backend.list(path);
       return path;
@@ -295,7 +303,7 @@ extension _Open on _SftpPageState {
 
   /// Where this server was left, if it is still listable — a remembered path
   /// that has since been deleted should not be what the browser opens into.
-  Future<String?> _lastPath(SftpFileBackend backend) async {
+  Future<String?> _lastPath(FileBackend backend) async {
     if (!Stores.setting.sftpOpenLastPath.fetch()) return null;
     final remembered = Stores.history.sftpLastPath.fetch(_spi.id);
     if (remembered == null) return null;
@@ -404,7 +412,7 @@ extension _Actions on _SftpPageState {
                 .read(fileTransferProvider.notifier)
                 .add(
                   FileTransfer(
-                    from: SftpFileRef.forServer(_spi, fullPath),
+                    from: SshFileRef.forServer(_spi, fullPath),
                     to: LocalFileRef(_localPathFor(fullPath)),
                   ),
                 );
@@ -459,7 +467,7 @@ extension _Actions on _SftpPageState {
             .add(
               FileTransfer(
                 from: LocalFileRef(local),
-                to: SftpFileRef.forServer(_spi, remote),
+                to: SshFileRef.forServer(_spi, remote),
               ),
             );
         return;
@@ -499,7 +507,7 @@ extension _Actions on _SftpPageState {
         .add(
           FileTransfer(
             from: LocalFileRef(local),
-            to: SftpFileRef.forServer(_spi, staging),
+            to: SshFileRef.forServer(_spi, staging),
           ),
           completer: completer,
         );
@@ -669,7 +677,7 @@ extension _Edit on _SftpPageState {
         .read(fileTransferProvider.notifier)
         .add(
           FileTransfer(
-            from: SftpFileRef.forServer(_spi, remotePath),
+            from: SshFileRef.forServer(_spi, remotePath),
             to: LocalFileRef(localPath),
           ),
           completer: completer,
@@ -702,7 +710,7 @@ extension _Edit on _SftpPageState {
           .add(
             FileTransfer(
               from: LocalFileRef(localPath),
-              to: SftpFileRef.forServer(_spi, remotePath),
+              to: SshFileRef.forServer(_spi, remotePath),
             ),
           );
       await announceQueued(context, ref, [id]);

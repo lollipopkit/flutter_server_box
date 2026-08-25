@@ -51,7 +51,7 @@ void main() {
       tempDir = await Directory.systemTemp.createTemp('server-box-transfer-');
       await openTestDb();
       getIt.registerSingleton<SettingStore>(SettingStore.forTest());
-      // Building an `SftpFileRef` reads keys and jump servers out of these,
+      // Building an `SshFileRef` reads keys and jump servers out of these,
       // which is the work these tests are checking happens on this side.
       getIt.registerSingleton<ServerStore>(ServerStore.forTest());
       getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore.forTest());
@@ -101,7 +101,7 @@ void main() {
 
     test('anything with SSH at either end needs one', () {
       final spi = spiFixture(name: 'srv', id: 'srv', ip: '10.0.0.1');
-      final remote = SftpFileRef.forServer(spi, '/tmp/x');
+      final remote = SshFileRef.forServer(spi, '/tmp/x');
 
       expect(
         FileTransfer(from: const LocalFileRef('/a/x'), to: remote).needsIsolate,
@@ -114,7 +114,7 @@ void main() {
       expect(
         FileTransfer(
           from: remote,
-          to: SftpFileRef.forServer(spiFixture(name: 'other', id: 'other', ip: '10.0.0.2'), '/tmp/y'),
+          to: SshFileRef.forServer(spiFixture(name: 'other', id: 'other', ip: '10.0.0.2'), '/tmp/y'),
         ).needsIsolate,
         isTrue,
       );
@@ -176,7 +176,7 @@ void main() {
 
     test('a folder never takes the single-file fast path', () {
       final job = FileTransfer(
-        from: SftpFileRef.forServer(
+        from: SshFileRef.forServer(
           spiFixture(name: 'srv', id: 'srv', ip: '10.0.0.1'),
           '/var/log',
         ),

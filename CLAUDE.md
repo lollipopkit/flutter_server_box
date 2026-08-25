@@ -146,6 +146,50 @@ through a `ProxyCommand`. The last two are mutually exclusive and
 `Spix.validate()` enforces that. Everything above `SSHSocket` is unchanged
 either way, and this app verifies the host key itself in every case.
 
+Which protocol carries *files* over that connection is a third axis —
+`SshCredential.fileTransport`, stored per server. `openSshFileBackend`
+(`lib/core/utils/ssh_file_backend.dart`) is the one place it is read, and every
+caller that has a client and a server goes through it rather than naming a
+backend class.
+
+- **SFTP** is the default and what everything that can use it should use: one
+  channel, random access, and a protocol that answers metadata questions
+  itself.
+- **SCP** is for a host with no SFTP subsystem to offer — an OpenWrt router
+  running dropbear, an embedded box whose firmware ships one static `scp`
+  (#1288). `ScpFileBackend` moves file contents with `scp -f`/`scp -t`
+  (`scp_protocol.dart`, testable against a scripted remote because the wire
+  protocol is written against a `ScpChannel` rather than an `SSHSession`) and
+  does everything else — list, stat, mkdir, rm, mv, chmod — as shell commands.
+  The listing command and its parser are shared with the SFTP backend's sudo
+  escalation in `shell_file_ops.dart`, so the two cannot drift.
+
+Not probed. Opening SFTP and falling back on failure would answer the second
+failure instead of the first — a link that dropped or an account that was
+locked reads exactly like a host with no subsystem — so the user names it, in
+the server editor under **More**. The file browser's error view says so when an
+SFTP session is the thing that would not open (`SftpUnavailable`).
+
+Two consequences worth knowing. `size` is a hint everywhere in `FileBackend`
+and a *contract* in SCP, because the sink is told the length before the bytes
+start; a write with no size is spooled to a temp file purely to measure it.
+And `read`'s `offset` is honoured by discarding bytes locally, since the
+protocol cannot start anywhere but zero.
+
+**A staged replace must not change a file's permissions.** Every `write` in the
+app stages beside the destination and renames, and the staged copy is created
+with the far side's umask — so the rename carries *that* mode onto the
+destination, and saving an edit to a 0755 script left it 0644 while replacing a
+0600 file made it world-readable. `carryModeToStaging` (`file_backend.dart`) is
+the one implementation, called by the SFTP and SCP backends and by the
+specialised SFTP upload in `transfer_worker.dart` — that last one is the path
+the editor's save-back takes, so it is where the bug actually bit. It is best
+effort and logged, never fatal: the bytes are already across, and a server that
+will not set a mode must not be one where the file can never be saved. The
+monitor agent does the same on its side (`monitor/src/api/fs.rs`);
+`LocalFileBackend` does not and says so, because `dart:io` has no `chmod` and
+that backend answers false to `FileBackendTraits.permissions`.
+
 
 ### Features
 
@@ -192,7 +236,7 @@ either way, and this app verifies the host key itself in every case.
   - **A value passed to `SqliteStore.set` needs a `toJson`.** That is the kv-backed stores. `set` encodes with `(value as dynamic).toJson()` and answers `false` on failure instead of throwing, so a model without one is dropped silently on every write. Freezed generates it only when the model has a `.g.dart`; `PortForwardConfig` has a hand-written `fromJson` and no `.g.dart`, so its `toJson` is hand-written too and has to be kept in step with it.
     - The entity stores write columns and do not go through `set`, so they do not share the requirement in that form. They do need `toJson`/`fromJson` for the backup, which `EntityStore` declares.
   - **`INSERT OR REPLACE` is wrong on a row with sync columns or children.** It deletes and reinserts, so every column the statement does not name goes back to its default — `rev` to 0, defeating the one thing it exists for — and every `ON DELETE CASCADE` fires, taking the children with it. Use `EntityStore.upsert`, which is `ON CONFLICT DO UPDATE` naming only the data columns.
-  - **Changing a model that `lib/hive/` still has an adapter for breaks the import.** The generator emits `fields[n] as String` for a non-nullable field, so a box written before that field existed fails to *open* and its whole store is silently left behind. `Snippet` and `PrivateKeyInfo` are frozen types in `lib/hive/legacy_adapters.dart` for this reason and are out of `@GenerateAdapters`; do the same rather than regenerating. `test/hive_release_migration_test.dart` is what catches it.
+  - **A model that `lib/hive/` still has an adapter for gets a frozen type, never a regenerated one.** Hive is the old database and SQLite is the new one: no Hive box has ever carried a field added after the last Hive release, so an adapter that knows about one is an adapter tracking a model it does not describe. It also breaks the import outright when the field is non-nullable — the generator emits `fields[n] as String`, the box fails to *open*, and its whole store is silently left behind. `Snippet`, `PrivateKeyInfo` and `SshCredential` are out of `@GenerateAdapters` for this reason and frozen in `lib/hive/legacy_adapters.dart`, each carrying the fields the release wrote at the indexes it wrote them; do the same rather than regenerating. Do not be reassured by a generated adapter that happens to still compile: `SshCredential.fileTransport` has a default, so the generator emitted a null check and the import kept working — it was still an adapter for a shape no box is in. `test/hive_release_migration_test.dart` is what catches the fatal version.
 - USE widgets and utilities from `fl_lib` package for common functionalities.
   - Such as `CustomAppBar`, `context.showRoundDialog`, `Input`, `Btnx.cancelOk`, etc.
   - You can use context7 MCP to search `lppcg fl_lib KEYWORD` to find relevant widgets and utilities.

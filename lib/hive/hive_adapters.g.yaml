@@ -205,27 +205,3 @@ types:
         index: 1
       dynamic:
         index: 2
-  SshCredential:
-    typeId: 16
-    nextIndex: 11
-    fields:
-      ip:
-        index: 0
-      port:
-        index: 1
-      user:
-        index: 2
-      pwd:
-        index: 3
-      keyId:
-        index: 4
-      alterUrl:
-        index: 5
-      jumpId:
-        index: 6
-      jumpIds:
-        index: 7
-      proxyCommand:
-        index: 8
-      keyPath:
-        index: 10

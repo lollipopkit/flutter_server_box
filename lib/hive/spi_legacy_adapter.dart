@@ -2,9 +2,9 @@ import 'package:hive_ce/hive.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
+import 'package:server_box/hive/legacy_adapters.dart';
 
 /// typeId 13, as written before plaintext HTTP could be explicitly allowed.
 class LegacyMonitorHttpCredentialV1 {
@@ -71,7 +71,7 @@ class LegacyMonitorHttpCredentialAdapter
 /// schema v2.
 class LegacySpiV2 {
   final String name;
-  final SshCredential? ssh;
+  final LegacySshCredentialV1? ssh;
   final LegacyMonitorHttpCredentialV1? monitorHttp;
   final List<String>? tags;
   final bool autoConnect;
@@ -98,7 +98,7 @@ class LegacySpiV2 {
 
   Spi toSpi() => Spi(
     name: name,
-    ssh: ssh,
+    ssh: ssh?.toCredential(),
     monitorHttp: _monitorCredential(monitorHttp),
     tags: tags,
     autoConnect: autoConnect,
@@ -132,12 +132,13 @@ class SpiLegacyAdapter extends TypeAdapter<LegacySpiV2> {
     final ip = fields[1] as String?;
     final ssh = (ip == null || ip.isEmpty)
         ? null
-        : SshCredential(
+        : LegacySshCredentialV1(
             ip: ip,
             port: (fields[2] as num?)?.toInt() ?? 22,
             user: fields[3] as String? ?? 'root',
             pwd: fields[4] as String?,
             keyId: fields[5] as String?,
+            keyPath: null,
             alterUrl: fields[7] as String?,
             jumpId: fields[9] as String?,
             jumpIds: (fields[17] as List?)?.cast<String>(),
@@ -186,7 +187,7 @@ class LegacySpiV3 {
   });
 
   final String name;
-  final SshCredential? ssh;
+  final LegacySshCredentialV1? ssh;
   final LegacyMonitorHttpCredentialV1? monitorHttp;
   final List<String>? tags;
   final bool autoConnect;
@@ -199,7 +200,7 @@ class LegacySpiV3 {
 
   Spi toSpi() => Spi(
     name: name,
-    ssh: ssh,
+    ssh: ssh?.toCredential(),
     monitorHttp: _monitorCredential(monitorHttp),
     tags: tags,
     autoConnect: autoConnect,
@@ -224,7 +225,7 @@ class SpiNestedLegacyAdapter extends TypeAdapter<LegacySpiV3> {
     };
     return LegacySpiV3(
       name: fields[0] as String,
-      ssh: fields[19] as SshCredential?,
+      ssh: fields[19] as LegacySshCredentialV1?,
       monitorHttp: fields[18] as LegacyMonitorHttpCredentialV1?,
       tags: (fields[6] as List?)?.cast<String>(),
       autoConnect: fields[8] == null ? true : fields[8] as bool,

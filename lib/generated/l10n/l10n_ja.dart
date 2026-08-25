@@ -1056,6 +1056,14 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sftpShowFoldersFirst => 'フォルダーを先に表示';
 
   @override
+  String get sftpUnavailableUseScp =>
+      '多くの組み込み機器のようにこのホストに SFTP サブシステムがない場合は、サーバー設定でファイル転送を SCP に変更してください。';
+
+  @override
+  String get sshFileTransportTip =>
+      '最近の機器なら SFTP。SSH サーバーに SFTP サブシステムがない古い機器や組み込み機器では SCP を選んでください。シェルと `scp` コマンドだけで動きます。';
+
+  @override
   String get specifyDev => 'デバイスを指定';
 
   @override

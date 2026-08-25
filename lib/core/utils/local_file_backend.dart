@@ -97,6 +97,15 @@ class LocalFileBackend implements FileBackend {
   Stream<List<int>> read(String path, {int offset = 0}) =>
       File(_native(path)).openRead(offset);
 
+  /// The one part of the contract this cannot keep: replacing a file does not
+  /// carry its permission bits over.
+  ///
+  /// Not an oversight but the same fact [traits] already states. `dart:io` can
+  /// read a mode and has no way to set one, so there is nothing to do here
+  /// short of running `chmod` as a subprocess — on platforms where half of them
+  /// have no such binary, for a value the other half calls meaningless. A
+  /// backend answering false to [FileBackendTraits.permissions] promises
+  /// nothing about them in either direction.
   @override
   Future<void> write(
     String path,

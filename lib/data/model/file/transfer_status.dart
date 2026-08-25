@@ -129,7 +129,7 @@ class FileTransferStatus {
       // passphrase on, so a key stored encrypted has to be opened on this side
       // or it fails over there with nothing to say why.
       for (final ref in [job.from, job.to]) {
-        if (ref is SftpFileRef) await ref.creds.unlockKeys();
+        if (ref is SshFileRef) await ref.creds.unlockKeys();
       }
       // Unlocking asks for a passphrase, so this await lasts as long as
       // somebody takes to answer it — plenty of time to cancel. `dispose` has
@@ -202,12 +202,12 @@ class FileTransferStatus {
     _ => false,
   };
 
-  /// An `SftpFileRef` never reaches here — [FileTransfer.needsIsolate] is
+  /// An `SshFileRef` never reaches here — [FileTransfer.needsIsolate] is
   /// exactly the question "is either end SSH".
   static FileBackend _backendFor(FileRef ref) => switch (ref) {
     LocalFileRef() => const LocalFileBackend(),
     MonitorFileRef(:final monitor) => MonitorFileBackend(monitor),
-    SftpFileRef() => throw StateError('SFTP transfers run in an isolate'),
+    SshFileRef() => throw StateError('SFTP transfers run in an isolate'),
   };
 
   void onNotify(dynamic event) {

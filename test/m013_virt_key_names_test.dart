@@ -9,8 +9,8 @@ library;
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
+import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/migrations/m013_virt_key_names.dart';
-import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
 
 void main() {
@@ -27,7 +27,15 @@ void main() {
 
   test('it is the step that follows the one before it', () {
     expect(migration.from, 13);
-    expect(SchemaVersion.current, migration.from + 1);
+    // Not `SchemaVersion.current`, which this used to assert: that pins this
+    // step as the newest one and fails the day another is added, which is
+    // information about `all.dart` rather than about this migration.
+    // `schema_migration_list_test.dart` is where the chain as a whole is
+    // checked.
+    expect(
+      kSchemaMigrations.where((m) => m.from == migration.from + 1),
+      hasLength(1),
+    );
   });
 
   test('the order comes across as the same keys, in the same places', () async {

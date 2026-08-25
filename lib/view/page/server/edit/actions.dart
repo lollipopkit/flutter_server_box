@@ -441,6 +441,7 @@ extension _Actions on _ServerEditPageState {
                 : _jumpServers.value.first,
             jumpIds: _jumpServers.value.isEmpty ? null : _jumpServers.value,
             proxyCommand: proxyCommandText.selfNotEmptyOrNull,
+            fileTransport: _fileTransport.value,
           );
 
     final wolEmpty =
@@ -646,6 +647,7 @@ extension _Utils on _ServerEditPageState {
       _altUrlController.text = ssh.alterUrl ?? '';
       _jumpServers.value = ssh.resolvedJumpIds;
       _proxyCommandCtrl.text = ssh.proxyCommand ?? '';
+      _fileTransport.value = ssh.fileTransport;
     }
 
     /// List in dart is passed by pointer, so you need to copy it here

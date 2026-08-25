@@ -9,7 +9,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:server_box/data/model/server/connection_stat.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/hive/hive_registrar.g.dart';
@@ -391,12 +390,13 @@ void main() {
       'srv-v2',
       const LegacySpiV2(
         name: 'legacy',
-        ssh: SshCredential(
+        ssh: LegacySshCredentialV1(
           ip: '10.0.0.9',
           port: 2200,
           user: 'admin',
           pwd: 'secret',
           keyId: 'k1',
+          keyPath: null,
           alterUrl: 'alt.example',
           jumpId: 'srv-1',
           jumpIds: ['srv-1'],

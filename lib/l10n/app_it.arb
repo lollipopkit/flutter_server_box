@@ -244,6 +244,8 @@
   "sftpRmrDirSummary": "Usa `rm -r` per eliminare una cartella in SFTP.",
   "sftpSSHConnected": "SFTP connesso",
   "sftpShowFoldersFirst": "Mostra prima le cartelle",
+  "sftpUnavailableUseScp": "Se questo host non ha il sottosistema SFTP, come molti dispositivi embedded, imposta il trasferimento file su SCP nelle impostazioni del server.",
+  "sshFileTransportTip": "SFTP va bene per qualsiasi macchina attuale. Scegli SCP per un host vecchio o embedded il cui server SSH non ha il sottosistema SFTP: gli bastano una shell e il comando `scp`.",
   "specifyDev": "Specifica dispositivo",
   "specifyDevTip": "Il traffico di rete conta tutti i dispositivi; indicane uno qui",
   "spentTime": "Tempo impiegato: {time}",

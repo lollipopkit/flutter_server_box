@@ -285,6 +285,8 @@
   "sftpRmrDirSummary": "SFTP에서 `rm -r`을 사용하여 폴더를 삭제합니다.",
   "sftpSSHConnected": "SFTP 연결됨",
   "sftpShowFoldersFirst": "폴더 우선 표시",
+  "sftpUnavailableUseScp": "많은 임베디드 장비처럼 이 호스트에 SFTP 하위 시스템이 없다면, 서버 설정에서 파일 전송을 SCP로 바꾸세요.",
+  "sshFileTransportTip": "요즘 장비는 SFTP를 쓰세요. SSH 서버에 SFTP 하위 시스템이 없는 오래된 장비나 임베디드 장비는 SCP를 고르면 됩니다. 셸과 `scp` 명령만 있으면 됩니다.",
   "specifyDev": "장치 지정",
   "specifyDevTip": "네트워크 트래픽은 기본적으로 모든 장치를 합칩니다. 여기서 지정할 수 있습니다",
   "tempIsCelsiusTip": "활성화하면 온도 값이 밀리섭씨가 아닌 섭씨로 처리됩니다. 온도가 잘못 표시될 때만 켜세요 (예: 58°C 대신 0.1°C로 표시되는 경우).",

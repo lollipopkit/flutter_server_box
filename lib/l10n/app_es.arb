@@ -243,6 +243,8 @@
   "sftpRmrDirSummary": "Usar `rm -r` en SFTP para eliminar directorios",
   "sftpSSHConnected": "SFTP conectado...",
   "sftpShowFoldersFirst": "Mostrar carpetas primero",
+  "sftpUnavailableUseScp": "Si este host no tiene subsistema SFTP, como ocurre en muchos dispositivos embebidos, cambia su transferencia de archivos a SCP en los ajustes del servidor.",
+  "sshFileTransportTip": "SFTP sirve para cualquier equipo actual. Elige SCP para un host antiguo o embebido cuyo servidor SSH no tiene subsistema SFTP: solo necesita un shell y el comando `scp`.",
   "specifyDev": "Especificar dispositivo",
   "specifyDevTip": "El tráfico de red cuenta todos los dispositivos por defecto; indica uno aquí",
   "spentTime": "Tiempo gastado: {time}",

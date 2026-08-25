@@ -1058,6 +1058,14 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sftpShowFoldersFirst => '폴더 우선 표시';
 
   @override
+  String get sftpUnavailableUseScp =>
+      '많은 임베디드 장비처럼 이 호스트에 SFTP 하위 시스템이 없다면, 서버 설정에서 파일 전송을 SCP로 바꾸세요.';
+
+  @override
+  String get sshFileTransportTip =>
+      '요즘 장비는 SFTP를 쓰세요. SSH 서버에 SFTP 하위 시스템이 없는 오래된 장비나 임베디드 장비는 SCP를 고르면 됩니다. 셸과 `scp` 명령만 있으면 됩니다.';
+
+  @override
   String get specifyDev => '장치 지정';
 
   @override

@@ -1039,6 +1039,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sftpShowFoldersFirst => '文件夹显示在前';
 
   @override
+  String get sftpUnavailableUseScp =>
+      '如果这台设备没有 SFTP 子系统(不少嵌入式设备如此),在服务器设置里把文件传输改为 SCP。';
+
+  @override
+  String get sshFileTransportTip =>
+      '常规设备用 SFTP。老旧或嵌入式设备的 SSH 服务没有 SFTP 子系统,选 SCP:它只需要 shell 和 scp 命令。';
+
+  @override
   String get specifyDev => '指定设备';
 
   @override
@@ -2544,6 +2552,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get sftpShowFoldersFirst => '資料夾顯示在前';
+
+  @override
+  String get sftpUnavailableUseScp =>
+      '如果這台裝置沒有 SFTP 子系統（不少嵌入式裝置如此），請在伺服器設定裡把檔案傳輸改為 SCP。';
+
+  @override
+  String get sshFileTransportTip =>
+      '一般裝置用 SFTP。老舊或嵌入式裝置的 SSH 服務沒有 SFTP 子系統，請選 SCP：它只需要 shell 與 scp 指令。';
 
   @override
   String get specifyDev => '指定裝置';

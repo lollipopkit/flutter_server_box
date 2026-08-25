@@ -12,12 +12,14 @@ import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/sftp_file_backend.dart';
 import 'package:server_box/core/utils/sftp_timeout.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
+import 'package:server_box/core/utils/ssh_file_backend.dart';
 import 'package:server_box/data/model/file/copy_tree.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/model/file/prompt_queue.dart';
 import 'package:server_box/data/model/file/transfer.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/ssh_credential.dart';
 
 const _sftpChunkSize = 32 * 1024;
 
@@ -270,13 +272,15 @@ Future<void> isolateMessageHandler(
       // The two pairs that already existed keep their own code: segmented
       // reads, an idle timer and a bounded write window are what make a large
       // file over a slow link finish, and none of that is expressible as
-      // `read` piped into `write`. Everything else takes the general path.
+      // `read` piped into `write`. Everything else takes the general path —
+      // including an SCP server, whose protocol has no random access to
+      // segment and no window to bound.
       switch ((job.from, job.to)) {
-        case (final SftpFileRef from, final LocalFileRef to)
-            when job.isSingleFile:
+        case (final SshFileRef from, final LocalFileRef to)
+            when job.isSingleFile && from.transport == SshFileTransport.sftp:
           await _download(job, from, to, mainSendPort);
-        case (final LocalFileRef from, final SftpFileRef to)
-            when job.isSingleFile:
+        case (final LocalFileRef from, final SshFileRef to)
+            when job.isSingleFile && to.transport == SshFileTransport.sftp:
           await _upload(job, from, to, mainSendPort);
         default:
           await _copy(job, mainSendPort);
@@ -299,7 +303,7 @@ Future<void> isolateMessageHandler(
 /// A server to this device.
 Future<void> _download(
   FileTransfer job,
-  SftpFileRef from,
+  SshFileRef from,
   LocalFileRef to,
   SendPort mainSendPort,
 ) async {
@@ -551,7 +555,7 @@ Future<void> _discard(File? staging) async {
 Future<void> _upload(
   FileTransfer job,
   LocalFileRef from,
-  SftpFileRef to,
+  SshFileRef to,
   SendPort mainSendPort,
 ) async {
   SSHClient? client;
@@ -628,6 +632,15 @@ Future<void> _upload(
     // is about to stop existing.
     await remoteFile.close();
     remoteFile = null;
+    // Through a backend over the channel this already has, rather than another
+    // copy of the stat-and-chmod: this is the path the editor's save-back
+    // takes, so it is exactly where a 0755 script must not come back 0644, and
+    // two hand-written versions of that are two chances to differ.
+    await carryModeToStaging(
+      SftpFileBackend(openedSftp, timeout: _prepareTimeout(job)),
+      staging,
+      to.path,
+    );
     await _replaceRemote(openedSftp, staging, to.path, _prepareTimeout(job));
     staging = null;
 
@@ -752,13 +765,14 @@ Future<FileBackend> _openBackend(
       final backend = MonitorFileBackend(monitor);
       closing.add(backend.close);
       return backend;
-    case SftpFileRef(:final creds):
+    case SshFileRef(:final creds, :final transport):
       final client = await _connectSsh(creds, mainSendPort);
       closing.add(() async => client.close());
       // No escalation: there is nobody on this isolate to ask for a password,
       // and a refusal is a refusal.
-      final backend = await SftpFileBackend.connect(
+      final backend = await openSshFileBackend(
         client,
+        transport: transport,
         timeout: _prepareTimeout(job),
       );
       closing.add(backend.close);

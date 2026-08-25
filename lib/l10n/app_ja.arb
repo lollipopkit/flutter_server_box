@@ -243,6 +243,8 @@
   "sftpRmrDirSummary": "SFTPで`rm -r`を使用してフォルダーを削除",
   "sftpSSHConnected": "SFTPに接続されました...",
   "sftpShowFoldersFirst": "フォルダーを先に表示",
+  "sftpUnavailableUseScp": "多くの組み込み機器のようにこのホストに SFTP サブシステムがない場合は、サーバー設定でファイル転送を SCP に変更してください。",
+  "sshFileTransportTip": "最近の機器なら SFTP。SSH サーバーに SFTP サブシステムがない古い機器や組み込み機器では SCP を選んでください。シェルと `scp` コマンドだけで動きます。",
   "specifyDev": "デバイスを指定",
   "specifyDevTip": "ネットワーク流量は既定で全デバイスを合算します。ここで指定できます",
   "spentTime": "費した時間: {time}",

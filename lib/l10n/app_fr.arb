@@ -243,6 +243,8 @@
   "sftpRmrDirSummary": "Utilisez `rm -r` pour supprimer un dossier en SFTP.",
   "sftpSSHConnected": "SFTP Connecté",
   "sftpShowFoldersFirst": "Afficher d'abord les dossiers",
+  "sftpUnavailableUseScp": "Si cet hôte n'a pas de sous-système SFTP, comme beaucoup d'appareils embarqués, réglez son transfert de fichiers sur SCP dans les paramètres du serveur.",
+  "sshFileTransportTip": "SFTP convient à tout matériel récent. Choisissez SCP pour un hôte ancien ou embarqué dont le serveur SSH n'a pas de sous-système SFTP : il ne lui faut qu'un shell et la commande `scp`.",
   "specifyDev": "Spécifier l'appareil",
   "specifyDevTip": "Le trafic réseau compte tous les appareils par défaut ; indique-en un ici",
   "spentTime": "Temps écoulé : {time}",

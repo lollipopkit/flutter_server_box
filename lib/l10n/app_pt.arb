@@ -243,6 +243,8 @@
   "sftpRmrDirSummary": "Usar `rm -r` em SFTP para excluir pastas",
   "sftpSSHConnected": "SFTP conectado...",
   "sftpShowFoldersFirst": "Mostrar pastas primeiro",
+  "sftpUnavailableUseScp": "Se este host não tiver subsistema SFTP, como acontece em muitos dispositivos embarcados, mude a transferência de ficheiros para SCP nas definições do servidor.",
+  "sshFileTransportTip": "SFTP serve para qualquer equipamento atual. Escolha SCP para um host antigo ou embarcado cujo servidor SSH não tem subsistema SFTP: basta-lhe uma shell e o comando `scp`.",
   "specifyDev": "Especificar dispositivo",
   "specifyDevTip": "O tráfego de rede conta todos os dispositivos; indique um aqui",
   "spentTime": "Tempo gasto: {time}",

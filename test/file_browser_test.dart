@@ -806,7 +806,7 @@ void main() {
 
     // That the same path on two different machines is also not the same place
     // is `file_transfer_test.dart`'s `two ends are the same place only when
-    // both halves match` — an `SftpFileRef` carries the server it is on.
+    // both halves match` — an `SshFileRef` carries the server it is on.
 
   });
 

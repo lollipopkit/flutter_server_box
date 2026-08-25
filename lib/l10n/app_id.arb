@@ -243,6 +243,8 @@
   "sftpRmrDirSummary": "Gunakan `rm -r` untuk menghapus dir di SFTP",
   "sftpSSHConnected": "Sftp terhubung",
   "sftpShowFoldersFirst": "Folder ditampilkan lebih dulu",
+  "sftpUnavailableUseScp": "Jika host ini tidak punya subsistem SFTP, seperti banyak perangkat tertanam, ubah transfer berkasnya menjadi SCP di pengaturan server.",
+  "sshFileTransportTip": "SFTP cocok untuk perangkat masa kini. Pilih SCP untuk host lama atau tertanam yang server SSH-nya tidak punya subsistem SFTP: ia hanya butuh shell dan perintah `scp`.",
   "specifyDev": "Tentukan perangkat",
   "specifyDevTip": "Trafik jaringan menghitung semua perangkat; sebutkan satu di sini",
   "spentTime": "Menghabiskan waktu: {time}",

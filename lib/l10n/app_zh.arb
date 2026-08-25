@@ -344,6 +344,8 @@
   "sftpRmrDirSummary": "在 SFTP 中使用 `rm -r` 来删除文件夹",
   "sftpSSHConnected": "SFTP 已连接",
   "sftpShowFoldersFirst": "文件夹显示在前",
+  "sftpUnavailableUseScp": "如果这台设备没有 SFTP 子系统(不少嵌入式设备如此),在服务器设置里把文件传输改为 SCP。",
+  "sshFileTransportTip": "常规设备用 SFTP。老旧或嵌入式设备的 SSH 服务没有 SFTP 子系统,选 SCP:它只需要 shell 和 scp 命令。",
   "specifyDev": "指定设备",
   "specifyDevTip": "网络流量默认统计所有设备，可以在这里指定特定设备",
   "tempIsCelsiusTip": "开启后，温度值将被视为摄氏度而非毫摄氏度。仅在温度显示不正确时开启（例如显示0.1°C而非58°C）。",

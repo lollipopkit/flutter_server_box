@@ -1119,6 +1119,14 @@ class AppLocalizationsId extends AppLocalizations {
   String get sftpShowFoldersFirst => 'Folder ditampilkan lebih dulu';
 
   @override
+  String get sftpUnavailableUseScp =>
+      'Jika host ini tidak punya subsistem SFTP, seperti banyak perangkat tertanam, ubah transfer berkasnya menjadi SCP di pengaturan server.';
+
+  @override
+  String get sshFileTransportTip =>
+      'SFTP cocok untuk perangkat masa kini. Pilih SCP untuk host lama atau tertanam yang server SSH-nya tidak punya subsistem SFTP: ia hanya butuh shell dan perintah `scp`.';
+
+  @override
   String get specifyDev => 'Tentukan perangkat';
 
   @override
