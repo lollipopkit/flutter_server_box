@@ -683,7 +683,7 @@ async fn command_output_with_timeout(
             tracing::warn!(
                 "{label} produced more than {MAX_COMMAND_OUTPUT_BYTES} bytes and was terminated"
             );
-            terminate_command(&mut child, process_group)?;
+            terminate_command(&mut child, process_group).await?;
             stdout_abort.abort();
             stderr_abort.abort();
             tokio::spawn(async move { let _ = child.wait().await; });
@@ -697,7 +697,7 @@ async fn command_output_with_timeout(
         Ok(status) => status?,
         Err(_) => {
             tracing::warn!("{label} exceeded {} seconds and was terminated", command_timeout.as_secs());
-            terminate_command(&mut child, process_group)?;
+            terminate_command(&mut child, process_group).await?;
             // A shell can leave descendants holding either pipe. Do not join
             // their readers after the deadline: a timed-out collection must
             // never turn into an unbounded wait on inherited handles.
@@ -745,21 +745,21 @@ async fn command_output_with_timeout(
     Ok(Some(std::process::Output { status, stdout, stderr }))
 }
 
-fn terminate_command(child: &mut Child, process_group: Option<u32>) -> std::io::Result<()> {
+async fn terminate_command(child: &mut Child, process_group: Option<u32>) -> std::io::Result<()> {
     if terminate_process_group(process_group) {
         return Ok(());
     }
 
     #[cfg(windows)]
     if let Some(pid) = child.id() {
-        use std::os::windows::process::CommandExt;
         const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-        if std::process::Command::new("taskkill")
+        if TokioCommand::new("taskkill")
             .args(["/PID", &pid.to_string(), "/T", "/F"])
             .creation_flags(CREATE_NO_WINDOW)
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .status()
+            .await
             .is_ok_and(|status| status.success())
         {
             return Ok(());

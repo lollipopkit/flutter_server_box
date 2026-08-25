@@ -1,7 +1,18 @@
 const UNITS = ['B', 'KB', 'MB', 'GB', 'TB']
 
 export function fmtBytes(v: number | string | bigint): string {
-  if (typeof v !== 'number') return fmtIntegerBytes(typeof v === 'bigint' ? v : BigInt(v))
+  if (typeof v === 'bigint') return fmtIntegerBytes(v)
+  if (typeof v === 'string') {
+    try {
+      return fmtIntegerBytes(BigInt(v))
+    } catch {
+      return fmtNumericBytes(Number(v))
+    }
+  }
+  return fmtNumericBytes(v)
+}
+
+function fmtNumericBytes(v: number): string {
   let size = Math.max(v, 0)
   let unit = 0
   while (size >= 1024 && unit < UNITS.length - 1) {

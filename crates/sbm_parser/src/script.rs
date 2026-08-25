@@ -747,7 +747,11 @@ fn unix_custom_cmds(func: ShellFunc) -> String {
          \to=\"${{TMPDIR:-/tmp}}/server_box_custom_$$\"\n\
          \trm -f \"$o\"\n\
          \t(ulimit -f {file_blocks} 2>/dev/null || :; if command -v timeout >/dev/null 2>&1; then timeout 5 sh \"$f\"; else sh \"$f\" & p=$!; (sleep 5; kill \"$p\" 2>/dev/null; sleep 1; kill -9 \"$p\" 2>/dev/null) & w=$!; wait \"$p\" 2>/dev/null; kill \"$w\" 2>/dev/null; wait \"$w\" 2>/dev/null; fi) > \"$o\"\n\
-         \thead -c {CUSTOM_CMD_MAX_OUTPUT_BYTES} \"$o\" 2>/dev/null\n\
+         \tif command -v head >/dev/null 2>&1; then\n\
+         \t\thead -c {CUSTOM_CMD_MAX_OUTPUT_BYTES} \"$o\" 2>/dev/null\n\
+         \telse\n\
+         \t\tdd if=\"$o\" bs=1 count={CUSTOM_CMD_MAX_OUTPUT_BYTES} 2>/dev/null\n\
+         \tfi\n\
          \trm -f \"$o\"\n\
          \tprintf '\\n'\n\
          done\n"

@@ -66,6 +66,20 @@ fn script_reads_custom_commands_from_a_directory() {
     );
 }
 
+#[test]
+fn unix_custom_output_has_a_head_fallback() {
+    let generated = build_script(SystemType::Linux, &opts());
+    assert!(generated.contains("if command -v head >/dev/null 2>&1; then"));
+    assert!(generated.contains(&format!(
+        "head -c {}",
+        script::CUSTOM_CMD_MAX_OUTPUT_BYTES
+    )));
+    assert!(generated.contains(&format!(
+        "dd if=\"$o\" bs=1 count={}",
+        script::CUSTOM_CMD_MAX_OUTPUT_BYTES
+    )));
+}
+
 /// The installer writes the directory in one round trip, atomically.
 #[test]
 fn custom_cmd_installer_replaces_the_directory() {

@@ -213,6 +213,8 @@ class SftpFileBackend implements FileBackend {
     void Function(String staging)? onStaging,
     Stream<List<int>> Function()? replayData,
   }) async {
+    // Intentionally unused: a timed-out rename has an unknown outcome, so an
+    // SFTP write is never replayed.
     // Beside the destination for the same reason as the local backend: a
     // rename on the far side is cheap and atomic only within one filesystem.
     final staging = stagingNameFor(path);
