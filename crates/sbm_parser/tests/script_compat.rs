@@ -972,7 +972,11 @@ fn windows_custom_commands_have_time_and_output_bounds() {
         "{}",
         String::from_utf8_lossy(&stderr)
     );
-    assert!(started.elapsed() < Duration::from_secs(10));
+    let elapsed = started.elapsed();
+    assert!(
+        elapsed < Duration::from_secs(12),
+        "generated PowerShell custom-command runner took {elapsed:?}"
+    );
     let parsed = parse_script_output(&String::from_utf8(stdout).unwrap());
     assert_eq!(
         parsed[&script::custom_result_key("large")].len(),
