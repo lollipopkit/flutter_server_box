@@ -202,6 +202,7 @@ abstract interface class FileBackend {
     Stream<List<int>> data, {
     int? size,
     void Function(String staging)? onStaging,
+    Stream<List<int>> Function()? replayData,
   });
 
   /// Releases whatever this holds. A backend may be used again afterwards only

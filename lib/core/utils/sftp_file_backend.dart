@@ -191,9 +191,10 @@ class SftpFileBackend implements FileBackend {
 
   @override
   Stream<List<int>> read(String path, {int offset = 0}) async* {
-    final file = await _bounded(
+    final file = await _openFile(
       'open for read',
       _sftp.open(path, mode: SftpFileOpenMode.read),
+      lateCleanup: (file) => file.close(),
     );
     try {
       // Not bounded: a slow transfer is not a stalled one, and the caller
@@ -210,6 +211,7 @@ class SftpFileBackend implements FileBackend {
     Stream<List<int>> data, {
     int? size,
     void Function(String staging)? onStaging,
+    Stream<List<int>> Function()? replayData,
   }) async {
     // Beside the destination for the same reason as the local backend: a
     // rename on the far side is cheap and atomic only within one filesystem.
@@ -218,7 +220,7 @@ class SftpFileBackend implements FileBackend {
     var wrote = false;
     var replacementOutcomeUnknown = false;
     try {
-      final file = await _bounded(
+      final file = await _openFile(
         'open for write',
         _sftp.open(
           staging,
@@ -227,6 +229,12 @@ class SftpFileBackend implements FileBackend {
               SftpFileOpenMode.write |
               SftpFileOpenMode.truncate,
         ),
+        lateCleanup: (file) async {
+          await file.close();
+          try {
+            await _sftp.remove(staging);
+          } catch (_) {}
+        },
       );
       wrote = true;
       try {
@@ -283,6 +291,19 @@ class SftpFileBackend implements FileBackend {
 
   Future<T> _bounded<T>(String what, Future<T> future) =>
       timeout == null ? future : withSftpOpTimeout(what, future, timeout!);
+
+  Future<SftpFile> _openFile(
+    String what,
+    Future<SftpFile> future, {
+    required FutureOr<void> Function(SftpFile file) lateCleanup,
+  }) => timeout == null
+      ? future
+      : withSftpLateCleanupTimeout(
+          what,
+          future,
+          timeout!,
+          cleanup: lateCleanup,
+        );
 
   /// `SSH_FX_NO_SUCH_FILE`, from the SFTP protocol.
   static const _sftpStatusNoSuchFile = 2;

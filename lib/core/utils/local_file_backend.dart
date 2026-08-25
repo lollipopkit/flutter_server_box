@@ -103,6 +103,7 @@ class LocalFileBackend implements FileBackend {
     Stream<List<int>> data, {
     int? size,
     void Function(String staging)? onStaging,
+    Stream<List<int>> Function()? replayData,
   }) async {
     final native = _native(path);
     // Beside the destination, not in a temp directory: a rename across
@@ -156,9 +157,7 @@ class LocalFileBackend implements FileBackend {
 
   static Future<FileEntry> _entryOf(FileSystemEntity entity) async {
     final stat = await entity.stat();
-    final kind = entity is Link
-        ? FileKind.link
-        : _kindOf(stat.type);
+    final kind = entity is Link ? FileKind.link : _kindOf(stat.type);
     return FileEntry(
       name: p.basename(entity.path),
       kind: kind,

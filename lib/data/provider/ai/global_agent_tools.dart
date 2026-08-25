@@ -727,6 +727,7 @@ class GlobalAgentToolService {
   static int _temporaryFileSequence = 0;
 
   final Ref _ref;
+
   /// The signal that stops whatever [_runShell] is waiting on, or null when
   /// nothing is running. Pulled by [cancelCurrent] and by the timeout.
   Completer<void>? _cancelRun;
@@ -881,6 +882,7 @@ class GlobalAgentToolService {
   /// forwarding all reach one through this same path.
   Future<AgentShellHandle> _connectedServer(String serverId) async {
     final state = _server(serverId);
+    final spi = state.spi;
     final existing = state.client;
     if (existing != null && !existing.isClosed) {
       return (
@@ -900,20 +902,21 @@ class GlobalAgentToolService {
       _ref.read(agentShellProvider.notifier).show();
     }
 
+    final notifier = _ref.read(serverProvider(spi.id).notifier);
     final ServerExec exec;
     try {
-      exec = await _ref.read(serverProvider(state.spi.id).notifier).ensureExec();
+      exec = await notifier.ensureExec();
     } catch (e) {
       throw StateError('Cannot run commands on ${state.spi.name}: $e');
     }
-    // Taken from what was just resolved rather than read back off the
-    // provider: a status refresh that failed while this was awaiting drops the
-    // client from the state, as does editing or disconnecting the server, and
-    // by now the state may hold nothing at all.
+    final stored = _ref.read(serversProvider).servers[serverId];
+    if (stored != spi || !notifier.isExecCurrent(exec, spi)) {
+      throw StateError('${spi.name} changed while connecting; try again.');
+    }
     return (
       exec: exec,
       client: exec is SshExec ? exec.client : null,
-      serverId: state.spi.id,
+      serverId: spi.id,
     );
   }
 
@@ -981,8 +984,10 @@ class GlobalAgentToolService {
         stderrCapture.text,
         // `outputIncomplete` is the drain having been given up on, which is
         // the same thing to a reader as having been cut short.
-        stdoutAlreadyTruncated: stdoutCapture.truncated || result.outputIncomplete,
-        stderrAlreadyTruncated: stderrCapture.truncated || result.outputIncomplete,
+        stdoutAlreadyTruncated:
+            stdoutCapture.truncated || result.outputIncomplete,
+        stderrAlreadyTruncated:
+            stderrCapture.truncated || result.outputIncomplete,
         maxCharacters: _maxShellOutputCharacters,
       );
       return AgentToolExecutionResult(
@@ -1138,6 +1143,7 @@ class GlobalAgentToolService {
   ) async {
     final quoted = shellSingleQuote(path);
     final result = await exec.run(
+      'set -e\n'
       'p=$quoted\n'
       r'if [ ! -f "$p" ]; then exit 44; fi'
       '\n'
@@ -1145,8 +1151,7 @@ class GlobalAgentToolService {
       '\n'
       r'''printf '%s\n' "$size"'''
       '\n'
-      'head -c $_maxReadBytes "\$p" | base64 | tr -d "\\n"\n'
-      r'''printf '\n' ''',
+      'head -c $_maxReadBytes "\$p" | base64 | tr -d "\\n"',
     );
     if (result.outputIncomplete) {
       throw StateError('The Linux userland returned incomplete file data.');
@@ -1254,6 +1259,7 @@ class GlobalAgentToolService {
     final quoted = shellSingleQuote(path);
     final suffix = ShortId.generate();
     final result = await exec.run(
+      'set -e\n'
       'p=$quoted\n'
       'tmp="\$p.$suffix.tmp"\n'
       r'''trap 'rm -f -- "$tmp"' EXIT HUP INT TERM'''

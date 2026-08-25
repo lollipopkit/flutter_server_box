@@ -43,6 +43,42 @@ Future<SftpClient> withSftpSessionOpenTimeout(
   }
 }
 
+Future<T> withSftpLateCleanupTimeout<T>(
+  String operation,
+  Future<T> future,
+  Duration timeout, {
+  required FutureOr<void> Function(T value) cleanup,
+}) async {
+  try {
+    return await future.timeout(timeout);
+  } on TimeoutException catch (e, s) {
+    unawaited(
+      future
+          .then<void>((value) async {
+            try {
+              await cleanup(value);
+            } catch (cleanupError, cleanupStack) {
+              Loggers.app.warning(
+                'Failed to clean up late SFTP $operation',
+                cleanupError,
+                cleanupStack,
+              );
+            }
+          })
+          .catchError((Object lateError, StackTrace lateStack) {
+            Loggers.app.warning(
+              'Timed out SFTP $operation later failed',
+              lateError,
+              lateStack,
+            );
+          }),
+    );
+    final error = TimeoutException('SFTP $operation timed out', timeout);
+    Loggers.app.warning(error.message, e, s);
+    throw error;
+  }
+}
+
 typedef SftpRename = Future<void> Function(String from, String to);
 typedef SftpRemove = Future<void> Function(String path);
 

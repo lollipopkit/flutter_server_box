@@ -39,10 +39,8 @@ class MonitorHttpClient {
         ? addr.substring(0, addr.length - 1)
         : addr;
     final uri = Uri.tryParse(normalized);
-    if (uri == null || !isSecureRemoteEndpoint(
-      uri,
-      allowInsecure: monitor.allowInsecure,
-    )) {
+    if (uri == null ||
+        !isSecureRemoteEndpoint(uri, allowInsecure: monitor.allowInsecure)) {
       throw MonitorHttpErr(
         type: MonitorHttpErrType.net,
         message: l10n.monitorHttpsRequired,
@@ -55,18 +53,19 @@ class MonitorHttpClient {
     if (_disposed) throw StateError('MonitorHttpClient disposed');
     final existing = _dio;
     if (existing != null) return existing;
-    final dio = Dio(
-      BaseOptions(
-        baseUrl: _addr,
-        connectTimeout: _connectTimeout,
-        sendTimeout: _sendTimeout,
-        receiveTimeout: _receiveTimeout,
-      ),
-    )
-      ..httpClientAdapter = IOHttpClientAdapter(
-        createHttpClient: _httpClient,
-        validateCertificate: monitor.ignoreCert ? (_, _, _) => true : null,
-      );
+    final dio =
+        Dio(
+            BaseOptions(
+              baseUrl: _addr,
+              connectTimeout: _connectTimeout,
+              sendTimeout: _sendTimeout,
+              receiveTimeout: _receiveTimeout,
+            ),
+          )
+          ..httpClientAdapter = IOHttpClientAdapter(
+            createHttpClient: _httpClient,
+            validateCertificate: monitor.ignoreCert ? (_, _, _) => true : null,
+          );
     _dio = dio;
     return dio;
   }
@@ -207,7 +206,8 @@ class MonitorHttpClient {
       if (points is! List) {
         throw MonitorHttpErr(
           type: MonitorHttpErrType.invalidResponse,
-          message: '/api/v1/metrics/history answered with '
+          message:
+              '/api/v1/metrics/history answered with '
               '${points.runtimeType}, not a JSON array',
         );
       }
@@ -280,19 +280,29 @@ class MonitorHttpClient {
   /// the only paths any other call here can succeed on, and a browser that does
   /// not know them can only start at `/` and be refused.
   Future<List<String>> fsRoots() {
+    return _fsRoots ??= _loadFsRoots().onError((Object e, StackTrace s) {
+      _fsRoots = null;
+      Error.throwWithStackTrace(e, s);
+    });
+  }
+
+  Future<List<String>> _loadFsRoots() {
     return _authed(() async {
       final resp = await _object('/api/v1/fs/roots');
       final roots = resp['roots'];
       if (roots is! List) {
         throw MonitorHttpErr(
           type: MonitorHttpErrType.invalidResponse,
-          message: '/api/v1/fs/roots answered with '
+          message:
+              '/api/v1/fs/roots answered with '
               '${roots.runtimeType}, not a JSON array',
         );
       }
       return roots.whereType<String>().toList();
     });
   }
+
+  Future<List<String>>? _fsRoots;
 
   /// One directory, as the agent's `EntryView` describes it.
   Future<List<Map<String, dynamic>>> fsList(String path) {
@@ -306,7 +316,8 @@ class MonitorHttpClient {
       if (entries is! List) {
         throw MonitorHttpErr(
           type: MonitorHttpErrType.invalidResponse,
-          message: '/api/v1/fs/list answered with '
+          message:
+              '/api/v1/fs/list answered with '
               '${entries.runtimeType}, not a JSON array',
         );
       }
@@ -359,16 +370,18 @@ class MonitorHttpClient {
     String path,
     Stream<List<int>> data, {
     int? size,
+    Stream<List<int>> Function()? replayData,
   }) async {
     // Validate or refresh the token with a replayable request before touching
     // this one-shot body. `_authed` cannot safely retry the PUT itself: a
     // `File.openRead()` stream has already been consumed by the first attempt.
-    await _authed(() => _object('/api/v1/fs/roots'));
-    try {
+    await fsRoots();
+
+    Future<void> put(Stream<List<int>> body) async {
       await _session().put<dynamic>(
         '/api/v1/fs/write',
         queryParameters: {'path': path},
-        data: data,
+        data: body,
         options: Options(
           // Dio will not set one for a stream, and the agent needs to know
           // where the body ends. Null sends it chunked, which the agent reads
@@ -379,7 +392,21 @@ class MonitorHttpClient {
           },
         ),
       );
+    }
+
+    try {
+      await put(data);
     } on DioException catch (e) {
+      if (e.response?.statusCode == 401 && replayData != null) {
+        _token = null;
+        await _login();
+        try {
+          await put(replayData());
+          return;
+        } on DioException catch (retryError) {
+          throw _toMonitorHttpErr(retryError);
+        }
+      }
       throw _toMonitorHttpErr(e);
     }
   }
@@ -420,7 +447,8 @@ class MonitorHttpClient {
   /// The agent runs the shell itself; what travels here is PTY bytes and
   /// control JSON in the clear, so it refuses plaintext links that are not
   /// loopback. See `MonitorShellBackend` for the protocol spoken over it.
-  Future<WebSocket> openTerminal({Duration? timeout}) => _openWs(timeout: timeout);
+  Future<WebSocket> openTerminal({Duration? timeout}) =>
+      _openWs(timeout: timeout);
 
   /// What this agent will accept right now, and what it runs on.
   ///
@@ -461,18 +489,19 @@ class MonitorHttpClient {
         path: '/api/v1/terminal/ws',
         queryParameters: {'ticket': ticket},
       );
-      final socket = await WebSocket.connect(
-        url.toString(),
-        // Carries `ignoreCert` onto the upgrade: this is the same endpoint the
-        // status poll uses, so it has to trust the same certs
-        customClient: _httpClient(),
-      ).timeout(
-        timeout ?? const Duration(seconds: 15),
-        onTimeout: () => throw MonitorHttpErr(
-          type: MonitorHttpErrType.net,
-          message: 'Timed out opening the monitor terminal',
-        ),
-      );
+      final socket =
+          await WebSocket.connect(
+            url.toString(),
+            // Carries `ignoreCert` onto the upgrade: this is the same endpoint the
+            // status poll uses, so it has to trust the same certs
+            customClient: _httpClient(),
+          ).timeout(
+            timeout ?? const Duration(seconds: 15),
+            onTimeout: () => throw MonitorHttpErr(
+              type: MonitorHttpErrType.net,
+              message: 'Timed out opening the monitor terminal',
+            ),
+          );
       return socket;
     });
   }
@@ -495,11 +524,20 @@ class MonitorHttpClient {
         e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.sendTimeout ||
         e.type == DioExceptionType.receiveTimeout) {
-      return MonitorHttpErr(type: MonitorHttpErrType.net, message: e.toString());
+      return MonitorHttpErr(
+        type: MonitorHttpErrType.net,
+        message: e.toString(),
+      );
     }
     if (e.response?.statusCode == 401) {
-      return MonitorHttpErr(type: MonitorHttpErrType.auth, message: e.toString());
+      return MonitorHttpErr(
+        type: MonitorHttpErrType.auth,
+        message: e.toString(),
+      );
     }
-    return MonitorHttpErr(type: MonitorHttpErrType.unknown, message: e.toString());
+    return MonitorHttpErr(
+      type: MonitorHttpErrType.unknown,
+      message: e.toString(),
+    );
   }
 }

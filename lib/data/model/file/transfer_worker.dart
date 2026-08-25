@@ -331,6 +331,7 @@ Future<void> _download(
   File? staging;
   Object? error;
   StackTrace? stackTrace;
+  Duration? spentTime;
 
   try {
     mainSendPort.send(FileTransferStage.preparing);
@@ -351,10 +352,11 @@ Future<void> _download(
     sftp = openedSftp;
 
     Loggers.app.info('Transfer download opening remote file: ${from.path}');
-    final openedRemoteFile = await withSftpOpTimeout(
+    final openedRemoteFile = await withSftpLateCleanupTimeout(
       'open remote file for download',
       openedSftp.open(from.path),
       _prepareTimeout(job),
+      cleanup: (file) => file.close(),
     );
     remoteFile = openedRemoteFile;
     Loggers.app.info('Transfer download reading remote size: ${from.path}');
@@ -485,8 +487,7 @@ Future<void> _download(
     staging = null;
     mainSendPort.send(const TransferStaging(''));
 
-    mainSendPort.send(watch.elapsed);
-    mainSendPort.send(FileTransferStage.finished);
+    spentTime = watch.elapsed;
   } catch (e, s) {
     error = e;
     stackTrace = s;
@@ -506,6 +507,9 @@ Future<void> _download(
       stackTrace,
     );
     mainSendPort.send(error);
+  } else if (spentTime != null) {
+    mainSendPort.send(spentTime);
+    mainSendPort.send(FileTransferStage.finished);
   }
 }
 
@@ -561,6 +565,7 @@ Future<void> _upload(
   var replacementOutcomeUnknown = false;
   Object? error;
   StackTrace? stackTrace;
+  Duration? spentTime;
 
   try {
     mainSendPort.send(FileTransferStage.preparing);
@@ -588,7 +593,7 @@ Future<void> _upload(
     // failed upload replaced a good remote file with a partial one.
     staging = stagingNameFor(to.path);
     Loggers.app.info('Transfer upload opening remote file: $staging');
-    final openedRemoteFile = await withSftpOpTimeout(
+    final openedRemoteFile = await withSftpLateCleanupTimeout(
       'open remote file for upload',
       openedSftp.open(
         staging,
@@ -598,6 +603,12 @@ Future<void> _upload(
             SftpFileOpenMode.write,
       ),
       _prepareTimeout(job),
+      cleanup: (file) async {
+        await file.close();
+        try {
+          await openedSftp.remove(staging!);
+        } catch (_) {}
+      },
     );
     remoteFile = openedRemoteFile;
     mainSendPort.send(FileTransferStage.loading);
@@ -606,25 +617,56 @@ Future<void> _upload(
       'chunk=$_sftpChunkSize, maxBytes=$_sftpUploadMaxBytesOnTheWire',
     );
     var lastProgress = -1;
-    final writer = openedRemoteFile.write(
-      localFile,
-      onProgress: (total) {
-        if (localLen == 0) return;
-        final progress = (total / localLen * 100).round();
-        if (progress != lastProgress) {
-          lastProgress = progress;
-          mainSendPort.send(
-            FileTransferProgress(
-              percent: progress.toDouble(),
-              transferredBytes: total,
-            ),
+    final idleDuration = _downloadIdleTimeout(job);
+    final idleTimeout = Completer<Never>();
+    Timer? idleTimer;
+    Future<void>? pendingWrite;
+
+    void resetIdleTimer() {
+      if (idleTimeout.isCompleted) return;
+      idleTimer?.cancel();
+      idleTimer = Timer(idleDuration, () {
+        if (!idleTimeout.isCompleted) {
+          idleTimeout.completeError(
+            TimeoutException('Transfer upload idle timed out', idleDuration),
           );
         }
-      },
-      chunkSize: _sftpChunkSize,
-      maxBytesOnTheWire: _sftpUploadMaxBytesOnTheWire,
-    );
-    await writer.done;
+      });
+    }
+
+    try {
+      resetIdleTimer();
+      final writer = openedRemoteFile.write(
+        localFile,
+        onProgress: (total) {
+          resetIdleTimer();
+          if (localLen == 0) return;
+          final progress = (total / localLen * 100).round();
+          if (progress != lastProgress) {
+            lastProgress = progress;
+            mainSendPort.send(
+              FileTransferProgress(
+                percent: progress.toDouble(),
+                transferredBytes: total,
+              ),
+            );
+          }
+        },
+        chunkSize: _sftpChunkSize,
+        maxBytesOnTheWire: _sftpUploadMaxBytesOnTheWire,
+      );
+      pendingWrite = writer.done;
+      await Future.any([pendingWrite, idleTimeout.future]);
+    } on TimeoutException {
+      pendingWrite?.ignore();
+      try {
+        await openedRemoteFile.close();
+      } catch (_) {}
+      remoteFile = null;
+      throw SftpError('Upload timed out without progress');
+    } finally {
+      idleTimer?.cancel();
+    }
     // Closed before the rename: a server need not see a handle to a path that
     // is about to stop existing.
     await remoteFile.close();
@@ -637,26 +679,19 @@ Future<void> _upload(
     }
     staging = null;
 
-    mainSendPort.send(watch.elapsed);
-    mainSendPort.send(FileTransferStage.finished);
+    spentTime = watch.elapsed;
   } catch (e, s) {
     error = e;
     stackTrace = s;
   } finally {
-    if (replacementOutcomeUnknown) {
-      await _closeSftpResources(
-        remoteFile: remoteFile,
-        sftp: sftp,
-        client: client,
-      );
-    } else {
+    if (!replacementOutcomeUnknown) {
       await _discardRemote(sftp, staging);
-      await _closeSftpResources(
-        remoteFile: remoteFile,
-        sftp: sftp,
-        client: client,
-      );
     }
+    await _closeSftpResources(
+      remoteFile: remoteFile,
+      sftp: sftp,
+      client: client,
+    );
   }
 
   if (error != null) {
@@ -666,6 +701,9 @@ Future<void> _upload(
       stackTrace,
     );
     mainSendPort.send(error);
+  } else if (spentTime != null) {
+    mainSendPort.send(spentTime);
+    mainSendPort.send(FileTransferStage.finished);
   }
 }
 
@@ -679,6 +717,7 @@ Future<void> _copy(FileTransfer job, SendPort mainSendPort) async {
   final closing = <Future<void> Function()>[];
   Object? error;
   StackTrace? stackTrace;
+  Duration? spentTime;
 
   try {
     mainSendPort.send(FileTransferStage.preparing);
@@ -730,8 +769,7 @@ Future<void> _copy(FileTransfer job, SendPort mainSendPort) async {
       },
     );
 
-    mainSendPort.send(watch.elapsed);
-    mainSendPort.send(FileTransferStage.finished);
+    spentTime = watch.elapsed;
   } catch (e, s) {
     error = e;
     stackTrace = s;
@@ -752,6 +790,9 @@ Future<void> _copy(FileTransfer job, SendPort mainSendPort) async {
       stackTrace,
     );
     mainSendPort.send(error);
+  } else if (spentTime != null) {
+    mainSendPort.send(spentTime);
+    mainSendPort.send(FileTransferStage.finished);
   }
 }
 

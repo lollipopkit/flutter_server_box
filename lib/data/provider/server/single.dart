@@ -5,6 +5,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
+import 'package:server_box/core/utils/monitor_exec.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/core/utils/ssh_exec.dart';
@@ -485,6 +486,22 @@ class ServerNotifier extends _$ServerNotifier {
         }
         return source.exec;
     }
+  }
+
+  bool isExecCurrent(ServerExec exec, Spi spi) {
+    if (state.spi != spi) return false;
+    if (exec is SshExec) {
+      return identical(state.client, exec.client) && !exec.client.isClosed;
+    }
+    if (exec is MonitorExec) {
+      final current = _source;
+      final currentExec = current is MonitorHttpDataSource
+          ? current.exec
+          : null;
+      return currentExec is MonitorExec &&
+          identical(currentExec.client, exec.client);
+    }
+    return false;
   }
 
   /// Whether the generated script has been written to this server since the

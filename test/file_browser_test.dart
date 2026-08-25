@@ -47,8 +47,7 @@ class _MapBackend implements FileBackend {
   final renamed = <(String from, String to)>[];
 
   @override
-  FileBackendTraits get traits =>
-      FileBackendTraits(sudoFallback: sudoFallback);
+  FileBackendTraits get traits => FileBackendTraits(sudoFallback: sudoFallback);
 
   @override
   Future<List<String>> reachableRoots() async => roots;
@@ -70,8 +69,7 @@ class _MapBackend implements FileBackend {
   Future<void> mkdir(String path) async {}
 
   @override
-  Stream<List<int>> read(String path, {int offset = 0}) =>
-      const Stream.empty();
+  Stream<List<int>> read(String path, {int offset = 0}) => const Stream.empty();
 
   @override
   Future<void> remove(String path, {bool recursive = false}) async =>
@@ -89,6 +87,7 @@ class _MapBackend implements FileBackend {
     Stream<List<int>> data, {
     int? size,
     void Function(String staging)? onStaging,
+    Stream<List<int>> Function()? replayData,
   }) async {}
 }
 
@@ -183,19 +182,13 @@ void main() {
       // The heading someone can act on...
       expect(find.text('This folder is no longer here'), findsOneWidget);
       // ...and the words the OS used, still there for whoever wants them.
-      expect(
-        find.textContaining('No such file or directory'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('No such file or directory'), findsOneWidget);
     });
 
     testWidgets('offers sudo only where there is somewhere to escalate', (
       tester,
     ) async {
-      await pump(
-        tester,
-        _MapBackend(const {}, failWith: 'Permission denied'),
-      );
+      await pump(tester, _MapBackend(const {}, failWith: 'Permission denied'));
       expect(find.text('Try using sudo'), findsNothing);
 
       await pump(
@@ -239,10 +232,7 @@ void main() {
     ) async {
       // An empty answer is "browse anywhere", not "nowhere to go" — drawing a
       // heading with no chips under it would say the opposite.
-      await pump(
-        tester,
-        _MapBackend(const {}, failWith: 'Permission denied'),
-      );
+      await pump(tester, _MapBackend(const {}, failWith: 'Permission denied'));
 
       expect(find.text('Permission denied.'), findsOneWidget);
       expect(find.byType(ActionChip), findsNothing);
@@ -266,12 +256,9 @@ void main() {
     });
 
     testWidgets('can be tried again', (tester) async {
-      final backend = _MapBackend(
-        {
-          '/': [_file('back.txt')],
-        },
-        failWith: 'Connection closed',
-      );
+      final backend = _MapBackend({
+        '/': [_file('back.txt')],
+      }, failWith: 'Connection closed');
 
       await pump(tester, backend);
       expect(find.text('Failure'), findsOneWidget);
@@ -567,9 +554,12 @@ void main() {
     });
 
     testWidgets('select-all picks the whole listing', (tester) async {
-      await pump(tester, _MapBackend({
-        '/': [_file('a.txt'), _file('b.txt'), _file('c.txt')],
-      }));
+      await pump(
+        tester,
+        _MapBackend({
+          '/': [_file('a.txt'), _file('b.txt'), _file('c.txt')],
+        }),
+      );
       await focusList(tester);
 
       await tester.sendKeyDownEvent(LogicalKeyboardKey.meta);
@@ -753,9 +743,12 @@ void main() {
 
   group('searching this listing', () {
     testWidgets('finds an entry by part of its name', (tester) async {
-      await pump(tester, _MapBackend({
-        '/': [_file('notes.txt'), _file('report.pdf'), _dir('archive')],
-      }));
+      await pump(
+        tester,
+        _MapBackend({
+          '/': [_file('notes.txt'), _file('report.pdf'), _dir('archive')],
+        }),
+      );
 
       await tester.tap(find.byIcon(Icons.search));
       await tester.pumpAndSettle();
@@ -770,9 +763,12 @@ void main() {
     testWidgets('searches what is listed, directories included', (
       tester,
     ) async {
-      await pump(tester, _MapBackend({
-        '/': [_file('notes.txt'), _dir('archive')],
-      }));
+      await pump(
+        tester,
+        _MapBackend({
+          '/': [_file('notes.txt'), _dir('archive')],
+        }),
+      );
 
       await tester.tap(find.byIcon(Icons.search));
       await tester.pumpAndSettle();
@@ -792,14 +788,18 @@ void main() {
     test('a name in this directory is this directory', () {
       const here = LocalFileRef('/tmp/into');
 
-      expect(here.child('dropped.txt'), const LocalFileRef('/tmp/into/dropped.txt'));
+      expect(
+        here.child('dropped.txt'),
+        const LocalFileRef('/tmp/into/dropped.txt'),
+      );
     });
 
     test('a sibling directory is not', () {
       const here = LocalFileRef('/tmp/into');
 
       expect(
-        here.child('dropped.txt') == const LocalFileRef('/tmp/elsewhere/dropped.txt'),
+        here.child('dropped.txt') ==
+            const LocalFileRef('/tmp/elsewhere/dropped.txt'),
         isFalse,
       );
     });
@@ -807,7 +807,6 @@ void main() {
     // That the same path on two different machines is also not the same place
     // is `file_transfer_test.dart`'s `two ends are the same place only when
     // both halves match` — an `SftpFileRef` carries the server it is on.
-
   });
 
   testWidgets('every icon button says what it does', (tester) async {
@@ -815,9 +814,12 @@ void main() {
     // the only label an icon-only button has, and on a desktop it is what a
     // hover is for; asserted over the tree rather than listed, so a button
     // added later is covered without anyone remembering to add it here.
-    await pump(tester, _MapBackend({
-      '/': [_file('a.txt')],
-    }));
+    await pump(
+      tester,
+      _MapBackend({
+        '/': [_file('a.txt')],
+      }),
+    );
 
     final silent = <String>[];
     for (final element in find.byType(IconButton).evaluate()) {
