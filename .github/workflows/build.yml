@@ -82,18 +82,33 @@ jobs:
         run: |
           set -euo pipefail
 
-          expected="${GITHUB_REF_NAME#v}"
-          build="${expected##*.}"
-          pub_version="$(sed -n -E 's/^version:[[:space:]]*([^+]+)\+([0-9]+)$/\1+\2/p' pubspec.yaml | head -n 1)"
           build_data="$(sed -n -E 's/.*static const int build = ([0-9]+);/\1/p' lib/data/res/build_data.dart | head -n 1)"
+          pub_version="$(sed -n -E 's/^version:[[:space:]]*([^+]+)\+([0-9]+)$/\1+\2/p' pubspec.yaml | head -n 1)"
 
-          if [[ "$pub_version" != "$expected+$build" ]]; then
-            echo "pubspec.yaml version must match tag ${GITHUB_REF_NAME}; got ${pub_version}."
+          if [[ -z "$build_data" ]]; then
+            echo "::error::BuildData.build not found in lib/data/res/build_data.dart"
             exit 1
           fi
 
-          if [[ "$build_data" != "$build" ]]; then
-            echo "BuildData.build must match tag ${GITHUB_REF_NAME}; got ${build_data}."
+          # The whole tag, not the number on the end of it. Everything
+          # downstream writes `v1.0.<build>` out by hand — the artifact names in
+          # every platform job, and the tag `publishRelease` opens the release
+          # on — while this compared only `${GITHUB_REF_NAME##*.}` and never the
+          # `1.0.` in front of it. So a tag of any other shape validated and
+          # then published somewhere else: `v2.0.1491`, with a pubspec of
+          # `2.0.1491+1491`, passed here, built assets named `..._v1.0.1491_...`
+          # and had the release opened on `v1.0.1491` — a tag git need not even
+          # have, created at this commit — leaving the tag that was actually
+          # pushed with nothing on it.
+          expected_tag="v1.0.${build_data}"
+          if [[ "$GITHUB_REF_NAME" != "$expected_tag" ]]; then
+            echo "::error::this workflow publishes ${expected_tag}, but the tag is ${GITHUB_REF_NAME}."
+            echo "Push ${expected_tag}, or set BuildData.build to the tag's build number."
+            exit 1
+          fi
+
+          if [[ "$pub_version" != "1.0.${build_data}+${build_data}" ]]; then
+            echo "::error::pubspec.yaml version must be 1.0.${build_data}+${build_data}; got ${pub_version}."
             exit 1
           fi
       - name: Check job selection
@@ -722,6 +737,11 @@ jobs:
     env:
       APP_NAME: ${{ needs.reproducibilityCheck.outputs.appName }}
       BUILD_NUMBER: ${{ needs.reproducibilityCheck.outputs.buildNumber }}
+      # Built from the build number rather than read from `github.ref_name`, so
+      # it is the same expression the platform jobs name their files with. The
+      # two are only interchangeable because `Check tag source version` refuses
+      # a tag that is not exactly this; without that check this opened a release
+      # on a tag nobody pushed.
       TAG: v1.0.${{ needs.reproducibilityCheck.outputs.buildNumber }}
     steps:
       - name: Collect the platform artifacts
