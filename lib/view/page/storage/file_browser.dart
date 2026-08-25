@@ -462,17 +462,20 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
       case LogicalKeyboardKey.escape:
         if (!_selecting && _cursor == null) return KeyEventResult.ignored;
         _clearSelection();
-      case LogicalKeyboardKey.f2:
+      // The three that mutate or select are guarded rather than the whole
+      // handler: moving the cursor, entering a directory, going up and
+      // clearing are what a picker is *for*, and stay.
+      case LogicalKeyboardKey.f2 when !_isPicking:
         final entry = _cursorOrOnlySelected;
         if (entry == null) return KeyEventResult.ignored;
         _rename(entry);
-      case LogicalKeyboardKey.delete:
+      case LogicalKeyboardKey.delete when !_isPicking:
         final targets = _selecting
             ? _selectedEntries
             : [?_cursorEntry];
         if (targets.isEmpty) return KeyEventResult.ignored;
         _deleteAll(targets);
-      case LogicalKeyboardKey.keyA when modified:
+      case LogicalKeyboardKey.keyA when modified && !_isPicking:
         _selectAll();
       default:
         return KeyEventResult.ignored;
@@ -806,6 +809,11 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
 
   /// [at] is where the pointer was, for a right-click. Null for a long press.
   Future<void> _showEntryMenu(FileEntry entry, {Offset? at}) {
+    // Picking: the caller asked for a path back, not a file manager. Every
+    // action on this menu either changes the entry or downloads it — none of
+    // them is what the browser was opened to do, and on SFTP that put delete
+    // one long press away from a dialog that only wanted a folder.
+    if (_isPicking) return Future.value();
     final full = _fullPath(entry);
     return showContextMenu(
       context,
@@ -1365,7 +1373,10 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
         _extendTo(entry);
         return;
       }
-      if (keys.isControlPressed || keys.isMetaPressed || _selecting) {
+      // Not while picking: a selection is the beginning of acting on several
+      // entries, and a picker returns exactly one thing.
+      if (!_isPicking &&
+          (keys.isControlPressed || keys.isMetaPressed || _selecting)) {
         _toggle(entry);
         return;
       }
