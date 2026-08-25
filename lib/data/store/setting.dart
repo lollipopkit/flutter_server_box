@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:meta/meta.dart';
+import 'package:server_box/data/model/app/agent_shell_config.dart';
+import 'package:server_box/data/model/app/ask_ai_config.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/net_view.dart';
@@ -9,6 +11,19 @@ import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/res/default.dart';
+import 'package:server_box/data/store/field_prop.dart';
+import 'package:server_box/data/store/migrations/m008_settings_fixups.dart';
+import 'package:server_box/data/store/migrations/m011_virt_key_rows.dart';
+import 'package:server_box/data/store/schema.dart';
+
+/// The virtual-key lists, read as names and nothing else.
+///
+/// `whereType`, so a row still holding the indices these replaced reads as
+/// empty rather than throwing while a page is building. Empty is a value the
+/// readers already handle — it falls back to the default order — and
+/// [VirtKeyNamesMigration] is what stops it being reached.
+List<String> _virtKeyNames(Object? raw) =>
+    raw is List ? raw.whereType<String>().toList() : const [];
 
 class SettingStore extends SqliteStore {
   SettingStore._() : super('setting');
@@ -71,8 +86,12 @@ class SettingStore extends SqliteStore {
   // Disabled detail cards (for persistence when toggling visibility)
   late final detailCardDisabled = listProperty<String>('detailCardDisabled');
 
-  // Disabled SSH virtual keys (for persistence when toggling visibility)
-  late final sshVirtKeysDisabled = listProperty<int>('sshVirtKeysDisabled');
+  /// Virtual keys the user has hidden, by [VirtKey.name] — see [sshVirtKeys]
+  /// for why not by index.
+  late final sshVirtKeysDisabled = listProperty<String>(
+    'sshVirtKeysDisabled',
+    fromObj: _virtKeyNames,
+  );
 
   // SSH term font size
   late final termFontSize = propertyDefault('termFontSize', 13.0);
@@ -160,10 +179,20 @@ class SettingStore extends SqliteStore {
 
   late final fullScreenJitter = propertyDefault('fullScreenJitter', true);
 
-  late final sshVirtKeys = listProperty<int>(
+  /// The order the virtual keys are drawn in, by [VirtKey.name].
+  ///
+  /// By name, never by index. An index changes meaning the moment a case is
+  /// inserted into [VirtKey] — every stored arrangement then names different
+  /// keys, silently, with nothing to say it happened — and this value outlives
+  /// the build that wrote it, through a backup and through a sync. It was a
+  /// list of indices; [VirtKeyNamesMigration] is the one pass that converts.
+  ///
+  /// A name this build cannot place reads as absent rather than as a key,
+  /// which is what [VirtKeyX.loadFromStore] drops.
+  late final sshVirtKeys = listProperty<String>(
     'sshVirtKeys',
-    defaultValue: VirtKeyX.defaultOrder.map((e) => e.index).toList(),
-    fromObj: (val) => List<int>.from(val as List),
+    defaultValue: VirtKeyX.defaultOrder.map((e) => e.name).toList(),
+    fromObj: _virtKeyNames,
   );
 
   late final netViewType = propertyDefault(
@@ -178,6 +207,20 @@ class SettingStore extends SqliteStore {
     'autoUpdateHomeWidget',
     isIOS,
   );
+
+  /// Hide the app's content once it leaves the foreground, so the app
+  /// switcher's card does not leave server names or terminal output readable.
+  /// Mobile only.
+  ///
+  /// iOS blurs the window; Android sets `FLAG_SECURE`, which blanks the recents
+  /// thumbnail instead — Flutter draws into a `SurfaceView` that no in-process
+  /// blur can reach, and a cover that has to render a frame races the system's
+  /// capture.
+  ///
+  /// The native side keeps its own copy — a cold launch can reach the switcher
+  /// before Dart has pushed anything — so a change here has to go through
+  /// [MethodChans.setPrivacyBlur], and every launch re-pushes.
+  late final privacyBlur = propertyDefault('privacyBlur', false);
 
   /// Servers the watch app may show, by [Spi.id], in display order.
   ///
@@ -273,17 +316,66 @@ class SettingStore extends SqliteStore {
   /// Whether collapse UI items by default
   late final collapseUIDefault = propertyDefault('collapseUIDefault', true);
 
-  /// Terminal AI helper configuration
-  late final askAiBaseUrl = propertyDefault(
-    'askAiBaseUrl',
-    'https://api.openai.com',
+  /// Terminal AI helper configuration, as one row.
+  ///
+  /// Six keys before this. See [AskAiConfig] for what moved and why; the
+  /// per-field names below are [FieldProp]s onto it, so a caller reads and
+  /// writes one field with one field's type and hears about one field's
+  /// changes.
+  ///
+  /// One row is also one entry in `lastUpdateTs`, and sync resolves per entry.
+  /// So two devices editing *different* fields between syncs no longer both
+  /// win: the later write takes the whole object, and the other device's field
+  /// goes back to what this one had. That was per field before, and it is the
+  /// price of the grouping. It is the same trade [agentShell] makes, and the
+  /// reason to accept it is that these are provider settings changed on one
+  /// device at a time, not records edited in parallel.
+  late final askAi = propertyDefault<AskAiConfig>(
+    'askAi',
+    const AskAiConfig(),
+    fromObj: (raw) =>
+        raw is Map ? AskAiConfig.fromJson(Map<String, dynamic>.from(raw)) : null,
+    toObj: (val) => val?.toJson(),
   );
-  late final askAiApiKey = propertyDefault('askAiApiKey', '');
-  late final askAiModel = propertyDefault('askAiModel', 'gpt-5.4-mini');
-  late final askAiProtocol = propertyDefault('askAiProtocol', 'auto');
-  late final askAiAutoRunSafeCommands = propertyDefault(
-    'askAiAutoRunSafeCommands',
-    false,
+
+  late final askAiBaseUrl = FieldProp<AskAiConfig, String>(
+    askAi,
+    'baseUrl',
+    read: (c) => c.baseUrl,
+    write: (c, v) => c.copyWith(baseUrl: v),
+  );
+  late final askAiApiKey = FieldProp<AskAiConfig, String>(
+    askAi,
+    'apiKey',
+    read: (c) => c.apiKey,
+    write: (c, v) => c.copyWith(apiKey: v),
+  );
+  late final askAiModel = FieldProp<AskAiConfig, String>(
+    askAi,
+    'model',
+    read: (c) => c.model,
+    write: (c, v) => c.copyWith(model: v),
+  );
+  late final askAiProtocol = FieldProp<AskAiConfig, String>(
+    askAi,
+    'protocol',
+    read: (c) => c.protocol,
+    write: (c, v) => c.copyWith(protocol: v),
+  );
+  late final askAiAutoRunSafeCommands = FieldProp<AskAiConfig, bool>(
+    askAi,
+    'autoRunSafeCommands',
+    read: (c) => c.autoRunSafeCommands,
+    write: (c, v) => c.copyWith(autoRunSafeCommands: v),
+  );
+
+  /// Enter sends the prompt and Shift+Enter starts a line. Off swaps them: a
+  /// line break is the plain key, and sending is the modifier or the button.
+  late final askAiSendOnEnter = FieldProp<AskAiConfig, bool>(
+    askAi,
+    'sendOnEnter',
+    read: (c) => c.sendOnEnter,
+    write: (c, v) => c.copyWith(sendOnEnter: v),
   );
 
   /// Whether the Agent may run commands on this device.
@@ -295,37 +387,90 @@ class SettingStore extends SqliteStore {
   ///
   /// Auto-running stays off here whatever [askAiAutoRunSafeCommands] says —
   /// that setting is about servers. See `AskAiCommand.canAutoRun`.
+  ///
+  /// Its own key, and outside [askAi] on purpose: that group is which provider
+  /// to talk to, and this is what the app will let the answer do to this
+  /// machine. A restore that carried a provider's configuration across should
+  /// not carry that with it.
   late final agentLocalExec = propertyDefault('agentLocalExec', false);
 
-  /// Enter sends the prompt and Shift+Enter starts a line. Off swaps them: a
-  /// line break is the plain key, and sending is the modifier or the button.
-  late final askAiSendOnEnter = propertyDefault('askAiSendOnEnter', true);
-
-  /// Whether the Agent follows you onto the other tabs, and how much of it
-  /// comes along. One of `AgentShellMode`'s names.
-  late final agentShellMode = propertyDefault('agentShellMode', 'hidden');
-
-  /// Where the floating Agent sits on a desktop window, and how big it is.
+  /// Settings that describe *this device* rather than a preference worth
+  /// carrying to another one, so a backup neither exports nor restores them.
   ///
-  /// A negative offset means "never placed", which the shell reads as its
-  /// default corner — a first run has no position to restore, and 0,0 is a
-  /// real position somebody may have dragged it to.
-  late final agentShellLeft = propertyDefault('agentShellLeft', -1.0);
-  late final agentShellTop = propertyDefault('agentShellTop', -1.0);
-  late final agentShellWidth = propertyDefault('agentShellWidth', 400.0);
-  late final agentShellHeight = propertyDefault('agentShellHeight', 560.0);
+  /// [agentLocalExec] is the whole list. Its doc says a restore of a provider
+  /// configuration must not carry it, and until this existed it did: the key
+  /// is an ordinary settings row, so exporting on a machine where the Agent
+  /// had been let loose and restoring on a phone turned it on there with
+  /// nothing said. The permission is about which machine, and a backup file
+  /// does not know which machine it is being read on.
+  ///
+  /// Handled beside the internal keys rather than by giving it an internal
+  /// name, so an install that has already answered the question keeps its
+  /// answer instead of being quietly reset by a rename.
+  static const deviceLocalKeys = {'agentLocalExec'};
 
-  /// Which edge the collapsed pill clings to on a phone, and how far down it.
-  late final agentShellPillOnRight = propertyDefault(
-    'agentShellPillOnRight',
-    true,
+  /// The floating Agent's placement and size, as one row.
+  ///
+  /// Eight keys before this. See [AgentShellConfig] for the nesting; the
+  /// per-field names below are [FieldProp]s onto it.
+  late final agentShell = propertyDefault<AgentShellConfig>(
+    'agentShell',
+    const AgentShellConfig(),
+    fromObj: (raw) => raw is Map
+        ? AgentShellConfig.fromJson(Map<String, dynamic>.from(raw))
+        : null,
+    toObj: (val) => val?.toJson(),
   );
-  late final agentShellPillY = propertyDefault('agentShellPillY', 0.62);
 
-  /// How much of a phone screen the expanded Agent takes, as a fraction.
-  late final agentShellSheetHeight = propertyDefault(
-    'agentShellSheetHeight',
-    0.62,
+  late final agentShellMode = FieldProp<AgentShellConfig, String>(
+    agentShell,
+    'mode',
+    read: (c) => c.mode,
+    write: (c, v) => c.copyWith(mode: v),
+  );
+
+  late final agentShellLeft = FieldProp<AgentShellConfig, double>(
+    agentShell,
+    'window.left',
+    read: (c) => c.window.left,
+    write: (c, v) => c.copyWith(window: c.window.copyWith(left: v)),
+  );
+  late final agentShellTop = FieldProp<AgentShellConfig, double>(
+    agentShell,
+    'window.top',
+    read: (c) => c.window.top,
+    write: (c, v) => c.copyWith(window: c.window.copyWith(top: v)),
+  );
+  late final agentShellWidth = FieldProp<AgentShellConfig, double>(
+    agentShell,
+    'window.width',
+    read: (c) => c.window.width,
+    write: (c, v) => c.copyWith(window: c.window.copyWith(width: v)),
+  );
+  late final agentShellHeight = FieldProp<AgentShellConfig, double>(
+    agentShell,
+    'window.height',
+    read: (c) => c.window.height,
+    write: (c, v) => c.copyWith(window: c.window.copyWith(height: v)),
+  );
+
+  late final agentShellPillOnRight = FieldProp<AgentShellConfig, bool>(
+    agentShell,
+    'pill.onRight',
+    read: (c) => c.pill.onRight,
+    write: (c, v) => c.copyWith(pill: c.pill.copyWith(onRight: v)),
+  );
+  late final agentShellPillY = FieldProp<AgentShellConfig, double>(
+    agentShell,
+    'pill.y',
+    read: (c) => c.pill.y,
+    write: (c, v) => c.copyWith(pill: c.pill.copyWith(y: v)),
+  );
+  late final agentShellSheetHeight = FieldProp<AgentShellConfig, double>(
+    agentShell,
+    'pill.sheetHeight',
+    read: (c) => c.pill.sheetHeight,
+    write: (c, v) => c.copyWith(pill: c.pill.copyWith(sheetHeight: v)),
   );
 
   late final serverFuncBtns = listProperty(
@@ -413,7 +558,13 @@ class SettingStore extends SqliteStore {
   /// there to walk through.
   late final virtKeyIntroShown = propertyDefault('virtKeyIntroShown', false);
 
-  late final horizonVirtKey = propertyDefault('horizonVirtKey', false);
+  /// How many rows of virtual keys the terminal shows at once, 0 for all.
+  ///
+  /// Rows past that go on a page of their own, swiped sideways. It replaced a
+  /// switch meaning "one row, scrolled sideways", which is this set to 1 —
+  /// with the difference that a swipe now lands on whole rows rather than
+  /// leaving the row halfway between two keys. See [VirtKeyRowsMigration].
+  late final virtKeyRows = propertyDefault('virtKeyRows', 0);
 
   /// general wake lock
   late final generalWakeLock = propertyDefault('generalWakeLock', false);
@@ -437,11 +588,27 @@ class SettingStore extends SqliteStore {
 
   /// For desktop only.
   /// Record the position and size of the window.
+  /// Stored as an object, not as a string holding one.
+  ///
+  /// `SqliteStore.set` encodes whatever `toObj` returns, so returning an
+  /// already-encoded string got it encoded a second time and the `value`
+  /// column held `"{\"size\":{\"width\":1324.0,...}}"`. Twice the bytes, and
+  /// the raw settings editor could only show it as one escaped line instead of
+  /// a value with fields.
+  ///
+  /// No migration: `WindowStateListener` writes on every move and resize, so
+  /// the row rewrites itself the first time the window is touched. The string
+  /// branch below is what reads it until then.
   late final windowState = property<WindowState>(
     'windowState',
-    fromObj: (raw) =>
-        WindowState.fromJson(jsonDecode(raw as String) as Map<String, dynamic>),
-    toObj: (state) => state == null ? null : jsonEncode(state.toJson()),
+    fromObj: (raw) => switch (raw) {
+      // TODO: delete the string branch once no install can still hold one.
+      final String s =>
+        WindowState.fromJson(jsonDecode(s) as Map<String, dynamic>),
+      final Map m => WindowState.fromJson(Map<String, dynamic>.from(m)),
+      _ => null,
+    },
+    toObj: (state) => state?.toJson(),
   );
 
   late final introVer = propertyDefault('introVer', 0);
@@ -494,40 +661,74 @@ class SettingStore extends SqliteStore {
     },
   );
 
-  /// Add Agent to the legacy default home tabs once.
+  /// What `{DIST}` expands to, for a distribution whose file is named
+  /// something else wherever the marks are hosted.
   ///
-  /// Written with `updateLastUpdateTsOnSet: false` throughout, as the Hive
-  /// version got by writing straight to the box: a migration this build runs on
-  /// its own is not an edit the user made, and counting it as one would have
-  /// every install claim a newer copy than whatever it last synced with.
-  Future<void> migrateHomeTabsAgent() async {
-    const key = 'homeTabs';
-    const flagKey = 'homeTabsAgentMigrated';
-    if (get<bool>(flagKey) == true) return;
+  /// Keyed by `Dist`'s own case name, which is the value `{DIST}` carries by
+  /// default. Absent means "use the case name", so this holds only the
+  /// disagreements — an empty map is the normal state.
+  ///
+  /// It exists because there is no correct table to ship. The names belong to
+  /// whichever collection the user pointed at: font-logos calls Arch
+  /// `archlinux` and RHEL `redhat`, another set will call them something else,
+  /// and a table baked in here would be right for one of them and wrong for
+  /// the rest. Edited by hand in the settings' key-value editor.
+  late final distNameMap = propertyDefault<Map<String, String>>(
+    'distNameMap',
+    const {},
+    fromObj: (raw) {
+      if (raw is Map) {
+        return raw.map(
+          (key, value) => MapEntry(key.toString(), value.toString()),
+        );
+      }
+      return <String, String>{};
+    },
+  );
 
-    final tabs = AppTab.parseAppTabsFromObj(get<Object>(key));
-    const legacyDefaultTabs = {
-      AppTab.server,
-      AppTab.ssh,
-      AppTab.file,
-      AppTab.snippet,
-    };
-    if (tabs.length == legacyDefaultTabs.length &&
-        tabs.toSet().containsAll(legacyDefaultTabs)) {
-      set(
-        key,
-        [...tabs, AppTab.agent].map((tab) => tab.name).toList(),
-        updateLastUpdateTsOnSet: false,
-      );
-    }
-    set(flagKey, true, updateLastUpdateTsOnSet: false);
-  }
+  /// Where the small mark beside a server's name is fetched from.
+  ///
+  /// Separate from [serverLogoUrl], which is the large image on a server's own
+  /// page, because the two are different pictures: artwork that reads at full
+  /// width is a smudge at 20px, and an icon that works at 20px is lost on a
+  /// detail page. Both take `{DIST}` and `{BRIGHT}`.
+  ///
+  /// Empty means the marks shipped with the app are used where there are any,
+  /// and the fallback icon everywhere else. See [showDistMark] for the switch
+  /// that governs whether any of it is drawn at all.
+  late final serverMarkUrl = propertyDefault('serverMarkUrl', '');
+
+  /// Whether to draw a mark beside a server's name at all.
+  ///
+  /// **Off by default.** Five distributions' logos ship with the app and the
+  /// rest fall back to an icon, so this is the difference between a column of
+  /// marks and no column — not, as an earlier version of it was, a second gate
+  /// over an address that was already blank. Turning it on shows the terms
+  /// first; turning it off is agreement to nothing and asks nothing.
+  ///
+  /// Off means *nothing*, not a blank of the same size: the callers ask for
+  /// `distIcon(...)`, which answers null, and leave the slot out entirely.
+  ///
+  /// A new key rather than the old `showDistIcon`, which defaulted to on and
+  /// would have carried that answer past the terms for anyone who had it
+  /// stored. TODO: the old key sits unread in the `setting` table on installs
+  /// that wrote it; nothing looks at it.
+  late final showDistMark = propertyDefault('showDistMark', false);
 
   /// Hide port forward beta warning
   late final portForwardBetaWarned = propertyDefault(
     'portForwardBetaWarned',
     false,
   );
+
+  /// Whether the one-off guide over the tab strip has been shown.
+  ///
+  /// The bulk actions there open on a long press or a right-click, and neither
+  /// leaves a mark on screen — nothing about the strip says the menu exists.
+  /// A version flag would show it again after every update; what is wanted is
+  /// once per install, so this is set the first time it is dismissed and never
+  /// read again.
+  late final navTabMenuGuided = propertyDefault('navTabMenuGuided', false);
 
   /// The highest rootfs-manifest serial this device has accepted.
   ///
@@ -583,6 +784,13 @@ class SettingStore extends SqliteStore {
   /// installs are cleaned without another migration flag becoming permanent
   /// state of its own.
   Future<void> removeRetiredKeys() async {
+    // Nothing is deleted from storage this build cannot read. `Stores.init`
+    // calls this before `SchemaVersion.migrate` gets to refuse the downgrade,
+    // so without this the refusal arrived after the keys were already gone —
+    // and "retired here" says nothing about whether the build that wrote them
+    // still reads them.
+    if (schemaVersion.fetch() > SchemaVersion.current) return;
+
     for (final key in const [
       'moveOutServerTabFuncBtns',
       'forceSinglePane',
@@ -593,25 +801,34 @@ class SettingStore extends SqliteStore {
     ]) {
       remove(key, updateLastUpdateTsOnRemove: false);
     }
-  }
 
-  /// Migrate sshConnectionMode from old int values (-1/0/1) to bool.
-  /// Call once after store initialization.
-  void migrateSshConnectionMode() {
-    const key = 'sshConnectionMode';
-    const flagKey = 'sshConnectionModeMigrated';
-    if (get<bool>(flagKey) == true) return;
-    final raw = get<Object>(key);
-    if (raw is int) {
-      // -1 = auto, 0 = built-in, 1 = system SSH
-      final bool value;
-      if (raw == -1) {
-        value = !isMacOS; // macOS default built-in, others default system SSH
-      } else {
-        value = raw != 0;
-      }
-      set(key, value, updateLastUpdateTsOnSet: false);
+    // The flags `SettingsFixupsMigration` reads, dropped once it has had its
+    // pass. The version is what says so: this runs from `Stores.init`, before
+    // `SchemaVersion.migrate`, so removing them unconditionally would delete
+    // them in the very launch that has to read them. Past that version they
+    // have no reader, and a restore of an older backup writes them back long
+    // after the step could run again — which is why this is here rather than
+    // at the end of the step.
+    //
+    // TODO: delete with the flag reads in `SettingsFixupsMigration`.
+    if (schemaVersion.fetch() > SettingsFixupsMigration.appliedAt) {
+      remove(
+        SettingsFixupsMigration.sshFlagKey,
+        updateLastUpdateTsOnRemove: false,
+      );
+      remove(
+        SettingsFixupsMigration.homeTabsFlagKey,
+        updateLastUpdateTsOnRemove: false,
+      );
     }
-    set(flagKey, true, updateLastUpdateTsOnSet: false);
+
+    // The switch `virtKeyRows` replaced, for the same reason and on the same
+    // terms: the step that reads it runs after this does, and a restore of an
+    // older backup writes it back long after that step can run again.
+    //
+    // TODO: delete with the read in `VirtKeyRowsMigration`.
+    if (schemaVersion.fetch() > VirtKeyRowsMigration.appliedAt) {
+      remove(VirtKeyRowsMigration.legacyKey, updateLastUpdateTsOnRemove: false);
+    }
   }
 }

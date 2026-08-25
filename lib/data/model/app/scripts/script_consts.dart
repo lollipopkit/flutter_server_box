@@ -1,6 +1,4 @@
 
-import 'package:server_box/data/res/build_data.dart';
-
 /// Path constants and per-connection script directory state.
 ///
 /// Script content, markers, headers, and output splitting live in the shared
@@ -11,9 +9,23 @@ import 'package:server_box/data/res/build_data.dart';
 class ScriptConstants {
   const ScriptConstants._();
 
-  // Script file names (versioned: bumping BuildData.script forces re-upload)
-  static const String scriptFile = 'srvboxm_v${BuildData.script}.sh';
-  static const String scriptFileWindows = 'srvboxm_v${BuildData.script}.ps1';
+  /// The number in the remote script's filename.
+  ///
+  /// It must only increase, and it must increase whenever the generated script
+  /// changes: the name is what decides whether a server reuses the copy it
+  /// already has. Two builds writing different scripts under one name is the
+  /// failure this exists to prevent.
+  ///
+  /// A plain constant, here. It was a Git-history count computed during the
+  /// build, whose result varied with the source paths and with whether a build
+  /// went through `fl_build` at all — so it became a hand-maintained number,
+  /// and then a hand-maintained number in *two* files with a test holding them
+  /// level, because `fl_build` regenerates `BuildData` and drops anything it
+  /// was not fed.
+  static const int version = 75;
+
+  static const String scriptFile = 'srvboxm_v$version.sh';
+  static const String scriptFileWindows = 'srvboxm_v$version.ps1';
 
   // Script directories
   static const String scriptDirHome = '~/.config/server_box';

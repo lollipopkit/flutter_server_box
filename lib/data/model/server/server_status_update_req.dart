@@ -118,7 +118,16 @@ ServerStatus _createWorkingStatus(ServerStatus source, SystemType system) {
     diskIO: DiskIO.copy(source.diskIO),
     diskSmart: const [],
     err: source.err,
-  );
+  )
+  // Carried, not reset. `_applyMore` only writes these when the response has
+  // them, on the stated grounds that a poll which could not read
+  // `/etc/os-release` should not throw away what the last one found — and that
+  // is only true if they start here. Without it every poll of a BSD, a Windows
+  // host or a Linux too old for that file cleared the distribution, so the
+  // mark beside its name blinked out and came back on the next successful
+  // read.
+  ..osId = source.osId
+  ..osIdLike = source.osIdLike;
 }
 
 List<SingleCpuCore> _coresFromJson(List cores) {
@@ -280,6 +289,29 @@ void _applyMore(ServerStatus ss, Map<String, dynamic> status) {
   final sys = status['sys'] as String?;
   if (sys != null && sys.isNotEmpty) {
     ss.more[StatusCmdType.sys] = sys;
+  }
+  // Both absent on BSD and Windows, and on a Linux old enough to have no
+  // `/etc/os-release`; left as they were rather than cleared, so a poll that
+  // failed to read the file does not throw away what the last one found.
+  final osId = status['os_id'] as String?;
+  if (osId != null && osId.isNotEmpty) {
+    ss.osId = osId;
+    // Written together, and only here. An `ID_LIKE` that came back empty is
+    // two different things depending on why: the file said the distribution
+    // declares no parent, or the file was never read. `os_id` is the evidence
+    // of which — it is only ever set by a successful read — so the parent is
+    // replaced when there was one to replace it with, and left alone when the
+    // whole section is missing. Without this, a host that stopped being a
+    // derivative kept the parent it used to declare, and `resolveDist` fell
+    // through to it whenever the new id was one this build does not know.
+    //
+    // `whereType`, not `cast`. A cast is a lazy view: a non-String element is
+    // found at the first iteration, which is `resolveDist` — reached from
+    // `DistIconOf` while the tree is building, so a malformed value would
+    // throw there instead of being caught by the section guard around this.
+    ss.osIdLike =
+        (status['os_id_like'] as List?)?.whereType<String>().toList() ??
+        const [];
   }
   final host = status['host'] as String?;
   if (host != null && !host.contains(ScriptConstants.scriptFile)) {

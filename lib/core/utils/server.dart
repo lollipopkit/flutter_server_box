@@ -924,7 +924,12 @@ Future<bool> promptHostKeyExclusively(
   Future<bool> Function() show,
 ) async {
   final server = _hostIdentifier(info.spi);
-  final question = '${info.keyType} ${info.fingerprint}';
+  // Joined on a byte neither half can contain, so no key type and fingerprint
+  // can spell the same question as another pair — the ambiguity
+  // [splitHostKeyStorageKey] records `::` walking into. Written as an escape:
+  // it was a literal control byte, which made `rg` and `grep` read this whole
+  // file as binary and skip it.
+  final question = '${info.keyType}\x00${info.fingerprint}';
 
   while (true) {
     final pending = _pendingHostKeyPrompts[server];

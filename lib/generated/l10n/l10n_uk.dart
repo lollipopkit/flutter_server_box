@@ -282,6 +282,57 @@ class AppLocalizationsUk extends AppLocalizations {
   String get backupPasswordWrong => 'Неправильний пароль резервного копіювання';
 
   @override
+  String get connectAll => 'Підключити всі';
+
+  @override
+  String get disconnectAll => 'Відключити всі';
+
+  @override
+  String get distIcon => 'Позначки дистрибутивів';
+
+  @override
+  String get distIconConsent =>
+      'Лише щоб позначити дистрибутив, який може працювати на сервері.';
+
+  @override
+  String get distIconIntroLegal =>
+      'Знак свідчить лише про те, що цей пристрій прочитав із віддаленої системи; ці відомості можуть бути хибними або застарілими і не позначають ані похідну збірку, ані перезбирання, ані якусь конкретну версію. Якщо визначити не вдалося, малюється звичайна піктограма.\n\nКожен знак є торговельною маркою свого власника і використовується тут лише для позначення системи, яку він ідентифікує.';
+
+  @override
+  String get distIconTip =>
+      'Показувати біля кожного сервера невелику позначку системи, яка на ньому ймовірно працює';
+
+  @override
+  String get distNameMap => 'Зіставлення імен';
+
+  @override
+  String get distNameMapTip =>
+      'Лише для дистрибутива, у якого файл там, де ви розміщуєте позначки, називається інакше. Ключ — ім\'я, яке вживає цей застосунок, значення — ім\'я, яке слід завантажити. Залиште порожнім, доки жодної позначки не бракує.';
+
+  @override
+  String get logoUrl => 'Адреса логотипа';
+
+  @override
+  String get logoUrlTip =>
+      'Велике зображення вгорі сторінки сервера, у власних кольорах.';
+
+  @override
+  String get markUrl => 'Адреса позначки';
+
+  @override
+  String get markUrlTip =>
+      'Маленька позначка поряд з іменем сервера у списках. Порожньо — не показувати.\n\nЦе не те саме зображення, що логотип';
+
+  @override
+  String get navTabMenuTip =>
+      'Натисніть і утримуйте вкладку — або клацніть правою кнопкою — щоб підключити чи відключити все одразу.';
+
+  @override
+  String nTags(Object count) {
+    return 'Тегів: $count';
+  }
+
+  @override
   String get remoteBackupPasswordRequired =>
       'Для віддалених резервних копій потрібен непорожній пароль резервного копіювання';
 
@@ -618,6 +669,9 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String get ungrouped => 'Без групи';
+
+  @override
   String get unused => 'Не використовується';
 
   @override
@@ -760,9 +814,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get noPromptAgain => 'Більше не запитувати';
-
-  @override
-  String get onlyOneLine => 'Відображати лише в один рядок (прокрутка)';
 
   @override
   String get openLastPath => 'Відкрити останній шлях';
@@ -1285,6 +1336,13 @@ class AppLocalizationsUk extends AppLocalizations {
       'Поки в терміналі є що прокручувати, перетягування вбік виділяє текст.';
 
   @override
+  String get virtKeyRows => 'Рядків показувати одразу';
+
+  @override
+  String get virtKeyRowsTip =>
+      'Решта — на окремій сторінці, яку гортають убік.';
+
+  @override
   String get waitConnection =>
       'Будь ласка, зачекайте, доки з\'єднання буде встановлено.';
 
@@ -1594,4 +1652,10 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get send => 'Надіслати';
+
+  @override
+  String get privacyBlur => 'Приватність у фоні';
+
+  @override
+  String get privacyBlurTip => 'Приховувати вміст програми в перемикачі';
 }

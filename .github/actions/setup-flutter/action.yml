@@ -1,0 +1,24 @@
+name: Set up Flutter
+description: The Flutter this project is built with, in the one place that says so.
+
+# Which Flutter CI uses was an `env: FLUTTER_VERSION` in every workflow that
+# needed one, read by ten copies of the same four-line step. Bumping it meant
+# finding all of them, and a workflow left behind built the app on a different
+# SDK than the one it ships from — which is the kind of difference that shows
+# up as a failure somewhere else entirely.
+#
+# A composite action rather than a version file the setup action can read:
+# those are `.fvmrc`, `fvm_config.json`, or `pubspec.yaml`'s
+# `environment.flutter`. This project does not use FVM, and that pubspec field
+# is a *constraint* — pinning it to one version to satisfy CI would refuse to
+# build for anybody on a newer stable.
+#
+# Requires the repository to be checked out first, which every job that sets
+# Flutter up already does.
+runs:
+  using: composite
+  steps:
+    - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+      with:
+        channel: stable
+        flutter-version: 3.47.1

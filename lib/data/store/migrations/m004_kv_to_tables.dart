@@ -79,9 +79,6 @@ class KvToTablesMigration implements SchemaMigration {
       for (final store in _consumed) {
         _db.execute('DELETE FROM kv WHERE store = ?;', [store]);
       }
-      _db.execute("DELETE FROM kv WHERE store = 'setting' AND key = ?;", [
-        'sshKnownHostFingerprints',
-      ]);
     });
   }
 
@@ -423,7 +420,22 @@ class KvToTablesMigration implements SchemaMigration {
       value.startsWith('~') || value.contains('/') || value.contains(r'\');
 
   /// `sshKnownHostFingerprints`, a JSON map in `setting` keyed
-  /// `<serverId>::<keyType>`, becomes rows that cascade with their server.
+  /// `<serverId>::<keyType>`, re-keyed onto the ids this step hands out.
+  ///
+  /// It stays a setting. It was moved into the `known_host` table here once,
+  /// and the setting deleted — but nothing outside this migration ever read
+  /// that table: `persistHostKeyFingerprint` and the known-hosts page both go
+  /// through the setting to this day. So the move silently took away every
+  /// host key an upgrading install had accepted, and every one of those
+  /// servers asked to be verified again. [KnownHostsToSettingsMigration] puts
+  /// back what the installs that already ran that version lost.
+  ///
+  /// The table cannot be the home while it is a child of `server`: an ad-hoc
+  /// connection files a fingerprint under an id with no server row, and the
+  /// foreign key would refuse it.
+  ///
+  /// TODO: drop the `known_host` table once no install can still be carrying
+  /// rows in it — it has no writer left, and only that migration reads it.
   void _migrateKnownHosts(Map<String, String> serverIds) {
     final raw = _db.select(
       "SELECT value FROM kv WHERE store = 'setting' AND key = ?;",
@@ -439,19 +451,24 @@ class KvToTablesMigration implements SchemaMigration {
     }
     if (decoded is! Map) return;
 
+    final remapped = <String, String>{};
     decoded.forEach((k, v) {
       // Split once from the left: a key type never contains `::`, and an old
       // `user@ip:port` server id does contain colons.
       final at = '$k'.indexOf('::');
       if (at <= 0) return;
       final serverId = serverIds['$k'.substring(0, at)];
+      // No server behind it any more — the same records this step drops
+      // everywhere else, and a fingerprint nothing can look up is not trust,
+      // it is a row.
       if (serverId == null) return;
-      _db.execute('INSERT OR IGNORE INTO known_host VALUES (?, ?, ?);', [
-        serverId,
-        '$k'.substring(at + 2),
-        '$v',
-      ]);
+      remapped['$serverId::${'$k'.substring(at + 2)}'] = '$v';
     });
+
+    _db.execute(
+      "UPDATE kv SET value = ? WHERE store = 'setting' AND key = ?;",
+      [json.encode(remapped), 'sshKnownHostFingerprints'],
+    );
   }
 
   /// Old name -> the names its records ended up with, in the order they were

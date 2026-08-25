@@ -282,6 +282,57 @@ class AppLocalizationsTr extends AppLocalizations {
   String get backupPasswordWrong => 'Yanlış yedekleme parolası';
 
   @override
+  String get connectAll => 'Tümünü bağla';
+
+  @override
+  String get disconnectAll => 'Tümünün bağlantısını kes';
+
+  @override
+  String get distIcon => 'Dağıtım işaretleri';
+
+  @override
+  String get distIconConsent =>
+      'Yalnızca bir sunucunun çalıştırıyor olabileceği dağıtımı belirtmek için.';
+
+  @override
+  String get distIconIntroLegal =>
+      'Bir işaret yalnızca bu cihazın uzak sistemden okuduğunu belirtir; bu bilgi yanlış veya güncel olmayabilir ve bir türevi, yeniden derlemeyi ya da belirli bir sürümü göstermez. Belirlenemediğinde sade bir simge çizilir.\n\nHer işaret ilgili sahibinin ticari markasıdır ve burada yalnızca işaret ettiği sistemi belirtmek için kullanılır.';
+
+  @override
+  String get distIconTip =>
+      'Her sunucunun yanında, üzerinde çalıştığı görünen sistemin küçük bir işaretini göster';
+
+  @override
+  String get distNameMap => 'Ad eşleştirme';
+
+  @override
+  String get distNameMapTip =>
+      'Yalnızca işaretleri barındırdığınız yerde dosyası başka adla duran bir dağıtım için. Anahtar, bu uygulamanın kullandığı ad; değer ise indirilecek ad. Eksik bir işaret olmadıkça boş bırakın.';
+
+  @override
+  String get logoUrl => 'Logo adresi';
+
+  @override
+  String get logoUrlTip =>
+      'Bir sunucunun kendi sayfasının üstündeki büyük görsel, kendi renkleriyle.';
+
+  @override
+  String get markUrl => 'İşaret adresi';
+
+  @override
+  String get markUrlTip =>
+      'Listelerde sunucu adının yanındaki küçük işaret. Boşsa hiçbiri çizilmez.\n\nLogoyla aynı görsel değil';
+
+  @override
+  String get navTabMenuTip =>
+      'İçindeki her şeyi tek seferde bağlamak veya bağlantısını kesmek için bir sekmeye uzun basın ya da sağ tıklayın.';
+
+  @override
+  String nTags(Object count) {
+    return '$count etiket';
+  }
+
+  @override
   String get remoteBackupPasswordRequired =>
       'Uzak yedeklemeler için boş olmayan bir yedekleme parolası gerekir';
 
@@ -615,6 +666,9 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get ungrouped => 'Gruplandırılmamış';
+
+  @override
   String get unused => 'Kullanılmıyor';
 
   @override
@@ -756,9 +810,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get noPromptAgain => 'Tekrar sorma';
-
-  @override
-  String get onlyOneLine => 'Yalnızca tek satır olarak göster (kaydırılabilir)';
 
   @override
   String get openLastPath => 'Son yolu aç';
@@ -1283,6 +1334,13 @@ class AppLocalizationsTr extends AppLocalizations {
       'Terminalde kaydırılacak bir şey olduğu sürece, yana sürükleyerek metin seçebilirsiniz.';
 
   @override
+  String get virtKeyRows => 'Aynı anda gösterilen satır';
+
+  @override
+  String get virtKeyRowsTip =>
+      'Kalanlar yana kaydırılan ayrı bir sayfada yer alır.';
+
+  @override
   String get waitConnection => 'Lütfen bağlantının kurulmasını bekleyin.';
 
   @override
@@ -1574,4 +1632,10 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get send => 'Gönder';
+
+  @override
+  String get privacyBlur => 'Arka planda gizlilik';
+
+  @override
+  String get privacyBlurTip => 'Uygulama değiştiricide içeriği gizle';
 }

@@ -433,7 +433,7 @@ fn disabled_filters_linux() {
     };
     let script = build_script(SystemType::Linux, &o);
     assert!(!script.contains("cat /proc/net/dev"));
-    assert!(!script.contains("cat /etc/*-release | grep ^PRETTY_NAME"));
+    assert!(!script.contains("cat /etc/os-release /usr/lib/os-release"));
     assert!(script.contains("uptime"));
     assert!(script.contains("date +%s"));
 }
@@ -449,7 +449,7 @@ fn disabled_filters_bsd_in_unix_script() {
     let script = build_script(SystemType::Linux, &o);
     assert!(!script.contains("uname -or"));
     assert!(!script.contains("top -l 1 | grep PhysMem"));
-    assert!(script.contains("cat /etc/*-release | grep ^PRETTY_NAME"));
+    assert!(script.contains("cat /etc/os-release /usr/lib/os-release"));
     assert!(script.contains("cat /proc/meminfo | grep -E 'Mem|Swap'"));
 }
 
@@ -479,7 +479,7 @@ fn disabled_other_platform_ignored() {
         ..opts()
     };
     let script = build_script(SystemType::Linux, &o);
-    assert!(script.contains("cat /etc/*-release | grep ^PRETTY_NAME"));
+    assert!(script.contains("cat /etc/os-release /usr/lib/os-release"));
     assert!(script.contains("cat /proc/net/dev"));
 }
 

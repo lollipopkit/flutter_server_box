@@ -68,6 +68,7 @@ abstract final class Tables {
     'snippet_auto_run_on',
     'port_forward',
     'conn_stat',
+    'server_dist',
     'agent_conversation',
     'agent_active_conversation',
     'tombstone',

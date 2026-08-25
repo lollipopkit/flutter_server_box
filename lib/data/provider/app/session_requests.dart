@@ -86,6 +86,23 @@ class TerminalRequests extends _$TerminalRequests {
   void clear() => state = const [];
 }
 
+/// A standing request to close every terminal.
+///
+/// The tab that owns the sessions is the only thing that can close them, and
+/// it is built when first visited — so this is a flag it drains, the same
+/// arrangement [TerminalRequests] has, rather than a call. A request left
+/// standing because that tab has never been built closes nothing when it
+/// finally is, which is right: a tab nobody has opened has no sessions.
+@Riverpod(keepAlive: true)
+class TerminalCloseAllRequest extends _$TerminalCloseAllRequest {
+  @override
+  bool build() => false;
+
+  void go() => state = true;
+
+  void done() => state = false;
+}
+
 /// Servers waiting for a file browser. Same reasoning as [TerminalRequests].
 @Riverpod(keepAlive: true)
 class SftpRequests extends _$SftpRequests {

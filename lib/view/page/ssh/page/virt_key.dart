@@ -2,9 +2,16 @@ part of 'page.dart';
 
 extension _VirtKey on SSHPageState {
   void _reloadVirtKeys() {
-    _horizonVirtKeys = Stores.setting.horizonVirtKey.fetch();
+    final pagesBefore = _virtKeyPages.length;
+    _virtKeyRows = Stores.setting.virtKeyRows.fetch();
     _initVirtKeys();
     _updateVirtKeysHeight();
+    // Only when the count changed, which is exactly when the `PageView` is
+    // rebuilt from its key and starts at the first page again. Resetting
+    // unconditionally moved the dots while the strip stayed where it was — a
+    // key turned on or off within the same number of rows left page two
+    // showing under a lit first dot.
+    if (_virtKeyPages.length != pagesBefore) _virtKeyPage.value = 0;
   }
 
   /// Runs the walkthrough over the keys, once ever — on the terminal that is
@@ -220,14 +227,12 @@ extension _VirtKey on SSHPageState {
     _virtKeysList.clear();
     final disabled = Stores.setting.sshVirtKeysDisabled.fetch().toSet();
     final virtKeys = VirtKeyX.loadFromStore()
-        .where((key) => !disabled.contains(key.index))
+        .where((key) => !disabled.contains(key.name))
         .toList();
-    for (int len = 0; len < virtKeys.length; len += 7) {
-      if (len + 7 > virtKeys.length) {
-        _virtKeysList.add(virtKeys.sublist(len));
-      } else {
-        _virtKeysList.add(virtKeys.sublist(len, len + 7));
-      }
+    for (var at = 0; at < virtKeys.length; at += kVirtKeysPerRow) {
+      _virtKeysList.add(
+        virtKeys.sublist(at, math.min(at + kVirtKeysPerRow, virtKeys.length)),
+      );
     }
   }
 }

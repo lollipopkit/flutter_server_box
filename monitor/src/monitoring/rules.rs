@@ -318,6 +318,8 @@ mod tests {
             temperature: Some(65.0),
             temps: vec![],
             sys: None,
+            os_id: None,
+            os_id_like: Vec::new(),
             cpu_brand: None,
             gpus: vec![],
             disk_details: vec![],

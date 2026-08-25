@@ -411,7 +411,16 @@ class ServerStore extends EntityStore<Spi> {
       .map((r) => r['tag'] as String)
       .toList();
 
-  /// The trusted host keys for [serverId], which go when the server does.
+  /// The trusted host keys for [serverId], as rows written by builds between
+  /// v5 and v13.
+  ///
+  /// Not where the app keeps them: `persistHostKeyFingerprint` and the
+  /// known-hosts page both read `Stores.setting.sshKnownHostFingerprints`, and
+  /// this table cannot hold an ad-hoc connection's fingerprint at all — its
+  /// `server_id` is a foreign key onto a server row that such a connection has
+  /// none of. [KnownHostsToSettingsMigration] is the only reader left.
+  ///
+  /// TODO: delete these three and the `known_host` table with that migration.
   Map<String, String> knownHosts(String serverId) => {
     for (final row in db.select(
       'SELECT key_type, fingerprint FROM known_host WHERE server_id = ?;',

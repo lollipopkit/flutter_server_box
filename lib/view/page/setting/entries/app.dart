@@ -14,6 +14,7 @@ extension _App on _AppSettingsPageState {
       _buildAppColor(),
       _buildCheckUpdate(),
       PlatformPublicSettings.buildBioAuth,
+      ?PlatformPublicSettings.buildPrivacyBlur,
       ?androidSettings,
       ?specific,
       _buildAppMore(),

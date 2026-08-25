@@ -4,6 +4,7 @@ import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/widget/dist_icon.dart';
 
 /// Every host key this app has accepted, and a way to take one back.
 ///
@@ -62,23 +63,32 @@ class _KnownHostsPageState extends State<KnownHostsPage> {
     return '${libL10n.unknown} ($serverId)';
   }
 
-  Future<void> _forget({String? storageKey, String? serverId}) async {
+  /// Confirms and then forgets — either every key of [serverId], or the single
+  /// [key].
+  ///
+  /// The question names what is about to be untrusted. Taking one key of one
+  /// server used to ask "Delete?" and nothing else, which is the one case where
+  /// the row under the finger is not enough to go on: the dialog covers the
+  /// list, and the two rows of a server that offers Ed25519 and RSA look the
+  /// same from behind it. Untrusting the wrong one is a connection that stops
+  /// working, or one that stops being checked.
+  Future<void> _forget({KnownHostKey? key, String? serverId}) async {
+    final what = key == null
+        ? _label(serverId!)
+        : '${_label(key.serverId)} · '
+              '${key.keyType.isEmpty ? libL10n.unknown : key.keyType}\n'
+              '${key.fingerprint}';
     final ok = await context.showRoundDialog<bool>(
       title: libL10n.attention,
-      child: Text(
-        libL10n.askContinue(
-          '${libL10n.delete} ${storageKey == null ? _label(serverId!) : ''}'
-              .trim(),
-        ),
-      ),
+      child: Text(libL10n.askContinue('${libL10n.delete} $what')),
       actions: Btnx.cancelRedOk,
     );
     if (ok != true) return;
     // Awaited: the forget is queued behind any acceptance still being written,
     // so reloading without waiting would read the map as it was before the
     // pruning and put the row straight back on screen.
-    if (storageKey != null) {
-      await forgetHostKey(storageKey);
+    if (key != null) {
+      await forgetHostKey(key.storageKey);
     } else {
       await forgetHostKeyFingerprints(serverId!);
     }
@@ -112,7 +122,10 @@ class _KnownHostsPageState extends State<KnownHostsPage> {
 
   Widget _buildServer(String serverId, List<KnownHostKey> keys) {
     return ExpandTile(
-      leading: const Icon(Icons.dns),
+      // From the cache, since this page holds ids and nothing else: a known
+      // host is a server that connected at some point, so there is usually a
+      // reading for it even though no status is live here.
+      leading: distIcon(serverId, size: 24),
       title: Text(_label(serverId)),
       subtitle: Text(
         '${keys.length} ${l10n.sshHostKeyType}',
@@ -137,7 +150,7 @@ class _KnownHostsPageState extends State<KnownHostsPage> {
             trailing: IconButton(
               tooltip: libL10n.delete,
               icon: const Icon(Icons.close, size: 17),
-              onPressed: () => _forget(storageKey: key.storageKey),
+              onPressed: () => _forget(key: key),
             ),
           ),
       ],

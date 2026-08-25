@@ -288,6 +288,57 @@ class AppLocalizationsFr extends AppLocalizations {
   String get backupPasswordWrong => 'Mot de passe de sauvegarde incorrect';
 
   @override
+  String get connectAll => 'Tout connecter';
+
+  @override
+  String get disconnectAll => 'Tout déconnecter';
+
+  @override
+  String get distIcon => 'Marques de distribution';
+
+  @override
+  String get distIconConsent =>
+      'Uniquement pour indiquer la distribution qu\'un serveur exécute peut-être.';
+
+  @override
+  String get distIconIntroLegal =>
+      'Une marque indique seulement ce que cet appareil a lu sur le système distant, ce qui peut être erroné ou périmé, et ne désigne ni un dérivé, ni une reconstruction, ni une version particulière. Quand elle ne peut pas être déterminée, une icône neutre est affichée.\n\nChaque marque appartient à son propriétaire respectif et n\'est utilisée ici que pour désigner le système qu\'elle identifie.';
+
+  @override
+  String get distIconTip =>
+      'Afficher à côté de chaque serveur une petite marque du système qu’il semble exécuter';
+
+  @override
+  String get distNameMap => 'Correspondance des noms';
+
+  @override
+  String get distNameMapTip =>
+      'Uniquement pour une distribution dont le fichier porte un autre nom là où vous hébergez les marques. La clé est le nom utilisé par cette application ; la valeur est le nom à récupérer. Laissez vide tant qu\'aucune marque ne manque.';
+
+  @override
+  String get logoUrl => 'URL du logo';
+
+  @override
+  String get logoUrlTip =>
+      'La grande image en haut de la page d\'un serveur, dans ses propres couleurs.';
+
+  @override
+  String get markUrl => 'URL de la marque';
+
+  @override
+  String get markUrlTip =>
+      'La petite marque à côté du nom d\'un serveur dans les listes. Vide : aucune.\n\nCe n\'est pas la même image que le logo';
+
+  @override
+  String get navTabMenuTip =>
+      'Appuyez longuement sur un onglet — ou faites un clic droit — pour connecter ou déconnecter d\'un coup tout ce qu\'il contient.';
+
+  @override
+  String nTags(Object count) {
+    return '$count tags';
+  }
+
+  @override
   String get remoteBackupPasswordRequired =>
       'Les sauvegardes distantes nécessitent un mot de passe de sauvegarde non vide';
 
@@ -500,7 +551,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get extraArgs => 'Arguments supplémentaires';
 
   @override
-  String get fallbackSshDest => 'Destino SSH alternativo';
+  String get fallbackSshDest => 'Destination SSH de secours';
 
   @override
   String get fdroidReleaseTip =>
@@ -621,6 +672,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String sshKeyUnlockTip(String name) {
     return 'Saisissez la phrase secrète de la clé privée [$name].';
   }
+
+  @override
+  String get ungrouped => 'Sans groupe';
 
   @override
   String get unused => 'Inutilisé';
@@ -767,10 +821,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get noPromptAgain => 'Ne pas demander à nouveau';
-
-  @override
-  String get onlyOneLine =>
-      'Afficher uniquement en une seule ligne (défilement)';
 
   @override
   String get openLastPath => 'Ouvrir le dernier chemin';
@@ -1300,6 +1350,13 @@ class AppLocalizationsFr extends AppLocalizations {
       'Tant que le terminal a de quoi défiler, un glissement latéral sélectionne du texte.';
 
   @override
+  String get virtKeyRows => 'Lignes affichées à la fois';
+
+  @override
+  String get virtKeyRowsTip =>
+      'Le reste passe sur une page à part, que l\'on fait défiler latéralement.';
+
+  @override
   String get waitConnection =>
       'Veuillez attendre que la connexion soit établie.';
 
@@ -1606,4 +1663,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get send => 'Envoyer';
+
+  @override
+  String get privacyBlur => 'Confidentialité en arrière-plan';
+
+  @override
+  String get privacyBlurTip => 'Masquer le contenu dans le sélecteur d\'apps';
 }

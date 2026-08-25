@@ -287,8 +287,59 @@ class AppLocalizationsEs extends AppLocalizations {
   String get backupPasswordWrong => 'Contraseña de respaldo incorrecta';
 
   @override
+  String get connectAll => 'Conectar todo';
+
+  @override
+  String get disconnectAll => 'Desconectar todo';
+
+  @override
+  String get distIcon => 'Marcas de distribución';
+
+  @override
+  String get distIconConsent =>
+      'Solo para indicar la distribución que un servidor podría estar ejecutando.';
+
+  @override
+  String get distIconIntroLegal =>
+      'Una marca solo indica lo que este dispositivo leyó del sistema remoto, información que puede ser errónea o estar desactualizada, y no identifica ni un derivado, ni una recompilación, ni una versión concreta. Cuando no se puede identificar, se dibuja un icono genérico.\n\nCada marca es una marca registrada de su respectivo propietario y aquí solo se usa para referirse al sistema que identifica.';
+
+  @override
+  String get distIconTip =>
+      'Mostrar junto a cada servidor una pequeña marca del sistema que parece estar ejecutando';
+
+  @override
+  String get distNameMap => 'Correspondencia de nombres';
+
+  @override
+  String get distNameMapTip =>
+      'Solo para una distribución cuyo archivo se llame de otro modo donde alojes las marcas. La clave es el nombre que usa esta aplicación; el valor es el nombre que se debe descargar. Déjalo vacío mientras no falte ninguna marca.';
+
+  @override
+  String get logoUrl => 'URL del logotipo';
+
+  @override
+  String get logoUrlTip =>
+      'La imagen grande en la parte superior de la página de un servidor, en sus propios colores.';
+
+  @override
+  String get markUrl => 'URL de la marca';
+
+  @override
+  String get markUrlTip =>
+      'La marca pequeña junto al nombre de un servidor en las listas. Vacío: ninguna.\n\nNo es la misma imagen que el logotipo';
+
+  @override
+  String get navTabMenuTip =>
+      'Mantén pulsada una pestaña, o haz clic derecho en ella, para conectar o desconectar de una vez todo lo que contiene.';
+
+  @override
+  String nTags(Object count) {
+    return '$count etiquetas';
+  }
+
+  @override
   String get remoteBackupPasswordRequired =>
-      'Remote backups require a non-empty backup password';
+      'Las copias de seguridad remotas requieren una contraseña de copia no vacía';
 
   @override
   String get monitorHttpsRequired =>
@@ -621,6 +672,9 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get ungrouped => 'Sin agrupar';
+
+  @override
   String get unused => 'Sin usar';
 
   @override
@@ -766,9 +820,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get noPromptAgain => 'No volver a preguntar';
-
-  @override
-  String get onlyOneLine => 'Mostrar solo en una línea (desplazable)';
 
   @override
   String get openLastPath => 'Abrir el último camino';
@@ -1300,6 +1351,13 @@ class AppLocalizationsEs extends AppLocalizations {
       'Mientras la terminal tenga contenido que desplazar, arrastra en horizontal para seleccionar texto.';
 
   @override
+  String get virtKeyRows => 'Filas visibles a la vez';
+
+  @override
+  String get virtKeyRowsTip =>
+      'El resto va en una página aparte, que se desliza lateralmente.';
+
+  @override
   String get waitConnection =>
       'Por favor, espera a que la conexión se establezca';
 
@@ -1606,4 +1664,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get send => 'Enviar';
+
+  @override
+  String get privacyBlur => 'Privacidad en segundo plano';
+
+  @override
+  String get privacyBlurTip => 'Ocultar el contenido de la app en el selector';
 }

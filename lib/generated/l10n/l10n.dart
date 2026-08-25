@@ -615,6 +615,90 @@ abstract class AppLocalizations {
   /// **'Incorrect backup password'**
   String get backupPasswordWrong;
 
+  /// No description provided for @connectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect all'**
+  String get connectAll;
+
+  /// No description provided for @disconnectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect all'**
+  String get disconnectAll;
+
+  /// No description provided for @distIcon.
+  ///
+  /// In en, this message translates to:
+  /// **'Distribution marks'**
+  String get distIcon;
+
+  /// No description provided for @distIconConsent.
+  ///
+  /// In en, this message translates to:
+  /// **'Only to indicate the distribution a server may be running.'**
+  String get distIconConsent;
+
+  /// No description provided for @distIconIntroLegal.
+  ///
+  /// In en, this message translates to:
+  /// **'A mark says only what this device read from the remote system, which can be wrong or out of date, and identifies neither a derivative, a rebuild, nor any particular version. Where it cannot be identified, a plain icon is drawn.\n\nEach mark is a trademark of its respective owner and is used only to refer to the system it identifies.'**
+  String get distIconIntroLegal;
+
+  /// No description provided for @distIconTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Show a small mark beside each server for the system it appears to be running.'**
+  String get distIconTip;
+
+  /// No description provided for @distNameMap.
+  ///
+  /// In en, this message translates to:
+  /// **'Name overrides'**
+  String get distNameMap;
+
+  /// No description provided for @distNameMapTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Only for a distribution whose file is named something else where you host the marks. The key is the name this app uses; the value is the name to fetch. Leave it empty unless a mark is missing.'**
+  String get distNameMapTip;
+
+  /// No description provided for @logoUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Logo URL'**
+  String get logoUrl;
+
+  /// No description provided for @logoUrlTip.
+  ///
+  /// In en, this message translates to:
+  /// **'The large image at the top of a server\'s own page, drawn in its own colours.'**
+  String get logoUrlTip;
+
+  /// No description provided for @markUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark URL'**
+  String get markUrl;
+
+  /// No description provided for @markUrlTip.
+  ///
+  /// In en, this message translates to:
+  /// **'The small mark beside a server\'s name in lists. Empty means none is drawn.\n\nNot the same picture as the logo'**
+  String get markUrlTip;
+
+  /// No description provided for @navTabMenuTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Long press a tab — or right-click it — to connect or disconnect everything on it at once.'**
+  String get navTabMenuTip;
+
+  /// No description provided for @nTags.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} Tags'**
+  String nTags(Object count);
+
   /// No description provided for @remoteBackupPasswordRequired.
   ///
   /// In en, this message translates to:
@@ -1185,6 +1269,12 @@ abstract class AppLocalizations {
   /// **'Enter the passphrase for the private key [{name}].'**
   String sshKeyUnlockTip(String name);
 
+  /// No description provided for @ungrouped.
+  ///
+  /// In en, this message translates to:
+  /// **'Ungrouped'**
+  String get ungrouped;
+
   /// No description provided for @unused.
   ///
   /// In en, this message translates to:
@@ -1436,12 +1526,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Do not prompt again'**
   String get noPromptAgain;
-
-  /// No description provided for @onlyOneLine.
-  ///
-  /// In en, this message translates to:
-  /// **'Only display as one line (scrollable)'**
-  String get onlyOneLine;
 
   /// No description provided for @openLastPath.
   ///
@@ -2306,6 +2390,18 @@ abstract class AppLocalizations {
   /// **'Drag sideways over the terminal to select text, whenever it has something to scroll.'**
   String get virtKeyIntroSelect;
 
+  /// No description provided for @virtKeyRows.
+  ///
+  /// In en, this message translates to:
+  /// **'Rows shown at once'**
+  String get virtKeyRows;
+
+  /// No description provided for @virtKeyRowsTip.
+  ///
+  /// In en, this message translates to:
+  /// **'The rest go on a page of their own, swiped sideways.'**
+  String get virtKeyRowsTip;
+
   /// No description provided for @waitConnection.
   ///
   /// In en, this message translates to:
@@ -2785,6 +2881,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Send'**
   String get send;
+
+  /// No description provided for @privacyBlur.
+  ///
+  /// In en, this message translates to:
+  /// **'Background privacy'**
+  String get privacyBlur;
+
+  /// No description provided for @privacyBlurTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide app content in the app switcher'**
+  String get privacyBlurTip;
 }
 
 class _AppLocalizationsDelegate

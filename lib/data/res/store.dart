@@ -10,6 +10,7 @@ import 'package:server_box/data/store/migrations/m003_hive_to_sqlite.dart';
 import 'package:server_box/data/store/port_forward.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
+import 'package:server_box/data/store/server_dist.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/data/store/snippet.dart';
 import 'package:server_box/data/store/tables.dart';
@@ -29,6 +30,10 @@ abstract final class Stores {
   static ConnectionStatsStore get connectionStats =>
       getIt<ConnectionStatsStore>();
   static PortForwardStore get portForward => getIt<PortForwardStore>();
+
+  /// What each server was last seen running. A cache of an observation, not a
+  /// record anyone edits — see [ServerDistStore].
+  static ServerDistStore get serverDist => getIt<ServerDistStore>();
 
   /// The key-value stores whose contents count as something the user changed.
   ///
@@ -61,6 +66,9 @@ abstract final class Stores {
     getIt.registerLazySingleton<AgentConversationStore>(
       () => AgentConversationStore.instance,
     );
+    getIt.registerLazySingleton<ServerDistStore>(
+      () => ServerDistStore.instance,
+    );
     getIt.registerLazySingleton<ConnectionStatsStore>(
       () => ConnectionStatsStore.instance,
     );
@@ -87,6 +95,11 @@ abstract final class Stores {
     for (final store in _entityStores) {
       store.dropCache();
     }
+    // And the dist cache, for the same reason. It is not an `EntityStore` and
+    // so not in that list, but it is the same singleton holding the same kind
+    // of copy — and its `put` short-circuits on what the cache says, so a
+    // stale one would also stop the correct reading ever being written.
+    serverDist.dropCache();
 
     await Future.wait([
       ..._kvStores.map((store) => store.init()),
@@ -102,10 +115,6 @@ abstract final class Stores {
     await HiveImport.runIfNeeded();
 
     await setting.removeRetiredKeys();
-
-    // Migrate sshConnectionMode from old int values to bool
-    setting.migrateSshConnectionMode();
-    await setting.migrateHomeTabsAgent();
   }
 
   static int get lastModTime {

@@ -12,8 +12,7 @@ extension _Server on _AppSettingsPageState {
   Widget _buildServer() {
     return Column(
       children: [
-        _buildServerLogoUrl(),
-        _buildServerFuncBtns(),
+        _buildDistIcon(),
         _buildNetViewType(),
         _buildConnectionStats(),
         _buildDeleteServers(),
@@ -129,20 +128,6 @@ extension _Server on _AppSettingsPageState {
     context.popDialog();
   }
 
-  /// Desktop and tablet only: below the width threshold there is only ever
-  /// one column, so the switch would claim to change something it cannot.
-  /// Order only. There was a switch above it for whether the buttons lived on
-  /// the server card or the detail page; they float over the detail page now,
-  /// which works on either layout, so there is nothing left to choose.
-  Widget _buildServerFuncBtns() {
-    return ListTile(
-      leading: const Icon(BoxIcons.bxs_joystick_button, size: _kIconSize),
-      title: Text(l10n.serverFuncBtns),
-      trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: () => ServerFuncBtnsOrderPage.route.go(context),
-    );
-  }
-
   Widget _buildDoubleColumnServersPage() {
     return ListTile(
       title: TipText(l10n.doubleColumnMode, l10n.doubleColumnTip),
@@ -201,9 +186,168 @@ extension _Server on _AppSettingsPageState {
     );
   }
 
+  /// The mark beside each server: whether to draw one, where it comes from,
+  /// and the names that disagree.
+  ///
+  /// Collapsed, because none of it applies to an install that has not gone
+  /// looking for it: the switch is off by default, and the three addresses
+  /// under it are blank. Left expanded it would be four rows of a feature most
+  /// people never turn on, above the settings they came for.
+  ///
+  /// The tip on the title is the whole of the terms — plain, not markdown,
+  /// because a tip is a text bubble and a link in one shows as its own syntax
+  /// with nothing to tap. The same text goes up in full when the switch is
+  /// turned on.
+  Widget _buildDistIcon() {
+    return ExpandTile(
+      leading: const Icon(Icons.dns_outlined),
+      title: TipText(l10n.distIcon, distLegalPlain(l10n)),
+      initiallyExpanded: false,
+      children: [
+        ListTile(
+          // The tip doubles as this row's title: inside a section already
+          // called "Distribution marks", repeating the name says nothing,
+          // while what the switch does is the thing worth reading.
+          title: Text(l10n.distIconTip),
+          trailing: StoreSwitch(
+            prop: _setting.showDistMark,
+            validator: _confirmDistIcon,
+          ),
+        ),
+        _buildServerMarkUrl(),
+        _buildServerLogoUrl(),
+        _buildDistNameMap(),
+      ],
+    );
+  }
+
+  /// Where the small mark in a list comes from.
+  ///
+  /// There is no on/off beside it: an empty address is the off position, and
+  /// the switch that used to sit here governed nothing once the app stopped
+  /// shipping pictures — it was a second gate over an address that was already
+  /// blank by default.
+  Widget _buildServerMarkUrl() {
+    void onSave(String raw) {
+      final url = resolveLogoUrl(raw);
+      // Emptying it is how marks are turned off, so it is the one value that
+      // skips both the validation and the terms.
+      if (url.isEmpty) {
+        _setting.serverMarkUrl.put('');
+        context.popDialog();
+        return;
+      }
+      if (!isFetchableLogoUrl(url)) {
+        _showInvalidUrlDialog();
+        return;
+      }
+      _setting.serverMarkUrl.put(url);
+      context.popDialog();
+    }
+
+    return ListTile(
+      leading: const Icon(Icons.label_outline),
+      title: TipText(l10n.markUrl, l10n.markUrlTip),
+      subtitle: ValBuilder(
+        listenable: _setting.serverMarkUrl.listenable(),
+        builder: (url) => Text(
+          url.isEmpty ? libL10n.empty : url,
+          style: UIs.textGrey,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+      trailing: const Icon(Icons.keyboard_arrow_right),
+      onTap: () {
+        _serverMarkCtrl.text = _setting.serverMarkUrl.fetch();
+        context.showRoundDialog(
+          title: l10n.markUrl,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Input(
+                controller: _serverMarkCtrl,
+                autoFocus: true,
+                hint: 'https://example.com/{DIST}.svg',
+                icon: Icons.link,
+                maxLines: 1,
+                suggestion: false,
+                onSubmitted: onSave,
+              ),
+              ListTile(
+                title: Text(libL10n.doc),
+                trailing: const Icon(Icons.open_in_new),
+                onTap: Urls.customLogoDoc.launchUrl,
+              ),
+            ],
+          ),
+          actions: Btn.ok(onTap: () => onSave(_serverMarkCtrl.text)).toList,
+        );
+      },
+    );
+  }
+
+  /// The exceptions to `{DIST}` — see [distFileName].
+  ///
+  /// A key-value editor rather than a picker over `Dist.values`: the keys are
+  /// the app's own case names and the values are whatever the collection the
+  /// user chose happens to call those files. Only the disagreements are
+  /// written down, so the list is normally empty and is a handful at most.
+  Widget _buildDistNameMap() {
+    return ValBuilder(
+      listenable: _setting.distNameMap.listenable(),
+      builder: (map) => ListTile(
+        leading: const Icon(Icons.swap_horiz),
+        title: TipText(l10n.distNameMap, l10n.distNameMapTip),
+        subtitle: Text(
+          // The count, not the pairs: a subtitle listing them would be a line
+          // of `arch=archlinux, rhel=redhat, …` that elides after two.
+          map.isEmpty ? libL10n.empty : '${map.length}',
+          style: UIs.textGrey,
+        ),
+        trailing: const Icon(Icons.keyboard_arrow_right),
+        onTap: () async {
+          final result = await KvEditor.route.go(
+            context,
+            KvEditorArgs(data: Map.of(map)),
+          );
+          // Null is a back-button, which is not the same as saving an empty
+          // map — that is how every override is cleared.
+          if (result == null) return;
+          _setting.distNameMap.put(result);
+        },
+      ),
+    );
+  }
+
+  /// Putting marks on the rows is a decision, so it is made once with the
+  /// terms on screen rather than silently.
+  ///
+  /// Only on the way on. Turning them off is agreement to nothing, and asking
+  /// there would turn "stop showing these" into a second decision to get past.
+  ///
+  /// Returning false leaves the switch where it was — `StoreSwitch` treats the
+  /// validator as the gate and writes nothing when it declines.
+  Future<bool> _confirmDistIcon(bool enabling) async {
+    if (!enabling) return true;
+    return confirmDistIconTerms(context);
+  }
+
   Widget _buildServerLogoUrl() {
-    void onSave(String url) {
-      if (url.isEmpty || !url.startsWith('http')) {
+    void onSave(String raw) {
+      // Emptying the field clears it. An empty string is not a fetchable URL,
+      // so it was refused as invalid — and unset is the state this starts in
+      // and shows as [libL10n.empty], which left no way back to it.
+      if (raw.trim().isEmpty) {
+        _setting.serverLogoUrl.put('');
+        context.popDialog();
+        return;
+      }
+      // A GitHub page URL is rewritten to the one that serves the file. It is
+      // what the address bar gives you, and left alone it fetches HTML that
+      // reaches the decoder as `Invalid image data`.
+      final url = resolveLogoUrl(raw);
+      if (!isFetchableLogoUrl(url)) {
         _showInvalidUrlDialog();
         return;
       }
@@ -213,11 +357,21 @@ extension _Server on _AppSettingsPageState {
 
     return ListTile(
       leading: const Icon(Icons.image),
-      title: const Text('Logo URL'),
+      title: TipText(l10n.logoUrl, l10n.logoUrlTip),
+      subtitle: ValBuilder(
+        listenable: _setting.serverLogoUrl.listenable(),
+        builder: (url) => Text(
+          url.isEmpty ? libL10n.empty : url,
+          style: UIs.textGrey,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () {
+        _serverLogoCtrl.text = _setting.serverLogoUrl.fetch();
         context.showRoundDialog(
-          title: 'Logo URL',
+          title: l10n.logoUrl,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -226,14 +380,18 @@ extension _Server on _AppSettingsPageState {
                 autoFocus: true,
                 hint: 'https://example.com/logo.png',
                 icon: Icons.link,
-                maxLines: 2,
+                // One line, so the text sits in the middle of the field. A URL
+                // has nowhere to wrap anyway, and with room for two the single
+                // line it holds was drawn against the top with a blank line
+                // under it.
+                maxLines: 1,
                 suggestion: false,
                 onSubmitted: onSave,
               ),
               ListTile(
                 title: Text(libL10n.doc),
                 trailing: const Icon(Icons.open_in_new),
-                onTap: Urls.appWiki.launchUrl,
+                onTap: Urls.customLogoDoc.launchUrl,
               ),
             ],
           ),

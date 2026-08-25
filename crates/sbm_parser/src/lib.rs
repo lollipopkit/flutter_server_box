@@ -64,6 +64,24 @@ pub struct ServerStatus {
     /// single clean lines, but this field is not semantically a "hostname
     /// parser" output on those platforms, just reused machinery.
     pub sys: Option<String>,
+    /// `/etc/os-release`'s `ID=`, e.g. `rhel`, `linuxmint`, `opensuse-leap`.
+    ///
+    /// Linux only, and only where that file exists: it is the identifier
+    /// os-release defines for programs to match on, as opposed to [`sys`],
+    /// which is the same file's line for a person to read. Bsd and Windows
+    /// have no equivalent and leave this empty.
+    ///
+    /// Covered by `capabilities::Capabilities::sys` rather than a field of its
+    /// own — it comes out of the same command, so its support is that of
+    /// [`sys`] by construction.
+    ///
+    /// [`sys`]: ServerStatus::sys
+    pub os_id: Option<String>,
+    /// `/etc/os-release`'s `ID_LIKE=`, split on whitespace, closest base first.
+    ///
+    /// Empty on the great majority of installs — only a derivative declares
+    /// one. See [`os_id`](ServerStatus::os_id).
+    pub os_id_like: Vec<String>,
     pub host: Option<String>,
     pub diskio: Vec<DiskIoPiece>,
     pub batteries: Vec<Battery>,
@@ -121,6 +139,8 @@ pub fn parse_status_opts(
             );
             status.conn = linux::parse_conn(get(commands::CONN));
             status.sys = common::parse_sys_version(get(commands::SYS));
+            status.os_id = common::parse_os_id(get(commands::SYS));
+            status.os_id_like = common::parse_os_id_like(get(commands::SYS));
             status.diskio = linux::parse_diskio(get(commands::DISKIO));
             // Matches the app: only lithium-polymer batteries are collected
             status.batteries = linux::parse_batteries(get(commands::BATTERY), true);

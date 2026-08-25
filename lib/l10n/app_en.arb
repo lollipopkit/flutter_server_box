@@ -82,6 +82,20 @@
   "backupPasswordSet": "Backup password set",
   "backupPasswordTip": "Set a password to encrypt backup files. Leave empty to disable encryption.",
   "backupPasswordWrong": "Incorrect backup password",
+  "connectAll": "Connect all",
+  "disconnectAll": "Disconnect all",
+  "distIcon": "Distribution marks",
+  "distIconConsent": "Only to indicate the distribution a server may be running.",
+  "distIconIntroLegal": "A mark says only what this device read from the remote system, which can be wrong or out of date, and identifies neither a derivative, a rebuild, nor any particular version. Where it cannot be identified, a plain icon is drawn.\n\nEach mark is a trademark of its respective owner and is used only to refer to the system it identifies.",
+  "distIconTip": "Show a small mark beside each server for the system it appears to be running.",
+  "distNameMap": "Name overrides",
+  "distNameMapTip": "Only for a distribution whose file is named something else where you host the marks. The key is the name this app uses; the value is the name to fetch. Leave it empty unless a mark is missing.",
+  "logoUrl": "Logo URL",
+  "logoUrlTip": "The large image at the top of a server's own page, drawn in its own colours.",
+  "markUrl": "Mark URL",
+  "markUrlTip": "The small mark beside a server's name in lists. Empty means none is drawn.\n\nNot the same picture as the logo",
+  "navTabMenuTip": "Long press a tab — or right-click it — to connect or disconnect everything on it at once.",
+  "nTags": "{count} Tags",
   "remoteBackupPasswordRequired": "Remote backups require a non-empty backup password",
   "monitorHttpsRequired": "A remote monitor agent needs HTTPS, unless HTTP is allowed for it.",
   "monitorAllowInsecureHttp": "Allow HTTP",
@@ -200,6 +214,7 @@
       }
     }
   },
+  "ungrouped": "Ungrouped",
   "unused": "Unused",
   "dangling": "Dangling",
   "pruneUnusedImages": "Prune unused images",
@@ -258,7 +273,6 @@
   "noLineChart": "Do not use line charts",
   "noPrivateKeyTip": "The private key does not exist, it may have been deleted or there is a configuration error.",
   "noPromptAgain": "Do not prompt again",
-  "onlyOneLine": "Only display as one line (scrollable)",
   "openLastPath": "Open the last path",
   "openLastPathTip": "Different servers will have different logs, and the log is the path to the exit",
   "parseContainerStatsTip": "Parsing the occupancy status of Docker is relatively slow.",
@@ -462,6 +476,8 @@
   "virtKeyIntroNav": "Navigation",
   "virtKeyIntroNavTip": "These move the cursor. Hold an arrow to repeat it.",
   "virtKeyIntroSelect": "Drag sideways over the terminal to select text, whenever it has something to scroll.",
+  "virtKeyRows": "Rows shown at once",
+  "virtKeyRowsTip": "The rest go on a page of their own, swiped sideways.",
   "waitConnection": "Please wait for the connection to be established.",
   "wakeLock": "Keep awake",
   "watchNotPaired": "No paired Apple Watch",
@@ -611,5 +627,7 @@
     }
   },
   "bmcStaleWrite": "The BMC changed while this was being written. Try again.",
-  "send": "Send"
+  "send": "Send",
+  "privacyBlur": "Background privacy",
+  "privacyBlurTip": "Hide app content in the app switcher"
 }

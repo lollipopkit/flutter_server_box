@@ -285,8 +285,59 @@ class AppLocalizationsIt extends AppLocalizations {
   String get backupPasswordWrong => 'Password di backup errata';
 
   @override
+  String get connectAll => 'Connetti tutti';
+
+  @override
+  String get disconnectAll => 'Disconnetti tutti';
+
+  @override
+  String get distIcon => 'Contrassegni di distribuzione';
+
+  @override
+  String get distIconConsent =>
+      'Solo per indicare la distribuzione che un server potrebbe eseguire.';
+
+  @override
+  String get distIconIntroLegal =>
+      'Un marchio indica solo ciò che questo dispositivo ha letto dal sistema remoto, informazione che può essere errata o non aggiornata, e non identifica né un derivato, né una ricompilazione, né una versione specifica. Quando non è identificabile, viene disegnata un\'icona generica.\n\nOgni marchio appartiene al rispettivo proprietario ed è usato qui solo per riferirsi al sistema che identifica.';
+
+  @override
+  String get distIconTip =>
+      'Mostra accanto a ogni server un piccolo contrassegno del sistema che sembra eseguire';
+
+  @override
+  String get distNameMap => 'Corrispondenza dei nomi';
+
+  @override
+  String get distNameMapTip =>
+      'Solo per una distribuzione il cui file ha un altro nome dove ospiti i marchi. La chiave è il nome usato da questa app; il valore è il nome da scaricare. Lascialo vuoto finché non manca alcun marchio.';
+
+  @override
+  String get logoUrl => 'URL del logo';
+
+  @override
+  String get logoUrlTip =>
+      'L\'immagine grande in cima alla pagina di un server, nei suoi colori originali.';
+
+  @override
+  String get markUrl => 'URL del marchio';
+
+  @override
+  String get markUrlTip =>
+      'Il piccolo marchio accanto al nome di un server negli elenchi. Vuoto: nessuno.\n\nNon è la stessa immagine del logo';
+
+  @override
+  String get navTabMenuTip =>
+      'Tieni premuta una scheda — o fai clic destro — per connettere o disconnettere in una volta tutto ciò che contiene.';
+
+  @override
+  String nTags(Object count) {
+    return '$count tag';
+  }
+
+  @override
   String get remoteBackupPasswordRequired =>
-      'Remote backups require a non-empty backup password';
+      'I backup remoti richiedono una password di backup non vuota';
 
   @override
   String get monitorHttpsRequired =>
@@ -620,6 +671,9 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String get ungrouped => 'Senza gruppo';
+
+  @override
   String get unused => 'Inutilizzato';
 
   @override
@@ -762,9 +816,6 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get noPromptAgain => 'Non chiedere di nuovo';
-
-  @override
-  String get onlyOneLine => 'Visualizza solo come una riga (scorrevole)';
 
   @override
   String get openLastPath => 'Apri l\'ultimo percorso';
@@ -1294,6 +1345,13 @@ class AppLocalizationsIt extends AppLocalizations {
       'Finché il terminale ha qualcosa da scorrere, trascinando in orizzontale selezioni il testo.';
 
   @override
+  String get virtKeyRows => 'Righe mostrate insieme';
+
+  @override
+  String get virtKeyRowsTip =>
+      'Il resto va su una pagina a parte, che si scorre lateralmente.';
+
+  @override
   String get waitConnection => 'Attendi che la connessione venga stabilita.';
 
   @override
@@ -1598,4 +1656,11 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get send => 'Invia';
+
+  @override
+  String get privacyBlur => 'Privacy in background';
+
+  @override
+  String get privacyBlurTip =>
+      'Nascondi il contenuto dell\'app nel selettore app';
 }

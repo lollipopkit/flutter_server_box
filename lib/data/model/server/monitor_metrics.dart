@@ -12,10 +12,22 @@ part 'monitor_metrics.g.dart';
 @JsonSerializable(fieldRename: FieldRename.snake)
 class MonitorMetrics {
   final String timestamp;
-  @JsonKey(defaultValue: '')
-  final String extendedUpdatedAt;
+
+  /// When the agent last ran its slower extended cycle.
+  ///
+  /// Null on agents predating the field. Optional for the reason the whole of
+  /// this class is tolerant: the app and the agent are updated separately, and
+  /// a required field on a newly added key made every response from an older
+  /// agent fail to decode — losing the metrics that *were* there, before the
+  /// mapper's per-section tolerance could keep any of them.
+  final String? extendedUpdatedAt;
   final String serverName;
   final double cpuUsage;
+
+  /// Per-core readings, preferred over [cpuUsage] where the agent sends them.
+  ///
+  /// Empty on agents predating the field, where [cpuUsage] is the whole of
+  /// what is reported.
   final List<MonitorCpuCoreTime> cpuCores;
   final MonitorMemoryMetrics memory;
   final MonitorSwapMetrics swap;
@@ -27,6 +39,14 @@ class MonitorMetrics {
   /// field, where [temperature] is the only reading available.
   final List<MonitorTempReading> temps;
   final String? sys;
+
+  /// `/etc/os-release`'s `ID=` on the agent's own machine, which is what picks
+  /// the distribution's mark. Null on Bsd/Windows agents, which have no such
+  /// file, and on agents predating the field — where [sys] is all there is.
+  final String? osId;
+
+  /// `/etc/os-release`'s `ID_LIKE=`, closest base first. See [osId].
+  final List<String> osIdLike;
   final String? cpuBrand;
   final List<MonitorGpuMetrics> gpus;
   final List<MonitorDiskDetail> diskDetails;
@@ -45,10 +65,10 @@ class MonitorMetrics {
 
   const MonitorMetrics({
     required this.timestamp,
-    required this.extendedUpdatedAt,
+    this.extendedUpdatedAt,
     required this.serverName,
     required this.cpuUsage,
-    required this.cpuCores,
+    this.cpuCores = const [],
     required this.memory,
     required this.swap,
     required this.disk,
@@ -56,6 +76,8 @@ class MonitorMetrics {
     this.temperature,
     this.temps = const [],
     this.sys,
+    this.osId,
+    this.osIdLike = const [],
     this.cpuBrand,
     this.gpus = const [],
     this.diskDetails = const [],
@@ -212,6 +234,13 @@ class MonitorGpuMetrics {
   final int memoryTotal;
   final String memoryUnit;
 
+  /// `nvidia` or `amd` — which tool reported it.
+  ///
+  /// The agent flattens its two lists into one, and the app draws them under
+  /// separate headings, so without this there is no way back. Null on agents
+  /// predating the field; [MonitorGpuMetrics.isAmd] falls back to the name.
+  final String? vendor;
+
   const MonitorGpuMetrics({
     required this.name,
     required this.usagePercent,
@@ -220,7 +249,21 @@ class MonitorGpuMetrics {
     required this.memoryUsed,
     required this.memoryTotal,
     required this.memoryUnit,
+    this.vendor,
   });
+
+  /// Whether this is an AMD card, for the two lists the status page keeps.
+  ///
+  /// The name is the fallback for an agent that sends no [vendor]: `amd-smi`
+  /// and `rocm-smi` name their cards "AMD ..." or "Radeon ...", and
+  /// `nvidia-smi` never does. A wrong guess puts the card under the other
+  /// heading; dropping it, which is what happened before, showed nothing.
+  bool get isAmd {
+    final v = vendor;
+    if (v != null && v.isNotEmpty) return v.toLowerCase() == 'amd';
+    final n = name.toLowerCase();
+    return n.contains('amd') || n.contains('radeon');
+  }
 
   factory MonitorGpuMetrics.fromJson(Map<String, dynamic> json) =>
       _$MonitorGpuMetricsFromJson(json);

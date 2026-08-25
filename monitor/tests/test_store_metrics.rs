@@ -28,6 +28,8 @@ fn sample_metrics() -> SystemMetrics {
         temperature: None,
         temps: vec![],
         sys: None,
+        os_id: None,
+        os_id_like: Vec::new(),
         cpu_brand: None,
         gpus: vec![],
         disk_details: vec![],

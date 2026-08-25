@@ -298,6 +298,65 @@ void main() {
       expect(backup.settings['timeOut'], 11);
     });
 
+    test('leaves the Agent local-exec permission out of the file', () async {
+      Stores.setting.agentLocalExec.put(true);
+
+      final backup = await BackupV2.loadFromStore();
+
+      expect(backup.settings.containsKey('agentLocalExec'), isFalse);
+    });
+
+    test('and does not take it from one either', () async {
+      Stores.setting.agentLocalExec.put(false);
+
+      final backup = BackupV2(
+        version: BackupV2.formatVer,
+        date: 1,
+        spis: const {},
+        snippets: const {},
+        keys: const {},
+        container: const {},
+        history: const {},
+        settings: {
+          'agentLocalExec': true,
+          'timeOut': 9,
+          Stores.setting.lastUpdateTsKey: <String, int>{},
+        },
+      );
+      await backup.merge(force: true);
+
+      expect(Stores.setting.agentLocalExec.fetch(), isFalse);
+      expect(Stores.setting.timeout.fetch(), 9, reason: 'the rest still lands');
+    });
+
+    test('a file carrying no settings leaves the local ones alone', () async {
+      Stores.setting.homeTabs.put(const [
+        AppTab.server,
+        AppTab.ssh,
+        AppTab.file,
+        AppTab.snippet,
+      ]);
+
+      final backup = BackupV2(
+        version: BackupV2.formatVer,
+        date: 1,
+        spis: const {},
+        snippets: const {},
+        keys: const {},
+        container: const {},
+        history: const {},
+        settings: const {},
+      );
+      await backup.merge(force: true);
+
+      expect(Stores.setting.homeTabs.fetch(), const [
+        AppTab.server,
+        AppTab.ssh,
+        AppTab.file,
+        AppTab.snippet,
+      ]);
+    });
+
     test('does not apply device-local markers from an older backup', () async {
       const importMarker = '${StoreDefaults.prefixKey}hiveImported';
       Stores.setting.set(importMarker, true, updateLastUpdateTsOnSet: false);
@@ -321,6 +380,34 @@ void main() {
 
       expect(Stores.setting.get<bool>(importMarker), isTrue);
       expect(SchemaVersion.stored, originalSchema);
+    });
+
+    test('regroups the settings a pre-grouping backup brings back', () async {
+      await Stores.setting.askAiModel.set('current-model');
+      await Stores.setting.agentShellWidth.set(999);
+
+      final backup = BackupV2(
+        version: BackupV2.formatVer,
+        date: 1,
+        spis: const {},
+        snippets: const {},
+        keys: const {},
+        container: const {},
+        history: const {},
+        settings: {
+          'askAiModel': 'from-backup',
+          'askAiApiKey': 'sk-from-backup',
+          'agentShellWidth': 321.0,
+          Stores.setting.lastUpdateTsKey: <String, int>{},
+        },
+      );
+      await backup.merge(force: true);
+
+      expect(Stores.setting.askAiModel.get(), 'from-backup');
+      expect(Stores.setting.askAiApiKey.get(), 'sk-from-backup');
+      expect(Stores.setting.agentShellWidth.get(), 321.0);
+      expect(Stores.setting.get<Object>('askAiModel'), isNull);
+      expect(Stores.setting.get<Object>('agentShellWidth'), isNull);
     });
 
     test(

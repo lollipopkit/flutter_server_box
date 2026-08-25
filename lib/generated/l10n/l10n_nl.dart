@@ -282,6 +282,57 @@ class AppLocalizationsNl extends AppLocalizations {
   String get backupPasswordWrong => 'Onjuist back-up wachtwoord';
 
   @override
+  String get connectAll => 'Alles verbinden';
+
+  @override
+  String get disconnectAll => 'Alles verbreken';
+
+  @override
+  String get distIcon => 'Distributiemarkeringen';
+
+  @override
+  String get distIconConsent =>
+      'Alleen om aan te geven welke distributie een server mogelijk draait.';
+
+  @override
+  String get distIconIntroLegal =>
+      'Een merkteken zegt alleen wat dit apparaat van het externe systeem heeft gelezen; dat kan onjuist of verouderd zijn en duidt geen afgeleide, herbouw of specifieke versie aan. Kan het niet worden vastgesteld, dan wordt een neutraal pictogram getekend.\n\nElk merkteken is een handelsmerk van de betreffende eigenaar en wordt hier alleen gebruikt om te verwijzen naar het systeem dat het aanduidt.';
+
+  @override
+  String get distIconTip =>
+      'Toon naast elke server een klein teken van het systeem dat er lijkt te draaien';
+
+  @override
+  String get distNameMap => 'Naamtoewijzing';
+
+  @override
+  String get distNameMapTip =>
+      'Alleen voor een distributie waarvan het bestand anders heet op de plek waar u de merktekens host. De sleutel is de naam die deze app gebruikt; de waarde is de naam die opgehaald wordt. Laat het leeg zolang er geen merkteken ontbreekt.';
+
+  @override
+  String get logoUrl => 'Logo-URL';
+
+  @override
+  String get logoUrlTip =>
+      'De grote afbeelding boven aan de pagina van een server, in de eigen kleuren.';
+
+  @override
+  String get markUrl => 'Merkteken-URL';
+
+  @override
+  String get markUrlTip =>
+      'Het kleine teken naast een servernaam in lijsten. Leeg betekent geen.\n\nNiet dezelfde afbeelding als het logo';
+
+  @override
+  String get navTabMenuTip =>
+      'Houd een tabblad ingedrukt — of klik er met rechts op — om alles erin in één keer te verbinden of te verbreken.';
+
+  @override
+  String nTags(Object count) {
+    return '$count tags';
+  }
+
+  @override
   String get remoteBackupPasswordRequired =>
       'Externe back-ups vereisen een niet-leeg back-upwachtwoord';
 
@@ -616,6 +667,9 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String get ungrouped => 'Zonder groep';
+
+  @override
   String get unused => 'Ongebruikt';
 
   @override
@@ -757,9 +811,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get noPromptAgain => 'Niet meer vragen';
-
-  @override
-  String get onlyOneLine => 'Alleen als één regel weergeven (scrollbaar)';
 
   @override
   String get openLastPath => 'Open het laatste pad';
@@ -1287,6 +1338,13 @@ class AppLocalizationsNl extends AppLocalizations {
       'Zolang de terminal iets te scrollen heeft, selecteer je tekst door opzij te slepen.';
 
   @override
+  String get virtKeyRows => 'Rijen tegelijk zichtbaar';
+
+  @override
+  String get virtKeyRowsTip =>
+      'De rest staat op een eigen pagina, die je opzij veegt.';
+
+  @override
   String get waitConnection =>
       'Wacht alstublieft tot de verbinding tot stand is gebracht.';
 
@@ -1591,4 +1649,10 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get send => 'Verzenden';
+
+  @override
+  String get privacyBlur => 'Privacy op de achtergrond';
+
+  @override
+  String get privacyBlurTip => 'Verberg de app-inhoud in de app-switcher';
 }

@@ -143,7 +143,6 @@ class _HomeTabsConfigPageState extends State<HomeTabsConfigPage> {
   }
 
   Widget _buildTabItem(AppTab tab, int idx, bool enabled) {
-    final dest = tab.navDestination;
     return ReorderableDelayedDragStartListener(
       key: ValueKey(tab.name),
       index: idx,
@@ -151,8 +150,8 @@ class _HomeTabsConfigPageState extends State<HomeTabsConfigPage> {
         opacity: enabled ? 1.0 : 0.5,
         child: CardX(
           child: ListTile(
-            leading: dest.icon,
-            title: Text(dest.label),
+            leading: tab.icon,
+            title: Text(tab.label),
             trailing: ReorderableDragStartListener(
               index: idx,
               child: const Icon(Icons.drag_handle),

@@ -17,6 +17,7 @@ import 'package:server_box/data/ssh/terminal_session.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
+import 'package:server_box/view/widget/dist_icon.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/rootfs_install.dart';
 
@@ -50,11 +51,10 @@ class _SshSession {
   /// restored but never looked at has no state of its own yet.
   Map<String, dynamic> toRestorable() {
     final live = pageKey.currentState;
-    final sourceId = live?.widget.args.source.id ?? page.args.source.id;
     return {
       // The source's id, not a server's: this device has one too, and it is
       // what tells the two apart when the set is reopened.
-      'sourceId': Stores.history.resolveSshServerId(sourceId),
+      'sourceId': live?.widget.args.source.id ?? page.args.source.id,
       'tmuxSession': live?.tmuxCurrentSession ?? page.args.tmuxSession,
       'tmuxWindow': live?.tmuxCurrentWindow ?? page.args.tmuxWindow,
     };
@@ -102,7 +102,17 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
     // already open rather than racing them.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _restoreTabs();
-      if (mounted) _drainRequests();
+      if (!mounted) return;
+      // Here and not only from the listener: a flag set before this tab was
+      // ever built is not a *change* by the time the listener exists, so
+      // nothing would fire and the request would stand for good — after which
+      // asking again would set a value it already had, and change nothing.
+      //
+      // Before the queue, not after it. Both can be standing at once — close
+      // every terminal, then open one from a server's row — and draining them
+      // the other way round closed the terminal that was just asked for.
+      _drainCloseAll();
+      _drainRequests();
     });
   }
 
@@ -118,6 +128,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
   Widget build(BuildContext context) {
     super.build(context);
     ref.listen(terminalRequestsProvider, (_, _) => _drainRequests());
+    ref.listen(terminalCloseAllRequestProvider, (_, _) => _drainCloseAll());
     return ListenBuilder(
       listenable: _sessions,
       builder: () => SbPaneList(
@@ -357,10 +368,6 @@ extension _Sessions on _SSHTabPageState {
   void _onRootfsRemoved() {
     final id = Rootfs.removed.value;
     if (id == null || !mounted) return;
-    // The picker and rail read Rootfs.profiles synchronously. They are cached
-    // widgets, so closing matching tabs alone does not rebuild their profile
-    // chips after a deletion from Settings.
-    _sortVersion.notify();
     for (final tab in [..._sessions.tabs]) {
       final source = tab.data.page.args.source;
       if (source is! LocalSource || !source.rootfs) continue;
@@ -391,6 +398,24 @@ extension _Sessions on _SSHTabPageState {
     // decided to keep.
     if (mounted) FocusScope.of(context).unfocus();
     _closeTab(tab.id);
+  }
+
+  /// Closes every terminal, when something has asked for it.
+  ///
+  /// No confirmation here. The ask comes from the tab strip's own menu, which
+  /// confirms before it gets this far; this end only knows that the answer was
+  /// yes.
+  void _drainCloseAll() {
+    if (!ref.read(terminalCloseAllRequestProvider)) return;
+    ref.read(terminalCloseAllRequestProvider.notifier).done();
+
+    // Copied, because closing a tab is what mutates the list being walked.
+    final ids = [for (final tab in _sessions.tabs) tab.id];
+    if (ids.isEmpty) return;
+    if (mounted) FocusScope.of(context).unfocus();
+    for (final id in ids) {
+      _closeTab(id);
+    }
   }
 
   /// Opens everything queued for this tab and empties the queue.
@@ -462,8 +487,7 @@ extension _Sessions on _SSHTabPageState {
       // to reopen has cost nothing.
       final id = entry['sourceId'] ?? entry['serverId'];
       final TerminalSource source;
-      final profileId = id is String ? LocalSource.profileIdOf(id) : null;
-      if (id == LocalSource.rootfsId || profileId != null) {
+      if (id is String && id.startsWith(LocalSource.rootfsId)) {
         // Only where there is one to enter. A rootfs the user deleted, or a
         // tab set restored onto a build without proot, would otherwise reopen
         // as a terminal that can only print an error.
@@ -471,6 +495,7 @@ extension _Sessions on _SSHTabPageState {
         if (!Rootfs.isReady) continue;
         // A saved set from before profiles existed names no profile, and reads
         // as "whichever is selected" — which is what it meant.
+        final profileId = LocalSource.profileIdOf(id);
         // One that names a profile this device has not got is skipped like an
         // unknown server: a backup restored onto another device is exactly how
         // that happens.
@@ -491,14 +516,16 @@ extension _Sessions on _SSHTabPageState {
         if (spi == null) continue;
         source = ServerSource(spi);
       }
+      // Tested rather than cast. `as String?` throws on a value that is
+      // neither — a number where a name was expected — and the throw leaves the
+      // loop, which is the whole-set abort the entry-by-entry reads above
+      // exist to prevent.
+      final tmuxSession = entry['tmuxSession'];
+      final tmuxWindow = entry['tmuxWindow'];
       _open(
         source,
-        tmuxSession: entry['tmuxSession'] is String
-            ? entry['tmuxSession'] as String
-            : null,
-        tmuxWindow: entry['tmuxWindow'] is int
-            ? entry['tmuxWindow'] as int
-            : null,
+        tmuxSession: tmuxSession is String ? tmuxSession : null,
+        tmuxWindow: tmuxWindow is int ? tmuxWindow : null,
         select: false,
       );
       restored++;
@@ -610,6 +637,7 @@ extension _Actions on _SSHTabPageState {
           ];
         },
         builder: (ctx, spi) => ListTile(
+          leading: distIcon(spi.id, size: 22),
           title: Text(spi.name),
           subtitle: Text(spi.displayAddr),
           trailing: const Icon(Icons.chevron_right),

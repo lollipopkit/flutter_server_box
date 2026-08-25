@@ -263,8 +263,53 @@ class AppLocalizationsJa extends AppLocalizations {
   String get backupPasswordWrong => 'バックアップパスワードが間違っています';
 
   @override
-  String get remoteBackupPasswordRequired =>
-      'Remote backups require a non-empty backup password';
+  String get connectAll => 'すべて接続';
+
+  @override
+  String get disconnectAll => 'すべて切断';
+
+  @override
+  String get distIcon => 'ディストリビューション標識';
+
+  @override
+  String get distIconConsent => 'そのサーバーが動かしている可能性のあるディストリビューションを示すためだけに使います。';
+
+  @override
+  String get distIconIntroLegal =>
+      'マークは、この端末がリモートシステムから読み取った内容を示すだけで、その情報は誤っていたり古かったりすることがあり、派生版・再構築版・特定のバージョンを表すものでもありません。判別できない場合は汎用のアイコンを表示します。\n\n各マークはそれぞれの所有者の商標であり、ここではそれが指すシステムを示す目的にのみ使用しています。';
+
+  @override
+  String get distIconTip => '各サーバーの横に、動作していると思われるシステムの小さな標識を表示します';
+
+  @override
+  String get distNameMap => '名前の対応付け';
+
+  @override
+  String get distNameMapTip =>
+      'マークの置き場でファイル名がこのアプリの呼び方と違うディストリビューションにだけ使います。キーはこのアプリが使う名前、値は実際に取得する名前です。表示できないマークがなければ設定は不要です。';
+
+  @override
+  String get logoUrl => 'ロゴの URL';
+
+  @override
+  String get logoUrlTip => 'サーバー詳細ページの上部に出る大きな画像。元の色のまま表示します。';
+
+  @override
+  String get markUrl => 'マークの URL';
+
+  @override
+  String get markUrlTip => '一覧でサーバー名の横に出る小さなマーク。空なら表示しません。\n\nロゴとは別の画像です';
+
+  @override
+  String get navTabMenuTip => 'タブを長押し（マウスは右クリック）すると、その中のすべてをまとめて接続・切断できます。';
+
+  @override
+  String nTags(Object count) {
+    return '$count 個のタグ';
+  }
+
+  @override
+  String get remoteBackupPasswordRequired => 'リモートバックアップには空でないバックアップパスワードが必要です';
 
   @override
   String get monitorHttpsRequired =>
@@ -583,6 +628,9 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get ungrouped => '未分類';
+
+  @override
   String get unused => '未使用';
 
   @override
@@ -717,9 +765,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get noPromptAgain => '再度確認しない';
-
-  @override
-  String get onlyOneLine => '一行のみ表示（スクロール可能）';
 
   @override
   String get openLastPath => '最後のパスを開く';
@@ -1211,6 +1256,12 @@ class AppLocalizationsJa extends AppLocalizations {
       'ターミナルにスクロールできる内容があるときは、横にドラッグするとテキストを選択できます。';
 
   @override
+  String get virtKeyRows => '同時に表示する行数';
+
+  @override
+  String get virtKeyRowsTip => '残りは別のページに置かれ、横にスワイプして切り替えます。';
+
+  @override
   String get waitConnection => '接続の確立を待ってください';
 
   @override
@@ -1270,7 +1321,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get sponsor => '赞助';
+  String get sponsor => 'スポンサー';
 
   @override
   String get sortByJoinTime => '追加した順';
@@ -1490,4 +1541,10 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get send => '送信';
+
+  @override
+  String get privacyBlur => 'バックグラウンドのプライバシー';
+
+  @override
+  String get privacyBlurTip => 'Appスイッチャーで内容を隠す';
 }
