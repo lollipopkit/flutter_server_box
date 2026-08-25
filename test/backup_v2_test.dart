@@ -261,6 +261,72 @@ void main() {
       expect(backup.settings['timeOut'], 11);
     });
 
+    test('leaves the Agent local-exec permission out of the file', () async {
+      // "The Agent may run commands on *this* device" is a question about the
+      // machine, and a backup file does not know which machine it is being
+      // read on. It exported as an ordinary settings row, so a file written
+      // where the Agent had been let loose turned it on wherever it landed.
+      Stores.setting.agentLocalExec.put(true);
+
+      final backup = await BackupV2.loadFromStore();
+
+      expect(backup.settings.containsKey('agentLocalExec'), isFalse);
+    });
+
+    test('and does not take it from one either', () async {
+      Stores.setting.agentLocalExec.put(false);
+
+      final backup = BackupV2(
+        version: BackupV2.formatVer,
+        date: 1,
+        spis: const {},
+        snippets: const {},
+        keys: const {},
+        container: const {},
+        history: const {},
+        settings: {
+          'agentLocalExec': true,
+          'timeOut': 9,
+          Stores.setting.lastUpdateTsKey: <String, int>{},
+        },
+      );
+      await backup.merge(force: true);
+
+      expect(Stores.setting.agentLocalExec.fetch(), isFalse);
+      expect(Stores.setting.timeout.fetch(), 9, reason: 'the rest still lands');
+    });
+
+    test('a file carrying no settings leaves the local ones alone', () async {
+      // `includeSettings: false`. The three settings migrations convert what
+      // *arrived*; run over the local settings anyway, `_migrateHomeTabsAgent`
+      // put Agent back for somebody who had taken it out.
+      Stores.setting.homeTabs.put(const [
+        AppTab.server,
+        AppTab.ssh,
+        AppTab.file,
+        AppTab.snippet,
+      ]);
+
+      final backup = BackupV2(
+        version: BackupV2.formatVer,
+        date: 1,
+        spis: const {},
+        snippets: const {},
+        keys: const {},
+        container: const {},
+        history: const {},
+        settings: const {},
+      );
+      await backup.merge(force: true);
+
+      expect(Stores.setting.homeTabs.fetch(), const [
+        AppTab.server,
+        AppTab.ssh,
+        AppTab.file,
+        AppTab.snippet,
+      ]);
+    });
+
     test('does not apply device-local markers from an older backup', () async {
       const importMarker = '${StoreDefaults.prefixKey}hiveImported';
       Stores.setting.set(importMarker, true, updateLastUpdateTsOnSet: false);

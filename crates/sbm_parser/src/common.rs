@@ -44,14 +44,48 @@ fn os_release_value(raw: &str, key: &str) -> Option<String> {
 
 /// os-release quotes a value only when it has to, and either quote character
 /// is allowed. Anything else in the line is part of the value.
+///
+/// A double-quoted value is shell-quoted, which os-release says in so many
+/// words, so `PRETTY_NAME="Foo \"Bar\" Linux"` carries backslashes that are
+/// not part of the name. They used to reach the status card as written. A
+/// single-quoted value has no escapes in shell and gets none here.
 fn unquote(value: &str) -> String {
     let value = value.trim();
-    let inner = value
-        .strip_prefix('"')
-        .and_then(|v| v.strip_suffix('"'))
-        .or_else(|| value.strip_prefix('\'').and_then(|v| v.strip_suffix('\'')))
-        .unwrap_or(value);
-    inner.to_string()
+    if let Some(inner) = value.strip_prefix('"').and_then(|v| v.strip_suffix('"')) {
+        return unescape_double_quoted(inner);
+    }
+    if let Some(inner) = value.strip_prefix('\'').and_then(|v| v.strip_suffix('\'')) {
+        return inner.to_string();
+    }
+    value.to_string()
+}
+
+/// The four characters a backslash escapes inside shell double quotes.
+///
+/// Every other `\x` keeps its backslash, which is what the shell does too — so
+/// a Windows path in a value is left alone rather than quietly mangled.
+fn unescape_double_quoted(value: &str) -> String {
+    if !value.contains('\\') {
+        return value.to_string();
+    }
+    let mut out = String::with_capacity(value.len());
+    let mut chars = value.chars();
+    while let Some(c) = chars.next() {
+        if c != '\\' {
+            out.push(c);
+            continue;
+        }
+        match chars.next() {
+            Some(next @ ('"' | '\\' | '$' | '`')) => out.push(next),
+            // A trailing backslash is not an escape of anything.
+            Some(next) => {
+                out.push('\\');
+                out.push(next);
+            }
+            None => out.push('\\'),
+        }
+    }
+    out
 }
 
 /// `PRETTY_NAME` — the line written for a person to read (Dart `_parseSysVer`).

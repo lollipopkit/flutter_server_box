@@ -250,6 +250,18 @@ Future<void> _doPlatformRelated() async {
 
 // It may contains some async heavy funcs.
 Future<void> _doDbMigrate() async {
+  // Storage layout first: it must finish before anything decodes a record as
+  // its current type. Throws SchemaTooNewException when the data was written
+  // by a newer build — that must not be swallowed, since continuing would let
+  // this build overwrite records whose shape it doesn't understand.
+  //
+  // First in this function, and not after the feature bump below, because that
+  // refusal is only worth anything if nothing has been written yet. Run second,
+  // it left `autoAddNewCards`, `autoAddNewFuncs` and a rewritten `lastVer`
+  // behind on a database it then declined to touch — so a downgrade destroyed
+  // exactly the settings the refusal exists to protect.
+  await SchemaVersion.migrate(kSchemaMigrations);
+
   final lastVer = Stores.setting.lastVer.fetch();
   const newVer = BuildData.build;
   // It's only the version upgrade trigger logic.
@@ -259,17 +271,6 @@ Future<void> _doDbMigrate() async {
     ServerFuncBtn.autoAddNewFuncs(lastVer, newVer);
     Stores.setting.lastVer.put(newVer);
   }
-
-  // Storage layout first: it must finish before anything decodes a record as
-  // its current type. Throws SchemaTooNewException when the data was written
-  // by a newer build — that must not be swallowed, since continuing would let
-  // this build overwrite records whose shape it doesn't understand.
-  //
-  // The list is empty as of v4: `HiveImport` brings every install straight to
-  // `current` while copying, because a pre-v3 record only exists as a Hive
-  // value and that is the one pass that reads one. The call stays for the
-  // downgrade check it performs, and for the next step that does exist.
-  await SchemaVersion.migrate(kSchemaMigrations);
 
   // No app-level fixups follow. `migrateIds` and `migrateIdentityFilePaths`
   // both scanned every server on every launch to repair a record only an

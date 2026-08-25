@@ -60,10 +60,6 @@ jobs:
       # of a manual dispatch against a tag with the release box unticked, which
       # is the one case the box exists to say no to.
       isRelease: ${{ steps.buildNumber.outputs.release }}
-    permissions:
-      # To open the release the platform jobs upload into. They used to each
-      # create it, which on a fresh tag is six jobs racing to make one thing.
-      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -215,17 +211,6 @@ jobs:
           fi
           echo "release=$release" >> "$GITHUB_OUTPUT"
           echo "build $build, release $release"
-      # Opened here so the platform jobs only ever upload into a release that
-      # exists. Each of them used to create it, and on a fresh tag they all
-      # observe it missing at once: one wins and the others can take a conflict
-      # back, failing a build that succeeded or leaving a partial asset set.
-      - name: Open the release
-        if: steps.buildNumber.outputs.release == 'true'
-        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
-        with:
-          tag_name: v1.0.${{ steps.buildNumber.outputs.build }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   buildMacOS:
     name: Build macos
@@ -246,8 +231,12 @@ jobs:
       BUILD_NUMBER: ${{ needs.reproducibilityCheck.outputs.buildNumber }}
     runs-on: macos-latest
     timeout-minutes: 45
+    # Read-only, on a release run as on any other. Nothing here writes to the
+    # repository: the artifact is handed to `publishRelease`, which is the one
+    # job that needs a write-capable token — and it runs nothing but the
+    # publication.
     permissions:
-      contents: write
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -348,26 +337,17 @@ jobs:
           APP_PATH: build/macos/Build/Products/Release/Server Box.app
           DMG_BASENAME: ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_NoSign
         run: bash scripts/release/package-dmg-from-xcarchive.sh
+      # Always, release or not. The artifact is how the build reaches
+      # `publishRelease`; `if-no-files-found: error` is what makes a rename
+      # that did not fire fail here, in the job that would know why, rather
+      # than by publishing a release with whatever else happened to be there.
       - name: Upload artifacts
-        if: needs.reproducibilityCheck.outputs.isRelease != 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-macos
-          path: build/artifacts/*.dmg
+          path: build/artifacts/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_NoSign.dmg
           if-no-files-found: error
           retention-days: 14
-      - name: Publish to the release
-        if: needs.reproducibilityCheck.outputs.isRelease == 'true'
-        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
-        with:
-          tag_name: v1.0.${{ env.BUILD_NUMBER }}
-          # A rename that did not fire, or an ABI that did not build, used to
-          # publish a release with whatever else happened to be there.
-          fail_on_unmatched_files: true
-          files: |
-            build/artifacts/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_NoSign.dmg
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   verifyMonitor:
     name: Verify monitor ${{ matrix.platform }}-${{ matrix.arch }}
@@ -436,8 +416,10 @@ jobs:
       APP_NAME: ${{ needs.reproducibilityCheck.outputs.appName }}
       BUILD_NUMBER: ${{ needs.reproducibilityCheck.outputs.buildNumber }}
     runs-on: ubuntu-latest
+    # See `buildMacOS` — publication is one job, and it is the only one that
+    # needs to write.
     permissions:
-      contents: write
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -508,28 +490,20 @@ jobs:
           done
           # Remove original APKs copied by fl_build
           rm -f app-*-release.apk
+      # Named one by one rather than `*.apk`, so the artifact holds exactly what
+      # a release publishes and nothing else. `if-no-files-found` only fires
+      # when *no* pattern matched, so it does not catch a single missing ABI —
+      # `publishRelease`'s `Check every expected asset arrived` is what does.
       - name: Upload artifacts
-        if: needs.reproducibilityCheck.outputs.isRelease != 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-android
-          path: build/app/outputs/flutter-apk/*.apk
-          if-no-files-found: error
-          retention-days: 14
-      - name: Publish to the release
-        if: needs.reproducibilityCheck.outputs.isRelease == 'true'
-        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
-        with:
-          tag_name: v1.0.${{ env.BUILD_NUMBER }}
-          # A rename that did not fire, or an ABI that did not build, used to
-          # publish a release with whatever else happened to be there.
-          fail_on_unmatched_files: true
-          files: |
+          path: |
             build/app/outputs/flutter-apk/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_arm64.apk
             build/app/outputs/flutter-apk/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_arm.apk
             build/app/outputs/flutter-apk/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_amd64.apk
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          if-no-files-found: error
+          retention-days: 14
 
   buildIOS:
     name: Build ios
@@ -545,8 +519,10 @@ jobs:
       APP_NAME: ${{ needs.reproducibilityCheck.outputs.appName }}
       BUILD_NUMBER: ${{ needs.reproducibilityCheck.outputs.buildNumber }}
     runs-on: macos-latest
+    # See `buildMacOS` — publication is one job, and it is the only one that
+    # needs to write.
     permissions:
-      contents: write
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -590,25 +566,12 @@ jobs:
         shell: bash
         run: APP_ASSET_NAME="${APP_NAME}" scripts/release/package-unsigned-ipa.sh
       - name: Upload artifacts
-        if: needs.reproducibilityCheck.outputs.isRelease != 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-ios
-          path: build/artifacts/*.ipa
+          path: build/artifacts/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_NoSign.ipa
           if-no-files-found: error
           retention-days: 14
-      - name: Publish to the release
-        if: needs.reproducibilityCheck.outputs.isRelease == 'true'
-        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
-        with:
-          tag_name: v1.0.${{ env.BUILD_NUMBER }}
-          # A rename that did not fire, or an ABI that did not build, used to
-          # publish a release with whatever else happened to be there.
-          fail_on_unmatched_files: true
-          files: |
-            build/artifacts/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_NoSign.ipa
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   buildLinux:
     name: Build linux
@@ -623,8 +586,10 @@ jobs:
     env:
       APP_NAME: ${{ needs.reproducibilityCheck.outputs.appName }}
       BUILD_NUMBER: ${{ needs.reproducibilityCheck.outputs.buildNumber }}
+    # See `buildMacOS` — publication is one job, and it is the only one that
+    # needs to write.
     permissions:
-      contents: write
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -670,25 +635,12 @@ jobs:
         run: |
           mv "${APP_NAME}_v1.0.${BUILD_NUMBER}_amd64.AppImage" "${APP_NAME}_v1.0.${BUILD_NUMBER}${{ matrix.release_suffix }}_amd64.AppImage"
       - name: Upload artifacts
-        if: needs.reproducibilityCheck.outputs.isRelease != 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-linux${{ matrix.artifact_suffix }}
-          path: "*.AppImage"
+          path: ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}${{ matrix.release_suffix }}_amd64.AppImage
           if-no-files-found: error
           retention-days: 14
-      - name: Publish to the release
-        if: needs.reproducibilityCheck.outputs.isRelease == 'true'
-        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
-        with:
-          tag_name: v1.0.${{ env.BUILD_NUMBER }}
-          # A rename that did not fire, or an ABI that did not build, used to
-          # publish a release with whatever else happened to be there.
-          fail_on_unmatched_files: true
-          files: |
-            ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}${{ matrix.release_suffix }}_amd64.AppImage
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   buildWindows:
     name: Build windows
@@ -704,8 +656,10 @@ jobs:
       APP_NAME: ${{ needs.reproducibilityCheck.outputs.appName }}
       BUILD_NUMBER: ${{ needs.reproducibilityCheck.outputs.buildNumber }}
     runs-on: windows-latest
+    # See `buildMacOS` — publication is one job, and it is the only one that
+    # needs to write.
     permissions:
-      contents: write
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -730,22 +684,98 @@ jobs:
             mv "$f" "${f/_${BUILD_NUMBER}_/_v1.0.${BUILD_NUMBER}_}"
           done
       - name: Upload artifacts
-        if: needs.reproducibilityCheck.outputs.isRelease != 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-windows
-          path: "*_windows_amd64.zip"
+          path: ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_windows_amd64.zip
           if-no-files-found: error
           retention-days: 14
-      - name: Publish to the release
-        if: needs.reproducibilityCheck.outputs.isRelease == 'true'
+
+  # The one job that publishes, and the only one with a write-capable token.
+  #
+  # Every platform used to open the release itself and upload into it, six jobs
+  # racing to create one thing; then the release was opened here and they
+  # uploaded into it, which stopped the race but not the half-finished result —
+  # a build that failed after another had uploaded left the tag carrying two
+  # platforms out of six, published, with nothing to say the rest were coming.
+  # `fail_on_unmatched_files` cannot see that: it knows about the files one job
+  # was asked for, not about the job that never ran.
+  #
+  # So: `needs` every platform, which a skipped or failed one fails; assemble
+  # the assets from their artifacts; refuse if the set is not complete; create
+  # the release as a **draft** and only then publish it. A failure anywhere
+  # before that last step leaves a draft, which is not a release anyone can
+  # download.
+  publishRelease:
+    name: Publish the release
+    if: needs.reproducibilityCheck.outputs.isRelease == 'true'
+    needs:
+      - reproducibilityCheck
+      - buildMacOS
+      - buildAndroid
+      - buildIOS
+      - buildLinux
+      - buildWindows
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      APP_NAME: ${{ needs.reproducibilityCheck.outputs.appName }}
+      BUILD_NUMBER: ${{ needs.reproducibilityCheck.outputs.buildNumber }}
+      TAG: v1.0.${{ needs.reproducibilityCheck.outputs.buildNumber }}
+    steps:
+      - name: Collect the platform artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          pattern: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-*
+          path: assets
+          merge-multiple: true
+      # The complete set, named here because this is the only place that can
+      # know it. Each build job knows about its own files and answers for those;
+      # a platform whose job never ran has no files and no complaint to make.
+      - name: Check every expected asset arrived
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          expected=(
+            "${APP_NAME}_${TAG}_NoSign.dmg"
+            "${APP_NAME}_${TAG}_NoSign.ipa"
+            "${APP_NAME}_${TAG}_arm64.apk"
+            "${APP_NAME}_${TAG}_arm.apk"
+            "${APP_NAME}_${TAG}_amd64.apk"
+            "${APP_NAME}_${TAG}_amd64.AppImage"
+            "${APP_NAME}_${TAG}_legacy_amd64.AppImage"
+            "${APP_NAME}_${TAG}_windows_amd64.zip"
+          )
+
+          missing=()
+          for name in "${expected[@]}"; do
+            [ -f "assets/$name" ] || missing+=("$name")
+          done
+
+          echo "collected:"
+          ls -la assets
+
+          if (( ${#missing[@]} )); then
+            echo "::error::the release is incomplete, ${#missing[@]} asset(s) missing: ${missing[*]}"
+            exit 1
+          fi
+      # As a draft, so nothing is downloadable until the step below says so.
+      # `action-gh-release` sends `draft` on an update too, so a second call
+      # without it would publish the release — which is exactly what the step
+      # below is for.
+      - name: Stage the release
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
         with:
-          tag_name: v1.0.${{ env.BUILD_NUMBER }}
-          # A rename that did not fire, or an ABI that did not build, used to
-          # publish a release with whatever else happened to be there.
+          tag_name: ${{ env.TAG }}
+          draft: true
           fail_on_unmatched_files: true
-          files: |
-            ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_windows_amd64.zip
+          files: assets/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release edit "$TAG" --draft=false --repo "$GITHUB_REPOSITORY"

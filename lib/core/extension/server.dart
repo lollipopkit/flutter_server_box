@@ -20,15 +20,20 @@ extension LogoExt on ServerState {
         Stores.setting.serverLogoUrl.fetch().selfNotEmptyOrNull;
     if (configured == null) return null;
 
+    // Every occurrence, not the first. A template naming one twice is ordinary
+    // — `.../{DIST}/{DIST}-{BRIGHT}.png` is how one collection is laid out —
+    // and substituting once left the literal `{DIST}` in the address that
+    // reached the image loader.
     var logoUrl = resolveLogoUrl(configured);
     final dist = status.dist;
-    if (dist != null) {
-      logoUrl = logoUrl.replaceFirst('{DIST}', distFileName(dist));
+    if (logoUrl.contains('{DIST}')) {
+      // Nothing to put there yet, so there is no address — the same answer
+      // `distMarkUrl` gives, rather than fetching one with the braces still in
+      // it and showing whatever a 404 renders as.
+      if (dist == null) return null;
+      logoUrl = logoUrl.replaceAll('{DIST}', distFileName(dist));
     }
-    logoUrl = logoUrl.replaceFirst(
-      '{BRIGHT}',
-      context.isDark ? 'dark' : 'light',
-    );
+    logoUrl = logoUrl.replaceAll('{BRIGHT}', context.isDark ? 'dark' : 'light');
     return isFetchableLogoUrl(logoUrl) ? logoUrl : null;
   }
 }

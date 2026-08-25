@@ -28,8 +28,8 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
   final prop = Stores.setting.sshVirtKeys;
   final disabledProp = Stores.setting.sshVirtKeysDisabled;
 
-  late List<int> _order;
-  late Set<int> _enabled;
+  late List<VirtKey> _order;
+  late Set<VirtKey> _enabled;
 
   @override
   void initState() {
@@ -38,21 +38,20 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
   }
 
   void _loadData() {
-    // Through [VirtKeyX.loadFromStore], which is where an index this build
-    // cannot name is dropped. Read straight out of the store, one such index —
+    // Through [VirtKeyX.loadFromStore], which is where a name this build
+    // cannot place is dropped. Read straight out of the store, one such entry —
     // a restore from a newer build — reached `VirtKey.values[key]` below and
     // threw while the list was building, so the page came up as a red box
     // rather than as a list missing a row.
-    final keys = VirtKeyX.loadFromStore().map((e) => e.index).toList();
+    final keys = VirtKeyX.loadFromStore();
     final disabled = disabledProp.fetch();
-    _order = List<int>.from(keys);
-    for (final d in disabled) {
-      if (d < 0 || d >= VirtKey.values.length) continue;
-      if (!_order.contains(d)) {
-        _order.add(d);
-      }
+    _order = List<VirtKey>.from(keys);
+    for (final name in disabled) {
+      final key = VirtKeyX.byName(name);
+      if (key == null) continue;
+      if (!_order.contains(key)) _order.add(key);
     }
-    _enabled = Set<int>.from(keys.where((k) => !disabled.contains(k)));
+    _enabled = keys.where((k) => !disabled.contains(k.name)).toSet();
   }
 
   @override
@@ -136,12 +135,11 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
     );
   }
 
-  Widget _buildListItem(int key, int idx) {
-    final item = VirtKey.values[key];
+  Widget _buildListItem(VirtKey item, int idx) {
     final help = item.help;
-    final isEnabled = _enabled.contains(key);
+    final isEnabled = _enabled.contains(item);
     return ReorderableDelayedDragStartListener(
-      key: ValueKey(key),
+      key: ValueKey(item),
       index: idx,
       child: CardX(
         child: ListTile(
@@ -150,7 +148,7 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildCheckBox(key, isEnabled),
+              _buildCheckBox(item, isEnabled),
               if (!isDesktop) ...[
                 const SizedBox(width: 7),
                 ReorderableDragStartListener(
@@ -180,7 +178,7 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
     );
   }
 
-  Widget _buildCheckBox(int key, bool isEnabled) {
+  Widget _buildCheckBox(VirtKey key, bool isEnabled) {
     return Checkbox(value: isEnabled, onChanged: (_) => _toggleEnabled(key));
   }
 
@@ -197,7 +195,7 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
     _saveChanges();
   }
 
-  void _toggleEnabled(int key) {
+  void _toggleEnabled(VirtKey key) {
     setState(() {
       if (_enabled.contains(key)) {
         _enabled.remove(key);
@@ -209,8 +207,11 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
   }
 
   void _saveChanges() {
-    prop.put(_order);
-    final disabledList = _order.where((k) => !_enabled.contains(k)).toList();
+    prop.put(_order.map((e) => e.name).toList());
+    final disabledList = _order
+        .where((k) => !_enabled.contains(k))
+        .map((e) => e.name)
+        .toList();
     disabledProp.put(disabledList);
   }
 }

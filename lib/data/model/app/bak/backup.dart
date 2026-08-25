@@ -11,6 +11,8 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/migrations/m008_settings_fixups.dart';
 import 'package:server_box/data/store/migrations/m009_grouped_settings.dart';
 import 'package:server_box/data/store/migrations/m011_virt_key_rows.dart';
+import 'package:server_box/data/store/migrations/m013_virt_key_names.dart';
+import 'package:server_box/data/store/setting.dart';
 
 part 'backup.g.dart';
 
@@ -76,16 +78,21 @@ class Backup implements Mergeable {
     // authenticating with the key the restore just removed.
     PrivateKeyUnlock.forgetAll();
 
+    final settings_ = settings;
+
     SqliteStore.transact(() {
       Stores.key.replaceAll(keys);
       Stores.server.replaceAll(spis);
       Stores.snippet.replaceAll(snippets);
       Stores.container.restoreLegacyMap(container);
-      _restoreInto(Stores.history, history, force: force);
+      _restoreInto(Stores.history, history);
 
-      final settings_ = settings;
       if (settings_ != null) {
-        _restoreInto(Stores.setting, settings_, force: force);
+        _restoreInto(
+          Stores.setting,
+          settings_,
+          deviceLocal: SettingStore.deviceLocalKeys,
+        );
       }
     });
 
@@ -96,10 +103,17 @@ class Backup implements Mergeable {
     // being older still, the pre-`virtKeyRows` switch and the `int`
     // `sshConnectionMode` as well.
     //
+    // Only when the file brought settings, for the reason [BackupV2.merge]
+    // records: these convert what arrived, and a file carrying none leaves the
+    // local settings alone.
+    //
     // In version order, which is the order the migrator would have run them in.
-    await const SettingsFixupsMigration().apply();
-    await const GroupedSettingsMigration().apply();
-    await const VirtKeyRowsMigration().apply();
+    if (settings_ != null && settings_.isNotEmpty) {
+      await const SettingsFixupsMigration().apply();
+      await const GroupedSettingsMigration().apply();
+      await const VirtKeyRowsMigration().apply();
+      await const VirtKeyNamesMigration().apply();
+    }
 
     Provider.reload();
     RNodes.app.notify();
@@ -113,9 +127,16 @@ class Backup implements Mergeable {
 
 /// Writes one section of a backup into the key-value store it came from.
 ///
-/// [force] replaces what is there; otherwise the store is also made to *stop*
-/// holding whatever the backup does not, which is what makes a delete on one
-/// device reach another.
+/// The store is also made to *stop* holding whatever the backup does not,
+/// which is what makes a delete on one device reach another. Unconditionally,
+/// including on a forced restore: `Mergeable.mergeStore` — the v2 path — takes
+/// a local-only key out when `force` is set, and skipping it here left a
+/// forced restore of an older file holding preferences that file does not
+/// have, which is not the state the user asked to go back to.
+///
+/// [deviceLocal] names keys this device answers for itself; they are neither
+/// written from the backup nor deleted for being absent from one. See
+/// [SettingStore.deviceLocalKeys].
 ///
 /// Nothing here stamps `lastUpdateTs`, which is what writing straight to the
 /// Hive box used to achieve. A restore is not an edit: marking every restored
@@ -129,14 +150,14 @@ class Backup implements Mergeable {
 void _restoreInto(
   SqliteStore store,
   Map<String, Object?> incoming, {
-  required bool force,
+  Set<String> deviceLocal = const {},
 }) {
-  if (!force) {
-    for (final key in store.keys().difference(incoming.keys.toSet())) {
-      store.remove(key, updateLastUpdateTsOnRemove: false);
-    }
+  for (final key in store.keys().difference(incoming.keys.toSet())) {
+    if (deviceLocal.contains(key)) continue;
+    store.remove(key, updateLastUpdateTsOnRemove: false);
   }
   for (final entry in incoming.entries) {
+    if (deviceLocal.contains(entry.key)) continue;
     final value = entry.value;
     if (value == null) {
       store.remove(entry.key, updateLastUpdateTsOnRemove: false);

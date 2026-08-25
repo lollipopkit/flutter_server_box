@@ -1087,6 +1087,31 @@ fn os_release_empty_id_like() {
     assert_eq!(parse_os_id_like(raw), Vec::<String>::new());
 }
 
+/// A double-quoted value is shell-quoted, so its backslash escapes are not
+/// part of the value. They used to reach the status card as written.
+#[test]
+fn os_release_unescapes_double_quoted() {
+    use sbm_parser::common::*;
+    let raw = "PRETTY_NAME=\"Foo \\\"Bar\\\" Linux \\\\ 1.0\"\n";
+    assert_eq!(
+        parse_sys_version(raw).as_deref(),
+        Some(r#"Foo "Bar" Linux \ 1.0"#)
+    );
+
+    // Only the four the shell escapes. Everything else keeps its backslash,
+    // the way the shell leaves it.
+    assert_eq!(
+        parse_sys_version("PRETTY_NAME=\"a\\nb\"\n").as_deref(),
+        Some(r"a\nb")
+    );
+
+    // Single quotes have no escapes in shell, and none here.
+    assert_eq!(
+        parse_sys_version("PRETTY_NAME='a\\nb'\n").as_deref(),
+        Some(r"a\nb")
+    );
+}
+
 /// `ID` must not be found inside `ID_LIKE`: the prefix alone matches, and
 /// reading `_LIKE=debian` as this machine's own id would name a distribution
 /// that does not exist.

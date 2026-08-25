@@ -11,6 +11,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/fl_lib.dart' as lib show isMacOS;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/store/migrations/m008_settings_fixups.dart';
+import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
 
 void main() {
@@ -201,6 +202,22 @@ void main() {
       await store.removeRetiredKeys();
 
       expect(store.get<bool>('homeTabsAgentMigrated'), isTrue);
+    });
+
+    test('and nothing at all is dropped on a database this build cannot read',
+        () async {
+      // `Stores.init` calls this before `SchemaVersion.migrate` gets to refuse
+      // the downgrade, so the refusal used to arrive after the keys were gone.
+      // "Retired here" says nothing about whether the newer build still reads
+      // them.
+      store.schemaVersion.put(SchemaVersion.current + 1);
+      store.set('sshConnectionModeMigrated', true);
+      store.set('forceSinglePane', true);
+
+      await store.removeRetiredKeys();
+
+      expect(store.get<bool>('sshConnectionModeMigrated'), isTrue);
+      expect(store.get<bool>('forceSinglePane'), isTrue);
     });
 
     test('and a restore that brings them back is cleaned up next launch',

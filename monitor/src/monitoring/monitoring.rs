@@ -197,6 +197,15 @@ pub struct GpuMetrics {
     pub memory_total: i64,
     /// Unit of the memory figures as reported by the tool (MiB usually)
     pub memory_unit: String,
+    /// Which tool reported it: `nvidia` or `amd`.
+    ///
+    /// The two lists are flattened into one here, and without this the
+    /// consumer cannot tell them apart again — the app draws them under
+    /// separate headings, and had to drop them all rather than guess.
+    /// `Option`, and skipped when absent, so a client written against the
+    /// older shape still decodes.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub vendor: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -906,6 +915,7 @@ fn adapt_status(
             memory_used: g.memory.used,
             memory_total: g.memory.total,
             memory_unit: g.memory.unit.clone(),
+            vendor: Some("nvidia".to_string()),
         })
         .chain(amd.iter().map(|g| GpuMetrics {
             name: g.name.clone(),
@@ -915,6 +925,7 @@ fn adapt_status(
             memory_used: g.memory.used,
             memory_total: g.memory.total,
             memory_unit: g.memory.unit.clone(),
+            vendor: Some("amd".to_string()),
         }))
         .collect();
 

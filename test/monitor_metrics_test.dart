@@ -110,5 +110,154 @@ void main() {
       expect(status.osId, isNull);
       expect(status.dist, Dist.alpine);
     });
+
+    test('and a parent is dropped when the next sample declares none', () {
+      var status = applyMonitorMetrics(
+        InitStatus.status,
+        MonitorMetrics.fromJson(
+          body({'os_id': 'linuxmint', 'os_id_like': const ['ubuntu']}),
+        ),
+      );
+      expect(status.osIdLike, ['ubuntu']);
+
+      // The same machine, reinstalled as something that declares no parent.
+      // Keeping the old one made `resolveDist` fall through to Ubuntu for any
+      // id this build does not know.
+      status = applyMonitorMetrics(
+        status,
+        MonitorMetrics.fromJson(body({'os_id': 'gentoo'})),
+      );
+      expect(status.osId, 'gentoo');
+      expect(status.osIdLike, isEmpty);
+    });
+  });
+
+  group('a payload from an agent older than this build', () {
+    /// Everything a released agent sends, and nothing this branch added.
+    Map<String, Object?> legacyBody(Map<String, Object?> extra) => {
+      'timestamp': '2026-08-22T00:00:00Z',
+      'server_name': 'test-server',
+      'cpu_usage': 40.0,
+      'memory': const {
+        'total': 2048,
+        'used': 1024,
+        'free': 1024,
+        'usage_percent': 50.0,
+      },
+      'swap': const {'total': 0, 'used': 0, 'usage_percent': 0.0},
+      'disk': const {
+        'total': 4096,
+        'used': 1024,
+        'free': 3072,
+        'usage_percent': 25.0,
+      },
+      'network': const {'rx_bytes': 0, 'tx_bytes': 0},
+      ...extra,
+    };
+
+    test('decodes without the fields this build added', () {
+      // The two were `required` and force-cast, so one missing key threw
+      // before the mapper's per-section tolerance could keep anything.
+      final metrics = MonitorMetrics.fromJson(legacyBody(const {}));
+
+      expect(metrics.extendedUpdatedAt, isNull);
+      expect(metrics.cpuCores, isEmpty);
+      expect(metrics.cpuUsage, 40.0);
+    });
+
+    test('and its aggregate CPU still moves the reading', () {
+      // Two samples, because a percentage is what happened *between* two —
+      // the mapper accumulates `cpu_usage` into a synthetic monotonic counter
+      // exactly as the Windows SSH path does.
+      var status = applyMonitorMetrics(
+        InitStatus.status,
+        MonitorMetrics.fromJson(legacyBody(const {})),
+      );
+      status = applyMonitorMetrics(
+        status,
+        MonitorMetrics.fromJson(legacyBody(const {})),
+      );
+
+      // One synthetic core carrying `cpu_usage`. Returning early on an empty
+      // `cpu_cores` left `ss.cpu` on its previous sample, and the history
+      // buffer then recorded that as the current figure.
+      expect(status.cpu.now.length, 2);
+      expect(status.cpu.usedPercent(), closeTo(40.0, 0.1));
+    });
+
+    test('and its aggregate disk is shown rather than nothing', () {
+      final status = applyMonitorMetrics(
+        InitStatus.status,
+        MonitorMetrics.fromJson(legacyBody(const {})),
+      );
+
+      expect(status.disk.length, 1);
+      expect(status.disk.single.mount, '/');
+      expect(status.disk.single.usedPercent, 25);
+    });
+
+    test('and a GPU with no vendor field is still placed by its name', () {
+      final status = applyMonitorMetrics(
+        InitStatus.status,
+        MonitorMetrics.fromJson(
+          legacyBody({
+            'gpus': const [
+              {
+                'name': 'NVIDIA GeForce RTX 4090',
+                'usage_percent': 30.0,
+                'temperature': 50,
+                'power': '100 W / 350 W',
+                'memory_used': 1024,
+                'memory_total': 24576,
+                'memory_unit': 'MiB',
+              },
+              {
+                'name': 'AMD Radeon RX 7900 XTX',
+                'usage_percent': 10.0,
+                'temperature': 40,
+                'power': '50 W / 355 W',
+                'memory_used': 512,
+                'memory_total': 24576,
+                'memory_unit': 'MiB',
+              },
+            ],
+          }),
+        ),
+      );
+
+      expect(status.nvidia?.single.name, 'NVIDIA GeForce RTX 4090');
+      expect(status.amd?.single.name, 'AMD Radeon RX 7900 XTX');
+    });
+  });
+
+  test('the vendor the agent reports wins over the name', () {
+    final status = applyMonitorMetrics(
+      InitStatus.status,
+      MonitorMetrics.fromJson({
+        'timestamp': '2026-08-22T00:00:00Z',
+        'server_name': 'test-server',
+        'cpu_usage': 0.0,
+        'memory': const {'total': 1, 'used': 0, 'free': 1, 'usage_percent': 0.0},
+        'swap': const {'total': 0, 'used': 0, 'usage_percent': 0.0},
+        'disk': const {'total': 1, 'used': 0, 'free': 1, 'usage_percent': 0.0},
+        'network': const {'rx_bytes': 0, 'tx_bytes': 0},
+        'gpus': const [
+          {
+            // Named after neither vendor, which is why the field exists.
+            'name': 'Instinct MI300X',
+            'vendor': 'amd',
+            'usage_percent': 5.0,
+            'temperature': 35,
+            'power': '20 W / 750 W',
+            'memory_used': 1,
+            'memory_total': 2,
+            'memory_unit': 'MiB',
+          },
+        ],
+      }),
+    );
+
+    expect(status.nvidia, isNull);
+    expect(status.amd?.single.name, 'Instinct MI300X');
   });
 }

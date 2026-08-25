@@ -39,15 +39,15 @@ class _HomePageState extends ConsumerState<HomePage>
         AfterLayoutMixin,
         WidgetsBindingObserver,
         GlobalRef {
-  /// Which tab to come back to.
+  /// Which tab to come back to, by [AppTab.name] — see [_rememberTab].
   ///
-  /// A store, not `RestorableInt`. Flutter's restoration is dead in this app —
+  /// A store, not a `Restorable*`. Flutter's restoration is dead in this app —
   /// `restoreState` runs, registration succeeds, the value reads back within
   /// the session, and a relaunch has nothing, because the route
   /// `MaterialApp.home` builds hands its subtree no bucket
-  /// (`test/restoration_bucket_test.dart`). So this always came back 0, and
-  /// nothing said so.
-  final _tabIndex = Stores.history.homeTabIndex;
+  /// (`test/restoration_bucket_test.dart`). So this always came back to the
+  /// first tab, and nothing said so.
+  final _lastTab = Stores.history.homeTab;
 
   late final PageController _pageController;
 
@@ -132,6 +132,34 @@ class _HomePageState extends ConsumerState<HomePage>
   void reassemble() {
     super.reassemble();
     _publishCurrentTab();
+  }
+
+  /// Files the tab at [index] as where the app was left.
+  ///
+  /// By name. A position stops meaning the same thing the moment the tabs are
+  /// reordered or one is hidden, and the reorder is a setting the user makes
+  /// between launches.
+  void _rememberTab(int index) {
+    if (index < 0 || index >= _tabs.length) return;
+    _lastTab.put(_tabs[index].name);
+  }
+
+  /// Where to reopen, or null to leave it on the first tab.
+  ///
+  /// A name this build cannot place, or a tab since hidden, is nothing to go
+  /// back to rather than a position to clamp.
+  int? _savedTabIndex() {
+    final name = _lastTab.fetch();
+    if (name.isNotEmpty) {
+      final at = _tabs.indexWhere((tab) => tab.name == name);
+      return at < 0 ? null : at;
+    }
+    // TODO: delete with `HistoryStore.homeTabIndex`. An install upgrading from
+    // a build that stored the position has one and no name; reading it once
+    // is what keeps that launch on the tab it was left on.
+    final saved = Stores.history.homeTabIndex.fetch();
+    if (saved < 0 || saved >= _tabs.length) return null;
+    return saved;
   }
 
   /// Tells [currentHomeTabProvider] where the app ended up.
@@ -243,7 +271,7 @@ class _HomePageState extends ConsumerState<HomePage>
                 FocusScope.of(context).unfocus();
                 if (!_switchingPage) {
                   _selectIndex.value = value;
-                  _tabIndex.put(value);
+                  _rememberTab(value);
                 }
                 _syncFullscreenSystemUi();
               },
@@ -383,8 +411,8 @@ class _HomePageState extends ConsumerState<HomePage>
     // Auth required for first launch
     // Where it was left, if that is still a tab: the enabled set is a setting
     // and may have shrunk since.
-    final saved = _tabIndex.fetch();
-    if (saved >= 0 && saved < _tabs.length) {
+    final saved = _savedTabIndex();
+    if (saved != null) {
       _selectIndex.value = saved;
       if (_pageController.hasClients) {
         _pageController.jumpToPage(saved);
@@ -449,7 +477,7 @@ class _HomePageState extends ConsumerState<HomePage>
     if (_selectIndex.value == index) return;
     if (index < 0 || index >= _tabs.length) return;
     _selectIndex.value = index;
-    _tabIndex.put(index);
+    _rememberTab(index);
     _switchingPage = true;
     _pageController.animateToPage(
       index,
@@ -508,7 +536,7 @@ extension _HomePageStateActions on _HomePageState {
     setState(() {
       _tabs = newTabs;
       _selectIndex.value = nextIndex;
-      _tabIndex.put(nextIndex);
+      _rememberTab(nextIndex);
     });
 
     // The index alone does not say which tab it is any more — the list under

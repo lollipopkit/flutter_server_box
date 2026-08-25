@@ -96,7 +96,14 @@ jobs:
           # turns everything on — the filters are the thing under test then —
           # and `packages/` are the submodules the app is built from, so a
           # gitlink move there is a source change to all of it.
-          shared='^\.github/workflows/analysis\.yml$|^pubspec\.(yaml|lock)$|^packages/'
+          #
+          # `.github/actions/` and `build.yml` are here for a reason of the same
+          # kind and were missed: `setup-flutter` is the composite action every
+          # job below starts with, so a broken SDK pin in it would have been
+          # merged after only the always-on reproducibility job, and `build.yml`
+          # does not run on a pull request at all — so its own changes were
+          # reaching main with nothing having compiled anything.
+          shared='^\.github/(workflows/(analysis|build)\.yml$|actions/)|^pubspec\.(yaml|lock)$|^packages/'
 
           emit rust "$shared|^crates/|^monitor/|^Cargo\.(toml|lock)$"
           # The engine, the scripts that build and check it, and everything the

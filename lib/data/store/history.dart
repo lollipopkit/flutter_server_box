@@ -1,5 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:meta/meta.dart';
+import 'package:server_box/data/model/app/tab.dart';
 
 /// index from 0 -> n : latest -> oldest
 class _ListHistory {
@@ -92,10 +93,22 @@ class HistoryStore extends SqliteStore {
   /// feature that had never once worked.
   late final fileTabs = propertyDefault('fileTabs', '');
 
-  /// Which bottom tab the app was last on.
+  /// Which bottom tab the app was last on, by [AppTab.name].
   ///
-  /// An index into the enabled tabs rather than the tab's identity, which is
-  /// what it always was — and why every reader clamps it: the enabled set is a
-  /// setting, so the list under this number can change while it is stored.
+  /// The tab and not its position. It was a position — an index into the
+  /// enabled tabs, which every reader had to clamp — and the enabled set is a
+  /// setting the user can reorder and shorten while the number is stored. So
+  /// moving Terminal to the front and relaunching reopened whatever had taken
+  /// its old place, which reads as the app forgetting rather than as the
+  /// consequence of a reorder. A name means the same tab or nothing at all.
+  ///
+  /// Empty means nothing has been stored, or a name this build cannot place:
+  /// the caller falls back to the first tab.
+  late final homeTab = propertyDefault('homeTab', '');
+
+  /// The position [homeTab] replaced, read once for an install upgrading from
+  /// a build that wrote it.
+  ///
+  /// TODO: delete once no install can still be carrying one.
   late final homeTabIndex = propertyDefault('homeTabIndex', 0);
 }

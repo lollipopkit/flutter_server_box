@@ -6,6 +6,8 @@ import 'package:server_box/data/store/migrations/m008_settings_fixups.dart';
 import 'package:server_box/data/store/migrations/m009_grouped_settings.dart';
 import 'package:server_box/data/store/migrations/m010_server_dist.dart';
 import 'package:server_box/data/store/migrations/m011_virt_key_rows.dart';
+import 'package:server_box/data/store/migrations/m012_known_hosts_to_settings.dart';
+import 'package:server_box/data/store/migrations/m013_virt_key_names.dart';
 import 'package:server_box/data/store/schema.dart';
 
 /// Every migration, ordered, in the one place that names them.
@@ -24,4 +26,6 @@ const kSchemaMigrations = <SchemaMigration>[
   GroupedSettingsMigration(),
   ServerDistMigration(),
   VirtKeyRowsMigration(),
+  KnownHostsToSettingsMigration(),
+  VirtKeyNamesMigration(),
 ];

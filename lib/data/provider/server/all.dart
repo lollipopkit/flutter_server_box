@@ -397,6 +397,11 @@ class ServersNotifier extends _$ServersNotifier {
     for (final id in serverIds) {
       ref.invalidate(serverProvider(id));
       forgetHostKeyFingerprints(id);
+      // The rows went with the servers — the foreign key cascades — but the
+      // map this store keeps in memory did not, so a list drawn afterwards
+      // read a mark for a server that no longer exists. `delServer` does the
+      // same for the one it deletes.
+      Stores.serverDist.remove(id);
     }
     ref.read(serverSelectionProvider.notifier).select(null);
     bakSync.sync(milliDelay: 1000);

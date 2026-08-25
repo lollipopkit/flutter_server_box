@@ -262,7 +262,16 @@ void main() {
 
         expect(Stores.setting.homeTabs.get().map((e) => e.name),
             ['server', 'ssh', 'snippet']);
-        expect(Stores.setting.sshVirtKeys.get(), [0, 1, 2, 13, 14]);
+        // Written as `[0, 1, 2, 13, 14]` by that release and converted to
+        // names by m013 — an index stops meaning the same key the moment a
+        // case is inserted into `VirtKey`.
+        expect(Stores.setting.sshVirtKeys.get(), [
+          'esc',
+          'alt',
+          'home',
+          'ime',
+          'shift',
+        ]);
         expect(Stores.setting.serverOrder.get(),
             ['srv-key', 'srv-pwd', 'srv-jump']);
         expect(Stores.setting.detailCardDisabled.get(), ['temperature']);
@@ -271,12 +280,13 @@ void main() {
         // changed meaning silently.
         expect(Stores.setting.netViewType.get().name, 'speed');
 
-        // Not a setting any more: a trusted fingerprint belongs to the server
-        // it was trusted for, and cascades with it. The old key is gone.
-        expect(Stores.setting.sshKnownHostFingerprints.get(), isEmpty);
-        expect(Stores.server.knownHosts('srv-pwd'),
-            {'ssh-ed25519': 'SHA256:AAAA'});
-        expect(Stores.server.knownHosts('srv-key'), {'ssh-rsa': 'SHA256:BBBB'});
+        // Still a setting, which is the only place anything reads them from.
+        // Re-keyed onto the ids m004 hands out, so a fingerprint filed under
+        // an old `user@ip:port` id is still found for the same server.
+        expect(Stores.setting.sshKnownHostFingerprints.get(), {
+          'srv-pwd::ssh-ed25519': 'SHA256:AAAA',
+          'srv-key::ssh-rsa': 'SHA256:BBBB',
+        });
       });
 
       test('history, container hosts and port forwards come across', () {

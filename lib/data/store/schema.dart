@@ -73,7 +73,11 @@ abstract final class SchemaVersion {
   ///      row can draw its mark without a live status
   /// v12: `horizonVirtKey`, a switch meaning one row of virtual keys, becomes
   ///      `virtKeyRows`, a count of how many rows to show at once
-  static const current = 12;
+  /// v13: the trusted host keys v5 moved into `known_host` put back into the
+  ///      setting the app actually reads
+  /// v14: the virtual keys' order and hidden set by name rather than by enum
+  ///      index
+  static const current = 14;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

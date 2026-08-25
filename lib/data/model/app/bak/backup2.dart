@@ -24,7 +24,9 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/migrations/m008_settings_fixups.dart';
 import 'package:server_box/data/store/migrations/m009_grouped_settings.dart';
 import 'package:server_box/data/store/migrations/m011_virt_key_rows.dart';
+import 'package:server_box/data/store/migrations/m013_virt_key_names.dart';
 import 'package:server_box/data/store/schema.dart';
+import 'package:server_box/data/store/setting.dart';
 
 part 'backup2.freezed.dart';
 part 'backup2.g.dart';
@@ -111,7 +113,11 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       ),
       if (settings.isNotEmpty)
         Mergeable.mergeStore(
-          backupData: _mergeDataForStore(Stores.setting, settings),
+          backupData: _mergeDataForStore(
+            Stores.setting,
+            settings,
+            deviceLocal: SettingStore.deviceLocalKeys,
+          ),
           store: Stores.setting,
           force: force,
         ),
@@ -133,11 +139,22 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     // without anything having read it. `sshConnectionMode` is the third: a
     // file older than v9 carries it as the `int` it used to be, which
     // `propertyDefault('sshConnectionMode', false)` cannot read at all.
+    // `sshVirtKeys` is the fourth: a file older than v14 carries the enum
+    // indices, which every reader now sees as nothing at all.
+    //
+    // Only when the file brought settings. These convert what *arrived*; a
+    // backup taken with `includeSettings: false` leaves the local settings
+    // alone, and running the steps over them anyway is this device editing
+    // itself for no reason — `_migrateHomeTabsAgent` would put Agent back for
+    // somebody who had taken it out.
     //
     // In version order, which is the order the migrator would have run them in.
-    await const SettingsFixupsMigration().apply();
-    await const GroupedSettingsMigration().apply();
-    await const VirtKeyRowsMigration().apply();
+    if (settings.isNotEmpty) {
+      await const SettingsFixupsMigration().apply();
+      await const GroupedSettingsMigration().apply();
+      await const VirtKeyRowsMigration().apply();
+      await const VirtKeyNamesMigration().apply();
+    }
 
     if (serversChanged) GlobalRef.gRef?.read(serversProvider.notifier).reload();
     if (snippetsChanged) {
@@ -171,7 +188,10 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       container: Stores.container.getAllMap(),
       history: _backupStore(Stores.history),
       settings: includeSettings
-          ? _backupStore(Stores.setting)
+          ? _backupStore(
+              Stores.setting,
+              deviceLocal: SettingStore.deviceLocalKeys,
+            )
           : const {},
     );
   }
@@ -206,9 +226,13 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     // Checked before decoding. `version` was written from the beginning but
     // never read, so a newer file was decoded by whatever reader happened to
     // accept its shape — silently dropping the fields it didn't know.
+    // `is num`, not `is int`: JSON has one number type, so a writer emitting
+    // `13.0` reaches here as a `double` and skipped the check entirely, while
+    // the generated decoder below reads it with `toInt()` and carries on as
+    // though it were this format.
     final ver = map['version'];
-    if (ver is int && ver > formatVer) {
-      throw SchemaTooNewException(stored: ver, supported: formatVer);
+    if (ver is num && ver > formatVer) {
+      throw SchemaTooNewException(stored: ver.toInt(), supported: formatVer);
     }
 
     return BackupV2.fromJson(map);
@@ -325,33 +349,45 @@ Map<String, Object?> _sshWithRestoredKeyId(
 /// Keeps the per-record modification map needed by sync, but not device-local
 /// layout and migration markers. Restoring those markers from another device
 /// can make this device skip a migration or claim a schema it does not have.
-Map<String, Object?> _backupStore(SqliteStore store) {
+///
+/// [deviceLocal] is the same idea for keys with ordinary names — see
+/// [SettingStore.deviceLocalKeys], where a permission granted on one machine
+/// must not be granted on another by restoring a file.
+Map<String, Object?> _backupStore(
+  SqliteStore store, {
+  Set<String> deviceLocal = const {},
+}) {
   final rows = store.getAllMap(includeInternalKeys: true);
   rows.removeWhere(
-    (key, _) => store.isInternalKey(key) && key != store.lastUpdateTsKey,
+    (key, _) => _isLocalOnly(store, key, deviceLocal),
   );
   return rows;
 }
 
 Map<String, Object?> _mergeDataForStore(
   SqliteStore store,
-  Map<String, Object?> rows,
-) {
+  Map<String, Object?> rows, {
+  Set<String> deviceLocal = const {},
+}) {
   final result = Map<String, Object?>.from(rows)
-    ..removeWhere(
-      (key, _) => store.isInternalKey(key) && key != store.lastUpdateTsKey,
-    );
+    ..removeWhere((key, _) => _isLocalOnly(store, key, deviceLocal));
 
   // Mergeable treats an absent key as a deletion. Keep local-only state in
   // the input until fl_lib can expose an internal-key exclusion policy.
-  for (final entry
-      in store.getAllMap(includeInternalKeys: true).entries
-      .where((entry) =>
-          store.isInternalKey(entry.key) && entry.key != store.lastUpdateTsKey)) {
+  for (final entry in store.getAllMap(includeInternalKeys: true).entries.where(
+    (entry) => _isLocalOnly(store, entry.key, deviceLocal),
+  )) {
     result[entry.key] = entry.value;
   }
   return result;
 }
+
+/// Whether [key] belongs to this device rather than to the backup.
+///
+/// `lastUpdateTs` is internal and still travels: it is what sync compares.
+bool _isLocalOnly(SqliteStore store, String key, Set<String> deviceLocal) =>
+    (store.isInternalKey(key) && key != store.lastUpdateTsKey) ||
+    deviceLocal.contains(key);
 
 Object? _toEncodable(Object? value) {
   if (value is Enum) return value.name;

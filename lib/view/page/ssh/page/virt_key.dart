@@ -227,7 +227,7 @@ extension _VirtKey on SSHPageState {
     _virtKeysList.clear();
     final disabled = Stores.setting.sshVirtKeysDisabled.fetch().toSet();
     final virtKeys = VirtKeyX.loadFromStore()
-        .where((key) => !disabled.contains(key.index))
+        .where((key) => !disabled.contains(key.name))
         .toList();
     for (var at = 0; at < virtKeys.length; at += kVirtKeysPerRow) {
       _virtKeysList.add(

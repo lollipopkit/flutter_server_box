@@ -14,6 +14,16 @@ import 'package:server_box/data/res/default.dart';
 import 'package:server_box/data/store/field_prop.dart';
 import 'package:server_box/data/store/migrations/m008_settings_fixups.dart';
 import 'package:server_box/data/store/migrations/m011_virt_key_rows.dart';
+import 'package:server_box/data/store/schema.dart';
+
+/// The virtual-key lists, read as names and nothing else.
+///
+/// `whereType`, so a row still holding the indices these replaced reads as
+/// empty rather than throwing while a page is building. Empty is a value the
+/// readers already handle — it falls back to the default order — and
+/// [VirtKeyNamesMigration] is what stops it being reached.
+List<String> _virtKeyNames(Object? raw) =>
+    raw is List ? raw.whereType<String>().toList() : const [];
 
 class SettingStore extends SqliteStore {
   SettingStore._() : super('setting');
@@ -76,8 +86,12 @@ class SettingStore extends SqliteStore {
   // Disabled detail cards (for persistence when toggling visibility)
   late final detailCardDisabled = listProperty<String>('detailCardDisabled');
 
-  // Disabled SSH virtual keys (for persistence when toggling visibility)
-  late final sshVirtKeysDisabled = listProperty<int>('sshVirtKeysDisabled');
+  /// Virtual keys the user has hidden, by [VirtKey.name] — see [sshVirtKeys]
+  /// for why not by index.
+  late final sshVirtKeysDisabled = listProperty<String>(
+    'sshVirtKeysDisabled',
+    fromObj: _virtKeyNames,
+  );
 
   // SSH term font size
   late final termFontSize = propertyDefault('termFontSize', 13.0);
@@ -165,10 +179,20 @@ class SettingStore extends SqliteStore {
 
   late final fullScreenJitter = propertyDefault('fullScreenJitter', true);
 
-  late final sshVirtKeys = listProperty<int>(
+  /// The order the virtual keys are drawn in, by [VirtKey.name].
+  ///
+  /// By name, never by index. An index changes meaning the moment a case is
+  /// inserted into [VirtKey] — every stored arrangement then names different
+  /// keys, silently, with nothing to say it happened — and this value outlives
+  /// the build that wrote it, through a backup and through a sync. It was a
+  /// list of indices; [VirtKeyNamesMigration] is the one pass that converts.
+  ///
+  /// A name this build cannot place reads as absent rather than as a key,
+  /// which is what [VirtKeyX.loadFromStore] drops.
+  late final sshVirtKeys = listProperty<String>(
     'sshVirtKeys',
-    defaultValue: VirtKeyX.defaultOrder.map((e) => e.index).toList(),
-    fromObj: (val) => List<int>.from(val as List),
+    defaultValue: VirtKeyX.defaultOrder.map((e) => e.name).toList(),
+    fromObj: _virtKeyNames,
   );
 
   late final netViewType = propertyDefault(
@@ -355,6 +379,21 @@ class SettingStore extends SqliteStore {
   /// machine. A restore that carried a provider's configuration across should
   /// not carry that with it.
   late final agentLocalExec = propertyDefault('agentLocalExec', false);
+
+  /// Settings that describe *this device* rather than a preference worth
+  /// carrying to another one, so a backup neither exports nor restores them.
+  ///
+  /// [agentLocalExec] is the whole list. Its doc says a restore of a provider
+  /// configuration must not carry it, and until this existed it did: the key
+  /// is an ordinary settings row, so exporting on a machine where the Agent
+  /// had been let loose and restoring on a phone turned it on there with
+  /// nothing said. The permission is about which machine, and a backup file
+  /// does not know which machine it is being read on.
+  ///
+  /// Handled beside the internal keys rather than by giving it an internal
+  /// name, so an install that has already answered the question keeps its
+  /// answer instead of being quietly reset by a rename.
+  static const deviceLocalKeys = {'agentLocalExec'};
 
   /// The floating Agent's placement and size, as one row.
   ///
@@ -731,6 +770,13 @@ class SettingStore extends SqliteStore {
   /// installs are cleaned without another migration flag becoming permanent
   /// state of its own.
   Future<void> removeRetiredKeys() async {
+    // Nothing is deleted from storage this build cannot read. `Stores.init`
+    // calls this before `SchemaVersion.migrate` gets to refuse the downgrade,
+    // so without this the refusal arrived after the keys were already gone —
+    // and "retired here" says nothing about whether the build that wrote them
+    // still reads them.
+    if (schemaVersion.fetch() > SchemaVersion.current) return;
+
     for (final key in const [
       'moveOutServerTabFuncBtns',
       'forceSinglePane',

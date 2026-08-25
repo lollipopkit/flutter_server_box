@@ -169,6 +169,8 @@ export interface GpuMetrics {
   memory_used: number;
   memory_total: number;
   memory_unit: string;
+  /** Which tool reported it: `nvidia` or `amd`. Absent on older agents. */
+  vendor?: string;
 }
 
 export interface DiskDetail {
