@@ -497,18 +497,21 @@ class PveNotifier extends _$PveNotifier {
     } catch (e) {
       if (!_isActiveSession(generation, active)) return;
       Loggers.app.warning('PVE list failed', e);
-      if (_isConnectionFailure(e) || _isInvalidResponse(e)) {
+      final error = _toPveErr(e);
+      if (_isConnectionFailure(e) ||
+          _isInvalidResponse(e) ||
+          error.type == PveErrType.loginFailed) {
         await _closeSession(clearPendingTfa: true);
         if (!ref.mounted) return;
         state = state.copyWith(
-          error: _toPveErr(e),
+          error: error,
           isConnected: false,
           isBusy: false,
           loadingStep: PveLoadingStep.none,
         );
         return;
       }
-      state = state.copyWith(error: _toPveErr(e));
+      state = state.copyWith(error: error);
     } finally {
       if (_isActiveSession(generation, active)) {
         state = state.copyWith(isBusy: false);
@@ -576,11 +579,12 @@ class PveNotifier extends _$PveNotifier {
       return success;
     } catch (e) {
       if (!_isActiveSession(generation, active)) return false;
-      if (_isConnectionFailure(e)) {
+      final error = _toPveErr(e);
+      if (_isConnectionFailure(e) || error.type == PveErrType.loginFailed) {
         await _closeSession(clearPendingTfa: true);
         if (ref.mounted) {
           state = state.copyWith(
-            error: _toPveErr(e),
+            error: error,
             isConnected: false,
             isBusy: false,
             loadingStep: PveLoadingStep.none,
@@ -589,6 +593,18 @@ class PveNotifier extends _$PveNotifier {
       }
       rethrow;
     }
+  }
+
+  @visibleForTesting
+  void useSessionForTest(Dio session) {
+    _session?.close(force: true);
+    _session = session;
+    state = state.copyWith(
+      error: null,
+      isConnected: true,
+      isBusy: false,
+      loadingStep: PveLoadingStep.none,
+    );
   }
 
   bool _isCtrlSuc(Response resp) {

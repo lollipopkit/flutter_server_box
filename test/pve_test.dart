@@ -1,7 +1,16 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
+import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/pve.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/provider/pve.dart';
+import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/data/res/status.dart';
 
 const _raw = '''
 {
@@ -133,4 +142,91 @@ void main() {
     final pveItems = list.map((e) => PveResIface.fromJson(e)).toList();
     expect(pveItems.length, 8);
   });
+
+  group('expired PVE sessions', () {
+    const spi = Spi(
+      name: 'pve',
+      id: 'pve-id',
+      custom: ServerCustom(pveAddr: 'https://pve.example.com:8006'),
+    );
+
+    ({
+      ProviderContainer container,
+      PveNotifier notifier,
+      _StatusAdapter adapter,
+      void Function() close,
+    })
+    harness(int statusCode) {
+      final container = ProviderContainer(
+        overrides: [
+          serverProvider(
+            spi.id,
+          ).overrideWithValue(ServerState(spi: spi, status: InitStatus.status)),
+        ],
+      );
+      final provider = pveProvider(spi);
+      final subscription = container.listen(provider, (_, _) {});
+      final notifier = container.read(provider.notifier);
+      final adapter = _StatusAdapter(statusCode);
+      final dio = Dio()..httpClientAdapter = adapter;
+      notifier.useSessionForTest(dio);
+      return (
+        container: container,
+        notifier: notifier,
+        adapter: adapter,
+        close: () {
+          subscription.close();
+          container.dispose();
+        },
+      );
+    }
+
+    test('resource listing drops a session after HTTP 401', () async {
+      final test = harness(401);
+      try {
+        await test.notifier.list();
+
+        expect(test.notifier.state.isConnected, isFalse);
+        expect(test.notifier.state.error?.type, PveErrType.loginFailed);
+        expect(test.adapter.closed, isTrue);
+      } finally {
+        test.close();
+      }
+    });
+
+    test('VM control drops a session after HTTP 403', () async {
+      final test = harness(403);
+      try {
+        await expectLater(
+          test.notifier.start('node', '100'),
+          throwsA(isA<DioException>()),
+        );
+
+        expect(test.notifier.state.isConnected, isFalse);
+        expect(test.notifier.state.error?.type, PveErrType.loginFailed);
+        expect(test.adapter.closed, isTrue);
+      } finally {
+        test.close();
+      }
+    });
+  });
+}
+
+class _StatusAdapter implements HttpClientAdapter {
+  _StatusAdapter(this.statusCode);
+
+  final int statusCode;
+  bool closed = false;
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    return ResponseBody.fromString('denied', statusCode);
+  }
+
+  @override
+  void close({bool force = false}) => closed = true;
 }
