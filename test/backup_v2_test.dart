@@ -528,6 +528,72 @@ void main() {
     );
 
     test(
+      'rejects duplicate embedded server ids before writing stores',
+      () async {
+        const first = Spi(
+          id: 'shared-backup-id',
+          name: 'first',
+          ssh: SshCredential(ip: '10.0.0.1'),
+        );
+        const second = Spi(
+          id: 'shared-backup-id',
+          name: 'second',
+          ssh: SshCredential(ip: '10.0.0.2'),
+        );
+        Map<String, Object?> stored(Spi server) => Map<String, Object?>.from(
+          json.decode(
+                json.encode(
+                  server.toJson(),
+                  toEncodable: (value) => (value as dynamic).toJson(),
+                ),
+              )
+              as Map,
+        );
+
+        final backup = BackupV2(
+          version: BackupV2.formatVer,
+          date: 1,
+          spis: {'first-key': stored(first), 'second-key': stored(second)},
+          snippets: const {
+            'snippet-duplicate': {
+              'id': 'snippet-duplicate',
+              'name': 'duplicate',
+              'script': 'echo duplicate',
+              'autoRunOn': ['first-key'],
+            },
+          },
+          keys: const {},
+          portForwards: const {
+            'forward-duplicate': {
+              'id': 'forward-duplicate',
+              'serverId': 'second-key',
+              'name': 'duplicate',
+              'type': 'local',
+              'localPort': 8080,
+            },
+          },
+          container: const {
+            'first-key': {'host_docker': 'tcp://10.0.0.1:2375'},
+          },
+          history: const {},
+          settings: const {},
+        );
+
+        await expectLater(
+          backup.merge(force: true),
+          throwsA(isA<FormatException>()),
+        );
+        expect(Stores.server.fetch(), isEmpty);
+        expect(Stores.snippet.fetch(), isEmpty);
+        expect(Stores.portForward.fetch(), isEmpty);
+        expect(
+          Stores.container.fetch('shared-backup-id', ContainerType.docker),
+          isNull,
+        );
+      },
+    );
+
+    test(
       'rolls every store back when a later store cannot be written',
       () async {
         const original = Spi(

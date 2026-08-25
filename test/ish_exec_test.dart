@@ -1,3 +1,4 @@
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/ish_exec.dart';
 
@@ -58,7 +59,13 @@ void main() {
   test('an environment name cannot add shell syntax', () {
     expect(
       () => wrap('true', env: {'SAFE; touch /tmp/unwanted #': 'x'}),
-      throwsArgumentError,
+      throwsA(
+        isA<ArgumentError>().having(
+          (error) => error.message,
+          'message',
+          allOf(contains(libL10n.invalid), contains(libL10n.name)),
+        ),
+      ),
     );
   });
 

@@ -81,6 +81,22 @@ void main() {
     expect(File('${outside.path}/payload').existsSync(), isFalse);
   });
 
+  test('an iOS layer rejects traversal instead of skipping it', () async {
+    final archive = Archive()
+      ..add(ArchiveFile.string('../outside/payload', 'outside'));
+
+    await expectLater(
+      IosRootfs.extractForTest(
+        await archiveOf('traversal', archive),
+        root,
+        source: source,
+      ),
+      throwsA(isA<StateError>()),
+    );
+
+    expect(File('${outside.path}/payload').existsSync(), isFalse);
+  });
+
   test('post-install seeds refuse a final symlink outside the root', () async {
     final outsideFile = File('${outside.path}/resolv.conf')
       ..writeAsStringSync('outside');

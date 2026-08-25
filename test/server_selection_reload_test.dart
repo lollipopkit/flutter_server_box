@@ -105,7 +105,16 @@ void main() {
     final notifier = container.read(serversProvider.notifier);
 
     await notifier.updateServer(original, newer);
-    await expectLater(notifier.updateServer(original, stale), throwsStateError);
+    await expectLater(
+      notifier.updateServer(original, stale),
+      throwsA(
+        isA<StateError>().having(
+          (error) => error.message,
+          'message',
+          allOf(contains(libL10n.server), contains(libL10n.retry)),
+        ),
+      ),
+    );
 
     expect(container.read(serversProvider).servers[original.id], newer);
     expect(Stores.server.fetchOneRaw(original.id), newer);

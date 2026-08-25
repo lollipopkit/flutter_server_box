@@ -77,6 +77,15 @@ fn unix_custom_output_has_a_head_fallback() {
     )));
 }
 
+#[test]
+fn unix_custom_output_uses_an_atomic_temporary_file() {
+    let generated = build_script(SystemType::Linux, &opts());
+    assert!(generated.contains("if command -v mktemp >/dev/null 2>&1; then"));
+    assert!(generated.contains("server_box_custom.XXXXXX"));
+    assert!(generated.contains("(umask 077; set -C; : > \"$o\")"));
+    assert!(!generated.contains("rm -f \"$o\"\n\t(ulimit"));
+}
+
 /// The installer writes the directory in one round trip, atomically.
 #[test]
 fn custom_cmd_installer_replaces_the_directory() {

@@ -514,7 +514,7 @@ class ServersNotifier extends _$ServersNotifier {
     newSpi.validateOrThrow();
 
     if (state.servers[old.id] != old) {
-      throw StateError('The server changed while it was being edited');
+      throw StateError('${libL10n.server}: ${libL10n.retry}');
     }
 
     if (old != newSpi) {

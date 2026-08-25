@@ -246,7 +246,7 @@ class IshExec extends LocalExec {
           throw ArgumentError.value(
             entry.key,
             'env',
-            'Environment variable names must be shell identifiers',
+            '${libL10n.invalid}: ${libL10n.name}',
           );
         }
         buffer.writeln("export ${entry.key}='${_quoted(entry.value)}'");

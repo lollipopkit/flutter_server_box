@@ -1359,8 +1359,9 @@ class GlobalAgentToolService {
       final writer = file.write(Stream<Uint8List>.value(bytes));
       await writer.done.timeout(_operationTimeout);
       _requireCurrent(handle);
-      await file.close().timeout(_sftpTimeout);
+      final completedFile = file;
       file = null;
+      await completedFile.close().timeout(_sftpTimeout);
       _requireCurrent(handle);
       await sftp.rename(tempPath, path).timeout(_sftpTimeout);
       _requireCurrent(handle);
@@ -1374,17 +1375,26 @@ class GlobalAgentToolService {
         data: {'path': path, 'bytes_written': bytes.length},
       );
     } finally {
+      final pendingFile = file;
+      file = null;
       try {
-        await file?.close();
-      } finally {
-        if (temporaryPath != null && sftp != null) {
-          try {
-            await sftp.remove(temporaryPath).timeout(_sftpTimeout);
-          } catch (_) {
-            // Best-effort cleanup keeps the original write error intact.
-          }
+        await pendingFile?.close().timeout(_sftpTimeout);
+      } catch (_) {
+        // Best-effort cleanup keeps the original write error intact.
+      }
+      if (temporaryPath != null && sftp != null) {
+        try {
+          await sftp.remove(temporaryPath).timeout(_sftpTimeout);
+        } catch (_) {
+          // Best-effort cleanup keeps the original write error intact.
         }
-        await sftp?.close();
+      }
+      final pendingSftp = sftp;
+      sftp = null;
+      try {
+        await pendingSftp?.close().timeout(_sftpTimeout);
+      } catch (_) {
+        // Best-effort cleanup keeps the original write error intact.
       }
     }
   }

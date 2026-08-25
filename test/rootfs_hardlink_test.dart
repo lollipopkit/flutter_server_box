@@ -113,6 +113,43 @@ void main() {
     expect(await Link('${root.path}/usr/bin/tool').target(), '../bin/tool');
   });
 
+  test('an iOS layer rejects an unsafe hard-link target', () async {
+    final entry = TarFile()
+      ..filename = 'usr/bin/tool'
+      ..mode = 0x1ed
+      ..lastModTime = 0
+      ..typeFlag = TarFile.hardLink
+      ..nameOfLinkedFile = '../outside/tool'
+      ..fileSize = 0;
+    final out = OutputMemoryStream();
+    entry.write(out);
+    out.writeBytes(Uint8List(1024));
+    out.flush();
+
+    final temp = await Directory.systemTemp.createTemp('rootfs-unsafe-link-');
+    addTearDown(() => temp.delete(recursive: true));
+    final archive = File('${temp.path}/rootfs.tar.gz');
+    await archive.writeAsBytes(GZipEncoder().encodeBytes(out.getBytes()));
+    final root = Directory('${temp.path}/root')..createSync();
+
+    await expectLater(
+      IosRootfs.extractForTest(
+        archive,
+        root,
+        source: const RootfsSource(
+          url: 'https://example.test/rootfs.tar.gz',
+          sha256: '',
+          sizeBytes: 1,
+          layout: LinuxRootfsLayout.plain,
+          compression: LinuxRootfsCompression.gzip,
+          followsMirror: false,
+        ),
+      ),
+      throwsA(isA<StateError>()),
+    );
+    expect(File('${temp.path}/outside/tool').existsSync(), isFalse);
+  });
+
   group('the real Ubuntu rootfs', () {
     // Skipped rather than failed when absent: this needs a 32 MB download that
     // a checkout does not carry. Fetch it with the URL in

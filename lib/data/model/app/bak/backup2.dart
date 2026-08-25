@@ -341,6 +341,19 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     };
     final serverIds = <String, String>{};
     final decoded = <String, Map<String, Object?>>{};
+    final sourceOwners = <String, String>{};
+    final destinationOwners = <String, String>{};
+
+    void claimSourceId(String id, String sourceKey) {
+      final owner = sourceOwners[id];
+      if (owner != null && owner != sourceKey) {
+        throw FormatException(
+          'Backup server id $id is shared by $owner and $sourceKey',
+        );
+      }
+      sourceOwners[id] = sourceKey;
+    }
+
     for (final entry in spis.entries) {
       if (_isInternalStoreKey(entry.key) || entry.value is! Map) continue;
       final server = Map<String, Object?>.from(entry.value as Map);
@@ -352,6 +365,15 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       final restoredId = name is String
           ? localByName[name] ?? backupId
           : backupId;
+      claimSourceId(entry.key, entry.key);
+      claimSourceId(backupId, entry.key);
+      final destinationOwner = destinationOwners[restoredId];
+      if (destinationOwner != null && destinationOwner != entry.key) {
+        throw FormatException(
+          'Backup servers $destinationOwner and ${entry.key} restore to the same id $restoredId',
+        );
+      }
+      destinationOwners[restoredId] = entry.key;
       serverIds[entry.key] = restoredId;
       serverIds[backupId] = restoredId;
       server['id'] = restoredId;

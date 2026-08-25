@@ -636,8 +636,7 @@ abstract final class IosRootfs {
         onProgress?.call(0.9 + (done / archive.length) * 0.1);
       }
       if (!_isSafeTarEntry(entry.name)) {
-        Loggers.app.warning('Skipping unsafe tar entry: ${entry.name}');
-        continue;
+        throw StateError('Unsafe tar entry: ${entry.name}');
       }
       final entryParts = _safeTarParts(entry.name)!;
       if (_hasTarLinkAncestor(entryParts, symbolicLinks)) {
@@ -681,8 +680,7 @@ abstract final class IosRootfs {
       final hardTarget = hardLinks[_tarPath(entry.name)];
       if (hardTarget != null) {
         if (!_isSafeTarEntry(hardTarget)) {
-          Loggers.app.warning('Skipping unsafe hardlink target: $hardTarget');
-          continue;
+          throw StateError('Unsafe hardlink target: $hardTarget');
         }
         if (_hasTarLinkAncestor(_safeTarParts(hardTarget)!, symbolicLinks)) {
           throw StateError(

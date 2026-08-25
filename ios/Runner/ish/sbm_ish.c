@@ -501,6 +501,10 @@ static int make_dev(const char *profile) {
 /// the path that opens a terminal.
 #define SBM_MAX_PROFILES 8
 static char attached[SBM_MAX_PROFILES][64];
+// Profiles whose sessions are being closed and mounts are being removed.
+// Protected by `sessions_lock`, so reserving a session and starting a detach
+// are one decision.
+static char detaching[SBM_MAX_PROFILES][64];
 static pthread_mutex_t attached_lock = PTHREAD_MUTEX_INITIALIZER;
 
 /// Whether `profile` names a directory directly under the machine root.
@@ -522,6 +526,30 @@ static bool is_attached(const char *profile) {
     for (int i = 0; i < SBM_MAX_PROFILES; i++)
         if (strcmp(attached[i], profile) == 0) return true;
     return false;
+}
+
+static bool is_detaching_locked(const char *profile) {
+    for (int i = 0; i < SBM_MAX_PROFILES; i++)
+        if (strcmp(detaching[i], profile) == 0) return true;
+    return false;
+}
+
+static int mark_detaching_locked(const char *profile) {
+    if (is_detaching_locked(profile)) return -EBUSY;
+    for (int i = 0; i < SBM_MAX_PROFILES; i++) {
+        if (detaching[i][0] != '\0') continue;
+        snprintf(detaching[i], sizeof(detaching[i]), "%s", profile);
+        return 0;
+    }
+    return -EMFILE;
+}
+
+static void clear_detaching_locked(const char *profile) {
+    for (int i = 0; i < SBM_MAX_PROFILES; i++) {
+        if (strcmp(detaching[i], profile) != 0) continue;
+        detaching[i][0] = '\0';
+        return;
+    }
 }
 
 /// Everything [sbm_ish_attach] and [make_dev] mount, innermost first:
@@ -596,7 +624,13 @@ int sbm_ish_attach(const char *profile) {
     int checked = check_profile(profile);
     if (checked < 0) return checked;
 
+    pthread_mutex_lock(&sessions_lock);
+    if (is_detaching_locked(profile)) {
+        pthread_mutex_unlock(&sessions_lock);
+        return -EBUSY;
+    }
     pthread_mutex_lock(&attached_lock);
+    pthread_mutex_unlock(&sessions_lock);
     if (is_attached(profile)) {
         pthread_mutex_unlock(&attached_lock);
         return 0;
@@ -727,6 +761,16 @@ int sbm_ish_detach(const char *profile) {
             return -EBUSY;
         }
     }
+    // Finish any attach that started first, then publish the detach while both
+    // locks exclude a new attach. Once published, attach checks the state
+    // before taking `attached_lock`, so it cannot enter during the gap below.
+    pthread_mutex_lock(&attached_lock);
+    int marking = mark_detaching_locked(profile);
+    pthread_mutex_unlock(&attached_lock);
+    if (marking < 0) {
+        pthread_mutex_unlock(&sessions_lock);
+        return marking;
+    }
     pthread_mutex_unlock(&sessions_lock);
 
     // Signalled, not waited for: the caller retries, which is where the time
@@ -771,8 +815,11 @@ int sbm_ish_detach(const char *profile) {
                    i, sessions[i].pid, sessions[i].used,
                    task == NULL ? "gone" : "alive");
         }
-        pthread_mutex_unlock(&sessions_lock);
+    } else {
+        pthread_mutex_lock(&sessions_lock);
     }
+    clear_detaching_locked(profile);
+    pthread_mutex_unlock(&sessions_lock);
     return err;
 }
 
@@ -889,6 +936,10 @@ int sbm_ish_open(const char *profile, const char *shell, const char *command,
     if (shell == NULL || shell[0] == '\0') shell = "/bin/sh";
 
     pthread_mutex_lock(&sessions_lock);
+    if (is_detaching_locked(profile)) {
+        pthread_mutex_unlock(&sessions_lock);
+        return -EBUSY;
+    }
     int index = -1;
     for (int i = 0; i < SBM_MAX_SESSIONS; i++) {
         if (!sessions[i].used) { index = i; break; }

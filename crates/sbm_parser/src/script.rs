@@ -796,8 +796,12 @@ fn unix_custom_cmds(func: ShellFunc) -> String {
          \tcase \"$o_prefix\" in *[!0-9]*) continue;; esac\n\
          \tcase \"$encoded\" in ''|*[!A-Za-z0-9_=-]*) continue;; esac\n\
          \tprintf '%s\\n' \"{CUSTOM_CMD_SEPARATOR}.{ENCODED_NAME_PREFIX}${{n#*_}}\"\n\
-         \to=\"${{TMPDIR:-/tmp}}/server_box_custom_$$\"\n\
-         \trm -f \"$o\"\n\
+         \tif command -v mktemp >/dev/null 2>&1; then\n\
+         \t\to=$(mktemp \"${{TMPDIR:-/tmp}}/server_box_custom.XXXXXX\" 2>/dev/null) || continue\n\
+         \telse\n\
+         \t\to=\"${{TMPDIR:-/tmp}}/server_box_custom_$$\"\n\
+         \t\t(umask 077; set -C; : > \"$o\") 2>/dev/null || continue\n\
+         \tfi\n\
          \t(ulimit -f {file_blocks} 2>/dev/null || :; if command -v timeout >/dev/null 2>&1; then timeout 5 sh \"$f\"; else kill_tree() {{ for c in $(ps -eo pid=,ppid= 2>/dev/null | awk -v p=\"$1\" '$2 == p {{ print $1 }}'); do kill_tree \"$c\"; done; kill \"$1\" 2>/dev/null; }}; grouped=0; if command -v setsid >/dev/null 2>&1; then setsid sh \"$f\" & p=$!; grouped=1; else sh \"$f\" & p=$!; fi; (sleep 5; if [ \"$grouped\" -eq 1 ]; then kill -TERM -\"$p\" 2>/dev/null; else kill_tree \"$p\"; fi; sleep 1; if [ \"$grouped\" -eq 1 ]; then kill -KILL -\"$p\" 2>/dev/null; else kill_tree \"$p\"; fi) & w=$!; wait \"$p\" 2>/dev/null; kill \"$w\" 2>/dev/null; wait \"$w\" 2>/dev/null; fi) > \"$o\"\n\
          \tprintf '%s' '{CUSTOM_CMD_OUTPUT_PREFIX}'\n\
          \tif command -v head >/dev/null 2>&1; then head -c {CUSTOM_CMD_MAX_OUTPUT_BYTES} \"$o\" 2>/dev/null | base64 | tr -d '\\n'; else dd if=\"$o\" bs=1 count={CUSTOM_CMD_MAX_OUTPUT_BYTES} 2>/dev/null | base64 | tr -d '\\n'; fi\n\
