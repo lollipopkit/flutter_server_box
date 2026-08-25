@@ -938,16 +938,18 @@ mod tests {
 
     #[test]
     fn environment_overrides_file_database_and_server_settings() {
-        let mut config = Config::default();
-        config.database_url = Some("sqlite:file.db".to_string());
-        config.server = Some(ServerConfig {
-            host: "file-host".to_string(),
-            port: 3770,
-            tls: None,
-            name: None,
-            cors_allowed_origins: Vec::new(),
-            card_order: Vec::new(),
-        });
+        let mut config = Config {
+            database_url: Some("sqlite:file.db".to_string()),
+            server: Some(ServerConfig {
+                host: "file-host".to_string(),
+                port: 3770,
+                tls: None,
+                name: None,
+                cors_allowed_origins: Vec::new(),
+                card_order: Vec::new(),
+            }),
+            ..Default::default()
+        };
 
         config
             .apply_overrides(EnvOverrides {
@@ -1003,9 +1005,11 @@ mod tests {
         fs::write(&secret_path, "a".repeat(96)).unwrap();
         fs::set_permissions(&secret_path, fs::Permissions::from_mode(0o644)).unwrap();
 
-        let mut config = Config::default();
-        config.database_url = Some(format!("sqlite:{}", db.display()));
-        config.jwt_secret = None;
+        let mut config = Config {
+            database_url: Some(format!("sqlite:{}", db.display())),
+            jwt_secret: None,
+            ..Default::default()
+        };
         config.resolve_jwt_secret().unwrap();
 
         let mode = fs::metadata(secret_path).unwrap().permissions().mode();
