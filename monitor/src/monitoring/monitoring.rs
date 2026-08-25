@@ -439,20 +439,22 @@ async fn collect_metrics(
     let script_due = extended_due || !native_status_available(system);
     let mut custom_cmds = Vec::new();
     let mut extended_refreshed = false;
-    let mut script_succeeded = false;
     if script_due {
-        let segments = match execute_commands(system, extended_due).await {
-            Ok(segments) => {
-                script_succeeded = true;
-                extended_refreshed = extended_due;
-                segments
-            }
+        let execution = match execute_commands(system, extended_due).await {
+            Ok(execution) => execution,
             Err(error) if native_status_available(system) => {
                 tracing::warn!("optional status script failed; keeping native sample: {error}");
-                Vec::new()
+                ScriptExecution::default()
             }
             Err(error) => return Err(error),
         };
+        if !execution.status_succeeded && !native_status_available(system) {
+            return Err(crate::utils::error::MonitorError::Monitoring(
+                "Status script SbStatus failed".to_string(),
+            ));
+        }
+        extended_refreshed = extended_due && execution.extended_succeeded;
+        let segments = execution.segments;
         custom_cmds = custom_cmd_outputs(&segments);
         // Built-in probes run before custom commands. Keep the first value for
         // each section so custom output cannot forge a later built-in marker
@@ -487,18 +489,24 @@ async fn collect_metrics(
         prev_metrics,
         extended_refreshed,
     );
-    // Not `carry_forward`: an empty result on an extended cycle is the user
-    // having deleted their commands, and carrying the old output forward
-    // would leave deleted commands on the page for as long as the process
-    // runs. Only a cycle that did not run the script keeps the previous set.
-    metrics.custom_cmds = if script_succeeded {
+    metrics.custom_cmds = refreshed_custom_cmds(custom_cmds, prev_metrics, extended_refreshed);
+    Ok(metrics)
+}
+
+fn refreshed_custom_cmds(
+    custom_cmds: Vec<CustomCmdOutput>,
+    prev_metrics: Option<&SystemMetrics>,
+    extended_refreshed: bool,
+) -> Vec<CustomCmdOutput> {
+    // An empty successful extended result means the user deleted their
+    // commands. A skipped or failed extended refresh keeps the previous set.
+    if extended_refreshed {
         custom_cmds
     } else {
         prev_metrics
             .map(|p| p.custom_cmds.clone())
             .unwrap_or_default()
-    };
-    Ok(metrics)
+    }
 }
 
 /// The custom-command sections of the script's output, in the order it printed
@@ -636,21 +644,42 @@ const EXTENDED_FUNCS: [sbm_parser::script::ShellFunc; 2] = [
 ];
 const CORE_FUNCS: [sbm_parser::script::ShellFunc; 1] = [sbm_parser::script::ShellFunc::Status];
 
+#[derive(Default)]
+struct ScriptExecution {
+    segments: Vec<(String, String)>,
+    status_succeeded: bool,
+    extended_succeeded: bool,
+}
+
+impl ScriptExecution {
+    fn record(&mut self, func: &sbm_parser::script::ShellFunc, succeeded: bool, stdout: &[u8]) {
+        if !succeeded {
+            return;
+        }
+        match func {
+            sbm_parser::script::ShellFunc::Status => self.status_succeeded = true,
+            sbm_parser::script::ShellFunc::StatusExt => self.extended_succeeded = true,
+            _ => {}
+        }
+        self.segments
+            .extend(sbm_parser::script::parse_script_segments(
+                &String::from_utf8_lossy(stdout),
+            ));
+    }
+}
+
 /// Execute the generated status script and split its output by segment.
 /// Failed commands inside the script yield empty segments (the script does
 /// `exec 2>/dev/null`), matching the app's per-segment tolerance; per-command
 /// stderr is not observable in this mode.
-async fn execute_commands(
-    system: SystemType,
-    include_extended: bool,
-) -> Result<Vec<(String, String)>> {
+async fn execute_commands(system: SystemType, include_extended: bool) -> Result<ScriptExecution> {
     let content = build_status_script(system);
     let path = script_path(system);
 
     ensure_script(&path, &content).map_err(|e| {
         crate::utils::error::MonitorError::Monitoring(format!("Status script error: {e}"))
     })?;
-    let mut stdout = String::new();
+    let mut execution = ScriptExecution::default();
     let funcs = if include_extended {
         &EXTENDED_FUNCS[..]
     } else {
@@ -675,25 +704,17 @@ async fn execute_commands(
         else {
             continue;
         };
-        if !output.status.success() {
+        let succeeded = output.status.success();
+        if !succeeded {
             error!(
                 "Status script {} exited with {}",
                 func.name(),
                 output.status
             );
         }
-        stdout.push_str(&String::from_utf8_lossy(&output.stdout));
-        stdout.push('\n');
+        execution.record(func, succeeded, &output.stdout);
     }
-
-    if stdout.trim().is_empty() {
-        return Err(crate::utils::error::MonitorError::Monitoring(
-            "Status script produced no output".to_string(),
-        ));
-    }
-    // Segments rather than a map: custom commands are ordered by the user and
-    // that order only exists in the order the script printed them.
-    Ok(sbm_parser::script::parse_script_segments(&stdout))
+    Ok(execution)
 }
 
 /// Runs a CLI tool with bounded time and output collection.
@@ -1745,7 +1766,6 @@ mod tests {
             None,
             true,
         );
-
         // Next (non-extended) cycle: script-only fields carry forward, while
         // the native disk-I/O snapshot reflects the current empty device set.
         let metrics = adapt_status(
@@ -1763,6 +1783,69 @@ mod tests {
         // The non-extended cycle didn't refresh extended data — freshness
         // timestamp carries over from the extended cycle, not bumped to now
         assert_eq!(metrics.extended_updated_at, prev.extended_updated_at);
+    }
+
+    #[test]
+    fn failed_extended_command_keeps_previous_extended_metrics() {
+        use sbm_parser::script::{ShellFunc, cmd_marker};
+
+        let mut prev = adapt_status(
+            SystemType::Linux,
+            {
+                let mut status = empty_status();
+                status.batteries = vec![sbm_parser::types::Battery {
+                    percent: Some(80),
+                    status: sbm_parser::types::BatteryStatus::Charging,
+                    name: None,
+                    cycle: None,
+                    tech: None,
+                }];
+                status
+            },
+            &Config::default(),
+            None,
+            None,
+            true,
+        );
+        prev.custom_cmds = vec![CustomCmdOutput {
+            name: "health".to_string(),
+            output: "ok".to_string(),
+        }];
+
+        let mut execution = ScriptExecution::default();
+        execution.record(
+            &ShellFunc::StatusExt,
+            false,
+            format!("{}\npartial", cmd_marker("battery")).as_bytes(),
+        );
+        execution.record(
+            &ShellFunc::Status,
+            true,
+            format!("{}\ncpu 100 0 100 0 0 0 0 0 0 0", cmd_marker("cpu")).as_bytes(),
+        );
+
+        assert!(execution.status_succeeded);
+        assert!(!execution.extended_succeeded);
+        assert!(execution.segments.iter().any(|(key, _)| key == "cpu"));
+        assert!(!execution.segments.iter().any(|(key, _)| key == "battery"));
+
+        let raw = execution.segments.into_iter().collect::<HashMap<_, _>>();
+        let status = sbm_parser::parse_status(SystemType::Linux, &raw);
+        let metrics = adapt_status(
+            SystemType::Linux,
+            status,
+            &Config::default(),
+            None,
+            Some(&prev),
+            execution.extended_succeeded,
+        );
+
+        assert_eq!(metrics.batteries, prev.batteries);
+        assert_eq!(metrics.extended_updated_at, prev.extended_updated_at);
+        let custom_cmds = refreshed_custom_cmds(Vec::new(), Some(&prev), false);
+        assert_eq!(custom_cmds.len(), 1);
+        assert_eq!(custom_cmds[0].name, "health");
+        assert_eq!(custom_cmds[0].output, "ok");
     }
 
     #[test]
@@ -1964,8 +2047,10 @@ mod tests {
     #[cfg(unix)]
     #[tokio::test]
     async fn execute_commands_via_script_smoke() {
-        let segments = execute_commands(system_type(), true).await.unwrap();
-        let keys: Vec<&str> = segments.iter().map(|(k, _)| k.as_str()).collect();
+        let execution = execute_commands(system_type(), true).await.unwrap();
+        assert!(execution.status_succeeded);
+        assert!(execution.extended_succeeded);
+        let keys: Vec<&str> = execution.segments.iter().map(|(k, _)| k.as_str()).collect();
         assert!(keys.contains(&"diskSmart"), "extended half missing");
         for redundant in ["echo", "time", "net", "cpu", "mem", "disk", "nvidia"] {
             assert!(

@@ -457,11 +457,11 @@ class KvToTablesMigration implements SchemaMigration {
       // `user@ip:port` server id does contain colons.
       final at = '$k'.indexOf('::');
       if (at <= 0) return;
-      final serverId = serverIds['$k'.substring(0, at)];
-      // No server behind it any more — the same records this step drops
-      // everywhere else, and a fingerprint nothing can look up is not trust,
-      // it is a row.
-      if (serverId == null) return;
+      final oldId = '$k'.substring(0, at);
+      // A key without a server mapping belongs to an ad-hoc connection. It
+      // has no server row by design, and the session id is already its final
+      // identifier; only aliases of migrated server rows are rewritten.
+      final serverId = serverIds[oldId] ?? oldId;
       remapped['$serverId::${'$k'.substring(at + 2)}'] = '$v';
     });
 

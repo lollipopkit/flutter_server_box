@@ -181,6 +181,28 @@ void main() {
     expect(json.decode(raw), [id]);
   });
 
+  test('known hosts remap servers and retain ad-hoc connection ids', () async {
+    seedLegacyServer();
+    seed('setting', 'sshKnownHostFingerprints', {
+      '$legacyRef::ssh-ed25519': 'SHA256:SERVER',
+      'session-123::ssh-rsa': 'SHA256:ADHOC',
+      'malformed': 'SHA256:IGNORED',
+    });
+
+    final id = await migrate();
+    final raw =
+        SqliteDb.instance.select(
+              "SELECT value FROM kv WHERE store = 'setting' AND key = ?;",
+              ['sshKnownHostFingerprints'],
+            ).single['value']
+            as String;
+
+    expect(json.decode(raw), {
+      '$id::ssh-ed25519': 'SHA256:SERVER',
+      'session-123::ssh-rsa': 'SHA256:ADHOC',
+    });
+  });
+
   test('duplicate embedded server ids are assigned distinct rows', () async {
     seed('server', 'legacy-a', {
       'id': 'duplicate-id',

@@ -400,24 +400,6 @@ extension _Sessions on _SSHTabPageState {
     _closeTab(tab.id);
   }
 
-  /// Closes every terminal, when something has asked for it.
-  ///
-  /// No confirmation here. The ask comes from the tab strip's own menu, which
-  /// confirms before it gets this far; this end only knows that the answer was
-  /// yes.
-  void _drainCloseAll() {
-    if (!ref.read(terminalCloseAllRequestProvider)) return;
-    ref.read(terminalCloseAllRequestProvider.notifier).done();
-
-    // Copied, because closing a tab is what mutates the list being walked.
-    final ids = [for (final tab in _sessions.tabs) tab.id];
-    if (ids.isEmpty) return;
-    if (mounted) FocusScope.of(context).unfocus();
-    for (final id in ids) {
-      _closeTab(id);
-    }
-  }
-
   /// Opens everything queued for this tab and empties the queue.
   void _drainRequests() {
     final pending = ref.read(terminalRequestsProvider);
@@ -544,6 +526,24 @@ extension _Sessions on _SSHTabPageState {
 
 /// The buttons on the tab bar.
 extension _Actions on _SSHTabPageState {
+  /// Closes every terminal, when something has asked for it.
+  ///
+  /// No confirmation here. The ask comes from the tab strip's own menu, which
+  /// confirms before it gets this far; this end only knows that the answer was
+  /// yes.
+  void _drainCloseAll() {
+    if (!ref.read(terminalCloseAllRequestProvider)) return;
+    ref.read(terminalCloseAllRequestProvider.notifier).done();
+
+    // Copied, because closing a tab is what mutates the list being walked.
+    final ids = [for (final tab in _sessions.tabs) tab.id];
+    if (ids.isEmpty) return;
+    if (mounted) FocusScope.of(context).unfocus();
+    for (final id in ids) {
+      _closeTab(id);
+    }
+  }
+
   /// The buttons for whichever terminal is showing.
   ///
   /// The agent's tools all name a server, so it is offered only on one.

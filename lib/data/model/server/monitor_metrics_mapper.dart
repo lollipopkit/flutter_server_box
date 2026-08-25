@@ -120,13 +120,13 @@ void _applyCpu(ServerStatus ss, MonitorMetrics m) {
 /// accumulating a fabricated 0 would draw a dip that never happened.
 List<double>? _cpuPercents(MonitorMetrics m) {
   if (m.cpuCores.isEmpty) {
-    return [m.cpuUsage.clamp(0.0, 100.0)];
+    return [m.cpuUsage.clamp(0.0, 100.0).toDouble()];
   }
   final percents = <double>[];
   for (final c in m.cpuCores) {
     final p = c.usagePercent;
     if (p == null) return null;
-    percents.add(p.clamp(0.0, 100.0));
+    percents.add(p.clamp(0.0, 100.0).toDouble());
   }
   return percents;
 }

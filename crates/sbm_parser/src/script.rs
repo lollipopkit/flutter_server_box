@@ -594,32 +594,31 @@ pub fn parse_script_segments(raw: &str) -> Vec<(String, String)> {
     let mut current: Option<String> = None;
     let mut buf = String::new();
 
-    let flush = |current: &mut Option<String>,
-                 buf: &mut String,
-                 result: &mut Vec<(String, String)>| {
-        if let Some(key) = current.take() {
-            // Preserve custom command output losslessly; only the final
-            // trailing newline added by the loop is removed. Previous
-            // `trim()` stripped leading/trailing blank lines.
-            let mut out = buf.clone();
-            if out.ends_with('\n') {
-                out.pop();
-            }
-            if out.ends_with('\r') {
-                out.pop();
-            }
-            if custom_result_name(&key).is_some() {
-                if let Some(encoded) = out.strip_prefix(CUSTOM_CMD_OUTPUT_PREFIX) {
+    let flush =
+        |current: &mut Option<String>, buf: &mut String, result: &mut Vec<(String, String)>| {
+            if let Some(key) = current.take() {
+                // Preserve custom command output losslessly; only the final
+                // trailing newline added by the loop is removed. Previous
+                // `trim()` stripped leading/trailing blank lines.
+                let mut out = buf.clone();
+                if out.ends_with('\n') {
+                    out.pop();
+                }
+                if out.ends_with('\r') {
+                    out.pop();
+                }
+                if custom_result_name(&key).is_some()
+                    && let Some(encoded) = out.strip_prefix(CUSTOM_CMD_OUTPUT_PREFIX)
+                {
                     use base64::Engine;
                     if let Ok(bytes) = base64::engine::general_purpose::STANDARD.decode(encoded) {
                         out = String::from_utf8_lossy(&bytes).into_owned();
                     }
                 }
+                result.push((key, out));
+                buf.clear();
             }
-            result.push((key, out));
-            buf.clear();
-        }
-    };
+        };
 
     for line in raw.split_terminator('\n') {
         let line = line.strip_suffix('\r').unwrap_or(line);

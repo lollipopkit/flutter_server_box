@@ -91,7 +91,17 @@ void main() {
         root,
         source: source,
       ),
-      throwsA(isA<StateError>()),
+      throwsA(
+        isA<StateError>().having(
+          (error) => error.message,
+          'message',
+          allOf(
+            contains(libL10n.invalid),
+            contains(libL10n.path),
+            contains('../outside/payload'),
+          ),
+        ),
+      ),
     );
 
     expect(File('${outside.path}/payload').existsSync(), isFalse);

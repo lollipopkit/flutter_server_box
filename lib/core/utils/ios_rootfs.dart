@@ -636,7 +636,7 @@ abstract final class IosRootfs {
         onProgress?.call(0.9 + (done / archive.length) * 0.1);
       }
       if (!_isSafeTarEntry(entry.name)) {
-        throw StateError('Unsafe tar entry: ${entry.name}');
+        throw StateError('${libL10n.invalid}: ${libL10n.path} (${entry.name})');
       }
       final entryParts = _safeTarParts(entry.name)!;
       if (_hasTarLinkAncestor(entryParts, symbolicLinks)) {
@@ -680,7 +680,7 @@ abstract final class IosRootfs {
       final hardTarget = hardLinks[_tarPath(entry.name)];
       if (hardTarget != null) {
         if (!_isSafeTarEntry(hardTarget)) {
-          throw StateError('Unsafe hardlink target: $hardTarget');
+          throw StateError('${libL10n.invalid}: ${libL10n.path} ($hardTarget)');
         }
         if (_hasTarLinkAncestor(_safeTarParts(hardTarget)!, symbolicLinks)) {
           throw StateError(

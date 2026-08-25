@@ -31,7 +31,10 @@ class VirtKeyRowsMigration implements SchemaMigration {
   static const key = 'virtKeyRows';
 
   @override
-  Future<void> apply() async {
+  Future<void> apply() async => applySync();
+
+  /// Runs the conversion inside a caller-owned SQLite transaction.
+  void applySync() {
     final store = _store ?? SettingStore.instance;
     // Already converted, or set by hand since. A second pass is what a process
     // stopped between this returning and the version being recorded comes back

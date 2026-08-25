@@ -630,6 +630,55 @@ void main() {
       },
     );
 
+    test('rolls every store back when a settings conversion fails', () async {
+      const original = Spi(
+        id: 'srv-conversion-atomic',
+        name: 'before',
+        ssh: SshCredential(ip: '10.0.0.1'),
+      );
+      Stores.server.put(original);
+      final replacement = original.copyWith(name: 'after');
+      final stored = json.decode(
+        json.encode(
+          replacement.toJson(),
+          toEncodable: (value) => (value as dynamic).toJson(),
+        ),
+      );
+      SqliteDb.instance.execute('''
+        CREATE TRIGGER fail_restored_ssh_mode_conversion
+        BEFORE UPDATE OF value ON kv
+        WHEN NEW.store = 'setting'
+          AND NEW.key = 'sshConnectionMode'
+          AND NEW.value IN ('true', 'false')
+        BEGIN
+          SELECT RAISE(ABORT, 'blocked conversion');
+        END;
+      ''');
+      final backup = BackupV2(
+        version: BackupV2.formatVer,
+        date: 1,
+        spis: {'srv-conversion-atomic': stored},
+        snippets: const {},
+        keys: const {},
+        container: const {},
+        history: const {},
+        settings: const {'sshConnectionMode': 0},
+      );
+
+      await expectLater(backup.merge(force: true), throwsStateError);
+      Stores.server.dropCache();
+      expect(Stores.server.fetchOneRaw(original.id), original);
+      expect(
+        SqliteDb.instance
+            .select(
+              "SELECT count(*) AS n FROM kv "
+              "WHERE store = 'setting' AND key = 'sshConnectionMode';",
+            )
+            .single['n'],
+        0,
+      );
+    });
+
     test(
       'container restore removes hosts and runtime omitted by the backup',
       () async {

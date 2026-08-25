@@ -219,7 +219,7 @@ pub async fn terminal_ws(
         return deny("no ticket", HttpResponse::Unauthorized().finish()).await;
     };
     let raw_ticket = &protocol[TICKET_PROTOCOL_PREFIX.len()..];
-    let Ok(reservation) = app_state.tickets.reserve(&raw_ticket, Purpose::Terminal) else {
+    let Ok(reservation) = app_state.tickets.reserve(raw_ticket, Purpose::Terminal) else {
         return deny("ticket", HttpResponse::Unauthorized().finish()).await;
     };
     let subject = reservation.subject().to_string();

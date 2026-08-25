@@ -161,6 +161,15 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
               ),
               force: force,
             );
+      // Restoring does not run the schema migrator. Convert legacy setting
+      // shapes in version order before this transaction can commit, so a
+      // failed conversion rolls the entire restore back with it.
+      if (settings.isNotEmpty) {
+        const SettingsFixupsMigration().applySync();
+        const GroupedSettingsMigration().applySync();
+        const VirtKeyRowsMigration().applySync();
+        const VirtKeyNamesMigration().applySync();
+      }
     });
 
     // Notifications and provider reloads happen only after the outer
@@ -181,39 +190,6 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     if (forwardsChanged && !serversChanged) Stores.portForward.invalidate();
     _notifySqliteStore(Stores.history, historyNotifications);
     _notifySqliteStore(Stores.setting, settingNotifications);
-
-    // A restore is neither a launch nor a version bump, so the migrator will
-    // not look at what just landed. A file written before the settings were
-    // grouped carries the old per-field keys and no grouped row, and
-    // `mergeStore` reads an absent key as a deletion — so without this the
-    // restore would take `askAi` and `agentShell` out and put fourteen rows
-    // nothing reads back in their place. Idempotent: a file that already has
-    // the grouped shape leaves it with nothing to fold.
-    //
-    // Every settings migration that reads a key a backup can carry belongs
-    // here for the same reason, not only the newest one. `virtKeyRows` is
-    // one other: a file written before it restores `horizonVirtKey` and no
-    // `virtKeyRows`, and the next launch's `removeRetiredKeys` — which sees
-    // a `schemaVersion` the merge left past that step — deletes the old key
-    // without anything having read it. `sshConnectionMode` is the third: a
-    // file older than v9 carries it as the `int` it used to be, which
-    // `propertyDefault('sshConnectionMode', false)` cannot read at all.
-    // `sshVirtKeys` is the fourth: a file older than v14 carries the enum
-    // indices, which every reader now sees as nothing at all.
-    //
-    // Only when the file brought settings. These convert what *arrived*; a
-    // backup taken with `includeSettings: false` leaves the local settings
-    // alone, and running the steps over them anyway is this device editing
-    // itself for no reason — `_migrateHomeTabsAgent` would put Agent back for
-    // somebody who had taken it out.
-    //
-    // In version order, which is the order the migrator would have run them in.
-    if (settings.isNotEmpty) {
-      await const SettingsFixupsMigration().apply();
-      await const GroupedSettingsMigration().apply();
-      await const VirtKeyRowsMigration().apply();
-      await const VirtKeyNamesMigration().apply();
-    }
 
     if (serversChanged) GlobalRef.gRef?.read(serversProvider.notifier).reload();
     if (snippetsChanged) {

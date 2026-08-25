@@ -57,7 +57,10 @@ class SettingsFixupsMigration implements SchemaMigration {
   /// it as one would have every install claim a newer copy than whatever it
   /// last synced with.
   @override
-  Future<void> apply() async {
+  Future<void> apply() async => applySync();
+
+  /// Runs the conversion inside a caller-owned SQLite transaction.
+  void applySync() {
     final store = _store ?? SettingStore.instance;
     _migrateSshConnectionMode(store);
     _migrateHomeTabsAgent(store);

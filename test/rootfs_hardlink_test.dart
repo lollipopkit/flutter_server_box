@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/ios_rootfs.dart';
 import 'package:server_box/core/utils/linux_seed.dart';
@@ -145,7 +146,17 @@ void main() {
           followsMirror: false,
         ),
       ),
-      throwsA(isA<StateError>()),
+      throwsA(
+        isA<StateError>().having(
+          (error) => error.message,
+          'message',
+          allOf(
+            contains(libL10n.invalid),
+            contains(libL10n.path),
+            contains('../outside/tool'),
+          ),
+        ),
+      ),
     );
     expect(File('${temp.path}/outside/tool').existsSync(), isFalse);
   });
