@@ -177,8 +177,11 @@ class SftpFileBackend implements FileBackend {
   Future<void> rename(String from, String to) => runWithEscalation(
     escalation: escalation,
     normal: () => _bounded('rename', _sftp.rename(from, to)),
-    sudoCommand: () =>
-        'mv -- ${shellSingleQuote(from)} ${shellSingleQuote(to)}',
+    // The same guard the SCP backend needs, for the same reason and only on
+    // this path: `SSH_FXP_RENAME` refuses a destination that is a directory,
+    // and `mv` files the source away inside it instead. Escalating a rename
+    // must not quietly change what the rename does.
+    sudoCommand: () => shellRenameCommand(from, to),
   );
 
   @override

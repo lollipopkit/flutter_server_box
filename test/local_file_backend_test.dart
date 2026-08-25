@@ -74,7 +74,9 @@ void main() {
       final entry = await backend.stat(at('l'));
 
       expect(entry!.kind, FileKind.link);
-      expect(entry.linkTarget, at('a.txt'));
+      // Slash-separated, as the backend reports every path: it converts on
+      // the way out so a caller never has to ask which platform it is on.
+      expect(entry.linkTarget, at('a.txt').replaceAll(r'\', '/'));
     });
 
     test('a link to nowhere is still something, not nothing', () async {

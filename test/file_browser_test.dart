@@ -797,7 +797,13 @@ void main() {
       await tester.tap(find.byIcon(Icons.search));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), 'bash');
-      await tester.pumpAndSettle();
+      // Counted out rather than settled: a tree holding a text field always
+      // has something scheduled, so `pumpAndSettle` has nothing to settle to
+      // and only gives up after its ten-minute default. Several frames,
+      // because the match is a future and one frame only starts it.
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
 
       expect(find.text('bash_notes.txt'), findsOneWidget);
       expect(find.text('.bash_history'), findsNothing);

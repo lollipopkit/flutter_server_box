@@ -104,7 +104,36 @@ class _SftpPageState extends ConsumerState<SftpPage> {
   /// closing the page and opening it.
   late Future<_SftpStart> _start = _open();
 
+  /// The server this page was opened on, as the route named it.
+  ///
+  /// Its **id** is what this is for. Everything else about it is a snapshot
+  /// taken when the tab opened, and a tab outlives an edit — see [_current].
   Spi get _spi => widget.args.spi;
+
+  /// The server as it is now.
+  ///
+  /// Every transfer this page queues is built from this rather than from the
+  /// snapshot: the queued job carries its own copy of the credentials and the
+  /// transport into an isolate, so a tab left open across an edit was sending
+  /// bytes with the address, key and protocol the server had when the tab was
+  /// opened — while the listing beside it had already reconnected with the
+  /// new ones. Switching a host from SFTP to SCP is where it shows: the
+  /// browser lists, and every download queued from it fails on a host that has
+  /// no SFTP subsystem.
+  ///
+  /// Falls back to the snapshot for a server that has since been deleted,
+  /// which is the one case the provider has nothing to say about.
+  Spi get _current {
+    try {
+      return ref.read(serverProvider(_spi.id)).spi;
+    } catch (e) {
+      Loggers.app.warning('No live server for ${_spi.id}', e);
+      return _spi;
+    }
+  }
+
+  /// [SshFileRef.forServer] on [_current].
+  SshFileRef _refOf(String path) => SshFileRef.forServer(_current, path);
 
   @override
   void dispose() {
@@ -169,7 +198,7 @@ class _SftpPageState extends ConsumerState<SftpPage> {
                   : UIs.placeholder,
             ),
             pathHistory: const _GotoHistory(),
-            refOf: (path) => SshFileRef.forServer(_spi, path),
+            refOf: _refOf,
             onOpenFile: _openFile,
           ),
         );
@@ -245,15 +274,14 @@ extension _Open on _SftpPageState {
       contextProvider: () => mounted ? context : null,
     );
 
-    // Read from the provider, not from `_spi`: the page holds the server as it
-    // was when the route was pushed, and the editor writes the transport into
-    // the store. A tab left open across an edit would otherwise keep opening
-    // the protocol the user just changed away from, on every retry, until the
-    // page was rebuilt.
-    final current = ref.read(serverProvider(_spi.id)).spi;
+    // [_current], not `_spi`: the page holds the server as it was when the
+    // route was pushed, and the editor writes the transport into the store. A
+    // tab left open across an edit would otherwise keep opening the protocol
+    // the user just changed away from, on every retry, until the page was
+    // rebuilt.
     final backend = await openSshFileBackend(
       _client,
-      transport: current.ssh?.fileTransport ?? SshFileTransport.sftp,
+      transport: _current.ssh?.fileTransport ?? SshFileTransport.sftp,
       escalation: _escalation,
       timeout: _opTimeout,
     );
@@ -424,7 +452,7 @@ extension _Actions on _SftpPageState {
                 .read(fileTransferProvider.notifier)
                 .add(
                   FileTransfer(
-                    from: SshFileRef.forServer(_spi, fullPath),
+                    from: _refOf(fullPath),
                     to: LocalFileRef(_localPathFor(fullPath)),
                   ),
                 );
@@ -479,7 +507,7 @@ extension _Actions on _SftpPageState {
             .add(
               FileTransfer(
                 from: LocalFileRef(local),
-                to: SshFileRef.forServer(_spi, remote),
+                to: _refOf(remote),
               ),
             );
         return;
@@ -519,7 +547,7 @@ extension _Actions on _SftpPageState {
         .add(
           FileTransfer(
             from: LocalFileRef(local),
-            to: SshFileRef.forServer(_spi, staging),
+            to: _refOf(staging),
           ),
           completer: completer,
         );
@@ -689,7 +717,7 @@ extension _Edit on _SftpPageState {
         .read(fileTransferProvider.notifier)
         .add(
           FileTransfer(
-            from: SshFileRef.forServer(_spi, remotePath),
+            from: _refOf(remotePath),
             to: LocalFileRef(localPath),
           ),
           completer: completer,
@@ -722,7 +750,7 @@ extension _Edit on _SftpPageState {
           .add(
             FileTransfer(
               from: LocalFileRef(localPath),
-              to: SshFileRef.forServer(_spi, remotePath),
+              to: _refOf(remotePath),
             ),
           );
       await announceQueued(context, ref, [id]);

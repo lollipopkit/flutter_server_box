@@ -19,6 +19,16 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- Guards the in-process broadcast the notification's "Stop All" action
+         sends. `RECEIVER_NOT_EXPORTED` only exists from API 33, so on anything
+         older the dynamically registered receiver was reachable by any app on
+         the device — and its one action disconnects every SSH session. Signature
+         level, so only a build signed with this key can send it. -->
+    <permission
+        android:name="tech.lolli.toolbox.permission.INTERNAL_BROADCAST"
+        android:protectionLevel="signature" />
+    <uses-permission android:name="tech.lolli.toolbox.permission.INTERNAL_BROADCAST" />
+
     <application
         android:label="@string/app_name"
         android:name="${applicationName}"

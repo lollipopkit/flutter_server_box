@@ -58,6 +58,29 @@ class ScpFileBackend implements FileBackend {
 
   static const _minStreamTimeout = Duration(seconds: 60);
 
+  /// The `scp` channels this backend has open right now.
+  ///
+  /// Held so [close] can end them. Every operation opens a channel of its own
+  /// and closes it, which is why this class holds none in the ordinary case —
+  /// but a caller that gives up on a `write` (the Agent's `write_file` bounds
+  /// itself with `.timeout`) abandons the future, not the transfer: the remote
+  /// `scp -t` goes on writing its staging file with nobody left to rename or
+  /// remove it. `close` is the one thing such a caller does next, so it is what
+  /// has to mean "stop".
+  final _open = <ScpChannel>{};
+
+  Future<T> _through<T>(
+    ScpChannel channel,
+    Future<T> Function(ScpChannel channel) run,
+  ) async {
+    _open.add(channel);
+    try {
+      return await run(channel);
+    } finally {
+      _open.remove(channel);
+    }
+  }
+
   /// Whatever the SSH account can reach, which the far side decides per path
   /// rather than by a list anything here could enumerate.
   @override
@@ -144,15 +167,14 @@ class ScpFileBackend implements FileBackend {
   }
 
   @override
-  Future<void> rename(String from, String to) => runWithEscalation(
-    escalation: escalation,
-    normal: () => _run(
-      'rename',
-      'mv -- ${shellSingleQuote(from)} ${shellSingleQuote(to)}',
-    ),
-    sudoCommand: () =>
-        'mv -- ${shellSingleQuote(from)} ${shellSingleQuote(to)}',
-  );
+  Future<void> rename(String from, String to) {
+    final command = shellRenameCommand(from, to);
+    return runWithEscalation(
+      escalation: escalation,
+      normal: () => _run('rename', command),
+      sudoCommand: () => command,
+    );
+  }
 
   @override
   Future<void> chmod(String path, int mode) {
@@ -170,7 +192,12 @@ class ScpFileBackend implements FileBackend {
     // Opened when the stream is listened to rather than when it is built, so a
     // caller that never reads never starts a process on the far side.
     final channel = await SshScpChannel.source(_client, path);
-    yield* scpRead(channel, path, offset: offset, timeout: _streamTimeout);
+    _open.add(channel);
+    try {
+      yield* scpRead(channel, path, offset: offset, timeout: _streamTimeout);
+    } finally {
+      _open.remove(channel);
+    }
   }
 
   @override
@@ -187,12 +214,15 @@ class ScpFileBackend implements FileBackend {
     onStaging?.call(staging);
     try {
       if (size != null) {
-        await scpWrite(
+        await _through(
           await SshScpChannel.sink(_client, staging),
-          staging,
-          data,
-          size: size,
-          timeout: _streamTimeout,
+          (channel) => scpWrite(
+            channel,
+            staging,
+            data,
+            size: size,
+            timeout: _streamTimeout,
+          ),
         );
       } else {
         await _writeUnsized(staging, data);
@@ -211,7 +241,11 @@ class ScpFileBackend implements FileBackend {
         // asked for. The other two backends fail on this because a rename onto
         // a directory is refused; `mv` succeeds, so it has to be asked first.
         // In the same command, so it costs no extra round trip.
-        'if [ -d $quoted ] && [ ! -L $quoted ]; then '
+        //
+        // No `! -L` exception. A symlink to a directory is one `mv` follows on
+        // some systems and replaces on others, and neither is what "write this
+        // file" asked for.
+        'if [ -d $quoted ]; then '
         // The path goes through `printf`'s argument, still single-quoted, and
         // never into a double-quoted string: a filename may contain `"`, `$`
         // or a backtick, and the message is the one place it would otherwise
@@ -259,12 +293,16 @@ class ScpFileBackend implements FileBackend {
         } catch (_) {}
         rethrow;
       }
-      await scpWrite(
+      final length = await spool.length();
+      await _through(
         await SshScpChannel.sink(_client, staging),
-        staging,
-        spool.openRead(),
-        size: await spool.length(),
-        timeout: _streamTimeout,
+        (channel) => scpWrite(
+          channel,
+          staging,
+          spool.openRead(),
+          size: length,
+          timeout: _streamTimeout,
+        ),
       );
     } finally {
       try {
@@ -275,10 +313,24 @@ class ScpFileBackend implements FileBackend {
     }
   }
 
-  /// Nothing to release: every operation opens a channel and closes it, and the
-  /// connection belongs to whoever handed it over.
+  /// Ends whatever is still running, and leaves the connection alone — it
+  /// belongs to whoever handed it over.
+  ///
+  /// Not a no-op, which is what this was. A caller that stops waiting on an
+  /// operation has no other way to stop the operation itself: `FileBackend` has
+  /// no cancellation, so `close` is it, and the SFTP backend has always meant
+  /// the same thing by closing its channel.
   @override
-  Future<void> close() async {}
+  Future<void> close() async {
+    for (final channel in _open.toList()) {
+      try {
+        channel.close();
+      } catch (e, s) {
+        Loggers.app.warning('Failed to close an scp channel', e, s);
+      }
+    }
+    _open.clear();
+  }
 
   /// Runs [command] and answers what it printed, or throws what it said.
   Future<String> _run(String what, String command) async {

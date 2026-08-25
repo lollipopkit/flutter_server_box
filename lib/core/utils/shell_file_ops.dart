@@ -137,3 +137,21 @@ List<FileEntry> parseShellFileRecords(String output) {
 DateTime? shellFileTime(int? seconds) => seconds == null
     ? null
     : DateTime.fromMillisecondsSinceEpoch(seconds * 1000);
+
+/// `mv`, refusing a destination that is a directory.
+///
+/// `mv a b` moves `a` *into* `b` when `b` is one, so renaming a file to the
+/// name of an existing folder files it away inside instead of failing — where
+/// SFTP's own `SSH_FXP_RENAME` refuses outright, and where the browser's
+/// rename dialog gives no hint that it might. Shared so that escalating an
+/// SFTP rename through `sudo` cannot quietly change what the rename does.
+///
+/// Asked in the same command, so it costs no extra round trip. The path goes
+/// through `printf`'s argument, still single-quoted, and never into a
+/// double-quoted string: a filename may contain `"`, `$` or a backtick.
+String shellRenameCommand(String from, String to) {
+  final target = shellSingleQuote(to);
+  return 'if [ -d $target ]; then '
+      'printf "%s: is a directory\\n" $target >&2; exit 1; fi; '
+      'mv -- ${shellSingleQuote(from)} $target';
+}

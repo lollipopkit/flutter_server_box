@@ -22,6 +22,7 @@ class MainActivity: FlutterFragmentActivity() {
     private val ACTION_UPDATE_SESSIONS = "tech.lolli.toolbox.ACTION_UPDATE_SESSIONS"
     private val ACTION_DISCONNECT_SESSION = "tech.lolli.toolbox.ACTION_DISCONNECT_SESSION"
     private val ACTION_STOP_ALL_CONNECTIONS = "tech.lolli.toolbox.STOP_ALL_CONNECTIONS"
+    private val INTERNAL_BROADCAST_PERMISSION = "tech.lolli.toolbox.permission.INTERNAL_BROADCAST"
     private var stopAllReceiver: BroadcastReceiver? = null
     private var disableImpeller = false
     private var ownsFlutterEngine = false
@@ -297,7 +298,12 @@ class MainActivity: FlutterFragmentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ContextCompat.registerReceiver(this, stopAllReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
         } else {
-            registerReceiver(stopAllReceiver, filter)
+            // `RECEIVER_NOT_EXPORTED` does not exist before API 33, and a bare
+            // `registerReceiver` leaves this reachable by every app on the
+            // device — for an action whose whole job is to disconnect every SSH
+            // session. The signature-level permission is what restricts the
+            // sender to this build.
+            registerReceiver(stopAllReceiver, filter, INTERNAL_BROADCAST_PERMISSION, null)
         }
     }
 

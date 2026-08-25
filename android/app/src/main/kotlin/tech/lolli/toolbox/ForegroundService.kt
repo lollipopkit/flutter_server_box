@@ -50,6 +50,20 @@ class ForegroundService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         try {
+            // Before the permission check below, because stopping needs no
+            // notification. A user who revokes the permission while this is
+            // running still has the action on a notification the system has not
+            // taken down yet, and it used to take the early exit — killing the
+            // service without ever telling Flutter to disconnect anything.
+            if (intent?.action == ACTION_STOP_FOREGROUND) {
+                val stopAllIntent = Intent("tech.lolli.toolbox.STOP_ALL_CONNECTIONS")
+                    .setPackage(packageName)
+                sendBroadcast(stopAllIntent, "tech.lolli.toolbox.permission.INTERNAL_BROADCAST")
+                clearAll()
+                stopForegroundService()
+                return START_NOT_STICKY
+            }
+
             // Check notification permission for Android 13+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
                 androidx.core.content.ContextCompat.checkSelfPermission(
@@ -73,14 +87,6 @@ class ForegroundService : Service() {
             Log.d("ForegroundService", "onStartCommand action=$action")
 
             return when (action) {
-                ACTION_STOP_FOREGROUND -> {
-                    // Notify Flutter to stop all connections before stopping service
-                    val stopAllIntent = Intent("tech.lolli.toolbox.STOP_ALL_CONNECTIONS")
-                    sendBroadcast(stopAllIntent)
-                    clearAll()
-                    stopForegroundService()
-                    START_NOT_STICKY
-                }
                 ACTION_UPDATE_SESSIONS -> {
                     val payload = intent.getStringExtra("payload") ?: "{}"
                     handleUpdateSessions(payload)
