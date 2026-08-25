@@ -48,8 +48,11 @@ void main() {
 
     final out = OutputMemoryStream();
     entry('usr/bin/coreutils', TarFile.normalFile).write(out);
-    entry('usr/bin/ls', TarFile.hardLink, target: 'usr/bin/coreutils')
-        .write(out);
+    entry(
+      'usr/bin/ls',
+      TarFile.hardLink,
+      target: 'usr/bin/coreutils',
+    ).write(out);
     entry('bin', TarFile.symbolicLink, target: 'usr/bin').write(out);
     out.writeBytes(Uint8List(1024)); // the two empty blocks that end a tar
     out.flush();
@@ -67,6 +70,47 @@ void main() {
     expect(byName['usr/bin/ls']!.nameOfLinkedFile, 'usr/bin/coreutils');
     expect(byName['bin']!.typeFlag, TarFile.symbolicLink);
     expect(byName['bin']!.nameOfLinkedFile, 'usr/bin');
+  });
+
+  test('a hard link to a pending symlink preserves the symlink', () async {
+    TarFile entry(String name, String type, {String? target}) => TarFile()
+      ..filename = name
+      ..mode = 0x1ed
+      ..lastModTime = 0
+      ..typeFlag = type
+      ..nameOfLinkedFile = target
+      ..fileSize = 0;
+
+    final out = OutputMemoryStream();
+    entry(
+      'usr/lib/tool',
+      TarFile.symbolicLink,
+      target: '../bin/tool',
+    ).write(out);
+    entry('usr/bin/tool', TarFile.hardLink, target: 'usr/lib/tool').write(out);
+    out.writeBytes(Uint8List(1024));
+    out.flush();
+
+    final temp = await Directory.systemTemp.createTemp('rootfs-link-link-');
+    addTearDown(() => temp.delete(recursive: true));
+    final archive = File('${temp.path}/rootfs.tar.gz');
+    await archive.writeAsBytes(GZipEncoder().encodeBytes(out.getBytes()));
+    final root = Directory('${temp.path}/root')..createSync();
+    await IosRootfs.extractForTest(
+      archive,
+      root,
+      source: const RootfsSource(
+        url: 'https://example.test/rootfs.tar.gz',
+        sha256: '',
+        sizeBytes: 1,
+        layout: LinuxRootfsLayout.plain,
+        compression: LinuxRootfsCompression.gzip,
+        followsMirror: false,
+      ),
+    );
+
+    expect(await Link('${root.path}/usr/lib/tool').target(), '../bin/tool');
+    expect(await Link('${root.path}/usr/bin/tool').target(), '../bin/tool');
   });
 
   group('the real Ubuntu rootfs', () {
@@ -121,7 +165,9 @@ void main() {
         return null;
       }
       LinuxDistros.adoptForTest(
-        RootfsManifest.parse(File(LinuxDistros.bundledAsset).readAsStringSync()),
+        RootfsManifest.parse(
+          File(LinuxDistros.bundledAsset).readAsStringSync(),
+        ),
       );
       await IosRootfs.extractForTest(
         tarball,
@@ -130,7 +176,6 @@ void main() {
       );
       return into;
     }
-
 
     tearDown(() async {
       if (await into.exists()) await into.delete(recursive: true);

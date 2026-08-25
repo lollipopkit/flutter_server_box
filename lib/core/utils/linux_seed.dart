@@ -15,6 +15,7 @@ import 'dart:io';
 
 import 'package:ffi/ffi.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/core/utils/guest_path.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/rootfs_manifest.dart';
 import 'package:server_box/data/res/default.dart';
@@ -27,6 +28,10 @@ import 'package:server_box/data/res/store.dart';
 /// Empty until something is chosen, which the platform layer reads as "the
 /// first one there is".
 String linuxProfileId() => Stores.setting.linuxProfile.fetch();
+
+void clearLinuxProfileSelection(String id) {
+  if (linuxProfileId() == id) Stores.setting.linuxProfile.put('');
+}
 
 /// Which distribution a *new* profile would be of.
 LinuxDistro linuxDistro() =>
@@ -153,7 +158,9 @@ String linuxShell(String? root) {
 Future<String> linuxShellAsync(String? root) async {
   if (root == null) return Defaults.linuxShell;
   try {
-    final raw = (await File(root.joinPath(shellConfPath)).readAsString()).trim();
+    final raw = (await File(
+      root.joinPath(shellConfPath),
+    ).readAsString()).trim();
     return isShellPathValid(raw) ? raw : Defaults.linuxShell;
   } catch (_) {
     return Defaults.linuxShell;
@@ -162,8 +169,7 @@ Future<String> linuxShellAsync(String? root) async {
 
 /// Records [shell] as [root]'s, or restores the default when it is empty.
 Future<void> setLinuxShell(String root, String shell) async {
-  final file = File(root.joinPath(shellConfPath));
-  await file.parent.create(recursive: true);
+  final file = await rootfsFileForWrite(root, '/$shellConfPath');
   final chosen = shell.trim();
   await file.writeAsString(
     '${isShellPathValid(chosen) ? chosen : Defaults.linuxShell}\n',
@@ -263,7 +269,7 @@ Future<void> seedChsh(String root, {bool force = false}) async {
     await setLinuxShell(root, Defaults.linuxShell);
   }
 
-  final script = File(root.joinPath('usr/local/bin/chsh'));
+  final script = await rootfsFileForWrite(root, '/usr/local/bin/chsh');
   if (!force && await script.exists()) {
     final head = await _readHead(script);
     if (head.contains('# serverbox-chsh v$_chshVersion')) return;
@@ -272,7 +278,6 @@ Future<void> seedChsh(String root, {bool force = false}) async {
     // reporting a modified system.
     if (!head.contains('# serverbox-chsh v')) return;
   }
-  await script.parent.create(recursive: true);
   await script.writeAsString(_chshScript(Defaults.linuxShell));
   chmodGuestFile(script.path, 0x1ED); // 0755
 }
@@ -350,8 +355,9 @@ bool linkGuestFile(String target, String path) {
 final _link = () {
   try {
     return DynamicLibrary.process().lookupFunction<
-        Int Function(Pointer<Char>, Pointer<Char>),
-        int Function(Pointer<Char>, Pointer<Char>)>('link');
+      Int Function(Pointer<Char>, Pointer<Char>),
+      int Function(Pointer<Char>, Pointer<Char>)
+    >('link');
   } catch (_) {
     return null;
   }
@@ -363,11 +369,15 @@ final _chmod = () {
     // `mode_t` is `uint16_t` on Darwin and `unsigned int` everywhere else this
     // ships, and the lookup has to name the width the call will actually use.
     if (Platform.isIOS || Platform.isMacOS) {
-      return process
-          .lookupFunction<Int Function(Pointer<Char>, Uint16), int Function(Pointer<Char>, int)>('chmod');
+      return process.lookupFunction<
+        Int Function(Pointer<Char>, Uint16),
+        int Function(Pointer<Char>, int)
+      >('chmod');
     }
-    return process
-        .lookupFunction<Int Function(Pointer<Char>, UnsignedInt), int Function(Pointer<Char>, int)>('chmod');
+    return process.lookupFunction<
+      Int Function(Pointer<Char>, UnsignedInt),
+      int Function(Pointer<Char>, int)
+    >('chmod');
   } catch (_) {
     return null;
   }
@@ -414,9 +424,7 @@ Future<void> seedResolvConf(
   required List<String> nameservers,
   bool overwrite = false,
 }) async {
-  final etc = Directory(root.joinPath('etc'));
-  if (!await etc.exists()) await etc.create(recursive: true);
-  final conf = File(etc.path.joinPath('resolv.conf'));
+  final conf = await rootfsFileForWrite(root, '/etc/resolv.conf');
   if (!overwrite && await conf.exists()) return;
   await conf.writeAsString(nameservers.map((e) => 'nameserver $e\n').join());
 }
@@ -441,7 +449,6 @@ Future<void> seedRepositories(
   // manager reads as its own: writing `resolute` into a 24.04 tree would have
   // apt fetching one release's packages into another's filesystem.
   final repo = distro.repositories(mirror, release: release);
-  final file = File(root.joinPath(repo.path));
-  await file.parent.create(recursive: true);
+  final file = await rootfsFileForWrite(root, '/${repo.path}');
   await file.writeAsString(repo.content);
 }

@@ -78,3 +78,59 @@ Future<String?> resolveWithinRoot(
   if (real != base && !real.startsWith('$base$separator')) return null;
   return forWrite ? '$real$separator${parts.last}' : real;
 }
+
+/// Returns a regular-file destination inside [root], creating missing parent
+/// directories without following archive-provided links.
+///
+/// Rootfs installation writes a handful of trusted configuration files after
+/// extraction. A tar member may already occupy one of those final paths with
+/// a symlink, so an ordinary [File.writeAsString] would follow it outside the
+/// tree even when every parent is confined.
+Future<File> rootfsFileForWrite(String root, String guestPath) async {
+  if (!guestPath.startsWith('/')) {
+    throw ArgumentError.value(guestPath, 'guestPath', 'must be absolute');
+  }
+
+  final parts = <String>[];
+  for (final segment in guestPath.split('/')) {
+    switch (segment) {
+      case '' || '.':
+        continue;
+      case '..':
+        if (parts.isEmpty) {
+          throw StateError('Rootfs write escapes the root: $guestPath');
+        }
+        parts.removeLast();
+      default:
+        parts.add(segment);
+    }
+  }
+  if (parts.isEmpty) {
+    throw StateError('Rootfs write does not name a file: $guestPath');
+  }
+
+  final base = await Directory(root).resolveSymbolicLinks();
+  var parent = base;
+  for (final segment in parts.take(parts.length - 1)) {
+    parent = '$parent${Platform.pathSeparator}$segment';
+    switch (await FileSystemEntity.type(parent, followLinks: false)) {
+      case FileSystemEntityType.notFound:
+        await Directory(parent).create();
+        break;
+      case FileSystemEntityType.directory:
+        break;
+      case FileSystemEntityType.link:
+        throw StateError('Rootfs write has a symlinked parent: $guestPath');
+      default:
+        throw StateError('Rootfs write has a non-directory parent: $guestPath');
+    }
+  }
+
+  final target = '$parent${Platform.pathSeparator}${parts.last}';
+  final type = await FileSystemEntity.type(target, followLinks: false);
+  if (type == FileSystemEntityType.link ||
+      type == FileSystemEntityType.directory) {
+    throw StateError('Rootfs write target is not a regular file: $guestPath');
+  }
+  return File(target);
+}

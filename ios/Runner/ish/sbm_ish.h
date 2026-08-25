@@ -108,7 +108,8 @@ SBM_ISH_EXPORT int sbm_ish_sessions(const char *profile);
 /// sight.
 /// [profile] is which system to run it in — the subdirectory name, not a path.
 SBM_ISH_EXPORT int sbm_ish_open(const char *profile, const char *shell,
-                                const char *command, int columns, int rows);
+                                const char *command, const char *environment,
+                                int columns, int rows);
 
 /// Reads what [session] has printed, waiting up to [timeout_ms] for the first
 /// byte. Returns the number of bytes, 0 on timeout, or -1 once that session

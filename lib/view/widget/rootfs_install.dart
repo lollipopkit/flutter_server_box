@@ -60,6 +60,14 @@ Future<bool> installRootfs(
   // What is being installed, decided in one place — see `Rootfs.target` for
   // why a replacement never crosses into another series.
   final target = Rootfs.target(into: into, picked: picked);
+  if (target == null) {
+    if (context.mounted) {
+      Toast.error(
+        'This Linux release is no longer available for an in-place update.',
+      );
+    }
+    return present || selected != null;
+  }
   final distro = target.distro;
   final chosen = target.release;
 

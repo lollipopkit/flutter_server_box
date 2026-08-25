@@ -4,6 +4,7 @@ import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/android_rootfs.dart';
 import 'package:server_box/core/utils/ios_rootfs.dart';
+import 'package:server_box/core/utils/linux_seed.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/rootfs_manifest.dart';
 
@@ -79,6 +80,29 @@ void main() {
     expect(File('${outside.path}/payload').existsSync(), isFalse);
   });
 
+  test('post-install seeds refuse a final symlink outside the root', () async {
+    final outsideFile = File('${outside.path}/resolv.conf')
+      ..writeAsStringSync('outside');
+    final archive = Archive()
+      ..add(ArchiveFile.symlink('etc/resolv.conf', outsideFile.path));
+
+    await IosRootfs.extractForTest(
+      await archiveOf('final-link', archive),
+      root,
+      source: source,
+    );
+    await expectLater(
+      seedResolvConf(
+        root.path,
+        nameservers: const ['1.1.1.1'],
+        overwrite: true,
+      ),
+      throwsA(isA<StateError>()),
+    );
+
+    expect(await outsideFile.readAsString(), 'outside');
+  });
+
   test(
     'Android validation rejects traversal and symlink-parent writes',
     () async {
@@ -103,4 +127,16 @@ void main() {
       expect(File('${outside.path}/payload').existsSync(), isFalse);
     },
   );
+
+  test('Android validates gzip tar metadata without a temporary tar', () async {
+    final traversal = Archive()
+      ..add(ArchiveFile.string('../outside/payload', 'bad'));
+    final archive = await archiveOf('android-gzip-traversal', traversal);
+
+    await expectLater(
+      AndroidRootfs.validateGzipTarForTest(archive, root),
+      throwsA(isA<StateError>()),
+    );
+    expect(File('${archive.path}.validated.tar').existsSync(), isFalse);
+  });
 }

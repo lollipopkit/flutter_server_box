@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
 import 'dart:typed_data';
@@ -127,7 +128,9 @@ abstract final class IosRootfs {
   /// The directory listing is the list. A subdirectory that does not look
   /// unpacked is skipped rather than repaired — half of an install is not a
   /// profile, and `install` deletes what it could not finish.
-  static Future<void> scan() async {
+  static Future<void> scan() => _mutate(_scan);
+
+  static Future<void> _scan() async {
     final container = _container;
     if (container == null) {
       _profiles.clear();
@@ -210,7 +213,11 @@ abstract final class IosRootfs {
   }) async {
     final container = _container;
     if (container == null) throw StateError('IosRootfs.prepare was not called');
-    await scan();
+    await _scan();
+
+    if (into != null && byId(into.id) == null) {
+      throw StateError('The Linux system is no longer installed');
+    }
 
     final id =
         into?.id ?? LinuxProfile.nextId(distro, _profiles.map((e) => e.id));
@@ -230,6 +237,9 @@ abstract final class IosRootfs {
     // EBUSY means a session still holds the mount and deleting underneath
     // it parks the engine.
     if (into != null) {
+      if (openSessions(id) > 0) {
+        throw StateError('The Linux system is still in use');
+      }
       final err = detach(id);
       if (err == _ebusy) {
         throw StateError('The Linux system is still in use');
@@ -293,15 +303,16 @@ abstract final class IosRootfs {
         branch: chosen.branch,
         label: label ?? into?.label ?? distro.label,
       );
-      await File(
-        root.joinPath(LinuxProfile.marker),
-      ).writeAsString(profile.encode());
-      await scan();
+      await (await rootfsFileForWrite(
+        root,
+        '/${LinuxProfile.marker}',
+      )).writeAsString(profile.encode());
+      await _scan();
       return profile;
     } catch (_) {
       // Nothing half-installed is left to be mistaken for a working one.
       if (await dir.exists()) await dir.delete(recursive: true);
-      await scan();
+      await _scan();
       rethrow;
     } finally {
       final leftover = File(archivePath);
@@ -358,10 +369,11 @@ abstract final class IosRootfs {
         if (byId(profile.id) == null) return;
         final root = rootOf(profile.id);
         if (root == null) return;
-        await File(
-          root.joinPath(LinuxProfile.marker),
-        ).writeAsString(profile.copyWith(label: label).encode());
-        await scan();
+        await (await rootfsFileForWrite(
+          root,
+          '/${LinuxProfile.marker}',
+        )).writeAsString(profile.copyWith(label: label).encode());
+        await _scan();
       });
 
   /// Removes one system and everything in it. The others stay.
@@ -374,6 +386,9 @@ abstract final class IosRootfs {
     if (byId(id) == null) return;
     final root = rootOf(id);
     if (root == null) return;
+    if (openSessions(id) > 0) {
+      throw StateError('The Linux system is still in use');
+    }
     // Before the directory goes: its `/dev` is a fakefs whose database lives
     // inside it, and the engine keeps the name attached until told otherwise.
     //
@@ -426,7 +441,7 @@ abstract final class IosRootfs {
     _profiles.removeWhere((e) => e.id == id);
     final dir = Directory(root);
     if (await dir.exists()) await dir.delete(recursive: true);
-    await scan();
+    await _scan();
   }
 
   /// Puts the downloaded rootfs on disk, whichever shape it came in.
@@ -720,6 +735,12 @@ abstract final class IosRootfs {
 
     for (final entry in pendingHardLinks.entries) {
       final path = await _safeTarTarget(into, entry.key);
+      final pendingSymlink = pendingSymlinks[entry.value];
+      if (pendingSymlink != null) {
+        await _removeTarTarget(path);
+        await Link(path).create(pendingSymlink);
+        continue;
+      }
       final target = await _safeTarTarget(into, entry.value);
       if (await FileSystemEntity.type(target, followLinks: false) !=
           FileSystemEntityType.file) {
@@ -907,6 +928,7 @@ abstract final class IosRootfs {
     String? command,
     String shell = '',
     String? profileId,
+    Map<String, String>? environment,
     int columns = 80,
     int rows = 25,
   }) {
@@ -916,11 +938,17 @@ abstract final class IosRootfs {
     final profile = id.toNativeUtf8();
     final shellPointer = shell.toNativeUtf8();
     final pointer = (command ?? '').toNativeUtf8();
+    final environmentBytes = _environmentBlock(environment);
+    final environmentPointer = malloc<Uint8>(environmentBytes.length);
+    environmentPointer
+        .asTypedList(environmentBytes.length)
+        .setAll(0, environmentBytes);
     try {
       return open(
         profile.cast(),
         shellPointer.cast(),
         pointer.cast(),
+        environmentPointer.cast(),
         columns,
         rows,
       );
@@ -928,7 +956,31 @@ abstract final class IosRootfs {
       malloc.free(profile);
       malloc.free(shellPointer);
       malloc.free(pointer);
+      malloc.free(environmentPointer);
     }
+  }
+
+  static Uint8List _environmentBlock(Map<String, String>? environment) {
+    final merged = <String, String>{
+      'TERM': 'xterm-256color',
+      'HOME': '/root',
+      'PATH': '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+      ...?environment,
+    };
+    final bytes = BytesBuilder(copy: false);
+    for (final entry in merged.entries) {
+      if (entry.key.isEmpty ||
+          entry.key.contains('=') ||
+          entry.key.contains('\u0000') ||
+          entry.value.contains('\u0000')) {
+        throw ArgumentError.value(entry.key, 'environment', 'invalid entry');
+      }
+      bytes
+        ..add(utf8.encode('${entry.key}=${entry.value}'))
+        ..addByte(0);
+    }
+    bytes.addByte(0);
+    return bytes.takeBytes();
   }
 
   /// What [session] has printed, waiting up to [timeout] for the first byte.
@@ -1078,8 +1130,22 @@ abstract final class IosRootfs {
     'sbm_ish_open',
     (p) =>
         p.lookupFunction<
-          Int Function(Pointer<Char>, Pointer<Char>, Pointer<Char>, Int, Int),
-          int Function(Pointer<Char>, Pointer<Char>, Pointer<Char>, int, int)
+          Int Function(
+            Pointer<Char>,
+            Pointer<Char>,
+            Pointer<Char>,
+            Pointer<Char>,
+            Int,
+            Int,
+          ),
+          int Function(
+            Pointer<Char>,
+            Pointer<Char>,
+            Pointer<Char>,
+            Pointer<Char>,
+            int,
+            int,
+          )
         >('sbm_ish_open'),
   );
   static final _read = _look(

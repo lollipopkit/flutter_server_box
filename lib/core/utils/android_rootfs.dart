@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
 import 'package:crypto/crypto.dart';
@@ -14,6 +15,227 @@ import 'package:server_box/core/utils/oci_image.dart';
 import 'package:server_box/core/utils/rootfs_lifecycle.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/rootfs_manifest.dart';
+
+final class _TarValidationEntry {
+  const _TarValidationEntry(this.name, this.type, this.linkTarget);
+
+  final String name;
+  final String type;
+  final String? linkTarget;
+}
+
+/// Incrementally keeps only tar headers and extended path metadata while a
+/// gzip stream is decoded. File payloads are skipped, so validation does not
+/// need a second uncompressed archive on disk or in memory.
+final class _TarValidationParser {
+  static const _blockSize = 512;
+  static const _maxMetadataSize = 1024 * 1024;
+
+  final entries = <_TarValidationEntry>[];
+  final _header = Uint8List(_blockSize);
+  final _globalPax = <String, String>{};
+  int _headerLength = 0;
+  int _payloadRemaining = 0;
+  int _paddingRemaining = 0;
+  BytesBuilder? _metadata;
+  String? _metadataType;
+  String? _longName;
+  String? _longLink;
+  Map<String, String>? _localPax;
+  bool _ended = false;
+
+  void add(List<int> bytes) {
+    var offset = 0;
+    while (offset < bytes.length && !_ended) {
+      if (_headerLength < _blockSize) {
+        final needed = _blockSize - _headerLength;
+        final available = bytes.length - offset;
+        final count = needed < available ? needed : available;
+        _header.setRange(_headerLength, _headerLength + count, bytes, offset);
+        _headerLength += count;
+        offset += count;
+        if (_headerLength == _blockSize) _beginEntry();
+        continue;
+      }
+
+      if (_payloadRemaining > 0) {
+        final available = bytes.length - offset;
+        final count = _payloadRemaining < available
+            ? _payloadRemaining
+            : available;
+        _metadata?.add(bytes.sublist(offset, offset + count));
+        _payloadRemaining -= count;
+        offset += count;
+        continue;
+      }
+
+      if (_paddingRemaining > 0) {
+        final available = bytes.length - offset;
+        final count = _paddingRemaining < available
+            ? _paddingRemaining
+            : available;
+        _paddingRemaining -= count;
+        offset += count;
+        continue;
+      }
+
+      _finishEntry();
+    }
+  }
+
+  void finish() {
+    if (_ended) return;
+    if (_headerLength == 0) return;
+    if (_headerLength != _blockSize ||
+        _payloadRemaining != 0 ||
+        _paddingRemaining != 0) {
+      throw const FormatException('Truncated tar archive');
+    }
+    _finishEntry();
+  }
+
+  void _beginEntry() {
+    if (_header.every((byte) => byte == 0)) {
+      _ended = true;
+      return;
+    }
+
+    final size = _parseNumber(_header, 124, 12);
+    final type = String.fromCharCode(_header[156]);
+    final name = _headerName(_header);
+    final linkTarget = _parseString(_header, 157, 100);
+    final metadata =
+        type == 'g' ||
+        type == 'G' ||
+        type == 'x' ||
+        type == 'X' ||
+        type == 'L' ||
+        type == 'K' ||
+        name == '././@LongLink';
+    if (metadata && size > _maxMetadataSize) {
+      throw const FormatException('Tar path metadata is too large');
+    }
+
+    _payloadRemaining = size;
+    _paddingRemaining = size % _blockSize == 0
+        ? 0
+        : _blockSize - (size % _blockSize);
+    if (metadata) {
+      _metadata = BytesBuilder(copy: false);
+      _metadataType = type;
+      return;
+    }
+
+    final pax = <String, String>{..._globalPax, ...?_localPax};
+    entries.add(
+      _TarValidationEntry(
+        pax['path'] ?? _longName ?? name,
+        type,
+        pax['linkpath'] ?? _longLink ?? linkTarget.selfNotEmptyOrNull,
+      ),
+    );
+    _localPax = null;
+    _longName = null;
+    _longLink = null;
+  }
+
+  void _finishEntry() {
+    final metadata = _metadata;
+    if (metadata != null) {
+      final data = metadata.takeBytes();
+      switch (_metadataType) {
+        case 'g' || 'G':
+          _globalPax.addAll(_parsePax(data));
+        case 'x' || 'X':
+          _localPax = _parsePax(data);
+        case 'K':
+          _longLink = _decodeMetadata(data);
+        default:
+          _longName = _decodeMetadata(data);
+      }
+    }
+    _metadata = null;
+    _metadataType = null;
+    _payloadRemaining = 0;
+    _paddingRemaining = 0;
+    _headerLength = 0;
+  }
+
+  static String _headerName(Uint8List header) {
+    final name = _parseString(header, 0, 100);
+    final prefix = _parseString(header, 345, 155);
+    return prefix.isEmpty ? name : '$prefix/$name';
+  }
+
+  static String _parseString(Uint8List bytes, int offset, int length) {
+    var end = offset;
+    final limit = offset + length;
+    while (end < limit && bytes[end] != 0) {
+      end++;
+    }
+    return utf8.decode(bytes.sublist(offset, end), allowMalformed: true);
+  }
+
+  static int _parseNumber(Uint8List bytes, int offset, int length) {
+    final first = bytes[offset];
+    if (first & 0x80 != 0) {
+      if (first & 0x40 != 0) {
+        throw const FormatException('Negative tar size');
+      }
+      var value = first & 0x3f;
+      for (var i = offset + 1; i < offset + length; i++) {
+        value = (value << 8) | bytes[i];
+      }
+      return value;
+    }
+    final raw = ascii
+        .decode(bytes.sublist(offset, offset + length), allowInvalid: true)
+        .replaceAll('\u0000', '')
+        .trim();
+    if (raw.isEmpty) return 0;
+    final value = int.tryParse(raw, radix: 8);
+    if (value == null || value < 0) {
+      throw const FormatException('Invalid tar size');
+    }
+    return value;
+  }
+
+  static String _decodeMetadata(Uint8List bytes) {
+    var end = bytes.length;
+    while (end > 0 && (bytes[end - 1] == 0 || bytes[end - 1] == 10)) {
+      end--;
+    }
+    return utf8.decode(bytes.sublist(0, end), allowMalformed: true);
+  }
+
+  static Map<String, String> _parsePax(Uint8List bytes) {
+    final values = <String, String>{};
+    var offset = 0;
+    while (offset < bytes.length) {
+      final space = bytes.indexOf(32, offset);
+      if (space < 0) throw const FormatException('Invalid pax record');
+      final length = int.tryParse(ascii.decode(bytes.sublist(offset, space)));
+      if (length == null || length <= space - offset + 1) {
+        throw const FormatException('Invalid pax record length');
+      }
+      final end = offset + length;
+      if (end > bytes.length) {
+        throw const FormatException('Truncated pax record');
+      }
+      final recordEnd = bytes[end - 1] == 10 ? end - 1 : end;
+      final record = utf8.decode(
+        bytes.sublist(space + 1, recordEnd),
+        allowMalformed: true,
+      );
+      final equals = record.indexOf('=');
+      if (equals > 0) {
+        values[record.substring(0, equals)] = record.substring(equals + 1);
+      }
+      offset = end;
+    }
+    return values;
+  }
+}
 
 /// A Linux userland on Android, and what it takes to get one.
 ///
@@ -209,6 +431,10 @@ abstract final class AndroidRootfs {
     }
     await scan();
 
+    if (into != null && !_profiles.any((e) => e.id == into.id)) {
+      throw StateError('The Linux system is no longer installed');
+    }
+
     final id =
         into?.id ?? LinuxProfile.nextId(distro, _profiles.map((e) => e.id));
     if ((_activeProfiles[id] ?? 0) > 0) {
@@ -233,13 +459,30 @@ abstract final class AndroidRootfs {
           receiveTimeout: const Duration(minutes: 10),
         ),
       );
-      await dio.download(
-        chosen.source.urlOn(mirror, distro.defaultMirror),
-        archive,
-        cancelToken: cancel,
-        onReceiveProgress: (got, total) =>
-            onProgress?.call(total > 0 ? got / total : null),
-      );
+      final downloadCancel = cancel ?? CancelToken();
+      final sizeLimit = chosen.source.sizeBytes;
+      try {
+        await dio.download(
+          chosen.source.urlOn(mirror, distro.defaultMirror),
+          archive,
+          cancelToken: downloadCancel,
+          onReceiveProgress: (got, total) {
+            if (got > sizeLimit && !downloadCancel.isCancelled) {
+              downloadCancel.cancel(
+                StateError('Rootfs archive exceeded $sizeLimit bytes'),
+              );
+              return;
+            }
+            onProgress?.call(total > 0 ? got / total : null);
+          },
+        );
+      } on DioException catch (e) {
+        final reason = e.error;
+        if (e.type == DioExceptionType.cancel && reason is StateError) {
+          throw reason;
+        }
+        rethrow;
+      }
 
       final digest = await _sha256Of(File(archive));
       if (digest != chosen.source.sha256) {
@@ -266,9 +509,10 @@ abstract final class AndroidRootfs {
         branch: chosen.branch,
         label: label ?? into?.label ?? distro.label,
       );
-      await File(
-        root.joinPath(LinuxProfile.marker),
-      ).writeAsString(profile.encode());
+      await (await rootfsFileForWrite(
+        root,
+        '/${LinuxProfile.marker}',
+      )).writeAsString(profile.encode());
       await scan();
       return profile;
     } catch (_) {
@@ -374,33 +618,32 @@ abstract final class AndroidRootfs {
     String root, {
     required bool gzip,
   }) async {
-    var tarPath = archivePath;
-    File? temporary;
     if (gzip) {
-      temporary = File('$archivePath.validated.tar');
-      final input = InputFileStream(archivePath);
-      final output = OutputFileStream(temporary.path);
-      try {
-        GZipDecoder().decodeStream(input, output);
-      } finally {
-        input.closeSync();
-        output.closeSync();
-      }
-      tarPath = temporary.path;
+      await _validateGzipTar(archivePath, root);
+    } else {
+      await _validateTar(archivePath, root);
     }
-    try {
-      await _validateTar(tarPath, root);
-      await _tar(tarPath, root, gzip: false);
-    } finally {
-      if (temporary != null && await temporary.exists()) {
-        await temporary.delete();
-      }
-    }
+    await _tar(archivePath, root, gzip: gzip);
   }
 
   @visibleForTesting
   static Future<void> validateTarForTest(File archive, Directory root) =>
       _validateTar(archive.path, root.path);
+
+  @visibleForTesting
+  static Future<void> validateGzipTarForTest(File archive, Directory root) =>
+      _validateGzipTar(archive.path, root.path);
+
+  static Future<void> _validateGzipTar(String archivePath, String root) async {
+    final parser = _TarValidationParser();
+    await for (final chunk in File(
+      archivePath,
+    ).openRead().transform(GZipCodec().decoder)) {
+      parser.add(chunk);
+    }
+    parser.finish();
+    await _validateEntries(parser.entries, root);
+  }
 
   static List<String>? _safeTarParts(String name) {
     var value = name;
@@ -448,35 +691,51 @@ abstract final class AndroidRootfs {
     final decoder = TarDecoder();
     try {
       decoder.decodeStream(input, storeData: false);
-      final links = <String>{};
-      for (final entry in decoder.files) {
-        if (entry.typeFlag != TarFile.symbolicLink) continue;
-        final parts = _safeTarParts(entry.filename);
-        if (parts == null) {
-          throw StateError('Unsafe tar entry: ${entry.filename}');
-        }
-        links.add(parts.join('/'));
-      }
-
-      for (final entry in decoder.files) {
-        final parts = _safeTarParts(entry.filename);
-        if (parts == null ||
-            _hasLinkAncestor(parts, links) ||
-            await _hasExistingLinkAncestor(root, parts)) {
-          throw StateError('Unsafe tar entry: ${entry.filename}');
-        }
-        if (entry.typeFlag != TarFile.hardLink) continue;
-        final target = entry.nameOfLinkedFile;
-        final targetParts = target == null ? null : _safeTarParts(target);
-        if (targetParts == null ||
-            links.contains(targetParts.join('/')) ||
-            _hasLinkAncestor(targetParts, links) ||
-            await _hasExistingLinkAncestor(root, targetParts)) {
-          throw StateError('Unsafe hardlink target: $target');
-        }
-      }
+      await _validateEntries(
+        decoder.files
+            .map(
+              (entry) => _TarValidationEntry(
+                entry.filename,
+                entry.typeFlag,
+                entry.nameOfLinkedFile,
+              ),
+            )
+            .toList(),
+        root,
+      );
     } finally {
       input.closeSync();
+    }
+  }
+
+  static Future<void> _validateEntries(
+    List<_TarValidationEntry> entries,
+    String root,
+  ) async {
+    final links = <String>{};
+    for (final entry in entries) {
+      if (entry.type != TarFile.symbolicLink) continue;
+      final parts = _safeTarParts(entry.name);
+      if (parts == null) throw StateError('Unsafe tar entry: ${entry.name}');
+      links.add(parts.join('/'));
+    }
+
+    for (final entry in entries) {
+      final parts = _safeTarParts(entry.name);
+      if (parts == null ||
+          _hasLinkAncestor(parts, links) ||
+          await _hasExistingLinkAncestor(root, parts)) {
+        throw StateError('Unsafe tar entry: ${entry.name}');
+      }
+      if (entry.type != TarFile.hardLink) continue;
+      final target = entry.linkTarget;
+      final targetParts = target == null ? null : _safeTarParts(target);
+      if (targetParts == null ||
+          links.contains(targetParts.join('/')) ||
+          _hasLinkAncestor(targetParts, links) ||
+          await _hasExistingLinkAncestor(root, targetParts)) {
+        throw StateError('Unsafe hardlink target: $target');
+      }
     }
   }
 

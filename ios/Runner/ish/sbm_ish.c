@@ -15,8 +15,9 @@ int sbm_ish_attach(const char *profile) { (void)profile; return -1; }
 int sbm_ish_detach(const char *profile) { (void)profile; return -1; }
 int sbm_ish_sessions(const char *profile) { (void)profile; return 0; }
 int sbm_ish_open(const char *profile, const char *shell, const char *command,
-                 int columns, int rows) {
-    (void)profile; (void)shell; (void)command; (void)columns; (void)rows;
+                 const char *environment, int columns, int rows) {
+    (void)profile; (void)shell; (void)command; (void)environment;
+    (void)columns; (void)rows;
     return -1;
 }
 int sbm_ish_read(int session, char *buffer, int length, int timeout_ms) {
@@ -872,7 +873,7 @@ int sbm_ish_boot(const char *rootfs, const char *profile) {
 }
 
 int sbm_ish_open(const char *profile, const char *shell, const char *command,
-                 int columns, int rows) {
+                 const char *environment, int columns, int rows) {
     if (!booted) return -ENOTCONN;
     // The same check `sbm_ish_sessions` and `sbm_ish_detach` apply. A weaker
     // one here would accept a name those two answer `-EINVAL` for, so a
@@ -948,13 +949,13 @@ int sbm_ish_open(const char *profile, const char *shell, const char *command,
     err = attach_stdio(tty);
     if (err < 0) goto fail;
 
-    char environment[256] = {0};
-    size_t written = 0;
-    written += snprintf(environment + written, sizeof(environment) - written,
-                        "TERM=xterm-256color") + 1;
-    written += snprintf(environment + written, sizeof(environment) - written, "HOME=/root") + 1;
-    written += snprintf(environment + written, sizeof(environment) - written,
-                        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin") + 1;
+    static const char default_environment[] =
+        "TERM=xterm-256color\0"
+        "HOME=/root\0"
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\0";
+    if (environment == NULL || environment[0] == '\0') {
+        environment = default_environment;
+    }
 
     // Built twice at most: a shell the setting names but the guest does not
     // have would otherwise be a terminal that opens and immediately dies, with
