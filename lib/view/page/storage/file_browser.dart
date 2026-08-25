@@ -204,7 +204,15 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
 
   final _listFocus = FocusNode(debugLabel: 'file browser');
 
-  bool get _selecting => _selected.isNotEmpty;
+  /// Whether anything *still in the listing* is selected.
+  ///
+  /// Not `_selected.isNotEmpty`. That set holds names, and a name outlives the
+  /// entry: deleted from another session, removed by a failed batch, or
+  /// filtered out by toggling hidden files. Everything that acts on a selection
+  /// goes through [_selectedEntries], which is the listing filtered by that
+  /// set — so the two disagreed, and the bar stayed open over a selection with
+  /// nothing in it, its delete button raising a confirmation for zero files.
+  bool get _selecting => _shown.any((e) => _selected.contains(e.name));
 
   late Future<List<FileEntry>> _entries = _list();
 
@@ -233,7 +241,14 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     final entries = await backend.list(listed);
     // Here rather than at each move: this is where the browser learns the
     // directory really opened.
-    if (mounted) widget.args.onPathChanged?.call(listed);
+    //
+    // Only while it is still the directory being shown. A slow listing that
+    // lands after the user has moved on would otherwise announce where they
+    // were, and this is what the file tab persists — a listing of `/slow`
+    // finishing after a move to `/fast` reopened the tab at `/slow`.
+    if (mounted && _path.path == listed) {
+      widget.args.onPathChanged?.call(listed);
+    }
     return entries;
   }
 
@@ -386,6 +401,10 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
       _pick(entry);
       return;
     }
+    // Picking a directory: a file is not something to act on here. Falling
+    // through opened the entry menu — edit, delete, download — in a browser the
+    // caller put up only to choose a folder.
+    if (widget.args.isPickDir) return;
     final open = widget.args.onOpenFile;
     if (open == null) {
       _showEntryMenu(entry);
@@ -558,15 +577,41 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     );
     if (confirmed != true) return;
 
-    await _run(() async {
+    // Not `_run`: it treats a failure as "nothing happened" and skips the
+    // reload, which is right for one operation and wrong for a batch. A refusal
+    // part way through leaves the earlier ones deleted, so the listing is stale
+    // either way — and clearing the selection wholesale after that took away
+    // the only record of which ones were left.
+    _busy.value = true;
+    final removed = <String>{};
+    Object? failure;
+    try {
       for (final entry in entries) {
         await backend.remove(
           _fullPath(entry),
           recursive: entry.isDir && recursive,
         );
+        removed.add(entry.name);
       }
-    });
-    _clearSelection();
+    } catch (e) {
+      failure = e;
+    } finally {
+      _busy.value = false;
+    }
+
+    if (mounted) {
+      setStateSafe(() {
+        // What is gone stops being selected; what is still there stays, so the
+        // user can see what the failure left behind and retry it.
+        _selected.removeAll(removed);
+        if (_selected.isEmpty) {
+          _cursor = null;
+          _anchor = null;
+        }
+      });
+      if (failure != null) Toast.error(libL10n.fail, body: '$failure');
+    }
+    await refresh();
   }
 
   Future<void> _delete(FileEntry entry) async {
@@ -671,6 +716,15 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
       child: _NameField(icon: icon, initial: initial),
     );
     if (name == null || name.isEmpty || !mounted) return null;
+    // A name, not a path. Every caller joins this onto the directory being
+    // shown and hands the result to the backend, so a separator or a dot
+    // segment here renames or creates somewhere else — `../outside` in a
+    // browser rooted at `/home/me` resolves to `/home/outside`. `BrowsePath`
+    // guards where the browser *goes*, and never sees these.
+    if (name.contains('/') || name.contains(r'\') || name == '.' || name == '..') {
+      Toast.error(libL10n.invalid);
+      return null;
+    }
     return name;
   }
 
