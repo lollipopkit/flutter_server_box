@@ -334,7 +334,7 @@ fn system_type_for(os: &str) -> SystemType {
 /// shared crate for a monitor-only concern.
 pub fn effective_capabilities(system: SystemType) -> sbm_parser::capabilities::Capabilities {
     let mut caps = sbm_parser::capabilities::capabilities(system);
-    if system == SystemType::Bsd {
+    if system == SystemType::Bsd && native_status_available(system) {
         use sbm_parser::capabilities::FieldSupport;
         // HardwareDependent, not Supported: sysinfo returns empty/zero when
         // there's no swap configured or no exposed thermal sensor (macOS in
@@ -345,6 +345,13 @@ pub fn effective_capabilities(system: SystemType) -> sbm_parser::capabilities::C
         caps.temps = FieldSupport::HardwareDependent;
     }
     caps
+}
+
+fn native_status_available(system: SystemType) -> bool {
+    match system {
+        SystemType::Linux | SystemType::Windows => true,
+        SystemType::Bsd => cfg!(target_os = "macos"),
+    }
 }
 
 async fn collect_metrics(
@@ -370,9 +377,10 @@ async fn collect_metrics(
     // Windows' `conn` also has no native implementation yet (would need
     // `GetExtendedTcpTable` FFI) so it rides along on the same schedule;
     // Linux/native already fills `status.conn` and this leaves it alone.
+    let script_due = extended_due || !native_status_available(system);
     let mut custom_cmds = Vec::new();
-    if extended_due {
-        let segments = execute_commands(system).await?;
+    if script_due {
+        let segments = execute_commands(system, extended_due).await?;
         custom_cmds = custom_cmd_outputs(&segments);
         // Built-in probes run before custom commands. Keep the first value for
         // each section so custom output cannot forge a later built-in marker
@@ -381,13 +389,19 @@ async fn collect_metrics(
         for (key, value) in segments {
             raw.entry(key).or_insert(value);
         }
-        let extended = sbm_parser::parse_status(system, &raw);
-        status.amd = extended.amd;
-        status.sensors = extended.sensors;
-        status.batteries = extended.batteries;
-        status.disk_smart = extended.disk_smart;
-        if status.conn.is_none() {
-            status.conn = extended.conn;
+        let scripted = sbm_parser::parse_status(system, &raw);
+        if native_status_available(system) {
+            status.amd = scripted.amd;
+            status.sensors = scripted.sensors;
+            status.batteries = scripted.batteries;
+            status.disk_smart = scripted.disk_smart;
+            if status.conn.is_none() {
+                status.conn = scripted.conn;
+            }
+        } else {
+            let nvidia = std::mem::take(&mut status.nvidia);
+            status = scripted;
+            status.nvidia = nvidia;
         }
     }
 
@@ -399,7 +413,7 @@ async fn collect_metrics(
     // having deleted their commands, and carrying the old output forward
     // would leave deleted commands on the page for as long as the process
     // runs. Only a cycle that did not run the script keeps the previous set.
-    metrics.custom_cmds = if extended_due {
+    metrics.custom_cmds = if script_due {
         custom_cmds
     } else {
         prev_metrics.map(|p| p.custom_cmds.clone()).unwrap_or_default()
@@ -475,6 +489,9 @@ fn build_status_script(system: SystemType) -> String {
 fn monitor_script_command_needed(system: SystemType, key: &str) -> bool {
     use sbm_parser::commands::{AMD, BATTERY, CONN, DISK_SMART, SENSORS};
 
+    if !native_status_available(system) {
+        return true;
+    }
     match system {
         SystemType::Linux => matches!(key, AMD | BATTERY | DISK_SMART | SENSORS),
         SystemType::Bsd => matches!(key, DISK_SMART),
@@ -529,19 +546,24 @@ fn ensure_script(path: &std::path::Path, content: &str) -> std::io::Result<()> {
 /// native-covered commands from both functions before this script is written.
 const EXTENDED_FUNCS: [sbm_parser::script::ShellFunc; 2] =
     [sbm_parser::script::ShellFunc::StatusExt, sbm_parser::script::ShellFunc::Status];
+const CORE_FUNCS: [sbm_parser::script::ShellFunc; 1] = [sbm_parser::script::ShellFunc::Status];
 
 /// Execute the generated status script and split its output by segment.
 /// Failed commands inside the script yield empty segments (the script does
 /// `exec 2>/dev/null`), matching the app's per-segment tolerance; per-command
 /// stderr is not observable in this mode.
-async fn execute_commands(system: SystemType) -> Result<Vec<(String, String)>> {
+async fn execute_commands(
+    system: SystemType,
+    include_extended: bool,
+) -> Result<Vec<(String, String)>> {
     let content = build_status_script(system);
     let path = script_path(system);
 
     ensure_script(&path, &content)
         .map_err(|e| crate::utils::error::MonitorError::Monitoring(format!("Status script error: {e}")))?;
     let mut stdout = String::new();
-    for func in EXTENDED_FUNCS {
+    let funcs = if include_extended { &EXTENDED_FUNCS[..] } else { &CORE_FUNCS[..] };
+    for func in funcs {
         let command = if cfg!(target_os = "windows") {
             let mut command = TokioCommand::new("powershell");
             command
@@ -728,6 +750,22 @@ fn terminate_command(child: &mut Child, process_group: Option<u32>) -> std::io::
         return Ok(());
     }
 
+    #[cfg(windows)]
+    if let Some(pid) = child.id() {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        if std::process::Command::new("taskkill")
+            .args(["/PID", &pid.to_string(), "/T", "/F"])
+            .creation_flags(CREATE_NO_WINDOW)
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status()
+            .is_ok_and(|status| status.success())
+        {
+            return Ok(());
+        }
+    }
+
     child.start_kill()
 }
 
@@ -783,8 +821,11 @@ fn compute_diskio_rate(
         .iter()
         .filter_map(|d| {
             let p = prev.diskio.iter().find(|p| p.dev == d.dev)?;
-            let read_delta = d.sectors_read.saturating_sub(p.sectors_read) as f64 * 512.0;
-            let write_delta = d.sectors_write.saturating_sub(p.sectors_write) as f64 * 512.0;
+            if d.sectors_read < p.sectors_read || d.sectors_write < p.sectors_write {
+                return None;
+            }
+            let read_delta = (d.sectors_read - p.sectors_read) as f64 * 512.0;
+            let write_delta = (d.sectors_write - p.sectors_write) as f64 * 512.0;
             Some(DiskIoRate {
                 dev: d.dev.clone(),
                 read_bytes_per_sec: read_delta / elapsed,
@@ -955,10 +996,16 @@ fn is_real_disk(system: SystemType, d: &Disk) -> bool {
 /// Every real filesystem as its own row (raw view for the drill-down; unlike
 /// aggregate_disks, APFS volumes are not pooled here), KiB -> bytes
 fn flatten_disks(system: SystemType, disks: &[Disk]) -> Vec<DiskDetail> {
-    fn walk<'a>(system: SystemType, disks: &'a [Disk], seen: &mut Vec<&'a str>, out: &mut Vec<DiskDetail>) {
+    fn walk<'a>(
+        system: SystemType,
+        disks: &'a [Disk],
+        seen: &mut Vec<(&'a str, &'a str)>,
+        out: &mut Vec<DiskDetail>,
+    ) {
         for d in disks {
-            if is_real_disk(system, d) && !seen.contains(&d.path.as_str()) {
-                seen.push(&d.path);
+            let identity = (d.path.as_str(), d.mount.as_str());
+            if is_real_disk(system, d) && !seen.contains(&identity) {
+                seen.push(identity);
                 out.push(DiskDetail {
                     path: d.path.clone(),
                     mount: d.mount.clone(),
@@ -1075,9 +1122,16 @@ fn percent(used: u64, total: u64) -> f32 {
 /// avail) belong to one pool: count size/avail once, keep summing used.
 /// Linux paths never match the /dev/diskN pattern and are unaffected.
 fn apfs_pool_key(d: &Disk) -> Option<(String, u64, u64)> {
-    let rest = d.path.strip_prefix("/dev/disk")?;
-    let base: String = rest.chars().take_while(|c| c.is_ascii_digit()).collect();
-    (!base.is_empty()).then_some((base, d.size, d.avail))
+    if let Some(rest) = d.path.strip_prefix("/dev/disk") {
+        let base: String = rest.chars().take_while(|c| c.is_ascii_digit()).collect();
+        if !base.is_empty() {
+            return Some((base, d.size, d.avail));
+        }
+    }
+    d.fs_type
+        .as_deref()
+        .filter(|fs| fs.eq_ignore_ascii_case("apfs"))
+        .map(|_| ("apfs".to_string(), d.size, d.avail))
 }
 
 /// Disk aggregation with Go-compatible /status semantics: real filesystems
@@ -1226,12 +1280,19 @@ mod tests {
     }
 
     #[test]
-    fn effective_capabilities_upgrades_bsd_native_gains() {
+    fn effective_capabilities_only_advertises_bsd_native_gains_on_macos() {
         use sbm_parser::capabilities::FieldSupport;
         let caps = effective_capabilities(SystemType::Bsd);
-        assert_eq!(caps.swap, FieldSupport::HardwareDependent);
-        assert_eq!(caps.diskio, FieldSupport::HardwareDependent);
-        assert_eq!(caps.temps, FieldSupport::HardwareDependent);
+        let expected = if cfg!(target_os = "macos") {
+            FieldSupport::HardwareDependent
+        } else {
+            sbm_parser::capabilities::capabilities(SystemType::Bsd).swap
+        };
+        assert_eq!(caps.swap, expected);
+        if cfg!(target_os = "macos") {
+            assert_eq!(caps.diskio, FieldSupport::HardwareDependent);
+            assert_eq!(caps.temps, FieldSupport::HardwareDependent);
+        }
         // Untouched fields still match the script-manifest-derived baseline
         assert_eq!(caps.conn, FieldSupport::NotImplemented);
     }
@@ -1329,6 +1390,60 @@ mod tests {
         let metrics = aggregate_disks(SystemType::Linux, &disks);
         assert_eq!(metrics.total, 0);
         assert!(flatten_disks(SystemType::Linux, &disks).is_empty());
+    }
+
+    #[test]
+    fn disk_details_keep_distinct_mounts_of_the_same_device() {
+        let disks = vec![
+            Disk {
+                path: "/dev/mapper/data".to_string(),
+                mount: "/".to_string(),
+                used: 100,
+                size: 1000,
+                ..Default::default()
+            },
+            Disk {
+                path: "/dev/mapper/data".to_string(),
+                mount: "/home".to_string(),
+                used: 200,
+                size: 1000,
+                ..Default::default()
+            },
+        ];
+
+        let details = flatten_disks(SystemType::Linux, &disks);
+        assert_eq!(details.len(), 2);
+        assert_eq!(details[0].mount, "/");
+        assert_eq!(details[1].mount, "/home");
+    }
+
+    #[test]
+    fn native_apfs_volumes_share_container_capacity() {
+        let disks = vec![
+            Disk {
+                path: "Macintosh HD (/)".to_string(),
+                mount: "/".to_string(),
+                fs_type: Some("apfs".to_string()),
+                used: 200,
+                size: 1000,
+                avail: 600,
+                ..Default::default()
+            },
+            Disk {
+                path: "Macintosh HD (/System/Volumes/Data)".to_string(),
+                mount: "/System/Volumes/Data".to_string(),
+                fs_type: Some("APFS".to_string()),
+                used: 200,
+                size: 1000,
+                avail: 600,
+                ..Default::default()
+            },
+        ];
+
+        let metrics = aggregate_disks(SystemType::Bsd, &disks);
+        assert_eq!(metrics.total, 1000 * 1024);
+        assert_eq!(metrics.free, 600 * 1024);
+        assert_eq!(metrics.used, 400 * 1024);
     }
 
     #[test]
@@ -1449,13 +1564,47 @@ mod tests {
     }
 
     #[test]
+    fn diskio_counter_reset_has_no_rate_sample() {
+        let mut first_status = empty_status();
+        first_status.diskio = vec![sbm_parser::types::DiskIoPiece {
+            dev: "sda".to_string(),
+            sectors_read: 1000,
+            sectors_write: 500,
+        }];
+        let first = adapt_status(SystemType::Linux, first_status, &Config::default(), None, None, false);
+
+        let current = [sbm_parser::types::DiskIoPiece {
+            dev: "sda".to_string(),
+            sectors_read: 10,
+            sectors_write: 5,
+        }];
+        let rate = compute_diskio_rate(
+            first.timestamp + chrono::Duration::seconds(1),
+            &current,
+            Some(&first),
+        );
+
+        assert!(rate.is_empty());
+    }
+
+    #[test]
     fn monitor_script_keeps_only_non_native_manifest_commands() {
         use sbm_parser::commands::{AMD, BATTERY, CONN, DISK_SMART, SENSORS};
         use sbm_parser::script::{cmd_marker, ShellFunc};
 
+        let bsd_native = [DISK_SMART];
+        let bsd_all = sbm_parser::commands::commands(SystemType::Bsd)
+            .iter()
+            .map(|spec| spec.key)
+            .collect::<Vec<_>>();
+        let bsd_expected = if native_status_available(SystemType::Bsd) {
+            &bsd_native[..]
+        } else {
+            &bsd_all[..]
+        };
         let cases: [(SystemType, &[&str]); 3] = [
             (SystemType::Linux, &[BATTERY, AMD, SENSORS, DISK_SMART]),
-            (SystemType::Bsd, &[DISK_SMART]),
+            (SystemType::Bsd, bsd_expected),
             (SystemType::Windows, &[CONN, BATTERY, AMD, SENSORS, DISK_SMART]),
         ];
         for (system, expected) in cases {
@@ -1513,7 +1662,7 @@ mod tests {
     #[cfg(unix)]
     #[tokio::test]
     async fn execute_commands_via_script_smoke() {
-        let segments = execute_commands(system_type()).await.unwrap();
+        let segments = execute_commands(system_type(), true).await.unwrap();
         let keys: Vec<&str> = segments.iter().map(|(k, _)| k.as_str()).collect();
         assert!(keys.contains(&"diskSmart"), "extended half missing");
         for redundant in ["echo", "time", "net", "cpu", "mem", "disk", "nvidia"] {
@@ -1579,6 +1728,39 @@ mod tests {
 
         assert!(output.is_none());
         assert!(started.elapsed() < Duration::from_secs(1));
+    }
+
+    #[cfg(windows)]
+    #[tokio::test]
+    async fn a_timed_out_windows_command_cannot_leave_a_descendant() {
+        let dir = tempfile::tempdir().unwrap();
+        let marker = dir.path().join("survived");
+        let child_path = dir.path().join("child.ps1");
+        let marker_arg = marker.to_string_lossy().replace('\'', "''");
+        std::fs::write(
+            &child_path,
+            format!(
+                "Start-Sleep -Seconds 2; Set-Content -LiteralPath '{marker_arg}' -Value alive"
+            ),
+        )
+        .unwrap();
+        let child_arg = child_path.to_string_lossy().replace('\'', "''");
+        let parent_script = format!(
+            "$q = '\"' + '{child_arg}' + '\"'; Start-Process powershell -WindowStyle Hidden -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',$q); Start-Sleep -Seconds 30"
+        );
+        let mut command = TokioCommand::new("powershell");
+        command.args(["-NoProfile", "-Command", &parent_script]);
+
+        let output = command_output_with_timeout(
+            command,
+            "test process tree",
+            Duration::from_millis(200),
+        )
+        .await
+        .unwrap();
+        assert!(output.is_none());
+        tokio::time::sleep(Duration::from_secs(3)).await;
+        assert!(!marker.exists());
     }
 
     #[tokio::test]
