@@ -136,6 +136,22 @@ void main() {
     expect(PortForwardStore.forTest().fetchForServer(id).single.id, 'pf-1');
   });
 
+  test('a late port forward still resolves a generated server id', () async {
+    seedLegacyServer();
+    final id = await migrate();
+
+    seed('port_forward', 'pf-late', {
+      'id': 'pf-late',
+      'serverId': legacyRef,
+      'name': 'late-forward',
+      'type': 'local',
+      'localPort': 15432,
+    });
+    await const KvToTablesMigration().apply();
+
+    expect(PortForwardStore.forTest().fetchForServer(id).single.id, 'pf-late');
+  });
+
   test('a container host follows it', () async {
     seedLegacyServer();
     seed('docker', 'containerHostdocker$legacyRef', 'tcp://10.0.0.1:2375');

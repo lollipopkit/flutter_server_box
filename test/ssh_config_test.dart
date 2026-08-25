@@ -381,6 +381,10 @@ Host target
       expect(jump.ssh?.ip, 'bastion.example.com');
       expect(jump.ssh?.user, 'deploy');
       expect(jump.ssh?.port, 2200);
+      expect(
+        servers.where((e) => e.ssh?.ip == 'bastion.example.com'),
+        hasLength(1),
+      );
     });
 
     test('removes references to an invalid ProxyJump owner', () async {

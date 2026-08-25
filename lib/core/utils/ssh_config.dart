@@ -260,6 +260,7 @@ abstract final class SSHConfig {
       for (final raw in specs) {
         final spec = _parseJumpSpec(raw);
         var base = byName[spec.host] ?? byHostname[spec.host];
+        var createdDirect = false;
         if (base == null) {
           if (spec.host.isEmpty || spec.host == servers[i].name) {
             Loggers.app.warning(
@@ -285,6 +286,7 @@ abstract final class SSHConfig {
               ),
             ),
           );
+          createdDirect = true;
         }
         if (base.id == servers[i].id) {
           Loggers.app.warning(
@@ -293,7 +295,7 @@ abstract final class SSHConfig {
           continue;
         }
         final resolvedBase = base;
-        if (spec.user == null && spec.port == null) {
+        if (createdDirect || (spec.user == null && spec.port == null)) {
           jumpIds.add(resolvedBase.id);
           continue;
         }

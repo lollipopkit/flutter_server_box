@@ -306,6 +306,18 @@ void main() {
         ),
       );
     });
+
+    test('the async loader expands the original host and port', () async {
+      final file = File('${tempDir.path}/alias-2200')..writeAsStringSync('KEY');
+      final ssh = SshCredential(
+        ip: 'resolved.example.com',
+        port: 2200,
+        keyPath: '${tempDir.path}/%n-%p',
+      );
+
+      expect(await resolvePrivateKeyAsync(ssh, originalHost: 'alias'), 'KEY');
+      expect(file.existsSync(), isTrue);
+    });
   });
 
   group('genClient', () {

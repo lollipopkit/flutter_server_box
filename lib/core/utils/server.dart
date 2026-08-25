@@ -188,12 +188,18 @@ Map<String, String> resolvePrivateKeys(
 }
 
 /// Async variant of [resolvePrivateKey] for callers that can await.
-Future<String?> resolvePrivateKeyAsync(SshCredential ssh) async {
-  final keys = await resolvePrivateKeysAsync(ssh);
+Future<String?> resolvePrivateKeyAsync(
+  SshCredential ssh, {
+  String? originalHost,
+}) async {
+  final keys = await resolvePrivateKeysAsync(ssh, originalHost: originalHost);
   return keys.isEmpty ? null : keys.values.first;
 }
 
-Future<Map<String, String>> resolvePrivateKeysAsync(SshCredential ssh) async {
+Future<Map<String, String>> resolvePrivateKeysAsync(
+  SshCredential ssh, {
+  String? originalHost,
+}) async {
   final keyId = ssh.keyId;
   if (keyId != null) {
     return {SshCredential.keyRefForId(keyId): getPrivateKey(keyId)};
@@ -214,6 +220,8 @@ Future<Map<String, String>> resolvePrivateKeysAsync(SshCredential ssh) async {
       keyPath,
       hostname: ssh.ip,
       remoteUser: ssh.user,
+      originalHost: originalHost,
+      port: ssh.port,
     );
     try {
       final handle = await File(expanded).open();

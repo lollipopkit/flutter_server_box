@@ -37,6 +37,8 @@ import 'package:sqlite3/sqlite3.dart';
 class KvToTablesMigration implements SchemaMigration {
   const KvToTablesMigration();
 
+  static const _serverAliasStore = 'm004_server_alias';
+
   @override
   int get from => 4;
 
@@ -185,10 +187,23 @@ class KvToTablesMigration implements SchemaMigration {
     // A later retry may contain only a child box: earlier boxes have already
     // been consumed into tables. Keep those server ids resolvable so retried
     // children are not dropped as references to missing servers.
-    final ids = <String, String>{
+    final existingIds = {
       for (final row in _db.select('SELECT id FROM server;'))
-        row['id'] as String: row['id'] as String,
+        row['id'] as String,
     };
+    final ids = <String, String>{for (final id in existingIds) id: id};
+    for (final row in _db.select('SELECT key, value FROM kv WHERE store = ?;', [
+      _serverAliasStore,
+    ])) {
+      try {
+        final id = json.decode(row['value'] as String);
+        if (id is String && existingIds.contains(id)) {
+          ids[row['key'] as String] = id;
+        }
+      } catch (e) {
+        Loggers.app.warning('m004: unreadable server id alias was skipped', e);
+      }
+    }
     final usedIds = ids.values.toSet();
     final jumps = <String, List<String>>{};
 
@@ -201,12 +216,27 @@ class KvToTablesMigration implements SchemaMigration {
 
         usedIds.add(migrated.id);
         ids[row.key] = migrated.id;
+        _db.execute(
+          'INSERT OR REPLACE INTO kv (store, key, value, updated_at) '
+          'VALUES (?, ?, ?, ?);',
+          [_serverAliasStore, row.key, json.encode(migrated.id), row.updatedAt],
+        );
         final stored = migrated.storedId;
         if (stored != null && stored.isNotEmpty) {
           // An embedded id is ambiguous when legacy data duplicated it. Keep
           // references stable on the first row, while the row's kv key still
           // resolves to the distinct id assigned to that exact record.
           ids.putIfAbsent(stored, () => migrated.id);
+          _db.execute(
+            'INSERT OR IGNORE INTO kv (store, key, value, updated_at) '
+            'VALUES (?, ?, ?, ?);',
+            [
+              _serverAliasStore,
+              stored,
+              json.encode(migrated.id),
+              row.updatedAt,
+            ],
+          );
         }
         if (migrated.jumps.isNotEmpty) {
           jumps[migrated.id] = migrated.jumps;
