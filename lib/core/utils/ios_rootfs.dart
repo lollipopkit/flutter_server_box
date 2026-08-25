@@ -153,14 +153,9 @@ abstract final class IosRootfs {
       if (entry is! Directory) continue;
       final id = entry.path.split(Platform.pathSeparator).last;
       if (id.startsWith('.')) continue;
-      if (!await looksUnpacked(entry.path)) continue;
       final marker = File(entry.path.joinPath(LinuxProfile.marker));
-      found.add(
-        LinuxProfile.decode(
-          id,
-          await marker.exists() ? await marker.readAsString() : '',
-        ),
-      );
+      if (!await marker.exists()) continue;
+      found.add(LinuxProfile.decode(id, await marker.readAsString()));
     }
     _profiles
       ..clear()
@@ -215,7 +210,7 @@ abstract final class IosRootfs {
     if (container == null) throw StateError('IosRootfs.prepare was not called');
     await _scan();
 
-    if (into != null && byId(into.id) == null) {
+    if (into != null && byId(into.id) != into) {
       throw StateError('The Linux system is no longer installed');
     }
 
@@ -379,15 +374,26 @@ abstract final class IosRootfs {
       });
 
   /// Removes one system and everything in it. The others stay.
-  static Future<void> removeProfile(String id) =>
-      _mutate(() => _removeProfile(id));
+  static Future<void> removeProfile(String id, {LinuxProfile? expected}) =>
+      _mutate(() => _removeProfile(id, expected: expected));
 
-  static Future<void> _removeProfile(String id) async {
+  static Future<void> _removeProfile(
+    String id, {
+    LinuxProfile? expected,
+  }) async {
     // A known id, before a recursive delete is built from it. `rootOf` only
     // joins a path, so anything the caller passes becomes one.
-    if (byId(id) == null) return;
+    final current = byId(id);
+    if (current == null) return;
+    if (expected != null && current != expected) {
+      throw StateError('The Linux system changed before it could be deleted');
+    }
     final root = rootOf(id);
     if (root == null) return;
+    if (await FileSystemEntity.type(root, followLinks: false) !=
+        FileSystemEntityType.directory) {
+      throw StateError('The Linux system directory is no longer available');
+    }
     if (openSessions(id) > 0) {
       throw StateError('The Linux system is still in use');
     }
@@ -815,18 +821,20 @@ abstract final class IosRootfs {
     _container = (await getApplicationSupportDirectory()).path.joinPath(
       'linux',
     );
-    await scan();
-    for (final profile in _profiles) {
-      final root = rootOf(profile.id);
-      if (root == null) continue;
-      // A system unpacked before [install] seeded a resolver has none, and
-      // nothing else would ever give it one. Writes only when absent, so a
-      // guest pointed at its owner's own resolver keeps it.
-      await seedResolvConf(root, nameservers: linuxNameservers());
-      // Repairs a system unpacked before either existed, and carries a fix to
-      // the script itself into one already installed.
-      await seedChsh(root);
-    }
+    await _mutate(() async {
+      await _scan();
+      for (final profile in _profiles) {
+        final root = rootOf(profile.id);
+        if (root == null) continue;
+        // A system unpacked before [install] seeded a resolver has none, and
+        // nothing else would ever give it one. Writes only when absent, so a
+        // guest pointed at its owner's own resolver keeps it.
+        await seedResolvConf(root, nameservers: linuxNameservers());
+        // Repairs a system unpacked before either existed, and carries a fix to
+        // the script itself into one already installed.
+        await seedChsh(root);
+      }
+    });
   }
 
   /// What [boot] answers when the machine is already up — `-EEXIST`.
@@ -846,10 +854,14 @@ abstract final class IosRootfs {
     final boot = _boot;
     final container = _container;
     final id = profileId ?? selected?.id;
+    final root = rootOf(id);
     if (_mutating ||
         boot == null ||
         container == null ||
         id == null ||
+        root == null ||
+        FileSystemEntity.typeSync(root, followLinks: false) !=
+            FileSystemEntityType.directory ||
         byId(id) == null) {
       return -1;
     }
@@ -936,7 +948,16 @@ abstract final class IosRootfs {
   }) {
     final open = _open;
     final id = profileId ?? selected?.id;
-    if (_mutating || open == null || id == null || byId(id) == null) return -1;
+    final root = rootOf(id);
+    if (_mutating ||
+        open == null ||
+        id == null ||
+        root == null ||
+        FileSystemEntity.typeSync(root, followLinks: false) !=
+            FileSystemEntityType.directory ||
+        byId(id) == null) {
+      return -1;
+    }
     final environmentBytes = _environmentBlock(environment);
     final profile = id.toNativeUtf8();
     final shellPointer = shell.toNativeUtf8();

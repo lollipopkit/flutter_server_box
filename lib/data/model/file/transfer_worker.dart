@@ -762,7 +762,9 @@ Future<void> _copy(FileTransfer job, SendPort mainSendPort) async {
             // zero rather than as a guess that would run past 100.
             percent: total == 0
                 ? 0
-                : (transferred / total * 100 * 10).roundToDouble() / 10,
+                : ((transferred / total * 100 * 10).roundToDouble() / 10)
+                      .clamp(0, 100)
+                      .toDouble(),
             transferredBytes: transferred,
           ),
         );

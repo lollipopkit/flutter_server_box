@@ -11,7 +11,10 @@
 //! here is arranging for code to run as the agent's user, and the endpoint
 //! that does it is gated accordingly.
 
-use std::{fs::OpenOptions, path::{Path, PathBuf}};
+use std::{
+    fs::OpenOptions,
+    path::{Path, PathBuf},
+};
 
 use fs2::FileExt;
 use sbm_parser::script;
@@ -85,10 +88,14 @@ fn read_dir(dir: &Path) -> Result<Vec<CustomCmd>, Error> {
             continue;
         }
         let file_name = entry.file_name().to_string_lossy().into_owned();
-        let Some(name) = script::custom_cmd_name_from_file(&file_name) else { continue };
+        let Some(name) = script::custom_cmd_name_from_file_for_current_platform(&file_name) else {
+            continue;
+        };
         // Command text a user typed; a file that is not UTF-8 is not one of
         // ours no matter what it is called.
-        let Ok(cmd) = std::fs::read_to_string(entry.path()) else { continue };
+        let Ok(cmd) = std::fs::read_to_string(entry.path()) else {
+            continue;
+        };
         found.push((file_name, CustomCmd { name, cmd }));
     }
     // By file name, which is what the script's own `Sort-Object Name` / glob
@@ -158,7 +165,10 @@ fn write_dir(dir: &Path, cmds: &[CustomCmd]) -> Result<(), Error> {
         // The new directory is already installed. Leaving an old backup is
         // safe and lets the next update clean it up; failing the save here
         // would misleadingly tell the caller its commands were not applied.
-        tracing::warn!("Failed to remove old custom commands at {}: {error}", backup.display());
+        tracing::warn!(
+            "Failed to remove old custom commands at {}: {error}",
+            backup.display()
+        );
     }
     Ok(())
 }
@@ -178,7 +188,9 @@ fn replace_lock(dir: &Path) -> Result<std::fs::File, Error> {
 }
 
 fn side_path(dir: &Path, suffix: &str) -> PathBuf {
-    let leaf = dir.file_name().unwrap_or_else(|| script::CUSTOM_CMD_DIR_LEAF.as_ref());
+    let leaf = dir
+        .file_name()
+        .unwrap_or_else(|| script::CUSTOM_CMD_DIR_LEAF.as_ref());
     dir.with_file_name(format!("{}.{}", leaf.to_string_lossy(), suffix))
 }
 
@@ -209,12 +221,16 @@ fn validate(cmds: &[CustomCmd]) -> Result<(), Error> {
             )));
         }
         if name != cmd.name {
-            return Err(Error::Invalid(format!("name '{name}' has surrounding whitespace")));
+            return Err(Error::Invalid(format!(
+                "name '{name}' has surrounding whitespace"
+            )));
         }
         // One file per name: two commands sharing one would be a single file,
         // and the second would silently replace the first.
         if !seen.insert(name) {
-            return Err(Error::Invalid(format!("two commands are both named '{name}'")));
+            return Err(Error::Invalid(format!(
+                "two commands are both named '{name}'"
+            )));
         }
         if cmd.cmd.trim().is_empty() {
             return Err(Error::Invalid(format!("command '{name}' is empty")));
@@ -229,7 +245,10 @@ mod tests {
     use std::sync::Arc;
 
     fn cmd(name: &str, body: &str) -> CustomCmd {
-        CustomCmd { name: name.to_string(), cmd: body.to_string() }
+        CustomCmd {
+            name: name.to_string(),
+            cmd: body.to_string(),
+        }
     }
 
     #[test]
@@ -324,8 +343,10 @@ mod tests {
         worker.join().unwrap().unwrap();
 
         let current = read_dir(&dir).unwrap();
-        assert!(current == vec![cmd("first", "echo first")]
-            || current == vec![cmd("second", "echo second")]);
+        assert!(
+            current == vec![cmd("first", "echo first")]
+                || current == vec![cmd("second", "echo second")]
+        );
         assert!(!side_path(&dir, "new").exists());
         assert!(!side_path(&dir, "old").exists());
         let _ = std::fs::remove_dir_all(tmp);

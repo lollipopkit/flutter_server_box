@@ -260,4 +260,62 @@ void main() {
     expect(keys.single['name'], 'healthy');
     expect(keys.single['key'], 'PRIVATE');
   });
+
+  test('malformed child rows do not block valid children', () async {
+    seedLegacyServer();
+    seed('snippet', 'broken-snippet', {
+      'name': 'broken',
+      'script': <String>['not', 'a', 'string'],
+    });
+    seed('snippet', 'healthy-snippet', {
+      'name': 'healthy',
+      'script': 'echo healthy',
+    });
+    seed('port_forward', 'broken-forward', {
+      'id': <String>['not', 'a', 'string'],
+      'serverId': legacyRef,
+    });
+    seed('port_forward', 'healthy-forward', {
+      'id': 'healthy-forward',
+      'serverId': legacyRef,
+      'localPort': 2200,
+    });
+    seed('conn_stat', 'broken-stat', {
+      'serverId': <String>['not', 'a', 'string'],
+      'timestamp': '2026-01-01T00:00:00.000',
+    });
+    seed('conn_stat', 'healthy-stat', {
+      'serverId': legacyRef,
+      'timestamp': '2026-01-01T00:00:00.000',
+      'result': 'success',
+    });
+    seed('agent_conversation', 'conversation::broken', {
+      'id': <String>['not', 'a', 'string'],
+      'server_id': legacyRef,
+    });
+    seed('agent_conversation', 'conversation::healthy', {
+      'id': 'healthy-conversation',
+      'server_id': legacyRef,
+      'updated_at': '2026-01-01T00:00:00.000',
+      'items': <Object>[],
+    });
+
+    final id = await migrate();
+
+    expect(SnippetStore.forTest().fetch().single.name, 'healthy');
+    expect(
+      PortForwardStore.forTest().fetchForServer(id).single.id,
+      'healthy-forward',
+    );
+    expect(
+      SqliteDb.instance
+          .select('SELECT count(*) AS n FROM conn_stat;')
+          .single['n'],
+      1,
+    );
+    expect(
+      AgentConversationStore.forTest().fetchForServer(id).single.id,
+      'healthy-conversation',
+    );
+  });
 }

@@ -13,7 +13,8 @@ import 'package:server_box/data/res/store.dart';
 
 /// Puts a Linux userland on this device, asking first.
 ///
-/// Returns whether there is one to enter afterwards — already installed counts.
+/// Returns whether this request completed — an already installed implicit
+/// system counts, while cancellation or failure does not.
 ///
 /// This is a download of executable code, so it says so before starting rather
 /// than fetching several megabytes on a tap. What makes it safe to run is in
@@ -38,7 +39,6 @@ Future<bool> installRootfs(
   final present = isIOS
       ? await IosRootfs.isInstalled
       : await AndroidRootfs.isInstalled;
-  final selected = Rootfs.selected;
   // This early return is for the one caller that means "there has to be one to
   // enter": a terminal was opened and had nothing to open into. Adding another
   // and replacing one both mean to install *although* something is there, and
@@ -54,7 +54,7 @@ Future<bool> installRootfs(
   // Before anything is downloaded, because this is where the feature is first
   // met: a system has to be installed before it can be entered, so a warning
   // here is one nobody reaches a Linux shell without having seen.
-  if (!await _confirmBeta(context)) return present || selected != null;
+  if (!await _confirmBeta(context)) return false;
   if (!context.mounted) return false;
 
   // What is being installed, decided in one place — see `Rootfs.target` for
@@ -64,7 +64,7 @@ Future<bool> installRootfs(
     if (context.mounted) {
       Toast.error(libL10n.notAvailable);
     }
-    return present || selected != null;
+    return false;
   }
   final distro = target.distro;
   final chosen = target.release;
@@ -89,7 +89,7 @@ Future<bool> installRootfs(
     ),
     actions: Btnx.cancelOk,
   );
-  if (confirm != true) return present || selected != null;
+  if (confirm != true) return false;
   if (!context.mounted) return false;
 
   final progress = ValueNotifier<double?>(null);
@@ -148,8 +148,6 @@ Future<bool> installRootfs(
     if (!context.mounted) return false;
     context.popDialog();
     if (!cancelled) context.showErrDialog(e, s);
-    // A failed *replacement* took the old one with it — `install` deletes what
-    // it cannot finish, so there is nothing left to fall back to.
     return false;
   } finally {
     progress.dispose();
@@ -252,7 +250,7 @@ Future<bool> removeRootfs(BuildContext context, {LinuxProfile? profile}) async {
   );
 
   try {
-    await Rootfs.removeProfile(target.id);
+    await Rootfs.removeProfile(target.id, expected: target);
   } catch (e, s) {
     // Refused rather than half-done: the tree is still there, and so is
     // whatever was using it. Deleting it anyway is what froze the app.

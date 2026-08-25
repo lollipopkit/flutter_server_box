@@ -10,8 +10,8 @@
 //! poll and `SbStatusExt` for the commands in `commands::EXTENDED`, which both
 //! callers run on a much slower cadence.
 
-use crate::commands::{self, CommandSpec, SEPARATOR};
 use crate::SystemType;
+use crate::commands::{self, CommandSpec, SEPARATOR};
 use std::collections::HashMap;
 
 /// Custom-command segment separator (`SrvBoxCusCmdSep.b64.<name>`)
@@ -51,6 +51,9 @@ pub const CUSTOM_CMD_DIR_WINDOWS: &str =
 /// exists. Absent means it does not — which is not the same as an empty
 /// directory, and the app's migration relies on telling those apart.
 pub const CUSTOM_CMD_DIR_MARKER: &str = "SrvBoxCusCmdDir";
+pub const CUSTOM_CMD_DIR_END_MARKER: &str = "SrvBoxCusCmdDirEnd";
+pub const CUSTOM_CMD_DIR_MISSING_MARKER: &str = "SrvBoxCusCmdDirMissing";
+const CUSTOM_CMD_OUTPUT_PREFIX: &str = "SrvBoxCusCmdOut.";
 
 /// The custom-command directory for a platform, as an expression the platform's
 /// shell expands.
@@ -127,6 +130,25 @@ pub fn custom_cmd_name_from_file(file_name: &str) -> Option<String> {
         return None;
     }
     decode_marker_name(&format!("{ENCODED_NAME_PREFIX}{encoded}"))
+}
+
+fn custom_cmd_name_from_file_for(system: SystemType, file_name: &str) -> Option<String> {
+    match system {
+        SystemType::Windows => custom_cmd_name_from_file(file_name.strip_suffix(".ps1")?),
+        SystemType::Linux | SystemType::Bsd if !file_name.ends_with(".ps1") => {
+            custom_cmd_name_from_file(file_name)
+        }
+        _ => None,
+    }
+}
+
+/// Validates one custom-command file for the platform this binary runs on.
+pub fn custom_cmd_name_from_file_for_current_platform(file_name: &str) -> Option<String> {
+    #[cfg(windows)]
+    let system = SystemType::Windows;
+    #[cfg(not(windows))]
+    let system = SystemType::Linux;
+    custom_cmd_name_from_file_for(system, file_name)
 }
 
 fn encode_marker_name(name: &str) -> String {
@@ -329,23 +351,37 @@ pub fn read_custom_cmds_script(system: SystemType) -> String {
     match system {
         SystemType::Windows => format!(
             "$d = {CUSTOM_CMD_DIR_WINDOWS}\n\
+             if (-not (Test-Path $d) -and (Test-Path \"$d.bak\")) {{ $d = \"$d.bak\" }}\n\
              if (Test-Path $d) {{\n\
              \x20 Write-Host '{CUSTOM_CMD_DIR_MARKER}'\n\
              \x20 Get-ChildItem -File $d | Sort-Object Name | ForEach-Object {{\n\
-             \x20   Write-Host (\"{{0}} {{1}}\" -f $_.BaseName, [Convert]::ToBase64String([IO.File]::ReadAllBytes($_.FullName)))\n\
+             \x20   if ($_.Name -match '^[0-9]{{5}}_[A-Za-z0-9_=-]+\\.ps1$') {{\n\
+             \x20     Write-Host (\"{{0}} {{1}}\" -f $_.Name, [Convert]::ToBase64String([IO.File]::ReadAllBytes($_.FullName)))\n\
+             \x20   }}\n\
              \x20 }}\n\
+             \x20 Write-Host '{CUSTOM_CMD_DIR_END_MARKER}'\n\
+             }} else {{\n\
+             \x20 Write-Host '{CUSTOM_CMD_DIR_MISSING_MARKER}'\n\
              }}\n"
         ),
         SystemType::Linux | SystemType::Bsd => format!(
             "d=\"{CUSTOM_CMD_DIR_UNIX}\"\n\
-             [ -d \"$d\" ] || exit 0\n\
+             [ -d \"$d\" ] || d=\"$d.bak\"\n\
+             if [ ! -d \"$d\" ]; then echo {CUSTOM_CMD_DIR_MISSING_MARKER}; exit 0; fi\n\
              echo {CUSTOM_CMD_DIR_MARKER}\n\
              for f in \"$d\"/*; do\n\
              \t[ -f \"$f\" ] || continue\n\
-             \tprintf '%s ' \"${{f##*/}}\"\n\
+             \tn=${{f##*/}}\n\
+             \to=${{n%%_*}}\n\
+             \te=${{n#*_}}\n\
+             \t[ ${{#o}} -eq 5 ] || continue\n\
+             \tcase \"$o\" in *[!0-9]*) continue;; esac\n\
+             \tcase \"$e\" in ''|*[!A-Za-z0-9_=-]*) continue;; esac\n\
+             \tprintf '%s ' \"$n\"\n\
              \tbase64 < \"$f\" | tr -d '\\n'\n\
              \techo\n\
-             done\n"
+             done\n\
+             echo {CUSTOM_CMD_DIR_END_MARKER}\n"
         ),
     }
 }
@@ -361,16 +397,25 @@ pub fn parse_custom_cmds_listing(raw: &str) -> Option<Vec<(u32, String, String)>
     use base64::Engine;
     let b64 = base64::engine::general_purpose::STANDARD;
 
-    let mut seen_marker = false;
+    let lines: Vec<_> = raw
+        .split('\n')
+        .map(|line| line.strip_suffix('\r').unwrap_or(line))
+        .collect();
+    let last_end = lines
+        .iter()
+        .rposition(|line| line.trim() == CUSTOM_CMD_DIR_END_MARKER);
+    let last_missing = lines
+        .iter()
+        .rposition(|line| line.trim() == CUSTOM_CMD_DIR_MISSING_MARKER);
+    if last_missing.is_some_and(|missing| last_end.is_none_or(|end| missing > end)) {
+        return None;
+    }
+    let end = last_end?;
+    let start = lines[..end]
+        .iter()
+        .rposition(|line| line.trim() == CUSTOM_CMD_DIR_MARKER)?;
     let mut out = Vec::new();
-    for line in raw.split('\n') {
-        let line = line.strip_suffix('\r').unwrap_or(line);
-        if !seen_marker {
-            // Anything before the marker is noise from the transport (a login
-            // banner, a shell's own chatter), not part of the listing.
-            seen_marker = line.trim() == CUSTOM_CMD_DIR_MARKER;
-            continue;
-        }
+    for line in &lines[start + 1..end] {
         let Some((file, encoded)) = line.split_once(' ') else {
             continue;
         };
@@ -391,7 +436,7 @@ pub fn parse_custom_cmds_listing(raw: &str) -> Option<Vec<(u32, String, String)>
         };
         out.push((order, name, cmd));
     }
-    seen_marker.then_some(out)
+    Some(out)
 }
 
 /// Build the full script. Linux and Bsd produce the identical Unix script
@@ -549,32 +594,32 @@ pub fn parse_script_segments(raw: &str) -> Vec<(String, String)> {
     let mut current: Option<String> = None;
     let mut buf = String::new();
 
-    let flush =
-        |current: &mut Option<String>, buf: &mut String, result: &mut Vec<(String, String)>| {
-            if let Some(key) = current.take() {
-                // Preserve custom command output losslessly; only the final
-                // trailing newline added by the loop is removed. Previous
-                // `trim()` stripped leading/trailing blank lines.
-                let mut out = buf.clone();
-                if out.ends_with('\n') {
-                    out.pop();
-                }
-                if out.ends_with('\r') {
-                    out.pop();
-                }
-                // The generated runner emits one delimiter newline after every
-                // custom command. Remove that known delimiter as well when the
-                // command itself already ended with a newline.
-                if custom_result_name(&key).is_some() && out.ends_with('\n') {
-                    out.pop();
-                    if out.ends_with('\r') {
-                        out.pop();
+    let flush = |current: &mut Option<String>,
+                 buf: &mut String,
+                 result: &mut Vec<(String, String)>| {
+        if let Some(key) = current.take() {
+            // Preserve custom command output losslessly; only the final
+            // trailing newline added by the loop is removed. Previous
+            // `trim()` stripped leading/trailing blank lines.
+            let mut out = buf.clone();
+            if out.ends_with('\n') {
+                out.pop();
+            }
+            if out.ends_with('\r') {
+                out.pop();
+            }
+            if custom_result_name(&key).is_some() {
+                if let Some(encoded) = out.strip_prefix(CUSTOM_CMD_OUTPUT_PREFIX) {
+                    use base64::Engine;
+                    if let Ok(bytes) = base64::engine::general_purpose::STANDARD.decode(encoded) {
+                        out = String::from_utf8_lossy(&bytes).into_owned();
                     }
                 }
-                result.push((key, out));
-                buf.clear();
             }
-        };
+            result.push((key, out));
+            buf.clear();
+        }
+    };
 
     for line in raw.split_terminator('\n') {
         let line = line.strip_suffix('\r').unwrap_or(line);
@@ -740,18 +785,22 @@ fn unix_custom_cmds(func: ShellFunc) -> String {
     // child that survives its shell cannot keep the status pipe open.
     let file_blocks = CUSTOM_CMD_MAX_OUTPUT_BYTES.div_ceil(512);
     format!(
-        "\nfor f in \"{CUSTOM_CMD_DIR_UNIX}\"/*; do\n\
+        "\nd=\"{CUSTOM_CMD_DIR_UNIX}\"\n\
+         [ -d \"$d\" ] || d=\"$d.bak\"\n\
+         for f in \"$d\"/*; do\n\
          \t[ -f \"$f\" ] || continue\n\
          \tn=${{f##*/}}\n\
+         \to_prefix=${{n%%_*}}\n\
+         \tencoded=${{n#*_}}\n\
+         \t[ ${{#o_prefix}} -eq 5 ] || continue\n\
+         \tcase \"$o_prefix\" in *[!0-9]*) continue;; esac\n\
+         \tcase \"$encoded\" in ''|*[!A-Za-z0-9_=-]*) continue;; esac\n\
          \tprintf '%s\\n' \"{CUSTOM_CMD_SEPARATOR}.{ENCODED_NAME_PREFIX}${{n#*_}}\"\n\
          \to=\"${{TMPDIR:-/tmp}}/server_box_custom_$$\"\n\
          \trm -f \"$o\"\n\
-         \t(ulimit -f {file_blocks} 2>/dev/null || :; if command -v timeout >/dev/null 2>&1; then timeout 5 sh \"$f\"; else sh \"$f\" & p=$!; (sleep 5; kill \"$p\" 2>/dev/null; sleep 1; kill -9 \"$p\" 2>/dev/null) & w=$!; wait \"$p\" 2>/dev/null; kill \"$w\" 2>/dev/null; wait \"$w\" 2>/dev/null; fi) > \"$o\"\n\
-         \tif command -v head >/dev/null 2>&1; then\n\
-         \t\thead -c {CUSTOM_CMD_MAX_OUTPUT_BYTES} \"$o\" 2>/dev/null\n\
-         \telse\n\
-         \t\tdd if=\"$o\" bs=1 count={CUSTOM_CMD_MAX_OUTPUT_BYTES} 2>/dev/null\n\
-         \tfi\n\
+         \t(ulimit -f {file_blocks} 2>/dev/null || :; if command -v timeout >/dev/null 2>&1; then timeout 5 sh \"$f\"; else kill_tree() {{ for c in $(ps -eo pid=,ppid= 2>/dev/null | awk -v p=\"$1\" '$2 == p {{ print $1 }}'); do kill_tree \"$c\"; done; kill \"$1\" 2>/dev/null; }}; grouped=0; if command -v setsid >/dev/null 2>&1; then setsid sh \"$f\" & p=$!; grouped=1; else sh \"$f\" & p=$!; fi; (sleep 5; if [ \"$grouped\" -eq 1 ]; then kill -TERM -\"$p\" 2>/dev/null; else kill_tree \"$p\"; fi; sleep 1; if [ \"$grouped\" -eq 1 ]; then kill -KILL -\"$p\" 2>/dev/null; else kill_tree \"$p\"; fi) & w=$!; wait \"$p\" 2>/dev/null; kill \"$w\" 2>/dev/null; wait \"$w\" 2>/dev/null; fi) > \"$o\"\n\
+         \tprintf '%s' '{CUSTOM_CMD_OUTPUT_PREFIX}'\n\
+         \tif command -v head >/dev/null 2>&1; then head -c {CUSTOM_CMD_MAX_OUTPUT_BYTES} \"$o\" 2>/dev/null | base64 | tr -d '\\n'; else dd if=\"$o\" bs=1 count={CUSTOM_CMD_MAX_OUTPUT_BYTES} 2>/dev/null | base64 | tr -d '\\n'; fi\n\
          \trm -f \"$o\"\n\
          \tprintf '\\n'\n\
          done\n"
@@ -879,8 +928,10 @@ fn windows_custom_cmds(func: ShellFunc) -> String {
     // nothing, so the command's output was swallowed by the section above it.
     format!(
         "\n    $d = {CUSTOM_CMD_DIR_WINDOWS}\n\
+         \x20   if (-not (Test-Path $d) -and (Test-Path \"$d.bak\")) {{ $d = \"$d.bak\" }}\n\
          \x20   if (Test-Path $d) {{\n\
          \x20     Get-ChildItem -File $d | Sort-Object Name | ForEach-Object {{\n\
+         \x20       if ($_.Name -notmatch '^[0-9]{{5}}_[A-Za-z0-9_=-]+\\.ps1$') {{ return }}\n\
          \x20       Write-Host \"{CUSTOM_CMD_SEPARATOR}.{ENCODED_NAME_PREFIX}$($_.BaseName -replace '^[0-9]+_','')\"\n\
          \x20       $o = Join-Path ([IO.Path]::GetTempPath()) (\"server_box_custom_{{0}}.out\" -f $PID)\n\
          \x20       $e = \"$o.err\"\n\
@@ -890,9 +941,10 @@ fn windows_custom_cmds(func: ShellFunc) -> String {
          \x20       $deadline = [DateTime]::UtcNow.AddSeconds(5)\n\
          \x20       while (-not $p.HasExited -and [DateTime]::UtcNow -lt $deadline -and (-not (Test-Path $o) -or (Get-Item $o).Length -le {CUSTOM_CMD_MAX_OUTPUT_BYTES})) {{ Start-Sleep -Milliseconds 50 }}\n\
          \x20       if (-not $p.HasExited) {{ taskkill /PID $p.Id /T /F | Out-Null; $p.WaitForExit() }}\n\
+         \x20       [Console]::Out.Write('{CUSTOM_CMD_OUTPUT_PREFIX}')\n\
          \x20       if (Test-Path $o) {{\n\
          \x20         $s = [IO.File]::OpenRead($o)\n\
-         \x20         try {{ $b = New-Object byte[] {CUSTOM_CMD_MAX_OUTPUT_BYTES}; $c = $s.Read($b, 0, $b.Length); [Console]::Out.Write([Text.Encoding]::UTF8.GetString($b, 0, $c)) }} finally {{ $s.Dispose() }}\n\
+         \x20         try {{ $b = New-Object byte[] {CUSTOM_CMD_MAX_OUTPUT_BYTES}; $c = $s.Read($b, 0, $b.Length); [Console]::Out.Write([Convert]::ToBase64String($b, 0, $c)) }} finally {{ $s.Dispose() }}\n\
          \x20       }}\n\
          \x20       Remove-Item -Force $o,$e -ErrorAction SilentlyContinue\n\
          \x20       Write-Host ''\n\

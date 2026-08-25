@@ -112,6 +112,7 @@ extension _Actions on _ServerEditPageState {
     // Whatever the page saved, or null if it was left without saving. Read
     // rather than assumed: the picker must not point at a record that does not
     // exist, which the foreign key would refuse at save time anyway.
+    if (!mounted) return;
     if (created is BmcCredential) _bmcCredId.value = created.id;
   }
 
@@ -173,7 +174,7 @@ extension _Actions on _ServerEditPageState {
     );
     // The dialog answers; this page acts on the answer and this page is what
     // holds the field — see the dialog rules in CLAUDE.md
-    if (accepted != true) return;
+    if (accepted != true || !mounted) return;
     _bmcCert.value = info.fingerprint;
   }
 
@@ -365,11 +366,11 @@ extension _Actions on _ServerEditPageState {
           child: Text(libL10n.askContinue(l10n.useNoPwd)),
           actions: Btnx.cancelRedOk,
         );
-        if (ok != true) return;
+        if (ok != true || !mounted) return;
       }
 
       // If [_pubKeyIndex] is -1, it means that the user has not selected
-      if (_keyIdx.value == -1) {
+      if (_keyIdx.value == -1 && _passwordController.text.isEmpty) {
         Toast.show(libL10n.empty);
         return;
       }
@@ -511,19 +512,28 @@ extension _Actions on _ServerEditPageState {
       return;
     }
 
-    if (this.spi == null) {
-      final existsIds = Stores.server.keys();
-      if (existsIds.contains(spi.id)) {
-        Toast.show('${l10n.sameIdServerExist}: ${spi.id}');
-        return;
+    try {
+      if (this.spi == null) {
+        final existsIds = Stores.server.keys();
+        if (existsIds.contains(spi.id)) {
+          Toast.show('${l10n.sameIdServerExist}: ${spi.id}');
+          return;
+        }
+        if (!await _persistPendingSudoPassword()) return;
+        await ref.read(serversProvider.notifier).addServer(spi);
+      } else {
+        if (!await _persistPendingSudoPassword()) return;
+        await ref.read(serversProvider.notifier).updateServer(this.spi!, spi);
       }
-      if (!await _persistPendingSudoPassword()) return;
-      await ref.read(serversProvider.notifier).addServer(spi);
-    } else {
-      if (!await _persistPendingSudoPassword()) return;
-      await ref.read(serversProvider.notifier).updateServer(this.spi!, spi);
+    } on DuplicateNameException catch (e) {
+      if (mounted) Toast.error(l10n.nameAlreadyExistsFmt(e.name));
+      return;
+    } catch (e, s) {
+      if (mounted) context.showErrDialog(e, s);
+      return;
     }
 
+    if (!mounted) return;
     context.pop();
   }
 }

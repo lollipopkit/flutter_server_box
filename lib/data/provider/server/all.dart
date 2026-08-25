@@ -38,6 +38,19 @@ abstract class ServersState with _$ServersState {
 class ServersNotifier extends _$ServersNotifier {
   static const _maxConcurrentRefreshes = 4;
   int _autoRefreshGeneration = 0;
+  Future<void> _mutationTail = Future.value();
+
+  Future<T> _mutate<T>(Future<T> Function() action) async {
+    final previous = _mutationTail;
+    final release = Completer<void>();
+    _mutationTail = release.future;
+    try {
+      await previous.catchError((_) {});
+      return await action();
+    } finally {
+      release.complete();
+    }
+  }
 
   @override
   ServersState build() {
@@ -290,7 +303,9 @@ class ServersNotifier extends _$ServersNotifier {
     TermSessionManager.remove(sessionId);
   }
 
-  Future<void> addServer(Spi spi) async {
+  Future<void> addServer(Spi spi) => _mutate(() => _addServer(spi));
+
+  Future<void> _addServer(Spi spi) async {
     spi.validateOrThrow();
 
     final exists = state.servers.containsKey(spi.id);
@@ -331,9 +346,12 @@ class ServersNotifier extends _$ServersNotifier {
     bakSync.sync(milliDelay: 1000);
   }
 
-  Future<void> delServer(String id) async {
+  Future<void> delServer(String id) => _mutate(() => _delServer(id));
+
+  Future<void> _delServer(String id) async {
     final deleting = state.servers[id];
-    if (deleting != null) await WatchSync.instance.removeServer(deleting);
+    if (deleting == null) return;
+    await WatchSync.instance.removeServer(deleting);
     await _clearServerData(id);
     final newServers = Map<String, Spi>.from(state.servers);
     newServers.remove(id);
@@ -368,7 +386,9 @@ class ServersNotifier extends _$ServersNotifier {
     bakSync.sync(milliDelay: 1000);
   }
 
-  Future<void> deleteAll() async {
+  Future<void> deleteAll() => _mutate(_deleteAll);
+
+  Future<void> _deleteAll() async {
     final serverIds = state.servers.keys.toList();
 
     // Remove all SSH sessions before clearing servers
@@ -411,7 +431,10 @@ class ServersNotifier extends _$ServersNotifier {
     await Stores.connectionStats.clearServerStats(id);
   }
 
-  Future<void> updateServerOrder(List<String> order) async {
+  Future<void> updateServerOrder(List<String> order) =>
+      _mutate(() => _updateServerOrder(order));
+
+  Future<void> _updateServerOrder(List<String> order) async {
     final seen = <String>{};
     final newOrder = <String>[];
 
@@ -445,8 +468,15 @@ class ServersNotifier extends _$ServersNotifier {
     return listEquals(a, b);
   }
 
-  Future<void> updateServer(Spi old, Spi newSpi) async {
+  Future<void> updateServer(Spi old, Spi newSpi) =>
+      _mutate(() => _updateServer(old, newSpi));
+
+  Future<void> _updateServer(Spi old, Spi newSpi) async {
     newSpi.validateOrThrow();
+
+    if (state.servers[old.id] != old) {
+      throw StateError('The server changed while it was being edited');
+    }
 
     if (old != newSpi) {
       if (newSpi.id != old.id) {

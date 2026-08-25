@@ -641,6 +641,7 @@ typedef AgentShellHandle = ({
   ServerExec exec,
   SSHClient? client,
   String? serverId,
+  Spi? expectedSpi,
 });
 
 /// Which machine a shell or file tool call is about.
@@ -836,7 +837,7 @@ class GlobalAgentToolService {
     }
     // No server id: a result claiming one would name a machine in the list,
     // and this is not one of them.
-    return (exec: exec, client: null, serverId: null);
+    return (exec: exec, client: null, serverId: null, expectedSpi: null);
   }
 
   /// An ad-hoc connection that is still open.
@@ -866,6 +867,7 @@ class GlobalAgentToolService {
       exec: SshExec(session.client),
       client: session.client,
       serverId: null,
+      expectedSpi: null,
     );
   }
 
@@ -889,6 +891,7 @@ class GlobalAgentToolService {
         exec: SshExec(existing),
         client: existing,
         serverId: state.spi.id,
+        expectedSpi: spi,
       );
     }
 
@@ -917,7 +920,19 @@ class GlobalAgentToolService {
       exec: exec,
       client: exec is SshExec ? exec.client : null,
       serverId: spi.id,
+      expectedSpi: spi,
     );
+  }
+
+  void _requireCurrent(AgentShellHandle handle) {
+    final serverId = handle.serverId;
+    final spi = handle.expectedSpi;
+    if (serverId == null || spi == null) return;
+    final notifier = _ref.read(serverProvider(serverId).notifier);
+    final stored = _ref.read(serversProvider).servers[serverId];
+    if (stored != spi || !notifier.isExecCurrent(handle.exec, spi)) {
+      throw StateError('${spi.name} changed while the operation was running.');
+    }
   }
 
   ServerState _server(String? serverId) {
@@ -941,7 +956,9 @@ class GlobalAgentToolService {
     AskAiCommand proposal,
     Stopwatch watch,
   ) async {
-    final (:exec, client: _, :serverId) = await _shellFor(proposal);
+    final handle = await _shellFor(proposal);
+    final exec = handle.exec;
+    final serverId = handle.serverId;
     final command = proposal.argumentString('command');
     if (command == null) throw const FormatException('command is required');
 
@@ -969,6 +986,7 @@ class GlobalAgentToolService {
       });
       final ExecResult result;
       try {
+        _requireCurrent(handle);
         result = await exec.run(
           command,
           onStdout: stdoutCapture.add,
@@ -978,6 +996,7 @@ class GlobalAgentToolService {
       } finally {
         timer.cancel();
       }
+      _requireCurrent(handle);
 
       final limited = limitGlobalAgentShellOutput(
         stdoutCapture.text,
@@ -1020,7 +1039,10 @@ class GlobalAgentToolService {
     AskAiCommand proposal,
     Stopwatch watch,
   ) async {
-    final (:exec, :client, :serverId) = await _shellFor(proposal);
+    final handle = await _shellFor(proposal);
+    final exec = handle.exec;
+    final client = handle.client;
+    final serverId = handle.serverId;
     final path = proposal.path;
     if (path == null) throw const FormatException('path is required');
     if (exec is LocalExec) return _readLocalFile(proposal, watch, path, exec);
@@ -1028,9 +1050,13 @@ class GlobalAgentToolService {
     SftpClient? sftp;
     SftpFile? file;
     try {
+      _requireCurrent(handle);
       sftp = await client.sftp().timeout(_sftpTimeout);
+      _requireCurrent(handle);
       file = await sftp.open(path).timeout(_sftpTimeout);
+      _requireCurrent(handle);
       final attrs = await file.stat().timeout(_sftpTimeout);
+      _requireCurrent(handle);
       final size = attrs.size;
       final readLength = size == null
           ? _maxReadBytes + 1
@@ -1040,6 +1066,7 @@ class GlobalAgentToolService {
           in file.read(length: readLength).timeout(_sftpTimeout)) {
         bytes.add(chunk);
       }
+      _requireCurrent(handle);
       final data = bytes.takeBytes();
       final truncated =
           data.length > _maxReadBytes || (size != null && size > _maxReadBytes);
@@ -1292,7 +1319,10 @@ class GlobalAgentToolService {
     AskAiCommand proposal,
     Stopwatch watch,
   ) async {
-    final (:exec, :client, :serverId) = await _shellFor(proposal);
+    final handle = await _shellFor(proposal);
+    final exec = handle.exec;
+    final client = handle.client;
+    final serverId = handle.serverId;
     final path = proposal.path;
     final content = proposal.arguments['content'];
     if (path == null) throw const FormatException('path is required');
@@ -1311,7 +1341,9 @@ class GlobalAgentToolService {
     SftpFile? file;
     String? temporaryPath;
     try {
+      _requireCurrent(handle);
       sftp = await client.sftp().timeout(_sftpTimeout);
+      _requireCurrent(handle);
       final tempPath = _temporaryRemotePath(path);
       temporaryPath = tempPath;
       file = await sftp
@@ -1323,11 +1355,15 @@ class GlobalAgentToolService {
                 SftpFileOpenMode.write,
           )
           .timeout(_sftpTimeout);
+      _requireCurrent(handle);
       final writer = file.write(Stream<Uint8List>.value(bytes));
       await writer.done.timeout(_operationTimeout);
-      await file.close();
+      _requireCurrent(handle);
+      await file.close().timeout(_sftpTimeout);
       file = null;
+      _requireCurrent(handle);
       await sftp.rename(tempPath, path).timeout(_sftpTimeout);
+      _requireCurrent(handle);
       temporaryPath = null;
       return AgentToolExecutionResult(
         toolName: proposal.toolName,

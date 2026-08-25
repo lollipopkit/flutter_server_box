@@ -462,7 +462,8 @@ extension _Sessions on _SSHTabPageState {
       // to reopen has cost nothing.
       final id = entry['sourceId'] ?? entry['serverId'];
       final TerminalSource source;
-      if (id is String && id.startsWith(LocalSource.rootfsId)) {
+      final profileId = id is String ? LocalSource.profileIdOf(id) : null;
+      if (id == LocalSource.rootfsId || profileId != null) {
         // Only where there is one to enter. A rootfs the user deleted, or a
         // tab set restored onto a build without proot, would otherwise reopen
         // as a terminal that can only print an error.
@@ -470,7 +471,6 @@ extension _Sessions on _SSHTabPageState {
         if (!Rootfs.isReady) continue;
         // A saved set from before profiles existed names no profile, and reads
         // as "whichever is selected" — which is what it meant.
-        final profileId = LocalSource.profileIdOf(id);
         // One that names a profile this device has not got is skipped like an
         // unknown server: a backup restored onto another device is exactly how
         // that happens.
@@ -493,8 +493,12 @@ extension _Sessions on _SSHTabPageState {
       }
       _open(
         source,
-        tmuxSession: entry['tmuxSession'] as String?,
-        tmuxWindow: entry['tmuxWindow'] as int?,
+        tmuxSession: entry['tmuxSession'] is String
+            ? entry['tmuxSession'] as String
+            : null,
+        tmuxWindow: entry['tmuxWindow'] is int
+            ? entry['tmuxWindow'] as int
+            : null,
         select: false,
       );
       restored++;

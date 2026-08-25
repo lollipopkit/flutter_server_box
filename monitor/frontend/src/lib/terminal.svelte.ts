@@ -125,12 +125,16 @@ function clearSession() {
 ///
 /// Exported for its own test: getting the scheme wrong on a same-origin panel
 /// is the kind of thing that only shows up in production.
-export function terminalWsUrl(base: string, ticket: string): string {
+export function terminalWsUrl(base: string): string {
   const origin = (base || window.location.origin).trim().replace(/\/+$/, '')
   const ws = /^https?:\/\//i.test(origin)
     ? origin.replace(/^http/i, 'ws')
     : `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${origin}`
-  return `${ws}/api/v1/terminal/ws?ticket=${encodeURIComponent(ticket)}`
+  return `${ws}/api/v1/terminal/ws`
+}
+
+export function terminalWsProtocol(ticket: string): string {
+  return `sbm-ticket.${ticket}`
 }
 
 export class TerminalSession {
@@ -258,7 +262,7 @@ export class TerminalSession {
 
     if (generation !== this.connectionGeneration || this.finished) return
 
-    const socket = new WebSocket(terminalWsUrl(entry.url, ticket))
+    const socket = new WebSocket(terminalWsUrl(entry.url), [terminalWsProtocol(ticket)])
     socket.binaryType = 'arraybuffer'
     this.socket = socket
 

@@ -267,7 +267,9 @@ class ProxyCommandSocket implements SSHSocket {
       await _done.timeout(const Duration(seconds: 2)).catchError((_) {});
     } catch (_) {}
     // Ensure the process is gone even if the above timed out.
-    _process.kill(ProcessSignal.sigkill);
+    try {
+      _process.kill(ProcessSignal.sigkill);
+    } catch (_) {}
     try {
       if (!Platform.isWindows && _processGroupId != null) {
         Process.killPid(-_processGroupId, ProcessSignal.sigkill);

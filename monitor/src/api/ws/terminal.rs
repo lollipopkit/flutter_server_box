@@ -25,11 +25,11 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::Arc;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use ntex::rt::spawn;
 use ntex::service::{fn_factory_with_config, fn_service};
-use ntex::time::sleep;
+use ntex::time::{sleep, timeout};
 use ntex::util::{ByteString, Bytes};
 use ntex::web::ws::{self, CloseCode, Frame, Message, WsSink};
 use ntex::web::{self, HttpRequest, HttpResponse};
@@ -61,6 +61,8 @@ const INPUT_QUEUE: usize = 64;
 /// observe pongs, so without this a client cannot tell a quiet session from a
 /// dead link — and it is the client noticing that starts a reconnect.
 const HEARTBEAT: Duration = Duration::from_secs(15);
+const TICKET_PROTOCOL_PREFIX: &str = "sbm-ticket.";
+const AUTH_TIMEOUT: Duration = Duration::from_secs(30);
 
 #[derive(Deserialize)]
 #[serde(tag = "type", rename_all = "lowercase")]
@@ -210,9 +212,13 @@ pub async fn terminal_ws(
         return deny("origin", HttpResponse::Unauthorized().finish()).await;
     }
 
-    let Some(raw_ticket) = query_param(req.query_string(), "ticket") else {
+    let Some(protocol) = ws::subprotocols(&req)
+        .find(|value| value.starts_with(TICKET_PROTOCOL_PREFIX))
+        .map(str::to_owned)
+    else {
         return deny("no ticket", HttpResponse::Unauthorized().finish()).await;
     };
+    let raw_ticket = &protocol[TICKET_PROTOCOL_PREFIX.len()..];
     let Ok(reservation) = app_state.tickets.reserve(&raw_ticket, Purpose::Terminal) else {
         return deny("ticket", HttpResponse::Unauthorized().finish()).await;
     };
@@ -228,7 +234,7 @@ pub async fn terminal_ws(
 
     let upgraded = ws::start::<_, _, &str, web::Error>(
         req,
-        None,
+        Some(&protocol),
         fn_factory_with_config(move |sink: WsSink| {
             let ctx = ctx.clone();
             async move {
@@ -244,17 +250,6 @@ pub async fn terminal_ws(
         tickets.rollback(reservation);
     }
     upgraded
-}
-
-/// First value of `name` in a query string.
-///
-/// Tickets are opaque hex values, so this intentionally avoids percent
-/// decoding and its alternate spellings.
-fn query_param(query: &str, name: &str) -> Option<String> {
-    query.split('&').find_map(|pair| {
-        let (key, value) = pair.split_once('=')?;
-        (key == name).then(|| value.to_string())
-    })
 }
 
 /// Everything about the connection that outlives a single frame.
@@ -282,6 +277,7 @@ enum Phase {
         term: String,
         cols: u16,
         rows: u16,
+        deadline: Instant,
     },
     Running {
         session: Arc<Session>,
@@ -318,6 +314,36 @@ fn set_if_opening(phase: &Rc<RefCell<Phase>>, next: Phase) -> bool {
     }
     *phase = next;
     true
+}
+
+fn arm_auth_timeout(ctx: Rc<ConnCtx>, sink: WsSink, phase: Rc<RefCell<Phase>>, deadline: Instant) {
+    spawn(async move {
+        sleep(AUTH_TIMEOUT).await;
+        let expired = {
+            let mut current = phase.borrow_mut();
+            if !matches!(
+                &*current,
+                Phase::Authenticating {
+                    deadline: active,
+                    ..
+                } if *active == deadline
+            ) {
+                return;
+            }
+            match std::mem::replace(&mut *current, Phase::Idle) {
+                Phase::Authenticating { ssh, user, .. } => Some((ssh, user)),
+                other => {
+                    *current = other;
+                    None
+                }
+            }
+        };
+        if let Some((ssh, user)) = expired {
+            ssh.disconnect().await;
+            let frame = fail(&ctx, &user, &SshError::AuthTimeout).await;
+            let _ = sink.send(frame).await;
+        }
+    });
 }
 
 fn handler(
@@ -667,11 +693,20 @@ async fn open(
     rows: u16,
 ) -> Option<Message> {
     let addr = &ctx.state.remote_access.ssh_addr;
-    let mut ssh = match SshSession::connect(ctx.state.db.clone(), addr).await {
-        Ok(ssh) => ssh,
-        Err(e) => {
+    let mut ssh = match timeout(
+        AUTH_TIMEOUT,
+        SshSession::connect(ctx.state.db.clone(), addr),
+    )
+    .await
+    {
+        Ok(Ok(ssh)) => ssh,
+        Ok(Err(e)) => {
             reset_opening(phase);
             return Some(fail(ctx, &user, &e).await);
+        }
+        Err(_) => {
+            reset_opening(phase);
+            return Some(fail(ctx, &user, &SshError::AuthTimeout).await);
         }
     };
 
@@ -680,19 +715,20 @@ async fn open(
         return None;
     }
 
-    match ssh.authenticate(&user, credential).await {
-        Ok(AuthStep::Authenticated) => {
+    match timeout(AUTH_TIMEOUT, ssh.authenticate(&user, credential)).await {
+        Ok(Ok(AuthStep::Authenticated)) => {
             start_shell(ctx, sink, phase, ssh, user, term, cols, rows).await
         }
-        Ok(AuthStep::NeedsAnswers {
+        Ok(Ok(AuthStep::NeedsAnswers {
             instructions,
             prompts,
-        }) => {
+        })) => {
             let frame = ServerMsg::Prompt {
                 instructions: &instructions,
                 prompts: &prompts,
             }
             .frame();
+            let deadline = Instant::now() + AUTH_TIMEOUT;
             if !set_if_opening(
                 phase,
                 Phase::Authenticating {
@@ -701,19 +737,26 @@ async fn open(
                     term,
                     cols,
                     rows,
+                    deadline,
                 },
             ) {
                 return None;
             }
+            arm_auth_timeout(ctx.clone(), sink.clone(), phase.clone(), deadline);
             Some(frame)
         }
-        Ok(AuthStep::Failed) => {
+        Ok(Ok(AuthStep::Failed)) => {
             reset_opening(phase);
             Some(fail(ctx, &user, &SshError::AuthFailed).await)
         }
-        Err(e) => {
+        Ok(Err(e)) => {
             reset_opening(phase);
             Some(fail(ctx, &user, &e).await)
+        }
+        Err(_) => {
+            ssh.disconnect().await;
+            reset_opening(phase);
+            Some(fail(ctx, &user, &SshError::AuthTimeout).await)
         }
     }
 }
@@ -735,6 +778,7 @@ async fn answer(
             term,
             cols,
             rows,
+            ..
         } => (ssh, user, term, cols, rows),
         other => {
             *phase.borrow_mut() = other;
@@ -742,19 +786,20 @@ async fn answer(
         }
     };
 
-    match ssh.answer_prompts(answers).await {
-        Ok(AuthStep::Authenticated) => {
+    match timeout(AUTH_TIMEOUT, ssh.answer_prompts(answers)).await {
+        Ok(Ok(AuthStep::Authenticated)) => {
             start_shell(ctx, sink, phase, *ssh, user, term, cols, rows).await
         }
-        Ok(AuthStep::NeedsAnswers {
+        Ok(Ok(AuthStep::NeedsAnswers {
             instructions,
             prompts,
-        }) => {
+        })) => {
             let frame = ServerMsg::Prompt {
                 instructions: &instructions,
                 prompts: &prompts,
             }
             .frame();
+            let deadline = Instant::now() + AUTH_TIMEOUT;
             if !set_if_opening(
                 phase,
                 Phase::Authenticating {
@@ -763,19 +808,26 @@ async fn answer(
                     term,
                     cols,
                     rows,
+                    deadline,
                 },
             ) {
                 return None;
             }
+            arm_auth_timeout(ctx.clone(), sink.clone(), phase.clone(), deadline);
             Some(frame)
         }
-        Ok(AuthStep::Failed) => {
+        Ok(Ok(AuthStep::Failed)) => {
             reset_opening(phase);
             Some(fail(ctx, &user, &SshError::AuthFailed).await)
         }
-        Err(e) => {
+        Ok(Err(e)) => {
             reset_opening(phase);
             Some(fail(ctx, &user, &e).await)
+        }
+        Err(_) => {
+            ssh.disconnect().await;
+            reset_opening(phase);
+            Some(fail(ctx, &user, &SshError::AuthTimeout).await)
         }
     }
 }
@@ -1201,31 +1253,6 @@ pub fn start_reaper(sessions: Arc<SessionStore>, interval: Duration) {
 
 #[cfg(test)]
 mod tests {
-    /// The ticket parser, which reads a query string by hand on a security
-    /// boundary.
-    ///
-    /// These came with `query_param` from the tunnel endpoint and were lost
-    /// when it was deleted; the function was copied and the tests were not.
-    /// What they pin is what a hand-rolled parser gets wrong: matching a name
-    /// that merely contains the one asked for, and taking a bare key as a
-    /// value. Switching `key == name` to `ends_with` passes every other test
-    /// in this file.
-    #[test]
-    fn query_param_reads_the_named_value() {
-        assert_eq!(query_param("ticket=abc", "ticket").as_deref(), Some("abc"));
-        assert_eq!(
-            query_param("a=1&ticket=abc&b=2", "ticket").as_deref(),
-            Some("abc")
-        );
-        assert_eq!(query_param("a=1&b=2", "ticket"), None);
-        assert_eq!(query_param("", "ticket"), None);
-        // A bare key is not a value
-        assert_eq!(query_param("ticket", "ticket"), None);
-        // Must not match on a suffix or prefix of the name
-        assert_eq!(query_param("myticket=abc", "ticket"), None);
-        assert_eq!(query_param("ticketx=abc", "ticket"), None);
-    }
-
     use super::*;
 
     fn parse(json: &str) -> ClientMsg {

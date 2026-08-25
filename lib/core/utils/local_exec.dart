@@ -157,8 +157,10 @@ class ProcessExec extends LocalExec {
       final processGroupId = setsid == null ? null : process.pid;
 
       var cancelled = false;
+      var processExited = false;
       unawaited(
         cancel?.then((_) {
+          if (processExited) return;
           cancelled = true;
           ProcessTree.terminate(process, processGroupId);
         }),
@@ -167,14 +169,28 @@ class ProcessExec extends LocalExec {
       final out = StringBuffer();
       final err = StringBuffer();
       const decoder = Utf8Decoder(allowMalformed: true);
-      final outDone = decoder.bind(process.stdout).forEach((chunk) {
-        out.write(chunk);
-        onStdout?.call(chunk);
-      });
-      final errDone = decoder.bind(process.stderr).forEach((chunk) {
-        err.write(chunk);
-        onStderr?.call(chunk);
-      });
+      final outDone = Completer<void>();
+      final errDone = Completer<void>();
+      final outSub = decoder
+          .bind(process.stdout)
+          .listen(
+            (chunk) {
+              out.write(chunk);
+              onStdout?.call(chunk);
+            },
+            onError: outDone.completeError,
+            onDone: outDone.complete,
+          );
+      final errSub = decoder
+          .bind(process.stderr)
+          .listen(
+            (chunk) {
+              err.write(chunk);
+              onStderr?.call(chunk);
+            },
+            onError: errDone.completeError,
+            onDone: errDone.complete,
+          );
 
       if (stdin != null) process.stdin.write(stdin);
       if (entry != null) process.stdin.write('$script\n');
@@ -188,7 +204,17 @@ class ProcessExec extends LocalExec {
       }
 
       final exitCode = await process.exitCode;
-      await Future.wait([outDone, errDone]);
+      processExited = true;
+      try {
+        await Future.wait([
+          outDone.future,
+          errDone.future,
+        ]).timeout(const Duration(seconds: 1));
+      } on TimeoutException {
+        // A background descendant can inherit these pipes after the command
+        // itself has exited. Its output is no longer part of this command.
+        await Future.wait([outSub.cancel(), errSub.cancel()]);
+      }
 
       return ExecResult(
         // A cancelled command has no exit code worth reporting: it was killed,

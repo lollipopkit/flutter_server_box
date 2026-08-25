@@ -297,6 +297,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
 
 extension _Actions on _PrivateKeyEditPageState {
   void _onTapSave() async {
+    if (_loading.value != null) return;
     final name = _nameController.text;
     final rawKey = _keyController.text.trim();
     final rawSize = privateKeyUtf8Length(rawKey);

@@ -167,6 +167,36 @@ void main() {
     expect(restored().map((t) => t['sourceId']), ['srv-1']);
   });
 
+  testWidgets('malformed tmux fields do not block later tabs', (tester) async {
+    final spi = spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u');
+    Stores.server.put(spi);
+    await saveTabs([
+      {'sourceId': 'srv-1', 'tmuxSession': 42, 'tmuxWindow': 'bad'},
+      {'sourceId': 'srv-1', 'tmuxSession': 'work', 'tmuxWindow': 3},
+    ]);
+
+    await pump(tester);
+
+    final tabs = restored();
+    expect(tabs, hasLength(2));
+    expect(tabs.last['tmuxSession'], 'work');
+    expect(tabs.last['tmuxWindow'], 3);
+  });
+
+  testWidgets('a server id sharing the rootfs prefix remains a server', (
+    tester,
+  ) async {
+    final id = '${LocalSource.rootfsId}x';
+    Stores.server.put(spiFixture(id: id, name: 'web', ip: 'h', user: 'u'));
+    await saveTabs([
+      {'sourceId': id},
+    ]);
+
+    await pump(tester);
+
+    expect(restored().map((t) => t['sourceId']), [id]);
+  });
+
   testWidgets('an unreadable set opens the picker rather than throwing', (
     tester,
   ) async {

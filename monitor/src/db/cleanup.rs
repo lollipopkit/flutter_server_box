@@ -1,8 +1,8 @@
-use anyhow::Result;
-use sqlx::SqlitePool;
-use tracing::{info, warn, error};
-use chrono::{Duration, Utc};
 use crate::core::config::DataRetentionConfig;
+use anyhow::Result;
+use chrono::{Duration, Utc};
+use sqlx::SqlitePool;
+use tracing::{error, info, warn};
 
 const MIN_AUDIT_ROWS: i64 = 100;
 
@@ -45,6 +45,7 @@ impl DataCleanupService {
         "rule_executions",
         "performance_metrics",
         "alerts",
+        "enhanced_alerts",
         "config_audit_log",
         "access_log",
     ];
@@ -52,9 +53,15 @@ impl DataCleanupService {
     /// Live data size: pages in use excluding the freelist, so deletions count
     /// immediately without requiring a blocking full-database VACUUM.
     async fn live_db_bytes(&self) -> Result<u64> {
-        let page_count: i64 = sqlx::query_scalar("PRAGMA page_count").fetch_one(&self.pool).await?;
-        let freelist: i64 = sqlx::query_scalar("PRAGMA freelist_count").fetch_one(&self.pool).await?;
-        let page_size: i64 = sqlx::query_scalar("PRAGMA page_size").fetch_one(&self.pool).await?;
+        let page_count: i64 = sqlx::query_scalar("PRAGMA page_count")
+            .fetch_one(&self.pool)
+            .await?;
+        let freelist: i64 = sqlx::query_scalar("PRAGMA freelist_count")
+            .fetch_one(&self.pool)
+            .await?;
+        let page_size: i64 = sqlx::query_scalar("PRAGMA page_size")
+            .fetch_one(&self.pool)
+            .await?;
         Ok((page_count - freelist).max(0) as u64 * page_size.max(0) as u64)
     }
 
@@ -153,10 +160,10 @@ impl DataCleanupService {
             let deleted = sqlx::query(sqlx::AssertSqlSafe(format!(
                 "DELETE FROM {table} WHERE timestamp < ?"
             )))
-                .bind(cutoff)
-                .execute(&self.pool)
-                .await?
-                .rows_affected();
+            .bind(cutoff)
+            .execute(&self.pool)
+            .await?
+            .rows_affected();
             if deleted > 0 {
                 info!(
                     "Deleted {} rows from {} older than {} days",
@@ -176,7 +183,7 @@ impl DataCleanupService {
 
     async fn cleanup_old_metrics(&self) -> Result<u64> {
         let cutoff_date = Utc::now() - Duration::days(self.config.metrics_days as i64);
-        
+
         let result = sqlx::query!(
             "DELETE FROM system_metrics WHERE timestamp < ?",
             cutoff_date
@@ -185,10 +192,12 @@ impl DataCleanupService {
         .await?;
 
         let deleted_count = result.rows_affected();
-        
+
         if deleted_count > 0 {
-            info!("Deleted {} old metrics records older than {} days", 
-                  deleted_count, self.config.metrics_days);
+            info!(
+                "Deleted {} old metrics records older than {} days",
+                deleted_count, self.config.metrics_days
+            );
         }
 
         Ok(deleted_count)
@@ -196,52 +205,43 @@ impl DataCleanupService {
 
     async fn cleanup_old_alerts(&self) -> Result<u64> {
         let cutoff_date = Utc::now() - Duration::days(self.config.alerts_days as i64);
-        
-        let result = sqlx::query!(
-            "DELETE FROM alerts WHERE timestamp < ?",
-            cutoff_date
-        )
-        .execute(&self.pool)
-        .await?;
+
+        let result = sqlx::query!("DELETE FROM alerts WHERE timestamp < ?", cutoff_date)
+            .execute(&self.pool)
+            .await?;
 
         let deleted_count = result.rows_affected();
-        
+
         if deleted_count > 0 {
-            info!("Deleted {} old alert records older than {} days", 
-                  deleted_count, self.config.alerts_days);
+            info!(
+                "Deleted {} old alert records older than {} days",
+                deleted_count, self.config.alerts_days
+            );
         }
 
         Ok(deleted_count)
     }
 
     pub async fn get_data_statistics(&self) -> Result<DataStatistics> {
-        let metrics_count = sqlx::query_scalar!(
-            "SELECT COUNT(*) FROM system_metrics"
-        )
-        .fetch_one(&self.pool)
-        .await?;
+        let metrics_count = sqlx::query_scalar!("SELECT COUNT(*) FROM system_metrics")
+            .fetch_one(&self.pool)
+            .await?;
 
-        let alerts_count = sqlx::query_scalar!(
-            "SELECT COUNT(*) FROM alerts"
-        )
-        .fetch_one(&self.pool)
-        .await?;
+        let alerts_count = sqlx::query_scalar!("SELECT COUNT(*) FROM alerts")
+            .fetch_one(&self.pool)
+            .await?;
 
-        let oldest_metric = sqlx::query_scalar!(
-            "SELECT MIN(timestamp) FROM system_metrics"
-        )
-        .fetch_optional(&self.pool)
-        .await?
-        .flatten()
-        .map(|dt| dt.to_string());
+        let oldest_metric = sqlx::query_scalar!("SELECT MIN(timestamp) FROM system_metrics")
+            .fetch_optional(&self.pool)
+            .await?
+            .flatten()
+            .map(|dt| dt.to_string());
 
-        let oldest_alert = sqlx::query_scalar!(
-            "SELECT MIN(timestamp) FROM alerts"
-        )
-        .fetch_optional(&self.pool)
-        .await?
-        .flatten()
-        .map(|dt| dt.to_string());
+        let oldest_alert = sqlx::query_scalar!("SELECT MIN(timestamp) FROM alerts")
+            .fetch_optional(&self.pool)
+            .await?
+            .flatten()
+            .map(|dt| dt.to_string());
 
         Ok(DataStatistics {
             metrics_count: metrics_count as u64,
@@ -253,16 +253,14 @@ impl DataCleanupService {
 
     pub async fn vacuum_database(&self) -> Result<()> {
         info!("Running database VACUUM to reclaim space");
-        
+
         let start_time = std::time::Instant::now();
-        
-        sqlx::query("VACUUM")
-            .execute(&self.pool)
-            .await?;
-            
+
+        sqlx::query("VACUUM").execute(&self.pool).await?;
+
         let duration = start_time.elapsed();
         info!("Database VACUUM completed in {:?}", duration);
-        
+
         Ok(())
     }
 }
@@ -275,15 +273,10 @@ pub struct DataStatistics {
     pub oldest_alert: Option<String>,
 }
 
-pub async fn start_cleanup_scheduler(
-    pool: SqlitePool,
-    config: DataRetentionConfig,
-) -> Result<()> {
-    config
-        .validate()
-        .map_err(anyhow::Error::msg)?;
+pub async fn start_cleanup_scheduler(pool: SqlitePool, config: DataRetentionConfig) -> Result<()> {
+    config.validate().map_err(anyhow::Error::msg)?;
     let cleanup_service = DataCleanupService::new(pool, config.clone());
-    
+
     info!(
         "Starting data cleanup scheduler: metrics retention {} days, alerts retention {} days, cleanup interval {} hours",
         config.metrics_days, config.alerts_days, config.cleanup_interval_hours
@@ -294,11 +287,9 @@ pub async fn start_cleanup_scheduler(
             tokio::time::Duration::from_secs(config.cleanup_interval_hours as u64 * 3600);
         let vacuum_period = cleanup_period.saturating_mul(7);
         let mut interval = tokio::time::interval(cleanup_period);
-        let mut vacuum = tokio::time::interval_at(
-            tokio::time::Instant::now() + vacuum_period,
-            vacuum_period,
-        );
-        
+        let mut vacuum =
+            tokio::time::interval_at(tokio::time::Instant::now() + vacuum_period, vacuum_period);
+
         loop {
             tokio::select! {
                 _ = interval.tick() => {
@@ -332,12 +323,10 @@ mod tests {
             .connect("sqlite::memory:")
             .await
             .unwrap();
-        sqlx::query(
-            "CREATE TABLE config_audit_log (timestamp INTEGER NOT NULL)",
-        )
-        .execute(&pool)
-        .await
-        .unwrap();
+        sqlx::query("CREATE TABLE config_audit_log (timestamp INTEGER NOT NULL)")
+            .execute(&pool)
+            .await
+            .unwrap();
         for timestamp in 0..150 {
             sqlx::query("INSERT INTO config_audit_log (timestamp) VALUES (?)")
                 .bind(timestamp)

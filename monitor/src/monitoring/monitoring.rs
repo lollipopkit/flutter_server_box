@@ -1,4 +1,9 @@
-use crate::{core::config::{Config, MonitoringConfig}, api::server::AppState, utils::error::Result, monitoring::timeseries::{core_usage_percent, CpuCoreTime}};
+use crate::{
+    api::server::AppState,
+    core::config::{Config, MonitoringConfig},
+    monitoring::timeseries::{CpuCoreTime, core_usage_percent},
+    utils::error::{MonitorError, Result},
+};
 use chrono::{DateTime, Utc};
 use sbm_parser::types::{CpuCore, Disk};
 use sbm_parser::{ServerStatus, SystemType};
@@ -9,8 +14,8 @@ use std::process::Stdio;
 use std::sync::Arc;
 use tokio::io::AsyncReadExt;
 use tokio::process::{Child, Command as TokioCommand};
-use tokio::time::{sleep, timeout, timeout_at, Duration};
-use tracing::{info, error};
+use tokio::time::{Duration, sleep, timeout, timeout_at};
+use tracing::{error, info};
 
 /// CLI tools are optional and must not stop the core sampling loop when a
 /// driver, disk, or network filesystem leaves one stuck in kernel I/O.
@@ -247,7 +252,10 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
     let monitoring_config = app_state.config.get_monitoring();
     let interval = Duration::from_secs(monitoring_config.interval_seconds);
 
-    info!("Starting monitoring loop with {}s interval", monitoring_config.interval_seconds);
+    info!(
+        "Starting monitoring loop with {}s interval",
+        monitoring_config.interval_seconds
+    );
 
     // CPU summary sample from the previous cycle: cumulative ticks need a
     // cross-cycle delta to yield current usage
@@ -265,7 +273,8 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
             monitoring_config.interval_seconds,
             live.extended_interval_secs,
         );
-        let idle_secs = (chrono::Utc::now() - *app_state.last_viewer_seen.read().await).num_seconds();
+        let idle_secs =
+            (chrono::Utc::now() - *app_state.last_viewer_seen.read().await).num_seconds();
         extended_due = should_run_extended(extended_due, &live, idle_secs);
         cycle += 1;
         let prev_metrics = app_state.current_metrics.read().await.clone();
@@ -287,16 +296,27 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
 
                 // Update the bounded in-memory velocity history used by the
                 // rules engine and velocity API.
-                app_state.velocity_manager.write().await.update_server_metrics(
-                    &metrics.server_name,
-                    metrics.network.rx_bytes,
-                    metrics.network.tx_bytes,
-                    metrics.cpu_cores.clone(),
-                    metrics.timestamp
-                ).await;
+                app_state
+                    .velocity_manager
+                    .write()
+                    .await
+                    .update_server_metrics(
+                        &metrics.server_name,
+                        metrics.network.rx_bytes,
+                        metrics.network.tx_bytes,
+                        metrics.cpu_cores.clone(),
+                        metrics.timestamp,
+                    )
+                    .await;
 
                 // Check rules and send alerts with velocity data
-                if let Err(e) = crate::monitoring::rules::check_rules_with_velocity(&metrics, &app_state.config, &*app_state.velocity_manager.read().await).await {
+                if let Err(e) = crate::monitoring::rules::check_rules_with_velocity(
+                    &metrics,
+                    &app_state.config,
+                    &*app_state.velocity_manager.read().await,
+                )
+                .await
+                {
                     error!("Failed to check enhanced rules: {}", e);
                 }
 
@@ -334,15 +354,17 @@ fn system_type_for(os: &str) -> SystemType {
 /// shared crate for a monitor-only concern.
 pub fn effective_capabilities(system: SystemType) -> sbm_parser::capabilities::Capabilities {
     let mut caps = sbm_parser::capabilities::capabilities(system);
-    if system == SystemType::Bsd && native_status_available(system) {
+    if native_status_available(system) {
         use sbm_parser::capabilities::FieldSupport;
-        // HardwareDependent, not Supported: sysinfo returns empty/zero when
-        // there's no swap configured or no exposed thermal sensor (macOS in
-        // particular locks down Components on many machines/OS versions) —
-        // "collected when present" fits better than "always populated".
-        caps.swap = FieldSupport::HardwareDependent;
-        caps.diskio = FieldSupport::HardwareDependent;
-        caps.temps = FieldSupport::HardwareDependent;
+        if matches!(system, SystemType::Bsd | SystemType::Windows) {
+            caps.swap = FieldSupport::HardwareDependent;
+        }
+        if system == SystemType::Bsd {
+            // HardwareDependent, not Supported: sysinfo returns empty/zero
+            // when the platform exposes no thermal or disk-I/O data.
+            caps.diskio = FieldSupport::HardwareDependent;
+            caps.temps = FieldSupport::HardwareDependent;
+        }
     }
     caps
 }
@@ -379,8 +401,19 @@ async fn collect_metrics(
     // Linux/native already fills `status.conn` and this leaves it alone.
     let script_due = extended_due || !native_status_available(system);
     let mut custom_cmds = Vec::new();
+    let mut extended_refreshed = false;
     if script_due {
-        let segments = execute_commands(system, extended_due).await?;
+        let segments = match execute_commands(system, extended_due).await {
+            Ok(segments) => {
+                extended_refreshed = extended_due;
+                segments
+            }
+            Err(error) if native_status_available(system) => {
+                tracing::warn!("optional status script failed; keeping native sample: {error}");
+                Vec::new()
+            }
+            Err(error) => return Err(error),
+        };
         custom_cmds = custom_cmd_outputs(&segments);
         // Built-in probes run before custom commands. Keep the first value for
         // each section so custom output cannot forge a later built-in marker
@@ -407,8 +440,14 @@ async fn collect_metrics(
 
     let prev = prev_cpu.take();
     *prev_cpu = summary_core(&status.cpu).cloned();
-    let mut metrics =
-        adapt_status(system, status, config, prev.as_ref(), prev_metrics, extended_due);
+    let mut metrics = adapt_status(
+        system,
+        status,
+        config,
+        prev.as_ref(),
+        prev_metrics,
+        extended_refreshed,
+    );
     // Not `carry_forward`: an empty result on an extended cycle is the user
     // having deleted their commands, and carrying the old output forward
     // would leave deleted commands on the page for as long as the process
@@ -416,7 +455,9 @@ async fn collect_metrics(
     metrics.custom_cmds = if script_due {
         custom_cmds
     } else {
-        prev_metrics.map(|p| p.custom_cmds.clone()).unwrap_or_default()
+        prev_metrics
+            .map(|p| p.custom_cmds.clone())
+            .unwrap_or_default()
     };
     Ok(metrics)
 }
@@ -429,7 +470,10 @@ fn custom_cmd_outputs(segments: &[(String, String)]) -> Vec<CustomCmdOutput> {
         .iter()
         .filter_map(|(key, value)| {
             let name = key.strip_prefix(&prefix)?;
-            Some(CustomCmdOutput { name: name.to_string(), output: value.clone() })
+            Some(CustomCmdOutput {
+                name: name.to_string(),
+                output: value.clone(),
+            })
         })
         .collect()
 }
@@ -450,7 +494,10 @@ async fn sample_nvidia() -> Vec<sbm_parser::types::NvidiaSmiItem> {
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
             let mut fallback = TokioCommand::new("/usr/lib/wsl/lib/nvidia-smi");
             fallback.args(["-q", "-x"]);
-            command_output(fallback, "WSL nvidia-smi").await.ok().flatten()
+            command_output(fallback, "WSL nvidia-smi")
+                .await
+                .ok()
+                .flatten()
         }
         Err(error) => {
             tracing::warn!("nvidia-smi collection failed: {error}");
@@ -544,8 +591,10 @@ fn ensure_script(path: &std::path::Path, content: &str) -> std::io::Result<()> {
 /// SMART and AMD are in `SbStatusExt`, while sensors/battery, Windows conn and
 /// custom commands live in `SbStatus`. `monitor_script_disabled` strips the
 /// native-covered commands from both functions before this script is written.
-const EXTENDED_FUNCS: [sbm_parser::script::ShellFunc; 2] =
-    [sbm_parser::script::ShellFunc::StatusExt, sbm_parser::script::ShellFunc::Status];
+const EXTENDED_FUNCS: [sbm_parser::script::ShellFunc; 2] = [
+    sbm_parser::script::ShellFunc::StatusExt,
+    sbm_parser::script::ShellFunc::Status,
+];
 const CORE_FUNCS: [sbm_parser::script::ShellFunc; 1] = [sbm_parser::script::ShellFunc::Status];
 
 /// Execute the generated status script and split its output by segment.
@@ -559,10 +608,15 @@ async fn execute_commands(
     let content = build_status_script(system);
     let path = script_path(system);
 
-    ensure_script(&path, &content)
-        .map_err(|e| crate::utils::error::MonitorError::Monitoring(format!("Status script error: {e}")))?;
+    ensure_script(&path, &content).map_err(|e| {
+        crate::utils::error::MonitorError::Monitoring(format!("Status script error: {e}"))
+    })?;
     let mut stdout = String::new();
-    let funcs = if include_extended { &EXTENDED_FUNCS[..] } else { &CORE_FUNCS[..] };
+    let funcs = if include_extended {
+        &EXTENDED_FUNCS[..]
+    } else {
+        &CORE_FUNCS[..]
+    };
     for func in funcs {
         let command = if cfg!(target_os = "windows") {
             let mut command = TokioCommand::new("powershell");
@@ -576,14 +630,18 @@ async fn execute_commands(
             command.arg(&path).arg(format!("-{}", func.flag()));
             command
         };
-        let Some(output) = command_output(command, func.name())
-            .await
-            .map_err(|e| crate::utils::error::MonitorError::Monitoring(format!("Status script error: {e}")))?
+        let Some(output) = command_output(command, func.name()).await.map_err(|e| {
+            crate::utils::error::MonitorError::Monitoring(format!("Status script error: {e}"))
+        })?
         else {
             continue;
         };
         if !output.status.success() {
-            error!("Status script {} exited with {}", func.name(), output.status);
+            error!(
+                "Status script {} exited with {}",
+                func.name(),
+                output.status
+            );
         }
         stdout.push_str(&String::from_utf8_lossy(&output.stdout));
         stdout.push('\n');
@@ -657,7 +715,10 @@ async fn command_output_with_timeout(
             let mut bytes = Vec::new();
             let mut stdout = stdout.take(MAX_COMMAND_OUTPUT_BYTES + 1);
             let read = stdout.read_to_end(&mut bytes).await.map(|_| bytes);
-            if read.as_ref().is_ok_and(|b| b.len() as u64 > MAX_COMMAND_OUTPUT_BYTES) {
+            if read
+                .as_ref()
+                .is_ok_and(|b| b.len() as u64 > MAX_COMMAND_OUTPUT_BYTES)
+            {
                 announce();
             }
             read
@@ -667,7 +728,10 @@ async fn command_output_with_timeout(
         let mut bytes = Vec::new();
         let mut stderr = stderr.take(MAX_COMMAND_OUTPUT_BYTES + 1);
         let read = stderr.read_to_end(&mut bytes).await.map(|_| bytes);
-        if read.as_ref().is_ok_and(|b| b.len() as u64 > MAX_COMMAND_OUTPUT_BYTES) {
+        if read
+            .as_ref()
+            .is_ok_and(|b| b.len() as u64 > MAX_COMMAND_OUTPUT_BYTES)
+        {
             announce();
         }
         read
@@ -696,7 +760,10 @@ async fn command_output_with_timeout(
     let status = match waited {
         Ok(status) => status?,
         Err(_) => {
-            tracing::warn!("{label} exceeded {} seconds and was terminated", command_timeout.as_secs());
+            tracing::warn!(
+                "{label} exceeded {} seconds and was terminated",
+                command_timeout.as_secs()
+            );
             terminate_command(&mut child, process_group).await?;
             // A shell can leave descendants holding either pipe. Do not join
             // their readers after the deadline: a timed-out collection must
@@ -742,7 +809,11 @@ async fn command_output_with_timeout(
             "{label} produced more than {MAX_COMMAND_OUTPUT_BYTES} bytes of output"
         )));
     }
-    Ok(Some(std::process::Output { status, stdout, stderr }))
+    Ok(Some(std::process::Output {
+        status,
+        stdout,
+        stderr,
+    }))
 }
 
 async fn terminate_command(child: &mut Child, process_group: Option<u32>) -> std::io::Result<()> {
@@ -787,15 +858,6 @@ unsafe extern "C" {
     fn kill_process_group(pid: i32, signal: i32) -> i32;
 }
 
-/// `fresh` wins whenever it has data; otherwise keeps whatever the previous
-/// cycle had. Used for the script-bound fields (diskio on Windows;
-/// battery/sensors/disk_smart/amd everywhere) that only get real values on
-/// the slower extended-collection cycles, so they don't flicker empty on the
-/// cycles in between.
-fn carry_forward<T>(fresh: Vec<T>, prev: Vec<T>) -> Vec<T> {
-    if fresh.is_empty() { prev } else { fresh }
-}
-
 fn carry_forward_opt<T>(fresh: Option<T>, prev: Option<T>) -> Option<T> {
     fresh.or(prev)
 }
@@ -812,7 +874,9 @@ fn compute_diskio_rate(
     current: &[sbm_parser::types::DiskIoPiece],
     prev_metrics: Option<&SystemMetrics>,
 ) -> Vec<DiskIoRate> {
-    let Some(prev) = prev_metrics else { return Vec::new() };
+    let Some(prev) = prev_metrics else {
+        return Vec::new();
+    };
     let elapsed = (now - prev.timestamp).num_milliseconds() as f64 / 1000.0;
     if elapsed <= 0.0 {
         return Vec::new();
@@ -842,7 +906,7 @@ fn adapt_status(
     config: &Config,
     prev_cpu: Option<&CpuCore>,
     prev_metrics: Option<&SystemMetrics>,
-    extended_due: bool,
+    extended_refreshed: bool,
 ) -> SystemMetrics {
     let (cpu_usage, cpu_cores) = adapt_cpu(
         system,
@@ -865,13 +929,19 @@ fn adapt_status(
         .temps
         .0
         .iter()
-        .map(|(device, value)| TempReading { device: device.clone(), value: *value })
+        .map(|(device, value)| TempReading {
+            device: device.clone(),
+            value: *value,
+        })
         .collect();
 
-    let amd = carry_forward(
-        status.amd,
-        prev_metrics.map(|p| p.amd_cache.clone()).unwrap_or_default(),
-    );
+    let amd = if extended_refreshed {
+        status.amd
+    } else {
+        prev_metrics
+            .map(|p| p.amd_cache.clone())
+            .unwrap_or_default()
+    };
 
     let gpus = status
         .nvidia
@@ -908,18 +978,21 @@ fn adapt_status(
         })
         .collect();
 
-    let disk_smart = carry_forward(
-        status.disk_smart.iter().map(SmartSummary::from).collect(),
-        prev_metrics.map(|p| p.disk_smart.clone()).unwrap_or_default(),
-    );
+    let disk_smart = if extended_refreshed {
+        status.disk_smart.iter().map(SmartSummary::from).collect()
+    } else {
+        prev_metrics
+            .map(|p| p.disk_smart.clone())
+            .unwrap_or_default()
+    };
 
     let now = Utc::now();
-    let diskio = carry_forward(status.diskio, prev_metrics.map(|p| p.diskio.clone()).unwrap_or_default());
+    let diskio = status.diskio;
     let diskio_rate = compute_diskio_rate(now, &diskio, prev_metrics);
     // Only stamped on a cycle that actually ran the extended script — a
     // carry_forward'd value (unchanged battery/sensors/SMART reading) keeps
     // its previous timestamp rather than looking falsely fresh every cycle
-    let extended_updated_at = if extended_due {
+    let extended_updated_at = if extended_refreshed {
         now
     } else {
         prev_metrics.map(|p| p.extended_updated_at).unwrap_or(now)
@@ -946,14 +1019,18 @@ fn adapt_status(
         conn: carry_forward_opt(status.conn, prev_metrics.and_then(|p| p.conn)),
         diskio,
         diskio_rate,
-        batteries: carry_forward(
-            status.batteries,
-            prev_metrics.map(|p| p.batteries.clone()).unwrap_or_default(),
-        ),
-        sensors: carry_forward(
-            status.sensors,
-            prev_metrics.map(|p| p.sensors.clone()).unwrap_or_default(),
-        ),
+        batteries: if extended_refreshed {
+            status.batteries
+        } else {
+            prev_metrics
+                .map(|p| p.batteries.clone())
+                .unwrap_or_default()
+        },
+        sensors: if extended_refreshed {
+            status.sensors
+        } else {
+            prev_metrics.map(|p| p.sensors.clone()).unwrap_or_default()
+        },
         disk_smart,
         // Filled in by `collect_metrics`: whether these are fresh or the
         // previous cycle's depends on whether the script ran, which this
@@ -970,7 +1047,13 @@ fn format_cpu_brand(brands: &[(String, u32)]) -> Option<String> {
     Some(
         brands
             .iter()
-            .map(|(name, count)| if *count > 1 { format!("{name} (x{count})") } else { name.clone() })
+            .map(|(name, count)| {
+                if *count > 1 {
+                    format!("{name} (x{count})")
+                } else {
+                    name.clone()
+                }
+            })
             .collect::<Vec<_>>()
             .join(", "),
     )
@@ -1024,7 +1107,10 @@ fn flatten_disks(system: SystemType, disks: &[Disk]) -> Vec<DiskDetail> {
 }
 
 fn summary_core(cores: &[CpuCore]) -> Option<&CpuCore> {
-    cores.iter().find(|c| c.id == "cpu").or_else(|| cores.first())
+    cores
+        .iter()
+        .find(|c| c.id == "cpu")
+        .or_else(|| cores.first())
 }
 
 /// CPU usage semantics differ per source:
@@ -1055,7 +1141,11 @@ fn adapt_cpu(
         _ => summary_core(cores)
             .map(|c| {
                 let total = c.total();
-                if total == 0 { 0.0 } else { (total - c.idle) as f32 / total as f32 * 100.0 }
+                if total == 0 {
+                    0.0
+                } else {
+                    (total - c.idle) as f32 / total as f32 * 100.0
+                }
             })
             .unwrap_or(0.0),
     };
@@ -1094,7 +1184,12 @@ fn adapt_memory(status: &ServerStatus) -> (MemoryMetrics, SwapMetrics) {
                 usage_percent: percent(used, m.total),
             }
         }
-        None => MemoryMetrics { total: 0, used: 0, free: 0, usage_percent: 0.0 },
+        None => MemoryMetrics {
+            total: 0,
+            used: 0,
+            free: 0,
+            usage_percent: 0.0,
+        },
     };
 
     let swap = match &status.swap {
@@ -1106,14 +1201,22 @@ fn adapt_memory(status: &ServerStatus) -> (MemoryMetrics, SwapMetrics) {
                 usage_percent: percent(used, s.total),
             }
         }
-        None => SwapMetrics { total: 0, used: 0, usage_percent: 0.0 },
+        None => SwapMetrics {
+            total: 0,
+            used: 0,
+            usage_percent: 0.0,
+        },
     };
 
     (memory, swap)
 }
 
 fn percent(used: u64, total: u64) -> f32 {
-    if total == 0 { 0.0 } else { (used as f32 / total as f32) * 100.0 }
+    if total == 0 {
+        0.0
+    } else {
+        (used as f32 / total as f32) * 100.0
+    }
 }
 
 /// APFS volumes of one container each report the full container size/avail
@@ -1128,10 +1231,7 @@ fn apfs_pool_key(d: &Disk) -> Option<(String, u64, u64)> {
             return Some((base, d.size, d.avail));
         }
     }
-    d.fs_type
-        .as_deref()
-        .filter(|fs| fs.eq_ignore_ascii_case("apfs"))
-        .map(|_| ("apfs".to_string(), d.size, d.avail))
+    None
 }
 
 /// Disk aggregation with Go-compatible /status semantics: real filesystems
@@ -1188,31 +1288,55 @@ fn aggregate_net(status: &ServerStatus) -> NetworkMetrics {
 /// Disk segment parsing + Go-compatible aggregation (for /status and tests);
 /// Linux-only (the legacy Go /status endpoint never ran on other platforms)
 pub fn parse_disk_metrics(segment: &str) -> Result<DiskMetrics> {
-    Ok(aggregate_disks(SystemType::Linux, &sbm_parser::linux::parse_disk(segment)))
+    Ok(aggregate_disks(
+        SystemType::Linux,
+        &sbm_parser::linux::parse_disk(segment),
+    ))
 }
 
 /// Store the aggregate trend row used by history queries. Per-core samples
 /// stay in the current in-memory snapshot; no database consumer queried them.
 pub async fn store_metrics(db: &SqlitePool, metrics: &SystemMetrics) -> Result<()> {
-    let memory_total = metrics.memory.total as i64;
-    let memory_used = metrics.memory.used as i64;
-    let memory_free = metrics.memory.free as i64;
-    let swap_total = metrics.swap.total as i64;
-    let swap_used = metrics.swap.used as i64;
-    let disk_total = metrics.disk.total as i64;
-    let disk_used = metrics.disk.used as i64;
-    let disk_free = metrics.disk.free as i64;
-    let network_rx_bytes = metrics.network.rx_bytes as i64;
-    let network_tx_bytes = metrics.network.tx_bytes as i64;
+    let checked = |name: &str, value: u64| {
+        i64::try_from(value)
+            .map_err(|_| MonitorError::Monitoring(format!("{name} exceeds SQLite INTEGER range")))
+    };
+    let memory_total = checked("memory_total", metrics.memory.total)?;
+    let memory_used = checked("memory_used", metrics.memory.used)?;
+    let memory_free = checked("memory_free", metrics.memory.free)?;
+    let swap_total = checked("swap_total", metrics.swap.total)?;
+    let swap_used = checked("swap_used", metrics.swap.used)?;
+    let disk_total = checked("disk_total", metrics.disk.total)?;
+    let disk_used = checked("disk_used", metrics.disk.used)?;
+    let disk_free = checked("disk_free", metrics.disk.free)?;
+    let network_rx_bytes = checked("network_rx_bytes", metrics.network.rx_bytes)?;
+    let network_tx_bytes = checked("network_tx_bytes", metrics.network.tx_bytes)?;
     // Summed across all devices — same "one aggregate trend line" shape as
     // network_rx_bytes/network_tx_bytes, not per-device (diskio's per-device
     // detail is snapshot-only, matching disk_details/ifaces)
-    let diskio_read_bytes: i64 =
-        metrics.diskio.iter().map(|d| d.sectors_read.max(0) * 512).sum();
-    let diskio_write_bytes: i64 =
-        metrics.diskio.iter().map(|d| d.sectors_write.max(0) * 512).sum();
+    let diskio_bytes = |read: bool| {
+        metrics.diskio.iter().try_fold(0i64, |sum, disk| {
+            let sectors = if read {
+                disk.sectors_read
+            } else {
+                disk.sectors_write
+            }
+            .max(0);
+            let bytes = sectors
+                .checked_mul(512)
+                .ok_or_else(|| MonitorError::Monitoring("disk I/O counter overflow".to_string()))?;
+            sum.checked_add(bytes)
+                .ok_or_else(|| MonitorError::Monitoring("disk I/O aggregate overflow".to_string()))
+        })
+    };
+    let diskio_read_bytes = diskio_bytes(true)?;
+    let diskio_write_bytes = diskio_bytes(false)?;
     // First battery only — matches the home page card's existing convention
-    let battery_percent: Option<f64> = metrics.batteries.first().and_then(|b| b.percent).map(|p| p as f64);
+    let battery_percent: Option<f64> = metrics
+        .batteries
+        .first()
+        .and_then(|b| b.percent)
+        .map(|p| p as f64);
 
     sqlx::query!(
         r#"
@@ -1298,10 +1422,15 @@ mod tests {
     }
 
     #[test]
-    fn effective_capabilities_leaves_linux_and_windows_unchanged() {
+    fn effective_capabilities_adds_windows_native_swap() {
+        use sbm_parser::capabilities::FieldSupport;
         assert_eq!(
             effective_capabilities(SystemType::Linux).swap,
             sbm_parser::capabilities::capabilities(SystemType::Linux).swap
+        );
+        assert_eq!(
+            effective_capabilities(SystemType::Windows).swap,
+            FieldSupport::HardwareDependent
         );
         assert_eq!(
             effective_capabilities(SystemType::Windows).diskio,
@@ -1326,7 +1455,11 @@ mod tests {
     }
 
     fn live_settings(idle_pause_enabled: bool, idle_pause_threshold_secs: u64) -> LiveSettings {
-        LiveSettings { extended_interval_secs: 60, idle_pause_enabled, idle_pause_threshold_secs }
+        LiveSettings {
+            extended_interval_secs: 60,
+            idle_pause_enabled,
+            idle_pause_threshold_secs,
+        }
     }
 
     #[test]
@@ -1344,8 +1477,14 @@ mod tests {
     #[test]
     fn should_run_extended_skips_when_idle_past_threshold() {
         let live = live_settings(true, 30);
-        assert!(should_run_extended(true, &live, 29), "just under the threshold: still runs");
-        assert!(!should_run_extended(true, &live, 30), "at the threshold: idle");
+        assert!(
+            should_run_extended(true, &live, 29),
+            "just under the threshold: still runs"
+        );
+        assert!(
+            !should_run_extended(true, &live, 30),
+            "at the threshold: idle"
+        );
         assert!(!should_run_extended(true, &live, 999), "well past: idle");
     }
 
@@ -1418,7 +1557,7 @@ mod tests {
     }
 
     #[test]
-    fn native_apfs_volumes_share_container_capacity() {
+    fn unidentified_apfs_volumes_are_not_merged_by_capacity() {
         let disks = vec![
             Disk {
                 path: "Macintosh HD (/)".to_string(),
@@ -1441,8 +1580,8 @@ mod tests {
         ];
 
         let metrics = aggregate_disks(SystemType::Bsd, &disks);
-        assert_eq!(metrics.total, 1000 * 1024);
-        assert_eq!(metrics.free, 600 * 1024);
+        assert_eq!(metrics.total, 2000 * 1024);
+        assert_eq!(metrics.free, 1200 * 1024);
         assert_eq!(metrics.used, 400 * 1024);
     }
 
@@ -1450,7 +1589,10 @@ mod tests {
     fn adapt_status_uses_fresh_extended_fields_when_present() {
         let mut status = empty_status();
         status.uptime = Some("up 1 day".to_string());
-        status.conn = Some(sbm_parser::types::Conn { max_conn: 10, fail: 0 });
+        status.conn = Some(sbm_parser::types::Conn {
+            max_conn: 10,
+            fail: 0,
+        });
         status.diskio = vec![sbm_parser::types::DiskIoPiece {
             dev: "sda".to_string(),
             sectors_read: 100,
@@ -1480,7 +1622,14 @@ mod tests {
             smart_attributes: Default::default(),
         }];
 
-        let metrics = adapt_status(SystemType::Linux, status, &Config::default(), None, None, true);
+        let metrics = adapt_status(
+            SystemType::Linux,
+            status,
+            &Config::default(),
+            None,
+            None,
+            true,
+        );
 
         assert_eq!(metrics.uptime.as_deref(), Some("up 1 day"));
         assert_eq!(metrics.conn.unwrap().max_conn, 10);
@@ -1517,17 +1666,56 @@ mod tests {
             true,
         );
 
-        // Next (non-extended) cycle: the script never ran these commands, so
-        // the parser returns empty/None — the previous snapshot should win.
-        let metrics =
-            adapt_status(SystemType::Linux, empty_status(), &Config::default(), None, Some(&prev), false);
+        // Next (non-extended) cycle: script-only fields carry forward, while
+        // the native disk-I/O snapshot reflects the current empty device set.
+        let metrics = adapt_status(
+            SystemType::Linux,
+            empty_status(),
+            &Config::default(),
+            None,
+            Some(&prev),
+            false,
+        );
 
         assert_eq!(metrics.uptime.as_deref(), Some("up 1 day"));
-        assert_eq!(metrics.diskio.len(), 1);
+        assert!(metrics.diskio.is_empty());
         assert_eq!(metrics.batteries.len(), 1);
         // The non-extended cycle didn't refresh extended data — freshness
         // timestamp carries over from the extended cycle, not bumped to now
         assert_eq!(metrics.extended_updated_at, prev.extended_updated_at);
+    }
+
+    #[test]
+    fn fresh_empty_extended_fields_clear_removed_devices() {
+        let prev = adapt_status(
+            SystemType::Linux,
+            {
+                let mut status = empty_status();
+                status.batteries = vec![sbm_parser::types::Battery {
+                    percent: Some(80),
+                    status: sbm_parser::types::BatteryStatus::Charging,
+                    name: None,
+                    cycle: None,
+                    tech: None,
+                }];
+                status
+            },
+            &Config::default(),
+            None,
+            None,
+            true,
+        );
+
+        let metrics = adapt_status(
+            SystemType::Linux,
+            empty_status(),
+            &Config::default(),
+            None,
+            Some(&prev),
+            true,
+        );
+
+        assert!(metrics.batteries.is_empty());
     }
 
     #[test]
@@ -1538,8 +1726,18 @@ mod tests {
             sectors_read: 1000,
             sectors_write: 500,
         }];
-        let first = adapt_status(SystemType::Linux, first_status, &Config::default(), None, None, false);
-        assert!(first.diskio_rate.is_empty(), "no baseline on the first cycle");
+        let first = adapt_status(
+            SystemType::Linux,
+            first_status,
+            &Config::default(),
+            None,
+            None,
+            false,
+        );
+        assert!(
+            first.diskio_rate.is_empty(),
+            "no baseline on the first cycle"
+        );
 
         let mut second_status = empty_status();
         // +2000 sectors read, +1000 written, 1MiB/512B-per-sector = 2048 sectors
@@ -1548,8 +1746,14 @@ mod tests {
             sectors_read: 3000,
             sectors_write: 1500,
         }];
-        let mut second =
-            adapt_status(SystemType::Linux, second_status, &Config::default(), None, Some(&first), false);
+        let mut second = adapt_status(
+            SystemType::Linux,
+            second_status,
+            &Config::default(),
+            None,
+            Some(&first),
+            false,
+        );
         // Force a known 2-second elapsed window instead of relying on real time
         // passing between the two adapt_status() calls in this test
         second.timestamp = first.timestamp + chrono::Duration::seconds(2);
@@ -1571,7 +1775,14 @@ mod tests {
             sectors_read: 1000,
             sectors_write: 500,
         }];
-        let first = adapt_status(SystemType::Linux, first_status, &Config::default(), None, None, false);
+        let first = adapt_status(
+            SystemType::Linux,
+            first_status,
+            &Config::default(),
+            None,
+            None,
+            false,
+        );
 
         let current = [sbm_parser::types::DiskIoPiece {
             dev: "sda".to_string(),
@@ -1590,7 +1801,7 @@ mod tests {
     #[test]
     fn monitor_script_keeps_only_non_native_manifest_commands() {
         use sbm_parser::commands::{AMD, BATTERY, CONN, DISK_SMART, SENSORS};
-        use sbm_parser::script::{cmd_marker, ShellFunc};
+        use sbm_parser::script::{ShellFunc, cmd_marker};
 
         let bsd_native = [DISK_SMART];
         let bsd_all = sbm_parser::commands::commands(SystemType::Bsd)
@@ -1605,7 +1816,10 @@ mod tests {
         let cases: [(SystemType, &[&str]); 3] = [
             (SystemType::Linux, &[BATTERY, AMD, SENSORS, DISK_SMART]),
             (SystemType::Bsd, bsd_expected),
-            (SystemType::Windows, &[CONN, BATTERY, AMD, SENSORS, DISK_SMART]),
+            (
+                SystemType::Windows,
+                &[CONN, BATTERY, AMD, SENSORS, DISK_SMART],
+            ),
         ];
         for (system, expected) in cases {
             let enabled: Vec<&str> = sbm_parser::commands::commands(system)
@@ -1633,13 +1847,21 @@ mod tests {
                     expected.contains(&spec.key),
                     "{system:?} {} should {}be generated",
                     spec.key,
-                    if expected.contains(&spec.key) { "" } else { "not " },
+                    if expected.contains(&spec.key) {
+                        ""
+                    } else {
+                        "not "
+                    },
                 );
             }
         }
     }
 
-    fn unix_monitor_branch(script: &str, func: sbm_parser::script::ShellFunc, system: SystemType) -> &str {
+    fn unix_monitor_branch(
+        script: &str,
+        func: sbm_parser::script::ShellFunc,
+        system: SystemType,
+    ) -> &str {
         let start = script
             .find(&format!("{}() {{", func.name()))
             .expect("generated function");
@@ -1666,7 +1888,10 @@ mod tests {
         let keys: Vec<&str> = segments.iter().map(|(k, _)| k.as_str()).collect();
         assert!(keys.contains(&"diskSmart"), "extended half missing");
         for redundant in ["echo", "time", "net", "cpu", "mem", "disk", "nvidia"] {
-            assert!(!keys.contains(&redundant), "redundant {redundant} in {keys:?}");
+            assert!(
+                !keys.contains(&redundant),
+                "redundant {redundant} in {keys:?}"
+            );
         }
     }
 
@@ -1677,8 +1902,14 @@ mod tests {
     fn custom_cmd_outputs_keep_the_scripts_order() {
         let segments = vec![
             ("cpu".to_string(), "…".to_string()),
-            (sbm_parser::script::custom_result_key("second"), "b".to_string()),
-            (sbm_parser::script::custom_result_key("first"), "a".to_string()),
+            (
+                sbm_parser::script::custom_result_key("second"),
+                "b".to_string(),
+            ),
+            (
+                sbm_parser::script::custom_result_key("first"),
+                "a".to_string(),
+            ),
         ];
         let out = custom_cmd_outputs(&segments);
         assert_eq!(out.len(), 2);
@@ -1700,7 +1931,10 @@ mod tests {
     fn first_builtin_segment_wins_over_a_custom_spoof() {
         let segments = vec![
             ("host".to_string(), "real-host".to_string()),
-            (sbm_parser::script::custom_result_key("bad"), "output".to_string()),
+            (
+                sbm_parser::script::custom_result_key("bad"),
+                "output".to_string(),
+            ),
             ("host".to_string(), "forged-host".to_string()),
         ];
         let mut raw = HashMap::new();
@@ -1739,9 +1973,7 @@ mod tests {
         let marker_arg = marker.to_string_lossy().replace('\'', "''");
         std::fs::write(
             &child_path,
-            format!(
-                "Start-Sleep -Seconds 2; Set-Content -LiteralPath '{marker_arg}' -Value alive"
-            ),
+            format!("Start-Sleep -Seconds 2; Set-Content -LiteralPath '{marker_arg}' -Value alive"),
         )
         .unwrap();
         let child_arg = child_path.to_string_lossy().replace('\'', "''");
@@ -1751,13 +1983,10 @@ mod tests {
         let mut command = TokioCommand::new("powershell");
         command.args(["-NoProfile", "-Command", &parent_script]);
 
-        let output = command_output_with_timeout(
-            command,
-            "test process tree",
-            Duration::from_millis(200),
-        )
-        .await
-        .unwrap();
+        let output =
+            command_output_with_timeout(command, "test process tree", Duration::from_millis(200))
+                .await
+                .unwrap();
         assert!(output.is_none());
         tokio::time::sleep(Duration::from_secs(3)).await;
         assert!(!marker.exists());
@@ -1799,15 +2028,19 @@ mod tests {
         // Says what it got instead of `unwrap_err`, which reported only
         // "Ok value: None" and did not separate a child that wrote nothing
         // from one that wrote enough and was never noticed.
-        let error =
-            match command_output_with_timeout(command, "test output", Duration::from_secs(30)).await
-            {
-                Err(error) => error,
-                Ok(output) => panic!(
-                    "expected an overflow error, got {:?}",
-                    output.map(|o| (o.status, o.stdout.len(), o.stderr.len()))
-                ),
-            };
+        let error = match command_output_with_timeout(
+            command,
+            "test output",
+            Duration::from_secs(30),
+        )
+        .await
+        {
+            Err(error) => error,
+            Ok(output) => panic!(
+                "expected an overflow error, got {:?}",
+                output.map(|o| (o.status, o.stdout.len(), o.stderr.len()))
+            ),
+        };
 
         assert!(error.to_string().contains("more than"));
     }

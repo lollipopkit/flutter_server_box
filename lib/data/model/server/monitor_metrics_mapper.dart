@@ -1,5 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
+import 'package:server_box/data/model/server/amd.dart';
 import 'package:server_box/data/model/server/battery.dart';
 import 'package:server_box/data/model/server/conn.dart';
 import 'package:server_box/data/model/server/cpu.dart';
@@ -8,6 +9,7 @@ import 'package:server_box/data/model/server/disk_smart.dart';
 import 'package:server_box/data/model/server/memory.dart';
 import 'package:server_box/data/model/server/monitor_metrics.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
+import 'package:server_box/data/model/server/nvdia.dart';
 import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/server.dart';
 
@@ -32,6 +34,7 @@ ServerStatus applyMonitorMetrics(ServerStatus ss, MonitorMetrics m) {
   _apply('disk', () => _applyDisks(ss, m));
   _apply('net', () => _applyNet(ss, m, time));
   _apply('temps', () => _applyTemps(ss, m));
+  _apply('gpus', () => _applyGpus(ss, m));
   _apply('conn', () => _applyConn(ss, m));
   _apply('more', () => _applyMore(ss, m));
   _apply('diskio', () => _applyDiskIO(ss, m, time));
@@ -75,17 +78,15 @@ const _kCpuScale = 1000;
 /// time lands in `user` because monitor carries no user/sys/nice/iowait/irq/
 /// softirq breakdown; those stay 0, as they already do on the Windows path.
 void _applyCpu(ServerStatus ss, MonitorMetrics m) {
-  if (m.cpuCores.isEmpty) return;
-
-  // Every core needs a reading. The agent reports null on its first Linux
-  // cycle (no baseline yet) and on builds predating the field — keep the
-  // previous sample instead of accumulating a fabricated 0.
-  final percents = <double>[];
-  for (final c in m.cpuCores) {
-    final p = c.usagePercent;
-    if (p == null) return;
-    percents.add(p.clamp(0.0, 100.0));
-  }
+  // Older agents and the first native Linux sample have no per-core baseline.
+  // The aggregate field is still a current measurement, so use one synthetic
+  // core instead of retaining a stale sample from the previous poll.
+  final hasEveryCore =
+      m.cpuCores.isNotEmpty &&
+      m.cpuCores.every((core) => core.usagePercent != null);
+  final percents = hasEveryCore
+      ? [for (final core in m.cpuCores) core.usagePercent!.clamp(0.0, 100.0)]
+      : [m.cpuUsage.clamp(0.0, 100.0)];
 
   // Index 0 of the previous sample is the "cpu" summary; per-core starts at 1
   final prev = ss.cpu.now;
@@ -108,7 +109,7 @@ void _applyCpu(ServerStatus ss, MonitorMetrics m) {
   final brand = m.cpuBrand;
   if (brand != null && brand.isNotEmpty) {
     ss.cpu.brand.clear();
-    ss.cpu.brand[brand] = m.cpuCores.length;
+    ss.cpu.brand[brand] = hasEveryCore ? m.cpuCores.length : 1;
   }
 }
 
@@ -153,25 +154,40 @@ void _applyDisks(ServerStatus ss, MonitorMetrics m) {
         ),
       )
       .toList();
+  if (ss.disk.isEmpty) {
+    ss.diskUsage = DiskUsage(
+      used: BigInt.from(_toKib(m.disk.used)),
+      size: BigInt.from(_toKib(m.disk.total)),
+    );
+    return;
+  }
   try {
-    ss.diskUsage = ss.disk.isEmpty ? null : DiskUsage.parse(ss.disk);
+    ss.diskUsage = DiskUsage.parse(ss.disk);
   } catch (e, s) {
     Loggers.app.warning(e, s);
   }
 }
 
 void _applyNet(ServerStatus ss, MonitorMetrics m, int time) {
-  if (m.ifaces.isEmpty) return;
-  final parts = m.ifaces
-      .map(
-        (i) => NetSpeedPart(
-          i.name,
-          BigInt.from(i.rxBytes),
-          BigInt.from(i.txBytes),
-          time,
-        ),
-      )
-      .toList();
+  final parts = m.ifaces.isEmpty
+      ? [
+          NetSpeedPart(
+            'eth-monitor-total',
+            BigInt.from(m.network.rxBytes),
+            BigInt.from(m.network.txBytes),
+            time,
+          ),
+        ]
+      : m.ifaces
+            .map(
+              (i) => NetSpeedPart(
+                i.name,
+                BigInt.from(i.rxBytes),
+                BigInt.from(i.txBytes),
+                time,
+              ),
+            )
+            .toList();
   ss.netSpeed.update(parts);
 }
 
@@ -186,8 +202,51 @@ void _applyTemps(ServerStatus ss, MonitorMetrics m) {
     return;
   }
   final t = m.temperature;
-  if (t == null) return;
-  ss.temps.setAll({'cpu_thermal': t});
+  ss.temps.setAll(t == null ? const {} : {'cpu_thermal': t});
+}
+
+void _applyGpus(ServerStatus ss, MonitorMetrics m) {
+  final nvidia = <NvidiaSmiItem>[];
+  final amd = <AmdSmiItem>[];
+  for (final gpu in m.gpus) {
+    final name = gpu.name.toLowerCase();
+    if (name.contains('amd') || name.contains('radeon')) {
+      amd.add(
+        AmdSmiItem(
+          name: gpu.name,
+          temp: gpu.temperature,
+          power: gpu.power,
+          utilization: gpu.usagePercent.round(),
+          fanSpeed: 0,
+          clockSpeed: 0,
+          memory: AmdSmiMem(
+            gpu.memoryTotal,
+            gpu.memoryUsed,
+            gpu.memoryUnit,
+            const [],
+          ),
+        ),
+      );
+    } else {
+      nvidia.add(
+        NvidiaSmiItem(
+          name: gpu.name,
+          temp: gpu.temperature,
+          power: gpu.power,
+          percent: gpu.usagePercent.round(),
+          fanSpeed: 0,
+          memory: NvidiaSmiMem(
+            gpu.memoryTotal,
+            gpu.memoryUsed,
+            gpu.memoryUnit,
+            const [],
+          ),
+        ),
+      );
+    }
+  }
+  ss.nvidia = nvidia;
+  ss.amd = amd;
 }
 
 void _applyConn(ServerStatus ss, MonitorMetrics m) {

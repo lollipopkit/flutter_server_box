@@ -651,15 +651,12 @@ extension _Widgets on _ServerEditPageState {
           color: cred == null ? Colors.orange : null,
         ),
         title: Text(l10n.bmcAccount),
-        subtitle: Text(
-          switch (cred) {
-            null => l10n.bmcAccountUnset,
-            final c when shared > 1 =>
-              '${c.name} (${c.user}) - ${l10n.bmcAccountShared(shared)}',
-            final c => '${c.name} (${c.user})',
-          },
-          style: UIs.textGrey,
-        ),
+        subtitle: Text(switch (cred) {
+          null => l10n.bmcAccountUnset,
+          final c when shared > 1 =>
+            '${c.name} (${c.user}) - ${l10n.bmcAccountShared(shared)}',
+          final c => '${c.name} (${c.user})',
+        }, style: UIs.textGrey),
         trailing: cred == null
             ? const Icon(Icons.keyboard_arrow_right)
             : IconButton(
@@ -837,7 +834,8 @@ extension _Widgets on _ServerEditPageState {
   }
 
   Widget _buildDelBtn() {
-    return IconButton(tooltip: libL10n.delete, 
+    return IconButton(
+      tooltip: libL10n.delete,
       onPressed: () async {
         // The dialog answers; this — which is on the page — acts on the answer
         // and then closes the page. Doing both from inside the button meant
@@ -854,7 +852,12 @@ extension _Widgets on _ServerEditPageState {
           actions: Btn.ok(red: true).toList,
         );
         if (confirmed != true || !mounted) return;
-        await ref.read(serversProvider.notifier).delServer(spi!.id);
+        try {
+          await ref.read(serversProvider.notifier).delServer(spi!.id);
+        } catch (e, s) {
+          if (mounted) context.showErrDialog(e, s);
+          return;
+        }
         if (!mounted) return;
         context.pop(true);
       },

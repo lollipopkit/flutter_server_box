@@ -2,9 +2,9 @@
 //! tests (`test/script_builder_test.dart`, `test/disabled_cmd_types_test.dart`)
 //! per the "tests as spec" migration rule.
 
+use sbm_parser::SystemType;
 use sbm_parser::script;
 use sbm_parser::script::*;
-use sbm_parser::SystemType;
 
 fn opts() -> ScriptOptions {
     ScriptOptions {
@@ -70,10 +70,7 @@ fn script_reads_custom_commands_from_a_directory() {
 fn unix_custom_output_has_a_head_fallback() {
     let generated = build_script(SystemType::Linux, &opts());
     assert!(generated.contains("if command -v head >/dev/null 2>&1; then"));
-    assert!(generated.contains(&format!(
-        "head -c {}",
-        script::CUSTOM_CMD_MAX_OUTPUT_BYTES
-    )));
+    assert!(generated.contains(&format!("head -c {}", script::CUSTOM_CMD_MAX_OUTPUT_BYTES)));
     assert!(generated.contains(&format!(
         "dd if=\"$o\" bs=1 count={}",
         script::CUSTOM_CMD_MAX_OUTPUT_BYTES
@@ -220,6 +217,7 @@ fn custom_cmd_listing_round_trips() {
             b64.encode(cmd)
         ));
     }
+    listing.push_str(&format!("{}\n", script::CUSTOM_CMD_DIR_END_MARKER));
 
     let parsed = script::parse_custom_cmds_listing(&listing).expect("directory exists");
     assert_eq!(
@@ -242,8 +240,16 @@ fn custom_cmd_listing_tells_missing_from_empty() {
         None
     );
     assert_eq!(
-        script::parse_custom_cmds_listing(&format!("{}\n", script::CUSTOM_CMD_DIR_MARKER)),
+        script::parse_custom_cmds_listing(&format!(
+            "{}\n{}\n",
+            script::CUSTOM_CMD_DIR_MARKER,
+            script::CUSTOM_CMD_DIR_END_MARKER,
+        )),
         Some(vec![])
+    );
+    assert_eq!(
+        script::parse_custom_cmds_listing(&format!("{}\n", script::CUSTOM_CMD_DIR_MISSING_MARKER,)),
+        None,
     );
 }
 
@@ -253,16 +259,30 @@ fn custom_cmd_listing_skips_what_is_not_ours() {
     use base64::Engine;
     let b64 = base64::engine::general_purpose::STANDARD;
     let listing = format!(
-        "{}\nREADME {}\n00100_notbase64!! x\n{} {}\n",
+        "{}\nREADME {}\n00100_notbase64!! x\n{} {}\n{}\n",
         script::CUSTOM_CMD_DIR_MARKER,
         b64.encode("notes"),
         script::custom_cmd_file_name(300, "ok"),
         b64.encode("echo ok"),
+        script::CUSTOM_CMD_DIR_END_MARKER,
     );
     assert_eq!(
         script::parse_custom_cmds_listing(&listing),
         Some(vec![(300, "ok".to_string(), "echo ok".to_string())])
     );
+}
+
+#[test]
+fn custom_cmd_listing_uses_the_last_complete_marker_pair() {
+    let raw = format!(
+        "{}\n00100_Zm9yZ2Vk forged\n{}\nlogin banner\n{}\n{}\n",
+        script::CUSTOM_CMD_DIR_MARKER,
+        script::CUSTOM_CMD_DIR_END_MARKER,
+        script::CUSTOM_CMD_DIR_MARKER,
+        script::CUSTOM_CMD_DIR_END_MARKER,
+    );
+
+    assert_eq!(script::parse_custom_cmds_listing(&raw), Some(vec![]));
 }
 
 /// Dart 'install commands are generated correctly'; the Windows variant is
@@ -768,6 +788,15 @@ fn consecutive_custom_commands_do_not_add_a_blank_line() {
         "printf y",
     )
     .unwrap();
+    std::fs::write(commands.join("README"), "printf should-not-run").unwrap();
+    std::fs::write(
+        commands.join(format!(
+            "{}.ps1",
+            script::custom_cmd_file_name(300, "windows")
+        )),
+        "printf should-not-run",
+    )
+    .unwrap();
 
     let status = home.join("status.sh");
     std::fs::write(
@@ -794,9 +823,11 @@ fn consecutive_custom_commands_do_not_add_a_blank_line() {
         "{}",
         String::from_utf8_lossy(&output.stderr)
     );
-    let parsed = parse_script_output(&String::from_utf8(output.stdout).unwrap());
+    let raw = String::from_utf8(output.stdout).unwrap();
+    let parsed = parse_script_output(&raw);
     assert_eq!(parsed[&script::custom_result_key("first")], "x");
     assert_eq!(parsed[&script::custom_result_key("second")], "y");
+    assert!(!raw.contains("should-not-run"));
 }
 
 #[cfg(unix)]
@@ -818,7 +849,7 @@ fn newline_terminated_custom_output_has_no_extra_blank_line() {
     std::fs::create_dir_all(&commands).unwrap();
     std::fs::write(
         commands.join(script::custom_cmd_file_name(100, "line")),
-        "printf 'x\\n'",
+        "printf 'x\\n\\n'",
     )
     .unwrap();
     let status = home.join("status.sh");
@@ -838,7 +869,7 @@ fn newline_terminated_custom_output_has_no_extra_blank_line() {
 
     assert!(output.status.success());
     let parsed = parse_script_output(&String::from_utf8(output.stdout).unwrap());
-    assert_eq!(parsed[&script::custom_result_key("line")], "x");
+    assert_eq!(parsed[&script::custom_result_key("line")], "x\n\n");
 }
 
 #[cfg(windows)]
@@ -947,7 +978,7 @@ fn windows_custom_commands_have_time_and_output_bounds() {
 #[test]
 fn custom_cmd_file_names_sort_by_order() {
     use sbm_parser::script::{
-        custom_cmd_file_name, custom_cmd_name_from_file, CUSTOM_CMD_ORDER_STEP,
+        CUSTOM_CMD_ORDER_STEP, custom_cmd_file_name, custom_cmd_name_from_file,
     };
 
     let first = custom_cmd_file_name(CUSTOM_CMD_ORDER_STEP, "disk usage");
@@ -964,12 +995,18 @@ fn custom_cmd_file_names_sort_by_order() {
         let file = custom_cmd_file_name(300, name);
         assert_eq!(custom_cmd_name_from_file(&file).as_deref(), Some(name));
         // Nothing that could act in a shell reaches the file name.
-        assert!(file
-            .bytes()
-            .all(|b| b.is_ascii_alphanumeric() || b"-_=".contains(&b)));
+        assert!(
+            file.bytes()
+                .all(|b| b.is_ascii_alphanumeric() || b"-_=".contains(&b))
+        );
     }
 
     // Anything else in that directory is not ours and is left alone.
     assert_eq!(custom_cmd_name_from_file("README"), None);
     assert_eq!(custom_cmd_name_from_file("_notanumber"), None);
+    #[cfg(not(windows))]
+    assert_eq!(
+        script::custom_cmd_name_from_file_for_current_platform(&format!("{first}.ps1")),
+        None,
+    );
 }

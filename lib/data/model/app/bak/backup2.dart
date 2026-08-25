@@ -1,9 +1,9 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:logging/logging.dart';
+import 'package:server_box/core/utils/local_file_backend.dart';
 import 'package:server_box/core/utils/ssh_key_unlock.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/bmc_credential.dart';
@@ -16,6 +16,7 @@ import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
 import 'package:server_box/data/provider/bmc_credential.dart';
+import 'package:server_box/data/provider/container.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/snippet.dart';
@@ -84,12 +85,14 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     late bool serversChanged;
     late bool snippetsChanged;
     late bool forwardsChanged;
+    late bool containerChanged;
     late Set<String> historyNotifications;
     late Set<String> settingNotifications;
 
     // Every store shares this SQLite connection. Keep the reference order, but
     // commit the whole restore as one unit so a later failure cannot leave the
     // earlier stores visible without it.
+    final restored = _restoredServerGraph();
     SqliteStore.transact(() {
       keysChanged = Stores.key.merge(keys, force: force, notify: false);
       credsChanged = Stores.bmcCredential.merge(
@@ -98,40 +101,48 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
         notify: false,
       );
       serversChanged = Stores.server.merge(
-        _serversWithRestoredIds(),
+        restored.servers,
         force: force,
         notify: false,
       );
       snippetsChanged = Stores.snippet.merge(
-        snippets,
+        _snippetsWithRestoredServerIds(restored.serverIds),
         force: force,
         notify: false,
       );
       forwardsChanged = Stores.portForward.merge(
-        portForwards,
+        _portForwardsWithRestoredServerIds(restored.serverIds),
         force: force,
         notify: false,
       );
 
+      final restoredContainer = _containerWithRestoredServerIds(
+        restored.serverIds,
+      );
+      containerChanged = false;
       final containerIds = <String>{
-        for (final key in spis.keys)
+        for (final key in restored.servers.keys)
           if (!_isInternalStoreKey(key)) key,
-        for (final key in container.keys)
+        for (final key in restoredContainer.keys)
           if (!_isInternalStoreKey(key)) key,
       };
       for (final serverId in containerIds) {
         if (Stores.container.restoreOne(
           serverId,
-          container[serverId] ?? const <String, Object?>{},
+          restoredContainer[serverId] ?? const <String, Object?>{},
           notify: false,
         )) {
+          containerChanged = true;
           serversChanged = true;
         }
       }
 
       historyNotifications = _mergeSqliteStore(
         Stores.history,
-        _mergeDataForStore(Stores.history, history),
+        _mergeDataForStore(
+          Stores.history,
+          _historyWithRestoredServerIds(restored.serverIds),
+        ),
         force: force,
       );
       settingNotifications = settings.isEmpty
@@ -170,6 +181,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     if (credsChanged) {
       GlobalRef.gRef?.read(bmcCredentialProvider.notifier).reload();
     }
+    if (containerChanged) GlobalRef.gRef?.invalidate(containerProvider);
 
     _loggerV2.info('Merge completed');
   }
@@ -193,9 +205,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       portForwards: Stores.portForward.getAllMap(),
       container: Stores.container.getAllMap(),
       history: _backupStore(Stores.history),
-      settings: includeSettings
-          ? _backupStore(Stores.setting)
-          : const {},
+      settings: includeSettings ? _backupStore(Stores.setting) : const {},
     );
   }
 
@@ -212,7 +222,12 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     }
 
     final path = Paths.doc.joinPath(name ?? Miscs.bakFileName);
-    await File(path).writeAsString(result);
+    final bytes = utf8.encode(result);
+    await const LocalFileBackend().write(
+      path,
+      Stream.value(bytes),
+      size: bytes.length,
+    );
     return path;
   }
 
@@ -256,7 +271,8 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
   /// so `bmc.credId` needs the same treatment — restoring one backup twice
   /// would otherwise leave every server pointing at an account id that the
   /// second restore did not create.
-  Map<String, Object?> _serversWithRestoredIds() {
+  ({Map<String, Object?> servers, Map<String, String> serverIds})
+  _restoredServerGraph() {
     final keyIds = _restoredIds(
       keys,
       PrivateKeyInfo.fromJson,
@@ -269,12 +285,47 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       (cred) => cred.id,
       (cred) => Stores.bmcCredential.fetchByName(cred.name)?.id,
     );
-    if (keyIds.isEmpty && credIds.isEmpty) return spis;
-
-    return {
-      for (final entry in spis.entries)
-        entry.key: _serverWithRestoredIds(entry.value, keyIds, credIds),
+    final localByName = {
+      for (final server in Stores.server.fetch()) server.name: server.id,
     };
+    final serverIds = <String, String>{};
+    final decoded = <String, Map<String, Object?>>{};
+    for (final entry in spis.entries) {
+      if (_isInternalStoreKey(entry.key) || entry.value is! Map) continue;
+      final server = Map<String, Object?>.from(entry.value as Map);
+      final embedded = server['id'];
+      final backupId = embedded is String && embedded.isNotEmpty
+          ? embedded
+          : entry.key;
+      final name = server['name'];
+      final restoredId = name is String
+          ? localByName[name] ?? backupId
+          : backupId;
+      serverIds[entry.key] = restoredId;
+      serverIds[backupId] = restoredId;
+      server['id'] = restoredId;
+      decoded[restoredId] = server;
+    }
+
+    final servers = <String, Object?>{
+      for (final entry in spis.entries)
+        if (_isInternalStoreKey(entry.key)) entry.key: entry.value,
+      for (final entry in decoded.entries)
+        entry.key: _serverWithRestoredIds(
+          entry.value,
+          keyIds,
+          credIds,
+          serverIds,
+        ),
+    };
+    final timestamps = spis[StoreDefaults.defaultLastUpdateTsKey];
+    if (timestamps is Map) {
+      servers[StoreDefaults.defaultLastUpdateTsKey] = {
+        for (final entry in timestamps.entries)
+          serverIds['${entry.key}'] ?? '${entry.key}': entry.value,
+      };
+    }
+    return (servers: servers, serverIds: serverIds);
   }
 
   /// Backup id -> local id, for the records of [store] whose name already
@@ -296,14 +347,69 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     for (final entry in store.entries) {
       if (_isInternalStoreKey(entry.key) || entry.value is! Map) continue;
       try {
-        final record = decode(Map<String, dynamic>.from(entry.value as Map));
+        final json = Map<String, dynamic>.from(entry.value as Map);
+        json['id'] ??= entry.key;
+        final record = decode(json);
         final restored = localIdOf(record);
-        if (restored != null) out[idOf(record)] = restored;
+        if (restored != null) {
+          out[entry.key] = restored;
+          out[idOf(record)] = restored;
+        }
       } catch (_) {
         continue;
       }
     }
     return out;
+  }
+
+  Map<String, Object?> _snippetsWithRestoredServerIds(
+    Map<String, String> serverIds,
+  ) => {
+    for (final entry in snippets.entries)
+      entry.key: _snippetWithRestoredServerIds(entry.value, serverIds),
+  };
+
+  Map<String, Object?> _portForwardsWithRestoredServerIds(
+    Map<String, String> serverIds,
+  ) => {
+    for (final entry in portForwards.entries)
+      entry.key: _recordWithRestoredServerId(entry.value, serverIds),
+  };
+
+  Map<String, Object?> _containerWithRestoredServerIds(
+    Map<String, String> serverIds,
+  ) => {
+    for (final entry in container.entries)
+      serverIds[entry.key] ?? entry.key: entry.value,
+  };
+
+  Map<String, Object?> _historyWithRestoredServerIds(
+    Map<String, String> serverIds,
+  ) {
+    final restored = Map<String, Object?>.from(history);
+    final serverHistory = restored['sshServerHistory'];
+    if (serverHistory is List) {
+      restored['sshServerHistory'] = [
+        for (final id in serverHistory) id is String ? serverIds[id] ?? id : id,
+      ];
+    }
+    final lastPaths = restored['sftpLastPath'];
+    if (lastPaths is Map) {
+      restored['sftpLastPath'] = {
+        for (final entry in lastPaths.entries)
+          serverIds['${entry.key}'] ?? '${entry.key}': entry.value,
+      };
+    }
+    for (final key in const ['sshTabs', 'fileTabs']) {
+      final value = restored[key];
+      if (value is! String || value.isEmpty) continue;
+      try {
+        restored[key] = json.encode(
+          _jsonWithRestoredServerIds(json.decode(value), serverIds),
+        );
+      } catch (_) {}
+    }
+    return restored;
   }
 }
 
@@ -311,12 +417,13 @@ Object? _serverWithRestoredIds(
   Object? value,
   Map<String, String> keyIds,
   Map<String, String> credIds,
+  Map<String, String> serverIds,
 ) {
   if (value is! Map) return value;
   final server = Map<String, Object?>.from(value);
   final ssh = server['ssh'];
   if (ssh is Map) {
-    server['ssh'] = _sshWithRestoredKeyId(ssh, keyIds);
+    server['ssh'] = _sshWithRestoredIds(ssh, keyIds, serverIds);
   } else {
     for (final key in const ['pubKeyId', 'keyId']) {
       final id = server[key];
@@ -347,6 +454,69 @@ Map<String, Object?> _sshWithRestoredKeyId(
   return ssh;
 }
 
+Map<String, Object?> _sshWithRestoredIds(
+  Map value,
+  Map<String, String> keyIds,
+  Map<String, String> serverIds,
+) {
+  final ssh = _sshWithRestoredKeyId(value, keyIds);
+  final jumpId = ssh['jumpId'];
+  if (jumpId is String) ssh['jumpId'] = serverIds[jumpId] ?? jumpId;
+  final jumpIds = ssh['jumpIds'];
+  if (jumpIds is List) {
+    ssh['jumpIds'] = [
+      for (final id in jumpIds) id is String ? serverIds[id] ?? id : id,
+    ];
+  }
+  return ssh;
+}
+
+Object? _snippetWithRestoredServerIds(
+  Object? value,
+  Map<String, String> serverIds,
+) {
+  if (value is! Map) return value;
+  final snippet = Map<String, Object?>.from(value);
+  final targets = snippet['autoRunOn'];
+  if (targets is List) {
+    snippet['autoRunOn'] = [
+      for (final id in targets) id is String ? serverIds[id] ?? id : id,
+    ];
+  }
+  return snippet;
+}
+
+Object? _recordWithRestoredServerId(
+  Object? value,
+  Map<String, String> serverIds,
+) {
+  if (value is! Map) return value;
+  final record = Map<String, Object?>.from(value);
+  final id = record['serverId'];
+  if (id is String) record['serverId'] = serverIds[id] ?? id;
+  return record;
+}
+
+Object? _jsonWithRestoredServerIds(
+  Object? value,
+  Map<String, String> serverIds,
+) {
+  if (value is List) {
+    return [
+      for (final item in value) _jsonWithRestoredServerIds(item, serverIds),
+    ];
+  }
+  if (value is! Map) return value;
+  return {
+    for (final entry in value.entries)
+      '${entry.key}': switch ('${entry.key}') {
+        'sourceId' || 'serverId' when entry.value is String =>
+          serverIds[entry.value] ?? entry.value,
+        _ => _jsonWithRestoredServerIds(entry.value, serverIds),
+      },
+  };
+}
+
 /// Keeps the per-record modification map needed by sync, but not device-local
 /// layout and migration markers. Restoring those markers from another device
 /// can make this device skip a migration or claim a schema it does not have.
@@ -370,9 +540,14 @@ Map<String, Object?> _mergeDataForStore(
   // Mergeable treats an absent key as a deletion. Keep local-only state in
   // the input until fl_lib can expose an internal-key exclusion policy.
   for (final entry
-      in store.getAllMap(includeInternalKeys: true).entries
-      .where((entry) =>
-          store.isInternalKey(entry.key) && entry.key != store.lastUpdateTsKey)) {
+      in store
+          .getAllMap(includeInternalKeys: true)
+          .entries
+          .where(
+            (entry) =>
+                store.isInternalKey(entry.key) &&
+                entry.key != store.lastUpdateTsKey,
+          )) {
     result[entry.key] = entry.value;
   }
   return result;

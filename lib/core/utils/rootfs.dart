@@ -162,11 +162,11 @@ abstract final class Rootfs {
   /// Deletes one system and everything in it. The others stay.
   ///
   /// The caller asks first.
-  static Future<void> removeProfile(String id) async {
+  static Future<void> removeProfile(String id, {LinuxProfile? expected}) async {
     if (isAndroid) {
-      await AndroidRootfs.removeProfile(id);
+      await AndroidRootfs.removeProfile(id, expected: expected);
     } else {
-      await IosRootfs.removeProfile(id);
+      await IosRootfs.removeProfile(id, expected: expected);
     }
     clearLinuxProfileSelection(id);
     // After the tree is gone, so a listener that closes tabs cannot race the

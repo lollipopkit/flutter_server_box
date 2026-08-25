@@ -54,6 +54,14 @@ class ServerStore extends EntityStore<Spi> {
   String? nameOf(Spi item) => item.name;
 
   @override
+  Spi reconcile(Spi incoming) {
+    final local = fetch().firstWhereOrNull(
+      (server) => server.name == incoming.name,
+    );
+    return local == null ? incoming : incoming.copyWith(id: local.id);
+  }
+
+  @override
   List<Spi> readAll() {
     final rows = db.select('SELECT * FROM server;');
     if (rows.isEmpty) return const [];
@@ -67,8 +75,11 @@ class ServerStore extends EntityStore<Spi> {
       'SELECT server_id, jump_id FROM server_jump ORDER BY ord;',
       'jump_id',
     );
-    final envs = _pairs('SELECT server_id, key, value FROM server_env;', 'key',
-        'value');
+    final envs = _pairs(
+      'SELECT server_id, key, value FROM server_env;',
+      'key',
+      'value',
+    );
     final cmds = _pairs(
       'SELECT server_id, name, cmd FROM server_custom_cmd;',
       'name',
@@ -148,8 +159,7 @@ class ServerStore extends EntityStore<Spi> {
               user: row['monitor_user'] as String?,
               pwd: row['monitor_pwd'] as String?,
               ignoreCert: (row['monitor_ignore_cert'] as int? ?? 0) == 1,
-              allowInsecure:
-                  (row['monitor_allow_insecure'] as int? ?? 0) == 1,
+              allowInsecure: (row['monitor_allow_insecure'] as int? ?? 0) == 1,
             ),
       wolCfg: row['wol_mac'] == null
           ? null
@@ -247,15 +257,37 @@ class ServerStore extends EntityStore<Spi> {
     final bmc = item.bmc;
     final custom = item.custom;
     const columns = [
-      'id', 'name', 'auto_connect', 'system_type',
-      'ssh_ip', 'ssh_port', 'ssh_user', 'ssh_pwd', 'ssh_key_id',
-      'ssh_key_path', 'ssh_alter_url', 'ssh_proxy_command',
-      'monitor_addr', 'monitor_user', 'monitor_pwd', 'monitor_ignore_cert',
+      'id',
+      'name',
+      'auto_connect',
+      'system_type',
+      'ssh_ip',
+      'ssh_port',
+      'ssh_user',
+      'ssh_pwd',
+      'ssh_key_id',
+      'ssh_key_path',
+      'ssh_alter_url',
+      'ssh_proxy_command',
+      'monitor_addr',
+      'monitor_user',
+      'monitor_pwd',
+      'monitor_ignore_cert',
       'monitor_allow_insecure',
-      'wol_mac', 'wol_ip', 'wol_pwd',
-      'bmc_addr', 'bmc_cred_id', 'bmc_cert_sha256',
-      'pve_addr', 'pve_ignore_cert', 'pve_pwd', 'prefer_temp_dev',
-      'temp_is_celsius', 'logo_url', 'net_dev', 'script_dir',
+      'wol_mac',
+      'wol_ip',
+      'wol_pwd',
+      'bmc_addr',
+      'bmc_cred_id',
+      'bmc_cert_sha256',
+      'pve_addr',
+      'pve_ignore_cert',
+      'pve_pwd',
+      'prefer_temp_dev',
+      'temp_is_celsius',
+      'logo_url',
+      'net_dev',
+      'script_dir',
     ];
     upsert(columns, [
       item.id,
@@ -329,7 +361,6 @@ class ServerStore extends EntityStore<Spi> {
         v,
       ]);
     });
-
   }
 
   /// A jump host is a server, so the row it names may not have been written
@@ -343,9 +374,9 @@ class ServerStore extends EntityStore<Spi> {
   void writeLinks(Spi item) {
     var ord = 0;
     for (final jump in item.ssh?.resolvedJumpIds ?? const <String>[]) {
-      final exists = db
-          .select('SELECT 1 FROM server WHERE id = ?;', [jump])
-          .isNotEmpty;
+      final exists = db.select('SELECT 1 FROM server WHERE id = ?;', [
+        jump,
+      ]).isNotEmpty;
       if (!exists) continue;
       db.execute('INSERT INTO server_jump VALUES (?, ?, ?);', [
         item.id,

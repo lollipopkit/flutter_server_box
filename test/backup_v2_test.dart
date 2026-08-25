@@ -351,7 +351,7 @@ void main() {
           },
           snippets: const {},
           keys: const {
-            'work': {'id': 'work', 'private_key': 'BACKUP'},
+            'work': {'name': 'work', 'private_key': 'BACKUP'},
           },
           container: const {},
           history: const {},
@@ -364,6 +364,79 @@ void main() {
           Stores.server.fetchOneRaw('srv-1')?.ssh?.keyId,
           'generated-local-id',
         );
+      },
+    );
+
+    test(
+      'same-name servers keep the local id across restored references',
+      () async {
+        const local = Spi(
+          id: 'local-server-id',
+          name: 'prod',
+          ssh: SshCredential(ip: '10.0.0.1'),
+        );
+        Stores.server.put(local);
+        final incoming = local.copyWith(
+          id: 'backup-server-id',
+          ssh: const SshCredential(ip: '10.0.0.2'),
+        );
+        const snippet = Snippet(
+          id: 'snippet-1',
+          name: 'deploy',
+          script: 'echo deploy',
+          autoRunOn: ['backup-server-id'],
+        );
+        const forward = PortForwardConfig(
+          id: 'forward-1',
+          serverId: 'backup-server-id',
+          name: 'web',
+          type: PortForwardType.local,
+          localPort: 8080,
+        );
+        final backup = BackupV2(
+          version: BackupV2.formatVer,
+          date: 1,
+          spis: {
+            'legacy-prod-key': json.decode(
+              json.encode(
+                incoming.toJson(),
+                toEncodable: (value) => (value as dynamic).toJson(),
+              ),
+            ),
+          },
+          snippets: {'snippet-1': snippet.toJson()},
+          keys: const {},
+          portForwards: {'forward-1': forward.toJson()},
+          container: const {
+            'backup-server-id': {'host_docker': 'tcp://10.0.0.2:2375'},
+          },
+          history: {
+            'sshServerHistory': ['backup-server-id'],
+            'sshTabs': json.encode([
+              {'sourceId': 'backup-server-id'},
+            ]),
+          },
+          settings: const {},
+        );
+
+        await backup.merge(force: true);
+
+        expect(Stores.server.fetch(), hasLength(1));
+        expect(Stores.server.fetch().single.id, local.id);
+        expect(Stores.server.fetch().single.ssh?.ip, '10.0.0.2');
+        expect(Stores.snippet.fetch().single.autoRunOn, [local.id]);
+        expect(
+          Stores.portForward.fetchForServer(local.id).single.id,
+          forward.id,
+        );
+        expect(
+          Stores.container.fetch(local.id, ContainerType.docker),
+          'tcp://10.0.0.2:2375',
+        );
+        expect(Stores.history.sshServerHistory.all, [local.id]);
+        expect(json.decode(Stores.history.sshTabs.fetch()) as List, [
+          {'sourceId': local.id},
+        ]);
       },
     );
 

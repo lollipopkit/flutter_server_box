@@ -33,14 +33,8 @@ void main() {
     });
 
     test('two ends are the same place only when both halves match', () {
-      expect(
-        const LocalFileRef('/a/b') == const LocalFileRef('/a/b'),
-        isTrue,
-      );
-      expect(
-        const LocalFileRef('/a/b') == const LocalFileRef('/a/c'),
-        isFalse,
-      );
+      expect(const LocalFileRef('/a/b') == const LocalFileRef('/a/b'), isTrue);
+      expect(const LocalFileRef('/a/b') == const LocalFileRef('/a/c'), isFalse);
     });
   });
 
@@ -59,7 +53,7 @@ void main() {
 
     tearDown(() async {
       await getIt.reset();
-    await SqliteDb.close();
+      await SqliteDb.close();
       await tempDir.delete(recursive: true);
     });
 
@@ -90,13 +84,49 @@ void main() {
       );
 
       expect(
-        FileTransfer(from: monitor, to: const LocalFileRef('/a/x')).needsIsolate,
+        FileTransfer(
+          from: monitor,
+          to: const LocalFileRef('/a/x'),
+        ).needsIsolate,
         isFalse,
       );
       expect(
-        FileTransfer(from: const LocalFileRef('/a/x'), to: monitor).needsIsolate,
+        FileTransfer(
+          from: const LocalFileRef('/a/x'),
+          to: monitor,
+        ).needsIsolate,
         isFalse,
       );
+    });
+
+    test('remote references include the configured endpoint in identity', () {
+      final oldSsh = SftpFileRef.forServer(
+        spiFixture(name: 'srv', id: 'same', ip: '10.0.0.1'),
+        '/tmp/x',
+      );
+      final newSsh = SftpFileRef.forServer(
+        spiFixture(name: 'srv', id: 'same', ip: '10.0.0.2'),
+        '/tmp/x',
+      );
+      final oldMonitor = MonitorFileRef.forServer(
+        const Spi(
+          name: 'agent',
+          id: 'same',
+          monitorHttp: MonitorHttpCredential(addr: 'https://10.0.0.1:3770'),
+        ),
+        '/tmp/x',
+      );
+      final newMonitor = MonitorFileRef.forServer(
+        const Spi(
+          name: 'agent',
+          id: 'same',
+          monitorHttp: MonitorHttpCredential(addr: 'https://10.0.0.2:3770'),
+        ),
+        '/tmp/x',
+      );
+
+      expect(oldSsh, isNot(newSsh));
+      expect(oldMonitor, isNot(newMonitor));
     });
 
     test('anything with SSH at either end needs one', () {
@@ -114,7 +144,10 @@ void main() {
       expect(
         FileTransfer(
           from: remote,
-          to: SftpFileRef.forServer(spiFixture(name: 'other', id: 'other', ip: '10.0.0.2'), '/tmp/y'),
+          to: SftpFileRef.forServer(
+            spiFixture(name: 'other', id: 'other', ip: '10.0.0.2'),
+            '/tmp/y',
+          ),
         ).needsIsolate,
         isTrue,
       );
@@ -194,8 +227,9 @@ void main() {
       // asked. Without that, cancelling removed the row and left it running.
       await Directory('${tempDir.path}/src').create();
       for (var i = 0; i < 40; i++) {
-        File('${tempDir.path}/src/f$i.bin')
-            .writeAsBytesSync(List<int>.filled(64 * 1024, 7));
+        File(
+          '${tempDir.path}/src/f$i.bin',
+        ).writeAsBytesSync(List<int>.filled(64 * 1024, 7));
       }
 
       final status = FileTransferStatus(
@@ -225,9 +259,9 @@ void main() {
       // And it is not reported as a failure: the user asked for this.
       expect(status.error, isNull);
       // Nothing half-written left under a final name.
-      final left = Directory('${tempDir.path}/dst')
-          .listSync()
-          .where((e) => e.path.contains('sb-part'));
+      final left = Directory(
+        '${tempDir.path}/dst',
+      ).listSync().where((e) => e.path.contains('sb-part'));
       expect(left, isEmpty);
     });
 
@@ -319,9 +353,7 @@ void main() {
 
     test('an older agent grants nothing it was never asked about', () {
       // `/capabilities` without a `files` field at all.
-      final granted = MonitorRemoteAccess.fromJson(const {
-        'terminal': true,
-      });
+      final granted = MonitorRemoteAccess.fromJson(const {'terminal': true});
 
       expect(granted.files, isFalse);
     });

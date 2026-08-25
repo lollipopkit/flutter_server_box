@@ -180,7 +180,9 @@ class FileTransferStatus {
         cancelled: () => _cancelled,
         onProgress: (transferred) => onNotify(
           FileTransferProgress(
-            percent: total == 0 ? 0 : transferred / total * 100,
+            percent: total == 0
+                ? 0
+                : (transferred / total * 100).clamp(0, 100).toDouble(),
             transferredBytes: transferred,
           ),
         ),
@@ -210,8 +212,7 @@ class FileTransferStatus {
   /// Whether two ends are the same place, and so can share one session.
   static bool _sameEnd(FileRef a, FileRef b) => switch ((a, b)) {
     (LocalFileRef(), LocalFileRef()) => true,
-    (MonitorFileRef(spi: final x), MonitorFileRef(spi: final y)) =>
-      x.id == y.id,
+    (MonitorFileRef(spi: final x), MonitorFileRef(spi: final y)) => x == y,
     _ => false,
   };
 

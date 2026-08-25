@@ -40,6 +40,15 @@ class LocalFileBackend implements FileBackend {
   @override
   Future<FileEntry?> stat(String path) async {
     final native = _native(path);
+    final type = await FileSystemEntity.type(native, followLinks: false);
+    if (type == FileSystemEntityType.notFound) return null;
+    if (type == FileSystemEntityType.link) {
+      return FileEntry(
+        name: p.basename(native),
+        kind: FileKind.link,
+        linkTarget: await _targetOf(Link(native)),
+      );
+    }
     final stat = await FileStat.stat(native);
     // `FileStat.stat` answers `notFound` both for something absent and for a
     // path whose parent cannot be traversed. Only the first is null here; the

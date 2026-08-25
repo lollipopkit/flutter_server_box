@@ -461,36 +461,45 @@ class KvToTablesMigration implements SchemaMigration {
     final renamed = <String, List<String>>{};
     final names = <String>{};
     for (final row in _rows('snippet')) {
-      final v = row.value;
-      final script = v['script'] as String?;
-      if (script == null) continue;
+      try {
+        final v = row.value;
+        final script = v['script'] as String?;
+        if (script == null) continue;
 
-      final oldName = v['name'] as String? ?? row.key;
-      var name = oldName;
-      for (var n = 2; !names.add(name); n++) {
-        name = '$oldName ($n)';
-      }
-      (renamed[oldName] ??= []).add(name);
+        final oldName = v['name'] as String? ?? row.key;
+        var name = oldName;
+        for (var n = 2; !names.add(name); n++) {
+          name = '$oldName ($n)';
+        }
+        (renamed[oldName] ??= []).add(name);
 
-      final id = ShortId.generate();
-      _db.execute(
-        'INSERT INTO snippet (id, name, script, note, updated_at) '
-        'VALUES (?, ?, ?, ?, ?);',
-        [id, name, script, v['note'] as String?, row.updatedAt],
-      );
-      for (final tag in (v['tags'] as List? ?? const []).whereType<String>()) {
-        _db.execute('INSERT OR IGNORE INTO snippet_tag VALUES (?, ?);', [
-          id,
-          tag,
-        ]);
-      }
-      for (final target
-          in (v['autoRunOn'] as List? ?? const []).whereType<String>()) {
-        final serverId = serverIds[target];
-        if (serverId == null) continue;
+        final id = ShortId.generate();
         _db.execute(
-          'INSERT OR IGNORE INTO snippet_auto_run_on VALUES (?, ?);',
-          [id, serverId],
+          'INSERT INTO snippet (id, name, script, note, updated_at) '
+          'VALUES (?, ?, ?, ?, ?);',
+          [id, name, script, v['note'] as String?, row.updatedAt],
+        );
+        for (final tag
+            in (v['tags'] as List? ?? const []).whereType<String>()) {
+          _db.execute('INSERT OR IGNORE INTO snippet_tag VALUES (?, ?);', [
+            id,
+            tag,
+          ]);
+        }
+        for (final target
+            in (v['autoRunOn'] as List? ?? const []).whereType<String>()) {
+          final serverId = serverIds[target];
+          if (serverId == null) continue;
+          _db.execute(
+            'INSERT OR IGNORE INTO snippet_auto_run_on VALUES (?, ?);',
+            [id, serverId],
+          );
+        }
+      } catch (e, s) {
+        Loggers.app.warning(
+          'm004: malformed snippet "${row.key}" was skipped',
+          e,
+          s,
         );
       }
     }
@@ -499,19 +508,19 @@ class KvToTablesMigration implements SchemaMigration {
 
   void _migratePortForwards(Map<String, String> serverIds) {
     for (final row in _rows('port_forward')) {
-      final v = row.value;
-      final id = v['id'] as String? ?? row.key;
-      final serverId = serverIds[v['serverId'] as String?];
-      if (serverId == null) {
-        Loggers.app.warning(
-          'm004: port forward "$id" names server "${v['serverId']}", which '
-          'does not exist; dropped',
-        );
-        continue;
-      }
-      const types = {'local', 'remote', 'dynamic'};
-      final type = v['type'] as String?;
       try {
+        final v = row.value;
+        final id = v['id'] as String? ?? row.key;
+        final serverId = serverIds[v['serverId'] as String?];
+        if (serverId == null) {
+          Loggers.app.warning(
+            'm004: port forward "$id" names server "${v['serverId']}", '
+            'which does not exist; dropped',
+          );
+          continue;
+        }
+        const types = {'local', 'remote', 'dynamic'};
+        final type = v['type'] as String?;
         _db.execute(
           'INSERT INTO port_forward (id, server_id, name, type, local_host, '
           'local_port, remote_host, remote_port, updated_at) '
@@ -534,12 +543,18 @@ class KvToTablesMigration implements SchemaMigration {
         // strand every store. Keep the first occurrence and drop the duplicate.
         if (e.extendedResultCode == 1555 || e.message.contains('UNIQUE')) {
           Loggers.app.warning(
-            'm004: duplicate port_forward id "$id" dropped',
+            'm004: duplicate port_forward row "${row.key}" dropped',
             e,
           );
           continue;
         }
         rethrow;
+      } catch (e, s) {
+        Loggers.app.warning(
+          'm004: malformed port forward "${row.key}" was skipped',
+          e,
+          s,
+        );
       }
     }
   }
@@ -620,29 +635,37 @@ class KvToTablesMigration implements SchemaMigration {
   void _migrateConnStats(Map<String, String> serverIds) {
     var dropped = 0;
     for (final row in _rows('conn_stat')) {
-      final v = row.value;
-      final serverId = serverIds[v['serverId'] as String?];
-      if (serverId == null) {
-        dropped++;
-        continue;
+      try {
+        final v = row.value;
+        final serverId = serverIds[v['serverId'] as String?];
+        if (serverId == null) {
+          dropped++;
+          continue;
+        }
+        final timestamp = DateTime.tryParse('${v['timestamp']}');
+        if (timestamp == null) continue;
+        // A fresh id: the old one was `<serverId>_<millis>`, so two attempts in
+        // the same millisecond shared a key and the second overwrote the first.
+        _db.execute(
+          'INSERT INTO conn_stat (id, server_id, server_name, timestamp, '
+          'result, error_message, duration_ms) VALUES (?, ?, ?, ?, ?, ?, ?);',
+          [
+            ShortId.generate(),
+            serverId,
+            v['serverName'] as String? ?? '',
+            timestamp.millisecondsSinceEpoch,
+            _results['${v['result']}'] ?? 'unknownError',
+            v['errorMessage'] as String? ?? '',
+            (v['durationMs'] as num?)?.toInt() ?? 0,
+          ],
+        );
+      } catch (e, s) {
+        Loggers.app.warning(
+          'm004: malformed connection stat "${row.key}" was skipped',
+          e,
+          s,
+        );
       }
-      final timestamp = DateTime.tryParse('${v['timestamp']}');
-      if (timestamp == null) continue;
-      // A fresh id: the old one was `<serverId>_<millis>`, so two attempts in
-      // the same millisecond shared a key and the second overwrote the first.
-      _db.execute(
-        'INSERT INTO conn_stat (id, server_id, server_name, timestamp, '
-        'result, error_message, duration_ms) VALUES (?, ?, ?, ?, ?, ?, ?);',
-        [
-          ShortId.generate(),
-          serverId,
-          v['serverName'] as String? ?? '',
-          timestamp.millisecondsSinceEpoch,
-          _results['${v['result']}'] ?? 'unknownError',
-          v['errorMessage'] as String? ?? '',
-          (v['durationMs'] as num?)?.toInt() ?? 0,
-        ],
-      );
     }
     if (dropped > 0) {
       Loggers.app.info('m004: dropped $dropped stats for deleted servers');
@@ -673,37 +696,45 @@ class KvToTablesMigration implements SchemaMigration {
       if (!row.key.startsWith(conversationPrefix)) continue;
       final v = row.value;
       if (v is! Map) continue;
-      // snake_case: `AgentConversation.toJson` is hand-written and that is
-      // what it produces, so reading `serverId` here found nothing and every
-      // conversation was dropped.
-      final id = v['id'] as String?;
-      final serverId = v['server_id'] as String?;
-      if (id == null || id.isEmpty || serverId == null || serverId.isEmpty) {
-        continue;
+      try {
+        // snake_case: `AgentConversation.toJson` is hand-written and that is
+        // what it produces, so reading `serverId` here found nothing and every
+        // conversation was dropped.
+        final id = v['id'] as String?;
+        final serverId = v['server_id'] as String?;
+        if (id == null || id.isEmpty || serverId == null || serverId.isEmpty) {
+          continue;
+        }
+        final updatedAt = DateTime.tryParse('${v['updated_at']}');
+        final scope = serverIds[serverId] ?? serverId;
+        // Inside the payload too, not only in the column. The store rebuilds a
+        // conversation from `data` and then compares `conversation.serverId`
+        // against the server it was asked about — `fetchActive`, `setActive` and
+        // `deleteConversation` all do — so a record whose JSON still named the
+        // old id would be unreachable by every one of them.
+        v['server_id'] = scope;
+        // `ON CONFLICT`, not `OR REPLACE`: the active row references this one and
+        // cascades, so replacing would delete the record of which conversation
+        // is open.
+        _db.execute(
+          'INSERT INTO agent_conversation (id, server_id, updated_at, data) '
+          'VALUES (?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET '
+          'server_id = excluded.server_id, updated_at = excluded.updated_at, '
+          'data = excluded.data;',
+          [
+            id,
+            scope,
+            updatedAt?.millisecondsSinceEpoch ?? row.updatedAt,
+            json.encode(v),
+          ],
+        );
+      } catch (e, s) {
+        Loggers.app.warning(
+          'm004: malformed agent conversation "${row.key}" was skipped',
+          e,
+          s,
+        );
       }
-      final updatedAt = DateTime.tryParse('${v['updated_at']}');
-      final scope = serverIds[serverId] ?? serverId;
-      // Inside the payload too, not only in the column. The store rebuilds a
-      // conversation from `data` and then compares `conversation.serverId`
-      // against the server it was asked about — `fetchActive`, `setActive` and
-      // `deleteConversation` all do — so a record whose JSON still named the
-      // old id would be unreachable by every one of them.
-      v['server_id'] = scope;
-      // `ON CONFLICT`, not `OR REPLACE`: the active row references this one and
-      // cascades, so replacing would delete the record of which conversation
-      // is open.
-      _db.execute(
-        'INSERT INTO agent_conversation (id, server_id, updated_at, data) '
-        'VALUES (?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET '
-        'server_id = excluded.server_id, updated_at = excluded.updated_at, '
-        'data = excluded.data;',
-        [
-          id,
-          scope,
-          updatedAt?.millisecondsSinceEpoch ?? row.updatedAt,
-          json.encode(v),
-        ],
-      );
     }
 
     active.forEach((serverId, conversationId) {

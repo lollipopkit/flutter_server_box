@@ -618,21 +618,10 @@ int sbm_ish_attach(const char *profile) {
     // whatever is holding it would hide that.
     int stale = unmount_profile(profile);
     if (stale < 0) {
-        // Something is holding one of them, which is `_EBUSY` and means the
-        // system is live: mounted, and with a process still in it. Record it
-        // and answer 0 rather than mounting a second set over the first.
-        //
-        // Not a refusal, which is what this did at first and what turned a
-        // recoverable state into a permanent one — a profile whose mounts
-        // could not be swept could never be opened again, for the life of the
-        // process. If the sweep took some of them down before meeting the one
-        // that would not go, this leaves a system missing those; that is a
-        // worse system, where refusing was no system at all.
-        snprintf(attached[slot], sizeof(attached[slot]), "%s", profile);
         pthread_mutex_unlock(&attached_lock);
-        syslog(LOG_ERR, "sbm_ish: %s still has mounts in use (%d); taken as "
-               "attached rather than mounted over", profile, stale);
-        return 0;
+        syslog(LOG_ERR, "sbm_ish: %s stale mounts could not be cleared (%d)",
+               profile, stale);
+        return stale;
     }
 
     char path[MAX_PATH];
@@ -728,6 +717,18 @@ int sbm_ish_detach(const char *profile) {
     // Read from the device as `session 0 pid 2 used=1 task=alive`, at the
     // moment a system whose terminal had been closed refused to detach.
     //
+    // An open reserves its slot before it has a pid. Releasing that reservation
+    // here lets the open continue into a live task whose slot is already free.
+    pthread_mutex_lock(&sessions_lock);
+    for (int i = 0; i < SBM_MAX_SESSIONS; i++) {
+        if (sessions[i].used && sessions[i].pid == 0 &&
+            strcmp(sessions[i].profile, profile) == 0) {
+            pthread_mutex_unlock(&sessions_lock);
+            return -EBUSY;
+        }
+    }
+    pthread_mutex_unlock(&sessions_lock);
+
     // Signalled, not waited for: the caller retries, which is where the time
     // for a shell to take SIGHUP and exit belongs — this holds `attached_lock`.
     for (int i = 0; i < SBM_MAX_SESSIONS; i++) close_session(i, profile);
@@ -912,8 +913,10 @@ int sbm_ish_open(const char *profile, const char *shell, const char *command,
 
     // A task of its own, under init. Everything from here happens as that
     // task, on this thread, until `task_start` gives it one.
+    bool child_created = false;
     int err = become_new_init_child();
     if (err < 0) goto fail;
+    child_created = true;
 
     // Before anything opens a path. `attach_stdio` names `/dev/pts/N`, and
     // that has to mean *this* profile's devpts rather than whichever one init
@@ -989,11 +992,25 @@ int sbm_ish_open(const char *profile, const char *shell, const char *command,
     return index;
 
 fail:
-    // The name goes with the reservation, since the two were taken together.
-    pthread_mutex_lock(&sessions_lock);
-    session->used = false;
-    session->profile[0] = '\0';
-    pthread_mutex_unlock(&sessions_lock);
+    // Publish an unstarted child's pid just long enough for close_session to
+    // release its pty and signal the right task. Detach refuses pid-zero
+    // reservations, so no concurrent profile removal can take this slot first.
+    if (child_created) {
+        pthread_mutex_lock(&sessions_lock);
+        if (session->used && session->pid == 0 &&
+            strcmp(session->profile, profile) == 0) {
+            session->pid = current->pid;
+        }
+        pthread_mutex_unlock(&sessions_lock);
+    }
+    pid_t_ failed_pid = close_session(index, profile);
+    if (child_created && failed_pid > 0) {
+        // The task has no host thread until task_start. Give it one so the
+        // pending fatal signal can run the normal guest teardown and reaping
+        // path instead of leaving an unreachable task in the pid table.
+        send_group_signal(current->group->pgid, SIGKILL_, SIGINFO_NIL);
+        task_start(current);
+    }
     return err;
 }
 

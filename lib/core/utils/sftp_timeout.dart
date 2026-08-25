@@ -82,6 +82,11 @@ Future<T> withSftpLateCleanupTimeout<T>(
 typedef SftpRename = Future<void> Function(String from, String to);
 typedef SftpRemove = Future<void> Function(String path);
 
+bool _isDefiniteSftpFailure(Object error) =>
+    error is SftpStatusError &&
+    error.code != SftpStatusCode.noConnection &&
+    error.code != SftpStatusCode.connectionLost;
+
 /// Replaces [destination] with [staging] without deleting the old path first.
 ///
 /// A timed-out rename is still running underneath `Future.timeout`, so its
@@ -103,6 +108,9 @@ Future<void> replaceSftpPath({
   } on TimeoutException {
     rethrow;
   } catch (e, s) {
+    if (!_isDefiniteSftpFailure(e)) {
+      Error.throwWithStackTrace(e, s);
+    }
     firstFailure = e;
     firstStack = s;
   }
@@ -111,7 +119,10 @@ Future<void> replaceSftpPath({
     await rename(destination, aside);
   } on TimeoutException {
     rethrow;
-  } catch (_) {
+  } catch (e, s) {
+    if (!_isDefiniteSftpFailure(e)) {
+      Error.throwWithStackTrace(e, s);
+    }
     Error.throwWithStackTrace(firstFailure, firstStack);
   }
 
@@ -120,11 +131,18 @@ Future<void> replaceSftpPath({
   } on TimeoutException {
     rethrow;
   } catch (e, s) {
+    if (!_isDefiniteSftpFailure(e)) {
+      Error.throwWithStackTrace(e, s);
+    }
     try {
       await rename(aside, destination);
     } on TimeoutException {
       rethrow;
-    } catch (_) {}
+    } catch (rollbackError, rollbackStack) {
+      if (!_isDefiniteSftpFailure(rollbackError)) {
+        Error.throwWithStackTrace(rollbackError, rollbackStack);
+      }
+    }
     Error.throwWithStackTrace(e, s);
   }
 

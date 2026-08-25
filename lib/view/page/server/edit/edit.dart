@@ -27,6 +27,7 @@ import 'package:server_box/data/provider/bmc_credential.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/entity_store.dart';
 import 'package:server_box/view/page/bmc_credential/edit.dart';
 import 'package:server_box/view/page/private_key/edit.dart';
 import 'package:server_box/view/page/server/custom_cmds.dart';
@@ -121,6 +122,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
 
   final _tempIsCelsius = ValueNotifier(false);
   final _env = <String, String>{}.vn;
+
   /// Custom commands an older version of the app stored here, carried through
   /// a save unchanged so that editing anything else on this page does not
   /// discard them before the first connection moves them to the server.

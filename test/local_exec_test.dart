@@ -110,6 +110,18 @@ void main() {
       expect(result.exitCode, 0);
     }, skip: !onPosix);
 
+    test('an inherited output pipe does not hold the result up', () async {
+      final result = await exec
+          .run('(sleep 30) & printf done')
+          .timeout(
+            const Duration(seconds: 5),
+            onTimeout: () => fail('a descendant kept the output pipe open'),
+          );
+
+      expect(result.stdout, 'done');
+      expect(result.exitCode, 0);
+    }, skip: !onPosix);
+
     test('also stops background descendants', () async {
       final temp = await Directory.systemTemp.createTemp(
         'server-box-exec-tree-',

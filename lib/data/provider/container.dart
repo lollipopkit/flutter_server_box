@@ -332,6 +332,16 @@ class ContainerNotifier extends _$ContainerNotifier {
     return generation != _refreshGeneration || !ref.mounted;
   }
 
+  Future<void> _restartAfterServerChange(
+    ContainerRefreshTarget target,
+    bool isAuto,
+  ) async {
+    _resetSudoProbe();
+    if (!ref.mounted) return;
+    state = state.copyWith(isBusy: false);
+    await refresh(target, isAuto: isAuto, generation: _refreshGeneration);
+  }
+
   Future<void> _requiresSudo(
     Completer<bool> completer,
     ContainerType type,
@@ -385,6 +395,9 @@ class ContainerNotifier extends _$ContainerNotifier {
     }
     _refreshing = true;
     final refreshGeneration = generation ?? _refreshGeneration;
+    final serverNotifier = ref.read(serverProvider(hostId).notifier);
+    final spi = ref.read(serverProvider(hostId)).spi;
+    bool serverChanged() => ref.read(serverProvider(hostId)).spi != spi;
     final type = state.type;
     final containerHost = Stores.container.fetch(hostId, type);
     // The error is left alone until something replaces it. Clearing it here
@@ -404,6 +417,10 @@ class ContainerNotifier extends _$ContainerNotifier {
 
     final needSudo = await sudo.future;
     if (_isStaleRefresh(refreshGeneration)) return;
+    if (serverChanged()) {
+      await _restartAfterServerChange(target, isAuto);
+      return;
+    }
 
     /// If sudo is required and auto refresh is enabled, skip the refresh.
     /// Or this will ask for pwd again and again.
@@ -464,7 +481,11 @@ class ContainerNotifier extends _$ContainerNotifier {
       // Asked for rather than held: a server reached over its monitor agent
       // has no connection sitting there until something needs one, and a
       // failure to open one is reported below like any other.
-      final exec = await ref.read(serverProvider(hostId).notifier).ensureExec();
+      final exec = await serverNotifier.ensureExec();
+      if (serverChanged() || !serverNotifier.isExecCurrent(exec, spi)) {
+        await _restartAfterServerChange(target, isAuto);
+        return;
+      }
       final result = await exec.runWithSudo(
         cmd,
         password: password,
@@ -475,6 +496,10 @@ class ContainerNotifier extends _$ContainerNotifier {
           }
         },
       );
+      if (serverChanged() || !serverNotifier.isExecCurrent(exec, spi)) {
+        await _restartAfterServerChange(target, isAuto);
+        return;
+      }
       (code, raw, errOut) = (result.exitCode, result.stdout, result.stderr);
       if (result.outputIncomplete) {
         if (_isStaleRefresh(refreshGeneration)) return;
@@ -490,6 +515,10 @@ class ContainerNotifier extends _$ContainerNotifier {
       }
     } catch (e, trace) {
       if (_isStaleRefresh(refreshGeneration)) return;
+      if (serverChanged()) {
+        await _restartAfterServerChange(target, isAuto);
+        return;
+      }
       Loggers.app.warning('Container refresh execution failed', e, trace);
       _setRefreshError(
         target,

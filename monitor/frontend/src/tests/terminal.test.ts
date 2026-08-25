@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
-import { TerminalSession, terminalWsUrl, type Renderer } from '../lib/terminal.svelte'
+import {
+  TerminalSession,
+  terminalWsProtocol,
+  terminalWsUrl,
+  type Renderer,
+} from '../lib/terminal.svelte'
 import { servers } from '../lib/servers.svelte'
 
 /// A WebSocket stand-in the test drives directly. Only the surface the session
@@ -18,7 +23,10 @@ class FakeSocket {
   binaryType = 'arraybuffer'
   closed = false
 
-  constructor(public url: string) {
+  constructor(
+    public url: string,
+    public protocols?: string | string[],
+  ) {
     FakeSocket.instances.push(this)
   }
 
@@ -124,29 +132,30 @@ async function connected(renderer: FakeRenderer) {
 
 describe('terminalWsUrl', () => {
   it('upgrades the scheme and keeps the host', () => {
-    expect(terminalWsUrl('https://agent.example.com:3770', 't')).toBe(
-      'wss://agent.example.com:3770/api/v1/terminal/ws?ticket=t',
+    expect(terminalWsUrl('https://agent.example.com:3770')).toBe(
+      'wss://agent.example.com:3770/api/v1/terminal/ws',
     )
-    expect(terminalWsUrl('http://192.168.1.5:3770', 't')).toBe(
-      'ws://192.168.1.5:3770/api/v1/terminal/ws?ticket=t',
+    expect(terminalWsUrl('http://192.168.1.5:3770')).toBe(
+      'ws://192.168.1.5:3770/api/v1/terminal/ws',
     )
   })
 
   it('resolves an empty base against the current origin', () => {
     // The same-origin case: the panel served by the agent itself
-    expect(terminalWsUrl('', 't')).toContain('/api/v1/terminal/ws?ticket=t')
-    expect(terminalWsUrl('', 't').startsWith('ws')).toBe(true)
+    expect(terminalWsUrl('')).toContain('/api/v1/terminal/ws')
+    expect(terminalWsUrl('').startsWith('ws')).toBe(true)
   })
 
   it('gives a schemeless entry the page scheme instead of reading it as one', () => {
     // `new URL` would take `agent.example.com:` for the scheme here
-    expect(terminalWsUrl('agent.example.com:3770', 't')).toBe(
-      'ws://agent.example.com:3770/api/v1/terminal/ws?ticket=t',
+    expect(terminalWsUrl('agent.example.com:3770')).toBe(
+      'ws://agent.example.com:3770/api/v1/terminal/ws',
     )
   })
 
-  it('escapes the ticket rather than splicing it in raw', () => {
-    expect(terminalWsUrl('https://a.example', 'a b&c')).toContain('ticket=a%20b%26c')
+  it('carries the ticket only in the websocket subprotocol', () => {
+    expect(terminalWsUrl('https://a.example')).not.toContain('ticket')
+    expect(terminalWsProtocol('id.secret')).toBe('sbm-ticket.id.secret')
   })
 })
 
@@ -171,7 +180,8 @@ describe('TerminalSession', () => {
     const { session, socket } = await connected(renderer)
 
     expect(ticketMock).toHaveBeenCalledWith('terminal')
-    expect(socket.url).toContain('ticket=id.secret')
+    expect(socket.url).not.toContain('ticket')
+    expect(socket.protocols).toEqual(['sbm-ticket.id.secret'])
     expect(socket.sent[0]).toMatchObject({
       type: 'open',
       user: 'ops',

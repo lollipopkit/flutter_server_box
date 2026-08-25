@@ -148,9 +148,12 @@ class SftpFileBackend implements FileBackend {
         (true, true) => 'rm -r -- ${shellSingleQuote(path)}',
         (true, false) => 'rmdir -- ${shellSingleQuote(path)}',
         (false, _) => 'rm -f -- ${shellSingleQuote(path)}',
-        // Never stat'd, because this user could not. `-r` covers a directory
-        // and `-f` a file, and one of the two is what is there.
-        (null, _) => 'rm -rf -- ${shellSingleQuote(path)}',
+        // Unknown because this user could not stat it. Keep the caller's
+        // recursion choice intact even when sudo has to determine the type.
+        (null, true) => 'rm -rf -- ${shellSingleQuote(path)}',
+        (null, false) =>
+          'rm -f -- ${shellSingleQuote(path)} || '
+              'rmdir -- ${shellSingleQuote(path)}',
       },
     );
   }
@@ -201,7 +204,7 @@ class SftpFileBackend implements FileBackend {
       // watching bytes arrive is better placed to decide it has given up.
       yield* file.read(offset: offset);
     } finally {
-      await file.close();
+      await _bounded('close file', file.close());
     }
   }
 
@@ -241,22 +244,21 @@ class SftpFileBackend implements FileBackend {
       wrote = true;
       try {
         await file.write(data.map(Uint8List.fromList)).done;
-        await file.close();
-      } catch (_) {
+        await _bounded('close file', file.close());
+      } catch (e) {
         // As in the local backend: a close that complains about a handle the
         // failure already invalidated must not replace the failure.
-        try {
-          await file.close();
-        } catch (_) {}
+        if (e is! TimeoutException) {
+          try {
+            await _bounded('close file', file.close());
+          } catch (_) {}
+        }
         rethrow;
       }
       try {
         await _replace(staging, path);
       } on TimeoutException {
         replacementOutcomeUnknown = true;
-        try {
-          await _sftp.close();
-        } catch (_) {}
         rethrow;
       }
     } catch (_) {
@@ -291,21 +293,38 @@ class SftpFileBackend implements FileBackend {
   @override
   Future<void> close() => _sftp.close();
 
-  Future<T> _bounded<T>(String what, Future<T> future) =>
-      timeout == null ? future : withSftpOpTimeout(what, future, timeout!);
+  Future<T> _bounded<T>(String what, Future<T> future) async {
+    final limit = timeout;
+    if (limit == null) return future;
+    try {
+      return await withSftpOpTimeout(what, future, limit);
+    } on TimeoutException {
+      // Future.timeout cannot cancel a request already on the wire. Closing
+      // the SFTP channel fences its late reply before callers retry anything.
+      unawaited(_sftp.close().catchError((_) {}));
+      rethrow;
+    }
+  }
 
   Future<SftpFile> _openFile(
     String what,
     Future<SftpFile> future, {
     required FutureOr<void> Function(SftpFile file) lateCleanup,
-  }) => timeout == null
-      ? future
-      : withSftpLateCleanupTimeout(
-          what,
-          future,
-          timeout!,
-          cleanup: lateCleanup,
-        );
+  }) async {
+    final limit = timeout;
+    if (limit == null) return future;
+    try {
+      return await withSftpLateCleanupTimeout(
+        what,
+        future,
+        limit,
+        cleanup: lateCleanup,
+      );
+    } on TimeoutException {
+      unawaited(_sftp.close().catchError((_) {}));
+      rethrow;
+    }
+  }
 
   /// `SSH_FX_NO_SUCH_FILE`, from the SFTP protocol.
   static const _sftpStatusNoSuchFile = 2;

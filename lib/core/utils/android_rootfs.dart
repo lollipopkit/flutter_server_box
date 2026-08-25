@@ -305,7 +305,9 @@ abstract final class AndroidRootfs {
   ///
   /// The directory listing is the list, for the reason iOS's is — a profile
   /// deleted from disk cannot linger in it.
-  static Future<void> scan() async {
+  static Future<void> scan() => _lifecycle.run(_scan);
+
+  static Future<void> _scan() async {
     final container = _container;
     if (container == null) {
       _profiles.clear();
@@ -382,16 +384,18 @@ abstract final class AndroidRootfs {
         _loader = loader;
       }
     }
-    await scan();
-    for (final profile in _profiles) {
-      final root = rootOf(profile.id);
-      if (root == null) continue;
-      // Repairs a rootfs unpacked before either existed, and carries a fix to
-      // the script itself into one already installed. Writes the resolver only
-      // when absent, so one pointed at its owner's own keeps it.
-      await seedResolvConf(root, nameservers: linuxNameservers());
-      await seedChsh(root);
-    }
+    await _lifecycle.run(() async {
+      await _scan();
+      for (final profile in _profiles) {
+        final root = rootOf(profile.id);
+        if (root == null) continue;
+        // Repairs a rootfs unpacked before either existed, and carries a fix to
+        // the script itself into one already installed. Writes the resolver only
+        // when absent, so one pointed at its owner's own keeps it.
+        await seedResolvConf(root, nameservers: linuxNameservers());
+        await seedChsh(root);
+      }
+    });
   }
 
   /// Downloads and unpacks the rootfs.
@@ -429,9 +433,10 @@ abstract final class AndroidRootfs {
     if (container == null) {
       throw StateError('AndroidRootfs.prepare was not called');
     }
-    await scan();
+    await _scan();
 
-    if (into != null && !_profiles.any((e) => e.id == into.id)) {
+    if (into != null &&
+        _profiles.firstWhereOrNull((e) => e.id == into.id) != into) {
       throw StateError('The Linux system is no longer installed');
     }
 
@@ -441,17 +446,21 @@ abstract final class AndroidRootfs {
       throw StateError('The Linux system is still in use');
     }
     final root = container.joinPath(id);
+    final stagingRoot = container.joinPath(
+      '.$id.install-${ShortId.generate()}',
+    );
     final mirror = linuxMirror(distro);
     // Read once, for the reason the mirror is.
     final chosen = release ?? distro.preferred;
 
-    final dir = Directory(root);
-    // Whatever a previous attempt left. A rootfs is only ever complete or
-    // absent; there is no repairing a partial one.
+    final dir = Directory(stagingRoot);
+    // Build the replacement beside the live tree. A cancelled download,
+    // digest mismatch, or extraction failure must leave the last good system
+    // untouched.
     if (await dir.exists()) await dir.delete(recursive: true);
     await dir.create(recursive: true);
 
-    final archive = root.joinPath('rootfs.tar.gz');
+    final archive = stagingRoot.joinPath('rootfs.tar.gz');
     try {
       final dio = Dio(
         BaseOptions(
@@ -492,16 +501,16 @@ abstract final class AndroidRootfs {
         );
       }
 
-      await _unpack(archive, root, source: chosen.source);
+      await _unpack(archive, stagingRoot, source: chosen.source);
 
-      await seedResolvConf(root, nameservers: linuxNameservers());
+      await seedResolvConf(stagingRoot, nameservers: linuxNameservers());
       await seedRepositories(
-        root,
+        stagingRoot,
         distro: distro,
         release: chosen,
         mirror: mirror,
       );
-      await seedChsh(root, force: true);
+      await seedChsh(stagingRoot, force: true);
       final profile = LinuxProfile(
         id: id,
         distro: distro,
@@ -510,10 +519,11 @@ abstract final class AndroidRootfs {
         label: label ?? into?.label ?? distro.label,
       );
       await (await rootfsFileForWrite(
-        root,
+        stagingRoot,
         '/${LinuxProfile.marker}',
       )).writeAsString(profile.encode());
-      await scan();
+      await _commitInstall(stagingRoot, root, replacing: into != null);
+      await _scan();
       return profile;
     } catch (_) {
       // Nothing half-installed is left to be mistaken for a working one.
@@ -522,6 +532,40 @@ abstract final class AndroidRootfs {
     } finally {
       final leftover = File(archive);
       if (await leftover.exists()) await leftover.delete();
+    }
+  }
+
+  static Future<void> _commitInstall(
+    String stagingRoot,
+    String root, {
+    required bool replacing,
+  }) async {
+    final rootType = await FileSystemEntity.type(root, followLinks: false);
+    if (replacing && rootType != FileSystemEntityType.directory) {
+      throw StateError('The Linux system changed while it was being replaced');
+    }
+    if (!replacing && rootType != FileSystemEntityType.notFound) {
+      throw StateError('The Linux system destination already exists');
+    }
+
+    final previous = '$root.previous-${ShortId.generate()}';
+    var movedPrevious = false;
+    if (rootType == FileSystemEntityType.directory) {
+      await Directory(root).rename(previous);
+      movedPrevious = true;
+    }
+    try {
+      await Directory(stagingRoot).rename(root);
+    } catch (_) {
+      if (movedPrevious) await Directory(previous).rename(root);
+      rethrow;
+    }
+    if (movedPrevious) {
+      try {
+        await Directory(previous).delete(recursive: true);
+      } catch (e, s) {
+        Loggers.app.warning('Could not remove previous Linux system', e, s);
+      }
     }
   }
 
@@ -889,29 +933,40 @@ abstract final class AndroidRootfs {
         await File(
           root.joinPath(LinuxProfile.marker),
         ).writeAsString(profile.copyWith(label: label).encode());
-        await scan();
+        await _scan();
       });
 
   /// Removes one rootfs and everything in it. The others stay.
-  static Future<void> removeProfile(String id) =>
-      _lifecycle.run(() => _removeProfile(id));
+  static Future<void> removeProfile(String id, {LinuxProfile? expected}) =>
+      _lifecycle.run(() => _removeProfile(id, expected: expected));
 
-  static Future<void> _removeProfile(String id) async {
+  static Future<void> _removeProfile(
+    String id, {
+    LinuxProfile? expected,
+  }) async {
     // A known id, before a recursive delete is built from it. `rootOf` only
     // joins a path, so anything the caller passes becomes one.
-    if (!_profiles.any((e) => e.id == id)) return;
+    final current = _profiles.firstWhereOrNull((e) => e.id == id);
+    if (current == null) return;
+    if (expected != null && current != expected) {
+      throw StateError('The Linux system changed before it could be deleted');
+    }
     if ((_activeProfiles[id] ?? 0) > 0) {
       throw StateError('The Linux system is still in use');
     }
     final root = rootOf(id);
     if (root == null) return;
+    if (await FileSystemEntity.type(root, followLinks: false) !=
+        FileSystemEntityType.directory) {
+      throw StateError('The Linux system directory is no longer available');
+    }
     // Remove from the cached list before the filesystem delete so a
     // concurrent applyNetSettings that is mid-iteration skips this profile
     // and does not recreate its repository file after the tree was removed.
     _profiles.removeWhere((e) => e.id == id);
     final dir = Directory(root);
     if (await dir.exists()) await dir.delete(recursive: true);
-    await scan();
+    await _scan();
   }
 
   /// The command that enters the rootfs, or null when it cannot be entered.
@@ -929,6 +984,10 @@ abstract final class AndroidRootfs {
     final root = rootOf(id);
     final proot = _proot;
     if (root == null || proot == null || !isAvailable) return null;
+    if (await FileSystemEntity.type(root, followLinks: false) !=
+        FileSystemEntityType.directory) {
+      return null;
+    }
     _activeProfiles[id] = (_activeProfiles[id] ?? 0) + 1;
     var released = false;
     void release() {

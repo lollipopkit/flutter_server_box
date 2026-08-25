@@ -8,12 +8,15 @@
 use std::sync::{Arc, Once};
 use std::time::Duration;
 
+use ntex::io::{Io, Sealed};
+use ntex::service::cfg::SharedCfg;
+use ntex::time::Seconds;
 use ntex::time::timeout;
 use ntex::util::ByteString;
 use ntex::web::test::{self as web_test, TestServer};
-use ntex::io::{Io, Sealed};
 use ntex::web::{self, App};
-use ntex::ws;
+use ntex::ws::error::WsClientError;
+use ntex::ws::{self, WsClient, WsConnection};
 use rustls::crypto::ring;
 use server_box_monitor::api::server::AppState;
 use server_box_monitor::api::ws::terminal::terminal_ws;
@@ -53,9 +56,9 @@ async fn test_server(state: Arc<AppState>) -> TestServer {
     web_test::server(move || {
         let state = state.clone();
         async move {
-            App::new().state(state).service(
-                web::scope("/api/v1").route("/terminal/ws", web::get().to(terminal_ws)),
-            )
+            App::new()
+                .state(state)
+                .service(web::scope("/api/v1").route("/terminal/ws", web::get().to(terminal_ws)))
         }
     })
     .await
@@ -73,10 +76,7 @@ fn dead_addr() -> String {
 ///
 /// Skips the heartbeat and any binary the session might have produced, so a
 /// test can assert on the reply it cares about without racing the pumps.
-async fn next_control(
-    io: &Io<Sealed>,
-    codec: &ws::Codec,
-) -> serde_json::Value {
+async fn next_control(io: &Io<Sealed>, codec: &ws::Codec) -> serde_json::Value {
     loop {
         let frame = timeout(Duration::from_secs(5), io.recv(codec))
             .await
@@ -94,12 +94,27 @@ async fn next_control(
 }
 
 async fn open_terminal(srv: &TestServer, ticket: &str) -> (Io<Sealed>, ws::Codec) {
-    let conn = srv
-        .ws_at(&format!("/api/v1/terminal/ws?ticket={ticket}"))
+    let conn = terminal_connection(srv, ticket)
         .await
         .expect("upgrade should succeed");
     let (io, codec, _) = conn.into_inner();
     (io, codec)
+}
+
+async fn terminal_connection(
+    srv: &TestServer,
+    ticket: &str,
+) -> Result<WsConnection<Sealed>, WsClientError> {
+    WsClient::builder(srv.url("/api/v1/terminal/ws"))
+        .address(srv.addr())
+        .timeout(Seconds(60))
+        .protocols([format!("sbm-ticket.{ticket}")])
+        .build(SharedCfg::default())
+        .await
+        .unwrap()
+        .connect()
+        .await
+        .map(WsConnection::seal)
 }
 
 #[ntex::test]
@@ -108,11 +123,7 @@ async fn a_disabled_terminal_refuses_even_a_valid_ticket() {
     let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state).await;
 
-    assert!(
-        srv.ws_at(&format!("/api/v1/terminal/ws?ticket={ticket}"))
-            .await
-            .is_err()
-    );
+    assert!(terminal_connection(&srv, &ticket).await.is_err());
 }
 
 #[ntex::test]
@@ -121,11 +132,7 @@ async fn a_missing_or_forged_ticket_is_refused() {
     let srv = test_server(state).await;
 
     assert!(srv.ws_at("/api/v1/terminal/ws").await.is_err());
-    assert!(
-        srv.ws_at("/api/v1/terminal/ws?ticket=dead.beef")
-            .await
-            .is_err()
-    );
+    assert!(terminal_connection(&srv, "dead.beef").await.is_err());
 }
 
 #[ntex::test]
@@ -134,9 +141,8 @@ async fn a_ticket_works_only_once() {
     let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state).await;
 
-    let path = format!("/api/v1/terminal/ws?ticket={ticket}");
-    assert!(srv.ws_at(&path).await.is_ok());
-    assert!(srv.ws_at(&path).await.is_err());
+    assert!(terminal_connection(&srv, &ticket).await.is_ok());
+    assert!(terminal_connection(&srv, &ticket).await.is_err());
 }
 
 #[ntex::test]
@@ -144,11 +150,9 @@ async fn a_failed_upgrade_does_not_burn_the_ticket() {
     let state = app_state(true, "127.0.0.1:22").await;
     let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state).await;
-    let path = format!("/api/v1/terminal/ws?ticket={ticket}");
-
-    let response = srv.get(&path).send().await.unwrap();
+    let response = srv.get("/api/v1/terminal/ws").send().await.unwrap();
     assert!(!response.status().is_success());
-    assert!(srv.ws_at(&path).await.is_ok());
+    assert!(terminal_connection(&srv, &ticket).await.is_ok());
 }
 
 #[ntex::test]
@@ -160,11 +164,7 @@ async fn a_plaintext_listener_still_serves_a_loopback_client() {
     let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state).await;
 
-    assert!(
-        srv.ws_at(&format!("/api/v1/terminal/ws?ticket={ticket}"))
-            .await
-            .is_ok()
-    );
+    assert!(terminal_connection(&srv, &ticket).await.is_ok());
 }
 
 #[ntex::test]
@@ -174,9 +174,12 @@ async fn an_unparseable_control_message_is_reported_not_ignored() {
     let srv = test_server(state).await;
     let (io, codec) = open_terminal(&srv, &ticket).await;
 
-    io.send(ws::Message::Text(ByteString::from_static("{\"type\":\"nope\"}")), &codec)
-        .await
-        .unwrap();
+    io.send(
+        ws::Message::Text(ByteString::from_static("{\"type\":\"nope\"}")),
+        &codec,
+    )
+    .await
+    .unwrap();
 
     assert_eq!(next_control(&io, &codec).await["code"], "bad_request");
 }
@@ -270,19 +273,19 @@ async fn a_ping_is_answered() {
 
 /// Opens a shell against the in-process fake sshd and returns the connection
 /// plus the session handle from `ready`.
-async fn open_shell(
-    srv: &TestServer,
-    ticket: &str,
-) -> (Io<Sealed>, ws::Codec, String) {
+async fn open_shell(srv: &TestServer, ticket: &str) -> (Io<Sealed>, ws::Codec, String) {
     let (io, codec) = open_terminal(srv, ticket).await;
     let open = serde_json::json!({
         "type": "open",
         "user": fake_sshd::USER,
         "auth": {"kind": "password", "password": fake_sshd::PASSWORD},
     });
-    io.send(ws::Message::Text(ByteString::from(open.to_string())), &codec)
-        .await
-        .unwrap();
+    io.send(
+        ws::Message::Text(ByteString::from(open.to_string())),
+        &codec,
+    )
+    .await
+    .unwrap();
 
     let ready = next_control(&io, &codec).await;
     assert_eq!(ready["type"], "ready", "expected a shell, got {ready}");
@@ -335,7 +338,9 @@ async fn a_password_login_produces_a_working_shell() {
 
     let banner = read_until(&io, &codec, fake_sshd::BANNER).await;
     assert!(
-        banner.windows(fake_sshd::BANNER.len()).any(|w| w == fake_sshd::BANNER),
+        banner
+            .windows(fake_sshd::BANNER.len())
+            .any(|w| w == fake_sshd::BANNER),
         "the shell's own output should reach the browser"
     );
 
@@ -365,14 +370,21 @@ async fn a_wrong_password_is_reported_as_an_auth_failure() {
         "user": fake_sshd::USER,
         "auth": {"kind": "password", "password": "wrong"},
     });
-    io.send(ws::Message::Text(ByteString::from(open.to_string())), &codec)
-        .await
-        .unwrap();
+    io.send(
+        ws::Message::Text(ByteString::from(open.to_string())),
+        &codec,
+    )
+    .await
+    .unwrap();
 
     let reply = next_control(&io, &codec).await;
     assert_eq!(reply["code"], "auth_failed");
     assert!(
-        !reply["message"].as_str().unwrap().to_lowercase().contains("password"),
+        !reply["message"]
+            .as_str()
+            .unwrap()
+            .to_lowercase()
+            .contains("password"),
         "the message must not narrow the search for a guesser"
     );
 }
@@ -390,9 +402,12 @@ async fn a_second_factor_prompt_is_forwarded_and_answerable() {
         "user": fake_sshd::USER,
         "auth": {"kind": "interactive"},
     });
-    io.send(ws::Message::Text(ByteString::from(open.to_string())), &codec)
-        .await
-        .unwrap();
+    io.send(
+        ws::Message::Text(ByteString::from(open.to_string())),
+        &codec,
+    )
+    .await
+    .unwrap();
 
     let prompt = next_control(&io, &codec).await;
     assert_eq!(prompt["type"], "prompt");
@@ -403,9 +418,12 @@ async fn a_second_factor_prompt_is_forwarded_and_answerable() {
     );
 
     let answer = serde_json::json!({"type": "answer", "answers": [fake_sshd::PASSWORD]});
-    io.send(ws::Message::Text(ByteString::from(answer.to_string())), &codec)
-        .await
-        .unwrap();
+    io.send(
+        ws::Message::Text(ByteString::from(answer.to_string())),
+        &codec,
+    )
+    .await
+    .unwrap();
     assert_eq!(next_control(&io, &codec).await["type"], "ready");
 }
 
@@ -423,26 +441,44 @@ async fn concurrent_answers_cannot_open_two_shells() {
         "user": fake_sshd::USER,
         "auth": {"kind": "interactive"},
     });
-    io.send(ws::Message::Text(ByteString::from(open.to_string())), &codec)
-        .await
-        .unwrap();
+    io.send(
+        ws::Message::Text(ByteString::from(open.to_string())),
+        &codec,
+    )
+    .await
+    .unwrap();
     assert_eq!(next_control(&io, &codec).await["type"], "prompt");
 
     let answer = serde_json::json!({"type": "answer", "answers": [fake_sshd::PASSWORD]});
-    io.send(ws::Message::Text(ByteString::from(answer.to_string())), &codec)
-        .await
-        .unwrap();
-    io.send(ws::Message::Text(ByteString::from(answer.to_string())), &codec)
-        .await
-        .unwrap();
+    io.send(
+        ws::Message::Text(ByteString::from(answer.to_string())),
+        &codec,
+    )
+    .await
+    .unwrap();
+    io.send(
+        ws::Message::Text(ByteString::from(answer.to_string())),
+        &codec,
+    )
+    .await
+    .unwrap();
 
-    let replies = [next_control(&io, &codec).await, next_control(&io, &codec).await];
+    let replies = [
+        next_control(&io, &codec).await,
+        next_control(&io, &codec).await,
+    ];
     assert_eq!(
-        replies.iter().filter(|reply| reply["type"] == "ready").count(),
+        replies
+            .iter()
+            .filter(|reply| reply["type"] == "ready")
+            .count(),
         1
     );
     assert_eq!(
-        replies.iter().filter(|reply| reply["code"] == "bad_request").count(),
+        replies
+            .iter()
+            .filter(|reply| reply["code"] == "bad_request")
+            .count(),
         1
     );
     assert_eq!(sessions.len(), 1);
@@ -462,20 +498,35 @@ async fn concurrent_open_frames_create_only_one_session() {
         "auth": {"kind": "password", "password": fake_sshd::PASSWORD},
     });
 
-    io.send(ws::Message::Text(ByteString::from(open.to_string())), &codec)
-        .await
-        .unwrap();
-    io.send(ws::Message::Text(ByteString::from(open.to_string())), &codec)
-        .await
-        .unwrap();
+    io.send(
+        ws::Message::Text(ByteString::from(open.to_string())),
+        &codec,
+    )
+    .await
+    .unwrap();
+    io.send(
+        ws::Message::Text(ByteString::from(open.to_string())),
+        &codec,
+    )
+    .await
+    .unwrap();
 
-    let replies = [next_control(&io, &codec).await, next_control(&io, &codec).await];
+    let replies = [
+        next_control(&io, &codec).await,
+        next_control(&io, &codec).await,
+    ];
     assert_eq!(
-        replies.iter().filter(|reply| reply["type"] == "ready").count(),
+        replies
+            .iter()
+            .filter(|reply| reply["type"] == "ready")
+            .count(),
         1
     );
     assert_eq!(
-        replies.iter().filter(|reply| reply["code"] == "bad_request").count(),
+        replies
+            .iter()
+            .filter(|reply| reply["code"] == "bad_request")
+            .count(),
         1
     );
     assert_eq!(sessions.len(), 1);
@@ -504,8 +555,8 @@ async fn a_reconnect_replays_only_what_was_missed() {
     .await
     .unwrap();
     for _ in 0..50 {
-        let received = session.scrollback.lock().unwrap().next_seq()
-            >= rendered + MISSED.len() as u64;
+        let received =
+            session.scrollback.lock().unwrap().next_seq() >= rendered + MISSED.len() as u64;
         if received {
             break;
         }
@@ -542,7 +593,9 @@ async fn a_reconnect_replays_only_what_was_missed() {
         "a recoverable gap must not clear the screen"
     );
     assert!(
-        replayed.windows(fake_sshd::BANNER.len()).all(|w| w != fake_sshd::BANNER),
+        replayed
+            .windows(fake_sshd::BANNER.len())
+            .all(|w| w != fake_sshd::BANNER),
         "already-rendered output must not be sent twice"
     );
 }
@@ -838,7 +891,10 @@ async fn turning_full_access_off_closes_an_existing_local_shell() {
         .full_access_off
         .store(true, std::sync::atomic::Ordering::Release);
     assert_eq!(state.sessions.close_local(), 1);
-    assert_eq!(next_control(&io, &codec).await["code"], "full_access_disabled");
+    assert_eq!(
+        next_control(&io, &codec).await["code"],
+        "full_access_disabled"
+    );
     assert!(state.sessions.is_empty());
 }
 
@@ -936,9 +992,12 @@ async fn an_outage_longer_than_the_buffer_reports_and_replays() {
     // Fill past the buffer from the reattached connection, then reattach once
     // more from a stale position
     let filler = vec![b'x'; 2048];
-    io2.send(ws::Message::Binary(ntex::util::Bytes::from(filler)), &codec2)
-        .await
-        .unwrap();
+    io2.send(
+        ws::Message::Binary(ntex::util::Bytes::from(filler)),
+        &codec2,
+    )
+    .await
+    .unwrap();
     read_until(&io2, &codec2, b"xxxxxxxx").await;
     drop(io2);
     ntex::time::sleep(Duration::from_millis(200)).await;
@@ -981,8 +1040,14 @@ async fn an_outage_longer_than_the_buffer_reports_and_replays() {
             break;
         }
     }
-    assert!(saw_truncated, "the client must be told that output was lost");
-    assert!(saw_replay, "the surviving scrollback must still be replayed");
+    assert!(
+        saw_truncated,
+        "the client must be told that output was lost"
+    );
+    assert!(
+        saw_replay,
+        "the surviving scrollback must still be replayed"
+    );
 }
 
 #[ntex::test]
@@ -1098,7 +1163,11 @@ async fn a_real_sshd_produces_a_working_shell() {
             seen.extend_from_slice(&data);
             // The echoed command appears first, then its output — two
             // occurrences means the shell actually ran it
-            if String::from_utf8_lossy(&seen).matches("sbm-e2e-marker").count() >= 2 {
+            if String::from_utf8_lossy(&seen)
+                .matches("sbm-e2e-marker")
+                .count()
+                >= 2
+            {
                 break true;
             }
         }
@@ -1109,4 +1178,3 @@ async fn a_real_sshd_produces_a_working_shell() {
         String::from_utf8_lossy(&seen)
     );
 }
-

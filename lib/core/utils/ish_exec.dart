@@ -176,15 +176,14 @@ class IshExec extends LocalExec {
     // incomplete sequence, and the strict decoder answers `close()` with a
     // `FormatException` — thrown from the one place that was about to return
     // the command's output. Replacement marks are the right answer there.
-    final console = const Utf8Decoder(
-      allowMalformed: true,
-    ).startChunkedConversion(
-      _SinkOf<String>((text) {
-        if (text.isEmpty) return;
-        err.adopt(text);
-        onStderr?.call(text);
-      }),
-    );
+    final console = const Utf8Decoder(allowMalformed: true)
+        .startChunkedConversion(
+          _SinkOf<String>((text) {
+            if (text.isEmpty) return;
+            err.adopt(text);
+            onStderr?.call(text);
+          }),
+        );
     try {
       while (true) {
         // Zero, so this returns whatever is there and no more; null means the
@@ -243,6 +242,13 @@ class IshExec extends LocalExec {
       ..writeln("exec >'$out' 2>'$err'${readsStdin ? '' : ' </dev/null'}");
     if (env != null) {
       for (final entry in env.entries) {
+        if (!_envName.hasMatch(entry.key)) {
+          throw ArgumentError.value(
+            entry.key,
+            'env',
+            'Environment variable names must be shell identifiers',
+          );
+        }
         buffer.writeln("export ${entry.key}='${_quoted(entry.value)}'");
       }
     }
@@ -251,6 +257,8 @@ class IshExec extends LocalExec {
 
   /// A value for the inside of single quotes, where the only thing that can end
   /// them is a quote of its own.
+  static final _envName = RegExp(r'^[A-Za-z_][A-Za-z0-9_]*$');
+
   static String _quoted(String value) => value.replaceAll("'", r"'\''");
 
   static Future<void> _remove(List<File> files) async {

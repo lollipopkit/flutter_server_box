@@ -84,10 +84,10 @@ final class SftpFileRef extends FileRef {
 
   @override
   bool operator ==(Object other) =>
-      other is SftpFileRef && other.path == path && other.spi.id == spi.id;
+      other is SftpFileRef && other.path == path && other.spi == spi;
 
   @override
-  int get hashCode => Object.hash(SftpFileRef, spi.id, path);
+  int get hashCode => Object.hash(SftpFileRef, spi, path);
 
   @override
   String toString() => 'SftpFileRef(${spi.id}:$path)';
@@ -133,10 +133,13 @@ final class MonitorFileRef extends FileRef {
 
   @override
   bool operator ==(Object other) =>
-      other is MonitorFileRef && other.path == path && other.spi.id == spi.id;
+      other is MonitorFileRef &&
+      other.path == path &&
+      other.spi == spi &&
+      other.monitor == monitor;
 
   @override
-  int get hashCode => Object.hash(MonitorFileRef, spi.id, path);
+  int get hashCode => Object.hash(MonitorFileRef, spi, monitor, path);
 
   @override
   String toString() => 'MonitorFileRef(${spi.id}:$path)';

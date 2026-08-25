@@ -21,7 +21,7 @@
 //! extended-cycle collection), which is the only source for them.
 
 use sbm_parser::types::Disk;
-use sbm_parser::{common, linux, ServerStatus};
+use sbm_parser::{ServerStatus, common, linux};
 use std::fs;
 use std::fs::OpenOptions;
 use std::os::unix::fs::OpenOptionsExt;
@@ -143,7 +143,10 @@ fn run_command_with_timeout(mut command: Command, command_timeout: Duration) -> 
                     String::new()
                 };
             }
-            Ok(None) if fs::metadata(&file).is_ok_and(|metadata| metadata.len() >= MAX_COMMAND_OUTPUT_BYTES) => {
+            Ok(None)
+                if fs::metadata(&file)
+                    .is_ok_and(|metadata| metadata.len() >= MAX_COMMAND_OUTPUT_BYTES) =>
+            {
                 terminate(&mut child);
                 with_child_reaper(|reaper| reaper.retain(child));
                 let _ = fs::remove_file(file);
@@ -200,8 +203,7 @@ fn output_file() -> Option<(std::fs::File, PathBuf)> {
 
 fn terminate(child: &mut std::process::Child) {
     #[cfg(unix)]
-    if unsafe { kill_process_group(-(child.id() as i32), 9) } == 0
-    {
+    if unsafe { kill_process_group(-(child.id() as i32), 9) } == 0 {
         return;
     }
     let _ = child.kill();
@@ -213,22 +215,31 @@ unsafe extern "C" {
     fn kill_process_group(pid: i32, signal: i32) -> i32;
 }
 
-/// Concatenation of every `/etc/*-release` file, filtered to the
-/// `PRETTY_NAME=...` line — mirrors `cat /etc/*-release | grep ^PRETTY_NAME`.
-/// `parse_sys_version` requires exactly this one line (it errors on more
-/// than one `=` in its input), so the filter isn't optional here.
 fn release_pretty_name() -> String {
-    let mut all = String::new();
+    fn line(raw: &str) -> Option<String> {
+        raw.lines()
+            .find(|line| line.starts_with("PRETTY_NAME="))
+            .map(str::to_string)
+    }
+
+    if let Some(pretty) = line(&read("/etc/os-release")) {
+        return pretty;
+    }
+
+    let mut releases = Vec::new();
     if let Ok(entries) = fs::read_dir("/etc") {
         for entry in entries.flatten() {
             let name = entry.file_name();
             if name.to_string_lossy().ends_with("-release") {
-                all.push_str(&read(&entry.path().to_string_lossy()));
-                all.push('\n');
+                releases.push(entry.path());
             }
         }
     }
-    all.lines().find(|l| l.starts_with("PRETTY_NAME")).unwrap_or("").to_string()
+    releases.sort();
+    releases
+        .into_iter()
+        .find_map(|path| line(&read(&path.to_string_lossy())))
+        .unwrap_or_default()
 }
 
 /// `/sys/class/thermal/thermal_zone*/{type,temp}`, sorted by zone directory
@@ -242,7 +253,9 @@ fn thermal_zones() -> (String, String) {
         .flatten()
         .map(|e| e.path())
         .filter(|p| {
-            p.file_name().and_then(|n| n.to_str()).is_some_and(|n| n.starts_with("thermal_zone"))
+            p.file_name()
+                .and_then(|n| n.to_str())
+                .is_some_and(|n| n.starts_with("thermal_zone"))
         })
         .collect();
     zones.sort();
@@ -306,10 +319,16 @@ mod tests {
     #[test]
     fn sample_produces_plausible_data() {
         let status = sample();
-        assert!(!status.cpu.is_empty(), "expected at least a 'cpu' summary row");
+        assert!(
+            !status.cpu.is_empty(),
+            "expected at least a 'cpu' summary row"
+        );
         assert!(status.mem.is_some());
         assert!(status.host.is_some());
-        assert!(!status.net.is_empty(), "expected at least one network interface");
+        assert!(
+            !status.net.is_empty(),
+            "expected at least one network interface"
+        );
     }
 
     #[test]
@@ -324,7 +343,10 @@ mod tests {
     #[test]
     fn over_limit_native_output_terminates_the_command_group() {
         let mut command = Command::new("sh");
-        let script = format!("head -c {} /dev/zero; sleep 2", MAX_COMMAND_OUTPUT_BYTES + 1);
+        let script = format!(
+            "head -c {} /dev/zero; sleep 2",
+            MAX_COMMAND_OUTPUT_BYTES + 1
+        );
         command.args(["-c", &script]);
         let started = Instant::now();
 
@@ -350,7 +372,10 @@ mod tests {
 
         let (file, path) = output_file().expect("temporary output file");
         drop(file);
-        let mode = fs::metadata(&path).expect("output file metadata").permissions().mode();
+        let mode = fs::metadata(&path)
+            .expect("output file metadata")
+            .permissions()
+            .mode();
         let _ = fs::remove_file(path);
         assert_eq!(mode & 0o077, 0);
     }

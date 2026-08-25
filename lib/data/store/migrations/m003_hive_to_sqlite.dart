@@ -45,13 +45,22 @@ abstract final class HiveImport {
   static Map<String, bool Function(String, Object)> get _boxes => {
     'setting': _intoKv(Stores.setting),
     'history': _intoKv(Stores.history),
+    'key': _intoKvTable('key'),
     'server': _intoKvTable('server'),
     'docker': _intoKvTable('docker'),
-    'key': _intoKvTable('key'),
     'snippet': _intoKvTable('snippet'),
     'port_forward': _intoKvTable('port_forward'),
     'connection_stats': _intoKvTable('conn_stat'),
     'agent_conversation': _intoKvTable('agent_conversation'),
+  };
+
+  static const _dependencies = <String, List<String>>{
+    'server': ['key'],
+    'docker': ['server'],
+    'snippet': ['server'],
+    'port_forward': ['server'],
+    'connection_stats': ['server'],
+    'agent_conversation': ['server'],
   };
 
   /// `updateLastUpdateTsOnSet: false`: the timestamps are copied across with
@@ -118,8 +127,8 @@ abstract final class HiveImport {
     if (present.isEmpty) {
       // A fresh install. Record the current layout so the migrator does not
       // walk it through steps written for data it never had.
-      _dropPlaintextIndex(dir);
       SchemaVersion.initFresh();
+      if (!_dropPlaintextIndex(dir)) return;
       Stores.setting.set(_markerKey, true);
       return;
     }
@@ -134,6 +143,16 @@ abstract final class HiveImport {
     var copied = 0;
     var hadWriteFailures = false;
     for (final name in pending) {
+      final waitingFor = (_dependencies[name] ?? const <String>[]).where(
+        (dependency) =>
+            present.contains(dependency) && !done.contains(dependency),
+      );
+      if (waitingFor.isNotEmpty) {
+        Loggers.app.warning(
+          'Hive box "$name" waits for ${waitingFor.join(', ')}',
+        );
+        continue;
+      }
       final result = await _importBox(name, _boxes[name]!);
       copied += result.copied;
       if (result.opened && !result.hadWriteFailures) {
@@ -179,12 +198,19 @@ abstract final class HiveImport {
     }
 
     Loggers.app.info('Imported $copied rows from Hive, every box read');
-    _dropPlaintextIndex(dir);
+    if (!_dropPlaintextIndex(dir)) {
+      _setDoneBoxes(done);
+      return;
+    }
 
     // The copy nests a pre-v3 server record on the way across, which is what
     // the v2 -> v3 step used to do in place. What has landed is the layout of
     // the build that dropped Hive, not the current one — the steps after this
     // still have to run over it.
+    // Persist this before schema migration: if that succeeds and the process
+    // dies before the final marker, the next launch must not copy every box a
+    // second time into an already-current database.
+    _setDoneBoxes(done);
     await _prepareSchemaAfterImport(schemaAtStart, copied);
     Stores.setting.set(_markerKey, true);
     Stores.setting.remove(_doneKey);
@@ -321,15 +347,18 @@ abstract final class HiveImport {
   /// one holds no data that is not derivable from the records, and leaving it
   /// would leave `<serverId>_<millis>` for every connection sitting in
   /// plaintext beside a database that exists to not do that.
-  static void _dropPlaintextIndex(String dir) {
+  static bool _dropPlaintextIndex(String dir) {
+    var removed = true;
     for (final suffix in const ['.hive', '.lock']) {
       final file = File(dir.joinPath('conn_stats_index$suffix'));
       try {
         if (file.existsSync()) file.deleteSync();
       } catch (e, s) {
+        removed = false;
         Loggers.app.warning('Could not delete ${file.path}', e, s);
       }
     }
+    return removed;
   }
 }
 

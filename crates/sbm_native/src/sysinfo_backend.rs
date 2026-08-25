@@ -14,7 +14,7 @@
 //! monitor-integration step).
 
 use sbm_parser::types::{Disk, DiskIoPiece, Memory, NetIface, Swap, Temperatures};
-use sbm_parser::{types::CpuCore, ServerStatus};
+use sbm_parser::{ServerStatus, types::CpuCore};
 use sysinfo::{Components, CpuRefreshKind, Disks, Networks, System};
 
 /// One scale for every synthetic CPU reading (0.01% precision). Matches the
@@ -92,15 +92,27 @@ fn cpu_brand(system: &System) -> Vec<(String, u32)> {
 }
 
 fn cpu_cores(system: &System) -> Vec<CpuCore> {
-    let per_core_pct: Vec<f64> =
-        system.cpus().iter().map(|c| c.cpu_usage().clamp(0.0, 100.0) as f64).collect();
+    let per_core_pct: Vec<f64> = system
+        .cpus()
+        .iter()
+        .map(|c| c.cpu_usage().clamp(0.0, 100.0) as f64)
+        .collect();
     if per_core_pct.is_empty() {
         return Vec::new();
     }
 
     let to_core = |id: String, pct: f64| {
         let used = (SCALE as f64 * pct / 100.0).round() as u64;
-        CpuCore { id, user: used, sys: 0, nice: 0, idle: SCALE.saturating_sub(used), iowait: 0, irq: 0, softirq: 0 }
+        CpuCore {
+            id,
+            user: used,
+            sys: 0,
+            nice: 0,
+            idle: SCALE.saturating_sub(used),
+            iowait: 0,
+            irq: 0,
+            softirq: 0,
+        }
     };
 
     // A "cpu" summary row (mean of all cores) alongside "cpu0".."cpuN-1"
@@ -108,7 +120,12 @@ fn cpu_cores(system: &System) -> Vec<CpuCore> {
     // (summary_core, per-core filtering) already assumes.
     let mean = per_core_pct.iter().sum::<f64>() / per_core_pct.len() as f64;
     let mut cores = vec![to_core("cpu".to_string(), mean)];
-    cores.extend(per_core_pct.into_iter().enumerate().map(|(i, pct)| to_core(format!("cpu{i}"), pct)));
+    cores.extend(
+        per_core_pct
+            .into_iter()
+            .enumerate()
+            .map(|(i, pct)| to_core(format!("cpu{i}"), pct)),
+    );
     cores
 }
 
@@ -141,7 +158,11 @@ pub fn sample(state: &mut State) -> ServerStatus {
     state.primed = true;
     // No delta baseline yet — leave cpu empty this cycle rather than report
     // a misleading single-sample reading, matching macos_cpu's prior behavior
-    let cpu = if first_call || topology_changed { Vec::new() } else { cpu_cores(&state.system) };
+    let cpu = if first_call || topology_changed {
+        Vec::new()
+    } else {
+        cpu_cores(&state.system)
+    };
 
     let total_mem = state.system.total_memory();
     let mem = (total_mem > 0).then(|| Memory {
@@ -157,14 +178,6 @@ pub fn sample(state: &mut State) -> ServerStatus {
         cached: 0,
     });
 
-    // Volume labels are not identifiers: APFS commonly gives multiple mounts
-    // the same name. Preserve every filesystem and qualify duplicate labels
-    // with their mount point so frontend keys remain unique without dropping
-    // real rows.
-    let mut name_counts = std::collections::HashMap::new();
-    for disk in state.disks.list() {
-        *name_counts.entry(disk.name().to_owned()).or_insert(0usize) += 1;
-    }
     let keyed_disks: Vec<_> = state
         .disks
         .list()
@@ -172,13 +185,7 @@ pub fn sample(state: &mut State) -> ServerStatus {
         .map(|disk| {
             let name = disk.name().to_string_lossy().into_owned();
             let mount = disk.mount_point().to_string_lossy().into_owned();
-            let id = if name.is_empty() {
-                mount.clone()
-            } else if name_counts.get(disk.name()).copied().unwrap_or(0) > 1 {
-                format!("{name} ({mount})")
-            } else {
-                name
-            };
+            let id = if mount.is_empty() { name } else { mount };
             (disk, id)
         })
         .collect();
@@ -288,7 +295,10 @@ mod tests {
         std::thread::sleep(std::time::Duration::from_millis(250));
         let status = sample(&mut state);
 
-        assert!(status.cpu.len() >= 2, "expected a summary row plus at least one core");
+        assert!(
+            status.cpu.len() >= 2,
+            "expected a summary row plus at least one core"
+        );
         assert_eq!(status.cpu[0].id, "cpu");
         assert!(status.mem.is_some());
         assert!(status.host.is_some());
@@ -296,7 +306,10 @@ mod tests {
         // usage and silently dropped cpu_brand entirely (no script fallback
         // exists post-cutover, so this was a real "CPU (x18)" -> blank
         // regression on every Bsd/Windows agent, not just a missing nicety)
-        assert!(!status.cpu_brand.is_empty(), "expected at least one cpu_brand entry");
+        assert!(
+            !status.cpu_brand.is_empty(),
+            "expected at least one cpu_brand entry"
+        );
     }
 
     #[test]
@@ -330,13 +343,21 @@ mod tests {
         let mut unique_paths = disk_paths.clone();
         unique_paths.sort();
         unique_paths.dedup();
-        assert_eq!(disk_paths.len(), unique_paths.len(), "duplicate disk path: {disk_paths:?}");
+        assert_eq!(
+            disk_paths.len(),
+            unique_paths.len(),
+            "duplicate disk path: {disk_paths:?}"
+        );
 
         let devs: Vec<&str> = status.diskio.iter().map(|d| d.dev.as_str()).collect();
         let mut unique_devs = devs.clone();
         unique_devs.sort();
         unique_devs.dedup();
-        assert_eq!(devs.len(), unique_devs.len(), "duplicate diskio dev: {devs:?}");
+        assert_eq!(
+            devs.len(),
+            unique_devs.len(),
+            "duplicate diskio dev: {devs:?}"
+        );
     }
 
     #[test]
