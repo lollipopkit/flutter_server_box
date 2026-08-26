@@ -51,6 +51,12 @@ abstract interface class ScpChannel {
 
   /// Null where the process has not exited, or where the far side reports no
   /// exit status at all — dropbear does not always.
+  ///
+  /// Those two are told apart by *how* they are asked. With no [timeout] this
+  /// completes when the process exits or the channel closes, so a null answer
+  /// means "no status was reported"; a process that never finishes never
+  /// answers. Passing [timeout] folds the second case into the first, which is
+  /// why [_ScpSession.finish] bounds the wait itself instead.
   Future<int?> exitCode({Duration? timeout});
 
   /// Gives up on the process, whatever state it is in.
@@ -524,7 +530,20 @@ final class _ScpSession {
         bound,
       ),
     );
-    final code = await _channel.exitCode(timeout: bound);
+    // Bounded here rather than by [ScpChannel.exitCode]'s own `timeout`, which
+    // answers *null* when it expires — the same null the contract uses for a
+    // host that reports no exit status at all. The two are not the same thing
+    // and this is where the difference matters: a remote `scp` that took the
+    // last acknowledgement and then never exited was read as one of those
+    // silent hosts, and the transfer was reported finished. Asked without a
+    // bound the future completes when the channel closes, so a host that
+    // simply sends no status still answers at once.
+    final int? code;
+    try {
+      code = await _channel.exitCode().timeout(bound);
+    } on TimeoutException {
+      throw ScpException('scp: the remote side never finished');
+    }
     if (code != null && code != 0) {
       final said = utf8.decode(_stderr.toBytes(), allowMalformed: true).trim();
       throw ScpException(said.isNotEmpty ? said : 'scp exited with $code');

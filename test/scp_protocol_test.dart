@@ -12,7 +12,11 @@ import 'package:server_box/core/utils/scp_protocol.dart';
 /// decides what comes back. Nothing here mocks the protocol — it *is* the other
 /// half of it, which is what makes a mistake in either half show up.
 final class _FakeScp implements ScpChannel {
-  _FakeScp({this.exit = 0});
+  _FakeScp({this.exit = 0, this.neverExits = false});
+
+  /// The remote took everything and then simply did not go away. Distinct from
+  /// a host that reports no exit status, which answers at once with null.
+  final bool neverExits;
 
   final _out = StreamController<Uint8List>();
   final _err = StreamController<Uint8List>();
@@ -49,7 +53,12 @@ final class _FakeScp implements ScpChannel {
   }
 
   @override
-  Future<int?> exitCode({Duration? timeout}) async => exit;
+  Future<int?> exitCode({Duration? timeout}) {
+    if (!neverExits) return Future.value(exit);
+    // Never completes, which is what a process that has not exited looks like
+    // when the wait is unbounded.
+    return Completer<int?>().future;
+  }
 
   @override
   void close() {
@@ -249,8 +258,8 @@ void main() {
 
   group('writing a file', () {
     /// A sink that accepts a header and then [size] bytes.
-    _FakeScp sink() {
-      final remote = _FakeScp();
+    _FakeScp sink({bool neverExits = false}) {
+      final remote = _FakeScp(neverExits: neverExits);
       final received = BytesBuilder(copy: false);
       final header = <int>[];
       var declared = -1;
@@ -275,6 +284,49 @@ void main() {
       scheduleMicrotask(remote.ack);
       return remote;
     }
+
+    test('a remote that takes everything and never exits is not a success',
+        () async {
+      // `waitForExit(timeout:)` answers *null* when it expires, which is the
+      // same null the contract uses for a host that reports no exit status at
+      // all — dropbear among them. Folding the two together meant a sink that
+      // took the last acknowledgement and then hung was reported as a finished
+      // transfer.
+      final remote = sink(neverExits: true);
+
+      await expectLater(
+        scpWrite(
+          remote,
+          '/tmp/x',
+          Stream<List<int>>.value(utf8.encode('hello')),
+          size: 5,
+          timeout: const Duration(milliseconds: 50),
+        ),
+        throwsA(
+          isA<ScpException>().having(
+            (e) => e.message,
+            'message',
+            contains('never finished'),
+          ),
+        ),
+      );
+    });
+
+    test('while a host that simply reports no status still finishes', () async {
+      // The other half of the same distinction: null arriving at once means
+      // "no exit status was sent", and that is not a failure.
+      final remote = sink()..exit = null;
+
+      await scpWrite(
+        remote,
+        '/tmp/x',
+        Stream<List<int>>.value(utf8.encode('hello')),
+        size: 5,
+        timeout: const Duration(milliseconds: 50),
+      );
+
+      expect(remote.inputClosed, isTrue);
+    });
 
     test('declares the size and the mode before the contents', () async {
       final remote = sink();

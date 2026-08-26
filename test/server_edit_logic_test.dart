@@ -392,6 +392,10 @@ void main() {
       await tester.tap(keyAuth);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
+      // Asserted, so the save below is known to exercise the `-1` path: a tap
+      // that missed would leave the switch off and the test passing for the
+      // wrong reason.
+      expect(tester.widget<Switch>(keyAuth).value, isTrue);
 
       await tester.tap(find.byType(FloatingActionButton));
       await tester.pump();

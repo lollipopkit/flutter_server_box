@@ -79,6 +79,17 @@ class ScpFileBackend implements FileBackend {
   /// with `.timeout` and gave up — so it is the one that must not slip through.
   var _closed = false;
 
+  /// The shell sessions this backend has running right now.
+  ///
+  /// Held for the same reason [_open] is, and it was the half that was
+  /// missing. A `write` is a channel *and* a handful of commands — the mode
+  /// carried onto the staged copy, the rename that puts it in place — and
+  /// `close` reached none of them: by then [_open] is empty, since the data
+  /// channel closed when the bytes were across. So a caller that gave up on a
+  /// `write` left an `mv` running that went on to replace the destination
+  /// after it had been told the transfer failed.
+  final _sessions = <SSHSession>{};
+
   /// The channel [open] makes, registered so [close] can end it.
   ///
   /// [open] is a closure rather than a future already in flight, so that a
@@ -140,25 +151,40 @@ class ScpFileBackend implements FileBackend {
 
   @override
   Future<FileEntry?> stat(String path) async {
-    final result = await _exec('stat', shellStatCommand(path));
+    // Marked like [_run]'s, and read the same way: a login banner arrives
+    // ahead of the command's own output and would otherwise be compared
+    // against the two answers below, matching neither. This cannot go through
+    // `_run` — the whole point of this command is the exit code it carries,
+    // which `_run` treats as failure.
+    final result = await _exec(
+      'stat',
+      'printf "%s" $_startMark; ${shellStatCommand(path)}',
+    );
+    final start = result.stdout.indexOf(_startMark);
+    final printed = start < 0
+        ? result.stdout
+        : result.stdout.substring(start + _startMark.length);
+    final said = printed.trim();
+
     // What the command said, before what the channel said: a host that reports
     // no exit status at all still printed its answer, and reading only the
     // exit code would leave every such host unable to say "nothing there" —
     // which is the answer a copy into a directory that does not exist yet
     // depends on.
-    final entries = parseShellFileRecords(result.stdout);
-    if (entries.isNotEmpty) return entries.first;
-
-    final said = result.stdout.trim();
-    // Absent is null; anything else — including a directory on the way this
-    // user may not search — is an error, because a caller that reads a refusal
-    // as "nothing there" goes on to create something over it.
+    //
+    // Asked before the records are parsed, because parsing fails closed: these
+    // two answers are one word rather than a record, and reaching the parser
+    // with either would raise "the listing ended mid-record" over an answer
+    // that is perfectly well formed.
     if (said == kShellStatAbsentMark || result.code == kShellStatAbsent) {
       return null;
     }
     if (said == kShellStatDeniedMark || result.code == kShellStatDenied) {
       throw ScpShellException('Permission denied: $path');
     }
+
+    final entries = parseShellFileRecords(printed);
+    if (entries.isNotEmpty) return entries.first;
     throw ScpShellException(result.describe('stat'));
   }
 
@@ -355,6 +381,14 @@ class ScpFileBackend implements FileBackend {
       }
     }
     _open.clear();
+    for (final session in _sessions.toList()) {
+      try {
+        session.close();
+      } catch (e, s) {
+        Loggers.app.warning('Failed to close an scp shell session', e, s);
+      }
+    }
+    _sessions.clear();
   }
 
   /// Runs [command] and answers what it printed, or throws what it said.
@@ -367,22 +401,44 @@ class ScpFileBackend implements FileBackend {
   /// a `mkdir`, `mv` or `chmod` that did nothing then reported that it had.
   /// So the command appends a marker of its own, which only runs if the
   /// command before it succeeded, and its absence is the failure.
+  /// A marker opens the output as well as closing it. `~/.bashrc` runs for a
+  /// non-interactive `ssh host cmd` too, so a login banner or a `.profile`
+  /// that echoes something lands ahead of everything the command prints —
+  /// where it was read as the first entry's name. Whatever arrives before
+  /// [_startMark] is the shell's, not the command's, and is dropped.
   Future<String> _run(String what, String command) async {
-    final result = await _exec(what, '{ $command; } && printf "%s" $_okMark');
+    final result = await _exec(
+      what,
+      'printf "%s" $_startMark; { $command; } && printf "%s" $_okMark',
+    );
     final said = result.stdout;
     final code = result.code;
-    if (!said.endsWith(_okMark) || (code != null && code != 0)) {
+    final start = said.indexOf(_startMark);
+    if (start < 0 || !said.endsWith(_okMark) || (code != null && code != 0)) {
       throw ScpShellException(result.describe(what));
     }
-    return said.substring(0, said.length - _okMark.length);
+    return said.substring(start + _startMark.length, said.length - _okMark.length);
   }
 
-  /// What [_run] appends to a command that worked. Not a word anybody types,
-  /// because a listing's output is checked for it.
+  /// What [_run] wraps a command's output in. Not words anybody types, because
+  /// a listing's own output is searched for them.
+  static const _startMark = '__sb_out__';
   static const _okMark = '__sb_ok__';
 
   Future<_ShellResult> _exec(String what, String command) async {
+    // Checked before and after, as [_opened] is, and for both reasons: a
+    // backend already closed must start no new command — the `rm` that clears
+    // a failed write's staging file is one, and running it against a
+    // connection the caller has finished with is not this class's decision —
+    // and one that closes while the channel is opening must not leave it
+    // running either.
+    if (_closed) throw const ScpShellException('The connection was closed');
     final session = await _client.execute(command);
+    if (_closed) {
+      session.close();
+      throw const ScpShellException('The connection was closed');
+    }
+    _sessions.add(session);
     try {
       final out = BytesBuilder(copy: false);
       final err = BytesBuilder(copy: false);
@@ -410,6 +466,7 @@ class ScpFileBackend implements FileBackend {
         utf8.decode(err.takeBytes(), allowMalformed: true),
       );
     } finally {
+      _sessions.remove(session);
       session.close();
     }
   }

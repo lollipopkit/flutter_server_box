@@ -149,26 +149,70 @@ List<FileEntry> parseShellFileRecords(String output) {
   final parts = output.split('\u0000');
   // The command's own trailing NUL leaves one empty string at the end.
   if (parts.isNotEmpty && parts.last.isEmpty) parts.removeLast();
+  // Anything left over is not a short listing, it is an unreadable one. A
+  // command killed part-way through prints an incomplete tail, and dropping it
+  // answered "these are the entries" for a directory whose remaining contents
+  // nobody ever saw — which is what a caller then reports as empty, or deletes
+  // into. There is no version of that worth showing, so it fails instead.
+  if (parts.length % 5 != 0) {
+    throw const ShellFileRecordException('the listing ended mid-record');
+  }
   final entries = <FileEntry>[];
-  for (var i = 0; i + 4 < parts.length; i += 5) {
-    final perm = int.tryParse(parts[i + 1], radix: 8);
+  for (var i = 0; i < parts.length; i += 5) {
     final kind = switch (parts[i + 2]) {
       'd' => FileKind.dir,
       'l' => FileKind.link,
       'f' => FileKind.file,
-      _ => FileKind.other,
+      // The command's own "none of the above": a socket, a fifo, a device.
+      'u' => FileKind.other,
+      // Not one of the four tokens `_emitRecord` can print, so this is not its
+      // output. Read as `other` it turned whatever the far side happened to
+      // send — a banner, a shell's own error — into an entry with a name.
+      final forged => throw ShellFileRecordException(
+        'unknown entry type "$forged"',
+      ),
     };
     entries.add(
       FileEntry(
         name: parts[i],
         kind: kind,
-        size: kind == FileKind.file ? int.tryParse(parts[i + 3]) : null,
-        modified: shellFileTime(int.tryParse(parts[i + 4])),
-        mode: perm,
+        size: kind == FileKind.file
+            ? _shellNumber(parts[i + 3], 10, 'size')
+            : null,
+        modified: shellFileTime(_shellNumber(parts[i + 4], 10, 'mtime')),
+        mode: _shellNumber(parts[i + 1], 8, 'mode'),
       ),
     );
   }
   return entries;
+}
+
+/// One numeric field, or null where the command printed nothing for it.
+///
+/// Empty is tolerated and anything else is not: a field the far side left
+/// blank is a fact about that entry, while a field carrying something that is
+/// not a number is a sign the output is not this command's at all — and read
+/// through `tryParse` it arrived as a null indistinguishable from the first.
+int? _shellNumber(String field, int radix, String what) {
+  if (field.isEmpty) return null;
+  final value = int.tryParse(field, radix: radix);
+  if (value == null) {
+    throw ShellFileRecordException('unreadable $what "$field"');
+  }
+  return value;
+}
+
+/// The far side's output is not a listing this can read.
+///
+/// Distinct from a command that failed, which says so in its own words: this
+/// is a command that reported success and printed something else.
+final class ShellFileRecordException implements Exception {
+  const ShellFileRecordException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => 'Unreadable listing: $message';
 }
 
 /// `stat -c %Y` counts seconds; the rest of the app counts milliseconds.

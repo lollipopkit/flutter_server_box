@@ -70,13 +70,47 @@ void main() {
       expect(entries.first.mode, isNull);
     });
 
-    test('a half-written record is dropped rather than half-read', () {
-      // A command killed partway through prints an incomplete tail.
-      final entries = parseShellFileRecords(
-        '${_record('whole', '644', 'f', '1', '0')}partial\u0000644\u0000',
+    test('a half-written record fails rather than being dropped', () {
+      // A command killed partway through prints an incomplete tail. Dropping
+      // it answered "these are the entries" for a directory whose remaining
+      // contents nobody ever saw — a short listing that reads as a complete
+      // one, which is what a caller then reports as empty or deletes into.
+      expect(
+        () => parseShellFileRecords(
+          '${_record('whole', '644', 'f', '1', '0')}partial\u0000644\u0000',
+        ),
+        throwsA(isA<ShellFileRecordException>()),
       );
+    });
 
-      expect(entries.single.name, 'whole');
+    test('output that is not this command\'s is refused', () {
+      // The far side reporting success and printing something else. Read
+      // leniently, an unknown type token became `FileKind.other` and a
+      // non-numeric field became null, so a banner or a shell's own error
+      // arrived as an entry with a name and no metadata.
+      for (final forged in [
+        _record('x', '644', 'banner', '1', '0'),
+        _record('x', 'rwx', 'f', '1', '0'),
+        _record('x', '644', 'f', 'huge', '0'),
+        _record('x', '644', 'f', '1', 'never'),
+      ]) {
+        expect(
+          () => parseShellFileRecords(forged),
+          throwsA(isA<ShellFileRecordException>()),
+          reason: forged.replaceAll('\u0000', '|'),
+        );
+      }
+    });
+
+    test('but the command\'s own "none of the above" is an entry', () {
+      // A socket, a fifo, a device: `_emitRecord` prints `u` for all of them,
+      // and they are things a directory really contains.
+      final entry = parseShellFileRecords(
+        _record('docker.sock', '660', 'u', '0', '1700000000'),
+      ).single;
+
+      expect(entry.kind, FileKind.other);
+      expect(entry.name, 'docker.sock');
     });
 
     test('nothing at all is an empty directory, not a failure', () {
@@ -151,9 +185,19 @@ void main() {
       // that does not exist yet.
       expect(command, contains(kShellStatAbsentMark));
       expect(command, contains(kShellStatDeniedMark));
-      // Neither can be mistaken for a filename the command might have printed.
-      expect(parseShellFileRecords(kShellStatAbsentMark), isEmpty);
-      expect(parseShellFileRecords(kShellStatDeniedMark), isEmpty);
+      // Neither can be mistaken for a filename the command might have
+      // printed: one word is not a record, and the parser refuses it. Which is
+      // why `ScpFileBackend.stat` compares against these two *before* it
+      // parses — reaching the parser with a perfectly good answer would raise
+      // "the listing ended mid-record" over it.
+      expect(
+        () => parseShellFileRecords(kShellStatAbsentMark),
+        throwsA(isA<ShellFileRecordException>()),
+      );
+      expect(
+        () => parseShellFileRecords(kShellStatDeniedMark),
+        throwsA(isA<ShellFileRecordException>()),
+      );
     });
 
     test('a trailing slash does not empty the name', () {
