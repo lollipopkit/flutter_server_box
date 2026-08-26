@@ -34,7 +34,12 @@ fn sandbox() -> Sandbox {
     fs::create_dir(root.join("sub")).unwrap();
 
     let roots = FsRoots::from_canonical(vec![root.clone()]);
-    Sandbox { _dir: dir, root, outside, roots }
+    Sandbox {
+        _dir: dir,
+        root,
+        outside,
+        roots,
+    }
 }
 
 fn s(path: &Path) -> String {
@@ -101,10 +106,7 @@ fn dot_dot_is_refused_even_when_it_would_land_inside() {
         format!("{root}/sub/../inside.txt")
     };
 
-    let err = sb
-        .roots
-        .resolve_existing(&requested)
-        .unwrap_err();
+    let err = sb.roots.resolve_existing(&requested).unwrap_err();
 
     assert_eq!(err, FsDenied::Traversal);
 }
@@ -138,6 +140,27 @@ fn a_symlink_staying_inside_the_root_is_allowed() {
         .expect("still inside");
 
     assert_eq!(resolved, sb.root.join("inside.txt"));
+}
+
+#[cfg(unix)]
+#[test]
+fn a_directory_entry_resolution_preserves_the_final_symlink() {
+    let sb = sandbox();
+    let link = sb.root.join("link");
+    std::os::unix::fs::symlink(&sb.outside, &link).unwrap();
+
+    let resolved = sb
+        .roots
+        .resolve_entry(&s(&link))
+        .expect("the link entry is inside the root");
+
+    assert_eq!(resolved, link);
+    assert!(
+        fs::symlink_metadata(resolved)
+            .unwrap()
+            .file_type()
+            .is_symlink()
+    );
 }
 
 #[cfg(unix)]
@@ -266,10 +289,7 @@ fn an_unusable_root_is_dropped_rather_than_fatal() {
     let base = fs::canonicalize(dir.path()).unwrap();
     fs::create_dir(base.join("real")).unwrap();
 
-    let roots = FsRoots::resolve(&[
-        s(&base.join("real")),
-        s(&base.join("does-not-exist")),
-    ]);
+    let roots = FsRoots::resolve(&[s(&base.join("real")), s(&base.join("does-not-exist"))]);
 
     assert_eq!(roots.as_slice().len(), 1);
     assert!(roots.resolve_existing(&s(&base.join("real"))).is_ok());

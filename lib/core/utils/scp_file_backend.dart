@@ -226,6 +226,10 @@ class ScpFileBackend implements FileBackend {
     Stream<List<int>> data, {
     int? size,
     void Function(String staging)? onStaging,
+    // Never consumed, as on the local and SFTP backends: this makes one
+    // attempt. Replaying would mean opening a second `scp -t` for a staging
+    // file whose first writer may still be holding it.
+    Stream<List<int>> Function()? replayData,
   }) async {
     // Beside the destination, as the other two backends do: `mv` within one
     // directory is atomic, so nothing ever reads a half-written file under the

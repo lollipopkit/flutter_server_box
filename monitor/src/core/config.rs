@@ -89,6 +89,32 @@ pub struct TlsConfig {
     pub key_path: String,
 }
 
+#[derive(Default)]
+struct EnvOverrides {
+    database_url: Option<String>,
+    host: Option<String>,
+    port: Option<String>,
+    tls_cert: Option<String>,
+    tls_key: Option<String>,
+    jwt_secret: Option<String>,
+    cors_origins: Option<String>,
+}
+
+impl EnvOverrides {
+    fn read() -> Self {
+        let value = |name| env::var(name).ok().filter(|s| !s.is_empty());
+        Self {
+            database_url: value("DATABASE_URL"),
+            host: value("SBM_HOST"),
+            port: value("SBM_PORT"),
+            tls_cert: value("SBM_TLS_CERT"),
+            tls_key: value("SBM_TLS_KEY"),
+            jwt_secret: value("JWT_SECRET"),
+            cors_origins: value("SBM_CORS_ORIGINS"),
+        }
+    }
+}
+
 /// Stated once, here, rather than at each of the places that used to build a
 /// `ServerConfig` by hand — they had drifted apart on whether the environment
 /// is read at all.
@@ -245,8 +271,8 @@ pub struct DataRetentionConfig {
     pub metrics_days: u32,
     pub alerts_days: u32,
     pub cleanup_interval_hours: u32,
-    /// Hard cap on the SQLite file size; oldest time-series rows are dropped
-    /// until the database fits (0 disables the cap)
+    /// Hard cap on live SQLite pages; oldest time-series rows are dropped
+    /// until the live data fits (0 disables the cap)
     #[serde(default = "default_max_db_size_mb")]
     pub max_db_size_mb: u64,
 }
@@ -255,7 +281,11 @@ impl DataRetentionConfig {
     /// A zero duration makes Tokio's interval tick continuously, turning
     /// retention into a database-consuming busy loop.
     pub fn validate(&self) -> std::result::Result<(), String> {
-        if self.cleanup_interval_hours < 1 {
+        if self.metrics_days < 1 {
+            Err("data_retention.metrics_days must be at least 1".to_string())
+        } else if self.alerts_days < 1 {
+            Err("data_retention.alerts_days must be at least 1".to_string())
+        } else if self.cleanup_interval_hours < 1 {
             Err("data_retention.cleanup_interval_hours must be at least 1".to_string())
         } else {
             Ok(())
@@ -309,7 +339,7 @@ impl Config {
             
             // Convert from Go format if needed
             config.normalize()?;
-            config.apply_env_overrides();
+            config.apply_env_overrides()?;
             config.validate()?;
             return Ok(config);
         } else if let Some(json_path) = legacy_json_path() {
@@ -319,7 +349,7 @@ impl Config {
 
             // Convert from Go format if needed
             config.normalize()?;
-            config.apply_env_overrides();
+            config.apply_env_overrides()?;
             config.validate()?;
 
             // One-way migration to config.toml so subsequent starts take the
@@ -350,7 +380,7 @@ impl Config {
 
         // Create default config
         let mut config = Self::default();
-        config.apply_env_overrides();
+        config.apply_env_overrides()?;
         config.validate()?;
 
         // Save default config as TOML
@@ -365,12 +395,13 @@ impl Config {
     /// Validates values that would otherwise be accepted by serde but make a
     /// runtime task unsafe or unusable.
     pub fn validate(&self) -> Result<()> {
-        if let Some(retention) = self
-            .monitoring
-            .as_ref()
-            .and_then(|monitoring| monitoring.data_retention.as_ref())
-        {
-            retention.validate().map_err(anyhow::Error::msg)?;
+        if let Some(monitoring) = self.monitoring.as_ref() {
+            if monitoring.interval_seconds == 0 {
+                anyhow::bail!("monitoring.interval_seconds must be >= 1");
+            }
+            if let Some(retention) = monitoring.data_retention.as_ref() {
+                retention.validate().map_err(anyhow::Error::msg)?;
+            }
         }
         Ok(())
     }
@@ -452,6 +483,18 @@ impl Config {
         // to look for the same answer.
         self.legacy = LegacyGoConfig::default();
 
+        // Older releases accepted zero here as "keep the shortest possible
+        // history". Preserve their ability to start while keeping validation
+        // strict for every other invalid duration.
+        if let Some(retention) = self
+            .monitoring
+            .as_mut()
+            .and_then(|monitoring| monitoring.data_retention.as_mut())
+        {
+            retention.metrics_days = retention.metrics_days.max(1);
+            retention.alerts_days = retention.alerts_days.max(1);
+        }
+
         Ok(())
     }
 
@@ -474,20 +517,52 @@ impl Config {
         self.database_url.clone().unwrap_or_else(|| "sqlite:serverbox_monitor.db".to_string())
     }
 
-    /// Environment variable overrides (take precedence over config files); empty values count as unset
-    fn apply_env_overrides(&mut self) {
-        if let Some(secret) = env::var("JWT_SECRET").ok().filter(|s| !s.is_empty()) {
+    /// Environment variable overrides (take precedence over config files);
+    /// empty values count as unset.
+    fn apply_env_overrides(&mut self) -> Result<()> {
+        self.apply_overrides(EnvOverrides::read())
+    }
+
+    fn apply_overrides(&mut self, overrides: EnvOverrides) -> Result<()> {
+        if let Some(database_url) = overrides.database_url {
+            self.database_url = Some(database_url);
+        }
+        if let Some(secret) = overrides.jwt_secret {
             self.jwt_secret = Some(secret);
         }
-        if let Some(origins) = env::var("SBM_CORS_ORIGINS").ok().filter(|s| !s.is_empty()) {
-            let mut server = self.get_server();
+
+        let mut server = self.get_server();
+        let mut server_changed = false;
+        if let Some(host) = overrides.host {
+            server.host = host;
+            server_changed = true;
+        }
+        if let Some(port) = overrides.port {
+            server.port = port
+                .parse()
+                .with_context(|| format!("Invalid SBM_PORT value {port:?}"))?;
+            server_changed = true;
+        }
+        match (overrides.tls_cert, overrides.tls_key) {
+            (Some(cert_path), Some(key_path)) => {
+                server.tls = Some(TlsConfig { cert_path, key_path });
+                server_changed = true;
+            }
+            (None, None) => {}
+            _ => anyhow::bail!("SBM_TLS_CERT and SBM_TLS_KEY must be provided together"),
+        }
+        if let Some(origins) = overrides.cors_origins {
             server.cors_allowed_origins = origins
                 .split(',')
                 .map(|o| o.trim().trim_end_matches('/').to_string())
                 .filter(|o| !o.is_empty())
                 .collect();
+            server_changed = true;
+        }
+        if server_changed {
             self.server = Some(server);
         }
+        Ok(())
     }
 
     /// JWT secret resolution; must be called once at serve startup:
@@ -514,6 +589,18 @@ impl Config {
 
         let path = self.jwt_secret_path();
         if path.exists() {
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+
+                let permissions = fs::metadata(&path)
+                    .with_context(|| format!("Failed to inspect {}", path.display()))?
+                    .permissions();
+                if permissions.mode() & 0o077 != 0 {
+                    fs::set_permissions(&path, fs::Permissions::from_mode(0o600))
+                        .with_context(|| format!("Failed to chmod {}", path.display()))?;
+                }
+            }
             let secret = fs::read_to_string(&path)
                 .with_context(|| format!("Failed to read {}", path.display()))?
                 .trim()
@@ -733,8 +820,8 @@ fn parse_go_duration(s: &str) -> Option<std::time::Duration> {
     let num: u64 = num.parse().ok()?;
     let secs = match unit {
         "s" => num,
-        "m" => num * 60,
-        "h" => num * 3600,
+        "m" => num.checked_mul(60)?,
+        "h" => num.checked_mul(3600)?,
         _ => return None,
     };
     Some(std::time::Duration::from_secs(secs))
@@ -836,5 +923,96 @@ impl Default for Config {
             ]),
             legacy: LegacyGoConfig::default(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn oversized_go_durations_are_rejected_without_overflowing() {
+        assert_eq!(parse_go_duration("18446744073709551615h"), None);
+        assert_eq!(parse_go_duration("18446744073709551615m"), None);
+    }
+
+    #[test]
+    fn environment_overrides_file_database_and_server_settings() {
+        let mut config = Config {
+            database_url: Some("sqlite:file.db".to_string()),
+            server: Some(ServerConfig {
+                host: "file-host".to_string(),
+                port: 3770,
+                tls: None,
+                name: None,
+                cors_allowed_origins: Vec::new(),
+                card_order: Vec::new(),
+            }),
+            ..Default::default()
+        };
+
+        config
+            .apply_overrides(EnvOverrides {
+                database_url: Some("sqlite:env.db".to_string()),
+                host: Some("127.0.0.1".to_string()),
+                port: Some("4770".to_string()),
+                tls_cert: Some("cert.pem".to_string()),
+                tls_key: Some("key.pem".to_string()),
+                ..Default::default()
+            })
+            .unwrap();
+
+        assert_eq!(config.get_database_url(), "sqlite:env.db");
+        let server = config.get_server();
+        assert_eq!(server.host, "127.0.0.1");
+        assert_eq!(server.port, 4770);
+        let tls = server.tls.unwrap();
+        assert_eq!(tls.cert_path, "cert.pem");
+        assert_eq!(tls.key_path, "key.pem");
+    }
+
+    #[test]
+    fn legacy_zero_retention_days_are_normalized() {
+        let mut config = Config::default();
+        let retention = config
+            .monitoring
+            .as_mut()
+            .and_then(|monitoring| monitoring.data_retention.as_mut())
+            .unwrap();
+        retention.metrics_days = 0;
+        retention.alerts_days = 0;
+
+        config.normalize().unwrap();
+
+        let retention = config
+            .monitoring
+            .as_ref()
+            .and_then(|monitoring| monitoring.data_retention.as_ref())
+            .unwrap();
+        assert_eq!(retention.metrics_days, 1);
+        assert_eq!(retention.alerts_days, 1);
+        config.validate().unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn an_existing_jwt_secret_is_restricted_before_use() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let dir = tempfile::tempdir().unwrap();
+        let db = dir.path().join("monitor.db");
+        let secret_path = dir.path().join("jwt.secret");
+        fs::write(&secret_path, "a".repeat(96)).unwrap();
+        fs::set_permissions(&secret_path, fs::Permissions::from_mode(0o644)).unwrap();
+
+        let mut config = Config {
+            database_url: Some(format!("sqlite:{}", db.display())),
+            jwt_secret: None,
+            ..Default::default()
+        };
+        config.resolve_jwt_secret().unwrap();
+
+        let mode = fs::metadata(secret_path).unwrap().permissions().mode();
+        assert_eq!(mode & 0o777, 0o600);
     }
 }

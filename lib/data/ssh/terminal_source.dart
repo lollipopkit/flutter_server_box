@@ -46,8 +46,7 @@ final class ServerSource extends TerminalSource {
   String get id => spi.id;
 
   @override
-  Map<String, String>? get environment =>
-      buildSshTerminalEnvironment(spi.envs);
+  Map<String, String>? get environment => buildSshTerminalEnvironment(spi.envs);
 
   @override
   String? get tmuxLang => resolveTmuxLang(spi.envs);
@@ -86,7 +85,9 @@ final class LocalSource extends TerminalSource {
   String get label {
     if (!rootfs) return libL10n.device;
     final id = profileId;
-    final profile = id == null ? Rootfs.selected : Rootfs.profiles.firstWhereOrNull((e) => e.id == id);
+    final profile = id == null
+        ? Rootfs.selected
+        : Rootfs.profiles.firstWhereOrNull((e) => e.id == id);
     return profile?.label ?? Rootfs.nextDistro.label;
   }
 
@@ -124,7 +125,9 @@ final class LocalSource extends TerminalSource {
 
   @override
   bool operator ==(Object other) =>
-      other is LocalSource && other.rootfs == rootfs;
+      other is LocalSource &&
+      other.rootfs == rootfs &&
+      other.profileId == profileId;
 
   @override
   int get hashCode => id.hashCode;

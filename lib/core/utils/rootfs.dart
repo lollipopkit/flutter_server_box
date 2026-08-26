@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:dio/dio.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
@@ -107,37 +105,34 @@ abstract final class Rootfs {
   ///   tree and destroys everything in it, so crossing that line would be a
   ///   migration wearing an update's clothes. If that series is gone from the
   ///   manifest there is nothing to update to, so the preferred release is
-  ///   the only remaining answer and the caller's dialog names it.
+  ///   no compatible replacement exists and this returns null.
   /// - [picked] by the user: taken as given, distribution and release
   ///   together. They arrive together because a release does not name its
   ///   distribution, and pairing a release from one with a distribution read
   ///   back out of a setting is how they come to disagree.
   /// - neither: the distribution the settings point at, and its preferred
   ///   release.
-  static ({LinuxDistro distro, RootfsRelease release}) target({
+  static ({LinuxDistro distro, RootfsRelease release})? target({
     LinuxProfile? into,
     ({LinuxDistro distro, RootfsRelease release})? picked,
   }) {
     if (into != null) {
       final distro = into.distro;
-      return (
-        distro: distro,
-        release: distro.info.newestIn(into.branch) ?? distro.preferred,
-      );
+      final release = into.branch.isEmpty
+          ? distro.preferred
+          : distro.info.newestIn(into.branch);
+      if (release == null) return null;
+      return (distro: distro, release: release);
     }
     if (picked != null) return picked;
     final distro = nextDistro;
     return (distro: distro, release: distro.preferred);
   }
 
-  /// How many terminals are open in [profile], where that can be asked.
-  ///
-  /// iOS only: its sessions live in one engine that can be asked. Android runs
-  /// each in its own proot process and keeps no such list, and answering 0
-  /// there means the delete goes ahead as it always has — which is also what
-  /// it does when the engine is absent.
-  static int openSessions(LinuxProfile profile) =>
-      isAndroid ? 0 : IosRootfs.openSessions(profile.id);
+  /// How many terminals or commands are holding [profile] open.
+  static int openSessions(LinuxProfile profile) => isAndroid
+      ? AndroidRootfs.openSessions(profile.id)
+      : IosRootfs.openSessions(profile.id);
 
   /// Locates both, so a caller does not have to ask which platform it is on.
   static Future<void> prepare() async {
@@ -160,15 +155,10 @@ abstract final class Rootfs {
   /// The id is a path and stays put: renaming a directory out from under a
   /// running session would be the one thing a label change must not do.
   static Future<void> rename(LinuxProfile profile, String label) async {
-    final root = rootOf(profile.id);
-    if (root == null) return;
-    await File(
-      root.joinPath(LinuxProfile.marker),
-    ).writeAsString(profile.copyWith(label: label).encode());
     if (isAndroid) {
-      await AndroidRootfs.scan();
+      await AndroidRootfs.rename(profile, label);
     } else {
-      await IosRootfs.scan();
+      await IosRootfs.rename(profile, label);
     }
     // A label is what a row is titled by, so this changes the list as surely
     // as installing one does.
@@ -194,12 +184,13 @@ abstract final class Rootfs {
   /// Deletes one system and everything in it. The others stay.
   ///
   /// The caller asks first.
-  static Future<void> removeProfile(String id) async {
+  static Future<void> removeProfile(String id, {LinuxProfile? expected}) async {
     if (isAndroid) {
-      await AndroidRootfs.removeProfile(id);
+      await AndroidRootfs.removeProfile(id, expected: expected);
     } else {
-      await IosRootfs.removeProfile(id);
+      await IosRootfs.removeProfile(id, expected: expected);
     }
+    clearLinuxProfileSelection(id);
     // After the tree is gone, so a listener that closes tabs cannot race the
     // deletion it is reacting to.
     removed.value = id;

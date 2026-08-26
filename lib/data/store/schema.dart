@@ -48,6 +48,9 @@ abstract interface class SchemaMigration {
 /// the backup envelope carries this same number so a file can be checked
 /// against the reader's capability.
 abstract final class SchemaVersion {
+  /// Oldest schema a partially completed Hive import may have left in SQLite.
+  static const oldestSupported = 2;
+
   /// v2: everything up to and including `monitorHttp` on Spi — the last
   ///     layout written before versioning existed, hence the starting point
   ///     rather than v1

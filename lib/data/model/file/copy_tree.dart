@@ -115,7 +115,9 @@ Future<void> runCopy(
     final existing = await dest.stat(dir);
     if (existing != null) {
       if (!existing.isDir) {
-        throw StateError('Copy destination exists and is not a directory: $dir');
+        throw StateError(
+          'Copy destination exists and is not a directory: $dir',
+        );
       }
       continue;
     }
@@ -133,12 +135,22 @@ Future<void> runCopy(
   var transferred = 0;
   for (final item in plan.items) {
     checkCancelled();
-    final counted = source.read(item.from).map((chunk) {
-      checkCancelled();
-      transferred += chunk.length;
-      onProgress(transferred);
-      return chunk;
-    });
+    final beforeItem = transferred;
+
+    Stream<List<int>> counted() {
+      var attemptBytes = 0;
+      return source.read(item.from).map((chunk) {
+        checkCancelled();
+        attemptBytes += chunk.length;
+        final logicalTransferred = beforeItem + attemptBytes;
+        if (logicalTransferred > transferred) {
+          transferred = logicalTransferred;
+          onProgress(transferred);
+        }
+        return chunk;
+      });
+    }
+
     // `write` stages beside the destination and renames, so a file that dies
     // halfway leaves no half-file under the name something else opens.
     //
@@ -149,9 +161,10 @@ Future<void> runCopy(
     // is not a failure it gets to handle.
     await dest.write(
       item.to,
-      counted,
+      counted(),
       size: item.size,
       onStaging: onStaging,
+      replayData: counted,
     );
   }
 }

@@ -28,9 +28,7 @@ void main() {
   // it in the app, and a test reads the same file off disk.
   setUpAll(() {
     LinuxDistros.adoptForTest(
-      RootfsManifest.parse(
-        File(LinuxDistros.bundledAsset).readAsStringSync(),
-      ),
+      RootfsManifest.parse(File(LinuxDistros.bundledAsset).readAsStringSync()),
     );
   });
 
@@ -94,9 +92,41 @@ void main() {
       expect(
         await resolv().readAsString(),
         'nameserver 223.5.5.5\n',
-        reason: 'the settings page saving a resolver has to reach the file, '
+        reason:
+            'the settings page saving a resolver has to reach the file, '
             'which is the only thing `apk` reads',
       );
+    });
+
+    test(
+      'replaces a final symlink only when its target stays inside',
+      () async {
+        await Directory('${root.path}/etc').create(recursive: true);
+        await Directory('${root.path}/run').create();
+        final target = File('${root.path}/run/resolv.conf')
+          ..writeAsStringSync('nameserver 192.168.1.1\n');
+        final link = Link(resolv().path)..createSync('../run/resolv.conf');
+
+        await seedResolvConf(root.path, nameservers: const ['8.8.8.8']);
+
+        expect(link.existsSync(), isFalse);
+        expect(resolv().readAsStringSync(), 'nameserver 8.8.8.8\n');
+        expect(target.readAsStringSync(), 'nameserver 192.168.1.1\n');
+      },
+    );
+
+    test('resolves an absolute final symlink inside the guest root', () async {
+      await Directory('${root.path}/etc').create(recursive: true);
+      await Directory('${root.path}/run').create();
+      final target = File('${root.path}/run/resolv.conf')
+        ..writeAsStringSync('nameserver 192.168.1.1\n');
+      final link = Link(resolv().path)..createSync('/run/resolv.conf');
+
+      await seedResolvConf(root.path, nameservers: const ['8.8.8.8']);
+
+      expect(link.existsSync(), isFalse);
+      expect(resolv().readAsStringSync(), 'nameserver 8.8.8.8\n');
+      expect(target.readAsStringSync(), 'nameserver 192.168.1.1\n');
     });
 
     test('is written for a userland unpacked before it existed', () async {
@@ -115,7 +145,9 @@ void main() {
     Future<void> unpackLikeAlpine() async {
       await Directory('${root.path}/bin').create(recursive: true);
       await Directory('${root.path}/usr/lib').create(recursive: true);
-      await File('${root.path}/usr/lib/os-release').writeAsString('ID=alpine\n');
+      await File(
+        '${root.path}/usr/lib/os-release',
+      ).writeAsString('ID=alpine\n');
       // Exactly what the tarball carries, and the whole point of this group:
       // `/bin/busybox` is a path inside the *guest*. Followed from the host it
       // names a file that is not there — on iOS, never there.
@@ -188,10 +220,12 @@ void main() {
 
   group('what a nameserver setting accepts', () {
     test('splits on commas, spaces and newlines alike', () {
-      expect(
-        parseNameservers('223.5.5.5, 1.1.1.1\n8.8.8.8;9.9.9.9'),
-        ['223.5.5.5', '1.1.1.1', '8.8.8.8', '9.9.9.9'],
-      );
+      expect(parseNameservers('223.5.5.5, 1.1.1.1\n8.8.8.8;9.9.9.9'), [
+        '223.5.5.5',
+        '1.1.1.1',
+        '8.8.8.8',
+        '9.9.9.9',
+      ]);
     });
 
     test('keeps IPv6', () {
@@ -322,10 +356,7 @@ void main() {
       // and nothing here reads it.
       await seedChsh(root.path);
 
-      expect(
-        await File('${root.path}/usr/local/bin/chsh').exists(),
-        isTrue,
-      );
+      expect(await File('${root.path}/usr/local/bin/chsh').exists(), isTrue);
     });
 
     test('leaves a shell the system already recorded alone', () async {
@@ -368,6 +399,22 @@ void main() {
       expect(linuxNameservers(), ['8.8.8.8', '1.1.1.1']);
     });
 
+    test('deleting the selected profile clears its persisted id', () {
+      Stores.setting.linuxProfile.put('alpine-2');
+
+      clearLinuxProfileSelection('alpine-2');
+
+      expect(Stores.setting.linuxProfile.fetch(), isEmpty);
+    });
+
+    test('deleting another profile preserves the persisted id', () {
+      Stores.setting.linuxProfile.put('alpine-2');
+
+      clearLinuxProfileSelection('ubuntu');
+
+      expect(Stores.setting.linuxProfile.fetch(), 'alpine-2');
+    });
+
     test('Alpine for a distribution name no build knows', () {
       // What an install downgraded from a build that had more of them would
       // leave behind. Falling back beats throwing on a string read from a
@@ -378,10 +425,7 @@ void main() {
     });
 
     test('a stored mirror, without its trailing slash', () {
-      setLinuxMirror(
-        LinuxDistro.alpine,
-        'https://mirrors.ustc.edu.cn/alpine/',
-      );
+      setLinuxMirror(LinuxDistro.alpine, 'https://mirrors.ustc.edu.cn/alpine/');
 
       expect(
         linuxMirror(),
@@ -404,10 +448,9 @@ void main() {
       // another, so asking for one must never answer with the other's.
       setLinuxMirror(LinuxDistro.alpine, 'https://mirrors.ustc.edu.cn/alpine');
 
-      expect(
-        Stores.setting.linuxMirrors.fetch(),
-        {LinuxDistro.alpine.id: 'https://mirrors.ustc.edu.cn/alpine'},
-      );
+      expect(Stores.setting.linuxMirrors.fetch(), {
+        LinuxDistro.alpine.id: 'https://mirrors.ustc.edu.cn/alpine',
+      });
     });
 
     test('an emptied mirror is forgotten rather than stored', () {
@@ -417,7 +460,8 @@ void main() {
       expect(
         Stores.setting.linuxMirrors.fetch(),
         isEmpty,
-        reason: 'storing the default verbatim would pin it against a release '
+        reason:
+            'storing the default verbatim would pin it against a release '
             'that moves it',
       );
       expect(linuxMirror(), LinuxDistro.alpine.defaultMirror);
@@ -428,7 +472,5 @@ void main() {
 
       expect(linuxNameservers(), ['8.8.8.8', '1.1.1.1']);
     });
-
-
   });
 }

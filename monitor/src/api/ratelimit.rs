@@ -24,7 +24,7 @@
 
 use std::collections::HashMap;
 use std::net::IpAddr;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 /// Failures allowed before any delay is imposed.
@@ -49,13 +49,17 @@ enum Key {
 #[derive(Debug)]
 struct Entry {
     failures: u32,
+    /// Attempts admitted but not yet resolved. They count provisionally as
+    /// failures so concurrent guesses cannot all pass the same stale check.
+    in_flight: u32,
     last_seen: Instant,
 }
 
 impl Entry {
     /// How long after `last_seen` this key stays blocked.
     fn penalty(&self) -> Duration {
-        let Some(excess) = self.failures.checked_sub(FREE_ATTEMPTS) else {
+        let effective = self.failures.saturating_add(self.in_flight);
+        let Some(excess) = effective.checked_sub(FREE_ATTEMPTS) else {
             return Duration::ZERO;
         };
         if excess == 0 {
@@ -69,7 +73,22 @@ impl Entry {
 
 #[derive(Default)]
 pub struct LoginThrottle {
-    entries: Mutex<HashMap<Key, Entry>>,
+    entries: Arc<Mutex<HashMap<Key, Entry>>>,
+}
+
+#[derive(Debug)]
+pub struct LoginAttempt {
+    entries: Arc<Mutex<HashMap<Key, Entry>>>,
+    keys: Vec<Key>,
+    resolved: bool,
+}
+
+impl Drop for LoginAttempt {
+    fn drop(&mut self) {
+        if !self.resolved {
+            release_reservation(&self.entries, &self.keys);
+        }
+    }
 }
 
 impl LoginThrottle {
@@ -77,28 +96,87 @@ impl LoginThrottle {
         Self::default()
     }
 
-    /// `None` when the attempt may proceed, otherwise how long to wait.
-    ///
-    /// Does not consume anything: only [`record_failure`](Self::record_failure)
-    /// moves the counters, so a correct password is never penalised for
-    /// arriving during someone else's backoff on the same IP.
-    pub fn check(&self, ip: Option<IpAddr>, username: &str) -> Option<Duration> {
-        self.check_at(ip, username, Instant::now())
+    /// Atomically admits and reserves one password verification.
+    pub fn begin(
+        &self,
+        ip: Option<IpAddr>,
+        username: &str,
+    ) -> std::result::Result<LoginAttempt, Duration> {
+        self.begin_at(ip, username, Instant::now())
     }
 
-    pub fn record_failure(&self, ip: Option<IpAddr>, username: &str) {
-        self.record_failure_at(ip, username, Instant::now());
+    pub fn record_failure(&self, mut attempt: LoginAttempt) {
+        self.finish_failure_at(&attempt.keys, Instant::now());
+        attempt.resolved = true;
     }
 
     /// Clears both counters. A correct password proves the client isn't the
     /// guessing loop the counters exist for.
-    pub fn record_success(&self, ip: Option<IpAddr>, username: &str) {
+    pub fn record_success(&self, mut attempt: LoginAttempt) {
+        self.clear(&attempt.keys);
+        attempt.resolved = true;
+    }
+
+    fn clear(&self, attempt_keys: &[Key]) {
         let mut entries = self.entries.lock().unwrap_or_else(|e| e.into_inner());
-        for key in keys(ip, username) {
-            entries.remove(&key);
+        for key in attempt_keys {
+            entries.remove(key);
         }
     }
 
+    /// Releases a reservation when the attempt could not be evaluated.
+    pub fn cancel(&self, attempt: LoginAttempt) {
+        drop(attempt);
+    }
+
+    fn begin_at(
+        &self,
+        ip: Option<IpAddr>,
+        username: &str,
+        now: Instant,
+    ) -> std::result::Result<LoginAttempt, Duration> {
+        let attempt_keys = keys(ip, username);
+        let mut entries = self.entries.lock().unwrap_or_else(|e| e.into_inner());
+        if entries.len() > PRUNE_THRESHOLD {
+            entries.retain(|_, e| {
+                e.in_flight > 0 || now.saturating_duration_since(e.last_seen) < ENTRY_TTL
+            });
+        }
+
+        let wait = attempt_keys
+            .iter()
+            .filter_map(|key| {
+                let entry = entries.get(key)?;
+                let elapsed = now.saturating_duration_since(entry.last_seen);
+                entry.penalty().checked_sub(elapsed).filter(|d| !d.is_zero())
+            })
+            .max();
+        if let Some(wait) = wait {
+            return Err(wait);
+        }
+
+        for key in &attempt_keys {
+            let entry = entries.entry(key.clone()).or_insert(Entry {
+                failures: 0,
+                in_flight: 0,
+                last_seen: now,
+            });
+            if entry.in_flight == 0
+                && now.saturating_duration_since(entry.last_seen) >= ENTRY_TTL
+            {
+                entry.failures = 0;
+            }
+            entry.in_flight = entry.in_flight.saturating_add(1);
+            entry.last_seen = now;
+        }
+        Ok(LoginAttempt {
+            entries: Arc::clone(&self.entries),
+            keys: attempt_keys,
+            resolved: false,
+        })
+    }
+
+    #[cfg(test)]
     fn check_at(&self, ip: Option<IpAddr>, username: &str, now: Instant) -> Option<Duration> {
         let entries = self.entries.lock().unwrap_or_else(|e| e.into_inner());
         keys(ip, username)
@@ -111,6 +189,7 @@ impl LoginThrottle {
             .max()
     }
 
+    #[cfg(test)]
     fn record_failure_at(&self, ip: Option<IpAddr>, username: &str, now: Instant) {
         let mut entries = self.entries.lock().unwrap_or_else(|e| e.into_inner());
         if entries.len() > PRUNE_THRESHOLD {
@@ -119,6 +198,7 @@ impl LoginThrottle {
         for key in keys(ip, username) {
             let entry = entries.entry(key).or_insert(Entry {
                 failures: 0,
+                in_flight: 0,
                 last_seen: now,
             });
             // A key idle past the TTL starts over rather than resuming a
@@ -128,6 +208,35 @@ impl LoginThrottle {
             }
             entry.failures = entry.failures.saturating_add(1);
             entry.last_seen = now;
+        }
+    }
+
+    fn finish_failure_at(&self, attempt_keys: &[Key], now: Instant) {
+        let mut entries = self.entries.lock().unwrap_or_else(|e| e.into_inner());
+        for key in attempt_keys {
+            let entry = entries.entry(key.clone()).or_insert(Entry {
+                failures: 0,
+                in_flight: 0,
+                last_seen: now,
+            });
+            entry.in_flight = entry.in_flight.saturating_sub(1);
+            entry.failures = entry.failures.saturating_add(1);
+            entry.last_seen = now;
+        }
+    }
+}
+
+fn release_reservation(entries: &Mutex<HashMap<Key, Entry>>, attempt_keys: &[Key]) {
+    let mut entries = entries.lock().unwrap_or_else(|e| e.into_inner());
+    for key in attempt_keys {
+        let remove = if let Some(entry) = entries.get_mut(key) {
+            entry.in_flight = entry.in_flight.saturating_sub(1);
+            entry.failures == 0 && entry.in_flight == 0
+        } else {
+            false
+        };
+        if remove {
+            entries.remove(key);
         }
     }
 }
@@ -201,7 +310,7 @@ mod tests {
         for _ in 0..FREE_ATTEMPTS + 2 {
             throttle.record_failure_at(ip(1), "admin", now);
         }
-        throttle.record_success(ip(1), "admin");
+        throttle.clear(&keys(ip(1), "admin"));
         assert!(throttle.check_at(ip(1), "admin", now).is_none());
         // The username counter must be gone too, not just the IP one
         assert!(throttle.check_at(ip(2), "admin", now).is_none());
@@ -258,5 +367,37 @@ mod tests {
             throttle.record_failure_at(None, "admin", now);
         }
         assert!(throttle.check_at(None, "admin", now).is_some());
+    }
+
+    #[test]
+    fn concurrent_attempts_reserve_the_limit_atomically() {
+        let throttle = LoginThrottle::new();
+        let now = Instant::now();
+        let mut attempts = Vec::new();
+        for _ in 0..FREE_ATTEMPTS + 1 {
+            attempts.push(throttle.begin_at(ip(1), "admin", now).unwrap());
+        }
+        assert!(matches!(
+            throttle.begin_at(ip(1), "admin", now),
+            Err(wait) if wait == BASE_DELAY
+        ));
+
+        for attempt in attempts {
+            throttle.cancel(attempt);
+        }
+        assert!(throttle.begin_at(ip(1), "admin", now).is_ok());
+    }
+
+    #[test]
+    fn dropping_an_unfinished_attempt_releases_its_reservation() {
+        let throttle = LoginThrottle::new();
+        let now = Instant::now();
+        let attempts: Vec<_> = (0..FREE_ATTEMPTS + 1)
+            .map(|_| throttle.begin_at(ip(1), "admin", now).unwrap())
+            .collect();
+        assert!(throttle.begin_at(ip(1), "admin", now).is_err());
+
+        drop(attempts);
+        assert!(throttle.begin_at(ip(1), "admin", now).is_ok());
     }
 }

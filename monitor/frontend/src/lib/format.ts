@@ -1,6 +1,18 @@
 const UNITS = ['B', 'KB', 'MB', 'GB', 'TB']
 
-export function fmtBytes(v: number): string {
+export function fmtBytes(v: number | string | bigint): string {
+  if (typeof v === 'bigint') return fmtIntegerBytes(v)
+  if (typeof v === 'string') {
+    try {
+      return fmtIntegerBytes(BigInt(v))
+    } catch {
+      return fmtNumericBytes(Number(v))
+    }
+  }
+  return fmtNumericBytes(v)
+}
+
+function fmtNumericBytes(v: number): string {
   let size = Math.max(v, 0)
   let unit = 0
   while (size >= 1024 && unit < UNITS.length - 1) {
@@ -8,6 +20,19 @@ export function fmtBytes(v: number): string {
     unit++
   }
   return `${unit === 0 ? size.toFixed(0) : size.toFixed(1)} ${UNITS[unit]}`
+}
+
+function fmtIntegerBytes(value: bigint): string {
+  const size = value < 0n ? 0n : value
+  let divisor = 1n
+  let unit = 0
+  while (size >= divisor * 1024n && unit < UNITS.length - 1) {
+    divisor *= 1024n
+    unit++
+  }
+  if (unit === 0) return `${size} ${UNITS[unit]}`
+  const tenths = (size * 10n + divisor / 2n) / divisor
+  return `${tenths / 10n}.${tenths % 10n} ${UNITS[unit]}`
 }
 
 export function fmtBytesPerSec(v: number): string {

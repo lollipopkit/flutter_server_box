@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/migrations/m004_kv_to_tables.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/hive/legacy_adapters.dart';
 import 'package:server_box/hive/spi_legacy_adapter.dart';
@@ -44,13 +45,22 @@ abstract final class HiveImport {
   static Map<String, bool Function(String, Object)> get _boxes => {
     'setting': _intoKv(Stores.setting),
     'history': _intoKv(Stores.history),
+    'key': _intoKvTable('key'),
     'server': _intoKvTable('server'),
     'docker': _intoKvTable('docker'),
-    'key': _intoKvTable('key'),
     'snippet': _intoKvTable('snippet'),
     'port_forward': _intoKvTable('port_forward'),
     'connection_stats': _intoKvTable('conn_stat'),
     'agent_conversation': _intoKvTable('agent_conversation'),
+  };
+
+  static const _dependencies = <String, List<String>>{
+    'server': ['key'],
+    'docker': ['server'],
+    'snippet': ['server'],
+    'port_forward': ['server'],
+    'connection_stats': ['server'],
+    'agent_conversation': ['server'],
   };
 
   /// `updateLastUpdateTsOnSet: false`: the timestamps are copied across with
@@ -96,6 +106,7 @@ abstract final class HiveImport {
   /// not be read is retried until it can.
   static Future<void> runIfNeeded() async {
     if (Stores.setting.get<bool>(_markerKey) == true) return;
+    final schemaAtStart = SchemaVersion.stored;
 
     // The same directory `HiveStore.init` opens from, asked of it rather than
     // recomputed: the macOS sandbox and the mobile platforms each answer this
@@ -117,6 +128,7 @@ abstract final class HiveImport {
       // A fresh install. Record the current layout so the migrator does not
       // walk it through steps written for data it never had.
       SchemaVersion.initFresh();
+      if (!_dropPlaintextIndex(dir)) return;
       Stores.setting.set(_markerKey, true);
       return;
     }
@@ -129,10 +141,25 @@ abstract final class HiveImport {
     );
 
     var copied = 0;
+    var hadWriteFailures = false;
     for (final name in pending) {
+      final waitingFor = (_dependencies[name] ?? const <String>[]).where(
+        (dependency) =>
+            present.contains(dependency) && !done.contains(dependency),
+      );
+      if (waitingFor.isNotEmpty) {
+        Loggers.app.warning(
+          'Hive box "$name" waits for ${waitingFor.join(', ')}',
+        );
+        continue;
+      }
       final result = await _importBox(name, _boxes[name]!);
       copied += result.copied;
-      if (result.opened) done.add(name);
+      if (result.opened && !result.hadWriteFailures) {
+        done.add(name);
+      } else if (result.hadWriteFailures) {
+        hadWriteFailures = true;
+      }
     }
 
     final unread = present.where((name) => !done.contains(name)).toList();
@@ -146,23 +173,63 @@ abstract final class HiveImport {
         'Imported $copied rows from Hive; $unread unread, '
         'left to the next launch',
       );
-      // What did land is already in the current shape, so the version is set
-      // now: a launch in this state runs the migrator like any other, and the
-      // step for a shape this data no longer has must not be applied to it.
-      if (done.isNotEmpty) SchemaVersion.initAtHiveImport();
+      // Remove the plaintext index when possible even while some encrypted
+      // boxes remain unread: it holds no data that is not derivable from the
+      // records and must not stay plaintext beside the encrypted database.
+      _dropPlaintextIndex(dir);
+      // Even when nothing succeeded we must advance the schema version away
+      // from the default 2, otherwise the subsequent SchemaVersion.migrate
+      // from 2 has no v2->v3/v3->v4 steps (HiveImport is supposed to establish
+      // v4) and the app crashes on every launch. Any future successful import
+      // of the still-unread boxes will land rows in kv at v4 shape; those
+      // rows will be picked up by the next m004 run via a re-entrant check.
+      await _prepareSchemaAfterImport(schemaAtStart, copied);
+      return;
+    }
+    if (hadWriteFailures) {
+      _setDoneBoxes(done);
+      Loggers.app.warning(
+        'Imported $copied rows from Hive; some rows failed to persist, '
+        'will retry failed boxes',
+      );
+      _dropPlaintextIndex(dir);
+      await _prepareSchemaAfterImport(schemaAtStart, copied);
       return;
     }
 
     Loggers.app.info('Imported $copied rows from Hive, every box read');
-    _dropPlaintextIndex(dir);
+    if (!_dropPlaintextIndex(dir)) {
+      _setDoneBoxes(done);
+      return;
+    }
 
     // The copy nests a pre-v3 server record on the way across, which is what
     // the v2 -> v3 step used to do in place. What has landed is the layout of
     // the build that dropped Hive, not the current one — the steps after this
     // still have to run over it.
-    SchemaVersion.initAtHiveImport();
+    // Persist this before schema migration: if that succeeds and the process
+    // dies before the final marker, the next launch must not copy every box a
+    // second time into an already-current database.
+    _setDoneBoxes(done);
+    await _prepareSchemaAfterImport(schemaAtStart, copied);
     Stores.setting.set(_markerKey, true);
     Stores.setting.remove(_doneKey);
+  }
+
+  static Future<void> _prepareSchemaAfterImport(
+    int schemaAtStart,
+    int copied,
+  ) async {
+    if (schemaAtStart <= SchemaVersion.hiveImportProduces) {
+      SchemaVersion.initAtHiveImport();
+      return;
+    }
+    if (copied > 0) {
+      // A box that became readable after the normal migration chain completed
+      // lands in the old v4 kv shape. Convert only those late rows without
+      // moving an already-current database back to v4 and replaying m005+.
+      await const KvToTablesMigration().apply();
+    }
   }
 
   static Set<String> _doneBoxes() {
@@ -174,7 +241,7 @@ abstract final class HiveImport {
   static void _setDoneBoxes(Set<String> names) =>
       Stores.setting.set(_doneKey, names.toList());
 
-  static Future<({bool opened, int copied})> _importBox(
+  static Future<({bool opened, int copied, bool hadWriteFailures})> _importBox(
     String name,
     bool Function(String, Object) into,
   ) async {
@@ -185,44 +252,60 @@ abstract final class HiveImport {
       // One box that will not open must not stop the others: the alternative is
       // an install that keeps all of its data and can reach none of it.
       Loggers.app.warning('Hive box "$name" did not open; skipped', e, s);
-      return (opened: false, copied: 0);
+      return (opened: false, copied: 0, hadWriteFailures: false);
     }
 
     var copied = 0;
+    var hadWriteFailures = false;
     try {
       // One transaction per box. A connection-stats box can hold thousands of
-      // rows, and a commit each would be thousands of durability barriers.
-      SqliteStore.transact(() {
-      for (final key in legacy.box.keys) {
-        if (key is! String) continue;
-        // Per record, because reading one goes through a `TypeAdapter`: a value
-        // written under a typeId this build no longer registers, or a truncated
-        // one, throws. Letting that escape would fail the launch — and fail it
-        // again on every launch after, since the marker stays unwritten. The
-        // v2 -> v3 migration this replaced caught per record for the same
-        // reason.
-        try {
-          final raw = legacy.box.get(key);
-          if (raw == null) continue;
+      // rows, and a commit each would be thousands of durability barriers. A
+      // destination failure rolls the whole box back: m004 can consume and
+      // delete successful kv rows later in this launch, so retrying a box that
+      // partly committed would reinsert those rows on the next launch.
+      try {
+        copied = SqliteStore.transact(() {
+          var boxCopied = 0;
+          for (final key in legacy.box.keys) {
+            if (key is! String) continue;
+            // Permanent legacy corruption costs that record, not every later
+            // launch. A destination write failure is different and rolls the
+            // box back for a clean retry.
+            try {
+              final raw = legacy.box.get(key);
+              if (raw == null) continue;
 
-          final value = _fromLegacy(raw) ?? raw;
-          final ok = into(key, _jsonSafe(value as Object));
-          if (ok) {
-            copied++;
-          } else {
-            Loggers.app.warning(
-              'Could not import "$name/$key" (${value.runtimeType})',
-            );
+              final value = _fromLegacy(raw) ?? raw;
+              final safe = _jsonSafe(value as Object);
+              json.encode(safe);
+              final ok = into(key, safe);
+              if (!ok) {
+                Loggers.app.warning(
+                  'Could not import "$name/$key" (${value.runtimeType})',
+                );
+                throw const _BoxWriteFailure();
+              }
+              boxCopied++;
+            } on _BoxWriteFailure {
+              rethrow;
+            } catch (e, s) {
+              Loggers.app.warning(
+                'Skipping unreadable record "$name/$key"',
+                e,
+                s,
+              );
+            }
           }
-        } catch (e, s) {
-          Loggers.app.warning('Skipping unreadable record "$name/$key"', e, s);
-        }
+          return boxCopied;
+        });
+      } on _BoxWriteFailure {
+        copied = 0;
+        hadWriteFailures = true;
       }
-      });
     } finally {
       await legacy.box.close();
     }
-    return (opened: true, copied: copied);
+    return (opened: true, copied: copied, hadWriteFailures: hadWriteFailures);
   }
 
   /// A record that a released build wrote, as the JSON that build produced.
@@ -264,14 +347,21 @@ abstract final class HiveImport {
   /// one holds no data that is not derivable from the records, and leaving it
   /// would leave `<serverId>_<millis>` for every connection sitting in
   /// plaintext beside a database that exists to not do that.
-  static void _dropPlaintextIndex(String dir) {
+  static bool _dropPlaintextIndex(String dir) {
+    var removed = true;
     for (final suffix in const ['.hive', '.lock']) {
       final file = File(dir.joinPath('conn_stats_index$suffix'));
       try {
         if (file.existsSync()) file.deleteSync();
       } catch (e, s) {
+        removed = false;
         Loggers.app.warning('Could not delete ${file.path}', e, s);
       }
     }
+    return removed;
   }
+}
+
+class _BoxWriteFailure implements Exception {
+  const _BoxWriteFailure();
 }

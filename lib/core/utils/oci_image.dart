@@ -63,10 +63,23 @@ List<OciLayer> ociLayers(Archive image) {
   if (manifests == null || manifests.isEmpty) {
     throw StateError('The image index names no manifest');
   }
+  final descriptors = manifests.whereType<Map>().toList();
+  final selected = descriptors.firstWhere(
+    (entry) {
+      final platform = entry['platform'];
+      return platform is Map &&
+          platform['os'] == 'linux' &&
+          platform['architecture'] == 'arm64';
+    },
+    orElse: () {
+      if (descriptors.length == 1 && descriptors.single['platform'] == null) {
+        return descriptors.single;
+      }
+      throw StateError('The image index has no Linux arm64 manifest');
+    },
+  );
   final manifest =
-      json.decode(
-            utf8.decode(blob((manifests.first as Map)['digest'] as String)),
-          )
+      json.decode(utf8.decode(blob(selected['digest'] as String)))
           as Map<String, dynamic>;
 
   // Required, not defaulted to none. A manifest with no `layers` is either
@@ -162,7 +175,11 @@ String ociParent(String path) {
 ({bool opaque, String? deletes})? ociWhiteout(String name) {
   if (name == '.wh..wh..opq') return (opaque: true, deletes: null);
   if (name.startsWith('.wh.')) {
-    return (opaque: false, deletes: name.substring(4));
+    final deletes = name.substring(4);
+    if (deletes.isEmpty || deletes == '.' || deletes == '..') {
+      throw StateError('Unsafe OCI whiteout target: $name');
+    }
+    return (opaque: false, deletes: deletes);
   }
   return null;
 }

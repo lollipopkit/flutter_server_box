@@ -9,20 +9,26 @@ import 'package:server_box/data/provider/container.dart';
 void main() {
   test('shellSingleQuote escapes untrusted command arguments', () {
     expect(shellSingleQuote('abc'), "'abc'");
-    expect(shellSingleQuote("abc'; touch /tmp/pwn; echo '"),
-        "'abc'\\''; touch /tmp/pwn; echo '\\'''",);
+    expect(
+      shellSingleQuote("abc'; touch /tmp/pwn; echo '"),
+      "'abc'\\''; touch /tmp/pwn; echo '\\'''",
+    );
   });
 
   test('buildContainerBulkCmd joins quoted container ids', () {
     expect(buildContainerBulkCmd('start', ['a', 'b']), "start 'a' 'b'");
     expect(buildContainerBulkCmd('stop', ['a']), "stop 'a'");
-    expect(buildContainerBulkCmd('restart', ['a', 'b', 'c']),
-        "restart 'a' 'b' 'c'");
+    expect(
+      buildContainerBulkCmd('restart', ['a', 'b', 'c']),
+      "restart 'a' 'b' 'c'",
+    );
   });
 
   test('buildContainerBulkCmd escapes hostile container ids', () {
-    expect(buildContainerBulkCmd('start', ["a'; touch /pwn; echo '"]),
-        "start 'a'\\''; touch /pwn; echo '\\'''");
+    expect(
+      buildContainerBulkCmd('start', ["a'; touch /pwn; echo '"]),
+      "start 'a'\\''; touch /pwn; echo '\\'''",
+    );
   });
 
   test('buildContainerBulkCmd returns null for empty ids', () {
@@ -50,6 +56,21 @@ void main() {
     );
   });
 
+  test('double quotes preserve non-special backslashes', () {
+    expect(parseContainerRunArgs(r'''--label "path=C:\work\data" "a\qb"'''), [
+      r'--label',
+      r'path=C:\work\data',
+      r'a\qb',
+    ]);
+  });
+
+  test('double-quoted backslash newline is a continuation', () {
+    expect(parseContainerRunArgs('--label "hello\\\nworld"'), [
+      '--label',
+      'helloworld',
+    ]);
+  });
+
   test('container run shell operators remain quoted arguments', () {
     final cmd = buildContainerRunCmd(
       image: 'alpine',
@@ -73,13 +94,13 @@ void main() {
     );
   });
 
-  test('buildContainerImagePruneCmd keeps remote execution non-interactive', () {
-    expect(buildContainerImagePruneCmd(), 'image prune -f');
-    expect(
-      buildContainerImagePruneCmd(allUnused: true),
-      'image prune -a -f',
-    );
-  });
+  test(
+    'buildContainerImagePruneCmd keeps remote execution non-interactive',
+    () {
+      expect(buildContainerImagePruneCmd(), 'image prune -f');
+      expect(buildContainerImagePruneCmd(allUnused: true), 'image prune -a -f');
+    },
+  );
 
   test('buildContainerSystemPruneCmd reflects each optional scope', () {
     expect(buildContainerSystemPruneCmd(), 'system prune -f');
@@ -92,10 +113,7 @@ void main() {
       'system prune --volumes -f',
     );
     expect(
-      buildContainerSystemPruneCmd(
-        allUnusedImages: true,
-        includeVolumes: true,
-      ),
+      buildContainerSystemPruneCmd(allUnusedImages: true, includeVolumes: true),
       'system prune -a --volumes -f',
     );
   });
@@ -151,24 +169,26 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
     expect(ps.workingDir, null);
   });
 
-  test('podman ps parse extracts compose project and working dir from labels',
-      () {
-    final ps = PodmanPs.fromJson({
-      'Id': '0e9e2ef860d2',
-      'Exited': false,
-      'Status': 'Up 3 hours',
-      'Image': 'nginx:alpine',
-      'Names': ['cmp-web'],
-      'Labels': {
-        'com.docker.compose.project': 'nginx',
-        'com.docker.compose.project.working_dir': '/opt/nginx',
-        'other': 'x',
-      },
-    });
-    expect(ps.project, 'nginx');
-    expect(ps.workingDir, '/opt/nginx');
-    expect(ps.rawStatus, 'Up 3 hours');
-  });
+  test(
+    'podman ps parse extracts compose project and working dir from labels',
+    () {
+      final ps = PodmanPs.fromJson({
+        'Id': '0e9e2ef860d2',
+        'Exited': false,
+        'Status': 'Up 3 hours',
+        'Image': 'nginx:alpine',
+        'Names': ['cmp-web'],
+        'Labels': {
+          'com.docker.compose.project': 'nginx',
+          'com.docker.compose.project.working_dir': '/opt/nginx',
+          'other': 'x',
+        },
+      });
+      expect(ps.project, 'nginx');
+      expect(ps.workingDir, '/opt/nginx');
+      expect(ps.rawStatus, 'Up 3 hours');
+    },
+  );
 
   test('podman ps status falls back to State on older output', () {
     final ps = PodmanPs.fromJson({
@@ -280,10 +300,7 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
       {'state': 'Up 5 minutes (Paused)', 'status': ContainerStatus.paused},
       {'state': 'Restarting', 'status': ContainerStatus.restarting},
       {'state': 'Removing', 'status': ContainerStatus.removing},
-      {
-        'state': 'Removal In Progress',
-        'status': ContainerStatus.removing,
-      },
+      {'state': 'Removal In Progress', 'status': ContainerStatus.removing},
       {'state': 'Dead', 'status': ContainerStatus.dead},
 
       // Edge cases
@@ -344,14 +361,15 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
     expect(ContainerStatus.created.isRunning, false);
     expect(ContainerStatus.exited.isStopped, true);
     expect(ContainerStatus.unknown.isStopped, false);
-    expect(
-      ContainerMenu.items(ContainerStatus.unknown),
-      [ContainerMenu.start, ContainerMenu.rm, ContainerMenu.logs],
-    );
-    expect(
-      ContainerMenu.items(ContainerStatus.paused),
-      [ContainerMenu.rm, ContainerMenu.logs],
-    );
+    expect(ContainerMenu.items(ContainerStatus.unknown), [
+      ContainerMenu.start,
+      ContainerMenu.rm,
+      ContainerMenu.logs,
+    ]);
+    expect(ContainerMenu.items(ContainerStatus.paused), [
+      ContainerMenu.rm,
+      ContainerMenu.logs,
+    ]);
   });
 
   group('DockerImg usage markers', () {
@@ -442,7 +460,8 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
       final image = DockerImg(
         containers: 'N/A',
         createdAt: '',
-        id: 'sha256:'
+        id:
+            'sha256:'
             '0123456789abcdef0123456789abcdef'
             '0123456789abcdef0123456789abcdef',
         repository: 'example/api',
@@ -544,10 +563,7 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
       );
 
       expect(
-        countUnusedTaggedImages(
-          [image],
-          ['registry.example/team/api@$digest'],
-        ),
+        countUnusedTaggedImages([image], ['registry.example/team/api@$digest']),
         0,
       );
       expect(
@@ -578,20 +594,14 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
   test('podman ps command requests detailed human-readable status', () {
     final cmd = ContainerCmdType.ps.exec(ContainerType.podman);
 
-    expect(
-      cmd,
-      'podman ps -a --format "{{json .}}\\t{{.Status}}"',
-    );
+    expect(cmd, 'podman ps -a --format "{{json .}}\\t{{.Status}}"');
   });
 
   test('container refresh command excludes image listing', () {
-    final cmd = ContainerCmdType.execSelected(
-      const [
-        ContainerCmdType.ps,
-        ContainerCmdType.stats,
-      ],
-      ContainerType.docker,
-    );
+    final cmd = ContainerCmdType.execSelected(const [
+      ContainerCmdType.ps,
+      ContainerCmdType.stats,
+    ], ContainerType.docker);
 
     expect(cmd, contains('docker ps -a'));
     expect(cmd, contains('docker stats --no-stream'));
@@ -599,10 +609,9 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
   });
 
   test('image refresh command excludes containers and stats', () {
-    final cmd = ContainerCmdType.execSelected(
-      const [ContainerCmdType.images],
-      ContainerType.podman,
-    );
+    final cmd = ContainerCmdType.execSelected(const [
+      ContainerCmdType.images,
+    ], ContainerType.podman);
 
     expect(cmd, contains('podman image ls'));
     expect(cmd, contains('--digests'));
@@ -791,7 +800,7 @@ not-json
       final podman = PodmanPs(id: 'test');
       podman.parseStats(
         '{"CPU":1,"AvgCPU":0,"MemLimit":1073741824,"MemUsage":1,'
-        '"NetInput":0,"NetOutput":0,"BlockInput":0,"BlockOutput":0}',
+            '"NetInput":0,"NetOutput":0,"BlockInput":0,"BlockOutput":0}',
         '5.0.0',
       );
       expect(podman.cpu, isNotNull);
@@ -804,9 +813,9 @@ not-json
       final podman = PodmanPs(id: 'test');
       podman.parseStats(
         '{"CPU":1.5,"AvgCPU":0.5,"MemLimit":1073741824,"MemUsage":1,'
-        '"Network":{"eth0":{"RxBytes":1024,"TxBytes":"2048"},'
-        '"nulliface":null},'
-        '"BlockInput":0,"BlockOutput":0}',
+            '"Network":{"eth0":{"RxBytes":1024,"TxBytes":"2048"},'
+            '"nulliface":null},'
+            '"BlockInput":0,"BlockOutput":0}',
         '5.0.0',
       );
       expect(podman.cpu, isNotNull);
@@ -826,7 +835,7 @@ not-json
       final podman = PodmanPs(id: 'test');
       podman.parseStats(
         '{"CPU":1,"AvgCPU":0,"MemLimit":1073741824,"MemUsage":1,'
-        '"NetInput":512,"NetOutput":256,"BlockInput":0,"BlockOutput":0}',
+            '"NetInput":512,"NetOutput":256,"BlockInput":0,"BlockOutput":0}',
         '5.0.0',
       );
       expect(podman.net, '↓ 512 B / ↑ 256 B');
@@ -863,7 +872,10 @@ not-json
       // The whole explanation a user got used to be exactly this and nothing
       // else, which named neither the command nor the reason.
       expect(
-        userFacingOutput('', 'SrvBoxContainerSep_1786614816321254_0\nSrvBoxContainerSep_1786614816321254_0'),
+        userFacingOutput(
+          '',
+          'SrvBoxContainerSep_1786614816321254_0\nSrvBoxContainerSep_1786614816321254_0',
+        ),
         isNull,
       );
     });

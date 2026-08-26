@@ -14,6 +14,9 @@ SshCredential _$SshCredentialFromJson(Map<String, dynamic> json) =>
       pwd: json['pwd'] as String?,
       keyId: json['pubKeyId'] as String?,
       keyPath: json['keyPath'] as String?,
+      identityFiles: (json['identityFiles'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
       alterUrl: json['alterUrl'] as String?,
       jumpId: json['jumpId'] as String?,
       jumpIds: (json['jumpIds'] as List<dynamic>?)
@@ -37,6 +40,7 @@ Map<String, dynamic> _$SshCredentialToJson(SshCredential instance) =>
       'pwd': ?instance.pwd,
       'pubKeyId': ?instance.keyId,
       'keyPath': ?instance.keyPath,
+      'identityFiles': ?instance.identityFiles,
       'alterUrl': ?instance.alterUrl,
       'jumpId': ?instance.jumpId,
       'jumpIds': ?instance.jumpIds,

@@ -48,7 +48,7 @@ class IshShellBackend implements ShellBackend {
     required int width,
     required int height,
     Map<String, String>? environment,
-  }) async => _start(null, width, height);
+  }) async => _start(null, width, height, environment);
 
   @override
   Future<ShellSession> execute(
@@ -56,9 +56,14 @@ class IshShellBackend implements ShellBackend {
     required int width,
     required int height,
     Map<String, String>? environment,
-  }) async => _start(command, width, height);
+  }) async => _start(command, width, height, environment);
 
-  _IshSession _start(String? command, int width, int height) {
+  _IshSession _start(
+    String? command,
+    int width,
+    int height,
+    Map<String, String>? environment,
+  ) {
     if (_closed) throw StateError('This guest has been closed');
 
     // The machine, once, whichever system asked for it first. -EEXIST means it
@@ -75,6 +80,7 @@ class IshShellBackend implements ShellBackend {
       // Interactive only: `_start` is also how `execute` runs a one-shot
       // command, and that one has to stay POSIX. See `linuxShell`.
       profileId: profileId,
+      environment: environment,
       shell: command == null
           ? linuxShell(IosRootfs.rootOf(profileId ?? IosRootfs.selected?.id))
           : '',

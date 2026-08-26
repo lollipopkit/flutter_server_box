@@ -97,6 +97,7 @@ abstract class Spi with _$Spi {
       // password auth. Listed whether or not any release wrote it flat: the
       // cost of naming a key nothing carries is nothing.
       'keyPath',
+      'identityFiles',
       'alterUrl',
       'jumpId',
       'jumpIds',

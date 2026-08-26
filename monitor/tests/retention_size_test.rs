@@ -50,6 +50,23 @@ async fn size_cap_drops_oldest_rows() {
     let deleted = service.enforce_db_size_limit().await.unwrap();
     assert!(deleted > 0, "over-cap database must shed rows");
 
+    let page_count: i64 = sqlx::query_scalar("PRAGMA page_count")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    let freelist: i64 = sqlx::query_scalar("PRAGMA freelist_count")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    let page_size: i64 = sqlx::query_scalar("PRAGMA page_size")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert!(
+        (page_count - freelist) * page_size <= 1024 * 1024,
+        "cleanup must continue until the live database fits the hard cap"
+    );
+
     let after: i64 = sqlx::query_scalar("SELECT count(*) FROM system_metrics")
         .fetch_one(&pool)
         .await

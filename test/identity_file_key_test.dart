@@ -32,6 +32,14 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('SshCredential', () {
+    test('legacy and current jump forms share equality and hash code', () {
+      const legacy = SshCredential(ip: 'a', jumpId: 'jump');
+      const current = SshCredential(ip: 'a', jumpIds: ['jump']);
+
+      expect(legacy, current);
+      expect(legacy.hashCode, current.hashCode);
+    });
+
     test('the id-only reference is the one a connection unlocks under', () {
       // The key editor invalidates and warms the unlock cache from an id it
       // holds, with no credential to ask. It spelled that `<id>` while
@@ -105,21 +113,18 @@ void main() {
       );
     }
 
-    void seedServer(String id, {String? keyId, String? keyPath}) => seed(
-      'server',
-      id,
-      {
-        'id': id,
-        'name': 'srv $id',
-        'ssh': {
-          'ip': '10.0.0.1',
-          'port': 22,
-          'user': 'root',
-          'keyId': ?keyId,
-          'keyPath': ?keyPath,
-        },
-      },
-    );
+    void seedServer(String id, {String? keyId, String? keyPath}) =>
+        seed('server', id, {
+          'id': id,
+          'name': 'srv $id',
+          'ssh': {
+            'ip': '10.0.0.1',
+            'port': 22,
+            'user': 'root',
+            'keyId': ?keyId,
+            'keyPath': ?keyPath,
+          },
+        });
 
     /// The old shape: the key's id *was* its name.
     void seedKey(String name) => seed('key', name, {'id': name, 'key': 'PEM'});
@@ -222,6 +227,32 @@ void main() {
       );
     });
 
+    test('reads every configured IdentityFile in order', () {
+      final first = File('${tempDir.path}/first')..writeAsStringSync('FIRST');
+      final second = File('${tempDir.path}/second')
+        ..writeAsStringSync('SECOND');
+      final ssh = SshCredential(
+        ip: 'a',
+        keyPath: first.path,
+        identityFiles: [first.path, second.path],
+      );
+
+      expect(resolvePrivateKeys(ssh).values, ['FIRST', 'SECOND']);
+      expect(ssh.keyRefs, ['path:${first.path}', 'path:${second.path}']);
+    });
+
+    test('an unreadable IdentityFile does not hide a later usable key', () {
+      final usable = File('${tempDir.path}/usable')..writeAsStringSync('KEY');
+      final missing = '${tempDir.path}/missing';
+      final ssh = SshCredential(
+        ip: 'a',
+        keyPath: missing,
+        identityFiles: [missing, usable.path],
+      );
+
+      expect(resolvePrivateKeys(ssh).values, ['KEY']);
+    });
+
     test('a missing file fails naming it, not as a missing key id', () {
       final ssh = SshCredential(ip: 'a', keyPath: '${tempDir.path}/absent');
 
@@ -275,9 +306,78 @@ void main() {
         ),
       );
     });
+
+    test('the async loader expands the original host and port', () async {
+      final file = File('${tempDir.path}/alias-2200')..writeAsStringSync('KEY');
+      final ssh = SshCredential(
+        ip: 'resolved.example.com',
+        port: 2200,
+        keyPath: '${tempDir.path}/%n-%p',
+      );
+
+      expect(await resolvePrivateKeyAsync(ssh, originalHost: 'alias'), 'KEY');
+      expect(file.existsSync(), isTrue);
+    });
   });
 
   group('genClient', () {
+    test('a stalled ProxyCommand handshake is bounded by timeout', () async {
+      final command = Platform.isWindows
+          ? 'ping -n 6 127.0.0.1 >NUL'
+          : 'sleep 5';
+      final spi = Spi(
+        id: 'stalled-proxy',
+        name: 'stalled-proxy',
+        ssh: SshCredential(
+          ip: 'example.com',
+          user: 'root',
+          proxyCommand: command,
+        ),
+      );
+
+      final client = await genClient(
+        spi,
+        timeout: const Duration(milliseconds: 200),
+      );
+      addTearDown(client.close);
+      var watchdogTimedOut = false;
+      await expectLater(
+        client.authenticated.timeout(
+          const Duration(seconds: 2),
+          onTimeout: () {
+            watchdogTimedOut = true;
+            throw StateError('test watchdog timed out');
+          },
+        ),
+        throwsA(anything),
+      );
+      expect(watchdogTimedOut, isFalse);
+    });
+
+    test('an unavailable key falls back to the configured password', () async {
+      final server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+      addTearDown(server.close);
+      final accepted = Completer<Socket>();
+      server.listen((socket) {
+        if (!accepted.isCompleted) accepted.complete(socket);
+      });
+
+      final spi = spiFixture(
+        name: 'password fallback',
+        id: 'password-fallback',
+        ip: server.address.address,
+        port: server.port,
+        keyPath: '/definitely/not/here/id_ed25519',
+        pwd: 'secret',
+      );
+      final client = await genClient(spi);
+      addTearDown(client.close);
+      final socket = await accepted.future;
+      addTearDown(socket.destroy);
+
+      expect(client, isNotNull);
+    });
+
     test('a key it cannot read does not leave the socket open', () async {
       // The socket is opened before the key is resolved, and a caller that
       // gets a key error gets no handle to close it with. A status poll

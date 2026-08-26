@@ -379,38 +379,55 @@ async fn login(
 ) -> Result<HttpResponse> {
     let peer_ip = http_req.peer_addr().map(|addr| addr.ip());
 
-    // Checked before touching the database, so a guessing loop can't keep
-    // spending bcrypt verifications (~100ms each) on this process.
-    if let Some(wait) = app_state.login_throttle.check(peer_ip, &req.username) {
-        let seconds = wait.as_secs().max(1);
-        return Ok(HttpResponse::TooManyRequests()
-            .header(RETRY_AFTER, seconds.to_string())
-            .json(&ErrorResponse {
-                error: format!("Too many failed attempts; retry in {seconds}s"),
-            }));
-    }
+    // Reserve under the throttle lock before touching the database or bcrypt,
+    // so concurrent guesses cannot all pass the same pre-failure snapshot.
+    let attempt = match app_state.login_throttle.begin(peer_ip, &req.username) {
+        Ok(attempt) => attempt,
+        Err(wait) => {
+            let seconds = wait.as_secs().max(1);
+            return Ok(HttpResponse::TooManyRequests()
+                .header(RETRY_AFTER, seconds.to_string())
+                .json(&ErrorResponse {
+                    error: format!("Too many failed attempts; retry in {seconds}s"),
+                }));
+        }
+    };
 
     // Verify user credentials
-    let user = sqlx::query!(
+    let user = match sqlx::query!(
         "SELECT id, username, password_hash FROM users WHERE username = ?",
         req.username
     )
     .fetch_optional(&app_state.db)
-    .await?;
+    .await
+    {
+        Ok(user) => user,
+        Err(error) => {
+            app_state.login_throttle.cancel(attempt);
+            return Err(error.into());
+        }
+    };
 
     // A missing account must cost the same bcrypt verification as a wrong
     // password, or response timing turns the login endpoint into a username
     // oracle even though both paths return the same status and throttle key.
-    let password_matches = verify_login_password_off_worker(
+    let password_matches = match verify_login_password_off_worker(
         req.password.clone(),
         user.as_ref().map(|user| user.password_hash.clone()),
     )
-    .await?;
+    .await
+    {
+        Ok(matched) => matched,
+        Err(error) => {
+            app_state.login_throttle.cancel(attempt);
+            return Err(error);
+        }
+    };
 
     if let Some(user) = user
         && password_matches
     {
-        app_state.login_throttle.record_success(peer_ip, &req.username);
+        app_state.login_throttle.record_success(attempt);
 
         // Update last login
         sqlx::query!(
@@ -429,7 +446,7 @@ async fn login(
     // One counter for both "no such user" and "wrong password": tracking them
     // separately would let an attacker tell the two apart by how quickly they
     // get throttled.
-    app_state.login_throttle.record_failure(peer_ip, &req.username);
+    app_state.login_throttle.record_failure(attempt);
 
     Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
         error: "Invalid credentials".to_string(),
@@ -573,11 +590,73 @@ async fn get_metrics(
     let metrics = app_state.current_metrics.read().await;
 
     if let Some(ref metrics) = *metrics {
-        Ok(HttpResponse::Ok().json(metrics))
+        let body = metrics_json(metrics)?;
+        Ok(HttpResponse::Ok().json(&body))
     } else {
         Ok(HttpResponse::ServiceUnavailable().json(&ErrorResponse {
             error: "Metrics not available yet".to_string(),
         }))
+    }
+}
+
+/// Keep the established numeric fields for existing clients, while exposing
+/// exact decimal forms for browser clients that cannot represent every u64.
+fn metrics_json(metrics: &SystemMetrics) -> serde_json::Result<serde_json::Value> {
+    let mut value = serde_json::to_value(metrics)?;
+    add_exact_counters(
+        &mut value,
+        &metrics.network,
+        &metrics.ifaces,
+        &metrics.diskio,
+    );
+    Ok(value)
+}
+
+fn add_exact_counters(
+    value: &mut serde_json::Value,
+    network_metrics: &monitoring::NetworkMetrics,
+    iface_metrics: &[monitoring::IfaceMetrics],
+    diskio_metrics: &[sbm_parser::types::DiskIoPiece],
+) {
+    if let Some(network) = value.get_mut("network").and_then(serde_json::Value::as_object_mut) {
+        network.insert(
+            "rx_bytes_exact".to_string(),
+            serde_json::Value::String(network_metrics.rx_bytes.to_string()),
+        );
+        network.insert(
+            "tx_bytes_exact".to_string(),
+            serde_json::Value::String(network_metrics.tx_bytes.to_string()),
+        );
+    }
+
+    if let Some(ifaces) = value.get_mut("ifaces").and_then(serde_json::Value::as_array_mut) {
+        for (wire, source) in ifaces.iter_mut().zip(iface_metrics) {
+            if let Some(wire) = wire.as_object_mut() {
+                wire.insert(
+                    "rx_bytes_exact".to_string(),
+                    serde_json::Value::String(source.rx_bytes.to_string()),
+                );
+                wire.insert(
+                    "tx_bytes_exact".to_string(),
+                    serde_json::Value::String(source.tx_bytes.to_string()),
+                );
+            }
+        }
+    }
+
+    if let Some(diskio) = value.get_mut("diskio").and_then(serde_json::Value::as_array_mut) {
+        for (wire, source) in diskio.iter_mut().zip(diskio_metrics) {
+            if let Some(wire) = wire.as_object_mut() {
+                wire.insert(
+                    "sectors_read_exact".to_string(),
+                    serde_json::Value::String(source.sectors_read.to_string()),
+                );
+                wire.insert(
+                    "sectors_write_exact".to_string(),
+                    serde_json::Value::String(source.sectors_write.to_string()),
+                );
+            }
+        }
     }
 }
 
@@ -685,9 +764,17 @@ async fn issue_ws_ticket(
                 .detail("issue failed")
                 .record(&app_state.db)
                 .await;
-            Ok(HttpResponse::ServiceUnavailable().json(&ErrorResponse {
-                error: e.to_string(),
-            }))
+            match e {
+                MonitorError::Quota {
+                    message,
+                    retry_after_secs,
+                } => Ok(HttpResponse::TooManyRequests()
+                    .header(RETRY_AFTER, retry_after_secs.to_string())
+                    .json(&ErrorResponse { error: message })),
+                other => Ok(HttpResponse::ServiceUnavailable().json(&ErrorResponse {
+                    error: other.to_string(),
+                })),
+            }
         }
     }
 }
@@ -699,7 +786,7 @@ async fn issue_ws_ticket(
 #[derive(Serialize, Deserialize)]
 struct SettingsPayload {
     interval_seconds: u64,
-    /// `null` = follow `interval_seconds` (see `LiveSettings`)
+    /// `null` = `interval_seconds * 10`, with a 120-second floor
     extended_interval_secs: Option<u64>,
     idle_pause_enabled: bool,
     /// `null` = `interval_seconds * 4`
@@ -861,9 +948,10 @@ async fn disable_full_access(
     }
 
     app_state.full_access_off.store(true, Ordering::Release);
+    let closed = app_state.sessions.close_local();
     tracing::info!(
-        "Access without SSH disabled from the panel by {}",
-        claims.sub
+        "Access without SSH disabled from the panel by {}; closed {closed} local terminal sessions",
+        claims.sub,
     );
     Ok(HttpResponse::Ok().json(&serde_json::json!({ "status": "ok" })))
 }
@@ -1059,7 +1147,12 @@ async fn get_velocity_history(
 
     let limit = query
         .get("limit")
-        .and_then(|v| v.as_u64())
+        .and_then(|v| {
+            v.as_u64().or_else(|| {
+                v.as_str()
+                    .and_then(|s| s.parse::<u64>().ok())
+            })
+        })
         .map(|l| l as usize);
 
     match app_state
@@ -1212,5 +1305,39 @@ mod watch_token_tests {
             .await
             .unwrap();
         assert!(verify_watch_token(&pool, token, 19).await.is_err());
+    }
+}
+
+#[cfg(test)]
+mod metrics_json_tests {
+    use super::*;
+
+    #[test]
+    fn cumulative_counters_include_exact_decimal_strings() {
+        let network = monitoring::NetworkMetrics {
+            rx_bytes: 9_007_199_254_740_993,
+            tx_bytes: 9_007_199_254_740_994,
+        };
+        let ifaces = [monitoring::IfaceMetrics {
+            name: "eth0".to_string(),
+            rx_bytes: 9_007_199_254_740_995,
+            tx_bytes: 9_007_199_254_740_996,
+        }];
+        let diskio = [sbm_parser::types::DiskIoPiece {
+            dev: "sda".to_string(),
+            sectors_read: 9_007_199_254_740_997,
+            sectors_write: 9_007_199_254_740_998,
+        }];
+        let mut value = serde_json::json!({
+            "network": { "rx_bytes": network.rx_bytes, "tx_bytes": network.tx_bytes },
+            "ifaces": [{ "name": "eth0", "rx_bytes": ifaces[0].rx_bytes, "tx_bytes": ifaces[0].tx_bytes }],
+            "diskio": [{ "dev": "sda", "sectors_read": diskio[0].sectors_read, "sectors_write": diskio[0].sectors_write }],
+        });
+
+        add_exact_counters(&mut value, &network, &ifaces, &diskio);
+
+        assert_eq!(value["network"]["rx_bytes_exact"], "9007199254740993");
+        assert_eq!(value["ifaces"][0]["tx_bytes_exact"], "9007199254740996");
+        assert_eq!(value["diskio"][0]["sectors_read_exact"], "9007199254740997");
     }
 }

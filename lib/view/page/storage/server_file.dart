@@ -6,6 +6,7 @@ import 'package:server_box/core/utils/monitor_file_backend.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/storage/file_browser.dart';
@@ -81,8 +82,10 @@ class _MonitorFilePageState extends ConsumerState<_MonitorFilePage> {
   void initState() {
     super.initState();
     final credential = ServerConnectCredential.fromSpi(_spi);
+    final system = ref.read(serverProvider(_spi.id)).status.system;
     _backend = MonitorFileBackend(
       (credential as ServerConnectCredentialMonitorHttp).monitor,
+      permissions: system != SystemType.windows,
     );
   }
 
@@ -141,7 +144,8 @@ class _MonitorFilePageState extends ConsumerState<_MonitorFilePage> {
         actionsSink: widget.args.actionsSink,
         onPathChanged: _onPathChanged,
         extraActions: (_) => [
-          IconButton(tooltip: libL10n.mission, 
+          IconButton(
+            tooltip: libL10n.mission,
             icon: const Icon(Icons.downloading),
             onPressed: () => showTransfers(context),
           ),

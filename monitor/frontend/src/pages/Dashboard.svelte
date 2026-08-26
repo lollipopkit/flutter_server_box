@@ -331,7 +331,7 @@
             : '--'}
           valueClass="text-lg"
           detail={m
-            ? `RX ${fmtBytes(m.network.rx_bytes)} \u00B7 TX ${fmtBytes(m.network.tx_bytes)}`
+            ? `RX ${fmtBytes(m.network.rx_bytes_exact ?? m.network.rx_bytes)} \u00B7 TX ${fmtBytes(m.network.tx_bytes_exact ?? m.network.tx_bytes)}`
             : ''}
           onclick={() => (detail = 'network')}
         />

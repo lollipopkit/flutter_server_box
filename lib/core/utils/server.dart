@@ -26,6 +26,20 @@ List<SSHKeyPair> loadIdentity(String key) {
   return SSHKeyPair.fromPem(key);
 }
 
+List<SSHKeyPair> loadIdentities(List<String> keys) {
+  final identities = <SSHKeyPair>[];
+  Object? lastError;
+  for (final key in keys) {
+    try {
+      identities.addAll(SSHKeyPair.fromPem(key));
+    } catch (e) {
+      lastError = e;
+    }
+  }
+  if (identities.isEmpty && lastError != null) throw lastError;
+  return identities;
+}
+
 /// Decrypts an encrypted PEM private key.
 ///
 /// Must also be a top-level function because it is called via [Computer]
@@ -108,11 +122,21 @@ String _decodeCapped(String path, List<int> bytes) {
 /// Runs where there are stores, a filesystem the user granted, and a UI to
 /// report a failure to. `SshTransferCreds` calls it on the main isolate and
 /// hands the result across, because the transfer isolate has none of those.
-String? resolvePrivateKey(SshCredential ssh) {
+String? resolvePrivateKey(SshCredential ssh, {String? originalHost}) {
+  final keys = resolvePrivateKeys(ssh, originalHost: originalHost);
+  return keys.isEmpty ? null : keys.values.first;
+}
+
+Map<String, String> resolvePrivateKeys(
+  SshCredential ssh, {
+  String? originalHost,
+}) {
   final keyId = ssh.keyId;
-  if (keyId != null) return getPrivateKey(keyId);
-  final keyPath = ssh.keyPath;
-  if (keyPath == null) return null;
+  if (keyId != null) {
+    return {SshCredential.keyRefForId(keyId): getPrivateKey(keyId)};
+  }
+  final keyPaths = ssh.resolvedIdentityFiles;
+  if (keyPaths.isEmpty) return const {};
 
   // Only ever reachable on desktop — `~/.ssh/config` import is the only writer
   // of `keyPath` — and not on one particular desktop build: the App Store one
@@ -121,54 +145,110 @@ String? resolvePrivateKey(SshCredential ssh) {
   if (Pfs.isMacSandboxed) {
     throw SSHErr(
       type: SSHErrType.noPrivateKey,
-      message: l10n.privateKeyFileSandboxed(keyPath),
+      message: l10n.privateKeyFileSandboxed(keyPaths.first),
     );
   }
 
-  final expanded = SSHConfig.expandHome(keyPath);
-  try {
-    final handle = File(expanded).openSync();
-    try {
-      return _decodeCapped(expanded, handle.readSync(_keyFileMaxSize + 1));
-    } finally {
-      handle.closeSync();
-    }
-  } catch (e) {
-    if (e is SSHErr) rethrow;
-    throw SSHErr(
-      type: SSHErrType.noPrivateKey,
-      message: l10n.privateKeyFileUnreadable(expanded, '$e'),
+  final keys = <String, String>{};
+  Object? lastError;
+  for (final keyPath in keyPaths) {
+    final expanded = SSHConfig.expandIdentityFile(
+      keyPath,
+      hostname: ssh.ip,
+      remoteUser: ssh.user,
+      originalHost: originalHost,
+      port: ssh.port,
     );
+    try {
+      final handle = File(expanded).openSync();
+      try {
+        keys['path:$keyPath'] = _decodeCapped(
+          expanded,
+          handle.readSync(_keyFileMaxSize + 1),
+        );
+      } finally {
+        handle.closeSync();
+      }
+    } catch (e) {
+      final error = e is SSHErr
+          ? e
+          : SSHErr(
+              type: SSHErrType.noPrivateKey,
+              message: l10n.privateKeyFileUnreadable(expanded, '$e'),
+            );
+      if (keyPaths.length == 1) {
+        throw error;
+      }
+      lastError = error;
+      Loggers.app.warning('Skipping unreadable IdentityFile $expanded', e);
+    }
   }
+  if (keys.isEmpty && lastError != null) throw lastError;
+  return keys;
 }
 
 /// Async variant of [resolvePrivateKey] for callers that can await.
-Future<String?> resolvePrivateKeyAsync(SshCredential ssh) async {
+Future<String?> resolvePrivateKeyAsync(
+  SshCredential ssh, {
+  String? originalHost,
+}) async {
+  final keys = await resolvePrivateKeysAsync(ssh, originalHost: originalHost);
+  return keys.isEmpty ? null : keys.values.first;
+}
+
+Future<Map<String, String>> resolvePrivateKeysAsync(
+  SshCredential ssh, {
+  String? originalHost,
+}) async {
   final keyId = ssh.keyId;
-  if (keyId != null) return getPrivateKey(keyId);
-  final keyPath = ssh.keyPath;
-  if (keyPath == null) return null;
+  if (keyId != null) {
+    return {SshCredential.keyRefForId(keyId): getPrivateKey(keyId)};
+  }
+  final keyPaths = ssh.resolvedIdentityFiles;
+  if (keyPaths.isEmpty) return const {};
   if (Pfs.isMacSandboxed) {
     throw SSHErr(
       type: SSHErrType.noPrivateKey,
-      message: l10n.privateKeyFileSandboxed(keyPath),
+      message: l10n.privateKeyFileSandboxed(keyPaths.first),
     );
   }
-  final expanded = SSHConfig.expandHome(keyPath);
-  try {
-    final handle = await File(expanded).open();
+
+  final keys = <String, String>{};
+  Object? lastError;
+  for (final keyPath in keyPaths) {
+    final expanded = SSHConfig.expandIdentityFile(
+      keyPath,
+      hostname: ssh.ip,
+      remoteUser: ssh.user,
+      originalHost: originalHost,
+      port: ssh.port,
+    );
     try {
-      return _decodeCapped(expanded, await handle.read(_keyFileMaxSize + 1));
-    } finally {
-      await handle.close();
+      final handle = await File(expanded).open();
+      try {
+        keys['path:$keyPath'] = _decodeCapped(
+          expanded,
+          await handle.read(_keyFileMaxSize + 1),
+        );
+      } finally {
+        await handle.close();
+      }
+    } catch (e) {
+      final error = e is SSHErr
+          ? e
+          : SSHErr(
+              type: SSHErrType.noPrivateKey,
+              message: l10n.privateKeyFileUnreadable(expanded, '$e'),
+            );
+      if (keyPaths.length == 1) {
+        throw error;
+      }
+      lastError = error;
+      Loggers.app.warning('Skipping unreadable IdentityFile $expanded', e);
     }
-  } catch (e) {
-    if (e is SSHErr) rethrow;
-    throw SSHErr(
-      type: SSHErrType.noPrivateKey,
-      message: l10n.privateKeyFileUnreadable(expanded, '$e'),
-    );
   }
+  if (keys.isEmpty && lastError != null) throw lastError;
+  return keys;
 }
 
 Future<SSHClient> genClient(
@@ -282,10 +362,19 @@ Future<SSHClient> genClient(
             visitedServerIds: {...chainVisitedServerIds},
           );
 
-          final forwarded = await jumpClient.forwardLocal(ssh.ip, ssh.port);
+          final forwarded = await jumpClient
+              .forwardLocal(ssh.ip, ssh.port)
+              .timeout(
+                timeout,
+                onTimeout: () => throw TimeoutException(
+                  'forwardLocal timed out after ${timeout.inSeconds}s',
+                ),
+              );
           return _JumpSocket(forwarded, jumpClient);
         } catch (e, stack) {
-          jumpClient?.close();
+          try {
+            jumpClient?.close();
+          } catch (_) {}
           if (!_isJumpFailoverError(e)) {
             rethrow;
           }
@@ -316,6 +405,8 @@ Future<SSHClient> genClient(
         host: ssh.ip,
         port: ssh.port,
         user: ssh.user,
+        originalHost: spi.name,
+        jump: ssh.resolvedJumpIds.join(','),
         timeout: timeout,
       );
     }
@@ -349,6 +440,7 @@ Future<SSHClient> genClient(
       socket: socket,
       spi: spi,
       ssh: ssh,
+      timeout: timeout,
       alterUser: alterUser,
       privateKey: privateKey,
       privateKeysByKeyId: privateKeysByKeyId,
@@ -375,6 +467,7 @@ Future<SSHClient> _authenticatedClient({
   required SSHSocket socket,
   required Spi spi,
   required SshCredential ssh,
+  required Duration timeout,
   required String? alterUser,
   required String? privateKey,
   required Map<String, String>? privateKeysByKeyId,
@@ -382,8 +475,7 @@ Future<SSHClient> _authenticatedClient({
   required SSHKeyboardInteractiveHandler? onKeyboardInteractive,
   required HostKeyVerifier hostKeyVerifier,
 }) async {
-  final keyRef = ssh.keyRef;
-  if (keyRef == null) {
+  SSHClient passwordClient() {
     onStatus?.call(GenSSHClientStatus.pwd);
     return SSHClient(
       socket,
@@ -393,16 +485,47 @@ Future<SSHClient> _authenticatedClient({
           ? null
           : (request) => onKeyboardInteractive(spi, request),
       onVerifyHostKey: hostKeyVerifier.call,
+      handshakeTimeout: timeout,
+      authTimeout: timeout,
     );
   }
-  // `keyRef` being non-null means one of the two key fields is set, so this
-  // either yields a key or throws saying why it could not. The null branch is
-  // unreachable and says so rather than handing `compute` a null.
-  privateKey ??= privateKeysByKeyId?[keyRef] ?? resolvePrivateKey(ssh);
-  if (privateKey == null) {
+
+  final keyRefs = ssh.keyRefs;
+  if (keyRefs.isEmpty) {
+    return passwordClient();
+  }
+  final keyMaterial = <String, String>{};
+  if (privateKey != null) keyMaterial[keyRefs.first] = privateKey;
+  if (privateKeysByKeyId != null) {
+    for (final ref in keyRefs) {
+      final pem = privateKeysByKeyId[ref];
+      if (pem != null) keyMaterial[ref] = pem;
+    }
+  } else if (privateKey == null || keyRefs.length > 1) {
+    try {
+      for (final entry in resolvePrivateKeys(
+        ssh,
+        originalHost: spi.name,
+      ).entries) {
+        keyMaterial.putIfAbsent(entry.key, () => entry.value);
+      }
+    } catch (e, s) {
+      if (ssh.pwd?.isNotEmpty != true) rethrow;
+      Loggers.app.warning(
+        'SSH key unavailable for ${spi.name}; falling back to password',
+        e,
+        s,
+      );
+      return passwordClient();
+    }
+  }
+  if (keyMaterial.isEmpty) {
+    if (ssh.pwd?.isNotEmpty == true) return passwordClient();
     throw SSHErr(
       type: SSHErrType.noPrivateKey,
-      message: l10n.privateKeyNotFoundFmt(ssh.keyId ?? ssh.keyPath ?? keyRef),
+      message: l10n.privateKeyNotFoundFmt(
+        ssh.keyId ?? ssh.keyPath ?? keyRefs.first,
+      ),
     );
   }
 
@@ -411,15 +534,20 @@ Future<SSHClient> _authenticatedClient({
   // happens for a key that is not — including one already opened before it was
   // handed to another isolate, which is why the transfer path can reach this
   // line with no screen to ask on.
-  privateKey = await PrivateKeyUnlock.open(
-    privateKey,
-    cacheKey: keyRef,
-    keyName: privateKeyDisplayName(keyRef),
-  );
+  final openedKeys = <String>[];
+  for (final entry in keyMaterial.entries) {
+    openedKeys.add(
+      await PrivateKeyUnlock.open(
+        entry.value,
+        cacheKey: entry.key,
+        keyName: privateKeyDisplayName(entry.key),
+      ),
+    );
+  }
   final List<SSHKeyPair> identities;
   try {
     // Must use [compute] here, instead of [Computer.shared.start]
-    identities = await compute(loadIdentity, privateKey);
+    identities = await compute(loadIdentities, openedKeys);
   } catch (e) {
     // A PEM that will not parse is a key problem and the caller has a category
     // for those. Left raw it arrived as whatever the parser threw — naming
@@ -428,7 +556,7 @@ Future<SSHClient> _authenticatedClient({
     throw SSHErr(
       type: SSHErrType.noPrivateKey,
       message: l10n.privateKeyFileUnreadable(
-        privateKeyDisplayName(keyRef),
+        privateKeyDisplayName(keyRefs.first),
         '$e',
       ),
     );
@@ -446,6 +574,8 @@ Future<SSHClient> _authenticatedClient({
         ? null
         : (request) => onKeyboardInteractive(spi, request),
     onVerifyHostKey: hostKeyVerifier.call,
+    handshakeTimeout: timeout,
+    authTimeout: timeout,
   );
 }
 
@@ -544,7 +674,9 @@ bool _isJumpFailoverError(Object error) {
       errStr.contains('channel open failed') ||
       errStr.contains('maxsessions') ||
       (errStr.contains('too many') && errStr.contains('session')) ||
-      (errStr.contains('session') && errStr.contains('failed') && !errStr.contains('auth'));
+      (errStr.contains('session') &&
+          errStr.contains('failed') &&
+          !errStr.contains('auth'));
 }
 
 @visibleForTesting
@@ -561,6 +693,7 @@ class HostKeyPromptInfo {
 
   final Spi spi;
   final String keyType;
+
   /// OpenSSH-style fingerprint, normally `SHA256:<base64-without-padding>`.
   final String fingerprint;
   final bool isMismatch;
@@ -679,10 +812,7 @@ Future<void> _enqueueHostKeyWrite(String what, void Function() body) {
   return _hostKeyPersistence;
 }
 
-Future<void> persistHostKeyFingerprint(
-  String storageKey,
-  String fingerprint,
-) {
+Future<void> persistHostKeyFingerprint(String storageKey, String fingerprint) {
   _hostKeyPersistence = _hostKeyPersistence.then((_) async {
     try {
       final prop = Stores.setting.sshKnownHostFingerprints;
@@ -812,7 +942,16 @@ Future<bool> promptHostKeyExclusively(
 
   final entry = _PendingHostKeyPrompt(question);
   _pendingHostKeyPrompts[server] = entry;
-  final running = show();
+  Future<bool> running;
+  try {
+    running = show();
+  } catch (e, s) {
+    entry.answer.completeError(e, s);
+    if (identical(_pendingHostKeyPrompts[server], entry)) {
+      _pendingHostKeyPrompts.remove(server);
+    }
+    rethrow;
+  }
   entry.answer.complete(running);
   try {
     return await running;
@@ -990,9 +1129,7 @@ String _fingerprintToHex(Uint8List fingerprint) {
 }
 
 final _openSshSha256 = RegExp(r'^SHA256:[A-Za-z0-9+/]{43}$');
-final _colonHexFingerprint = RegExp(
-  r'^(?:[0-9a-fA-F]{2}:)*[0-9a-fA-F]{2}$',
-);
+final _colonHexFingerprint = RegExp(r'^(?:[0-9a-fA-F]{2}:)*[0-9a-fA-F]{2}$');
 
 @visibleForTesting
 String fingerprintToOpenSsh(Uint8List fingerprint) {
@@ -1067,14 +1204,16 @@ Map<String, List<KnownHostKey>> groupHostKeysByServer(
   final grouped = <String, List<KnownHostKey>>{};
   for (final entry in known.entries) {
     final (serverId, keyType) = splitHostKeyStorageKey(entry.key);
-    grouped.putIfAbsent(serverId, () => []).add(
-      KnownHostKey(
-        storageKey: entry.key,
-        serverId: serverId,
-        keyType: keyType,
-        fingerprint: entry.value,
-      ),
-    );
+    grouped
+        .putIfAbsent(serverId, () => [])
+        .add(
+          KnownHostKey(
+            storageKey: entry.key,
+            serverId: serverId,
+            keyType: keyType,
+            fingerprint: entry.value,
+          ),
+        );
   }
   for (final list in grouped.values) {
     list.sort((a, b) => a.keyType.compareTo(b.keyType));

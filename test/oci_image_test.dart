@@ -93,6 +93,45 @@ void main() {
       expect(layers.map((e) => e.bytes.single), [1, 2, 3]);
     });
 
+    test('selects the Linux arm64 manifest from a platform index', () {
+      Map<String, Object> manifest(String layer) => {
+        'schemaVersion': 2,
+        'layers': [
+          {
+            'mediaType': 'application/vnd.oci.image.layer.v1.tar',
+            'digest': digestOf(layer),
+          },
+        ],
+      };
+      final image = Archive()
+        ..add(
+          ArchiveFile.string(
+            'index.json',
+            json.encode({
+              'schemaVersion': 2,
+              'manifests': [
+                {
+                  'digest': digestOf('amd64-manifest'),
+                  'platform': {'os': 'linux', 'architecture': 'amd64'},
+                },
+                {
+                  'digest': digestOf('arm64-manifest'),
+                  'platform': {'os': 'linux', 'architecture': 'arm64'},
+                },
+              ],
+            }),
+          ),
+        )
+        ..add(blob('amd64-manifest', utf8.encode(json.encode(manifest('x64')))))
+        ..add(
+          blob('arm64-manifest', utf8.encode(json.encode(manifest('arm64')))),
+        )
+        ..add(blob('x64', const [1]))
+        ..add(blob('arm64', const [2]));
+
+      expect(ociLayers(image).single.bytes, [2]);
+    });
+
     test('reads compression from the declared media type', () {
       final image = imageWith(
         layers: [
@@ -161,7 +200,8 @@ void main() {
     test('says so when the download is not an image layout', () {
       // What a plain rootfs tarball would look like if a distribution's layout
       // were ever set to `oci` by mistake: real files, no index.json.
-      final notAnImage = Archive()..add(ArchiveFile.string('etc/hostname', 'x'));
+      final notAnImage = Archive()
+        ..add(ArchiveFile.string('etc/hostname', 'x'));
       expect(() => ociLayers(notAnImage), throwsStateError);
     });
 
@@ -215,15 +255,20 @@ void main() {
         ],
       });
       final image = Archive()
-        ..add(ArchiveFile.string('index.json', json.encode({
-          'schemaVersion': 2,
-          'manifests': [
-            {
-              'mediaType': 'application/vnd.oci.image.index.v1+json',
-              'digest': digestOf('manifest'),
-            },
-          ],
-        })))
+        ..add(
+          ArchiveFile.string(
+            'index.json',
+            json.encode({
+              'schemaVersion': 2,
+              'manifests': [
+                {
+                  'mediaType': 'application/vnd.oci.image.index.v1+json',
+                  'digest': digestOf('manifest'),
+                },
+              ],
+            }),
+          ),
+        )
         ..add(blob('manifest', utf8.encode(index)));
 
       expect(() => ociLayers(image), throwsStateError);
@@ -232,7 +277,9 @@ void main() {
 
   group("a layer's media type", () {
     Archive of(String mediaType) => imageWith(
-      layers: [(name: 'l', bytes: const [1], mediaType: mediaType)],
+      layers: [
+        (name: 'l', bytes: const [1], mediaType: mediaType),
+      ],
     );
 
     test("Docker's own spelling of a gzipped layer is one", () {
@@ -241,9 +288,9 @@ void main() {
       // around those two read it as an uncompressed tar and handed gzip bytes
       // to the tar decoder.
       expect(
-        ociLayers(of('application/vnd.docker.image.rootfs.diff.tar.gzip'))
-            .single
-            .compression,
+        ociLayers(
+          of('application/vnd.docker.image.rootfs.diff.tar.gzip'),
+        ).single.compression,
         LinuxRootfsCompression.gzip,
       );
     });
@@ -282,6 +329,12 @@ void main() {
       final mark = ociWhiteout('.wh..wh..opq');
       expect(mark?.opaque, true);
       expect(mark?.deletes, isNull);
+    });
+
+    test('a marker cannot target its directory or parent', () {
+      for (final name in const ['.wh.', '.wh..', '.wh...']) {
+        expect(() => ociWhiteout(name), throwsStateError, reason: name);
+      }
     });
   });
 }

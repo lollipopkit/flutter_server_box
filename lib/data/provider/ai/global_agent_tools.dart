@@ -12,6 +12,7 @@ import 'package:server_box/core/utils/adhoc_ssh_prompt.dart';
 import 'package:server_box/core/utils/local_exec.dart';
 import 'package:server_box/core/utils/rootfs.dart';
 import 'package:server_box/core/utils/server.dart';
+import 'package:server_box/core/utils/shell_quote.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/core/utils/ssh_exec.dart';
 import 'package:server_box/core/utils/ssh_file_backend.dart';
@@ -638,11 +639,21 @@ class AgentToolExecutionResult {
 /// [serverId] is null for a connection that is not a configured server — it is
 /// what makes a result say "no particular server" rather than name someone
 /// else's.
+/// [fileTransport] is which protocol carries this host's files, so the file
+/// tools open a backend rather than insisting on SFTP — a server told to use
+/// `scp` has no subsystem to open.
+///
+/// [expectedSpi] is the server as it was when this handle was resolved, and
+/// null where there is no configured server to compare against. Every await in
+/// a tool re-checks it: an edit or a disconnect mid-operation would otherwise
+/// leave the tool finishing against the host it started on and reporting the
+/// result under the new one's name.
 typedef AgentShellHandle = ({
   ServerExec exec,
   SSHClient? client,
   String? serverId,
   SshFileTransport fileTransport,
+  Spi? expectedSpi,
 });
 
 /// Which machine a shell or file tool call is about.
@@ -728,6 +739,7 @@ class GlobalAgentToolService {
   static const _maxWriteBytes = 512 * 1024;
 
   final Ref _ref;
+
   /// The signal that stops whatever [_runShell] is waiting on, or null when
   /// nothing is running. Pulled by [cancelCurrent] and by the timeout.
   Completer<void>? _cancelRun;
@@ -843,6 +855,7 @@ class GlobalAgentToolService {
       // Never read: with no client there is no file backend to build, and the
       // file tools take the `dart:io` path here.
       fileTransport: SshFileTransport.sftp,
+      expectedSpi: null,
     );
   }
 
@@ -874,8 +887,10 @@ class GlobalAgentToolService {
       client: session.client,
       serverId: null,
       // Nothing was configured for this host — it was reached by address a
-      // moment ago — so it gets the protocol every server starts on.
+      // moment ago — so it gets the protocol every server starts on, and there
+      // is no stored record for a later check to compare against.
       fileTransport: SshFileTransport.sftp,
+      expectedSpi: null,
     );
   }
 
@@ -892,13 +907,15 @@ class GlobalAgentToolService {
   /// forwarding all reach one through this same path.
   Future<AgentShellHandle> _connectedServer(String serverId) async {
     final state = _server(serverId);
+    final spi = state.spi;
     final existing = state.client;
     if (existing != null && !existing.isClosed) {
       return (
         exec: SshExec(existing),
         client: existing,
-        serverId: state.spi.id,
-        fileTransport: state.spi.ssh?.fileTransport ?? SshFileTransport.sftp,
+        serverId: spi.id,
+        fileTransport: spi.ssh?.fileTransport ?? SshFileTransport.sftp,
+        expectedSpi: spi,
       );
     }
 
@@ -912,22 +929,37 @@ class GlobalAgentToolService {
       _ref.read(agentShellProvider.notifier).show();
     }
 
+    final notifier = _ref.read(serverProvider(spi.id).notifier);
     final ServerExec exec;
     try {
-      exec = await _ref.read(serverProvider(state.spi.id).notifier).ensureExec();
+      exec = await notifier.ensureExec();
     } catch (e) {
       throw StateError('Cannot run commands on ${state.spi.name}: $e');
     }
-    // Taken from what was just resolved rather than read back off the
-    // provider: a status refresh that failed while this was awaiting drops the
-    // client from the state, as does editing or disconnecting the server, and
-    // by now the state may hold nothing at all.
+    final stored = _ref.read(serversProvider).servers[serverId];
+    if (stored != spi || !notifier.isExecCurrent(exec, spi)) {
+      throw StateError('${spi.name} changed while connecting; try again.');
+    }
     return (
       exec: exec,
       client: exec is SshExec ? exec.client : null,
-      serverId: state.spi.id,
-      fileTransport: state.spi.ssh?.fileTransport ?? SshFileTransport.sftp,
+      serverId: spi.id,
+      // From what was just checked against the store rather than read back off
+      // the provider, which by now may hold a different server entirely.
+      fileTransport: spi.ssh?.fileTransport ?? SshFileTransport.sftp,
+      expectedSpi: spi,
     );
+  }
+
+  void _requireCurrent(AgentShellHandle handle) {
+    final serverId = handle.serverId;
+    final spi = handle.expectedSpi;
+    if (serverId == null || spi == null) return;
+    final notifier = _ref.read(serverProvider(serverId).notifier);
+    final stored = _ref.read(serversProvider).servers[serverId];
+    if (stored != spi || !notifier.isExecCurrent(handle.exec, spi)) {
+      throw StateError('${spi.name} changed while the operation was running.');
+    }
   }
 
   ServerState _server(String? serverId) {
@@ -951,8 +983,9 @@ class GlobalAgentToolService {
     AskAiCommand proposal,
     Stopwatch watch,
   ) async {
-    final (:exec, client: _, :serverId, fileTransport: _) =
-        await _shellFor(proposal);
+    final handle = await _shellFor(proposal);
+    final exec = handle.exec;
+    final serverId = handle.serverId;
     final command = proposal.argumentString('command');
     if (command == null) throw const FormatException('command is required');
 
@@ -980,6 +1013,7 @@ class GlobalAgentToolService {
       });
       final ExecResult result;
       try {
+        _requireCurrent(handle);
         result = await exec.run(
           command,
           onStdout: stdoutCapture.add,
@@ -989,14 +1023,17 @@ class GlobalAgentToolService {
       } finally {
         timer.cancel();
       }
+      _requireCurrent(handle);
 
       final limited = limitGlobalAgentShellOutput(
         stdoutCapture.text,
         stderrCapture.text,
         // `outputIncomplete` is the drain having been given up on, which is
         // the same thing to a reader as having been cut short.
-        stdoutAlreadyTruncated: stdoutCapture.truncated || result.outputIncomplete,
-        stderrAlreadyTruncated: stderrCapture.truncated || result.outputIncomplete,
+        stdoutAlreadyTruncated:
+            stdoutCapture.truncated || result.outputIncomplete,
+        stderrAlreadyTruncated:
+            stderrCapture.truncated || result.outputIncomplete,
         maxCharacters: _maxShellOutputCharacters,
       );
       return AgentToolExecutionResult(
@@ -1029,9 +1066,10 @@ class GlobalAgentToolService {
     AskAiCommand proposal,
     Stopwatch watch,
   ) async {
-    final (:exec, :client, :serverId, :fileTransport) = await _shellFor(
-      proposal,
-    );
+    final handle = await _shellFor(proposal);
+    final exec = handle.exec;
+    final client = handle.client;
+    final serverId = handle.serverId;
     final path = proposal.path;
     if (path == null) throw const FormatException('path is required');
     if (exec is LocalExec) return _readLocalFile(proposal, watch, path, exec);
@@ -1042,11 +1080,13 @@ class GlobalAgentToolService {
     // that still insisted on one.
     final backend = await openSshFileBackend(
       client,
-      transport: fileTransport,
+      transport: handle.fileTransport,
       timeout: _sftpTimeout,
     );
     try {
+      _requireCurrent(handle);
       final entry = await backend.stat(path);
+      _requireCurrent(handle);
       if (entry == null) throw StateError('No such file: $path');
       if (entry.isDir) throw StateError('$path is a directory, not a file.');
       final size = entry.size;
@@ -1063,6 +1103,7 @@ class GlobalAgentToolService {
         // being pulled across in full before being thrown away.
         if (bytes.length > _maxReadBytes) break;
       }
+      _requireCurrent(handle);
       final data = bytes.takeBytes();
       final truncated =
           data.length > _maxReadBytes || (size != null && size > _maxReadBytes);
@@ -1114,18 +1155,21 @@ class GlobalAgentToolService {
     return host;
   }
 
-  /// The same two tools on this device, over `dart:io` instead of SFTP.
+  /// The same two tools on this device.
   ///
-  /// Not `cat` and `tee` through the shell: those would go through the same
-  /// review as any other command, and reading a file is not a command. Same
-  /// limits as the remote ones, so a model gets one answer whichever machine
-  /// it asked about.
+  /// Host files use `dart:io`. Guest files run a fixed, quoted helper inside
+  /// the guest instead: resolving a host path and opening it later leaves a
+  /// check/use window where a concurrent guest command can swap a parent for
+  /// an outside symlink. Same limits as the remote tools either way.
   Future<AgentToolExecutionResult> _readLocalFile(
     AskAiCommand proposal,
     Stopwatch watch,
     String path,
     LocalExec exec,
   ) async {
+    if (exec.inRootfs) {
+      return _readGuestFile(proposal, watch, path, exec);
+    }
     final file = File(await _localPath(path, exec));
     final int size;
     try {
@@ -1143,6 +1187,68 @@ class GlobalAgentToolService {
     final data = truncated
         ? await _firstBytes(file, _maxReadBytes)
         : await file.readAsBytes();
+    return AgentToolExecutionResult(
+      toolName: proposal.toolName,
+      serverId: null,
+      summary: truncated
+          ? 'Read the first $_maxReadBytes bytes of $path on this device.'
+          : 'Read $path on this device.',
+      succeeded: true,
+      duration: watch.elapsed,
+      truncated: truncated,
+      data: {
+        'path': path,
+        'size_bytes': size,
+        'content': utf8.decode(data, allowMalformed: true),
+      },
+    );
+  }
+
+  Future<AgentToolExecutionResult> _readGuestFile(
+    AskAiCommand proposal,
+    Stopwatch watch,
+    String path,
+    LocalExec exec,
+  ) async {
+    final quoted = shellSingleQuote(path);
+    final result = await exec.run(
+      'set -e\n'
+      'p=$quoted\n'
+      r'if [ ! -f "$p" ]; then exit 44; fi'
+      '\n'
+      r'size=$(wc -c < "$p") || exit'
+      '\n'
+      r'''printf '%s\n' "$size"'''
+      '\n'
+      'head -c $_maxReadBytes "\$p" | base64 | tr -d "\\n"',
+    );
+    if (result.outputIncomplete) {
+      throw StateError('The Linux userland returned incomplete file data.');
+    }
+    if (result.exitCode == 44) {
+      throw StateError('No such file on this device: $path');
+    }
+    if (result.exitCode != 0) {
+      throw StateError(
+        result.stderr.trim().isEmpty
+            ? 'Could not read $path inside the Linux userland.'
+            : result.stderr.trim(),
+      );
+    }
+
+    final separator = result.stdout.indexOf('\n');
+    if (separator <= 0) {
+      throw StateError('The Linux userland returned malformed file data.');
+    }
+    final size = int.tryParse(result.stdout.substring(0, separator).trim());
+    if (size == null || size < 0) {
+      throw StateError('The Linux userland returned an invalid file size.');
+    }
+    final encoded = result.stdout.substring(separator + 1).trim();
+    final data = encoded.isEmpty
+        ? Uint8List(0)
+        : Uint8List.fromList(base64.decode(encoded));
+    final truncated = size > _maxReadBytes;
     return AgentToolExecutionResult(
       toolName: proposal.toolName,
       serverId: null,
@@ -1181,6 +1287,9 @@ class GlobalAgentToolService {
         'File content exceeds the $_maxWriteBytes byte Agent limit.',
       );
     }
+    if (exec.inRootfs) {
+      return _writeGuestFile(proposal, watch, path, bytes, exec);
+    }
     final host = await _localPath(path, exec, forWrite: true);
     // Written beside the target and moved onto it, the way the remote one is:
     // a write that fails halfway leaves the original file rather than half of
@@ -1209,13 +1318,53 @@ class GlobalAgentToolService {
     );
   }
 
+  Future<AgentToolExecutionResult> _writeGuestFile(
+    AskAiCommand proposal,
+    Stopwatch watch,
+    String path,
+    Uint8List bytes,
+    LocalExec exec,
+  ) async {
+    final quoted = shellSingleQuote(path);
+    final suffix = ShortId.generate();
+    final result = await exec.run(
+      'set -e\n'
+      'p=$quoted\n'
+      'tmp="\$p.$suffix.tmp"\n'
+      r'''trap 'rm -f -- "$tmp"' EXIT HUP INT TERM'''
+      '\n'
+      r'''base64 -d > "$tmp"'''
+      '\n'
+      r'''mv -f -- "$tmp" "$p"'''
+      '\n'
+      'trap - EXIT HUP INT TERM',
+      stdin: base64.encode(bytes),
+    );
+    if (result.outputIncomplete || result.exitCode != 0) {
+      throw StateError(
+        result.stderr.trim().isEmpty
+            ? 'Could not write $path inside the Linux userland.'
+            : result.stderr.trim(),
+      );
+    }
+    return AgentToolExecutionResult(
+      toolName: proposal.toolName,
+      serverId: null,
+      summary: 'Wrote ${bytes.length} bytes to $path on this device.',
+      succeeded: true,
+      duration: watch.elapsed,
+      data: {'path': path, 'bytes_written': bytes.length},
+    );
+  }
+
   Future<AgentToolExecutionResult> _writeFile(
     AskAiCommand proposal,
     Stopwatch watch,
   ) async {
-    final (:exec, :client, :serverId, :fileTransport) = await _shellFor(
-      proposal,
-    );
+    final handle = await _shellFor(proposal);
+    final exec = handle.exec;
+    final client = handle.client;
+    final serverId = handle.serverId;
     final path = proposal.path;
     final content = proposal.arguments['content'];
     if (path == null) throw const FormatException('path is required');
@@ -1232,15 +1381,21 @@ class GlobalAgentToolService {
     }
     final backend = await openSshFileBackend(
       client,
-      transport: fileTransport,
+      transport: handle.fileTransport,
       timeout: _sftpTimeout,
     );
     try {
-      // The staging file and the rename over it were written out here; the
-      // backend does both, and removes its own leftovers when the write fails.
+      _requireCurrent(handle);
+      // The staging file, the mode carried onto it and the rename over it were
+      // written out here; the backend does all three, and removes its own
+      // leftovers when the write fails.
       await backend
           .write(path, Stream<List<int>>.value(bytes), size: bytes.length)
           .timeout(_operationTimeout);
+      // After, not only before. The write is the long await here, and a server
+      // edited while it ran is one whose result must not be reported under the
+      // new name — `close` below still ends the channel either way.
+      _requireCurrent(handle);
       return AgentToolExecutionResult(
         toolName: proposal.toolName,
         serverId: serverId,
@@ -1250,6 +1405,10 @@ class GlobalAgentToolService {
         data: {'path': path, 'bytes_written': bytes.length},
       );
     } finally {
+      // One call where there were three: the backend owns the handle, the
+      // staging path and the session, and closing it is what ends whichever of
+      // them are still open — including an `scp` channel that is mid-open, for
+      // a caller that gave up on the `.timeout` above.
       await backend.close();
     }
   }

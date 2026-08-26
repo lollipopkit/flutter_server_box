@@ -336,7 +336,9 @@ extension _Sessions on _SSHTabPageState {
     // has to mean both.
     if (!await installRootfs(context, another: before.isNotEmpty)) return;
     if (!mounted) return;
-    final added = Rootfs.profiles.firstWhereOrNull((e) => !before.contains(e.id));
+    final added = Rootfs.profiles.firstWhereOrNull(
+      (e) => !before.contains(e.id),
+    );
     // Nothing new means it was already there and the install returned early —
     // the first system, opened by the chip that offered to install it.
     //
@@ -397,24 +399,6 @@ extension _Sessions on _SSHTabPageState {
     // decided to keep.
     if (mounted) FocusScope.of(context).unfocus();
     _closeTab(tab.id);
-  }
-
-  /// Closes every terminal, when something has asked for it.
-  ///
-  /// No confirmation here. The ask comes from the tab strip's own menu, which
-  /// confirms before it gets this far; this end only knows that the answer was
-  /// yes.
-  void _drainCloseAll() {
-    if (!ref.read(terminalCloseAllRequestProvider)) return;
-    ref.read(terminalCloseAllRequestProvider.notifier).done();
-
-    // Copied, because closing a tab is what mutates the list being walked.
-    final ids = [for (final tab in _sessions.tabs) tab.id];
-    if (ids.isEmpty) return;
-    if (mounted) FocusScope.of(context).unfocus();
-    for (final id in ids) {
-      _closeTab(id);
-    }
   }
 
   /// Opens everything queued for this tab and empties the queue.
@@ -543,6 +527,24 @@ extension _Sessions on _SSHTabPageState {
 
 /// The buttons on the tab bar.
 extension _Actions on _SSHTabPageState {
+  /// Closes every terminal, when something has asked for it.
+  ///
+  /// No confirmation here. The ask comes from the tab strip's own menu, which
+  /// confirms before it gets this far; this end only knows that the answer was
+  /// yes.
+  void _drainCloseAll() {
+    if (!ref.read(terminalCloseAllRequestProvider)) return;
+    ref.read(terminalCloseAllRequestProvider.notifier).done();
+
+    // Copied, because closing a tab is what mutates the list being walked.
+    final ids = [for (final tab in _sessions.tabs) tab.id];
+    if (ids.isEmpty) return;
+    if (mounted) FocusScope.of(context).unfocus();
+    for (final id in ids) {
+      _closeTab(id);
+    }
+  }
+
   /// The buttons for whichever terminal is showing.
   ///
   /// The agent's tools all name a server, so it is offered only on one.
@@ -561,29 +563,34 @@ extension _Actions on _SSHTabPageState {
 
   /// Opens the agent on the terminal that is on screen, the same way the
   /// snippet picker beside it works.
-  Widget get _agentBtn => Btn.icon(text: l10n.askAi, 
+  Widget get _agentBtn => Btn.icon(
+    text: l10n.askAi,
     icon: const Icon(Icons.auto_awesome, size: 18),
     onTap: () =>
         _sessions.current?.data.pageKey.currentState?.openAgentFromToolbar(),
   );
 
-  Widget get _snippetBtn => Btn.icon(text: libL10n.snippet, 
+  Widget get _snippetBtn => Btn.icon(
+    text: libL10n.snippet,
     icon: const Icon(Icons.code, size: 18),
     onTap: () =>
         _sessions.current?.data.pageKey.currentState?.pickSnippetFromToolbar(),
   );
 
-  Widget get _sortBtn => Btn.icon(text: libL10n.sort, 
+  Widget get _sortBtn => Btn.icon(
+    text: libL10n.sort,
     icon: Icon(_SortOrder.stored.icon, size: 18),
     onTap: _showSortMenu,
   );
 
-  Widget get _searchBtn => Btn.icon(text: libL10n.search, 
+  Widget get _searchBtn => Btn.icon(
+    text: libL10n.search,
     icon: const Icon(Icons.search, size: 18),
     onTap: _showSearch,
   );
 
-  Widget get _historyBtn => Btn.icon(text: l10n.history, 
+  Widget get _historyBtn => Btn.icon(
+    text: l10n.history,
     icon: const Icon(Icons.history, size: 18),
     onTap: _showHistory,
   );

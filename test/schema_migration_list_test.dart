@@ -40,7 +40,11 @@ void main() {
     // be walked across. `hiveImportProduces` is the earliest an install can
     // be at — everything older goes through `HiveImport` first.
     final covered = {for (final m in kSchemaMigrations) m.from};
-    for (var v = SchemaVersion.hiveImportProduces; v < SchemaVersion.current; v++) {
+    for (
+      var v = SchemaVersion.hiveImportProduces;
+      v < SchemaVersion.current;
+      v++
+    ) {
       expect(covered, contains(v), reason: 'no step converts v$v to v${v + 1}');
     }
   });
@@ -49,7 +53,10 @@ void main() {
     for (final m in kSchemaMigrations) {
       expect(
         m.from,
-        inInclusiveRange(SchemaVersion.hiveImportProduces, SchemaVersion.current - 1),
+        inInclusiveRange(
+          SchemaVersion.oldestSupported,
+          SchemaVersion.current - 1,
+        ),
         reason: '${m.runtimeType} converts from a version nothing is at',
       );
     }
@@ -96,7 +103,9 @@ void main() {
       SettingStore.instance.schemaVersion.put(SchemaVersion.hiveImportProduces);
 
       expect(
-        () => SchemaVersion.migrate(const [_Noop(SchemaVersion.hiveImportProduces)]),
+        () => SchemaVersion.migrate(const [
+          _Noop(SchemaVersion.hiveImportProduces),
+        ]),
         throwsA(isA<StateError>()),
       );
     });

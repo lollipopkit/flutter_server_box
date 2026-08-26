@@ -5,6 +5,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
+import 'package:server_box/core/utils/monitor_exec.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/core/utils/ssh_exec.dart';
@@ -116,6 +117,9 @@ class ServerNotifier extends _$ServerNotifier {
     ref.onDispose(() {
       unawaited(_disposePersistentShell());
       _source?.close();
+      try {
+        state.client?.close();
+      } catch (_) {}
     });
 
     // Cache timeout in memory; the DB read per poll is replaced by this.
@@ -415,10 +419,15 @@ class ServerNotifier extends _$ServerNotifier {
           Loggers.app.warning('Ask ${spi.name} what it allows', e, s);
         }
       }
+      if (!_isRefreshCurrent(operation, spi)) return;
       updateConnection(ServerConn.finished);
       TryLimiter.reset(sid);
     } catch (e, s) {
-      Loggers.app.warning('Get status via monitor for ${spi.name} failed', e, s);
+      Loggers.app.warning(
+        'Get status via monitor for ${spi.name} failed',
+        e,
+        s,
+      );
       // A failure belongs to the server it was fetched for. Edit a server's
       // address and the poll still running against the old one eventually
       // times out; without this it counted that timeout against the retry
@@ -443,19 +452,23 @@ class ServerNotifier extends _$ServerNotifier {
   /// [ServerCapabilities.storedHistory], and once live samples exist — see
   /// [StatusHistory.seed].
   Future<void> seedHistory({int minutes = 60}) async {
-    final credential = ServerConnectCredential.fromSpi(state.spi);
+    final generation = _operationGeneration;
+    final spi = state.spi;
+    final credential = ServerConnectCredential.fromSpi(spi);
     if (!ServerCapabilities.of(credential).storedHistory) return;
     try {
       final samples = await _resolveSource(
         credential,
       ).fetchHistory(minutes: minutes);
+      if (!_isRefreshCurrent(generation, spi)) return;
       if (samples.isEmpty) return;
       state.status.history.seed(samples);
       // history is mutated in place, so hand out a fresh ServerStatus to make
       // the watchers rebuild
       updateStatus(_copyStatus(state.status));
     } catch (e, s) {
-      Loggers.app.warning('Seed history for ${state.spi.name}', e, s);
+      if (!_isRefreshCurrent(generation, spi)) return;
+      Loggers.app.warning('Seed history for ${spi.name}', e, s);
     }
   }
 
@@ -498,6 +511,22 @@ class ServerNotifier extends _$ServerNotifier {
         }
         return source.exec;
     }
+  }
+
+  bool isExecCurrent(ServerExec exec, Spi spi) {
+    if (state.spi != spi) return false;
+    if (exec is SshExec) {
+      return identical(state.client, exec.client) && !exec.client.isClosed;
+    }
+    if (exec is MonitorExec) {
+      final current = _source;
+      final currentExec = current is MonitorHttpDataSource
+          ? current.exec
+          : null;
+      return currentExec is MonitorExec &&
+          identical(currentExec.client, exec.client);
+    }
+    return false;
   }
 
   /// Whether the generated script has been written to this server since the
@@ -545,7 +574,8 @@ class ServerNotifier extends _$ServerNotifier {
       final merged = [
         ...?onServer,
         for (final e in local.entries)
-          if (!existing.contains(e.key)) ffi.CustomCmd(name: e.key, cmd: e.value),
+          if (!existing.contains(e.key))
+            ffi.CustomCmd(name: e.key, cmd: e.value),
       ];
 
       final install = await exec.run(
@@ -558,9 +588,15 @@ class ServerNotifier extends _$ServerNotifier {
 
       final custom = spi.custom;
       if (custom == null) return;
+      // Don't overwrite newer edits that happened while we were reading/installing.
+      final current = ref.read(serversProvider).servers[spi.id];
+      if (current == null || current != spi) return;
       await ref
           .read(serversProvider.notifier)
-          .updateServer(spi, spi.copyWith(custom: custom.withoutCmds()));
+          .updateServer(
+            current,
+            current.copyWith(custom: custom.withoutCmds()),
+          );
       Loggers.app.info(
         'Migrated ${local.length} custom command(s) for ${spi.name}',
       );
@@ -586,7 +622,19 @@ class ServerNotifier extends _$ServerNotifier {
   /// reporting an empty list on a server that has plenty of processes.
   Future<ServerExec> ensureScriptExec() async {
     final exec = await ensureExec();
-    if (_scriptWritten) return exec;
+    final gen = _operationGeneration;
+    final origSpi = state.spi;
+    if (_scriptWritten) {
+      final spi = state.spi;
+      if (spi.custom?.cmds?.isNotEmpty == true &&
+          gen == _operationGeneration &&
+          origSpi == spi) {
+        try {
+          await _migrateCustomCmds(spi, state.status.system, exec);
+        } catch (_) {}
+      }
+      return exec;
+    }
 
     final spi = state.spi;
     final system = state.status.system;
@@ -625,9 +673,10 @@ class ServerNotifier extends _$ServerNotifier {
     // A monitor-only server reaches this path too, which is the point: what
     // carries the commands is `ServerExec`, not SSH, so both kinds of server
     // reach the same directory.
-    await _migrateCustomCmds(spi, system, exec);
-
-    _scriptWritten = true;
+    if (gen == _operationGeneration && origSpi == state.spi) {
+      await _migrateCustomCmds(spi, system, exec);
+      _scriptWritten = true;
+    }
     return exec;
   }
 
@@ -643,6 +692,8 @@ class ServerNotifier extends _$ServerNotifier {
     if (existing != null && !existing.isClosed) return existing;
 
     final spi = state.spi;
+    final gen = _operationGeneration;
+    final origSpi = spi;
     if (spi.ssh == null) {
       throw SSHErr(
         type: SSHErrType.connect,
@@ -656,39 +707,49 @@ class ServerNotifier extends _$ServerNotifier {
       );
     }
 
-    // Read before connecting and checked after, as every await in the refresh
-    // paths already does. Authenticating takes as long as the far side and the
-    // user take, and editing the server or disconnecting it bumps this — so
-    // without the check the client that eventually arrived was installed into
-    // the state of a server that is now somewhere else entirely, and the next
-    // caller ran its commands on the old host.
-    final generation = _operationGeneration;
-
+    // Held so the `catch` can close it. Authentication is awaited before
+    // `_setClient`, so a failure there would otherwise leak a connected client
+    // that nothing holds a reference to.
+    SSHClient? client;
     try {
-      final client = await genClient(
+      client = await genClient(
         spi,
         timeout: _timeout,
         onKeyboardInteractive: KeyboardInteractiveAuth.handle,
       );
       await client.authenticated;
-      if (!_isRefreshCurrent(generation, spi)) {
-        client.close();
-        throw SSHErr(
-          type: SSHErrType.connect,
-          message: '${spi.name} changed while connecting',
-        );
+      // Checked after, as every await in the refresh paths already does.
+      // Authenticating takes as long as the far side and the user take, and
+      // editing the server or disconnecting it bumps the generation — so
+      // without this the client that eventually arrived was installed into the
+      // state of a server that is now somewhere else, and the next caller ran
+      // its commands on the old host.
+      if (!_isRefreshCurrent(gen, origSpi)) {
+        try {
+          client.close();
+        } catch (_) {}
+        throw StateError('superseded shell connect for ${origSpi.name}');
       }
       TryLimiter.reset(_shellTryId);
       _setClient(client);
       return client;
     } catch (e, s) {
+      // Authentication is awaited before _setClient, so a failure would leak
+      // the newly created client if we only close state.client.
+      if (client != null) {
+        try {
+          client.close();
+        } catch (_) {}
+      }
       // Not counted when it is this server that moved: the limiter is keyed on
       // an id an edit keeps, so charging a superseded attempt to it would stop
       // the *corrected* server reconnecting. `_failSsh` skips it for the same
       // reason.
-      if (_isRefreshCurrent(generation, spi)) {
-        TryLimiter.inc(_shellTryId);
+      if (!_isRefreshCurrent(gen, origSpi)) {
+        Loggers.app.info('Discarded superseded shell connect for ${spi.name}');
+        rethrow;
       }
+      TryLimiter.inc(_shellTryId);
       Loggers.app.warning('Connect shell for ${spi.name}', e, s);
       rethrow;
     }
@@ -1073,7 +1134,10 @@ class ServerNotifier extends _$ServerNotifier {
         force: interactive,
         operation: operation,
       );
-      final combined = extended.isEmpty ? raw : '$raw\n$extended';
+      // Built-in markers are trusted only before the first custom section;
+      // custom output may contain marker-looking text. Extended status has no
+      // custom commands, so put it first and leave custom output last.
+      final combined = extended.isEmpty ? raw : '$extended\n$raw';
 
       // Same conversion contract as the monitor path: raw transport output in,
       // ServerStatus (plus a trend sample) out

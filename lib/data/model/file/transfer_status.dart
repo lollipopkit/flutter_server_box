@@ -129,7 +129,11 @@ class FileTransferStatus {
       final file = File(LocalFileBackend.nativePath(staging));
       if (await file.exists()) await file.delete();
     } catch (e, s) {
-      Loggers.app.warning('Failed to clean up after a cancelled transfer', e, s);
+      Loggers.app.warning(
+        'Failed to clean up after a cancelled transfer',
+        e,
+        s,
+      );
     }
   }
 
@@ -164,6 +168,8 @@ class FileTransferStatus {
     // agent would otherwise log in twice to move a file it never sends over
     // the network at all.
     final dest = _sameEnd(job.from, job.to) ? source : _backendFor(job.to);
+    Duration? spentTime;
+    Object? error;
     try {
       onNotify(FileTransferStage.preparing);
       final watch = Stopwatch()..start();
@@ -190,31 +196,39 @@ class FileTransferStatus {
         cancelled: () => _cancelled,
         onProgress: (transferred) => onNotify(
           FileTransferProgress(
-            percent: total == 0 ? 0 : transferred / total * 100,
+            percent: total == 0
+                ? 0
+                : (transferred / total * 100).clamp(0, 100).toDouble(),
             transferredBytes: transferred,
           ),
         ),
       );
 
-      onNotify(watch.elapsed);
-      onNotify(FileTransferStage.finished);
+      spentTime = watch.elapsed;
     } on CopyCancelled {
       // The row is already gone and `write` has removed what it staged. There
       // is nobody left to report this to.
     } catch (e, s) {
       Loggers.app.warning('Local copy failed: ${job.from} -> ${job.to}', e, s);
-      onNotify(e);
+      error = e;
     } finally {
       await source.close();
       if (!identical(dest, source)) await dest.close();
+    }
+
+    if (error != null) {
+      onNotify(error);
+    }
+    if (spentTime != null) {
+      onNotify(spentTime);
+      onNotify(FileTransferStage.finished);
     }
   }
 
   /// Whether two ends are the same place, and so can share one session.
   static bool _sameEnd(FileRef a, FileRef b) => switch ((a, b)) {
     (LocalFileRef(), LocalFileRef()) => true,
-    (MonitorFileRef(spi: final x), MonitorFileRef(spi: final y)) =>
-      x.id == y.id,
+    (MonitorFileRef(spi: final x), MonitorFileRef(spi: final y)) => x == y,
     _ => false,
   };
 

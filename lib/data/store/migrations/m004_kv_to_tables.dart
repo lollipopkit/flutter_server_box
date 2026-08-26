@@ -37,6 +37,8 @@ import 'package:sqlite3/sqlite3.dart';
 class KvToTablesMigration implements SchemaMigration {
   const KvToTablesMigration();
 
+  static const _serverAliasStore = 'm004_server_alias';
+
   @override
   int get from => 4;
 
@@ -131,30 +133,43 @@ class KvToTablesMigration implements SchemaMigration {
     final ids = <String, String>{};
     final names = <String>{};
     for (final row in _rows('key')) {
-      final oldId = row.value['id'] as String? ?? row.key;
-      // `private_key` is what the released model's `toJson` called it.
-      final key = (row.value['private_key'] ?? row.value['key']) as String?;
-      if (key == null) continue;
+      try {
+        final storedId = row.value['id'];
+        if (storedId != null && storedId is! String) {
+          throw const FormatException('private-key id is not a string');
+        }
+        final oldId = (storedId as String?) ?? row.key;
+        // `private_key` is what the released model's `toJson` called it.
+        final rawKey = row.value['private_key'] ?? row.value['key'];
+        if (rawKey == null) continue;
+        if (rawKey is! String) {
+          throw const FormatException('private-key payload is not a string');
+        }
 
-      // The old key was the name, and nothing enforced that it was unique
-      // across the two places one could be created.
-      var name = oldId;
-      for (var n = 2; !names.add(name); n++) {
-        name = '$oldId ($n)';
+        // The old key was the name, and nothing enforced that it was unique
+        // across the two places one could be created.
+        var name = oldId;
+        for (var n = 2; !names.add(name); n++) {
+          name = '$oldId ($n)';
+        }
+
+        final id = ShortId.generate();
+        // The first row under a name wins the reference, and it is also the one
+        // that keeps the name unrenamed above — so a server that pointed at `X`
+        // ends up on the key still called `X`.
+        ids.putIfAbsent(oldId, () => id);
+        _db.execute(
+          'INSERT INTO private_key (id, name, key, updated_at) '
+          'VALUES (?, ?, ?, ?);',
+          [id, name, rawKey, row.updatedAt],
+        );
+      } catch (e, s) {
+        Loggers.app.warning(
+          'm004: malformed private key "${row.key}" was skipped',
+          e,
+          s,
+        );
       }
-
-      final id = ShortId.generate();
-      // The first row under a name wins the reference, and it is also the one
-      // that keeps the name unrenamed above — so a server that pointed at `X`
-      // ends up on the key still called `X`. Assigning unconditionally handed
-      // every such server to whichever duplicate happened to be read last,
-      // which is to say: to a key the user never chose, silently.
-      ids.putIfAbsent(oldId, () => id);
-      _db.execute(
-        'INSERT INTO private_key (id, name, key, updated_at) '
-        'VALUES (?, ?, ?, ?);',
-        [id, name, key, row.updatedAt],
-      );
     }
     return ids;
   }
@@ -166,137 +181,70 @@ class KvToTablesMigration implements SchemaMigration {
   /// everything written since 1155, and for anything older the field is empty
   /// and the key is `user@ip:port` — which other records point at.
   Map<String, String> _migrateServers(Map<String, String> keyIds) {
-    final ids = <String, String>{};
+    // A later retry may contain only a child box: earlier boxes have already
+    // been consumed into tables. Keep those server ids resolvable so retried
+    // children are not dropped as references to missing servers.
+    final existingIds = {
+      for (final row in _db.select('SELECT id FROM server;'))
+        row['id'] as String,
+    };
+    final ids = <String, String>{for (final id in existingIds) id: id};
+    for (final row in _db.select('SELECT key, value FROM kv WHERE store = ?;', [
+      _serverAliasStore,
+    ])) {
+      try {
+        final id = json.decode(row['value'] as String);
+        if (id is String && existingIds.contains(id)) {
+          ids[row['key'] as String] = id;
+        }
+      } catch (e) {
+        Loggers.app.warning('m004: unreadable server id alias was skipped', e);
+      }
+    }
+    final usedIds = ids.values.toSet();
     final jumps = <String, List<String>>{};
 
     for (final row in _rows('server')) {
-      final v = row.value;
-      final stored = v['id'] as String?;
-      final id = stored != null && stored.isNotEmpty
-          ? stored
-          : ShortId.generate();
-      final ssh = v['ssh'] as Map?;
-      final monitor = v['monitorHttp'] as Map?;
-      final sshIp = ssh?['ip'] as String?;
-      final monitorAddr = monitor?['addr'] as String?;
-
-      // The schema now says a server is reached one way or the other. A record
-      // with neither was already unusable — `genClient` had nothing to dial —
-      // and one with both was ambiguous. Neither can be represented, so say so
-      // rather than failing the whole migration.
-      final hasSsh = sshIp != null && sshIp.isNotEmpty;
-      final hasMonitor = monitorAddr != null && monitorAddr.isNotEmpty;
-      if (hasSsh == hasMonitor) {
-        Loggers.app.warning(
-          'm004: server "$id" has ${hasSsh ? 'both' : 'neither'} SSH and '
-          'monitor; it could not be connected to and is dropped',
+      try {
+        final migrated = SqliteStore.transact(
+          () => _migrateServerRow(row, keyIds, usedIds),
         );
-        continue;
+        if (migrated == null) continue;
+
+        usedIds.add(migrated.id);
+        ids[row.key] = migrated.id;
+        _db.execute(
+          'INSERT OR REPLACE INTO kv (store, key, value, updated_at) '
+          'VALUES (?, ?, ?, ?);',
+          [_serverAliasStore, row.key, json.encode(migrated.id), row.updatedAt],
+        );
+        final stored = migrated.storedId;
+        if (stored != null && stored.isNotEmpty) {
+          // An embedded id is ambiguous when legacy data duplicated it. Keep
+          // references stable on the first row, while the row's kv key still
+          // resolves to the distinct id assigned to that exact record.
+          ids.putIfAbsent(stored, () => migrated.id);
+          _db.execute(
+            'INSERT OR IGNORE INTO kv (store, key, value, updated_at) '
+            'VALUES (?, ?, ?, ?);',
+            [
+              _serverAliasStore,
+              stored,
+              json.encode(migrated.id),
+              row.updatedAt,
+            ],
+          );
+        }
+        if (migrated.jumps.isNotEmpty) {
+          jumps[migrated.id] = migrated.jumps;
+        }
+      } catch (e, s) {
+        Loggers.app.warning(
+          'm004: malformed server "${row.key}" was skipped',
+          e,
+          s,
+        );
       }
-
-      final custom = v['custom'] as Map? ?? const {};
-      final wol = v['wolCfg'] as Map?;
-
-      // A key id that names no key. If it looks like a path it is one: the
-      // `~/.ssh/config` import wrote `IdentityFile` into this field. Mapping it
-      // to null would be the only record that it ever existed.
-      // `pubKeyId` is what `SshCredential.toJson` calls it, kept from the
-      // flat pre-v3 layout. Reading `keyId` alone found nothing and detached
-      // every server from its key.
-      final oldKeyId = (ssh?['pubKeyId'] ?? ssh?['keyId']) as String?;
-      final newKeyId = keyIds[oldKeyId];
-      final keyPath = newKeyId == null && oldKeyId != null && _isPath(oldKeyId)
-          ? oldKeyId
-          : ssh?['keyPath'] as String?;
-
-      _db.execute(
-        'INSERT INTO server ('
-        'id, name, auto_connect, system_type, '
-        'ssh_ip, ssh_port, ssh_user, ssh_pwd, ssh_key_id, ssh_key_path, '
-        'ssh_alter_url, ssh_proxy_command, '
-        'monitor_addr, monitor_user, monitor_pwd, monitor_ignore_cert, '
-        'monitor_allow_insecure, '
-        'wol_mac, wol_ip, wol_pwd, '
-        'pve_addr, pve_ignore_cert, pve_pwd, prefer_temp_dev, '
-        'temp_is_celsius, logo_url, net_dev, script_dir, updated_at'
-        ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '
-        '?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
-        [
-          id,
-          v['name'] as String? ?? id,
-          _bool(v['autoConnect'], fallback: true),
-          v['customSystemType'] as String?,
-          hasSsh ? sshIp : null,
-          hasSsh ? ((ssh?['port'] as num?)?.toInt() ?? 22) : null,
-          hasSsh ? ((ssh?['user'] as String?) ?? 'root') : null,
-          ssh?['pwd'] as String?,
-          // Points at the new id, so renaming the key later cannot detach it.
-          newKeyId,
-          keyPath,
-          ssh?['alterUrl'] as String?,
-          ssh?['proxyCommand'] as String?,
-          hasMonitor ? monitorAddr : null,
-          monitor?['user'] as String?,
-          monitor?['pwd'] as String?,
-          hasMonitor ? _bool(monitor?['ignoreCert']) : null,
-          hasMonitor ? _bool(monitor?['allowInsecure']) : null,
-          wol?['mac'] as String?,
-          wol?['ip'] as String?,
-          wol?['pwd'] as String?,
-          custom['pveAddr'] as String?,
-          _bool(custom['pveIgnoreCert']),
-          custom['pvePwd'] as String?,
-          custom['preferTempDev'] as String?,
-          _bool(custom['tempIsCelsius'], fallback: true),
-          custom['logoUrl'] as String?,
-          custom['netDev'] as String?,
-          custom['scriptDir'] as String?,
-          row.updatedAt,
-        ],
-      );
-      ids[row.key] = id;
-      if (stored != null && stored.isNotEmpty) ids[stored] = id;
-
-      for (final tag in (v['tags'] as List? ?? const []).whereType<String>()) {
-        _db.execute('INSERT OR IGNORE INTO server_tag VALUES (?, ?);', [
-          id,
-          tag,
-        ]);
-      }
-      (v['envs'] as Map? ?? const {}).forEach((k, val) {
-        _db.execute('INSERT OR IGNORE INTO server_env VALUES (?, ?, ?);', [
-          id,
-          '$k',
-          '$val',
-        ]);
-      });
-      for (final cmd
-          in (v['disabledCmdTypes'] as List? ?? const []).whereType<String>()) {
-        _db.execute('INSERT OR IGNORE INTO server_disabled_cmd VALUES (?, ?);', [
-          id,
-          cmd,
-        ]);
-      }
-      (custom['cmds'] as Map? ?? const {}).forEach((k, val) {
-        _db.execute('INSERT OR IGNORE INTO server_custom_cmd VALUES (?, ?, ?);', [
-          id,
-          '$k',
-          '$val',
-        ]);
-      });
-
-      // Held back: a jump host is a server, so the row it points at may not
-      // have been inserted yet — and its id may not be known yet either.
-      final ordered = <String>[
-        for (final j in [ssh?['jumpId'], ...?(ssh?['jumpIds'] as List?)])
-          if (j is String && j.isNotEmpty) j,
-      ];
-      final seen = <String>{};
-      final deduped = [
-        for (final j in ordered)
-          if (seen.add(j)) j,
-      ];
-      if (deduped.isNotEmpty) jumps[id] = deduped;
     }
 
     jumps.forEach((serverId, targets) {
@@ -321,6 +269,141 @@ class KvToTablesMigration implements SchemaMigration {
     });
 
     return ids;
+  }
+
+  ({String id, String? storedId, List<String> jumps})? _migrateServerRow(
+    ({String key, Map<String, dynamic> value, int updatedAt}) row,
+    Map<String, String> keyIds,
+    Set<String> usedIds,
+  ) {
+    final v = row.value;
+    final stored = v['id'] as String?;
+    var id = stored != null && stored.isNotEmpty ? stored : ShortId.generate();
+    if (usedIds.contains(id)) {
+      Loggers.app.warning(
+        'm004: duplicate server id "$id" on "${row.key}"; assigning a new id',
+      );
+      do {
+        id = ShortId.generate();
+      } while (usedIds.contains(id));
+    }
+
+    final ssh = v['ssh'] as Map?;
+    final monitor = v['monitorHttp'] as Map?;
+    final sshIp = ssh?['ip'] as String?;
+    final monitorAddr = monitor?['addr'] as String?;
+
+    // The schema now says a server is reached one way or the other. A record
+    // with neither was already unusable — `genClient` had nothing to dial —
+    // and one with both was ambiguous. Neither can be represented, so say so
+    // rather than failing the whole migration.
+    final hasSsh = sshIp != null && sshIp.isNotEmpty;
+    final hasMonitor = monitorAddr != null && monitorAddr.isNotEmpty;
+    if (hasSsh == hasMonitor) {
+      Loggers.app.warning(
+        'm004: server "$id" has ${hasSsh ? 'both' : 'neither'} SSH and '
+        'monitor; it could not be connected to and is dropped',
+      );
+      return null;
+    }
+
+    final custom = v['custom'] as Map? ?? const {};
+    final wol = v['wolCfg'] as Map?;
+
+    // A key id that names no key. If it looks like a path it is one: the
+    // `~/.ssh/config` import wrote `IdentityFile` into this field. Mapping it
+    // to null would be the only record that it ever existed.
+    final oldKeyId = (ssh?['pubKeyId'] ?? ssh?['keyId']) as String?;
+    final newKeyId = keyIds[oldKeyId];
+    final keyPath = newKeyId == null && oldKeyId != null && _isPath(oldKeyId)
+        ? oldKeyId
+        : ssh?['keyPath'] as String?;
+
+    _db.execute(
+      'INSERT INTO server ('
+      'id, name, auto_connect, system_type, '
+      'ssh_ip, ssh_port, ssh_user, ssh_pwd, ssh_key_id, ssh_key_path, '
+      'ssh_alter_url, ssh_proxy_command, '
+      'monitor_addr, monitor_user, monitor_pwd, monitor_ignore_cert, '
+      'monitor_allow_insecure, '
+      'wol_mac, wol_ip, wol_pwd, '
+      'pve_addr, pve_ignore_cert, pve_pwd, prefer_temp_dev, '
+      'temp_is_celsius, logo_url, net_dev, script_dir, updated_at'
+      ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '
+      '?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
+      [
+        id,
+        v['name'] as String? ?? id,
+        _bool(v['autoConnect'], fallback: true),
+        v['customSystemType'] as String?,
+        hasSsh ? sshIp : null,
+        hasSsh ? ((ssh?['port'] as num?)?.toInt() ?? 22) : null,
+        hasSsh ? ((ssh?['user'] as String?) ?? 'root') : null,
+        ssh?['pwd'] as String?,
+        newKeyId,
+        keyPath,
+        ssh?['alterUrl'] as String?,
+        ssh?['proxyCommand'] as String?,
+        hasMonitor ? monitorAddr : null,
+        monitor?['user'] as String?,
+        monitor?['pwd'] as String?,
+        hasMonitor ? _bool(monitor?['ignoreCert']) : null,
+        hasMonitor ? _bool(monitor?['allowInsecure']) : null,
+        wol?['mac'] as String?,
+        wol?['ip'] as String?,
+        wol?['pwd'] as String?,
+        custom['pveAddr'] as String?,
+        _bool(custom['pveIgnoreCert']),
+        custom['pvePwd'] as String?,
+        custom['preferTempDev'] as String?,
+        _bool(custom['tempIsCelsius'], fallback: true),
+        custom['logoUrl'] as String?,
+        custom['netDev'] as String?,
+        custom['scriptDir'] as String?,
+        row.updatedAt,
+      ],
+    );
+
+    for (final tag in (v['tags'] as List? ?? const []).whereType<String>()) {
+      _db.execute('INSERT OR IGNORE INTO server_tag VALUES (?, ?);', [id, tag]);
+    }
+    (v['envs'] as Map? ?? const {}).forEach((k, val) {
+      _db.execute('INSERT OR IGNORE INTO server_env VALUES (?, ?, ?);', [
+        id,
+        '$k',
+        '$val',
+      ]);
+    });
+    for (final cmd
+        in (v['disabledCmdTypes'] as List? ?? const []).whereType<String>()) {
+      _db.execute('INSERT OR IGNORE INTO server_disabled_cmd VALUES (?, ?);', [
+        id,
+        cmd,
+      ]);
+    }
+    (custom['cmds'] as Map? ?? const {}).forEach((k, val) {
+      _db.execute('INSERT OR IGNORE INTO server_custom_cmd VALUES (?, ?, ?);', [
+        id,
+        '$k',
+        '$val',
+      ]);
+    });
+
+    // Held back: a jump host is a server, so the row it points at may not have
+    // been inserted yet — and its id may not be known yet either.
+    final ordered = <String>[
+      for (final j in [ssh?['jumpId'], ...?(ssh?['jumpIds'] as List?)])
+        if (j is String && j.isNotEmpty) j,
+    ];
+    final seen = <String>{};
+    return (
+      id: id,
+      storedId: stored,
+      jumps: [
+        for (final jump in ordered)
+          if (seen.add(jump)) jump,
+      ],
+    );
   }
 
   /// Whether [value] is a filesystem path rather than a key id.
@@ -374,11 +457,11 @@ class KvToTablesMigration implements SchemaMigration {
       // `user@ip:port` server id does contain colons.
       final at = '$k'.indexOf('::');
       if (at <= 0) return;
-      final serverId = serverIds['$k'.substring(0, at)];
-      // No server behind it any more — the same records this step drops
-      // everywhere else, and a fingerprint nothing can look up is not trust,
-      // it is a row.
-      if (serverId == null) return;
+      final oldId = '$k'.substring(0, at);
+      // A key without a server mapping belongs to an ad-hoc connection. It
+      // has no server row by design, and the session id is already its final
+      // identifier; only aliases of migrated server rows are rewritten.
+      final serverId = serverIds[oldId] ?? oldId;
       remapped['$serverId::${'$k'.substring(at + 2)}'] = '$v';
     });
 
@@ -395,37 +478,46 @@ class KvToTablesMigration implements SchemaMigration {
     final renamed = <String, List<String>>{};
     final names = <String>{};
     for (final row in _rows('snippet')) {
-      final v = row.value;
-      final script = v['script'] as String?;
-      if (script == null) continue;
+      try {
+        final v = row.value;
+        final script = v['script'] as String?;
+        if (script == null) continue;
 
-      final oldName = v['name'] as String? ?? row.key;
-      var name = oldName;
-      for (var n = 2; !names.add(name); n++) {
-        name = '$oldName ($n)';
-      }
-      (renamed[oldName] ??= []).add(name);
+        final oldName = v['name'] as String? ?? row.key;
+        var name = oldName;
+        for (var n = 2; !names.add(name); n++) {
+          name = '$oldName ($n)';
+        }
+        (renamed[oldName] ??= []).add(name);
 
-      final id = ShortId.generate();
-      _db.execute(
-        'INSERT INTO snippet (id, name, script, note, updated_at) '
-        'VALUES (?, ?, ?, ?, ?);',
-        [id, name, script, v['note'] as String?, row.updatedAt],
-      );
-      for (final tag in (v['tags'] as List? ?? const []).whereType<String>()) {
-        _db.execute('INSERT OR IGNORE INTO snippet_tag VALUES (?, ?);', [
-          id,
-          tag,
-        ]);
-      }
-      for (final target
-          in (v['autoRunOn'] as List? ?? const []).whereType<String>()) {
-        final serverId = serverIds[target];
-        if (serverId == null) continue;
-        _db.execute('INSERT OR IGNORE INTO snippet_auto_run_on VALUES (?, ?);', [
-          id,
-          serverId,
-        ]);
+        final id = ShortId.generate();
+        _db.execute(
+          'INSERT INTO snippet (id, name, script, note, updated_at) '
+          'VALUES (?, ?, ?, ?, ?);',
+          [id, name, script, v['note'] as String?, row.updatedAt],
+        );
+        for (final tag
+            in (v['tags'] as List? ?? const []).whereType<String>()) {
+          _db.execute('INSERT OR IGNORE INTO snippet_tag VALUES (?, ?);', [
+            id,
+            tag,
+          ]);
+        }
+        for (final target
+            in (v['autoRunOn'] as List? ?? const []).whereType<String>()) {
+          final serverId = serverIds[target];
+          if (serverId == null) continue;
+          _db.execute(
+            'INSERT OR IGNORE INTO snippet_auto_run_on VALUES (?, ?);',
+            [id, serverId],
+          );
+        }
+      } catch (e, s) {
+        Loggers.app.warning(
+          'm004: malformed snippet "${row.key}" was skipped',
+          e,
+          s,
+        );
       }
     }
     return renamed;
@@ -433,34 +525,54 @@ class KvToTablesMigration implements SchemaMigration {
 
   void _migratePortForwards(Map<String, String> serverIds) {
     for (final row in _rows('port_forward')) {
-      final v = row.value;
-      final id = v['id'] as String? ?? row.key;
-      final serverId = serverIds[v['serverId'] as String?];
-      if (serverId == null) {
-        Loggers.app.warning(
-          'm004: port forward "$id" names server "${v['serverId']}", which '
-          'does not exist; dropped',
+      try {
+        final v = row.value;
+        final id = v['id'] as String? ?? row.key;
+        final serverId = serverIds[v['serverId'] as String?];
+        if (serverId == null) {
+          Loggers.app.warning(
+            'm004: port forward "$id" names server "${v['serverId']}", '
+            'which does not exist; dropped',
+          );
+          continue;
+        }
+        const types = {'local', 'remote', 'dynamic'};
+        final type = v['type'] as String?;
+        _db.execute(
+          'INSERT INTO port_forward (id, server_id, name, type, local_host, '
+          'local_port, remote_host, remote_port, updated_at) '
+          'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);',
+          [
+            id,
+            serverId,
+            v['name'] as String? ?? id,
+            types.contains(type) ? type : 'local',
+            v['localHost'] as String?,
+            (v['localPort'] as num?)?.toInt() ?? 0,
+            v['remoteHost'] as String?,
+            (v['remotePort'] as num?)?.toInt(),
+            row.updatedAt,
+          ],
         );
-        continue;
+      } on SqliteException catch (e) {
+        // Duplicate logical ids (e.g. two Hive keys `pf-a`/`pf-b` both with
+        // `id: 'pf-1'`) would otherwise abort the whole m004 transaction and
+        // strand every store. Keep the first occurrence and drop the duplicate.
+        if (e.extendedResultCode == 1555 || e.message.contains('UNIQUE')) {
+          Loggers.app.warning(
+            'm004: duplicate port_forward row "${row.key}" dropped',
+            e,
+          );
+          continue;
+        }
+        rethrow;
+      } catch (e, s) {
+        Loggers.app.warning(
+          'm004: malformed port forward "${row.key}" was skipped',
+          e,
+          s,
+        );
       }
-      const types = {'local', 'remote', 'dynamic'};
-      final type = v['type'] as String?;
-      _db.execute(
-        'INSERT INTO port_forward (id, server_id, name, type, local_host, '
-        'local_port, remote_host, remote_port, updated_at) '
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);',
-        [
-          id,
-          serverId,
-          v['name'] as String? ?? id,
-          types.contains(type) ? type : 'local',
-          v['localHost'] as String?,
-          (v['localPort'] as num?)?.toInt() ?? 0,
-          v['remoteHost'] as String?,
-          (v['remotePort'] as num?)?.toInt(),
-          row.updatedAt,
-        ],
-      );
     }
   }
 
@@ -540,29 +652,37 @@ class KvToTablesMigration implements SchemaMigration {
   void _migrateConnStats(Map<String, String> serverIds) {
     var dropped = 0;
     for (final row in _rows('conn_stat')) {
-      final v = row.value;
-      final serverId = serverIds[v['serverId'] as String?];
-      if (serverId == null) {
-        dropped++;
-        continue;
+      try {
+        final v = row.value;
+        final serverId = serverIds[v['serverId'] as String?];
+        if (serverId == null) {
+          dropped++;
+          continue;
+        }
+        final timestamp = DateTime.tryParse('${v['timestamp']}');
+        if (timestamp == null) continue;
+        // A fresh id: the old one was `<serverId>_<millis>`, so two attempts in
+        // the same millisecond shared a key and the second overwrote the first.
+        _db.execute(
+          'INSERT INTO conn_stat (id, server_id, server_name, timestamp, '
+          'result, error_message, duration_ms) VALUES (?, ?, ?, ?, ?, ?, ?);',
+          [
+            ShortId.generate(),
+            serverId,
+            v['serverName'] as String? ?? '',
+            timestamp.millisecondsSinceEpoch,
+            _results['${v['result']}'] ?? 'unknownError',
+            v['errorMessage'] as String? ?? '',
+            (v['durationMs'] as num?)?.toInt() ?? 0,
+          ],
+        );
+      } catch (e, s) {
+        Loggers.app.warning(
+          'm004: malformed connection stat "${row.key}" was skipped',
+          e,
+          s,
+        );
       }
-      final timestamp = DateTime.tryParse('${v['timestamp']}');
-      if (timestamp == null) continue;
-      // A fresh id: the old one was `<serverId>_<millis>`, so two attempts in
-      // the same millisecond shared a key and the second overwrote the first.
-      _db.execute(
-        'INSERT INTO conn_stat (id, server_id, server_name, timestamp, '
-        'result, error_message, duration_ms) VALUES (?, ?, ?, ?, ?, ?, ?);',
-        [
-          ShortId.generate(),
-          serverId,
-          v['serverName'] as String? ?? '',
-          timestamp.millisecondsSinceEpoch,
-          _results['${v['result']}'] ?? 'unknownError',
-          v['errorMessage'] as String? ?? '',
-          (v['durationMs'] as num?)?.toInt() ?? 0,
-        ],
-      );
     }
     if (dropped > 0) {
       Loggers.app.info('m004: dropped $dropped stats for deleted servers');
@@ -593,46 +713,53 @@ class KvToTablesMigration implements SchemaMigration {
       if (!row.key.startsWith(conversationPrefix)) continue;
       final v = row.value;
       if (v is! Map) continue;
-      // snake_case: `AgentConversation.toJson` is hand-written and that is
-      // what it produces, so reading `serverId` here found nothing and every
-      // conversation was dropped.
-      final id = v['id'] as String?;
-      final serverId = v['server_id'] as String?;
-      if (id == null || id.isEmpty || serverId == null || serverId.isEmpty) {
-        continue;
+      try {
+        // snake_case: `AgentConversation.toJson` is hand-written and that is
+        // what it produces, so reading `serverId` here found nothing and every
+        // conversation was dropped.
+        final id = v['id'] as String?;
+        final serverId = v['server_id'] as String?;
+        if (id == null || id.isEmpty || serverId == null || serverId.isEmpty) {
+          continue;
+        }
+        final updatedAt = DateTime.tryParse('${v['updated_at']}');
+        final scope = serverIds[serverId] ?? serverId;
+        // Inside the payload too, not only in the column. The store rebuilds a
+        // conversation from `data` and then compares `conversation.serverId`
+        // against the server it was asked about — `fetchActive`, `setActive` and
+        // `deleteConversation` all do — so a record whose JSON still named the
+        // old id would be unreachable by every one of them.
+        v['server_id'] = scope;
+        // `ON CONFLICT`, not `OR REPLACE`: the active row references this one and
+        // cascades, so replacing would delete the record of which conversation
+        // is open.
+        _db.execute(
+          'INSERT INTO agent_conversation (id, server_id, updated_at, data) '
+          'VALUES (?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET '
+          'server_id = excluded.server_id, updated_at = excluded.updated_at, '
+          'data = excluded.data;',
+          [
+            id,
+            scope,
+            updatedAt?.millisecondsSinceEpoch ?? row.updatedAt,
+            json.encode(v),
+          ],
+        );
+      } catch (e, s) {
+        Loggers.app.warning(
+          'm004: malformed agent conversation "${row.key}" was skipped',
+          e,
+          s,
+        );
       }
-      final updatedAt = DateTime.tryParse('${v['updated_at']}');
-      final scope = serverIds[serverId] ?? serverId;
-      // Inside the payload too, not only in the column. The store rebuilds a
-      // conversation from `data` and then compares `conversation.serverId`
-      // against the server it was asked about — `fetchActive`, `setActive` and
-      // `deleteConversation` all do — so a record whose JSON still named the
-      // old id would be unreachable by every one of them.
-      v['server_id'] = scope;
-      // `ON CONFLICT`, not `OR REPLACE`: the active row references this one and
-      // cascades, so replacing would delete the record of which conversation
-      // is open.
-      _db.execute(
-        'INSERT INTO agent_conversation (id, server_id, updated_at, data) '
-        'VALUES (?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET '
-        'server_id = excluded.server_id, updated_at = excluded.updated_at, '
-        'data = excluded.data;',
-        [
-          id,
-          scope,
-          updatedAt?.millisecondsSinceEpoch ?? row.updatedAt,
-          json.encode(v),
-        ],
-      );
     }
 
     active.forEach((serverId, conversationId) {
       // The active row references a real conversation now.
-      final exists = _db
-          .select('SELECT 1 FROM agent_conversation WHERE id = ?;', [
-            conversationId,
-          ])
-          .isNotEmpty;
+      final exists = _db.select(
+        'SELECT 1 FROM agent_conversation WHERE id = ?;',
+        [conversationId],
+      ).isNotEmpty;
       if (!exists) return;
       _db.execute(
         'INSERT INTO agent_active_conversation (server_id, conversation_id) '
@@ -664,9 +791,7 @@ class KvToTablesMigration implements SchemaMigration {
       return;
     }
 
-    final rewritten = [
-      for (final entry in entries) ?resolve(entry),
-    ];
+    final rewritten = [for (final entry in entries) ?resolve(entry)];
     if (rewritten.length == entries.length &&
         rewritten.indexed.every((e) => e.$2 == entries[e.$1])) {
       return;

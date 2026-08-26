@@ -52,6 +52,7 @@ final class _FakeBackend implements FileBackend {
     Stream<List<int>> data, {
     int? size,
     void Function(String staging)? onStaging,
+    Stream<List<int>> Function()? replayData,
   }) async {}
   @override
   Future<void> close() async {}

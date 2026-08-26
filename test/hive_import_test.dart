@@ -10,7 +10,12 @@ import 'package:hive_ce/hive.dart';
 import 'package:server_box/data/model/server/connection_stat.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/history.dart';
+import 'package:server_box/data/store/migrations/all.dart';
+import 'package:server_box/data/store/migrations/m003_hive_to_sqlite.dart';
 import 'package:server_box/data/store/schema.dart';
+import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/tables.dart';
 import 'package:server_box/hive/hive_registrar.g.dart';
 import 'package:server_box/hive/legacy_adapters.dart';
 import 'package:server_box/hive/spi_legacy_adapter.dart';
@@ -367,6 +372,71 @@ void main() {
       Stores.setting.get<bool>('${StoreDefaults.prefixKey}hiveImported'),
       true,
       reason: 'the box is done; the rejected record is not retried',
+    );
+  });
+
+  test('a partially failed box retries without duplicating migrated rows',
+      () async {
+    // Build the SQLite side without running the import yet, so a trigger can
+    // model a transient destination failure during the first import.
+    getIt.registerLazySingleton<SettingStore>(() => SettingStore.instance);
+    getIt.registerLazySingleton<HistoryStore>(() => HistoryStore.instance);
+    await Stores.setting.init();
+    await Stores.history.init();
+    await createTables(SqliteDb.instance);
+    await seedHive();
+
+    final stats = HiveStore('connection_stats');
+    await stats.init();
+    await stats.box.put(
+      'srv-pwd_2000',
+      ConnectionStat(
+        serverId: 'srv-pwd',
+        serverName: 'password auth',
+        timestamp: DateTime.now(),
+        result: ConnectionResult.success,
+        durationMs: 24,
+      ),
+    );
+    await Hive.close();
+
+    SqliteDb.instance.execute('''
+      CREATE TRIGGER fail_one_conn_stat
+      BEFORE INSERT ON kv
+      WHEN NEW.store = 'conn_stat' AND NEW.key = 'srv-pwd_2000'
+      BEGIN
+        SELECT RAISE(FAIL, 'transient write failure');
+      END;
+    ''');
+
+    await HiveImport.runIfNeeded();
+    expect(kvRow('conn_stat', 'srv-pwd_1000'), isNull);
+    expect(
+      kvRow('conn_stat', 'srv-pwd_2000'),
+      isNull,
+      reason: 'the successful row rolls back with the failed box',
+    );
+
+    // Other boxes are consumed by m004 before the failed box is retried.
+    await SchemaVersion.migrate(kSchemaMigrations);
+    SqliteDb.instance.execute('DROP TRIGGER fail_one_conn_stat;');
+
+    await HiveImport.runIfNeeded();
+    await SchemaVersion.migrate(kSchemaMigrations);
+
+    final serverCount = SqliteDb.instance
+        .select('SELECT COUNT(*) AS n FROM server WHERE id = ?;', ['srv-pwd'])
+        .single['n'] as int;
+    final statCount = SqliteDb.instance
+        .select('SELECT COUNT(*) AS n FROM conn_stat WHERE server_id = ?;', [
+          'srv-pwd',
+        ])
+        .single['n'] as int;
+    expect(serverCount, 1, reason: 'an already migrated box is not re-imported');
+    expect(
+      statCount,
+      2,
+      reason: 'the failed box is imported exactly once on retry',
     );
   });
 

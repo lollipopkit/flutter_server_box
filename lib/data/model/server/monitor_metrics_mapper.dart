@@ -120,13 +120,13 @@ void _applyCpu(ServerStatus ss, MonitorMetrics m) {
 /// accumulating a fabricated 0 would draw a dip that never happened.
 List<double>? _cpuPercents(MonitorMetrics m) {
   if (m.cpuCores.isEmpty) {
-    return [m.cpuUsage.clamp(0.0, 100.0)];
+    return [m.cpuUsage.clamp(0.0, 100.0).toDouble()];
   }
   final percents = <double>[];
   for (final c in m.cpuCores) {
     final p = c.usagePercent;
     if (p == null) return null;
-    percents.add(p.clamp(0.0, 100.0));
+    percents.add(p.clamp(0.0, 100.0).toDouble());
   }
   return percents;
 }
@@ -203,17 +203,25 @@ void _applyDisks(ServerStatus ss, MonitorMetrics m) {
 }
 
 void _applyNet(ServerStatus ss, MonitorMetrics m, int time) {
-  if (m.ifaces.isEmpty) return;
-  final parts = m.ifaces
-      .map(
-        (i) => NetSpeedPart(
-          i.name,
-          BigInt.from(i.rxBytes),
-          BigInt.from(i.txBytes),
-          time,
-        ),
-      )
-      .toList();
+  final parts = m.ifaces.isEmpty
+      ? [
+          NetSpeedPart(
+            'eth-monitor-total',
+            BigInt.from(m.network.rxBytes),
+            BigInt.from(m.network.txBytes),
+            time,
+          ),
+        ]
+      : m.ifaces
+            .map(
+              (i) => NetSpeedPart(
+                i.name,
+                BigInt.from(i.rxBytes),
+                BigInt.from(i.txBytes),
+                time,
+              ),
+            )
+            .toList();
   ss.netSpeed.update(parts);
 }
 
@@ -228,8 +236,7 @@ void _applyTemps(ServerStatus ss, MonitorMetrics m) {
     return;
   }
   final t = m.temperature;
-  if (t == null) return;
-  ss.temps.setAll({'cpu_thermal': t});
+  ss.temps.setAll(t == null ? const {} : {'cpu_thermal': t});
 }
 
 /// The agent's flattened `gpus`, split back into the two lists the status page
@@ -258,7 +265,12 @@ void _applyGpus(ServerStatus ss, MonitorMetrics m) {
           name: g.name,
           temp: g.temperature,
           power: g.power,
-          memory: AmdSmiMem(g.memoryTotal, g.memoryUsed, g.memoryUnit, const []),
+          memory: AmdSmiMem(
+            g.memoryTotal,
+            g.memoryUsed,
+            g.memoryUnit,
+            const [],
+          ),
           utilization: g.usagePercent.round(),
           fanSpeed: 0,
           clockSpeed: 0,

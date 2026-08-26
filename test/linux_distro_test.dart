@@ -23,9 +23,7 @@ void main() {
   // so it reads the same file off disk.
   setUpAll(() {
     LinuxDistros.adoptForTest(
-      RootfsManifest.parse(
-        File(LinuxDistros.bundledAsset).readAsStringSync(),
-      ),
+      RootfsManifest.parse(File(LinuxDistros.bundledAsset).readAsStringSync()),
     );
   });
 
@@ -45,7 +43,8 @@ void main() {
           expect(
             release.source.sha256,
             hasLength(64),
-            reason: '$where has to pin a sha256 — the tarball is executable '
+            reason:
+                '$where has to pin a sha256 — the tarball is executable '
                 'code, and the digest is what makes downloading it different '
                 'from running whatever the connection returned',
           );
@@ -96,7 +95,8 @@ void main() {
           expect(
             distro.rootfsUrl('https://mirror.example/x', release: release),
             startsWith('https://mirror.example/x/'),
-            reason: '${distro.id} ${release.version} must honour a mirror, or '
+            reason:
+                '${distro.id} ${release.version} must honour a mirror, or '
                 'the setting does nothing',
           );
         }
@@ -121,10 +121,9 @@ void main() {
           // The setting still has to reach the packages, which is the half it
           // was actually set for.
           expect(
-            distro.repositories(
-              'https://mirror.example/x',
-              release: release,
-            ).content,
+            distro
+                .repositories('https://mirror.example/x', release: release)
+                .content,
             contains('https://mirror.example/x'),
             reason: where,
           );
@@ -387,10 +386,16 @@ void main() {
       // Nothing here is platform-specific, which is the point: the same two
       // fields decide it wherever the test runs.
       for (final distro in LinuxDistro.values) {
-        expect(Rootfs.isOutdated(of(distro, distro.version)), isFalse,
-            reason: '${distro.id} matches what would be installed');
-        expect(Rootfs.isOutdated(of(distro, '0.0.1')), isTrue,
-            reason: '${distro.id} is older than what would be installed');
+        expect(
+          Rootfs.isOutdated(of(distro, distro.version)),
+          isFalse,
+          reason: '${distro.id} matches what would be installed',
+        );
+        expect(
+          Rootfs.isOutdated(of(distro, '0.0.1')),
+          isTrue,
+          reason: '${distro.id} is older than what would be installed',
+        );
       }
     });
 
@@ -400,9 +405,9 @@ void main() {
       // throw rather than guess.
       LinuxDistros.adoptForTest(
         RootfsManifest.parse(
-          File(LinuxDistros.bundledAsset)
-              .readAsStringSync()
-              .replaceFirst('"rocky": {', '"rocky-gone": {'),
+          File(
+            LinuxDistros.bundledAsset,
+          ).readAsStringSync().replaceFirst('"rocky": {', '"rocky-gone": {'),
         ),
       );
       addTearDown(() {
@@ -464,7 +469,7 @@ void main() {
       final release = LinuxDistro.ubuntu.releases.last;
       final target = Rootfs.target(
         picked: (distro: LinuxDistro.ubuntu, release: release),
-      );
+      )!;
 
       expect(target.distro, LinuxDistro.ubuntu);
       expect(target.release, same(release));
@@ -482,7 +487,7 @@ void main() {
         for (final release in distro.releases) {
           final target = Rootfs.target(
             into: of(distro, '0.0.1', release.branch),
-          );
+          )!;
 
           expect(target.distro, distro);
           expect(target.release.branch, release.branch, reason: distro.id);
@@ -500,21 +505,24 @@ void main() {
           distro: LinuxDistro.alpine,
           release: LinuxDistro.alpine.preferred,
         ),
-      );
+      )!;
 
       expect(target.distro, LinuxDistro.ubuntu);
       expect(target.release.branch, 'noble');
     });
 
-    test('a system whose series is gone falls back to the preferred one', () {
-      // Nothing to update to. The dialog names what it would install, so the
-      // user sees that this is a different release before answering — which
-      // is why this answers at all rather than throwing.
+    test('a legacy marker without a series uses the preferred release', () {
+      final target = Rootfs.target(into: of(LinuxDistro.alpine, '3.18.0', ''))!;
+
+      expect(target.release, same(LinuxDistro.alpine.preferred));
+    });
+
+    test('a system whose series is gone has no replacement target', () {
       final target = Rootfs.target(
         into: of(LinuxDistro.alpine, '3.19.1', 'v3.19'),
       );
 
-      expect(target.release, same(LinuxDistro.alpine.preferred));
+      expect(target, isNull);
     });
   });
 

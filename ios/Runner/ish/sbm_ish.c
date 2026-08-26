@@ -15,8 +15,9 @@ int sbm_ish_attach(const char *profile) { (void)profile; return -1; }
 int sbm_ish_detach(const char *profile) { (void)profile; return -1; }
 int sbm_ish_sessions(const char *profile) { (void)profile; return 0; }
 int sbm_ish_open(const char *profile, const char *shell, const char *command,
-                 int columns, int rows) {
-    (void)profile; (void)shell; (void)command; (void)columns; (void)rows;
+                 const char *environment, int columns, int rows) {
+    (void)profile; (void)shell; (void)command; (void)environment;
+    (void)columns; (void)rows;
     return -1;
 }
 int sbm_ish_read(int session, char *buffer, int length, int timeout_ms) {
@@ -500,6 +501,10 @@ static int make_dev(const char *profile) {
 /// the path that opens a terminal.
 #define SBM_MAX_PROFILES 8
 static char attached[SBM_MAX_PROFILES][64];
+// Profiles whose sessions are being closed and mounts are being removed.
+// Protected by `sessions_lock`, so reserving a session and starting a detach
+// are one decision.
+static char detaching[SBM_MAX_PROFILES][64];
 static pthread_mutex_t attached_lock = PTHREAD_MUTEX_INITIALIZER;
 
 /// Whether `profile` names a directory directly under the machine root.
@@ -521,6 +526,30 @@ static bool is_attached(const char *profile) {
     for (int i = 0; i < SBM_MAX_PROFILES; i++)
         if (strcmp(attached[i], profile) == 0) return true;
     return false;
+}
+
+static bool is_detaching_locked(const char *profile) {
+    for (int i = 0; i < SBM_MAX_PROFILES; i++)
+        if (strcmp(detaching[i], profile) == 0) return true;
+    return false;
+}
+
+static int mark_detaching_locked(const char *profile) {
+    if (is_detaching_locked(profile)) return -EBUSY;
+    for (int i = 0; i < SBM_MAX_PROFILES; i++) {
+        if (detaching[i][0] != '\0') continue;
+        snprintf(detaching[i], sizeof(detaching[i]), "%s", profile);
+        return 0;
+    }
+    return -EMFILE;
+}
+
+static void clear_detaching_locked(const char *profile) {
+    for (int i = 0; i < SBM_MAX_PROFILES; i++) {
+        if (strcmp(detaching[i], profile) != 0) continue;
+        detaching[i][0] = '\0';
+        return;
+    }
 }
 
 /// Everything [sbm_ish_attach] and [make_dev] mount, innermost first:
@@ -595,7 +624,13 @@ int sbm_ish_attach(const char *profile) {
     int checked = check_profile(profile);
     if (checked < 0) return checked;
 
+    pthread_mutex_lock(&sessions_lock);
+    if (is_detaching_locked(profile)) {
+        pthread_mutex_unlock(&sessions_lock);
+        return -EBUSY;
+    }
     pthread_mutex_lock(&attached_lock);
+    pthread_mutex_unlock(&sessions_lock);
     if (is_attached(profile)) {
         pthread_mutex_unlock(&attached_lock);
         return 0;
@@ -617,21 +652,10 @@ int sbm_ish_attach(const char *profile) {
     // whatever is holding it would hide that.
     int stale = unmount_profile(profile);
     if (stale < 0) {
-        // Something is holding one of them, which is `_EBUSY` and means the
-        // system is live: mounted, and with a process still in it. Record it
-        // and answer 0 rather than mounting a second set over the first.
-        //
-        // Not a refusal, which is what this did at first and what turned a
-        // recoverable state into a permanent one — a profile whose mounts
-        // could not be swept could never be opened again, for the life of the
-        // process. If the sweep took some of them down before meeting the one
-        // that would not go, this leaves a system missing those; that is a
-        // worse system, where refusing was no system at all.
-        snprintf(attached[slot], sizeof(attached[slot]), "%s", profile);
         pthread_mutex_unlock(&attached_lock);
-        syslog(LOG_ERR, "sbm_ish: %s still has mounts in use (%d); taken as "
-               "attached rather than mounted over", profile, stale);
-        return 0;
+        syslog(LOG_ERR, "sbm_ish: %s stale mounts could not be cleared (%d)",
+               profile, stale);
+        return stale;
     }
 
     char path[MAX_PATH];
@@ -727,6 +751,28 @@ int sbm_ish_detach(const char *profile) {
     // Read from the device as `session 0 pid 2 used=1 task=alive`, at the
     // moment a system whose terminal had been closed refused to detach.
     //
+    // An open reserves its slot before it has a pid. Releasing that reservation
+    // here lets the open continue into a live task whose slot is already free.
+    pthread_mutex_lock(&sessions_lock);
+    for (int i = 0; i < SBM_MAX_SESSIONS; i++) {
+        if (sessions[i].used && sessions[i].pid == 0 &&
+            strcmp(sessions[i].profile, profile) == 0) {
+            pthread_mutex_unlock(&sessions_lock);
+            return -EBUSY;
+        }
+    }
+    // Finish any attach that started first, then publish the detach while both
+    // locks exclude a new attach. Once published, attach checks the state
+    // before taking `attached_lock`, so it cannot enter during the gap below.
+    pthread_mutex_lock(&attached_lock);
+    int marking = mark_detaching_locked(profile);
+    pthread_mutex_unlock(&attached_lock);
+    if (marking < 0) {
+        pthread_mutex_unlock(&sessions_lock);
+        return marking;
+    }
+    pthread_mutex_unlock(&sessions_lock);
+
     // Signalled, not waited for: the caller retries, which is where the time
     // for a shell to take SIGHUP and exit belongs — this holds `attached_lock`.
     for (int i = 0; i < SBM_MAX_SESSIONS; i++) close_session(i, profile);
@@ -769,8 +815,11 @@ int sbm_ish_detach(const char *profile) {
                    i, sessions[i].pid, sessions[i].used,
                    task == NULL ? "gone" : "alive");
         }
-        pthread_mutex_unlock(&sessions_lock);
+    } else {
+        pthread_mutex_lock(&sessions_lock);
     }
+    clear_detaching_locked(profile);
+    pthread_mutex_unlock(&sessions_lock);
     return err;
 }
 
@@ -872,7 +921,7 @@ int sbm_ish_boot(const char *rootfs, const char *profile) {
 }
 
 int sbm_ish_open(const char *profile, const char *shell, const char *command,
-                 int columns, int rows) {
+                 const char *environment, int columns, int rows) {
     if (!booted) return -ENOTCONN;
     // The same check `sbm_ish_sessions` and `sbm_ish_detach` apply. A weaker
     // one here would accept a name those two answer `-EINVAL` for, so a
@@ -887,6 +936,10 @@ int sbm_ish_open(const char *profile, const char *shell, const char *command,
     if (shell == NULL || shell[0] == '\0') shell = "/bin/sh";
 
     pthread_mutex_lock(&sessions_lock);
+    if (is_detaching_locked(profile)) {
+        pthread_mutex_unlock(&sessions_lock);
+        return -EBUSY;
+    }
     int index = -1;
     for (int i = 0; i < SBM_MAX_SESSIONS; i++) {
         if (!sessions[i].used) { index = i; break; }
@@ -911,8 +964,10 @@ int sbm_ish_open(const char *profile, const char *shell, const char *command,
 
     // A task of its own, under init. Everything from here happens as that
     // task, on this thread, until `task_start` gives it one.
+    bool child_created = false;
     int err = become_new_init_child();
     if (err < 0) goto fail;
+    child_created = true;
 
     // Before anything opens a path. `attach_stdio` names `/dev/pts/N`, and
     // that has to mean *this* profile's devpts rather than whichever one init
@@ -948,13 +1003,13 @@ int sbm_ish_open(const char *profile, const char *shell, const char *command,
     err = attach_stdio(tty);
     if (err < 0) goto fail;
 
-    char environment[256] = {0};
-    size_t written = 0;
-    written += snprintf(environment + written, sizeof(environment) - written,
-                        "TERM=xterm-256color") + 1;
-    written += snprintf(environment + written, sizeof(environment) - written, "HOME=/root") + 1;
-    written += snprintf(environment + written, sizeof(environment) - written,
-                        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin") + 1;
+    static const char default_environment[] =
+        "TERM=xterm-256color\0"
+        "HOME=/root\0"
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\0";
+    if (environment == NULL || environment[0] == '\0') {
+        environment = default_environment;
+    }
 
     // Built twice at most: a shell the setting names but the guest does not
     // have would otherwise be a terminal that opens and immediately dies, with
@@ -988,11 +1043,25 @@ int sbm_ish_open(const char *profile, const char *shell, const char *command,
     return index;
 
 fail:
-    // The name goes with the reservation, since the two were taken together.
-    pthread_mutex_lock(&sessions_lock);
-    session->used = false;
-    session->profile[0] = '\0';
-    pthread_mutex_unlock(&sessions_lock);
+    // Publish an unstarted child's pid just long enough for close_session to
+    // release its pty and signal the right task. Detach refuses pid-zero
+    // reservations, so no concurrent profile removal can take this slot first.
+    if (child_created) {
+        pthread_mutex_lock(&sessions_lock);
+        if (session->used && session->pid == 0 &&
+            strcmp(session->profile, profile) == 0) {
+            session->pid = current->pid;
+        }
+        pthread_mutex_unlock(&sessions_lock);
+    }
+    pid_t_ failed_pid = close_session(index, profile);
+    if (child_created && failed_pid > 0) {
+        // The task has no host thread until task_start. Give it one so the
+        // pending fatal signal can run the normal guest teardown and reaping
+        // path instead of leaving an unreachable task in the pid table.
+        send_group_signal(current->group->pgid, SIGKILL_, SIGINFO_NIL);
+        task_start(current);
+    }
     return err;
 }
 

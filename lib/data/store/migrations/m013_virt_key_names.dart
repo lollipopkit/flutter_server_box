@@ -38,7 +38,10 @@ class VirtKeyNamesMigration implements SchemaMigration {
   static const disabledKey = 'sshVirtKeysDisabled';
 
   @override
-  Future<void> apply() async {
+  Future<void> apply() async => applySync();
+
+  /// Runs the conversion inside a caller-owned SQLite transaction.
+  void applySync() {
     final store = _store ?? SettingStore.instance;
     _convert(store, orderKey);
     _convert(store, disabledKey);
@@ -57,13 +60,10 @@ class VirtKeyNamesMigration implements SchemaMigration {
     final names = <String>[];
     for (final entry in raw) {
       final name = switch (entry) {
-        final int index
-            when index >= 0 && index < VirtKey.values.length =>
+        final int index when index >= 0 && index < VirtKey.values.length =>
           VirtKey.values[index].name,
         // Half-converted, which a crash between the two writes below leaves.
-        final String s
-            when VirtKey.values.any((k) => k.name == s) =>
-          s,
+        final String s when VirtKey.values.any((k) => k.name == s) => s,
         _ => null,
       };
       if (name == null || !seen.add(name)) continue;

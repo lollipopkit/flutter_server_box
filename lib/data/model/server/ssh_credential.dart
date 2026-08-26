@@ -57,9 +57,13 @@ final class SshCredential {
   /// names one. Read when the connection is made, never copied into the app.
   ///
   /// Only ever set by `~/.ssh/config` import, which is desktop-only — there is
-  /// no such file to point at on a phone. At most one of this and [keyId] is
-  /// set; both being null means password or keyboard-interactive.
+  /// no such file to point at on a phone. This remains the first path for
+  /// compatibility with older data and UI code; [identityFiles] preserves the
+  /// full ordered OpenSSH list when more than one directive applies.
   final String? keyPath;
+
+  /// Ordered `IdentityFile` paths. Null in legacy data and for stored keys.
+  final List<String>? identityFiles;
 
   /// Fallback `user@host:port` tried when [ip] is unreachable
   final String? alterUrl;
@@ -70,7 +74,7 @@ final class SshCredential {
   /// [resolvedJumpIds] so failover candidates are included.
   final String? jumpId;
 
-  /// Ordered jump-server candidates. At most the first two are used.
+  /// Ordered jump-server candidates.
   final List<String>? jumpIds;
 
   final String? proxyCommand;
@@ -104,6 +108,7 @@ final class SshCredential {
     this.pwd,
     this.keyId,
     this.keyPath,
+    this.identityFiles,
     this.alterUrl,
     this.jumpId,
     this.jumpIds,
@@ -116,7 +121,7 @@ final class SshCredential {
 
   Map<String, dynamic> toJson() => _$SshCredentialToJson(this);
 
-  /// [jumpIds] first (at most two are ever used for failover), falling back
+  /// [jumpIds] first, falling back
   /// to the legacy single [jumpId] only when that list yields nothing.
   List<String> get resolvedJumpIds {
     final ids = <String>[];
@@ -127,10 +132,24 @@ final class SshCredential {
 
     for (final id in jumpIds ?? const <String>[]) {
       add(id);
-      if (ids.length >= 2) break;
     }
     if (ids.isEmpty) add(jumpId);
     return ids;
+  }
+
+  List<String> get resolvedIdentityFiles {
+    if (keyId != null) return const [];
+    final paths = <String>[];
+    void add(String? path) {
+      if (path == null || path.isEmpty || paths.contains(path)) return;
+      paths.add(path);
+    }
+
+    for (final path in identityFiles ?? const <String>[]) {
+      add(path);
+    }
+    if (paths.isEmpty) add(keyPath);
+    return paths;
   }
 
   String? get firstJumpId {
@@ -156,8 +175,14 @@ final class SshCredential {
   String? get keyRef {
     final id = keyId;
     if (id != null) return keyRefForId(id);
-    final path = keyPath;
-    return path == null ? null : 'path:$path';
+    final refs = keyRefs;
+    return refs.isEmpty ? null : refs.first;
+  }
+
+  List<String> get keyRefs {
+    final id = keyId;
+    if (id != null) return [keyRefForId(id)];
+    return [for (final path in resolvedIdentityFiles) 'path:$path'];
   }
 
   /// The same reference for a stored key named by its id alone.
@@ -204,6 +229,7 @@ final class SshCredential {
     Object? pwd = _unset,
     Object? keyId = _unset,
     Object? keyPath = _unset,
+    Object? identityFiles = _unset,
     Object? alterUrl = _unset,
     Object? jumpId = _unset,
     Object? jumpIds = _unset,
@@ -217,11 +243,12 @@ final class SshCredential {
       pwd: pwd == _unset ? this.pwd : pwd as String?,
       keyId: keyId == _unset ? this.keyId : keyId as String?,
       keyPath: keyPath == _unset ? this.keyPath : keyPath as String?,
+      identityFiles: identityFiles == _unset
+          ? this.identityFiles
+          : identityFiles as List<String>?,
       alterUrl: alterUrl == _unset ? this.alterUrl : alterUrl as String?,
       jumpId: jumpId == _unset ? this.jumpId : jumpId as String?,
-      jumpIds: jumpIds == _unset
-          ? this.jumpIds
-          : (jumpIds as List<String>?),
+      jumpIds: jumpIds == _unset ? this.jumpIds : (jumpIds as List<String>?),
       proxyCommand: proxyCommand == _unset
           ? this.proxyCommand
           : proxyCommand as String?,
@@ -237,7 +264,7 @@ final class SshCredential {
         user == other.user &&
         pwd == other.pwd &&
         keyId == other.keyId &&
-        keyPath == other.keyPath &&
+        listEquals(resolvedIdentityFiles, other.resolvedIdentityFiles) &&
         proxyCommand == other.proxyCommand &&
         // Changing how the socket is obtained needs a reconnect just as much
         // as changing the address does
@@ -262,14 +289,16 @@ final class SshCredential {
     user,
     pwd,
     keyId,
-    keyPath,
+    Object.hashAll(resolvedIdentityFiles),
     alterUrl,
     // [resolvedJumpIds], as [isSameAs] compares them, and not the two raw
     // fields it is derived from. Old storage and an import write [jumpId]
     // while everything since writes [jumpIds], so the same single jump server
     // has two spellings — which `==` calls equal and this used to hash
     // differently, breaking the one thing hashing has to promise. A credential
-    // put into a `Set` under one spelling was then not found under the other.
+    // put into a `Set` under one spelling was then not found under the other,
+    // and `SshFileRef` hashes a whole `Spi`, so a transfer's identity rests on
+    // this.
     Object.hashAll(resolvedJumpIds),
     proxyCommand,
     fileTransport,

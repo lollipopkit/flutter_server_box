@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
-import { TerminalSession, terminalWsUrl, type Renderer } from '../lib/terminal.svelte'
+import {
+  TerminalSession,
+  terminalWsProtocol,
+  terminalWsUrl,
+  type Renderer,
+} from '../lib/terminal.svelte'
 import { servers } from '../lib/servers.svelte'
 
 /// A WebSocket stand-in the test drives directly. Only the surface the session
@@ -18,7 +23,10 @@ class FakeSocket {
   binaryType = 'arraybuffer'
   closed = false
 
-  constructor(public url: string) {
+  constructor(
+    public url: string,
+    public protocols?: string | string[],
+  ) {
     FakeSocket.instances.push(this)
   }
 
@@ -124,29 +132,30 @@ async function connected(renderer: FakeRenderer) {
 
 describe('terminalWsUrl', () => {
   it('upgrades the scheme and keeps the host', () => {
-    expect(terminalWsUrl('https://agent.example.com:3770', 't')).toBe(
-      'wss://agent.example.com:3770/api/v1/terminal/ws?ticket=t',
+    expect(terminalWsUrl('https://agent.example.com:3770')).toBe(
+      'wss://agent.example.com:3770/api/v1/terminal/ws',
     )
-    expect(terminalWsUrl('http://192.168.1.5:3770', 't')).toBe(
-      'ws://192.168.1.5:3770/api/v1/terminal/ws?ticket=t',
+    expect(terminalWsUrl('http://192.168.1.5:3770')).toBe(
+      'ws://192.168.1.5:3770/api/v1/terminal/ws',
     )
   })
 
   it('resolves an empty base against the current origin', () => {
     // The same-origin case: the panel served by the agent itself
-    expect(terminalWsUrl('', 't')).toContain('/api/v1/terminal/ws?ticket=t')
-    expect(terminalWsUrl('', 't').startsWith('ws')).toBe(true)
+    expect(terminalWsUrl('')).toContain('/api/v1/terminal/ws')
+    expect(terminalWsUrl('').startsWith('ws')).toBe(true)
   })
 
   it('gives a schemeless entry the page scheme instead of reading it as one', () => {
     // `new URL` would take `agent.example.com:` for the scheme here
-    expect(terminalWsUrl('agent.example.com:3770', 't')).toBe(
-      'ws://agent.example.com:3770/api/v1/terminal/ws?ticket=t',
+    expect(terminalWsUrl('agent.example.com:3770')).toBe(
+      'ws://agent.example.com:3770/api/v1/terminal/ws',
     )
   })
 
-  it('escapes the ticket rather than splicing it in raw', () => {
-    expect(terminalWsUrl('https://a.example', 'a b&c')).toContain('ticket=a%20b%26c')
+  it('carries the ticket only in the websocket subprotocol', () => {
+    expect(terminalWsUrl('https://a.example')).not.toContain('ticket')
+    expect(terminalWsProtocol('id.secret')).toBe('sbm-ticket.id.secret')
   })
 })
 
@@ -171,7 +180,8 @@ describe('TerminalSession', () => {
     const { session, socket } = await connected(renderer)
 
     expect(ticketMock).toHaveBeenCalledWith('terminal')
-    expect(socket.url).toContain('ticket=id.secret')
+    expect(socket.url).not.toContain('ticket')
+    expect(socket.protocols).toEqual(['sbm-ticket.id.secret'])
     expect(socket.sent[0]).toMatchObject({
       type: 'open',
       user: 'ops',
@@ -247,6 +257,73 @@ describe('TerminalSession', () => {
 
     await vi.waitFor(() => expect(session.phase).toBe('closed'))
     expect(session.error).toBe('Session expired')
+  })
+
+  it('does not retry when the ticket quota is exhausted', async () => {
+    const { session, socket } = await connected(renderer)
+
+    ticketMock.mockRejectedValueOnce(new FakeApiError('Retry after 30 seconds', 429))
+    socket.close()
+    session.reconnectNow()
+
+    await vi.waitFor(() => expect(session.phase).toBe('closed'))
+    expect(session.error).toBe('Retry after 30 seconds')
+    expect(ticketMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('ignores disconnect callbacks from a replaced socket', async () => {
+    const { session, socket: first } = await connected(renderer)
+    first.close()
+
+    session.reconnectNow()
+    await vi.waitFor(() => expect(FakeSocket.instances.length).toBe(2))
+    const second = FakeSocket.latest()
+    second.onopen?.()
+    second.control({ type: 'ready', session: 'abc.def', since: 0 })
+
+    first.onerror?.()
+    first.onclose?.()
+
+    expect(session.phase).toBe('running')
+    session.input('x')
+    expect(second.binary).toHaveLength(1)
+  })
+
+  it('ignores a ticket that completes after a newer reconnect attempt', async () => {
+    const { session, socket } = await connected(renderer)
+    let resolveStale!: (value: { ticket: string; expires_in: number }) => void
+    ticketMock.mockImplementationOnce(
+      () => new Promise((resolve) => (resolveStale = resolve)),
+    )
+
+    socket.close()
+    session.reconnectNow()
+    await vi.waitFor(() => expect(ticketMock).toHaveBeenCalledTimes(2))
+
+    session.reconnectNow()
+    await vi.waitFor(() => expect(FakeSocket.instances.length).toBe(2))
+    resolveStale({ ticket: 'stale.secret', expires_in: 30 })
+    await Promise.resolve()
+
+    expect(FakeSocket.instances).toHaveLength(2)
+    expect(FakeSocket.latest().url).not.toContain('stale.secret')
+  })
+
+  it('does not let an old render completion advance a new connection', async () => {
+    const { session, socket: first } = await connected(renderer)
+    first.output('old')
+    first.close()
+
+    session.reconnectNow()
+    await vi.waitFor(() => expect(FakeSocket.instances.length).toBe(2))
+    const second = FakeSocket.latest()
+    second.onopen?.()
+    second.control({ type: 'ready', session: 'abc.def', since: 0 })
+    second.output('new')
+
+    renderer.flush()
+    session.flush()
+    expect(JSON.parse(window.sessionStorage.getItem('terminal.session')!).rendered).toBe(3)
   })
 
   it('sets the counter from ready rather than adding to it', async () => {

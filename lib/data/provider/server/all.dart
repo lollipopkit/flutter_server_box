@@ -18,6 +18,7 @@ import 'package:server_box/data/provider/server/selection.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
+import 'package:server_box/data/store/entity_store.dart';
 
 part 'all.freezed.dart';
 part 'all.g.dart';
@@ -37,18 +38,48 @@ abstract class ServersState with _$ServersState {
 class ServersNotifier extends _$ServersNotifier {
   static const _maxConcurrentRefreshes = 4;
   int _autoRefreshGeneration = 0;
+  Future<void> _mutationTail = Future.value();
+
+  Future<T> _mutate<T>(Future<T> Function() action) async {
+    final previous = _mutationTail;
+    final release = Completer<void>();
+    _mutationTail = release.future;
+    try {
+      await previous.catchError((_) {});
+      return await action();
+    } finally {
+      release.complete();
+    }
+  }
 
   @override
   ServersState build() {
     return _load();
   }
 
-  Future<void> reload() async {
+  Future<void> reload({bool refreshConnections = true}) async {
     Stores.server.dropCache();
     final newState = _load();
+    final selectedId = ref.read(serverSelectionProvider);
+    if (selectedId != null && !newState.servers.containsKey(selectedId)) {
+      ref.read(serverSelectionProvider.notifier).select(null);
+    }
     if (newState == state) return;
+    final previousServers = state.servers;
     state = newState;
-    await refresh();
+    for (final entry in previousServers.entries) {
+      if (newState.servers.containsKey(entry.key)) continue;
+      final provider = serverProvider(entry.key);
+      if (ref.exists(provider)) ref.invalidate(provider);
+    }
+    for (final entry in newState.servers.entries) {
+      if (previousServers[entry.key] == entry.value) continue;
+      final provider = serverProvider(entry.key);
+      if (ref.exists(provider)) {
+        ref.read(provider.notifier).updateSpi(entry.value);
+      }
+    }
+    if (refreshConnections) await refresh();
   }
 
   ServersState _load() {
@@ -244,6 +275,7 @@ class ServersNotifier extends _$ServersNotifier {
       });
       state = state.copyWith(autoRefreshTimer: timer);
     }
+
     schedule();
   }
 
@@ -301,13 +333,23 @@ class ServersNotifier extends _$ServersNotifier {
     TermSessionManager.remove(sessionId);
   }
 
-  Future<void> addServer(Spi spi) async {
+  Future<void> addServer(Spi spi) => _mutate(() => _addServer(spi));
+
+  Future<void> _addServer(Spi spi) async {
     spi.validateOrThrow();
 
+    final exists = state.servers.containsKey(spi.id);
     final newServers = Map<String, Spi>.from(state.servers);
     newServers[spi.id] = spi;
 
-    final newOrder = List<String>.from(state.serverOrder)..add(spi.id);
+    final newOrder = List<String>.from(state.serverOrder);
+    if (!exists) {
+      newOrder.add(spi.id);
+    } else {
+      Loggers.app.warning(
+        'addServer: id ${spi.id} already exists, updating in place',
+      );
+    }
     final newTags = _calculateTags(newServers);
     final newManualDisconnected = Set<String>.from(state.manualDisconnectedIds)
       ..remove(spi.id);
@@ -320,13 +362,26 @@ class ServersNotifier extends _$ServersNotifier {
       tags: newTags,
       manualDisconnectedIds: newManualDisconnected,
     );
+    // If the server already had a live notifier, refresh its Spi rather than
+    // leaving it stale with the old credentials.
+    if (exists) {
+      try {
+        ref.read(serverProvider(spi.id).notifier).updateSpi(spi);
+      } catch (_) {
+        // Provider may not have been created yet (keepAlive not yet built)
+        ref.invalidate(serverProvider(spi.id));
+      }
+    }
     unawaited(refresh(spi: spi));
     bakSync.sync(milliDelay: 1000);
   }
 
-  Future<void> delServer(String id) async {
+  Future<void> delServer(String id) => _mutate(() => _delServer(id));
+
+  Future<void> _delServer(String id) async {
     final deleting = state.servers[id];
-    if (deleting != null) await WatchSync.instance.removeServer(deleting);
+    if (deleting == null) return;
+    await WatchSync.instance.removeServer(deleting);
     await _clearServerData(id);
     final newServers = Map<String, Spi>.from(state.servers);
     newServers.remove(id);
@@ -365,7 +420,9 @@ class ServersNotifier extends _$ServersNotifier {
     bakSync.sync(milliDelay: 1000);
   }
 
-  Future<void> deleteAll() async {
+  Future<void> deleteAll() => _mutate(_deleteAll);
+
+  Future<void> _deleteAll() async {
     final serverIds = state.servers.keys.toList();
 
     // Remove all SSH sessions before clearing servers
@@ -413,7 +470,10 @@ class ServersNotifier extends _$ServersNotifier {
     await Stores.connectionStats.clearServerStats(id);
   }
 
-  Future<void> updateServerOrder(List<String> order) async {
+  Future<void> updateServerOrder(List<String> order) =>
+      _mutate(() => _updateServerOrder(order));
+
+  Future<void> _updateServerOrder(List<String> order) async {
     final seen = <String>{};
     final newOrder = <String>[];
 
@@ -447,11 +507,27 @@ class ServersNotifier extends _$ServersNotifier {
     return listEquals(a, b);
   }
 
-  Future<void> updateServer(Spi old, Spi newSpi) async {
+  Future<void> updateServer(Spi old, Spi newSpi) =>
+      _mutate(() => _updateServer(old, newSpi));
+
+  Future<void> _updateServer(Spi old, Spi newSpi) async {
     newSpi.validateOrThrow();
 
+    if (state.servers[old.id] != old) {
+      throw StateError('${libL10n.server}: ${libL10n.retry}');
+    }
+
     if (old != newSpi) {
-      Stores.server.update(old, newSpi);
+      if (newSpi.id != old.id) {
+        // `EntityStore.update` explicitly rejects id changes; renaming must
+        // move dependent rows and handle sync metadata itself.
+        if (state.servers.containsKey(newSpi.id)) {
+          throw DuplicateNameException(newSpi.name);
+        }
+        Stores.server.rename(old, newSpi);
+      } else {
+        Stores.server.update(old, newSpi);
+      }
 
       final newServers = Map<String, Spi>.from(state.servers);
       final newOrder = List<String>.from(state.serverOrder);
@@ -467,17 +543,9 @@ class ServersNotifier extends _$ServersNotifier {
           newManualDisconnected.add(newSpi.id);
         }
         Stores.setting.serverOrder.put(newOrder);
-
-        // Update SSH session ID when server ID changes
-        final oldSessionId = 'ssh_${old.id}';
-        TermSessionManager.remove(oldSessionId);
-        // Session will be re-added when reconnecting if necessary
-        await _clearSudoPasswordOverrideBestEffort(old.id);
+        Stores.history.renameSshServer(old.id, newSpi.id);
       } else {
         newServers[old.id] = newSpi;
-        // Update SPI in the corresponding IndividualServerNotifier
-        final serverNotifier = ref.read(serverProvider(old.id).notifier);
-        serverNotifier.updateSpi(newSpi);
       }
 
       final newTags = _calculateTags(newServers);
@@ -487,6 +555,22 @@ class ServersNotifier extends _$ServersNotifier {
         tags: newTags,
         manualDisconnectedIds: newManualDisconnected,
       );
+
+      if (newSpi.id != old.id) {
+        // Publish the replacement before selection or async cleanup can make
+        // consumers rebuild against the deleted id.
+        if (ref.read(serverSelectionProvider) == old.id) {
+          ref.read(serverSelectionProvider.notifier).select(newSpi.id);
+        }
+        ref.invalidate(serverProvider(old.id));
+
+        final oldSessionId = 'ssh_${old.id}';
+        TermSessionManager.remove(oldSessionId);
+        await _clearSudoPasswordOverrideBestEffort(old.id);
+      } else {
+        final serverNotifier = ref.read(serverProvider(old.id).notifier);
+        serverNotifier.updateSpi(newSpi);
+      }
 
       // Only reconnect if neccessary
       if (newSpi.shouldReconnect(old)) {

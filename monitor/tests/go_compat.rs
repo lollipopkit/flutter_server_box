@@ -187,7 +187,15 @@ fn test_go_config_defaults() {
 /// Go initRateLimiter: falls back to the default rate limit when rate parsing fails
 #[test]
 fn test_go_rate_invalid_falls_back_to_default() {
-    for bad in ["abc", "1", "x/1m", "1/xx", "1/1w"] {
+    for bad in [
+        "abc",
+        "1",
+        "x/1m",
+        "1/xx",
+        "1/1w",
+        "1/18446744073709551615m",
+        "1/18446744073709551615h",
+    ] {
         let mut config: Config = serde_json::from_str(&format!(r#"{{"rate": "{}"}}"#, bad)).unwrap();
         config.normalize().unwrap();
         assert_eq!(
