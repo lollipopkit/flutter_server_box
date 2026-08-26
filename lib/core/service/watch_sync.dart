@@ -13,9 +13,15 @@ import 'package:watch_connectivity/watch_connectivity.dart';
 ///
 /// The watch is a separate process on a separate device that reaches monitor
 /// agents by itself; all it needs from here is *which* servers to show and how
-/// to authenticate. That configuration lives in [SettingStore.watchServerIds]
-/// (backed up and synced like everything else) — the WCSession application
-/// context is only the transport.
+/// to authenticate.
+///
+/// Which servers is not a list anyone maintains: it is every server with a
+/// `monitor` agent, minus [SettingStore.watchExcludedServerIds]. Adding a
+/// server in the app puts it on the watch, and the exclusion list exists for
+/// the one thing that genuinely needs a decision — syncing a server mints a
+/// credential and puts it on a second device, and that is worth being able to
+/// refuse. The list is backed up and synced like everything else; the WCSession
+/// application context is only the transport.
 ///
 /// Both WatchConnectivity paths are used, on purpose and in this order:
 ///
@@ -147,7 +153,7 @@ final class WatchSync {
     // at the end, the slower one finished last carrying the *newer* number
     // while holding the *older* selection, which is exactly backwards.
     final revision = nextRevision();
-    final selectedIds = Stores.setting.watchServerIds.fetch();
+    final selectedIds = syncedServerIds();
     final existingTokens = await _existingTokens();
     final tokens = reusableScopedTokens(
       serverIds: selectedIds,
@@ -191,6 +197,27 @@ final class WatchSync {
       legacyUrls: Stores.setting.watchLegacyUrls.fetch(),
       stamp: revision,
     );
+  }
+
+  /// Every server the watch is meant to show, in a stable order.
+  ///
+  /// Everything with a `monitor` agent, minus what the user held back. There
+  /// is no opt-in step: a server added in the app is on the watch by the next
+  /// push, which is what makes this automatic rather than a second list to
+  /// maintain.
+  ///
+  /// Ordered by name because the watch pages through this list and the order
+  /// has to be one someone can predict — store order is the order servers
+  /// happened to be added, which on a watch face reads as no order at all.
+  static List<String> syncedServerIds() {
+    final excluded = Stores.setting.watchExcludedServerIds.fetch().toSet();
+    final servers =
+        Stores.server
+            .fetch()
+            .where((e) => e.monitor != null && !excluded.contains(e.id))
+            .toList()
+          ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    return servers.map((e) => e.id).toList();
   }
 
   /// The agent-side `client_id` a watch token is scoped to.
@@ -237,17 +264,23 @@ final class WatchSync {
     }
   }
 
-  Future<void> updateSelection(List<String> next) async {
-    final previous = Stores.setting.watchServerIds.fetch();
-    final nextIds = next.toSet();
+  /// Holds [next] back from the watch, and syncs everything else.
+  ///
+  /// A server moving *into* the exclusion list has its credential revoked
+  /// right away rather than left to lapse. Holding a server back has to mean
+  /// the watch can no longer read it — a token that stays valid for another 90
+  /// days would make this a change to what is displayed and nothing more.
+  Future<void> updateExclusions(List<String> next) async {
+    final previously = Stores.setting.watchExcludedServerIds.fetch().toSet();
+    final nowExcluded = next.toSet();
     final existingTokens = await _existingTokens();
-    for (final id in previous.where((id) => !nextIds.contains(id))) {
+    for (final id in nowExcluded.where((id) => !previously.contains(id))) {
       final spi = Stores.server.fetchOneRaw(id);
       if (spi != null) {
         await _revokeServer(spi, endpoint: existingTokens[id]?.endpoint);
       }
     }
-    Stores.setting.watchServerIds.put(next);
+    Stores.setting.watchExcludedServerIds.put(next);
     await push();
   }
 
@@ -261,11 +294,16 @@ final class WatchSync {
       // worse and there is no retry target once the user has deleted it.
       Loggers.app.warning('Could not revoke watch token for ${spi.id}', e, s);
     }
-    final selected = Stores.setting.watchServerIds.fetch();
-    if (!selected.contains(spi.id)) return;
-    Stores.setting.watchServerIds.put(
-      selected.where((id) => id != spi.id).toList(),
-    );
+    // A deleted server must not leave its id sitting in the exclusion list.
+    // Ids are generated, so a stale one is only clutter today — but it becomes
+    // a trap the moment one is reused by a restore, which would arrive already
+    // held back for a reason nobody can see.
+    final excluded = Stores.setting.watchExcludedServerIds.fetch();
+    if (excluded.contains(spi.id)) {
+      Stores.setting.watchExcludedServerIds.put(
+        excluded.where((id) => id != spi.id).toList(),
+      );
+    }
     try {
       await push();
     } catch (e, s) {
@@ -275,7 +313,7 @@ final class WatchSync {
 
   Future<void> _revokeSelectedServers() async {
     final existingTokens = await _existingTokens();
-    for (final id in Stores.setting.watchServerIds.fetch()) {
+    for (final id in syncedServerIds()) {
       final spi = Stores.server.fetchOneRaw(id);
       if (spi != null) {
         await _revokeServer(spi, endpoint: existingTokens[id]?.endpoint);

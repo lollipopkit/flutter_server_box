@@ -229,7 +229,28 @@ class SettingStore extends SqliteStore {
   /// reinstall, and unrelated to the server list the user actually maintains.
   /// Keeping the selection here makes the app the source of truth and the
   /// context merely the transport. iOS only.
+  ///
+  /// Read only by the v15 -> v16 migration now, which turns whatever is in it
+  /// into [watchExcludedServerIds]. Every monitor server syncs by default.
+  ///
+  /// TODO: drop with `WatchSelectionToExclusionMigration`.
   late final watchServerIds = listProperty<String>('watchServerIds');
+
+  /// Servers held back from the watch, by [Spi.id].
+  ///
+  /// The inverse of what came before, and the inversion is the feature: a
+  /// server the user adds is on their watch without a second step, which is
+  /// what "sync automatically" has to mean. An opt-*in* list is a place to
+  /// forget a server, and forgetting one looks exactly like the watch being
+  /// broken.
+  ///
+  /// It exists at all because syncing a server means minting a credential for
+  /// it and putting that on a second device. That is worth being able to
+  /// refuse per server — the default is what changed, not whether there is a
+  /// choice. iOS only.
+  late final watchExcludedServerIds = listProperty<String>(
+    'watchExcludedServerIds',
+  );
 
   /// Raw Go-compat `/status` URLs typed by hand in builds before the watch
   /// could read a server record.

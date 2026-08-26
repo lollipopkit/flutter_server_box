@@ -135,22 +135,24 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
   }
 
   Widget _buildWatchApp() {
-    // Counted against the servers that can still be shown, for the same reason
-    // as [_accessoryServer]: a selected id outlives the monitor configuration
-    // that made it selectable, and `buildPayload` already skips those — so the
-    // raw length was a number the watch would never agree with.
-    final selected = Stores.setting.watchServerIds.fetch().toSet();
-    final count = _monitorServers.where((e) => selected.contains(e.id)).length;
+    // What the watch will actually show, which is every monitor server bar the
+    // ones held back. Counted rather than taken from the exclusion list's
+    // length for the same reason as [_accessoryServer]: an id outlives the
+    // monitor configuration that made it relevant, and `buildPayload` already
+    // skips those — so a raw length is a number the watch never agrees with.
+    final count = WatchSync.syncedServerIds().length;
     return ListTile(
       title: const Text('Watch app'),
       subtitle: FutureWidget<bool>(
         future: _watchPairedFuture,
         loading: const Text('...'),
-        // Not a blocker: the selection is stored here and delivered whenever a
-        // watch does show up, so it stays editable either way.
+        // Not a blocker: the exclusions are stored here and delivered whenever
+        // a watch does show up, so they stay editable either way.
         error: (e, _) => Text('${libL10n.error}: $e', style: UIs.textGrey),
         success: (paired) => Text(
-          paired == true ? '$count' : l10n.watchNotPaired,
+          paired == true
+              ? '$count / ${_monitorServers.length}'
+              : l10n.watchNotPaired,
           style: UIs.textGrey,
         ),
       ),
@@ -222,6 +224,13 @@ extension _Actions on _IosSettingsPageState {
     _refresh();
   }
 
+  /// Which servers the watch shows — expressed as what it is *shown*, while
+  /// what is stored is what it is denied.
+  ///
+  /// The picker is the right way round for the person using it: everything is
+  /// ticked, and unticking one holds it back. Inverting here rather than
+  /// storing the ticks is what makes a newly added server appear without
+  /// anyone having to come back to this page.
   void _onTapWatchApp() async {
     final servers = _monitorServers;
     if (servers.isEmpty) {
@@ -229,12 +238,12 @@ extension _Actions on _IosSettingsPageState {
       return;
     }
 
-    final selectedIds = Stores.setting.watchServerIds.fetch();
+    final excluded = Stores.setting.watchExcludedServerIds.fetch().toSet();
     final picked = await context.showPickDialog<Spi>(
       title: l10n.watchServers,
       items: servers,
       display: (e) => e.name,
-      initial: servers.where((e) => selectedIds.contains(e.id)).toList(),
+      initial: servers.where((e) => !excluded.contains(e.id)).toList(),
       actions: [
         TextButton(
           onPressed: () => context.showRoundDialog(
@@ -247,14 +256,16 @@ extension _Actions on _IosSettingsPageState {
     );
     if (picked == null) return;
 
-    final pickedIds = picked.map((e) => e.id).toSet();
-    // Keep the order the user already had and append what is new, rather than
-    // rebuilding from the picker's order — the watch pages through this list.
-    final next = [
-      ...selectedIds.where(pickedIds.contains),
-      ...pickedIds.where((id) => !selectedIds.contains(id)),
-    ];
-    await WatchSync.instance.updateSelection(next);
+    final shown = picked.map((e) => e.id).toSet();
+    // Only servers that were on offer. An id the picker never showed — one
+    // whose monitor configuration was removed while this page was open — has
+    // no business being added to the exclusion list by the act of not being
+    // ticked in a dialog it was absent from.
+    final next = servers
+        .map((e) => e.id)
+        .where((id) => !shown.contains(id))
+        .toList();
+    await WatchSync.instance.updateExclusions(next);
     _refresh();
   }
 
