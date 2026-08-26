@@ -178,11 +178,7 @@ final class WidgetSync {
       return {
         for (final entry in decoded.whereType<Map>())
           if (entry['id'] is String && entry['endpoint'] is String)
-            entry['id'] as String: ScopedToken(
-              // Not the real one. `servesEndpoint` only asks whether there is
-              // a token at all, and carrying the actual bytes back across the
-              // channel to answer that would defeat storing it natively.
-              token: 'held',
+            entry['id'] as String: ScopedToken.held(
               endpoint: normalizeAgentEndpoint(entry['endpoint'] as String),
               expiresAt: switch (entry['expiresAt']) {
                 final num v => v.toInt(),
@@ -223,7 +219,13 @@ final class WidgetSync {
         'id': spi.id,
         'name': spi.name,
         'addr': normalizeAgentEndpoint(monitor.addr),
-        if (token != null && !token.isEmpty) 'token': token.token,
+        // Only a credential this side actually holds. A reused one lives in
+        // the platform store and comes back as a placeholder
+        // (`ScopedToken.held`); publishing that would write the word "held"
+        // over the real token, and the native side already keeps what it has
+        // when an entry carries none.
+        if (token != null && !token.isEmpty && !token.opaque)
+          'token': token.token,
         'expiresAt': token?.expiresAt ?? 0,
         'ignoreCert': monitor.ignoreCert,
         // Whether this server was opted in to plaintext HTTP. The widget

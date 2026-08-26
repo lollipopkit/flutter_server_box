@@ -202,7 +202,7 @@ private struct HomeScreen: View {
         VStack(alignment: .leading, spacing: family == .systemSmall ? 4 : 7) {
             header
             if family == .systemSmall {
-                Readings(snapshot: snapshot, family: family)
+                Readings(snapshot: snapshot)
             } else {
                 charts(metric.following(Self.chartCount))
             }
@@ -279,20 +279,20 @@ private struct HomeScreen: View {
     }
 }
 
+/// All four readings, which is the whole of what the small widget is for.
+///
+/// It used to show two of them, on the theory that four labelled rows do not
+/// fit in something the size of an app icon. They do — the widget this
+/// replaced drew four — and once the medium widget became charts-only there
+/// was no size left where the other two would ever appear. A reading the user
+/// asked for and cannot see anywhere is worse than a slightly denser row.
 private struct Readings: View {
     let snapshot: WidgetSnapshot
-    let family: WidgetFamily
 
     var body: some View {
-        VStack(alignment: .leading, spacing: family == .systemSmall ? 3 : 5) {
-            // A small widget is the size of an app icon. Four labelled rows in
-            // it are legible only at a size nobody can read at arm's length,
-            // so it gets the two readings that answer "is this machine busy".
-            let shown: [WidgetMetric] = family == .systemSmall
-                ? [.cpu, .memory]
-                : [.cpu, .memory, .disk, .network]
-            ForEach(shown, id: \.self) { metric in
-                Reading(snapshot: snapshot, metric: metric, family: family)
+        VStack(alignment: .leading, spacing: 3) {
+            ForEach(WidgetMetric.rotation, id: \.self) { metric in
+                Reading(snapshot: snapshot, metric: metric)
             }
         }
     }
@@ -301,7 +301,6 @@ private struct Readings: View {
 private struct Reading: View {
     let snapshot: WidgetSnapshot
     let metric: WidgetMetric
-    let family: WidgetFamily
 
     var body: some View {
         HStack(spacing: 5) {
@@ -310,14 +309,14 @@ private struct Reading: View {
                 .font(.system(size: 10, design: .monospaced))
                 .foregroundStyle(.secondary)
             Spacer(minLength: 0)
-            if family != .systemSmall, let detail = snapshot.detailText(for: metric) {
-                Text(detail)
-                    .font(.system(size: 10, design: .monospaced))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
+            // No second, longer form beside it — "1.3g / 1.9g" next to a
+            // percentage is two numbers competing for a row about a hundred
+            // points wide. Network has no percentage, so its reading *is* the
+            // byte counts, and that one shrinks rather than truncating.
             Text(snapshot.percentText(for: metric))
-                .font(.system(size: family == .systemSmall ? 13 : 12, weight: .semibold, design: .monospaced))
+                .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
         }
     }
 }

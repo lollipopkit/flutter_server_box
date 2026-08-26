@@ -121,6 +121,56 @@ void main() {
     });
   });
 
+  group('a credential the platform is already holding', () {
+    test('is not published back over itself', () {
+      // The renewal decision needs to know a token exists, its endpoint and
+      // its deadline — never the bytes, which stay in the platform credential
+      // store. So a reused one comes back as a placeholder, and publishing
+      // that would write the placeholder *over* the real credential. Every
+      // request after it answers 401, and nothing re-issues, because from
+      // this side the server still looks like it has a token.
+      //
+      // Found on a device: the first push worked and the next one wedged it.
+      final result = payload(
+        servers: [monitorSpi(id: 'a', name: 'A')],
+        tokens: {
+          'a': const ScopedToken.held(endpoint: addr, expiresAt: 1800000000),
+        },
+      );
+
+      final entry = entries(result).single;
+      expect(entry.containsKey('token'), isFalse);
+      // The deadline still travels: the native side keeps the credential it
+      // has and needs to agree about when it lapses.
+      expect(entry['expiresAt'], 1800000000);
+    });
+
+    test('but a freshly issued one is', () {
+      final result = payload(
+        servers: [monitorSpi(id: 'a', name: 'A')],
+        tokens: {'a': tok('brand-new')},
+      );
+
+      expect(entries(result).single['token'], 'brand-new');
+    });
+
+    test('and it still counts as reusable', () {
+      // The other half of the same decision: a held token has to satisfy
+      // `servesEndpoint`, or every push would mint a replacement for a
+      // credential that was working.
+      final held = const ScopedToken.held(
+        endpoint: addr,
+        expiresAt: 1800000000,
+      );
+
+      expect(held.isEmpty, isFalse);
+      expect(
+        held.servesEndpoint(addr, DateTime.utc(2026, 8, 26)),
+        isTrue,
+      );
+    });
+  });
+
   group('a server the app could not get a token for', () {
     test('is still published, without one', () {
       // Dropping it would empty a configuration screen because an agent was

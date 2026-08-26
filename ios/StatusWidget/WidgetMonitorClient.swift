@@ -169,6 +169,14 @@ final class WidgetMonitorClient: NSObject {
 
         if let http = response as? HTTPURLResponse,
            !(200 ..< 300).contains(http.statusCode) {
+            // A scoped token the agent refuses is not going to start working,
+            // and leaving it in place wedges the widget until it expires — up
+            // to ninety days. Dropping it makes the app mint a replacement on
+            // its next publish.
+            if http.statusCode == 401 || http.statusCode == 403 {
+                WidgetStore.setToken(nil, for: server.id)
+                throw WidgetError.noToken
+            }
             let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
             throw WidgetError.http(http.statusCode, obj?["error"] as? String ?? "")
         }

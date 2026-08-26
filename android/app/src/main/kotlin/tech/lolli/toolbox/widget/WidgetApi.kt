@@ -37,6 +37,17 @@ object WidgetApi {
 
     class MissingTokenException : IOException("No credential")
 
+    /**
+     * The agent refused the stored credential.
+     *
+     * Its own type because the stored token is dropped when it happens: a
+     * scoped token that the agent will not accept is not going to start
+     * working, and leaving it in place wedges the widget until it expires —
+     * up to ninety days. Dropping it makes `widgetTokenState` stop reporting
+     * one, so the app mints a replacement on its next publish.
+     */
+    class RejectedTokenException : IOException("Credential rejected")
+
     /** One reading, reduced to what a widget shows. */
     data class Reading(
         val name: String,
@@ -76,7 +87,12 @@ object WidgetApi {
         server: WidgetStore.WidgetServer,
     ): Pair<Reading, List<HistoryPoint>> = withContext(Dispatchers.IO) {
         val token = WidgetStore.token(context, server.id) ?: throw MissingTokenException()
-        val reading = parseMetrics(server, get(server, "/api/v1/metrics", token))
+        val reading = try {
+            parseMetrics(server, get(server, "/api/v1/metrics", token))
+        } catch (e: RejectedTokenException) {
+            WidgetStore.setToken(context, server.id, null)
+            throw e
+        }
         // History failing is not fatal: an agent that has just started has
         // none, and numbers with no chart beat an error.
         val history = try {
@@ -144,9 +160,9 @@ object WidgetApi {
                 setRequestProperty("Accept", "application/json")
                 setRequestProperty("User-Agent", "ServerBox-Widget/2")
             }
-            if (connection.responseCode !in 200..299) {
-                throw IOException("HTTP ${connection.responseCode}")
-            }
+            val code = connection.responseCode
+            if (code == 401 || code == 403) throw RejectedTokenException()
+            if (code !in 200..299) throw IOException("HTTP $code")
             return connection.inputStream.bufferedReader().use { it.readText() }
         } finally {
             connection?.disconnect()

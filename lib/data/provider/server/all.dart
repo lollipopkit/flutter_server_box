@@ -383,12 +383,19 @@ class ServersNotifier extends _$ServersNotifier {
   Future<void> _delServer(String id) async {
     final deleting = state.servers[id];
     if (deleting == null) return;
-    // Before the row goes, because revoking is an authenticated call to the
-    // agent and the credential is on the record. Neither publishes — see
+    // Started here, because revoking is an authenticated call to the agent
+    // and the credential is on the record. Neither publishes — see
     // `revokeServer`: a rebuild from a store that still holds this server
     // would mint a replacement token for the one being deleted.
-    await WatchSync.instance.revokeServer(deleting);
-    await WidgetSync.instance.revokeServer(deleting);
+    //
+    // Not waited for, for the reason the edit path does not either: an agent
+    // that has gone away costs ten seconds per call to establish that, and a
+    // delete that hangs on it is a delete that looks ignored. `deleting` is a
+    // value already in hand, so the request carries the old credential
+    // whatever the store does next, and a rebuild after the row is gone has
+    // nothing to mint for.
+    unawaited(WatchSync.instance.revokeServer(deleting));
+    unawaited(WidgetSync.instance.revokeServer(deleting));
     await _clearServerData(id);
     final newServers = Map<String, Spi>.from(state.servers);
     newServers.remove(id);
@@ -596,7 +603,21 @@ class ServersNotifier extends _$ServersNotifier {
       // last moment anything can: after this the old address and login are
       // gone, and a rebuild of the token set can only stop handing the
       // credential out, never take it back.
-      await revokeScopedTokensLeftBehind(old, newSpi);
+      //
+      // Started here and not waited for. The old address is the one being
+      // moved away from, and the commonest reason to move away from an
+      // address is that it stopped answering — so this is a request that
+      // routinely runs into `MonitorHttpClient`'s ten-second connect timeout,
+      // twice, on the one code path between the Save button and the editor
+      // closing. `_mutate` serialises every mutation, so a second tap queued
+      // behind the first instead of doing anything: the save appeared to be
+      // ignored for as long as the old agent took to not answer.
+      //
+      // Nothing below depends on the result, `old` is a value this closure
+      // holds rather than something re-read from the store, and the call
+      // already swallows its own failures — see its own doc comment for why
+      // a token that outlives the edit is the accepted worst case.
+      unawaited(revokeScopedTokensLeftBehind(old, newSpi));
 
       // Only reconnect if neccessary
       if (newSpi.shouldReconnect(old)) {

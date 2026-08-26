@@ -66,11 +66,20 @@
         android:scaleType="fitCenter"
         android:visibility="gone" />
 
+    <!--
+        Weighted like the chart above it, and only ever one of the two is
+        visible: whichever it is takes the space the header leaves. Without a
+        weight here the readings sat against the top of the card with the rest
+        of it blank, because a `GONE` view contributes no weight and nothing
+        else was asking for the room.
+    -->
     <LinearLayout
         android:id="@+id/widget_content"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:layout_marginTop="6dp"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
         android:orientation="vertical">
 
         <LinearLayout

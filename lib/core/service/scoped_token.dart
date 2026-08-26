@@ -22,9 +22,36 @@ class ScopedToken {
     required this.token,
     required this.endpoint,
     this.expiresAt = 0,
+    this.opaque = false,
   });
 
+  /// A credential this side knows *about* but cannot read.
+  ///
+  /// The home widgets keep theirs in the platform credential store, and the
+  /// channel answers with the endpoint and the deadline only — everything the
+  /// renewal decision needs, without carrying the bytes back across. [token]
+  /// is then a placeholder.
+  const ScopedToken.held({
+    required String endpoint,
+    required int expiresAt,
+  }) : this(
+         token: _heldPlaceholder,
+         endpoint: endpoint,
+         expiresAt: expiresAt,
+         opaque: true,
+       );
+
+  static const _heldPlaceholder = 'held';
+
   final String token;
+
+  /// Whether [token] is a placeholder rather than the credential.
+  ///
+  /// Publishing one of these would overwrite the real credential with the
+  /// word "held", and every request after it answers 401 — which is exactly
+  /// what happened: the first push issued a real token, and the next one found
+  /// it reusable and wrote the placeholder over it.
+  final bool opaque;
 
   /// The normalized agent address this was issued by — see
   /// [normalizeAgentEndpoint].
@@ -77,10 +104,11 @@ class ScopedToken {
       other is ScopedToken &&
       other.token == token &&
       other.endpoint == endpoint &&
-      other.expiresAt == expiresAt;
+      other.expiresAt == expiresAt &&
+      other.opaque == opaque;
 
   @override
-  int get hashCode => Object.hash(token, endpoint, expiresAt);
+  int get hashCode => Object.hash(token, endpoint, expiresAt, opaque);
 
   @override
   String toString() => 'ScopedToken($endpoint, expires $expiresAt)';

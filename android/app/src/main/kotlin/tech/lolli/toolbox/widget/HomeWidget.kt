@@ -178,7 +178,9 @@ abstract class HomeWidget(private val kind: WidgetKind) : AppWidgetProvider() {
                 } catch (e: Exception) {
                     Log.w(TAG, "Widget $appWidgetId update failed: ${e.message}")
                     val message = when (e) {
-                        is WidgetApi.MissingTokenException -> R.string.widget_err_no_token
+                        is WidgetApi.MissingTokenException,
+                        is WidgetApi.RejectedTokenException,
+                            -> R.string.widget_err_no_token
                         is WidgetApi.InsecureException -> R.string.widget_err_insecure
                         is SocketTimeoutException -> R.string.widget_err_timeout
                         is JSONException -> R.string.widget_err_network
@@ -324,7 +326,7 @@ abstract class HomeWidget(private val kind: WidgetKind) : AppWidgetProvider() {
         if (!kind.drawsCharts) {
             views.setViewVisibility(R.id.widget_chart, View.GONE)
             views.setViewVisibility(R.id.widget_content, View.VISIBLE)
-            showReadings(views, reading, compact = bounds.columns < 3)
+            showReadings(views, reading)
         } else {
             val bitmap = WidgetChart.render(
                 context = context,
@@ -341,30 +343,49 @@ abstract class HomeWidget(private val kind: WidgetKind) : AppWidgetProvider() {
             } else {
                 views.setViewVisibility(R.id.widget_chart, View.GONE)
                 views.setViewVisibility(R.id.widget_content, View.VISIBLE)
-                showReadings(views, reading, compact = bounds.columns < 3)
+                showReadings(views, reading)
             }
         }
         manager.updateAppWidget(appWidgetId, views)
     }
 
     /**
-     * Two rows on a widget the size of an app icon, four when there is room.
+     * All four readings, which is the whole of what the small widget is for.
      *
-     * Four labelled rows at 2x2 are legible only at a size nobody reads at
-     * arm's length, so the small case gets the two that answer "is this
-     * machine busy".
+     * It used to show two of them, on the theory that four rows do not fit in
+     * something the size of an app icon. They do — and once the medium widget
+     * became charts-only there was no size left where the other two would ever
+     * appear, since this is only ever called for [WidgetKind.SMALL] at 2x2.
+     *
+     * Percentages rather than the "4.2g / 8.0g" forms: fifteen monospace
+     * characters do not fit a row about 94dp wide, and a truncated pair of
+     * numbers says less than one whole one. Network has no percentage, so it
+     * gets the shortened byte counts.
      */
-    private fun showReadings(views: RemoteViews, reading: WidgetApi.Reading, compact: Boolean) {
+    private fun showReadings(views: RemoteViews, reading: WidgetApi.Reading) {
         views.setTextViewText(R.id.widget_cpu, percentText(reading.cpu))
-        views.setTextViewText(R.id.widget_mem, reading.memText)
-        views.setTextViewText(R.id.widget_disk, reading.diskText)
-        views.setTextViewText(R.id.widget_net, reading.netText)
-        val rest = if (compact) View.GONE else View.VISIBLE
-        views.setViewVisibility(R.id.widget_cpu_label, View.VISIBLE)
-        views.setViewVisibility(R.id.widget_mem_label, View.VISIBLE)
-        views.setViewVisibility(R.id.widget_disk_label, rest)
-        views.setViewVisibility(R.id.widget_net_label, rest)
+        views.setTextViewText(R.id.widget_mem, percentText(reading.mem))
+        views.setTextViewText(R.id.widget_disk, percentText(reading.disk))
+        views.setTextViewText(R.id.widget_net, shortNet(reading.netText))
+        for (row in listOf(
+            R.id.widget_cpu_label,
+            R.id.widget_mem_label,
+            R.id.widget_disk_label,
+            R.id.widget_net_label,
+        )) {
+            views.setViewVisibility(row, View.VISIBLE)
+        }
     }
+
+    /**
+     * "93.2m / 75.3m" -> "93m/75m".
+     *
+     * Six characters back, which is the difference between fitting a narrow
+     * row and not. Used by the readings widget and as the chart panel's last
+     * resort when the full form will not fit beside its label.
+     */
+    private fun shortNet(netText: String): String =
+        netText.replace(" / ", "/").replace(Regex("\\.[0-9]"), "")
 
     private fun showError(
         context: Context,
@@ -428,9 +449,7 @@ abstract class HomeWidget(private val kind: WidgetKind) : AppWidgetProvider() {
             secondary = history.map { it.netTx },
             isPercent = false,
             valueText = reading.netText,
-            // "93m/75m" against "93.2m / 75.3m": six characters back, which is
-            // the difference between fitting a one-column panel and not.
-            valueShort = reading.netText.replace(" / ", "/").replace(Regex("\\.[0-9]"), ""),
+            valueShort = shortNet(reading.netText),
             color = Color.parseColor("#BF5AF2"),
         )
     }
