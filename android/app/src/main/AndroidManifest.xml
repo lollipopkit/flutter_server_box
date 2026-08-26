@@ -39,8 +39,10 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="false"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:hasFragileUserData="true"
-        tools:targetApi="q">
+        tools:targetApi="s">
         <activity
             android:name=".MainActivity"
             android:exported="true"
