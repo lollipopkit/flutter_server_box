@@ -29,6 +29,7 @@
     <string name="widget_mem_desc">Uso della memoria</string>
     <string name="widget_disk_desc">Uso del disco</string>
     <string name="widget_net_desc">Uso della rete</string>
+    <string name="widget_refresh_desc">Aggiorna</string>
     <string name="widget_small_label">Valori del server</string>
     <string name="widget_medium_label">Grafici del server</string>
 </resources>

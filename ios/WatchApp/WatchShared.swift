@@ -81,12 +81,39 @@ struct WatchServer: Codable, Identifiable, Hashable {
     /// Base address of the agent, no trailing slash.
     let addr: String
     let ignoreCert: Bool
+    /// Whether this server was opted in to plaintext HTTP in the app.
+    ///
+    /// Checked before the token is sent (`MonitorClient`), never at storage
+    /// time — the same question the phone asks, answered the same way, since
+    /// the credential the watch holds is as good as the one the phone does.
+    let allowInsecure: Bool
 
-    init(id: String, name: String, addr: String, ignoreCert: Bool = false) {
+    init(
+        id: String,
+        name: String,
+        addr: String,
+        ignoreCert: Bool = false,
+        allowInsecure: Bool = false
+    ) {
         self.id = id
         self.name = name
         self.addr = addr
         self.ignoreCert = ignoreCert
+        self.allowInsecure = allowInsecure
+    }
+
+    /// Hand-written for `allowInsecure` alone: a list stored by a build that
+    /// predates the key would otherwise fail to decode *entirely*, and
+    /// `Store.servers()` answers a decoding failure with an empty list — so
+    /// adding this field would have emptied the watch until the next push.
+    /// Absent reads as false, which is the refusing answer.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        addr = try c.decode(String.self, forKey: .addr)
+        ignoreCert = try c.decodeIfPresent(Bool.self, forKey: .ignoreCert) ?? false
+        allowInsecure = try c.decodeIfPresent(Bool.self, forKey: .allowInsecure) ?? false
     }
 }
 

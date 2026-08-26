@@ -166,7 +166,8 @@ final class PhoneConnMgr: NSObject, ObservableObject, WCSessionDelegate {
                     id: id,
                     name: entry["name"] as? String ?? addr,
                     addr: addr,
-                    ignoreCert: entry["ignoreCert"] as? Bool ?? false
+                    ignoreCert: entry["ignoreCert"] as? Bool ?? false,
+                    allowInsecure: entry["allowInsecure"] as? Bool ?? false
                 )
             )
             // Absent means "no token", which clears a stored one rather than

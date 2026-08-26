@@ -439,13 +439,46 @@ private struct AccessoryCircular: View {
     let metric: WidgetMetric
 
     var body: some View {
-        Gauge(value: snapshot.percent(for: metric) ?? 0, in: 0 ... 100) {
-            Image(systemName: metric.icon)
-        } currentValueLabel: {
-            Text(snapshot.percent(for: metric).map { String(format: "%.0f", $0) } ?? "--")
-                .font(.system(size: 12, weight: .bold, design: .monospaced))
+        if let percent = snapshot.percent(for: metric) {
+            Gauge(value: percent, in: 0 ... 100) {
+                Image(systemName: metric.icon)
+            } currentValueLabel: {
+                Text(String(format: "%.0f", percent))
+                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+            }
+            .gaugeStyle(.accessoryCircular)
+        } else {
+            // No ring, because a ring is a fraction of a whole and neither
+            // thing that lands here has one: a transfer rate has no ceiling to
+            // be a percentage of, and a reading the agent could not take has
+            // no value at all. Filling `nil` in as 0 drew an empty ring beside
+            // the "--" — a link moving traffic, rendered as a machine sitting
+            // idle, which is the reading that text exists to avoid.
+            VStack(spacing: 0) {
+                Image(systemName: metric.icon)
+                    .font(.system(size: 10))
+                ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
+                    Text(line)
+                        .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
+                }
+            }
         }
-        .gaugeStyle(.accessoryCircular)
+    }
+
+    /// "119.1m / 127.8m" -> ["119m", "128m"], and "--" -> ["--"].
+    ///
+    /// A circular accessory is about five characters wide, so the two rates
+    /// only fit stacked, and only without their decimals.
+    private var lines: [String] {
+        snapshot.percentText(for: metric)
+            .components(separatedBy: " / ")
+            .map {
+                $0.replacingOccurrences(
+                    of: #"\.[0-9]"#, with: "", options: .regularExpression
+                )
+            }
     }
 }
 

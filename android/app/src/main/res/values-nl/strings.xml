@@ -29,6 +29,7 @@
     <string name="widget_mem_desc">Geheugengebruik</string>
     <string name="widget_disk_desc">Schijfgebruik</string>
     <string name="widget_net_desc">Netwerkgebruik</string>
+    <string name="widget_refresh_desc">Vernieuwen</string>
     <string name="widget_small_label">Serverwaarden</string>
     <string name="widget_medium_label">Servergrafieken</string>
 </resources>

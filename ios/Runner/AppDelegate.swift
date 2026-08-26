@@ -150,8 +150,18 @@ import ActivityKit
                   let addr = entry["addr"] as? String, !addr.isEmpty
             else { continue }
 
+            let stored = WidgetStore.server(id: id)
+            // Only while the entry still names the endpoint the stored
+            // credential was minted against. A token is scoped to one agent,
+            // so after an address change the held one is not a credential the
+            // widget can fall back on — it is a request that will be refused,
+            // and an `expiresAt` inherited alongside it would report a working
+            // credential and stop anything asking for a real one.
+            let sameEndpoint = stored?.addr == addr
             if let token = entry["token"] as? String, !token.isEmpty {
                 WidgetStore.setToken(token, for: id)
+            } else if !sameEndpoint {
+                WidgetStore.setToken(nil, for: id)
             }
             let expiresAt = (entry["expiresAt"] as? NSNumber)?.intValue ?? 0
             servers.append(
@@ -166,7 +176,7 @@ import ActivityKit
                     // credential is gone".
                     tokenExpiresAt: expiresAt > 0
                         ? expiresAt
-                        : (WidgetStore.server(id: id)?.tokenExpiresAt ?? 0)
+                        : (sameEndpoint ? stored?.tokenExpiresAt ?? 0 : 0)
                 )
             )
         }

@@ -72,6 +72,22 @@ final class MonitorClient: NSObject {
         super.init()
     }
 
+    /// Whether a bearer token may go to this URL.
+    ///
+    /// The same question the phone asks before every request, and the home
+    /// widget after it. Loopback counts as secure without TLS — that is the
+    /// reverse proxy on the same host, which really is encrypted — and
+    /// everything else in plaintext needs the server's own opt-in. A watch
+    /// carries a credential as real as the phone's; the reason it is a
+    /// narrower one is that it can be revoked separately, not that it matters
+    /// less on the wire.
+    private func isSendable(_ url: URL) -> Bool {
+        if url.scheme?.lowercased() == "https" { return true }
+        if server.allowInsecure { return true }
+        guard let host = url.host?.lowercased() else { return false }
+        return host == "localhost" || host == "127.0.0.1" || host == "::1"
+    }
+
     /// Base address with any trailing slash removed, so paths can be appended.
     private var base: String {
         let addr = server.addr.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -125,6 +141,9 @@ final class MonitorClient: NSObject {
             throw MonitorError.badUrl(base + path)
         }
         var req = URLRequest(url: url)
+        guard isSendable(url) else {
+            throw MonitorError.transport("HTTPS required")
+        }
         guard let token = WatchStore.token(for: server.id), !token.isEmpty else {
             throw MonitorError.http(401, "No read-only watch token")
         }

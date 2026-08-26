@@ -38,6 +38,16 @@ fn ensure_crypto_provider() {
 /// any point count asked for below — so a short answer is the bucketing and
 /// not a shortage of rows.
 async fn state_with_samples(minutes: i64) -> Arc<AppState> {
+    state_with_samples_every(minutes * 60, 10).await
+}
+
+/// One row every [`step_secs`] over the last [`span_secs`].
+///
+/// The step matters to the two tests below that are about bucket *width*: a
+/// bucket narrower than the gap between rows holds one row like any other, so
+/// a fixture at 10-second spacing answers identically whether the width was
+/// rounded up or down and proves nothing either way.
+async fn state_with_samples_every(span_secs: i64, step_secs: i64) -> Arc<AppState> {
     ensure_crypto_provider();
     let config = Config {
         jwt_secret: Some(SECRET.to_string()),
@@ -47,9 +57,9 @@ async fn state_with_samples(minutes: i64) -> Arc<AppState> {
     let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
     sqlx::migrate!("./migrations").run(&db).await.unwrap();
 
-    let rows = minutes * 6;
+    let rows = span_secs / step_secs;
     for i in 0..rows {
-        let seconds_ago = (rows - i) * 10;
+        let seconds_ago = (rows - i) * step_secs;
         sqlx::query(
             "INSERT INTO system_metrics (
                 timestamp, server_name, cpu_usage,
@@ -102,17 +112,32 @@ async fn max_points_is_a_ceiling() {
     }
 }
 
-/// The case integer division gets wrong: 7 minutes over 100 points is 4.2
-/// seconds a bucket, and rounding that down to 4 answers with 105.
+/// The case integer division gets wrong, asserted on the symptom it has.
+///
+/// Rounding the width down makes more buckets than were asked for, but that
+/// is not what a caller sees: the handler caps the vector at the end, and it
+/// drops from the *old* end, so the count is right and the window is short.
+/// Five minutes over 200 points is 1.5 seconds a bucket — rounded down to 1
+/// that is 300 buckets for a 200-point answer, and the 100 dropped are the
+/// oldest third of the window.
+///
+/// Asserting `len() <= max` alone cannot fail here. The cap guarantees it
+/// whether the width was computed correctly or not, which is why this test
+/// passed for the whole time it was checking that and nothing else.
 #[ntex::test]
-async fn a_window_that_does_not_divide_evenly_still_fits() {
-    let srv = test_server(state_with_samples(10).await).await;
+async fn a_window_that_does_not_divide_evenly_is_still_covered() {
+    let srv = test_server(state_with_samples_every(6 * 60, 1).await).await;
 
-    let points = history(&srv, "minutes=7&max_points=100").await;
+    let points = history(&srv, "minutes=5&max_points=200").await;
     assert!(
-        points.len() <= 100,
-        "7 minutes at 100 points came back with {}",
+        points.len() <= 200,
+        "asked for at most 200 points, got {}",
         points.len()
+    );
+    let span = span_secs(&points);
+    assert!(
+        span >= 280,
+        "5 minutes at 200 points covered {span}s of the 300 asked for"
     );
 }
 
@@ -127,6 +152,15 @@ async fn the_window_is_still_covered() {
         points.len() >= 18,
         "an hour of samples thinned to 20 gave {}",
         points.len()
+    );
+    // Twenty points clustered into the last few minutes would satisfy the
+    // count and still be the wrong chart. One bucket is three minutes here,
+    // and the oldest is a partial one, so the span is short of the full hour
+    // by up to that much even when everything is right.
+    let span = span_secs(&points);
+    assert!(
+        span >= 55 * 60,
+        "20 points over an hour spanned {span}s"
     );
 }
 
@@ -163,4 +197,28 @@ async fn a_silly_count_is_clamped() {
         "an unreadable count should read as absent, got {}",
         nonsense.len()
     );
+}
+
+
+/// Seconds between the first and last point.
+///
+/// The column is SQLite's `datetime()` text, so this reads the clock out of
+/// it rather than taking a date dependency for two tests. A run that straddles
+/// midnight would see the last time as the smaller of the two; a day is added
+/// back in that case, which is correct for any window shorter than one.
+fn span_secs(points: &[serde_json::Value]) -> i64 {
+    let at = |p: &serde_json::Value| -> i64 {
+        let ts = p["timestamp"].as_str().expect("point has no timestamp");
+        let clock = ts.rsplit(' ').next().unwrap_or_default();
+        let mut parts = clock.split(':').map(|f| f.parse::<i64>().unwrap_or(0));
+        let h = parts.next().unwrap_or(0);
+        let m = parts.next().unwrap_or(0);
+        let s = parts.next().unwrap_or(0);
+        h * 3600 + m * 60 + s
+    };
+    let (first, last) = match (points.first(), points.last()) {
+        (Some(f), Some(l)) => (at(f), at(l)),
+        _ => return 0,
+    };
+    if last >= first { last - first } else { last + 86_400 - first }
 }

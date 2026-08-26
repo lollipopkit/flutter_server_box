@@ -408,6 +408,11 @@ final class WatchSync {
         // 401, which it cannot do anything about; renewing is this side's job.
         'expiresAt': token.expiresAt,
         'ignoreCert': monitor.ignoreCert,
+        // The watch refuses to send the token over plaintext without it, the
+        // way this app and the home widget do. Not a storage decision made
+        // here: the answer travels so the check can be made where the request
+        // is.
+        'allowInsecure': monitor.allowInsecure,
       });
     }
 

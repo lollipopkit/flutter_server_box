@@ -33,6 +33,7 @@ void main() {
     String? user = 'admin',
     String? pwd = 'secret',
     bool ignoreCert = false,
+    bool allowInsecure = false,
   }) {
     return spiFixture(name: name, id: id).copyWith(
       monitorHttp: MonitorHttpCredential(
@@ -40,6 +41,7 @@ void main() {
         user: user,
         pwd: pwd,
         ignoreCert: ignoreCert,
+        allowInsecure: allowInsecure,
       ),
     );
   }
@@ -72,6 +74,23 @@ void main() {
   }
 
   group('the payload the watch is handed', () {
+    test('carries the plaintext opt-in, which the watch checks before sending '
+        'the token', () {
+      final result = payload(
+        selectedIds: ['a', 'b'],
+        servers: [
+          monitorSpi(id: 'a', name: 'Plain', addr: 'http://10.0.0.9:3770',
+              allowInsecure: true),
+          monitorSpi(id: 'b', name: 'Default', addr: 'http://10.0.0.8:3770'),
+        ],
+        tokens: {'a': tok('t-a', endpoint: 'http://10.0.0.9:3770'),
+                 'b': tok('t-b', endpoint: 'http://10.0.0.8:3770')},
+      );
+
+      final servers = (result['servers'] as List).cast<Map>();
+      expect(servers.map((e) => e['allowInsecure']), [true, false]);
+    });
+
     test('carries what it needs to reach the agent', () {
       final result = payload(
         selectedIds: ['a'],
@@ -88,6 +107,7 @@ void main() {
           'token': 'watch-token',
           'expiresAt': inDays(90),
           'ignoreCert': true,
+          'allowInsecure': false,
         },
       ]);
       final server = (result['servers'] as List).single as Map;

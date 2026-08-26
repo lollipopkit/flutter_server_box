@@ -13,6 +13,7 @@
     <string name="widget_mem_desc">Memory usage</string>
     <string name="widget_disk_desc">Disk usage</string>
     <string name="widget_net_desc">Network usage</string>
+    <string name="widget_refresh_desc">Refresh</string>
 
     <string name="widget_configure_title">Widget</string>
     <string name="widget_configure_server">Server</string>
@@ -38,9 +39,6 @@
     <string name="widget_err_network">Network error</string>
     <string name="widget_err_timeout">Timed out</string>
     <string name="widget_no_history">No history</string>
-
-    <!-- Read aloud, never drawn, so this one is translated like any other. -->
-    <string name="widget_refresh_desc">Refresh</string>
 
     <!--
         Row labels, matching the abbreviations the iOS widget draws. Not

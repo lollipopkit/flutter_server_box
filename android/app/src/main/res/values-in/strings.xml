@@ -29,6 +29,7 @@
     <string name="widget_mem_desc">Penggunaan memori</string>
     <string name="widget_disk_desc">Penggunaan disk</string>
     <string name="widget_net_desc">Penggunaan jaringan</string>
+    <string name="widget_refresh_desc">Segarkan</string>
     <string name="widget_small_label">Nilai server</string>
     <string name="widget_medium_label">Grafik server</string>
 </resources>

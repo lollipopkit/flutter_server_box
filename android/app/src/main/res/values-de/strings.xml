@@ -29,6 +29,7 @@
     <string name="widget_mem_desc">Speicherauslastung</string>
     <string name="widget_disk_desc">Datenträgerauslastung</string>
     <string name="widget_net_desc">Netzwerkauslastung</string>
+    <string name="widget_refresh_desc">Aktualisieren</string>
     <string name="widget_small_label">Server-Messwerte</string>
     <string name="widget_medium_label">Server-Diagramme</string>
 </resources>

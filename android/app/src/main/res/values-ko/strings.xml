@@ -29,6 +29,7 @@
     <string name="widget_mem_desc">메모리 사용률</string>
     <string name="widget_disk_desc">디스크 사용률</string>
     <string name="widget_net_desc">네트워크 사용량</string>
+    <string name="widget_refresh_desc">새로 고침</string>
     <string name="widget_small_label">서버 값</string>
     <string name="widget_medium_label">서버 그래프</string>
 </resources>

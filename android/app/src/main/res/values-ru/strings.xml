@@ -29,6 +29,7 @@
     <string name="widget_mem_desc">Использование памяти</string>
     <string name="widget_disk_desc">Использование диска</string>
     <string name="widget_net_desc">Сетевой трафик</string>
+    <string name="widget_refresh_desc">Обновить</string>
     <string name="widget_small_label">Значения сервера</string>
     <string name="widget_medium_label">Графики сервера</string>
 </resources>

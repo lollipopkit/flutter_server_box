@@ -269,7 +269,13 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
               controller: _nameController,
               type: TextInputType.text,
               node: _nameFocus,
-              onSubmitted: (_) => _focusScope.requestFocus(_ipFocus),
+              // The host field is the next one in this card, and it is only
+              // in the card when SSH is on. Requesting a node attached to
+              // nothing left the keyboard up over a field that had just lost
+              // focus, with no way to tell what it was typing into.
+              onSubmitted: (_) => useSsh
+                  ? _focusScope.requestFocus(_ipFocus)
+                  : _focusScope.unfocus(),
               hint: libL10n.example,
               label: libL10n.name,
               icon: BoxIcons.bx_rename,

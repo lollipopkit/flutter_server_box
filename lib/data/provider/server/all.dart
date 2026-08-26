@@ -451,10 +451,18 @@ class ServersNotifier extends _$ServersNotifier {
 
     // Revoke every one first, while the records are still there to
     // authenticate with; the single push comes after the store is empty.
-    for (final spi in state.servers.values) {
-      await WatchSync.instance.revokeServer(spi);
-      await WidgetSync.instance.revokeServer(spi);
-    }
+    //
+    // All at once, because one at a time made an unreachable agent cost the
+    // whole ten-second connect timeout and the next server wait behind it —
+    // a confirmed "delete everything" sat there for `2N` timeouts with
+    // nothing on screen explaining why. Both calls swallow their own errors,
+    // so this settles whatever the agents answer.
+    await Future.wait([
+      for (final spi in state.servers.values) ...[
+        WatchSync.instance.revokeServer(spi),
+        WidgetSync.instance.revokeServer(spi),
+      ],
+    ]);
     for (final id in serverIds) {
       await _clearServerData(id);
     }

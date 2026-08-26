@@ -29,6 +29,7 @@
     <string name="widget_mem_desc">メモリ使用率</string>
     <string name="widget_disk_desc">ディスク使用率</string>
     <string name="widget_net_desc">ネットワーク使用量</string>
+    <string name="widget_refresh_desc">更新</string>
     <string name="widget_small_label">サーバーの数値</string>
     <string name="widget_medium_label">サーバーのグラフ</string>
 </resources>
