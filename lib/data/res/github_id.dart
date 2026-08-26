@@ -196,7 +196,8 @@ abstract final class GithubIds {
     'TimeRainStarSky',
     'ArindamBhatta',
     'LiuShu3',
-    'rayangl'
+    'rayangl',
+    'openwrt-jichang-core'
   };
 }
 
