@@ -134,7 +134,9 @@ jobs:
           emit website "$shared|^website/|^packages/webui/"
 
   reproducibilityCheck:
-    name: Reproducibility check
+    # These are deterministic-input guards, not a reproducibility proof. The
+    # two independent Android builds are compared in android-reproducible.yml.
+    name: Build input checks
     runs-on: ubuntu-latest
 
     steps:
