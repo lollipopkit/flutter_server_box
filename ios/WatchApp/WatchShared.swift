@@ -3,8 +3,8 @@
 //  WatchApp / WatchWidget
 //
 //  Types both watch targets need. `Utils.swift` can't serve that role: it is
-//  built for the app and its iOS extensions, and its `Status` shape is the
-//  Go-compat one this app no longer speaks.
+//  built for the app and its iOS extensions, which are a different platform —
+//  no source file is shared across that boundary.
 //
 
 import Foundation
@@ -27,11 +27,6 @@ enum WatchKeys {
     /// Which chart within that page, by `WatchChart.rawValue`. Same purpose,
     /// the other axis.
     static let selectedChart = "watch_shared_selected_chart"
-    /// Pre-v2 payload, kept only so an install that has not been opened since
-    /// the rewrite can be migrated.
-    ///
-    /// TODO: drop with `WatchServer.Kind.legacy`.
-    static let legacyCtx = "ctx"
 }
 
 /// One page of a server's readings.
@@ -75,29 +70,15 @@ enum WatchChart: Int, CaseIterable, Identifiable {
 
 /// One server the watch may show.
 struct WatchServer: Codable, Identifiable, Hashable {
-    enum Kind: String, Codable {
-        /// Reached through monitor's `/api/v1`: authenticated, and the only
-        /// kind that can produce charts.
-        case monitor
-        /// A bare Go-compat `/status` URL typed by hand in an older build.
-        /// Unauthenticated, current values only.
-        ///
-        /// TODO: drop with monitor's `/status` compat route.
-        case legacy
-    }
-
     let id: String
     let name: String
-    let kind: Kind
-    /// Base address of the agent for `.monitor`, the full status URL for
-    /// `.legacy`.
+    /// Base address of the agent, no trailing slash.
     let addr: String
     let ignoreCert: Bool
 
-    init(id: String, name: String, kind: Kind, addr: String, ignoreCert: Bool = false) {
+    init(id: String, name: String, addr: String, ignoreCert: Bool = false) {
         self.id = id
         self.name = name
-        self.kind = kind
         self.addr = addr
         self.ignoreCert = ignoreCert
     }
@@ -122,8 +103,8 @@ struct WatchSnapshot: Codable, Hashable {
     let netText: String
     let uptime: String?
 
-    /// Oldest first, and all of them share an index. Empty for a source with no
-    /// history (`.legacy`, or an agent that has not stored any yet).
+    /// Oldest first, and all of them share an index. Empty for an agent that
+    /// has not stored any history yet.
     let cpuSeries: [Double]
     let memSeries: [Double]
     let netRxSeries: [Double]

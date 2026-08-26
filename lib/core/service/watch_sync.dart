@@ -78,7 +78,6 @@ final class WatchSync {
   Future<void> init() async {
     if (!isIOS) return;
     await _setupOnce();
-    await _importLegacyUrls();
     await push();
   }
 
@@ -193,8 +192,6 @@ final class WatchSync {
       selectedIds: selectedIds,
       lookup: Stores.server.fetchOneRaw,
       tokens: tokens,
-      // TODO: drop with `SettingStore.watchLegacyUrls`.
-      legacyUrls: Stores.setting.watchLegacyUrls.fetch(),
       stamp: revision,
     );
   }
@@ -348,9 +345,10 @@ final class WatchSync {
   /// The payload as a pure function of the selection, so the shape the watch
   /// depends on can be tested without a store behind it.
   ///
-  /// `servers` carries scoped read-only tokens, so it only ever contains
-  /// servers the user explicitly picked for the watch. `urls` is the pre-v2 shape and
-  /// is still emitted so a watch app that has not updated yet keeps working.
+  /// `servers` carries scoped read-only tokens, and is the only shape the
+  /// watch is offered. The pre-v2 `urls` list is gone: it named the agent's
+  /// Go-compat endpoint, which the agent no longer serves, so emitting it
+  /// would only give an un-updated watch something that fails slightly later.
   @visibleForTesting
   /// [stamp] orders this against the other payloads in flight, and is passed in
   /// rather than read here so that this stays a pure function.
@@ -358,7 +356,6 @@ final class WatchSync {
     required List<String> selectedIds,
     required Spi? Function(String id) lookup,
     required Map<String, ScopedToken> tokens,
-    required List<String> legacyUrls,
     required int stamp,
   }) {
     final servers = <Map<String, dynamic>>[];
@@ -395,35 +392,7 @@ final class WatchSync {
       // without it is applied as before.
       'ts': stamp,
       'servers': servers,
-      // TODO: drop with `SettingStore.watchLegacyUrls`.
-      'urls': legacyUrls,
     };
-  }
-
-  /// Seeds [SettingStore.watchLegacyUrls] from the application context this app
-  /// sent in an older build, which until now was the only place that list
-  /// existed.
-  ///
-  /// TODO: drop with `SettingStore.watchLegacyUrls`.
-  Future<void> _importLegacyUrls() async {
-    final imported = Stores.setting.watchLegacyUrlsImported;
-    if (imported.fetch()) return;
-
-    try {
-      final ctx = await _wc?.applicationContext;
-      final urls = (ctx?['urls'] as List?)
-          ?.whereType<String>()
-          .where((e) => e.trim().isNotEmpty)
-          .toList();
-      if (urls != null && urls.isNotEmpty) {
-        Stores.setting.watchLegacyUrls.put(urls);
-      }
-      imported.put(true);
-    } catch (e, s) {
-      // Leave the flag unset so the next launch retries; an empty import is
-      // indistinguishable from a failed one otherwise.
-      Loggers.app.warning('Failed to import legacy watch URLs', e, s);
-    }
   }
 
   /// The watch asking for the current configuration, e.g. right after being

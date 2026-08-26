@@ -1568,7 +1568,11 @@ class AppLocalizationsIt extends AppLocalizations {
       'Nessun server ha un agente monitor configurato';
 
   @override
-  String get watchLegacyUrls => 'URL di stato legacy';
+  String get legacyStatusGoneTitle => 'Gli URL di stato non funzionano più';
+
+  @override
+  String get legacyStatusGoneBody =>
+      'L\'app per l\'orologio e i widget leggevano un indirizzo `/status` scritto a mano. Quell\'endpoint è stato rimosso: restituiva solo valori correnti come testo, ed è per questo che non hanno mai potuto mostrare un grafico.\n\nOra leggono l\'API autenticata dell\'agente monitor, disegnano gli andamenti e restano sincronizzati con l\'app da soli. Configura il server una volta nell\'app e ogni orologio e widget lo riprenderà.';
 
   @override
   String get systemdMissing => 'Nessun systemd su questo server';

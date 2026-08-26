@@ -1568,7 +1568,11 @@ class AppLocalizationsDe extends AppLocalizations {
       'Kein Server hat einen monitor-Agenten konfiguriert';
 
   @override
-  String get watchLegacyUrls => 'Alte Status-URLs';
+  String get legacyStatusGoneTitle => 'Status-URLs funktionieren nicht mehr';
+
+  @override
+  String get legacyStatusGoneBody =>
+      'Die Watch-App und die Home-Widgets lasen eine von Hand eingetragene `/status`-Adresse. Dieser Endpunkt ist entfallen: Er konnte nur aktuelle Werte als Text liefern, weshalb dort nie ein Diagramm möglich war.\n\nSie lesen jetzt die authentifizierte API des monitor-Agenten, zeichnen Verläufe und halten sich selbst mit der App im Einklang. Den Server einmal in der App einrichten, und jede Watch und jedes Widget übernimmt ihn.';
 
   @override
   String get systemdMissing => 'Kein systemd auf diesem Server';

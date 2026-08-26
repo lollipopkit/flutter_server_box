@@ -1421,7 +1421,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get watchNoMonitorServer => '没有服务器配置了 monitor';
 
   @override
-  String get watchLegacyUrls => '旧版 status 链接';
+  String get legacyStatusGoneTitle => '状态链接已失效';
+
+  @override
+  String get legacyStatusGoneBody =>
+      '手表 App 和桌面小组件此前读取的是手动填写的 `/status` 地址。该接口已移除：它只能以文本形式返回当前值，这也是它们始终无法显示曲线的原因。\n\n现在它们读取 Monitor 的认证接口，可以绘制曲线，并自动与 App 保持同步。在 App 内配置一次服务器，所有手表和小组件都会自动获取。';
 
   @override
   String get systemdMissing => '此服务器没有 systemd';
@@ -2933,7 +2937,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get watchNoMonitorServer => '沒有伺服器設定了 monitor';
 
   @override
-  String get watchLegacyUrls => '舊版 status 連結';
+  String get legacyStatusGoneTitle => '狀態連結已失效';
+
+  @override
+  String get legacyStatusGoneBody =>
+      '手錶 App 與桌面小工具先前讀取的是手動填寫的 `/status` 位址。該端點已移除：它只能以文字回傳目前數值，這也是它們始終無法顯示曲線的原因。\n\n現在它們讀取 Monitor 的驗證 API，可以繪製曲線，並自動與 App 保持同步。在 App 內設定一次伺服器，所有手錶與小工具都會自動取得。';
 
   @override
   String get systemdMissing => '此伺服器沒有 systemd';

@@ -150,31 +150,4 @@ enum WatchStore {
         else { return [] }
         return entries.compactMap { $0[kSecAttrAccount as String] as? String }
     }
-
-    // MARK: - Migration
-
-    /// Reads the pre-v2 `ctx` dictionary, whose only content was a list of
-    /// hand-typed `/status` URLs, and returns them as servers.
-    ///
-    /// Only consulted when nothing has arrived from the phone yet, so a watch
-    /// that has been configured since the rewrite never sees it.
-    ///
-    /// TODO: drop with `WatchServer.Kind.legacy`.
-    static func migrateLegacyCtx() -> [WatchServer] {
-        let ctx = UserDefaults.standard.object(forKey: WatchKeys.legacyCtx) as? [String: Any]
-        guard let urls = ctx?["urls"] as? [String] else { return [] }
-        return urls.filter { !$0.isEmpty }.map(WatchServer.legacy(url:))
-    }
-}
-
-extension WatchServer {
-    /// TODO: drop with `WatchServer.Kind.legacy`.
-    static func legacy(url: String) -> WatchServer {
-        WatchServer(
-            id: "legacy:\(url)",
-            name: URL(string: url)?.host ?? url,
-            kind: .legacy,
-            addr: url
-        )
-    }
 }

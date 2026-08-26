@@ -1547,7 +1547,11 @@ class AppLocalizationsId extends AppLocalizations {
       'Tidak ada server dengan agen monitor terkonfigurasi';
 
   @override
-  String get watchLegacyUrls => 'URL status lama';
+  String get legacyStatusGoneTitle => 'URL status tidak berfungsi lagi';
+
+  @override
+  String get legacyStatusGoneBody =>
+      'Aplikasi jam dan widget layar utama membaca alamat `/status` yang diketik manual. Endpoint itu sudah dihapus: ia hanya bisa melaporkan nilai saat ini sebagai teks, itulah sebabnya keduanya tidak pernah bisa menampilkan grafik.\n\nSekarang keduanya membaca API monitor yang terautentikasi, sehingga bisa menggambar tren dan tetap selaras dengan aplikasi sendiri. Atur server sekali di aplikasi, dan setiap jam dan widget akan mengambilnya.';
 
   @override
   String get systemdMissing => 'Tidak ada systemd di server ini';

@@ -1565,7 +1565,11 @@ class AppLocalizationsUk extends AppLocalizations {
       'Жоден сервер не має налаштованого агента monitor';
 
   @override
-  String get watchLegacyUrls => 'Застарілі URL статусу';
+  String get legacyStatusGoneTitle => 'URL-адреси стану більше не працюють';
+
+  @override
+  String get legacyStatusGoneBody =>
+      'Застосунок для годинника та віджети читали адресу `/status`, введену вручну. Цю кінцеву точку вилучено: вона могла повертати лише поточні значення текстом, тому графіки були неможливі.\n\nТепер вони читають автентифікований API агента monitor, малюють графіки та самі синхронізуються із застосунком. Налаштуйте сервер у застосунку один раз — і кожен годинник та віджет його підхопить.';
 
   @override
   String get systemdMissing => 'На цьому сервері немає systemd';

@@ -1547,7 +1547,11 @@ class AppLocalizationsTr extends AppLocalizations {
       'monitor aracısı yapılandırılmış sunucu yok';
 
   @override
-  String get watchLegacyUrls => 'Eski durum URL\'leri';
+  String get legacyStatusGoneTitle => 'Durum URL\'leri artık çalışmıyor';
+
+  @override
+  String get legacyStatusGoneBody =>
+      'Saat uygulaması ve ana ekran araçları elle yazılan bir `/status` adresini okuyordu. Bu uç nokta kaldırıldı: yalnızca anlık değerleri metin olarak döndürebiliyordu, grafik gösterememelerinin nedeni buydu.\n\nArtık monitor aracısının kimlik doğrulamalı API\'sini okuyorlar; eğilimleri çiziyor ve uygulamayla kendiliğinden eşleşiyorlar. Sunucuyu uygulamada bir kez yapılandırın, her saat ve araç onu alsın.';
 
   @override
   String get systemdMissing => 'Bu sunucuda systemd yok';

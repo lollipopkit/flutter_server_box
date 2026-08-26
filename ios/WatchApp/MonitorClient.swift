@@ -85,14 +85,9 @@ final class MonitorClient: NSObject {
     /// History failing is not fatal: an agent that has just started has none,
     /// and a page with live numbers and no chart is better than an error.
     func load() async throws -> (MonitorReading, [HistoryPoint]) {
-        switch server.kind {
-        case .legacy:
-            return (try await loadLegacy(), [])
-        case .monitor:
-            let reading = try await loadMetrics()
-            let history = (try? await loadHistory()) ?? []
-            return (reading, history)
-        }
+        let reading = try await loadMetrics()
+        let history = (try? await loadHistory()) ?? []
+        return (reading, history)
     }
 
     // MARK: - monitor /api/v1
@@ -130,34 +125,6 @@ final class MonitorClient: NSObject {
         } catch {
             throw MonitorError.decoding("\(error)")
         }
-    }
-
-    // MARK: - Go-compat /status
-
-    /// TODO: drop with `WatchServer.Kind.legacy`.
-    private func loadLegacy() async throws -> MonitorReading {
-        guard let url = URL(string: server.addr) else {
-            throw MonitorError.badUrl(server.addr)
-        }
-        let data = try await send(URLRequest(url: url))
-        guard let all = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            throw MonitorError.decoding("Not JSON")
-        }
-        if let code = all["code"] as? Int, code != 0 {
-            throw MonitorError.http(code, all["msg"] as? String ?? "")
-        }
-        let json = all["data"] as? [String: Any] ?? [:]
-        let cpuText = json["cpu"] as? String ?? ""
-        return MonitorReading(
-            name: json["name"] as? String ?? server.name,
-            cpu: Double(cpuText.trimmingCharacters(in: CharacterSet(charactersIn: "% "))),
-            mem: nil,
-            disk: nil,
-            memText: json["mem"] as? String ?? "-",
-            diskText: json["disk"] as? String ?? "-",
-            netText: json["net"] as? String ?? "-",
-            uptime: nil
-        )
     }
 
     // MARK: - Transport

@@ -84,7 +84,8 @@ abstract final class SchemaVersion {
   ///      told to move its files over `scp` instead
   /// v16: the watch's server selection inverted into an exclusion list, so
   ///      every monitor server syncs unless it is held back
-  static const current = 16;
+  /// v17: the hand-typed Go-compat `/status` URLs retired, and the user told
+  static const current = 17;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

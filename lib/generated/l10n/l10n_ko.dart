@@ -1464,7 +1464,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get watchNoMonitorServer => 'monitor 에이전트가 설정된 서버가 없습니다';
 
   @override
-  String get watchLegacyUrls => '레거시 status URL';
+  String get legacyStatusGoneTitle => '상태 URL이 더 이상 작동하지 않습니다';
+
+  @override
+  String get legacyStatusGoneBody =>
+      '워치 앱과 홈 위젯은 직접 입력한 `/status` 주소를 읽었습니다. 이 엔드포인트는 제거되었습니다. 현재 값을 텍스트로만 반환할 수 있었고, 그래서 그래프를 표시할 수 없었습니다.\n\n이제는 monitor의 인증된 API를 읽으므로 추이를 그리고 앱과 자동으로 동기화됩니다. 앱에서 서버를 한 번 설정하면 모든 워치와 위젯이 이를 가져옵니다.';
 
   @override
   String get systemdMissing => '이 서버에는 systemd가 없습니다';

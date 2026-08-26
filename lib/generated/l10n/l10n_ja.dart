@@ -1458,7 +1458,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get watchNoMonitorServer => 'monitor を設定したサーバーがありません';
 
   @override
-  String get watchLegacyUrls => '旧形式の status URL';
+  String get legacyStatusGoneTitle => 'ステータス URL は使用できなくなりました';
+
+  @override
+  String get legacyStatusGoneBody =>
+      'ウォッチ App とホーム画面ウィジェットは、手入力した `/status` アドレスを読み取っていました。このエンドポイントは削除されました。現在値をテキストで返すことしかできず、グラフを表示できなかったのはそのためです。\n\n現在は monitor の認証付き API を読み取るため、推移を描画でき、App と自動的に同期します。App でサーバーを一度設定すれば、すべてのウォッチとウィジェットが受け取ります。';
 
   @override
   String get systemdMissing => 'このサーバーには systemd がありません';

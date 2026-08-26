@@ -32,14 +32,6 @@ final class PhoneConnMgr: NSObject, ObservableObject, WCSessionDelegate {
         super.init()
 
         servers = WatchStore.servers()
-        if servers.isEmpty {
-            // TODO: drop with `WatchServer.Kind.legacy`.
-            let migrated = WatchStore.migrateLegacyCtx()
-            if !migrated.isEmpty {
-                WatchStore.setServers(migrated)
-                servers = migrated
-            }
-        }
 
         guard WCSession.isSupported() else { return }
         let session = WCSession.default
@@ -150,22 +142,21 @@ final class PhoneConnMgr: NSObject, ObservableObject, WCSessionDelegate {
     /// Payload shape (`WatchSync.buildPayload` on the phone):
     ///
     ///     {"v": 3,
-    ///      "servers": [{"id", "name", "addr", "token", "ignoreCert"}],
-    ///      "urls": ["http://host:3770/status"]}
+    ///      "servers": [{"id", "name", "addr", "token", "expiresAt", "ignoreCert"}]}
     ///
-    /// `urls` is the pre-v2 shape and is still accepted so an install that has
-    /// not been migrated on the phone keeps working.
+    /// The pre-v2 `urls` list is no longer accepted: it named the agent's
+    /// Go-compat endpoint, which the agent no longer serves, so honouring it
+    /// would only produce a page that fails a moment later instead of a list
+    /// that is honestly empty.
     static func parse(_ payload: [String: Any]) -> (servers: [WatchServer], tokens: [String: String])? {
-        let rawServers = payload["servers"] as? [[String: Any]]
-        let rawUrls = payload["urls"] as? [String]
         // Distinguishes "the phone says there are none" from "this isn't a
         // configuration payload"; only the latter is ignored.
-        if rawServers == nil, rawUrls == nil { return nil }
+        guard let rawServers = payload["servers"] as? [[String: Any]] else { return nil }
 
         var servers: [WatchServer] = []
         var tokens: [String: String] = [:]
 
-        for entry in rawServers ?? [] {
+        for entry in rawServers {
             guard let id = entry["id"] as? String,
                   let addr = (entry["addr"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
                   !id.isEmpty, !addr.isEmpty
@@ -174,7 +165,6 @@ final class PhoneConnMgr: NSObject, ObservableObject, WCSessionDelegate {
                 WatchServer(
                     id: id,
                     name: entry["name"] as? String ?? addr,
-                    kind: .monitor,
                     addr: addr,
                     ignoreCert: entry["ignoreCert"] as? Bool ?? false
                 )
@@ -182,11 +172,6 @@ final class PhoneConnMgr: NSObject, ObservableObject, WCSessionDelegate {
             // Absent means "no token", which clears a stored one rather than
             // leave a revoked credential in place.
             tokens[id] = entry["token"] as? String ?? ""
-        }
-
-        // TODO: drop with `WatchServer.Kind.legacy`.
-        for url in rawUrls ?? [] where !url.isEmpty {
-            servers.append(.legacy(url: url))
         }
 
         return (servers, tokens)

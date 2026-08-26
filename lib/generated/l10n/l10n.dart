@@ -2732,11 +2732,17 @@ abstract class AppLocalizations {
   /// **'No server has a monitor agent configured'**
   String get watchNoMonitorServer;
 
-  /// No description provided for @watchLegacyUrls.
+  /// No description provided for @legacyStatusGoneTitle.
   ///
   /// In en, this message translates to:
-  /// **'Legacy status URLs'**
-  String get watchLegacyUrls;
+  /// **'Status URLs no longer work'**
+  String get legacyStatusGoneTitle;
+
+  /// No description provided for @legacyStatusGoneBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The watch app and home widgets used to read a `/status` address typed by hand. That endpoint is gone: it could only report current values as text, which is why they could never show a chart.\n\nThey now read the monitor agent\'s authenticated API, so they draw trends and stay in step with the app on their own. Configure the server in the app once, and every watch and widget picks it up.'**
+  String get legacyStatusGoneBody;
 
   /// No description provided for @systemdMissing.
   ///

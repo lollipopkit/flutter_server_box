@@ -63,7 +63,6 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
         _buildPushToken(),
         _buildAutoUpdateHomeWidget(),
         _buildWatchApp(),
-        _buildWatchLegacyUrls(),
       ].nonNulls.map((e) => CardX(child: e)).toList(),
     );
     if (widget.embedded) return body;
@@ -141,20 +140,6 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
       onTap: _onTapWatchApp,
     );
   }
-
-  /// Only offered when one exists — nothing can create these any more.
-  ///
-  /// TODO: drop with `SettingStore.watchLegacyUrls`.
-  Widget? _buildWatchLegacyUrls() {
-    final urls = Stores.setting.watchLegacyUrls.fetch();
-    if (urls.isEmpty) return null;
-    return ListTile(
-      title: Text(l10n.watchLegacyUrls),
-      subtitle: Text('${urls.length}', style: UIs.textGrey),
-      trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: () => _onTapWatchLegacyUrls(urls),
-    );
-  }
 }
 
 extension _Actions on _IosSettingsPageState {
@@ -198,21 +183,6 @@ extension _Actions on _IosSettingsPageState {
         .where((id) => !shown.contains(id))
         .toList();
     await WatchSync.instance.updateExclusions(next);
-    _refresh();
-  }
-
-  /// TODO: drop with `SettingStore.watchLegacyUrls`.
-  void _onTapWatchLegacyUrls(List<String> urls) async {
-    final result = await JsonListEditor.route.go(
-      context,
-      JsonListEditorArgs(data: urls),
-    );
-    if (result == null) return;
-
-    Stores.setting.watchLegacyUrls.put(
-      result.whereType<String>().where((e) => e.trim().isNotEmpty).toList(),
-    );
-    await WatchSync.instance.push();
     _refresh();
   }
 }

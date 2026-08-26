@@ -255,21 +255,23 @@ class SettingStore extends SqliteStore {
   /// Raw Go-compat `/status` URLs typed by hand in builds before the watch
   /// could read a server record.
   ///
-  /// Still pushed to the watch so an existing setup keeps working, and still
-  /// editable so it can be emptied.
+  /// Read only by [LegacyStatusUrlsMigration], which empties it and arranges
+  /// for the user to be told — a bare address cannot reach the authenticated
+  /// API, so there is nothing to convert it into.
   ///
-  /// TODO: drop this together with the watch app's `legacy` server kind and
-  /// monitor's `/status` compat route, once no install can still be carrying
-  /// one of these.
+  /// TODO: drop with `LegacyStatusUrlsMigration`.
   late final watchLegacyUrls = listProperty<String>('watchLegacyUrls');
 
-  /// Whether [watchLegacyUrls] has been seeded from the pre-existing
-  /// application context. Runs at most once; the user may legitimately empty
-  /// the list afterwards, and re-importing would resurrect it.
+  /// Whether this install still has to be told that its hand-typed `/status`
+  /// URLs stopped working.
   ///
-  /// TODO: drop with [watchLegacyUrls].
-  late final watchLegacyUrlsImported = propertyDefault(
-    'watchLegacyUrlsImported',
+  /// Set by [LegacyStatusUrlsMigration] and cleared by the dialog. Persisted
+  /// rather than shown from the migration itself, because a migration runs
+  /// before there is a screen to show anything on — and a message about a
+  /// feature that has gone must not be lost to whichever launch happened to
+  /// run the migration.
+  late final legacyStatusNoticePending = propertyDefault(
+    'legacyStatusNoticePending',
     false,
   );
 

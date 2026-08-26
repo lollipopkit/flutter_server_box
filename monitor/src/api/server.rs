@@ -13,7 +13,6 @@ use crate::{
     core::config_file,
     core::remote_access::RemoteAccess,
     monitoring::{self, LiveSettings, SystemMetrics},
-    monitoring::size::Size,
     monitoring::velocity::{NetworkSpeedInfo, VelocityAnalysisResponse, VelocityManager},
     utils::error::{MonitorError, Result},
 };
@@ -525,30 +524,29 @@ async fn revoke_watch_token(
     Ok(HttpResponse::Ok().json(&serde_json::json!({ "status": "revoked" })))
 }
 
-// TODO: Go-compat endpoint (matches the legacy GET /status response format, unauthenticated); remove once flutter_server_box migrates
-async fn get_status_compat(
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse> {
-    let metrics = app_state.current_metrics.read().await;
-    let data = go_status_data(metrics.as_ref(), &app_state.config.get_server_name());
-    Ok(HttpResponse::Ok().json(&serde_json::json!({ "code": 0, "data": data })))
-}
-
-/// Response data of Go web.Status: sizes in Size.String() format (e.g. "26.0g"), CPU as one-decimal percentage
-pub fn go_status_data(metrics: Option<&SystemMetrics>, server_name: &str) -> serde_json::Value {
-    match metrics {
-        Some(m) => serde_json::json!({
-            "name": m.server_name,
-            "cpu": format!("{:.1}%", m.cpu_usage),
-            "mem": format!("{} / {}", Size(m.memory.used), Size(m.memory.total)),
-            "net": format!("{} / {}", Size(m.network.rx_bytes), Size(m.network.tx_bytes)),
-            "disk": format!("{} / {}", Size(m.disk.used), Size(m.disk.total)),
-        }),
-        None => serde_json::json!({
-            "name": server_name,
-            "cpu": "", "mem": "", "net": "", "disk": "",
-        }),
-    }
+/// The retired Go-compat endpoint.
+///
+/// It answered unauthenticated, with values preformatted as strings —
+/// `"1.3g / 1.9g"`, `"31.7%"` — and no history at all. That shape is why the
+/// clients built on it could never draw a trend: there were no numbers in it
+/// to draw. They read `/api/v1/metrics` and `/metrics/history` now, with a
+/// scoped read-only token.
+///
+/// Answers 410 rather than 404, and says where to go. Anything still calling
+/// this is a build old enough to have no other path, and a 404 would send its
+/// owner looking for a typo in an address that was correct.
+///
+/// The route is kept for one release so the failure has an explanation
+/// attached; a client that no longer exists cannot be told anything.
+///
+/// TODO: remove the route entirely in the release after this one.
+async fn get_status_compat() -> Result<HttpResponse> {
+    Ok(HttpResponse::Gone().json(&serde_json::json!({
+        "code": 410,
+        "error": "GET /status has been removed. Use GET /api/v1/metrics with a \
+                  token from POST /api/v1/watch-token, or configure this server \
+                  in the ServerBox app.",
+    })))
 }
 
 async fn get_status(

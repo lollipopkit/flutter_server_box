@@ -23,6 +23,7 @@ import 'package:server_box/view/page/home_tab.dart';
 import 'package:server_box/view/page/macos_menu_bar.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/widget/dmg_notice.dart';
+import 'package:server_box/view/widget/legacy_status_notice.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -466,6 +467,9 @@ class _HomePageState extends ConsumerState<HomePage>
     // Says so when this launch took over the sandboxed build's data, or when
     // it could not — see [SandboxImport].
     unawaited(SandboxImportNotice.showIfNeeded(context));
+    // Says so when this upgrade took a feature away — see
+    // [LegacyStatusUrlsMigration].
+    unawaited(LegacyStatusNotice.showIfNeeded(context));
     unawaited(MethodChans.updateHomeWidget());
 
     // Before the refresh and not after it: that call waits on every server's

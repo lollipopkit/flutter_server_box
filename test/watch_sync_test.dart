@@ -48,14 +48,12 @@ void main() {
     required List<String> selectedIds,
     List<Spi> servers = const [],
     Map<String, ScopedToken> tokens = const {},
-    List<String> legacyUrls = const [],
     int stamp = 1,
   }) {
     return WatchSync.payloadFrom(
       selectedIds: selectedIds,
       lookup: (id) => servers.where((e) => e.id == id).firstOrNull,
       tokens: tokens,
-      legacyUrls: legacyUrls,
       stamp: stamp,
     );
   }
@@ -166,14 +164,13 @@ void main() {
       expect((result['servers'] as List).single['addr'], addr);
     });
 
-    test('still emits the pre-v2 url list for an un-updated watch app', () {
-      // TODO: drop with `SettingStore.watchLegacyUrls`.
-      final result = payload(
-        selectedIds: const [],
-        legacyUrls: ['http://10.0.0.2:3770/status'],
-      );
+    test('no longer carries the pre-v2 url list', () {
+      // It named the agent's Go-compat endpoint, which the agent answers 410
+      // on. Emitting it would give an un-updated watch something that fails a
+      // moment later instead of a list that is honestly empty.
+      final result = payload(selectedIds: const []);
 
-      expect(result['urls'], ['http://10.0.0.2:3770/status']);
+      expect(result.containsKey('urls'), isFalse);
       expect(result['servers'], isEmpty);
     });
 
