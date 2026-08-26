@@ -39,9 +39,15 @@ rustup run "$rust_toolchain" cargo fetch \
 scripts/release/patch-jni-build-id.sh
 scripts/build-proot-android.sh
 
+# Generate release-specific plugin files before Gradle starts. A preceding
+# `pub get` includes dev-only plugins such as integration_test in the default
+# registrant, while Gradle deliberately excludes their projects from release.
+flutter build apk --release --config-only --no-pub
+
 # Only a complete release task graph resolves plugin compile/runtime artifacts;
-# `dependencies` and `--config-only` missed artifacts that CI then requested
-# from the blocked network. Build once to seed the isolated Gradle cache, then
-# remove every compiled output so the offline phase still rebuilds from source.
+# `dependencies` and `--config-only` alone missed artifacts that CI then
+# requested from the blocked network. Build once to seed the isolated Gradle
+# cache, then remove every compiled output so the offline phase still rebuilds
+# from source.
 flutter build apk --release --split-per-abi --no-pub
 flutter clean

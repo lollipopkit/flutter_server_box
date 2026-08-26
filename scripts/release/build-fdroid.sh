@@ -36,6 +36,12 @@ fi
 scripts/release/patch-jni-build-id.sh
 scripts/build-proot-android.sh
 
+# Regenerate the Android plugin registrant for release after `pub get` added
+# dev-only plugins. Their Gradle projects are intentionally absent from release
+# configurations, so compiling the default registrant would leave dangling
+# Java references (notably integration_test).
+flutter build apk --release --config-only --no-pub
+
 rm -rf build/app/outputs/apk/release build/app/outputs/flutter-apk
 flutter build apk \
   --no-pub \
