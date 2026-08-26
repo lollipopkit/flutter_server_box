@@ -41,6 +41,8 @@
 		E39A76B02AB9A2F70067C641 /* Info-Profile.plist in Resources */ = {isa = PBXBuildFile; fileRef = E39A76AD2AB9A2F70067C641 /* Info-Profile.plist */; };
 		E3AE8AEA2AB601DB000A6459 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3AE8AE92AB601DB000A6459 /* Utils.swift */; };
 		E3AE8AEB2AB601DB000A6459 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3AE8AE92AB601DB000A6459 /* Utils.swift */; };
+		FA7C40000000000000000092 /* WidgetStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA7C40000000000000000091 /* WidgetStore.swift */; };
+		FA7C40000000000000000093 /* WidgetStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA7C40000000000000000091 /* WidgetStore.swift */; };
 		E3DB67ED2A31FE200027B8CB /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = E3DB67EB2A31FE200027B8CB /* LaunchScreen.storyboard */; };
 		F0A1B2C31A2B3C4D5E6F0005 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = F0A1B2C31A2B3C4D5E6F0001 /* Localizable.strings */; };
 		F0A1B2C31A2B3C4D5E6F1005 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = F0A1B2C31A2B3C4D5E6F1001 /* Localizable.strings */; };
@@ -175,6 +177,7 @@
 		E39A76AC2AB9A2F70067C641 /* Info-Release.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "Info-Release.plist"; sourceTree = "<group>"; };
 		E39A76AD2AB9A2F70067C641 /* Info-Profile.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "Info-Profile.plist"; sourceTree = "<group>"; };
 		E3AE8AE92AB601DB000A6459 /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
+		FA7C40000000000000000091 /* WidgetStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetStore.swift; sourceTree = "<group>"; };
 		E3D26BC22B99637800D83425 /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/Main.strings"; sourceTree = "<group>"; };
 		E3D26BC32B99637900D83425 /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/LaunchScreen.strings"; sourceTree = "<group>"; };
 		E3D26BC42B99637F00D83425 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Main.strings; sourceTree = "<group>"; };
@@ -325,6 +328,7 @@
 				4A2DCD742E4B127100CF68B7 /* PrivacyBlur.swift */,
 				1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */,
 				E3AE8AE92AB601DB000A6459 /* Utils.swift */,
+				FA7C40000000000000000091 /* WidgetStore.swift */,
 				74858FAE1ED2DC5600515810 /* AppDelegate.swift */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
 			);
@@ -642,6 +646,7 @@
 				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
 				E37C48EA2B9C30EE00E542D2 /* StatusWidget.intentdefinition in Sources */,
 				E3AE8AEA2AB601DB000A6459 /* Utils.swift in Sources */,
+				FA7C40000000000000000092 /* WidgetStore.swift in Sources */,
 				5B1A0002200001000000ISH0 /* sbm_ish.c in Sources */,
 				4A2DCD6B2E4B127100CF68B7 /* LiveActivityManager.swift in Sources */,
 				4A2DCD6C2E4B127100CF68B7 /* TerminalLiveActivityAttributes.swift in Sources */,
@@ -660,6 +665,7 @@
 				4A2DCD702E4B128100CF68B7 /* TerminalLiveActivityAttributes.swift in Sources */,
 				E33A3E3C2A626DCE009744AB /* StatusWidgetBundle.swift in Sources */,
 				E3AE8AEB2AB601DB000A6459 /* Utils.swift in Sources */,
+				FA7C40000000000000000093 /* WidgetStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1059,7 +1065,7 @@
 				INFOPLIST_FILE = StatusWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = StatusWidget;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1099,7 +1105,7 @@
 				INFOPLIST_FILE = StatusWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = StatusWidget;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1136,7 +1142,7 @@
 				INFOPLIST_FILE = StatusWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = StatusWidget;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1191,7 +1197,7 @@
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 9.0;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 			};
 			name = Debug;
 		};
@@ -1230,7 +1236,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 9.0;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 			};
 			name = Release;
 		};
@@ -1269,7 +1275,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 9.0;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 			};
 			name = Profile;
 		};
@@ -1311,7 +1317,7 @@
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 9.0;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 			};
 			name = Debug;
 		};
@@ -1350,7 +1356,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 9.0;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 			};
 			name = Release;
 		};
@@ -1389,7 +1395,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 9.0;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 			};
 			name = Profile;
 		};

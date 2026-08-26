@@ -51,6 +51,36 @@ abstract final class MethodChans {
     }
   }
 
+  /// Hand the home-screen widgets the current monitor server list and a
+  /// read-only credential for each.
+  ///
+  /// The native side splits the payload: the list goes to a container the
+  /// widget process reads directly (the iOS App Group, Android's shared
+  /// preferences), and every `token` is moved into the platform credential
+  /// store instead — see `WidgetSync` for why. It is a full replacement, so a
+  /// server absent from [payload] has its stored token dropped as well.
+  static Future<void> publishWidgetServers(String payload) async {
+    if (!isIOS && !isAndroid) return;
+    await _channel.invokeMethod('publishWidgetServers', payload);
+  }
+
+  /// Which servers the native side currently holds a widget token for, and
+  /// until when — as JSON, `[{"id","endpoint","expiresAt"}]`.
+  ///
+  /// Never the token itself. The renewal decision needs the endpoint it
+  /// belongs to and its deadline, and carrying the credential back across the
+  /// channel to answer that would undo the point of storing it natively.
+  ///
+  /// Answers from the *platform*, not from a copy kept here, because those two
+  /// come apart exactly where it matters: a reinstall empties the Keychain
+  /// while a restored backup refills this app's own database, and a renewal
+  /// decision made from the latter would skip every server whose credential no
+  /// longer exists.
+  static Future<String?> widgetTokenState() async {
+    if (!isIOS && !isAndroid) return null;
+    return await _channel.invokeMethod<String>('widgetTokenState');
+  }
+
   /// Point the iOS lock-screen accessory widget at a server's Go-compat
   /// `/status` URL, or clear it with `null`.
   ///

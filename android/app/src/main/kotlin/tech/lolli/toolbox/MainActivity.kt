@@ -16,6 +16,7 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import android.appwidget.AppWidgetManager
 import tech.lolli.toolbox.widget.HomeWidget
+import tech.lolli.toolbox.widget.WidgetStore
 
 class MainActivity: FlutterFragmentActivity() {
     private lateinit var channel: MethodChannel
@@ -194,6 +195,24 @@ class MainActivity: FlutterFragmentActivity() {
                         intent.action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
                         sendBroadcast(intent)
                         result.success(null)
+                    }
+                    "publishWidgetServers" -> {
+                        val payload = method.arguments as? String
+                        if (payload == null) {
+                            result.success(null)
+                            return@setMethodCallHandler
+                        }
+                        WidgetStore.publish(applicationContext, payload)
+                        // Every placed widget, not just one: a republish can
+                        // change a name, an address or a credential, and which
+                        // widget was pointed at which server is not known here.
+                        val intent = Intent(this@MainActivity, HomeWidget::class.java)
+                        intent.action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                        sendBroadcast(intent)
+                        result.success(null)
+                    }
+                    "widgetTokenState" -> {
+                        result.success(WidgetStore.tokenState(applicationContext))
                     }
                     "updateSessions" -> {
                         try {

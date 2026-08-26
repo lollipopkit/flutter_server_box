@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart' show listEquals;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/service/watch_sync.dart';
+import 'package:server_box/core/service/widget_sync.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/core/utils/refresh_interval.dart';
 import 'package:server_box/core/utils/server.dart';
@@ -382,6 +383,7 @@ class ServersNotifier extends _$ServersNotifier {
     final deleting = state.servers[id];
     if (deleting == null) return;
     await WatchSync.instance.removeServer(deleting);
+    await WidgetSync.instance.removeServer(deleting);
     await _clearServerData(id);
     final newServers = Map<String, Spi>.from(state.servers);
     newServers.remove(id);
@@ -433,6 +435,7 @@ class ServersNotifier extends _$ServersNotifier {
 
     for (final spi in state.servers.values) {
       await WatchSync.instance.removeServer(spi);
+      await WidgetSync.instance.removeServer(spi);
     }
     for (final id in serverIds) {
       await _clearServerData(id);

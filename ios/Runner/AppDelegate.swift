@@ -125,10 +125,88 @@ import ActivityKit
                     WidgetCenter.shared.reloadTimelines(ofKind: "StatusWidget")
                 }
                 result(nil)
+            case "publishWidgetServers":
+                guard let payload = call.arguments as? String else {
+                    result(nil)
+                    return
+                }
+                Self.publishWidgetServers(payload)
+                result(nil)
+            case "widgetTokenState":
+                result(Self.widgetTokenState())
             default:
                 result(FlutterMethodNotImplemented)
             }
         })
+    }
+
+    /// Splits `WidgetSync`'s payload between the two containers: the list into
+    /// the App Group, every token into the shared Keychain.
+    ///
+    /// A server whose entry carries no `token` keeps whatever is already
+    /// stored for it. The app publishes the full list on every change, and an
+    /// agent that happened to be unreachable when it did so must not cost the
+    /// widget the credential it was working with — the entry's `expiresAt` is
+    /// zero in that case, so nothing here claims it has one either.
+    private static func publishWidgetServers(_ payload: String) {
+        guard let data = payload.data(using: .utf8),
+              let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let raw = root["servers"] as? [[String: Any]]
+        else { return }
+
+        var servers: [WidgetServer] = []
+        for entry in raw {
+            guard let id = entry["id"] as? String, !id.isEmpty,
+                  let addr = entry["addr"] as? String, !addr.isEmpty
+            else { continue }
+
+            if let token = entry["token"] as? String, !token.isEmpty {
+                WidgetStore.setToken(token, for: id)
+            }
+            let expiresAt = (entry["expiresAt"] as? NSNumber)?.intValue ?? 0
+            servers.append(
+                WidgetServer(
+                    id: id,
+                    name: entry["name"] as? String ?? addr,
+                    addr: addr,
+                    ignoreCert: entry["ignoreCert"] as? Bool ?? false,
+                    allowInsecure: entry["allowInsecure"] as? Bool ?? false,
+                    // Kept from the stored entry when this push brought no
+                    // token, so a transient failure does not read as "the
+                    // credential is gone".
+                    tokenExpiresAt: expiresAt > 0
+                        ? expiresAt
+                        : (WidgetStore.server(id: id)?.tokenExpiresAt ?? 0)
+                )
+            )
+        }
+
+        WidgetStore.setServers(servers)
+        if #available(iOS 14.0, *) {
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+    }
+
+    /// What is actually held, as JSON — never the tokens themselves.
+    ///
+    /// The Keychain is consulted per server rather than trusting the stored
+    /// `tokenExpiresAt`, because the two can disagree: a restore brings back
+    /// one container without the other, and a renewal decision made from a
+    /// deadline whose credential no longer exists would skip the server
+    /// forever.
+    private static func widgetTokenState() -> String {
+        let held = WidgetStore.servers().compactMap { server -> [String: Any]? in
+            guard WidgetStore.token(for: server.id) != nil else { return nil }
+            return [
+                "id": server.id,
+                "endpoint": server.addr,
+                "expiresAt": server.tokenExpiresAt,
+            ]
+        }
+        guard let data = try? JSONSerialization.data(withJSONObject: held),
+              let json = String(data: data, encoding: .utf8)
+        else { return "[]" }
+        return json
     }
 
     override func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
