@@ -34,4 +34,5 @@
     <string name="widget_mem_desc">Speicherauslastung</string>
     <string name="widget_disk_desc">Datenträgerauslastung</string>
     <string name="widget_net_desc">Netzwerkauslastung</string>
+    <string name="widget_err_too_small">Zwei oder mehr Diagramme brauchen ein breiteres Widget</string>
 </resources>

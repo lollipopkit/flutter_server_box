@@ -34,4 +34,5 @@
     <string name="widget_mem_desc">記憶體使用率</string>
     <string name="widget_disk_desc">磁碟使用率</string>
     <string name="widget_net_desc">網路使用量</string>
+    <string name="widget_err_too_small">2 個以上曲線需要更寬的小工具</string>
 </resources>

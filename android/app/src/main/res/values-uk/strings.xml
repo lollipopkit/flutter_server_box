@@ -34,4 +34,5 @@
     <string name="widget_mem_desc">Використання пам\'яті</string>
     <string name="widget_disk_desc">Використання диска</string>
     <string name="widget_net_desc">Використання мережі</string>
+    <string name="widget_err_too_small">Два графіки й більше потребують ширшого віджета</string>
 </resources>

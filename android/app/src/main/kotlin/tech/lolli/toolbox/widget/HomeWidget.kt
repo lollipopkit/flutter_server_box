@@ -288,7 +288,13 @@ class HomeWidget : AppWidgetProvider() {
         )
         views.setViewVisibility(R.id.error_message, View.GONE)
 
-        val layout = config.layout.resolved(bounds.columns, bounds.rows)
+        val layout = config.layout
+        if (!layout.fits(bounds.columns, bounds.rows)) {
+            // The reading is fine; the widget is the wrong size for what was
+            // asked of it, and only the widget can say so.
+            showError(context, views, manager, appWidgetId, R.string.widget_err_too_small, reading.name)
+            return
+        }
         if (layout == WidgetLayout.TEXT) {
             views.setViewVisibility(R.id.widget_chart, View.GONE)
             views.setViewVisibility(R.id.widget_content, View.VISIBLE)

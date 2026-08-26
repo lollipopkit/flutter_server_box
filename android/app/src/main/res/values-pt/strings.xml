@@ -34,4 +34,5 @@
     <string name="widget_mem_desc">Utilização da memória</string>
     <string name="widget_disk_desc">Utilização do disco</string>
     <string name="widget_net_desc">Utilização da rede</string>
+    <string name="widget_err_too_small">Dois ou mais gráficos precisam de um widget mais largo</string>
 </resources>

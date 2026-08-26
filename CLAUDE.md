@@ -248,6 +248,14 @@ naming a group lands in the first entry, `flutter_secure_storage` names none,
 and that is how the database encryption key is stored. Putting the shared group
 first would quietly start writing that key somewhere the extension can read.
 
+**A layout that does not fit is refused, not narrowed.** The home widgets come
+in two sizes — small and medium; there is no large, which was mostly the same
+information with more space around it. Anything past one chart needs a medium
+(`.systemMedium` on iOS, four cells wide on Android), and a small widget asked
+for more says so on its face. Narrowing silently is what it used to do, and
+that reads as the setting having no effect, with nowhere in a widget to find
+out otherwise.
+
 **Nothing is opt-in any more.** `WatchSync.syncedServerIds()` is every server
 with an agent minus `SettingStore.watchExcludedServerIds`; `WidgetSync`
 publishes every one of them. An opt-in list is somewhere to forget a server,

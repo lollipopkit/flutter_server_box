@@ -93,9 +93,9 @@ enum WidgetMetric: String, AppEnum {
 /// How much of the widget is given to charts rather than to numbers.
 ///
 /// Named by what it produces rather than by a size, because the same choice
-/// means different things in different families and the widget clamps it —
-/// see `WidgetLayout.resolved(for:)`. A user who picks four charts and then
-/// resizes to small gets one, not an unreadable grid.
+/// means different things in different families — see [fits]. Anything past
+/// one chart needs a medium widget, and a small one asked for more says so
+/// rather than quietly drawing something else.
 enum WidgetLayout: String, AppEnum {
     /// Readings as text. The only thing that fits a small widget legibly when
     /// more than one number is wanted.
@@ -115,26 +115,30 @@ enum WidgetLayout: String, AppEnum {
         .fourCharts: "Four charts",
     ]
 
-    /// What this layout becomes at [family].
+    /// How many charts this draws.
+    var chartCount: Int {
+        switch self {
+        case .text: return 0
+        case .oneChart: return 1
+        case .twoCharts: return 2
+        case .fourCharts: return 4
+        }
+    }
+
+    /// Whether [family] has room for it.
     ///
     /// A small widget is about the size of an app icon: two charts in it are
-    /// two smudges. A medium one is that shape twice over, so it holds two
-    /// side by side but not four. Rather than hiding the choice per family —
-    /// which would make the sheet's options depend on a size the user can
-    /// change afterwards — the choice is kept whole and narrowed here, so
-    /// resizing back up restores what was asked for.
-    func resolved(for family: WidgetFamily) -> WidgetLayout {
+    /// two smudges, so anything past one needs a medium.
+    ///
+    /// It used to narrow silently — four charts on a small widget quietly
+    /// became one. That reads as the setting having no effect, and there is
+    /// nowhere in a widget to notice otherwise. Saying so and drawing nothing
+    /// is the honest answer: the fix is one gesture away, and the widget is
+    /// the only place to mention it.
+    func fits(_ family: WidgetFamily) -> Bool {
         switch family {
-        case .systemSmall:
-            return self == .text ? .text : .oneChart
-        case .systemMedium:
-            switch self {
-            case .text: return .text
-            case .oneChart: return .oneChart
-            case .twoCharts, .fourCharts: return .twoCharts
-            }
-        default:
-            return self
+        case .systemSmall: return chartCount <= 1
+        default: return true
         }
     }
 }

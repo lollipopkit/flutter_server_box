@@ -34,4 +34,5 @@
     <string name="widget_mem_desc">Penggunaan memori</string>
     <string name="widget_disk_desc">Penggunaan disk</string>
     <string name="widget_net_desc">Penggunaan jaringan</string>
+    <string name="widget_err_too_small">Dua grafik atau lebih perlu widget yang lebih lebar</string>
 </resources>

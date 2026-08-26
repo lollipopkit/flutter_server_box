@@ -34,4 +34,5 @@
     <string name="widget_mem_desc">Bellek kullanımı</string>
     <string name="widget_disk_desc">Disk kullanımı</string>
     <string name="widget_net_desc">Ağ kullanımı</string>
+    <string name="widget_err_too_small">İki veya daha fazla grafik daha geniş bir bileşen gerektirir</string>
 </resources>

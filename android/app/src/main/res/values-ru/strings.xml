@@ -34,4 +34,5 @@
     <string name="widget_mem_desc">Использование памяти</string>
     <string name="widget_disk_desc">Использование диска</string>
     <string name="widget_net_desc">Сетевой трафик</string>
+    <string name="widget_err_too_small">Два графика и больше требуют более широкого виджета</string>
 </resources>

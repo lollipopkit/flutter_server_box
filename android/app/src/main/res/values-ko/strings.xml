@@ -34,4 +34,5 @@
     <string name="widget_mem_desc">메모리 사용률</string>
     <string name="widget_disk_desc">디스크 사용률</string>
     <string name="widget_net_desc">네트워크 사용량</string>
+    <string name="widget_err_too_small">그래프 2개 이상은 더 넓은 위젯이 필요합니다</string>
 </resources>

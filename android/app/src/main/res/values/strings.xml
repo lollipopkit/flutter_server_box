@@ -43,4 +43,5 @@
     <string name="widget_err_network">Network error</string>
     <string name="widget_err_timeout">Timed out</string>
     <string name="widget_no_history">No history</string>
+    <string name="widget_err_too_small">Two or more charts need a wider widget</string>
 </resources>

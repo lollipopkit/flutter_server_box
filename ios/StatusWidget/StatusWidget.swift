@@ -131,9 +131,7 @@ struct StatusWidgetEntryView: View {
 
     @Environment(\.widgetFamily) private var family
 
-    private var layout: WidgetLayout {
-        entry.configuration.layout.resolved(for: family)
-    }
+    private var layout: WidgetLayout { entry.configuration.layout }
 
     var body: some View {
         content.widgetBackground()
@@ -150,17 +148,44 @@ struct StatusWidgetEntryView: View {
             case .accessoryCircular:
                 AccessoryCircular(snapshot: snapshot, metric: entry.configuration.metric)
             default:
-                HomeScreen(
-                    snapshot: snapshot,
-                    layout: layout,
-                    metric: entry.configuration.metric,
-                    family: family,
-                    failure: entry.failure
-                )
+                if layout.fits(family) {
+                    HomeScreen(
+                        snapshot: snapshot,
+                        layout: layout,
+                        metric: entry.configuration.metric,
+                        family: family,
+                        failure: entry.failure
+                    )
+                } else {
+                    // The reading is fine; the widget is the wrong size for
+                    // what was asked of it, and only the widget can say so.
+                    TooSmall(name: snapshot.name)
+                }
             }
         } else {
             Unavailable(message: entry.failure ?? WidgetError.notConfigured.errorDescription ?? "")
         }
+    }
+}
+
+/// The chosen layout needs more room than this family has.
+private struct TooSmall: View {
+    let name: String
+
+    var body: some View {
+        VStack(spacing: 4) {
+            Text(name)
+                .font(.system(.subheadline, design: .monospaced))
+                .lineLimit(1)
+            Image(systemName: "arrow.up.left.and.arrow.down.right")
+                .font(.system(size: 13))
+                .foregroundStyle(.secondary)
+            Text("Two or more charts need a medium widget")
+                .font(.system(size: 11, design: .monospaced))
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.secondary)
+        }
+        .padding(6)
     }
 }
 
@@ -296,12 +321,6 @@ private struct Readings: View {
                 : [.cpu, .memory, .disk, .network]
             ForEach(shown, id: \.self) { metric in
                 Reading(snapshot: snapshot, metric: metric, family: family)
-            }
-            if family == .systemLarge, let uptime = snapshot.uptime, !uptime.isEmpty {
-                Text(uptime)
-                    .font(.system(size: 11, design: .monospaced))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
             }
         }
     }
@@ -557,10 +576,12 @@ struct StatusWidget: Widget {
         }
         .configurationDisplayName("Status")
         .description("A server's status, from its monitor agent.")
+        // No `.systemLarge`. Four charts on a medium are already small, and a
+        // large one is mostly the same information with more space around it —
+        // a size to scroll past rather than one anybody would choose.
         .supportedFamilies([
             .systemSmall,
             .systemMedium,
-            .systemLarge,
             .accessoryRectangular,
             .accessoryInline,
             .accessoryCircular,

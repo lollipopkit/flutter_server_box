@@ -123,20 +123,29 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
     final count = WatchSync.syncedServerIds().length;
     return ListTile(
       title: const Text('Watch app'),
+      // What the tile is for, which does not depend on whether a watch has
+      // turned up: the exclusions are stored here either way. Only a watch
+      // that is missing, or a lookup that failed, displaces it — both are
+      // things the reader can act on, and neither is worth a second line.
       subtitle: FutureWidget<bool>(
         future: _watchPairedFuture,
-        loading: const Text('...'),
-        // Not a blocker: the exclusions are stored here and delivered whenever
-        // a watch does show up, so they stay editable either way.
+        loading: Text(l10n.watchServers, style: UIs.textGrey),
         error: (e, _) => Text('${libL10n.error}: $e', style: UIs.textGrey),
         success: (paired) => Text(
-          paired == true
-              ? '$count / ${_monitorServers.length}'
-              : l10n.watchNotPaired,
+          paired == true ? l10n.watchServers : l10n.watchNotPaired,
           style: UIs.textGrey,
         ),
       ),
-      trailing: const Icon(Icons.keyboard_arrow_right),
+      // Shown whether or not a watch is paired, since it counts what would be
+      // sent to one rather than what a watch is currently showing.
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('$count / ${_monitorServers.length}', style: UIs.textGrey),
+          UIs.width7,
+          const Icon(Icons.keyboard_arrow_right),
+        ],
+      ),
       onTap: _onTapWatchApp,
     );
   }

@@ -34,4 +34,5 @@
     <string name="widget_mem_desc">メモリ使用率</string>
     <string name="widget_disk_desc">ディスク使用率</string>
     <string name="widget_net_desc">ネットワーク使用量</string>
+    <string name="widget_err_too_small">グラフ2つ以上には、より幅の広いウィジェットが必要です</string>
 </resources>

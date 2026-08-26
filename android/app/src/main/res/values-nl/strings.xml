@@ -34,4 +34,5 @@
     <string name="widget_mem_desc">Geheugengebruik</string>
     <string name="widget_disk_desc">Schijfgebruik</string>
     <string name="widget_net_desc">Netwerkgebruik</string>
+    <string name="widget_err_too_small">Twee of meer grafieken hebben een bredere widget nodig</string>
 </resources>

@@ -84,28 +84,35 @@ enum class WidgetLayout {
     FOUR_CHARTS;
 
     companion object {
+        /** What "medium" means in cells — a standard 4x2 widget. */
+        const val MEDIUM_COLUMNS = 4
+        const val MEDIUM_ROWS = 2
+
         /** By name, for the reason in [WidgetMetric.from]. */
         fun from(name: String?): WidgetLayout =
             entries.firstOrNull { it.name == name } ?: TEXT
     }
 
-    /**
-     * What this layout becomes in a widget [columns] by [rows] cells.
-     *
-     * Narrowed at draw time rather than restricted at configuration time,
-     * because on Android the size is not chosen once: the widget is resized in
-     * place, whenever, and a choice that had been taken away would have no way
-     * to come back. Asking for four charts and shrinking to 2x2 gives one
-     * chart; growing again gives four back.
-     */
-    fun resolved(columns: Int, rows: Int): WidgetLayout {
-        if (this == TEXT) return TEXT
-        // Two panels side by side need the width; four need both. Below that a
-        // panel is a smudge, and one readable chart beats four unreadable ones.
-        return when {
-            columns >= 4 && rows >= 3 -> this
-            columns >= 4 -> if (this == FOUR_CHARTS) TWO_CHARTS else this
-            else -> ONE_CHART
+    /** How many charts this draws. */
+    val chartCount: Int
+        get() = when (this) {
+            TEXT -> 0
+            ONE_CHART -> 1
+            TWO_CHARTS -> 2
+            FOUR_CHARTS -> 4
         }
-    }
+
+    /**
+     * Whether a widget [columns] by [rows] cells has room for it.
+     *
+     * Two panels side by side need the width of a medium widget — four cells,
+     * the same shape iOS calls `.systemMedium`. Below that a panel is a smudge.
+     *
+     * Checked rather than narrowed. It used to quietly turn four charts into
+     * one on a small widget, which reads as the setting having no effect and
+     * leaves nowhere to find out otherwise. The widget says so instead: the
+     * choice is kept, and dragging the widget wider brings it back.
+     */
+    fun fits(columns: Int, rows: Int): Boolean =
+        chartCount <= 1 || (columns >= MEDIUM_COLUMNS && rows >= MEDIUM_ROWS)
 }
