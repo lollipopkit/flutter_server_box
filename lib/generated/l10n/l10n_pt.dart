@@ -348,6 +348,11 @@ class AppLocalizationsPt extends AppLocalizations {
       'Apenas numa rede privada de confiança que cifre o transporte, como a Tailscale';
 
   @override
+  String monitorHttpTip(String url) {
+    return 'Ler o estado deste servidor pela API HTTP de um agente **monitor**, em vez de executar comandos por SSH.\n\nÉ preciso instalar o agente no servidor primeiro; as tendências, a app do relógio e os widgets dependem dele.\n\n[Instalar um agente monitor]($url)';
+  }
+
+  @override
   String get backupTip =>
       'Os dados exportados podem ser criptografados com senha. \nPor favor, guarde-os com segurança.';
 
@@ -597,10 +602,6 @@ class AppLocalizationsPt extends AppLocalizations {
       'Personalize quais abas aparecem na página inicial e sua ordem';
 
   @override
-  String get homeWidgetUrlConfig =>
-      'Configuração de URL do widget da tela inicial';
-
-  @override
   String get ignoreCert => 'Ignorar certificado';
 
   @override
@@ -741,6 +742,16 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get jumpServerAndProxyCommandCannotBeUsedTogether =>
       'Servidor de salto e ProxyCommand não podem ser usados juntos.';
+
+  @override
+  String get noConnectionMethod => 'Configure SSH, um agente monitor, ou ambos';
+
+  @override
+  String get preferredTransport => 'Tentar primeiro';
+
+  @override
+  String get preferredTransportTip =>
+      'De onde o estado é lido e que ligação um comando abre primeiro. A outra continua disponível.';
 
   @override
   String get keepForeground => 'Por favor, mantenha o app em primeiro plano!';
@@ -1561,10 +1572,11 @@ class AppLocalizationsPt extends AppLocalizations {
       'Nenhum servidor tem um agente monitor configurado';
 
   @override
-  String get watchLegacyUrls => 'URLs de status antigas';
+  String get legacyStatusGoneTitle => 'As URLs de estado deixaram de funcionar';
 
   @override
-  String get accessoryWidgetServer => 'Servidor do widget da tela de bloqueio';
+  String get legacyStatusGoneBody =>
+      'A app do relógio e os widgets liam um endereço `/status` escrito à mão. Esse endpoint foi removido: só conseguia devolver valores atuais como texto, e por isso nunca puderam mostrar um gráfico.\n\nAgora leem a API autenticada do agente monitor, desenham tendências e mantêm-se sincronizados com a app sozinhos. Configure o servidor uma vez na app e cada relógio e widget passa a usá-lo.';
 
   @override
   String get systemdMissing => 'Sem systemd neste servidor';

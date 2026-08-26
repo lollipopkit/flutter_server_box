@@ -2,7 +2,6 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/utils/jump_chain.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_key_unlock.dart';
-import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
@@ -121,13 +120,20 @@ final class MonitorFileRef extends FileRef {
     required this.path,
   });
 
+  /// Reads [Spix.monitor] rather than resolving a connect credential.
+  ///
+  /// The two came apart once a server could carry both transports:
+  /// `fromSpi` answers whichever *leads*, which for such a server is usually
+  /// SSH — and a cast to the monitor variant would then throw. Naming the
+  /// agent directly is also what this means. Choosing to browse a server's
+  /// files over its agent is a decision about the file backend, and has
+  /// nothing to do with which transport its status poll uses.
   factory MonitorFileRef.forServer(Spi spi, String path) {
-    final credential = ServerConnectCredential.fromSpi(spi);
-    return MonitorFileRef(
-      spi: spi,
-      monitor: (credential as ServerConnectCredentialMonitorHttp).monitor,
-      path: path,
-    );
+    final monitor = spi.monitor;
+    if (monitor == null) {
+      throw StateError('${spi.name} has no monitor agent to browse');
+    }
+    return MonitorFileRef(spi: spi, monitor: monitor, path: path);
   }
 
   final Spi spi;

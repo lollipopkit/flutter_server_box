@@ -326,6 +326,11 @@ class AppLocalizationsKo extends AppLocalizations {
       'HTTP 외에 전송 자체가 암호화되는 신뢰할 수 있는 사설망에서만. 예를 들어 Tailscale';
 
   @override
+  String monitorHttpTip(String url) {
+    return 'SSH로 명령을 실행하는 대신 **monitor**의 HTTP API에서 이 서버의 상태를 읽습니다.\n\n먼저 서버에 monitor를 설치해야 하며, 추이 그래프와 워치 앱, 홈 위젯이 이에 의존합니다.\n\n[monitor 설치 방법]($url)';
+  }
+
+  @override
   String get backupTip => '내보낸 데이터는 비밀번호로 암호화할 수 있습니다.\n안전하게 보관해 주세요.';
 
   @override
@@ -563,9 +568,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeTabsCustomizeDesc => '홈 페이지에 표시할 탭과 순서를 사용자 지정합니다';
 
   @override
-  String get homeWidgetUrlConfig => '홈 위젯 URL 설정';
-
-  @override
   String get ignoreCert => '인증서 무시';
 
   @override
@@ -698,6 +700,16 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get jumpServerAndProxyCommandCannotBeUsedTogether =>
       '점프 서버와 ProxyCommand는 함께 사용할 수 없습니다.';
+
+  @override
+  String get noConnectionMethod => 'SSH, monitor 또는 둘 다 설정하세요';
+
+  @override
+  String get preferredTransport => '우선 사용';
+
+  @override
+  String get preferredTransportTip =>
+      '상태를 읽어오는 쪽과 명령이 먼저 여는 연결입니다. 다른 쪽도 계속 사용됩니다.';
 
   @override
   String get keepForeground => '앱을 포그라운드에 유지해 주세요!';
@@ -1467,10 +1479,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get watchNoMonitorServer => 'monitor 에이전트가 설정된 서버가 없습니다';
 
   @override
-  String get watchLegacyUrls => '레거시 status URL';
+  String get legacyStatusGoneTitle => '상태 URL이 더 이상 작동하지 않습니다';
 
   @override
-  String get accessoryWidgetServer => '잠금 화면 위젯 서버';
+  String get legacyStatusGoneBody =>
+      '워치 앱과 홈 위젯은 직접 입력한 `/status` 주소를 읽었습니다. 이 엔드포인트는 제거되었습니다. 현재 값을 텍스트로만 반환할 수 있었고, 그래서 그래프를 표시할 수 없었습니다.\n\n이제는 monitor의 인증된 API를 읽으므로 추이를 그리고 앱과 자동으로 동기화됩니다. 앱에서 서버를 한 번 설정하면 모든 워치와 위젯이 이를 가져옵니다.';
 
   @override
   String get systemdMissing => '이 서버에는 systemd가 없습니다';

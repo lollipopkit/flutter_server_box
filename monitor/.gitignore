@@ -5,5 +5,21 @@ frontend/dist
 target
 serverbox_monitor.db*
 .env
-config.toml
 jwt.secret
+
+# What a run leaves in whatever directory it was started from. `CONFIG_PATH` is
+# deliberately relative (`core/config_file.rs`), so running the agent from here
+# — `cargo run`, or a dev deployment in this directory — writes its config and
+# its backups into the checkout.
+#
+# The backups are the ones that kept turning up untracked: every save through
+# the settings API rotates one in, up to `MAX_BACKUPS`. They hold the same
+# secrets as `config.toml` itself.
+config.toml
+config.toml.bak-*
+
+# The Go agent's flat config, which `Config::legacy` still reads once at the
+# `config.json` -> `config.toml` migration. Same secrets, other spelling.
+#
+# TODO: drop with that migration.
+config.json

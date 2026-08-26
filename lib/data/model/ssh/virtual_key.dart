@@ -125,6 +125,7 @@ extension VirtKeyX on VirtKey {
     VirtKey.sftp,
     VirtKey.snippet,
     VirtKey.tab,
+    VirtKey.shift,
     VirtKey.ctrl,
     VirtKey.left,
     VirtKey.down,
@@ -132,7 +133,6 @@ extension VirtKeyX on VirtKey {
     VirtKey.clipboard,
     VirtKey.sudo,
     VirtKey.ime,
-    VirtKey.shift,
     VirtKey.tmux,
   ];
 

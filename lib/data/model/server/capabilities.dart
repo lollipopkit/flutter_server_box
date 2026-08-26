@@ -1,5 +1,6 @@
 import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/monitor_remote_access.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
 
 /// What a way of reaching a server can do.
 ///
@@ -71,6 +72,76 @@ abstract interface class ServerCapabilities {
       ),
     };
   }
+
+  /// What a server can do across every way it is reachable.
+  ///
+  /// The union, not the preferred transport's answer. A server carrying both
+  /// SSH and an agent really can do both sets of things — the agent has
+  /// history the app never sampled, sshd has a byte stream the agent has no
+  /// endpoint for — and asking "which transport leads" would hide half of
+  /// that behind a preference that is about *ordering*, not about ability.
+  ///
+  /// Which transport a given feature ends up using is decided where it is
+  /// used, by whichever can carry it. That is the whole reason these are
+  /// questions about a server rather than about a connection.
+  static ServerCapabilities ofSpi(
+    Spi spi, {
+    MonitorRemoteAccess? granted,
+  }) {
+    final primary = of(
+      ServerConnectCredential.fromSpi(spi),
+      granted: granted,
+    );
+    final fallback = ServerConnectCredential.fallbackOf(spi);
+    if (fallback == null) return primary;
+    return UnionCapabilities(primary, of(fallback, granted: granted));
+  }
+}
+
+/// Two transports' answers, taken together.
+///
+/// Deliberately not a class that knows about SSH or about agents: it is the
+/// same "either of these can do it" no matter which two it is given, and a
+/// third transport would compose the same way.
+class UnionCapabilities implements ServerCapabilities {
+  const UnionCapabilities(this.a, this.b);
+
+  final ServerCapabilities a;
+  final ServerCapabilities b;
+
+  @override
+  bool get shell => a.shell || b.shell;
+
+  @override
+  bool get terminal => a.terminal || b.terminal;
+
+  @override
+  bool get byteStream => a.byteStream || b.byteStream;
+
+  @override
+  bool get files => a.files || b.files;
+
+  @override
+  bool get storedHistory => a.storedHistory || b.storedHistory;
+
+  /// True when *either* keeps a connection, because the question this answers
+  /// is "might a caller be made to wait for one" — and one long-lived
+  /// connection is enough to make that so.
+  @override
+  bool get persistentSession => a.persistentSession || b.persistentSession;
+
+  /// Order does not matter: a union of the same two answers the same either
+  /// way round, and which one leads is a preference about ordering rather than
+  /// about ability. Without this a server whose preference flipped would
+  /// publish a change to every watcher of its capabilities and none of the
+  /// answers would differ.
+  @override
+  bool operator ==(Object other) =>
+      other is UnionCapabilities &&
+      ((other.a == a && other.b == b) || (other.a == b && other.b == a));
+
+  @override
+  int get hashCode => Object.hash(UnionCapabilities, a.hashCode ^ b.hashCode);
 }
 
 /// An SSH connection, which can do all of it.

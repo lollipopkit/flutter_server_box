@@ -15,9 +15,14 @@ import 'package:server_box/data/model/server/time_seq.dart';
 /// hold `null` at that index rather than a fabricated 0 — a server with no
 /// battery must render as "no data", not as a flat 0%.
 class StatusHistory {
-  /// ~25 minutes at the app's default refresh interval, and enough to make
-  /// monitor's 300-bucket history seed fit exactly
-  static const capacity = 300;
+  /// How many samples any one series keeps — ~5 minutes at the app's default
+  /// 3-second refresh interval.
+  ///
+  /// Fewer than the agent's history holds. [seed] walks the response through
+  /// [add], so a longer one keeps its newest [capacity] points and the rest
+  /// is dropped on arrival; the chart is the same either way, since a card a
+  /// few hundred pixels wide cannot draw more points than it has pixels.
+  static const capacity = 100;
 
   /// Percent, 0-100
   final cpu = Fifo<double?>(capacity: capacity);

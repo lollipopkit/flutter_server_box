@@ -16,7 +16,27 @@ part 'server_private_info.g.dart';
 
 enum SpiValidationError {
   jumpServerAndProxyCommandConflict,
-  sshAndMonitorHttpConflict,
+
+  /// Neither [Spi.ssh] nor [Spi.monitorHttp] is configured.
+  ///
+  /// This used to be the opposite complaint — carrying *both* was the error.
+  /// A server may now carry both, with [Spi.preferredTransport] saying which
+  /// is tried first; what it still may not do is carry neither, which is a
+  /// name and an address of nothing.
+  noConnectionMethod,
+}
+
+/// Which way of reaching a server is tried first.
+///
+/// Only meaningful when both are configured. Stored **by name**, never by
+/// index: an index silently changes meaning when a case is inserted, and this
+/// outlives the build that wrote it.
+enum ServerTransport {
+  ssh,
+  monitorHttp;
+
+  static ServerTransport? fromName(Object? name) =>
+      ServerTransport.values.firstWhereOrNull((e) => e.name == name);
 }
 
 class SpiValidationException implements Exception {
@@ -52,8 +72,27 @@ abstract class Spi with _$Spi {
     SshCredential? ssh,
 
     /// Reach this server via a `monitor` instance's HTTP API. A peer of
-    /// [ssh]; a server may carry either one, or neither.
+    /// [ssh]; a server may carry either one, or both.
     MonitorHttpCredential? monitorHttp,
+
+    /// Which of the two is tried first, when both are configured.
+    ///
+    /// Null on every server with only one way in, which is most of them, and
+    /// on every record written before the two could coexist. Read through
+    /// [Spix.transport], which resolves that.
+    ///
+    /// A name this build does not know reads as null rather than throwing.
+    /// Without that, one unrecognised word makes `Spi.fromJson` fail and takes
+    /// the *whole server record* with it — through a backup restore, a sync,
+    /// or a shared QR code. A build that grows a third transport writes a word
+    /// this one has never seen, and losing a server over it would be a far
+    /// worse answer than falling back to the resolution [Spix.transport]
+    /// already does for a preference that names nothing configured.
+    @JsonKey(
+      includeIfNull: false,
+      unknownEnumValue: JsonKey.nullForUndefinedEnumValue,
+    )
+    ServerTransport? preferredTransport,
     List<String>? tags,
     @Default(true) bool autoConnect,
     ServerCustom? custom,
@@ -134,8 +173,8 @@ extension Spix on Spi {
 
   SpiValidationError? validate() {
     final s = ssh;
-    if (s != null && monitorHttp != null) {
-      return SpiValidationError.sshAndMonitorHttpConflict;
+    if (s == null && monitor == null) {
+      return SpiValidationError.noConnectionMethod;
     }
     if (s == null) return null;
     final hasJumpServer = s.resolvedJumpIds.isNotEmpty;
@@ -164,25 +203,38 @@ extension Spix on Spi {
     return monitorHttp?.addr ?? id;
   }
 
+  /// Which way of reaching this server is tried first.
+  ///
+  /// With one configured there is nothing to prefer, and the answer is
+  /// whichever exists — so a stored preference naming the *other* one is
+  /// ignored rather than honoured into a dead end. That happens: turning a
+  /// server's SSH off leaves the preference behind, and nothing clears it.
+  ///
+  /// With both, and nothing stored, SSH leads. Not arbitrary — it is what
+  /// every such server was before this field existed, and it is the transport
+  /// that can do everything, so a server that gains an agent does not quietly
+  /// lose its terminal.
+  ServerTransport get transport {
+    final hasSsh = ssh != null;
+    final hasMonitor = monitor != null;
+    if (!hasMonitor) return ServerTransport.ssh;
+    if (!hasSsh) return ServerTransport.monitorHttp;
+    return preferredTransport ?? ServerTransport.ssh;
+  }
+
+  /// The other way in, when there is one.
+  ServerTransport? get fallbackTransport {
+    if (ssh == null || monitor == null) return null;
+    return transport == ServerTransport.ssh
+        ? ServerTransport.monitorHttp
+        : ServerTransport.ssh;
+  }
+
   /// This server's monitor agent, or null when it has none configured.
   MonitorHttpCredential? get monitor {
     final m = monitorHttp;
     if (m == null || m.addr.trim().isEmpty) return null;
     return m;
-  }
-
-  /// The agent's unauthenticated Go-compat status endpoint, or null when this
-  /// server has no monitor agent.
-  ///
-  /// Used by the clients that can only do one plain GET and have nowhere to
-  /// keep a token: the iOS lock-screen widget, and watch app builds predating
-  /// the `/api/v1` client.
-  ///
-  /// TODO: drop together with monitor's `/status` compat route.
-  String? get monitorStatusUrl {
-    final addr = monitor?.addr.trim();
-    if (addr == null) return null;
-    return '${addr.endsWith('/') ? addr.substring(0, addr.length - 1) : addr}/status';
   }
 
   /// The pre-1155 storage key.
@@ -233,7 +285,11 @@ extension Spix on Spi {
   bool shouldReconnect(Spi old) {
     return !isSameAs(old) ||
         ssh?.alterUrl != old.ssh?.alterUrl ||
-        monitorHttp != old.monitorHttp;
+        monitorHttp != old.monitorHttp ||
+        // Which transport leads decides where the status poll goes and which
+        // connection `ensureExec` opens, so changing it has to tear down what
+        // the old answer built.
+        transport != old.transport;
   }
 
   /// Parse the SSH [SshCredential.alterUrl] to (ip, user, port).

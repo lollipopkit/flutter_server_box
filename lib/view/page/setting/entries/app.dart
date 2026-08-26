@@ -27,7 +27,7 @@ extension _App on _AppSettingsPageState {
     return ExpandTile(
       leading: const Icon(Icons.phone_android),
       title: Text('Android ${libL10n.setting}'),
-      children: [_buildBgRun(), _buildAndroidWidgetSharedPreference()],
+      children: [_buildBgRun()],
     );
   }
 
@@ -72,52 +72,6 @@ extension _App on _AppSettingsPageState {
         );
       },
     );
-  }
-
-  Widget _buildAndroidWidgetSharedPreference() {
-    return ListTile(
-      title: Text(l10n.homeWidgetUrlConfig),
-      trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: () async {
-        const prefix = 'widget_';
-        final data = <String, String>{};
-        final keys = PrefStore.shared.keys();
-
-        for (final key in keys) {
-          if (!key.startsWith(prefix)) continue;
-          final val = PrefStore.shared.get<String>(key);
-          if (val != null) data[key] = val;
-        }
-        final result = await KvEditor.route.go(
-          context,
-          KvEditorArgs(data: data, prefix: prefix),
-        );
-        if (result != null) {
-          await _saveWidgetSP(result, data, prefix);
-        }
-      },
-    );
-  }
-
-  Future<void> _saveWidgetSP(
-    Map<String, String> map,
-    Map<String, String> old,
-    String prefix,
-  ) async {
-    try {
-      final keysDel = old.keys.toSet().difference(map.keys.toSet());
-      for (final key in keysDel) {
-        if (!key.startsWith(prefix)) continue;
-        await PrefStore.shared.remove(key);
-      }
-      for (final entry in map.entries) {
-        if (!entry.key.startsWith(prefix)) continue;
-        await PrefStore.shared.set(entry.key, entry.value);
-      }
-      if (mounted) Toast.success(libL10n.success);
-    } catch (e) {
-      if (mounted) Toast.error(e.toString());
-    }
   }
 
   Widget? _buildPlatformSetting() {

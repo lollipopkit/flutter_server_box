@@ -94,7 +94,7 @@ extension _Init on SSHPageState {
       windowIndex: plan.windowIndex,
     );
     _bindForegroundSession(session);
-    widget.args.focusNode?.requestFocus();
+    _focusTerminal(keyboard: false);
     return true;
   }
 
@@ -168,7 +168,7 @@ extension _Init on SSHPageState {
             ? TermSessionStatus.connected
             : TermSessionStatus.disconnected,
       );
-      widget.args.focusNode?.requestFocus();
+      _focusTerminal(keyboard: false);
       return;
     }
 
@@ -210,7 +210,7 @@ extension _Init on SSHPageState {
       initSnippet.runInTerm(_terminal, spi);
     }
 
-    widget.args.focusNode?.requestFocus();
+    _focusTerminal(keyboard: false);
   }
 
   void _setupDiscontinuityTimer() {
@@ -470,7 +470,7 @@ extension _Init on SSHPageState {
           return false;
         }
         _setupDiscontinuityTimer();
-        widget.args.focusNode?.requestFocus();
+        _focusTerminal(keyboard: false);
         return true;
       }
       if (!mounted || _reconnectCancelled) {
@@ -495,7 +495,7 @@ extension _Init on SSHPageState {
     }
     _bindForegroundSession(shell);
     _setupDiscontinuityTimer();
-    widget.args.focusNode?.requestFocus();
+    _focusTerminal(keyboard: false);
     return true;
   }
 
@@ -805,7 +805,7 @@ extension _Init on SSHPageState {
           nextSessionName: choice.sessionName,
           nextWindowIndex: choice.windowIndex,
         );
-        widget.args.focusNode?.requestFocus();
+        _focusTerminal(keyboard: false);
         return;
       }
 
@@ -827,7 +827,7 @@ extension _Init on SSHPageState {
           choice.sessionName,
           nextSessionName: choice.sessionName,
         );
-        widget.args.focusNode?.requestFocus();
+        _focusTerminal(keyboard: false);
         return;
       }
     } finally {

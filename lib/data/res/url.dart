@@ -13,4 +13,11 @@ abstract final class Urls {
   /// like. The wiki this used to point at says nothing about either.
   static const customLogoDoc = '$docs/advanced/custom-logo/';
 
+  /// What a `monitor` agent is, and how to get one onto a server.
+  ///
+  /// Linked from the server editor rather than only from the docs site: the
+  /// switch offers a way of reaching a server that does not exist until
+  /// something has been installed on it, which is not a thing a switch can
+  /// convey on its own.
+  static const monitorAgentDoc = '$docs/advanced/monitor-agent/';
 }

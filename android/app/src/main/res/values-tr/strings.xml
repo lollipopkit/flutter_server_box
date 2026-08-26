@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Widget strings only. Everything the Flutter side owns stays in its
+    ARB files; these are drawn by native code in a process the Flutter
+    engine may never have started in, so `l10n` is not reachable.
+
+    Indonesian is `values-in`, not `values-id`: resource qualifiers use
+    the legacy ISO code, which is what `Locale.getLanguage()` returns
+    on every Android version.
+-->
+<resources>
+    <string name="widget_configure_title">Bileşen</string>
+    <string name="widget_configure_server">Sunucu</string>
+    <string name="widget_configure_metric">Ana ölçüm</string>
+    <string name="widget_configure_save">Kaydet</string>
+    <string name="widget_configure_empty">Henüz monitor aracısı olan bir sunucu yok.\nServerBox\'ta bir tane ekleyip geri dönün.</string>
+    <string name="widget_metric_cpu">CPU</string>
+    <string name="widget_metric_memory">Bellek</string>
+    <string name="widget_metric_disk">Disk</string>
+    <string name="widget_metric_network">Ağ</string>
+    <string name="widget_err_not_configured">Sunucu seçmek için dokunun</string>
+    <string name="widget_err_no_token">Kimlik bilgisi yok — ServerBox\'ı açın</string>
+    <string name="widget_err_insecure">HTTPS gerekli</string>
+    <string name="widget_err_network">Ağ hatası</string>
+    <string name="widget_err_timeout">Zaman aşımı</string>
+    <string name="widget_no_history">Geçmiş yok</string>
+    <string name="widget_chart_desc">Durum grafikleri</string>
+    <string name="widget_cpu_desc">CPU kullanımı</string>
+    <string name="widget_mem_desc">Bellek kullanımı</string>
+    <string name="widget_disk_desc">Disk kullanımı</string>
+    <string name="widget_net_desc">Ağ kullanımı</string>
+    <string name="widget_refresh_desc">Yenile</string>
+    <string name="widget_small_label">Sunucu değerleri</string>
+    <string name="widget_medium_label">Sunucu grafikleri</string>
+</resources>

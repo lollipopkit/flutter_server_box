@@ -1,6 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/services.dart';
-import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 
@@ -51,19 +50,34 @@ abstract final class MethodChans {
     }
   }
 
-  /// Point the iOS lock-screen accessory widget at a server's Go-compat
-  /// `/status` URL, or clear it with `null`.
+  /// Hand the home-screen widgets the current monitor server list and a
+  /// read-only credential for each.
   ///
-  /// The widget reads this out of the App Group container, which no Dart code
-  /// ever wrote — so every install has been showing "url is nil" on the
-  /// accessory families since they were added.
-  static Future<void> setAccessoryWidgetUrl(String? url) async {
-    if (!isIOS) return;
-    try {
-      await _channel.invokeMethod('setAccessoryWidgetUrl', url);
-    } catch (e, s) {
-      Loggers.app.warning('Failed to set accessory widget url', e, s);
-    }
+  /// The native side splits the payload: the list goes to a container the
+  /// widget process reads directly (the iOS App Group, Android's shared
+  /// preferences), and every `token` is moved into the platform credential
+  /// store instead — see `WidgetSync` for why. It is a full replacement, so a
+  /// server absent from [payload] has its stored token dropped as well.
+  static Future<void> publishWidgetServers(String payload) async {
+    if (!isIOS && !isAndroid) return;
+    await _channel.invokeMethod('publishWidgetServers', payload);
+  }
+
+  /// Which servers the native side currently holds a widget token for, and
+  /// until when — as JSON, `[{"id","endpoint","expiresAt"}]`.
+  ///
+  /// Never the token itself. The renewal decision needs the endpoint it
+  /// belongs to and its deadline, and carrying the credential back across the
+  /// channel to answer that would undo the point of storing it natively.
+  ///
+  /// Answers from the *platform*, not from a copy kept here, because those two
+  /// come apart exactly where it matters: a reinstall empties the Keychain
+  /// while a restored backup refills this app's own database, and a renewal
+  /// decision made from the latter would skip every server whose credential no
+  /// longer exists.
+  static Future<String?> widgetTokenState() async {
+    if (!isIOS && !isAndroid) return null;
+    return await _channel.invokeMethod<String>('widgetTokenState');
   }
 
   /// Last pair pushed by [setIslandBrandColors], so that rebuilding the theme —
@@ -137,18 +151,6 @@ abstract final class MethodChans {
       _privacyBlurLocked = null;
       Loggers.app.warning('Failed to set privacy blur lock', e, s);
     }
-  }
-
-  /// Re-derive the accessory widget's URL from the chosen server.
-  ///
-  /// Run at launch as well as on change: the App Group container goes away
-  /// with the app, while the choice lives in the (backed up, synced) settings
-  /// store, so a reinstall has to re-publish it.
-  static Future<void> syncAccessoryWidgetUrl() async {
-    if (!isIOS) return;
-    final id = Stores.setting.accessoryWidgetServerId.fetch();
-    final spi = id.isEmpty ? null : Stores.server.fetchOneRaw(id);
-    await setAccessoryWidgetUrl(spi?.monitorStatusUrl);
   }
 
   /// Update Android foreground service notifications for SSH sessions

@@ -345,6 +345,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Only on a trusted private network that encrypts the transport itself, such as Tailscale';
 
   @override
+  String monitorHttpTip(String url) {
+    return 'Read this server\'s status from a **monitor** agent\'s HTTP API instead of running commands over SSH.\n\nThe agent has to be installed on the server first, and it is what makes trends, the watch app and the home-screen widgets possible.\n\n[Setting up a monitor agent]($url)';
+  }
+
+  @override
   String get backupTip =>
       'The exported data can be encrypted with password. \nPlease keep it safe.';
 
@@ -591,9 +596,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Customize which tabs appear on the home page and their order';
 
   @override
-  String get homeWidgetUrlConfig => 'Config home widget url';
-
-  @override
   String get ignoreCert => 'Ignore certificate';
 
   @override
@@ -733,6 +735,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get jumpServerAndProxyCommandCannotBeUsedTogether =>
       'Jump server and ProxyCommand cannot be used together.';
+
+  @override
+  String get noConnectionMethod => 'Configure SSH, a monitor agent, or both';
+
+  @override
+  String get preferredTransport => 'Try first';
+
+  @override
+  String get preferredTransportTip =>
+      'Where status is read from, and which connection a command opens first. The other stays available.';
 
   @override
   String get keepForeground => 'Keep app foreground!';
@@ -1549,10 +1561,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get watchNoMonitorServer => 'No server has a monitor agent configured';
 
   @override
-  String get watchLegacyUrls => 'Legacy status URLs';
+  String get legacyStatusGoneTitle => 'Status URLs no longer work';
 
   @override
-  String get accessoryWidgetServer => 'Lock screen widget server';
+  String get legacyStatusGoneBody =>
+      'The watch app and home widgets used to read a `/status` address typed by hand. That endpoint is gone: it could only report current values as text, which is why they could never show a chart.\n\nThey now read the monitor agent\'s authenticated API, so they draw trends and stay in step with the app on their own. Configure the server in the app once, and every watch and widget picks it up.';
 
   @override
   String get systemdMissing => 'No systemd on this server';

@@ -351,6 +351,11 @@ class AppLocalizationsIt extends AppLocalizations {
       'Solo su una rete privata fidata che cifra da sé il trasporto, come Tailscale';
 
   @override
+  String monitorHttpTip(String url) {
+    return 'Leggere lo stato di questo server dall\'API HTTP di un agente **monitor**, invece di eseguire comandi via SSH.\n\nL\'agente va prima installato sul server; andamenti, app per l\'orologio e widget dipendono da esso.\n\n[Installare un agente monitor]($url)';
+  }
+
+  @override
   String get backupTip =>
       'I dati esportati possono essere crittografati con password.\nConservali al sicuro.';
 
@@ -602,9 +607,6 @@ class AppLocalizationsIt extends AppLocalizations {
       'Personalizza quali schede appaiono nella home page e il loro ordine';
 
   @override
-  String get homeWidgetUrlConfig => 'Configura url widget home';
-
-  @override
   String get ignoreCert => 'Ignora certificato';
 
   @override
@@ -745,6 +747,17 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get jumpServerAndProxyCommandCannotBeUsedTogether =>
       'Jump server e ProxyCommand non possono essere usati insieme.';
+
+  @override
+  String get noConnectionMethod =>
+      'Configura SSH, un agente monitor, o entrambi';
+
+  @override
+  String get preferredTransport => 'Prova per prima';
+
+  @override
+  String get preferredTransportTip =>
+      'Da dove viene letto lo stato e quale connessione apre per prima un comando. L\'altra resta disponibile.';
 
   @override
   String get keepForeground => 'Mantieni l\'app in primo piano!';
@@ -1571,11 +1584,11 @@ class AppLocalizationsIt extends AppLocalizations {
       'Nessun server ha un agente monitor configurato';
 
   @override
-  String get watchLegacyUrls => 'URL di stato legacy';
+  String get legacyStatusGoneTitle => 'Gli URL di stato non funzionano più';
 
   @override
-  String get accessoryWidgetServer =>
-      'Server del widget della schermata di blocco';
+  String get legacyStatusGoneBody =>
+      'L\'app per l\'orologio e i widget leggevano un indirizzo `/status` scritto a mano. Quell\'endpoint è stato rimosso: restituiva solo valori correnti come testo, ed è per questo che non hanno mai potuto mostrare un grafico.\n\nOra leggono l\'API autenticata dell\'agente monitor, disegnano gli andamenti e restano sincronizzati con l\'app da soli. Configura il server una volta nell\'app e ogni orologio e widget lo riprenderà.';
 
   @override
   String get systemdMissing => 'Nessun systemd su questo server';

@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    The medium widget: charts, at a fixed 4x2. See `widget_small.xml` for why
+    neither one resizes.
+-->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
-    android:minWidth="110dp"
-    android:maxHeight="110dp"
-    android:maxWidth="110dp"
+    android:minWidth="250dp"
     android:minHeight="110dp"
-    android:updatePeriodMillis="1800001"
+    android:targetCellWidth="4"
+    android:targetCellHeight="2"
+    android:updatePeriodMillis="1800000"
     android:initialLayout="@layout/home_widget"
     android:configure="tech.lolli.toolbox.widget.WidgetConfigureActivity"
     android:resizeMode="none"

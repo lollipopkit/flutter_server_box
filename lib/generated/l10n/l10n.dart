@@ -723,6 +723,12 @@ abstract class AppLocalizations {
   /// **'Only on a trusted private network that encrypts the transport itself, such as Tailscale'**
   String get monitorAllowInsecureHttpTip;
 
+  /// No description provided for @monitorHttpTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Read this server\'s status from a **monitor** agent\'s HTTP API instead of running commands over SSH.\n\nThe agent has to be installed on the server first, and it is what makes trends, the watch app and the home-screen widgets possible.\n\n[Setting up a monitor agent]({url})'**
+  String monitorHttpTip(String url);
+
   /// No description provided for @backupTip.
   ///
   /// In en, this message translates to:
@@ -1149,12 +1155,6 @@ abstract class AppLocalizations {
   /// **'Customize which tabs appear on the home page and their order'**
   String get homeTabsCustomizeDesc;
 
-  /// No description provided for @homeWidgetUrlConfig.
-  ///
-  /// In en, this message translates to:
-  /// **'Config home widget url'**
-  String get homeWidgetUrlConfig;
-
   /// No description provided for @ignoreCert.
   ///
   /// In en, this message translates to:
@@ -1400,6 +1400,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Jump server and ProxyCommand cannot be used together.'**
   String get jumpServerAndProxyCommandCannotBeUsedTogether;
+
+  /// No description provided for @noConnectionMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure SSH, a monitor agent, or both'**
+  String get noConnectionMethod;
+
+  /// No description provided for @preferredTransport.
+  ///
+  /// In en, this message translates to:
+  /// **'Try first'**
+  String get preferredTransport;
+
+  /// No description provided for @preferredTransportTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Where status is read from, and which connection a command opens first. The other stays available.'**
+  String get preferredTransportTip;
 
   /// No description provided for @keepForeground.
   ///
@@ -2738,17 +2756,17 @@ abstract class AppLocalizations {
   /// **'No server has a monitor agent configured'**
   String get watchNoMonitorServer;
 
-  /// No description provided for @watchLegacyUrls.
+  /// No description provided for @legacyStatusGoneTitle.
   ///
   /// In en, this message translates to:
-  /// **'Legacy status URLs'**
-  String get watchLegacyUrls;
+  /// **'Status URLs no longer work'**
+  String get legacyStatusGoneTitle;
 
-  /// No description provided for @accessoryWidgetServer.
+  /// No description provided for @legacyStatusGoneBody.
   ///
   /// In en, this message translates to:
-  /// **'Lock screen widget server'**
-  String get accessoryWidgetServer;
+  /// **'The watch app and home widgets used to read a `/status` address typed by hand. That endpoint is gone: it could only report current values as text, which is why they could never show a chart.\n\nThey now read the monitor agent\'s authenticated API, so they draw trends and stay in step with the app on their own. Configure the server in the app once, and every watch and widget picks it up.'**
+  String get legacyStatusGoneBody;
 
   /// No description provided for @systemdMissing.
   ///

@@ -351,6 +351,11 @@ class AppLocalizationsRu extends AppLocalizations {
       'Только в доверенной частной сети, которая сама шифрует транспорт, например Tailscale';
 
   @override
+  String monitorHttpTip(String url) {
+    return 'Читать состояние этого сервера через HTTP API агента **monitor**, а не выполняя команды по SSH.\n\nАгент нужно сначала установить на сервер; от него зависят графики, приложение для часов и виджеты.\n\n[Как установить monitor]($url)';
+  }
+
+  @override
   String get backupTip =>
       'Экспортированные данные могут быть зашифрованы паролем. \nПожалуйста, храните их в безопасности.';
 
@@ -601,9 +606,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Настройте, какие вкладки появляются на главной странице и их порядок';
 
   @override
-  String get homeWidgetUrlConfig => 'Конфигурация URL виджета домашнего экрана';
-
-  @override
   String get ignoreCert => 'Игнорировать сертификат';
 
   @override
@@ -744,6 +746,16 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get jumpServerAndProxyCommandCannotBeUsedTogether =>
       'Промежуточный сервер и ProxyCommand нельзя использовать вместе.';
+
+  @override
+  String get noConnectionMethod => 'Настройте SSH, агент monitor или оба';
+
+  @override
+  String get preferredTransport => 'Сначала пробовать';
+
+  @override
+  String get preferredTransportTip =>
+      'Откуда читается статус и какое соединение команда откроет первым. Второе остаётся доступным.';
 
   @override
   String get keepForeground => 'Пожалуйста, держите приложение в фокусе!';
@@ -1572,10 +1584,11 @@ class AppLocalizationsRu extends AppLocalizations {
       'Ни на одном сервере не настроен агент monitor';
 
   @override
-  String get watchLegacyUrls => 'Устаревшие URL статуса';
+  String get legacyStatusGoneTitle => 'URL-адреса статуса больше не работают';
 
   @override
-  String get accessoryWidgetServer => 'Сервер для виджета экрана блокировки';
+  String get legacyStatusGoneBody =>
+      'Приложение для часов и виджеты читали адрес `/status`, введённый вручную. Эта конечная точка удалена: она возвращала только текущие значения текстом, поэтому графики были невозможны.\n\nТеперь они читают аутентифицированный API агента monitor, строят графики и синхронизируются с приложением сами. Настройте сервер в приложении один раз — часы и виджеты подхватят его.';
 
   @override
   String get systemdMissing => 'На этом сервере нет systemd';

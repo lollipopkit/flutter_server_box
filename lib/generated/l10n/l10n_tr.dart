@@ -348,6 +348,11 @@ class AppLocalizationsTr extends AppLocalizations {
       'Yalnızca taşımayı kendisi şifreleyen güvenilir özel ağlarda, örneğin Tailscale';
 
   @override
+  String monitorHttpTip(String url) {
+    return 'Bu sunucunun durumunu SSH ile komut çalıştırmak yerine bir **monitor** aracısının HTTP API\'sinden okur.\n\nAracının önce sunucuya kurulması gerekir; eğilimler, saat uygulaması ve ana ekran bileşenleri buna bağlıdır.\n\n[monitor aracısı nasıl kurulur]($url)';
+  }
+
+  @override
   String get backupTip =>
       'Dışa aktarılan veriler parola ile şifrelenebilir. \nLütfen güvenli bir şekilde saklayın.';
 
@@ -599,9 +604,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Ana sayfada görünecek sekmeleri ve sıralarını özelleştirin';
 
   @override
-  String get homeWidgetUrlConfig => 'Ana ekran bileşeni URL\'sini yapılandır';
-
-  @override
   String get ignoreCert => 'Sertifikayı yok say';
 
   @override
@@ -740,6 +742,17 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get jumpServerAndProxyCommandCannotBeUsedTogether =>
       'Atlama sunucusu ile ProxyCommand birlikte kullanılamaz.';
+
+  @override
+  String get noConnectionMethod =>
+      'SSH, monitor aracısı veya ikisini birden yapılandırın';
+
+  @override
+  String get preferredTransport => 'Önce denenecek';
+
+  @override
+  String get preferredTransportTip =>
+      'Durumun nereden okunacağı ve bir komutun önce hangi bağlantıyı açacağı. Diğeri kullanılabilir kalır.';
 
   @override
   String get keepForeground => 'Uygulamayı ön planda tut!';
@@ -1550,10 +1563,11 @@ class AppLocalizationsTr extends AppLocalizations {
       'monitor aracısı yapılandırılmış sunucu yok';
 
   @override
-  String get watchLegacyUrls => 'Eski durum URL\'leri';
+  String get legacyStatusGoneTitle => 'Durum URL\'leri artık çalışmıyor';
 
   @override
-  String get accessoryWidgetServer => 'Kilit ekranı bileşeni sunucusu';
+  String get legacyStatusGoneBody =>
+      'Saat uygulaması ve ana ekran bileşenleri elle yazılan bir `/status` adresini okuyordu. Bu uç nokta kaldırıldı: yalnızca anlık değerleri metin olarak döndürebiliyordu, grafik gösterememelerinin nedeni buydu.\n\nArtık monitor aracısının kimlik doğrulamalı API\'sini okuyorlar; eğilimleri çiziyor ve uygulamayla kendiliğinden eşleşiyorlar. Sunucuyu uygulamada bir kez yapılandırın, her saat ve bileşen onu alsın.';
 
   @override
   String get systemdMissing => 'Bu sunucuda systemd yok';

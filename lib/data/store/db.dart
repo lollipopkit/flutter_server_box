@@ -121,6 +121,12 @@ class Servers extends Table with SyncMeta {
   /// written before the column existed meant — see `m014`.
   TextColumn get sshFileTransport => text().nullable()();
 
+  /// Which way of reaching this server is tried first, by
+  /// `ServerTransport.name`. Null means "whichever is configured", which is
+  /// the only answer for a server that has just one — and the only shape rows
+  /// written before v18 are in, when carrying both was not possible.
+  TextColumn get preferredTransport => text().nullable()();
+
   TextColumn get monitorAddr => text().nullable()();
   TextColumn get monitorUser => text().nullable()();
   TextColumn get monitorPwd => text().nullable()();
@@ -165,8 +171,15 @@ class Servers extends Table with SyncMeta {
 
   @override
   List<String> get customConstraints => [
-    // Reached over SSH or over a monitor agent, never both and never neither.
-    'CHECK ((ssh_ip IS NOT NULL) <> (monitor_addr IS NOT NULL))',
+    // Reached over SSH, over a monitor agent, or both — but never neither.
+    //
+    // It used to be an exclusive-or. Both at once is now a configuration the
+    // user can ask for: an agent that reports status without a shell open, and
+    // sshd for the things the agent has no endpoint for, with
+    // [preferredTransport] saying which is tried first. What stays is that a
+    // server has to be reachable *somehow*; a row with neither is not a
+    // server, it is a name.
+    'CHECK (ssh_ip IS NOT NULL OR monitor_addr IS NOT NULL)',
     'CHECK (ssh_port IS NULL OR ssh_port BETWEEN 1 AND 65535)',
   ];
 }
@@ -599,14 +612,21 @@ class AppDb extends _$AppDb {
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
-      for (final statement in _indexes) {
+      for (final statement in indexStatements) {
         await customStatement(statement);
       }
     },
   );
 
   /// Indexes the read patterns need, which the table definitions do not carry.
-  static const _indexes = [
+  ///
+  /// Public because a migration that *rebuilds* a table has to put them back:
+  /// `DROP TABLE` takes its indexes with it, and Drift only runs this list on
+  /// `onCreate`, which an upgrading install never reaches. Every statement is
+  /// `IF NOT EXISTS`, so re-running the whole list is the safe way to do that
+  /// — safer than a migration naming the two it knows about, which is a list
+  /// that goes stale the next time someone adds an index to `server`.
+  static const indexStatements = [
     'CREATE INDEX IF NOT EXISTS idx_server_key ON server(ssh_key_id);',
     // Same read as `ssh_key_id`: "how many servers use this account", asked
     // once per row of the account list and on every rebuild of the server

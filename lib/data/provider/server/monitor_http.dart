@@ -167,9 +167,15 @@ class MonitorHttpClient {
     });
   }
 
-  /// Mints a read-only, independently revocable credential for a watch.
-  /// The normal session token is never handed to the second device.
-  Future<String> issueWatchToken(String clientId) {
+  /// Mints a read-only, independently revocable credential for a second
+  /// device. The normal session token is never handed to one.
+  ///
+  /// The agent's `expires_at` is returned rather than dropped: these live 90
+  /// days, and a caller that keeps the token without keeping the deadline has
+  /// no way to renew it before the device it was given to starts answering
+  /// 401 with nobody to report it to. Zero when the agent did not say — an
+  /// older one — which [ScopedToken] treats as due for renewal.
+  Future<({String token, int expiresAt})> issueWatchToken(String clientId) {
     return _authed(() async {
       final resp = await _object(
         '/api/v1/watch-token',
@@ -182,7 +188,11 @@ class MonitorHttpClient {
           message: 'Empty token in /api/v1/watch-token response',
         );
       }
-      return token;
+      final expiresAt = resp['expires_at'];
+      return (
+        token: token,
+        expiresAt: expiresAt is num ? expiresAt.toInt() : 0,
+      );
     });
   }
 
@@ -195,13 +205,21 @@ class MonitorHttpClient {
     });
   }
 
-  Future<List<MonitorHistoryPoint>> fetchHistory({int minutes = 60}) {
+  /// [maxPoints] is how many points to come back with; the agent averages the
+  /// window into that many buckets rather than answering with its own default
+  /// of 300 for the caller to throw most of away. An agent from before that
+  /// parameter existed ignores it and answers with 300, which is why nothing
+  /// here assumes the count it asked for.
+  Future<List<MonitorHistoryPoint>> fetchHistory({
+    int minutes = 60,
+    int maxPoints = 300,
+  }) {
     return _authed(() async {
       // The endpoint answers with a bare JSON array of points, not an
       // envelope object — see `get_metrics_history` in monitor's api/server.rs
       final resp = await _session().get<dynamic>(
         '/api/v1/metrics/history',
-        queryParameters: {'minutes': minutes},
+        queryParameters: {'minutes': minutes, 'max_points': maxPoints},
       );
       final points = resp.data;
       if (points is! List) {

@@ -4,6 +4,18 @@
 <dict>
 	<key>aps-environment</key>
 	<string>production</string>
+	<!-- The app's OWN group is first, and that is load-bearing: an item added
+	     without naming a group lands in the *first* entry here, and
+	     `flutter_secure_storage` names none. The database's encryption key
+	     (SecureStoreProps.hivePwd) goes through it, so putting the shared
+	     group first would quietly start writing that key somewhere the widget
+	     extension can read. Nothing may rely on this ordering by accident —
+	     `WidgetStore` names its group explicitly. -->
+	<key>keychain-access-groups</key>
+	<array>
+		<string>$(AppIdentifierPrefix)com.lollipopkit.toolbox</string>
+		<string>$(AppIdentifierPrefix)com.lollipopkit.toolbox.widgets</string>
+	</array>
 	<key>com.apple.security.application-groups</key>
 	<array>
 		<string>group.com.lollipopkit.toolbox</string>

@@ -15,12 +15,14 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/ai/agent_conversation.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
+import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/provider/ai/agent_scope.dart';
 import 'package:server_box/data/provider/ai/agent_session.dart';
+import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/provider/virtual_keyboard.dart';
@@ -375,11 +377,9 @@ class SSHPageState extends ConsumerState<SSHPage>
       case AppLifecycleState.resumed:
         if (!_isVisibleSessionPage) return;
         TermSessionManager.setActive(_sessionId, hasTerminal: true);
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted || !_isVisibleSessionPage) return;
-          widget.args.focusNode?.requestFocus();
-          _termKey.currentState?.requestKeyboard();
-        });
+        // Next frame, not this one: the tab the user came back to is decided
+        // by the state this frame is built from.
+        WidgetsBinding.instance.addPostFrameCallback((_) => _focusTerminal());
         unawaited(_checkConnectionHealth(immediate: true));
         if (_discontinuityTimer == null || !_discontinuityTimer!.isActive) {
           _setupDiscontinuityTimer();
@@ -666,8 +666,7 @@ class SSHPageState extends ConsumerState<SSHPage>
         return;
       }
       if (!mounted) return;
-      widget.args.focusNode?.requestFocus();
-      _termKey.currentState?.requestKeyboard();
+      _focusTerminal();
     } finally {
       _isPickingSnippet = false;
     }
@@ -875,12 +874,35 @@ class SSHPageState extends ConsumerState<SSHPage>
     return widget.args.visibleListenable?.value ?? false;
   }
 
+  /// Whether this is the terminal the user is looking at right now.
+  ///
+  /// Two questions for a session in a tab, not one. `visibleListenable`
+  /// answers which of the terminal tabs is selected, and says nothing about
+  /// whether the terminal page is the one the home page is showing — so a
+  /// shell left open in it went on answering yes from the servers tab, and
+  /// coming back from the background raised the keyboard over whatever the
+  /// user was actually reading.
   bool get _isVisibleSessionPage {
     if (widget.args.notFromTab) {
       final route = ModalRoute.of(context);
       return route?.isCurrent ?? true;
     }
-    return widget.args.visibleListenable?.value ?? false;
+    if (widget.args.visibleListenable?.value != true) return false;
+    return ref.read(currentHomeTabProvider) == AppTab.ssh;
+  }
+
+  /// Puts the cursor back in this terminal, and on a phone raises the keyboard
+  /// with it — the terminal's input connection is opened by the focus, so a
+  /// bare `requestFocus` shows it just as surely as asking for it does.
+  ///
+  /// Which is why nothing focuses the terminal directly. A reconnect, a tmux
+  /// switch and a snippet all end by restoring focus, and every one of them
+  /// can finish while the user is on another tab or in another shell; the
+  /// keyboard then came up over whatever they were reading.
+  void _focusTerminal({bool keyboard = true}) {
+    if (!mounted || !_isVisibleSessionPage) return;
+    widget.args.focusNode?.requestFocus();
+    if (keyboard) _termKey.currentState?.requestKeyboard();
   }
 
   void _bindVisibilityListener() {
@@ -892,7 +914,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     }
     void listener() {
       if (!mounted) return;
-      if (visibleListenable.value) {
+      if (_isVisibleSessionPage) {
         TermSessionManager.setActive(_sessionId, hasTerminal: true);
         unawaited(_checkConnectionHealth(immediate: true));
       } else {
@@ -902,6 +924,14 @@ class SSHPageState extends ConsumerState<SSHPage>
 
     _visibilityListener = listener;
     visibleListenable.addListener(listener);
+    // The other half of the same question. Leaving the terminal page takes
+    // this shell off screen exactly as selecting another tab within it does,
+    // and nothing was telling the session manager so — which left the Live
+    // Activity offering a terminal that was two taps away.
+    //
+    // A `listenManual` subscription from a `ConsumerState` is closed with the
+    // widget, so it needs no counterpart in [dispose].
+    ref.listenManual(currentHomeTabProvider, (_, _) => listener());
   }
 
   void _removeVisibilityListener() {
@@ -969,8 +999,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     _sess.clearOutputTail();
 
     if (!mounted) return;
-    widget.args.focusNode?.requestFocus();
-    _termKey.currentState?.requestKeyboard();
+    _focusTerminal();
     Toast.success(libL10n.success);
   }
 

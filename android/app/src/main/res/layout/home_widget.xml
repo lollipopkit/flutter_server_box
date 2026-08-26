@@ -1,213 +1,274 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+    One layout for every size, with rows and the chart shown or hidden per
+    update. `RemoteViews` cannot hold a custom view, so the charts are a single
+    `ImageView` that Kotlin draws every panel into — see `WidgetChart`. That is
+    also why there is one image rather than four: four bitmaps in one
+    `RemoteViews` is four times the binder payload, and the transaction has a
+    hard limit that a widget cannot recover from.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/widget_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
-    android:padding="17dp"
-    android:orientation="vertical" >
+    android:orientation="vertical"
+    android:padding="12dp">
 
-    <TextView
-        android:id="@+id/widget_name"
+    <!-- Name and a refresh button; the time is the footer, as on iOS. -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="@color/widgetText"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:maxLines="1"
-        android:ellipsize="end"
-        android:alpha="0"
-        android:animateLayoutChanges="true"
-        android:fadingEdge="horizontal"
-        android:singleLine="true"
-        tools:text="Server Name" />
+        android:baselineAligned="false"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
-    <!-- Wrap the content in a LinearLayout for easy visibility management -->
+        <TextView
+            android:id="@+id/widget_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:textColor="@color/widgetText"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            tools:text="Server Name" />
+
+        <!--
+            Its own tap target, and a child of the container that carries the
+            "open the settings" one — a click on a child wins over the parent's
+            in a `RemoteViews`, so the two do not fight. Padded rather than
+            sized up: 14dp of icon is what matches the rows, and the padding is
+            what makes it reachable with a thumb.
+        -->
+        <ImageView
+            android:id="@+id/widget_refresh"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:layout_marginStart="6dp"
+            android:contentDescription="@string/widget_refresh_desc"
+            android:padding="6dp"
+            android:src="@drawable/refresh_24" />
+    </LinearLayout>
+
+    <!-- The charts, all of them, as one bitmap. -->
+    <!--
+        `fitCenter`, never `fitXY`. Nothing here can measure this view, so the
+        bitmap's size is computed from the size the launcher reports minus what
+        this layout takes — an estimate, and one that was wrong by different
+        amounts on each axis. `fitXY` turns any such mismatch into a non-uniform
+        scale, which is text stretched one way and squashed the other. Uniform
+        scaling can only ever leave a little unused margin.
+    -->
+    <ImageView
+        android:id="@+id/widget_chart"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="6dp"
+        android:layout_weight="1"
+        android:contentDescription="@string/widget_chart_desc"
+        android:scaleType="fitCenter"
+        android:visibility="gone" />
+
+    <!--
+        Weighted like the chart above it, and only ever one of the two is
+        visible: whichever it is takes the space the header leaves. Without a
+        weight here the readings sat against the top of the card with the rest
+        of it blank, because a `GONE` view contributes no weight and nothing
+        else was asking for the room.
+    -->
     <LinearLayout
         android:id="@+id/widget_content"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_below="@id/widget_name"
-        android:layout_marginTop="8dp">
+        android:layout_height="0dp"
+        android:layout_marginTop="6dp"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:orientation="vertical">
 
-        <RelativeLayout
-            android:id="@+id/widget_container_inner"
+        <LinearLayout
+            android:id="@+id/widget_cpu_label"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:animateLayoutChanges="true">
+            android:layout_marginBottom="5dp"
+            android:baselineAligned="false"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-            <LinearLayout
-                android:id="@+id/widget_cpu_label"
-                android:layout_width="match_parent"
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:contentDescription="@string/widget_cpu_desc"
+                android:src="@drawable/speed_24" />
+
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="4dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:alpha="0"
-                android:animateLayoutChanges="true">
+                android:layout_marginStart="6dp"
+                android:fontFamily="monospace"
+                android:text="@string/widget_row_cpu"
+                android:textColor="@color/widgetSummaryText"
+                android:textSize="10sp" />
 
-                <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:src="@drawable/speed_24"
-                    android:layout_gravity="center_vertical"
-                    android:contentDescription="CPU usage" />
-
-                <TextView
-                    android:id="@+id/widget_cpu"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="8dp"
-                    android:singleLine="true"
-                    android:ellipsize="end"
-                    android:textColor="@color/widgetSummaryText"
-                    android:textSize="12sp"
-                    tools:text="CPU: 25.6%" />
-
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/widget_mem_label"
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/widget_cpu"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="4dp"
-                android:layout_below="@id/widget_cpu_label"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:alpha="0"
-                android:animateLayoutChanges="true">
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:fontFamily="monospace"
+                android:gravity="end"
+                android:singleLine="true"
+                android:textColor="@color/widgetText"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                tools:text="25%" />
+        </LinearLayout>
 
-                <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:src="@drawable/memory_24"
-                    android:layout_gravity="center_vertical"
-                    android:contentDescription="Memory usage" />
+        <LinearLayout
+            android:id="@+id/widget_mem_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="5dp"
+            android:baselineAligned="false"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/widget_mem"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="8dp"
-                    android:maxLines="1"
-                    android:ellipsize="end"
-                    android:textColor="@color/widgetSummaryText"
-                    android:textSize="12sp"
-                    tools:text="Memory: 4.2GB / 8GB" />
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:contentDescription="@string/widget_mem_desc"
+                android:src="@drawable/memory_24" />
 
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/widget_disk_label"
-                android:layout_width="match_parent"
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="4dp"
-                android:layout_below="@id/widget_mem_label"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:alpha="0"
-                android:animateLayoutChanges="true">
+                android:layout_marginStart="6dp"
+                android:fontFamily="monospace"
+                android:text="@string/widget_row_mem"
+                android:textColor="@color/widgetSummaryText"
+                android:textSize="10sp" />
 
-                <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:src="@drawable/storage_24"
-                    android:layout_gravity="center_vertical"
-                    android:contentDescription="Disk usage" />
-
-                <TextView
-                    android:id="@+id/widget_disk"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="8dp"
-                    android:maxLines="1"
-                    android:ellipsize="end"
-                    android:textColor="@color/widgetSummaryText"
-                    android:textSize="12sp"
-                    tools:text="Disk: 125GB / 250GB" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/widget_net_label"
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/widget_mem"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/widget_disk_label"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:alpha="0"
-                android:animateLayoutChanges="true">
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:fontFamily="monospace"
+                android:gravity="end"
+                android:singleLine="true"
+                android:textColor="@color/widgetText"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                tools:text="25%" />
+        </LinearLayout>
 
-                <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:src="@drawable/net_24"
-                    android:layout_gravity="center_vertical"
-                    android:contentDescription="Network usage" />
+        <LinearLayout
+            android:id="@+id/widget_disk_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="5dp"
+            android:baselineAligned="false"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/widget_net"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="8dp"
-                    android:maxLines="1"
-                    android:ellipsize="end"
-                    android:textColor="@color/widgetSummaryText"
-                    android:textSize="12sp"
-                    tools:text="Network: 15MB/s ↓ 8MB/s ↑" />
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:contentDescription="@string/widget_disk_desc"
+                android:src="@drawable/storage_24" />
 
-            </LinearLayout>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:fontFamily="monospace"
+                android:text="@string/widget_row_disk"
+                android:textColor="@color/widgetSummaryText"
+                android:textSize="10sp" />
 
-        </RelativeLayout>
+            <TextView
+                android:id="@+id/widget_disk"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:fontFamily="monospace"
+                android:gravity="end"
+                android:singleLine="true"
+                android:textColor="@color/widgetText"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                tools:text="25%" />
+        </LinearLayout>
 
+        <LinearLayout
+            android:id="@+id/widget_net_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:baselineAligned="false"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:contentDescription="@string/widget_net_desc"
+                android:src="@drawable/net_24" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:fontFamily="monospace"
+                android:text="@string/widget_row_net"
+                android:textColor="@color/widgetSummaryText"
+                android:textSize="10sp" />
+
+            <TextView
+                android:id="@+id/widget_net"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:fontFamily="monospace"
+                android:gravity="end"
+                android:singleLine="true"
+                android:textColor="@color/widgetText"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                tools:text="25%" />
+        </LinearLayout>
     </LinearLayout>
-
-    <!-- Error message display -->
-    <TextView
-        android:id="@+id/error_message"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/widget_name"
-        android:layout_marginTop="8dp"
-        android:textColor="@color/widgetSummaryText"
-        android:textSize="11sp"
-        android:visibility="gone"
-        android:alpha="0"
-        android:animateLayoutChanges="true"
-        android:lineSpacingMultiplier="1.2"
-        android:maxLines="3"
-        android:ellipsize="end"
-        tools:text="Error message text that might be longer than usual" />
 
     <TextView
         android:id="@+id/widget_time"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentEnd="true"
+        android:fontFamily="monospace"
         android:maxLines="1"
         android:textColor="@color/widgetSummaryText"
-        android:textSize="10sp"
-        android:alpha="0"
-        android:animateLayoutChanges="true"
-        android:fontFamily="monospace"
+        android:textSize="9sp"
         tools:text="12:34" />
 
-    <!-- Progress indicator for loading state -->
-    <ProgressBar
-        android:id="@+id/widget_progress"
-        style="?android:attr/progressBarStyleLarge"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:layout_centerInParent="true"
+    <TextView
+        android:id="@+id/error_message"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:ellipsize="end"
+        android:lineSpacingMultiplier="1.2"
+        android:maxLines="3"
+        android:textColor="@color/widgetSummaryText"
+        android:textSize="11sp"
         android:visibility="gone"
-        android:indeterminate="true" />
+        tools:text="Network error" />
 
-</RelativeLayout>
+</LinearLayout>

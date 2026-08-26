@@ -29,12 +29,33 @@
         android:protectionLevel="signature" />
     <uses-permission android:name="tech.lolli.toolbox.permission.INTERNAL_BROADCAST" />
 
+    <!--
+        `usesCleartextTraffic` is what the home widget needs to reach a
+        `monitor` agent over plain HTTP at all. From `targetSdk` 28 the platform
+        refuses it unless an app says otherwise, and the widget is native Kotlin
+        talking through `HttpURLConnection`, so the refusal arrives as an
+        `IOException` and the widget shows "Network error" for an address the
+        rest of the app reads fine (#951). The app itself never hit it: Dart's
+        `HttpClient` has its own sockets and the platform policy does not reach
+        them.
+
+        This is a *process-wide* permission and nothing more. It is not a
+        decision about any particular server, and it must not be read as one —
+        the widget now carries a bearer token, so "may this process speak
+        plaintext" and "may this server's token go over an unencrypted wire"
+        are two different questions with two different answers. The second is
+        `MonitorHttpCredential.allowInsecure`, chosen per server in the app,
+        published to the widget as `allowInsecure` (`WidgetStore`), and checked
+        before every request. Without that check this flag alone would put a
+        credential on the wire for a server whose owner never agreed to it.
+    -->
     <application
         android:label="@string/app_name"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="false"
         android:hasFragileUserData="true"
+        android:usesCleartextTraffic="true"
         tools:targetApi="q">
         <activity
             android:name=".MainActivity"
@@ -72,23 +93,38 @@
             </intent-filter>
         </activity>
 
+        <!--
+            Two providers, so the launcher's picker offers two widgets. The size
+            and what it shows are one decision: 2x2 holds readings, 4x2 holds
+            charts, and neither resizes. One resizable provider meant a layout
+            could be chosen and then silently overruled by the size.
+        -->
         <receiver
-            android:name=".widget.HomeWidget"
+            android:name=".widget.StatusWidgetSmall"
             android:exported="false"
-            android:label="StatusWidget">
+            android:label="@string/widget_small_label">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="tech.lolli.toolbox.UPDATE_WIDGET" />
                 <action android:name="miui.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
-            <!--
-                 <meta-data
-                android:name="miuiWidget"
-                android:value="true" />
-            -->
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/home_widget" />
+                android:resource="@xml/widget_small" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.StatusWidgetMedium"
+            android:exported="false"
+            android:label="@string/widget_medium_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="tech.lolli.toolbox.UPDATE_WIDGET" />
+                <action android:name="miui.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_medium" />
         </receiver>
 
         <service

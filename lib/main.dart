@@ -12,6 +12,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:server_box/app.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/service/watch_sync.dart';
+import 'package:server_box/core/service/widget_sync.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/core/utils/rootfs.dart';
 import 'package:server_box/core/utils/rootfs_manifest_source.dart';
@@ -239,7 +240,14 @@ Future<void> _doPlatformRelated() async {
   // restored watch configure itself.
   if (isIOS) {
     unawaited(WatchSync.instance.init());
-    unawaited(MethodChans.syncAccessoryWidgetUrl());
+  }
+
+  // Same reasoning, for the home-screen widgets: the list they offer on their
+  // configuration screen is whatever this last published, and the container
+  // holding it goes away with the app — so a reinstall has to re-publish
+  // before a widget can be configured at all.
+  if (isIOS || isAndroid) {
+    unawaited(WidgetSync.instance.init());
   }
 
   // Both platforms keep their own copy of this, which a reinstall or a restored

@@ -11,9 +11,8 @@ import SwiftUI
 @main
 struct StatusWidgetBundle: WidgetBundle {
     var body: some Widget {
-        StatusWidget()
-        if #available(iOSApplicationExtension 16.1, *) {
-            TerminalLiveActivity()
-        }
+        StatusWidgetSmall()
+        StatusWidgetMedium()
+        TerminalLiveActivity()
     }
 }

@@ -45,7 +45,7 @@ final class FileTransferNotifierProvider
 }
 
 String _$fileTransferNotifierHash() =>
-    r'1d3140b202bab662049909b8a136a5195ce7b909';
+    r'59202179e00773aaa877583254b928440e357b2d';
 
 /// Every transfer this app has been asked to run, wherever its two ends are.
 

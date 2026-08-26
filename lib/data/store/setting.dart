@@ -229,35 +229,50 @@ class SettingStore extends SqliteStore {
   /// reinstall, and unrelated to the server list the user actually maintains.
   /// Keeping the selection here makes the app the source of truth and the
   /// context merely the transport. iOS only.
+  ///
+  /// Read only by the v15 -> v16 migration now, which turns whatever is in it
+  /// into [watchExcludedServerIds]. Every monitor server syncs by default.
+  ///
+  /// TODO: drop with `WatchSelectionToExclusionMigration`.
   late final watchServerIds = listProperty<String>('watchServerIds');
+
+  /// Servers held back from the watch, by [Spi.id].
+  ///
+  /// The inverse of what came before, and the inversion is the feature: a
+  /// server the user adds is on their watch without a second step, which is
+  /// what "sync automatically" has to mean. An opt-*in* list is a place to
+  /// forget a server, and forgetting one looks exactly like the watch being
+  /// broken.
+  ///
+  /// It exists at all because syncing a server means minting a credential for
+  /// it and putting that on a second device. That is worth being able to
+  /// refuse per server — the default is what changed, not whether there is a
+  /// choice. iOS only.
+  late final watchExcludedServerIds = listProperty<String>(
+    'watchExcludedServerIds',
+  );
 
   /// Raw Go-compat `/status` URLs typed by hand in builds before the watch
   /// could read a server record.
   ///
-  /// Still pushed to the watch so an existing setup keeps working, and still
-  /// editable so it can be emptied.
+  /// Read only by [LegacyStatusUrlsMigration], which empties it and arranges
+  /// for the user to be told — a bare address cannot reach the authenticated
+  /// API, so there is nothing to convert it into.
   ///
-  /// TODO: drop this together with the watch app's `legacy` server kind and
-  /// monitor's `/status` compat route, once no install can still be carrying
-  /// one of these.
+  /// TODO: drop with `LegacyStatusUrlsMigration`.
   late final watchLegacyUrls = listProperty<String>('watchLegacyUrls');
 
-  /// Whether [watchLegacyUrls] has been seeded from the pre-existing
-  /// application context. Runs at most once; the user may legitimately empty
-  /// the list afterwards, and re-importing would resurrect it.
+  /// Whether this install still has to be told that its hand-typed `/status`
+  /// URLs stopped working.
   ///
-  /// TODO: drop with [watchLegacyUrls].
-  late final watchLegacyUrlsImported = propertyDefault(
-    'watchLegacyUrlsImported',
+  /// Set by [LegacyStatusUrlsMigration] and cleared by the dialog. Persisted
+  /// rather than shown from the migration itself, because a migration runs
+  /// before there is a screen to show anything on — and a message about a
+  /// feature that has gone must not be lost to whichever launch happened to
+  /// run the migration.
+  late final legacyStatusNoticePending = propertyDefault(
+    'legacyStatusNoticePending',
     false,
-  );
-
-  /// Server whose status feeds the iOS lock-screen accessory widget, by
-  /// [Spi.id]. Empty means none is chosen, which is what every install had
-  /// until now — the widget read an App Group key nothing ever wrote.
-  late final accessoryWidgetServerId = propertyDefault(
-    'accessoryWidgetServerId',
-    '',
   );
 
   late final autoCheckAppUpdate = propertyDefault('autoCheckAppUpdate', true);

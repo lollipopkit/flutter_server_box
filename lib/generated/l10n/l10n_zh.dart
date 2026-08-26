@@ -319,6 +319,11 @@ class AppLocalizationsZh extends AppLocalizations {
       '仅应在 HTTP 之外具备传输加密的可信私有网络中开启，例如 Tailscale';
 
   @override
+  String monitorHttpTip(String url) {
+    return '通过 **monitor** 的 HTTP 接口读取此服务器的状态，而不是经由 SSH 执行命令。\n\n需要先在服务器上安装 monitor；曲线、手表 App 和桌面小部件都依赖它。\n\n[如何部署 monitor]($url)';
+  }
+
+  @override
   String get backupTip => '导出数据可通过密码加密，请妥善保管。';
 
   @override
@@ -551,9 +556,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeTabsCustomizeDesc => '自定义主页上显示的标签及其顺序';
 
   @override
-  String get homeWidgetUrlConfig => '桌面部件链接配置';
-
-  @override
   String get ignoreCert => '忽略证书';
 
   @override
@@ -685,6 +687,15 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get jumpServerAndProxyCommandCannotBeUsedTogether =>
       '跳板服务器与 ProxyCommand 不能同时使用。';
+
+  @override
+  String get noConnectionMethod => '请配置 SSH、Monitor 或两者';
+
+  @override
+  String get preferredTransport => '优先使用';
+
+  @override
+  String get preferredTransportTip => '状态从哪一侧读取，命令优先走哪条连接。另一条仍然可用。';
 
   @override
   String get keepForeground => '请将应用保持在前台运行';
@@ -1424,10 +1435,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get watchNoMonitorServer => '没有服务器配置了 monitor';
 
   @override
-  String get watchLegacyUrls => '旧版 status 链接';
+  String get legacyStatusGoneTitle => '状态链接已失效';
 
   @override
-  String get accessoryWidgetServer => '锁屏小组件服务器';
+  String get legacyStatusGoneBody =>
+      '手表 App 和桌面小组件此前读取的是手动填写的 `/status` 地址。该接口已移除：它只能以文本形式返回当前值，这也是它们始终无法显示曲线的原因。\n\n现在它们读取 Monitor 的认证接口，可以绘制曲线，并自动与 App 保持同步。在 App 内配置一次服务器，所有手表和小组件都会自动获取。';
 
   @override
   String get systemdMissing => '此服务器没有 systemd';
@@ -1836,6 +1848,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       '僅應在 HTTP 之外具備傳輸加密的可信私有網路中開啟，例如 Tailscale';
 
   @override
+  String monitorHttpTip(String url) {
+    return '透過 **monitor** 的 HTTP 介面讀取此伺服器的狀態，而不是經由 SSH 執行指令。\n\n需要先在伺服器上安裝 monitor；曲線、手錶 App 與桌面小工具都依賴它。\n\n[如何部署 monitor]($url)';
+  }
+
+  @override
   String get backupTip => '匯出的資料可透過密碼加密，請妥善保管。';
 
   @override
@@ -2068,9 +2085,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get homeTabsCustomizeDesc => '自訂主頁上顯示的標籤及其順序';
 
   @override
-  String get homeWidgetUrlConfig => '桌面小工具連結配置';
-
-  @override
   String get ignoreCert => '忽略憑證';
 
   @override
@@ -2202,6 +2216,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get jumpServerAndProxyCommandCannotBeUsedTogether =>
       '跳板伺服器與 ProxyCommand 不能同時使用。';
+
+  @override
+  String get noConnectionMethod => '請設定 SSH、Monitor 或兩者';
+
+  @override
+  String get preferredTransport => '優先使用';
+
+  @override
+  String get preferredTransportTip => '狀態從哪一側讀取，指令優先走哪條連線。另一條仍然可用。';
 
   @override
   String get keepForeground => '請讓 App 保持在前景執行';
@@ -2942,10 +2965,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get watchNoMonitorServer => '沒有伺服器設定了 monitor';
 
   @override
-  String get watchLegacyUrls => '舊版 status 連結';
+  String get legacyStatusGoneTitle => '狀態連結已失效';
 
   @override
-  String get accessoryWidgetServer => '鎖定畫面小工具伺服器';
+  String get legacyStatusGoneBody =>
+      '手錶 App 與桌面小工具先前讀取的是手動填寫的 `/status` 位址。該端點已移除：它只能以文字回傳目前數值，這也是它們始終無法顯示曲線的原因。\n\n現在它們讀取 Monitor 的驗證 API，可以繪製曲線，並自動與 App 保持同步。在 App 內設定一次伺服器，所有手錶與小工具都會自動取得。';
 
   @override
   String get systemdMissing => '此伺服器沒有 systemd';

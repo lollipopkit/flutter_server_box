@@ -350,6 +350,11 @@ class AppLocalizationsDe extends AppLocalizations {
       'Nur in einem vertrauenswürdigen privaten Netz, das den Transport selbst verschlüsselt, etwa Tailscale';
 
   @override
+  String monitorHttpTip(String url) {
+    return 'Den Status dieses Servers über die HTTP-API eines **monitor**-Agenten lesen, statt Befehle über SSH auszuführen.\n\nDer Agent muss zuerst auf dem Server eingerichtet werden; Verläufe, die Watch-App und die Home-Widgets hängen davon ab.\n\n[Einen monitor-Agenten einrichten]($url)';
+  }
+
+  @override
   String get backupTip =>
       'Die exportierten Daten können mit einem Passwort verschlüsselt werden. \nBitte sicher aufbewahren.';
 
@@ -600,9 +605,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Passen Sie an, welche Tabs auf der Startseite angezeigt werden und ihre Reihenfolge';
 
   @override
-  String get homeWidgetUrlConfig => 'Home-Widget-Link konfigurieren';
-
-  @override
   String get ignoreCert => 'Zertifikat ignorieren';
 
   @override
@@ -742,6 +744,17 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get jumpServerAndProxyCommandCannotBeUsedTogether =>
       'Jump-Server und ProxyCommand können nicht zusammen verwendet werden.';
+
+  @override
+  String get noConnectionMethod =>
+      'SSH, einen monitor-Agenten oder beides einrichten';
+
+  @override
+  String get preferredTransport => 'Zuerst versuchen';
+
+  @override
+  String get preferredTransportTip =>
+      'Woher der Status gelesen wird und welche Verbindung ein Befehl zuerst öffnet. Die andere bleibt verfügbar.';
 
   @override
   String get keepForeground => 'Stelle sicher, dass die App geöffnet bleibt.';
@@ -1571,10 +1584,11 @@ class AppLocalizationsDe extends AppLocalizations {
       'Kein Server hat einen monitor-Agenten konfiguriert';
 
   @override
-  String get watchLegacyUrls => 'Alte Status-URLs';
+  String get legacyStatusGoneTitle => 'Status-URLs funktionieren nicht mehr';
 
   @override
-  String get accessoryWidgetServer => 'Server für Sperrbildschirm-Widget';
+  String get legacyStatusGoneBody =>
+      'Die Watch-App und die Home-Widgets lasen eine von Hand eingetragene `/status`-Adresse. Dieser Endpunkt ist entfallen: Er konnte nur aktuelle Werte als Text liefern, weshalb dort nie ein Diagramm möglich war.\n\nSie lesen jetzt die authentifizierte API des monitor-Agenten, zeichnen Verläufe und halten sich selbst mit der App im Einklang. Den Server einmal in der App einrichten, und jede Watch und jedes Widget übernimmt ihn.';
 
   @override
   String get systemdMissing => 'Kein systemd auf diesem Server';

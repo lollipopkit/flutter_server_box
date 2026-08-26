@@ -82,7 +82,12 @@ abstract final class SchemaVersion {
   ///      index
   /// v15: `server.ssh_file_transport`, so a host with no SFTP subsystem can be
   ///      told to move its files over `scp` instead
-  static const current = 15;
+  /// v16: the watch's server selection inverted into an exclusion list, so
+  ///      every monitor server syncs unless it is held back
+  /// v17: the hand-typed Go-compat `/status` URLs retired, and the user told
+  /// v18: `server.preferred_transport`, and the SSH/monitor exclusivity check
+  ///      relaxed so one server can carry both
+  static const current = 18;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the
