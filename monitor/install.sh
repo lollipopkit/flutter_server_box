@@ -195,9 +195,32 @@ download() {
         exit 1
     fi
 
-    # Only monitor-v* tags; isolated from the app's v1.0.x releases
-    tag=$(curl -s "https://api.github.com/repos/${REPO}/releases?per_page=100" \
-        | grep -o '"tag_name": *"monitor-v[^"]*"' | head -n 1 | cut -d '"' -f 4)
+    # Only monitor-v* tags; isolated from the app's v1.0.x releases. Not
+    # /releases/latest, which is a single release for the whole repository and
+    # is the app's — the agent is versioned separately and the workflow
+    # deliberately does not claim that slot.
+    #
+    # The listing is newest-first, so the first monitor tag on it is the
+    # current one. But it lists *every* release, and the app publishes far more
+    # often than the agent: enough app releases between two monitor ones and
+    # the monitor release falls off the first page, which reads as "no release
+    # exists" rather than as "look further". So walk pages until one turns up.
+    tag=""
+    page=1
+    while [ "$page" -le 10 ]; do
+        body=$(curl -s "https://api.github.com/repos/${REPO}/releases?per_page=100&page=${page}")
+        tag=$(printf '%s' "$body" \
+            | grep -o '"tag_name": *"monitor-v[^"]*"' | head -n 1 | cut -d '"' -f 4)
+        if [ -n "$tag" ]; then
+            break
+        fi
+        # A short page is the last one, so there is nothing further to walk.
+        count=$(printf '%s' "$body" | grep -c '"tag_name":')
+        if [ "$count" -lt 100 ]; then
+            break
+        fi
+        page=$((page + 1))
+    done
     if [ -z "$tag" ]; then
         echo "Failed to find a monitor-v* release of ${REPO}"
         exit 1
