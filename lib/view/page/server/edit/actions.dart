@@ -295,8 +295,8 @@ extension _Actions on _ServerEditPageState {
     switch (error) {
       case SpiValidationError.jumpServerAndProxyCommandConflict:
         return l10n.jumpServerAndProxyCommandCannotBeUsedTogether;
-      case SpiValidationError.sshAndMonitorHttpConflict:
-        return libL10n.invalid;
+      case SpiValidationError.noConnectionMethod:
+        return l10n.noConnectionMethod;
     }
   }
 
@@ -338,6 +338,7 @@ extension _Actions on _ServerEditPageState {
   }
 
   void _onSave() async {
+    final useSsh = _useSsh.value;
     final useMonitorHttp = _useMonitorHttp.value;
     final keyIdx = _keyIdx.value;
     // `-1` is not an index into anything. It is what the key-auth switch
@@ -358,9 +359,10 @@ extension _Actions on _ServerEditPageState {
       return;
     }
 
-    // SSH host/auth/jump-chain fields are hidden (and irrelevant) in
-    // monitor-HTTP mode — skip their validation/defaulting entirely.
-    if (!useMonitorHttp) {
+    // The SSH form is hidden when SSH is switched off, so there is nothing
+    // there to validate — and requiring it is what used to make a
+    // monitor-only server invent a host and a user named `monitor`.
+    if (useSsh) {
       if (_ipController.text.isEmpty) {
         Toast.show('${libL10n.empty} ${libL10n.host}');
         return;
@@ -434,12 +436,9 @@ extension _Actions on _ServerEditPageState {
       );
     }
 
-    // In monitor mode the SSH form is hidden and a monitor server carries no
-    // SSH credential at all: it is reached through its agent, and nothing here
-    // would have anywhere to go. Previously these fields were required, which
-    // is why a monitor-only server used to be saved with a host derived from
-    // the monitor URL and a user literally named `monitor`.
-    final ssh = useMonitorHttp
+    // Null when the SSH switch is off: such a server is reached through its
+    // agent, and nothing in the hidden form would have anywhere to go.
+    final ssh = !useSsh
         ? null
         : SshCredential(
             ip: _ipController.text,
@@ -514,6 +513,15 @@ extension _Actions on _ServerEditPageState {
       wolCfg: wol,
       bmc: bmc,
       monitorHttp: monitorHttp,
+      // Only meaningful with two to order. Storing it for a server with one
+      // way in would leave a preference behind for a transport that is not
+      // configured — which is exactly what `Spix.transport` then has to
+      // ignore, so it is better never written.
+      preferredTransport: ssh != null && monitorHttp != null
+          ? (_preferMonitorHttp.value
+                ? ServerTransport.monitorHttp
+                : ServerTransport.ssh)
+          : null,
       envs: _env.value.isEmpty ? null : _env.value,
       id: _serverId,
       customSystemType: _systemType.value,
@@ -704,7 +712,10 @@ extension _Utils on _ServerEditPageState {
     }
 
     final monitorHttp = spi.monitorHttp;
+    _useSsh.value = spi.ssh != null;
     _useMonitorHttp.value = monitorHttp != null;
+    _preferMonitorHttp.value =
+        spi.transport == ServerTransport.monitorHttp;
     if (monitorHttp != null) {
       _monitorAddrCtrl.text = monitorHttp.addr;
       _monitorUserCtrl.text = monitorHttp.user ?? '';

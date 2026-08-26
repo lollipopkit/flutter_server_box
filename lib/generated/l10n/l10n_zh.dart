@@ -684,6 +684,15 @@ class AppLocalizationsZh extends AppLocalizations {
       '跳板服务器与 ProxyCommand 不能同时使用。';
 
   @override
+  String get noConnectionMethod => '请配置 SSH、Monitor 或两者';
+
+  @override
+  String get preferredTransport => '优先使用';
+
+  @override
+  String get preferredTransportTip => '状态从哪一侧读取，命令优先走哪条连接。另一条仍然可用。';
+
+  @override
   String get keepForeground => '请将应用保持在前台运行';
 
   @override
@@ -2197,6 +2206,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get jumpServerAndProxyCommandCannotBeUsedTogether =>
       '跳板伺服器與 ProxyCommand 不能同時使用。';
+
+  @override
+  String get noConnectionMethod => '請設定 SSH、Monitor 或兩者';
+
+  @override
+  String get preferredTransport => '優先使用';
+
+  @override
+  String get preferredTransportTip => '狀態從哪一側讀取，指令優先走哪條連線。另一條仍然可用。';
 
   @override
   String get keepForeground => '請讓 App 保持在前景執行';

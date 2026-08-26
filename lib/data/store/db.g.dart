@@ -959,6 +959,17 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _preferredTransportMeta =
+      const VerificationMeta('preferredTransport');
+  @override
+  late final GeneratedColumn<String> preferredTransport =
+      GeneratedColumn<String>(
+        'preferred_transport',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _monitorAddrMeta = const VerificationMeta(
     'monitorAddr',
   );
@@ -1191,6 +1202,7 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
     sshAlterUrl,
     sshProxyCommand,
     sshFileTransport,
+    preferredTransport,
     monitorAddr,
     monitorUser,
     monitorPwd,
@@ -1326,6 +1338,15 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
         sshFileTransport.isAcceptableOrUnknown(
           data['ssh_file_transport']!,
           _sshFileTransportMeta,
+        ),
+      );
+    }
+    if (data.containsKey('preferred_transport')) {
+      context.handle(
+        _preferredTransportMeta,
+        preferredTransport.isAcceptableOrUnknown(
+          data['preferred_transport']!,
+          _preferredTransportMeta,
         ),
       );
     }
@@ -1536,6 +1557,10 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
         DriftSqlType.string,
         data['${effectivePrefix}ssh_file_transport'],
       ),
+      preferredTransport: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}preferred_transport'],
+      ),
       monitorAddr: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}monitor_addr'],
@@ -1646,6 +1671,12 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
   /// `SshFileTransport`, by name. Null is `sftp`, which is what every row
   /// written before the column existed meant — see `m014`.
   final String? sshFileTransport;
+
+  /// Which way of reaching this server is tried first, by
+  /// `ServerTransport.name`. Null means "whichever is configured", which is
+  /// the only answer for a server that has just one — and the only shape rows
+  /// written before v18 are in, when carrying both was not possible.
+  final String? preferredTransport;
   final String? monitorAddr;
   final String? monitorUser;
   final String? monitorPwd;
@@ -1696,6 +1727,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     this.sshAlterUrl,
     this.sshProxyCommand,
     this.sshFileTransport,
+    this.preferredTransport,
     this.monitorAddr,
     this.monitorUser,
     this.monitorPwd,
@@ -1753,6 +1785,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     }
     if (!nullToAbsent || sshFileTransport != null) {
       map['ssh_file_transport'] = Variable<String>(sshFileTransport);
+    }
+    if (!nullToAbsent || preferredTransport != null) {
+      map['preferred_transport'] = Variable<String>(preferredTransport);
     }
     if (!nullToAbsent || monitorAddr != null) {
       map['monitor_addr'] = Variable<String>(monitorAddr);
@@ -1847,6 +1882,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       sshFileTransport: sshFileTransport == null && nullToAbsent
           ? const Value.absent()
           : Value(sshFileTransport),
+      preferredTransport: preferredTransport == null && nullToAbsent
+          ? const Value.absent()
+          : Value(preferredTransport),
       monitorAddr: monitorAddr == null && nullToAbsent
           ? const Value.absent()
           : Value(monitorAddr),
@@ -1924,6 +1962,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       sshAlterUrl: serializer.fromJson<String?>(json['sshAlterUrl']),
       sshProxyCommand: serializer.fromJson<String?>(json['sshProxyCommand']),
       sshFileTransport: serializer.fromJson<String?>(json['sshFileTransport']),
+      preferredTransport: serializer.fromJson<String?>(
+        json['preferredTransport'],
+      ),
       monitorAddr: serializer.fromJson<String?>(json['monitorAddr']),
       monitorUser: serializer.fromJson<String?>(json['monitorUser']),
       monitorPwd: serializer.fromJson<String?>(json['monitorPwd']),
@@ -1966,6 +2007,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       'sshAlterUrl': serializer.toJson<String?>(sshAlterUrl),
       'sshProxyCommand': serializer.toJson<String?>(sshProxyCommand),
       'sshFileTransport': serializer.toJson<String?>(sshFileTransport),
+      'preferredTransport': serializer.toJson<String?>(preferredTransport),
       'monitorAddr': serializer.toJson<String?>(monitorAddr),
       'monitorUser': serializer.toJson<String?>(monitorUser),
       'monitorPwd': serializer.toJson<String?>(monitorPwd),
@@ -2004,6 +2046,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     Value<String?> sshAlterUrl = const Value.absent(),
     Value<String?> sshProxyCommand = const Value.absent(),
     Value<String?> sshFileTransport = const Value.absent(),
+    Value<String?> preferredTransport = const Value.absent(),
     Value<String?> monitorAddr = const Value.absent(),
     Value<String?> monitorUser = const Value.absent(),
     Value<String?> monitorPwd = const Value.absent(),
@@ -2043,6 +2086,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     sshFileTransport: sshFileTransport.present
         ? sshFileTransport.value
         : this.sshFileTransport,
+    preferredTransport: preferredTransport.present
+        ? preferredTransport.value
+        : this.preferredTransport,
     monitorAddr: monitorAddr.present ? monitorAddr.value : this.monitorAddr,
     monitorUser: monitorUser.present ? monitorUser.value : this.monitorUser,
     monitorPwd: monitorPwd.present ? monitorPwd.value : this.monitorPwd,
@@ -2100,6 +2146,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       sshFileTransport: data.sshFileTransport.present
           ? data.sshFileTransport.value
           : this.sshFileTransport,
+      preferredTransport: data.preferredTransport.present
+          ? data.preferredTransport.value
+          : this.preferredTransport,
       monitorAddr: data.monitorAddr.present
           ? data.monitorAddr.value
           : this.monitorAddr,
@@ -2158,6 +2207,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           ..write('sshAlterUrl: $sshAlterUrl, ')
           ..write('sshProxyCommand: $sshProxyCommand, ')
           ..write('sshFileTransport: $sshFileTransport, ')
+          ..write('preferredTransport: $preferredTransport, ')
           ..write('monitorAddr: $monitorAddr, ')
           ..write('monitorUser: $monitorUser, ')
           ..write('monitorPwd: $monitorPwd, ')
@@ -2198,6 +2248,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     sshAlterUrl,
     sshProxyCommand,
     sshFileTransport,
+    preferredTransport,
     monitorAddr,
     monitorUser,
     monitorPwd,
@@ -2237,6 +2288,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           other.sshAlterUrl == this.sshAlterUrl &&
           other.sshProxyCommand == this.sshProxyCommand &&
           other.sshFileTransport == this.sshFileTransport &&
+          other.preferredTransport == this.preferredTransport &&
           other.monitorAddr == this.monitorAddr &&
           other.monitorUser == this.monitorUser &&
           other.monitorPwd == this.monitorPwd &&
@@ -2274,6 +2326,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
   final Value<String?> sshAlterUrl;
   final Value<String?> sshProxyCommand;
   final Value<String?> sshFileTransport;
+  final Value<String?> preferredTransport;
   final Value<String?> monitorAddr;
   final Value<String?> monitorUser;
   final Value<String?> monitorPwd;
@@ -2309,6 +2362,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     this.sshAlterUrl = const Value.absent(),
     this.sshProxyCommand = const Value.absent(),
     this.sshFileTransport = const Value.absent(),
+    this.preferredTransport = const Value.absent(),
     this.monitorAddr = const Value.absent(),
     this.monitorUser = const Value.absent(),
     this.monitorPwd = const Value.absent(),
@@ -2345,6 +2399,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     this.sshAlterUrl = const Value.absent(),
     this.sshProxyCommand = const Value.absent(),
     this.sshFileTransport = const Value.absent(),
+    this.preferredTransport = const Value.absent(),
     this.monitorAddr = const Value.absent(),
     this.monitorUser = const Value.absent(),
     this.monitorPwd = const Value.absent(),
@@ -2382,6 +2437,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     Expression<String>? sshAlterUrl,
     Expression<String>? sshProxyCommand,
     Expression<String>? sshFileTransport,
+    Expression<String>? preferredTransport,
     Expression<String>? monitorAddr,
     Expression<String>? monitorUser,
     Expression<String>? monitorPwd,
@@ -2418,6 +2474,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
       if (sshAlterUrl != null) 'ssh_alter_url': sshAlterUrl,
       if (sshProxyCommand != null) 'ssh_proxy_command': sshProxyCommand,
       if (sshFileTransport != null) 'ssh_file_transport': sshFileTransport,
+      if (preferredTransport != null) 'preferred_transport': preferredTransport,
       if (monitorAddr != null) 'monitor_addr': monitorAddr,
       if (monitorUser != null) 'monitor_user': monitorUser,
       if (monitorPwd != null) 'monitor_pwd': monitorPwd,
@@ -2457,6 +2514,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     Value<String?>? sshAlterUrl,
     Value<String?>? sshProxyCommand,
     Value<String?>? sshFileTransport,
+    Value<String?>? preferredTransport,
     Value<String?>? monitorAddr,
     Value<String?>? monitorUser,
     Value<String?>? monitorPwd,
@@ -2493,6 +2551,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
       sshAlterUrl: sshAlterUrl ?? this.sshAlterUrl,
       sshProxyCommand: sshProxyCommand ?? this.sshProxyCommand,
       sshFileTransport: sshFileTransport ?? this.sshFileTransport,
+      preferredTransport: preferredTransport ?? this.preferredTransport,
       monitorAddr: monitorAddr ?? this.monitorAddr,
       monitorUser: monitorUser ?? this.monitorUser,
       monitorPwd: monitorPwd ?? this.monitorPwd,
@@ -2562,6 +2621,9 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     }
     if (sshFileTransport.present) {
       map['ssh_file_transport'] = Variable<String>(sshFileTransport.value);
+    }
+    if (preferredTransport.present) {
+      map['preferred_transport'] = Variable<String>(preferredTransport.value);
     }
     if (monitorAddr.present) {
       map['monitor_addr'] = Variable<String>(monitorAddr.value);
@@ -2643,6 +2705,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
           ..write('sshAlterUrl: $sshAlterUrl, ')
           ..write('sshProxyCommand: $sshProxyCommand, ')
           ..write('sshFileTransport: $sshFileTransport, ')
+          ..write('preferredTransport: $preferredTransport, ')
           ..write('monitorAddr: $monitorAddr, ')
           ..write('monitorUser: $monitorUser, ')
           ..write('monitorPwd: $monitorPwd, ')
@@ -8545,6 +8608,7 @@ typedef $$ServersTableCreateCompanionBuilder =
       Value<String?> sshAlterUrl,
       Value<String?> sshProxyCommand,
       Value<String?> sshFileTransport,
+      Value<String?> preferredTransport,
       Value<String?> monitorAddr,
       Value<String?> monitorUser,
       Value<String?> monitorPwd,
@@ -8582,6 +8646,7 @@ typedef $$ServersTableUpdateCompanionBuilder =
       Value<String?> sshAlterUrl,
       Value<String?> sshProxyCommand,
       Value<String?> sshFileTransport,
+      Value<String?> preferredTransport,
       Value<String?> monitorAddr,
       Value<String?> monitorUser,
       Value<String?> monitorPwd,
@@ -8926,6 +8991,11 @@ class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
 
   ColumnFilters<String> get sshFileTransport => $composableBuilder(
     column: $table.sshFileTransport,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get preferredTransport => $composableBuilder(
+    column: $table.preferredTransport,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -9419,6 +9489,11 @@ class $$ServersTableOrderingComposer extends Composer<_$AppDb, $ServersTable> {
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get preferredTransport => $composableBuilder(
+    column: $table.preferredTransport,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get monitorAddr => $composableBuilder(
     column: $table.monitorAddr,
     builder: (column) => ColumnOrderings(column),
@@ -9616,6 +9691,11 @@ class $$ServersTableAnnotationComposer
 
   GeneratedColumn<String> get sshFileTransport => $composableBuilder(
     column: $table.sshFileTransport,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get preferredTransport => $composableBuilder(
+    column: $table.preferredTransport,
     builder: (column) => column,
   );
 
@@ -10072,6 +10152,7 @@ class $$ServersTableTableManager
                 Value<String?> sshAlterUrl = const Value.absent(),
                 Value<String?> sshProxyCommand = const Value.absent(),
                 Value<String?> sshFileTransport = const Value.absent(),
+                Value<String?> preferredTransport = const Value.absent(),
                 Value<String?> monitorAddr = const Value.absent(),
                 Value<String?> monitorUser = const Value.absent(),
                 Value<String?> monitorPwd = const Value.absent(),
@@ -10107,6 +10188,7 @@ class $$ServersTableTableManager
                 sshAlterUrl: sshAlterUrl,
                 sshProxyCommand: sshProxyCommand,
                 sshFileTransport: sshFileTransport,
+                preferredTransport: preferredTransport,
                 monitorAddr: monitorAddr,
                 monitorUser: monitorUser,
                 monitorPwd: monitorPwd,
@@ -10144,6 +10226,7 @@ class $$ServersTableTableManager
                 Value<String?> sshAlterUrl = const Value.absent(),
                 Value<String?> sshProxyCommand = const Value.absent(),
                 Value<String?> sshFileTransport = const Value.absent(),
+                Value<String?> preferredTransport = const Value.absent(),
                 Value<String?> monitorAddr = const Value.absent(),
                 Value<String?> monitorUser = const Value.absent(),
                 Value<String?> monitorPwd = const Value.absent(),
@@ -10179,6 +10262,7 @@ class $$ServersTableTableManager
                 sshAlterUrl: sshAlterUrl,
                 sshProxyCommand: sshProxyCommand,
                 sshFileTransport: sshFileTransport,
+                preferredTransport: preferredTransport,
                 monitorAddr: monitorAddr,
                 monitorUser: monitorUser,
                 monitorPwd: monitorPwd,

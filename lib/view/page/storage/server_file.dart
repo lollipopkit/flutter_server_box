@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/monitor_file_backend.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
-import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/provider/server/single.dart';
@@ -81,10 +80,16 @@ class _MonitorFilePageState extends ConsumerState<_MonitorFilePage> {
   @override
   void initState() {
     super.initState();
-    final credential = ServerConnectCredential.fromSpi(_spi);
+    // The agent itself, not whichever transport leads. This page is only
+    // reached when there is no byte stream to browse over, but saying so here
+    // costs nothing and cannot be made wrong by a change to that branch.
+    final monitor = _spi.monitor;
+    if (monitor == null) {
+      throw StateError('${_spi.name} has no monitor agent to browse');
+    }
     final system = ref.read(serverProvider(_spi.id)).status.system;
     _backend = MonitorFileBackend(
-      (credential as ServerConnectCredentialMonitorHttp).monitor,
+      monitor,
       permissions: system != SystemType.windows,
     );
   }

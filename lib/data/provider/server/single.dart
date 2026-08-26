@@ -75,12 +75,15 @@ abstract class ServerState with _$ServerState {
 
   const ServerState._();
 
-  /// What this server's connection method can do. The UI reads this instead of
-  /// testing which transport is in use — see [ServerCapabilities].
-  ServerCapabilities get capabilities => ServerCapabilities.of(
-    ServerConnectCredential.fromSpi(spi),
-    granted: remoteAccess,
-  );
+  /// What this server can do. The UI reads this instead of testing which
+  /// transport is in use — see [ServerCapabilities].
+  ///
+  /// Across every way it is reachable, not just the one that leads: a server
+  /// carrying both SSH and an agent really can do both sets of things, and
+  /// hiding half of them behind a preference about *ordering* would take
+  /// features away for no reason the user could see.
+  ServerCapabilities get capabilities =>
+      ServerCapabilities.ofSpi(spi, granted: remoteAccess);
 
   /// Whether running a command would have to open a connection first, i.e.
   /// whether a caller is about to make the user wait.
@@ -521,7 +524,27 @@ class ServerNotifier extends _$ServerNotifier {
   ///
   /// Throws whatever the transport throws when it cannot be reached.
   Future<ServerExec> ensureExec() async {
-    final credential = ServerConnectCredential.fromSpi(state.spi);
+    final spi = state.spi;
+    try {
+      return await _execOver(ServerConnectCredential.fromSpi(spi));
+    } catch (e, s) {
+      // Only a server the user gave *both* sets of credentials to has one of
+      // these, and giving both is the request: reach this machine either way.
+      // Refusing to use the second because the first was asked for first would
+      // be honouring an ordering preference as though it were an exclusion.
+      final fallback = ServerConnectCredential.fallbackOf(spi);
+      if (fallback == null) rethrow;
+      Loggers.app.info(
+        'Exec over ${spi.transport.name} for ${spi.name} failed, '
+        'falling back to ${spi.fallbackTransport?.name}',
+        e,
+        s,
+      );
+      return await _execOver(fallback);
+    }
+  }
+
+  Future<ServerExec> _execOver(ServerConnectCredential credential) async {
     switch (credential) {
       case ServerConnectCredentialSsh():
         return SshExec(await ensureShellClient());

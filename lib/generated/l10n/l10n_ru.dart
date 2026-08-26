@@ -743,6 +743,16 @@ class AppLocalizationsRu extends AppLocalizations {
       'Промежуточный сервер и ProxyCommand нельзя использовать вместе.';
 
   @override
+  String get noConnectionMethod => 'Настройте SSH, агент monitor или оба';
+
+  @override
+  String get preferredTransport => 'Сначала пробовать';
+
+  @override
+  String get preferredTransportTip =>
+      'Откуда читается статус и какое соединение команда откроет первым. Второе остаётся доступным.';
+
+  @override
   String get keepForeground => 'Пожалуйста, держите приложение в фокусе!';
 
   @override

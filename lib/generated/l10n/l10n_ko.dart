@@ -697,6 +697,16 @@ class AppLocalizationsKo extends AppLocalizations {
       '점프 서버와 ProxyCommand는 함께 사용할 수 없습니다.';
 
   @override
+  String get noConnectionMethod => 'SSH, monitor 또는 둘 다 설정하세요';
+
+  @override
+  String get preferredTransport => '우선 사용';
+
+  @override
+  String get preferredTransportTip =>
+      '상태를 읽어오는 쪽과 명령이 먼저 여는 연결입니다. 다른 쪽도 계속 사용됩니다.';
+
+  @override
   String get keepForeground => '앱을 포그라운드에 유지해 주세요!';
 
   @override

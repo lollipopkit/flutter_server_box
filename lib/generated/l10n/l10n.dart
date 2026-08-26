@@ -1395,6 +1395,24 @@ abstract class AppLocalizations {
   /// **'Jump server and ProxyCommand cannot be used together.'**
   String get jumpServerAndProxyCommandCannotBeUsedTogether;
 
+  /// No description provided for @noConnectionMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure SSH, a monitor agent, or both'**
+  String get noConnectionMethod;
+
+  /// No description provided for @preferredTransport.
+  ///
+  /// In en, this message translates to:
+  /// **'Try first'**
+  String get preferredTransport;
+
+  /// No description provided for @preferredTransportTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Where status is read from, and which connection a command opens first. The other stays available.'**
+  String get preferredTransportTip;
+
   /// No description provided for @keepForeground.
   ///
   /// In en, this message translates to:

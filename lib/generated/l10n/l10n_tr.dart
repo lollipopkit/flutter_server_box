@@ -739,6 +739,17 @@ class AppLocalizationsTr extends AppLocalizations {
       'Atlama sunucusu ile ProxyCommand birlikte kullanılamaz.';
 
   @override
+  String get noConnectionMethod =>
+      'SSH, monitor aracısı veya ikisini birden yapılandırın';
+
+  @override
+  String get preferredTransport => 'Önce denenecek';
+
+  @override
+  String get preferredTransportTip =>
+      'Durumun nereden okunacağı ve bir komutun önce hangi bağlantıyı açacağı. Diğeri kullanılabilir kalır.';
+
+  @override
   String get keepForeground => 'Uygulamayı ön planda tut!';
 
   @override

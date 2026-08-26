@@ -738,6 +738,16 @@ class AppLocalizationsId extends AppLocalizations {
       'Jump server dan ProxyCommand tidak bisa dipakai bersamaan.';
 
   @override
+  String get noConnectionMethod => 'Atur SSH, agen monitor, atau keduanya';
+
+  @override
+  String get preferredTransport => 'Coba lebih dulu';
+
+  @override
+  String get preferredTransportTip =>
+      'Dari mana status dibaca, dan koneksi mana yang dibuka perintah lebih dulu. Yang lain tetap tersedia.';
+
+  @override
   String get keepForeground => 'Simpan Aplikasi Foreground!';
 
   @override

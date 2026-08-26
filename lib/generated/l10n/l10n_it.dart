@@ -744,6 +744,17 @@ class AppLocalizationsIt extends AppLocalizations {
       'Jump server e ProxyCommand non possono essere usati insieme.';
 
   @override
+  String get noConnectionMethod =>
+      'Configura SSH, un agente monitor, o entrambi';
+
+  @override
+  String get preferredTransport => 'Prova per prima';
+
+  @override
+  String get preferredTransportTip =>
+      'Da dove viene letto lo stato e quale connessione apre per prima un comando. L\'altra resta disponibile.';
+
+  @override
   String get keepForeground => 'Mantieni l\'app in primo piano!';
 
   @override

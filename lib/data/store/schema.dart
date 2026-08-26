@@ -85,7 +85,9 @@ abstract final class SchemaVersion {
   /// v16: the watch's server selection inverted into an exclusion list, so
   ///      every monitor server syncs unless it is held back
   /// v17: the hand-typed Go-compat `/status` URLs retired, and the user told
-  static const current = 17;
+  /// v18: `server.preferred_transport`, and the SSH/monitor exclusivity check
+  ///      relaxed so one server can carry both
+  static const current = 18;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

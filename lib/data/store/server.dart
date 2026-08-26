@@ -160,6 +160,7 @@ class ServerStore extends EntityStore<Spi> {
               jumpId: jumps?.firstOrNull,
               jumpIds: jumps,
             ),
+      preferredTransport: ServerTransport.fromName(row['preferred_transport']),
       monitorHttp: monitorAddr == null
           ? null
           : MonitorHttpCredential(
@@ -278,6 +279,7 @@ class ServerStore extends EntityStore<Spi> {
       'ssh_alter_url',
       'ssh_proxy_command',
       'ssh_file_transport',
+      'preferred_transport',
       'monitor_addr',
       'monitor_user',
       'monitor_pwd',
@@ -312,6 +314,10 @@ class ServerStore extends EntityStore<Spi> {
       ssh?.alterUrl,
       ssh?.proxyCommand,
       ssh?.fileTransport.name,
+      // Written only when it means something. A server with one way in has
+      // nothing to prefer, and storing a value there would leave a preference
+      // behind for the *other* transport if that one is ever configured.
+      ssh != null && monitor != null ? item.transport.name : null,
       monitor?.addr,
       monitor?.user,
       monitor?.pwd,

@@ -748,6 +748,17 @@ class AppLocalizationsFr extends AppLocalizations {
       'Le serveur de rebond et ProxyCommand ne peuvent pas être utilisés ensemble.';
 
   @override
+  String get noConnectionMethod =>
+      'Configurez SSH, un agent monitor, ou les deux';
+
+  @override
+  String get preferredTransport => 'Essayer en premier';
+
+  @override
+  String get preferredTransportTip =>
+      'D\'où l\'état est lu, et quelle connexion une commande ouvre en premier. L\'autre reste disponible.';
+
+  @override
   String get keepForeground => 'Garder l\'application en premier plan !';
 
   @override

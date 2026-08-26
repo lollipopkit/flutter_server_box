@@ -697,6 +697,15 @@ class AppLocalizationsJa extends AppLocalizations {
       '踏み台サーバーと ProxyCommand は併用できません。';
 
   @override
+  String get noConnectionMethod => 'SSH、monitor、またはその両方を設定してください';
+
+  @override
+  String get preferredTransport => '優先する接続';
+
+  @override
+  String get preferredTransportTip => 'ステータスの取得元と、コマンドが最初に開く接続。もう一方も引き続き使えます。';
+
+  @override
   String get keepForeground => 'アプリを前面に保ってください！';
 
   @override

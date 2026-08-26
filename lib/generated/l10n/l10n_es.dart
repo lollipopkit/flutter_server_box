@@ -746,6 +746,16 @@ class AppLocalizationsEs extends AppLocalizations {
       'El servidor de salto y ProxyCommand no se pueden usar a la vez.';
 
   @override
+  String get noConnectionMethod => 'Configura SSH, un agente monitor, o ambos';
+
+  @override
+  String get preferredTransport => 'Intentar primero';
+
+  @override
+  String get preferredTransportTip =>
+      'De dónde se lee el estado y qué conexión abre primero un comando. La otra sigue disponible.';
+
+  @override
   String get keepForeground => '¡Por favor, mantén la app en primer plano!';
 
   @override

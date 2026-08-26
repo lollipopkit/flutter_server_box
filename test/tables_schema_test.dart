@@ -59,7 +59,7 @@ void main() {
     expect(tables.toSet(), Tables.names.toSet());
   });
 
-  group('a server is reached one way or the other', () {
+  group('a server is reached somehow', () {
     test('SSH alone is accepted', () {
       expect(() => addServer('a'), returnsNormally);
     });
@@ -71,14 +71,20 @@ void main() {
       );
     });
 
-    test('both at once is refused', () {
+    test('both at once is accepted', () {
+      // It used to be refused — the constraint was an exclusive or. Both is
+      // now a configuration someone can ask for: an agent for status without
+      // holding a shell open, and sshd for what the agent has no endpoint
+      // for, with `server.preferred_transport` saying which leads.
       expect(
         () => addServer('c', monitorAddr: 'https://h:3770'),
-        throwsA(isA<SqliteException>()),
+        returnsNormally,
       );
     });
 
-    test('neither is refused', () {
+    test('neither is still refused', () {
+      // The half of the constraint that stays. A row with no way in is not a
+      // server, it is a name.
       expect(
         () => addServer('d', sshIp: null),
         throwsA(isA<SqliteException>()),

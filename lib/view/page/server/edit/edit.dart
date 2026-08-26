@@ -118,7 +118,18 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
 
   /// Connection method for this server: SSH+shell (false) or monitor's HTTP
   /// API (true) — mutually exclusive, see the switch at the top of the form.
+  /// The two ways in, each switched on independently.
+  ///
+  /// They used to be one boolean, because a server could carry exactly one.
+  /// Both at once is now a configuration someone can ask for — an agent for
+  /// status without a shell open, sshd for the things the agent has no
+  /// endpoint for — so what is left of the old exclusivity is
+  /// [_preferMonitorHttp], which orders them rather than excluding either.
+  final _useSsh = ValueNotifier(true);
   final _useMonitorHttp = ValueNotifier(false);
+
+  /// Which one is tried first. Only shown, and only stored, when both are on.
+  final _preferMonitorHttp = ValueNotifier(false);
 
   /// Which protocol this server's files move over — see [SshFileTransport].
   ///
@@ -192,7 +203,9 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     _pveIgnoreCert.dispose();
     _monitorIgnoreCert.dispose();
     _monitorAllowInsecure.dispose();
+    _useSsh.dispose();
     _useMonitorHttp.dispose();
+    _preferMonitorHttp.dispose();
     _fileTransport.dispose();
     _tempIsCelsius.dispose();
     _env.dispose();
@@ -250,8 +263,8 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
         autoCorrect: true,
         suggestion: true,
       ),
-      _useMonitorHttp.listenVal(
-        (useHttp) => useHttp ? UIs.placeholder : _buildSshConnFields(),
+      _useSsh.listenVal(
+        (useSsh) => useSsh ? _buildSshConnFields() : UIs.placeholder,
       ),
       TagTile(tags: _tags, allTags: ref.watch(serversProvider).tags).cardx,
       ListTile(
@@ -265,16 +278,19 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
           ),
         ),
       ),
-      _useMonitorHttp.listenVal(
-        (useHttp) => useHttp ? _buildMonitorHttp() : _buildAuth(),
+      _useSsh.listenVal(
+        (useSsh) => useSsh ? _buildAuth() : UIs.placeholder,
       ),
       _useMonitorHttp.listenVal(
-        (useHttp) => useHttp
-            ? UIs.placeholder
-            : Column(
+        (useHttp) => useHttp ? _buildMonitorHttp() : UIs.placeholder,
+      ),
+      _useSsh.listenVal(
+        (useSsh) => useSsh
+            ? Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [_buildSystemType(), _buildJumpServer()],
-              ),
+              )
+            : UIs.placeholder,
       ),
       _buildMore(),
     ];
