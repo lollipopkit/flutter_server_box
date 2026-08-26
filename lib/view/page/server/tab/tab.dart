@@ -10,6 +10,7 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
+import 'package:server_box/core/utils/tag_group.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
@@ -49,6 +50,14 @@ class ServerPage extends ConsumerStatefulWidget {
 
 const _cardPad = 74.0;
 const _cardPadSingle = 13.0;
+
+/// Kept clear either side of the floating tag bar.
+///
+/// Set by the add button — a 56pt `FloatingActionButton`, the inset `Scaffold`
+/// gives it, and a gap so the two never touch — and then applied to both ends,
+/// because the bar is centred and room on one side only would move it off
+/// centre to buy that clearance.
+const _kTagBarSideRoom = 80.0;
 
 /// Long enough to read as one movement, short enough not to be waited on.
 const _kFlightDuration = Durations.medium3;
@@ -183,17 +192,31 @@ class _ServerPageState extends ConsumerState<ServerPage>
 
   Widget _buildScaffold(Widget child) {
     return Scaffold(
-      appBar: _TopBar(
-        tags: _tags,
-        onTagChanged: (p0) => _tag.value = p0,
-        initTag: _tag.value,
-      ),
+      // Nothing to put up here on a wide window — see [_TopBar].
+      appBar: ResponsiveBreakpoints.of(context).isMobile
+          ? const _TopBar()
+          : null,
       body: GestureDetector(
         behavior: HitTestBehavior.translucent,
         onTap: _autoHideCtrl.show,
         child: Stores.setting.textFactor.listenable().listenVal((val) {
           _updateTextScaler(val);
-          return child;
+          // At the top, what the app bar used to keep this clear of — a notch,
+          // a status bar — now that a wide window has no app bar. At the
+          // bottom, what the floating tag bar sits above: it is 13pt off the
+          // edge of this, not 13pt off the edge of a home indicator.
+          return SafeArea(
+            // Expand, or the grid is as tall as the cards in it and the bar
+            // pinned to the bottom of this is pinned to the bottom of *them*.
+            // A `Stack` hands its unpositioned children loose constraints, and
+            // a `SingleChildScrollView` given a loose one sizes to its content
+            // rather than to the window — which is also a page that stops
+            // scrolling as soon as it has scrolled its own height.
+            child: Stack(
+              fit: StackFit.expand,
+              children: [child, _buildTagBar()],
+            ),
+          );
         }),
       ),
       floatingActionButton: AutoHide(
@@ -244,12 +267,81 @@ class _ServerPageState extends ConsumerState<ServerPage>
           primaryBuilder: (_, split) => _ServerOpenRequest(
             split: split,
             onOpen: _openRequestedServer,
+            // The rail gets everything, not [filtered]. It groups by tag
+            // instead of filtering by one, and it has no switcher of its own —
+            // so a tag picked in the grid before a server was opened would
+            // hide servers here with nothing on screen to say so or undo it.
             child: split
-                ? _buildPaneList(filtered)
+                ? _buildPaneList(serverOrder)
                 : _buildScaffold(_buildBodySmall(filtered: filtered)),
           ),
         );
       });
+    });
+  }
+
+  /// The tag filter, floating over the bottom of the grid.
+  ///
+  /// Down here rather than in a bar above the cards for the reason the detail
+  /// page's function bar is: it acts on the whole list, so it belongs within
+  /// reach the whole way down instead of scrolling off after the first row.
+  /// Same `HideOnScroll` and same rule — gone on a drag down the page, back on
+  /// a drag up it or at the top, and coming up from the bottom edge when the
+  /// tab arrives.
+  ///
+  /// A `Stack` child rather than a `Positioned` one, because with no tags
+  /// there is nothing to position. `Positioned` reaches the `Stack` through
+  /// the builder below it — it is a `ParentDataWidget`, and only an
+  /// intervening *render* object would break that.
+  Widget _buildTagBar() {
+    return _tags.listenVal((tags) {
+      // No tags anywhere means no bar at all, rather than an empty one. The
+      // pill is the tags: an empty one floating over the grid would be a
+      // control that does nothing, and would cover a row of cards to do it.
+      // Built only once there are tags, so the first one added brings the bar
+      // in the way opening the tab does.
+      if (tags.isEmpty) return const SizedBox.shrink();
+
+      return Positioned(
+        left: 0,
+        right: 0,
+        bottom: 0,
+        child: HideOnScroll(
+          controller: _scrollController,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: _kTagBarSideRoom,
+            ).copyWith(bottom: 13),
+            // Centred in the window, and the same room kept on both sides so
+            // that stays true — the bar grows from the middle outwards as
+            // tags are added, and the side it would reach something on is the
+            // add button's.
+            child: Center(
+              child: Material(
+                // Raised off the page, because it is the one thing here that
+                // is not part of what the page is showing.
+                elevation: 3,
+                shadowColor: Colors.black26,
+                color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(19),
+                clipBehavior: Clip.antiAlias,
+                child: SizedBox(
+                  height: TagSwitcher.kTagBtnHeight,
+                  // Shrink-wrapped, so the pill is as wide as the tags in it
+                  // and scrolls once they outgrow the room above.
+                  child: TagSwitcher(
+                    tags: _tags,
+                    onTagChanged: (tag) => _tag.value = tag,
+                    initTag: _tag.value,
+                    singleLine: true,
+                    shrinkWrap: true,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
     });
   }
 
@@ -265,15 +357,29 @@ class _ServerPageState extends ConsumerState<ServerPage>
     // round-robin into a `ListView` per column left a short column beside a
     // long one and gave each its own scroll position; they flow into whichever
     // column is shortest now, in one scrollable.
-    return MasonryList.builder(
+    //
+    // The animated form, because everything that rearranges this grid does so
+    // for a reason worth seeing: a server connects and its card grows, a tag
+    // is picked and half of them leave, one is added or deleted. See
+    // [AnimatedMasonry] — the card that moves is usually not the card anything
+    // happened to, which is exactly why it has to be carried rather than
+    // moved.
+    return AnimatedMasonry(
       controller: _scrollController,
-      // Room at the bottom for the add button to float over.
+      // Room at the bottom for the add button and the tag bar to float over.
       padding: MasonryList.kPadding.copyWith(bottom: 77),
-      itemCount: filtered.length,
-      // Built as they come into view, so a page of servers watches the ones it
-      // is showing rather than all of them.
-      itemBuilder: (_, i) =>
-          _buildEachServerCard(ref.watch(serverProvider(filtered[i]))),
+      children: [
+        for (final id in filtered)
+          // Its own `Consumer`, so a status poll rebuilds the one card whose
+          // server answered rather than the grid. Watched from this page's
+          // `ref` — which is what a builder would have to do — any server's
+          // reading landing rebuilt every card on screen.
+          Consumer(
+            key: ValueKey(id),
+            builder: (_, ref, _) =>
+                _buildEachServerCard(ref.watch(serverProvider(id))),
+          ),
+      ],
     );
   }
 

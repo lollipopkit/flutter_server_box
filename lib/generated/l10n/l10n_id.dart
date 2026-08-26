@@ -208,7 +208,7 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get agentFloat => 'Mengambang di atas tab lain';
+  String get floatOverTabs => 'Mengambang di atas tab lain';
 
   @override
   String get agentToolSshConnect => 'Sambungkan SSH';
@@ -1666,4 +1666,10 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get privacyBlurTip =>
       'Sembunyikan konten aplikasi di pengalih aplikasi';
+
+  @override
+  String get floatReturnToTab => 'Kembalikan ke tab';
+
+  @override
+  String get termInFloatWindow => 'Terminal ini ada di jendela mengambang';
 }

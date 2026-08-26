@@ -372,7 +372,7 @@
   "agentToolWriteFile": "ファイルを書く",
   "agentToolFailed": "ツールの実行に失敗しました。",
   "agentToolCallsFmt": "ツール呼び出し {count} 件",
-  "agentFloat": "他のタブの上に浮かべる",
+  "floatOverTabs": "他のタブの上に浮かべる",
   "agentToolSshConnect": "SSH 接続",
   "agentToolSshDisconnect": "SSH 切断",
   "agentSshConnectTitle": "新しいホストに接続",
@@ -485,5 +485,7 @@
   "monitorHttpTip": "SSH でコマンドを実行する代わりに、**monitor** の HTTP API からこのサーバーの状態を読み取ります。\n\n先にサーバーへ monitor を導入する必要があります。推移のグラフ、ウォッチ App、ホーム画面ウィジェットはこれに依存します。\n\n[monitor の導入方法]({url})",
   "send": "送信",
   "privacyBlur": "バックグラウンドのプライバシー",
-  "privacyBlurTip": "Appスイッチャーで内容を隠す"
+  "privacyBlurTip": "Appスイッチャーで内容を隠す",
+  "floatReturnToTab": "タブに戻す",
+  "termInFloatWindow": "このターミナルはフローティングウィンドウにあります"
 }

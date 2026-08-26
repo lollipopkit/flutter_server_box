@@ -208,7 +208,7 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get agentFloat => 'Flutuar sobre as outras abas';
+  String get floatOverTabs => 'Flutuar sobre as outras abas';
 
   @override
   String get agentToolSshConnect => 'Conectar por SSH';
@@ -1675,4 +1675,10 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get privacyBlurTip => 'Ocultar o conteúdo do app no alternador';
+
+  @override
+  String get floatReturnToTab => 'Voltar para a aba';
+
+  @override
+  String get termInFloatWindow => 'Este terminal está na janela flutuante';
 }

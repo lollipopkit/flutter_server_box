@@ -1,20 +1,20 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'agent_shell_config.dart';
+part of 'float_shell_config.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator
 // **************************************************************************
 
-AgentShellWindow _$AgentShellWindowFromJson(Map<String, dynamic> json) =>
-    AgentShellWindow(
+FloatShellWindow _$FloatShellWindowFromJson(Map<String, dynamic> json) =>
+    FloatShellWindow(
       left: (json['left'] as num?)?.toDouble() ?? -1.0,
       top: (json['top'] as num?)?.toDouble() ?? -1.0,
       width: (json['width'] as num?)?.toDouble() ?? 400.0,
       height: (json['height'] as num?)?.toDouble() ?? 560.0,
     );
 
-Map<String, dynamic> _$AgentShellWindowToJson(AgentShellWindow instance) =>
+Map<String, dynamic> _$FloatShellWindowToJson(FloatShellWindow instance) =>
     <String, dynamic>{
       'left': instance.left,
       'top': instance.top,
@@ -22,32 +22,32 @@ Map<String, dynamic> _$AgentShellWindowToJson(AgentShellWindow instance) =>
       'height': instance.height,
     };
 
-AgentShellPill _$AgentShellPillFromJson(Map<String, dynamic> json) =>
-    AgentShellPill(
+FloatShellPill _$FloatShellPillFromJson(Map<String, dynamic> json) =>
+    FloatShellPill(
       onRight: json['onRight'] as bool? ?? true,
       y: (json['y'] as num?)?.toDouble() ?? 0.62,
       sheetHeight: (json['sheetHeight'] as num?)?.toDouble() ?? 0.62,
     );
 
-Map<String, dynamic> _$AgentShellPillToJson(AgentShellPill instance) =>
+Map<String, dynamic> _$FloatShellPillToJson(FloatShellPill instance) =>
     <String, dynamic>{
       'onRight': instance.onRight,
       'y': instance.y,
       'sheetHeight': instance.sheetHeight,
     };
 
-AgentShellConfig _$AgentShellConfigFromJson(Map<String, dynamic> json) =>
-    AgentShellConfig(
+FloatShellConfig _$FloatShellConfigFromJson(Map<String, dynamic> json) =>
+    FloatShellConfig(
       mode: json['mode'] as String? ?? 'hidden',
       window: json['window'] == null
-          ? const AgentShellWindow()
-          : AgentShellWindow.fromJson(json['window'] as Map<String, dynamic>),
+          ? const FloatShellWindow()
+          : FloatShellWindow.fromJson(json['window'] as Map<String, dynamic>),
       pill: json['pill'] == null
-          ? const AgentShellPill()
-          : AgentShellPill.fromJson(json['pill'] as Map<String, dynamic>),
+          ? const FloatShellPill()
+          : FloatShellPill.fromJson(json['pill'] as Map<String, dynamic>),
     );
 
-Map<String, dynamic> _$AgentShellConfigToJson(AgentShellConfig instance) =>
+Map<String, dynamic> _$FloatShellConfigToJson(FloatShellConfig instance) =>
     <String, dynamic>{
       'mode': instance.mode,
       'window': instance.window,

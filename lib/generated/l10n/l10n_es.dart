@@ -213,7 +213,7 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get agentFloat => 'Flotar sobre otras pestañas';
+  String get floatOverTabs => 'Flotar sobre otras pestañas';
 
   @override
   String get agentToolSshConnect => 'Conectar por SSH';
@@ -1694,4 +1694,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get privacyBlurTip => 'Ocultar el contenido de la app en el selector';
+
+  @override
+  String get floatReturnToTab => 'Volver a la pestaña';
+
+  @override
+  String get termInFloatWindow => 'Esta terminal está en la ventana flotante';
 }

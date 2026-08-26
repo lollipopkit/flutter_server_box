@@ -1,24 +1,25 @@
 import 'dart:ui';
 
+import 'package:flutter/painting.dart' show Alignment;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/provider/ai/agent_shell.dart';
+import 'package:server_box/data/model/app/float_shell.dart';
 
 void main() {
-  const margin = AgentShellGeometry.margin;
-  const min = AgentShellGeometry.minSize;
+  const margin = FloatShellGeometry.margin;
+  const min = FloatShellGeometry.minSize;
   const desktop = Size(1440, 900);
 
-  group('AgentShellMode.parse', () {
+  group('FloatShellMode.parse', () {
     test('reads back every name it writes', () {
-      for (final mode in AgentShellMode.values) {
-        expect(AgentShellMode.parse(mode.name), mode);
+      for (final mode in FloatShellMode.values) {
+        expect(FloatShellMode.parse(mode.name), mode);
       }
     });
 
     test('falls back to hidden for anything else', () {
-      expect(AgentShellMode.parse(null), AgentShellMode.hidden);
-      expect(AgentShellMode.parse(''), AgentShellMode.hidden);
-      expect(AgentShellMode.parse('minimised'), AgentShellMode.hidden);
+      expect(FloatShellMode.parse(null), FloatShellMode.hidden);
+      expect(FloatShellMode.parse(''), FloatShellMode.hidden);
+      expect(FloatShellMode.parse('minimised'), FloatShellMode.hidden);
     });
   });
 
@@ -30,20 +31,47 @@ void main() {
       Offset? offset,
       Size size = const Size(400, 560),
       bool collapsed = false,
+      Alignment corner = Alignment.bottomRight,
     }) {
-      return AgentShellGeometry.desktopRect(
+      return FloatShellGeometry.desktopRect(
         area: area,
         topInset: topInset,
         bottomInset: bottomInset,
         offset: offset,
         size: size,
         collapsed: collapsed,
+        corner: corner,
       );
     }
 
     test('an unplaced panel starts in the bottom-right corner', () {
       final result = rect();
       expect(result.right, desktop.width - margin);
+      expect(result.bottom, desktop.height - margin);
+    });
+
+    test('two unplaced panels do not start in the same place', () {
+      // The Agent's window and the terminal's can be on screen at once, and on
+      // a first run neither has a placement to fall back on.
+      //
+      // Not "they never overlap": two panels of this size do not both fit down
+      // the side of a 900pt window, and overlapping windows are ordinary. What
+      // must not happen is one arriving exactly on top of the other, where the
+      // bar you drag it by is the bar of the one underneath.
+      final agent = rect();
+      final terminal = rect(corner: Alignment.topRight, size: const Size(560, 400));
+
+      expect(terminal.topLeft, isNot(agent.topLeft));
+      expect(
+        agent.top - terminal.top,
+        greaterThan(FloatShellGeometry.barHeight),
+        reason: 'the two title bars start on top of each other',
+      );
+    });
+
+    test('the left corners are the mirror of the right ones', () {
+      final result = rect(corner: Alignment.bottomLeft);
+      expect(result.left, margin);
       expect(result.bottom, desktop.height - margin);
     });
 
@@ -84,7 +112,7 @@ void main() {
 
     test('collapsed is the bar height regardless of the stored size', () {
       final result = rect(size: const Size(400, 800), collapsed: true);
-      expect(result.height, AgentShellGeometry.barHeight);
+      expect(result.height, FloatShellGeometry.barHeight);
       expect(result.width, 400);
     });
 
@@ -108,7 +136,7 @@ void main() {
       double keyboardInset = 0,
       double fraction = 0.62,
     }) {
-      return AgentShellGeometry.sheetHeightFor(
+      return FloatShellGeometry.sheetHeightFor(
         areaHeight: areaHeight,
         topInset: topInset,
         keyboardInset: keyboardInset,
@@ -137,14 +165,14 @@ void main() {
     test('0 is the top of the safe area and 1 the bottom', () {
       const area = 800.0;
       const pill = 52.0;
-      final top = AgentShellGeometry.pillTopFor(
+      final top = FloatShellGeometry.pillTopFor(
         areaHeight: area,
         topInset: 47,
         bottomInset: 34,
         y: 0,
         pillSize: pill,
       );
-      final bottom = AgentShellGeometry.pillTopFor(
+      final bottom = FloatShellGeometry.pillTopFor(
         areaHeight: area,
         topInset: 47,
         bottomInset: 34,
@@ -156,7 +184,7 @@ void main() {
     });
 
     test('a screen with no room reports no travel and does not divide by it', () {
-      final travel = AgentShellGeometry.pillTravelFor(
+      final travel = FloatShellGeometry.pillTravelFor(
         areaHeight: 60,
         topInset: 20,
         bottomInset: 20,
@@ -166,7 +194,7 @@ void main() {
     });
 
     test('an out-of-range stored position is clamped, not extrapolated', () {
-      final top = AgentShellGeometry.pillTopFor(
+      final top = FloatShellGeometry.pillTopFor(
         areaHeight: 800,
         topInset: 0,
         bottomInset: 0,

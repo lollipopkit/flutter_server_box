@@ -372,7 +372,7 @@
   "agentToolWriteFile": "Запись файла",
   "agentToolFailed": "Не удалось выполнить инструмент.",
   "agentToolCallsFmt": "Вызовов инструментов: {count}",
-  "agentFloat": "Поверх других вкладок",
+  "floatOverTabs": "Поверх других вкладок",
   "agentToolSshConnect": "Подключение по SSH",
   "agentToolSshDisconnect": "Отключить SSH",
   "agentSshConnectTitle": "Подключение к новому хосту",
@@ -485,5 +485,7 @@
   "monitorHttpTip": "Читать состояние этого сервера через HTTP API агента **monitor**, а не выполняя команды по SSH.\n\nАгент нужно сначала установить на сервер; от него зависят графики, приложение для часов и виджеты.\n\n[Как установить monitor]({url})",
   "send": "Отправить",
   "privacyBlur": "Приватность в фоне",
-  "privacyBlurTip": "Скрывать содержимое приложения в переключателе"
+  "privacyBlurTip": "Скрывать содержимое приложения в переключателе",
+  "floatReturnToTab": "Вернуть во вкладку",
+  "termInFloatWindow": "Этот терминал открыт в плавающем окне"
 }

@@ -477,11 +477,11 @@ abstract class AppLocalizations {
   /// **'{count} tool calls'**
   String agentToolCallsFmt(Object count);
 
-  /// No description provided for @agentFloat.
+  /// No description provided for @floatOverTabs.
   ///
   /// In en, this message translates to:
   /// **'Float over other tabs'**
-  String get agentFloat;
+  String get floatOverTabs;
 
   /// No description provided for @agentToolSshConnect.
   ///
@@ -2929,6 +2929,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Hide app content in the app switcher'**
   String get privacyBlurTip;
+
+  /// No description provided for @floatReturnToTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Return to tab'**
+  String get floatReturnToTab;
+
+  /// No description provided for @termInFloatWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'This terminal is in the floating window'**
+  String get termInFloatWindow;
 }
 
 class _AppLocalizationsDelegate

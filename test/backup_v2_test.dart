@@ -384,7 +384,7 @@ void main() {
 
     test('regroups the settings a pre-grouping backup brings back', () async {
       await Stores.setting.askAiModel.set('current-model');
-      await Stores.setting.agentShellWidth.set(999);
+      await Stores.setting.agentShell.width.set(999);
 
       final backup = BackupV2(
         version: BackupV2.formatVer,
@@ -405,7 +405,7 @@ void main() {
 
       expect(Stores.setting.askAiModel.get(), 'from-backup');
       expect(Stores.setting.askAiApiKey.get(), 'sk-from-backup');
-      expect(Stores.setting.agentShellWidth.get(), 321.0);
+      expect(Stores.setting.agentShell.width.get(), 321.0);
       expect(Stores.setting.get<Object>('askAiModel'), isNull);
       expect(Stores.setting.get<Object>('agentShellWidth'), isNull);
     });

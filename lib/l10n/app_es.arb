@@ -372,7 +372,7 @@
   "agentToolWriteFile": "Escribir archivo",
   "agentToolFailed": "Falló la ejecución de la herramienta.",
   "agentToolCallsFmt": "{count} llamadas de herramienta",
-  "agentFloat": "Flotar sobre otras pestañas",
+  "floatOverTabs": "Flotar sobre otras pestañas",
   "agentToolSshConnect": "Conectar por SSH",
   "agentToolSshDisconnect": "Desconectar SSH",
   "agentSshConnectTitle": "Conectar a un host nuevo",
@@ -485,5 +485,7 @@
   "monitorHttpTip": "Leer el estado de este servidor desde la API HTTP de un agente **monitor**, en lugar de ejecutar comandos por SSH.\n\nHay que instalar el agente en el servidor primero; las tendencias, la app del reloj y los widgets dependen de él.\n\n[Instalar un agente monitor]({url})",
   "send": "Enviar",
   "privacyBlur": "Privacidad en segundo plano",
-  "privacyBlurTip": "Ocultar el contenido de la app en el selector"
+  "privacyBlurTip": "Ocultar el contenido de la app en el selector",
+  "floatReturnToTab": "Volver a la pestaña",
+  "termInFloatWindow": "Esta terminal está en la ventana flotante"
 }

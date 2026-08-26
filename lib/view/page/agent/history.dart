@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/ai/agent_conversation.dart';
 import 'package:server_box/data/provider/ai/agent_session.dart';
-import 'package:server_box/view/page/agent/view.dart';
+import 'package:server_box/view/widget/float_shell.dart';
 
 /// Opens the conversation list as a sheet, for the layouts too narrow to give
 /// it a column of its own.
@@ -167,7 +167,7 @@ class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
                     onPressed: session.isWorking ? null : _clear,
                     icon: const Icon(
                       Icons.delete_sweep_outlined,
-                      size: agentHeaderIconSize,
+                      size: floatHeaderIconSize,
                     ),
                   ),
                   const SizedBox(width: 4),
@@ -184,7 +184,7 @@ class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
                           await _notifier.beginNewConversation();
                           _closeIfSheet();
                         },
-                  icon: const Icon(Icons.add, size: agentHeaderIconSize),
+                  icon: const Icon(Icons.add, size: floatHeaderIconSize),
                 ),
               ],
             ),

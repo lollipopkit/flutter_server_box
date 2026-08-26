@@ -18,7 +18,7 @@ import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
-import 'package:server_box/view/page/agent/shell.dart';
+import 'package:server_box/view/page/floating_panels.dart';
 import 'package:server_box/view/page/home_tab.dart';
 import 'package:server_box/view/page/macos_menu_bar.dart';
 import 'package:server_box/view/page/setting/entry.dart';
@@ -310,10 +310,11 @@ class _HomePageState extends ConsumerState<HomePage>
       bottomNavigationBar: isMobile ? _buildBottomBar() : null,
     );
 
-    // Above the `PageView` rather than inside a tab: the Agent floats over
-    // whichever tab you are on, so it cannot belong to one of them.
+    // Above the `PageView` rather than inside a tab: the Agent and a floated
+    // terminal float over whichever tab you are on, so neither can belong to
+    // one of them.
     //
-    // The shell is told how big this box actually is rather than reading
+    // They are told how big this box actually is rather than reading
     // `MediaQuery.sizeOf`. Those are not the same number — everything between
     // the window and here, the responsive builder included, is free to hand
     // down less than it got — and keeping a panel inside the window is not the
@@ -322,7 +323,7 @@ class _HomePageState extends ConsumerState<HomePage>
       builder: (_, constraints) => Stack(
         children: [
           mainContent,
-          AgentFloatingShell(area: constraints.biggest),
+          FloatingPanels(area: constraints.biggest),
         ],
       ),
     );

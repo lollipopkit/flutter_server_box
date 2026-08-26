@@ -209,7 +209,7 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String get agentFloat => 'Boven andere tabbladen zweven';
+  String get floatOverTabs => 'Boven andere tabbladen zweven';
 
   @override
   String get agentToolSshConnect => 'SSH verbinden';
@@ -1680,4 +1680,10 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get privacyBlurTip => 'Verberg de app-inhoud in de app-switcher';
+
+  @override
+  String get floatReturnToTab => 'Terug naar tabblad';
+
+  @override
+  String get termInFloatWindow => 'Deze terminal staat in het zwevende venster';
 }

@@ -8,12 +8,27 @@ part of 'agent_shell.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// Whether the Agent follows you onto the other tabs, and how much of it comes
+/// along.
+///
+/// The conversation is in `agentSessionProvider` and carries on either way —
+/// see [FloatShellMode], which the terminal's floating window shares.
 
 @ProviderFor(AgentShell)
 final agentShellProvider = AgentShellProvider._();
 
+/// Whether the Agent follows you onto the other tabs, and how much of it comes
+/// along.
+///
+/// The conversation is in `agentSessionProvider` and carries on either way —
+/// see [FloatShellMode], which the terminal's floating window shares.
 final class AgentShellProvider
-    extends $NotifierProvider<AgentShell, AgentShellMode> {
+    extends $NotifierProvider<AgentShell, FloatShellMode> {
+  /// Whether the Agent follows you onto the other tabs, and how much of it comes
+  /// along.
+  ///
+  /// The conversation is in `agentSessionProvider` and carries on either way —
+  /// see [FloatShellMode], which the terminal's floating window shares.
   AgentShellProvider._()
     : super(
         from: null,
@@ -33,27 +48,33 @@ final class AgentShellProvider
   AgentShell create() => AgentShell();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(AgentShellMode value) {
+  Override overrideWithValue(FloatShellMode value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<AgentShellMode>(value),
+      providerOverride: $SyncValueProvider<FloatShellMode>(value),
     );
   }
 }
 
-String _$agentShellHash() => r'14ffb9ade96c5d2b29d7cffdc3574b183bf60e72';
+String _$agentShellHash() => r'7b4e8674930e490318e3d9e0af4e61b2eb09bda0';
 
-abstract class _$AgentShell extends $Notifier<AgentShellMode> {
-  AgentShellMode build();
+/// Whether the Agent follows you onto the other tabs, and how much of it comes
+/// along.
+///
+/// The conversation is in `agentSessionProvider` and carries on either way —
+/// see [FloatShellMode], which the terminal's floating window shares.
+
+abstract class _$AgentShell extends $Notifier<FloatShellMode> {
+  FloatShellMode build();
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
-    final ref = this.ref as $Ref<AgentShellMode, AgentShellMode>;
+    final ref = this.ref as $Ref<FloatShellMode, FloatShellMode>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<AgentShellMode, AgentShellMode>,
-              AgentShellMode,
+              AnyNotifier<FloatShellMode, FloatShellMode>,
+              FloatShellMode,
               Object?,
               Object?
             >;

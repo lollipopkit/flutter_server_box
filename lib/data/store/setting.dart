@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:meta/meta.dart';
-import 'package:server_box/data/model/app/agent_shell_config.dart';
 import 'package:server_box/data/model/app/ask_ai_config.dart';
+import 'package:server_box/data/model/app/float_shell_config.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/net_view.dart';
@@ -426,66 +426,38 @@ class SettingStore extends SqliteStore {
 
   /// The floating Agent's placement and size, as one row.
   ///
-  /// Eight keys before this. See [AgentShellConfig] for the nesting; the
-  /// per-field names below are [FieldProp]s onto it.
-  late final agentShell = propertyDefault<AgentShellConfig>(
-    'agentShell',
-    const AgentShellConfig(),
-    fromObj: (raw) => raw is Map
-        ? AgentShellConfig.fromJson(Map<String, dynamic>.from(raw))
-        : null,
-    toObj: (val) => val?.toJson(),
+  /// Eight keys before this. See [FloatShellConfig] for the nesting and
+  /// [FloatShellProps] for the [FieldProp]s onto it.
+  late final agentShell = FloatShellProps(
+    propertyDefault<FloatShellConfig>(
+      'agentShell',
+      const FloatShellConfig(),
+      fromObj: (raw) => raw is Map
+          ? FloatShellConfig.fromJson(Map<String, dynamic>.from(raw))
+          : null,
+      toObj: (val) => val?.toJson(),
+    ),
   );
 
-  late final agentShellMode = FieldProp<AgentShellConfig, String>(
-    agentShell,
-    'mode',
-    read: (c) => c.mode,
-    write: (c, v) => c.copyWith(mode: v),
-  );
-
-  late final agentShellLeft = FieldProp<AgentShellConfig, double>(
-    agentShell,
-    'window.left',
-    read: (c) => c.window.left,
-    write: (c, v) => c.copyWith(window: c.window.copyWith(left: v)),
-  );
-  late final agentShellTop = FieldProp<AgentShellConfig, double>(
-    agentShell,
-    'window.top',
-    read: (c) => c.window.top,
-    write: (c, v) => c.copyWith(window: c.window.copyWith(top: v)),
-  );
-  late final agentShellWidth = FieldProp<AgentShellConfig, double>(
-    agentShell,
-    'window.width',
-    read: (c) => c.window.width,
-    write: (c, v) => c.copyWith(window: c.window.copyWith(width: v)),
-  );
-  late final agentShellHeight = FieldProp<AgentShellConfig, double>(
-    agentShell,
-    'window.height',
-    read: (c) => c.window.height,
-    write: (c, v) => c.copyWith(window: c.window.copyWith(height: v)),
-  );
-
-  late final agentShellPillOnRight = FieldProp<AgentShellConfig, bool>(
-    agentShell,
-    'pill.onRight',
-    read: (c) => c.pill.onRight,
-    write: (c, v) => c.copyWith(pill: c.pill.copyWith(onRight: v)),
-  );
-  late final agentShellPillY = FieldProp<AgentShellConfig, double>(
-    agentShell,
-    'pill.y',
-    read: (c) => c.pill.y,
-    write: (c, v) => c.copyWith(pill: c.pill.copyWith(y: v)),
-  );
-  late final agentShellSheetHeight = FieldProp<AgentShellConfig, double>(
-    agentShell,
-    'pill.sheetHeight',
-    read: (c) => c.pill.sheetHeight,
-    write: (c, v) => c.copyWith(pill: c.pill.copyWith(sheetHeight: v)),
+  /// The floating terminal's placement and size. Same shape, own row.
+  ///
+  /// Two defaults differ from the Agent's, and both are about not landing on
+  /// top of it. The window is wider and shorter because a terminal is measured
+  /// in columns and a conversation in messages; the pill sits higher up the
+  /// edge, which is the only thing that keeps two collapsed panels apart on a
+  /// phone, where the position is the whole of what tells them apart.
+  late final terminalShell = FloatShellProps(
+    propertyDefault<FloatShellConfig>(
+      'terminalShell',
+      const FloatShellConfig(
+        window: FloatShellWindow(width: 560, height: 400),
+        pill: FloatShellPill(y: 0.38),
+      ),
+      fromObj: (raw) => raw is Map
+          ? FloatShellConfig.fromJson(Map<String, dynamic>.from(raw))
+          : null,
+      toObj: (val) => val?.toJson(),
+    ),
   );
 
   late final serverFuncBtns = listProperty(
@@ -852,4 +824,83 @@ class SettingStore extends SqliteStore {
       remove(VirtKeyRowsMigration.legacyKey, updateLastUpdateTsOnRemove: false);
     }
   }
+}
+
+/// One floating panel's row, and the eight fields onto it.
+///
+/// Written once for the two panels that use it. Eight [FieldProp]s declared
+/// twice is eight chances for the Agent's window and the terminal's to come to
+/// mean different things by `pill.y`, and the whole reason they share
+/// [FloatShellConfig] is that they do not.
+///
+/// [get] and [set] pass through to the row itself, so this reads like the
+/// property it wraps for the migration that writes the grouped value.
+final class FloatShellProps {
+  FloatShellProps(this.config)
+    : mode = FieldProp<FloatShellConfig, String>(
+        config,
+        'mode',
+        read: (c) => c.mode,
+        write: (c, v) => c.copyWith(mode: v),
+      ),
+      left = FieldProp<FloatShellConfig, double>(
+        config,
+        'window.left',
+        read: (c) => c.window.left,
+        write: (c, v) => c.copyWith(window: c.window.copyWith(left: v)),
+      ),
+      top = FieldProp<FloatShellConfig, double>(
+        config,
+        'window.top',
+        read: (c) => c.window.top,
+        write: (c, v) => c.copyWith(window: c.window.copyWith(top: v)),
+      ),
+      width = FieldProp<FloatShellConfig, double>(
+        config,
+        'window.width',
+        read: (c) => c.window.width,
+        write: (c, v) => c.copyWith(window: c.window.copyWith(width: v)),
+      ),
+      height = FieldProp<FloatShellConfig, double>(
+        config,
+        'window.height',
+        read: (c) => c.window.height,
+        write: (c, v) => c.copyWith(window: c.window.copyWith(height: v)),
+      ),
+      pillOnRight = FieldProp<FloatShellConfig, bool>(
+        config,
+        'pill.onRight',
+        read: (c) => c.pill.onRight,
+        write: (c, v) => c.copyWith(pill: c.pill.copyWith(onRight: v)),
+      ),
+      pillY = FieldProp<FloatShellConfig, double>(
+        config,
+        'pill.y',
+        read: (c) => c.pill.y,
+        write: (c, v) => c.copyWith(pill: c.pill.copyWith(y: v)),
+      ),
+      sheetHeight = FieldProp<FloatShellConfig, double>(
+        config,
+        'pill.sheetHeight',
+        read: (c) => c.pill.sheetHeight,
+        write: (c, v) => c.copyWith(pill: c.pill.copyWith(sheetHeight: v)),
+      );
+
+  /// The `kv` row the eight fields are views onto.
+  final StorePropDefault<FloatShellConfig> config;
+
+  final FieldProp<FloatShellConfig, String> mode;
+
+  final FieldProp<FloatShellConfig, double> left;
+  final FieldProp<FloatShellConfig, double> top;
+  final FieldProp<FloatShellConfig, double> width;
+  final FieldProp<FloatShellConfig, double> height;
+
+  final FieldProp<FloatShellConfig, bool> pillOnRight;
+  final FieldProp<FloatShellConfig, double> pillY;
+  final FieldProp<FloatShellConfig, double> sheetHeight;
+
+  FloatShellConfig get() => config.get();
+
+  Future<void> set(FloatShellConfig value) => config.set(value);
 }

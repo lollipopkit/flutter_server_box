@@ -210,7 +210,7 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get agentFloat => 'Über anderen Tabs schweben';
+  String get floatOverTabs => 'Über anderen Tabs schweben';
 
   @override
   String get agentToolSshConnect => 'SSH verbinden';
@@ -1688,4 +1688,10 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get privacyBlurTip => 'App-Inhalt in der App-Übersicht verbergen';
+
+  @override
+  String get floatReturnToTab => 'Zum Tab zurück';
+
+  @override
+  String get termInFloatWindow => 'Dieses Terminal ist im schwebenden Fenster';
 }

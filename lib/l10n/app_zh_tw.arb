@@ -59,7 +59,7 @@
   "agentToolWriteFile": "寫入檔案",
   "agentToolFailed": "工具執行失敗。",
   "agentToolCallsFmt": "{count} 次工具呼叫",
-  "agentFloat": "在其他分頁上懸浮",
+  "floatOverTabs": "在其他分頁上懸浮",
   "agentToolSshConnect": "SSH 連線",
   "agentToolSshDisconnect": "中斷 SSH",
   "agentSshConnectTitle": "連線到新主機",
@@ -492,5 +492,7 @@
   "bmcStaleWrite": "BMC 上的內容在寫入期間被改動過，請重試。",
   "send": "傳送",
   "privacyBlur": "背景隱私保護",
-  "privacyBlurTip": "在多工介面隱藏應用內容"
+  "privacyBlurTip": "在多工介面隱藏應用內容",
+  "floatReturnToTab": "放回分頁",
+  "termInFloatWindow": "此終端正在懸浮視窗中"
 }

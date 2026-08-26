@@ -372,7 +372,7 @@
   "agentToolWriteFile": "Tulis berkas",
   "agentToolFailed": "Eksekusi alat gagal.",
   "agentToolCallsFmt": "{count} panggilan alat",
-  "agentFloat": "Mengambang di atas tab lain",
+  "floatOverTabs": "Mengambang di atas tab lain",
   "agentToolSshConnect": "Sambungkan SSH",
   "agentToolSshDisconnect": "Putuskan SSH",
   "agentSshConnectTitle": "Sambungkan ke host baru",
@@ -485,5 +485,7 @@
   "monitorHttpTip": "Membaca status server ini dari HTTP API agen **monitor**, bukan menjalankan perintah lewat SSH.\n\nAgen harus dipasang di server terlebih dahulu; tren, aplikasi jam tangan, dan widget layar utama bergantung padanya.\n\n[Cara memasang agen monitor]({url})",
   "send": "Kirim",
   "privacyBlur": "Privasi latar belakang",
-  "privacyBlurTip": "Sembunyikan konten aplikasi di pengalih aplikasi"
+  "privacyBlurTip": "Sembunyikan konten aplikasi di pengalih aplikasi",
+  "floatReturnToTab": "Kembalikan ke tab",
+  "termInFloatWindow": "Terminal ini ada di jendela mengambang"
 }

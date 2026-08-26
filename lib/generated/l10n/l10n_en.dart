@@ -206,7 +206,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get agentFloat => 'Float over other tabs';
+  String get floatOverTabs => 'Float over other tabs';
 
   @override
   String get agentToolSshConnect => 'SSH connect';
@@ -1663,4 +1663,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get privacyBlurTip => 'Hide app content in the app switcher';
+
+  @override
+  String get floatReturnToTab => 'Return to tab';
+
+  @override
+  String get termInFloatWindow => 'This terminal is in the floating window';
 }
