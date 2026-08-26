@@ -45,6 +45,8 @@
         and a translated one would be the only thing on the row wide enough to
         push the value off it.
     -->
+    <string name="widget_refresh_desc">Refresh</string>
+
     <string name="widget_row_cpu" translatable="false">CPU</string>
     <string name="widget_row_mem" translatable="false">MEM</string>
     <string name="widget_row_disk" translatable="false">DISK</string>

@@ -294,6 +294,27 @@ abstract class HomeWidget(private val kind: WidgetKind) : AppWidgetProvider() {
             R.id.widget_container,
             PendingIntent.getActivity(context, appWidgetId, intent, flag),
         )
+
+        // A broadcast back to this same provider, naming this one widget, which
+        // `AppWidgetProvider.onReceive` turns into an `onUpdate` for it. The
+        // receiver is not exported and does not need to be: a `PendingIntent`
+        // is sent with the identity of the app that created it, and that is
+        // this app.
+        //
+        // The `data` is what keeps the widgets apart. Two refresh intents differ
+        // only in an extra, `filterEquals` does not look at extras, and the
+        // flags say `FLAG_UPDATE_CURRENT` — so without it the second widget's
+        // `PendingIntent` would rewrite the first one's target id and both
+        // buttons would refresh the same widget.
+        val refresh = Intent(context, javaClass).apply {
+            action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+            putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, intArrayOf(appWidgetId))
+            data = android.net.Uri.parse("sbm://widget/refresh/$appWidgetId")
+        }
+        views.setOnClickPendingIntent(
+            R.id.widget_refresh,
+            PendingIntent.getBroadcast(context, appWidgetId, refresh, flag),
+        )
     }
 
     // MARK: - States
@@ -307,6 +328,11 @@ abstract class HomeWidget(private val kind: WidgetKind) : AppWidgetProvider() {
         // The server's own name, not "Loading...": the name is already known
         // and is what identifies the widget among several on one screen.
         views.setTextViewText(R.id.widget_name, name)
+        // The footer says the reading's time, so during a fetch it has nothing
+        // true to say. It is also the only acknowledgement the refresh button
+        // gets — a `RemoteViews` cannot animate, and a tap that changes nothing
+        // on screen reads as a tap that missed.
+        views.setTextViewText(R.id.widget_time, "…")
         views.setViewVisibility(R.id.error_message, View.GONE)
         manager.updateAppWidget(appWidgetId, views)
     }
@@ -408,6 +434,11 @@ abstract class HomeWidget(private val kind: WidgetKind) : AppWidgetProvider() {
         views.setViewVisibility(R.id.error_message, View.VISIBLE)
         views.setViewVisibility(R.id.widget_content, View.GONE)
         views.setViewVisibility(R.id.widget_chart, View.GONE)
+        // It dates a reading, and there is none. Left alone it would still be
+        // showing the ellipsis `showLoading` put there, which claims a fetch is
+        // in flight when one has just failed. The refresh button stays: this is
+        // the state it is most use in.
+        views.setViewVisibility(R.id.widget_time, View.GONE)
         manager.updateAppWidget(appWidgetId, views)
     }
 
