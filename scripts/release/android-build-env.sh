@@ -31,5 +31,7 @@ export ORG_GRADLE_PROJECT_allowUnsignedRelease=true
 # fail the scanner or be deleted before the offline build can use it.
 FDROID_CACHE_DIR="${FDROID_CACHE_DIR:-${RUNNER_TEMP:-${TMPDIR:-/tmp}}/server-box-fdroid-cache}"
 export PUB_CACHE="${PUB_CACHE:-$FDROID_CACHE_DIR/pub}"
+export CARGO_HOME="${CARGO_HOME:-$FDROID_CACHE_DIR/cargo}"
+export RUSTUP_HOME="${RUSTUP_HOME:-$FDROID_CACHE_DIR/rustup}"
 export GRADLE_USER_HOME="${FDROID_GRADLE_USER_HOME:-$FDROID_CACHE_DIR/gradle}"
 export PROOT_BUILD_DIR="${PROOT_BUILD_DIR:-$FDROID_CACHE_DIR/proot}"

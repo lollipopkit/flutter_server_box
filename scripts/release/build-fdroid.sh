@@ -70,7 +70,7 @@ scripts/build-proot-android.sh
 # Refresh Flutter's Android metadata after `pub get`, then remove dev-only
 # plugins before Gradle configures the release. The final assemble target
 # regenerates its registrant from this pruned input even with `--no-pub`.
-flutter build apk --release --config-only
+flutter build apk --no-pub --release --config-only
 dart --packages="$REPO_ROOT/scripts/release/empty-package-config.json" \
   "$REPO_ROOT/scripts/release/prune-android-dev-plugins.dart"
 dart --packages="$REPO_ROOT/scripts/release/empty-package-config.json" \
