@@ -362,6 +362,10 @@ class AppLocalizationsJa extends AppLocalizations {
       'このスイッチはプログラムがバックグラウンドで実行を試みることを意味しますが、実際にバックグラウンドで実行できるかどうかは、権限が有効になっているかに依存します。AOSPベースのAndroid ROMでは、このアプリの「バッテリー最適化」をオフにしてください。MIUIでは、省エネモードを「無制限」に変更してください。';
 
   @override
+  String get bgRunNeedsNotification =>
+      'バックグラウンド実行には常駐通知が必要ですが、このアプリには通知の許可がありません。タップして通知を許可してください。';
+
+  @override
   String get clearAllStatsContent => 'すべてのサーバー接続統計を削除してもよろしいですか？この操作は元に戻せません。';
 
   @override
@@ -1054,6 +1058,14 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get sftpShowFoldersFirst => 'フォルダーを先に表示';
+
+  @override
+  String get sftpUnavailableUseScp =>
+      '多くの組み込み機器のようにこのホストに SFTP サブシステムがない場合は、サーバー設定でファイル転送を SCP に変更してください。';
+
+  @override
+  String get sshFileTransportTip =>
+      '最近の機器なら SFTP。SSH サーバーに SFTP サブシステムがない古い機器や組み込み機器では SCP を選んでください。`scp` コマンドと、`find`・`stat`・`mv`・`chmod` など一般的なファイル操作コマンドが揃った shell 環境が必要です。';
 
   @override
   String get specifyDev => 'デバイスを指定';

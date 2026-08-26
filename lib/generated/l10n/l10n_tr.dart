@@ -391,6 +391,10 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu anahtar yalnızca programın arka planda çalışmayı deneyeceği anlamına gelir. Arka planda çalışıp çalışamayacağı, iznin etkinleştirilip etkinleştirilmediğine bağlıdır. AOSP tabanlı Android ROM\'lar için lütfen bu uygulamada \"Pil Optimizasyonu\"nu devre dışı bırakın. MIUI / HyperOS için lütfen güç tasarrufu politikasını \"Sınırsız\" olarak değiştirin.';
 
   @override
+  String get bgRunNeedsNotification =>
+      'Arka planda çalışmak kalıcı bir bildirim gerektirir ve bu uygulamanın bildirim izni yok. İzin vermek için dokunun.';
+
+  @override
   String get clearAllStatsContent =>
       'Tüm sunucu bağlantı istatistiklerini temizlemek istediğinizden emin misiniz? Bu işlem geri alınamaz.';
 
@@ -1119,6 +1123,14 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get sftpShowFoldersFirst => 'Önce klasörleri göster';
+
+  @override
+  String get sftpUnavailableUseScp =>
+      'Birçok gömülü cihazda olduğu gibi bu makinede SFTP alt sistemi yoksa, sunucu ayarlarından dosya aktarımını SCP yapın.';
+
+  @override
+  String get sshFileTransportTip =>
+      'Güncel her cihaz için SFTP uygundur. SSH sunucusunda SFTP alt sistemi bulunmayan eski ya da gömülü bir makine için SCP seçin: `scp` komutunun yanı sıra `find`, `stat`, `mv`, `chmod` gibi olağan dosya araçlarına sahip bir kabuk ortamı gerekir.';
 
   @override
   String get specifyDev => 'Cihazı belirt';

@@ -15,12 +15,14 @@ import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/shell_quote.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/core/utils/ssh_exec.dart';
+import 'package:server_box/core/utils/ssh_file_backend.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/provider/ai/adhoc_ssh.dart';
 import 'package:server_box/data/provider/ai/agent_shell.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
@@ -207,7 +209,7 @@ const globalAgentToolDefinitions = <AskAiToolDefinition>[
   AskAiToolDefinition(
     name: 'read_file',
     description:
-        'Read a UTF-8 text file over SFTP, from a configured server or an '
+        'Read a UTF-8 text file from a configured server or an '
         'ad-hoc SSH connection.',
     parameters: {
       'type': 'object',
@@ -250,7 +252,7 @@ const globalAgentToolDefinitions = <AskAiToolDefinition>[
   AskAiToolDefinition(
     name: 'write_file',
     description:
-        'Replace a UTF-8 text file over SFTP after user review, on a '
+        'Replace a UTF-8 text file after user review, on a '
         'configured server or an ad-hoc SSH connection.',
     parameters: {
       'type': 'object',
@@ -637,10 +639,20 @@ class AgentToolExecutionResult {
 /// [serverId] is null for a connection that is not a configured server — it is
 /// what makes a result say "no particular server" rather than name someone
 /// else's.
+/// [fileTransport] is which protocol carries this host's files, so the file
+/// tools open a backend rather than insisting on SFTP — a server told to use
+/// `scp` has no subsystem to open.
+///
+/// [expectedSpi] is the server as it was when this handle was resolved, and
+/// null where there is no configured server to compare against. Every await in
+/// a tool re-checks it: an edit or a disconnect mid-operation would otherwise
+/// leave the tool finishing against the host it started on and reporting the
+/// result under the new one's name.
 typedef AgentShellHandle = ({
   ServerExec exec,
   SSHClient? client,
   String? serverId,
+  SshFileTransport fileTransport,
   Spi? expectedSpi,
 });
 
@@ -701,15 +713,15 @@ final class AdHocSessionTarget extends AgentSshTarget {
   final String sessionId;
 }
 
-/// What the file tools say when there is no byte stream to carry SFTP.
+/// What the file tools say when there is no byte stream to carry a file.
 ///
 /// Told as a way forward rather than as a refusal: the machine is reachable
 /// and `cat` and `tee` are right there, so a model that reads this can finish
 /// the job instead of reporting the server unusable.
 final _noSftp = StateError(
-  'Reading and writing files here needs SFTP, which travels over SSH. This '
-  'server is reached only through its monitor agent, which carries no byte '
-  'stream. Use run_shell_command instead — `cat path` to read, and a heredoc '
+  'Reading and writing files here needs a byte stream, which travels over '
+  'SSH. This server is reached only through its monitor agent, which carries '
+  'none. Use run_shell_command instead — `cat path` to read, and a heredoc '
   'into `tee path` to write.',
 );
 
@@ -725,7 +737,6 @@ class GlobalAgentToolService {
   static const _maxShellOutputCharacters = _maxGlobalAgentShellOutputCharacters;
   static const _maxReadBytes = 128 * 1024;
   static const _maxWriteBytes = 512 * 1024;
-  static int _temporaryFileSequence = 0;
 
   final Ref _ref;
 
@@ -837,7 +848,15 @@ class GlobalAgentToolService {
     }
     // No server id: a result claiming one would name a machine in the list,
     // and this is not one of them.
-    return (exec: exec, client: null, serverId: null, expectedSpi: null);
+    return (
+      exec: exec,
+      client: null,
+      serverId: null,
+      // Never read: with no client there is no file backend to build, and the
+      // file tools take the `dart:io` path here.
+      fileTransport: SshFileTransport.sftp,
+      expectedSpi: null,
+    );
   }
 
   /// An ad-hoc connection that is still open.
@@ -867,6 +886,10 @@ class GlobalAgentToolService {
       exec: SshExec(session.client),
       client: session.client,
       serverId: null,
+      // Nothing was configured for this host — it was reached by address a
+      // moment ago — so it gets the protocol every server starts on, and there
+      // is no stored record for a later check to compare against.
+      fileTransport: SshFileTransport.sftp,
       expectedSpi: null,
     );
   }
@@ -890,7 +913,8 @@ class GlobalAgentToolService {
       return (
         exec: SshExec(existing),
         client: existing,
-        serverId: state.spi.id,
+        serverId: spi.id,
+        fileTransport: spi.ssh?.fileTransport ?? SshFileTransport.sftp,
         expectedSpi: spi,
       );
     }
@@ -920,6 +944,9 @@ class GlobalAgentToolService {
       exec: exec,
       client: exec is SshExec ? exec.client : null,
       serverId: spi.id,
+      // From what was just checked against the store rather than read back off
+      // the provider, which by now may hold a different server entirely.
+      fileTransport: spi.ssh?.fileTransport ?? SshFileTransport.sftp,
       expectedSpi: spi,
     );
   }
@@ -1047,24 +1074,34 @@ class GlobalAgentToolService {
     if (path == null) throw const FormatException('path is required');
     if (exec is LocalExec) return _readLocalFile(proposal, watch, path, exec);
     if (client == null) throw _noSftp;
-    SftpClient? sftp;
-    SftpFile? file;
+    // Through the backend rather than through `client.sftp()` directly, which
+    // is what this used to do: a server told to move its files over `scp` has
+    // no SFTP subsystem to open, and the tool would be the one part of the app
+    // that still insisted on one.
+    final backend = await openSshFileBackend(
+      client,
+      transport: handle.fileTransport,
+      timeout: _sftpTimeout,
+    );
     try {
       _requireCurrent(handle);
-      sftp = await client.sftp().timeout(_sftpTimeout);
+      final entry = await backend.stat(path);
       _requireCurrent(handle);
-      file = await sftp.open(path).timeout(_sftpTimeout);
-      _requireCurrent(handle);
-      final attrs = await file.stat().timeout(_sftpTimeout);
-      _requireCurrent(handle);
-      final size = attrs.size;
-      final readLength = size == null
-          ? _maxReadBytes + 1
-          : size.clamp(0, _maxReadBytes + 1).toInt();
+      if (entry == null) throw StateError('No such file: $path');
+      if (entry.isDir) throw StateError('$path is a directory, not a file.');
+      final size = entry.size;
       final bytes = BytesBuilder(copy: false);
-      await for (final chunk
-          in file.read(length: readLength).timeout(_sftpTimeout)) {
+      // Bounded per chunk. The SFTP path this replaced read with an explicit
+      // `.timeout(_sftpTimeout)`, and the backends do not bound a read of
+      // their own — deliberately, since a transfer watches its own progress —
+      // so without this a remote that stops sending holds the Agent's turn
+      // open with nothing able to end it.
+      await for (final chunk in backend.read(path).timeout(_sftpTimeout)) {
         bytes.add(chunk);
+        // One byte past the limit is enough to know it was exceeded, and
+        // stopping here is what keeps a log file the model asked for from
+        // being pulled across in full before being thrown away.
+        if (bytes.length > _maxReadBytes) break;
       }
       _requireCurrent(handle);
       final data = bytes.takeBytes();
@@ -1087,8 +1124,7 @@ class GlobalAgentToolService {
         },
       );
     } finally {
-      await file?.close();
-      await sftp?.close();
+      await backend.close();
     }
   }
 
@@ -1135,10 +1171,16 @@ class GlobalAgentToolService {
       return _readGuestFile(proposal, watch, path, exec);
     }
     final file = File(await _localPath(path, exec));
-    if (!await file.exists()) {
+    final int size;
+    try {
+      // Asked by doing it, not by `exists()` first. That probe answers false
+      // both for a file that is not there and for one under a directory this
+      // process may not traverse, so a refusal was reported to the model as an
+      // absence — and a model told a file does not exist goes and creates it.
+      size = await file.length();
+    } on PathNotFoundException {
       throw StateError('No such file on this device: $path');
     }
-    final size = await file.length();
     final truncated = size > _maxReadBytes;
     // Only what is going to be shown. A log the size of memory is a plausible
     // thing to point this at.
@@ -1172,6 +1214,12 @@ class GlobalAgentToolService {
     final result = await exec.run(
       'set -e\n'
       'p=$quoted\n'
+      // Asked before `-f`, which answers no for a directory as readily as for
+      // something that is not there — so reading one was reported as "no such
+      // file", and the model was told to create a path that already exists.
+      // The SSH side tells the two apart; this now says the same thing.
+      r'if [ -d "$p" ]; then exit 45; fi'
+      '\n'
       r'if [ ! -f "$p" ]; then exit 44; fi'
       '\n'
       r'size=$(wc -c < "$p") || exit'
@@ -1182,6 +1230,9 @@ class GlobalAgentToolService {
     );
     if (result.outputIncomplete) {
       throw StateError('The Linux userland returned incomplete file data.');
+    }
+    if (result.exitCode == 45) {
+      throw StateError('$path is a directory, not a file.');
     }
     if (result.exitCode == 44) {
       throw StateError('No such file on this device: $path');
@@ -1288,11 +1339,30 @@ class GlobalAgentToolService {
     final result = await exec.run(
       'set -e\n'
       'p=$quoted\n'
+      // `mv file dir` files the one *inside* the other, so replacing a path
+      // that turned out to be a directory would quietly leave the staged copy
+      // sitting in it under a name nobody asked for.
+      r'''if [ -d "$p" ]; then printf '%s: is a directory\n' "$p" >&2; exit 1; fi'''
+      '\n'
       'tmp="\$p.$suffix.tmp"\n'
       r'''trap 'rm -f -- "$tmp"' EXIT HUP INT TERM'''
       '\n'
       r'''base64 -d > "$tmp"'''
       '\n'
+      // The staged copy is created with the guest's umask, and the `mv` below
+      // carries *that* mode onto the destination — so saving an edit to a 0755
+      // script left it 0644 and unrunnable. Whatever was there keeps its
+      // permissions instead, as `carryModeToStaging` arranges for every other
+      // backend. Best effort, like that one: the bytes are already written,
+      // and a mode that cannot be read or set must not mean the file can never
+      // be saved.
+      r'''if [ -f "$p" ]; then'''
+      '\n'
+      r'''  mode=$(stat -c %a "$p" 2>/dev/null) || mode='''
+      '\n'
+      r'''  if [ -n "$mode" ]; then chmod "$mode" "$tmp" || :; fi'''
+      '\n'
+      'fi\n'
       r'''mv -f -- "$tmp" "$p"'''
       '\n'
       'trap - EXIT HUP INT TERM',
@@ -1337,35 +1407,23 @@ class GlobalAgentToolService {
         'File content exceeds the $_maxWriteBytes byte Agent limit.',
       );
     }
-    SftpClient? sftp;
-    SftpFile? file;
-    String? temporaryPath;
+    final backend = await openSshFileBackend(
+      client,
+      transport: handle.fileTransport,
+      timeout: _sftpTimeout,
+    );
     try {
       _requireCurrent(handle);
-      sftp = await client.sftp().timeout(_sftpTimeout);
+      // The staging file, the mode carried onto it and the rename over it were
+      // written out here; the backend does all three, and removes its own
+      // leftovers when the write fails.
+      await backend
+          .write(path, Stream<List<int>>.value(bytes), size: bytes.length)
+          .timeout(_operationTimeout);
+      // After, not only before. The write is the long await here, and a server
+      // edited while it ran is one whose result must not be reported under the
+      // new name — `close` below still ends the channel either way.
       _requireCurrent(handle);
-      final tempPath = _temporaryRemotePath(path);
-      temporaryPath = tempPath;
-      file = await sftp
-          .open(
-            tempPath,
-            mode:
-                SftpFileOpenMode.truncate |
-                SftpFileOpenMode.create |
-                SftpFileOpenMode.write,
-          )
-          .timeout(_sftpTimeout);
-      _requireCurrent(handle);
-      final writer = file.write(Stream<Uint8List>.value(bytes));
-      await writer.done.timeout(_operationTimeout);
-      _requireCurrent(handle);
-      final completedFile = file;
-      file = null;
-      await completedFile.close().timeout(_sftpTimeout);
-      _requireCurrent(handle);
-      await sftp.rename(tempPath, path).timeout(_sftpTimeout);
-      _requireCurrent(handle);
-      temporaryPath = null;
       return AgentToolExecutionResult(
         toolName: proposal.toolName,
         serverId: serverId,
@@ -1375,39 +1433,12 @@ class GlobalAgentToolService {
         data: {'path': path, 'bytes_written': bytes.length},
       );
     } finally {
-      final pendingFile = file;
-      file = null;
-      try {
-        await pendingFile?.close().timeout(_sftpTimeout);
-      } catch (_) {
-        // Best-effort cleanup keeps the original write error intact.
-      }
-      if (temporaryPath != null && sftp != null) {
-        try {
-          await sftp.remove(temporaryPath).timeout(_sftpTimeout);
-        } catch (_) {
-          // Best-effort cleanup keeps the original write error intact.
-        }
-      }
-      final pendingSftp = sftp;
-      sftp = null;
-      try {
-        await pendingSftp?.close().timeout(_sftpTimeout);
-      } catch (_) {
-        // Best-effort cleanup keeps the original write error intact.
-      }
+      // One call where there were three: the backend owns the handle, the
+      // staging path and the session, and closing it is what ends whichever of
+      // them are still open — including an `scp` channel that is mid-open, for
+      // a caller that gave up on the `.timeout` above.
+      await backend.close();
     }
-  }
-
-  String _temporaryRemotePath(String path) {
-    final slash = path.lastIndexOf('/');
-    final backslash = path.lastIndexOf('\\');
-    final separator = slash > backslash ? slash : backslash;
-    final directory = separator < 0 ? '' : path.substring(0, separator + 1);
-    final filename = separator < 0 ? path : path.substring(separator + 1);
-    final sequence = _temporaryFileSequence++;
-    final timestamp = DateTime.now().microsecondsSinceEpoch;
-    return '$directory.$filename.serverbox-agent-$timestamp-$sequence.tmp';
   }
 
   /// Connects to a host the app does not know about.

@@ -22,6 +22,7 @@ class MainActivity: FlutterFragmentActivity() {
     private val ACTION_UPDATE_SESSIONS = "tech.lolli.toolbox.ACTION_UPDATE_SESSIONS"
     private val ACTION_DISCONNECT_SESSION = "tech.lolli.toolbox.ACTION_DISCONNECT_SESSION"
     private val ACTION_STOP_ALL_CONNECTIONS = "tech.lolli.toolbox.STOP_ALL_CONNECTIONS"
+    private val INTERNAL_BROADCAST_PERMISSION = "tech.lolli.toolbox.permission.INTERNAL_BROADCAST"
     private var stopAllReceiver: BroadcastReceiver? = null
     private var disableImpeller = false
     private var ownsFlutterEngine = false
@@ -125,6 +126,30 @@ class MainActivity: FlutterFragmentActivity() {
                     }
                     "isServiceRunning" -> {
                         result.success(ForegroundService.isRunning)
+                    }
+                    // Whether this app may post notifications at all. Without
+                    // it there is no foreground service, and without that the
+                    // system freezes the process the moment it is backgrounded
+                    // — so "run in the background" is a switch that cannot do
+                    // what it says. The settings page reads this to say so.
+                    "notificationsAllowed" -> {
+                        result.success(notificationsAllowed())
+                    }
+                    "openNotificationSettings" -> {
+                        try {
+                            val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                                    .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, packageName)
+                            } else {
+                                Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                    .setData(android.net.Uri.fromParts("package", packageName, null))
+                            }
+                            startActivity(intent)
+                            result.success(null)
+                        } catch (e: Exception) {
+                            android.util.Log.e("MainActivity", "Failed to open notification settings: ${e.message}")
+                            result.error("SETTINGS_ERROR", e.message, null)
+                        }
                     }
                     "setPrivacyBlur" -> {
                         privacyCoverEnabled = method.arguments as? Boolean ?: false
@@ -273,7 +298,12 @@ class MainActivity: FlutterFragmentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ContextCompat.registerReceiver(this, stopAllReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
         } else {
-            registerReceiver(stopAllReceiver, filter)
+            // `RECEIVER_NOT_EXPORTED` does not exist before API 33, and a bare
+            // `registerReceiver` leaves this reachable by every app on the
+            // device — for an action whose whole job is to disconnect every SSH
+            // session. The signature-level permission is what restricts the
+            // sender to this build.
+            registerReceiver(stopAllReceiver, filter, INTERNAL_BROADCAST_PERMISSION, null)
         }
     }
 
@@ -286,6 +316,20 @@ class MainActivity: FlutterFragmentActivity() {
         if (requestCode == 123) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 android.util.Log.i("MainActivity", "Notification permission granted")
+                // `reqPerm` is asynchronous and `startService`/`updateSessions`
+                // test the permission the moment after asking for it, so the
+                // first attempt is always refused and nothing retries it. With
+                // a session already open and no further lifecycle change
+                // coming, the service stayed stopped and the process was free
+                // to be frozen — despite the user having just said yes. Telling
+                // Dart is what makes it ask again.
+                if (::channel.isInitialized) {
+                    try {
+                        channel.invokeMethod("notificationPermissionGranted", null)
+                    } catch (e: Exception) {
+                        android.util.Log.e("MainActivity", "Failed to report the grant: ${e.message}")
+                    }
+                }
             } else {
                 android.util.Log.w("MainActivity", "Notification permission denied")
                 // Optionally inform user about the limitation

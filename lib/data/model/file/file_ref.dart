@@ -5,13 +5,14 @@ import 'package:server_box/core/utils/ssh_key_unlock.dart';
 import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/res/store.dart';
 
 /// One end of a transfer: somewhere files live, and a path in it.
 ///
 /// Serializable, because a transfer runs in an isolate and a live `SSHClient`
 /// does not cross one. What travels is everything needed to *build* the
-/// backend on the other side, which is why [SftpFileRef] carries a whole
+/// backend on the other side, which is why [SshFileRef] carries a whole
 /// credential bundle rather than a connection.
 ///
 /// The counterpart of `FileBackend`: that one is a connection somebody already
@@ -59,14 +60,19 @@ final class LocalFileRef extends FileRef {
   String toString() => 'LocalFileRef($path)';
 }
 
-/// A server, over SFTP.
-final class SftpFileRef extends FileRef {
-  const SftpFileRef({required this.creds, required this.path});
+/// A server, over its SSH connection.
+///
+/// Which protocol runs on top of that connection — SFTP or `scp` — is the
+/// server's own answer and travels inside [creds], so this is one kind of end
+/// and not two. A transfer that had to be told is a transfer that could be told
+/// something the server disagrees with.
+final class SshFileRef extends FileRef {
+  const SshFileRef({required this.creds, required this.path});
 
   /// Built from a server the app knows about, resolving its keys now, on the
   /// isolate that has the stores.
-  factory SftpFileRef.forServer(Spi spi, String path) =>
-      SftpFileRef(creds: SshTransferCreds.forServer(spi), path: path);
+  factory SshFileRef.forServer(Spi spi, String path) =>
+      SshFileRef(creds: SshTransferCreds.forServer(spi), path: path);
 
   final SshTransferCreds creds;
 
@@ -75,28 +81,36 @@ final class SftpFileRef extends FileRef {
 
   Spi get spi => creds.spi;
 
+  /// What this server said it speaks. SFTP for a server carrying no SSH
+  /// credential at all, which cannot happen for a ref that exists — the
+  /// fallback is there so callers need no `?`.
+  SshFileTransport get transport =>
+      spi.ssh?.fileTransport ?? SshFileTransport.sftp;
+
   /// Always `/`: the far side is a Linux-like system, whatever this device is.
   @override
-  SftpFileRef child(String name) => SftpFileRef(
-    creds: creds,
-    path: path.joinPath(name, separator: '/'),
-  );
+  SshFileRef child(String name) =>
+      SshFileRef(creds: creds, path: path.joinPath(name, separator: '/'));
 
+  // The whole [Spi], not its id. A queued transfer names where it is going, and
+  // an id outlives an edit that moved the server somewhere else — so two refs
+  // that were equal by id could be to two different hosts. `SshCredential`
+  // hashes its jump servers normalised for this to hold.
   @override
   bool operator ==(Object other) =>
-      other is SftpFileRef && other.path == path && other.spi == spi;
+      other is SshFileRef && other.path == path && other.spi == spi;
 
   @override
-  int get hashCode => Object.hash(SftpFileRef, spi, path);
+  int get hashCode => Object.hash(SshFileRef, spi, path);
 
   @override
-  String toString() => 'SftpFileRef(${spi.id}:$path)';
+  String toString() => 'SshFileRef(${spi.id}:$path)';
 }
 
 /// A server, through its `monitor` agent's file API.
 ///
 /// Carries the credential rather than a client, for the same reason
-/// [SftpFileRef] carries one — except that this one need not cross an isolate
+/// [SshFileRef] carries one — except that this one need not cross an isolate
 /// at all: the agent is reached over HTTPS, whose crypto is native rather than
 /// pure Dart, so a transfer with this at either end does not peg the UI
 /// thread the way an SSH one would.

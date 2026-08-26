@@ -148,6 +148,22 @@ const en = {
 	terminalPasswordlessNoticeBody: 'Opening a terminal here needs no SSH credentials, so your panel password is all that stands between a visitor and a shell on this machine. Keep it if that is what you want, or turn it off and sign in with an SSH account instead. Turning it back on later means editing the agent\'s config file.',
 	terminalPasswordlessKeep: 'Keep it on',
 	terminalPasswordlessDisable: 'Turn it off',
+	files: 'Files',
+	filesUnavailable: 'File access is not enabled on this agent. Turn on remote_access.fs.enabled and name its roots in config.toml; it also requires TLS, or a proxy on the same host.',
+	filesRoots: 'Roots',
+	filesEmpty: 'Nothing here',
+	filesSize: 'Size',
+	filesModified: 'Modified',
+	filesUpload: 'Upload',
+	filesUploading: 'Uploading...',
+	filesDownload: 'Download',
+	filesNewFolder: 'New folder',
+	filesRename: 'Rename',
+	filesDelete: 'Delete',
+	filesPermissions: 'Permissions',
+	filesConfirmDelete: 'Delete this? It cannot be undone.',
+	filesDeleteRecursive: 'Delete the folder and everything in it',
+	filesName: 'Name',
 } satisfies BaseTranslation
 
 export default en

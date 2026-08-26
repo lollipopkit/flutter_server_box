@@ -365,6 +365,10 @@ class AppLocalizationsKo extends AppLocalizations {
       '이 스위치는 프로그램이 백그라운드에서 실행을 시도한다는 의미입니다. 실제 백그라운드 실행 가능 여부는 권한 활성화 여부에 따라 다릅니다. AOSP 기반 Android ROM의 경우, 이 앱의 \"배터리 최적화\"를 비활성화해 주세요. MIUI / HyperOS의 경우, 절전 정책을 \"무제한\"으로 변경해 주세요.';
 
   @override
+  String get bgRunNeedsNotification =>
+      '백그라운드 실행에는 상주 알림이 필요하지만, 이 앱에는 알림 권한이 없습니다. 눌러서 알림을 허용하세요.';
+
+  @override
   String get clearAllStatsContent => '모든 서버 연결 통계를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.';
 
   @override
@@ -1056,6 +1060,14 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get sftpShowFoldersFirst => '폴더 우선 표시';
+
+  @override
+  String get sftpUnavailableUseScp =>
+      '많은 임베디드 장비처럼 이 호스트에 SFTP 하위 시스템이 없다면, 서버 설정에서 파일 전송을 SCP로 바꾸세요.';
+
+  @override
+  String get sshFileTransportTip =>
+      '요즘 장비는 SFTP를 쓰세요. SSH 서버에 SFTP 하위 시스템이 없는 오래된 장비나 임베디드 장비는 SCP를 고르면 됩니다. `scp` 명령과, `find`·`stat`·`mv`·`chmod` 같은 일반적인 파일 명령이 갖춰진 셸 환경이 필요합니다.';
 
   @override
   String get specifyDev => '장치 지정';

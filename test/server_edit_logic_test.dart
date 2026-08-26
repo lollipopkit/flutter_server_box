@@ -316,6 +316,102 @@ void main() {
       await tester.pump();
     });
 
+    testWidgets('key auth switched on without a key still saves', (
+      tester,
+    ) async {
+      // Turning the switch on writes `-1` to `_keyIdx`, which stands for "on,
+      // nothing picked yet" — not for a key at index -1. A guard added to stop
+      // `elementAt` throwing on a key deleted from another pane read it as a
+      // missing key and refused the save, so a server authenticating by
+      // password could no longer be saved once that switch had been touched.
+      FlutterSecureStorage.setMockInitialValues({});
+
+      final server = spiFixture(
+        name: 'pwd-server',
+        ip: '192.168.1.102',
+        user: 'me',
+        pwd: 'hunter2',
+        id: 'pwd-server-id',
+      );
+      Spi? persisted;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            serversProvider.overrideWith(
+              () => _PersistingServersNotifier(
+                server,
+                (value) => persisted = value,
+              ),
+            ),
+            privateKeyProvider.overrideWithValue(const PrivateKeyState()),
+          ],
+          child: MaterialApp(
+            builder: ResponsivePoints.builder,
+            locale: const Locale('en'),
+            localizationsDelegates: const [
+              LibLocalizations.delegate,
+              ...AppLocalizations.localizationsDelegates,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Builder(
+              builder: (context) {
+                app_locale.l10n = AppLocalizations.of(context)!;
+                context.setLibL10n();
+                return Scaffold(
+                  body: TextButton(
+                    key: const ValueKey('open-server-editor'),
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) =>
+                            ServerEditPage(args: SpiRequiredArgs(server)),
+                      ),
+                    ),
+                    child: const Text('Open editor'),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.byKey(const ValueKey('open-server-editor')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      final keyAuth = find.descendant(
+        of: find.widgetWithText(ListTile, 'Key Auth'),
+        matching: find.byType(Switch),
+      );
+      expect(keyAuth, findsOneWidget);
+      // Scrolled to first: the form is longer than the test window, and a tap
+      // at an off-screen offset lands on whatever is drawn there instead.
+      await tester.ensureVisible(keyAuth);
+      await tester.pump();
+      await tester.tap(keyAuth);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      // Asserted, so the save below is known to exercise the `-1` path: a tap
+      // that missed would leave the switch off and the test passing for the
+      // wrong reason.
+      expect(tester.widget<Switch>(keyAuth).value, isTrue);
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      // Saved and popped, rather than stopped with "invalid: key". The password
+      // is what authenticates it, and no stored key was ever chosen.
+      expect(find.byKey(const ValueKey('open-server-editor')), findsOneWidget);
+      expect(persisted, isNotNull);
+      expect(persisted!.ssh?.pwd, 'hunter2');
+      expect(persisted!.ssh?.keyId, isNull);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+    });
+
     test('server editing vs creation logic', () {
       // Test logic for distinguishing between editing and creating servers
 

@@ -315,4 +315,55 @@ void main() {
       );
     });
   });
+
+  group('ordering two release versions', () {
+    test('is by number, segment by segment', () {
+      expect(compareRootfsVersions('24.04.4', '24.04.3'), greaterThan(0));
+      expect(compareRootfsVersions('24.04.3', '24.04.4'), lessThan(0));
+      expect(compareRootfsVersions('24.04.3', '24.04.3'), 0);
+      // Not by text, which would put 10 before 9.
+      expect(compareRootfsVersions('3.10', '3.9'), greaterThan(0));
+      // A missing segment is a zero, so a release precedes its own point
+      // releases rather than sorting after them.
+      expect(compareRootfsVersions('24.04.1', '24.04'), greaterThan(0));
+      expect(compareRootfsVersions('24.04', '24.04.0'), 0);
+    });
+
+    test('and an update is only ever offered upwards', () {
+      // What this is for. `isOutdated` asked whether the two versions were
+      // *different*, and a manifest can describe an older release than what is
+      // installed — a fetched one that fails verification falls back to the
+      // copy compiled into the build. Installing over a profile destroys the
+      // tree, so "different" meant a downgrade that took everything with it.
+      expect(compareRootfsVersions('24.04.3', '24.04.4'), lessThan(0));
+      expect(compareRootfsVersions('24.04.4', '24.04.4'), 0);
+    });
+
+    test('a scheme it cannot read gets no answer at all', () {
+      // Null, not a comparison of the text. Ordering these by their first
+      // letters is a guess, and what the caller does with a positive answer is
+      // replace the tree and destroy everything in it — so half the guesses
+      // would be the downgrade this function exists to prevent.
+      expect(compareRootfsVersions('edge', 'v3'), isNull);
+      expect(compareRootfsVersions('v3', 'edge'), isNull);
+      expect(compareRootfsVersions('24.04.3', '24.04.edge'), isNull);
+
+      // Which makes it outdated in neither direction: `isOutdated` asks for an
+      // ordering and a greater one, and null is neither.
+      bool outdated(String manifest, String installed) {
+        final order = compareRootfsVersions(manifest, installed);
+        return order != null && order > 0;
+      }
+
+      expect(outdated('edge', 'v3'), isFalse);
+      expect(outdated('v3', 'edge'), isFalse);
+    });
+
+    test('but two profiles on the same unreadable scheme are the same', () {
+      // Identical text needs no ordering to be equal, so this is not a guess
+      // and does not have to be refused.
+      expect(compareRootfsVersions('edge', 'edge'), 0);
+      expect(compareRootfsVersions('v3.20', 'v3.20'), 0);
+    });
+  });
 }

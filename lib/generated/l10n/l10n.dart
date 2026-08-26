@@ -795,6 +795,12 @@ abstract class AppLocalizations {
   /// **'This switch only means the program will try to run in the background. Whether it can run in the background depends on whether the permission is enabled or not. For AOSP-based Android ROMs, please disable \"Battery Optimization\" in this app. For MIUI / HyperOS, please change the power saving policy to \"Unlimited\".'**
   String get bgRunTip;
 
+  /// No description provided for @bgRunNeedsNotification.
+  ///
+  /// In en, this message translates to:
+  /// **'Running in the background needs an ongoing notification, and this app has no notification permission. Tap to allow notifications.'**
+  String get bgRunNeedsNotification;
+
   /// No description provided for @clearAllStatsContent.
   ///
   /// In en, this message translates to:
@@ -2047,6 +2053,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Display folders first'**
   String get sftpShowFoldersFirst;
+
+  /// No description provided for @sftpUnavailableUseScp.
+  ///
+  /// In en, this message translates to:
+  /// **'If this host has no SFTP subsystem, as many embedded devices do not, set its file transfer to SCP in the server settings.'**
+  String get sftpUnavailableUseScp;
+
+  /// No description provided for @sshFileTransportTip.
+  ///
+  /// In en, this message translates to:
+  /// **'SFTP suits anything current. Choose SCP for an old or embedded host whose SSH server has no SFTP subsystem: it needs the `scp` command and a shell that also has the usual file utilities (`find`, `stat`, `mv`, `chmod`).'**
+  String get sshFileTransportTip;
 
   /// No description provided for @specifyDev.
   ///

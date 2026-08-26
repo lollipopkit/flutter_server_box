@@ -521,7 +521,23 @@ extension _Linux on _AppSettingsPageState {
         onSave(value);
         // The setting is only half of it: what the package manager reads is
         // the file, and that was written at install.
-        await Rootfs.applyNetSettings();
+        //
+        // Reported rather than left to escape from an async callback nobody
+        // awaits. The setting has to be written first — this reads it back —
+        // so a failure here is the store and the installed systems disagreeing,
+        // and saying "success" over it left the user with a mirror the guest
+        // does not use and no reason to think otherwise.
+        try {
+          await Rootfs.applyNetSettings();
+        } catch (e, s) {
+          Loggers.app.warning('Failed to apply the Linux net settings', e, s);
+          if (!context.mounted) return;
+          await context.showRoundDialog(
+            title: libL10n.fail,
+            child: Text('$e'),
+          );
+          return;
+        }
         Toast.success(libL10n.success);
       }
 

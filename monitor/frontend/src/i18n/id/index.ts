@@ -148,6 +148,22 @@ const id = {
 	terminalPasswordlessNoticeBody: 'Membuka terminal di sini tidak butuh kredensial SSH, jadi kata sandi panel Anda adalah satu-satunya penghalang antara pengunjung dan shell di mesin ini. Pertahankan bila memang itu yang Anda mau, atau matikan dan masuk dengan akun SSH. Menyalakannya lagi nanti berarti menyunting berkas konfigurasi agen.',
 	terminalPasswordlessKeep: 'Biarkan aktif',
 	terminalPasswordlessDisable: 'Matikan',
+	files: 'Berkas',
+	filesUnavailable: 'Akses berkas tidak diaktifkan pada agen ini. Nyalakan remote_access.fs.enabled di config.toml dan tentukan root-nya; juga membutuhkan TLS, atau proxy di host yang sama.',
+	filesRoots: 'Root',
+	filesEmpty: 'Tidak ada apa-apa di sini',
+	filesSize: 'Ukuran',
+	filesModified: 'Diubah',
+	filesUpload: 'Unggah',
+	filesUploading: 'Mengunggah...',
+	filesDownload: 'Unduh',
+	filesNewFolder: 'Folder baru',
+	filesRename: 'Ganti nama',
+	filesDelete: 'Hapus',
+	filesPermissions: 'Izin',
+	filesConfirmDelete: 'Hapus ini? Tindakan ini tidak dapat dibatalkan.',
+	filesDeleteRecursive: 'Hapus folder beserta seluruh isinya',
+	filesName: 'Nama',
 } satisfies Translation
 
 export default id

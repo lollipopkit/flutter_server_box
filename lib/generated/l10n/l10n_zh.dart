@@ -358,6 +358,9 @@ class AppLocalizationsZh extends AppLocalizations {
       '此开关只代表程序会尝试在后台运行，具体能否后台运行取决于是否开启了权限。原生 Android 请关闭本 App 的“电池优化”，MIUI / HyperOS 请将省电策略改为“无限制”。';
 
   @override
+  String get bgRunNeedsNotification => '后台运行需要一条常驻通知,而本应用当前无通知权限。点击去开启通知权限。';
+
+  @override
   String get clearAllStatsContent => '确定要清空所有服务器的连接统计数据吗？此操作无法撤销。';
 
   @override
@@ -1037,6 +1040,14 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sftpShowFoldersFirst => '文件夹显示在前';
+
+  @override
+  String get sftpUnavailableUseScp =>
+      '如果这台设备没有 SFTP 子系统(不少嵌入式设备如此),在服务器设置里把文件传输改为 SCP。';
+
+  @override
+  String get sshFileTransportTip =>
+      '常规设备用 SFTP。老旧或嵌入式设备的 SSH 服务没有 SFTP 子系统,选 SCP:它只需要 scp 命令,以及带有 find、stat、mv、chmod 等常用文件命令的 shell 环境。';
 
   @override
   String get specifyDev => '指定设备';
@@ -1864,6 +1875,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       '此開關僅代表程式會嘗試於背景執行，能否成功取決於系統權限。在原生 Android 上，請關閉本應用的「電池最佳化」；在 MIUI / HyperOS 上，請將省電策略調整為「無限制」。';
 
   @override
+  String get bgRunNeedsNotification => '背景執行需要一條常駐通知，而本應用目前沒有通知權限。點擊前往開啟通知權限。';
+
+  @override
   String get clearAllStatsContent => '確定要清空所有伺服器的連線統計資料嗎？此操作無法撤銷。';
 
   @override
@@ -2544,6 +2558,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get sftpShowFoldersFirst => '資料夾顯示在前';
+
+  @override
+  String get sftpUnavailableUseScp =>
+      '如果這台裝置沒有 SFTP 子系統（不少嵌入式裝置如此），請在伺服器設定裡把檔案傳輸改為 SCP。';
+
+  @override
+  String get sshFileTransportTip =>
+      '一般裝置用 SFTP。老舊或嵌入式裝置的 SSH 服務沒有 SFTP 子系統，請選 SCP：它只需要 scp 指令，以及帶有 find、stat、mv、chmod 等常用檔案指令的 shell 環境。';
 
   @override
   String get specifyDev => '指定裝置';

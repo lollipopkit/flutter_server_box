@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
@@ -284,6 +285,10 @@ class ServerNotifier extends _$ServerNotifier {
   /// server still marked failed after they had fixed its address.
   int? _refreshingOperation;
 
+  /// [interactive] means a person is waiting on this one — the Retry button on
+  /// a failed card or on the detail page — as opposed to the poll timer. It
+  /// decides both whether keyboard-interactive auth may raise a prompt and
+  /// whether the wait is shown before the work starts.
   Future<void> refresh({bool interactive = false}) async {
     final operation = _operationGeneration;
     // Two refreshes of the *same* generation are the overlap worth stopping.
@@ -291,6 +296,24 @@ class ServerNotifier extends _$ServerNotifier {
 
     _refreshingOperation = operation;
     try {
+      // Somebody pressed Retry, and the first thing they are owed is that it
+      // registered. Both paths raise a connecting/loading state of their own,
+      // but the monitor path can fail *synchronously* — an address that is not
+      // HTTPS is refused by `MonitorHttpClient._addr` before a request goes
+      // out — so the attempt began and ended inside one microtask drain and no
+      // frame ever carried the loading state. The button appeared dead.
+      //
+      // Only from a resting state: `finished` refreshing in place must not
+      // blink a spinner over the readings it already has.
+      final spi = state.spi;
+      if (interactive && state.conn < ServerConn.connecting) {
+        updateConnection(ServerConn.connecting);
+        // Waited on rather than assumed. Yielding to the microtask queue is
+        // not enough — a frame is scheduled on the event queue, and the whole
+        // failure would still land before it ran.
+        await SchedulerBinding.instance.endOfFrame;
+        if (!_isRefreshCurrent(operation, spi)) return;
+      }
       await _getData(interactive: interactive, operation: operation);
     } finally {
       // Only if it is still ours: a newer refresh may have taken over while
@@ -578,6 +601,12 @@ class ServerNotifier extends _$ServerNotifier {
             ffi.CustomCmd(name: e.key, cmd: e.value),
       ];
 
+      // Reading the listing is an await, and an edit or a disconnect during it
+      // leaves `exec` pointing at the host this started on. The check below
+      // guards the database write; this one guards the write to the *server*,
+      // which is the one that cannot be taken back.
+      if (!isExecCurrent(exec, spi)) return;
+
       final install = await exec.run(
         ShellFuncManager.installCustomCmds(merged, systemType: system),
         entry: entry,
@@ -707,6 +736,9 @@ class ServerNotifier extends _$ServerNotifier {
       );
     }
 
+    // Held so the `catch` can close it. Authentication is awaited before
+    // `_setClient`, so a failure there would otherwise leak a connected client
+    // that nothing holds a reference to.
     SSHClient? client;
     try {
       client = await genClient(
@@ -715,7 +747,13 @@ class ServerNotifier extends _$ServerNotifier {
         onKeyboardInteractive: KeyboardInteractiveAuth.handle,
       );
       await client.authenticated;
-      if (gen != _operationGeneration || origSpi != state.spi) {
+      // Checked after, as every await in the refresh paths already does.
+      // Authenticating takes as long as the far side and the user take, and
+      // editing the server or disconnecting it bumps the generation — so
+      // without this the client that eventually arrived was installed into the
+      // state of a server that is now somewhere else, and the next caller ran
+      // its commands on the old host.
+      if (!_isRefreshCurrent(gen, origSpi)) {
         try {
           client.close();
         } catch (_) {}
@@ -732,7 +770,11 @@ class ServerNotifier extends _$ServerNotifier {
           client.close();
         } catch (_) {}
       }
-      if (gen != _operationGeneration || origSpi != state.spi) {
+      // Not counted when it is this server that moved: the limiter is keyed on
+      // an id an edit keeps, so charging a superseded attempt to it would stop
+      // the *corrected* server reconnecting. `_failSsh` skips it for the same
+      // reason.
+      if (!_isRefreshCurrent(gen, origSpi)) {
         Loggers.app.info('Discarded superseded shell connect for ${spi.name}');
         rethrow;
       }

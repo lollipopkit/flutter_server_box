@@ -8,6 +8,7 @@ import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/local_shell.dart';
 import 'package:server_box/core/utils/rootfs.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
+import 'package:server_box/data/model/server/dist.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';

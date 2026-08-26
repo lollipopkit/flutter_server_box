@@ -36,4 +36,5 @@
 	branch = main
 [submodule "packages/redfish"]
 	path = packages/redfish
-	url = git@github.com:lollipopkit/redfish.git
+	url = https://github.com/lollipopkit/redfish
+	branch = main

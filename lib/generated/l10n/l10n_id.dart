@@ -389,6 +389,10 @@ class AppLocalizationsId extends AppLocalizations {
       'Sakelar ini hanya berarti aplikasi akan mencoba berjalan di latar belakang, apakah aplikasi dapat berjalan di latar belakang tergantung pada apakah izin diaktifkan atau tidak. Untuk Android asli, nonaktifkan \"Pengoptimalan Baterai\" di aplikasi ini, dan untuk miui, ubah kebijakan penghematan daya ke \"Tidak Terbatas\".';
 
   @override
+  String get bgRunNeedsNotification =>
+      'Berjalan di latar belakang butuh notifikasi permanen, dan aplikasi ini tidak punya izin notifikasi. Ketuk untuk memberikannya.';
+
+  @override
   String get clearAllStatsContent =>
       'Apakah Anda yakin ingin menghapus semua statistik koneksi server? Tindakan ini tidak dapat dibatalkan.';
 
@@ -1117,6 +1121,14 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get sftpShowFoldersFirst => 'Folder ditampilkan lebih dulu';
+
+  @override
+  String get sftpUnavailableUseScp =>
+      'Jika host ini tidak punya subsistem SFTP, seperti banyak perangkat tertanam, ubah transfer berkasnya menjadi SCP di pengaturan server.';
+
+  @override
+  String get sshFileTransportTip =>
+      'SFTP cocok untuk perangkat masa kini. Pilih SCP untuk host lama atau tertanam yang server SSH-nya tidak punya subsistem SFTP: ia butuh perintah `scp` dan shell yang juga punya utilitas berkas umum (`find`, `stat`, `mv`, `chmod`).';
 
   @override
   String get specifyDev => 'Tentukan perangkat';

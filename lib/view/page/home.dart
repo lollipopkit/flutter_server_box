@@ -17,6 +17,7 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
+import 'package:server_box/data/ssh/session_manager.dart';
 import 'package:server_box/view/page/agent/shell.dart';
 import 'package:server_box/view/page/home_tab.dart';
 import 'package:server_box/view/page/macos_menu_bar.dart';
@@ -179,6 +180,9 @@ class _HomePageState extends ConsumerState<HomePage>
 
     switch (state) {
       case AppLifecycleState.resumed:
+        // Before anything else, so the foreground service can be let go while
+        // the app is allowed to ask for it again.
+        TermSessionManager.setBackgrounded(false);
         _lastFullscreenMode = null;
         if (_shouldAuth) {
           final delay = Stores.setting.delayBioAuthLock.fetch();
@@ -216,6 +220,20 @@ class _HomePageState extends ConsumerState<HomePage>
         if (!(isAndroid && Stores.setting.bgRun.fetch())) {
           _notifier.stopAutoRefresh();
         }
+        break;
+      case AppLifecycleState.inactive:
+        // Not in `paused`, which is too late. Android refuses to *start* a
+        // foreground service for an app that is already in the background, and
+        // `paused` is delivered from `onStop` — by then the activity is gone.
+        // `inactive` comes from `onPause`, while it is still visible, which is
+        // the last moment the request is allowed.
+        //
+        // The cost is that pulling down the notification shade also reads as
+        // leaving, so a device with nothing connected can show the keep-alive
+        // notification for as long as the shade is open. That is the same
+        // notification `bgRun` asks for anyway, and the alternative is a
+        // request the system turns down.
+        TermSessionManager.setBackgrounded(true);
         break;
       default:
         break;

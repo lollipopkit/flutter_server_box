@@ -148,6 +148,22 @@ const it = {
 	terminalPasswordlessNoticeBody: 'Aprire un terminale qui non richiede credenziali SSH, quindi la password del pannello è l\'unica cosa tra un visitatore e una shell su questa macchina. Mantienilo se è ciò che vuoi, oppure disattivalo e accedi con un account SSH. Riattivarlo in seguito richiede di modificare il file di configurazione dell\'agente.',
 	terminalPasswordlessKeep: 'Lascialo attivo',
 	terminalPasswordlessDisable: 'Disattivalo',
+	files: 'File',
+	filesUnavailable: 'L\'accesso ai file non è abilitato su questo agente. Attiva remote_access.fs.enabled in config.toml e indica le sue radici; serve anche TLS, o un proxy sullo stesso host.',
+	filesRoots: 'Radici',
+	filesEmpty: 'Non c’è nulla qui',
+	filesSize: 'Dimensione',
+	filesModified: 'Modificato',
+	filesUpload: 'Carica',
+	filesUploading: 'Caricamento...',
+	filesDownload: 'Scarica',
+	filesNewFolder: 'Nuova cartella',
+	filesRename: 'Rinomina',
+	filesDelete: 'Elimina',
+	filesPermissions: 'Permessi',
+	filesConfirmDelete: 'Eliminare questo? Non è reversibile.',
+	filesDeleteRecursive: 'Elimina la cartella e tutto il suo contenuto',
+	filesName: 'Nome',
 } satisfies Translation
 
 export default it

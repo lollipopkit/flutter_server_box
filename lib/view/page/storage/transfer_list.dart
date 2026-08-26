@@ -210,7 +210,7 @@ class _TransferListViewState extends ConsumerState<TransferListView> {
   /// come over SFTP or over its agent's file API.
   static String _endName(FileRef ref) => switch (ref) {
     LocalFileRef() => libL10n.device,
-    SftpFileRef(:final spi) => spi.name,
+    SshFileRef(:final spi) => spi.name,
     MonitorFileRef(:final spi) => spi.name,
   };
 

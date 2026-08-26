@@ -390,6 +390,10 @@ class AppLocalizationsNl extends AppLocalizations {
       'Deze schakelaar betekent alleen dat het programma zal proberen op de achtergrond uit te voeren, of het in de achtergrond kan worden uitgevoerd, hangt af van of de toestemming is ingeschakeld of niet. Voor native Android, schakel \"Batterijoptimalisatie\" uit in deze app, en voor miui, wijzig de energiebesparingsbeleid naar \"Onbeperkt\".';
 
   @override
+  String get bgRunNeedsNotification =>
+      'Op de achtergrond draaien vereist een permanente melding, en deze app heeft geen meldingsrechten. Tik om ze toe te staan.';
+
+  @override
   String get clearAllStatsContent =>
       'Weet u zeker dat u alle serververbindingsstatistieken wilt wissen? Deze actie kan niet ongedaan worden gemaakt.';
 
@@ -1121,6 +1125,14 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get sftpShowFoldersFirst => 'Mappen eerst weergeven';
+
+  @override
+  String get sftpUnavailableUseScp =>
+      'Heeft deze host geen SFTP-subsysteem, zoals veel embedded apparaten, zet de bestandsoverdracht dan op SCP in de serverinstellingen.';
+
+  @override
+  String get sshFileTransportTip =>
+      'SFTP past bij alles wat actueel is. Kies SCP voor een oude of embedded host waarvan de SSH-server geen SFTP-subsysteem heeft: die heeft het commando `scp` nodig en een shell met ook de gebruikelijke bestandstools (`find`, `stat`, `mv`, `chmod`).';
 
   @override
   String get specifyDev => 'Apparaat specificeren';

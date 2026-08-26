@@ -43,7 +43,7 @@ class FileTransfer {
   /// isolate exists (see `benchmark/README.md`). A copy within this device has
   /// no crypto at all, and a monitor agent is reached over HTTPS, whose crypto
   /// is native. Starting an isolate for either would cost more than it saved.
-  bool get needsIsolate => from is SftpFileRef || to is SftpFileRef;
+  bool get needsIsolate => from is SshFileRef || to is SshFileRef;
 
   /// Whether the two specialised SFTP paths can serve this.
   ///

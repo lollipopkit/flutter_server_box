@@ -339,9 +339,24 @@ extension _Actions on _ServerEditPageState {
 
   void _onSave() async {
     final useMonitorHttp = _useMonitorHttp.value;
-    final selectedKey = _keyIdx.value == null
+    final keyIdx = _keyIdx.value;
+    // `-1` is not an index into anything. It is what the key-auth switch
+    // writes when it is turned on before a key is picked, and it stands for
+    // "no selection" — the check further down at `_keyIdx.value == -1` is what
+    // handles it. `elementAtOrNull` does not tolerate it either: it throws
+    // `RangeError.checkNotNegative` rather than answering null, so reaching it
+    // with the switch on and no key chosen took the save down.
+    final selectedKey = keyIdx == null || keyIdx < 0
         ? null
-        : ref.read(privateKeyProvider).keys.elementAtOrNull(_keyIdx.value!);
+        : ref.read(privateKeyProvider).keys.elementAtOrNull(keyIdx);
+    // Said rather than silently dropped. `elementAtOrNull` is what keeps the
+    // save from throwing when the chosen key was deleted from another pane
+    // meanwhile, but going on from there would write a server with no key and
+    // no word about why.
+    if (keyIdx != null && keyIdx >= 0 && selectedKey == null) {
+      Toast.show('${libL10n.invalid}: ${libL10n.key}');
+      return;
+    }
 
     // SSH host/auth/jump-chain fields are hidden (and irrelevant) in
     // monitor-HTTP mode — skip their validation/defaulting entirely.
@@ -437,8 +452,7 @@ extension _Actions on _ServerEditPageState {
             // away the only credential an imported server has
             keyPath: selectedKey != null ? null : _keyPath.value,
             identityFiles:
-                _keyIdx.value == null &&
-                    _keyPath.value == this.spi?.ssh?.keyPath
+                keyIdx == null && _keyPath.value == this.spi?.ssh?.keyPath
                 ? this.spi?.ssh?.identityFiles
                 : null,
             alterUrl: _altUrlController.text.selfNotEmptyOrNull,
@@ -447,6 +461,7 @@ extension _Actions on _ServerEditPageState {
                 : _jumpServers.value.first,
             jumpIds: _jumpServers.value.isEmpty ? null : _jumpServers.value,
             proxyCommand: proxyCommandText.selfNotEmptyOrNull,
+            fileTransport: _fileTransport.value,
           );
 
     final wolEmpty =
@@ -534,6 +549,14 @@ extension _Actions on _ServerEditPageState {
     }
 
     if (!mounted) return;
+    // Saved either way — the address may well be one TLS is being set up for,
+    // and refusing to store it would be this page deciding that for the user.
+    // But it will not connect as it stands, and the switch that would let it
+    // is on this same page under More, so saying so beats leaving them to find
+    // out from the detail page's error.
+    if (monitorHttp?.needsInsecureOptIn == true) {
+      Toast.warn(l10n.monitorHttpsRequired, body: l10n.monitorAllowInsecureHttpTip);
+    }
     context.pop();
   }
 }
@@ -661,6 +684,7 @@ extension _Utils on _ServerEditPageState {
       _altUrlController.text = ssh.alterUrl ?? '';
       _jumpServers.value = ssh.resolvedJumpIds;
       _proxyCommandCtrl.text = ssh.proxyCommand ?? '';
+      _fileTransport.value = ssh.fileTransport;
     }
 
     /// List in dart is passed by pointer, so you need to copy it here

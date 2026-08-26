@@ -149,6 +149,14 @@ class ServerStore extends EntityStore<Spi> {
               identityFiles: identityFiles.$2,
               alterUrl: row['ssh_alter_url'] as String?,
               proxyCommand: row['ssh_proxy_command'] as String?,
+              // By name, never by index — and null for every row written
+              // before the column, which is `sftp` because that was the only
+              // one such a build had.
+              fileTransport:
+                  SshFileTransport.values.firstWhereOrNull(
+                    (e) => e.name == row['ssh_file_transport'],
+                  ) ??
+                  SshFileTransport.sftp,
               jumpId: jumps?.firstOrNull,
               jumpIds: jumps,
             ),
@@ -269,6 +277,7 @@ class ServerStore extends EntityStore<Spi> {
       'ssh_key_path',
       'ssh_alter_url',
       'ssh_proxy_command',
+      'ssh_file_transport',
       'monitor_addr',
       'monitor_user',
       'monitor_pwd',
@@ -302,6 +311,7 @@ class ServerStore extends EntityStore<Spi> {
       _encodeIdentityFiles(ssh),
       ssh?.alterUrl,
       ssh?.proxyCommand,
+      ssh?.fileTransport.name,
       monitor?.addr,
       monitor?.user,
       monitor?.pwd,

@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/linux_seed.dart';

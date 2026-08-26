@@ -385,6 +385,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'This switch only means the program will try to run in the background. Whether it can run in the background depends on whether the permission is enabled or not. For AOSP-based Android ROMs, please disable \"Battery Optimization\" in this app. For MIUI / HyperOS, please change the power saving policy to \"Unlimited\".';
 
   @override
+  String get bgRunNeedsNotification =>
+      'Running in the background needs an ongoing notification, and this app has no notification permission. Tap to allow notifications.';
+
+  @override
   String get clearAllStatsContent =>
       'Are you sure you want to clear all server connection statistics? This action cannot be undone.';
 
@@ -1110,6 +1114,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sftpShowFoldersFirst => 'Display folders first';
+
+  @override
+  String get sftpUnavailableUseScp =>
+      'If this host has no SFTP subsystem, as many embedded devices do not, set its file transfer to SCP in the server settings.';
+
+  @override
+  String get sshFileTransportTip =>
+      'SFTP suits anything current. Choose SCP for an old or embedded host whose SSH server has no SFTP subsystem: it needs the `scp` command and a shell that also has the usual file utilities (`find`, `stat`, `mv`, `chmod`).';
 
   @override
   String get specifyDev => 'Specify device';

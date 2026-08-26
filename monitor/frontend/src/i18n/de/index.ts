@@ -148,6 +148,22 @@ const de = {
 	terminalPasswordlessNoticeBody: 'Ein Terminal hier braucht keine SSH-Zugangsdaten — dein Panel-Passwort ist also das Einzige zwischen einem Besucher und einer Shell auf diesem Rechner. Behalte es, wenn du das willst, oder schalte es ab und melde dich stattdessen mit einem SSH-Konto an. Späteres Wiedereinschalten geht nur über die Konfigurationsdatei des Agenten.',
 	terminalPasswordlessKeep: 'Eingeschaltet lassen',
 	terminalPasswordlessDisable: 'Abschalten',
+	files: 'Dateien',
+	filesUnavailable: 'Der Dateizugriff ist auf diesem Agenten nicht aktiviert. Aktiviere remote_access.fs.enabled in der config.toml und gib die Wurzelverzeichnisse an; außerdem wird TLS oder ein Proxy auf demselben Host benötigt.',
+	filesRoots: 'Wurzelverzeichnisse',
+	filesEmpty: 'Nichts vorhanden',
+	filesSize: 'Größe',
+	filesModified: 'Geändert',
+	filesUpload: 'Hochladen',
+	filesUploading: 'Wird hochgeladen...',
+	filesDownload: 'Herunterladen',
+	filesNewFolder: 'Neuer Ordner',
+	filesRename: 'Umbenennen',
+	filesDelete: 'Löschen',
+	filesPermissions: 'Berechtigungen',
+	filesConfirmDelete: 'Das hier löschen? Das lässt sich nicht rückgängig machen.',
+	filesDeleteRecursive: 'Den Ordner und seinen gesamten Inhalt löschen',
+	filesName: 'Name',
 } satisfies Translation
 
 export default de

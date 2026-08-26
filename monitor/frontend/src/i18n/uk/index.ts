@@ -148,6 +148,22 @@ const uk = {
 	terminalPasswordlessNoticeBody: 'Термінал тут не потребує облікових даних SSH — отже, між відвідувачем і оболонкою на цій машині стоїть лише пароль панелі. Залиште, якщо так і задумано, або вимкніть і входьте через обліковий запис SSH. Увімкнути назад можна лише через файл конфігурації агента.',
 	terminalPasswordlessKeep: 'Залишити увімкненим',
 	terminalPasswordlessDisable: 'Вимкнути',
+	files: 'Файли',
+	filesUnavailable: 'Доступ до файлів не увімкнено на цьому агенті. Увімкніть remote_access.fs.enabled у config.toml і вкажіть кореневі каталоги; також потрібен TLS або проксі на тому самому хості.',
+	filesRoots: 'Кореневі каталоги',
+	filesEmpty: 'Тут нічого немає',
+	filesSize: 'Розмір',
+	filesModified: 'Змінено',
+	filesUpload: 'Вивантажити',
+	filesUploading: 'Вивантаження...',
+	filesDownload: 'Завантажити',
+	filesNewFolder: 'Нова тека',
+	filesRename: 'Перейменувати',
+	filesDelete: 'Видалити',
+	filesPermissions: 'Права',
+	filesConfirmDelete: 'Видалити це? Скасувати буде неможливо.',
+	filesDeleteRecursive: 'Видалити теку з усім вмістом',
+	filesName: 'Назва',
 } satisfies Translation
 
 export default uk

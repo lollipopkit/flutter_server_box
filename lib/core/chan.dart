@@ -22,15 +22,22 @@ abstract final class MethodChans {
     }
   }
 
-  /// Issue #662
+  /// Puts the Android process in the foreground, so the system stops treating
+  /// it as cached and freezing it (#662, #1287).
+  ///
+  /// Ungated. It used to return here unless `fgService` was true — a setting
+  /// whose switch was commented out of the Android settings page and then
+  /// deleted with it, so it was false for every install and both of these did
+  /// nothing at all. What kept the service alive instead was [updateSessions],
+  /// which starts it as a side effect; the moment the session list went empty
+  /// that side effect went the other way and the process lost its foreground
+  /// status with nothing able to give it back. Whether the service is wanted
+  /// is `TermSessionManager`'s decision, and it is the only caller.
   static void startService() {
-    if (Stores.setting.fgService.fetch() != true) return;
     _channel.invokeMethod('startService');
   }
 
-  /// Issue #662
   static void stopService() {
-    if (Stores.setting.fgService.fetch() != true) return;
     _channel.invokeMethod('stopService');
   }
 
@@ -156,6 +163,37 @@ abstract final class MethodChans {
     }
   }
 
+  /// Whether Android will let this app post notifications.
+  ///
+  /// Read by the settings page rather than acted on: without the permission
+  /// there is no foreground service, and without that the system freezes the
+  /// process as soon as it is backgrounded — so `bgRun` is a switch that cannot
+  /// keep its promise, and saying nothing about it leaves the user with a
+  /// connection that drops for no reason they can see (#1287).
+  ///
+  /// True off Android, where the question does not arise.
+  static Future<bool> notificationsAllowed() async {
+    if (!isAndroid) return true;
+    try {
+      return await _channel.invokeMethod('notificationsAllowed') == true;
+    } catch (e, s) {
+      Loggers.app.warning('Failed to read the notification permission', e, s);
+      // Assumed granted: a failure here is this app's, and reporting it as the
+      // user's problem would send them to a settings page to fix nothing.
+      return true;
+    }
+  }
+
+  /// Opens this app's notification settings, for the case above.
+  static Future<void> openNotificationSettings() async {
+    if (!isAndroid) return;
+    try {
+      await _channel.invokeMethod('openNotificationSettings');
+    } catch (e, s) {
+      Loggers.app.warning('Failed to open the notification settings', e, s);
+    }
+  }
+
   /// Query whether the Android foreground service is currently running.
   static Future<bool> isServiceRunning() async {
     if (!isAndroid) return false;
@@ -197,9 +235,11 @@ abstract final class MethodChans {
   /// Currently handles:
   /// - `disconnectSession` with argument map {id: string}
   /// - `stopAllConnections` with no arguments
+  /// - `notificationPermissionGranted` with no arguments
   static void registerHandler(
     Future<void> Function(String id) onDisconnect, [
     VoidCallback? onStopAll,
+    VoidCallback? onNotificationPermissionGranted,
   ]) {
     _channel.setMethodCallHandler((call) async {
       switch (call.method) {
@@ -212,6 +252,14 @@ abstract final class MethodChans {
           return;
         case 'stopAllConnections':
           onStopAll?.call();
+          return;
+        // Android asks for the permission asynchronously, so the call that
+        // triggered the prompt has already been refused by the time the user
+        // answers it. This is the only edge that says the answer was yes, and
+        // without acting on it the foreground service stays stopped until
+        // something else happens to sync — see [startService].
+        case 'notificationPermissionGranted':
+          onNotificationPermissionGranted?.call();
           return;
         default:
           return;

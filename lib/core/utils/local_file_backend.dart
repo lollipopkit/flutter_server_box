@@ -40,8 +40,16 @@ class LocalFileBackend implements FileBackend {
   @override
   Future<FileEntry?> stat(String path) async {
     final native = _native(path);
+    // Asked without following. `FileStat.stat` follows a link and so answered
+    // for whatever it points at — reporting a symlink as its target's kind,
+    // and a link to nowhere as *absent*, which is what a caller reads as "free
+    // to create something here". [list] has always reported links as links;
+    // this is the same question and gives the same answer.
     final type = await FileSystemEntity.type(native, followLinks: false);
     if (type == FileSystemEntityType.notFound) return null;
+    // A link is reported as a link and nothing more. Its own size and time
+    // describe the link, the target's describe the target, and neither is an
+    // answer about this entry. The SFTP backend says the same.
     if (type == FileSystemEntityType.link) {
       return FileEntry(
         name: p.basename(native),
@@ -106,6 +114,15 @@ class LocalFileBackend implements FileBackend {
   Stream<List<int>> read(String path, {int offset = 0}) =>
       File(_native(path)).openRead(offset);
 
+  /// The one part of the contract this cannot keep: replacing a file does not
+  /// carry its permission bits over.
+  ///
+  /// Not an oversight but the same fact [traits] already states. `dart:io` can
+  /// read a mode and has no way to set one, so there is nothing to do here
+  /// short of running `chmod` as a subprocess — on platforms where half of them
+  /// have no such binary, for a value the other half calls meaningless. A
+  /// backend answering false to [FileBackendTraits.permissions] promises
+  /// nothing about them in either direction.
   @override
   Future<void> write(
     String path,

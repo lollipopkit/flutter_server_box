@@ -47,11 +47,17 @@ class _AddPageState extends ConsumerState<_AddPage> {
   void initState() {
     super.initState();
     widget.sortVersion.addListener(_onSortChanged);
+    // Installing or deleting a system used to leave this page drawing the list
+    // it was built with: the picker is a cached widget, so nothing rebuilt it.
+    // It mattered less when the systems were chips inside one card; it is the
+    // whole page now.
+    Rootfs.changed.addListener(_onSortChanged);
   }
 
   @override
   void dispose() {
     widget.sortVersion.removeListener(_onSortChanged);
+    Rootfs.changed.removeListener(_onSortChanged);
     super.dispose();
   }
 
@@ -72,156 +78,135 @@ class _AddPageState extends ConsumerState<_AddPage> {
       return Center(child: Text(libL10n.empty, textAlign: TextAlign.center));
     }
 
-    final grid = MasonryList(
-      columnWidth: _kServerColumnWidth,
+    // Sections rather than one flow of cards. The systems on this device and
+    // the servers are two kinds of thing, and a masonry grid says only "here
+    // are some cards" — which is why the systems used to be pinned above it in
+    // a card of their own, collapsed behind a title that named them in a
+    // subtitle. One row each, grouped, says the same thing without a control
+    // to open first. `MasonryList`'s own doc points here for grouping that
+    // means something.
+    return MultiList(
       children: [
         // First, and for the same reason the file tab lists it first: it is
         // always reachable, and it needs no credential to be.
         if (LocalShellBackend.isSupported)
-          CardTile(
-            icon: Icons.smartphone,
-            title: libL10n.device,
-            subtitle: LocalShellBackend.shellPath,
-            onTap: widget.onLocal,
-          ),
-        for (final id in order)
-          if (state.servers[id] case final spi?) _ServerTile(
-            key: ValueKey(id),
-            spi: spi,
-            onTap: () => widget.onTap(spi),
-            onLongPress: () => widget.onLongPress(spi),
-          ),
-      ],
-    );
-
-    // Above the grid and outside it. The systems are one subject with several
-    // members, and a card each would have put them among the servers as though
-    // each were another machine — they are all this one.
-    if (!Rootfs.isAvailable) return grid;
-    return Column(
-      children: [
-        _LinuxSection(
-          onOpen: widget.onRootfsOpen,
-          onAdd: widget.onRootfsAdd,
-          onRemove: widget.onRootfsRemove,
-        ),
-        Expanded(child: grid),
+          [
+            CenterGreyTitle(libL10n.device),
+            CardTile(
+              icon: Icons.smartphone,
+              title: libL10n.device,
+              subtitle: LocalShellBackend.shellPath,
+              onTap: widget.onLocal,
+            ),
+          ],
+        if (Rootfs.isAvailable)
+          [
+            // Where the beta is said. It used to be the collapsed tile's
+            // title; with a row per system there is no one row it belongs to.
+            const CenterGreyTitle('Linux (Beta)'),
+            for (final profile in Rootfs.profiles)
+              _LinuxTile(
+                key: ValueKey(profile.id),
+                profile: profile,
+                onTap: () => widget.onRootfsOpen(profile.id),
+                onLongPress: () => widget.onRootfsRemove(profile),
+              ),
+            CardTile(
+              icon: Icons.add,
+              title: Rootfs.profiles.isEmpty ? libL10n.install : libL10n.add,
+              // Only where there is nothing yet: the line explains what a
+              // Linux system on this device *is*, which is a question the
+              // second one does not raise.
+              subtitle: Rootfs.profiles.isEmpty ? l10n.rootfsSubtitle : null,
+              onTap: widget.onRootfsAdd,
+            ),
+          ],
+        if (order.isNotEmpty)
+          [
+            CenterGreyTitle(libL10n.servers),
+            for (final id in order)
+              if (state.servers[id] case final spi?)
+                _ServerTile(
+                  key: ValueKey(id),
+                  spi: spi,
+                  onTap: () => widget.onTap(spi),
+                  onLongPress: () => widget.onLongPress(spi),
+                ),
+          ],
       ],
     );
   }
 }
 
-/// The Linux systems on this device, pinned above the servers.
+/// One Linux system on this device, shaped like the server rows beside it.
 ///
-/// A row of chips rather than a dialog on the way in: they can all run at once,
-/// so which one to open is a thing to see and tap, not a question to answer
-/// before the page will do anything.
-///
-/// Starts open. It is the one control on this page that is not self-evident
-/// from its title, and collapsing it is one tap away.
-class _LinuxSection extends StatefulWidget {
-  const _LinuxSection({
-    required this.onOpen,
-    required this.onAdd,
-    required this.onRemove,
+/// The same row a server gets, because it is the same choice: somewhere to
+/// open a shell. They were chips inside a collapsible card, which made the set
+/// of them one control to open before any of them could be picked, and put the
+/// distribution's name in a subtitle listing all of them at once.
+class _LinuxTile extends StatelessWidget {
+  const _LinuxTile({
+    super.key,
+    required this.profile,
+    required this.onTap,
+    required this.onLongPress,
   });
 
-  final void Function(String profileId) onOpen;
-  final VoidCallback onAdd;
-  final void Function(LinuxProfile profile) onRemove;
-
-  @override
-  State<_LinuxSection> createState() => _LinuxSectionState();
-}
-
-class _LinuxSectionState extends State<_LinuxSection> {
-  var _expanded = true;
+  final LinuxProfile profile;
+  final VoidCallback onTap;
+  final VoidCallback onLongPress;
 
   @override
   Widget build(BuildContext context) {
-    final profiles = Rootfs.profiles;
-    // The grid below keeps its cards off the window edge with
-    // [MasonryList.kPadding]. This one is above the grid rather than in it, so
-    // all it had was the `Card`'s own 4pt margin — a band running edge to edge
-    // over a column of cards that stop well short of it. Taken from the same
-    // constant, so the two cannot drift apart.
-    //
-    // No bottom: the grid's own top padding is the gap between them.
-    return Padding(
-      padding: MasonryList.kPadding.copyWith(bottom: 0),
-      child: CardX(
-        child: Column(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.terminal),
-              // Where it is said on this page. The subtitle below is already
-              // spoken for — it names the systems installed — and the chips
-              // are one per system, so a badge among them would read as being
-              // about one of them.
-              title: const Text('Linux (Beta)'),
-              subtitle: Text(
-                profiles.isEmpty
-                    ? l10n.rootfsSubtitle
-                    : profiles.map((e) => e.label).join(' · '),
-                style: UIs.textGrey,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              trailing: Icon(
-                _expanded ? Icons.expand_less : Icons.expand_more,
-              ),
-              onTap: () => setState(() => _expanded = !_expanded),
-            ),
-            AnimatedSize(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOut,
-              alignment: Alignment.topCenter,
-              child: _expanded ? _buildChips(profiles) : UIs.placeholder,
-            ),
-          ],
+    final outdated = Rootfs.isOutdated(profile);
+    return CardX(
+      child: ListTile(
+        // The distribution's own mark, from the same place a server's comes
+        // from: these are Alpine, Ubuntu and Rocky, and a server running one
+        // of them is drawn with exactly this icon.
+        leading: distIconOf(_distOf(profile.distro), size: 26),
+        title: Text(
+          profile.label,
+          style: UIs.text18,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
         ),
-      ),
+        // What a server puts its address on. The label is the user's to
+        // change, so on its own it need not say what is installed.
+        subtitle: Text(
+          _describe(),
+          style: UIs.text12Grey,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        // The update mark the chip carried as an avatar. It says there is a
+        // newer release of this system, which is not what a chevron says.
+        trailing: Icon(outdated ? Icons.update : Icons.chevron_right),
+        // Which one a restored tab that names no profile opens in — the only
+        // sense in which one of several is current, and what the chip's
+        // selected state used to show.
+        selected: profile.id == Rootfs.selected?.id,
+        onTap: onTap,
+        onLongPress: onLongPress,
+      ).onSecondary(asSecondary(onLongPress)),
     );
   }
 
-  Widget _buildChips(List<LinuxProfile> profiles) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(17, 0, 17, 13),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: [
-          for (final profile in profiles)
-            GestureDetector(
-              // The gesture the card used to carry, kept where the thing it
-              // deletes now is.
-              onLongPress: () => widget.onRemove(profile),
-              child: ChoiceChip(
-                // Marks the one a restored tab without a profile would open in,
-                // which is the only sense in which one of them is current.
-                // Tapping is opening, not selecting — see `onSelected`.
-                selected: profile.id == Rootfs.selected?.id,
-                label: Text(profile.label),
-                avatar: Rootfs.isOutdated(profile)
-                    ? const Icon(Icons.update, size: 16)
-                    : null,
-                onSelected: (_) => widget.onOpen(profile.id),
-              ),
-            ),
-          ActionChip(
-            avatar: const Icon(Icons.add, size: 18),
-            label: Text(profiles.isEmpty ? libL10n.install : libL10n.add),
-            onPressed: widget.onAdd,
-          ),
-        ],
-      ),
-    );
+  String _describe() {
+    final name = profile.distro.label;
+    final version = profile.version;
+    return version.isEmpty ? name : '$name · $version';
   }
+
+  /// The [Dist] this [LinuxDistro] is, for the icon.
+  ///
+  /// By name, and null for anything unmatched: the two enums are separate
+  /// lists that happen to overlap — one is what can be installed here, the
+  /// other everything a server might report — and a system whose distribution
+  /// has no mark simply gets no mark.
+  static Dist? _distOf(LinuxDistro distro) =>
+      Dist.values.firstWhereOrNull((e) => e.name == distro.name);
 }
-
-/// Wide enough for a server name and the chevron beside it, and narrow enough
-/// that a desktop window gets more than one column.
-const _kServerColumnWidth = 300.0;
 
 /// The same two things as [_AddPage], in a column too narrow for cards: the
 /// shells that are running, and the servers one could be started on.
@@ -278,11 +263,15 @@ class _SideBarState extends ConsumerState<_SideBar> {
   void initState() {
     super.initState();
     widget.sortVersion.addListener(_onSortChanged);
+    // As in the picker: nothing else tells this rail that a system was
+    // installed or deleted.
+    Rootfs.changed.addListener(_onSortChanged);
   }
 
   @override
   void dispose() {
     widget.sortVersion.removeListener(_onSortChanged);
+    Rootfs.changed.removeListener(_onSortChanged);
     super.dispose();
   }
 
@@ -317,12 +306,21 @@ class _SideBarState extends ConsumerState<_SideBar> {
             if (Rootfs.isAvailable) ...[
               for (final profile in Rootfs.profiles)
                 SideBarTile(
+                  key: ValueKey(profile.id),
                   title: profile.label,
                   onTap: () => widget.onRootfsOpen(profile.id),
                   onLongPress: () => widget.onRootfsRemove(profile),
                 ),
-              if (Rootfs.profiles.isEmpty)
-                SideBarTile(title: 'Linux', onTap: widget.onRootfsAdd),
+              // Offered whether or not there is one already, as the picker
+              // does. The rail used to show this only while nothing was
+              // installed, so the second system could be added from one of the
+              // two layouts and not the other.
+              SideBarTile(
+                title: Rootfs.profiles.isEmpty
+                    ? 'Linux'
+                    : '${libL10n.add} Linux',
+                onTap: widget.onRootfsAdd,
+              ),
             ],
           ],
           SideBarSection(libL10n.servers),

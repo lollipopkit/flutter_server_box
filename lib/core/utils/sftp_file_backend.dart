@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
-import 'package:meta/meta.dart';
 import 'package:server_box/core/utils/sftp_escalation.dart';
 import 'package:server_box/core/utils/sftp_timeout.dart';
+import 'package:server_box/core/utils/shell_file_ops.dart';
 import 'package:server_box/core/utils/shell_quote.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 
@@ -47,6 +47,18 @@ class SftpFileBackend implements FileBackend {
   /// inside a transfer that has its own progress to show.
   final Duration? timeout;
 
+  /// What bounds a step of a *transfer*, as opposed to an operation.
+  ///
+  /// The same distinction the SCP backend draws, and the same floor: a command
+  /// answers at once or not at all, while a transfer is bounded by the gap
+  /// between bytes — and five seconds of silence on a slow link is a slow
+  /// link, not a stall. See [SftpIdleWatchdog].
+  Duration? get _streamTimeout {
+    final bound = timeout;
+    if (bound == null) return null;
+    return bound < SftpIdleWatchdog.minIdle ? SftpIdleWatchdog.minIdle : bound;
+  }
+
   /// Whatever the SSH account can reach, which sshd decides per path rather
   /// than by a list anything here could enumerate.
   @override
@@ -75,31 +87,43 @@ class SftpFileBackend implements FileBackend {
       ];
     },
     // A directory this user may not list is the case sudo exists for, so
-    // reading escalates like writing does. `find` rather than `ls` because its
-    // output is a fixed number of NUL-separated fields per entry, and so
-    // survives names with spaces, quotes and newlines in them.
-    sudoCommand: () => listCommand(path),
-    fromOutput: parseListOutput,
+    // reading escalates like writing does. The command is `shell_file_ops`',
+    // shared with the SCP backend, which has no protocol for a listing at all.
+    sudoCommand: () => shellListCommand(path),
+    fromOutput: parseShellFileRecords,
   );
 
   @override
   Future<FileEntry?> stat(String path) async {
-    final SftpFileAttrs attrs;
+    // Asked without following, first. Following answered for whatever the link
+    // points at — reporting a symlink as its target's kind, and a link to
+    // nowhere as *absent*, which is what a caller reads as "free to create
+    // something here" before it writes over the link. [list] has always
+    // reported links as links, and so do the local and SCP backends; this is
+    // the same question and now gives the same answer.
+    final SftpFileAttrs linkless;
     try {
-      attrs = await _bounded('stat', _sftp.stat(path));
+      linkless = await _bounded('stat', _sftp.stat(path, followLink: false));
     } on SftpStatusError catch (e) {
       // Only "no such file" is absence. A refusal is a refusal, and turning it
       // into null would tell a caller it is free to create something there.
       if (e.code == _sftpStatusNoSuchFile) return null;
       rethrow;
     }
-    return FileEntry(
-      name: _basename(path),
-      kind: _kindOf(attrs),
-      size: attrs.size,
-      modified: _timeOf(attrs.modifyTime),
-      mode: _permOf(attrs),
-    );
+    if (!linkless.isSymbolicLink) {
+      return FileEntry(
+        name: _basename(path),
+        kind: _kindOf(linkless),
+        size: linkless.size,
+        modified: _timeOf(linkless.modifyTime),
+        mode: _permOf(linkless),
+      );
+    }
+    // A link is reported as a link and nothing more, which is what the local
+    // backend answers: its own size and time describe the link, the target's
+    // describe the target, and neither is an answer about this entry. It also
+    // saves the second round trip a followed stat would cost.
+    return FileEntry(name: _basename(path), kind: FileKind.link);
   }
 
   @override
@@ -148,12 +172,22 @@ class SftpFileBackend implements FileBackend {
         (true, true) => 'rm -r -- ${shellSingleQuote(path)}',
         (true, false) => 'rmdir -- ${shellSingleQuote(path)}',
         (false, _) => 'rm -f -- ${shellSingleQuote(path)}',
-        // Unknown because this user could not stat it. Keep the caller's
-        // recursion choice intact even when sudo has to determine the type.
+        // Never stat'd, because this user could not, so the shell decides
+        // where the file is — while keeping the caller's recursion choice
+        // intact. `rm -rf` was here for both cases and turned a delete the
+        // user asked to be non-recursive into one that took a whole tree: a
+        // stat this account was refused is not consent for that.
+        //
+        // Asked rather than tried in order, so a refusal is reported as what
+        // it refused: `rm -f || rmdir` reaches the second command whatever the
+        // first failed for, and the error the user reads is then about the
+        // wrong one.
         (null, true) => 'rm -rf -- ${shellSingleQuote(path)}',
         (null, false) =>
-          'rm -f -- ${shellSingleQuote(path)} || '
-              'rmdir -- ${shellSingleQuote(path)}',
+          'if [ -d ${shellSingleQuote(path)} ] && '
+              '[ ! -L ${shellSingleQuote(path)} ]; '
+              'then rmdir -- ${shellSingleQuote(path)}; '
+              'else rm -f -- ${shellSingleQuote(path)}; fi',
       },
     );
   }
@@ -174,8 +208,11 @@ class SftpFileBackend implements FileBackend {
   Future<void> rename(String from, String to) => runWithEscalation(
     escalation: escalation,
     normal: () => _bounded('rename', _sftp.rename(from, to)),
-    sudoCommand: () =>
-        'mv -- ${shellSingleQuote(from)} ${shellSingleQuote(to)}',
+    // The same guard the SCP backend needs, for the same reason and only on
+    // this path: `SSH_FXP_RENAME` refuses a destination that is a directory,
+    // and `mv` files the source away inside it instead. Escalating a rename
+    // must not quietly change what the rename does.
+    sudoCommand: () => shellRenameCommand(from, to),
   );
 
   @override
@@ -200,9 +237,15 @@ class SftpFileBackend implements FileBackend {
       lateCleanup: (file) => file.close(),
     );
     try {
-      // Not bounded: a slow transfer is not a stalled one, and the caller
-      // watching bytes arrive is better placed to decide it has given up.
-      yield* file.read(offset: offset);
+      // Bounded by the gap between chunks, not by the length of the read: a
+      // slow transfer is not a stalled one, and the same five seconds that is
+      // generous for a `stat` would abort every large file over a bad link.
+      // Unbounded is what it was, and a server that accepted the channel and
+      // then said nothing left this stream — and the isolate around it — alive
+      // for as long as the process was.
+      final idle = _streamTimeout;
+      final bytes = file.read(offset: offset);
+      yield* idle == null ? bytes : bytes.timeout(idle);
     } finally {
       await _bounded('close file', file.close());
     }
@@ -243,7 +286,21 @@ class SftpFileBackend implements FileBackend {
       );
       wrote = true;
       try {
-        await file.write(data.map(Uint8List.fromList)).done;
+        // Bounded the same way [read] is, and for the same reason: `done`
+        // resolves when the server has taken everything, and a server that
+        // stops acknowledging never resolves it. `onProgress` is the only
+        // sign of life there is, so it is what restarts the clock.
+        final idle = _streamTimeout;
+        final watchdog = idle == null ? null : SftpIdleWatchdog('write', idle);
+        try {
+          final writer = file.write(
+            data.map(Uint8List.fromList),
+            onProgress: watchdog == null ? null : (_) => watchdog.beat(),
+          );
+          await (watchdog == null ? writer.done : watchdog.guard(writer.done));
+        } finally {
+          watchdog?.cancel();
+        }
         await _bounded('close file', file.close());
       } catch (e) {
         // As in the local backend: a close that complains about a handle the
@@ -255,6 +312,10 @@ class SftpFileBackend implements FileBackend {
         }
         rethrow;
       }
+      // Before the rename, which is what carries a mode onto the destination:
+      // the staged copy was created with the far side's umask, so replacing a
+      // 0755 script left it 0644 and a 0600 file world-readable.
+      await carryModeToStaging(this, staging, path);
       try {
         await _replace(staging, path);
       } on TimeoutException {
@@ -328,62 +389,6 @@ class SftpFileBackend implements FileBackend {
 
   /// `SSH_FX_NO_SUCH_FILE`, from the SFTP protocol.
   static const _sftpStatusNoSuchFile = 2;
-
-  /// One directory level, as five NUL-terminated fields per entry.
-  ///
-  /// `-mindepth 1 -maxdepth 1` is this directory and no deeper; `-exec … {} +`
-  /// hands the whole batch to one shell rather than starting one per file.
-  @visibleForTesting
-  static String listCommand(String path) =>
-      'find ${shellSingleQuote(path)} '
-      '-mindepth 1 -maxdepth 1 '
-      '-exec sh -c \''
-      'for path do '
-      'name=\${path##*/}; '
-      'perm=\$(stat -c %a "\$path"); '
-      'size=\$(stat -c %s "\$path"); '
-      'mtime=\$(stat -c %Y "\$path"); '
-      'type=u; '
-      '[ -d "\$path" ] && type=d; '
-      '[ -f "\$path" ] && type=f; '
-      // Last, so a link is reported as a link: the two tests above follow it
-      // and would otherwise answer for whatever it points at.
-      '[ -L "\$path" ] && type=l; '
-      'printf "%s\\0%s\\0%s\\0%s\\0%s\\0" "\$name" "\$perm" "\$type" "\$size" "\$mtime"; '
-      'done'
-      '\' sh {} +';
-
-  @visibleForTesting
-  static List<FileEntry> parseListOutput(String output) {
-    // Split, not filtered. The command prints five NUL-terminated fields per
-    // entry and an empty one is still a field — `stat -c %a` printing nothing
-    // used to be dropped, and from that entry onward names were read out of
-    // the perm column and sizes out of the mtime column. A silently
-    // rearranged listing is worse than a short one.
-    final parts = output.split('\u0000');
-    // The command's own trailing NUL leaves one empty string at the end.
-    if (parts.isNotEmpty && parts.last.isEmpty) parts.removeLast();
-    final entries = <FileEntry>[];
-    for (var i = 0; i + 4 < parts.length; i += 5) {
-      final perm = int.tryParse(parts[i + 1], radix: 8);
-      final kind = switch (parts[i + 2]) {
-        'd' => FileKind.dir,
-        'l' => FileKind.link,
-        'f' => FileKind.file,
-        _ => FileKind.other,
-      };
-      entries.add(
-        FileEntry(
-          name: parts[i],
-          kind: kind,
-          size: kind == FileKind.file ? int.tryParse(parts[i + 3]) : null,
-          modified: _timeOf(int.tryParse(parts[i + 4])),
-          mode: perm,
-        ),
-      );
-    }
-    return entries;
-  }
 
   static FileEntry _entryOf(SftpName name) => FileEntry(
     name: name.filename,

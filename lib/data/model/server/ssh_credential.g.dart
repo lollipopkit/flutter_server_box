@@ -23,6 +23,13 @@ SshCredential _$SshCredentialFromJson(Map<String, dynamic> json) =>
           ?.map((e) => e as String)
           .toList(),
       proxyCommand: json['proxyCommand'] as String?,
+      fileTransport:
+          $enumDecodeNullable(
+            _$SshFileTransportEnumMap,
+            json['fileTransport'],
+            unknownValue: SshFileTransport.sftp,
+          ) ??
+          SshFileTransport.sftp,
     );
 
 Map<String, dynamic> _$SshCredentialToJson(SshCredential instance) =>
@@ -38,4 +45,10 @@ Map<String, dynamic> _$SshCredentialToJson(SshCredential instance) =>
       'jumpId': ?instance.jumpId,
       'jumpIds': ?instance.jumpIds,
       'proxyCommand': ?instance.proxyCommand,
+      'fileTransport': _$SshFileTransportEnumMap[instance.fileTransport]!,
     };
+
+const _$SshFileTransportEnumMap = {
+  SshFileTransport.sftp: 'sftp',
+  SshFileTransport.scp: 'scp',
+};

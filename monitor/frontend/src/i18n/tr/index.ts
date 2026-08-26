@@ -148,6 +148,22 @@ const tr = {
 	terminalPasswordlessNoticeBody: 'Burada terminal açmak SSH kimlik bilgisi istemez; yani ziyaretçiyle bu makinedeki kabuk arasındaki tek şey panel parolanızdır. İstediğiniz buysa bırakın, değilse kapatıp bir SSH hesabıyla giriş yapın. Sonradan yeniden açmak aracının yapılandırma dosyasını düzenlemeyi gerektirir.',
 	terminalPasswordlessKeep: 'Açık bırak',
 	terminalPasswordlessDisable: 'Kapat',
+	files: 'Dosyalar',
+	filesUnavailable: 'Bu aracıda dosya erişimi etkin değil. config.toml içinde remote_access.fs.enabled seçeneğini açın ve köklerini belirtin; ayrıca TLS ya da aynı makinede bir proxy gerekir.',
+	filesRoots: 'Kökler',
+	filesEmpty: 'Burada bir şey yok',
+	filesSize: 'Boyut',
+	filesModified: 'Değiştirilme',
+	filesUpload: 'Yükle',
+	filesUploading: 'Yükleniyor...',
+	filesDownload: 'İndir',
+	filesNewFolder: 'Yeni klasör',
+	filesRename: 'Yeniden adlandır',
+	filesDelete: 'Sil',
+	filesPermissions: 'İzinler',
+	filesConfirmDelete: 'Bu silinsin mi? Geri alınamaz.',
+	filesDeleteRecursive: 'Klasörü ve içindeki her şeyi sil',
+	filesName: 'Ad',
 } satisfies Translation
 
 export default tr

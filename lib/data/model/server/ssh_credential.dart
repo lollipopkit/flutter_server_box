@@ -4,6 +4,32 @@ import 'package:server_box/data/model/app/error.dart';
 
 part 'ssh_credential.g.dart';
 
+/// How this app moves file contents to and from a server over SSH.
+///
+/// A property of the *host*, which is why it is stored per server rather than
+/// as an app setting: one machine in someone's list may be a NAS running a
+/// current OpenSSH and the next an OpenWrt router whose firmware has no SFTP
+/// subsystem at all.
+///
+/// Not probed. Opening an SFTP session and falling back on failure would work
+/// for the case it is aimed at and be wrong for every other kind of failure —
+/// a link that dropped, an account that was locked — where the fallback can
+/// only fail a second time, more slowly, and leave the user reading the wrong
+/// error. The user knows which their device is; the app asks once.
+enum SshFileTransport {
+  /// The SFTP subsystem. One channel, random access, and a protocol that
+  /// answers metadata questions itself, so it is what everything that can use
+  /// it should use.
+  sftp,
+
+  /// `scp` for the bytes and a shell for everything else.
+  ///
+  /// For a host with no SFTP subsystem to offer (#1288). Slower and coarser —
+  /// no random access, a channel per operation — but it needs nothing of the
+  /// server that running a command does not already prove.
+  scp,
+}
+
 /// Everything needed to reach a server over SSH.
 ///
 /// A peer of [MonitorHttpCredential], not the default: a server may carry
@@ -53,6 +79,19 @@ final class SshCredential {
 
   final String? proxyCommand;
 
+  /// Which protocol carries file contents to and from this host.
+  ///
+  /// Defaulted rather than nullable: every record written before this existed
+  /// was written by a build that only had SFTP, so "unset" and "SFTP" are the
+  /// same answer and there is nothing for a reader to decide.
+  @JsonKey(
+    defaultValue: SshFileTransport.sftp,
+    // A value this build does not know is a value from a build that had more
+    // of them, and reading a backup should not throw over one.
+    unknownEnumValue: SshFileTransport.sftp,
+  )
+  final SshFileTransport fileTransport;
+
   /// Carry the SSH byte stream over this server's `monitor` agent instead of
   /// connecting to [ip]:[port] directly, for hosts whose SSH port isn't
   /// reachable but whose monitor endpoint is.
@@ -74,6 +113,7 @@ final class SshCredential {
     this.jumpId,
     this.jumpIds,
     this.proxyCommand,
+    this.fileTransport = SshFileTransport.sftp,
   });
 
   factory SshCredential.fromJson(Map<String, dynamic> json) =>
@@ -194,6 +234,7 @@ final class SshCredential {
     Object? jumpId = _unset,
     Object? jumpIds = _unset,
     Object? proxyCommand = _unset,
+    SshFileTransport? fileTransport,
   }) {
     return SshCredential(
       ip: ip ?? this.ip,
@@ -211,6 +252,7 @@ final class SshCredential {
       proxyCommand: proxyCommand == _unset
           ? this.proxyCommand
           : proxyCommand as String?,
+      fileTransport: fileTransport ?? this.fileTransport,
     );
   }
 
@@ -233,7 +275,11 @@ final class SshCredential {
   bool operator ==(Object other) {
     return other is SshCredential &&
         isSameAs(other) &&
-        alterUrl == other.alterUrl;
+        alterUrl == other.alterUrl &&
+        // Not in [isSameAs], which answers "must this reconnect": the same
+        // session carries either protocol, so switching costs a new channel
+        // and nothing more. It is still a change, which is what this answers.
+        fileTransport == other.fileTransport;
   }
 
   @override
@@ -245,8 +291,17 @@ final class SshCredential {
     keyId,
     Object.hashAll(resolvedIdentityFiles),
     alterUrl,
+    // [resolvedJumpIds], as [isSameAs] compares them, and not the two raw
+    // fields it is derived from. Old storage and an import write [jumpId]
+    // while everything since writes [jumpIds], so the same single jump server
+    // has two spellings — which `==` calls equal and this used to hash
+    // differently, breaking the one thing hashing has to promise. A credential
+    // put into a `Set` under one spelling was then not found under the other,
+    // and `SshFileRef` hashes a whole `Spi`, so a transfer's identity rests on
+    // this.
     Object.hashAll(resolvedJumpIds),
     proxyCommand,
+    fileTransport,
   );
 }
 

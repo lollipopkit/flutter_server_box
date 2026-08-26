@@ -9,15 +9,16 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/core/utils/local_files.dart';
 import 'package:server_box/core/utils/sftp_escalation.dart';
-import 'package:server_box/core/utils/sftp_file_backend.dart';
 import 'package:server_box/core/utils/sftp_sudo.dart';
 import 'package:server_box/core/utils/sftp_timeout.dart';
 import 'package:server_box/core/utils/shell_quote.dart';
+import 'package:server_box/core/utils/ssh_file_backend.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/file/file_issue.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/model/file/transfer.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/provider/file_transfer.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/misc.dart';
@@ -64,9 +65,11 @@ final class SftpPageArgs {
 
 /// A server's files.
 ///
-/// A [FileBrowserPage] over [SftpFileBackend], plus what only a server has:
+/// A [FileBrowserPage] over whichever backend this server's SSH connection
+/// carries — SFTP, or `scp` and a shell — plus what only a server has:
 /// somewhere to escalate to, an archive that can be unpacked in place, an
-/// editor that has to fetch the file first, and a transfer queue.
+/// editor that has to fetch the file first, and a transfer queue. None of that
+/// depends on which protocol is underneath, which is why one page serves both.
 class SftpPage extends ConsumerStatefulWidget {
   final SftpPageArgs args;
 
@@ -101,7 +104,36 @@ class _SftpPageState extends ConsumerState<SftpPage> {
   /// closing the page and opening it.
   late Future<_SftpStart> _start = _open();
 
+  /// The server this page was opened on, as the route named it.
+  ///
+  /// Its **id** is what this is for. Everything else about it is a snapshot
+  /// taken when the tab opened, and a tab outlives an edit — see [_current].
   Spi get _spi => widget.args.spi;
+
+  /// The server as it is now.
+  ///
+  /// Every transfer this page queues is built from this rather than from the
+  /// snapshot: the queued job carries its own copy of the credentials and the
+  /// transport into an isolate, so a tab left open across an edit was sending
+  /// bytes with the address, key and protocol the server had when the tab was
+  /// opened — while the listing beside it had already reconnected with the
+  /// new ones. Switching a host from SFTP to SCP is where it shows: the
+  /// browser lists, and every download queued from it fails on a host that has
+  /// no SFTP subsystem.
+  ///
+  /// Falls back to the snapshot for a server that has since been deleted,
+  /// which is the one case the provider has nothing to say about.
+  Spi get _current {
+    try {
+      return ref.read(serverProvider(_spi.id)).spi;
+    } catch (e) {
+      Loggers.app.warning('No live server for ${_spi.id}', e);
+      return _spi;
+    }
+  }
+
+  /// [SshFileRef.forServer] on [_current].
+  SshFileRef _refOf(String path) => SshFileRef.forServer(_current, path);
 
   @override
   void dispose() {
@@ -135,6 +167,10 @@ class _SftpPageState extends ConsumerState<SftpPage> {
             FileIssue.denied => libL10n.permissionDenied,
             _ => l10n.serverUnreachable,
           },
+          // Only for the one failure it can do anything about. A host with no
+          // SFTP subsystem fails here on every visit and nothing else in the
+          // app mentions that there is another way — see `SftpUnavailable`.
+          explain: e is SftpUnavailable ? l10n.sftpUnavailableUseScp : null,
           detail: '$e',
           onRetry: _retry,
         ),
@@ -162,7 +198,7 @@ class _SftpPageState extends ConsumerState<SftpPage> {
                   : UIs.placeholder,
             ),
             pathHistory: const _GotoHistory(),
-            refOf: (path) => SftpFileRef.forServer(_spi, path),
+            refOf: _refOf,
             onOpenFile: _openFile,
           ),
         );
@@ -197,7 +233,7 @@ class _SftpStart {
     required this.path,
   });
 
-  final SftpFileBackend backend;
+  final FileBackend backend;
 
   /// This user's home directory, as the server reports it.
   final String home;
@@ -212,6 +248,19 @@ extension _Open on _SftpPageState {
       sftpOperationTimeout(Stores.setting.timeout.fetch());
 
   Future<_SftpStart> _open() async {
+    // [_current], not `_spi`, and read once for everything below. The page
+    // holds the server as it was when the route was pushed, and a tab outlives
+    // an edit — so opening has to use the settings the editor just wrote, on
+    // this attempt and on every retry.
+    //
+    // Once, because it was three separate decisions and only one of them was
+    // made this way: the transport came from `_current` while the sudo helper
+    // and the home-directory guess still came off the snapshot. Changing a
+    // server's SSH user and pressing Retry then opened the protocol the user
+    // had chosen and asked for a password labelled with the account they had
+    // just moved away from.
+    final spi = _current;
+
     // `ensureShellClient`, not `state.client`: pressing a server's file button
     // is asking to reach it, so a server that is merely not connected yet
     // connects rather than reporting that it is not connected — and Retry
@@ -224,12 +273,12 @@ extension _Open on _SftpPageState {
     // open hit that null every time. As a failure of `_open` it lands in the
     // error branch this page already draws.
     final client = await ref
-        .read(serverProvider(_spi.id).notifier)
+        .read(serverProvider(spi.id).notifier)
         .ensureShellClient();
     _client = client;
     _sudoHelper = SftpSudoHelper(
       client: client,
-      spi: _spi,
+      spi: spi,
       contextProvider: () => mounted ? context : null,
     );
     _escalation = _SudoEscalation(
@@ -238,17 +287,23 @@ extension _Open on _SftpPageState {
       contextProvider: () => mounted ? context : null,
     );
 
-    final backend = await SftpFileBackend.connect(
+    final backend = await openSshFileBackend(
       _client,
+      transport: spi.ssh?.fileTransport ?? SshFileTransport.sftp,
       escalation: _escalation,
       timeout: _opTimeout,
     );
-    final home = await _homeDir();
+    final home = await _homeDir(spi);
     return _SftpStart(
       backend: backend,
       home: home,
+      // Checked like the other three. The file tab restores a session by
+      // passing its saved directory as `initPath`, and one that has since been
+      // deleted or become unreadable opened the browser straight onto a
+      // listing error with nothing to press — for as long as the tab was
+      // remembered, which is every launch.
       path:
-          widget.args.initPath ??
+          await _openable(backend, widget.args.initPath) ??
           await _lastPath(backend) ??
           await _openable(backend, home) ??
           '/',
@@ -266,7 +321,8 @@ extension _Open on _SftpPageState {
   ///
   /// `/` is the last resort rather than a failure. It is the same place the
   /// browser's root already is, so going up from anywhere reaches it anyway.
-  Future<String?> _openable(SftpFileBackend backend, String path) async {
+  Future<String?> _openable(FileBackend backend, String? path) async {
+    if (path == null) return null;
     try {
       await backend.list(path);
       return path;
@@ -277,8 +333,12 @@ extension _Open on _SftpPageState {
 
   /// Asked of the server rather than assumed: a user's home is wherever
   /// `passwd` says it is, and only the guess is `/home/<user>`.
-  Future<String> _homeDir() async {
-    final user = _spi.ssh?.user ?? '';
+  ///
+  /// [spi] is passed in rather than read off the page, which held the snapshot
+  /// the tab was opened with: after an edit the fallback named the old user's
+  /// home even though the connection was the new user's.
+  Future<String> _homeDir(Spi spi) async {
+    final user = spi.ssh?.user ?? '';
     final fallback = user == 'root' ? '/root' : '/home/$user';
     try {
       final result = await _client.run(
@@ -295,7 +355,7 @@ extension _Open on _SftpPageState {
 
   /// Where this server was left, if it is still listable — a remembered path
   /// that has since been deleted should not be what the browser opens into.
-  Future<String?> _lastPath(SftpFileBackend backend) async {
+  Future<String?> _lastPath(FileBackend backend) async {
     if (!Stores.setting.sftpOpenLastPath.fetch()) return null;
     final remembered = Stores.history.sftpLastPath.fetch(_spi.id);
     if (remembered == null) return null;
@@ -404,7 +464,7 @@ extension _Actions on _SftpPageState {
                 .read(fileTransferProvider.notifier)
                 .add(
                   FileTransfer(
-                    from: SftpFileRef.forServer(_spi, fullPath),
+                    from: _refOf(fullPath),
                     to: LocalFileRef(_localPathFor(fullPath)),
                   ),
                 );
@@ -459,7 +519,7 @@ extension _Actions on _SftpPageState {
             .add(
               FileTransfer(
                 from: LocalFileRef(local),
-                to: SftpFileRef.forServer(_spi, remote),
+                to: _refOf(remote),
               ),
             );
         return;
@@ -493,13 +553,13 @@ extension _Actions on _SftpPageState {
 
     final staging = '/tmp/serverbox-upload-'
         '${DateTime.now().microsecondsSinceEpoch}-$name';
-    final completer = Completer<void>();
+    final completer = Completer<bool>();
     final reqId = ref
         .read(fileTransferProvider.notifier)
         .add(
           FileTransfer(
             from: LocalFileRef(local),
-            to: SftpFileRef.forServer(_spi, staging),
+            to: _refOf(staging),
           ),
           completer: completer,
         );
@@ -509,14 +569,20 @@ extension _Actions on _SftpPageState {
       // business and not this dialog's.
       timeout: null,
       fn: () async {
-        await completer.future;
+        // The two checks answer different questions. A failed transfer leaves
+        // its error on the row; a cancelled one takes the row with it, and
+        // only the completer's own answer says so. Renaming after either would
+        // put a partial file — or nothing at all — over the destination as
+        // root.
+        final finished = await completer.future;
         final status = ref.read(fileTransferProvider.notifier).get(reqId);
         if (status?.error != null) throw status!.error!;
+        if (!finished) return false;
         await _sudoHelper.rename(staging, remote, password: pwd);
         return true;
       },
     );
-    if (moved != null && err == null) {
+    if (moved == true && err == null) {
       _sudoMode.value = true;
       return true;
     }
@@ -664,30 +730,32 @@ extension _Edit on _SftpPageState {
       return err == null;
     }
 
-    final completer = Completer<void>();
+    final completer = Completer<bool>();
     final id = ref
         .read(fileTransferProvider.notifier)
         .add(
           FileTransfer(
-            from: SftpFileRef.forServer(_spi, remotePath),
+            from: _refOf(remotePath),
             to: LocalFileRef(localPath),
           ),
           completer: completer,
         );
-    final (_, err) = await context.showLoadingDialog(
+    final (opened, err) = await context.showLoadingDialog(
       timeout: null,
       fn: () async {
-        await completer.future;
         // The completer says "this transfer is over", not "it worked":
-        // `dispose()` completes it on failure too. Without this, a download
-        // that failed opened the editor on a file that was missing or left
-        // over from a previous session — and saving it uploaded that back.
+        // `dispose()` answers it on failure and on cancellation too. Without
+        // both checks, a download that failed opened the editor on a file that
+        // was missing or left over from a previous session — and saving it
+        // uploaded that back. A cancelled one leaves no row to carry the
+        // error, which is what the completer's own answer is for.
+        final finished = await completer.future;
         final status = ref.read(fileTransferProvider.notifier).get(id);
         if (status?.error != null) throw status!.error!;
-        return true;
+        return finished;
       },
     );
-    return err == null;
+    return opened == true && err == null;
   }
 
   Future<void> _saveBack(
@@ -702,7 +770,7 @@ extension _Edit on _SftpPageState {
           .add(
             FileTransfer(
               from: LocalFileRef(localPath),
-              to: SftpFileRef.forServer(_spi, remotePath),
+              to: _refOf(remotePath),
             ),
           );
       await announceQueued(context, ref, [id]);

@@ -120,6 +120,14 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   /// API (true) — mutually exclusive, see the switch at the top of the form.
   final _useMonitorHttp = ValueNotifier(false);
 
+  /// Which protocol this server's files move over — see [SshFileTransport].
+  ///
+  /// A field of the SSH credential rather than a preference, so it lives here
+  /// beside `ProxyCommand` and the fallback address: all three are "how this
+  /// one host has to be talked to", and none of them is a question the app can
+  /// answer by itself.
+  final _fileTransport = ValueNotifier(SshFileTransport.sftp);
+
   final _tempIsCelsius = ValueNotifier(false);
   final _env = <String, String>{}.vn;
 
@@ -185,6 +193,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     _monitorIgnoreCert.dispose();
     _monitorAllowInsecure.dispose();
     _useMonitorHttp.dispose();
+    _fileTransport.dispose();
     _tempIsCelsius.dispose();
     _env.dispose();
     _unmigratedCmds.dispose();

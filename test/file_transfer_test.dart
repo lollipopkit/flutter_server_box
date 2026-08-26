@@ -45,7 +45,7 @@ void main() {
       tempDir = await Directory.systemTemp.createTemp('server-box-transfer-');
       await openTestDb();
       getIt.registerSingleton<SettingStore>(SettingStore.forTest());
-      // Building an `SftpFileRef` reads keys and jump servers out of these,
+      // Building an `SshFileRef` reads keys and jump servers out of these,
       // which is the work these tests are checking happens on this side.
       getIt.registerSingleton<ServerStore>(ServerStore.forTest());
       getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore.forTest());
@@ -100,11 +100,11 @@ void main() {
     });
 
     test('remote references include the configured endpoint in identity', () {
-      final oldSsh = SftpFileRef.forServer(
+      final oldSsh = SshFileRef.forServer(
         spiFixture(name: 'srv', id: 'same', ip: '10.0.0.1'),
         '/tmp/x',
       );
-      final newSsh = SftpFileRef.forServer(
+      final newSsh = SshFileRef.forServer(
         spiFixture(name: 'srv', id: 'same', ip: '10.0.0.2'),
         '/tmp/x',
       );
@@ -131,7 +131,7 @@ void main() {
 
     test('anything with SSH at either end needs one', () {
       final spi = spiFixture(name: 'srv', id: 'srv', ip: '10.0.0.1');
-      final remote = SftpFileRef.forServer(spi, '/tmp/x');
+      final remote = SshFileRef.forServer(spi, '/tmp/x');
 
       expect(
         FileTransfer(from: const LocalFileRef('/a/x'), to: remote).needsIsolate,
@@ -144,7 +144,7 @@ void main() {
       expect(
         FileTransfer(
           from: remote,
-          to: SftpFileRef.forServer(
+          to: SshFileRef.forServer(
             spiFixture(name: 'other', id: 'other', ip: '10.0.0.2'),
             '/tmp/y',
           ),
@@ -159,7 +159,7 @@ void main() {
       final destPath = '${tempDir.path}/nested/dest.bin';
       await Directory('${tempDir.path}/nested').create();
 
-      final done = Completer<void>();
+      final done = Completer<bool>();
       final status = FileTransferStatus(
         job: FileTransfer(
           from: LocalFileRef(source.path),
@@ -186,7 +186,7 @@ void main() {
       File('${tempDir.path}/src/one.txt').writeAsStringSync('hello');
       File('${tempDir.path}/src/deep/two.txt').writeAsStringSync('world');
 
-      final done = Completer<void>();
+      final done = Completer<bool>();
       final status = FileTransferStatus(
         job: FileTransfer(
           from: LocalFileRef('${tempDir.path}/src'),
@@ -209,7 +209,7 @@ void main() {
 
     test('a folder never takes the single-file fast path', () {
       final job = FileTransfer(
-        from: SftpFileRef.forServer(
+        from: SshFileRef.forServer(
           spiFixture(name: 'srv', id: 'srv', ip: '10.0.0.1'),
           '/var/log',
         ),
@@ -232,6 +232,7 @@ void main() {
         ).writeAsBytesSync(List<int>.filled(64 * 1024, 7));
       }
 
+      final done = Completer<bool>();
       final status = FileTransferStatus(
         job: FileTransfer(
           from: LocalFileRef('${tempDir.path}/src'),
@@ -239,6 +240,7 @@ void main() {
           isDir: true,
         ),
         notifyListeners: () {},
+        completer: done,
       );
 
       // Once it is moving, pull the plug.
@@ -258,6 +260,16 @@ void main() {
       );
       // And it is not reported as a failure: the user asked for this.
       expect(status.error, isNull);
+      // Which is exactly why the completer has to say so itself. A cancelled
+      // transfer carries no error and, once cancelled, no row either — so a
+      // caller reading only those two read this as a success, renamed a
+      // staging file that was never finished over its destination, and opened
+      // an editor on a download that never arrived.
+      expect(
+        await done.future.timeout(const Duration(seconds: 5)),
+        isFalse,
+        reason: 'the completer answers whether it finished',
+      );
       // Nothing half-written left under a final name.
       final left = Directory(
         '${tempDir.path}/dst',
@@ -273,8 +285,8 @@ void main() {
       File('${tempDir.path}/a').writeAsStringSync('a');
       File('${tempDir.path}/b').writeAsStringSync('b');
 
-      final firstDone = Completer<void>();
-      final secondDone = Completer<void>();
+      final firstDone = Completer<bool>();
+      final secondDone = Completer<bool>();
       final first = FileTransferStatus(
         job: FileTransfer(
           from: LocalFileRef('${tempDir.path}/a'),

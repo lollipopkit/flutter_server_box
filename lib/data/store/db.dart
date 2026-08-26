@@ -117,6 +117,10 @@ class Servers extends Table with SyncMeta {
   TextColumn get sshAlterUrl => text().nullable()();
   TextColumn get sshProxyCommand => text().nullable()();
 
+  /// `SshFileTransport`, by name. Null is `sftp`, which is what every row
+  /// written before the column existed meant — see `m014`.
+  TextColumn get sshFileTransport => text().nullable()();
+
   TextColumn get monitorAddr => text().nullable()();
   TextColumn get monitorUser => text().nullable()();
   TextColumn get monitorPwd => text().nullable()();

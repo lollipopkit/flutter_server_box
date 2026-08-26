@@ -391,6 +391,10 @@ class AppLocalizationsPt extends AppLocalizations {
       'Este interruptor indica que o programa tentará rodar em segundo plano, mas a capacidade de fazer isso depende das permissões concedidas. No Android nativo, desative a \'Otimização de bateria\' para este app, no MIUI, altere a estratégia de economia de energia para \'Sem restrições\'.';
 
   @override
+  String get bgRunNeedsNotification =>
+      'Correr em segundo plano precisa de uma notificação permanente, e esta app não tem permissão de notificações. Toca para a conceder.';
+
+  @override
   String get clearAllStatsContent =>
       'Tem certeza de que deseja limpar todas as estatísticas de conexão do servidor? Esta ação não pode ser desfeita.';
 
@@ -1119,6 +1123,14 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get sftpShowFoldersFirst => 'Mostrar pastas primeiro';
+
+  @override
+  String get sftpUnavailableUseScp =>
+      'Se este host não tiver subsistema SFTP, como acontece em muitos dispositivos embarcados, mude a transferência de ficheiros para SCP nas definições do servidor.';
+
+  @override
+  String get sshFileTransportTip =>
+      'SFTP serve para qualquer equipamento atual. Escolhe SCP para um host antigo ou embarcado cujo servidor SSH não tem subsistema SFTP: precisa do comando `scp` e de uma shell que tenha também os utilitários de ficheiros habituais (`find`, `stat`, `mv`, `chmod`).';
 
   @override
   String get specifyDev => 'Especificar dispositivo';

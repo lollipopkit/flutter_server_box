@@ -34,6 +34,7 @@ import 'package:server_box/data/ssh/tmux/tmux_export.dart';
 import 'package:server_box/view/page/agent/history.dart';
 import 'package:server_box/view/page/ssh/ask_ai_layout.dart';
 import 'package:server_box/view/page/ssh/page/virt_key_intro.dart';
+import 'package:server_box/view/page/storage/server_file.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
 import 'package:server_box/view/widget/agent_common.dart';
 import 'package:server_box/view/widget/tmux_session_selector.dart';
@@ -235,6 +236,11 @@ class SSHPageState extends ConsumerState<SSHPage>
   static const _connectionCheckInterval = Duration(seconds: 60);
   static const _connectionCheckTimeout = Duration(seconds: 10);
   static const _maxKeepAliveFailures = 3;
+
+  /// Between the tries of one check that cannot wait for the next interval —
+  /// see `_checkConnectionHealth`. Short enough that a genuinely dead session
+  /// is still reported within a few seconds of coming back.
+  static const _connectionCheckRetryDelay = Duration(seconds: 2);
   int _missedKeepAliveCount = 0;
   bool _isCheckingConnection = false;
   bool _hasPendingImmediateCheck = false;
@@ -633,11 +639,23 @@ class SSHPageState extends ConsumerState<SSHPage>
         return;
       }
 
-      final selected = await context.showPickSingleDialog<Snippet>(
+      // By tag, which is what the virtual key used to offer and this did not.
+      // There is one picker now: the key called a copy of this that bailed
+      // without a word whenever there was no server, so the snippet key did
+      // nothing at all on a shell on this device.
+      final tags = ref.read(snippetProvider.select((p) => p.tags));
+      final picked = await context.showPickWithTagDialog<Snippet>(
         title: libL10n.snippet,
-        items: snippets,
+        tags: tags.vn,
+        itemsBuilder: (tag) {
+          if (tag == TagSwitcher.kDefaultTag) return snippets;
+          return snippets
+              .where((e) => e.tags?.contains(tag) ?? false)
+              .toList();
+        },
         display: (snippet) => snippet.name,
       );
+      final selected = picked?.firstOrNull;
       if (selected == null) return;
 
       try {

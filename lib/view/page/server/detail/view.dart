@@ -171,13 +171,20 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 20),
         children: [
-          if (err != null)
+          if (err != null) ...[
             CardX(
               child: Padding(
                 padding: const EdgeInsets.all(13),
                 child: SimpleMarkdown(data: _errMarkdown(err)),
               ),
-            )
+            ),
+            // Under the error rather than inside it: the card says what went
+            // wrong, this says what to do about it. Only for the one failure
+            // that has a one-tap answer — a plaintext address the connection
+            // has not been allowed to use. Everything else needs the editor.
+            if (si.spi.monitorHttp?.needsInsecureOptIn == true)
+              _buildAllowInsecure(si),
+          ]
           else
             Padding(
               padding: const EdgeInsets.all(13),
@@ -222,6 +229,52 @@ ${err.solution ?? libL10n.unknown}
 ${err.message ?? 'null'}
 ```
 ''';
+  }
+
+  /// Turns plaintext HTTP on for this one connection, and reconnects.
+  ///
+  /// The switch is on the editor's More section, which is three taps and a
+  /// scroll away from the error that sent you looking for it. What it costs is
+  /// stated under the button rather than behind a dialog: the tip is the same
+  /// sentence the editor shows beside the switch, and the button names the
+  /// setting it changes.
+  Widget _buildAllowInsecure(ServerState si) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 13),
+      child: Column(
+        children: [
+          Btn.elevated(
+            text: l10n.monitorAllowInsecureHttp,
+            icon: const Icon(Icons.lock_open, size: 18),
+            mainAxisSize: MainAxisSize.min,
+            gap: 8,
+            onTap: () => _allowInsecure(si),
+          ),
+          UIs.height7,
+          Text(
+            l10n.monitorAllowInsecureHttpTip,
+            style: UIs.textGrey,
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Saving is the whole of it: `Spi.shouldReconnect` counts a changed
+  /// `monitorHttp` — and `MonitorHttpCredential.==` counts `allowInsecure` —
+  /// so `updateServer` clears the retry limiter and refreshes on its own.
+  /// Reconnecting here as well would be a second attempt at the same thing.
+  Future<void> _allowInsecure(ServerState si) async {
+    final monitor = si.spi.monitorHttp;
+    if (monitor == null) return;
+    try {
+      await ref
+          .read(serversProvider.notifier)
+          .updateServer(si.spi, si.spi.copyWith(monitorHttp: monitor.allowingInsecure()));
+    } catch (e, s) {
+      if (mounted) context.showErrDialog(e, s);
+    }
   }
 
   /// Clears the retry limiter first: the user asking again *is* the new
@@ -354,17 +407,30 @@ ${err.message ?? 'null'}
           overflow: TextOverflow.ellipsis,
         ),
         trailing: const Icon(Icons.chevron_right, size: 17),
-        onTap: () => _showErrDetail(err),
+        onTap: () => _showErrDetail(si, err),
       ),
     );
   }
 
-  void _showErrDetail(Err err) {
+  /// A server that has reported before shows its failure here rather than on
+  /// the empty page, so the same one-tap answer has to be offered in both.
+  void _showErrDetail(ServerState si, Err err) {
     final md = _errMarkdown(err);
     context.showRoundDialog(
       title: libL10n.error,
       child: SingleChildScrollView(child: SimpleMarkdown(data: md)),
       actions: [
+        if (si.spi.monitorHttp?.needsInsecureOptIn == true)
+          TextButton(
+            // Closes the dialog itself and leaves the work to the page: an
+            // `onPressed` replaces the navigator the button would have
+            // resolved on its own — see the dialog rules in CLAUDE.md.
+            onPressed: () {
+              context.popDialog();
+              _allowInsecure(si);
+            },
+            child: Text(l10n.monitorAllowInsecureHttp),
+          ),
         TextButton(onPressed: () => Pfs.copy(md), child: Text(libL10n.copy)),
         TextButton(onPressed: () => context.popDialog(), child: Text(libL10n.close)),
       ],

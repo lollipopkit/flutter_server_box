@@ -148,6 +148,22 @@ const es = {
 	terminalPasswordlessNoticeBody: 'Abrir una terminal aquí no requiere credenciales SSH, así que la contraseña del panel es lo único entre un visitante y un shell en esta máquina. Consérvalo si es lo que quieres, o desactívalo e inicia sesión con una cuenta SSH. Volver a activarlo después requiere editar el archivo de configuración del agente.',
 	terminalPasswordlessKeep: 'Mantenerlo activo',
 	terminalPasswordlessDisable: 'Desactivarlo',
+	files: 'Archivos',
+	filesUnavailable: 'El acceso a archivos no está habilitado en este agente. Activa remote_access.fs.enabled en config.toml e indica sus raíces; además requiere TLS o un proxy en el mismo host.',
+	filesRoots: 'Raíces',
+	filesEmpty: 'No hay nada aquí',
+	filesSize: 'Tamaño',
+	filesModified: 'Modificado',
+	filesUpload: 'Subir',
+	filesUploading: 'Subiendo...',
+	filesDownload: 'Descargar',
+	filesNewFolder: 'Nueva carpeta',
+	filesRename: 'Renombrar',
+	filesDelete: 'Eliminar',
+	filesPermissions: 'Permisos',
+	filesConfirmDelete: '¿Eliminar esto? No se puede deshacer.',
+	filesDeleteRecursive: 'Eliminar la carpeta y todo su contenido',
+	filesName: 'Nombre',
 } satisfies Translation
 
 export default es

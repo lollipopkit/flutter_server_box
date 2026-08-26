@@ -391,6 +391,10 @@ class AppLocalizationsUk extends AppLocalizations {
       'Цей перемикач лише вказує на те, що програма намагатиметься працювати у фоновому режимі. Чи може вона працювати у фоновому режимі, залежить від прав доступу. Для AOSP-орієнтованих Android ROM, будь ласка, вимкніть \"Оптимізацію акумулятора\" в цьому додатку. Для MIUI / HyperOS, будь ласка, змініть політику економії енергії на \"Нескінченна\".';
 
   @override
+  String get bgRunNeedsNotification =>
+      'Робота у фоні потребує постійного сповіщення, а застосунок не має дозволу на сповіщення. Натисніть, щоб дозволити.';
+
+  @override
   String get clearAllStatsContent =>
       'Ви впевнені, що хочете очистити всю статистику з\'єднань сервера? Цю дію не можна скасувати.';
 
@@ -1122,6 +1126,14 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get sftpShowFoldersFirst => 'Спочатку відображати директорії';
+
+  @override
+  String get sftpUnavailableUseScp =>
+      'Якщо цей хост не має підсистеми SFTP, як багато вбудованих пристроїв, змініть передавання файлів на SCP в налаштуваннях сервера.';
+
+  @override
+  String get sshFileTransportTip =>
+      'SFTP підходить для будь-якого сучасного пристрою. SCP — для старого чи вбудованого хоста, у SSH-сервера якого немає підсистеми SFTP: йому потрібна команда `scp` і оболонка, у якій є й звичайні файлові утиліти (`find`, `stat`, `mv`, `chmod`).';
 
   @override
   String get specifyDev => 'Вказати пристрій';

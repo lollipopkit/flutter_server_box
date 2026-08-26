@@ -58,10 +58,47 @@ Future<void> sendTo(
     return;
   }
 
+  // And a directory into its own descendant copies the tree inside itself.
+  // `planCopy` walks before it copies, so this does not run away — it just
+  // leaves a nested duplicate of everything under a folder the user was
+  // putting something *into*, which nobody means to ask for.
+  if (isDir && _isInside(destination, source)) {
+    Toast.error(libL10n.fail);
+    return;
+  }
+
   final id = ref
       .read(fileTransferProvider.notifier)
       .add(FileTransfer(from: source, to: destination, isDir: isDir));
   await announceQueued(context, ref, [id]);
+}
+
+/// Whether [inner] names somewhere at or under [outer], on the same filesystem.
+///
+/// Two refs on different ends are never inside one another however their paths
+/// compare: `/etc` on this device and `/etc` on a server are two directories
+/// that happen to be spelled the same.
+bool _isInside(FileRef inner, FileRef outer) {
+  final sameFilesystem = switch ((inner, outer)) {
+    (LocalFileRef(), LocalFileRef()) => true,
+    (SshFileRef(spi: final a), SshFileRef(spi: final b)) => a.id == b.id,
+    (MonitorFileRef(spi: final a), MonitorFileRef(spi: final b)) => a.id == b.id,
+    _ => false,
+  };
+  if (!sameFilesystem) return false;
+
+  String normalize(String path) {
+    final slashed = path.replaceAll(r'\', '/');
+    return slashed.endsWith('/') && slashed.length > 1
+        ? slashed.substring(0, slashed.length - 1)
+        : slashed;
+  }
+
+  final parent = normalize(outer.path);
+  final child = normalize(inner.path);
+  if (child == parent) return true;
+  // The separator matters: `/data2` is not inside `/data`.
+  return child.startsWith(parent == '/' ? '/' : '$parent/');
 }
 
 /// Where the last send went, so a batch asks once rather than once per file.
@@ -148,7 +185,7 @@ Future<String?> _pickDir(BuildContext context, _Place place) => switch (place) {
 FileRef serverFileRef(WidgetRef ref, Spi spi, String path) {
   final caps = ref.read(serverProvider(spi.id)).capabilities;
   return caps.byteStream
-      ? SftpFileRef.forServer(spi, path)
+      ? SshFileRef.forServer(spi, path)
       : MonitorFileRef.forServer(spi, path);
 }
 

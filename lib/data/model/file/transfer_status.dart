@@ -41,7 +41,17 @@ class FileTransferStatus {
 
   final FileTransfer job;
   final void Function() notifyListeners;
-  final Completer? completer;
+
+  /// Answered with whether the transfer *finished*, for a caller that has
+  /// something to do next with what it moved.
+  ///
+  /// It used to be answered `true` no matter how the transfer ended, and a
+  /// cancelled one is removed from the list — so the caller's other check,
+  /// "does this row carry an error", found no row and read the cancellation as
+  /// a success. `_uploadViaSudo` then renamed a staging file that was never
+  /// fully written over the destination, and the editor opened a download that
+  /// had not arrived.
+  final Completer<bool>? completer;
 
   /// Null for a transfer that runs on this isolate, which is the pairs with no
   /// crypto in them.
@@ -80,7 +90,7 @@ class FileTransferStatus {
     worker?.dispose();
     if (unfinished) _discardStaging();
     if (completer?.isCompleted == false) {
-      completer?.complete(true);
+      completer?.complete(!unfinished);
     }
   }
 
@@ -133,7 +143,7 @@ class FileTransferStatus {
       // passphrase on, so a key stored encrypted has to be opened on this side
       // or it fails over there with nothing to say why.
       for (final ref in [job.from, job.to]) {
-        if (ref is SftpFileRef) await ref.creds.unlockKeys();
+        if (ref is SshFileRef) await ref.creds.unlockKeys();
       }
       // Unlocking asks for a passphrase, so this await lasts as long as
       // somebody takes to answer it — plenty of time to cancel. `dispose` has
@@ -177,6 +187,12 @@ class FileTransferStatus {
         plan,
         source,
         dest,
+        // As the isolate path reports it, and for the same reason: `write`
+        // cleans up after its own failures, and a cancellation is not one of
+        // them. Without this a local copy stopped part-way left its
+        // `.sb-part-…` beside the destination, which is the thing staging was
+        // introduced to avoid.
+        onStaging: (path) => onNotify(TransferStaging(path)),
         cancelled: () => _cancelled,
         onProgress: (transferred) => onNotify(
           FileTransferProgress(
@@ -216,15 +232,21 @@ class FileTransferStatus {
     _ => false,
   };
 
-  /// An `SftpFileRef` never reaches here — [FileTransfer.needsIsolate] is
+  /// An `SshFileRef` never reaches here — [FileTransfer.needsIsolate] is
   /// exactly the question "is either end SSH".
   static FileBackend _backendFor(FileRef ref) => switch (ref) {
     LocalFileRef() => const LocalFileBackend(),
     MonitorFileRef(:final monitor) => MonitorFileBackend(monitor),
-    SftpFileRef() => throw StateError('SFTP transfers run in an isolate'),
+    SshFileRef() => throw StateError('SFTP transfers run in an isolate'),
   };
 
   void onNotify(dynamic event) {
+    // Nothing after the end. Killing a worker does not recall the messages it
+    // already sent, so a cancelled transfer could still be handed a progress
+    // update or a stage — and would publish it, moving a row that is no longer
+    // in the list and completing a completer that has already been answered.
+    if (_disposed) return;
+
     var shouldDispose = false;
     switch (event) {
       case final FileTransferStage val:

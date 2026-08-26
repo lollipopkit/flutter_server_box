@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:meta/meta.dart';
 
 /// What a directory listing can say about one entry.
@@ -96,6 +97,49 @@ final _stagingToken = Random.secure()
     .toRadixString(36)
     .padLeft(7, '0');
 
+/// Gives [staging] the permission bits [destination] already has, before a
+/// [FileBackend.write] renames the one onto the other.
+///
+/// A staged copy is created with whatever the far side's umask says, and the
+/// rename carries *that* mode onto the destination. So saving an edit to a 0755
+/// script left it 0644 and unrunnable, and replacing a 0600 file made it
+/// world-readable — neither of which anyone asked for by saving a file.
+/// Whatever was there keeps its permissions instead.
+///
+/// Best effort, and logged rather than fatal. The bytes are already across by
+/// the time this runs, and a server that will not report or set a mode is one
+/// where failing here would mean the file could never be saved at all, with the
+/// new contents thrown away every time. The `monitor` agent's own write settled
+/// on the same answer (`monitor/src/api/fs.rs`).
+///
+/// A no-op where the backend has no notion of permissions: there is nothing to
+/// read and nothing to set, which is what [FileBackendTraits.permissions]
+/// answering false means.
+Future<void> carryModeToStaging(
+  FileBackend backend,
+  String staging,
+  String destination,
+) async {
+  if (!backend.traits.permissions) return;
+  try {
+    final existing = await backend.stat(destination);
+    // Nothing there is the ordinary case: a file being created for the first
+    // time has no mode to keep. A directory is one the rename is about to fail
+    // on anyway. A symlink is replaced *as a link* by the rename, so what the
+    // new file inherits would be the link's own bits — `0777` on most systems,
+    // which is not permissions being kept but a world-writable file being
+    // created.
+    if (existing == null || existing.isDir || existing.kind == FileKind.link) {
+      return;
+    }
+    final mode = existing.mode;
+    if (mode == null) return;
+    await backend.chmod(staging, mode);
+  } catch (e, s) {
+    Loggers.app.warning("Could not carry $destination's mode over", e, s);
+  }
+}
+
 /// The bits [FileEntry.mode] keeps: `rwxrwxrwx` plus setuid, setgid and
 /// sticky, and nothing above them.
 const kFilePermMask = 0xFFF;
@@ -190,6 +234,11 @@ abstract interface class FileBackend {
   /// and renames, so a transfer that dies halfway leaves no half-file under the
   /// name something else is about to open. [size] is a hint for progress and
   /// pre-allocation, not a contract.
+  ///
+  /// Replacing a file that is already there keeps its permission bits — see
+  /// [carryModeToStaging], which every implementation that has any calls. A
+  /// backend answering false to [FileBackendTraits.permissions] cannot, and
+  /// does not claim to.
   ///
   /// [onStaging] is called with the path being staged onto, before anything is
   /// written there, for the caller that has to clean up after a process this

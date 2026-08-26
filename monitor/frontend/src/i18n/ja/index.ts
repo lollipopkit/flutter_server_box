@@ -148,6 +148,22 @@ const ja = {
 	terminalPasswordlessNoticeBody: 'ここでターミナルを開くのに SSH 認証情報は要りません。つまり、訪問者とこのマシンのシェルとの間にあるのはパネルのパスワードだけです。それでよければそのままに、そうでなければ無効にして SSH アカウントでログインしてください。あとで再び有効にするにはエージェントの設定ファイルを編集する必要があります。',
 	terminalPasswordlessKeep: '有効のままにする',
 	terminalPasswordlessDisable: '無効にする',
+	files: 'ファイル',
+	filesUnavailable: 'このエージェントではファイルアクセスが有効になっていません。config.toml の remote_access.fs.enabled を有効にし、ルートを指定してください。TLS、または同一ホスト上のプロキシも必要です。',
+	filesRoots: 'ルート',
+	filesEmpty: '何もありません',
+	filesSize: 'サイズ',
+	filesModified: '更新日時',
+	filesUpload: 'アップロード',
+	filesUploading: 'アップロード中...',
+	filesDownload: 'ダウンロード',
+	filesNewFolder: '新しいフォルダー',
+	filesRename: '名前を変更',
+	filesDelete: '削除',
+	filesPermissions: 'パーミッション',
+	filesConfirmDelete: 'これを削除しますか？元に戻せません。',
+	filesDeleteRecursive: 'フォルダーと中身をすべて削除する',
+	filesName: '名前',
 } satisfies Translation
 
 export default ja

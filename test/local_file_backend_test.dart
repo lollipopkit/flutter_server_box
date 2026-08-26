@@ -64,18 +64,42 @@ void main() {
       expect(entry.size, 5);
     });
 
-    test('reports links without following them', () async {
+    test('reports a link as a link, not as what it points at', () async {
+      // The same answer `list` gives. Following meant the two disagreed about
+      // the same path, and a caller acting on the difference — deleting, or
+      // replacing — acted on the target instead of the link.
+      await File(at('a.txt')).writeAsString('hello');
+      await Link(at('l')).create(at('a.txt'));
       await Directory(at('sub')).create();
       await Link(at('to-dir')).create(at('sub'));
-      await Link(at('broken')).create(at('missing'));
 
+      final entry = await backend.stat(at('l'));
       final linkedDir = await backend.stat(at('to-dir'));
-      final broken = await backend.stat(at('broken'));
 
+      expect(entry!.kind, FileKind.link);
+      // Slash-separated, as the backend reports every path: it converts on
+      // the way out so a caller never has to ask which platform it is on.
+      expect(entry.linkTarget, at('a.txt').replaceAll(r'\', '/'));
+      // A link to a directory too, which `list` would otherwise call a dir.
       expect(linkedDir!.kind, FileKind.link);
       expect(linkedDir.linkTarget, at('sub').replaceAll(r'\', '/'));
-      expect(broken!.kind, FileKind.link);
-      expect(broken.linkTarget, at('missing').replaceAll(r'\', '/'));
+      // Neither carries the target's size or time: those describe the target,
+      // and the link's own describe the link. The SFTP backend says the same.
+      expect(entry.size, isNull);
+      expect(entry.modified, isNull);
+    });
+
+    test('a link to nowhere is still something, not nothing', () async {
+      // Reported as absent, it read as "free to create something here" — and
+      // the something would have replaced a link the user could see listed.
+      await Link(at('broken')).create(at('missing'));
+
+      final entry = await backend.stat(at('broken'));
+
+      expect(entry, isNotNull);
+      expect(entry!.kind, FileKind.link);
+      expect(entry.linkTarget, at('missing').replaceAll(r'\', '/'));
+      expect(entry.size, isNull);
     });
   });
 

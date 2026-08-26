@@ -12,18 +12,20 @@ import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/sftp_file_backend.dart';
 import 'package:server_box/core/utils/sftp_timeout.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
+import 'package:server_box/core/utils/ssh_file_backend.dart';
 import 'package:server_box/data/model/file/copy_tree.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/model/file/prompt_queue.dart';
 import 'package:server_box/data/model/file/transfer.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/ssh_credential.dart';
 
 const _sftpChunkSize = 32 * 1024;
 
 const _sftpDownloadMaxPendingRequests = 64;
 
-const _sftpDownloadMinIdleTimeout = Duration(seconds: 60);
+const _sftpMinIdleTimeout = Duration(seconds: 60);
 
 const _sftpUploadMaxBytesOnTheWire = _sftpChunkSize * 64;
 
@@ -98,11 +100,11 @@ class TransferHostKeyAccepted {
 Duration _prepareTimeout(FileTransfer job) =>
     sftpOperationTimeout(job.timeoutSeconds);
 
-Duration _downloadIdleTimeout(FileTransfer job) {
+Duration _idleTimeout(FileTransfer job) {
   final seconds = job.timeoutSeconds;
   final timeout = Duration(seconds: seconds <= 0 ? 60 : seconds);
-  return timeout < _sftpDownloadMinIdleTimeout
-      ? _sftpDownloadMinIdleTimeout
+  return timeout < _sftpMinIdleTimeout
+      ? _sftpMinIdleTimeout
       : timeout;
 }
 
@@ -292,13 +294,15 @@ Future<void> isolateMessageHandler(
       // The two pairs that already existed keep their own code: segmented
       // reads, an idle timer and a bounded write window are what make a large
       // file over a slow link finish, and none of that is expressible as
-      // `read` piped into `write`. Everything else takes the general path.
+      // `read` piped into `write`. Everything else takes the general path —
+      // including an SCP server, whose protocol has no random access to
+      // segment and no window to bound.
       switch ((job.from, job.to)) {
-        case (final SftpFileRef from, final LocalFileRef to)
-            when job.isSingleFile:
+        case (final SshFileRef from, final LocalFileRef to)
+            when job.isSingleFile && from.transport == SshFileTransport.sftp:
           await _download(job, from, to, mainSendPort);
-        case (final LocalFileRef from, final SftpFileRef to)
-            when job.isSingleFile:
+        case (final LocalFileRef from, final SshFileRef to)
+            when job.isSingleFile && to.transport == SshFileTransport.sftp:
           await _upload(job, from, to, mainSendPort);
         default:
           await _copy(job, mainSendPort);
@@ -321,7 +325,7 @@ Future<void> isolateMessageHandler(
 /// A server to this device.
 Future<void> _download(
   FileTransfer job,
-  SftpFileRef from,
+  SshFileRef from,
   LocalFileRef to,
   SendPort mainSendPort,
 ) async {
@@ -396,7 +400,7 @@ Future<void> _download(
       final dlWatch = Stopwatch()..start();
       Loggers.app.info('Transfer download start size=$size');
 
-      final timeout = _downloadIdleTimeout(job);
+      final timeout = _idleTimeout(job);
 
       while (offset < size) {
         final remaining = size - offset;
@@ -555,7 +559,7 @@ Future<void> _discard(File? staging) async {
 Future<void> _upload(
   FileTransfer job,
   LocalFileRef from,
-  SftpFileRef to,
+  SshFileRef to,
   SendPort mainSendPort,
 ) async {
   SSHClient? client;
@@ -617,60 +621,65 @@ Future<void> _upload(
       'chunk=$_sftpChunkSize, maxBytes=$_sftpUploadMaxBytesOnTheWire',
     );
     var lastProgress = -1;
-    final idleDuration = _downloadIdleTimeout(job);
-    final idleTimeout = Completer<Never>();
-    Timer? idleTimer;
-    Future<void>? pendingWrite;
-
-    void resetIdleTimer() {
-      if (idleTimeout.isCompleted) return;
-      idleTimer?.cancel();
-      idleTimer = Timer(idleDuration, () {
-        if (!idleTimeout.isCompleted) {
-          idleTimeout.completeError(
-            TimeoutException('Transfer upload idle timed out', idleDuration),
+    // The download beside this one has been bounded by the gap between its
+    // chunks all along; the upload was not, so a server that accepted the
+    // channel and then stopped acknowledging left `done` pending forever and
+    // no configured timeout ever reached it — the isolate stayed alive, and
+    // the staged file with it.
+    //
+    // Through [SftpIdleWatchdog] rather than a third hand-rolled timer, since
+    // `SftpFileBackend.write` needs the same bound and the download's own copy
+    // is what this was written from.
+    final watchdog = SftpIdleWatchdog('upload', _idleTimeout(job));
+    final writer = openedRemoteFile.write(
+      localFile,
+      onProgress: (total) {
+        watchdog.beat();
+        if (localLen == 0) return;
+        final progress = (total / localLen * 100).round();
+        if (progress != lastProgress) {
+          lastProgress = progress;
+          mainSendPort.send(
+            FileTransferProgress(
+              percent: progress.toDouble(),
+              transferredBytes: total,
+            ),
           );
         }
-      });
-    }
-
+      },
+      chunkSize: _sftpChunkSize,
+      maxBytesOnTheWire: _sftpUploadMaxBytesOnTheWire,
+    );
     try {
-      resetIdleTimer();
-      final writer = openedRemoteFile.write(
-        localFile,
-        onProgress: (total) {
-          resetIdleTimer();
-          if (localLen == 0) return;
-          final progress = (total / localLen * 100).round();
-          if (progress != lastProgress) {
-            lastProgress = progress;
-            mainSendPort.send(
-              FileTransferProgress(
-                percent: progress.toDouble(),
-                transferredBytes: total,
-              ),
-            );
-          }
-        },
-        chunkSize: _sftpChunkSize,
-        maxBytesOnTheWire: _sftpUploadMaxBytesOnTheWire,
-      );
-      pendingWrite = writer.done;
-      await Future.any([pendingWrite, idleTimeout.future]);
+      await watchdog.guard(writer.done);
     } on TimeoutException {
-      pendingWrite?.ignore();
+      // `Future.any` stops waiting; it does not stop the write, which goes on
+      // holding the remote file. Closing it is what ends the requests still in
+      // flight — the `finally` below then removes the staging file — and the
+      // download path stops the same way for the same reason.
+      writer.done.ignore();
       try {
         await openedRemoteFile.close();
       } catch (_) {}
       remoteFile = null;
+      // Named like the download's, rather than passed through as a bare
+      // `TimeoutException`: both are the same failure and the list shows the
+      // message.
       throw SftpError('Upload timed out without progress');
-    } finally {
-      idleTimer?.cancel();
     }
     // Closed before the rename: a server need not see a handle to a path that
     // is about to stop existing.
     await remoteFile.close();
     remoteFile = null;
+    // Through a backend over the channel this already has, rather than another
+    // copy of the stat-and-chmod: this is the path the editor's save-back
+    // takes, so it is exactly where a 0755 script must not come back 0644, and
+    // two hand-written versions of that are two chances to differ.
+    await carryModeToStaging(
+      SftpFileBackend(openedSftp, timeout: _prepareTimeout(job)),
+      staging,
+      to.path,
+    );
     try {
       await _replaceRemote(openedSftp, staging, to.path, _prepareTimeout(job));
     } on TimeoutException {
@@ -813,13 +822,14 @@ Future<FileBackend> _openBackend(
       final backend = MonitorFileBackend(monitor);
       closing.add(backend.close);
       return backend;
-    case SftpFileRef(:final creds):
+    case SshFileRef(:final creds, :final transport):
       final client = await _connectSsh(creds, mainSendPort);
       closing.add(() async => client.close());
       // No escalation: there is nobody on this isolate to ask for a password,
       // and a refusal is a refusal.
-      final backend = await SftpFileBackend.connect(
+      final backend = await openSshFileBackend(
         client,
+        transport: transport,
         timeout: _prepareTimeout(job),
       );
       closing.add(backend.close);
