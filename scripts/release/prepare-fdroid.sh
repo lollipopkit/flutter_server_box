@@ -45,6 +45,8 @@ scripts/build-proot-android.sh
 # Do not pass `--no-pub`: Flutter gates platform-tooling regeneration on that
 # flag even when `--config-only` is requested.
 flutter build apk --release --config-only
+dart --packages="$REPO_ROOT/scripts/release/empty-package-config.json" \
+  "$REPO_ROOT/scripts/release/prune-android-dev-plugins.dart"
 
 # Only a complete release task graph resolves plugin compile/runtime artifacts;
 # `dependencies` and `--config-only` alone missed artifacts that CI then

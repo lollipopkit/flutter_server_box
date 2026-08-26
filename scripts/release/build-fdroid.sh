@@ -45,6 +45,8 @@ scripts/build-proot-android.sh
 # Java references (notably integration_test). Flutter skips this regeneration
 # when `--no-pub` is present, including for a config-only build.
 flutter build apk --release --config-only
+dart --packages="$REPO_ROOT/scripts/release/empty-package-config.json" \
+  "$REPO_ROOT/scripts/release/prune-android-dev-plugins.dart"
 
 rm -rf build/app/outputs/apk/release build/app/outputs/flutter-apk
 flutter build apk \
