@@ -4,17 +4,10 @@ import 'dart:io';
 void main() {
   const packageName = 'server_box_generated_plugin_registrant';
   const packageConfigPath = '.dart_tool/package_config.json';
-  const registrantPath = '.dart_tool/flutter_build/dart_plugin_registrant.dart';
 
   final packageConfigFile = File(packageConfigPath);
-  final registrantFile = File(registrantPath);
   if (!packageConfigFile.existsSync()) {
     stderr.writeln('missing $packageConfigPath; run flutter pub get first');
-    exitCode = 1;
-    return;
-  }
-  if (!registrantFile.existsSync()) {
-    stderr.writeln('missing $registrantPath; generate Android metadata first');
     exitCode = 1;
     return;
   }
