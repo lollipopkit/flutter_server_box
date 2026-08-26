@@ -148,6 +148,22 @@ const ko = {
 	terminalPasswordlessNoticeBody: '여기서 터미널을 열 때는 SSH 자격 증명이 필요 없습니다. 즉 방문자와 이 컴퓨터의 셸 사이를 막는 것은 패널 비밀번호뿐입니다. 원하는 동작이면 그대로 두고, 아니라면 끄고 SSH 계정으로 로그인하세요. 나중에 다시 켜려면 에이전트의 설정 파일을 편집해야 합니다.',
 	terminalPasswordlessKeep: '켜 둔다',
 	terminalPasswordlessDisable: '끈다',
+	files: '파일',
+	filesUnavailable: '이 에이전트에서 파일 API가 활성화되어 있지 않습니다. config.toml에서 remote_access.fs.enabled를 켜고 루트를 지정하세요. TLS 또는 같은 호스트의 프록시도 필요합니다.',
+	filesRoots: '루트',
+	filesEmpty: '아무것도 없습니다',
+	filesSize: '크기',
+	filesModified: '수정일',
+	filesUpload: '업로드',
+	filesUploading: '업로드 중...',
+	filesDownload: '다운로드',
+	filesNewFolder: '새 폴더',
+	filesRename: '이름 변경',
+	filesDelete: '삭제',
+	filesPermissions: '권한',
+	filesConfirmDelete: '삭제할까요? 되돌릴 수 없습니다.',
+	filesDeleteRecursive: '폴더와 그 안의 모든 항목을 삭제',
+	filesName: '이름',
 } satisfies Translation
 
 export default ko

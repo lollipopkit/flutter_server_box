@@ -148,6 +148,22 @@ const zh_CN = {
 	terminalPasswordlessNoticeBody: '在这里开终端不需要 SSH 凭据，因此你的面板密码是访问者与本机 shell 之间唯一的屏障。如果这正是你要的就保留；否则关掉它，改用 SSH 账号登录。之后想重新开启，需要改代理的配置文件。',
 	terminalPasswordlessKeep: '保留',
 	terminalPasswordlessDisable: '关闭',
+	files: '文件',
+	filesUnavailable: '此代理未启用文件 API。请在 config.toml 中开启 remote_access.fs.enabled 并指定其根目录；同时需要 TLS，或同主机上的代理。',
+	filesRoots: '根目录',
+	filesEmpty: '这里没有内容',
+	filesSize: '大小',
+	filesModified: '修改时间',
+	filesUpload: '上传',
+	filesUploading: '上传中...',
+	filesDownload: '下载',
+	filesNewFolder: '新建文件夹',
+	filesRename: '重命名',
+	filesDelete: '删除',
+	filesPermissions: '权限',
+	filesConfirmDelete: '删除该项？此操作无法撤销。',
+	filesDeleteRecursive: '删除该文件夹及其全部内容',
+	filesName: '名称',
 } satisfies Translation
 
 export default zh_CN

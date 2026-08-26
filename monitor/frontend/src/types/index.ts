@@ -297,3 +297,27 @@ export interface SettingsView extends SettingsPayload {
 export interface CardOrderPayload {
   card_order: string[];
 }
+
+/// One entry in a directory the agent serves, as `/fs/list` and `/fs/stat`
+/// answer. Mirrors `EntryView` in `monitor/src/api/fs.rs`, which the app's
+/// `FileEntry` is also defined against — the three have to agree.
+export interface FsEntry {
+  name: string;
+  /// Matches the app's `FileKind`.
+  kind: 'file' | 'dir' | 'link' | 'other';
+  /// Null where the platform did not say, which reads as "no size" rather
+  /// than as zero.
+  size: number | null;
+  /// Seconds since the epoch, as SFTP reports them.
+  modified: number | null;
+  /// Permission bits only, so `chmod` can take the value back unchanged.
+  mode: number | null;
+  /// Where a link points, unresolved. Null for anything else.
+  link_target: string | null;
+}
+
+/// The directories the operator opened up. Everything outside them is denied,
+/// so this is the whole of what the panel can browse.
+export interface FsRootsResponse {
+  roots: string[];
+}

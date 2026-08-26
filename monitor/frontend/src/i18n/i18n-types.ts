@@ -615,6 +615,70 @@ type RootTranslation = {
 	 * T​u​r​n​ ​i​t​ ​o​f​f
 	 */
 	terminalPasswordlessDisable: string
+	/**
+	 * F​i​l​e​s
+	 */
+	files: string
+	/**
+	 * T​h​e​ ​f​i​l​e​ ​A​P​I​ ​i​s​ ​n​o​t​ ​e​n​a​b​l​e​d​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​.​ ​T​u​r​n​ ​o​n​ ​r​e​m​o​t​e​_​a​c​c​e​s​s​.​f​s​.​e​n​a​b​l​e​d​ ​a​n​d​ ​n​a​m​e​ ​i​t​s​ ​r​o​o​t​s​ ​i​n​ ​c​o​n​f​i​g​.​t​o​m​l​;​ ​i​t​ ​a​l​s​o​ ​r​e​q​u​i​r​e​s​ ​T​L​S​,​ ​o​r​ ​a​ ​p​r​o​x​y​ ​o​n​ ​t​h​e​ ​s​a​m​e​ ​h​o​s​t​.
+	 */
+	filesUnavailable: string
+	/**
+	 * R​o​o​t​s
+	 */
+	filesRoots: string
+	/**
+	 * N​o​t​h​i​n​g​ ​h​e​r​e
+	 */
+	filesEmpty: string
+	/**
+	 * S​i​z​e
+	 */
+	filesSize: string
+	/**
+	 * M​o​d​i​f​i​e​d
+	 */
+	filesModified: string
+	/**
+	 * U​p​l​o​a​d
+	 */
+	filesUpload: string
+	/**
+	 * U​p​l​o​a​d​i​n​g​.​.​.
+	 */
+	filesUploading: string
+	/**
+	 * D​o​w​n​l​o​a​d
+	 */
+	filesDownload: string
+	/**
+	 * N​e​w​ ​f​o​l​d​e​r
+	 */
+	filesNewFolder: string
+	/**
+	 * R​e​n​a​m​e
+	 */
+	filesRename: string
+	/**
+	 * D​e​l​e​t​e
+	 */
+	filesDelete: string
+	/**
+	 * P​e​r​m​i​s​s​i​o​n​s
+	 */
+	filesPermissions: string
+	/**
+	 * D​e​l​e​t​e​ ​t​h​i​s​?​ ​I​t​ ​c​a​n​n​o​t​ ​b​e​ ​u​n​d​o​n​e​.
+	 */
+	filesConfirmDelete: string
+	/**
+	 * D​e​l​e​t​e​ ​t​h​e​ ​f​o​l​d​e​r​ ​a​n​d​ ​e​v​e​r​y​t​h​i​n​g​ ​i​n​ ​i​t
+	 */
+	filesDeleteRecursive: string
+	/**
+	 * N​a​m​e
+	 */
+	filesName: string
 }
 
 export type TranslationFunctions = {
@@ -1206,6 +1270,70 @@ export type TranslationFunctions = {
 	 * Turn it off
 	 */
 	terminalPasswordlessDisable: () => LocalizedString
+	/**
+	 * Files
+	 */
+	files: () => LocalizedString
+	/**
+	 * The file API is not enabled on this agent. Turn on remote_access.fs.enabled and name its roots in config.toml; it also requires TLS, or a proxy on the same host.
+	 */
+	filesUnavailable: () => LocalizedString
+	/**
+	 * Roots
+	 */
+	filesRoots: () => LocalizedString
+	/**
+	 * Nothing here
+	 */
+	filesEmpty: () => LocalizedString
+	/**
+	 * Size
+	 */
+	filesSize: () => LocalizedString
+	/**
+	 * Modified
+	 */
+	filesModified: () => LocalizedString
+	/**
+	 * Upload
+	 */
+	filesUpload: () => LocalizedString
+	/**
+	 * Uploading...
+	 */
+	filesUploading: () => LocalizedString
+	/**
+	 * Download
+	 */
+	filesDownload: () => LocalizedString
+	/**
+	 * New folder
+	 */
+	filesNewFolder: () => LocalizedString
+	/**
+	 * Rename
+	 */
+	filesRename: () => LocalizedString
+	/**
+	 * Delete
+	 */
+	filesDelete: () => LocalizedString
+	/**
+	 * Permissions
+	 */
+	filesPermissions: () => LocalizedString
+	/**
+	 * Delete this? It cannot be undone.
+	 */
+	filesConfirmDelete: () => LocalizedString
+	/**
+	 * Delete the folder and everything in it
+	 */
+	filesDeleteRecursive: () => LocalizedString
+	/**
+	 * Name
+	 */
+	filesName: () => LocalizedString
 }
 
 export type Formatters = {}

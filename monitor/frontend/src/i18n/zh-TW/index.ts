@@ -148,6 +148,22 @@ const zh_TW = {
 	terminalPasswordlessNoticeBody: '在這裡開終端機不需要 SSH 憑證，因此你的面板密碼是訪客與本機 shell 之間唯一的屏障。如果這正是你要的就保留；否則關掉它，改用 SSH 帳號登入。之後想重新開啟，需要修改代理的設定檔。',
 	terminalPasswordlessKeep: '保留',
 	terminalPasswordlessDisable: '關閉',
+	files: '檔案',
+	filesUnavailable: '此代理未啟用檔案 API。請在 config.toml 中開啟 remote_access.fs.enabled 並指定其根目錄；同時需要 TLS，或同主機上的代理。',
+	filesRoots: '根目錄',
+	filesEmpty: '這裡沒有內容',
+	filesSize: '大小',
+	filesModified: '修改時間',
+	filesUpload: '上傳',
+	filesUploading: '上傳中...',
+	filesDownload: '下載',
+	filesNewFolder: '新增資料夾',
+	filesRename: '重新命名',
+	filesDelete: '刪除',
+	filesPermissions: '權限',
+	filesConfirmDelete: '刪除該項？此操作無法復原。',
+	filesDeleteRecursive: '刪除該資料夾及其全部內容',
+	filesName: '名稱',
 } satisfies Translation
 
 export default zh_TW

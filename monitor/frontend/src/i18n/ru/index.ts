@@ -148,6 +148,22 @@ const ru = {
 	terminalPasswordlessNoticeBody: 'Терминал здесь не требует учётных данных SSH — значит, между посетителем и оболочкой на этой машине стоит только пароль панели. Оставьте, если так и задумано, либо отключите и входите через учётную запись SSH. Включить обратно можно только через файл конфигурации агента.',
 	terminalPasswordlessKeep: 'Оставить включённым',
 	terminalPasswordlessDisable: 'Отключить',
+	files: 'Файлы',
+	filesUnavailable: 'API файлов не включён на этом агенте. Включите remote_access.fs.enabled и укажите корневые каталоги в config.toml; также требуется TLS или прокси на том же хосте.',
+	filesRoots: 'Корневые каталоги',
+	filesEmpty: 'Здесь ничего нет',
+	filesSize: 'Размер',
+	filesModified: 'Изменён',
+	filesUpload: 'Загрузить',
+	filesUploading: 'Загрузка...',
+	filesDownload: 'Скачать',
+	filesNewFolder: 'Новая папка',
+	filesRename: 'Переименовать',
+	filesDelete: 'Удалить',
+	filesPermissions: 'Права',
+	filesConfirmDelete: 'Удалить это? Отменить будет нельзя.',
+	filesDeleteRecursive: 'Удалить папку со всем содержимым',
+	filesName: 'Имя',
 } satisfies Translation
 
 export default ru

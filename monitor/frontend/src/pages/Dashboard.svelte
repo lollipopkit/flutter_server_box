@@ -2,6 +2,7 @@
   import {
     BatteryMedium,
     Cpu,
+    FolderOpen,
     Gauge,
     Gpu,
     HardDrive,
@@ -236,6 +237,11 @@
         {#if capabilities?.remote_access?.terminal}
           <IconButton label={$LL.terminal()} onclick={() => layout.navigate('terminal')}>
             <SquareTerminal class="w-4 h-4" />
+          </IconButton>
+        {/if}
+        {#if capabilities?.remote_access?.files}
+          <IconButton label={$LL.files()} onclick={() => layout.navigate('files')}>
+            <FolderOpen class="w-4 h-4" />
           </IconButton>
         {/if}
         <IconButton label={$LL.serverSettings()} onclick={() => layout.navigate('server-settings')}>

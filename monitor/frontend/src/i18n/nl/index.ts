@@ -148,6 +148,22 @@ const nl = {
 	terminalPasswordlessNoticeBody: 'Een terminal openen vraagt hier geen SSH-gegevens, dus je paneelwachtwoord is het enige tussen een bezoeker en een shell op deze machine. Laat het staan als je dat wilt, of schakel het uit en log in met een SSH-account. Later weer aanzetten gaat via het configuratiebestand van de agent.',
 	terminalPasswordlessKeep: 'Aan laten staan',
 	terminalPasswordlessDisable: 'Uitschakelen',
+	files: 'Bestanden',
+	filesUnavailable: 'De bestands-API staat niet aan op deze agent. Zet remote_access.fs.enabled aan en geef de roots op in config.toml; het vereist ook TLS, of een proxy op dezelfde host.',
+	filesRoots: 'Roots',
+	filesEmpty: 'Hier staat niets',
+	filesSize: 'Grootte',
+	filesModified: 'Gewijzigd',
+	filesUpload: 'Uploaden',
+	filesUploading: 'Bezig met uploaden...',
+	filesDownload: 'Downloaden',
+	filesNewFolder: 'Nieuwe map',
+	filesRename: 'Naam wijzigen',
+	filesDelete: 'Verwijderen',
+	filesPermissions: 'Rechten',
+	filesConfirmDelete: 'Dit verwijderen? Dit kan niet ongedaan worden gemaakt.',
+	filesDeleteRecursive: 'De map en alles erin verwijderen',
+	filesName: 'Naam',
 } satisfies Translation
 
 export default nl
