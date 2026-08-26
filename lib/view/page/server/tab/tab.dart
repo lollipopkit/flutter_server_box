@@ -51,6 +51,14 @@ class ServerPage extends ConsumerStatefulWidget {
 const _cardPad = 74.0;
 const _cardPadSingle = 13.0;
 
+/// Kept clear at the right of the floating tag bar: a 56pt add button, the
+/// inset `Scaffold` gives it, and a gap so the two never touch.
+const _kTagBarFabRoom = 80.0;
+
+/// Left over at the other end, so the bar reads as floating over the grid
+/// rather than as a second edge to it.
+const _kTagBarSideRoom = 16.0;
+
 /// Long enough to read as one movement, short enough not to be waited on.
 const _kFlightDuration = Durations.medium3;
 
@@ -184,17 +192,22 @@ class _ServerPageState extends ConsumerState<ServerPage>
 
   Widget _buildScaffold(Widget child) {
     return Scaffold(
-      appBar: _TopBar(
-        tags: _tags,
-        onTagChanged: (p0) => _tag.value = p0,
-        initTag: _tag.value,
-      ),
+      // Nothing to put up here on a wide window — see [_TopBar].
+      appBar: ResponsiveBreakpoints.of(context).isMobile
+          ? const _TopBar()
+          : null,
       body: GestureDetector(
         behavior: HitTestBehavior.translucent,
         onTap: _autoHideCtrl.show,
         child: Stores.setting.textFactor.listenable().listenVal((val) {
           _updateTextScaler(val);
-          return child;
+          // At the top, what the app bar used to keep this clear of — a notch,
+          // a status bar — now that a wide window has no app bar. At the
+          // bottom, what the floating tag bar sits above: it is 13pt off the
+          // edge of this, not 13pt off the edge of a home indicator.
+          return SafeArea(
+            child: Stack(children: [child, _buildTagBar()]),
+          );
         }),
       ),
       floatingActionButton: AutoHide(
@@ -255,6 +268,72 @@ class _ServerPageState extends ConsumerState<ServerPage>
           ),
         );
       });
+    });
+  }
+
+  /// The tag filter, floating over the bottom of the grid.
+  ///
+  /// Down here rather than in a bar above the cards for the reason the detail
+  /// page's function bar is: it acts on the whole list, so it belongs within
+  /// reach the whole way down instead of scrolling off after the first row.
+  /// Same `HideOnScroll` and same rule — gone on a drag down the page, back on
+  /// a drag up it or at the top, and coming up from the bottom edge when the
+  /// tab arrives.
+  ///
+  /// A `Stack` child rather than a `Positioned` one, because with no tags
+  /// there is nothing to position. `Positioned` reaches the `Stack` through
+  /// the builder below it — it is a `ParentDataWidget`, and only an
+  /// intervening *render* object would break that.
+  Widget _buildTagBar() {
+    return _tags.listenVal((tags) {
+      // No tags anywhere means no bar at all, rather than an empty one. The
+      // pill is the tags: an empty one floating over the grid would be a
+      // control that does nothing, and would cover a row of cards to do it.
+      // Built only once there are tags, so the first one added brings the bar
+      // in the way opening the tab does.
+      if (tags.isEmpty) return const SizedBox.shrink();
+
+      return Positioned(
+        left: 0,
+        right: 0,
+        bottom: 0,
+        child: HideOnScroll(
+          controller: _scrollController,
+          child: Padding(
+            padding: const EdgeInsets.only(
+              left: _kTagBarSideRoom,
+              right: _kTagBarFabRoom,
+              bottom: 13,
+            ),
+            // Centred in what the add button leaves, rather than in the
+            // window: centred in the window it would run under that button as
+            // soon as there were a few tags.
+            child: Center(
+              child: Material(
+                // Raised off the page, because it is the one thing here that
+                // is not part of what the page is showing.
+                elevation: 3,
+                shadowColor: Colors.black26,
+                color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(19),
+                clipBehavior: Clip.antiAlias,
+                child: SizedBox(
+                  height: TagSwitcher.kTagBtnHeight,
+                  // Shrink-wrapped, so the pill is as wide as the tags in it
+                  // and scrolls once they outgrow the room above.
+                  child: TagSwitcher(
+                    tags: _tags,
+                    onTagChanged: (tag) => _tag.value = tag,
+                    initTag: _tag.value,
+                    singleLine: true,
+                    shrinkWrap: true,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
     });
   }
 
