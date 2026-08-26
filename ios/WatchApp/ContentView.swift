@@ -206,18 +206,32 @@ private struct ChartPage: View {
     let chart: WatchChart
     let reload: () async -> Void
 
+    /// Two shapes, because the pages are two different things.
+    ///
+    /// The overview is a list, and how tall it comes out depends on what is in
+    /// it — a long uptime, a larger text size — so it scrolls. A metric page is
+    /// one number and one chart, and should be measured *from* the page rather
+    /// than against it: a chart with a height written into it overflowed a 40mm
+    /// watch, pushing the timestamp half off the bottom, and would leave a band
+    /// of empty screen on a 49mm one.
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 7) {
-                header
-                body(for: chart)
-                Text(snapshot.updatedAt, style: .time)
-                    .font(.system(size: 10, design: .monospaced))
-                    .foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 9)
+        if chart == .overview {
+            ScrollView { content }
+        } else {
+            content.frame(maxHeight: .infinity, alignment: .top)
         }
+    }
+
+    private var content: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            header
+            body(for: chart)
+            Text(snapshot.updatedAt, style: .time)
+                .font(.system(size: 10, design: .monospaced))
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 9)
     }
 
     private var header: some View {
@@ -243,11 +257,14 @@ private struct ChartPage: View {
         switch chart {
         case .overview:
             VStack(alignment: .leading, spacing: 7) {
-                PercentRow(icon: "cpu", label: "CPU", percent: snapshot.cpu, detail: nil)
-                PercentRow(icon: "memorychip", label: "MEM", percent: snapshot.mem, detail: snapshot.memText)
-                PercentRow(icon: "externaldrive", label: "DISK", percent: snapshot.disk, detail: snapshot.diskText)
-                Label(snapshot.netText, systemImage: "network")
-                    .font(.system(.caption2, design: .monospaced))
+                MetricRow(icon: "cpu", label: "CPU", value: MetricRow.percent(snapshot.cpu))
+                MetricRow(icon: "memorychip", label: "MEM", value: MetricRow.percent(snapshot.mem))
+                MetricRow(icon: "externaldrive", label: "DISK", value: MetricRow.percent(snapshot.disk))
+                // A row like the three above it rather than a bare `Label`.
+                // Without a label and a right-hand value it wrapped onto two
+                // lines and read as a caption that had come loose from the
+                // list, which is what it looked like on a 40mm watch.
+                MetricRow(icon: "network", label: "NET", value: snapshot.netText)
                 if let uptime = snapshot.uptime, !uptime.isEmpty {
                     Text(uptime)
                         .font(.system(size: 10, design: .monospaced))
@@ -319,6 +336,7 @@ private struct MetricPage: View {
                 PercentChart(values: series, tint: tint)
             }
         }
+        .frame(maxHeight: .infinity, alignment: .top)
     }
 }
 
@@ -329,7 +347,12 @@ private struct NoHistoryHint: View {
         Text("No history yet")
             .font(.system(size: 11, design: .monospaced))
             .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity, minHeight: 44, alignment: .center)
+            .frame(
+                maxWidth: .infinity,
+                minHeight: 44,
+                maxHeight: .infinity,
+                alignment: .center
+            )
     }
 }
 
@@ -348,27 +371,46 @@ private struct RefreshButton: View {
 
 // MARK: - Rendering
 
-private struct PercentRow: View {
+/// One line of the overview: an icon, what it is, and one number.
+///
+/// One number, and not a percentage with the byte counts wedged in beside it.
+/// A watch is about a hundred and sixty points wide, and "1.8g / 1.9g" between
+/// the label and the percentage had nowhere to go — it came out as `1.8g / 1…`,
+/// which is a truncated number rather than a smaller one, and worth less than
+/// the space it took. The full figures are on that metric's own page, which is
+/// one turn of the crown away and has the width for them.
+private struct MetricRow: View {
     let icon: String
     let label: String
-    /// Nil renders as "no data" — a source that cannot measure this must not
-    /// look like a server sitting at 0%.
-    let percent: Double?
-    let detail: String?
+    /// Already formatted: a percentage for the three that have one, and the
+    /// byte counts for network, which has none.
+    let value: String
+
+    /// Nil renders as "--" — a source that cannot measure this must not look
+    /// like a server sitting at 0%.
+    static func percent(_ value: Double?) -> String {
+        value.map { String(format: "%.0f%%", $0) } ?? "--"
+    }
 
     var body: some View {
         HStack(spacing: 5) {
-            Image(systemName: icon).font(.system(size: 11))
-            Text(label).font(.system(size: 11, design: .monospaced)).foregroundStyle(.secondary)
-            Spacer()
-            if let detail {
-                Text(detail)
-                    .font(.system(size: 10, design: .monospaced))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
-            Text(percent.map { String(format: "%.0f%%", $0) } ?? "--")
+            // Fixed, so the labels start in the same place. The four SF
+            // Symbols here are not the same width, and ragged icons make the
+            // column of labels look like it was set by hand.
+            Image(systemName: icon)
+                .font(.system(size: 11))
+                .frame(width: 14)
+            Text(label)
+                .font(.system(size: 11, design: .monospaced))
+                .foregroundStyle(.secondary)
+            Spacer(minLength: 4)
+            // Network's value is twice as long as a percentage, so it shrinks
+            // rather than wrapping: a second line here would break the row
+            // grid the other three are read against.
+            Text(value)
                 .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
         }
     }
 }
@@ -387,7 +429,11 @@ private struct PercentChart: View {
         .chartYScale(domain: 0 ... 100)
         .chartXAxis(.hidden)
         .chartYAxis(.hidden)
-        .frame(height: 74)
+        // Whatever the page has left. `Chart` expands on its own once nothing
+        // pins it, and the minimum is there for the one caller that is inside
+        // a scroll view, where "what is left" is unbounded and a flexible view
+        // collapses instead.
+        .frame(minHeight: 44, maxHeight: .infinity)
     }
 }
 
@@ -408,7 +454,7 @@ private struct NetChart: View {
         }
         .chartXAxis(.hidden)
         .chartYAxis(.hidden)
-        .frame(height: 74)
+        .frame(minHeight: 44, maxHeight: .infinity)
     }
 }
 
