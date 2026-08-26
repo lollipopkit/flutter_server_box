@@ -1,0 +1,113 @@
+import 'package:meta/meta.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
+
+/// A read-only credential this app obtained from one `monitor` agent on behalf
+/// of a second surface — an Apple Watch, or a home-screen widget.
+///
+/// The agent mints these at `POST /api/v1/watch-token`, scoped to a
+/// `client_id` and independently revocable, and they reach exactly three
+/// endpoints: `/status`, `/metrics` and `/metrics/history`. That limit is the
+/// agent's route table rather than anything carried in the token, and is
+/// locked there by `monitor/tests/watch_token_scope.rs`.
+///
+/// [endpoint] travels with the token because the token is only meaningful
+/// against the agent that issued it: point a server at a different address and
+/// the stored credential is not stale, it is *wrong*, and reusing it would
+/// send one agent's token to another.
+@immutable
+class ScopedToken {
+  const ScopedToken({
+    required this.token,
+    required this.endpoint,
+    this.expiresAt = 0,
+  });
+
+  final String token;
+
+  /// The normalized agent address this was issued by — see
+  /// [normalizeAgentEndpoint].
+  final String endpoint;
+
+  /// Seconds since epoch, as the agent reported it.
+  ///
+  /// Zero means "not known", which is what a token minted by a build that
+  /// discarded the agent's `expires_at` looks like. Treated as due for
+  /// renewal rather than as valid forever: the agent's lifetime is 90 days,
+  /// and an install carrying one of those has no other way back to a known
+  /// expiry.
+  final int expiresAt;
+
+  /// How long before expiry a token is replaced.
+  ///
+  /// Renewal only happens when something asks for the token set to be
+  /// rebuilt — a launch, a server edit, a watch reconnecting — so the window
+  /// has to be wide enough that one of those is likely to fall inside it.
+  /// Two weeks against the agent's ninety is generous in the direction that
+  /// costs one HTTP request and stingy in the direction that costs a silent
+  /// 401 on a device with no way to report it.
+  static const renewBefore = Duration(days: 14);
+
+  bool get isEmpty => token.isEmpty;
+
+  /// Whether this can be handed over again as-is for [endpoint].
+  ///
+  /// [now] is passed in rather than read here so the decision stays a pure
+  /// function of its inputs.
+  bool servesEndpoint(String endpoint, DateTime now) {
+    if (isEmpty) return false;
+    if (this.endpoint != normalizeAgentEndpoint(endpoint)) return false;
+    if (expiresAt <= 0) return false;
+    final remaining =
+        DateTime.fromMillisecondsSinceEpoch(
+          expiresAt * 1000,
+          isUtc: true,
+        ).difference(now.toUtc());
+    return remaining > renewBefore;
+  }
+
+  Map<String, dynamic> toEntry() => {
+    'token': token,
+    'expiresAt': expiresAt,
+  };
+
+  @override
+  bool operator ==(Object other) =>
+      other is ScopedToken &&
+      other.token == token &&
+      other.endpoint == endpoint &&
+      other.expiresAt == expiresAt;
+
+  @override
+  int get hashCode => Object.hash(token, endpoint, expiresAt);
+
+  @override
+  String toString() => 'ScopedToken($endpoint, expires $expiresAt)';
+}
+
+/// An agent address with surrounding space and trailing slashes removed, so
+/// two spellings of one endpoint compare equal.
+String normalizeAgentEndpoint(String value) =>
+    value.trim().replaceFirst(RegExp(r'/+$'), '');
+
+/// Which of [serverIds] already hold a token that can be handed over again,
+/// and which have to be issued a fresh one.
+///
+/// Pure, and separate from the issuing, because every interesting case here is
+/// a decision rather than a request: an address that changed, an expiry that
+/// crept up, a server that lost its monitor configuration between two pushes.
+/// The IO around it is one `POST` per id this does not return.
+Map<String, ScopedToken> reusableScopedTokens({
+  required List<String> serverIds,
+  required Spi? Function(String id) lookup,
+  required Map<String, ScopedToken> existing,
+  required DateTime now,
+}) {
+  final reusable = <String, ScopedToken>{};
+  for (final id in serverIds) {
+    final monitor = lookup(id)?.monitor;
+    final held = existing[id];
+    if (monitor == null || held == null) continue;
+    if (held.servesEndpoint(monitor.addr, now)) reusable[id] = held;
+  }
+  return reusable;
+}

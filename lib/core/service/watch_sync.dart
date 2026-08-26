@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
+import 'package:server_box/core/service/scoped_token.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
@@ -148,10 +149,11 @@ final class WatchSync {
     final revision = nextRevision();
     final selectedIds = Stores.setting.watchServerIds.fetch();
     final existingTokens = await _existingTokens();
-    final tokens = reusableTokens(
-      selectedIds: selectedIds,
+    final tokens = reusableScopedTokens(
+      serverIds: selectedIds,
       lookup: Stores.server.fetchOneRaw,
-      existingTokens: existingTokens,
+      existing: existingTokens,
+      now: DateTime.now(),
     );
     for (final id in selectedIds) {
       final spi = Stores.server.fetchOneRaw(id);
@@ -159,13 +161,22 @@ final class WatchSync {
       if (spi == null || monitor == null) continue;
       if (tokens.containsKey(id)) continue;
       final existing = existingTokens[id];
-      if (existing != null &&
-          existing.endpoint != _normalizedEndpoint(monitor.addr)) {
+      final endpoint = normalizeAgentEndpoint(monitor.addr);
+      // Only when the *address* moved. An expiry that crept up is renewed by
+      // issuing again — the agent's `ON CONFLICT DO UPDATE` replaces the row
+      // in place — and revoking first would leave the watch with nothing for
+      // as long as the second request takes, or forever if it fails.
+      if (existing != null && existing.endpoint != endpoint) {
         await _revokeServer(spi, endpoint: existing.endpoint);
       }
       final client = MonitorHttpClient(monitor);
       try {
-        tokens[id] = await client.issueWatchToken('watch:${spi.id}');
+        final issued = await client.issueWatchToken(watchClientId(spi.id));
+        tokens[id] = ScopedToken(
+          token: issued.token,
+          endpoint: endpoint,
+          expiresAt: issued.expiresAt,
+        );
       } catch (e, s) {
         Loggers.app.warning('Failed to issue read-only watch token for $id', e, s);
       } finally {
@@ -182,26 +193,22 @@ final class WatchSync {
     );
   }
 
-  @visibleForTesting
-  static Map<String, String> reusableTokens({
-    required List<String> selectedIds,
-    required Spi? Function(String id) lookup,
-    required Map<String, ({String endpoint, String token})> existingTokens,
-  }) {
-    final reusable = <String, String>{};
-    for (final id in selectedIds) {
-      final monitor = lookup(id)?.monitor;
-      final existing = existingTokens[id];
-      if (monitor != null &&
-          existing != null &&
-          existing.endpoint == _normalizedEndpoint(monitor.addr)) {
-        reusable[id] = existing.token;
-      }
-    }
-    return reusable;
-  }
+  /// The agent-side `client_id` a watch token is scoped to.
+  ///
+  /// Distinct from the widgets' — see `WidgetSync.widgetClientId` — so that
+  /// revoking one device does not take the other's credential with it. The
+  /// agent keys `watch_tokens` by `(subject, client_id)`, which is what makes
+  /// the two independent.
+  static String watchClientId(String serverId) => 'watch:$serverId';
 
-  Future<Map<String, ({String endpoint, String token})>> _existingTokens() async {
+  /// The tokens the watch is currently holding, read back out of the context
+  /// this app last delivered.
+  ///
+  /// The context is the only place they are kept: a scoped token is derived
+  /// state — it can always be minted again — so storing it beside the server
+  /// record would be one more copy of a credential to protect, back up and
+  /// forget to revoke.
+  Future<Map<String, ScopedToken>> _existingTokens() async {
     try {
       final raw = await _wc?.applicationContext;
       final servers = raw?['servers'];
@@ -211,9 +218,17 @@ final class WatchSync {
           if (entry['id'] is String &&
               entry['addr'] is String &&
               entry['token'] is String)
-            entry['id'] as String: (
-              endpoint: _normalizedEndpoint(entry['addr'] as String),
+            entry['id'] as String: ScopedToken(
               token: entry['token'] as String,
+              endpoint: normalizeAgentEndpoint(entry['addr'] as String),
+              // Absent on a context written before this app kept the
+              // deadline, which `ScopedToken` reads as due for renewal —
+              // so an install carrying one of those gets a known expiry on
+              // its next push rather than a silent 401 up to 90 days later.
+              expiresAt: switch (entry['expiresAt']) {
+                final num v => v.toInt(),
+                _ => 0,
+              },
             ),
       };
     } catch (e, s) {
@@ -292,11 +307,8 @@ final class WatchSync {
     }
   }
 
-  static String _normalizedEndpoint(String value) =>
-      value.trim().replaceFirst(RegExp(r'/+$'), '');
-
   /// The payload as a pure function of the selection, so the shape the watch
-  /// depends on can be tested without a Hive box behind it.
+  /// depends on can be tested without a store behind it.
   ///
   /// `servers` carries scoped read-only tokens, so it only ever contains
   /// servers the user explicitly picked for the watch. `urls` is the pre-v2 shape and
@@ -307,7 +319,7 @@ final class WatchSync {
   static Map<String, dynamic> payloadFrom({
     required List<String> selectedIds,
     required Spi? Function(String id) lookup,
-    required Map<String, String> tokens,
+    required Map<String, ScopedToken> tokens,
     required List<String> legacyUrls,
     required int stamp,
   }) {
@@ -325,7 +337,12 @@ final class WatchSync {
         'id': spi.id,
         'name': spi.name,
         'addr': monitor.addr.trim(),
-        'token': token,
+        'token': token.token,
+        // Read back by `_existingTokens` on the next push to decide whether
+        // this one is close enough to expiry to replace. The watch app itself
+        // ignores the key — it finds out a token has expired by being told
+        // 401, which it cannot do anything about; renewing is this side's job.
+        'expiresAt': token.expiresAt,
         'ignoreCert': monitor.ignoreCert,
       });
     }

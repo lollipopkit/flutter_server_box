@@ -167,9 +167,15 @@ class MonitorHttpClient {
     });
   }
 
-  /// Mints a read-only, independently revocable credential for a watch.
-  /// The normal session token is never handed to the second device.
-  Future<String> issueWatchToken(String clientId) {
+  /// Mints a read-only, independently revocable credential for a second
+  /// device. The normal session token is never handed to one.
+  ///
+  /// The agent's `expires_at` is returned rather than dropped: these live 90
+  /// days, and a caller that keeps the token without keeping the deadline has
+  /// no way to renew it before the device it was given to starts answering
+  /// 401 with nobody to report it to. Zero when the agent did not say — an
+  /// older one — which [ScopedToken] treats as due for renewal.
+  Future<({String token, int expiresAt})> issueWatchToken(String clientId) {
     return _authed(() async {
       final resp = await _object(
         '/api/v1/watch-token',
@@ -182,7 +188,11 @@ class MonitorHttpClient {
           message: 'Empty token in /api/v1/watch-token response',
         );
       }
-      return token;
+      final expiresAt = resp['expires_at'];
+      return (
+        token: token,
+        expiresAt: expiresAt is num ? expiresAt.toInt() : 0,
+      );
     });
   }
 
