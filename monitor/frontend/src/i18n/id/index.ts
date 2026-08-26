@@ -149,7 +149,7 @@ const id = {
 	terminalPasswordlessKeep: 'Biarkan aktif',
 	terminalPasswordlessDisable: 'Matikan',
 	files: 'Berkas',
-	filesUnavailable: 'API berkas tidak aktif pada agen ini. Aktifkan remote_access.fs.enabled dan tentukan root-nya di config.toml; ini juga memerlukan TLS, atau proxy pada host yang sama.',
+	filesUnavailable: 'Akses berkas tidak diaktifkan pada agen ini. Nyalakan remote_access.fs.enabled di config.toml dan tentukan root-nya; juga membutuhkan TLS, atau proxy di host yang sama.',
 	filesRoots: 'Root',
 	filesEmpty: 'Tidak ada apa-apa di sini',
 	filesSize: 'Ukuran',

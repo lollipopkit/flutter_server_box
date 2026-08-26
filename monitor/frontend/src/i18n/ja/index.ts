@@ -149,7 +149,7 @@ const ja = {
 	terminalPasswordlessKeep: '有効のままにする',
 	terminalPasswordlessDisable: '無効にする',
 	files: 'ファイル',
-	filesUnavailable: 'このエージェントではファイル API が有効になっていません。config.toml で remote_access.fs.enabled を有効にし、ルートを指定してください。TLS、または同一ホスト上のプロキシも必要です。',
+	filesUnavailable: 'このエージェントではファイルアクセスが有効になっていません。config.toml の remote_access.fs.enabled を有効にし、ルートを指定してください。TLS、または同一ホスト上のプロキシも必要です。',
 	filesRoots: 'ルート',
 	filesEmpty: '何もありません',
 	filesSize: 'サイズ',

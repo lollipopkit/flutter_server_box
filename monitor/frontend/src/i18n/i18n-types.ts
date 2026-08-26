@@ -620,7 +620,7 @@ type RootTranslation = {
 	 */
 	files: string
 	/**
-	 * T​h​e​ ​f​i​l​e​ ​A​P​I​ ​i​s​ ​n​o​t​ ​e​n​a​b​l​e​d​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​.​ ​T​u​r​n​ ​o​n​ ​r​e​m​o​t​e​_​a​c​c​e​s​s​.​f​s​.​e​n​a​b​l​e​d​ ​a​n​d​ ​n​a​m​e​ ​i​t​s​ ​r​o​o​t​s​ ​i​n​ ​c​o​n​f​i​g​.​t​o​m​l​;​ ​i​t​ ​a​l​s​o​ ​r​e​q​u​i​r​e​s​ ​T​L​S​,​ ​o​r​ ​a​ ​p​r​o​x​y​ ​o​n​ ​t​h​e​ ​s​a​m​e​ ​h​o​s​t​.
+	 * F​i​l​e​ ​a​c​c​e​s​s​ ​i​s​ ​n​o​t​ ​e​n​a​b​l​e​d​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​.​ ​T​u​r​n​ ​o​n​ ​r​e​m​o​t​e​_​a​c​c​e​s​s​.​f​s​.​e​n​a​b​l​e​d​ ​a​n​d​ ​n​a​m​e​ ​i​t​s​ ​r​o​o​t​s​ ​i​n​ ​c​o​n​f​i​g​.​t​o​m​l​;​ ​i​t​ ​a​l​s​o​ ​r​e​q​u​i​r​e​s​ ​T​L​S​,​ ​o​r​ ​a​ ​p​r​o​x​y​ ​o​n​ ​t​h​e​ ​s​a​m​e​ ​h​o​s​t​.
 	 */
 	filesUnavailable: string
 	/**
@@ -1275,7 +1275,7 @@ export type TranslationFunctions = {
 	 */
 	files: () => LocalizedString
 	/**
-	 * The file API is not enabled on this agent. Turn on remote_access.fs.enabled and name its roots in config.toml; it also requires TLS, or a proxy on the same host.
+	 * File access is not enabled on this agent. Turn on remote_access.fs.enabled and name its roots in config.toml; it also requires TLS, or a proxy on the same host.
 	 */
 	filesUnavailable: () => LocalizedString
 	/**

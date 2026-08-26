@@ -149,7 +149,7 @@ const ko = {
 	terminalPasswordlessKeep: '켜 둔다',
 	terminalPasswordlessDisable: '끈다',
 	files: '파일',
-	filesUnavailable: '이 에이전트에서 파일 API가 활성화되어 있지 않습니다. config.toml에서 remote_access.fs.enabled를 켜고 루트를 지정하세요. TLS 또는 같은 호스트의 프록시도 필요합니다.',
+	filesUnavailable: '이 에이전트에서는 파일 접근이 활성화되어 있지 않습니다. config.toml에서 remote_access.fs.enabled를 켜고 루트를 지정하세요. TLS 또는 같은 호스트의 프록시도 필요합니다.',
 	filesRoots: '루트',
 	filesEmpty: '아무것도 없습니다',
 	filesSize: '크기',

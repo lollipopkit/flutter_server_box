@@ -149,7 +149,7 @@ const tr = {
 	terminalPasswordlessKeep: 'Açık bırak',
 	terminalPasswordlessDisable: 'Kapat',
 	files: 'Dosyalar',
-	filesUnavailable: 'Bu aracıda dosya API\'si etkin değil. config.toml içinde remote_access.fs.enabled ayarını açın ve köklerini belirtin; ayrıca TLS ya da aynı makinede bir proxy gerekir.',
+	filesUnavailable: 'Bu aracıda dosya erişimi etkin değil. config.toml içinde remote_access.fs.enabled seçeneğini açın ve köklerini belirtin; ayrıca TLS ya da aynı makinede bir proxy gerekir.',
 	filesRoots: 'Kökler',
 	filesEmpty: 'Burada bir şey yok',
 	filesSize: 'Boyut',

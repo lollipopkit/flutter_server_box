@@ -149,7 +149,7 @@ const fr = {
 	terminalPasswordlessKeep: 'Le garder actif',
 	terminalPasswordlessDisable: 'Le désactiver',
 	files: 'Fichiers',
-	filesUnavailable: 'L\'API de fichiers n\'est pas activée sur cet agent. Activez remote_access.fs.enabled et indiquez ses racines dans config.toml ; elle nécessite aussi TLS, ou un proxy sur le même hôte.',
+	filesUnavailable: 'L\'accès aux fichiers n\'est pas activé sur cet agent. Activez remote_access.fs.enabled dans config.toml et indiquez ses racines ; TLS, ou un proxy sur le même hôte, est également requis.',
 	filesRoots: 'Racines',
 	filesEmpty: 'Rien ici',
 	filesSize: 'Taille',

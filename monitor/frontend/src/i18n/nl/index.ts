@@ -149,7 +149,7 @@ const nl = {
 	terminalPasswordlessKeep: 'Aan laten staan',
 	terminalPasswordlessDisable: 'Uitschakelen',
 	files: 'Bestanden',
-	filesUnavailable: 'De bestands-API staat niet aan op deze agent. Zet remote_access.fs.enabled aan en geef de roots op in config.toml; het vereist ook TLS, of een proxy op dezelfde host.',
+	filesUnavailable: 'Bestandstoegang is niet ingeschakeld op deze agent. Zet remote_access.fs.enabled aan in config.toml en geef de roots op; er is ook TLS nodig, of een proxy op dezelfde host.',
 	filesRoots: 'Roots',
 	filesEmpty: 'Hier staat niets',
 	filesSize: 'Grootte',

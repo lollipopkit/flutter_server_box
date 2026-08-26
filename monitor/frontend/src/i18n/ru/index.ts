@@ -149,7 +149,7 @@ const ru = {
 	terminalPasswordlessKeep: 'Оставить включённым',
 	terminalPasswordlessDisable: 'Отключить',
 	files: 'Файлы',
-	filesUnavailable: 'API файлов не включён на этом агенте. Включите remote_access.fs.enabled и укажите корневые каталоги в config.toml; также требуется TLS или прокси на том же хосте.',
+	filesUnavailable: 'Доступ к файлам не включён на этом агенте. Включите remote_access.fs.enabled в config.toml и укажите корневые каталоги; также нужен TLS или прокси на том же хосте.',
 	filesRoots: 'Корневые каталоги',
 	filesEmpty: 'Здесь ничего нет',
 	filesSize: 'Размер',
