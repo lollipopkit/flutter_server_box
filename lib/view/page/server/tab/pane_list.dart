@@ -11,19 +11,20 @@ typedef _RailRow = ({String? heading, String? id});
 /// width where its charts can be read; in a column this narrow they are a
 /// smaller copy of what the detail pane is already showing.
 extension _PaneList on _ServerPageState {
-  Widget _buildPaneList(List<String> filtered) {
+  /// [order] is every server, not what the grid's tag filter left — the rail
+  /// groups by tag rather than filtering to one, and has no switcher of its
+  /// own to undo a filter with. See the call site.
+  Widget _buildPaneList(List<String> order) {
     final selected = ref.watch(serverSelectionProvider);
     // Watched, not read: a tag added or removed in the editor regroups the
     // rail, and the row it moves is one this page is already rebuilding for.
     final servers = ref.watch(serversProvider.select((s) => s.servers));
-    final rows = _railRows(filtered, servers);
+    final rows = _railRows(order, servers);
 
     return Scaffold(
-      appBar: _TopBar(
-        tags: _tags,
-        onTagChanged: (p0) => _tag.value = p0,
-        initTag: _tag.value,
-      ),
+      // No tag switcher over the rail. It filtered to one tag at a time, which
+      // is the question the headings below now answer for every tag at once —
+      // and a filter above a grouped index only takes rows out of it.
       floatingActionButton: FloatingActionButton.small(
         heroTag: 'addServerPane',
         onPressed: _onTapAddServer,
@@ -34,27 +35,33 @@ extension _PaneList on _ServerPageState {
       // hands this the whole width: what a wide window shows when the tab is
       // empty is this, not a rail beside something. So the same mark as the
       // narrow layout, rather than a rail's worth of text.
-      body: filtered.isEmpty
-          ? const EmptyPane(icon: BoxIcons.bx_server)
-          : ListView.builder(
-              controller: _scrollController,
-              // Room at the bottom for the add button to float over.
-              padding: const EdgeInsets.only(top: 4, bottom: 77),
-              itemCount: rows.length,
-              itemBuilder: (context, index) {
-                final row = rows[index];
-                if (row.heading case final heading?) {
-                  return SideBarSection(heading);
-                }
-                final id = row.id!;
-                final srv = ref.watch(serverProvider(id));
-                return _buildPaneListTile(
-                  context,
-                  srv,
-                  selected: selected == id,
-                );
-              },
-            ),
+      // The app bar used to be what kept this clear of a notch or a status
+      // bar — a `Scaffold` insets that and nothing else. Only the top: the add
+      // button below floats over the list on purpose.
+      body: SafeArea(
+        bottom: false,
+        child: order.isEmpty
+            ? const EmptyPane(icon: BoxIcons.bx_server)
+            : ListView.builder(
+                controller: _scrollController,
+                // Room at the bottom for the add button to float over.
+                padding: const EdgeInsets.only(top: 8, bottom: 77),
+                itemCount: rows.length,
+                itemBuilder: (context, index) {
+                  final row = rows[index];
+                  if (row.heading case final heading?) {
+                    return SideBarSection(heading);
+                  }
+                  final id = row.id!;
+                  final srv = ref.watch(serverProvider(id));
+                  return _buildPaneListTile(
+                    context,
+                    srv,
+                    selected: selected == id,
+                  );
+                },
+              ),
+      ),
     );
   }
 
@@ -69,9 +76,9 @@ extension _PaneList on _ServerPageState {
   /// screen is work repeated every few seconds.
   ///
   /// Exactly one of [_RailRow.heading] and [_RailRow.id] is set on any row.
-  List<_RailRow> _railRows(List<String> filtered, Map<String, Spi> servers) {
+  List<_RailRow> _railRows(List<String> order, Map<String, Spi> servers) {
     return [
-      for (final group in groupByTag(filtered, (id) => servers[id]?.tags)) ...[
+      for (final group in groupByTag(order, (id) => servers[id]?.tags)) ...[
         if (group.label case final label?) (heading: label, id: null),
         for (final id in group.items) (heading: null, id: id),
       ],

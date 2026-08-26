@@ -245,8 +245,12 @@ class _ServerPageState extends ConsumerState<ServerPage>
           primaryBuilder: (_, split) => _ServerOpenRequest(
             split: split,
             onOpen: _openRequestedServer,
+            // The rail gets everything, not [filtered]. It groups by tag
+            // instead of filtering by one, and it has no switcher of its own —
+            // so a tag picked in the grid before a server was opened would
+            // hide servers here with nothing on screen to say so or undo it.
             child: split
-                ? _buildPaneList(filtered)
+                ? _buildPaneList(serverOrder)
                 : _buildScaffold(_buildBodySmall(filtered: filtered)),
           ),
         );
