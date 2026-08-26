@@ -689,12 +689,18 @@ abstract final class AndroidRootfs {
     await _validateEntries(parser.entries, root);
   }
 
+  /// The components [name] names inside the root, or null where it escapes.
+  ///
+  /// Empty is neither: it is the archive's own root, and the two have to be
+  /// told apart. `tar czf` writes a `./` member first and almost every rootfs
+  /// tarball therefore starts with one — read as an escape, that refused the
+  /// whole archive on its first entry.
   static List<String>? _safeTarParts(String name) {
     var value = name;
     while (value.startsWith('./')) {
       value = value.substring(2);
     }
-    if (value.isEmpty || value.startsWith('/')) return null;
+    if (value.startsWith('/')) return null;
     final parts = <String>[];
     for (final segment in value.split('/')) {
       if (segment.isEmpty || segment == '.') continue;
@@ -705,7 +711,7 @@ abstract final class AndroidRootfs {
         parts.add(segment);
       }
     }
-    return parts.isEmpty ? null : parts;
+    return parts;
   }
 
   static bool _hasLinkAncestor(List<String> parts, Set<String> links) {
@@ -760,21 +766,28 @@ abstract final class AndroidRootfs {
     for (final entry in entries) {
       if (entry.type != TarFile.symbolicLink) continue;
       final parts = _safeTarParts(entry.name);
-      if (parts == null) throw StateError('Unsafe tar entry: ${entry.name}');
+      // Empty names the root, which is not something a symlink may be.
+      if (parts == null || parts.isEmpty) {
+        throw StateError('Unsafe tar entry: ${entry.name}');
+      }
       links.add(parts.join('/'));
     }
 
     for (final entry in entries) {
       final parts = _safeTarParts(entry.name);
-      if (parts == null ||
-          _hasLinkAncestor(parts, links) ||
+      if (parts == null) throw StateError('Unsafe tar entry: ${entry.name}');
+      // The archive's own root: already there, and no ancestor to check.
+      if (parts.isEmpty) continue;
+      if (_hasLinkAncestor(parts, links) ||
           await _hasExistingLinkAncestor(root, parts)) {
         throw StateError('Unsafe tar entry: ${entry.name}');
       }
       if (entry.type != TarFile.hardLink) continue;
       final target = entry.linkTarget;
       final targetParts = target == null ? null : _safeTarParts(target);
+      // Empty names the root, which is not something a hard link may point at.
       if (targetParts == null ||
+          targetParts.isEmpty ||
           links.contains(targetParts.join('/')) ||
           _hasLinkAncestor(targetParts, links) ||
           await _hasExistingLinkAncestor(root, targetParts)) {

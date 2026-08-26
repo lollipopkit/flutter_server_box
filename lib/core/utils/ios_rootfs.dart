@@ -538,9 +538,16 @@ abstract final class IosRootfs {
   static String _tarPath(String name) =>
       name.startsWith('./') ? name.substring(2) : name;
 
+  /// The components [name] names inside the root, or null where it escapes.
+  ///
+  /// Empty is neither: it is the archive's own root, and the two have to be
+  /// told apart. `tar czf` writes a `./` member first and almost every rootfs
+  /// tarball therefore starts with one — read as an escape, that refused the
+  /// whole archive on its first entry and no Linux system could be installed
+  /// at all.
   static List<String>? _safeTarParts(String name) {
     final sanitized = _tarPath(name);
-    if (sanitized.isEmpty || sanitized.startsWith('/')) return null;
+    if (sanitized.startsWith('/')) return null;
     // Lexical check: no segment may be '..' that escapes the root.
     final parts = <String>[];
     for (final seg in sanitized.split('/')) {
@@ -552,10 +559,19 @@ abstract final class IosRootfs {
         parts.add(seg);
       }
     }
-    return parts.isEmpty ? null : parts;
+    return parts;
   }
 
-  static bool _isSafeTarEntry(String name) => _safeTarParts(name) != null;
+  /// [name] is the directory being extracted into, so there is nothing to
+  /// write for it and nothing unsafe about it.
+  static bool _isTarRoot(String name) => _safeTarParts(name)?.isEmpty ?? false;
+
+  /// [name] can be written somewhere under the root. False for an escape and
+  /// for the root itself, which names no member.
+  static bool _isSafeTarEntry(String name) {
+    final parts = _safeTarParts(name);
+    return parts != null && parts.isNotEmpty;
+  }
 
   static bool _hasTarLinkAncestor(List<String> parts, Set<String> links) {
     for (var i = 1; i < parts.length; i++) {
@@ -615,7 +631,7 @@ abstract final class IosRootfs {
     for (final entry in archive) {
       if (!entry.isSymbolicLink) continue;
       final parts = _safeTarParts(entry.name);
-      if (parts != null) symbolicLinks.add(parts.join('/'));
+      if (parts != null && parts.isNotEmpty) symbolicLinks.add(parts.join('/'));
     }
     // What this layer writes, which is what an opaque marker spares. Built up
     // front because the archive is not obliged to put the marker before the
@@ -635,6 +651,9 @@ abstract final class IosRootfs {
       if (done % 200 == 0) {
         onProgress?.call(0.9 + (done / archive.length) * 0.1);
       }
+      // The archive's own root, which is already there — it is what everything
+      // else is being written into.
+      if (_isTarRoot(entry.name)) continue;
       if (!_isSafeTarEntry(entry.name)) {
         throw StateError('${libL10n.invalid}: ${libL10n.path} (${entry.name})');
       }
