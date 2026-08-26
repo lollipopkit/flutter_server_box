@@ -17,9 +17,9 @@ enum ServerFuncBtn {
   process(),
   snippet(),
   iperf(),
-  systemd(introducedAfterBuild: 1051),
-  portForward(introducedAfterBuild: 1340),
-  power(introducedAfterBuild: 1491);
+  systemd(1051),
+  portForward(1340),
+  power(1491);
 
   /// The last released build that did not contain this entry.
   ///
@@ -30,7 +30,7 @@ enum ServerFuncBtn {
   /// before the next tag.
   final int? introducedAfterBuild;
 
-  const ServerFuncBtn({this.introducedAfterBuild});
+  const ServerFuncBtn([this.introducedAfterBuild]);
 
   /// Puts entries that arrived during an upgrade into the user's row, which
   /// was last written when they did not exist.
