@@ -44,7 +44,7 @@ scripts/build-proot-android.sh
 # registrant, while Gradle deliberately excludes their projects from release.
 # Do not pass `--no-pub`: Flutter gates platform-tooling regeneration on that
 # flag even when `--config-only` is requested.
-flutter build apk --release --config-only
+flutter build apk "${FLUTTER_ANDROID_REPRO_ARGS[@]}" --release --config-only
 dart --packages="$REPO_ROOT/scripts/release/empty-package-config.json" \
   "$REPO_ROOT/scripts/release/prune-android-dev-plugins.dart"
 
@@ -53,5 +53,9 @@ dart --packages="$REPO_ROOT/scripts/release/empty-package-config.json" \
 # requested from the blocked network. Build once to seed the isolated Gradle
 # cache, then remove every compiled output so the offline phase still rebuilds
 # from source.
-flutter build apk --release --split-per-abi --no-pub
+flutter build apk \
+  "${FLUTTER_ANDROID_REPRO_ARGS[@]}" \
+  --release \
+  --split-per-abi \
+  --no-pub
 flutter clean

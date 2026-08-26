@@ -26,6 +26,14 @@ export TZ=UTC
 export LC_ALL=C
 export ORG_GRADLE_PROJECT_allowUnsignedRelease=true
 
+# Keep generated Dart sources under a stable virtual URI. Flutter otherwise
+# embeds the checkout's absolute dart_plugin_registrant.dart path in libapp.so,
+# which also changes private-symbol hashes when the path length changes.
+FLUTTER_ANDROID_REPRO_ARGS=(
+  "--android-project-arg=filesystem-roots=$REPO_ROOT"
+  "--android-project-arg=filesystem-scheme=org-dartlang-root"
+)
+
 # Do not inherit an arbitrary host Gradle cache. Preparation fills this cache
 # from an empty clean checkout, and the network-isolated build reuses exactly
 # that prepared input. Keep proot beside it so `flutter clean` can discard all
