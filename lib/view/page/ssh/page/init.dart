@@ -354,6 +354,9 @@ extension _Init on SSHPageState {
       // torn down mid-reconnect — its tab closed, the app moved on — left it
       // spinning over every tab with nothing able to close it: this pop was
       // skipped, and the cancel button did not close it either.
+      //
+      // Before returning, so the caller's next dialog goes up over an empty
+      // navigator rather than over this one. See [_dismissReconnectingDialog].
       _dismissReconnectingDialog();
     }
   }
@@ -393,15 +396,24 @@ extension _Init on SSHPageState {
 
   /// Closes the reconnecting dialog, once. Safe when it is already gone.
   ///
-  /// The pop is scheduled rather than done here, because one of the three
-  /// callers is [dispose], which runs inside the frame that is unmounting this
-  /// page — popping a route from there is a `markNeedsBuild` during build. The
-  /// claim on the dialog is dropped now either way, so the two callers that
-  /// could race still cannot both pop it.
-  void _dismissReconnectingDialog() {
+  /// Now, not next frame. A pop takes whatever is on top of the root
+  /// navigator, and the caller that closes this dialog is usually about to put
+  /// another one up — [_onConnectionLossSuspected] asks "go back?" the moment
+  /// the reconnect it was waiting on gives up. Scheduled, this pop landed
+  /// after that question was already on screen and closed *it*: the spinner
+  /// stayed, and the dialog meant to replace it was gone in a frame.
+  ///
+  /// [deferred] is for [dispose] alone, which runs inside the frame that is
+  /// unmounting this page — popping a route from there is a `markNeedsBuild`
+  /// during build. Nothing follows it, so nothing can be popped by mistake.
+  void _dismissReconnectingDialog({bool deferred = false}) {
     final nav = _reconnectDialogNav;
     if (nav == null) return;
     _reconnectDialogNav = null;
+    if (!deferred) {
+      if (nav.mounted) nav.pop();
+      return;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (nav.mounted) nav.pop();
     });

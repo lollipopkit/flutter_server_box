@@ -327,7 +327,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     // to a host that is not answering. A dialog left on the root navigator by
     // a page that no longer exists is one nothing else can close.
     _reconnectCancelled = true;
-    _dismissReconnectingDialog();
+    _dismissReconnectingDialog(deferred: true);
     // Not `close`: the connection may be the status poller's, shared with the
     // rest of the app, and a terminal going away is not a reason to hang it up.
     _sess.dispose();
