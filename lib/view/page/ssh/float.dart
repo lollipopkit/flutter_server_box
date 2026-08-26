@@ -78,12 +78,6 @@ class _FloatTerminalState extends ConsumerState<_FloatTerminal> {
   final _focusNode = FocusNode();
   final _termKey = GlobalKey<TerminalViewState>();
 
-  /// One row, as tall as the tab's rows are.
-  static const _keyRowHeight = 37.0;
-
-  /// Wide enough for `PgDn` and for a 17pt icon to sit in the middle of.
-  static const _keyWidth = 46.0;
-
   Terminal get _terminal => widget.session.terminal;
 
   @override
@@ -133,7 +127,9 @@ class _FloatTerminalState extends ConsumerState<_FloatTerminal> {
       ),
     );
   }
+}
 
+extension _Utils on _FloatTerminalState {
   /// The keys this window can actually serve.
   ///
   /// The tab's strip carries four more — snippets, the file browser, the sudo
@@ -164,6 +160,15 @@ class _FloatTerminalState extends ConsumerState<_FloatTerminal> {
         .toList();
   }
 
+}
+
+/// One row, as tall as the tab's rows are.
+const _keyRowHeight = 37.0;
+
+/// Wide enough for `PgDn` and for a 17pt icon to sit in the middle of.
+const _keyWidth = 46.0;
+
+extension _Widgets on _FloatTerminalState {
   /// One row that scrolls sideways, rather than the tab's grid of seven per
   /// row: this window is as wide as it was dragged to, and a row that reflowed
   /// as it was resized would move every key under the thumb reaching for one.
@@ -228,6 +233,9 @@ class _FloatTerminalState extends ConsumerState<_FloatTerminal> {
     );
   }
 
+}
+
+extension _Actions on _FloatTerminalState {
   void _press(VirtKey item, VirtKeyboard notifier) {
     switch (item.func) {
       case VirtualKeyFunc.toggleIME:
