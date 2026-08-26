@@ -16,36 +16,17 @@
     android:orientation="vertical"
     android:padding="12dp">
 
-    <LinearLayout
+    <!-- The name has the row to itself; the time is the footer, as on iOS. -->
+    <TextView
+        android:id="@+id/widget_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:baselineAligned="false"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
-
-        <TextView
-            android:id="@+id/widget_name"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:ellipsize="end"
-            android:singleLine="true"
-            android:textColor="@color/widgetText"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            tools:text="Server Name" />
-
-        <TextView
-            android:id="@+id/widget_time"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:fontFamily="monospace"
-            android:maxLines="1"
-            android:textColor="@color/widgetSummaryText"
-            android:textSize="10sp"
-            tools:text="12:34" />
-    </LinearLayout>
+        android:ellipsize="end"
+        android:singleLine="true"
+        android:textColor="@color/widgetText"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        tools:text="Server Name" />
 
     <!-- The charts, all of them, as one bitmap. -->
     <!--
@@ -79,14 +60,15 @@
         android:layout_height="0dp"
         android:layout_marginTop="6dp"
         android:layout_weight="1"
-        android:gravity="center_vertical"
+        android:gravity="top"
         android:orientation="vertical">
 
         <LinearLayout
             android:id="@+id/widget_cpu_label"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="4dp"
+            android:layout_marginBottom="5dp"
+            android:baselineAligned="false"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
@@ -97,23 +79,36 @@
                 android:src="@drawable/speed_24" />
 
             <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:fontFamily="monospace"
+                android:text="@string/widget_row_cpu"
+                android:textColor="@color/widgetSummaryText"
+                android:textSize="10sp" />
+
+            <TextView
                 android:id="@+id/widget_cpu"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="7dp"
+                android:layout_marginStart="6dp"
                 android:layout_weight="1"
                 android:ellipsize="end"
+                android:fontFamily="monospace"
+                android:gravity="end"
                 android:singleLine="true"
-                android:textColor="@color/widgetSummaryText"
+                android:textColor="@color/widgetText"
                 android:textSize="12sp"
-                tools:text="CPU 25%" />
+                android:textStyle="bold"
+                tools:text="25%" />
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/widget_mem_label"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="4dp"
+            android:layout_marginBottom="5dp"
+            android:baselineAligned="false"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
@@ -124,23 +119,36 @@
                 android:src="@drawable/memory_24" />
 
             <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:fontFamily="monospace"
+                android:text="@string/widget_row_mem"
+                android:textColor="@color/widgetSummaryText"
+                android:textSize="10sp" />
+
+            <TextView
                 android:id="@+id/widget_mem"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="7dp"
+                android:layout_marginStart="6dp"
                 android:layout_weight="1"
                 android:ellipsize="end"
-                android:maxLines="1"
-                android:textColor="@color/widgetSummaryText"
+                android:fontFamily="monospace"
+                android:gravity="end"
+                android:singleLine="true"
+                android:textColor="@color/widgetText"
                 android:textSize="12sp"
-                tools:text="MEM 4.2g / 8.0g" />
+                android:textStyle="bold"
+                tools:text="25%" />
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/widget_disk_label"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="4dp"
+            android:layout_marginBottom="5dp"
+            android:baselineAligned="false"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
@@ -151,22 +159,35 @@
                 android:src="@drawable/storage_24" />
 
             <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:fontFamily="monospace"
+                android:text="@string/widget_row_disk"
+                android:textColor="@color/widgetSummaryText"
+                android:textSize="10sp" />
+
+            <TextView
                 android:id="@+id/widget_disk"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="7dp"
+                android:layout_marginStart="6dp"
                 android:layout_weight="1"
                 android:ellipsize="end"
-                android:maxLines="1"
-                android:textColor="@color/widgetSummaryText"
+                android:fontFamily="monospace"
+                android:gravity="end"
+                android:singleLine="true"
+                android:textColor="@color/widgetText"
                 android:textSize="12sp"
-                tools:text="DISK 125g / 250g" />
+                android:textStyle="bold"
+                tools:text="25%" />
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/widget_net_label"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:baselineAligned="false"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
@@ -177,18 +198,40 @@
                 android:src="@drawable/net_24" />
 
             <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:fontFamily="monospace"
+                android:text="@string/widget_row_net"
+                android:textColor="@color/widgetSummaryText"
+                android:textSize="10sp" />
+
+            <TextView
                 android:id="@+id/widget_net"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="7dp"
+                android:layout_marginStart="6dp"
                 android:layout_weight="1"
                 android:ellipsize="end"
-                android:maxLines="1"
-                android:textColor="@color/widgetSummaryText"
+                android:fontFamily="monospace"
+                android:gravity="end"
+                android:singleLine="true"
+                android:textColor="@color/widgetText"
                 android:textSize="12sp"
-                tools:text="NET 15m / 8m" />
+                android:textStyle="bold"
+                tools:text="25%" />
         </LinearLayout>
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/widget_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="monospace"
+        android:maxLines="1"
+        android:textColor="@color/widgetSummaryText"
+        android:textSize="9sp"
+        tools:text="12:34" />
 
     <TextView
         android:id="@+id/error_message"

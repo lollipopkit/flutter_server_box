@@ -94,14 +94,26 @@ abstract class HomeWidget(private val kind: WidgetKind) : AppWidgetProvider() {
          * were out by different amounts and `fitXY` turned that into a
          * stretch.
          */
-        private const val CONTAINER_PADDING_DP = 12f
+        /**
+         * The chrome around the content, per widget rather than per cell count.
+         *
+         * It used to be decided by how many cells the launcher reported, which
+         * was a guess standing in for a question now answered outright: the two
+         * widgets are fixed sizes and each knows what it draws. The readings
+         * one can afford room around its text — that is most of what iOS's
+         * container margins buy it — while the chart one spends the same space
+         * on the charts, which is the whole reason to choose it.
+         */
+        private const val CHART_PADDING_DP = 10f
         private const val CHART_MARGIN_DP = 6f
-        private const val HEADER_SP = 15f
+        private const val CHART_HEADER_SP = 14f
 
-        /** What a 2x2 gets instead, so the chart is left something to draw in. */
-        private const val COMPACT_PADDING_DP = 8f
-        private const val COMPACT_CHART_MARGIN_DP = 4f
-        private const val COMPACT_HEADER_SP = 13f
+        private const val READINGS_PADDING_DP = 14f
+        private const val READINGS_CHART_MARGIN_DP = 6f
+        private const val READINGS_HEADER_SP = 13f
+
+        /** The time, on its own line at the bottom. */
+        private const val FOOTER_DP = 13f
 
         /** A single line of text takes about this much more than its size. */
         private const val HEADER_LINE_RATIO = 1.45f
@@ -246,18 +258,14 @@ abstract class HomeWidget(private val kind: WidgetKind) : AppWidgetProvider() {
         val columns = ((widthDp + 30) / 70).coerceAtLeast(1)
         val rows = ((heightDp + 30) / 70).coerceAtLeast(1)
 
-        // A 2x2 widget is about 110dp tall, and the roomy chrome a 4x4 wants
-        // takes nearly half of that before the chart gets anything. Tightened
-        // rather than kept uniform: the alternative is a chart too short to
-        // have a shape, which is the only reason the panel is there.
-        val compact = columns <= 2 || rows <= 2
-        val paddingDp = if (compact) COMPACT_PADDING_DP else CONTAINER_PADDING_DP
-        val headerSp = if (compact) COMPACT_HEADER_SP else HEADER_SP
-        val marginDp = if (compact) COMPACT_CHART_MARGIN_DP else CHART_MARGIN_DP
+        val charts = kind.drawsCharts
+        val paddingDp = if (charts) CHART_PADDING_DP else READINGS_PADDING_DP
+        val headerSp = if (charts) CHART_HEADER_SP else READINGS_HEADER_SP
+        val marginDp = if (charts) CHART_MARGIN_DP else READINGS_CHART_MARGIN_DP
 
         val chartWidthDp = widthDp - paddingDp * 2
         val chartHeightDp =
-            heightDp - paddingDp * 2 - headerSp * HEADER_LINE_RATIO - marginDp
+            heightDp - paddingDp * 2 - headerSp * HEADER_LINE_RATIO - marginDp - FOOTER_DP
 
         return Bounds(
             columns = columns,
