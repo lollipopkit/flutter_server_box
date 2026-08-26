@@ -33,7 +33,9 @@ env:
 
 jobs:
   reproducibilityCheck:
-    name: Reproducibility check
+    # Static build-input validation. The independent byte-for-byte Android
+    # builds live in android-reproducible.yml.
+    name: Build input checks
     runs-on: ubuntu-latest
     outputs:
       # The selection, canonicalised once and matched exactly by every job
@@ -448,6 +450,17 @@ jobs:
         with:
           distribution: "zulu"
           java-version: "21"
+      - name: Fix the Android build epoch
+        shell: bash
+        run: echo "SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)" >> "$GITHUB_ENV"
+      - name: Install the pinned Android NDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          ndk_version="$(tr -d '[:space:]' < android/ndk-version.txt)"
+          sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          "$sdkmanager" "ndk;$ndk_version"
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$ndk_version" >> "$GITHUB_ENV"
       - name: Fetch secrets
         # Through the environment, and quoted. Expanded into the script the way
         # they were, a space or a shell metacharacter in either value is parsed
@@ -469,9 +482,7 @@ jobs:
       # than broken in it, which is why the check below exists.
       - name: Build proot
         shell: bash
-        run: |
-          export ANDROID_NDK_HOME="${ANDROID_NDK_LATEST_HOME:-${ANDROID_NDK_ROOT:-}}"
-          scripts/build-proot-android.sh
+        run: scripts/build-proot-android.sh
       - name: Build (release)
         if: needs.reproducibilityCheck.outputs.isRelease == 'true'
         shell: bash
