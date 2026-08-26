@@ -170,7 +170,23 @@ jobs:
 
           name="${BIN_NAME}_v${version}_${{ matrix.platform }}_${{ matrix.arch }}"
           if [[ "${{ matrix.platform }}" == "windows" ]]; then
-            tar -a -c -f "${name}.zip" "$staging"
+            # 7-Zip, preinstalled on the runner, and not `tar -a`. `shell:
+            # bash` on windows-latest is Git Bash, whose `tar` is GNU tar —
+            # whose --auto-compress knows .gz/.bz2/.xz/.zst and cannot produce
+            # a zip at all. Handed a suffix it does not know it silently writes
+            # a plain uncompressed tar under that name, which is what v0.1.0
+            # shipped: 26MB rather than ~10MB, and a file Explorer and
+            # `Expand-Archive` both refuse for having no PK signature.
+            7z a -tzip "${name}.zip" "$staging" > /dev/null
+
+            # The suffix is the only thing a consumer reads before opening it,
+            # so it is checked here rather than found by someone downloading
+            # the result. Two bytes, because that is exactly what said the old
+            # one was wrong.
+            if [[ "$(head -c 2 "${name}.zip")" != "PK" ]]; then
+              echo "${name}.zip is not a zip archive."
+              exit 1
+            fi
           else
             tar -czf "${name}.tar.gz" "$staging"
           fi
@@ -284,13 +300,49 @@ jobs:
       - name: Checksums
         shell: bash
         working-directory: packages
-        run: sha256sum *.tar.gz *.zip > SHA256SUMS
+        # `--`, so an archive is never read as an option. The names are all
+        # `server-box-monitor_…` today, which is the kind of thing that holds
+        # until it doesn't; it keeps the bare filenames `sha256sum -c` expects.
+        run: sha256sum -- *.tar.gz *.zip > SHA256SUMS
 
       - name: Create Release
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
         with:
           tag_name: ${{ needs.meta.outputs.tag }}
           name: Monitor ${{ needs.meta.outputs.tag }}
+          # Never the repository's latest release. That slot belongs to the
+          # app, which is versioned separately — the whole point of this
+          # workflow reading the crate version instead of a git tag. v0.1.0
+          # took it, so anyone opening /releases/latest was handed the agent
+          # rather than ServerBox.
+          make_latest: false
+          body: |
+            The **ServerBox Monitor** agent, versioned independently of the
+            app — see `monitor/README.md` for what it does and
+            `config.example.toml` in the archive for how it is configured.
+
+            ### Docker
+
+            ```sh
+            docker run -d --name server-box-monitor \
+              -p 3770:3770 -v ./data:/data \
+              ${{ env.IMAGE }}:${{ needs.meta.outputs.version }}
+            ```
+
+            Also tagged `latest`. `linux/amd64` and `linux/arm64`.
+
+            ### Native
+
+            Pick the archive for the machine being monitored and unpack it.
+            Linux builds are static musl binaries, so they run on Alpine as
+            they are. Each archive carries the binary, the web panel, the
+            migrations and an example config.
+
+            Verify what you downloaded against `SHA256SUMS`:
+
+            ```sh
+            sha256sum -c SHA256SUMS --ignore-missing
+            ```
           files: |
             packages/*.tar.gz
             packages/*.zip
