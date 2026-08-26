@@ -71,7 +71,7 @@ enum ServerDetailCards {
     ];
     if (added.isNotEmpty) {
       list.addAll(added);
-      prop.put(list);
+      prop.putSync(list);
     }
 
     if (to >= _kTrendCardsFoldedBuild) {
@@ -91,7 +91,7 @@ enum ServerDetailCards {
           'monitorHistory',
         }.contains(e),
       );
-      if (list.length != before) prop.put(list);
+      if (list.length != before) prop.putSync(list);
     }
   }
 }

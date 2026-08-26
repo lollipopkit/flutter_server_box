@@ -110,13 +110,13 @@ void main() {
     expect(order(), [ServerDetailCards.about.name, ServerDetailCards.bmc.name]);
   });
 
-  test('keeps a disabled new card disabled once it has shipped', () {
+  test('keeps a newly shipped card ordered but disabled', () {
     setting.detailCardOrder.put([ServerDetailCards.about.name]);
     setting.detailCardDisabled.put([ServerDetailCards.bmc.name]);
 
-    ServerDetailCards.autoAddNewCards(1536, 1600);
+    ServerDetailCards.autoAddNewCards(1491, 1536);
 
-    expect(order(), [ServerDetailCards.about.name]);
+    expect(order(), [ServerDetailCards.about.name, ServerDetailCards.bmc.name]);
     expect(setting.detailCardDisabled.get(), [ServerDetailCards.bmc.name]);
   });
 }

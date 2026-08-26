@@ -57,7 +57,7 @@ enum ServerFuncBtn {
           btn.index,
     ];
     if (added.isEmpty) return;
-    prop.put([...list, ...added]);
+    prop.putSync([...list, ...added]);
   }
 
   static final defaultIdxs = [

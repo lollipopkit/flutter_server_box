@@ -112,6 +112,7 @@ dev_dependencies:
   freezed: ^3.0.0
   riverpod_generator: ^4.0.3
   test: ^1.29.0
+  xml: ^7.0.1
   flutter_test:
     sdk: flutter
   fl_build:
