@@ -549,6 +549,14 @@ extension _Actions on _ServerEditPageState {
     }
 
     if (!mounted) return;
+    // Saved either way — the address may well be one TLS is being set up for,
+    // and refusing to store it would be this page deciding that for the user.
+    // But it will not connect as it stands, and the switch that would let it
+    // is on this same page under More, so saying so beats leaving them to find
+    // out from the detail page's error.
+    if (monitorHttp?.needsInsecureOptIn == true) {
+      Toast.warn(l10n.monitorHttpsRequired, body: l10n.monitorAllowInsecureHttpTip);
+    }
     context.pop();
   }
 }

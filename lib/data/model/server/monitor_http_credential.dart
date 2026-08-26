@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:server_box/core/utils/secure_endpoint.dart';
 
 part 'monitor_http_credential.g.dart';
 
@@ -37,6 +38,30 @@ final class MonitorHttpCredential {
       _$MonitorHttpCredentialFromJson(json);
 
   Map<String, dynamic> toJson() => _$MonitorHttpCredentialToJson(this);
+
+  /// Whether this connection will be refused for being plaintext, and turning
+  /// [allowInsecure] on is what would let it through.
+  ///
+  /// The same question `MonitorHttpClient._addr` asks before every request,
+  /// asked ahead of time so the editor can say so on save and the detail page
+  /// can offer the switch instead of only naming the error. Read off the
+  /// configuration rather than off the failure text, which is a localized
+  /// sentence and not something to match against.
+  bool get needsInsecureOptIn {
+    if (allowInsecure) return false;
+    final uri = Uri.tryParse(addr.trim());
+    if (uri == null) return false;
+    return !isSecureRemoteEndpoint(uri);
+  }
+
+  /// The same connection with plaintext HTTP permitted.
+  MonitorHttpCredential allowingInsecure() => MonitorHttpCredential(
+    addr: addr,
+    user: user,
+    pwd: pwd,
+    ignoreCert: ignoreCert,
+    allowInsecure: true,
+  );
 
   @override
   bool operator ==(Object other) {
