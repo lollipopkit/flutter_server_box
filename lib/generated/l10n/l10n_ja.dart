@@ -193,7 +193,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get agentFloat => '他のタブの上に浮かべる';
+  String get floatOverTabs => '他のタブの上に浮かべる';
 
   @override
   String get agentToolSshConnect => 'SSH 接続';
@@ -1571,4 +1571,10 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get privacyBlurTip => 'Appスイッチャーで内容を隠す';
+
+  @override
+  String get floatReturnToTab => 'タブに戻す';
+
+  @override
+  String get termInFloatWindow => 'このターミナルはフローティングウィンドウにあります';
 }

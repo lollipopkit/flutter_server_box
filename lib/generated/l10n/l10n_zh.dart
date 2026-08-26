@@ -191,7 +191,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get agentFloat => '在其他标签页上悬浮';
+  String get floatOverTabs => '在其他标签页上悬浮';
 
   @override
   String get agentToolSshConnect => 'SSH 连接';
@@ -1531,6 +1531,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get privacyBlurTip => '在多任务界面隐藏应用内容';
+
+  @override
+  String get floatReturnToTab => '放回标签页';
+
+  @override
+  String get termInFloatWindow => '此终端正在悬浮窗中';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -1720,7 +1726,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get agentFloat => '在其他分頁上懸浮';
+  String get floatOverTabs => '在其他分頁上懸浮';
 
   @override
   String get agentToolSshConnect => 'SSH 連線';
@@ -3061,4 +3067,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get privacyBlurTip => '在多工介面隱藏應用內容';
+
+  @override
+  String get floatReturnToTab => '放回分頁';
+
+  @override
+  String get termInFloatWindow => '此終端正在懸浮視窗中';
 }

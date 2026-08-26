@@ -12,8 +12,8 @@ import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/app/agent_shell_config.dart';
 import 'package:server_box/data/model/app/ask_ai_config.dart';
+import 'package:server_box/data/model/app/float_shell_config.dart';
 import 'package:server_box/data/store/migrations/m009_grouped_settings.dart';
 import 'package:server_box/data/store/setting.dart';
 
@@ -144,7 +144,7 @@ void main() {
       expect(store.agentShell.get().window.height, 700.0);
       expect(
         store.agentShell.get().window.width,
-        const AgentShellWindow().width,
+        const FloatShellWindow().width,
       );
       // Removed all the same. Once the field is served by the grouped row the
       // old key has no reader, this step will not run again to reconsider it,
@@ -191,7 +191,7 @@ void main() {
   group('a field reads and writes like the property it replaced', () {
     test('get falls back to the model default', () {
       expect(store.askAiModel.get(), const AskAiConfig().model);
-      expect(store.agentShellPillY.get(), const AgentShellPill().y);
+      expect(store.agentShell.pillY.get(), const FloatShellPill().y);
     });
 
     test('set touches one field and leaves the rest', () async {
@@ -204,13 +204,13 @@ void main() {
     });
 
     test('and so does a nested one', () async {
-      await store.agentShellWidth.set(500);
-      await store.agentShellPillY.set(0.25);
+      await store.agentShell.width.set(500);
+      await store.agentShell.pillY.set(0.25);
 
-      expect(store.agentShellWidth.get(), 500);
-      expect(store.agentShellPillY.get(), 0.25);
-      expect(store.agentShellHeight.get(), const AgentShellWindow().height);
-      expect(store.agentShellMode.get(), const AgentShellConfig().mode);
+      expect(store.agentShell.width.get(), 500);
+      expect(store.agentShell.pillY.get(), 0.25);
+      expect(store.agentShell.height.get(), const FloatShellWindow().height);
+      expect(store.agentShell.mode.get(), const FloatShellConfig().mode);
     });
 
     test('remove puts the field back to its default, not the whole row',

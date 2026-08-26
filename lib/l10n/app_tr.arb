@@ -372,7 +372,7 @@
   "agentToolWriteFile": "Dosya yaz",
   "agentToolFailed": "Araç çalıştırılamadı.",
   "agentToolCallsFmt": "{count} araç çağrısı",
-  "agentFloat": "Diğer sekmelerin üzerinde yüzsün",
+  "floatOverTabs": "Diğer sekmelerin üzerinde yüzsün",
   "agentToolSshConnect": "SSH bağlan",
   "agentToolSshDisconnect": "SSH bağlantısını kes",
   "agentSshConnectTitle": "Yeni bir sunucuya bağlan",
@@ -485,5 +485,7 @@
   "monitorHttpTip": "Bu sunucunun durumunu SSH ile komut çalıştırmak yerine bir **monitor** aracısının HTTP API'sinden okur.\n\nAracının önce sunucuya kurulması gerekir; eğilimler, saat uygulaması ve ana ekran bileşenleri buna bağlıdır.\n\n[monitor aracısı nasıl kurulur]({url})",
   "send": "Gönder",
   "privacyBlur": "Arka planda gizlilik",
-  "privacyBlurTip": "Uygulama değiştiricide içeriği gizle"
+  "privacyBlurTip": "Uygulama değiştiricide içeriği gizle",
+  "floatReturnToTab": "Sekmeye geri koy",
+  "termInFloatWindow": "Bu terminal yüzen pencerede"
 }

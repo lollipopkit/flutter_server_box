@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/float_shell.dart';
 import 'package:server_box/data/provider/ai/agent_session.dart';
 import 'package:server_box/data/provider/ai/agent_shell.dart';
 import 'package:server_box/view/page/agent/history.dart';
 import 'package:server_box/view/page/agent/view.dart';
+import 'package:server_box/view/widget/float_shell.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 
 /// The Agent tab.
@@ -66,18 +68,18 @@ class _FloatToggle extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final floating = ref.watch(agentShellProvider) != AgentShellMode.hidden;
+    final floating = ref.watch(agentShellProvider) != FloatShellMode.hidden;
     return IconButton(
-      tooltip: context.l10n.agentFloat,
+      tooltip: context.l10n.floatOverTabs,
       isSelected: floating,
       onPressed: ref.read(agentShellProvider.notifier).toggle,
       icon: const Icon(
         Icons.picture_in_picture_alt_outlined,
-        size: agentHeaderIconSize,
+        size: floatHeaderIconSize,
       ),
       selectedIcon: const Icon(
         Icons.picture_in_picture_alt,
-        size: agentHeaderIconSize,
+        size: floatHeaderIconSize,
       ),
     );
   }

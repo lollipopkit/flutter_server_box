@@ -210,7 +210,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get agentFloat => 'Поверх других вкладок';
+  String get floatOverTabs => 'Поверх других вкладок';
 
   @override
   String get agentToolSshConnect => 'Подключение по SSH';
@@ -1687,4 +1687,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get privacyBlurTip => 'Скрывать содержимое приложения в переключателе';
+
+  @override
+  String get floatReturnToTab => 'Вернуть во вкладку';
+
+  @override
+  String get termInFloatWindow => 'Этот терминал открыт в плавающем окне';
 }

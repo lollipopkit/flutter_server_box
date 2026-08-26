@@ -59,7 +59,7 @@
   "agentToolWriteFile": "Write file",
   "agentToolFailed": "Tool execution failed.",
   "agentToolCallsFmt": "{count} tool calls",
-  "agentFloat": "Float over other tabs",
+  "floatOverTabs": "Float over other tabs",
   "agentToolSshConnect": "SSH connect",
   "agentToolSshDisconnect": "Disconnect SSH",
   "agentSshConnectTitle": "Connect to a new host",
@@ -642,5 +642,7 @@
   "bmcStaleWrite": "The BMC changed while this was being written. Try again.",
   "send": "Send",
   "privacyBlur": "Background privacy",
-  "privacyBlurTip": "Hide app content in the app switcher"
+  "privacyBlurTip": "Hide app content in the app switcher",
+  "floatReturnToTab": "Return to tab",
+  "termInFloatWindow": "This terminal is in the floating window"
 }

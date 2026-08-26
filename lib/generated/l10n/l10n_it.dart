@@ -212,7 +212,7 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String get agentFloat => 'In sovrimpressione sulle altre schede';
+  String get floatOverTabs => 'In sovrimpressione sulle altre schede';
 
   @override
   String get agentToolSshConnect => 'Connetti SSH';
@@ -1688,4 +1688,10 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get privacyBlurTip =>
       'Nascondi il contenuto dell\'app nel selettore app';
+
+  @override
+  String get floatReturnToTab => 'Torna alla scheda';
+
+  @override
+  String get termInFloatWindow => 'Questo terminale è nella finestra mobile';
 }

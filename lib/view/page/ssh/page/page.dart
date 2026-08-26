@@ -23,6 +23,7 @@ import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/provider/ai/agent_scope.dart';
 import 'package:server_box/data/provider/ai/agent_session.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
+import 'package:server_box/data/provider/app/terminal_shell.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/provider/virtual_keyboard.dart';
@@ -159,6 +160,17 @@ class SSHPageState extends ConsumerState<SSHPage>
   /// a second time.
   bool get _adopted => widget.args.session != null;
 
+  /// The terminal and the shell behind it, for whoever is showing them.
+  ///
+  /// The floating window is the only caller: it draws this session while this
+  /// page stands its own view down — see [terminalShellProvider].
+  TerminalSession get session => _sess;
+
+  /// Held from `initState` rather than read where it is used, because
+  /// [dispose] is one of the places that uses it and `ref` is not usable by
+  /// then.
+  late final TerminalShell _terminalShell;
+
   Terminal get _terminal => _sess.terminal;
 
   late final TerminalController _terminalController = TerminalController();
@@ -273,6 +285,18 @@ class SSHPageState extends ConsumerState<SSHPage>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    // The floating window is a view onto this page's session, and once
+    // `_sess.dispose()` below has taken its output subscriptions away it is a
+    // terminal that has silently stopped answering. So it goes with the page.
+    //
+    // Scheduled rather than called: `dispose` runs inside the frame that is
+    // unmounting this page, and Riverpod refuses a write from there — it
+    // throws, which is a page that cannot be closed at all. By the end of this
+    // frame the tree is settled and the write is ordinary; the window has
+    // already been drawn once this frame and goes on the next.
+    final shell = _terminalShell;
+    final session = _sess;
+    WidgetsBinding.instance.addPostFrameCallback((_) => shell.hideIf(session));
     _releaseAgentHost?.call();
     _virtKeyLongPressTimer?.cancel();
     final introListener = _introVisibilityListener;
@@ -319,6 +343,7 @@ class SSHPageState extends ConsumerState<SSHPage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _terminalShell = ref.read(terminalShellProvider.notifier);
     _attachAgentHost();
     _initStoredCfg();
     _reloadVirtKeys();
@@ -410,6 +435,18 @@ class SSHPageState extends ConsumerState<SSHPage>
   Widget build(BuildContext context) {
     super.build(context);
 
+    // Popped out into the floating window, which is then the only view on this
+    // terminal. Two `TerminalView`s on one `Terminal` both resize it as they
+    // lay out, each undoing the other's size on the next frame and sending the
+    // far side a `SIGWINCH` for every one — so this one stands down rather
+    // than drawing a second copy nobody is looking at.
+    final floating = ref.watch(
+      terminalShellProvider.select(
+        (shell) => identical(shell?.session, _sess),
+      ),
+    );
+    if (floating) return _buildFloatedAway();
+
     final bgImage = Stores.setting.sshBgImage.fetch();
     final bgFile = bgImage.isEmpty ? null : File(bgImage);
     final hasBg = bgFile != null && bgFile.existsSync();
@@ -456,6 +493,47 @@ class SSHPageState extends ConsumerState<SSHPage>
       );
     }
     return child;
+  }
+
+  /// What the tab shows while the terminal is in the floating window.
+  ///
+  /// Not left blank: this tab is still open, still named after the server, and
+  /// still where the terminal goes back to. Somewhere saying so is the
+  /// difference between a terminal that moved and one that broke.
+  Widget _buildFloatedAway() {
+    final scheme = Theme.of(context).colorScheme;
+    return Scaffold(
+      // Nothing floats a terminal opened as a route — the button is on the tab
+      // strip — so this branch is not reached today. Kept because the cost of
+      // being wrong about that is a page with no way off it.
+      appBar: widget.args.notFromTab
+          ? CustomAppBar(
+              leading: BackButton(onPressed: context.pop),
+              title: Text(widget.args.source.label),
+              centerTitle: false,
+            )
+          : null,
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.picture_in_picture_alt,
+              size: 56,
+              color: scheme.outlineVariant,
+            ),
+            const SizedBox(height: 13),
+            Text(l10n.termInFloatWindow, style: UIs.textGrey),
+            const SizedBox(height: 7),
+            TextButton.icon(
+              onPressed: _terminalShell.hide,
+              icon: const Icon(Icons.open_in_full, size: 18),
+              label: Text(l10n.floatReturnToTab),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   /// The picture the page is drawn on, bottom layer first.

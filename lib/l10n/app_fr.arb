@@ -372,7 +372,7 @@
   "agentToolWriteFile": "Écrire un fichier",
   "agentToolFailed": "Échec de l'exécution de l'outil.",
   "agentToolCallsFmt": "{count} appels d'outil",
-  "agentFloat": "Flotter au-dessus des autres onglets",
+  "floatOverTabs": "Flotter au-dessus des autres onglets",
   "agentToolSshConnect": "Connexion SSH",
   "agentToolSshDisconnect": "Déconnecter le SSH",
   "agentSshConnectTitle": "Se connecter à un nouvel hôte",
@@ -485,5 +485,7 @@
   "monitorHttpTip": "Lire l'état de ce serveur via l'API HTTP d'un agent **monitor**, au lieu d'exécuter des commandes en SSH.\n\nL'agent doit d'abord être installé sur le serveur ; les tendances, l'app Watch et les widgets en dépendent.\n\n[Installer un agent monitor]({url})",
   "send": "Envoyer",
   "privacyBlur": "Confidentialité en arrière-plan",
-  "privacyBlurTip": "Masquer le contenu dans le sélecteur d'apps"
+  "privacyBlurTip": "Masquer le contenu dans le sélecteur d'apps",
+  "floatReturnToTab": "Revenir à l'onglet",
+  "termInFloatWindow": "Ce terminal est dans la fenêtre flottante"
 }

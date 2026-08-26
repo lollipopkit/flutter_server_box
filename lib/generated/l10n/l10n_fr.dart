@@ -213,7 +213,7 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get agentFloat => 'Flotter au-dessus des autres onglets';
+  String get floatOverTabs => 'Flotter au-dessus des autres onglets';
 
   @override
   String get agentToolSshConnect => 'Connexion SSH';
@@ -1695,4 +1695,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get privacyBlurTip => 'Masquer le contenu dans le sélecteur d\'apps';
+
+  @override
+  String get floatReturnToTab => 'Revenir à l\'onglet';
+
+  @override
+  String get termInFloatWindow => 'Ce terminal est dans la fenêtre flottante';
 }

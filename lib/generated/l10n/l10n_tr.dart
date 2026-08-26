@@ -209,7 +209,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get agentFloat => 'Diğer sekmelerin üzerinde yüzsün';
+  String get floatOverTabs => 'Diğer sekmelerin üzerinde yüzsün';
 
   @override
   String get agentToolSshConnect => 'SSH bağlan';
@@ -1664,4 +1664,10 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get privacyBlurTip => 'Uygulama değiştiricide içeriği gizle';
+
+  @override
+  String get floatReturnToTab => 'Sekmeye geri koy';
+
+  @override
+  String get termInFloatWindow => 'Bu terminal yüzen pencerede';
 }

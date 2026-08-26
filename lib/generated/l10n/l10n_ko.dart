@@ -194,7 +194,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get agentFloat => '다른 탭 위에 띄우기';
+  String get floatOverTabs => '다른 탭 위에 띄우기';
 
   @override
   String get agentToolSshConnect => 'SSH 연결';
@@ -1577,4 +1577,10 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get privacyBlurTip => '앱 전환기에서 앱 내용 숨기기';
+
+  @override
+  String get floatReturnToTab => '탭으로 되돌리기';
+
+  @override
+  String get termInFloatWindow => '이 터미널은 플로팅 창에 있습니다';
 }

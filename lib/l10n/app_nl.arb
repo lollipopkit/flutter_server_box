@@ -372,7 +372,7 @@
   "agentToolWriteFile": "Bestand schrijven",
   "agentToolFailed": "Uitvoeren van het hulpmiddel is mislukt.",
   "agentToolCallsFmt": "{count} hulpmiddelaanroepen",
-  "agentFloat": "Boven andere tabbladen zweven",
+  "floatOverTabs": "Boven andere tabbladen zweven",
   "agentToolSshConnect": "SSH verbinden",
   "agentToolSshDisconnect": "SSH verbreken",
   "agentSshConnectTitle": "Met een nieuwe host verbinden",
@@ -485,5 +485,7 @@
   "monitorHttpTip": "De status van deze server lezen via de HTTP-API van een **monitor**-agent, in plaats van opdrachten via SSH uit te voeren.\n\nDe agent moet eerst op de server worden geïnstalleerd; grafieken, de Watch-app en de widgets hangen ervan af.\n\n[Een monitor-agent installeren]({url})",
   "send": "Verzenden",
   "privacyBlur": "Privacy op de achtergrond",
-  "privacyBlurTip": "Verberg de app-inhoud in de app-switcher"
+  "privacyBlurTip": "Verberg de app-inhoud in de app-switcher",
+  "floatReturnToTab": "Terug naar tabblad",
+  "termInFloatWindow": "Deze terminal staat in het zwevende venster"
 }

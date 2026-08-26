@@ -372,7 +372,7 @@
   "agentToolWriteFile": "Datei schreiben",
   "agentToolFailed": "Ausführung des Werkzeugs fehlgeschlagen.",
   "agentToolCallsFmt": "{count} Werkzeugaufrufe",
-  "agentFloat": "Über anderen Tabs schweben",
+  "floatOverTabs": "Über anderen Tabs schweben",
   "agentToolSshConnect": "SSH verbinden",
   "agentToolSshDisconnect": "SSH trennen",
   "agentSshConnectTitle": "Mit einem neuen Host verbinden",
@@ -485,5 +485,7 @@
   "monitorHttpTip": "Den Status dieses Servers über die HTTP-API eines **monitor**-Agenten lesen, statt Befehle über SSH auszuführen.\n\nDer Agent muss zuerst auf dem Server eingerichtet werden; Verläufe, die Watch-App und die Home-Widgets hängen davon ab.\n\n[Einen monitor-Agenten einrichten]({url})",
   "send": "Senden",
   "privacyBlur": "Datenschutz im Hintergrund",
-  "privacyBlurTip": "App-Inhalt in der App-Übersicht verbergen"
+  "privacyBlurTip": "App-Inhalt in der App-Übersicht verbergen",
+  "floatReturnToTab": "Zum Tab zurück",
+  "termInFloatWindow": "Dieses Terminal ist im schwebenden Fenster"
 }
