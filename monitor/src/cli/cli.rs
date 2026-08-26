@@ -10,7 +10,12 @@ use tracing::info;
 pub fn build_cli() -> Command {
     Command::new("server_box_monitor")
         .about("ServerBox Monitor - a server monitoring application")
-        .version("0.1.0")
+        // The crate's, not a second copy of it. `monitor-release.yml` reads
+        // Cargo.toml to decide what to tag and publish, so a literal here is a
+        // number that stops being the one that shipped the moment it is bumped
+        // — and `--version` is where someone looks to find out what they are
+        // running.
+        .version(env!("CARGO_PKG_VERSION"))
         .subcommand_required(false)
         .arg_required_else_help(false)
         .subcommand(
