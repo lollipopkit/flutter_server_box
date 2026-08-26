@@ -1,10 +1,8 @@
-import 'dart:collection';
-
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/utils/tag_group.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/view/page/snippet/edit.dart';
@@ -129,9 +127,9 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
         // server rail leaves it.
         padding: const EdgeInsets.only(top: 4, bottom: 77),
         children: [
-          for (final group in _groupByTag(filtered)) ...[
-            SideBarSection(group.label),
-            for (final snippet in group.snippets)
+          for (final group in groupByTag(filtered, (e) => e.tags)) ...[
+            if (group.label case final label?) SideBarSection(label),
+            for (final snippet in group.items)
               SideBarTile(
                 key: ValueKey(snippet.name),
                 title: snippet.name,
@@ -153,46 +151,6 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
       itemCount: filtered.length,
       itemBuilder: (_, index) => _buildSnippetItem(filtered[index]),
     );
-  }
-
-  /// The rail's groups, in the order they are drawn.
-  ///
-  /// One tag is its own heading. More than one goes under "n tags" instead of
-  /// appearing under each of them: a rail is an index, and one that lists the
-  /// same snippet three times is not one — and which of its tags would be the
-  /// right heading is not a question the snippet answers.
-  ///
-  /// Single tags first and in name order, then the multi-tag groups by how
-  /// many, then whatever carries no tag at all, under a heading of its own.
-  /// So the heading someone is looking for comes before the ones nobody looks
-  /// for by name, and nothing in the rail sits outside a group.
-  List<({String label, List<Snippet> snippets})> _groupByTag(
-    List<Snippet> snippets,
-  ) {
-    final byTag = SplayTreeMap<String, List<Snippet>>();
-    final byCount = SplayTreeMap<int, List<Snippet>>();
-    final untagged = <Snippet>[];
-
-    for (final snippet in snippets) {
-      final tags = snippet.tags;
-      switch (tags?.length ?? 0) {
-        case 0:
-          untagged.add(snippet);
-        case 1:
-          byTag.putIfAbsent(tags!.first, () => []).add(snippet);
-        case final count:
-          byCount.putIfAbsent(count, () => []).add(snippet);
-      }
-    }
-
-    final l10n = context.l10n;
-    return [
-      for (final entry in byTag.entries)
-        (label: entry.key, snippets: entry.value),
-      for (final entry in byCount.entries)
-        (label: l10n.nTags(entry.key), snippets: entry.value),
-      if (untagged.isNotEmpty) (label: l10n.ungrouped, snippets: untagged),
-    ];
   }
 
   /// Finds a snippet by what it is called or by what it runs.

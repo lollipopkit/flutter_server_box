@@ -1,5 +1,8 @@
 part of 'tab.dart';
 
+/// One row of the rail: a group heading, or a server under one.
+typedef _RailRow = ({String? heading, String? id});
+
 /// The server list as a rail beside the detail pane.
 ///
 /// The same rail the terminal and file pages use, because it is the same job:
@@ -10,6 +13,10 @@ part of 'tab.dart';
 extension _PaneList on _ServerPageState {
   Widget _buildPaneList(List<String> filtered) {
     final selected = ref.watch(serverSelectionProvider);
+    // Watched, not read: a tag added or removed in the editor regroups the
+    // rail, and the row it moves is one this page is already rebuilding for.
+    final servers = ref.watch(serversProvider.select((s) => s.servers));
+    final rows = _railRows(filtered, servers);
 
     return Scaffold(
       appBar: _TopBar(
@@ -33,9 +40,13 @@ extension _PaneList on _ServerPageState {
               controller: _scrollController,
               // Room at the bottom for the add button to float over.
               padding: const EdgeInsets.only(top: 4, bottom: 77),
-              itemCount: filtered.length,
+              itemCount: rows.length,
               itemBuilder: (context, index) {
-                final id = filtered[index];
+                final row = rows[index];
+                if (row.heading case final heading?) {
+                  return SideBarSection(heading);
+                }
+                final id = row.id!;
                 final srv = ref.watch(serverProvider(id));
                 return _buildPaneListTile(
                   context,
@@ -45,6 +56,26 @@ extension _PaneList on _ServerPageState {
               },
             ),
     );
+  }
+
+  /// The rail as one flat list of rows, grouped by tag the way the snippet
+  /// rail is — see [groupByTag] for what the groups are and what order they
+  /// come in.
+  ///
+  /// Flattened rather than a list of lists because the rail scrolls as one
+  /// column, and a heading is a row in it like any other. Flat rather than
+  /// built eagerly into children because a row here watches its server and the
+  /// rail is rebuilt on every status poll: building the rows that are off
+  /// screen is work repeated every few seconds.
+  ///
+  /// Exactly one of [_RailRow.heading] and [_RailRow.id] is set on any row.
+  List<_RailRow> _railRows(List<String> filtered, Map<String, Spi> servers) {
+    return [
+      for (final group in groupByTag(filtered, (id) => servers[id]?.tags)) ...[
+        if (group.label case final label?) (heading: label, id: null),
+        for (final id in group.items) (heading: null, id: id),
+      ],
+    ];
   }
 
   Widget _buildPaneListTile(
