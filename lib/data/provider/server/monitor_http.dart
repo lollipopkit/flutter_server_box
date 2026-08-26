@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
+import 'package:meta/meta.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/secure_endpoint.dart';
 import 'package:server_box/data/model/app/error.dart';
@@ -465,9 +466,33 @@ class MonitorHttpClient {
 
   /// Takes a single-use ticket, then upgrades.
   ///
+  /// Where the terminal upgrade is opened, carrying no ticket.
+  ///
+  /// Split out, and paired with [terminalWsProtocol], because this is one half
+  /// of a contract whose other half is in another language: the agent reads
+  /// the ticket in `api/ws/terminal.rs` and the panel sends it from
+  /// `frontend/src/lib/terminal.svelte.ts`. The panel's two functions are
+  /// shaped this way for the same reason and are tested the same way — this
+  /// side had it inline and untested, which is how it went on sending
+  /// `?ticket=` for a release after the agent stopped reading it.
+  ///
+  /// Scheme compared case-insensitively: `Uri.parse` lowercases it, but [addr]
+  /// is whatever the user typed, and reading `HTTPS://` as plaintext would
+  /// dial `ws://` at a TLS port and hang.
+  @visibleForTesting
+  static Uri terminalWsUrl(String addr) => Uri.parse(addr)
+      .replace(
+        scheme: addr.toLowerCase().startsWith('https') ? 'wss' : 'ws',
+        path: '/api/v1/terminal/ws',
+        queryParameters: const <String, String>{},
+      )
+      .removeFragment();
+
   /// What the agent reads the ticket out of — `TICKET_PROTOCOL_PREFIX` in
-  /// `monitor/src/api/ws/terminal.rs`, and the two have to say the same thing.
-  static const _ticketProtocol = 'sbm-ticket.';
+  /// `monitor/src/api/ws/terminal.rs`, and `terminalWsProtocol` in the panel.
+  /// All three have to say the same thing.
+  @visibleForTesting
+  static String terminalWsProtocol(String ticket) => 'sbm-ticket.$ticket';
 
   /// A browser can't put a bearer token on a WebSocket handshake, so the agent
   /// authorises upgrades with a short-lived, single-use ticket instead.
@@ -485,25 +510,15 @@ class MonitorHttpClient {
         );
       }
 
-      // Scheme compared case-insensitively: `Uri.parse` lowercases it, but
-      // `_addr` is whatever the user typed, and reading `HTTPS://` as
-      // plaintext would dial `ws://` at a TLS port and hang
-      final url = Uri.parse(_addr)
-          .replace(
-            scheme: _addr.toLowerCase().startsWith('https') ? 'wss' : 'ws',
-            path: '/api/v1/terminal/ws',
-            queryParameters: const <String, String>{},
-          )
-          .removeFragment();
       final socket =
           await WebSocket.connect(
-            url.toString(),
+            terminalWsUrl(_addr).toString(),
             // The ticket rides the subprotocol, not the query string. A URL is
             // what every access log, proxy and error message writes down, and
             // this one authorises a shell — the agent stopped reading
             // `?ticket=` for that reason and answers 401 to anything that
             // still sends it that way.
-            protocols: ['$_ticketProtocol$ticket'],
+            protocols: [terminalWsProtocol(ticket)],
             // Carries `ignoreCert` onto the upgrade: this is the same endpoint the
             // status poll uses, so it has to trust the same certs
             customClient: _httpClient(),
