@@ -13,6 +13,10 @@ void main() {
     'database',
     'sharedpref',
     'external',
+    'device_root',
+    'device_file',
+    'device_database',
+    'device_sharedpref',
   ];
 
   String section(String source, String tag) {

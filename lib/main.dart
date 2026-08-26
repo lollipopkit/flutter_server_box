@@ -16,14 +16,13 @@ import 'package:server_box/core/sync.dart';
 import 'package:server_box/core/utils/rootfs.dart';
 import 'package:server_box/core/utils/rootfs_manifest_source.dart';
 import 'package:server_box/core/utils/sandbox_import.dart';
-import 'package:server_box/data/model/app/menu/server_func.dart';
-import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/model/server/dist_license.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
 import 'package:server_box/data/store/migrations/all.dart';
+import 'package:server_box/data/store/migrations/build_features.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/hive/hive_registrar.g.dart';
 import 'package:server_box/hive/legacy_adapters.dart';
@@ -268,15 +267,7 @@ Future<void> _doDbMigrate() async {
   // exactly the settings the refusal exists to protect.
   await SchemaVersion.migrate(kSchemaMigrations);
 
-  final lastVer = Stores.setting.lastVer.fetch();
-  const newVer = BuildData.build;
-  // It's only the version upgrade trigger logic.
-  // How to upgrade the data is inside each own func.
-  if (lastVer < newVer) {
-    ServerDetailCards.autoAddNewCards(lastVer, newVer);
-    ServerFuncBtn.autoAddNewFuncs(lastVer, newVer);
-    Stores.setting.lastVer.put(newVer);
-  }
+  migrateBuildFeatures(BuildData.build);
 
   // No app-level fixups follow. `migrateIds` and `migrateIdentityFilePaths`
   // both scanned every server on every launch to repair a record only an

@@ -63,6 +63,22 @@ void main() {
     },
   );
 
+  test('adds no entry when the target is the release boundary', () {
+    const boundaries = {
+      1051: ServerFuncBtn.systemd,
+      1340: ServerFuncBtn.portForward,
+      1491: ServerFuncBtn.power,
+    };
+
+    for (final MapEntry(key: boundary, value: button) in boundaries.entries) {
+      setting.serverFuncBtns.put([ServerFuncBtn.terminal.index]);
+
+      ServerFuncBtn.autoAddNewFuncs(boundary - 1, boundary);
+
+      expect(row(), isNot(contains(button.index)));
+    }
+  });
+
   test('adds nothing for an upgrade that shipped no new entry', () async {
     setting.serverFuncBtns.put([ServerFuncBtn.terminal.index]);
 

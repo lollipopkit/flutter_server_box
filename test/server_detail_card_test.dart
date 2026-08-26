@@ -41,6 +41,24 @@ void main() {
     ]);
   });
 
+  test('does not add cards when the target is the release boundary', () {
+    const boundaries = {
+      493: [ServerDetailCards.pve, ServerDetailCards.custom],
+      1130: [ServerDetailCards.smart],
+      1491: [ServerDetailCards.bmc],
+    };
+
+    for (final MapEntry(key: boundary, value: cards) in boundaries.entries) {
+      setting.detailCardOrder.put([ServerDetailCards.about.name]);
+
+      ServerDetailCards.autoAddNewCards(boundary - 1, boundary);
+
+      for (final card in cards) {
+        expect(order(), isNot(contains(card.name)));
+      }
+    }
+  });
+
   for (final retainedBuild in [1466, 1480, 1491]) {
     test('adds BMC when upgrading from v$retainedBuild', () {
       setting.detailCardOrder.put([
