@@ -104,7 +104,6 @@
   "goto": "Vai a",
   "homeTabs": "Schede home",
   "homeTabsCustomizeDesc": "Personalizza quali schede appaiono nella home page e il loro ordine",
-  "homeWidgetUrlConfig": "Configura url widget home",
   "ignoreCert": "Ignora certificato",
   "image": "Immagine",
   "macDmgBody": "L’App Store richiede che questa app sia in sandbox, e una sandbox non può aprire un terminale. La versione DMG sì.\n\nLa versione App Store potrebbe non essere più aggiornata.",

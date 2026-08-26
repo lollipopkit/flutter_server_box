@@ -104,7 +104,6 @@
   "goto": "Pfad öffnen",
   "homeTabs": "Home-Tabs",
   "homeTabsCustomizeDesc": "Passen Sie an, welche Tabs auf der Startseite angezeigt werden und ihre Reihenfolge",
-  "homeWidgetUrlConfig": "Home-Widget-Link konfigurieren",
   "ignoreCert": "Zertifikat ignorieren",
   "image": "Image",
   "macDmgBody": "Der App Store verlangt, dass diese App in einer Sandbox läuft, und eine Sandbox kann kein Terminal öffnen. Die DMG-Version kann es.\n\nDie App-Store-Version wird eventuell nicht mehr aktualisiert.",

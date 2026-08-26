@@ -603,9 +603,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'Personaliza qué pestañas aparecen en la página de inicio y su orden';
 
   @override
-  String get homeWidgetUrlConfig => 'Configuración de URL del widget de inicio';
-
-  @override
   String get ignoreCert => 'Ignorar certificado';
 
   @override

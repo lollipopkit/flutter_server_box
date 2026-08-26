@@ -562,9 +562,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeTabsCustomizeDesc => 'ホームページに表示するタブとその順序をカスタマイズします';
 
   @override
-  String get homeWidgetUrlConfig => 'ホームウィジェットURL設定';
-
-  @override
   String get ignoreCert => '証明書を無視する';
 
   @override

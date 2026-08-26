@@ -104,7 +104,6 @@
   "goto": "Ir para",
   "homeTabs": "Abas iniciais",
   "homeTabsCustomizeDesc": "Personalize quais abas aparecem na página inicial e sua ordem",
-  "homeWidgetUrlConfig": "Configuração de URL do widget da tela inicial",
   "ignoreCert": "Ignorar certificado",
   "image": "Imagem",
   "macDmgBody": "A App Store exige que esta app corra em sandbox, e uma sandbox não pode abrir um terminal. A versão DMG pode.\n\nA versão da App Store pode deixar de ser atualizada.",

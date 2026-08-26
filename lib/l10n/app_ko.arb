@@ -117,7 +117,6 @@
   "goto": "이동",
   "homeTabs": "홈 탭",
   "homeTabsCustomizeDesc": "홈 페이지에 표시할 탭과 순서를 사용자 지정합니다",
-  "homeWidgetUrlConfig": "홈 위젯 URL 설정",
   "ignoreCert": "인증서 무시",
   "image": "이미지",
   "macDmgBody": "App Store는 이 앱을 샌드박스에서 실행하도록 요구하며, 샌드박스에서는 터미널을 열 수 없습니다. DMG 버전은 가능합니다.\n\nApp Store 버전은 이후 업데이트가 중단될 수 있습니다.",

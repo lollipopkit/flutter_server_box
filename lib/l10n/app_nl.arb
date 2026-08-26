@@ -104,7 +104,6 @@
   "goto": "Ga naar",
   "homeTabs": "Home-tabbladen",
   "homeTabsCustomizeDesc": "Pas aan welke tabbladen op de startpagina worden weergegeven en hun volgorde",
-  "homeWidgetUrlConfig": "Home-widget-url configureren",
   "ignoreCert": "Certificaat negeren",
   "image": "Afbeelding",
   "macDmgBody": "De App Store vereist een sandbox, en een sandbox kan geen terminal openen. De DMG-versie wel.\n\nDe App Store-versie wordt mogelijk niet meer bijgewerkt.",

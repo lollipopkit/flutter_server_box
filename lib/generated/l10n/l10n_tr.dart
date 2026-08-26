@@ -599,9 +599,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Ana sayfada görünecek sekmeleri ve sıralarını özelleştirin';
 
   @override
-  String get homeWidgetUrlConfig => 'Ana ekran bileşeni URL\'sini yapılandır';
-
-  @override
   String get ignoreCert => 'Sertifikayı yok say';
 
   @override

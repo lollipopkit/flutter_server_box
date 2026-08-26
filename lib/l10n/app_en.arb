@@ -177,7 +177,6 @@
   "goto": "Go to",
   "homeTabs": "Home Tabs",
   "homeTabsCustomizeDesc": "Customize which tabs appear on the home page and their order",
-  "homeWidgetUrlConfig": "Config home widget url",
   "ignoreCert": "Ignore certificate",
   "image": "Image",
   "@image": {

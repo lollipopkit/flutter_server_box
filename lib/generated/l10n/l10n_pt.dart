@@ -597,10 +597,6 @@ class AppLocalizationsPt extends AppLocalizations {
       'Personalize quais abas aparecem na página inicial e sua ordem';
 
   @override
-  String get homeWidgetUrlConfig =>
-      'Configuração de URL do widget da tela inicial';
-
-  @override
   String get ignoreCert => 'Ignorar certificado';
 
   @override

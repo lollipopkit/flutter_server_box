@@ -601,9 +601,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Настройте, какие вкладки появляются на главной странице и их порядок';
 
   @override
-  String get homeWidgetUrlConfig => 'Конфигурация URL виджета домашнего экрана';
-
-  @override
   String get ignoreCert => 'Игнорировать сертификат';
 
   @override

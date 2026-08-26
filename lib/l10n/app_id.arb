@@ -104,7 +104,6 @@
   "goto": "Pergi ke",
   "homeTabs": "Tab Beranda",
   "homeTabsCustomizeDesc": "Sesuaikan tab mana yang muncul di halaman beranda dan urutannya",
-  "homeWidgetUrlConfig": "Konfigurasi URL Widget Rumah",
   "ignoreCert": "Abaikan sertifikat",
   "image": "Gambar",
   "macDmgBody": "App Store mengharuskan aplikasi ini berjalan dalam sandbox, dan sandbox tidak bisa membuka terminal. Versi DMG bisa.\n\nVersi App Store mungkin berhenti diperbarui.",

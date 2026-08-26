@@ -591,9 +591,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Customize which tabs appear on the home page and their order';
 
   @override
-  String get homeWidgetUrlConfig => 'Config home widget url';
-
-  @override
   String get ignoreCert => 'Ignore certificate';
 
   @override

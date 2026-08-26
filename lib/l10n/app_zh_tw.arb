@@ -177,7 +177,6 @@
   "goto": "前往",
   "homeTabs": "主頁標籤",
   "homeTabsCustomizeDesc": "自訂主頁上顯示的標籤及其順序",
-  "homeWidgetUrlConfig": "桌面小工具連結配置",
   "ignoreCert": "忽略憑證",
   "image": "映像檔",
   "macDmgBody": "App Store 要求本應用沙盒執行，而沙盒內無法開啟終端。DMG 版可以開啟。\n\nApp Store 版以後可能停止更新。",

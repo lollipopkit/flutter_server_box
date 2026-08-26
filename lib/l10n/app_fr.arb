@@ -104,7 +104,6 @@
   "goto": "Aller à",
   "homeTabs": "Onglets d'accueil",
   "homeTabsCustomizeDesc": "Personnalisez les onglets qui apparaissent sur la page d'accueil et leur ordre",
-  "homeWidgetUrlConfig": "Configurer l'URL du widget d'accueil",
   "ignoreCert": "Ignorer le certificat",
   "image": "Image",
   "macDmgBody": "L’App Store impose un bac à sable, et un bac à sable ne peut pas ouvrir de terminal. La version DMG le peut.\n\nLa version App Store pourrait ne plus être mise à jour.",

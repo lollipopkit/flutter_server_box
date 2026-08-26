@@ -1149,12 +1149,6 @@ abstract class AppLocalizations {
   /// **'Customize which tabs appear on the home page and their order'**
   String get homeTabsCustomizeDesc;
 
-  /// No description provided for @homeWidgetUrlConfig.
-  ///
-  /// In en, this message translates to:
-  /// **'Config home widget url'**
-  String get homeWidgetUrlConfig;
-
   /// No description provided for @ignoreCert.
   ///
   /// In en, this message translates to:

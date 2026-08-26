@@ -597,9 +597,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Sesuaikan tab mana yang muncul di halaman beranda dan urutannya';
 
   @override
-  String get homeWidgetUrlConfig => 'Konfigurasi URL Widget Rumah';
-
-  @override
   String get ignoreCert => 'Abaikan sertifikat';
 
   @override

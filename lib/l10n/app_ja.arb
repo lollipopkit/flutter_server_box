@@ -104,7 +104,6 @@
   "goto": "移動",
   "homeTabs": "ホームタブ",
   "homeTabsCustomizeDesc": "ホームページに表示するタブとその順序をカスタマイズします",
-  "homeWidgetUrlConfig": "ホームウィジェットURL設定",
   "ignoreCert": "証明書を無視する",
   "image": "イメージ",
   "macDmgBody": "App Store はこのアプリをサンドボックスで動かすことを要求し、サンドボックスではターミナルを開けません。DMG 版なら開けます。\n\nApp Store 版は今後更新が止まる可能性があります。",

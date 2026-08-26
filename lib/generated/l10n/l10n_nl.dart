@@ -598,9 +598,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Pas aan welke tabbladen op de startpagina worden weergegeven en hun volgorde';
 
   @override
-  String get homeWidgetUrlConfig => 'Home-widget-url configureren';
-
-  @override
   String get ignoreCert => 'Certificaat negeren';
 
   @override

@@ -551,9 +551,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeTabsCustomizeDesc => '自定义主页上显示的标签及其顺序';
 
   @override
-  String get homeWidgetUrlConfig => '桌面部件链接配置';
-
-  @override
   String get ignoreCert => '忽略证书';
 
   @override
@@ -2063,9 +2060,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get homeTabsCustomizeDesc => '自訂主頁上顯示的標籤及其順序';
-
-  @override
-  String get homeWidgetUrlConfig => '桌面小工具連結配置';
 
   @override
   String get ignoreCert => '忽略憑證';

@@ -602,9 +602,6 @@ class AppLocalizationsIt extends AppLocalizations {
       'Personalizza quali schede appaiono nella home page e il loro ordine';
 
   @override
-  String get homeWidgetUrlConfig => 'Configura url widget home';
-
-  @override
   String get ignoreCert => 'Ignora certificato';
 
   @override

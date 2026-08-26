@@ -600,9 +600,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Passen Sie an, welche Tabs auf der Startseite angezeigt werden und ihre Reihenfolge';
 
   @override
-  String get homeWidgetUrlConfig => 'Home-Widget-Link konfigurieren';
-
-  @override
   String get ignoreCert => 'Zertifikat ignorieren';
 
   @override

@@ -563,9 +563,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeTabsCustomizeDesc => '홈 페이지에 표시할 탭과 순서를 사용자 지정합니다';
 
   @override
-  String get homeWidgetUrlConfig => '홈 위젯 URL 설정';
-
-  @override
   String get ignoreCert => '인증서 무시';
 
   @override

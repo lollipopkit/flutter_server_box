@@ -605,9 +605,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'Personnalisez les onglets qui apparaissent sur la page d\'accueil et leur ordre';
 
   @override
-  String get homeWidgetUrlConfig => 'Configurer l\'URL du widget d\'accueil';
-
-  @override
   String get ignoreCert => 'Ignorer le certificat';
 
   @override

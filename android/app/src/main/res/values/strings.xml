@@ -1,4 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">ServerBox</string>
+
+    <!--
+        Widget strings live here rather than in the app's ARB files: they are
+        drawn by native code in a process the Flutter engine may never have
+        started in, so `l10n` is not reachable. Only what a widget or its
+        configuration screen actually shows.
+    -->
+    <string name="widget_chart_desc">Status charts</string>
+    <string name="widget_cpu_desc">CPU usage</string>
+    <string name="widget_mem_desc">Memory usage</string>
+    <string name="widget_disk_desc">Disk usage</string>
+    <string name="widget_net_desc">Network usage</string>
+
+    <string name="widget_configure_title">Widget</string>
+    <string name="widget_configure_server">Server</string>
+    <string name="widget_configure_layout">Layout</string>
+    <string name="widget_configure_metric">Leading metric</string>
+    <string name="widget_configure_save">Save</string>
+    <!--
+        Shown when the app has published no server with a monitor agent. The
+        widget reads a list this app writes, so there is nothing to pick from
+        until one exists — and it has to be added in the app, since reaching an
+        agent needs a login the widget has nowhere to keep.
+    -->
+    <string name="widget_configure_empty">No server with a monitor agent yet.\nAdd one in ServerBox, then come back.</string>
+
+    <string name="widget_layout_text">Readings</string>
+    <string name="widget_layout_one">One chart</string>
+    <string name="widget_layout_two">Two charts</string>
+    <string name="widget_layout_four">Four charts</string>
+
+    <string name="widget_metric_cpu">CPU</string>
+    <string name="widget_metric_memory">Memory</string>
+    <string name="widget_metric_disk">Disk</string>
+    <string name="widget_metric_network">Network</string>
+
+    <string name="widget_err_not_configured">Tap to pick a server</string>
+    <string name="widget_err_no_token">No credential — open ServerBox</string>
+    <string name="widget_err_insecure">HTTPS required</string>
+    <string name="widget_err_network">Network error</string>
+    <string name="widget_err_timeout">Timed out</string>
+    <string name="widget_no_history">No history</string>
 </resources>

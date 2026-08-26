@@ -599,10 +599,6 @@ class AppLocalizationsUk extends AppLocalizations {
       'Налаштуйте, які вкладки відображаються на головній сторінці та їх порядок';
 
   @override
-  String get homeWidgetUrlConfig =>
-      'Налаштувати URL віджета на головному екрані';
-
-  @override
   String get ignoreCert => 'Ігнорувати сертифікат';
 
   @override

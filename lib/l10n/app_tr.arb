@@ -104,7 +104,6 @@
   "goto": "Git",
   "homeTabs": "Ana Sayfa Sekmeleri",
   "homeTabsCustomizeDesc": "Ana sayfada görünecek sekmeleri ve sıralarını özelleştirin",
-  "homeWidgetUrlConfig": "Ana ekran bileşeni URL'sini yapılandır",
   "ignoreCert": "Sertifikayı yok say",
   "image": "Görüntü",
   "macDmgBody": "App Store bu uygulamanın kum havuzunda çalışmasını ister ve kum havuzu terminal açamaz. DMG sürümü açabilir.\n\nApp Store sürümü ileride güncellenmeyebilir.",
