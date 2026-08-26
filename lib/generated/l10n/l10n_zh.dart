@@ -319,6 +319,11 @@ class AppLocalizationsZh extends AppLocalizations {
       '仅应在 HTTP 之外具备传输加密的可信私有网络中开启，例如 Tailscale';
 
   @override
+  String monitorHttpTip(String url) {
+    return '通过 **monitor** 的 HTTP 接口读取此服务器的状态，而不是经由 SSH 执行命令。\n\n需要先在服务器上安装 monitor；曲线、手表 App 和桌面小部件都依赖它。\n\n[如何部署 monitor]($url)';
+  }
+
+  @override
   String get backupTip => '导出数据可通过密码加密，请妥善保管。';
 
   @override
@@ -1841,6 +1846,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get monitorAllowInsecureHttpTip =>
       '僅應在 HTTP 之外具備傳輸加密的可信私有網路中開啟，例如 Tailscale';
+
+  @override
+  String monitorHttpTip(String url) {
+    return '透過 **monitor** 的 HTTP 介面讀取此伺服器的狀態，而不是經由 SSH 執行指令。\n\n需要先在伺服器上安裝 monitor；曲線、手錶 App 與桌面小工具都依賴它。\n\n[如何部署 monitor]($url)';
+  }
 
   @override
   String get backupTip => '匯出的資料可透過密碼加密，請妥善保管。';

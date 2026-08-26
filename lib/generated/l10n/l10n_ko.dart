@@ -326,6 +326,11 @@ class AppLocalizationsKo extends AppLocalizations {
       'HTTP 외에 전송 자체가 암호화되는 신뢰할 수 있는 사설망에서만. 예를 들어 Tailscale';
 
   @override
+  String monitorHttpTip(String url) {
+    return 'SSH로 명령을 실행하는 대신 **monitor**의 HTTP API에서 이 서버의 상태를 읽습니다.\n\n먼저 서버에 monitor를 설치해야 하며, 추이 그래프와 워치 앱, 홈 위젯이 이에 의존합니다.\n\n[monitor 설치 방법]($url)';
+  }
+
+  @override
   String get backupTip => '내보낸 데이터는 비밀번호로 암호화할 수 있습니다.\n안전하게 보관해 주세요.';
 
   @override

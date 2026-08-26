@@ -345,6 +345,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Only on a trusted private network that encrypts the transport itself, such as Tailscale';
 
   @override
+  String monitorHttpTip(String url) {
+    return 'Read this server\'s status from a **monitor** agent\'s HTTP API instead of running commands over SSH.\n\nThe agent has to be installed on the server first, and it is what makes trends, the watch app and the home-screen widgets possible.\n\n[Setting up a monitor agent]($url)';
+  }
+
+  @override
   String get backupTip =>
       'The exported data can be encrypted with password. \nPlease keep it safe.';
 

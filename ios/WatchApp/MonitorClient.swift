@@ -106,8 +106,18 @@ final class MonitorClient: NSObject {
         )
     }
 
+    /// The window, thinned by the agent to what a watch-sized chart can draw.
+    ///
+    /// `max_points` is what makes the window mean what it says: without it the
+    /// agent answers with 300 buckets regardless, and the tail taken from them
+    /// covers the newest fifth of the hour rather than the hour. An agent too
+    /// old to know the parameter still answers with 300, so the tail is taken
+    /// either way.
     private func loadHistory(minutes: Int = 60) async throws -> [HistoryPoint] {
-        try await get("/api/v1/metrics/history?minutes=\(minutes)")
+        let maxPoints = WatchSnapshot.maxSeriesPoints
+        return try await get(
+            "/api/v1/metrics/history?minutes=\(minutes)&max_points=\(maxPoints)"
+        )
     }
 
     private func get<T: Decodable>(_ path: String) async throws -> T {

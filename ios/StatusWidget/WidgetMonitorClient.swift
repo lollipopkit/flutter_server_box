@@ -129,8 +129,20 @@ final class WidgetMonitorClient: NSObject {
         )
     }
 
+    /// The window, thinned by the agent to what a sparkline this size can
+    /// draw.
+    ///
+    /// `max_points` is what makes the two numbers mean what they say. Without
+    /// it the agent answers with 300 buckets whatever was asked, and the tail
+    /// this gets cut down to covered the newest part of the window rather than
+    /// the window — three hours requested, seventy minutes drawn. An agent too
+    /// old to know the parameter still answers with 300, which is why the tail
+    /// is taken anyway.
     private func history(minutes: Int = 180) async throws -> [WidgetHistoryPoint] {
-        try await get("/api/v1/metrics/history?minutes=\(minutes)")
+        let maxPoints = WidgetSnapshot.maxSeriesPoints
+        return try await get(
+            "/api/v1/metrics/history?minutes=\(minutes)&max_points=\(maxPoints)"
+        )
     }
 
     private func get<T: Decodable>(_ path: String) async throws -> T {

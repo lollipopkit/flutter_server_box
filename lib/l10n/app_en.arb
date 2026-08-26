@@ -100,6 +100,14 @@
   "monitorHttpsRequired": "A remote monitor agent needs HTTPS, unless HTTP is allowed for it.",
   "monitorAllowInsecureHttp": "Allow HTTP",
   "monitorAllowInsecureHttpTip": "Only on a trusted private network that encrypts the transport itself, such as Tailscale",
+  "monitorHttpTip": "Read this server's status from a **monitor** agent's HTTP API instead of running commands over SSH.\n\nThe agent has to be installed on the server first, and it is what makes trends, the watch app and the home-screen widgets possible.\n\n[Setting up a monitor agent]({url})",
+  "@monitorHttpTip": {
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
   "backupTip": "The exported data can be encrypted with password. \nPlease keep it safe.",
   "icloudBackupStatusTitle": "Backup status",
   "icloudBackupStatusLoading": "Loading iCloud backup status...",

@@ -482,6 +482,7 @@
   "bmcStaleWrite": "BMC berubah saat proses tulis. Coba lagi.",
   "monitorAllowInsecureHttp": "Izinkan HTTP",
   "monitorAllowInsecureHttpTip": "Hanya di jaringan privat tepercaya yang mengenkripsi transportnya sendiri, misalnya Tailscale",
+  "monitorHttpTip": "Membaca status server ini dari HTTP API agen **monitor**, bukan menjalankan perintah lewat SSH.\n\nAgen harus dipasang di server terlebih dahulu; tren, aplikasi jam tangan, dan widget layar utama bergantung padanya.\n\n[Cara memasang agen monitor]({url})",
   "send": "Kirim",
   "privacyBlur": "Privasi latar belakang",
   "privacyBlurTip": "Sembunyikan konten aplikasi di pengalih aplikasi"

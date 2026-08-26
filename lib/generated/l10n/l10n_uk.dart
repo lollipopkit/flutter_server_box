@@ -348,6 +348,11 @@ class AppLocalizationsUk extends AppLocalizations {
       'Лише в довіреній приватній мережі, що сама шифрує транспорт, наприклад Tailscale';
 
   @override
+  String monitorHttpTip(String url) {
+    return 'Читати стан цього сервера через HTTP API агента **monitor**, а не виконуючи команди по SSH.\n\nАгента спершу треба встановити на сервер; графіки, застосунок для годинника та віджети залежать від нього.\n\n[Як встановити monitor]($url)';
+  }
+
+  @override
   String get backupTip =>
       'Експортовані дані можуть бути зашифровані паролем. \nБудь ласка, зберігайте їх у безпеці.';
 

@@ -482,6 +482,7 @@
   "bmcStaleWrite": "De BMC is gewijzigd tijdens het schrijven. Probeer opnieuw.",
   "monitorAllowInsecureHttp": "HTTP toestaan",
   "monitorAllowInsecureHttpTip": "Alleen op een vertrouwd privénetwerk dat het transport zelf versleutelt, zoals Tailscale",
+  "monitorHttpTip": "De status van deze server lezen via de HTTP-API van een **monitor**-agent, in plaats van opdrachten via SSH uit te voeren.\n\nDe agent moet eerst op de server worden geïnstalleerd; grafieken, de Watch-app en de widgets hangen ervan af.\n\n[Een monitor-agent installeren]({url})",
   "send": "Verzenden",
   "privacyBlur": "Privacy op de achtergrond",
   "privacyBlurTip": "Verberg de app-inhoud in de app-switcher"

@@ -205,13 +205,21 @@ class MonitorHttpClient {
     });
   }
 
-  Future<List<MonitorHistoryPoint>> fetchHistory({int minutes = 60}) {
+  /// [maxPoints] is how many points to come back with; the agent averages the
+  /// window into that many buckets rather than answering with its own default
+  /// of 300 for the caller to throw most of away. An agent from before that
+  /// parameter existed ignores it and answers with 300, which is why nothing
+  /// here assumes the count it asked for.
+  Future<List<MonitorHistoryPoint>> fetchHistory({
+    int minutes = 60,
+    int maxPoints = 300,
+  }) {
     return _authed(() async {
       // The endpoint answers with a bare JSON array of points, not an
       // envelope object — see `get_metrics_history` in monitor's api/server.rs
       final resp = await _session().get<dynamic>(
         '/api/v1/metrics/history',
-        queryParameters: {'minutes': minutes},
+        queryParameters: {'minutes': minutes, 'max_points': maxPoints},
       );
       final points = resp.data;
       if (points is! List) {

@@ -348,6 +348,11 @@ class AppLocalizationsNl extends AppLocalizations {
       'Alleen op een vertrouwd privénetwerk dat het transport zelf versleutelt, zoals Tailscale';
 
   @override
+  String monitorHttpTip(String url) {
+    return 'De status van deze server lezen via de HTTP-API van een **monitor**-agent, in plaats van opdrachten via SSH uit te voeren.\n\nDe agent moet eerst op de server worden geïnstalleerd; grafieken, de Watch-app en de widgets hangen ervan af.\n\n[Een monitor-agent installeren]($url)';
+  }
+
+  @override
   String get backupTip =>
       'De geëxporteerde gegevens kunnen worden versleuteld met een wachtwoord. \nBewaar deze aub veilig.';
 

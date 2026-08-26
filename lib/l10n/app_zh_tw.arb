@@ -100,6 +100,7 @@
   "monitorHttpsRequired": "遠端監控代理必須使用 HTTPS，除非該連線已允許 HTTP。",
   "monitorAllowInsecureHttp": "允許 HTTP",
   "monitorAllowInsecureHttpTip": "僅應在 HTTP 之外具備傳輸加密的可信私有網路中開啟，例如 Tailscale",
+  "monitorHttpTip": "透過 **monitor** 的 HTTP 介面讀取此伺服器的狀態，而不是經由 SSH 執行指令。\n\n需要先在伺服器上安裝 monitor；曲線、手錶 App 與桌面小工具都依賴它。\n\n[如何部署 monitor]({url})",
   "backupTip": "匯出的資料可透過密碼加密，請妥善保管。",
   "icloudBackupStatusTitle": "備份狀態",
   "icloudBackupStatusLoading": "正在讀取 iCloud 備份狀態...",

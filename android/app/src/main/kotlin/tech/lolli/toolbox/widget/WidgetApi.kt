@@ -59,6 +59,18 @@ object WidgetApi {
 
     private const val TIMEOUT_MS = 8_000
 
+    /**
+     * How many history points to ask the agent for.
+     *
+     * The chart is a bitmap a few hundred pixels wide, drawn into a binder
+     * transaction with a hard size limit, so there is nothing to do with more
+     * than this. The agent averages its window into this many buckets, which
+     * keeps a spike that dropping every Nth row would lose; an agent too old
+     * to know the parameter answers with its own 300 and the chart draws them
+     * all, as it did before.
+     */
+    private const val MAX_HISTORY_POINTS = 120
+
     suspend fun load(
         context: Context,
         server: WidgetStore.WidgetServer,
@@ -68,7 +80,14 @@ object WidgetApi {
         // History failing is not fatal: an agent that has just started has
         // none, and numbers with no chart beat an error.
         val history = try {
-            parseHistory(get(server, "/api/v1/metrics/history?minutes=180", token))
+            parseHistory(
+                get(
+                    server,
+                    "/api/v1/metrics/history?minutes=180" +
+                        "&max_points=$MAX_HISTORY_POINTS",
+                    token,
+                ),
+            )
         } catch (_: Exception) {
             emptyList()
         }

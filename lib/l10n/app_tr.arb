@@ -482,6 +482,7 @@
   "bmcStaleWrite": "Yazma sırasında BMC değişti. Tekrar dene.",
   "monitorAllowInsecureHttp": "HTTP’ye izin ver",
   "monitorAllowInsecureHttpTip": "Yalnızca taşımayı kendisi şifreleyen güvenilir özel ağlarda, örneğin Tailscale",
+  "monitorHttpTip": "Bu sunucunun durumunu SSH ile komut çalıştırmak yerine bir **monitor** aracısının HTTP API'sinden okur.\n\nAracının önce sunucuya kurulması gerekir; eğilimler, saat uygulaması ve ana ekran bileşenleri buna bağlıdır.\n\n[monitor aracısı nasıl kurulur]({url})",
   "send": "Gönder",
   "privacyBlur": "Arka planda gizlilik",
   "privacyBlurTip": "Uygulama değiştiricide içeriği gizle"

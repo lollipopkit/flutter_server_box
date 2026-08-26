@@ -354,6 +354,11 @@ class AppLocalizationsFr extends AppLocalizations {
       'Uniquement sur un réseau privé de confiance qui chiffre lui-même le transport, comme Tailscale';
 
   @override
+  String monitorHttpTip(String url) {
+    return 'Lire l\'état de ce serveur via l\'API HTTP d\'un agent **monitor**, au lieu d\'exécuter des commandes en SSH.\n\nL\'agent doit d\'abord être installé sur le serveur ; les tendances, l\'app Watch et les widgets en dépendent.\n\n[Installer un agent monitor]($url)';
+  }
+
+  @override
   String get backupTip =>
       'Les données exportées peuvent être chiffrées avec un mot de passe. \nVeuillez les garder en sécurité.';
 

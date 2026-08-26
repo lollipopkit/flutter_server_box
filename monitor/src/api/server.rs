@@ -1016,6 +1016,18 @@ async fn update_card_order(
     Ok(HttpResponse::Ok().json(&serde_json::json!({ "status": "ok" })))
 }
 
+/// One numeric query parameter, or `None` when it is absent or unreadable.
+///
+/// Read by hand rather than deserialised into a struct: these are integers
+/// with no encoding to undo, and every one of them is clamped at the use site
+/// anyway, so a bad value and a missing value have the same answer.
+fn query_param<T: std::str::FromStr>(query: &str, name: &str) -> Option<T> {
+    query
+        .split('&')
+        .find_map(|kv| kv.strip_prefix(name)?.strip_prefix('='))
+        .and_then(|v| v.parse().ok())
+}
+
 #[derive(Serialize)]
 struct HistoryPoint {
     timestamp: String,
@@ -1030,25 +1042,43 @@ struct HistoryPoint {
     battery_percent: Option<f64>,
 }
 
-/// Bucketed time series from system_metrics. `?minutes=` selects the window
-/// (default 60, clamped to 5..=10080); rows are averaged into at most 300
-/// buckets and network rates are derived from consecutive cumulative counters.
+/// Bucketed time series from system_metrics.
+///
+/// `?minutes=` selects the window (default 60, clamped to 5..=10080) and
+/// `?max_points=` how many points to answer with (default 300, clamped to
+/// 2..=300). Rows are averaged into that many buckets and network rates are
+/// derived from consecutive cumulative counters.
+///
+/// The count is the caller's to pick because it is a property of what is
+/// drawing the result, not of what is stored: a home widget a few hundred
+/// pixels wide cannot render 300 points, and asking for them means carrying
+/// them over the network to throw them away. Thinning here is also better
+/// than thinning on the client — an average over a wider bucket keeps the
+/// spikes that dropping every third row loses.
 async fn get_metrics_history(
     req: HttpRequest,
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse> {
     require_read_access!(&req, &app_state);
 
-    let minutes: i64 = req
-        .query_string()
-        .split('&')
-        .find_map(|kv| kv.strip_prefix("minutes="))
-        .and_then(|v| v.parse().ok())
+    let query = req.query_string();
+    let minutes: i64 = query_param(query, "minutes")
         .unwrap_or(60)
         .clamp(5, 7 * 24 * 60);
 
+    /// What this endpoint has always answered with, and still does for a
+    /// caller that names no count.
     const MAX_POINTS: i64 = 300;
-    let bucket_secs = (minutes * 60 / MAX_POINTS).max(1);
+    let max_points: i64 = query_param(query, "max_points")
+        .unwrap_or(MAX_POINTS)
+        .clamp(2, MAX_POINTS);
+
+    // Rounded up, so the window divides into no more buckets than were asked
+    // for. Rounding down leaves buckets narrower than the window/count ratio
+    // and answers with more points than the caller said it could take —
+    // `minutes=7&max_points=100` is 4-second buckets and 105 of them.
+    // `i64::div_ceil` is still unstable; both operands are positive here.
+    let bucket_secs = ((minutes * 60 + max_points - 1) / max_points).max(1);
 
     use sqlx::Row;
     let rows = sqlx::query(
@@ -1093,6 +1123,16 @@ async fn get_metrics_history(
             diskio_write_speed,
             battery_percent: row.try_get::<Option<f64>, _>("battery").ok().flatten(),
         });
+    }
+
+    // A bucket boundary is an absolute multiple of `bucket_secs` while the
+    // window's start is wherever "now minus N minutes" falls, so the first
+    // bucket is a partial one and the count can come out one over. Drop from
+    // the old end: the rates above are derived from consecutive buckets, so
+    // they have to be computed over the whole series before anything is cut.
+    let max_points = max_points as usize;
+    if points.len() > max_points {
+        points.drain(..points.len() - max_points);
     }
 
     Ok(HttpResponse::Ok().json(&points))

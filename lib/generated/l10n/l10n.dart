@@ -723,6 +723,12 @@ abstract class AppLocalizations {
   /// **'Only on a trusted private network that encrypts the transport itself, such as Tailscale'**
   String get monitorAllowInsecureHttpTip;
 
+  /// No description provided for @monitorHttpTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Read this server\'s status from a **monitor** agent\'s HTTP API instead of running commands over SSH.\n\nThe agent has to be installed on the server first, and it is what makes trends, the watch app and the home-screen widgets possible.\n\n[Setting up a monitor agent]({url})'**
+  String monitorHttpTip(String url);
+
   /// No description provided for @backupTip.
   ///
   /// In en, this message translates to:

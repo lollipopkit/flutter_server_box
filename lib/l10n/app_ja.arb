@@ -482,6 +482,7 @@
   "bmcStaleWrite": "書き込み中に BMC が変更されました。再試行してください。",
   "monitorAllowInsecureHttp": "HTTP を許可",
   "monitorAllowInsecureHttpTip": "HTTP 以外で通信自体が暗号化される信頼できるプライベートネットワークでのみ。たとえば Tailscale",
+  "monitorHttpTip": "SSH でコマンドを実行する代わりに、**monitor** の HTTP API からこのサーバーの状態を読み取ります。\n\n先にサーバーへ monitor を導入する必要があります。推移のグラフ、ウォッチ App、ホーム画面ウィジェットはこれに依存します。\n\n[monitor の導入方法]({url})",
   "send": "送信",
   "privacyBlur": "バックグラウンドのプライバシー",
   "privacyBlurTip": "Appスイッチャーで内容を隠す"

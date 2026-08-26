@@ -348,6 +348,11 @@ class AppLocalizationsPt extends AppLocalizations {
       'Apenas numa rede privada de confiança que cifre o transporte, como a Tailscale';
 
   @override
+  String monitorHttpTip(String url) {
+    return 'Ler o estado deste servidor pela API HTTP de um agente **monitor**, em vez de executar comandos por SSH.\n\nÉ preciso instalar o agente no servidor primeiro; as tendências, a app do relógio e os widgets dependem dele.\n\n[Instalar um agente monitor]($url)';
+  }
+
+  @override
   String get backupTip =>
       'Os dados exportados podem ser criptografados com senha. \nPor favor, guarde-os com segurança.';
 

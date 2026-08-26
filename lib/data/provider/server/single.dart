@@ -488,9 +488,13 @@ class ServerNotifier extends _$ServerNotifier {
     final credential = _historyCredential(spi);
     if (credential == null) return;
     try {
-      final samples = await _resolveSource(
-        credential,
-      ).fetchHistory(minutes: minutes);
+      // Asking for exactly what the buffer holds. Any more is averaged down
+      // on the agent's side instead of being carried here and dropped by
+      // [StatusHistory.seed] as it walks past the capacity.
+      final samples = await _resolveSource(credential).fetchHistory(
+        minutes: minutes,
+        maxPoints: StatusHistory.capacity,
+      );
       if (!_isRefreshCurrent(generation, spi)) return;
       if (samples.isEmpty) return;
       state.status.history.seed(samples);

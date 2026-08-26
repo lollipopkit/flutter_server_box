@@ -485,6 +485,7 @@
   "bmcStaleWrite": "Il BMC è cambiato durante la scrittura. Riprova.",
   "monitorAllowInsecureHttp": "Consenti HTTP",
   "monitorAllowInsecureHttpTip": "Solo su una rete privata fidata che cifra da sé il trasporto, come Tailscale",
+  "monitorHttpTip": "Leggere lo stato di questo server dall'API HTTP di un agente **monitor**, invece di eseguire comandi via SSH.\n\nL'agente va prima installato sul server; andamenti, app per l'orologio e widget dipendono da esso.\n\n[Installare un agente monitor]({url})",
   "send": "Invia",
   "privacyBlur": "Privacy in background",
   "privacyBlurTip": "Nascondi il contenuto dell'app nel selettore app"

@@ -439,7 +439,15 @@ extension _Widgets on _ServerEditPageState {
               },
             ),
             SwitchListTile(
-              title: const Text('Monitor HTTP'),
+              // The one switch here that offers a way in which does not exist
+              // until something has been installed on the server — which is
+              // not a thing a switch can convey, so the tip carries a link to
+              // the page that explains it. Markdown, so the link is a link.
+              title: TipText(
+                'Monitor HTTP',
+                l10n.monitorHttpTip(Urls.monitorAgentDoc),
+                isMarkdown: true,
+              ),
               secondary: const Icon(MingCute.web_line),
               value: useHttp,
               onChanged: (val) {

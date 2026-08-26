@@ -491,6 +491,7 @@
   "bmcStaleWrite": "쓰는 동안 BMC가 변경되었습니다. 다시 시도하세요.",
   "monitorAllowInsecureHttp": "HTTP 허용",
   "monitorAllowInsecureHttpTip": "HTTP 외에 전송 자체가 암호화되는 신뢰할 수 있는 사설망에서만. 예를 들어 Tailscale",
+  "monitorHttpTip": "SSH로 명령을 실행하는 대신 **monitor**의 HTTP API에서 이 서버의 상태를 읽습니다.\n\n먼저 서버에 monitor를 설치해야 하며, 추이 그래프와 워치 앱, 홈 위젯이 이에 의존합니다.\n\n[monitor 설치 방법]({url})",
   "send": "보내기",
   "privacyBlur": "백그라운드 개인정보 보호",
   "privacyBlurTip": "앱 전환기에서 앱 내용 숨기기"
