@@ -202,7 +202,19 @@ private struct HomeScreen: View {
         VStack(alignment: .leading, spacing: family == .systemSmall ? 4 : 7) {
             header
             if family == .systemSmall {
+                // Centred in what is left between the name and the timestamp,
+                // rather than sitting against the name with the gap below it.
+                // Four short rows do not fill a widget the size of an app
+                // icon, and pushed to the top they read as the start of a list
+                // that got cut off.
+                //
+                // `.leading` rather than `.center`: an `Alignment` is a pair,
+                // and that one is leading horizontally and centred vertically
+                // — which is the whole of what this asks for. Centring the
+                // rows horizontally too would unpick the label/value columns
+                // they are lined up in.
                 Readings(snapshot: snapshot)
+                    .frame(maxHeight: .infinity, alignment: .leading)
             } else {
                 charts(metric.following(Self.chartCount))
             }
