@@ -5,10 +5,12 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
 import kotlinx.coroutines.CoroutineScope
@@ -49,6 +51,29 @@ class HomeWidget : AppWidgetProvider() {
         private const val COROUTINE_TIMEOUT = 20_000L
 
         private val activeUpdates = ConcurrentHashMap<Int, Boolean>()
+
+        /**
+         * What `home_widget.xml` takes before the chart gets any room, in dp.
+         *
+         * Read off that file and has to stay in step with it. Nothing here can
+         * measure the `ImageView` — a `RemoteViews` is a description, not a
+         * view tree — so the chart's box is the reported size minus this.
+         * Being a little out only costs a margin now that the image scales
+         * uniformly; it used to be the whole distortion, because the two axes
+         * were out by different amounts and `fitXY` turned that into a
+         * stretch.
+         */
+        private const val CONTAINER_PADDING_DP = 12f
+        private const val CHART_MARGIN_DP = 6f
+        private const val HEADER_SP = 15f
+
+        /** What a 2x2 gets instead, so the chart is left something to draw in. */
+        private const val COMPACT_PADDING_DP = 8f
+        private const val COMPACT_CHART_MARGIN_DP = 4f
+        private const val COMPACT_HEADER_SP = 13f
+
+        /** A single line of text takes about this much more than its size. */
+        private const val HEADER_LINE_RATIO = 1.45f
     }
 
     override fun onUpdate(context: Context, manager: AppWidgetManager, appWidgetIds: IntArray) {
@@ -98,13 +123,25 @@ class HomeWidget : AppWidgetProvider() {
             return
         }
 
+        // Before anything is drawn, because the padding and the header size are
+        // part of the same arithmetic that decides how much room the chart has.
+        val bounds = boundsOf(context, manager, appWidgetId)
+        views.setViewPadding(
+            R.id.widget_container,
+            bounds.paddingPx, bounds.paddingPx, bounds.paddingPx, bounds.paddingPx,
+        )
+        views.setTextViewTextSize(
+            R.id.widget_name,
+            TypedValue.COMPLEX_UNIT_SP,
+            bounds.headerSp,
+        )
+
         showLoading(views, manager, appWidgetId, server.name)
 
         CoroutineScope(Dispatchers.IO).launch {
             withTimeoutOrNull(COROUTINE_TIMEOUT) {
                 try {
                     val (reading, history) = WidgetApi.load(context, server)
-                    val bounds = boundsOf(context, manager, appWidgetId)
                     withContext(Dispatchers.Main) {
                         showData(context, views, manager, appWidgetId, config, reading, history, bounds)
                     }
@@ -132,27 +169,72 @@ class HomeWidget : AppWidgetProvider() {
         }
     }
 
-    /** The widget's size in grid cells and in pixels, as the launcher reports it. */
-    private data class Bounds(val columns: Int, val rows: Int, val widthPx: Int, val heightPx: Int)
+    /** The widget's size in grid cells, the chart area, and the chrome around it. */
+    private data class Bounds(
+        val columns: Int,
+        val rows: Int,
+        val widthPx: Int,
+        val heightPx: Int,
+        val density: Float,
+        /** Applied to the container, so this and [heightPx] cannot disagree. */
+        val paddingPx: Int,
+        val headerSp: Float,
+    )
 
     private fun boundsOf(context: Context, manager: AppWidgetManager, appWidgetId: Int): Bounds {
         val options = manager.getAppWidgetOptions(appWidgetId)
-        // The *minimum* of the range the launcher gives, which is the size the
-        // widget is guaranteed. Using the maximum would draw a bitmap wider
-        // than the view and let the scale type crop it.
-        val widthDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 110)
-            .takeIf { it > 0 } ?: 110
-        val heightDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 110)
-            .takeIf { it > 0 } ?: 110
+        // The launcher reports a *range*, and which end describes the view
+        // depends on the orientation: in portrait the widget is at its minimum
+        // width and its maximum height, in landscape the other way round.
+        // Taking the minimum of both — which reads as the safe choice — gave a
+        // box far shorter than the real one in portrait, and the image sat
+        // letterboxed with a band of empty card above and below it.
+        val portrait = context.resources.configuration.orientation ==
+            Configuration.ORIENTATION_PORTRAIT
+        val widthKey = if (portrait) {
+            AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH
+        } else {
+            AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH
+        }
+        val heightKey = if (portrait) {
+            AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT
+        } else {
+            AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT
+        }
+        val widthDp = options.getInt(widthKey, 0).takeIf { it > 0 }
+            ?: options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 110)
+                .takeIf { it > 0 } ?: 110
+        val heightDp = options.getInt(heightKey, 0).takeIf { it > 0 }
+            ?: options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 110)
+                .takeIf { it > 0 } ?: 110
         val density = context.resources.displayMetrics.density
+
+        // The launcher's own cell arithmetic, near enough: a cell is roughly
+        // 70dp wide with 30dp of margin between.
+        val columns = ((widthDp + 30) / 70).coerceAtLeast(1)
+        val rows = ((heightDp + 30) / 70).coerceAtLeast(1)
+
+        // A 2x2 widget is about 110dp tall, and the roomy chrome a 4x4 wants
+        // takes nearly half of that before the chart gets anything. Tightened
+        // rather than kept uniform: the alternative is a chart too short to
+        // have a shape, which is the only reason the panel is there.
+        val compact = columns <= 2 || rows <= 2
+        val paddingDp = if (compact) COMPACT_PADDING_DP else CONTAINER_PADDING_DP
+        val headerSp = if (compact) COMPACT_HEADER_SP else HEADER_SP
+        val marginDp = if (compact) COMPACT_CHART_MARGIN_DP else CHART_MARGIN_DP
+
+        val chartWidthDp = widthDp - paddingDp * 2
+        val chartHeightDp =
+            heightDp - paddingDp * 2 - headerSp * HEADER_LINE_RATIO - marginDp
+
         return Bounds(
-            // The launcher's own cell arithmetic, near enough: a cell is
-            // roughly 70dp wide with 30dp of margin between.
-            columns = ((widthDp + 30) / 70).coerceAtLeast(1),
-            rows = ((heightDp + 30) / 70).coerceAtLeast(1),
-            widthPx = (widthDp * density).roundToInt(),
-            // Only the part left after the header and any text rows.
-            heightPx = (heightDp * density * 0.62f).roundToInt(),
+            columns = columns,
+            rows = rows,
+            widthPx = (chartWidthDp * density).roundToInt().coerceAtLeast(1),
+            heightPx = (chartHeightDp * density).roundToInt().coerceAtLeast(1),
+            density = density,
+            paddingPx = (paddingDp * density).roundToInt(),
+            headerSp = headerSp,
         )
     }
 
@@ -222,6 +304,7 @@ class HomeWidget : AppWidgetProvider() {
                 series = config.metric.following(count).map { seriesFor(context, it, reading, history) },
                 widthPx = bounds.widthPx,
                 heightPx = bounds.heightPx,
+                density = bounds.density,
             )
             if (bitmap != null) {
                 views.setImageViewBitmap(R.id.widget_chart, bitmap)
@@ -288,6 +371,7 @@ class HomeWidget : AppWidgetProvider() {
             secondary = emptyList(),
             isPercent = true,
             valueText = percentText(reading.cpu),
+            valueShort = percentText(reading.cpu),
             color = Color.parseColor("#34C759"),
         )
         WidgetMetric.MEMORY -> WidgetChart.Series(
@@ -296,6 +380,7 @@ class HomeWidget : AppWidgetProvider() {
             secondary = emptyList(),
             isPercent = true,
             valueText = percentText(reading.mem),
+            valueShort = percentText(reading.mem),
             color = Color.parseColor("#0A84FF"),
         )
         WidgetMetric.DISK -> WidgetChart.Series(
@@ -304,6 +389,7 @@ class HomeWidget : AppWidgetProvider() {
             secondary = emptyList(),
             isPercent = true,
             valueText = percentText(reading.disk),
+            valueShort = percentText(reading.disk),
             color = Color.parseColor("#FF9F0A"),
         )
         // A rate has no ceiling to be a percentage of, so the scale is drawn
@@ -314,6 +400,9 @@ class HomeWidget : AppWidgetProvider() {
             secondary = history.map { it.netTx },
             isPercent = false,
             valueText = reading.netText,
+            // "93m/75m" against "93.2m / 75.3m": six characters back, which is
+            // the difference between fitting a one-column panel and not.
+            valueShort = reading.netText.replace(" / ", "/").replace(Regex("\\.[0-9]"), ""),
             color = Color.parseColor("#BF5AF2"),
         )
     }

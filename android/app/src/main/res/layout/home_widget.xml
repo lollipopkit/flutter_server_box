@@ -48,15 +48,22 @@
     </LinearLayout>
 
     <!-- The charts, all of them, as one bitmap. -->
+    <!--
+        `fitCenter`, never `fitXY`. Nothing here can measure this view, so the
+        bitmap's size is computed from the size the launcher reports minus what
+        this layout takes — an estimate, and one that was wrong by different
+        amounts on each axis. `fitXY` turns any such mismatch into a non-uniform
+        scale, which is text stretched one way and squashed the other. Uniform
+        scaling can only ever leave a little unused margin.
+    -->
     <ImageView
         android:id="@+id/widget_chart"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="6dp"
         android:layout_weight="1"
-        android:adjustViewBounds="true"
         android:contentDescription="@string/widget_chart_desc"
-        android:scaleType="fitXY"
+        android:scaleType="fitCenter"
         android:visibility="gone" />
 
     <LinearLayout

@@ -56,6 +56,14 @@ object WidgetChart {
         /** Whether the vertical scale is a fixed 0..100. */
         val isPercent: Boolean,
         val valueText: String,
+        /**
+         * A shorter spelling of [valueText] for a panel too narrow for it.
+         *
+         * Only network has one worth having: its reading is two byte counts,
+         * and on a one-column widget even the label-less full form is wider
+         * than the panel. Everything else passes its own text through.
+         */
+        val valueShort: String,
         val color: Int,
     )
 
@@ -65,21 +73,48 @@ object WidgetChart {
      * Returns null when there is nothing to draw, so the caller hides the
      * image rather than showing an empty box.
      */
+    /** Between panels, in dp. Wide enough that a right-aligned value and the
+     *  next panel's label cannot run together, which at 3% of the smaller side
+     *  they did. */
+    private const val GAP_DP = 10f
+
+    /** Label and value type sizes, in dp. */
+    private const val LABEL_DP = 11f
+    private const val VALUE_DP = 15f
+
+    /** Kept clear between a panel's label and its value. */
+    private const val LABEL_GAP_DP = 10f
+
+    /** How small the value may get, relative to the label, before the label is
+     *  dropped instead. A panel has room for one of them at that point, and the
+     *  number is the one worth reading — the colour already says which metric
+     *  it is. */
+    private const val MIN_VALUE_RATIO = 1.0f
+
     fun render(
         context: Context,
         series: List<Series>,
         widthPx: Int,
         heightPx: Int,
+        density: Float,
     ): Bitmap? {
         if (series.isEmpty()) return null
-        val (w, h) = withinBudget(widthPx.coerceAtLeast(1), heightPx.coerceAtLeast(1))
+        // The scale comes back too, because everything drawn is sized in dp:
+        // shrinking the bitmap for the transaction budget has to shrink the
+        // type with it, or the text would be over-large once the `ImageView`
+        // scales the image back up.
+        val (w, h, scale) = withinBudget(
+            widthPx.coerceAtLeast(1),
+            heightPx.coerceAtLeast(1),
+        )
+        val px = density * scale
 
         val columns = if (series.size >= 4) 2 else if (series.size == 2) 2 else 1
         val rows = if (series.size >= 4) 2 else 1
 
         val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
-        val gap = (min(w, h) * 0.03f).coerceIn(2f, 10f)
+        val gap = GAP_DP * px
         val cellW = (w - gap * (columns - 1)) / columns
         val cellH = (h - gap * (rows - 1)) / rows
 
@@ -94,6 +129,7 @@ object WidgetChart {
                 top = row * (cellH + gap),
                 width = cellW,
                 height = cellH,
+                px = px,
             )
         }
         return bitmap
@@ -106,12 +142,17 @@ object WidgetChart {
      * `ImageView` will stretch back to, and squashing one side alone would
      * make every chart lean.
      */
-    private fun withinBudget(width: Int, height: Int): Pair<Int, Int> {
+    private data class Sized(val width: Int, val height: Int, val scale: Float)
+
+    private fun withinBudget(width: Int, height: Int): Sized {
         val pixels = width.toLong() * height.toLong()
-        if (pixels <= MAX_PIXELS) return width to height
+        if (pixels <= MAX_PIXELS) return Sized(width, height, 1f)
         val scale = kotlin.math.sqrt(MAX_PIXELS.toDouble() / pixels.toDouble())
-        return (width * scale).toInt().coerceAtLeast(1) to
-            (height * scale).toInt().coerceAtLeast(1)
+        return Sized(
+            (width * scale).toInt().coerceAtLeast(1),
+            (height * scale).toInt().coerceAtLeast(1),
+            scale.toFloat(),
+        )
     }
 
     private fun drawPanel(
@@ -122,24 +163,83 @@ object WidgetChart {
         top: Float,
         width: Float,
         height: Float,
+        px: Float,
     ) {
-        val labelSize = (height * 0.17f).coerceIn(9f, 26f)
+        // Sized in dp, not as a fraction of the panel. A fraction made the type
+        // depend on the widget's shape — a tall 2x2 got huge letters, a wide
+        // one got tiny ones — and on how far the bitmap had been scaled.
+        // Capped by the panel so a very short one does not overflow its own
+        // label row.
+        val labelSize = (LABEL_DP * px).coerceAtMost(height * 0.22f)
         val text = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             typeface = Typeface.MONOSPACE
             textSize = labelSize
             color = context.getColor(R.color.widgetSummaryText)
         }
-        canvas.drawText(series.label, left, top + labelSize, text)
 
-        val value = Paint(text).apply {
+        val value = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+            textSize = (VALUE_DP * px).coerceAtMost(height * 0.28f)
             color = context.getColor(R.color.widgetText)
             textAlign = Paint.Align.RIGHT
         }
-        canvas.drawText(series.valueText, left + width, top + labelSize, value)
 
-        val plotTop = top + labelSize * 1.5f
-        val plotHeight = height - labelSize * 1.5f
+        // Shrunk to what is left after the label, rather than drawn at a fixed
+        // size and allowed to run into it. Network is the case that forces
+        // this: its reading is two byte counts ("92.9m / 71.2m"), which in a
+        // four-panel grid is wider than the panel itself — and a right-aligned
+        // string that does not fit grows leftwards, straight through the label.
+        val full = value.textSize
+        val floor = labelSize * MIN_VALUE_RATIO
+        val beside = width - text.measureText(series.label) - LABEL_GAP_DP * px
+
+        // The size at which [str] exactly fills [avail], unclamped — so what
+        // follows is decided by measuring rather than by guessing how wide a
+        // string will be. Guessing is what the first attempt at this did, and
+        // it kept the label on a panel that had no room for it.
+        fun sizeFor(str: String, avail: Float): Float {
+            value.textSize = full
+            val needed = value.measureText(str)
+            return if (needed <= avail || needed <= 0f) full else full * (avail / needed)
+        }
+
+        // In order of what is worth keeping: the label and the full reading,
+        // then the label with a shorter one, then the reading alone. A
+        // right-aligned string that does not fit grows leftwards — through the
+        // label, and then out of the panel — so something has to give, and it
+        // should be the least informative thing first.
+        val options = listOf(
+            Triple(true, series.valueText, beside),
+            Triple(true, series.valueShort, beside),
+            Triple(false, series.valueText, width),
+            Triple(false, series.valueShort, width),
+        )
+        var showLabel = false
+        var shown = series.valueShort
+        var size = sizeFor(series.valueShort, width)
+        for ((withLabel, str, avail) in options) {
+            val fitted = sizeFor(str, avail)
+            if (fitted >= floor) {
+                showLabel = withLabel
+                shown = str
+                size = fitted
+                break
+            }
+        }
+        // Never clamped back up: a value that overflows its panel and runs into
+        // the one beside it is worse than a small one.
+        value.textSize = size
+
+        val valueSize = value.textSize
+        // Right-aligned to the panel, not to the bitmap: with four panels the
+        // value of the left one and the label of the right one share a line,
+        // and the gap between the cells is what keeps them apart.
+        val baseline = top + maxOf(labelSize, valueSize)
+        if (showLabel) canvas.drawText(series.label, left, baseline, text)
+        canvas.drawText(shown, left + width, baseline, value)
+
+        val plotTop = baseline + valueSize * 0.4f
+        val plotHeight = height - (plotTop - top)
         if (plotHeight <= 2f) return
 
         if (series.values.isEmpty() && series.secondary.isEmpty()) {
