@@ -40,40 +40,60 @@
   let error = $state('')
   let busy = $state('')
 
-  async function load(path: string) {
+  /// Which agent the answer being awaited belongs to.
+  ///
+  /// The sidebar can be clicked while a listing is in flight, and a path means
+  /// nothing on another machine: publishing what arrives late would put one
+  /// agent's tree under another's name, with a `cwd` its roots may not even
+  /// contain. Every write to the page's state is behind this check.
+  function stale(serverId: string): boolean {
+    return servers.currentId !== serverId
+  }
+
+  async function load(path: string, serverId = servers.currentId) {
     loading = true
     error = ''
     try {
-      entries = sortEntries(await api.fsList(path))
+      const listed = sortEntries(await api.fsList(path))
+      if (stale(serverId)) return
+      entries = listed
       cwd = path
     } catch (e) {
+      if (stale(serverId)) return
       error = e instanceof Error ? e.message : String(e)
     } finally {
-      loading = false
+      if (!stale(serverId)) loading = false
     }
   }
 
-  async function start() {
+  async function start(serverId: string) {
     loading = true
     error = ''
+    // Cleared rather than left showing the previous agent's tree while this
+    // one is being read.
+    entries = []
+    cwd = null
     try {
       const res = await api.fsRoots()
+      if (stale(serverId)) return
       roots = res.roots
       if (roots.length === 0) {
         loading = false
         return
       }
-      await load(roots[0])
+      await load(roots[0], serverId)
     } catch (e) {
+      if (stale(serverId)) return
       error = e instanceof Error ? e.message : String(e)
       loading = false
     }
   }
 
   $effect(() => {
-    // Re-reads when the selected server changes: roots are that agent's.
-    servers.currentId
-    void start()
+    // Read into the call rather than as a bare expression: the dependency is
+    // what makes this rerun when the sidebar selection changes, and the value
+    // is what the run then checks itself against.
+    void start(servers.currentId)
   })
 
   async function act(what: string, fn: () => Promise<unknown>) {
