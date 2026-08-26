@@ -42,7 +42,9 @@ scripts/build-proot-android.sh
 # Generate release-specific plugin files before Gradle starts. A preceding
 # `pub get` includes dev-only plugins such as integration_test in the default
 # registrant, while Gradle deliberately excludes their projects from release.
-flutter build apk --release --config-only --no-pub
+# Do not pass `--no-pub`: Flutter gates platform-tooling regeneration on that
+# flag even when `--config-only` is requested.
+flutter build apk --release --config-only
 
 # Only a complete release task graph resolves plugin compile/runtime artifacts;
 # `dependencies` and `--config-only` alone missed artifacts that CI then
