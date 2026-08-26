@@ -52,7 +52,14 @@ PINNED_NDK_VERSION="$(tr -d '[:space:]' <"$NDK_VERSION_FILE")"
 # that changes. Git's commit timestamp is stable across independent checkouts.
 SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-$(git -C "$REPO_ROOT" log -1 --format=%ct)}"
 export SOURCE_DATE_EPOCH TZ=UTC LC_ALL=C
-PREFIX_MAP_FLAGS="-ffile-prefix-map=$WORK_DIR=. -fdebug-prefix-map=$WORK_DIR=."
+PREFIX_MAP_FLAGS=(
+  "-ffile-prefix-map=$WORK_DIR=."
+  "-fdebug-prefix-map=$WORK_DIR=."
+)
+# Make receives CFLAGS as one variable and later expands it in a shell recipe.
+# Quote each array element for that second shell parse as well.
+printf -v PREFIX_MAP_FLAGS_FOR_MAKE '%q ' "${PREFIX_MAP_FLAGS[@]}"
+PREFIX_MAP_FLAGS_FOR_MAKE="${PREFIX_MAP_FLAGS_FOR_MAKE% }"
 
 TALLOC_VERSION=2.4.2
 TALLOC_URL="https://download.samba.org/pub/talloc/talloc-${TALLOC_VERSION}.tar.gz"
@@ -216,7 +223,7 @@ build_talloc() {
 SHIM
 
   log "Building talloc"
-  "$CC" -c -O2 $PREFIX_MAP_FLAGS -o "$WORK_DIR/talloc.o" -I "$src" "$src/talloc.c"
+  "$CC" -c -O2 "${PREFIX_MAP_FLAGS[@]}" -o "$WORK_DIR/talloc.o" -I "$src" "$src/talloc.c"
   "$TOOLCHAIN/llvm-ar" rcsD "$WORK_DIR/libtalloc.a" "$WORK_DIR/talloc.o"
 }
 
@@ -275,7 +282,7 @@ build_proot() {
       OBJCOPY="$TOOLCHAIN/llvm-objcopy" \
       OBJDUMP="$TOOLCHAIN/llvm-objdump" \
       CPPFLAGS="-D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -I. -DARG_MAX=131072 -I$WORK_DIR/talloc-$TALLOC_VERSION" \
-      CFLAGS="-O2 -Wall -Wextra -fPIE $PREFIX_MAP_FLAGS" \
+      CFLAGS="-O2 -Wall -Wextra -fPIE $PREFIX_MAP_FLAGS_FOR_MAKE" \
       LDFLAGS="-Wl,-z,noexecstack -Wl,--build-id=none -pie -L$WORK_DIR -ltalloc" \
       -j"$(sysctl -n hw.ncpu 2>/dev/null || nproc)" >/dev/null )
 

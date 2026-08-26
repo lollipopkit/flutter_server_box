@@ -25,3 +25,11 @@ export SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-$(git -C "$REPO_ROOT" log -1 --fo
 export TZ=UTC
 export LC_ALL=C
 export ORG_GRADLE_PROJECT_allowUnsignedRelease=true
+
+# Do not inherit an arbitrary host Gradle cache. Preparation fills this cache
+# from an empty clean checkout, and the network-isolated build reuses exactly
+# that prepared input. Keep proot beside it so `flutter clean` can discard all
+# warm-up build outputs without discarding proot's authenticated source cache.
+FDROID_CACHE_DIR="${FDROID_CACHE_DIR:-$REPO_ROOT/.fdroid-cache}"
+export GRADLE_USER_HOME="${FDROID_GRADLE_USER_HOME:-$FDROID_CACHE_DIR/gradle}"
+export PROOT_BUILD_DIR="${PROOT_BUILD_DIR:-$FDROID_CACHE_DIR/proot}"
