@@ -216,16 +216,39 @@ private struct ChartPage: View {
     /// of empty screen on a 49mm one.
     var body: some View {
         if chart == .overview {
-            ScrollView { content }
+            ScrollView { overview }
         } else {
-            content.frame(maxHeight: .infinity, alignment: .top)
+            metric.frame(maxHeight: .infinity, alignment: .top)
         }
     }
 
-    private var content: some View {
+    /// Which server this is, its four numbers, and when they were read.
+    private var overview: some View {
         VStack(alignment: .leading, spacing: 7) {
-            header
-            body(for: chart)
+            HStack(spacing: 4) {
+                // The server name, not the chart's: the vertical axis is the
+                // one that is easy to lose track of, since paging with the
+                // crown moves without anything being touched.
+                Text(snapshot.name)
+                    .font(.system(.headline, design: .monospaced))
+                    .lineLimit(1)
+                Spacer(minLength: 0)
+                RefreshButton(reload: reload)
+            }
+            MetricRow(icon: "cpu", label: "CPU", value: MetricRow.percent(snapshot.cpu))
+            MetricRow(icon: "memorychip", label: "Mem", value: MetricRow.percent(snapshot.mem))
+            MetricRow(icon: "externaldrive", label: "Disk", value: MetricRow.percent(snapshot.disk))
+            // A row like the three above it rather than a bare `Label`.
+            // Without a label and a right-hand value it wrapped onto two
+            // lines and read as a caption that had come loose from the
+            // list, which is what it looked like on a 40mm watch.
+            MetricRow(icon: "network", label: "Net", value: snapshot.netText)
+            if let uptime = snapshot.uptime, !uptime.isEmpty {
+                Text(uptime)
+                    .font(.system(size: 10, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
             Text(snapshot.updatedAt, style: .time)
                 .font(.system(size: 10, design: .monospaced))
                 .foregroundStyle(.secondary)
@@ -234,109 +257,103 @@ private struct ChartPage: View {
         .padding(.horizontal, 9)
     }
 
-    private var header: some View {
-        HStack(spacing: 4) {
-            // The server name, not the chart's: the vertical axis is the one
-            // that is easy to lose track of, since paging with the crown moves
-            // without anything being touched.
-            Text(snapshot.name)
-                .font(.system(.headline, design: .monospaced))
-                .lineLimit(1)
-            Spacer(minLength: 0)
-            if chart != .overview {
+    /// One metric: what it is, what it reads, and where it has been.
+    ///
+    /// No server name and no timestamp. Both are on the overview, one swipe
+    /// away, and on a 40mm watch they cost two of the six lines this page has
+    /// — spent saying which machine is being looked at, on a page reached by
+    /// swiping sideways *within* that machine. The chart is why anyone comes
+    /// here, and it gets what they were using.
+    private var metric: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 5) {
                 Image(systemName: chart.icon)
-                    .font(.system(size: 11))
+                    .font(.system(size: 14))
                     .foregroundStyle(.secondary)
+                Text(primary)
+                    .font(.system(size: 28, weight: .semibold, design: .monospaced))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                Spacer(minLength: 4)
+                RefreshButton(reload: reload)
             }
-            RefreshButton(reload: reload)
+            if let secondary {
+                Text(secondary)
+                    .font(.system(size: 12, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            }
+            chartView
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 9)
+    }
+
+    /// The number the page is about, at headline size.
+    private var primary: String {
+        switch chart {
+        case .overview: return ""
+        case .cpu: return MetricRow.percent(snapshot.cpu)
+        case .memory: return MetricRow.percent(snapshot.mem)
+        case .disk: return MetricRow.percent(snapshot.disk)
+        case .network: return netParts.map { "↓ \($0.rx)" } ?? snapshot.netText
+        }
+    }
+
+    /// What else is worth saying, or nothing — CPU is a percentage and its
+    /// trend, and a line held open for a detail it does not have would only
+    /// push the chart down.
+    private var secondary: String? {
+        switch chart {
+        case .overview, .cpu: return nil
+        case .memory: return snapshot.memText
+        case .disk: return snapshot.diskText
+        case .network: return netParts.map { "↑ \($0.tx)" }
+        }
+    }
+
+    /// `netText` is "<received> / <sent>" — see `MonitorClient`, which is in
+    /// this target and builds it.
+    ///
+    /// Split rather than shown whole: two byte counts at headline size do not
+    /// fit across a 40mm watch, and shrinking them until they do makes the
+    /// page's own number the smallest thing on it. A string this does not
+    /// recognise falls back to being shown whole, which is what the overview
+    /// row does with it anyway.
+    private var netParts: (rx: String, tx: String)? {
+        let parts = snapshot.netText.components(separatedBy: " / ")
+        guard parts.count == 2 else { return nil }
+        return (parts[0], parts[1])
+    }
+
+    @ViewBuilder
+    private var chartView: some View {
+        switch chart {
+        case .overview:
+            EmptyView()
+        case .cpu:
+            percentChart(snapshot.cpuSeries, tint: .green)
+        case .memory:
+            percentChart(snapshot.memSeries, tint: .blue)
+        case .disk:
+            percentChart(snapshot.diskTrend, tint: .orange)
+        case .network:
+            if snapshot.netRxSeries.isEmpty && snapshot.netTxSeries.isEmpty {
+                NoHistoryHint()
+            } else {
+                NetChart(rx: snapshot.netRxSeries, tx: snapshot.netTxSeries)
+            }
         }
     }
 
     @ViewBuilder
-    private func body(for chart: WatchChart) -> some View {
-        switch chart {
-        case .overview:
-            VStack(alignment: .leading, spacing: 7) {
-                MetricRow(icon: "cpu", label: "CPU", value: MetricRow.percent(snapshot.cpu))
-                MetricRow(icon: "memorychip", label: "Mem", value: MetricRow.percent(snapshot.mem))
-                MetricRow(icon: "externaldrive", label: "Disk", value: MetricRow.percent(snapshot.disk))
-                // A row like the three above it rather than a bare `Label`.
-                // Without a label and a right-hand value it wrapped onto two
-                // lines and read as a caption that had come loose from the
-                // list, which is what it looked like on a 40mm watch.
-                MetricRow(icon: "network", label: "Net", value: snapshot.netText)
-                if let uptime = snapshot.uptime, !uptime.isEmpty {
-                    Text(uptime)
-                        .font(.system(size: 10, design: .monospaced))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-            }
-        case .cpu:
-            MetricPage(
-                label: "CPU",
-                percent: snapshot.cpu,
-                detail: nil,
-                series: snapshot.cpuSeries,
-                tint: .green
-            )
-        case .memory:
-            MetricPage(
-                label: "Mem",
-                percent: snapshot.mem,
-                detail: snapshot.memText,
-                series: snapshot.memSeries,
-                tint: .blue
-            )
-        case .disk:
-            MetricPage(
-                label: "Disk",
-                percent: snapshot.disk,
-                detail: snapshot.diskText,
-                series: snapshot.diskTrend,
-                tint: .orange
-            )
-        case .network:
-            VStack(alignment: .leading, spacing: 7) {
-                Label(snapshot.netText, systemImage: "network")
-                    .font(.system(.caption2, design: .monospaced))
-                if snapshot.netRxSeries.isEmpty && snapshot.netTxSeries.isEmpty {
-                    NoHistoryHint()
-                } else {
-                    NetChart(rx: snapshot.netRxSeries, tx: snapshot.netTxSeries)
-                }
-            }
+    private func percentChart(_ series: [Double], tint: Color) -> some View {
+        if series.isEmpty {
+            NoHistoryHint()
+        } else {
+            PercentChart(values: series, tint: tint)
         }
-    }
-}
-
-private struct MetricPage: View {
-    let label: String
-    let percent: Double?
-    let detail: String?
-    let series: [Double]
-    let tint: Color
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 7) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(percent.map { String(format: "%.0f%%", $0) } ?? "--")
-                    .font(.system(size: 30, weight: .semibold, design: .monospaced))
-                Spacer(minLength: 0)
-                if let detail {
-                    Text(detail)
-                        .font(.system(size: 11, design: .monospaced))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-            }
-            if series.isEmpty {
-                NoHistoryHint()
-            } else {
-                PercentChart(values: series, tint: tint)
-            }
-        }
-        .frame(maxHeight: .infinity, alignment: .top)
     }
 }
 
