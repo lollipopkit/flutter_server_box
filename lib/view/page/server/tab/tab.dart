@@ -51,13 +51,13 @@ class ServerPage extends ConsumerStatefulWidget {
 const _cardPad = 74.0;
 const _cardPadSingle = 13.0;
 
-/// Kept clear at the right of the floating tag bar: a 56pt add button, the
-/// inset `Scaffold` gives it, and a gap so the two never touch.
-const _kTagBarFabRoom = 80.0;
-
-/// Left over at the other end, so the bar reads as floating over the grid
-/// rather than as a second edge to it.
-const _kTagBarSideRoom = 16.0;
+/// Kept clear either side of the floating tag bar.
+///
+/// Set by the add button — a 56pt `FloatingActionButton`, the inset `Scaffold`
+/// gives it, and a gap so the two never touch — and then applied to both ends,
+/// because the bar is centred and room on one side only would move it off
+/// centre to buy that clearance.
+const _kTagBarSideRoom = 80.0;
 
 /// Long enough to read as one movement, short enough not to be waited on.
 const _kFlightDuration = Durations.medium3;
@@ -206,7 +206,16 @@ class _ServerPageState extends ConsumerState<ServerPage>
           // bottom, what the floating tag bar sits above: it is 13pt off the
           // edge of this, not 13pt off the edge of a home indicator.
           return SafeArea(
-            child: Stack(children: [child, _buildTagBar()]),
+            // Expand, or the grid is as tall as the cards in it and the bar
+            // pinned to the bottom of this is pinned to the bottom of *them*.
+            // A `Stack` hands its unpositioned children loose constraints, and
+            // a `SingleChildScrollView` given a loose one sizes to its content
+            // rather than to the window — which is also a page that stops
+            // scrolling as soon as it has scrolled its own height.
+            child: Stack(
+              fit: StackFit.expand,
+              children: [child, _buildTagBar()],
+            ),
           );
         }),
       ),
@@ -300,14 +309,13 @@ class _ServerPageState extends ConsumerState<ServerPage>
         child: HideOnScroll(
           controller: _scrollController,
           child: Padding(
-            padding: const EdgeInsets.only(
-              left: _kTagBarSideRoom,
-              right: _kTagBarFabRoom,
-              bottom: 13,
-            ),
-            // Centred in what the add button leaves, rather than in the
-            // window: centred in the window it would run under that button as
-            // soon as there were a few tags.
+            padding: const EdgeInsets.symmetric(
+              horizontal: _kTagBarSideRoom,
+            ).copyWith(bottom: 13),
+            // Centred in the window, and the same room kept on both sides so
+            // that stays true — the bar grows from the middle outwards as
+            // tags are added, and the side it would reach something on is the
+            // add button's.
             child: Center(
               child: Material(
                 // Raised off the page, because it is the one thing here that
@@ -349,15 +357,29 @@ class _ServerPageState extends ConsumerState<ServerPage>
     // round-robin into a `ListView` per column left a short column beside a
     // long one and gave each its own scroll position; they flow into whichever
     // column is shortest now, in one scrollable.
-    return MasonryList.builder(
+    //
+    // The animated form, because everything that rearranges this grid does so
+    // for a reason worth seeing: a server connects and its card grows, a tag
+    // is picked and half of them leave, one is added or deleted. See
+    // [AnimatedMasonry] — the card that moves is usually not the card anything
+    // happened to, which is exactly why it has to be carried rather than
+    // moved.
+    return AnimatedMasonry(
       controller: _scrollController,
-      // Room at the bottom for the add button to float over.
+      // Room at the bottom for the add button and the tag bar to float over.
       padding: MasonryList.kPadding.copyWith(bottom: 77),
-      itemCount: filtered.length,
-      // Built as they come into view, so a page of servers watches the ones it
-      // is showing rather than all of them.
-      itemBuilder: (_, i) =>
-          _buildEachServerCard(ref.watch(serverProvider(filtered[i]))),
+      children: [
+        for (final id in filtered)
+          // Its own `Consumer`, so a status poll rebuilds the one card whose
+          // server answered rather than the grid. Watched from this page's
+          // `ref` — which is what a builder would have to do — any server's
+          // reading landing rebuilt every card on screen.
+          Consumer(
+            key: ValueKey(id),
+            builder: (_, ref, _) =>
+                _buildEachServerCard(ref.watch(serverProvider(id))),
+          ),
+      ],
     );
   }
 
