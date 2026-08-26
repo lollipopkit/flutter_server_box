@@ -16,7 +16,6 @@
 
     <string name="widget_configure_title">Widget</string>
     <string name="widget_configure_server">Server</string>
-    <string name="widget_configure_layout">Layout</string>
     <string name="widget_configure_metric">Leading metric</string>
     <string name="widget_configure_save">Save</string>
     <!--
@@ -27,10 +26,6 @@
     -->
     <string name="widget_configure_empty">No server with a monitor agent yet.\nAdd one in ServerBox, then come back.</string>
 
-    <string name="widget_layout_text">Readings</string>
-    <string name="widget_layout_one">One chart</string>
-    <string name="widget_layout_two">Two charts</string>
-    <string name="widget_layout_four">Four charts</string>
 
     <string name="widget_metric_cpu">CPU</string>
     <string name="widget_metric_memory">Memory</string>
@@ -43,5 +38,6 @@
     <string name="widget_err_network">Network error</string>
     <string name="widget_err_timeout">Timed out</string>
     <string name="widget_no_history">No history</string>
-    <string name="widget_err_too_small">Two or more charts need a wider widget</string>
+    <string name="widget_small_label">Server readings</string>
+    <string name="widget_medium_label">Server charts</string>
 </resources>

@@ -11,14 +11,9 @@
 <resources>
     <string name="widget_configure_title">위젯</string>
     <string name="widget_configure_server">서버</string>
-    <string name="widget_configure_layout">레이아웃</string>
     <string name="widget_configure_metric">주요 지표</string>
     <string name="widget_configure_save">저장</string>
     <string name="widget_configure_empty">monitor 에이전트가 있는 서버가 아직 없습니다.\nServerBox에서 추가한 뒤 돌아오세요.</string>
-    <string name="widget_layout_text">값</string>
-    <string name="widget_layout_one">그래프 1개</string>
-    <string name="widget_layout_two">그래프 2개</string>
-    <string name="widget_layout_four">그래프 4개</string>
     <string name="widget_metric_cpu">CPU</string>
     <string name="widget_metric_memory">메모리</string>
     <string name="widget_metric_disk">디스크</string>
@@ -34,5 +29,6 @@
     <string name="widget_mem_desc">메모리 사용률</string>
     <string name="widget_disk_desc">디스크 사용률</string>
     <string name="widget_net_desc">네트워크 사용량</string>
-    <string name="widget_err_too_small">그래프 2개 이상은 더 넓은 위젯이 필요합니다</string>
+    <string name="widget_small_label">서버 값</string>
+    <string name="widget_medium_label">서버 그래프</string>
 </resources>

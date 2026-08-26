@@ -90,59 +90,14 @@ enum WidgetMetric: String, AppEnum {
     }
 }
 
-/// How much of the widget is given to charts rather than to numbers.
+/// What a widget is pointed at.
 ///
-/// Named by what it produces rather than by a size, because the same choice
-/// means different things in different families — see [fits]. Anything past
-/// one chart needs a medium widget, and a small one asked for more says so
-/// rather than quietly drawing something else.
-enum WidgetLayout: String, AppEnum {
-    /// Readings as text. The only thing that fits a small widget legibly when
-    /// more than one number is wanted.
-    case text
-    case oneChart
-    case twoCharts
-    case fourCharts
-
-    static var typeDisplayRepresentation: TypeDisplayRepresentation {
-        TypeDisplayRepresentation(name: "Layout")
-    }
-
-    static var caseDisplayRepresentations: [WidgetLayout: DisplayRepresentation] = [
-        .text: "Readings",
-        .oneChart: "One chart",
-        .twoCharts: "Two charts",
-        .fourCharts: "Four charts",
-    ]
-
-    /// How many charts this draws.
-    var chartCount: Int {
-        switch self {
-        case .text: return 0
-        case .oneChart: return 1
-        case .twoCharts: return 2
-        case .fourCharts: return 4
-        }
-    }
-
-    /// Whether [family] has room for it.
-    ///
-    /// A small widget is about the size of an app icon: two charts in it are
-    /// two smudges, so anything past one needs a medium.
-    ///
-    /// It used to narrow silently — four charts on a small widget quietly
-    /// became one. That reads as the setting having no effect, and there is
-    /// nowhere in a widget to notice otherwise. Saying so and drawing nothing
-    /// is the honest answer: the fix is one gesture away, and the widget is
-    /// the only place to mention it.
-    func fits(_ family: WidgetFamily) -> Bool {
-        switch family {
-        case .systemSmall: return chartCount <= 1
-        default: return true
-        }
-    }
-}
-
+/// Which server, and which metric leads — nothing about *what* is drawn. That
+/// is the widget's own identity now: the small one shows readings and the
+/// medium one shows a chart per metric, and there are two of them so that the
+/// choice is made where a widget is picked rather than in a sheet afterwards.
+/// A layout setting the size could overrule was a setting that appeared to do
+/// nothing.
 struct SelectServerIntent: WidgetConfigurationIntent {
     static var title: LocalizedStringResource = "Server Status"
     static var description = IntentDescription("Pick a server configured in the app.")
@@ -150,9 +105,8 @@ struct SelectServerIntent: WidgetConfigurationIntent {
     @Parameter(title: "Server")
     var server: MonitorServerEntity?
 
-    @Parameter(title: "Layout", default: .text)
-    var layout: WidgetLayout
-
+    /// Which chart leads on the medium widget, and which reading the lock
+    /// screen families show — the one place a single metric has to be named.
     @Parameter(title: "Leading metric", default: .cpu)
     var metric: WidgetMetric
 }

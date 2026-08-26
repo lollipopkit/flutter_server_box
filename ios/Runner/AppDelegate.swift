@@ -51,7 +51,9 @@ import ActivityKit
             switch call.method {
             case "update":
                 if #available(iOS 14.0, *) {
-                    WidgetCenter.shared.reloadTimelines(ofKind: "StatusWidget")
+                    // Every kind: there are two home widgets now, and which
+                    // one is placed is not knowable from here.
+                    WidgetCenter.shared.reloadAllTimelines()
                 }
                 result(nil)
             default:
@@ -64,7 +66,9 @@ import ActivityKit
             switch call.method {
             case "updateHomeWidget":
                 if #available(iOS 14.0, *) {
-                    WidgetCenter.shared.reloadTimelines(ofKind: "StatusWidget")
+                    // Every kind: there are two home widgets now, and which
+                    // one is placed is not knowable from here.
+                    WidgetCenter.shared.reloadAllTimelines()
                 }
                 result(nil)
             // The three Live Activity cases answer from inside the Task, not

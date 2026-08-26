@@ -191,9 +191,7 @@ class MainActivity: FlutterFragmentActivity() {
                         result.success(null)
                     }
                     "updateHomeWidget" -> {
-                        val intent = Intent(this@MainActivity, HomeWidget::class.java)
-                        intent.action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-                        sendBroadcast(intent)
+                        HomeWidget.broadcastUpdate(applicationContext)
                         result.success(null)
                     }
                     "publishWidgetServers" -> {
@@ -203,12 +201,11 @@ class MainActivity: FlutterFragmentActivity() {
                             return@setMethodCallHandler
                         }
                         WidgetStore.publish(applicationContext, payload)
-                        // Every placed widget, not just one: a republish can
-                        // change a name, an address or a credential, and which
-                        // widget was pointed at which server is not known here.
-                        val intent = Intent(this@MainActivity, HomeWidget::class.java)
-                        intent.action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-                        sendBroadcast(intent)
+                        // Every placed widget of either size, not just one: a
+                        // republish can change a name, an address or a
+                        // credential, and which widget was pointed at which
+                        // server is not known here.
+                        HomeWidget.broadcastUpdate(applicationContext)
                         result.success(null)
                     }
                     "widgetTokenState" -> {

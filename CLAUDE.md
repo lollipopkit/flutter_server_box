@@ -248,13 +248,18 @@ naming a group lands in the first entry, `flutter_secure_storage` names none,
 and that is how the database encryption key is stored. Putting the shared group
 first would quietly start writing that key somewhere the extension can read.
 
-**A layout that does not fit is refused, not narrowed.** The home widgets come
-in two sizes — small and medium; there is no large, which was mostly the same
-information with more space around it. Anything past one chart needs a medium
-(`.systemMedium` on iOS, four cells wide on Android), and a small widget asked
-for more says so on its face. Narrowing silently is what it used to do, and
-that reads as the setting having no effect, with nowhere in a widget to find
-out otherwise.
+**There are two home widgets, and the size is the choice.** Small shows
+readings as text; medium shows one chart per metric. Each is its own
+registration — two `Widget` types on iOS, two `AppWidgetProvider`s on Android —
+so both appear by name in the gallery and neither resizes. What a widget draws
+is not configurable; only which server it points at and which metric leads.
+
+That replaced one widget with a layout setting, which put "how big" and "what
+it shows" in two places that could disagree: pick four charts, place it small,
+and the size quietly overruled the setting. A setting that appears to do
+nothing is worse than one that is not offered, and a widget has nowhere to
+explain itself. There is no large either — it was the medium's charts with more
+space around them.
 
 **Nothing is opt-in any more.** `WatchSync.syncedServerIds()` is every server
 with an agent minus `SettingStore.watchExcludedServerIds`; `WidgetSync`

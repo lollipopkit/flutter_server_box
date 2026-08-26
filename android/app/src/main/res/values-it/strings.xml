@@ -11,14 +11,9 @@
 <resources>
     <string name="widget_configure_title">Widget</string>
     <string name="widget_configure_server">Server</string>
-    <string name="widget_configure_layout">Disposizione</string>
     <string name="widget_configure_metric">Metrica principale</string>
     <string name="widget_configure_save">Salva</string>
     <string name="widget_configure_empty">Non c\'è ancora un server con agente monitor.\nAggiungine uno in ServerBox e torna qui.</string>
-    <string name="widget_layout_text">Valori</string>
-    <string name="widget_layout_one">Un grafico</string>
-    <string name="widget_layout_two">Due grafici</string>
-    <string name="widget_layout_four">Quattro grafici</string>
     <string name="widget_metric_cpu">CPU</string>
     <string name="widget_metric_memory">Memoria</string>
     <string name="widget_metric_disk">Disco</string>
@@ -34,5 +29,6 @@
     <string name="widget_mem_desc">Uso della memoria</string>
     <string name="widget_disk_desc">Uso del disco</string>
     <string name="widget_net_desc">Uso della rete</string>
-    <string name="widget_err_too_small">Due o più grafici richiedono un widget più largo</string>
+    <string name="widget_small_label">Valori del server</string>
+    <string name="widget_medium_label">Grafici del server</string>
 </resources>

@@ -15,7 +15,12 @@ import android.widget.TextView
 import tech.lolli.toolbox.R
 
 /**
- * What a widget shows: which server, and how much of it is charts.
+ * What a widget shows: which server, and which metric leads.
+ *
+ * Serves both providers. Which one is being configured comes from the id, not
+ * from an extra: the launcher hands over an `appWidgetId` and the system knows
+ * what it belongs to. What each one *draws* is not configurable — that is the
+ * point of there being two of them.
  *
  * The servers are the ones the app published (`WidgetStore`), not an address
  * typed in here. There is no free-text field any more and that is deliberate:
@@ -56,7 +61,6 @@ class WidgetConfigureActivity : Activity() {
 
         val existing = WidgetConfig.load(applicationContext, appWidgetId)
         val serverGroup = buildServerList(existing)
-        val layoutSpinner = buildLayoutSpinner(existing)
         val metricSpinner = buildMetricSpinner(existing)
 
         findViewById<Button>(R.id.save_button).setOnClickListener {
@@ -68,19 +72,22 @@ class WidgetConfigureActivity : Activity() {
                 appWidgetId,
                 WidgetConfig(
                     serverId = servers[index].id,
-                    layout = WidgetLayout.entries[layoutSpinner.selectedItemPosition],
                     metric = WidgetMetric.entries[metricSpinner.selectedItemPosition],
                 ),
             )
 
-            // Targeted at this widget, so reconfiguring one does not make every
-            // other widget on the screen refetch.
-            sendBroadcast(
-                Intent(this, HomeWidget::class.java).apply {
-                    action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-                    putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, intArrayOf(appWidgetId))
-                }
-            )
+            // Targeted at this widget, and at its own provider: reconfiguring
+            // one must not make every other widget on the screen refetch.
+            val provider = AppWidgetManager.getInstance(applicationContext)
+                .getAppWidgetInfo(appWidgetId)?.provider
+            if (provider != null) {
+                sendBroadcast(
+                    Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE).apply {
+                        component = provider
+                        putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, intArrayOf(appWidgetId))
+                    }
+                )
+            }
 
             setResult(
                 RESULT_OK,
@@ -123,27 +130,6 @@ class WidgetConfigureActivity : Activity() {
     // reordering a case cannot leave the spinner offering the wrong words for
     // the right positions — which is silent, and stored by name, so it would
     // only show up as widgets drawing something nobody asked for.
-    private fun buildLayoutSpinner(existing: WidgetConfig): Spinner {
-        val labels = WidgetLayout.entries.map {
-            getString(
-                when (it) {
-                    WidgetLayout.TEXT -> R.string.widget_layout_text
-                    WidgetLayout.ONE_CHART -> R.string.widget_layout_one
-                    WidgetLayout.TWO_CHARTS -> R.string.widget_layout_two
-                    WidgetLayout.FOUR_CHARTS -> R.string.widget_layout_four
-                }
-            )
-        }
-        return findViewById<Spinner>(R.id.layout_spinner).apply {
-            adapter = ArrayAdapter(
-                this@WidgetConfigureActivity,
-                android.R.layout.simple_spinner_dropdown_item,
-                labels,
-            )
-            setSelection(WidgetLayout.entries.indexOf(existing.layout).coerceAtLeast(0))
-        }
-    }
-
     private fun buildMetricSpinner(existing: WidgetConfig): Spinner {
         val labels = WidgetMetric.entries.map {
             getString(

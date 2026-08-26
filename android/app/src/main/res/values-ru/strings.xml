@@ -11,14 +11,9 @@
 <resources>
     <string name="widget_configure_title">Виджет</string>
     <string name="widget_configure_server">Сервер</string>
-    <string name="widget_configure_layout">Макет</string>
     <string name="widget_configure_metric">Основной показатель</string>
     <string name="widget_configure_save">Сохранить</string>
     <string name="widget_configure_empty">Пока нет сервера с агентом monitor.\nДобавьте его в ServerBox и вернитесь сюда.</string>
-    <string name="widget_layout_text">Значения</string>
-    <string name="widget_layout_one">Один график</string>
-    <string name="widget_layout_two">Два графика</string>
-    <string name="widget_layout_four">Четыре графика</string>
     <string name="widget_metric_cpu">ЦП</string>
     <string name="widget_metric_memory">Память</string>
     <string name="widget_metric_disk">Диск</string>
@@ -34,5 +29,6 @@
     <string name="widget_mem_desc">Использование памяти</string>
     <string name="widget_disk_desc">Использование диска</string>
     <string name="widget_net_desc">Сетевой трафик</string>
-    <string name="widget_err_too_small">Два графика и больше требуют более широкого виджета</string>
+    <string name="widget_small_label">Значения сервера</string>
+    <string name="widget_medium_label">Графики сервера</string>
 </resources>

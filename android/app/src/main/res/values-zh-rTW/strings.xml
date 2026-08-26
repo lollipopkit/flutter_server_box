@@ -11,14 +11,9 @@
 <resources>
     <string name="widget_configure_title">小工具</string>
     <string name="widget_configure_server">伺服器</string>
-    <string name="widget_configure_layout">版面</string>
     <string name="widget_configure_metric">主要指標</string>
     <string name="widget_configure_save">儲存</string>
     <string name="widget_configure_empty">尚未設定任何有 Monitor 的伺服器。\n請先在 ServerBox 中新增，然後返回。</string>
-    <string name="widget_layout_text">數值</string>
-    <string name="widget_layout_one">1 個曲線</string>
-    <string name="widget_layout_two">2 個曲線</string>
-    <string name="widget_layout_four">4 個曲線</string>
     <string name="widget_metric_cpu">CPU</string>
     <string name="widget_metric_memory">記憶體</string>
     <string name="widget_metric_disk">磁碟</string>
@@ -34,5 +29,6 @@
     <string name="widget_mem_desc">記憶體使用率</string>
     <string name="widget_disk_desc">磁碟使用率</string>
     <string name="widget_net_desc">網路使用量</string>
-    <string name="widget_err_too_small">2 個以上曲線需要更寬的小工具</string>
+    <string name="widget_small_label">伺服器數值</string>
+    <string name="widget_medium_label">伺服器曲線</string>
 </resources>

@@ -56,20 +56,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="@string/widget_configure_layout"
-                android:textSize="13sp"
-                android:textStyle="bold" />
-
-            <Spinner
-                android:id="@+id/layout_spinner"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
                 android:text="@string/widget_configure_metric"
                 android:textSize="13sp"
                 android:textStyle="bold" />

@@ -11,14 +11,9 @@
 <resources>
     <string name="widget_configure_title">Widget</string>
     <string name="widget_configure_server">Server</string>
-    <string name="widget_configure_layout">Indeling</string>
     <string name="widget_configure_metric">Belangrijkste meting</string>
     <string name="widget_configure_save">Bewaren</string>
     <string name="widget_configure_empty">Nog geen server met monitor-agent.\nVoeg er een toe in ServerBox en kom terug.</string>
-    <string name="widget_layout_text">Waarden</string>
-    <string name="widget_layout_one">Eén grafiek</string>
-    <string name="widget_layout_two">Twee grafieken</string>
-    <string name="widget_layout_four">Vier grafieken</string>
     <string name="widget_metric_cpu">CPU</string>
     <string name="widget_metric_memory">Geheugen</string>
     <string name="widget_metric_disk">Schijf</string>
@@ -34,5 +29,6 @@
     <string name="widget_mem_desc">Geheugengebruik</string>
     <string name="widget_disk_desc">Schijfgebruik</string>
     <string name="widget_net_desc">Netwerkgebruik</string>
-    <string name="widget_err_too_small">Twee of meer grafieken hebben een bredere widget nodig</string>
+    <string name="widget_small_label">Serverwaarden</string>
+    <string name="widget_medium_label">Servergrafieken</string>
 </resources>

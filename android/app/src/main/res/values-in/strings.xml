@@ -11,14 +11,9 @@
 <resources>
     <string name="widget_configure_title">Widget</string>
     <string name="widget_configure_server">Server</string>
-    <string name="widget_configure_layout">Tata letak</string>
     <string name="widget_configure_metric">Metrik utama</string>
     <string name="widget_configure_save">Simpan</string>
     <string name="widget_configure_empty">Belum ada server dengan agen monitor.\nTambahkan satu di ServerBox, lalu kembali ke sini.</string>
-    <string name="widget_layout_text">Nilai</string>
-    <string name="widget_layout_one">Satu grafik</string>
-    <string name="widget_layout_two">Dua grafik</string>
-    <string name="widget_layout_four">Empat grafik</string>
     <string name="widget_metric_cpu">CPU</string>
     <string name="widget_metric_memory">Memori</string>
     <string name="widget_metric_disk">Disk</string>
@@ -34,5 +29,6 @@
     <string name="widget_mem_desc">Penggunaan memori</string>
     <string name="widget_disk_desc">Penggunaan disk</string>
     <string name="widget_net_desc">Penggunaan jaringan</string>
-    <string name="widget_err_too_small">Dua grafik atau lebih perlu widget yang lebih lebar</string>
+    <string name="widget_small_label">Nilai server</string>
+    <string name="widget_medium_label">Grafik server</string>
 </resources>

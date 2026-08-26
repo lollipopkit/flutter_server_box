@@ -11,14 +11,9 @@
 <resources>
     <string name="widget_configure_title">ウィジェット</string>
     <string name="widget_configure_server">サーバー</string>
-    <string name="widget_configure_layout">レイアウト</string>
     <string name="widget_configure_metric">主な指標</string>
     <string name="widget_configure_save">保存</string>
     <string name="widget_configure_empty">monitor を設定したサーバーがまだありません。\nServerBox で追加してから戻ってください。</string>
-    <string name="widget_layout_text">数値</string>
-    <string name="widget_layout_one">グラフ1つ</string>
-    <string name="widget_layout_two">グラフ2つ</string>
-    <string name="widget_layout_four">グラフ4つ</string>
     <string name="widget_metric_cpu">CPU</string>
     <string name="widget_metric_memory">メモリ</string>
     <string name="widget_metric_disk">ディスク</string>
@@ -34,5 +29,6 @@
     <string name="widget_mem_desc">メモリ使用率</string>
     <string name="widget_disk_desc">ディスク使用率</string>
     <string name="widget_net_desc">ネットワーク使用量</string>
-    <string name="widget_err_too_small">グラフ2つ以上には、より幅の広いウィジェットが必要です</string>
+    <string name="widget_small_label">サーバーの数値</string>
+    <string name="widget_medium_label">サーバーのグラフ</string>
 </resources>

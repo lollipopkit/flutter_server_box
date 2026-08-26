@@ -12,7 +12,6 @@ import android.content.Context
 data class WidgetConfig(
     /** [WidgetStore.WidgetServer.id], or empty when nothing is picked yet. */
     val serverId: String,
-    val layout: WidgetLayout,
     val metric: WidgetMetric,
 ) {
     companion object {
@@ -22,7 +21,6 @@ data class WidgetConfig(
             val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             return WidgetConfig(
                 serverId = prefs.getString(key(appWidgetId, "server"), "") ?: "",
-                layout = WidgetLayout.from(prefs.getString(key(appWidgetId, "layout"), null)),
                 metric = WidgetMetric.from(prefs.getString(key(appWidgetId, "metric"), null)),
             )
         }
@@ -30,7 +28,6 @@ data class WidgetConfig(
         fun save(context: Context, appWidgetId: Int, config: WidgetConfig) {
             context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
                 .putString(key(appWidgetId, "server"), config.serverId)
-                .putString(key(appWidgetId, "layout"), config.layout.name)
                 .putString(key(appWidgetId, "metric"), config.metric.name)
                 .apply()
         }
@@ -38,7 +35,6 @@ data class WidgetConfig(
         fun forget(context: Context, appWidgetId: Int) {
             context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
                 .remove(key(appWidgetId, "server"))
-                .remove(key(appWidgetId, "layout"))
                 .remove(key(appWidgetId, "metric"))
                 .apply()
         }
@@ -76,43 +72,33 @@ enum class WidgetMetric {
     }
 }
 
-/** How much of the widget is given to charts rather than to numbers. */
-enum class WidgetLayout {
-    TEXT,
-    ONE_CHART,
-    TWO_CHARTS,
-    FOUR_CHARTS;
+/**
+ * Which of the two widgets this is.
+ *
+ * Two fixed providers rather than one that resizes. The size and what it can
+ * show are the same decision — a 2x2 holds readings and a 4x2 holds charts —
+ * so binding them removes the case where a layout was chosen and the size
+ * quietly overruled it. It is also what puts both in the launcher's picker as
+ * separate entries, which is where someone chooses a widget.
+ */
+enum class WidgetKind {
+    /** 2x2, readings as text. Nothing to configure beyond the server. */
+    SMALL,
+
+    /** 4x2, one chart per metric. */
+    MEDIUM;
+
+    val drawsCharts: Boolean get() = this == MEDIUM
 
     companion object {
-        /** What "medium" means in cells — a standard 4x2 widget. */
-        const val MEDIUM_COLUMNS = 4
-        const val MEDIUM_ROWS = 2
-
-        /** By name, for the reason in [WidgetMetric.from]. */
-        fun from(name: String?): WidgetLayout =
-            entries.firstOrNull { it.name == name } ?: TEXT
+        /**
+         * Every metric, always.
+         *
+         * Not a choice. A medium widget has room for the four panels and no
+         * reason to draw fewer — asking how many charts someone wants is a
+         * question with one sensible answer, and a setting whose only effect
+         * is to show less.
+         */
+        const val CHART_COUNT = 4
     }
-
-    /** How many charts this draws. */
-    val chartCount: Int
-        get() = when (this) {
-            TEXT -> 0
-            ONE_CHART -> 1
-            TWO_CHARTS -> 2
-            FOUR_CHARTS -> 4
-        }
-
-    /**
-     * Whether a widget [columns] by [rows] cells has room for it.
-     *
-     * Two panels side by side need the width of a medium widget — four cells,
-     * the same shape iOS calls `.systemMedium`. Below that a panel is a smudge.
-     *
-     * Checked rather than narrowed. It used to quietly turn four charts into
-     * one on a small widget, which reads as the setting having no effect and
-     * leaves nowhere to find out otherwise. The widget says so instead: the
-     * choice is kept, and dragging the widget wider brings it back.
-     */
-    fun fits(columns: Int, rows: Int): Boolean =
-        chartCount <= 1 || (columns >= MEDIUM_COLUMNS && rows >= MEDIUM_ROWS)
 }

@@ -11,14 +11,9 @@
 <resources>
     <string name="widget_configure_title">Widget</string>
     <string name="widget_configure_server">Server</string>
-    <string name="widget_configure_layout">Layout</string>
     <string name="widget_configure_metric">Führender Messwert</string>
     <string name="widget_configure_save">Sichern</string>
     <string name="widget_configure_empty">Noch kein Server mit monitor-Agent.\nRichte einen in ServerBox ein und komm zurück.</string>
-    <string name="widget_layout_text">Messwerte</string>
-    <string name="widget_layout_one">Ein Diagramm</string>
-    <string name="widget_layout_two">Zwei Diagramme</string>
-    <string name="widget_layout_four">Vier Diagramme</string>
     <string name="widget_metric_cpu">CPU</string>
     <string name="widget_metric_memory">Speicher</string>
     <string name="widget_metric_disk">Datenträger</string>
@@ -34,5 +29,6 @@
     <string name="widget_mem_desc">Speicherauslastung</string>
     <string name="widget_disk_desc">Datenträgerauslastung</string>
     <string name="widget_net_desc">Netzwerkauslastung</string>
-    <string name="widget_err_too_small">Zwei oder mehr Diagramme brauchen ein breiteres Widget</string>
+    <string name="widget_small_label">Server-Messwerte</string>
+    <string name="widget_medium_label">Server-Diagramme</string>
 </resources>

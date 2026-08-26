@@ -11,14 +11,9 @@
 <resources>
     <string name="widget_configure_title">Bileşen</string>
     <string name="widget_configure_server">Sunucu</string>
-    <string name="widget_configure_layout">Düzen</string>
     <string name="widget_configure_metric">Ana ölçüm</string>
     <string name="widget_configure_save">Kaydet</string>
     <string name="widget_configure_empty">Henüz monitor aracısı olan bir sunucu yok.\nServerBox\'ta bir tane ekleyip geri dönün.</string>
-    <string name="widget_layout_text">Değerler</string>
-    <string name="widget_layout_one">Bir grafik</string>
-    <string name="widget_layout_two">İki grafik</string>
-    <string name="widget_layout_four">Dört grafik</string>
     <string name="widget_metric_cpu">CPU</string>
     <string name="widget_metric_memory">Bellek</string>
     <string name="widget_metric_disk">Disk</string>
@@ -34,5 +29,6 @@
     <string name="widget_mem_desc">Bellek kullanımı</string>
     <string name="widget_disk_desc">Disk kullanımı</string>
     <string name="widget_net_desc">Ağ kullanımı</string>
-    <string name="widget_err_too_small">İki veya daha fazla grafik daha geniş bir bileşen gerektirir</string>
+    <string name="widget_small_label">Sunucu değerleri</string>
+    <string name="widget_medium_label">Sunucu grafikleri</string>
 </resources>

@@ -93,23 +93,38 @@
             </intent-filter>
         </activity>
 
+        <!--
+            Two providers, so the launcher's picker offers two widgets. The size
+            and what it shows are one decision: 2x2 holds readings, 4x2 holds
+            charts, and neither resizes. One resizable provider meant a layout
+            could be chosen and then silently overruled by the size.
+        -->
         <receiver
-            android:name=".widget.HomeWidget"
+            android:name=".widget.StatusWidgetSmall"
             android:exported="false"
-            android:label="StatusWidget">
+            android:label="@string/widget_small_label">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="tech.lolli.toolbox.UPDATE_WIDGET" />
                 <action android:name="miui.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
-            <!--
-                 <meta-data
-                android:name="miuiWidget"
-                android:value="true" />
-            -->
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/home_widget" />
+                android:resource="@xml/widget_small" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.StatusWidgetMedium"
+            android:exported="false"
+            android:label="@string/widget_medium_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="tech.lolli.toolbox.UPDATE_WIDGET" />
+                <action android:name="miui.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_medium" />
         </receiver>
 
         <service

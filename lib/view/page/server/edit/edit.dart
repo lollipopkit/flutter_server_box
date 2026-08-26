@@ -250,21 +250,35 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   Widget _buildForm() {
     final children = [
       _buildConnMethodSwitch(),
-      Input(
-        autoFocus: true,
-        controller: _nameController,
-        type: TextInputType.text,
-        node: _nameFocus,
-        onSubmitted: (_) => _focusScope.requestFocus(_ipFocus),
-        hint: libL10n.example,
-        label: libL10n.name,
-        icon: BoxIcons.bx_rename,
-        obscureText: false,
-        autoCorrect: true,
-        suggestion: true,
-      ),
+      // The name is in the same group of cards as the SSH fields rather than
+      // a card of its own above them. Cards within a group sit against each
+      // other; a card that is its own [PageColumns] child gets the grid's
+      // spacing on top of that, which read as a gap belonging to nothing.
+      //
+      // It also means this entry always has something in it. An entry that
+      // renders to an empty box still gets spacing on both sides of it, so
+      // the placeholder this used to be left a wider gap behind than the
+      // fields it stood in for.
       _useSsh.listenVal(
-        (useSsh) => useSsh ? _buildSshConnFields() : UIs.placeholder,
+        (useSsh) => Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Input(
+              autoFocus: true,
+              controller: _nameController,
+              type: TextInputType.text,
+              node: _nameFocus,
+              onSubmitted: (_) => _focusScope.requestFocus(_ipFocus),
+              hint: libL10n.example,
+              label: libL10n.name,
+              icon: BoxIcons.bx_rename,
+              obscureText: false,
+              autoCorrect: true,
+              suggestion: true,
+            ),
+            if (useSsh) _buildSshConnFields(),
+          ],
+        ),
       ),
       TagTile(tags: _tags, allTags: ref.watch(serversProvider).tags).cardx,
       ListTile(
@@ -278,19 +292,22 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
           ),
         ),
       ),
-      _useSsh.listenVal(
-        (useSsh) => useSsh ? _buildAuth() : UIs.placeholder,
-      ),
-      _useMonitorHttp.listenVal(
-        (useHttp) => useHttp ? _buildMonitorHttp() : UIs.placeholder,
-      ),
-      _useSsh.listenVal(
-        (useSsh) => useSsh
-            ? Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [_buildSystemType(), _buildJumpServer()],
-              )
-            : UIs.placeholder,
+      // The rest of the connection fields, as one group rather than three
+      // entries. Which of them are shown is up to the two switches, and each
+      // one that was its own [PageColumns] child left the grid's spacing
+      // behind when it rendered to nothing — an SSH-only server showed a gap
+      // between the password and the system type, held open by monitor
+      // fields that were not there.
+      ListenableBuilder(
+        listenable: Listenable.merge([_useSsh, _useMonitorHttp]),
+        builder: (_, _) => Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_useSsh.value) _buildAuth(),
+            if (_useMonitorHttp.value) _buildMonitorHttp(),
+            if (_useSsh.value) ...[_buildSystemType(), _buildJumpServer()],
+          ],
+        ),
       ),
       _buildMore(),
     ];

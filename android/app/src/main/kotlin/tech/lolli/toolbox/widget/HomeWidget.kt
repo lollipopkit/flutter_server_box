@@ -3,6 +3,7 @@ package tech.lolli.toolbox.widget
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
@@ -39,8 +40,38 @@ import kotlin.math.roundToInt
  * everything it needs is readable without a channel hop — which is the thing
  * iOS needs a shared Keychain group to arrange.
  */
-class HomeWidget : AppWidgetProvider() {
+abstract class HomeWidget(private val kind: WidgetKind) : AppWidgetProvider() {
     companion object {
+        /** Both providers, for the callers that mean "every widget". */
+        val providers = listOf(StatusWidgetSmall::class.java, StatusWidgetMedium::class.java)
+
+        /** Asks every placed widget of either size to refresh. */
+        fun broadcastUpdate(context: Context) {
+            for (provider in providers) {
+                context.sendBroadcast(
+                    Intent(context, provider).apply {
+                        action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                        putExtra(
+                            AppWidgetManager.EXTRA_APPWIDGET_IDS,
+                            AppWidgetManager.getInstance(context)
+                                .getAppWidgetIds(ComponentName(context, provider)),
+                        )
+                    }
+                )
+            }
+        }
+
+        /** Which widget an id belongs to, or null when the system has forgotten it. */
+        fun kindOf(context: Context, appWidgetId: Int): WidgetKind? {
+            val provider = AppWidgetManager.getInstance(context)
+                .getAppWidgetInfo(appWidgetId)?.provider?.className ?: return null
+            return when (provider) {
+                StatusWidgetSmall::class.java.name -> WidgetKind.SMALL
+                StatusWidgetMedium::class.java.name -> WidgetKind.MEDIUM
+                else -> null
+            }
+        }
+
         private const val TAG = "HomeWidget"
 
         /**
@@ -81,10 +112,9 @@ class HomeWidget : AppWidgetProvider() {
     }
 
     /**
-     * Redrawn on resize, because size is what decides how many charts fit —
-     * see [WidgetLayout.resolved]. Without this a widget dragged larger keeps
-     * the single chart it was given at 2x2 until something else happens to
-     * refresh it.
+     * Neither widget resizes, but a launcher may still report a different box
+     * for one — a home screen with a different grid, or a fold opening. The
+     * bitmap is drawn to that box, so it has to be drawn again.
      */
     override fun onAppWidgetOptionsChanged(
         context: Context,
@@ -288,26 +318,18 @@ class HomeWidget : AppWidgetProvider() {
         )
         views.setViewVisibility(R.id.error_message, View.GONE)
 
-        val layout = config.layout
-        if (!layout.fits(bounds.columns, bounds.rows)) {
-            // The reading is fine; the widget is the wrong size for what was
-            // asked of it, and only the widget can say so.
-            showError(context, views, manager, appWidgetId, R.string.widget_err_too_small, reading.name)
-            return
-        }
-        if (layout == WidgetLayout.TEXT) {
+        // No layout check and no "too small" state: the size and what it shows
+        // are one decision, made when the widget was picked from the launcher,
+        // and neither provider resizes.
+        if (!kind.drawsCharts) {
             views.setViewVisibility(R.id.widget_chart, View.GONE)
             views.setViewVisibility(R.id.widget_content, View.VISIBLE)
             showReadings(views, reading, compact = bounds.columns < 3)
         } else {
-            val count = when (layout) {
-                WidgetLayout.FOUR_CHARTS -> 4
-                WidgetLayout.TWO_CHARTS -> 2
-                else -> 1
-            }
             val bitmap = WidgetChart.render(
                 context = context,
-                series = config.metric.following(count).map { seriesFor(context, it, reading, history) },
+                series = config.metric.following(WidgetKind.CHART_COUNT)
+                    .map { seriesFor(context, it, reading, history) },
                 widthPx = bounds.widthPx,
                 heightPx = bounds.heightPx,
                 density = bounds.density,
@@ -413,3 +435,9 @@ class HomeWidget : AppWidgetProvider() {
         )
     }
 }
+
+/** 2x2, readings as text. */
+class StatusWidgetSmall : HomeWidget(WidgetKind.SMALL)
+
+/** 4x2, charts. */
+class StatusWidgetMedium : HomeWidget(WidgetKind.MEDIUM)

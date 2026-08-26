@@ -131,8 +131,6 @@ struct StatusWidgetEntryView: View {
 
     @Environment(\.widgetFamily) private var family
 
-    private var layout: WidgetLayout { entry.configuration.layout }
-
     var body: some View {
         content.widgetBackground()
     }
@@ -148,44 +146,19 @@ struct StatusWidgetEntryView: View {
             case .accessoryCircular:
                 AccessoryCircular(snapshot: snapshot, metric: entry.configuration.metric)
             default:
-                if layout.fits(family) {
-                    HomeScreen(
-                        snapshot: snapshot,
-                        layout: layout,
-                        metric: entry.configuration.metric,
-                        family: family,
-                        failure: entry.failure
-                    )
-                } else {
-                    // The reading is fine; the widget is the wrong size for
-                    // what was asked of it, and only the widget can say so.
-                    TooSmall(name: snapshot.name)
-                }
+                // The family *is* the choice: `.systemSmall` is the readings
+                // widget and `.systemMedium` the chart one, registered
+                // separately so the gallery offers both by name.
+                HomeScreen(
+                    snapshot: snapshot,
+                    metric: entry.configuration.metric,
+                    family: family,
+                    failure: entry.failure
+                )
             }
         } else {
             Unavailable(message: entry.failure ?? WidgetError.notConfigured.errorDescription ?? "")
         }
-    }
-}
-
-/// The chosen layout needs more room than this family has.
-private struct TooSmall: View {
-    let name: String
-
-    var body: some View {
-        VStack(spacing: 4) {
-            Text(name)
-                .font(.system(.subheadline, design: .monospaced))
-                .lineLimit(1)
-            Image(systemName: "arrow.up.left.and.arrow.down.right")
-                .font(.system(size: 13))
-                .foregroundStyle(.secondary)
-            Text("Two or more charts need a medium widget")
-                .font(.system(size: 11, design: .monospaced))
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.secondary)
-        }
-        .padding(6)
     }
 }
 
@@ -216,23 +189,22 @@ private struct Unavailable: View {
 
 private struct HomeScreen: View {
     let snapshot: WidgetSnapshot
-    let layout: WidgetLayout
     let metric: WidgetMetric
     let family: WidgetFamily
     let failure: String?
 
+    /// Every metric, always — see `StatusWidgetMedium`. Asking how many charts
+    /// someone wants is a question with one sensible answer, and a setting
+    /// whose only effect is to show less.
+    private static let chartCount = 4
+
     var body: some View {
         VStack(alignment: .leading, spacing: family == .systemSmall ? 4 : 7) {
             header
-            switch layout {
-            case .text:
+            if family == .systemSmall {
                 Readings(snapshot: snapshot, family: family)
-            case .oneChart:
-                charts(metric.following(1))
-            case .twoCharts:
-                charts(metric.following(2))
-            case .fourCharts:
-                charts(metric.following(4))
+            } else {
+                charts(metric.following(Self.chartCount))
             }
             Spacer(minLength: 0)
             footer
@@ -563,29 +535,47 @@ extension View {
     }
 }
 
-struct StatusWidget: Widget {
-    let kind: String = "StatusWidget"
-
+/// Readings as text, at `.systemSmall` — and the lock-screen families, which
+/// live in their own gallery and so cost this entry nothing.
+///
+/// Two widgets rather than one that supports both sizes. A single entry the
+/// user swipes between sizes made "how big" and "what it shows" two settings
+/// that could disagree; here the size *is* the choice, made once, in the
+/// gallery. No `.systemLarge` either: it was the medium's four charts with
+/// more space around them.
+struct StatusWidgetSmall: Widget {
     var body: some WidgetConfiguration {
         AppIntentConfiguration(
-            kind: kind,
+            kind: "StatusWidgetSmall",
             intent: SelectServerIntent.self,
             provider: StatusProvider()
         ) { entry in
             StatusWidgetEntryView(entry: entry)
         }
-        .configurationDisplayName("Status")
-        .description("A server's status, from its monitor agent.")
-        // No `.systemLarge`. Four charts on a medium are already small, and a
-        // large one is mostly the same information with more space around it —
-        // a size to scroll past rather than one anybody would choose.
+        .configurationDisplayName("Server readings")
+        .description("A server's current readings, from its monitor agent.")
         .supportedFamilies([
             .systemSmall,
-            .systemMedium,
             .accessoryRectangular,
             .accessoryInline,
             .accessoryCircular,
         ])
+    }
+}
+
+/// One chart per metric, at `.systemMedium`.
+struct StatusWidgetMedium: Widget {
+    var body: some WidgetConfiguration {
+        AppIntentConfiguration(
+            kind: "StatusWidgetMedium",
+            intent: SelectServerIntent.self,
+            provider: StatusProvider()
+        ) { entry in
+            StatusWidgetEntryView(entry: entry)
+        }
+        .configurationDisplayName("Server charts")
+        .description("A server's trends, from its monitor agent.")
+        .supportedFamilies([.systemMedium])
     }
 }
 
