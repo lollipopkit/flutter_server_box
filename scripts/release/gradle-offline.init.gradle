@@ -1,0 +1,4 @@
+// Flutter does not expose Gradle's --offline option. Init scripts run before
+// dependency resolution, so this applies the same StartParameter setting to
+// Gradle processes launched indirectly by `flutter build`.
+gradle.startParameter.offline = true

@@ -18,6 +18,7 @@ on:
       - "scripts/release/android-build-env.sh"
       - "scripts/release/build-fdroid.sh"
       - "scripts/release/compare-apks.sh"
+      - "scripts/release/gradle-offline.init.gradle"
       - "scripts/release/patch-jni-build-id.sh"
       - "scripts/release/prepare-fdroid.sh"
       - "Cargo.lock"

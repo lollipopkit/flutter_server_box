@@ -20,9 +20,12 @@ esac
 
 if [ "${FDROID_OFFLINE:-false}" = true ]; then
   export CARGO_NET_OFFLINE=true
-  # Flutter does not expose Gradle's --offline switch. Route any JVM download
-  # attempt to a closed local port instead, so a cache miss fails in CI just
-  # as it does in F-Droid's network-isolated build phase.
+  # Flutter does not expose Gradle's --offline switch. Install a project-local
+  # init script that sets the equivalent StartParameter before dependencies are
+  # resolved. Keep the dead proxy as a second guard against JVM networking.
+  mkdir -p "$GRADLE_USER_HOME/init.d"
+  cp "$REPO_ROOT/scripts/release/gradle-offline.init.gradle" \
+    "$GRADLE_USER_HOME/init.d/fdroid-offline.gradle"
   export GRADLE_OPTS="${GRADLE_OPTS:-} -Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=9 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=9"
   export PROOT_OFFLINE=true
   # If the preparation step missed the pinned Rust toolchain, fail instead of
