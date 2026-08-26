@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Widget strings only. Everything the Flutter side owns stays in its
+    ARB files; these are drawn by native code in a process the Flutter
+    engine may never have started in, so `l10n` is not reachable.
+
+    Indonesian is `values-in`, not `values-id`: resource qualifiers use
+    the legacy ISO code, which is what `Locale.getLanguage()` returns
+    on every Android version.
+-->
+<resources>
+    <string name="widget_configure_title">Widget</string>
+    <string name="widget_configure_server">Server</string>
+    <string name="widget_configure_layout">Tata letak</string>
+    <string name="widget_configure_metric">Metrik utama</string>
+    <string name="widget_configure_save">Simpan</string>
+    <string name="widget_configure_empty">Belum ada server dengan agen monitor.\nTambahkan satu di ServerBox, lalu kembali ke sini.</string>
+    <string name="widget_layout_text">Nilai</string>
+    <string name="widget_layout_one">Satu grafik</string>
+    <string name="widget_layout_two">Dua grafik</string>
+    <string name="widget_layout_four">Empat grafik</string>
+    <string name="widget_metric_cpu">CPU</string>
+    <string name="widget_metric_memory">Memori</string>
+    <string name="widget_metric_disk">Disk</string>
+    <string name="widget_metric_network">Jaringan</string>
+    <string name="widget_err_not_configured">Ketuk untuk memilih server</string>
+    <string name="widget_err_no_token">Tidak ada kredensial — buka ServerBox</string>
+    <string name="widget_err_insecure">Perlu HTTPS</string>
+    <string name="widget_err_network">Kesalahan jaringan</string>
+    <string name="widget_err_timeout">Waktu habis</string>
+    <string name="widget_no_history">Belum ada riwayat</string>
+    <string name="widget_chart_desc">Grafik status</string>
+    <string name="widget_cpu_desc">Penggunaan CPU</string>
+    <string name="widget_mem_desc">Penggunaan memori</string>
+    <string name="widget_disk_desc">Penggunaan disk</string>
+    <string name="widget_net_desc">Penggunaan jaringan</string>
+</resources>

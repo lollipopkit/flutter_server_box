@@ -9,6 +9,7 @@ import org.json.JSONObject
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.Locale
 import java.security.cert.X509Certificate
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.HttpsURLConnection
@@ -199,7 +200,14 @@ object WidgetApi {
             value /= 1024
             idx++
         }
-        return if (idx == 0) "${value.toInt()}${units[idx]}" else String.format("%.1f%s", value, units[idx])
+        // `Locale.US` explicitly: the default locale decides the decimal
+        // separator, so a German device printed "1,3g" beside the app's own
+        // "1.3g" for the same number.
+        return if (idx == 0) {
+            "${value.toInt()}${units[idx]}"
+        } else {
+            String.format(Locale.US, "%.1f%s", value, units[idx])
+        }
     }
 
     /** A host to show in a list, without the scheme or the port. */

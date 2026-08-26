@@ -182,6 +182,15 @@ object WidgetStore {
         }
     }
 
+    /**
+     * Read-or-create, serialised.
+     *
+     * Two callers racing here — a widget refresh and a publish from the app —
+     * would both find no key and both generate one under the same alias. The
+     * second replaces the first, and every token already encrypted under it
+     * becomes undecryptable.
+     */
+    @Synchronized
     private fun secretKey(): SecretKey {
         val keyStore = KeyStore.getInstance(KEYSTORE).apply { load(null) }
         (keyStore.getEntry(KEY_ALIAS, null) as? KeyStore.SecretKeyEntry)?.let { return it.secretKey }

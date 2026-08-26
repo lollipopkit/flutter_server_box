@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Widget strings only. Everything the Flutter side owns stays in its
+    ARB files; these are drawn by native code in a process the Flutter
+    engine may never have started in, so `l10n` is not reachable.
+
+    Indonesian is `values-in`, not `values-id`: resource qualifiers use
+    the legacy ISO code, which is what `Locale.getLanguage()` returns
+    on every Android version.
+-->
+<resources>
+    <string name="widget_configure_title">Віджет</string>
+    <string name="widget_configure_server">Сервер</string>
+    <string name="widget_configure_layout">Макет</string>
+    <string name="widget_configure_metric">Основний показник</string>
+    <string name="widget_configure_save">Зберегти</string>
+    <string name="widget_configure_empty">Поки немає сервера з агентом monitor.\nДодайте його в ServerBox і поверніться сюди.</string>
+    <string name="widget_layout_text">Значення</string>
+    <string name="widget_layout_one">Один графік</string>
+    <string name="widget_layout_two">Два графіки</string>
+    <string name="widget_layout_four">Чотири графіки</string>
+    <string name="widget_metric_cpu">ЦП</string>
+    <string name="widget_metric_memory">Пам\'ять</string>
+    <string name="widget_metric_disk">Диск</string>
+    <string name="widget_metric_network">Мережа</string>
+    <string name="widget_err_not_configured">Торкніться, щоб вибрати сервер</string>
+    <string name="widget_err_no_token">Немає облікових даних — відкрийте ServerBox</string>
+    <string name="widget_err_insecure">Потрібен HTTPS</string>
+    <string name="widget_err_network">Помилка мережі</string>
+    <string name="widget_err_timeout">Час очікування вичерпано</string>
+    <string name="widget_no_history">Немає історії</string>
+    <string name="widget_chart_desc">Графіки стану</string>
+    <string name="widget_cpu_desc">Використання ЦП</string>
+    <string name="widget_mem_desc">Використання пам\'яті</string>
+    <string name="widget_disk_desc">Використання диска</string>
+    <string name="widget_net_desc">Використання мережі</string>
+</resources>

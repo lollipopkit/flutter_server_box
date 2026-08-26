@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Widget strings only. Everything the Flutter side owns stays in its
+    ARB files; these are drawn by native code in a process the Flutter
+    engine may never have started in, so `l10n` is not reachable.
+
+    Indonesian is `values-in`, not `values-id`: resource qualifiers use
+    the legacy ISO code, which is what `Locale.getLanguage()` returns
+    on every Android version.
+-->
+<resources>
+    <string name="widget_configure_title">Widget</string>
+    <string name="widget_configure_server">Server</string>
+    <string name="widget_configure_layout">Indeling</string>
+    <string name="widget_configure_metric">Belangrijkste meting</string>
+    <string name="widget_configure_save">Bewaren</string>
+    <string name="widget_configure_empty">Nog geen server met monitor-agent.\nVoeg er een toe in ServerBox en kom terug.</string>
+    <string name="widget_layout_text">Waarden</string>
+    <string name="widget_layout_one">Eén grafiek</string>
+    <string name="widget_layout_two">Twee grafieken</string>
+    <string name="widget_layout_four">Vier grafieken</string>
+    <string name="widget_metric_cpu">CPU</string>
+    <string name="widget_metric_memory">Geheugen</string>
+    <string name="widget_metric_disk">Schijf</string>
+    <string name="widget_metric_network">Netwerk</string>
+    <string name="widget_err_not_configured">Tik om een server te kiezen</string>
+    <string name="widget_err_no_token">Geen inloggegevens — open ServerBox</string>
+    <string name="widget_err_insecure">HTTPS vereist</string>
+    <string name="widget_err_network">Netwerkfout</string>
+    <string name="widget_err_timeout">Time-out</string>
+    <string name="widget_no_history">Geen geschiedenis</string>
+    <string name="widget_chart_desc">Statusgrafieken</string>
+    <string name="widget_cpu_desc">CPU-gebruik</string>
+    <string name="widget_mem_desc">Geheugengebruik</string>
+    <string name="widget_disk_desc">Schijfgebruik</string>
+    <string name="widget_net_desc">Netwerkgebruik</string>
+</resources>

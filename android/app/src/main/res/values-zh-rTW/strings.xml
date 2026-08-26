@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Widget strings only. Everything the Flutter side owns stays in its
+    ARB files; these are drawn by native code in a process the Flutter
+    engine may never have started in, so `l10n` is not reachable.
+
+    Indonesian is `values-in`, not `values-id`: resource qualifiers use
+    the legacy ISO code, which is what `Locale.getLanguage()` returns
+    on every Android version.
+-->
+<resources>
+    <string name="widget_configure_title">小工具</string>
+    <string name="widget_configure_server">伺服器</string>
+    <string name="widget_configure_layout">版面</string>
+    <string name="widget_configure_metric">主要指標</string>
+    <string name="widget_configure_save">儲存</string>
+    <string name="widget_configure_empty">尚未設定任何有 Monitor 的伺服器。\n請先在 ServerBox 中新增，然後返回。</string>
+    <string name="widget_layout_text">數值</string>
+    <string name="widget_layout_one">1 個曲線</string>
+    <string name="widget_layout_two">2 個曲線</string>
+    <string name="widget_layout_four">4 個曲線</string>
+    <string name="widget_metric_cpu">CPU</string>
+    <string name="widget_metric_memory">記憶體</string>
+    <string name="widget_metric_disk">磁碟</string>
+    <string name="widget_metric_network">網路</string>
+    <string name="widget_err_not_configured">點按選擇伺服器</string>
+    <string name="widget_err_no_token">無憑證 —— 請開啟 ServerBox</string>
+    <string name="widget_err_insecure">需要 HTTPS</string>
+    <string name="widget_err_network">網路錯誤</string>
+    <string name="widget_err_timeout">要求逾時</string>
+    <string name="widget_no_history">尚無歷史</string>
+    <string name="widget_chart_desc">狀態曲線</string>
+    <string name="widget_cpu_desc">CPU 使用率</string>
+    <string name="widget_mem_desc">記憶體使用率</string>
+    <string name="widget_disk_desc">磁碟使用率</string>
+    <string name="widget_net_desc">網路使用量</string>
+</resources>

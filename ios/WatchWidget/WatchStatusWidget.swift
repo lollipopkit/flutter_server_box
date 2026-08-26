@@ -75,7 +75,7 @@ struct WatchStatusWidgetEntryView: View {
     /// Follows the app's own chart selection, with one exception: the overview
     /// page has no single number, and a complication has room for exactly one.
     /// CPU stands in for it — the reading someone glances at a watch face for.
-    private var metric: (label: String, icon: String, percent: Double?, detail: String, series: [Double]) {
+    private var metric: (label: String, icon: String, percent: Double?, detail: String?, series: [Double]) {
         switch entry.chart {
         case .memory:
             return ("MEM", "memorychip", entry.snapshot.mem, entry.snapshot.memText, entry.snapshot.memSeries)
@@ -86,7 +86,12 @@ struct WatchStatusWidgetEntryView: View {
             // so the gauge stays empty and the text carries the reading.
             return ("NET", "network", nil, entry.snapshot.netText, entry.snapshot.netRxSeries)
         case .overview, .cpu:
-            return ("CPU", "cpu", entry.snapshot.cpu, entry.snapshot.memText, entry.snapshot.cpuSeries)
+            // Optional, and nil here rather than the memory text it used to
+            // borrow: a percentage of one core count has no second number to
+            // put beside it, and printing "1.3g / 1.9g" under a CPU heading
+            // says something that is not true of CPU. Uptime is the one thing
+            // worth the line when there is no chart to fill it.
+            return ("CPU", "cpu", entry.snapshot.cpu, entry.snapshot.uptime, entry.snapshot.cpuSeries)
         }
     }
 
@@ -115,16 +120,18 @@ struct WatchStatusWidgetEntryView: View {
                     Text(metric.percent == nil ? metric.label : valueText)
                         .font(.system(size: 12, design: .monospaced))
                 }
-                if metric.series.isEmpty {
-                    Text(metric.detail)
+                if metric.series.isEmpty, let detail = metric.detail, !detail.isEmpty {
+                    Text(detail)
                         .font(.system(size: 11, design: .monospaced))
                         .lineLimit(1)
-                } else {
+                } else if !metric.series.isEmpty {
                     TrendLine(values: metric.series, isPercent: metric.percent != nil)
                 }
             }
         case .accessoryInline:
-            Text("\(entry.snapshot.name) \(metric.percent == nil ? metric.detail : valueText)")
+            // The label when there is neither a percentage nor a detail, so
+            // the line still says which reading it is about.
+            Text("\(entry.snapshot.name) \(metric.percent == nil ? (metric.detail ?? metric.label) : valueText)")
         default:
             VStack {
                 Text(entry.snapshot.name).lineLimit(1)

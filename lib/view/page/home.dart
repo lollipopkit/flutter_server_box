@@ -464,19 +464,29 @@ class _HomePageState extends ConsumerState<HomePage>
       );
     }
 
-    // Says so when this launch took over the sandboxed build's data, or when
-    // it could not — see [SandboxImport].
-    unawaited(SandboxImportNotice.showIfNeeded(context));
-    // Says so when this upgrade took a feature away — see
-    // [LegacyStatusUrlsMigration].
-    unawaited(LegacyStatusNotice.showIfNeeded(context));
     unawaited(MethodChans.updateHomeWidget());
 
+    // In sequence, and awaited. Both are root-navigator dialogs, so firing
+    // them together stacks one on the other; and the guide is an overlay above
+    // every route, which would cover whichever was up rather than wait for it.
+    // The guide checks for that and skips, so racing them cost the guide a
+    // launch at a time.
+    //
     // Before the refresh and not after it: that call waits on every server's
-    // connection, and one machine that is slow to answer would hold the guide
-    // back for as long as it takes to time out. The strip it points at is
+    // connection, and one machine slow to answer would hold all of this back
+    // for as long as it takes to time out. The strip the guide points at is
     // already laid out — this runs after the first frame.
-    unawaited(_maybeShowNavGuide());
+    unawaited(() async {
+      // Says so when this launch took over the sandboxed build's data, or
+      // when it could not — see [SandboxImport].
+      await SandboxImportNotice.showIfNeeded(context);
+      if (!mounted) return;
+      // Says so when this upgrade took a feature away — see
+      // [LegacyStatusUrlsMigration].
+      await LegacyStatusNotice.showIfNeeded(context);
+      if (!mounted) return;
+      await _maybeShowNavGuide();
+    }());
 
     await _notifier.refresh();
 

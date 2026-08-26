@@ -336,12 +336,14 @@ extension _Widgets on _ServerEditPageState {
   /// the first. Nobody has to come here unless SFTP does not work, and the
   /// browser's own failure says so when it does not.
   Widget _buildFileTransport() {
-    // Nothing to set on a monitor server: saving one writes `ssh: null`, so a
-    // choice made here would be accepted, saved and discarded without a word.
-    // The two fields above it have the same shape and the same problem; this
-    // one is new, so it does not add to it.
-    return _useMonitorHttp.listenVal((useHttp) {
-      if (useHttp) return UIs.placeholder;
+    // Follows the *SSH* switch. Nothing to set with SSH off: saving then
+    // writes `ssh: null`, so a choice made here would be accepted, saved and
+    // discarded without a word. It used to follow the monitor switch, which
+    // was the same question only while the two were exclusive — a server
+    // carrying both had its file transport hidden and could not be told to
+    // use SCP.
+    return _useSsh.listenVal((useSsh) {
+      if (!useSsh) return UIs.placeholder;
       return _buildFileTransportTile();
     });
   }

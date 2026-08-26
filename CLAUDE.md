@@ -262,6 +262,16 @@ Android's `usesCleartextTraffic` answers a different question — whether the
 *process* may speak plaintext at all — and it is not a decision about any one
 server. Loopback counts as secure without TLS, matching the app.
 
+**Two platform minimums moved with this, and both cost users a feature.** The
+`StatusWidgetExtension` target alone is iOS 17 (the app stays at 15), because
+picking a server from a list needs `AppIntentConfiguration` — an iOS 15/16
+install keeps the app and loses the home widget entirely, since the system will
+not load an extension below its deployment target. `WATCHOS_DEPLOYMENT_TARGET`
+is 10.0 for the two-axis paging, and that one takes the **whole watch app and
+its complication** away from watchOS 9, not just a feature of them. Both belong
+in release notes; neither is visible in the app, which is why they are written
+down here.
+
 `GET /status` is gone. It answered unauthenticated with values preformatted as
 strings and no history, which is why everything built on it could never draw a
 trend. The agent answers 410 there with a sentence saying where to go, for one

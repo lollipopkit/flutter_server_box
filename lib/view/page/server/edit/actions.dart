@@ -354,7 +354,10 @@ extension _Actions on _ServerEditPageState {
     // save from throwing when the chosen key was deleted from another pane
     // meanwhile, but going on from there would write a server with no key and
     // no word about why.
-    if (keyIdx != null && keyIdx >= 0 && selectedKey == null) {
+    // Only when the key is going to be written. With SSH switched off the
+    // form is hidden and `_keyIdx` still holds whatever it was loaded with, so
+    // this used to refuse a save over a key the record is about to drop.
+    if (useSsh && keyIdx != null && keyIdx >= 0 && selectedKey == null) {
       Toast.show('${libL10n.invalid}: ${libL10n.key}');
       return;
     }
@@ -403,7 +406,7 @@ extension _Actions on _ServerEditPageState {
       }
     }
     final proxyCommandText = _proxyCommandCtrl.text.trim();
-    if (!useMonitorHttp && !isDesktop && proxyCommandText.isNotEmpty) {
+    if (useSsh && !isDesktop && proxyCommandText.isNotEmpty) {
       Toast.show(l10n.proxyCommandOnlySupportedOnDesktop);
       return;
     }

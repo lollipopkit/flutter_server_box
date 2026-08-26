@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Widget strings only. Everything the Flutter side owns stays in its
+    ARB files; these are drawn by native code in a process the Flutter
+    engine may never have started in, so `l10n` is not reachable.
+
+    Indonesian is `values-in`, not `values-id`: resource qualifiers use
+    the legacy ISO code, which is what `Locale.getLanguage()` returns
+    on every Android version.
+-->
+<resources>
+    <string name="widget_configure_title">위젯</string>
+    <string name="widget_configure_server">서버</string>
+    <string name="widget_configure_layout">레이아웃</string>
+    <string name="widget_configure_metric">주요 지표</string>
+    <string name="widget_configure_save">저장</string>
+    <string name="widget_configure_empty">monitor 에이전트가 있는 서버가 아직 없습니다.\nServerBox에서 추가한 뒤 돌아오세요.</string>
+    <string name="widget_layout_text">값</string>
+    <string name="widget_layout_one">그래프 1개</string>
+    <string name="widget_layout_two">그래프 2개</string>
+    <string name="widget_layout_four">그래프 4개</string>
+    <string name="widget_metric_cpu">CPU</string>
+    <string name="widget_metric_memory">메모리</string>
+    <string name="widget_metric_disk">디스크</string>
+    <string name="widget_metric_network">네트워크</string>
+    <string name="widget_err_not_configured">탭하여 서버 선택</string>
+    <string name="widget_err_no_token">자격 증명 없음 — ServerBox를 여세요</string>
+    <string name="widget_err_insecure">HTTPS 필요</string>
+    <string name="widget_err_network">네트워크 오류</string>
+    <string name="widget_err_timeout">시간 초과</string>
+    <string name="widget_no_history">기록 없음</string>
+    <string name="widget_chart_desc">상태 그래프</string>
+    <string name="widget_cpu_desc">CPU 사용률</string>
+    <string name="widget_mem_desc">메모리 사용률</string>
+    <string name="widget_disk_desc">디스크 사용률</string>
+    <string name="widget_net_desc">네트워크 사용량</string>
+</resources>

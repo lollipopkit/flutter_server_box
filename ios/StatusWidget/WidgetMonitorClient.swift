@@ -22,15 +22,21 @@ enum WidgetError: LocalizedError {
     case transport(String)
     case decoding(String)
 
+    /// `String(localized:)` and not a bare literal: these are drawn on a home
+    /// screen, and the target carries a `Localizable.strings` catalog that the
+    /// SwiftUI `Text` literals elsewhere already look up. A plain `String` does
+    /// not go through it.
     var errorDescription: String? {
         switch self {
-        case .notConfigured: return "Pick a server"
-        case .noToken: return "No credential — open the app"
+        case .notConfigured: return String(localized: "Pick a server")
+        case .noToken: return String(localized: "No credential — open the app")
         // Named rather than reported as a network failure, because it is a
         // decision and not a fault: the address is plain HTTP and this server
         // was never opted in to that.
-        case .insecure: return "HTTPS required"
-        case .badUrl: return "Bad address"
+        case .insecure: return String(localized: "HTTPS required")
+        case .badUrl: return String(localized: "Bad address")
+        // The remaining three carry the agent's or the system's own words,
+        // which are not this app's to translate.
         case .http(let code, let msg): return msg.isEmpty ? "HTTP \(code)" : msg
         case .transport(let s): return s
         case .decoding(let s): return s
@@ -62,7 +68,7 @@ struct WidgetHistoryPoint: Decodable {
 final class WidgetMonitorClient: NSObject {
     private let server: WidgetServer
 
-    private lazy var session: URLSession = URLSession(
+    fileprivate lazy var session: URLSession = URLSession(
         configuration: .ephemeral,
         delegate: self,
         delegateQueue: nil
@@ -79,6 +85,10 @@ final class WidgetMonitorClient: NSObject {
     /// and numbers with no chart beat an error.
     static func load(server: WidgetServer) async throws -> (WidgetReading, [WidgetHistoryPoint]) {
         let client = WidgetMonitorClient(server: server)
+        // A `URLSession` with a delegate holds a strong reference to it until
+        // it is invalidated, and this one is built per call — without this the
+        // client and its session outlive every timeline refresh.
+        defer { client.session.finishTasksAndInvalidate() }
         let reading = try await client.metrics()
         let history = (try? await client.history()) ?? []
         return (reading, history)
@@ -198,13 +208,13 @@ private struct Metrics: Decodable {
     struct Memory: Decodable {
         let total: UInt64
         let used: UInt64
-        let usage_percent: Double
+        let usage_percent: Double?
     }
 
     struct Disk: Decodable {
         let total: UInt64
         let used: UInt64
-        let usage_percent: Double
+        let usage_percent: Double?
     }
 
     struct Network: Decodable {
@@ -213,7 +223,12 @@ private struct Metrics: Decodable {
     }
 
     let server_name: String
-    let cpu_usage: Double
+    // Optional, matching what the Android widget's parser already tolerates.
+    // The agent sends these on every reading, so this is not a case anyone has
+    // hit — but one omitted field currently fails the whole decode, and a
+    // widget that says "--" for a number is a far better answer than one that
+    // says the server is unreachable.
+    let cpu_usage: Double?
     let memory: Memory
     let disk: Disk
     let network: Network

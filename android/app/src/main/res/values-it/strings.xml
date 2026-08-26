@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Widget strings only. Everything the Flutter side owns stays in its
+    ARB files; these are drawn by native code in a process the Flutter
+    engine may never have started in, so `l10n` is not reachable.
+
+    Indonesian is `values-in`, not `values-id`: resource qualifiers use
+    the legacy ISO code, which is what `Locale.getLanguage()` returns
+    on every Android version.
+-->
+<resources>
+    <string name="widget_configure_title">Widget</string>
+    <string name="widget_configure_server">Server</string>
+    <string name="widget_configure_layout">Disposizione</string>
+    <string name="widget_configure_metric">Metrica principale</string>
+    <string name="widget_configure_save">Salva</string>
+    <string name="widget_configure_empty">Non c\'è ancora un server con agente monitor.\nAggiungine uno in ServerBox e torna qui.</string>
+    <string name="widget_layout_text">Valori</string>
+    <string name="widget_layout_one">Un grafico</string>
+    <string name="widget_layout_two">Due grafici</string>
+    <string name="widget_layout_four">Quattro grafici</string>
+    <string name="widget_metric_cpu">CPU</string>
+    <string name="widget_metric_memory">Memoria</string>
+    <string name="widget_metric_disk">Disco</string>
+    <string name="widget_metric_network">Rete</string>
+    <string name="widget_err_not_configured">Tocca per scegliere un server</string>
+    <string name="widget_err_no_token">Nessuna credenziale — apri ServerBox</string>
+    <string name="widget_err_insecure">HTTPS richiesto</string>
+    <string name="widget_err_network">Errore di rete</string>
+    <string name="widget_err_timeout">Tempo scaduto</string>
+    <string name="widget_no_history">Nessuno storico</string>
+    <string name="widget_chart_desc">Grafici di stato</string>
+    <string name="widget_cpu_desc">Uso della CPU</string>
+    <string name="widget_mem_desc">Uso della memoria</string>
+    <string name="widget_disk_desc">Uso del disco</string>
+    <string name="widget_net_desc">Uso della rete</string>
+</resources>

@@ -274,7 +274,7 @@ class HomeWidget : AppWidgetProvider() {
     // MARK: - Reading a metric
 
     private fun percentText(value: Double?): String =
-        value?.let { String.format("%.0f%%", it) } ?: "--"
+        value?.let { String.format(java.util.Locale.US, "%.0f%%", it) } ?: "--"
 
     private fun seriesFor(
         context: Context,

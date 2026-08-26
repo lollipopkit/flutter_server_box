@@ -286,15 +286,29 @@ final class WatchSync {
     final existingTokens = await _existingTokens();
     for (final id in nowExcluded.where((id) => !previously.contains(id))) {
       final spi = Stores.server.fetchOneRaw(id);
-      if (spi != null) {
+      if (spi == null) continue;
+      // Best effort, per server. `_revokeServer` rethrows, and one agent that
+      // is merely offline used to take the whole call with it — the choice was
+      // never stored and the watch was never told, so a user holding three
+      // servers back kept all three because one of them was unreachable.
+      try {
         await _revokeServer(spi, endpoint: existingTokens[id]?.endpoint);
+      } catch (e, s) {
+        Loggers.app.warning('Could not revoke watch token for $id', e, s);
       }
     }
     Stores.setting.watchExcludedServerIds.put(next);
     await push();
   }
 
-  Future<void> removeServer(Spi spi) async {
+  /// Hands this server's credential back, ahead of the record being deleted.
+  ///
+  /// Deliberately does **not** push. The caller runs this while the server is
+  /// still in the store — it has to, since revoking needs the credential — and
+  /// a push here would rebuild the list from a store that still contains it,
+  /// mint a *replacement* token for a server about to be deleted, and deliver
+  /// it to the watch. Publishing is the caller's job, after the delete.
+  Future<void> revokeServer(Spi spi) async {
     final existingTokens = await _existingTokens();
     try {
       await _revokeServer(spi, endpoint: existingTokens[spi.id]?.endpoint);
@@ -314,19 +328,21 @@ final class WatchSync {
         excluded.where((id) => id != spi.id).toList(),
       );
     }
-    try {
-      await push();
-    } catch (e, s) {
-      Loggers.app.warning('Could not update watch after deleting ${spi.id}', e, s);
-    }
   }
 
+  /// Hands every credential back, because there is no watch to use them.
+  ///
+  /// Per server and best effort: one unreachable agent must not stop the rest
+  /// being revoked, and must not abort the `_pushOnce` that called this.
   Future<void> _revokeSelectedServers() async {
     final existingTokens = await _existingTokens();
     for (final id in syncedServerIds()) {
       final spi = Stores.server.fetchOneRaw(id);
-      if (spi != null) {
+      if (spi == null) continue;
+      try {
         await _revokeServer(spi, endpoint: existingTokens[id]?.endpoint);
+      } catch (e, s) {
+        Loggers.app.warning('Could not revoke watch token for $id', e, s);
       }
     }
   }

@@ -5,6 +5,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/service/scoped_token.dart';
+import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
 import 'package:server_box/data/res/store.dart';
@@ -96,12 +97,35 @@ final class WidgetSync {
       if (tokens.containsKey(spi.id)) continue;
       final monitor = spi.monitor;
       if (monitor == null) continue;
+      final endpoint = normalizeAgentEndpoint(monitor.addr);
       final client = MonitorHttpClient(monitor);
+      // A backstop, not the real revocation: `revokeScopedTokensLeftBehind`
+      // runs at the edit, while the old *login* is still known, and this only
+      // has the new one to try the old address with. It covers the address
+      // moving without this device seeing the edit — a change arriving over
+      // sync, where nothing local ever held the old credential. Failing is
+      // expected and must not stop the replacement being issued.
+      final previous = held[spi.id];
+      if (previous != null && previous.endpoint != endpoint) {
+        try {
+          await MonitorHttpClient(
+            MonitorHttpCredential(
+              addr: previous.endpoint,
+              user: monitor.user,
+              pwd: monitor.pwd,
+              ignoreCert: monitor.ignoreCert,
+              allowInsecure: monitor.allowInsecure,
+            ),
+          ).revokeWatchToken(widgetClientId(spi.id));
+        } catch (e, s) {
+          Loggers.app.info('Backstop revoke at ${previous.endpoint}', e, s);
+        }
+      }
       try {
         final issued = await client.issueWatchToken(widgetClientId(spi.id));
         tokens[spi.id] = ScopedToken(
           token: issued.token,
-          endpoint: normalizeAgentEndpoint(monitor.addr),
+          endpoint: endpoint,
           expiresAt: issued.expiresAt,
         );
       } catch (e, s) {
@@ -226,20 +250,27 @@ final class WidgetSync {
   /// Best effort, like the watch's: a server has to stay deletable while its
   /// agent is offline, and once the record is gone there is nothing left to
   /// retry against.
-  Future<void> removeServer(Spi spi) async {
+  /// Hands this server's credential back, ahead of the record being deleted.
+  ///
+  /// Deliberately does **not** publish. The caller runs this while the server
+  /// is still in the store — it has to, since revoking needs the credential —
+  /// and a push here would rebuild the list from a store that still contains
+  /// it, mint a *replacement* token for a server about to be deleted, and hand
+  /// it to the widget. Publishing is the caller's job, after the delete.
+  Future<void> revokeServer(Spi spi) async {
     if (!_supported) return;
     final monitor = spi.monitor;
-    if (monitor != null) {
-      final client = MonitorHttpClient(monitor);
-      try {
-        await client.revokeWatchToken(widgetClientId(spi.id));
-      } catch (e, s) {
-        Loggers.app.warning('Revoke widget token for ${spi.id}', e, s);
-      } finally {
-        client.dispose();
-      }
+    if (monitor == null) return;
+    final client = MonitorHttpClient(monitor);
+    try {
+      await client.revokeWatchToken(widgetClientId(spi.id));
+    } catch (e, s) {
+      // The local server must remain deletable while its agent is offline,
+      // and once the record is gone there is no retry target.
+      Loggers.app.warning('Revoke widget token for ${spi.id}', e, s);
+    } finally {
+      client.dispose();
     }
-    await push();
   }
 
   void dispose() {

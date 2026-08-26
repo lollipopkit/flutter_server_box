@@ -383,8 +383,12 @@ class ServersNotifier extends _$ServersNotifier {
   Future<void> _delServer(String id) async {
     final deleting = state.servers[id];
     if (deleting == null) return;
-    await WatchSync.instance.removeServer(deleting);
-    await WidgetSync.instance.removeServer(deleting);
+    // Before the row goes, because revoking is an authenticated call to the
+    // agent and the credential is on the record. Neither publishes — see
+    // `revokeServer`: a rebuild from a store that still holds this server
+    // would mint a replacement token for the one being deleted.
+    await WatchSync.instance.revokeServer(deleting);
+    await WidgetSync.instance.revokeServer(deleting);
     await _clearServerData(id);
     final newServers = Map<String, Spi>.from(state.servers);
     newServers.remove(id);
@@ -407,6 +411,10 @@ class ServersNotifier extends _$ServersNotifier {
       manualDisconnectedIds: newManualDisconnected,
     );
     await _clearSudoPasswordOverrideBestEffort(id);
+
+    // Now that the row is gone, so the rebuilt lists cannot contain it.
+    await WatchSync.instance.push();
+    await WidgetSync.instance.push();
 
     // Deselect if the deleted server was selected, and invalidate its provider
     // so the keepAlive notifier (PersistentShell, Pve socket) is disposed.
@@ -434,9 +442,11 @@ class ServersNotifier extends _$ServersNotifier {
       TermSessionManager.remove(sessionId);
     }
 
+    // Revoke every one first, while the records are still there to
+    // authenticate with; the single push comes after the store is empty.
     for (final spi in state.servers.values) {
-      await WatchSync.instance.removeServer(spi);
-      await WidgetSync.instance.removeServer(spi);
+      await WatchSync.instance.revokeServer(spi);
+      await WidgetSync.instance.revokeServer(spi);
     }
     for (final id in serverIds) {
       await _clearServerData(id);
@@ -454,6 +464,11 @@ class ServersNotifier extends _$ServersNotifier {
     }
     Stores.setting.serverOrder.put([]);
     state = const ServersState();
+    // One push, once the store is empty. Pushing per server inside the loop
+    // above would rebuild from a store that still held the rest and re-issue
+    // tokens for servers on their way out.
+    await WatchSync.instance.push();
+    await WidgetSync.instance.push();
     await Future.wait(serverIds.map(_clearSudoPasswordOverrideBestEffort));
     for (final id in serverIds) {
       ref.invalidate(serverProvider(id));

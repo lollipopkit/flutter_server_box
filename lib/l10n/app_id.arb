@@ -322,7 +322,7 @@
   "watchServersTip": "Jam mengambil sendiri dari monitor, jadi hanya server yang punya monitor bisa dipilih.",
   "watchNoMonitorServer": "Tidak ada server dengan agen monitor terkonfigurasi",
   "legacyStatusGoneTitle": "URL status tidak berfungsi lagi",
-  "legacyStatusGoneBody": "Aplikasi jam dan widget layar utama membaca alamat `/status` yang diketik manual. Endpoint itu sudah dihapus: ia hanya bisa melaporkan nilai saat ini sebagai teks, itulah sebabnya keduanya tidak pernah bisa menampilkan grafik.\n\nSekarang keduanya membaca API monitor yang terautentikasi, sehingga bisa menggambar tren dan tetap selaras dengan aplikasi sendiri. Atur server sekali di aplikasi, dan setiap jam dan widget akan mengambilnya.",
+  "legacyStatusGoneBody": "Aplikasi jam tangan dan widget layar utama membaca alamat `/status` yang diketik manual. Endpoint itu sudah dihapus: ia hanya bisa melaporkan nilai saat ini sebagai teks, itulah sebabnya keduanya tidak pernah bisa menampilkan grafik.\n\nSekarang keduanya membaca API monitor yang terautentikasi, sehingga bisa menggambar tren dan tetap selaras dengan aplikasi sendiri. Atur server sekali di aplikasi, dan setiap jam tangan dan widget akan mengambilnya.",
   "askAiEndpointTip": "Domain atau URL lengkap. Path dilengkapi dari protokol yang dipilih.",
   "askAiProtocolTip": "Auto mencoba Responses, lalu Chat Completions.",
   "askAiAgentWelcome": "Apa yang akan kita lakukan di server ini?",

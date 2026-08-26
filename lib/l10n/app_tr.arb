@@ -322,7 +322,7 @@
   "watchServersTip": "Saat veriyi monitor’dan kendisi alır, bu yüzden yalnızca monitor’u olan sunucular seçilebilir.",
   "watchNoMonitorServer": "monitor aracısı yapılandırılmış sunucu yok",
   "legacyStatusGoneTitle": "Durum URL'leri artık çalışmıyor",
-  "legacyStatusGoneBody": "Saat uygulaması ve ana ekran araçları elle yazılan bir `/status` adresini okuyordu. Bu uç nokta kaldırıldı: yalnızca anlık değerleri metin olarak döndürebiliyordu, grafik gösterememelerinin nedeni buydu.\n\nArtık monitor aracısının kimlik doğrulamalı API'sini okuyorlar; eğilimleri çiziyor ve uygulamayla kendiliğinden eşleşiyorlar. Sunucuyu uygulamada bir kez yapılandırın, her saat ve araç onu alsın.",
+  "legacyStatusGoneBody": "Saat uygulaması ve ana ekran bileşenleri elle yazılan bir `/status` adresini okuyordu. Bu uç nokta kaldırıldı: yalnızca anlık değerleri metin olarak döndürebiliyordu, grafik gösterememelerinin nedeni buydu.\n\nArtık monitor aracısının kimlik doğrulamalı API'sini okuyorlar; eğilimleri çiziyor ve uygulamayla kendiliğinden eşleşiyorlar. Sunucuyu uygulamada bir kez yapılandırın, her saat ve bileşen onu alsın.",
   "askAiEndpointTip": "Alan adı veya tam URL. Yol, seçtiğin protokole göre tamamlanır.",
   "askAiProtocolTip": "Otomatik önce Responses, sonra Chat Completions dener.",
   "askAiAgentWelcome": "Bu sunucuda ne yapalım?",

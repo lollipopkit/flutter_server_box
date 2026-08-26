@@ -173,15 +173,21 @@ extension _Actions on _IosSettingsPageState {
     );
     if (picked == null) return;
 
+    final offered = servers.map((e) => e.id).toSet();
     final shown = picked.map((e) => e.id).toSet();
-    // Only servers that were on offer. An id the picker never showed — one
-    // whose monitor configuration was removed while this page was open — has
-    // no business being added to the exclusion list by the act of not being
-    // ticked in a dialog it was absent from.
-    final next = servers
-        .map((e) => e.id)
-        .where((id) => !shown.contains(id))
-        .toList();
+    // Only servers that were on offer are decided here, in both directions.
+    // An id the picker never showed — one whose monitor configuration was
+    // removed while this page was open — has no business being added to the
+    // list by the act of not being ticked in a dialog it was absent from, and
+    // no business being *removed* from it either: it would silently come back
+    // to the watch the moment it had an agent again.
+    final kept = Stores.setting.watchExcludedServerIds
+        .fetch()
+        .where((id) => !offered.contains(id));
+    final next = [
+      ...kept,
+      ...offered.where((id) => !shown.contains(id)),
+    ];
     await WatchSync.instance.updateExclusions(next);
     _refresh();
   }
