@@ -37,6 +37,7 @@ A `Makefile` wraps most common tasks — run `make help` for the full list. Pref
   - This is not theoretical, twice over. The fixtures' first run exposed `PortForwardConfig` being lost during import — the one freezed model with no `.g.dart` and so no generated `toJson`, which `SqliteStore.set` reports by returning `false` rather than throwing. Their first run against m004 then exposed four field-name mismatches, each silently dropping a whole store: `pubKeyId` vs `keyId`, `private_key` vs `key`, snake_case in `AgentConversation.toJson`, and generated Hive adapters that could no longer open a box at all.
   - Do the same for the next migration, and never regenerate a fixture to make a failing test pass.
   - **A schema step is three edits, and a passing test for the step proves none of the other two.** The class, `SchemaVersion.current` in `lib/data/store/schema.dart`, and the `kSchemaMigrations` list in `lib/data/store/migrations/all.dart`. Leave `current` behind and the step is registered and never reached — every install stays on the old version with a green test suite. Advance `current` without registering it and `SchemaVersion.migrate` throws `Missing schema migration from vN`, which happens at launch and on a user's device rather than in a test. Neither is visible in the migration's own test, which calls `apply()` directly.
+  - **A step that changes a table *constraint* is a rebuild, not an `ALTER`.** SQLite cannot drop or replace one, so the only way is the documented create-copy-drop-rename — see `m017_both_transports.dart`. `server` is the parent of six tables with `ON DELETE CASCADE`, so `foreign_keys` must be **off** while the old table is dropped (or the drop takes every tag, jump, env and custom command with it) and **on** again afterwards (or every cascade in the app is disarmed for the life of the connection). `PRAGMA foreign_keys` is a no-op inside a transaction, so it is set outside one. `legacy_alter_table` is the other half: without it the rename rewrites the child tables' foreign keys to point at a table that is about to not exist.
 - Size the view, not the surface, when a test depends on a breakpoint: `tester.view.physicalSize` + `devicePixelRatio`. `setSurfaceSize` changes what the tree is laid out in but not what `MediaQuery` reports, so a "phone" test written that way silently exercises the desktop rendering.
 - `pumpAndSettle` is not usable on a tree containing a text field or another always-scheduling widget: it waits for a frame in which nothing is scheduled, and then gives up after its 10-minute default. Count the frames out with `pump(duration)` instead. `--timeout 30s` keeps any such mistake from costing ten minutes.
 
@@ -112,14 +113,36 @@ This is a Flutter application for managing Linux servers with the following key 
 
 ### Connection methods
 
-A server is reached over SSH **or** over a `monitor` agent's HTTP API, never
-both: `ServerConnectCredential.fromSpi` picks by whether `Spi.monitorHttp` is
-set, and a monitor server carries no `SshCredential` at all (`Spi.ssh` is
-null). The edit page enforces the same exclusivity with one switch.
+A server is reached over SSH, over a `monitor` agent's HTTP API, **or both**.
+It used to be exclusive, enforced three times over — a validation error, a
+factory that picked one, and a `CHECK` constraint that was an exclusive or.
+What is left of that is an *ordering*: `Spi.preferredTransport` says which is
+tried first, `Spix.transport` resolves it (SSH leads when both are configured
+and nothing says otherwise — what every such server was before the field, and
+the transport that can do everything), and `Spix.fallbackTransport` names the
+other. A preference for a transport that is not configured is ignored rather
+than honoured into a dead end; that happens, because switching a server's SSH
+off leaves the preference behind and nothing clears it.
 
-What a way of reaching a server can do is asked through `ServerCapabilities`,
-rather than by testing which transport is in use, so a feature needing a shell
-never has to know that "SSH" is the thing that provides one:
+What a server may **not** do is carry neither: `SpiValidationError
+.noConnectionMethod` and `CHECK (ssh_ip IS NOT NULL OR monitor_addr IS NOT
+NULL)` both refuse it. A row with no way in is not a server, it is a name.
+
+`ServerConnectCredential.fromSpi` answers the leading transport and
+`.fallbackOf` the other. `ServerNotifier.ensureExec()` falls through to the
+second when the first fails — giving both sets of credentials is a request to
+reach the machine either way, and refusing the second because the first was
+asked for first would honour an ordering preference as though it were an
+exclusion.
+
+What a server can do is asked through `ServerCapabilities`, rather than by
+testing which transport is in use, so a feature needing a shell never has to
+know that "SSH" is the thing that provides one. For a server with both,
+`ServerCapabilities.ofSpi` answers the **union** (`UnionCapabilities`), not the
+leading transport's answers: such a server really can do both sets of things,
+and reporting only one would hide features behind a preference that is about
+ordering. Which transport a given feature ends up using is decided where it is
+used, by whichever can carry it.
 
 - `SshCapabilities` answers yes to everything but `storedHistory` — one
   connection already carries a shell, a PTY and a channel, and the app samples
@@ -130,8 +153,14 @@ never has to know that "SSH" is the thing that provides one:
   because that one means "these directories" rather than "a shell".
   `byteStream` is **false** — the agent has no endpoint that relays a
   connection to an address the app names, so SFTP and port forwarding are not
-  offered on a monitor server. `storedHistory` is true, since the agent has
-  been sampling since before the app asked.
+  offered on a monitor-only server. `storedHistory` is true, since the agent
+  has been sampling since before the app asked.
+
+Two consequences of the union worth knowing. A both-transports server answers
+true to `byteStream`, so `ServerFilePage` gives it SFTP rather than the agent's
+file API — the fuller of the two. And anything that needs the *agent*
+specifically reads `Spix.monitor` directly rather than casting a connect
+credential, since `fromSpi` may well answer SSH.
 
 `ServerNotifier.ensureExec()` is the one place that decides how a command
 reaches a server: SSH gets an `SshExec`, a monitor server gets the agent's
@@ -191,6 +220,54 @@ monitor agent does the same on its side (`monitor/src/api/fs.rs`);
 `LocalFileBackend` does not and says so, because `dart:io` has no `chmod` and
 that backend answers false to `FileBackendTraits.permissions`.
 
+
+### Watch and home-screen widgets
+
+All three surfaces — the watch app, its complication, and the iOS and Android
+home widgets — read a `monitor` agent's `/api/v1/metrics` and
+`/metrics/history` directly, with a scoped read-only credential this app minted
+for them. None of them speaks to the app at request time.
+
+**The credential is the thing to get right.** `POST /api/v1/watch-token` mints
+one per `client_id` (`watch:<id>` and `widget:<id>`, deliberately different so
+revoking one surface leaves the other alone), and it reaches exactly three
+endpoints. That limit is the agent's route table, not anything in the token —
+`monitor/tests/watch_token_scope.rs` is what holds it, and it mounts the real
+`configure_api` so a hand-built test router cannot pass for the shipped one.
+`ScopedToken` carries the agent's `expires_at` and replaces a token inside a
+two-week window; the agent issues them for 90 days, and this app only rebuilds
+the set when something asks it to.
+
+**Where each surface keeps it differs by what the platform allows.** The watch
+has its own Keychain. The Android widget provider is a `BroadcastReceiver` in
+the app's own process, so it reads app-private storage directly — the token is
+encrypted under an AndroidKeyStore key (`WidgetStore.kt`). The iOS widget is a
+separate extension process and needs a **shared Keychain group**, which is the
+*second* entry in `keychain-access-groups` on purpose: an item added without
+naming a group lands in the first entry, `flutter_secure_storage` names none,
+and that is how the database encryption key is stored. Putting the shared group
+first would quietly start writing that key somewhere the extension can read.
+
+**Nothing is opt-in any more.** `WatchSync.syncedServerIds()` is every server
+with an agent minus `SettingStore.watchExcludedServerIds`; `WidgetSync`
+publishes every one of them. An opt-in list is somewhere to forget a server,
+and a forgotten server looks exactly like a broken watch. The exclusion list
+stays because syncing means minting a credential and putting it on a second
+device, which is worth being able to refuse — and holding a server back revokes
+its token immediately, or it would mean "stop showing this" while the watch
+could still read it for 90 days.
+
+**`allowInsecure` is per server and is checked before the token is sent.**
+Android's `usesCleartextTraffic` answers a different question — whether the
+*process* may speak plaintext at all — and it is not a decision about any one
+server. Loopback counts as secure without TLS, matching the app.
+
+`GET /status` is gone. It answered unauthenticated with values preformatted as
+strings and no history, which is why everything built on it could never draw a
+trend. The agent answers 410 there with a sentence saying where to go, for one
+release, then the route goes too. Schema v17 detects an install that had
+hand-typed one of those addresses and raises a one-time dialog: a bare address
+cannot reach the authenticated API, so there is nothing to convert it into.
 
 ### Features
 
