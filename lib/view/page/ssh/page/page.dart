@@ -259,6 +259,18 @@ class SSHPageState extends ConsumerState<SSHPage>
   bool _isCheckingConnection = false;
   bool _hasPendingImmediateCheck = false;
   bool _reconnectCancelled = false;
+
+  /// The navigator holding the reconnecting dialog, while it is on screen.
+  ///
+  /// The navigator rather than a bool, because this page's own context is not
+  /// enough to close that dialog: it lives on the *root* navigator and so
+  /// outlives the page, and `contextSafe` is null the moment the page is gone.
+  /// A `NavigatorState` captured while showing it still answers.
+  ///
+  /// Nulled by whoever closes it — the cancel button, the reconnect finishing,
+  /// or [dispose] — so the other two do nothing. A second pop on a dialog that
+  /// is already gone takes the route under it instead, which here is the app.
+  NavigatorState? _reconnectDialogNav;
   bool _disconnectDialogOpen = false;
   bool _reportedDisconnected = false;
   VoidCallback? _visibilityListener;
@@ -310,6 +322,12 @@ class SSHPageState extends ConsumerState<SSHPage>
     _terminalController.dispose();
     _virtKeyPage.dispose();
     _discontinuityTimer?.cancel();
+    // The reconnect's own `finally` normally does this, but it only runs when
+    // the reconnect returns — and the thing it is waiting on is a connection
+    // to a host that is not answering. A dialog left on the root navigator by
+    // a page that no longer exists is one nothing else can close.
+    _reconnectCancelled = true;
+    _dismissReconnectingDialog();
     // Not `close`: the connection may be the status poller's, shared with the
     // rest of the app, and a terminal going away is not a reason to hang it up.
     _sess.dispose();

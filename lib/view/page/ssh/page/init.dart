@@ -341,9 +341,7 @@ extension _Init on SSHPageState {
   /// Returns `true` when the terminal was restored.
   Future<bool> _tryReconnect({String? tmuxSession}) async {
     _reconnectCancelled = false;
-    if (mounted) {
-      _showReconnectingDialog(onCancel: () => _reconnectCancelled = true);
-    }
+    if (mounted) _showReconnectingDialog();
     try {
       return await _reconnect(tmuxSession: tmuxSession);
     } catch (e, st) {
@@ -351,12 +349,19 @@ extension _Init on SSHPageState {
       _closeFailedReconnectClient();
       return false;
     } finally {
-      if (mounted) contextSafe?.pop();
+      // Not gated on `mounted`, which is what this used to be. The dialog is
+      // on the root navigator and outlives the page that raised it, so a page
+      // torn down mid-reconnect — its tab closed, the app moved on — left it
+      // spinning over every tab with nothing able to close it: this pop was
+      // skipped, and the cancel button did not close it either.
+      _dismissReconnectingDialog();
     }
   }
 
   /// Cancellable progress dialog shown while reconnecting.
-  void _showReconnectingDialog({required VoidCallback onCancel}) {
+  void _showReconnectingDialog() {
+    // Captured now, while there is certainly a context to ask — see the field.
+    _reconnectDialogNav = Navigator.of(context, rootNavigator: true);
     unawaited(
       context.showRoundDialog(
         child: Row(
@@ -368,12 +373,38 @@ extension _Init on SSHPageState {
             ),
             const SizedBox(width: 16),
             Expanded(child: Text(libL10n.reconnecting)),
-            Btn.cancel(onTap: onCancel),
+            // Closes the dialog itself. An `onTap` replaces the pop `Btn`
+            // would otherwise do from its own context, so a callback that only
+            // set the flag left the button doing nothing anyone could see: the
+            // loop reads the flag between attempts, and an attempt is a whole
+            // SSH connect timeout long.
+            Btn.cancel(
+              onTap: () {
+                _reconnectCancelled = true;
+                _dismissReconnectingDialog();
+              },
+            ),
           ],
         ),
         barrierDismiss: false,
       ),
     );
+  }
+
+  /// Closes the reconnecting dialog, once. Safe when it is already gone.
+  ///
+  /// The pop is scheduled rather than done here, because one of the three
+  /// callers is [dispose], which runs inside the frame that is unmounting this
+  /// page — popping a route from there is a `markNeedsBuild` during build. The
+  /// claim on the dialog is dropped now either way, so the two callers that
+  /// could race still cannot both pop it.
+  void _dismissReconnectingDialog() {
+    final nav = _reconnectDialogNav;
+    if (nav == null) return;
+    _reconnectDialogNav = null;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (nav.mounted) nav.pop();
+    });
   }
 
   Future<void> _showDisconnectDialog() async {
