@@ -45,11 +45,11 @@
         -->
         <ImageView
             android:id="@+id/widget_refresh"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
             android:layout_marginStart="6dp"
             android:contentDescription="@string/widget_refresh_desc"
-            android:padding="5dp"
+            android:padding="6dp"
             android:src="@drawable/refresh_24" />
     </LinearLayout>
 

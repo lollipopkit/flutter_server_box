@@ -455,9 +455,9 @@ private extension WidgetMetric {
     var short: String {
         switch self {
         case .cpu: return "CPU"
-        case .memory: return "MEM"
-        case .disk: return "DISK"
-        case .network: return "NET"
+        case .memory: return "Mem"
+        case .disk: return "Disk"
+        case .network: return "Net"
         }
     }
 

@@ -39,18 +39,20 @@
     <string name="widget_err_timeout">Timed out</string>
     <string name="widget_no_history">No history</string>
 
+    <!-- Read aloud, never drawn, so this one is translated like any other. -->
+    <string name="widget_refresh_desc">Refresh</string>
+
     <!--
         Row labels, matching the abbreviations the iOS widget draws. Not
         translated on either platform: they are read as symbols beside an icon,
         and a translated one would be the only thing on the row wide enough to
         push the value off it.
     -->
-    <string name="widget_refresh_desc">Refresh</string>
-
     <string name="widget_row_cpu" translatable="false">CPU</string>
-    <string name="widget_row_mem" translatable="false">MEM</string>
-    <string name="widget_row_disk" translatable="false">DISK</string>
-    <string name="widget_row_net" translatable="false">NET</string>
+    <string name="widget_row_mem" translatable="false">Mem</string>
+    <string name="widget_row_disk" translatable="false">Disk</string>
+    <string name="widget_row_net" translatable="false">Net</string>
+
     <string name="widget_small_label">Server readings</string>
     <string name="widget_medium_label">Server charts</string>
 </resources>

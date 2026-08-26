@@ -258,13 +258,13 @@ private struct ChartPage: View {
         case .overview:
             VStack(alignment: .leading, spacing: 7) {
                 MetricRow(icon: "cpu", label: "CPU", value: MetricRow.percent(snapshot.cpu))
-                MetricRow(icon: "memorychip", label: "MEM", value: MetricRow.percent(snapshot.mem))
-                MetricRow(icon: "externaldrive", label: "DISK", value: MetricRow.percent(snapshot.disk))
+                MetricRow(icon: "memorychip", label: "Mem", value: MetricRow.percent(snapshot.mem))
+                MetricRow(icon: "externaldrive", label: "Disk", value: MetricRow.percent(snapshot.disk))
                 // A row like the three above it rather than a bare `Label`.
                 // Without a label and a right-hand value it wrapped onto two
                 // lines and read as a caption that had come loose from the
                 // list, which is what it looked like on a 40mm watch.
-                MetricRow(icon: "network", label: "NET", value: snapshot.netText)
+                MetricRow(icon: "network", label: "Net", value: snapshot.netText)
                 if let uptime = snapshot.uptime, !uptime.isEmpty {
                     Text(uptime)
                         .font(.system(size: 10, design: .monospaced))
@@ -282,7 +282,7 @@ private struct ChartPage: View {
             )
         case .memory:
             MetricPage(
-                label: "MEM",
+                label: "Mem",
                 percent: snapshot.mem,
                 detail: snapshot.memText,
                 series: snapshot.memSeries,
@@ -290,7 +290,7 @@ private struct ChartPage: View {
             )
         case .disk:
             MetricPage(
-                label: "DISK",
+                label: "Disk",
                 percent: snapshot.disk,
                 detail: snapshot.diskText,
                 series: snapshot.diskTrend,

@@ -78,13 +78,13 @@ struct WatchStatusWidgetEntryView: View {
     private var metric: (label: String, icon: String, percent: Double?, detail: String?, series: [Double]) {
         switch entry.chart {
         case .memory:
-            return ("MEM", "memorychip", entry.snapshot.mem, entry.snapshot.memText, entry.snapshot.memSeries)
+            return ("Mem", "memorychip", entry.snapshot.mem, entry.snapshot.memText, entry.snapshot.memSeries)
         case .disk:
-            return ("DISK", "externaldrive", entry.snapshot.disk, entry.snapshot.diskText, entry.snapshot.diskTrend)
+            return ("Disk", "externaldrive", entry.snapshot.disk, entry.snapshot.diskText, entry.snapshot.diskTrend)
         case .network:
             // A rate, not a percentage: there is no ceiling to show it against,
             // so the gauge stays empty and the text carries the reading.
-            return ("NET", "network", nil, entry.snapshot.netText, entry.snapshot.netRxSeries)
+            return ("Net", "network", nil, entry.snapshot.netText, entry.snapshot.netRxSeries)
         case .overview, .cpu:
             // Optional, and nil here rather than the memory text it used to
             // borrow: a percentage of one core count has no second number to

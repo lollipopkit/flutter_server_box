@@ -57,9 +57,9 @@ enum WatchChart: Int, CaseIterable, Identifiable {
         switch self {
         case .overview: return "Overview"
         case .cpu: return "CPU"
-        case .memory: return "MEM"
-        case .network: return "NET"
-        case .disk: return "DISK"
+        case .memory: return "Mem"
+        case .network: return "Net"
+        case .disk: return "Disk"
         }
     }
 
