@@ -1564,9 +1564,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get watchLegacyUrls => 'URLs de status antigas';
 
   @override
-  String get accessoryWidgetServer => 'Servidor do widget da tela de bloqueio';
-
-  @override
   String get systemdMissing => 'Sem systemd neste servidor';
 
   @override

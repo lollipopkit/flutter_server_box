@@ -1574,9 +1574,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get watchLegacyUrls => 'Alte Status-URLs';
 
   @override
-  String get accessoryWidgetServer => 'Server für Sperrbildschirm-Widget';
-
-  @override
   String get systemdMissing => 'Kein systemd auf diesem Server';
 
   @override

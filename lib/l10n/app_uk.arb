@@ -324,7 +324,6 @@
   "watchServersTip": "Годинник сам звертається до monitor, тому доступні лише сервери з ним.",
   "watchNoMonitorServer": "Жоден сервер не має налаштованого агента monitor",
   "watchLegacyUrls": "Застарілі URL статусу",
-  "accessoryWidgetServer": "Сервер для віджета екрана блокування",
   "askAiEndpointTip": "Домен або повний URL. Шлях доповнюється за обраним протоколом.",
   "askAiProtocolTip": "Авто пробує Responses, потім Chat Completions.",
   "askAiAgentWelcome": "Що зробимо на цьому сервері?",

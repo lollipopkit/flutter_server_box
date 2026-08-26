@@ -1572,9 +1572,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get watchLegacyUrls => 'Застарілі URL статусу';
 
   @override
-  String get accessoryWidgetServer => 'Сервер для віджета екрана блокування';
-
-  @override
   String get systemdMissing => 'На цьому сервері немає systemd';
 
   @override

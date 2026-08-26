@@ -1575,9 +1575,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get watchLegacyUrls => 'Устаревшие URL статуса';
 
   @override
-  String get accessoryWidgetServer => 'Сервер для виджета экрана блокировки';
-
-  @override
   String get systemdMissing => 'На этом сервере нет systemd';
 
   @override

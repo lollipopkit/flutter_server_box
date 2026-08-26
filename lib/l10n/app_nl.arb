@@ -323,7 +323,6 @@
   "watchServersTip": "De horloge haalt de gegevens zelf bij de monitor op, dus alleen servers met een monitor zijn kiesbaar.",
   "watchNoMonitorServer": "Geen enkele server heeft een monitor-agent geconfigureerd",
   "watchLegacyUrls": "Oude status-URL's",
-  "accessoryWidgetServer": "Server voor vergrendelscherm-widget",
   "askAiEndpointTip": "Een domein of volledige URL. Het pad volgt uit het gekozen protocol.",
   "askAiProtocolTip": "Auto probeert Responses, daarna Chat Completions.",
   "askAiAgentWelcome": "Wat gaan we op deze server doen?",

@@ -240,7 +240,6 @@ Future<void> _doPlatformRelated() async {
   // restored watch configure itself.
   if (isIOS) {
     unawaited(WatchSync.instance.init());
-    unawaited(MethodChans.syncAccessoryWidgetUrl());
   }
 
   // Same reasoning, for the home-screen widgets: the list they offer on their

@@ -1,6 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/service/watch_sync.dart';
@@ -63,7 +62,6 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
       children: [
         _buildPushToken(),
         _buildAutoUpdateHomeWidget(),
-        _buildAccessoryWidgetServer(),
         _buildWatchApp(),
         _buildWatchLegacyUrls(),
       ].nonNulls.map((e) => CardX(child: e)).toList(),
@@ -117,29 +115,12 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
     );
   }
 
-  /// The lock screen / inline families can't carry the intent configuration the
-  /// home screen ones use, so they read one URL out of the App Group instead.
-  Widget _buildAccessoryWidgetServer() {
-    final spi = _accessoryServer;
-    return ListTile(
-      title: Text(l10n.accessoryWidgetServer),
-      subtitle: Text(
-        spi?.name ?? libL10n.empty,
-        style: UIs.textGrey,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: _onTapAccessoryWidgetServer,
-    );
-  }
-
   Widget _buildWatchApp() {
     // What the watch will actually show, which is every monitor server bar the
     // ones held back. Counted rather than taken from the exclusion list's
-    // length for the same reason as [_accessoryServer]: an id outlives the
-    // monitor configuration that made it relevant, and `buildPayload` already
-    // skips those — so a raw length is a number the watch never agrees with.
+    // length: an id outlives the monitor configuration that made it relevant,
+    // and `buildPayload` already skips those — so a raw length is a number the
+    // watch never agrees with.
     final count = WatchSync.syncedServerIds().length;
     return ListTile(
       title: const Text('Watch app'),
@@ -182,55 +163,6 @@ extension _Actions on _IosSettingsPageState {
   List<Spi> get _monitorServers =>
       Stores.server.fetch().where((e) => e.monitor != null).toList();
 
-  /// The chosen server, but only while it can still serve the widget.
-  ///
-  /// A server whose monitor configuration was removed stays in this setting —
-  /// nothing clears it, and there is no single place a removal passes through
-  /// that could. The widget already ends up empty, because the URL is derived
-  /// from the monitor; naming the server here was the last thing still saying
-  /// it was configured.
-  Spi? get _accessoryServer {
-    final id = Stores.setting.accessoryWidgetServerId.fetch();
-    if (id.isEmpty) return null;
-    final spi = Stores.server.fetchOneRaw(id);
-    return spi?.monitor == null ? null : spi;
-  }
-
-  void _onTapAccessoryWidgetServer() async {
-    final servers = _monitorServers;
-    if (servers.isEmpty) {
-      Toast.show(l10n.watchNoMonitorServer);
-      return;
-    }
-
-    final current = _accessoryServer;
-    // `showPickSingleDialog` collapses "dismissed" and "cleared" into the same
-    // null, which would make the choice impossible to unset. The multi-value
-    // form keeps them apart: null is dismissed, empty is cleared.
-    final picked = await context.showPickDialog<Spi>(
-      title: l10n.accessoryWidgetServer,
-      items: servers,
-      display: (e) => e.name,
-      multi: false,
-      clearable: true,
-      initial: current == null ? null : [current],
-    );
-    if (picked == null) return;
-
-    Stores.setting.accessoryWidgetServerId.put(
-      picked.isEmpty ? '' : picked.first.id,
-    );
-    await MethodChans.syncAccessoryWidgetUrl();
-    _refresh();
-  }
-
-  /// Which servers the watch shows — expressed as what it is *shown*, while
-  /// what is stored is what it is denied.
-  ///
-  /// The picker is the right way round for the person using it: everything is
-  /// ticked, and unticking one holds it back. Inverting here rather than
-  /// storing the ticks is what makes a newly added server appear without
-  /// anyone having to come back to this page.
   void _onTapWatchApp() async {
     final servers = _monitorServers;
     if (servers.isEmpty) {

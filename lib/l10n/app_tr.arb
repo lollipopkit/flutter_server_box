@@ -323,7 +323,6 @@
   "watchServersTip": "Saat veriyi monitor’dan kendisi alır, bu yüzden yalnızca monitor’u olan sunucular seçilebilir.",
   "watchNoMonitorServer": "monitor aracısı yapılandırılmış sunucu yok",
   "watchLegacyUrls": "Eski durum URL'leri",
-  "accessoryWidgetServer": "Kilit ekranı bileşeni sunucusu",
   "askAiEndpointTip": "Alan adı veya tam URL. Yol, seçtiğin protokole göre tamamlanır.",
   "askAiProtocolTip": "Otomatik önce Responses, sonra Chat Completions dener.",
   "askAiAgentWelcome": "Bu sunucuda ne yapalım?",

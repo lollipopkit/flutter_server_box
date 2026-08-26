@@ -1470,9 +1470,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get watchLegacyUrls => '레거시 status URL';
 
   @override
-  String get accessoryWidgetServer => '잠금 화면 위젯 서버';
-
-  @override
   String get systemdMissing => '이 서버에는 systemd가 없습니다';
 
   @override

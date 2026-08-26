@@ -323,7 +323,6 @@
   "watchServersTip": "La montre interroge le monitor elle-même ; seuls les serveurs qui en ont un sont proposés.",
   "watchNoMonitorServer": "Aucun serveur n'a d'agent monitor configuré",
   "watchLegacyUrls": "Anciennes URL de statut",
-  "accessoryWidgetServer": "Serveur du widget d'écran verrouillé",
   "askAiEndpointTip": "Un domaine ou une URL complète. Le chemin est complété selon le protocole choisi.",
   "askAiProtocolTip": "Auto essaie Responses, puis Chat Completions.",
   "askAiAgentWelcome": "Que faisons-nous sur ce serveur ?",

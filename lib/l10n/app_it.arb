@@ -328,7 +328,6 @@
   "watchServersTip": "L’orologio interroga il monitor da solo, quindi si possono scegliere solo i server che ne hanno uno.",
   "watchNoMonitorServer": "Nessun server ha un agente monitor configurato",
   "watchLegacyUrls": "URL di stato legacy",
-  "accessoryWidgetServer": "Server del widget della schermata di blocco",
   "askAiEndpointTip": "Un dominio o un URL completo. Il percorso viene completato dal protocollo scelto.",
   "askAiProtocolTip": "Auto prova Responses, poi Chat Completions.",
   "askAiAgentWelcome": "Cosa facciamo su questo server?",

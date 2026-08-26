@@ -323,7 +323,6 @@
   "watchServersTip": "Часы сами обращаются к monitor, поэтому доступны только серверы с ним.",
   "watchNoMonitorServer": "Ни на одном сервере не настроен агент monitor",
   "watchLegacyUrls": "Устаревшие URL статуса",
-  "accessoryWidgetServer": "Сервер для виджета экрана блокировки",
   "askAiEndpointTip": "Домен или полный URL. Путь дополняется по выбранному протоколу.",
   "askAiProtocolTip": "Авто пробует Responses, затем Chat Completions.",
   "askAiAgentWelcome": "Что сделаем на этом сервере?",

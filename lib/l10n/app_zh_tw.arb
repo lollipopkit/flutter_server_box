@@ -444,7 +444,6 @@
   "watchServersTip": "手錶獨立向 monitor 取資料，所以只能選擇已設定 monitor 的伺服器。",
   "watchNoMonitorServer": "沒有伺服器設定了 monitor",
   "watchLegacyUrls": "舊版 status 連結",
-  "accessoryWidgetServer": "鎖定畫面小工具伺服器",
   "jumpServerAndProxyCommandCannotBeUsedTogether": "跳板伺服器與 ProxyCommand 不能同時使用。",
   "proxyCommandOnlySupportedOnDesktop": "ProxyCommand 僅支援桌面平台。",
   "tempIsCelsiusTip": "啟用後，溫度值會以攝氏度而非毫攝氏度處理。僅在溫度顯示錯誤時開啟（例如顯示 0.1°C 而非 58°C）。",

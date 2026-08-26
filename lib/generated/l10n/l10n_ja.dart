@@ -1464,9 +1464,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get watchLegacyUrls => '旧形式の status URL';
 
   @override
-  String get accessoryWidgetServer => 'ロック画面ウィジェットのサーバー';
-
-  @override
   String get systemdMissing => 'このサーバーには systemd がありません';
 
   @override

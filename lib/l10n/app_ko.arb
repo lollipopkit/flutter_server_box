@@ -384,7 +384,6 @@
   "watchServersTip": "시계는 스스로 monitor에서 가져오므로 monitor가 있는 서버만 고를 수 있습니다.",
   "watchNoMonitorServer": "monitor 에이전트가 설정된 서버가 없습니다",
   "watchLegacyUrls": "레거시 status URL",
-  "accessoryWidgetServer": "잠금 화면 위젯 서버",
   "askAiProtocolTip": "자동은 Responses를 먼저, 그다음 Chat Completions를 시도합니다.",
   "askAiAgentWelcome": "이 서버에서 무엇을 할까요?",
   "askAiAgentPromptHint": "에이전트에게 점검이나 수정을 요청하세요...",

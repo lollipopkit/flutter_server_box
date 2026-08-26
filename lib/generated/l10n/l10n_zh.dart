@@ -1427,9 +1427,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get watchLegacyUrls => '旧版 status 链接';
 
   @override
-  String get accessoryWidgetServer => '锁屏小组件服务器';
-
-  @override
   String get systemdMissing => '此服务器没有 systemd';
 
   @override
@@ -2943,9 +2940,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get watchLegacyUrls => '舊版 status 連結';
-
-  @override
-  String get accessoryWidgetServer => '鎖定畫面小工具伺服器';
 
   @override
   String get systemdMissing => '此伺服器沒有 systemd';

@@ -462,7 +462,6 @@
   "watchServersTip": "手表独立向 monitor 取数据，所以只能选择已配置 monitor 的服务器。",
   "watchNoMonitorServer": "没有服务器配置了 monitor",
   "watchLegacyUrls": "旧版 status 链接",
-  "accessoryWidgetServer": "锁屏小组件服务器",
   "systemdMissing": "此服务器没有 systemd",
   "systemdMissingTip": "机器上没有安装 `systemctl`，因此没有 unit 可列。",
   "initSystemFmt": "这台机器似乎使用 {init}。",

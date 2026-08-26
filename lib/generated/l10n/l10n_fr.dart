@@ -1581,9 +1581,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get watchLegacyUrls => 'Anciennes URL de statut';
 
   @override
-  String get accessoryWidgetServer => 'Serveur du widget d\'écran verrouillé';
-
-  @override
   String get systemdMissing => 'Pas de systemd sur ce serveur';
 
   @override

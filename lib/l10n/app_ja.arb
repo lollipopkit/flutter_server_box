@@ -323,7 +323,6 @@
   "watchServersTip": "時計は自分で monitor から取得するため、monitor のあるサーバーだけ選べます。",
   "watchNoMonitorServer": "monitor を設定したサーバーがありません",
   "watchLegacyUrls": "旧形式の status URL",
-  "accessoryWidgetServer": "ロック画面ウィジェットのサーバー",
   "askAiEndpointTip": "ドメインまたは完全な URL。パスは選んだプロトコルから補完されます。",
   "askAiProtocolTip": "自動は Responses、次に Chat Completions を試します。",
   "askAiAgentWelcome": "このサーバーで何をしますか？",

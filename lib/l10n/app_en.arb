@@ -577,7 +577,6 @@
   "watchServersTip": "The watch fetches from the monitor on its own, so only servers with one can be picked.",
   "watchNoMonitorServer": "No server has a monitor agent configured",
   "watchLegacyUrls": "Legacy status URLs",
-  "accessoryWidgetServer": "Lock screen widget server",
   "systemdMissing": "No systemd on this server",
   "systemdMissingTip": "`systemctl` is not installed here, so there are no units to list.",
   "initSystemFmt": "This machine appears to use {init}.",

@@ -1552,9 +1552,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get watchLegacyUrls => 'Legacy status URLs';
 
   @override
-  String get accessoryWidgetServer => 'Lock screen widget server';
-
-  @override
   String get systemdMissing => 'No systemd on this server';
 
   @override

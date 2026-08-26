@@ -1553,9 +1553,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get watchLegacyUrls => 'Eski durum URL\'leri';
 
   @override
-  String get accessoryWidgetServer => 'Kilit ekranı bileşeni sunucusu';
-
-  @override
   String get systemdMissing => 'Bu sunucuda systemd yok';
 
   @override

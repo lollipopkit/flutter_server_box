@@ -273,14 +273,6 @@ class SettingStore extends SqliteStore {
     false,
   );
 
-  /// Server whose status feeds the iOS lock-screen accessory widget, by
-  /// [Spi.id]. Empty means none is chosen, which is what every install had
-  /// until now — the widget read an App Group key nothing ever wrote.
-  late final accessoryWidgetServerId = propertyDefault(
-    'accessoryWidgetServerId',
-    '',
-  );
-
   late final autoCheckAppUpdate = propertyDefault('autoCheckAppUpdate', true);
 
   /// Width of the list column, wherever one shares the window with what it

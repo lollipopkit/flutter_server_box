@@ -2744,12 +2744,6 @@ abstract class AppLocalizations {
   /// **'Legacy status URLs'**
   String get watchLegacyUrls;
 
-  /// No description provided for @accessoryWidgetServer.
-  ///
-  /// In en, this message translates to:
-  /// **'Lock screen widget server'**
-  String get accessoryWidgetServer;
-
   /// No description provided for @systemdMissing.
   ///
   /// In en, this message translates to:

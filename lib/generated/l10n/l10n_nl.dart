@@ -1568,9 +1568,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get watchLegacyUrls => 'Oude status-URL\'s';
 
   @override
-  String get accessoryWidgetServer => 'Server voor vergrendelscherm-widget';
-
-  @override
   String get systemdMissing => 'Geen systemd op deze server';
 
   @override

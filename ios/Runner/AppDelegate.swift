@@ -111,20 +111,6 @@ import ActivityKit
             case "setPrivacyBlurLocked":
                 PrivacyBlur.shared.setLocked(call.arguments as? Bool ?? false)
                 result(nil)
-            case "setAccessoryWidgetUrl":
-                // The accessory families can't carry the intent configuration
-                // the home-screen ones use, so they read this key instead —
-                // see StatusWidget.getTimeline.
-                let defaults = UserDefaults(suiteName: appGroupId)
-                if let url = call.arguments as? String, !url.isEmpty {
-                    defaults?.set(url, forKey: accessoryKey)
-                } else {
-                    defaults?.removeObject(forKey: accessoryKey)
-                }
-                if #available(iOS 14.0, *) {
-                    WidgetCenter.shared.reloadTimelines(ofKind: "StatusWidget")
-                }
-                result(nil)
             case "publishWidgetServers":
                 guard let payload = call.arguments as? String else {
                     result(nil)

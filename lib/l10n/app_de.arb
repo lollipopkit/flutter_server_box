@@ -323,7 +323,6 @@
   "watchServersTip": "Die Uhr holt die Daten selbst vom Monitor, daher sind nur Server mit einem wählbar.",
   "watchNoMonitorServer": "Kein Server hat einen monitor-Agenten konfiguriert",
   "watchLegacyUrls": "Alte Status-URLs",
-  "accessoryWidgetServer": "Server für Sperrbildschirm-Widget",
   "askAiEndpointTip": "Domain oder vollständige URL. Der Pfad ergibt sich aus dem gewählten Protokoll.",
   "askAiProtocolTip": "Auto probiert Responses, dann Chat Completions.",
   "askAiAgentWelcome": "Was sollen wir auf diesem Server tun?",

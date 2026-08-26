@@ -1553,9 +1553,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get watchLegacyUrls => 'URL status lama';
 
   @override
-  String get accessoryWidgetServer => 'Server widget layar kunci';
-
-  @override
   String get systemdMissing => 'Tidak ada systemd di server ini';
 
   @override

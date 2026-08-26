@@ -1574,10 +1574,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get watchLegacyUrls => 'URL di stato legacy';
 
   @override
-  String get accessoryWidgetServer =>
-      'Server del widget della schermata di blocco';
-
-  @override
   String get systemdMissing => 'Nessun systemd su questo server';
 
   @override
