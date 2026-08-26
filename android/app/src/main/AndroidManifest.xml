@@ -29,6 +29,11 @@
         android:protectionLevel="signature" />
     <uses-permission android:name="tech.lolli.toolbox.permission.INTERNAL_BROADCAST" />
 
+    <!-- The database is encrypted with a random key held by Android's
+         device-bound secure storage. Auto Backup can restore the database on
+         another device without restoring that key, producing data the app can
+         never decrypt. Credentials also do not belong in an OS backup.
+         Cross-device recovery is the app's encrypted export. -->
     <application
         android:label="@string/app_name"
         android:name="${applicationName}"
