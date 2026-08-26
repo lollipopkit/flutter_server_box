@@ -42,9 +42,11 @@ scripts/build-proot-android.sh
 # Refresh Flutter's Android metadata after `pub get`, then remove dev-only
 # plugins before Gradle configures the release. The complete build below
 # regenerates its registrant from this pruned input even with `--no-pub`.
-flutter build apk "${FLUTTER_ANDROID_REPRO_ARGS[@]}" --release --config-only
+flutter build apk --release --config-only
 dart --packages="$REPO_ROOT/scripts/release/empty-package-config.json" \
   "$REPO_ROOT/scripts/release/prune-android-dev-plugins.dart"
+dart --packages="$REPO_ROOT/scripts/release/empty-package-config.json" \
+  "$REPO_ROOT/scripts/release/map_plugin_registrant_package.dart"
 
 # Only a complete release task graph resolves plugin compile/runtime artifacts;
 # `dependencies` and `--config-only` alone missed artifacts that CI then
@@ -52,7 +54,6 @@ dart --packages="$REPO_ROOT/scripts/release/empty-package-config.json" \
 # cache, then remove every compiled output so the offline phase still rebuilds
 # from source.
 flutter build apk \
-  "${FLUTTER_ANDROID_REPRO_ARGS[@]}" \
   --release \
   --split-per-abi \
   --no-pub

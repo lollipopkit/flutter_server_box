@@ -20,6 +20,7 @@ on:
       - "scripts/release/compare-apks.sh"
       - "scripts/release/empty-package-config.json"
       - "scripts/release/gradle-offline.init.gradle"
+      - "scripts/release/map_plugin_registrant_package.dart"
       - "scripts/release/patch-jni-build-id.sh"
       - "scripts/release/prepare-fdroid.sh"
       - "scripts/release/prune-android-dev-plugins.dart"

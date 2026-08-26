@@ -26,14 +26,6 @@ export TZ=UTC
 export LC_ALL=C
 export ORG_GRADLE_PROJECT_allowUnsignedRelease=true
 
-# Keep generated Dart sources under a stable virtual URI. Flutter otherwise
-# embeds the checkout's absolute dart_plugin_registrant.dart path in libapp.so,
-# which also changes private-symbol hashes when the path length changes.
-FLUTTER_ANDROID_REPRO_ARGS=(
-  "--android-project-arg=filesystem-roots=$REPO_ROOT"
-  "--android-project-arg=filesystem-scheme=org-dartlang-root"
-)
-
 # Do not inherit an arbitrary host cache or put fetched dependencies inside the
 # source tree. F-Droid scans after `prebuild`, so an in-tree cache would either
 # fail the scanner or be deleted before the offline build can use it.
