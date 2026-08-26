@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
@@ -284,6 +285,10 @@ class ServerNotifier extends _$ServerNotifier {
   /// server still marked failed after they had fixed its address.
   int? _refreshingOperation;
 
+  /// [interactive] means a person is waiting on this one — the Retry button on
+  /// a failed card or on the detail page — as opposed to the poll timer. It
+  /// decides both whether keyboard-interactive auth may raise a prompt and
+  /// whether the wait is shown before the work starts.
   Future<void> refresh({bool interactive = false}) async {
     final operation = _operationGeneration;
     // Two refreshes of the *same* generation are the overlap worth stopping.
@@ -291,6 +296,24 @@ class ServerNotifier extends _$ServerNotifier {
 
     _refreshingOperation = operation;
     try {
+      // Somebody pressed Retry, and the first thing they are owed is that it
+      // registered. Both paths raise a connecting/loading state of their own,
+      // but the monitor path can fail *synchronously* — an address that is not
+      // HTTPS is refused by `MonitorHttpClient._addr` before a request goes
+      // out — so the attempt began and ended inside one microtask drain and no
+      // frame ever carried the loading state. The button appeared dead.
+      //
+      // Only from a resting state: `finished` refreshing in place must not
+      // blink a spinner over the readings it already has.
+      final spi = state.spi;
+      if (interactive && state.conn < ServerConn.connecting) {
+        updateConnection(ServerConn.connecting);
+        // Waited on rather than assumed. Yielding to the microtask queue is
+        // not enough — a frame is scheduled on the event queue, and the whole
+        // failure would still land before it ran.
+        await SchedulerBinding.instance.endOfFrame;
+        if (!_isRefreshCurrent(operation, spi)) return;
+      }
       await _getData(interactive: interactive, operation: operation);
     } finally {
       // Only if it is still ours: a newer refresh may have taken over while
