@@ -69,14 +69,19 @@ jobs:
           distribution: "zulu"
           java-version: "21"
 
-      - name: Install the pinned Android NDK
+      - name: Install the pinned Android SDK and NDK
         shell: bash
         working-directory: ${{ runner.temp }}/${{ matrix.source_directory }}
         run: |
           set -euo pipefail
+          compile_sdk="$(tr -d '[:space:]' < android/compile-sdk-version.txt)"
+          build_tools="$(tr -d '[:space:]' < android/build-tools-version.txt)"
           ndk_version="$(tr -d '[:space:]' < android/ndk-version.txt)"
           sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
-          "$sdkmanager" "ndk;$ndk_version"
+          "$sdkmanager" \
+            "platforms;android-$compile_sdk" \
+            "build-tools;$build_tools" \
+            "ndk;$ndk_version"
           echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$ndk_version" >> "$GITHUB_ENV"
 
       - name: Fix the build epoch

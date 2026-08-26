@@ -34,10 +34,10 @@ FLUTTER_ANDROID_REPRO_ARGS=(
   "--android-project-arg=filesystem-scheme=org-dartlang-root"
 )
 
-# Do not inherit an arbitrary host Gradle cache. Preparation fills this cache
-# from an empty clean checkout, and the network-isolated build reuses exactly
-# that prepared input. Keep proot beside it so `flutter clean` can discard all
-# warm-up build outputs without discarding proot's authenticated source cache.
-FDROID_CACHE_DIR="${FDROID_CACHE_DIR:-$REPO_ROOT/.fdroid-cache}"
+# Do not inherit an arbitrary host cache or put fetched dependencies inside the
+# source tree. F-Droid scans after `prebuild`, so an in-tree cache would either
+# fail the scanner or be deleted before the offline build can use it.
+FDROID_CACHE_DIR="${FDROID_CACHE_DIR:-${RUNNER_TEMP:-${TMPDIR:-/tmp}}/server-box-fdroid-cache}"
+export PUB_CACHE="${PUB_CACHE:-$FDROID_CACHE_DIR/pub}"
 export GRADLE_USER_HOME="${FDROID_GRADLE_USER_HOME:-$FDROID_CACHE_DIR/gradle}"
 export PROOT_BUILD_DIR="${PROOT_BUILD_DIR:-$FDROID_CACHE_DIR/proot}"

@@ -13,6 +13,8 @@ can be named.
   the version into F-Droid metadata without checking that file.
 - Android NDK r28c is pinned as `28.2.13676358` in
   `android/ndk-version.txt`.
+- Android compile SDK 36 and SDK Build Tools 35.0.0 are pinned in
+  `android/compile-sdk-version.txt` and `android/build-tools-version.txt`.
 - The app's Rust native asset pins its compiler and targets in
   `crates/sbm_ffi/rust-toolchain.toml`.
 - `pubspec.lock`, `Cargo.lock`, Gradle's wrapper, every git dependency, and all
@@ -73,16 +75,14 @@ signature.
       - '[[ $flutterVersion ]]'
       - git -C $$flutter$$ checkout -f $flutterVersion
       - export PATH=$$flutter$$/bin:$PATH
-      - export PUB_CACHE=$(pwd)/.pub-cache
       - flutter config --no-analytics
       - scripts/release/prepare-fdroid.sh
     scandelete:
-      - .pub-cache
       - packages/xterm/example/assets/specs_v1.json.gz
     build:
       - export PATH=$$flutter$$/bin:$PATH
-      - export PUB_CACHE=$(pwd)/.pub-cache
       - FDROID_OFFLINE=true scripts/release/build-fdroid.sh amd64
+    target: android-36
     ndk: r28c
 
   - versionName: 1.0.<build>
@@ -109,16 +109,14 @@ signature.
       - '[[ $flutterVersion ]]'
       - git -C $$flutter$$ checkout -f $flutterVersion
       - export PATH=$$flutter$$/bin:$PATH
-      - export PUB_CACHE=$(pwd)/.pub-cache
       - flutter config --no-analytics
       - scripts/release/prepare-fdroid.sh
     scandelete:
-      - .pub-cache
       - packages/xterm/example/assets/specs_v1.json.gz
     build:
       - export PATH=$$flutter$$/bin:$PATH
-      - export PUB_CACHE=$(pwd)/.pub-cache
       - FDROID_OFFLINE=true scripts/release/build-fdroid.sh arm
+    target: android-36
     ndk: r28c
 
   - versionName: 1.0.<build>
@@ -145,16 +143,14 @@ signature.
       - '[[ $flutterVersion ]]'
       - git -C $$flutter$$ checkout -f $flutterVersion
       - export PATH=$$flutter$$/bin:$PATH
-      - export PUB_CACHE=$(pwd)/.pub-cache
       - flutter config --no-analytics
       - scripts/release/prepare-fdroid.sh
     scandelete:
-      - .pub-cache
       - packages/xterm/example/assets/specs_v1.json.gz
     build:
       - export PATH=$$flutter$$/bin:$PATH
-      - export PUB_CACHE=$(pwd)/.pub-cache
       - FDROID_OFFLINE=true scripts/release/build-fdroid.sh arm64
+    target: android-36
     ndk: r28c
 ```
 

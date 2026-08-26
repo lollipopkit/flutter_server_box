@@ -76,6 +76,8 @@ if (requiresReleaseSigning && !hasReleaseSigning) {
 }
 
 def pinnedNdkVersion = rootProject.file('ndk-version.txt').text.trim()
+def pinnedCompileSdkVersion = rootProject.file('compile-sdk-version.txt').text.trim().toInteger()
+def pinnedBuildToolsVersion = rootProject.file('build-tools-version.txt').text.trim()
 
 def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
 if (flutterVersionCode == null) {
@@ -89,7 +91,8 @@ if (flutterVersionName == null) {
 
 android {
     namespace "tech.lolli.toolbox"
-    compileSdk flutter.compileSdkVersion
+    compileSdk pinnedCompileSdkVersion
+    buildToolsVersion pinnedBuildToolsVersion
     // One version for Gradle native assets and scripts/build-proot-android.sh.
     // A runner's "latest" NDK is not a reproducible build input.
     ndkVersion pinnedNdkVersion

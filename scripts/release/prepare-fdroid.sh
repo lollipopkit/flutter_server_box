@@ -10,8 +10,8 @@ cd "$REPO_ROOT"
 # shellcheck source=android-build-env.sh
 source "$REPO_ROOT/scripts/release/android-build-env.sh"
 
-[ ! -e "$GRADLE_USER_HOME" ] || {
-  echo "prepared Gradle cache already exists: $GRADLE_USER_HOME" >&2
+[ ! -e "$FDROID_CACHE_DIR" ] || {
+  echo "prepared build cache already exists: $FDROID_CACHE_DIR" >&2
   echo "run preparation from a clean checkout or choose a new FDROID_CACHE_DIR" >&2
   exit 1
 }
@@ -39,11 +39,9 @@ rustup run "$rust_toolchain" cargo fetch \
 scripts/release/patch-jni-build-id.sh
 scripts/build-proot-android.sh
 
-# Generate release-specific plugin files before Gradle starts. A preceding
-# `pub get` includes dev-only plugins such as integration_test in the default
-# registrant, while Gradle deliberately excludes their projects from release.
-# Do not pass `--no-pub`: Flutter gates platform-tooling regeneration on that
-# flag even when `--config-only` is requested.
+# Refresh Flutter's Android metadata after `pub get`, then remove dev-only
+# plugins before Gradle configures the release. The complete build below
+# regenerates its registrant from this pruned input even with `--no-pub`.
 flutter build apk "${FLUTTER_ANDROID_REPRO_ARGS[@]}" --release --config-only
 dart --packages="$REPO_ROOT/scripts/release/empty-package-config.json" \
   "$REPO_ROOT/scripts/release/prune-android-dev-plugins.dart"
