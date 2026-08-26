@@ -211,6 +211,85 @@ macro_rules! require_read_access {
     }};
 }
 
+/// Every `/api/v1` route, in one place both the real server and the tests
+/// mount.
+///
+/// Extracted because the auth gate an endpoint gets is a property of *this*
+/// table, not of the handler: [`require_read_access`] accepts a watch token
+/// and [`require_jwt`] does not, and which one a route ends up behind is
+/// decided here. A test that hand-built its own scope could assert whatever it
+/// liked about a handler and still say nothing about what the shipped binary
+/// exposes — see `tests/watch_token_scope.rs`, whose whole subject is this
+/// table.
+pub fn configure_api(cfg: &mut web::ServiceConfig) {
+    cfg.service(
+        web::scope("/api/v1")
+            .route("/login", web::post().to(login))
+            .service(
+                web::resource("/watch-token")
+                    .route(web::post().to(issue_watch_token))
+                    .route(web::delete().to(revoke_watch_token)),
+            )
+            .route("/status", web::get().to(get_status))
+            .route("/metrics", web::get().to(get_metrics))
+            .route("/capabilities", web::get().to(get_capabilities))
+            .route("/ws-ticket", web::post().to(issue_ws_ticket))
+            .route("/terminal/ws", web::get().to(terminal_ws))
+            .service(
+                // Its own payload limit: ntex allows 32 KiB by
+                // default, and this endpoint's `stdin` carries the
+                // generated status script — 5 KiB today, but it grows
+                // with every custom command a user adds, and going
+                // over would answer 413 with nothing to explain it.
+                web::resource("/exec")
+                    .state(
+                        web::types::JsonConfig::default()
+                            .limit(crate::api::exec::MAX_REQUEST),
+                    )
+                    .route(web::post().to(crate::api::exec::exec)),
+            )
+            .service(
+                // A streamed body, so ntex's payload limit must not
+                // apply: the point of this endpoint is the file that
+                // `/exec` could not carry.
+                web::resource("/fs/write").route(web::put().to(crate::api::fs::write)),
+            )
+            .route("/fs/roots", web::get().to(crate::api::fs::roots))
+            .route("/fs/list", web::get().to(crate::api::fs::list))
+            .route("/fs/stat", web::get().to(crate::api::fs::stat))
+            .route("/fs/read", web::get().to(crate::api::fs::read))
+            .route("/fs/mkdir", web::post().to(crate::api::fs::mkdir))
+            .route("/fs/rename", web::post().to(crate::api::fs::rename))
+            .route("/fs/chmod", web::post().to(crate::api::fs::chmod))
+            .route("/fs/remove", web::delete().to(crate::api::fs::remove))
+            .route(
+                "/remote-access/full-access",
+                web::delete().to(disable_full_access),
+            )
+            .service(
+                // Its own payload limit, like `/exec`: the body is
+                // every custom command at once, and a user who pastes
+                // a real script into one would otherwise meet ntex's
+                // 32 KiB default as a 413 with nothing to explain it.
+                web::resource("/custom-cmds")
+                    .state(
+                        web::types::JsonConfig::default()
+                            .limit(crate::api::custom_cmds::MAX_REQUEST),
+                    )
+                    .route(web::get().to(crate::api::custom_cmds::list))
+                    .route(web::put().to(crate::api::custom_cmds::replace)),
+            )
+            .route("/settings", web::get().to(get_settings))
+            .route("/settings", web::put().to(update_settings))
+            .route("/card-order", web::get().to(get_card_order))
+            .route("/card-order", web::put().to(update_card_order))
+            .route("/metrics/history", web::get().to(get_metrics_history))
+            .route("/health", web::get().to(health_check))
+            .route("/velocity", web::get().to(get_velocity))
+            .route("/velocity/history", web::get().to(get_velocity_history)),
+    );
+}
+
 pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
     let server_config = app_state.config.get_server();
     let bind_addr = format!("{}:{}", server_config.host, server_config.port);
@@ -232,73 +311,7 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
             .state(app_state.clone())
             .middleware(Logger::default())
             .middleware(cors)
-            .service(
-                web::scope("/api/v1")
-                    .route("/login", web::post().to(login))
-                    .service(
-                        web::resource("/watch-token")
-                            .route(web::post().to(issue_watch_token))
-                            .route(web::delete().to(revoke_watch_token)),
-                    )
-                    .route("/status", web::get().to(get_status))
-                    .route("/metrics", web::get().to(get_metrics))
-                    .route("/capabilities", web::get().to(get_capabilities))
-                    .route("/ws-ticket", web::post().to(issue_ws_ticket))
-                    .route("/terminal/ws", web::get().to(terminal_ws))
-                    .service(
-                        // Its own payload limit: ntex allows 32 KiB by
-                        // default, and this endpoint's `stdin` carries the
-                        // generated status script — 5 KiB today, but it grows
-                        // with every custom command a user adds, and going
-                        // over would answer 413 with nothing to explain it.
-                        web::resource("/exec")
-                            .state(
-                                web::types::JsonConfig::default()
-                                    .limit(crate::api::exec::MAX_REQUEST),
-                            )
-                            .route(web::post().to(crate::api::exec::exec)),
-                    )
-                    .service(
-                        // A streamed body, so ntex's payload limit must not
-                        // apply: the point of this endpoint is the file that
-                        // `/exec` could not carry.
-                        web::resource("/fs/write")
-                            .route(web::put().to(crate::api::fs::write)),
-                    )
-                    .route("/fs/roots", web::get().to(crate::api::fs::roots))
-                    .route("/fs/list", web::get().to(crate::api::fs::list))
-                    .route("/fs/stat", web::get().to(crate::api::fs::stat))
-                    .route("/fs/read", web::get().to(crate::api::fs::read))
-                    .route("/fs/mkdir", web::post().to(crate::api::fs::mkdir))
-                    .route("/fs/rename", web::post().to(crate::api::fs::rename))
-                    .route("/fs/chmod", web::post().to(crate::api::fs::chmod))
-                    .route("/fs/remove", web::delete().to(crate::api::fs::remove))
-                    .route(
-                        "/remote-access/full-access",
-                        web::delete().to(disable_full_access),
-                    )
-                    .service(
-                        // Its own payload limit, like `/exec`: the body is
-                        // every custom command at once, and a user who pastes
-                        // a real script into one would otherwise meet ntex's
-                        // 32 KiB default as a 413 with nothing to explain it.
-                        web::resource("/custom-cmds")
-                            .state(
-                                web::types::JsonConfig::default()
-                                    .limit(crate::api::custom_cmds::MAX_REQUEST),
-                            )
-                            .route(web::get().to(crate::api::custom_cmds::list))
-                            .route(web::put().to(crate::api::custom_cmds::replace)),
-                    )
-                    .route("/settings", web::get().to(get_settings))
-                    .route("/settings", web::put().to(update_settings))
-                    .route("/card-order", web::get().to(get_card_order))
-                    .route("/card-order", web::put().to(update_card_order))
-                    .route("/metrics/history", web::get().to(get_metrics_history))
-                    .route("/health", web::get().to(health_check))
-                    .route("/velocity", web::get().to(get_velocity))
-                    .route("/velocity/history", web::get().to(get_velocity_history)),
-            )
+            .configure(configure_api)
             // TODO: Go-compat endpoint (used by the flutter_server_box app); remove once the app migrates to /api/v1
             .route("/status", web::get().to(get_status_compat))
             // Static file serving configuration:
