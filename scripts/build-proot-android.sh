@@ -95,12 +95,17 @@ log "NDK: $NDK"
 mkdir -p "$WORK_DIR" "$OUT_DIR"
 
 fetch() {
-  local url="$1" dest="$2" want="${3:-}"
-  [ -f "$dest" ] && return
+  local url="$1" dest="$2" want="${3:-}" got
+  if [ -f "$dest" ]; then
+    if [ -z "$want" ]; then return; fi
+    got="$(sha256 "$dest")"
+    if [ "$got" = "$want" ]; then return; fi
+    log "$(basename "$dest") digest mismatch (expected $want, got $got), re-fetching"
+    rm -f "$dest"
+  fi
   log "Fetching $(basename "$dest")"
   curl -fsSL --retry 3 -o "$dest" "$url"
   [ -n "$want" ] || return
-  local got
   got="$(sha256 "$dest")"
   # Removed, not left behind: a cached file that failed its check would be
   # skipped by the `-f` above on the next run and never checked again.
@@ -117,10 +122,13 @@ sha256() {
 
 build_talloc() {
   local src="$WORK_DIR/talloc-$TALLOC_VERSION"
-  [ -f "$WORK_DIR/libtalloc.a" ] && { log "talloc already built"; return; }
-
   fetch "$TALLOC_URL" "$WORK_DIR/talloc.tar.gz" "$TALLOC_SHA256"
-  [ -d "$src" ] || tar xzf "$WORK_DIR/talloc.tar.gz" -C "$WORK_DIR"
+  # The archive is the authenticated cache. Recreate sources and outputs from
+  # it on every invocation so a modified persistent work tree or libtalloc.a
+  # can never be packaged merely because the expected files still exist.
+  rm -rf "$src"
+  rm -f "$WORK_DIR/talloc.o" "$WORK_DIR/libtalloc.a"
+  tar xzf "$WORK_DIR/talloc.tar.gz" -C "$WORK_DIR"
 
   # talloc.c includes Samba's `replace.h`, a compat shim for platforms without
   # a modern libc. Building the one file we need against bionic is far less
@@ -189,6 +197,10 @@ patch_proot() {
 
 build_proot() {
   local src="$WORK_DIR/proot"
+  if [ -e "$src" ] && [ ! -d "$src/.git" ]; then
+    log "Discarding an unauthenticated proot source cache"
+    rm -rf "$src"
+  fi
   if [ ! -d "$src" ]; then
     log "Cloning proot $PROOT_TAG"
     # Cloned rather than fetched as a tarball: GitHub's generated archives are
@@ -199,6 +211,11 @@ build_proot() {
   local head
   head="$(git -C "$src" rev-parse HEAD)"
   [ "$head" = "$PROOT_COMMIT" ] || die "proot $PROOT_TAG is $head, not the pinned $PROOT_COMMIT"
+  # HEAD alone does not authenticate a reused working tree or old build
+  # products. Restore the committed tree and remove every untracked/ignored
+  # artifact before applying our deterministic patch and rebuilding.
+  git -C "$src" reset --hard "$PROOT_COMMIT" >/dev/null
+  git -C "$src" clean -ffdqx
   patch_proot "$src"
 
   log "Building proot"

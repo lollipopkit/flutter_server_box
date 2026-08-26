@@ -207,7 +207,7 @@ types:
         index: 2
   SshCredential:
     typeId: 16
-    nextIndex: 11
+    nextIndex: 12
     fields:
       ip:
         index: 0
@@ -229,3 +229,5 @@ types:
         index: 8
       keyPath:
         index: 10
+      identityFiles:
+        index: 11

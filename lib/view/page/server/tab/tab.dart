@@ -58,9 +58,11 @@ class _ServerPageState extends ConsumerState<ServerPage>
         AutomaticKeepAliveClientMixin,
         AfterLayoutMixin,
         TickerProviderStateMixin {
-  late double _textFactorDouble;
+  double _textFactorDouble = 1.0;
   final ValueNotifier<double> _offsetNotifier = ValueNotifier(1);
-  late TextScaler _textFactor;
+  TextScaler _textFactor = TextScaler.linear(1.0);
+  PageController? _landscapeController;
+  String? _landscapeSeenId;
 
   final _cardsStatus = <String, _CardNotifier>{};
   late final ValueNotifier<Set<String>> _tags;
@@ -117,6 +119,11 @@ class _ServerPageState extends ConsumerState<ServerPage>
     _tag.dispose();
     _tags.dispose();
     _offsetNotifier.dispose();
+    _landscapeController?.dispose();
+    for (final n in _cardsStatus.values) {
+      n.dispose();
+    }
+    _cardsStatus.clear();
     super.dispose();
   }
 
@@ -146,12 +153,20 @@ class _ServerPageState extends ConsumerState<ServerPage>
     _startAvoidJitterTimer();
   }
 
+  void _pruneCardNotifiers(Set<String> aliveIds) {
+    final toRemove = _cardsStatus.keys.where((id) => !aliveIds.contains(id)).toList();
+    for (final id in toRemove) {
+      _cardsStatus.remove(id)?.dispose();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
     // Listen to provider changes and update the ValueNotifier
     ref.listen(serversProvider, (previous, next) {
       _tags.value = next.tags;
+      _pruneCardNotifiers(next.servers.keys.toSet());
     });
     return OrientationBuilder(
       builder: (_, orientation) {

@@ -139,6 +139,57 @@ fn a_zero_cleanup_interval_is_rejected() {
     );
 }
 
+#[test]
+fn zero_retention_windows_are_rejected() {
+    let mut config = DataRetentionConfig {
+        metrics_days: 0,
+        alerts_days: 90,
+        cleanup_interval_hours: 24,
+        max_db_size_mb: 256,
+    };
+    assert_eq!(
+        config.validate().unwrap_err(),
+        "data_retention.metrics_days must be at least 1"
+    );
+
+    config.metrics_days = 30;
+    config.alerts_days = 0;
+    assert_eq!(
+        config.validate().unwrap_err(),
+        "data_retention.alerts_days must be at least 1"
+    );
+}
+
+#[tokio::test]
+async fn a_negative_table_policy_does_not_delete_current_data() -> Result<()> {
+    let pool = setup_test_db().await?;
+    sqlx::query("UPDATE retention_policies SET retention_days = -1 WHERE table_name = 'access_log'")
+        .execute(&pool)
+        .await?;
+    sqlx::query(
+        "INSERT INTO access_log (kind, action, result) VALUES ('terminal', 'open', 'ok')",
+    )
+    .execute(&pool)
+    .await?;
+
+    let service = DataCleanupService::new(
+        pool.clone(),
+        DataRetentionConfig {
+            metrics_days: 30,
+            alerts_days: 90,
+            cleanup_interval_hours: 24,
+            max_db_size_mb: 0,
+        },
+    );
+    service.cleanup_expired_data().await?;
+
+    let count: i64 = sqlx::query_scalar("SELECT count(*) FROM access_log")
+        .fetch_one(&pool)
+        .await?;
+    assert_eq!(count, 1);
+    Ok(())
+}
+
 #[tokio::test]
 async fn the_cleanup_scheduler_refuses_a_zero_interval_before_spawning() -> Result<()> {
     let pool = setup_test_db().await?;

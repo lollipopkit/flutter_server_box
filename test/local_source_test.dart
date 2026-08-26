@@ -23,6 +23,7 @@ void main() {
       const b = LocalSource(rootfs: true, profileId: 'alpine-2');
 
       expect(a.id, isNot(b.id));
+      expect(a, isNot(b));
     });
 
     test('is not the device\'s own', () {

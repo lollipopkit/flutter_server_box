@@ -148,9 +148,12 @@ class SftpFileBackend implements FileBackend {
         (true, true) => 'rm -r -- ${shellSingleQuote(path)}',
         (true, false) => 'rmdir -- ${shellSingleQuote(path)}',
         (false, _) => 'rm -f -- ${shellSingleQuote(path)}',
-        // Never stat'd, because this user could not. `-r` covers a directory
-        // and `-f` a file, and one of the two is what is there.
-        (null, _) => 'rm -rf -- ${shellSingleQuote(path)}',
+        // Unknown because this user could not stat it. Keep the caller's
+        // recursion choice intact even when sudo has to determine the type.
+        (null, true) => 'rm -rf -- ${shellSingleQuote(path)}',
+        (null, false) =>
+          'rm -f -- ${shellSingleQuote(path)} || '
+              'rmdir -- ${shellSingleQuote(path)}',
       },
     );
   }
@@ -191,16 +194,17 @@ class SftpFileBackend implements FileBackend {
 
   @override
   Stream<List<int>> read(String path, {int offset = 0}) async* {
-    final file = await _bounded(
+    final file = await _openFile(
       'open for read',
       _sftp.open(path, mode: SftpFileOpenMode.read),
+      lateCleanup: (file) => file.close(),
     );
     try {
       // Not bounded: a slow transfer is not a stalled one, and the caller
       // watching bytes arrive is better placed to decide it has given up.
       yield* file.read(offset: offset);
     } finally {
-      await file.close();
+      await _bounded('close file', file.close());
     }
   }
 
@@ -210,37 +214,55 @@ class SftpFileBackend implements FileBackend {
     Stream<List<int>> data, {
     int? size,
     void Function(String staging)? onStaging,
+    Stream<List<int>> Function()? replayData,
   }) async {
+    // Intentionally unused: a timed-out rename has an unknown outcome, so an
+    // SFTP write is never replayed.
     // Beside the destination for the same reason as the local backend: a
     // rename on the far side is cheap and atomic only within one filesystem.
     final staging = stagingNameFor(path);
     onStaging?.call(staging);
     var wrote = false;
+    var replacementOutcomeUnknown = false;
     try {
-      final file = await _bounded(
+      final file = await _openFile(
         'open for write',
         _sftp.open(
           staging,
-          mode: SftpFileOpenMode.create |
+          mode:
+              SftpFileOpenMode.create |
               SftpFileOpenMode.write |
               SftpFileOpenMode.truncate,
         ),
+        lateCleanup: (file) async {
+          await file.close();
+          try {
+            await _sftp.remove(staging);
+          } catch (_) {}
+        },
       );
       wrote = true;
       try {
         await file.write(data.map(Uint8List.fromList)).done;
-        await file.close();
-      } catch (_) {
+        await _bounded('close file', file.close());
+      } catch (e) {
         // As in the local backend: a close that complains about a handle the
         // failure already invalidated must not replace the failure.
-        try {
-          await file.close();
-        } catch (_) {}
+        if (e is! TimeoutException) {
+          try {
+            await _bounded('close file', file.close());
+          } catch (_) {}
+        }
         rethrow;
       }
-      await _replace(staging, path);
+      try {
+        await _replace(staging, path);
+      } on TimeoutException {
+        replacementOutcomeUnknown = true;
+        rethrow;
+      }
     } catch (_) {
-      if (wrote) {
+      if (wrote && !replacementOutcomeUnknown) {
         try {
           await _sftp.remove(staging);
         } catch (_) {
@@ -259,53 +281,50 @@ class SftpFileBackend implements FileBackend {
   /// first. That is a moment where neither file is in place, and it is still
   /// better than truncating the destination before the bytes have arrived.
   Future<void> _replace(String staging, String path) async {
-    final Object failure;
-    try {
-      await _bounded('rename', _sftp.rename(staging, path));
-      return;
-    } catch (e) {
-      failure = e;
-    }
-
-    // Moved aside, never deleted first. Reading "the rename failed and the
-    // destination stats" as "the destination is in the way" was a guess: a
-    // server refuses a rename for permission, quota or policy reasons too,
-    // with the destination sitting there intact, and the remove that followed
-    // could well succeed and take a good file with it.
-    //
-    // Renaming the destination away asks the same question without betting on
-    // the answer — a refusal that was not about the destination refuses this
-    // too, and nothing has been lost. Only once the staged copy is in place
-    // does the old one go.
-    final aside = stagingNameFor(path);
-    try {
-      await _bounded('rename', _sftp.rename(path, aside));
-    } catch (_) {
-      throw failure;
-    }
-    try {
-      await _bounded('rename', _sftp.rename(staging, path));
-    } catch (_) {
-      // Put it back: losing the destination to a replacement that did not
-      // happen is the whole thing this path exists to avoid.
-      try {
-        await _bounded('rename', _sftp.rename(aside, path));
-      } catch (_) {}
-      rethrow;
-    }
-    try {
-      await _bounded('remove', _sftp.remove(aside));
-    } catch (_) {
-      // The replacement is done. A leftover beside it is visible in the
-      // browser and not worth failing a finished write for.
-    }
+    await replaceSftpPath(
+      staging: staging,
+      destination: path,
+      aside: stagingNameFor(path),
+      rename: (from, to) => _bounded('rename', _sftp.rename(from, to)),
+      remove: (target) => _bounded('remove', _sftp.remove(target)),
+    );
   }
 
   @override
   Future<void> close() => _sftp.close();
 
-  Future<T> _bounded<T>(String what, Future<T> future) =>
-      timeout == null ? future : withSftpOpTimeout(what, future, timeout!);
+  Future<T> _bounded<T>(String what, Future<T> future) async {
+    final limit = timeout;
+    if (limit == null) return future;
+    try {
+      return await withSftpOpTimeout(what, future, limit);
+    } on TimeoutException {
+      // Future.timeout cannot cancel a request already on the wire. Closing
+      // the SFTP channel fences its late reply before callers retry anything.
+      unawaited(_sftp.close().catchError((_) {}));
+      rethrow;
+    }
+  }
+
+  Future<SftpFile> _openFile(
+    String what,
+    Future<SftpFile> future, {
+    required FutureOr<void> Function(SftpFile file) lateCleanup,
+  }) async {
+    final limit = timeout;
+    if (limit == null) return future;
+    try {
+      return await withSftpLateCleanupTimeout(
+        what,
+        future,
+        limit,
+        cleanup: lateCleanup,
+      );
+    } on TimeoutException {
+      unawaited(_sftp.close().catchError((_) {}));
+      rethrow;
+    }
+  }
 
   /// `SSH_FX_NO_SUCH_FILE`, from the SFTP protocol.
   static const _sftpStatusNoSuchFile = 2;

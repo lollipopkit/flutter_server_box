@@ -29,8 +29,12 @@ use crate::ssh::known_hosts::{self, Verdict};
 #[derive(Debug)]
 pub enum SshError {
     Connect(String),
-    HostKeyMismatch { expected: String, actual: String },
+    HostKeyMismatch {
+        expected: String,
+        actual: String,
+    },
     AuthFailed,
+    AuthTimeout,
     /// The key material the browser sent could not be parsed or decrypted.
     BadKey(String),
     Protocol(String),
@@ -42,6 +46,7 @@ impl SshError {
             SshError::Connect(_) => "connect_failed",
             SshError::HostKeyMismatch { .. } => "host_key_mismatch",
             SshError::AuthFailed => "auth_failed",
+            SshError::AuthTimeout => "auth_timeout",
             SshError::BadKey(_) => "bad_key",
             SshError::Protocol(_) => "protocol_error",
         }
@@ -58,6 +63,7 @@ impl SshError {
                  Refusing to connect; remove the pinned key only if this change was expected."
             ),
             SshError::AuthFailed => "Authentication failed".to_string(),
+            SshError::AuthTimeout => "SSH authentication timed out".to_string(),
             SshError::BadKey(e) => format!("Could not read the private key: {e}"),
             SshError::Protocol(e) => format!("SSH error: {e}"),
         }
@@ -75,7 +81,10 @@ impl From<russh::Error> for SshError {
 /// Every variant is zeroized after use — see [`Credential::zeroize`].
 pub enum Credential {
     Password(String),
-    Key { pem: String, passphrase: Option<String> },
+    Key {
+        pem: String,
+        passphrase: Option<String>,
+    },
     /// Start a keyboard-interactive exchange; answers arrive later.
     KeyboardInteractive,
 }
@@ -210,7 +219,10 @@ impl SshSession {
     ) -> Result<AuthStep, SshError> {
         match credential {
             Credential::Password(password) => {
-                let result = self.handle.authenticate_password(user, password.clone()).await?;
+                let result = self
+                    .handle
+                    .authenticate_password(user, password.clone())
+                    .await?;
                 Ok(auth_step(result))
             }
             Credential::Key { pem, passphrase } => {
@@ -239,10 +251,7 @@ impl SshSession {
     }
 
     /// Answers the prompts from the previous [`AuthStep::NeedsAnswers`].
-    pub async fn answer_prompts(
-        &mut self,
-        mut answers: Vec<String>,
-    ) -> Result<AuthStep, SshError> {
+    pub async fn answer_prompts(&mut self, mut answers: Vec<String>) -> Result<AuthStep, SshError> {
         let response = self
             .handle
             .authenticate_keyboard_interactive_respond(answers.clone())

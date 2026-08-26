@@ -17,7 +17,17 @@ import 'package:server_box/data/store/schema.dart';
 /// launch that throws `Missing schema migration from vN`, or a test asserting
 /// a shape no install is ever in — and which of the two you get depends on
 /// which copy was forgotten. There is nothing to forget with one list.
+class _NoopMigration implements SchemaMigration {
+  const _NoopMigration(this.from);
+  @override
+  final int from;
+  @override
+  Future<void> apply() async {}
+}
+
 const kSchemaMigrations = <SchemaMigration>[
+  _NoopMigration(2),
+  _NoopMigration(3),
   KvToTablesMigration(),
   MonitorInsecureHttpMigration(),
   BmcColumnsMigration(),

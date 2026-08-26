@@ -46,7 +46,10 @@ class GroupedSettingsMigration implements SchemaMigration {
   /// one would have every install claim a newer copy than whatever it last
   /// synced with.
   @override
-  Future<void> apply() async {
+  Future<void> apply() async => applySync();
+
+  /// Runs the conversion inside a caller-owned SQLite transaction.
+  void applySync() {
     final store = _store ?? SettingStore.instance;
     _groupAskAi(store);
     _groupAgentShell(store);
@@ -71,7 +74,7 @@ class GroupedSettingsMigration implements SchemaMigration {
     // of those would leave the values in neither shape, and the step is not
     // run again once the version has moved.
     if (!store.set('askAi', config.toJson(), updateLastUpdateTsOnSet: false)) {
-      return;
+      throw StateError('m009: writing "askAi" failed');
     }
     read.removeAll();
   }
@@ -101,7 +104,7 @@ class GroupedSettingsMigration implements SchemaMigration {
       grouped.toJson(),
       updateLastUpdateTsOnSet: false,
     );
-    if (!written) return;
+    if (!written) throw StateError('m009: writing "agentShell" failed');
     read.removeAll();
   }
 }

@@ -45,7 +45,9 @@ class PveNotifier extends _$PveNotifier {
   Future<void>? _initFuture;
   int _sessionGeneration = 0;
 
-  Dio get session => _session!;
+  @visibleForTesting
+  Future<void> Function()? forwardForTest;
+
   String get addrValue => addr!;
 
   SSHClient get _client {
@@ -111,26 +113,29 @@ class PveNotifier extends _$PveNotifier {
     return const PveState(loadingStep: PveLoadingStep.forwarding);
   }
 
-  void _initSession() {
+  Dio _initSession() {
     _session?.close(force: true);
-    _session = Dio(
-      BaseOptions(
-        connectTimeout: _connectTimeout,
-        sendTimeout: _requestTimeout,
-        receiveTimeout: _requestTimeout,
-      ),
-    )
-      ..httpClientAdapter = IOHttpClientAdapter(
-        createHttpClient: () {
-          final client = HttpClient();
-          client.connectionFactory = cf;
-          if (_ignoreCert) {
-            client.badCertificateCallback = (_, _, _) => true;
-          }
-          return client;
-        },
-        validateCertificate: _ignoreCert ? (_, _, _) => true : null,
-      );
+    final active =
+        Dio(
+            BaseOptions(
+              connectTimeout: _connectTimeout,
+              sendTimeout: _requestTimeout,
+              receiveTimeout: _requestTimeout,
+            ),
+          )
+          ..httpClientAdapter = IOHttpClientAdapter(
+            createHttpClient: () {
+              final client = HttpClient();
+              client.connectionFactory = cf;
+              if (_ignoreCert) {
+                client.badCertificateCallback = (_, _, _) => true;
+              }
+              return client;
+            },
+            validateCertificate: _ignoreCert ? (_, _, _) => true : null,
+          );
+    _session = active;
+    return active;
   }
 
   Future<void> reconnect() async {
@@ -163,30 +168,48 @@ class PveNotifier extends _$PveNotifier {
 
   Future<void> _initImpl() async {
     final generation = _sessionGeneration;
+    Dio? active;
     try {
       if (!ref.mounted) return;
-      _initSession();
+      active = _initSession();
       state = state.copyWith(loadingStep: PveLoadingStep.forwarding);
       await _forward(generation);
-      if (!_isActiveInit(generation)) return;
+      if (_abortStaleInit(generation, active)) return;
       state = state.copyWith(loadingStep: PveLoadingStep.loggingIn);
-      await _login();
-      if (!_isActiveInit(generation)) return;
+      await _login(generation, active);
+      if (_abortStaleInit(generation, active)) return;
       state = state.copyWith(loadingStep: PveLoadingStep.fetchingData);
-      await _getRelease();
-      if (!_isActiveInit(generation)) return;
+      await _getRelease(generation, active);
+      if (_abortStaleInit(generation, active)) return;
       state = state.copyWith(isConnected: true);
-      await list();
-      if (!_isActiveInit(generation)) return;
+      await _list(generation, active);
+      if (_abortStaleInit(generation, active)) return;
       state = state.copyWith(loadingStep: PveLoadingStep.none);
     } on PveErr catch (e) {
-      if (!_isActiveInit(generation)) return;
+      if (!_isActiveInit(generation)) {
+        _scheduleInitAfterStale(generation);
+        return;
+      }
+      if (e.type != PveErrType.needTfa) {
+        await _closeSession(clearPendingTfa: true);
+        if (!ref.mounted) return;
+      }
       state = state.copyWith(error: e, loadingStep: PveLoadingStep.none);
     } catch (e, s) {
-      if (!_isActiveInit(generation)) return;
+      if (!_isActiveInit(generation)) {
+        _scheduleInitAfterStale(generation);
+        return;
+      }
       Loggers.app.warning('PVE init failed', e, s);
+      final error = _toPveErr(e);
+      if (active != null) {
+        await _closeSession(clearPendingTfa: true);
+        if (!ref.mounted) return;
+      }
       state = state.copyWith(
-        error: _toPveErr(e),
+        error: error,
+        isConnected: false,
+        isBusy: false,
         loadingStep: PveLoadingStep.none,
       );
     }
@@ -196,7 +219,37 @@ class PveNotifier extends _$PveNotifier {
     return ref.mounted && generation == _sessionGeneration;
   }
 
+  bool _isActiveSession(int generation, Dio active) {
+    return _isActiveInit(generation) && identical(_session, active);
+  }
+
+  bool _abortStaleInit(int generation, Dio active) {
+    if (_isActiveSession(generation, active)) return false;
+    _scheduleInitAfterStale(generation);
+    return true;
+  }
+
+  void _scheduleInitAfterStale(int generation) {
+    if (generation == _sessionGeneration) return;
+    final current = _initFuture;
+    if (current == null) return;
+    unawaited(_initAfter(current));
+  }
+
+  Future<void> _initAfter(Future<void> current) async {
+    await current;
+    if (!ref.mounted) return;
+    final client = ref.read(serverProvider(spiParam.id)).client;
+    if (client == null || client.isClosed) return;
+    await _init();
+  }
+
   Future<void> _forward(int generation) async {
+    final forwardOverride = forwardForTest;
+    if (forwardOverride != null) {
+      await forwardOverride();
+      return;
+    }
     final url = Uri.parse(addrValue);
     if (_localPort == 0) {
       final serverSocket = await ServerSocket.bind('localhost', 0);
@@ -242,10 +295,7 @@ class PveNotifier extends _$PveNotifier {
     }
   }
 
-  Future<void> _bridgeForward(
-    Socket socket,
-    SSHForwardChannel forward,
-  ) async {
+  Future<void> _bridgeForward(Socket socket, SSHForwardChannel forward) async {
     try {
       await Future.any([
         forward.stream.cast<List<int>>().pipe(socket),
@@ -287,7 +337,7 @@ class PveNotifier extends _$PveNotifier {
     }
   }
 
-  Future<void> _login() async {
+  Future<void> _login(int generation, Dio active) async {
     final useKeyAuth = spiParam.ssh?.keyId != null;
     final password = (useKeyAuth ? spiParam.custom?.pvePwd : spiParam.ssh?.pwd)
         ?.trim();
@@ -297,12 +347,13 @@ class PveNotifier extends _$PveNotifier {
         message: l10n.pvePasswordRequired,
       );
     }
-    final resp = await _requestTicket({
+    final resp = await _requestTicket(active, {
       'username': spiParam.ssh?.user ?? '',
       'password': password,
       'realm': 'pam',
       'new-format': '1',
     });
+    if (!_isActiveSession(generation, active)) return;
 
     final data = _readTicketData(resp);
     if (data['NeedTFA'] == 1 || data['TFA'] != null) {
@@ -313,16 +364,20 @@ class PveNotifier extends _$PveNotifier {
           message: l10n.pveInvalidResponseData,
         );
       }
+      if (!_isActiveSession(generation, active)) return;
       _pendingTfaChallenge = ticket;
       throw PveErr(type: PveErrType.needTfa, message: l10n.pveOtpRequired);
     }
 
+    if (!_isActiveSession(generation, active)) return;
     _pendingTfaChallenge = null;
-    _setAuthHeaders(data);
+    _setAuthHeaders(active, data);
   }
 
   Future<void> submitTfaCode(String otp) async {
     final challenge = _pendingTfaChallenge;
+    final gen = _sessionGeneration;
+    final active = _session;
     if (challenge == null) {
       throw PveErr(
         type: PveErrType.needTfa,
@@ -333,29 +388,29 @@ class PveNotifier extends _$PveNotifier {
       throw PveErr(type: PveErrType.needTfa, message: l10n.pveOtpCodeRequired);
     }
 
-    if (!ref.mounted) return;
+    if (active == null || !_isActiveSession(gen, active)) return;
     state = state.copyWith(error: null, loadingStep: PveLoadingStep.loggingIn);
 
     try {
-      await _loginWithTfaChallenge(challenge, otp.trim());
-      if (!ref.mounted) return;
+      await _loginWithTfaChallenge(gen, active, challenge, otp.trim());
+      if (!_isActiveSession(gen, active)) return;
       state = state.copyWith(loadingStep: PveLoadingStep.fetchingData);
-      await _getRelease();
-      if (!ref.mounted) return;
+      await _getRelease(gen, active);
+      if (!_isActiveSession(gen, active)) return;
       state = state.copyWith(isConnected: true);
-      await list();
-      if (!ref.mounted) return;
+      await _list(gen, active);
+      if (!_isActiveSession(gen, active)) return;
       if (state.error == null) {
         state = state.copyWith(error: null, loadingStep: PveLoadingStep.none);
       } else {
         state = state.copyWith(loadingStep: PveLoadingStep.none);
       }
     } on PveErr catch (e) {
-      if (!ref.mounted) return;
+      if (!_isActiveSession(gen, active)) return;
       state = state.copyWith(error: e, loadingStep: PveLoadingStep.none);
       rethrow;
     } catch (e, s) {
-      if (!ref.mounted) return;
+      if (!_isActiveSession(gen, active)) return;
       Loggers.app.warning('PVE TFA login failed', e, s);
       state = state.copyWith(
         error: PveErr(type: PveErrType.unknown, message: e.toString()),
@@ -365,20 +420,27 @@ class PveNotifier extends _$PveNotifier {
     }
   }
 
-  Future<void> _loginWithTfaChallenge(String challenge, String otp) async {
+  Future<void> _loginWithTfaChallenge(
+    int generation,
+    Dio active,
+    String challenge,
+    String otp,
+  ) async {
     try {
       // The current OTP dialog only collects a code, so this flow supports
       // Proxmox TOTP challenges for now.
-      final resp = await _requestTicket({
+      final resp = await _requestTicket(active, {
         'username': spiParam.ssh?.user ?? '',
         'password': 'totp:$otp',
         'realm': 'pam',
         'tfa-challenge': challenge,
         'new-format': '1',
       });
+      if (!_isActiveSession(generation, active)) return;
       final data = _readTicketData(resp);
+      if (!_isActiveSession(generation, active)) return;
       _pendingTfaChallenge = null;
-      _setAuthHeaders(data);
+      _setAuthHeaders(active, data);
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
         throw PveErr(
@@ -390,8 +452,11 @@ class PveNotifier extends _$PveNotifier {
     }
   }
 
-  Future<Response<dynamic>> _requestTicket(Map<String, dynamic> data) {
-    return session.post(
+  Future<Response<dynamic>> _requestTicket(
+    Dio active,
+    Map<String, dynamic> data,
+  ) {
+    return active.post(
       '$addrValue/api2/json/access/ticket',
       data: data,
       options: Options(contentType: Headers.formUrlEncodedContentType),
@@ -416,7 +481,7 @@ class PveNotifier extends _$PveNotifier {
     return data;
   }
 
-  void _setAuthHeaders(Map<String, dynamic> data) {
+  void _setAuthHeaders(Dio active, Map<String, dynamic> data) {
     final ticket = data['ticket'];
     if (ticket == null) {
       throw PveErr(
@@ -424,51 +489,66 @@ class PveNotifier extends _$PveNotifier {
         message: l10n.pveMissingAuthTicket,
       );
     }
-    session.options.headers['CSRFPreventionToken'] =
-        data['CSRFPreventionToken'];
-    session.options.headers['Cookie'] = 'PVEAuthCookie=$ticket';
+    active.options.headers['CSRFPreventionToken'] = data['CSRFPreventionToken'];
+    active.options.headers['Cookie'] = 'PVEAuthCookie=$ticket';
   }
 
   /// Returns true if the PVE version is 8.0 or later
-  Future<void> _getRelease() async {
-    final resp = await session.get('$addrValue/api2/extjs/version');
-    final version = resp.data['data']['release'] as String?;
-    if (version != null && ref.mounted) {
+  Future<void> _getRelease(int generation, Dio active) async {
+    final resp = await active.get('$addrValue/api2/extjs/version');
+    if (!_isActiveSession(generation, active)) return;
+    final body = resp.data;
+    final data = body is Map<String, dynamic> ? body['data'] : null;
+    final version = data is Map<String, dynamic> ? data['release'] : null;
+    if (version is String && version.isNotEmpty) {
       state = state.copyWith(release: version);
     }
   }
 
   Future<void> list() async {
+    final active = _session;
+    if (active == null) return;
+    await _list(_sessionGeneration, active);
+  }
+
+  Future<void> _list(int generation, Dio active) async {
     if (!state.isConnected || state.isBusy) return;
     state = state.copyWith(isBusy: true);
+    final previous = state.data;
     try {
-      final resp = await session.get('$addrValue/api2/json/cluster/resources');
-      final res = resp.data['data'] as List;
-      final result = await Computer.shared.start(PveRes.parse, (
-        res,
-        state.data,
-      ));
-      if (!ref.mounted) return;
+      final resp = await active.get('$addrValue/api2/json/cluster/resources');
+      if (!_isActiveSession(generation, active)) return;
+      final body = resp.data;
+      final res = body is Map<String, dynamic> ? body['data'] : null;
+      if (res is! List) {
+        throw PveErr(
+          type: PveErrType.invalidResponse,
+          message: l10n.pveInvalidResponseData,
+        );
+      }
+      final result = await Computer.shared.start(PveRes.parse, (res, previous));
+      if (!_isActiveSession(generation, active)) return;
       state = state.copyWith(data: result, error: null);
     } catch (e) {
-      if (!ref.mounted) return;
+      if (!_isActiveSession(generation, active)) return;
       Loggers.app.warning('PVE list failed', e);
-      if (_isConnectionFailure(e)) {
+      final error = _toPveErr(e);
+      if (_isConnectionFailure(e) ||
+          _isInvalidResponse(e) ||
+          error.type == PveErrType.loginFailed) {
         await _closeSession(clearPendingTfa: true);
         if (!ref.mounted) return;
         state = state.copyWith(
-          error: _toPveErr(e),
+          error: error,
           isConnected: false,
           isBusy: false,
           loadingStep: PveLoadingStep.none,
         );
         return;
       }
-      state = state.copyWith(
-        error: PveErr(type: PveErrType.unknown, message: e.toString()),
-      );
+      state = state.copyWith(error: error);
     } finally {
-      if (ref.mounted) {
+      if (_isActiveSession(generation, active)) {
         state = state.copyWith(isBusy: false);
       }
     }
@@ -476,10 +556,18 @@ class PveNotifier extends _$PveNotifier {
 
   PveErr _toPveErr(Object e) {
     if (e is PveErr) return e;
+    if (e is DioException &&
+        (e.response?.statusCode == 401 || e.response?.statusCode == 403)) {
+      return PveErr(type: PveErrType.loginFailed, message: e.toString());
+    }
     if (_isConnectionFailure(e)) {
       return PveErr(type: PveErrType.net, message: e.toString());
     }
     return PveErr(type: PveErrType.unknown, message: e.toString());
+  }
+
+  bool _isInvalidResponse(Object e) {
+    return e is PveErr && e.type == PveErrType.invalidResponse;
   }
 
   bool _isConnectionFailure(Object e) {
@@ -490,33 +578,68 @@ class PveNotifier extends _$PveNotifier {
       return true;
     }
     if (e is DioException) {
-      if (e.type == DioExceptionType.connectionError) return true;
+      if (e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        return true;
+      }
       final inner = e.error;
       return inner != null && _isConnectionFailure(inner);
     }
     return false;
   }
 
-  Future<bool> reboot(String node, String id) =>
-      _controlVm(node, id, 'reboot');
+  Future<bool> reboot(String node, String id) => _controlVm(node, id, 'reboot');
 
-  Future<bool> start(String node, String id) =>
-      _controlVm(node, id, 'start');
+  Future<bool> start(String node, String id) => _controlVm(node, id, 'start');
 
-  Future<bool> stop(String node, String id) =>
-      _controlVm(node, id, 'stop');
+  Future<bool> stop(String node, String id) => _controlVm(node, id, 'stop');
 
   Future<bool> shutdown(String node, String id) =>
       _controlVm(node, id, 'shutdown');
 
   Future<bool> _controlVm(String node, String id, String action) async {
     if (!state.isConnected) return false;
-    final resp = await session.post(
-      '$addrValue/api2/json/nodes/$node/$id/status/$action',
+    final generation = _sessionGeneration;
+    final active = _session;
+    if (active == null) return false;
+    try {
+      final resp = await active.post(
+        '$addrValue/api2/json/nodes/$node/$id/status/$action',
+      );
+      if (!_isActiveSession(generation, active)) return false;
+      final success = _isCtrlSuc(resp);
+      if (success) await _list(generation, active);
+      return success;
+    } catch (e) {
+      if (!_isActiveSession(generation, active)) return false;
+      final error = _toPveErr(e);
+      if (_isConnectionFailure(e) || error.type == PveErrType.loginFailed) {
+        await _closeSession(clearPendingTfa: true);
+        if (ref.mounted) {
+          state = state.copyWith(
+            error: error,
+            isConnected: false,
+            isBusy: false,
+            loadingStep: PveLoadingStep.none,
+          );
+        }
+      }
+      rethrow;
+    }
+  }
+
+  @visibleForTesting
+  void useSessionForTest(Dio session) {
+    _session?.close(force: true);
+    _session = session;
+    state = state.copyWith(
+      error: null,
+      isConnected: true,
+      isBusy: false,
+      loadingStep: PveLoadingStep.none,
     );
-    final success = _isCtrlSuc(resp);
-    if (success) await list();
-    return success;
   }
 
   bool _isCtrlSuc(Response resp) {
@@ -532,7 +655,6 @@ class PveNotifier extends _$PveNotifier {
       _pendingTfaChallenge = null;
     }
     _sessionGeneration++;
-    _initFuture = null;
     _session?.close(force: true);
     _session = null;
     final serverSocket = _serverSocket;

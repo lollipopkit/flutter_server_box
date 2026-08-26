@@ -63,18 +63,35 @@ void main() {
       expect(entry.kind, FileKind.file);
       expect(entry.size, 5);
     });
+
+    test('reports links without following them', () async {
+      await Directory(at('sub')).create();
+      await Link(at('to-dir')).create(at('sub'));
+      await Link(at('broken')).create(at('missing'));
+
+      final linkedDir = await backend.stat(at('to-dir'));
+      final broken = await backend.stat(at('broken'));
+
+      expect(linkedDir!.kind, FileKind.link);
+      expect(linkedDir.linkTarget, at('sub').replaceAll(r'\', '/'));
+      expect(broken!.kind, FileKind.link);
+      expect(broken.linkTarget, at('missing').replaceAll(r'\', '/'));
+    });
   });
 
   group('remove', () {
-    test('refuses a directory with contents unless asked recursively', () async {
-      await Directory(at('sub')).create();
-      await File(at('sub/a.txt')).writeAsString('x');
+    test(
+      'refuses a directory with contents unless asked recursively',
+      () async {
+        await Directory(at('sub')).create();
+        await File(at('sub/a.txt')).writeAsString('x');
 
-      await expectLater(backend.remove(at('sub')), throwsA(anything));
-      await backend.remove(at('sub'), recursive: true);
+        await expectLater(backend.remove(at('sub')), throwsA(anything));
+        await backend.remove(at('sub'), recursive: true);
 
-      expect(await Directory(at('sub')).exists(), isFalse);
-    });
+        expect(await Directory(at('sub')).exists(), isFalse);
+      },
+    );
 
     test('deletes the link, not what it points at', () async {
       await File(at('a.txt')).writeAsString('hello');
@@ -98,11 +115,10 @@ void main() {
     test('leaves nothing behind when the source fails', () async {
       // The point of staging: a transfer that dies halfway must not leave a
       // half-file under the name something else is about to open.
-      final failing = Stream<List<int>>.fromIterable([
-        utf8.encode('half'),
-      ]).asyncMap((chunk) async {
-        throw const FileSystemException('source went away');
-      });
+      final failing = Stream<List<int>>.fromIterable([utf8.encode('half')])
+          .asyncMap((chunk) async {
+            throw const FileSystemException('source went away');
+          });
 
       await expectLater(
         backend.write(at('a.txt'), failing),

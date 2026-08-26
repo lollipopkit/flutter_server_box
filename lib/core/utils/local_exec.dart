@@ -6,6 +6,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/utils/android_rootfs.dart';
 import 'package:server_box/core/utils/ish_exec.dart';
 import 'package:server_box/core/utils/local_shell.dart';
+import 'package:server_box/core/utils/process_tree.dart';
 import 'package:server_box/core/utils/rootfs.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/res/store.dart';
@@ -131,88 +132,107 @@ class ProcessExec extends LocalExec {
     // is what the ternary below says. The one that used to stand here chose
     // between `shell` and `shell`.
     final guest = inRootfs
-        ? AndroidRootfs.enter(command: entry ?? script)
+        ? await AndroidRootfs.enter(command: entry ?? script)
         : null;
     if (inRootfs && guest == null) {
       throw StateError('There is no Linux userland on this device to run in.');
     }
-    final process = await Process.start(
-      guest?.executable ?? shell,
-      guest?.arguments ?? (entry == null ? [flag, script] : [flag, entry]),
-      // The guest's own PATH and home, or Android's name for a directory that
-      // does not exist inside it and a shell that finds none of its own tools.
-      environment: guest == null
-          ? env
-          : {...AndroidRootfs.environment, ...?env},
-      // Added to, not replaced: a command here runs on the user's own machine
-      // and is written expecting the PATH they have.
-      includeParentEnvironment: true,
-    );
-
-    var cancelled = false;
-    unawaited(
-      cancel?.then((_) {
-        cancelled = true;
-        _kill(process);
-      }),
-    );
-
-    final out = StringBuffer();
-    final err = StringBuffer();
-    const decoder = Utf8Decoder(allowMalformed: true);
-    final outDone = decoder.bind(process.stdout).forEach((chunk) {
-      out.write(chunk);
-      onStdout?.call(chunk);
-    });
-    final errDone = decoder.bind(process.stderr).forEach((chunk) {
-      err.write(chunk);
-      onStderr?.call(chunk);
-    });
-
-    if (stdin != null) process.stdin.write(stdin);
-    if (entry != null) process.stdin.write('$script\n');
-    // Closed either way: a command that reads stdin would otherwise wait for
-    // input nobody is going to send.
     try {
-      await process.stdin.close();
-    } catch (_) {
-      // The process exited before reading anything, which is not this call's
-      // failure — the exit code below is the answer.
-    }
+      final executable = guest?.executable ?? shell;
+      final arguments =
+          guest?.arguments ?? (entry == null ? [flag, script] : [flag, entry]);
+      final setsid = cancel == null ? null : _setsidPath;
+      final process = await Process.start(
+        setsid ?? executable,
+        setsid == null ? arguments : [executable, ...arguments],
+        // The guest's own PATH and home, or Android's name for a directory that
+        // does not exist inside it and a shell that finds none of its own tools.
+        environment: guest == null
+            ? env
+            : {...AndroidRootfs.environment, ...?env},
+        // Added to, not replaced: a command here runs on the user's own machine
+        // and is written expecting the PATH they have.
+        includeParentEnvironment: true,
+      );
+      final processGroupId = setsid == null ? null : process.pid;
 
-    final exitCode = await process.exitCode;
-    await Future.wait([outDone, errDone]);
+      var cancelled = false;
+      var processExited = false;
+      unawaited(
+        cancel?.then((_) {
+          if (processExited) return;
+          cancelled = true;
+          ProcessTree.terminate(process, processGroupId);
+        }),
+      );
 
-    return ExecResult(
-      // A cancelled command has no exit code worth reporting: it was killed,
-      // and the signal's number is not what the caller asked about.
-      exitCode: cancelled ? null : exitCode,
-      stdout: out.toString(),
-      stderr: err.toString(),
-    );
-  }
+      final out = StringBuffer();
+      final err = StringBuffer();
+      const decoder = Utf8Decoder(allowMalformed: true);
+      final outDone = Completer<void>();
+      final errDone = Completer<void>();
+      final outSub = decoder
+          .bind(process.stdout)
+          .listen(
+            (chunk) {
+              out.write(chunk);
+              onStdout?.call(chunk);
+            },
+            onError: outDone.completeError,
+            onDone: outDone.complete,
+          );
+      final errSub = decoder
+          .bind(process.stderr)
+          .listen(
+            (chunk) {
+              err.write(chunk);
+              onStderr?.call(chunk);
+            },
+            onError: errDone.completeError,
+            onDone: errDone.complete,
+          );
 
-  /// Ends the process.
-  ///
-  /// Only the process, unlike the terminal's pty. `Process.start` does not make
-  /// the child a session leader, so its pid is not a group id — signalling
-  /// `-pid` would reach whatever group the *app* is in. A shell running one
-  /// command execs it rather than forking, so this reaches the real work in
-  /// the ordinary case; a script that backgrounds something outlives this, and
-  /// there is no safe way from here to find it.
-  void _kill(Process process) {
-    if (!process.kill()) return;
-    // For a script that trapped the first one. Nothing is reading it any more.
-    final sigkill = Timer(const Duration(seconds: 3), () {
+      if (stdin != null) process.stdin.write(stdin);
+      if (entry != null) process.stdin.write('$script\n');
+      // Closed either way: a command that reads stdin would otherwise wait for
+      // input nobody is going to send.
       try {
-        process.kill(ProcessSignal.sigkill);
+        await process.stdin.close();
       } catch (_) {
-        // Already gone, which is the point.
+        // The process exited before reading anything, which is not this call's
+        // failure — the exit code below is the answer.
       }
-    });
-    // Cancelled when the process goes on its own, which is the ordinary case.
-    // Left running, the timer held this closure — and the `Process` with it —
-    // for three seconds past every cancelled command.
-    process.exitCode.whenComplete(sigkill.cancel).ignore();
+
+      final exitCode = await process.exitCode;
+      processExited = true;
+      try {
+        await Future.wait([
+          outDone.future,
+          errDone.future,
+        ]).timeout(const Duration(seconds: 1));
+      } on TimeoutException {
+        // A background descendant can inherit these pipes after the command
+        // itself has exited. Its output is no longer part of this command.
+        await Future.wait([outSub.cancel(), errSub.cancel()]);
+      }
+
+      return ExecResult(
+        // A cancelled command has no exit code worth reporting: it was killed,
+        // and the signal's number is not what the caller asked about.
+        exitCode: cancelled ? null : exitCode,
+        stdout: out.toString(),
+        stderr: err.toString(),
+      );
+    } finally {
+      guest?.release();
+    }
   }
 }
+
+final String? _setsidPath = () {
+  if (!Platform.isLinux) return null;
+  for (final path in const ['/usr/bin/setsid', '/bin/setsid']) {
+    if (File(path).existsSync()) return path;
+  }
+  return null;
+}();

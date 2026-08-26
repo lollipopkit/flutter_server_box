@@ -115,7 +115,10 @@ void main() {
       var status = applyMonitorMetrics(
         InitStatus.status,
         MonitorMetrics.fromJson(
-          body({'os_id': 'linuxmint', 'os_id_like': const ['ubuntu']}),
+          body({
+            'os_id': 'linuxmint',
+            'os_id_like': const ['ubuntu'],
+          }),
         ),
       );
       expect(status.osIdLike, ['ubuntu']);
@@ -196,6 +199,34 @@ void main() {
       expect(status.disk.single.usedPercent, 25);
     });
 
+    test('and aggregate network data replaces stale temperature detail', () {
+      final status = InitStatus.status;
+      status.temps.setAll({'old': 99});
+
+      applyMonitorMetrics(
+        status,
+        MonitorMetrics.fromJson(
+          legacyBody({
+            'timestamp': '2026-08-22T00:00:00Z',
+            'network': const {'rx_bytes': 10, 'tx_bytes': 20},
+          }),
+        ),
+      );
+      applyMonitorMetrics(
+        status,
+        MonitorMetrics.fromJson(
+          legacyBody({
+            'timestamp': '2026-08-22T00:00:01Z',
+            'network': const {'rx_bytes': 110, 'tx_bytes': 220},
+          }),
+        ),
+      );
+
+      expect(status.netSpeed.devices, ['eth-monitor-total']);
+      expect(status.netSpeed.sizeInBytes(0), BigInt.from(110));
+      expect(status.temps.isEmpty, isTrue);
+    });
+
     test('and a GPU with no vendor field is still placed by its name', () {
       final status = applyMonitorMetrics(
         InitStatus.status,
@@ -237,7 +268,12 @@ void main() {
         'timestamp': '2026-08-22T00:00:00Z',
         'server_name': 'test-server',
         'cpu_usage': 0.0,
-        'memory': const {'total': 1, 'used': 0, 'free': 1, 'usage_percent': 0.0},
+        'memory': const {
+          'total': 1,
+          'used': 0,
+          'free': 1,
+          'usage_percent': 0.0,
+        },
         'swap': const {'total': 0, 'used': 0, 'usage_percent': 0.0},
         'disk': const {'total': 1, 'used': 0, 'free': 1, 'usage_percent': 0.0},
         'network': const {'rx_bytes': 0, 'tx_bytes': 0},

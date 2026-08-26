@@ -22,7 +22,8 @@ MemAvailable:   24576 kB
 SwapTotal:      2097148 kB
 SwapFree:       1048574 kB''';
 
-const _netRaw = '''Inter-|   Receive                                                |  Transmit
+const _netRaw =
+    '''Inter-|   Receive                                                |  Transmit
  face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed
     lo: 45929941  269112    0    0    0     0          0         0 45929941  269112    0    0    0     0       0          0
   eth0: 48481023  505772    0    0    0     0          0         0 36002262  202307    0    0    0     0       0          0''';
@@ -247,6 +248,7 @@ void main() {
       // 00100_<base64url of 'probe'> <base64 of the command>
       '00100_${base64Url.encode(utf8.encode('probe'))} '
           '${base64.encode(utf8.encode('echo hi\necho there'))}',
+      'SrvBoxCusCmdDirEnd',
       '',
     ].join('\n');
     final parsed = script.parseCustomCmdsListing(raw: listing);
@@ -256,7 +258,12 @@ void main() {
     expect(parsed.first.cmd, 'echo hi\necho there');
 
     expect(script.parseCustomCmdsListing(raw: ''), isNull);
-    expect(script.parseCustomCmdsListing(raw: 'SrvBoxCusCmdDir\n'), isEmpty);
+    expect(
+      script.parseCustomCmdsListing(
+        raw: 'SrvBoxCusCmdDir\nSrvBoxCusCmdDirEnd\n',
+      ),
+      isEmpty,
+    );
   });
 
   test('parseScriptSegments round-trip via FFI', () async {
@@ -295,11 +302,7 @@ void main() {
     expect(script.customResultName(key: 'time'), isNull);
     // Order is preserved, which is the only record of how the user arranged
     // their custom commands once those live on the server.
-    expect(segments.map((s) => s.key).toList(), [
-      'time',
-      customX,
-      customTime,
-    ]);
+    expect(segments.map((s) => s.key).toList(), ['time', customX, customTime]);
   });
 
   test('enum names stay in sync with the FFI manifest', () {

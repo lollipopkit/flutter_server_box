@@ -1,5 +1,8 @@
 import 'dart:io';
 
+import 'package:fl_lib/fl_lib.dart';
+import 'package:path/path.dart' as p;
+
 /// The host path a guest path names, or null when it names nothing inside.
 ///
 /// The Agent's file tools are `dart:io` on the host — they never enter the
@@ -77,4 +80,96 @@ Future<String?> resolveWithinRoot(
   }
   if (real != base && !real.startsWith('$base$separator')) return null;
   return forWrite ? '$real$separator${parts.last}' : real;
+}
+
+/// Returns a regular-file destination inside [root], creating missing parent
+/// directories without following archive-provided links.
+///
+/// Rootfs installation writes a handful of trusted configuration files after
+/// extraction. A tar member may already occupy one of those final paths with
+/// a symlink, so an ordinary [File.writeAsString] would follow it outside the
+/// tree even when every parent is confined.
+Future<File> rootfsFileForWrite(
+  String root,
+  String guestPath, {
+  bool replaceFinalSymlink = false,
+}) async {
+  if (!guestPath.startsWith('/')) {
+    throw ArgumentError.value(guestPath, 'guestPath', 'must be absolute');
+  }
+
+  final parts = <String>[];
+  for (final segment in guestPath.split('/')) {
+    switch (segment) {
+      case '' || '.':
+        continue;
+      case '..':
+        if (parts.isEmpty) {
+          throw StateError('Rootfs write escapes the root: $guestPath');
+        }
+        parts.removeLast();
+      default:
+        parts.add(segment);
+    }
+  }
+  if (parts.isEmpty) {
+    throw StateError('Rootfs write does not name a file: $guestPath');
+  }
+
+  final base = await Directory(root).resolveSymbolicLinks();
+  var parent = base;
+  for (final segment in parts.take(parts.length - 1)) {
+    parent = '$parent${Platform.pathSeparator}$segment';
+    switch (await FileSystemEntity.type(parent, followLinks: false)) {
+      case FileSystemEntityType.notFound:
+        await Directory(parent).create();
+        break;
+      case FileSystemEntityType.directory:
+        break;
+      case FileSystemEntityType.link:
+        throw StateError('Rootfs write has a symlinked parent: $guestPath');
+      default:
+        throw StateError('Rootfs write has a non-directory parent: $guestPath');
+    }
+  }
+
+  final target = '$parent${Platform.pathSeparator}${parts.last}';
+  final type = await FileSystemEntity.type(target, followLinks: false);
+  if (type == FileSystemEntityType.link && replaceFinalSymlink) {
+    String resolved;
+    try {
+      final linkTarget = await Link(target).target();
+      final guestCandidate = linkTarget.startsWith('/')
+          ? p.joinAll([
+              base,
+              ...p.posix
+                  .normalize(linkTarget)
+                  .split('/')
+                  .where((part) => part.isNotEmpty && part != '.'),
+            ])
+          : null;
+      final candidate =
+          guestCandidate ??
+          (p.isAbsolute(linkTarget)
+              ? p.normalize(linkTarget)
+              : p.normalize(p.join(parent, linkTarget)));
+      try {
+        resolved = await File(candidate).resolveSymbolicLinks();
+      } on FileSystemException {
+        if (guestCandidate == null || !p.isAbsolute(linkTarget)) rethrow;
+        resolved = await File(p.normalize(linkTarget)).resolveSymbolicLinks();
+      }
+    } catch (_) {
+      throw StateError('${libL10n.fail}: ${libL10n.path} ($guestPath)');
+    }
+    final separator = Platform.pathSeparator;
+    if (resolved != base && !resolved.startsWith('$base$separator')) {
+      throw StateError('${libL10n.invalid}: ${libL10n.path} ($guestPath)');
+    }
+    await Link(target).delete();
+  } else if (type == FileSystemEntityType.link ||
+      type == FileSystemEntityType.directory) {
+    throw StateError('Rootfs write target is not a regular file: $guestPath');
+  }
+  return File(target);
 }

@@ -125,12 +125,16 @@ function clearSession() {
 ///
 /// Exported for its own test: getting the scheme wrong on a same-origin panel
 /// is the kind of thing that only shows up in production.
-export function terminalWsUrl(base: string, ticket: string): string {
+export function terminalWsUrl(base: string): string {
   const origin = (base || window.location.origin).trim().replace(/\/+$/, '')
   const ws = /^https?:\/\//i.test(origin)
     ? origin.replace(/^http/i, 'ws')
     : `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${origin}`
-  return `${ws}/api/v1/terminal/ws?ticket=${encodeURIComponent(ticket)}`
+  return `${ws}/api/v1/terminal/ws`
+}
+
+export function terminalWsProtocol(ticket: string): string {
+  return `sbm-ticket.${ticket}`
 }
 
 export class TerminalSession {
@@ -155,6 +159,8 @@ export class TerminalSession {
   private attempt = 0
   private reconnectTimer: number | null = null
   private heartbeatTimer: number | null = null
+  /// Invalidates socket events and renderer callbacks from older attempts.
+  private connectionGeneration = 0
   /// Set by close()/exit so the disconnect handler doesn't try to reconnect.
   private finished = false
 
@@ -224,6 +230,7 @@ export class TerminalSession {
   }
 
   private async connect() {
+    const generation = ++this.connectionGeneration
     const entry = servers.list.find((s) => s.id === servers.currentId)
     if (!entry) {
       this.fail('No server selected')
@@ -235,6 +242,7 @@ export class TerminalSession {
     try {
       ticket = (await api.issueWsTicket('terminal')).ticket
     } catch (e) {
+      if (generation !== this.connectionGeneration || this.finished) return
       // Not being able to reach the agent is the ordinary case here — it is
       // exactly what a dropped link looks like from this side — so it must
       // keep retrying rather than end the session. Only a refused
@@ -242,7 +250,7 @@ export class TerminalSession {
       // a 401 and App is showing the login screen, so retrying would spin
       // against a dead token. With no session to rejoin there is likewise
       // nothing a retry could recover.
-      const refused = e instanceof ApiError && e.status === 401
+      const refused = e instanceof ApiError && (e.status === 401 || e.status === 429)
       if (refused || !this.handle) {
         this.fail(e instanceof Error ? e.message : 'Could not authorise the terminal')
       } else {
@@ -252,14 +260,17 @@ export class TerminalSession {
       return
     }
 
-    const socket = new WebSocket(terminalWsUrl(entry.url, ticket))
+    if (generation !== this.connectionGeneration || this.finished) return
+
+    const socket = new WebSocket(terminalWsUrl(entry.url), [terminalWsProtocol(ticket)])
     socket.binaryType = 'arraybuffer'
     this.socket = socket
 
     socket.onopen = () => {
+      if (!this.isCurrentConnection(generation, socket)) return
       this.error = null
       this.attempt = 0
-      this.armHeartbeat()
+      this.armHeartbeat(generation, socket)
       if (this.handle) {
         this.send({
           type: 'attach',
@@ -283,16 +294,17 @@ export class TerminalSession {
     }
 
     socket.onmessage = (event) => {
-      this.armHeartbeat()
+      if (!this.isCurrentConnection(generation, socket)) return
+      this.armHeartbeat(generation, socket)
       if (typeof event.data === 'string') {
         this.onControl(event.data)
       } else {
-        this.onOutput(new Uint8Array(event.data as ArrayBuffer))
+        this.onOutput(new Uint8Array(event.data as ArrayBuffer), generation)
       }
     }
 
-    socket.onclose = () => this.onDisconnect()
-    socket.onerror = () => this.onDisconnect()
+    socket.onclose = () => this.onDisconnect(generation, socket)
+    socket.onerror = () => this.onDisconnect(generation, socket)
   }
 
   private onControl(raw: string) {
@@ -369,10 +381,11 @@ export class TerminalSession {
     }
   }
 
-  private onOutput(data: Uint8Array) {
+  private onOutput(data: Uint8Array, generation: number) {
     const renderer = this.renderer
     if (!renderer) return
     renderer.write(data, () => {
+      if (generation !== this.connectionGeneration || renderer !== this.renderer) return
       this.rendered += data.length
       this.persist()
     })
@@ -394,9 +407,11 @@ export class TerminalSession {
     if (this.handle) saveSession(this.handle, this.rendered)
   }
 
-  private onDisconnect() {
+  private onDisconnect(generation: number, socket: WebSocket) {
+    if (!this.isCurrentConnection(generation, socket)) return
     this.clearHeartbeat()
     this.socket = null
+    socket.close()
     if (this.finished) {
       if (this.phase !== 'closed' && this.phase !== 'idle') this.phase = 'closed'
       return
@@ -424,14 +439,19 @@ export class TerminalSession {
 
   /// Restarts the silence timer. Any traffic counts as proof of life, not just
   /// the heartbeat itself.
-  private armHeartbeat() {
+  private armHeartbeat(generation: number, socket: WebSocket) {
     this.clearHeartbeat()
     this.heartbeatTimer = window.setTimeout(() => {
+      if (!this.isCurrentConnection(generation, socket)) return
       this.heartbeatTimer = null
       // The socket may still look open to us while the link is long gone;
       // closing it ourselves is what starts the reconnect.
-      this.socket?.close()
+      socket.close()
     }, HEARTBEAT_TIMEOUT_MS)
+  }
+
+  private isCurrentConnection(generation: number, socket: WebSocket): boolean {
+    return generation === this.connectionGeneration && socket === this.socket
   }
 
   private clearHeartbeat() {
@@ -449,6 +469,7 @@ export class TerminalSession {
   }
 
   private teardown() {
+    this.connectionGeneration += 1
     this.clearReconnect()
     this.clearHeartbeat()
     const socket = this.socket

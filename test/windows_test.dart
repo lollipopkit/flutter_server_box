@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/app/scripts/shell_func.dart';
@@ -127,7 +129,10 @@ void main() {
 
       expect(scriptPath, contains('powershell'));
       expect(scriptPath, contains('-ExecutionPolicy Bypass'));
-      expect(scriptPath, contains('-${ShellFunc.status.flag}'));
+      expect(
+        _decodePowerShellCommand(scriptPath),
+        contains('-${ShellFunc.status.flag}'),
+      );
     });
 
     test('should execute Windows commands correctly', () {
@@ -181,4 +186,14 @@ void main() {
       expect(() async => await getStatus(req), returnsNormally);
     });
   });
+}
+
+String _decodePowerShellCommand(String command) {
+  final encoded = command.split(' -EncodedCommand ').last;
+  final bytes = base64.decode(encoded);
+  final units = <int>[
+    for (var i = 0; i + 1 < bytes.length; i += 2)
+      bytes[i] | (bytes[i + 1] << 8),
+  ];
+  return String.fromCharCodes(units);
 }

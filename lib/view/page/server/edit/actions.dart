@@ -112,6 +112,7 @@ extension _Actions on _ServerEditPageState {
     // Whatever the page saved, or null if it was left without saving. Read
     // rather than assumed: the picker must not point at a record that does not
     // exist, which the foreign key would refuse at save time anyway.
+    if (!mounted) return;
     if (created is BmcCredential) _bmcCredId.value = created.id;
   }
 
@@ -158,7 +159,10 @@ extension _Actions on _ServerEditPageState {
           SelectableText('SHA-256: ${info.prettyFingerprint}'),
           if (info.isExpired) ...[
             const SizedBox(height: 8),
-            Text(l10n.bmcCertExpired, style: const TextStyle(color: Colors.orange)),
+            Text(
+              l10n.bmcCertExpired,
+              style: const TextStyle(color: Colors.orange),
+            ),
           ],
           if (changed) ...[
             const SizedBox(height: 8),
@@ -170,7 +174,7 @@ extension _Actions on _ServerEditPageState {
     );
     // The dialog answers; this page acts on the answer and this page is what
     // holds the field — see the dialog rules in CLAUDE.md
-    if (accepted != true) return;
+    if (accepted != true || !mounted) return;
     _bmcCert.value = info.fingerprint;
   }
 
@@ -335,6 +339,9 @@ extension _Actions on _ServerEditPageState {
 
   void _onSave() async {
     final useMonitorHttp = _useMonitorHttp.value;
+    final selectedKey = _keyIdx.value == null
+        ? null
+        : ref.read(privateKeyProvider).keys.elementAtOrNull(_keyIdx.value!);
 
     // SSH host/auth/jump-chain fields are hidden (and irrelevant) in
     // monitor-HTTP mode — skip their validation/defaulting entirely.
@@ -352,18 +359,18 @@ extension _Actions on _ServerEditPageState {
       // Either key source counts. A server imported with an IdentityFile has
       // a key and no password, and asking it to confirm "no authentication"
       // on every save would be asking about something that is not true.
-      final hasKey = _keyIdx.value != null || _keyPath.value != null;
+      final hasKey = selectedKey != null || _keyPath.value != null;
       if (!hasKey && _passwordController.text.isEmpty) {
         final ok = await context.showRoundDialog<bool>(
           title: libL10n.attention,
           child: Text(libL10n.askContinue(l10n.useNoPwd)),
           actions: Btnx.cancelRedOk,
         );
-        if (ok != true) return;
+        if (ok != true || !mounted) return;
       }
 
       // If [_pubKeyIndex] is -1, it means that the user has not selected
-      if (_keyIdx.value == -1) {
+      if (_keyIdx.value == -1 && _passwordController.text.isEmpty) {
         Toast.show(libL10n.empty);
         return;
       }
@@ -424,17 +431,16 @@ extension _Actions on _ServerEditPageState {
             port: int.tryParse(_portController.text) ?? 22,
             user: _usernameController.text,
             pwd: _passwordController.text.selfNotEmptyOrNull,
-            keyId: _keyIdx.value != null
-                ? ref
-                      .read(privateKeyProvider)
-                      .keys
-                      .elementAt(_keyIdx.value!)
-                      .id
-                : null,
+            keyId: selectedKey?.id,
             // Carried through rather than rebuilt from the form: nothing on
             // this page can type a path, and dropping it on save would take
             // away the only credential an imported server has
-            keyPath: _keyIdx.value != null ? null : _keyPath.value,
+            keyPath: selectedKey != null ? null : _keyPath.value,
+            identityFiles:
+                _keyIdx.value == null &&
+                    _keyPath.value == this.spi?.ssh?.keyPath
+                ? this.spi?.ssh?.identityFiles
+                : null,
             alterUrl: _altUrlController.text.selfNotEmptyOrNull,
             jumpId: _jumpServers.value.isEmpty
                 ? null
@@ -506,19 +512,28 @@ extension _Actions on _ServerEditPageState {
       return;
     }
 
-    if (this.spi == null) {
-      final existsIds = Stores.server.keys();
-      if (existsIds.contains(spi.id)) {
-        Toast.show('${l10n.sameIdServerExist}: ${spi.id}');
-        return;
+    try {
+      if (this.spi == null) {
+        final existsIds = Stores.server.keys();
+        if (existsIds.contains(spi.id)) {
+          Toast.show('${l10n.sameIdServerExist}: ${spi.id}');
+          return;
+        }
+        if (!await _persistPendingSudoPassword()) return;
+        await ref.read(serversProvider.notifier).addServer(spi);
+      } else {
+        if (!await _persistPendingSudoPassword()) return;
+        await ref.read(serversProvider.notifier).updateServer(this.spi!, spi);
       }
-      if (!await _persistPendingSudoPassword()) return;
-      await ref.read(serversProvider.notifier).addServer(spi);
-    } else {
-      if (!await _persistPendingSudoPassword()) return;
-      await ref.read(serversProvider.notifier).updateServer(this.spi!, spi);
+    } on DuplicateNameException catch (e) {
+      if (mounted) Toast.error(l10n.nameAlreadyExistsFmt(e.name));
+      return;
+    } catch (e, s) {
+      if (mounted) context.showErrDialog(e, s);
+      return;
     }
 
+    if (!mounted) return;
     context.pop();
   }
 }

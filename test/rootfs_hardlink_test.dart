@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/ios_rootfs.dart';
 import 'package:server_box/core/utils/linux_seed.dart';
@@ -27,6 +28,35 @@ import 'package:server_box/data/model/app/rootfs_manifest.dart';
 /// Android is unaffected and has no equivalent test: it hands the archive to
 /// the system `tar`, which has always known the difference.
 void main() {
+  const source = RootfsSource(
+    url: 'https://example.test/rootfs.tar.gz',
+    sha256: '',
+    sizeBytes: 1,
+    layout: LinuxRootfsLayout.plain,
+    compression: LinuxRootfsCompression.gzip,
+    followsMirror: false,
+  );
+
+  TarFile linkEntry(String name, String type, String target) => TarFile()
+    ..filename = name
+    ..mode = 0x1ed
+    ..lastModTime = 0
+    ..typeFlag = type
+    ..nameOfLinkedFile = target
+    ..fileSize = 0;
+
+  Future<File> archiveFile(Directory temp, List<TarFile> entries) async {
+    final out = OutputMemoryStream();
+    for (final entry in entries) {
+      entry.write(out);
+    }
+    out.writeBytes(Uint8List(1024));
+    out.flush();
+    final archive = File('${temp.path}/rootfs.tar.gz');
+    await archive.writeAsBytes(GZipEncoder().encodeBytes(out.getBytes()));
+    return archive;
+  }
+
   test('a hard link is not the same shape as a symbolic one', () {
     // The distinction this rests on, asserted against the reader rather than
     // assumed. If a future version of `archive` stopped setting
@@ -48,8 +78,11 @@ void main() {
 
     final out = OutputMemoryStream();
     entry('usr/bin/coreutils', TarFile.normalFile).write(out);
-    entry('usr/bin/ls', TarFile.hardLink, target: 'usr/bin/coreutils')
-        .write(out);
+    entry(
+      'usr/bin/ls',
+      TarFile.hardLink,
+      target: 'usr/bin/coreutils',
+    ).write(out);
     entry('bin', TarFile.symbolicLink, target: 'usr/bin').write(out);
     out.writeBytes(Uint8List(1024)); // the two empty blocks that end a tar
     out.flush();
@@ -67,6 +100,147 @@ void main() {
     expect(byName['usr/bin/ls']!.nameOfLinkedFile, 'usr/bin/coreutils');
     expect(byName['bin']!.typeFlag, TarFile.symbolicLink);
     expect(byName['bin']!.nameOfLinkedFile, 'usr/bin');
+  });
+
+  test('a hard link to a pending symlink preserves the symlink', () async {
+    TarFile entry(String name, String type, {String? target}) => TarFile()
+      ..filename = name
+      ..mode = 0x1ed
+      ..lastModTime = 0
+      ..typeFlag = type
+      ..nameOfLinkedFile = target
+      ..fileSize = 0;
+
+    final out = OutputMemoryStream();
+    entry(
+      'usr/lib/tool',
+      TarFile.symbolicLink,
+      target: '../bin/tool',
+    ).write(out);
+    entry('usr/bin/tool', TarFile.hardLink, target: 'usr/lib/tool').write(out);
+    out.writeBytes(Uint8List(1024));
+    out.flush();
+
+    final temp = await Directory.systemTemp.createTemp('rootfs-link-link-');
+    addTearDown(() => temp.delete(recursive: true));
+    final archive = File('${temp.path}/rootfs.tar.gz');
+    await archive.writeAsBytes(GZipEncoder().encodeBytes(out.getBytes()));
+    final root = Directory('${temp.path}/root')..createSync();
+    await IosRootfs.extractForTest(
+      archive,
+      root,
+      source: const RootfsSource(
+        url: 'https://example.test/rootfs.tar.gz',
+        sha256: '',
+        sizeBytes: 1,
+        layout: LinuxRootfsLayout.plain,
+        compression: LinuxRootfsCompression.gzip,
+        followsMirror: false,
+      ),
+    );
+
+    expect(await Link('${root.path}/usr/lib/tool').target(), '../bin/tool');
+    expect(await Link('${root.path}/usr/bin/tool').target(), '../bin/tool');
+  });
+
+  test('an iOS layer rejects an unsafe hard-link target', () async {
+    final entry = TarFile()
+      ..filename = 'usr/bin/tool'
+      ..mode = 0x1ed
+      ..lastModTime = 0
+      ..typeFlag = TarFile.hardLink
+      ..nameOfLinkedFile = '../outside/tool'
+      ..fileSize = 0;
+    final out = OutputMemoryStream();
+    entry.write(out);
+    out.writeBytes(Uint8List(1024));
+    out.flush();
+
+    final temp = await Directory.systemTemp.createTemp('rootfs-unsafe-link-');
+    addTearDown(() => temp.delete(recursive: true));
+    final archive = File('${temp.path}/rootfs.tar.gz');
+    await archive.writeAsBytes(GZipEncoder().encodeBytes(out.getBytes()));
+    final root = Directory('${temp.path}/root')..createSync();
+
+    await expectLater(
+      IosRootfs.extractForTest(
+        archive,
+        root,
+        source: const RootfsSource(
+          url: 'https://example.test/rootfs.tar.gz',
+          sha256: '',
+          sizeBytes: 1,
+          layout: LinuxRootfsLayout.plain,
+          compression: LinuxRootfsCompression.gzip,
+          followsMirror: false,
+        ),
+      ),
+      throwsA(
+        isA<StateError>().having(
+          (error) => error.message,
+          'message',
+          allOf(
+            contains(libL10n.invalid),
+            contains(libL10n.path),
+            contains('../outside/tool'),
+          ),
+        ),
+      ),
+    );
+    expect(File('${temp.path}/outside/tool').existsSync(), isFalse);
+  });
+
+  test('an iOS layer localizes a hard-link target below a symlink', () async {
+    final temp = await Directory.systemTemp.createTemp('rootfs-link-parent-');
+    addTearDown(() => temp.delete(recursive: true));
+
+    await expectLater(
+      IosRootfs.extractForTest(
+        await archiveFile(temp, [
+          linkEntry('usr/link', TarFile.symbolicLink, 'bin'),
+          linkEntry('usr/bin/tool', TarFile.hardLink, 'usr/link/tool'),
+        ]),
+        Directory('${temp.path}/root')..createSync(),
+        source: source,
+      ),
+      throwsA(
+        isA<StateError>().having(
+          (error) => error.message,
+          'message',
+          allOf(
+            contains(libL10n.invalid),
+            contains(libL10n.path),
+            contains('usr/link/tool'),
+          ),
+        ),
+      ),
+    );
+  });
+
+  test('an iOS layer localizes a non-file hard-link target', () async {
+    final temp = await Directory.systemTemp.createTemp('rootfs-missing-link-');
+    addTearDown(() => temp.delete(recursive: true));
+
+    await expectLater(
+      IosRootfs.extractForTest(
+        await archiveFile(temp, [
+          linkEntry('usr/bin/tool', TarFile.hardLink, 'usr/bin/missing'),
+        ]),
+        Directory('${temp.path}/root')..createSync(),
+        source: source,
+      ),
+      throwsA(
+        isA<StateError>().having(
+          (error) => error.message,
+          'message',
+          allOf(
+            contains(libL10n.invalid),
+            contains(libL10n.file),
+            contains('usr/bin/missing'),
+          ),
+        ),
+      ),
+    );
   });
 
   group('the real Ubuntu rootfs', () {
@@ -121,7 +295,9 @@ void main() {
         return null;
       }
       LinuxDistros.adoptForTest(
-        RootfsManifest.parse(File(LinuxDistros.bundledAsset).readAsStringSync()),
+        RootfsManifest.parse(
+          File(LinuxDistros.bundledAsset).readAsStringSync(),
+        ),
       );
       await IosRootfs.extractForTest(
         tarball,
@@ -130,7 +306,6 @@ void main() {
       );
       return into;
     }
-
 
     tearDown(() async {
       if (await into.exists()) await into.delete(recursive: true);
@@ -218,7 +393,7 @@ void main() {
       // other, which a copy would not be.
       target.writeAsStringSync('changed');
       expect(applet.readAsStringSync(), 'changed');
-    });
+    }, skip: Platform.isWindows);
 
     test('answers false rather than throwing when it cannot', () async {
       // The caller has a fallback and a system missing `ls` is worse than one

@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:server_box/core/utils/ssh_config.dart';
 
-
 void main() {
   group('SSHConfig Tests', () {
     late Directory tempDir;
@@ -195,8 +194,8 @@ Host myserver
       final server = servers.first;
       expect(server.name, 'myserver');
       expect(server.ssh?.ip, '192.168.1.100');
-      expect(server.ssh?.user, 'admin');
-      expect(server.ssh?.port, 22); // Uses default, not wildcard setting
+      expect(server.ssh?.user, 'defaultuser');
+      expect(server.ssh?.port, 2222);
     });
 
     test('parseConfig handles IdentityFile', () async {
@@ -215,6 +214,39 @@ Host keyserver
       // bug ship: every reader looks that field up in `Stores.key`.
       expect(server.ssh?.keyPath, '~/.ssh/special_key');
       expect(server.ssh?.keyId, isNull);
+    });
+
+    test('expands supported IdentityFile tokens', () {
+      final localUser =
+          Platform.environment['USER'] ??
+          Platform.environment['USERNAME'] ??
+          '';
+      expect(
+        SSHConfig.expandIdentityFile(
+          r'keys/%h-%n-%p-%r-%u-%%',
+          hostname: 'prod.example.com',
+          originalHost: 'prod',
+          port: 2200,
+          remoteUser: 'deploy',
+        ),
+        'keys/prod.example.com-prod-2200-deploy-$localUser-%',
+      );
+    });
+
+    test('preserves escaped spaces and repeated IdentityFile values', () async {
+      await configFile.writeAsString(r'''
+Host keyserver
+  HostName 192.168.1.100
+  IdentityFile ~/.ssh/key\ with\ spaces
+  IdentityFile ~/.ssh/fallback
+''');
+
+      final server = (await SSHConfig.parseConfig(configFile.path)).single;
+      expect(server.ssh?.keyPath, '~/.ssh/key with spaces');
+      expect(server.ssh?.identityFiles, [
+        '~/.ssh/key with spaces',
+        '~/.ssh/fallback',
+      ]);
     });
 
     test('parseConfig handles quoted values', () async {
@@ -245,10 +277,18 @@ Host badport
 Host goodserver
   HostName 192.168.1.200
   Port 2222
+
+Host zero
+  HostName 192.168.1.201
+  Port 0
+
+Host high
+  HostName 192.168.1.202
+  Port 65536
 ''');
 
       final servers = await SSHConfig.parseConfig(configFile.path);
-      expect(servers, hasLength(2));
+      expect(servers, hasLength(4));
 
       // First server should use default port due to invalid port
       expect(servers[0].name, 'badport');
@@ -257,9 +297,11 @@ Host goodserver
       // Second server should use specified port
       expect(servers[1].name, 'goodserver');
       expect(servers[1].ssh?.port, 2222);
+      expect(servers[2].ssh?.port, 22);
+      expect(servers[3].ssh?.port, 22);
     });
 
-    test('parseConfig skips hosts with multiple host patterns', () async {
+    test('parseConfig imports each concrete host pattern', () async {
       await configFile.writeAsString('''
 Host server1 server2
   HostName 192.168.1.100
@@ -269,27 +311,102 @@ Host singleserver
 ''');
 
       final servers = await SSHConfig.parseConfig(configFile.path);
-      expect(servers, hasLength(1)); // Only single host patterns
-
-      expect(servers[0].name, 'singleserver');
+      expect(servers.map((e) => e.name), [
+        'server1',
+        'server2',
+        'singleserver',
+      ]);
     });
 
-    test('parseConfig handles ProxyJump (ignored)', () async {
+    test('parseConfig resolves ProxyJump aliases', () async {
       await configFile.writeAsString('''
+Host bastion
+  HostName bastion.example.com
+
 Host jumpserver
   HostName 192.168.1.100
   User admin
-  ProxyJump bastion.example.com
+  ProxyJump bastion
 ''');
 
       final servers = await SSHConfig.parseConfig(configFile.path);
-      expect(servers, hasLength(1));
+      expect(servers, hasLength(2));
 
-      final server = servers.first;
+      final server = servers.firstWhere((e) => e.name == 'jumpserver');
+      final bastion = servers.firstWhere((e) => e.name == 'bastion');
       expect(server.name, 'jumpserver');
       expect(server.ssh?.ip, '192.168.1.100');
       expect(server.ssh?.user, 'admin');
-      // ProxyJump is ignored in current implementation
+      expect(server.ssh?.resolvedJumpIds, [bastion.id]);
+    });
+
+    test('preserves ProxyJump lists and user/port overrides', () async {
+      await configFile.writeAsString('''
+Host first
+  HostName first.example.com
+  User old
+  Port 22
+
+Host second
+  HostName second.example.com
+
+Host target
+  HostName target.example.com
+  ProxyJump jumpuser@first:2200,second
+''');
+
+      final servers = await SSHConfig.parseConfig(configFile.path);
+      final target = servers.firstWhere((e) => e.name == 'target');
+      final second = servers.firstWhere((e) => e.name == 'second');
+      final override = servers.firstWhere(
+        (e) => e.id == target.ssh!.resolvedJumpIds.first,
+      );
+      expect(target.ssh?.resolvedJumpIds, [override.id, second.id]);
+      expect(override.ssh?.user, 'jumpuser');
+      expect(override.ssh?.port, 2200);
+    });
+
+    test('imports a direct ProxyJump host specification', () async {
+      await configFile.writeAsString('''
+Host target
+  HostName target.example.com
+  ProxyJump deploy@bastion.example.com:2200
+''');
+
+      final servers = await SSHConfig.parseConfig(configFile.path);
+      final target = servers.firstWhere((e) => e.name == 'target');
+      final jump = servers.firstWhere(
+        (e) => e.id == target.ssh!.resolvedJumpIds.single,
+      );
+      expect(jump.ssh?.ip, 'bastion.example.com');
+      expect(jump.ssh?.user, 'deploy');
+      expect(jump.ssh?.port, 2200);
+      expect(
+        servers.where((e) => e.ssh?.ip == 'bastion.example.com'),
+        hasLength(1),
+      );
+    });
+
+    test('removes references to an invalid ProxyJump owner', () async {
+      await configFile.writeAsString('''
+Host broken
+  HostName broken.example.com
+  ProxyJump broken
+
+Host target
+  HostName target.example.com
+  ProxyJump broken,direct.example.com
+''');
+
+      final servers = await SSHConfig.parseConfig(configFile.path);
+      expect(servers.where((e) => e.name == 'broken'), isEmpty);
+      final target = servers.firstWhere((e) => e.name == 'target');
+      final jumps = target.ssh!.resolvedJumpIds;
+      expect(jumps, hasLength(1));
+      expect(
+        servers.firstWhere((e) => e.id == jumps.single).ssh?.ip,
+        'direct.example.com',
+      );
     });
 
     test('parseConfig returns empty list for non-existent file', () async {

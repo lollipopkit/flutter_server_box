@@ -72,9 +72,7 @@ impl FsRoots {
         for raw in configured {
             match std::fs::canonicalize(raw) {
                 Ok(path) => roots.push(path),
-                Err(e) => tracing::warn!(
-                    "fs root {raw:?} is unusable and will be ignored: {e}"
-                ),
+                Err(e) => tracing::warn!("fs root {raw:?} is unusable and will be ignored: {e}"),
             }
         }
         Self { roots }
@@ -115,6 +113,24 @@ impl FsRoots {
             FsDenied::OutsideRoots
         })?;
         self.check_within(canonical)
+    }
+
+    /// Resolves an existing directory entry without following its final
+    /// symlink. This is for operations such as remove and rename, which must
+    /// mutate the link itself while still resolving and confining its parent.
+    pub fn resolve_entry(&self, requested: &str) -> Result<PathBuf, FsDenied> {
+        let path = Self::check_absolute(requested)?;
+        let Some(parent) = path.parent() else {
+            return self.resolve_existing(requested);
+        };
+        let Some(name) = path.file_name() else {
+            return self.resolve_existing(requested);
+        };
+        let parent = std::fs::canonicalize(parent).map_err(|_| FsDenied::OutsideRoots)?;
+        let mut resolved = self.check_within(parent)?;
+        resolved.push(name);
+        std::fs::symlink_metadata(&resolved).map_err(|_| FsDenied::OutsideRoots)?;
+        Ok(resolved)
     }
 
     /// Resolves a path that may not exist yet — a file about to be written, a
