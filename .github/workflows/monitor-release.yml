@@ -309,7 +309,9 @@ jobs:
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
         with:
           tag_name: ${{ needs.meta.outputs.tag }}
-          name: Monitor ${{ needs.meta.outputs.tag }}
+          # The version, not the tag, which already carries the word: the tag
+          # is `monitor-v0.1.0`, so this read "Monitor monitor-v0.1.0".
+          name: Monitor v${{ needs.meta.outputs.version }}
           # Never the repository's latest release. That slot belongs to the
           # app, which is versioned separately — the whole point of this
           # workflow reading the crate version instead of a git tag. v0.1.0
