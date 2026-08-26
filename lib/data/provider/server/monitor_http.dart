@@ -465,6 +465,10 @@ class MonitorHttpClient {
 
   /// Takes a single-use ticket, then upgrades.
   ///
+  /// What the agent reads the ticket out of — `TICKET_PROTOCOL_PREFIX` in
+  /// `monitor/src/api/ws/terminal.rs`, and the two have to say the same thing.
+  static const _ticketProtocol = 'sbm-ticket.';
+
   /// A browser can't put a bearer token on a WebSocket handshake, so the agent
   /// authorises upgrades with a short-lived, single-use ticket instead.
   Future<WebSocket> _openWs({Duration? timeout}) {
@@ -484,14 +488,22 @@ class MonitorHttpClient {
       // Scheme compared case-insensitively: `Uri.parse` lowercases it, but
       // `_addr` is whatever the user typed, and reading `HTTPS://` as
       // plaintext would dial `ws://` at a TLS port and hang
-      final url = Uri.parse(_addr).replace(
-        scheme: _addr.toLowerCase().startsWith('https') ? 'wss' : 'ws',
-        path: '/api/v1/terminal/ws',
-        queryParameters: {'ticket': ticket},
-      );
+      final url = Uri.parse(_addr)
+          .replace(
+            scheme: _addr.toLowerCase().startsWith('https') ? 'wss' : 'ws',
+            path: '/api/v1/terminal/ws',
+            queryParameters: const <String, String>{},
+          )
+          .removeFragment();
       final socket =
           await WebSocket.connect(
             url.toString(),
+            // The ticket rides the subprotocol, not the query string. A URL is
+            // what every access log, proxy and error message writes down, and
+            // this one authorises a shell — the agent stopped reading
+            // `?ticket=` for that reason and answers 401 to anything that
+            // still sends it that way.
+            protocols: ['$_ticketProtocol$ticket'],
             // Carries `ignoreCert` onto the upgrade: this is the same endpoint the
             // status poll uses, so it has to trust the same certs
             customClient: _httpClient(),
