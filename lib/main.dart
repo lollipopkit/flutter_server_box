@@ -273,7 +273,7 @@ Future<void> _doDbMigrate() async {
   // It's only the version upgrade trigger logic.
   // How to upgrade the data is inside each own func.
   if (lastVer < newVer) {
-    ServerDetailCards.autoAddNewCards(newVer);
+    ServerDetailCards.autoAddNewCards(lastVer, newVer);
     ServerFuncBtn.autoAddNewFuncs(lastVer, newVer);
     Stores.setting.lastVer.put(newVer);
   }

@@ -26,13 +26,13 @@ void main() {
   List<int> row() => setting.serverFuncBtns.get();
 
   test('adds every entry that shipped during the upgrade', () async {
-    // A row from before systemd (1058), portForward (1340) and power (1481).
+    // A row from before systemd, port forwarding and Power shipped.
     setting.serverFuncBtns.put([
       ServerFuncBtn.terminal.index,
       ServerFuncBtn.files.index,
     ]);
 
-    ServerFuncBtn.autoAddNewFuncs(1000, 1500);
+    ServerFuncBtn.autoAddNewFuncs(1000, 1536);
 
     expect(row(), [
       ServerFuncBtn.terminal.index,
@@ -43,25 +43,45 @@ void main() {
     ]);
   });
 
+  test(
+    'uses release tags as the Systemd and port-forward boundaries',
+    () async {
+      setting.serverFuncBtns.put([ServerFuncBtn.terminal.index]);
+
+      ServerFuncBtn.autoAddNewFuncs(1051, 1070);
+      expect(row(), [
+        ServerFuncBtn.terminal.index,
+        ServerFuncBtn.systemd.index,
+      ]);
+
+      ServerFuncBtn.autoAddNewFuncs(1340, 1351);
+      expect(row(), [
+        ServerFuncBtn.terminal.index,
+        ServerFuncBtn.systemd.index,
+        ServerFuncBtn.portForward.index,
+      ]);
+    },
+  );
+
   test('adds nothing for an upgrade that shipped no new entry', () async {
     setting.serverFuncBtns.put([ServerFuncBtn.terminal.index]);
 
-    ServerFuncBtn.autoAddNewFuncs(1481, 1600);
+    ServerFuncBtn.autoAddNewFuncs(1492, 1600);
 
     expect(row(), [ServerFuncBtn.terminal.index]);
   });
 
   test('leaves an entry the user removed removed', () async {
-    // The bug the `(from, to]` window fixes: power shipped in 1481, this
-    // install has been running 1500, and the user took it out of the row. An
+    // The bug the release window fixes: this install has already run a build
+    // containing Power, and the user took it out of the row. An
     // upgrade to 1600 must not put it back — and would have, when the rule was
-    // `to >= addedVersion` alone.
+    // `to` alone.
     setting.serverFuncBtns.put([
       ServerFuncBtn.terminal.index,
       ServerFuncBtn.systemd.index,
     ]);
 
-    ServerFuncBtn.autoAddNewFuncs(1500, 1600);
+    ServerFuncBtn.autoAddNewFuncs(1536, 1600);
 
     expect(row(), [ServerFuncBtn.terminal.index, ServerFuncBtn.systemd.index]);
   });
@@ -72,7 +92,7 @@ void main() {
       ServerFuncBtn.terminal.index,
     ]);
 
-    ServerFuncBtn.autoAddNewFuncs(1000, 1500);
+    ServerFuncBtn.autoAddNewFuncs(1000, 1536);
 
     expect(
       row().where((e) => e == ServerFuncBtn.power.index).length,
@@ -80,6 +100,16 @@ void main() {
       reason: 'power was already there',
     );
   });
+
+  for (final retainedBuild in [1466, 1480, 1491]) {
+    test('adds Power when upgrading from v$retainedBuild', () async {
+      setting.serverFuncBtns.put([ServerFuncBtn.terminal.index]);
+
+      ServerFuncBtn.autoAddNewFuncs(retainedBuild, 1536);
+
+      expect(row(), [ServerFuncBtn.terminal.index, ServerFuncBtn.power.index]);
+    });
+  }
 
   test('a fresh install gets the defaults untouched', () async {
     // lastVer is 0 on a first run, and the window is wide open — but the
