@@ -578,6 +578,12 @@ class ServerNotifier extends _$ServerNotifier {
             ffi.CustomCmd(name: e.key, cmd: e.value),
       ];
 
+      // Reading the listing is an await, and an edit or a disconnect during it
+      // leaves `exec` pointing at the host this started on. The check below
+      // guards the database write; this one guards the write to the *server*,
+      // which is the one that cannot be taken back.
+      if (!isExecCurrent(exec, spi)) return;
+
       final install = await exec.run(
         ShellFuncManager.installCustomCmds(merged, systemType: system),
         entry: entry,

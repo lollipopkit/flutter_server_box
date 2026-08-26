@@ -1214,6 +1214,12 @@ class GlobalAgentToolService {
     final result = await exec.run(
       'set -e\n'
       'p=$quoted\n'
+      // Asked before `-f`, which answers no for a directory as readily as for
+      // something that is not there — so reading one was reported as "no such
+      // file", and the model was told to create a path that already exists.
+      // The SSH side tells the two apart; this now says the same thing.
+      r'if [ -d "$p" ]; then exit 45; fi'
+      '\n'
       r'if [ ! -f "$p" ]; then exit 44; fi'
       '\n'
       r'size=$(wc -c < "$p") || exit'
@@ -1224,6 +1230,9 @@ class GlobalAgentToolService {
     );
     if (result.outputIncomplete) {
       throw StateError('The Linux userland returned incomplete file data.');
+    }
+    if (result.exitCode == 45) {
+      throw StateError('$path is a directory, not a file.');
     }
     if (result.exitCode == 44) {
       throw StateError('No such file on this device: $path');
@@ -1330,11 +1339,30 @@ class GlobalAgentToolService {
     final result = await exec.run(
       'set -e\n'
       'p=$quoted\n'
+      // `mv file dir` files the one *inside* the other, so replacing a path
+      // that turned out to be a directory would quietly leave the staged copy
+      // sitting in it under a name nobody asked for.
+      r'''if [ -d "$p" ]; then printf '%s: is a directory\n' "$p" >&2; exit 1; fi'''
+      '\n'
       'tmp="\$p.$suffix.tmp"\n'
       r'''trap 'rm -f -- "$tmp"' EXIT HUP INT TERM'''
       '\n'
       r'''base64 -d > "$tmp"'''
       '\n'
+      // The staged copy is created with the guest's umask, and the `mv` below
+      // carries *that* mode onto the destination — so saving an edit to a 0755
+      // script left it 0644 and unrunnable. Whatever was there keeps its
+      // permissions instead, as `carryModeToStaging` arranges for every other
+      // backend. Best effort, like that one: the bytes are already written,
+      // and a mode that cannot be read or set must not mean the file can never
+      // be saved.
+      r'''if [ -f "$p" ]; then'''
+      '\n'
+      r'''  mode=$(stat -c %a "$p" 2>/dev/null) || mode='''
+      '\n'
+      r'''  if [ -n "$mode" ]; then chmod "$mode" "$tmp" || :; fi'''
+      '\n'
+      'fi\n'
       r'''mv -f -- "$tmp" "$p"'''
       '\n'
       'trap - EXIT HUP INT TERM',

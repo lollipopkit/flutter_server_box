@@ -79,9 +79,17 @@ class ScpFileBackend implements FileBackend {
   /// with `.timeout` and gave up — so it is the one that must not slip through.
   var _closed = false;
 
-  /// [opening] once it has arrived, registered so [close] can end it.
-  Future<ScpChannel> _opened(Future<ScpChannel> opening) async {
-    final channel = await opening;
+  /// The channel [open] makes, registered so [close] can end it.
+  ///
+  /// [open] is a closure rather than a future already in flight, so that a
+  /// backend already closed starts nothing: `client.execute` is what runs
+  /// `scp` on the far side, and passing the future in meant the remote process
+  /// had begun — for `scp -t`, with a staging file to show for it — before
+  /// anything here got to look at [_closed]. Checked again afterwards, since
+  /// `close` can also land while the channel is being opened.
+  Future<ScpChannel> _opened(Future<ScpChannel> Function() open) async {
+    if (_closed) throw const ScpShellException('The connection was closed');
+    final channel = await open();
     if (_closed) {
       channel.close();
       throw const ScpShellException('The connection was closed');
@@ -91,10 +99,10 @@ class ScpFileBackend implements FileBackend {
   }
 
   Future<T> _through<T>(
-    Future<ScpChannel> opening,
+    Future<ScpChannel> Function() open,
     Future<T> Function(ScpChannel channel) run,
   ) async {
-    final channel = await _opened(opening);
+    final channel = await _opened(open);
     try {
       return await run(channel);
     } finally {
@@ -212,7 +220,7 @@ class ScpFileBackend implements FileBackend {
   Stream<List<int>> read(String path, {int offset = 0}) async* {
     // Opened when the stream is listened to rather than when it is built, so a
     // caller that never reads never starts a process on the far side.
-    final channel = await _opened(SshScpChannel.source(_client, path));
+    final channel = await _opened(() => SshScpChannel.source(_client, path));
     try {
       yield* scpRead(channel, path, offset: offset, timeout: _streamTimeout);
     } finally {
@@ -239,7 +247,7 @@ class ScpFileBackend implements FileBackend {
     try {
       if (size != null) {
         await _through(
-          SshScpChannel.sink(_client, staging),
+          () => SshScpChannel.sink(_client, staging),
           (channel) => scpWrite(
             channel,
             staging,
@@ -311,7 +319,7 @@ class ScpFileBackend implements FileBackend {
       }
       final length = await spool.length();
       await _through(
-        SshScpChannel.sink(_client, staging),
+        () => SshScpChannel.sink(_client, staging),
         (channel) => scpWrite(
           channel,
           staging,

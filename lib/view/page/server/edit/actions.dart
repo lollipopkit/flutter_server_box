@@ -340,14 +340,20 @@ extension _Actions on _ServerEditPageState {
   void _onSave() async {
     final useMonitorHttp = _useMonitorHttp.value;
     final keyIdx = _keyIdx.value;
-    final selectedKey = keyIdx == null
+    // `-1` is not an index into anything. It is what the key-auth switch
+    // writes when it is turned on before a key is picked, and it stands for
+    // "no selection" — the check further down at `_keyIdx.value == -1` is what
+    // handles it. `elementAtOrNull` does not tolerate it either: it throws
+    // `RangeError.checkNotNegative` rather than answering null, so reaching it
+    // with the switch on and no key chosen took the save down.
+    final selectedKey = keyIdx == null || keyIdx < 0
         ? null
         : ref.read(privateKeyProvider).keys.elementAtOrNull(keyIdx);
     // Said rather than silently dropped. `elementAtOrNull` is what keeps the
-    // save from throwing a RangeError when the chosen key was deleted from
-    // another pane meanwhile, but going on from there would write a server
-    // with no key and no word about why.
-    if (keyIdx != null && selectedKey == null) {
+    // save from throwing when the chosen key was deleted from another pane
+    // meanwhile, but going on from there would write a server with no key and
+    // no word about why.
+    if (keyIdx != null && keyIdx >= 0 && selectedKey == null) {
       Toast.show('${libL10n.invalid}: ${libL10n.key}');
       return;
     }
