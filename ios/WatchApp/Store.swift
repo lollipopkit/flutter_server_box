@@ -58,6 +58,13 @@ enum WatchStore {
         set { defaults.set(newValue, forKey: WatchKeys.selectedIndex) }
     }
 
+    /// Which chart the user was last on, so the complication shows the same
+    /// one. Defaults to the overview, which is also what an unset key reads as.
+    static var selectedChart: WatchChart {
+        get { WatchChart(rawValue: defaults.integer(forKey: WatchKeys.selectedChart)) ?? .overview }
+        set { defaults.set(newValue.rawValue, forKey: WatchKeys.selectedChart) }
+    }
+
     // MARK: - Snapshots
 
     static func snapshots() -> [String: WatchSnapshot] {
