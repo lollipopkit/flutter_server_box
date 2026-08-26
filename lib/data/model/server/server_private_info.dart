@@ -80,7 +80,19 @@ abstract class Spi with _$Spi {
     /// Null on every server with only one way in, which is most of them, and
     /// on every record written before the two could coexist. Read through
     /// [Spix.transport], which resolves that.
-    @JsonKey(includeIfNull: false) ServerTransport? preferredTransport,
+    ///
+    /// A name this build does not know reads as null rather than throwing.
+    /// Without that, one unrecognised word makes `Spi.fromJson` fail and takes
+    /// the *whole server record* with it — through a backup restore, a sync,
+    /// or a shared QR code. A build that grows a third transport writes a word
+    /// this one has never seen, and losing a server over it would be a far
+    /// worse answer than falling back to the resolution [Spix.transport]
+    /// already does for a preference that names nothing configured.
+    @JsonKey(
+      includeIfNull: false,
+      unknownEnumValue: JsonKey.nullForUndefinedEnumValue,
+    )
+    ServerTransport? preferredTransport,
     List<String>? tags,
     @Default(true) bool autoConnect,
     ServerCustom? custom,

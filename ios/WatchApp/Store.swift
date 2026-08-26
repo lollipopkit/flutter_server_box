@@ -53,9 +53,23 @@ enum WatchStore {
 
     // MARK: - Selection
 
-    static var selectedIndex: Int {
-        get { defaults.integer(forKey: WatchKeys.selectedIndex) }
-        set { defaults.set(newValue, forKey: WatchKeys.selectedIndex) }
+    static var selectedServerId: String? {
+        get { defaults.string(forKey: WatchKeys.selectedServerId) }
+        set { defaults.set(newValue, forKey: WatchKeys.selectedServerId) }
+    }
+
+    /// The server the app was last showing, or the first one.
+    ///
+    /// Falling back rather than answering nil: a complication that goes blank
+    /// because a server was renamed elsewhere is worse than one showing the
+    /// first server in the list.
+    static func selectedServer() -> WatchServer? {
+        let all = servers()
+        guard !all.isEmpty else { return nil }
+        if let id = selectedServerId, let match = all.first(where: { $0.id == id }) {
+            return match
+        }
+        return all.first
     }
 
     /// Which chart the user was last on, so the complication shows the same

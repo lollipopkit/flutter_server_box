@@ -35,8 +35,8 @@ struct WatchProvider: TimelineProvider {
     }
 
     private func loadEntry() -> WatchEntry {
-        let servers = WatchStore.servers()
-        guard !servers.isEmpty else {
+        // By id, with a fallback to the first — see `WatchStore.selectedServer`.
+        guard let server = WatchStore.selectedServer() else {
             return WatchEntry(
                 date: Date(),
                 snapshot: .placeholder(name: "-"),
@@ -44,8 +44,6 @@ struct WatchProvider: TimelineProvider {
                 configured: false
             )
         }
-        let index = min(max(0, WatchStore.selectedIndex), servers.count - 1)
-        let server = servers[index]
         return WatchEntry(
             date: Date(),
             // No reading yet means the app has not managed to load this server

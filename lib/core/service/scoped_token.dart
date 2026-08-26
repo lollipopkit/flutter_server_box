@@ -1,5 +1,7 @@
+import 'package:fl_lib/fl_lib.dart';
 import 'package:meta/meta.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/provider/server/monitor_http.dart';
 
 /// A read-only credential this app obtained from one `monitor` agent on behalf
 /// of a second surface — an Apple Watch, or a home-screen widget.
@@ -110,4 +112,61 @@ Map<String, ScopedToken> reusableScopedTokens({
     if (held.servesEndpoint(monitor.addr, now)) reusable[id] = held;
   }
   return reusable;
+}
+
+/// Every `client_id` this app mints a scoped token under.
+///
+/// One list, because the thing that has to revoke them does not care which
+/// surface each belongs to — it is undoing all of them at one agent.
+List<String> scopedClientIdsFor(String serverId) => [
+  'watch:$serverId',
+  'widget:$serverId',
+];
+
+/// Hands back the credentials an agent the server is *moving away from* still
+/// holds.
+///
+/// This is the only moment they can be revoked. Once the record has been
+/// edited, the old address and the old login are gone — and a scoped token is
+/// revoked by an authenticated call to the agent that issued it, so nothing
+/// later has anything to authenticate with. A rebuild of the token set can
+/// only ever stop *handing out* a credential; the agent-side row stays valid
+/// for up to ninety days.
+///
+/// Three ways a server moves away from its agent, and all three leave a live
+/// token behind:
+///
+/// - its monitor configuration is removed outright;
+/// - its address changes, so the new token is minted somewhere else;
+/// - its username changes, since the agent keys `watch_tokens` by
+///   `(subject, client_id)` and the subject is the account that asked.
+///
+/// Best effort and never rethrows. A server must stay editable while its agent
+/// is offline, and once the record is written there is no retry target — the
+/// token may outlive it remotely, which is worse than nothing but far better
+/// than an edit that cannot be saved.
+Future<void> revokeScopedTokensLeftBehind(Spi old, Spi next) async {
+  final previous = old.monitor;
+  if (previous == null) return;
+
+  final current = next.monitor;
+  final movedOn =
+      current == null ||
+      normalizeAgentEndpoint(current.addr) !=
+          normalizeAgentEndpoint(previous.addr) ||
+      current.user != previous.user;
+  if (!movedOn) return;
+
+  final client = MonitorHttpClient(previous);
+  try {
+    for (final clientId in scopedClientIdsFor(old.id)) {
+      try {
+        await client.revokeWatchToken(clientId);
+      } catch (e, s) {
+        Loggers.app.warning('Revoke $clientId at ${previous.addr}', e, s);
+      }
+    }
+  } finally {
+    client.dispose();
+  }
 }

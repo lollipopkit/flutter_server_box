@@ -46,18 +46,31 @@ struct ContentView: View {
                 .tabViewStyle(.verticalPage)
             }
         }
-        .onAppear { serverIndex = clamped(WatchStore.selectedIndex) }
-        .onChange(of: mgr.servers) { _ in serverIndex = clamped(serverIndex) }
+        .onAppear { serverIndex = storedIndex() }
+        // Followed by id, not by position. The list is ordered by name and the
+        // phone republishes it on every change, so renaming a server reorders
+        // it — and holding a bare index would leave the page on whatever
+        // machine had moved into that slot.
+        .onChange(of: mgr.servers) { _ in serverIndex = storedIndex() }
         .onChange(of: serverIndex) { newValue in
             // The complication shows whichever server the user last looked at.
-            WatchStore.selectedIndex = newValue
+            WatchStore.selectedServerId =
+                mgr.servers.indices.contains(newValue)
+                    ? mgr.servers[newValue].id
+                    : nil
             WidgetCenter.shared.reloadAllTimelines()
         }
     }
 
-    private func clamped(_ index: Int) -> Int {
+    /// Where the remembered server sits in the list as it stands now.
+    private func storedIndex() -> Int {
         guard !mgr.servers.isEmpty else { return 0 }
-        return min(max(0, index), mgr.servers.count - 1)
+        if let id = WatchStore.selectedServerId,
+           let found = mgr.servers.firstIndex(where: { $0.id == id }) {
+            return found
+        }
+        // Gone from the list, or nothing remembered yet.
+        return 0
     }
 }
 

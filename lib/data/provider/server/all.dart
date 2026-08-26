@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:server_box/core/service/scoped_token.dart';
 import 'package:server_box/core/service/watch_sync.dart';
 import 'package:server_box/core/service/widget_sync.dart';
 import 'package:server_box/core/sync.dart';
@@ -574,6 +575,13 @@ class ServersNotifier extends _$ServersNotifier {
         final serverNotifier = ref.read(serverProvider(old.id).notifier);
         serverNotifier.updateSpi(newSpi);
       }
+
+      // While the *old* credential is still known. A scoped token is revoked
+      // by an authenticated call to the agent that issued it, so this is the
+      // last moment anything can: after this the old address and login are
+      // gone, and a rebuild of the token set can only stop handing the
+      // credential out, never take it back.
+      await revokeScopedTokensLeftBehind(old, newSpi);
 
       // Only reconnect if neccessary
       if (newSpi.shouldReconnect(old)) {

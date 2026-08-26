@@ -22,8 +22,14 @@ enum WatchKeys {
     /// `[String: WatchSnapshot]` keyed by server id, JSON. Written by the app,
     /// read by the widget.
     static let snapshots = "watch_snapshots"
-    /// Which page the user was last on, so the widget shows the same server.
-    static let selectedIndex = "watch_shared_selected_index"
+    /// Which server the user was last on, by id, so the complication shows the
+    /// same one.
+    ///
+    /// By id and not by position. The list is ordered by name and the phone
+    /// republishes it on every change, so renaming a server reorders it — and
+    /// a stored index would then point at a different machine, silently, with
+    /// the complication following along.
+    static let selectedServerId = "watch_shared_selected_server_id"
     /// Which chart within that page, by `WatchChart.rawValue`. Same purpose,
     /// the other axis.
     static let selectedChart = "watch_shared_selected_chart"

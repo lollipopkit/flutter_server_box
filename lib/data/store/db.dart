@@ -612,14 +612,21 @@ class AppDb extends _$AppDb {
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
-      for (final statement in _indexes) {
+      for (final statement in indexStatements) {
         await customStatement(statement);
       }
     },
   );
 
   /// Indexes the read patterns need, which the table definitions do not carry.
-  static const _indexes = [
+  ///
+  /// Public because a migration that *rebuilds* a table has to put them back:
+  /// `DROP TABLE` takes its indexes with it, and Drift only runs this list on
+  /// `onCreate`, which an upgrading install never reaches. Every statement is
+  /// `IF NOT EXISTS`, so re-running the whole list is the safe way to do that
+  /// — safer than a migration naming the two it knows about, which is a list
+  /// that goes stale the next time someone adds an index to `server`.
+  static const indexStatements = [
     'CREATE INDEX IF NOT EXISTS idx_server_key ON server(ssh_key_id);',
     // Same read as `ssh_key_id`: "how many servers use this account", asked
     // once per row of the account list and on every rebuild of the server

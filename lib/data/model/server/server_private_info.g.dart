@@ -19,6 +19,7 @@ _Spi _$SpiFromJson(Map<String, dynamic> json) => _Spi(
   preferredTransport: $enumDecodeNullable(
     _$ServerTransportEnumMap,
     json['preferredTransport'],
+    unknownValue: JsonKey.nullForUndefinedEnumValue,
   ),
   tags: (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList(),
   autoConnect: json['autoConnect'] as bool? ?? true,

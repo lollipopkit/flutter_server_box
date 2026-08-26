@@ -9,6 +9,12 @@ import org.json.JSONObject
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
+import java.security.cert.X509Certificate
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.HttpsURLConnection
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
 
 /**
  * Reads one server's `/api/v1/metrics` and `/api/v1/metrics/history` with the
@@ -100,6 +106,17 @@ object WidgetApi {
         var connection: HttpURLConnection? = null
         try {
             connection = (url.openConnection() as HttpURLConnection).apply {
+                // Only the certificate check, only when this server was
+                // configured to skip it in the app, and only on *this*
+                // connection — a self-signed agent is the common case, and the
+                // setting travels with the server rather than being global.
+                // Installing it through `HttpsURLConnection.setDefault*` would
+                // silently disarm certificate checking for every other request
+                // the process makes.
+                if (this is HttpsURLConnection && server.ignoreCert) {
+                    sslSocketFactory = permissiveSslContext().socketFactory
+                    hostnameVerifier = HostnameVerifier { _, _ -> true }
+                }
                 requestMethod = "GET"
                 connectTimeout = TIMEOUT_MS
                 readTimeout = TIMEOUT_MS
@@ -154,6 +171,24 @@ object WidgetApi {
      */
     private fun JSONObject.optDoubleOrNull(key: String): Double? =
         if (has(key) && !isNull(key)) optDouble(key).takeIf { !it.isNaN() } else null
+
+    /**
+     * A TLS context that accepts any certificate.
+     *
+     * Built fresh per request rather than cached, so there is no object that
+     * outlives the one connection it was made for and could be reached by
+     * anything else.
+     */
+    private fun permissiveSslContext(): SSLContext {
+        val trustEverything = object : X509TrustManager {
+            override fun checkClientTrusted(chain: Array<X509Certificate>?, authType: String?) = Unit
+            override fun checkServerTrusted(chain: Array<X509Certificate>?, authType: String?) = Unit
+            override fun getAcceptedIssuers(): Array<X509Certificate> = emptyArray()
+        }
+        return SSLContext.getInstance("TLS").apply {
+            init(null, arrayOf<TrustManager>(trustEverything), java.security.SecureRandom())
+        }
+    }
 
     /** Byte counts the way the rest of the app prints them ("1.3g"). */
     fun formatBytes(bytes: Double): String {

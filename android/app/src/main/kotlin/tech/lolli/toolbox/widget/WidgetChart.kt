@@ -26,15 +26,27 @@ import kotlin.math.min
  */
 object WidgetChart {
     /**
-     * The largest bitmap this will produce, in pixels per side.
+     * The most bitmap one update may carry, in bytes.
      *
-     * A 4x4 widget on a 3x-density screen is around 750px across, so this is
-     * generous for the real case while bounding what a launcher reporting an
-     * absurd size could ask for. At `ARGB_8888` a 900x900 bitmap is about
-     * 3 MiB — already past what one `RemoteViews` should carry, which is why
-     * the drawing is scaled to fit rather than to fill.
+     * The binding constraint is not a side length, it is the size of the whole
+     * `RemoteViews` transaction — around a megabyte, shared with the layout
+     * and with whatever else is in flight, and exceeding it throws
+     * `TransactionTooLargeException` and stops the update reaching the
+     * launcher at all. A per-side cap does not bound that: 900x900 at
+     * `ARGB_8888` is 3.2 MiB, and even a 4x4 widget at 3x density
+     * (about 750x465 after the header) is 1.4 MiB.
+     *
+     * So the budget is on area, and an image over it is drawn smaller and
+     * stretched by the `ImageView` (`scaleType="fitXY"`). These are
+     * antialiased line charts; a modest upscale costs a little softness, and a
+     * widget that silently stops updating costs everything.
      */
-    private const val MAX_SIDE = 900
+    private const val MAX_BITMAP_BYTES = 640 * 1024
+
+    /** `ARGB_8888`, chosen because a translucent fill bands visibly below it. */
+    private const val BYTES_PER_PIXEL = 4
+
+    private const val MAX_PIXELS = MAX_BITMAP_BYTES / BYTES_PER_PIXEL
 
     data class Series(
         val label: String,
@@ -60,8 +72,7 @@ object WidgetChart {
         heightPx: Int,
     ): Bitmap? {
         if (series.isEmpty()) return null
-        val w = widthPx.coerceIn(1, MAX_SIDE)
-        val h = heightPx.coerceIn(1, MAX_SIDE)
+        val (w, h) = withinBudget(widthPx.coerceAtLeast(1), heightPx.coerceAtLeast(1))
 
         val columns = if (series.size >= 4) 2 else if (series.size == 2) 2 else 1
         val rows = if (series.size >= 4) 2 else 1
@@ -86,6 +97,21 @@ object WidgetChart {
             )
         }
         return bitmap
+    }
+
+    /**
+     * [width] x [height] shrunk to fit [MAX_PIXELS], keeping its shape.
+     *
+     * Proportional rather than clamped per side: the aspect ratio is what the
+     * `ImageView` will stretch back to, and squashing one side alone would
+     * make every chart lean.
+     */
+    private fun withinBudget(width: Int, height: Int): Pair<Int, Int> {
+        val pixels = width.toLong() * height.toLong()
+        if (pixels <= MAX_PIXELS) return width to height
+        val scale = kotlin.math.sqrt(MAX_PIXELS.toDouble() / pixels.toDouble())
+        return (width * scale).toInt().coerceAtLeast(1) to
+            (height * scale).toInt().coerceAtLeast(1)
     }
 
     private fun drawPanel(

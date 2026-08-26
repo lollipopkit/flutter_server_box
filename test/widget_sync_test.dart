@@ -175,5 +175,17 @@ void main() {
         isNot(WatchSync.watchClientId('abc')),
       );
     });
+
+    test('and both are in the list revocation walks', () {
+      // `revokeScopedTokensLeftBehind` hands an agent back every credential
+      // this app minted there, and it is the only chance to do so — after the
+      // edit the login that would authenticate the call is gone. A client id
+      // missing from that list is a token nobody can ever revoke.
+      final ids = scopedClientIdsFor('abc');
+
+      expect(ids, contains(WidgetSync.widgetClientId('abc')));
+      expect(ids, contains(WatchSync.watchClientId('abc')));
+      expect(ids, hasLength(2));
+    });
   });
 }

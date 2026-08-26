@@ -225,6 +225,23 @@ void main() {
     expect(read.fallbackTransport, ServerTransport.ssh);
   });
 
+  test('the indexes on server come back', () async {
+    // `DROP TABLE` takes them with it, and Drift only creates indexes on
+    // `onCreate` — which an upgrading install never reaches. Both of these
+    // also serve an `ON DELETE SET NULL`, so without them deleting a key or a
+    // BMC account scans `server` once per row deleted, for good.
+    await createV17Schema();
+
+    await const BothTransportsMigration().apply();
+
+    final names = SqliteDb.instance
+        .select("SELECT name FROM sqlite_master WHERE type = 'index';")
+        .map((row) => row['name'])
+        .toSet();
+    expect(names, contains('idx_server_key'));
+    expect(names, contains('idx_server_bmc_cred'));
+  });
+
   test('runs again without complaining', () async {
     // The version is recorded only once every statement has run, so a process
     // stopped partway means the whole step runs again.

@@ -171,8 +171,20 @@ final class WatchSync {
       // issuing again — the agent's `ON CONFLICT DO UPDATE` replaces the row
       // in place — and revoking first would leave the watch with nothing for
       // as long as the second request takes, or forever if it fails.
+      //
+      // A backstop, not the real revocation: `revokeScopedTokensLeftBehind`
+      // runs at the edit, while the old *login* is still known, and this only
+      // has the new one to try the old address with. So a failure here is
+      // expected and must not take the payload with it — it used to throw out
+      // of the whole build, and since the store event that started it had
+      // already been consumed, nothing was delivered and nothing retried. The
+      // watch kept whatever it had until the next unrelated edit.
       if (existing != null && existing.endpoint != endpoint) {
-        await _revokeServer(spi, endpoint: existing.endpoint);
+        try {
+          await _revokeServer(spi, endpoint: existing.endpoint);
+        } catch (e, s) {
+          Loggers.app.info('Backstop revoke at ${existing.endpoint}', e, s);
+        }
       }
       final client = MonitorHttpClient(monitor);
       try {
@@ -222,7 +234,8 @@ final class WatchSync {
   /// Distinct from the widgets' — see `WidgetSync.widgetClientId` — so that
   /// revoking one device does not take the other's credential with it. The
   /// agent keys `watch_tokens` by `(subject, client_id)`, which is what makes
-  /// the two independent.
+  /// the two independent. Both appear in `scopedClientIdsFor`, which is what
+  /// revokes them together when a server leaves its agent behind.
   static String watchClientId(String serverId) => 'watch:$serverId';
 
   /// The tokens the watch is currently holding, read back out of the context

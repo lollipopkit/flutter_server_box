@@ -1,4 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/data/store/db.dart';
 import 'package:server_box/data/store/schema.dart';
 
 /// Lets one server carry SSH *and* a monitor agent, and records which leads.
@@ -122,6 +123,19 @@ class BothTransportsMigration implements SchemaMigration {
         );
         db.execute('DROP TABLE server;');
         db.execute('ALTER TABLE server_m017 RENAME TO server;');
+        // `DROP TABLE` took `server`'s indexes with it, and Drift only creates
+        // them on `onCreate` — which an upgrading install never reaches. An
+        // upgraded database would otherwise have a different query shape from
+        // a fresh one for good: `idx_server_key` and `idx_server_bmc_cred`
+        // also serve two `ON DELETE SET NULL`s, so without them deleting a key
+        // or a BMC account scans `server` once per row deleted.
+        //
+        // The whole list, not the two that name `server`: every statement is
+        // `IF NOT EXISTS`, and a migration naming what it knows about is a
+        // list that goes stale the next time someone adds one.
+        for (final statement in AppDb.indexStatements) {
+          db.execute(statement);
+        }
         db.execute('COMMIT;');
       } catch (_) {
         db.execute('ROLLBACK;');
