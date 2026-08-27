@@ -9,6 +9,9 @@ import 'package:server_box/data/store/migrations/m011_virt_key_rows.dart';
 import 'package:server_box/data/store/migrations/m012_known_hosts_to_settings.dart';
 import 'package:server_box/data/store/migrations/m013_virt_key_names.dart';
 import 'package:server_box/data/store/migrations/m014_ssh_file_transport.dart';
+import 'package:server_box/data/store/migrations/m015_watch_selection_to_exclusion.dart';
+import 'package:server_box/data/store/migrations/m016_legacy_status_urls.dart';
+import 'package:server_box/data/store/migrations/m017_both_transports.dart';
 import 'package:server_box/data/store/schema.dart';
 
 /// Every migration, ordered, in the one place that names them.
@@ -40,4 +43,7 @@ const kSchemaMigrations = <SchemaMigration>[
   KnownHostsToSettingsMigration(),
   VirtKeyNamesMigration(),
   SshFileTransportMigration(),
+  WatchSelectionToExclusionMigration(),
+  LegacyStatusUrlsMigration(),
+  BothTransportsMigration(),
 ];

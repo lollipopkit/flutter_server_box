@@ -117,4 +117,37 @@ void main() {
       expect(BackupV2.formatVer, SchemaVersion.current);
     });
   });
+
+  group('an unknown preferred transport', () {
+    test('reads as null rather than taking the record with it', () {
+      // Stored by name, and a build that grows a third transport writes a word
+      // this one has never seen. Without `unknownEnumValue` the decode throws,
+      // and `Spi.fromJson` failing loses the *whole server* — through a backup
+      // restore, a sync, or a shared QR code.
+      final spi = Spi.fromJson({
+        'name': 'box',
+        'id': 's-1',
+        'ssh': {'ip': '10.0.0.1', 'port': 22, 'user': 'root'},
+        'monitorHttp': {'addr': 'https://h:3770'},
+        'preferredTransport': 'quicOverCarrierPigeon',
+      });
+
+      expect(spi.name, 'box');
+      expect(spi.preferredTransport, isNull);
+      // And falls back to the resolution an absent preference already gets.
+      expect(spi.transport, ServerTransport.ssh);
+    });
+
+    test('a known one still decodes', () {
+      final spi = Spi.fromJson({
+        'name': 'box',
+        'id': 's-1',
+        'ssh': {'ip': '10.0.0.1', 'port': 22, 'user': 'root'},
+        'monitorHttp': {'addr': 'https://h:3770'},
+        'preferredTransport': 'monitorHttp',
+      });
+
+      expect(spi.transport, ServerTransport.monitorHttp);
+    });
+  });
 }

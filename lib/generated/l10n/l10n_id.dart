@@ -208,7 +208,7 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get agentFloat => 'Mengambang di atas tab lain';
+  String get floatOverTabs => 'Mengambang di atas tab lain';
 
   @override
   String get agentToolSshConnect => 'Sambungkan SSH';
@@ -345,6 +345,11 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get monitorAllowInsecureHttpTip =>
       'Hanya di jaringan privat tepercaya yang mengenkripsi transportnya sendiri, misalnya Tailscale';
+
+  @override
+  String monitorHttpTip(String url) {
+    return 'Membaca status server ini dari HTTP API agen **monitor**, bukan menjalankan perintah lewat SSH.\n\nAgen harus dipasang di server terlebih dahulu; tren, aplikasi jam tangan, dan widget layar utama bergantung padanya.\n\n[Cara memasang agen monitor]($url)';
+  }
 
   @override
   String get backupTip =>
@@ -597,9 +602,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Sesuaikan tab mana yang muncul di halaman beranda dan urutannya';
 
   @override
-  String get homeWidgetUrlConfig => 'Konfigurasi URL Widget Rumah';
-
-  @override
   String get ignoreCert => 'Abaikan sertifikat';
 
   @override
@@ -739,6 +741,16 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get jumpServerAndProxyCommandCannotBeUsedTogether =>
       'Jump server dan ProxyCommand tidak bisa dipakai bersamaan.';
+
+  @override
+  String get noConnectionMethod => 'Atur SSH, agen monitor, atau keduanya';
+
+  @override
+  String get preferredTransport => 'Coba lebih dulu';
+
+  @override
+  String get preferredTransportTip =>
+      'Dari mana status dibaca, dan koneksi mana yang dibuka perintah lebih dulu. Yang lain tetap tersedia.';
 
   @override
   String get keepForeground => 'Simpan Aplikasi Foreground!';
@@ -1550,10 +1562,11 @@ class AppLocalizationsId extends AppLocalizations {
       'Tidak ada server dengan agen monitor terkonfigurasi';
 
   @override
-  String get watchLegacyUrls => 'URL status lama';
+  String get legacyStatusGoneTitle => 'URL status tidak berfungsi lagi';
 
   @override
-  String get accessoryWidgetServer => 'Server widget layar kunci';
+  String get legacyStatusGoneBody =>
+      'Aplikasi jam tangan dan widget layar utama membaca alamat `/status` yang diketik manual. Endpoint itu sudah dihapus: ia hanya bisa melaporkan nilai saat ini sebagai teks, itulah sebabnya keduanya tidak pernah bisa menampilkan grafik.\n\nSekarang keduanya membaca API monitor yang terautentikasi, sehingga bisa menggambar tren dan tetap selaras dengan aplikasi sendiri. Atur server sekali di aplikasi, dan setiap jam tangan dan widget akan mengambilnya.';
 
   @override
   String get systemdMissing => 'Tidak ada systemd di server ini';
@@ -1653,4 +1666,10 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get privacyBlurTip =>
       'Sembunyikan konten aplikasi di pengalih aplikasi';
+
+  @override
+  String get floatReturnToTab => 'Kembalikan ke tab';
+
+  @override
+  String get termInFloatWindow => 'Terminal ini ada di jendela mengambang';
 }

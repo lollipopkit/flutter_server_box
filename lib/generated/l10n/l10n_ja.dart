@@ -193,7 +193,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get agentFloat => '他のタブの上に浮かべる';
+  String get floatOverTabs => '他のタブの上に浮かべる';
 
   @override
   String get agentToolSshConnect => 'SSH 接続';
@@ -321,6 +321,11 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get monitorAllowInsecureHttpTip =>
       'HTTP 以外で通信自体が暗号化される信頼できるプライベートネットワークでのみ。たとえば Tailscale';
+
+  @override
+  String monitorHttpTip(String url) {
+    return 'SSH でコマンドを実行する代わりに、**monitor** の HTTP API からこのサーバーの状態を読み取ります。\n\n先にサーバーへ monitor を導入する必要があります。推移のグラフ、ウォッチ App、ホーム画面ウィジェットはこれに依存します。\n\n[monitor の導入方法]($url)';
+  }
 
   @override
   String get backupTip => 'エクスポートされたデータはパスワードで暗号化できます。 \n適切に保管してください。';
@@ -562,9 +567,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeTabsCustomizeDesc => 'ホームページに表示するタブとその順序をカスタマイズします';
 
   @override
-  String get homeWidgetUrlConfig => 'ホームウィジェットURL設定';
-
-  @override
   String get ignoreCert => '証明書を無視する';
 
   @override
@@ -698,6 +700,15 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get jumpServerAndProxyCommandCannotBeUsedTogether =>
       '踏み台サーバーと ProxyCommand は併用できません。';
+
+  @override
+  String get noConnectionMethod => 'SSH、monitor、またはその両方を設定してください';
+
+  @override
+  String get preferredTransport => '優先する接続';
+
+  @override
+  String get preferredTransportTip => 'ステータスの取得元と、コマンドが最初に開く接続。もう一方も引き続き使えます。';
 
   @override
   String get keepForeground => 'アプリを前面に保ってください！';
@@ -1461,10 +1472,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get watchNoMonitorServer => 'monitor を設定したサーバーがありません';
 
   @override
-  String get watchLegacyUrls => '旧形式の status URL';
+  String get legacyStatusGoneTitle => 'ステータス URL は使用できなくなりました';
 
   @override
-  String get accessoryWidgetServer => 'ロック画面ウィジェットのサーバー';
+  String get legacyStatusGoneBody =>
+      'ウォッチ App とホーム画面ウィジェットは、手入力した `/status` アドレスを読み取っていました。このエンドポイントは削除されました。現在値をテキストで返すことしかできず、グラフを表示できなかったのはそのためです。\n\n現在は monitor の認証付き API を読み取るため、推移を描画でき、App と自動的に同期します。App でサーバーを一度設定すれば、すべてのウォッチとウィジェットが受け取ります。';
 
   @override
   String get systemdMissing => 'このサーバーには systemd がありません';
@@ -1559,4 +1571,10 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get privacyBlurTip => 'Appスイッチャーで内容を隠す';
+
+  @override
+  String get floatReturnToTab => 'タブに戻す';
+
+  @override
+  String get termInFloatWindow => 'このターミナルはフローティングウィンドウにあります';
 }

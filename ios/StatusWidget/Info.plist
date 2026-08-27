@@ -2,14 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>AppIdentifierPrefix</key>
+	<string>$(AppIdentifierPrefix)</string>
 	<key>NSExtension</key>
 	<dict>
 		<key>NSExtensionAttributes</key>
 		<dict>
-			<key>IntentsSupportedIntents</key>
-			<array>
-				<string>ConfigurationIntent</string>
-			</array>
 			<key>NSSupportsLiveActivities</key>
 			<true/>
 		</dict>

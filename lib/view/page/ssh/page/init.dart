@@ -94,7 +94,7 @@ extension _Init on SSHPageState {
       windowIndex: plan.windowIndex,
     );
     _bindForegroundSession(session);
-    widget.args.focusNode?.requestFocus();
+    _focusTerminal(keyboard: false);
     return true;
   }
 
@@ -168,7 +168,7 @@ extension _Init on SSHPageState {
             ? TermSessionStatus.connected
             : TermSessionStatus.disconnected,
       );
-      widget.args.focusNode?.requestFocus();
+      _focusTerminal(keyboard: false);
       return;
     }
 
@@ -210,7 +210,7 @@ extension _Init on SSHPageState {
       initSnippet.runInTerm(_terminal, spi);
     }
 
-    widget.args.focusNode?.requestFocus();
+    _focusTerminal(keyboard: false);
   }
 
   void _setupDiscontinuityTimer() {
@@ -341,9 +341,7 @@ extension _Init on SSHPageState {
   /// Returns `true` when the terminal was restored.
   Future<bool> _tryReconnect({String? tmuxSession}) async {
     _reconnectCancelled = false;
-    if (mounted) {
-      _showReconnectingDialog(onCancel: () => _reconnectCancelled = true);
-    }
+    if (mounted) _showReconnectingDialog();
     try {
       return await _reconnect(tmuxSession: tmuxSession);
     } catch (e, st) {
@@ -351,12 +349,22 @@ extension _Init on SSHPageState {
       _closeFailedReconnectClient();
       return false;
     } finally {
-      if (mounted) contextSafe?.pop();
+      // Not gated on `mounted`, which is what this used to be. The dialog is
+      // on the root navigator and outlives the page that raised it, so a page
+      // torn down mid-reconnect — its tab closed, the app moved on — left it
+      // spinning over every tab with nothing able to close it: this pop was
+      // skipped, and the cancel button did not close it either.
+      //
+      // Before returning, so the caller's next dialog goes up over an empty
+      // navigator rather than over this one. See [_dismissReconnectingDialog].
+      _dismissReconnectingDialog();
     }
   }
 
   /// Cancellable progress dialog shown while reconnecting.
-  void _showReconnectingDialog({required VoidCallback onCancel}) {
+  void _showReconnectingDialog() {
+    // Captured now, while there is certainly a context to ask — see the field.
+    _reconnectDialogNav = Navigator.of(context, rootNavigator: true);
     unawaited(
       context.showRoundDialog(
         child: Row(
@@ -368,12 +376,47 @@ extension _Init on SSHPageState {
             ),
             const SizedBox(width: 16),
             Expanded(child: Text(libL10n.reconnecting)),
-            Btn.cancel(onTap: onCancel),
+            // Closes the dialog itself. An `onTap` replaces the pop `Btn`
+            // would otherwise do from its own context, so a callback that only
+            // set the flag left the button doing nothing anyone could see: the
+            // loop reads the flag between attempts, and an attempt is a whole
+            // SSH connect timeout long.
+            Btn.cancel(
+              onTap: () {
+                _reconnectCancelled = true;
+                _dismissReconnectingDialog();
+              },
+            ),
           ],
         ),
         barrierDismiss: false,
       ),
     );
+  }
+
+  /// Closes the reconnecting dialog, once. Safe when it is already gone.
+  ///
+  /// Now, not next frame. A pop takes whatever is on top of the root
+  /// navigator, and the caller that closes this dialog is usually about to put
+  /// another one up — [_onConnectionLossSuspected] asks "go back?" the moment
+  /// the reconnect it was waiting on gives up. Scheduled, this pop landed
+  /// after that question was already on screen and closed *it*: the spinner
+  /// stayed, and the dialog meant to replace it was gone in a frame.
+  ///
+  /// [deferred] is for [dispose] alone, which runs inside the frame that is
+  /// unmounting this page — popping a route from there is a `markNeedsBuild`
+  /// during build. Nothing follows it, so nothing can be popped by mistake.
+  void _dismissReconnectingDialog({bool deferred = false}) {
+    final nav = _reconnectDialogNav;
+    if (nav == null) return;
+    _reconnectDialogNav = null;
+    if (!deferred) {
+      if (nav.mounted) nav.pop();
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (nav.mounted) nav.pop();
+    });
   }
 
   Future<void> _showDisconnectDialog() async {
@@ -470,7 +513,7 @@ extension _Init on SSHPageState {
           return false;
         }
         _setupDiscontinuityTimer();
-        widget.args.focusNode?.requestFocus();
+        _focusTerminal(keyboard: false);
         return true;
       }
       if (!mounted || _reconnectCancelled) {
@@ -495,7 +538,7 @@ extension _Init on SSHPageState {
     }
     _bindForegroundSession(shell);
     _setupDiscontinuityTimer();
-    widget.args.focusNode?.requestFocus();
+    _focusTerminal(keyboard: false);
     return true;
   }
 
@@ -805,7 +848,7 @@ extension _Init on SSHPageState {
           nextSessionName: choice.sessionName,
           nextWindowIndex: choice.windowIndex,
         );
-        widget.args.focusNode?.requestFocus();
+        _focusTerminal(keyboard: false);
         return;
       }
 
@@ -827,7 +870,7 @@ extension _Init on SSHPageState {
           choice.sessionName,
           nextSessionName: choice.sessionName,
         );
-        widget.args.focusNode?.requestFocus();
+        _focusTerminal(keyboard: false);
         return;
       }
     } finally {

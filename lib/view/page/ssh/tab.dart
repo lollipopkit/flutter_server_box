@@ -12,6 +12,7 @@ import 'package:server_box/data/model/server/dist.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
+import 'package:server_box/data/provider/app/terminal_shell.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/terminal_session.dart';
@@ -554,11 +555,67 @@ extension _Actions on _SSHTabPageState {
   /// Read from the tab's arguments rather than its live state: a tab that has
   /// not been looked at yet has no state, and the buttons would flicker in as
   /// it built.
+  ///
+  /// [_floatBtn] is last, which puts it in the corner of the window — the
+  /// place a control over the window itself belongs.
   List<Widget> get _serverActions {
     final current = _sessions.current;
     if (current == null) return const [];
     final onServer = current.data.page.args.spi != null;
-    return onServer ? [_agentBtn, _snippetBtn] : [_snippetBtn];
+    return onServer
+        ? [_agentBtn, _snippetBtn, _floatBtn]
+        : [_snippetBtn, _floatBtn];
+  }
+
+  /// Sends the terminal on screen into the window that floats over every tab,
+  /// and brings it back.
+  ///
+  /// On the tab and not on the page inside it, beside the other buttons that
+  /// act on whichever terminal is showing — and because a terminal opened as a
+  /// route rather than as a tab has nowhere to come back to.
+  ///
+  /// Its own [Consumer] so that only the button rebuilds when the window opens
+  /// or closes; the bar around it is driven by the session list.
+  Widget get _floatBtn => Consumer(
+    builder: (_, ref, _) {
+      final session = _sessions.current?.data.pageKey.currentState?.session;
+      final floating =
+          session != null &&
+          ref.watch(
+            terminalShellProvider.select(
+              (shell) => identical(shell?.session, session),
+            ),
+          );
+      return Btn.icon(
+        text: floating ? l10n.floatReturnToTab : l10n.floatOverTabs,
+        icon: Icon(
+          floating
+              ? Icons.picture_in_picture_alt
+              : Icons.picture_in_picture_alt_outlined,
+          size: 18,
+        ),
+        onTap: _toggleFloat,
+      );
+    },
+  );
+
+  void _toggleFloat() {
+    final tab = _sessions.current;
+    // Null until the page has been built once, which is a tab restored but
+    // never looked at. There is no session to float yet, and the tap that
+    // brought it on screen is what makes one.
+    final state = tab?.data.pageKey.currentState;
+    if (tab == null || state == null) return;
+
+    final shell = ref.read(terminalShellProvider.notifier);
+    if (shell.isFloating(state.session)) {
+      shell.hide();
+      return;
+    }
+    // The tab's name, not the server's: two shells on one machine are told
+    // apart by exactly that, and the window's title bar has the same job the
+    // tab strip does.
+    shell.float(state.session, title: tab.name);
   }
 
   /// Opens the agent on the terminal that is on screen, the same way the

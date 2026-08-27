@@ -209,7 +209,7 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String get agentFloat => 'Boven andere tabbladen zweven';
+  String get floatOverTabs => 'Boven andere tabbladen zweven';
 
   @override
   String get agentToolSshConnect => 'SSH verbinden';
@@ -346,6 +346,11 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get monitorAllowInsecureHttpTip =>
       'Alleen op een vertrouwd privénetwerk dat het transport zelf versleutelt, zoals Tailscale';
+
+  @override
+  String monitorHttpTip(String url) {
+    return 'De status van deze server lezen via de HTTP-API van een **monitor**-agent, in plaats van opdrachten via SSH uit te voeren.\n\nDe agent moet eerst op de server worden geïnstalleerd; grafieken, de Watch-app en de widgets hangen ervan af.\n\n[Een monitor-agent installeren]($url)';
+  }
 
   @override
   String get backupTip =>
@@ -598,9 +603,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Pas aan welke tabbladen op de startpagina worden weergegeven en hun volgorde';
 
   @override
-  String get homeWidgetUrlConfig => 'Home-widget-url configureren';
-
-  @override
   String get ignoreCert => 'Certificaat negeren';
 
   @override
@@ -741,6 +743,16 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get jumpServerAndProxyCommandCannotBeUsedTogether =>
       'Jumpserver en ProxyCommand kunnen niet samen worden gebruikt.';
+
+  @override
+  String get noConnectionMethod => 'Stel SSH, een monitor-agent of beide in';
+
+  @override
+  String get preferredTransport => 'Eerst proberen';
+
+  @override
+  String get preferredTransportTip =>
+      'Waar de status vandaan komt en welke verbinding een opdracht als eerste opent. De andere blijft beschikbaar.';
 
   @override
   String get keepForeground => 'Houd de app op de voorgrond!';
@@ -1565,10 +1577,11 @@ class AppLocalizationsNl extends AppLocalizations {
       'Geen enkele server heeft een monitor-agent geconfigureerd';
 
   @override
-  String get watchLegacyUrls => 'Oude status-URL\'s';
+  String get legacyStatusGoneTitle => 'Status-URL\'s werken niet meer';
 
   @override
-  String get accessoryWidgetServer => 'Server voor vergrendelscherm-widget';
+  String get legacyStatusGoneBody =>
+      'De Watch-app en de widgets lazen een handmatig ingevoerd `/status`-adres. Dat eindpunt is verdwenen: het kon alleen actuele waarden als tekst teruggeven, en daarom was er nooit een grafiek mogelijk.\n\nZe lezen nu de geverifieerde API van de monitor-agent, tekenen trendlijnen en blijven zelf gelijk met de app. Stel de server één keer in de app in, dan pikt elke watch en widget hem op.';
 
   @override
   String get systemdMissing => 'Geen systemd op deze server';
@@ -1667,4 +1680,10 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get privacyBlurTip => 'Verberg de app-inhoud in de app-switcher';
+
+  @override
+  String get floatReturnToTab => 'Terug naar tabblad';
+
+  @override
+  String get termInFloatWindow => 'Deze terminal staat in het zwevende venster';
 }

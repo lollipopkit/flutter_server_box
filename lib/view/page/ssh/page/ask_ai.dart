@@ -144,9 +144,7 @@ extension _AskAi on SSHPageState {
   void _insertAiCommand(String command) {
     if (command.isEmpty) return;
     _terminal.textInput(command);
-    (widget.args.focusNode?.requestFocus ??
-            _termKey.currentState?.requestKeyboard)
-        ?.call();
+    _focusTerminal();
   }
 
   Future<AskAiCommandResult> _runAiCommand(AskAiCommand proposal) async {

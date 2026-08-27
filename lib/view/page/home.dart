@@ -18,11 +18,12 @@ import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
-import 'package:server_box/view/page/agent/shell.dart';
+import 'package:server_box/view/page/floating_panels.dart';
 import 'package:server_box/view/page/home_tab.dart';
 import 'package:server_box/view/page/macos_menu_bar.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/widget/dmg_notice.dart';
+import 'package:server_box/view/widget/legacy_status_notice.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -309,10 +310,11 @@ class _HomePageState extends ConsumerState<HomePage>
       bottomNavigationBar: isMobile ? _buildBottomBar() : null,
     );
 
-    // Above the `PageView` rather than inside a tab: the Agent floats over
-    // whichever tab you are on, so it cannot belong to one of them.
+    // Above the `PageView` rather than inside a tab: the Agent and a floated
+    // terminal float over whichever tab you are on, so neither can belong to
+    // one of them.
     //
-    // The shell is told how big this box actually is rather than reading
+    // They are told how big this box actually is rather than reading
     // `MediaQuery.sizeOf`. Those are not the same number — everything between
     // the window and here, the responsive builder included, is free to hand
     // down less than it got — and keeping a panel inside the window is not the
@@ -321,7 +323,7 @@ class _HomePageState extends ConsumerState<HomePage>
       builder: (_, constraints) => Stack(
         children: [
           mainContent,
-          AgentFloatingShell(area: constraints.biggest),
+          FloatingPanels(area: constraints.biggest),
         ],
       ),
     );
@@ -463,16 +465,29 @@ class _HomePageState extends ConsumerState<HomePage>
       );
     }
 
-    // Says so when this launch took over the sandboxed build's data, or when
-    // it could not — see [SandboxImport].
-    unawaited(SandboxImportNotice.showIfNeeded(context));
     unawaited(MethodChans.updateHomeWidget());
 
+    // In sequence, and awaited. Both are root-navigator dialogs, so firing
+    // them together stacks one on the other; and the guide is an overlay above
+    // every route, which would cover whichever was up rather than wait for it.
+    // The guide checks for that and skips, so racing them cost the guide a
+    // launch at a time.
+    //
     // Before the refresh and not after it: that call waits on every server's
-    // connection, and one machine that is slow to answer would hold the guide
-    // back for as long as it takes to time out. The strip it points at is
+    // connection, and one machine slow to answer would hold all of this back
+    // for as long as it takes to time out. The strip the guide points at is
     // already laid out — this runs after the first frame.
-    unawaited(_maybeShowNavGuide());
+    unawaited(() async {
+      // Says so when this launch took over the sandboxed build's data, or
+      // when it could not — see [SandboxImport].
+      await SandboxImportNotice.showIfNeeded(context);
+      if (!mounted) return;
+      // Says so when this upgrade took a feature away — see
+      // [LegacyStatusUrlsMigration].
+      await LegacyStatusNotice.showIfNeeded(context);
+      if (!mounted) return;
+      await _maybeShowNavGuide();
+    }());
 
     await _notifier.refresh();
 

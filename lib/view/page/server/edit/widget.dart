@@ -336,12 +336,14 @@ extension _Widgets on _ServerEditPageState {
   /// the first. Nobody has to come here unless SFTP does not work, and the
   /// browser's own failure says so when it does not.
   Widget _buildFileTransport() {
-    // Nothing to set on a monitor server: saving one writes `ssh: null`, so a
-    // choice made here would be accepted, saved and discarded without a word.
-    // The two fields above it have the same shape and the same problem; this
-    // one is new, so it does not add to it.
-    return _useMonitorHttp.listenVal((useHttp) {
-      if (useHttp) return UIs.placeholder;
+    // Follows the *SSH* switch. Nothing to set with SSH off: saving then
+    // writes `ssh: null`, so a choice made here would be accepted, saved and
+    // discarded without a word. It used to follow the monitor switch, which
+    // was the same question only while the two were exclusive — a server
+    // carrying both had its file transport hidden and could not be told to
+    // use SCP.
+    return _useSsh.listenVal((useSsh) {
+      if (!useSsh) return UIs.placeholder;
       return _buildFileTransportTile();
     });
   }
@@ -407,27 +409,83 @@ extension _Widgets on _ServerEditPageState {
     });
   }
 
-  /// SSH+shell vs monitor's HTTP API — mutually exclusive connection
-  /// methods for reaching this server (see `Spi.monitorHttp`'s doc comment).
+  /// SSH+shell and monitor's HTTP API — peer ways of reaching this server
+  /// (see `Spi.monitorHttp`'s doc comment), either or both.
+  ///
+  /// Two switches rather than the segmented control this replaced. Both at
+  /// once is a real configuration: an agent that reports status without
+  /// holding a shell open, and sshd for the things the agent has no endpoint
+  /// for. What survives of the exclusivity is the order, which only has to be
+  /// asked when there are two things to order.
   Widget _buildConnMethodSwitch() {
-    return _useMonitorHttp.listenVal((useHttp) {
-      return SegmentedButton<bool>(
-        segments: const [
-          ButtonSegment(
-            value: false,
-            label: Text('SSH'),
-            icon: Icon(Icons.terminal, size: 16),
-          ),
-          ButtonSegment(
-            value: true,
-            label: Text('Monitor HTTP'),
-            icon: Icon(MingCute.web_line, size: 16),
-          ),
-        ],
-        selected: {useHttp},
-        onSelectionChanged: (selection) {
-          _useMonitorHttp.value = selection.first;
-        },
+    return _useSsh.listenVal((useSsh) {
+      return _useMonitorHttp.listenVal((useHttp) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SwitchListTile(
+              title: const Text('SSH'),
+              secondary: const Icon(Icons.terminal),
+              value: useSsh,
+              // Turning the last one off would leave a server with no way in
+              // at all, which `Spix.validate` refuses on save — better to
+              // refuse the switch than to accept it and reject the save.
+              onChanged: (val) {
+                if (!val && !_useMonitorHttp.value) {
+                  Toast.show(l10n.noConnectionMethod);
+                  return;
+                }
+                _useSsh.value = val;
+              },
+            ),
+            SwitchListTile(
+              // The one switch here that offers a way in which does not exist
+              // until something has been installed on the server — which is
+              // not a thing a switch can convey, so the tip carries a link to
+              // the page that explains it. Markdown, so the link is a link.
+              title: TipText(
+                'Monitor HTTP',
+                l10n.monitorHttpTip(Urls.monitorAgentDoc),
+                isMarkdown: true,
+              ),
+              secondary: const Icon(MingCute.web_line),
+              value: useHttp,
+              onChanged: (val) {
+                if (!val && !_useSsh.value) {
+                  Toast.show(l10n.noConnectionMethod);
+                  return;
+                }
+                _useMonitorHttp.value = val;
+              },
+            ),
+            if (useSsh && useHttp) _buildTransportPriority(),
+          ],
+        );
+      });
+    });
+  }
+
+  /// Which way in is tried first.
+  ///
+  /// Ordering, not exclusion: the other one still carries whatever it alone
+  /// can do, and a failure on this one falls through to it. What the choice
+  /// actually decides is where the status poll goes and which connection a
+  /// command opens first.
+  Widget _buildTransportPriority() {
+    return _preferMonitorHttp.listenVal((preferHttp) {
+      return ListTile(
+        title: Text(l10n.preferredTransport),
+        subtitle: Text(l10n.preferredTransportTip, style: UIs.textGrey),
+        trailing: SegmentedButton<bool>(
+          segments: const [
+            ButtonSegment(value: false, label: Text('SSH')),
+            ButtonSegment(value: true, label: Text('HTTP')),
+          ],
+          selected: {preferHttp},
+          onSelectionChanged: (selection) {
+            _preferMonitorHttp.value = selection.first;
+          },
+        ),
       );
     });
   }

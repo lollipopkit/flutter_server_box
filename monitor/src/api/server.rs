@@ -13,7 +13,6 @@ use crate::{
     core::config_file,
     core::remote_access::RemoteAccess,
     monitoring::{self, LiveSettings, SystemMetrics},
-    monitoring::size::Size,
     monitoring::velocity::{NetworkSpeedInfo, VelocityAnalysisResponse, VelocityManager},
     utils::error::{MonitorError, Result},
 };
@@ -211,6 +210,85 @@ macro_rules! require_read_access {
     }};
 }
 
+/// Every `/api/v1` route, in one place both the real server and the tests
+/// mount.
+///
+/// Extracted because the auth gate an endpoint gets is a property of *this*
+/// table, not of the handler: [`require_read_access`] accepts a watch token
+/// and [`require_jwt`] does not, and which one a route ends up behind is
+/// decided here. A test that hand-built its own scope could assert whatever it
+/// liked about a handler and still say nothing about what the shipped binary
+/// exposes — see `tests/watch_token_scope.rs`, whose whole subject is this
+/// table.
+pub fn configure_api(cfg: &mut web::ServiceConfig) {
+    cfg.service(
+        web::scope("/api/v1")
+            .route("/login", web::post().to(login))
+            .service(
+                web::resource("/watch-token")
+                    .route(web::post().to(issue_watch_token))
+                    .route(web::delete().to(revoke_watch_token)),
+            )
+            .route("/status", web::get().to(get_status))
+            .route("/metrics", web::get().to(get_metrics))
+            .route("/capabilities", web::get().to(get_capabilities))
+            .route("/ws-ticket", web::post().to(issue_ws_ticket))
+            .route("/terminal/ws", web::get().to(terminal_ws))
+            .service(
+                // Its own payload limit: ntex allows 32 KiB by
+                // default, and this endpoint's `stdin` carries the
+                // generated status script — 5 KiB today, but it grows
+                // with every custom command a user adds, and going
+                // over would answer 413 with nothing to explain it.
+                web::resource("/exec")
+                    .state(
+                        web::types::JsonConfig::default()
+                            .limit(crate::api::exec::MAX_REQUEST),
+                    )
+                    .route(web::post().to(crate::api::exec::exec)),
+            )
+            .service(
+                // A streamed body, so ntex's payload limit must not
+                // apply: the point of this endpoint is the file that
+                // `/exec` could not carry.
+                web::resource("/fs/write").route(web::put().to(crate::api::fs::write)),
+            )
+            .route("/fs/roots", web::get().to(crate::api::fs::roots))
+            .route("/fs/list", web::get().to(crate::api::fs::list))
+            .route("/fs/stat", web::get().to(crate::api::fs::stat))
+            .route("/fs/read", web::get().to(crate::api::fs::read))
+            .route("/fs/mkdir", web::post().to(crate::api::fs::mkdir))
+            .route("/fs/rename", web::post().to(crate::api::fs::rename))
+            .route("/fs/chmod", web::post().to(crate::api::fs::chmod))
+            .route("/fs/remove", web::delete().to(crate::api::fs::remove))
+            .route(
+                "/remote-access/full-access",
+                web::delete().to(disable_full_access),
+            )
+            .service(
+                // Its own payload limit, like `/exec`: the body is
+                // every custom command at once, and a user who pastes
+                // a real script into one would otherwise meet ntex's
+                // 32 KiB default as a 413 with nothing to explain it.
+                web::resource("/custom-cmds")
+                    .state(
+                        web::types::JsonConfig::default()
+                            .limit(crate::api::custom_cmds::MAX_REQUEST),
+                    )
+                    .route(web::get().to(crate::api::custom_cmds::list))
+                    .route(web::put().to(crate::api::custom_cmds::replace)),
+            )
+            .route("/settings", web::get().to(get_settings))
+            .route("/settings", web::put().to(update_settings))
+            .route("/card-order", web::get().to(get_card_order))
+            .route("/card-order", web::put().to(update_card_order))
+            .route("/metrics/history", web::get().to(get_metrics_history))
+            .route("/health", web::get().to(health_check))
+            .route("/velocity", web::get().to(get_velocity))
+            .route("/velocity/history", web::get().to(get_velocity_history)),
+    );
+}
+
 pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
     let server_config = app_state.config.get_server();
     let bind_addr = format!("{}:{}", server_config.host, server_config.port);
@@ -232,73 +310,7 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
             .state(app_state.clone())
             .middleware(Logger::default())
             .middleware(cors)
-            .service(
-                web::scope("/api/v1")
-                    .route("/login", web::post().to(login))
-                    .service(
-                        web::resource("/watch-token")
-                            .route(web::post().to(issue_watch_token))
-                            .route(web::delete().to(revoke_watch_token)),
-                    )
-                    .route("/status", web::get().to(get_status))
-                    .route("/metrics", web::get().to(get_metrics))
-                    .route("/capabilities", web::get().to(get_capabilities))
-                    .route("/ws-ticket", web::post().to(issue_ws_ticket))
-                    .route("/terminal/ws", web::get().to(terminal_ws))
-                    .service(
-                        // Its own payload limit: ntex allows 32 KiB by
-                        // default, and this endpoint's `stdin` carries the
-                        // generated status script — 5 KiB today, but it grows
-                        // with every custom command a user adds, and going
-                        // over would answer 413 with nothing to explain it.
-                        web::resource("/exec")
-                            .state(
-                                web::types::JsonConfig::default()
-                                    .limit(crate::api::exec::MAX_REQUEST),
-                            )
-                            .route(web::post().to(crate::api::exec::exec)),
-                    )
-                    .service(
-                        // A streamed body, so ntex's payload limit must not
-                        // apply: the point of this endpoint is the file that
-                        // `/exec` could not carry.
-                        web::resource("/fs/write")
-                            .route(web::put().to(crate::api::fs::write)),
-                    )
-                    .route("/fs/roots", web::get().to(crate::api::fs::roots))
-                    .route("/fs/list", web::get().to(crate::api::fs::list))
-                    .route("/fs/stat", web::get().to(crate::api::fs::stat))
-                    .route("/fs/read", web::get().to(crate::api::fs::read))
-                    .route("/fs/mkdir", web::post().to(crate::api::fs::mkdir))
-                    .route("/fs/rename", web::post().to(crate::api::fs::rename))
-                    .route("/fs/chmod", web::post().to(crate::api::fs::chmod))
-                    .route("/fs/remove", web::delete().to(crate::api::fs::remove))
-                    .route(
-                        "/remote-access/full-access",
-                        web::delete().to(disable_full_access),
-                    )
-                    .service(
-                        // Its own payload limit, like `/exec`: the body is
-                        // every custom command at once, and a user who pastes
-                        // a real script into one would otherwise meet ntex's
-                        // 32 KiB default as a 413 with nothing to explain it.
-                        web::resource("/custom-cmds")
-                            .state(
-                                web::types::JsonConfig::default()
-                                    .limit(crate::api::custom_cmds::MAX_REQUEST),
-                            )
-                            .route(web::get().to(crate::api::custom_cmds::list))
-                            .route(web::put().to(crate::api::custom_cmds::replace)),
-                    )
-                    .route("/settings", web::get().to(get_settings))
-                    .route("/settings", web::put().to(update_settings))
-                    .route("/card-order", web::get().to(get_card_order))
-                    .route("/card-order", web::put().to(update_card_order))
-                    .route("/metrics/history", web::get().to(get_metrics_history))
-                    .route("/health", web::get().to(health_check))
-                    .route("/velocity", web::get().to(get_velocity))
-                    .route("/velocity/history", web::get().to(get_velocity_history)),
-            )
+            .configure(configure_api)
             // TODO: Go-compat endpoint (used by the flutter_server_box app); remove once the app migrates to /api/v1
             .route("/status", web::get().to(get_status_compat))
             // Static file serving configuration:
@@ -512,30 +524,29 @@ async fn revoke_watch_token(
     Ok(HttpResponse::Ok().json(&serde_json::json!({ "status": "revoked" })))
 }
 
-// TODO: Go-compat endpoint (matches the legacy GET /status response format, unauthenticated); remove once flutter_server_box migrates
-async fn get_status_compat(
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse> {
-    let metrics = app_state.current_metrics.read().await;
-    let data = go_status_data(metrics.as_ref(), &app_state.config.get_server_name());
-    Ok(HttpResponse::Ok().json(&serde_json::json!({ "code": 0, "data": data })))
-}
-
-/// Response data of Go web.Status: sizes in Size.String() format (e.g. "26.0g"), CPU as one-decimal percentage
-pub fn go_status_data(metrics: Option<&SystemMetrics>, server_name: &str) -> serde_json::Value {
-    match metrics {
-        Some(m) => serde_json::json!({
-            "name": m.server_name,
-            "cpu": format!("{:.1}%", m.cpu_usage),
-            "mem": format!("{} / {}", Size(m.memory.used), Size(m.memory.total)),
-            "net": format!("{} / {}", Size(m.network.rx_bytes), Size(m.network.tx_bytes)),
-            "disk": format!("{} / {}", Size(m.disk.used), Size(m.disk.total)),
-        }),
-        None => serde_json::json!({
-            "name": server_name,
-            "cpu": "", "mem": "", "net": "", "disk": "",
-        }),
-    }
+/// The retired Go-compat endpoint.
+///
+/// It answered unauthenticated, with values preformatted as strings —
+/// `"1.3g / 1.9g"`, `"31.7%"` — and no history at all. That shape is why the
+/// clients built on it could never draw a trend: there were no numbers in it
+/// to draw. They read `/api/v1/metrics` and `/metrics/history` now, with a
+/// scoped read-only token.
+///
+/// Answers 410 rather than 404, and says where to go. Anything still calling
+/// this is a build old enough to have no other path, and a 404 would send its
+/// owner looking for a typo in an address that was correct.
+///
+/// The route is kept for one release so the failure has an explanation
+/// attached; a client that no longer exists cannot be told anything.
+///
+/// TODO: remove the route entirely in the release after this one.
+async fn get_status_compat() -> Result<HttpResponse> {
+    Ok(HttpResponse::Gone().json(&serde_json::json!({
+        "code": 410,
+        "error": "GET /status has been removed. Use GET /api/v1/metrics with a \
+                  token from POST /api/v1/watch-token, or configure this server \
+                  in the ServerBox app.",
+    })))
 }
 
 async fn get_status(
@@ -1005,6 +1016,18 @@ async fn update_card_order(
     Ok(HttpResponse::Ok().json(&serde_json::json!({ "status": "ok" })))
 }
 
+/// One numeric query parameter, or `None` when it is absent or unreadable.
+///
+/// Read by hand rather than deserialised into a struct: these are integers
+/// with no encoding to undo, and every one of them is clamped at the use site
+/// anyway, so a bad value and a missing value have the same answer.
+fn query_param<T: std::str::FromStr>(query: &str, name: &str) -> Option<T> {
+    query
+        .split('&')
+        .find_map(|kv| kv.strip_prefix(name)?.strip_prefix('='))
+        .and_then(|v| v.parse().ok())
+}
+
 #[derive(Serialize)]
 struct HistoryPoint {
     timestamp: String,
@@ -1019,25 +1042,43 @@ struct HistoryPoint {
     battery_percent: Option<f64>,
 }
 
-/// Bucketed time series from system_metrics. `?minutes=` selects the window
-/// (default 60, clamped to 5..=10080); rows are averaged into at most 300
-/// buckets and network rates are derived from consecutive cumulative counters.
+/// Bucketed time series from system_metrics.
+///
+/// `?minutes=` selects the window (default 60, clamped to 5..=10080) and
+/// `?max_points=` how many points to answer with (default 300, clamped to
+/// 2..=300). Rows are averaged into that many buckets and network rates are
+/// derived from consecutive cumulative counters.
+///
+/// The count is the caller's to pick because it is a property of what is
+/// drawing the result, not of what is stored: a home widget a few hundred
+/// pixels wide cannot render 300 points, and asking for them means carrying
+/// them over the network to throw them away. Thinning here is also better
+/// than thinning on the client — an average over a wider bucket keeps the
+/// spikes that dropping every third row loses.
 async fn get_metrics_history(
     req: HttpRequest,
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse> {
     require_read_access!(&req, &app_state);
 
-    let minutes: i64 = req
-        .query_string()
-        .split('&')
-        .find_map(|kv| kv.strip_prefix("minutes="))
-        .and_then(|v| v.parse().ok())
+    let query = req.query_string();
+    let minutes: i64 = query_param(query, "minutes")
         .unwrap_or(60)
         .clamp(5, 7 * 24 * 60);
 
+    /// What this endpoint has always answered with, and still does for a
+    /// caller that names no count.
     const MAX_POINTS: i64 = 300;
-    let bucket_secs = (minutes * 60 / MAX_POINTS).max(1);
+    let max_points: i64 = query_param(query, "max_points")
+        .unwrap_or(MAX_POINTS)
+        .clamp(2, MAX_POINTS);
+
+    // Rounded up, so the window divides into no more buckets than were asked
+    // for. Rounding down leaves buckets narrower than the window/count ratio
+    // and answers with more points than the caller said it could take —
+    // `minutes=7&max_points=100` is 4-second buckets and 105 of them.
+    // `i64::div_ceil` is still unstable; both operands are positive here.
+    let bucket_secs = ((minutes * 60 + max_points - 1) / max_points).max(1);
 
     use sqlx::Row;
     let rows = sqlx::query(
@@ -1082,6 +1123,16 @@ async fn get_metrics_history(
             diskio_write_speed,
             battery_percent: row.try_get::<Option<f64>, _>("battery").ok().flatten(),
         });
+    }
+
+    // A bucket boundary is an absolute multiple of `bucket_secs` while the
+    // window's start is wherever "now minus N minutes" falls, so the first
+    // bucket is a partial one and the count can come out one over. Drop from
+    // the old end: the rates above are derived from consecutive buckets, so
+    // they have to be computed over the whole series before anything is cut.
+    let max_points = max_points as usize;
+    if points.len() > max_points {
+        points.drain(..points.len() - max_points);
     }
 
     Ok(HttpResponse::Ok().json(&points))

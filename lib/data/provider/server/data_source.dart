@@ -27,7 +27,18 @@ abstract interface class ServerDataSource {
 
   /// Trend points the source already holds, oldest first. Empty when
   /// [ServerCapabilities.storedHistory] is false.
-  Future<List<StatusHistorySample>> fetchHistory({int minutes});
+  ///
+  /// [maxPoints] is what the caller can keep — [StatusHistory.capacity]. A
+  /// source that thins on its side is told rather than left to answer with
+  /// everything it has for the buffer to discard on arrival; the agent
+  /// averages over wider buckets, which keeps spikes that dropping rows loses.
+  /// The defaults are named here as well as on both implementations, so what
+  /// a caller holding a [DataSource] gets by omitting them is a property of
+  /// the interface rather than of whichever source it happens to be.
+  Future<List<StatusHistorySample>> fetchHistory({
+    int minutes = 60,
+    int maxPoints = StatusHistory.capacity,
+  });
 
   /// Releases transport-owned resources. Safe to call more than once.
   void close();

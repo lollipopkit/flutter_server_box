@@ -1,5 +1,5 @@
-import 'package:server_box/data/model/app/agent_shell_config.dart';
 import 'package:server_box/data/model/app/ask_ai_config.dart';
+import 'package:server_box/data/model/app/float_shell_config.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
 
@@ -8,7 +8,7 @@ import 'package:server_box/data/store/setting.dart';
 ///
 /// Fourteen `kv` rows for two pieces of state: fourteen entries in a backup,
 /// fourteen in the sync timestamps, fourteen lines in the raw settings editor.
-/// They are `agentShell` and `askAi` now — see [AgentShellConfig] and
+/// They are `agentShell` and `askAi` now — see [FloatShellConfig] and
 /// [AskAiConfig] for the shapes, and `FieldProp` for how a caller still reads
 /// and writes one field at a time.
 ///

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Widget strings only. Everything the Flutter side owns stays in its
+    ARB files; these are drawn by native code in a process the Flutter
+    engine may never have started in, so `l10n` is not reachable.
+
+    Indonesian is `values-in`, not `values-id`: resource qualifiers use
+    the legacy ISO code, which is what `Locale.getLanguage()` returns
+    on every Android version.
+-->
+<resources>
+    <string name="widget_configure_title">Widget</string>
+    <string name="widget_configure_server">Serveur</string>
+    <string name="widget_configure_metric">Mesure principale</string>
+    <string name="widget_configure_save">Enregistrer</string>
+    <string name="widget_configure_empty">Aucun serveur avec agent monitor pour l\'instant.\nAjoutez-en un dans ServerBox, puis revenez.</string>
+    <string name="widget_metric_cpu">Processeur</string>
+    <string name="widget_metric_memory">Mémoire</string>
+    <string name="widget_metric_disk">Disque</string>
+    <string name="widget_metric_network">Réseau</string>
+    <string name="widget_err_not_configured">Touchez pour choisir un serveur</string>
+    <string name="widget_err_no_token">Aucun identifiant — ouvrez ServerBox</string>
+    <string name="widget_err_insecure">HTTPS requis</string>
+    <string name="widget_err_network">Erreur réseau</string>
+    <string name="widget_err_timeout">Délai dépassé</string>
+    <string name="widget_no_history">Aucun historique</string>
+    <string name="widget_chart_desc">Graphiques d\'état</string>
+    <string name="widget_cpu_desc">Utilisation du processeur</string>
+    <string name="widget_mem_desc">Utilisation de la mémoire</string>
+    <string name="widget_disk_desc">Utilisation du disque</string>
+    <string name="widget_net_desc">Utilisation du réseau</string>
+    <string name="widget_refresh_desc">Actualiser</string>
+    <string name="widget_small_label">Valeurs du serveur</string>
+    <string name="widget_medium_label">Graphiques du serveur</string>
+</resources>

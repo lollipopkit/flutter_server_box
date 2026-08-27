@@ -53,9 +53,30 @@ enum WatchStore {
 
     // MARK: - Selection
 
-    static var selectedIndex: Int {
-        get { defaults.integer(forKey: WatchKeys.selectedIndex) }
-        set { defaults.set(newValue, forKey: WatchKeys.selectedIndex) }
+    static var selectedServerId: String? {
+        get { defaults.string(forKey: WatchKeys.selectedServerId) }
+        set { defaults.set(newValue, forKey: WatchKeys.selectedServerId) }
+    }
+
+    /// The server the app was last showing, or the first one.
+    ///
+    /// Falling back rather than answering nil: a complication that goes blank
+    /// because a server was renamed elsewhere is worse than one showing the
+    /// first server in the list.
+    static func selectedServer() -> WatchServer? {
+        let all = servers()
+        guard !all.isEmpty else { return nil }
+        if let id = selectedServerId, let match = all.first(where: { $0.id == id }) {
+            return match
+        }
+        return all.first
+    }
+
+    /// Which chart the user was last on, so the complication shows the same
+    /// one. Defaults to the overview, which is also what an unset key reads as.
+    static var selectedChart: WatchChart {
+        get { WatchChart(rawValue: defaults.integer(forKey: WatchKeys.selectedChart)) ?? .overview }
+        set { defaults.set(newValue.rawValue, forKey: WatchKeys.selectedChart) }
     }
 
     // MARK: - Snapshots
@@ -142,32 +163,5 @@ enum WatchStore {
               let entries = items as? [[String: Any]]
         else { return [] }
         return entries.compactMap { $0[kSecAttrAccount as String] as? String }
-    }
-
-    // MARK: - Migration
-
-    /// Reads the pre-v2 `ctx` dictionary, whose only content was a list of
-    /// hand-typed `/status` URLs, and returns them as servers.
-    ///
-    /// Only consulted when nothing has arrived from the phone yet, so a watch
-    /// that has been configured since the rewrite never sees it.
-    ///
-    /// TODO: drop with `WatchServer.Kind.legacy`.
-    static func migrateLegacyCtx() -> [WatchServer] {
-        let ctx = UserDefaults.standard.object(forKey: WatchKeys.legacyCtx) as? [String: Any]
-        guard let urls = ctx?["urls"] as? [String] else { return [] }
-        return urls.filter { !$0.isEmpty }.map(WatchServer.legacy(url:))
-    }
-}
-
-extension WatchServer {
-    /// TODO: drop with `WatchServer.Kind.legacy`.
-    static func legacy(url: String) -> WatchServer {
-        WatchServer(
-            id: "legacy:\(url)",
-            name: URL(string: url)?.host ?? url,
-            kind: .legacy,
-            addr: url
-        )
     }
 }

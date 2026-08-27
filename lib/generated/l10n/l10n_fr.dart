@@ -213,7 +213,7 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get agentFloat => 'Flotter au-dessus des autres onglets';
+  String get floatOverTabs => 'Flotter au-dessus des autres onglets';
 
   @override
   String get agentToolSshConnect => 'Connexion SSH';
@@ -352,6 +352,11 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get monitorAllowInsecureHttpTip =>
       'Uniquement sur un réseau privé de confiance qui chiffre lui-même le transport, comme Tailscale';
+
+  @override
+  String monitorHttpTip(String url) {
+    return 'Lire l\'état de ce serveur via l\'API HTTP d\'un agent **monitor**, au lieu d\'exécuter des commandes en SSH.\n\nL\'agent doit d\'abord être installé sur le serveur ; les tendances, l\'app Watch et les widgets en dépendent.\n\n[Installer un agent monitor]($url)';
+  }
 
   @override
   String get backupTip =>
@@ -605,9 +610,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'Personnalisez les onglets qui apparaissent sur la page d\'accueil et leur ordre';
 
   @override
-  String get homeWidgetUrlConfig => 'Configurer l\'URL du widget d\'accueil';
-
-  @override
   String get ignoreCert => 'Ignorer le certificat';
 
   @override
@@ -749,6 +751,17 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get jumpServerAndProxyCommandCannotBeUsedTogether =>
       'Le serveur de rebond et ProxyCommand ne peuvent pas être utilisés ensemble.';
+
+  @override
+  String get noConnectionMethod =>
+      'Configurez SSH, un agent monitor, ou les deux';
+
+  @override
+  String get preferredTransport => 'Essayer en premier';
+
+  @override
+  String get preferredTransportTip =>
+      'D\'où l\'état est lu, et quelle connexion une commande ouvre en premier. L\'autre reste disponible.';
 
   @override
   String get keepForeground => 'Garder l\'application en premier plan !';
@@ -1578,10 +1591,11 @@ class AppLocalizationsFr extends AppLocalizations {
       'Aucun serveur n\'a d\'agent monitor configuré';
 
   @override
-  String get watchLegacyUrls => 'Anciennes URL de statut';
+  String get legacyStatusGoneTitle => 'Les URL de statut ne fonctionnent plus';
 
   @override
-  String get accessoryWidgetServer => 'Serveur du widget d\'écran verrouillé';
+  String get legacyStatusGoneBody =>
+      'L\'app Watch et les widgets lisaient une adresse `/status` saisie à la main. Ce point d\'accès a été retiré : il ne renvoyait que des valeurs actuelles sous forme de texte, d\'où l\'impossibilité d\'afficher une courbe.\n\nIls lisent désormais l\'API authentifiée de l\'agent monitor, tracent les tendances et se synchronisent seuls avec l\'app. Configurez le serveur une fois dans l\'app et chaque montre et widget le reprend.';
 
   @override
   String get systemdMissing => 'Pas de systemd sur ce serveur';
@@ -1681,4 +1695,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get privacyBlurTip => 'Masquer le contenu dans le sélecteur d\'apps';
+
+  @override
+  String get floatReturnToTab => 'Revenir à l\'onglet';
+
+  @override
+  String get termInFloatWindow => 'Ce terminal est dans la fenêtre flottante';
 }

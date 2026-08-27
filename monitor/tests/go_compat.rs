@@ -4,9 +4,7 @@
 //! Each test names the Go semantics it covers; see the threshold.rs module comment for the two deliberate divergences (Go-side bugs).
 
 use server_box_monitor::core::config::Config;
-use server_box_monitor::monitoring::{
-    parse_disk_metrics, DiskMetrics, MemoryMetrics, NetworkMetrics, SwapMetrics, SystemMetrics,
-};
+use server_box_monitor::monitoring::parse_disk_metrics;
 use server_box_monitor::monitoring::push::PushRateLimiter;
 use server_box_monitor::monitoring::size::Size;
 use server_box_monitor::monitoring::threshold::{CompareType, Threshold, ThresholdType};
@@ -269,73 +267,11 @@ fn test_parse_disk_go_fixture() {
 
 // ---------- /status endpoint: web/web.go + web/base.go ----------
 
-fn sample_metrics() -> SystemMetrics {
-    SystemMetrics {
-        timestamp: chrono::Utc::now(),
-        extended_updated_at: chrono::Utc::now(),
-        server_name: "Server 1".to_string(),
-        cpu_usage: 36.6,
-        cpu_cores: vec![],
-        memory: MemoryMetrics {
-            total: 40 * 1024 * 1024 * 1024,
-            used: 26 * 1024 * 1024 * 1024,
-            free: 14 * 1024 * 1024 * 1024,
-            usage_percent: 65.0,
-        },
-        swap: SwapMetrics { total: 0, used: 0, usage_percent: 0.0 },
-        disk: DiskMetrics {
-            total: 41 * 1024 * 1024 * 1024,
-            used: 27 * 1024 * 1024 * 1024,
-            free: 14 * 1024 * 1024 * 1024,
-            usage_percent: 65.8,
-        },
-        network: NetworkMetrics {
-            rx_bytes: 3 * 1024,
-            tx_bytes: 7,
-        },
-        temperature: None,
-        temps: vec![],
-        sys: None,
-        os_id: None,
-        os_id_like: Vec::new(),
-        cpu_brand: None,
-        gpus: vec![],
-        disk_details: vec![],
-        ifaces: vec![],
-        uptime: None,
-        conn: None,
-        diskio: vec![],
-        diskio_rate: vec![],
-        batteries: vec![],
-        sensors: vec![],
-        disk_smart: vec![],
-        custom_cmds: vec![],
-        amd_cache: vec![],
-    }
-}
 
-/// Go web.Status: {"name","cpu","mem","net","disk"}, cpu "%.1f%%", others "used/total" in Size format
-#[test]
-fn test_status_response_go_shape() {
-    let metrics = sample_metrics();
-    let data = server_box_monitor::api::server::go_status_data(Some(&metrics), "Server 1");
-
-    assert_eq!(data["name"], "Server 1");
-    assert_eq!(data["cpu"], "36.6%");
-    assert_eq!(data["mem"], "26.0g / 40.0g");
-    assert_eq!(data["net"], "3.0k / 7.0b");
-    assert_eq!(data["disk"], "27.0g / 41.0g");
-    // Exactly the same 5 fields as Go, no more, no less
-    assert_eq!(data.as_object().unwrap().len(), 5);
-}
-
-/// Fields are empty strings before metrics are ready; name comes from config
-#[test]
-fn test_status_response_no_metrics() {
-    let data = server_box_monitor::api::server::go_status_data(None, "my-server");
-    assert_eq!(data["name"], "my-server");
-    assert_eq!(data["cpu"], "");
-    assert_eq!(data["mem"], "");
-    assert_eq!(data["net"], "");
-    assert_eq!(data["disk"], "");
-}
+// The Go-compat `GET /status` shape is gone: it answered preformatted strings
+// and no history, which is why nothing built on it could ever draw a trend.
+// The two tests that pinned that shape went with it; `watch_token_scope.rs`
+// pins the endpoints that took over.
+//
+// The `Size` formatting they exercised is still covered above, since it is
+// what the app's own parser reads.

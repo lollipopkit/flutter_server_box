@@ -58,7 +58,7 @@ struct TerminalLiveActivity: Widget {
             HStack(alignment: .center, spacing: 12) {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 6) {
-                        Text(state.hasTerminal ? NSLocalizedString("Terminal", comment: "Terminal label") : "SSH")
+                        Text(NSLocalizedString("Terminal", comment: "Terminal label"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                         if state.connectionCount > 1 {
@@ -96,7 +96,7 @@ struct TerminalLiveActivity: Widget {
                 DynamicIslandExpandedRegion(.leading) {
                     VStack(alignment: .leading, spacing: 4) {
                         HStack(spacing: 4) {
-                            Text(context.state.hasTerminal ? NSLocalizedString("Terminal", comment: "Terminal label") : "SSH")
+                            Text(NSLocalizedString("Terminal", comment: "Terminal label"))
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                             if context.state.connectionCount > 1 {

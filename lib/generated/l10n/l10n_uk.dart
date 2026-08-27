@@ -208,7 +208,7 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get agentFloat => 'Поверх інших вкладок';
+  String get floatOverTabs => 'Поверх інших вкладок';
 
   @override
   String get agentToolSshConnect => 'Підключення по SSH';
@@ -346,6 +346,11 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get monitorAllowInsecureHttpTip =>
       'Лише в довіреній приватній мережі, що сама шифрує транспорт, наприклад Tailscale';
+
+  @override
+  String monitorHttpTip(String url) {
+    return 'Читати стан цього сервера через HTTP API агента **monitor**, а не виконуючи команди по SSH.\n\nАгента спершу треба встановити на сервер; графіки, застосунок для годинника та віджети залежать від нього.\n\n[Як встановити monitor]($url)';
+  }
 
   @override
   String get backupTip =>
@@ -599,10 +604,6 @@ class AppLocalizationsUk extends AppLocalizations {
       'Налаштуйте, які вкладки відображаються на головній сторінці та їх порядок';
 
   @override
-  String get homeWidgetUrlConfig =>
-      'Налаштувати URL віджета на головному екрані';
-
-  @override
   String get ignoreCert => 'Ігнорувати сертифікат';
 
   @override
@@ -743,6 +744,16 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get jumpServerAndProxyCommandCannotBeUsedTogether =>
       'Проміжний сервер і ProxyCommand не можна використовувати разом.';
+
+  @override
+  String get noConnectionMethod => 'Налаштуйте SSH, агент monitor або обидва';
+
+  @override
+  String get preferredTransport => 'Спробувати спершу';
+
+  @override
+  String get preferredTransportTip =>
+      'Звідки читається стан і яке з’єднання команда відкриє першим. Інше лишається доступним.';
 
   @override
   String get keepForeground => 'Тримати застосунок на передньому плані!';
@@ -1569,10 +1580,11 @@ class AppLocalizationsUk extends AppLocalizations {
       'Жоден сервер не має налаштованого агента monitor';
 
   @override
-  String get watchLegacyUrls => 'Застарілі URL статусу';
+  String get legacyStatusGoneTitle => 'URL-адреси стану більше не працюють';
 
   @override
-  String get accessoryWidgetServer => 'Сервер для віджета екрана блокування';
+  String get legacyStatusGoneBody =>
+      'Застосунок для годинника та віджети читали адресу `/status`, введену вручну. Цю кінцеву точку вилучено: вона могла повертати лише поточні значення текстом, тому графіки були неможливі.\n\nТепер вони читають автентифікований API агента monitor, малюють графіки та самі синхронізуються із застосунком. Налаштуйте сервер у застосунку один раз — і кожен годинник та віджет його підхопить.';
 
   @override
   String get systemdMissing => 'На цьому сервері немає systemd';
@@ -1670,4 +1682,10 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get privacyBlurTip => 'Приховувати вміст програми в перемикачі';
+
+  @override
+  String get floatReturnToTab => 'Повернути у вкладку';
+
+  @override
+  String get termInFloatWindow => 'Цей термінал у плаваючому вікні';
 }

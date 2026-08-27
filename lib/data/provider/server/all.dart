@@ -4,7 +4,9 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:server_box/core/service/scoped_token.dart';
 import 'package:server_box/core/service/watch_sync.dart';
+import 'package:server_box/core/service/widget_sync.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/core/utils/refresh_interval.dart';
 import 'package:server_box/core/utils/server.dart';
@@ -381,7 +383,19 @@ class ServersNotifier extends _$ServersNotifier {
   Future<void> _delServer(String id) async {
     final deleting = state.servers[id];
     if (deleting == null) return;
-    await WatchSync.instance.removeServer(deleting);
+    // Started here, because revoking is an authenticated call to the agent
+    // and the credential is on the record. Neither publishes — see
+    // `revokeServer`: a rebuild from a store that still holds this server
+    // would mint a replacement token for the one being deleted.
+    //
+    // Not waited for, for the reason the edit path does not either: an agent
+    // that has gone away costs ten seconds per call to establish that, and a
+    // delete that hangs on it is a delete that looks ignored. `deleting` is a
+    // value already in hand, so the request carries the old credential
+    // whatever the store does next, and a rebuild after the row is gone has
+    // nothing to mint for.
+    unawaited(WatchSync.instance.revokeServer(deleting));
+    unawaited(WidgetSync.instance.revokeServer(deleting));
     await _clearServerData(id);
     final newServers = Map<String, Spi>.from(state.servers);
     newServers.remove(id);
@@ -404,6 +418,10 @@ class ServersNotifier extends _$ServersNotifier {
       manualDisconnectedIds: newManualDisconnected,
     );
     await _clearSudoPasswordOverrideBestEffort(id);
+
+    // Now that the row is gone, so the rebuilt lists cannot contain it.
+    await WatchSync.instance.push();
+    await WidgetSync.instance.push();
 
     // Deselect if the deleted server was selected, and invalidate its provider
     // so the keepAlive notifier (PersistentShell, Pve socket) is disposed.
@@ -431,9 +449,20 @@ class ServersNotifier extends _$ServersNotifier {
       TermSessionManager.remove(sessionId);
     }
 
-    for (final spi in state.servers.values) {
-      await WatchSync.instance.removeServer(spi);
-    }
+    // Revoke every one first, while the records are still there to
+    // authenticate with; the single push comes after the store is empty.
+    //
+    // All at once, because one at a time made an unreachable agent cost the
+    // whole ten-second connect timeout and the next server wait behind it —
+    // a confirmed "delete everything" sat there for `2N` timeouts with
+    // nothing on screen explaining why. Both calls swallow their own errors,
+    // so this settles whatever the agents answer.
+    await Future.wait([
+      for (final spi in state.servers.values) ...[
+        WatchSync.instance.revokeServer(spi),
+        WidgetSync.instance.revokeServer(spi),
+      ],
+    ]);
     for (final id in serverIds) {
       await _clearServerData(id);
     }
@@ -450,6 +479,11 @@ class ServersNotifier extends _$ServersNotifier {
     }
     Stores.setting.serverOrder.put([]);
     state = const ServersState();
+    // One push, once the store is empty. Pushing per server inside the loop
+    // above would rebuild from a store that still held the rest and re-issue
+    // tokens for servers on their way out.
+    await WatchSync.instance.push();
+    await WidgetSync.instance.push();
     await Future.wait(serverIds.map(_clearSudoPasswordOverrideBestEffort));
     for (final id in serverIds) {
       ref.invalidate(serverProvider(id));
@@ -571,6 +605,27 @@ class ServersNotifier extends _$ServersNotifier {
         final serverNotifier = ref.read(serverProvider(old.id).notifier);
         serverNotifier.updateSpi(newSpi);
       }
+
+      // While the *old* credential is still known. A scoped token is revoked
+      // by an authenticated call to the agent that issued it, so this is the
+      // last moment anything can: after this the old address and login are
+      // gone, and a rebuild of the token set can only stop handing the
+      // credential out, never take it back.
+      //
+      // Started here and not waited for. The old address is the one being
+      // moved away from, and the commonest reason to move away from an
+      // address is that it stopped answering — so this is a request that
+      // routinely runs into `MonitorHttpClient`'s ten-second connect timeout,
+      // twice, on the one code path between the Save button and the editor
+      // closing. `_mutate` serialises every mutation, so a second tap queued
+      // behind the first instead of doing anything: the save appeared to be
+      // ignored for as long as the old agent took to not answer.
+      //
+      // Nothing below depends on the result, `old` is a value this closure
+      // holds rather than something re-read from the store, and the call
+      // already swallows its own failures — see its own doc comment for why
+      // a token that outlives the edit is the accepted worst case.
+      unawaited(revokeScopedTokensLeftBehind(old, newSpi));
 
       // Only reconnect if neccessary
       if (newSpi.shouldReconnect(old)) {

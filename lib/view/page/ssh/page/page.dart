@@ -15,12 +15,15 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/ai/agent_conversation.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
+import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/provider/ai/agent_scope.dart';
 import 'package:server_box/data/provider/ai/agent_session.dart';
+import 'package:server_box/data/provider/app/session_requests.dart';
+import 'package:server_box/data/provider/app/terminal_shell.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/provider/virtual_keyboard.dart';
@@ -157,6 +160,17 @@ class SSHPageState extends ConsumerState<SSHPage>
   /// a second time.
   bool get _adopted => widget.args.session != null;
 
+  /// The terminal and the shell behind it, for whoever is showing them.
+  ///
+  /// The floating window is the only caller: it draws this session while this
+  /// page stands its own view down — see [terminalShellProvider].
+  TerminalSession get session => _sess;
+
+  /// Held from `initState` rather than read where it is used, because
+  /// [dispose] is one of the places that uses it and `ref` is not usable by
+  /// then.
+  late final TerminalShell _terminalShell;
+
   Terminal get _terminal => _sess.terminal;
 
   late final TerminalController _terminalController = TerminalController();
@@ -245,6 +259,18 @@ class SSHPageState extends ConsumerState<SSHPage>
   bool _isCheckingConnection = false;
   bool _hasPendingImmediateCheck = false;
   bool _reconnectCancelled = false;
+
+  /// The navigator holding the reconnecting dialog, while it is on screen.
+  ///
+  /// The navigator rather than a bool, because this page's own context is not
+  /// enough to close that dialog: it lives on the *root* navigator and so
+  /// outlives the page, and `contextSafe` is null the moment the page is gone.
+  /// A `NavigatorState` captured while showing it still answers.
+  ///
+  /// Nulled by whoever closes it — the cancel button, the reconnect finishing,
+  /// or [dispose] — so the other two do nothing. A second pop on a dialog that
+  /// is already gone takes the route under it instead, which here is the app.
+  NavigatorState? _reconnectDialogNav;
   bool _disconnectDialogOpen = false;
   bool _reportedDisconnected = false;
   VoidCallback? _visibilityListener;
@@ -271,6 +297,18 @@ class SSHPageState extends ConsumerState<SSHPage>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    // The floating window is a view onto this page's session, and once
+    // `_sess.dispose()` below has taken its output subscriptions away it is a
+    // terminal that has silently stopped answering. So it goes with the page.
+    //
+    // Scheduled rather than called: `dispose` runs inside the frame that is
+    // unmounting this page, and Riverpod refuses a write from there — it
+    // throws, which is a page that cannot be closed at all. By the end of this
+    // frame the tree is settled and the write is ordinary; the window has
+    // already been drawn once this frame and goes on the next.
+    final shell = _terminalShell;
+    final session = _sess;
+    WidgetsBinding.instance.addPostFrameCallback((_) => shell.hideIf(session));
     _releaseAgentHost?.call();
     _virtKeyLongPressTimer?.cancel();
     final introListener = _introVisibilityListener;
@@ -284,6 +322,12 @@ class SSHPageState extends ConsumerState<SSHPage>
     _terminalController.dispose();
     _virtKeyPage.dispose();
     _discontinuityTimer?.cancel();
+    // The reconnect's own `finally` normally does this, but it only runs when
+    // the reconnect returns — and the thing it is waiting on is a connection
+    // to a host that is not answering. A dialog left on the root navigator by
+    // a page that no longer exists is one nothing else can close.
+    _reconnectCancelled = true;
+    _dismissReconnectingDialog(deferred: true);
     // Not `close`: the connection may be the status poller's, shared with the
     // rest of the app, and a terminal going away is not a reason to hang it up.
     _sess.dispose();
@@ -317,6 +361,7 @@ class SSHPageState extends ConsumerState<SSHPage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _terminalShell = ref.read(terminalShellProvider.notifier);
     _attachAgentHost();
     _initStoredCfg();
     _reloadVirtKeys();
@@ -375,11 +420,9 @@ class SSHPageState extends ConsumerState<SSHPage>
       case AppLifecycleState.resumed:
         if (!_isVisibleSessionPage) return;
         TermSessionManager.setActive(_sessionId, hasTerminal: true);
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted || !_isVisibleSessionPage) return;
-          widget.args.focusNode?.requestFocus();
-          _termKey.currentState?.requestKeyboard();
-        });
+        // Next frame, not this one: the tab the user came back to is decided
+        // by the state this frame is built from.
+        WidgetsBinding.instance.addPostFrameCallback((_) => _focusTerminal());
         unawaited(_checkConnectionHealth(immediate: true));
         if (_discontinuityTimer == null || !_discontinuityTimer!.isActive) {
           _setupDiscontinuityTimer();
@@ -409,6 +452,18 @@ class SSHPageState extends ConsumerState<SSHPage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
+    // Popped out into the floating window, which is then the only view on this
+    // terminal. Two `TerminalView`s on one `Terminal` both resize it as they
+    // lay out, each undoing the other's size on the next frame and sending the
+    // far side a `SIGWINCH` for every one — so this one stands down rather
+    // than drawing a second copy nobody is looking at.
+    final floating = ref.watch(
+      terminalShellProvider.select(
+        (shell) => identical(shell?.session, _sess),
+      ),
+    );
+    if (floating) return _buildFloatedAway();
 
     final bgImage = Stores.setting.sshBgImage.fetch();
     final bgFile = bgImage.isEmpty ? null : File(bgImage);
@@ -456,6 +511,47 @@ class SSHPageState extends ConsumerState<SSHPage>
       );
     }
     return child;
+  }
+
+  /// What the tab shows while the terminal is in the floating window.
+  ///
+  /// Not left blank: this tab is still open, still named after the server, and
+  /// still where the terminal goes back to. Somewhere saying so is the
+  /// difference between a terminal that moved and one that broke.
+  Widget _buildFloatedAway() {
+    final scheme = Theme.of(context).colorScheme;
+    return Scaffold(
+      // Nothing floats a terminal opened as a route — the button is on the tab
+      // strip — so this branch is not reached today. Kept because the cost of
+      // being wrong about that is a page with no way off it.
+      appBar: widget.args.notFromTab
+          ? CustomAppBar(
+              leading: BackButton(onPressed: context.pop),
+              title: Text(widget.args.source.label),
+              centerTitle: false,
+            )
+          : null,
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.picture_in_picture_alt,
+              size: 56,
+              color: scheme.outlineVariant,
+            ),
+            const SizedBox(height: 13),
+            Text(l10n.termInFloatWindow, style: UIs.textGrey),
+            const SizedBox(height: 7),
+            TextButton.icon(
+              onPressed: _terminalShell.hide,
+              icon: const Icon(Icons.open_in_full, size: 18),
+              label: Text(l10n.floatReturnToTab),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   /// The picture the page is drawn on, bottom layer first.
@@ -666,8 +762,7 @@ class SSHPageState extends ConsumerState<SSHPage>
         return;
       }
       if (!mounted) return;
-      widget.args.focusNode?.requestFocus();
-      _termKey.currentState?.requestKeyboard();
+      _focusTerminal();
     } finally {
       _isPickingSnippet = false;
     }
@@ -875,12 +970,35 @@ class SSHPageState extends ConsumerState<SSHPage>
     return widget.args.visibleListenable?.value ?? false;
   }
 
+  /// Whether this is the terminal the user is looking at right now.
+  ///
+  /// Two questions for a session in a tab, not one. `visibleListenable`
+  /// answers which of the terminal tabs is selected, and says nothing about
+  /// whether the terminal page is the one the home page is showing — so a
+  /// shell left open in it went on answering yes from the servers tab, and
+  /// coming back from the background raised the keyboard over whatever the
+  /// user was actually reading.
   bool get _isVisibleSessionPage {
     if (widget.args.notFromTab) {
       final route = ModalRoute.of(context);
       return route?.isCurrent ?? true;
     }
-    return widget.args.visibleListenable?.value ?? false;
+    if (widget.args.visibleListenable?.value != true) return false;
+    return ref.read(currentHomeTabProvider) == AppTab.ssh;
+  }
+
+  /// Puts the cursor back in this terminal, and on a phone raises the keyboard
+  /// with it — the terminal's input connection is opened by the focus, so a
+  /// bare `requestFocus` shows it just as surely as asking for it does.
+  ///
+  /// Which is why nothing focuses the terminal directly. A reconnect, a tmux
+  /// switch and a snippet all end by restoring focus, and every one of them
+  /// can finish while the user is on another tab or in another shell; the
+  /// keyboard then came up over whatever they were reading.
+  void _focusTerminal({bool keyboard = true}) {
+    if (!mounted || !_isVisibleSessionPage) return;
+    widget.args.focusNode?.requestFocus();
+    if (keyboard) _termKey.currentState?.requestKeyboard();
   }
 
   void _bindVisibilityListener() {
@@ -892,7 +1010,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     }
     void listener() {
       if (!mounted) return;
-      if (visibleListenable.value) {
+      if (_isVisibleSessionPage) {
         TermSessionManager.setActive(_sessionId, hasTerminal: true);
         unawaited(_checkConnectionHealth(immediate: true));
       } else {
@@ -902,6 +1020,14 @@ class SSHPageState extends ConsumerState<SSHPage>
 
     _visibilityListener = listener;
     visibleListenable.addListener(listener);
+    // The other half of the same question. Leaving the terminal page takes
+    // this shell off screen exactly as selecting another tab within it does,
+    // and nothing was telling the session manager so — which left the Live
+    // Activity offering a terminal that was two taps away.
+    //
+    // A `listenManual` subscription from a `ConsumerState` is closed with the
+    // widget, so it needs no counterpart in [dispose].
+    ref.listenManual(currentHomeTabProvider, (_, _) => listener());
   }
 
   void _removeVisibilityListener() {
@@ -969,8 +1095,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     _sess.clearOutputTail();
 
     if (!mounted) return;
-    widget.args.focusNode?.requestFocus();
-    _termKey.currentState?.requestKeyboard();
+    _focusTerminal();
     Toast.success(libL10n.success);
   }
 

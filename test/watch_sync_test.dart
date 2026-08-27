@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/service/scoped_token.dart';
 import 'package:server_box/core/service/watch_sync.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -9,13 +10,30 @@ import 'helpers/spi_fixture.dart';
 /// ask for a correction, so its shape is the contract between two processes on
 /// two devices that update independently.
 void main() {
+  const addr = 'https://10.0.0.1:3770';
+
+  /// A fixed point to measure expiry against, so these never depend on when
+  /// they run.
+  final now = DateTime.utc(2026, 8, 26, 12);
+
+  int inDays(int days) =>
+      now.add(Duration(days: days)).millisecondsSinceEpoch ~/ 1000;
+
+  /// A token that is comfortably in date for [endpoint].
+  ScopedToken tok(String token, {String endpoint = addr}) => ScopedToken(
+    token: token,
+    endpoint: endpoint,
+    expiresAt: inDays(90),
+  );
+
   Spi monitorSpi({
     required String id,
     required String name,
-    String addr = 'https://10.0.0.1:3770',
+    String addr = addr,
     String? user = 'admin',
     String? pwd = 'secret',
     bool ignoreCert = false,
+    bool allowInsecure = false,
   }) {
     return spiFixture(name: name, id: id).copyWith(
       monitorHttp: MonitorHttpCredential(
@@ -23,6 +41,7 @@ void main() {
         user: user,
         pwd: pwd,
         ignoreCert: ignoreCert,
+        allowInsecure: allowInsecure,
       ),
     );
   }
@@ -30,149 +49,283 @@ void main() {
   Map<String, dynamic> payload({
     required List<String> selectedIds,
     List<Spi> servers = const [],
-    Map<String, String> tokens = const {},
-    List<String> legacyUrls = const [],
+    Map<String, ScopedToken> tokens = const {},
     int stamp = 1,
   }) {
     return WatchSync.payloadFrom(
       selectedIds: selectedIds,
       lookup: (id) => servers.where((e) => e.id == id).firstOrNull,
       tokens: tokens,
-      legacyUrls: legacyUrls,
       stamp: stamp,
     );
   }
 
-  test('carries what the watch needs to reach the agent', () {
-    final result = payload(
-      selectedIds: ['a'],
-      servers: [monitorSpi(id: 'a', name: 'Home', ignoreCert: true)],
-      tokens: const {'a': 'watch-token'},
+  Map<String, ScopedToken> reusable({
+    required List<String> serverIds,
+    required List<Spi> servers,
+    required Map<String, ScopedToken> existing,
+  }) {
+    return reusableScopedTokens(
+      serverIds: serverIds,
+      lookup: (id) => servers.where((e) => e.id == id).firstOrNull,
+      existing: existing,
+      now: now,
     );
+  }
 
-    expect(result['v'], 3);
-    expect(result['servers'], [
-      {
-        'id': 'a',
-        'name': 'Home',
-        'addr': 'https://10.0.0.1:3770',
-        'token': 'watch-token',
-        'ignoreCert': true,
-      },
-    ]);
-    final server = (result['servers'] as List).single as Map;
-    expect(server.containsKey('user'), isFalse);
-    expect(server.containsKey('pwd'), isFalse);
+  group('the payload the watch is handed', () {
+    test('carries the plaintext opt-in, which the watch checks before sending '
+        'the token', () {
+      final result = payload(
+        selectedIds: ['a', 'b'],
+        servers: [
+          monitorSpi(id: 'a', name: 'Plain', addr: 'http://10.0.0.9:3770',
+              allowInsecure: true),
+          monitorSpi(id: 'b', name: 'Default', addr: 'http://10.0.0.8:3770'),
+        ],
+        tokens: {'a': tok('t-a', endpoint: 'http://10.0.0.9:3770'),
+                 'b': tok('t-b', endpoint: 'http://10.0.0.8:3770')},
+      );
+
+      final servers = (result['servers'] as List).cast<Map>();
+      expect(servers.map((e) => e['allowInsecure']), [true, false]);
+    });
+
+    test('carries what it needs to reach the agent', () {
+      final result = payload(
+        selectedIds: ['a'],
+        servers: [monitorSpi(id: 'a', name: 'Home', ignoreCert: true)],
+        tokens: {'a': tok('watch-token')},
+      );
+
+      expect(result['v'], 3);
+      expect(result['servers'], [
+        {
+          'id': 'a',
+          'name': 'Home',
+          'addr': addr,
+          'token': 'watch-token',
+          'expiresAt': inDays(90),
+          'ignoreCert': true,
+          'allowInsecure': false,
+        },
+      ]);
+      final server = (result['servers'] as List).single as Map;
+      expect(server.containsKey('user'), isFalse);
+      expect(server.containsKey('pwd'), isFalse);
+    });
+
+    test('keeps the selection order, which is the order of the pages', () {
+      final result = payload(
+        selectedIds: ['c', 'a', 'b'],
+        servers: [
+          monitorSpi(id: 'a', name: 'A'),
+          monitorSpi(id: 'b', name: 'B'),
+          monitorSpi(id: 'c', name: 'C'),
+        ],
+        tokens: {'a': tok('a-token'), 'b': tok('b-token'), 'c': tok('c-token')},
+      );
+
+      final names = (result['servers'] as List).map((e) => e['name']).toList();
+      expect(names, ['C', 'A', 'B']);
+    });
+
+    test('drops a picked server that no longer exists', () {
+      final result = payload(
+        selectedIds: ['gone', 'a'],
+        servers: [monitorSpi(id: 'a', name: 'A')],
+        tokens: {'a': tok('a-token')},
+      );
+
+      expect((result['servers'] as List).single['id'], 'a');
+    });
+
+    test('drops a picked server that lost its monitor config', () {
+      // The watch has no SSH client, so an SSH-only server is an entry it could
+      // never load — worse than not being listed at all.
+      final result = payload(
+        selectedIds: ['ssh', 'a'],
+        servers: [
+          spiFixture(name: 'SSH only', id: 'ssh', ip: '10.0.0.9'),
+          monitorSpi(id: 'a', name: 'A'),
+        ],
+        tokens: {'a': tok('a-token'), 'ssh': tok('ssh-token')},
+      );
+
+      expect((result['servers'] as List).single['id'], 'a');
+    });
+
+    test('drops a server whose monitor address is blank', () {
+      final result = payload(
+        selectedIds: ['blank'],
+        servers: [monitorSpi(id: 'blank', name: 'Blank', addr: '   ')],
+        tokens: {'blank': tok('blank-token')},
+      );
+
+      expect(result['servers'], isEmpty);
+    });
+
+    test('drops a server when no scoped token could be issued', () {
+      final result = payload(
+        selectedIds: ['a'],
+        servers: [monitorSpi(id: 'a', name: 'A', user: '', pwd: '')],
+      );
+
+      expect(result['servers'], isEmpty);
+    });
+
+    test('trims the address so the watch can append paths to it', () {
+      final result = payload(
+        selectedIds: ['a'],
+        servers: [monitorSpi(id: 'a', name: 'A', addr: '  $addr ')],
+        tokens: {'a': tok('a-token')},
+      );
+
+      expect((result['servers'] as List).single['addr'], addr);
+    });
+
+    test('no longer carries the pre-v2 url list', () {
+      // It named the agent's Go-compat endpoint, which the agent answers 410
+      // on. Emitting it would give an un-updated watch something that fails a
+      // moment later instead of a list that is honestly empty.
+      final result = payload(selectedIds: const []);
+
+      expect(result.containsKey('urls'), isFalse);
+      expect(result['servers'], isEmpty);
+    });
+
+    test('carries the stamp the watch orders deliveries by', () {
+      // WatchConnectivity orders nothing between a queued userInfo, the
+      // application context and a reply to `requestData`, so the watch drops a
+      // payload older than the one it has already applied. Without this it can
+      // only be told what arrived last, which is not the same as current.
+      final result = payload(selectedIds: const [], stamp: 1737000000000);
+
+      expect(result['ts'], 1737000000000);
+    });
   });
 
-  test('keeps the selection order, which is the order of the watch pages', () {
-    final result = payload(
-      selectedIds: ['c', 'a', 'b'],
-      servers: [
-        monitorSpi(id: 'a', name: 'A'),
-        monitorSpi(id: 'b', name: 'B'),
-        monitorSpi(id: 'c', name: 'C'),
-      ],
-      tokens: const {'a': 'a-token', 'b': 'b-token', 'c': 'c-token'},
-    );
+  group('deciding which tokens survive a rebuild', () {
+    test('reuses one only for the endpoint that issued it', () {
+      // A token is meaningful against one agent. Point the server somewhere
+      // else and the held credential is not stale, it is the wrong agent's.
+      final servers = [
+        monitorSpi(id: 'same', name: 'Same', addr: 'https://host:3770/'),
+        monitorSpi(id: 'changed', name: 'Changed', addr: 'https://new:3770'),
+      ];
 
-    final names = (result['servers'] as List).map((e) => e['name']).toList();
-    expect(names, ['C', 'A', 'B']);
-  });
+      final result = reusable(
+        serverIds: ['same', 'changed'],
+        servers: servers,
+        existing: {
+          'same': tok('same-token', endpoint: 'https://host:3770'),
+          'changed': tok('old-token', endpoint: 'https://old:3770'),
+        },
+      );
 
-  test('drops a picked server that no longer exists', () {
-    final result = payload(
-      selectedIds: ['gone', 'a'],
-      servers: [monitorSpi(id: 'a', name: 'A')],
-      tokens: const {'a': 'a-token'},
-    );
+      expect(result.keys, ['same']);
+      expect(result['same']!.token, 'same-token');
+    });
 
-    expect((result['servers'] as List).single['id'], 'a');
-  });
+    test('a trailing slash is the same endpoint', () {
+      final result = reusable(
+        serverIds: ['a'],
+        servers: [monitorSpi(id: 'a', name: 'A', addr: '$addr/')],
+        existing: {'a': tok('a-token')},
+      );
 
-  test('drops a picked server that lost its monitor config', () {
-    // The watch has no SSH client, so an SSH-only server is an entry it could
-    // never load — worse than not being listed at all.
-    final result = payload(
-      selectedIds: ['ssh', 'a'],
-      servers: [
-        spiFixture(name: 'SSH only', id: 'ssh', ip: '10.0.0.9'),
-        monitorSpi(id: 'a', name: 'A'),
-      ],
-      tokens: const {'a': 'a-token', 'ssh': 'ssh-token'},
-    );
+      expect(result.keys, ['a']);
+    });
 
-    expect((result['servers'] as List).single['id'], 'a');
-  });
+    test('replaces one close enough to expiry to lapse before the next push', () {
+      // The agent issues these for 90 days and this app only rebuilds the set
+      // when something asks it to — a launch, a server edit, a watch
+      // reconnecting. Holding a token to its last day means the first of those
+      // to fall on the wrong side leaves the watch answering 401, on a device
+      // with nothing to report it to and no way to renew for itself.
+      final result = reusable(
+        serverIds: ['a'],
+        servers: [monitorSpi(id: 'a', name: 'A')],
+        existing: {
+          'a': ScopedToken(
+            token: 'nearly-done',
+            endpoint: addr,
+            expiresAt: inDays(13),
+          ),
+        },
+      );
 
-  test('drops a server whose monitor address is blank', () {
-    final result = payload(
-      selectedIds: ['blank'],
-      servers: [monitorSpi(id: 'blank', name: 'Blank', addr: '   ')],
-      tokens: const {'blank': 'blank-token'},
-    );
+      expect(result, isEmpty);
+    });
 
-    expect(result['servers'], isEmpty);
-  });
+    test('keeps one still comfortably in date', () {
+      final result = reusable(
+        serverIds: ['a'],
+        servers: [monitorSpi(id: 'a', name: 'A')],
+        existing: {
+          'a': ScopedToken(
+            token: 'plenty-left',
+            endpoint: addr,
+            expiresAt: inDays(15),
+          ),
+        },
+      );
 
-  test('drops a server when no scoped token could be issued', () {
-    final result = payload(
-      selectedIds: ['a'],
-      servers: [monitorSpi(id: 'a', name: 'A', user: '', pwd: '')],
-    );
+      expect(result.keys, ['a']);
+    });
 
-    expect(result['servers'], isEmpty);
-  });
+    test('replaces one already expired', () {
+      final result = reusable(
+        serverIds: ['a'],
+        servers: [monitorSpi(id: 'a', name: 'A')],
+        existing: {
+          'a': ScopedToken(
+            token: 'gone',
+            endpoint: addr,
+            expiresAt: inDays(-1),
+          ),
+        },
+      );
 
-  test('trims the address so the watch can append paths to it', () {
-    final result = payload(
-      selectedIds: ['a'],
-      servers: [
-        monitorSpi(id: 'a', name: 'A', addr: '  https://10.0.0.1:3770 '),
-      ],
-      tokens: const {'a': 'a-token'},
-    );
+      expect(result, isEmpty);
+    });
 
-    expect((result['servers'] as List).single['addr'], 'https://10.0.0.1:3770');
-  });
+    test('replaces one whose expiry was never recorded', () {
+      // What every install carries today: the agent has always answered with
+      // `expires_at` and this app threw it away, so the held token had no
+      // deadline attached and was reused forever. Treating "unknown" as due
+      // is what gets such an install onto a known expiry, at the cost of one
+      // request per server, once.
+      final result = reusable(
+        serverIds: ['a'],
+        servers: [monitorSpi(id: 'a', name: 'A')],
+        existing: {
+          'a': const ScopedToken(token: 'undated', endpoint: addr),
+        },
+      );
 
-  test('reuses a token only for the endpoint that issued it', () {
-    final servers = [
-      monitorSpi(id: 'same', name: 'Same', addr: 'https://host:3770/'),
-      monitorSpi(id: 'changed', name: 'Changed', addr: 'https://new:3770'),
-    ];
+      expect(result, isEmpty);
+    });
 
-    final reusable = WatchSync.reusableTokens(
-      selectedIds: ['same', 'changed'],
-      lookup: (id) => servers.where((server) => server.id == id).firstOrNull,
-      existingTokens: const {
-        'same': (endpoint: 'https://host:3770', token: 'same-token'),
-        'changed': (endpoint: 'https://old:3770', token: 'old-token'),
-      },
-    );
+    test('has nothing to reuse for a server that lost its monitor', () {
+      final result = reusable(
+        serverIds: ['ssh'],
+        servers: [spiFixture(name: 'SSH only', id: 'ssh', ip: '10.0.0.9')],
+        existing: {'ssh': tok('ssh-token')},
+      );
 
-    expect(reusable, {'same': 'same-token'});
-  });
+      expect(result, isEmpty);
+    });
 
-  test('still emits the pre-v2 url list for a watch app that has not updated', () {
-    // TODO: drop with `SettingStore.watchLegacyUrls`.
-    final result = payload(
-      selectedIds: const [],
-      legacyUrls: ['http://10.0.0.2:3770/status'],
-    );
+    test('an empty token is never reusable', () {
+      final result = reusable(
+        serverIds: ['a'],
+        servers: [monitorSpi(id: 'a', name: 'A')],
+        existing: {'a': tok('')},
+      );
 
-    expect(result['urls'], ['http://10.0.0.2:3770/status']);
-    expect(result['servers'], isEmpty);
-  });
-
-  test('carries the stamp the watch orders deliveries by', () {
-    // WatchConnectivity orders nothing between a queued userInfo, the
-    // application context and a reply to `requestData`, so the watch drops a
-    // payload older than the one it has already applied. Without this it can
-    // only be told what arrived last, which is not the same as what is current.
-    final result = payload(selectedIds: const [], stamp: 1737000000000);
-
-    expect(result['ts'], 1737000000000);
+      expect(result, isEmpty);
+    });
   });
 
   group('the revision snapshots are stamped with', () {
@@ -202,6 +355,12 @@ void main() {
       final before = DateTime.now().millisecondsSinceEpoch;
 
       expect(WatchSync.nextRevision(), greaterThanOrEqualTo(before));
+    });
+  });
+
+  group('the client id a token is scoped to', () {
+    test('names the server, so one can be revoked without the others', () {
+      expect(WatchSync.watchClientId('abc'), 'watch:abc');
     });
   });
 }

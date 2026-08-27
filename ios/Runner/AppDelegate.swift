@@ -51,7 +51,9 @@ import ActivityKit
             switch call.method {
             case "update":
                 if #available(iOS 14.0, *) {
-                    WidgetCenter.shared.reloadTimelines(ofKind: "StatusWidget")
+                    // Every kind: there are two home widgets now, and which
+                    // one is placed is not knowable from here.
+                    WidgetCenter.shared.reloadAllTimelines()
                 }
                 result(nil)
             default:
@@ -64,7 +66,9 @@ import ActivityKit
             switch call.method {
             case "updateHomeWidget":
                 if #available(iOS 14.0, *) {
-                    WidgetCenter.shared.reloadTimelines(ofKind: "StatusWidget")
+                    // Every kind: there are two home widgets now, and which
+                    // one is placed is not knowable from here.
+                    WidgetCenter.shared.reloadAllTimelines()
                 }
                 result(nil)
             // The three Live Activity cases answer from inside the Task, not
@@ -111,24 +115,98 @@ import ActivityKit
             case "setPrivacyBlurLocked":
                 PrivacyBlur.shared.setLocked(call.arguments as? Bool ?? false)
                 result(nil)
-            case "setAccessoryWidgetUrl":
-                // The accessory families can't carry the intent configuration
-                // the home-screen ones use, so they read this key instead —
-                // see StatusWidget.getTimeline.
-                let defaults = UserDefaults(suiteName: appGroupId)
-                if let url = call.arguments as? String, !url.isEmpty {
-                    defaults?.set(url, forKey: accessoryKey)
-                } else {
-                    defaults?.removeObject(forKey: accessoryKey)
+            case "publishWidgetServers":
+                guard let payload = call.arguments as? String else {
+                    result(nil)
+                    return
                 }
-                if #available(iOS 14.0, *) {
-                    WidgetCenter.shared.reloadTimelines(ofKind: "StatusWidget")
-                }
+                Self.publishWidgetServers(payload)
                 result(nil)
+            case "widgetTokenState":
+                result(Self.widgetTokenState())
             default:
                 result(FlutterMethodNotImplemented)
             }
         })
+    }
+
+    /// Splits `WidgetSync`'s payload between the two containers: the list into
+    /// the App Group, every token into the shared Keychain.
+    ///
+    /// A server whose entry carries no `token` keeps whatever is already
+    /// stored for it. The app publishes the full list on every change, and an
+    /// agent that happened to be unreachable when it did so must not cost the
+    /// widget the credential it was working with — the entry's `expiresAt` is
+    /// zero in that case, so nothing here claims it has one either.
+    private static func publishWidgetServers(_ payload: String) {
+        guard let data = payload.data(using: .utf8),
+              let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let raw = root["servers"] as? [[String: Any]]
+        else { return }
+
+        var servers: [WidgetServer] = []
+        for entry in raw {
+            guard let id = entry["id"] as? String, !id.isEmpty,
+                  let addr = entry["addr"] as? String, !addr.isEmpty
+            else { continue }
+
+            let stored = WidgetStore.server(id: id)
+            // Only while the entry still names the endpoint the stored
+            // credential was minted against. A token is scoped to one agent,
+            // so after an address change the held one is not a credential the
+            // widget can fall back on — it is a request that will be refused,
+            // and an `expiresAt` inherited alongside it would report a working
+            // credential and stop anything asking for a real one.
+            let sameEndpoint = stored?.addr == addr
+            if let token = entry["token"] as? String, !token.isEmpty {
+                WidgetStore.setToken(token, for: id)
+            } else if !sameEndpoint {
+                WidgetStore.setToken(nil, for: id)
+            }
+            let expiresAt = (entry["expiresAt"] as? NSNumber)?.intValue ?? 0
+            servers.append(
+                WidgetServer(
+                    id: id,
+                    name: entry["name"] as? String ?? addr,
+                    addr: addr,
+                    ignoreCert: entry["ignoreCert"] as? Bool ?? false,
+                    allowInsecure: entry["allowInsecure"] as? Bool ?? false,
+                    // Kept from the stored entry when this push brought no
+                    // token, so a transient failure does not read as "the
+                    // credential is gone".
+                    tokenExpiresAt: expiresAt > 0
+                        ? expiresAt
+                        : (sameEndpoint ? stored?.tokenExpiresAt ?? 0 : 0)
+                )
+            )
+        }
+
+        WidgetStore.setServers(servers)
+        if #available(iOS 14.0, *) {
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+    }
+
+    /// What is actually held, as JSON — never the tokens themselves.
+    ///
+    /// The Keychain is consulted per server rather than trusting the stored
+    /// `tokenExpiresAt`, because the two can disagree: a restore brings back
+    /// one container without the other, and a renewal decision made from a
+    /// deadline whose credential no longer exists would skip the server
+    /// forever.
+    private static func widgetTokenState() -> String {
+        let held = WidgetStore.servers().compactMap { server -> [String: Any]? in
+            guard WidgetStore.token(for: server.id) != nil else { return nil }
+            return [
+                "id": server.id,
+                "endpoint": server.addr,
+                "expiresAt": server.tokenExpiresAt,
+            ]
+        }
+        guard let data = try? JSONSerialization.data(withJSONObject: held),
+              let json = String(data: data, encoding: .utf8)
+        else { return "[]" }
+        return json
     }
 
     override func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {

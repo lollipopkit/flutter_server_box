@@ -75,12 +75,15 @@ abstract class ServerState with _$ServerState {
 
   const ServerState._();
 
-  /// What this server's connection method can do. The UI reads this instead of
-  /// testing which transport is in use — see [ServerCapabilities].
-  ServerCapabilities get capabilities => ServerCapabilities.of(
-    ServerConnectCredential.fromSpi(spi),
-    granted: remoteAccess,
-  );
+  /// What this server can do. The UI reads this instead of testing which
+  /// transport is in use — see [ServerCapabilities].
+  ///
+  /// Across every way it is reachable, not just the one that leads: a server
+  /// carrying both SSH and an agent really can do both sets of things, and
+  /// hiding half of them behind a preference about *ordering* would take
+  /// features away for no reason the user could see.
+  ServerCapabilities get capabilities =>
+      ServerCapabilities.ofSpi(spi, granted: remoteAccess);
 
   /// Whether running a command would have to open a connection first, i.e.
   /// whether a caller is about to make the user wait.
@@ -477,12 +480,21 @@ class ServerNotifier extends _$ServerNotifier {
   Future<void> seedHistory({int minutes = 60}) async {
     final generation = _operationGeneration;
     final spi = state.spi;
-    final credential = ServerConnectCredential.fromSpi(spi);
-    if (!ServerCapabilities.of(credential).storedHistory) return;
+    // Whichever transport *has* history, not whichever leads. On a server
+    // carrying both, SSH usually leads and has none — so asking only the
+    // leading one meant `capabilities.storedHistory` advertised a trend the
+    // page then never seeded, and the chart built up from empty exactly where
+    // an agent had months of it.
+    final credential = _historyCredential(spi);
+    if (credential == null) return;
     try {
-      final samples = await _resolveSource(
-        credential,
-      ).fetchHistory(minutes: minutes);
+      // Asking for exactly what the buffer holds. Any more is averaged down
+      // on the agent's side instead of being carried here and dropped by
+      // [StatusHistory.seed] as it walks past the capacity.
+      final samples = await _resolveSource(credential).fetchHistory(
+        minutes: minutes,
+        maxPoints: StatusHistory.capacity,
+      );
       if (!_isRefreshCurrent(generation, spi)) return;
       if (samples.isEmpty) return;
       state.status.history.seed(samples);
@@ -493,6 +505,17 @@ class ServerNotifier extends _$ServerNotifier {
       if (!_isRefreshCurrent(generation, spi)) return;
       Loggers.app.warning('Seed history for ${spi.name}', e, s);
     }
+  }
+
+  /// The way in that keeps its own trend data, or null when neither does.
+  ServerConnectCredential? _historyCredential(Spi spi) {
+    final primary = ServerConnectCredential.fromSpi(spi);
+    if (ServerCapabilities.of(primary).storedHistory) return primary;
+    final fallback = ServerConnectCredential.fallbackOf(spi);
+    if (fallback != null && ServerCapabilities.of(fallback).storedHistory) {
+      return fallback;
+    }
+    return null;
   }
 
   String get _sshSessionId => 'ssh_${state.spi.id}';
@@ -514,16 +537,51 @@ class ServerNotifier extends _$ServerNotifier {
   /// what keeps a second transport from being a condition inside each of
   /// them.
   ///
-  /// A monitor-backed server runs its commands through the agent, never
-  /// through sshd: the agent is how that server is reachable at all, and
-  /// falling back to SSH would mean asking for credentials the user chose not
-  /// to give this app.
+  /// A server with only an agent runs its commands through it, never through
+  /// sshd: the agent is how that server is reachable at all, and reaching for
+  /// SSH would mean asking for credentials the user chose not to give this
+  /// app. A server carrying both falls through to the other on failure.
   ///
   /// Throws whatever the transport throws when it cannot be reached.
   Future<ServerExec> ensureExec() async {
-    final credential = ServerConnectCredential.fromSpi(state.spi);
+    final spi = state.spi;
+    final fallbackExists = spi.fallbackTransport != null;
+    try {
+      return await _execOver(
+        ServerConnectCredential.fromSpi(spi),
+        // Only when there is somewhere to fall through to. Handing back a
+        // `MonitorExec` costs no request, so a dead agent is not discovered
+        // until the *caller's* command runs — outside the catch below, and too
+        // late to retry, since a command is not safe to run twice. One cheap
+        // authenticated request makes that failure land here instead. The
+        // agent-only case pays nothing: there is nothing to fall back to, so
+        // the caller's own error is the answer either way.
+        probe: fallbackExists,
+      );
+    } catch (e, s) {
+      // Only a server the user gave *both* sets of credentials to has one of
+      // these, and giving both is the request: reach this machine either way.
+      // Refusing to use the second because the first was asked for first would
+      // be honouring an ordering preference as though it were an exclusion.
+      final fallback = ServerConnectCredential.fallbackOf(spi);
+      if (fallback == null) rethrow;
+      Loggers.app.info(
+        'Exec over ${spi.transport.name} for ${spi.name} failed, '
+        'falling back to ${spi.fallbackTransport?.name}',
+        e,
+        s,
+      );
+      return await _execOver(fallback);
+    }
+  }
+
+  Future<ServerExec> _execOver(
+    ServerConnectCredential credential, {
+    bool probe = false,
+  }) async {
     switch (credential) {
       case ServerConnectCredentialSsh():
+        // Connecting *is* the probe here, and it always happens.
         return SshExec(await ensureShellClient());
       case ServerConnectCredentialMonitorHttp():
         final source = _resolveSource(credential);
@@ -532,6 +590,11 @@ class ServerNotifier extends _$ServerNotifier {
             'A monitor credential resolved to a ${source.runtimeType}',
           );
         }
+        // A GET the agent answers only to an authenticated caller, so it
+        // covers both halves of "can this reach the machine": the agent is up,
+        // and the login still works. Never the caller's command — that is what
+        // must not be attempted twice.
+        if (probe) await source.fetchCapabilities();
         return source.exec;
     }
   }

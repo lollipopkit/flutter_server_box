@@ -16,6 +16,11 @@ _Spi _$SpiFromJson(Map<String, dynamic> json) => _Spi(
       : MonitorHttpCredential.fromJson(
           json['monitorHttp'] as Map<String, dynamic>,
         ),
+  preferredTransport: $enumDecodeNullable(
+    _$ServerTransportEnumMap,
+    json['preferredTransport'],
+    unknownValue: JsonKey.nullForUndefinedEnumValue,
+  ),
   tags: (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList(),
   autoConnect: json['autoConnect'] as bool? ?? true,
   custom: json['custom'] == null
@@ -44,6 +49,7 @@ Map<String, dynamic> _$SpiToJson(_Spi instance) => <String, dynamic>{
   'name': instance.name,
   'ssh': ?instance.ssh,
   'monitorHttp': ?instance.monitorHttp,
+  'preferredTransport': ?_$ServerTransportEnumMap[instance.preferredTransport],
   'tags': ?instance.tags,
   'autoConnect': instance.autoConnect,
   'custom': ?instance.custom,
@@ -53,6 +59,11 @@ Map<String, dynamic> _$SpiToJson(_Spi instance) => <String, dynamic>{
   'id': instance.id,
   'customSystemType': ?_$SystemTypeEnumMap[instance.customSystemType],
   'disabledCmdTypes': ?instance.disabledCmdTypes,
+};
+
+const _$ServerTransportEnumMap = {
+  ServerTransport.ssh: 'ssh',
+  ServerTransport.monitorHttp: 'monitorHttp',
 };
 
 const _$SystemTypeEnumMap = {

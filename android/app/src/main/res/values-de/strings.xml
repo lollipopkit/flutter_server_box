@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Widget strings only. Everything the Flutter side owns stays in its
+    ARB files; these are drawn by native code in a process the Flutter
+    engine may never have started in, so `l10n` is not reachable.
+
+    Indonesian is `values-in`, not `values-id`: resource qualifiers use
+    the legacy ISO code, which is what `Locale.getLanguage()` returns
+    on every Android version.
+-->
+<resources>
+    <string name="widget_configure_title">Widget</string>
+    <string name="widget_configure_server">Server</string>
+    <string name="widget_configure_metric">Führender Messwert</string>
+    <string name="widget_configure_save">Sichern</string>
+    <string name="widget_configure_empty">Noch kein Server mit monitor-Agent.\nRichte einen in ServerBox ein und komm zurück.</string>
+    <string name="widget_metric_cpu">CPU</string>
+    <string name="widget_metric_memory">Speicher</string>
+    <string name="widget_metric_disk">Datenträger</string>
+    <string name="widget_metric_network">Netzwerk</string>
+    <string name="widget_err_not_configured">Tippen, um einen Server zu wählen</string>
+    <string name="widget_err_no_token">Keine Zugangsdaten – ServerBox öffnen</string>
+    <string name="widget_err_insecure">HTTPS erforderlich</string>
+    <string name="widget_err_network">Netzwerkfehler</string>
+    <string name="widget_err_timeout">Zeitüberschreitung</string>
+    <string name="widget_no_history">Kein Verlauf</string>
+    <string name="widget_chart_desc">Statusdiagramme</string>
+    <string name="widget_cpu_desc">CPU-Auslastung</string>
+    <string name="widget_mem_desc">Speicherauslastung</string>
+    <string name="widget_disk_desc">Datenträgerauslastung</string>
+    <string name="widget_net_desc">Netzwerkauslastung</string>
+    <string name="widget_refresh_desc">Aktualisieren</string>
+    <string name="widget_small_label">Server-Messwerte</string>
+    <string name="widget_medium_label">Server-Diagramme</string>
+</resources>

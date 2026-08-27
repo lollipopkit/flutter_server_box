@@ -54,32 +54,6 @@ warn_pre_notary_spctl_rejection() {
   echo 'Developer ID signed apps can be rejected by Gatekeeper before notarization with source=Unnotarized Developer ID'
 }
 
-ensure_macos_pods_synced() {
-  local macos_dir="$REPO_ROOT/macos"
-  local podfile_lock="$macos_dir/Podfile.lock"
-  local manifest_lock="$macos_dir/Pods/Manifest.lock"
-  local pods_project="$macos_dir/Pods/Pods.xcodeproj"
-
-  require_cmd pod
-
-  if [[ ! -f "$manifest_lock" || ! -d "$pods_project" ]]; then
-    echo 'CocoaPods sandbox is incomplete, running pod install'
-    (
-      cd "$macos_dir"
-      pod install
-    )
-    return
-  fi
-
-  if [[ -f "$podfile_lock" ]] && ! cmp -s "$podfile_lock" "$manifest_lock"; then
-    echo 'CocoaPods sandbox is out of sync, running pod install'
-    (
-      cd "$macos_dir"
-      pod install
-    )
-  fi
-}
-
 normalize_abs_path() {
   local path="$1"
   if [[ -z "$path" ]]; then
@@ -267,7 +241,7 @@ if [[ "$PUBLISH_GITHUB_RELEASE" == "1" ]]; then
 fi
 
 require_file "$WORKSPACE_PATH"
-ensure_macos_pods_synced
+require_file "$REPO_ROOT/macos/Runner/ReleaseDmg.entitlements"
 
 read -r DEFAULT_MARKETING_VERSION DEFAULT_CURRENT_PROJECT_VERSION <<<"$(read_pubspec_versions)"
 MARKETING_VERSION="${MARKETING_VERSION_OVERRIDE:-$DEFAULT_MARKETING_VERSION}"
@@ -312,12 +286,6 @@ restore_runner_project() {
 cp "$RUNNER_PROJECT_FILE" "$RUNNER_PROJECT_BACKUP"
 trap restore_runner_project EXIT
 
-APP_PROFILE_NAME="$APP_PROFILE_NAME" perl -0pi -e '
-  my $profile = $ENV{"APP_PROFILE_NAME"};
-  s/"PROVISIONING_PROFILE_SPECIFIER\[sdk=macosx\*\]" = "[^"]*";/"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "$profile";/
-    or die "macOS Runner Release provisioning profile setting not found\n";
-' "$RUNNER_PROJECT_FILE"
-
 # The DMG ships unsandboxed, which is what lets it host a terminal on this
 # machine: a sandboxed process cannot open a pseudo-terminal's slave device.
 # The App Store build keeps Release.entitlements and its sandbox, and the same
@@ -326,11 +294,26 @@ APP_PROFILE_NAME="$APP_PROFILE_NAME" perl -0pi -e '
 # An override rather than a second build configuration: the two products differ
 # in one entitlement and nothing else, and a flavour would be a scheme, a
 # configuration and a bundle id to keep in step for that one bit.
+#
+# The entitlements swap is a project edit and not an xcconfig override, because
+# `-xcconfig` applies to *every* target in the workspace — including the Swift
+# Package Manager targets Flutter's plugins are built as. CODE_SIGN_ENTITLEMENTS
+# is a path relative to each target's own SRCROOT, so a value naming a file in
+# the Runner project fails to resolve in ~10 package projects and the archive
+# stops before it compiles anything. An absolute path would resolve, and would
+# then sign every plugin framework with the app's entitlements.
+APP_PROFILE_NAME="$APP_PROFILE_NAME" perl -0pi -e '
+  my $profile = $ENV{"APP_PROFILE_NAME"};
+  s/"PROVISIONING_PROFILE_SPECIFIER\[sdk=macosx\*\]" = "[^"]*";/"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "$profile";/
+    or die "macOS Runner Release provisioning profile setting not found\n";
+  s{CODE_SIGN_ENTITLEMENTS = Runner/Release\.entitlements;}{CODE_SIGN_ENTITLEMENTS = Runner/ReleaseDmg.entitlements;}
+    or die "macOS Runner Release entitlements setting not found\n";
+' "$RUNNER_PROJECT_FILE"
+
 cat >"$OVERRIDE_XCCONFIG_PATH" <<EOF
 CODE_SIGN_STYLE = Manual
 CODE_SIGN_IDENTITY[sdk=macosx*] = $SIGNING_IDENTITY
 DEVELOPMENT_TEAM[sdk=macosx*] = $APPLE_TEAM_ID
-CODE_SIGN_ENTITLEMENTS = Runner/ReleaseDmg.entitlements
 OTHER_CODE_SIGN_FLAGS = --timestamp --options runtime
 EOF
 

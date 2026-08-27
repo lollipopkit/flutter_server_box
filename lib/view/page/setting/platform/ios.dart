@@ -1,6 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/service/watch_sync.dart';
@@ -63,9 +62,7 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
       children: [
         _buildPushToken(),
         _buildAutoUpdateHomeWidget(),
-        _buildAccessoryWidgetServer(),
         _buildWatchApp(),
-        _buildWatchLegacyUrls(),
       ].nonNulls.map((e) => CardX(child: e)).toList(),
     );
     if (widget.embedded) return body;
@@ -117,59 +114,39 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
     );
   }
 
-  /// The lock screen / inline families can't carry the intent configuration the
-  /// home screen ones use, so they read one URL out of the App Group instead.
-  Widget _buildAccessoryWidgetServer() {
-    final spi = _accessoryServer;
-    return ListTile(
-      title: Text(l10n.accessoryWidgetServer),
-      subtitle: Text(
-        spi?.name ?? libL10n.empty,
-        style: UIs.textGrey,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: _onTapAccessoryWidgetServer,
-    );
-  }
-
   Widget _buildWatchApp() {
-    // Counted against the servers that can still be shown, for the same reason
-    // as [_accessoryServer]: a selected id outlives the monitor configuration
-    // that made it selectable, and `buildPayload` already skips those — so the
-    // raw length was a number the watch would never agree with.
-    final selected = Stores.setting.watchServerIds.fetch().toSet();
-    final count = _monitorServers.where((e) => selected.contains(e.id)).length;
+    // What the watch will actually show, which is every monitor server bar the
+    // ones held back. Counted rather than taken from the exclusion list's
+    // length: an id outlives the monitor configuration that made it relevant,
+    // and `buildPayload` already skips those — so a raw length is a number the
+    // watch never agrees with.
+    final count = WatchSync.syncedServerIds().length;
     return ListTile(
       title: const Text('Watch app'),
+      // What the tile is for, which does not depend on whether a watch has
+      // turned up: the exclusions are stored here either way. Only a watch
+      // that is missing, or a lookup that failed, displaces it — both are
+      // things the reader can act on, and neither is worth a second line.
       subtitle: FutureWidget<bool>(
         future: _watchPairedFuture,
-        loading: const Text('...'),
-        // Not a blocker: the selection is stored here and delivered whenever a
-        // watch does show up, so it stays editable either way.
+        loading: Text(l10n.watchServers, style: UIs.textGrey),
         error: (e, _) => Text('${libL10n.error}: $e', style: UIs.textGrey),
         success: (paired) => Text(
-          paired == true ? '$count' : l10n.watchNotPaired,
+          paired == true ? l10n.watchServers : l10n.watchNotPaired,
           style: UIs.textGrey,
         ),
       ),
-      trailing: const Icon(Icons.keyboard_arrow_right),
+      // Shown whether or not a watch is paired, since it counts what would be
+      // sent to one rather than what a watch is currently showing.
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('$count / ${_monitorServers.length}', style: UIs.textGrey),
+          UIs.width7,
+          const Icon(Icons.keyboard_arrow_right),
+        ],
+      ),
       onTap: _onTapWatchApp,
-    );
-  }
-
-  /// Only offered when one exists — nothing can create these any more.
-  ///
-  /// TODO: drop with `SettingStore.watchLegacyUrls`.
-  Widget? _buildWatchLegacyUrls() {
-    final urls = Stores.setting.watchLegacyUrls.fetch();
-    if (urls.isEmpty) return null;
-    return ListTile(
-      title: Text(l10n.watchLegacyUrls),
-      subtitle: Text('${urls.length}', style: UIs.textGrey),
-      trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: () => _onTapWatchLegacyUrls(urls),
     );
   }
 }
@@ -180,48 +157,6 @@ extension _Actions on _IosSettingsPageState {
   List<Spi> get _monitorServers =>
       Stores.server.fetch().where((e) => e.monitor != null).toList();
 
-  /// The chosen server, but only while it can still serve the widget.
-  ///
-  /// A server whose monitor configuration was removed stays in this setting —
-  /// nothing clears it, and there is no single place a removal passes through
-  /// that could. The widget already ends up empty, because the URL is derived
-  /// from the monitor; naming the server here was the last thing still saying
-  /// it was configured.
-  Spi? get _accessoryServer {
-    final id = Stores.setting.accessoryWidgetServerId.fetch();
-    if (id.isEmpty) return null;
-    final spi = Stores.server.fetchOneRaw(id);
-    return spi?.monitor == null ? null : spi;
-  }
-
-  void _onTapAccessoryWidgetServer() async {
-    final servers = _monitorServers;
-    if (servers.isEmpty) {
-      Toast.show(l10n.watchNoMonitorServer);
-      return;
-    }
-
-    final current = _accessoryServer;
-    // `showPickSingleDialog` collapses "dismissed" and "cleared" into the same
-    // null, which would make the choice impossible to unset. The multi-value
-    // form keeps them apart: null is dismissed, empty is cleared.
-    final picked = await context.showPickDialog<Spi>(
-      title: l10n.accessoryWidgetServer,
-      items: servers,
-      display: (e) => e.name,
-      multi: false,
-      clearable: true,
-      initial: current == null ? null : [current],
-    );
-    if (picked == null) return;
-
-    Stores.setting.accessoryWidgetServerId.put(
-      picked.isEmpty ? '' : picked.first.id,
-    );
-    await MethodChans.syncAccessoryWidgetUrl();
-    _refresh();
-  }
-
   void _onTapWatchApp() async {
     final servers = _monitorServers;
     if (servers.isEmpty) {
@@ -229,12 +164,12 @@ extension _Actions on _IosSettingsPageState {
       return;
     }
 
-    final selectedIds = Stores.setting.watchServerIds.fetch();
+    final excluded = Stores.setting.watchExcludedServerIds.fetch().toSet();
     final picked = await context.showPickDialog<Spi>(
       title: l10n.watchServers,
       items: servers,
       display: (e) => e.name,
-      initial: servers.where((e) => selectedIds.contains(e.id)).toList(),
+      initial: servers.where((e) => !excluded.contains(e.id)).toList(),
       actions: [
         TextButton(
           onPressed: () => context.showRoundDialog(
@@ -247,29 +182,22 @@ extension _Actions on _IosSettingsPageState {
     );
     if (picked == null) return;
 
-    final pickedIds = picked.map((e) => e.id).toSet();
-    // Keep the order the user already had and append what is new, rather than
-    // rebuilding from the picker's order — the watch pages through this list.
+    final offered = servers.map((e) => e.id).toSet();
+    final shown = picked.map((e) => e.id).toSet();
+    // Only servers that were on offer are decided here, in both directions.
+    // An id the picker never showed — one whose monitor configuration was
+    // removed while this page was open — has no business being added to the
+    // list by the act of not being ticked in a dialog it was absent from, and
+    // no business being *removed* from it either: it would silently come back
+    // to the watch the moment it had an agent again.
+    final kept = Stores.setting.watchExcludedServerIds
+        .fetch()
+        .where((id) => !offered.contains(id));
     final next = [
-      ...selectedIds.where(pickedIds.contains),
-      ...pickedIds.where((id) => !selectedIds.contains(id)),
+      ...kept,
+      ...offered.where((id) => !shown.contains(id)),
     ];
-    await WatchSync.instance.updateSelection(next);
-    _refresh();
-  }
-
-  /// TODO: drop with `SettingStore.watchLegacyUrls`.
-  void _onTapWatchLegacyUrls(List<String> urls) async {
-    final result = await JsonListEditor.route.go(
-      context,
-      JsonListEditorArgs(data: urls),
-    );
-    if (result == null) return;
-
-    Stores.setting.watchLegacyUrls.put(
-      result.whereType<String>().where((e) => e.trim().isNotEmpty).toList(),
-    );
-    await WatchSync.instance.push();
+    await WatchSync.instance.updateExclusions(next);
     _refresh();
   }
 }

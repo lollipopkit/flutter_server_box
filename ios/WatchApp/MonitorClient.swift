@@ -72,6 +72,22 @@ final class MonitorClient: NSObject {
         super.init()
     }
 
+    /// Whether a bearer token may go to this URL.
+    ///
+    /// The same question the phone asks before every request, and the home
+    /// widget after it. Loopback counts as secure without TLS — that is the
+    /// reverse proxy on the same host, which really is encrypted — and
+    /// everything else in plaintext needs the server's own opt-in. A watch
+    /// carries a credential as real as the phone's; the reason it is a
+    /// narrower one is that it can be revoked separately, not that it matters
+    /// less on the wire.
+    private func isSendable(_ url: URL) -> Bool {
+        if url.scheme?.lowercased() == "https" { return true }
+        if server.allowInsecure { return true }
+        guard let host = url.host?.lowercased() else { return false }
+        return host == "localhost" || host == "127.0.0.1" || host == "::1"
+    }
+
     /// Base address with any trailing slash removed, so paths can be appended.
     private var base: String {
         let addr = server.addr.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -85,14 +101,9 @@ final class MonitorClient: NSObject {
     /// History failing is not fatal: an agent that has just started has none,
     /// and a page with live numbers and no chart is better than an error.
     func load() async throws -> (MonitorReading, [HistoryPoint]) {
-        switch server.kind {
-        case .legacy:
-            return (try await loadLegacy(), [])
-        case .monitor:
-            let reading = try await loadMetrics()
-            let history = (try? await loadHistory()) ?? []
-            return (reading, history)
-        }
+        let reading = try await loadMetrics()
+        let history = (try? await loadHistory()) ?? []
+        return (reading, history)
     }
 
     // MARK: - monitor /api/v1
@@ -111,8 +122,18 @@ final class MonitorClient: NSObject {
         )
     }
 
+    /// The window, thinned by the agent to what a watch-sized chart can draw.
+    ///
+    /// `max_points` is what makes the window mean what it says: without it the
+    /// agent answers with 300 buckets regardless, and the tail taken from them
+    /// covers the newest fifth of the hour rather than the hour. An agent too
+    /// old to know the parameter still answers with 300, so the tail is taken
+    /// either way.
     private func loadHistory(minutes: Int = 60) async throws -> [HistoryPoint] {
-        try await get("/api/v1/metrics/history?minutes=\(minutes)")
+        let maxPoints = WatchSnapshot.maxSeriesPoints
+        return try await get(
+            "/api/v1/metrics/history?minutes=\(minutes)&max_points=\(maxPoints)"
+        )
     }
 
     private func get<T: Decodable>(_ path: String) async throws -> T {
@@ -120,6 +141,9 @@ final class MonitorClient: NSObject {
             throw MonitorError.badUrl(base + path)
         }
         var req = URLRequest(url: url)
+        guard isSendable(url) else {
+            throw MonitorError.transport("HTTPS required")
+        }
         guard let token = WatchStore.token(for: server.id), !token.isEmpty else {
             throw MonitorError.http(401, "No read-only watch token")
         }
@@ -130,34 +154,6 @@ final class MonitorClient: NSObject {
         } catch {
             throw MonitorError.decoding("\(error)")
         }
-    }
-
-    // MARK: - Go-compat /status
-
-    /// TODO: drop with `WatchServer.Kind.legacy`.
-    private func loadLegacy() async throws -> MonitorReading {
-        guard let url = URL(string: server.addr) else {
-            throw MonitorError.badUrl(server.addr)
-        }
-        let data = try await send(URLRequest(url: url))
-        guard let all = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            throw MonitorError.decoding("Not JSON")
-        }
-        if let code = all["code"] as? Int, code != 0 {
-            throw MonitorError.http(code, all["msg"] as? String ?? "")
-        }
-        let json = all["data"] as? [String: Any] ?? [:]
-        let cpuText = json["cpu"] as? String ?? ""
-        return MonitorReading(
-            name: json["name"] as? String ?? server.name,
-            cpu: Double(cpuText.trimmingCharacters(in: CharacterSet(charactersIn: "% "))),
-            mem: nil,
-            disk: nil,
-            memText: json["mem"] as? String ?? "-",
-            diskText: json["disk"] as? String ?? "-",
-            netText: json["net"] as? String ?? "-",
-            uptime: nil
-        )
     }
 
     // MARK: - Transport
