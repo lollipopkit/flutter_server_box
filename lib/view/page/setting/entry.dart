@@ -562,7 +562,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       );
     }
 
-    return Navigator(
+    final navigator = Navigator(
       key: _contentNav,
       pages: [
         if (wide)
@@ -593,6 +593,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           setState(_path.removeLast);
         }
       },
+    );
+
+    // Platform back belongs to this stack while it has somewhere to go. Without
+    // a pop handler the enclosing navigator removes the whole settings route,
+    // skipping whichever level or manually pushed page is currently on top.
+    return NavigatorPopHandler(
+      onPopWithResult: (_) => _contentNav.currentState?.pop(),
+      child: navigator,
     );
   }
 
