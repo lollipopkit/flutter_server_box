@@ -1,3 +1,6 @@
+@TestOn('vm') // Reads the Android and Dart source trees through dart:io.
+library;
+
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -15,7 +18,7 @@ void main() {
     );
   });
 
-  test('idle foreground state stops only a running service', () {
+  test('idle foreground state stops a running service', () {
     expect(
       decideAndroidSessionServiceAction(
         wanted: false,
@@ -24,6 +27,9 @@ void main() {
       ),
       AndroidSessionServiceAction.stop,
     );
+  });
+
+  test('idle state leaves a pending foreground start alone', () {
     expect(
       decideAndroidSessionServiceAction(
         wanted: false,
@@ -32,6 +38,26 @@ void main() {
       ),
       AndroidSessionServiceAction.none,
     );
+  });
+
+  test('a wanted state followed by idle updates before stopping', () {
+    final actions = [
+      decideAndroidSessionServiceAction(
+        wanted: true,
+        running: false,
+        backgrounded: false,
+      ),
+      decideAndroidSessionServiceAction(
+        wanted: false,
+        running: true,
+        backgrounded: false,
+      ),
+    ];
+
+    expect(actions, [
+      AndroidSessionServiceAction.update,
+      AndroidSessionServiceAction.stop,
+    ]);
   });
 
   test('idle background state leaves the service unchanged', () {
@@ -45,14 +71,14 @@ void main() {
     );
   });
 
-  test('terminal pages do not control the Android service directly', () {
+  test('terminal-page source wiring does not own the Android service', () {
     final source = File('lib/view/page/ssh/page/page.dart').readAsStringSync();
 
     expect(source, isNot(contains('MethodChans.startService')));
     expect(source, isNot(contains('MethodChans.stopService')));
   });
 
-  test('Android queues service stops behind foreground starts', () {
+  test('Android source wiring dispatches stop through a service action', () {
     final activity = File(
       'android/app/src/main/kotlin/tech/lolli/toolbox/MainActivity.kt',
     ).readAsStringSync();
