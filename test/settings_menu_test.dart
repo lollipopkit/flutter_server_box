@@ -331,4 +331,36 @@ void main() {
     await settle(tester, 20);
     expect(contentNav().pages.length, 1);
   });
+
+  testWidgets('system back pops one settings page at a time', (tester) async {
+    await pump(tester, width: 500);
+    await tester.tap(menuRow(libL10n.server));
+    await settle(tester, 20);
+
+    final contentNavFinder = find.byWidgetPredicate(
+      (widget) => widget is Navigator && widget.pages.isNotEmpty,
+    );
+    final contentNav = tester.state<NavigatorState>(contentNavFinder);
+    final pushed = contentNav.push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => const Scaffold(body: Text('deeper settings page')),
+      ),
+    );
+    await settle(tester);
+
+    await tester.binding.handlePopRoute();
+    await pushed;
+    await settle(tester, 40);
+    expect(find.text('deeper settings page'), findsNothing);
+    expect(barTitle(tester), libL10n.general);
+
+    await tester.binding.handlePopRoute();
+    await settle(tester, 20);
+    expect(barTitle(tester), libL10n.setting);
+    expect(menuRow(libL10n.server), findsOneWidget);
+
+    await tester.binding.handlePopRoute();
+    await settle(tester, 20);
+    expect(find.text('open'), findsOneWidget);
+  });
 }
