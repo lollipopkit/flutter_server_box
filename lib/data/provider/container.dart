@@ -468,7 +468,7 @@ class ContainerNotifier extends _$ContainerNotifier {
       type: type,
       containerHost: containerHost,
     );
-    int? code;
+    late final ExecResult result;
     String raw = '';
     // Kept apart from [raw]: parsing wants stdout only, but everything that
     // explains a failure — `sh: docker: not found`, a permission denial — is
@@ -486,7 +486,7 @@ class ContainerNotifier extends _$ContainerNotifier {
         await _restartAfterServerChange(target, isAuto);
         return;
       }
-      final result = await exec.runWithSudo(
+      result = await exec.runWithSudo(
         cmd,
         password: password,
         onStderr: (data) {
@@ -500,7 +500,7 @@ class ContainerNotifier extends _$ContainerNotifier {
         await _restartAfterServerChange(target, isAuto);
         return;
       }
-      (code, raw, errOut) = (result.exitCode, result.stdout, result.stderr);
+      (raw, errOut) = (result.stdout, result.stderr);
       if (result.outputIncomplete) {
         if (_isStaleRefresh(refreshGeneration)) return;
         _setRefreshError(
@@ -540,7 +540,7 @@ class ContainerNotifier extends _$ContainerNotifier {
     }
 
     /// Code 127 means command not found
-    if (code == 127 ||
+    if (result.exitCode == 127 ||
         errOut.contains(_dockerNotFound) ||
         raw.contains(_dockerNotFound)) {
       _setRefreshError(
@@ -559,7 +559,7 @@ class ContainerNotifier extends _$ContainerNotifier {
     }
 
     /// Sudo password error
-    if (needSudo && code == kSudoPasswordRejected) {
+    if (needSudo && result.exitCode == kSudoPasswordRejected) {
       _cachedPassword = null;
       _setRefreshError(
         target,
@@ -571,7 +571,7 @@ class ContainerNotifier extends _$ContainerNotifier {
       await _finishRefresh(refreshGeneration);
       return;
     }
-    if (code != 0) {
+    if (!result.succeeded) {
       _setRefreshError(
         target,
         ContainerErr(
@@ -953,7 +953,7 @@ class ContainerNotifier extends _$ContainerNotifier {
       await _finishRun();
       return ContainerErr(type: ContainerErrType.unknown, message: detail);
     }
-    if (result.exitCode != 0) {
+    if (!result.succeeded) {
       if (result.exitCode == 127 || detail.contains(_dockerNotFound)) {
         await _finishRun();
         return ContainerErr(
