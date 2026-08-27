@@ -35,16 +35,25 @@ final class BakSyncer extends SyncIface {
 
   @override
   Future<void> saveToFile() async {
+    await writeEncryptedBackup(
+      includeSettings: PrefProps.syncAppSettings.get(),
+    );
+  }
+
+  /// Writes a backup that is safe to upload to remote storage.
+  ///
+  /// Remote writes are always encrypted. Reading remains backwards-compatible
+  /// in [fromFile] so a plaintext backup created before this requirement can be
+  /// merged and replaced by an encrypted backup on the next upload.
+  Future<String> writeEncryptedBackup({
+    String? name,
+    bool includeSettings = true,
+  }) async {
     final pwd = await SecureStoreProps.bakPwd.read();
     if (pwd == null || pwd.isEmpty) {
       throw StateError(l10n.remoteBackupPasswordRequired);
     }
-    final includeSettings = PrefProps.syncAppSettings.get();
-    await BackupV2.backup(
-      null,
-      pwd,
-      includeSettings,
-    );
+    return BackupV2.backup(name, pwd, includeSettings);
   }
 
   @override
@@ -61,6 +70,9 @@ final class BakSyncer extends SyncIface {
           includeSettings: includeSettings,
         );
       }
+      // Backups uploaded before remote encryption became mandatory are
+      // plaintext. Keep accepting them; only new remote writes are required
+      // to be encrypted.
       final mergeable = MergeableUtils.fromJsonString(content).$1;
       return _normalizeSyncPayload(mergeable, includeSettings: includeSettings);
     } on SchemaTooNewException catch (e) {
@@ -144,7 +156,9 @@ final class BakSyncer extends SyncIface {
       );
       final mergeable = await fromFile(localPath);
       await mergeable.merge();
-      Loggers.app.info('Inherited sync history from ${Miscs.legacyBakFileName}');
+      Loggers.app.info(
+        'Inherited sync history from ${Miscs.legacyBakFileName}',
+      );
     } catch (e, s) {
       // Best-effort: failing to inherit leaves the user with an empty remote
       // they can populate by syncing, which is recoverable. Failing loudly
