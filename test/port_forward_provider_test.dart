@@ -75,7 +75,7 @@ void main() {
       client.close();
       socket.destroy();
       await getIt.reset();
-      await SqliteDb.close();
+      await closeTestDb();
     }
   });
 }

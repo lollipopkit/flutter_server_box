@@ -52,7 +52,10 @@ _schemaOf(String table) => (
 void main() {
   group('the migration', () {
     setUp(() => SqliteDb.openInMemory());
-    tearDown(SqliteDb.close);
+    tearDown(() async {
+      await closeTables();
+      await SqliteDb.close();
+    });
 
     test('is the step that follows the one before it', () {
       expect(const ServerDistMigration().from, 10);
@@ -117,7 +120,10 @@ void main() {
       store = ServerDistStore();
     });
 
-    tearDown(SqliteDb.close);
+    tearDown(() async {
+      await closeTables();
+      await SqliteDb.close();
+    });
 
     test('remembers a reading', () {
       store.put('srv', Dist.debian);
@@ -231,7 +237,10 @@ void main() {
       store = ServerDistStore();
     });
 
-    tearDown(SqliteDb.close);
+    tearDown(() async {
+      await closeTables();
+      await SqliteDb.close();
+    });
 
     // The stream is what every mark on screen redraws from, so an event that
     // says nothing changed is a redraw of every row for nothing.

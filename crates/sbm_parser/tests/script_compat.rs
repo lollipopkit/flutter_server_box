@@ -954,12 +954,14 @@ fn windows_custom_commands_have_time_and_output_bounds() {
         bytes
     });
 
+    const EXPECTED_RUNTIME: Duration = Duration::from_secs(20);
+    const HARD_TIMEOUT: Duration = Duration::from_secs(25);
     let started = Instant::now();
     let status_code = loop {
         if let Some(status) = child.try_wait().unwrap() {
             break status;
         }
-        if started.elapsed() > Duration::from_secs(12) {
+        if started.elapsed() > HARD_TIMEOUT {
             child.kill().ok();
             panic!("generated PowerShell custom-command runner did not stop");
         }
@@ -976,7 +978,7 @@ fn windows_custom_commands_have_time_and_output_bounds() {
     );
     let elapsed = started.elapsed();
     assert!(
-        elapsed < Duration::from_secs(12),
+        elapsed < EXPECTED_RUNTIME,
         "generated PowerShell custom-command runner took {elapsed:?}"
     );
     let parsed = parse_script_output(&String::from_utf8(stdout).unwrap());

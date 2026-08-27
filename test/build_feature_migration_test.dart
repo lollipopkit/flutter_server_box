@@ -19,7 +19,7 @@ void main() {
 
   tearDown(() async {
     await getIt.reset();
-    await SqliteDb.close();
+    await closeTestDb();
   });
 
   test(

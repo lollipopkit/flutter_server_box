@@ -4,7 +4,6 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
-import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/rootfs_manifest_source.dart';
 import 'package:server_box/data/model/app/linux_distros.dart';
@@ -51,7 +50,7 @@ void main() {
     LinuxDistros.adopt(RootfsManifest.parse(bundledJson));
   });
 
-  tearDown(SqliteDb.close);
+  tearDown(closeTestDb);
 
   /// A Dio that answers the manifest URL with [body] and the signature URL
   /// with [sig], or fails with [error] for everything.

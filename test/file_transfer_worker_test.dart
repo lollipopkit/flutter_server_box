@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:easy_isolate/easy_isolate.dart';
-import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/model/file/transfer.dart';
@@ -21,7 +20,7 @@ void main() {
 
   tearDown(() async {
     await getIt.reset();
-    await SqliteDb.close();
+    await closeTestDb();
   });
 
   test(

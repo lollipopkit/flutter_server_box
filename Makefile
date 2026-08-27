@@ -88,9 +88,11 @@ test-one:
 		echo 'TEST is required. Example: make test-one TEST=test/disk_test.dart'; \
 		exit 1; \
 	fi
+	$(CARGO) build -p sbm_ffi
 	$(FLUTTER) test $(TEST)
 
 coverage:
+	$(CARGO) build -p sbm_ffi
 	$(FLUTTER) test --coverage
 
 test-cla:

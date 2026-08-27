@@ -1,4 +1,3 @@
-import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/res/store.dart';
@@ -17,7 +16,7 @@ void main() {
 
   tearDown(() async {
     await getIt.reset();
-    await SqliteDb.close();
+    await closeTestDb();
   });
 
   List<String> order() => setting.detailCardOrder.get();
