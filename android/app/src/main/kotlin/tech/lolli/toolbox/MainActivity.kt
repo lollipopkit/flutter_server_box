@@ -164,31 +164,21 @@ class MainActivity: FlutterFragmentActivity() {
                         if (!privacyLocked && isForeground) applyPrivacyCover(false)
                         result.success(null)
                     }
-                    "startService" -> {
+                    "stopService" -> {
                         try {
-                            reqPerm()
-                            if (!notificationsAllowed()) {
-                                // Don't start foreground service without notification permission on API 33+
-                                result.error("NOTIFICATION_PERMISSION_DENIED", "Notification permission not granted", null)
-                                return@setMethodCallHandler
+                            // Queue the stop behind any pending foreground start.
+                            // Context.stopService can destroy the instance before
+                            // that start reaches onStartCommand, leaving Android's
+                            // foreground-service obligation outstanding.
+                            val serviceIntent = Intent(this@MainActivity, ForegroundService::class.java).apply {
+                                action = ForegroundService.ACTION_STOP_SERVICE
                             }
-                            val serviceIntent = Intent(this@MainActivity, ForegroundService::class.java)
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                startForegroundService(serviceIntent)
-                            } else {
-                                startService(serviceIntent)
-                            }
+                            startService(serviceIntent)
                             result.success(null)
                         } catch (e: Exception) {
-                            // Log error but don't crash
-                            android.util.Log.e("MainActivity", "Failed to start service: ${e.message}")
+                            android.util.Log.e("MainActivity", "Failed to stop service: ${e.message}")
                             result.error("SERVICE_ERROR", e.message, null)
                         }
-                    }
-                    "stopService" -> {
-                        val serviceIntent = Intent(this@MainActivity, ForegroundService::class.java)
-                        stopService(serviceIntent)
-                        result.success(null)
                     }
                     "updateHomeWidget" -> {
                         HomeWidget.broadcastUpdate(applicationContext)
@@ -213,6 +203,7 @@ class MainActivity: FlutterFragmentActivity() {
                     }
                     "updateSessions" -> {
                         try {
+                            reqPerm()
                             if (!notificationsAllowed()) {
                                 // Avoid starting/continuing service updates when notifications are blocked
                                 result.error("NOTIFICATION_PERMISSION_DENIED", "Notification permission not granted", null)
@@ -221,7 +212,7 @@ class MainActivity: FlutterFragmentActivity() {
                             val serviceIntent = Intent(this@MainActivity, ForegroundService::class.java)
                             serviceIntent.action = ACTION_UPDATE_SESSIONS
                             serviceIntent.putExtra("payload", method.arguments as String)
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !ForegroundService.isRunning) {
                                 startForegroundService(serviceIntent)
                             } else {
                                 startService(serviceIntent)
@@ -332,7 +323,7 @@ class MainActivity: FlutterFragmentActivity() {
         if (requestCode == 123) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 android.util.Log.i("MainActivity", "Notification permission granted")
-                // `reqPerm` is asynchronous and `startService`/`updateSessions`
+                // `reqPerm` is asynchronous and `updateSessions`
                 // test the permission the moment after asking for it, so the
                 // first attempt is always refused and nothing retries it. With
                 // a session already open and no further lifecycle change

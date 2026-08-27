@@ -622,8 +622,8 @@ class SettingStore extends SqliteStore {
   // `fgService` was here: a second switch for the Android foreground service,
   // whose tile was commented out of the settings page long before that page
   // was deleted. It defaulted to false, nothing could turn it on, and it gated
-  // `MethodChans.startService` — so the app never asked for the service it
-  // needs to survive being backgrounded. [bgRun] is the one switch now.
+  // Android service updates — so the app never asked for the service it needs
+  // to survive being backgrounded. [bgRun] is the one switch now.
   //
   // TODO: the stale `fgService` row in `kv` is harmless and is left to be swept
   // with the next settings migration.

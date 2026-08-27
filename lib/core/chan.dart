@@ -21,23 +21,15 @@ abstract final class MethodChans {
     }
   }
 
-  /// Puts the Android process in the foreground, so the system stops treating
-  /// it as cached and freezing it (#662, #1287).
-  ///
-  /// Ungated. It used to return here unless `fgService` was true — a setting
-  /// whose switch was commented out of the Android settings page and then
-  /// deleted with it, so it was false for every install and both of these did
-  /// nothing at all. What kept the service alive instead was [updateSessions],
-  /// which starts it as a side effect; the moment the session list went empty
-  /// that side effect went the other way and the process lost its foreground
-  /// status with nothing able to give it back. Whether the service is wanted
-  /// is `TermSessionManager`'s decision, and it is the only caller.
-  static void startService() {
-    _channel.invokeMethod('startService');
-  }
-
-  static void stopService() {
-    _channel.invokeMethod('stopService');
+  /// Stops Android's terminal foreground service after its queued starts have
+  /// been handled.
+  static Future<void> stopService() async {
+    if (!isAndroid) return;
+    try {
+      await _channel.invokeMethod('stopService');
+    } catch (e, s) {
+      Loggers.app.warning('Failed to stop Android terminal service', e, s);
+    }
   }
 
   static Future<void> updateHomeWidget() async {
@@ -153,8 +145,10 @@ abstract final class MethodChans {
     }
   }
 
-  /// Update Android foreground service notifications for SSH sessions
-  /// The [payload] is a JSON string describing sessions list.
+  /// Starts or updates Android's terminal foreground service with [payload].
+  ///
+  /// The native side also owns the notification permission request, so one
+  /// call describes the desired state instead of racing a separate start.
   static Future<void> updateSessions(String payload) async {
     if (!isAndroid) return;
     try {
@@ -259,7 +253,7 @@ abstract final class MethodChans {
         // triggered the prompt has already been refused by the time the user
         // answers it. This is the only edge that says the answer was yes, and
         // without acting on it the foreground service stays stopped until
-        // something else happens to sync — see [startService].
+        // something else happens to sync — see [updateSessions].
         case 'notificationPermissionGranted':
           onNotificationPermissionGranted?.call();
           return;

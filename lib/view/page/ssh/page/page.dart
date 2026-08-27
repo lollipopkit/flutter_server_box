@@ -10,7 +10,6 @@ import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/ai/agent_conversation.dart';
@@ -284,7 +283,7 @@ class SSHPageState extends ConsumerState<SSHPage>
   /// Current tmux window index (for state restoration)
   int? get tmuxCurrentWindow => _tmuxCurrentWindow;
 
-  /// Used for (de)activate the wake lock and forground service
+  /// Used to activate the wake lock while at least one terminal page exists.
   static var _sshConnCount = 0;
   late final String _sessionId = ShortId.generate();
   late final int _sessionStartMs = DateTime.now().millisecondsSinceEpoch;
@@ -346,9 +345,6 @@ class SSHPageState extends ConsumerState<SSHPage>
 
     if (--_sshConnCount <= 0) {
       WakelockPlus.disable();
-      if (isAndroid) {
-        MethodChans.stopService();
-      }
     }
 
     // Remove session entry
@@ -391,9 +387,6 @@ class SSHPageState extends ConsumerState<SSHPage>
 
     if (++_sshConnCount == 1) {
       WakelockPlus.enable();
-      if (isAndroid) {
-        MethodChans.startService();
-      }
     }
 
     // Add session entry (for Android notifications & iOS Live Activities)

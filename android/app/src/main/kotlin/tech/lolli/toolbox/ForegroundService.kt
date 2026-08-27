@@ -16,6 +16,8 @@ class ForegroundService : Service() {
     companion object {
         @Volatile
         var isRunning: Boolean = false
+
+        const val ACTION_STOP_SERVICE = "tech.lolli.toolbox.ACTION_STOP_SERVICE"
     }
     private val chanId = "ForegroundServiceChannel"
     private val NOTIFICATION_ID = 1000
@@ -50,6 +52,12 @@ class ForegroundService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         try {
+            if (intent?.action == ACTION_STOP_SERVICE) {
+                Log.d("ForegroundService", "Stopping after queued starts")
+                stopForegroundService()
+                return START_NOT_STICKY
+            }
+
             // Before the permission check below, because stopping needs no
             // notification. A user who revokes the permission while this is
             // running still has the action on a notification the system has not
