@@ -36,12 +36,12 @@ void main() {
     await openTestDb();
     // In memory: this tree writes as it builds, and a test has no
     // business leaving a database behind.
-    getIt.registerSingleton<SettingStore>(SettingStore.forTest());
+    getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
     // The rail draws each server's distribution mark, which reads this.
-    getIt.registerSingleton<ServerDistStore>(ServerDistStore.forTest());
-    getIt.registerSingleton<ServerStore>(ServerStore.forTest());
-    getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore.forTest());
-    getIt.registerSingleton<HistoryStore>(HistoryStore.forTest());
+    getIt.registerSingleton<ServerDistStore>(ServerDistStore());
+    getIt.registerSingleton<ServerStore>(ServerStore());
+    getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore());
+    getIt.registerSingleton<HistoryStore>(HistoryStore('history_test'));
   });
 
   tearDown(() async {

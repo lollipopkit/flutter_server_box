@@ -45,10 +45,10 @@ void main() {
 
   setUp(() async {
     await openTestDb();
-    forwards = PortForwardStore.forTest();
-    snippets = SnippetStore.forTest();
-    conversations = AgentConversationStore.forTest();
-    servers = ServerStore.forTest(
+    forwards = PortForwardStore();
+    snippets = SnippetStore();
+    conversations = AgentConversationStore();
+    servers = ServerStore(
       portForwards: forwards,
       snippets: snippets,
       conversations: conversations,

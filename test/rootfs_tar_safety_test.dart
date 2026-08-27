@@ -44,7 +44,7 @@ void main() {
     'an iOS layer cannot write through a symlink from an earlier layer',
     () async {
       final links = Archive()..add(ArchiveFile.symlink('escape', outside.path));
-      await IosRootfs.extractForTest(
+      await IosRootfs.extract(
         await archiveOf('links', links),
         root,
         source: source,
@@ -53,7 +53,7 @@ void main() {
       final payload = Archive()
         ..add(ArchiveFile.string('escape/payload', 'outside'));
       await expectLater(
-        IosRootfs.extractForTest(
+        IosRootfs.extract(
           await archiveOf('payload', payload),
           root,
           source: source,
@@ -70,7 +70,7 @@ void main() {
       ..add(ArchiveFile.string('escape/payload', 'inside only'));
 
     await expectLater(
-      IosRootfs.extractForTest(
+      IosRootfs.extract(
         await archiveOf('same-layer', archive),
         root,
         source: source,
@@ -96,7 +96,7 @@ void main() {
       ..add(ArchiveFile.string('../outside/payload', 'outside'));
 
     await expectLater(
-      IosRootfs.extractForTest(
+      IosRootfs.extract(
         await archiveOf('traversal', archive),
         root,
         source: source,
@@ -123,7 +123,7 @@ void main() {
     final archive = Archive()
       ..add(ArchiveFile.symlink('etc/resolv.conf', outsideFile.path));
 
-    await IosRootfs.extractForTest(
+    await IosRootfs.extract(
       await archiveOf('final-link', archive),
       root,
       source: source,
@@ -174,7 +174,7 @@ void main() {
       final traversalFile = File('${temp.path}/traversal.tar')
         ..writeAsBytesSync(TarEncoder().encodeBytes(traversal));
       await expectLater(
-        AndroidRootfs.validateTarForTest(traversalFile, root),
+        AndroidRootfs.validateTar(traversalFile.path, root.path),
         throwsA(isA<StateError>()),
       );
 
@@ -184,7 +184,7 @@ void main() {
       final linkFile = File('${temp.path}/link-parent.tar')
         ..writeAsBytesSync(TarEncoder().encodeBytes(throughLink));
       await expectLater(
-        AndroidRootfs.validateTarForTest(linkFile, root),
+        AndroidRootfs.validateTar(linkFile.path, root.path),
         throwsA(isA<StateError>()),
       );
       expect(File('${outside.path}/payload').existsSync(), isFalse);
@@ -197,7 +197,7 @@ void main() {
     final archive = await archiveOf('android-gzip-traversal', traversal);
 
     await expectLater(
-      AndroidRootfs.validateGzipTarForTest(archive, root),
+      AndroidRootfs.validateGzipTar(archive.path, root.path),
       throwsA(isA<StateError>()),
     );
     expect(File('${archive.path}.validated.tar').existsSync(), isFalse);

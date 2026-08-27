@@ -7,7 +7,6 @@
 /// working. Neither shows up as a crash.
 library;
 
-import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/store/migrations/m015_watch_selection_to_exclusion.dart';
@@ -27,18 +26,19 @@ void main() {
     SettingStore.instance.watchServerIds.put([]);
     SettingStore.instance.watchExcludedServerIds.put([]);
   });
-  tearDown(SqliteDb.close);
+  tearDown(closeTestDb);
 
   void seedMonitorServer(String id, String name) {
-    ServerStore.forTest().put(
-      spiFixture(name: name, id: id).copyWith(
-        monitorHttp: MonitorHttpCredential(addr: 'https://$id:3770'),
-      ),
+    ServerStore().put(
+      spiFixture(
+        name: name,
+        id: id,
+      ).copyWith(monitorHttp: MonitorHttpCredential(addr: 'https://$id:3770')),
     );
   }
 
   void seedSshServer(String id, String name) {
-    ServerStore.forTest().put(spiFixture(name: name, id: id, ip: '10.0.0.1'));
+    ServerStore().put(spiFixture(name: name, id: id, ip: '10.0.0.1'));
   }
 
   List<String> excluded() =>

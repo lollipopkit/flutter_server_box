@@ -8,10 +8,8 @@ import 'package:server_box/core/app_navigator.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 
-typedef SSHKeyboardInteractiveHandler = FutureOr<List<String>?> Function(
-  Spi server,
-  SSHUserInfoRequest request,
-);
+typedef SSHKeyboardInteractiveHandler =
+    FutureOr<List<String>?> Function(Spi server, SSHUserInfoRequest request);
 
 abstract final class KeyboardInteractiveAuth {
   static const promptTimeout = Duration(minutes: 3);
@@ -19,7 +17,6 @@ abstract final class KeyboardInteractiveAuth {
   static final _dialogQueue = Queue<_QueuedKeyboardInteractiveRequest>();
   static bool _isDrainingQueue = false;
   static _QueuedKeyboardInteractiveRequest? _activeRequest;
-  static int _queueGeneration = 0;
 
   static FutureOr<List<String>?> handle(
     Spi spi,
@@ -51,20 +48,6 @@ abstract final class KeyboardInteractiveAuth {
   static void _cancelRequest(_QueuedKeyboardInteractiveRequest request) {
     _dialogQueue.remove(request);
     request.cancel();
-  }
-
-  @visibleForTesting
-  static void resetForTesting() {
-    final requests = <_QueuedKeyboardInteractiveRequest>{..._dialogQueue};
-    final active = _activeRequest;
-    if (active != null) requests.add(active);
-    _queueGeneration++;
-    _dialogQueue.clear();
-    _activeRequest = null;
-    _isDrainingQueue = false;
-    for (final request in requests) {
-      request.cancel();
-    }
   }
 
   static Future<void> _showQueuedRequest(
@@ -101,17 +84,14 @@ abstract final class KeyboardInteractiveAuth {
   static Future<void> _drainQueue() async {
     if (_isDrainingQueue) return;
     _isDrainingQueue = true;
-    final generation = _queueGeneration;
     try {
-      while (generation == _queueGeneration && _dialogQueue.isNotEmpty) {
+      while (_dialogQueue.isNotEmpty) {
         final queued = _dialogQueue.removeFirst();
         await _showQueuedRequest(queued);
       }
     } finally {
-      if (generation == _queueGeneration) {
-        _isDrainingQueue = false;
-        if (_dialogQueue.isNotEmpty) unawaited(_drainQueue());
-      }
+      _isDrainingQueue = false;
+      if (_dialogQueue.isNotEmpty) unawaited(_drainQueue());
     }
   }
 
@@ -209,10 +189,9 @@ abstract final class KeyboardInteractiveAuth {
   }
 
   static String _normalizePrompt(String value) {
-    return _sanitize(value)
-        .toLowerCase()
-        .replaceAll(RegExp(r'[\s:：]+'), ' ')
-        .trim();
+    return _sanitize(
+      value,
+    ).toLowerCase().replaceAll(RegExp(r'[\s:：]+'), ' ').trim();
   }
 
   static Future<List<String>?> _showDialog(
@@ -234,9 +213,7 @@ abstract final class KeyboardInteractiveAuth {
     final fieldsKey = GlobalKey<_KeyboardInteractiveFieldsState>();
     final requestName = _sanitize(request.name);
     final instruction = _sanitize(request.instruction);
-    final title = requestName.isNotEmpty
-        ? requestName
-        : libL10n.authRequired;
+    final title = requestName.isNotEmpty ? requestName : libL10n.authRequired;
 
     return await context.showRoundDialog<List<String>>(
       title: title,
@@ -253,9 +230,9 @@ abstract final class KeyboardInteractiveAuth {
           spi: spi,
           instruction: instruction,
           prompts: request.prompts,
-          onSubmit: () => Navigator.of(dialogContext).pop(
-            fieldsKey.currentState?.responses,
-          ),
+          onSubmit: () => Navigator.of(
+            dialogContext,
+          ).pop(fieldsKey.currentState?.responses),
         );
       },
       actionsBuilder: (dialogContext) => [
@@ -264,9 +241,9 @@ abstract final class KeyboardInteractiveAuth {
           child: Text(libL10n.cancel),
         ),
         TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(
-            fieldsKey.currentState?.responses,
-          ),
+          onPressed: () => Navigator.of(
+            dialogContext,
+          ).pop(fieldsKey.currentState?.responses),
           child: Text(libL10n.ok),
         ),
       ],
@@ -423,8 +400,7 @@ class _KeyboardInteractiveFieldsState
                     ? (_) => widget.onSubmit()
                     : null,
               ),
-              if (i != widget.prompts.length - 1)
-                const SizedBox(height: 8),
+              if (i != widget.prompts.length - 1) const SizedBox(height: 8),
             ],
           ],
         ),

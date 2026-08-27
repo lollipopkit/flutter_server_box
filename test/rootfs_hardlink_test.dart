@@ -126,7 +126,7 @@ void main() {
     final archive = File('${temp.path}/rootfs.tar.gz');
     await archive.writeAsBytes(GZipEncoder().encodeBytes(out.getBytes()));
     final root = Directory('${temp.path}/root')..createSync();
-    await IosRootfs.extractForTest(
+    await IosRootfs.extract(
       archive,
       root,
       source: const RootfsSource(
@@ -163,7 +163,7 @@ void main() {
     final root = Directory('${temp.path}/root')..createSync();
 
     await expectLater(
-      IosRootfs.extractForTest(
+      IosRootfs.extract(
         archive,
         root,
         source: const RootfsSource(
@@ -195,7 +195,7 @@ void main() {
     addTearDown(() => temp.delete(recursive: true));
 
     await expectLater(
-      IosRootfs.extractForTest(
+      IosRootfs.extract(
         await archiveFile(temp, [
           linkEntry('usr/link', TarFile.symbolicLink, 'bin'),
           linkEntry('usr/bin/tool', TarFile.hardLink, 'usr/link/tool'),
@@ -222,7 +222,7 @@ void main() {
     addTearDown(() => temp.delete(recursive: true));
 
     await expectLater(
-      IosRootfs.extractForTest(
+      IosRootfs.extract(
         await archiveFile(temp, [
           linkEntry('usr/bin/tool', TarFile.hardLink, 'usr/bin/missing'),
         ]),
@@ -294,12 +294,12 @@ void main() {
         markTestSkipped('no ${tarball.path}');
         return null;
       }
-      LinuxDistros.adoptForTest(
+      LinuxDistros.adopt(
         RootfsManifest.parse(
           File(LinuxDistros.bundledAsset).readAsStringSync(),
         ),
       );
-      await IosRootfs.extractForTest(
+      await IosRootfs.extract(
         tarball,
         into,
         source: LinuxDistro.ubuntu.preferred.source,

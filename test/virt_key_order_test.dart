@@ -24,7 +24,7 @@ void main() {
     await openTestDb();
     // `loadFromStore` reads the singleton rather than a store handed to it,
     // so the singleton is what has to point at the in-memory database.
-    getIt.registerSingleton<SettingStore>(SettingStore.forTest());
+    getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
   });
 
   tearDown(() async {

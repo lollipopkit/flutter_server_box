@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:meta/meta.dart';
 import 'package:server_box/data/model/app/tab.dart';
 
 /// index from 0 -> n : latest -> oldest
@@ -59,18 +58,9 @@ class _MapHistory {
 }
 
 class HistoryStore extends SqliteStore {
-  HistoryStore._() : super('history');
+  HistoryStore([super.storeName = 'history']);
 
-  /// The same seam [ServerStore.forTest] has: a distinct store name, so a test
-  /// on `SqliteDb.openInMemory()` cannot collide with another test's rows.
-  ///
-  /// This one holds the terminal tab set, which is the piece of session state
-  /// that does survive a relaunch — Flutter's own restoration does not, here —
-  /// so it is what a test of "what comes back" has to be able to write.
-  @visibleForTesting
-  HistoryStore.forTest() : super('history_test');
-
-  static final instance = HistoryStore._();
+  static final instance = HistoryStore();
 
   final Map<String, String> _serverIdAliases = {};
 

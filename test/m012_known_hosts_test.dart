@@ -27,7 +27,7 @@ void main() {
     // the real one would be.
     SqliteDb.instance.execute('PRAGMA foreign_keys = ON;');
     await createTables(SqliteDb.instance);
-    store = SettingStore.forTest();
+    store = SettingStore('setting_test');
     migration = KnownHostsToSettingsMigration(store: store);
   });
 
@@ -40,10 +40,11 @@ void main() {
   );
 
   void seedRow(String serverId, String keyType, String fingerprint) =>
-      SqliteDb.instance.execute(
-        'INSERT INTO known_host VALUES (?, ?, ?);',
-        [serverId, keyType, fingerprint],
-      );
+      SqliteDb.instance.execute('INSERT INTO known_host VALUES (?, ?, ?);', [
+        serverId,
+        keyType,
+        fingerprint,
+      ]);
 
   test('it is the step that follows the one before it', () {
     expect(migration.from, 12);

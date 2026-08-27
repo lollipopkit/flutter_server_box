@@ -7,6 +7,8 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
 
+import 'helpers/test_db.dart';
+
 /// Covers the two halves of [SqliteStore] separately.
 ///
 /// The store's own behaviour runs against an in-memory database, because the
@@ -57,15 +59,20 @@ void main() {
 
       final reopened = sqlite3.open(path);
       key(reopened, k);
-      expect(reopened.select('SELECT v FROM t;').single['v'],
-          'a-recognisable-secret');
+      expect(
+        reopened.select('SELECT v FROM t;').single['v'],
+        'a-recognisable-secret',
+      );
       reopened.close();
 
       // The point of the whole exercise: neither the value nor the schema is
       // readable in the file. Hive only ever encrypted values, which is what
       // made `conn_stats_index.hive` legible.
       final bytes = File(path).readAsBytesSync();
-      expect(String.fromCharCodes(bytes), isNot(contains('a-recognisable-secret')));
+      expect(
+        String.fromCharCodes(bytes),
+        isNot(contains('a-recognisable-secret')),
+      );
       expect(String.fromCharCodes(bytes), isNot(contains('CREATE TABLE')));
     });
 
@@ -98,7 +105,7 @@ void main() {
       store = SqliteStore('a');
       other = SqliteStore('b');
     });
-    tearDown(SqliteDb.close);
+    tearDown(closeTestDb);
 
     test('round-trips primitives, maps and lists', () {
       store.set('s', 'txt');
@@ -169,7 +176,10 @@ void main() {
       store.set('e', _Fruit.pear);
       expect(store.get<String>('e'), 'pear');
       expect(
-        store.get<_Fruit>('e', fromObj: (v) => _Fruit.values.byName(v as String)),
+        store.get<_Fruit>(
+          'e',
+          fromObj: (v) => _Fruit.values.byName(v as String),
+        ),
         _Fruit.pear,
       );
     });
@@ -258,10 +268,12 @@ void main() {
 
     test('the stored value really is JSON text', () {
       store.set('m', {'x': 1});
-      final raw = SqliteDb.instance.select(
-        'SELECT value FROM kv WHERE store = ? AND key = ?;',
-        ['a', 'm'],
-      ).single['value'] as String;
+      final raw =
+          SqliteDb.instance.select(
+                'SELECT value FROM kv WHERE store = ? AND key = ?;',
+                ['a', 'm'],
+              ).single['value']
+              as String;
       expect(json.decode(raw), {'x': 1});
     });
   });
@@ -273,7 +285,7 @@ void main() {
       SqliteDb.openInMemory();
       store = SqliteStore('r');
     });
-    tearDown(SqliteDb.close);
+    tearDown(closeTestDb);
 
     test('clear keeps internal keys, so a migration marker survives', () async {
       const marker = '${StoreDefaults.prefixKey}someMigrationDone';
@@ -286,7 +298,8 @@ void main() {
       expect(
         store.get<bool>(marker),
         isTrue,
-        reason: 'a "delete all settings" that erases "this migration already '
+        reason:
+            'a "delete all settings" that erases "this migration already '
             'ran" makes it run again over whatever replaced the data',
       );
     });
@@ -362,21 +375,24 @@ void main() {
       expect(store.get<int>('b'), 2);
     });
 
-    test('a cached statement is rebuilt when the database is replaced', () {
-      // Statements are kept across calls because preparing one is most of what
-      // a read costs. They belong to the database that made them, which
-      // disposes them with itself — so a store that outlives an open/close
-      // cycle must not reuse or re-dispose them.
-      store.set('a', 1);
-      expect(store.get<int>('a'), 1);
+    test(
+      'a cached statement is rebuilt when the database is replaced',
+      () async {
+        // Statements are kept across calls because preparing one is most of what
+        // a read costs. They belong to the database that made them, which
+        // disposes them with itself — so a store that outlives an open/close
+        // cycle must not reuse or re-dispose them.
+        store.set('a', 1);
+        expect(store.get<int>('a'), 1);
 
-      SqliteDb.close();
-      SqliteDb.openInMemory();
+        await closeTestDb();
+        SqliteDb.openInMemory();
 
-      expect(store.get<int>('a'), isNull);
-      store.set('a', 2);
-      expect(store.get<int>('a'), 2);
-    });
+        expect(store.get<int>('a'), isNull);
+        store.set('a', 2);
+        expect(store.get<int>('a'), 2);
+      },
+    );
 
     test('getAllMap reads every key in one pass', () {
       store.set('a', 1);
@@ -403,5 +419,4 @@ class _Point {
   Map<String, Object?> toJson() => {'x': x, 'y': y};
 }
 
-class _NoJson {
-}
+class _NoJson {}

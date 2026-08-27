@@ -234,12 +234,16 @@ void main() {
     late AgentConversationStore conversationStore;
 
     setUpAll(() async {
-      tempDir = await Directory.systemTemp.createTemp('server-box-agent-session-');
+      tempDir = await Directory.systemTemp.createTemp(
+        'server-box-agent-session-',
+      );
       await openTestDb();
       await getIt.reset();
-      getIt.registerSingleton<SettingStore>(SettingStore.forTest()..init());
-      getIt.registerSingleton<ServerStore>(ServerStore.forTest());
-      conversationStore = AgentConversationStore.forTest();
+      getIt.registerSingleton<SettingStore>(
+        SettingStore('setting_test')..init(),
+      );
+      getIt.registerSingleton<ServerStore>(ServerStore());
+      conversationStore = AgentConversationStore();
       getIt.registerSingleton<AgentConversationStore>(conversationStore);
     });
 

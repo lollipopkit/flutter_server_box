@@ -33,7 +33,7 @@ void main() {
 
   setUp(() async {
     await openTestDb();
-    store = SettingStore.forTest();
+    store = SettingStore('setting_test');
   });
 
   tearDown(SqliteDb.close);
@@ -86,7 +86,9 @@ void main() {
     test('and rewrites it as an object on the next write', () async {
       store.set('windowState', jsonEncode(state.toJson()));
 
-      await store.windowState.set(const WindowState(Size(800, 600), Offset.zero));
+      await store.windowState.set(
+        const WindowState(Size(800, 600), Offset.zero),
+      );
 
       expect(
         jsonDecode(_rawValue('setting_test', 'windowState')!),
@@ -105,7 +107,10 @@ void main() {
       // Any ordinary write stamps the map.
       await store.timeout.set(9);
 
-      final raw = _rawValue('setting_test', StoreDefaults.defaultLastUpdateTsKey);
+      final raw = _rawValue(
+        'setting_test',
+        StoreDefaults.defaultLastUpdateTsKey,
+      );
       expect(raw, isNotNull);
 
       final decoded = jsonDecode(raw!);

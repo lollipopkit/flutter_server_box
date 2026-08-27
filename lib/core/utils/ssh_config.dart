@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
-import 'package:meta/meta.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 
@@ -134,7 +133,7 @@ abstract final class SSHConfig {
     var current = blocks.first;
 
     for (final line in content.split('\n')) {
-      final cleanLine = _stripInlineComment(line.trim());
+      final cleanLine = stripInlineComment(line.trim());
       if (cleanLine.isEmpty) continue;
       final match = RegExp(r'^(\S+)\s+(.+)$').firstMatch(cleanLine);
       if (match == null) continue;
@@ -464,7 +463,7 @@ abstract final class SSHConfig {
     return (host: host, user: user, port: port);
   }
 
-  static String _stripInlineComment(String line) {
+  static String stripInlineComment(String line) {
     var inSingleQuotes = false;
     var inDoubleQuotes = false;
     var escaped = false;
@@ -496,11 +495,6 @@ abstract final class SSHConfig {
     }
 
     return line.trim();
-  }
-
-  @visibleForTesting
-  static String stripInlineCommentForTest(String line) {
-    return _stripInlineComment(line);
   }
 
   /// Check if SSH config file exists, trying multiple possible paths

@@ -16,7 +16,7 @@ void main() {
 
   setUp(() async {
     await openTestDb();
-    getIt.registerSingleton<SettingStore>(SettingStore.forTest());
+    getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
   });
 
   tearDown(() async {

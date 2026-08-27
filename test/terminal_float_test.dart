@@ -38,10 +38,8 @@ void main() {
     await openTestDb();
     // In memory rather than on disk: floating writes the window's placement the
     // moment it changes, so these tests write.
-    getIt.registerSingleton<SettingStore>(SettingStore.forTest());
-    getIt.registerSingleton<AgentConversationStore>(
-      AgentConversationStore.forTest(),
-    );
+    getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
+    getIt.registerSingleton<AgentConversationStore>(AgentConversationStore());
     // The terminal page opens this over itself on a first run, and it would sit
     // over everything these tests are looking at.
     Stores.setting.sshTermHelpShown.put(true);
@@ -109,9 +107,9 @@ void main() {
       // A session handed to the page is one it adopts — already connected,
       // already running — so it opens no shell of its own, which is what keeps
       // this off a socket.
-      final session = TerminalSession.over(
-        const LocalSource(),
-        FakeShellBackend(),
+      final session = TerminalSession(
+        source: const LocalSource(),
+        backend: FakeShellBackend(),
       );
       final it = container();
 
@@ -121,7 +119,10 @@ void main() {
           (area) => Stack(
             children: [
               SSHPage(
-                args: SshPageArgs(source: const LocalSource(), session: session),
+                args: SshPageArgs(
+                  source: const LocalSource(),
+                  session: session,
+                ),
               ),
               TerminalFloatingShell(area: area),
             ],
@@ -139,10 +140,9 @@ void main() {
       final (container, session) = await pump(tester);
       expect(find.byType(TerminalView), findsOneWidget);
 
-      container.read(terminalShellProvider.notifier).float(
-        session,
-        title: 'shell',
-      );
+      container
+          .read(terminalShellProvider.notifier)
+          .float(session, title: 'shell');
       // One frame, not a settled tree: the handover is what has to be clean.
       await tester.pump();
       expect(find.byType(TerminalView), findsOneWidget);
@@ -164,10 +164,9 @@ void main() {
       tester,
     ) async {
       final (container, session) = await pump(tester);
-      container.read(terminalShellProvider.notifier).float(
-        session,
-        title: 'shell',
-      );
+      container
+          .read(terminalShellProvider.notifier)
+          .float(session, title: 'shell');
       await settle(tester);
       expect(container.read(terminalShellProvider), isNotNull);
 
@@ -191,15 +190,13 @@ void main() {
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
 
-      final session = TerminalSession.over(
-        const LocalSource(),
-        FakeShellBackend(),
+      final session = TerminalSession(
+        source: const LocalSource(),
+        backend: FakeShellBackend(),
       );
       final it = container();
 
-      await tester.pumpWidget(
-        app(it, (area) => FloatingPanels(area: area)),
-      );
+      await tester.pumpWidget(app(it, (area) => FloatingPanels(area: area)));
       await settle(tester);
       return (it, session);
     }
@@ -212,12 +209,14 @@ void main() {
         view: const Size(390, 844),
       );
 
-      container.read(terminalShellProvider.notifier).float(
-        session,
-        title: 'shell',
-      );
+      container
+          .read(terminalShellProvider.notifier)
+          .float(session, title: 'shell');
       await settle(tester);
-      expect(container.read(terminalShellProvider).mode, FloatShellMode.expanded);
+      expect(
+        container.read(terminalShellProvider).mode,
+        FloatShellMode.expanded,
+      );
 
       container.read(agentShellProvider.notifier).expand();
       await settle(tester);
@@ -234,10 +233,15 @@ void main() {
       await settle(tester);
 
       expect(container.read(agentShellProvider), FloatShellMode.collapsed);
-      expect(container.read(terminalShellProvider).mode, FloatShellMode.expanded);
+      expect(
+        container.read(terminalShellProvider).mode,
+        FloatShellMode.expanded,
+      );
     });
 
-    testWidgets('and never conjures a window that was not open', (tester) async {
+    testWidgets('and never conjures a window that was not open', (
+      tester,
+    ) async {
       // `collapse` on a hidden Agent would *show* it: the three modes are one
       // value, and collapsed is a way of being on screen.
       final (container, session) = await pumpPanels(
@@ -246,10 +250,9 @@ void main() {
       );
       expect(container.read(agentShellProvider), FloatShellMode.hidden);
 
-      container.read(terminalShellProvider.notifier).float(
-        session,
-        title: 'shell',
-      );
+      container
+          .read(terminalShellProvider.notifier)
+          .float(session, title: 'shell');
       await settle(tester);
 
       expect(container.read(agentShellProvider), FloatShellMode.hidden);
@@ -261,15 +264,17 @@ void main() {
         view: const Size(1400, 900),
       );
 
-      container.read(terminalShellProvider.notifier).float(
-        session,
-        title: 'shell',
-      );
+      container
+          .read(terminalShellProvider.notifier)
+          .float(session, title: 'shell');
       container.read(agentShellProvider.notifier).expand();
       await settle(tester);
 
       expect(container.read(agentShellProvider), FloatShellMode.expanded);
-      expect(container.read(terminalShellProvider).mode, FloatShellMode.expanded);
+      expect(
+        container.read(terminalShellProvider).mode,
+        FloatShellMode.expanded,
+      );
     });
   });
 }

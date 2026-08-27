@@ -1,5 +1,4 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:meta/meta.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/store/entity_store.dart';
 import 'package:sqlite3/sqlite3.dart';
@@ -10,13 +9,9 @@ import 'package:sqlite3/sqlite3.dart';
 /// forwards with it. Nothing did that before, and [fetch] answered "this
 /// server's forwards" by decoding every record in the store.
 class PortForwardStore extends EntityStore<PortForwardConfig> {
-  PortForwardStore._();
+  PortForwardStore();
 
-  /// See [PrivateKeyStore.forTest].
-  @visibleForTesting
-  PortForwardStore.forTest();
-
-  static final instance = PortForwardStore._();
+  static final instance = PortForwardStore();
 
   @override
   String get table => 'port_forward';

@@ -29,9 +29,9 @@ void main() {
     await openTestDb();
     // In memory: a real write started in a `testWidgets` body never lets go of
     // the box's lock, and this page writes on nearly every switch.
-    getIt.registerSingleton<SettingStore>(SettingStore.forTest());
+    getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
     // The server order page reads it as soon as it is shown.
-    getIt.registerSingleton<ServerStore>(ServerStore.forTest());
+    getIt.registerSingleton<ServerStore>(ServerStore());
   });
 
   tearDown(() async {
@@ -42,12 +42,16 @@ void main() {
 
   /// A row of the menu, and only a row of it: several of these titles are also
   /// words in the settings beside or behind it.
-  Finder menuRow(String title) =>
-      find.descendant(of: find.byKey(settingsMenuKey), matching: find.text(title));
+  Finder menuRow(String title) => find.descendant(
+    of: find.byKey(settingsMenuKey),
+    matching: find.text(title),
+  );
 
   /// A tab of the floating bar, told apart from the settings behind it.
-  Finder tabRow(String title) =>
-      find.descendant(of: find.byKey(settingsTabsKey), matching: find.text(title));
+  Finder tabRow(String title) => find.descendant(
+    of: find.byKey(settingsTabsKey),
+    matching: find.text(title),
+  );
 
   /// The way back out, which is the title bar's own button and the only one on
   /// the screen — the tabs show the level and nothing else.
@@ -55,7 +59,9 @@ void main() {
 
   String barTitle(WidgetTester tester) => tester
       .widget<Text>(
-        find.descendant(of: find.byType(AppBar), matching: find.byType(Text)).first,
+        find
+            .descendant(of: find.byType(AppBar), matching: find.byType(Text))
+            .first,
       )
       .data!;
 
@@ -101,7 +107,9 @@ void main() {
     addTearDown(() => tester.pumpWidget(const SizedBox.shrink()));
   }
 
-  testWidgets('a wide window shows the menu beside the content', (tester) async {
+  testWidgets('a wide window shows the menu beside the content', (
+    tester,
+  ) async {
     await pump(tester, width: 1200);
 
     expect(menuRow(libL10n.app), findsOneWidget);
@@ -128,7 +136,10 @@ void main() {
       expect(tile.icon, isNotNull, reason: tile.title);
     }
     expect(
-      find.descendant(of: find.byKey(settingsMenuKey), matching: find.byType(CardX)),
+      find.descendant(
+        of: find.byKey(settingsMenuKey),
+        matching: find.byType(CardX),
+      ),
       findsNothing,
     );
   });
@@ -224,7 +235,9 @@ void main() {
     expect(midway, greaterThan(settled));
   });
 
-  testWidgets('a first-level leaf shows on its own, with no tabs', (tester) async {
+  testWidgets('a first-level leaf shows on its own, with no tabs', (
+    tester,
+  ) async {
     await pump(tester, width: 500);
 
     await tester.tap(menuRow(libL10n.about));
@@ -243,7 +256,9 @@ void main() {
     expect(barTitle(tester), libL10n.setting);
   });
 
-  testWidgets('the way back leads to the list, and drops the tabs', (tester) async {
+  testWidgets('the way back leads to the list, and drops the tabs', (
+    tester,
+  ) async {
     await pump(tester, width: 500);
 
     await tester.tap(menuRow(libL10n.server));
@@ -277,14 +292,22 @@ void main() {
     await tester.tap(menuRow(libL10n.server));
     await settle(tester, 20);
 
-    final scheme = Theme.of(tester.element(find.byKey(settingsTabsKey))).colorScheme;
+    final scheme = Theme.of(
+      tester.element(find.byKey(settingsTabsKey)),
+    ).colorScheme;
     Color? fillOf(String title) {
       // The pill is around the icon, not the label — so it is a sibling of the
       // text, reached through the button's own column.
-      final button = find.ancestor(of: tabRow(title), matching: find.byType(Column)).first;
-      final pill = find.descendant(of: button, matching: find.byType(AnimatedContainer));
+      final button = find
+          .ancestor(of: tabRow(title), matching: find.byType(Column))
+          .first;
+      final pill = find.descendant(
+        of: button,
+        matching: find.byType(AnimatedContainer),
+      );
       final decoration =
-          tester.widget<AnimatedContainer>(pill.first).decoration as BoxDecoration?;
+          tester.widget<AnimatedContainer>(pill.first).decoration
+              as BoxDecoration?;
       return decoration?.color;
     }
 
@@ -311,7 +334,9 @@ void main() {
     expect(barTitle(tester), libL10n.sequence);
   });
 
-  testWidgets('the list and the level are pages of one navigator', (tester) async {
+  testWidgets('the list and the level are pages of one navigator', (
+    tester,
+  ) async {
     await pump(tester, width: 500);
 
     // The content navigator is the declarative one; the app's own is not.

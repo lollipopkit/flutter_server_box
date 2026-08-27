@@ -207,7 +207,7 @@ void main() {
     await createV17Schema();
     await const BothTransportsMigration().apply();
 
-    final store = ServerStore.forTest();
+    final store = ServerStore();
     store.put(
       Spi(
         name: 'both',

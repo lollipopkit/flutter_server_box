@@ -26,8 +26,7 @@ enum SandboxImportResult {
   failed;
 
   /// Whether the user is looking at an empty app that did not have to be one.
-  bool get needsExplaining =>
-      this == denied || this == noKey || this == failed;
+  bool get needsExplaining => this == denied || this == noKey || this == failed;
 }
 
 /// Taking over the data of the sandboxed build, once.
@@ -160,7 +159,9 @@ abstract final class SandboxImport {
 
     final List<String> srcNames;
     try {
-      srcNames = (await src.list().toList()).map((e) => _basename(e.path)).toList();
+      srcNames = (await src.list().toList())
+          .map((e) => _basename(e.path))
+          .toList();
     } on PathNotFoundException {
       return SandboxImportResult.notFound;
     } on PathAccessException {
@@ -232,7 +233,7 @@ abstract final class SandboxImport {
       if (existing.contains(key)) continue;
       final raw = await _defaultsRead(plistPathWithoutExt, key);
       if (raw == null) continue;
-      final value = _parsePref(raw, entry.value);
+      final value = parsePref(raw, entry.value);
       if (value == null) continue;
       if (write != null) {
         await write(key, value);
@@ -253,11 +254,7 @@ abstract final class SandboxImport {
     _result = SandboxImportResult.failed;
   }
 
-  @visibleForTesting
-  static Object? parsePrefForTest(String raw, Type type) =>
-      _parsePref(raw, type);
-
-  static Object? _parsePref(String raw, Type type) {
+  static Object? parsePref(String raw, Type type) {
     final val = raw.trim();
     return switch (type) {
       const (bool) => val == '1' || val.toLowerCase() == 'true',
@@ -309,8 +306,7 @@ abstract final class SandboxImport {
     return parts.join(Pfs.seperator);
   }
 
-  static String _basename(String path) =>
-      path.split(Pfs.seperator).last;
+  static String _basename(String path) => path.split(Pfs.seperator).last;
 
   /// Everything this app wrote into [dir], and nothing a user put there.
   static Future<void> _clear(Directory dir) async {

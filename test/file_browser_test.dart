@@ -104,7 +104,7 @@ void main() {
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-browser-');
     await openTestDb();
-    getIt.registerSingleton<SettingStore>(SettingStore.forTest());
+    getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
   });
 
   tearDown(() async {
@@ -786,9 +786,12 @@ void main() {
       // The filter used to hold only until someone typed: search read the raw
       // listing, so a query surfaced — and opened — the dotfiles the setting
       // says not to show.
-      await pump(tester, _MapBackend({
-        '/': [_file('.bash_history'), _file('bash_notes.txt')],
-      }));
+      await pump(
+        tester,
+        _MapBackend({
+          '/': [_file('.bash_history'), _file('bash_notes.txt')],
+        }),
+      );
 
       await tester.tap(find.byIcon(Icons.search));
       await tester.pumpAndSettle();
@@ -814,11 +817,7 @@ void main() {
       // chmod act above the root — which `BrowsePath` guards for navigation
       // and could not guard for this.
       final backend = _MapBackend({
-        '/home/me': [
-          _file('notes.txt'),
-          _file('../../etc/shadow'),
-          _dir('..'),
-        ],
+        '/home/me': [_file('notes.txt'), _file('../../etc/shadow'), _dir('..')],
       });
 
       await pump(tester, backend, root: '/home/me');

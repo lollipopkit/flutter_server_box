@@ -26,8 +26,6 @@ void main() {
   });
 
   test('the data directory follows the entitlement, not the platform', () {
-    if (!Platform.isMacOS) return;
-
     if (Pfs.isMacSandboxed) {
       // The container is the sandboxed build's documents directory, and where
       // every install to date has its data.
@@ -43,11 +41,9 @@ void main() {
       endsWith('/Library/Application Support/${BuildData.name}'),
     );
     expect(Directory(Paths.doc).existsSync(), true);
-  });
+  }, skip: !Platform.isMacOS ? 'macOS-only integration test' : null);
 
   test('the container is where the other build put it', () async {
-    if (!Platform.isMacOS) return;
-
     final container = SandboxImport.containerData;
     expect(container, isNotNull);
     expect(
@@ -63,27 +59,28 @@ void main() {
     // nothing has ever written to — silently, and only on a user's machine.
     final running = await _runningBundleId();
     if (running != null) expect(SandboxImport.bundleId, running);
-  });
+  }, skip: !Platform.isMacOS ? 'macOS-only integration test' : null);
 
   test('the keychain answers whether the boxes could be decrypted', () async {
-    if (!Platform.isMacOS) return;
-
     // Only that the question can be asked in a real app — the answer depends
     // on the machine, and on a signed DMG it is the one thing this whole
     // feature rests on. `flutter test` cannot ask it at all: the plugin is not
     // there.
     expect(await SandboxImport.hasBoxKey(), isA<bool>());
-  });
+  }, skip: !Platform.isMacOS ? 'macOS-only integration test' : null);
 
   test('preferences come across the way `defaults` reports them', () async {
-    if (!Platform.isMacOS) return;
-
     final dir = await Directory.systemTemp.createTemp('sbm_prefs');
     addTearDown(() => dir.delete(recursive: true));
     final plist = '${dir.path}/prefs';
 
     Future<void> write(String key, List<String> value) async {
-      final res = await Process.run('defaults', ['write', plist, key, ...value]);
+      final res = await Process.run('defaults', [
+        'write',
+        plist,
+        key,
+        ...value,
+      ]);
       expect(res.exitCode, 0, reason: res.stderr.toString());
     }
 
@@ -104,11 +101,9 @@ void main() {
     expect(imported['webdav_sync'], true);
     expect(imported['last_ver'], 1480);
     expect(imported.containsKey('setting.locale'), false);
-  });
+  }, skip: !Platform.isMacOS ? 'macOS-only integration test' : null);
 
   test('a container of plain boxes is copied into a real directory', () async {
-    if (!Platform.isMacOS) return;
-
     final src = await Directory.systemTemp.createTemp('sbm_src');
     final dest = await Directory.systemTemp.createTemp('sbm_dest');
     addTearDown(() async {
@@ -132,7 +127,7 @@ void main() {
     expect(File('${dest.path}/conn_stats_index.hive').existsSync(), true);
     expect(File('${dest.path}/app.db').existsSync(), true);
     expect(File('${dest.path}/${SandboxImport.doneMarker}').existsSync(), true);
-  });
+  }, skip: !Platform.isMacOS ? 'macOS-only integration test' : null);
 }
 
 /// The bundle id of the app this test is running inside, or null when it is
@@ -143,7 +138,11 @@ Future<String?> _runningBundleId() async {
   final idx = exe.indexOf(marker);
   if (idx < 0) return null;
   final info = '${exe.substring(0, idx)}.app/Contents/Info';
-  final res = await Process.run('defaults', ['read', info, 'CFBundleIdentifier']);
+  final res = await Process.run('defaults', [
+    'read',
+    info,
+    'CFBundleIdentifier',
+  ]);
   if (res.exitCode != 0) return null;
   final id = res.stdout.toString().trim();
   return id.isEmpty ? null : id;

@@ -87,8 +87,7 @@ void main() {
 
   const source = RootfsSource(
     url: 'https://example.test/image.tar.gz',
-    sha256:
-        '0000000000000000000000000000000000000000000000000000000000000000',
+    sha256: '0000000000000000000000000000000000000000000000000000000000000000',
     sizeBytes: 1,
     layout: LinuxRootfsLayout.oci,
     compression: LinuxRootfsCompression.gzip,
@@ -97,7 +96,7 @@ void main() {
 
   Future<Directory> unpack(List<List<int>> layers) async {
     final into = Directory('${dir.path}/root')..createSync(recursive: true);
-    await IosRootfs.extractForTest(await imageOf(layers), into, source: source);
+    await IosRootfs.extract(await imageOf(layers), into, source: source);
     return into;
   }
 

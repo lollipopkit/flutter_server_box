@@ -33,16 +33,13 @@ void main() {
       for (final encrypted in [false, true]) {
         final label = encrypted ? 'with a passphrase' : 'unencrypted';
         test('${algorithm.name} $label', () {
-          final key = generate(
-            algorithm,
-            pass: encrypted ? passphrase : '',
-          );
+          final key = generate(algorithm, pass: encrypted ? passphrase : '');
           final dir = Directory.systemTemp.createTempSync('sb-keygen-');
           addTearDown(() => dir.deleteSync(recursive: true));
           final file = File('${dir.path}/id')
             ..writeAsStringSync(key.privatePem);
           // ssh-keygen refuses a key the rest of the world can read.
-          Process.runSync('chmod', ['600', file.path]);
+          _restrictPrivateKey(file);
 
           final result = Process.runSync(sshKeygen!, [
             '-y',
@@ -67,7 +64,8 @@ void main() {
           expect(
             theirs[1],
             ours[1],
-            reason: 'the public key ssh-keygen derived is not the one we '
+            reason:
+                'the public key ssh-keygen derived is not the one we '
                 'would hand a server',
           );
           expect(theirs.skip(2).join(' '), ours.skip(2).join(' '));
@@ -155,7 +153,7 @@ void main() {
         final dir = Directory.systemTemp.createTempSync('sb-fp-');
         addTearDown(() => dir.deleteSync(recursive: true));
         final file = File('${dir.path}/id')..writeAsStringSync(key.privatePem);
-        Process.runSync('chmod', ['600', file.path]);
+        _restrictPrivateKey(file);
 
         final result = Process.runSync(sshKeygen!, ['-l', '-f', file.path]);
         expect(result.exitCode, 0, reason: '${result.stderr}');
@@ -164,7 +162,8 @@ void main() {
         expect(
           describeSshKey(key.privatePem).fingerprint,
           printed,
-          reason: '${algorithm.name}: a fingerprint that does not match what '
+          reason:
+              '${algorithm.name}: a fingerprint that does not match what '
               'the server side prints is worse than none',
         );
       }
@@ -194,8 +193,8 @@ void main() {
 
     test('a locked key fingerprints the same as the open one', () {
       final plain = generate(SshKeyAlgorithm.ed25519, comment: 'phone');
-      final pair = SSHKeyPair.fromPem(plain.privatePem).single
-          as OpenSSHKeyPair;
+      final pair =
+          SSHKeyPair.fromPem(plain.privatePem).single as OpenSSHKeyPair;
       final locked = pair.toPem(passphrase: passphrase);
       expect(
         describeSshKey(locked).fingerprint,
@@ -210,7 +209,11 @@ void main() {
 
     test('anything unreadable says nothing rather than throwing', () {
       // This runs while building a list row.
-      for (final input in ['', 'not a pem', '-----BEGIN X-----\nzz\n-----END X-----']) {
+      for (final input in [
+        '',
+        'not a pem',
+        '-----BEGIN X-----\nzz\n-----END X-----',
+      ]) {
         expect(describeSshKey(input).isEmpty, isTrue, reason: input);
       }
     });
@@ -231,4 +234,28 @@ String? _whichSshKeygen() {
   if (result.exitCode != 0) return null;
   final found = (result.stdout as String).trim().split('\n').first.trim();
   return found.isEmpty ? null : found;
+}
+
+void _restrictPrivateKey(File file) {
+  if (!Platform.isWindows) {
+    final result = Process.runSync('chmod', ['600', file.path]);
+    if (result.exitCode != 0) {
+      throw StateError('chmod failed: ${result.stderr}');
+    }
+    return;
+  }
+
+  final username = Platform.environment['USERNAME'];
+  if (username == null || username.isEmpty) {
+    throw StateError('USERNAME is unavailable; cannot secure the private key');
+  }
+  final result = Process.runSync('icacls', [
+    file.path,
+    '/inheritance:r',
+    '/grant:r',
+    '$username:(F)',
+  ]);
+  if (result.exitCode != 0) {
+    throw StateError('icacls failed: ${result.stderr}');
+  }
 }

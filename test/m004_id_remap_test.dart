@@ -41,7 +41,7 @@ void main() {
 
   setUp(() async {
     await openTestDb();
-    servers = ServerStore.forTest();
+    servers = ServerStore();
   });
 
   tearDown(SqliteDb.close);
@@ -98,7 +98,7 @@ void main() {
       seed('agent_conversation', 'active::$legacyRef', 'conv-1');
 
       final id = await migrate();
-      final store = AgentConversationStore.forTest();
+      final store = AgentConversationStore();
 
       expect(store.activeConversationId(id), 'conv-1');
       expect(store.fetchForServer(id).single.serverId, id);
@@ -118,7 +118,7 @@ void main() {
 
     final id = await migrate();
 
-    expect(SnippetStore.forTest().fetch().single.autoRunOn, [id]);
+    expect(SnippetStore().fetch().single.autoRunOn, [id]);
   });
 
   test('a port forward follows it', () async {
@@ -133,7 +133,7 @@ void main() {
 
     final id = await migrate();
 
-    expect(PortForwardStore.forTest().fetchForServer(id).single.id, 'pf-1');
+    expect(PortForwardStore().fetchForServer(id).single.id, 'pf-1');
   });
 
   test('a late port forward still resolves a generated server id', () async {
@@ -149,7 +149,7 @@ void main() {
     });
     await const KvToTablesMigration().apply();
 
-    expect(PortForwardStore.forTest().fetchForServer(id).single.id, 'pf-late');
+    expect(PortForwardStore().fetchForServer(id).single.id, 'pf-late');
   });
 
   test('a container host follows it', () async {
@@ -159,7 +159,7 @@ void main() {
     final id = await migrate();
 
     expect(
-      ContainerStore.forTest().fetch(id, ContainerType.docker),
+      ContainerStore().fetch(id, ContainerType.docker),
       'tcp://10.0.0.1:2375',
     );
   });
@@ -235,7 +235,7 @@ void main() {
     final beta = migrated.where((server) => server.name == 'beta').single;
     expect(beta.id, isNot('duplicate-id'));
     expect(
-      PortForwardStore.forTest().fetchForServer(beta.id).single.id,
+      PortForwardStore().fetchForServer(beta.id).single.id,
       'pf-b',
       reason: 'the exact legacy kv key still resolves to its reassigned row',
     );
@@ -324,11 +324,8 @@ void main() {
 
     final id = await migrate();
 
-    expect(SnippetStore.forTest().fetch().single.name, 'healthy');
-    expect(
-      PortForwardStore.forTest().fetchForServer(id).single.id,
-      'healthy-forward',
-    );
+    expect(SnippetStore().fetch().single.name, 'healthy');
+    expect(PortForwardStore().fetchForServer(id).single.id, 'healthy-forward');
     expect(
       SqliteDb.instance
           .select('SELECT count(*) AS n FROM conn_stat;')
@@ -336,7 +333,7 @@ void main() {
       1,
     );
     expect(
-      AgentConversationStore.forTest().fetchForServer(id).single.id,
+      AgentConversationStore().fetchForServer(id).single.id,
       'healthy-conversation',
     );
   });

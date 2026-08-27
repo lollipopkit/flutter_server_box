@@ -19,8 +19,8 @@ void main() {
 
   setUp(() async {
     await openTestDb();
-    creds = BmcCredentialStore.forTest();
-    servers = ServerStore.forTest();
+    creds = BmcCredentialStore();
+    servers = ServerStore();
   });
 
   tearDown(() async => SqliteDb.close());
@@ -93,11 +93,13 @@ void main() {
     creds.put(const BmcCredential(id: 'cred-2', name: 'rack-b', user: 'root'));
     servers.put(serverOn('1', 'https://10.0.0.9'));
     servers.put(serverOn('2', 'https://10.0.0.10', credId: 'cred-2'));
-    servers.put(const Spi(
-      id: '3',
-      name: '3',
-      ssh: SshCredential(ip: '10.0.0.3', port: 22, user: 'root'),
-    ));
+    servers.put(
+      const Spi(
+        id: '3',
+        name: '3',
+        ssh: SshCredential(ip: '10.0.0.3', port: 22, user: 'root'),
+      ),
+    );
 
     expect(creds.serversUsing('cred-1'), 1);
     expect(creds.serversUsing('cred-2'), 1);

@@ -44,11 +44,11 @@ void main() {
     setUp(() async {
       tempDir = await Directory.systemTemp.createTemp('server-box-transfer-');
       await openTestDb();
-      getIt.registerSingleton<SettingStore>(SettingStore.forTest());
+      getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
       // Building an `SshFileRef` reads keys and jump servers out of these,
       // which is the work these tests are checking happens on this side.
-      getIt.registerSingleton<ServerStore>(ServerStore.forTest());
-      getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore.forTest());
+      getIt.registerSingleton<ServerStore>(ServerStore());
+      getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore());
     });
 
     tearDown(() async {

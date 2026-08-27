@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:meta/meta.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
@@ -23,14 +22,7 @@ import 'package:sqlite3/sqlite3.dart';
 class ServerStore extends EntityStore<Spi> {
   static const _identityFilesPrefix = 'server-box:identity-files:';
 
-  ServerStore._()
-    : _portForwards = PortForwardStore.instance,
-      _snippets = SnippetStore.instance,
-      _conversations = AgentConversationStore.instance;
-
-  /// See [PrivateKeyStore.forTest].
-  @visibleForTesting
-  ServerStore.forTest({
+  ServerStore({
     PortForwardStore? portForwards,
     SnippetStore? snippets,
     AgentConversationStore? conversations,
@@ -38,7 +30,11 @@ class ServerStore extends EntityStore<Spi> {
        _snippets = snippets,
        _conversations = conversations;
 
-  static final instance = ServerStore._();
+  static final instance = ServerStore(
+    portForwards: PortForwardStore.instance,
+    snippets: SnippetStore.instance,
+    conversations: AgentConversationStore.instance,
+  );
 
   final PortForwardStore? _portForwards;
   final SnippetStore? _snippets;

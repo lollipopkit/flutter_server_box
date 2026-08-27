@@ -6,18 +6,20 @@ import 'package:server_box/data/provider/ai/ask_ai.dart';
 import 'package:server_box/data/provider/ai/global_agent_tools.dart';
 
 void main() {
-  group('AskAiRepository.composeChatCompletionsUri', () {
+  group('AskAiRepository.composeEndpointUri', () {
     test('appends v1 chat completions to service root', () {
-      final uri = AskAiRepository.composeChatCompletionsUri(
+      final uri = AskAiRepository.composeEndpointUri(
         'https://api.openai.com',
+        AskAiProtocol.chatCompletions,
       );
 
       expect(uri.toString(), 'https://api.openai.com/v1/chat/completions');
     });
 
     test('appends chat completions to v1 endpoint', () {
-      final uri = AskAiRepository.composeChatCompletionsUri(
+      final uri = AskAiRepository.composeEndpointUri(
         'https://api.longcat.chat/openai/v1',
+        AskAiProtocol.chatCompletions,
       );
 
       expect(
@@ -27,8 +29,9 @@ void main() {
     });
 
     test('keeps full chat completions endpoint unchanged', () {
-      final uri = AskAiRepository.composeChatCompletionsUri(
+      final uri = AskAiRepository.composeEndpointUri(
         'https://api.longcat.chat/openai/v1/chat/completions',
+        AskAiProtocol.chatCompletions,
       );
 
       expect(
@@ -38,8 +41,9 @@ void main() {
     });
 
     test('supports OpenRouter-compatible v1 endpoint', () {
-      final uri = AskAiRepository.composeChatCompletionsUri(
+      final uri = AskAiRepository.composeEndpointUri(
         'https://openrouter.ai/api/v1',
+        AskAiProtocol.chatCompletions,
       );
 
       expect(uri.toString(), 'https://openrouter.ai/api/v1/chat/completions');
@@ -49,18 +53,23 @@ void main() {
   group('AskAiRepository Responses endpoint and protocol selection', () {
     test('composes and converts full protocol endpoints', () {
       expect(
-        AskAiRepository.composeResponsesUri('https://api.openai.com'),
+        AskAiRepository.composeEndpointUri(
+          'https://api.openai.com',
+          AskAiProtocol.responses,
+        ),
         Uri.parse('https://api.openai.com/v1/responses'),
       );
       expect(
-        AskAiRepository.composeResponsesUri(
+        AskAiRepository.composeEndpointUri(
           'https://example.com/openai/v1/chat/completions',
+          AskAiProtocol.responses,
         ),
         Uri.parse('https://example.com/openai/v1/responses'),
       );
       expect(
-        AskAiRepository.composeChatCompletionsUri(
+        AskAiRepository.composeEndpointUri(
           'https://example.com/openai/v1/responses',
+          AskAiProtocol.chatCompletions,
         ),
         Uri.parse('https://example.com/openai/v1/chat/completions'),
       );
@@ -149,10 +158,7 @@ void main() {
       // the command writes anything. `sleep` is the plainest example: the
       // badge said "changes the system" over a model description that
       // correctly said it does not.
-      expect(
-        AskAiCommand.classifyRisk('sleep 60'),
-        AskAiCommandRisk.unknown,
-      );
+      expect(AskAiCommand.classifyRisk('sleep 60'), AskAiCommandRisk.unknown);
       // Chains are not taken apart, so the same applies to one whose parts are
       // all reads.
       expect(
@@ -470,10 +476,7 @@ void main() {
                     {
                       'index': 0,
                       'id': 'call-${tool.name}',
-                      'function': {
-                        'name': tool.name,
-                        'arguments': jsonEncode(arguments),
-                      },
+                      'function': {'name': tool.name, 'arguments': jsonEncode(arguments)},
                     },
                   ],
                 },

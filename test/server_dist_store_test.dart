@@ -70,7 +70,8 @@ void main() {
       );
 
       // The migration's version, on a database that has the parent but not it.
-      SqliteDb.close();
+      await closeTables();
+      await SqliteDb.close();
       SqliteDb.openInMemory();
       await createTables(SqliteDb.instance);
       SqliteDb.instance.execute('DROP TABLE server_dist;');
@@ -113,7 +114,7 @@ void main() {
       SqliteDb.instance.execute(
         "INSERT INTO server (id, name, ssh_ip) VALUES ('srv2', 'web', '10.0.0.2');",
       );
-      store = ServerDistStore.forTest();
+      store = ServerDistStore();
     });
 
     tearDown(SqliteDb.close);
@@ -134,7 +135,9 @@ void main() {
       expect(store.get('srv'), Dist.ubuntu);
       expect(
         SqliteDb.instance
-            .select("SELECT count(*) AS n FROM server_dist WHERE server_id = 'srv';")
+            .select(
+              "SELECT count(*) AS n FROM server_dist WHERE server_id = 'srv';",
+            )
             .single['n'],
         1,
         reason: 'one row per server, replaced rather than appended',
@@ -146,14 +149,18 @@ void main() {
       // tick would redraw every list in the app for nothing.
       store.put('srv', Dist.debian);
       final first = SqliteDb.instance
-          .select("SELECT updated_at AS t FROM server_dist WHERE server_id = 'srv';")
+          .select(
+            "SELECT updated_at AS t FROM server_dist WHERE server_id = 'srv';",
+          )
           .single['t'];
 
       store.put('srv', Dist.debian);
 
       expect(
         SqliteDb.instance
-            .select("SELECT updated_at AS t FROM server_dist WHERE server_id = 'srv';")
+            .select(
+              "SELECT updated_at AS t FROM server_dist WHERE server_id = 'srv';",
+            )
             .single['t'],
         first,
       );
@@ -163,7 +170,9 @@ void main() {
       store.put('srv', Dist.rocky);
       expect(
         SqliteDb.instance
-            .select("SELECT dist AS d FROM server_dist WHERE server_id = 'srv';")
+            .select(
+              "SELECT dist AS d FROM server_dist WHERE server_id = 'srv';",
+            )
             .single['d'],
         'rocky',
         reason: 'an index silently changes meaning when a case is inserted',
@@ -189,10 +198,7 @@ void main() {
 
     test('and a reading for a server that does not exist is refused', () {
       // The foreign key is what stops the cache outliving what it describes.
-      expect(
-        () => store.put('no-such-server', Dist.debian),
-        throwsA(anything),
-      );
+      expect(() => store.put('no-such-server', Dist.debian), throwsA(anything));
     });
 
     test('all() gives every reading at once', () {
@@ -222,7 +228,7 @@ void main() {
       SqliteDb.instance.execute(
         "INSERT INTO server (id, name, ssh_ip) VALUES ('a', 'prod', '10.0.0.1');",
       );
-      store = ServerDistStore.forTest();
+      store = ServerDistStore();
     });
 
     tearDown(SqliteDb.close);

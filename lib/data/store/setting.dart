@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:meta/meta.dart';
 import 'package:server_box/data/model/app/ask_ai_config.dart';
 import 'package:server_box/data/model/app/float_shell_config.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
@@ -26,14 +25,9 @@ List<String> _virtKeyNames(Object? raw) =>
     raw is List ? raw.whereType<String>().toList() : const [];
 
 class SettingStore extends SqliteStore {
-  SettingStore._() : super('setting');
+  SettingStore([super.storeName = 'setting']);
 
-  /// A distinct store name, so a test on `SqliteDb.openInMemory()` cannot
-  /// collide with another test's rows.
-  @visibleForTesting
-  SettingStore.forTest() : super('setting_test');
-
-  static final instance = SettingStore._();
+  static final instance = SettingStore();
 
   /// Time out for server connect and more...
   late final timeout = propertyDefault('timeOut', 5);
@@ -348,8 +342,9 @@ class SettingStore extends SqliteStore {
   late final askAi = propertyDefault<AskAiConfig>(
     'askAi',
     const AskAiConfig(),
-    fromObj: (raw) =>
-        raw is Map ? AskAiConfig.fromJson(Map<String, dynamic>.from(raw)) : null,
+    fromObj: (raw) => raw is Map
+        ? AskAiConfig.fromJson(Map<String, dynamic>.from(raw))
+        : null,
     toObj: (val) => val?.toJson(),
   );
 
@@ -590,8 +585,9 @@ class SettingStore extends SqliteStore {
     'windowState',
     fromObj: (raw) => switch (raw) {
       // TODO: delete the string branch once no install can still hold one.
-      final String s =>
-        WindowState.fromJson(jsonDecode(s) as Map<String, dynamic>),
+      final String s => WindowState.fromJson(
+        jsonDecode(s) as Map<String, dynamic>,
+      ),
       final Map m => WindowState.fromJson(Map<String, dynamic>.from(m)),
       _ => null,
     },

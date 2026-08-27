@@ -13,7 +13,7 @@ void main() {
 
   setUp(() async {
     await openTestDb();
-    setting = SettingStore.forTest();
+    setting = SettingStore('setting_test');
     getIt.registerSingleton<SettingStore>(setting);
   });
 
@@ -46,7 +46,7 @@ void main() {
       // Finish the store's queued timestamp writes before replacing it.
       await setting.updateLastUpdateTs(key: null);
       await getIt.unregister<SettingStore>();
-      setting = SettingStore.forTest();
+      setting = SettingStore('setting_test');
       getIt.registerSingleton<SettingStore>(setting);
 
       migrateBuildFeatures(1536);

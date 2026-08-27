@@ -6,7 +6,7 @@ import 'package:server_box/data/model/server/shell_backend.dart';
 /// A shell that is a controller, so a terminal test is about the terminal.
 ///
 /// The three real backends each reach for something a test does not have — a
-/// socket, an agent's HTTP PTY, a process — and `TerminalSession.over` exists
+/// socket, an agent's HTTP PTY, a process — and `TerminalSession` accepts one
 /// so a page can be built on this instead.
 class FakeShellBackend implements ShellBackend {
   FakeShellBackend({this.supportsExec = true});

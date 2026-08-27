@@ -36,12 +36,12 @@ void main() {
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-filetab-');
     await openTestDb();
-      // In memory: this tree writes as it builds, and a test has no
-      // business leaving a database behind.
-    getIt.registerSingleton<SettingStore>(SettingStore.forTest());
-    getIt.registerSingleton<ServerStore>(ServerStore.forTest());
-    getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore.forTest());
-    getIt.registerSingleton<HistoryStore>(HistoryStore.forTest());
+    // In memory: this tree writes as it builds, and a test has no
+    // business leaving a database behind.
+    getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
+    getIt.registerSingleton<ServerStore>(ServerStore());
+    getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore());
+    getIt.registerSingleton<HistoryStore>(HistoryStore('history_test'));
     // A restored server session opens its browser, which now connects rather
     // than reporting that it is not connected — so an unreachable fixture
     // leaves a timer running. One second, pumped past below.

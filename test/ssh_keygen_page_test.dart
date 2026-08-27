@@ -27,8 +27,8 @@ void main() {
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-keygen-page-');
     await openTestDb();
-    getIt.registerSingleton<SettingStore>(SettingStore.forTest());
-    getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore.forTest());
+    getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
+    getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore());
   });
 
   tearDown(() async {
@@ -80,9 +80,13 @@ void main() {
   testWidgets('opening it shows every algorithm', (tester) async {
     await pump(tester);
 
-    await tester.tap(find.text(AppLocalizations.of(tester.element(
-      find.byType(PrivateKeyGeneratePage),
-    ))!.sshKeyAlgorithm));
+    await tester.tap(
+      find.text(
+        AppLocalizations.of(
+          tester.element(find.byType(PrivateKeyGeneratePage)),
+        )!.sshKeyAlgorithm,
+      ),
+    );
     for (var i = 0; i < 10; i++) {
       await tester.pump(const Duration(milliseconds: 50));
     }

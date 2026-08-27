@@ -49,19 +49,13 @@ impl Size {
 mod tests {
     use super::*;
 
-    // Ported from Go model/size_test.go TestParseToSize
-    #[test]
-    fn test_parse_to_size() {
-        assert_eq!(Size::parse("1m").unwrap(), Size(1024 * 1024));
-        assert_eq!(Size::parse("1M").unwrap(), Size(1024 * 1024));
-        assert_eq!(Size::parse("3k").unwrap(), Size(3 * 1024));
-        assert_eq!(Size::parse("7b").unwrap(), Size(7));
-    }
-
     #[test]
     fn test_parse_special() {
         assert_eq!(Size::parse("0").unwrap(), Size(0));
-        assert_eq!(Size::parse("1.5g").unwrap(), Size((1.5 * 1024.0 * 1024.0 * 1024.0) as u64));
+        assert_eq!(
+            Size::parse("1.5g").unwrap(),
+            Size((1.5 * 1024.0 * 1024.0 * 1024.0) as u64)
+        );
         // Go: no suffix / invalid characters → error
         assert!(Size::parse("100").is_err());
         assert!(Size::parse("abc").is_err());

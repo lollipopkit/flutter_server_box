@@ -582,17 +582,6 @@ class AskAiRepository {
     return '[Earlier terminal context omitted]\n${text.substring(text.length - limit)}';
   }
 
-  @visibleForTesting
-  static Uri composeChatCompletionsUri(String endpoint) {
-    return composeEndpointUri(endpoint, AskAiProtocol.chatCompletions);
-  }
-
-  @visibleForTesting
-  static Uri composeResponsesUri(String endpoint) {
-    return composeEndpointUri(endpoint, AskAiProtocol.responses);
-  }
-
-  @visibleForTesting
   static Uri composeEndpointUri(String endpoint, AskAiProtocol protocol) {
     final uri = Uri.parse(endpoint.replaceAll(RegExp(r'/+$'), ''));
     final target = protocol == AskAiProtocol.responses

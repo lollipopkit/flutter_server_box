@@ -25,6 +25,7 @@ import 'package:server_box/data/ssh/session_manager.dart';
 import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/migrations/build_features.dart';
 import 'package:server_box/data/store/schema.dart';
+import 'package:server_box/data/store/tables.dart';
 import 'package:server_box/hive/hive_registrar.g.dart';
 import 'package:server_box/hive/legacy_adapters.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
@@ -179,6 +180,7 @@ Future<void> _initData() async {
     // unlinking a file out from under a live handle is undefined at best: on
     // Windows the delete fails outright and the copy stays, so the retry below
     // reopens exactly the data that just failed to open.
+    await closeTables();
     await SqliteDb.close();
     await Hive.close();
     await getIt.reset();

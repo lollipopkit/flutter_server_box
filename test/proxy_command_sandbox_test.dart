@@ -27,10 +27,7 @@ void main() {
   group('the sandbox note', () {
     test('is appended to a failure, not substituted for it', () {
       const original = 'ProxyCommand exited with code 255.';
-      final explained = ProxyCommandSocket.debugExplain(
-        original,
-        sandboxed: true,
-      );
+      final explained = ProxyCommandSocket.explain(original, sandboxed: true);
 
       // The command's own outcome still has to be readable: it is the only
       // thing that says which command and how it ended
@@ -40,14 +37,11 @@ void main() {
 
     test('says nothing on a build that is not confined', () {
       const original = 'ProxyCommand timed out after 5s.';
-      expect(
-        ProxyCommandSocket.debugExplain(original, sandboxed: false),
-        original,
-      );
+      expect(ProxyCommandSocket.explain(original, sandboxed: false), original);
     });
 
     test('names the home directory, which is the part that surprises', () {
-      final explained = ProxyCommandSocket.debugExplain('x', sandboxed: true);
+      final explained = ProxyCommandSocket.explain('x', sandboxed: true);
       // Not "permission denied": the child gets a *different* home, so the
       // failure it reports is about a host or a missing file, never about
       // access. A note that said "denied" would send someone looking for a
@@ -60,7 +54,7 @@ void main() {
   group('what a placeholder may expand to', () {
     test('all supported OpenSSH placeholders are expanded', () {
       expect(
-        ProxyCommandSocket.debugResolveCommand(
+        ProxyCommandSocket.resolveCommand(
           command: 'proxy %% %h %n %p %r %j',
           host: '10.0.0.1',
           originalHost: 'prod',

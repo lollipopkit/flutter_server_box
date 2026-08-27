@@ -32,7 +32,7 @@ void main() {
 
   setUp(() {
     SqliteDb.openInMemory();
-    store = SettingStore.forTest();
+    store = SettingStore('setting_test');
     migration = GroupedSettingsMigration(store: store);
   });
 
@@ -75,19 +75,21 @@ void main() {
       expect(store.get<Object>('askAiApiKey'), isNull);
     });
 
-    test('a key nobody set keeps the default, not this build\'s idea of it',
-        () async {
-      store.set('askAiModel', 'some-model');
+    test(
+      'a key nobody set keeps the default, not this build\'s idea of it',
+      () async {
+        store.set('askAiModel', 'some-model');
 
-      await migration.apply();
+        await migration.apply();
 
-      final config = store.askAi.get();
-      expect(config.model, 'some-model');
-      // Never set, so it goes on tracking whatever the model says the default
-      // is — pinning it here would freeze it at today's value forever.
-      expect(config.baseUrl, const AskAiConfig().baseUrl);
-      expect(config.sendOnEnter, const AskAiConfig().sendOnEnter);
-    });
+        final config = store.askAi.get();
+        expect(config.model, 'some-model');
+        // Never set, so it goes on tracking whatever the model says the default
+        // is — pinning it here would freeze it at today's value forever.
+        expect(config.baseUrl, const AskAiConfig().baseUrl);
+        expect(config.sendOnEnter, const AskAiConfig().sendOnEnter);
+      },
+    );
 
     test('nothing stored writes nothing at all', () async {
       await migration.apply();
@@ -134,23 +136,25 @@ void main() {
       expect(store.agentShell.get().window.width, 400.0);
     });
 
-    test('a key holding the wrong type keeps the default but still goes',
-        () async {
-      store.set('agentShellWidth', 'not a number');
-      store.set('agentShellHeight', 700.0);
+    test(
+      'a key holding the wrong type keeps the default but still goes',
+      () async {
+        store.set('agentShellWidth', 'not a number');
+        store.set('agentShellHeight', 700.0);
 
-      await migration.apply();
+        await migration.apply();
 
-      expect(store.agentShell.get().window.height, 700.0);
-      expect(
-        store.agentShell.get().window.width,
-        const FloatShellWindow().width,
-      );
-      // Removed all the same. Once the field is served by the grouped row the
-      // old key has no reader, this step will not run again to reconsider it,
-      // and every future backup would carry it.
-      expect(store.get<Object>('agentShellWidth'), isNull);
-    });
+        expect(store.agentShell.get().window.height, 700.0);
+        expect(
+          store.agentShell.get().window.width,
+          const FloatShellWindow().width,
+        );
+        // Removed all the same. Once the field is served by the grouped row the
+        // old key has no reader, this step will not run again to reconsider it,
+        // and every future backup would carry it.
+        expect(store.get<Object>('agentShellWidth'), isNull);
+      },
+    );
   });
 
   test('the rows really are objects', () async {
@@ -213,16 +217,18 @@ void main() {
       expect(store.agentShell.mode.get(), const FloatShellConfig().mode);
     });
 
-    test('remove puts the field back to its default, not the whole row',
-        () async {
-      await store.askAiApiKey.set('sk-secret');
-      await store.askAiModel.set('some-model');
+    test(
+      'remove puts the field back to its default, not the whole row',
+      () async {
+        await store.askAiApiKey.set('sk-secret');
+        await store.askAiModel.set('some-model');
 
-      await store.askAiApiKey.remove();
+        await store.askAiApiKey.remove();
 
-      expect(store.askAiApiKey.get(), '');
-      expect(store.askAiModel.get(), 'some-model');
-    });
+        expect(store.askAiApiKey.get(), '');
+        expect(store.askAiModel.get(), 'some-model');
+      },
+    );
 
     test('fetch, put and delete are the same three operations', () async {
       store.askAiModel.put('some-model');

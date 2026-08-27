@@ -27,16 +27,13 @@ class _FixedSession extends AgentSession {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-
   setUp(() async {
     await openTestDb();
     // In memory rather than on disk: the shell persists its mode the moment it
     // changes, so every test here writes, and none of them should leave a
     // database behind.
-    getIt.registerSingleton<SettingStore>(SettingStore.forTest());
-    getIt.registerSingleton<AgentConversationStore>(
-      AgentConversationStore.forTest(),
-    );
+    getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
+    getIt.registerSingleton<AgentConversationStore>(AgentConversationStore());
   });
 
   tearDown(() async {

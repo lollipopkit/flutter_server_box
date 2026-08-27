@@ -52,14 +52,14 @@ void main() {
   test('is valid sh', () async {
     final checked = await Process.run('sh', ['-n', chsh]);
     expect(checked.exitCode, 0, reason: checked.stderr.toString());
-  });
+  }, skip: _hasSh ? null : 'requires a POSIX sh executable');
 
   test('prints the shell in force when asked nothing', () async {
     final result = await run([]);
 
     expect(result.exitCode, 0);
     expect(result.stdout.toString().trim(), '/bin/sh');
-  });
+  }, skip: _hasSh ? null : 'requires a POSIX sh executable');
 
   test('records an absolute path to something executable', () async {
     final result = await run(['-s', '/bin/sh']);
@@ -68,11 +68,12 @@ void main() {
     expect(
       await File(root.path.joinPath(shellConfPath)).readAsString(),
       '/bin/sh\n',
-      reason: 'the app reads this file too, so its shape is a contract — one '
+      reason:
+          'the app reads this file too, so its shape is a contract — one '
           'line, no trailing anything',
     );
     expect(linuxShell(root.path), '/bin/sh');
-  });
+  }, skip: _hasSh ? null : 'requires a POSIX sh executable');
 
   test('says the change lands in the next terminal, not this one', () async {
     // It cannot re-exec the shell the user is typing into, and a `chsh` that
@@ -80,7 +81,7 @@ void main() {
     final result = await run(['-s', '/bin/sh']);
 
     expect(result.stdout.toString(), contains('next terminal'));
-  });
+  }, skip: _hasSh ? null : 'requires a POSIX sh executable');
 
   test('refuses a relative path', () async {
     // It would be resolved against a working directory the next session has
@@ -91,14 +92,14 @@ void main() {
     expect(result.stderr.toString(), contains('absolute'));
     // Seeded with the default, and still it: a refusal must not have written.
     expect(linuxShell(root.path), '/bin/sh');
-  });
+  }, skip: _hasSh ? null : 'requires a POSIX sh executable');
 
   test('refuses something that is not there', () async {
     final result = await run(['-s', '/usr/bin/nope']);
 
     expect(result.exitCode, isNot(0));
     expect(result.stderr.toString(), contains('not executable'));
-  });
+  }, skip: _hasSh ? null : 'requires a POSIX sh executable');
 
   test('leaves the recorded shell alone when it refuses', () async {
     await run(['-s', '/bin/sh']);
@@ -106,12 +107,12 @@ void main() {
     await run(['-s', '/usr/bin/nope']);
 
     expect(linuxShell(root.path), '/bin/sh');
-  });
+  }, skip: _hasSh ? null : 'requires a POSIX sh executable');
 
   test('answers -l from /etc/shells when there is one', () async {
-    await File(root.path.joinPath('etc/shells')).writeAsString(
-      '# comment\n/bin/sh\n\n/bin/ash\n',
-    );
+    await File(
+      root.path.joinPath('etc/shells'),
+    ).writeAsString('# comment\n/bin/sh\n\n/bin/ash\n');
 
     final result = await run(['-l']);
 
@@ -123,12 +124,19 @@ void main() {
       result.stdout.toString().trim().split('\n').map((e) => e.trim()).toList(),
       ['/bin/sh', '/bin/ash'],
     );
-  });
+  }, skip: _hasSh ? null : 'requires a POSIX sh executable');
 
   test('refuses a flag it does not know, rather than guessing', () async {
     final result = await run(['--wat']);
 
     expect(result.exitCode, 2);
     expect(result.stderr.toString(), contains('usage'));
-  });
+  }, skip: _hasSh ? null : 'requires a POSIX sh executable');
 }
+
+final _hasSh = () {
+  final lookup = Process.runSync(Platform.isWindows ? 'where' : 'which', [
+    'sh',
+  ]);
+  return lookup.exitCode == 0;
+}();

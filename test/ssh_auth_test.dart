@@ -38,8 +38,6 @@ void main() {
     app_locale.l10n = AppLocalizationsEn();
   });
 
-  tearDown(KeyboardInteractiveAuth.resetForTesting);
-
   test('empty keyboard-interactive request needs no dialog', () {
     final result = KeyboardInteractiveAuth.handle(
       _spi,
@@ -52,11 +50,7 @@ void main() {
   test('uses the stored password for an explicit password prompt', () {
     final result = KeyboardInteractiveAuth.handle(
       _spiWithPassword,
-      SSHUserInfoRequest(
-        'Login',
-        '',
-        [SSHUserInfoPrompt('Password:', false)],
-      ),
+      SSHUserInfoRequest('Login', '', [SSHUserInfoPrompt('Password:', false)]),
     );
 
     expect(result, ['stored-password']);
@@ -68,14 +62,10 @@ void main() {
         TransferKeyboardInteractivePrompt(
           id: 1,
           spi: _spi,
-          expiresAt: DateTime.now().add(
-            KeyboardInteractiveAuth.promptTimeout,
-          ),
-          request: SSHUserInfoRequest(
-            'OTP',
-            'Enter a code',
-            [SSHUserInfoPrompt('Code:', false)],
-          ),
+          expiresAt: DateTime.now().add(KeyboardInteractiveAuth.promptTimeout),
+          request: SSHUserInfoRequest('OTP', 'Enter a code', [
+            SSHUserInfoPrompt('Code:', false),
+          ]),
         ),
         TransferHostKeyPrompt(
           id: 2,
@@ -112,19 +102,21 @@ void main() {
       ),
     );
 
-    final resultFuture = KeyboardInteractiveAuth.handle(
-      _spi,
-      SSHUserInfoRequest(
-        'Multi-factor authentication',
-        'Enter all requested values.',
-        [
-          SSHUserInfoPrompt('Password:', false),
-          SSHUserInfoPrompt('Verification code:', false),
-          SSHUserInfoPrompt('Comment:', true),
-        ],
-      ),
-      context: context,
-    ) as Future<List<String>?>;
+    final resultFuture =
+        KeyboardInteractiveAuth.handle(
+              _spi,
+              SSHUserInfoRequest(
+                'Multi-factor authentication',
+                'Enter all requested values.',
+                [
+                  SSHUserInfoPrompt('Password:', false),
+                  SSHUserInfoPrompt('Verification code:', false),
+                  SSHUserInfoPrompt('Comment:', true),
+                ],
+              ),
+              context: context,
+            )
+            as Future<List<String>?>;
 
     await tester.pumpAndSettle();
 
@@ -144,10 +136,7 @@ void main() {
     await tester.tap(find.byType(TextButton).last);
     await tester.pumpAndSettle();
 
-    expect(
-      await resultFuture,
-      ['secret', '123456', 'trusted device'],
-    );
+    expect(await resultFuture, ['secret', '123456', 'trusted device']);
   });
 
   testWidgets('hides a stored password prompt and asks only for OTP', (
@@ -168,18 +157,16 @@ void main() {
       ),
     );
 
-    final resultFuture = KeyboardInteractiveAuth.handle(
-      _spiWithPassword,
-      SSHUserInfoRequest(
-        'Multi-factor authentication',
-        '',
-        [
-          SSHUserInfoPrompt('Password:', false),
-          SSHUserInfoPrompt('Verification code:', false),
-        ],
-      ),
-      context: context,
-    ) as Future<List<String>?>;
+    final resultFuture =
+        KeyboardInteractiveAuth.handle(
+              _spiWithPassword,
+              SSHUserInfoRequest('Multi-factor authentication', '', [
+                SSHUserInfoPrompt('Password:', false),
+                SSHUserInfoPrompt('Verification code:', false),
+              ]),
+              context: context,
+            )
+            as Future<List<String>?>;
 
     await tester.pumpAndSettle();
 
@@ -214,18 +201,16 @@ void main() {
       ),
     );
 
-    final resultFuture = KeyboardInteractiveAuth.handle(
-      _spiWithPassword,
-      SSHUserInfoRequest(
-        'Multi-factor authentication',
-        '',
-        [
-          SSHUserInfoPrompt('Verification code:', false),
-          SSHUserInfoPrompt('Password:', false),
-        ],
-      ),
-      context: context,
-    ) as Future<List<String>?>;
+    final resultFuture =
+        KeyboardInteractiveAuth.handle(
+              _spiWithPassword,
+              SSHUserInfoRequest('Multi-factor authentication', '', [
+                SSHUserInfoPrompt('Verification code:', false),
+                SSHUserInfoPrompt('Password:', false),
+              ]),
+              context: context,
+            )
+            as Future<List<String>?>;
 
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), '123456');
@@ -253,15 +238,15 @@ void main() {
       ),
     );
 
-    final resultFuture = KeyboardInteractiveAuth.handle(
-      _spi,
-      SSHUserInfoRequest(
-        'Multi-factor authentication',
-        '',
-        [SSHUserInfoPrompt('Enter backup code from list 3:', false)],
-      ),
-      context: context,
-    ) as Future<List<String>?>;
+    final resultFuture =
+        KeyboardInteractiveAuth.handle(
+              _spi,
+              SSHUserInfoRequest('Multi-factor authentication', '', [
+                SSHUserInfoPrompt('Enter backup code from list 3:', false),
+              ]),
+              context: context,
+            )
+            as Future<List<String>?>;
 
     await tester.pumpAndSettle();
     final field = tester.widget<TextField>(find.byType(TextField));
@@ -289,16 +274,16 @@ void main() {
       ),
     );
 
-    final resultFuture = KeyboardInteractiveAuth.handle(
-      _spi,
-      SSHUserInfoRequest(
-        'OTP',
-        '',
-        [SSHUserInfoPrompt('Verification code:', false)],
-      ),
-      context: context,
-      timeout: const Duration(seconds: 1),
-    ) as Future<List<String>?>;
+    final resultFuture =
+        KeyboardInteractiveAuth.handle(
+              _spi,
+              SSHUserInfoRequest('OTP', '', [
+                SSHUserInfoPrompt('Verification code:', false),
+              ]),
+              context: context,
+              timeout: const Duration(seconds: 1),
+            )
+            as Future<List<String>?>;
 
     await tester.pumpAndSettle();
     expect(find.text('OTP'), findsOneWidget);
@@ -309,9 +294,7 @@ void main() {
     expect(find.text('OTP'), findsNothing);
   });
 
-  testWidgets('keeps a one-time password user-editable', (
-    tester,
-  ) async {
+  testWidgets('keeps a one-time password user-editable', (tester) async {
     late BuildContext context;
     await tester.pumpWidget(
       MaterialApp(
@@ -327,15 +310,15 @@ void main() {
       ),
     );
 
-    final resultFuture = KeyboardInteractiveAuth.handle(
-      _spiWithPassword,
-      SSHUserInfoRequest(
-        'Multi-factor authentication',
-        '',
-        [SSHUserInfoPrompt('One-time password:', false)],
-      ),
-      context: context,
-    ) as Future<List<String>?>;
+    final resultFuture =
+        KeyboardInteractiveAuth.handle(
+              _spiWithPassword,
+              SSHUserInfoRequest('Multi-factor authentication', '', [
+                SSHUserInfoPrompt('One-time password:', false),
+              ]),
+              context: context,
+            )
+            as Future<List<String>?>;
 
     await tester.pumpAndSettle();
 
@@ -374,15 +357,15 @@ void main() {
       ),
     );
 
-    final resultFuture = KeyboardInteractiveAuth.handle(
-      _spiWithPassword,
-      SSHUserInfoRequest(
-        'Multi-factor authentication',
-        '',
-        [SSHUserInfoPrompt('Verification code:', false)],
-      ),
-      context: context,
-    ) as Future<List<String>?>;
+    final resultFuture =
+        KeyboardInteractiveAuth.handle(
+              _spiWithPassword,
+              SSHUserInfoRequest('Multi-factor authentication', '', [
+                SSHUserInfoPrompt('Verification code:', false),
+              ]),
+              context: context,
+            )
+            as Future<List<String>?>;
 
     await tester.pumpAndSettle();
 
@@ -413,29 +396,26 @@ void main() {
       ),
     );
 
-    final request = SSHUserInfoRequest(
-      'OTP',
-      '',
-      [SSHUserInfoPrompt('Code:', false)],
-    );
-    final firstFuture = KeyboardInteractiveAuth.handle(
-      _spi,
-      request,
-      context: context,
-    ) as Future<List<String>?>;
+    final request = SSHUserInfoRequest('OTP', '', [
+      SSHUserInfoPrompt('Code:', false),
+    ]);
+    final firstFuture =
+        KeyboardInteractiveAuth.handle(_spi, request, context: context)
+            as Future<List<String>?>;
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), '654321');
     await tester.tap(find.byType(TextButton).first);
     await tester.pumpAndSettle();
     expect(await firstFuture, isNull);
 
-    final secondFuture = KeyboardInteractiveAuth.handle(
-      _spi,
-      request,
-      context: context,
-    ) as Future<List<String>?>;
+    final secondFuture =
+        KeyboardInteractiveAuth.handle(_spi, request, context: context)
+            as Future<List<String>?>;
     await tester.pumpAndSettle();
-    expect(tester.widget<TextField>(find.byType(TextField)).controller?.text, '');
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).controller?.text,
+      '',
+    );
     await tester.tap(find.byType(TextButton).first);
     await tester.pumpAndSettle();
     expect(await secondFuture, isNull);
@@ -460,11 +440,9 @@ void main() {
     Future<List<String>?> request(String title) =>
         KeyboardInteractiveAuth.handle(
               _spi,
-              SSHUserInfoRequest(
-                title,
-                '',
-                [SSHUserInfoPrompt('Code:', false)],
-              ),
+              SSHUserInfoRequest(title, '', [
+                SSHUserInfoPrompt('Code:', false),
+              ]),
               context: context,
             )
             as Future<List<String>?>;

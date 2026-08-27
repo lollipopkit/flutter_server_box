@@ -28,7 +28,7 @@ class KnownHostsToSettingsMigration implements SchemaMigration {
   const KnownHostsToSettingsMigration({SettingStore? store}) : _store = store;
 
   /// Which store to convert. Null is the app's own; a test hands in a
-  /// `forTest` one, since the singleton is bound to the real store name and an
+  /// caller-provided one, since the singleton is bound to the real store name and an
   /// in-memory database has no rows under it.
   final SettingStore? _store;
 
@@ -50,7 +50,9 @@ class KnownHostsToSettingsMigration implements SchemaMigration {
     );
     if (rows.isEmpty) return;
 
-    final known = Map<String, String>.from(store.sshKnownHostFingerprints.get());
+    final known = Map<String, String>.from(
+      store.sshKnownHostFingerprints.get(),
+    );
     var added = 0;
     for (final row in rows) {
       final storageKey =

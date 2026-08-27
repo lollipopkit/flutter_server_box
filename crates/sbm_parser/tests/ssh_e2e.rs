@@ -7,12 +7,14 @@
 //! the script-transported parse agrees with the direct parse, proving the
 //! generate → install → exec → segment → parse chain is lossless.
 //!
-//! Configuration (tests are skipped when unset), via environment or a `.env`
+//! Configuration (tests are ignored by default), via environment or a `.env`
 //! at the workspace root; values are any destination the system `ssh` accepts,
 //! so `~/.ssh/config` aliases work natively:
 //! - `SBM_E2E_SSH_HOST`: a Unix remote (Linux or BSD/macOS)
 //! - `SBM_E2E_SSH_HOST_WINDOWS`: a Windows remote (OpenSSH server; both
 //!   cmd.exe and PowerShell default shells are supported)
+//!
+//! Run with `cargo test -p sbm_parser --test ssh_e2e -- --ignored`.
 //!
 //! Destructive shell functions (shutdown/reboot/suspend) are NEVER executed
 //! against real hosts — they are covered by text assertions in script_compat.
@@ -94,7 +96,11 @@ fn run_ssh(host: &str, arg: &str, stdin: Option<&str>) -> Result<std::process::O
     let mut child = Command::new("ssh")
         .args(SSH_OPTS)
         .args([host, arg])
-        .stdin(if stdin.is_some() { Stdio::piped() } else { Stdio::null() })
+        .stdin(if stdin.is_some() {
+            Stdio::piped()
+        } else {
+            Stdio::null()
+        })
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
@@ -122,7 +128,10 @@ fn run_ssh(host: &str, arg: &str, stdin: Option<&str>) -> Result<std::process::O
     // the process is gone is a pid the OS may have given to something else.
     let deadline = Instant::now() + SSH_TIMEOUT;
     let status = loop {
-        match child.try_wait().map_err(|e| format!("ssh wait failed: {e}"))? {
+        match child
+            .try_wait()
+            .map_err(|e| format!("ssh wait failed: {e}"))?
+        {
             Some(status) => break Some(status),
             None if Instant::now() >= deadline => {
                 let _ = child.kill();
@@ -145,7 +154,10 @@ fn run_ssh(host: &str, arg: &str, stdin: Option<&str>) -> Result<std::process::O
     // Before joining the writer: the kill is what unblocks it, and its broken
     // pipe is a consequence of the timeout rather than something to report
     let Some(status) = status else {
-        return Err(format!("ssh command {arg:?} killed after {}s", SSH_TIMEOUT.as_secs()));
+        return Err(format!(
+            "ssh command {arg:?} killed after {}s",
+            SSH_TIMEOUT.as_secs()
+        ));
     };
     if let Some(writer) = writer {
         writer
@@ -153,7 +165,11 @@ fn run_ssh(host: &str, arg: &str, stdin: Option<&str>) -> Result<std::process::O
             .map_err(|_| "ssh stdin writer panicked".to_string())?
             .map_err(|e| format!("failed to write ssh stdin: {e}"))?;
     }
-    Ok(std::process::Output { status, stdout, stderr })
+    Ok(std::process::Output {
+        status,
+        stdout,
+        stderr,
+    })
 }
 
 fn check_ssh(cmd: &str, out: std::process::Output) -> Result<String, String> {
@@ -205,23 +221,29 @@ fn manifest_cmd(system: SystemType, key: &str) -> &'static str {
 
 /// Whether a path exists on the remote, as a plain yes/no.
 fn has_file(host: &str, path: &str) -> bool {
-    ssh(host, &format!("[ -e \"{path}\" ] && echo yes || echo no"), None)
-        .map(|s| s.trim() == "yes")
-        .unwrap_or(false)
+    ssh(
+        host,
+        &format!("[ -e \"{path}\" ] && echo yes || echo no"),
+        None,
+    )
+    .map(|s| s.trim() == "yes")
+    .unwrap_or(false)
 }
 
 #[test]
+#[ignore = "requires SBM_E2E_SSH_HOST and a reachable SSH server"]
 fn ssh_e2e_script_parse_matches_direct_commands() {
-    let Some(host) = ssh_host() else {
-        eprintln!("skipping ssh e2e: SBM_E2E_SSH_HOST not set (env or workspace-root .env)");
-        return;
-    };
+    let host =
+        ssh_host().expect("SBM_E2E_SSH_HOST must be set in the environment or workspace-root .env");
 
     // Full app-like script (all commands enabled); Linux and Bsd yield the
     // same Unix script, which self-detects the OS at runtime
     let content = script::build_script(
         SystemType::Linux,
-        &ScriptOptions { build_number: "e2e".into(), ..Default::default() },
+        &ScriptOptions {
+            build_number: "e2e".into(),
+            ..Default::default()
+        },
     );
     let script_path = format!("{REMOTE_DIR}/status.sh");
 
@@ -240,7 +262,10 @@ fn ssh_e2e_script_parse_matches_direct_commands() {
     let _ = ssh(&host, &format!("rm -rf {REMOTE_DIR}"), None);
 
     let mut segments = script::parse_script_output(&raw);
-    assert!(!segments.is_empty(), "no segments parsed; raw output: {raw:?}");
+    assert!(
+        !segments.is_empty(),
+        "no segments parsed; raw output: {raw:?}"
+    );
     let segments_ext = script::parse_script_output(&raw_ext);
     assert!(
         segments_ext.contains_key(commands::DISK_SMART),
@@ -268,7 +293,10 @@ fn ssh_e2e_script_parse_matches_direct_commands() {
     assert!(status.uptime.is_some(), "uptime parsed");
 
     // Remote clock sanity via the time segment (unix epoch, ±5 min tolerance)
-    let remote_epoch: i64 = segments["time"].trim().parse().expect("time segment is a unix epoch");
+    let remote_epoch: i64 = segments["time"]
+        .trim()
+        .parse()
+        .expect("time segment is a unix epoch");
     let local_epoch = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()
@@ -306,8 +334,7 @@ fn ssh_e2e_script_parse_matches_direct_commands() {
         "cpu core count: script vs direct"
     );
 
-    let direct_sys_raw =
-        ssh(&host, manifest_cmd(system, commands::SYS), None).expect("direct sys");
+    let direct_sys_raw = ssh(&host, manifest_cmd(system, commands::SYS), None).expect("direct sys");
     let direct_sys = match system {
         SystemType::Bsd => sbm_parser::common::parse_hostname(&direct_sys_raw),
         _ => sbm_parser::common::parse_sys_version(&direct_sys_raw),
@@ -344,7 +371,9 @@ fn ssh_e2e_script_parse_matches_direct_commands() {
     // adapts to what the remote actually has — presence means the segment must
     // parse into data, absence means graceful degradation to empty.
     let has = |probe: &str| {
-        ssh(&host, probe, None).map(|s| s.trim() == "yes").unwrap_or(false)
+        ssh(&host, probe, None)
+            .map(|s| s.trim() == "yes")
+            .unwrap_or(false)
     };
 
     if system == SystemType::Linux {
@@ -357,8 +386,8 @@ fn ssh_e2e_script_parse_matches_direct_commands() {
                 "nvidia-smi available on the remote but no GPU parsed; segment: {:?}",
                 segments.get(commands::NVIDIA)
             );
-            let direct = ssh(&host, manifest_cmd(system, commands::NVIDIA), None)
-                .expect("direct nvidia");
+            let direct =
+                ssh(&host, manifest_cmd(system, commands::NVIDIA), None).expect("direct nvidia");
             let direct = sbm_parser::gpu::nvidia_from_xml(&direct);
             let script_names: Vec<_> = status.nvidia.iter().map(|g| &g.name).collect();
             let direct_names: Vec<_> = direct.iter().map(|g| &g.name).collect();
@@ -377,7 +406,8 @@ fn ssh_e2e_script_parse_matches_direct_commands() {
         // Tool presence does not imply data (e.g. sensors on a VM/WSL finds no
         // chips and exits 1 with empty stdout) — the contract is that the
         // script-transported parse equals the direct parse, empty or not
-        let has_sensors = has("if command -v sensors >/dev/null 2>&1; then echo yes; else echo no; fi");
+        let has_sensors =
+            has("if command -v sensors >/dev/null 2>&1; then echo yes; else echo no; fi");
         if has_sensors {
             let direct = sbm_parser::linux::parse_sensors(&ssh_stdout(
                 &host,
@@ -385,12 +415,16 @@ fn ssh_e2e_script_parse_matches_direct_commands() {
             ));
             let script_devices: Vec<_> = status.sensors.iter().map(|s| &s.device).collect();
             let direct_devices: Vec<_> = direct.iter().map(|s| &s.device).collect();
-            assert_eq!(script_devices, direct_devices, "sensor devices: script vs direct");
+            assert_eq!(
+                script_devices, direct_devices,
+                "sensor devices: script vs direct"
+            );
         } else {
             assert!(status.sensors.is_empty());
         }
 
-        let has_smart = has("if command -v smartctl >/dev/null 2>&1; then echo yes; else echo no; fi");
+        let has_smart =
+            has("if command -v smartctl >/dev/null 2>&1; then echo yes; else echo no; fi");
         if has_smart {
             let direct = sbm_parser::smart::parse(&ssh_stdout(
                 &host,
@@ -398,7 +432,10 @@ fn ssh_e2e_script_parse_matches_direct_commands() {
             ));
             let script_devices: Vec<_> = status.disk_smart.iter().map(|d| &d.device).collect();
             let direct_devices: Vec<_> = direct.iter().map(|d| &d.device).collect();
-            assert_eq!(script_devices, direct_devices, "SMART devices: script vs direct");
+            assert_eq!(
+                script_devices, direct_devices,
+                "SMART devices: script vs direct"
+            );
         } else {
             assert!(status.disk_smart.is_empty());
         }
@@ -437,11 +474,10 @@ fn ssh_e2e_script_parse_matches_direct_commands() {
 /// Custom commands and disabled keys against a real remote: the custom segment
 /// must round-trip, the disabled segment must be absent from the output
 #[test]
+#[ignore = "requires SBM_E2E_SSH_HOST and a reachable SSH server"]
 fn ssh_e2e_unix_custom_and_disabled() {
-    let Some(host) = ssh_host() else {
-        eprintln!("skipping ssh e2e: SBM_E2E_SSH_HOST not set");
-        return;
-    };
+    let host =
+        ssh_host().expect("SBM_E2E_SSH_HOST must be set in the environment or workspace-root .env");
 
     const DIR: &str = "/tmp/server_box_e2e_custom";
     let opts = ScriptOptions {
@@ -451,8 +487,12 @@ fn ssh_e2e_unix_custom_and_disabled() {
     let content = script::build_script(SystemType::Linux, &opts);
     let path = format!("{DIR}/status.sh");
     let payload = script::install_payload(SystemType::Linux, &content);
-    ssh(&host, &script::install_command(SystemType::Linux, DIR, &path), Some(&payload))
-        .expect("install script");
+    ssh(
+        &host,
+        &script::install_command(SystemType::Linux, DIR, &path),
+        Some(&payload),
+    )
+    .expect("install script");
     // The commands themselves are files in a fixed directory under the user's
     // home now, written in one round trip. This is the half a unit test cannot
     // check: that a real shell on a real host reads that directory and reports
@@ -462,17 +502,37 @@ fn ssh_e2e_unix_custom_and_disabled() {
     // every reader agrees on it — so whatever the account already had there is
     // moved aside first and put back at the end.
     let cmd_dir = script::custom_cmd_dir(SystemType::Linux);
-    let _ = ssh(&host, &format!("rm -rf \"{cmd_dir}.e2e\"; mv \"{cmd_dir}\" \"{cmd_dir}.e2e\""), None);
-    let cmds = vec![(100u32, "e2e_probe".to_string(), "echo custom-cmd-works".to_string())];
-    let installed = ssh(&host, &script::install_custom_cmds_script(SystemType::Linux, &cmds), None);
+    let _ = ssh(
+        &host,
+        &format!("rm -rf \"{cmd_dir}.e2e\"; mv \"{cmd_dir}\" \"{cmd_dir}.e2e\""),
+        None,
+    );
+    let cmds = vec![(
+        100u32,
+        "e2e_probe".to_string(),
+        "echo custom-cmd-works".to_string(),
+    )];
+    let installed = ssh(
+        &host,
+        &script::install_custom_cmds_script(SystemType::Linux, &cmds),
+        None,
+    );
     let raw = installed
         .and_then(|_| {
-            ssh(&host, &script::exec_command(SystemType::Linux, &path, ShellFunc::Status), None)
+            ssh(
+                &host,
+                &script::exec_command(SystemType::Linux, &path, ShellFunc::Status),
+                None,
+            )
         })
         .inspect_err(|_| restore_custom_cmd_dir(&host, cmd_dir))
         .expect("install custom commands and run status script");
-    let listing =
-        ssh(&host, &script::read_custom_cmds_script(SystemType::Linux), None).unwrap_or_default();
+    let listing = ssh(
+        &host,
+        &script::read_custom_cmds_script(SystemType::Linux),
+        None,
+    )
+    .unwrap_or_default();
     restore_custom_cmd_dir(&host, cmd_dir);
     let _ = ssh(&host, &format!("rm -rf {DIR}"), None);
 
@@ -480,13 +540,19 @@ fn ssh_e2e_unix_custom_and_disabled() {
     // command comes back byte-identical to what was written.
     assert_eq!(
         script::parse_custom_cmds_listing(&listing),
-        Some(vec![(100, "e2e_probe".to_string(), "echo custom-cmd-works".to_string())]),
+        Some(vec![(
+            100,
+            "e2e_probe".to_string(),
+            "echo custom-cmd-works".to_string()
+        )]),
         "listing must round-trip; raw: {listing:?}"
     );
 
     let segments = script::parse_script_output(&raw);
     assert_eq!(
-        segments.get(&script::custom_result_key("e2e_probe")).map(String::as_str),
+        segments
+            .get(&script::custom_result_key("e2e_probe"))
+            .map(String::as_str),
         Some("custom-cmd-works"),
         "custom command segment must round-trip"
     );
@@ -495,33 +561,50 @@ fn ssh_e2e_unix_custom_and_disabled() {
         "disabled net segment must be absent; keys: {:?}",
         segments.keys().collect::<Vec<_>>()
     );
-    assert!(segments.contains_key(commands::MEM), "non-disabled segments still present");
+    assert!(
+        segments.contains_key(commands::MEM),
+        "non-disabled segments still present"
+    );
 }
 
 /// The process function (`-p`) on a real remote — the most complex generated
 /// body (busybox detection, /proc/<pid>/io loop). Read-only, safe to execute.
 #[test]
+#[ignore = "requires SBM_E2E_SSH_HOST and a reachable SSH server"]
 fn ssh_e2e_unix_process_function() {
-    let Some(host) = ssh_host() else {
-        eprintln!("skipping ssh e2e: SBM_E2E_SSH_HOST not set");
-        return;
-    };
+    let host =
+        ssh_host().expect("SBM_E2E_SSH_HOST must be set in the environment or workspace-root .env");
 
     const DIR: &str = "/tmp/server_box_e2e_proc";
     let content = script::build_script(
         SystemType::Linux,
-        &ScriptOptions { build_number: "e2e".into(), ..Default::default() },
+        &ScriptOptions {
+            build_number: "e2e".into(),
+            ..Default::default()
+        },
     );
     let path = format!("{DIR}/status.sh");
     let payload = script::install_payload(SystemType::Linux, &content);
-    ssh(&host, &script::install_command(SystemType::Linux, DIR, &path), Some(&payload))
-        .expect("install script");
-    let raw = ssh(&host, &script::exec_command(SystemType::Linux, &path, ShellFunc::Process), None)
-        .expect("run process function");
+    ssh(
+        &host,
+        &script::install_command(SystemType::Linux, DIR, &path),
+        Some(&payload),
+    )
+    .expect("install script");
+    let raw = ssh(
+        &host,
+        &script::exec_command(SystemType::Linux, &path, ShellFunc::Process),
+        None,
+    )
+    .expect("run process function");
     let _ = ssh(&host, &format!("rm -rf {DIR}"), None);
 
     let lines: Vec<&str> = raw.lines().collect();
-    assert!(lines.len() > 3, "expected a process list, got {} lines", lines.len());
+    assert!(
+        lines.len() > 3,
+        "expected a process list, got {} lines",
+        lines.len()
+    );
     assert!(
         lines[0].contains("PID"),
         "first line should be a ps header, got: {:?}",
@@ -534,23 +617,29 @@ fn ssh_e2e_unix_process_function() {
 /// direct-vs-script parse comparisons. Status function only — destructive
 /// functions are never executed.
 #[test]
+#[ignore = "requires SBM_E2E_SSH_HOST_WINDOWS and a reachable Windows SSH server"]
 fn ssh_e2e_windows_script_parse_matches_direct_commands() {
-    let Some(host) = windows_host() else {
-        eprintln!("skipping windows ssh e2e: SBM_E2E_SSH_HOST_WINDOWS not set");
-        return;
-    };
+    let host = windows_host()
+        .expect("SBM_E2E_SSH_HOST_WINDOWS must be set in the environment or workspace-root .env");
 
     // Resolve the real temp dir first (cmd expands %TEMP%; PowerShell default
     // shells would print it literally, so fall back to an encoded query)
     let temp = {
-        let t = ssh_raw(&host, "echo %TEMP%", None).unwrap_or_default().trim().to_string();
+        let t = ssh_raw(&host, "echo %TEMP%", None)
+            .unwrap_or_default()
+            .trim()
+            .to_string();
         if t.contains(':') {
             t
         } else {
-            ssh_raw(&host, &script::encoded_powershell_command("Write-Output $env:TEMP"), None)
-                .expect("resolve TEMP")
-                .trim()
-                .to_string()
+            ssh_raw(
+                &host,
+                &script::encoded_powershell_command("Write-Output $env:TEMP"),
+                None,
+            )
+            .expect("resolve TEMP")
+            .trim()
+            .to_string()
         }
     };
     assert!(temp.contains(':'), "unexpected TEMP dir: {temp:?}");
@@ -559,15 +648,26 @@ fn ssh_e2e_windows_script_parse_matches_direct_commands() {
 
     let content = script::build_script(
         SystemType::Windows,
-        &ScriptOptions { build_number: "e2e".into(), ..Default::default() },
+        &ScriptOptions {
+            build_number: "e2e".into(),
+            ..Default::default()
+        },
     );
     // `install_payload`, not `content`: the Windows install command stops at a
     // marker line rather than at EOF, and the marker is this function's job
     let payload = script::install_payload(SystemType::Windows, &content);
-    ssh_raw(&host, &script::install_command(SystemType::Windows, &dir, &path), Some(&payload))
-        .expect("install script");
-    let raw = ssh_raw(&host, &script::exec_command(SystemType::Windows, &path, ShellFunc::Status), None)
-        .expect("run status script");
+    ssh_raw(
+        &host,
+        &script::install_command(SystemType::Windows, &dir, &path),
+        Some(&payload),
+    )
+    .expect("install script");
+    let raw = ssh_raw(
+        &host,
+        &script::exec_command(SystemType::Windows, &path, ShellFunc::Status),
+        None,
+    )
+    .expect("run status script");
     let _ = ssh_raw(
         &host,
         &script::encoded_powershell_command(&format!("Remove-Item -Recurse -Force '{dir}'")),
@@ -577,7 +677,10 @@ fn ssh_e2e_windows_script_parse_matches_direct_commands() {
     let segments = script::parse_script_output(&raw);
     assert!(!segments.is_empty(), "no segments parsed; raw: {raw:?}");
     let sign = segments.get("echo").map(String::as_str).unwrap_or("");
-    assert!(sign.contains("__windows"), "expected windows sign, got {sign:?}");
+    assert!(
+        sign.contains("__windows"),
+        "expected windows sign, got {sign:?}"
+    );
 
     let status = sbm_parser::parse_status(SystemType::Windows, &segments);
 
@@ -586,22 +689,34 @@ fn ssh_e2e_windows_script_parse_matches_direct_commands() {
     assert!(!status.cpu.is_empty(), "cpu parsed");
     assert!(!status.disks.is_empty(), "disks parsed");
     assert!(status.uptime.is_some(), "uptime parsed");
-    assert!(!status.net.is_empty(), "net counters parsed from WMI double sample");
+    assert!(
+        !status.net.is_empty(),
+        "net counters parsed from WMI double sample"
+    );
 
-    let remote_epoch: i64 = segments["time"].trim().parse().expect("time is a unix epoch");
+    let remote_epoch: i64 = segments["time"]
+        .trim()
+        .parse()
+        .expect("time is a unix epoch");
     let local_epoch = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()
         .as_secs() as i64;
-    assert!((remote_epoch - local_epoch).abs() < 300, "clock skew too large");
+    assert!(
+        (remote_epoch - local_epoch).abs() < 300,
+        "clock skew too large"
+    );
 
     // Direct runs via EncodedCommand, so the remote default shell is irrelevant
-    let direct = |cmd: &str| {
-        ssh_raw(&host, &script::encoded_powershell_command(cmd), None)
-    };
+    let direct = |cmd: &str| ssh_raw(&host, &script::encoded_powershell_command(cmd), None);
 
-    let direct_host = direct(manifest_cmd(SystemType::Windows, commands::HOST)).expect("direct host");
-    assert_eq!(status.host, sbm_parser::common::parse_hostname(&direct_host), "hostname");
+    let direct_host =
+        direct(manifest_cmd(SystemType::Windows, commands::HOST)).expect("direct host");
+    assert_eq!(
+        status.host,
+        sbm_parser::common::parse_hostname(&direct_host),
+        "hostname"
+    );
 
     let direct_mem = sbm_parser::windows::parse_mem(
         &direct(manifest_cmd(SystemType::Windows, commands::MEM)).expect("direct mem"),
@@ -613,7 +728,11 @@ fn ssh_e2e_windows_script_parse_matches_direct_commands() {
         &direct(manifest_cmd(SystemType::Windows, commands::CPU)).expect("direct cpu"),
         &[],
     );
-    assert_eq!(status.cpu.len(), direct_cpu.len(), "cpu core count: script vs direct");
+    assert_eq!(
+        status.cpu.len(),
+        direct_cpu.len(),
+        "cpu core count: script vs direct"
+    );
 
     let direct_sys = sbm_parser::common::parse_hostname(
         &direct(manifest_cmd(SystemType::Windows, commands::SYS)).expect("direct sys"),

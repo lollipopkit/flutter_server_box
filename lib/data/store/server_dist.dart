@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:meta/meta.dart';
 import 'package:server_box/data/model/server/dist.dart';
 import 'package:sqlite3/sqlite3.dart';
 
@@ -16,16 +15,9 @@ import 'package:sqlite3/sqlite3.dart';
 /// Read synchronously and cached in memory, like the rest of the stores here:
 /// the UI reads this while building.
 class ServerDistStore {
-  ServerDistStore._(this._table);
+  ServerDistStore([this._table = 'server_dist']);
 
-  static final instance = ServerDistStore._('server_dist');
-
-  /// A distinct table name would need distinct DDL, so a test shares the real
-  /// one on an in-memory database instead. Present for symmetry with the
-  /// other stores' `forTest`, and to make the sharing explicit at the call
-  /// site rather than implicit in the singleton.
-  @visibleForTesting
-  ServerDistStore.forTest() : _table = 'server_dist';
+  static final instance = ServerDistStore();
 
   final String _table;
 
