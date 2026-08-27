@@ -19,7 +19,7 @@ import 'helpers/test_db.dart';
 void main() {
   test('clear closes a forward that finishes starting during deletion', () async {
     await openTestDb();
-    final store = PortForwardStore.forTest();
+    final store = PortForwardStore();
     getIt.registerSingleton<PortForwardStore>(store);
     const serverId = 'server-id';
     SqliteDb.instance.execute(
@@ -47,9 +47,9 @@ void main() {
     );
     final container = ProviderContainer(
       overrides: [
-        serverProvider(serverId).overrideWith(
-          () => _FixedServerNotifier(serverState),
-        ),
+        serverProvider(
+          serverId,
+        ).overrideWith(() => _FixedServerNotifier(serverState)),
       ],
     );
     try {
@@ -75,7 +75,7 @@ void main() {
       client.close();
       socket.destroy();
       await getIt.reset();
-      await SqliteDb.close();
+      await closeTestDb();
     }
   });
 }
@@ -84,7 +84,10 @@ Future<void> _waitUntilPortIsBound(int port) async {
   final deadline = DateTime.now().add(const Duration(seconds: 1));
   while (DateTime.now().isBefore(deadline)) {
     try {
-      final socket = await ServerSocket.bind(InternetAddress.loopbackIPv4, port);
+      final socket = await ServerSocket.bind(
+        InternetAddress.loopbackIPv4,
+        port,
+      );
       await socket.close();
     } on SocketException {
       return;

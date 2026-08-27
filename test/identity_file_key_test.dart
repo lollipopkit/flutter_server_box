@@ -99,8 +99,8 @@ void main() {
       // In memory: this tree writes as it builds, and a test has no
       // business leaving a database behind.
       await openTestDb();
-      servers = ServerStore.forTest();
-      keys = PrivateKeyStore.forTest();
+      servers = ServerStore();
+      keys = PrivateKeyStore();
     });
 
     tearDown(SqliteDb.close);

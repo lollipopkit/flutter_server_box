@@ -12,8 +12,6 @@ import 'package:server_box/data/model/app/error.dart';
 /// Asks for a key's passphrase and answers with it, or null if the person
 /// declined.
 ///
-/// A parameter so the policy below can be exercised without a screen — see
-/// [PrivateKeyUnlock.promptOverrideForTesting].
 typedef PassphrasePrompt =
     Future<String?> Function({required String keyName, required bool retry});
 
@@ -54,9 +52,6 @@ abstract final class PrivateKeyUnlock {
   /// stops a loop with no way out when the dialog cannot be shown.
   static const maxAttempts = 3;
 
-  @visibleForTesting
-  static PassphrasePrompt? promptOverrideForTesting;
-
   /// Whether [pem] cannot be used without a passphrase.
   ///
   /// False for anything unreadable rather than throwing: whether a key is
@@ -80,6 +75,7 @@ abstract final class PrivateKeyUnlock {
     String pem, {
     required String cacheKey,
     required String keyName,
+    PassphrasePrompt? prompt,
   }) async {
     if (!isLocked(pem)) return pem;
 
@@ -93,7 +89,12 @@ abstract final class PrivateKeyUnlock {
     final inFlight = _inFlight[cacheKey];
     if (inFlight != null) return inFlight;
 
-    final attempt = _ask(pem, cacheKey: cacheKey, keyName: keyName);
+    final attempt = _ask(
+      pem,
+      cacheKey: cacheKey,
+      keyName: keyName,
+      prompt: prompt ?? _showDialog,
+    );
     _inFlight[cacheKey] = attempt;
     try {
       return await attempt;
@@ -120,7 +121,11 @@ abstract final class PrivateKeyUnlock {
     // let an ask that is still running match again — which is the whole thing
     // this counter exists to stop. A restore replaces every key at once, so
     // every one of them has a dialog that may be up.
-    for (final key in {..._opened.keys, ..._inFlight.keys, ..._generation.keys}) {
+    for (final key in {
+      ..._opened.keys,
+      ..._inFlight.keys,
+      ..._generation.keys,
+    }) {
       _generation[key] = (_generation[key] ?? 0) + 1;
     }
     _opened.clear();
@@ -138,9 +143,6 @@ abstract final class PrivateKeyUnlock {
     _opened[cacheKey] = openedPem;
   }
 
-  @visibleForTesting
-  static bool isOpened(String cacheKey) => _opened.containsKey(cacheKey);
-
   static SSHErr _locked(String keyName) => SSHErr(
     type: SSHErrType.noPrivateKey,
     message: l10n.sshKeyLockedFmt(keyName),
@@ -150,9 +152,8 @@ abstract final class PrivateKeyUnlock {
     String pem, {
     required String cacheKey,
     required String keyName,
+    required PassphrasePrompt prompt,
   }) async {
-    final prompt = promptOverrideForTesting ?? _showDialog;
-
     final generation = _generation[cacheKey] ?? 0;
     var guesses = 0;
     var rounds = 0;

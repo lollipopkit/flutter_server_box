@@ -12,7 +12,6 @@
 /// happened to be at when it launched.
 library;
 
-import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/migrations/all.dart';
@@ -78,12 +77,12 @@ void main() {
   group('and the migrator itself', () {
     setUp(() async {
       await openTestDb();
-      getIt.registerSingleton<SettingStore>(SettingStore.forTest());
+      getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
     });
 
     tearDown(() async {
       await getIt.reset();
-      await SqliteDb.close();
+      await closeTestDb();
     });
 
     test('refuses two steps claiming one version', () async {

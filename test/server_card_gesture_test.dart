@@ -32,11 +32,11 @@ void main() {
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-card-');
     await openTestDb();
-      // In memory: this tree writes as it builds, and a test has no
-      // business leaving a database behind.
-    getIt.registerSingleton<SettingStore>(SettingStore.forTest());
-    getIt.registerSingleton<ServerStore>(ServerStore.forTest());
-    getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore.forTest());
+    // In memory: this tree writes as it builds, and a test has no
+    // business leaving a database behind.
+    getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
+    getIt.registerSingleton<ServerStore>(ServerStore());
+    getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore());
     // No auto-refresh: 0 is what `normalizeServerStatusRefreshSeconds` reads
     // as off, and its periodic timer would otherwise outlive the tree and
     // fail the run on a pending timer.
@@ -80,28 +80,35 @@ void main() {
     addTearDown(() => tester.pumpWidget(const SizedBox.shrink()));
   }
 
-  testWidgets('a long press on a card with nothing behind it opens the edit page', (
-    tester,
-  ) async {
-    // `_onLongPressCard` flips a card that has a status to show, and opens the
-    // page where a broken server is fixed when it has not connected. A flip
-    // would show the back of a card with nothing on it.
-    //
-    // `autoConnect: false`, so the server stays `ServerConn.disconnected` and
-    // nothing here reaches for a socket.
-    Stores.server.put(
-      spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u', autoConnect: false),
-    );
+  testWidgets(
+    'a long press on a card with nothing behind it opens the edit page',
+    (tester) async {
+      // `_onLongPressCard` flips a card that has a status to show, and opens the
+      // page where a broken server is fixed when it has not connected. A flip
+      // would show the back of a card with nothing on it.
+      //
+      // `autoConnect: false`, so the server stays `ServerConn.disconnected` and
+      // nothing here reaches for a socket.
+      Stores.server.put(
+        spiFixture(
+          id: 'srv-1',
+          name: 'web',
+          ip: 'h',
+          user: 'u',
+          autoConnect: false,
+        ),
+      );
 
-    await pump(tester);
-    expect(find.text('web'), findsWidgets);
+      await pump(tester);
+      expect(find.text('web'), findsWidgets);
 
-    await tester.longPress(find.text('web').first);
-    await tester.pumpAndSettle();
+      await tester.longPress(find.text('web').first);
+      await tester.pumpAndSettle();
 
-    // The edit page — the navigation the callback performs.
-    expect(find.byType(ServerEditPage), findsOneWidget);
-  });
+      // The edit page — the navigation the callback performs.
+      expect(find.byType(ServerEditPage), findsOneWidget);
+    },
+  );
 
   testWidgets('and a right-click does the same, being the same callback', (
     tester,
@@ -110,7 +117,13 @@ void main() {
     // the `onLongPress` that gets the same call. The gesture itself is
     // `fl_lib/test/secondary_tap_test.dart`; this is that they agree.
     Stores.server.put(
-      spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u', autoConnect: false),
+      spiFixture(
+        id: 'srv-1',
+        name: 'web',
+        ip: 'h',
+        user: 'u',
+        autoConnect: false,
+      ),
     );
 
     await pump(tester);

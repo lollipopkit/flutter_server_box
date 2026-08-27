@@ -1,5 +1,4 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:meta/meta.dart';
 import 'package:server_box/data/model/server/bmc_credential.dart';
 import 'package:server_box/data/store/entity_store.dart';
 import 'package:sqlite3/sqlite3.dart';
@@ -10,13 +9,9 @@ import 'package:sqlite3/sqlite3.dart';
 /// point at one record, so the thing they point at has to be an id rather than
 /// a name the user can change.
 class BmcCredentialStore extends EntityStore<BmcCredential> {
-  BmcCredentialStore._();
+  BmcCredentialStore();
 
-  /// See [PrivateKeyStore.forTest].
-  @visibleForTesting
-  BmcCredentialStore.forTest();
-
-  static final instance = BmcCredentialStore._();
+  static final instance = BmcCredentialStore();
 
   @override
   String get table => 'bmc_credential';
@@ -88,11 +83,8 @@ class BmcCredentialStore extends EntityStore<BmcCredential> {
   /// does not fail — it quietly leaves those servers with an address and
   /// nothing to log in with. Asking first is what lets the UI say so.
   int serversUsing(String id) =>
-      db
-              .select(
-                'SELECT COUNT(*) AS n FROM server WHERE bmc_cred_id = ?;',
-                [id],
-              )
-              .single['n']
+      db.select('SELECT COUNT(*) AS n FROM server WHERE bmc_cred_id = ?;', [
+            id,
+          ]).single['n']
           as int;
 }

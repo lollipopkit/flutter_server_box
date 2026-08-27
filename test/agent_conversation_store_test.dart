@@ -11,7 +11,7 @@ void main() {
 
   setUp(() async {
     await openTestDb();
-    store = AgentConversationStore.forTest();
+    store = AgentConversationStore();
   });
 
   tearDown(SqliteDb.close);
@@ -101,27 +101,30 @@ void main() {
     expect(store.fetchForServer('server-b').single.id, other.id);
   });
 
-  test('deleting the active conversation selects the next newest one', () async {
-    final older = store.create(
-      serverId: 'server-1',
-      protocol: AskAiProtocol.chatCompletions,
-      providerBaseUrl: 'https://example.com',
-      model: 'model',
-      now: DateTime.fromMillisecondsSinceEpoch(1000),
-    );
-    final newer = store.create(
-      serverId: 'server-1',
-      protocol: AskAiProtocol.chatCompletions,
-      providerBaseUrl: 'https://example.com',
-      model: 'model',
-      now: DateTime.fromMillisecondsSinceEpoch(2000),
-    );
+  test(
+    'deleting the active conversation selects the next newest one',
+    () async {
+      final older = store.create(
+        serverId: 'server-1',
+        protocol: AskAiProtocol.chatCompletions,
+        providerBaseUrl: 'https://example.com',
+        model: 'model',
+        now: DateTime.fromMillisecondsSinceEpoch(1000),
+      );
+      final newer = store.create(
+        serverId: 'server-1',
+        protocol: AskAiProtocol.chatCompletions,
+        providerBaseUrl: 'https://example.com',
+        model: 'model',
+        now: DateTime.fromMillisecondsSinceEpoch(2000),
+      );
 
-    store.deleteConversation('server-1', newer.id);
+      store.deleteConversation('server-1', newer.id);
 
-    expect(store.activeConversationId('server-1'), older.id);
-    expect(store.fetch(newer.id), isNull);
-  });
+      expect(store.activeConversationId('server-1'), older.id);
+      expect(store.fetch(newer.id), isNull);
+    },
+  );
 
   test('rename keeps the selected conversation active', () async {
     final active = store.create(
@@ -144,19 +147,22 @@ void main() {
     expect(store.fetch(other.id)?.title, 'Renamed conversation');
   });
 
-  test('cannot delete another server conversation through a foreign key', () async {
-    final other = store.create(
-      serverId: 'server-b',
-      protocol: AskAiProtocol.chatCompletions,
-      providerBaseUrl: 'https://example.com',
-      model: 'model',
-    );
+  test(
+    'cannot delete another server conversation through a foreign key',
+    () async {
+      final other = store.create(
+        serverId: 'server-b',
+        protocol: AskAiProtocol.chatCompletions,
+        providerBaseUrl: 'https://example.com',
+        model: 'model',
+      );
 
-    store.deleteConversation('server-a', other.id);
+      store.deleteConversation('server-a', other.id);
 
-    expect(store.fetch(other.id), isNotNull);
-    expect(store.activeConversationId('server-b'), other.id);
-  });
+      expect(store.fetch(other.id), isNotNull);
+      expect(store.activeConversationId('server-b'), other.id);
+    },
+  );
 
   test('trims whole old turns without splitting tool protocol pairs', () {
     final items = <AskAiConversationItem>[];
@@ -224,25 +230,28 @@ void main() {
     );
   });
 
-  test('clearServer does not remove conversations from other servers', () async {
-    store.create(
-      serverId: 'server-a',
-      protocol: AskAiProtocol.chatCompletions,
-      providerBaseUrl: 'https://example.com',
-      model: 'model',
-    );
-    final other = store.create(
-      serverId: 'server-b',
-      protocol: AskAiProtocol.chatCompletions,
-      providerBaseUrl: 'https://example.com',
-      model: 'model',
-    );
+  test(
+    'clearServer does not remove conversations from other servers',
+    () async {
+      store.create(
+        serverId: 'server-a',
+        protocol: AskAiProtocol.chatCompletions,
+        providerBaseUrl: 'https://example.com',
+        model: 'model',
+      );
+      final other = store.create(
+        serverId: 'server-b',
+        protocol: AskAiProtocol.chatCompletions,
+        providerBaseUrl: 'https://example.com',
+        model: 'model',
+      );
 
-    store.clearServer('server-a');
+      store.clearServer('server-a');
 
-    expect(store.fetchForServer('server-a'), isEmpty);
-    expect(store.fetchForServer('server-b').single.id, other.id);
-  });
+      expect(store.fetchForServer('server-a'), isEmpty);
+      expect(store.fetchForServer('server-b').single.id, other.id);
+    },
+  );
 
   group('the queries the tables replaced a full scan with', () {
     AgentConversation conv(String id, String serverId, DateTime updatedAt) =>

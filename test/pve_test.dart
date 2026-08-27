@@ -159,8 +159,10 @@ void main() {
       void Function() close,
     })
     harness(int statusCode) {
+      final pve = _TestPveNotifier();
       final container = ProviderContainer(
         overrides: [
+          pveProvider(spi).overrideWith(() => pve),
           serverProvider(
             spi.id,
           ).overrideWithValue(ServerState(spi: spi, status: InitStatus.status)),
@@ -168,10 +170,10 @@ void main() {
       );
       final provider = pveProvider(spi);
       final subscription = container.listen(provider, (_, _) {});
-      final notifier = container.read(provider.notifier);
+      final notifier = container.read(provider.notifier) as _TestPveNotifier;
       final adapter = _StatusAdapter(statusCode);
       final dio = Dio()..httpClientAdapter = adapter;
-      notifier.useSessionForTest(dio);
+      notifier.useSession(dio);
       return (
         container: container,
         notifier: notifier,
@@ -230,6 +232,7 @@ void main() {
     );
     final container = ProviderContainer(
       overrides: [
+        pveProvider(spi).overrideWith(() => _TestPveNotifier()),
         serverProvider(
           spi.id,
         ).overrideWith(() => _MutableServerNotifier(initial)),
@@ -237,7 +240,7 @@ void main() {
     );
     final provider = pveProvider(spi);
     final subscription = container.listen(provider, (_, _) {});
-    final notifier = container.read(provider.notifier);
+    final notifier = container.read(provider.notifier) as _TestPveNotifier;
     final server =
         container.read(serverProvider(spi.id).notifier)
             as _MutableServerNotifier;
@@ -246,7 +249,7 @@ void main() {
     final secondStarted = Completer<void>();
     final releaseSecond = Completer<void>();
     var starts = 0;
-    notifier.forwardForTest = () async {
+    notifier.forwardAction = () async {
       starts++;
       if (starts == 1) {
         firstStarted.complete();
@@ -278,6 +281,27 @@ void main() {
       secondSocket.destroy();
     }
   });
+}
+
+class _TestPveNotifier extends PveNotifier {
+  Future<void> Function()? forwardAction;
+
+  void useSession(Dio session) {
+    adoptSession(session);
+    state = state.copyWith(
+      error: null,
+      isConnected: true,
+      isBusy: false,
+      loadingStep: PveLoadingStep.none,
+    );
+  }
+
+  @override
+  Future<void> forward(int generation) async {
+    final action = forwardAction;
+    if (action != null) return action();
+    return super.forward(generation);
+  }
 }
 
 class _StatusAdapter implements HttpClientAdapter {

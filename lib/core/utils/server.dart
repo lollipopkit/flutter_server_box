@@ -375,7 +375,7 @@ Future<SSHClient> genClient(
           try {
             jumpClient?.close();
           } catch (_) {}
-          if (!_isJumpFailoverError(e)) {
+          if (!isJumpFailoverError(e)) {
             rethrow;
           }
           lastNetworkError = e;
@@ -650,7 +650,7 @@ List<Spi> _resolveJumpCandidates({
   return candidates;
 }
 
-bool _isJumpFailoverError(Object error) {
+bool isJumpFailoverError(Object error) {
   final errStr = error.toString().toLowerCase();
   // Exclude auth failures that also contain "too many" (e.g. "too many authentication failures").
   if (errStr.contains('auth') ||
@@ -678,9 +678,6 @@ bool _isJumpFailoverError(Object error) {
           errStr.contains('failed') &&
           !errStr.contains('auth'));
 }
-
-@visibleForTesting
-bool isJumpFailoverErrorForTest(Object error) => _isJumpFailoverError(error);
 
 class HostKeyPromptInfo {
   HostKeyPromptInfo({
@@ -963,10 +960,6 @@ Future<bool> promptHostKeyExclusively(
     }
   }
 }
-
-/// Drops any prompt a test left in flight, so the next one does not wait on it.
-@visibleForTesting
-void resetHostKeyPromptsForTesting() => _pendingHostKeyPrompts.clear();
 
 Future<bool> showHostKeyPrompt(
   HostKeyPromptInfo info, {

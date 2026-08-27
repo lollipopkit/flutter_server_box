@@ -480,36 +480,33 @@ Host internal-server
     group('_stripInlineComment', () {
       test('preserves hash characters inside quotes', () {
         expect(
-          SSHConfig.stripInlineCommentForTest("ProxyCommand echo '#'"),
+          SSHConfig.stripInlineComment("ProxyCommand echo '#'"),
           "ProxyCommand echo '#'",
         );
         expect(
-          SSHConfig.stripInlineCommentForTest('ProxyCommand echo "#"'),
+          SSHConfig.stripInlineComment('ProxyCommand echo "#"'),
           'ProxyCommand echo "#"',
         );
       });
 
       test('preserves escaped hash characters', () {
         expect(
-          SSHConfig.stripInlineCommentForTest(r'ProxyCommand echo \#'),
+          SSHConfig.stripInlineComment(r'ProxyCommand echo \#'),
           r'ProxyCommand echo \#',
         );
       });
 
       test('removes whitespace-prefixed inline comments', () {
-        expect(
-          SSHConfig.stripInlineCommentForTest('value  # comment'),
-          'value',
-        );
+        expect(SSHConfig.stripInlineComment('value  # comment'), 'value');
       });
 
       test('preserves hash without preceding whitespace', () {
-        expect(SSHConfig.stripInlineCommentForTest('foo#bar'), 'foo#bar');
+        expect(SSHConfig.stripInlineComment('foo#bar'), 'foo#bar');
       });
 
       test('handles combined escapes and quotes', () {
         expect(
-          SSHConfig.stripInlineCommentForTest(
+          SSHConfig.stripInlineComment(
             r'''ProxyCommand sh -c "echo \# '#'"  # comment''',
           ),
           r'''ProxyCommand sh -c "echo \# '#'"''',

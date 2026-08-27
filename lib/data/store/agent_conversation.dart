@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:meta/meta.dart';
 import 'package:server_box/data/model/ai/agent_conversation.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:sqlite3/sqlite3.dart';
@@ -21,16 +20,9 @@ import 'package:sqlite3/sqlite3.dart';
 /// Left out of backup and sync on purpose: these may contain terminal output
 /// and reasoning.
 class AgentConversationStore {
-  AgentConversationStore._();
+  AgentConversationStore();
 
-  /// A second instance over the same tables.
-  ///
-  /// The table names are fixed by the schema now, so isolation between tests
-  /// comes from `SqliteDb.openInMemory()` being fresh per test.
-  @visibleForTesting
-  AgentConversationStore.forTest();
-
-  static final instance = AgentConversationStore._();
+  static final instance = AgentConversationStore();
 
   static const maxConversationsPerServer = 30;
   static const maxItemsPerConversation = 240;

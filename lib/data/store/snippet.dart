@@ -1,5 +1,4 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:meta/meta.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/store/entity_store.dart';
 
@@ -9,13 +8,9 @@ import 'package:server_box/data/store/entity_store.dart';
 /// snippets run on this server" meant decoding every snippet, and deleting a
 /// server left it named in the ones that did. Both are rows that cascade now.
 class SnippetStore extends EntityStore<Snippet> {
-  SnippetStore._();
+  SnippetStore();
 
-  /// See [PrivateKeyStore.forTest].
-  @visibleForTesting
-  SnippetStore.forTest();
-
-  static final instance = SnippetStore._();
+  static final instance = SnippetStore();
 
   @override
   String get table => 'snippet';
@@ -82,9 +77,9 @@ class SnippetStore extends EntityStore<Snippet> {
       // A server that is not there is dropped rather than written as a
       // dangling reference — the foreign key would refuse it anyway, and
       // refusing would fail the whole save over a server deleted long ago.
-      final exists = db
-          .select('SELECT 1 FROM server WHERE id = ?;', [serverId])
-          .isNotEmpty;
+      final exists = db.select('SELECT 1 FROM server WHERE id = ?;', [
+        serverId,
+      ]).isNotEmpty;
       if (!exists) continue;
       db.execute('INSERT OR IGNORE INTO snippet_auto_run_on VALUES (?, ?);', [
         item.id,
@@ -127,9 +122,10 @@ class SnippetStore extends EntityStore<Snippet> {
   /// Snippets to run when [serverId] connects, as a query rather than a decode
   /// of every record.
   List<String> autoRunIdsFor(String serverId) => db
-      .select('SELECT snippet_id FROM snippet_auto_run_on WHERE server_id = ?;', [
-        serverId,
-      ])
+      .select(
+        'SELECT snippet_id FROM snippet_auto_run_on WHERE server_id = ?;',
+        [serverId],
+      )
       .map((r) => r['snippet_id'] as String)
       .toList();
 

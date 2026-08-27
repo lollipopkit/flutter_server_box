@@ -15,7 +15,7 @@ class VirtKeyRowsMigration implements SchemaMigration {
   const VirtKeyRowsMigration({SettingStore? store}) : _store = store;
 
   /// Which store to convert. Null is the app's own; a test hands in a
-  /// `forTest` one, since the singleton is bound to the real store name and an
+  /// caller-provided one, since the singleton is bound to the real store name and an
   /// in-memory database has no rows under it.
   final SettingStore? _store;
 

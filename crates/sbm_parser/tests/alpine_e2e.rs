@@ -2,9 +2,11 @@
 //! generated Unix script (ash as /bin/sh, `ps w` process fallback) and the
 //! df -k disk fallback (Alpine ships no lsblk).
 //!
-//! Skipped silently when docker is unavailable. Each run pipes the script via
+//! Ignored by default because it requires Docker in Linux-container mode. Each
+//! run pipes the script via
 //! stdin using the shared install command and then executes it — the same
 //! install-then-exec flow the app performs over SSH, inside one container.
+//! Run with `cargo test -p sbm_parser --test alpine_e2e -- --ignored`.
 
 use sbm_parser::script::{self, ScriptOptions, ShellFunc};
 use sbm_parser::SystemType;
@@ -26,9 +28,7 @@ fn docker_runs_linux() -> bool {
         .stderr(Stdio::null())
         .output();
     match out {
-        Ok(out) if out.status.success() => {
-            String::from_utf8_lossy(&out.stdout).trim() == "linux"
-        }
+        Ok(out) if out.status.success() => String::from_utf8_lossy(&out.stdout).trim() == "linux",
         _ => false,
     }
 }
@@ -75,19 +75,26 @@ fn install_then_exec(func: ShellFunc) -> String {
 }
 
 #[test]
+#[ignore = "requires Docker in Linux-container mode"]
 fn alpine_busybox_status_and_process() {
-    if !docker_runs_linux() {
-        eprintln!("skipping alpine e2e: no docker that runs Linux containers");
-        return;
-    }
+    assert!(
+        docker_runs_linux(),
+        "Docker must be available in Linux-container mode"
+    );
 
     // Sanity: this image really is busybox-backed (the branch under test)
     let sh_link = alpine("ls -l /bin/sh", None, true);
-    assert!(sh_link.contains("busybox"), "expected busybox sh, got: {sh_link:?}");
+    assert!(
+        sh_link.contains("busybox"),
+        "expected busybox sh, got: {sh_link:?}"
+    );
 
     let content = script::build_script(
         SystemType::Linux,
-        &ScriptOptions { build_number: "e2e".into(), ..Default::default() },
+        &ScriptOptions {
+            build_number: "e2e".into(),
+            ..Default::default()
+        },
     );
 
     // ---- status (-s) ----
@@ -110,7 +117,11 @@ fn alpine_busybox_status_and_process() {
     assert!(status.uptime.is_some(), "uptime parsed");
 
     // ---- process (-p): must take the busybox `ps w` branch ----
-    let proc_out = alpine(&install_then_exec(ShellFunc::Process), Some(&content), false);
+    let proc_out = alpine(
+        &install_then_exec(ShellFunc::Process),
+        Some(&content),
+        false,
+    );
     let first = proc_out.lines().next().unwrap_or_default();
     assert!(
         first.contains("PID") && first.contains("COMMAND"),

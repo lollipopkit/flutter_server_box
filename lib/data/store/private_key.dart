@@ -1,5 +1,4 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:meta/meta.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/store/entity_store.dart';
 import 'package:sqlite3/sqlite3.dart';
@@ -10,17 +9,9 @@ import 'package:sqlite3/sqlite3.dart';
 /// value until the tables landed, which is why renaming a key detached every
 /// server pointing at it — `Spi.ssh.keyId` held the name.
 class PrivateKeyStore extends EntityStore<PrivateKeyInfo> {
-  PrivateKeyStore._();
+  PrivateKeyStore();
 
-  /// A second instance over the same table.
-  ///
-  /// The table name is fixed by the schema now, so isolation between tests
-  /// comes from `SqliteDb.openInMemory()` being fresh per test. What this
-  /// still buys is a cache that is not the singleton's.
-  @visibleForTesting
-  PrivateKeyStore.forTest();
-
-  static final instance = PrivateKeyStore._();
+  static final instance = PrivateKeyStore();
 
   @override
   String get table => 'private_key';

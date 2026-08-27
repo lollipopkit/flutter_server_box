@@ -89,7 +89,7 @@ class LocalShellBackend implements ShellBackend {
   }
 
   var _closed = false;
-  final _sessions = <_LocalShellSession>[];
+  final _sessions = <ShellSession>[];
 
   @override
   bool get isClosed => _closed;
@@ -133,6 +133,9 @@ class LocalShellBackend implements ShellBackend {
     required int height,
     Map<String, String>? environment,
   }) async {
+    if (_closed) {
+      throw StateError('This local shell backend is closed');
+    }
     final guest = inRootfs
         ? await AndroidRootfs.enter(command: command, profileId: profileId)
         : null;
@@ -140,6 +143,29 @@ class LocalShellBackend implements ShellBackend {
       throw StateError('The selected Linux system is no longer available.');
     }
     try {
+      if (Platform.isWindows && guest == null) {
+        // flutter_pty closes its output receive port as soon as a short-lived
+        // process exits. ConPTY can report that exit before the last output
+        // chunk reaches Dart, so fast commands such as `echo` lose all of
+        // their output. A one-off command needs no terminal resizing; using a
+        // normal process here also gives cmd.exe the complete Windows
+        // environment rather than flutter_pty's POSIX-only subset.
+        final process = await Process.start(
+          shellPath,
+          ['/D', '/C', command],
+          workingDirectory: homeDir,
+          environment: environment,
+          runInShell: false,
+        );
+        final session = _LocalProcessSession(process);
+        _sessions.add(session);
+        unawaited(
+          session.done.whenComplete(() {
+            _sessions.remove(session);
+          }),
+        );
+        return session;
+      }
       return _start(
         guest?.executable ?? shellPath,
         arguments:
@@ -217,6 +243,31 @@ class LocalShellBackend implements ShellBackend {
       session.close();
     }
   }
+}
+
+/// A short-lived Windows command, where a ConPTY can drop output at exit.
+class _LocalProcessSession implements ShellSession {
+  _LocalProcessSession(this._process);
+
+  final Process _process;
+
+  @override
+  Stream<Uint8List> get stdout => _process.stdout.map(Uint8List.fromList);
+
+  @override
+  Stream<Uint8List> get stderr => _process.stderr.map(Uint8List.fromList);
+
+  @override
+  void write(List<int> data) => _process.stdin.add(data);
+
+  @override
+  void resizeTerminal(int width, int height) {}
+
+  @override
+  Future<void> get done => _process.exitCode.then<void>((_) {});
+
+  @override
+  void close() => _process.kill();
 }
 
 /// [ShellSession] on a local pseudo-terminal.

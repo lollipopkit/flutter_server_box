@@ -29,7 +29,6 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/foundation.dart';
 import 'package:server_box/data/model/app/linux_distros.dart';
 import 'package:server_box/data/model/app/rootfs_manifest.dart';
 import 'package:server_box/data/model/app/rootfs_manifest_trust.dart';
@@ -97,8 +96,8 @@ abstract final class RootfsManifestSource {
     final Uint8List source;
     final Uint8List signature;
     try {
-      source = await _get(client, manifestUrl);
-      signature = await _get(client, signatureUrl);
+      source = await get(client, manifestUrl);
+      signature = await get(client, signatureUrl);
     } catch (e) {
       Loggers.app.info('rootfs manifest: not fetched ($e)');
       return false;
@@ -166,12 +165,6 @@ abstract final class RootfsManifestSource {
     }
   }
 
-  /// Visible so a test can point it at a server of its own. [manifestUrl] is
-  /// absolute, so a `baseUrl` on the Dio handed to [refresh] does not redirect
-  /// it — a test written that way fetches GitHub and proves nothing.
-  @visibleForTesting
-  static Future<Uint8List> getForTest(Dio dio, String url) => _get(dio, url);
-
   /// At most [_maxBytes] of [url], and never more held than that.
   ///
   /// Read as a stream and counted as it arrives, so a server answering with a
@@ -179,7 +172,7 @@ abstract final class RootfsManifestSource {
   /// and checking the length afterwards meant whoever served the manifest
   /// decided how much memory this app used — and that is a URL a device
   /// fetches on its own, with no one watching.
-  static Future<Uint8List> _get(Dio dio, String url) async {
+  static Future<Uint8List> get(Dio dio, String url) async {
     final res = await dio.get<ResponseBody>(
       url,
       options: Options(

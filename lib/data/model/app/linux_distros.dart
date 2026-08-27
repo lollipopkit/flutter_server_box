@@ -38,7 +38,7 @@ abstract final class LinuxDistros {
       throw StateError(
         'The rootfs manifest has not been loaded. Rootfs.prepare does that, '
         'and a test that reads distribution data has to call '
-        'LinuxDistros.adoptForTest first — or loadBundled, where there is an '
+        'LinuxDistros.adopt first — or loadBundled, where there is an '
         'asset bundle to read it from.',
       );
     }
@@ -78,12 +78,4 @@ abstract final class LinuxDistros {
     for (final distro in LinuxDistro.values)
       if (current.distros.containsKey(distro.id)) distro,
   ];
-
-  /// For tests, which have no `Rootfs.prepare` to adopt one for them.
-  ///
-  /// Takes an already parsed [manifest] and hands it to [adopt]; a test reads
-  /// [bundledAsset] off disk itself, since there is no asset bundle in one.
-  /// Named apart from [adopt] so that a production call site asking for this
-  /// reads as the mistake it is.
-  static void adoptForTest(RootfsManifest manifest) => adopt(manifest);
 }

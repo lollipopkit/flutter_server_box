@@ -6,7 +6,6 @@ import 'package:archive/archive.dart';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:fl_lib/fl_lib.dart';
-import 'package:meta/meta.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/utils/guest_path.dart';
@@ -663,22 +662,14 @@ abstract final class AndroidRootfs {
     required bool gzip,
   }) async {
     if (gzip) {
-      await _validateGzipTar(archivePath, root);
+      await validateGzipTar(archivePath, root);
     } else {
-      await _validateTar(archivePath, root);
+      await validateTar(archivePath, root);
     }
     await _tar(archivePath, root, gzip: gzip);
   }
 
-  @visibleForTesting
-  static Future<void> validateTarForTest(File archive, Directory root) =>
-      _validateTar(archive.path, root.path);
-
-  @visibleForTesting
-  static Future<void> validateGzipTarForTest(File archive, Directory root) =>
-      _validateGzipTar(archive.path, root.path);
-
-  static Future<void> _validateGzipTar(String archivePath, String root) async {
+  static Future<void> validateGzipTar(String archivePath, String root) async {
     final parser = _TarValidationParser();
     await for (final chunk in File(
       archivePath,
@@ -736,7 +727,7 @@ abstract final class AndroidRootfs {
     return false;
   }
 
-  static Future<void> _validateTar(String archivePath, String root) async {
+  static Future<void> validateTar(String archivePath, String root) async {
     final input = InputFileStream(archivePath);
     final decoder = TarDecoder();
     try {

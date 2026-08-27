@@ -26,8 +26,6 @@ HostKeyPromptInfo _info({
 /// `onVerifyHostKey`. What it must not become is a cache: the store is what
 /// remembers an accepted key, and a user who declined has to be asked again.
 void main() {
-  tearDown(resetHostKeyPromptsForTesting);
-
   test('the same question twice at once raises one dialog', () async {
     var shown = 0;
     final onScreen = Completer<bool>();
@@ -75,30 +73,35 @@ void main() {
     expect(await second, false);
   });
 
-  test('a changed fingerprint is a different question, not the same one', () async {
-    final shown = <String>[];
-    final stale = Completer<bool>();
+  test(
+    'a changed fingerprint is a different question, not the same one',
+    () async {
+      final shown = <String>[];
+      final stale = Completer<bool>();
 
-    final first = promptHostKeyExclusively(_info(), () {
-      shown.add('aa:bb:cc');
-      return stale.future;
-    });
-    final second = promptHostKeyExclusively(
-      _info(fingerprint: 'SHA256:BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'),
-      () {
-        shown.add('dd:ee:ff');
-        return Future.value(false);
-      },
-    );
-    await pumpEventQueue();
+      final first = promptHostKeyExclusively(_info(), () {
+        shown.add('aa:bb:cc');
+        return stale.future;
+      });
+      final second = promptHostKeyExclusively(
+        _info(
+          fingerprint: 'SHA256:BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+        ),
+        () {
+          shown.add('dd:ee:ff');
+          return Future.value(false);
+        },
+      );
+      await pumpEventQueue();
 
-    expect(shown, ['aa:bb:cc']);
+      expect(shown, ['aa:bb:cc']);
 
-    stale.complete(true);
-    expect(await first, true);
-    expect(await second, false);
-    expect(shown, ['aa:bb:cc', 'dd:ee:ff']);
-  });
+      stale.complete(true);
+      expect(await first, true);
+      expect(await second, false);
+      expect(shown, ['aa:bb:cc', 'dd:ee:ff']);
+    },
+  );
 
   test('two servers are asked at the same time', () async {
     var shown = 0;

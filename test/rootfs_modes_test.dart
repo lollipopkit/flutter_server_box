@@ -32,8 +32,7 @@ void main() {
 
   const source = RootfsSource(
     url: 'https://example.test/rootfs.tar.gz',
-    sha256:
-        '0000000000000000000000000000000000000000000000000000000000000000',
+    sha256: '0000000000000000000000000000000000000000000000000000000000000000',
     sizeBytes: 1,
     layout: LinuxRootfsLayout.plain,
     compression: LinuxRootfsCompression.gzip,
@@ -55,7 +54,7 @@ void main() {
     );
 
     final into = Directory('${dir.path}/root')..createSync(recursive: true);
-    await IosRootfs.extractForTest(file, into, source: source);
+    await IosRootfs.extract(file, into, source: source);
     return into;
   }
 
@@ -70,7 +69,7 @@ void main() {
       // And nothing else was added: 0555 becomes 0755, not 0777.
       expect(modeOf(into, 'usr/bin'), 0x1ed);
     });
-  });
+  }, skip: Platform.isWindows ? 'requires POSIX file modes' : null);
 
   test('and keeps the bits that were not in the way', () async {
     // 1777 for /tmp, 2755 for a setgid directory. Neither stops this app
@@ -85,13 +84,13 @@ void main() {
     expect(modeOf(into, 'tmp') & 0x200, 0x200, reason: 'sticky');
     expect(modeOf(into, 'tmp') & 0x1ff, 0x1ff, reason: '777');
     expect(modeOf(into, 'var/log') & 0x400, 0x400, reason: 'setgid');
-  });
+  }, skip: Platform.isWindows ? 'requires POSIX file modes' : null);
 
   test('an ordinary directory is left exactly as the archive had it', () async {
     final into = await unpack({'etc': 0x1ed});
 
     expect(modeOf(into, 'etc'), 0x1ed);
-  });
+  }, skip: Platform.isWindows ? 'requires POSIX file modes' : null);
 
   test('a directory only named as a parent is still usable', () async {
     // `usr/lib/x` with no entry of its own for `usr/lib`, which is what
@@ -101,5 +100,5 @@ void main() {
     final into = await unpack({'usr/lib/x': 0x1ed});
 
     expect(modeOf(into, 'usr/lib') & 0x1c0, 0x1c0, reason: 'owner rwx');
-  });
+  }, skip: Platform.isWindows ? 'requires POSIX file modes' : null);
 }

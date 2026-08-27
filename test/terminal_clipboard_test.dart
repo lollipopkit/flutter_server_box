@@ -34,7 +34,7 @@ void main() {
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-term-');
     await openTestDb();
-    getIt.registerSingleton<SettingStore>(SettingStore.forTest());
+    getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
 
     clipboard.clear();
     // The real channel would reach a platform that is not here. Recorded
@@ -69,9 +69,9 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
 
-    final session = TerminalSession.over(
-      const LocalSource(),
-      FakeShellBackend(),
+    final session = TerminalSession(
+      source: const LocalSource(),
+      backend: FakeShellBackend(),
     );
 
     await tester.pumpWidget(
@@ -160,7 +160,11 @@ void main() {
 
     selectAll(tester);
     await tester.pump(const Duration(milliseconds: 50));
-    expect(controllerOf(tester).selection, isNotNull, reason: 'nothing selected');
+    expect(
+      controllerOf(tester).selection,
+      isNotNull,
+      reason: 'nothing selected',
+    );
 
     await secondaryTap(tester);
 
@@ -193,7 +197,10 @@ void main() {
     // `textInput('')` would be a no-op anyway — but the guard is what stops a
     // null reaching the terminal as the string "null".
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(SystemChannels.platform, (call) async => null);
+        .setMockMethodCallHandler(
+          SystemChannels.platform,
+          (call) async => null,
+        );
     await pump(tester);
 
     await secondaryTap(tester);

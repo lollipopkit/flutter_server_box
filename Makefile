@@ -4,6 +4,7 @@ SHELL := /bin/bash
 
 FLUTTER ?= flutter
 DART ?= dart
+CARGO ?= cargo
 DEVICE ?=
 TEST ?=
 PLATFORM ?=
@@ -79,6 +80,7 @@ analyze:
 	$(FLUTTER) analyze lib test integration_test
 
 test:
+	$(CARGO) build -p sbm_ffi
 	$(FLUTTER) test
 
 test-one:
@@ -86,9 +88,11 @@ test-one:
 		echo 'TEST is required. Example: make test-one TEST=test/disk_test.dart'; \
 		exit 1; \
 	fi
+	$(CARGO) build -p sbm_ffi
 	$(FLUTTER) test $(TEST)
 
 coverage:
+	$(CARGO) build -p sbm_ffi
 	$(FLUTTER) test --coverage
 
 test-cla:

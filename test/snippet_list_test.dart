@@ -32,8 +32,8 @@ void main() {
     await openTestDb();
     // In memory: this page persists the pane width on every drag, and a real
     // write started in a `testWidgets` body never lets go of the box's lock.
-    getIt.registerSingleton<SettingStore>(SettingStore.forTest());
-    getIt.registerSingleton<SnippetStore>(SnippetStore.forTest());
+    getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
+    getIt.registerSingleton<SnippetStore>(SnippetStore());
   });
 
   tearDown(() async {
@@ -97,7 +97,9 @@ void main() {
   testWidgets('a wide window with snippets lists them under the same row', (
     tester,
   ) async {
-    Stores.snippet.put(const Snippet(id: 'sn-1', name: 'deploy', script: 'echo hi'));
+    Stores.snippet.put(
+      const Snippet(id: 'sn-1', name: 'deploy', script: 'echo hi'),
+    );
 
     await pump(tester, width: 1200);
 

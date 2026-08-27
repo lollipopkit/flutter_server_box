@@ -10,8 +10,8 @@ use std::time::Duration;
 
 use ntex::io::{Io, Sealed};
 use ntex::service::cfg::SharedCfg;
-use ntex::time::Seconds;
 use ntex::time::timeout;
+use ntex::time::Seconds;
 use ntex::util::ByteString;
 use ntex::web::test::{self as web_test, TestServer};
 use ntex::web::{self, App};
@@ -1084,26 +1084,24 @@ async fn a_session_nobody_comes_back_for_is_reaped() {
 /// SBM_E2E_TERMINAL_ADDR=127.0.0.1:2222 \
 /// SBM_E2E_TERMINAL_USER=me \
 /// SBM_E2E_TERMINAL_KEY=/path/to/id_ed25519 \
-/// cargo test -p server_box_monitor --test terminal_ws
+/// cargo test -p server_box_monitor --test terminal_ws -- --ignored
 ///
 /// # or password auth
 /// SBM_E2E_TERMINAL_ADDR=127.0.0.1:22 \
 /// SBM_E2E_TERMINAL_USER=me \
 /// SBM_E2E_TERMINAL_PASSWORD=... \
-/// cargo test -p server_box_monitor --test terminal_ws
+/// cargo test -p server_box_monitor --test terminal_ws -- --ignored
 /// ```
 ///
 /// Credentials come from the environment and are never written to the repo.
-/// Silently skipped when unset, like `sbm_parser`'s SSH end-to-end tests.
+/// Ignored by default because it requires a reachable SSH server.
 #[ntex::test]
+#[ignore = "requires SBM_E2E_TERMINAL_* credentials and a reachable SSH server"]
 async fn a_real_sshd_produces_a_working_shell() {
-    let (Ok(addr), Ok(user)) = (
-        std::env::var("SBM_E2E_TERMINAL_ADDR"),
-        std::env::var("SBM_E2E_TERMINAL_USER"),
-    ) else {
-        eprintln!("SBM_E2E_TERMINAL_* unset; skipping the real-sshd terminal test");
-        return;
-    };
+    let addr = std::env::var("SBM_E2E_TERMINAL_ADDR")
+        .expect("SBM_E2E_TERMINAL_ADDR must be set for this ignored test");
+    let user = std::env::var("SBM_E2E_TERMINAL_USER")
+        .expect("SBM_E2E_TERMINAL_USER must be set for this ignored test");
     let auth = match (
         std::env::var("SBM_E2E_TERMINAL_KEY"),
         std::env::var("SBM_E2E_TERMINAL_PASSWORD"),
@@ -1114,10 +1112,7 @@ async fn a_real_sshd_produces_a_working_shell() {
             "passphrase": std::env::var("SBM_E2E_TERMINAL_PASSPHRASE").ok(),
         }),
         (_, Ok(password)) => serde_json::json!({"kind": "password", "password": password}),
-        _ => {
-            eprintln!("neither SBM_E2E_TERMINAL_KEY nor _PASSWORD set; skipping");
-            return;
-        }
+        _ => panic!("set SBM_E2E_TERMINAL_KEY or SBM_E2E_TERMINAL_PASSWORD"),
     };
 
     let state = app_state(true, &addr).await;

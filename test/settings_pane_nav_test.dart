@@ -75,20 +75,18 @@ void main() {
 
   setUp(() async {
     await openTestDb();
-    getIt.registerSingleton<SettingStore>(SettingStore.forTest());
-    getIt.registerSingleton<ServerStore>(ServerStore.forTest());
-    getIt.registerSingleton<ContainerStore>(ContainerStore.forTest());
-    getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore.forTest());
-    getIt.registerSingleton<BmcCredentialStore>(BmcCredentialStore.forTest());
-    getIt.registerSingleton<SnippetStore>(SnippetStore.forTest());
-    getIt.registerSingleton<HistoryStore>(HistoryStore.forTest());
-    getIt.registerSingleton<AgentConversationStore>(
-      AgentConversationStore.forTest(),
-    );
+    getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
+    getIt.registerSingleton<ServerStore>(ServerStore());
+    getIt.registerSingleton<ContainerStore>(ContainerStore());
+    getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore());
+    getIt.registerSingleton<BmcCredentialStore>(BmcCredentialStore());
+    getIt.registerSingleton<SnippetStore>(SnippetStore());
+    getIt.registerSingleton<HistoryStore>(HistoryStore('history_test'));
+    getIt.registerSingleton<AgentConversationStore>(AgentConversationStore());
     getIt.registerSingleton<ConnectionStatsStore>(
       ConnectionStatsStore.instance,
     );
-    getIt.registerSingleton<PortForwardStore>(PortForwardStore.forTest());
+    getIt.registerSingleton<PortForwardStore>(PortForwardStore());
   });
 
   tearDown(() async {

@@ -4,7 +4,6 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
-import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/rootfs_manifest_source.dart';
 import 'package:server_box/data/model/app/linux_distros.dart';
@@ -46,12 +45,12 @@ void main() {
   setUp(() async {
     await openTestDb();
     await getIt.reset();
-    getIt.registerSingleton<SettingStore>(SettingStore.forTest());
+    getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
     // What `Rootfs.prepare` would have adopted before any of this runs.
-    LinuxDistros.adoptForTest(RootfsManifest.parse(bundledJson));
+    LinuxDistros.adopt(RootfsManifest.parse(bundledJson));
   });
 
-  tearDown(SqliteDb.close);
+  tearDown(closeTestDb);
 
   /// A Dio that answers the manifest URL with [body] and the signature URL
   /// with [sig], or fails with [error] for everything.
@@ -62,86 +61,92 @@ void main() {
   }
 
   group('refresh', () {
-    test('a body far larger than a manifest is refused while it arrives', () async {
-      // Over a real socket, because a fake adapter cannot express the thing
-      // under test: its stream ignores backpressure, so the producer runs to
-      // completion whatever the consumer does, and a chunk count measures the
-      // fake rather than the code.
-      //
-      // A refusal on its own proves nothing either — megabytes of zeros fail
-      // the signature check just as well, so a test that looked only at the
-      // result passed happily while the whole body was read into memory
-      // first. What separates the two is *when*: this server sends more than
-      // the cap and then stalls, so a reader that stops at the cap answers at
-      // once and one that waits for the end waits for the receive timeout.
-      // `ensureInitialized` above installs Flutter's HttpOverrides, which
-      // answers every request 400 without a socket being opened. A real one
-      // is the whole point here, so this test asks for the real client back.
-      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
-      addTearDown(() => server.close(force: true));
-      unawaited(() async {
-        await for (final request in server) {
-          try {
-            for (var i = 0; i < 6; i++) {
-              request.response.add(Uint8List(64 * 1024));
-              await request.response.flush();
+    test(
+      'a body far larger than a manifest is refused while it arrives',
+      () async {
+        // Over a real socket, because a fake adapter cannot express the thing
+        // under test: its stream ignores backpressure, so the producer runs to
+        // completion whatever the consumer does, and a chunk count measures the
+        // fake rather than the code.
+        //
+        // A refusal on its own proves nothing either — megabytes of zeros fail
+        // the signature check just as well, so a test that looked only at the
+        // result passed happily while the whole body was read into memory
+        // first. What separates the two is *when*: this server sends more than
+        // the cap and then stalls, so a reader that stops at the cap answers at
+        // once and one that waits for the end waits for the receive timeout.
+        // `ensureInitialized` above installs Flutter's HttpOverrides, which
+        // answers every request 400 without a socket being opened. A real one
+        // is the whole point here, so this test asks for the real client back.
+        final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+        addTearDown(() => server.close(force: true));
+        unawaited(() async {
+          await for (final request in server) {
+            try {
+              for (var i = 0; i < 6; i++) {
+                request.response.add(Uint8List(64 * 1024));
+                await request.response.flush();
+              }
+              // And then nothing, for as long as anyone is listening.
+              await Completer<void>().future;
+            } catch (_) {
+              // The client hung up, which is the point.
             }
-            // And then nothing, for as long as anyone is listening.
-            await Completer<void>().future;
-          } catch (_) {
-            // The client hung up, which is the point.
           }
-        }
-      }());
+        }());
 
-      final watch = Stopwatch()..start();
-      await HttpOverrides.runWithHttpOverrides(() async {
+        final watch = Stopwatch()..start();
+        await HttpOverrides.runWithHttpOverrides(() async {
+          await expectLater(
+            RootfsManifestSource.get(
+              Dio(),
+              'http://${server.address.address}:${server.port}/manifest.json',
+            ),
+            throwsStateError,
+          );
+        }, _RealHttp());
+        watch.stop();
+
+        // The receive timeout is 20s. Anything near it means the read ran on
+        // waiting for the end of a body that never ends.
+        expect(
+          watch.elapsed,
+          lessThan(const Duration(seconds: 5)),
+          reason: 'refused while the body was still arriving',
+        );
+      },
+    );
+
+    test(
+      'the cap is a limit on what is kept, not on what is kept plus one chunk',
+      () async {
+        // The boundary either side of it. Exactly the cap is a manifest — a
+        // large one, but the number is the promise — and one byte more is not.
+        //
+        // This pins the arithmetic, not the ordering: whether the check runs
+        // before or after the chunk is added is not visible from out here, and
+        // over a socket a chunk is whatever the read buffer gave, so the two
+        // orderings differ by at most one buffer. The reason to check first is
+        // that "at most one buffer" is the server's number to choose and not
+        // ours.
+        const cap = 256 * 1024;
+
+        expect(
+          await RootfsManifestSource.get(
+            fakeDio(body: Uint8List(cap)),
+            'https://x.test/manifest.json',
+          ),
+          hasLength(cap),
+        );
         await expectLater(
-          RootfsManifestSource.getForTest(
-            Dio(),
-            'http://${server.address.address}:${server.port}/manifest.json',
+          RootfsManifestSource.get(
+            fakeDio(body: Uint8List(cap + 1)),
+            'https://x.test/manifest.json',
           ),
           throwsStateError,
         );
-      }, _RealHttp());
-      watch.stop();
-
-      // The receive timeout is 20s. Anything near it means the read ran on
-      // waiting for the end of a body that never ends.
-      expect(
-        watch.elapsed,
-        lessThan(const Duration(seconds: 5)),
-        reason: 'refused while the body was still arriving',
-      );
-    });
-
-    test('the cap is a limit on what is kept, not on what is kept plus one chunk', () async {
-      // The boundary either side of it. Exactly the cap is a manifest — a
-      // large one, but the number is the promise — and one byte more is not.
-      //
-      // This pins the arithmetic, not the ordering: whether the check runs
-      // before or after the chunk is added is not visible from out here, and
-      // over a socket a chunk is whatever the read buffer gave, so the two
-      // orderings differ by at most one buffer. The reason to check first is
-      // that "at most one buffer" is the server's number to choose and not
-      // ours.
-      const cap = 256 * 1024;
-
-      expect(
-        await RootfsManifestSource.getForTest(
-          fakeDio(body: Uint8List(cap)),
-          'https://x.test/manifest.json',
-        ),
-        hasLength(cap),
-      );
-      await expectLater(
-        RootfsManifestSource.getForTest(
-          fakeDio(body: Uint8List(cap + 1)),
-          'https://x.test/manifest.json',
-        ),
-        throwsStateError,
-      );
-    });
+      },
+    );
 
     test('two overlapping refreshes are one fetch', () async {
       // Two racing to commit, and the one finishing last wins — which need not
@@ -205,10 +210,7 @@ void main() {
       // Same serial as the bundled copy, so nothing is displaced...
       expect(changed, isFalse);
       // ...but it verified, so it is kept and counted.
-      expect(
-        base64Decode(Stores.setting.rootfsManifestCache.fetch()),
-        signed,
-      );
+      expect(base64Decode(Stores.setting.rootfsManifestCache.fetch()), signed);
       expect(Stores.setting.rootfsManifestSerial.fetch(), 1);
     });
 
@@ -254,20 +256,23 @@ void main() {
       expect(Stores.setting.rootfsManifestCache.fetch(), isEmpty);
     });
 
-    test('a cache no newer than the bundled copy does not displace it', () async {
-      // What happens after an app update ships a manifest as new as the last
-      // fetched one: the two are equal, and the bundled one stays. Believing
-      // the cache here would be harmless today and wrong in principle — an
-      // update must never move a device backwards.
-      Stores.setting.rootfsManifestCache.put(base64Encode(signed));
-      Stores.setting.rootfsManifestCacheSig.put(base64Encode(signature));
+    test(
+      'a cache no newer than the bundled copy does not displace it',
+      () async {
+        // What happens after an app update ships a manifest as new as the last
+        // fetched one: the two are equal, and the bundled one stays. Believing
+        // the cache here would be harmless today and wrong in principle — an
+        // update must never move a device backwards.
+        Stores.setting.rootfsManifestCache.put(base64Encode(signed));
+        Stores.setting.rootfsManifestCacheSig.put(base64Encode(signature));
 
-      await RootfsManifestSource.loadLocal();
+        await RootfsManifestSource.loadLocal();
 
-      expect(LinuxDistros.current.serial, 1);
-      // Still there: it verified, so there is no reason to throw it away.
-      expect(Stores.setting.rootfsManifestCache.fetch(), isNotEmpty);
-    });
+        expect(LinuxDistros.current.serial, 1);
+        // Still there: it verified, so there is no reason to throw it away.
+        expect(Stores.setting.rootfsManifestCache.fetch(), isNotEmpty);
+      },
+    );
 
     test('it does not throw when the cache is nonsense', () async {
       // It runs on the startup path. A device with a corrupt cache still has

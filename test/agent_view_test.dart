@@ -34,15 +34,12 @@ class _FixedSession extends AgentSession {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-
   setUp(() async {
     await openTestDb();
     // In memory: the return-key tests below write the setting they are about,
     // and none of them should leave a database behind.
-    getIt.registerSingleton<SettingStore>(SettingStore.forTest());
-    getIt.registerSingleton<AgentConversationStore>(
-      AgentConversationStore.forTest(),
-    );
+    getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
+    getIt.registerSingleton<AgentConversationStore>(AgentConversationStore());
   });
 
   tearDown(() async {
@@ -152,13 +149,17 @@ void main() {
       expect(
         await actionWith(tester, sendOnEnter: true),
         TextInputAction.send,
-        reason: 'this runs on no particular platform, and that is the point: '
+        reason:
+            'this runs on no particular platform, and that is the point: '
             'the answer no longer depends on one',
       );
     });
 
     testWidgets('off, it offers a newline', (tester) async {
-      expect(await actionWith(tester, sendOnEnter: false), TextInputAction.newline);
+      expect(
+        await actionWith(tester, sendOnEnter: false),
+        TextInputAction.newline,
+      );
     });
   });
 

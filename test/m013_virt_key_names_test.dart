@@ -19,7 +19,7 @@ void main() {
 
   setUp(() {
     SqliteDb.openInMemory();
-    store = SettingStore.forTest();
+    store = SettingStore('setting_test');
     migration = VirtKeyNamesMigration(store: store);
   });
 
@@ -117,11 +117,9 @@ void main() {
   test('none of it counts as a user edit', () async {
     // Sync compares this number, so a device that had only ever run a
     // migration would otherwise claim the newer copy of everything.
-    store.set(
-      VirtKeyNamesMigration.orderKey,
-      [VirtKey.tab.index],
-      updateLastUpdateTsOnSet: false,
-    );
+    store.set(VirtKeyNamesMigration.orderKey, [
+      VirtKey.tab.index,
+    ], updateLastUpdateTsOnSet: false);
     final before = store.lastUpdateTs;
 
     await migration.apply();

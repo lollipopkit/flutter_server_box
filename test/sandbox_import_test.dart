@@ -57,10 +57,7 @@ void main() {
     await write(src, 'setting_enc.hive');
     await write(dest, 'setting_enc.hive', 'mine');
     expect(await import(), SandboxImportResult.skipped);
-    expect(
-      File('${dest.path}/setting_enc.hive').readAsStringSync(),
-      'mine',
-    );
+    expect(File('${dest.path}/setting_enc.hive').readAsStringSync(), 'mine');
   });
 
   test('the marker is remembered', () async {
@@ -126,13 +123,13 @@ void main() {
   });
 
   test('preference values are read the way each key is stored', () {
-    expect(SandboxImport.parsePrefForTest('1', bool), true);
-    expect(SandboxImport.parsePrefForTest('0', bool), false);
-    expect(SandboxImport.parsePrefForTest('true\n', bool), true);
-    expect(SandboxImport.parsePrefForTest('1480\n', int), 1480);
-    expect(SandboxImport.parsePrefForTest('not a number', int), null);
-    expect(SandboxImport.parsePrefForTest(' https://dav \n', String), 'https://dav');
-    expect(SandboxImport.parsePrefForTest('  ', String), null);
+    expect(SandboxImport.parsePref('1', bool), true);
+    expect(SandboxImport.parsePref('0', bool), false);
+    expect(SandboxImport.parsePref('true\n', bool), true);
+    expect(SandboxImport.parsePref('1480\n', int), 1480);
+    expect(SandboxImport.parsePref('not a number', int), null);
+    expect(SandboxImport.parsePref(' https://dav \n', String), 'https://dav');
+    expect(SandboxImport.parsePref('  ', String), null);
   });
 
   test('sqlite\'s shared-memory file is not carried across', () async {

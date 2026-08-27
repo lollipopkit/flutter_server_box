@@ -37,11 +37,11 @@ void main() {
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-pane-');
     await openTestDb();
-      // In memory: this tree writes as it builds, and a test has no
-      // business leaving a database behind.
-    getIt.registerSingleton<SettingStore>(SettingStore.forTest());
-    getIt.registerSingleton<ServerStore>(ServerStore.forTest());
-    getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore.forTest());
+    // In memory: this tree writes as it builds, and a test has no
+    // business leaving a database behind.
+    getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
+    getIt.registerSingleton<ServerStore>(ServerStore());
+    getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore());
     // 0 is what `normalizeServerStatusRefreshSeconds` reads as off; its
     // periodic timer would otherwise outlive the tree and fail the run.
     Stores.setting.serverStatusUpdateInterval.put(0);
@@ -173,7 +173,10 @@ void main() {
     // column that opened at one and was clamped to the other would move on its
     // own first frame.
     expect(Stores.setting.paneListWidth.fetch(), defaults.primaryWidth);
-    expect(defaults.primaryWidth, greaterThanOrEqualTo(defaults.minPrimaryWidth));
+    expect(
+      defaults.primaryWidth,
+      greaterThanOrEqualTo(defaults.minPrimaryWidth),
+    );
     expect(defaults.primaryWidth, lessThanOrEqualTo(defaults.maxPrimaryWidth));
   });
 }

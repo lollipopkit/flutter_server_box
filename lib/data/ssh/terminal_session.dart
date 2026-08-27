@@ -31,22 +31,8 @@ import 'package:xterm/core.dart';
 /// and the plumbing between them. What a particular *view* of one needs — tmux,
 /// keep-alive, the virtual keyboard, state restoration — stays on the page.
 class TerminalSession {
-  TerminalSession({required this.source});
-
-  /// A session over a backend that already exists.
-  ///
-  /// Nothing in the app builds one this way: a real session gets its backend
-  /// from [adopt] or [connect], which is where the choice between SSH, an
-  /// agent's PTY and this device is made. A test does, because every one of
-  /// those three reaches for a socket or a process — and because [adopt]
-  /// returns early when a backend is already set, a page built on this one
-  /// never tries to make its own.
-  ///
-  /// [_ownsBackend] stays false: whoever handed the backend over closes it.
-  @visibleForTesting
-  factory TerminalSession.over(TerminalSource source, ShellBackend backend) {
-    return TerminalSession(source: source).._backend = backend;
-  }
+  TerminalSession({required this.source, ShellBackend? backend})
+    : _backend = backend;
 
   /// Where this terminal's shell comes from — a server, or this device.
   final TerminalSource source;
@@ -151,11 +137,12 @@ class TerminalSession {
 
     final client = await genClient(
       spi!,
-      onKeyboardInteractive: (server, request) => KeyboardInteractiveAuth.handle(
-        server,
-        request,
-        context: context ?? AppNavigator.context,
-      ),
+      onKeyboardInteractive: (server, request) =>
+          KeyboardInteractiveAuth.handle(
+            server,
+            request,
+            context: context ?? AppNavigator.context,
+          ),
     );
     return _backend = SshShellBackend(client);
   }

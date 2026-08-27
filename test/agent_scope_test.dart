@@ -37,9 +37,9 @@ void main() {
     tempDir = await Directory.systemTemp.createTemp('server-box-agent-scope-');
     await openTestDb();
     await getIt.reset();
-    getIt.registerSingleton<SettingStore>(SettingStore.forTest()..init());
-    getIt.registerSingleton<ServerStore>(ServerStore.forTest());
-    conversationStore = AgentConversationStore.forTest();
+    getIt.registerSingleton<SettingStore>(SettingStore('setting_test')..init());
+    getIt.registerSingleton<ServerStore>(ServerStore());
+    conversationStore = AgentConversationStore();
     getIt.registerSingleton<AgentConversationStore>(conversationStore);
   });
 
@@ -96,109 +96,125 @@ void main() {
     );
   }
 
-  test('a terminal session sends the terminal, and only the shell tool', () async {
-    final h = harness();
-    final t = terminal(context: 'df -h\n/dev/disk1s1  92% /');
-    h.container.read(agentScopeHostsProvider).register('srv-a', t.host);
+  test(
+    'a terminal session sends the terminal, and only the shell tool',
+    () async {
+      final h = harness();
+      final t = terminal(context: 'df -h\n/dev/disk1s1  92% /');
+      h.container.read(agentScopeHostsProvider).register('srv-a', t.host);
 
-    await h.container
-        .read(agentSessionProvider('srv-a').notifier)
-        .submitPrompt('why is the disk full');
-    await settle();
+      await h.container
+          .read(agentSessionProvider('srv-a').notifier)
+          .submitPrompt('why is the disk full');
+      await settle();
 
-    expect(h.repository.terminalContext, contains('92%'));
-    expect(h.repository.serverName, 'web-1');
-    expect(h.repository.tools, [AskAiToolDefinition.runShellCommand]);
-    // The terminal is the context and is already being sent; a second
-    // description of the machine would be the app-wide Agent's prompt on a
-    // surface that is not it.
-    expect(h.repository.customInstructions, isNull);
-  });
+      expect(h.repository.terminalContext, contains('92%'));
+      expect(h.repository.serverName, 'web-1');
+      expect(h.repository.tools, [AskAiToolDefinition.runShellCommand]);
+      // The terminal is the context and is already being sent; a second
+      // description of the machine would be the app-wide Agent's prompt on a
+      // surface that is not it.
+      expect(h.repository.customInstructions, isNull);
+    },
+  );
 
-  test('the terminal is read per turn, not captured when the panel opened', () async {
-    final h = harness();
-    var screen = 'first screen';
-    final host = TerminalAgentHost(
-      serverName: 'web-1',
-      readContext: () => screen,
-      run: (_) async => throw StateError('not reached'),
-      insert: (_) {},
-      cancel: () async {},
-    );
-    h.container.read(agentScopeHostsProvider).register('srv-b', host);
-    final notifier = h.container.read(agentSessionProvider('srv-b').notifier);
+  test(
+    'the terminal is read per turn, not captured when the panel opened',
+    () async {
+      final h = harness();
+      var screen = 'first screen';
+      final host = TerminalAgentHost(
+        serverName: 'web-1',
+        readContext: () => screen,
+        run: (_) async => throw StateError('not reached'),
+        insert: (_) {},
+        cancel: () async {},
+      );
+      h.container.read(agentScopeHostsProvider).register('srv-b', host);
+      final notifier = h.container.read(agentSessionProvider('srv-b').notifier);
 
-    await notifier.submitPrompt('what is this');
+      await notifier.submitPrompt('what is this');
 
-    await settle();
-    expect(h.repository.terminalContext, 'first screen');
+      await settle();
+      expect(h.repository.terminalContext, 'first screen');
 
-    screen = 'second screen';
-    await notifier.declinePendingTool();
-    await settle();
-    expect(
-      h.repository.terminalContext,
-      'second screen',
-      reason: 'a session outlives the panel, so the screen it opened on is gone',
-    );
-  });
+      screen = 'second screen';
+      await notifier.declinePendingTool();
+      await settle();
+      expect(
+        h.repository.terminalContext,
+        'second screen',
+        reason:
+            'a session outlives the panel, so the screen it opened on is gone',
+      );
+    },
+  );
 
-  test('an approved command is stored the way a terminal has always stored it', () async {
-    final h = harness();
-    final t = terminal();
-    h.container.read(agentScopeHostsProvider).register('srv-c', t.host);
-    final notifier = h.container.read(agentSessionProvider('srv-c').notifier);
+  test(
+    'an approved command is stored the way a terminal has always stored it',
+    () async {
+      final h = harness();
+      final t = terminal();
+      h.container.read(agentScopeHostsProvider).register('srv-c', t.host);
+      final notifier = h.container.read(agentSessionProvider('srv-c').notifier);
 
-    await notifier.submitPrompt('check uptime');
+      await notifier.submitPrompt('check uptime');
 
-    await settle();
-    await notifier.runPendingTool();
-    await settle();
+      await settle();
+      await notifier.runPendingTool();
+      await settle();
 
-    expect(t.ran, ['uptime']);
-    final state = h.container.read(agentSessionProvider('srv-c'));
-    final entry = state.timeline.whereType<AgentShellResultEntry>().single;
-    expect(entry.result.stdout, 'up 3 days');
+      expect(t.ran, ['uptime']);
+      final state = h.container.read(agentSessionProvider('srv-c'));
+      final entry = state.timeline.whereType<AgentShellResultEntry>().single;
+      expect(entry.result.stdout, 'up 3 days');
 
-    // The output the model reads next turn. A terminal Agent writes a shell
-    // result, and the app-wide Agent's marked encoding stays out of it —
-    // conversations written before the merge are read back through the same
-    // decoder.
-    final output = state.history.whereType<AskAiFunctionOutputItem>().single;
-    expect(AgentToolExecutionResult.tryFromToolMessage(output.output), isNull);
-    expect(
-      AskAiCommandResult.tryFromToolMessage(
-        output.output,
-        fallbackCommand: 'uptime',
-      )?.stdout,
-      'up 3 days',
-    );
-  });
+      // The output the model reads next turn. A terminal Agent writes a shell
+      // result, and the app-wide Agent's marked encoding stays out of it —
+      // conversations written before the merge are read back through the same
+      // decoder.
+      final output = state.history.whereType<AskAiFunctionOutputItem>().single;
+      expect(
+        AgentToolExecutionResult.tryFromToolMessage(output.output),
+        isNull,
+      );
+      expect(
+        AskAiCommandResult.tryFromToolMessage(
+          output.output,
+          fallbackCommand: 'uptime',
+        )?.stdout,
+        'up 3 days',
+      );
+    },
+  );
 
-  test('a command approved after the terminal closed says so, and does not throw', () async {
-    final h = harness();
-    final t = terminal();
-    final hosts = h.container.read(agentScopeHostsProvider)
-      ..register('srv-d', t.host);
-    final notifier = h.container.read(agentSessionProvider('srv-d').notifier);
-    await notifier.submitPrompt('check uptime');
-    await settle();
+  test(
+    'a command approved after the terminal closed says so, and does not throw',
+    () async {
+      final h = harness();
+      final t = terminal();
+      final hosts = h.container.read(agentScopeHostsProvider)
+        ..register('srv-d', t.host);
+      final notifier = h.container.read(agentSessionProvider('srv-d').notifier);
+      await notifier.submitPrompt('check uptime');
+      await settle();
 
-    // The tab is closed while the proposal is on screen. The conversation is
-    // stored and survives; the terminal it was about does not.
-    hosts.unregister('srv-d', t.host);
-    await notifier.runPendingTool();
-    await settle();
+      // The tab is closed while the proposal is on screen. The conversation is
+      // stored and survives; the terminal it was about does not.
+      hosts.unregister('srv-d', t.host);
+      await notifier.runPendingTool();
+      await settle();
 
-    expect(t.ran, isEmpty);
-    final entry = h.container
-        .read(agentSessionProvider('srv-d'))
-        .timeline
-        .whereType<AgentShellResultEntry>()
-        .single;
-    expect(entry.result.succeeded, isFalse);
-    expect(entry.result.stderr, contains('closed'));
-  });
+      expect(t.ran, isEmpty);
+      final entry = h.container
+          .read(agentSessionProvider('srv-d'))
+          .timeline
+          .whereType<AgentShellResultEntry>()
+          .single;
+      expect(entry.result.succeeded, isFalse);
+      expect(entry.result.stderr, contains('closed'));
+    },
+  );
 
   group('insertPendingTool', () {
     test('puts the command on the terminal and ends the turn there', () async {
@@ -250,20 +266,23 @@ void main() {
     });
   });
 
-  test('two tabs on one server: the first closing does not detach the second', () {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
-    final hosts = container.read(agentScopeHostsProvider);
-    final first = terminal().host;
-    final second = terminal().host;
+  test(
+    'two tabs on one server: the first closing does not detach the second',
+    () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final hosts = container.read(agentScopeHostsProvider);
+      final first = terminal().host;
+      final second = terminal().host;
 
-    hosts
-      ..register('srv-f', first)
-      ..register('srv-f', second)
-      ..unregister('srv-f', first);
+      hosts
+        ..register('srv-f', first)
+        ..register('srv-f', second)
+        ..unregister('srv-f', first);
 
-    expect(identical(hosts['srv-f'], second), isTrue);
-  });
+      expect(identical(hosts['srv-f'], second), isTrue);
+    },
+  );
 }
 
 /// Answers every turn with one tool call awaiting review.

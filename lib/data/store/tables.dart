@@ -1,5 +1,4 @@
 import 'package:drift/native.dart';
-import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/store/db.dart';
 import 'package:sqlite3/sqlite3.dart';
 
@@ -87,14 +86,7 @@ Future<void> createTables(Database db) async {
     // warns about, and a test suite that opens a database per test would
     // otherwise leave one behind for each.
     //
-    // Best-effort: the previous connection may already be closed — a test's
-    // `tearDown` closes it directly — and closing a wrapper around a dead
-    // handle is not worth failing the next open over.
-    try {
-      await _appDb?.close();
-    } catch (e) {
-      Loggers.app.warning('Dropping the previous AppDb', e);
-    }
+    await closeTables();
     // `closeUnderlyingOnClose: false`: the handle belongs to `SqliteDb`, which
     // opened it, applied the cipher pragmas and will close it.
     _appDb = AppDb(NativeDatabase.opened(db, closeUnderlyingOnClose: false));
@@ -106,13 +98,16 @@ Future<void> createTables(Database db) async {
   await _appDb!.customStatement('SELECT 1;');
 }
 
-/// Forgets the cached [AppDb] without touching any connection.
+/// Closes the Drift wrapper without closing the raw SQLite handle it borrows.
 ///
-/// For a caller that closes the handle itself, so the next [createTables] does
-/// not reach through a wrapper around a database that is gone.
-void resetTables() {
+/// This must run before `SqliteDb.close()`: the wrapper was created with
+/// `closeUnderlyingOnClose: false`, so each layer remains responsible for its
+/// own resource and Drift can finish its pending work before the handle goes.
+Future<void> closeTables() async {
+  final appDb = _appDb;
   _appDb = null;
   _over = null;
+  await appDb?.close();
 }
 
 AppDb? _appDb;

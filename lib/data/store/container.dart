@@ -1,5 +1,4 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:meta/meta.dart';
 import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:sqlite3/sqlite3.dart';
@@ -18,13 +17,9 @@ import 'package:sqlite3/sqlite3.dart';
 /// belonging to a server that had been deleted, and a serverId beginning with
 /// `docker` would have been read as a runtime name.
 class ContainerStore {
-  ContainerStore._();
+  ContainerStore();
 
-  /// See [PrivateKeyStore.forTest].
-  @visibleForTesting
-  ContainerStore.forTest();
-
-  static final instance = ContainerStore._();
+  static final instance = ContainerStore();
 
   Database get _db => SqliteDb.instance;
 
@@ -72,8 +67,9 @@ class ContainerStore {
         defaultType;
   }
 
-  ContainerType get defaultType =>
-      Stores.setting.usePodman.get() ? ContainerType.podman : ContainerType.docker;
+  ContainerType get defaultType => Stores.setting.usePodman.get()
+      ? ContainerType.podman
+      : ContainerType.docker;
 
   /// Records [type] for [id], or drops the row when it matches the default —
   /// so a later change to the global setting still reaches servers the user
@@ -155,8 +151,7 @@ class ContainerStore {
 
   /// Both tables have a foreign key, and a backup can name a server this device
   /// deleted.
-  bool _known(String serverId) =>
-      Stores.server.fetchOneRaw(serverId) != null;
+  bool _known(String serverId) => Stores.server.fetchOneRaw(serverId) != null;
 
   /// Writes one entry of [getAllMap] back. Skips a server that is not here:
   /// both tables have a foreign key, and a backup can name a server this

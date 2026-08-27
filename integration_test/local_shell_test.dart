@@ -41,6 +41,18 @@ void main() {
   // decided here — a test that skips it is testing a state the app is never in.
   setUpAll(() => Paths.init(BuildData.name, bakName: Miscs.bakFileName));
 
+  String markerCommand(String suffix, {String? onlyIf}) {
+    if (Platform.isWindows) {
+      final condition = onlyIf == null ? '' : '$onlyIf && ';
+      return 'set "SBM_MARK_A=SBM_"\r'
+          'set "SBM_MARK_B=$suffix"\r'
+          '$condition'
+          'echo %SBM_MARK_A%%SBM_MARK_B%\r';
+    }
+    final condition = onlyIf == null ? '' : '$onlyIf && ';
+    return '${condition}echo "SBM_""$suffix"\n';
+  }
+
   /// Reads until [marker] shows up, or gives up.
   ///
   /// The commands below are written so that only the *output* can contain the
@@ -79,7 +91,7 @@ void main() {
     addTearDown(backend.close);
 
     final shell = await backend.openShell(width: 80, height: 24);
-    shell.write(utf8.encode('echo "SBM_""ALIVE"\n'));
+    shell.write(utf8.encode(markerCommand('ALIVE')));
 
     final out = await readUntil(shell, 'SBM_ALIVE');
     expect(out, contains('SBM_ALIVE'));
@@ -98,13 +110,24 @@ void main() {
     final shell = await backend.openShell(width: 80, height: 24);
     // A marker of its own rather than reading the prompt: what a prompt looks
     // like is the user's business, and `$` is not even zsh's.
-    shell.write(utf8.encode('echo "SBM_""PWD:\$PWD"\n'));
+    if (Platform.isWindows) {
+      shell.write(
+        utf8.encode(
+          'set "SBM_MARK_A=SBM_"\r'
+          'set "SBM_MARK_B=PWD:"\r'
+          'echo %SBM_MARK_A%%SBM_MARK_B%%CD%\r',
+        ),
+      );
+    } else {
+      shell.write(utf8.encode('echo "SBM_""PWD:\$PWD"\n'));
+    }
 
     final out = await readUntil(shell, 'SBM_PWD:');
     expect(
       out,
       contains('SBM_PWD:$home'),
-      reason: 'a shell that merely inherited the app\'s working directory '
+      reason:
+          'a shell that merely inherited the app\'s working directory '
           'would open at / — under Finder on macOS, and always on Android',
     );
   }, skip: _cannotRun != null);
@@ -119,7 +142,12 @@ void main() {
 
     final shell = await backend.openShell(width: 80, height: 24);
     shell.write(
-      utf8.encode('ls "\$HOME" >/dev/null && echo "SBM_""HOME_OK"\n'),
+      utf8.encode(
+        markerCommand(
+          'HOME_OK',
+          onlyIf: Platform.isWindows ? 'dir . >nul' : 'ls "\$HOME" >/dev/null',
+        ),
+      ),
     );
 
     final out = await readUntil(shell, 'SBM_HOME_OK');
@@ -150,7 +178,7 @@ void main() {
   testWidgets('closing the backend ends the shell', (_) async {
     final backend = LocalShellBackend();
     final shell = await backend.openShell(width: 80, height: 24);
-    shell.write(utf8.encode('echo "SBM_""ALIVE"\n'));
+    shell.write(utf8.encode(markerCommand('ALIVE')));
     await readUntil(shell, 'SBM_ALIVE');
 
     backend.close();

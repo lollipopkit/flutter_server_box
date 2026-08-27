@@ -24,7 +24,9 @@ void main() {
     await openTestDb();
     // `distMarkUrl` reads the global setting through the locator, so it has to
     // be the same instance this test writes to.
-    GetIt.instance.registerSingleton<SettingStore>(SettingStore.forTest()..init());
+    GetIt.instance.registerSingleton<SettingStore>(
+      SettingStore('setting_test')..init(),
+    );
   });
 
   tearDown(() async {
@@ -77,11 +79,17 @@ void main() {
     expect(url(mark: 'https://ex.com/{DIST}.svg', dist: null), isNull);
   });
 
-  test('an address without the token works for a server with no distribution', () {
-    // A single fixed image is a legitimate thing to configure, and it does not
-    // depend on recognising anything.
-    expect(url(mark: 'https://ex.com/one.png', dist: null), 'https://ex.com/one.png');
-  });
+  test(
+    'an address without the token works for a server with no distribution',
+    () {
+      // A single fixed image is a legitimate thing to configure, and it does not
+      // depend on recognising anything.
+      expect(
+        url(mark: 'https://ex.com/one.png', dist: null),
+        'https://ex.com/one.png',
+      );
+    },
+  );
 
   test('{BRIGHT} follows the theme', () {
     expect(

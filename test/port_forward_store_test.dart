@@ -23,7 +23,7 @@ void main() {
       "('srv-1', 'one', '10.0.0.1'), ('srv-2', 'two', '10.0.0.2'), "
       "('srv-other', 'other', '10.0.0.3');",
     );
-    store = PortForwardStore.forTest();
+    store = PortForwardStore();
   });
 
   tearDown(() async => SqliteDb.close());
@@ -52,9 +52,7 @@ void main() {
       store.put(config.copyWith(id: type.name, type: type));
     }
 
-    final byType = {
-      for (final c in store.fetchForServer('srv-1')) c.type: c,
-    };
+    final byType = {for (final c in store.fetchForServer('srv-1')) c.type: c};
     expect(byType.keys.toSet(), PortForwardType.values.toSet());
   });
 

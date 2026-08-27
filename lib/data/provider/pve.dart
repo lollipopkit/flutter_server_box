@@ -45,9 +45,6 @@ class PveNotifier extends _$PveNotifier {
   Future<void>? _initFuture;
   int _sessionGeneration = 0;
 
-  @visibleForTesting
-  Future<void> Function()? forwardForTest;
-
   String get addrValue => addr!;
 
   SSHClient get _client {
@@ -134,8 +131,7 @@ class PveNotifier extends _$PveNotifier {
             },
             validateCertificate: _ignoreCert ? (_, _, _) => true : null,
           );
-    _session = active;
-    return active;
+    return adoptSession(active);
   }
 
   Future<void> reconnect() async {
@@ -173,7 +169,7 @@ class PveNotifier extends _$PveNotifier {
       if (!ref.mounted) return;
       active = _initSession();
       state = state.copyWith(loadingStep: PveLoadingStep.forwarding);
-      await _forward(generation);
+      await forward(generation);
       if (_abortStaleInit(generation, active)) return;
       state = state.copyWith(loadingStep: PveLoadingStep.loggingIn);
       await _login(generation, active);
@@ -244,12 +240,8 @@ class PveNotifier extends _$PveNotifier {
     await _init();
   }
 
-  Future<void> _forward(int generation) async {
-    final forwardOverride = forwardForTest;
-    if (forwardOverride != null) {
-      await forwardOverride();
-      return;
-    }
+  @protected
+  Future<void> forward(int generation) async {
     final url = Uri.parse(addrValue);
     if (_localPort == 0) {
       final serverSocket = await ServerSocket.bind('localhost', 0);
@@ -630,16 +622,11 @@ class PveNotifier extends _$PveNotifier {
     }
   }
 
-  @visibleForTesting
-  void useSessionForTest(Dio session) {
+  @protected
+  Dio adoptSession(Dio session) {
     _session?.close(force: true);
     _session = session;
-    state = state.copyWith(
-      error: null,
-      isConnected: true,
-      isBusy: false,
-      loadingStep: PveLoadingStep.none,
-    );
+    return session;
   }
 
   bool _isCtrlSuc(Response resp) {

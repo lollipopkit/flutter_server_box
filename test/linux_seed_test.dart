@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/linux_seed.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
@@ -27,7 +26,7 @@ void main() {
   // Distribution data comes from the manifest now; `Rootfs.prepare` loads
   // it in the app, and a test reads the same file off disk.
   setUpAll(() {
-    LinuxDistros.adoptForTest(
+    LinuxDistros.adopt(
       RootfsManifest.parse(File(LinuxDistros.bundledAsset).readAsStringSync()),
     );
   });
@@ -385,12 +384,14 @@ void main() {
     setUp(() async {
       await openTestDb();
       await getIt.reset();
-      getIt.registerSingleton<SettingStore>(SettingStore.forTest()..init());
+      getIt.registerSingleton<SettingStore>(
+        SettingStore('setting_test')..init(),
+      );
     });
 
     tearDown(() async {
       await getIt.reset();
-      SqliteDb.close();
+      await closeTestDb();
     });
 
     test('the default, until something is stored', () {

@@ -22,7 +22,7 @@ void main() {
   // `Rootfs.prepare` is what loads it in the app. A test has no asset bundle,
   // so it reads the same file off disk.
   setUpAll(() {
-    LinuxDistros.adoptForTest(
+    LinuxDistros.adopt(
       RootfsManifest.parse(File(LinuxDistros.bundledAsset).readAsStringSync()),
     );
   });
@@ -403,7 +403,7 @@ void main() {
       // A marker outlives any manifest that stops describing its distribution.
       // There is nothing to offer as an update, and asking for a version would
       // throw rather than guess.
-      LinuxDistros.adoptForTest(
+      LinuxDistros.adopt(
         RootfsManifest.parse(
           File(
             LinuxDistros.bundledAsset,
@@ -411,7 +411,7 @@ void main() {
         ),
       );
       addTearDown(() {
-        LinuxDistros.adoptForTest(
+        LinuxDistros.adopt(
           RootfsManifest.parse(
             File(LinuxDistros.bundledAsset).readAsStringSync(),
           ),

@@ -25,7 +25,7 @@ void main() {
   setUp(() async {
     await openTestDb();
     GetIt.instance.registerSingleton<SettingStore>(
-      SettingStore.forTest()..init(),
+      SettingStore('setting_test')..init(),
     );
     // Off by default, and every case below is about what is drawn when it is
     // on. The off case has a group of its own.
@@ -40,7 +40,9 @@ void main() {
   });
 
   Future<void> pump(WidgetTester tester, Dist? dist) => tester.pumpWidget(
-    MaterialApp(home: Scaffold(body: Center(child: DistIconOf(dist)))),
+    MaterialApp(
+      home: Scaffold(body: Center(child: DistIconOf(dist))),
+    ),
   );
 
   /// A machine — what is drawn when it is not even known to be a Linux.

@@ -91,8 +91,4 @@ class ScriptPaths {
     return '$dir$separator$fileName';
   }
 
-  /// Clear cached script directories (useful for testing)
-  static void clearCache() {
-    _scriptDirMap.clear();
-  }
 }

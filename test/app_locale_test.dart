@@ -12,7 +12,7 @@ void main() {
 
   setUp(() async {
     SqliteDb.openInMemory();
-    setting = SettingStore.forTest();
+    setting = SettingStore('setting_test');
     getIt.registerSingleton<SettingStore>(setting);
     FlutterSecureStorage.setMockInitialValues({});
   });

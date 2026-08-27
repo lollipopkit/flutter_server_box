@@ -51,7 +51,7 @@ class ProxyCommandSocket implements SSHSocket {
       );
     }
 
-    final resolvedCommand = _resolveCommand(
+    final resolvedCommand = resolveCommand(
       command: command,
       host: host,
       port: port,
@@ -161,18 +161,12 @@ class ProxyCommandSocket implements SSHSocket {
   /// home-directory path works there (`nc %h %p` was measured working, network
   /// access being granted), so this is the likely cause and not the certain one.
   static String _explain(String message) =>
-      _explainFor(message, sandboxed: Pfs.isMacSandboxed);
+      explain(message, sandboxed: Pfs.isMacSandboxed);
 
-  static String _explainFor(String message, {required bool sandboxed}) {
+  static String explain(String message, {required bool sandboxed}) {
     if (!sandboxed) return message;
     return '$message\n\n${l10n.proxyCommandSandboxed}';
   }
-
-  /// [_explainFor] with the confinement stated rather than asked of the
-  /// process, since a test runs in neither of the two builds this is about.
-  @visibleForTesting
-  static String debugExplain(String message, {required bool sandboxed}) =>
-      _explainFor(message, sandboxed: sandboxed);
 
   /// Everything a hostname, an IPv4 or IPv6 literal, or a POSIX user name is
   /// made of, and nothing a shell reads as syntax. `%` is absent on purpose:
@@ -202,7 +196,7 @@ class ProxyCommandSocket implements SSHSocket {
     );
   }
 
-  static String _resolveCommand({
+  static String resolveCommand({
     required String command,
     required String host,
     required int port,
@@ -220,23 +214,6 @@ class ProxyCommandSocket implements SSHSocket {
         .replaceAll('%j', checkSubstitutable('jump', jump))
         .replaceAll(percentPlaceholder, '%');
   }
-
-  @visibleForTesting
-  static String debugResolveCommand({
-    required String command,
-    required String host,
-    required int port,
-    required String user,
-    required String originalHost,
-    String jump = '',
-  }) => _resolveCommand(
-    command: command,
-    host: host,
-    port: port,
-    user: user,
-    originalHost: originalHost,
-    jump: jump,
-  );
 
   static ({String executable, List<String> arguments}) _buildShellCommand(
     String command,

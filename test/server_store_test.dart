@@ -30,7 +30,7 @@ void main() {
 
   setUp(() async {
     await openTestDb();
-    store = ServerStore.forTest();
+    store = ServerStore();
   });
 
   tearDown(() async => SqliteDb.close());
@@ -148,7 +148,7 @@ void main() {
     );
 
     setUp(() {
-      creds = BmcCredentialStore.forTest();
+      creds = BmcCredentialStore();
       creds.put(cred);
     });
 
@@ -376,7 +376,7 @@ void main() {
     });
 
     test('a merged server tombstone stamps cascaded relationship owners', () {
-      final snippets = SnippetStore.forTest();
+      final snippets = SnippetStore();
       store.put(target);
       store.put(jumper);
       snippets.put(

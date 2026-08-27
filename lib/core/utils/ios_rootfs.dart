@@ -8,7 +8,6 @@ import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:ffi/ffi.dart';
 import 'package:fl_lib/fl_lib.dart';
-import 'package:meta/meta.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:server_box/core/utils/guest_path.dart';
 import 'package:server_box/core/utils/linux_seed.dart';
@@ -278,7 +277,7 @@ abstract final class IosRootfs {
         );
       }
 
-      await _extract(file, dir, source: chosen.source, onProgress: onProgress);
+      await extract(file, dir, source: chosen.source, onProgress: onProgress);
       // Without these `apk` reaches nothing: the guest's sockets work and an
       // address literal is fetched fine, but there is no resolver, so every
       // mirror is a "temporary error" and every package is missing.
@@ -457,18 +456,7 @@ abstract final class IosRootfs {
   /// [LinuxDistro.compression] and [LinuxDistro.layout] are two axes because
   /// they are two decisions: what decompresses the download, and whether what
   /// falls out is the filesystem or an image describing one.
-  /// Visible so a test can unpack a real distribution's tarball and look at
-  /// what landed. Hard links, symbolic links and modes are all things whose
-  /// failure looks like a working install until something tries to run.
-  @visibleForTesting
-  static Future<void> extractForTest(
-    File archiveFile,
-    Directory into, {
-    required RootfsSource source,
-    void Function(double? progress)? onProgress,
-  }) => _extract(archiveFile, into, source: source, onProgress: onProgress);
-
-  static Future<void> _extract(
+  static Future<void> extract(
     File archiveFile,
     Directory into, {
     required RootfsSource source,

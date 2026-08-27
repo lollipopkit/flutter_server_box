@@ -20,7 +20,7 @@ void main() {
 
   setUp(() {
     SqliteDb.openInMemory();
-    store = SettingStore.forTest();
+    store = SettingStore('setting_test');
     migration = SettingsFixupsMigration(store: store);
   });
 
@@ -78,12 +78,7 @@ void main() {
 
       await migration.apply();
 
-      expect(store.get<List>('homeTabs'), [
-        'server',
-        'ssh',
-        'file',
-        'snippet',
-      ]);
+      expect(store.get<List>('homeTabs'), ['server', 'ssh', 'file', 'snippet']);
     });
 
     test('and running the step twice is the same as running it once', () async {
@@ -179,18 +174,20 @@ void main() {
       expect(store.get<bool>('sshConnectionModeMigrated'), isTrue);
     });
 
-    test('and removeRetiredKeys drops them once the version has moved',
-        () async {
-      store.set('homeTabsAgentMigrated', true);
-      store.set('sshConnectionModeMigrated', true);
-      store.schemaVersion.put(SettingsFixupsMigration.appliedAt + 1);
+    test(
+      'and removeRetiredKeys drops them once the version has moved',
+      () async {
+        store.set('homeTabsAgentMigrated', true);
+        store.set('sshConnectionModeMigrated', true);
+        store.schemaVersion.put(SettingsFixupsMigration.appliedAt + 1);
 
-      await store.removeRetiredKeys();
+        await store.removeRetiredKeys();
 
-      // One key per fixup, each exported by a backup and read by nothing else.
-      expect(store.get<bool>('homeTabsAgentMigrated'), isNull);
-      expect(store.get<bool>('sshConnectionModeMigrated'), isNull);
-    });
+        // One key per fixup, each exported by a backup and read by nothing else.
+        expect(store.get<bool>('homeTabsAgentMigrated'), isNull);
+        expect(store.get<bool>('sshConnectionModeMigrated'), isNull);
+      },
+    );
 
     test('but not before, since that launch still has to read them', () async {
       // `removeRetiredKeys` runs from `Stores.init`, which is before
@@ -204,34 +201,38 @@ void main() {
       expect(store.get<bool>('homeTabsAgentMigrated'), isTrue);
     });
 
-    test('and nothing at all is dropped on a database this build cannot read',
-        () async {
-      // `Stores.init` calls this before `SchemaVersion.migrate` gets to refuse
-      // the downgrade, so the refusal used to arrive after the keys were gone.
-      // "Retired here" says nothing about whether the newer build still reads
-      // them.
-      store.schemaVersion.put(SchemaVersion.current + 1);
-      store.set('sshConnectionModeMigrated', true);
-      store.set('forceSinglePane', true);
+    test(
+      'and nothing at all is dropped on a database this build cannot read',
+      () async {
+        // `Stores.init` calls this before `SchemaVersion.migrate` gets to refuse
+        // the downgrade, so the refusal used to arrive after the keys were gone.
+        // "Retired here" says nothing about whether the newer build still reads
+        // them.
+        store.schemaVersion.put(SchemaVersion.current + 1);
+        store.set('sshConnectionModeMigrated', true);
+        store.set('forceSinglePane', true);
 
-      await store.removeRetiredKeys();
+        await store.removeRetiredKeys();
 
-      expect(store.get<bool>('sshConnectionModeMigrated'), isTrue);
-      expect(store.get<bool>('forceSinglePane'), isTrue);
-    });
+        expect(store.get<bool>('sshConnectionModeMigrated'), isTrue);
+        expect(store.get<bool>('forceSinglePane'), isTrue);
+      },
+    );
 
-    test('and a restore that brings them back is cleaned up next launch',
-        () async {
-      // The reason this lives in removeRetiredKeys rather than at the tail of
-      // the step: an older backup writes the flags back long after the step
-      // can run again.
-      store.schemaVersion.put(SettingsFixupsMigration.appliedAt + 2);
-      store.set('sshConnectionModeMigrated', true);
+    test(
+      'and a restore that brings them back is cleaned up next launch',
+      () async {
+        // The reason this lives in removeRetiredKeys rather than at the tail of
+        // the step: an older backup writes the flags back long after the step
+        // can run again.
+        store.schemaVersion.put(SettingsFixupsMigration.appliedAt + 2);
+        store.set('sshConnectionModeMigrated', true);
 
-      await store.removeRetiredKeys();
+        await store.removeRetiredKeys();
 
-      expect(store.get<bool>('sshConnectionModeMigrated'), isNull);
-    });
+        expect(store.get<bool>('sshConnectionModeMigrated'), isNull);
+      },
+    );
   });
 
   test('none of it counts as a user edit', () async {
@@ -250,17 +251,20 @@ void main() {
     expect(store.lastUpdateTs, anyOf(isNull, isEmpty));
   });
 
-  test('removes retired setting keys without touching active settings', () async {
-    store.setAll({
-      'moveOutServerTabFuncBtns': true,
-      'forceSinglePane': true,
-      'recordHistory': false,
-    });
+  test(
+    'removes retired setting keys without touching active settings',
+    () async {
+      store.setAll({
+        'moveOutServerTabFuncBtns': true,
+        'forceSinglePane': true,
+        'recordHistory': false,
+      });
 
-    await store.removeRetiredKeys();
+      await store.removeRetiredKeys();
 
-    expect(store.get<bool>('moveOutServerTabFuncBtns'), isNull);
-    expect(store.get<bool>('forceSinglePane'), isNull);
-    expect(store.get<bool>('recordHistory'), isFalse);
-  });
+      expect(store.get<bool>('moveOutServerTabFuncBtns'), isNull);
+      expect(store.get<bool>('forceSinglePane'), isNull);
+      expect(store.get<bool>('recordHistory'), isFalse);
+    },
+  );
 }

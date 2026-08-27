@@ -14,6 +14,7 @@ import 'package:server_box/data/model/app/error.dart';
 void main() {
   late String lockedPem;
   late String plainPem;
+  late PassphrasePrompt prompt;
   const passphrase = 'let me in';
 
   setUpAll(() {
@@ -31,24 +32,35 @@ void main() {
 
   setUp(() {
     PrivateKeyUnlock.forgetAll();
-    PrivateKeyUnlock.promptOverrideForTesting = null;
+    prompt = ({required keyName, required retry}) async =>
+        throw StateError('unexpected passphrase prompt for $keyName');
   });
 
   tearDown(() {
     PrivateKeyUnlock.forgetAll();
-    PrivateKeyUnlock.promptOverrideForTesting = null;
   });
+
+  Future<String> open(
+    String pem, {
+    required String cacheKey,
+    required String keyName,
+  }) => PrivateKeyUnlock.open(
+    pem,
+    cacheKey: cacheKey,
+    keyName: keyName,
+    prompt: prompt,
+  );
 
   test('a key that needs no passphrase is never asked about', () async {
     var asked = 0;
-    PrivateKeyUnlock.promptOverrideForTesting = ({required keyName, required retry}) async {
+    prompt = ({required keyName, required retry}) async {
       asked++;
       return passphrase;
     };
 
     expect(PrivateKeyUnlock.isLocked(plainPem), isFalse);
     expect(
-      await PrivateKeyUnlock.open(plainPem, cacheKey: 'k', keyName: 'k'),
+      await open(plainPem, cacheKey: 'k', keyName: 'k'),
       plainPem,
       reason: 'it should come back untouched, not re-encoded',
     );
@@ -57,40 +69,32 @@ void main() {
 
   test('a locked key is asked about once and remembered', () async {
     var asked = 0;
-    PrivateKeyUnlock.promptOverrideForTesting = ({required keyName, required retry}) async {
+    prompt = ({required keyName, required retry}) async {
       asked++;
       return passphrase;
     };
 
     expect(PrivateKeyUnlock.isLocked(lockedPem), isTrue);
-    final opened = await PrivateKeyUnlock.open(
-      lockedPem,
-      cacheKey: 'k',
-      keyName: 'work laptop',
-    );
+    final opened = await open(lockedPem, cacheKey: 'k', keyName: 'work laptop');
     expect(PrivateKeyUnlock.isLocked(opened), isFalse);
 
-    await PrivateKeyUnlock.open(lockedPem, cacheKey: 'k', keyName: 'x');
+    await open(lockedPem, cacheKey: 'k', keyName: 'x');
     expect(asked, 1, reason: 'once per key per run, not once per connection');
   });
 
   test('the key is named when asking', () async {
     String? seen;
-    PrivateKeyUnlock.promptOverrideForTesting = ({required keyName, required retry}) async {
+    prompt = ({required keyName, required retry}) async {
       seen = keyName;
       return passphrase;
     };
-    await PrivateKeyUnlock.open(
-      lockedPem,
-      cacheKey: 'k',
-      keyName: 'work laptop',
-    );
+    await open(lockedPem, cacheKey: 'k', keyName: 'work laptop');
     expect(seen, 'work laptop');
   });
 
   test('two connections at once produce one prompt', () async {
     var asked = 0;
-    PrivateKeyUnlock.promptOverrideForTesting = ({required keyName, required retry}) async {
+    prompt = ({required keyName, required retry}) async {
       asked++;
       // Long enough that the second caller arrives while this is pending,
       // which is the case being tested — a stack of identical dialogs.
@@ -99,8 +103,8 @@ void main() {
     };
 
     final results = await Future.wait([
-      PrivateKeyUnlock.open(lockedPem, cacheKey: 'k', keyName: 'k'),
-      PrivateKeyUnlock.open(lockedPem, cacheKey: 'k', keyName: 'k'),
+      open(lockedPem, cacheKey: 'k', keyName: 'k'),
+      open(lockedPem, cacheKey: 'k', keyName: 'k'),
     ]);
     expect(asked, 1);
     expect(results[0], results[1]);
@@ -108,72 +112,67 @@ void main() {
 
   test('a wrong passphrase is asked again, and says so', () async {
     final retries = <bool>[];
-    PrivateKeyUnlock.promptOverrideForTesting = ({required keyName, required retry}) async {
+    prompt = ({required keyName, required retry}) async {
       retries.add(retry);
       return retries.length == 1 ? 'wrong' : passphrase;
     };
 
-    final opened = await PrivateKeyUnlock.open(
-      lockedPem,
-      cacheKey: 'k',
-      keyName: 'k',
-    );
+    final opened = await open(lockedPem, cacheKey: 'k', keyName: 'k');
     expect(PrivateKeyUnlock.isLocked(opened), isFalse);
     expect(retries, [false, true], reason: 'the second ask has to say why');
   });
 
   test('a wrong passphrase every time gives up rather than looping', () async {
     var asked = 0;
-    PrivateKeyUnlock.promptOverrideForTesting = ({required keyName, required retry}) async {
+    prompt = ({required keyName, required retry}) async {
       asked++;
       return 'wrong';
     };
 
     await expectLater(
-      PrivateKeyUnlock.open(lockedPem, cacheKey: 'k', keyName: 'k'),
+      open(lockedPem, cacheKey: 'k', keyName: 'k'),
       throwsA(isA<SSHErr>()),
     );
     expect(asked, PrivateKeyUnlock.maxAttempts);
-    expect(PrivateKeyUnlock.isOpened('k'), isFalse);
   });
 
-  test('declining fails the connection rather than trying without a key',
-      () async {
-    PrivateKeyUnlock.promptOverrideForTesting = ({required keyName, required retry}) async => null;
+  test(
+    'declining fails the connection rather than trying without a key',
+    () async {
+      prompt = ({required keyName, required retry}) async => null;
 
-    await expectLater(
-      PrivateKeyUnlock.open(lockedPem, cacheKey: 'k', keyName: 'k'),
-      throwsA(isA<SSHErr>()),
-    );
-    expect(PrivateKeyUnlock.isOpened('k'), isFalse);
-  });
+      await expectLater(
+        open(lockedPem, cacheKey: 'k', keyName: 'k'),
+        throwsA(isA<SSHErr>()),
+      );
+    },
+  );
 
   test('forget makes the next connection ask again', () async {
     var asked = 0;
-    PrivateKeyUnlock.promptOverrideForTesting = ({required keyName, required retry}) async {
+    prompt = ({required keyName, required retry}) async {
       asked++;
       return passphrase;
     };
 
-    await PrivateKeyUnlock.open(lockedPem, cacheKey: 'k', keyName: 'k');
+    await open(lockedPem, cacheKey: 'k', keyName: 'k');
     // What editing or deleting the key does: the passphrase held was for the
     // bytes that were there when it was given.
     PrivateKeyUnlock.forget('k');
-    await PrivateKeyUnlock.open(lockedPem, cacheKey: 'k', keyName: 'k');
+    await open(lockedPem, cacheKey: 'k', keyName: 'k');
     expect(asked, 2);
   });
 
   test('a refusal is remembered, so the poller does not ask again', () async {
     var asked = 0;
-    PrivateKeyUnlock.promptOverrideForTesting =
-        ({required keyName, required retry}) async {
-          asked++;
-          return null;
-        };
+    prompt = ({required keyName, required retry}) async {
+      asked++;
+      return null;
+    };
 
     for (var i = 0; i < 3; i++) {
       await expectLater(
-        PrivateKeyUnlock.open(lockedPem, cacheKey: 'k', keyName: 'k'),
+        open(lockedPem, cacheKey: 'k', keyName: 'k'),
         throwsA(isA<SSHErr>()),
       );
     }
@@ -184,7 +183,7 @@ void main() {
     // Editing the key is what offers it again.
     PrivateKeyUnlock.forget('k');
     await expectLater(
-      PrivateKeyUnlock.open(lockedPem, cacheKey: 'k', keyName: 'k'),
+      open(lockedPem, cacheKey: 'k', keyName: 'k'),
       throwsA(isA<SSHErr>()),
     );
     expect(asked, 2);
@@ -193,19 +192,14 @@ void main() {
   test('an empty passphrase is not a guess', () async {
     final answers = ['', '', passphrase];
     var asked = 0;
-    PrivateKeyUnlock.promptOverrideForTesting =
-        ({required keyName, required retry}) async {
-          // Never a retry: nothing was guessed yet, so saying "wrong
-          // passphrase" would be reporting a failure that did not happen.
-          expect(retry, isFalse);
-          return answers[asked++];
-        };
+    prompt = ({required keyName, required retry}) async {
+      // Never a retry: nothing was guessed yet, so saying "wrong
+      // passphrase" would be reporting a failure that did not happen.
+      expect(retry, isFalse);
+      return answers[asked++];
+    };
 
-    final opened = await PrivateKeyUnlock.open(
-      lockedPem,
-      cacheKey: 'k',
-      keyName: 'k',
-    );
+    final opened = await open(lockedPem, cacheKey: 'k', keyName: 'k');
     expect(PrivateKeyUnlock.isLocked(opened), isFalse);
     expect(asked, 3, reason: 'the two empty answers cost no attempts');
   });
@@ -215,37 +209,34 @@ void main() {
     // that are no longer stored, and caching it would authenticate every later
     // connection with the key that was just replaced.
     final released = Completer<void>();
-    PrivateKeyUnlock.promptOverrideForTesting =
-        ({required keyName, required retry}) async {
-          await released.future;
-          return passphrase;
-        };
+    prompt = ({required keyName, required retry}) async {
+      await released.future;
+      return passphrase;
+    };
 
-    final pending = PrivateKeyUnlock.open(
-      lockedPem,
-      cacheKey: 'k',
-      keyName: 'k',
-    );
+    final pending = open(lockedPem, cacheKey: 'k', keyName: 'k');
     PrivateKeyUnlock.forget('k');
     released.complete();
     await pending;
 
-    expect(PrivateKeyUnlock.isOpened('k'), isFalse);
+    var askedAgain = 0;
+    prompt = ({required keyName, required retry}) async {
+      askedAgain++;
+      return passphrase;
+    };
+    await open(lockedPem, cacheKey: 'k', keyName: 'k');
+    expect(askedAgain, 1, reason: 'the stale answer must not be cached');
   });
 
   test('remember seeds what the import page already verified', () async {
     var asked = 0;
-    PrivateKeyUnlock.promptOverrideForTesting =
-        ({required keyName, required retry}) async {
-          asked++;
-          return passphrase;
-        };
+    prompt = ({required keyName, required retry}) async {
+      asked++;
+      return passphrase;
+    };
 
     PrivateKeyUnlock.remember('k', plainPem);
-    expect(
-      await PrivateKeyUnlock.open(lockedPem, cacheKey: 'k', keyName: 'k'),
-      plainPem,
-    );
+    expect(await open(lockedPem, cacheKey: 'k', keyName: 'k'), plainPem);
     expect(asked, 0, reason: 'the passphrase was typed seconds ago');
   });
 

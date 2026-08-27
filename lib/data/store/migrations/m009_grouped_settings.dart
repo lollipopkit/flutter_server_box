@@ -35,7 +35,7 @@ class GroupedSettingsMigration implements SchemaMigration {
   const GroupedSettingsMigration({SettingStore? store}) : _store = store;
 
   /// Which store to convert. Null is the app's own; a test hands in a
-  /// `forTest` one, since the singleton is bound to the real store name.
+  /// caller-provided one, since the singleton is bound to the real store name.
   final SettingStore? _store;
 
   @override

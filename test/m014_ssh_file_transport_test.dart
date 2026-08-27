@@ -68,12 +68,11 @@ void main() {
 
     await const SshFileTransportMigration().apply();
 
-    final spi = ServerStore.forTest().fetch().single;
+    final spi = ServerStore().fetch().single;
     expect(spi.ssh?.fileTransport, SshFileTransport.sftp);
   });
 
-  test('a value nothing recognises reads as SFTP rather than throwing',
-      () async {
+  test('a value nothing recognises reads as SFTP rather than throwing', () async {
     await createV14Schema();
     await const SshFileTransportMigration().apply();
     SqliteDb.instance.execute(
@@ -84,7 +83,7 @@ void main() {
 
     // Stored by name, so a build that grows a third protocol writes a word this
     // one has never seen. Falling back beats refusing to list the server.
-    final spi = ServerStore.forTest().fetch().single;
+    final spi = ServerStore().fetch().single;
     expect(spi.ssh?.fileTransport, SshFileTransport.sftp);
   });
 
