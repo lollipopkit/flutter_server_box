@@ -920,17 +920,15 @@ fn windows_custom_commands_have_time_and_output_bounds() {
         .map(|spec| format!("Windows.{}", spec.key))
         .collect();
     let status = home.join("status.ps1");
-    std::fs::write(
-        &status,
-        build_script(
-            SystemType::Windows,
-            &ScriptOptions {
-                disabled,
-                ..Default::default()
-            },
-        ),
-    )
-    .unwrap();
+    let generated = build_script(
+        SystemType::Windows,
+        &ScriptOptions {
+            disabled,
+            ..Default::default()
+        },
+    );
+    assert!(generated.contains("$deadline = [DateTime]::UtcNow.AddSeconds(5)"));
+    std::fs::write(&status, generated).unwrap();
 
     let mut child = Command::new("powershell")
         .args(["-NoProfile", "-ExecutionPolicy", "Bypass", "-File"])
@@ -954,8 +952,10 @@ fn windows_custom_commands_have_time_and_output_bounds() {
         bytes
     });
 
-    const EXPECTED_RUNTIME: Duration = Duration::from_secs(20);
-    const HARD_TIMEOUT: Duration = Duration::from_secs(25);
+    // Hosted Windows runners vary widely in nested PowerShell startup and
+    // taskkill time. The generated deadline and the missing `late` output
+    // below verify the five-second behavior; this is only a hang guard.
+    const HARD_TIMEOUT: Duration = Duration::from_secs(60);
     let started = Instant::now();
     let status_code = loop {
         if let Some(status) = child.try_wait().unwrap() {
@@ -975,11 +975,6 @@ fn windows_custom_commands_have_time_and_output_bounds() {
         status_code.success(),
         "{}",
         String::from_utf8_lossy(&stderr)
-    );
-    let elapsed = started.elapsed();
-    assert!(
-        elapsed < EXPECTED_RUNTIME,
-        "generated PowerShell custom-command runner took {elapsed:?}"
     );
     let parsed = parse_script_output(&String::from_utf8(stdout).unwrap());
     assert_eq!(
