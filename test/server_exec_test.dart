@@ -31,6 +31,28 @@ class _RecordingExec implements ServerExec {
 }
 
 void main() {
+  group('ExecResult', () {
+    test('accepts output when the SSH server omits a clean exit status', () {
+      const result = ExecResult(
+        exitCode: null,
+        stdout: 'container output',
+        stderr: '',
+      );
+
+      expect(result.succeeded, isTrue);
+    });
+
+    test('rejects a missing exit status when stderr reports a failure', () {
+      const result = ExecResult(
+        exitCode: null,
+        stdout: '',
+        stderr: 'permission denied',
+      );
+
+      expect(result.succeeded, isFalse);
+    });
+  });
+
   group('runWithSudo', () {
     test('the password goes to stdin, never into the command', () async {
       final exec = _RecordingExec();
