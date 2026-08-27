@@ -14,6 +14,8 @@ import 'package:server_box/data/store/migrations/m010_server_dist.dart';
 import 'package:server_box/data/store/server_dist.dart';
 import 'package:server_box/data/store/tables.dart';
 
+import 'helpers/test_db.dart';
+
 /// What SQLite reports about a table: its columns *and* its constraints.
 ///
 /// The constraints are the half that matters here and the half a column list
@@ -120,10 +122,7 @@ void main() {
       store = ServerDistStore();
     });
 
-    tearDown(() async {
-      await closeTables();
-      await SqliteDb.close();
-    });
+    tearDown(closeTestDb);
 
     test('remembers a reading', () {
       store.put('srv', Dist.debian);
@@ -237,10 +236,7 @@ void main() {
       store = ServerDistStore();
     });
 
-    tearDown(() async {
-      await closeTables();
-      await SqliteDb.close();
-    });
+    tearDown(closeTestDb);
 
     // The stream is what every mark on screen redraws from, so an event that
     // says nothing changed is a redraw of every row for nothing.
