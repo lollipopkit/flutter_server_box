@@ -40,6 +40,26 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK_DIR="${PROOT_BUILD_DIR:-$REPO_ROOT/build/proot-android}"
 OUT_DIR="$REPO_ROOT/android/app/src/main/jniLibs/arm64-v8a"
+NDK_VERSION_FILE="$REPO_ROOT/android/ndk-version.txt"
+
+[ -f "$NDK_VERSION_FILE" ] || { echo "missing $NDK_VERSION_FILE" >&2; exit 1; }
+PINNED_NDK_VERSION="$(tr -d '[:space:]' <"$NDK_VERSION_FILE")"
+[ -n "$PINNED_NDK_VERSION" ] || { echo "empty $NDK_VERSION_FILE" >&2; exit 1; }
+
+# The compiler and archiver otherwise have the build directory available to
+# embed in diagnostics/debug sections. Release binaries are stripped, but the
+# mapping makes the object files deterministic too and is cheap insurance if
+# that changes. Git's commit timestamp is stable across independent checkouts.
+SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-$(git -C "$REPO_ROOT" log -1 --format=%ct)}"
+export SOURCE_DATE_EPOCH TZ=UTC LC_ALL=C
+PREFIX_MAP_FLAGS=(
+  "-ffile-prefix-map=$WORK_DIR=."
+  "-fdebug-prefix-map=$WORK_DIR=."
+)
+# Make receives CFLAGS as one variable and later expands it in a shell recipe.
+# Quote each array element for that second shell parse as well.
+printf -v PREFIX_MAP_FLAGS_FOR_MAKE '%q ' "${PREFIX_MAP_FLAGS[@]}"
+PREFIX_MAP_FLAGS_FOR_MAKE="${PREFIX_MAP_FLAGS_FOR_MAKE% }"
 
 TALLOC_VERSION=2.4.2
 TALLOC_URL="https://download.samba.org/pub/talloc/talloc-${TALLOC_VERSION}.tar.gz"
@@ -70,18 +90,23 @@ fi
 
 find_ndk() {
   for candidate in "${ANDROID_NDK_HOME:-}" "${ANDROID_NDK_ROOT:-}"; do
-    [ -n "$candidate" ] && [ -d "$candidate" ] && { echo "$candidate"; return; }
+    if [ -n "$candidate" ] && [ -d "$candidate" ]; then
+      echo "$candidate"
+      return
+    fi
   done
-  # Whatever Android Studio installed, newest first.
+  # The same version Gradle reads from android/ndk-version.txt. Selecting the
+  # newest installed NDK made the output depend on the runner image.
   local sdk="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
-  [ -d "$sdk/ndk" ] || die "no NDK found; set \$ANDROID_NDK_HOME"
-  local newest
-  newest="$(ls -1 "$sdk/ndk" | sort -V | tail -1)"
-  [ -n "$newest" ] || die "no NDK found; set \$ANDROID_NDK_HOME"
-  echo "$sdk/ndk/$newest"
+  local pinned="$sdk/ndk/$PINNED_NDK_VERSION"
+  [ -d "$pinned" ] || die "NDK $PINNED_NDK_VERSION not found at $pinned"
+  echo "$pinned"
 }
 
 NDK="$(find_ndk)"
+NDK_REVISION="$(sed -n -E 's/^Pkg\.Revision[[:space:]]*=[[:space:]]*(.*)$/\1/p' "$NDK/source.properties" | tr -d '[:space:]')"
+[ "$NDK_REVISION" = "$PINNED_NDK_VERSION" ] ||
+  die "NDK at $NDK is $NDK_REVISION, expected $PINNED_NDK_VERSION"
 case "$(uname -s)" in
   Darwin) HOST_TAG=darwin-x86_64 ;;
   Linux) HOST_TAG=linux-x86_64 ;;
@@ -103,6 +128,8 @@ fetch() {
     log "$(basename "$dest") digest mismatch (expected $want, got $got), re-fetching"
     rm -f "$dest"
   fi
+  [ "${PROOT_OFFLINE:-false}" != true ] ||
+    die "offline build is missing the prepared input: $dest"
   log "Fetching $(basename "$dest")"
   curl -fsSL --retry 3 -o "$dest" "$url"
   [ -n "$want" ] || return
@@ -110,6 +137,22 @@ fetch() {
   # Removed, not left behind: a cached file that failed its check would be
   # skipped by the `-f` above on the next run and never checked again.
   [ "$got" = "$want" ] || { rm -f "$dest"; die "$(basename "$dest") is not what it should be: expected $want, got $got"; }
+}
+
+seed_talloc_archive() {
+  local dest="$WORK_DIR/talloc.tar.gz"
+  if [ -z "${TALLOC_ARCHIVE:-}" ]; then
+    fetch "$TALLOC_URL" "$dest" "$TALLOC_SHA256"
+    return
+  fi
+  [ -f "$TALLOC_ARCHIVE" ] || die "TALLOC_ARCHIVE not found: $TALLOC_ARCHIVE"
+  cp "$TALLOC_ARCHIVE" "$dest"
+  local got
+  got="$(sha256 "$dest")"
+  [ "$got" = "$TALLOC_SHA256" ] || {
+    rm -f "$dest"
+    die "TALLOC_ARCHIVE is not talloc $TALLOC_VERSION: expected $TALLOC_SHA256, got $got"
+  }
 }
 
 sha256() {
@@ -122,7 +165,7 @@ sha256() {
 
 build_talloc() {
   local src="$WORK_DIR/talloc-$TALLOC_VERSION"
-  fetch "$TALLOC_URL" "$WORK_DIR/talloc.tar.gz" "$TALLOC_SHA256"
+  seed_talloc_archive
   # The archive is the authenticated cache. Recreate sources and outputs from
   # it on every invocation so a modified persistent work tree or libtalloc.a
   # can never be packaged merely because the expected files still exist.
@@ -180,8 +223,8 @@ build_talloc() {
 SHIM
 
   log "Building talloc"
-  "$CC" -c -O2 -o "$WORK_DIR/talloc.o" -I "$src" "$src/talloc.c"
-  "$TOOLCHAIN/llvm-ar" rcs "$WORK_DIR/libtalloc.a" "$WORK_DIR/talloc.o"
+  "$CC" -c -O2 "${PREFIX_MAP_FLAGS[@]}" -o "$WORK_DIR/talloc.o" -I "$src" "$src/talloc.c"
+  "$TOOLCHAIN/llvm-ar" rcsD "$WORK_DIR/libtalloc.a" "$WORK_DIR/talloc.o"
 }
 
 patch_proot() {
@@ -202,11 +245,20 @@ build_proot() {
     rm -rf "$src"
   fi
   if [ ! -d "$src" ]; then
-    log "Cloning proot $PROOT_TAG"
-    # Cloned rather than fetched as a tarball: GitHub's generated archives are
-    # not promised to be byte-stable, so a digest of one is a check that can
-    # break without anything having changed. A commit id cannot.
-    git clone --quiet --depth 1 --branch "$PROOT_TAG" "$PROOT_REPO" "$src"
+    if [ -n "${PROOT_SOURCE_DIR:-}" ]; then
+      [ -d "$PROOT_SOURCE_DIR/.git" ] ||
+        die "PROOT_SOURCE_DIR is not a git checkout: $PROOT_SOURCE_DIR"
+      log "Cloning pre-fetched proot source"
+      git clone --quiet --no-hardlinks "$PROOT_SOURCE_DIR" "$src"
+      git -C "$src" checkout --quiet "$PROOT_COMMIT"
+    else
+      [ "${PROOT_OFFLINE:-false}" != true ] ||
+        die "offline build is missing the prepared proot checkout: $src"
+      log "Cloning proot $PROOT_TAG"
+      # Cloned rather than fetched as a tarball: GitHub's generated archives
+      # are not promised to be byte-stable. A commit id cannot move.
+      git clone --quiet --depth 1 --branch "$PROOT_TAG" "$PROOT_REPO" "$src"
+    fi
   fi
   local head
   head="$(git -C "$src" rev-parse HEAD)"
@@ -230,8 +282,8 @@ build_proot() {
       OBJCOPY="$TOOLCHAIN/llvm-objcopy" \
       OBJDUMP="$TOOLCHAIN/llvm-objdump" \
       CPPFLAGS="-D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -I. -DARG_MAX=131072 -I$WORK_DIR/talloc-$TALLOC_VERSION" \
-      CFLAGS="-O2 -Wall -Wextra -fPIE" \
-      LDFLAGS="-Wl,-z,noexecstack -pie -L$WORK_DIR -ltalloc" \
+      CFLAGS="-O2 -Wall -Wextra -fPIE $PREFIX_MAP_FLAGS_FOR_MAKE" \
+      LDFLAGS="-Wl,-z,noexecstack -Wl,--build-id=none -pie -L$WORK_DIR -ltalloc" \
       -j"$(sysctl -n hw.ncpu 2>/dev/null || nproc)" >/dev/null )
 
   [ -f "$src/src/proot" ] || die "proot did not build"

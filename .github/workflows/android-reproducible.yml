@@ -1,0 +1,152 @@
+name: Android reproducible build
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - ".github/actions/setup-flutter/action.yml"
+      - ".github/workflows/android-reproducible.yml"
+      - ".github/workflows/build.yml"
+      - "android/**"
+      - "assets/**"
+      - "crates/**"
+      - "hook/**"
+      - "lib/**"
+      - "packages/**"
+      - "scripts/build-proot-android.sh"
+      - "scripts/release/android-build-env.sh"
+      - "scripts/release/build-fdroid.sh"
+      - "scripts/release/compare-apks.sh"
+      - "scripts/release/empty-package-config.json"
+      - "scripts/release/gradle-offline.init.gradle"
+      - "scripts/release/map_plugin_registrant_package.dart"
+      - "scripts/release/patch-jni-build-id.sh"
+      - "scripts/release/prepare-fdroid.sh"
+      - "scripts/release/prune-android-dev-plugins.dart"
+      - "Cargo.lock"
+      - "Cargo.toml"
+      - "pubspec.lock"
+      - "pubspec.yaml"
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Independent build ${{ matrix.instance }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - instance: one
+            source_directory: source-one
+          - instance: two
+            source_directory: a/different-length/source-two
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          submodules: recursive
+          persist-credentials: false
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup-flutter
+
+      - name: Create a path-independent source tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_dir="$RUNNER_TEMP/${{ matrix.source_directory }}"
+          mkdir -p "$(dirname "$source_dir")"
+          cp -a "$GITHUB_WORKSPACE" "$source_dir"
+
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: "zulu"
+          java-version: "21"
+
+      - name: Install the pinned Android SDK and NDK
+        shell: bash
+        working-directory: ${{ runner.temp }}/${{ matrix.source_directory }}
+        run: |
+          set -euo pipefail
+          compile_sdk="$(tr -d '[:space:]' < android/compile-sdk-version.txt)"
+          build_tools="$(tr -d '[:space:]' < android/build-tools-version.txt)"
+          ndk_version="$(tr -d '[:space:]' < android/ndk-version.txt)"
+          sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          "$sdkmanager" \
+            "platforms;android-$compile_sdk" \
+            "build-tools;$build_tools" \
+            "ndk;$ndk_version"
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$ndk_version" >> "$GITHUB_ENV"
+
+      - name: Fix the build epoch
+        shell: bash
+        working-directory: ${{ runner.temp }}/${{ matrix.source_directory }}
+        run: echo "SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)" >> "$GITHUB_ENV"
+
+      - name: Prepare the offline build
+        shell: bash
+        working-directory: ${{ runner.temp }}/${{ matrix.source_directory }}
+        run: scripts/release/prepare-fdroid.sh
+
+      - name: Build unsigned split APKs without network access
+        shell: bash
+        working-directory: ${{ runner.temp }}/${{ matrix.source_directory }}
+        run: FDROID_OFFLINE=true scripts/release/build-fdroid.sh all
+
+      - name: Upload unsigned APKs
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: android-unsigned-${{ matrix.instance }}
+          path: ${{ runner.temp }}/${{ matrix.source_directory }}/build/app/outputs/apk/release/*-release-unsigned.apk
+          if-no-files-found: error
+          retention-days: 7
+
+  compare:
+    name: Compare independent APKs
+    needs: build
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Download first build
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: android-unsigned-one
+          path: artifacts/one
+
+      - name: Download second build
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: android-unsigned-two
+          path: artifacts/two
+
+      - name: Require byte-identical APKs
+        shell: bash
+        run: scripts/release/compare-apks.sh artifacts/one artifacts/two apk-diffoscope.txt
+
+      - name: Diagnose a reproducibility failure
+        if: failure()
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends diffoscope
+          scripts/release/compare-apks.sh artifacts/one artifacts/two apk-diffoscope.txt || true
+
+      - name: Upload diffoscope report
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: android-reproducibility-diff
+          path: apk-diffoscope.txt
+          if-no-files-found: ignore
+          retention-days: 14

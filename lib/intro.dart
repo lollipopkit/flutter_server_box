@@ -25,7 +25,11 @@ final class _IntroPage extends StatelessWidget {
             pages: pages_,
             maxWidth: PageColumns.columnWidth,
             onDone: (ctx) {
-              Stores.setting.introVer.put(BuildData.build);
+              SqliteStore.transact(() {
+                Stores.setting.introVer.putSync(BuildData.build);
+                final lastVer = Stores.setting.lastVer;
+                if (lastVer.fetch() == 0) lastVer.putSync(BuildData.build);
+              });
               Navigator.of(ctx).pushReplacement(
                 MaterialPageRoute(builder: (_) => _buildHomeWithWindowFrame()),
               );

@@ -17,15 +17,20 @@ enum ServerFuncBtn {
   process(),
   snippet(),
   iperf(),
-  systemd(1058),
+  systemd(1051),
   portForward(1340),
-  power(1481);
+  power(1491);
 
-  /// The build this entry first shipped in, or null for one that has been
-  /// there from the start. Read by [autoAddNewFuncs] and nothing else.
-  final int? addedVersion;
+  /// The last released build that did not contain this entry.
+  ///
+  /// A feature branch's commit count is not a release number: Power was
+  /// developed at build 1481 but merged after v1.0.1491, so using 1481 made a
+  /// v1491 install look as though it had already seen the entry. A release
+  /// boundary remains true no matter how many commits the branch accumulated
+  /// before the next tag.
+  final int? introducedAfterBuild;
 
-  const ServerFuncBtn([this.addedVersion]);
+  const ServerFuncBtn([this.introducedAfterBuild]);
 
   /// Puts entries that arrived during an upgrade into the user's row, which
   /// was last written when they did not exist.
@@ -39,7 +44,7 @@ enum ServerFuncBtn {
   /// [from] is the build this install last ran, 0 on a fresh one — where
   /// [defaultIdxs] already lists everything, so nothing here fires.
   ///
-  /// Driven by [addedVersion] over [values] rather than by a branch per entry:
+  /// Driven by [introducedAfterBuild] over [values] rather than by a branch per entry:
   /// the old form needed three near-identical blocks, and a new entry was
   /// added by remembering to write a fourth.
   static void autoAddNewFuncs(int from, int to) {
@@ -47,12 +52,12 @@ enum ServerFuncBtn {
     final list = prop.fetch();
     final added = [
       for (final btn in values)
-        if (btn.addedVersion case final since?
-            when since > from && since <= to && !list.contains(btn.index))
+        if (btn.introducedAfterBuild case final boundary?
+            when boundary >= from && boundary < to && !list.contains(btn.index))
           btn.index,
     ];
     if (added.isEmpty) return;
-    prop.put([...list, ...added]);
+    prop.putSync([...list, ...added]);
   }
 
   static final defaultIdxs = [

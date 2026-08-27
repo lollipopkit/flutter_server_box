@@ -17,6 +17,23 @@ import 'package:server_box/data/store/tables.dart';
 
 final GetIt getIt = GetIt.instance;
 
+extension SyncSqlitePropWrite<T extends Object> on StoreProp<T> {
+  /// Performs a checked synchronous write, so a surrounding SQLite
+  /// transaction can roll back when persistence fails.
+  void putSync(T value) {
+    final sqlite = store;
+    if (sqlite is! SqliteStore ||
+        !sqlite.set(
+          key,
+          value,
+          toObj: toObj,
+          updateLastUpdateTsOnSet: updateLastUpdateTsOnSet,
+        )) {
+      throw StateError('failed to persist "$key"');
+    }
+  }
+}
+
 abstract final class Stores {
   static SettingStore get setting => getIt<SettingStore>();
   static ServerStore get server => getIt<ServerStore>();

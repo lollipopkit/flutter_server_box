@@ -14,20 +14,21 @@ enum ServerDetailCards {
   swap(Icons.swap_horiz),
   gpu(Bootstrap.gpu_card),
   disk(Bootstrap.device_hdd_fill),
-  smart(Icons.health_and_safety, sinceBuild: 1174),
+  smart(Icons.health_and_safety, introducedAfterBuild: 1130),
   net(ZondIcons.network),
   sensor(MingCute.dashboard_4_line),
   temp(FontAwesome.temperature_empty_solid),
   battery(Icons.battery_full),
-  pve(BoxIcons.bxs_dashboard, sinceBuild: 818),
-  bmc(Icons.developer_board, sinceBuild: 1491),
-  custom(Icons.code, sinceBuild: 825);
+  pve(BoxIcons.bxs_dashboard, introducedAfterBuild: 493),
+  bmc(Icons.developer_board, introducedAfterBuild: 1491),
+  custom(Icons.code, introducedAfterBuild: 493);
 
-  final int? sinceBuild;
+  /// The last released build that did not contain this card.
+  final int? introducedAfterBuild;
 
   final IconData icon;
 
-  const ServerDetailCards(this.icon, {this.sinceBuild});
+  const ServerDetailCards(this.icon, {this.introducedAfterBuild});
 
   static ServerDetailCards? fromName(String str) =>
       ServerDetailCards.values.firstWhereOrNull((e) => e.name == str);
@@ -54,40 +55,26 @@ enum ServerDetailCards {
   /// Build that folded the standalone trend cards into their snapshot cards.
   static const _kTrendCardsFoldedBuild = 1467;
 
-  /// If:
-  /// Version 1 => user set [about], default is [about, cpu]
-  /// Version 2 => default is [about, cpu, mem] => auto add [mem] to user's setting
-  static void autoAddNewCards(int cur) {
-    if (cur >= pve.sinceBuild!) {
-      final prop = Stores.setting.detailCardOrder;
-      final list = prop.fetch();
-      if (!list.contains(pve.name)) {
-        list.add(pve.name);
-        prop.put(list);
-      }
+  /// Adds only cards that first became available during `(from, to]`.
+  ///
+  /// Looking at [to] alone re-added every old card on every release bump. The
+  /// boundary also cannot be the feature branch's commit count: BMC was merged
+  /// after v1.0.1491 even though its branch still carried 1491 in BuildData.
+  static void autoAddNewCards(int from, int to) {
+    final prop = Stores.setting.detailCardOrder;
+    final list = prop.fetch();
+    final added = [
+      for (final card in values)
+        if (card.introducedAfterBuild case final boundary?
+            when boundary >= from && boundary < to && !list.contains(card.name))
+          card.name,
+    ];
+    if (added.isNotEmpty) {
+      list.addAll(added);
+      prop.putSync(list);
     }
 
-    if (cur >= bmc.sinceBuild!) {
-      final prop = Stores.setting.detailCardOrder;
-      final list = prop.fetch();
-      if (!list.contains(bmc.name)) {
-        list.add(bmc.name);
-        prop.put(list);
-      }
-    }
-
-    if (cur >= custom.sinceBuild!) {
-      final prop = Stores.setting.detailCardOrder;
-      final list = prop.fetch();
-      if (!list.contains(custom.name)) {
-        list.add(custom.name);
-        prop.put(list);
-      }
-    }
-
-    if (cur >= _kTrendCardsFoldedBuild) {
-      final prop = Stores.setting.detailCardOrder;
-      final list = prop.fetch();
+    if (to >= _kTrendCardsFoldedBuild) {
       // Standalone trend cards, each since folded into the snapshot card of
       // the same subject. These names were only ever written by unreleased
       // builds of this branch, so there is nothing to insert in their place —
@@ -104,7 +91,7 @@ enum ServerDetailCards {
           'monitorHistory',
         }.contains(e),
       );
-      if (list.length != before) prop.put(list);
+      if (list.length != before) prop.putSync(list);
     }
   }
 }
