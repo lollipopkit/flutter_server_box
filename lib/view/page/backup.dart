@@ -9,7 +9,6 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/sync.dart';
-import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/app/bak/backup_service.dart';
 import 'package:server_box/data/model/app/bak/backup_source.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -133,6 +132,10 @@ final class _BackupPageState extends ConsumerState<BackupPage>
                   UIs.width7,
                   TextButton(
                     onPressed: () async {
+                      if (_hasEnabledRemoteSync) {
+                        Toast.show(l10n.remoteBackupPasswordRequired);
+                        return;
+                      }
                       await SecureStoreProps.bakPwd.write(null);
                       Toast.show(l10n.backupPasswordRemoved);
                       setState(() {});
@@ -149,7 +152,16 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     );
   }
 
-  Future<void> _onTapSetBakPwd(BuildContext context) async {
+  bool get _hasEnabledRemoteSync =>
+      (isICloudSupported && PrefProps.icloudSync.get()) ||
+      PrefProps.webdavSync.get() ||
+      PrefProps.gistSync.get();
+
+  Future<bool> _onTapSetBakPwd(
+    BuildContext context, {
+    String? hint,
+    String? emptyMessage,
+  }) async {
     final currentPwd = await SecureStoreProps.bakPwd.read();
     final controller = TextEditingController(text: currentPwd ?? '');
     final node = FocusNode();
@@ -164,7 +176,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(l10n.backupPasswordTip, style: UIs.textGrey),
+            Text(hint ?? l10n.backupPasswordTip, style: UIs.textGrey),
             UIs.height13,
             Input(
               label: l10n.backupPassword,
@@ -178,16 +190,17 @@ final class _BackupPageState extends ConsumerState<BackupPage>
       ),
       actions: Btnx.oks,
     );
-    if (result != true) return;
+    if (result != true) return false;
 
     final pwd = controller.text.trim();
     if (pwd.isEmpty) {
-      Toast.show(libL10n.empty);
-      return;
+      Toast.show(emptyMessage ?? libL10n.empty);
+      return false;
     }
     await SecureStoreProps.bakPwd.write(pwd);
     Toast.show(l10n.backupPasswordSet);
     setState(() {});
+    return true;
   }
 
   Widget get _buildTip {
@@ -601,7 +614,8 @@ extension on _BackupPageState {
 
     final files = await icloud.list();
     final matches = files.where(
-      (file) => file.relativePath == Paths.bakName && file.contentChangeDate != null,
+      (file) =>
+          file.relativePath == Paths.bakName && file.contentChangeDate != null,
     );
     if (matches.isEmpty) return null;
 
@@ -649,15 +663,7 @@ extension on _BackupPageState {
     try {
       final ok = await _ensureBakPwd(context);
       if (!ok) return;
-      final savedPassword = await SecureStoreProps.bakPwd.read();
-      if (savedPassword == null || savedPassword.isEmpty) {
-        Toast.show(l10n.backupPassword);
-        return;
-      }
-      await BackupV2.backup(
-        bakName,
-        savedPassword,
-      );
+      await bakSync.writeEncryptedBackup(name: bakName);
       await Webdav.shared.upload(relativePath: bakName);
       Loggers.app.info('Upload webdav backup success');
     } catch (e, s) {
@@ -698,15 +704,7 @@ extension on _BackupPageState {
     try {
       final ok = await _ensureBakPwd(context);
       if (!ok) return;
-      final savedPassword = await SecureStoreProps.bakPwd.read();
-      if (savedPassword == null || savedPassword.isEmpty) {
-        Toast.show(l10n.backupPassword);
-        return;
-      }
-      await BackupV2.backup(
-        bakName,
-        savedPassword,
-      );
+      await bakSync.writeEncryptedBackup(name: bakName);
       await GistRs.shared.upload(relativePath: bakName);
       Loggers.app.info('Upload gist backup success');
     } catch (e, s) {
@@ -900,7 +898,7 @@ extension on _BackupPageState {
     // mandatory rather than an optional warning.
     final result = await context.showRoundDialog<bool>(
       title: l10n.backupPassword,
-      child: Text(l10n.backupPasswordTip, style: UIs.textGrey),
+      child: Text(l10n.remoteBackupPasswordRequired, style: UIs.textGrey),
       actions: [
         TextButton(
           onPressed: () => context.popDialog(false),
@@ -914,9 +912,11 @@ extension on _BackupPageState {
     );
 
     if (result == true) {
-      await _onTapSetBakPwd(context);
-      final savedAfterSetting = await SecureStoreProps.bakPwd.read();
-      return savedAfterSetting != null && savedAfterSetting.isNotEmpty;
+      return _onTapSetBakPwd(
+        context,
+        hint: l10n.remoteBackupPasswordRequired,
+        emptyMessage: l10n.remoteBackupPasswordRequired,
+      );
     }
 
     return false;
