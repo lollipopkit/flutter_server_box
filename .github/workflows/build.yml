@@ -548,6 +548,21 @@ jobs:
             build/app/outputs/flutter-apk/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_amd64.apk
           if-no-files-found: error
           retention-days: 14
+      # A native crash reaches us as a tombstone full of addresses, and these
+      # are the only thing they resolve against. Not a release asset: users
+      # have no use for them, and `publishRelease` checks the asset list.
+      #
+      # 90 days rather than 14, because a crash is reported when a user hits
+      # it, not when the build was made. This does not cover an APK built by
+      # F-Droid on their own servers -- reproducibility is what covers that,
+      # by allowing the same binary to be rebuilt here.
+      - name: Upload native debug symbols
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-android-symbols
+          path: build/app/outputs/native-debug-symbols/release/native-debug-symbols.zip
+          if-no-files-found: error
+          retention-days: 90
 
   buildIOS:
     name: Build ios
@@ -616,6 +631,17 @@ jobs:
           path: build/artifacts/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_NoSign.ipa
           if-no-files-found: error
           retention-days: 14
+      # MetricKit's call stacks are addresses and a binary UUID, nothing more,
+      # so without these a crash report from an iOS user says only that it
+      # crashed. `dwarf-with-dsym` was already set for Release; these were
+      # simply thrown away with the runner.
+      - name: Upload dSYMs
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-ios-dsyms
+          path: build/ios/Release-iphoneos/**/*.dSYM
+          if-no-files-found: error
+          retention-days: 90
 
   buildLinux:
     name: Build linux

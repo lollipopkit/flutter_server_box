@@ -11,3 +11,19 @@ members = ["crates/sbm_parser", "crates/sbm_native", "crates/sbm_ffi", "monitor"
 [profile.release]
 # Smaller release binaries for the shipped container / native packages
 strip = true
+
+# The one exception, and it is not about size.
+#
+# `sbm_ffi` is linked into the app, where it is one of the few things that can
+# take the process down — and a native crash arrives as a tombstone full of
+# addresses. Stripping here throws away the only thing those addresses can be
+# resolved against, so `crash_native` would be as far as any report ever got.
+#
+# The shipped artifact is not larger for this. Gradle's `debugSymbolLevel`
+# extracts the symbols into a separate archive and strips the library on its
+# way into the APK, so what users download is the same stripped `.so` as
+# before; Apple's dSYM has always worked that way. The monitor binary is
+# untouched and keeps the workspace setting, since a server-side crash has the
+# host's own tooling and a container image that should stay small.
+[profile.release.package.sbm_ffi]
+strip = false
