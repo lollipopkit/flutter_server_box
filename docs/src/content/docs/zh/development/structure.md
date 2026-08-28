@@ -3,137 +3,94 @@ title: 项目结构
 description: 了解 Server Box 的代码库结构
 ---
 
-Server Box 项目是一个单一仓库（monorepo）：Flutter 应用位于仓库根目录，并与 Rust workspace、服务端监控共存。
+Server Box 使用 monorepo 组织代码：Flutter App 位于仓库根目录，与 Rust workspace、Monitor agent、文档站和项目网站共同维护。
 
 ## Monorepo 布局
 
-```
+```text
 flutter_server_box/
-├── lib/               # Flutter 应用（见下文）
+├── lib/               # Flutter App
 ├── crates/
-│   ├── sbm_parser/    # 共享状态解析库（单一事实来源，
-│   │                  # App 经 FFI 使用，monitor 直接依赖）
-│   ├── sbm_ffi/       # flutter_rust_bridge 绑定 crate
-│   │                  # 原生构建集成
-│   └── sbm_native/    # 各平台原生采样（仅 monitor 使用）
-├── monitor/           # 服务端监控（Rust 服务 + Svelte 前端）
-├── packages/          # Vendor 的 Dart fork（path 依赖），以及
-│                      # webui：monitor 与 website 共用的 Svelte UI
-├── docs/              # 本文档站（Astro Starlight）
+│   ├── sbm_parser/    # App 和 Monitor 共用的状态解析库
+│   ├── sbm_ffi/       # flutter_rust_bridge binding crate
+│   └── sbm_native/    # Monitor 使用的原生采样器
+├── monitor/           # Monitor agent（Rust 服务 + Svelte 面板）
+├── packages/          # path 依赖的 Dart fork 和共享 webui 包
+├── docs/              # Astro Starlight 文档站
 ├── website/           # 项目网站
-└── Cargo.toml         # Rust workspace 根
+└── Cargo.toml         # Rust workspace 根文件
 ```
 
-## 应用目录结构
+## Flutter App 目录
 
-```
+```text
 lib/
-├── core/              # 核心工具类和扩展
-├── data/              # 数据层
-│   ├── model/         # 按功能划分的数据模型
-│   ├── provider/      # Riverpod provider
-│   ├── store/         # 本地存储 (SQLite)
-│   ├── helper/        # 数据层辅助工具
-│   ├── res/           # 资源与常量
-│   └── ssh/           # SSH 会话管理
-├── view/              # UI 层
-│   ├── page/          # 主要页面
-│   └── widget/        # 可复用组件
+├── core/              # 核心工具、extension 和路由
+├── data/              # model、provider、store、SSH 会话
+│   ├── model/
+│   ├── provider/
+│   ├── store/         # SQLite 存储
+│   ├── helper/
+│   ├── res/
+│   └── ssh/
+├── view/              # 页面和可复用 Widget
 ├── generated/         # 生成的本地化代码
-├── l10n/              # 本地化 ARB 文件
-├── hive/              # 用于迁移的旧版 Hive 适配器
-└── src/rust/          # 生成的 flutter_rust_bridge 绑定（勿手改）
+├── l10n/              # ARB 本地化源文件
+├── hive/              # 仅用于迁移的旧版 Hive adapter
+└── src/rust/          # 生成的 flutter_rust_bridge bindings
 ```
 
-## 核心层 (`lib/core/`)
+`lib/src/rust/`、`lib/generated/` 以及 `*.g.dart`、`*.freezed.dart` 都是生成结果，不要直接编辑。
 
-包含工具类、扩展和路由配置：
+## 核心代码目录
 
-- **Extensions**：针对通用类型的 Dart 扩展
-- **Routes**：应用路由配置
-- **Utils**：共享的工具函数
+### `lib/core/`
 
-## 数据层 (`lib/data/`)
+放置跨功能共用的 extension、路由和 utility。这里不应放置某个页面专属的业务状态。
 
-### 模型 (`lib/data/model/`)
+### `lib/data/model/`
 
-按功能模块组织：
+按功能组织数据模型，例如：
 
-- `server/` - 服务器连接及状态模型
-- `container/` - Docker 容器模型
-- `ssh/` - SSH 会话模型
-- `sftp/` - SFTP 文件模型
-- `app/` - 应用特定的模型
+- `server/`：服务器配置、凭据和状态
+- `container/`：Docker/Podman 容器
+- `ssh/`：SSH 会话相关模型
+- `sftp/`：远程文件模型
+- `app/`：App 本身的配置和状态
 
-### Provider (`lib/data/provider/`)
+### `lib/data/provider/`
 
-用于依赖注入和状态管理的 Riverpod provider：
+Riverpod provider 负责依赖注入、异步状态和跨页面共享状态。Provider 通常调用 service 或 store，而不是把数据访问逻辑放进 UI Widget。
 
-- 服务器 Provider
-- UI 状态 Provider
-- 服务 Provider
+### `lib/data/store/`
 
-### 存储 (`lib/data/store/`)
+本地数据层使用加密 SQLite 数据库：
 
-基于 SQLite 的本地存储：
+- `SqliteStore`：适合设置和历史等 key-value 数据
+- entity store：适合服务器、private key、snippet 等具有关系的数据
+- migrations：处理跨版本存储迁移
 
-- 服务器存储
-- 设置存储
-- 缓存存储
+### `lib/view/`
 
-## 视图层 (`lib/view/`)
+`page/` 放置主要页面，`widget/` 放置可复用 UI 组件，例如服务器卡片、状态图表、输入框和 dialog。
 
-### 页面 (`lib/view/page/`)
+## Packages
 
-应用程序的主要屏幕：
+`packages/` 中的大多数目录是通过 path dependency 引入的 fork：
 
-- `server/` - 服务器管理页面
-- `ssh/` - SSH 终端页面
-- `container/` - 容器管理页面
-- `setting/` - 设置页面
-- `storage/` - SFTP 页面
-- `snippet/` - 脚本页面
+- `dartssh2/`：SSH 客户端
+- `xterm/`：终端模拟器
+- `fl_lib/`：共享 UI 组件和 utility
+- `fl_build/`：跨平台构建工具
+- 其他平台插件和组件包
 
-### 组件 (`lib/view/widget/`)
+`packages/webui/` 是例外。它是供 Monitor 面板和项目网站共用的 Svelte 包，提供 UI 基础组件和 design token。
 
-可复用的 UI 组件：
+## Rust workspace
 
-- 服务器卡片
-- 状态图表
-- 输入组件
-- 对话框
+- `crates/sbm_parser/`：将命令输出解析为结构化服务器状态。Flutter App 的 SSH 路径通过 FFI 调用；Monitor 的脚本路径也使用它。
+- `crates/sbm_native/`：仅 Monitor 使用的原生采样器，通过 syscall、procfs 或 sysfs 获取核心指标。Flutter App 通过 SSH 采集，不能在远程主机上调用该 crate。
+- `crates/sbm_ffi/`：向 Flutter 暴露 Rust API，包括 parser 和 native SSH crypto；Dart bindings 生成到 `lib/src/rust/`。
+- `monitor/`：独立的 Monitor agent，详细说明见 `monitor/README_zh.md`。
 
-## 生成的文件
-
-- `lib/generated/l10n/` - 自动生成的本地化代码
-- `*.g.dart` - 生成的代码 (json_serializable, freezed, hive, riverpod)
-- `*.freezed.dart` - Freezed 不可变类
-
-## Packages 目录 (`/packages/`)
-
-包含依赖项的自定义 fork，在 `pubspec.yaml` 中以 path 引用：
-
-- `dartssh2/` - SSH 库
-- `xterm/` - 终端模拟器
-- `fl_lib/` - 共享工具类
-- `fl_build/` - 构建系统
-- `circle_chart/` - 图表组件
-- `plain_notification_token/` - 推送 token 插件
-- `watch_connectivity/` - Apple Watch 通信
-
-其中有一个目录不是 Dart fork：`webui/`（`@serverbox/webui`）是一个 Svelte 包，
-提供共享的 UI 基础组件和设计令牌（design token），`monitor/frontend` 和 `website/` 都以
-`file:` 依赖引用它。
-
-## Rust 侧
-
-- `crates/sbm_parser/` - 将命令原始输出解析为结构化服务器状态。App 的 SSH 路径经
-  FFI 使用它；monitor 的原生采样也会在需要时使用其中的平台解析器。App 通过 monitor
-  HTTP 获取的数据则由 `MonitorMetrics.fromJson` 和本地映射器转换，两条 App 路径共享
-  `ServerStatus` 形状，但不是同一个解析流程。
-- `crates/sbm_native/` - 各平台的原生采样，仅 monitor 使用。它通过 syscall 或
-  procfs 直接读取 cpu/内存/swap/磁盘/网络/uptime，不执行 shell 命令。App 不依赖
-  它：App 通过 SSH 采集，无法在远程主机上执行 syscall。
-- `crates/sbm_ffi/` - `sbm_parser` 的 flutter_rust_bridge 绑定，生成的 Dart 侧位于
-  `lib/src/rust/`。
-- `monitor/` - 独立的监控服务，文档见 `monitor/README_zh.md`。
+App 通过 SSH 获取远程主机数据，Monitor agent 则在服务器本机采样。两条路径共享部分数据模型和 parser，但不经过完全相同的采样流程。

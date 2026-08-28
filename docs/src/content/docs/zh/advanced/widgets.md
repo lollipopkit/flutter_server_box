@@ -1,96 +1,78 @@
 ---
 title: 主屏幕小组件
-description: 在主屏幕上添加服务器状态小组件
+description: 在主屏幕添加服务器状态小组件
 ---
 
-需要在服务器上安装 [monitor agent](/docs/zh/advanced/monitor-agent/)。
+主屏幕小组件需要服务器运行 [Monitor agent](/docs/zh/advanced/monitor-agent/)。安装并配置 agent 后，在 App 中配置服务器，小组件会自动获取可用服务器列表。
 
-## 前置条件
+## 工作方式
 
-请先在你的服务器上安装 ServerBox Monitor。安装说明请参考 [ServerBox Monitor Wiki](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/README.md)。
+小组件直接读取 Monitor agent 的认证 API，不依赖 App 在前台运行。App 会将带 Monitor agent 的服务器名称、地址和短期 read-only token 发布给系统小组件；token 保存在平台提供的安全存储中。
 
-安装完成后，你的服务器应具备：
-- HTTP/HTTPS 端点
-- `/status` API 接口
-- 可选的身份验证。`/status` 是旧版的免认证接口；需要 bearer 或 watch token 的认证
-  `/api/v1/status` 不能由只提供 URL 的小组件使用。
-
-## URL 格式
-
-```text
-https://your-server.com/status
-```
-
-必须以 `/status` 结尾。只提供 URL 的小组件不能使用需要 bearer 或 watch token 的认证端点。
+小组件显示 Small 或 Medium 两种固定布局：Small 显示当前读数，Medium 显示多个指标的图表。添加小组件时选择服务器和主指标，不能手动填写 URL。
 
 ## iOS 小组件
 
-### 设置步骤
+iOS 小组件需要 iOS 17 或更高版本。
 
-1. 长按主屏幕 → 点击 **+**
-2. 搜索 “ServerBox”
-3. 选择小组件尺寸
-4. 长按小组件 → **编辑小组件**
-5. 输入以 `/status` 结尾的 URL
+### 添加步骤
+
+1. 长按主屏幕，点击 **+**。
+2. 搜索 “Server Box”。
+3. 选择 **Small** 或 **Medium**。
+4. 添加后长按小组件，点击 **编辑小组件**。
+5. 选择要显示的服务器。
 
 ### 注意事项
 
-- 必须使用 HTTPS（局域网 IP 除外）
-- 最大刷新频率：30 分钟（iOS 系统限制）
-- 可以为多个服务器添加多个小组件
+- 服务器需要在 App 中配置 Monitor agent。
+- App 会检查每台服务器的 `allowInsecure` 设置；除 loopback 外，通常应使用 HTTPS。
+- iOS 会决定小组件的刷新时间，不能保证固定间隔。
+- 同一台设备可以添加多个小组件，并分别选择服务器。
 
 ## Android 小组件
 
-### 设置步骤
+### 添加步骤
 
-1. 长按主屏幕 → **小组件**
-2. 找到 “ServerBox” → 添加到主屏幕
-3. 记下显示的 Widget ID 数字
-4. 打开 ServerBox 应用 → 设置 → **应用** → 设置 → **Android 设置**
-5. 点击 **桌面部件链接配置**
-6. 添加条目：`Widget ID` = `状态 URL`
+1. 长按主屏幕，点击 **小组件**。
+2. 找到 “Server Box”，选择 Small 或 Medium 类型并添加。
+3. 在配置页面选择服务器和主指标。
+4. 点击保存。
+5. 点击主屏幕上的小组件可以手动刷新。
 
-示例：
-- 键 (Key)：`17`
-- 值 (Value)：`https://my-server.com/status`
+Android 小组件的配置保存在每个小组件实例中，因此多个小组件可以分别显示不同服务器或指标。服务器列表由 App 发布；如果列表为空，请先在 App 中配置带 Monitor agent 的服务器。
 
-7. 点击主屏幕上的小组件进行刷新
+## Watch App
 
-## watchOS
+Watch App 需要 watchOS 10 或更高版本。它直接从 Monitor agent 获取数据，因此只能显示在 App 中配置了 Monitor agent 的服务器。默认会同步这些服务器；你可以在 **iOS 设置 → 应用 → iOS → Watch 应用** 中排除不希望在手表上显示的服务器。
 
-手表自己向 monitor agent 取数据，因此只能显示已配置 monitor 的服务器。请先在
-服务器的编辑页将 agent 设为连接方式，不要同时配置 SSH。
+### 配置步骤
 
-### 设置步骤
+1. 在 iPhone 上打开 Server Box。
+2. 前往 **设置 → 应用 → iOS → Watch 应用**。
+3. 选择要显示的服务器；列表顺序决定手表上的翻页顺序。
+4. 等待 Watch App 同步。
 
-1. 打开 iPhone 上的应用 → 设置 → **应用** → 设置 → **iOS 设置**
-2. 点击 **Watch 应用**
-3. 选择要显示的服务器。选择的顺序会被保留，手表按该顺序翻页
-4. 等待手表端同步
-
-**锁屏小组件** 是同一页上的另一个入口，只选一台服务器。
-
-### 注意事项
-
-- 如果未更新，请尝试重启手表应用
-- 确保手机和手表已连接
-- **旧版 status 链接** 只在你已经有旧数据时才出现，新版本不再创建
+**锁屏小组件**使用同一页的独立设置，只能选择一台服务器。
 
 ## 故障排除
 
-### 小组件不更新
+### 小组件或 Watch App 不更新
 
-**iOS：** 等待最多 30 分钟，然后尝试删除并重新添加。
-**Android：** 点击小组件强制刷新，检查设置中的 ID 是否正确。
-**watchOS：** 重启手表应用，等待几分钟。
+- 确认 Monitor agent 正在运行，且设备能够访问其 URL。
+- 确认 App 中的 Monitor 用户名、密码、证书和 `allowInsecure` 设置仍然有效。
+- iOS 刷新由系统调度，请等待一段时间，或删除后重新添加小组件。
+- Android 小组件可点击手动刷新；重新打开配置页面检查服务器和指标。
+- Watch App 需要与 iPhone 配对；修改服务器配置后打开 iPhone App，等待同步完成。
 
-### 小组件显示错误
+### 小组件显示错误或没有服务器
 
-- 确保 ServerBox Monitor 正在运行
-- 在浏览器中测试 URL 是否可用
-- 检查 URL 是否以 `/status` 结尾
+- 在 App 中至少配置一台带 Monitor agent 的服务器。
+- 检查 agent 的 HTTPS、登录凭据和网络可达性。
+- 小组件不再使用手动填写的 `/status` URL。如果旧版本留下了这类地址，请按 App 中的一次性提示重新配置服务器。
 
 ## 安全性
 
-- 尽可能**始终使用 HTTPS**
-- **局域网 IP** 仅建议在信任的网络中使用
+- 尽可能使用 HTTPS。
+- 对非 loopback 的 HTTP 连接，必须在 App 和 Monitor agent 两端明确开启不安全 HTTP。
+- 不要把 Monitor 登录密码或小组件 token 写入公开文档或版本控制。

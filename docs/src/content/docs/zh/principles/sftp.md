@@ -1,60 +1,53 @@
 ---
-title: SFTP 系统
-description: SFTP 文件浏览器的工作原理
+title: SFTP 和 SCP 文件传输
+description: Server Box 如何浏览和传输远程文件
 ---
 
-SFTP 通过 SSH 管理远程文件。
+Server Box 通过 SSH 提供远程文件访问。默认使用 SFTP；对于不提供 SFTP subsystem、但支持 `scp` 和 shell 的设备，可以选择 SCP。
 
-## 架构
+## 文件访问架构
 
 ```text
 ┌─────────────────────────────────────────────┐
-│              SFTP UI 层                     │
-│  - 远程文件浏览器                           │
-│  - 本地文件浏览器                           │
-│  - 传输队列                                 │
+│ 文件 UI 层                                   │
+│ 远程文件浏览器、本地文件浏览器、传输队列      │
 └─────────────────────────────────────────────┘
-                ↓
+                    ↓
 ┌─────────────────────────────────────────────┐
-│          SFTP 状态管理                      │
-│  - sftpProvider                             │
-│  - 路径管理                                 │
-│  - 操作队列                                 │
+│ 状态管理层                                   │
+│ sftpProvider、路径管理、操作队列              │
 └─────────────────────────────────────────────┘
-                ↓
+                    ↓
 ┌─────────────────────────────────────────────┐
-│         SFTP 协议层                         │
-│  - SSH 子系统                               │
-│  - 文件操作                                 │
-│  - 目录列表                                 │
+│ FileBackend                                  │
+│ SFTP 或 SCP + shell                          │
 └─────────────────────────────────────────────┘
-                ↓
+                    ↓
 ┌─────────────────────────────────────────────┐
-│            SSH 传输层                       │
-│  - 安全通道                                 │
-│  - 数据流                                   │
+│ SSH 传输层                                   │
+│ 加密连接和数据流                             │
 └─────────────────────────────────────────────┘
 ```
 
-## 连接建立
+文件浏览器和传输引擎只依赖 `FileBackend`，不直接判断具体 backend class。SSH 连接建立后，`openSshFileBackend` 根据服务器的 `SshCredential.fileTransport` 选择 SFTP 或 SCP。
 
-### 创建 SFTP 客户端
+## SFTP
+
+### 建立连接
 
 ```dart
 Future<SftpClient> createSftpClient(Spi spi) async {
-  // 1. 获取 SSH 客户端 (如果可用则复用)
+  // 1. 获取 SSH client；如果已有连接则复用
   final sshClient = await genClient(spi);
 
-  // 2. 打开 SFTP 子系统
+  // 2. 打开 SFTP subsystem
   final sftp = await sshClient.sftp();
 
   return sftp;
 }
 ```
 
-### 连接复用
-
-SFTP 复用现有的 SSH 连接：
+SFTP 与其他 SSH 功能共用同一 SSH 连接，但使用独立的 SFTP channel：
 
 ```dart
 class ServerProvider {
@@ -68,49 +61,56 @@ class ServerProvider {
 }
 ```
 
-## 文件系统操作
+如果 SSH 连接成功但 SFTP subsystem 无法打开，App 会报告 SFTP 不可用。App 不会把任意 SFTP 连接失败都解释为“服务器没有 SFTP”，也不会自动切换到 SCP；你可以在服务器编辑页明确选择 SCP。
 
-### 目录列表
+### 目录列表和元数据
 
 ```dart
 Future<List<SftpName>> listDirectory(String path) async {
   final sftp = await getSftpClient(spiId);
-
-  // 获取目录列表
   final files = await sftp.listdir(path);
 
-  // 根据设置排序
-  // 每个条目通过 `attr` 暴露元数据；此处按名称排序。
   files.sort((a, b) => a.filename.toLowerCase().compareTo(b.filename.toLowerCase()));
-
-  // 如果启用，文件夹优先
   if (showFoldersFirst) {
-    final dirs = files.where((f) => f.attr.isDirectory);
-    final regular = files.where((f) => !f.attr.isDirectory);
+    final dirs = files.where((file) => file.attr.isDirectory);
+    final regular = files.where((file) => !file.attr.isDirectory);
     return [...dirs, ...regular];
   }
-
   return files;
 }
 ```
 
-### 文件元数据
+`SftpClient.listdir` 返回 `SftpName` 条目。浏览器使用 `filename` 和 `attr` 中的 `size`、`modifyTime`、`isDirectory` 等字段。用于流式读写的 `SftpFile` 是独立句柄，使用后必须关闭。
 
-`SftpClient.listdir` 返回 `SftpName` 条目。浏览器使用其 `filename`、`attr` 以及属性中
-的 `size`、`modifyTime` 和 `isDirectory` 字段。已打开的 `SftpFile` 是用于流式读写的
-独立句柄，使用后必须关闭。
+### 文件权限
 
-## 文件操作
+```dart
+Future<void> setPermissions(String path, String permissions) async {
+  final sftp = await getSftpClient(spiId);
+  final mode = parsePermissions(permissions);
+  await sftp.setStat(path, SftpFileAttrs(mode: SftpFileMode.value(mode)));
+}
+```
+
+权限修改通常通过 SFTP `setStat` 完成，不需要 shell。如果服务器拒绝该操作且已配置 SSH 提权，App 才会使用 `sudo chmod` 重试。这个回退需要 shell，不属于普通 SFTP protocol。
+
+## SCP
+
+SCP 适用于没有 SFTP subsystem、但有 shell 和 `scp` 命令的设备，例如某些运行 dropbear 的 OpenWrt 路由器或嵌入式系统。
+
+SCP protocol 只负责传输单个文件的内容，不负责目录列表、stat、rename、mkdir 或权限管理。因此 `ScpFileBackend` 使用 `scp -f`/`scp -t` 读取和写入文件，其他操作使用 shell 命令。它通过 SSH channel 执行这些操作。
+
+SCP 是服务器级别的明确选择，不会因为一次 SFTP 连接失败而自动启用。这样可以区分“服务器没有 SFTP”和“本次 SSH 连接或账户失败”。
+
+## 上传和下载
 
 ### 上传
 
-```dart
-Future<void> uploadFile(
-  String localPath,
-  String remotePath,
-) async {
-  final sftp = await getSftpClient(spiId);
+无论 SFTP 还是 SCP，App 都采用 staged write：先在目标旁边创建带唯一后缀的临时文件，完成写入并关闭句柄后，再 rename 到目标路径。
 
+```dart
+Future<void> uploadFile(String localPath, String remotePath) async {
+  final sftp = await getSftpClient(spiId);
   final stagingPath = '$remotePath.sb-part-${nextTransferId()}';
   SftpFile? remote;
   String? pendingStagingPath = stagingPath;
@@ -139,22 +139,15 @@ Future<void> uploadFile(
 }
 ```
 
-`nextTransferId()` 是进程级计数器。实际实现使用同样的计数器生成不同的
-`.sb-part-<number>` 路径，即使两个传输指向同一个目标文件也不会互相覆盖。
-
-客户端没有 `sftp.upload` 便捷方法。实际传输会打开 `SftpFile` 并显式关闭，先写入
-目标旁边带唯一后缀的临时路径，并在重命名之前关闭句柄；打开、写入、关闭或重命名失败
-时都会删除临时文件。新内容完成之前不会截断目标文件。
+实际实现使用进程级和 isolate 级的唯一 transfer ID，避免并行传输使用同一个临时文件。写入、关闭或 rename 失败时会清理临时文件；目标文件在新内容完成前不会被截断。
 
 ### 下载
 
-```dart
-Future<void> downloadFile(
-  String remotePath,
-  String localPath,
-) async {
-  final sftp = await getSftpClient(spiId);
+下载也先写入本地临时文件，完整关闭文件后再 rename 覆盖目标：
 
+```dart
+Future<void> downloadFile(String remotePath, String localPath) async {
+  final sftp = await getSftpClient(spiId);
   SftpFile? remote;
   File? staging;
   IOSink? sink;
@@ -184,34 +177,17 @@ Future<void> downloadFile(
 }
 ```
 
-客户端也没有 `sftp.download` 便捷方法。读取通过已打开的 `SftpFile` 流式进行；远端
-句柄和本地 sink 都必须显式关闭。内容先写入本地临时文件，关闭后才重命名覆盖目标；
-失败时会删除临时文件，因此部分下载不会替换原文件。
+失败时清理临时文件，因此部分下载不会覆盖本地目标文件。
 
-### 权限编辑
+### 文件权限保持不变
 
-```dart
-Future<void> setPermissions(
-  String path,
-  String permissions,
-) async {
-  final sftp = await getSftpClient(spiId);
+替换已有文件时，App 会先读取目标文件的 POSIX permission bits，再将相同 mode 应用到 staged file。这样保存 0755 的脚本不会变成 0644，替换 0600 文件也不会因为远端 umask 而扩大可读范围。
 
-  // 解析权限 (例如 "rwxr-xr-x" 或 "755")
-  final mode = parsePermissions(permissions);
-
-  // 通常通过 SFTP 的 set-stat 操作设置权限。
-  await sftp.setStat(path, SftpFileAttrs(mode: SftpFileMode.value(mode)));
-}
-```
-
-权限修改通常使用 SFTP `setStat`，不需要 shell。如果服务器拒绝该操作且存在
-SSH 提权处理器，backend 才会用 `sudo chmod` 重试。这个回退需要 shell，并非普通的
-SFTP 路径。
+权限复制是 best effort，不会因为服务器拒绝读取或设置 mode 而丢弃已经传输的内容。没有权限概念的 backend（例如 local backend）不会执行这一步。Monitor agent 的文件 API 也采用相同策略。
 
 ## 路径管理
 
-### 路径结构
+文件 backend 的路径使用绝对 POSIX 风格路径。相对路径由当前目录解析。
 
 ```dart
 class PathWithPrefix {
@@ -219,67 +195,28 @@ class PathWithPrefix {
   final String path;    // 相对或绝对路径
 
   String get fullPath {
-    if (path.startsWith('/')) {
-      return path;  // 绝对路径
-    }
-    return '$prefix/$path';  // 相对路径
+    if (path.startsWith('/')) return path;
+    return '$prefix/$path';
   }
 
-  PathWithPrefix cd(String subPath) {
-    return PathWithPrefix(
-      prefix: fullPath,
-      path: subPath,
-    );
-  }
+  PathWithPrefix cd(String subPath) => PathWithPrefix(
+    prefix: fullPath,
+    path: subPath,
+  );
 }
 ```
 
-### 导航历史
-
-```dart
-class PathHistory {
-  final List<String> _history = [];
-  int _index = -1;
-
-  void push(String path) {
-    // 移除前进历史
-    _history.removeRange(_index + 1, _history.length);
-    _history.add(path);
-    _index = _history.length - 1;
-  }
-
-  String? back() {
-    if (_index > 0) {
-      _index--;
-      return _history[_index];
-    }
-    return null;
-  }
-
-  String? forward() {
-    if (_index < _history.length - 1) {
-      _index++;
-      return _history[_index];
-    }
-    return null;
-  }
-}
-```
+浏览器保存 back/forward 导航历史。进入新路径后，旧的 forward history 会被移除。
 
 ## 传输系统
 
-### 队列管理
+传输由常驻的 `FileTransferNotifier` 管理，每个 `FileTransferStatus` 对应一个传输任务。任务可以使用独立 worker，也可以在当前 isolate 中执行。Notifier 负责添加、取消、报告进度、完成和清理。
 
-App 并不使用固定三并发的 `TransferQueue`。传输由常驻的
-`FileTransferNotifier` 中的 `FileTransferStatus` 表示；每个状态会拥有自己的 worker，
-或直接在当前 isolate 中运行。notifier 通过这一生命周期提供添加、取消、进度、完成和清理。
+大文件传输使用后台 isolate，避免阻塞 UI。传输队列不使用固定并发数的旧版 `TransferQueue`。
 
-## 本地存储模式
+## 本地下载位置
 
-### 下载文件位置
-
-下载的文件按服务器 id 和远程路径各级组件存储。组件会按本机平台进行清理，但目录结构
-会保留：
+下载文件按 server ID 和远程路径的各级组件保存，并在本地保持目录结构：
 
 ```dart
 String getLocalDownloadPath(String spiId, String remotePath) {
@@ -291,92 +228,34 @@ String getLocalDownloadPath(String spiId, String remotePath) {
 }
 ```
 
-示例：
-- 远程：`/var/log/nginx/access.log`
-- spiId：`server-123`
-- 本地：`Paths.file/server-123/var/log/nginx/access.log`
+例如：
+
+- 远程路径：`/var/log/nginx/access.log`
+- Server ID：`server-123`
+- 本地路径：`Paths.file/server-123/var/log/nginx/access.log`
 
 ## 文件编辑
 
-### 编辑工作流
+内置编辑器的流程是：
 
-```dart
-Future<void> editFile(String path) async {
-  final sftp = await getSftpClient(spiId);
+1. 读取远程文件 metadata，检查文件大小。
+2. 将文件下载到本地临时目录。
+3. 在编辑器中打开临时文件。
+4. 保存后，以 staged write 方式上传回原路径。
+5. 删除临时文件。
 
-  // 1. 检查大小
-  final stat = await sftp.stat(path);
-  if (stat.size > editorMaxSize) {
-    showWarning('文件太大，内置编辑器无法打开');
-    return;
-  }
-
-  // 2. 下载到临时目录
-  final temp = await downloadToTemp(path);
-
-  // 3. 在编辑器中打开
-  final content = await openEditor(temp.path);
-
-  // 4. 上传回服务器
-  await uploadFile(temp.path, path);
-
-  // 5. 清理
-  await temp.delete();
-}
-```
-
-### 外部编辑器集成
-
-```dart
-Future<void> editInExternalEditor(String path, {bool useSudo = false}) async {
-  final ssh = await getSshClient(spiId);
-
-  // 使用编辑器打开终端
-  final editor = getSetting('sftpEditor', 'vim');
-  final command = '${useSudo ? 'sudo ' : ''}$editor ${shellSingleQuote(path)}';
-  await ssh.exec(command);
-
-  // 用户在终端中编辑
-  // 保存后，刷新 SFTP 视图
-}
-```
+超过编辑器大小限制的文件不会直接打开；可以使用外部编辑器，或在终端中执行编辑命令。
 
 ## 错误处理
 
-### 权限错误
+- **权限错误**：检查远程文件的 owner、permission bits 和 SSH 用户；配置提权后可以重试 sudo 路径。
+- **连接错误**：先检查 SSH 连接是否仍然有效，再重连；不要把连接中断误判为 SFTP subsystem 缺失。
+- **SFTP 不可用**：在服务器编辑页将 file transport 改为 SCP，前提是服务器提供 `scp` 和 shell。
+- **空间不足**：检查远程文件系统剩余空间。staged write 可能需要同时容纳旧文件和临时文件。
 
-```dart
-try {
-  await uploadFile(localPath, remotePath);
-} on SftpPermissionException {
-  showError('拒绝访问：${stat.path}');
-  showHint('请检查文件权限和所有权');
-}
-```
+## 性能和限制
 
-### 连接错误
-
-```dart
-try {
-  await sftp.listdir(path);
-} on SftpStatusError {
-  showError('连接丢失');
-  await reconnect();
-}
-```
-
-### 空间错误
-
-```dart
-try {
-  await uploadFile(localPath, remotePath);
-} on SftpStatusError {
-  showError('远程服务器磁盘空间不足');
-}
-```
-
-## 性能说明
-
-- SFTP 复用现有 SSH 连接,不会另建连接。
-- 目录列表在导航时获取，并按需刷新，不使用 TTL 缓存层。
-- 大文件传输在后台 isolate 中执行，不阻塞 UI。
+- SFTP 复用现有 SSH 连接，不会为每个文件操作重新建立 SSH connection。
+- 目录列表在进入目录时获取，并按需刷新；不使用 TTL cache。
+- SFTP 支持随机访问；SCP 的 `read` offset 通过本地丢弃开头字节实现，protocol 本身仍从文件开头传输。
+- staged write 保证读者不会看到半写入文件，但网络超时后可能无法确定 rename 是否成功；App 不会自动重试结果未知的 rename。
