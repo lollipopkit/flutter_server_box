@@ -215,7 +215,7 @@ abstract final class MethodChans {
     }
   }
 
-  /// What MetricKit has reported since this was last asked, on iOS.
+  /// What MetricKit has reported since this was last asked, on iOS and macOS.
   ///
   /// The counterpart to [lastExitInfo], for the platform that has no equivalent
   /// of it. Delivery is on the system's schedule — a payload arrives somewhere
@@ -227,7 +227,7 @@ abstract final class MethodChans {
   /// for a crash whichever of `signal`, `exceptionType`, `exceptionCode` and
   /// `terminationReason` the payload carried.
   static Future<List<Map<String, Object?>>> takeCrashDiagnostics() async {
-    if (!isIOS) return const [];
+    if (!isIOS && !isMacOS) return const [];
     try {
       final res = await _channel.invokeListMethod<Object?>(
         'takeCrashDiagnostics',
