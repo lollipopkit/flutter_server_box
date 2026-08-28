@@ -59,6 +59,7 @@ class _HomePageState extends ConsumerState<HomePage>
   bool _shouldAuth = false;
   bool? _lastFullscreenMode;
   DateTime? _pausedTime;
+  int _serverRefreshCycle = 0;
 
   late final _notifier = ref.read(serversProvider.notifier);
   late List<AppTab> _tabs = Stores.setting.homeTabs.fetch();
@@ -76,6 +77,7 @@ class _HomePageState extends ConsumerState<HomePage>
 
   @override
   void dispose() {
+    _stopServerRefreshCycle();
     if (isMobile) {
       SystemUIs.switchStatusBar(hide: false);
     }
@@ -202,9 +204,7 @@ class _HomePageState extends ConsumerState<HomePage>
         } else {
           _releasePrivacyCover();
         }
-        final serverNotifier = _notifier;
-        unawaited(serverNotifier.startAutoRefresh());
-        unawaited(serverNotifier.refresh());
+        unawaited(_restartServerRefreshCycle());
         unawaited(MethodChans.updateHomeWidget());
         _syncFullscreenSystemUi();
         break;
@@ -219,7 +219,7 @@ class _HomePageState extends ConsumerState<HomePage>
           unawaited(MethodChans.setPrivacyBlurLocked(true));
         }
         if (!(isAndroid && Stores.setting.bgRun.fetch())) {
-          _notifier.stopAutoRefresh();
+          _stopServerRefreshCycle();
         }
         break;
       case AppLifecycleState.inactive:
@@ -489,7 +489,7 @@ class _HomePageState extends ConsumerState<HomePage>
       await _maybeShowNavGuide();
     }());
 
-    await _notifier.refresh();
+    unawaited(_restartServerRefreshCycle());
 
     bakSync.sync(milliDelay: 1000);
   }
@@ -613,13 +613,43 @@ extension _HomePageStateActions on _HomePageState {
   }
 
   void _handleRefreshIntervalChanged() {
-    final lifecycle = WidgetsBinding.instance.lifecycleState;
-    if (isDesktop ||
-        lifecycle == null ||
-        lifecycle == AppLifecycleState.resumed) {
-      unawaited(_notifier.startAutoRefresh());
-      unawaited(_notifier.refresh());
+    if (_canRefreshServers) {
+      unawaited(_restartServerRefreshCycle());
+    } else {
+      _stopServerRefreshCycle();
     }
+  }
+
+  bool get _canRefreshServers {
+    if (isDesktop) return true;
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    if (lifecycle == null || lifecycle == AppLifecycleState.resumed) {
+      return true;
+    }
+    return isAndroid && Stores.setting.bgRun.fetch();
+  }
+
+  /// Starts a new polling cycle without letting its timer race the first run.
+  ///
+  /// The generation prevents a refresh that finishes after pause, dispose or a
+  /// newer restart from turning the timer back on. Repeated restart requests
+  /// share the notifier's global refresh queue; only the latest one schedules
+  /// the next poll.
+  Future<void> _restartServerRefreshCycle() async {
+    final cycle = ++_serverRefreshCycle;
+    _notifier.stopAutoRefresh();
+    try {
+      await _notifier.refresh();
+    } catch (error, stackTrace) {
+      Loggers.app.warning('Initial server refresh failed', error, stackTrace);
+    }
+    if (!mounted || cycle != _serverRefreshCycle || !_canRefreshServers) return;
+    await _notifier.startAutoRefresh();
+  }
+
+  void _stopServerRefreshCycle() {
+    _serverRefreshCycle++;
+    _notifier.stopAutoRefresh();
   }
 }
 

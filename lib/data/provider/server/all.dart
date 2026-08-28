@@ -16,6 +16,7 @@ import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/provider/port_forward_provider.dart';
+import 'package:server_box/data/provider/server/refresh_scheduler.dart';
 import 'package:server_box/data/provider/server/selection.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
@@ -41,6 +42,14 @@ class ServersNotifier extends _$ServersNotifier {
   static const _maxConcurrentRefreshes = 4;
   int _autoRefreshGeneration = 0;
   Future<void> _mutationTail = Future.value();
+  ServerRefreshScheduler? _refreshScheduler;
+
+  ServerRefreshScheduler get _refreshes =>
+      _refreshScheduler ??= ServerRefreshScheduler(
+        maxConcurrent: _maxConcurrentRefreshes,
+        refresh: (serverId) =>
+            ref.read(serverProvider(serverId).notifier).refresh(),
+      );
 
   Future<T> _mutate<T>(Future<T> Function() action) async {
     final previous = _mutationTail;
@@ -229,27 +238,12 @@ class ServersNotifier extends _$ServersNotifier {
     await _refreshEach(ids);
   }
 
-  /// Refreshes [ids], a few at a time.
+  /// Refreshes [ids] through the app-wide queue.
   ///
-  /// The cap is what keeps a list of thirty machines from opening thirty
-  /// connections at once; the workers share one cursor rather than a slice
-  /// each, so a slow server holds up nothing but itself.
-  Future<void> _refreshEach(List<String> ids) async {
-    var next = 0;
-    Future<void> worker() async {
-      while (next < ids.length) {
-        final serverNotifier = ref.read(serverProvider(ids[next++]).notifier);
-        await serverNotifier.refresh();
-      }
-    }
-
-    await Future.wait(
-      List.generate(
-        ids.length.clamp(0, _maxConcurrentRefreshes).toInt(),
-        (_) => worker(),
-      ),
-    );
-  }
+  /// The scheduler is shared by startup, lifecycle, timer and explicit bulk
+  /// requests, so overlapping calls cannot each create their own set of four
+  /// workers. It also coalesces a server already queued or in flight.
+  Future<void> _refreshEach(List<String> ids) => _refreshes.refresh(ids);
 
   Future<void> startAutoRefresh() async {
     stopAutoRefresh();
