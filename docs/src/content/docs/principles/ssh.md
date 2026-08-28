@@ -1,90 +1,83 @@
 ---
 title: SSH Connection
-description: How SSH connections are established and managed
+description: How Server Box establishes and manages SSH connections
 ---
 
-This page describes how Server Box establishes and manages SSH connections.
+This page describes how Server Box establishes, verifies, and reuses SSH connections. A server configured only through Monitor HTTP has no SSH credentials and is not covered here.
 
-This page covers servers added over SSH. A server can instead be added through
-a monitor agent's HTTP API, in which case it carries no SSH credential at all
-and nothing here applies to it.
+## Connection flow
 
-## Connection Flow
-
-```
-User Input → Spi Config → genClient() → SSH Client → Session
+```text
+User configuration → Spi → genClient() → SSH client → Session
 ```
 
-### Step 1: Configuration
+### Configuration
 
-The `Spi` (Server Parameter Info) model holds the SSH settings in a nullable
-`SshCredential`. It is null for a server reached through a monitor agent:
+`Spi` (Server Parameter Info) contains the server and connection settings:
 
 ```dart
 class Spi {
+  String id;                      // Unique identifier
   String name;                    // Server name
-  SshCredential? ssh;             // null for a monitor server
+  SshCredential? ssh;             // null when SSH is not configured
   MonitorHttpCredential? monitorHttp;
 }
 
 final class SshCredential {
-  String ip;              // IP address
-  int port;               // SSH port (default 22)
-  String user;            // Username
-  String? pwd;            // Password (encrypted)
-  String? keyId;          // SSH key ID
-  String? alterUrl;       // Alternative URL
-  List<String>? jumpIds;  // Jump server chain
-  String? proxyCommand;   // ProxyCommand, desktop only
+  String ip;              // IP address or hostname
+  int port;               // SSH port, default 22
+  String user;             // Username
+  String? pwd;             // Password, encrypted at rest
+  String? keyId;           // SSH key ID
+  String? alterUrl;        // Fallback URL
+  List<String>? jumpIds;   // Jump-server candidates
+  String? proxyCommand;    // ProxyCommand, desktop only
 }
 ```
 
-A jump chain and a `ProxyCommand` are mutually exclusive; `Spix.validate()`
-rejects a server that sets both.
+Jump-server candidates and `ProxyCommand` are mutually exclusive. `Spix.validate()` rejects a server that configures both.
 
-### Step 2: Client Generation
+### Creating the client
 
-`genClient(spi)` creates SSH client:
+`genClient(spi)` creates and returns an SSH client:
 
 ```dart
 Future<SSHClient> genClient(Spi spi) async {
   final ssh = spi.ssh!;
-  // 1. Establish the socket, then try the parsed alternative URL if it fails.
+  // 1. Establish the socket; try the parsed fallback URL if it fails.
   SSHSocket? socket;
-  var alterUser = ssh.user;
+  var connectUser = ssh.user;
   try {
     socket = await connect(ssh.ip, ssh.port);
   } catch (_) {
     if (ssh.alterUrl == null) rethrow;
-    final (alterHost, parsedUser, alterPort) = ssh.parseAlterUrl();
-    socket = await connect(alterHost, alterPort);
-    alterUser = parsedUser;
+    final (fallbackHost, fallbackUser, fallbackPort) = ssh.parseAlterUrl();
+    socket = await connect(fallbackHost, fallbackPort);
+    connectUser = fallbackUser;
   }
 
-  // 3. Authenticate
+  // 2. Authenticate
   final client = SSHClient(
     socket: socket!,
-    username: alterUser,
+    username: connectUser,
     onPasswordRequest: () => ssh.pwd,
     onIdentityRequest: () => loadKey(ssh.keyId),
   );
 
-  // 4. Verify host key
+  // 3. Verify the host key
   await verifyHostKey(client, spi);
 
   return client;
 }
 ```
 
-### Step 3: Where the socket comes from
+## Socket sources
 
-`genClient` resolves one of three sources, then everything above `SSHSocket` is
-the same in each case:
+`genClient` selects one of the following socket sources. Once the socket exists, SSH client setup and host-key verification are the same in every case.
 
-**Direct**: the default, `SSHSocket.connect(ip, port)`, falling back to
-`alterUrl` when it fails.
+**Direct connection** uses `SSHSocket.connect(ip, port)`. If it fails and `alterUrl` is configured, the App tries the fallback address, user, and port.
 
-**Jump server**: recursive connection, then a local forward:
+**Jump server** connects through jump-server candidates in order, then creates a local forward to the target:
 
 ```dart
 for (final jumpId in spi.resolvedJumpIds) {
@@ -93,7 +86,7 @@ for (final jumpId in spi.resolvedJumpIds) {
 }
 ```
 
-**ProxyCommand**: desktop only, since it spawns a process:
+**ProxyCommand** is available on desktop only because it starts a local process:
 
 ```dart
 if (ssh.proxyCommand != null) {
@@ -106,75 +99,78 @@ if (ssh.proxyCommand != null) {
 }
 ```
 
-## Authentication Methods
+The SSH client above these socket sources still authenticates to and verifies the target server. A jump server or ProxyCommand only changes how the byte stream reaches it.
 
-### Password Authentication
+## Authentication
+
+### Password
 
 ```dart
 onPasswordRequest: () => ssh.pwd
 ```
 
-- Password stored in the encrypted SQLite database
-- Decrypted on connection
-- Sent to server for verification
+The password is stored in encrypted SQLite, decrypted when needed, and sent to the server for authentication.
 
-### Private Key Authentication
+### Private key
 
 ```dart
 onIdentityRequest: () async {
   final key = await PrivateKeyStore.get(ssh.keyId);
-  return decyptPem(key.pem, key.password);
+  return decryptPem(key.pem, key.password);
 }
 ```
 
-**Key Loading Process:**
-1. Retrieve encrypted key from `PrivateKeyStore`
-2. Decrypt password (biometric/prompt)
-3. Parse PEM format
-4. Standardize line endings (LF)
-5. Return for authentication
+The private-key loading flow is:
 
-### Keyboard-Interactive
+1. Read the encrypted key from `PrivateKeyStore`.
+2. Unlock it; depending on settings, this may require biometrics or confirmation.
+3. Parse the PEM data.
+4. Normalize line endings to LF.
+5. Pass the key to the SSH client.
+
+Desktop imports from `~/.ssh/config` can also reference a private-key file. The App reads that path when connecting instead of copying the file into its store.
+
+### Keyboard-interactive
 
 ```dart
 onUserInfoRequest: (instructions) async {
-  // Handle challenge-response
+  // Handle challenge-response prompts
   return responses;
 }
 ```
 
-Supports:
-- Password authentication
-- OTP tokens
-- Two-factor authentication
+This can support passwords, OTP tokens, and two-factor authentication.
 
-## Host Key Verification
+## Host-key verification
 
-### Why Verify Host Keys?
+### Why verify host keys?
 
-Helps detect a possible man-in-the-middle (MITM) attack by comparing the server's host key.
+The App records a server's host key and compares it on later connections. This helps detect man-in-the-middle (MITM) attacks.
 
-### Storage Format
+### Storage key
 
-```
+```text
 {spi.id}::{keyType}
 ```
 
-Example:
-```
+For example:
+
+```text
 my-server::ssh-ed25519
 my-server::ecdsa-sha2-nistp256
 ```
 
-### Fingerprint Format
+### Fingerprint format
 
-The current display and storage format is the OpenSSH SHA-256 form:
+The App displays and stores fingerprints in the OpenSSH SHA-256 format:
+
 ```text
 SHA256:AbCdEf1234567890...=
 ```
+
 Legacy stored values are normalized when read.
 
-### Verification Flow
+### Verification flow
 
 ```dart
 Future<bool> verifyHostKey(
@@ -184,53 +180,32 @@ Future<bool> verifyHostKey(
 ) => verifier(keyType, fingerprintBytes);
 ```
 
-`HostKeyVerifier` compares the received fingerprint with the value stored under
-`spi.id::keyType`. An unknown key is trusted only when the user accepts the
-prompt. A mismatch is accepted only after explicit re-approval; declining it
-returns `false`, so the SSH connection is rejected. Accepted values are then
-persisted for later connections.
+`HostKeyVerifier` compares the received fingerprint with the value stored under `spi.id::keyType`. An unknown key is trusted only after you accept the prompt. A mismatch requires explicit re-approval; declining returns `false` and rejects the SSH connection. Accepted fingerprints are persisted for future connections.
 
-## Session Management
+## Session management
 
-### Connection Pooling
+### Connection reuse
 
-`ServerProvider` maintains active clients:
+`ServerNotifier` owns the per-server client and reuses it across status collection and other SSH features:
 
 ```dart
-class ServerProvider {
-  final Map<String, SSHClient> _clients = {};
-
-  SSHClient getClient(String spiId) {
-    return _clients[spiId] ??= connect(spiId);
-  }
-}
+final state = ref.watch(serverProvider(serverId));
+final client = state.client;
 ```
 
-### Keep-Alive
+The exact operation that needs a client asks the server provider for it; pages should not create a separate client for every action.
 
-The client sends keep-alive messages during inactivity:
+### Keep-alive
 
-```dart
-Timer.periodic(
-  Duration(seconds: 30),
-  (_) => client.sendKeepAlive(),
-);
-```
+The SSH client sends protocol-level keep-alive messages during inactivity. These messages are separate from terminal input and output.
 
-### Auto-Reconnect
+### Reconnection
 
-On connection loss:
+When a connection fails, the server provider can recreate it on a later refresh. A failed status request should not be treated as proof that the host has no SFTP subsystem or no other capability.
 
-```dart
-client.onError.listen((error) async {
-  await Future.delayed(Duration(seconds: 5));
-  reconnect();
-});
-```
+## Connection lifecycle
 
-## Connection Lifecycle
-
-```
+```text
 ┌─────────────┐
 │   Initial   │
 └──────┬──────┘
@@ -239,77 +214,34 @@ client.onError.listen((error) async {
 ┌─────────────┐
 │ Connecting  │ ←──┐
 └──────┬──────┘   │
-       │ success  │
-       ↓          │ fail (retry)
+       │ success  │ failure, retry later
+       ↓          │
 ┌─────────────┐   │
 │ Connected   │───┘
 └──────┬──────┘
        │
        ↓
 ┌─────────────┐
-│   Active    │ ──→ Send commands
+│ In use      │ ──→ Run commands or open sessions
 └──────┬──────┘
        │
-       ↓ (error/disconnect)
+       ↓ error or disconnect
 ┌─────────────┐
 │ Disconnected│
 └─────────────┘
 ```
 
-## Error Handling
+## Error handling
 
-### Connection Timeout
+- **Connection timeout**: Check the host, port, firewall, and network route.
+- **Authentication failure**: Check the username, password, private key, or keyboard-interactive configuration.
+- **Host-key mismatch**: Do not accept a new key automatically. Verify the server identity first. If the server really replaced its key, remove the old entry from Known Hosts and reconnect.
+- **Missing private key**: Confirm that the configured key ID still exists, or that the imported `keyPath` is readable on the desktop.
 
-```dart
-try {
-  await client.connect().timeout(
-    Duration(seconds: 30),
-  );
-} on TimeoutException {
-  throw ConnectionException('Connection timeout');
-}
-```
+## Performance guidance
 
-### Authentication Failure
-
-```dart
-onAuthFail: (error) {
-  if (error.contains('password')) {
-    return 'Invalid password';
-  } else if (error.contains('key')) {
-    return 'Invalid SSH key';
-  }
-  return 'Authentication failed';
-}
-```
-
-### Host Key Mismatch
-
-```dart
-onHostKeyMismatch: (stored, current) {
-  showSecurityWarning(
-    'Host key has changed!',
-    'Possible MITM attack',
-  );
-}
-```
-
-## Performance Considerations
-
-### Connection Reuse
-
-- Reuse clients across features
-- Don't disconnect/reconnect unnecessarily
-- Pool connections for concurrent operations
-
-### Optimal Settings
-
-- **Timeout**: 30 seconds (adjustable)
-- **Keep-alive**: Every 30 seconds
-- **Retry delay**: 5 seconds
-
-### Network Efficiency
-
-- Single connection for multiple operations
-- Pipeline commands when possible
-- Avoid opening multiple connections
+- Reuse an existing client across features.
+- Avoid unnecessary disconnect/reconnect cycles.
+- Use one SSH connection for multiple operations where possible.
+- Create additional independent sessions only when a feature requires them.
+- Tune timeouts, keep-alive intervals, and retry behavior for the actual network and server.

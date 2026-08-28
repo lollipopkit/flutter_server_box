@@ -1,85 +1,55 @@
 ---
 title: Terminal on This Device
-description: Open a shell on the machine running ServerBox
+description: Open a shell on the device running Server Box
 ---
 
-The terminal tab lists two things before your servers, when the build offers
-them: a shell on **this device**, and a Linux container ServerBox installs.
+When the current build includes the relevant capability, the terminal tab lists a shell on **this device** and a Linux userland provided by Server Box before the remote servers.
 
-Both are listed first for the same reason the file tab lists this device first:
-the device is always reachable, and these entries do not require credentials.
+They appear first because the device is always reachable and these entries do not require credentials.
 
-## This device
+## Shell on this device
 
-A shell on the machine ServerBox is running on. It uses `$SHELL` where the OS
-says which shell you chose, so it is the same shell your terminal app opens.
+This shell runs on the device where Server Box is running. On platforms that support choosing a shell, the App uses `$SHELL`, so it is normally the same shell opened by your terminal app.
 
-Where it is available:
-
-| Platform | Available |
+| Platform | Availability |
 |---|---|
-| Linux, Windows | yes |
-| macOS (DMG build) | yes |
-| macOS (App Store build) | no |
-| Android | yes, though its shell capabilities differ from desktop platforms |
-| iOS | no |
+| Linux, Windows | Available |
+| macOS (DMG build) | Available |
+| macOS (App Store build) | Not available |
+| Android | Available, with different shell capabilities from desktop |
+| iOS | Not available |
 
-**The App Store macOS build cannot offer one.** It has to be sandboxed, and a
-sandboxed process cannot open a pseudo-terminal. The entry is omitted rather
-than shown as unavailable. The DMG build is signed without the sandbox and does
-have one. The app checks the running process, so the UI reflects the build's
-sandboxing.
+**The App Store macOS build cannot provide a local shell.** It runs in a sandbox, and a sandboxed process cannot open a pseudo-terminal, so the App omits this entry. The DMG build is not sandboxed and can provide it. The App checks the running build, so the UI reflects the actual sandbox restriction.
 
-**iOS has none** for a stronger reason: an App Store app cannot start a process
-at all, and there is no `/bin/sh` in its container to start.
+**iOS does not provide a local shell.** An App Store App cannot start processes, and its sandbox contains no `/bin/sh` to start.
 
-## The Alpine container
+## Linux userland
 
-Where the platform does not provide a shell or provides only limited shell
-access, ServerBox can
-install a Linux userland of its own, Alpine 3.22.5 on both
-platforms.
+If a platform does not provide a shell, or its local shell is limited, Server Box can install an independent Linux userland. The default release is currently Alpine 3.22.5, and the App's release list may offer other distributions and versions, including Debian and Ubuntu.
 
-It appears in the terminal tab as **Alpine \<version\>**, beside this device
-rather than among the servers, because that is what it is: the same machine,
-with a userland this app installed. When a newer release is pinned than the one
-on disk, the entry offers the update.
+It appears in the terminal tab as **<distribution> <version>**, beside the local shell because both run on the same device. The distribution and version are chosen at install time; an update stays within the same profile and offers no new choice.
 
-Two platforms, two mechanisms:
+Android and iOS use different implementations:
 
-- **Android** unpacks a real root filesystem and enters it with `proot`. It is
-  arm64 only, and the rootfs is a tarball fetched over the network and then run,
-  so its digest is pinned and checked.
-- **iOS** cannot start a process, so it carries an interpreter, and the
-  container is that interpreter's filesystem.
+- **Android**: Unpacks a real Linux rootfs and enters it with `proot`. Current builds support arm64; the rootfs is downloaded as a tarball and verified against a pinned digest.
+- **iOS**: Cannot start processes directly, so the App includes a Linux interpreter. The userland is the filesystem used by that interpreter.
 
-**Both are absent unless the build ships them.** Neither mechanism is included
-by default, so a build may offer this device, the container, both, or neither.
-The terminal tab is written to expect any of those. If you do not see it, your
-build does not have it.
+**These features depend on the build configuration.** A build may provide only the local shell, only the Alpine userland, both, or neither. If the entry is missing from the terminal tab, the current build does not include that capability.
 
 ### Use cases
 
-- A `curl`, `dig`, `ssh` or `jq` on a phone that has none
-- Scratch work you would rather not do on a production host
-- A sandboxed target for Agent commands, separate from the device filesystem. See
-  [Agent](/docs/advanced/agent/)
+- Use `curl`, `dig`, `ssh`, or `jq` on a phone that does not include them.
+- Perform temporary work that you do not want to run directly on a production server.
+- Give Agent an execution target isolated from the device filesystem; see [Agent](/docs/advanced/agent/).
 
-The container uses a standard Alpine userland, so `apk add` works.
+Each userland is a standard environment for its distribution, so packages are installed with its own package manager: `apk add` on Alpine, `apt install` on Debian and Ubuntu.
 
-### What it cannot see
+### Filesystem isolation
 
-The container has its own filesystem. It cannot read the phone's storage, the
-app's own data, your private keys or your files. That containment is why the
-Agent's "run commands on this device" switch reads differently on mobile than on
-desktop: on a phone it is offering a sandbox, on a desktop it is offering your
-computer.
+The Alpine userland has its own filesystem and cannot read phone storage, App data, private keys, or user files. This is why **Run commands on this device** means different things on mobile and desktop: mobile uses an isolated userland, while desktop uses the computer's own shell.
 
-## How it differs from a server
+## Differences from a server terminal
 
-Everything above the byte stream is the same: the terminal emulator, virtual
-keyboard, and tabs. What changes is where the bytes come from.
+The terminal emulator, virtual keyboard, and tabs are shared. Only the source of the byte stream changes.
 
-A local shell has no host key to verify, no reconnection, and no server card. It
-also does not appear on the server list or in status charts: it is a terminal,
-not a monitored machine.
+A local shell does not verify a host key and does not reconnect like a server connection. It does not appear in the server list or status charts: it is a terminal session, not a monitored server.

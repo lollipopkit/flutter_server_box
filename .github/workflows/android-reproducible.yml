@@ -1,36 +1,24 @@
 name: Android reproducible build
 
 on:
+  # Called by the release pipeline, where it gates publication — see
+  # `androidReproducible` in build.yml. Not run per pull request any more: it
+  # is two full Android builds and takes about twenty minutes, which is a long
+  # time to hold every change that touches `lib/` for a property only a release
+  # can act on. What it protects is the F-Droid contract — F-Droid rebuilds
+  # from this source and compares against the published APK — so the release is
+  # the moment it has to hold, and the release is where it now runs.
+  workflow_call:
+  # For checking a change that is likely to break it without waiting for a tag:
+  # anything under `android/`, the build scripts, or a dependency bump.
   workflow_dispatch:
-  pull_request:
-    branches: ["main"]
-    paths:
-      - ".github/actions/setup-flutter/action.yml"
-      - ".github/workflows/android-reproducible.yml"
-      - ".github/workflows/build.yml"
-      - "android/**"
-      - "assets/**"
-      - "crates/**"
-      - "hook/**"
-      - "lib/**"
-      - "packages/**"
-      - "scripts/build-proot-android.sh"
-      - "scripts/release/android-build-env.sh"
-      - "scripts/release/build-fdroid.sh"
-      - "scripts/release/compare-apks.sh"
-      - "scripts/release/empty-package-config.json"
-      - "scripts/release/gradle-offline.init.gradle"
-      - "scripts/release/map_plugin_registrant_package.dart"
-      - "scripts/release/patch-jni-build-id.sh"
-      - "scripts/release/prepare-fdroid.sh"
-      - "scripts/release/prune-android-dev-plugins.dart"
-      - "Cargo.lock"
-      - "Cargo.toml"
-      - "pubspec.lock"
-      - "pubspec.yaml"
-  push:
-    tags:
-      - "v*"
+  # Weekly on main, because what breaks reproducibility lands between releases:
+  # a Flutter, NDK or Gradle plugin bump, a dependency that started embedding a
+  # path or a timestamp. Without this the first anyone hears of it is the tag,
+  # which is the worst moment — someone is trying to ship. One run a week costs
+  # nothing and no pull request waits for it.
+  schedule:
+    - cron: "17 4 * * 1"
 
 permissions:
   contents: read

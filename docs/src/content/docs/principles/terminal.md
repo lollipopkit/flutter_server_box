@@ -1,64 +1,52 @@
 ---
 title: Terminal Implementation
-description: How the SSH terminal works internally
+description: How the Server Box terminal works
 ---
 
-The terminal is built on a custom `xterm.dart` fork.
+The terminal is built on a custom `xterm.dart` fork. Its UI is shared across SSH, local, Alpine, and Monitor agent sessions.
 
 ## Where the bytes come from
 
-Everything above the byte stream is one implementation: the same emulator, the
-same virtual keyboard, and the same tabs. Below it, `ShellBackend` has four:
+Everything above the byte stream uses one implementation: the same emulator, virtual keyboard, and tabs. `ShellBackend` has these implementations:
 
-| Backend | Bytes from |
+| Backend | Byte source |
 |---|---|
-| `SshShellBackend` | An SSH channel; the rest of this page |
-| `LocalShellBackend` | A shell on this device, or inside the Alpine container on Android |
+| `SshShellBackend` | An SSH channel; this page focuses on this path |
+| `LocalShellBackend` | A shell on this device, or an Alpine environment on Android |
 | `IshShellBackend` | The Linux interpreter on iOS |
-| `MonitorShellBackend` | A monitor agent's `/api/v1/terminal/ws` |
+| `MonitorShellBackend` | Monitor agent's `/api/v1/terminal/ws` endpoint |
 
-A caller opens a session and writes to it. The UI does not need to know which
-backend supplies the response. See
-[Terminal on This Device](/docs/advanced/local-terminal/) for the two local ones
-and [Monitor Agent](/docs/advanced/monitor-agent/) for the last.
+The caller opens a session and reads or writes bytes without knowing which backend supplies them. See [Terminal on This Device](/docs/advanced/local-terminal/) for local backends and [Monitor Agent](/docs/advanced/monitor-agent/) for the Monitor backend.
 
-The rest of this page describes the SSH path. The other backends expose the same
-interface.
+The sections below describe the SSH path. Other backends expose the same upper-level interface.
 
-## Architecture Overview
+## Architecture overview
 
-```
+```text
 ┌─────────────────────────────────────────────┐
-│          Terminal UI Layer                  │
-│  - Tab management                           │
-│  - Virtual keyboard                         │
-│  - Text selection                           │
+│ Terminal UI layer                            │
+│ Tabs, virtual keyboard, text selection       │
 └─────────────────────────────────────────────┘
-                ↓
+                    ↓
 ┌─────────────────────────────────────────────┐
-│         xterm.dart Emulator                 │
-│  - PTY (Pseudo Terminal)                    │
-│  - VT100/ANSI emulation                     │
-│  - Rendering engine                         │
+│ xterm.dart emulator                          │
+│ PTY, VT100/ANSI emulation, rendering         │
 └─────────────────────────────────────────────┘
-                ↓
+                    ↓
 ┌─────────────────────────────────────────────┐
-│          SSH Client Layer                   │
-│  - SSH session                              │
-│  - Channel management                       │
-│  - Data streaming                           │
+│ SSH client layer                             │
+│ Sessions, channels, and byte streams          │
 └─────────────────────────────────────────────┘
-                ↓
+                    ↓
 ┌─────────────────────────────────────────────┐
-│          Remote Server                      │
-│  - Shell process                            │
-│  - Command execution                        │
+│ Remote server                                │
+│ Shell process, PTY, and command execution    │
 └─────────────────────────────────────────────┘
 ```
 
-## Terminal Session Lifecycle
+## Terminal session lifecycle
 
-### 1. Session Creation
+### Session creation
 
 ```dart
 Future<TerminalSession> createSession(Spi spi) async {
@@ -71,150 +59,87 @@ Future<TerminalSession> createSession(Spi spi) async {
 }
 ```
 
-The session's backend creates the SSH PTY with `SSHPtyConfig` and owns the
-shell lifecycle. The same `TerminalSession` shape is also used for local and
-monitor-agent backends.
+The SSH backend creates a PTY with `SSHPtyConfig` and owns the shell lifecycle. `TerminalSession` is also used by local and Monitor agent backends.
 
-### 2. Terminal Emulation
+### Terminal emulation
 
 The xterm.dart fork provides:
 
-**VT100/ANSI Emulation:**
+**VT100/ANSI emulation:**
+
 - Cursor movement
-- Colors (256-color support)
-- Text attributes (bold, underline, etc.)
+- 256 colors
+- Text attributes such as bold and underline
 - Scrolling regions
 - Alternate screen buffer
 
 **Rendering:**
+
 - Line-based rendering
-- Bidirectional text support
-- Unicode/emoji support
+- Bidirectional text
+- Unicode and Emoji
 - Redraws limited to changed terminal content
 
-### 3. Data Flow
+### Data flow
 
-```
-User Input
+```text
+User input
     ↓
-Virtual Keyboard / Physical Keyboard
+Virtual or physical keyboard
     ↓
-Terminal Emulator (key → escape sequence)
+Terminal emulator (key → escape sequence)
     ↓
-SSH Channel (send)
+SSH channel (send)
     ↓
 Remote PTY
     ↓
-Remote Shell
+Remote shell
     ↓
-Command Output
+Command output
     ↓
-SSH Channel (receive)
+SSH channel (receive)
     ↓
-Terminal Emulator (parse ANSI codes)
+Terminal emulator (parse ANSI sequences)
     ↓
-Render to Screen
+Render to screen
 ```
 
-## Multi-Tab System
+## Multiple tabs
 
-### Tab Management
+Each tab owns an independent terminal session. When you navigate away, the session and terminal state remain available:
 
-```dart
-class TerminalTabs {
-  final Map<String, TabData> _tabs = {};
-  String? _activeTabId;
+- The SSH connection stays alive until it closes or the session is disposed.
+- Terminal state is preserved.
+- The scrollback buffer is preserved.
+- Input history is preserved.
 
-  void createTab(Server server) {
-    final id = _generateTabId(server);
-    _tabs[id] = TabData(
-      id: id,
-      name: _generateTabName(server),
-      session: createSession(server),
-    );
-    _activeTabId = id;
-  }
+When multiple tabs use one server, tab names include a number to distinguish them.
 
-  String _generateTabName(Server server) {
-    final count = _tabs.values
-        .where((t) => t.name.startsWith(server.name))
-        .length;
-    return count == 0 ? server.name : '${server.name}($count)';
-  }
-}
-```
+## Virtual keyboard
 
-### Session Persistence
+The virtual keyboard is a cross-platform Flutter Widget rendered above the terminal. Available keys are defined in `lib/data/model/ssh/virtual_key.dart`. On mobile, it can appear alongside the system keyboard.
 
-Tabs maintain state across navigation:
-
-- SSH connection kept alive
-- Terminal state preserved
-- Scroll buffer maintained
-- Input history retained
-
-## Virtual Keyboard
-
-The virtual keyboard is a Flutter widget rendered above the terminal on all
-platforms (`lib/data/model/ssh/virtual_key.dart` defines the available keys),
-shown together with the system keyboard on mobile.
-
-### Keyboard Buttons
-
-| Button | Action |
-|--------|--------|
+| Key | Action |
+|---|---|
 | **Esc / Tab / Home / End / PgUp / PgDn / arrows** | Send the corresponding key |
-| **Ctrl / Alt / Shift** | Toggle modifier for the next key |
-| **IME** | Show/hide system keyboard |
-| **Clipboard** | Copy selection / paste, context-aware |
+| **Ctrl / Alt / Shift** | Apply a modifier to the next key |
+| **IME** | Show or hide the system keyboard |
+| **Clipboard** | Copy or paste according to the current context |
 | **SFTP** | Open the current directory in the SFTP browser |
-| **Snippet** | Pick and execute a snippet |
-| **Symbols** | `/ \ _ + = - ( ) [ ] { } < >` and more |
+| **Snippet** | Select and execute a saved command snippet |
+| **Symbols** | Enter `/ \\ _ + = - ( ) [ ] { } < >` and other symbols |
 
 The key set and order are customizable in settings.
 
-### Key Encoding
+## Text selection
 
-```dart
-String encodeKey(Key key) {
-  switch (key) {
-    case Key.enter:
-      return '\r';
-    case Key.tab:
-      return '\t';
-    case Key.escape:
-      return '\x1b';
-    case Key.ctrlC:
-      return '\x03';
-    // ... more keys
-  }
-}
-```
+1. Long-press terminal text to enter selection mode.
+2. Drag to extend the selection.
+3. Release to copy it to the clipboard.
 
-## Text Selection
+## Font and dimensions
 
-### Selection Mode
-
-1. **Long press**: Enter selection mode
-2. **Drag**: Extend selection
-3. **Release**: Copy to clipboard
-
-### Selection Storage
-
-```dart
-class TextSelection {
-  final BufferRange range;
-  final String text;
-
-  void copyToClipboard() {
-    Clipboard.setData(ClipboardData(text: text));
-  }
-}
-```
-
-## Font and Dimensions
-
-### Size Calculation
+The terminal calculates its rows and columns from the font size and available space:
 
 ```dart
 class TerminalDimensions {
@@ -230,102 +155,24 @@ class TerminalDimensions {
 }
 ```
 
-### Pinch-to-Zoom
+On mobile, pinch-to-zoom changes the terminal font size and recalculates the PTY dimensions.
 
-```dart
-GestureDetector(
-  onScaleStart: () => _baseFontSize = currentFontSize,
-  onScaleUpdate: (details) {
-    final newFontSize = _baseFontSize * details.scale;
-    resize(newFontSize);
-  },
-)
-```
+## Color schemes
 
-## Color Scheme
-
-### ANSI Color Mapping
-
-```dart
-const colorMap = {
-  0: Color(0x000000),  // Black
-  1: Color(0x800000),  // Red
-  2: Color(0x008000),  // Green
-  3: Color(0x808000),  // Yellow
-  4: Color(0x000080),  // Blue
-  5: Color(0x800080),  // Magenta
-  6: Color(0x008080),  // Cyan
-  7: Color(0xC0C0C0),  // White
-  // ... 256-color palette
-};
-```
-
-### Theme Support
-
-- **Light**: Light background, dark text
-- **Dark**: Dark background, light text
+- **Light**: Light background and dark text
+- **Dark**: Dark background and light text
 - **AMOLED**: Pure black background
 
 ## Performance
 
-The xterm.dart fork renders with a custom painter and only repaints on terminal
-updates; output writes are buffered and coalesced before being fed to the
-emulator.
+The xterm.dart fork uses a custom painter and repaints only when terminal content changes. Remote output is buffered and coalesced before it reaches the emulator, reducing the cost of many small updates.
 
-## Clipboard Integration
+## Special features
 
-### Copy Selection
+- **Snippet execution** inserts a saved command into the terminal and executes it.
+- **SFTP quick access** opens the SFTP browser at the terminal's current working directory.
+- **Shared backends** let local shells, Alpine environments, and Monitor terminals use the same upper-level terminal UI as SSH.
 
-```dart
-void copySelection() {
-  final selected = terminal.getSelection();
-  Clipboard.setData(ClipboardData(text: selected));
-}
-```
+## Keep-alive
 
-### Paste Clipboard
-
-```dart
-Future<void> pasteClipboard() async {
-  final data = await Clipboard.getData('text/plain');
-  if (data?.text != null) {
-    terminal.paste(data!.text!);
-  }
-}
-```
-
-### Context-Aware Button
-
-- **Has selection**: Show "Copy"
-- **Has clipboard**: Show "Paste"
-- **Both**: Show primary action
-
-## Special Features
-
-### Snippet Execution
-
-```dart
-void executeSnippet(Snippet snippet) {
-  final formatted = formatSnippet(snippet);
-  terminal.paste(formatted);
-  terminal.paste('\r');  // Execute
-}
-```
-
-### SFTP Quick Access
-
-```dart
-void openSftp() async {
-  final cwd = await terminal.getCurrentWorkingDirectory();
-  Navigator.push(
-    context,
-    SftpPage(initialPath: cwd),
-  );
-}
-```
-
-### Keep-Alive
-
-Connections are kept alive at the SSH protocol layer (see the
-[SSH Connection](/docs/principles/ssh/) page), not by injecting bytes into the
-terminal.
+SSH keep-alive messages operate at the protocol layer. They are separate from bytes typed into or displayed by the terminal; see [SSH Connection](/docs/principles/ssh/).

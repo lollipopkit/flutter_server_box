@@ -1,48 +1,48 @@
 ---
 title: Desktop Features
-description: macOS, Linux and Windows specific features
+description: Platform-specific features for macOS, Linux, and Windows
 ---
 
-Server Box provides desktop-specific features.
+Server Box provides a larger workspace, full keyboard support, and platform-specific window features on desktop.
 
 ## macOS
 
-### Native Menu Bar
+### Menu bar
 
-The macOS menu bar provides these menus and shortcuts:
+The macOS menu bar includes:
 
-- **Server Box**: About, Settings (⌘,), Quit (⌘Q)
+- **Server Box**: About, Settings (⌘,), and Quit (⌘Q)
 - **Navigate**: Switch between home tabs (⌘1 … ⌘9)
 - **Info**: Project links
 
-### Window Management
+### Window management
 
-- Remembers window size and position across launches
+The App remembers the window size and position and restores them on the next launch.
 
 ## Linux
 
 - X11 and Wayland support
-- File picker integration
-- Distributed as AppImage
+- System file picker integration
+- Distributed as an AppImage
 
 ## Windows
 
 - Native window controls
-- Distributed as portable zip
+- Distributed as a portable zip package
 
-## Cross-Platform Desktop Features
+## Common desktop features
 
 ### Themes
 
-- Light theme
-- Dark theme
-- AMOLED theme (pure black)
-- Auto AMOLED (follows OS, AMOLED when dark)
-- System theme (follows OS)
+- Light
+- Dark
+- AMOLED (pure black background)
+- Auto AMOLED (use a pure black background when the system theme is dark)
+- Follow system
 
 ### Compared with mobile
 
-- More screen space for monitoring
-- Physical keyboard support for the terminal
-- Faster file operations
-- Windowed multitasking
+- More screen space for viewing multiple metrics
+- A full-size keyboard for easier terminal input
+- More efficient file transfers and batch operations
+- Better support for working with multiple tasks at once

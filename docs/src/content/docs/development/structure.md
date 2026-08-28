@@ -1,138 +1,96 @@
 ---
 title: Project Structure
-description: Understanding the Server Box codebase
+description: Understand the Server Box codebase
 ---
 
-The Server Box project is a monorepo: the Flutter app lives at the repository root, alongside a Rust workspace and the server-side monitor.
+Server Box uses a monorepo: the Flutter App lives at the repository root alongside the Rust workspace, Monitor agent, documentation site, and project website.
 
-## Monorepo Layout
+## Monorepo layout
 
-```
+```text
 flutter_server_box/
-├── lib/               # Flutter app (see below)
+├── lib/               # Flutter App
 ├── crates/
-│   ├── sbm_parser/    # Shared status parser (single source of truth,
-│   │                  # used by the app via FFI and by the monitor)
+│   ├── sbm_parser/    # Shared status parser for App and Monitor
 │   ├── sbm_ffi/       # flutter_rust_bridge binding crate
-│   │                  # Native build integration
-│   └── sbm_native/    # Native per-platform sampler (monitor only)
-├── monitor/           # Server-side monitor (Rust service + Svelte frontend)
-├── packages/          # Vendored Dart forks (path dependencies), plus
-│                      # webui: shared Svelte UI for monitor and website
-├── docs/              # This documentation site (Astro Starlight)
+│   └── sbm_native/    # Native sampler used by Monitor
+├── monitor/           # Monitor agent (Rust service + Svelte panel)
+├── packages/          # Path-dependent Dart forks and shared webui package
+├── docs/              # Astro Starlight documentation site
 ├── website/           # Project website
 └── Cargo.toml         # Rust workspace root
 ```
 
-## App Directory Structure
+## Flutter App directories
 
-```
+```text
 lib/
-├── core/              # Core utilities and extensions
-├── data/              # Data layer
-│   ├── model/         # Data models by feature
-│   ├── provider/      # Riverpod providers
-│   ├── store/         # Local storage (SQLite)
-│   ├── helper/        # Data-layer helpers
-│   ├── res/           # Resources and constants
-│   └── ssh/           # SSH session management
-├── view/              # UI layer
-│   ├── page/          # Main pages
-│   └── widget/        # Reusable widgets
-├── generated/         # Generated localization
-├── l10n/              # Localization ARB files
-├── hive/              # Legacy Hive adapters for migration
-└── src/rust/          # Generated flutter_rust_bridge bindings (do not edit)
+├── core/              # Core utilities, extensions, and routing
+├── data/              # Models, providers, stores, and SSH sessions
+│   ├── model/
+│   ├── provider/
+│   ├── store/         # SQLite storage
+│   ├── helper/
+│   ├── res/
+│   └── ssh/
+├── view/              # Pages and reusable Widgets
+├── generated/         # Generated localization code
+├── l10n/              # Localization source ARB files
+├── hive/              # Legacy Hive adapters used only for migration
+└── src/rust/          # Generated flutter_rust_bridge bindings
 ```
 
-## Core Layer (`lib/core/`)
+`lib/src/rust/`, `lib/generated/`, `*.g.dart`, and `*.freezed.dart` are generated outputs. Do not edit them directly.
 
-Contains utilities, extensions, and routing configuration:
+## Core code
 
-- **Extensions**: Dart extensions for common types
-- **Routes**: App routing configuration
-- **Utils**: Shared utility functions
+### `lib/core/`
 
-## Data Layer (`lib/data/`)
+Cross-feature extensions, routing, and utility functions live here. Page-specific business state belongs in the relevant provider or service instead.
 
-### Models (`lib/data/model/`)
+### `lib/data/model/`
 
-Organized by feature:
+Models are grouped by feature:
 
-- `server/` - Server connection and status models
-- `container/` - Docker container models
-- `ssh/` - SSH session models
-- `sftp/` - SFTP file models
-- `app/` - App-specific models
+- `server/`: Server configuration, credentials, and status
+- `container/`: Docker and Podman containers
+- `ssh/`: SSH session models
+- `sftp/`: Remote file models
+- `app/`: App configuration and state
 
-### Providers (`lib/data/provider/`)
+### `lib/data/provider/`
 
-Riverpod providers for dependency injection and state management:
+Riverpod providers handle dependency injection, asynchronous state, and state shared across pages. Providers normally call services or stores rather than putting data-access logic in UI Widgets.
 
-- Server providers
-- UI state providers
-- Service providers
+### `lib/data/store/`
 
-### Stores (`lib/data/store/`)
+The local data layer uses one encrypted SQLite database:
 
-SQLite-backed stores:
+- `SqliteStore`: key-value data such as settings and history
+- Entity stores: relational data such as servers, private keys, and snippets
+- Migrations: cross-version storage migrations
 
-- Server storage
-- Settings storage
-- Cache storage
+### `lib/view/`
 
-## View Layer (`lib/view/`)
+`page/` contains main screens. `widget/` contains reusable UI components such as server cards, status charts, inputs, and dialogs.
 
-### Pages (`lib/view/page/`)
+## Packages
 
-Main application screens:
+Most directories in `packages/` are path-dependent forks:
 
-- `server/` - Server management pages
-- `ssh/` - SSH terminal pages
-- `container/` - Container pages
-- `setting/` - Settings pages
-- `storage/` - SFTP pages
-- `snippet/` - Snippet pages
+- `dartssh2/`: SSH client
+- `xterm/`: Terminal emulator
+- `fl_lib/`: Shared UI components and utilities
+- `fl_build/`: Cross-platform build tool
+- Other platform plugins and component packages
 
-### Widgets (`lib/view/widget/`)
+`packages/webui/` is the exception. It is a Svelte package shared by the Monitor panel and project website, providing UI primitives and design tokens.
 
-Reusable UI components:
+## Rust workspace
 
-- Server cards
-- Status charts
-- Input components
-- Dialogs
+- `crates/sbm_parser/`: Parses command output into structured server status. The App calls it through FFI, and Monitor uses it for its script path.
+- `crates/sbm_native/`: Native sampler used only by Monitor on the server itself. It reads core metrics through syscalls, procfs, or sysfs. The App collects remote data over SSH and never calls this crate on a remote host.
+- `crates/sbm_ffi/`: Exposes Rust APIs to Flutter, including the parser and native SSH crypto; generated Dart bindings are in `lib/src/rust/`.
+- `monitor/`: Standalone Monitor agent; see `monitor/README.md` for its own documentation.
 
-## Generated Files
-
-- `lib/generated/l10n/` - Auto-generated localization
-- `*.g.dart` - Generated code (json_serializable, freezed, hive, riverpod)
-- `*.freezed.dart` - Freezed immutable classes
-
-## Packages Directory (`/packages/`)
-
-Contains vendored dependencies referenced by path from `pubspec.yaml`:
-
-- `dartssh2/` - SSH library
-- `xterm/` - Terminal emulator
-- `fl_lib/` - Shared utilities
-- `fl_build/` - Build system
-- `circle_chart/` - Chart widget
-- `plain_notification_token/` - Push token plugin
-- `watch_connectivity/` - Apple Watch connectivity
-
-One directory here is not a Dart fork: `webui/` (`@serverbox/webui`) is a
-Svelte package of shared UI primitives and design tokens, consumed as a `file:`
-dependency by both `monitor/frontend` and `website/`.
-
-## Rust Side
-
-- `crates/sbm_parser/` - Parses raw command output into structured server status.
-  Shared by the app (via FFI) and the monitor, so both always agree on parsing.
-- `crates/sbm_ffi/` - Flutter Rust Bridge bindings around `sbm_parser`; the app's native build hook builds it.
-  The generated Dart side lives in `lib/src/rust/`.
-- `crates/sbm_native/` - Per-platform native sampling, used by the monitor only.
-  It reads cpu/memory/swap/disk/network/uptime directly through syscalls or
-  procfs instead of running shell commands. The app never depends on it: it
-  collects over SSH and cannot run syscalls on a remote host.
-- `monitor/` - Standalone monitoring service with its own docs in `monitor/README.md`.
+The App samples remote servers over SSH, while Monitor samples its own host. They share selected models and parser code, but their sampling pipelines are not identical.

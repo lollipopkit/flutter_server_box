@@ -1,89 +1,84 @@
 ---
 title: Testing
-description: Testing strategies and running tests
+description: Run and write tests for Server Box
 ---
 
-## Running Tests
+## Running tests
 
 ```bash
-# Run all tests
+# Flutter and Dart tests
 flutter test
 
-# Run specific test file
+# A specific test file
 flutter test test/disk_test.dart
 
-# Run with coverage
+# Generate a coverage report
 flutter test --coverage
 ```
 
-## Test Structure
+## Test structure
 
-Tests are located in the `test/` directory. The current suite is mostly flat and grouped by parser, model, and utility behavior, for example `disk_test.dart`, `container_test.dart`, and `ssh_config_test.dart`.
+Dart tests live in `test/` and are grouped by parser, model, store, and utility behavior. Tests should verify behavior and input/output without depending on an external network or a real server.
 
-## Rust Tests
-
-Status parsing lives in the shared Rust workspace:
+## Rust tests
 
 ```bash
-# All Rust tests (parser, native sampler, FFI shell, monitor)
+# All tests in the Rust workspace
 cargo test --workspace
 
-# FFI parity test: asserts the Dart side gets identical results
-# through flutter_rust_bridge (build the FFI crate first)
+# FFI parity test: build the FFI crate first
 cargo build -p sbm_ffi
 flutter test test/frb_parser_test.dart
 ```
 
-`crates/sbm_parser/tests/dart_compat.rs` locks parser behavior against the
-original Dart fixture suite.
+`crates/sbm_parser/tests/dart_compat.rs` uses the same fixtures as the Dart tests to lock parser behavior on both sides.
 
 ### Opt-in tests
 
-Two suites need a real host and are skipped silently without one:
+The following suites need a real host. They are skipped silently when the required environment variables are not set:
 
 ```bash
-# SSH end to end: uploads the generated script to a remote, runs it, and
-# compares the parsed result against direct command output.
-# Set SBM_E2E_SSH_HOST=<ssh destination or ~/.ssh/config alias> in the
-# workspace-root .env first.
+# SSH end to end: upload the generated script, run it remotely,
+# and compare the parsed result with direct command output.
+# Set this in the workspace-root .env:
+# SBM_E2E_SSH_HOST=<SSH destination or ~/.ssh/config alias>
 cargo test -p sbm_parser --test ssh_e2e
 
-# Monitor terminal against a real sshd, rather than the in-process fake one
-# in monitor/tests/fake_sshd/. Needs SBM_E2E_TERMINAL_*.
+# Monitor terminal against a real sshd
+# Requires SBM_E2E_TERMINAL_* environment variables.
 cargo test -p server_box_monitor --test terminal_ws
 ```
 
-## Monitor Panel Tests
+## Monitor panel tests
 
-The monitor's Svelte frontend has its own suite (vitest +
-@testing-library/svelte):
+The Monitor Svelte frontend has an independent Vitest and Testing Library suite:
 
 ```bash
 cd monitor/frontend
 npm run test
 npm run test:coverage
-
-# Type gate, also part of `npm run build`
 npm run check
 ```
 
-## Unit Tests
+`npm run check` performs type checking and is also part of `npm run build`.
 
-Test business logic and data models:
+## Unit tests
+
+Use unit tests for pure business logic, models, and parsers:
 
 ```dart
-test('should calculate CPU percentage', () {
+test('calculates CPU percentage', () {
   final cpu = CpuModel(usage: 75.0);
   expect(cpu.usagePercentage, '75%');
 });
 ```
 
-## Widget Tests
+## Widget tests
 
-Test UI components:
+Use Widget tests for layout, text, and interaction:
 
 ```dart
-testWidgets('ServerCard displays server name', (tester) async {
+testWidgets('shows the server name', (tester) async {
   await tester.pumpWidget(
     ProviderScope(
       child: MaterialApp(
@@ -96,135 +91,79 @@ testWidgets('ServerCard displays server name', (tester) async {
 });
 ```
 
-## Provider Tests
+A Widget test that writes to a store must call `openTestDb()` in `setUp` to open an in-memory database, use the store's `forTest()` constructor, and call `SqliteDb.close` in `tearDown`. This prevents tests from sharing singleton caches or writing to a real file.
 
-Test Riverpod providers:
+Do not use `pumpAndSettle()` on a tree containing a text field or another Widget that continually schedules frames. Count frames explicitly with `pump(duration)` instead, and use a reasonable test timeout.
+
+## Provider tests
+
+Use Provider tests to verify state and asynchronous results:
 
 ```dart
-test('serverStatusProvider returns status', () async {
+test('returns server status', () async {
   final container = ProviderContainer();
+  addTearDown(container.dispose);
+
   final status = await container.read(serverStatusProvider(testServer).future);
   expect(status, isA<StatusModel>());
 });
 ```
 
-## Storage Migrations
+## Storage migration tests
 
-A storage migration gets one pass over a user's real records, on one launch,
-and it is not repeatable. Once the "done" marker is written, the old data is
-never read again. A bug there is not a crash, it is silence: the records are
-still on disk and the app no longer looks at them.
+A storage migration usually gets one chance to process a user's data. Once it writes its completion marker, the old data is not read again. A migration bug is therefore more likely to silently lose data than to crash.
 
-So every storage migration keeps a permanent regression test, against **bytes
-written by the release being migrated from**, not by the current tree.
-Permanent means the test is never retired once the migration ships; it runs and
-finishes on every `flutter test`, like any other.
+Every migration must keep a permanent regression test using bytes written by the release being migrated from, not data regenerated by the current adapter:
 
-| File | Role |
+| File | Purpose |
 |---|---|
-| `test/hive_release_migration_test.dart` | Reads each fixture and asserts every store arrives intact |
-| `test/fixtures/hive_v{1466,1480,1491}/` | The boxes those releases wrote, plus generators and a README |
-| `test/hive_import_test.dart` | The import's own logic: retry, idempotency, per-box progress |
+| `test/hive_release_migration_test.dart` | Runs Hive import and the registered migrations against each release fixture |
+| `test/fixtures/hive_v{1466,1480,1491}/` | Boxes written by those releases, plus their generators and documentation |
+| `test/hive_import_test.dart` | Verifies import retry, idempotency, and per-box progress |
+| `test/m0NN_*_test.dart` | One per schema migration, verifying that step's behavior |
 
-### Why the fixture, and not a hand-seeded box
+A fixture generated with the current adapter only proves that the current code agrees with itself. It cannot prove that the current decoder still reads the format written by an old release. Once a fixture is used for regression coverage, never regenerate it to make a failing test pass.
 
-Seeding through the current adapters only proves today's code is
-self-consistent. It cannot catch a decoder that disagrees with what the old
-release actually wrote, because both sides of the test are the same code.
+### Creating a release-authentic fixture
 
-That is not hypothetical. `hive_import_test.dart` seeded `Spi` through the
-current adapter, which writes typeId 15 with the SSH fields nested. v1.0.1466
-wrote typeId 3 with them flat. The path every upgrading install takes,
-`SpiLegacyAdapter` decoding typeId 3 and `_toSpi` nesting it, had no coverage at
-all until the fixture existed.
+1. Check out the target release with `git worktree add /tmp/<tag> <tag>`, initialize the submodules required by its `pubspec.yaml`, and run `flutter pub get`.
+2. Copy `test/fixtures/hive_v1466/gen_fixture.dart.txt` into a temporary test. Adapt it to that release's models, adapters, and dependency versions, then generate `.hive` bytes with the old release's own code. Cover every optional field, every enum value, every store type, and include non-ASCII text, quotes, and newlines.
+3. Copy the generated files into `test/fixtures/hive_v<tag>/`, keep the generator notes and README, then remove the worktree.
+4. Write the current-version reading test through the public store API, and check that the database encoding contains no fields from the old shape.
 
-The fixture then exposed a second one on its first run: port forwards were
-being lost **during import**. `PortForwardConfig` is the only freezed model in
-the app with no `.g.dart`, so it has no generated `toJson`. Under Hive it
-persisted through its typeId 10 adapter and never needed one. `SqliteStore.set`
-encodes with `(value as dynamic).toJson()` and returns `false` instead of
-throwing, so the failure was silent.
+The generator is checked in as `.txt` because it targets an old release's API and is not expected to pass analyze in the current tree.
 
-The import was only where it surfaced. `test/port_forward_store_test.dart`
-establishes the rest independently: an ordinary save loses the record the same
-way, with no migration involved.
+## External dependencies
 
-Each covers one half, so both stay:
+The default test suite must remain deterministic. Parser, model, command-builder, and ordinary Widget tests must not access a network or a real server. When a feature introduces a service boundary, add a targeted fake or fixture.
 
-| Test | What it checks |
+The SSH end-to-end and real-sshd suites above are exceptions. They run only when their environment variables are configured, so a default `cargo test --workspace` still needs no external service.
+
+## Integration tests
+
+`integration_test/` covers questions that `flutter test` cannot answer. Unit tests run under `flutter_tester`, which does not load plugins. Code reached through a plugin or FFI therefore does not execute in the real App environment there. Integration tests run on a connected device or simulator:
+
+| File | What it verifies |
 |---|---|
-| `hive_release_migration_test.dart` | Records written by older releases import correctly |
-| `port_forward_store_test.dart` | A write made by the current build persists and reads back |
-
-### Adding one for the next migration
-
-1. `git worktree add /tmp/<tag> <tag>`, init the submodules its `pubspec.yaml`
-   needs, `flutter pub get`.
-2. Copy the fixture generator from `test/fixtures/hive_v1466/gen_fixture.dart.txt` into a test, adapt it
-   to that release's models, and make the data cover **every optional field,
-   every enum case, and every stored type**, not one happy record. Include
-   non-ASCII, quotes and newlines somewhere.
-3. Run it, copy the output into `test/fixtures/<engine>_<tag>/`, remove the
-   worktree.
-4. Write the reading test against the current stores' public API, and assert
-   the encoding too: read a row back out of the database and check no field of
-   the old shape survived.
-
-The generator is checked in as `.txt` because it is written against the old
-release's APIs and would fail `flutter analyze` in this tree.
-
-Never regenerate a fixture to make a failing test pass. It is the record of
-what a shipped release wrote; editing it to suit the current decoder deletes
-the only evidence that the decoder is wrong.
-
-## External Dependencies
-
-Keep `flutter test` deterministic: parser, model and command-builder tests must
-not need a network or a real server. Add targeted fakes or fixtures when a
-feature introduces a service boundary.
-
-The Rust suites listed under "Opt-in tests" above are the exception. They are
-skipped unless their environment variables are set, so a default
-`cargo test --workspace` still needs nothing.
-
-## Integration Tests
-
-`integration_test/` holds what `flutter test` cannot answer. The unit suite runs
-under `flutter_tester`, which loads no plugins. Anything reached through a
-plugin or FFI has never actually run there. These run inside a real app on a
-real device:
-
-| File | Question |
-|---|---|
-| `local_shell_test.dart` | Does a shell on this device actually spawn |
-| `rootfs_shell_test.dart` | The Linux userland, through the API the app uses |
-| `android_exec_test.dart` | What Android will execute out of the app's own directory |
-| `android_rootfs_test.dart` | Whether the Android guest mechanism can work at all |
+| `local_shell_test.dart` | Whether a shell on the device can actually start |
+| `rootfs_shell_test.dart` | Whether the Alpine userland works through the App's API |
+| `android_exec_test.dart` | What Android permits the App to execute from its own directory |
+| `android_rootfs_test.dart` | Whether the Android guest mechanism works |
 | `ios_rootfs_test.dart` | The Linux userland on iOS |
-| `ios_bench_test.dart` | What the Linux guest costs on real hardware |
-| `ios_load_test.dart` | What the guest costs the app while it is working |
-| `sandbox_import_test.dart` | Taking over the sandboxed build's data |
+| `ios_bench_test.dart` | Linux guest overhead on real hardware |
+| `ios_load_test.dart` | App overhead while the guest is running |
+| `sandbox_import_test.dart` | Taking over data from the App Store sandbox build |
 
 ```bash
-# Needs a connected device or simulator; flutter test alone does not run these
+# Requires a connected device or simulator
 flutter test integration_test/local_shell_test.dart
 ```
 
-They live outside `test/` because `flutter test` with no argument runs
-everything in there. Device tests placed among the unit suite would be picked
-up by every local run and by CI, where there is no device.
+`make analyze` also analyzes `integration_test/`.
 
-`make analyze` covers this directory too (`flutter analyze lib test
-integration_test`).
+### Wireless iOS 17+ devices
 
-### The one device `flutter test` cannot reach
-
-When Xcode reaches an iOS 17+ device over the network rather than by cable,
-`flutter test` cannot launch the app at all: it hardcodes
-`disablePortPublication: true`, `IOSDevice.startApp` refuses a wirelessly
-tethered device when that is set, and there is no flag to clear it.
-`flutter drive --publish-port` is the same run with the bit cleared, which is
-what `integration_test/driver.dart` exists for:
+When Xcode connects to an iOS 17+ device over the network, publish the driver port:
 
 ```bash
 flutter drive --publish-port \
@@ -232,13 +171,12 @@ flutter drive --publish-port \
   --target=integration_test/ios_rootfs_test.dart
 ```
 
-The device answers `--publish-port` with the local-network permission dialog on
-first use, which someone has to allow.
+The device may request local-network permission on the first run. Allow it for the test to connect.
 
-## Best Practices
+## Testing recommendations
 
-1. **Arrange-Act-Assert**: Structure tests clearly
-2. **Descriptive names**: Test names should describe behavior
-3. **Focused tests**: Keep each test focused; use as many assertions as needed to verify its behavior
-4. **Mock external deps**: Don't depend on real servers
-5. **Test edge cases**: Empty lists, null values, etc.
+1. Organize tests with Arrange–Act–Assert.
+2. Name tests after the behavior they verify, not the implementation.
+3. Add enough assertions for important behavior while keeping each test focused.
+4. Isolate external dependencies with fakes or fixtures.
+5. Cover empty lists, missing values, invalid input, and permission failures.

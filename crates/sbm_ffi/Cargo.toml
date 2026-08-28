@@ -8,9 +8,22 @@ name = "sbm_ffi"
 crate-type = ["cdylib", "staticlib"]
 
 [dependencies]
+aes = "0.9"
+bcrypt-pbkdf = "0.11"
+cbc = "0.2"
+ctr = "0.10"
+ed25519-dalek = "3"
 flutter_rust_bridge = "=2.13.0-beta.6"
+hmac = "0.13"
+md-5 = "0.11"
+p256 = "0.14"
+p384 = "0.14"
+p521 = "0.14"
 sbm_parser = { path = "../sbm_parser" }
 serde_json = "1.0"
+sha1 = "0.11"
+sha2 = "0.11"
+x25519-dalek = { version = "3", features = ["static_secrets", "getrandom"] }
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(frb_expand)'] }

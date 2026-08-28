@@ -1,44 +1,45 @@
 ---
 title: 代码生成
-description: 使用 build_runner 进行代码生成
+description: 使用代码生成工具生成 Dart、Flutter 和 Rust 绑定代码
 ---
 
-Server Box 广泛使用代码生成来处理模型、状态管理和序列化。
+Server Box 使用代码生成处理 immutable model、JSON 序列化、Riverpod provider、旧版 Hive adapter、本地化代码和 Rust bindings。
 
-## 何时运行代码生成
+## 什么时候运行代码生成
 
-修改以下内容后，需要运行相应的生成器：
+修改以下内容后，请运行对应的生成器：
 
-- 带有 `@freezed` 注解的模型
-- 带有 `@JsonSerializable` 的类
-- 当前生成适配器列表中的 Hive 适配器源码（不是冻结的旧版读取器）
-- 带有 `@riverpod` 的 Provider
-- 本地化文件（ARB 文件）
+- 带 `@freezed` 注解的 model
+- 带 `@JsonSerializable` 注解的 class
+- 当前生成 adapter 列表中的 Hive model
+- 带 `@riverpod` 注解的 provider
+- ARB 本地化文件
+- `crates/sbm_ffi/src/api` 下的 Rust API
 
-## 运行代码生成
+`lib/hive/legacy_adapters.dart` 中冻结的旧版 adapter 不属于生成列表。它们用于读取旧版本写入的 box，不要根据当前 model 重新生成。
 
-### 普通构建
+## Dart 代码生成
 
-用于常规代码生成：
+### 常规生成
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
 ```
 
-### 清理后重建
+### 清理后重新生成
 
-仅在生成缓存异常或生成结果不一致时使用。先清理，再重新生成：
+仅当生成缓存异常或结果不一致时使用：
 
 ```bash
 dart run build_runner clean
 dart run build_runner build --delete-conflicting-outputs
 ```
 
-## 生成的文件类型
+## 生成文件
 
-### Freezed (`*.freezed.dart`)
+### Freezed（`*.freezed.dart`）
 
-包含联合类型（Union types）的不可变数据模型：
+Freezed 生成 immutable model、`copyWith`、相等性比较和 union API：
 
 ```dart
 @freezed
@@ -49,9 +50,9 @@ class ServerState with _$ServerState {
 }
 ```
 
-### JSON 序列化 (`*.g.dart`)
+### JSON 序列化（`*.g.dart`）
 
-由 `json_serializable` 生成：
+`json_serializable` 根据 model 的字段生成 `fromJson` 和 `toJson`：
 
 ```dart
 @JsonSerializable()
@@ -68,9 +69,9 @@ class Server {
 }
 ```
 
-### Riverpod Provider (`*.g.dart`)
+### Riverpod provider（`*.g.dart`）
 
-由 `@riverpod` 注解生成：
+`riverpod_generator` 根据 `@riverpod` 声明生成 provider：
 
 ```dart
 @riverpod
@@ -80,9 +81,9 @@ class MyNotifier extends _$MyNotifier {
 }
 ```
 
-### Hive 适配器（`*.g.dart`）
+### Hive adapter（`*.g.dart`）
 
-生成的 Hive 适配器覆盖当前的适配器列表：
+生成的 Hive adapter 只覆盖当前仍在生成列表中的 model：
 
 ```dart
 @HiveType(typeId: 0)
@@ -92,32 +93,31 @@ class ServerModel {
 }
 ```
 
-`lib/hive/legacy_adapters.dart` 中的适配器是有意冻结的读取器。不要根据当前模型
-重新生成它们，也不要将包含新增字段的模型加入生成适配器列表：新增的非空字段可能让旧版本
-写入的 box 无法打开。只有当已发布版本实际写入的字节需要变化时，才应更新冻结读取器和
-对应的迁移测试。
+`lib/hive/legacy_adapters.dart` 中的 adapter 是有意冻结的读取器。不要把新增字段的当前 model 加入旧版 adapter 的生成列表：旧版本写入的 box 没有这些字段，新增的 non-nullable 字段甚至可能导致 box 无法打开。只有在已发布版本实际写入的数据格式发生变化，并且迁移测试同步更新时，才修改冻结读取器。
 
+## Rust bindings（flutter_rust_bridge）
 
-## Rust 绑定 (flutter_rust_bridge)
-
-修改 `crates/sbm_ffi/src/api` 后,重新生成 Dart 绑定：
+修改 `crates/sbm_ffi/src/api` 后，重新生成 Dart bindings：
 
 ```bash
 flutter_rust_bridge_codegen generate
 ```
 
-配置位于 `flutter_rust_bridge.yaml`;输出到 `lib/src/rust/`(生成文件勿手改)。
+配置文件是 `flutter_rust_bridge.yaml`，生成结果位于 `lib/src/rust/`。这些文件由工具维护，请勿手动编辑。不要运行 `flutter_rust_bridge_codegen integrate`；该命令会生成不适用于本仓库的模板结构。
 
-## 生成本地化代码
+## 本地化代码
+
+修改 `lib/l10n/*.arb` 后运行：
 
 ```bash
 flutter gen-l10n
 ```
 
-根据 `lib/l10n/*.arb` 文件生成 `lib/generated/l10n/` 目录下的代码。
+生成代码位于 `lib/generated/l10n/`。
 
-## 提示
+## 注意事项
 
-- 使用 `--delete-conflicting-outputs` 避免冲突
-- 如果生成文件已被本仓库纳入版本控制，请将其提交
-- **切勿**手动编辑生成的文件
+- 使用 `--delete-conflicting-outputs` 处理生成文件冲突。
+- 生成文件已纳入版本控制时，请将生成结果一并提交。
+- 不要手动编辑 `*.g.dart`、`*.freezed.dart` 或 `lib/generated/` 下的文件。
+- 修改 model 后，先完成代码生成，再运行 analyze 和测试。

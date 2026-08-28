@@ -1,19 +1,19 @@
 ---
 title: Bulk Import Servers
-description: Import multiple servers from JSON file
+description: Import multiple server configurations from a JSON file
 ---
 
-Import multiple server configurations from a JSON file.
+You can import multiple server configurations from one JSON file.
 
-## JSON Format
+## JSON format
 
-:::danger[Security Warning]
-**Never store plaintext passwords in files!** This JSON example shows a password field for demonstration only, but you should:
+:::danger[Security warning]
+**Do not store plaintext passwords in the file.** The example below includes a sample password only to show the format. In real files:
 
-- **Prefer SSH keys** (`pubKeyId`) instead of `pwd` to avoid storing passwords in the file
-- **Use secret managers** or environment variables if you must use passwords
-- **Delete the file** after import; do not retain credentials in plaintext
-- **Add to .gitignore** - never commit credential files to version control
+- **Prefer SSH keys** (`pubKeyId`) instead of `pwd`.
+- If a password is unavoidable, generate the file through a secret manager or environment variable.
+- Delete the file immediately after import.
+- Add it to `.gitignore`; never commit credential files to version control.
 :::
 
 ```json
@@ -33,57 +33,53 @@ Import multiple server configurations from a JSON file.
 ]
 ```
 
-The SSH settings are nested under `ssh`. This is what the app writes, and the
-example the import dialog shows you.
+SSH fields are nested under the `ssh` object. This is the format exported by the App and shown in the import dialog.
 
-The old flat layout, with `ip`/`port`/`user`/... at the top level, is still
-accepted, so files exported by an older version and `~/.ssh/config` imports keep
-working. Nothing writes it any more.
+The older flat format, with `ip`, `port`, `user`, and other fields at the top level, is still accepted. Files exported by older versions and `~/.ssh/config` imports therefore remain usable; the current version does not write this format.
 
 ## Fields
 
 | Field | Required | Description |
-|-------|----------|-------------|
-| `name` | Yes | Display name |
-| `ssh` | No | SSH settings, see below. Omit for a monitor-only server |
-| `monitorHttp` | No | Monitor agent: `addr`, `user`, `pwd`, `ignoreCert`, `allowInsecure` |
+|---|---|---|
+| `name` | Yes | Server name shown in the App |
+| `ssh` | No | SSH configuration; omit for a server configured only through Monitor HTTP |
+| `monitorHttp` | No | Monitor agent configuration: `addr`, `user`, `pwd`, `ignoreCert`, `allowInsecure` |
+| `preferredTransport` | No | Which transport leads when both SSH and Monitor HTTP are configured: `ssh` or `monitorHttp`. SSH leads when omitted |
 | `tags` | No | Tags used to group servers |
-| `autoConnect` | No | Auto-connect on startup |
-| `custom` | No | Per-server extras: `pveAddr`, `preferTempDev`, `logoUrl`, ... |
+| `autoConnect` | No | Connect automatically when the App starts |
+| `custom` | No | Per-server extras such as `pveAddr`, `preferTempDev`, and `logoUrl` |
 | `wolCfg` | No | Wake-on-LAN configuration |
-| `envs` | No | Environment variables, SSH terminal only |
-| `customSystemType` | No | Skip system auto-detection |
+| `envs` | No | Environment variables for the SSH terminal only |
+| `customSystemType` | No | Skip automatic system-type detection |
 | `disabledCmdTypes` | No | Status commands to skip on this server |
-| `id` | No | Stable server id; omitted or empty values are generated on import |
+| `id` | No | Stable server ID; omitted or empty values are generated during import |
 
 Inside `ssh`:
 
 | Field | Required | Description |
-|-------|----------|-------------|
-| `ip` | Yes | Domain or IP address |
-| `port` | Yes | SSH port (usually 22) |
+|---|---|---|
+| `ip` | Yes | Domain name or IP address |
+| `port` | Yes | SSH port, usually `22` |
 | `user` | Yes | SSH username |
-| `pwd` | No | Password (avoid - use SSH keys instead) |
-| `pubKeyId` | No | Id of a private key already stored in this app (recommended); it is not a PEM path |
-| `keyPath` | No | Desktop-only path to a private key file, used by `~/.ssh/config` imports; the app reads it when connecting |
-| `alterUrl` | No | Fallback address, `user@ip:port` |
-| `jumpIds` | No | Jump server chain, by server id |
-| `proxyCommand` | No | ProxyCommand; desktop only, and exclusive with `jumpIds` |
+| `pwd` | No | Password; not recommended, use an SSH key instead |
+| `fileTransport` | No | Which protocol carries files: `sftp` or `scp`. Defaults to `sftp`; use `scp` for a host with no SFTP subsystem |
+| `pubKeyId` | No | ID of a private key stored in the App, not a PEM file path |
+| `keyPath` | No | Desktop-only private-key path produced by a `~/.ssh/config` import; read from disk when connecting |
+| `alterUrl` | No | Fallback address in the form `user@ip:port` |
+| `jumpIds` | No | Jump-server chain specified by server ID |
+| `proxyCommand` | No | ProxyCommand; desktop only and mutually exclusive with `jumpIds` |
 
-A record with no `ssh` and no `monitorHttp` imports as a server with no way to
-reach it. Give it one or the other.
+A record that omits both `ssh` and `monitorHttp` cannot connect to anything after import. Provide at least one.
 
-`allowInsecure` defaults to `false`. Set it only when this monitor connection is
-intentionally allowed to use plaintext HTTP, including for non-loopback private
-addresses. The monitor agent independently applies its own `allow_insecure`
-setting to sensitive endpoints.
+`allowInsecure` defaults to `false`. Set it only when you intentionally allow this Monitor connection to use plaintext HTTP, including for non-loopback private addresses. Monitor agent independently checks its own `allow_insecure` setting for sensitive endpoints.
 
-## Import Steps
+## Import steps
 
-1. Create JSON file with server configurations
-2. Settings → **Backup** → Import → **Server**
-3. Select your JSON file
-4. Confirm the count it reports
+1. Create a JSON file containing the server configurations.
+2. Open **Settings → Backup → Import → Server**.
+3. Select the JSON file.
+4. Confirm the number of servers to import.
+5. Delete the JSON file after the import completes.
 
 ## Example
 
@@ -121,10 +117,10 @@ setting to sensitive endpoints.
 ]
 ```
 
-## Tips
+## Recommendations
 
-- **Use SSH keys** instead of passwords when possible
-- **Test connection** after import
-- **Use tags to group servers**
-- **Delete JSON file** after import
-- **Never commit** JSON files with credentials to version control
+- Prefer SSH keys over passwords.
+- Test every connection after importing.
+- Use tags to organize servers.
+- Delete the JSON file after importing.
+- Never commit a JSON file containing credentials.

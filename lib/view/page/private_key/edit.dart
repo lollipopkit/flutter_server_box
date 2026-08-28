@@ -173,6 +173,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
                 );
                 if (confirmed != true || !context.mounted) return;
                 PrivateKeyUnlock.forget(SshCredential.keyRefForId(pki.id));
+                forgetParsedIdentities();
                 await _notifier.delete(pki);
                 context.pop();
               },
@@ -367,6 +368,7 @@ extension _Actions on _PrivateKeyEditPageState {
       // seconds later on the first connection.
       final cacheKey = SshCredential.keyRefForId(pki.id);
       PrivateKeyUnlock.forget(cacheKey);
+      forgetParsedIdentities();
       if (pwd.isNotEmpty && opened != key) {
         PrivateKeyUnlock.remember(cacheKey, opened);
       }

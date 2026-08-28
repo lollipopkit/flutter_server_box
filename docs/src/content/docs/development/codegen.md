@@ -1,39 +1,45 @@
 ---
 title: Code Generation
-description: Using build_runner for code generation
+description: Generate Dart, Flutter, and Rust binding code
 ---
 
-Server Box uses code generation for models, state management, and serialization.
+Server Box uses code generation for immutable models, JSON serialization, Riverpod providers, legacy Hive adapters, localization, and Rust bindings.
 
-## When to Run Code Generation
+## When to run code generation
 
 Run the relevant generator after modifying:
 
-- Models with `@freezed` annotation
+- Models with `@freezed`
 - Classes with `@JsonSerializable`
-- Hive adapter sources in the current generated adapter list (not frozen legacy
-  readers)
+- Hive models in the current generated-adapter list
 - Providers with `@riverpod`
-- Localization ARB files; run `flutter gen-l10n`
+- ARB localization files
+- Rust APIs under `crates/sbm_ffi/src/api`
 
-## Running Code Generation
+The frozen adapters in `lib/hive/legacy_adapters.dart` are not part of the generated list. They read boxes written by old releases and must not be regenerated from current models.
+
+## Dart generation
+
+### Normal generation
 
 ```bash
-# Generate all code
-dart run build_runner build --delete-conflicting-outputs
-
-# Clear the build_runner cache
-dart run build_runner clean
-
-# Then regenerate
 dart run build_runner build --delete-conflicting-outputs
 ```
 
-## Generated Files
+### Clean and regenerate
+
+Use this only when the build cache is inconsistent:
+
+```bash
+dart run build_runner clean
+dart run build_runner build --delete-conflicting-outputs
+```
+
+## Generated files
 
 ### Freezed (`*.freezed.dart`)
 
-Immutable data models with union types:
+Freezed generates immutable models, `copyWith`, equality, and union APIs:
 
 ```dart
 @freezed
@@ -44,9 +50,9 @@ class ServerState with _$ServerState {
 }
 ```
 
-### JSON Serialization (`*.g.dart`)
+### JSON serialization (`*.g.dart`)
 
-The `json_serializable` package generates these files:
+`json_serializable` generates `fromJson` and `toJson` methods from model fields:
 
 ```dart
 @JsonSerializable()
@@ -63,9 +69,9 @@ class Server {
 }
 ```
 
-### Riverpod Providers (`*.g.dart`)
+### Riverpod providers (`*.g.dart`)
 
-Generated from `@riverpod` annotation:
+`riverpod_generator` creates providers from `@riverpod` declarations:
 
 ```dart
 @riverpod
@@ -75,9 +81,9 @@ class MyNotifier extends _$MyNotifier {
 }
 ```
 
-### Hive Adapters (`*.g.dart`)
+### Hive adapters (`*.g.dart`)
 
-Generated Hive adapters cover the current adapter list:
+Generated adapters cover only models that remain in the current adapter list:
 
 ```dart
 @HiveType(typeId: 0)
@@ -87,33 +93,31 @@ class ServerModel {
 }
 ```
 
-The adapters in `lib/hive/legacy_adapters.dart` are intentionally frozen readers.
-Do not regenerate them from current models or add a newly changed model to the
-generated adapter list: a newly added non-nullable field can make boxes written
-by older releases fail to open. Update a frozen reader and its migration test
-only when the bytes written by a released version require it.
+Adapters in `lib/hive/legacy_adapters.dart` are intentionally frozen readers. Do not regenerate them from current models or add models with new fields to the legacy generated list: old boxes do not contain those fields, and a new non-nullable field can prevent an old box from opening. Change a frozen reader only when bytes written by a released version require it, and update the migration test with it.
 
-## Rust Bindings (flutter_rust_bridge)
+## Rust bindings (flutter_rust_bridge)
 
-After changing `crates/sbm_ffi/src/api`, regenerate the Dart bindings:
+After changing `crates/sbm_ffi/src/api`, regenerate Dart bindings:
 
 ```bash
 flutter_rust_bridge_codegen generate
 ```
 
-Config lives in `flutter_rust_bridge.yaml`; output goes to `lib/src/rust/`
-(never edit generated files there).
+Configuration is in `flutter_rust_bridge.yaml`; output is written to `lib/src/rust/`. Do not edit generated files. Do not run `flutter_rust_bridge_codegen integrate`; it creates template scaffolding that does not match this repository.
 
-## Localization Generation
+## Localization generation
+
+After changing `lib/l10n/*.arb`, run:
 
 ```bash
 flutter gen-l10n
 ```
 
-Generates `lib/generated/l10n/` from `lib/l10n/*.arb` files.
+The generated code is written to `lib/generated/l10n/`.
 
-## Tips
+## Notes
 
-- Use `--delete-conflicting-outputs` to avoid conflicts
-- Commit generated files that are already tracked by this repository
-- Never manually edit generated files
+- Use `--delete-conflicting-outputs` when generated files conflict.
+- Commit generated files that are tracked by this repository.
+- Never manually edit `*.g.dart`, `*.freezed.dart`, or files under `lib/generated/`.
+- Finish code generation before running analyze and tests after a model change.

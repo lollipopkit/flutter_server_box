@@ -3778,9 +3778,22 @@ dependencies = [
 name = "sbm_ffi"
 version = "0.1.0"
 dependencies = [
+ "aes",
+ "bcrypt-pbkdf",
+ "cbc",
+ "ctr",
+ "ed25519-dalek 3.0.0",
  "flutter_rust_bridge",
+ "hmac 0.13.0",
+ "md-5 0.11.0",
+ "p256 0.14.0",
+ "p384 0.14.0",
+ "p521",
  "sbm_parser",
  "serde_json",
+ "sha1",
+ "sha2 0.11.0",
+ "x25519-dalek",
 ]
 
 [[package]]
@@ -5486,6 +5499,18 @@ name = "writeable"
 version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3ad82d2a33cdc9674dc7465672f271e096168fcdbe0f799d9e6db8c5892679dc"
+
+[[package]]
+name = "x25519-dalek"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e7e8131a03190127fb2263afc72b322ecadae46b6ff8c6f399ff5d02f5559af6"
+dependencies = [
+ "curve25519-dalek 5.0.0",
+ "getrandom 0.4.3",
+ "rand_core 0.10.1",
+ "zeroize",
+]
 
 [[package]]
 name = "yoke"

@@ -1,62 +1,52 @@
 ---
 title: 终端实现
-description: SSH 终端的内部工作原理
+description: Server Box 终端的工作方式
 ---
 
-终端是功能最复杂的模块之一，基于自定义的 xterm.dart 分支构建。
+终端是 Server Box 中功能较多的模块之一，底层使用自定义的 xterm.dart fork。
 
-## 字节从哪里来
+## 终端数据来源
 
-字节流之上只有一套实现，包括同一个模拟器、同一套虚拟键盘和同样的标签页。之下，
-`ShellBackend` 有四个实现：
+无论数据来自哪里，字节流之上的 UI、终端模拟器、虚拟键盘和标签页都使用同一套实现。`ShellBackend` 有以下实现：
 
-| 后端 | 字节来源 |
+| Backend | 数据来源 |
 |---|---|
-| `SshShellBackend` | SSH channel；本页其余部分讲的就是它 |
-| `LocalShellBackend` | 本机的 shell；Android 上是 Alpine 容器内的 shell |
-| `IshShellBackend` | iOS 上的 Linux 解释器 |
-| `MonitorShellBackend` | monitor agent 的 `/api/v1/terminal/ws` |
+| `SshShellBackend` | SSH channel；下文主要介绍此路径 |
+| `LocalShellBackend` | 本机 shell；Android 上也可运行 Alpine 环境 |
+| `IshShellBackend` | iOS 上的 Linux interpreter |
+| `MonitorShellBackend` | Monitor agent 的 `/api/v1/terminal/ws` |
 
-调用方打开一个会话并向它写入，上层 UI 不会去问是四个中的哪一个应答的。前两个见
-[本机终端](/docs/zh/advanced/local-terminal/)，最后一个见
-[Monitor Agent](/docs/zh/advanced/monitor-agent/)。
+调用方只需打开 session 并读写字节流，不需要关心具体 backend。前两种本机实现详见[本机终端](/docs/zh/advanced/local-terminal/)，Monitor backend 详见[Monitor Agent](/docs/zh/advanced/monitor-agent/)。
 
-本页其余部分介绍 SSH 路径。其他后端提供相同的接口。
+下文介绍 SSH 路径；其他 backend 提供相同的上层接口。
 
 ## 架构概览
 
-```
+```text
 ┌─────────────────────────────────────────────┐
-│              终端 UI 层                     │
-│  - 标签页管理                               │
-│  - 虚拟键盘                                 │
-│  - 文本选择                                 │
+│ 终端 UI 层                                   │
+│ 标签页、虚拟键盘、文本选择                    │
 └─────────────────────────────────────────────┘
-                ↓
+                    ↓
 ┌─────────────────────────────────────────────┐
-│         xterm.dart 模拟器                   │
-│  - PTY (伪终端)                             │
-│  - VT100/ANSI 模拟                          │
-│  - 渲染引擎                                 │
+│ xterm.dart 模拟器                            │
+│ PTY、VT100/ANSI 模拟、渲染                   │
 └─────────────────────────────────────────────┘
-                ↓
+                    ↓
 ┌─────────────────────────────────────────────┐
-│          SSH 客户端层                       │
-│  - SSH 会话                                 │
-│  - 通道管理                                 │
-│  - 数据流                                   │
+│ SSH client 层                                │
+│ session、channel、数据流                     │
 └─────────────────────────────────────────────┘
-                ↓
+                    ↓
 ┌─────────────────────────────────────────────┐
-│            远程服务器                       │
-│  - Shell 进程                               │
-│  - 命令执行                                 │
+│ 远程服务器                                   │
+│ shell 进程、PTY、命令执行                    │
 └─────────────────────────────────────────────┘
 ```
 
-## 终端会话生命周期
+## 终端 Session 生命周期
 
-### 1. 创建会话
+### 创建 session
 
 ```dart
 Future<TerminalSession> createSession(Spi spi) async {
@@ -69,115 +59,87 @@ Future<TerminalSession> createSession(Spi spi) async {
 }
 ```
 
-会话的 backend 使用 `SSHPtyConfig` 创建 SSH PTY，并负责 shell 生命周期。同一个
-`TerminalSession` 形状也用于本机和 monitor agent backend。
+SSH backend 使用 `SSHPtyConfig` 创建 SSH PTY，并负责 shell 的生命周期。`TerminalSession` 也用于本机和 Monitor agent backend。
 
-### 2. 终端模拟
+### 终端模拟
 
-xterm.dart 分支提供：
+xterm.dart fork 提供：
 
 **VT100/ANSI 模拟：**
+
 - 光标移动
-- 颜色（支持 256 色）
-- 文本属性（粗体、下划线等）
+- 256 色
+- 粗体、下划线等文字属性
 - 滚动区域
-- 交替屏幕缓冲区
+- alternate screen buffer
 
 **渲染：**
-- 基于行的渲染
-- 双向文本支持
-- Unicode/Emoji 支持
-- 减少不必要的重绘
 
-### 3. 数据流向
+- 按行渲染
+- 双向文字
+- Unicode 和 Emoji
+- 合并更新，减少不必要的重绘
 
-```
+### 数据流
+
+```text
 用户输入
     ↓
-虚拟键盘 / 实体键盘
+虚拟键盘或实体键盘
     ↓
-终端模拟器 (按键 → 转义序列)
+终端模拟器（按键 → escape sequence）
     ↓
-SSH 通道 (发送)
+SSH channel（发送）
     ↓
 远程 PTY
     ↓
-远程 Shell
+远程 shell
     ↓
 命令输出
     ↓
-SSH 通道 (接收)
+SSH channel（接收）
     ↓
-终端模拟器 (解析 ANSI 编码)
+终端模拟器（解析 ANSI sequence）
     ↓
 渲染到屏幕
 ```
 
-## 多标签页系统
+## 多标签页
 
-### 标签页管理
+每个标签页拥有独立的 terminal session。切换页面时，session 和终端状态会保留：
 
-```dart
-class TerminalTabs {
-  final Map<String, TabData> _tabs = {};
-  String? _activeTabId;
-
-  void createTab(Server server) {
-    final id = _generateTabId(server);
-    _tabs[id] = TabData(
-      id: id,
-      name: _generateTabName(server),
-      session: createSession(server),
-    );
-    _activeTabId = id;
-  }
-
-  String _generateTabName(Server server) {
-    final count = _tabs.values
-        .where((t) => t.name.startsWith(server.name))
-        .length;
-    return count == 0 ? server.name : '${server.name}($count)';
-  }
-}
-```
-
-### 会话持久化
-
-标签页在导航切换时会保持状态：
-- SSH 连接保持活跃
+- SSH 连接继续保持，直到连接断开或 session 被关闭
 - 终端状态保留
-- 滚动缓冲区保留
+- scrollback buffer 保留
 - 输入历史保留
+
+标签页名称由服务器名称和序号组成；同一服务器打开多个标签页时，名称会追加序号。
 
 ## 虚拟键盘
 
-虚拟键盘是所有平台通用的 Flutter widget,渲染在终端上方
-(可用按键定义在 `lib/data/model/ssh/virtual_key.dart`),
-在移动端，虚拟键盘与系统键盘同时显示。
+虚拟键盘是跨平台的 Flutter Widget，显示在终端上方。可用按键定义于 `lib/data/model/ssh/virtual_key.dart`。移动端可以同时显示虚拟键盘和系统键盘。
 
-### 键盘按键
-
-| 按钮 | 操作 |
-|--------|--------|
+| 按键 | 操作 |
+|---|---|
 | **Esc / Tab / Home / End / PgUp / PgDn / 方向键** | 发送对应按键 |
-| **Ctrl / Alt / Shift** | 为下一个按键附加修饰符 |
-| **IME** | 显示/隐藏系统键盘 |
-| **剪贴板 (Clipboard)** | 上下文感知的复制/粘贴 |
+| **Ctrl / Alt / Shift** | 为下一次输入附加修饰键 |
+| **IME** | 显示或隐藏系统键盘 |
+| **Clipboard** | 根据当前上下文复制或粘贴 |
 | **SFTP** | 在 SFTP 浏览器中打开当前目录 |
-| **脚本 (Snippet)** | 选择并执行命令脚本 |
-| **符号** | `/ \ _ + = - ( ) [ ] { } < >` 等 |
+| **Snippet** | 选择并执行命令片段 |
+| **符号** | 输入 `/ \ _ + = - ( ) [ ] { } < >` 等符号 |
 
-按键集合与顺序可在设置中自定义。
+按键集合和顺序可以在设置中自定义。
 
 ## 文本选择
 
-1. **长按**：进入选择模式
-2. **拖动**：扩大选择范围
-3. **释放**：复制到剪贴板
+1. 长按终端文字进入选择模式。
+2. 拖动选择范围。
+3. 松开后复制到剪贴板。
 
-## 字体与尺寸
+## 字体和尺寸
 
-### 尺寸计算
+终端根据字体大小和可用空间计算行列数：
 
 ```dart
 class TerminalDimensions {
@@ -193,49 +155,20 @@ class TerminalDimensions {
 }
 ```
 
-### 捏合缩放（Pinch-to-Zoom）
-
-```dart
-GestureDetector(
-  onScaleStart: () => _baseFontSize = currentFontSize,
-  onScaleUpdate: (details) {
-    final newFontSize = _baseFontSize * details.scale;
-    resize(newFontSize);
-  },
-)
-```
+移动端支持捏合缩放终端文字；字体大小改变后会重新计算 PTY 尺寸。
 
 ## 配色方案
 
-- **浅色 (Light)**：浅色背景，深色文字
-- **深色 (Dark)**：深色背景，浅色文字
+- **浅色（Light）**：浅色背景、深色文字
+- **深色（Dark）**：深色背景、浅色文字
 - **AMOLED**：纯黑背景
 
 ## 性能
 
-xterm.dart fork 使用自定义 painter 渲染,仅在终端内容更新时重绘;
-输出会先缓冲并合并，再传给终端模拟器。
+xterm.dart fork 使用自定义 painter，仅在终端内容变化时重绘。远程输出会先合并，再交给终端模拟器处理，减少大量小片段更新造成的开销。
 
 ## 特色功能
 
-### 脚本执行
-
-```dart
-void executeSnippet(Snippet snippet) {
-  final formatted = formatSnippet(snippet);
-  terminal.paste(formatted);
-  terminal.paste('\r');  // 执行
-}
-```
-
-### SFTP 快速访问
-
-```dart
-void openSftp() async {
-  final cwd = await terminal.getCurrentWorkingDirectory();
-  Navigator.push(
-    context,
-    SftpPage(initialPath: cwd),
-  );
-}
-```
+- **Snippet 执行**：将保存的命令插入终端并执行。
+- **SFTP 快速访问**：从终端当前工作目录打开 SFTP 浏览器。
+- **跨 backend**：本机 shell、Alpine 环境和 Monitor terminal 使用与 SSH 相同的上层终端 UI。

@@ -1,121 +1,87 @@
 ---
 title: BMC (Redfish)
-description: Reach a server's baseboard management controller when the host is not answering
+description: Configure and use out-of-band management when the host is unavailable
 ---
 
 :::caution[Beta]
-Reading — power state and sensors — has been verified against exactly one
-machine, and power control against none by anything automated. Both work; how
-much of the hardware in the world they work on is not yet known. See
-[Hardware this has run against](/docs/principles/bmc/#hardware-this-has-run-against).
+Only the read path (power state and sensors) has been verified against one real device. Power control has no automated verification yet. Compatibility with other vendors and models still needs to be established; see [Hardware tested](/docs/principles/bmc/#hardware-tested).
 
-Treat the power operations the way you would treat a physical button on a
-machine you are not standing next to.
+Treat power operations like pressing a physical power button on a remote server.
 :::
 
-A BMC is a small computer on the server's motherboard with its own power rail
-and its own network port. It answers while the host is off, hung, or has no
-operating system on it at all — which is the one thing SSH and a monitor agent
-cannot do.
+A BMC (Baseboard Management Controller) is an independent computer on the server motherboard with its own power and network connection. It can respond when the host is powered off, hung, or has no operating system installed. SSH and Monitor agent cannot work in those situations.
 
-ServerBox talks to it over **Redfish**, the HTTPS API most enterprise hardware
-from roughly 2016 on provides. Older machines that only speak IPMI are not
-supported; see [How it works](/docs/principles/bmc/) for why that line is where it
-is.
+Server Box communicates with the BMC through **Redfish**, a common HTTPS API for enterprise servers. Devices that support only IPMI are outside the current scope; see [BMC design](/docs/principles/bmc/) for the reason.
 
-## What it gives you
+## What it provides
 
-- **Power state while the server is unreachable.** `Power: on` means the
-  machine is running and something else is wrong; `Power: off` means it is off.
-  Those are different problems and the server card cannot otherwise tell them
-  apart.
-- **Hardware sensors** — inlet and CPU temperatures, fan speeds, chassis power
-  draw — read from the BMC rather than from inside the OS.
-- **Power control**: power on a machine that is off, and shut down, restart,
-  power cycle or force off one that is not responding.
+- **Power state**: Determine whether a host is on or off even when SSH and Monitor agent are unreachable.
+- **Hardware sensors**: Read inlet and CPU temperatures, fan speeds, and chassis power draw from the BMC rather than the operating system.
+- **Power control**: Power on a host, request an operating-system shutdown or restart, or perform a power cycle or force-off operation.
 
-A BMC sits *beside* SSH rather than instead of it. One server can have both,
-and normally does.
+BMC is a complementary management path, not a replacement for SSH. A server can have SSH, Monitor agent, and BMC configured at the same time.
 
-## Setting one up
+## Configure a BMC
 
-1. Open the server's edit page and find the **BMC (Redfish)** section.
-2. **Address** — the BMC's own address, not the host's. `https://10.0.0.9`.
-   Only the scheme, host and port are used; the rest of the path is fixed by
-   the specification.
-3. **Account** — pick one, or create one. See below.
-4. **Certificate** — tap it, compare what is shown against what the BMC's own
-   web interface reports, and accept.
+1. Open the server edit page and find **BMC (Redfish)**.
+2. Enter the BMC's address, not the host operating system's address, for example `https://10.0.0.9`. Enter only the scheme, host, and port; the App handles the Redfish path.
+3. Select an existing BMC account or create one.
+4. Open **Certificate**, compare the fingerprint with the one shown by the BMC's own web interface, and accept it only after verifying the device.
+5. Save the server configuration.
 
-The BMC card then appears on the server's detail page, and the power button
-gains the hardware operations.
+The server detail page then shows a BMC card and hardware-level power operations.
 
-## Accounts are shared
+## BMC accounts
 
-A BMC account is a record of its own, not a username and password typed into
-each server. BMCs are provisioned a rack at a time and usually answer to one
-account, so twenty machines share one — and rotating that password is one edit
-rather than twenty.
+A BMC account is a separate record, so you do not need to enter the username and password repeatedly for each server. BMCs in one rack commonly share an account; changing it once updates every server that references it.
 
-Manage them at **Settings → BMC accounts**. Each entry shows how many servers
-use it, because editing one changes what all of them use.
+Manage accounts at **Settings → BMC accounts**. Each account shows how many servers use it, because editing the account affects all of them.
 
-Deleting an account does not delete the servers that used it. They keep their
-address and lose the account, which the editor then says.
+Deleting an account does not delete the servers that reference it. Those servers keep the BMC address but no longer have a usable account; the edit page indicates that state.
 
-## The certificate
+## Certificate verification
 
-BMCs ship self-signed certificates, so there is nothing for a certificate
-authority to vouch for. ServerBox does not offer an "ignore the certificate"
-switch here — a management interface holding power control is the worst place
-to have one.
+BMCs commonly use self-signed certificates. Server Box does not provide an “ignore certificate” option here: a BMC has power-control authority, and disabling verification would allow another service at that address to impersonate it.
 
-Instead it works the way SSH host keys already do in this app: you look at the
-certificate once and accept it, and from then on only that exact certificate is
-accepted.
+The App uses a trust-on-first-use flow similar to SSH host-key verification:
 
-**Compare the fingerprint against the BMC's own web interface before
-accepting.** That is the step that makes this worth anything.
+1. The first connection shows the certificate fingerprint.
+2. Compare it with the fingerprint shown by the BMC web interface and confirm it.
+3. The App stores the accepted fingerprint and accepts only a matching certificate later.
+4. If the fingerprint changes, the App refuses the connection, shows the old and new values, and asks you to verify the device again.
 
-If the fingerprint later changes, the app refuses the connection and says so.
-That happens legitimately when a BMC regenerates its certificate or its
-firmware is updated — and it is also what an interception looks like. Check
-before accepting the new one.
+A BMC may legitimately change its fingerprint after regenerating a certificate or upgrading firmware. A man-in-the-middle attack produces the same symptom, so verify the BMC before accepting a new certificate.
 
-Many BMCs ship certificates that expired years ago. ServerBox says so and lets
-you accept anyway; refusing them would refuse most of the hardware this is for.
+Some BMCs ship with expired certificates. The App reports the expiry but still lets you accept the certificate after you have verified the device identity.
 
 ## Power operations
 
-The power button offers the OS operations and the hardware ones together.
-They are not the same thing:
+Power operations either ask the operating system to act or operate on the hardware directly:
 
-| | Goes through the OS | Effect |
+| Operation | Through the OS | Effect |
 |---|---|---|
-| Shut down | yes | asks the OS to shut down; needs a running OS |
-| Restart | yes | asks the OS to restart |
-| Power on | no | the only one that works on a machine that is off |
-| Force off | no | cuts power. Unsaved work is lost, filesystems are not unmounted |
-| Power cycle | no | off, then on |
+| Shut down | Yes | Requests an OS shutdown; requires a running OS |
+| Restart | Yes | Requests an OS restart |
+| Power on | No | Powers on a host that is off |
+| Force off | No | Cuts power; unsaved data is lost and filesystems are not cleanly unmounted |
+| Power cycle | No | Turns power off, then on again |
 
-**A graceful operation is a request, not a result.** ServerBox sends it and
-then watches the reported power state rather than trusting the HTTP response —
-some firmware accepts a graceful shutdown and reports success without the OS
-having done anything. When the state does not move within the wait, the app
-reports *accepted* rather than *confirmed*, and means it.
+**A graceful shutdown or restart is an accepted request, not proof of completion.** The App polls the BMC's reported power state instead of trusting a successful HTTP response. Some firmware accepts a request even when the operating system does not act on it.
 
-What the service actually allows differs per vendor, and ServerBox asks rather
-than assumes: an operation this machine has no equivalent for is not offered at
-all, instead of failing when pressed.
+If the power state does not change before the wait expires, the App reports *accepted*, not *confirmed*. *Accepted* means the BMC received the request; *confirmed* means the App observed the expected state change.
 
-## What is not here
+The supported `ResetType` values vary by BMC. The App reads the device's advertised operations and shows only operations that the device exposes.
 
-The event log, storage inventory, boot device override and virtual media are
-not implemented. Neither is reaching a BMC through a monitor agent, which is
-what a BMC on an isolated management network would need — the phone has to be
-able to route to the BMC directly.
+## Current limitations
 
-Guests of one physical host are not modelled. Several virtual machines running
-on one server would all point at that server's BMC, where a power operation on
-any of them cuts all of them and the reported power state is the host's rather
-than the guest's. Configure the BMC on the host.
+The following features are not implemented:
+
+- Event logs
+- Storage inventory
+- Boot-device override
+- Virtual media
+- Relaying BMC access through Monitor agent
+
+If a BMC is on an isolated management network, the phone must be able to route to it directly. Monitor agent cannot currently proxy BMC access.
+
+The App does not model physical-host and virtual-machine relationships. Several virtual machines may point to one physical host's BMC; a power operation from any of them affects the entire physical host and all its guests, and the reported power state belongs to the host. Configure BMC on the physical-host record only.

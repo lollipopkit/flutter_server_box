@@ -1,60 +1,53 @@
 ---
-title: SFTP System
-description: How the SFTP file browser works
+title: SFTP and SCP File Transfer
+description: How Server Box browses and transfers remote files
 ---
 
-SFTP manages remote files over an SSH connection.
+Server Box provides remote file access over SSH. SFTP is the default. SCP can be selected for devices that do not provide an SFTP subsystem but do provide `scp` and a shell.
 
-## Architecture
+## File access architecture
 
-```
+```text
 ┌─────────────────────────────────────────────┐
-│              SFTP UI Layer                  │
-│  - File browser (remote)                    │
-│  - File browser (local)                     │
-│  - Transfer queue                           │
+│ File UI layer                                │
+│ Remote browser, local browser, transfer queue│
 └─────────────────────────────────────────────┘
-                ↓
+                    ↓
 ┌─────────────────────────────────────────────┐
-│          SFTP State Management              │
-│  - sftpProvider                             │
-│  - Path management                          │
-│  - Operation queue                          │
+│ State management                             │
+│ sftpProvider, paths, operation queue         │
 └─────────────────────────────────────────────┘
-                ↓
+                    ↓
 ┌─────────────────────────────────────────────┐
-│         SFTP Protocol Layer                 │
-│  - SSH subsystem                            │
-│  - File operations                          │
-│  - Directory listing                        │
+│ FileBackend                                  │
+│ SFTP or SCP + shell                          │
 └─────────────────────────────────────────────┘
-                ↓
+                    ↓
 ┌─────────────────────────────────────────────┐
-│            SSH Transport                    │
-│  - Secure channel                           │
-│  - Data streaming                           │
+│ SSH transport                               │
+│ Encrypted connection and byte streams        │
 └─────────────────────────────────────────────┘
 ```
 
-## Connection Establishment
+The file browser and transfer engine depend on `FileBackend` rather than a concrete backend class. After the SSH connection is established, `openSshFileBackend` selects SFTP or SCP from `SshCredential.fileTransport`.
 
-### SFTP Client Creation
+## SFTP
+
+### Establishing a client
 
 ```dart
 Future<SftpClient> createSftpClient(Spi spi) async {
-  // 1. Get SSH client (reuse if available)
+  // 1. Get the SSH client; reuse an existing connection when available.
   final sshClient = await genClient(spi);
 
-  // 2. Open SFTP subsystem
+  // 2. Open the SFTP subsystem.
   final sftp = await sshClient.sftp();
 
   return sftp;
 }
 ```
 
-### Connection Reuse
-
-SFTP reuses existing SSH connections:
+SFTP shares the underlying SSH connection with other SSH features, but uses its own channel:
 
 ```dart
 class ServerProvider {
@@ -68,49 +61,56 @@ class ServerProvider {
 }
 ```
 
-## File System Operations
+If SSH connects but the SFTP subsystem cannot be opened, the App reports that SFTP is unavailable. It does not interpret every SFTP failure as proof that the server lacks the subsystem, and it does not silently switch to SCP. Select SCP explicitly in the server editor.
 
-### Directory Listing
+### Directory listings and metadata
 
 ```dart
 Future<List<SftpName>> listDirectory(String path) async {
   final sftp = await getSftpClient(spiId);
-
-  // List directory
   final files = await sftp.listdir(path);
 
-  // Sort based on settings; each entry exposes metadata through `attr`.
   files.sort((a, b) => a.filename.toLowerCase().compareTo(b.filename.toLowerCase()));
-
-  // Folders first if enabled
   if (showFoldersFirst) {
-    final dirs = files.where((f) => f.attr.isDirectory);
-    final regular = files.where((f) => !f.attr.isDirectory);
+    final dirs = files.where((file) => file.attr.isDirectory);
+    final regular = files.where((file) => !file.attr.isDirectory);
     return [...dirs, ...regular];
   }
-
   return files;
 }
 ```
 
-### File Metadata
+`SftpClient.listdir` returns `SftpName` entries. The browser uses `filename` and attributes such as `size`, `modifyTime`, and `isDirectory`. An opened `SftpFile` is a separate handle for streaming reads and writes and must be closed when finished.
 
-`SftpClient.listdir` returns `SftpName` entries. Their `filename`, `attr`, and
-the attributes' `size`, `modifyTime`, and `isDirectory` fields provide the
-metadata used by the browser. An opened `SftpFile` is a separate handle used for
-streaming bytes and must be closed.
-
-## File Operations
-
-### Upload
+### File permissions
 
 ```dart
-Future<void> uploadFile(
-  String localPath,
-  String remotePath,
-) async {
+Future<void> setPermissions(String path, String permissions) async {
   final sftp = await getSftpClient(spiId);
+  final mode = parsePermissions(permissions);
+  await sftp.setStat(path, SftpFileAttrs(mode: SftpFileMode.value(mode)));
+}
+```
 
+Permission changes normally use SFTP `setStat` and do not require a shell. If the server refuses the operation and SSH escalation is configured, the backend can retry with `sudo chmod`. That fallback requires a shell and is not part of the normal SFTP path.
+
+## SCP
+
+SCP is intended for hosts without an SFTP subsystem but with a shell and an `scp` command, such as some OpenWrt routers running dropbear or other embedded systems.
+
+The SCP protocol transfers the contents of one file. It does not list directories or provide stat, rename, mkdir, or permission operations. `ScpFileBackend` therefore uses `scp -f`/`scp -t` for reads and writes, and shell commands for the other operations, each through an SSH channel.
+
+SCP is an explicit per-server choice. A failed SFTP connection does not automatically enable it, because that would confuse a missing subsystem with a failed SSH connection or locked account.
+
+## Uploads and downloads
+
+### Uploads
+
+Both SFTP and SCP use a staged write: create a uniquely named temporary file beside the destination, finish the transfer and close the handle, then rename the temporary file into place.
+
+```dart
+Future<void> uploadFile(String localPath, String remotePath) async {
+  final sftp = await getSftpClient(spiId);
   final stagingPath = '$remotePath.sb-part-${nextTransferId()}';
   SftpFile? remote;
   String? pendingStagingPath = stagingPath;
@@ -139,25 +139,15 @@ Future<void> uploadFile(
 }
 ```
 
-`nextTransferId()` is a process-wide counter. The real implementation uses the
-same counter to make each `.sb-part-<number>` path distinct, including when two
-transfers target the same destination.
+The implementation uses unique transfer IDs across the process and each isolate, so concurrent transfers cannot use the same staging file. Failed writes, closes, and renames clean up the staging file; the destination is not truncated before the new contents are complete.
 
-There is no `sftp.upload` convenience method in the client used by Server Box.
-The real transfer code opens an `SftpFile`, closes it before the rename, writes
-to a unique staging path beside the destination, and removes that staging file
-when opening, writing, closing, or renaming fails. The destination is not
-truncated before the new contents are complete.
+### Downloads
 
-### Download
+Downloads also use a local staging file and rename it over the destination only after the complete file has been received and closed:
 
 ```dart
-Future<void> downloadFile(
-  String remotePath,
-  String localPath,
-) async {
+Future<void> downloadFile(String remotePath, String localPath) async {
   final sftp = await getSftpClient(spiId);
-
   SftpFile? remote;
   File? staging;
   IOSink? sink;
@@ -187,107 +177,46 @@ Future<void> downloadFile(
 }
 ```
 
-There is no `sftp.download` convenience method either. Reads stream from the
-opened `SftpFile` into a local staging file. The remote handle and local sink are
-closed before the staging file is renamed over the destination; failures remove
-the staging file so a partial download cannot replace the existing file.
+If a download fails, its staging file is removed, so partial content cannot replace the local destination.
 
-### Permission Editing
+### Preserving permissions
 
-```dart
-Future<void> setPermissions(
-  String path,
-  String permissions,
-) async {
-  final sftp = await getSftpClient(spiId);
+When replacing an existing file, the App reads its POSIX permission bits and applies the same mode to the staging file. Saving a `0755` script therefore does not change it to `0644`, and replacing a `0600` file does not make it more readable because of the remote umask.
 
-  // Parse permissions (e.g., "rwxr-xr-x" or "755")
-  final mode = parsePermissions(permissions);
+Permission copying is best effort. A server that will not report or set a mode does not cause already transferred contents to be discarded. Backends without a permission model, such as the local backend, skip this step. Monitor agent's file API follows the same policy.
 
-  // Normal path: use the SFTP set-stat operation.
-  await sftp.setStat(path, SftpFileAttrs(mode: SftpFileMode.value(mode)));
-}
-```
+## Path management
 
-Permission changes normally use SFTP `setStat`; a shell is not required. If the
-server refuses the operation and an SSH escalation handler is available, the
-backend can retry with `sudo chmod`. That fallback requires a shell and is not
-the normal SFTP path.
-
-## Path Management
-
-### Path Structure
+File backend paths use absolute POSIX-style paths. Relative paths are resolved against the current directory.
 
 ```dart
 class PathWithPrefix {
-  final String prefix;  // e.g., "/home/user"
+  final String prefix;  // e.g. "/home/user"
   final String path;    // Relative or absolute
 
   String get fullPath {
-    if (path.startsWith('/')) {
-      return path;  // Absolute path
-    }
-    return '$prefix/$path';  // Relative path
+    if (path.startsWith('/')) return path;
+    return '$prefix/$path';
   }
 
-  PathWithPrefix cd(String subPath) {
-    return PathWithPrefix(
-      prefix: fullPath,
-      path: subPath,
-    );
-  }
+  PathWithPrefix cd(String subPath) => PathWithPrefix(
+    prefix: fullPath,
+    path: subPath,
+  );
 }
 ```
 
-### Navigation History
+The browser maintains back/forward navigation history. Entering a new path removes the old forward history.
 
-```dart
-class PathHistory {
-  final List<String> _history = [];
-  int _index = -1;
+## Transfer system
 
-  void push(String path) {
-    // Remove forward history
-    _history.removeRange(_index + 1, _history.length);
-    _history.add(path);
-    _index = _history.length - 1;
-  }
+Transfers are managed by the keep-alive `FileTransferNotifier`. Each `FileTransferStatus` represents one transfer task. A task can use its own worker or run in the current isolate; the notifier manages adding, cancellation, progress, completion, and cleanup.
 
-  String? back() {
-    if (_index > 0) {
-      _index--;
-      return _history[_index];
-    }
-    return null;
-  }
+Large transfers use a background isolate so they do not block the UI. The transfer system does not use the old fixed-concurrency `TransferQueue`.
 
-  String? forward() {
-    if (_index < _history.length - 1) {
-      _index++;
-      return _history[_index];
-    }
-    return null;
-  }
-}
-```
+## Local download location
 
-## Transfer System
-
-### Queue Management
-
-The app does not use a fixed three-transfer `TransferQueue`. Transfers are
-represented by `FileTransferStatus` objects in the keep-alive
-`FileTransferNotifier`. Each status owns its worker or runs inline, and the
-notifier exposes add, cancel, progress, completion, and cleanup through that
-lifecycle.
-
-## Local Storage Pattern
-
-### Downloaded File Location
-
-Downloaded files are stored at a path made from the server id and the remote
-path components. Components are sanitized for the local platform, but the
-directory structure is retained:
+Downloaded files are stored using the server ID and each component of the remote path, while retaining the directory structure locally:
 
 ```dart
 String getLocalDownloadPath(String spiId, String remotePath) {
@@ -299,93 +228,34 @@ String getLocalDownloadPath(String spiId, String remotePath) {
 }
 ```
 
-Example:
-- Remote: `/var/log/nginx/access.log`
-- spiId: `server-123`
-- Local: `Paths.file/server-123/var/log/nginx/access.log`
+For example:
 
-## File Editing
+- Remote path: `/var/log/nginx/access.log`
+- Server ID: `server-123`
+- Local path: `Paths.file/server-123/var/log/nginx/access.log`
 
-### Edit Workflow
+## File editing
 
-```dart
-Future<void> editFile(String path) async {
-  final sftp = await getSftpClient(spiId);
+The built-in editor follows this workflow:
 
-  // 1. Check size
-  final stat = await sftp.stat(path);
-  if (stat.size > editorMaxSize) {
-    showWarning('File too large for built-in editor');
-    return;
-  }
+1. Read remote metadata and check the file size.
+2. Download the file to a local temporary directory.
+3. Open the temporary file in the editor.
+4. Upload it back to the original path with a staged write after saving.
+5. Delete the temporary file.
 
-  // 2. Download to temp
-  final temp = await downloadToTemp(path);
+Files over the editor's size limit are not opened directly. Use an external editor or edit them from a terminal instead.
 
-  // 3. Open in editor
-  final content = await openEditor(temp.path);
+## Error handling
 
-  // 4. Upload back
-  await uploadFile(temp.path, path);
+- **Permission errors**: Check the remote owner, permission bits, and SSH user. If configured, retry through the sudo escalation path.
+- **Connection errors**: Check whether the SSH connection is still valid before reconnecting. Do not treat a dropped connection as evidence that SFTP is unavailable.
+- **SFTP unavailable**: Change the server's file transport to SCP, provided the host has `scp` and a shell.
+- **Insufficient space**: Check free space on the remote filesystem. A staged write may need room for both the existing file and the temporary file.
 
-  // 5. Cleanup
-  await temp.delete();
-}
-```
+## Performance and limitations
 
-### External Editor Integration
-
-```dart
-Future<void> editInExternalEditor(String path, {bool useSudo = false}) async {
-  final ssh = await getSshClient(spiId);
-
-  // Open terminal with editor
-  final editor = getSetting('sftpEditor', 'vim');
-  final command = '${useSudo ? 'sudo ' : ''}$editor ${shellSingleQuote(path)}';
-  await ssh.exec(command);
-
-  // User edits in terminal
-  // After save, refresh SFTP view
-}
-```
-
-## Error Handling
-
-### Permission Errors
-
-```dart
-try {
-  await uploadFile(localPath, remotePath);
-} on SftpPermissionException {
-  showError('Permission denied: ${stat.path}');
-  showHint('Check file permissions and ownership');
-}
-```
-
-### Connection Errors
-
-```dart
-try {
-  await sftp.listdir(path);
-} on SftpStatusError {
-  showError('Connection lost');
-  await reconnect();
-}
-```
-
-### Space Errors
-
-```dart
-try {
-  await uploadFile(localPath, remotePath);
-} on SftpStatusError {
-  showError('Disk full on remote server');
-}
-```
-
-## Performance Notes
-
-- The SSH connection is reused for SFTP; no separate connection is opened.
-- Directory listings are fetched on navigation and refreshed on demand. There is
-  no TTL cache layer.
-- Large transfers run in a background isolate.
+- SFTP reuses the existing SSH connection and does not establish a new connection for every file operation.
+- Directory listings are fetched when entering a directory and refreshed on demand; there is no TTL cache.
+- SFTP supports random access. SCP implements `read` offsets by discarding the initial bytes locally, so the protocol still transfers from the beginning.
+- A staged write prevents readers from seeing a partially written file, but a network timeout can leave the result of a rename unknown. The App does not automatically retry a rename whose result is unknown.

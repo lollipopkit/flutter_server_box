@@ -1,55 +1,53 @@
 ---
 title: 快速开始
-description: 在几分钟内开始使用 Server Box
+description: 几分钟内完成首次配置
 ---
 
-按照本指南连接第一台服务器并开始监控。
+本指南会带你添加第一台服务器，并开始查看监控数据。
 
 ## 第一步：添加服务器
 
-1. 打开 Server Box
-2. 点击 **+** 按钮添加新服务器
-3. 填写服务器信息：
-   - **名称 (Name)**：服务器的友好名称
-   - **主机 (Host)**：IP 地址或域名
-   - **端口 (Port)**：SSH 端口（默认：22）
-   - **用户 (User)**：SSH 用户名
-   - **密码或密钥 (Password or Key)**：身份验证方式
+1. 打开 Server Box。
+2. 点击 **+** 添加服务器。
+3. 在连接方式中选择 **SSH**，然后填写：
+   - **名称（Name）**：用于在 App 中识别服务器的名称
+   - **主机（Host）**：IP 地址或域名
+   - **端口（Port）**：SSH 端口，默认是 `22`
+   - **用户（User）**：SSH 用户名
+   - **密码或密钥（Password or Key）**：选择一种身份验证方式
+4. 点击 **保存（Save）**。
 
-4. 点击 **保存 (Save)** 添加服务器
+### 使用 Monitor agent 连接
 
-### 通过 monitor agent 添加服务器
+如果服务器不方便开放 SSH 端口，也可以使用 Monitor agent：
 
-表单顶部的 **SSH / Monitor HTTP** 选择器决定连接方式。选择 **Monitor HTTP** 后，SSH 字段会被替换为 agent 的字段：
+1. 在服务器上安装并配置 [Monitor agent](/docs/zh/advanced/monitor-agent/)。
+2. 在添加服务器页面开启 **Monitor HTTP**。
+3. 填写 agent 地址、面板用户名和密码；使用自签名证书时，按需开启 **Monitor Ignore certificate**。
+4. 保存配置。
 
-- **URL**：例如 `https://1.2.3.4:3770`
-- **Monitor User** / **Monitor Password**：agent 的面板登录凭据
-- **Monitor Ignore certificate**：用于自签名证书
+SSH 和 Monitor HTTP 可以同时开启。两者同时存在时，**优先使用**只决定 App 先尝试哪一种连接，另一种连接仍然可用。仅配置 Monitor HTTP 的服务器不包含 SSH 凭据，其命令、终端和文件功能取决于 agent 开启的权限。
 
-以这种方式添加的服务器不携带任何 SSH 凭据。状态和图表无需额外配置即可使用。命令、终端和文件浏览取决于 agent 运维方启用的功能，详见 [Monitor Agent](/docs/zh/advanced/monitor-agent/)。此类服务器不提供 SFTP 和端口转发，需要这两项功能时请以 SSH 方式添加。
+## 第二步：连接并查看状态
 
-## 第二步：连接并监控
+1. 点击服务器卡片。
+2. 连接成功后，你可以查看 CPU、内存、交换分区、磁盘和网络等状态。
 
-1. 点击服务器卡片进行连接
-2. 您将看到以下内容的实时状态：
-   - CPU 使用率
-   - 内存 (RAM) 和交换分区 (Swap)
-   - 磁盘使用情况
-   - 网络速度
+使用 Monitor agent 的服务器还可以显示 App 连接前已经积累的历史数据；仅使用 SSH 的服务器从 App 开始采样时建立本地历史记录。
 
 ## 第三步：探索功能
 
 连接后可以：
 
-- **打开终端**：SSH 服务器可点击终端按钮打开 SSH 终端；Monitor HTTP 服务器需要 agent 的 `full_access` 权限。
-- **浏览文件**：SSH 服务器使用 SFTP 管理文件；Monitor HTTP 服务器需要配置 `[remote_access.fs]` 和 `roots`，并使用 agent 的文件 API。
-- **管理容器**：查看和控制 Docker/Podman 容器
-- **查看进程**：检查正在运行的进程
-- **运行片段**：执行保存的命令
-- **使用 Agent**：诊断或操作该服务器，见 [Agent](/docs/zh/advanced/agent/)
+- **打开终端**：SSH 连接可直接打开终端；Monitor HTTP 连接需要 agent 授予 `full_access`，并开启终端访问。
+- **浏览文件**：SSH 连接使用 SFTP；Monitor HTTP 连接使用 agent 的文件 API，要求配置 `[remote_access.fs]` 和 `roots`。
+- **管理容器**：查看和控制 Docker 或 Podman 容器。
+- **查看进程**：检查正在运行的进程。
+- **运行代码片段**：执行已保存的命令。
+- **使用 Agent**：诊断或操作服务器，详见 [Agent](/docs/zh/advanced/agent/)。
 
-## 提示
+## 实用设置
 
-- **生物识别身份验证**：启用 Face ID / Touch ID / 指纹以快速访问（移动端）
-- **主屏幕小组件**：将服务器状态小组件添加到您的主屏幕（iOS/Android）
-- **后台运行**：在后台保持连接（Android）
+- **生物识别**：在移动端启用 Face ID、Touch ID 或指纹，快速解锁 App。
+- **主屏幕小组件**：安装 Monitor agent 后，将服务器添加到 iOS 或 Android 小组件。
+- **Android 后台运行**：需要持续保持连接时，在 App 设置中开启后台运行，并允许通知和后台活动。
