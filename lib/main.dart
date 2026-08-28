@@ -12,6 +12,7 @@ import 'package:logging/logging.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:server_box/app.dart';
 import 'package:server_box/core/chan.dart';
+import 'package:server_box/core/service/crash_log.dart';
 import 'package:server_box/core/service/watch_sync.dart';
 import 'package:server_box/core/service/widget_sync.dart';
 import 'package:server_box/core/sync.dart';
@@ -105,6 +106,12 @@ Future<void> _runInZone(Future<void> Function() body) async {
 Future<void> _initApp() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Before anything that can fail. What is worth catching most is what stops
+  // the app from finishing startup — a report of a launch crash is one nobody
+  // can open the Logs page to collect. Buffers until [_initData] gives it a
+  // path; nothing between here and there is lost.
+  _setupDebug();
+
   // Shared parsing library (sbm_parser FFI, see the shared-parser design)
   await RustLib.init();
   // Every SSH connection this isolate opens computes AES and HMAC through the
@@ -116,7 +123,6 @@ Future<void> _initApp() async {
   // when that page asks for it.
   registerDistMarkLicenses();
   await _initData();
-  _setupDebug();
   await _initWindow();
 
   await _doPlatformRelated();
@@ -142,6 +148,11 @@ Future<void> _initData() async {
     bakName: Miscs.bakFileName,
     dirs: const {PathDir.img, PathDir.font},
   );
+
+  // As early as there is a path to write to: everything below can fail, and
+  // a failure below is exactly what leaves no other way to find out what
+  // happened. Drains what [_setupDebug] buffered before this point.
+  await CrashLog.attach(Paths.doc.joinPath('logs'));
 
   // `extended_image` caches under `getTemporaryDirectory()` and makes its own
   // folder there with a plain `create()`, no `recursive`. On macOS that
@@ -209,6 +220,7 @@ void _setupDebug() {
   Logger.root.onRecord.listen((record) {
     DebugProvider.addLog(record);
   });
+  CrashLog.handleErrors();
 }
 
 Future<void> _doPlatformRelated() async {
