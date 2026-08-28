@@ -1598,6 +1598,36 @@ class AppLocalizationsFr extends AppLocalizations {
       'L\'app Watch et les widgets lisaient une adresse `/status` saisie à la main. Ce point d\'accès a été retiré : il ne renvoyait que des valeurs actuelles sous forme de texte, d\'où l\'impossibilité d\'afficher une courbe.\n\nIls lisent désormais l\'API authentifiée de l\'agent monitor, tracent les tendances et se synchronisent seuls avec l\'app. Configurez le serveur une fois dans l\'app et chaque montre et widget le reprend.';
 
   @override
+  String get services => 'Services';
+
+  @override
+  String get serviceManagerUnsupported =>
+      'Gestionnaire de services non pris en charge';
+
+  @override
+  String get serviceManagerUnsupportedTip =>
+      'Ce serveur utilise un gestionnaire que ServerBox ne prend pas encore en charge. systemd, procd et OpenRC sont pris en charge.';
+
+  @override
+  String serviceManagerFmt(String manager) {
+    return 'Géré par $manager';
+  }
+
+  @override
+  String get serviceListFailed => 'Impossible de lister les services';
+
+  @override
+  String get serviceDetailsUnavailable =>
+      'Certains détails des services sont indisponibles';
+
+  @override
+  String get serviceDetailsUnavailableTip =>
+      'La liste reste utilisable, mais le gestionnaire n\'a pas renvoyé toutes les informations d\'état ou de démarrage.';
+
+  @override
+  String get serviceEnabled => 'Activé au démarrage';
+
+  @override
   String get systemdMissing => 'Pas de systemd sur ce serveur';
 
   @override

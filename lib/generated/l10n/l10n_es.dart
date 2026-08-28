@@ -1597,6 +1597,35 @@ class AppLocalizationsEs extends AppLocalizations {
       'La app del reloj y los widgets leían una dirección `/status` escrita a mano. Ese endpoint se ha eliminado: solo podía devolver valores actuales como texto, por eso nunca pudieron mostrar una gráfica.\n\nAhora leen la API autenticada del agente monitor, dibujan tendencias y se mantienen sincronizados con la app por sí solos. Configura el servidor una vez en la app y cada reloj y widget lo recogerá.';
 
   @override
+  String get services => 'Servicios';
+
+  @override
+  String get serviceManagerUnsupported => 'Gestor de servicios no compatible';
+
+  @override
+  String get serviceManagerUnsupportedTip =>
+      'Este servidor utiliza un gestor de servicios que ServerBox aún no admite. Se admiten systemd, procd y OpenRC.';
+
+  @override
+  String serviceManagerFmt(String manager) {
+    return 'Gestionado por $manager';
+  }
+
+  @override
+  String get serviceListFailed => 'No se pudieron listar los servicios';
+
+  @override
+  String get serviceDetailsUnavailable =>
+      'Algunos detalles del servicio no están disponibles';
+
+  @override
+  String get serviceDetailsUnavailableTip =>
+      'La lista se puede usar, pero el gestor no devolvió toda la información de estado o inicio automático.';
+
+  @override
+  String get serviceEnabled => 'Activado al iniciar';
+
+  @override
   String get systemdMissing => 'No hay systemd en este servidor';
 
   @override

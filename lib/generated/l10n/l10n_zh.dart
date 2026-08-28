@@ -1442,6 +1442,33 @@ class AppLocalizationsZh extends AppLocalizations {
       '手表 App 和桌面小组件此前读取的是手动填写的 `/status` 地址。该接口已移除：它只能以文本形式返回当前值，这也是它们始终无法显示曲线的原因。\n\n现在它们读取 Monitor 的认证接口，可以绘制曲线，并自动与 App 保持同步。在 App 内配置一次服务器，所有手表和小组件都会自动获取。';
 
   @override
+  String get services => '服务';
+
+  @override
+  String get serviceManagerUnsupported => '不支持的服务管理器';
+
+  @override
+  String get serviceManagerUnsupportedTip =>
+      '此服务器使用的服务管理器暂未受 ServerBox 支持。目前支持 systemd、procd 和 OpenRC。';
+
+  @override
+  String serviceManagerFmt(String manager) {
+    return '由 $manager 管理';
+  }
+
+  @override
+  String get serviceListFailed => '无法列出服务';
+
+  @override
+  String get serviceDetailsUnavailable => '部分服务详情不可用';
+
+  @override
+  String get serviceDetailsUnavailableTip => '服务列表仍可使用，但服务管理器未返回完整的状态或开机启动信息。';
+
+  @override
+  String get serviceEnabled => '已设置开机启动';
+
+  @override
   String get systemdMissing => '此服务器没有 systemd';
 
   @override
@@ -2976,6 +3003,33 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get legacyStatusGoneBody =>
       '手錶 App 與桌面小工具先前讀取的是手動填寫的 `/status` 位址。該端點已移除：它只能以文字回傳目前數值，這也是它們始終無法顯示曲線的原因。\n\n現在它們讀取 Monitor 的驗證 API，可以繪製曲線，並自動與 App 保持同步。在 App 內設定一次伺服器，所有手錶與小工具都會自動取得。';
+
+  @override
+  String get services => '服務';
+
+  @override
+  String get serviceManagerUnsupported => '不支援的服務管理器';
+
+  @override
+  String get serviceManagerUnsupportedTip =>
+      '此伺服器使用的服務管理器尚未受 ServerBox 支援。目前支援 systemd、procd 和 OpenRC。';
+
+  @override
+  String serviceManagerFmt(String manager) {
+    return '由 $manager 管理';
+  }
+
+  @override
+  String get serviceListFailed => '無法列出服務';
+
+  @override
+  String get serviceDetailsUnavailable => '部分服務詳細資料無法使用';
+
+  @override
+  String get serviceDetailsUnavailableTip => '服務列表仍可使用，但服務管理器未傳回完整的狀態或開機啟動資訊。';
+
+  @override
+  String get serviceEnabled => '已設定開機啟動';
 
   @override
   String get systemdMissing => '此伺服器沒有 systemd';

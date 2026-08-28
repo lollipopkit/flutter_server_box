@@ -1479,6 +1479,34 @@ class AppLocalizationsJa extends AppLocalizations {
       'ウォッチ App とホーム画面ウィジェットは、手入力した `/status` アドレスを読み取っていました。このエンドポイントは削除されました。現在値をテキストで返すことしかできず、グラフを表示できなかったのはそのためです。\n\n現在は monitor の認証付き API を読み取るため、推移を描画でき、App と自動的に同期します。App でサーバーを一度設定すれば、すべてのウォッチとウィジェットが受け取ります。';
 
   @override
+  String get services => 'サービス';
+
+  @override
+  String get serviceManagerUnsupported => '未対応のサービスマネージャー';
+
+  @override
+  String get serviceManagerUnsupportedTip =>
+      'このサーバーのサービスマネージャーにはまだ対応していません。systemd、procd、OpenRC に対応しています。';
+
+  @override
+  String serviceManagerFmt(String manager) {
+    return '$manager で管理';
+  }
+
+  @override
+  String get serviceListFailed => 'サービスを一覧表示できませんでした';
+
+  @override
+  String get serviceDetailsUnavailable => '一部のサービス情報を取得できません';
+
+  @override
+  String get serviceDetailsUnavailableTip =>
+      '一覧は利用できますが、状態または自動起動の情報がすべて返されませんでした。';
+
+  @override
+  String get serviceEnabled => '自動起動が有効';
+
+  @override
   String get systemdMissing => 'このサーバーには systemd がありません';
 
   @override

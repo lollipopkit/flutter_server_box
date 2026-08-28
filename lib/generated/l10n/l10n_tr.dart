@@ -1570,6 +1570,35 @@ class AppLocalizationsTr extends AppLocalizations {
       'Saat uygulaması ve ana ekran bileşenleri elle yazılan bir `/status` adresini okuyordu. Bu uç nokta kaldırıldı: yalnızca anlık değerleri metin olarak döndürebiliyordu, grafik gösterememelerinin nedeni buydu.\n\nArtık monitor aracısının kimlik doğrulamalı API\'sini okuyorlar; eğilimleri çiziyor ve uygulamayla kendiliğinden eşleşiyorlar. Sunucuyu uygulamada bir kez yapılandırın, her saat ve bileşen onu alsın.';
 
   @override
+  String get services => 'Hizmetler';
+
+  @override
+  String get serviceManagerUnsupported => 'Desteklenmeyen hizmet yöneticisi';
+
+  @override
+  String get serviceManagerUnsupportedTip =>
+      'Bu sunucu ServerBox\'ın henüz desteklemediği bir hizmet yöneticisi kullanıyor. systemd, procd ve OpenRC desteklenir.';
+
+  @override
+  String serviceManagerFmt(String manager) {
+    return '$manager tarafından yönetiliyor';
+  }
+
+  @override
+  String get serviceListFailed => 'Hizmetler listelenemedi';
+
+  @override
+  String get serviceDetailsUnavailable =>
+      'Bazı hizmet ayrıntıları kullanılamıyor';
+
+  @override
+  String get serviceDetailsUnavailableTip =>
+      'Liste kullanılabilir, ancak yönetici tüm durum veya otomatik başlatma bilgilerini döndürmedi.';
+
+  @override
+  String get serviceEnabled => 'Başlangıçta etkin';
+
+  @override
   String get systemdMissing => 'Bu sunucuda systemd yok';
 
   @override

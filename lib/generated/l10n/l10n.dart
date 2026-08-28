@@ -2768,6 +2768,54 @@ abstract class AppLocalizations {
   /// **'The watch app and home widgets used to read a `/status` address typed by hand. That endpoint is gone: it could only report current values as text, which is why they could never show a chart.\n\nThey now read the monitor agent\'s authenticated API, so they draw trends and stay in step with the app on their own. Configure the server in the app once, and every watch and widget picks it up.'**
   String get legacyStatusGoneBody;
 
+  /// No description provided for @services.
+  ///
+  /// In en, this message translates to:
+  /// **'Services'**
+  String get services;
+
+  /// No description provided for @serviceManagerUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsupported service manager'**
+  String get serviceManagerUnsupported;
+
+  /// No description provided for @serviceManagerUnsupportedTip.
+  ///
+  /// In en, this message translates to:
+  /// **'This server uses a service manager that ServerBox does not support yet. Supported managers: systemd, procd, and OpenRC.'**
+  String get serviceManagerUnsupportedTip;
+
+  /// No description provided for @serviceManagerFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'Managed by {manager}'**
+  String serviceManagerFmt(String manager);
+
+  /// No description provided for @serviceListFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not list services'**
+  String get serviceListFailed;
+
+  /// No description provided for @serviceDetailsUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Some service details are unavailable'**
+  String get serviceDetailsUnavailable;
+
+  /// No description provided for @serviceDetailsUnavailableTip.
+  ///
+  /// In en, this message translates to:
+  /// **'The service list is usable, but the manager did not return all status or startup information.'**
+  String get serviceDetailsUnavailableTip;
+
+  /// No description provided for @serviceEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Enabled at startup'**
+  String get serviceEnabled;
+
   /// No description provided for @systemdMissing.
   ///
   /// In en, this message translates to:

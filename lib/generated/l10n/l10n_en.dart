@@ -1568,6 +1568,35 @@ class AppLocalizationsEn extends AppLocalizations {
       'The watch app and home widgets used to read a `/status` address typed by hand. That endpoint is gone: it could only report current values as text, which is why they could never show a chart.\n\nThey now read the monitor agent\'s authenticated API, so they draw trends and stay in step with the app on their own. Configure the server in the app once, and every watch and widget picks it up.';
 
   @override
+  String get services => 'Services';
+
+  @override
+  String get serviceManagerUnsupported => 'Unsupported service manager';
+
+  @override
+  String get serviceManagerUnsupportedTip =>
+      'This server uses a service manager that ServerBox does not support yet. Supported managers: systemd, procd, and OpenRC.';
+
+  @override
+  String serviceManagerFmt(String manager) {
+    return 'Managed by $manager';
+  }
+
+  @override
+  String get serviceListFailed => 'Could not list services';
+
+  @override
+  String get serviceDetailsUnavailable =>
+      'Some service details are unavailable';
+
+  @override
+  String get serviceDetailsUnavailableTip =>
+      'The service list is usable, but the manager did not return all status or startup information.';
+
+  @override
+  String get serviceEnabled => 'Enabled at startup';
+
+  @override
   String get systemdMissing => 'No systemd on this server';
 
   @override

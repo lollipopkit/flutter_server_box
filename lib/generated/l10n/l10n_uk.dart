@@ -1587,6 +1587,35 @@ class AppLocalizationsUk extends AppLocalizations {
       'Застосунок для годинника та віджети читали адресу `/status`, введену вручну. Цю кінцеву точку вилучено: вона могла повертати лише поточні значення текстом, тому графіки були неможливі.\n\nТепер вони читають автентифікований API агента monitor, малюють графіки та самі синхронізуються із застосунком. Налаштуйте сервер у застосунку один раз — і кожен годинник та віджет його підхопить.';
 
   @override
+  String get services => 'Служби';
+
+  @override
+  String get serviceManagerUnsupported => 'Непідтримуваний менеджер служб';
+
+  @override
+  String get serviceManagerUnsupportedTip =>
+      'Цей сервер використовує менеджер служб, який ServerBox ще не підтримує. Підтримуються systemd, procd та OpenRC.';
+
+  @override
+  String serviceManagerFmt(String manager) {
+    return 'Керується через $manager';
+  }
+
+  @override
+  String get serviceListFailed => 'Не вдалося отримати список служб';
+
+  @override
+  String get serviceDetailsUnavailable =>
+      'Деякі відомості про служби недоступні';
+
+  @override
+  String get serviceDetailsUnavailableTip =>
+      'Список доступний, але менеджер не повернув усі відомості про стан або автозапуск.';
+
+  @override
+  String get serviceEnabled => 'Увімкнено під час запуску';
+
+  @override
   String get systemdMissing => 'На цьому сервері немає systemd';
 
   @override

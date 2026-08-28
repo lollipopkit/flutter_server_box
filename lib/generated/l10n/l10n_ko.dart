@@ -1486,6 +1486,34 @@ class AppLocalizationsKo extends AppLocalizations {
       '워치 앱과 홈 위젯은 직접 입력한 `/status` 주소를 읽었습니다. 이 엔드포인트는 제거되었습니다. 현재 값을 텍스트로만 반환할 수 있었고, 그래서 그래프를 표시할 수 없었습니다.\n\n이제는 monitor의 인증된 API를 읽으므로 추이를 그리고 앱과 자동으로 동기화됩니다. 앱에서 서버를 한 번 설정하면 모든 워치와 위젯이 이를 가져옵니다.';
 
   @override
+  String get services => '서비스';
+
+  @override
+  String get serviceManagerUnsupported => '지원되지 않는 서비스 관리자';
+
+  @override
+  String get serviceManagerUnsupportedTip =>
+      '이 서버의 서비스 관리자는 아직 ServerBox에서 지원되지 않습니다. systemd, procd 및 OpenRC를 지원합니다.';
+
+  @override
+  String serviceManagerFmt(String manager) {
+    return '$manager에서 관리';
+  }
+
+  @override
+  String get serviceListFailed => '서비스 목록을 가져올 수 없습니다';
+
+  @override
+  String get serviceDetailsUnavailable => '일부 서비스 세부 정보를 사용할 수 없습니다';
+
+  @override
+  String get serviceDetailsUnavailableTip =>
+      '서비스 목록은 사용할 수 있지만 상태 또는 자동 시작 정보가 모두 반환되지 않았습니다.';
+
+  @override
+  String get serviceEnabled => '부팅 시 활성화';
+
+  @override
   String get systemdMissing => '이 서버에는 systemd가 없습니다';
 
   @override
