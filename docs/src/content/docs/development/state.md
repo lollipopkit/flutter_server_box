@@ -172,6 +172,9 @@ class AutoRefreshServerStatus extends _$AutoRefreshServerStatus {
   Future<StatusModel> build(Server server) async {
     ref.onDispose(() => _timer?.cancel());
     final status = await fetchStatus(server);
+    // Disposed while the fetch was in flight: onDispose has already run, so a
+    // timer started now is one nothing cancels.
+    if (!ref.mounted) return status;
     // Started once the first fetch has landed. A tick that fired while it was
     // still running would set state that this build's own result then
     // overwrites.
