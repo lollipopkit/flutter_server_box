@@ -39,7 +39,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
                     default_rust_auto_opaque = RustAutoOpaqueMoi,
                 );
                 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0-beta.6";
-                pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 235161080;
+                pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1621534510;
             
 
 // Section: executor
@@ -139,6 +139,17 @@ let api_mac_size = <u32>::sse_decode(&mut deserializer);deserializer.end();
                 transform_result_sse::<_, String>((move || {
                      let output_ok = crate::api::ssh_crypto::SshMac::new(api_algorithm, api_key, api_mac_size)?;   std::result::Result::Ok(output_ok)
                 })()) })
+            }fn wire__crate__api__ssh_asym__bcrypt_pbkdf_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "bcrypt_pbkdf", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_passphrase = <Vec<u8>>::sse_decode(&mut deserializer);
+let api_salt = <Vec<u8>>::sse_decode(&mut deserializer);
+let api_rounds = <u32>::sse_decode(&mut deserializer);
+let api_output_len = <u32>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, String>((move || {
+                     let output_ok = crate::api::ssh_asym::bcrypt_pbkdf(api_passphrase, api_salt, api_rounds, api_output_len)?;   std::result::Result::Ok(output_ok)
+                })()) })
             }fn wire__crate__api__script__build_script_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
                 FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "build_script", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
             let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
@@ -188,6 +199,47 @@ let api_build_number = <String>::sse_decode(&mut deserializer);deserializer.end(
             let api_key = <String>::sse_decode(&mut deserializer);deserializer.end();
                 transform_result_sse::<_, ()>((move || {
                      let output_ok = Ok::<_, ()>(crate::api::script::custom_result_name(api_key))?;   std::result::Result::Ok(output_ok)
+                })()) })
+            }fn wire__crate__api__ssh_asym__ecdsa_sign_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "ecdsa_sign", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_curve = <String>::sse_decode(&mut deserializer);
+let api_private_key = <Vec<u8>>::sse_decode(&mut deserializer);
+let api_message = <Vec<u8>>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, String>((move || {
+                     let output_ok = crate::api::ssh_asym::ecdsa_sign(api_curve, api_private_key, api_message)?;   std::result::Result::Ok(output_ok)
+                })()) })
+            }fn wire__crate__api__ssh_asym__ecdsa_verify_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "ecdsa_verify", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_curve = <String>::sse_decode(&mut deserializer);
+let api_public_key = <Vec<u8>>::sse_decode(&mut deserializer);
+let api_message = <Vec<u8>>::sse_decode(&mut deserializer);
+let api_r = <Vec<u8>>::sse_decode(&mut deserializer);
+let api_s = <Vec<u8>>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, ()>((move || {
+                     let output_ok = Ok::<_, ()>(crate::api::ssh_asym::ecdsa_verify(api_curve, api_public_key, api_message, api_r, api_s))?;   std::result::Result::Ok(output_ok)
+                })()) })
+            }fn wire__crate__api__ssh_asym__ed25519_sign_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "ed25519_sign", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_private_key = <Vec<u8>>::sse_decode(&mut deserializer);
+let api_message = <Vec<u8>>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, String>((move || {
+                     let output_ok = crate::api::ssh_asym::ed25519_sign(api_private_key, api_message)?;   std::result::Result::Ok(output_ok)
+                })()) })
+            }fn wire__crate__api__ssh_asym__ed25519_verify_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "ed25519_verify", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_public_key = <Vec<u8>>::sse_decode(&mut deserializer);
+let api_message = <Vec<u8>>::sse_decode(&mut deserializer);
+let api_signature = <Vec<u8>>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, ()>((move || {
+                     let output_ok = Ok::<_, ()>(crate::api::ssh_asym::ed25519_verify(api_public_key, api_message, api_signature))?;   std::result::Result::Ok(output_ok)
                 })()) })
             }fn wire__crate__api__script__exec_command_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
                 FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "exec_command", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
@@ -297,6 +349,23 @@ let api_custom = <bool>::sse_decode(&mut deserializer);deserializer.end();
                 transform_result_sse::<_, ()>((move || {
                      let output_ok = Ok::<_, ()>(crate::api::script::shell_func_flag(api_func))?;   std::result::Result::Ok(output_ok)
                 })()) })
+            }fn wire__crate__api__ssh_asym__x25519_keypair_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "x25519_keypair", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+                transform_result_sse::<_, ()>((move || {
+                     let output_ok = Ok::<_, ()>(crate::api::ssh_asym::x25519_keypair())?;   std::result::Result::Ok(output_ok)
+                })()) })
+            }fn wire__crate__api__ssh_asym__x25519_shared_secret_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "x25519_shared_secret", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_private_key = <Vec<u8>>::sse_decode(&mut deserializer);
+let api_peer_public_key = <Vec<u8>>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, String>((move || {
+                     let output_ok = crate::api::ssh_asym::x25519_shared_secret(api_private_key, api_peer_public_key)?;   std::result::Result::Ok(output_ok)
+                })()) })
             }
 
 // Section: related_funcs
@@ -361,6 +430,13 @@ return crate::api::parser::CommandSpec{key: var_key, cmd: var_cmd};}
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_name = <String>::sse_decode(deserializer);
 let mut var_cmd = <String>::sse_decode(deserializer);
 return crate::api::script::CustomCmd{name: var_name, cmd: var_cmd};}
+                }
+                
+                impl SseDecode for crate::api::ssh_asym::EcdsaSignature {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_r = <Vec<u8>>::sse_decode(deserializer);
+let mut var_s = <Vec<u8>>::sse_decode(deserializer);
+return crate::api::ssh_asym::EcdsaSignature{r: var_r, s: var_s};}
                 }
                 
                 impl SseDecode for f64 {
@@ -487,6 +563,13 @@ return crate::api::script::ScriptSegment{key: var_key, value: var_value};}
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {deserializer.cursor.read_u64::<NativeEndian>().unwrap() as _}
                 }
                 
+                impl SseDecode for crate::api::ssh_asym::X25519KeyPair {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_privateKey = <Vec<u8>>::sse_decode(deserializer);
+let mut var_publicKey = <Vec<u8>>::sse_decode(deserializer);
+return crate::api::ssh_asym::X25519KeyPair{private_key: var_privateKey, public_key: var_publicKey};}
+                }
+                
                 fn pde_ffi_dispatcher_primary_impl(
                     func_id: i32,port: flutter_rust_bridge::for_generated::MessagePort,
                     ptr: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -495,9 +578,9 @@ return crate::api::script::ScriptSegment{key: var_key, value: var_value};}
                 )  {
                     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
                     match func_id {
-                        14 => wire__crate__api__parser__init_app_impl(port, ptr, rust_vec_len, data_len),
-19 => wire__crate__api__script__parse_script_segments_impl(port, ptr, rust_vec_len, data_len),
-20 => wire__crate__api__parser__parse_status_json_impl(port, ptr, rust_vec_len, data_len),
+                        19 => wire__crate__api__parser__init_app_impl(port, ptr, rust_vec_len, data_len),
+24 => wire__crate__api__script__parse_script_segments_impl(port, ptr, rust_vec_len, data_len),
+25 => wire__crate__api__parser__parse_status_json_impl(port, ptr, rust_vec_len, data_len),
                         _ => unreachable!(),
                     }
                 }
@@ -516,21 +599,28 @@ return crate::api::script::ScriptSegment{key: var_key, value: var_value};}
 4 => wire__crate__api__ssh_crypto__SshMac_compute_impl(ptr, rust_vec_len, data_len),
 5 => wire__crate__api__ssh_crypto__SshMac_mac_size_impl(ptr, rust_vec_len, data_len),
 6 => wire__crate__api__ssh_crypto__SshMac_new_impl(ptr, rust_vec_len, data_len),
-7 => wire__crate__api__script__build_script_impl(ptr, rust_vec_len, data_len),
-8 => wire__crate__api__parser__command_specs_impl(ptr, rust_vec_len, data_len),
-9 => wire__crate__api__script__contains_script_segment_impl(ptr, rust_vec_len, data_len),
-10 => wire__crate__api__script__contains_status_segment_impl(ptr, rust_vec_len, data_len),
-11 => wire__crate__api__script__custom_result_key_impl(ptr, rust_vec_len, data_len),
-12 => wire__crate__api__script__custom_result_name_impl(ptr, rust_vec_len, data_len),
-13 => wire__crate__api__script__exec_command_impl(ptr, rust_vec_len, data_len),
-15 => wire__crate__api__script__install_command_impl(ptr, rust_vec_len, data_len),
-16 => wire__crate__api__script__install_custom_cmds_command_impl(ptr, rust_vec_len, data_len),
-17 => wire__crate__api__script__install_payload_impl(ptr, rust_vec_len, data_len),
-18 => wire__crate__api__script__parse_custom_cmds_listing_impl(ptr, rust_vec_len, data_len),
-21 => wire__crate__api__parser__parse_windows_net_speed_json_impl(ptr, rust_vec_len, data_len),
-22 => wire__crate__api__script__read_custom_cmds_command_impl(ptr, rust_vec_len, data_len),
-23 => wire__crate__api__script__script_segment_marker_impl(ptr, rust_vec_len, data_len),
-24 => wire__crate__api__script__shell_func_flag_impl(ptr, rust_vec_len, data_len),
+7 => wire__crate__api__ssh_asym__bcrypt_pbkdf_impl(ptr, rust_vec_len, data_len),
+8 => wire__crate__api__script__build_script_impl(ptr, rust_vec_len, data_len),
+9 => wire__crate__api__parser__command_specs_impl(ptr, rust_vec_len, data_len),
+10 => wire__crate__api__script__contains_script_segment_impl(ptr, rust_vec_len, data_len),
+11 => wire__crate__api__script__contains_status_segment_impl(ptr, rust_vec_len, data_len),
+12 => wire__crate__api__script__custom_result_key_impl(ptr, rust_vec_len, data_len),
+13 => wire__crate__api__script__custom_result_name_impl(ptr, rust_vec_len, data_len),
+14 => wire__crate__api__ssh_asym__ecdsa_sign_impl(ptr, rust_vec_len, data_len),
+15 => wire__crate__api__ssh_asym__ecdsa_verify_impl(ptr, rust_vec_len, data_len),
+16 => wire__crate__api__ssh_asym__ed25519_sign_impl(ptr, rust_vec_len, data_len),
+17 => wire__crate__api__ssh_asym__ed25519_verify_impl(ptr, rust_vec_len, data_len),
+18 => wire__crate__api__script__exec_command_impl(ptr, rust_vec_len, data_len),
+20 => wire__crate__api__script__install_command_impl(ptr, rust_vec_len, data_len),
+21 => wire__crate__api__script__install_custom_cmds_command_impl(ptr, rust_vec_len, data_len),
+22 => wire__crate__api__script__install_payload_impl(ptr, rust_vec_len, data_len),
+23 => wire__crate__api__script__parse_custom_cmds_listing_impl(ptr, rust_vec_len, data_len),
+26 => wire__crate__api__parser__parse_windows_net_speed_json_impl(ptr, rust_vec_len, data_len),
+27 => wire__crate__api__script__read_custom_cmds_command_impl(ptr, rust_vec_len, data_len),
+28 => wire__crate__api__script__script_segment_marker_impl(ptr, rust_vec_len, data_len),
+29 => wire__crate__api__script__shell_func_flag_impl(ptr, rust_vec_len, data_len),
+30 => wire__crate__api__ssh_asym__x25519_keypair_impl(ptr, rust_vec_len, data_len),
+31 => wire__crate__api__ssh_asym__x25519_shared_secret_impl(ptr, rust_vec_len, data_len),
                         _ => unreachable!(),
                     }
                 }
@@ -599,6 +689,21 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::script::CustomCmd> for crate:
             }
         }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::ssh_asym::EcdsaSignature {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    [
+                    self.r.into_into_dart().into_dart(),
+self.s.into_into_dart().into_dart()
+                ].into_dart()
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::ssh_asym::EcdsaSignature {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::EcdsaSignature> for crate::api::ssh_asym::EcdsaSignature {
+            fn into_into_dart(self) -> crate::api::ssh_asym::EcdsaSignature {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
             impl flutter_rust_bridge::IntoDart for crate::api::script::ScriptSegment {
                 fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
                     [
@@ -630,6 +735,21 @@ Self::Suspend => 5.into_dart(),
             impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::script::ShellFuncKind {}
 impl flutter_rust_bridge::IntoIntoDart<crate::api::script::ShellFuncKind> for crate::api::script::ShellFuncKind {
             fn into_into_dart(self) -> crate::api::script::ShellFuncKind {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::ssh_asym::X25519KeyPair {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    [
+                    self.private_key.into_into_dart().into_dart(),
+self.public_key.into_into_dart().into_dart()
+                ].into_dart()
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::ssh_asym::X25519KeyPair {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::X25519KeyPair> for crate::api::ssh_asym::X25519KeyPair {
+            fn into_into_dart(self) -> crate::api::ssh_asym::X25519KeyPair {
                 self
             }
         }
@@ -683,6 +803,12 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::script::ShellFuncKind> for cr
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<String>::sse_encode(self.name, serializer);
 <String>::sse_encode(self.cmd, serializer);}
+                }
+                
+                impl SseEncode for crate::api::ssh_asym::EcdsaSignature {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<Vec<u8>>::sse_encode(self.r, serializer);
+<Vec<u8>>::sse_encode(self.s, serializer);}
                 }
                 
                 impl SseEncode for f64 {
@@ -788,6 +914,12 @@ crate::api::script::ShellFuncKind::Suspend => { 5 }
                 impl SseEncode for usize {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {serializer.cursor.write_u64::<NativeEndian>(self as _).unwrap();}
+                }
+                
+                impl SseEncode for crate::api::ssh_asym::X25519KeyPair {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<Vec<u8>>::sse_encode(self.private_key, serializer);
+<Vec<u8>>::sse_encode(self.public_key, serializer);}
                 }
                 
 

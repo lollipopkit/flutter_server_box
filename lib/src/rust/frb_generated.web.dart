@@ -12,6 +12,7 @@ import 'dart:convert';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_web.dart';
 import 'package:server_box/src/rust/api/parser.dart';
 import 'package:server_box/src/rust/api/script.dart';
+import 'package:server_box/src/rust/api/ssh_asym.dart';
 import 'package:server_box/src/rust/api/ssh_crypto.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
@@ -89,6 +90,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   CustomCmd dco_decode_custom_cmd(dynamic raw);
 
   @protected
+  EcdsaSignature dco_decode_ecdsa_signature(dynamic raw);
+
+  @protected
   double dco_decode_f_64(dynamic raw);
 
   @protected
@@ -141,6 +145,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   BigInt dco_decode_usize(dynamic raw);
+
+  @protected
+  X25519KeyPair dco_decode_x_25519_key_pair(dynamic raw);
 
   @protected
   SshBlockCipher
@@ -202,6 +209,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   CustomCmd sse_decode_custom_cmd(SseDeserializer deserializer);
 
   @protected
+  EcdsaSignature sse_decode_ecdsa_signature(SseDeserializer deserializer);
+
+  @protected
   double sse_decode_f_64(SseDeserializer deserializer);
 
   @protected
@@ -260,6 +270,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   BigInt sse_decode_usize(SseDeserializer deserializer);
+
+  @protected
+  X25519KeyPair sse_decode_x_25519_key_pair(SseDeserializer deserializer);
 
   @protected
   void
@@ -327,6 +340,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_custom_cmd(CustomCmd self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_ecdsa_signature(
+    EcdsaSignature self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_f_64(double self, SseSerializer serializer);
@@ -402,6 +421,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_usize(BigInt self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_x_25519_key_pair(
+    X25519KeyPair self,
+    SseSerializer serializer,
+  );
 }
 
 // Section: wire_class
