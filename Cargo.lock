@@ -3778,9 +3778,16 @@ dependencies = [
 name = "sbm_ffi"
 version = "0.1.0"
 dependencies = [
+ "aes",
+ "cbc",
+ "ctr",
  "flutter_rust_bridge",
+ "hmac 0.13.0",
+ "md-5 0.11.0",
  "sbm_parser",
  "serde_json",
+ "sha1",
+ "sha2 0.11.0",
 ]
 
 [[package]]

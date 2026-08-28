@@ -43,9 +43,23 @@ A `Makefile` wraps most common tasks — run `make help` for the full list. Pref
 
 ### Rust / FFI
 
-- `cargo build -p sbm_ffi` - Build the FFI crate; required before running `flutter test test/frb_parser_test.dart` (`test/rust_lib_helper.dart` loads the dylib from `target/`)
+- `cargo build -p sbm_ffi` - Build the FFI crate; required before running `flutter test test/frb_parser_test.dart` and `test/ssh_native_crypto_test.dart` (`test/rust_lib_helper.dart` loads the dylib from `target/`)
 - `flutter_rust_bridge_codegen generate` - Regenerate FRB bindings after changing `crates/sbm_ffi/src/api` (config: `flutter_rust_bridge.yaml`; Dart output `lib/src/rust/`, do not edit generated code). Its `dart fix`/`dart format` pass is scoped to that output directory, so it is safe to run.
   - **Never run `flutter_rust_bridge_codegen integrate`.** It is greenfield scaffolding: on this repo it reformats the whole project *and every submodule*, and writes a second Rust crate at `rust/` beside the real one. To see what a template looks like, run `create` in a temp directory instead.
+- **The SSH record layer's cipher and MAC come from `sbm_ffi` too** (`api/ssh_crypto.rs` → `NativeSshCrypto`, installed in `_initApp` right after `RustLib.init`). dartssh2 computes AES and HMAC with pointycastle, in Dart, on whichever isolate owns the connection — which for this app is the isolate drawing frames. It is not moved to another isolate because it cannot be: the socket under a transport may be a jump connection wrapping a second `SSHClient` or a `ProxyCommand` wrapping a `Process`, and neither is sendable.
+  - **Benchmark in AOT, not in `flutter test`.** pointycastle's AES and SHA-2 are roughly 4x slower compiled AOT than under the JIT — 27 MB/s against 108 for aes256-ctr alone — so a number measured in the test VM understates by that much what a release build does, and understates it on one side only. Measured with `dart compile exe` on a pure-Dart harness, aes256-ctr plus hmac-sha2-256 over 8 MiB per packet size:
+
+    | packet | pointycastle | native | |
+    | --- | --- | --- | --- |
+    | 64 B | 5.5 MB/s | 36 MB/s | 6.5x |
+    | 1 KiB | 13.5 MB/s | 261 MB/s | 19x |
+    | 32 KiB | 15 MB/s | 486 MB/s | 32x |
+
+    The small-packet row is the one worth keeping: a crossing per packet was the reason to doubt this would pay off at terminal-keystroke sizes, and it still wins there because pointycastle's per-byte cost is high enough to swamp it.
+  - `SSHCryptoBackend` (the dartssh2 fork's `algorithm/ssh_crypto_backend.dart`) is the seam, and `null` from either of its two methods means "use pointycastle" — so an algorithm the backend does not implement costs nothing and needs no coordination. **AES-GCM and ChaCha20-Poly1305 are among those**: the transport computes them inline rather than through `createCipher`, so they are not reachable from this seam at all. What is covered is AES-CTR, AES-CBC and HMAC, which is what gets negotiated — `SSHAlgorithms.cipher` proposes `aes256-ctr` first.
+  - `SSHBulkBlockCipher` is the other half. Without it `BlockCipherX.processAll` walks a packet a block at a time, which is right for pointycastle and turns a 32 KB packet into two thousand FFI crossings.
+  - The file-transfer worker is its own isolate and keeps pointycastle: it would need its own `RustLib.init`, and it is not the isolate anyone is looking at.
+  - `test/ssh_native_crypto_test.dart` asserts the two produce identical bytes, fed the way the transport feeds them — keyed once, then packet after packet, with the CTR counter and the CBC chaining block carrying across the calls. That is the part the Rust crate's own NIST/RFC vectors cannot show, and a mistake in it is a packet the peer silently cannot authenticate rather than a crash.
 - App builds compile Rust through `hook/build.dart` (Dart build hooks, via `flutter_rust_bridge_hooks` → `native_toolchain_rust`). `crates/sbm_ffi` is **not** a Flutter plugin and the app does not depend on it as a package — the hook names the crate path. So it produces no podspec and no `Package.swift`, and one file covers all five platforms.
   - `flutter_rust_bridge` is pinned to `2.13.0-beta.6` in both `pubspec.yaml` and `crates/sbm_ffi/Cargo.toml`, and the two must match or `RustLib.init` throws at startup. The native-assets backend needs `>= 2.13.0-beta.2` and 2.13.0 has no stable release yet; this is the project's only prerelease dependency.
   - `crates/sbm_ffi/rust-toolchain.toml` pins the channel and lists every shipped target, which `native_toolchain_rust` requires. A target missing from that list is not an error, it is a silent fallback to the host.

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:computer/computer.dart';
+import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +18,7 @@ import 'package:server_box/core/sync.dart';
 import 'package:server_box/core/utils/rootfs.dart';
 import 'package:server_box/core/utils/rootfs_manifest_source.dart';
 import 'package:server_box/core/utils/sandbox_import.dart';
+import 'package:server_box/core/utils/ssh_native_crypto.dart';
 import 'package:server_box/data/model/server/dist_license.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/misc.dart';
@@ -105,6 +107,11 @@ Future<void> _initApp() async {
 
   // Shared parsing library (sbm_parser FFI, see the shared-parser design)
   await RustLib.init();
+  // Every SSH connection this isolate opens computes AES and HMAC through the
+  // same library from here on, instead of in Dart on the isolate drawing
+  // frames. Read when a connection installs its keys, so it has to be in place
+  // before the first one — see [NativeSshCrypto].
+  sshCryptoBackend = const NativeSshCrypto();
   // Before anything can open the licence page. Cheap: the callback only runs
   // when that page asks for it.
   registerDistMarkLicenses();
