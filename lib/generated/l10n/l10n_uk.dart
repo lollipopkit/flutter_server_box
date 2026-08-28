@@ -1590,6 +1590,21 @@ class AppLocalizationsUk extends AppLocalizations {
   String get services => 'Служби';
 
   @override
+  String get status => 'Стан';
+
+  @override
+  String get enable => 'Увімкнути';
+
+  @override
+  String get disable => 'Вимкнути';
+
+  @override
+  String get starting => 'Запускається';
+
+  @override
+  String get stopping => 'Зупиняється';
+
+  @override
   String get serviceManagerUnsupported => 'Непідтримуваний менеджер служб';
 
   @override

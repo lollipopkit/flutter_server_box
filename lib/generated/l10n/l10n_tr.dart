@@ -1573,6 +1573,21 @@ class AppLocalizationsTr extends AppLocalizations {
   String get services => 'Hizmetler';
 
   @override
+  String get status => 'Durum';
+
+  @override
+  String get enable => 'Etkinleştir';
+
+  @override
+  String get disable => 'Devre dışı bırak';
+
+  @override
+  String get starting => 'Başlatılıyor';
+
+  @override
+  String get stopping => 'Durduruluyor';
+
+  @override
   String get serviceManagerUnsupported => 'Desteklenmeyen hizmet yöneticisi';
 
   @override

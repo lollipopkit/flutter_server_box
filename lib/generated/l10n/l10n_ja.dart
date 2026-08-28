@@ -1482,6 +1482,21 @@ class AppLocalizationsJa extends AppLocalizations {
   String get services => 'サービス';
 
   @override
+  String get status => '状態';
+
+  @override
+  String get enable => '有効化';
+
+  @override
+  String get disable => '無効化';
+
+  @override
+  String get starting => '起動中';
+
+  @override
+  String get stopping => '停止中';
+
+  @override
   String get serviceManagerUnsupported => '未対応のサービスマネージャー';
 
   @override

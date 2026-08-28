@@ -1445,6 +1445,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get services => '服务';
 
   @override
+  String get status => '状态';
+
+  @override
+  String get enable => '启用';
+
+  @override
+  String get disable => '禁用';
+
+  @override
+  String get starting => '启动中';
+
+  @override
+  String get stopping => '停止中';
+
+  @override
   String get serviceManagerUnsupported => '不支持的服务管理器';
 
   @override
@@ -3006,6 +3021,21 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get services => '服務';
+
+  @override
+  String get status => '狀態';
+
+  @override
+  String get enable => '啟用';
+
+  @override
+  String get disable => '停用';
+
+  @override
+  String get starting => '啟動中';
+
+  @override
+  String get stopping => '停止中';
 
   @override
   String get serviceManagerUnsupported => '不支援的服務管理器';

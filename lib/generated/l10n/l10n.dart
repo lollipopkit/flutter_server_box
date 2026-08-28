@@ -2774,6 +2774,36 @@ abstract class AppLocalizations {
   /// **'Services'**
   String get services;
 
+  /// No description provided for @status.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get status;
+
+  /// No description provided for @enable.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable'**
+  String get enable;
+
+  /// No description provided for @disable.
+  ///
+  /// In en, this message translates to:
+  /// **'Disable'**
+  String get disable;
+
+  /// No description provided for @starting.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting'**
+  String get starting;
+
+  /// No description provided for @stopping.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopping'**
+  String get stopping;
+
   /// No description provided for @serviceManagerUnsupported.
   ///
   /// In en, this message translates to:

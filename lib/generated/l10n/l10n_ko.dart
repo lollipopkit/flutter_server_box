@@ -1489,6 +1489,21 @@ class AppLocalizationsKo extends AppLocalizations {
   String get services => '서비스';
 
   @override
+  String get status => '상태';
+
+  @override
+  String get enable => '활성화';
+
+  @override
+  String get disable => '비활성화';
+
+  @override
+  String get starting => '시작 중';
+
+  @override
+  String get stopping => '중지 중';
+
+  @override
   String get serviceManagerUnsupported => '지원되지 않는 서비스 관리자';
 
   @override

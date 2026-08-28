@@ -1601,6 +1601,21 @@ class AppLocalizationsFr extends AppLocalizations {
   String get services => 'Services';
 
   @override
+  String get status => 'État';
+
+  @override
+  String get enable => 'Activer';
+
+  @override
+  String get disable => 'Désactiver';
+
+  @override
+  String get starting => 'Démarrage en cours';
+
+  @override
+  String get stopping => 'Arrêt en cours';
+
+  @override
   String get serviceManagerUnsupported =>
       'Gestionnaire de services non pris en charge';
 

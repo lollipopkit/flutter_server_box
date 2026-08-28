@@ -1572,6 +1572,21 @@ class AppLocalizationsId extends AppLocalizations {
   String get services => 'Layanan';
 
   @override
+  String get status => 'Status';
+
+  @override
+  String get enable => 'Aktifkan';
+
+  @override
+  String get disable => 'Nonaktifkan';
+
+  @override
+  String get starting => 'Memulai';
+
+  @override
+  String get stopping => 'Menghentikan';
+
+  @override
   String get serviceManagerUnsupported => 'Pengelola layanan tidak didukung';
 
   @override

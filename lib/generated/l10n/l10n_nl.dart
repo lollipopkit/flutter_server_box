@@ -1587,6 +1587,21 @@ class AppLocalizationsNl extends AppLocalizations {
   String get services => 'Diensten';
 
   @override
+  String get status => 'Status';
+
+  @override
+  String get enable => 'Inschakelen';
+
+  @override
+  String get disable => 'Uitschakelen';
+
+  @override
+  String get starting => 'Bezig met starten';
+
+  @override
+  String get stopping => 'Bezig met stoppen';
+
+  @override
   String get serviceManagerUnsupported => 'Niet-ondersteunde servicebeheerder';
 
   @override

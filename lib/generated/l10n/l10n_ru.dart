@@ -1594,6 +1594,21 @@ class AppLocalizationsRu extends AppLocalizations {
   String get services => 'Службы';
 
   @override
+  String get status => 'Состояние';
+
+  @override
+  String get enable => 'Включить';
+
+  @override
+  String get disable => 'Отключить';
+
+  @override
+  String get starting => 'Запускается';
+
+  @override
+  String get stopping => 'Останавливается';
+
+  @override
   String get serviceManagerUnsupported => 'Неподдерживаемый менеджер служб';
 
   @override

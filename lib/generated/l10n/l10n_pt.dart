@@ -1582,6 +1582,21 @@ class AppLocalizationsPt extends AppLocalizations {
   String get services => 'Serviços';
 
   @override
+  String get status => 'Estado';
+
+  @override
+  String get enable => 'Ativar';
+
+  @override
+  String get disable => 'Desativar';
+
+  @override
+  String get starting => 'A iniciar';
+
+  @override
+  String get stopping => 'A parar';
+
+  @override
   String get serviceManagerUnsupported => 'Gestor de serviços não suportado';
 
   @override

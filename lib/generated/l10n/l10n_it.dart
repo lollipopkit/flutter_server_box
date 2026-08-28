@@ -1594,6 +1594,21 @@ class AppLocalizationsIt extends AppLocalizations {
   String get services => 'Servizi';
 
   @override
+  String get status => 'Stato';
+
+  @override
+  String get enable => 'Abilita';
+
+  @override
+  String get disable => 'Disabilita';
+
+  @override
+  String get starting => 'Avvio in corso';
+
+  @override
+  String get stopping => 'Arresto in corso';
+
+  @override
   String get serviceManagerUnsupported => 'Gestore dei servizi non supportato';
 
   @override
