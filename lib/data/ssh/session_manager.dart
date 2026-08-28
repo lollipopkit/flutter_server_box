@@ -5,6 +5,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/ssh/android_service_policy.dart';
 
 enum TermSessionStatus {
   connecting,
@@ -212,25 +213,34 @@ abstract final class TermSessionManager {
   static Future<void> _syncLatest() async {
     // Android: update foreground service notifications
     if (isAndroid) {
-      final isRunning = await MethodChans.isServiceRunning();
       final wanted = _serviceWanted;
-      if (wanted && !isRunning) {
-        MethodChans.startService();
-      } else if (!wanted && isRunning && !_backgrounded) {
-        // Never while backgrounded, even when nothing is left to keep alive:
-        // stopping is the one direction that cannot be undone from there.
-        MethodChans.stopService();
+      // No query is needed for an update, and no stop is allowed while the app
+      // is backgrounded. Apart from saving a platform round trip, that keeps an
+      // empty state from starting a foreground service just to stop it again.
+      final running = !wanted && !_backgrounded
+          ? await MethodChans.isServiceRunning()
+          : false;
+      switch (decideAndroidSessionServiceAction(
+        wanted: wanted,
+        running: running,
+        backgrounded: _backgrounded,
+      )) {
+        case AndroidSessionServiceAction.update:
+          await MethodChans.updateSessions(
+            jsonEncode({
+              'sessions': _entries.values.map((e) => e.info.toJson()).toList(),
+              // Tells the service that an empty list is not the same as
+              // "nothing to do" while background execution is wanted.
+              'keepAlive': wanted,
+            }),
+          );
+        case AndroidSessionServiceAction.stop:
+          // Serialized through the service itself, so a pending foreground
+          // start is promoted before the stop command is handled.
+          await MethodChans.stopService();
+        case AndroidSessionServiceAction.none:
+          break;
       }
-      await MethodChans.updateSessions(
-        jsonEncode({
-          'sessions': _entries.values.map((e) => e.info.toJson()).toList(),
-          // Tells the service that an empty list is not the same as "nothing
-          // to do". Without it the native side cancels its notification, which
-          // drops the process out of the foreground exactly when it is
-          // background and cannot get back in.
-          'keepAlive': wanted,
-        }),
-      );
     }
 
     // iOS: manage Live Activity timer
