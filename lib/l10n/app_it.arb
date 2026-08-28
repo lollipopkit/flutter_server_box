@@ -1,5 +1,7 @@
 {
   "@@locale": "it",
+  "crashUpload": "Invia i rapporti di arresto anomalo",
+  "crashUploadTip": "Invia i rapporti di arresto anomalo anche allo sviluppatore, invece di conservarli solo su questo dispositivo. I nomi e gli indirizzi dei server noti vengono sostituiti da segnaposto, ma altri dettagli possono rimanere. Disattivato per impostazione predefinita; può essere disattivato in qualsiasi momento.",
   "crashNoticeBody": "ServerBox si è chiuso inaspettatamente l'ultima volta. Vuoi vedere un rapporto di arresto anomalo?",
   "crashReportTitle": "Rapporto di arresto anomalo",
   "crashReportHint": "Questo è il registro dell'esecuzione precedente. I nomi e gli indirizzi dei server noti sono stati sostituiti da segnaposto, ma altri dettagli possono rimanere: leggilo prima di pubblicarlo. Copiando, il rapporto completo viene messo negli appunti.",

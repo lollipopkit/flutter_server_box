@@ -9,6 +9,13 @@ class AppLocalizationsUk extends AppLocalizations {
   AppLocalizationsUk([String locale = 'uk']) : super(locale);
 
   @override
+  String get crashUpload => 'Надсилати звіти про збої';
+
+  @override
+  String get crashUploadTip =>
+      'Надсилати звіти про збої розробнику, а не лише зберігати їх на цьому пристрої. Відомі імена та адреси серверів замінюються заповнювачами, але інші дані можуть залишитися. Типово вимкнено; можна вимкнути будь-коли.';
+
+  @override
   String get crashNoticeBody =>
       'ServerBox несподівано закрився минулого разу. Бажаєте переглянути звіт про збій?';
 

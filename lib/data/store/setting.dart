@@ -291,6 +291,14 @@ class SettingStore extends SqliteStore {
     updateLastModified: false,
   );
 
+  /// Whether crash reports are uploaded, rather than only kept on the device.
+  ///
+  /// Defaults to false and stays false until the user says otherwise, which is
+  /// what keeps this clear of F-Droid's Tracking anti-feature — sending a
+  /// crash report without permission is the documented example of it. The
+  /// switch is only shown when the build has a DSN at all; see [CrashUpload].
+  late final crashUpload = propertyDefault('crashUpload', false);
+
   late final autoCheckAppUpdate = propertyDefault('autoCheckAppUpdate', true);
 
   /// Width of the list column, wherever one shares the window with what it

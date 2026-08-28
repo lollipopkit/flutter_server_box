@@ -1,5 +1,7 @@
 {
   "@@locale": "tr",
+  "crashUpload": "Çökme raporlarını gönder",
+  "crashUploadTip": "Çökme raporlarını yalnızca bu cihazda tutmak yerine geliştiriciye de gönder. Bilinen sunucu adları ve adresleri yer tutucularla değiştirilir, ancak başka ayrıntılar kalabilir. Varsayılan olarak kapalıdır; istediğiniz zaman yeniden kapatabilirsiniz.",
   "crashNoticeBody": "ServerBox geçen sefer beklenmedik şekilde kapandı. Bir çökme raporuna bakmak ister misiniz?",
   "crashReportTitle": "Çökme raporu",
   "crashReportHint": "Bu, önceki çalıştırmanın günlüğüdür. Bilinen sunucu adları ve adresleri yer tutucularla değiştirildi, ancak başka ayrıntılar kalmış olabilir — paylaşmadan önce okuyun. Kopyalamak tam raporu panoya koyar.",

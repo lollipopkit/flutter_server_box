@@ -1,5 +1,7 @@
 {
   "@@locale": "es",
+  "crashUpload": "Subir informes de fallo",
+  "crashUploadTip": "Enviar también los informes de fallo al desarrollador, en lugar de guardarlos solo en este dispositivo. Los nombres y direcciones de servidor conocidos se sustituyen por marcadores, pero pueden quedar otros datos. Desactivado por defecto; se puede desactivar de nuevo en cualquier momento.",
   "crashNoticeBody": "ServerBox se cerró inesperadamente la última vez. ¿Quieres ver un informe de fallo?",
   "crashReportTitle": "Informe de fallo",
   "crashReportHint": "Este es el registro de la ejecución anterior. Los nombres y direcciones de servidor conocidos se han sustituido por marcadores, pero pueden quedar otros datos: léelo antes de publicarlo. Al copiar se coloca el informe completo en el portapapeles.",

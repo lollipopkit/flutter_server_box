@@ -9,6 +9,13 @@ class AppLocalizationsTr extends AppLocalizations {
   AppLocalizationsTr([String locale = 'tr']) : super(locale);
 
   @override
+  String get crashUpload => 'Çökme raporlarını gönder';
+
+  @override
+  String get crashUploadTip =>
+      'Çökme raporlarını yalnızca bu cihazda tutmak yerine geliştiriciye de gönder. Bilinen sunucu adları ve adresleri yer tutucularla değiştirilir, ancak başka ayrıntılar kalabilir. Varsayılan olarak kapalıdır; istediğiniz zaman yeniden kapatabilirsiniz.';
+
+  @override
   String get crashNoticeBody =>
       'ServerBox geçen sefer beklenmedik şekilde kapandı. Bir çökme raporuna bakmak ister misiniz?';
 

@@ -96,6 +96,7 @@ dependencies:
   # hook compiles the crate directly, so there is nothing to depend on.
   flutter_rust_bridge_hooks: 2.13.0-beta.6
   desktop_drop: ^0.8.0
+  sentry: ^9.28.0
 
 dev_dependencies:
   integration_test:

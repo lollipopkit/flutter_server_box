@@ -9,6 +9,13 @@ class AppLocalizationsKo extends AppLocalizations {
   AppLocalizationsKo([String locale = 'ko']) : super(locale);
 
   @override
+  String get crashUpload => '충돌 보고서 업로드';
+
+  @override
+  String get crashUploadTip =>
+      '충돌 보고서를 이 기기에만 보관하지 않고 개발자에게도 전송합니다. 알려진 서버 이름과 주소는 자리 표시자로 대체되지만 다른 정보가 남을 수 있습니다. 기본적으로 꺼져 있으며 언제든지 다시 끌 수 있습니다.';
+
+  @override
   String get crashNoticeBody =>
       'ServerBox가 지난번에 예기치 않게 종료되었습니다. 충돌 보고서를 확인하시겠습니까?';
 

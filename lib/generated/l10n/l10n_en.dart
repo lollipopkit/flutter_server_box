@@ -9,6 +9,13 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get crashUpload => 'Upload crash reports';
+
+  @override
+  String get crashUploadTip =>
+      'Also send crash reports to the developer, instead of only keeping them on this device. Known server names and addresses are replaced with placeholders, but other details may remain. Off by default; can be turned off again at any time.';
+
+  @override
   String get crashNoticeBody =>
       'ServerBox closed unexpectedly last time. Would you like to look at a crash report?';
 

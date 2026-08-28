@@ -1,5 +1,7 @@
 {
   "@@locale": "id",
+  "crashUpload": "Unggah laporan kerusakan",
+  "crashUploadTip": "Kirim juga laporan kerusakan ke pengembang, alih-alih hanya menyimpannya di perangkat ini. Nama dan alamat server yang dikenal diganti dengan placeholder, tetapi detail lain mungkin tersisa. Nonaktif secara bawaan; dapat dimatikan lagi kapan saja.",
   "crashNoticeBody": "ServerBox tertutup tak terduga terakhir kali. Ingin melihat laporan kerusakan?",
   "crashReportTitle": "Laporan kerusakan",
   "crashReportHint": "Ini adalah log dari sesi sebelumnya. Nama dan alamat server yang dikenal telah diganti dengan placeholder, tetapi detail lain mungkin tersisa — baca sebelum mengirim. Menyalin akan menaruh laporan lengkap di papan klip.",

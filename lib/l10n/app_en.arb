@@ -1,5 +1,7 @@
 {
   "@@locale": "en",
+  "crashUpload": "Upload crash reports",
+  "crashUploadTip": "Also send crash reports to the developer, instead of only keeping them on this device. Known server names and addresses are replaced with placeholders, but other details may remain. Off by default; can be turned off again at any time.",
   "crashNoticeBody": "ServerBox closed unexpectedly last time. Would you like to look at a crash report?",
   "crashReportTitle": "Crash report",
   "crashReportHint": "This is the previous run's log. Known server names and addresses have been replaced with placeholders, but other details may remain — read it through before posting. Copying puts the full report on the clipboard.",

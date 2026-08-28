@@ -9,6 +9,13 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get crashUpload => '上传崩溃报告';
+
+  @override
+  String get crashUploadTip =>
+      '除在本机保留外，同时将崩溃报告发送给开发者。已知的服务器名称和地址会替换为占位符，但可能仍有其他信息残留。默认关闭，可随时再次关闭。';
+
+  @override
   String get crashNoticeBody => 'ServerBox 上次异常退出。要查看崩溃报告吗？';
 
   @override
@@ -1597,6 +1604,13 @@ class AppLocalizationsZh extends AppLocalizations {
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
 class AppLocalizationsZhTw extends AppLocalizationsZh {
   AppLocalizationsZhTw() : super('zh_TW');
+
+  @override
+  String get crashUpload => '上傳當機報告';
+
+  @override
+  String get crashUploadTip =>
+      '除在本機保留外，同時將當機報告傳送給開發者。已知的伺服器名稱和位址會替換為預留位置，但可能仍有其他資訊殘留。預設關閉，可隨時再次關閉。';
 
   @override
   String get crashNoticeBody => 'ServerBox 上次異常結束。要查看當機報告嗎？';

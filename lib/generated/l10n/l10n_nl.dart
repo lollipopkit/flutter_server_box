@@ -9,6 +9,13 @@ class AppLocalizationsNl extends AppLocalizations {
   AppLocalizationsNl([String locale = 'nl']) : super(locale);
 
   @override
+  String get crashUpload => 'Crashrapporten uploaden';
+
+  @override
+  String get crashUploadTip =>
+      'Crashrapporten ook naar de ontwikkelaar sturen in plaats van ze alleen op dit apparaat te bewaren. Bekende servernamen en adressen worden vervangen door plaatsaanduidingen, maar andere gegevens kunnen achterblijven. Standaard uit; kan altijd weer worden uitgezet.';
+
+  @override
   String get crashNoticeBody =>
       'ServerBox is de vorige keer onverwacht afgesloten. Wil je een crashrapport bekijken?';
 

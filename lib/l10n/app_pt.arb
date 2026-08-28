@@ -1,5 +1,7 @@
 {
   "@@locale": "pt",
+  "crashUpload": "Enviar relatórios de falha",
+  "crashUploadTip": "Enviar os relatórios de falha também ao desenvolvedor, em vez de mantê-los apenas neste dispositivo. Nomes e endereços de servidor conhecidos são substituídos por marcadores, mas outros detalhes podem permanecer. Desativado por padrão; pode ser desativado a qualquer momento.",
   "crashNoticeBody": "O ServerBox fechou inesperadamente da última vez. Deseja ver um relatório de falha?",
   "crashReportTitle": "Relatório de falha",
   "crashReportHint": "Este é o registro da execução anterior. Nomes e endereços de servidor conhecidos foram substituídos por marcadores, mas outros detalhes podem permanecer — leia antes de publicar. Copiar coloca o relatório completo na área de transferência.",

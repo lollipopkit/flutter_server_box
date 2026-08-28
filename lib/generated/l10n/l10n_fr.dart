@@ -9,6 +9,13 @@ class AppLocalizationsFr extends AppLocalizations {
   AppLocalizationsFr([String locale = 'fr']) : super(locale);
 
   @override
+  String get crashUpload => 'Envoyer les rapports de plantage';
+
+  @override
+  String get crashUploadTip =>
+      'Envoyer aussi les rapports de plantage au développeur, au lieu de les conserver uniquement sur cet appareil. Les noms et adresses de serveurs connus sont remplacés par des espaces réservés, mais d\'autres informations peuvent subsister. Désactivé par défaut ; peut être désactivé à tout moment.';
+
+  @override
   String get crashNoticeBody =>
       'ServerBox s\'est fermé de manière inattendue la dernière fois. Voulez-vous consulter un rapport de plantage ?';
 

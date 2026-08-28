@@ -9,6 +9,13 @@ class AppLocalizationsPt extends AppLocalizations {
   AppLocalizationsPt([String locale = 'pt']) : super(locale);
 
   @override
+  String get crashUpload => 'Enviar relatórios de falha';
+
+  @override
+  String get crashUploadTip =>
+      'Enviar os relatórios de falha também ao desenvolvedor, em vez de mantê-los apenas neste dispositivo. Nomes e endereços de servidor conhecidos são substituídos por marcadores, mas outros detalhes podem permanecer. Desativado por padrão; pode ser desativado a qualquer momento.';
+
+  @override
   String get crashNoticeBody =>
       'O ServerBox fechou inesperadamente da última vez. Deseja ver um relatório de falha?';
 

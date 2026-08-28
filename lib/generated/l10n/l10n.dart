@@ -123,6 +123,18 @@ abstract class AppLocalizations {
     Locale('zh', 'TW'),
   ];
 
+  /// No description provided for @crashUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload crash reports'**
+  String get crashUpload;
+
+  /// No description provided for @crashUploadTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Also send crash reports to the developer, instead of only keeping them on this device. Known server names and addresses are replaced with placeholders, but other details may remain. Off by default; can be turned off again at any time.'**
+  String get crashUploadTip;
+
   /// No description provided for @crashNoticeBody.
   ///
   /// In en, this message translates to:

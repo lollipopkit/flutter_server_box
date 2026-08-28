@@ -1,5 +1,7 @@
 {
   "@@locale": "de",
+  "crashUpload": "Absturzberichte hochladen",
+  "crashUploadTip": "Absturzberichte zusätzlich an den Entwickler senden, statt sie nur auf diesem Gerät zu behalten. Bekannte Servernamen und Adressen werden durch Platzhalter ersetzt, andere Angaben können verbleiben. Standardmäßig aus; jederzeit wieder abschaltbar.",
   "crashNoticeBody": "ServerBox wurde beim letzten Mal unerwartet beendet. Möchten Sie einen Absturzbericht ansehen?",
   "crashReportTitle": "Absturzbericht",
   "crashReportHint": "Dies ist das Protokoll des letzten Laufs. Bekannte Servernamen und Adressen wurden durch Platzhalter ersetzt, andere Angaben können jedoch verbleiben — lesen Sie es vor dem Absenden durch. Beim Kopieren wird der vollständige Bericht in die Zwischenablage gelegt.",

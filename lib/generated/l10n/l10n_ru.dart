@@ -9,6 +9,13 @@ class AppLocalizationsRu extends AppLocalizations {
   AppLocalizationsRu([String locale = 'ru']) : super(locale);
 
   @override
+  String get crashUpload => 'Отправлять отчёты о сбоях';
+
+  @override
+  String get crashUploadTip =>
+      'Отправлять отчёты о сбоях разработчику, а не только хранить их на этом устройстве. Известные имена и адреса серверов заменяются заполнителями, но другие данные могут остаться. По умолчанию выключено; можно отключить в любой момент.';
+
+  @override
   String get crashNoticeBody =>
       'ServerBox неожиданно закрылся в прошлый раз. Хотите посмотреть отчёт о сбое?';
 

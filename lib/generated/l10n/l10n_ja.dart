@@ -9,6 +9,13 @@ class AppLocalizationsJa extends AppLocalizations {
   AppLocalizationsJa([String locale = 'ja']) : super(locale);
 
   @override
+  String get crashUpload => 'クラッシュレポートを送信';
+
+  @override
+  String get crashUploadTip =>
+      'クラッシュレポートを端末に保存するだけでなく、開発者にも送信します。既知のサーバー名とアドレスはプレースホルダーに置き換えられますが、他の情報が残る場合があります。既定ではオフで、いつでも再びオフにできます。';
+
+  @override
   String get crashNoticeBody => 'ServerBox は前回予期せず終了しました。クラッシュレポートを確認しますか？';
 
   @override

@@ -328,11 +328,34 @@ extension _App on _AppSettingsPageState {
       initiallyExpanded: false,
       children: [
         _buildBeta(),
+        // Only where a report could actually be sent. A switch that cannot do
+        // anything is worse than one that is not offered, and this build has
+        // no DSN in it at all — which is every build made from this source
+        // without one supplied. See [CrashUpload].
+        if (CrashUpload.availableInBuild) _buildCrashUpload(),
         if (isMobile) _buildWakeLock(),
         _buildCollapseUI(),
         if (isDesktop) _buildHideTitleBar(),
         _buildEditRawSettings(),
       ],
+    );
+  }
+
+  /// Off by default, and the description says what leaving it off means.
+  ///
+  /// This is the informed-consent half of staying clear of F-Droid's Tracking
+  /// anti-feature: opt-in, disabled by default, and told plainly what is sent.
+  /// Reports are kept on the device either way — this only decides whether a
+  /// copy is also uploaded.
+  Widget _buildCrashUpload() {
+    return ListTile(
+      title: TipText(l10n.crashUpload, l10n.crashUploadTip),
+      trailing: StoreSwitch(
+        prop: _setting.crashUpload,
+        // Applied immediately rather than at the next launch: turning it off
+        // has to take the sink out now, not eventually.
+        callback: (_) => unawaited(CrashUpload.sync()),
+      ),
     );
   }
 

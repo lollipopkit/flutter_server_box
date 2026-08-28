@@ -9,6 +9,13 @@ class AppLocalizationsIt extends AppLocalizations {
   AppLocalizationsIt([String locale = 'it']) : super(locale);
 
   @override
+  String get crashUpload => 'Invia i rapporti di arresto anomalo';
+
+  @override
+  String get crashUploadTip =>
+      'Invia i rapporti di arresto anomalo anche allo sviluppatore, invece di conservarli solo su questo dispositivo. I nomi e gli indirizzi dei server noti vengono sostituiti da segnaposto, ma altri dettagli possono rimanere. Disattivato per impostazione predefinita; può essere disattivato in qualsiasi momento.';
+
+  @override
   String get crashNoticeBody =>
       'ServerBox si è chiuso inaspettatamente l\'ultima volta. Vuoi vedere un rapporto di arresto anomalo?';
 

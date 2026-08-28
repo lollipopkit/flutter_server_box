@@ -9,6 +9,13 @@ class AppLocalizationsDe extends AppLocalizations {
   AppLocalizationsDe([String locale = 'de']) : super(locale);
 
   @override
+  String get crashUpload => 'Absturzberichte hochladen';
+
+  @override
+  String get crashUploadTip =>
+      'Absturzberichte zusätzlich an den Entwickler senden, statt sie nur auf diesem Gerät zu behalten. Bekannte Servernamen und Adressen werden durch Platzhalter ersetzt, andere Angaben können verbleiben. Standardmäßig aus; jederzeit wieder abschaltbar.';
+
+  @override
   String get crashNoticeBody =>
       'ServerBox wurde beim letzten Mal unerwartet beendet. Möchten Sie einen Absturzbericht ansehen?';
 

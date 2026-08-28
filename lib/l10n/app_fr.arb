@@ -1,5 +1,7 @@
 {
   "@@locale": "fr",
+  "crashUpload": "Envoyer les rapports de plantage",
+  "crashUploadTip": "Envoyer aussi les rapports de plantage au développeur, au lieu de les conserver uniquement sur cet appareil. Les noms et adresses de serveurs connus sont remplacés par des espaces réservés, mais d'autres informations peuvent subsister. Désactivé par défaut ; peut être désactivé à tout moment.",
   "crashNoticeBody": "ServerBox s'est fermé de manière inattendue la dernière fois. Voulez-vous consulter un rapport de plantage ?",
   "crashReportTitle": "Rapport de plantage",
   "crashReportHint": "Ceci est le journal de l'exécution précédente. Les noms et adresses de serveurs connus ont été remplacés par des espaces réservés, mais d'autres informations peuvent subsister — relisez-le avant de le publier. La copie place le rapport complet dans le presse-papiers.",
