@@ -257,10 +257,13 @@ Future<void> _doPlatformRelated() async {
     unawaited(MethodChans.setPrivacyBlur(Stores.setting.privacyBlur.fetch()));
   }
 
-  final serversCount = Stores.server.keys().length;
-  await Computer.shared.turnOn(
-    workersCount: (serversCount / 3).round() + 1,
-  ); // Plus 1 to avoid 0.
+  // Status parsing used to run on this pool, which is why its size followed
+  // the server count. It now runs on the Rust thread pool, while the remaining
+  // Computer tasks (backup parsing, editor work and PVE responses) are
+  // occasional and already queue safely. Starting several otherwise idle
+  // isolates before the first frame only makes a larger server list slower and
+  // more memory-hungry to open.
+  await Computer.shared.turnOn(workersCount: 1);
 }
 
 // It may contains some async heavy funcs.
