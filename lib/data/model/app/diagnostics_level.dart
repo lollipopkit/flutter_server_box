@@ -12,6 +12,26 @@
 /// The local log is unaffected by all three. It never leaves the device on its
 /// own, it is what the Logs page shows, and it is what a user pastes into an
 /// issue by hand. This setting only decides what is *uploaded*.
+/// What a fresh install starts at, before the user has chosen.
+///
+/// Compile-time, and **the default is deliberately the quietest one**: a build
+/// that was handed no channel is treated as F-Droid's, because that is the
+/// distribution where collecting by default is the thing that must not happen.
+/// Opt-in *and* disabled by default is what their Tracking anti-feature asks
+/// for, and this is the half that "ask on an intro page" cannot supply.
+///
+/// The release workflow passes `full` for the builds it publishes itself.
+/// F-Droid builds from this source without passing anything, so they get
+/// `none` — the same binary logic, a different starting point, decided by who
+/// built it.
+///
+/// Either way the intro page is shown and the user can pick any level; this
+/// only decides which one is already selected when they see it.
+const kDefaultDiagnosticsLevel = String.fromEnvironment(
+  'DIAG_DEFAULT',
+  defaultValue: 'none',
+);
+
 enum DiagnosticsLevel {
   /// Nothing is uploaded, ever.
   ///
@@ -51,15 +71,19 @@ enum DiagnosticsLevel {
   /// Whether operations are traced for performance.
   bool get tracesPerformance => this == DiagnosticsLevel.full;
 
-  /// Reads a stored name, falling back to [full] for anything unrecognised.
+  /// Reads a stored name.
   ///
   /// By name rather than index, per the store's rule: an index silently
   /// changes meaning the moment a case is inserted, and these values outlive
   /// the build that wrote them.
+  ///
+  /// Anything unrecognised falls back to [none], not to the build's default. A
+  /// value that cannot be read is not a record of what the user agreed to, and
+  /// the safe reading of "unknown" is to send nothing.
   static DiagnosticsLevel fromName(String? name) {
-    return DiagnosticsLevel.values.firstWhere(
-      (e) => e.name == name,
-      orElse: () => DiagnosticsLevel.full,
-    );
+    for (final level in DiagnosticsLevel.values) {
+      if (level.name == name) return level;
+    }
+    return DiagnosticsLevel.none;
   }
 }

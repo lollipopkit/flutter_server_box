@@ -302,7 +302,7 @@ class SettingStore extends SqliteStore {
   /// makes this "asked before it happens" rather than collection by surprise.
   late final diagnosticsLevel = propertyDefault(
     'diagnosticsLevel',
-    DiagnosticsLevel.full.name,
+    kDefaultDiagnosticsLevel,
   );
 
   /// The revision of the crash-collection notice this install has seen.

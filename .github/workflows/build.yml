@@ -300,7 +300,8 @@ jobs:
         run: |
           flutter build macos --release \
             --build-number="${BUILD_NUMBER}" \
-            --build-name="1.0.${BUILD_NUMBER}"
+            --build-name="1.0.${BUILD_NUMBER}" \
+            --dart-define=DIAG_DEFAULT=full
       - name: Verify release launch
         shell: bash
         run: |
@@ -515,11 +516,11 @@ jobs:
       - name: Build (release)
         if: needs.reproducibilityCheck.outputs.isRelease == 'true'
         shell: bash
-        run: dart run fl_build -bp -p android
+        run: dart run fl_build -bp -p android -- --dart-define=DIAG_DEFAULT=full
       - name: Build (test)
         if: needs.reproducibilityCheck.outputs.isRelease != 'true'
         shell: bash
-        run: dart run fl_build -p android
+        run: dart run fl_build -p android -- --dart-define=DIAG_DEFAULT=full
       # `useLegacyPackaging` off means nothing is extracted from the APK, so
       # `nativeLibraryDir` does not exist and proot cannot be run from
       # anywhere. The APK still builds, installs and runs — the rootfs entry
@@ -623,7 +624,8 @@ jobs:
         run: |
           flutter build ios --release --no-codesign \
             --build-number="${BUILD_NUMBER}" \
-            --build-name="1.0.${BUILD_NUMBER}"
+            --build-name="1.0.${BUILD_NUMBER}" \
+            --dart-define=DIAG_DEFAULT=full
       # The step above asked for the engine; this is what says it arrived. It
       # cannot fail at build time — nothing in the app calls those functions, so
       # a linker that dead-strips them produces an IPA that builds, installs and
@@ -699,11 +701,11 @@ jobs:
       - name: Build (release)
         if: needs.reproducibilityCheck.outputs.isRelease == 'true'
         shell: bash
-        run: dart run fl_build -bp -p linux
+        run: dart run fl_build -bp -p linux -- --dart-define=DIAG_DEFAULT=full
       - name: Build (test)
         if: needs.reproducibilityCheck.outputs.isRelease != 'true'
         shell: bash
-        run: dart run fl_build -p linux
+        run: dart run fl_build -p linux -- --dart-define=DIAG_DEFAULT=full
       - name: Rename
         shell: bash
         run: |
@@ -753,11 +755,11 @@ jobs:
       - name: Build (release)
         if: needs.reproducibilityCheck.outputs.isRelease == 'true'
         shell: bash
-        run: dart run fl_build -bp -p windows
+        run: dart run fl_build -bp -p windows -- --dart-define=DIAG_DEFAULT=full
       - name: Build (test)
         if: needs.reproducibilityCheck.outputs.isRelease != 'true'
         shell: bash
-        run: dart run fl_build -p windows
+        run: dart run fl_build -p windows -- --dart-define=DIAG_DEFAULT=full
       - name: Rename
         shell: bash
         run: |
