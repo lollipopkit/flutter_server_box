@@ -14,6 +14,7 @@ void main() {
     String os = 'android 16',
     String locale = 'zh_CN',
     Map<String, String> identifiers = const {},
+    Map<String, String>? previousExit,
     int maxLogChars = CrashReport.maxLogChars,
   }) => CrashReport.compose(
     log: log,
@@ -21,6 +22,7 @@ void main() {
     os: os,
     locale: locale,
     identifiers: identifiers,
+    previousExit: previousExit,
     maxLogChars: maxLogChars,
   );
 
@@ -33,6 +35,34 @@ void main() {
     expect(
       report.indexOf('### Environment'),
       lessThan(report.indexOf('### Log')),
+    );
+  });
+
+  test('carries how the previous run ended, which the log cannot', () {
+    // Found on a device, not by a test: the platform's record describes the
+    // previous run but is written into *this* run's log, while the report is
+    // built from the previous run's file. Without this the one thing a crash
+    // report left out was why the app crashed.
+    final report = composed(
+      log: 'some earlier line',
+      previousExit: {'reason': 'crash_native', 'status': '11'},
+    );
+
+    expect(report, contains('Previous exit'));
+    expect(report, contains('crash_native'));
+    expect(report, contains('11'));
+    expect(
+      report.indexOf('Previous exit'),
+      lessThan(report.indexOf('### Log')),
+      reason: 'it is environment, not a log line',
+    );
+  });
+
+  test('a run that ended normally says nothing about a previous exit', () {
+    expect(composed(log: 'x'), isNot(contains('Previous exit')));
+    expect(
+      composed(log: 'x', previousExit: const {}),
+      isNot(contains('Previous exit')),
     );
   });
 

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
+import 'package:server_box/core/service/native_exit.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
@@ -35,6 +36,7 @@ abstract final class CrashReport {
     os: '${Pfs.type.name} ${Platform.operatingSystemVersion}',
     locale: Platform.localeName,
     identifiers: knownIdentifiers(Stores.server.fetch()),
+    previousExit: NativeExitReport.lastExit,
   );
 
   /// Every string this install knows to be the user's, and what replaces it.
@@ -85,6 +87,7 @@ abstract final class CrashReport {
     required String os,
     required String locale,
     Map<String, String> identifiers = const {},
+    Map<String, String>? previousExit,
     int maxLogChars = maxLogChars,
   }) {
     final buf = StringBuffer()
@@ -92,8 +95,19 @@ abstract final class CrashReport {
       ..writeln()
       ..writeln('- App: $build')
       ..writeln('- OS: $os')
-      ..writeln('- Locale: $locale')
-      ..writeln();
+      ..writeln('- Locale: $locale');
+
+    // The platform's account of how the previous run ended, which is the one
+    // fact a report assembled only from the previous run's log cannot contain:
+    // a native crash leaves nothing behind in the run it kills, and the record
+    // of it arrives on the next launch — into a different file.
+    if (previousExit != null && previousExit.isNotEmpty) {
+      final fields = previousExit.entries
+          .map((e) => '${e.key} ${e.value}')
+          .join(', ');
+      buf.writeln('- Previous exit: $fields');
+    }
+    buf.writeln();
 
     if (log == null || log.trim().isEmpty) {
       // Says so rather than showing an empty fence. An empty log is itself

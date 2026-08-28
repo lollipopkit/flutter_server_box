@@ -27,6 +27,15 @@ abstract final class NativeExitReport {
   /// alone could never make.
   static const _crashReasons = {'crash', 'crash_native', 'anr', 'signaled'};
 
+  /// The platform's account of how the previous run ended, once [collect] has
+  /// seen it.
+  ///
+  /// Held here because of where it lands: the record describes the *previous*
+  /// run but is written into *this* run's log, while a report is built from
+  /// the previous run's file. Without somewhere for it to be read from, the
+  /// one thing a crash report would leave out is why the app crashed.
+  static Map<String, String>? lastExit;
+
   /// Folds the system's record into this run's log.
   ///
   /// Best effort throughout. Every failure costs one report, and none of them
@@ -64,6 +73,21 @@ abstract final class NativeExitReport {
       // different bug with different causes, and prompting for one would call
       // a slow frame a crash.
       if (kind == 'crash') crashed = true;
+
+      // Same reason as the Android path: what a report is built from is the
+      // previous run's file, and this describes that run without being in it.
+      // A crash wins over a hang when both were delivered.
+      if (kind == 'crash' || lastExit == null) {
+        lastExit = {
+          'reason': 'metrickit $kind',
+          if (record['signal'] != null) 'signal': '${record['signal']}',
+          if (record['exceptionType'] != null)
+            'exceptionType': '${record['exceptionType']}',
+          if (record['terminationReason'] != null)
+            'terminationReason': '${record['terminationReason']}',
+          'appVersion': '${record['appVersion'] ?? '-'}',
+        };
+      }
 
       Diag.crumb(
         DiagCategory.lifecycle,
@@ -116,6 +140,13 @@ abstract final class NativeExitReport {
 
       final reason = '${info['reason']}';
       final crashed = _crashReasons.contains(reason);
+
+      lastExit = {
+        'reason': reason,
+        'description': '${info['description'] ?? '-'}',
+        'status': '${info['status'] ?? '-'}',
+        'importance': '${info['importance'] ?? '-'}',
+      };
 
       Diag.crumb(
         DiagCategory.lifecycle,
