@@ -37,6 +37,13 @@ import ActivityKit
             PrivacyBlur.shared.show(in: scene)
         }
 
+        // Subscribed at launch because delivery is on the system's schedule:
+        // a payload for a crash arrives some time after the launch following
+        // it, and a subscriber registered later simply misses that window.
+        if #available(iOS 14.0, *) {
+            CrashDiagnostics.shared.start()
+        }
+
         return super.application(application, didFinishLaunchingWithOptions: launchOptions)
     }
 
@@ -71,6 +78,15 @@ import ActivityKit
                     WidgetCenter.shared.reloadAllTimelines()
                 }
                 result(nil)
+            // What MetricKit has reported since this was last asked. Cleared
+            // by the read — the caller writes them into a log that persists,
+            // and keeping a copy here would report the same crash forever.
+            case "takeCrashDiagnostics":
+                if #available(iOS 14.0, *) {
+                    result(CrashDiagnostics.take())
+                } else {
+                    result(nil)
+                }
             // The three Live Activity cases answer from inside the Task, not
             // after starting it. ActivityKit is what takes the time here, and
             // none of it may run on this thread; replying only once it is done

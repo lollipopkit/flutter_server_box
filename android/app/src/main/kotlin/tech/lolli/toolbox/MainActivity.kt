@@ -1,5 +1,7 @@
 package tech.lolli.toolbox
 
+import android.app.ActivityManager
+import android.app.ApplicationExitInfo
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -127,6 +129,13 @@ class MainActivity: FlutterFragmentActivity() {
                     }
                     "isServiceRunning" -> {
                         result.success(ForegroundService.isRunning)
+                    }
+                    // Why the process died last time, from the system rather
+                    // than from anything this app managed to run on its way
+                    // out. Covers the crashes Dart cannot see at all: a SIGSEGV
+                    // in the Rust FFI, in proot, or in sqlite.
+                    "lastExitInfo" -> {
+                        result.success(lastExitInfo())
                     }
                     // Whether this app may post notifications at all. Without
                     // it there is no foreground service, and without that the
@@ -266,6 +275,87 @@ class MainActivity: FlutterFragmentActivity() {
         } else {
             ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
         }
+    }
+
+    /**
+     * How the process ended last time, as the system recorded it.
+     *
+     * The only way to see a native crash from inside the app. A SIGSEGV in the
+     * Rust FFI, in proot, or in sqlite takes the process with it, so nothing in
+     * Dart runs afterwards and nothing is written -- but the system keeps a
+     * record, and this reads it on the next launch.
+     *
+     * Deliberately not a signal handler. Collection happens out of process, so
+     * no code runs inside a crashing app and no handler is installed for
+     * SIGSEGV or SIGABRT -- which matters here beyond the usual reasons,
+     * because the iOS Linux engine interrupts its guest threads with SIGUSR1
+     * and a crash reporter fighting over signal disposition is a class of bug
+     * this avoids entirely.
+     *
+     * Null below API 30, where the API does not exist.
+     *
+     * The trace is only read for ANR, where it is plain text. A native crash's
+     * trace is a tombstone serialised as a protocol buffer (API 31+), and
+     * decoding it means generating the schema -- worth doing later, but the
+     * reason alone already answers the question that has no other answer today:
+     * whether the last exit was a native crash at all.
+     */
+    private fun lastExitInfo(): Map<String, Any?>? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return null
+        return try {
+            val am = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+            // One record: the caller compares timestamps to decide whether it
+            // has seen this one, and anything older it has seen already.
+            val info = am.getHistoricalProcessExitReasons(packageName, 0, 1)
+                .firstOrNull() ?: return null
+            mapOf(
+                "reason" to exitReasonName(info.reason),
+                "timestamp" to info.timestamp,
+                "description" to info.description,
+                "status" to info.status,
+                // Whether the app was in front when it died. A crash the user
+                // was looking at and one that happened in the background are
+                // different reports.
+                "importance" to info.importance,
+                "trace" to anrTrace(info),
+            )
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "lastExitInfo: ${e.message}")
+            null
+        }
+    }
+
+    /** The ANR trace, which is text. Null for everything else. */
+    private fun anrTrace(info: ApplicationExitInfo): String? {
+        if (info.reason != ApplicationExitInfo.REASON_ANR) return null
+        return try {
+            // Kept in a global circular buffer, so another app's crash can
+            // evict it and this is null often enough to be normal.
+            info.traceInputStream?.bufferedReader()?.use { it.readText() }
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /**
+     * The reason as a name rather than an int, because the int is a platform
+     * constant whose meaning is not obvious in a bug report pasted by a user.
+     */
+    private fun exitReasonName(reason: Int): String = when (reason) {
+        ApplicationExitInfo.REASON_ANR -> "anr"
+        ApplicationExitInfo.REASON_CRASH -> "crash"
+        ApplicationExitInfo.REASON_CRASH_NATIVE -> "crash_native"
+        ApplicationExitInfo.REASON_DEPENDENCY_DIED -> "dependency_died"
+        ApplicationExitInfo.REASON_EXCESSIVE_RESOURCE_USAGE -> "excessive_resource_usage"
+        ApplicationExitInfo.REASON_EXIT_SELF -> "exit_self"
+        ApplicationExitInfo.REASON_INITIALIZATION_FAILURE -> "initialization_failure"
+        ApplicationExitInfo.REASON_LOW_MEMORY -> "low_memory"
+        ApplicationExitInfo.REASON_OTHER -> "other"
+        ApplicationExitInfo.REASON_PERMISSION_CHANGE -> "permission_change"
+        ApplicationExitInfo.REASON_SIGNALED -> "signaled"
+        ApplicationExitInfo.REASON_USER_REQUESTED -> "user_requested"
+        ApplicationExitInfo.REASON_USER_STOPPED -> "user_stopped"
+        else -> "unknown($reason)"
     }
 
     override fun onNewIntent(intent: Intent) {

@@ -269,6 +269,14 @@ class SettingStore extends SqliteStore {
     false,
   );
 
+  /// The timestamp of the most recent `ApplicationExitInfo` already reported.
+  ///
+  /// Android hands back the same record on every launch until another one
+  /// replaces it, and the records carry no id — the timestamp is the only thing
+  /// telling two apart. Without this, one crash would raise the prompt on every
+  /// launch after it, forever.
+  late final lastExitInfoTs = propertyDefault('lastExitInfoTs', 0);
+
   late final autoCheckAppUpdate = propertyDefault('autoCheckAppUpdate', true);
 
   /// Width of the list column, wherever one shares the window with what it

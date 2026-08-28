@@ -13,6 +13,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:server_box/app.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/diag.dart';
+import 'package:server_box/core/service/native_exit.dart';
 import 'package:server_box/core/service/watch_sync.dart';
 import 'package:server_box/core/service/widget_sync.dart';
 import 'package:server_box/core/sync.dart';
@@ -255,6 +256,12 @@ Future<void> _doPlatformRelated() async {
       Loggers.app.warning('Failed to set high refresh rate', e, s);
     }
   }
+
+  // Why the process died last time, which for a native crash is the only
+  // record there is — nothing in Dart ran to write one. After the stores are
+  // open, since it remembers which record it has already reported, and after
+  // `CrashLog.attach`, whose answer about the previous run it may correct.
+  await NativeExitReport.collect();
 
   // Where the Linux userland is, and whether there is one — proot and an
   // unpacked rootfs on Android, the engine and its filesystem on iOS. A few
