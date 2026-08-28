@@ -19,11 +19,21 @@ strip = true
 # addresses. Stripping here throws away the only thing those addresses can be
 # resolved against, so `crash_native` would be as far as any report ever got.
 #
-# The shipped artifact is not larger for this. Gradle's `debugSymbolLevel`
-# extracts the symbols into a separate archive and strips the library on its
-# way into the APK, so what users download is the same stripped `.so` as
-# before; Apple's dSYM has always worked that way. The monitor binary is
-# untouched and keeps the workspace setting, since a server-side crash has the
-# host's own tooling and a container image that should stay small.
+# On the platforms this is for, the shipped artifact is not larger. Gradle's
+# `debugSymbolLevel` extracts the symbols and strips the library on its way
+# into the APK; Apple's dSYM has always worked that way, and the copy inside
+# the `.app` carries 25 symbols against the 9664 cargo now emits. The monitor
+# binary is untouched and keeps the workspace setting, since a server-side
+# crash has the host's own tooling and a container image that should stay
+# small.
+#
+# Linux and Windows are the loose end, and the cost is about 1 MB. Neither has
+# an equivalent of `ApplicationExitInfo` or MetricKit, so nothing collects a
+# native crash there automatically, and whether their bundling strips this is
+# not something the Apple/Android paths above tell us. The symbols are still
+# what a core dump or a minidump would be read against, which is why this is
+# left as it is rather than special-cased. If the size matters more than that,
+# the fix is a strip step in those two CI jobs, not a different profile —
+# cargo cannot vary `strip` per target.
 [profile.release.package.sbm_ffi]
 strip = false

@@ -365,6 +365,17 @@ jobs:
           path: build/artifacts/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_NoSign.dmg
           if-no-files-found: error
           retention-days: 14
+      # macOS subscribes to MetricKit the same way iOS does, so it needs the
+      # same symbols: a call stack there is a binary UUID and an offset too.
+      # `sbm_ffi.framework.dSYM` is the one that matters most -- Rust is linked
+      # as its own framework here, and it is what can take the process down.
+      - name: Upload dSYMs
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-macos-dsyms
+          path: build/macos/Build/Products/Release/**/*.dSYM
+          if-no-files-found: error
+          retention-days: 90
 
   verifyMonitor:
     name: Verify monitor ${{ matrix.platform }}-${{ matrix.arch }}
