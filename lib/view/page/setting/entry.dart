@@ -7,6 +7,7 @@ import 'dart:ui' show ImageFilter;
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -45,6 +46,7 @@ import 'package:server_box/view/page/setting/platform/platform_pub.dart';
 import 'package:server_box/view/page/setting/seq/known_hosts.dart';
 import 'package:server_box/view/page/setting/seq/srv_orders.dart';
 import 'package:server_box/view/page/setting/seq/virt_key.dart';
+import 'package:server_box/view/widget/crash_debug.dart';
 import 'package:server_box/view/widget/dist_icon.dart';
 import 'package:server_box/view/widget/dmg_notice.dart';
 import 'package:server_box/view/widget/rootfs_install.dart';
@@ -454,6 +456,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             ? BackButton(onPressed: _onTabBack)
             : null,
         actions: [
+          // `kDebugMode` is a const, so this and everything it reaches is tree
+          // shaken out of a release rather than shipped and hidden.
+          if (kDebugMode)
+            Btn.text(
+              text: 'Crash',
+              onTap: () => CrashDebugMenu.show(context),
+            ),
           Btn.text(
             text: context.libL10n.logs,
             onTap: () => DebugPage.route.go(
