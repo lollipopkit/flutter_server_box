@@ -170,9 +170,13 @@ class AutoRefreshServerStatus extends _$AutoRefreshServerStatus {
 
   @override
   Future<StatusModel> build(Server server) async {
-    _timer = Timer.periodic(const Duration(seconds: 5), (_) => refresh());
     ref.onDispose(() => _timer?.cancel());
-    return fetchStatus(server);
+    final status = await fetchStatus(server);
+    // Started once the first fetch has landed. A tick that fired while it was
+    // still running would set state that this build's own result then
+    // overwrites.
+    _timer = Timer.periodic(const Duration(seconds: 5), (_) => refresh());
+    return status;
   }
 
   bool _refreshing = false;
