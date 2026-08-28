@@ -1591,6 +1591,50 @@ class AppLocalizationsIt extends AppLocalizations {
       'L\'app per l\'orologio e i widget leggevano un indirizzo `/status` scritto a mano. Quell\'endpoint è stato rimosso: restituiva solo valori correnti come testo, ed è per questo che non hanno mai potuto mostrare un grafico.\n\nOra leggono l\'API autenticata dell\'agente monitor, disegnano gli andamenti e restano sincronizzati con l\'app da soli. Configura il server una volta nell\'app e ogni orologio e widget lo riprenderà.';
 
   @override
+  String get services => 'Servizi';
+
+  @override
+  String get status => 'Stato';
+
+  @override
+  String get enable => 'Abilita';
+
+  @override
+  String get disable => 'Disabilita';
+
+  @override
+  String get starting => 'Avvio in corso';
+
+  @override
+  String get stopping => 'Arresto in corso';
+
+  @override
+  String get serviceManagerUnsupported => 'Gestore dei servizi non supportato';
+
+  @override
+  String get serviceManagerUnsupportedTip =>
+      'Questo server usa un gestore che ServerBox non supporta ancora. Sono supportati systemd, procd e OpenRC.';
+
+  @override
+  String serviceManagerFmt(String manager) {
+    return 'Gestito da $manager';
+  }
+
+  @override
+  String get serviceListFailed => 'Impossibile elencare i servizi';
+
+  @override
+  String get serviceDetailsUnavailable =>
+      'Alcuni dettagli dei servizi non sono disponibili';
+
+  @override
+  String get serviceDetailsUnavailableTip =>
+      'L\'elenco è utilizzabile, ma il gestore non ha restituito tutte le informazioni sullo stato o sull\'avvio.';
+
+  @override
+  String get serviceEnabled => 'Abilitato all\'avvio';
+
+  @override
   String get systemdMissing => 'Nessun systemd su questo server';
 
   @override

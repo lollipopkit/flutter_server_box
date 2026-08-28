@@ -1569,6 +1569,50 @@ class AppLocalizationsId extends AppLocalizations {
       'Aplikasi jam tangan dan widget layar utama membaca alamat `/status` yang diketik manual. Endpoint itu sudah dihapus: ia hanya bisa melaporkan nilai saat ini sebagai teks, itulah sebabnya keduanya tidak pernah bisa menampilkan grafik.\n\nSekarang keduanya membaca API monitor yang terautentikasi, sehingga bisa menggambar tren dan tetap selaras dengan aplikasi sendiri. Atur server sekali di aplikasi, dan setiap jam tangan dan widget akan mengambilnya.';
 
   @override
+  String get services => 'Layanan';
+
+  @override
+  String get status => 'Status';
+
+  @override
+  String get enable => 'Aktifkan';
+
+  @override
+  String get disable => 'Nonaktifkan';
+
+  @override
+  String get starting => 'Memulai';
+
+  @override
+  String get stopping => 'Menghentikan';
+
+  @override
+  String get serviceManagerUnsupported => 'Pengelola layanan tidak didukung';
+
+  @override
+  String get serviceManagerUnsupportedTip =>
+      'Server ini menggunakan pengelola layanan yang belum didukung ServerBox. Pengelola yang didukung: systemd, procd, dan OpenRC.';
+
+  @override
+  String serviceManagerFmt(String manager) {
+    return 'Dikelola oleh $manager';
+  }
+
+  @override
+  String get serviceListFailed => 'Tidak dapat menampilkan daftar layanan';
+
+  @override
+  String get serviceDetailsUnavailable =>
+      'Beberapa detail layanan tidak tersedia';
+
+  @override
+  String get serviceDetailsUnavailableTip =>
+      'Daftar layanan dapat digunakan, tetapi pengelola tidak memberikan semua informasi status atau mulai otomatis.';
+
+  @override
+  String get serviceEnabled => 'Diaktifkan saat mulai';
+
+  @override
   String get systemdMissing => 'Tidak ada systemd di server ini';
 
   @override

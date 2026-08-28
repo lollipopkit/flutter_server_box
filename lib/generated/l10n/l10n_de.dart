@@ -1591,6 +1591,50 @@ class AppLocalizationsDe extends AppLocalizations {
       'Die Watch-App und die Home-Widgets lasen eine von Hand eingetragene `/status`-Adresse. Dieser Endpunkt ist entfallen: Er konnte nur aktuelle Werte als Text liefern, weshalb dort nie ein Diagramm möglich war.\n\nSie lesen jetzt die authentifizierte API des monitor-Agenten, zeichnen Verläufe und halten sich selbst mit der App im Einklang. Den Server einmal in der App einrichten, und jede Watch und jedes Widget übernimmt ihn.';
 
   @override
+  String get services => 'Dienste';
+
+  @override
+  String get status => 'Status';
+
+  @override
+  String get enable => 'Aktivieren';
+
+  @override
+  String get disable => 'Deaktivieren';
+
+  @override
+  String get starting => 'Wird gestartet';
+
+  @override
+  String get stopping => 'Wird gestoppt';
+
+  @override
+  String get serviceManagerUnsupported => 'Nicht unterstützter Dienstmanager';
+
+  @override
+  String get serviceManagerUnsupportedTip =>
+      'Dieser Server verwendet einen Dienstmanager, den ServerBox noch nicht unterstützt. Unterstützt werden systemd, procd und OpenRC.';
+
+  @override
+  String serviceManagerFmt(String manager) {
+    return 'Verwaltet von $manager';
+  }
+
+  @override
+  String get serviceListFailed => 'Dienste konnten nicht aufgelistet werden';
+
+  @override
+  String get serviceDetailsUnavailable =>
+      'Einige Dienstdetails sind nicht verfügbar';
+
+  @override
+  String get serviceDetailsUnavailableTip =>
+      'Die Dienstliste kann verwendet werden, aber der Manager hat nicht alle Status- oder Autostartinformationen geliefert.';
+
+  @override
+  String get serviceEnabled => 'Beim Systemstart aktiviert';
+
+  @override
   String get systemdMissing => 'Kein systemd auf diesem Server';
 
   @override

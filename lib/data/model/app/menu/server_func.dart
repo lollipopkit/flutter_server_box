@@ -110,7 +110,7 @@ enum ServerFuncBtn {
     process => libL10n.process,
     terminal => libL10n.terminal,
     iperf => 'iperf',
-    systemd => 'Systemd',
+    systemd => l10n.services,
     portForward => libL10n.portForward,
     power => l10n.power,
   };

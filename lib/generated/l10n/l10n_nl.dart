@@ -1584,6 +1584,50 @@ class AppLocalizationsNl extends AppLocalizations {
       'De Watch-app en de widgets lazen een handmatig ingevoerd `/status`-adres. Dat eindpunt is verdwenen: het kon alleen actuele waarden als tekst teruggeven, en daarom was er nooit een grafiek mogelijk.\n\nZe lezen nu de geverifieerde API van de monitor-agent, tekenen trendlijnen en blijven zelf gelijk met de app. Stel de server één keer in de app in, dan pikt elke watch en widget hem op.';
 
   @override
+  String get services => 'Diensten';
+
+  @override
+  String get status => 'Status';
+
+  @override
+  String get enable => 'Inschakelen';
+
+  @override
+  String get disable => 'Uitschakelen';
+
+  @override
+  String get starting => 'Bezig met starten';
+
+  @override
+  String get stopping => 'Bezig met stoppen';
+
+  @override
+  String get serviceManagerUnsupported => 'Niet-ondersteunde servicebeheerder';
+
+  @override
+  String get serviceManagerUnsupportedTip =>
+      'Deze server gebruikt een servicebeheerder die ServerBox nog niet ondersteunt. systemd, procd en OpenRC worden ondersteund.';
+
+  @override
+  String serviceManagerFmt(String manager) {
+    return 'Beheerd door $manager';
+  }
+
+  @override
+  String get serviceListFailed => 'Kon diensten niet tonen';
+
+  @override
+  String get serviceDetailsUnavailable =>
+      'Sommige servicedetails zijn niet beschikbaar';
+
+  @override
+  String get serviceDetailsUnavailableTip =>
+      'De lijst is bruikbaar, maar de beheerder gaf niet alle status- of opstartinformatie terug.';
+
+  @override
+  String get serviceEnabled => 'Ingeschakeld bij opstarten';
+
+  @override
   String get systemdMissing => 'Geen systemd op deze server';
 
   @override
