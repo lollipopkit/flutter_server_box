@@ -17,7 +17,7 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 /// rather than another branch inside a factory. [of] is the only place a
 /// credential picks between them.
 abstract interface class ServerCapabilities {
-  /// A command can be run and its output read: the process and systemd pages,
+  /// A command can be run and its output read: the process and service pages,
   /// containers, power control.
   bool get shell;
 

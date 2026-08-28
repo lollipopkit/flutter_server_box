@@ -532,7 +532,7 @@ class ServerNotifier extends _$ServerNotifier {
   /// Something that can run a command on this server.
   ///
   /// The one place that decides *how* a command reaches a server. Callers —
-  /// the process list, systemd units, containers, snippets, power control —
+  /// the process list, services, containers, snippets, power control —
   /// take a [ServerExec] and never learn which transport answered, which is
   /// what keeps a second transport from being a condition inside each of
   /// them.

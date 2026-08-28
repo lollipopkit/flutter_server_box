@@ -309,7 +309,7 @@ ${err.message ?? 'null'}
 
   Widget _buildMainPage(ServerState si) {
     // Every ServerFuncBtn (terminal / sftp / container / process / snippet /
-    // iperf / systemd / portForward) needs a shell. Hide the whole row on
+    // iperf / services / portForward) needs a shell. Hide the whole row on
     // transports without one instead of offering buttons that can only fail.
     // `terminal` rather than `shell`: an agent's passwordless PTY earns the
     // row too, and `btns` decides what belongs in it

@@ -628,7 +628,7 @@ class AgentToolExecutionResult {
 /// A machine a tool call is about, ready to be worked on.
 ///
 /// [exec] is how a command runs there. It is the interface the process,
-/// systemd and container pages already use, which is what lets a server
+/// service and container pages already use, which is what lets a server
 /// reached only over its monitor agent answer at all — it has no `SSHClient`
 /// to hand anybody, and asking for one is what used to refuse it.
 ///

@@ -10,7 +10,7 @@ import 'package:server_box/data/provider/server/monitor_http.dart';
 /// One request per command, on the same authenticated session the status poll
 /// uses. There is no second channel to open because there is no connection to
 /// multiplex — which is the whole reason this exists: a server reached only
-/// over its agent has no `SSHClient` to hand the process list, systemd or the
+/// over its agent has no `SSHClient` to hand the process list, services or the
 /// container pages, and before this it could show a status page and nothing
 /// else.
 ///
