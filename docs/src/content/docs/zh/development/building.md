@@ -53,7 +53,7 @@ dart run fl_build -p ios
 dart run fl_build -p android
 ```
 
-需要 Android SDK、JDK 和用于发布签名的 keystore。正式 release 构建必须使用 `key.properties` 配置的 release keystore；仅用于本地验证时，才可以显式传入 `-PallowDebugReleaseSigning=true` 使用 debug signing。
+需要 Android SDK、JDK 和用于发布签名的 keystore。正式 release 构建必须使用 `key.properties` 配置的 release keystore；仅用于本地验证时，才可以显式传入 `-PallowDebugReleaseSigning=true` 使用 debug signing。可重现构建和 F-Droid 构建则传入 `-PallowUnsignedRelease=true`，完全不指定签名配置；`scripts/release/android-build-env.sh` 会导出它。
 
 ### macOS
 

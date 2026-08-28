@@ -62,6 +62,7 @@ SSH 相关字段放在 `ssh` 对象中。这是 App 导出的格式，也是导�
 | `port` | 是 | SSH 端口，通常为 `22` |
 | `user` | 是 | SSH 用户名 |
 | `pwd` | 否 | 密码，不推荐；建议使用 SSH key |
+| `fileTransport` | 否 | 文件传输使用的协议：`sftp` 或 `scp`。默认 `sftp`；不提供 SFTP subsystem 的主机使用 `scp` |
 | `pubKeyId` | 否 | App 中已保存的 private key 记录 ID，不是 PEM 文件路径 |
 | `keyPath` | 否 | 仅桌面端使用的 private key 文件路径，由 `~/.ssh/config` 导入生成；连接时从该文件读取 |
 | `alterUrl` | 否 | 备用地址，格式为 `user@ip:port` |

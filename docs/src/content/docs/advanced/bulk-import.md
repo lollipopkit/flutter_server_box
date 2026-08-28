@@ -62,6 +62,7 @@ Inside `ssh`:
 | `port` | Yes | SSH port, usually `22` |
 | `user` | Yes | SSH username |
 | `pwd` | No | Password; not recommended, use an SSH key instead |
+| `fileTransport` | No | Which protocol carries files: `sftp` or `scp`. Defaults to `sftp`; use `scp` for a host with no SFTP subsystem |
 | `pubKeyId` | No | ID of a private key stored in the App, not a PEM file path |
 | `keyPath` | No | Desktop-only private-key path produced by a `~/.ssh/config` import; read from disk when connecting |
 | `alterUrl` | No | Fallback address in the form `user@ip:port` |

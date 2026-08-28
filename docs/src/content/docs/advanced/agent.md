@@ -5,7 +5,7 @@ description: Ask a model to diagnose and operate your servers, one reviewed acti
 
 Agent connects a language model to the servers you configure. The model proposes one action at a time, and the App asks you to review it before execution.
 
-Agent stays disabled until you configure an API endpoint and model. There is no default provider, so nothing is sent anywhere before configuration. Only providers that require authentication need an API key; when configured, the App sends it as a bearer token.
+Agent ships with a default API endpoint and model, so it is ready to use without being configured first; change either in settings to use a different provider. Only providers that require authentication need an API key; when configured, the App sends it as a bearer token. A request is what reaches the provider — nothing is sent until you send a message.
 
 ## Two entry points
 

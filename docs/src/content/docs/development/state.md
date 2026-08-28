@@ -102,7 +102,7 @@ Future<List<Container>> containers(Ref ref, Server server) async {
 By default, a provider can be disposed when it has no listeners. Use `keepAlive` only when state must survive that lifecycle:
 
 ```dart
-@Riverpod(keepAlive: false)
+@Riverpod(keepAlive: true)
 class TemporaryState extends _$TemporaryState {
   // ...
 }
@@ -175,9 +175,20 @@ class AutoRefreshServerStatus extends _$AutoRefreshServerStatus {
     return fetchStatus(server);
   }
 
+  bool _refreshing = false;
+
   Future<void> refresh() async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => fetchStatus(server));
+    // A tick that arrives while the previous fetch is still running is
+    // dropped. Two in flight can finish out of order, and the older answer
+    // would then overwrite the newer one.
+    if (_refreshing) return;
+    _refreshing = true;
+    try {
+      state = const AsyncValue.loading();
+      state = await AsyncValue.guard(() => fetchStatus(server));
+    } finally {
+      _refreshing = false;
+    }
   }
 }
 ```

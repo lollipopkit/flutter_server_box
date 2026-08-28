@@ -5,7 +5,7 @@ description: 让模型诊断和操作服务器，并在每次操作前请求确�
 
 Agent 会将语言模型连接到你已配置的服务器。模型每次提出一个操作，App 都会在执行前请求你的确认。
 
-在配置 API endpoint 和 model 之前，Agent 处于关闭状态，不会向任何服务发送内容。只有需要身份验证的服务商才需要填写 API key；填写后，App 会将它作为 bearer token 发送。
+Agent 自带默认的 API endpoint 和 model，无需先配置即可使用；要换服务商，在设置中修改其中任意一项。只有需要身份验证的服务商才需要填写 API key；填写后，App 会将它作为 bearer token 发送。只有在你发送消息时才会请求服务商。
 
 ## 两个入口
 

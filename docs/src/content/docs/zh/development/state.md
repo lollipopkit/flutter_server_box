@@ -108,7 +108,7 @@ Future<List<Container>> containers(Ref ref, Server server) async {
 默认情况下，provider 在没有监听者时可以自动释放。需要保留状态时显式设置 `keepAlive`：
 
 ```dart
-@Riverpod(keepAlive: false)
+@Riverpod(keepAlive: true)
 class TemporaryState extends _$TemporaryState {
   // ...
 }

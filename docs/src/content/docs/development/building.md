@@ -53,7 +53,7 @@ Requires macOS with Xcode and an Apple Developer account for signing.
 dart run fl_build -p android
 ```
 
-Requires the Android SDK, a JDK, and a keystore for release signing. Formal release builds must use the release keystore configured in `key.properties`. For local verification only, explicitly pass `-PallowDebugReleaseSigning=true` to use debug signing.
+Requires the Android SDK, a JDK, and a keystore for release signing. Formal release builds must use the release keystore configured in `key.properties`. For local verification only, explicitly pass `-PallowDebugReleaseSigning=true` to use debug signing. The reproducible and F-Droid builds pass `-PallowUnsignedRelease=true` instead, which assigns no signing config at all; `scripts/release/android-build-env.sh` exports it.
 
 ### macOS
 
