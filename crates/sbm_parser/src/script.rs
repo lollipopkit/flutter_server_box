@@ -947,7 +947,7 @@ fn windows_custom_cmds(func: ShellFunc) -> String {
          \x20       [Console]::Out.Write('{CUSTOM_CMD_OUTPUT_PREFIX}')\n\
          \x20       if (Test-Path $o) {{\n\
          \x20         $s = [IO.File]::OpenRead($o)\n\
-         \x20         try {{ $b = New-Object byte[] {CUSTOM_CMD_MAX_OUTPUT_BYTES}; $c = $s.Read($b, 0, $b.Length); [Console]::Out.Write([Convert]::ToBase64String($b, 0, $c)) }} finally {{ $s.Dispose() }}\n\
+         \x20         try {{ $b = New-Object byte[] {CUSTOM_CMD_MAX_OUTPUT_BYTES}; $c = 0; while ($c -lt $b.Length) {{ $n = $s.Read($b, $c, $b.Length - $c); if ($n -le 0) {{ break }}; $c += $n }}; [Console]::Out.Write([Convert]::ToBase64String($b, 0, $c)) }} finally {{ $s.Dispose() }}\n\
          \x20       }}\n\
          \x20       Remove-Item -Force $o,$e -ErrorAction SilentlyContinue\n\
          \x20       Write-Host ''\n\
