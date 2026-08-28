@@ -17,7 +17,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get crashReportHint =>
-      'This is the previous run\'s log. Read it before posting — it can name your servers. Copying puts the full report on the clipboard.';
+      'This is the previous run\'s log. Server names, addresses and usernames have been replaced with placeholders — read it through before posting anyway. Copying puts the full report on the clipboard.';
 
   @override
   String get crashReportSubmit => 'Copy & report';

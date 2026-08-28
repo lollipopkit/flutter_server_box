@@ -2,7 +2,9 @@ import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/build_data.dart';
+import 'package:server_box/data/res/store.dart';
 
 /// The text a user pastes into an issue after a crash.
 ///
@@ -32,7 +34,49 @@ abstract final class CrashReport {
     build: BuildData.build,
     os: '${Pfs.type.name} ${Platform.operatingSystemVersion}',
     locale: Platform.localeName,
+    identifiers: knownIdentifiers(Stores.server.fetch()),
   );
+
+  /// Every string this install knows to be the user's, and what replaces it.
+  ///
+  /// Precise rather than pattern-based, which is the whole point. A regex for
+  /// "things that look like a host" both misses — a machine called `nas` is
+  /// not a pattern — and overreaches, since a package name in a stack trace
+  /// looks like a domain. The app holds the actual records, so it can replace
+  /// exactly the strings that came out of them.
+  ///
+  /// This is what makes the log readable in the Logs page and safe in a
+  /// report: the two readers want opposite things, and the split belongs here
+  /// rather than at the point the line was written.
+  ///
+  /// Numbered rather than hashed. A reader following one server through a log
+  /// needs to see the same token twice; they do not need it to mean anything.
+  @visibleForTesting
+  static Map<String, String> knownIdentifiers(List<Spi> servers) {
+    final out = <String, String>{};
+    for (var i = 0; i < servers.length; i++) {
+      final spi = servers[i];
+      final n = i + 1;
+      _addIdentifier(out, spi.name, '<server-$n>');
+      _addIdentifier(out, spi.ssh?.ip, '<host-$n>');
+      _addIdentifier(out, spi.ssh?.user, '<user-$n>');
+      _addIdentifier(out, spi.monitorHttp?.addr, '<agent-$n>');
+    }
+    return out;
+  }
+
+  /// Too short to substitute safely is left alone: a two-character name occurs
+  /// inside ordinary words, and replacing it would corrupt the log rather than
+  /// redact it. Such a name identifies little in any case.
+  static void _addIdentifier(
+    Map<String, String> out,
+    String? value,
+    String replacement,
+  ) {
+    final trimmed = value?.trim();
+    if (trimmed == null || trimmed.length < 3) return;
+    out[trimmed] = replacement;
+  }
 
   @visibleForTesting
   static String compose({
@@ -40,6 +84,7 @@ abstract final class CrashReport {
     required int build,
     required String os,
     required String locale,
+    Map<String, String> identifiers = const {},
     int maxLogChars = maxLogChars,
   }) {
     final buf = StringBuffer()
@@ -60,7 +105,7 @@ abstract final class CrashReport {
       return buf.toString();
     }
 
-    var body = log;
+    var body = _substitute(log, identifiers);
     var truncated = false;
     if (body.length > maxLogChars) {
       body = body.substring(body.length - maxLogChars);
@@ -78,5 +123,22 @@ abstract final class CrashReport {
     buf.writeln(body.trimRight());
     buf.writeln('```');
     return buf.toString();
+  }
+
+  /// Applies [identifiers], longest match first.
+  ///
+  /// The ordering is not cosmetic: a server called `db` and one called
+  /// `db-prod` overlap, and replacing the short one first leaves
+  /// `<server-1>-prod` — which still says there is a `-prod` and has lost the
+  /// fact that the two lines named different machines.
+  static String _substitute(String text, Map<String, String> identifiers) {
+    if (identifiers.isEmpty) return text;
+    final keys = identifiers.keys.toList()
+      ..sort((a, b) => b.length.compareTo(a.length));
+    var out = text;
+    for (final key in keys) {
+      out = out.replaceAll(key, identifiers[key]!);
+    }
+    return out;
   }
 }

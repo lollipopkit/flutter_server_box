@@ -17,7 +17,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get crashReportHint =>
-      'Dit is het logboek van de vorige sessie. Lees het voordat je het plaatst — het kan je servers benoemen. Kopiëren zet het volledige rapport op het klembord.';
+      'Dit is het logboek van de vorige sessie. Servernamen, adressen en gebruikersnamen zijn vervangen door plaatsaanduidingen — lees het toch door voordat je het plaatst. Kopiëren zet het volledige rapport op het klembord.';
 
   @override
   String get crashReportSubmit => 'Kopiëren en melden';

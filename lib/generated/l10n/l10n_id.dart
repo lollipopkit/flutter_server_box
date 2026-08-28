@@ -17,7 +17,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get crashReportHint =>
-      'Ini adalah log dari sesi sebelumnya. Baca sebelum mengirim — log ini dapat menyebut nama server Anda. Menyalin akan menaruh laporan lengkap di papan klip.';
+      'Ini adalah log dari sesi sebelumnya. Nama server, alamat, dan nama pengguna telah diganti dengan placeholder — tetap baca sebelum mengirim. Menyalin akan menaruh laporan lengkap di papan klip.';
 
   @override
   String get crashReportSubmit => 'Salin & laporkan';

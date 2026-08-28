@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/service/crash_report.dart';
 
+import 'helpers/spi_fixture.dart';
+
 /// This text is what a user pastes into an issue, and it is assembled once,
 /// after a crash, on a device nobody can reach. Getting the truncation
 /// backwards would produce a report that is the right length and the wrong
@@ -11,12 +13,14 @@ void main() {
     int build = 1538,
     String os = 'android 16',
     String locale = 'zh_CN',
+    Map<String, String> identifiers = const {},
     int maxLogChars = CrashReport.maxLogChars,
   }) => CrashReport.compose(
     log: log,
     build: build,
     os: os,
     locale: locale,
+    identifiers: identifiers,
     maxLogChars: maxLogChars,
   );
 
@@ -76,5 +80,89 @@ void main() {
     final report = composed(log: 'at foo\n  at bar\n  at baz');
 
     expect(report, contains('```\nat foo\n  at bar\n  at baz\n```'));
+  });
+
+  /// The log has two readers wanting opposite things: in the Logs page the
+  /// user needs to see which machine, and in an issue nobody may. Substitution
+  /// is what separates them, and it is precise rather than pattern-based
+  /// because the app holds the actual records.
+  group('identifiers', () {
+    test('a server name, host and user are all replaced', () {
+      final ids = CrashReport.knownIdentifiers([
+        spiFixture(name: 'prod-db', id: 'a', ip: '10.1.2.3', user: 'deploy'),
+      ]);
+
+      final report = composed(
+        log: 'Connect to prod-db failed\n'
+            'ProxyCommand for deploy@10.1.2.3:22',
+        identifiers: ids,
+      );
+
+      expect(report, isNot(contains('prod-db')));
+      expect(report, isNot(contains('10.1.2.3')));
+      expect(report, isNot(contains('deploy')));
+      expect(report, contains('<server-1>'));
+      expect(report, contains('<host-1>'));
+      expect(report, contains('<user-1>'));
+    });
+
+    test('the same server reads as the same token throughout', () {
+      // A reader following one machine through a log needs to see the token
+      // twice. It does not need to mean anything beyond that.
+      final ids = CrashReport.knownIdentifiers([
+        spiFixture(name: 'alpha', id: 'a', ip: '10.0.0.1'),
+        spiFixture(name: 'beta', id: 'b', ip: '10.0.0.2'),
+      ]);
+
+      final report = composed(
+        log: 'alpha connect\nbeta connect\nalpha timeout',
+        identifiers: ids,
+      );
+
+      expect('<server-1>'.allMatches(report).length, 2);
+      expect('<server-2>'.allMatches(report).length, 1);
+    });
+
+    test('an overlapping name is replaced longest first', () {
+      // `db` inside `db-prod`: replacing the short one first would leave
+      // `<server-1>-prod`, which still discloses `-prod` and has lost the fact
+      // that the two lines named different machines.
+      final ids = CrashReport.knownIdentifiers([
+        spiFixture(name: 'db', id: 'a'),
+        spiFixture(name: 'db-prod', id: 'b'),
+      ]);
+
+      final report = composed(log: 'db-prod failed', identifiers: ids);
+
+      expect(report, contains('<server-2>'));
+      expect(report, isNot(contains('prod')));
+    });
+
+    test('a name too short to substitute safely is left alone', () {
+      // Two characters occur inside ordinary words, so replacing them would
+      // corrupt the log rather than redact it — and such a name discloses
+      // little in any case.
+      final ids = CrashReport.knownIdentifiers([spiFixture(name: 'a', id: 'x')]);
+
+      expect(ids.values, isNot(contains('<server-1>')));
+      expect(
+        composed(log: 'a failure happened', identifiers: ids),
+        contains('a failure happened'),
+      );
+    });
+
+    test('substitution happens before truncation, not after', () {
+      // Otherwise the tail kept is measured against unredacted text, and which
+      // lines survive depends on the length of names being removed.
+      final ids = CrashReport.knownIdentifiers([
+        spiFixture(name: 'secret-host', id: 'a'),
+      ]);
+      final log = [for (var i = 0; i < 200; i++) 'secret-host line $i'].join('\n');
+
+      final report = composed(log: log, identifiers: ids, maxLogChars: 400);
+
+      expect(report, isNot(contains('secret-host')));
+      expect(report, contains('<server-1>'));
+    });
   });
 }

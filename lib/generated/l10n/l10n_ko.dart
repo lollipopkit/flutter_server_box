@@ -17,7 +17,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get crashReportHint =>
-      '이전 실행의 로그입니다. 게시하기 전에 읽어 보세요 — 서버 이름이 포함될 수 있습니다. 복사하면 전체 보고서가 클립보드에 저장됩니다.';
+      '이전 실행의 로그입니다. 서버 이름, 주소, 사용자 이름은 자리 표시자로 대체되었지만 게시하기 전에 한 번 읽어 보세요. 복사하면 전체 보고서가 클립보드에 저장됩니다.';
 
   @override
   String get crashReportSubmit => '복사 후 보고';

@@ -17,7 +17,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get crashReportHint =>
-      'Dies ist das Protokoll des letzten Laufs. Lesen Sie es vor dem Absenden — es kann Ihre Server benennen. Beim Kopieren wird der vollständige Bericht in die Zwischenablage gelegt.';
+      'Dies ist das Protokoll des letzten Laufs. Servernamen, Adressen und Benutzernamen wurden durch Platzhalter ersetzt — lesen Sie es vor dem Absenden dennoch durch. Beim Kopieren wird der vollständige Bericht in die Zwischenablage gelegt.';
 
   @override
   String get crashReportSubmit => 'Kopieren & melden';

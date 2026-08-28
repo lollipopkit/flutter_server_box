@@ -17,7 +17,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get crashReportHint =>
-      'Este é o registro da execução anterior. Leia antes de publicar — ele pode nomear seus servidores. Copiar coloca o relatório completo na área de transferência.';
+      'Este é o registro da execução anterior. Nomes de servidor, endereços e usuários foram substituídos por marcadores, mas leia antes de publicar mesmo assim. Copiar coloca o relatório completo na área de transferência.';
 
   @override
   String get crashReportSubmit => 'Copiar e relatar';

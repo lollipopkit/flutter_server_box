@@ -2,7 +2,7 @@
   "@@locale": "pt",
   "crashNoticeBody": "O ServerBox fechou inesperadamente da última vez. Deseja ver um relatório de falha?",
   "crashReportTitle": "Relatório de falha",
-  "crashReportHint": "Este é o registro da execução anterior. Leia antes de publicar — ele pode nomear seus servidores. Copiar coloca o relatório completo na área de transferência.",
+  "crashReportHint": "Este é o registro da execução anterior. Nomes de servidor, endereços e usuários foram substituídos por marcadores, mas leia antes de publicar mesmo assim. Copiar coloca o relatório completo na área de transferência.",
   "crashReportSubmit": "Copiar e relatar",
   "acceptBeta": "Aceitar atualizações da versão de teste",
   "addSystemPrivateKeyTip": "Atualmente, não há nenhuma chave privada. Gostaria de adicionar a chave do sistema (~/.ssh/id_rsa)?",

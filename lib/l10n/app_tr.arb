@@ -2,7 +2,7 @@
   "@@locale": "tr",
   "crashNoticeBody": "ServerBox geçen sefer beklenmedik şekilde kapandı. Bir çökme raporuna bakmak ister misiniz?",
   "crashReportTitle": "Çökme raporu",
-  "crashReportHint": "Bu, önceki çalıştırmanın günlüğüdür. Paylaşmadan önce okuyun — sunucularınızın adlarını içerebilir. Kopyalamak tam raporu panoya koyar.",
+  "crashReportHint": "Bu, önceki çalıştırmanın günlüğüdür. Sunucu adları, adresler ve kullanıcı adları yer tutucularla değiştirildi, yine de paylaşmadan önce okuyun. Kopyalamak tam raporu panoya koyar.",
   "crashReportSubmit": "Kopyala ve bildir",
   "acceptBeta": "Beta sürüm güncellemelerini kabul et",
   "addSystemPrivateKeyTip": "Şu anda özel anahtarlar mevcut değil, sistemle birlikte gelen anahtarı (~/.ssh/id_rsa) eklemek ister misiniz?",

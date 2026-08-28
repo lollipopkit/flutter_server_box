@@ -2,7 +2,7 @@
   "@@locale": "nl",
   "crashNoticeBody": "ServerBox is de vorige keer onverwacht afgesloten. Wil je een crashrapport bekijken?",
   "crashReportTitle": "Crashrapport",
-  "crashReportHint": "Dit is het logboek van de vorige sessie. Lees het voordat je het plaatst — het kan je servers benoemen. Kopiëren zet het volledige rapport op het klembord.",
+  "crashReportHint": "Dit is het logboek van de vorige sessie. Servernamen, adressen en gebruikersnamen zijn vervangen door plaatsaanduidingen — lees het toch door voordat je het plaatst. Kopiëren zet het volledige rapport op het klembord.",
   "crashReportSubmit": "Kopiëren en melden",
   "acceptBeta": "Accepteer testversie-updates",
   "addSystemPrivateKeyTip": "Er is momenteel geen privésleutel, wilt u degene toevoegen die bij het systeem wordt geleverd (~/.ssh/id_rsa)?",

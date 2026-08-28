@@ -17,7 +17,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get crashReportHint =>
-      'Bu, önceki çalıştırmanın günlüğüdür. Paylaşmadan önce okuyun — sunucularınızın adlarını içerebilir. Kopyalamak tam raporu panoya koyar.';
+      'Bu, önceki çalıştırmanın günlüğüdür. Sunucu adları, adresler ve kullanıcı adları yer tutucularla değiştirildi, yine de paylaşmadan önce okuyun. Kopyalamak tam raporu panoya koyar.';
 
   @override
   String get crashReportSubmit => 'Kopyala ve bildir';
