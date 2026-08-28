@@ -12,7 +12,7 @@ import 'package:logging/logging.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:server_box/app.dart';
 import 'package:server_box/core/chan.dart';
-import 'package:server_box/core/service/crash_log.dart';
+import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/service/watch_sync.dart';
 import 'package:server_box/core/service/widget_sync.dart';
 import 'package:server_box/core/sync.dart';
@@ -153,6 +153,10 @@ Future<void> _initData() async {
   // a failure below is exactly what leaves no other way to find out what
   // happened. Drains what [_setupDebug] buffered before this point.
   await CrashLog.attach(Paths.doc.joinPath('logs'));
+  // Which release a report came from is the first thing asked about one and
+  // the thing users most often leave out.
+  Diag.tag(SbDiagTag.build, '${BuildData.build}');
+  Diag.crumb(DiagCategory.lifecycle, 'launch');
 
   // `extended_image` caches under `getTemporaryDirectory()` and makes its own
   // folder there with a plain `create()`, no `recursive`. On macOS that
@@ -221,6 +225,11 @@ void _setupDebug() {
     DebugProvider.addLog(record);
   });
   CrashLog.handleErrors();
+  // Local only, and that is the whole of it: nothing is sent anywhere, so
+  // there is nothing to ask the user's permission for. The file is theirs
+  // until they paste it into a report — which is also why a crumb has to be
+  // publishable when it is written. See [Redact].
+  Diag.install(LocalDiagnosticsSink());
 }
 
 Future<void> _doPlatformRelated() async {
@@ -241,6 +250,9 @@ Future<void> _doPlatformRelated() async {
   } catch (e, s) {
     Loggers.app.warning('Failed to locate the Linux rootfs', e, s);
   }
+  // Both open crash reports naming a terminal are on Android, and neither says
+  // whether a Linux userland was involved at all.
+  Diag.tag(SbDiagTag.rootfs, Rootfs.isAvailable ? 'yes' : 'no');
 
   // Which releases are installable is data that moves on the distributions'
   // schedule, so it is fetched rather than compiled in. Not awaited: what
@@ -298,6 +310,7 @@ Future<void> _doDbMigrate() async {
   // behind on a database it then declined to touch — so a downgrade destroyed
   // exactly the settings the refusal exists to protect.
   await SchemaVersion.migrate(kSchemaMigrations);
+  Diag.tag(SbDiagTag.schema, '${SchemaVersion.current}');
 
   migrateBuildFeatures(BuildData.build);
 
