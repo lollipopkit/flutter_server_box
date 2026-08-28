@@ -9,6 +9,20 @@ class AppLocalizationsTr extends AppLocalizations {
   AppLocalizationsTr([String locale = 'tr']) : super(locale);
 
   @override
+  String get crashNoticeBody =>
+      'ServerBox geçen sefer beklenmedik şekilde kapandı. Bir çökme raporuna bakmak ister misiniz?';
+
+  @override
+  String get crashReportTitle => 'Çökme raporu';
+
+  @override
+  String get crashReportHint =>
+      'Bu, önceki çalıştırmanın günlüğüdür. Paylaşmadan önce okuyun — sunucularınızın adlarını içerebilir. Kopyalamak tam raporu panoya koyar.';
+
+  @override
+  String get crashReportSubmit => 'Kopyala ve bildir';
+
+  @override
   String get acceptBeta => 'Beta sürüm güncellemelerini kabul et';
 
   @override

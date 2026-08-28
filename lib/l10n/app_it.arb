@@ -1,5 +1,9 @@
 {
   "@@locale": "it",
+  "crashNoticeBody": "ServerBox si è chiuso inaspettatamente l'ultima volta. Vuoi vedere un rapporto di arresto anomalo?",
+  "crashReportTitle": "Rapporto di arresto anomalo",
+  "crashReportHint": "Questo è il registro dell'esecuzione precedente. Leggilo prima di pubblicarlo: può nominare i tuoi server. Copiando, il rapporto completo viene messo negli appunti.",
+  "crashReportSubmit": "Copia e segnala",
   "acceptBeta": "Accetta aggiornamenti versione beta",
   "addSystemPrivateKeyTip": "Attualmente non esistono chiavi private, vuoi aggiungere quella fornita dal sistema (~/.ssh/id_rsa)?",
   "added2List": "Aggiunto alla lista delle attività",

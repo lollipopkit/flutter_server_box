@@ -9,6 +9,19 @@ class AppLocalizationsJa extends AppLocalizations {
   AppLocalizationsJa([String locale = 'ja']) : super(locale);
 
   @override
+  String get crashNoticeBody => 'ServerBox は前回予期せず終了しました。クラッシュレポートを確認しますか？';
+
+  @override
+  String get crashReportTitle => 'クラッシュレポート';
+
+  @override
+  String get crashReportHint =>
+      'これは前回の実行ログです。投稿する前にお読みください——サーバー名が含まれる場合があります。コピーすると完全なレポートがクリップボードに入ります。';
+
+  @override
+  String get crashReportSubmit => 'コピーして報告';
+
+  @override
   String get acceptBeta => 'テストバージョンの更新を受け入れる';
 
   @override

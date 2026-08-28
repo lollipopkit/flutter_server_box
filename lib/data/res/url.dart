@@ -7,6 +7,14 @@ abstract final class Urls {
   static const appHelp = '$thisRepo#-help';
   static const appWiki = '$thisRepo/wiki';
 
+  /// Where a crash report goes.
+  ///
+  /// The body is not prefilled through the query string: a report carries the
+  /// previous run's log, which is far past what a URL can hold, and a truncated
+  /// one would be a report missing the end — the part nearest the crash. It is
+  /// put on the clipboard instead and this page is opened to paste it into.
+  static const newIssue = '$thisRepo/issues/new';
+
   static const docs = 'https://serverbox.lollipopkit.com/docs';
 
   /// What `{DIST}` and `{BRIGHT}` mean, and what a usable image URL looks

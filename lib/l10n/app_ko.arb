@@ -1,5 +1,9 @@
 {
   "@@locale": "ko",
+  "crashNoticeBody": "ServerBox가 지난번에 예기치 않게 종료되었습니다. 충돌 보고서를 확인하시겠습니까?",
+  "crashReportTitle": "충돌 보고서",
+  "crashReportHint": "이전 실행의 로그입니다. 게시하기 전에 읽어 보세요 — 서버 이름이 포함될 수 있습니다. 복사하면 전체 보고서가 클립보드에 저장됩니다.",
+  "crashReportSubmit": "복사 후 보고",
   "acceptBeta": "베타 버전 업데이트 수락",
   "addSystemPrivateKeyTip": "현재 개인 키가 없습니다. 시스템 기본 키(~/.ssh/id_rsa)를 추가하시겠습니까?",
   "added2List": "작업 목록에 추가되었습니다",

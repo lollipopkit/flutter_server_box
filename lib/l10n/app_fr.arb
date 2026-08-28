@@ -1,5 +1,9 @@
 {
   "@@locale": "fr",
+  "crashNoticeBody": "ServerBox s'est fermé de manière inattendue la dernière fois. Voulez-vous consulter un rapport de plantage ?",
+  "crashReportTitle": "Rapport de plantage",
+  "crashReportHint": "Ceci est le journal de l'exécution précédente. Lisez-le avant de le publier : il peut nommer vos serveurs. La copie place le rapport complet dans le presse-papiers.",
+  "crashReportSubmit": "Copier et signaler",
   "acceptBeta": "Accepter les mises à jour de la version de test",
   "addSystemPrivateKeyTip": "Actuellement, vous n'avez aucune clé privée. Souhaitez-vous ajouter celle qui vient avec le système (~/.ssh/id_rsa) ?",
   "added2List": "Ajouté à la liste des tâches",

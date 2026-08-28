@@ -9,6 +9,20 @@ class AppLocalizationsId extends AppLocalizations {
   AppLocalizationsId([String locale = 'id']) : super(locale);
 
   @override
+  String get crashNoticeBody =>
+      'ServerBox tertutup tak terduga terakhir kali. Ingin melihat laporan kerusakan?';
+
+  @override
+  String get crashReportTitle => 'Laporan kerusakan';
+
+  @override
+  String get crashReportHint =>
+      'Ini adalah log dari sesi sebelumnya. Baca sebelum mengirim — log ini dapat menyebut nama server Anda. Menyalin akan menaruh laporan lengkap di papan klip.';
+
+  @override
+  String get crashReportSubmit => 'Salin & laporkan';
+
+  @override
   String get acceptBeta => 'Terima pembaruan versi uji coba';
 
   @override

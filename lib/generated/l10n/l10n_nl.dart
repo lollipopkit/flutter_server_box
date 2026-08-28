@@ -9,6 +9,20 @@ class AppLocalizationsNl extends AppLocalizations {
   AppLocalizationsNl([String locale = 'nl']) : super(locale);
 
   @override
+  String get crashNoticeBody =>
+      'ServerBox is de vorige keer onverwacht afgesloten. Wil je een crashrapport bekijken?';
+
+  @override
+  String get crashReportTitle => 'Crashrapport';
+
+  @override
+  String get crashReportHint =>
+      'Dit is het logboek van de vorige sessie. Lees het voordat je het plaatst — het kan je servers benoemen. Kopiëren zet het volledige rapport op het klembord.';
+
+  @override
+  String get crashReportSubmit => 'Kopiëren en melden';
+
+  @override
   String get acceptBeta => 'Accepteer testversie-updates';
 
   @override

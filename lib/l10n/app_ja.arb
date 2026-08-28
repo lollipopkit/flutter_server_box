@@ -1,5 +1,9 @@
 {
   "@@locale": "ja",
+  "crashNoticeBody": "ServerBox は前回予期せず終了しました。クラッシュレポートを確認しますか？",
+  "crashReportTitle": "クラッシュレポート",
+  "crashReportHint": "これは前回の実行ログです。投稿する前にお読みください——サーバー名が含まれる場合があります。コピーすると完全なレポートがクリップボードに入ります。",
+  "crashReportSubmit": "コピーして報告",
   "acceptBeta": "テストバージョンの更新を受け入れる",
   "addSystemPrivateKeyTip": "現在秘密鍵がありません。システムのデフォルト(~/.ssh/id_rsa)を追加しますか？",
   "added2List": "タスクリストに追加されました",

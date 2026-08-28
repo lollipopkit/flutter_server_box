@@ -22,6 +22,7 @@ import 'package:server_box/view/page/floating_panels.dart';
 import 'package:server_box/view/page/home_tab.dart';
 import 'package:server_box/view/page/macos_menu_bar.dart';
 import 'package:server_box/view/page/setting/entry.dart';
+import 'package:server_box/view/widget/crash_report_notice.dart';
 import 'package:server_box/view/widget/dmg_notice.dart';
 import 'package:server_box/view/widget/legacy_status_notice.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -485,6 +486,12 @@ class _HomePageState extends ConsumerState<HomePage>
       // Says so when this upgrade took a feature away — see
       // [LegacyStatusUrlsMigration].
       await LegacyStatusNotice.showIfNeeded(context);
+      if (!mounted) return;
+      // Offers the previous run's log when that run crashed. Ahead of the
+      // guide because a user who just lost their session is not being
+      // introduced to the app, and after the two migration notices because
+      // those are about data rather than about one bad launch.
+      await CrashReportNotice.showIfNeeded(context);
       if (!mounted) return;
       await _maybeShowNavGuide();
     }());

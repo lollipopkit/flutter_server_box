@@ -9,6 +9,20 @@ class AppLocalizationsIt extends AppLocalizations {
   AppLocalizationsIt([String locale = 'it']) : super(locale);
 
   @override
+  String get crashNoticeBody =>
+      'ServerBox si è chiuso inaspettatamente l\'ultima volta. Vuoi vedere un rapporto di arresto anomalo?';
+
+  @override
+  String get crashReportTitle => 'Rapporto di arresto anomalo';
+
+  @override
+  String get crashReportHint =>
+      'Questo è il registro dell\'esecuzione precedente. Leggilo prima di pubblicarlo: può nominare i tuoi server. Copiando, il rapporto completo viene messo negli appunti.';
+
+  @override
+  String get crashReportSubmit => 'Copia e segnala';
+
+  @override
   String get acceptBeta => 'Accetta aggiornamenti versione beta';
 
   @override

@@ -9,6 +9,20 @@ class AppLocalizationsUk extends AppLocalizations {
   AppLocalizationsUk([String locale = 'uk']) : super(locale);
 
   @override
+  String get crashNoticeBody =>
+      'ServerBox несподівано закрився минулого разу. Бажаєте переглянути звіт про збій?';
+
+  @override
+  String get crashReportTitle => 'Звіт про збій';
+
+  @override
+  String get crashReportHint =>
+      'Це журнал попереднього запуску. Прочитайте його перед публікацією — він може містити назви ваших серверів. Копіювання помістить повний звіт у буфер обміну.';
+
+  @override
+  String get crashReportSubmit => 'Копіювати та повідомити';
+
+  @override
   String get acceptBeta => 'Прийняти оновлення бета-версії';
 
   @override

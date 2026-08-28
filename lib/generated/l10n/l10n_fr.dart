@@ -9,6 +9,20 @@ class AppLocalizationsFr extends AppLocalizations {
   AppLocalizationsFr([String locale = 'fr']) : super(locale);
 
   @override
+  String get crashNoticeBody =>
+      'ServerBox s\'est fermé de manière inattendue la dernière fois. Voulez-vous consulter un rapport de plantage ?';
+
+  @override
+  String get crashReportTitle => 'Rapport de plantage';
+
+  @override
+  String get crashReportHint =>
+      'Ceci est le journal de l\'exécution précédente. Lisez-le avant de le publier : il peut nommer vos serveurs. La copie place le rapport complet dans le presse-papiers.';
+
+  @override
+  String get crashReportSubmit => 'Copier et signaler';
+
+  @override
   String get acceptBeta => 'Accepter les mises à jour de la version de test';
 
   @override

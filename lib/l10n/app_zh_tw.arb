@@ -1,5 +1,9 @@
 {
   "@@locale": "zh_TW",
+  "crashNoticeBody": "ServerBox 上次異常結束。要查看當機報告嗎？",
+  "crashReportTitle": "當機報告",
+  "crashReportHint": "這是上次執行的日誌。提交前請先閱讀——其中可能包含你的伺服器名稱。複製會將完整報告放入剪貼簿。",
+  "crashReportSubmit": "複製並回報",
   "acceptBeta": "接受測試版更新推送",
   "addSystemPrivateKeyTip": "偵測到尚無私鑰，是否要加入系統預設的私鑰（~/.ssh/id_rsa）？",
   "added2List": "已新增至任務清單",

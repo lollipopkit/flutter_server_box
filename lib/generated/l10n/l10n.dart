@@ -123,6 +123,30 @@ abstract class AppLocalizations {
     Locale('zh', 'TW'),
   ];
 
+  /// No description provided for @crashNoticeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'ServerBox closed unexpectedly last time. Would you like to look at a crash report?'**
+  String get crashNoticeBody;
+
+  /// No description provided for @crashReportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Crash report'**
+  String get crashReportTitle;
+
+  /// No description provided for @crashReportHint.
+  ///
+  /// In en, this message translates to:
+  /// **'This is the previous run\'s log. Read it before posting — it can name your servers. Copying puts the full report on the clipboard.'**
+  String get crashReportHint;
+
+  /// No description provided for @crashReportSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy & report'**
+  String get crashReportSubmit;
+
   /// No description provided for @acceptBeta.
   ///
   /// In en, this message translates to:

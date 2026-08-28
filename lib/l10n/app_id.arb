@@ -1,5 +1,9 @@
 {
   "@@locale": "id",
+  "crashNoticeBody": "ServerBox tertutup tak terduga terakhir kali. Ingin melihat laporan kerusakan?",
+  "crashReportTitle": "Laporan kerusakan",
+  "crashReportHint": "Ini adalah log dari sesi sebelumnya. Baca sebelum mengirim — log ini dapat menyebut nama server Anda. Menyalin akan menaruh laporan lengkap di papan klip.",
+  "crashReportSubmit": "Salin & laporkan",
   "acceptBeta": "Terima pembaruan versi uji coba",
   "addSystemPrivateKeyTip": "Saat ini tidak memiliki kunci privat, apakah Anda menambahkan kunci yang disertakan dengan sistem (~/.ssh/id_rsa)?",
   "added2List": "Ditambahkan ke Daftar Tugas",
