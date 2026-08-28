@@ -1,50 +1,43 @@
 ---
 title: Building
-description: Build instructions for different platforms
+description: Build Server Box and Monitor agent for different platforms
 ---
 
-The project uses `fl_build` to build the supported platforms.
+Server Box uses the custom `fl_build` tool to build the App for each platform. Monitor agent is an independent Rust service with its own build process.
 
 ## Prerequisites
 
 - Flutter SDK (stable channel)
-- Platform toolchains (Xcode for iOS, Android Studio for Android)
-- Rust toolchain (required: the `crates/sbm_ffi` Rust crate is built into the app
-  by the Dart build hook through `flutter_rust_bridge_hooks` and native assets)
+- Platform tools: Xcode for iOS, Android Studio and Android SDK for Android, and Visual Studio for Windows
+- Rust toolchain: the App builds `crates/sbm_ffi` through a Dart build hook, `flutter_rust_bridge_hooks`, and native assets
 
-Initialize the bundled Git submodules before fetching Dart dependencies:
+Initialize the repository's Git submodules before fetching Dart dependencies:
 
 ```bash
 git submodule update --init --recursive
 ```
 
-## Development Build
+## Development build
 
 ```bash
-# Run in development mode
+# Run the App
 flutter run
 
-# Run on specific device
+# Run on a specific device
 flutter run -d <device-id>
 ```
 
-## Release Build
+## Release build
 
-The project uses `fl_build` for building:
+Build a target platform with `fl_build`:
 
 ```bash
-# Build for specific platform
 dart run fl_build -p <platform>
-
-# Available platforms:
-# - ios
-# - android
-# - macos
-# - linux
-# - windows
 ```
 
-## Platform-Specific Builds
+Available platforms are `ios`, `android`, `macos`, `linux`, and `windows`.
+
+## Platform requirements
 
 ### iOS
 
@@ -52,9 +45,7 @@ dart run fl_build -p <platform>
 dart run fl_build -p ios
 ```
 
-Requires:
-- macOS with Xcode
-- Apple Developer account for signing
+Requires macOS with Xcode and an Apple Developer account for signing.
 
 ### Android
 
@@ -62,10 +53,7 @@ Requires:
 dart run fl_build -p android
 ```
 
-Requires:
-- Android SDK
-- Java Development Kit
-- Keystore for signing
+Requires the Android SDK, a JDK, and a keystore for release signing. Formal release builds must use the release keystore configured in `key.properties`. For local verification only, explicitly pass `-PallowDebugReleaseSigning=true` to use debug signing.
 
 ### macOS
 
@@ -85,36 +73,29 @@ dart run fl_build -p linux
 dart run fl_build -p windows
 ```
 
-Requires Windows with Visual Studio.
+Requires a Windows build environment with Visual Studio.
 
-## Building the Monitor
+## Build Monitor agent
 
-The server-side monitor is a separate binary, built from `monitor/`. It is not
-part of any app build.
+Monitor agent is a standalone server binary and is not part of the App build process.
 
 ```bash
-cd monitor
-
-# Backend
+# From the repository root
 cargo build --release
 
-# Panel, served by the agent itself when frontend/dist exists
-cd frontend && npm install && npm run build
+# Build the web panel
+cd monitor/frontend
+npm install
+npm run build
 ```
 
-`make monitor-dev` from the repository root runs both in development mode: the
-API on `:3770` and the panel's vite dev server on `:3000`.
+After the build, the agent serves the panel when `frontend/dist` exists. From the repository root, `make monitor-dev` starts the development environment: the API listens on `:3770` and the Vite dev server on `:3000`.
 
-Release artifacts come from the `monitor-release.yml` workflow, which is
-`workflow_dispatch`-only and publishes `monitor-v*` tags separately from the
-app's own releases. Docker is in `monitor/Dockerfile`.
+Release artifacts are built by the `monitor-release.yml` workflow. It supports `workflow_dispatch` only; `monitor-v*` tags are independent of App releases. See `monitor/Dockerfile` for Docker builds.
 
-## Pre/Post Build
+## Build hooks
 
-`fl_build` regenerates `lib/data/res/build_data.dart` on every build, deriving
-the build number from the Git history, and writes the matching version into the
-Xcode configs. The `fl_build:` section of `pubspec.yaml` is what names the app
-for it.
+`fl_build` regenerates `lib/data/res/build_data.dart` on every build, derives the build number from Git history, and writes the version into Xcode configuration. The `fl_build:` section in `pubspec.yaml` configures the App name.
 
 ## Troubleshooting
 
@@ -126,18 +107,23 @@ dart run build_runner build --delete-conflicting-outputs
 flutter pub get
 ```
 
-### Dependency version mismatch
+`flutter clean` removes `build/`, including the iOS Linux engine libraries when that engine is enabled. Rebuild the required target with `scripts/build-ish-ios.sh device`, `simulator`, or `macos`; otherwise the linker will report missing engine files.
 
-If dependency resolution reports a version conflict, run:
+### Dependency version conflict
+
+Resolve dependencies only after checking compatibility:
+
 ```bash
 flutter pub upgrade
 ```
 
-## Release Checklist
+After changing an annotated model, run code generation as well; see [Code Generation](/docs/development/codegen/).
 
-1. Update version in `pubspec.yaml`
-2. Run code generation
-3. Run tests
-4. Build for all target platforms
-5. Test on physical devices
-6. Create GitHub release
+## Release checklist
+
+1. Update the version in `pubspec.yaml`.
+2. Run code generation and localization generation.
+3. Run Dart, Flutter, and Rust tests.
+4. Build every target platform.
+5. Verify key features on real devices.
+6. Create the GitHub release.

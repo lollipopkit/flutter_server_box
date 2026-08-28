@@ -7,28 +7,29 @@ Server Box is a cross-platform server management application built with Flutter.
 
 ## What is Server Box?
 
-Server Box provides one interface for common server administration tasks. It is intended for system administrators, developers, and people who run servers at home.
+Server Box provides one interface for common server administration tasks. It is useful for system administrators, developers, and people who run servers at home.
 
-A server is reached in one of two ways: over **SSH**, or through a **[monitor agent](/docs/advanced/monitor-agent/)** running on it, which the app talks to over HTTP. SSH needs nothing installed on the server and supports every feature; an agent covers hosts whose SSH port you would rather not expose, and keeps its own history so charts are filled in before the app ever connects.
+There are two ways to connect to a server: **SSH**, or a **[Monitor agent](/docs/advanced/monitor-agent/)** running on the server. SSH requires no additional software on the server and supports the full set of SSH features. Monitor agent is useful when opening an SSH port is inconvenient; it continuously stores monitoring history, so charts can contain data from before the App connects.
 
-## Key Capabilities
+The same server can use SSH and Monitor agent at the same time. The App tries them in the configured order and can fall back to the other connection. Capabilities provided by both connections remain available.
 
-- **Real-time Monitoring**: Track CPU, memory, disk usage, network speed, GPU status, and system temperatures
-- **SSH Terminal**: Full terminal access with multi-tab support and customizable appearance
-- **SFTP Client**: Browse and manage files on your servers
-- **Docker / Podman Management**: Manage Docker or Podman containers
-- **Process Management**: View and manage system processes
-- **Systemd Services**: Start, stop, and monitor systemd services
-- **Network Tools**: iPerf testing, ping, and Wake-on-LAN
+## Key features
+
+- **Real-time monitoring**: View CPU, memory, disk usage, network speed, GPU status, and system temperature
+- **SSH terminal**: Use a full-featured terminal with multiple tabs and customizable appearance
+- **SFTP client**: Browse and manage server files
+- **Container management**: Manage Docker and Podman containers
+- **Process management**: View and manage system processes
+- **Systemd services**: Start, stop, and monitor systemd services
+- **Network tools**: Run iPerf, ping, and Wake-on-LAN (WoL)
 - **Snippets**: Save and execute custom shell commands
-- **[Agent](/docs/advanced/agent/)**: Ask a model to diagnose and operate your servers, with each action reviewed before it runs
+- **[Agent](/docs/advanced/agent/)**: Ask a model to diagnose and operate a server; every action requires your confirmation
 
-## Supported Platforms
-
-Supported platforms:
+## Supported platforms
 
 - **Mobile**: iOS and Android
 - **Desktop**: macOS, Linux, and Windows
+- **Companion app**: watchOS
 
 ## License
 

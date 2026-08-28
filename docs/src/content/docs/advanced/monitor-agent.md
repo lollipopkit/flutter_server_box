@@ -1,154 +1,103 @@
 ---
 title: Monitor Agent
-description: Reach a server through an agent instead of SSH
+description: Reach a server through Monitor agent
 ---
 
-ServerBox Monitor is a small service you install on a server. The app talks to
-it over HTTP, which makes it a second way to reach that server. It is also the
-only way to get push alerts, home screen widgets and the watch app, all of which have
-to work while the app is closed.
+Server Box Monitor is a lightweight monitoring service installed on a server. The App communicates with it over HTTP, so the server can be reached without exposing an SSH port. Monitor agent also powers push alerts, home-screen widgets, and the Watch app when the App is not open.
 
-## When to use it
+## SSH or Monitor agent?
 
 | | SSH | Monitor agent |
 |---|---|---|
-| Install anything on the server | no | yes |
-| Status and charts | yes | yes |
-| History from before the app connected | no | yes |
-| Terminal, commands, file browsing | yes | only what the agent's operator enables |
-| SFTP transfers, port forwarding | yes | no |
-| Push alerts, widgets, watch app | no | yes |
+| Requires additional software on the server | No | Yes |
+| Status and charts | Yes | Yes |
+| History from before the App connected | No | Yes |
+| Terminal, commands, and file browsing | Yes | Depends on the features enabled by the operator |
+| SFTP transfers and port forwarding | Yes | No |
+| Push alerts, home-screen widgets, and Watch app | No | Yes |
 
-Use SSH unless you have a reason not to. Reach for the agent when the SSH port
-is not reachable from where you are, when you want charts that are already
-filled in when you open the app, or when you want alerts pushed to your phone.
+SSH is usually the simplest option. Monitor agent is useful when the SSH port is unreachable from the current network, when you want charts to have history before the App connects, or when you want server alerts pushed to a phone.
 
-Nothing stops you from doing both: a server added over SSH and an agent on the
-same machine feeding the widgets are independent.
+The two methods can be used together: configure SSH in the App while running Monitor agent on the same server for widgets and the Watch app.
 
-## Install the agent
+## Install Monitor agent
 
-Download from a published `monitor-v*` release when one exists, or build it. The
-release workflow is manually dispatched, so an unreleased or offline install
-should use `SBM_INSTALL_PKG` with a local package. The installer picks the init
-system for you:
+Download a published `monitor-v*` release when one is available, or build the agent yourself. The release workflow is manually dispatched. For an unreleased version or an offline installation, use a local package with `SBM_INSTALL_PKG`.
+
+The installer detects the init system automatically:
 
 ```sh
-# systemd: a `systemctl --user` service, running as your own account
+# systemd: install a `systemctl --user` service running as the current user
 ./install.sh install
 
-# Offline or without a published monitor-v* release
+# No downloadable release, or an offline installation
 SBM_INSTALL_PKG=/path/to/server-box-monitor ./install.sh install
 
-# OpenRC (Alpine): needs root to write /etc/init.d, but still runs the agent
-# as the account you sudo'd from
+# OpenRC (Alpine): writing /etc/init.d needs root, but the agent runs as
+# the user who invoked sudo
 sudo ./install.sh install
 ```
 
-It runs as an ordinary account by default. See
-[What each switch grants](#what-each-switch-grants).
+The agent runs as an ordinary user by default. This limits the scope of `full_access`; see [Permission switches](#permission-switches).
 
-Configuration is `config.toml` next to the binary. Every key is documented in
-[`config.example.toml`](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/config.example.toml).
-The agent listens on `0.0.0.0:3770` and serves its own web panel there.
+The configuration file is `config.toml` next to the binary. Every option is documented in [`config.example.toml`](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/config.example.toml). The agent listens on `0.0.0.0:3770`; when `frontend/dist` exists, it also serves the web panel there.
 
-Use HTTPS if the agent is reachable from anywhere but your own machine: either
-the built-in TLS (`[server.tls]`) or a reverse proxy. The app will accept a
-self-signed certificate, but only because you tell it to.
+If the agent must be reachable from another device, use HTTPS: configure built-in TLS with `[server.tls]`, or put the agent behind a reverse proxy. The App supports self-signed certificates when you explicitly enable that option.
 
-## Add the server in the app
+## Add it in the App
 
-1. Tap **+** to add a server
-2. Switch the selector at the top of the form from **SSH** to **Monitor HTTP**
-3. Fill in:
-    - **URL**: e.g. `https://1.2.3.4:3770`
-    - **Monitor User** / **Monitor Password**: the agent's panel login
-    - **Monitor Ignore certificate**: only for a self-signed certificate
+1. Tap **+** to add a server.
+2. Enable **Monitor HTTP**. SSH and Monitor HTTP are independent switches: you can enable either one or both. When both are enabled, use **Preferred transport** to choose which one the App tries first.
+3. Enter:
+   - **URL**: for example, `https://1.2.3.4:3770`
+   - **Monitor User** / **Monitor Password**: the agent's web-panel credentials
+   - **Monitor Ignore certificate**: enable only for a self-signed certificate
+4. Save the configuration.
 
-A server added this way carries **no SSH credentials at all**. There is nothing
-for the app to fall back to, which is the point: you have not given it a way
-into the machine beyond what the agent allows.
+A server added through Monitor HTTP contains **no SSH credentials**. The App has no other way to reach the machine beyond the capabilities explicitly provided by the agent.
 
-## What each switch grants
+## Permission switches
 
-The agent tells the app what it will accept, and the app offers exactly that.
-It does not show buttons that would answer 403. The file API and the agent-panel
-terminal are off unless the operator turns them on in `config.toml`.
-`full_access` defaults on only on Linux, but it is effective for app
-shell/command access only when `[remote_access.terminal] enabled = true` and the
-request uses secure transport or the terminal's explicit `allow_insecure`
-opt-in. None of these permissions can be widened from the web panel.
+The agent reports its current capabilities through `GET /api/v1/capabilities`, and the App shows only those capabilities. The file API and web-panel terminal are disabled by default and can only be enabled by the operator in `config.toml`.
 
-**Status, charts and stored history** need nothing beyond the login.
+**Status, charts, and stored history** require only panel login credentials.
 
-**`full_access`** lets a panel login reach the machine directly: a shell, a
-command, as the account the agent runs as. This is what the app's process list,
-systemd units, containers, snippets, power controls and terminal all depend on.
+**`full_access`** gives an authenticated user a shell and command execution as the user running the agent. The App's process, systemd, container, snippet, power-control, and terminal features depend on this grant.
 
-It is one switch rather than one per feature because there is only one decision
-in it. Anyone who can open a shell can run anything in that shell, so granting
-the terminal and withholding commands withholds nothing.
+There is one `full_access` switch because anyone who can open a shell can run arbitrary commands in it. Disabling a separate “commands” switch would not reduce that access. It defaults to enabled on Linux and disabled on macOS and Windows. The panel can disable it, but cannot enable it again; re-enabling requires a configuration-file change.
 
-**Your panel password is then worth a shell on that machine.** That is why
-`install.sh` runs the agent as an ordinary account rather than root. If you do
-run it as root, turn `full_access` off. It defaults on for Linux and off for
-macOS and Windows. The panel can turn it off but never on.
+**The panel password is equivalent to shell access as the agent user.** This is why `install.sh` runs the agent as an ordinary user by default. If you run it as root, disable `full_access`.
 
-**`[remote_access.fs]`** serves the file browser, confined to the directories
-named in `roots`. It has its own switch rather than riding on `full_access`,
-because that grant means "a shell" and this one means "these directories".
-Folding them together would give the narrower feature the wider permission.
+**`[remote_access.fs]`** provides file browsing, restricted to directories listed in `roots`. It is independent of `full_access`: the file API grants access to selected directories, while `full_access` grants a shell. `roots` has no default; enabling the file API requires naming the directories explicitly.
 
-`roots` has no default. Every request is resolved to a real path. Symlinks are
-followed, `..` is refused, and anything landing outside the roots is denied, so a
-link inside a root pointing at `/etc` is not a way out. `roots = ["/"]` makes
-this equivalent to a shell, since anyone who can write `~/.ssh/authorized_keys`
-has one; the agent warns about it at startup.
+The agent resolves every request to a real path, follows symlinks, and rejects `..`. The resolved path must remain within `roots`, so a symlink pointing to `/etc` cannot escape the restriction. Setting `roots = ["/"]` is effectively shell access, and the agent warns about it at startup.
 
-**`[remote_access.terminal]`** enables the terminal endpoint used by both the app
-and the agent's own web panel. The panel's SSH-backed session acts as an SSH
-client to its configured `ssh_addr`, while the app's passwordless session uses
-the agent's local shell when `full_access` is granted. The panel password alone
-grants no shell unless `full_access` is on.
+Like the terminal, the file API also requires `[remote_access.fs] allow_insecure = true` on a plaintext HTTP connection. Setting only `enabled` and `roots` without TLS leaves the file API unavailable: `GET /api/v1/capabilities` reports that file access is unsupported, so the App hides the entry and the agent logs a warning at startup.
 
-It refuses to run on a plaintext listener unless
-`[remote_access.terminal] allow_insecure = true`; TLS satisfies the transport
-requirement, and so does a reverse proxy on the same host.
+**`[remote_access.terminal]`** enables the terminal endpoint used by both the App and the web panel. The panel terminal connects to `ssh_addr` as an SSH client, with the permissions of that SSH account. The App's passwordless terminal uses the agent user's local shell when `full_access` is enabled. Panel login credentials alone do not grant a shell.
 
-## What you do not get
+Unless `[remote_access.terminal] allow_insecure = true` is configured, the terminal will not run over plaintext HTTP because the first message may contain an SSH password. TLS or a same-host reverse proxy satisfies the transport requirement. The App must also enable **Allow insecure HTTP** for this individual Monitor connection; both settings are required.
 
-**SFTP and port forwarding are not offered on a monitor server.** The agent has
-no endpoint that relays a connection to an address the app names, so there is
-nothing to carry them. File *browsing* works through the agent's own file API,
-which is a different thing: it moves file contents through the agent rather
-than opening a stream to somewhere.
+## Unsupported features
 
-If you need SFTP or port forwarding on that machine, add it over SSH.
+A server configured only through Monitor HTTP does not provide SFTP or port forwarding. The agent has no endpoint that relays a connection to an address chosen by the App, so it cannot carry either feature. File **browsing** can use the agent's file API, but that API moves file contents rather than providing an arbitrary TCP byte stream.
 
-## Widgets, push and the watch
+If you need SFTP or port forwarding, configure SSH for the same server in the App.
 
-These read the agent directly and do not involve the app being open.
+## Widgets, push, and the Watch app
 
-- **Home screen widgets** take a URL ending in `/status`. See
-  [Home Screen Widgets](/docs/advanced/widgets/)
-- **The watch app** reads from the agent by itself, so it can only show servers
-  that have one configured
-- **Push alerts** are configured on the agent, in `[[monitoring.rules]]` and
-  `[[push]]`
+These features read directly from Monitor agent and do not depend on the App being in the foreground:
+
+- **Home-screen widgets**: Configure the server in the App after installing Monitor agent. The widget selects from the server list published by the App; you do not enter a URL manually.
+- **Watch app**: It can show only servers with Monitor agent configured. These servers sync by default, and you can exclude individual servers in the iOS settings.
+- **Push alerts**: Configure them in the agent with `[[monitoring.rules]]` and `[[push]]`.
 
 ## Troubleshooting
 
-**Buttons missing on the server page.** The app is showing what the agent said
-it allows. Check `full_access` for commands and the terminal, and
-`[remote_access.fs]` plus its `roots` for files. The agent re-reads its config
-on restart.
+**Features are missing from the server page.** The App shows what the agent reports. Commands and the terminal require `full_access` and the terminal endpoint; file browsing requires `[remote_access.fs]` and `roots`. Restart the agent after changing its configuration.
 
-**Certificate errors.** Either configure real TLS, put the agent behind a
-reverse proxy, or turn on **Monitor Ignore certificate** for that server.
+**Certificate errors.** Configure valid TLS, put the agent behind a reverse proxy, or enable **Monitor Ignore certificate** for that server.
 
-**The panel is on another origin.** An agent must allow it explicitly:
-`cors_allowed_origins` in `config.toml`, or `SBM_CORS_ORIGINS`.
+**The panel is hosted on another origin.** Add the origin to `cors_allowed_origins` in `config.toml` or to the `SBM_CORS_ORIGINS` environment variable.
 
-**Nothing at all.** Check the agent is running and the port is reachable, then
-`access_log` in its database. It records who opened what, from where, and
-whether it worked, and never records a credential.
+**Requests receive no response.** Confirm that the agent is running and the port is reachable, then inspect `access_log` in its database. It records the visitor, time, source, requested resource, and result, but never credentials.

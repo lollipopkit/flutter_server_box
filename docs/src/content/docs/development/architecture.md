@@ -1,155 +1,131 @@
 ---
 title: Architecture
-description: Architecture patterns and design decisions
+description: Server Box architecture patterns and design decisions
 ---
 
-Server Box separates presentation, business logic, and data layers.
+Server Box is organized by responsibility: UI, state coordination, local storage, and external connections are kept separate. This allows SSH, Monitor agent, and local terminal backends to share the same UI while keeping platform-specific code at the edges.
 
-## Layered Architecture
+## Layers
 
-```
+```text
 ┌─────────────────────────────────────┐
-│          Presentation Layer         │
-│         (lib/view/page/)            │
-│  - Pages, Widgets, Controllers      │
+│ Presentation                        │
+│ lib/view/                           │
+│ Pages, Widgets, and user interaction│
 └─────────────────────────────────────┘
-                 ↓
+                  ↓
 ┌─────────────────────────────────────┐
-│         Business Logic Layer        │
-│      (lib/data/provider/)           │
-│  - Riverpod Providers               │
-│  - State Management                 │
+│ State and business coordination     │
+│ lib/data/provider/                  │
+│ Riverpod providers and async state  │
 └─────────────────────────────────────┘
-                 ↓
+                  ↓
 ┌─────────────────────────────────────┐
-│           Data Layer                │
-│      (lib/data/model/, store/)      │
-│  - Models, Storage, Services        │
+│ Data and services                   │
+│ lib/data/model/, lib/data/store/    │
+│ Models, storage, and connections    │
+└─────────────────────────────────────┘
+                  ↓
+┌─────────────────────────────────────┐
+│ External integrations               │
+│ SSH, SFTP, Monitor HTTP, platform APIs│
 └─────────────────────────────────────┘
 ```
 
-## Key Patterns
+## Application foundation
 
-### State Management: Riverpod
+`lib/main.dart` initializes dependencies, opens the encrypted local database, initializes the Rust bindings, and calls `runApp`. The root Widget provides the theme, routing structure, and Riverpod `ProviderScope` used for dependency injection.
 
-- **Code Generation**: Uses `riverpod_generator` for type-safe providers
-- **State Notifiers**: For mutable state with business logic
-- **Async Notifiers**: For loading and error states
-- **Stream Providers**: For real-time data
+The home page provides tabs for servers, terminals, files, and snippets. Pages display state and receive user interaction; providers, services, and stores own operations and state transitions.
 
-### Immutable Models: Freezed
+## State management: Riverpod
 
-- Many data models use Freezed for immutability
-- Union types for state representation
-- JSON serialization when configured
-- `copyWith` methods for updates
+The project uses `riverpod_generator` to generate type-safe providers:
 
-### Local Storage: SQLite
+- `NotifierProvider` manages synchronous state with update methods.
+- `AsyncNotifierProvider` manages loading, success, and error states.
+- `StreamProvider` exposes continuously produced data.
+- Family providers maintain independent state for different servers or other parameters.
 
-One encrypted file, `store.db`, opened through `package:sqlite3` with the
-`sqlite3mc` cipher applied before anything reads it. There are two shapes in
-it, and which one a store uses is a decision about whether its records have
-relations:
+Providers do not depend on `BuildContext`, so services and business logic can be tested independently.
 
-- **`kv(store, key, value, updated_at)`** holds the settings and the history. It
-  suits a hundred unrelated preferences with nothing that queries by field, where
-  adding one should stay a one-line change. `value` is JSON, so a value written
-  here needs a `toJson`; `SqliteStore.set` answers `false` rather than throwing
-  when it has none.
-- **Entity tables** hold the servers, private keys, snippets, port forwards,
-  connection statistics and agent conversations. Real columns, foreign keys,
-  `CHECK` constraints and indexes.
+## Data persistence: encrypted SQLite
 
-Drift owns the DDL (`lib/data/store/db.dart`), and only the DDL: the app's
-queries are hand-written and synchronous, because the UI reads a store while
-building. Drift never opens the connection. `SqliteDb` does, applies the
-cipher and the `foreign_keys` pragma, and hands the live handle over.
+The App's authoritative local store is the encrypted SQLite file `store.db`. `SqliteDb` opens the connection and applies database encryption and the `foreign_keys` pragma.
 
-Two conventions the key-value layout could not hold:
+Data uses one of two shapes:
 
-- **A primary key is an id, never something the user typed.** Renaming a
-  private key used to detach every server pointing at it, because the key's id
-  *was* its name. Names are ordinary `UNIQUE` columns now.
-- **A list or map field is a child table.** That makes "every server with this
-  tag" a query rather than a decode of every row, and lets `ON DELETE CASCADE`
-  clean up after a deleted server instead of six hand-written calls.
+- **Key-value table `kv(store, key, value, updated_at)`**: settings and history that do not need relational queries. Values are JSON and require `toJson` when written through `SqliteStore.set`.
+- **Entity tables**: servers, private keys, snippets, port forwards, connection statistics, Agent conversations, and related records. These use real columns, foreign keys, constraints, and indexes.
 
-`Tables.syncRoots` names the tables that are a unit of sync. Each carries
-`updated_at` and `rev`; their children carry neither and move with the parent,
-so a tag cannot arrive before the server it belongs to. A delete leaves a row
-in `tombstone`, without which a peer reads the record's absence as an addition
-and puts it back.
+Drift owns the DDL in `lib/data/store/db.dart`, but does not open the connection or replace the hand-written synchronous store queries. Entity primary keys are generated IDs; user-provided names are ordinary unique columns. List and map fields are stored in child tables.
 
-### Storage migrations
+## Connection methods and capabilities
 
-`SchemaVersion` tracks the layout; Drift's own `schemaVersion` is pinned at 1
-and stays there, because the steps that matter are outside what a Drift
-migration can express. `HiveImport` runs separately before the registered
-`SchemaMigration` steps:
+A server can have SSH configured, Monitor HTTP configured, or both. `preferredTransport` controls which connection is tried first; it does not disable the other one. If the first connection fails, the App can try the other.
 
-- `HiveImport` (m003) is not a `SchemaMigration`. `Stores.init` runs it before
-  `SchemaVersion.migrate`; it copies an upgrading install's Hive boxes into
-  `kv`, once per device. It reads through frozen adapters in
-  `lib/hive/legacy_adapters.dart` rather than through the live models. Adding
-  a field to a model makes a *generated* adapter unable to read any box written
-  before it.
-- `KvToTablesMigration` (m004) takes those rows apart into the entity tables,
-  generating ids for the records that were keyed by name and rewriting every
-  reference to them.
-- `MonitorInsecureHttpMigration` (m005) adds the explicit per-monitor opt-in
-  for plaintext HTTP on trusted networks.
+The UI uses `ServerCapabilities` to decide which features to offer:
 
-**A storage migration keeps a permanent regression test, fed by bytes the
-release being migrated *from* actually wrote.** It gets one pass over a user's
-records and is not repeatable, so a bug there is silence rather than a crash.
-`test/fixtures/hive_v{1466,1480,1491}/` hold boxes produced by those releases'
-own adapters, and `test/hive_release_migration_test.dart` runs the Hive import
-followed by both registered steps against each. The isolated
-`test/m005_monitor_insecure_http_test.dart` covers m005 as well. Seeding through the current adapters would only
-show that today's code agrees with itself. On its first run, that test found four field-name
-mismatches, each of which silently dropped an entire store.
+| Capability | SSH | Monitor HTTP |
+|---|---|---|
+| Shell and commands | Available | Requires `full_access` |
+| Interactive terminal | Available | Requires `full_access` and the terminal endpoint |
+| File browsing | SFTP | Requires `[remote_access.fs]` and `roots` |
+| Byte streams (SFTP and port forwarding) | Available | Not available |
+| History from before the App connected | Not available | Available |
 
-## Dependency Injection
+When both transports are configured, the server exposes the union of their capabilities. Making Monitor HTTP preferred therefore does not hide SFTP or port forwarding provided by SSH.
 
-Services and stores are injected via:
+SSH file transport is a separate setting. SFTP is the default; SCP can be selected for hosts without an SFTP subsystem. A server configured only through Monitor HTTP uses the agent's file API and does not provide SFTP or port forwarding.
 
-1. **Providers**: Expose dependencies to UI
-2. **GetIt**: Service location (where applicable)
-3. **Constructor Injection**: Explicit dependencies
+## Status collection and parsing
 
-## Data Flow
+The App has two status paths:
 
-```
-User Action → Widget → Provider → Service/Store → Model Update → UI Rebuild
+**SSH path:**
+
+```text
+Timer
+  → Provider
+  → SSH command script
+  → sbm_parser through sbm_ffi
+  → ServerStatus
+  → UI rebuild
 ```
 
-1. User interacts with widget
-2. Widget calls provider method
-3. Provider updates state via service/store
-3. State change triggers UI rebuild
-4. New state reflected in widget
+**Monitor HTTP path:**
 
-## Status Parsing: Shared Rust Library
+```text
+Timer
+  → GET /api/v1/metrics
+  → MonitorMetrics JSON
+  → applyMonitorMetrics
+  → ServerStatus
+  → UI rebuild
+```
 
-The app's SSH status path parses command output through the Rust crate
-`crates/sbm_parser`, called through flutter_rust_bridge (`crates/sbm_ffi`,
-generated Dart in `lib/src/rust/`). The monitor's native sampler also uses that
-crate for the platform-specific parsing it needs, while the app's monitor HTTP
-path decodes `MonitorMetrics` JSON and maps it locally to `ServerStatus`.
-Parsers are pure functions: they return raw counters, and diff/windowed
-computations (e.g. network speed) are pure functions too. No mutable state
-crosses the FFI boundary.
+The App's SSH path calls the shared Rust parser in `crates/sbm_ffi`. Monitor agent uses `crates/sbm_native` on the server for core metrics such as CPU, memory, disk, and network, and uses the shared script on its slower extended cycle for values that still need CLI tools. The two paths share parts of the status model, but they are not identical sampling or parsing pipelines.
 
-## Custom Dependencies
+The parser is made of pure functions. It returns raw counters; diff and window calculations are also pure functions, and mutable state does not cross the FFI boundary.
 
-The project uses several custom forks to extend functionality:
+## Storage migrations
 
-- **dartssh2**: Enhanced SSH features
-- **xterm**: Terminal emulator with mobile support
-- **fl_lib**: Shared UI components and utilities
+`SchemaVersion` manages the App's storage layout while Drift's `schemaVersion` remains `1`. App migrations also read old Hive boxes, generate IDs, and rewrite references, which is outside the scope of a Drift migration.
 
-## Threading
+`HiveImport` first imports data from an upgrading installation into `kv`. Registered schema migrations then split that data into entity tables. The adapters in `lib/hive/legacy_adapters.dart` are frozen readers for old releases and must not be regenerated from current models.
 
-- **Isolates**: Heavy computation runs in a separate isolate rather than on the main isolate
-- **computer package**: Multi-threading utilities
-- **Async/Await**: Non-blocking I/O operations
+Every storage migration needs a permanent regression test using bytes written by the release being migrated from. A fixture generated by the current adapter only proves that the current code agrees with itself; it does not prove that an old release can still be read.
+
+## Dependency injection
+
+Services and stores are combined through:
+
+1. **Providers**: expose dependencies and state to the UI.
+2. **GetIt**: provide global service instances where service location is appropriate.
+3. **Constructor injection**: pass dependencies explicitly between classes.
+
+## Platform and Rust integration
+
+Flutter provides the cross-platform UI. Platform integrations provide notifications, background services, filesystem access, and other system features. Rust APIs are exposed to Dart through `crates/sbm_ffi` and flutter_rust_bridge; generated bindings live in `lib/src/rust/`.
+
+`crates/sbm_parser` is the shared pure parser. `crates/sbm_native` is used only by Monitor agent for sampling on the server itself. The App never calls `sbm_native` on a remote host.

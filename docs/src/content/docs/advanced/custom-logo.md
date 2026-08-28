@@ -1,32 +1,30 @@
 ---
 title: Custom Server Logo
-description: Use custom images for server cards
+description: Set a custom icon for a server card
 ---
 
-Display custom logos on server cards using image URLs.
+You can set a custom logo for a server card with an image URL.
 
 ## Setup
 
-1. Server settings → **Logo URL**
-2. Enter image URL
+1. Open the server edit page and go to **More → Logo URL**.
+2. Enter the image URL and save.
 
-## URL Placeholders
+## URL placeholders
 
-### {DIST} - Linux Distribution
+### `{DIST}`: Linux distribution
 
-Replaced automatically with the detected distribution:
+`{DIST}` is replaced with the Linux distribution detected by the App:
 
 ```text
 https://example.com/{DIST}.png
 ```
 
-The requested file can be `debian.png`, `ubuntu.png`, `arch.png`, and so on. If
-the system is not recognized, `{DIST}` is left unchanged; provide a generic URL
-or avoid this placeholder when a fallback is needed.
+For example, the App may request `debian.png`, `ubuntu.png`, or `arch.png`. If it cannot identify the distribution, `{DIST}` remains unchanged. For a generic icon, provide a URL without this placeholder or provide a matching fallback file on the server.
 
-### {BRIGHT} - Theme
+### `{BRIGHT}`: Theme
 
-Replaced automatically with the current theme:
+`{BRIGHT}` is replaced with the current theme:
 
 ```text
 https://example.com/{BRIGHT}.png
@@ -34,23 +32,23 @@ https://example.com/{BRIGHT}.png
 
 The requested file is `light.png` or `dark.png`.
 
-### Combining Both Placeholders
+### Combining both
 
 ```text
 https://example.com/{DIST}-{BRIGHT}.png
 ```
 
-The requested file can be `debian-light.png`, `ubuntu-dark.png`, and so on.
+For example, the requested file may be `debian-light.png` or `ubuntu-dark.png`.
 
-## Tips
+## Recommendations
 
-- Use PNG or SVG images
-- Recommended size: 64x64 to 128x128 pixels
-- Use HTTPS URLs
-- Keep image files small
+- Use PNG or SVG.
+- Recommended size: 64×64 to 128×128 pixels.
+- Prefer HTTPS URLs.
+- Keep image files small to avoid slowing down card rendering.
 
-## Supported Distributions
+## Supported distributions
 
 debian, ubuntu, centos, fedora, opensuse, kali, alpine, arch, rocky, deepin, armbian, wrt, coreelec
 
-Full list: [`dist.dart`](https://github.com/lollipopkit/flutter_server_box/blob/main/lib/data/model/server/dist.dart)
+See [`dist.dart`](https://github.com/lollipopkit/flutter_server_box/blob/main/lib/data/model/server/dist.dart) for the complete list.

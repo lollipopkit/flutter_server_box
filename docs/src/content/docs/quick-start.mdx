@@ -1,59 +1,53 @@
 ---
 title: Quick Start
-description: Get up and running with Server Box in minutes
+description: Complete your first setup in a few minutes
 ---
 
-Use this guide to connect Server Box to a server and start monitoring it.
+This guide walks you through adding your first server and viewing its monitoring data.
 
-## Step 1: Add a Server
+## Step 1: Add a server
 
-1. Open Server Box
-2. Tap the **+** button to add a new server
-3. Fill in the server information:
-   - **Name**: A friendly name for your server
-   - **Host**: IP address or domain name
-   - **Port**: SSH port (default: 22)
+1. Open Server Box.
+2. Tap **+** to add a server.
+3. Select **SSH** as the connection method, then fill in:
+   - **Name**: A name used to identify the server in the App
+   - **Host**: An IP address or domain name
+   - **Port**: The SSH port; `22` is the default
    - **User**: SSH username
-   - **Password or Key**: Authentication method
+   - **Password or Key**: Choose an authentication method
+4. Tap **Save**.
 
-4. Tap **Save** to add the server
+### Connect through Monitor agent
 
-### Adding a server through a monitor agent
+If opening an SSH port is inconvenient, you can use Monitor agent instead:
 
-The **SSH / Monitor HTTP** selector at the top of the form chooses the
-connection method. Picking **Monitor HTTP** replaces the SSH fields with the
-agent's:
+1. Install and configure [Monitor agent](/docs/advanced/monitor-agent/) on the server.
+2. Enable **Monitor HTTP** on the Add Server page.
+3. Enter the agent URL, panel username, and password. If the agent uses a self-signed certificate, enable **Monitor Ignore certificate** only when needed.
+4. Save the configuration.
 
-- **URL**: e.g. `https://1.2.3.4:3770`
-- **Monitor User** / **Monitor Password**: the agent's panel login
-- **Monitor Ignore certificate**: for a self-signed certificate
+SSH and Monitor HTTP can be enabled together. When both are configured, **Preferred transport** only controls which connection the App tries first; the other remains available. A server configured only through Monitor HTTP has no SSH credentials, and its command, terminal, and file features depend on the permissions enabled by the agent.
 
-A server added this way carries no SSH credentials. It shows status and charts
-immediately. Commands, the terminal, and file browsing depend on what the
-agent's operator has enabled. See [Monitor Agent](/docs/advanced/monitor-agent/) for the available options. SFTP and port forwarding are not available for this type of server. Add it over SSH if you need them.
+## Step 2: Connect and view status
 
-## Step 2: Connect and Monitor
+1. Tap the server card.
+2. After connecting, view CPU, memory, swap, disk, and network status.
 
-1. Tap on your server card to connect
-2. You'll see real-time status for:
-   - CPU usage
-   - Memory (RAM) and Swap
-   - Disk usage
-   - Network speed
+A server using Monitor agent can also show history collected before the App connected. An SSH-only server starts its local history when the App begins sampling.
 
-## Step 3: Explore Features
+## Step 3: Explore features
 
-Available actions include:
+After connecting, you can:
 
-- **Open Terminal**: On an SSH server, tap the terminal button to open an SSH terminal. A Monitor HTTP server needs the agent's `full_access` grant.
-- **Browse Files**: On an SSH server, use SFTP to manage files. A Monitor HTTP server needs `[remote_access.fs]` and configured `roots`, and uses the agent's file API.
-- **Manage Containers**: View and control Docker or Podman containers
-- **View Processes**: Check running processes
-- **Run Snippets**: Execute saved commands
-- **Ask the Agent**: Diagnose or operate the server. See [Agent](/docs/advanced/agent/)
+- **Open the terminal**: An SSH connection can open the terminal directly. A Monitor HTTP connection needs the agent's `full_access` grant and an enabled terminal endpoint.
+- **Browse files**: SSH connections use SFTP. Monitor HTTP connections use the agent's file API, which requires `[remote_access.fs]` and `roots`.
+- **Manage containers**: View and control Docker or Podman containers.
+- **View processes**: Inspect running processes.
+- **Run snippets**: Execute saved commands.
+- **Use Agent**: Diagnose or operate the server; see [Agent](/docs/advanced/agent/).
 
-## Tips
+## Useful settings
 
-- **Biometric Authentication**: Enable Face ID / Touch ID / Fingerprint for quick access (mobile)
-- **Home Screen Widgets**: Add server status widgets to your home screen (iOS/Android)
-- **Background Running**: Allow eligible connections to continue running in the background (Android)
+- **Biometrics**: On mobile, enable Face ID, Touch ID, or fingerprint authentication to unlock the App quickly.
+- **Home screen widgets**: After installing Monitor agent, add the server to an iOS or Android widget.
+- **Android background running**: To keep connections alive in the background, enable background running and allow notifications and background activity.

@@ -1,303 +1,195 @@
 ---
 title: BMC (Redfish)
-description: How out-of-band management reaches a server whose OS is not answering
+description: BMC design, limitations, and hardware compatibility
 ---
 
-:::caution[Read verified on one machine; power control on none]
-Phase 1 is implemented and the read half has been run against real firmware —
-see [Hardware this has run against](#hardware-this-has-run-against), which is
-one model. Every other vendor difference below is handled against recorded
-responses and a local TLS server: enough to be sure of the decisions, not
-enough to be sure of a machine.
+:::caution[Beta]
+Only the read path (power state and sensors) has been verified against one real device. Power control has not been verified automatically. The vendor and model differences below come from vendor documentation, recorded responses, and a local test service; they are not a hardware compatibility list.
 
-Power control has never been performed by anything automated, deliberately.
-See the header of `packages/redfish/test/power_test.dart`.
+Treat power operations like pressing a physical power button on a remote server.
 :::
 
-Every other way this app reaches a server needs the host operating system to be
-running. SSH needs sshd; a monitor agent is a process on the machine. When the
-host is powered off, hung, or mid-reboot, all of them report the same thing —
-a connection failure — and the app has nothing further to say.
+SSH and Monitor agent both require the host operating system to be running. SSH needs `sshd`, while Monitor agent needs a process running on the host. When the host is powered off, hung, or rebooting, both usually report only a connection failure.
 
-A BMC is the other path. It is a small computer on the motherboard with its own
-power rail and its own network port, and it stays reachable when nothing else
-on the machine is. It can answer three questions the host cannot answer about
-itself: what the power state is, what the hardware sensors read, and what the
-hardware event log holds.
+A BMC (Baseboard Management Controller) is an independent computer on the motherboard with its own power and network connection. It may still respond when the host's other services are unavailable, and can provide power state, hardware sensor readings, and hardware events that the operating system cannot provide.
 
-## Why Redfish and not IPMI
+## Why Redfish
+
+Server Box communicates with the BMC through Redfish's HTTPS/JSON API. Redfish is a common out-of-band management interface for modern servers.
 
 | | Redfish | IPMI 2.0 over LAN |
 |---|---|---|
-| Transport | HTTPS + JSON | RMCP+ over UDP 623, binary |
-| Cost in this repo | `dio`, no native code | no Dart implementation exists; a client in `crates/` behind FFI |
-| Data model | self-describing, navigable | SDR / SEL / chassis commands, then vendor-specific raw bytes |
-| Auth | TLS + a session token | RAKP, with weaknesses firmware cannot fix |
-| Hardware | roughly 2016 and later | older and entry-level too |
-| Spec | active | last revised 2013 |
+| Transport | HTTPS + JSON | RMCP+ over UDP 623, binary protocol |
+| Implementation cost in this project | `dio` is sufficient; no native code required | No Dart implementation exists; a client would need to be implemented in `crates/` behind FFI |
+| Data model | Self-describing resources connected by links | SDR, SEL, and chassis commands plus vendor-specific raw data |
+| Authentication | TLS + session token | RAKP |
+| Hardware coverage | Generally devices from around 2016 onward | Also covers older and entry-level devices |
+| Specification status | Actively maintained | Last revised in 2013 |
 
-IPMI's remaining advantages are pre-Redfish hardware and Serial-over-LAN.
-Neither is worth an FFI client and a second security model here, so **IPMI is
-not implemented and not planned**. If pre-Redfish hardware turns out to matter,
-that is a new decision with its own justification, not a phase of this one.
+IPMI's main advantages are support for older hardware and Serial-over-LAN. This project does not currently include an IPMI client; supporting pre-Redfish hardware would require a separate decision about an FFI client and another security model.
 
-## Where it sits in the model
+## Where it fits in the application model
 
-A BMC is not a way of reaching the host, so it is not on the
-`ServerConnectCredential` axis — that axis answers "where does this server's
-*status* come from", and a `ServerCapabilities` implementation exists per
-transport on it. A BMC answers about the machine when the host is absent.
+BMC is an out-of-band management channel and an independent side channel in the server configuration. SSH and Monitor HTTP determine where status data and normal operations come from; BMC reads hardware state and performs power operations when the host operating system is unavailable.
 
-It is a side channel, modelled the way Wake-on-LAN already is: an optional
-nested config on `Spi`, beside `wolCfg`.
+BMC is nested in `Spi`, alongside Wake-on-LAN's `wolCfg`:
 
 ```dart
 class Spi {
   SshCredential? ssh;
   MonitorHttpCredential? monitorHttp;
   WakeOnLanCfg? wolCfg;
-  BmcCfg? bmc;          // ← null when not configured
+  BmcCfg? bmc;          // null when BMC is not configured
 }
 
 final class BmcCfg {
   String addr;          // https://...
-  String? credId;       // → BmcCredential, shared between servers
-  String? certSha256;   // reviewed and pinned — see below
+  String? credId;       // BmcCredential shared by several servers
+  String? certSha256;   // pinned after user confirmation
 }
 
-class BmcCredential {   // its own table, its own sync root
-  String id;            // generated; never the name
-  String name;          // unique, what the picker lists
+class BmcCredential {
+  String id;            // generated ID, not the display name
+  String name;          // unique name shown in the picker
   String user;
   String? pwd;
 }
 ```
 
-Nested rather than flat fields on `ServerCustom` (where PVE's three settings
-live): flat cannot express "not configured", which is the same reason the SSH
-fields were extracted into `SshCredential`.
+A BMC account is a separate record referenced by ID. Servers in one rack commonly share an account, so changing it once updates every server that references it. Deleting an account uses `ON DELETE SET NULL`, so it does not delete the server configurations that used it.
 
-The account is a record of its own, referenced by id. BMCs are provisioned a
-rack at a time and answer to one directory or one factory password, so the
-normal case is many servers to one account — stored per server it would be
-typed once per machine and, on a rotation, changed once per machine, with no
-way to tell whether one was missed except by a machine that stops answering.
-The reference is `ON DELETE SET NULL`: losing an account must not lose the
-servers that used it.
+The address and certificate fingerprint belong to one BMC and stay on `BmcCfg`. Different BMCs may present different certificates; storing the fingerprint on a shared account would verify one device with another device's fingerprint.
 
-What stays on `BmcCfg` is what belongs to one device. The address, obviously —
-and the certificate fingerprint, less obviously: two BMCs never present the
-same certificate, so a fingerprint on a shared record would be the first
-device's used to verify the second, which is the check not happening at all.
-
-A shared *account* is not a shared *BMC*. Several servers that are guests of
-one physical host would be pointing at one device, where a power action on any
-of them cuts all of them and the reported `PowerState` is the host's rather
-than the guest's. That is a host/guest relation, not a storage question, and it
-is not modelled here.
+Physical hosts and virtual machines may point to the same BMC. A power operation from any of those records affects the physical host, and `PowerState` reports the host rather than the guest. The current model does not represent this host/guest relationship; configure BMC only on the physical-host record.
 
 ## Layers
 
-The split exists so that the half worth testing does not need a server.
+The layers keep the code that can be tested with fixtures independent of real servers:
 
 ```text
-BmcCfg + BmcCredential    what the user configured
+BmcCfg + BmcCredential    user configuration                 App
   ↓
-RedfishClient             transport: TLS trust, session lifetime, GET/POST
+RedfishClient             TLS trust, sessions, GET/POST      package:redfish
+RedfishDiscovery          one-time resource discovery        package:redfish
+resources / sensors       JSON → models, no IO                package:redfish
   ↓
-RedfishService            one-time discovery, cached: which ids, which schemas
-  ↓
-redfish/*.dart (pure)     JSON → typed models, no IO
-  ↓
-BmcNotifier (riverpod)    state, and a poll cycle of its own
+BmcNotifier               state and independent polling      App
 ```
 
-Only `RedfishClient` touches the network. Everything below it takes a decoded
-JSON map and returns a model, which is what makes vendor differences testable
-against saved responses instead of against hardware.
+Only `RedfishClient` accesses the network. Lower-level parsers receive decoded JSON maps and return models, so vendor differences can be tested against saved responses rather than hardware.
 
-## TLS: trust on first use, not "ignore the certificate"
+## TLS and trust on first use
 
-BMCs ship self-signed certificates. There are two existing places in this app
-that meet a self-signed HTTPS endpoint — a monitor agent and PVE — and both
-offer the user a switch that sets `badCertificateCallback` to accept anything.
+BMCs commonly use self-signed certificates. A BMC has power-control authority, so accepting any certificate at its address could allow another service to impersonate it. Server Box therefore uses a trust-on-first-use flow similar to SSH host-key verification:
 
-That is not extended here. A BMC sits on a management network and holds power
-control; turning verification off for it means accepting any certificate from
-anything answering on that address.
+1. The first connection displays the certificate's SHA-256 fingerprint.
+2. Compare it with the fingerprint shown by the BMC's own web interface and confirm it.
+3. The App stores the accepted fingerprint and accepts only a matching certificate later.
+4. If the fingerprint changes, the App refuses the connection, shows the old and new values, and asks for verification again.
 
-Instead it works the way SSH host keys already do in this app
-(`HostKeyVerifier`): the certificate's SHA-256 fingerprint is recorded the
-first time it is seen, after the user agrees; a fingerprint that later differs
-raises the question again and names both; a refusal is never recorded. The
-verifier is written to be reusable, so PVE and the monitor agent can adopt it
-later — but changing their behaviour is a separate decision, and this page is
-not it.
+A BMC may legitimately change its fingerprint after regenerating a certificate or upgrading firmware. A man-in-the-middle attack produces the same symptom, so verify the BMC before accepting a new certificate.
 
-## What varies between vendors
+## Vendor differences
 
-Everything in this section is a thing that has to be discovered rather than
-assumed. A client that hardcodes any of it works on the machine it was written
-against and fails on the next one.
+Everything in this section must be discovered from Redfish resources rather than assumed from a vendor name or a common path.
 
-### Resource ids are not stable
+### Resource IDs are not fixed
 
-The service root is the only fixed path. Below it, the id of the system and of
-the chassis differs by vendor:
+`/redfish/v1/` is the fixed entry point, but the IDs below `Systems` and `Chassis` are vendor-defined:
 
-| Vendor | Typical system id |
+| Vendor | Typical system ID |
 |---|---|
 | Supermicro | `1` |
 | Dell iDRAC | `System.Embedded.1` |
 | OpenBMC | `system` |
 
-So a client walks `/redfish/v1/Systems` and reads the collection's `Members`,
-rather than building a path.
+A client should walk `/redfish/v1/Systems`, read the collection's `Members`, and then access the concrete resources.
 
-### There are two sensor models, and both may be present
+### Sensor models may come in two forms
 
-Redfish 2020.4 deprecated `Chassis/{id}/Thermal` and `/Power` in favour of
-`ThermalSubsystem`, `PowerSubsystem` and a unified `Sensors` collection.
-Firmware lags the schema by years and unevenly — Supermicro switched at the X14
-generation, so X11 through X13 still present the old model.
+Redfish 2020.4 deprecated `Chassis/{id}/Thermal` and `/Power` in favor of `ThermalSubsystem`, `PowerSubsystem`, and a unified `Sensors` collection. Many firmware versions still implement only the legacy model; some expose both.
 
-Transitional firmware exposes **both**. The rule: look at which links the
-`Chassis` resource actually has, prefer the new model where it exists, fall
-back to the old one, and never assume from the vendor name.
+The client should inspect the links actually provided by the `Chassis` resource, prefer a complete modern model, and fall back to the legacy model when necessary. It should not infer the model from the vendor name.
 
-### `ResetType` is advertised, which is not the same as implemented
+### `ResetType` advertisements may be unreliable
 
-`ComputerSystem.Reset` takes a `ResetType`, and the values a given service
-accepts are in `ResetType@Redfish.AllowableValues` on the action. They differ
-per vendor, and `Nmi` and `PowerCycle` in particular are commonly advertised
-but unimplemented or license-gated.
+The `ComputerSystem.Reset` action advertises supported values through `ResetType@Redfish.AllowableValues`. The supported values differ by device; `Nmi` and `PowerCycle` may be advertised but unavailable because of firmware behavior or licensing.
 
-An intent — "restart this machine" — is therefore mapped onto whatever the
-service allows, with a fallback chain, and an intent with nothing to map onto
-is not offered in the UI at all.
+The App maps intents such as “restart” and “power cycle” to values advertised by the device and uses a fallback order when needed. If no value can implement an intent, the corresponding button is not shown.
 
-### `ResetType` may be a name the specification does not have
+### Vendors may extend `ResetType`
 
-An H3C R5350 G6 advertises `ForcePowerCycle`, which is not in the Redfish
-`ResetType` enum, and advertises nothing else that cuts power. Matching only
-the standard names meant the power-cycle intent fell through to
-`ForceRestart` — a different operation, under a button that said power cycle.
+An H3C R5350 G6 advertises `ForcePowerCycle`, which is not part of the standard Redfish enum, and does not advertise another power-cut operation. Matching only standard names would incorrectly map “power cycle” to `ForceRestart`.
 
-So the candidate list per intent carries vendor names as fallbacks, after the
-standard ones. Measured, not read: this is the kind of thing that only appears
-when a real machine answers.
+The candidate list for each intent therefore includes known vendor extensions after the standard names. These extensions come from real device responses and cannot be inferred from the specification alone.
 
-### A sensor with nothing to say may not say null
+### Sensors may return sentinel values
 
-The specification suggests `null` for a sensor that has no reading. Some
-firmware sends a sentinel instead. The same H3C reports `4294967295` —
-`0xFFFFFFFF`, unsigned -1 — for every temperature it cannot read, which was 18
-of its 20. Taken at face value that reaches the UI as `4294967295 Cel`.
+The specification recommends `null` when a sensor has no reading, but some firmware sends a sentinel instead. For example, the tested H3C device returns `4294967295` (`0xFFFFFFFF`) for temperatures it cannot read.
 
-Readings are therefore filtered by plausibility rather than by matching known
-sentinels: the next vendor's is `65535` or `127`, and a list of them is always
-one short. Nothing real falls in the gaps — a chassis sensor below absolute
-zero or above a thousand degrees is not a reading, and no fan turns at four
-billion RPM.
+The App filters readings by a plausible range rather than matching a fixed list of sentinel values. The current range rejects temperatures below absolute zero or above 1000°C and implausible fan speeds. `-1` is retained because it may be a sentinel or a real cold-inlet reading.
 
-The limit is deliberate. `-1` is a sentinel for some firmware and is also what
-a cold inlet reads, so it is kept: deleting a real measurement to hide a fake
-one is the worse of the two mistakes, and the only one nobody can see.
+### Graceful operations only confirm a request
 
-### HPE iLO's graceful operations are advisory
+HPE iLO documents that `GracefulShutdown` and `GracefulRestart` depend on the operating system. A `204 No Content` response means that the request was accepted, not that the operating system acted on it.
 
-HPE documents that the behaviour of `GracefulShutdown` and `GracefulRestart`
-depends on the OS, and that iLO does not distinguish them at the OS level. A
-`204 No Content` therefore means the request was accepted, not that anything
-happened.
+The App polls `PowerState` until it changes or the timeout expires. The HTTP status code is not treated as the operation's result.
 
-Power operations are confirmed by polling `PowerState` until it changes or a
-timeout expires — the HTTP status is not the result.
+### Sessions are limited
 
-### Sessions leak, and the limit is low
+Redfish sessions are created with `POST` to `SessionService/Sessions`, which returns an `X-Auth-Token`. An undeleted session remains on the BMC until it expires, and BMCs commonly support only a small number of concurrent sessions. Too many leaked sessions can block the management interface.
 
-Redfish session auth is a `POST` to `SessionService/Sessions`, which returns an
-`X-Auth-Token`. A session that is never deleted stays on the BMC until its
-timeout, and BMCs allow few concurrent sessions — enough leaked sessions lock
-the management interface out entirely until the timeout expires or the BMC is
-reset by hand.
+Each client creates one session and deletes its session resource when disposed. Both normal and failure paths must release the session. Probing the service root does not require a session.
 
-So: one login per client, `DELETE` of the session resource when the client is
-disposed, on the failure path as much as the normal one. A single unauthenticated
-probe of the service root needs no session at all.
+### Licensing may limit features
 
-### Licensing gates some of it
+Some Supermicro licenses gate firmware updates and virtual media. Tests indicate that read-only GET requests and `ComputerSystem.Reset` work without those licenses on some X11 through X13 devices; this is field experience, not a policy for every model.
 
-Supermicro's `SFT-OOB-LIC` / `SFT-DCMS-SINGLE` keys gate firmware update and
-virtual media rather than reads, and in practice read-only GETs and
-`ComputerSystem.Reset` work without them on X11 through X13 — but that is field
-experience rather than documented policy.
-
-Which means a `401` or `403` on a sub-resource is an ordinary answer to be
-reported, not a bug and not a reason to fail the whole fetch.
+A `401` or `403` from a sub-resource should be reported as that resource being unavailable and should not fail the entire fetch.
 
 ## Polling
 
-A BMC is slow; a single thermal fetch can take seconds. It gets a cycle of its
-own rather than riding on the status poll, the same way the extended status
-commands are split out from the fast one (`_extendedStatusInterval`).
+BMC responses are usually slower than operating-system APIs; reading sensors may take several seconds. BMC therefore uses its own polling cycle instead of sharing the normal server-status timer.
 
-Discovery — which ids, which sensor model, which reset types — happens once per
-client and is cached. Re-deriving it on every poll is work the device can least
-afford.
+Resource IDs, sensor model, and supported reset types are discovery results. Each client discovers them once and caches them; later polls read and convert live values without rediscovering the device structure.
 
-## What Phase 1 covers
+## Phase 1 scope
 
-- Detection: `GET /redfish/v1/` and the collections below it
-- `Systems/{id}`: power state, model, serial, BIOS version, health rollup
-- `Chassis/{id}`: temperatures, fan speeds, power draw, by whichever sensor
-  model the firmware presents
-- `ComputerSystem.Reset`, behind a confirmation dialog, with the reset type
-  negotiated and the result confirmed by polling
+- Probe `GET /redfish/v1/` and its collections
+- Read `Systems/{id}`: power state, model, serial number, BIOS version, and health rollup
+- Read `Chassis/{id}`: temperatures, fan speeds, and power draw using the model provided by the device
+- Call `ComputerSystem.Reset` with a confirmation dialog, negotiated reset type, and polling-based result confirmation
 
-Not in Phase 1: the event log, storage inventory, boot device override, virtual
-media, and relaying Redfish through a monitor agent for BMCs on a management
-network a phone cannot route to.
+Not included: event logs, storage inventory, boot-device override, virtual media, or relaying access through Monitor agent to BMCs on an isolated management network.
 
-## Hardware this has run against
+## Hardware tested
 
-One machine, and it is worth being exact about that: the table below is what
-has answered, not what is supported. Everything else in this page comes from
-vendor documentation and recorded responses, which is a different kind of
-confidence — the two entries under [What varies between
-vendors](#what-varies-between-vendors) marked as measured are the ones that
-came from here, and both were things no amount of reading had turned up.
+The table below records a device that has actually responded; it is not a compatibility list. Other behavior comes from vendor documentation, recorded responses, and a local test service.
 
-| | |
-| --- | --- |
+| Item | Value |
+|---|---|
 | Model | H3C R5350 G6 |
 | BIOS | 6.30.50 |
 | Redfish version | 1.15.1 |
-| `Vendor` / `Product` at the root | **both absent** — do not rely on them to identify a service |
-| System id | `Systems/1` |
-| Chassis id | `Chassis/1` |
-| Sensor model | legacy (`Thermal` + `Power`). `Sensors` is linked but `ThermalSubsystem` is not, so the modern model is not fully present and is correctly not used |
-| `ResetType` allowed | `ForceOff`, `ForcePowerCycle`, `ForceRestart`, `GracefulShutdown`, `Nmi`, `On` |
-| Temperatures | 20 reported, 18 of them the `0xFFFFFFFF` sentinel |
-| Fans | 8 positions, each reported twice with different readings — dual rotor, and the two share a name |
-| Chassis power | 48 W reported through `PowerControl` |
-| Sessions | one open while one client is connected; released on close |
-| Certificate | self-signed, within its validity dates |
-| Run | 2026-08-23 |
+| Root `Vendor` / `Product` | Both absent; do not rely on them to identify the service |
+| System ID | `Systems/1` |
+| Chassis ID | `Chassis/1` |
+| Sensor model | Legacy (`Thermal` + `Power`); `Sensors` is linked but `ThermalSubsystem` is incomplete, so the legacy model is used |
+| `ResetType` | `ForceOff`, `ForcePowerCycle`, `ForceRestart`, `GracefulShutdown`, `Nmi`, `On` |
+| Temperatures | 20 reported; 18 returned the `0xFFFFFFFF` sentinel |
+| Fans | 8 positions, with two different readings reported for each position |
+| Chassis power | 48 W through `PowerControl` |
+| Sessions | One session per connected client, released on close |
+| Certificate | Self-signed and valid at test time |
+| Test date | 2026-08-23 |
 
-What that does **not** cover, and what to add a row for when someone has one:
-Dell (`System.Embedded.1`), OpenBMC (`system`), Supermicro X11–X13 against X14
-(the sensor-model switch), HPE iLO's graceful operations, and any machine that
-publishes more than one system.
+Not yet covered: Dell (`System.Embedded.1`), OpenBMC (`system`), the Supermicro X11–X14 sensor-model transition, HPE iLO graceful operations, and devices that publish multiple systems.
 
-## Checking it against real hardware
+## Testing against real hardware
 
-Everything above is verified against recorded vendor responses and a local TLS
-server, which settles the decisions and settles nothing about a machine. Two
-things are left to a person.
+### Read-only test
 
-**The read half** is `packages/redfish/test/e2e_test.dart`, opt-in and read-only. It
-skips silently unless the workspace-root `.env` carries:
+`packages/redfish/test/e2e_test.dart` is an opt-in, read-only test. It connects to a real device only when these variables are present in the workspace-root `.env`; otherwise it skips silently:
 
 ```bash
 SBM_E2E_BMC_URL=https://10.0.0.9
@@ -305,19 +197,13 @@ SBM_E2E_BMC_USER=...
 SBM_E2E_BMC_PWD=...
 ```
 
-It prints what it found rather than asserting a shape — the id this vendor uses,
-which sensor model the firmware presents, which reset types it advertises and
-what each intent resolves to. A fourth id shape is something to learn, not a
-failure. It reads the reset action and **never posts to it**.
+The test prints discovered resource IDs, sensor model, reset types, and intent mappings. It does not assert that every vendor uses one resource shape. It reads the reset action but never posts to it.
 
-**The power half** has no automated form and is not going to get one. To check
-it by hand, on a machine nobody is using:
+### Power operations
 
-1. Configure the BMC on that server and review its certificate.
-2. Confirm the card shows a power state matching the machine.
-3. Press *Restart*. The dialog names the `ResetType` that was negotiated —
-   check it is the one that hardware should be getting.
-4. Watch that the result reported is *confirmed* rather than *accepted*. On iLO
-   a graceful operation may legitimately report accepted; on hardware that does
-   distinguish them, accepted means the machine did not move and is worth
-   looking into.
+Power control has no automated test. If you verify it manually, use a machine that carries no important workload:
+
+1. Configure the BMC and verify its certificate fingerprint.
+2. Confirm that the App shows the actual power state.
+3. Press **Restart** and verify the negotiated `ResetType` in the confirmation dialog.
+4. Check whether the result is *confirmed* or *accepted*. For iLO graceful operations, *accepted* can be correct; on hardware that distinguishes request from result, it means no state change has been observed and needs investigation.
