@@ -1,3 +1,5 @@
+import 'dart:io';
+
 /// How much diagnostic data leaves the device.
 ///
 /// Not a crash setting. A crash is one of the things reported; the levels
@@ -12,26 +14,6 @@
 /// The local log is unaffected by all three. It never leaves the device on its
 /// own, it is what the Logs page shows, and it is what a user pastes into an
 /// issue by hand. This setting only decides what is *uploaded*.
-/// What a fresh install starts at, before the user has chosen.
-///
-/// Compile-time, and **the default is deliberately the quietest one**: a build
-/// that was handed no channel is treated as F-Droid's, because that is the
-/// distribution where collecting by default is the thing that must not happen.
-/// Opt-in *and* disabled by default is what their Tracking anti-feature asks
-/// for, and this is the half that "ask on an intro page" cannot supply.
-///
-/// The release workflow passes `full` for the builds it publishes itself.
-/// F-Droid builds from this source without passing anything, so they get
-/// `none` — the same binary logic, a different starting point, decided by who
-/// built it.
-///
-/// Either way the intro page is shown and the user can pick any level; this
-/// only decides which one is already selected when they see it.
-const kDefaultDiagnosticsLevel = String.fromEnvironment(
-  'DIAG_DEFAULT',
-  defaultValue: 'none',
-);
-
 enum DiagnosticsLevel {
   /// Nothing is uploaded, ever.
   ///
@@ -86,4 +68,39 @@ enum DiagnosticsLevel {
     }
     return DiagnosticsLevel.none;
   }
+}
+
+/// What a fresh install starts at, before the user has chosen.
+///
+/// Android starts at [DiagnosticsLevel.none]; everything else starts at
+/// [DiagnosticsLevel.basic].
+///
+/// The split is about F-Droid, and it works because **F-Droid only distributes
+/// the Android build**. Their Tracking anti-feature requires opt-in *and*
+/// disabled by default — an intro page supplies the first half, and no amount
+/// of asking supplies the second — so the Android default has to be `none`.
+/// The desktop and Apple builds never go through that channel, and start at
+/// `basic`: failures are reported, nothing is sent in between.
+///
+/// **Decided at runtime, and that is load-bearing.** The obvious alternative
+/// is a compile-time flag — ship `full` in the builds we publish and `none` in
+/// F-Droid's — and it cannot work here. F-Droid's metadata carries a `binary:`
+/// field for this app, so they rebuild from this source and compare the result
+/// byte for byte against the published APK, distributing our signature only
+/// when the two match. A flag that differs between them makes the bytes differ
+/// and the verification fail. One binary branching on [Platform.isAndroid] is
+/// identical either way.
+///
+/// Detecting the *installer* was the other idea, and is worth ruling out in
+/// writing: it exists (`getInstallSourceInfo`, API 30+), but F-Droid has
+/// several clients, an APK downloaded from their website reports the system
+/// installer like any other sideload, and a reviewer reading the source would
+/// still find a path where collection is on by default. Keying on the platform
+/// needs none of that.
+DiagnosticsLevel get defaultDiagnosticsLevel {
+  // An escape hatch for a private build — a beta channel that never goes near
+  // F-Droid. Must not be used to vary the published Android build, per above.
+  const override = String.fromEnvironment('DIAG_DEFAULT');
+  if (override.isNotEmpty) return DiagnosticsLevel.fromName(override);
+  return Platform.isAndroid ? DiagnosticsLevel.none : DiagnosticsLevel.basic;
 }

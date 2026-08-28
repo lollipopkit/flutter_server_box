@@ -103,14 +103,38 @@ final class _IntroPage extends StatelessWidget {
             },
             child: Column(
             children: [
-              for (final level in DiagnosticsLevel.values)
+              // Reversed, so the recommended answer is the one read first.
+              // The default is `none` on every channel — that is what F-Droid's
+              // anti-feature policy requires and it cannot vary per build, see
+              // [kDefaultDiagnosticsLevel] — so the case for collecting has to
+              // be made here rather than by pre-selecting it.
+              for (final level in DiagnosticsLevel.values.reversed)
                 RadioListTile<DiagnosticsLevel>(
                   value: level,
-                  title: Text(switch (level) {
-                    DiagnosticsLevel.none => l10n.crashCollectNone,
-                    DiagnosticsLevel.basic => l10n.crashCollectBasic,
-                    DiagnosticsLevel.full => l10n.crashCollectFull,
-                  }),
+                  title: Row(
+                    children: [
+                      Flexible(
+                        child: Text(switch (level) {
+                          DiagnosticsLevel.none => l10n.crashCollectNone,
+                          DiagnosticsLevel.basic => l10n.crashCollectBasic,
+                          DiagnosticsLevel.full => l10n.crashCollectFull,
+                        }),
+                      ),
+                      if (level == DiagnosticsLevel.full) ...[
+                        UIs.width7,
+                        // The existing word, rather than a second translation
+                        // of it in fifteen files. Its key names where it was
+                        // first needed, not what it means.
+                        Text(
+                          l10n.sshKeyRecommended,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Theme.of(ctx).colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                   subtitle: Text(
                     switch (level) {
                       DiagnosticsLevel.none => l10n.crashCollectNoneTip,
