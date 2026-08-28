@@ -26,18 +26,91 @@ List<SSHKeyPair> loadIdentity(String key) {
   return SSHKeyPair.fromPem(key);
 }
 
-List<SSHKeyPair> loadIdentities(List<String> keys) {
-  final identities = <SSHKeyPair>[];
-  Object? lastError;
+/// What each of [keys] decoded to, in order: its key pairs, or why it failed.
+///
+/// Top-level for the same reason [loadIdentity] is, and reporting the failure
+/// as a string for a related one: this runs in an isolate, whatever
+/// `SSHKeyPair.fromPem` throws is not required to be sendable across one, and
+/// the only thing the caller does with it is put it in a message.
+///
+/// Per key rather than one merged list so that [identitiesOf] can cache each
+/// one on its own — a key that failed included, since retrying it once per
+/// connection would spawn an isolate per attempt to reach the same answer.
+List<(List<SSHKeyPair>, String?)> loadIdentitiesEach(List<String> keys) {
+  final results = <(List<SSHKeyPair>, String?)>[];
   for (final key in keys) {
     try {
-      identities.addAll(SSHKeyPair.fromPem(key));
+      results.add((SSHKeyPair.fromPem(key), null));
     } catch (e) {
-      lastError = e;
+      results.add((const <SSHKeyPair>[], '$e'));
     }
   }
-  if (identities.isEmpty && lastError != null) throw lastError;
+  return results;
+}
+
+/// Key pairs parsed this run, by the PEM they were parsed from.
+///
+/// `SSHKeyPair.fromPem` is milliseconds of RSA or Ed25519 decoding and
+/// [compute] spawns an isolate to run it, so ten servers sharing one key
+/// parsed that key ten times in ten isolates — during launch, where
+/// `ServersNotifier` connects several at once and the isolate spawns land on
+/// the frames the user is looking at.
+///
+/// Keyed by the PEM and not by the id or path it came from, so replacing a
+/// key's contents parses the new one instead of handing back the old one's
+/// pairs. Growth is bounded by the distinct key material this run has seen.
+///
+/// Sharing an [SSHKeyPair] between connections is safe: every `sign` builds its
+/// own signer out of the key's fields and writes nothing back, so a parsed pair
+/// is read-only.
+///
+/// Nor does this hold a secret the process was not holding already —
+/// [PrivateKeyUnlock] caches the decrypted PEM for the run, and this is that
+/// same PEM decoded.
+final _identityCache = <String, (List<SSHKeyPair>, String?)>{};
+
+/// The key pairs [keys] decode to, parsing only the ones not already parsed.
+///
+/// Keeps [loadIdentitiesEach]'s tolerance: a PEM that will not parse is
+/// skipped, and the failure is only raised when *nothing* parsed — a server
+/// listing several keys authenticates with whichever of them is usable.
+Future<List<SSHKeyPair>> identitiesOf(List<String> keys) async {
+  final missing = [
+    for (final key in keys.toSet())
+      if (!_identityCache.containsKey(key)) key,
+  ];
+  if (missing.isNotEmpty) {
+    final parsed = await compute(loadIdentitiesEach, missing);
+    for (var i = 0; i < missing.length; i++) {
+      _identityCache[missing[i]] = parsed[i];
+    }
+  }
+
+  final identities = <SSHKeyPair>[];
+  String? lastError;
+  for (final key in keys) {
+    final (pairs, error) = _identityCache[key]!;
+    identities.addAll(pairs);
+    if (error != null) lastError = error;
+  }
+  if (identities.isEmpty && lastError != null) {
+    throw PrivateKeyParseException(lastError);
+  }
   return identities;
+}
+
+/// A PEM that would not parse, carrying the message the parse failed with.
+///
+/// The parse happens in an isolate and what it threw is not required to survive
+/// the trip, so what comes back is the text — see [loadIdentitiesEach]. Its
+/// [toString] is that text unadorned, which is what the callers interpolate.
+class PrivateKeyParseException implements Exception {
+  const PrivateKeyParseException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
 }
 
 /// Decrypts an encrypted PEM private key.
@@ -546,8 +619,9 @@ Future<SSHClient> _authenticatedClient({
   }
   final List<SSHKeyPair> identities;
   try {
-    // Must use [compute] here, instead of [Computer.shared.start]
-    identities = await compute(loadIdentities, openedKeys);
+    // Must use [compute] here, instead of [Computer.shared.start].
+    // Which [identitiesOf] does, for whatever it has not parsed yet.
+    identities = await identitiesOf(openedKeys);
   } catch (e) {
     // A PEM that will not parse is a key problem and the caller has a category
     // for those. Left raw it arrived as whatever the parser threw — naming
