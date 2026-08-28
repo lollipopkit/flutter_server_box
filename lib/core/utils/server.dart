@@ -7,6 +7,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/app_navigator.dart';
+import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/proxy_command_socket.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
@@ -458,6 +459,24 @@ Future<SSHClient> genClient(
       message: 'Invalid jump chain: address cycle at ${ssh.ip}:${ssh.port}',
     );
   }
+
+  // Where the byte stream comes from is the axis that decides which half of
+  // this function runs, and a failure looks the same from the outside whichever
+  // it was. Recorded before the socket is opened, since a connection that never
+  // returns leaves no later crumb.
+  //
+  // No-op on the transfer isolate, which installs no sink: statics are per
+  // isolate. Worth knowing rather than working around — that isolate is not the
+  // one a crash report comes from.
+  Diag.crumb(SbDiag.server, 'ssh connect', data: {
+    'server': Redact.id(spi.id),
+    'host': Redact.host(ssh.ip),
+    'via': switch (ssh) {
+      _ when spi.resolvedJumpIds.isNotEmpty => 'jump',
+      _ when ssh.proxyCommand != null => 'proxy',
+      _ => 'direct',
+    },
+  });
 
   onStatus?.call(GenSSHClientStatus.socket);
 
