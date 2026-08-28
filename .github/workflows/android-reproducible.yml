@@ -12,6 +12,13 @@ on:
   # For checking a change that is likely to break it without waiting for a tag:
   # anything under `android/`, the build scripts, or a dependency bump.
   workflow_dispatch:
+  # Weekly on main, because what breaks reproducibility lands between releases:
+  # a Flutter, NDK or Gradle plugin bump, a dependency that started embedding a
+  # path or a timestamp. Without this the first anyone hears of it is the tag,
+  # which is the worst moment — someone is trying to ship. One run a week costs
+  # nothing and no pull request waits for it.
+  schedule:
+    - cron: "17 4 * * 1"
 
 permissions:
   contents: read
