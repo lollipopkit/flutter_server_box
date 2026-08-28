@@ -331,8 +331,8 @@ extension _App on _AppSettingsPageState {
         // Only where a report could actually be sent. A switch that cannot do
         // anything is worse than one that is not offered, and this build has
         // no DSN in it at all — which is every build made from this source
-        // without one supplied. See [CrashUpload].
-        if (CrashUpload.availableInBuild) _buildCrashUpload(),
+        // without one supplied. See [DiagnosticsUpload].
+        if (DiagnosticsUpload.availableInBuild) _buildDiagnosticsUpload(),
         if (isMobile) _buildWakeLock(),
         _buildCollapseUI(),
         if (isDesktop) _buildHideTitleBar(),
@@ -341,22 +341,42 @@ extension _App on _AppSettingsPageState {
     );
   }
 
-  /// Off by default, and the description says what leaving it off means.
+  /// Where the choice made on the intro page can be revisited.
   ///
-  /// This is the informed-consent half of staying clear of F-Droid's Tracking
-  /// anti-feature: opt-in, disabled by default, and told plainly what is sent.
-  /// Reports are kept on the device either way — this only decides whether a
-  /// copy is also uploaded.
-  Widget _buildCrashUpload() {
-    return ListTile(
-      title: TipText(l10n.crashUpload, l10n.crashUploadTip),
-      trailing: StoreSwitch(
-        prop: _setting.crashUpload,
-        // Applied immediately rather than at the next launch: turning it off
-        // has to take the sink out now, not eventually.
-        callback: (_) => unawaited(CrashUpload.sync()),
-      ),
-    );
+  /// The same three levels, in the same words. Reports are kept on the device
+  /// at every level — this only decides what is uploaded, and how often.
+  Widget _buildDiagnosticsUpload() {
+    return _setting.diagnosticsLevel.listenable().listenVal((name) {
+      final current = DiagnosticsLevel.fromName(name);
+      return ListTile(
+        title: TipText(l10n.crashCollect, l10n.crashCollectFooter),
+        trailing: Text(
+          switch (current) {
+            DiagnosticsLevel.none => l10n.crashCollectNone,
+            DiagnosticsLevel.basic => l10n.crashCollectBasic,
+            DiagnosticsLevel.full => l10n.crashCollectFull,
+          },
+          style: UIs.textGrey,
+        ),
+        onTap: () async {
+          final picked = await context.showPickSingleDialog(
+            title: l10n.crashCollect,
+            items: DiagnosticsLevel.values,
+            display: (e) => switch (e) {
+              DiagnosticsLevel.none => l10n.crashCollectNone,
+              DiagnosticsLevel.basic => l10n.crashCollectBasic,
+              DiagnosticsLevel.full => l10n.crashCollectFull,
+            },
+            initial: current,
+          );
+          if (picked == null) return;
+          _setting.diagnosticsLevel.put(picked.name);
+          // Applied now rather than at the next launch: turning it down has to
+          // take the sink out immediately, not eventually.
+          unawaited(DiagnosticsUpload.sync());
+        },
+      );
+    });
   }
 
   Widget _buildBeta() {

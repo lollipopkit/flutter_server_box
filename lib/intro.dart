@@ -8,6 +8,7 @@ final class _IntroPage extends StatelessWidget {
   static const _builders = {
     1: _buildAppSettings,
     2: _buildBackupPasswordMigration,
+    3: _buildCrashCollect,
   };
 
   @override
@@ -29,7 +30,16 @@ final class _IntroPage extends StatelessWidget {
                 Stores.setting.introVer.putSync(BuildData.build);
                 final lastVer = Stores.setting.lastVer;
                 if (lastVer.fetch() == 0) lastVer.putSync(BuildData.build);
+                // Marks the crash notice as seen, which is also what unblocks
+                // uploading — see `DiagnosticsUpload.sync`. Written here rather than
+                // on the page itself so that dismissing the intro without
+                // reaching the last page leaves it unacknowledged, and asks
+                // again next launch.
+                Stores.setting.diagnosticsConsentVer.putSync(kDiagnosticsConsentVer);
               });
+              // Applies whatever was chosen a moment ago. Until this runs the
+              // app has uploaded nothing at all.
+              unawaited(DiagnosticsUpload.sync());
               Navigator.of(ctx).pushReplacement(
                 MaterialPageRoute(builder: (_) => _buildHomeWithWindowFrame()),
               );
@@ -53,6 +63,73 @@ final class _IntroPage extends StatelessWidget {
           children: children,
         );
       },
+    );
+  }
+
+  /// Explains what a crash report carries, and lets the user pick how much of
+  /// it leaves the device.
+  ///
+  /// Shown before anything is uploaded — `DiagnosticsUpload.sync` refuses to start
+  /// until `diagnosticsConsentVer` says this page has been seen. The default is the
+  /// fullest level, so this page is what turns "on by default" into "asked
+  /// first", and it is the only thing that does.
+  ///
+  /// A radio list rather than a switch: three levels do not read as one, and
+  /// the middle one is the whole reason to offer a choice instead of an
+  /// on/off. Each option states what it sends, not how it feels.
+  static Widget _buildCrashCollect(BuildContext ctx, double padTop) {
+    final l10n = ctx.l10n;
+
+    return _introList(
+      children: [
+        SizedBox(height: padTop),
+        IntroPage.title(text: l10n.crashCollect, big: true),
+        SizedBox(height: padTop),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
+          child: Text(l10n.crashCollectIntro, style: UIs.textGrey),
+        ),
+        // Rebuilt on change so the selection is visible immediately; the store
+        // is the source of truth, not a local field.
+        _setting.diagnosticsLevel.listenable().listenVal((name) {
+          final current = DiagnosticsLevel.fromName(name);
+          // `RadioGroup` rather than a `groupValue` on each tile: the per-tile
+          // form is deprecated, and the group owns the selection anyway.
+          return RadioGroup<DiagnosticsLevel>(
+            groupValue: current,
+            onChanged: (v) {
+              if (v == null) return;
+              _setting.diagnosticsLevel.put(v.name);
+            },
+            child: Column(
+            children: [
+              for (final level in DiagnosticsLevel.values)
+                RadioListTile<DiagnosticsLevel>(
+                  value: level,
+                  title: Text(switch (level) {
+                    DiagnosticsLevel.none => l10n.crashCollectNone,
+                    DiagnosticsLevel.basic => l10n.crashCollectBasic,
+                    DiagnosticsLevel.full => l10n.crashCollectFull,
+                  }),
+                  subtitle: Text(
+                    switch (level) {
+                      DiagnosticsLevel.none => l10n.crashCollectNoneTip,
+                      DiagnosticsLevel.basic => l10n.crashCollectBasicTip,
+                      DiagnosticsLevel.full => l10n.crashCollectFullTip,
+                    },
+                    style: UIs.textGrey,
+                  ),
+                ).cardx,
+            ],
+            ),
+          );
+        }),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
+          child: Text(l10n.crashCollectFooter, style: UIs.textGrey),
+        ),
+        UIs.height77,
+      ],
     );
   }
 
@@ -197,6 +274,15 @@ final class _IntroPage extends StatelessWidget {
         .where((e) {
           if (e.key == 2 && (!isUpgrading || hasBackupPwd)) {
             return false; // Skip backup password migration if not upgrading or already has password
+          }
+          // Its own counter, because `e.key > storedVer` cannot work for a
+          // newly added page: `onDone` writes the *build number* into
+          // `introVer`, so every key here is permanently below it for anyone
+          // who has ever completed an intro. Keyed on what the page is about
+          // rather than on when it was added, which is also what lets a change
+          // in what is collected ask again.
+          if (e.key == 3) {
+            return _setting.diagnosticsConsentVer.fetch() < kDiagnosticsConsentVer;
           }
           return e.key > storedVer;
         })

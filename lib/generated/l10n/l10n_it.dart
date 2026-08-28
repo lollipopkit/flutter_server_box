@@ -9,6 +9,38 @@ class AppLocalizationsIt extends AppLocalizations {
   AppLocalizationsIt([String locale = 'it']) : super(locale);
 
   @override
+  String get crashCollect => 'Rapporti di arresto anomalo';
+
+  @override
+  String get crashCollectIntro =>
+      'Quando ServerBox si arresta, registra cosa è successo per poter risolvere il problema. Scegli quanto di questo viene inviato.';
+
+  @override
+  String get crashCollectNone => 'Niente';
+
+  @override
+  String get crashCollectNoneTip =>
+      'Non viene inviato nulla. I rapporti restano su questo dispositivo e puoi comunque inviarne uno a mano dopo un arresto.';
+
+  @override
+  String get crashCollectBasic => 'Essenziale';
+
+  @override
+  String get crashCollectBasicTip =>
+      'L\'arresto e la versione in cui si è verificato. Non cosa stavi facendo.';
+
+  @override
+  String get crashCollectFull => 'Completo';
+
+  @override
+  String get crashCollectFullTip =>
+      'Anche i log e i dati sulle prestazioni durante l\'uso, non solo quando qualcosa si rompe. Invia di più e usa di più il server.';
+
+  @override
+  String get crashCollectFooter =>
+      'A ogni livello, nomi dei server, indirizzi e nomi utente vengono sostituiti da segnaposto già alla registrazione. Modificabile in seguito nelle impostazioni.';
+
+  @override
   String get crashUpload => 'Invia i rapporti di arresto anomalo';
 
   @override

@@ -9,6 +9,37 @@ class AppLocalizationsKo extends AppLocalizations {
   AppLocalizationsKo([String locale = 'ko']) : super(locale);
 
   @override
+  String get crashCollect => '충돌 보고서';
+
+  @override
+  String get crashCollectIntro =>
+      'ServerBox가 충돌하면 문제를 고칠 수 있도록 무슨 일이 있었는지 기록합니다. 그중 얼마나 전송할지 선택하세요.';
+
+  @override
+  String get crashCollectNone => '전송 안 함';
+
+  @override
+  String get crashCollectNoneTip =>
+      '아무것도 전송하지 않습니다. 보고서는 이 기기에 남아 있으며, 충돌 후 직접 보낼 수도 있습니다.';
+
+  @override
+  String get crashCollectBasic => '기본 정보';
+
+  @override
+  String get crashCollectBasicTip => '충돌 자체와 발생한 버전. 무엇을 하고 있었는지는 포함하지 않습니다.';
+
+  @override
+  String get crashCollectFull => '전체 정보';
+
+  @override
+  String get crashCollectFullTip =>
+      '앱이 실행되는 동안의 로그와 성능 데이터도 전송합니다. 문제가 생겼을 때만이 아닙니다. 전송량이 늘고 서버 부담도 커집니다.';
+
+  @override
+  String get crashCollectFooter =>
+      '모든 단계에서 서버 이름, 주소, 사용자 이름은 기록 시점에 자리 표시자로 대체됩니다. 나중에 설정에서 변경할 수 있습니다.';
+
+  @override
   String get crashUpload => '충돌 보고서 업로드';
 
   @override

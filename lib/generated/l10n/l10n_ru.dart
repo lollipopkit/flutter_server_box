@@ -9,6 +9,38 @@ class AppLocalizationsRu extends AppLocalizations {
   AppLocalizationsRu([String locale = 'ru']) : super(locale);
 
   @override
+  String get crashCollect => 'Отчёты о сбоях';
+
+  @override
+  String get crashCollectIntro =>
+      'Когда ServerBox падает, он записывает, что произошло, чтобы проблему можно было исправить. Выберите, какая часть этого отправляется.';
+
+  @override
+  String get crashCollectNone => 'Ничего';
+
+  @override
+  String get crashCollectNoneTip =>
+      'Ничего не отправляется. Отчёты остаются на устройстве, и после сбоя вы всё ещё можете отправить один вручную.';
+
+  @override
+  String get crashCollectBasic => 'Основное';
+
+  @override
+  String get crashCollectBasicTip =>
+      'Сам сбой и версия, в которой он произошёл. Без того, что вы делали.';
+
+  @override
+  String get crashCollectFull => 'Полностью';
+
+  @override
+  String get crashCollectFullTip =>
+      'Также журналы и данные о производительности во время работы приложения, а не только при сбоях. Отправляется больше данных и сильнее нагружается сервер.';
+
+  @override
+  String get crashCollectFooter =>
+      'На всех уровнях имена серверов, адреса и имена пользователей заменяются заполнителями уже при записи. Позже это можно изменить в настройках.';
+
+  @override
   String get crashUpload => 'Отправлять отчёты о сбоях';
 
   @override

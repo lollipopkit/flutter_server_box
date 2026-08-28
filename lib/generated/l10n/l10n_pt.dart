@@ -9,6 +9,38 @@ class AppLocalizationsPt extends AppLocalizations {
   AppLocalizationsPt([String locale = 'pt']) : super(locale);
 
   @override
+  String get crashCollect => 'Relatórios de falha';
+
+  @override
+  String get crashCollectIntro =>
+      'Quando o ServerBox falha, ele registra o que aconteceu para que o problema possa ser corrigido. Escolha quanto disso é enviado.';
+
+  @override
+  String get crashCollectNone => 'Nada';
+
+  @override
+  String get crashCollectNoneTip =>
+      'Nada é enviado. Os relatórios continuam neste dispositivo e você ainda pode enviar um manualmente após uma falha.';
+
+  @override
+  String get crashCollectBasic => 'Básico';
+
+  @override
+  String get crashCollectBasicTip =>
+      'A falha e a versão em que ocorreu. Não o que você estava fazendo.';
+
+  @override
+  String get crashCollectFull => 'Completo';
+
+  @override
+  String get crashCollectFullTip =>
+      'Também os registros e dados de desempenho enquanto o app roda, não apenas quando algo falha. Envia mais e usa mais do servidor.';
+
+  @override
+  String get crashCollectFooter =>
+      'Em todos os níveis, nomes de servidor, endereços e usuários são substituídos por marcadores já no registro. Pode ser alterado depois nas configurações.';
+
+  @override
   String get crashUpload => 'Enviar relatórios de falha';
 
   @override

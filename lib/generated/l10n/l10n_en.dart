@@ -9,6 +9,38 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get crashCollect => 'Crash reports';
+
+  @override
+  String get crashCollectIntro =>
+      'When ServerBox crashes, it records what happened so the problem can be fixed. Choose how much of that is sent.';
+
+  @override
+  String get crashCollectNone => 'Nothing';
+
+  @override
+  String get crashCollectNoneTip =>
+      'Nothing is sent. Reports are still kept on this device, and you can still send one by hand after a crash.';
+
+  @override
+  String get crashCollectBasic => 'Basics';
+
+  @override
+  String get crashCollectBasicTip =>
+      'The crash and the version it happened in. Not what you were doing.';
+
+  @override
+  String get crashCollectFull => 'Full';
+
+  @override
+  String get crashCollectFullTip =>
+      'Also the log and performance data while the app runs — not only when something breaks. Sends more, and uses more of the server.';
+
+  @override
+  String get crashCollectFooter =>
+      'Server names, addresses and usernames are replaced with placeholders before anything is recorded, at every level. You can change this later in Settings.';
+
+  @override
   String get crashUpload => 'Upload crash reports';
 
   @override

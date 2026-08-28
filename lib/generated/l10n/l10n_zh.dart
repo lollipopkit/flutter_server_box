@@ -9,6 +9,35 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get crashCollect => '崩溃报告';
+
+  @override
+  String get crashCollectIntro =>
+      'ServerBox 崩溃时会记录发生了什么，以便修复问题。你可以选择其中多少内容被发送。';
+
+  @override
+  String get crashCollectNone => '不发送';
+
+  @override
+  String get crashCollectNoneTip => '不发送任何内容。报告仍保留在本机，崩溃后你仍可手动发送。';
+
+  @override
+  String get crashCollectBasic => '基础信息';
+
+  @override
+  String get crashCollectBasicTip => '崩溃本身和所在版本，不包含你当时在做什么。';
+
+  @override
+  String get crashCollectFull => '完整信息';
+
+  @override
+  String get crashCollectFullTip =>
+      '还包括应用运行期间的日志和性能数据，而不只是出错时才发送。发送量更大，也更占用服务器资源。';
+
+  @override
+  String get crashCollectFooter => '所有级别下，服务器名称、地址和用户名在记录时就已替换为占位符。之后可在设置中更改。';
+
+  @override
   String get crashUpload => '上传崩溃报告';
 
   @override
@@ -1604,6 +1633,36 @@ class AppLocalizationsZh extends AppLocalizations {
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
 class AppLocalizationsZhTw extends AppLocalizationsZh {
   AppLocalizationsZhTw() : super('zh_TW');
+
+  @override
+  String get crashCollect => '當機報告';
+
+  @override
+  String get crashCollectIntro =>
+      'ServerBox 當機時會記錄發生了什麼，以便修復問題。你可以選擇其中多少內容被傳送。';
+
+  @override
+  String get crashCollectNone => '不傳送';
+
+  @override
+  String get crashCollectNoneTip => '不傳送任何內容。報告仍保留在本機，當機後你仍可手動傳送。';
+
+  @override
+  String get crashCollectBasic => '基礎資訊';
+
+  @override
+  String get crashCollectBasicTip => '當機本身和所在版本，不包含你當時在做什麼。';
+
+  @override
+  String get crashCollectFull => '完整資訊';
+
+  @override
+  String get crashCollectFullTip =>
+      '還包括應用執行期間的日誌和效能資料，而不只是出錯時才傳送。傳送量更大，也更佔用伺服器資源。';
+
+  @override
+  String get crashCollectFooter =>
+      '所有等級下，伺服器名稱、位址和使用者名稱在記錄時就已替換為預留位置。之後可在設定中更改。';
 
   @override
   String get crashUpload => '上傳當機報告';

@@ -9,6 +9,38 @@ class AppLocalizationsTr extends AppLocalizations {
   AppLocalizationsTr([String locale = 'tr']) : super(locale);
 
   @override
+  String get crashCollect => 'Çökme raporları';
+
+  @override
+  String get crashCollectIntro =>
+      'ServerBox çöktüğünde, sorun giderilebilsin diye ne olduğunu kaydeder. Bunun ne kadarının gönderileceğini seçin.';
+
+  @override
+  String get crashCollectNone => 'Hiçbir şey';
+
+  @override
+  String get crashCollectNoneTip =>
+      'Hiçbir şey gönderilmez. Raporlar bu cihazda kalır ve çökmeden sonra yine elle bir tane gönderebilirsiniz.';
+
+  @override
+  String get crashCollectBasic => 'Temel';
+
+  @override
+  String get crashCollectBasicTip =>
+      'Çökmenin kendisi ve gerçekleştiği sürüm. Ne yaptığınız değil.';
+
+  @override
+  String get crashCollectFull => 'Tam';
+
+  @override
+  String get crashCollectFullTip =>
+      'Uygulama çalışırken günlükler ve performans verileri de gönderilir, yalnızca bir şey bozulduğunda değil. Daha fazla veri gönderir ve sunucuyu daha çok kullanır.';
+
+  @override
+  String get crashCollectFooter =>
+      'Her düzeyde sunucu adları, adresler ve kullanıcı adları daha kaydedilirken yer tutucularla değiştirilir. Sonradan ayarlardan değiştirilebilir.';
+
+  @override
   String get crashUpload => 'Çökme raporlarını gönder';
 
   @override

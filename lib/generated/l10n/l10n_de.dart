@@ -9,6 +9,38 @@ class AppLocalizationsDe extends AppLocalizations {
   AppLocalizationsDe([String locale = 'de']) : super(locale);
 
   @override
+  String get crashCollect => 'Absturzberichte';
+
+  @override
+  String get crashCollectIntro =>
+      'Wenn ServerBox abstürzt, wird festgehalten, was passiert ist, damit das Problem behoben werden kann. Wählen Sie, wie viel davon gesendet wird.';
+
+  @override
+  String get crashCollectNone => 'Nichts';
+
+  @override
+  String get crashCollectNoneTip =>
+      'Es wird nichts gesendet. Berichte bleiben auf diesem Gerät, und Sie können nach einem Absturz weiterhin von Hand einen senden.';
+
+  @override
+  String get crashCollectBasic => 'Grunddaten';
+
+  @override
+  String get crashCollectBasicTip =>
+      'Der Absturz und die Version, in der er auftrat. Nicht, was Sie gerade taten.';
+
+  @override
+  String get crashCollectFull => 'Vollständig';
+
+  @override
+  String get crashCollectFullTip =>
+      'Zusätzlich Protokoll- und Leistungsdaten während der Nutzung, nicht nur wenn etwas schiefgeht. Sendet mehr und belastet den Server stärker.';
+
+  @override
+  String get crashCollectFooter =>
+      'Auf allen Stufen werden Servernamen, Adressen und Benutzernamen bereits beim Aufzeichnen durch Platzhalter ersetzt. Später in den Einstellungen änderbar.';
+
+  @override
   String get crashUpload => 'Absturzberichte hochladen';
 
   @override

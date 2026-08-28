@@ -9,6 +9,38 @@ class AppLocalizationsId extends AppLocalizations {
   AppLocalizationsId([String locale = 'id']) : super(locale);
 
   @override
+  String get crashCollect => 'Laporan kerusakan';
+
+  @override
+  String get crashCollectIntro =>
+      'Saat ServerBox mengalami kerusakan, aplikasi mencatat apa yang terjadi agar masalahnya bisa diperbaiki. Pilih seberapa banyak yang dikirim.';
+
+  @override
+  String get crashCollectNone => 'Tidak ada';
+
+  @override
+  String get crashCollectNoneTip =>
+      'Tidak ada yang dikirim. Laporan tetap tersimpan di perangkat ini, dan Anda masih bisa mengirimnya secara manual setelah kerusakan.';
+
+  @override
+  String get crashCollectBasic => 'Dasar';
+
+  @override
+  String get crashCollectBasicTip =>
+      'Kerusakan itu sendiri dan versi tempat terjadinya. Bukan apa yang sedang Anda lakukan.';
+
+  @override
+  String get crashCollectFull => 'Lengkap';
+
+  @override
+  String get crashCollectFullTip =>
+      'Juga log dan data performa selama aplikasi berjalan, bukan hanya saat terjadi masalah. Mengirim lebih banyak dan lebih membebani server.';
+
+  @override
+  String get crashCollectFooter =>
+      'Pada semua tingkat, nama server, alamat, dan nama pengguna sudah diganti dengan placeholder saat dicatat. Dapat diubah nanti di Pengaturan.';
+
+  @override
   String get crashUpload => 'Unggah laporan kerusakan';
 
   @override

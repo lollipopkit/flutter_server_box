@@ -13,7 +13,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:server_box/app.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/diag.dart';
-import 'package:server_box/core/service/crash_upload.dart';
+import 'package:server_box/core/service/diagnostics_upload.dart';
 import 'package:server_box/core/service/native_exit.dart';
 import 'package:server_box/core/service/watch_sync.dart';
 import 'package:server_box/core/service/widget_sync.dart';
@@ -296,7 +296,7 @@ Future<void> _doPlatformRelated() async {
   // user asked for it. Neither is true by default. Not awaited: the local sink
   // is already recording, and a slow or unreachable server must not hold up
   // startup to add a second destination for it.
-  unawaited(CrashUpload.sync());
+  unawaited(DiagnosticsUpload.sync());
 
   // Where the Linux userland is, and whether there is one — proot and an
   // unpacked rootfs on Android, the engine and its filesystem on iOS. A few

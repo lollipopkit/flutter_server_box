@@ -123,6 +123,60 @@ abstract class AppLocalizations {
     Locale('zh', 'TW'),
   ];
 
+  /// No description provided for @crashCollect.
+  ///
+  /// In en, this message translates to:
+  /// **'Crash reports'**
+  String get crashCollect;
+
+  /// No description provided for @crashCollectIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'When ServerBox crashes, it records what happened so the problem can be fixed. Choose how much of that is sent.'**
+  String get crashCollectIntro;
+
+  /// No description provided for @crashCollectNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing'**
+  String get crashCollectNone;
+
+  /// No description provided for @crashCollectNoneTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is sent. Reports are still kept on this device, and you can still send one by hand after a crash.'**
+  String get crashCollectNoneTip;
+
+  /// No description provided for @crashCollectBasic.
+  ///
+  /// In en, this message translates to:
+  /// **'Basics'**
+  String get crashCollectBasic;
+
+  /// No description provided for @crashCollectBasicTip.
+  ///
+  /// In en, this message translates to:
+  /// **'The crash and the version it happened in. Not what you were doing.'**
+  String get crashCollectBasicTip;
+
+  /// No description provided for @crashCollectFull.
+  ///
+  /// In en, this message translates to:
+  /// **'Full'**
+  String get crashCollectFull;
+
+  /// No description provided for @crashCollectFullTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Also the log and performance data while the app runs — not only when something breaks. Sends more, and uses more of the server.'**
+  String get crashCollectFullTip;
+
+  /// No description provided for @crashCollectFooter.
+  ///
+  /// In en, this message translates to:
+  /// **'Server names, addresses and usernames are replaced with placeholders before anything is recorded, at every level. You can change this later in Settings.'**
+  String get crashCollectFooter;
+
   /// No description provided for @crashUpload.
   ///
   /// In en, this message translates to:

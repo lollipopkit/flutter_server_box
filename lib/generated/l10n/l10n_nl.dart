@@ -9,6 +9,38 @@ class AppLocalizationsNl extends AppLocalizations {
   AppLocalizationsNl([String locale = 'nl']) : super(locale);
 
   @override
+  String get crashCollect => 'Crashrapporten';
+
+  @override
+  String get crashCollectIntro =>
+      'Wanneer ServerBox crasht, legt het vast wat er gebeurde zodat het probleem verholpen kan worden. Kies hoeveel daarvan wordt verstuurd.';
+
+  @override
+  String get crashCollectNone => 'Niets';
+
+  @override
+  String get crashCollectNoneTip =>
+      'Er wordt niets verstuurd. Rapporten blijven op dit apparaat en je kunt er na een crash nog steeds handmatig een sturen.';
+
+  @override
+  String get crashCollectBasic => 'Basis';
+
+  @override
+  String get crashCollectBasicTip =>
+      'De crash en de versie waarin die optrad. Niet wat je aan het doen was.';
+
+  @override
+  String get crashCollectFull => 'Volledig';
+
+  @override
+  String get crashCollectFullTip =>
+      'Ook de logboeken en prestatiegegevens tijdens gebruik, niet alleen als er iets misgaat. Verstuurt meer en belast de server zwaarder.';
+
+  @override
+  String get crashCollectFooter =>
+      'Op elk niveau worden servernamen, adressen en gebruikersnamen al bij het vastleggen vervangen door plaatsaanduidingen. Later te wijzigen in de instellingen.';
+
+  @override
   String get crashUpload => 'Crashrapporten uploaden';
 
   @override

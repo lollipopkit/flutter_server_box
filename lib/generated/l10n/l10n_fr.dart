@@ -9,6 +9,38 @@ class AppLocalizationsFr extends AppLocalizations {
   AppLocalizationsFr([String locale = 'fr']) : super(locale);
 
   @override
+  String get crashCollect => 'Rapports de plantage';
+
+  @override
+  String get crashCollectIntro =>
+      'Quand ServerBox plante, il enregistre ce qui s\'est passé afin que le problème puisse être corrigé. Choisissez la part qui est envoyée.';
+
+  @override
+  String get crashCollectNone => 'Rien';
+
+  @override
+  String get crashCollectNoneTip =>
+      'Rien n\'est envoyé. Les rapports restent sur cet appareil et vous pouvez toujours en envoyer un à la main après un plantage.';
+
+  @override
+  String get crashCollectBasic => 'L\'essentiel';
+
+  @override
+  String get crashCollectBasicTip =>
+      'Le plantage et la version où il s\'est produit. Pas ce que vous faisiez.';
+
+  @override
+  String get crashCollectFull => 'Complet';
+
+  @override
+  String get crashCollectFullTip =>
+      'Aussi les journaux et les données de performance pendant l\'utilisation, pas seulement en cas de problème. Envoie davantage et sollicite plus le serveur.';
+
+  @override
+  String get crashCollectFooter =>
+      'À tous les niveaux, les noms de serveurs, adresses et noms d\'utilisateur sont remplacés par des espaces réservés dès l\'enregistrement. Modifiable ensuite dans les réglages.';
+
+  @override
   String get crashUpload => 'Envoyer les rapports de plantage';
 
   @override

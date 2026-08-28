@@ -9,6 +9,38 @@ class AppLocalizationsUk extends AppLocalizations {
   AppLocalizationsUk([String locale = 'uk']) : super(locale);
 
   @override
+  String get crashCollect => 'Звіти про збої';
+
+  @override
+  String get crashCollectIntro =>
+      'Коли ServerBox аварійно завершується, він записує, що сталося, щоб проблему можна було виправити. Оберіть, яка частина цього надсилається.';
+
+  @override
+  String get crashCollectNone => 'Нічого';
+
+  @override
+  String get crashCollectNoneTip =>
+      'Нічого не надсилається. Звіти залишаються на цьому пристрої, і після збою ви все одно можете надіслати один вручну.';
+
+  @override
+  String get crashCollectBasic => 'Основне';
+
+  @override
+  String get crashCollectBasicTip =>
+      'Сам збій і версія, у якій він стався. Не те, що ви робили.';
+
+  @override
+  String get crashCollectFull => 'Повністю';
+
+  @override
+  String get crashCollectFullTip =>
+      'Також журнали та дані про продуктивність під час роботи застосунку, а не лише в разі збою. Надсилається більше даних і сильніше навантажується сервер.';
+
+  @override
+  String get crashCollectFooter =>
+      'На всіх рівнях імена серверів, адреси та імена користувачів замінюються заповнювачами вже під час запису. Пізніше це можна змінити в налаштуваннях.';
+
+  @override
   String get crashUpload => 'Надсилати звіти про збої';
 
   @override

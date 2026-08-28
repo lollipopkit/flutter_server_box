@@ -2,8 +2,15 @@ import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:sentry/sentry.dart' as sentry;
+import 'package:server_box/data/model/app/diagnostics_level.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
+
+/// The revision of the crash-collection notice.
+///
+/// Bumped when what is collected changes materially, which shows the intro
+/// page again — consent given for one arrangement is not consent for another.
+const kDiagnosticsConsentVer = 1;
 
 /// Sends what [Diag] records to a Sentry-compatible server, when the user has
 /// asked for it.
@@ -25,7 +32,7 @@ import 'package:server_box/data/res/store.dart';
 /// **Off unless the user turns it on.** That is the only gate, and it is the
 /// one F-Droid's Tracking anti-feature actually asks for: opt-in, disabled by
 /// default, and told plainly what is sent.
-abstract final class CrashUpload {
+abstract final class DiagnosticsUpload {
   /// Where reports go.
   ///
   /// Committed rather than injected, because a Sentry DSN is not a secret: it
@@ -54,28 +61,59 @@ abstract final class CrashUpload {
   /// that cannot do anything is worse than one that is not offered.
   static bool get availableInBuild => dsn.isNotEmpty;
 
-  static bool _started = false;
+  static DiagnosticsLevel? _started;
 
-  /// Starts or stops uploading to match the setting.
+  /// What the user has chosen.
+  static DiagnosticsLevel get level =>
+      DiagnosticsLevel.fromName(Stores.setting.diagnosticsLevel.fetch());
+
+  /// Starts, stops or re-levels uploading to match the setting.
   ///
   /// Safe to call whenever the setting changes, and at launch.
+  ///
+  /// Nothing is uploaded until the intro page explaining the levels has been
+  /// acknowledged. The default is `full`, so without this check a fresh
+  /// install would be sending before it had said anything — which is the
+  /// difference between "opt-in" and "on by default" in F-Droid's terms, and
+  /// the difference between asking and not in anyone else's.
   static Future<void> sync() async {
-    final wanted = availableInBuild && Stores.setting.crashUpload.fetch();
+    final acknowledged =
+        Stores.setting.diagnosticsConsentVer.fetch() >= kDiagnosticsConsentVer;
+    final wanted = availableInBuild && acknowledged && level.uploads
+        ? level
+        : null;
+
     if (wanted == _started) return;
-    if (wanted) {
-      await _start();
-    } else {
+    if (wanted == null) {
       await _stop();
+    } else if (_started == null) {
+      await _start(wanted);
+    } else if (_started!.streamsLogs != wanted.streamsLogs ||
+        _started!.tracesPerformance != wanted.tracesPerformance) {
+      // `enableLogs` and `tracesSampleRate` are read when the SDK is built, so
+      // moving between basic and full has to rebuild it. Breadcrumb filtering
+      // is read per call and would not have needed this.
+      await _stop();
+      await _start(wanted);
+    } else {
+      _started = wanted;
     }
   }
 
-  static Future<void> _start() async {
+  static Future<void> _start(DiagnosticsLevel wanted) async {
     try {
       await sentry.Sentry.init((options) {
         options.dsn = dsn;
         options.release = 'server_box@1.0.${BuildData.build}';
 
-        options.tracesSampleRate = 0;
+        // At `full` these two are what turn "report a crash" into "report what
+        // the app is doing": the log stream and traced operations arrive as
+        // they happen rather than being held until something breaks. They are
+        // also the only settings here whose cost scales with *use* rather than
+        // with failures, which is why they are the level's defining feature
+        // and not a default.
+        options.enableLogs = wanted.streamsLogs;
+        options.tracesSampleRate = wanted.tracesPerformance ? 1.0 : 0.0;
         // No IP address, no username, nothing the SDK infers. A crash report
         // is about a build and a code path, not about a person. It is the
         // default, and set anyway because a later SDK flipping it would be
@@ -90,14 +128,14 @@ abstract final class CrashUpload {
         // app supplying it.
         options.attachThreads = false;
       });
-      _started = true;
+      _started = wanted;
       Diag.install(FanOutSink([LocalDiagnosticsSink(), const SentrySink()]));
-      Loggers.app.info('Crash upload started');
+      Loggers.app.info('Crash upload started at ${wanted.name}');
     } catch (e, s) {
       // A bad DSN or an unreachable server must not stop the app, and must
       // not take the local log down with it.
       Loggers.app.warning('Crash upload failed to start', e, s);
-      _started = false;
+      _started = null;
     }
   }
 
@@ -106,7 +144,7 @@ abstract final class CrashUpload {
     // being shut down — and so withdrawing consent stops delivery rather than
     // asking the SDK to be quiet.
     Diag.install(LocalDiagnosticsSink());
-    _started = false;
+    _started = null;
     try {
       await sentry.Sentry.close();
     } catch (e, s) {
@@ -125,6 +163,10 @@ final class SentrySink extends DiagnosticsSink {
 
   @override
   void breadcrumb(Breadcrumb crumb) {
+    // The one thing `basic` withholds. A crumb is already redacted — it says
+    // "a machine on a LAN", not which — so this is not about identifiability
+    // but about how much of a session's shape leaves the device.
+    if (!DiagnosticsUpload.level.sendsBreadcrumbs) return;
     sentry.Sentry.addBreadcrumb(
       sentry.Breadcrumb(
         category: crumb.category.name,
@@ -146,6 +188,32 @@ final class SentrySink extends DiagnosticsSink {
             : (scope) => scope.setTag('source', source),
       ),
     );
+  }
+
+  /// Forwards the log stream, at `full` only.
+  ///
+  /// This is the one channel that carries traffic while nothing is wrong, so
+  /// it is gated on the level rather than on a sampling rate: a user who chose
+  /// `basic` asked for failures, not for a running commentary.
+  @override
+  void log(DiagLevel level, String message, {String? logger}) {
+    if (!DiagnosticsUpload.level.streamsLogs) return;
+    final attrs = logger == null
+        ? null
+        : {'logger': sentry.SentryAttribute.string(logger)};
+    // Fire-and-forget: a log line must never make the caller wait on a
+    // network round trip, and losing one to a dropped connection costs
+    // nothing that the local file has not already recorded.
+    switch (level) {
+      case DiagLevel.error:
+        unawaited(Future.value(sentry.Sentry.logger.error(message, attributes: attrs)));
+      case DiagLevel.warning:
+        unawaited(Future.value(sentry.Sentry.logger.warn(message, attributes: attrs)));
+      case DiagLevel.info:
+        unawaited(Future.value(sentry.Sentry.logger.info(message, attributes: attrs)));
+      case DiagLevel.debug:
+        unawaited(Future.value(sentry.Sentry.logger.debug(message, attributes: attrs)));
+    }
   }
 
   @override

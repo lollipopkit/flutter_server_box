@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/app/ask_ai_config.dart';
+import 'package:server_box/data/model/app/diagnostics_level.dart';
 import 'package:server_box/data/model/app/float_shell_config.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
@@ -291,13 +292,27 @@ class SettingStore extends SqliteStore {
     updateLastModified: false,
   );
 
-  /// Whether crash reports are uploaded, rather than only kept on the device.
+  /// How much of a crash is uploaded — see `DiagnosticsLevel`.
   ///
-  /// Defaults to false and stays false until the user says otherwise, which is
-  /// what keeps this clear of F-Droid's Tracking anti-feature — sending a
-  /// crash report without permission is the documented example of it. The
-  /// switch is only shown when the build has a DSN at all; see [CrashUpload].
-  late final crashUpload = propertyDefault('crashUpload', false);
+  /// Stored by name, never by index: an index changes meaning the moment a
+  /// case is inserted, and this value outlives the build that wrote it.
+  ///
+  /// Defaults to `full`, and nothing is uploaded until the user has been shown
+  /// the intro page that explains the three levels. That ordering is what
+  /// makes this "asked before it happens" rather than collection by surprise.
+  late final diagnosticsLevel = propertyDefault(
+    'diagnosticsLevel',
+    DiagnosticsLevel.full.name,
+  );
+
+  /// The revision of the crash-collection notice this install has seen.
+  ///
+  /// Its own counter rather than `introVer`, which is set to the *build
+  /// number* when an intro completes — so every key in `_builders` is
+  /// permanently below it for anyone who has ever seen one, and a newly added
+  /// page could never appear. Bumping `kDiagnosticsConsentVer` shows this again,
+  /// which is what a change to what is collected would need.
+  late final diagnosticsConsentVer = propertyDefault('diagnosticsConsentVer', 0);
 
   late final autoCheckAppUpdate = propertyDefault('autoCheckAppUpdate', true);
 

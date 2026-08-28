@@ -9,6 +9,36 @@ class AppLocalizationsJa extends AppLocalizations {
   AppLocalizationsJa([String locale = 'ja']) : super(locale);
 
   @override
+  String get crashCollect => 'クラッシュレポート';
+
+  @override
+  String get crashCollectIntro =>
+      'ServerBox がクラッシュしたとき、修正できるように何が起きたかを記録します。そのうちどこまでを送信するか選べます。';
+
+  @override
+  String get crashCollectNone => '送信しない';
+
+  @override
+  String get crashCollectNoneTip => '何も送信しません。レポートは端末に残り、クラッシュ後に手動で送ることもできます。';
+
+  @override
+  String get crashCollectBasic => '基本情報';
+
+  @override
+  String get crashCollectBasicTip => 'クラッシュ自体と、発生したバージョン。何をしていたかは含みません。';
+
+  @override
+  String get crashCollectFull => '詳細情報';
+
+  @override
+  String get crashCollectFullTip =>
+      'アプリの動作中のログとパフォーマンスデータも送信します（問題が起きたときだけではありません）。送信量が増え、サーバーの負荷も上がります。';
+
+  @override
+  String get crashCollectFooter =>
+      'どの段階でも、サーバー名・アドレス・ユーザー名は記録の時点でプレースホルダーに置き換えられます。設定であとから変更できます。';
+
+  @override
   String get crashUpload => 'クラッシュレポートを送信';
 
   @override
