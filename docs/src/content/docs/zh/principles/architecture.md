@@ -131,3 +131,17 @@ parser 以纯函数形式工作，只返回原始计数；差分和滑动窗口�
 Flutter 提供跨平台 UI，平台插件负责通知、后台服务、文件系统等系统能力。Rust 代码通过 `crates/sbm_ffi` 和 flutter_rust_bridge 暴露给 Dart，生成的 bindings 位于 `lib/src/rust/`。
 
 `crates/sbm_parser` 是共享的纯解析库；`crates/sbm_native` 仅供 Monitor agent 在服务器本机采样。App 不会在远程服务器上调用 `sbm_native`。
+
+## 安全架构
+
+### 数据保护
+
+- **密码 / SSH 密钥**：存储在加密的 SQLite 数据库中；加密密钥本身保存在平台安全存储（Keychain/Keystore）
+- **主机指纹**：安全存储
+- **会话数据**：不进行持久化
+
+### 连接安全
+
+- **主机密钥验证**：检测中间人攻击
+- **加密**：标准 SSH 加密
+- **不存储明文**：敏感数据不会以明文存储

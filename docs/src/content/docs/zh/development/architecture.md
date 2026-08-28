@@ -59,6 +59,10 @@ Drift 只负责 DDL（`lib/data/store/db.dart`）。连接由 `SqliteDb` 打开�
 
 Entity 的 primary key 使用生成的 ID，用户输入的 name 只作为可唯一约束的普通列。列表和 map 字段使用 child table，以便查询和级联删除。
 
+`Tables.syncRoots` 列出作为同步单元的表。每张都带 `updated_at` 和 `rev`；
+它们的子表两者都不带，随父记录一起移动，因此 tag 不会先于它所属的服务器到达。
+删除会在 `tombstone` 留下一行，否则对端会把记录的缺失读成新增并将其写回。
+
 ### 连接方式和能力
 
 服务器可以配置 SSH、Monitor HTTP，或同时配置两者。`preferredTransport` 只决定优先尝试的连接顺序，不会禁用另一种方式；首选连接失败时，App 可以回退到另一种连接。

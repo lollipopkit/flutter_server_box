@@ -46,7 +46,7 @@ sudo ./install.sh install
 ## 在 App 中添加
 
 1. 点击 **+** 添加服务器。
-2. 将连接方式切换为 **Monitor HTTP**。
+2. 打开 **Monitor HTTP** 开关。
 3. 填写：
    - **URL**：例如 `https://1.2.3.4:3770`
    - **Monitor User** / **Monitor Password**：agent 网页面板的登录凭据
@@ -70,6 +70,8 @@ agent 会通过 `GET /api/v1/capabilities` 告诉 App 当前允许的功能，Ap
 **`[remote_access.fs]`** 提供文件浏览，访问范围限制在 `roots` 指定的目录中。它独立于 `full_access`，因为文件 API 只授予目录范围内的访问，而 `full_access` 授予的是 shell。`roots` 没有默认值；启用文件 API 时必须明确指定目录。
 
 agent 会将请求解析为真实路径，跟随 symlink，并拒绝 `..` 路径。解析后的路径必须位于 `roots` 内部，因此指向 `/etc` 的 symlink 也不能绕过限制。将 `roots` 设为 `['/']` 几乎等同于授予 shell，agent 启动时会对此发出警告。
+
+除非配置 `[remote_access.fs] allow_insecure = true`，文件 API 也不会在明文 HTTP 上运行。只设置 `enabled` 和 `roots` 而没有 TLS，它仍然是关闭的。
 
 **`[remote_access.terminal]`** 同时为 App 和网页面板开启终端 endpoint。网页面板终端通过 SSH 连接 `ssh_addr`，权限与对应 SSH 账号相同；App 的无密码终端则在 `full_access` 开启时使用 agent 用户的本地 shell。仅有面板登录凭据并不会自动获得 shell。
 

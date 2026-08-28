@@ -124,7 +124,7 @@ test('returns server status', () async {
 | `test/hive_release_migration_test.dart` | 对每个 release fixture 运行 Hive import 和已注册的 migration |
 | `test/fixtures/hive_v{1466,1480,1491}/` | 这些 release 实际写出的 box、生成器和说明 |
 | `test/hive_import_test.dart` | 验证 import 的重试、幂等和按 box 进度 |
-| `test/m005_monitor_insecure_http_test.dart` | 验证 m005 的迁移行为 |
+| `test/m0NN_*_test.dart` | 每个 schema migration 一个，验证该步的迁移行为 |
 
 fixture 一旦进入 regression test，就不能重新生成来绕过失败。使用当前 adapter 生成数据只能证明当前版本与自己一致，不能证明它仍能读取旧 release 的格式。
 

@@ -23,11 +23,11 @@ description: 在运行 Server Box 的设备上打开 shell
 
 **iOS 不支持本机 shell。** App Store App 无法启动进程，沙盒中也没有可用于启动的 `/bin/sh`。
 
-## Alpine Linux 环境
+## Linux 环境
 
-如果平台不提供 shell，或者本机 shell 的能力有限，Server Box 可以安装独立的 Linux userland。目前默认提供 Alpine 3.22.5，也可以从 App 提供的 release 列表中选择其他版本。
+如果平台不提供 shell，或者本机 shell 的能力有限，Server Box 可以安装独立的 Linux userland。目前默认提供 Alpine 3.22.5，也可以从 App 提供的 release 列表中选择其他发行版和版本，包括 Debian 和 Ubuntu。
 
-它会在终端标签页中显示为 **Alpine <版本>**，紧邻本机 shell，因为二者都运行在同一设备上。打开更新提示后，可以在可用 release 中选择版本。
+它会在终端标签页中显示为 **<发行版> <版本>**，紧邻本机 shell，因为二者都运行在同一设备上。发行版和版本在安装时选择；更新只在同一 profile 内进行，不提供重新选择。
 
 Android 和 iOS 使用不同的实现：
 
@@ -42,7 +42,7 @@ Android 和 iOS 使用不同的实现：
 - 执行不希望直接在生产服务器上进行的临时操作
 - 为 Agent 提供与设备文件系统隔离的执行目标，详见[Agent](/docs/zh/advanced/agent/)
 
-Alpine 环境使用标准 Alpine userland，因此可以使用 `apk add` 安装软件包。
+环境使用对应发行版的标准 userland，因此可以使用它自带的包管理器安装软件包：Alpine 用 `apk add`，Debian 和 Ubuntu 用 `apt install`。
 
 ### 文件隔离
 

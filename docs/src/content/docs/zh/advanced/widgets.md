@@ -50,10 +50,12 @@ Watch App 需要 watchOS 10 或更高版本。它直接从 Monitor agent 获取�
 
 1. 在 iPhone 上打开 Server Box。
 2. 前往 **设置 → 应用 → iOS → Watch 应用**。
-3. 选择要显示的服务器；列表顺序决定手表上的翻页顺序。
+3. 排除不希望在手表上显示的服务器；其余的都会同步。
 4. 等待 Watch App 同步。
 
-**锁屏小组件**使用同一页的独立设置，只能选择一台服务器。
+手表上的翻页顺序按服务器名称排序，与 App 中的列表顺序无关。
+
+**锁屏小组件**没有独立的设置项。它和主屏幕小组件一样，在系统的小组件库中添加，并在那里选择服务器。
 
 ## 故障排除
 
@@ -74,5 +76,5 @@ Watch App 需要 watchOS 10 或更高版本。它直接从 Monitor agent 获取�
 ## 安全性
 
 - 尽可能使用 HTTPS。
-- 对非 loopback 的 HTTP 连接，必须在 App 和 Monitor agent 两端明确开启不安全 HTTP。
+- 对非 loopback 的 HTTP 连接，必须在 App 中为该服务器开启不安全 HTTP。
 - 不要把 Monitor 登录密码或小组件 token 写入公开文档或版本控制。

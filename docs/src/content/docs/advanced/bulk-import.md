@@ -44,6 +44,7 @@ The older flat format, with `ip`, `port`, `user`, and other fields at the top le
 | `name` | Yes | Server name shown in the App |
 | `ssh` | No | SSH configuration; omit for a server configured only through Monitor HTTP |
 | `monitorHttp` | No | Monitor agent configuration: `addr`, `user`, `pwd`, `ignoreCert`, `allowInsecure` |
+| `preferredTransport` | No | Which transport leads when both SSH and Monitor HTTP are configured: `ssh` or `monitorHttp`. SSH leads when omitted |
 | `tags` | No | Tags used to group servers |
 | `autoConnect` | No | Connect automatically when the App starts |
 | `custom` | No | Per-server extras such as `pveAddr`, `preferTempDev`, and `logoUrl` |

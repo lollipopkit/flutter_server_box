@@ -120,7 +120,7 @@ Every migration must keep a permanent regression test using bytes written by the
 | `test/hive_release_migration_test.dart` | Runs Hive import and the registered migrations against each release fixture |
 | `test/fixtures/hive_v{1466,1480,1491}/` | Boxes written by those releases, plus their generators and documentation |
 | `test/hive_import_test.dart` | Verifies import retry, idempotency, and per-box progress |
-| `test/m005_monitor_insecure_http_test.dart` | Verifies the m005 migration behavior |
+| `test/m0NN_*_test.dart` | One per schema migration, verifying that step's behavior |
 
 A fixture generated with the current adapter only proves that the current code agrees with itself. It cannot prove that the current decoder still reads the format written by an old release. Once a fixture is used for regression coverage, never regenerate it to make a failing test pass.
 

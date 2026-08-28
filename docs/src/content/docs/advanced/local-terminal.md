@@ -23,11 +23,11 @@ This shell runs on the device where Server Box is running. On platforms that sup
 
 **iOS does not provide a local shell.** An App Store App cannot start processes, and its sandbox contains no `/bin/sh` to start.
 
-## Alpine Linux userland
+## Linux userland
 
-If a platform does not provide a shell, or its local shell is limited, Server Box can install an independent Linux userland. The default release is currently Alpine 3.22.5, and other releases may be available in the App's release list.
+If a platform does not provide a shell, or its local shell is limited, Server Box can install an independent Linux userland. The default release is currently Alpine 3.22.5, and the App's release list may offer other distributions and versions, including Debian and Ubuntu.
 
-It appears in the terminal tab as **Alpine <version>**, beside the local shell because both run on the same device. When an update is available, the entry offers the newer release.
+It appears in the terminal tab as **<distribution> <version>**, beside the local shell because both run on the same device. The distribution and version are chosen at install time; an update stays within the same profile and offers no new choice.
 
 Android and iOS use different implementations:
 
@@ -42,7 +42,7 @@ Android and iOS use different implementations:
 - Perform temporary work that you do not want to run directly on a production server.
 - Give Agent an execution target isolated from the device filesystem; see [Agent](/docs/advanced/agent/).
 
-The Alpine userland is a standard Alpine environment, so `apk add` can install packages.
+Each userland is a standard environment for its distribution, so packages are installed with its own package manager: `apk add` on Alpine, `apt install` on Debian and Ubuntu.
 
 ### Filesystem isolation
 
