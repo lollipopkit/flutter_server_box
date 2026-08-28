@@ -573,6 +573,18 @@ class _HomePageState extends ConsumerState<HomePage>
 }
 
 
+extension _HomePageStateUtils on _HomePageState {
+  bool get _canRefreshServers {
+    if (isDesktop) return true;
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    if (lifecycle == null || lifecycle == AppLifecycleState.resumed) {
+      return true;
+    }
+    return isAndroid && Stores.setting.bgRun.fetch();
+  }
+}
+
+
 extension _HomePageStateActions on _HomePageState {
   void _handleHomeTabsChanged() {
     final newTabs = Stores.setting.homeTabs.fetch();
@@ -618,15 +630,6 @@ extension _HomePageStateActions on _HomePageState {
     } else {
       _stopServerRefreshCycle();
     }
-  }
-
-  bool get _canRefreshServers {
-    if (isDesktop) return true;
-    final lifecycle = WidgetsBinding.instance.lifecycleState;
-    if (lifecycle == null || lifecycle == AppLifecycleState.resumed) {
-      return true;
-    }
-    return isAndroid && Stores.setting.bgRun.fetch();
   }
 
   /// Starts a new polling cycle without letting its timer race the first run.
