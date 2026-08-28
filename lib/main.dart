@@ -245,6 +245,20 @@ void _setupDebug() {
       data: {'route': settings?.name ?? '-'},
     );
   });
+
+  // A no-op for the local sink, which writes synchronously — and installed
+  // anyway, because that is exactly the kind of thing that is forgotten until
+  // a sink that *does* buffer is added and quietly loses its last batch. Not
+  // `home.dart`'s lifecycle callback: that one returns early on desktop and
+  // only runs while the home page is mounted.
+  //
+  // Not held in a variable: the constructor registers it with the binding,
+  // which keeps it alive for as long as the process is, and it is never
+  // disposed.
+  AppLifecycleListener(
+    onPause: () => unawaited(Diag.flush()),
+    onDetach: () => unawaited(Diag.flush()),
+  );
 }
 
 Future<void> _doPlatformRelated() async {
