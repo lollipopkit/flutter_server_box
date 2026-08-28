@@ -22,24 +22,36 @@ import 'package:server_box/data/res/store.dart';
 /// package pulls in no transitive additions at all, which is the difference
 /// between a reviewable diff and an Android SDK for F-Droid to vet.
 ///
-/// **Off unless a build supplies a DSN, and off unless the user turns it on.**
-/// Those are two separate gates on purpose. The DSN is compile-time, so a
-/// build that was not given one — which is every build F-Droid makes from this
-/// source — has no upload path in it at all, and needs no anti-feature
-/// declaration. Where the path does exist, it is still opt-in and defaults to
-/// off, which is what keeps it clear of the Tracking anti-feature.
+/// **Off unless the user turns it on.** That is the only gate, and it is the
+/// one F-Droid's Tracking anti-feature actually asks for: opt-in, disabled by
+/// default, and told plainly what is sent.
 abstract final class CrashUpload {
-  /// Where reports go, injected at build time with
-  /// `--dart-define=SENTRY_DSN=...`.
+  /// Where reports go.
   ///
-  /// Never committed. A DSN in the source would ship in the F-Droid build too,
-  /// and the point of this arrangement is that it does not.
-  static const dsn = String.fromEnvironment('SENTRY_DSN');
+  /// Committed rather than injected, because a Sentry DSN is not a secret: it
+  /// ships inside every client that uses it, is recoverable from any build,
+  /// and grants only the ability to *write* events — it reads nothing back.
+  ///
+  /// The alternative was a build-time define, which would have left every
+  /// F-Droid build without an upload path. That sounds tidy and is the wrong
+  /// trade: opt-in and off-by-default is already what the anti-feature policy
+  /// requires, so the define bought no compliance — it only excluded the users
+  /// most likely to hit the crashes, since F-Droid is where a large part of
+  /// this app's Android install base comes from. All three open crash reports
+  /// are from that side.
+  ///
+  /// Still overridable with `--dart-define=SENTRY_DSN=...`, which is how a
+  /// build points at a test instance instead of the live one.
+  static const dsn = String.fromEnvironment(
+    'SENTRY_DSN',
+    defaultValue: 'https://b13cb67be5014853ac12fb760acf2b97@sentry.lollipopkit.com/1',
+  );
 
   /// Whether this build can upload at all.
   ///
-  /// Read by the settings page: an switch that cannot do anything is worse
-  /// than one that is not offered, and this is false in every F-Droid build.
+  /// Normally true; false only where a build deliberately defined an empty
+  /// DSN. The settings page hides the switch when it is false, since a switch
+  /// that cannot do anything is worse than one that is not offered.
   static bool get availableInBuild => dsn.isNotEmpty;
 
   static bool _started = false;
