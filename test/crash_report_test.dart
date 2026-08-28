@@ -15,6 +15,7 @@ void main() {
     String locale = 'zh_CN',
     Map<String, String> identifiers = const {},
     Map<String, String>? previousExit,
+    String? previousExitTrace,
     int maxLogChars = CrashReport.maxLogChars,
   }) => CrashReport.compose(
     log: log,
@@ -23,6 +24,7 @@ void main() {
     locale: locale,
     identifiers: identifiers,
     previousExit: previousExit,
+    previousExitTrace: previousExitTrace,
     maxLogChars: maxLogChars,
   );
 
@@ -56,6 +58,38 @@ void main() {
       lessThan(report.indexOf('### Log')),
       reason: 'it is environment, not a log line',
     );
+  });
+
+  test('the previous exit trace is a block of its own, ahead of the log', () {
+    // It describes the failure, while the log only leads up to it — and it is
+    // not in the log at all, since the platform hands it over on the launch
+    // after the crash.
+    final report = composed(
+      log: 'earlier',
+      previousExitTrace: 'frame #0 libsbm_ffi.so',
+    );
+
+    expect(report, contains('### Previous exit trace'));
+    expect(report, contains('frame #0 libsbm_ffi.so'));
+    expect(
+      report.indexOf('Previous exit trace'),
+      lessThan(report.indexOf('### Log')),
+    );
+  });
+
+  test('the trace is redacted like the log is', () {
+    final ids = CrashReport.knownIdentifiers([
+      spiFixture(name: 'prod-box', id: 'a'),
+    ]);
+
+    final report = composed(
+      log: 'x',
+      previousExitTrace: 'crash while talking to prod-box',
+      identifiers: ids,
+    );
+
+    expect(report, isNot(contains('prod-box')));
+    expect(report, contains('<server-1>'));
   });
 
   test('a run that ended normally says nothing about a previous exit', () {
@@ -166,6 +200,34 @@ void main() {
 
       expect(report, contains('<server-2>'));
       expect(report, isNot(contains('prod')));
+    });
+
+    test('a replacement is never itself substituted', () {
+      // `prod-server` becomes <server-1>; a key-by-key pass would then let
+      // `server` match *inside* that placeholder and produce
+      // `<<server-2>-1>`, which garbles the report and makes two machines
+      // read as one. The same trap exists for anything named host, user or
+      // agent.
+      final ids = CrashReport.knownIdentifiers([
+        spiFixture(name: 'prod-server', id: 'a'),
+        spiFixture(name: 'server', id: 'b'),
+      ]);
+
+      final report = composed(log: 'prod-server down', identifiers: ids);
+
+      expect(report, contains('<server-1> down'));
+      expect(report, isNot(contains('<<')));
+    });
+
+    test('a name colliding with a placeholder word is still safe', () {
+      final ids = CrashReport.knownIdentifiers([
+        spiFixture(name: 'host', id: 'a', user: 'user'),
+      ]);
+
+      final report = composed(log: 'host reached by user', identifiers: ids);
+
+      expect(report, isNot(contains('<<')));
+      expect(report, contains('<server-1>'));
     });
 
     test('a name too short to substitute safely is left alone', () {

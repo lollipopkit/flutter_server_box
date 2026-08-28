@@ -17,7 +17,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get crashReportHint =>
-      'Questo è il registro dell\'esecuzione precedente. Nomi dei server, indirizzi e nomi utente sono stati sostituiti da segnaposto, ma leggilo comunque prima di pubblicarlo. Copiando, il rapporto completo viene messo negli appunti.';
+      'Questo è il registro dell\'esecuzione precedente. I nomi e gli indirizzi dei server noti sono stati sostituiti da segnaposto, ma altri dettagli possono rimanere: leggilo prima di pubblicarlo. Copiando, il rapporto completo viene messo negli appunti.';
 
   @override
   String get crashReportSubmit => 'Copia e segnala';

@@ -17,7 +17,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get crashReportHint =>
-      'Ceci est le journal de l\'exécution précédente. Les noms de serveur, adresses et noms d\'utilisateur ont été remplacés par des espaces réservés — relisez-le tout de même avant de le publier. La copie place le rapport complet dans le presse-papiers.';
+      'Ceci est le journal de l\'exécution précédente. Les noms et adresses de serveurs connus ont été remplacés par des espaces réservés, mais d\'autres informations peuvent subsister — relisez-le avant de le publier. La copie place le rapport complet dans le presse-papiers.';
 
   @override
   String get crashReportSubmit => 'Copier et signaler';

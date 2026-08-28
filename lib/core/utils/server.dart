@@ -465,18 +465,21 @@ Future<SSHClient> genClient(
   // it was. Recorded before the socket is opened, since a connection that never
   // returns leaves no later crumb.
   //
-  // No-op on the transfer isolate, which installs no sink: statics are per
-  // isolate. Worth knowing rather than working around — that isolate is not the
-  // one a crash report comes from.
-  Diag.crumb(SbDiag.server, 'ssh connect', data: {
-    'server': Redact.id(spi.id),
-    'host': Redact.host(ssh.ip),
-    'via': switch (ssh) {
-      _ when spi.resolvedJumpIds.isNotEmpty => 'jump',
-      _ when ssh.proxyCommand != null => 'proxy',
-      _ => 'direct',
-    },
-  });
+  // Guarded, because the two `Redact` calls are two hash passes and a regex,
+  // and this runs per connection and again per jump hop. On the transfer
+  // isolate — which installs no sink, statics being per isolate — that would
+  // all be computed for a crumb nothing receives.
+  if (Diag.enabled) {
+    Diag.crumb(SbDiag.server, 'ssh connect', data: {
+      'server': Redact.id(spi.id),
+      'host': Redact.host(ssh.ip),
+      'via': switch (ssh) {
+        _ when spi.resolvedJumpIds.isNotEmpty => 'jump',
+        _ when ssh.proxyCommand != null => 'proxy',
+        _ => 'direct',
+      },
+    });
+  }
 
   onStatus?.call(GenSSHClientStatus.socket);
 

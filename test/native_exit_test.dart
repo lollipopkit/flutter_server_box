@@ -43,6 +43,8 @@ void main() {
   });
 
   tearDown(() async {
+    NativeExitReport.lastExit = null;
+    NativeExitReport.lastExitTrace = null;
     Diag.uninstall();
     await CrashLog.resetForTest();
     await getIt.reset();
@@ -60,6 +62,37 @@ void main() {
   test('an ANR and a Java crash count too', () {
     NativeExitReport.apply(record('anr'));
     expect(CrashLog.lastRunEndedBadly, isTrue);
+  });
+
+  test('a SIGKILL is a kill, not a crash', () {
+    // REASON_SIGNALED covers both an OEM task killer's SIGKILL (9) and a real
+    // fault (SIGSEGV 11, SIGABRT 6). Counting 9 would raise a crash prompt
+    // after every aggressive background kill, which on some ROMs is routine.
+    expect(NativeExitReport.isCrash('signaled', 9), isFalse);
+    expect(NativeExitReport.isCrash('signaled', 11), isTrue);
+    expect(NativeExitReport.isCrash('signaled', 6), isTrue);
+    expect(NativeExitReport.isCrash('crash_native', 11), isTrue);
+    expect(NativeExitReport.isCrash('low_memory', 0), isFalse);
+  });
+
+  test('a signaled kill does not raise the prompt end to end', () async {
+    NativeExitReport.apply({
+      'reason': 'signaled',
+      'timestamp': 7000,
+      'status': 9,
+    });
+
+    expect(CrashLog.lastRunEndedBadly, isFalse);
+    expect(await logged(), contains('signaled'));
+  });
+
+  test('the ANR trace is kept for the report, not only for the log', () async {
+    // The report is built from the *previous* run's file; this record arrives
+    // into the current one. Without holding it, the trace never reaches a
+    // report at all.
+    NativeExitReport.apply(record('anr', timestamp: 8000, trace: 'thread dump'));
+
+    expect(NativeExitReport.lastExitTrace, 'thread dump');
   });
 
   test('being reclaimed for memory is not a crash', () async {

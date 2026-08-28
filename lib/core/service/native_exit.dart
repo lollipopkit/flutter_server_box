@@ -27,6 +27,22 @@ abstract final class NativeExitReport {
   /// alone could never make.
   static const _crashReasons = {'crash', 'crash_native', 'anr', 'signaled'};
 
+  /// Whether a record describes something going wrong, rather than a run
+  /// ending.
+  ///
+  /// `signaled` needs [status] to answer, and the distinction is not academic
+  /// on this app's userbase: a SIGKILL (9) is what an OEM background killer
+  /// sends, and it is reported as `REASON_SIGNALED` exactly like a SIGSEGV
+  /// (11) or SIGABRT (6) would be. Counting it would raise a crash prompt
+  /// after every aggressive task-kill on the ROMs where that is routine —
+  /// which is the same mistake the reason list exists to avoid.
+  @visibleForTesting
+  static bool isCrash(String reason, Object? status) {
+    if (!_crashReasons.contains(reason)) return false;
+    if (reason == 'signaled' && status == 9) return false;
+    return true;
+  }
+
   /// The platform's account of how the previous run ended, once [collect] has
   /// seen it.
   ///
@@ -35,6 +51,15 @@ abstract final class NativeExitReport {
   /// the previous run's file. Without somewhere for it to be read from, the
   /// one thing a crash report would leave out is why the app crashed.
   static Map<String, String>? lastExit;
+
+  /// The previous run's native stack or ANR trace, when the platform had one.
+  ///
+  /// Separate from [lastExit] because it is large — a MetricKit call stack is
+  /// capped at 16 KB and an ANR trace is a full thread dump — and because it
+  /// belongs in a report as a block rather than as a field. Held for the same
+  /// reason: it describes the run that died and is only learned about after
+  /// that run's log has been closed.
+  static String? lastExitTrace;
 
   /// Folds the system's record into this run's log.
   ///
@@ -110,6 +135,9 @@ abstract final class NativeExitReport {
 
       final stack = record['callStack'];
       if (stack is String && stack.isNotEmpty) {
+        // A crash's stack wins over a hang's when both arrived, matching how
+        // [lastExit] is chosen.
+        if (kind == 'crash' || lastExitTrace == null) lastExitTrace = stack;
         CrashLog.write('--- metrickit $kind call stack ---\n$stack');
       }
     }
@@ -139,7 +167,7 @@ abstract final class NativeExitReport {
       Stores.setting.lastExitInfoTs.put(ts);
 
       final reason = '${info['reason']}';
-      final crashed = _crashReasons.contains(reason);
+      final crashed = isCrash(reason, info['status']);
 
       lastExit = {
         'reason': reason,
@@ -171,6 +199,10 @@ abstract final class NativeExitReport {
       // its stack rather than only its name.
       final trace = info['trace'];
       if (trace is String && trace.isNotEmpty) {
+        // Both: the file is what a developer reads on the device, and
+        // [lastExitTrace] is what reaches a report — which is assembled from
+        // the *previous* run's file, where this could never appear.
+        lastExitTrace = trace;
         CrashLog.write('--- previous exit ($reason) trace ---\n$trace');
       }
 

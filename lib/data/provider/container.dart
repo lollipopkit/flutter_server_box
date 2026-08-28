@@ -890,18 +890,21 @@ class ContainerNotifier extends _$ContainerNotifier {
     final generation = _refreshGeneration;
     final type = state.type;
     final containerHost = Stores.container.fetch(hostId, type);
+
+    // Before the engine prefix is prepended, so this reads the verb directly
+    // instead of slicing it back off by the length of `type.name` — which is
+    // only correct while that name and the literal below happen to match.
+    // `Redact.command` keeps the verb and drops the argument, which is a
+    // container the user named.
+    Diag.crumb(SbDiag.container, 'run', data: {
+      'engine': type.name,
+      'cmd': Redact.command(cmd),
+    });
+
     cmd = switch (type) {
       ContainerType.docker => 'docker $cmd',
       ContainerType.podman => 'podman $cmd',
     };
-
-    // One crumb for every container operation, since all of them come through
-    // here. The verb only — `Redact.command` drops the arguments, and the
-    // argument is a container id the user named.
-    Diag.crumb(SbDiag.container, 'run', data: {
-      'engine': type.name,
-      'cmd': Redact.command(cmd.substring(type.name.length + 1)),
-    });
 
     final target = refreshTarget ?? ContainerRefreshTarget.containers;
     final sudo = _sudoCompleters[target]!;

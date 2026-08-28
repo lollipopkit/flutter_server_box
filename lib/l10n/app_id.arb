@@ -2,7 +2,7 @@
   "@@locale": "id",
   "crashNoticeBody": "ServerBox tertutup tak terduga terakhir kali. Ingin melihat laporan kerusakan?",
   "crashReportTitle": "Laporan kerusakan",
-  "crashReportHint": "Ini adalah log dari sesi sebelumnya. Nama server, alamat, dan nama pengguna telah diganti dengan placeholder — tetap baca sebelum mengirim. Menyalin akan menaruh laporan lengkap di papan klip.",
+  "crashReportHint": "Ini adalah log dari sesi sebelumnya. Nama dan alamat server yang dikenal telah diganti dengan placeholder, tetapi detail lain mungkin tersisa — baca sebelum mengirim. Menyalin akan menaruh laporan lengkap di papan klip.",
   "crashReportSubmit": "Salin & laporkan",
   "acceptBeta": "Terima pembaruan versi uji coba",
   "addSystemPrivateKeyTip": "Saat ini tidak memiliki kunci privat, apakah Anda menambahkan kunci yang disertakan dengan sistem (~/.ssh/id_rsa)?",

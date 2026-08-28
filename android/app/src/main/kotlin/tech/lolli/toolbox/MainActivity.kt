@@ -135,7 +135,15 @@ class MainActivity: FlutterFragmentActivity() {
                     // out. Covers the crashes Dart cannot see at all: a SIGSEGV
                     // in the Rust FFI, in proot, or in sqlite.
                     "lastExitInfo" -> {
-                        result.success(lastExitInfo())
+                        // Off the main thread: an ANR trace is a full thread
+                        // dump and routinely hundreds of KB, and the Dart side
+                        // awaits this before the first frame. Reading it inline
+                        // would stall the UI thread on a device that has just
+                        // been shown to be struggling.
+                        Thread {
+                            val info = lastExitInfo()
+                            runOnUiThread { result.success(info) }
+                        }.start()
                     }
                     // Whether this app may post notifications at all. Without
                     // it there is no foreground service, and without that the

@@ -37,6 +37,7 @@ abstract final class CrashReport {
     locale: Platform.localeName,
     identifiers: knownIdentifiers(Stores.server.fetch()),
     previousExit: NativeExitReport.lastExit,
+    previousExitTrace: NativeExitReport.lastExitTrace,
   );
 
   /// Every string this install knows to be the user's, and what replaces it.
@@ -88,6 +89,7 @@ abstract final class CrashReport {
     required String locale,
     Map<String, String> identifiers = const {},
     Map<String, String>? previousExit,
+    String? previousExitTrace,
     int maxLogChars = maxLogChars,
   }) {
     final buf = StringBuffer()
@@ -108,6 +110,19 @@ abstract final class CrashReport {
       buf.writeln('- Previous exit: $fields');
     }
     buf.writeln();
+
+    // Before the log, because it describes the failure while the log only
+    // leads up to it — and because it is the part a reader wants first. It is
+    // not in the log at all: the platform hands it over on the launch after
+    // the crash, into a file this report does not read.
+    if (previousExitTrace != null && previousExitTrace.trim().isNotEmpty) {
+      buf.writeln('### Previous exit trace');
+      buf.writeln();
+      buf.writeln('```');
+      buf.writeln(_substitute(previousExitTrace.trimRight(), identifiers));
+      buf.writeln('```');
+      buf.writeln();
+    }
 
     if (log == null || log.trim().isEmpty) {
       // Says so rather than showing an empty fence. An empty log is itself
@@ -139,20 +154,29 @@ abstract final class CrashReport {
     return buf.toString();
   }
 
-  /// Applies [identifiers], longest match first.
+  /// Applies [identifiers] in a single pass, longest match first.
   ///
-  /// The ordering is not cosmetic: a server called `db` and one called
-  /// `db-prod` overlap, and replacing the short one first leaves
-  /// `<server-1>-prod` — which still says there is a `-prod` and has lost the
-  /// fact that the two lines named different machines.
+  /// One pass, and that is the point rather than an optimisation. Replacing
+  /// key by key means each pass can match inside a placeholder an earlier pass
+  /// wrote: with servers named `prod-server` and `server`, the first becomes
+  /// `<server-1>`, and the second's pass then rewrites the `server` inside it
+  /// into `<<server-2>-1>`. The same happens to anything named `host`, `user`
+  /// or `agent`. A scan over the original text can only match the original
+  /// text.
+  ///
+  /// Longest first is still needed, for a different overlap: a machine called
+  /// `db` and one called `db-prod` both match at the same position, and the
+  /// short one winning would leave `<server-1>-prod` — still disclosing
+  /// `-prod`, and no longer showing that two lines named different machines.
+  /// Alternation in a Dart regex is ordered, so sorting decides it.
   static String _substitute(String text, Map<String, String> identifiers) {
     if (identifiers.isEmpty) return text;
     final keys = identifiers.keys.toList()
       ..sort((a, b) => b.length.compareTo(a.length));
-    var out = text;
-    for (final key in keys) {
-      out = out.replaceAll(key, identifiers[key]!);
-    }
-    return out;
+    final pattern = RegExp(keys.map(RegExp.escape).join('|'));
+    return text.replaceAllMapped(
+      pattern,
+      (m) => identifiers[m[0]] ?? m[0]!,
+    );
   }
 }

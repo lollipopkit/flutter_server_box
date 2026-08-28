@@ -2,7 +2,7 @@
   "@@locale": "en",
   "crashNoticeBody": "ServerBox closed unexpectedly last time. Would you like to look at a crash report?",
   "crashReportTitle": "Crash report",
-  "crashReportHint": "This is the previous run's log. Server names, addresses and usernames have been replaced with placeholders — read it through before posting anyway. Copying puts the full report on the clipboard.",
+  "crashReportHint": "This is the previous run's log. Known server names and addresses have been replaced with placeholders, but other details may remain — read it through before posting. Copying puts the full report on the clipboard.",
   "crashReportSubmit": "Copy & report",
   "acceptBeta": "Accept beta version updates",
   "addSystemPrivateKeyTip": "Currently private keys don't exist, do you want to add the one that comes with the system (~/.ssh/id_rsa)?",

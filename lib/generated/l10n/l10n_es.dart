@@ -17,7 +17,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get crashReportHint =>
-      'Este es el registro de la ejecución anterior. Los nombres de servidor, direcciones y usuarios se han sustituido por marcadores, pero léelo antes de publicarlo de todos modos. Al copiar se coloca el informe completo en el portapapeles.';
+      'Este es el registro de la ejecución anterior. Los nombres y direcciones de servidor conocidos se han sustituido por marcadores, pero pueden quedar otros datos: léelo antes de publicarlo. Al copiar se coloca el informe completo en el portapapeles.';
 
   @override
   String get crashReportSubmit => 'Copiar e informar';

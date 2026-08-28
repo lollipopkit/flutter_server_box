@@ -275,7 +275,21 @@ class SettingStore extends SqliteStore {
   /// replaces it, and the records carry no id — the timestamp is the only thing
   /// telling two apart. Without this, one crash would raise the prompt on every
   /// launch after it, forever.
-  late final lastExitInfoTs = propertyDefault('lastExitInfoTs', 0);
+  /// Device-local twice over, which takes both the prefix and the flag.
+  ///
+  /// `updateLastModified: false` because a crash is not an edit: stamping the
+  /// sync clock for one would make a phone that merely crashed claim the newer
+  /// copy of every setting at the next merge.
+  ///
+  /// The internal-key prefix because the value must not travel. It is compared
+  /// against *this* device's `ApplicationExitInfo.timestamp`, so another
+  /// device's — which is simply a different clock reading — arriving here
+  /// would silently discard every crash older than it, permanently.
+  late final lastExitInfoTs = propertyDefault(
+    '${StoreDefaults.prefixKey}lastExitInfoTs',
+    0,
+    updateLastModified: false,
+  );
 
   late final autoCheckAppUpdate = propertyDefault('autoCheckAppUpdate', true);
 

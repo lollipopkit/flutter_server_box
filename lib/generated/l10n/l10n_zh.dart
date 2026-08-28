@@ -16,7 +16,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get crashReportHint =>
-      '这是上次运行的日志。服务器名称、地址和用户名已替换为占位符，但提交前仍请通读一遍。复制会将完整报告放入剪贴板。';
+      '这是上次运行的日志。已知的服务器名称和地址已替换为占位符，但可能仍有其他信息残留——提交前请通读一遍。复制会将完整报告放入剪贴板。';
 
   @override
   String get crashReportSubmit => '复制并反馈';
@@ -1606,7 +1606,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get crashReportHint =>
-      '這是上次執行的日誌。伺服器名稱、位址和使用者名稱已替換為預留位置，但提交前仍請通讀一遍。複製會將完整報告放入剪貼簿。';
+      '這是上次執行的日誌。已知的伺服器名稱和位址已替換為預留位置，但可能仍有其他資訊殘留——提交前請通讀一遍。複製會將完整報告放入剪貼簿。';
 
   @override
   String get crashReportSubmit => '複製並回報';

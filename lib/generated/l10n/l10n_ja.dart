@@ -16,7 +16,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get crashReportHint =>
-      'これは前回の実行ログです。サーバー名、アドレス、ユーザー名はプレースホルダーに置き換えられていますが、投稿する前に目を通してください。コピーすると完全なレポートがクリップボードに入ります。';
+      'これは前回の実行ログです。既知のサーバー名とアドレスはプレースホルダーに置き換えられていますが、他の情報が残っている場合があります——投稿する前に目を通してください。コピーすると完全なレポートがクリップボードに入ります。';
 
   @override
   String get crashReportSubmit => 'コピーして報告';

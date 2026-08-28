@@ -138,7 +138,7 @@ abstract class AppLocalizations {
   /// No description provided for @crashReportHint.
   ///
   /// In en, this message translates to:
-  /// **'This is the previous run\'s log. Server names, addresses and usernames have been replaced with placeholders — read it through before posting anyway. Copying puts the full report on the clipboard.'**
+  /// **'This is the previous run\'s log. Known server names and addresses have been replaced with placeholders, but other details may remain — read it through before posting. Copying puts the full report on the clipboard.'**
   String get crashReportHint;
 
   /// No description provided for @crashReportSubmit.

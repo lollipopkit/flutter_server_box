@@ -99,7 +99,15 @@ Future<void> _runInZone(Future<void> Function() body) async {
 
   await runZonedGuarded(
     body,
-    (e, s) => Loggers.app.warning('Zone error', e, s),
+    (e, s) {
+      // `CrashLog.handleErrors` also installs `PlatformDispatcher.onError`,
+      // and inside a guarded zone that handler is never reached: the zone
+      // takes async errors first, and the two are alternatives rather than
+      // layers. So this is the only place an uncaught async error is seen,
+      // and marking has to happen here or not at all.
+      Loggers.app.severe('Zone error', e, s);
+      CrashLog.markUnhandled();
+    },
     zoneSpecification: zoneSpec,
   );
 }
@@ -107,10 +115,16 @@ Future<void> _runInZone(Future<void> Function() body) async {
 Future<void> _initApp() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Before anything that can fail. What is worth catching most is what stops
-  // the app from finishing startup — a report of a launch crash is one nobody
-  // can open the Logs page to collect. Buffers until [_initData] gives it a
-  // path; nothing between here and there is lost.
+  // Before anything that can fail, so that a failure during startup is at
+  // least recorded — the errors worth catching most are the ones that stop the
+  // app from reaching a screen anyone could copy a log from.
+  //
+  // Bounded by what it can do without a path, and worth being exact about:
+  // lines are buffered here and written once [_initData] calls
+  // `CrashLog.attach`, but the marker is a file, so a failure *before* that
+  // call leaves no marker and the buffered lines are never written either.
+  // What covers that case is the platform's own record of the exit, which is
+  // read on the following launch — see [NativeExitReport].
   _setupDebug();
 
   // Shared parsing library (sbm_parser FFI, see the shared-parser design)
