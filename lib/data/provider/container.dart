@@ -5,6 +5,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/shell_quote.dart' as sh;
 import 'package:server_box/data/model/app/error.dart';
@@ -893,6 +894,14 @@ class ContainerNotifier extends _$ContainerNotifier {
       ContainerType.docker => 'docker $cmd',
       ContainerType.podman => 'podman $cmd',
     };
+
+    // One crumb for every container operation, since all of them come through
+    // here. The verb only — `Redact.command` drops the arguments, and the
+    // argument is a container id the user named.
+    Diag.crumb(SbDiag.container, 'run', data: {
+      'engine': type.name,
+      'cmd': Redact.command(cmd.substring(type.name.length + 1)),
+    });
 
     final target = refreshTarget ?? ContainerRefreshTarget.containers;
     final sudo = _sudoCompleters[target]!;

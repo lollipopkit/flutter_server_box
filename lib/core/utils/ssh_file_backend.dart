@@ -1,4 +1,6 @@
 import 'package:dartssh2/dartssh2.dart';
+import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/utils/scp_file_backend.dart';
 import 'package:server_box/core/utils/sftp_escalation.dart';
 import 'package:server_box/core/utils/sftp_file_backend.dart';
@@ -18,6 +20,11 @@ Future<FileBackend> openSshFileBackend(
   SftpEscalation? escalation,
   Duration? timeout,
 }) async {
+  // Which protocol carries files is per server and chosen by hand, so a report
+  // about the file browser is unreadable without it: SCP does list, stat and
+  // mkdir as shell commands, and fails in places SFTP has no equivalent of.
+  Diag.crumb(SbDiag.file, 'open backend', data: {'transport': transport.name});
+
   switch (transport) {
     case SshFileTransport.sftp:
       try {
@@ -27,6 +34,14 @@ Future<FileBackend> openSshFileBackend(
           timeout: timeout,
         );
       } catch (e) {
+        // The one failure with a user-facing consequence — the browser offers
+        // SCP after it — so it is worth separating from a generic error.
+        Diag.crumb(
+          SbDiag.file,
+          'sftp unavailable',
+          level: DiagLevel.warning,
+          data: {'error': Redact.error(e)},
+        );
         // Wrapped, not swallowed: the failure is reported as it always was,
         // and the wrapper is only so the page above can add the one sentence
         // that turns "SFTP failed" into something the user can act on. A host

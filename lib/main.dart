@@ -230,6 +230,20 @@ void _setupDebug() {
   // until they paste it into a report — which is also why a crumb has to be
   // publishable when it is written. See [Redact].
   Diag.install(LocalDiagnosticsSink());
+
+  // Where the user was is the cheapest context there is, and the one every
+  // report leaves out — two of the three open ones describe a route ("terminal,
+  // then Device") in prose because there was nowhere for it to be recorded.
+  //
+  // A route name is a path, not data: arguments travel in `args`, so this
+  // publishes `/server/detail` rather than which server.
+  AppRouteObserver.addListener((settings, type) {
+    Diag.crumb(
+      DiagCategory.nav,
+      type.name,
+      data: {'route': settings?.name ?? '-'},
+    );
+  });
 }
 
 Future<void> _doPlatformRelated() async {
