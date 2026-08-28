@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:logging/logging.dart';
 import 'package:server_box/core/utils/local_file_backend.dart';
+import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_key_unlock.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/bmc_credential.dart';
@@ -177,6 +178,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     if (keysChanged) {
       Stores.key.invalidate();
       PrivateKeyUnlock.forgetAll();
+      forgetParsedIdentities();
     }
     if (credsChanged) Stores.bmcCredential.invalidate();
     if (serversChanged) {

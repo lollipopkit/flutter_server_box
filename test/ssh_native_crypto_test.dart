@@ -17,6 +17,7 @@ import 'package:dartssh2/dartssh2.dart';
 // ignore_for_file: implementation_imports
 import 'package:dartssh2/src/hostkey/hostkey_ecdsa.dart';
 import 'package:dartssh2/src/hostkey/hostkey_ed25519.dart';
+import 'package:dartssh2/src/kex/kex_x25519.dart';
 import 'package:dartssh2/src/utils/bcrypt.dart' as builtin_bcrypt;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pinenacl/tweetnacl.dart';
@@ -46,6 +47,12 @@ void main() {
   const native = NativeSshCrypto();
 
   setUpAll(initRustLibForTest);
+  // Every 'agrees with pointycastle' comparison reaches its reference
+  // implementation through `SSHCipherType.createCipher`, which reads this
+  // global. A group that left it set would have those tests comparing the
+  // native implementation with itself, and passing.
+  setUp(() => sshCryptoBackend = null);
+  tearDown(() => sshCryptoBackend = null);
   _asymmetricTests(native);
 
   group('record cipher', () {
@@ -313,15 +320,31 @@ void main() {
 
     test('leaves an algorithm it does not implement on pointycastle', () {
       sshCryptoBackend = native;
-      // `hmac-md5` is implemented; a MAC nothing implements has no SSHMacType,
-      // so the case to check here is the AEAD cipher the transport handles
-      // itself — asked through the factory it must still come back usable.
-      final cipher = SSHCipherType.aes256ctr.createCipher(
-        _bytes(32),
-        _bytes(16),
-        forEncryption: true,
+
+      // `hmac-md5` and every cipher in `SSHCipherType` are implemented, so the
+      // only reachable unimplemented algorithm is one the backend is asked for
+      // by name. `SSHMacType` is where that happens.
+      expect(native.createMac('hmac-ripemd160', _bytes(20), 20), isNull);
+      expect(
+        native.createBlockCipher(
+          'aes256-gcm@openssh.com',
+          _bytes(32),
+          _bytes(12),
+          forEncryption: true,
+        ),
+        isNull,
       );
-      expect(cipher.blockSize, 16);
+
+      // And an implemented one still comes back native, so the null above is a
+      // refusal of that algorithm rather than of everything.
+      expect(
+        SSHCipherType.aes256ctr.createCipher(
+          _bytes(32),
+          _bytes(16),
+          forEncryption: true,
+        ),
+        isA<SSHBulkBlockCipher>(),
+      );
     });
   });
 }
@@ -405,15 +428,20 @@ void _asymmetricTests(NativeSshCrypto native) {
       expect(builtinAb, nativeAb);
     });
 
-    test('a low-order peer point is refused rather than fallen back from', () {
-      final a = native.x25519KeyPair()!;
-      // All-zero is the canonical low-order point. The built-in computes an
-      // all-zero secret for it without complaint, which is the case this
-      // refuses — so it must throw, not answer null.
-      expect(
-        () => native.x25519SharedSecret(a.$1, Uint8List(32)),
-        throwsA(anything),
-      );
+    test('a low-order peer point is refused end to end', () async {
+      // The refusal moved into `SSHKexX25519` so that it applies whether or not
+      // a backend is installed. What is checked here is that installing one
+      // does not route around it — the native side refuses, the seam falls
+      // back, and the built-in refuses too.
+      for (final backend in [null, native]) {
+        sshCryptoBackend = backend;
+        final kex = await SSHKexX25519.createAsync();
+        expect(
+          () => kex.computeSecretAsync(Uint8List(32)),
+          throwsA(isA<SSHHandshakeError>()),
+          reason: 'backend: ${backend == null ? 'none' : 'native'}',
+        );
+      }
     });
   });
 

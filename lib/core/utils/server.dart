@@ -69,6 +69,32 @@ List<(List<SSHKeyPair>, String?)> loadIdentitiesEach(List<String> keys) {
 /// same PEM decoded.
 final _identityCache = <String, (List<SSHKeyPair>, String?)>{};
 
+/// Parses already running, by the PEM they are parsing.
+///
+/// Without this the cache pays off only on a reconnect. Ten servers sharing one
+/// key reach [identitiesOf] in the same turn, before any `compute` has
+/// returned, so every one of them finds the cache empty and starts its own
+/// isolate — which is the launch this exists to fix.
+/// `PrivateKeyUnlock` joins its in-flight unlocks the same way.
+final _identityParses = <String, Future<void>>{};
+
+/// Drops what has been parsed, for a key that is no longer what it was.
+///
+/// Two reasons, and the second is the one that is easy to miss. A key edited or
+/// deleted leaves its decrypted PEM in [_identityCache] as a map *key*, so
+/// "holds no secret the process was not already holding" stops being true the
+/// moment `PrivateKeyUnlock.forget` runs. And a PEM that failed to parse is
+/// cached as a failure, so a key repaired outside the app would keep reporting
+/// unreadable until the next launch.
+///
+/// Clears everything rather than one entry: the cache is keyed by PEM content
+/// and the caller has an id, so there is nothing to match on — and rebuilding
+/// it costs one parse per key still in use.
+void forgetParsedIdentities() {
+  _identityCache.clear();
+  _identityParses.clear();
+}
+
 /// The key pairs [keys] decode to, parsing only the ones not already parsed.
 ///
 /// Keeps [loadIdentitiesEach]'s tolerance: a PEM that will not parse is
@@ -77,13 +103,36 @@ final _identityCache = <String, (List<SSHKeyPair>, String?)>{};
 Future<List<SSHKeyPair>> identitiesOf(List<String> keys) async {
   final missing = [
     for (final key in keys.toSet())
-      if (!_identityCache.containsKey(key)) key,
+      if (!_identityCache.containsKey(key) && !_identityParses.containsKey(key))
+        key,
   ];
   if (missing.isNotEmpty) {
-    final parsed = await compute(loadIdentitiesEach, missing);
-    for (var i = 0; i < missing.length; i++) {
-      _identityCache[missing[i]] = parsed[i];
+    final parse = compute(loadIdentitiesEach, missing).then((parsed) {
+      for (var i = 0; i < missing.length; i++) {
+        _identityCache[missing[i]] = parsed[i];
+      }
+    });
+    // Recorded before the first `await`, so the servers connecting in the same
+    // turn join this rather than each starting their own.
+    for (final key in missing) {
+      _identityParses[key] = parse;
     }
+    try {
+      await parse;
+    } finally {
+      for (final key in missing) {
+        if (identical(_identityParses[key], parse)) _identityParses.remove(key);
+      }
+    }
+  }
+
+  // A parse another caller started, which may have been running before this
+  // one was called.
+  final joining = {
+    for (final key in keys.toSet()) ?_identityParses[key],
+  };
+  for (final parse in joining) {
+    await parse;
   }
 
   final identities = <SSHKeyPair>[];

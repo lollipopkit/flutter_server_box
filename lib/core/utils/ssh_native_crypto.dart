@@ -84,18 +84,26 @@ final class NativeSshCrypto extends SSHCryptoBackend {
     }
   }
 
-  /// Unlike the rest, a failure here is **not** swallowed.
+  /// Falls back like the rest, which it could not do until dartssh2 refused a
+  /// low-order peer point itself.
   ///
-  /// The one thing this refuses is a low-order peer point, which is not "the
-  /// library could not do it" but a peer forcing a secret both sides would
-  /// share with it. Answering `null` would fall back to the built-in, which
-  /// does not check, and complete the exchange anyway.
+  /// While this was the only place that checked, answering `null` here would
+  /// have fallen through to an implementation that did not — so a failure of
+  /// any kind had to take the connection down rather than risk completing an
+  /// exchange on a secret the peer chose. `SSHKexX25519._secretFrom` now
+  /// refuses an all-zero secret on every path, so a library that will not load
+  /// is once again just a slower connection.
   @override
   Uint8List? x25519SharedSecret(Uint8List privateKey, Uint8List peerPublicKey) {
-    return asym.x25519SharedSecret(
-      privateKey: privateKey,
-      peerPublicKey: peerPublicKey,
-    );
+    try {
+      return asym.x25519SharedSecret(
+        privateKey: privateKey,
+        peerPublicKey: peerPublicKey,
+      );
+    } catch (e) {
+      _reportOnce('x25519 shared secret', e);
+      return null;
+    }
   }
 
   @override
@@ -206,7 +214,16 @@ int? _curveWidth(String curveId) => switch (curveId) {
 /// leading zeroes is shorter than the field and one that needed a sign byte is
 /// longer. The native side takes the field width, so the conversion happens
 /// here rather than being guessed at either end.
+///
+/// Neither failure names [v]. For `ecdsaSign` it is the private scalar, and the
+/// caller puts the error it catches into a log line.
 Uint8List _fixedWidth(BigInt v, int width) {
+  // Silently wrong without this: the loop below does nothing for a negative
+  // value and the overflow check after it does not fire either, so a negative
+  // `r` off the wire became a run of zero bytes.
+  if (v.isNegative) {
+    throw ArgumentError('a negative value has no fixed-width encoding');
+  }
   final out = Uint8List(width);
   var x = v;
   for (var i = width - 1; i >= 0 && x > BigInt.zero; i--) {
@@ -214,7 +231,7 @@ Uint8List _fixedWidth(BigInt v, int width) {
     x = x >> 8;
   }
   if (x > BigInt.zero) {
-    throw ArgumentError.value(v, 'v', 'does not fit in $width bytes');
+    throw ArgumentError('does not fit in $width bytes');
   }
   return out;
 }
@@ -251,8 +268,13 @@ final class _NativeBlockCipher implements SSHBulkBlockCipher {
   @override
   Uint8List processBulk(Uint8List data) => _cipher.process(data: data);
 
+  /// One block, which is what pointycastle's `BlockCipher.process` is: it
+  /// consumes `blockSize` bytes and ignores the rest. Passing the whole input
+  /// through would advance the cipher further than the caller asked and give a
+  /// different answer from the implementation this replaces.
   @override
-  Uint8List process(Uint8List data) => _cipher.process(data: data);
+  Uint8List process(Uint8List data) =>
+      _cipher.process(data: Uint8List.sublistView(data, 0, blockSize));
 
   @override
   int processBlock(Uint8List inp, int inpOff, Uint8List out, int outOff) {

@@ -207,23 +207,25 @@ impl SshMac {
     /// to use its own implementation rather than a failure.
     #[flutter_rust_bridge::frb(sync)]
     pub fn new(algorithm: String, key: Vec<u8>, mac_size: u32) -> Result<SshMac, String> {
-        // HMAC takes a key of any length, so there is nothing to validate here
-        // the way there is for a cipher — RFC 2104 hashes one that is longer
-        // than the block and zero-pads one that is shorter. That is also why
-        // `new_from_slice`, which only rejects a length the algorithm forbids,
-        // is unwrapped rather than propagated.
+        // HMAC takes a key of any length, so nothing is validated here the way
+        // it is for a cipher — RFC 2104 hashes one longer than the block and
+        // zero-pads one shorter. `new_from_slice` should therefore never fail,
+        // but the signature already carries a `Result` and a wrong guess about
+        // a third-party crate would otherwise be a panic unwinding into Dart
+        // mid-handshake, where an `Err` is a fall back to pointycastle.
+        let keyed = |e| format!("{algorithm} rejected a {}-byte key: {e}", key.len());
         let state = match algorithm.as_str() {
             "hmac-md5" => MacState::Md5(
-                hmac::Hmac::new_from_slice(&key).expect("HMAC takes any key length"),
+                hmac::Hmac::new_from_slice(&key).map_err(keyed)?,
             ),
             "hmac-sha1" => MacState::Sha1(
-                hmac::Hmac::new_from_slice(&key).expect("HMAC takes any key length"),
+                hmac::Hmac::new_from_slice(&key).map_err(keyed)?,
             ),
             "hmac-sha2-256" => MacState::Sha256(
-                hmac::Hmac::new_from_slice(&key).expect("HMAC takes any key length"),
+                hmac::Hmac::new_from_slice(&key).map_err(keyed)?,
             ),
             "hmac-sha2-512" => MacState::Sha512(
-                hmac::Hmac::new_from_slice(&key).expect("HMAC takes any key length"),
+                hmac::Hmac::new_from_slice(&key).map_err(keyed)?,
             ),
             other => return Err(format!("unsupported mac: {other}")),
         };
