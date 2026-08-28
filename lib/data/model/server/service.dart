@@ -1,5 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 
 enum ServiceAction {
   start,
@@ -22,7 +23,9 @@ enum ServiceAction {
     start => libL10n.start,
     stop => libL10n.stop,
     restart => libL10n.restart,
-    _ => name.capitalize,
+    status => l10n.status,
+    enable => l10n.enable,
+    disable => l10n.disable,
   };
 }
 
@@ -91,8 +94,9 @@ enum ServiceState {
     running => libL10n.running,
     stopped => libL10n.stopped,
     failed => libL10n.fail,
+    starting => l10n.starting,
+    stopping => l10n.stopping,
     unknown => libL10n.unknown,
-    _ => name.capitalize,
   };
 }
 

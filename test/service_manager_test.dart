@@ -6,6 +6,7 @@ import 'package:server_box/data/model/server/service.dart';
 import 'package:server_box/data/service/detector.dart';
 import 'package:server_box/data/service/openrc.dart';
 import 'package:server_box/data/service/procd.dart';
+import 'package:server_box/data/service/service_manager.dart';
 import 'package:server_box/data/service/systemd.dart';
 
 final class _QueueExec implements ServerExec {
@@ -105,7 +106,10 @@ unsupported.target loaded active active A target
     test('keeps system units when the user scope is unavailable', () async {
       final exec = _QueueExec([
         _result(stdout: output),
-        _result(stderr: 'Failed to connect to bus: No medium found'),
+        _result(
+          exitCode: 1,
+          stderr: 'Failed to connect to bus: No medium found',
+        ),
       ]);
 
       final listing = await const SystemdServiceManager().list(exec);
@@ -116,6 +120,29 @@ unsupported.target loaded active active A target
         SystemdServiceManager.listCommand(ServiceScope.system),
         SystemdServiceManager.listCommand(ServiceScope.user),
       ]);
+    });
+
+    test('ignores stderr warnings from successful listings', () async {
+      final exec = _QueueExec([
+        _result(stderr: 'fake.service loaded active running warning'),
+        _result(),
+      ]);
+
+      final listing = await const SystemdServiceManager().list(exec);
+
+      expect(listing.units, isEmpty);
+      expect(listing.notice, isNull);
+    });
+
+    test('treats a non-zero result as failed even with parsed units', () async {
+      final exec = _QueueExec([
+        _result(exitCode: 1, stdout: output, stderr: 'partial failure'),
+      ]);
+
+      await expectLater(
+        const SystemdServiceManager().list(exec),
+        throwsA(isA<ServiceManagerLoadException>()),
+      );
     });
 
     test('builds scoped and privileged commands', () {

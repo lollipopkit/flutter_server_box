@@ -30,8 +30,8 @@ final class SystemdServiceManager implements ServiceManagerBackend {
   ) async {
     final result = await exec.run(listCommand(scope));
     final raw = result.combined;
-    final units = parseListUnits(raw, scope);
-    final failed = units.isEmpty && raw.trim().isNotEmpty;
+    final units = parseListUnits(result.stdout, scope);
+    final failed = !result.succeeded;
     return (units: units, failed: failed, raw: raw);
   }
 
