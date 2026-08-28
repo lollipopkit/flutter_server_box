@@ -63,10 +63,7 @@ const _kTagBarSideRoom = 80.0;
 const _kFlightDuration = Durations.medium3;
 
 class _ServerPageState extends ConsumerState<ServerPage>
-    with
-        AutomaticKeepAliveClientMixin,
-        AfterLayoutMixin,
-        TickerProviderStateMixin {
+    with AutomaticKeepAliveClientMixin, TickerProviderStateMixin {
   double _textFactorDouble = 1.0;
   final ValueNotifier<double> _offsetNotifier = ValueNotifier(1);
   TextScaler _textFactor = TextScaler.linear(1.0);
@@ -545,12 +542,6 @@ class _ServerPageState extends ConsumerState<ServerPage>
 
   @override
   bool get wantKeepAlive => true;
-
-  @override
-  Future<void> afterFirstLayout(BuildContext context) async {
-    ref.read(serversProvider.notifier).refresh();
-    ref.read(serversProvider.notifier).startAutoRefresh();
-  }
 
   static const _kCardHeightMin = 23.0;
   static const _kCardHeightFlip = 99.0;
