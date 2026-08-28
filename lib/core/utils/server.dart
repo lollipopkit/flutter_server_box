@@ -76,7 +76,16 @@ final _identityCache = <String, (List<SSHKeyPair>, String?)>{};
 /// returned, so every one of them finds the cache empty and starts its own
 /// isolate — which is the launch this exists to fix.
 /// `PrivateKeyUnlock` joins its in-flight unlocks the same way.
-final _identityParses = <String, Future<void>>{};
+///
+/// Each future carries **what it parsed**, rather than only signalling that it
+/// finished. A joiner that had to read the answer back out of [_identityCache]
+/// would be reading a map that anything on this isolate can empty while it is
+/// suspended — [forgetParsedIdentities] is called straight out of a button
+/// handler — and would find its own entry gone.
+final _identityParses = <String, Future<Map<String, _Parsed>>>{};
+
+/// What one PEM decoded to: its key pairs, or why it failed.
+typedef _Parsed = (List<SSHKeyPair>, String?);
 
 /// Drops what has been parsed, for a key that is no longer what it was.
 ///
@@ -101,22 +110,40 @@ void forgetParsedIdentities() {
 /// skipped, and the failure is only raised when *nothing* parsed — a server
 /// listing several keys authenticates with whichever of them is usable.
 Future<List<SSHKeyPair>> identitiesOf(List<String> keys) async {
-  final missing = [
-    for (final key in keys.toSet())
-      if (!_identityCache.containsKey(key) && !_identityParses.containsKey(key))
-        key,
-  ];
+  // Answered out of `parsed`, which is this call's own, rather than by reading
+  // [_identityCache] back at the end. The cache is an optimisation that any
+  // turn can empty; what this was asked about is the bytes it was handed, and
+  // a key deleted while the parse ran does not make those bytes something else.
+  final parsed = <String, _Parsed>{};
+  final joining = <Future<Map<String, _Parsed>>>{};
+  final missing = <String>[];
+
+  for (final key in keys.toSet()) {
+    switch ((_identityCache[key], _identityParses[key])) {
+      case (final cached?, _):
+        parsed[key] = cached;
+      case (_, final running?):
+        joining.add(running);
+      default:
+        missing.add(key);
+    }
+  }
+
   if (missing.isNotEmpty) {
-    final parse = compute(loadIdentitiesEach, missing).then((parsed) {
+    final parse = compute(loadIdentitiesEach, missing).then((results) {
+      final done = <String, _Parsed>{};
       for (var i = 0; i < missing.length; i++) {
-        _identityCache[missing[i]] = parsed[i];
+        done[missing[i]] = results[i];
+        _identityCache[missing[i]] = results[i];
       }
+      return done;
     });
     // Recorded before the first `await`, so the servers connecting in the same
     // turn join this rather than each starting their own.
     for (final key in missing) {
       _identityParses[key] = parse;
     }
+    joining.add(parse);
     try {
       await parse;
     } finally {
@@ -126,21 +153,23 @@ Future<List<SSHKeyPair>> identitiesOf(List<String> keys) async {
     }
   }
 
-  // A parse another caller started, which may have been running before this
-  // one was called.
-  final joining = {
-    for (final key in keys.toSet()) ?_identityParses[key],
-  };
   for (final parse in joining) {
-    await parse;
+    parsed.addAll(await parse);
   }
 
   final identities = <SSHKeyPair>[];
   String? lastError;
   for (final key in keys) {
-    final (pairs, error) = _identityCache[key]!;
-    identities.addAll(pairs);
-    if (error != null) lastError = error;
+    final entry = parsed[key];
+    // Every key was cached, joined or parsed above, so this holds. Stated
+    // rather than asserted with `!`, which fails as a bare null check with
+    // nothing saying what went wrong. The key is not named: `key` is the PEM
+    // itself, and the caller puts what it catches into a message.
+    if (entry == null) {
+      throw StateError('identitiesOf: a requested key was never parsed');
+    }
+    identities.addAll(entry.$1);
+    if (entry.$2 != null) lastError = entry.$2;
   }
   if (identities.isEmpty && lastError != null) {
     throw PrivateKeyParseException(lastError);
