@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'systemd.dart';
+part of 'services.dart';
 
 // **************************************************************************
 // RiverpodGenerator
@@ -9,47 +9,47 @@ part of 'systemd.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(SystemdNotifier)
-final systemdProvider = SystemdNotifierFamily._();
+@ProviderFor(ServicesNotifier)
+final servicesProvider = ServicesNotifierFamily._();
 
-final class SystemdNotifierProvider
-    extends $NotifierProvider<SystemdNotifier, SystemdState> {
-  SystemdNotifierProvider._({
-    required SystemdNotifierFamily super.from,
+final class ServicesNotifierProvider
+    extends $NotifierProvider<ServicesNotifier, ServicesState> {
+  ServicesNotifierProvider._({
+    required ServicesNotifierFamily super.from,
     required Spi super.argument,
   }) : super(
          retry: null,
-         name: r'systemdProvider',
+         name: r'servicesProvider',
          isAutoDispose: true,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
 
   @override
-  String debugGetCreateSourceHash() => _$systemdNotifierHash();
+  String debugGetCreateSourceHash() => _$servicesNotifierHash();
 
   @override
   String toString() {
-    return r'systemdProvider'
+    return r'servicesProvider'
         ''
         '($argument)';
   }
 
   @$internal
   @override
-  SystemdNotifier create() => SystemdNotifier();
+  ServicesNotifier create() => ServicesNotifier();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(SystemdState value) {
+  Override overrideWithValue(ServicesState value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<SystemdState>(value),
+      providerOverride: $SyncValueProvider<ServicesState>(value),
     );
   }
 
   @override
   bool operator ==(Object other) {
-    return other is SystemdNotifierProvider && other.argument == argument;
+    return other is ServicesNotifierProvider && other.argument == argument;
   }
 
   @override
@@ -58,47 +58,47 @@ final class SystemdNotifierProvider
   }
 }
 
-String _$systemdNotifierHash() => r'9175306a987f4d4c23d603db4666b1e3bdae1d08';
+String _$servicesNotifierHash() => r'104d8daccce8338d3beb8464227ed1c3e384d996';
 
-final class SystemdNotifierFamily extends $Family
+final class ServicesNotifierFamily extends $Family
     with
         $ClassFamilyOverride<
-          SystemdNotifier,
-          SystemdState,
-          SystemdState,
-          SystemdState,
+          ServicesNotifier,
+          ServicesState,
+          ServicesState,
+          ServicesState,
           Spi
         > {
-  SystemdNotifierFamily._()
+  ServicesNotifierFamily._()
     : super(
         retry: null,
-        name: r'systemdProvider',
+        name: r'servicesProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
         isAutoDispose: true,
       );
 
-  SystemdNotifierProvider call(Spi spi) =>
-      SystemdNotifierProvider._(argument: spi, from: this);
+  ServicesNotifierProvider call(Spi spi) =>
+      ServicesNotifierProvider._(argument: spi, from: this);
 
   @override
-  String toString() => r'systemdProvider';
+  String toString() => r'servicesProvider';
 }
 
-abstract class _$SystemdNotifier extends $Notifier<SystemdState> {
+abstract class _$ServicesNotifier extends $Notifier<ServicesState> {
   late final _$args = ref.$arg as Spi;
   Spi get spi => _$args;
 
-  SystemdState build(Spi spi);
+  ServicesState build(Spi spi);
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
-    final ref = this.ref as $Ref<SystemdState, SystemdState>;
+    final ref = this.ref as $Ref<ServicesState, ServicesState>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<SystemdState, SystemdState>,
-              SystemdState,
+              AnyNotifier<ServicesState, ServicesState>,
+              ServicesState,
               Object?,
               Object?
             >;

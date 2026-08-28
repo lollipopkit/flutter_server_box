@@ -169,7 +169,7 @@ void main() {
 
     test('powering a machine down needs a shell, not a terminal', () {
       // It runs one of the script's functions, so it belongs with the process
-      // and systemd pages rather than with the entries that open a terminal.
+      // and service pages rather than with the entries that open a terminal.
       expect(ServerFuncBtn.power.availableWith(granted), isTrue);
       expect(ServerFuncBtn.power.availableWith(refused), isFalse);
     });
