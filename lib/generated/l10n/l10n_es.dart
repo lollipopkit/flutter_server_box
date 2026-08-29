@@ -9,54 +9,54 @@ class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([String locale = 'es']) : super(locale);
 
   @override
-  String get crashCollect => 'Informes de fallo';
+  String get crashCollect => 'Datos de diagnóstico';
 
   @override
   String get crashCollectIntro =>
-      'Cuando ServerBox falla, registra lo ocurrido para poder solucionarlo. Elige cuánto de eso se envía.';
+      'ServerBox registra lo que ocurre mientras se ejecuta para poder solucionar los problemas. Elige cuánta información se envía.';
 
   @override
   String get crashCollectNone => 'Nada';
 
   @override
   String get crashCollectNoneTip =>
-      'No se envía nada. Los informes se conservan en este dispositivo y aún puedes enviar uno a mano tras un fallo.';
+      'No se envía nada. Los informes se conservan en este dispositivo y aún puedes enviar uno manualmente después de un fallo.';
 
   @override
-  String get crashCollectBasic => 'Lo básico';
+  String get crashCollectBasic => 'Información básica';
 
   @override
   String get crashCollectBasicTip =>
-      'El fallo y la versión en que ocurrió. No lo que estabas haciendo.';
+      'Solo incluye el fallo y la versión de la aplicación en la que ocurrió. No incluye lo que estabas haciendo.';
 
   @override
-  String get crashCollectFull => 'Completo';
+  String get crashCollectFull => 'Información completa';
 
   @override
   String get crashCollectFullTip =>
-      'También los registros y datos de rendimiento mientras la app funciona, no solo cuando algo falla. Envía más y usa más del servidor.';
+      'Además de la información del momento en que ocurre un problema, también envía los registros y datos de rendimiento mientras la aplicación está en ejecución.';
 
   @override
   String get crashCollectFooter =>
-      'En todos los niveles, los nombres de servidor, direcciones y usuarios se sustituyen por marcadores al registrarlos. Puedes cambiarlo luego en Ajustes.';
+      'En todos los niveles, los nombres de servidores, las direcciones y los nombres de usuario se sustituyen por marcadores al registrarlos. Puedes cambiar el nivel de recopilación más adelante en Ajustes.';
 
   @override
   String get crashUpload => 'Subir informes de fallo';
 
   @override
   String get crashUploadTip =>
-      'Enviar también los informes de fallo al desarrollador, en lugar de guardarlos solo en este dispositivo. Los nombres y direcciones de servidor conocidos se sustituyen por marcadores, pero pueden quedar otros datos. Desactivado por defecto; se puede desactivar de nuevo en cualquier momento.';
+      'Enviar también los informes de fallo al desarrollador, en lugar de conservarlos únicamente en este dispositivo. Los nombres y direcciones de servidor conocidos se sustituyen por marcadores, pero otros datos pueden permanecer. Desactivado de forma predeterminada; puedes desactivarlo en cualquier momento.';
 
   @override
   String get crashNoticeBody =>
-      'ServerBox se cerró inesperadamente la última vez. ¿Quieres ver un informe de fallo?';
+      'ServerBox se cerró inesperadamente durante la última ejecución. ¿Quieres ver el informe de fallo?';
 
   @override
   String get crashReportTitle => 'Informe de fallo';
 
   @override
   String get crashReportHint =>
-      'Este es el registro de la ejecución anterior. Los nombres y direcciones de servidor conocidos se han sustituido por marcadores, pero pueden quedar otros datos: léelo antes de publicarlo. Al copiar se coloca el informe completo en el portapapeles.';
+      'Este es el registro de la ejecución anterior. Los nombres y direcciones de servidor conocidos se han sustituido por marcadores, pero pueden quedar otros datos. Lee el informe detenidamente antes de enviarlo.';
 
   @override
   String get crashReportSubmit => 'Copiar e informar';

@@ -9,54 +9,54 @@ class AppLocalizationsDe extends AppLocalizations {
   AppLocalizationsDe([String locale = 'de']) : super(locale);
 
   @override
-  String get crashCollect => 'Absturzberichte';
+  String get crashCollect => 'Diagnosedaten';
 
   @override
   String get crashCollectIntro =>
-      'Wenn ServerBox abstürzt, wird festgehalten, was passiert ist, damit das Problem behoben werden kann. Wählen Sie, wie viel davon gesendet wird.';
+      'ServerBox zeichnet während des Betriebs auf, was passiert, damit Probleme behoben werden können. Wählen Sie, wie viele Informationen gesendet werden.';
 
   @override
   String get crashCollectNone => 'Nichts';
 
   @override
   String get crashCollectNoneTip =>
-      'Es wird nichts gesendet. Berichte bleiben auf diesem Gerät, und Sie können nach einem Absturz weiterhin von Hand einen senden.';
+      'Es wird nichts gesendet. Berichte bleiben auf diesem Gerät; nach einem Absturz können Sie weiterhin manuell einen senden.';
 
   @override
-  String get crashCollectBasic => 'Grunddaten';
+  String get crashCollectBasic => 'Grundlegende Informationen';
 
   @override
   String get crashCollectBasicTip =>
-      'Der Absturz und die Version, in der er auftrat. Nicht, was Sie gerade taten.';
+      'Nur der Absturz und die App-Version, in der er auftrat. Ihre damalige Tätigkeit wird nicht erfasst.';
 
   @override
-  String get crashCollectFull => 'Vollständig';
+  String get crashCollectFull => 'Vollständige Informationen';
 
   @override
   String get crashCollectFullTip =>
-      'Zusätzlich Protokoll- und Leistungsdaten während der Nutzung, nicht nur wenn etwas schiefgeht. Sendet mehr und belastet den Server stärker.';
+      'Zusätzlich zu den Informationen beim Auftreten eines Problems werden während des Betriebs Protokoll- und Leistungsdaten gesendet.';
 
   @override
   String get crashCollectFooter =>
-      'Auf allen Stufen werden Servernamen, Adressen und Benutzernamen bereits beim Aufzeichnen durch Platzhalter ersetzt. Später in den Einstellungen änderbar.';
+      'Unabhängig von der Stufe werden Servernamen, Adressen und Benutzernamen bereits beim Aufzeichnen durch Platzhalter ersetzt. Die Erfassungsstufe kann später in den Einstellungen geändert werden.';
 
   @override
   String get crashUpload => 'Absturzberichte hochladen';
 
   @override
   String get crashUploadTip =>
-      'Absturzberichte zusätzlich an den Entwickler senden, statt sie nur auf diesem Gerät zu behalten. Bekannte Servernamen und Adressen werden durch Platzhalter ersetzt, andere Angaben können verbleiben. Standardmäßig aus; jederzeit wieder abschaltbar.';
+      'Absturzberichte werden zusätzlich an den Entwickler gesendet, statt nur auf diesem Gerät gespeichert zu werden. Bekannte Servernamen und -adressen werden durch Platzhalter ersetzt, andere Angaben können jedoch verbleiben. Standardmäßig deaktiviert; jederzeit wieder deaktivierbar.';
 
   @override
   String get crashNoticeBody =>
-      'ServerBox wurde beim letzten Mal unerwartet beendet. Möchten Sie einen Absturzbericht ansehen?';
+      'ServerBox wurde beim letzten Ausführen unerwartet beendet. Möchten Sie den Absturzbericht ansehen?';
 
   @override
   String get crashReportTitle => 'Absturzbericht';
 
   @override
   String get crashReportHint =>
-      'Dies ist das Protokoll des letzten Laufs. Bekannte Servernamen und Adressen wurden durch Platzhalter ersetzt, andere Angaben können jedoch verbleiben — lesen Sie es vor dem Absenden durch. Beim Kopieren wird der vollständige Bericht in die Zwischenablage gelegt.';
+      'Dies ist das Protokoll des vorherigen Laufs. Bekannte Servernamen und -adressen wurden durch Platzhalter ersetzt, andere Angaben können jedoch verbleiben. Bitte lesen Sie es vor dem Absenden sorgfältig durch.';
 
   @override
   String get crashReportSubmit => 'Kopieren & melden';

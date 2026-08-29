@@ -9,50 +9,50 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
-  String get crashCollect => '崩溃报告';
+  String get crashCollect => '诊断信息';
 
   @override
   String get crashCollectIntro =>
-      'ServerBox 崩溃时会记录发生了什么，以便修复问题。你可以选择其中多少内容被发送。';
+      'ServerBox 会记录运行过程中发生的情况，以便修复问题。你可以选择要发送多少信息。';
 
   @override
   String get crashCollectNone => '不发送';
 
   @override
-  String get crashCollectNoneTip => '不发送任何内容。报告仍保留在本机，崩溃后你仍可手动发送。';
+  String get crashCollectNoneTip => '不会发送任何信息。报告仍会保留在本机；发生崩溃后，你仍可手动发送。';
 
   @override
-  String get crashCollectBasic => '基础信息';
+  String get crashCollectBasic => '基本信息';
 
   @override
-  String get crashCollectBasicTip => '崩溃本身和所在版本，不包含你当时在做什么。';
+  String get crashCollectBasicTip => '仅包含崩溃信息和发生崩溃时的应用版本，不包含你当时正在进行的操作。';
 
   @override
   String get crashCollectFull => '完整信息';
 
   @override
-  String get crashCollectFullTip =>
-      '还包括应用运行期间的日志和性能数据，而不只是出错时才发送。发送量更大，也更占用服务器资源。';
+  String get crashCollectFullTip => '除发生问题时的信息外，还会发送应用运行期间的日志和性能数据。';
 
   @override
-  String get crashCollectFooter => '所有级别下，服务器名称、地址和用户名在记录时就已替换为占位符。之后可在设置中更改。';
+  String get crashCollectFooter =>
+      '无论选择哪个级别，记录时都会将服务器名称、地址和用户名替换为占位符。之后可在设置中更改收集级别。';
 
   @override
   String get crashUpload => '上传崩溃报告';
 
   @override
   String get crashUploadTip =>
-      '除在本机保留外，同时将崩溃报告发送给开发者。已知的服务器名称和地址会替换为占位符，但可能仍有其他信息残留。默认关闭，可随时再次关闭。';
+      '除保存在本机外，还会将崩溃报告发送给开发者。已知的服务器名称和地址会替换为占位符，但其他信息可能仍会保留。默认关闭，可随时停用。';
 
   @override
-  String get crashNoticeBody => 'ServerBox 上次异常退出。要查看崩溃报告吗？';
+  String get crashNoticeBody => 'ServerBox 上次运行时异常退出。要查看崩溃报告吗？';
 
   @override
   String get crashReportTitle => '崩溃报告';
 
   @override
   String get crashReportHint =>
-      '这是上次运行的日志。已知的服务器名称和地址已替换为占位符，但可能仍有其他信息残留——提交前请通读一遍。复制会将完整报告放入剪贴板。';
+      '这是上次运行的日志。已知的服务器名称和地址已替换为占位符，但其中可能仍包含其他信息。提交前请仔细阅读。';
 
   @override
   String get crashReportSubmit => '复制并反馈';
@@ -1635,51 +1635,49 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   AppLocalizationsZhTw() : super('zh_TW');
 
   @override
-  String get crashCollect => '當機報告';
+  String get crashCollect => '診斷資料';
 
   @override
-  String get crashCollectIntro =>
-      'ServerBox 當機時會記錄發生了什麼，以便修復問題。你可以選擇其中多少內容被傳送。';
+  String get crashCollectIntro => 'ServerBox 會記錄執行期間發生的情況，以便修正問題。你可以選擇要傳送多少資料。';
 
   @override
   String get crashCollectNone => '不傳送';
 
   @override
-  String get crashCollectNoneTip => '不傳送任何內容。報告仍保留在本機，當機後你仍可手動傳送。';
+  String get crashCollectNoneTip => '不會傳送任何資料。報告仍會保留在本機；當機後你仍可手動傳送。';
 
   @override
-  String get crashCollectBasic => '基礎資訊';
+  String get crashCollectBasic => '基本資料';
 
   @override
-  String get crashCollectBasicTip => '當機本身和所在版本，不包含你當時在做什麼。';
+  String get crashCollectBasicTip => '只包含當機資訊和發生當機時的 App 版本，不包含你當時正在進行的操作。';
 
   @override
-  String get crashCollectFull => '完整資訊';
+  String get crashCollectFull => '完整資料';
 
   @override
-  String get crashCollectFullTip =>
-      '還包括應用執行期間的日誌和效能資料，而不只是出錯時才傳送。傳送量更大，也更佔用伺服器資源。';
+  String get crashCollectFullTip => '除了發生問題時的資訊外，也會傳送 App 執行期間的日誌和效能資料。';
 
   @override
   String get crashCollectFooter =>
-      '所有等級下，伺服器名稱、位址和使用者名稱在記錄時就已替換為預留位置。之後可在設定中更改。';
+      '無論選擇哪個等級，記錄時都會將伺服器名稱、位址和使用者名稱替換為預留位置。之後可在設定中更改收集等級。';
 
   @override
   String get crashUpload => '上傳當機報告';
 
   @override
   String get crashUploadTip =>
-      '除在本機保留外，同時將當機報告傳送給開發者。已知的伺服器名稱和位址會替換為預留位置，但可能仍有其他資訊殘留。預設關閉，可隨時再次關閉。';
+      '除了保留在本機外，也會將當機報告傳送給開發者。已知的伺服器名稱和位址會替換為預留位置，但其他資訊可能仍會保留。預設關閉，可隨時停用。';
 
   @override
-  String get crashNoticeBody => 'ServerBox 上次異常結束。要查看當機報告嗎？';
+  String get crashNoticeBody => 'ServerBox 上次執行時異常結束。要查看當機報告嗎？';
 
   @override
   String get crashReportTitle => '當機報告';
 
   @override
   String get crashReportHint =>
-      '這是上次執行的日誌。已知的伺服器名稱和位址已替換為預留位置，但可能仍有其他資訊殘留——提交前請通讀一遍。複製會將完整報告放入剪貼簿。';
+      '這是上次執行的日誌。已知的伺服器名稱和位址已替換為預留位置，但其中可能仍包含其他資訊。提交前請仔細閱讀。';
 
   @override
   String get crashReportSubmit => '複製並回報';

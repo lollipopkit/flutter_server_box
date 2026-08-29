@@ -9,54 +9,54 @@ class AppLocalizationsIt extends AppLocalizations {
   AppLocalizationsIt([String locale = 'it']) : super(locale);
 
   @override
-  String get crashCollect => 'Rapporti di arresto anomalo';
+  String get crashCollect => 'Dati diagnostici';
 
   @override
   String get crashCollectIntro =>
-      'Quando ServerBox si arresta, registra cosa è successo per poter risolvere il problema. Scegli quanto di questo viene inviato.';
+      'ServerBox registra ciò che accade durante l\'esecuzione per poter risolvere i problemi. Scegli quanti dati inviare.';
 
   @override
   String get crashCollectNone => 'Niente';
 
   @override
   String get crashCollectNoneTip =>
-      'Non viene inviato nulla. I rapporti restano su questo dispositivo e puoi comunque inviarne uno a mano dopo un arresto.';
+      'Non viene inviato nulla. I rapporti restano su questo dispositivo e puoi comunque inviarne uno manualmente dopo un arresto anomalo.';
 
   @override
-  String get crashCollectBasic => 'Essenziale';
+  String get crashCollectBasic => 'Informazioni di base';
 
   @override
   String get crashCollectBasicTip =>
-      'L\'arresto e la versione in cui si è verificato. Non cosa stavi facendo.';
+      'Solo l\'arresto anomalo e la versione dell\'app in cui si è verificato. Non include ciò che stavi facendo.';
 
   @override
-  String get crashCollectFull => 'Completo';
+  String get crashCollectFull => 'Informazioni complete';
 
   @override
   String get crashCollectFullTip =>
-      'Anche i log e i dati sulle prestazioni durante l\'uso, non solo quando qualcosa si rompe. Invia di più e usa di più il server.';
+      'Oltre alle informazioni raccolte quando si verifica un problema, invia anche i log e i dati sulle prestazioni durante l\'esecuzione dell\'app.';
 
   @override
   String get crashCollectFooter =>
-      'A ogni livello, nomi dei server, indirizzi e nomi utente vengono sostituiti da segnaposto già alla registrazione. Modificabile in seguito nelle impostazioni.';
+      'A ogni livello, nomi dei server, indirizzi e nomi utente vengono sostituiti da segnaposto al momento della registrazione. Puoi modificare il livello di raccolta in seguito nelle impostazioni.';
 
   @override
   String get crashUpload => 'Invia i rapporti di arresto anomalo';
 
   @override
   String get crashUploadTip =>
-      'Invia i rapporti di arresto anomalo anche allo sviluppatore, invece di conservarli solo su questo dispositivo. I nomi e gli indirizzi dei server noti vengono sostituiti da segnaposto, ma altri dettagli possono rimanere. Disattivato per impostazione predefinita; può essere disattivato in qualsiasi momento.';
+      'Invia i rapporti di arresto anomalo anche allo sviluppatore, invece di conservarli solo su questo dispositivo. I nomi e gli indirizzi dei server noti vengono sostituiti da segnaposto, ma altri dettagli possono rimanere. Disattivato per impostazione predefinita; puoi disattivarlo in qualsiasi momento.';
 
   @override
   String get crashNoticeBody =>
-      'ServerBox si è chiuso inaspettatamente l\'ultima volta. Vuoi vedere un rapporto di arresto anomalo?';
+      'ServerBox si è chiuso inaspettatamente durante l\'ultima esecuzione. Vuoi vedere il rapporto di arresto anomalo?';
 
   @override
   String get crashReportTitle => 'Rapporto di arresto anomalo';
 
   @override
   String get crashReportHint =>
-      'Questo è il registro dell\'esecuzione precedente. I nomi e gli indirizzi dei server noti sono stati sostituiti da segnaposto, ma altri dettagli possono rimanere: leggilo prima di pubblicarlo. Copiando, il rapporto completo viene messo negli appunti.';
+      'Questo è il registro dell\'esecuzione precedente. I nomi e gli indirizzi dei server noti sono stati sostituiti da segnaposto, ma altri dettagli possono rimanere. Leggilo attentamente prima di inviarlo.';
 
   @override
   String get crashReportSubmit => 'Copia e segnala';

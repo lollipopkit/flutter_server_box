@@ -9,54 +9,54 @@ class AppLocalizationsFr extends AppLocalizations {
   AppLocalizationsFr([String locale = 'fr']) : super(locale);
 
   @override
-  String get crashCollect => 'Rapports de plantage';
+  String get crashCollect => 'Données de diagnostic';
 
   @override
   String get crashCollectIntro =>
-      'Quand ServerBox plante, il enregistre ce qui s\'est passé afin que le problème puisse être corrigé. Choisissez la part qui est envoyée.';
+      'ServerBox enregistre ce qui se passe pendant son fonctionnement afin de pouvoir corriger les problèmes. Choisissez la quantité d\'informations envoyée.';
 
   @override
   String get crashCollectNone => 'Rien';
 
   @override
   String get crashCollectNoneTip =>
-      'Rien n\'est envoyé. Les rapports restent sur cet appareil et vous pouvez toujours en envoyer un à la main après un plantage.';
+      'Rien n\'est envoyé. Les rapports restent sur cet appareil ; vous pouvez toujours en envoyer un manuellement après un plantage.';
 
   @override
-  String get crashCollectBasic => 'L\'essentiel';
+  String get crashCollectBasic => 'Informations de base';
 
   @override
   String get crashCollectBasicTip =>
-      'Le plantage et la version où il s\'est produit. Pas ce que vous faisiez.';
+      'Le plantage et la version de l\'application dans laquelle il s\'est produit. Vos actions ne sont pas incluses.';
 
   @override
-  String get crashCollectFull => 'Complet';
+  String get crashCollectFull => 'Informations complètes';
 
   @override
   String get crashCollectFullTip =>
-      'Aussi les journaux et les données de performance pendant l\'utilisation, pas seulement en cas de problème. Envoie davantage et sollicite plus le serveur.';
+      'En plus des informations recueillies lorsqu\'un problème survient, les journaux et données de performance pendant l\'utilisation sont également envoyés.';
 
   @override
   String get crashCollectFooter =>
-      'À tous les niveaux, les noms de serveurs, adresses et noms d\'utilisateur sont remplacés par des espaces réservés dès l\'enregistrement. Modifiable ensuite dans les réglages.';
+      'Quel que soit le niveau, les noms de serveurs, adresses et noms d\'utilisateur sont remplacés par des espaces réservés dès l\'enregistrement. Vous pouvez modifier le niveau de collecte plus tard dans les réglages.';
 
   @override
   String get crashUpload => 'Envoyer les rapports de plantage';
 
   @override
   String get crashUploadTip =>
-      'Envoyer aussi les rapports de plantage au développeur, au lieu de les conserver uniquement sur cet appareil. Les noms et adresses de serveurs connus sont remplacés par des espaces réservés, mais d\'autres informations peuvent subsister. Désactivé par défaut ; peut être désactivé à tout moment.';
+      'Envoyer aussi les rapports de plantage au développeur, au lieu de les conserver uniquement sur cet appareil. Les noms et adresses de serveurs connus sont remplacés par des espaces réservés, mais d\'autres informations peuvent subsister. Désactivé par défaut ; vous pouvez le désactiver à tout moment.';
 
   @override
   String get crashNoticeBody =>
-      'ServerBox s\'est fermé de manière inattendue la dernière fois. Voulez-vous consulter un rapport de plantage ?';
+      'ServerBox s\'est fermé de manière inattendue lors de sa dernière exécution. Voulez-vous consulter le rapport de plantage ?';
 
   @override
   String get crashReportTitle => 'Rapport de plantage';
 
   @override
   String get crashReportHint =>
-      'Ceci est le journal de l\'exécution précédente. Les noms et adresses de serveurs connus ont été remplacés par des espaces réservés, mais d\'autres informations peuvent subsister — relisez-le avant de le publier. La copie place le rapport complet dans le presse-papiers.';
+      'Ceci est le journal de l\'exécution précédente. Les noms et adresses de serveurs connus ont été remplacés par des espaces réservés, mais d\'autres informations peuvent subsister. Lisez-le attentivement avant de l\'envoyer.';
 
   @override
   String get crashReportSubmit => 'Copier et signaler';

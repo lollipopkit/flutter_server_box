@@ -126,13 +126,13 @@ abstract class AppLocalizations {
   /// No description provided for @crashCollect.
   ///
   /// In en, this message translates to:
-  /// **'Crash reports'**
+  /// **'Diagnostic data'**
   String get crashCollect;
 
   /// No description provided for @crashCollectIntro.
   ///
   /// In en, this message translates to:
-  /// **'When ServerBox crashes, it records what happened so the problem can be fixed. Choose how much of that is sent.'**
+  /// **'ServerBox records what happens while it runs so problems can be fixed. Choose how much information to send.'**
   String get crashCollectIntro;
 
   /// No description provided for @crashCollectNone.
@@ -144,37 +144,37 @@ abstract class AppLocalizations {
   /// No description provided for @crashCollectNoneTip.
   ///
   /// In en, this message translates to:
-  /// **'Nothing is sent. Reports are still kept on this device, and you can still send one by hand after a crash.'**
+  /// **'Nothing is sent. Reports remain on this device, and you can still send one manually after a crash.'**
   String get crashCollectNoneTip;
 
   /// No description provided for @crashCollectBasic.
   ///
   /// In en, this message translates to:
-  /// **'Basics'**
+  /// **'Basic information'**
   String get crashCollectBasic;
 
   /// No description provided for @crashCollectBasicTip.
   ///
   /// In en, this message translates to:
-  /// **'The crash and the version it happened in. Not what you were doing.'**
+  /// **'Only the crash and the app version it occurred in. It does not include what you were doing.'**
   String get crashCollectBasicTip;
 
   /// No description provided for @crashCollectFull.
   ///
   /// In en, this message translates to:
-  /// **'Full'**
+  /// **'Full information'**
   String get crashCollectFull;
 
   /// No description provided for @crashCollectFullTip.
   ///
   /// In en, this message translates to:
-  /// **'Also the log and performance data while the app runs — not only when something breaks. Sends more, and uses more of the server.'**
+  /// **'In addition to information from when something goes wrong, this sends logs and performance data while the app runs.'**
   String get crashCollectFullTip;
 
   /// No description provided for @crashCollectFooter.
   ///
   /// In en, this message translates to:
-  /// **'Server names, addresses and usernames are replaced with placeholders before anything is recorded, at every level. You can change this later in Settings.'**
+  /// **'At every level, server names, addresses and usernames are replaced with placeholders when recorded. You can change the collection level later in Settings.'**
   String get crashCollectFooter;
 
   /// No description provided for @crashUpload.
@@ -186,13 +186,13 @@ abstract class AppLocalizations {
   /// No description provided for @crashUploadTip.
   ///
   /// In en, this message translates to:
-  /// **'Also send crash reports to the developer, instead of only keeping them on this device. Known server names and addresses are replaced with placeholders, but other details may remain. Off by default; can be turned off again at any time.'**
+  /// **'Also send crash reports to the developer instead of keeping them only on this device. Known server names and addresses are replaced with placeholders, but other details may remain. Off by default; you can turn it off at any time.'**
   String get crashUploadTip;
 
   /// No description provided for @crashNoticeBody.
   ///
   /// In en, this message translates to:
-  /// **'ServerBox closed unexpectedly last time. Would you like to look at a crash report?'**
+  /// **'ServerBox exited unexpectedly during its last run. Would you like to view the crash report?'**
   String get crashNoticeBody;
 
   /// No description provided for @crashReportTitle.
@@ -204,7 +204,7 @@ abstract class AppLocalizations {
   /// No description provided for @crashReportHint.
   ///
   /// In en, this message translates to:
-  /// **'This is the previous run\'s log. Known server names and addresses have been replaced with placeholders, but other details may remain — read it through before posting. Copying puts the full report on the clipboard.'**
+  /// **'This is the log from the previous run. Known server names and addresses have been replaced with placeholders, but other details may remain. Please read it carefully before submitting.'**
   String get crashReportHint;
 
   /// No description provided for @crashReportSubmit.

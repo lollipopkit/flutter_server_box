@@ -9,11 +9,11 @@ class AppLocalizationsNl extends AppLocalizations {
   AppLocalizationsNl([String locale = 'nl']) : super(locale);
 
   @override
-  String get crashCollect => 'Crashrapporten';
+  String get crashCollect => 'Diagnostische gegevens';
 
   @override
   String get crashCollectIntro =>
-      'Wanneer ServerBox crasht, legt het vast wat er gebeurde zodat het probleem verholpen kan worden. Kies hoeveel daarvan wordt verstuurd.';
+      'ServerBox legt vast wat er tijdens het gebruik gebeurt, zodat problemen kunnen worden opgelost. Kies hoeveel informatie er wordt verstuurd.';
 
   @override
   String get crashCollectNone => 'Niets';
@@ -23,40 +23,40 @@ class AppLocalizationsNl extends AppLocalizations {
       'Er wordt niets verstuurd. Rapporten blijven op dit apparaat en je kunt er na een crash nog steeds handmatig een sturen.';
 
   @override
-  String get crashCollectBasic => 'Basis';
+  String get crashCollectBasic => 'Basisgegevens';
 
   @override
   String get crashCollectBasicTip =>
-      'De crash en de versie waarin die optrad. Niet wat je aan het doen was.';
+      'Alleen de crash en de appversie waarin die optrad. Wat je aan het doen was, wordt niet opgenomen.';
 
   @override
-  String get crashCollectFull => 'Volledig';
+  String get crashCollectFull => 'Volledige gegevens';
 
   @override
   String get crashCollectFullTip =>
-      'Ook de logboeken en prestatiegegevens tijdens gebruik, niet alleen als er iets misgaat. Verstuurt meer en belast de server zwaarder.';
+      'Naast informatie over het moment waarop er iets misgaat, worden ook logboeken en prestatiegegevens tijdens het gebruik verstuurd.';
 
   @override
   String get crashCollectFooter =>
-      'Op elk niveau worden servernamen, adressen en gebruikersnamen al bij het vastleggen vervangen door plaatsaanduidingen. Later te wijzigen in de instellingen.';
+      'Op elk niveau worden servernamen, adressen en gebruikersnamen al bij het vastleggen vervangen door plaatsaanduidingen. Je kunt het verzamelingsniveau later wijzigen in de instellingen.';
 
   @override
   String get crashUpload => 'Crashrapporten uploaden';
 
   @override
   String get crashUploadTip =>
-      'Crashrapporten ook naar de ontwikkelaar sturen in plaats van ze alleen op dit apparaat te bewaren. Bekende servernamen en adressen worden vervangen door plaatsaanduidingen, maar andere gegevens kunnen achterblijven. Standaard uit; kan altijd weer worden uitgezet.';
+      'Crashrapporten ook naar de ontwikkelaar sturen in plaats van ze alleen op dit apparaat te bewaren. Bekende servernamen en adressen worden vervangen door plaatsaanduidingen, maar andere gegevens kunnen achterblijven. Standaard uit; je kunt dit op elk moment uitschakelen.';
 
   @override
   String get crashNoticeBody =>
-      'ServerBox is de vorige keer onverwacht afgesloten. Wil je een crashrapport bekijken?';
+      'ServerBox is tijdens de vorige uitvoering onverwacht afgesloten. Wil je het crashrapport bekijken?';
 
   @override
   String get crashReportTitle => 'Crashrapport';
 
   @override
   String get crashReportHint =>
-      'Dit is het logboek van de vorige sessie. Bekende servernamen en adressen zijn vervangen door plaatsaanduidingen, maar andere gegevens kunnen achterblijven — lees het door voordat je het plaatst. Kopiëren zet het volledige rapport op het klembord.';
+      'Dit is het logboek van de vorige uitvoering. Bekende servernamen en adressen zijn vervangen door plaatsaanduidingen, maar andere gegevens kunnen achterblijven. Lees het zorgvuldig door voordat je het indient.';
 
   @override
   String get crashReportSubmit => 'Kopiëren en melden';

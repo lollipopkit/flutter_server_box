@@ -9,11 +9,11 @@ class AppLocalizationsKo extends AppLocalizations {
   AppLocalizationsKo([String locale = 'ko']) : super(locale);
 
   @override
-  String get crashCollect => '충돌 보고서';
+  String get crashCollect => '진단 데이터';
 
   @override
   String get crashCollectIntro =>
-      'ServerBox가 충돌하면 문제를 고칠 수 있도록 무슨 일이 있었는지 기록합니다. 그중 얼마나 전송할지 선택하세요.';
+      'ServerBox는 문제를 해결할 수 있도록 실행 중 발생한 일을 기록합니다. 전송할 정보의 양을 선택할 수 있습니다.';
 
   @override
   String get crashCollectNone => '전송 안 함';
@@ -26,36 +26,37 @@ class AppLocalizationsKo extends AppLocalizations {
   String get crashCollectBasic => '기본 정보';
 
   @override
-  String get crashCollectBasicTip => '충돌 자체와 발생한 버전. 무엇을 하고 있었는지는 포함하지 않습니다.';
+  String get crashCollectBasicTip =>
+      '충돌과 충돌이 발생한 앱 버전만 포함합니다. 당시 무엇을 하고 있었는지는 포함하지 않습니다.';
 
   @override
   String get crashCollectFull => '전체 정보';
 
   @override
   String get crashCollectFullTip =>
-      '앱이 실행되는 동안의 로그와 성능 데이터도 전송합니다. 문제가 생겼을 때만이 아닙니다. 전송량이 늘고 서버 부담도 커집니다.';
+      '문제가 발생했을 때의 정보뿐 아니라 앱 실행 중의 로그와 성능 데이터도 전송합니다.';
 
   @override
   String get crashCollectFooter =>
-      '모든 단계에서 서버 이름, 주소, 사용자 이름은 기록 시점에 자리 표시자로 대체됩니다. 나중에 설정에서 변경할 수 있습니다.';
+      '모든 수준에서 서버 이름, 주소, 사용자 이름은 기록할 때 자리 표시자로 대체됩니다. 나중에 설정에서 수집 수준을 변경할 수 있습니다.';
 
   @override
   String get crashUpload => '충돌 보고서 업로드';
 
   @override
   String get crashUploadTip =>
-      '충돌 보고서를 이 기기에만 보관하지 않고 개발자에게도 전송합니다. 알려진 서버 이름과 주소는 자리 표시자로 대체되지만 다른 정보가 남을 수 있습니다. 기본적으로 꺼져 있으며 언제든지 다시 끌 수 있습니다.';
+      '충돌 보고서를 이 기기에만 보관하지 않고 개발자에게도 전송합니다. 알려진 서버 이름과 주소는 자리 표시자로 대체되지만 다른 정보가 남을 수 있습니다. 기본적으로 꺼져 있으며 언제든지 끌 수 있습니다.';
 
   @override
   String get crashNoticeBody =>
-      'ServerBox가 지난번에 예기치 않게 종료되었습니다. 충돌 보고서를 확인하시겠습니까?';
+      'ServerBox가 마지막 실행 중 예기치 않게 종료되었습니다. 충돌 보고서를 확인하시겠습니까?';
 
   @override
   String get crashReportTitle => '충돌 보고서';
 
   @override
   String get crashReportHint =>
-      '이전 실행의 로그입니다. 알려진 서버 이름과 주소는 자리 표시자로 대체되었지만 다른 정보가 남아 있을 수 있습니다 — 게시하기 전에 읽어 보세요. 복사하면 전체 보고서가 클립보드에 저장됩니다.';
+      '이전 실행의 로그입니다. 알려진 서버 이름과 주소는 자리 표시자로 대체되었지만 다른 정보가 남아 있을 수 있습니다. 제출하기 전에 주의 깊게 읽어 보세요.';
 
   @override
   String get crashReportSubmit => '복사 후 보고';

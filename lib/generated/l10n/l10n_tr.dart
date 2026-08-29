@@ -9,54 +9,54 @@ class AppLocalizationsTr extends AppLocalizations {
   AppLocalizationsTr([String locale = 'tr']) : super(locale);
 
   @override
-  String get crashCollect => 'Çökme raporları';
+  String get crashCollect => 'Tanılama verileri';
 
   @override
   String get crashCollectIntro =>
-      'ServerBox çöktüğünde, sorun giderilebilsin diye ne olduğunu kaydeder. Bunun ne kadarının gönderileceğini seçin.';
+      'ServerBox, sorunların düzeltilebilmesi için çalışırken olanları kaydeder. Ne kadar bilgi gönderileceğini seçin.';
 
   @override
   String get crashCollectNone => 'Hiçbir şey';
 
   @override
   String get crashCollectNoneTip =>
-      'Hiçbir şey gönderilmez. Raporlar bu cihazda kalır ve çökmeden sonra yine elle bir tane gönderebilirsiniz.';
+      'Hiçbir şey gönderilmez. Raporlar bu cihazda tutulur ve çökmenin ardından yine de elle bir rapor gönderebilirsiniz.';
 
   @override
-  String get crashCollectBasic => 'Temel';
+  String get crashCollectBasic => 'Temel bilgiler';
 
   @override
   String get crashCollectBasicTip =>
-      'Çökmenin kendisi ve gerçekleştiği sürüm. Ne yaptığınız değil.';
+      'Yalnızca çökme ve gerçekleştiği uygulama sürümü dahil edilir. O sırada ne yaptığınız dahil edilmez.';
 
   @override
-  String get crashCollectFull => 'Tam';
+  String get crashCollectFull => 'Tüm bilgiler';
 
   @override
   String get crashCollectFullTip =>
-      'Uygulama çalışırken günlükler ve performans verileri de gönderilir, yalnızca bir şey bozulduğunda değil. Daha fazla veri gönderir ve sunucuyu daha çok kullanır.';
+      'Bir sorun oluştuğundaki bilgilere ek olarak, uygulama çalışırken günlükler ve performans verileri de gönderilir.';
 
   @override
   String get crashCollectFooter =>
-      'Her düzeyde sunucu adları, adresler ve kullanıcı adları daha kaydedilirken yer tutucularla değiştirilir. Sonradan ayarlardan değiştirilebilir.';
+      'Her düzeyde sunucu adları, adresler ve kullanıcı adları kaydedilirken yer tutucularla değiştirilir. Toplama düzeyini daha sonra Ayarlar\'dan değiştirebilirsiniz.';
 
   @override
-  String get crashUpload => 'Çökme raporlarını gönder';
+  String get crashUpload => 'Çökme raporlarını yükle';
 
   @override
   String get crashUploadTip =>
-      'Çökme raporlarını yalnızca bu cihazda tutmak yerine geliştiriciye de gönder. Bilinen sunucu adları ve adresleri yer tutucularla değiştirilir, ancak başka ayrıntılar kalabilir. Varsayılan olarak kapalıdır; istediğiniz zaman yeniden kapatabilirsiniz.';
+      'Çökme raporlarını yalnızca bu cihazda tutmak yerine geliştiriciye de gönderir. Bilinen sunucu adları ve adresleri yer tutucularla değiştirilir, ancak başka ayrıntılar kalabilir. Varsayılan olarak kapalıdır; istediğiniz zaman kapatabilirsiniz.';
 
   @override
   String get crashNoticeBody =>
-      'ServerBox geçen sefer beklenmedik şekilde kapandı. Bir çökme raporuna bakmak ister misiniz?';
+      'ServerBox son çalıştırmada beklenmedik şekilde kapandı. Çökme raporunu görüntülemek ister misiniz?';
 
   @override
   String get crashReportTitle => 'Çökme raporu';
 
   @override
   String get crashReportHint =>
-      'Bu, önceki çalıştırmanın günlüğüdür. Bilinen sunucu adları ve adresleri yer tutucularla değiştirildi, ancak başka ayrıntılar kalmış olabilir — paylaşmadan önce okuyun. Kopyalamak tam raporu panoya koyar.';
+      'Bu, önceki çalıştırmanın günlüğüdür. Bilinen sunucu adları ve adresleri yer tutucularla değiştirilmiştir, ancak başka ayrıntılar kalmış olabilir. Göndermeden önce dikkatlice okuyun.';
 
   @override
   String get crashReportSubmit => 'Kopyala ve bildir';

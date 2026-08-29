@@ -9,11 +9,11 @@ class AppLocalizationsPt extends AppLocalizations {
   AppLocalizationsPt([String locale = 'pt']) : super(locale);
 
   @override
-  String get crashCollect => 'Relatórios de falha';
+  String get crashCollect => 'Dados de diagnóstico';
 
   @override
   String get crashCollectIntro =>
-      'Quando o ServerBox falha, ele registra o que aconteceu para que o problema possa ser corrigido. Escolha quanto disso é enviado.';
+      'O ServerBox registra o que acontece durante a execução para que os problemas possam ser corrigidos. Escolha quanta informação enviar.';
 
   @override
   String get crashCollectNone => 'Nada';
@@ -23,40 +23,40 @@ class AppLocalizationsPt extends AppLocalizations {
       'Nada é enviado. Os relatórios continuam neste dispositivo e você ainda pode enviar um manualmente após uma falha.';
 
   @override
-  String get crashCollectBasic => 'Básico';
+  String get crashCollectBasic => 'Informações básicas';
 
   @override
   String get crashCollectBasicTip =>
-      'A falha e a versão em que ocorreu. Não o que você estava fazendo.';
+      'Inclui apenas a falha e a versão do app em que ela ocorreu. Não inclui o que você estava fazendo.';
 
   @override
-  String get crashCollectFull => 'Completo';
+  String get crashCollectFull => 'Informações completas';
 
   @override
   String get crashCollectFullTip =>
-      'Também os registros e dados de desempenho enquanto o app roda, não apenas quando algo falha. Envia mais e usa mais do servidor.';
+      'Além das informações do momento em que ocorre um problema, também envia registros e dados de desempenho enquanto o app está em execução.';
 
   @override
   String get crashCollectFooter =>
-      'Em todos os níveis, nomes de servidor, endereços e usuários são substituídos por marcadores já no registro. Pode ser alterado depois nas configurações.';
+      'Em todos os níveis, nomes de servidor, endereços e nomes de usuário são substituídos por marcadores no momento do registro. Você pode alterar o nível de coleta mais tarde nas configurações.';
 
   @override
   String get crashUpload => 'Enviar relatórios de falha';
 
   @override
   String get crashUploadTip =>
-      'Enviar os relatórios de falha também ao desenvolvedor, em vez de mantê-los apenas neste dispositivo. Nomes e endereços de servidor conhecidos são substituídos por marcadores, mas outros detalhes podem permanecer. Desativado por padrão; pode ser desativado a qualquer momento.';
+      'Enviar os relatórios de falha também ao desenvolvedor, em vez de mantê-los apenas neste dispositivo. Nomes e endereços de servidor conhecidos são substituídos por marcadores, mas outros detalhes podem permanecer. Desativado por padrão; você pode desativá-lo a qualquer momento.';
 
   @override
   String get crashNoticeBody =>
-      'O ServerBox fechou inesperadamente da última vez. Deseja ver um relatório de falha?';
+      'O ServerBox fechou inesperadamente durante a última execução. Deseja ver o relatório de falha?';
 
   @override
   String get crashReportTitle => 'Relatório de falha';
 
   @override
   String get crashReportHint =>
-      'Este é o registro da execução anterior. Nomes e endereços de servidor conhecidos foram substituídos por marcadores, mas outros detalhes podem permanecer — leia antes de publicar. Copiar coloca o relatório completo na área de transferência.';
+      'Este é o registro da execução anterior. Nomes e endereços de servidor conhecidos foram substituídos por marcadores, mas outros detalhes podem permanecer. Leia-o com atenção antes de enviá-lo.';
 
   @override
   String get crashReportSubmit => 'Copiar e relatar';

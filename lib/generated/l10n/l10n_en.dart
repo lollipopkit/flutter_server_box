@@ -9,54 +9,54 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get crashCollect => 'Crash reports';
+  String get crashCollect => 'Diagnostic data';
 
   @override
   String get crashCollectIntro =>
-      'When ServerBox crashes, it records what happened so the problem can be fixed. Choose how much of that is sent.';
+      'ServerBox records what happens while it runs so problems can be fixed. Choose how much information to send.';
 
   @override
   String get crashCollectNone => 'Nothing';
 
   @override
   String get crashCollectNoneTip =>
-      'Nothing is sent. Reports are still kept on this device, and you can still send one by hand after a crash.';
+      'Nothing is sent. Reports remain on this device, and you can still send one manually after a crash.';
 
   @override
-  String get crashCollectBasic => 'Basics';
+  String get crashCollectBasic => 'Basic information';
 
   @override
   String get crashCollectBasicTip =>
-      'The crash and the version it happened in. Not what you were doing.';
+      'Only the crash and the app version it occurred in. It does not include what you were doing.';
 
   @override
-  String get crashCollectFull => 'Full';
+  String get crashCollectFull => 'Full information';
 
   @override
   String get crashCollectFullTip =>
-      'Also the log and performance data while the app runs — not only when something breaks. Sends more, and uses more of the server.';
+      'In addition to information from when something goes wrong, this sends logs and performance data while the app runs.';
 
   @override
   String get crashCollectFooter =>
-      'Server names, addresses and usernames are replaced with placeholders before anything is recorded, at every level. You can change this later in Settings.';
+      'At every level, server names, addresses and usernames are replaced with placeholders when recorded. You can change the collection level later in Settings.';
 
   @override
   String get crashUpload => 'Upload crash reports';
 
   @override
   String get crashUploadTip =>
-      'Also send crash reports to the developer, instead of only keeping them on this device. Known server names and addresses are replaced with placeholders, but other details may remain. Off by default; can be turned off again at any time.';
+      'Also send crash reports to the developer instead of keeping them only on this device. Known server names and addresses are replaced with placeholders, but other details may remain. Off by default; you can turn it off at any time.';
 
   @override
   String get crashNoticeBody =>
-      'ServerBox closed unexpectedly last time. Would you like to look at a crash report?';
+      'ServerBox exited unexpectedly during its last run. Would you like to view the crash report?';
 
   @override
   String get crashReportTitle => 'Crash report';
 
   @override
   String get crashReportHint =>
-      'This is the previous run\'s log. Known server names and addresses have been replaced with placeholders, but other details may remain — read it through before posting. Copying puts the full report on the clipboard.';
+      'This is the log from the previous run. Known server names and addresses have been replaced with placeholders, but other details may remain. Please read it carefully before submitting.';
 
   @override
   String get crashReportSubmit => 'Copy & report';
