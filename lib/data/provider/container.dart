@@ -505,8 +505,10 @@ class ContainerNotifier extends _$ContainerNotifier {
         if (_isStaleRefresh(refreshGeneration)) return;
         Loggers.app.warning(
           'Container refresh output incomplete '
-          '(exit ${result.exitCode}, stdout ${raw.length} bytes, '
-          'stderr ${errOut.length} bytes)',
+          '(exit ${result.exitCode}, stdout ${raw.length} code units, '
+          'stderr ${errOut.length} code units)',
+          result.streamError,
+          result.streamErrorStackTrace,
         );
         _setRefreshError(
           target,
@@ -577,15 +579,21 @@ class ContainerNotifier extends _$ContainerNotifier {
       return;
     }
     if (!result.succeeded) {
+      final detail = userFacingOutput(
+        errOut,
+        result.streamError == null ? raw : '',
+      );
       Loggers.app.warning(
         'Container refresh command failed (exit ${result.exitCode}): '
-        '${userFacingOutput(errOut, '') ?? 'no stderr'}',
+        '${detail ?? result.streamError ?? 'no stderr'}',
+        result.streamError,
+        result.streamErrorStackTrace,
       );
       _setRefreshError(
         target,
         ContainerErr(
           type: ContainerErrType.unknown,
-          message: userFacingOutput(errOut, raw) ?? libL10n.fail,
+          message: detail ?? '${result.streamError ?? libL10n.fail}',
         ),
       );
       await _finishRefresh(refreshGeneration);

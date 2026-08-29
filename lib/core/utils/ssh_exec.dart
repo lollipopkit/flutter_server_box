@@ -9,6 +9,8 @@ typedef SshExecCollectedOutput = ({
   String stdout,
   String stderr,
   bool outputIncomplete,
+  Object? streamError,
+  StackTrace? streamErrorStackTrace,
 });
 
 /// Collects both SSH output streams until the command and streams have ended.
@@ -43,9 +45,22 @@ Future<SshExecCollectedOutput> collectSshExecOutput({
 
   // These must be obtained while the subscriptions are still live. Calling
   // asFuture after a done event has already been delivered creates futures
-  // that can no longer complete.
-  final outDone = outSub.asFuture<void>();
-  final errDone = errSub.asFuture<void>();
+  // that can no longer complete. `asFuture` also replaces the subscription's
+  // error callback, so catch its error here and keep the output buffered up to
+  // that point instead of letting the collector throw it away.
+  Object? streamError;
+  StackTrace? streamErrorStackTrace;
+  Future<void> captureDone(StreamSubscription<String> subscription) async {
+    try {
+      await subscription.asFuture<void>();
+    } catch (error, trace) {
+      streamError ??= error;
+      streamErrorStackTrace ??= trace;
+    }
+  }
+
+  final outDone = captureDone(outSub);
+  final errDone = captureDone(errSub);
 
   await commandDone;
 
@@ -64,6 +79,8 @@ Future<SshExecCollectedOutput> collectSshExecOutput({
     stdout: out.toString(),
     stderr: err.toString(),
     outputIncomplete: incomplete,
+    streamError: streamError,
+    streamErrorStackTrace: streamErrorStackTrace,
   );
 }
 
@@ -144,6 +161,8 @@ class SshExec implements ServerExec {
         stdout: collected.stdout,
         stderr: collected.stderr,
         outputIncomplete: collected.outputIncomplete,
+        streamError: collected.streamError,
+        streamErrorStackTrace: collected.streamErrorStackTrace,
       );
     } finally {
       session.close();

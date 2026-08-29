@@ -36,27 +36,30 @@ class _RecordingExec implements ServerExec {
 
 void main() {
   group('collectSshExecOutput', () {
-    test('accepts streams that close before the command exit arrives', () async {
-      final stdout = StreamController<List<int>>();
-      final stderr = StreamController<List<int>>();
-      final commandDone = Completer<void>();
-      final collecting = collectSshExecOutput(
-        stdout: stdout.stream,
-        stderr: stderr.stream,
-        commandDone: commandDone.future,
-        drainTimeout: const Duration(milliseconds: 20),
-      );
+    test(
+      'accepts streams that close before the command exit arrives',
+      () async {
+        final stdout = StreamController<List<int>>();
+        final stderr = StreamController<List<int>>();
+        final commandDone = Completer<void>();
+        final collecting = collectSshExecOutput(
+          stdout: stdout.stream,
+          stderr: stderr.stream,
+          commandDone: commandDone.future,
+          drainTimeout: const Duration(milliseconds: 20),
+        );
 
-      stdout.add(utf8.encode('container json'));
-      await stdout.close();
-      await stderr.close();
-      commandDone.complete();
+        stdout.add(utf8.encode('container json'));
+        await stdout.close();
+        await stderr.close();
+        commandDone.complete();
 
-      final result = await collecting;
-      expect(result.stdout, 'container json');
-      expect(result.stderr, isEmpty);
-      expect(result.outputIncomplete, isFalse);
-    });
+        final result = await collecting;
+        expect(result.stdout, 'container json');
+        expect(result.stderr, isEmpty);
+        expect(result.outputIncomplete, isFalse);
+      },
+    );
 
     test('still reports a stream held open after command exit', () async {
       final stdout = StreamController<List<int>>();
@@ -79,6 +82,32 @@ void main() {
       await stdout.close();
       await stderr.close();
     });
+
+    test('preserves output received before a stream error', () async {
+      final stdout = StreamController<List<int>>();
+      final stderr = StreamController<List<int>>();
+      final commandDone = Completer<void>();
+      final error = StateError('stdout connection lost');
+      final collecting = collectSshExecOutput(
+        stdout: stdout.stream,
+        stderr: stderr.stream,
+        commandDone: commandDone.future,
+        drainTimeout: const Duration(milliseconds: 20),
+      );
+
+      stdout
+        ..add(utf8.encode('partial container json'))
+        ..addError(error);
+      commandDone.complete();
+      await stderr.close();
+
+      final result = await collecting;
+      expect(result.stdout, 'partial container json');
+      expect(result.streamError, same(error));
+      expect(result.outputIncomplete, isFalse);
+
+      await stdout.close();
+    });
   });
 
   group('ExecResult', () {
@@ -97,6 +126,17 @@ void main() {
         exitCode: null,
         stdout: '',
         stderr: 'permission denied',
+      );
+
+      expect(result.succeeded, isFalse);
+    });
+
+    test('rejects a command whose output stream failed', () {
+      final result = ExecResult(
+        exitCode: 0,
+        stdout: 'partial output',
+        stderr: '',
+        streamError: StateError('connection lost'),
       );
 
       expect(result.succeeded, isFalse);
