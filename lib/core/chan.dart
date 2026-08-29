@@ -154,6 +154,12 @@ abstract final class MethodChans {
     try {
       Loggers.app.info('Updating Android sessions: $payload');
       await _channel.invokeMethod('updateSessions', payload);
+    } on PlatformException catch (e, s) {
+      // A denied notification permission is a supported state: Android cannot
+      // run the foreground service, and the settings page explains how to
+      // enable it. Do not turn every ordinary session sync into a warning.
+      if (e.code == 'NOTIFICATION_PERMISSION_DENIED') return;
+      Loggers.app.warning('Failed to update Android sessions', e, s);
     } catch (e, s) {
       Loggers.app.warning('Failed to update Android sessions', e, s);
     }

@@ -29,6 +29,7 @@ class MainActivity: FlutterFragmentActivity() {
     private var stopAllReceiver: BroadcastReceiver? = null
     private var disableImpeller = false
     private var ownsFlutterEngine = false
+    private var notificationPermissionRequestInFlight = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val graphicsCompatibility = ImpellerCompatibility.check(this)
@@ -57,6 +58,9 @@ class MainActivity: FlutterFragmentActivity() {
         const val ARG_DISABLE_IMPELLER = "--enable-impeller=false"
         const val PRIVACY_PREFS = "privacy_cover"
         const val KEY_PRIVACY_COVER = "enabled"
+        const val NOTIFICATION_PERMISSION_REQUEST_CODE = 123
+        const val NOTIFICATION_PERMISSION_PREFS = "notification_permission"
+        const val KEY_NOTIFICATION_PERMISSION_REQUESTED = "requested"
     }
 
     // --- Privacy cover ------------------------------------------------------
@@ -220,7 +224,7 @@ class MainActivity: FlutterFragmentActivity() {
                     }
                     "updateSessions" -> {
                         try {
-                            reqPerm()
+                            requestNotificationPermissionOnce()
                             if (!notificationsAllowed()) {
                                 // Avoid starting/continuing service updates when notifications are blocked
                                 result.error("NOTIFICATION_PERMISSION_DENIED", "Notification permission not granted", null)
@@ -253,26 +257,36 @@ class MainActivity: FlutterFragmentActivity() {
         setupStopAllReceiver()
     }
 
-    private fun reqPerm() {
+    private fun requestNotificationPermissionOnce() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
-        
+
+        if (notificationsAllowed()) return
+        if (notificationPermissionRequestInFlight) return
+
+        val permissionPrefs = getSharedPreferences(
+            NOTIFICATION_PERMISSION_PREFS,
+            Context.MODE_PRIVATE,
+        )
+        if (permissionPrefs.getBoolean(KEY_NOTIFICATION_PERMISSION_REQUESTED, false)) return
+
+        // Record this before launching Android's permission activity. That
+        // activity changes the Flutter lifecycle, which immediately causes
+        // another session sync; without both guards every sync launches a new
+        // permission activity until Android removes the task.
+        notificationPermissionRequestInFlight = true
+        permissionPrefs.edit().putBoolean(KEY_NOTIFICATION_PERMISSION_REQUESTED, true).apply()
+
         try {
-            // Check if we already have the permission to avoid unnecessary prompts
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-                != PackageManager.PERMISSION_GRANTED) {
-                // Check if we should show rationale
-                if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.POST_NOTIFICATIONS)) {
-                    android.util.Log.i("MainActivity", "User previously denied notification permission")
-                }
-                
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                    123,
-                )
-            }
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                NOTIFICATION_PERMISSION_REQUEST_CODE,
+            )
         } catch (e: Exception) {
-            // Log error but don't crash
+            notificationPermissionRequestInFlight = false
+            // A failed launch did not ask the user anything, so allow a later
+            // sync to make one genuine retry.
+            permissionPrefs.edit().remove(KEY_NOTIFICATION_PERMISSION_REQUESTED).apply()
             android.util.Log.e("MainActivity", "Failed to request permissions: ${e.message}")
         }
     }
@@ -418,10 +432,11 @@ class MainActivity: FlutterFragmentActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == 123) {
+        if (requestCode == NOTIFICATION_PERMISSION_REQUEST_CODE) {
+            notificationPermissionRequestInFlight = false
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 android.util.Log.i("MainActivity", "Notification permission granted")
-                // `reqPerm` is asynchronous and `updateSessions`
+                // The permission request is asynchronous and `updateSessions`
                 // test the permission the moment after asking for it, so the
                 // first attempt is always refused and nothing retries it. With
                 // a session already open and no further lifecycle change
