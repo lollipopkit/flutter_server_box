@@ -514,7 +514,7 @@ class ContainerNotifier extends _$ContainerNotifier {
           target,
           ContainerErr(
             type: ContainerErrType.unknown,
-            message: userFacingOutput(errOut, raw) ?? libL10n.fail,
+            message: containerExecErrorDetail(result),
           ),
         );
         await _finishRefresh(refreshGeneration);
@@ -558,7 +558,7 @@ class ContainerNotifier extends _$ContainerNotifier {
         // should be able to see what it was.
         ContainerErr(
           type: ContainerErrType.notInstalled,
-          message: userFacingOutput(errOut, raw),
+          message: containerExecErrorDetail(result),
         ),
       );
       await _finishRefresh(refreshGeneration);
@@ -579,22 +579,15 @@ class ContainerNotifier extends _$ContainerNotifier {
       return;
     }
     if (!result.succeeded) {
-      final detail = userFacingOutput(
-        errOut,
-        result.streamError == null ? raw : '',
-      );
+      final detail = containerExecErrorDetail(result);
       Loggers.app.warning(
-        'Container refresh command failed (exit ${result.exitCode}): '
-        '${detail ?? result.streamError ?? 'no stderr'}',
+        'Container refresh command failed (exit ${result.exitCode}): $detail',
         result.streamError,
         result.streamErrorStackTrace,
       );
       _setRefreshError(
         target,
-        ContainerErr(
-          type: ContainerErrType.unknown,
-          message: detail ?? '${result.streamError ?? libL10n.fail}',
-        ),
+        ContainerErr(type: ContainerErrType.unknown, message: detail),
       );
       await _finishRefresh(refreshGeneration);
       return;
@@ -621,7 +614,7 @@ class ContainerNotifier extends _$ContainerNotifier {
         target,
         ContainerErr(
           type: ContainerErrType.notInstalled,
-          message: userFacingOutput(errOut, raw),
+          message: containerExecErrorDetail(result),
         ),
       );
       await _finishRefresh(refreshGeneration);
@@ -964,8 +957,7 @@ class ContainerNotifier extends _$ContainerNotifier {
         message: l10n.containerSudoPasswordIncorrect,
       );
     }
-    final detail =
-        userFacingOutput(result.stderr, result.stdout) ?? libL10n.fail;
+    final detail = containerExecErrorDetail(result);
     if (result.outputIncomplete) {
       await _finishRun();
       return ContainerErr(type: ContainerErrType.unknown, message: detail);
@@ -1056,6 +1048,17 @@ String? userFacingOutput(String stderr, String stdout) {
   }
   return null;
 }
+
+/// An execution failure ready to show in the container page.
+///
+/// A stream error means stdout may end in the middle of an otherwise valid
+/// response, so it must not be presented as the reason for the failure.
+String containerExecErrorDetail(ExecResult result) =>
+    userFacingOutput(
+      result.stderr,
+      result.streamError == null ? result.stdout : '',
+    ) ??
+    '${result.streamError ?? libL10n.fail}';
 
 /// The command line for one container-runtime call.
 ///
