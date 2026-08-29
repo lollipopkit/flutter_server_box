@@ -1051,12 +1051,15 @@ String? userFacingOutput(String stderr, String stdout) {
 
 /// An execution failure ready to show in the container page.
 ///
-/// A stream error means stdout may end in the middle of an otherwise valid
-/// response, so it must not be presented as the reason for the failure.
+/// Incomplete output or a stream error means stdout may end in the middle of
+/// an otherwise valid response, so it must not be presented as the reason for
+/// the failure.
 String containerExecErrorDetail(ExecResult result) =>
     userFacingOutput(
       result.stderr,
-      result.streamError == null ? result.stdout : '',
+      !result.outputIncomplete && result.streamError == null
+          ? result.stdout
+          : '',
     ) ??
     '${result.streamError ?? libL10n.fail}';
 

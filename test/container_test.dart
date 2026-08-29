@@ -922,5 +922,16 @@ not-json
       expect(containerExecErrorDetail(partial), '$error');
       expect(containerExecErrorDetail(withStderr), 'permission denied');
     });
+
+    test('incomplete output hides partial stdout without a stream error', () {
+      final result = ExecResult(
+        exitCode: 0,
+        stdout: '{"partial": true}',
+        stderr: '',
+        outputIncomplete: true,
+      );
+
+      expect(containerExecErrorDetail(result), isNot(contains('partial')));
+    });
   });
 }
