@@ -135,6 +135,7 @@ abstract final class TermSessionManager {
   static void updateStatus(String id, TermSessionStatus status) {
     final old = _entries[id];
     if (old == null) return;
+    if (old.info.status == status) return;
     _entries[id] = _Entry(
       TermSessionInfo(
         id: old.info.id,
