@@ -5,6 +5,85 @@ import 'dart:typed_data';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 
+typedef SshExecCollectedOutput = ({
+  String stdout,
+  String stderr,
+  bool outputIncomplete,
+  Object? streamError,
+  StackTrace? streamErrorStackTrace,
+});
+
+/// Collects both SSH output streams until the command and streams have ended.
+///
+/// The completion futures are registered before [commandDone] is awaited. A
+/// fast command can close stdout and stderr before its SSH exit status arrives;
+/// registering `asFuture` afterwards misses that already-delivered done event
+/// and falsely turns an ordinary command into a drain timeout.
+Future<SshExecCollectedOutput> collectSshExecOutput({
+  required Stream<List<int>> stdout,
+  required Stream<List<int>> stderr,
+  required Future<void> commandDone,
+  required Duration drainTimeout,
+  OnExecOutput? onStdout,
+  OnExecOutput? onStderr,
+}) async {
+  final out = StringBuffer();
+  final err = StringBuffer();
+  final decoder = const Utf8Decoder(allowMalformed: true);
+
+  // Subscriptions rather than `forEach`, so that giving up on the drain can
+  // actually let go of the streams instead of leaving them writing into
+  // buffers nobody will read.
+  final outSub = decoder.bind(stdout).listen((chunk) {
+    out.write(chunk);
+    onStdout?.call(chunk);
+  });
+  final errSub = decoder.bind(stderr).listen((chunk) {
+    err.write(chunk);
+    onStderr?.call(chunk);
+  });
+
+  // These must be obtained while the subscriptions are still live. Calling
+  // asFuture after a done event has already been delivered creates futures
+  // that can no longer complete. `asFuture` also replaces the subscription's
+  // error callback, so catch its error here and keep the output buffered up to
+  // that point instead of letting the collector throw it away.
+  Object? streamError;
+  StackTrace? streamErrorStackTrace;
+  Future<void> captureDone(StreamSubscription<String> subscription) async {
+    try {
+      await subscription.asFuture<void>();
+    } catch (error, trace) {
+      streamError ??= error;
+      streamErrorStackTrace ??= trace;
+    }
+  }
+
+  final outDone = captureDone(outSub);
+  final errDone = captureDone(errSub);
+
+  await commandDone;
+
+  var incomplete = false;
+  await Future.wait([outDone, errDone]).timeout(
+    drainTimeout,
+    onTimeout: () async {
+      incomplete = true;
+      await outSub.cancel();
+      await errSub.cancel();
+      return const <void>[];
+    },
+  );
+
+  return (
+    stdout: out.toString(),
+    stderr: err.toString(),
+    outputIncomplete: incomplete,
+    streamError: streamError,
+    streamErrorStackTrace: streamErrorStackTrace,
+  );
+}
+
 /// [ServerExec] over an SSH connection.
 ///
 /// One command, one channel — which is what SSH multiplexing is for, and why
@@ -56,52 +135,37 @@ class SshExec implements ServerExec {
       }),
     );
 
-    final out = StringBuffer();
-    final err = StringBuffer();
-    final decoder = const Utf8Decoder(allowMalformed: true);
-
-    // Subscriptions rather than `forEach`, so that giving up on the drain can
-    // actually let go of the streams instead of leaving them writing into
-    // buffers nobody will read.
-    final outSub = decoder.bind(session.stdout).listen((chunk) {
-      out.write(chunk);
-      onStdout?.call(chunk);
-    });
-    final errSub = decoder.bind(session.stderr).listen((chunk) {
-      err.write(chunk);
-      onStderr?.call(chunk);
-    });
-
-    if (stdin != null) {
-      session.stdin.add(Uint8List.fromList(utf8.encode(stdin)));
-    }
-    if (entry != null) {
-      session.stdin.add(Uint8List.fromList(utf8.encode('$script\n')));
-    }
-    // Closed either way: a command that reads stdin would otherwise wait for
-    // input nobody is going to send.
-    await session.stdin.close();
-
-    await session.done;
-
-    var incomplete = false;
-    await Future.wait([outSub.asFuture<void>(), errSub.asFuture<void>()])
-        .timeout(
-          drainTimeout,
-          onTimeout: () async {
-            incomplete = true;
-            await outSub.cancel();
-            await errSub.cancel();
-            return const <void>[];
-          },
-        );
-    session.close();
-
-    return ExecResult(
-      exitCode: session.exitCode,
-      stdout: out.toString(),
-      stderr: err.toString(),
-      outputIncomplete: incomplete,
+    final output = collectSshExecOutput(
+      stdout: session.stdout,
+      stderr: session.stderr,
+      commandDone: session.done,
+      drainTimeout: drainTimeout,
+      onStdout: onStdout,
+      onStderr: onStderr,
     );
+
+    try {
+      if (stdin != null) {
+        session.stdin.add(Uint8List.fromList(utf8.encode(stdin)));
+      }
+      if (entry != null) {
+        session.stdin.add(Uint8List.fromList(utf8.encode('$script\n')));
+      }
+      // Closed either way: a command that reads stdin would otherwise wait for
+      // input nobody is going to send.
+      await session.stdin.close();
+
+      final collected = await output;
+      return ExecResult(
+        exitCode: session.exitCode,
+        stdout: collected.stdout,
+        stderr: collected.stderr,
+        outputIncomplete: collected.outputIncomplete,
+        streamError: collected.streamError,
+        streamErrorStackTrace: collected.streamErrorStackTrace,
+      );
+    } finally {
+      session.close();
+    }
   }
 }

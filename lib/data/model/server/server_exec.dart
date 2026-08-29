@@ -7,6 +7,8 @@ class ExecResult {
     required this.stdout,
     required this.stderr,
     this.outputIncomplete = false,
+    this.streamError,
+    this.streamErrorStackTrace,
   });
 
   /// Null where the source cannot report one — a shell that was closed rather
@@ -23,12 +25,19 @@ class ExecResult {
   /// is here; this says there may have been more.
   final bool outputIncomplete;
 
+  /// An error while reading stdout or stderr, after preserving everything that
+  /// arrived before it.
+  final Object? streamError;
+  final StackTrace? streamErrorStackTrace;
+
   /// Both streams in the order a terminal would have shown them. Most callers
   /// want this: they are parsing what a command printed, not auditing which
   /// file descriptor it used.
   String get combined => stderr.isEmpty ? stdout : '$stdout$stderr';
 
-  bool get succeeded => exitCode == 0 || (exitCode == null && stderr.isEmpty);
+  bool get succeeded =>
+      streamError == null &&
+      (exitCode == 0 || (exitCode == null && stderr.isEmpty));
 }
 
 typedef OnExecOutput = void Function(String chunk);
