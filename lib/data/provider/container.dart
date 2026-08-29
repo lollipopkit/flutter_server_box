@@ -503,6 +503,11 @@ class ContainerNotifier extends _$ContainerNotifier {
       (raw, errOut) = (result.stdout, result.stderr);
       if (result.outputIncomplete) {
         if (_isStaleRefresh(refreshGeneration)) return;
+        Loggers.app.warning(
+          'Container refresh output incomplete '
+          '(exit ${result.exitCode}, stdout ${raw.length} bytes, '
+          'stderr ${errOut.length} bytes)',
+        );
         _setRefreshError(
           target,
           ContainerErr(
@@ -572,6 +577,10 @@ class ContainerNotifier extends _$ContainerNotifier {
       return;
     }
     if (!result.succeeded) {
+      Loggers.app.warning(
+        'Container refresh command failed (exit ${result.exitCode}): '
+        '${userFacingOutput(errOut, '') ?? 'no stderr'}',
+      );
       _setRefreshError(
         target,
         ContainerErr(
