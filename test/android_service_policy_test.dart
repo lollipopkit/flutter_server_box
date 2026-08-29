@@ -94,4 +94,56 @@ void main() {
     );
     expect(service, contains('intent?.action == ACTION_STOP_SERVICE'));
   });
+
+  test('Android notification permission is requested at most once', () {
+    final activity = File(
+      'android/app/src/main/kotlin/tech/lolli/toolbox/MainActivity.kt',
+    ).readAsStringSync();
+
+    expect(activity, contains('notificationPermissionRequestInFlight'));
+    expect(activity, contains('KEY_NOTIFICATION_PERMISSION_REQUESTED'));
+    expect(
+      activity,
+      contains(
+        'permissionPrefs.getBoolean(KEY_NOTIFICATION_PERMISSION_REQUESTED, false)',
+      ),
+    );
+
+    final persistedAt = activity.indexOf(
+      'putBoolean(KEY_NOTIFICATION_PERMISSION_REQUESTED, true)',
+    );
+    final inFlightGuardAt = activity.indexOf(
+      'if (notificationPermissionRequestInFlight) return',
+    );
+    final persistedGuardAt = activity.indexOf(
+      'permissionPrefs.getBoolean(KEY_NOTIFICATION_PERMISSION_REQUESTED, false)',
+    );
+    final requestedAt = activity.indexOf('ActivityCompat.requestPermissions(');
+    expect(inFlightGuardAt, greaterThanOrEqualTo(0));
+    expect(persistedGuardAt, greaterThan(inFlightGuardAt));
+    expect(persistedAt, greaterThanOrEqualTo(0));
+    expect(requestedAt, greaterThan(persistedGuardAt));
+    expect(requestedAt, greaterThan(persistedAt));
+
+    final resultHandlerAt = activity.indexOf(
+      'if (requestCode == NOTIFICATION_PERMISSION_REQUEST_CODE)',
+    );
+    final clearedAt = activity.indexOf(
+      'notificationPermissionRequestInFlight = false',
+      resultHandlerAt,
+    );
+    expect(resultHandlerAt, greaterThanOrEqualTo(0));
+    expect(clearedAt, greaterThan(resultHandlerAt));
+    expect(activity, isNot(contains('reqPerm()')));
+  });
+
+  test('notification permission denial is not logged as a sync failure', () {
+    final channel = File('lib/core/chan.dart').readAsStringSync();
+
+    expect(channel, contains('on PlatformException catch'));
+    expect(
+      channel,
+      contains("if (e.code == 'NOTIFICATION_PERMISSION_DENIED') return;"),
+    );
+  });
 }
