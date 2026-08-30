@@ -102,6 +102,7 @@ dependencies:
   # collection, fixnum, meta — are already in this tree.
   protobuf: ^6.0.0
   fixnum: ^1.1.1
+  device_info_plus: ^13.2.0
 
 dev_dependencies:
   integration_test:

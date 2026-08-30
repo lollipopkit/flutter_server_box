@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:sentry/sentry.dart' as sentry;
+import 'package:server_box/core/service/diagnostics_platform.dart';
 import 'package:server_box/data/model/app/diagnostics_level.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
@@ -129,6 +130,11 @@ abstract final class DiagnosticsUpload {
         options.attachThreads = false;
       });
       _started = wanted;
+      // Before the sink is installed, so the first error to arrive already
+      // says what it arrived from. The pure-Dart SDK cannot work this out for
+      // itself — see [DiagnosticsPlatform], which is also where the line
+      // between "what hardware" and "whose hardware" is drawn.
+      await DiagnosticsPlatform.describe();
       Diag.install(FanOutSink([LocalDiagnosticsSink(), const SentrySink()]));
       Loggers.app.info('Crash upload started at ${wanted.name}');
     } catch (e, s) {
