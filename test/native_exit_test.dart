@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:fixnum/fixnum.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/service/native_exit.dart';
@@ -7,6 +9,7 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
 
 import 'helpers/test_db.dart';
+import 'helpers/tombstone_proto.dart';
 
 /// Two decisions here fail silently in opposite directions: treating an
 /// ordinary exit as a crash raises a prompt after a normal launch, which
@@ -143,6 +146,76 @@ void main() {
     NativeExitReport.apply(record('anr', trace: 'main prio=5 tid=1 Blocked'));
 
     expect(await logged(), contains('main prio=5 tid=1 Blocked'));
+  });
+
+  group('a native crash tombstone', () {
+    Map<String, Object?> nativeRecord(Object? proto, {int timestamp = 9000}) => {
+      'reason': 'crash_native',
+      'timestamp': timestamp,
+      'description': 'desc',
+      'status': 0,
+      'importance': 100,
+      // What the platform side actually sends for this reason: bytes, and no
+      // `trace`. Spelled out rather than reusing `record` so the difference
+      // between the two shapes is visible here.
+      'trace': null,
+      'traceProto': proto,
+    };
+
+    test('is decoded into the log and held for the report', () async {
+      final proto = tombstoneBytes(
+        pid: 4321,
+        tid: 4330,
+        signal: signalOf(
+          number: 11,
+          name: 'SIGSEGV',
+          code: 1,
+          codeName: 'SEGV_MAPERR',
+          hasFaultAddress: true,
+          faultAddress: Int64(0x18),
+        ),
+        threads: {
+          4330: threadOf(
+            id: 4330,
+            name: '1.ui',
+            frames: [
+              frameOf(relPc: 0x2b4c, function: 'ssh_kex', file: 'libsbm_ffi.so'),
+            ],
+          ),
+        },
+      );
+
+      NativeExitReport.apply(nativeRecord(proto));
+
+      expect(CrashLog.lastRunEndedBadly, isTrue);
+      // Held as well as logged: the report is assembled from the *previous*
+      // run's file, and this record arrives into the current one.
+      expect(NativeExitReport.lastExitTrace, contains('SIGSEGV'));
+      expect(NativeExitReport.lastExitTrace, contains('ssh_kex'));
+      final log = await logged();
+      expect(log, contains('fault addr 0x0000000000000018'));
+      expect(log, contains('libsbm_ffi.so'));
+    });
+
+    test('an unreadable one still leaves the crash reported', () async {
+      // The tombstone lives in a global circular buffer another app's crash can
+      // evict, so half a record is a thing that happens. Losing the stack must
+      // not also lose the fact that the app died.
+      NativeExitReport.apply(
+        nativeRecord(Uint8List.fromList([0xff, 0xff, 0xff]), timestamp: 9100),
+      );
+
+      expect(CrashLog.lastRunEndedBadly, isTrue);
+      expect(NativeExitReport.lastExitTrace, isNull);
+      expect(await logged(), contains('crash_native'));
+    });
+
+    test('no tombstone at all is not an error', () async {
+      NativeExitReport.apply(nativeRecord(null, timestamp: 9200));
+
+      expect(CrashLog.lastRunEndedBadly, isTrue);
+      expect(NativeExitReport.lastExitTrace, isNull);
+    });
   });
 
   group('MetricKit', () {

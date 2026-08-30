@@ -97,6 +97,11 @@ dependencies:
   flutter_rust_bridge_hooks: 2.13.0-beta.6
   desktop_drop: ^0.8.0
   sentry: ^9.28.0
+  # Runtime for the generated reader in `lib/src/proto`, which is how Android's
+  # crash tombstone is decoded. Pure Dart, and its own dependencies —
+  # collection, fixnum, meta — are already in this tree.
+  protobuf: ^6.0.0
+  fixnum: ^1.1.1
 
 dev_dependencies:
   integration_test:

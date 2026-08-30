@@ -206,8 +206,12 @@ abstract final class MethodChans {
   /// Null below API 30, and null when there is nothing recorded. Keys:
   /// `reason` (a name — `crash_native`, `anr`, `low_memory`,
   /// `user_requested`, …), `timestamp` (ms, and the only thing distinguishing
-  /// one record from another), `description`, `status`, `importance`, and
-  /// `trace` for ANR only.
+  /// one record from another), `description`, `status`, `importance`, and one
+  /// of two traces: `trace`, a `String`, for an ANR, or `traceProto`, the
+  /// bytes of a `Tombstone` protocol buffer, for a native crash on API 31+.
+  /// Both are absent for every other reason, and either can be absent anyway —
+  /// the traces live in a global circular buffer that another app's crash can
+  /// evict.
   static Future<Map<String, Object?>?> lastExitInfo() async {
     if (!isAndroid) return null;
     try {

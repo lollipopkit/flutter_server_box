@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:server_box/core/chan.dart';
+import 'package:server_box/core/service/tombstone.dart';
 import 'package:server_box/data/res/store.dart';
 
 /// Reads why the process died last time, from the system.
@@ -55,10 +56,11 @@ abstract final class NativeExitReport {
   /// The previous run's native stack or ANR trace, when the platform had one.
   ///
   /// Separate from [lastExit] because it is large — a MetricKit call stack is
-  /// capped at 16 KB and an ANR trace is a full thread dump — and because it
-  /// belongs in a report as a block rather than as a field. Held for the same
-  /// reason: it describes the run that died and is only learned about after
-  /// that run's log has been closed.
+  /// capped at 16 KB, an ANR trace is a full thread dump, and a decoded
+  /// tombstone is a signal line and a stack — and because it belongs in a
+  /// report as a block rather than as a field. Held for the same reason: it
+  /// describes the run that died and is only learned about after that run's
+  /// log has been closed.
   static String? lastExitTrace;
 
   /// Folds the system's record into this run's log.
@@ -190,15 +192,20 @@ abstract final class NativeExitReport {
         },
       );
 
-      // ANR hands back a plain-text trace. A native crash's is a tombstone
-      // serialised as a protocol buffer, which needs the generated schema to
-      // read — the reason alone still answers what nothing else could, which
-      // is whether the exit was a native crash at all.
+      // Two shapes, decided by the reason. ANR hands back a thread dump as
+      // plain text; a native crash hands back a tombstone as a protocol
+      // buffer, which [Tombstone.decode] turns into the text a tombstone is
+      // usually read as. Either way what lands here is a trace, and the rest
+      // of this method does not need to know which it was.
       //
-      // TODO(tombstone): decode the API 31+ protobuf so a native crash carries
-      // its stack rather than only its name.
-      final trace = info['trace'];
-      if (trace is String && trace.isNotEmpty) {
+      // The protobuf is preferred when both are present, which does not happen
+      // today — the platform side sends one or the other — and would mean the
+      // structured record and the text disagreed if it did.
+      final proto = info['traceProto'];
+      final trace = proto is Uint8List
+          ? Tombstone.decode(proto)
+          : info['trace'] as String?;
+      if (trace != null && trace.isNotEmpty) {
         // Both: the file is what a developer reads on the device, and
         // [lastExitTrace] is what reaches a report — which is assembled from
         // the *previous* run's file, where this could never appear.

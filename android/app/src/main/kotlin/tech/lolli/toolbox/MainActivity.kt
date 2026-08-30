@@ -61,6 +61,15 @@ class MainActivity: FlutterFragmentActivity() {
         const val NOTIFICATION_PERMISSION_REQUEST_CODE = 123
         const val NOTIFICATION_PERMISSION_PREFS = "notification_permission"
         const val KEY_NOTIFICATION_PERMISSION_REQUESTED = "requested"
+
+        /**
+         * The most tombstone this will carry across the method channel.
+         *
+         * Real ones run to tens of kilobytes; the ceiling is here so a
+         * pathological record cannot be read into memory at launch, not
+         * because 8 MiB is a size anything is expected to approach.
+         */
+        const val MAX_TOMBSTONE_BYTES = 8 * 1024 * 1024
     }
 
     // --- Privacy cover ------------------------------------------------------
@@ -316,11 +325,12 @@ class MainActivity: FlutterFragmentActivity() {
      *
      * Null below API 30, where the API does not exist.
      *
-     * The trace is only read for ANR, where it is plain text. A native crash's
-     * trace is a tombstone serialised as a protocol buffer (API 31+), and
-     * decoding it means generating the schema -- worth doing later, but the
-     * reason alone already answers the question that has no other answer today:
-     * whether the last exit was a native crash at all.
+     * Two shapes of trace come back, and which one depends on the reason. ANR
+     * hands over a thread dump as plain text and it is passed through as
+     * `trace`. A native crash hands over a tombstone serialised as a protocol
+     * buffer (API 31+); the bytes are passed through as `traceProto` and
+     * decoded on the Dart side, which is where they can be tested against a
+     * fixture without a device.
      */
     private fun lastExitInfo(): Map<String, Any?>? {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return null
@@ -340,6 +350,7 @@ class MainActivity: FlutterFragmentActivity() {
                 // different reports.
                 "importance" to info.importance,
                 "trace" to anrTrace(info),
+                "traceProto" to tombstoneBytes(info),
             )
         } catch (e: Exception) {
             android.util.Log.e("MainActivity", "lastExitInfo: ${e.message}")
@@ -357,6 +368,60 @@ class MainActivity: FlutterFragmentActivity() {
         } catch (e: Exception) {
             null
         }
+    }
+
+    /**
+     * The tombstone for a native crash, as the bytes the system wrote.
+     *
+     * Handed over undecoded on purpose. The `Tombstone` protobuf is read in
+     * Dart, so the parser it needs is covered by `flutter test` against a
+     * recorded fixture rather than only by a device that has to crash first --
+     * and adding the protobuf runtime and its Gradle plugin here would put a
+     * dependency and a code generator into the build that F-Droid rebuilds and
+     * `androidReproducible` compares.
+     *
+     * API 31 is where the stream starts carrying this; on API 30 the reason is
+     * recorded but there is no trace to go with it.
+     */
+    private fun tombstoneBytes(info: ApplicationExitInfo): ByteArray? {
+        if (info.reason != ApplicationExitInfo.REASON_CRASH_NATIVE) return null
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return null
+        return try {
+            // Kept in a global circular buffer, so another app's crash can
+            // evict it and this is null often enough to be normal.
+            val stream = info.traceInputStream ?: return null
+            // A tombstone carries memory dumps, every mapping and the tail of
+            // the log buffers, so it is bounded rather than trusted to be
+            // small -- this crosses a method channel at launch. The cap is far
+            // above any real one; hitting it means something is wrong, and a
+            // truncated protobuf is refused by the parser rather than
+            // half-read.
+            stream.use { readBounded(it, MAX_TOMBSTONE_BYTES) }
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /**
+     * Everything the stream has, or null if there is more than [limit] of it.
+     *
+     * Null rather than the first [limit] bytes: a truncated protobuf is not a
+     * shorter tombstone, it is one the parser has to refuse, so handing one
+     * over would only move the failure.
+     */
+    private fun readBounded(stream: java.io.InputStream, limit: Int): ByteArray? {
+        val out = java.io.ByteArrayOutputStream()
+        val buf = ByteArray(16 * 1024)
+        while (true) {
+            val n = stream.read(buf)
+            if (n < 0) break
+            if (out.size() + n > limit) {
+                android.util.Log.w("MainActivity", "tombstone over ${limit}B, dropped")
+                return null
+            }
+            out.write(buf, 0, n)
+        }
+        return if (out.size() == 0) null else out.toByteArray()
     }
 
     /**
