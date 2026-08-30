@@ -366,6 +366,10 @@ class MainActivity: FlutterFragmentActivity() {
             // evict it and this is null often enough to be normal.
             info.traceInputStream?.bufferedReader()?.use { it.readText() }
         } catch (e: Exception) {
+            // Logged rather than swallowed: a null here is indistinguishable
+            // from the ordinary evicted-trace case, so without this an ANR
+            // that failed to read looks exactly like one never recorded.
+            android.util.Log.w("MainActivity", "anrTrace: ${e.message}")
             null
         }
     }
@@ -398,6 +402,10 @@ class MainActivity: FlutterFragmentActivity() {
             // half-read.
             stream.use { readBounded(it, MAX_TOMBSTONE_BYTES) }
         } catch (e: Exception) {
+            // Same reason as [anrTrace]: the caller cannot tell a read that
+            // failed from a tombstone that was evicted, and a native crash
+            // reported with no stack is the case worth being able to explain.
+            android.util.Log.w("MainActivity", "tombstoneBytes: ${e.message}")
             null
         }
     }

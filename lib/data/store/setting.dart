@@ -297,9 +297,15 @@ class SettingStore extends SqliteStore {
   /// Stored by name, never by index: an index changes meaning the moment a
   /// case is inserted, and this value outlives the build that wrote it.
   ///
-  /// Defaults to `full`, and nothing is uploaded until the user has been shown
-  /// the intro page that explains the three levels. That ordering is what
-  /// makes this "asked before it happens" rather than collection by surprise.
+  /// The default is `defaultDiagnosticsLevel`: `none` on Android, `basic`
+  /// everywhere else. The split is about F-Droid, which distributes only the
+  /// Android build and requires collection to be off by default — see that
+  /// getter for why it is decided at runtime rather than by a compile-time
+  /// flag.
+  ///
+  /// Either way nothing is uploaded until the user has been shown the intro
+  /// page that explains the three levels. That ordering is what makes this
+  /// "asked before it happens" rather than collection by surprise.
   late final diagnosticsLevel = propertyDefault(
     'diagnosticsLevel',
     defaultDiagnosticsLevel.name,

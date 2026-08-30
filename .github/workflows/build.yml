@@ -820,6 +820,16 @@ jobs:
       # The complete set, named here because this is the only place that can
       # know it. Each build job knows about its own files and answers for those;
       # a platform whose job never ran has no files and no complaint to make.
+      #
+      # It also decides what does *not* ship. The download pattern above is a
+      # glob over every artifact this run produced, and three of them are debug
+      # symbols — `-android-symbols`, `-ios-dsyms`, `-macos-dsyms` — which
+      # `merge-multiple` flattens in beside the binaries. `files: assets/*`
+      # would then publish `native-debug-symbols.zip` and every dSYM as release
+      # assets, which the jobs producing them explicitly say they are not.
+      # Pruning here rather than narrowing the pattern keeps one list of what a
+      # release consists of, and makes a new artifact opt in to shipping rather
+      # than default to it.
       - name: Check every expected asset arrived
         shell: bash
         run: |
@@ -836,18 +846,35 @@ jobs:
             "${APP_NAME}_${TAG}_windows_amd64.zip"
           )
 
+          echo "collected:"
+          ls -la assets
+
           missing=()
           for name in "${expected[@]}"; do
             [ -f "assets/$name" ] || missing+=("$name")
           done
 
-          echo "collected:"
-          ls -la assets
-
           if (( ${#missing[@]} )); then
             echo "::error::the release is incomplete, ${#missing[@]} asset(s) missing: ${missing[*]}"
             exit 1
           fi
+
+          # Everything that is not on the list, including the symbol bundles.
+          # `-depth` so a dSYM's contents are removed before the directory
+          # holding them, and `-print0` so a name with a space survives the
+          # read. Compared as strings rather than matched as a pattern: these
+          # are filenames, and `.` in every one of them is a literal.
+          while IFS= read -r -d '' path; do
+            name="${path#assets/}"
+            keep=false
+            for want in "${expected[@]}"; do
+              if [[ "$name" == "$want" ]]; then keep=true; break; fi
+            done
+            if [[ "$keep" == false ]]; then rm -rf "$path"; fi
+          done < <(find assets -depth -mindepth 1 -print0)
+
+          echo "publishing:"
+          ls -la assets
       # As a draft, so nothing is downloadable until the step below says so.
       # `action-gh-release` sends `draft` on an update too, so a second call
       # without it would publish the release — which is exactly what the step

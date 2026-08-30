@@ -110,8 +110,14 @@ void main() {
   });
 
   test('an exit the user asked for is not a crash', () {
+    // Explicitly increasing, because `apply` drops any record whose timestamp
+    // is not past the last one it saw. Derived from `hashCode` these arrive in
+    // an arbitrary order, so whichever reasons happened to sort low were
+    // dropped — and a dropped record asserts nothing while still passing,
+    // which is the shape of a test that has quietly stopped testing.
+    var ts = 1000;
     for (final reason in ['user_requested', 'user_stopped', 'exit_self']) {
-      NativeExitReport.apply(record(reason, timestamp: reason.hashCode.abs()));
+      NativeExitReport.apply(record(reason, timestamp: ts += 100));
       expect(CrashLog.lastRunEndedBadly, isFalse, reason: reason);
     }
   });

@@ -117,7 +117,13 @@ gen-l10n:
 gen-proto:
 	@command -v protoc >/dev/null || { echo 'protoc is not installed'; exit 1; }
 	$(DART) pub global activate protoc_plugin
-	protoc --dart_out=lib/src/proto -I third_party/proto third_party/proto/tombstone.proto
+	# `protoc` looks for its Dart backend as a `protoc-gen-dart` executable on
+	# PATH, and `pub global activate` installs that into the pub cache's `bin`
+	# — which is not on PATH unless the user has put it there. Without this the
+	# line above succeeds and this one fails with `protoc-gen-dart: program not
+	# found`, naming a plugin nothing asked for by that name.
+	PATH="$${PUB_CACHE:-$$HOME/.pub-cache}/bin:$$PATH" \
+		protoc --dart_out=lib/src/proto -I third_party/proto third_party/proto/tombstone.proto
 
 build:
 	@if [ -z "$(PLATFORM)" ]; then \

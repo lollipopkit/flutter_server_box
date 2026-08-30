@@ -451,7 +451,7 @@ class _HomePageState extends ConsumerState<HomePage>
     // Explicitly, because the listener above only fires on a change: the first
     // tab is usually already the value, and nothing would have announced it.
     _publishCurrentTab();
-    final authed = _goAuth();
+    final authed = _goAuth(showGuide: false);
 
     if (Stores.setting.autoCheckAppUpdate.fetch()) {
       AppUpdateIface.doUpdate(
@@ -513,7 +513,15 @@ class _HomePageState extends ConsumerState<HomePage>
   /// raised while it is up draws over it — and the crash report renders the
   /// previous run's log, which is precisely what a lock screen exists to keep
   /// unread. The other two notices are no better placed there.
-  Future<void> _goAuth() async {
+  /// [showGuide] is false on the launch path, where the caller shows the guide
+  /// itself once the launch notices have been through.
+  ///
+  /// The call below runs *before* this method's own future completes, so a
+  /// launch with a lock configured had the guide up before the crash and
+  /// migration notices it is supposed to follow — the ordering the caller
+  /// spells out, defeated by the one branch that does not go through it.
+  /// Resuming has no such sequence and is where this still has to happen.
+  Future<void> _goAuth({bool showGuide = true}) async {
     // First, and on every path out of here. On iOS the cover is a view over the
     // Flutter window, so it is *above* every route drawn inside it — left up it
     // would hide the lock screen instead of protecting it. Releasing it before
@@ -539,7 +547,7 @@ class _HomePageState extends ConsumerState<HomePage>
       context,
       args: LocalAuthPageArgs(onAuthSuccess: () => _shouldAuth = false),
     );
-    await _maybeShowNavGuide();
+    if (showGuide) await _maybeShowNavGuide();
   }
 
   /// Let the native privacy cover come off, now that either the lock screen is

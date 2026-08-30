@@ -63,8 +63,15 @@ final class _IntroPage extends StatelessWidget {
   /// seen" for anyone who has completed an intro, and a newly added one could
   /// never appear. Keyed on the arrangement instead, which is also what lets a
   /// change to what is collected ask again.
-  static Future<bool> _needsDiagnosticsConsent() async =>
-      _setting.diagnosticsConsentVer.fetch() < kDiagnosticsConsentVer;
+  ///
+  /// Not asked at all in a build that cannot upload — one made with an empty
+  /// `SENTRY_DSN`. Every level then behaves identically, so the page would put
+  /// a question whose answer changes nothing, and the settings page already
+  /// hides the same control under the same condition.
+  static Future<bool> _needsDiagnosticsConsent() async {
+    if (!DiagnosticsUpload.availableInBuild) return false;
+    return _setting.diagnosticsConsentVer.fetch() < kDiagnosticsConsentVer;
+  }
 
   // — Widget build ——————————————————————————————————————————————————
 
