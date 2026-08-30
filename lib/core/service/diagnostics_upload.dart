@@ -72,8 +72,8 @@ abstract final class DiagnosticsUpload {
   /// Safe to call whenever the setting changes, and at launch.
   ///
   /// Nothing is uploaded until the intro page explaining the levels has been
-  /// acknowledged. The default is `full`, so without this check a fresh
-  /// install would be sending before it had said anything — which is the
+  /// acknowledged. Off Android the default is `basic`, so without this check a
+  /// fresh install would be sending before it had said anything — which is the
   /// difference between "opt-in" and "on by default" in F-Droid's terms, and
   /// the difference between asking and not in anyone else's.
   static Future<void> sync() async {

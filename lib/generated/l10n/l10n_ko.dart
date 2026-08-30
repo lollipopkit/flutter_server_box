@@ -19,33 +19,35 @@ class AppLocalizationsKo extends AppLocalizations {
   String get crashCollectNone => '전송 안 함';
 
   @override
-  String get crashCollectNoneTip =>
-      '아무것도 전송하지 않습니다. 보고서는 이 기기에 남아 있으며, 충돌 후 직접 보낼 수도 있습니다.';
+  String get crashCollectNoneTip => '보고서는 이 기기에 남아 있으며, 충돌 후 직접 보낼 수도 있습니다.';
 
   @override
   String get crashCollectBasic => '기본 정보';
 
   @override
   String get crashCollectBasicTip =>
-      '충돌과 충돌이 발생한 앱 버전만 포함합니다. 당시 무엇을 하고 있었는지는 포함하지 않습니다.';
+      '충돌 정보만 포함하며 로그와 성능 데이터는 포함하지 않습니다. **앱을 개선하고 버그를 수정하는 데 도움이 됩니다.**';
 
   @override
   String get crashCollectFull => '전체 정보';
 
   @override
   String get crashCollectFullTip =>
-      '문제가 발생했을 때의 정보뿐 아니라 앱 실행 중의 로그와 성능 데이터도 전송합니다.';
+      '충돌 로그와 함께 추가 로그 및 성능 데이터도 포함합니다. **충돌을 재현하고 버그 발생 조건을 파악하는 데 필요합니다.**';
 
   @override
   String get crashCollectFooter =>
-      '모든 수준에서 서버 이름, 주소, 사용자 이름은 기록할 때 자리 표시자로 대체됩니다. 나중에 설정에서 수집 수준을 변경할 수 있습니다.';
+      '모든 수준에서 알려진 서버 이름, 주소, 사용자 이름은 기록할 때 자리 표시자로 대체됩니다. 나중에 설정에서 수집 수준을 변경할 수 있습니다.';
+
+  @override
+  String get privacyPolicy => '개인정보 처리방침';
 
   @override
   String get crashUpload => '충돌 보고서 업로드';
 
   @override
   String get crashUploadTip =>
-      '충돌 보고서를 이 기기에만 보관하지 않고 개발자에게도 전송합니다. 알려진 서버 이름과 주소는 자리 표시자로 대체되지만 다른 정보가 남을 수 있습니다. 기본적으로 꺼져 있으며 언제든지 끌 수 있습니다.';
+      '충돌 보고서를 개발자에게 전송합니다. 알려진 서버 이름과 주소는 자리 표시자로 대체됩니다. 기본적으로 꺼져 있으며 언제든지 끌 수 있습니다.';
 
   @override
   String get crashNoticeBody =>

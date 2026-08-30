@@ -19,30 +19,33 @@ class AppLocalizationsZh extends AppLocalizations {
   String get crashCollectNone => '不发送';
 
   @override
-  String get crashCollectNoneTip => '不会发送任何信息。报告仍会保留在本机；发生崩溃后，你仍可手动发送。';
+  String get crashCollectNoneTip => '报告会保留在本机；发生崩溃后，你可手动发送。';
 
   @override
   String get crashCollectBasic => '基本信息';
 
   @override
-  String get crashCollectBasicTip => '仅包含崩溃信息和发生崩溃时的应用版本，不包含你当时正在进行的操作。';
+  String get crashCollectBasicTip => '仅包含崩溃信息，不包含日志/性能数据; **帮助我们完善App, 修复bug**';
 
   @override
   String get crashCollectFull => '完整信息';
 
   @override
-  String get crashCollectFullTip => '除发生问题时的信息外，还会发送应用运行期间的日志和性能数据。';
+  String get crashCollectFullTip =>
+      '除崩溃日志，加上日志和性能数据: 我们需要知道 **崩溃如何复现/怎么才能触发这个bug**';
 
   @override
   String get crashCollectFooter =>
-      '无论选择哪个级别，记录时都会将服务器名称、地址和用户名替换为占位符。之后可在设置中更改收集级别。';
+      '无论选择哪个级别，记录时都会将已知服务器名称、地址和用户名替换为占位符。之后可在设置中更改收集级别。';
+
+  @override
+  String get privacyPolicy => '隐私政策';
 
   @override
   String get crashUpload => '上传崩溃报告';
 
   @override
-  String get crashUploadTip =>
-      '除保存在本机外，还会将崩溃报告发送给开发者。已知的服务器名称和地址会替换为占位符，但其他信息可能仍会保留。默认关闭，可随时停用。';
+  String get crashUploadTip => '将崩溃报告发送给开发者。已知的服务器名称和地址会被替换为占位符。默认关闭，可随时停用。';
 
   @override
   String get crashNoticeBody => 'ServerBox 上次运行时异常退出。要查看崩溃报告吗？';
@@ -1644,23 +1647,28 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get crashCollectNone => '不傳送';
 
   @override
-  String get crashCollectNoneTip => '不會傳送任何資料。報告仍會保留在本機；當機後你仍可手動傳送。';
+  String get crashCollectNoneTip => '報告仍會保留在本機；當機後你仍可手動傳送。';
 
   @override
   String get crashCollectBasic => '基本資料';
 
   @override
-  String get crashCollectBasicTip => '只包含當機資訊和發生當機時的 App 版本，不包含你當時正在進行的操作。';
+  String get crashCollectBasicTip =>
+      '只包含當機資訊，不包含日誌或效能資料。**這有助於我們改善 App 和修正錯誤。**';
 
   @override
   String get crashCollectFull => '完整資料';
 
   @override
-  String get crashCollectFullTip => '除了發生問題時的資訊外，也會傳送 App 執行期間的日誌和效能資料。';
+  String get crashCollectFullTip =>
+      '除了當機日誌外，也會包含額外的日誌和效能資料：我們需要這些資料來重現當機，並找出觸發錯誤的原因。';
 
   @override
   String get crashCollectFooter =>
-      '無論選擇哪個等級，記錄時都會將伺服器名稱、位址和使用者名稱替換為預留位置。之後可在設定中更改收集等級。';
+      '無論選擇哪個等級，記錄時都會將已知伺服器名稱、位址和使用者名稱替換為預留位置。之後可在設定中更改收集等級。';
+
+  @override
+  String get privacyPolicy => '隱私權政策';
 
   @override
   String get crashUpload => '上傳當機報告';

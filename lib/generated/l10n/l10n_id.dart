@@ -20,32 +20,35 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get crashCollectNoneTip =>
-      'Tidak ada yang dikirim. Laporan tetap tersimpan di perangkat ini, dan Anda masih bisa mengirimnya secara manual setelah kerusakan.';
+      'Laporan tetap tersimpan di perangkat ini; setelah terjadi kerusakan, Anda dapat mengirimkannya secara manual.';
 
   @override
   String get crashCollectBasic => 'Informasi dasar';
 
   @override
   String get crashCollectBasicTip =>
-      'Hanya kerusakan dan versi aplikasi saat kerusakan terjadi. Tidak termasuk apa yang sedang Anda lakukan.';
+      'Hanya informasi kerusakan yang disertakan; log dan data performa tidak disertakan. **Ini membantu kami menyempurnakan aplikasi dan memperbaiki bug.**';
 
   @override
   String get crashCollectFull => 'Informasi lengkap';
 
   @override
   String get crashCollectFullTip =>
-      'Selain informasi saat terjadi masalah, log dan data performa selama aplikasi berjalan juga dikirim.';
+      'Selain log kerusakan, log tambahan dan data performa juga disertakan: kami perlu mengetahui **cara mereproduksi kerusakan dan pemicu bug tersebut.**';
 
   @override
   String get crashCollectFooter =>
-      'Pada tingkat apa pun, nama server, alamat, dan nama pengguna diganti dengan placeholder saat dicatat. Tingkat pengumpulan dapat diubah nanti di Pengaturan.';
+      'Pada tingkat apa pun, nama server yang dikenal beserta alamat dan nama penggunanya diganti dengan placeholder saat dicatat. Tingkat pengumpulan dapat diubah nanti di Pengaturan.';
+
+  @override
+  String get privacyPolicy => 'Kebijakan privasi';
 
   @override
   String get crashUpload => 'Unggah laporan kerusakan';
 
   @override
   String get crashUploadTip =>
-      'Kirim juga laporan kerusakan ke pengembang, alih-alih hanya menyimpannya di perangkat ini. Nama dan alamat server yang dikenal diganti dengan placeholder, tetapi detail lain mungkin tersisa. Dinonaktifkan secara default; Anda dapat menonaktifkannya kapan saja.';
+      'Kirim laporan kerusakan kepada pengembang. Nama dan alamat server yang dikenal diganti dengan placeholder. Dinonaktifkan secara default; Anda dapat menonaktifkannya kapan saja.';
 
   @override
   String get crashNoticeBody =>

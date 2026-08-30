@@ -20,32 +20,35 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get crashCollectNoneTip =>
-      'Er wordt niets verstuurd. Rapporten blijven op dit apparaat en je kunt er na een crash nog steeds handmatig een sturen.';
+      'Rapporten blijven op dit apparaat; na een crash kun je er handmatig een versturen.';
 
   @override
   String get crashCollectBasic => 'Basisgegevens';
 
   @override
   String get crashCollectBasicTip =>
-      'Alleen de crash en de appversie waarin die optrad. Wat je aan het doen was, wordt niet opgenomen.';
+      'Bevat alleen informatie over de crash; logboeken en prestatiegegevens worden niet opgenomen. **Zo help je ons de app te verbeteren en bugs op te lossen.**';
 
   @override
   String get crashCollectFull => 'Volledige gegevens';
 
   @override
   String get crashCollectFullTip =>
-      'Naast informatie over het moment waarop er iets misgaat, worden ook logboeken en prestatiegegevens tijdens het gebruik verstuurd.';
+      'Naast het crashlogboek bevat dit ook extra logboeken en prestatiegegevens: we hebben die nodig om crashes te reproduceren en vast te stellen waardoor de bug wordt veroorzaakt.';
 
   @override
   String get crashCollectFooter =>
-      'Op elk niveau worden servernamen, adressen en gebruikersnamen al bij het vastleggen vervangen door plaatsaanduidingen. Je kunt het verzamelingsniveau later wijzigen in de instellingen.';
+      'Op elk niveau worden bekende servernamen, adressen en gebruikersnamen al bij het vastleggen vervangen door plaatsaanduidingen. Je kunt het verzamelingsniveau later wijzigen in de instellingen.';
+
+  @override
+  String get privacyPolicy => 'Privacybeleid';
 
   @override
   String get crashUpload => 'Crashrapporten uploaden';
 
   @override
   String get crashUploadTip =>
-      'Crashrapporten ook naar de ontwikkelaar sturen in plaats van ze alleen op dit apparaat te bewaren. Bekende servernamen en adressen worden vervangen door plaatsaanduidingen, maar andere gegevens kunnen achterblijven. Standaard uit; je kunt dit op elk moment uitschakelen.';
+      'Crashrapporten naar de ontwikkelaar sturen. Bekende servernamen en adressen worden vervangen door plaatsaanduidingen. Standaard uit; je kunt dit op elk moment uitschakelen.';
 
   @override
   String get crashNoticeBody =>

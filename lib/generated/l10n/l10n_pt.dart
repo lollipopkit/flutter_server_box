@@ -20,32 +20,35 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get crashCollectNoneTip =>
-      'Nada é enviado. Os relatórios continuam neste dispositivo e você ainda pode enviar um manualmente após uma falha.';
+      'Os relatórios continuam neste dispositivo; após uma falha, você pode enviar um manualmente.';
 
   @override
   String get crashCollectBasic => 'Informações básicas';
 
   @override
   String get crashCollectBasicTip =>
-      'Inclui apenas a falha e a versão do app em que ela ocorreu. Não inclui o que você estava fazendo.';
+      'Inclui apenas informações sobre a falha; não inclui registros nem dados de desempenho. **Isso nos ajuda a melhorar o app e corrigir bugs.**';
 
   @override
   String get crashCollectFull => 'Informações completas';
 
   @override
   String get crashCollectFullTip =>
-      'Além das informações do momento em que ocorre um problema, também envia registros e dados de desempenho enquanto o app está em execução.';
+      'Além do registro da falha, inclui registros adicionais e dados de desempenho: precisamos deles para reproduzir as falhas e descobrir o que aciona o bug.';
 
   @override
   String get crashCollectFooter =>
-      'Em todos os níveis, nomes de servidor, endereços e nomes de usuário são substituídos por marcadores no momento do registro. Você pode alterar o nível de coleta mais tarde nas configurações.';
+      'Em todos os níveis, nomes de servidor conhecidos, seus endereços e nomes de usuário são substituídos por marcadores no momento do registro. Você pode alterar o nível de coleta mais tarde nas configurações.';
+
+  @override
+  String get privacyPolicy => 'Política de privacidade';
 
   @override
   String get crashUpload => 'Enviar relatórios de falha';
 
   @override
   String get crashUploadTip =>
-      'Enviar os relatórios de falha também ao desenvolvedor, em vez de mantê-los apenas neste dispositivo. Nomes e endereços de servidor conhecidos são substituídos por marcadores, mas outros detalhes podem permanecer. Desativado por padrão; você pode desativá-lo a qualquer momento.';
+      'Enviar os relatórios de falha ao desenvolvedor. Nomes e endereços de servidor conhecidos são substituídos por marcadores. Desativado por padrão; você pode desativá-lo a qualquer momento.';
 
   @override
   String get crashNoticeBody =>

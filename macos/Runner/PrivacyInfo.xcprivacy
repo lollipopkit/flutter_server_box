@@ -7,8 +7,66 @@
    Created by lollipopkit on 31/3/2024.
    Copyright (c) 2024 . All rights reserved.
 -->
+<!--
+   What leaves the device, and under which setting.
+
+   Everything below is sent only when `DiagnosticsLevel` is not `none`. That
+   setting is chosen on an intro page before anything is uploaded, and this
+   platform starts at `basic` — so a declaration is required here even though
+   the Android default is `none`. `full` is the only level that sends the last
+   two types; `basic` sends crash data alone.
+
+   Nothing is linked to an identity and nothing is used for tracking: reports
+   carry a per-install id the server generates, no account, no advertising
+   identifier, and server names, addresses and usernames are replaced with
+   placeholders where they are recorded rather than where they are sent.
+
+   Kept in step with `ios/Runner/PrivacyInfo.xcprivacy`, which declares the
+   same three types for the same reason.
+-->
 <plist version="1.0">
 <dict>
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array>
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeCrashData</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypePerformanceData</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeOtherDiagnosticData</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+	</array>
 	<key>NSPrivacyAccessedAPITypes</key>
 	<array>
 		<dict>

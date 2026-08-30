@@ -20,32 +20,35 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get crashCollectNoneTip =>
-      'Hiçbir şey gönderilmez. Raporlar bu cihazda tutulur ve çökmenin ardından yine de elle bir rapor gönderebilirsiniz.';
+      'Raporlar bu cihazda tutulur; çökmenin ardından bir raporu elle gönderebilirsiniz.';
 
   @override
   String get crashCollectBasic => 'Temel bilgiler';
 
   @override
   String get crashCollectBasicTip =>
-      'Yalnızca çökme ve gerçekleştiği uygulama sürümü dahil edilir. O sırada ne yaptığınız dahil edilmez.';
+      'Yalnızca çökme bilgileri dahil edilir; günlükler ve performans verileri dahil edilmez. **Bu, uygulamayı geliştirmemize ve hataları düzeltmemize yardımcı olur.**';
 
   @override
   String get crashCollectFull => 'Tüm bilgiler';
 
   @override
   String get crashCollectFullTip =>
-      'Bir sorun oluştuğundaki bilgilere ek olarak, uygulama çalışırken günlükler ve performans verileri de gönderilir.';
+      'Çökme günlüğüne ek olarak ek günlükler ve performans verileri de dahil edilir: **Çökmeleri yeniden oluşturmak ve hatayı neyin tetiklediğini anlamak için bunlara ihtiyacımız var.**';
 
   @override
   String get crashCollectFooter =>
-      'Her düzeyde sunucu adları, adresler ve kullanıcı adları kaydedilirken yer tutucularla değiştirilir. Toplama düzeyini daha sonra Ayarlar\'dan değiştirebilirsiniz.';
+      'Her düzeyde bilinen sunucu adları, adresler ve kullanıcı adları kaydedilirken yer tutucularla değiştirilir. Toplama düzeyini daha sonra Ayarlar\'dan değiştirebilirsiniz.';
+
+  @override
+  String get privacyPolicy => 'Gizlilik politikası';
 
   @override
   String get crashUpload => 'Çökme raporlarını yükle';
 
   @override
   String get crashUploadTip =>
-      'Çökme raporlarını yalnızca bu cihazda tutmak yerine geliştiriciye de gönderir. Bilinen sunucu adları ve adresleri yer tutucularla değiştirilir, ancak başka ayrıntılar kalabilir. Varsayılan olarak kapalıdır; istediğiniz zaman kapatabilirsiniz.';
+      'Çökme raporlarını geliştiriciye gönderir. Bilinen sunucu adları ve adresleri yer tutucularla değiştirilir. Varsayılan olarak kapalıdır; istediğiniz zaman kapatabilirsiniz.';
 
   @override
   String get crashNoticeBody =>

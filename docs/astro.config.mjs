@@ -95,6 +95,11 @@ export default defineConfig({
 						{ label: 'Testing', translations: { zh: '测试' }, slug: 'development/testing' },
 					],
 				},
+				// Its own entry rather than a line in a group: the app links
+				// straight to it from the diagnostics setting and from the
+				// intro page that asks the question, so it has to be findable
+				// without knowing which section it would belong to.
+				{ label: 'Privacy Policy', translations: { zh: '隐私政策' }, slug: 'privacy' },
 			],
 			customCss: ['./src/styles/custom.css'],
 		}),

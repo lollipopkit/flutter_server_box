@@ -19,30 +19,35 @@ class AppLocalizationsJa extends AppLocalizations {
   String get crashCollectNone => '送信しない';
 
   @override
-  String get crashCollectNoneTip => '何も送信しません。レポートは端末に残り、クラッシュ後に手動で送ることもできます。';
+  String get crashCollectNoneTip => 'レポートは端末に残り、クラッシュ後に手動で送信できます。';
 
   @override
   String get crashCollectBasic => '基本情報';
 
   @override
-  String get crashCollectBasicTip => 'クラッシュと、その発生時のアプリのバージョンのみ。何をしていたかは含みません。';
+  String get crashCollectBasicTip =>
+      'クラッシュ情報のみを含み、ログやパフォーマンスデータは含みません。**アプリの改善やバグの修正に役立ちます。**';
 
   @override
   String get crashCollectFull => '完全な情報';
 
   @override
-  String get crashCollectFullTip => '問題発生時の情報に加え、アプリの実行中のログとパフォーマンスデータも送信します。';
+  String get crashCollectFullTip =>
+      'クラッシュログに加え、追加のログとパフォーマンスデータも含みます。**クラッシュを再現し、バグの発生条件を把握するために必要です。**';
 
   @override
   String get crashCollectFooter =>
-      'どのレベルでも、サーバー名・アドレス・ユーザー名は記録時にプレースホルダーへ置き換えられます。設定であとから収集レベルを変更できます。';
+      'どのレベルでも、既知のサーバー名・アドレス・ユーザー名は記録時にプレースホルダーへ置き換えられます。設定であとから収集レベルを変更できます。';
+
+  @override
+  String get privacyPolicy => 'プライバシーポリシー';
 
   @override
   String get crashUpload => 'クラッシュレポートを送信';
 
   @override
   String get crashUploadTip =>
-      'クラッシュレポートを端末に保存するだけでなく、開発者にも送信します。既知のサーバー名とアドレスはプレースホルダーに置き換えられますが、他の情報が残る場合があります。デフォルトはオフで、いつでもオフにできます。';
+      'クラッシュレポートを開発者に送信します。既知のサーバー名とアドレスはプレースホルダーに置き換えられます。デフォルトはオフで、いつでもオフにできます。';
 
   @override
   String get crashNoticeBody =>

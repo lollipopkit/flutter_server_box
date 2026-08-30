@@ -20,32 +20,35 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get crashCollectNoneTip =>
-      'Es wird nichts gesendet. Berichte bleiben auf diesem Gerät; nach einem Absturz können Sie weiterhin manuell einen senden.';
+      'Berichte bleiben auf diesem Gerät; nach einem Absturz können Sie manuell einen senden.';
 
   @override
   String get crashCollectBasic => 'Grundlegende Informationen';
 
   @override
   String get crashCollectBasicTip =>
-      'Nur der Absturz und die App-Version, in der er auftrat. Ihre damalige Tätigkeit wird nicht erfasst.';
+      'Es werden nur Absturzinformationen erfasst; Protokoll- und Leistungsdaten sind nicht enthalten. **Damit helfen Sie uns, die App zu verbessern und Fehler zu beheben.**';
 
   @override
   String get crashCollectFull => 'Vollständige Informationen';
 
   @override
   String get crashCollectFullTip =>
-      'Zusätzlich zu den Informationen beim Auftreten eines Problems werden während des Betriebs Protokoll- und Leistungsdaten gesendet.';
+      'Neben dem Absturzprotokoll werden zusätzliche Protokoll- und Leistungsdaten erfasst: Wir müssen wissen, **wie sich Abstürze reproduzieren lassen und wodurch der Fehler ausgelöst wird.**';
 
   @override
   String get crashCollectFooter =>
-      'Unabhängig von der Stufe werden Servernamen, Adressen und Benutzernamen bereits beim Aufzeichnen durch Platzhalter ersetzt. Die Erfassungsstufe kann später in den Einstellungen geändert werden.';
+      'Unabhängig von der Stufe werden bekannte Servernamen, -adressen und Benutzernamen bereits beim Aufzeichnen durch Platzhalter ersetzt. Die Erfassungsstufe kann später in den Einstellungen geändert werden.';
+
+  @override
+  String get privacyPolicy => 'Datenschutzerklärung';
 
   @override
   String get crashUpload => 'Absturzberichte hochladen';
 
   @override
   String get crashUploadTip =>
-      'Absturzberichte werden zusätzlich an den Entwickler gesendet, statt nur auf diesem Gerät gespeichert zu werden. Bekannte Servernamen und -adressen werden durch Platzhalter ersetzt, andere Angaben können jedoch verbleiben. Standardmäßig deaktiviert; jederzeit wieder deaktivierbar.';
+      'Absturzberichte werden an den Entwickler gesendet. Bekannte Servernamen und -adressen werden durch Platzhalter ersetzt. Standardmäßig deaktiviert; jederzeit wieder deaktivierbar.';
 
   @override
   String get crashNoticeBody =>

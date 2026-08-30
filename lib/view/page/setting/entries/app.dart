@@ -332,7 +332,10 @@ extension _App on _AppSettingsPageState {
         // anything is worse than one that is not offered, and this build has
         // no DSN in it at all — which is every build made from this source
         // without one supplied. See [DiagnosticsUpload].
-        if (DiagnosticsUpload.availableInBuild) _buildDiagnosticsUpload(),
+        if (DiagnosticsUpload.availableInBuild) ...[
+          _buildDiagnosticsUpload(),
+          _buildPrivacyPolicy(),
+        ],
         if (isMobile) _buildWakeLock(),
         _buildCollapseUI(),
         if (isDesktop) _buildHideTitleBar(),
@@ -377,6 +380,21 @@ extension _App on _AppSettingsPageState {
         },
       );
     });
+  }
+
+  /// Beside the level, not inside the picker.
+  ///
+  /// The dialog that picks a level is a list of three options and has nowhere
+  /// to put a link; and the policy is worth reaching without first opening the
+  /// control that changes a setting. Shown under the same condition as the
+  /// level itself — a build that cannot upload has nothing for the page to
+  /// describe.
+  Widget _buildPrivacyPolicy() {
+    return ListTile(
+      title: Text(l10n.privacyPolicy),
+      trailing: const Icon(Icons.open_in_new, size: 17),
+      onTap: Urls.privacyPolicy.launchUrl,
+    );
   }
 
   Widget _buildBeta() {

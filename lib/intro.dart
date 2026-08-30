@@ -247,6 +247,17 @@ final class _IntroPage extends StatelessWidget {
           );
         }),
         _prose(l10n.crashCollectFooter),
+        // On the page where the question is put, not only in Settings
+        // afterwards. A tile can say what a level sends; where it goes, how
+        // long it is kept and what a report was checked not to contain need
+        // somewhere to be written down, and an answer given without that is
+        // an answer to the summary.
+        ListTile(
+          leading: const Icon(Icons.privacy_tip_outlined, size: _kIconSize),
+          title: Text(l10n.privacyPolicy),
+          trailing: const Icon(Icons.open_in_new, size: 17),
+          onTap: Urls.privacyPolicy.launchUrl,
+        ).cardx,
         UIs.height77,
       ],
     );
@@ -274,7 +285,7 @@ final class _IntroPage extends StatelessWidget {
               ],
             )
           : Text(title),
-      subtitle: Text(tip, style: UIs.textGrey),
+      subtitle: SimpleMarkdown(data: tip),
     ).cardx;
   }
 

@@ -28,4 +28,13 @@ abstract final class Urls {
   /// something has been installed on it, which is not a thing a switch can
   /// convey on its own.
   static const monitorAgentDoc = '$docs/advanced/monitor-agent/';
+
+  /// What is collected at each diagnostics level, and what is not.
+  ///
+  /// Linked from the intro page that asks the question and from the setting
+  /// that revisits it. Three sentences on a radio tile can say what a level
+  /// sends; they cannot say where it goes, how long it is kept, or what a
+  /// report has been checked not to contain — and consent given without
+  /// somewhere to read that is consent to a summary.
+  static const privacyPolicy = '$docs/privacy/';
 }

@@ -20,32 +20,35 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get crashCollectNoneTip =>
-      'No se envía nada. Los informes se conservan en este dispositivo y aún puedes enviar uno manualmente después de un fallo.';
+      'Los informes se conservan en este dispositivo; después de un fallo, puedes enviar uno manualmente.';
 
   @override
   String get crashCollectBasic => 'Información básica';
 
   @override
   String get crashCollectBasicTip =>
-      'Solo incluye el fallo y la versión de la aplicación en la que ocurrió. No incluye lo que estabas haciendo.';
+      'Solo se incluye información sobre el fallo; no se incluyen registros ni datos de rendimiento. **Esto nos ayuda a mejorar la aplicación y corregir errores.**';
 
   @override
   String get crashCollectFull => 'Información completa';
 
   @override
   String get crashCollectFullTip =>
-      'Además de la información del momento en que ocurre un problema, también envía los registros y datos de rendimiento mientras la aplicación está en ejecución.';
+      'Además del registro del fallo, se incluyen registros adicionales y datos de rendimiento: necesitamos saber **cómo reproducir los fallos y qué activa el error.**';
 
   @override
   String get crashCollectFooter =>
-      'En todos los niveles, los nombres de servidores, las direcciones y los nombres de usuario se sustituyen por marcadores al registrarlos. Puedes cambiar el nivel de recopilación más adelante en Ajustes.';
+      'En todos los niveles, los nombres de servidores conocidos, sus direcciones y nombres de usuario se sustituyen por marcadores al registrarlos. Puedes cambiar el nivel de recopilación más adelante en Ajustes.';
+
+  @override
+  String get privacyPolicy => 'Política de privacidad';
 
   @override
   String get crashUpload => 'Subir informes de fallo';
 
   @override
   String get crashUploadTip =>
-      'Enviar también los informes de fallo al desarrollador, en lugar de conservarlos únicamente en este dispositivo. Los nombres y direcciones de servidor conocidos se sustituyen por marcadores, pero otros datos pueden permanecer. Desactivado de forma predeterminada; puedes desactivarlo en cualquier momento.';
+      'Enviar los informes de fallo al desarrollador. Los nombres y direcciones de servidor conocidos se sustituyen por marcadores. Desactivado de forma predeterminada; puedes desactivarlo en cualquier momento.';
 
   @override
   String get crashNoticeBody =>

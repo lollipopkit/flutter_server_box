@@ -20,32 +20,35 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get crashCollectNoneTip =>
-      'Rien n\'est envoyé. Les rapports restent sur cet appareil ; vous pouvez toujours en envoyer un manuellement après un plantage.';
+      'Les rapports restent sur cet appareil ; après un plantage, vous pouvez en envoyer un manuellement.';
 
   @override
   String get crashCollectBasic => 'Informations de base';
 
   @override
   String get crashCollectBasicTip =>
-      'Le plantage et la version de l\'application dans laquelle il s\'est produit. Vos actions ne sont pas incluses.';
+      'Seules les informations sur le plantage sont incluses ; les journaux et données de performance ne le sont pas. **Cela nous aide à améliorer l\'application et à corriger les bugs.**';
 
   @override
   String get crashCollectFull => 'Informations complètes';
 
   @override
   String get crashCollectFullTip =>
-      'En plus des informations recueillies lorsqu\'un problème survient, les journaux et données de performance pendant l\'utilisation sont également envoyés.';
+      'En plus du journal du plantage, des journaux supplémentaires et des données de performance sont inclus : nous devons savoir **comment reproduire les plantages et ce qui déclenche le bug.**';
 
   @override
   String get crashCollectFooter =>
-      'Quel que soit le niveau, les noms de serveurs, adresses et noms d\'utilisateur sont remplacés par des espaces réservés dès l\'enregistrement. Vous pouvez modifier le niveau de collecte plus tard dans les réglages.';
+      'Quel que soit le niveau, les noms de serveurs connus, leurs adresses et noms d\'utilisateur sont remplacés par des espaces réservés dès l\'enregistrement. Vous pouvez modifier le niveau de collecte plus tard dans les réglages.';
+
+  @override
+  String get privacyPolicy => 'Politique de confidentialité';
 
   @override
   String get crashUpload => 'Envoyer les rapports de plantage';
 
   @override
   String get crashUploadTip =>
-      'Envoyer aussi les rapports de plantage au développeur, au lieu de les conserver uniquement sur cet appareil. Les noms et adresses de serveurs connus sont remplacés par des espaces réservés, mais d\'autres informations peuvent subsister. Désactivé par défaut ; vous pouvez le désactiver à tout moment.';
+      'Envoyer les rapports de plantage au développeur. Les noms et adresses de serveurs connus sont remplacés par des espaces réservés. Désactivé par défaut ; vous pouvez le désactiver à tout moment.';
 
   @override
   String get crashNoticeBody =>

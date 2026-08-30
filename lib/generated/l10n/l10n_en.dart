@@ -20,32 +20,35 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get crashCollectNoneTip =>
-      'Nothing is sent. Reports remain on this device, and you can still send one manually after a crash.';
+      'Reports remain on this device; after a crash, you can send one manually.';
 
   @override
   String get crashCollectBasic => 'Basic information';
 
   @override
   String get crashCollectBasicTip =>
-      'Only the crash and the app version it occurred in. It does not include what you were doing.';
+      'Only crash information is included; logs and performance data are not. **This helps us improve the app and fix bugs.**';
 
   @override
   String get crashCollectFull => 'Full information';
 
   @override
   String get crashCollectFullTip =>
-      'In addition to information from when something goes wrong, this sends logs and performance data while the app runs.';
+      'Along with the crash log, additional logs and performance data are included: we need to know **how to reproduce crashes and what triggers the bug.**';
 
   @override
   String get crashCollectFooter =>
-      'At every level, server names, addresses and usernames are replaced with placeholders when recorded. You can change the collection level later in Settings.';
+      'At every level, known server names, addresses and usernames are replaced with placeholders when recorded. You can change the collection level later in Settings.';
+
+  @override
+  String get privacyPolicy => 'Privacy policy';
 
   @override
   String get crashUpload => 'Upload crash reports';
 
   @override
   String get crashUploadTip =>
-      'Also send crash reports to the developer instead of keeping them only on this device. Known server names and addresses are replaced with placeholders, but other details may remain. Off by default; you can turn it off at any time.';
+      'Send crash reports to the developer. Known server names and addresses are replaced with placeholders. Off by default; you can turn it off at any time.';
 
   @override
   String get crashNoticeBody =>

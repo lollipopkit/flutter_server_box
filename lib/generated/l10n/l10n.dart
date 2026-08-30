@@ -144,7 +144,7 @@ abstract class AppLocalizations {
   /// No description provided for @crashCollectNoneTip.
   ///
   /// In en, this message translates to:
-  /// **'Nothing is sent. Reports remain on this device, and you can still send one manually after a crash.'**
+  /// **'Reports remain on this device; after a crash, you can send one manually.'**
   String get crashCollectNoneTip;
 
   /// No description provided for @crashCollectBasic.
@@ -156,7 +156,7 @@ abstract class AppLocalizations {
   /// No description provided for @crashCollectBasicTip.
   ///
   /// In en, this message translates to:
-  /// **'Only the crash and the app version it occurred in. It does not include what you were doing.'**
+  /// **'Only crash information is included; logs and performance data are not. **This helps us improve the app and fix bugs.**'**
   String get crashCollectBasicTip;
 
   /// No description provided for @crashCollectFull.
@@ -168,14 +168,20 @@ abstract class AppLocalizations {
   /// No description provided for @crashCollectFullTip.
   ///
   /// In en, this message translates to:
-  /// **'In addition to information from when something goes wrong, this sends logs and performance data while the app runs.'**
+  /// **'Along with the crash log, additional logs and performance data are included: we need to know **how to reproduce crashes and what triggers the bug.**'**
   String get crashCollectFullTip;
 
   /// No description provided for @crashCollectFooter.
   ///
   /// In en, this message translates to:
-  /// **'At every level, server names, addresses and usernames are replaced with placeholders when recorded. You can change the collection level later in Settings.'**
+  /// **'At every level, known server names, addresses and usernames are replaced with placeholders when recorded. You can change the collection level later in Settings.'**
   String get crashCollectFooter;
+
+  /// No description provided for @privacyPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy policy'**
+  String get privacyPolicy;
 
   /// No description provided for @crashUpload.
   ///
@@ -186,7 +192,7 @@ abstract class AppLocalizations {
   /// No description provided for @crashUploadTip.
   ///
   /// In en, this message translates to:
-  /// **'Also send crash reports to the developer instead of keeping them only on this device. Known server names and addresses are replaced with placeholders, but other details may remain. Off by default; you can turn it off at any time.'**
+  /// **'Send crash reports to the developer. Known server names and addresses are replaced with placeholders. Off by default; you can turn it off at any time.'**
   String get crashUploadTip;
 
   /// No description provided for @crashNoticeBody.

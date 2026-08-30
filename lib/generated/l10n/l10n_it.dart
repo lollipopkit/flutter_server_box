@@ -20,32 +20,35 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get crashCollectNoneTip =>
-      'Non viene inviato nulla. I rapporti restano su questo dispositivo e puoi comunque inviarne uno manualmente dopo un arresto anomalo.';
+      'I rapporti restano su questo dispositivo; dopo un arresto anomalo puoi inviarne uno manualmente.';
 
   @override
   String get crashCollectBasic => 'Informazioni di base';
 
   @override
   String get crashCollectBasicTip =>
-      'Solo l\'arresto anomalo e la versione dell\'app in cui si è verificato. Non include ciò che stavi facendo.';
+      'Include solo le informazioni sull\'arresto anomalo; non include log o dati sulle prestazioni. **Questo ci aiuta a migliorare l\'app e a correggere i bug.**';
 
   @override
   String get crashCollectFull => 'Informazioni complete';
 
   @override
   String get crashCollectFullTip =>
-      'Oltre alle informazioni raccolte quando si verifica un problema, invia anche i log e i dati sulle prestazioni durante l\'esecuzione dell\'app.';
+      'Oltre al registro dell\'arresto anomalo, include log aggiuntivi e dati sulle prestazioni: dobbiamo sapere **come riprodurre gli arresti anomali e cosa attiva il bug.**';
 
   @override
   String get crashCollectFooter =>
-      'A ogni livello, nomi dei server, indirizzi e nomi utente vengono sostituiti da segnaposto al momento della registrazione. Puoi modificare il livello di raccolta in seguito nelle impostazioni.';
+      'A ogni livello, i nomi dei server noti, i relativi indirizzi e nomi utente vengono sostituiti da segnaposto al momento della registrazione. Puoi modificare il livello di raccolta in seguito nelle impostazioni.';
+
+  @override
+  String get privacyPolicy => 'Informativa sulla privacy';
 
   @override
   String get crashUpload => 'Invia i rapporti di arresto anomalo';
 
   @override
   String get crashUploadTip =>
-      'Invia i rapporti di arresto anomalo anche allo sviluppatore, invece di conservarli solo su questo dispositivo. I nomi e gli indirizzi dei server noti vengono sostituiti da segnaposto, ma altri dettagli possono rimanere. Disattivato per impostazione predefinita; puoi disattivarlo in qualsiasi momento.';
+      'Invia i rapporti di arresto anomalo allo sviluppatore. I nomi e gli indirizzi dei server noti vengono sostituiti da segnaposto. Disattivato per impostazione predefinita; puoi disattivarlo in qualsiasi momento.';
 
   @override
   String get crashNoticeBody =>
