@@ -662,6 +662,43 @@ fn unencoded_separator_in_output_is_data() {
     assert_eq!(map["host"], "SrvBoxSep.time\nSrvBoxCusCmdSep.x\nmyhost");
 }
 
+/// A command whose output has no final newline leaves the `echo` that follows
+/// it on the same line. Observed with `cat /etc/hostname` on a host whose file
+/// has no trailing newline: `host` came back holding the whole of `diskio` and
+/// `diskio` itself was missing.
+#[test]
+fn marker_glued_to_unterminated_output_still_separates() {
+    let raw = format!(
+        "{}\nmyhost{}\n 254 0 vda 1 2 3\n",
+        script::cmd_marker("host"),
+        script::cmd_marker("diskio")
+    );
+    let map = parse_script_output(&raw);
+    assert_eq!(map["host"], "myhost");
+    assert_eq!(map["diskio"], " 254 0 vda 1 2 3");
+}
+
+/// The same for the first section of a response: the text before the marker is
+/// what came before any section, and stays dropped.
+#[test]
+fn marker_glued_to_noise_opens_a_section() {
+    let raw = format!("motd{}\n123\n", script::cmd_marker("time"));
+    let map = parse_script_output(&raw);
+    assert_eq!(map.len(), 1);
+    assert_eq!(map["time"], "123");
+    assert!(script::contains_script_segment(&raw));
+}
+
+/// Recognised only at the end of a line: a marker with output after it is a
+/// command that printed one, not a section boundary.
+#[test]
+fn marker_followed_by_more_output_is_data() {
+    let raw = section("host", &format!("{} tail", script::cmd_marker("diskio")));
+    let map = parse_script_output(&raw);
+    assert_eq!(map.len(), 1);
+    assert!(map["host"].contains("tail"));
+}
+
 #[test]
 fn segment_detection_uses_the_same_encoded_markers_as_parsing() {
     assert!(!script::contains_script_segment("SrvBoxSep.time\noutput"));

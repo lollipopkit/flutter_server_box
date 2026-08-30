@@ -562,7 +562,8 @@ pub fn exec_command(system: SystemType, script_path: &str, func: ShellFunc) -> S
 ///
 /// Only the encoded marker form is recognised (see [`ENCODED_NAME_PREFIX`]);
 /// a line that merely starts with `SrvBoxSep.` is command output and is
-/// buffered as such.
+/// buffered as such. A marker ends its line but need not start it — see
+/// [`split_marker`].
 ///
 /// A trailing `\r` is stripped from each line before matching, so CRLF output
 /// (monitor running PowerShell locally) parses identically to LF output.
@@ -623,9 +624,15 @@ pub fn parse_script_segments(raw: &str) -> Vec<(String, String)> {
     for line in raw.split_terminator('\n') {
         let line = line.strip_suffix('\r').unwrap_or(line);
         let allow_builtin = current.as_deref().and_then(custom_result_name).is_none();
-        let marker = marker_key(line, &sep_prefix, &custom_prefix, allow_builtin);
+        let marker = split_marker(line, &sep_prefix, &custom_prefix, allow_builtin);
         match marker {
-            Some(key) => {
+            Some((leading, key)) => {
+                // Output the marker was appended to closes the section it
+                // belongs to, rather than being dropped with the marker line.
+                if !leading.is_empty() && current.is_some() {
+                    buf.push_str(leading);
+                    buf.push('\n');
+                }
                 flush(&mut current, &mut buf, &mut result);
                 current = Some(key);
             }
@@ -641,33 +648,56 @@ pub fn parse_script_segments(raw: &str) -> Vec<(String, String)> {
     result
 }
 
-fn marker_key(
-    line: &str,
+/// The marker a line ends with, and whatever preceded it on that line.
+///
+/// Sections are separated by `echo <marker>`, so a marker always ends its
+/// line — but it only *starts* one when the command before it left its output
+/// newline-terminated. `cat /etc/hostname` on a host whose file has no final
+/// newline emits `lkag1SrvBoxSep.b64.ZGlza2lv`: read as data, that loses the
+/// section the marker opened *and* appends its output to the previous one, so
+/// a missing byte in one file costs two sections.
+///
+/// The marker still has to run to the end of the line, so a command printing
+/// one mid-line is data, as is anything that does not decode (see
+/// [`ENCODED_NAME_PREFIX`]).
+fn split_marker<'a>(
+    line: &'a str,
     sep_prefix: &str,
     custom_prefix: &str,
     allow_builtin: bool,
-) -> Option<String> {
+) -> Option<(&'a str, String)> {
     let builtin = allow_builtin
-        .then(|| line.strip_prefix(sep_prefix).and_then(decode_marker_name))
+        .then(|| find_marker(line, sep_prefix))
         .flatten();
-    builtin.or_else(|| {
-        line.strip_prefix(custom_prefix)
-            .and_then(decode_marker_name)
-            .map(|name| custom_result_key(&name))
-    })
+    let custom = find_marker(line, custom_prefix).map(|(at, name)| (at, custom_result_key(&name)));
+    match (builtin, custom) {
+        // The earlier one, so the text before it stays with the section it was
+        // printed by. Neither separator is a prefix of the other, so a line
+        // holding both is a custom command echoing a built-in marker.
+        (Some(b), Some(c)) => Some(if b.0 <= c.0 { b } else { c }),
+        (found, None) | (None, found) => found,
+    }
+    .map(|(at, key)| (&line[..at], key))
+}
+
+/// Where `prefix` begins a decodable marker running to the end of `line`.
+fn find_marker(line: &str, prefix: &str) -> Option<(usize, String)> {
+    line.match_indices(prefix)
+        .find_map(|(at, _)| decode_marker_name(&line[at + prefix.len()..]).map(|name| (at, name)))
 }
 
 /// Whether output contains at least one valid built-in or custom segment.
 ///
-/// Only encoded marker lines count, matching [`parse_script_segments`]. A
-/// command is free to print text such as `SrvBoxSep.cpu` without turning an
-/// otherwise invalid response into a status sample.
+/// Only encoded markers count, matching [`parse_script_segments`] down to
+/// where one may sit on a line (see [`split_marker`]). A command is free to
+/// print text such as `SrvBoxSep.cpu` without turning an otherwise invalid
+/// response into a status sample.
 pub fn contains_script_segment(raw: &str) -> bool {
     let sep_prefix = format!("{SEPARATOR}.");
     let custom_prefix = format!("{CUSTOM_CMD_SEPARATOR}.");
     raw.split('\n').any(|line| {
         let line = line.strip_suffix('\r').unwrap_or(line);
-        marker_key(line, &sep_prefix, &custom_prefix, true).is_some()
+        split_marker(line, &sep_prefix, &custom_prefix, true).is_some()
     })
 }
 
