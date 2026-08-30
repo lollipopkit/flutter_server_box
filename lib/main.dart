@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:computer/computer.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -39,56 +38,7 @@ Future<void> main() async {
   await _runInZone(() async {
     await _initApp();
     runApp(ProviderScope(child: const MyApp()));
-    _greetDev();
   });
-}
-
-/// Raises a pile of toasts a second after launch, on debug builds only.
-///
-/// After [runApp] rather than in [_setupDebug]: the `ToastHost` only exists
-/// once the first frame has built, and the initialization still to come after
-/// `_setupDebug` can outlast the delay — the toasts would then be raised with
-/// no host to draw them.
-void _greetDev() {
-  if (!kDebugMode) return;
-  Future.delayed(const Duration(seconds: 1), _showDevToasts);
-}
-
-/// One of each shape, staggered so that they visibly pile up.
-///
-/// Covers what is worth looking at: every level, a title too long for its line,
-/// a body worth opening, an action button, and — with five of them — the two
-/// edges that show behind the front one plus the level past that which does not.
-///
-/// They stay long enough to be opened and read, rather than until dismissed:
-/// clearing five toasts by hand on every hot restart is its own annoyance.
-Future<void> _showDevToasts() async {
-  const gap = Duration(milliseconds: 300);
-  const stay = Duration(seconds: 12);
-
-  Toast.show('welcome, dev!', duration: stay);
-  await Future.delayed(gap);
-
-  Toast.success('Saved', body: 'to /etc/nginx/nginx.conf', duration: stay);
-  await Future.delayed(gap);
-
-  Toast.warn('Disk almost full', body: '/dev/sda1 at 94%', duration: stay);
-  await Future.delayed(gap);
-
-  Toast.error(
-    'SSHError: connection to 192.168.1.100 was refused after three attempts',
-    body:
-        'SocketException: Connection refused (OS Error: Connection refused, '
-        'errno = 61), address = 192.168.1.100, port = 22',
-    duration: stay,
-  );
-  await Future.delayed(gap);
-
-  Toast.info(
-    'New version available',
-    duration: stay,
-    action: ToastAction(label: 'Update', onTap: () {}),
-  );
 }
 
 Future<void> _runInZone(Future<void> Function() body) async {

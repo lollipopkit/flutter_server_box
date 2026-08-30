@@ -840,7 +840,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
-				CURRENT_PROJECT_VERSION = 1538;
+				CURRENT_PROJECT_VERSION = 1553;
 				DEVELOPMENT_TEAM = BA88US33G6;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = "Runner/Info-$(CONFIGURATION).plist";
@@ -850,7 +850,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1538;
+				MARKETING_VERSION = 1.0.1553;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
@@ -976,7 +976,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
-				CURRENT_PROJECT_VERSION = 1538;
+				CURRENT_PROJECT_VERSION = 1553;
 				DEVELOPMENT_TEAM = BA88US33G6;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = "Runner/Info-$(CONFIGURATION).plist";
@@ -986,7 +986,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1538;
+				MARKETING_VERSION = 1.0.1553;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
@@ -1004,7 +1004,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
-				CURRENT_PROJECT_VERSION = 1538;
+				CURRENT_PROJECT_VERSION = 1553;
 				DEVELOPMENT_TEAM = BA88US33G6;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = "Runner/Info-$(CONFIGURATION).plist";
@@ -1014,7 +1014,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1538;
+				MARKETING_VERSION = 1.0.1553;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
@@ -1036,7 +1036,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_ENTITLEMENTS = StatusWidget/StatusWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1538;
+				CURRENT_PROJECT_VERSION = 1553;
 				DEVELOPMENT_TEAM = BA88US33G6;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1049,7 +1049,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1538;
+				MARKETING_VERSION = 1.0.1553;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox.StatusWidget;
@@ -1076,7 +1076,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_ENTITLEMENTS = StatusWidget/StatusWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1538;
+				CURRENT_PROJECT_VERSION = 1553;
 				DEVELOPMENT_TEAM = BA88US33G6;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1089,7 +1089,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1538;
+				MARKETING_VERSION = 1.0.1553;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox.StatusWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1113,7 +1113,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_ENTITLEMENTS = StatusWidget/StatusWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1538;
+				CURRENT_PROJECT_VERSION = 1553;
 				DEVELOPMENT_TEAM = BA88US33G6;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1126,7 +1126,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1538;
+				MARKETING_VERSION = 1.0.1553;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox.StatusWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1150,7 +1150,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_ENTITLEMENTS = WatchApp/WatchApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1538;
+				CURRENT_PROJECT_VERSION = 1553;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = BA88US33G6;
 				ENABLE_PREVIEWS = YES;
@@ -1162,7 +1162,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1538;
+				MARKETING_VERSION = 1.0.1553;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox.WatchEnd;
@@ -1192,7 +1192,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_ENTITLEMENTS = WatchApp/WatchApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1538;
+				CURRENT_PROJECT_VERSION = 1553;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = BA88US33G6;
 				ENABLE_PREVIEWS = YES;
@@ -1204,7 +1204,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1538;
+				MARKETING_VERSION = 1.0.1553;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox.WatchEnd;
 				PRODUCT_NAME = ServerBox;
@@ -1231,7 +1231,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_ENTITLEMENTS = WatchApp/WatchApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1538;
+				CURRENT_PROJECT_VERSION = 1553;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = BA88US33G6;
 				ENABLE_PREVIEWS = YES;
@@ -1243,7 +1243,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1538;
+				MARKETING_VERSION = 1.0.1553;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox.WatchEnd;
 				PRODUCT_NAME = ServerBox;
@@ -1270,7 +1270,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_ENTITLEMENTS = WatchWidget/WatchWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1538;
+				CURRENT_PROJECT_VERSION = 1553;
 				DEVELOPMENT_TEAM = BA88US33G6;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1282,7 +1282,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1538;
+				MARKETING_VERSION = 1.0.1553;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox.WatchEnd.WatchWidget;
@@ -1312,7 +1312,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_ENTITLEMENTS = WatchWidget/WatchWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1538;
+				CURRENT_PROJECT_VERSION = 1553;
 				DEVELOPMENT_TEAM = BA88US33G6;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1324,7 +1324,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1538;
+				MARKETING_VERSION = 1.0.1553;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox.WatchEnd.WatchWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1351,7 +1351,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_ENTITLEMENTS = WatchWidget/WatchWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1538;
+				CURRENT_PROJECT_VERSION = 1553;
 				DEVELOPMENT_TEAM = BA88US33G6;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1363,7 +1363,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1538;
+				MARKETING_VERSION = 1.0.1553;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox.WatchEnd.WatchWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";

@@ -4,6 +4,7 @@ import 'package:server_box/data/model/container/image.dart';
 import 'package:server_box/data/model/container/ps.dart';
 import 'package:server_box/data/model/container/status.dart';
 import 'package:server_box/data/model/container/type.dart';
+import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/provider/container.dart';
 
 void main() {
@@ -901,6 +902,36 @@ not-json
         ),
         'sh: docker: not found',
       );
+    });
+
+    test('stream errors hide partial stdout but keep stderr', () {
+      final error = StateError('stdout connection lost');
+      final partial = ExecResult(
+        exitCode: 0,
+        stdout: '{"partial": true}',
+        stderr: '',
+        streamError: error,
+      );
+      final withStderr = ExecResult(
+        exitCode: 0,
+        stdout: '{"partial": true}',
+        stderr: 'permission denied',
+        streamError: error,
+      );
+
+      expect(containerExecErrorDetail(partial), '$error');
+      expect(containerExecErrorDetail(withStderr), 'permission denied');
+    });
+
+    test('incomplete output hides partial stdout without a stream error', () {
+      final result = ExecResult(
+        exitCode: 0,
+        stdout: '{"partial": true}',
+        stderr: '',
+        outputIncomplete: true,
+      );
+
+      expect(containerExecErrorDetail(result), isNot(contains('partial')));
     });
   });
 }
