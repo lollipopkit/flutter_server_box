@@ -111,16 +111,29 @@ final class _IntroPage extends StatelessWidget {
   /// Keeps the content in the same column the rest of the app reads in, while
   /// the scrollbar stays at the window edge.
   static Widget _introList({required List<Widget> children}) {
-    return LayoutBuilder(
-      builder: (_, cons) {
-        final rest = (cons.maxWidth - PageColumns.columnWidth) / 2;
-        return ListView(
-          padding: EdgeInsets.symmetric(
-            horizontal: math.max(rest, _kIntroListPad),
-          ),
-          children: children,
-        );
-      },
+    // [IntroPage] is a bare `Scaffold` holding a `PageView`, so a page's
+    // viewport starts at the very top of the screen — and a list long enough
+    // to scroll draws its title over the clock and the status icons. Bounding
+    // the viewport rather than padding the list is what clips it there, which
+    // is the difference between a title that stops under the status bar and
+    // one that slides past it.
+    //
+    // `bottom: false` because the page already ends in a `BottomAppBar`, and
+    // outside the [LayoutBuilder] so the width the column is centred in is the
+    // one left after a landscape cutout.
+    return SafeArea(
+      bottom: false,
+      child: LayoutBuilder(
+        builder: (_, cons) {
+          final rest = (cons.maxWidth - PageColumns.columnWidth) / 2;
+          return ListView(
+            padding: EdgeInsets.symmetric(
+              horizontal: math.max(rest, _kIntroListPad),
+            ),
+            children: children,
+          );
+        },
+      ),
     );
   }
 
