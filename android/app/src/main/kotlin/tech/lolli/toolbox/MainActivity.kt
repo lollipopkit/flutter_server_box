@@ -526,16 +526,21 @@ class MainActivity: FlutterFragmentActivity() {
             }
         }
         val filter = IntentFilter(ACTION_STOP_ALL_CONNECTIONS)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            ContextCompat.registerReceiver(this, stopAllReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
-        } else {
-            // `RECEIVER_NOT_EXPORTED` does not exist before API 33, and a bare
-            // `registerReceiver` leaves this reachable by every app on the
-            // device — for an action whose whole job is to disconnect every SSH
-            // session. The signature-level permission is what restricts the
-            // sender to this build.
-            registerReceiver(stopAllReceiver, filter, INTERNAL_BROADCAST_PERMISSION, null)
-        }
+        // Both guards at once, on every version. `RECEIVER_NOT_EXPORTED` is
+        // what API 33+ requires and is ignored below it; the signature-level
+        // permission is what restricts the sender on the versions that have no
+        // flag. Either alone would leave an action whose whole job is to
+        // disconnect every SSH session reachable by other apps on some range of
+        // devices. `ContextCompat` picks the right platform call, which is also
+        // what lets lint see the flag -- it does not follow an SDK_INT branch.
+        ContextCompat.registerReceiver(
+            this,
+            stopAllReceiver,
+            filter,
+            INTERNAL_BROADCAST_PERMISSION,
+            null,
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
     }
 
     override fun onRequestPermissionsResult(
