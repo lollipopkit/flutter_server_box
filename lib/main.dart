@@ -56,7 +56,21 @@ Future<void> _runInZone(Future<void> Function() body) async {
       // takes async errors first, and the two are alternatives rather than
       // layers. So this is the only place an uncaught async error is seen,
       // and marking has to happen here or not at all.
-      Loggers.app.severe('Zone error', e, s);
+      //
+      // Reporting has to happen here for the same reason, and it is the same
+      // reason again that it cannot be left to `CrashLog`: that class only
+      // sees what its own handlers catch, and this is precisely what they do
+      // not. Most uncaught errors in this app are async, so without this the
+      // sink hears about almost none of them.
+      //
+      // `LocalDiagnosticsSink.error` logs it, so logging it here as well would
+      // record it twice — and with no sink installed nothing would be recorded
+      // at all, which is what the fallback covers.
+      if (Diag.enabled) {
+        Diag.error(e, s, 'Zone error');
+      } else {
+        Loggers.app.severe('Zone error', e, s);
+      }
       CrashLog.markUnhandled();
     },
     zoneSpecification: zoneSpec,
