@@ -154,6 +154,29 @@ void main() {
     expect(await logged(), contains('main prio=5 tid=1 Blocked'));
   });
 
+  test('a trace kept from an earlier ANR is recorded whatever the reason',
+      () async {
+    // `getTraceInputStream` documents that a process which hits an ANR,
+    // *recovers*, and dies later for some other reason still carries that
+    // trace on the record of the death that eventually happened. The platform
+    // side used to hand the trace over only when the reason was `anr`, which
+    // threw away the one case where the dump explains a reason that cannot
+    // explain itself — a run the system killed after it had been wedged.
+    NativeExitReport.apply(
+      record(
+        'user_requested',
+        timestamp: 7000,
+        trace: 'main prio=5 tid=1 Blocked',
+      ),
+    );
+
+    // Still not a crash: the run ended the way the reason says it did.
+    expect(CrashLog.lastRunEndedBadly, isFalse);
+    // But the dump is kept, because it is what says why it was killed.
+    expect(NativeExitReport.lastExitTrace, contains('Blocked'));
+    expect(await logged(), contains('main prio=5 tid=1 Blocked'));
+  });
+
   group('a native crash tombstone', () {
     Map<String, Object?> nativeRecord(Object? proto, {int timestamp = 9000}) => {
       'reason': 'crash_native',

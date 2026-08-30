@@ -7,7 +7,7 @@
   "crashCollectBasic": "Basic information",
   "crashCollectBasicTip": "Only crash information is included; logs and performance data are not. **This helps us improve the app and fix bugs.**",
   "crashCollectFull": "Full information",
-  "crashCollectFullTip": "Along with the crash log, performance data is included: we need to know **how to reproduce crashes and what triggers the bug.**",
+  "crashCollectFullTip": "Along with the crash log, performance data is included: **it shows what is slow when nothing has actually crashed.**",
 
   "crashCollectFooter": "At every level, known server names, addresses and usernames are replaced with placeholders when recorded. You can change the collection level later in Settings.",
   "privacyPolicy": "Privacy policy",

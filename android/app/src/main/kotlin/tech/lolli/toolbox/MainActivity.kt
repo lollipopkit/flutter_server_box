@@ -11,6 +11,7 @@ import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.IntentFilter
+import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterFragmentActivity
@@ -349,7 +350,7 @@ class MainActivity: FlutterFragmentActivity() {
                 // was looking at and one that happened in the background are
                 // different reports.
                 "importance" to info.importance,
-                "trace" to anrTrace(info),
+                "trace" to textTrace(info),
                 "traceProto" to tombstoneBytes(info),
             )
         } catch (e: Exception) {
@@ -358,18 +359,33 @@ class MainActivity: FlutterFragmentActivity() {
         }
     }
 
-    /** The ANR trace, which is text. Null for everything else. */
-    private fun anrTrace(info: ApplicationExitInfo): String? {
-        if (info.reason != ApplicationExitInfo.REASON_ANR) return null
+    /**
+     * The thread dump the system kept for this record, which is text.
+     *
+     * Not gated on `REASON_ANR`, and that is the point. `getTraceInputStream`
+     * documents that a process which hits an ANR, *recovers*, and dies later
+     * for some other reason still carries that trace on the record of the
+     * death that eventually happened. Requiring ANR here threw exactly those
+     * away -- the case where the trace explains a reason that cannot explain
+     * itself, such as a run the system killed after it had been wedged.
+     *
+     * Skipped only where the stream is a tombstone instead: a native crash on
+     * API 31+, which [tombstoneBytes] reads as the protobuf it is. Read as
+     * text that would be mojibake. The two are mutually exclusive by
+     * [hasTombstone], so a record yields one or the other and never both.
+     */
+    @RequiresApi(Build.VERSION_CODES.R)
+    private fun textTrace(info: ApplicationExitInfo): String? {
+        if (hasTombstone(info)) return null
         return try {
             // Kept in a global circular buffer, so another app's crash can
             // evict it and this is null often enough to be normal.
             info.traceInputStream?.bufferedReader()?.use { it.readText() }
         } catch (e: Exception) {
             // Logged rather than swallowed: a null here is indistinguishable
-            // from the ordinary evicted-trace case, so without this an ANR
+            // from the ordinary evicted-trace case, so without this a trace
             // that failed to read looks exactly like one never recorded.
-            android.util.Log.w("MainActivity", "anrTrace: ${e.message}")
+            android.util.Log.w("MainActivity", "textTrace: ${e.message}")
             null
         }
     }
@@ -384,12 +400,13 @@ class MainActivity: FlutterFragmentActivity() {
      * dependency and a code generator into the build that F-Droid rebuilds and
      * `androidReproducible` compares.
      *
-     * API 31 is where the stream starts carrying this; on API 30 the reason is
-     * recorded but there is no trace to go with it.
+     * API 31 is where the stream starts carrying this; on API 30 a native
+     * crash's record still has a reason but no tombstone to go with it, and
+     * [textTrace] takes whatever the stream holds instead.
      */
+    @RequiresApi(Build.VERSION_CODES.R)
     private fun tombstoneBytes(info: ApplicationExitInfo): ByteArray? {
-        if (info.reason != ApplicationExitInfo.REASON_CRASH_NATIVE) return null
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return null
+        if (!hasTombstone(info)) return null
         return try {
             // Kept in a global circular buffer, so another app's crash can
             // evict it and this is null often enough to be normal.
@@ -402,13 +419,24 @@ class MainActivity: FlutterFragmentActivity() {
             // half-read.
             stream.use { readBounded(it, MAX_TOMBSTONE_BYTES) }
         } catch (e: Exception) {
-            // Same reason as [anrTrace]: the caller cannot tell a read that
+            // Same reason as [textTrace]: the caller cannot tell a read that
             // failed from a tombstone that was evicted, and a native crash
             // reported with no stack is the case worth being able to explain.
             android.util.Log.w("MainActivity", "tombstoneBytes: ${e.message}")
             null
         }
     }
+
+    /**
+     * Whether this record's trace stream is a tombstone rather than text.
+     *
+     * The one place the split is decided, so [textTrace] and [tombstoneBytes]
+     * cannot both claim a record or both pass on it.
+     */
+    @RequiresApi(Build.VERSION_CODES.R)
+    private fun hasTombstone(info: ApplicationExitInfo): Boolean =
+        info.reason == ApplicationExitInfo.REASON_CRASH_NATIVE &&
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
     /**
      * Everything the stream has, or null if there is more than [limit] of it.
@@ -436,6 +464,7 @@ class MainActivity: FlutterFragmentActivity() {
      * The reason as a name rather than an int, because the int is a platform
      * constant whose meaning is not obvious in a bug report pasted by a user.
      */
+    @RequiresApi(Build.VERSION_CODES.R)
     private fun exitReasonName(reason: Int): String = when (reason) {
         ApplicationExitInfo.REASON_ANR -> "anr"
         ApplicationExitInfo.REASON_CRASH -> "crash"
@@ -443,9 +472,19 @@ class MainActivity: FlutterFragmentActivity() {
         ApplicationExitInfo.REASON_DEPENDENCY_DIED -> "dependency_died"
         ApplicationExitInfo.REASON_EXCESSIVE_RESOURCE_USAGE -> "excessive_resource_usage"
         ApplicationExitInfo.REASON_EXIT_SELF -> "exit_self"
+        // API 33. A compile-time constant, so naming it here costs nothing on
+        // an older device -- the value simply never matches. The app was
+        // cached, frozen and then dropped, which is the ordinary end of a
+        // backgrounded run and reads as a mystery under `unknown(14)`.
+        ApplicationExitInfo.REASON_FREEZER -> "freezer"
         ApplicationExitInfo.REASON_INITIALIZATION_FAILURE -> "initialization_failure"
         ApplicationExitInfo.REASON_LOW_MEMORY -> "low_memory"
         ApplicationExitInfo.REASON_OTHER -> "other"
+        // API 34, and the pair a self-update produces: the process is stopped
+        // because its own package changed. Worth telling apart from a crash by
+        // name, since that is when a user is most likely to be looking.
+        ApplicationExitInfo.REASON_PACKAGE_STATE_CHANGE -> "package_state_change"
+        ApplicationExitInfo.REASON_PACKAGE_UPDATED -> "package_updated"
         ApplicationExitInfo.REASON_PERMISSION_CHANGE -> "permission_change"
         ApplicationExitInfo.REASON_SIGNALED -> "signaled"
         ApplicationExitInfo.REASON_USER_REQUESTED -> "user_requested"

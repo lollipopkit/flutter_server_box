@@ -34,7 +34,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get crashCollectFullTip =>
-      'Окрім журналу збою, містить дані про продуктивність: вони потрібні, щоб відтворити збій і зрозуміти, що спричиняє помилку.';
+      'Окрім журналу збою, містить дані про продуктивність: вони допомагають знайти, що працює повільно, коли збою не сталося.';
 
   @override
   String get crashCollectFooter =>

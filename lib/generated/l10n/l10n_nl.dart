@@ -34,7 +34,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get crashCollectFullTip =>
-      'Naast het crashlogboek bevat dit ook prestatiegegevens: we hebben die nodig om crashes te reproduceren en vast te stellen waardoor de bug wordt veroorzaakt.';
+      'Naast het crashlogboek bevat dit ook prestatiegegevens: daarmee is te vinden wat traag is wanneer er niets is gecrasht.';
 
   @override
   String get crashCollectFooter =>

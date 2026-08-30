@@ -7,7 +7,7 @@
   "crashCollectBasic": "Temel bilgiler",
   "crashCollectBasicTip": "Yalnızca çökme bilgileri dahil edilir; günlükler ve performans verileri dahil edilmez. **Bu, uygulamayı geliştirmemize ve hataları düzeltmemize yardımcı olur.**",
   "crashCollectFull": "Tüm bilgiler",
-  "crashCollectFullTip": "Çökme günlüğüne ek olarak performans verileri de dahil edilir: **Çökmeleri yeniden oluşturmak ve hatayı neyin tetiklediğini anlamak için bunlara ihtiyacımız var.**",
+  "crashCollectFullTip": "Çökme günlüğüne ek olarak performans verileri de dahil edilir: **Hiçbir çökme olmadığında neyin yavaş olduğunu bulmaya yarar.**",
   "crashCollectFooter": "Her düzeyde bilinen sunucu adları, adresler ve kullanıcı adları kaydedilirken yer tutucularla değiştirilir. Toplama düzeyini daha sonra Ayarlar'dan değiştirebilirsiniz.",
   "privacyPolicy": "Gizlilik politikası",
   "crashUpload": "Çökme raporlarını yükle",

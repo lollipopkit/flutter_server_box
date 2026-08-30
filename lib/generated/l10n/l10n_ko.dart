@@ -33,7 +33,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get crashCollectFullTip =>
-      '충돌 로그와 함께 성능 데이터도 포함합니다. **충돌을 재현하고 버그 발생 조건을 파악하는 데 필요합니다.**';
+      '충돌 로그와 함께 성능 데이터도 포함합니다. **충돌하지 않았는데 느린 문제를 찾는 데 사용됩니다.**';
 
   @override
   String get crashCollectFooter =>

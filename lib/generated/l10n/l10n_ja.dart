@@ -33,7 +33,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get crashCollectFullTip =>
-      'クラッシュログに加え、パフォーマンスデータも含みます。**クラッシュを再現し、バグの発生条件を把握するために必要です。**';
+      'クラッシュログに加え、パフォーマンスデータも含みます。**クラッシュしていないのに動作が遅い、といった問題の特定に役立ちます。**';
 
   @override
   String get crashCollectFooter =>
