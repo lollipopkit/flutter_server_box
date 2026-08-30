@@ -71,7 +71,7 @@ reqwest = { version = "0.13", default-features = false, features = ["json", "rus
 # push client panics on its first HTTPS request (verified: it drops aws-lc and
 # cmake from the tree, and fails all five push tests until the provider is
 # installed). Left alone here as it belongs to the push path, not this one.
-russh = { version = "0.62", default-features = false, features = ["ring", "flate2", "rsa"] }
+russh = { version = "0.63", default-features = false, features = ["ring", "flate2", "rsa"] }
 # Wipes SSH credentials from memory once they have been used
 zeroize = "1"
 
