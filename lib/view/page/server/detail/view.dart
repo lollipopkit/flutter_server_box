@@ -101,11 +101,40 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   late final _cpuViewAsProgress = _settings.cpuViewAsProgress.fetch();
   late final _displayCpuIndex = _settings.displayCpuIndex.fetch();
 
+  /// Which cards are expanded, by [_expand]'s key.
+  ///
+  /// Held by the page rather than by each tile, because a tile does not
+  /// outlive a refresh. `initiallyExpanded` is applied once per tile
+  /// *element*, and cards are matched to elements by position — so anything
+  /// that changes the list or how it is laid out (a status arriving and with
+  /// it the logo, the error card appearing, a window resize changing the
+  /// column count) builds the tile again and re-applies it, undoing whatever
+  /// the user had collapsed. That is what made the About card spring open on
+  /// every poll: its key was `ValueKey(more.hashCode)`, and `more` carries
+  /// uptime, so every sample was a new key and a new tile.
+  final _expands = <String, ExpansibleController>{};
+
+  /// The controller for the card [key], expanded on first use if [initially].
+  ///
+  /// Passed instead of `initiallyExpanded`, never alongside it:
+  /// `ExpansionTile.initState` re-applies that flag to the controller for
+  /// every tile it builds, which is the reset this exists to prevent.
+  ExpansibleController _expand(String key, bool initially) {
+    return _expands.putIfAbsent(key, () {
+      final ctrl = ExpansibleController();
+      if (initially) ctrl.expand();
+      return ctrl;
+    });
+  }
+
   @override
   void dispose() {
     super.dispose();
     _netSortType.dispose();
     _scrollCtrl.dispose();
+    for (final ctrl in _expands.values) {
+      ctrl.dispose();
+    }
   }
 
   @override
@@ -559,9 +588,8 @@ ${err.message ?? 'null'}
   Widget? _buildAbout(ServerState si) {
     final ss = si.status;
     return ExpandTile(
-      key: ValueKey(ss.more.hashCode), // Use hashCode to avoid perf issue
       leading: const Icon(MingCute.information_fill, size: 20),
-      initiallyExpanded: _getInitExpand(ss.more.entries.length),
+      controller: _expand('about', _getInitExpand(ss.more.entries.length)),
       title: Text(libL10n.about),
       childrenPadding: const EdgeInsets.symmetric(horizontal: 17, vertical: 11),
       children: ss.more.entries
@@ -635,7 +663,7 @@ ${err.message ?? 'null'}
         ),
       ),
       childrenPadding: const EdgeInsets.symmetric(vertical: 13),
-      initiallyExpanded: _getInitExpand(1),
+      controller: _expand('cpu', _getInitExpand(1)),
       trailing: Row(mainAxisSize: MainAxisSize.min, children: details),
       children: children,
     ).cardx;
@@ -666,7 +694,7 @@ ${err.message ?? 'null'}
         ],
       ),
       childrenPadding: const EdgeInsets.symmetric(vertical: 13),
-      initiallyExpanded: _getInitExpand(1),
+      controller: _expand('mem', _getInitExpand(1)),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -853,7 +881,7 @@ ${err.message ?? 'null'}
     return ExpandTile(
       title: const Text('GPU'),
       leading: const Icon(Icons.memory, size: 17),
-      initiallyExpanded: _getInitExpand(children.length, 3),
+      controller: _expand('gpu', _getInitExpand(children.length, 3)),
       children: children,
     ).cardx;
   }
@@ -968,7 +996,10 @@ ${err.message ?? 'null'}
       ?_buildDiskChart(si),
       ExpandTile(
         title: Text(libL10n.device, style: UIs.text13Grey),
-        initiallyExpanded: false,
+        // Its own entry: a nested tile is dropped from the tree whenever the
+        // card above it is collapsed, so it needs somewhere to be remembered
+        // just as much as the card does.
+        controller: _expand('disk.devices', false),
         childrenPadding: const EdgeInsets.only(bottom: 7),
         children: mounts,
       ),
@@ -978,7 +1009,7 @@ ${err.message ?? 'null'}
       title: Text(libL10n.disk),
       childrenPadding: EdgeInsets.zero,
       leading: Icon(ServerDetailCards.disk.icon, size: 17),
-      initiallyExpanded: _getInitExpand(1),
+      controller: _expand('disk', _getInitExpand(1)),
       children: children,
     ).cardx;
   }
@@ -1069,7 +1100,7 @@ ${err.message ?? 'null'}
         title: Text(l10n.diskHealth),
         leading: Icon(ServerDetailCards.smart.icon, size: 17),
         childrenPadding: const EdgeInsets.only(bottom: 7),
-        initiallyExpanded: _getInitExpand(smarts.length),
+        controller: _expand('smart', _getInitExpand(smarts.length)),
         children: smarts.map(_buildDiskSmartItem).toList(),
       ),
     );
@@ -1229,7 +1260,7 @@ ${err.message ?? 'null'}
     children.add(
       ExpandTile(
         title: Text(libL10n.device, style: UIs.text13Grey),
-        initiallyExpanded: false,
+        controller: _expand('net.devices', false),
         childrenPadding: const EdgeInsets.only(bottom: 7),
         children: devices.map((e) => _buildNetSpeedItem(ns, e)).toList(),
       ),
@@ -1261,7 +1292,7 @@ ${err.message ?? 'null'}
         ],
       ),
       childrenPadding: EdgeInsets.zero,
-      initiallyExpanded: _getInitExpand(1),
+      controller: _expand('net', _getInitExpand(1)),
       children: children,
     ).cardx;
   }
@@ -1354,7 +1385,7 @@ ${err.message ?? 'null'}
       child: ExpandTile(
         title: Text(libL10n.temperature),
         leading: const Icon(Icons.ac_unit, size: 20),
-        initiallyExpanded: _getInitExpand(1),
+        controller: _expand('temp', _getInitExpand(1)),
         // The chart already carries whatever space its axis needs
         childrenPadding: EdgeInsets.symmetric(vertical: 10),
         trailing: note,
@@ -1376,7 +1407,7 @@ ${err.message ?? 'null'}
         title: Text(libL10n.battery),
         leading: const Icon(Icons.battery_charging_full, size: 17),
         childrenPadding: const EdgeInsets.only(bottom: 7),
-        initiallyExpanded: _getInitExpand(ss.batteries.length, 2),
+        controller: _expand('battery', _getInitExpand(ss.batteries.length, 2)),
         children: children,
       ),
     );
@@ -1416,7 +1447,7 @@ ${err.message ?? 'null'}
         title: Text(libL10n.sensors),
         leading: const Icon(Icons.thermostat, size: 17),
         childrenPadding: const EdgeInsets.only(bottom: 7),
-        initiallyExpanded: _getInitExpand(ss.sensors.length, 2),
+        controller: _expand('sensor', _getInitExpand(ss.sensors.length, 2)),
         children: ss.sensors.map(_buildSensorItem).toList(),
       ),
     );
@@ -1577,7 +1608,7 @@ ${err.message ?? 'null'}
         // every time the page opens would make it wallpaper.
         title: const Text('BMC (Beta)'),
         subtitle: subtitle,
-        initiallyExpanded: _getInitExpand(children.length),
+        controller: _expand('bmc', _getInitExpand(children.length)),
         children: children,
       ),
     );
@@ -1684,7 +1715,7 @@ ${err.message ?? 'null'}
       child: ExpandTile(
         leading: const Icon(MingCute.command_line, size: 17),
         title: Text(l10n.customCmd),
-        initiallyExpanded: _getInitExpand(ss.customCmds.length),
+        controller: _expand('custom', _getInitExpand(ss.customCmds.length)),
         children: ss.customCmds.entries.map(_buildCustomCmdItem).toList(),
       ),
     );
