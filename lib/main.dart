@@ -84,13 +84,45 @@ Future<void> _initApp() async {
   // least recorded — the errors worth catching most are the ones that stop the
   // app from reaching a screen anyone could copy a log from.
   //
-  // Bounded by what it can do without a path, and worth being exact about:
-  // lines are buffered here and written once [_initData] calls
-  // `CrashLog.attach`, but the marker is a file, so a failure *before* that
-  // call leaves no marker and the buffered lines are never written either.
-  // What covers that case is the platform's own record of the exit, which is
-  // read on the following launch — see [NativeExitReport].
+  // Bounded by what it can do without a path: lines are buffered in memory
+  // and written once `CrashLog.attach` below has one, and the marker that
+  // tells the next launch this run died is a file, so neither exists until
+  // then. That window is now two platform channels wide rather than the whole
+  // of `_initData`. What covers even that is the platform's own record of the
+  // exit, read on the following launch — see [NativeExitReport].
   _setupDebug();
+
+  // Before `RustLib.init`, and that ordering is the point. `_setupDebug`
+  // buffers into memory and can do nothing else until there is a path; the
+  // marker that tells the next launch this one died is a *file*, so until this
+  // runs a crash leaves no marker and the buffered lines are never written.
+  // This used to sit at the top of `_initData`, which runs after the Rust
+  // library, the database and the schema migration — the three things most
+  // likely to take the process down, and precisely the ones whose failure went
+  // unrecorded. Nothing here needs Rust: both are platform channels.
+  //
+  // `img` holds the SSH background, `font` the terminal font. The rest of
+  // `PathDir` belongs to other apps on fl_lib, and creating them here would
+  // only leave empty directories beside the boxes.
+  //
+  // `bakName` is versioned on purpose. Sync is a single shared file on
+  // iCloud/WebDAV/Gist, and `SyncIface._sync` uploads unconditionally after a
+  // failed merge — so a build that cannot read the remote copy overwrites it.
+  // Builds already released have no version check and cannot be given one, and
+  // the only thing that stops them is not seeing the file at all.
+  //
+  // TODO: drop the legacy name (and `BakSyncer.inheritLegacyRemote`) once no
+  // install can still be writing `srvbox_bak.json`.
+  await Paths.init(
+    BuildData.name,
+    bakName: Miscs.bakFileName,
+    dirs: const {PathDir.img, PathDir.font},
+  );
+  await CrashLog.attach(Paths.doc.joinPath('logs'));
+  // Which release a report came from is the first thing asked about one and
+  // the thing users most often leave out.
+  Diag.tag(SbDiagTag.build, '${BuildData.build}');
+  Diag.crumb(DiagCategory.lifecycle, 'launch');
 
   // Shared parsing library (sbm_parser FFI, see the shared-parser design)
   await RustLib.init();
@@ -112,32 +144,6 @@ Future<void> _initApp() async {
 }
 
 Future<void> _initData() async {
-  // Versioned on purpose. Sync is a single shared file on iCloud/WebDAV/Gist,
-  // and `SyncIface._sync` uploads unconditionally after a failed merge — so a
-  // build that cannot read the remote copy overwrites it. Builds already
-  // released have no version check and cannot be given one, and the only thing
-  // that stops them is not seeing the file at all.
-  //
-  // TODO: drop the legacy name (and `BakSyncer.inheritLegacyRemote`) once no
-  // install can still be writing `srvbox_bak.json`.
-  // `img` holds the SSH background, `font` the terminal font. The rest of
-  // `PathDir` belongs to other apps on fl_lib, and creating them here would
-  // only leave empty directories beside the boxes.
-  await Paths.init(
-    BuildData.name,
-    bakName: Miscs.bakFileName,
-    dirs: const {PathDir.img, PathDir.font},
-  );
-
-  // As early as there is a path to write to: everything below can fail, and
-  // a failure below is exactly what leaves no other way to find out what
-  // happened. Drains what [_setupDebug] buffered before this point.
-  await CrashLog.attach(Paths.doc.joinPath('logs'));
-  // Which release a report came from is the first thing asked about one and
-  // the thing users most often leave out.
-  Diag.tag(SbDiagTag.build, '${BuildData.build}');
-  Diag.crumb(DiagCategory.lifecycle, 'launch');
-
   // `extended_image` caches under `getTemporaryDirectory()` and makes its own
   // folder there with a plain `create()`, no `recursive`. On macOS that
   // directory is `~/Library/Caches/<bundle id>`, which nothing has to have

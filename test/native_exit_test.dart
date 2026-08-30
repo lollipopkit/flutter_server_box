@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/service/native_exit.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'helpers/test_db.dart';
 import 'helpers/tombstone_proto.dart';
@@ -15,6 +16,15 @@ import 'helpers/tombstone_proto.dart';
 /// ordinary exit as a crash raises a prompt after a normal launch, which
 /// teaches the user to dismiss the one that matters; treating a crash as
 /// ordinary loses the only record of it. Neither shows up anywhere but here.
+/// Remembers what reached a sink, so "did the crash get out" can be asserted.
+final class _RecordingSink extends DiagnosticsSink {
+  final errors = <({Object error, StackTrace? trace})>[];
+
+  @override
+  void error(Object error, StackTrace? stack, {String? source}) =>
+      errors.add((error: error, trace: stack));
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -37,6 +47,8 @@ void main() {
       File(tmp.path.joinPath(CrashLog.currentName)).readAsString();
 
   setUp(() async {
+    SharedPreferences.setMockInitialValues({});
+    await PrefStore.shared.init();
     tmp = await Directory.systemTemp.createTemp('native_exit_test');
     await openTestDb();
     getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
@@ -175,6 +187,100 @@ void main() {
     // But the dump is kept, because it is what says why it was killed.
     expect(NativeExitReport.lastExitTrace, contains('Blocked'));
     expect(await logged(), contains('main prio=5 tid=1 Blocked'));
+  });
+
+  group('a crash is held for a sink that does not exist yet', () {
+    // `collect` runs from `_initData`; `DiagnosticsUpload.sync` -- which is
+    // what installs a sink that uploads -- runs after it and is not awaited.
+    // Reporting inline handed every native crash to the local file and
+    // nothing else, which is why nothing ever reached the server.
+    test('and reaches the sink once it is installed', () async {
+      final sink = _RecordingSink();
+      NativeExitReport.apply(
+        record('crash_native', timestamp: 8000, trace: 'signal 11 (SIGSEGV)'),
+      );
+
+      // Nothing yet: this is the window where only the local sink exists.
+      Diag.install(sink);
+      expect(sink.errors, isEmpty);
+
+      NativeExitReport.reportPending();
+
+      expect(sink.errors, hasLength(1));
+      expect(sink.errors.single.error, isA<NativeExitError>());
+      // Short and stable, so two occurrences of one bug group together
+      // rather than filing an issue each.
+      expect('${sink.errors.single.error}', 'Native exit: crash_native');
+      expect('${sink.errors.single.trace}', contains('SIGSEGV'));
+    });
+
+    test('is reported once, however often the sink asks', () {
+      final sink = _RecordingSink();
+      Diag.install(sink);
+      NativeExitReport.apply(record('crash_native', timestamp: 8100));
+
+      NativeExitReport.reportPending();
+      NativeExitReport.reportPending();
+
+      expect(sink.errors, hasLength(1));
+    });
+
+    test('survives a launch that died before a sink existed', () async {
+      // `apply` marks the record handled the moment it writes `lastExitInfoTs`,
+      // so a launch that then died before `sync` dropped the crash *and* left
+      // the next launch nothing to find. Held in `PrefStore` now, so the next
+      // launch that gets far enough reports it.
+      NativeExitReport.apply(record('crash_native', timestamp: 8400));
+      // What a process death does to the in-memory copy.
+      NativeExitReport.debugForgetPending();
+
+      final sink = _RecordingSink();
+      Diag.install(sink);
+      NativeExitReport.reportPending();
+
+      expect(sink.errors, hasLength(1));
+      expect('${sink.errors.single.error}', 'Native exit: crash_native');
+      // No stack: a decoded tombstone is too big for this store, and the run
+      // that produced it already wrote it to the log.
+      expect(sink.errors.single.trace, isNull);
+    });
+
+    test('and is not reported twice across launches', () async {
+      NativeExitReport.apply(record('crash_native', timestamp: 8500));
+      final sink = _RecordingSink();
+      Diag.install(sink);
+      NativeExitReport.reportPending();
+      expect(sink.errors, hasLength(1));
+
+      NativeExitReport.debugForgetPending();
+      NativeExitReport.reportPending();
+
+      expect(sink.errors, hasLength(1), reason: 'the persisted copy was cleared too');
+    });
+
+    test('an ordinary exit is not reported at all', () {
+      final sink = _RecordingSink();
+      Diag.install(sink);
+      NativeExitReport.apply(record('user_requested', timestamp: 8200));
+
+      NativeExitReport.reportPending();
+
+      expect(sink.errors, isEmpty);
+    });
+
+    test('a SIGKILL is not reported either', () {
+      // The OEM background killer, which `isCrash` already refuses to call a
+      // crash -- it must not become an issue on the server either.
+      final sink = _RecordingSink();
+      Diag.install(sink);
+      NativeExitReport.apply(
+        {...record('signaled', timestamp: 8300), 'status': 9},
+      );
+
+      NativeExitReport.reportPending();
+
+      expect(sink.errors, isEmpty);
+    });
   });
 
   group('a native crash tombstone', () {

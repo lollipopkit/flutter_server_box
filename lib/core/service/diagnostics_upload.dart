@@ -5,6 +5,7 @@ import 'package:sentry/sentry.dart' as sentry;
 import 'package:server_box/core/service/analytics.dart';
 import 'package:server_box/core/service/diagnostics_platform.dart';
 import 'package:server_box/core/service/feature_flags.dart';
+import 'package:server_box/core/service/native_exit.dart';
 import 'package:server_box/data/model/app/diagnostics_level.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
@@ -156,6 +157,11 @@ abstract final class DiagnosticsUpload {
         ]),
       );
       Loggers.app.info('Crash upload started at ${wanted.name}');
+      // The last thing, and only now: a native crash is collected before this
+      // runs and has been waiting for a sink that uploads. Without this the
+      // one class of crash Dart cannot see at all -- a SIGSEGV in the Rust
+      // FFI, in proot or in sqlite -- reached the local log and stopped there.
+      NativeExitReport.reportPending();
     } catch (e, s) {
       // A bad DSN or an unreachable server must not stop the app, and must
       // not take the local log down with it.

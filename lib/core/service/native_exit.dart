@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:server_box/core/chan.dart';
@@ -52,6 +54,49 @@ abstract final class NativeExitReport {
   /// the previous run's file. Without somewhere for it to be read from, the
   /// one thing a crash report would leave out is why the app crashed.
   static Map<String, String>? lastExit;
+
+  /// The crash the platform reported, held until there is a sink to report it
+  /// to.
+  ///
+  /// **Held rather than sent, because of when this runs.** `collect` is called
+  /// from `_initData`, and `DiagnosticsUpload.sync` — which is what installs a
+  /// sink that uploads — is called after it and is not awaited. Reporting
+  /// inline would hand every native crash to whatever sink happened to be
+  /// installed at that moment, which is the local file and nothing else. So
+  /// `DiagnosticsUpload` calls [reportPending] once its sink is in place, and
+  /// a level that does not upload simply never calls it.
+  ///
+  /// Cleared as it is read, so one crash is reported once. `apply` already
+  /// refuses a record it has seen, but MetricKit's path has no timestamp to
+  /// deduplicate by and relies on the platform clearing what it hands over.
+  ///
+  /// **Persisted, because in memory it was lost by the launch that most needed
+  /// it.** `apply` writes `lastExitInfoTs` before this is set, so the record
+  /// counts as handled from that moment on; a launch that then died before
+  /// reaching a sink dropped the crash *and* left nothing for the next launch
+  /// to find. In [PrefStore] rather than a setting, for the same reason as
+  /// the analytics identity: the backup file carries every setting, and a
+  /// restored backup replaying someone else's crash is nonsense.
+  static const _pendingKey = 'native_exit_pending';
+
+  /// This run's copy, so the common case never touches storage: a crash held
+  /// and reported within one launch is read straight back from here.
+  static ({Object error, StackTrace? trace})? _pending;
+
+  /// The trace is deliberately not kept here. A decoded tombstone runs to tens
+  /// of kilobytes and `SharedPreferences` is the wrong place for it; the run
+  /// that produced it already wrote it to the log file, which is what a manual
+  /// report quotes. What survives is the fact and the reason — enough to know
+  /// a native crash happened at all, which is what was missing.
+  static void _holdCrash(String reason, Object? status, String? trace) {
+    _pending = (
+      error: NativeExitError(reason, status: status),
+      trace: trace == null || trace.isEmpty ? null : StackTrace.fromString(trace),
+    );
+    unawaited(
+      PrefStore.shared.set(_pendingKey, '$reason\u0000${status ?? ''}'),
+    );
+  }
 
   /// The previous run's native stack or ANR trace, when the platform had one.
   ///
@@ -144,7 +189,17 @@ abstract final class NativeExitReport {
       }
     }
 
-    if (crashed) CrashLog.reportPreviousRunCrashed();
+    if (crashed) {
+      CrashLog.reportPreviousRunCrashed();
+      // `lastExitTrace` rather than a local: the loop above has already picked
+      // the crash's call stack over any hang's, which is the one worth
+      // reporting when both were delivered together.
+      _holdCrash(
+        'metrickit crash',
+        lastExit?['signal'],
+        lastExitTrace,
+      );
+    }
   }
 
   /// Folds one platform record into this run's log.
@@ -217,9 +272,79 @@ abstract final class NativeExitReport {
       // marker exists because a Dart crash has no way to tell the following
       // launch anything; the platform is telling us directly, about a run
       // that is already over, so there is nothing to route through a file.
-      if (crashed) CrashLog.reportPreviousRunCrashed();
+      if (crashed) {
+        CrashLog.reportPreviousRunCrashed();
+        // Held, not sent: nothing that uploads is installed this early — see
+        // [_pending]. `trace` is the tombstone or thread dump decoded above,
+        // so the report carries the stack rather than only the reason.
+        _holdCrash(reason, info['status'], trace);
+      }
     } catch (e, s) {
       Loggers.app.warning('NativeExitReport.apply', e, s);
     }
+  }
+
+  /// Hands the held crash to whatever sink is now installed.
+  ///
+  /// Called by `DiagnosticsUpload` once it has one, and by nothing else: a
+  /// level that does not upload never calls this, so the record stays held and
+  /// dies with the process — which is the same thing as not reporting it.
+  static void reportPending() {
+    final pending = _pending ?? _readPersisted();
+    if (pending == null) return;
+    _pending = null;
+    unawaited(PrefStore.shared.remove(_pendingKey));
+    Diag.error(pending.error, pending.trace, 'native exit');
+  }
+
+  /// Drops the in-memory copy, leaving only what was persisted — which is
+  /// what a process death does. Tests only.
+  @visibleForTesting
+  static void debugForgetPending() => _pending = null;
+
+  /// A crash held by a launch that never reached a sink.
+  ///
+  /// No trace: see [_holdCrash]. The reason alone still answers the question
+  /// nothing else can, which is whether the app died in native code.
+  static ({Object error, StackTrace? trace})? _readPersisted() {
+    final raw = PrefStore.shared.get<String>(_pendingKey);
+    if (raw == null || raw.isEmpty) return null;
+    final parts = raw.split('\u0000');
+    final status = parts.length > 1 && parts[1].isNotEmpty
+        ? int.tryParse(parts[1]) ?? parts[1]
+        : null;
+    return (
+      error: NativeExitError(parts.first, status: status),
+      trace: null,
+    );
+  }
+
+}
+
+/// A death outside Dart, in the shape a reporting sink understands.
+///
+/// There is no exception and no Dart stack for a process the kernel killed, so
+/// one is made here. **The message is short and stable on purpose**: a backend
+/// groups by type and value, and a tombstone's addresses differ on every
+/// crash — putting them here would file every occurrence as its own issue and
+/// hide the fact that it is one bug. The addresses travel in the stack trace,
+/// and the record's own fields travel in the breadcrumb `apply` writes.
+final class NativeExitError implements Exception {
+  const NativeExitError(this.reason, {this.status});
+
+  /// `crash_native`, `anr`, `signaled`, `metrickit crash`, …
+  final String reason;
+
+  /// The signal number for `signaled`, the exit status otherwise. Part of the
+  /// message because a SIGSEGV and a SIGABRT are different bugs; not enough of
+  /// it varies to break grouping.
+  final Object? status;
+
+  @override
+  String toString() {
+    final status = this.status;
+    return status == null || status == 0
+        ? 'Native exit: $reason'
+        : 'Native exit: $reason ($status)';
   }
 }
