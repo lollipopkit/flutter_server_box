@@ -17,7 +17,7 @@ dependencies:
   # transitive one it is whatever some other package happens to want, and a
   # tar reader deciding what a hard link is has already cost this app a
   # release.
-  archive: ^4.1.0
+  archive: ^4.2.0
   choice: ^2.3.2
   # SHA-256 of a certificate's DER form, for the BMC's pinned certificate.
   # `X509Certificate` only offers sha1 ready made.
@@ -91,11 +91,11 @@ dependencies:
   # which is what takes the last pod out of the iOS and macOS builds.
   flutter_pty:
     path: packages/flutter_pty
-  flutter_rust_bridge: 2.13.0-beta.6
+  flutter_rust_bridge: 2.13.0
   # Drives the build hook below. `sbm_ffi` is no longer a Flutter plugin — the
   # hook compiles the crate directly, so there is nothing to depend on.
-  flutter_rust_bridge_hooks: 2.13.0-beta.6
-  desktop_drop: ^0.8.0
+  flutter_rust_bridge_hooks: 2.13.0
+  desktop_drop: ^0.8.2
 
 dev_dependencies:
   integration_test:
