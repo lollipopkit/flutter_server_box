@@ -34,7 +34,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get crashCollectFullTip =>
-      'Çökme günlüğüne ek olarak performans verileri de dahil edilir: **Hiçbir çökme olmadığında neyin yavaş olduğunu bulmaya yarar.**';
+      'Çökme günlüğüne ek olarak performans verileri ve hangi özelliklerin kullanıldığı da dahil edilir: **Neyin yavaş olduğunu ve hangi özelliklerin gerçekten kullanıldığını bulmaya yarar.**';
 
   @override
   String get crashCollectFooter =>

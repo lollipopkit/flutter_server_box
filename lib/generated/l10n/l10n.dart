@@ -168,7 +168,7 @@ abstract class AppLocalizations {
   /// No description provided for @crashCollectFullTip.
   ///
   /// In en, this message translates to:
-  /// **'Along with the crash log, performance data is included: **it shows what is slow when nothing has actually crashed.**'**
+  /// **'Along with the crash log, performance data and which features are used are included: **they show what is slow, and which features are worth keeping.**'**
   String get crashCollectFullTip;
 
   /// No description provided for @crashCollectFooter.

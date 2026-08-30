@@ -34,7 +34,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get crashCollectFullTip =>
-      'Selain log kerusakan, data performa juga disertakan: **Berguna untuk menemukan apa yang lambat saat tidak ada yang mogok.**';
+      'Selain log kerusakan, data performa dan penggunaan fitur juga disertakan: **Berguna untuk menemukan apa yang lambat dan fitur mana yang benar-benar dipakai.**';
 
   @override
   String get crashCollectFooter =>

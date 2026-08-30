@@ -560,6 +560,27 @@ extension _Actions on _ServerEditPageState {
     }
 
     if (!mounted) return;
+    // Closes the funnel `edit opened` began, and is the one place that knows
+    // the whole shape of what was configured. Every value here is an enum or a
+    // flag this app defines -- no host, no name, no credential -- which is
+    // what makes "which combinations are actually used" answerable without
+    // any of them being about a particular server.
+    Diag.crumb(
+      SbDiag.server,
+      'edit saved',
+      data: {
+        'ssh': '$useSsh',
+        'monitor': '$useMonitorHttp',
+        if (useSsh) 'auth': selectedKey != null ? 'key' : 'password',
+        if (useSsh)
+          'via': switch (0) {
+            _ when _jumpServers.value.isNotEmpty => 'jump',
+            _ when proxyCommandText.isNotEmpty => 'proxy',
+            _ => 'direct',
+          },
+        if (useSsh) 'files': _fileTransport.value.name,
+      },
+    );
     // Saved either way — the address may well be one TLS is being set up for,
     // and refusing to store it would be this page deciding that for the user.
     // But it will not connect as it stands, and the switch that would let it

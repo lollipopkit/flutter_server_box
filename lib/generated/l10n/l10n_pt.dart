@@ -34,7 +34,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get crashCollectFullTip =>
-      'Além do registro da falha, inclui dados de desempenho: servem para localizar o que está lento quando nada falhou.';
+      'Além do registro da falha, inclui dados de desempenho e o uso de funcionalidades: servem para localizar o que está lento e quais funcionalidades são realmente usadas.';
 
   @override
   String get crashCollectFooter =>

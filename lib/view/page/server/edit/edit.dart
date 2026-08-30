@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:redfish/redfish.dart';
+import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/jump_chain.dart';
@@ -162,6 +163,14 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   void initState() {
     super.initState();
     _serverId = widget.args?.spi.id ?? ShortId.generate();
+    // The open half of a funnel that `edit saved` closes. Without it, giving
+    // up partway through adding a server is indistinguishable from never
+    // having started -- neither leaves a record of any kind.
+    Diag.crumb(
+      SbDiag.server,
+      'edit opened',
+      data: {'mode': widget.args?.spi == null ? 'new' : 'existing'},
+    );
     unawaited(_refreshStoredSudoPasswordState());
   }
 

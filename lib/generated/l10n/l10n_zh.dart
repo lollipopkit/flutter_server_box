@@ -31,7 +31,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get crashCollectFull => '完整信息';
 
   @override
-  String get crashCollectFullTip => '除崩溃日志，加上性能数据: **用于定位没有崩溃、但明显变慢的问题。**';
+  String get crashCollectFullTip =>
+      '除崩溃日志，加上性能数据和功能使用情况: **用于定位变慢的问题，以及了解哪些功能真的有人用。**';
 
   @override
   String get crashCollectFooter =>
@@ -1659,7 +1660,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get crashCollectFull => '完整資料';
 
   @override
-  String get crashCollectFullTip => '除了當機日誌外，也會包含效能資料：用於定位沒有當機、但明顯變慢的問題。';
+  String get crashCollectFullTip =>
+      '除了當機日誌外，也會包含效能資料和功能使用情況：用於定位變慢的問題，以及了解哪些功能真的有人用。';
 
   @override
   String get crashCollectFooter =>

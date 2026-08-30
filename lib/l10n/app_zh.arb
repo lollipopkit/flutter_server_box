@@ -7,7 +7,7 @@
   "crashCollectBasic": "基本信息",
   "crashCollectBasicTip": "仅包含崩溃信息，不包含日志/性能数据; **帮助我们完善App, 修复bug**",
   "crashCollectFull": "完整信息",
-  "crashCollectFullTip": "除崩溃日志，加上性能数据: **用于定位没有崩溃、但明显变慢的问题。**",
+  "crashCollectFullTip": "除崩溃日志，加上性能数据和功能使用情况: **用于定位变慢的问题，以及了解哪些功能真的有人用。**",
   "crashCollectFooter": "无论选择哪个级别，记录时都会将已知服务器名称、地址和用户名替换为占位符。之后可在设置中更改收集级别。",
   "privacyPolicy": "隐私政策",
   "crashUpload": "上传崩溃报告",

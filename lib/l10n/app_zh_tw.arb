@@ -7,7 +7,7 @@
   "crashCollectBasic": "基本資料",
   "crashCollectBasicTip": "只包含當機資訊，不包含日誌或效能資料。**這有助於我們改善 App 和修正錯誤。**",
   "crashCollectFull": "完整資料",
-  "crashCollectFullTip": "除了當機日誌外，也會包含效能資料：用於定位沒有當機、但明顯變慢的問題。",
+  "crashCollectFullTip": "除了當機日誌外，也會包含效能資料和功能使用情況：用於定位變慢的問題，以及了解哪些功能真的有人用。",
   "crashCollectFooter": "無論選擇哪個等級，記錄時都會將已知伺服器名稱、位址和使用者名稱替換為預留位置。之後可在設定中更改收集等級。",
   "privacyPolicy": "隱私權政策",
   "crashUpload": "上傳當機報告",

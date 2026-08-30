@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:sentry/sentry.dart' as sentry;
+import 'package:server_box/core/service/analytics.dart';
 import 'package:server_box/core/service/diagnostics_platform.dart';
 import 'package:server_box/data/model/app/diagnostics_level.dart';
 import 'package:server_box/data/res/build_data.dart';
@@ -89,10 +90,12 @@ abstract final class DiagnosticsUpload {
       await _stop();
     } else if (_started == null) {
       await _start(wanted);
-    } else if (_started!.tracesPerformance != wanted.tracesPerformance) {
+    } else if (_started!.tracesPerformance != wanted.tracesPerformance ||
+        _started!.sendsAnalytics != wanted.sendsAnalytics) {
       // `tracesSampleRate` is read when the SDK is built, so moving between
       // basic and full has to rebuild it. Breadcrumb filtering is read per
-      // call and would not have needed this.
+      // call and would not have needed this; analytics is here because
+      // dropping to `basic` has to stop it and take the queue with it.
       await _stop();
       await _start(wanted);
     } else {
@@ -135,7 +138,17 @@ abstract final class DiagnosticsUpload {
       // itself — see [DiagnosticsPlatform], which is also where the line
       // between "what hardware" and "whose hardware" is drawn.
       await DiagnosticsPlatform.describe();
-      Diag.install(FanOutSink([LocalDiagnosticsSink(), const SentrySink()]));
+      // `full` only, and started before the sink so the first crumb through it
+      // is already counted. A build with no PostHog endpoint compiled in
+      // starts nothing, and `PostHogSink` then queues into a sink that drops.
+      if (wanted.sendsAnalytics) Analytics.start();
+      Diag.install(
+        FanOutSink([
+          LocalDiagnosticsSink(),
+          const SentrySink(),
+          const PostHogSink(),
+        ]),
+      );
       Loggers.app.info('Crash upload started at ${wanted.name}');
     } catch (e, s) {
       // A bad DSN or an unreachable server must not stop the app, and must
@@ -151,6 +164,9 @@ abstract final class DiagnosticsUpload {
     // asking the SDK to be quiet.
     Diag.install(LocalDiagnosticsSink());
     _started = null;
+    // Dropped rather than flushed -- see [Analytics.stop]. Withdrawing consent
+    // must not be the thing that sends the last batch.
+    await Analytics.stop();
     try {
       await sentry.Sentry.close();
     } catch (e, s) {

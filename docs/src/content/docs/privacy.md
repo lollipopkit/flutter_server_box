@@ -35,7 +35,7 @@ can be changed at any time in **Settings → Diagnostic data**.
 |---|---|
 | **Nothing** | Nothing is sent, ever. Reports stay on the device |
 | **Basic information** | Crashes and caught errors, with the app version they happened in |
-| **Full information** | Everything Basic sends, plus performance traces while the app runs |
+| **Full information** | Everything Basic sends, plus performance traces and a count of which features are used, while the app runs |
 
 The default on Android is **Nothing**. On iOS, macOS, Linux and Windows it is
 **Basic information**, and the intro page is shown before the first upload.
@@ -56,7 +56,16 @@ launch.
 
 At **Full information**, it also contains timings for operations such as
 connecting to a server or listing a directory — how long each took, not what
-was in it.
+was in it — and a count of which features are used: that a terminal was
+opened, that a server was saved with an SSH key rather than a password, that
+a file browser used SFTP rather than SCP.
+
+Those counts are the same breadcrumbs described above, sent as they happen
+rather than held for a crash. They carry an identifier that is **generated at
+launch and never stored**, so one run's actions can be read in order and two
+runs cannot be connected to each other. That rules out knowing how many people
+use the app, or whether anyone came back — which is the cost of not holding a
+device identifier.
 
 The app's own log is **never** uploaded, at any level. It is written to be read
 by a developer on the device, by code going back years, and some of it formats

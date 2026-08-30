@@ -7,9 +7,15 @@
    setting is chosen on an intro page before anything is uploaded, and this
    platform starts at `basic` — so a declaration is required here even though
    the Android default is `none`. `basic` sends crash data and the breadcrumbs
-   leading up to it (other diagnostic data); `full` adds performance data. The
-   app's own log stream is uploaded at no level at all -- see `SentrySink.log`
-   -- so none of these three covers it.
+   leading up to it (other diagnostic data); `full` adds performance data and
+   counts which features are used (product interaction). The app's own log
+   stream is uploaded at no level at all -- see `SentrySink.log` -- so none of
+   these four covers it.
+
+   `Tracking` stays false for all of them. Apple's definition is linking to
+   third-party data for advertising or a data broker; this is first-party,
+   goes to a self-hosted instance, and the identifier ordering one run's
+   events is random per launch and never stored -- see `Analytics`.
 
    Nothing is linked to an identity and nothing is used for tracking: reports
    carry a per-install id the server generates, no account, no advertising
@@ -37,6 +43,18 @@
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>
 			<string>NSPrivacyCollectedDataTypePerformanceData</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeProductInteraction</string>
 			<key>NSPrivacyCollectedDataTypeLinked</key>
 			<false/>
 			<key>NSPrivacyCollectedDataTypeTracking</key>

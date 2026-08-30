@@ -7,7 +7,7 @@
   "crashCollectBasic": "Informasi dasar",
   "crashCollectBasicTip": "Hanya informasi kerusakan yang disertakan; log dan data performa tidak disertakan. **Ini membantu kami menyempurnakan aplikasi dan memperbaiki bug.**",
   "crashCollectFull": "Informasi lengkap",
-  "crashCollectFullTip": "Selain log kerusakan, data performa juga disertakan: **Berguna untuk menemukan apa yang lambat saat tidak ada yang mogok.**",
+  "crashCollectFullTip": "Selain log kerusakan, data performa dan penggunaan fitur juga disertakan: **Berguna untuk menemukan apa yang lambat dan fitur mana yang benar-benar dipakai.**",
   "crashCollectFooter": "Pada tingkat apa pun, nama server yang dikenal beserta alamat dan nama penggunanya diganti dengan placeholder saat dicatat. Tingkat pengumpulan dapat diubah nanti di Pengaturan.",
   "privacyPolicy": "Kebijakan privasi",
   "crashUpload": "Unggah laporan kerusakan",

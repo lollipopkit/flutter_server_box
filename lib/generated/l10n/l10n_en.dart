@@ -34,7 +34,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get crashCollectFullTip =>
-      'Along with the crash log, performance data is included: **it shows what is slow when nothing has actually crashed.**';
+      'Along with the crash log, performance data and which features are used are included: **they show what is slow, and which features are worth keeping.**';
 
   @override
   String get crashCollectFooter =>

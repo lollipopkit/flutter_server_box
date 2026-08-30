@@ -34,7 +34,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get crashCollectFullTip =>
-      'Neben dem Absturzprotokoll werden Leistungsdaten erfasst: **Damit lässt sich finden, was langsam ist, wenn gar nichts abgestürzt ist.**';
+      'Neben dem Absturzprotokoll werden Leistungsdaten und die Nutzung von Funktionen erfasst: **Damit lässt sich finden, was langsam ist und welche Funktionen tatsächlich genutzt werden.**';
 
   @override
   String get crashCollectFooter =>
