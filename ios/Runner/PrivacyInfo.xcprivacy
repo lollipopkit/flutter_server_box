@@ -13,9 +13,11 @@
    these four covers it.
 
    `Tracking` stays false for all of them. Apple's definition is linking to
-   third-party data for advertising or a data broker; this is first-party,
-   goes to a self-hosted instance, and the identifier ordering one run's
-   events is random per launch and never stored -- see `Analytics`.
+   third-party data for advertising or a data broker. This is first-party, is
+   never shared with one, and the identifier is a random value for the install
+   that exists only while `full` is selected and is deleted when it is not --
+   see `Analytics`. It is deliberately kept out of the backup file, so a
+   restore cannot give two devices the same one.
 
    Nothing is linked to an identity and nothing is used for tracking: reports
    carry a per-install id the server generates, no account, no advertising

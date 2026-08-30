@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:sentry/sentry.dart' as sentry;
 import 'package:server_box/core/service/analytics.dart';
 import 'package:server_box/core/service/diagnostics_platform.dart';
+import 'package:server_box/core/service/feature_flags.dart';
 import 'package:server_box/data/model/app/diagnostics_level.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
@@ -141,7 +142,12 @@ abstract final class DiagnosticsUpload {
       // `full` only, and started before the sink so the first crumb through it
       // is already counted. A build with no PostHog endpoint compiled in
       // starts nothing, and `PostHogSink` then queues into a sink that drops.
-      if (wanted.sendsAnalytics) Analytics.start();
+      if (wanted.sendsAnalytics) {
+        await Analytics.start();
+        // Once, here, so a screen built later this run already has its
+        // assignment -- see [FeatureFlags.fetch] on why it is never retried.
+        await FeatureFlags.fetch();
+      }
       Diag.install(
         FanOutSink([
           LocalDiagnosticsSink(),
@@ -167,6 +173,8 @@ abstract final class DiagnosticsUpload {
     // Dropped rather than flushed -- see [Analytics.stop]. Withdrawing consent
     // must not be the thing that sends the last batch.
     await Analytics.stop();
+    // A variant must not outlive the consent it was assigned under.
+    FeatureFlags.clear();
     try {
       await sentry.Sentry.close();
     } catch (e, s) {

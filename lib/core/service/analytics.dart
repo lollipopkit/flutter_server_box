@@ -23,14 +23,26 @@ import 'package:server_box/data/res/build_data.dart';
 /// to vet in order to ship a feature that is off by default. Here what leaves
 /// the device is the list below and nothing else.
 ///
-/// **The identifier is per launch and is not stored.** PostHog needs a
-/// `distinct_id` to order one run's events into a funnel. A persisted one
-/// would be a stable device identifier — the exact thing
-/// `PrivacyInfo.xcprivacy` claims not to collect and
-/// [DiagnosticsPlatform] refuses to send — so this is a random value that dies
-/// with the process. A funnel inside one run still works, which is what
-/// "where did they give up adding a server" asks. Retention and DAU do not,
-/// and are the price.
+/// **The identifier persists, and that is a deliberate reversal.** It was
+/// random per launch, which kept anything from being connected across runs.
+/// An experiment cannot work that way: a user reassigned to a different
+/// variant on every launch makes the two arms the same population, so the
+/// result measures nothing. Supporting A/B tests means accepting a stable
+/// anonymous id, and there is no version of that which is also per launch.
+///
+/// What is done to bound it instead:
+///
+/// - It exists **only at `full`**. `start` is what creates it, and [stop]
+///   deletes it — so turning collection off is not "stop sending", it is
+///   "forget which install this was". Turning it back on is a new identity,
+///   with the experiment reassignment that implies.
+/// - It is a random 128-bit value and nothing else. Not derived from any
+///   device property, so it cannot be recomputed after deletion, and it
+///   identifies an install rather than a device or a person.
+/// - It lives in [PrefStore], **not** in `Stores.setting`, because the backup
+///   file carries every setting (see `BackupV2`) and restoring one onto a
+///   second device would give both the same identity — which is precisely the
+///   cross-device link this is not allowed to create.
 abstract final class Analytics {
   /// Where events go. Empty in a build that was not given one, which is every
   /// build until `--dart-define=POSTHOG_HOST=...` supplies it.
@@ -67,6 +79,10 @@ abstract final class Analytics {
   static const _maxQueue = 500;
 
   static final _queue = <Map<String, Object?>>[];
+  /// Where the install identity is kept. See the class doc for why this is
+  /// `PrefStore` and not a setting.
+  static const _idKey = 'analytics_install_id';
+
   static Timer? _timer;
   static Dio? _dio;
   static String? _distinctId;
@@ -77,17 +93,28 @@ abstract final class Analytics {
   /// Whether events are being collected right now.
   static bool get started => _distinctId != null;
 
-  /// Begins a run's collection. Idempotent.
-  static void start() {
+  /// The install identity, for the one other thing that needs it: asking which
+  /// experiment variants this install is in. Null when collection is off.
+  static String? get distinctId => _distinctId;
+
+  /// Begins a run's collection, minting the install identity if this is the
+  /// first time collection has ever been switched on. Idempotent.
+  static Future<void> start() async {
     if (started) return;
     if (!availableInBuild) return;
-    // 128 bits from `Random.secure`, so two installs starting in the same
-    // millisecond are not the same person. Not stored anywhere.
-    final rnd = Random.secure();
-    _distinctId = List.generate(
-      16,
-      (_) => rnd.nextInt(256).toRadixString(16).padLeft(2, '0'),
-    ).join();
+    var id = PrefStore.shared.get<String>(_idKey);
+    if (id == null || id.isEmpty) {
+      // 128 bits from `Random.secure`, so two installs switching this on in
+      // the same millisecond are not the same identity, and so it cannot be
+      // guessed from anything about the device.
+      final rnd = Random.secure();
+      id = List.generate(
+        16,
+        (_) => rnd.nextInt(256).toRadixString(16).padLeft(2, '0'),
+      ).join();
+      await PrefStore.shared.set(_idKey, id);
+    }
+    _distinctId = id;
     _dio = Dio(
       BaseOptions(
         baseUrl: host,
@@ -99,12 +126,16 @@ abstract final class Analytics {
     _timer = Timer.periodic(_flushEvery, (_) => unawaited(flush()));
   }
 
-  /// Ends it, sending whatever is queued.
+  /// Ends it, and forgets who this was.
   ///
-  /// Awaited by the caller, because the one moment this matters is consent
-  /// being withdrawn — where the queue holds events the user has just said
-  /// they did not want sent. So it is *dropped*, not flushed: the alternative
-  /// is honouring a setting by ignoring it once.
+  /// The queue is *dropped*, not flushed: the one moment this runs is consent
+  /// being withdrawn, and the queue then holds events the user has just said
+  /// they did not want sent. Flushing would be honouring a setting by ignoring
+  /// it once.
+  ///
+  /// The identity goes with it. Keeping it would make "off" mean "paused", and
+  /// the record of which install this was is the part worth deleting — the
+  /// cost is that switching back on lands in a fresh experiment assignment.
   static Future<void> stop() async {
     _timer?.cancel();
     _timer = null;
@@ -113,6 +144,7 @@ abstract final class Analytics {
     _distinctId = null;
     _dio?.close(force: true);
     _dio = null;
+    await PrefStore.shared.remove(_idKey);
   }
 
   /// Records one event. Never blocks, never throws.
