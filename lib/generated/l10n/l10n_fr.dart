@@ -34,7 +34,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get crashCollectFullTip =>
-      'En plus du journal du plantage, des journaux supplémentaires et des données de performance sont inclus : nous devons savoir **comment reproduire les plantages et ce qui déclenche le bug.**';
+      'En plus du journal du plantage, des données de performance sont incluses : nous devons savoir **comment reproduire les plantages et ce qui déclenche le bug.**';
 
   @override
   String get crashCollectFooter =>

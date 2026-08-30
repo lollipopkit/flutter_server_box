@@ -7,7 +7,7 @@
   "crashCollectBasic": "Grundlegende Informationen",
   "crashCollectBasicTip": "Es werden nur Absturzinformationen erfasst; Protokoll- und Leistungsdaten sind nicht enthalten. **Damit helfen Sie uns, die App zu verbessern und Fehler zu beheben.**",
   "crashCollectFull": "Vollständige Informationen",
-  "crashCollectFullTip": "Neben dem Absturzprotokoll werden zusätzliche Protokoll- und Leistungsdaten erfasst: Wir müssen wissen, **wie sich Abstürze reproduzieren lassen und wodurch der Fehler ausgelöst wird.**",
+  "crashCollectFullTip": "Neben dem Absturzprotokoll werden Leistungsdaten erfasst: Wir müssen wissen, **wie sich Abstürze reproduzieren lassen und wodurch der Fehler ausgelöst wird.**",
   "crashCollectFooter": "Unabhängig von der Stufe werden bekannte Servernamen, -adressen und Benutzernamen bereits beim Aufzeichnen durch Platzhalter ersetzt. Die Erfassungsstufe kann später in den Einstellungen geändert werden.",
   "privacyPolicy": "Datenschutzerklärung",
   "crashUpload": "Absturzberichte hochladen",

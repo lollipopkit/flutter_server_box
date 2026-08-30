@@ -34,7 +34,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get crashCollectFullTip =>
-      'Along with the crash log, additional logs and performance data are included: we need to know **how to reproduce crashes and what triggers the bug.**';
+      'Along with the crash log, performance data is included: we need to know **how to reproduce crashes and what triggers the bug.**';
 
   @override
   String get crashCollectFooter =>

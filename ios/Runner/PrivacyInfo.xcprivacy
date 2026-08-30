@@ -6,8 +6,10 @@
    Everything below is sent only when `DiagnosticsLevel` is not `none`. That
    setting is chosen on an intro page before anything is uploaded, and this
    platform starts at `basic` — so a declaration is required here even though
-   the Android default is `none`. `full` is the only level that sends the last
-   two types; `basic` sends crash data alone.
+   the Android default is `none`. `basic` sends crash data and the breadcrumbs
+   leading up to it (other diagnostic data); `full` adds performance data. The
+   app's own log stream is uploaded at no level at all -- see `SentrySink.log`
+   -- so none of these three covers it.
 
    Nothing is linked to an identity and nothing is used for tracking: reports
    carry a per-install id the server generates, no account, no advertising

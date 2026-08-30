@@ -29,16 +29,25 @@ enum DiagnosticsLevel {
 
   /// Continuously, while the app runs.
   ///
-  /// Everything [basic] sends, plus the log stream and performance traces as
-  /// they happen — not held back until something breaks. This is what makes a
-  /// problem visible that never crashes: a connection that takes twelve
-  /// seconds, a refresh that quietly fails every time, a screen that is slow
-  /// only on one platform.
+  /// Everything [basic] sends, plus performance traces as they happen — not
+  /// held back until something breaks. This is what makes a problem visible
+  /// that never crashes: a connection that takes twelve seconds, a refresh
+  /// that quietly fails every time, a screen that is slow only on one
+  /// platform.
   ///
-  /// It is also the level that costs something real. Every log line and every
-  /// traced operation is a request to the server, which for a self-hosted
-  /// instance means storage and CPU that scale with how much the app is used
-  /// rather than with how often it fails.
+  /// **The log stream is not part of this, at any level.** It was, and it was
+  /// the one channel that carried the app's own log lines off the device
+  /// continuously — the thing most likely to hold a string nobody audited,
+  /// since a log line is written to be read by a developer on the device
+  /// rather than to be published. Timings are structured and say how long an
+  /// operation took, not what was in it. The log stays on the device, where
+  /// the Logs page shows it and a crash report quotes it with the user
+  /// reading first.
+  ///
+  /// It is still the level that costs something real: every traced operation
+  /// is a request to the server, which for a self-hosted instance means
+  /// storage and CPU that scale with how much the app is used rather than
+  /// with how often it fails.
   full;
 
   /// Whether anything is sent at all.
@@ -46,9 +55,6 @@ enum DiagnosticsLevel {
 
   /// Whether breadcrumbs accompany an error.
   bool get sendsBreadcrumbs => this != DiagnosticsLevel.none;
-
-  /// Whether the log stream is uploaded as it happens.
-  bool get streamsLogs => this == DiagnosticsLevel.full;
 
   /// Whether operations are traced for performance.
   bool get tracesPerformance => this == DiagnosticsLevel.full;

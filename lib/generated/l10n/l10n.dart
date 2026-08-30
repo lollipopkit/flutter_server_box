@@ -168,7 +168,7 @@ abstract class AppLocalizations {
   /// No description provided for @crashCollectFullTip.
   ///
   /// In en, this message translates to:
-  /// **'Along with the crash log, additional logs and performance data are included: we need to know **how to reproduce crashes and what triggers the bug.**'**
+  /// **'Along with the crash log, performance data is included: we need to know **how to reproduce crashes and what triggers the bug.**'**
   String get crashCollectFullTip;
 
   /// No description provided for @crashCollectFooter.

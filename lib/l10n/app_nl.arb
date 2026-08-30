@@ -7,7 +7,7 @@
   "crashCollectBasic": "Basisgegevens",
   "crashCollectBasicTip": "Bevat alleen informatie over de crash; logboeken en prestatiegegevens worden niet opgenomen. **Zo help je ons de app te verbeteren en bugs op te lossen.**",
   "crashCollectFull": "Volledige gegevens",
-  "crashCollectFullTip": "Naast het crashlogboek bevat dit ook extra logboeken en prestatiegegevens: we hebben die nodig om crashes te reproduceren en vast te stellen waardoor de bug wordt veroorzaakt.",
+  "crashCollectFullTip": "Naast het crashlogboek bevat dit ook prestatiegegevens: we hebben die nodig om crashes te reproduceren en vast te stellen waardoor de bug wordt veroorzaakt.",
   "crashCollectFooter": "Op elk niveau worden bekende servernamen, adressen en gebruikersnamen al bij het vastleggen vervangen door plaatsaanduidingen. Je kunt het verzamelingsniveau later wijzigen in de instellingen.",
   "privacyPolicy": "Privacybeleid",
   "crashUpload": "Crashrapporten uploaden",

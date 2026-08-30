@@ -7,7 +7,7 @@
   "crashCollectBasic": "Informations de base",
   "crashCollectBasicTip": "Seules les informations sur le plantage sont incluses ; les journaux et données de performance ne le sont pas. **Cela nous aide à améliorer l'application et à corriger les bugs.**",
   "crashCollectFull": "Informations complètes",
-  "crashCollectFullTip": "En plus du journal du plantage, des journaux supplémentaires et des données de performance sont inclus : nous devons savoir **comment reproduire les plantages et ce qui déclenche le bug.**",
+  "crashCollectFullTip": "En plus du journal du plantage, des données de performance sont incluses : nous devons savoir **comment reproduire les plantages et ce qui déclenche le bug.**",
   "crashCollectFooter": "Quel que soit le niveau, les noms de serveurs connus, leurs adresses et noms d'utilisateur sont remplacés par des espaces réservés dès l'enregistrement. Vous pouvez modifier le niveau de collecte plus tard dans les réglages.",
   "privacyPolicy": "Politique de confidentialité",
   "crashUpload": "Envoyer les rapports de plantage",

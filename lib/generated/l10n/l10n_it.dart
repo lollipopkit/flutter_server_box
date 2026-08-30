@@ -34,7 +34,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get crashCollectFullTip =>
-      'Oltre al registro dell\'arresto anomalo, include log aggiuntivi e dati sulle prestazioni: dobbiamo sapere **come riprodurre gli arresti anomali e cosa attiva il bug.**';
+      'Oltre al registro dell\'arresto anomalo, include dati sulle prestazioni: dobbiamo sapere **come riprodurre gli arresti anomali e cosa attiva il bug.**';
 
   @override
   String get crashCollectFooter =>

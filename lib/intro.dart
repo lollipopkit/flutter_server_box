@@ -256,10 +256,12 @@ final class _IntroPage extends StatelessWidget {
             groupValue: DiagnosticsLevel.fromName(name),
             onChanged: _onLevelPicked,
             child: Column(
-              // Reversed, so the recommended answer is read first. The default
-              // is the quiet end — `none` on Android, which is the only
-              // platform F-Droid distributes — so the case for collecting has
-              // to be made here rather than by pre-selecting it.
+              // Reversed, so the list runs from most sent to least and the
+              // recommended answer sits between the two it is a middle ground
+              // between. The default is the quiet end — `none` on Android,
+              // which is the only platform F-Droid distributes — so the case
+              // for collecting has to be made here rather than by
+              // pre-selecting it.
               children: DiagnosticsLevel.values.reversed
                   .map((e) => _levelTile(ctx, e))
                   .toList(),
@@ -310,7 +312,14 @@ final class _IntroPage extends StatelessWidget {
   }
 
   /// Which level the page argues for.
-  static const _kRecommendedLevel = DiagnosticsLevel.full;
+  ///
+  /// `basic`, not `full`. It is what answers a crash report — the failure, the
+  /// build it happened in and the crumbs leading to it — and it sends nothing
+  /// at all while the app is behaving. `full` adds timings, which are worth
+  /// having when a problem is that something is slow rather than that it
+  /// broke; that is a real case and a narrow one, so it is offered rather
+  /// than recommended.
+  static const _kRecommendedLevel = DiagnosticsLevel.basic;
 
   /// A level's label and the sentence under it.
   ///

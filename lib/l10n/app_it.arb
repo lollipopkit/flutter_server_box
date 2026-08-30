@@ -7,7 +7,7 @@
   "crashCollectBasic": "Informazioni di base",
   "crashCollectBasicTip": "Include solo le informazioni sull'arresto anomalo; non include log o dati sulle prestazioni. **Questo ci aiuta a migliorare l'app e a correggere i bug.**",
   "crashCollectFull": "Informazioni complete",
-  "crashCollectFullTip": "Oltre al registro dell'arresto anomalo, include log aggiuntivi e dati sulle prestazioni: dobbiamo sapere **come riprodurre gli arresti anomali e cosa attiva il bug.**",
+  "crashCollectFullTip": "Oltre al registro dell'arresto anomalo, include dati sulle prestazioni: dobbiamo sapere **come riprodurre gli arresti anomali e cosa attiva il bug.**",
   "crashCollectFooter": "A ogni livello, i nomi dei server noti, i relativi indirizzi e nomi utente vengono sostituiti da segnaposto al momento della registrazione. Puoi modificare il livello di raccolta in seguito nelle impostazioni.",
   "privacyPolicy": "Informativa sulla privacy",
   "crashUpload": "Invia i rapporti di arresto anomalo",

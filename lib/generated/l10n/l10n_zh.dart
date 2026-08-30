@@ -32,7 +32,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get crashCollectFullTip =>
-      '除崩溃日志，加上日志和性能数据: 我们需要知道 **崩溃如何复现/怎么才能触发这个bug**';
+      '除崩溃日志，加上性能数据: 我们需要知道 **崩溃如何复现/怎么才能触发这个bug**';
 
   @override
   String get crashCollectFooter =>
@@ -1661,7 +1661,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get crashCollectFullTip =>
-      '除了當機日誌外，也會包含額外的日誌和效能資料：我們需要這些資料來重現當機，並找出觸發錯誤的原因。';
+      '除了當機日誌外，也會包含效能資料：我們需要這些資料來重現當機，並找出觸發錯誤的原因。';
 
   @override
   String get crashCollectFooter =>

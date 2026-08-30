@@ -89,11 +89,10 @@ abstract final class DiagnosticsUpload {
       await _stop();
     } else if (_started == null) {
       await _start(wanted);
-    } else if (_started!.streamsLogs != wanted.streamsLogs ||
-        _started!.tracesPerformance != wanted.tracesPerformance) {
-      // `enableLogs` and `tracesSampleRate` are read when the SDK is built, so
-      // moving between basic and full has to rebuild it. Breadcrumb filtering
-      // is read per call and would not have needed this.
+    } else if (_started!.tracesPerformance != wanted.tracesPerformance) {
+      // `tracesSampleRate` is read when the SDK is built, so moving between
+      // basic and full has to rebuild it. Breadcrumb filtering is read per
+      // call and would not have needed this.
       await _stop();
       await _start(wanted);
     } else {
@@ -107,14 +106,15 @@ abstract final class DiagnosticsUpload {
         options.dsn = dsn;
         options.release = 'server_box@1.0.${BuildData.build}';
 
-        // At `full` these two are what turn "report a crash" into "report what
-        // the app is doing": the log stream and traced operations arrive as
-        // they happen rather than being held until something breaks. They are
-        // also the only settings here whose cost scales with *use* rather than
-        // with failures, which is why they are the level's defining feature
-        // and not a default.
-        options.enableLogs = wanted.streamsLogs;
+        // What `full` adds: traced operations arrive as they happen rather
+        // than being held until something breaks. It is also the only setting
+        // here whose cost scales with *use* rather than with failures, which
+        // is why it is the level's defining feature and not a default.
         options.tracesSampleRate = wanted.tracesPerformance ? 1.0 : 0.0;
+        // Never, at any level — see [SentrySink.log]. Set rather than left to
+        // the default, because the default flipping in a later SDK would
+        // silently start streaming the app's log lines off the device.
+        options.enableLogs = false;
         // No IP address, no username, nothing the SDK infers. A crash report
         // is about a build and a code path, not about a person. It is the
         // default, and set anyway because a later SDK flipping it would be
@@ -196,31 +196,24 @@ final class SentrySink extends DiagnosticsSink {
     );
   }
 
-  /// Forwards the log stream, at `full` only.
+  /// Dropped, at every level. The log stream does not leave the device.
   ///
-  /// This is the one channel that carries traffic while nothing is wrong, so
-  /// it is gated on the level rather than on a sampling rate: a user who chose
-  /// `basic` asked for failures, not for a running commentary.
+  /// It used to be forwarded at `full`, and it was the wrong thing to offer.
+  /// A crumb is written to be published — [Breadcrumb] says so, and [Redact]
+  /// is applied where the crumb is made. A log line is not: it is written for
+  /// a developer reading the file on the device, by code going back years,
+  /// and some of it formats a server name straight into the message. Uploading
+  /// that continuously meant the one channel carrying unaudited strings was
+  /// also the one that ran while nothing was wrong.
+  ///
+  /// Nothing is lost that a report needs. Crumbs carry what happened, and the
+  /// log itself is still written, still shown by the Logs page, and still
+  /// quoted into a crash report — which the user reads before sending.
+  ///
+  /// Overridden to say so rather than inherited, since an empty inherited
+  /// `log` reads as a sink that has not got round to it.
   @override
-  void log(DiagLevel level, String message, {String? logger}) {
-    if (!DiagnosticsUpload.level.streamsLogs) return;
-    final attrs = logger == null
-        ? null
-        : {'logger': sentry.SentryAttribute.string(logger)};
-    // Fire-and-forget: a log line must never make the caller wait on a
-    // network round trip, and losing one to a dropped connection costs
-    // nothing that the local file has not already recorded.
-    switch (level) {
-      case DiagLevel.error:
-        unawaited(Future.value(sentry.Sentry.logger.error(message, attributes: attrs)));
-      case DiagLevel.warning:
-        unawaited(Future.value(sentry.Sentry.logger.warn(message, attributes: attrs)));
-      case DiagLevel.info:
-        unawaited(Future.value(sentry.Sentry.logger.info(message, attributes: attrs)));
-      case DiagLevel.debug:
-        unawaited(Future.value(sentry.Sentry.logger.debug(message, attributes: attrs)));
-    }
-  }
+  void log(DiagLevel level, String message, {String? logger}) {}
 
   @override
   void tag(String key, String? value) {

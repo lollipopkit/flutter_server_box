@@ -34,7 +34,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get crashCollectFullTip =>
-      'Además del registro del fallo, se incluyen registros adicionales y datos de rendimiento: necesitamos saber **cómo reproducir los fallos y qué activa el error.**';
+      'Además del registro del fallo, se incluyen datos de rendimiento: necesitamos saber **cómo reproducir los fallos y qué activa el error.**';
 
   @override
   String get crashCollectFooter =>

@@ -34,7 +34,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get crashCollectFullTip =>
-      'Çökme günlüğüne ek olarak ek günlükler ve performans verileri de dahil edilir: **Çökmeleri yeniden oluşturmak ve hatayı neyin tetiklediğini anlamak için bunlara ihtiyacımız var.**';
+      'Çökme günlüğüne ek olarak performans verileri de dahil edilir: **Çökmeleri yeniden oluşturmak ve hatayı neyin tetiklediğini anlamak için bunlara ihtiyacımız var.**';
 
   @override
   String get crashCollectFooter =>

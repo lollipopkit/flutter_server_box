@@ -35,7 +35,7 @@ can be changed at any time in **Settings → Diagnostic data**.
 |---|---|
 | **Nothing** | Nothing is sent, ever. Reports stay on the device |
 | **Basic information** | Crashes and caught errors, with the app version they happened in |
-| **Full information** | Everything Basic sends, plus the log stream and performance traces while the app runs |
+| **Full information** | Everything Basic sends, plus performance traces while the app runs |
 
 The default on Android is **Nothing**. On iOS, macOS, Linux and Windows it is
 **Basic information**, and the intro page is shown before the first upload.
@@ -54,8 +54,14 @@ launch.
 - Dart and Flutter runtime versions
 - An identifier the diagnostics server generates for the install
 
-At **Full information**, it also contains the app's log lines and timings for
-operations such as connecting to a server or listing a directory.
+At **Full information**, it also contains timings for operations such as
+connecting to a server or listing a directory — how long each took, not what
+was in it.
+
+The app's own log is **never** uploaded, at any level. It is written to be read
+by a developer on the device, by code going back years, and some of it formats
+a server name straight into the message. It stays on the device, where the Logs
+page shows it and the manual report below quotes it.
 
 ### What a report does not contain
 
@@ -71,10 +77,10 @@ Server names, addresses and usernames are replaced with placeholders at the
 moment a line is recorded, not when it is sent. A report says that a connection
 to a server on a private network failed, not which server.
 
-This is not a claim that a report is anonymous. Log lines written by older
-versions of the app can contain a server name in their message text, and the
-manual report described below shows you the full text so you can read it before
-posting.
+This is not a claim that the manual report below is anonymous. Log lines
+written by older versions of the app can contain a server name in their message
+text, which is why that report shows you the full text to read before you post
+it. Uploaded reports carry no log lines at all.
 
 ## Reporting a crash by hand
 
