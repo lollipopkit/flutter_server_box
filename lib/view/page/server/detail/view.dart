@@ -16,6 +16,7 @@ import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/model/server/amd.dart';
 import 'package:server_box/data/model/server/battery.dart';
+import 'package:server_box/data/model/server/gpu.dart';
 import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/disk_smart.dart';
@@ -901,7 +902,7 @@ ${err.message ?? 'null'}
     );
   }
 
-  Widget _buildGpuProcessItem(NvidiaSmiMemProcess process) {
+  Widget _buildGpuProcessItem(GpuSmiMemProcess process) {
     return _buildGpuProcessTile(
       name: process.name,
       subtitle: 'PID: ${process.pid} - ${process.memory} MiB',
@@ -909,7 +910,7 @@ ${err.message ?? 'null'}
     );
   }
 
-  Widget _buildAmdGpuProcessItem(AmdSmiMemProcess process) {
+  Widget _buildAmdGpuProcessItem(GpuSmiMemProcess process) {
     return _buildGpuProcessTile(
       name: process.name,
       subtitle:

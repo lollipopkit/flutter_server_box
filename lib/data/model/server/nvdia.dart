@@ -1,3 +1,4 @@
+import 'package:server_box/data/model/server/gpu.dart';
 
 // Parsing implementation migrated to the shared Rust library sbm_parser
 
@@ -5,7 +6,7 @@ class NvidiaSmiItem {
   final String name;
   final int temp;
   final String power;
-  final NvidiaSmiMem memory;
+  final GpuSmiMem memory;
   final int percent;
   final int fanSpeed;
 
@@ -24,29 +25,11 @@ class NvidiaSmiItem {
   }
 }
 
-class NvidiaSmiMem {
-  final int total;
-  final int used;
-  final String unit;
-  final List<NvidiaSmiMemProcess> processes;
-
-  const NvidiaSmiMem(this.total, this.used, this.unit, this.processes);
-
-  @override
-  String toString() {
-    return 'NvidiaSmiMem{total: $total, used: $used, unit: $unit, processes: $processes}';
-  }
+// Unified GPU memory types — subclasses for backward compat.
+class NvidiaSmiMem extends GpuSmiMem {
+  const NvidiaSmiMem(super.total, super.used, super.unit, super.processes);
 }
 
-class NvidiaSmiMemProcess {
-  final int pid;
-  final String name;
-  final int memory;
-
-  const NvidiaSmiMemProcess(this.pid, this.name, this.memory);
-
-  @override
-  String toString() {
-    return 'NvidiaSmiMemProcess{pid: $pid, name: $name, memory: $memory}';
-  }
+class NvidiaSmiMemProcess extends GpuSmiMemProcess {
+  const NvidiaSmiMemProcess(super.pid, super.name, super.memory);
 }
