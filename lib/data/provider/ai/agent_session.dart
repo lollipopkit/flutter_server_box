@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:meta/meta.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:server_box/core/diag.dart';
 import 'package:server_box/data/model/ai/agent_conversation.dart';
 import 'package:server_box/data/model/ai/agent_conversation_replay.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
@@ -239,6 +241,15 @@ class AgentSession extends _$AgentSession {
     }
     _submissionInFlight = true;
     try {
+      // That one was sent, and whether it opened the conversation or continued
+      // one. Never the text: a prompt here can quote terminal output and file
+      // contents, which is the reason this crumb carries no data about it at
+      // all — not a length, not a word count.
+      Diag.crumb(
+        SbDiag.agent,
+        'prompt',
+        data: {'first': state.history.isEmpty ? 'yes' : 'no'},
+      );
       if (localeHint != null) _localeHint = localeHint;
       await _ensureConversation();
       state = state.copyWith(
@@ -379,6 +390,22 @@ class AgentSession extends _$AgentSession {
       error: null,
       autoRunCount: autoApproved ? state.autoRunCount + 1 : null,
     );
+    // The tool's name, which comes from a fixed set the model chooses from,
+    // and whether the user was asked. Never `proposal.command`, which is a
+    // command against the user's own server.
+    //
+    // `auto` is the number worth having: it is how often the agent acts
+    // without being confirmed, which is the setting people are most wary of
+    // and the one nothing currently says anything about.
+    Diag.crumb(
+      SbDiag.agent,
+      'tool',
+      data: {
+        'tool': proposal.toolName,
+        'auto': autoApproved ? 'yes' : 'no',
+      },
+    );
+
     final host = _host;
     AgentRunResult run;
     try {
@@ -386,6 +413,11 @@ class AgentSession extends _$AgentSession {
     } catch (error) {
       run = host.describeFailure(proposal, error);
     }
+    Diag.crumb(
+      SbDiag.agent,
+      run.cancelled ? 'tool cancelled' : 'tool done',
+      data: {'tool': proposal.toolName},
+    );
     state = state.copyWith(
       history: [
         ...state.history,

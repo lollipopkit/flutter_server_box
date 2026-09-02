@@ -7,6 +7,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:redfish/redfish.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:server_box/core/diag.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/bmc_credential.dart';
 
@@ -254,16 +255,34 @@ class BmcNotifier extends _$BmcNotifier {
     final before = state.powerState;
     _powering = true;
     try {
+      // The intent, never the controller's address or its credentials. This is
+      // the one feature that acts on hardware rather than on an OS, so which
+      // of the intents people actually reach for is what says whether the set
+      // is the right one.
+      Diag.crumb(SbDiag.bmc, 'power', data: {'intent': intent.name});
       try {
         await client.post(request.target, request.body);
       } catch (e) {
+        Diag.crumb(
+          SbDiag.bmc,
+          'power failed',
+          level: DiagLevel.warning,
+          data: {'intent': intent.name, 'error': Redact.error(e)},
+        );
         Loggers.app.warning('BMC ${request.resetType} refused', e);
         return BmcPowerResult.failed;
       }
 
-      return await _awaitPowerChange(client, before, intent)
-          ? BmcPowerResult.confirmed
-          : BmcPowerResult.accepted;
+      // `accepted` and `confirmed` are told apart because they are different
+      // answers: the controller took the request either way, but only one of
+      // them was watched reaching the state it asked for.
+      final confirmed = await _awaitPowerChange(client, before, intent);
+      Diag.crumb(
+        SbDiag.bmc,
+        confirmed ? 'power confirmed' : 'power accepted',
+        data: {'intent': intent.name},
+      );
+      return confirmed ? BmcPowerResult.confirmed : BmcPowerResult.accepted;
     } finally {
       _powering = false;
     }

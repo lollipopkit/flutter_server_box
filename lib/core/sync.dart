@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/bak/backup.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
@@ -122,9 +123,15 @@ final class BakSyncer extends SyncIface {
   Future<void> backup([RemoteStorage? rs]) async {
     final tooNew = _remoteTooNew;
     if (tooNew != null) {
+      // Its own outcome, not a failure: the upload was refused because the
+      // remote is newer than what this device last read. It is the one that
+      // says a user has two devices disagreeing, which no error path reports
+      // because nothing here went wrong.
+      Diag.crumb(SbDiag.sync, 'upload skipped', data: {'why': 'remote newer'});
       Loggers.app.warning('Sync upload aborted: $tooNew');
       return;
     }
+    Diag.crumb(SbDiag.sync, 'upload');
     return super.backup(rs);
   }
 

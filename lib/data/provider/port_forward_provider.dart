@@ -202,7 +202,17 @@ class PortForwardNotifier extends _$PortForwardNotifier {
         config.id,
         PortForwardStatus(id: config.id, isActive: true),
       );
+      Diag.crumb(SbDiag.forward, 'start ok', data: {'type': config.type.name});
     } catch (e) {
+      // A local forward binds a port on this device and a remote one asks the
+      // server to, which fails for reasons the other cannot have — an address
+      // already in use here, against a sshd that refuses to listen.
+      Diag.crumb(
+        SbDiag.forward,
+        'start failed',
+        level: DiagLevel.warning,
+        data: {'type': config.type.name, 'error': Redact.error(e)},
+      );
       Loggers.app.warning('Port forward failed to start: $e');
       if (!_disposed && !_clearing && generation == _generation) {
         _updateStatus(

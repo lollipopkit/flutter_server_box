@@ -885,7 +885,53 @@ class ContainerNotifier extends _$ContainerNotifier {
     return null;
   }
 
+  /// Runs one container command, and records how it went.
+  ///
+  /// The pair of crumbs is here rather than inside [_run], which has seven
+  /// exits — four kinds of failure, a success, and two that return early
+  /// because a newer refresh has replaced this one. Recording at each would be
+  /// seven call sites to keep in step; recording here is one, at the cost of
+  /// reading a superseded run as a success. That case needs the user to act
+  /// twice inside one round trip and is rare enough to be worth the trade,
+  /// where getting six of seven right would not be.
   Future<ContainerErr?> run(
+    String cmd, {
+    ContainerRefreshTarget? refreshTarget = ContainerRefreshTarget.containers,
+  }) async {
+    // Read before the engine prefix is prepended, so the verb is what it says
+    // rather than something sliced back off by the length of `type.name`.
+    // `Redact.command` keeps the verb and drops the argument, which is a
+    // container the user named.
+    final engine = state.type.name;
+    final verb = Diag.enabled ? Redact.command(cmd) : '';
+    if (Diag.enabled) {
+      Diag.crumb(
+        SbDiag.container,
+        'run',
+        data: {'engine': engine, 'cmd': verb},
+      );
+    }
+
+    final err = await _run(cmd, refreshTarget: refreshTarget);
+
+    if (Diag.enabled) {
+      Diag.crumb(
+        SbDiag.container,
+        err == null ? 'run ok' : 'run failed',
+        level: err == null ? DiagLevel.info : DiagLevel.warning,
+        data: {
+          'engine': engine,
+          'cmd': verb,
+          // The kind, which is what separates "this host has no docker" from
+          // "sudo was refused" from a command that simply did not work.
+          if (err != null) 'reason': err.type.name,
+        },
+      );
+    }
+    return err;
+  }
+
+  Future<ContainerErr?> _run(
     String cmd, {
     ContainerRefreshTarget? refreshTarget = ContainerRefreshTarget.containers,
   }) async {
@@ -900,16 +946,6 @@ class ContainerNotifier extends _$ContainerNotifier {
     final generation = _refreshGeneration;
     final type = state.type;
     final containerHost = Stores.container.fetch(hostId, type);
-
-    // Before the engine prefix is prepended, so this reads the verb directly
-    // instead of slicing it back off by the length of `type.name` — which is
-    // only correct while that name and the literal below happen to match.
-    // `Redact.command` keeps the verb and drops the argument, which is a
-    // container the user named.
-    Diag.crumb(SbDiag.container, 'run', data: {
-      'engine': type.name,
-      'cmd': Redact.command(cmd),
-    });
 
     cmd = switch (type) {
       ContainerType.docker => 'docker $cmd',

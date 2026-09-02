@@ -50,6 +50,33 @@ abstract final class SbDiag {
   /// silently does nothing is — and the one nobody reports, because a user
   /// finds out about it on a device they no longer have.
   static const backup = DiagCategory('backup');
+
+  /// The AI agent: a prompt going out, a tool it proposed being run.
+  ///
+  /// Never what was asked or what the tool was pointed at. A prompt is the
+  /// most private thing this app handles — it can quote terminal output and
+  /// file contents — so what is recorded is that one happened, and which of a
+  /// fixed set of tools the model reached for.
+  static const agent = DiagCategory('agent');
+
+  /// Reaching a BMC, which is a machine's management controller rather than
+  /// the machine.
+  static const bmc = DiagCategory('bmc');
+
+  /// Init-system units: listing them, and acting on one.
+  ///
+  /// Apart from [container], which is Docker and Podman. Which init system a
+  /// server runs is the useful half — systemd is assumed far more often than
+  /// it is true, and openrc and procd are why the abstraction exists.
+  static const service = DiagCategory('service');
+
+  /// Moving settings between devices: remote sync, and the push that keeps a
+  /// watch or a home widget fed.
+  ///
+  /// Not [backup], though one is built on the other. A backup is asked for and
+  /// its failure is seen; a sync runs unattended, and a user meets its failure
+  /// on a device that never received anything.
+  static const sync = DiagCategory('sync');
 }
 
 /// Keys for [Diag.tag], which is what every crumb is read against.

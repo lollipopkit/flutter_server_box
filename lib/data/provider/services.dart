@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:server_box/core/diag.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/service.dart';
@@ -87,6 +88,21 @@ class ServicesNotifier extends _$ServicesNotifier {
   }
 
   String? commandFor(ServiceUnit unit, ServiceAction action) {
+    // The verb and the init system, never the unit's name — that is what runs
+    // on the user's machine.
+    //
+    // This is where an action is *chosen*. A destructive one (stop, restart,
+    // disable) then goes through a confirmation the user can still decline, so
+    // this counts intent rather than execution. The page below is where the
+    // two diverge, and it has no manager to name.
+    Diag.crumb(
+      SbDiag.service,
+      'action',
+      data: {
+        'action': action.name,
+        'via': _manager == null ? 'none' : state.manager?.name ?? '-',
+      },
+    );
     return _manager?.commandFor(unit, action, isRoot: _spi.isRoot);
   }
 
@@ -108,6 +124,12 @@ class ServicesNotifier extends _$ServicesNotifier {
     try {
       final probe = await ServiceManagerDetector.probe(exec);
       final type = probe.type;
+      // Which init system, or that there was none to find. This is the half
+      // worth having: systemd is assumed far more often than it is true, and
+      // openrc and procd are the reason `ServiceManager` is an abstraction
+      // rather than a systemd client. `none` is a real answer too — it is what
+      // a container or a busybox appliance reports.
+      Diag.crumb(SbDiag.service, 'list', data: {'via': type?.name ?? 'none'});
       if (type == null) {
         _manager = null;
         state = state.copyWith(
