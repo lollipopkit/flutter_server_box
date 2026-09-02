@@ -190,14 +190,30 @@ Future<void> _doPlatformRelated() async {
   // and a request per launch for a feature that cannot be used is one nobody
   // asked for.
   if (Rootfs.isAvailable) {
-    unawaited(RootfsManifestSource.refresh());
+    unawaited(
+      (() async {
+        try {
+          await RootfsManifestSource.refresh();
+        } catch (e, s) {
+          Loggers.app.warning('Rootfs manifest refresh failed', e, s);
+        }
+      })(),
+    );
   }
 
   // The watch app used to learn about servers only while the user sat on the
   // iOS settings page. Pushing at launch is what makes a freshly installed or
   // restored watch configure itself.
   if (isIOS) {
-    unawaited(WatchSync.instance.init());
+    unawaited(
+      (() async {
+        try {
+          await WatchSync.instance.init();
+        } catch (e, s) {
+          Loggers.app.warning('WatchSync init failed', e, s);
+        }
+      })(),
+    );
   }
 
   // Same reasoning, for the home-screen widgets: the list they offer on their
@@ -205,13 +221,31 @@ Future<void> _doPlatformRelated() async {
   // holding it goes away with the app — so a reinstall has to re-publish
   // before a widget can be configured at all.
   if (isIOS || isAndroid) {
-    unawaited(WidgetSync.instance.init());
+    unawaited(
+      (() async {
+        try {
+          await WidgetSync.instance.init();
+        } catch (e, s) {
+          Loggers.app.warning('WidgetSync init failed', e, s);
+        }
+      })(),
+    );
   }
 
   // Both platforms keep their own copy of this, which a reinstall or a restored
   // backup leaves disagreeing with the settings store.
   if (isIOS || isAndroid) {
-    unawaited(MethodChans.setPrivacyBlur(Stores.setting.privacyBlur.fetch()));
+    unawaited(
+      (() async {
+        try {
+          await MethodChans.setPrivacyBlur(
+            Stores.setting.privacyBlur.fetch(),
+          );
+        } catch (e, s) {
+          Loggers.app.warning('setPrivacyBlur failed', e, s);
+        }
+      })(),
+    );
   }
 
   // Status parsing used to run on this pool, which is why its size followed
@@ -249,7 +283,15 @@ Future<void> _doDbMigrate() async {
 
   // Pick up sync history written under the pre-v3 remote filename. Runs at
   // most once per remote and is best-effort — see `inheritLegacyRemote`.
-  unawaited(bakSync.inheritLegacyRemote());
+  unawaited(
+    (() async {
+      try {
+        await bakSync.inheritLegacyRemote();
+      } catch (e, s) {
+        Loggers.app.warning('inheritLegacyRemote failed', e, s);
+      }
+    })(),
+  );
 }
 
 Future<void> _initWindow() async {
