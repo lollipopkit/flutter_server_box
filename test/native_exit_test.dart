@@ -60,6 +60,11 @@ void main() {
   tearDown(() async {
     NativeExitReport.lastExit = null;
     NativeExitReport.lastExitTrace = null;
+    // Static, and held across a launch on purpose -- so a test that applies a
+    // crash and never reports it leaves one for the next test to find. Two
+    // tests already clear it by hand mid-body for that reason; doing it here
+    // means the rest cannot be broken by the order they run in.
+    NativeExitReport.debugForgetPending();
     Diag.uninstall();
     await CrashLog.resetForTest();
     await getIt.reset();

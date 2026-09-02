@@ -46,7 +46,7 @@ retention rules also apply.
 
 Automatic diagnostics are the only telemetry sent to the developer's diagnostic
 services. The choice is shown on the intro page before the first upload and can
-be changed at any time in **Settings → Diagnostic data**.
+be changed at any time in **Settings → App → Privacy**.
 
 | Level | What is sent automatically |
 |---|---|

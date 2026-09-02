@@ -84,12 +84,22 @@ abstract final class AptabaseAnalytics {
     }
   }
 
-  /// Ends it.
+  /// Stops *recording*, which is as far as this can go.
   ///
-  /// Nothing queued is flushed. The one moment this runs is consent being
-  /// withdrawn, and whatever the SDK is holding was recorded under a setting
-  /// the user has just changed — sending it would be honouring that setting by
-  /// ignoring it once.
+  /// **It does not stop sending, and that is a limitation rather than a
+  /// decision.** `Aptabase.init` is not undoable: its `_dispose` is private
+  /// and reached only when the SDK decides tracking is disabled, its periodic
+  /// timer and its `AppLifecycleListener` keep running, and anything already
+  /// in its `StorageManager` is delivered on the next tick. So after this
+  /// returns, events recorded *before* consent was withdrawn can still leave
+  /// the device — nothing recorded after it can.
+  ///
+  /// [OpenPanelAnalytics.stop] is the shape this should have: it owns its
+  /// queue, so withdrawing consent drops what was held rather than delivering
+  /// it. Matching that here means either a `dispose` upstream or replacing the
+  /// SDK, and until one of those happens this destination must not be
+  /// configured in a build — which is also why it is not. Do not turn it on
+  /// without closing this, or "off" will mean "off from now on, mostly".
   static Future<void> stop() async {
     _started = false;
   }

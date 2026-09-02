@@ -37,7 +37,12 @@ class BackupService {
         Toast.success(libL10n.success);
       }
     } catch (e, s) {
-      Diag.crumb(SbDiag.backup, 'save failed', data: {'to': kind});
+      Diag.crumb(
+        SbDiag.backup,
+        'save failed',
+        level: DiagLevel.warning,
+        data: {'to': kind},
+      );
       if (context.mounted) {
         context.showErrDialog(e, s, libL10n.backup);
       }

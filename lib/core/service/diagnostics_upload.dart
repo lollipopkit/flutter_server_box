@@ -148,7 +148,10 @@ abstract final class DiagnosticsUpload {
         // Two destinations, started independently, and each is a no-op in a
         // build with no endpoint for it. Published builds carry OpenPanel's
         // and not Aptabase's -- see [OpenPanelAnalytics] on why the heavier of
-        // the two is the one that is configured.
+        // the two is the one that is configured, and [AptabaseAnalytics.stop]
+        // for the reason the other one must stay unconfigured: it cannot be
+        // fully stopped once started, so leaving `full` would not reliably
+        // stop delivery of what it had already recorded.
         await AptabaseAnalytics.start();
         await OpenPanelAnalytics.start();
       }

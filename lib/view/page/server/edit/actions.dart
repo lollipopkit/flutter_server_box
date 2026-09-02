@@ -571,7 +571,19 @@ extension _Actions on _ServerEditPageState {
       data: {
         'ssh': '$useSsh',
         'monitor': '$useMonitorHttp',
-        if (useSsh) 'auth': selectedKey != null ? 'key' : 'password',
+        // The same two key sources the validation above counts, and for the
+        // same reason: a server imported with an IdentityFile has its key in
+        // `_keyPath` and no `selectedKey`, so testing only the latter filed it
+        // under `password` when it has no password at all. `none` is a real
+        // third answer -- the save path asks the user to confirm it and then
+        // goes ahead -- and folding it into `password` would report a
+        // passwordless server as one with a password.
+        if (useSsh)
+          'auth': switch (0) {
+            _ when selectedKey != null || _keyPath.value != null => 'key',
+            _ when _passwordController.text.isNotEmpty => 'password',
+            _ => 'none',
+          },
         if (useSsh)
           'via': switch (0) {
             _ when _jumpServers.value.isNotEmpty => 'jump',
