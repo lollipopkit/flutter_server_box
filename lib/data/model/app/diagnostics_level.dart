@@ -59,7 +59,7 @@ enum DiagnosticsLevel {
   /// Whether what the app is used for is counted, as it happens.
   ///
   /// The other half of what makes `full` continuous. Its instrumentation is
-  /// the breadcrumbs every level already records — see `PostHogSink` — so the
+  /// the breadcrumbs every level already records — see `AptabaseSink` — so the
   /// difference between the levels is not what is *recorded* but whether the
   /// count leaves the device while nothing is wrong.
   bool get sendsAnalytics => this == DiagnosticsLevel.full;

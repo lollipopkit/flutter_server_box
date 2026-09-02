@@ -41,6 +41,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.3"
+  aptabase_flutter:
+    dependency: "direct main"
+    description:
+      name: aptabase_flutter
+      sha256: bef8e216351a61b3769ffc642d84a59eca012134e6cc2c1b575441b1c987c1b6
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.5.0"
   archive:
     dependency: "direct main"
     description:

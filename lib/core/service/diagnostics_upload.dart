@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:sentry/sentry.dart' as sentry;
-import 'package:server_box/core/service/analytics.dart';
+import 'package:server_box/core/service/aptabase.dart';
 import 'package:server_box/core/service/diagnostics_platform.dart';
-import 'package:server_box/core/service/feature_flags.dart';
 import 'package:server_box/core/service/native_exit.dart';
+import 'package:server_box/core/service/openpanel.dart';
 import 'package:server_box/data/model/app/diagnostics_level.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
@@ -141,19 +141,23 @@ abstract final class DiagnosticsUpload {
       // between "what hardware" and "whose hardware" is drawn.
       await DiagnosticsPlatform.describe();
       // `full` only, and started before the sink so the first crumb through it
-      // is already counted. A build with no PostHog endpoint compiled in
-      // starts nothing, and `PostHogSink` then queues into a sink that drops.
+      // is already counted. `AptabaseSink` captures nothing until this has
+      // run, so a failure to reach the instance costs events rather than the
+      // launch.
       if (wanted.sendsAnalytics) {
-        await Analytics.start();
-        // Once, here, so a screen built later this run already has its
-        // assignment -- see [FeatureFlags.fetch] on why it is never retried.
-        await FeatureFlags.fetch();
+        // Two destinations, started independently, and each is a no-op in a
+        // build with no endpoint for it. Published builds carry OpenPanel's
+        // and not Aptabase's -- see [OpenPanelAnalytics] on why the heavier of
+        // the two is the one that is configured.
+        await AptabaseAnalytics.start();
+        await OpenPanelAnalytics.start();
       }
       Diag.install(
         FanOutSink([
           LocalDiagnosticsSink(),
           const SentrySink(),
-          const PostHogSink(),
+          const AptabaseSink(),
+          const OpenPanelSink(),
         ]),
       );
       Loggers.app.info('Crash upload started at ${wanted.name}');
@@ -176,11 +180,10 @@ abstract final class DiagnosticsUpload {
     // asking the SDK to be quiet.
     Diag.install(LocalDiagnosticsSink());
     _started = null;
-    // Dropped rather than flushed -- see [Analytics.stop]. Withdrawing consent
+    // Dropped rather than flushed -- see [AptabaseAnalytics.stop]. Withdrawing consent
     // must not be the thing that sends the last batch.
-    await Analytics.stop();
-    // A variant must not outlive the consent it was assigned under.
-    FeatureFlags.clear();
+    await AptabaseAnalytics.stop();
+    await OpenPanelAnalytics.stop();
     try {
       await sentry.Sentry.close();
     } catch (e, s) {
