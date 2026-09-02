@@ -125,6 +125,9 @@ class PveNotifier extends _$PveNotifier {
               final client = HttpClient();
               client.connectionFactory = cf;
               if (_ignoreCert) {
+                Loggers.app.warning(
+                  'PVE ignoring TLS certificate — only use on trusted private network',
+                );
                 client.badCertificateCallback = (_, _, _) => true;
               }
               return client;

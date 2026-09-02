@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -17,6 +18,23 @@ final class SftpSudoHelper {
   final BuildContext? Function() contextProvider;
 
   String? _cachedPassword;
+  Timer? _cacheTimer;
+
+  static const _cacheTtl = Duration(minutes: 5);
+
+  void _scheduleCacheExpiry() {
+    _cacheTimer?.cancel();
+    _cacheTimer = Timer(_cacheTtl, () {
+      _cachedPassword = null;
+      Loggers.app.info('SFTP sudo password cache expired for ${spi.id}');
+    });
+  }
+
+  void clearCache() {
+    _cachedPassword = null;
+    _cacheTimer?.cancel();
+    _cacheTimer = null;
+  }
 
   SftpSudoHelper({
     required this.client,
@@ -32,7 +50,7 @@ final class SftpSudoHelper {
     if (!enabled) return '';
 
     if (force) {
-      _cachedPassword = null;
+      clearCache();
     } else if (_rememberPwd && _cachedPassword != null) {
       return _cachedPassword;
     }
@@ -49,6 +67,7 @@ final class SftpSudoHelper {
     if (pwd == null || pwd.isEmpty) return null;
     if (_rememberPwd) {
       _cachedPassword = pwd;
+      _scheduleCacheExpiry();
     }
     return pwd;
   }
@@ -135,7 +154,7 @@ final class SftpSudoHelper {
     );
 
     if (code == kSudoPasswordRejected) {
-      _cachedPassword = null;
+      clearCache();
       final retryPwd = await ensurePassword(force: true);
       if (retryPwd == null) throw const SftpSudoCancelled();
       final retryContext = contextProvider();
@@ -149,7 +168,7 @@ final class SftpSudoHelper {
         id: '${spi.id}_sftp_sudo',
       );
       if (retry.$1 == 2) {
-        _cachedPassword = null;
+        clearCache();
         throw Exception('Incorrect sudo password');
       }
       if (retry.$1 != 0) {
