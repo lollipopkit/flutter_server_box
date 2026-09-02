@@ -16,7 +16,7 @@
     "typesafe-i18n": "typesafe-i18n --no-watch"
   },
   "dependencies": {
-    "@lucide/svelte": "^1.33.0",
+    "@lucide/svelte": "^1.34.0",
     "@serverbox/webui": "file:../../packages/webui",
     "@xterm/addon-fit": "^0.11.0",
     "@xterm/xterm": "^6.0.0",
@@ -31,7 +31,7 @@
     "@testing-library/svelte": "^5.4.2",
     "@tsconfig/svelte": "^5.0.4",
     "@vitest/coverage-v8": "4.1.11",
-    "eslint": "^10.8.1",
+    "eslint": "^10.9.1",
     "eslint-plugin-svelte": "^3.23.0",
     "globals": "^17.11.0",
     "jsdom": "^30.0.1",
@@ -39,7 +39,7 @@
     "svelte-check": "^4.7.6",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.0",
-    "typescript-eslint": "^8.67.0",
+    "typescript-eslint": "^8.68.0",
     "vite": "^8.2.2",
     "vitest": "^4.1.11"
   }

@@ -21,7 +21,7 @@
     "tailwind-variants": "^3.3.1"
   },
   "devDependencies": {
-    "svelte": "^5.56.9",
+    "svelte": "^5.56.10",
     "typescript": "^7.0.2"
   }
 }

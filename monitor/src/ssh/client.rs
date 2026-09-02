@@ -13,8 +13,7 @@
 use std::sync::Arc;
 
 use russh::client::{self, AuthResult, Handle, KeyboardInteractiveAuthResponse};
-use russh::keys::ssh_key::PublicKey;
-use russh::keys::{PrivateKeyWithHashAlg, decode_secret_key};
+use russh::keys::{PrivateKeyWithHashAlg, PublicKeyOrCertificate, decode_secret_key};
 use russh::{Channel, ChannelMsg, ChannelReadHalf, Disconnect};
 use sqlx::SqlitePool;
 use zeroize::Zeroize;
@@ -146,8 +145,32 @@ impl client::Handler for HostKeyChecker {
 
     async fn check_server_key(
         &mut self,
-        server_public_key: &PublicKey,
+        server_public_key: &PublicKeyOrCertificate,
     ) -> Result<bool, Self::Error> {
+        // russh 0.63 widened this parameter: a server may now answer with a
+        // CA-signed certificate rather than a bare key.
+        //
+        // A certificate is refused rather than reduced to the key inside it.
+        // Its trust comes from a CA, and this build has nowhere to configure
+        // one — so checking that key against `known_hosts` would pin whatever
+        // the first connection happened to present and call that verified,
+        // which is a weaker guarantee wearing the name of a stronger one.
+        // Refusing is visible; silently accepting is not.
+        let server_public_key = match server_public_key {
+            PublicKeyOrCertificate::PublicKey { key, .. } => key,
+            PublicKeyOrCertificate::Certificate(_) => {
+                tracing::warn!(
+                    "Refusing SSH connection to {}: host presented a certificate, \
+                     which this build cannot verify (no CA is configured)",
+                    self.addr
+                );
+                *self.rejection.lock().unwrap_or_else(|e| e.into_inner()) = Some(
+                    SshError::Connect("host key is a certificate, unsupported".into()),
+                );
+                return Ok(false);
+            }
+        };
+
         match known_hosts::verify(&self.pool, &self.addr, server_public_key).await {
             Ok(Verdict::Known | Verdict::Pinned) => Ok(true),
             Ok(Verdict::Mismatch { expected, actual }) => {
