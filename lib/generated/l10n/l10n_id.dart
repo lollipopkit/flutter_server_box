@@ -41,6 +41,9 @@ class AppLocalizationsId extends AppLocalizations {
       'Pada tingkat apa pun, nama server yang dikenal beserta alamat dan nama penggunanya diganti dengan placeholder saat dicatat. Tingkat pengumpulan dapat diubah nanti di Pengaturan.';
 
   @override
+  String get privacy => 'Privasi';
+
+  @override
   String get privacyPolicy => 'Kebijakan privasi';
 
   @override

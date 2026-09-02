@@ -41,6 +41,9 @@ class AppLocalizationsRu extends AppLocalizations {
       'На всех уровнях известные имена серверов, адреса и имена пользователей заменяются заполнителями уже при записи. Позже уровень сбора можно изменить в настройках.';
 
   @override
+  String get privacy => 'Конфиденциальность';
+
+  @override
   String get privacyPolicy => 'Политика конфиденциальности';
 
   @override

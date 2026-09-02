@@ -39,6 +39,9 @@ class AppLocalizationsZh extends AppLocalizations {
       '无论选择哪个级别，记录时都会将已知服务器名称、地址和用户名替换为占位符。之后可在设置中更改收集级别。';
 
   @override
+  String get privacy => '隐私';
+
+  @override
   String get privacyPolicy => '隐私政策';
 
   @override
@@ -1666,6 +1669,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get crashCollectFooter =>
       '無論選擇哪個等級，記錄時都會將已知伺服器名稱、位址和使用者名稱替換為預留位置。之後可在設定中更改收集等級。';
+
+  @override
+  String get privacy => '隱私';
 
   @override
   String get privacyPolicy => '隱私權政策';

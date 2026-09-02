@@ -41,6 +41,9 @@ class AppLocalizationsIt extends AppLocalizations {
       'A ogni livello, i nomi dei server noti, i relativi indirizzi e nomi utente vengono sostituiti da segnaposto al momento della registrazione. Puoi modificare il livello di raccolta in seguito nelle impostazioni.';
 
   @override
+  String get privacy => 'Privacy';
+
+  @override
   String get privacyPolicy => 'Informativa sulla privacy';
 
   @override

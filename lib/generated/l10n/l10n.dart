@@ -177,6 +177,12 @@ abstract class AppLocalizations {
   /// **'At every level, known server names, addresses and usernames are replaced with placeholders when recorded. You can change the collection level later in Settings.'**
   String get crashCollectFooter;
 
+  /// No description provided for @privacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy'**
+  String get privacy;
+
   /// No description provided for @privacyPolicy.
   ///
   /// In en, this message translates to:

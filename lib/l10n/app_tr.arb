@@ -9,6 +9,7 @@
   "crashCollectFull": "Tüm bilgiler",
   "crashCollectFullTip": "Çökme günlüğüne ek olarak performans verileri ve hangi özelliklerin kullanıldığı da dahil edilir: **Neyin yavaş olduğunu ve hangi özelliklerin gerçekten kullanıldığını bulmaya yarar.**",
   "crashCollectFooter": "Her düzeyde bilinen sunucu adları, adresler ve kullanıcı adları kaydedilirken yer tutucularla değiştirilir. Toplama düzeyini daha sonra Ayarlar'dan değiştirebilirsiniz.",
+  "privacy": "Gizlilik",
   "privacyPolicy": "Gizlilik politikası",
   "crashUpload": "Çökme raporlarını yükle",
   "crashUploadTip": "Çökme raporlarını geliştiriciye gönderir. Bilinen sunucu adları ve adresleri yer tutucularla değiştirilir. Varsayılan olarak kapalıdır; istediğiniz zaman kapatabilirsiniz.",

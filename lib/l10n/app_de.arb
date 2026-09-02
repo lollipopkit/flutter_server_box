@@ -9,6 +9,7 @@
   "crashCollectFull": "Vollständige Informationen",
   "crashCollectFullTip": "Neben dem Absturzprotokoll werden Leistungsdaten und die Nutzung von Funktionen erfasst: **Damit lässt sich finden, was langsam ist und welche Funktionen tatsächlich genutzt werden.**",
   "crashCollectFooter": "Unabhängig von der Stufe werden bekannte Servernamen, -adressen und Benutzernamen bereits beim Aufzeichnen durch Platzhalter ersetzt. Die Erfassungsstufe kann später in den Einstellungen geändert werden.",
+  "privacy": "Datenschutz",
   "privacyPolicy": "Datenschutzerklärung",
   "crashUpload": "Absturzberichte hochladen",
   "crashUploadTip": "Absturzberichte werden an den Entwickler gesendet. Bekannte Servernamen und -adressen werden durch Platzhalter ersetzt. Standardmäßig deaktiviert; jederzeit wieder deaktivierbar.",

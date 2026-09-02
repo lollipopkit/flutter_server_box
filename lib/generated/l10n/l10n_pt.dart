@@ -41,6 +41,9 @@ class AppLocalizationsPt extends AppLocalizations {
       'Em todos os níveis, nomes de servidor conhecidos, seus endereços e nomes de usuário são substituídos por marcadores no momento do registro. Você pode alterar o nível de coleta mais tarde nas configurações.';
 
   @override
+  String get privacy => 'Privacidade';
+
+  @override
   String get privacyPolicy => 'Política de privacidade';
 
   @override

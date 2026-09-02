@@ -24,7 +24,6 @@ import 'package:server_box/core/utils/rootfs_manifest_source.dart';
 import 'package:server_box/core/utils/server_dedup.dart';
 import 'package:server_box/core/utils/ssh_config.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
-import 'package:server_box/data/model/app/diagnostics_level.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/linux_distros.dart';
 import 'package:server_box/data/model/app/net_view.dart';
@@ -49,6 +48,7 @@ import 'package:server_box/view/page/setting/seq/known_hosts.dart';
 import 'package:server_box/view/page/setting/seq/srv_orders.dart';
 import 'package:server_box/view/page/setting/seq/virt_key.dart';
 import 'package:server_box/view/widget/crash_debug.dart';
+import 'package:server_box/view/widget/diagnostics_level_picker.dart';
 import 'package:server_box/view/widget/dist_icon.dart';
 import 'package:server_box/view/widget/dmg_notice.dart';
 import 'package:server_box/view/widget/rootfs_install.dart';
@@ -153,6 +153,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             title: libL10n.general,
             icon: Icons.settings_outlined,
             page: () => const AppSettingsPage(section: SettingsSection.app),
+          ),
+          SettingsNode.leaf(
+            id: 'app.privacy',
+            title: l10n.privacy,
+            icon: Icons.privacy_tip_outlined,
+            page: () => const AppSettingsPage(section: SettingsSection.privacy),
           ),
           SettingsNode.leaf(
             id: 'app.ai',
@@ -699,6 +705,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 /// controllers on it — survives moving between them.
 enum SettingsSection {
   app,
+  privacy,
   ai,
   server,
   ssh,
@@ -772,6 +779,7 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
     // repeats it. A `CenterGreyTitle` here would be the third time.
     final group = switch (widget.section) {
       SettingsSection.app => _buildApp(),
+      SettingsSection.privacy => _buildPrivacy(),
       SettingsSection.ai => _buildAskAiConfig(),
       SettingsSection.server => _buildServer(),
       SettingsSection.ssh => _buildSSH(),

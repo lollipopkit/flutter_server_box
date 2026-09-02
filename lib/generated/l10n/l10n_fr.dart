@@ -41,6 +41,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'Quel que soit le niveau, les noms de serveurs connus, leurs adresses et noms d\'utilisateur sont remplacés par des espaces réservés dès l\'enregistrement. Vous pouvez modifier le niveau de collecte plus tard dans les réglages.';
 
   @override
+  String get privacy => 'Confidentialité';
+
+  @override
   String get privacyPolicy => 'Politique de confidentialité';
 
   @override

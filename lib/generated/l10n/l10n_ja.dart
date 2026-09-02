@@ -40,6 +40,9 @@ class AppLocalizationsJa extends AppLocalizations {
       'どのレベルでも、既知のサーバー名・アドレス・ユーザー名は記録時にプレースホルダーへ置き換えられます。設定であとから収集レベルを変更できます。';
 
   @override
+  String get privacy => 'プライバシー';
+
+  @override
   String get privacyPolicy => 'プライバシーポリシー';
 
   @override

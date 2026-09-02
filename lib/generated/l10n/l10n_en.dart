@@ -41,6 +41,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'At every level, known server names, addresses and usernames are replaced with placeholders when recorded. You can change the collection level later in Settings.';
 
   @override
+  String get privacy => 'Privacy';
+
+  @override
   String get privacyPolicy => 'Privacy policy';
 
   @override

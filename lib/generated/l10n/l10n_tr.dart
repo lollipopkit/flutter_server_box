@@ -41,6 +41,9 @@ class AppLocalizationsTr extends AppLocalizations {
       'Her düzeyde bilinen sunucu adları, adresler ve kullanıcı adları kaydedilirken yer tutucularla değiştirilir. Toplama düzeyini daha sonra Ayarlar\'dan değiştirebilirsiniz.';
 
   @override
+  String get privacy => 'Gizlilik';
+
+  @override
   String get privacyPolicy => 'Gizlilik politikası';
 
   @override

@@ -41,6 +41,9 @@ class AppLocalizationsDe extends AppLocalizations {
       'Unabhängig von der Stufe werden bekannte Servernamen, -adressen und Benutzernamen bereits beim Aufzeichnen durch Platzhalter ersetzt. Die Erfassungsstufe kann später in den Einstellungen geändert werden.';
 
   @override
+  String get privacy => 'Datenschutz';
+
+  @override
   String get privacyPolicy => 'Datenschutzerklärung';
 
   @override

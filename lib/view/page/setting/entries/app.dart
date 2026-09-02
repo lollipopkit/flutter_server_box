@@ -328,14 +328,6 @@ extension _App on _AppSettingsPageState {
       initiallyExpanded: false,
       children: [
         _buildBeta(),
-        // Only where a report could actually be sent. A switch that cannot do
-        // anything is worse than one that is not offered, and this build has
-        // no DSN in it at all — which is every build made from this source
-        // without one supplied. See [DiagnosticsUpload].
-        if (DiagnosticsUpload.availableInBuild) ...[
-          _buildDiagnosticsUpload(),
-          _buildPrivacyPolicy(),
-        ],
         if (isMobile) _buildWakeLock(),
         _buildCollapseUI(),
         if (isDesktop) _buildHideTitleBar(),
@@ -344,51 +336,55 @@ extension _App on _AppSettingsPageState {
     );
   }
 
+  /// Its own page rather than two rows under **More**, because what it decides
+  /// is not the same kind of thing as the rows it sat among.
+  ///
+  /// A page can also be reached — from the intro that first asks the question,
+  /// from a release note, from an answer to someone asking what is collected —
+  /// and a row buried in a collapsed tile cannot. It stays a page even with
+  /// two rows on it: the settings search matches on the node id, so `privacy`
+  /// is now a thing to search for.
+  Widget _buildPrivacy() {
+    return Column(
+      children: [
+        // Only where a report could actually be sent. A control that cannot do
+        // anything is worse than one that is not offered, and a build with no
+        // DSN in it can do nothing here. See [DiagnosticsUpload].
+        //
+        // Not wrapped in a card: the picker is a list of them already.
+        if (DiagnosticsUpload.availableInBuild) _buildDiagnosticsUpload(),
+        // Not under that condition, unlike when these two were rows together.
+        // The policy describes what is kept on the device as well as what is
+        // sent, so it has something to say in a build that uploads nothing —
+        // and a page whose only content is conditional can otherwise open
+        // empty.
+        _buildPrivacyPolicy().cardx,
+      ],
+    );
+  }
+
   /// Where the choice made on the intro page can be revisited.
   ///
-  /// The same three levels, in the same words. Reports are kept on the device
-  /// at every level — this only decides what is uploaded, and how often.
+  /// The same widget the intro puts the question with, so the answer reads the
+  /// same in both places. It replaced a row whose trailing text named the
+  /// current level and whose tap opened a picker of three bare labels: the
+  /// sentence saying what a level actually sends existed only on the intro,
+  /// which is the one screen a user sees once and cannot go back to.
+  ///
+  /// A page has the room for it. This one holds two rows.
   Widget _buildDiagnosticsUpload() {
-    return _setting.diagnosticsLevel.listenable().listenVal((name) {
-      final current = DiagnosticsLevel.fromName(name);
-      return ListTile(
-        title: TipText(l10n.crashCollect, l10n.crashCollectFooter),
-        trailing: Text(
-          switch (current) {
-            DiagnosticsLevel.none => l10n.crashCollectNone,
-            DiagnosticsLevel.basic => l10n.crashCollectBasic,
-            DiagnosticsLevel.full => l10n.crashCollectFull,
-          },
-          style: UIs.textGrey,
-        ),
-        onTap: () async {
-          final picked = await context.showPickSingleDialog(
-            title: l10n.crashCollect,
-            items: DiagnosticsLevel.values,
-            display: (e) => switch (e) {
-              DiagnosticsLevel.none => l10n.crashCollectNone,
-              DiagnosticsLevel.basic => l10n.crashCollectBasic,
-              DiagnosticsLevel.full => l10n.crashCollectFull,
-            },
-            initial: current,
-          );
-          if (picked == null) return;
-          _setting.diagnosticsLevel.put(picked.name);
-          // Applied now rather than at the next launch: turning it down has to
-          // take the sink out immediately, not eventually.
-          unawaited(DiagnosticsUpload.sync());
-        },
-      );
-    });
+    return DiagnosticsLevelPicker(
+      // Applied now rather than at the next launch: turning it down has to
+      // take the sink out immediately, not eventually.
+      onPicked: () => unawaited(DiagnosticsUpload.sync()),
+    );
   }
 
   /// Beside the level, not inside the picker.
   ///
   /// The dialog that picks a level is a list of three options and has nowhere
   /// to put a link; and the policy is worth reaching without first opening the
-  /// control that changes a setting. Shown under the same condition as the
-  /// level itself — a build that cannot upload has nothing for the page to
-  /// describe.
+  /// control that changes a setting.
   Widget _buildPrivacyPolicy() {
     return ListTile(
       title: Text(l10n.privacyPolicy),

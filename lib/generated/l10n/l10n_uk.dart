@@ -41,6 +41,9 @@ class AppLocalizationsUk extends AppLocalizations {
       'На всіх рівнях відомі імена серверів, адреси та імена користувачів замінюються заповнювачами вже під час запису. Пізніше рівень збору можна змінити в налаштуваннях.';
 
   @override
+  String get privacy => 'Конфіденційність';
+
+  @override
   String get privacyPolicy => 'Політика конфіденційності';
 
   @override

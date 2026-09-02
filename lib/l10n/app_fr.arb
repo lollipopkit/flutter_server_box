@@ -9,6 +9,7 @@
   "crashCollectFull": "Informations complètes",
   "crashCollectFullTip": "En plus du journal du plantage, des données de performance et l'usage des fonctionnalités sont inclus : **Cela permet de repérer ce qui est lent et quelles fonctionnalités servent vraiment.**",
   "crashCollectFooter": "Quel que soit le niveau, les noms de serveurs connus, leurs adresses et noms d'utilisateur sont remplacés par des espaces réservés dès l'enregistrement. Vous pouvez modifier le niveau de collecte plus tard dans les réglages.",
+  "privacy": "Confidentialité",
   "privacyPolicy": "Politique de confidentialité",
   "crashUpload": "Envoyer les rapports de plantage",
   "crashUploadTip": "Envoyer les rapports de plantage au développeur. Les noms et adresses de serveurs connus sont remplacés par des espaces réservés. Désactivé par défaut ; vous pouvez le désactiver à tout moment.",

@@ -247,27 +247,10 @@ final class _IntroPage extends StatelessWidget {
       children: [
         ..._head(l10n.crashCollect, padTop),
         _prose(l10n.crashCollectIntro),
-        // Rebuilt on change so the selection is visible at once; the store is
-        // the source of truth, not a field on this widget.
-        _setting.diagnosticsLevel.listenable().listenVal((name) {
-          // `RadioGroup` owns the selection — the per-tile `groupValue` and
-          // `onChanged` are deprecated.
-          return RadioGroup<DiagnosticsLevel>(
-            groupValue: DiagnosticsLevel.fromName(name),
-            onChanged: _onLevelPicked,
-            child: Column(
-              // Reversed, so the list runs from most sent to least and the
-              // recommended answer sits between the two it is a middle ground
-              // between. The default is the quiet end — `none` on Android,
-              // which is the only platform F-Droid distributes — so the case
-              // for collecting has to be made here rather than by
-              // pre-selecting it.
-              children: DiagnosticsLevel.values.reversed
-                  .map((e) => _levelTile(ctx, e))
-                  .toList(),
-            ),
-          );
-        }),
+        // Stored only, so no callback: nothing starts uploading until the
+        // intro is finished, which is what makes leaving it early mean "not
+        // answered". Settings passes one, because there the change is now.
+        const DiagnosticsLevelPicker(),
         _prose(l10n.crashCollectFooter),
         // On the page where the question is put, not only in Settings
         // afterwards. A tile can say what a level sends; where it goes, how
@@ -285,65 +268,8 @@ final class _IntroPage extends StatelessWidget {
     );
   }
 
-  /// One level, with its own sentence saying what it sends.
-  static Widget _levelTile(BuildContext ctx, DiagnosticsLevel level) {
-    final (title, tip) = _levelText(ctx.l10n, level);
-    return RadioListTile<DiagnosticsLevel>(
-      value: level,
-      title: level == _kRecommendedLevel
-          ? Row(
-              children: [
-                Flexible(child: Text(title)),
-                UIs.width7,
-                Text(
-                  // The word this app already has. Its key names where it was
-                  // first needed, not what it means.
-                  ctx.l10n.sshKeyRecommended,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Theme.of(ctx).colorScheme.primary,
-                  ),
-                ),
-              ],
-            )
-          : Text(title),
-      subtitle: SimpleMarkdown(data: tip),
-    ).cardx;
-  }
-
-  /// Which level the page argues for.
-  ///
-  /// `basic`, not `full`. It is what answers a crash report — the failure, the
-  /// build it happened in and the crumbs leading to it — and it sends nothing
-  /// at all while the app is behaving. `full` adds timings, which are worth
-  /// having when a problem is that something is slow rather than that it
-  /// broke; that is a real case and a narrow one, so it is offered rather
-  /// than recommended.
-  static const _kRecommendedLevel = DiagnosticsLevel.basic;
-
-  /// A level's label and the sentence under it.
-  ///
-  /// One switch rather than two parallel ones: the pair belongs together, and
-  /// a case added to the enum should fail to compile here once.
-  static (String, String) _levelText(AppLocalizations l10n, DiagnosticsLevel l) {
-    return switch (l) {
-      DiagnosticsLevel.none => (l10n.crashCollectNone, l10n.crashCollectNoneTip),
-      DiagnosticsLevel.basic => (
-        l10n.crashCollectBasic,
-        l10n.crashCollectBasicTip,
-      ),
-      DiagnosticsLevel.full => (l10n.crashCollectFull, l10n.crashCollectFullTip),
-    };
-  }
-
   // — Actions ———————————————————————————————————————————————————————
 
-  static void _onLevelPicked(DiagnosticsLevel? level) {
-    if (level == null) return;
-    // Stored only. Nothing starts uploading until the intro is finished, which
-    // is what makes leaving it early mean "not answered".
-    _setting.diagnosticsLevel.put(level.name);
-  }
 
   static Future<void> _selectLocale(BuildContext ctx) async {
     final selected = await ctx.showPickSingleDialog(

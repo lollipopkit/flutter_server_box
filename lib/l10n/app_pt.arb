@@ -9,6 +9,7 @@
   "crashCollectFull": "Informações completas",
   "crashCollectFullTip": "Além do registro da falha, inclui dados de desempenho e o uso de funcionalidades: servem para localizar o que está lento e quais funcionalidades são realmente usadas.",
   "crashCollectFooter": "Em todos os níveis, nomes de servidor conhecidos, seus endereços e nomes de usuário são substituídos por marcadores no momento do registro. Você pode alterar o nível de coleta mais tarde nas configurações.",
+  "privacy": "Privacidade",
   "privacyPolicy": "Política de privacidade",
   "crashUpload": "Enviar relatórios de falha",
   "crashUploadTip": "Enviar os relatórios de falha ao desenvolvedor. Nomes e endereços de servidor conhecidos são substituídos por marcadores. Desativado por padrão; você pode desativá-lo a qualquer momento.",

@@ -40,6 +40,9 @@ class AppLocalizationsKo extends AppLocalizations {
       '모든 수준에서 알려진 서버 이름, 주소, 사용자 이름은 기록할 때 자리 표시자로 대체됩니다. 나중에 설정에서 수집 수준을 변경할 수 있습니다.';
 
   @override
+  String get privacy => '개인정보';
+
+  @override
   String get privacyPolicy => '개인정보 처리방침';
 
   @override

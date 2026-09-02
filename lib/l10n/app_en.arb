@@ -10,6 +10,7 @@
   "crashCollectFullTip": "Along with the crash log, performance data and which features are used are included: **they show what is slow, and which features are worth keeping.**",
 
   "crashCollectFooter": "At every level, known server names, addresses and usernames are replaced with placeholders when recorded. You can change the collection level later in Settings.",
+  "privacy": "Privacy",
   "privacyPolicy": "Privacy policy",
   "crashUpload": "Upload crash reports",
   "crashUploadTip": "Send crash reports to the developer. Known server names and addresses are replaced with placeholders. Off by default; you can turn it off at any time.",

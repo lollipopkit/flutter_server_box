@@ -9,6 +9,7 @@
   "crashCollectFull": "Volledige gegevens",
   "crashCollectFullTip": "Naast het crashlogboek bevat dit ook prestatiegegevens en het gebruik van functies: daarmee is te vinden wat traag is en welke functies echt worden gebruikt.",
   "crashCollectFooter": "Op elk niveau worden bekende servernamen, adressen en gebruikersnamen al bij het vastleggen vervangen door plaatsaanduidingen. Je kunt het verzamelingsniveau later wijzigen in de instellingen.",
+  "privacy": "Privacy",
   "privacyPolicy": "Privacybeleid",
   "crashUpload": "Crashrapporten uploaden",
   "crashUploadTip": "Crashrapporten naar de ontwikkelaar sturen. Bekende servernamen en adressen worden vervangen door plaatsaanduidingen. Standaard uit; je kunt dit op elk moment uitschakelen.",

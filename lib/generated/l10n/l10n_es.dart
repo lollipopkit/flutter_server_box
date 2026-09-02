@@ -41,6 +41,9 @@ class AppLocalizationsEs extends AppLocalizations {
       'En todos los niveles, los nombres de servidores conocidos, sus direcciones y nombres de usuario se sustituyen por marcadores al registrarlos. Puedes cambiar el nivel de recopilación más adelante en Ajustes.';
 
   @override
+  String get privacy => 'Privacidad';
+
+  @override
   String get privacyPolicy => 'Política de privacidad';
 
   @override

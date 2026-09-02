@@ -9,6 +9,7 @@
   "crashCollectFull": "Informazioni complete",
   "crashCollectFullTip": "Oltre al registro dell'arresto anomalo, include dati sulle prestazioni e l'uso delle funzioni: **Servono a individuare cosa è lento e quali funzioni vengono davvero usate.**",
   "crashCollectFooter": "A ogni livello, i nomi dei server noti, i relativi indirizzi e nomi utente vengono sostituiti da segnaposto al momento della registrazione. Puoi modificare il livello di raccolta in seguito nelle impostazioni.",
+  "privacy": "Privacy",
   "privacyPolicy": "Informativa sulla privacy",
   "crashUpload": "Invia i rapporti di arresto anomalo",
   "crashUploadTip": "Invia i rapporti di arresto anomalo allo sviluppatore. I nomi e gli indirizzi dei server noti vengono sostituiti da segnaposto. Disattivato per impostazione predefinita; puoi disattivarlo in qualsiasi momento.",
