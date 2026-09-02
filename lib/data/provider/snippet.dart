@@ -5,6 +5,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/data/model/server/snippet.dart';
+import 'package:server_box/data/provider/entity_helpers.dart';
 import 'package:server_box/data/res/store.dart';
 
 part 'snippet.freezed.dart';
@@ -68,39 +69,32 @@ class SnippetNotifier extends _$SnippetNotifier {
   }
 
   Future<void> add(Snippet snippet) async {
-    final newSnippets = [...state.snippets, snippet];
-    final newTags = _computeTags(newSnippets);
-    Stores.snippet.put(snippet);
-    state = state.copyWith(snippets: newSnippets, tags: newTags);
-    bakSync.sync(milliDelay: 1000);
+    final next = entityAdd(Stores.snippet, state.snippets, snippet);
+    state = state.copyWith(snippets: next, tags: _computeTags(next));
   }
 
   Future<void> del(Snippet snippet) async {
-    final newSnippets = state.snippets
-        .where((s) => s.id != snippet.id)
-        .toList();
-    final newTags = _computeTags(newSnippets);
-    Stores.snippet.delete(snippet);
-    state = state.copyWith(snippets: newSnippets, tags: newTags);
-    bakSync.sync(milliDelay: 1000);
+    final next = entityDelete(
+      Stores.snippet,
+      state.snippets,
+      snippet,
+      (e) => e.id,
+    );
+    state = state.copyWith(snippets: next, tags: _computeTags(next));
   }
 
   /// A rename is an update of columns, not a delete and an insert: the two
   /// carry the same id, and deleting first would tombstone a record that is
   /// still there and take its tags and auto-run targets with it.
   Future<void> update(Snippet old, Snippet newOne) async {
-    if (old.id != newOne.id) {
-      // `EntityStore.update` refuses this; going straight to `put` would let a
-      // caller insert a second record under the name of the first.
-      throw ArgumentError('cannot change the id of a Snippet');
-    }
-    final newSnippets = state.snippets
-        .map((s) => s.id == old.id ? newOne : s)
-        .toList();
-    final newTags = _computeTags(newSnippets);
-    Stores.snippet.put(newOne);
-    state = state.copyWith(snippets: newSnippets, tags: newTags);
-    bakSync.sync(milliDelay: 1000);
+    final next = entityUpdate(
+      Stores.snippet,
+      state.snippets,
+      old,
+      newOne,
+      (e) => e.id,
+    );
+    state = state.copyWith(snippets: next, tags: _computeTags(next));
   }
 
   /// One `UPDATE` over the tag rows, rather than rewriting every snippet that
