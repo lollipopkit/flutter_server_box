@@ -26,7 +26,6 @@
   "connectAll": "Conectar todo",
   "disconnectAll": "Desconectar todo",
   "distIcon": "Marcas de distribución",
-  "distIconConsent": "Solo para indicar la distribución que un servidor podría estar ejecutando.",
   "distIconIntroLegal": "Una marca solo indica lo que este dispositivo leyó del sistema remoto, información que puede ser errónea o estar desactualizada, y no identifica ni un derivado, ni una recompilación, ni una versión concreta. Cuando no se puede identificar, se dibuja un icono genérico.\n\nCada marca es una marca registrada de su respectivo propietario y aquí solo se usa para referirse al sistema que identifica.",
   "distIconTip": "Mostrar junto a cada servidor una pequeña marca del sistema que parece estar ejecutando",
   "distNameMap": "Correspondencia de nombres",
@@ -69,13 +68,6 @@
   "discoveryFailed": "Falló el descubrimiento",
   "discoverySettings": "Configuración de descubrimiento",
   "distro": "Distribución",
-  "distroSwitchTip": "Reemplazar {from} por {to}. Se elimina todo lo instalado dentro de {from} y, en su lugar, se descarga y descomprime {to}.",
-  "@distroSwitchTip": {
-    "placeholders": {
-      "from": {},
-      "to": {}
-    }
-  },
   "diskHealth": "Salud del disco",
   "displayCpuIndex": "Muestre el índice de CPU",
   "dl2Local": "¿Descargar {fileName} a local?",
@@ -469,10 +461,6 @@
   "serviceDetailsUnavailable": "Algunos detalles del servicio no están disponibles",
   "serviceDetailsUnavailableTip": "La lista se puede usar, pero el gestor no devolvió toda la información de estado o inicio automático.",
   "serviceEnabled": "Activado al iniciar",
-  "systemdMissing": "No hay systemd en este servidor",
-  "systemdMissingTip": "`systemctl` no está instalado aquí, por lo que no hay unidades que listar.",
-  "initSystemFmt": "Esta máquina parece usar {init}.",
-  "systemdListFailed": "No se pudieron listar las unidades",
   "systemdUserScopeMissing": "No se listan las unidades de usuario",
   "systemdUserScopeMissingTip": "Esta cuenta no tiene bus de sesión de usuario en el servidor, por lo que solo se muestran las unidades del sistema.",
   "serverUnreachable": "No se pudo ejecutar ningún comando en este servidor",

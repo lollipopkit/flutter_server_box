@@ -237,6 +237,9 @@ class DistIconOf extends StatelessWidget {
           : ExtendedImage.network(
               url,
               cache: true,
+              cacheWidth: (size * 2).toInt(),
+              cacheHeight: (size * 2).toInt(),
+              clearMemoryCacheWhenDispose: true,
               width: size,
               height: size,
               fit: BoxFit.contain,

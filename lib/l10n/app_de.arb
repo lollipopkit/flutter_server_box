@@ -26,7 +26,6 @@
   "connectAll": "Alle verbinden",
   "disconnectAll": "Alle trennen",
   "distIcon": "Distributions-Kennzeichen",
-  "distIconConsent": "Nur, um die Distribution zu kennzeichnen, die ein Server möglicherweise ausführt.",
   "distIconIntroLegal": "Eine Marke sagt nur aus, was dieses Gerät vom entfernten System gelesen hat; das kann falsch oder veraltet sein und bezeichnet weder eine Ableitung noch einen Rebuild noch eine bestimmte Version. Lässt sie sich nicht bestimmen, wird ein schlichtes Symbol gezeichnet.\n\nJede Marke ist ein Warenzeichen ihres jeweiligen Inhabers und wird hier nur verwendet, um auf das System zu verweisen, das sie bezeichnet.",
   "distIconTip": "Neben jedem Server ein kleines Zeichen für das System anzeigen, das er offenbar ausführt",
   "distNameMap": "Namenszuordnung",
@@ -69,13 +68,6 @@
   "discoveryFailed": "Entdeckung fehlgeschlagen",
   "discoverySettings": "Entdeckungseinstellungen",
   "distro": "Distribution",
-  "distroSwitchTip": "{from} durch {to} ersetzen. Alles, was in {from} installiert wurde, wird gelöscht, und {to} wird stattdessen heruntergeladen und entpackt.",
-  "@distroSwitchTip": {
-    "placeholders": {
-      "from": {},
-      "to": {}
-    }
-  },
   "diskHealth": "Festplattengesundheit",
   "displayCpuIndex": "Zeigen Sie den CPU-Index an",
   "dl2Local": "Datei \"{fileName}\" herunterladen?",
@@ -469,10 +461,6 @@
   "serviceDetailsUnavailable": "Einige Dienstdetails sind nicht verfügbar",
   "serviceDetailsUnavailableTip": "Die Dienstliste kann verwendet werden, aber der Manager hat nicht alle Status- oder Autostartinformationen geliefert.",
   "serviceEnabled": "Beim Systemstart aktiviert",
-  "systemdMissing": "Kein systemd auf diesem Server",
-  "systemdMissingTip": "`systemctl` ist hier nicht installiert, daher gibt es keine Units aufzulisten.",
-  "initSystemFmt": "Dieser Rechner scheint {init} zu verwenden.",
-  "systemdListFailed": "Units konnten nicht aufgelistet werden",
   "systemdUserScopeMissing": "Benutzer-Units werden nicht aufgelistet",
   "systemdUserScopeMissingTip": "Dieses Konto hat auf dem Server keinen Benutzer-Sitzungsbus, daher werden nur System-Units angezeigt.",
   "serverUnreachable": "Auf diesem Server konnte kein Befehl ausgeführt werden",

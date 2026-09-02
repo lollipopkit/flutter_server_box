@@ -288,10 +288,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get distIcon => 'Distribution marks';
 
   @override
-  String get distIconConsent =>
-      'Only to indicate the distribution a server may be running.';
-
-  @override
   String get distIconIntroLegal =>
       'A mark says only what this device read from the remote system, which can be wrong or out of date, and identifies neither a derivative, a rebuild, nor any particular version. Where it cannot be identified, a plain icon is drawn.\n\nEach mark is a trademark of its respective owner and is used only to refer to the system it identifies.';
 
@@ -484,11 +480,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get distro => 'Distribution';
-
-  @override
-  String distroSwitchTip(Object from, Object to) {
-    return 'Replace $from with $to. Everything installed inside $from is deleted, and $to is downloaded and unpacked in its place.';
-  }
 
   @override
   String get diskHealth => 'Disk Health';
@@ -1610,21 +1601,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get serviceEnabled => 'Enabled at startup';
-
-  @override
-  String get systemdMissing => 'No systemd on this server';
-
-  @override
-  String get systemdMissingTip =>
-      '`systemctl` is not installed here, so there are no units to list.';
-
-  @override
-  String initSystemFmt(String init) {
-    return 'This machine appears to use $init.';
-  }
-
-  @override
-  String get systemdListFailed => 'Could not list units';
 
   @override
   String get systemdUserScopeMissing => 'User units are not listed';

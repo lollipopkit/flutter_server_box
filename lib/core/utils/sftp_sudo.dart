@@ -170,12 +170,16 @@ final class SftpSudoHelper {
 
   static String _buildSudoCommand(String command, String password) {
     final wrapped = '($command) 2>&1';
-    final escapedWrapped = wrapped.replaceAll("'", "'\\''");
+    // Use shellSingleQuote for consistent escaping (see shell_quote.dart).
+    final quotedWrapped = shellSingleQuote(wrapped);
+    final quotedPwd = shellSingleQuote(password);
     // Use shell builtin printf to pipe password to sudo -S.
     // printf is a shell builtin so the password does not appear in
     // the process argument list (unlike external `echo`).
-    final escapedPwd = password.replaceAll("'", "'\\''");
-    return "printf '%s\\n' '$escapedPwd' | sudo -S -- sh -c '$escapedWrapped'";
+    // shellSingleQuote wraps in single quotes, so strip the outer quotes
+    // for the printf %s argument and re-add with \n handling.
+    // Simpler: use the quoted forms directly.
+    return "printf '%s\\n' $quotedPwd | sudo -S -- sh -c $quotedWrapped";
   }
 }
 

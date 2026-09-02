@@ -85,7 +85,6 @@
   "connectAll": "Connect all",
   "disconnectAll": "Disconnect all",
   "distIcon": "Distribution marks",
-  "distIconConsent": "Only to indicate the distribution a server may be running.",
   "distIconIntroLegal": "A mark says only what this device read from the remote system, which can be wrong or out of date, and identifies neither a derivative, a rebuild, nor any particular version. Where it cannot be identified, a plain icon is drawn.\n\nEach mark is a trademark of its respective owner and is used only to refer to the system it identifies.",
   "distIconTip": "Show a small mark beside each server for the system it appears to be running.",
   "distNameMap": "Name overrides",
@@ -147,13 +146,6 @@
   "discoveryFailed": "Discovery failed",
   "discoverySettings": "Discovery Settings",
   "distro": "Distribution",
-  "distroSwitchTip": "Replace {from} with {to}. Everything installed inside {from} is deleted, and {to} is downloaded and unpacked in its place.",
-  "@distroSwitchTip": {
-    "placeholders": {
-      "from": {},
-      "to": {}
-    }
-  },
   "diskHealth": "Disk Health",
   "displayCpuIndex": "Display CPU index",
   "dl2Local": "Download {fileName} to local?",
@@ -608,17 +600,6 @@
   "serviceDetailsUnavailable": "Some service details are unavailable",
   "serviceDetailsUnavailableTip": "The service list is usable, but the manager did not return all status or startup information.",
   "serviceEnabled": "Enabled at startup",
-  "systemdMissing": "No systemd on this server",
-  "systemdMissingTip": "`systemctl` is not installed here, so there are no units to list.",
-  "initSystemFmt": "This machine appears to use {init}.",
-  "@initSystemFmt": {
-    "placeholders": {
-      "init": {
-        "type": "String"
-      }
-    }
-  },
-  "systemdListFailed": "Could not list units",
   "systemdUserScopeMissing": "User units are not listed",
   "systemdUserScopeMissingTip": "This account has no user session bus on the server, so only system units are shown.",
   "serverUnreachable": "Could not run a command on this server",

@@ -291,10 +291,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get distIcon => 'Dağıtım işaretleri';
 
   @override
-  String get distIconConsent =>
-      'Yalnızca bir sunucunun çalıştırıyor olabileceği dağıtımı belirtmek için.';
-
-  @override
   String get distIconIntroLegal =>
       'Bir işaret yalnızca bu cihazın uzak sistemden okuduğunu belirtir; bu bilgi yanlış veya güncel olmayabilir ve bir türevi, yeniden derlemeyi ya da belirli bir sürümü göstermez. Belirlenemediğinde sade bir simge çizilir.\n\nHer işaret ilgili sahibinin ticari markasıdır ve burada yalnızca işaret ettiği sistemi belirtmek için kullanılır.';
 
@@ -490,11 +486,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get distro => 'Dağıtım';
-
-  @override
-  String distroSwitchTip(Object from, Object to) {
-    return '$from yerine $to kurulur. $from içine kurulmuş her şey silinir ve yerine $to indirilip açılır.';
-  }
 
   @override
   String get diskHealth => 'Disk sağlığı';
@@ -1612,21 +1603,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get serviceEnabled => 'Başlangıçta etkin';
-
-  @override
-  String get systemdMissing => 'Bu sunucuda systemd yok';
-
-  @override
-  String get systemdMissingTip =>
-      '`systemctl` burada kurulu değil, bu yüzden listelenecek unit yok.';
-
-  @override
-  String initSystemFmt(String init) {
-    return 'Bu makine $init kullanıyor gibi görünüyor.';
-  }
-
-  @override
-  String get systemdListFailed => 'Unit\'ler listelenemedi';
 
   @override
   String get systemdUserScopeMissing => 'Kullanıcı unit\'leri listelenmiyor';

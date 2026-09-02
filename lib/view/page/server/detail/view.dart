@@ -548,6 +548,9 @@ ${err.message ?? 'null'}
           return ExtendedImage.network(
             logoUrl,
             cache: true,
+            cacheWidth: cons.maxWidth.toInt(),
+            cacheHeight: height.toInt(),
+            clearMemoryCacheWhenDispose: true,
             height: height,
             width: cons.maxWidth,
           );

@@ -291,10 +291,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get distIcon => 'Distributiemarkeringen';
 
   @override
-  String get distIconConsent =>
-      'Alleen om aan te geven welke distributie een server mogelijk draait.';
-
-  @override
   String get distIconIntroLegal =>
       'Een merkteken zegt alleen wat dit apparaat van het externe systeem heeft gelezen; dat kan onjuist of verouderd zijn en duidt geen afgeleide, herbouw of specifieke versie aan. Kan het niet worden vastgesteld, dan wordt een neutraal pictogram getekend.\n\nElk merkteken is een handelsmerk van de betreffende eigenaar en wordt hier alleen gebruikt om te verwijzen naar het systeem dat het aanduidt.';
 
@@ -489,11 +485,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get distro => 'Distributie';
-
-  @override
-  String distroSwitchTip(Object from, Object to) {
-    return '$from vervangen door $to. Alles wat in $from is geïnstalleerd wordt verwijderd, en $to wordt in plaats daarvan gedownload en uitgepakt.';
-  }
 
   @override
   String get diskHealth => 'Schijfgezondheid';
@@ -1626,21 +1617,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get serviceEnabled => 'Ingeschakeld bij opstarten';
-
-  @override
-  String get systemdMissing => 'Geen systemd op deze server';
-
-  @override
-  String get systemdMissingTip =>
-      '`systemctl` is hier niet geïnstalleerd, dus er zijn geen units om te tonen.';
-
-  @override
-  String initSystemFmt(String init) {
-    return 'Deze machine lijkt $init te gebruiken.';
-  }
-
-  @override
-  String get systemdListFailed => 'Kon units niet tonen';
 
   @override
   String get systemdUserScopeMissing => 'Gebruikers-units worden niet getoond';
