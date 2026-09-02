@@ -654,10 +654,10 @@ Future<SSHClient> _authenticatedClient({
     }
   } else if (privateKey == null || keyRefs.length > 1) {
     try {
-      for (final entry in resolvePrivateKeys(
+      for (final entry in (await resolvePrivateKeysAsync(
         ssh,
         originalHost: spi.name,
-      ).entries) {
+      )).entries) {
         keyMaterial.putIfAbsent(entry.key, () => entry.value);
       }
     } catch (e, s) {
