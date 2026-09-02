@@ -546,11 +546,12 @@ ${err.message ?? 'null'}
               fit: BoxFit.contain,
             );
           }
+          final dpr = MediaQuery.devicePixelRatioOf(context);
           return ExtendedImage.network(
             logoUrl,
             cache: true,
-            cacheWidth: cons.maxWidth.toInt(),
-            cacheHeight: height.toInt(),
+            cacheWidth: (cons.maxWidth * dpr).round(),
+            cacheHeight: (height * dpr).round(),
             clearMemoryCacheWhenDispose: true,
             height: height,
             width: cons.maxWidth,

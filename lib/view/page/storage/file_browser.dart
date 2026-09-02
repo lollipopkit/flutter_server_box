@@ -1365,8 +1365,6 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
       child: ListView.builder(
         itemCount: items.length + up,
         padding: padding,
-        // Fixed extent avoids layout thrash on 1000-file directories.
-        itemExtent: 64,
         itemBuilder: (context, index) {
           if (up == 1 && index == 0) return upTile();
           return _buildEntry(items[index - up], narrow: narrow);

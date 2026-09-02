@@ -77,10 +77,10 @@ Data has been on SQLite since before `1.0.1538`. However upgrades from `1466`/`1
 
 ## How to retire
 
-1. Confirm `test/hive_release_migration_test.dart` + `test/fixtures/*` expectation.
-2. Bump `SchemaVersion.current` in `lib/data/store/schema.dart` and add entry in `lib/data/store/migrations/all.dart`.
+1. **Hive retirements only:** Confirm `test/hive_release_migration_test.dart` + `test/fixtures/*` expectation. Other retirements skip this.
+2. **Persisted-schema changes only:** Bump `SchemaVersion.current` in `lib/data/store/schema.dart` and add entry in `lib/data/store/migrations/all.dart`. ARB, platform, and code-only retirements skip this — no schema step needed.
 3. Remove code + update this file (move row to `Retired` below).
-4. `dart run build_runner build --delete-conflicting-outputs` if models changed, `flutter gen-l10n` if ARB touched, `flutter analyze`, `cargo test --workspace`, `flutter test --timeout 30s`.
+4. Run the checks that match the change: `dart run build_runner build --delete-conflicting-outputs` if models changed, `flutter gen-l10n` if ARB touched, `flutter analyze`, `cargo test --workspace` if Rust changed, `flutter test --timeout 30s` (always).
 5. One PR per retirement.
 
 ## Retired (append here)

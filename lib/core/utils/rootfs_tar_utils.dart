@@ -4,6 +4,7 @@
 /// crafted archive can escape that directory (`../`, absolute `/`, or a symlink
 /// ancestor), so every entry is vetted before it is written. The two
 /// implementations were identical; this is the single source.
+library;
 
 /// The components [name] names inside the root, or null where it escapes.
 ///
