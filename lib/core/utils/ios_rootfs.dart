@@ -13,6 +13,7 @@ import 'package:server_box/core/utils/guest_path.dart';
 import 'package:server_box/core/utils/linux_seed.dart';
 import 'package:server_box/core/utils/oci_image.dart';
 import 'package:server_box/core/utils/rootfs_lifecycle.dart';
+import 'package:server_box/core/utils/rootfs_tar_utils.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/rootfs_manifest.dart';
 
@@ -522,51 +523,18 @@ abstract final class IosRootfs {
   /// runs as one unprivileged host uid and nothing in it is root.
   static const _ownerRwx = 0x1c0;
 
-  /// A tar entry's name without the `./` a great many archives prefix it with.
-  static String _tarPath(String name) =>
-      name.startsWith('./') ? name.substring(2) : name;
+  // Tar helpers now share rootfs_tar_utils.dart (single source; was duplicated
+  // between Android and iOS installers).
+  static String _tarPath(String name) => tarPath(name);
 
-  /// The components [name] names inside the root, or null where it escapes.
-  ///
-  /// Empty is neither: it is the archive's own root, and the two have to be
-  /// told apart. `tar czf` writes a `./` member first and almost every rootfs
-  /// tarball therefore starts with one — read as an escape, that refused the
-  /// whole archive on its first entry and no Linux system could be installed
-  /// at all.
-  static List<String>? _safeTarParts(String name) {
-    final sanitized = _tarPath(name);
-    if (sanitized.startsWith('/')) return null;
-    // Lexical check: no segment may be '..' that escapes the root.
-    final parts = <String>[];
-    for (final seg in sanitized.split('/')) {
-      if (seg.isEmpty || seg == '.') continue;
-      if (seg == '..') {
-        if (parts.isEmpty) return null;
-        parts.removeLast();
-      } else {
-        parts.add(seg);
-      }
-    }
-    return parts;
-  }
+  static List<String>? _safeTarParts(String name) => safeTarParts(name);
 
-  /// [name] is the directory being extracted into, so there is nothing to
-  /// write for it and nothing unsafe about it.
-  static bool _isTarRoot(String name) => _safeTarParts(name)?.isEmpty ?? false;
+  static bool _isTarRoot(String name) => isTarRoot(name);
 
-  /// [name] can be written somewhere under the root. False for an escape and
-  /// for the root itself, which names no member.
-  static bool _isSafeTarEntry(String name) {
-    final parts = _safeTarParts(name);
-    return parts != null && parts.isNotEmpty;
-  }
+  static bool _isSafeTarEntry(String name) => isSafeTarEntry(name);
 
-  static bool _hasTarLinkAncestor(List<String> parts, Set<String> links) {
-    for (var i = 1; i < parts.length; i++) {
-      if (links.contains(parts.take(i).join('/'))) return true;
-    }
-    return false;
-  }
+  static bool _hasTarLinkAncestor(List<String> parts, Set<String> links) =>
+      hasLinkAncestor(parts, links);
 
   /// Resolves an archive member one component at a time without ever asking
   /// the host filesystem to traverse a symlinked parent.
