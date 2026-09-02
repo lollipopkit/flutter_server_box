@@ -1,6 +1,7 @@
 import 'package:computer/computer.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/app/bak/backup_source.dart';
@@ -10,9 +11,24 @@ import 'package:server_box/data/model/app/bak/utils.dart';
 class BackupService {
   /// Perform backup operation with the given source
   static Future<void> backup(BuildContext context, BackupSource source) async {
+    // The destination's kind, never its address or its credentials. Whether a
+    // backup is encrypted is the other half: an unencrypted one going to a
+    // third party is the case worth being able to count.
+    //
+    // Spelled out rather than taken from the object. `runtimeType` is a name a
+    // `--obfuscate` build is free to rewrite, and `displayName` is localized —
+    // it would file the same destination under as many values as the app has
+    // languages.
+    final kind = source is ClipboardBackupSource ? 'clipboard' : 'file';
     try {
       final saved = await SecureStoreProps.bakPwd.read();
       final password = saved?.isEmpty == true ? null : saved;
+
+      Diag.crumb(
+        SbDiag.backup,
+        'save',
+        data: {'to': kind, 'encrypted': password == null ? 'no' : 'yes'},
+      );
 
       final path = await BackupV2.backup(null, password);
       await source.saveContent(path);
@@ -21,6 +37,7 @@ class BackupService {
         Toast.success(libL10n.success);
       }
     } catch (e, s) {
+      Diag.crumb(SbDiag.backup, 'save failed', data: {'to': kind});
       if (context.mounted) {
         context.showErrDialog(e, s, libL10n.backup);
       }

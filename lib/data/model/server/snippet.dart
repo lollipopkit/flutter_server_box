@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:server_box/core/diag.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:xterm/core.dart';
 
@@ -74,6 +75,17 @@ extension SnippetX on Snippet {
   }) async {
     final argsFmted = fmtWithSpi(spi);
     final matches = fmtFinder.allMatches(argsFmted);
+
+    // That one ran, and whether it was parameterised — never the script, the
+    // name or the server. `interactive` is the branch below: a snippet with
+    // `${key}` placeholders is typed in pieces and waits for the user between
+    // them, which is a different feature from pasting a fixed command and the
+    // one worth knowing is used before it is maintained.
+    Diag.crumb(
+      SbDiag.snippet,
+      'run',
+      data: {'interactive': matches.isEmpty ? 'no' : 'yes'},
+    );
 
     /// There is no [TerminalKey] in the script
     if (matches.isEmpty) {

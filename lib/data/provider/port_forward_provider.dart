@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:server_box/core/diag.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
@@ -174,6 +175,11 @@ class PortForwardNotifier extends _$PortForwardNotifier {
       Loggers.app.warning('Port forward config not found: $id');
       return;
     }
+
+    // The kind, not the ports or the host. Which of the three is actually used
+    // is the question — dynamic is a SOCKS proxy and a different feature from
+    // the other two wearing the same name.
+    Diag.crumb(SbDiag.forward, 'start', data: {'type': config.type.name});
 
     final existing = _forwards[id];
     if (existing != null) {
