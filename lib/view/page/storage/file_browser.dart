@@ -178,11 +178,8 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   );
   final _sort = const _SortOption().vn;
 
-  /// What is typed into the app bar, or null while it is a title. Null and
-  /// empty are different states: no field at all, and a field with nothing in
-  /// it yet.
-  final _query = ValueNotifier<String?>(null);
-  final _queryCtrl = TextEditingController();
+  /// The bar's search: what is typed, and whether the bar is a field at all.
+  final _search = InlineSearchController();
 
   /// Redrawn when it changes rather than by [setState], so a long delete does
   /// not rebuild the listing under it.
@@ -234,8 +231,7 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   @override
   void dispose() {
     _sort.dispose();
-    _query.dispose();
-    _queryCtrl.dispose();
+    _search.dispose();
     _busy.dispose();
     _dropping.dispose();
     _listFocus.dispose();
@@ -901,19 +897,6 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
 
   /// Narrows this directory's listing in place — see [InlineSearchField].
   ///
-  /// What is being searched is one directory in one session, and it is on
-  /// screen: the rows stay the rows, with the menu and the selection they
-  /// carry, rather than being copied into a page of results that has to be
-  /// dismissed before any of it can be acted on.
-  void _startSearch() {
-    _queryCtrl.clear();
-    _query.value = '';
-  }
-
-  void _endSearch() {
-    _queryCtrl.clear();
-    _query.value = null;
-  }
 
   // -------------------------------------------------------------------- build
 
@@ -940,7 +923,7 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
           onTap: () => showContextMenu(context, _createActions),
         ),
       _buildViewBtn(),
-      Btn.icon(text: libL10n.search, icon: const Icon(Icons.search), onTap: _startSearch),
+      Btn.icon(text: libL10n.search, icon: const Icon(Icons.search), onTap: _search.start),
       if (isDesktop)
         Btn.icon(text: libL10n.refresh, icon: const Icon(Icons.refresh), onTap: refresh),
     ];
@@ -989,34 +972,34 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     if (sink == null) {
       final title = _path.name;
       // Listened to, not read: the bar is a field or a title depending on it.
-      return _query.listenVal((_) => Scaffold(
-        appBar: _query.value != null
-            // In place of the title and its buttons, as on every other page
-            // that searches in this app.
-            ? PreferredSize(
-                preferredSize: const Size.fromHeight(kToolbarHeight),
-                child: SafeArea(
-                  bottom: false,
-                  child: SizedBox(
-                    height: kToolbarHeight,
-                    child: InlineSearchField(
-                      controller: _queryCtrl,
-                      onChanged: (value) => _query.value = value,
-                      onClose: _endSearch,
-                    ),
+      return ListenableBuilder(
+        listenable: _search,
+        builder: (_, _) => Scaffold(
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(kToolbarHeight),
+          child: SafeArea(
+            bottom: false,
+            child: SizedBox(
+              height: kToolbarHeight,
+              // In place of the title and its buttons, as on every other page
+              // that searches in this app.
+              child: InlineSearchBar(
+                controller: _search,
+                child: CustomAppBar(
+                  title: AnimatedSwitcher(
+                    duration: Durations.short3,
+                    child: Text(title, key: ValueKey(title)),
                   ),
+                  actions: actions,
                 ),
-              )
-            : CustomAppBar(
-                title: AnimatedSwitcher(
-                  duration: Durations.short3,
-                  child: Text(title, key: ValueKey(title)),
-                ),
-                actions: actions,
               ),
+            ),
+          ),
+        ),
         body: body,
         bottomNavigationBar: _buildBottom(),
-      ));
+      ),
+      );
     }
 
     // Handed over after the frame, not during it: a notifier written while
@@ -1024,8 +1007,30 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) sink.value = actions;
     });
-    return _query.listenVal(
-      (_) => Scaffold(body: body, bottomNavigationBar: _buildBottom()),
+    // The bar here is the host's — this page only hands it a list of actions —
+    // so the field cannot take its place. It goes at the head of the listing
+    // instead, which is the thing being searched.
+    return ListenableBuilder(
+      listenable: _search,
+      builder: (_, _) => Scaffold(
+        body: Column(
+          children: [
+            // The same swap every other bar makes, against nothing: there is
+            // no row here when no search is on, so `AnimatedSize` gives the
+            // opening and closing a height to animate.
+            AnimatedSize(
+              duration: Durations.short4,
+              alignment: Alignment.topCenter,
+              child: InlineSearchBar(
+                controller: _search,
+                child: const SizedBox(width: double.infinity),
+              ),
+            ),
+            Expanded(child: body),
+          ],
+        ),
+        bottomNavigationBar: _buildBottom(),
+      ),
     );
   }
 
@@ -1244,10 +1249,10 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
       loading: UIs.placeholder,
       error: (e, _) => _buildError(e),
       success: (entries) => ListenBuilder(
-        listenable: Listenable.merge([_sort, _query]),
+        listenable: Listenable.merge([_sort, _search]),
         builder: () {
           final sorted = _sorted(entries ?? const [], _sort.value);
-          final needle = _query.value?.trim().toLowerCase() ?? '';
+          final needle = _search.needle;
           if (needle.isEmpty) return _buildListView(sorted);
 
           // The same visibility rule the listing uses. Searching the raw

@@ -27,11 +27,8 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
     with AutomaticKeepAliveClientMixin {
   final _tag = ''.vn;
 
-  /// What is typed into the bar, or null while the bar is not a field. Null
-  /// and empty are different states: no field at all, and a field with
-  /// nothing in it yet.
-  final _query = ValueNotifier<String?>(null);
-  final _queryCtrl = TextEditingController();
+  /// The bar's search: what is typed, and whether the bar is a field at all.
+  final _search = InlineSearchController();
 
   /// The name of the snippet being edited, [_newSnippet] for one being
   /// created, or null for nothing.
@@ -45,8 +42,7 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
   void dispose() {
     super.dispose();
     _tag.dispose();
-    _query.dispose();
-    _queryCtrl.dispose();
+    _search.dispose();
   }
 
   @override
@@ -94,9 +90,9 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
     final snippetState = ref.watch(snippetProvider);
 
     return ListenBuilder(
-      listenable: _query,
+      listenable: _search,
       builder: () {
-        final needle = _query.value?.trim().toLowerCase() ?? '';
+        final needle = _search.needle;
         final filtered = [
           for (final snippet in snippets)
             if (tag == TagSwitcher.kDefaultTag ||
@@ -116,10 +112,8 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
             tags: snippetState.tags.vn,
             onTagChanged: (tag) => _tag.value = tag,
             initTag: _tag.value,
-            query: _query,
-            queryCtrl: _queryCtrl,
-            onSearch: _startSearch,
-            onEndSearch: _endSearch,
+            search: _search,
+            onSearch: _search.start,
             onAdd: () => _edit(null, split),
           ),
           body: _buildSnippetList(filtered, split, searching: needle.isNotEmpty),
@@ -152,7 +146,7 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
     if (filtered.isEmpty) {
       return EmptyPane(
         icon: searching ? Icons.search_off : Icons.code_outlined,
-        label: searching ? _query.value?.trim() : null,
+        label: searching ? _search.needle : null,
       );
     }
 
@@ -195,18 +189,6 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
     );
   }
 
-  /// Narrows the list in place — see [InlineSearchField]. It was a results
-  /// page, which put a read-only copy of the list over the list.
-  void _startSearch() {
-    _queryCtrl.clear();
-    _query.value = '';
-  }
-
-  void _endSearch() {
-    _queryCtrl.clear();
-    _query.value = null;
-  }
-
   Widget _buildSnippetItem(Snippet snippet) {
     return CardTile(
       icon: Icons.code,
@@ -233,10 +215,9 @@ final class _SnippetBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onSearch;
   final VoidCallback onAdd;
 
-  /// What the field holds, or null while the bar is a tag switcher.
-  final ValueNotifier<String?> query;
-  final TextEditingController queryCtrl;
-  final VoidCallback onEndSearch;
+  /// The bar's search — see [InlineSearchBar]. It was a results page, which
+  /// put a read-only copy of the list over the list.
+  final InlineSearchController search;
 
   const _SnippetBar({
     required this.tags,
@@ -244,23 +225,15 @@ final class _SnippetBar extends StatelessWidget implements PreferredSizeWidget {
     required this.onTagChanged,
     required this.onSearch,
     required this.onAdd,
-    required this.query,
-    required this.queryCtrl,
-    required this.onEndSearch,
+    required this.search,
   });
 
   @override
   Widget build(BuildContext context) {
     // In place of the switcher, as on every other tab that searches.
-    if (query.value != null) {
-      return InlineSearchField(
-        controller: queryCtrl,
-        onChanged: (value) => query.value = value,
-        onClose: onEndSearch,
-      );
-    }
-
-    return Padding(
+    return InlineSearchBar(
+      controller: search,
+      child: Padding(
       padding: const EdgeInsets.only(left: 10, right: 4),
       child: Row(
         children: [
@@ -286,6 +259,7 @@ final class _SnippetBar extends StatelessWidget implements PreferredSizeWidget {
             onTap: onAdd,
           ),
         ],
+      ),
       ),
     );
   }

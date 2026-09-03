@@ -73,13 +73,8 @@ class _ServerPageState extends ConsumerState<ServerPage>
   /// anything the providers hold — so nothing else would rebuild it.
   final _sortVersion = RNode();
 
-  /// What is typed into the bar, or null while the bar is not a field.
-  ///
-  /// Null rather than an empty string, because the two are different states:
-  /// no field at all, and a field with nothing in it yet. Only the first
-  /// shows the tag switcher.
-  final _query = ValueNotifier<String?>(null);
-  final _queryCtrl = TextEditingController();
+  /// The bar's search: what is typed, and whether the bar is a field at all.
+  final _search = InlineSearchController();
 
   /// The server whose card is in the air, or null. Its row in the list is
   /// built hidden and carries [_flightAnchorKey], so the flight has somewhere
@@ -123,8 +118,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
     _timer?.cancel();
     _scrollController.dispose();
     _sortVersion.dispose();
-    _query.dispose();
-    _queryCtrl.dispose();
+    _search.dispose();
     _tag.dispose();
     _tags.dispose();
     _offsetNotifier.dispose();
@@ -251,7 +245,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
           child: ListenableBuilder(
             // The three ways of viewing the list, and nothing else: a tag, a
             // search and an order.
-            listenable: Listenable.merge([_tag, _sortVersion, _query]),
+            listenable: Listenable.merge([_tag, _sortVersion, _search]),
             builder: (_, _) {
                 // The settings arrangement, viewed however the sort button
                 // says — see [_SortOrder], whose first option is that
@@ -298,15 +292,15 @@ class _ServerPageState extends ConsumerState<ServerPage>
       // own default is a full toolbar.
       preferSize: const Size.fromHeight(SessionTabBar.height),
       builder: () {
-        if (_query.value != null) return _buildSearchBar();
-
         final tags = _tags.value.toList();
         final current = _tag.value;
         final at = tags.indexOf(current);
 
         return SizedBox(
           height: SessionTabBar.height,
-          child: Row(
+          child: InlineSearchBar(
+            controller: _search,
+            child: Row(
             children: [
               Expanded(
                 child: SessionSwitcherLabel(
@@ -323,31 +317,10 @@ class _ServerPageState extends ConsumerState<ServerPage>
                   onTap: tags.isEmpty ? null : () => _showTagSheet(tags),
                 ),
               ),
-              Btn.icon(
-                text: libL10n.search,
-                icon: const Icon(Icons.search, size: 18),
-                onTap: _startSearch,
-              ),
-              Btn.icon(
-                text: libL10n.sort,
-                icon: Icon(_SortOrder.stored.icon, size: 18),
-                onTap: _showSortSheet,
-              ),
-              // Where a phone pulls the grid down instead — see
-              // [_buildBodySmall].
-              if (isDesktop)
-                Btn.icon(
-                  text: libL10n.refresh,
-                  icon: const Icon(Icons.refresh, size: 18),
-                  onTap: _refreshAll,
-                ),
-              Btn.icon(
-                text: libL10n.add,
-                icon: const Icon(Icons.add),
-                onTap: _onTapAddServer,
-              ),
+              ..._listActions,
               const SizedBox(width: 7),
             ],
+            ),
           ),
         );
       },
@@ -364,26 +337,35 @@ class _ServerPageState extends ConsumerState<ServerPage>
   /// It narrows *within* the tag, because both are in this bar and one of them
   /// is visibly on. A search that quietly ignored the tag would answer with
   /// servers the page says it is not showing.
-  void _startSearch() {
-    _queryCtrl.clear();
-    _query.value = '';
-  }
-
-  void _endSearch() {
-    _queryCtrl.clear();
-    _query.value = null;
-  }
-
-  Widget _buildSearchBar() {
-    return SizedBox(
-      height: SessionTabBar.height,
-      child: InlineSearchField(
-        controller: _queryCtrl,
-        onChanged: (value) => _query.value = value,
-        onClose: _endSearch,
+  /// What acts on the list rather than on one server in it.
+  ///
+  /// One list for the bar on a single column and the rail's head beside a
+  /// pane: they act on the same list and had drifted to two orders and two
+  /// icon sizes.
+  List<Widget> get _listActions => [
+    Btn.icon(
+      text: libL10n.search,
+      icon: const Icon(Icons.search, size: 18),
+      onTap: _search.start,
+    ),
+    Btn.icon(
+      text: libL10n.sort,
+      icon: Icon(_SortOrder.stored.icon, size: 18),
+      onTap: _showSortSheet,
+    ),
+    // Where a phone pulls the grid down instead — see [_buildBodySmall].
+    if (isDesktop)
+      Btn.icon(
+        text: libL10n.refresh,
+        icon: const Icon(Icons.refresh, size: 18),
+        onTap: _refreshAll,
       ),
-    );
-  }
+    Btn.icon(
+      text: libL10n.add,
+      icon: const Icon(Icons.add, size: 18),
+      onTap: _onTapAddServer,
+    ),
+  ];
 
   /// How to order the list. The default is the arrangement from the settings,
   /// so this starts as a view of what the user already decided rather than as
@@ -520,13 +502,13 @@ class _ServerPageState extends ConsumerState<ServerPage>
     // A search with no hits is a third thing again, and the one that would be
     // read most wrongly: with no tag on, it used to answer "no servers yet"
     // and offer to add one, on a page whose servers are all still there.
-    final query = _query.value?.trim() ?? '';
+    final query = _search.needle;
     if (query.isNotEmpty) {
       return EmptyPane(
         key: const ValueKey('empty-search'),
         icon: Icons.search_off,
         label: query,
-        action: Btn.text(text: libL10n.clear, onTap: _endSearch),
+        action: Btn.text(text: libL10n.clear, onTap: _search.end),
       );
     }
 

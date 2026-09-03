@@ -98,14 +98,12 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
     leadingName: libL10n.open,
   );
 
-  /// What is typed into the bar, or null while the bar is not a field.
+  /// The bar's search: what is typed, and whether the bar is a field at all.
   ///
-  /// The search is for "which server do I open", which is what the picker and
-  /// the rail are both a list of — so it narrows that list where it is, in the
-  /// column or the tab holding it. Null and empty are different states: no
-  /// field at all, and a field with nothing in it yet.
-  final _query = ValueNotifier<String?>(null);
-  final _queryCtrl = TextEditingController();
+  /// It is for "which server do I open", which is what the picker and the rail
+  /// are both a list of — so it narrows that list where it is, in the column
+  /// or the tab holding it.
+  final _search = InlineSearchController();
 
   /// What the right column is showing instead of the browsers, if anything.
   ///
@@ -114,7 +112,7 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
   WidgetBuilder? _paneView;
 
   late final _picker = _PickPage(
-    query: _query,
+    search: _search,
     onLocal: _openLocal,
     onServer: _openRemote,
   );
@@ -202,9 +200,7 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
         // different layout.
         sideBuilder: (_) => _SideBar(
           sessions: _sessions,
-          query: _query,
-          queryCtrl: _queryCtrl,
-          onEndSearch: _endSearch,
+          search: _search,
           actions: [_searchBtn],
           onLocal: _openLocal,
           onServer: _openRemote,
@@ -307,22 +303,17 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
   }
 
   PreferredSizeWidget get _tabBar => PreferredSizeListenBuilder(
-    listenable: Listenable.merge([_sessions, _query]),
+    listenable: Listenable.merge([_sessions, _search]),
     // The wrapper is what the `Scaffold` measures, so it has to be told;
     // its own default is a full toolbar.
     preferSize: const Size.fromHeight(SessionTabBar.height),
-    builder: () => _query.value != null
-        // In place of the strip, as on the terminal tab: what is searched is
-        // the picker, and the tabs beside it are open browsers.
-        ? SizedBox(
-            height: SessionTabBar.height,
-            child: InlineSearchField(
-              controller: _queryCtrl,
-              onChanged: (value) => _query.value = value,
-              onClose: _endSearch,
-            ),
-          )
-        : SessionTabBar(
+    builder: () => SizedBox(
+      height: SessionTabBar.height,
+      // In place of the strip, as on the terminal tab: what is searched is the
+      // picker, and the tabs beside it are open browsers.
+      child: InlineSearchBar(
+        controller: _search,
+        child: SessionTabBar(
       names: _sessions.names,
       index: _sessions.index,
       leadingIcon: MingCute.folder_fill,
@@ -334,8 +325,10 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
       sessionActions: [_SessionActions(sessions: _sessions)],
       // The same two the rail carries. On one screen the picker is a tab
       // rather than a column, and these act on what it lists.
-            leadingActions: [_searchBtn],
-          ),
+                leadingActions: [_searchBtn],
+        ),
+      ),
+    ),
   );
 
   PreferredSizeWidget get _sessionBar => PreferredSizeListenBuilder(
@@ -481,20 +474,9 @@ extension _Actions on _FileTabPageState {
   Widget get _searchBtn => Btn.icon(
     text: libL10n.search,
     icon: const Icon(Icons.search, size: 18),
-    onTap: _startSearch,
+    onTap: _search.start,
   );
 
-  /// Narrows the picker and the rail in place — see [InlineSearchField]. It
-  /// was a results page, which put a read-only copy of the list over the list.
-  void _startSearch() {
-    _queryCtrl.clear();
-    _query.value = '';
-  }
-
-  void _endSearch() {
-    _queryCtrl.clear();
-    _query.value = null;
-  }
 }
 
 /// Whether a file browser can be opened on [spi] at all.
@@ -514,13 +496,13 @@ bool _canBrowse(WidgetRef ref, Spi spi) => canTransferTo(ref, spi);
 /// where downloads land.
 class _PickPage extends ConsumerWidget {
   const _PickPage({
-    required this.query,
+    required this.search,
     required this.onLocal,
     required this.onServer,
   });
 
-  /// What the bar's field holds, or null while it is not a field.
-  final ValueNotifier<String?> query;
+  /// The bar's search, shared with the rail beside this picker.
+  final InlineSearchController search;
 
   final VoidCallback onLocal;
   final void Function(Spi spi) onServer;
@@ -530,9 +512,9 @@ class _PickPage extends ConsumerWidget {
     final state = ref.watch(serversProvider);
 
     return ListenBuilder(
-      listenable: query,
+      listenable: search,
       builder: () {
-        final needle = query.value?.trim().toLowerCase() ?? '';
+        final needle = search.needle;
         final found = [
           for (final id in state.serverOrder)
             if (state.servers[id] case final spi? when _canBrowse(ref, spi))
@@ -587,9 +569,7 @@ const _kColumnWidth = 300.0;
 class _SideBar extends ConsumerWidget {
   const _SideBar({
     required this.sessions,
-    required this.query,
-    required this.queryCtrl,
-    required this.onEndSearch,
+    required this.search,
     required this.actions,
     required this.onLocal,
     required this.onServer,
@@ -599,11 +579,8 @@ class _SideBar extends ConsumerWidget {
 
   final SessionTabsController<FileSession> sessions;
 
-  /// What the search field holds, or null while the rail's head is a row of
-  /// buttons.
-  final ValueNotifier<String?> query;
-  final TextEditingController queryCtrl;
-  final VoidCallback onEndSearch;
+  /// The bar's search, shared with the picker beside this rail.
+  final InlineSearchController search;
 
   /// What acts on the rail rather than on one session in it.
   final List<Widget> actions;
@@ -620,23 +597,17 @@ class _SideBar extends ConsumerWidget {
 
   Widget _buildSessionList(BuildContext context, WidgetRef ref) {
     final state = ref.watch(serversProvider);
-    final needle = query.value?.trim().toLowerCase() ?? '';
+    final needle = search.needle;
 
     return ListenBuilder(
-      listenable: Listenable.merge([sessions, query]),
+      listenable: Listenable.merge([sessions, search]),
       builder: () => SessionSideBar(
         names: sessions.names,
         index: sessions.index,
         onTap: onSelect,
         onClose: onClose,
         actions: actions,
-        header: query.value == null
-            ? null
-            : InlineSearchField(
-                controller: queryCtrl,
-                onChanged: (value) => query.value = value,
-                onClose: onEndSearch,
-              ),
+        search: search,
         // Nothing here is running. A browser is a place you are looking at,
         // and the default heading — written for terminals, where a session can
         // have a command still going — said otherwise.

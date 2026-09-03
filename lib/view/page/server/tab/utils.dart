@@ -144,7 +144,7 @@ extension _Utils on _ServerPageState {
   /// tag rather than filtering to one, so a tag picked in the grid must not
   /// take rows out of it — a search must, since that is what was just typed.
   List<String> _filterByQuery(List<String> order) {
-    final needle = _query.value?.trim().toLowerCase() ?? '';
+    final needle = _search.needle;
     if (needle.isEmpty) return order;
 
     final servers = ref.read(serversProvider).servers;

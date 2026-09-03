@@ -69,43 +69,9 @@ extension _PaneList on _ServerPageState {
   /// filter above a grouped index only takes rows out of it.
   Widget _buildRailActions() {
     return ListenableBuilder(
-      listenable: Listenable.merge([_sortVersion, _query]),
-      builder: (_, _) => Padding(
-        padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-        // The field takes the row's place while searching, as it takes the
-        // switcher's place in the bar on one column.
-        child: _query.value != null
-            ? _buildSearchBar()
-            : Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Btn.icon(
-              text: libL10n.search,
-              icon: const Icon(Icons.search, size: 18),
-              onTap: _startSearch,
-            ),
-            const SizedBox(width: 4),
-            Btn.icon(
-              text: libL10n.sort,
-              icon: Icon(_SortOrder.stored.icon, size: 18),
-              onTap: _showSortSheet,
-            ),
-            const SizedBox(width: 4),
-            Btn.icon(
-              text: libL10n.refresh,
-              icon: const Icon(Icons.refresh, size: 18),
-              onTap: _refreshAll,
-            ),
-            const SizedBox(width: 4),
-            Btn.icon(
-              text: libL10n.add,
-              icon: const Icon(Icons.add, size: 18),
-              onTap: _onTapAddServer,
-            ),
-            const SizedBox(width: 4),
-          ],
-        ),
-      ),
+      listenable: _sortVersion,
+      builder: (_, _) =>
+          SideBarActions(actions: _listActions, search: _search),
     );
   }
 

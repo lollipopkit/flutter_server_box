@@ -75,11 +75,8 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
   /// picker — or the icon on the bar — to rebuild.
   final _sortVersion = RNode();
 
-  /// What is typed into the bar, or null while the bar is not a field. Null
-  /// and empty are different states: no field at all, and a field with
-  /// nothing in it yet.
-  final _query = ValueNotifier<String?>(null);
-  final _queryCtrl = TextEditingController();
+  /// The bar's search: what is typed, and whether the bar is a field at all.
+  final _search = InlineSearchController();
 
   /// The picker, and the button for adding a server to pick from.
   ///
@@ -88,8 +85,8 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
   /// beside the terminals on two.
   late final _picker = Scaffold(
     body: _AddPage(
-      sortVersion: Listenable.merge([_sortVersion, _query]),
-      query: _query,
+      sortVersion: Listenable.merge([_sortVersion, _search]),
+      search: _search,
       onTap: _openServer,
       onLocal: () => _open(const LocalSource()),
       onRootfsOpen: _openRootfs,
@@ -131,8 +128,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
     Rootfs.removed.removeListener(_onRootfsRemoved);
     _sessions.dispose();
     _sortVersion.dispose();
-    _query.dispose();
-    _queryCtrl.dispose();
+    _search.dispose();
     super.dispose();
   }
 
@@ -151,10 +147,8 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
         // for one page, the first of which is not what the page looks like.
         sideBuilder: (_) => _SideBar(
           sessions: _sessions,
-          sortVersion: Listenable.merge([_sortVersion, _query]),
-          query: _query,
-          onEndSearch: _endSearch,
-          queryCtrl: _queryCtrl,
+          sortVersion: Listenable.merge([_sortVersion, _search]),
+          search: _search,
           actions: [_sortBtn, _searchBtn, _historyBtn],
           onOpen: _openServer,
           onLocal: () => _open(const LocalSource()),
@@ -206,34 +200,28 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
   PreferredSizeWidget get _tabBar => PreferredSizeListenBuilder(
     // Both: the bar shows which tab is current *and* how the picker behind it
     // is sorted.
-    listenable: Listenable.merge([_sessions, _sortVersion, _query]),
+    listenable: Listenable.merge([_sessions, _sortVersion, _search]),
     // The wrapper is what the `Scaffold` measures, so it has to be told;
     // its own default is a full toolbar.
     preferSize: const Size.fromHeight(SessionTabBar.height),
-    builder: () {
-      // In place of the strip, not over it — see [InlineSearchField]. Only on
-      // the picker: a search here narrows that list, and the tabs beside it
-      // are open terminals rather than anything to find.
-      if (_query.value != null) {
-        return SizedBox(
-          height: SessionTabBar.height,
-          child: InlineSearchField(
-            controller: _queryCtrl,
-            onChanged: (value) => _query.value = value,
-            onClose: _endSearch,
-          ),
-        );
-      }
-      return SessionTabBar(
+    builder: () => SizedBox(
+      height: SessionTabBar.height,
+      // In place of the strip, not over it. Only on the picker: a search here
+      // narrows that list, and the tabs beside it are open terminals rather
+      // than anything to find.
+      child: InlineSearchBar(
+        controller: _search,
+        child: SessionTabBar(
         names: _sessions.names,
         index: _sessions.index,
         onTap: _sessions.select,
         onClose: _confirmClose,
         detailOf: _sessionAddr,
         sessionActions: _serverActions,
-        leadingActions: [_sortBtn, _searchBtn, _historyBtn],
-      );
-    },
+          leadingActions: [_sortBtn, _searchBtn, _historyBtn],
+        ),
+      ),
+    ),
   );
 
   /// What a session's row in the sheet says under the name: the machine the
@@ -671,7 +659,7 @@ extension _Actions on _SSHTabPageState {
   Widget get _searchBtn => Btn.icon(
     text: libL10n.search,
     icon: const Icon(Icons.search, size: 18),
-    onTap: _startSearch,
+    onTap: _search.start,
   );
 
   Widget get _historyBtn => Btn.icon(
@@ -706,17 +694,6 @@ extension _Actions on _SSHTabPageState {
     );
   }
 
-  /// Narrows the picker in place rather than opening a page of results over
-  /// it — see [InlineSearchField] for why.
-  void _startSearch() {
-    _queryCtrl.clear();
-    _query.value = '';
-  }
-
-  void _endSearch() {
-    _queryCtrl.clear();
-    _query.value = null;
-  }
 
   void _showHistory() {
     final history = Stores.history.sshServerHistory.all.cast<String>();

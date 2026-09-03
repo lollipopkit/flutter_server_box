@@ -10,7 +10,7 @@ part of 'tab.dart';
 class _AddPage extends ConsumerStatefulWidget {
   const _AddPage({
     required this.sortVersion,
-    required this.query,
+    required this.search,
     required this.onTap,
     required this.onLocal,
     required this.onRootfsOpen,
@@ -23,9 +23,8 @@ class _AddPage extends ConsumerStatefulWidget {
   /// in a provider, so nothing else would tell this page to rebuild.
   final Listenable sortVersion;
 
-  /// What the bar's field holds, or null while it is not a field. Read rather
-  /// than listened to: [sortVersion] already carries it.
-  final ValueNotifier<String?> query;
+  /// The bar's search. Read rather than listened to: [sortVersion] carries it.
+  final InlineSearchController search;
 
   final void Function(Spi spi) onTap;
 
@@ -78,7 +77,7 @@ class _AddPageState extends ConsumerState<_AddPage> {
     // What is typed in the bar, applied to the servers here. The systems on
     // this device are left alone: they are two rows with fixed names, and a
     // search is for finding one server among many.
-    final needle = widget.query.value?.trim().toLowerCase() ?? '';
+    final needle = widget.search.needle;
     if (needle.isNotEmpty) {
       order = [
         for (final id in order)
@@ -246,9 +245,7 @@ class _SideBar extends ConsumerStatefulWidget {
   const _SideBar({
     required this.sessions,
     required this.sortVersion,
-    required this.query,
-    required this.queryCtrl,
-    required this.onEndSearch,
+    required this.search,
     required this.actions,
     required this.onOpen,
     required this.onLocal,
@@ -266,11 +263,8 @@ class _SideBar extends ConsumerStatefulWidget {
   /// in a provider, so nothing else would tell this rail to rebuild.
   final Listenable sortVersion;
 
-  /// What the search field holds, or null while the rail's head is a row of
-  /// buttons. Read rather than listened to: [sortVersion] carries it.
-  final ValueNotifier<String?> query;
-  final TextEditingController queryCtrl;
-  final VoidCallback onEndSearch;
+  /// The bar's search. Read rather than listened to: [sortVersion] carries it.
+  final InlineSearchController search;
 
   final List<Widget> actions;
   final void Function(Spi spi) onOpen;
@@ -321,7 +315,7 @@ class _SideBarState extends ConsumerState<_SideBar> {
     var order = _SortOrder.stored.apply(state.serverOrder, state.servers);
 
     // The same narrowing the picker does, on the same query — see `_AddPage`.
-    final needle = widget.query.value?.trim().toLowerCase() ?? '';
+    final needle = widget.search.needle;
     if (needle.isNotEmpty) {
       order = [
         for (final id in order)
@@ -340,13 +334,7 @@ class _SideBarState extends ConsumerState<_SideBar> {
         onTap: widget.onSelect,
         onClose: widget.onClose,
         actions: widget.actions,
-        header: widget.query.value == null
-            ? null
-            : InlineSearchField(
-                controller: widget.queryCtrl,
-                onChanged: (value) => widget.query.value = value,
-                onClose: widget.onEndSearch,
-              ),
+        search: widget.search,
         targets: [
           // Above the servers, the way the file rail puts this device above
           // them: it is the one place that is always reachable, and it needs
