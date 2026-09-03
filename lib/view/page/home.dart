@@ -274,18 +274,6 @@ class _HomePageState extends ConsumerState<HomePage>
       if (index >= 0) _onDestinationSelected(index);
       ref.read(homeTabRequestProvider.notifier).done();
     });
-    // The same width the pages inside decide by, so the rail appears exactly
-    // when a tab can start using the room it costs — see [AdaptivePanes
-    // .kSplitWidth]. `ResponsiveBreakpoints`' MOBILE class, which this used to
-    // ask, ends at 600.
-    //
-    // Measured against what a tab would be left with, not against the window:
-    // the rail is taken off the top before any page sees the width, so between
-    // 800 and 880 a rail appeared beside pages that were still too narrow to
-    // split — the extra column bought nothing but its own presence.
-    final narrow =
-        MediaQuery.sizeOf(context).width - _kRailWidth <
-        AdaptivePanes.kSplitWidth;
     _syncFullscreenSystemUi();
 
     // No `appBar`, deliberately. It used to hold an empty box the height of
@@ -298,7 +286,7 @@ class _HomePageState extends ConsumerState<HomePage>
     //
     // The bottom bar is a different case and stays: it is chrome the tabs
     // share, and a page opened in a tab is meant to leave it in place.
-    final Widget mainContent = Scaffold(
+    Widget mainContent(bool narrow) => Scaffold(
       body: Row(
         children: [
           if (!narrow) _buildRailBar(),
@@ -352,12 +340,31 @@ class _HomePageState extends ConsumerState<HomePage>
     // down less than it got — and keeping a panel inside the window is not the
     // same as keeping it inside the area it is painted in.
     final withShell = LayoutBuilder(
-      builder: (_, constraints) => Stack(
-        children: [
-          mainContent,
-          FloatingPanels(area: constraints.biggest),
-        ],
-      ),
+      builder: (_, constraints) {
+        // The same width the pages inside decide by, so the rail appears
+        // exactly when a tab can start using the room it costs — see
+        // [AdaptivePanes.kSplitWidth]. `ResponsiveBreakpoints`' MOBILE class,
+        // which this used to ask, ends at 600.
+        //
+        // Measured against what a tab would be left with, not against the
+        // window: the rail is taken off the top before any page sees the
+        // width, so between 800 and 880 a rail appeared beside pages that were
+        // still too narrow to split — the extra column bought nothing but its
+        // own presence.
+        //
+        // And measured from this box for the same reason the panels above are:
+        // everything between the window and here is free to hand down less
+        // than it got, so `MediaQuery.sizeOf` is a different number and it is
+        // not the one a tab is laid out in.
+        final narrow =
+            constraints.maxWidth - _kRailWidth < AdaptivePanes.kSplitWidth;
+        return Stack(
+          children: [
+            mainContent(narrow),
+            FloatingPanels(area: constraints.biggest),
+          ],
+        );
+      },
     );
 
     // The shortcuts, on every desktop. macOS additionally gets a menu bar,
