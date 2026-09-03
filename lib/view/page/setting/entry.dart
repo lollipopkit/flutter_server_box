@@ -77,12 +77,6 @@ class SettingsPage extends ConsumerStatefulWidget {
   ConsumerState<SettingsPage> createState() => _SettingsPageState();
 }
 
-/// Below this the menu is a drawer rather than a column beside the content.
-///
-/// The width `AdaptivePanes` splits at, so that a window wide enough for two
-/// columns gets two columns here as well.
-const _kMenuBreakpoint = 800.0;
-
 // `_kMenuWidth` was here, at 232. The menu is laid out by `AdaptiveSideList`
 // now and takes the width every other list column in the app has — the one the
 // user drags, stored in `paneListWidth`.
@@ -410,7 +404,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final wide = constraints.maxWidth >= _kMenuBreakpoint;
+        // The width `AdaptivePanes` splits at, so that a window wide enough for
+        // two columns gets two columns here as well.
+        final wide = constraints.maxWidth >= AdaptivePanes.kSplitWidth;
         return _buildScaffold(
           wide: wide,
           menu: menu,

@@ -6,7 +6,6 @@ import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
-import 'package:responsive_framework/responsive_framework.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/sync.dart';
@@ -268,7 +267,12 @@ class _HomePageState extends ConsumerState<HomePage>
       if (index >= 0) _onDestinationSelected(index);
       ref.read(homeTabRequestProvider.notifier).done();
     });
-    final isMobile = ResponsiveBreakpoints.of(context).isMobile;
+    // The same width the pages inside decide by, so the rail appears exactly
+    // when a tab can start using the room it costs — see [AdaptivePanes
+    // .kSplitWidth]. `ResponsiveBreakpoints`' MOBILE class, which this used to
+    // ask, ends at 600.
+    final narrow =
+        MediaQuery.sizeOf(context).width < AdaptivePanes.kSplitWidth;
     _syncFullscreenSystemUi();
 
     // No `appBar`, deliberately. It used to hold an empty box the height of
@@ -284,7 +288,7 @@ class _HomePageState extends ConsumerState<HomePage>
     final Widget mainContent = Scaffold(
       body: Row(
         children: [
-          if (!isMobile) _buildRailBar(),
+          if (!narrow) _buildRailBar(),
           Expanded(
             child: PageView.builder(
               controller: _pageController,
@@ -322,7 +326,7 @@ class _HomePageState extends ConsumerState<HomePage>
           ),
         ],
       ),
-      bottomNavigationBar: isMobile ? _buildBottomBar() : null,
+      bottomNavigationBar: narrow ? _buildBottomBar() : null,
     );
 
     // Above the `PageView` rather than inside a tab: the Agent and a floated
@@ -417,50 +421,44 @@ class _HomePageState extends ConsumerState<HomePage>
     final overflow = _tabs.skip(shownCount).toList();
     final selected = _selectIndex.value;
 
-    await showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final tab in overflow)
-              ListTile(
-                leading: tab.icon,
-                title: Text(tab.label),
-                selected: _tabs.indexOf(tab) == selected,
-                onTap: () {
-                  // The sheet closes itself; the page it came from is what
-                  // switches tabs, on the navigator that owns the tabs.
-                  Navigator.of(ctx).pop();
-                  _onDestinationSelected(_tabs.indexOf(tab));
-                },
-              ),
-            if (overflow.isNotEmpty) const Divider(height: 1),
-            // Where the tabs are arranged, reachable from the bar they arrange
-            // rather than only from four levels into the settings tree. The
-            // same page either way — this pushes it, settings embeds it.
-            ListTile(
-              leading: const Icon(Icons.tab_outlined),
-              title: Text(l10n.homeTabs),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                HomeTabsConfigPage.route.go(context);
-              },
-            ),
-            // The bottom bar has no settings button of its own — the rail on a
-            // wide window does, at its foot — and this is the slot for it.
-            ListTile(
-              leading: const Icon(Icons.settings),
-              title: Text(libL10n.setting),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                SettingsPage.route.go(context);
-              },
-            ),
-          ],
+    await showRowsSheet<void>(
+      context,
+      rows: (ctx) => [
+        for (final tab in overflow)
+          ListTile(
+            leading: tab.icon,
+            title: Text(tab.label),
+            selected: _tabs.indexOf(tab) == selected,
+            onTap: () {
+              // The sheet closes itself; the page it came from is what
+              // switches tabs, on the navigator that owns the tabs.
+              Navigator.of(ctx).pop();
+              _onDestinationSelected(_tabs.indexOf(tab));
+            },
+          ),
+        if (overflow.isNotEmpty) const Divider(height: 1),
+        // Where the tabs are arranged, reachable from the bar they arrange
+        // rather than only from four levels into the settings tree. The
+        // same page either way — this pushes it, settings embeds it.
+        ListTile(
+          leading: const Icon(Icons.tab_outlined),
+          title: Text(l10n.homeTabs),
+          onTap: () {
+            Navigator.of(ctx).pop();
+            HomeTabsConfigPage.route.go(context);
+          },
         ),
-      ),
+        // The bottom bar has no settings button of its own — the rail on a
+        // wide window does, at its foot — and this is the slot for it.
+        ListTile(
+          leading: const Icon(Icons.settings),
+          title: Text(libL10n.setting),
+          onTap: () {
+            Navigator.of(ctx).pop();
+            SettingsPage.route.go(context);
+          },
+        ),
+      ],
     );
   }
 
