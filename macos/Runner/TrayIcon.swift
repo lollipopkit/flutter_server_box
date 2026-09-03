@@ -65,30 +65,23 @@ final class TrayIcon: NSObject, NSMenuDelegate {
 
     /// The menu bar's own image.
     ///
-    /// A symbol first, and a bitmap only as a fallback. A menu bar is drawn at
-    /// whatever height the system is set to and on whichever display the mouse
-    /// is on, so a bitmap is scaled by a factor nobody chose — which is what
-    /// made the drawn one soft on a Retina screen. A symbol is resolved at the
-    /// size it is asked for, every time.
+    /// A vector, through the asset catalogue with
+    /// `preserves-vector-representation`: a menu bar is drawn at whatever
+    /// height the system is set to and on whichever display the pointer is on,
+    /// so a bitmap there is scaled by a factor nobody chose — which is what
+    /// made it soft on a Retina screen.
     ///
-    /// `server.rack` because that is what this app is about, and because it is
-    /// the same shape the app icon draws. Template either way, so the system
-    /// inverts it along with the bar.
+    /// This app's own shape rather than an SF Symbol. `server.rack` is the
+    /// nearest one and it is an outline; there is no `server.rack.fill`, and
+    /// the filled symbols that do exist are drives and stacks of cards. The
+    /// glyph here is the app icon's, drawn solid.
+    ///
+    /// Template, so the system inverts it along with the bar. 18pt is what a
+    /// menu bar item is; on a vector that is a size rather than a resolution.
     private static func menuBarImage() -> NSImage? {
-        if #available(macOS 11.0, *) {
-            let config = NSImage.SymbolConfiguration(
-                pointSize: 16, weight: .regular
-            )
-            if let symbol = NSImage(
-                systemSymbolName: "server.rack",
-                accessibilityDescription: "ServerBox"
-            )?.withSymbolConfiguration(config) {
-                symbol.isTemplate = true
-                return symbol
-            }
-        }
         guard let image = NSImage(named: "TrayIcon") else { return nil }
         image.isTemplate = true
+        image.size = NSSize(width: 18, height: 18)
         return image
     }
 

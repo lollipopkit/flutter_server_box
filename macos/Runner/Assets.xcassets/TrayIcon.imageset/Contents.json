@@ -1,11 +1,11 @@
 {
   "images" : [
     {
+      "filename" : "mac.pdf",
       "idiom" : "mac",
       "scale" : "1x"
     },
     {
-      "filename" : "tray@2x.png",
       "idiom" : "mac",
       "scale" : "2x"
     }
@@ -15,6 +15,7 @@
     "version" : 1
   },
   "properties" : {
+    "preserves-vector-representation" : true,
     "template-rendering-intent" : "template"
   }
 }
