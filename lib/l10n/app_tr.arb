@@ -43,7 +43,6 @@
   "connectAll": "Tümünü bağla",
   "disconnectAll": "Tümünün bağlantısını kes",
   "distIcon": "Dağıtım işaretleri",
-  "distIconConsent": "Yalnızca bir sunucunun çalıştırıyor olabileceği dağıtımı belirtmek için.",
   "distIconIntroLegal": "Bir işaret yalnızca bu cihazın uzak sistemden okuduğunu belirtir; bu bilgi yanlış veya güncel olmayabilir ve bir türevi, yeniden derlemeyi ya da belirli bir sürümü göstermez. Belirlenemediğinde sade bir simge çizilir.\n\nHer işaret ilgili sahibinin ticari markasıdır ve burada yalnızca işaret ettiği sistemi belirtmek için kullanılır.",
   "distIconTip": "Her sunucunun yanında, üzerinde çalıştığı görünen sistemin küçük bir işaretini göster",
   "distNameMap": "Ad eşleştirme",
@@ -86,13 +85,6 @@
   "discoveryFailed": "Keşif başarısız",
   "discoverySettings": "Keşif Ayarları",
   "distro": "Dağıtım",
-  "distroSwitchTip": "{from} yerine {to} kurulur. {from} içine kurulmuş her şey silinir ve yerine {to} indirilip açılır.",
-  "@distroSwitchTip": {
-    "placeholders": {
-      "from": {},
-      "to": {}
-    }
-  },
   "diskHealth": "Disk sağlığı",
   "displayCpuIndex": "CPU indeksini göster",
   "dl2Local": "{fileName} dosyasını yerel cihaza indir?",
@@ -486,10 +478,6 @@
   "serviceDetailsUnavailable": "Bazı hizmet ayrıntıları kullanılamıyor",
   "serviceDetailsUnavailableTip": "Liste kullanılabilir, ancak yönetici tüm durum veya otomatik başlatma bilgilerini döndürmedi.",
   "serviceEnabled": "Başlangıçta etkin",
-  "systemdMissing": "Bu sunucuda systemd yok",
-  "systemdMissingTip": "`systemctl` burada kurulu değil, bu yüzden listelenecek unit yok.",
-  "initSystemFmt": "Bu makine {init} kullanıyor gibi görünüyor.",
-  "systemdListFailed": "Unit'ler listelenemedi",
   "systemdUserScopeMissing": "Kullanıcı unit'leri listelenmiyor",
   "systemdUserScopeMissingTip": "Bu hesabın sunucuda kullanıcı oturum veri yolu yok, bu yüzden yalnızca sistem unit'leri gösteriliyor.",
   "serverUnreachable": "Bu sunucuda komut çalıştırılamadı",

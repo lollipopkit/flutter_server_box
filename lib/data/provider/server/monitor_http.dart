@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
+import 'package:fl_lib/fl_lib.dart';
 import 'package:meta/meta.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/secure_endpoint.dart';
@@ -74,6 +75,9 @@ class MonitorHttpClient {
   HttpClient _httpClient() {
     final client = HttpClient();
     if (monitor.ignoreCert) {
+      Loggers.app.warning(
+        'Monitor ignoring TLS certificate for ${monitor.addr} — only use on trusted private network',
+      );
       client.badCertificateCallback = (_, _, _) => true;
     }
     return client;

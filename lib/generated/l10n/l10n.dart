@@ -735,12 +735,6 @@ abstract class AppLocalizations {
   /// **'Distribution marks'**
   String get distIcon;
 
-  /// No description provided for @distIconConsent.
-  ///
-  /// In en, this message translates to:
-  /// **'Only to indicate the distribution a server may be running.'**
-  String get distIconConsent;
-
   /// No description provided for @distIconIntroLegal.
   ///
   /// In en, this message translates to:
@@ -1064,12 +1058,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Distribution'**
   String get distro;
-
-  /// No description provided for @distroSwitchTip.
-  ///
-  /// In en, this message translates to:
-  /// **'Replace {from} with {to}. Everything installed inside {from} is deleted, and {to} is downloaded and unpacked in its place.'**
-  String distroSwitchTip(Object from, Object to);
 
   /// No description provided for @diskHealth.
   ///
@@ -2947,30 +2935,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enabled at startup'**
   String get serviceEnabled;
-
-  /// No description provided for @systemdMissing.
-  ///
-  /// In en, this message translates to:
-  /// **'No systemd on this server'**
-  String get systemdMissing;
-
-  /// No description provided for @systemdMissingTip.
-  ///
-  /// In en, this message translates to:
-  /// **'`systemctl` is not installed here, so there are no units to list.'**
-  String get systemdMissingTip;
-
-  /// No description provided for @initSystemFmt.
-  ///
-  /// In en, this message translates to:
-  /// **'This machine appears to use {init}.'**
-  String initSystemFmt(String init);
-
-  /// No description provided for @systemdListFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not list units'**
-  String get systemdListFailed;
 
   /// No description provided for @systemdUserScopeMissing.
   ///

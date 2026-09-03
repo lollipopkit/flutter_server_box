@@ -330,9 +330,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get distIcon => 'ディストリビューション標識';
 
   @override
-  String get distIconConsent => 'そのサーバーが動かしている可能性のあるディストリビューションを示すためだけに使います。';
-
-  @override
   String get distIconIntroLegal =>
       'マークは、この端末がリモートシステムから読み取った内容を示すだけで、その情報は誤っていたり古かったりすることがあり、派生版・再構築版・特定のバージョンを表すものでもありません。判別できない場合は汎用のアイコンを表示します。\n\n各マークはそれぞれの所有者の商標であり、ここではそれが指すシステムを示す目的にのみ使用しています。';
 
@@ -514,11 +511,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get distro => 'ディストリビューション';
-
-  @override
-  String distroSwitchTip(Object from, Object to) {
-    return '$from を $to に置き換えます。$from の中にインストールしたものはすべて削除され、代わりに $to をダウンロードして展開します。';
-  }
 
   @override
   String get diskHealth => 'ディスクの健康状態';
@@ -1578,21 +1570,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get serviceEnabled => '自動起動が有効';
-
-  @override
-  String get systemdMissing => 'このサーバーには systemd がありません';
-
-  @override
-  String get systemdMissingTip =>
-      '`systemctl` がインストールされていないため、一覧表示できる unit はありません。';
-
-  @override
-  String initSystemFmt(String init) {
-    return 'このマシンは $init を使用しているようです。';
-  }
-
-  @override
-  String get systemdListFailed => 'unit を一覧表示できませんでした';
 
   @override
   String get systemdUserScopeMissing => 'ユーザー unit は表示されていません';

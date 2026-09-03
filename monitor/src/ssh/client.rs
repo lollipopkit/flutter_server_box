@@ -147,31 +147,11 @@ impl client::Handler for HostKeyChecker {
         &mut self,
         server_public_key: &PublicKeyOrCertificate,
     ) -> Result<bool, Self::Error> {
-        // russh 0.63 widened this parameter: a server may now answer with a
-        // CA-signed certificate rather than a bare key.
-        //
-        // A certificate is refused rather than reduced to the key inside it.
-        // Its trust comes from a CA, and this build has nowhere to configure
-        // one — so checking that key against `known_hosts` would pin whatever
-        // the first connection happened to present and call that verified,
-        // which is a weaker guarantee wearing the name of a stronger one.
-        // Refusing is visible; silently accepting is not.
-        let server_public_key = match server_public_key {
-            PublicKeyOrCertificate::PublicKey { key, .. } => key,
-            PublicKeyOrCertificate::Certificate(_) => {
-                tracing::warn!(
-                    "Refusing SSH connection to {}: host presented a certificate, \
-                     which this build cannot verify (no CA is configured)",
-                    self.addr
-                );
-                *self.rejection.lock().unwrap_or_else(|e| e.into_inner()) = Some(
-                    SshError::Connect("host key is a certificate, unsupported".into()),
-                );
-                return Ok(false);
-            }
-        };
-
-        match known_hosts::verify(&self.pool, &self.addr, server_public_key).await {
+        // Pin the underlying public key, whether the server presented a bare
+        // key or an OpenSSH certificate (russh 0.63 reports both through
+        // `PublicKeyOrCertificate`).
+        let key = server_public_key.public_key();
+        match known_hosts::verify(&self.pool, &self.addr, &key).await {
             Ok(Verdict::Known | Verdict::Pinned) => Ok(true),
             Ok(Verdict::Mismatch { expected, actual }) => {
                 tracing::warn!(

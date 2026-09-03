@@ -102,7 +102,6 @@
   "connectAll": "全部连接",
   "disconnectAll": "全部断开",
   "distIcon": "发行版标识",
-  "distIconConsent": "仅用于标识某台服务器可能运行的发行版。",
   "distIconIntroLegal": "标识仅表示本设备从远程系统读取到的信息,该信息可能有误或已过期,也不代表其衍生版本、重构版本或任何特定版本。识别不出时显示一个通用图标。\n\n每个标识均为其各自所有者的商标,此处仅用于指代它所标识的系统。",
   "distIconTip": "在每台服务器旁显示一个小标识,表示它可能运行的系统",
   "distNameMap": "名称映射",
@@ -157,13 +156,6 @@
   "discoveryFailed": "发现失败",
   "discoverySettings": "发现设置",
   "distro": "发行版",
-  "distroSwitchTip": "用 {to} 替换 {from}。{from} 里装过的所有东西都会被删除,然后下载并解包 {to}。",
-  "@distroSwitchTip": {
-    "placeholders": {
-      "from": {},
-      "to": {}
-    }
-  },
   "diskHealth": "磁盘健康",
   "displayCpuIndex": "显示 CPU 索引",
   "dl2Local": "下载 {fileName} 到本地？",
@@ -496,17 +488,6 @@
   "serviceDetailsUnavailable": "部分服务详情不可用",
   "serviceDetailsUnavailableTip": "服务列表仍可使用，但服务管理器未返回完整的状态或开机启动信息。",
   "serviceEnabled": "已设置开机启动",
-  "systemdMissing": "此服务器没有 systemd",
-  "systemdMissingTip": "机器上没有安装 `systemctl`，因此没有 unit 可列。",
-  "initSystemFmt": "这台机器似乎使用 {init}。",
-  "@initSystemFmt": {
-    "placeholders": {
-      "init": {
-        "type": "String"
-      }
-    }
-  },
-  "systemdListFailed": "无法列出 unit",
   "systemdUserScopeMissing": "未列出用户 unit",
   "systemdUserScopeMissingTip": "该账户在服务器上没有用户会话总线，因此只显示系统 unit。",
   "serverUnreachable": "无法在此服务器上执行命令",

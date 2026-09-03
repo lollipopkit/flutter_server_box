@@ -355,10 +355,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get distIcon => 'Marcas de distribución';
 
   @override
-  String get distIconConsent =>
-      'Solo para indicar la distribución que un servidor podría estar ejecutando.';
-
-  @override
   String get distIconIntroLegal =>
       'Una marca solo indica lo que este dispositivo leyó del sistema remoto, información que puede ser errónea o estar desactualizada, y no identifica ni un derivado, ni una recompilación, ni una versión concreta. Cuando no se puede identificar, se dibuja un icono genérico.\n\nCada marca es una marca registrada de su respectivo propietario y aquí solo se usa para referirse al sistema que identifica.';
 
@@ -554,11 +550,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get distro => 'Distribución';
-
-  @override
-  String distroSwitchTip(Object from, Object to) {
-    return 'Reemplazar $from por $to. Se elimina todo lo instalado dentro de $from y, en su lugar, se descarga y descomprime $to.';
-  }
 
   @override
   String get diskHealth => 'Salud del disco';
@@ -1698,21 +1689,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get serviceEnabled => 'Activado al iniciar';
-
-  @override
-  String get systemdMissing => 'No hay systemd en este servidor';
-
-  @override
-  String get systemdMissingTip =>
-      '`systemctl` no está instalado aquí, por lo que no hay unidades que listar.';
-
-  @override
-  String initSystemFmt(String init) {
-    return 'Esta máquina parece usar $init.';
-  }
-
-  @override
-  String get systemdListFailed => 'No se pudieron listar las unidades';
 
   @override
   String get systemdUserScopeMissing => 'No se listan las unidades de usuario';

@@ -43,7 +43,6 @@
   "connectAll": "Tout connecter",
   "disconnectAll": "Tout déconnecter",
   "distIcon": "Marques de distribution",
-  "distIconConsent": "Uniquement pour indiquer la distribution qu'un serveur exécute peut-être.",
   "distIconIntroLegal": "Une marque indique seulement ce que cet appareil a lu sur le système distant, ce qui peut être erroné ou périmé, et ne désigne ni un dérivé, ni une reconstruction, ni une version particulière. Quand elle ne peut pas être déterminée, une icône neutre est affichée.\n\nChaque marque appartient à son propriétaire respectif et n'est utilisée ici que pour désigner le système qu'elle identifie.",
   "distIconTip": "Afficher à côté de chaque serveur une petite marque du système qu’il semble exécuter",
   "distNameMap": "Correspondance des noms",
@@ -86,13 +85,6 @@
   "discoveryFailed": "Échec de la découverte",
   "discoverySettings": "Paramètres de découverte",
   "distro": "Distribution",
-  "distroSwitchTip": "Remplacer {from} par {to}. Tout ce qui a été installé dans {from} est supprimé, et {to} est téléchargé et décompressé à la place.",
-  "@distroSwitchTip": {
-    "placeholders": {
-      "from": {},
-      "to": {}
-    }
-  },
   "diskHealth": "Santé du disque",
   "displayCpuIndex": "Afficher l'index CPU",
   "dl2Local": "Télécharger {fileName} localement ?",
@@ -486,10 +478,6 @@
   "serviceDetailsUnavailable": "Certains détails des services sont indisponibles",
   "serviceDetailsUnavailableTip": "La liste reste utilisable, mais le gestionnaire n'a pas renvoyé toutes les informations d'état ou de démarrage.",
   "serviceEnabled": "Activé au démarrage",
-  "systemdMissing": "Pas de systemd sur ce serveur",
-  "systemdMissingTip": "`systemctl` n'est pas installé ici, il n'y a donc aucune unité à lister.",
-  "initSystemFmt": "Cette machine semble utiliser {init}.",
-  "systemdListFailed": "Impossible de lister les unités",
   "systemdUserScopeMissing": "Les unités utilisateur ne sont pas listées",
   "systemdUserScopeMissingTip": "Ce compte n'a pas de bus de session utilisateur sur le serveur, seules les unités système sont affichées.",
   "serverUnreachable": "Impossible d'exécuter une commande sur ce serveur",

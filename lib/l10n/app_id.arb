@@ -43,7 +43,6 @@
   "connectAll": "Hubungkan semua",
   "disconnectAll": "Putuskan semua",
   "distIcon": "Tanda distribusi",
-  "distIconConsent": "Hanya untuk menunjukkan distribusi yang mungkin dijalankan sebuah server.",
   "distIconIntroLegal": "Sebuah tanda hanya menyatakan apa yang dibaca perangkat ini dari sistem jarak jauh, yang bisa saja keliru atau usang, dan tidak menandakan turunan, hasil bangun ulang, maupun versi tertentu. Bila tidak dapat dikenali, ikon biasa yang digambar.\n\nSetiap tanda adalah merek dagang pemiliknya masing-masing dan di sini hanya dipakai untuk merujuk pada sistem yang ditandainya.",
   "distIconTip": "Tampilkan tanda kecil di samping setiap server untuk sistem yang tampaknya dijalankannya",
   "distNameMap": "Pemetaan nama",
@@ -86,13 +85,6 @@
   "discoveryFailed": "Penemuan gagal",
   "discoverySettings": "Pengaturan Penemuan",
   "distro": "Distribusi",
-  "distroSwitchTip": "Ganti {from} dengan {to}. Semua yang terpasang di dalam {from} akan dihapus, dan {to} diunduh serta diekstrak sebagai gantinya.",
-  "@distroSwitchTip": {
-    "placeholders": {
-      "from": {},
-      "to": {}
-    }
-  },
   "diskHealth": "Kesehatan disk",
   "displayCpuIndex": "Tampilkan indeks CPU",
   "dl2Local": "Unduh {fileName} ke lokal?",
@@ -486,10 +478,6 @@
   "serviceDetailsUnavailable": "Beberapa detail layanan tidak tersedia",
   "serviceDetailsUnavailableTip": "Daftar layanan dapat digunakan, tetapi pengelola tidak memberikan semua informasi status atau mulai otomatis.",
   "serviceEnabled": "Diaktifkan saat mulai",
-  "systemdMissing": "Tidak ada systemd di server ini",
-  "systemdMissingTip": "`systemctl` tidak terpasang di sini, jadi tidak ada unit untuk ditampilkan.",
-  "initSystemFmt": "Mesin ini tampaknya menggunakan {init}.",
-  "systemdListFailed": "Tidak dapat menampilkan daftar unit",
   "systemdUserScopeMissing": "Unit pengguna tidak ditampilkan",
   "systemdUserScopeMissingTip": "Akun ini tidak memiliki bus sesi pengguna di server, jadi hanya unit sistem yang ditampilkan.",
   "serverUnreachable": "Tidak dapat menjalankan perintah di server ini",

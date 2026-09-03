@@ -43,7 +43,6 @@
   "connectAll": "すべて接続",
   "disconnectAll": "すべて切断",
   "distIcon": "ディストリビューション標識",
-  "distIconConsent": "そのサーバーが動かしている可能性のあるディストリビューションを示すためだけに使います。",
   "distIconIntroLegal": "マークは、この端末がリモートシステムから読み取った内容を示すだけで、その情報は誤っていたり古かったりすることがあり、派生版・再構築版・特定のバージョンを表すものでもありません。判別できない場合は汎用のアイコンを表示します。\n\n各マークはそれぞれの所有者の商標であり、ここではそれが指すシステムを示す目的にのみ使用しています。",
   "distIconTip": "各サーバーの横に、動作していると思われるシステムの小さな標識を表示します",
   "distNameMap": "名前の対応付け",
@@ -86,13 +85,6 @@
   "discoveryFailed": "発見に失敗",
   "discoverySettings": "発見設定",
   "distro": "ディストリビューション",
-  "distroSwitchTip": "{from} を {to} に置き換えます。{from} の中にインストールしたものはすべて削除され、代わりに {to} をダウンロードして展開します。",
-  "@distroSwitchTip": {
-    "placeholders": {
-      "from": {},
-      "to": {}
-    }
-  },
   "diskHealth": "ディスクの健康状態",
   "displayCpuIndex": "CPUインデックスを表示する",
   "dl2Local": "{fileName}をローカルにダウンロードしますか？",
@@ -486,10 +478,6 @@
   "serviceDetailsUnavailable": "一部のサービス情報を取得できません",
   "serviceDetailsUnavailableTip": "一覧は利用できますが、状態または自動起動の情報がすべて返されませんでした。",
   "serviceEnabled": "自動起動が有効",
-  "systemdMissing": "このサーバーには systemd がありません",
-  "systemdMissingTip": "`systemctl` がインストールされていないため、一覧表示できる unit はありません。",
-  "initSystemFmt": "このマシンは {init} を使用しているようです。",
-  "systemdListFailed": "unit を一覧表示できませんでした",
   "systemdUserScopeMissing": "ユーザー unit は表示されていません",
   "systemdUserScopeMissingTip": "このアカウントにはサーバー上のユーザーセッションバスがないため、システム unit のみ表示しています。",
   "serverUnreachable": "このサーバーでコマンドを実行できませんでした",

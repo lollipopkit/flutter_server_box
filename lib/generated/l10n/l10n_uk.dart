@@ -350,10 +350,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get distIcon => 'Позначки дистрибутивів';
 
   @override
-  String get distIconConsent =>
-      'Лише щоб позначити дистрибутив, який може працювати на сервері.';
-
-  @override
   String get distIconIntroLegal =>
       'Знак свідчить лише про те, що цей пристрій прочитав із віддаленої системи; ці відомості можуть бути хибними або застарілими і не позначають ані похідну збірку, ані перезбирання, ані якусь конкретну версію. Якщо визначити не вдалося, малюється звичайна піктограма.\n\nКожен знак є торговельною маркою свого власника і використовується тут лише для позначення системи, яку він ідентифікує.';
 
@@ -549,11 +545,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get distro => 'Дистрибутив';
-
-  @override
-  String distroSwitchTip(Object from, Object to) {
-    return 'Замінити $from на $to. Усе, що встановлено всередині $from, буде видалено, а замість нього буде завантажено й розпаковано $to.';
-  }
 
   @override
   String get diskHealth => 'Стан диска';
@@ -1688,21 +1679,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get serviceEnabled => 'Увімкнено під час запуску';
-
-  @override
-  String get systemdMissing => 'На цьому сервері немає systemd';
-
-  @override
-  String get systemdMissingTip =>
-      '`systemctl` тут не встановлено, тому юнітів для показу немає.';
-
-  @override
-  String initSystemFmt(String init) {
-    return 'Схоже, ця машина використовує $init.';
-  }
-
-  @override
-  String get systemdListFailed => 'Не вдалося отримати список юнітів';
 
   @override
   String get systemdUserScopeMissing => 'Юніти користувача не показані';

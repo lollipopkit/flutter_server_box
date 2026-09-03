@@ -349,10 +349,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get distIcon => 'Tanda distribusi';
 
   @override
-  String get distIconConsent =>
-      'Hanya untuk menunjukkan distribusi yang mungkin dijalankan sebuah server.';
-
-  @override
   String get distIconIntroLegal =>
       'Sebuah tanda hanya menyatakan apa yang dibaca perangkat ini dari sistem jarak jauh, yang bisa saja keliru atau usang, dan tidak menandakan turunan, hasil bangun ulang, maupun versi tertentu. Bila tidak dapat dikenali, ikon biasa yang digambar.\n\nSetiap tanda adalah merek dagang pemiliknya masing-masing dan di sini hanya dipakai untuk merujuk pada sistem yang ditandainya.';
 
@@ -547,11 +543,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get distro => 'Distribusi';
-
-  @override
-  String distroSwitchTip(Object from, Object to) {
-    return 'Ganti $from dengan $to. Semua yang terpasang di dalam $from akan dihapus, dan $to diunduh serta diekstrak sebagai gantinya.';
-  }
 
   @override
   String get diskHealth => 'Kesehatan disk';
@@ -1670,21 +1661,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get serviceEnabled => 'Diaktifkan saat mulai';
-
-  @override
-  String get systemdMissing => 'Tidak ada systemd di server ini';
-
-  @override
-  String get systemdMissingTip =>
-      '`systemctl` tidak terpasang di sini, jadi tidak ada unit untuk ditampilkan.';
-
-  @override
-  String initSystemFmt(String init) {
-    return 'Mesin ini tampaknya menggunakan $init.';
-  }
-
-  @override
-  String get systemdListFailed => 'Tidak dapat menampilkan daftar unit';
 
   @override
   String get systemdUserScopeMissing => 'Unit pengguna tidak ditampilkan';

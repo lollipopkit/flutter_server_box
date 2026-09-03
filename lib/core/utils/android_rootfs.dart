@@ -12,6 +12,7 @@ import 'package:server_box/core/utils/guest_path.dart';
 import 'package:server_box/core/utils/linux_seed.dart';
 import 'package:server_box/core/utils/oci_image.dart';
 import 'package:server_box/core/utils/rootfs_lifecycle.dart';
+import 'package:server_box/core/utils/rootfs_tar_utils.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/rootfs_manifest.dart';
 
@@ -682,35 +683,12 @@ abstract final class AndroidRootfs {
 
   /// The components [name] names inside the root, or null where it escapes.
   ///
-  /// Empty is neither: it is the archive's own root, and the two have to be
-  /// told apart. `tar czf` writes a `./` member first and almost every rootfs
-  /// tarball therefore starts with one — read as an escape, that refused the
-  /// whole archive on its first entry.
-  static List<String>? _safeTarParts(String name) {
-    var value = name;
-    while (value.startsWith('./')) {
-      value = value.substring(2);
-    }
-    if (value.startsWith('/')) return null;
-    final parts = <String>[];
-    for (final segment in value.split('/')) {
-      if (segment.isEmpty || segment == '.') continue;
-      if (segment == '..') {
-        if (parts.isEmpty) return null;
-        parts.removeLast();
-      } else {
-        parts.add(segment);
-      }
-    }
-    return parts;
-  }
+  // Delegates to shared helpers in rootfs_tar_utils.dart (single source; was
+  // duplicated verbatim between Android and iOS installers).
+  static List<String>? _safeTarParts(String name) => safeTarParts(name);
 
-  static bool _hasLinkAncestor(List<String> parts, Set<String> links) {
-    for (var i = 1; i < parts.length; i++) {
-      if (links.contains(parts.take(i).join('/'))) return true;
-    }
-    return false;
-  }
+  static bool _hasLinkAncestor(List<String> parts, Set<String> links) =>
+      hasLinkAncestor(parts, links);
 
   static Future<bool> _hasExistingLinkAncestor(
     String root,

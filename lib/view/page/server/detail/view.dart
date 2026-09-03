@@ -19,6 +19,7 @@ import 'package:server_box/data/model/server/battery.dart';
 import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/disk_smart.dart';
+import 'package:server_box/data/model/server/gpu.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/nvdia.dart';
 import 'package:server_box/data/model/server/sensors.dart';
@@ -574,9 +575,13 @@ ${err.message ?? 'null'}
               fit: BoxFit.contain,
             );
           }
+          final dpr = MediaQuery.devicePixelRatioOf(context);
           return ExtendedImage.network(
             logoUrl,
             cache: true,
+            cacheWidth: (cons.maxWidth * dpr).round(),
+            cacheHeight: (height * dpr).round(),
+            clearMemoryCacheWhenDispose: true,
             height: height,
             width: cons.maxWidth,
           );
@@ -926,7 +931,7 @@ ${err.message ?? 'null'}
     );
   }
 
-  Widget _buildGpuProcessItem(NvidiaSmiMemProcess process) {
+  Widget _buildGpuProcessItem(GpuSmiMemProcess process) {
     return _buildGpuProcessTile(
       name: process.name,
       subtitle: 'PID: ${process.pid} - ${process.memory} MiB',
@@ -934,7 +939,7 @@ ${err.message ?? 'null'}
     );
   }
 
-  Widget _buildAmdGpuProcessItem(AmdSmiMemProcess process) {
+  Widget _buildAmdGpuProcessItem(GpuSmiMemProcess process) {
     return _buildGpuProcessTile(
       name: process.name,
       subtitle:

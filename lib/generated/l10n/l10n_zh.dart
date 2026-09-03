@@ -324,9 +324,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get distIcon => '发行版标识';
 
   @override
-  String get distIconConsent => '仅用于标识某台服务器可能运行的发行版。';
-
-  @override
   String get distIconIntroLegal =>
       '标识仅表示本设备从远程系统读取到的信息,该信息可能有误或已过期,也不代表其衍生版本、重构版本或任何特定版本。识别不出时显示一个通用图标。\n\n每个标识均为其各自所有者的商标,此处仅用于指代它所标识的系统。';
 
@@ -504,11 +501,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get distro => '发行版';
-
-  @override
-  String distroSwitchTip(Object from, Object to) {
-    return '用 $to 替换 $from。$from 里装过的所有东西都会被删除,然后下载并解包 $to。';
-  }
 
   @override
   String get diskHealth => '磁盘健康';
@@ -1539,20 +1531,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get serviceEnabled => '已设置开机启动';
 
   @override
-  String get systemdMissing => '此服务器没有 systemd';
-
-  @override
-  String get systemdMissingTip => '机器上没有安装 `systemctl`，因此没有 unit 可列。';
-
-  @override
-  String initSystemFmt(String init) {
-    return '这台机器似乎使用 $init。';
-  }
-
-  @override
-  String get systemdListFailed => '无法列出 unit';
-
-  @override
   String get systemdUserScopeMissing => '未列出用户 unit';
 
   @override
@@ -1957,9 +1935,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get distIcon => '發行版標識';
 
   @override
-  String get distIconConsent => '僅用於標識某台伺服器可能執行的發行版。';
-
-  @override
   String get distIconIntroLegal =>
       '標識僅表示本裝置從遠端系統讀取到的資訊,該資訊可能有誤或已過期,也不代表其衍生版本、重構版本或任何特定版本。識別不出時顯示一個通用圖示。\n\n每個標識均為其各自所有者的商標,此處僅用於指代它所標識的系統。';
 
@@ -2137,11 +2112,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get distro => '發行版';
-
-  @override
-  String distroSwitchTip(Object from, Object to) {
-    return '以 $to 取代 $from。$from 裡安裝過的所有東西都會被刪除,然後下載並解壓 $to。';
-  }
 
   @override
   String get diskHealth => '磁碟健康';
@@ -3171,20 +3141,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get serviceEnabled => '已設定開機啟動';
-
-  @override
-  String get systemdMissing => '此伺服器沒有 systemd';
-
-  @override
-  String get systemdMissingTip => '機器上沒有安裝 `systemctl`，因此沒有 unit 可列。';
-
-  @override
-  String initSystemFmt(String init) {
-    return '這台機器似乎使用 $init。';
-  }
-
-  @override
-  String get systemdListFailed => '無法列出 unit';
 
   @override
   String get systemdUserScopeMissing => '未列出使用者 unit';

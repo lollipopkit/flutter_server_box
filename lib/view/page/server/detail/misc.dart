@@ -52,7 +52,7 @@ extension on _ServerDetailPageState {
     );
   }
 
-  void _onTapGpuProcessItem(NvidiaSmiMemProcess process) {
+  void _onTapGpuProcessItem(GpuSmiMemProcess process) {
     _showClosableDetailDialog(
       title: '${process.pid}',
       child: Column(
@@ -68,7 +68,7 @@ extension on _ServerDetailPageState {
     );
   }
 
-  void _onTapAmdGpuProcessItem(AmdSmiMemProcess process) {
+  void _onTapAmdGpuProcessItem(GpuSmiMemProcess process) {
     _showClosableDetailDialog(
       title: '${process.pid}',
       child: Column(

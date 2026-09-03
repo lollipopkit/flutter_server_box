@@ -70,13 +70,6 @@ class BmcCredentialStore extends EntityStore<BmcCredential> {
 
   BmcCredential? fetchOne(String? id) => id == null ? null : fetchOneRaw(id);
 
-  BmcCredential? fetchByName(String name) {
-    for (final cred in fetch()) {
-      if (cred.name == name) return cred;
-    }
-    return null;
-  }
-
   /// How many servers point at [id], for a delete that would orphan them.
   ///
   /// The foreign key is `ON DELETE SET NULL`, so deleting an account in use

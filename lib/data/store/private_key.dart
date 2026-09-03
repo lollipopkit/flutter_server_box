@@ -64,13 +64,4 @@ class PrivateKeyStore extends EntityStore<PrivateKeyInfo> {
   }
 
   PrivateKeyInfo? fetchOne(String? id) => id == null ? null : fetchOneRaw(id);
-
-  /// The key called [name], for the places that only have one — an imported
-  /// `~/.ssh/config`, and the backup format that keyed keys by name.
-  PrivateKeyInfo? fetchByName(String name) {
-    for (final key in fetch()) {
-      if (key.name == name) return key;
-    }
-    return null;
-  }
 }

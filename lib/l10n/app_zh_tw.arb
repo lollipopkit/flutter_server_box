@@ -102,7 +102,6 @@
   "connectAll": "全部連線",
   "disconnectAll": "全部斷開",
   "distIcon": "發行版標識",
-  "distIconConsent": "僅用於標識某台伺服器可能執行的發行版。",
   "distIconIntroLegal": "標識僅表示本裝置從遠端系統讀取到的資訊,該資訊可能有誤或已過期,也不代表其衍生版本、重構版本或任何特定版本。識別不出時顯示一個通用圖示。\n\n每個標識均為其各自所有者的商標,此處僅用於指代它所標識的系統。",
   "distIconTip": "在每台伺服器旁顯示一個小標識,表示它可能執行的系統",
   "distNameMap": "名稱對應",
@@ -157,13 +156,6 @@
   "discoveryFailed": "發現失敗",
   "discoverySettings": "發現設定",
   "distro": "發行版",
-  "distroSwitchTip": "以 {to} 取代 {from}。{from} 裡安裝過的所有東西都會被刪除,然後下載並解壓 {to}。",
-  "@distroSwitchTip": {
-    "placeholders": {
-      "from": {},
-      "to": {}
-    }
-  },
   "diskHealth": "磁碟健康",
   "displayCpuIndex": "顯示 CPU 索引",
   "dl2Local": "下載 {fileName} 到本地？",
@@ -496,10 +488,6 @@
   "serviceDetailsUnavailable": "部分服務詳細資料無法使用",
   "serviceDetailsUnavailableTip": "服務列表仍可使用，但服務管理器未傳回完整的狀態或開機啟動資訊。",
   "serviceEnabled": "已設定開機啟動",
-  "systemdMissing": "此伺服器沒有 systemd",
-  "systemdMissingTip": "機器上沒有安裝 `systemctl`，因此沒有 unit 可列。",
-  "initSystemFmt": "這台機器似乎使用 {init}。",
-  "systemdListFailed": "無法列出 unit",
   "systemdUserScopeMissing": "未列出使用者 unit",
   "systemdUserScopeMissingTip": "該帳號在伺服器上沒有使用者工作階段匯流排，因此只顯示系統 unit。",
   "serverUnreachable": "無法在此伺服器上執行命令",
