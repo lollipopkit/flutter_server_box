@@ -67,6 +67,7 @@ COLORREF DotColour(const std::wstring& state) {
 
 TrayIcon::TrayIcon(HWND window, flutter::BinaryMessenger* messenger)
     : window_(window) {
+  taskbar_created_message_ = RegisterWindowMessageW(L"TaskbarCreated");
   channel_ = std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
       messenger, "tech.lolli.toolbox/tray",
       &flutter::StandardMethodCodec::GetInstance());
@@ -106,11 +107,62 @@ TrayIcon::~TrayIcon() {
   if (detail_font_ != nullptr) DeleteObject(detail_font_);
 }
 
+bool TrayIcon::AddIcon() {
+  if (icon_added_) return true;
+
+  if (icon_ == nullptr) {
+    // Beside the executable, where the bundle puts it — the same place the
+    // Flutter asset it was declared as ends up.
+    wchar_t path[MAX_PATH] = {};
+    const DWORD path_size = GetModuleFileNameW(nullptr, path, MAX_PATH);
+    if (path_size == 0 || path_size == MAX_PATH) return false;
+    std::wstring icon_path(path, path_size);
+    const size_t slash = icon_path.find_last_of(L'\\');
+    if (slash != std::wstring::npos) icon_path.resize(slash + 1);
+    icon_path += L"data\\flutter_assets\\assets\\tray\\tray.ico";
+
+    icon_ = static_cast<HICON>(
+        LoadImageW(nullptr, icon_path.c_str(), IMAGE_ICON,
+                   GetSystemMetrics(SM_CXSMICON),
+                   GetSystemMetrics(SM_CYSMICON), LR_LOADFROMFILE));
+    if (icon_ == nullptr) return false;
+  }
+
+  icon_data_ = {};
+  icon_data_.cbSize = sizeof(icon_data_);
+  icon_data_.hWnd = window_;
+  icon_data_.uID = 1;
+  icon_data_.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
+  icon_data_.uCallbackMessage = kCallbackMessage;
+  icon_data_.hIcon = icon_;
+  wcscpy_s(icon_data_.szTip, L"ServerBox");
+  if (!Shell_NotifyIconW(NIM_ADD, &icon_data_)) return false;
+
+  icon_added_ = true;
+  icon_data_.uVersion = NOTIFYICON_VERSION_4;
+  modern_notifications_ =
+      Shell_NotifyIconW(NIM_SETVERSION, &icon_data_) != FALSE;
+  return true;
+}
+
+bool TrayIcon::OwnsRowItem(UINT id, ULONG_PTR data) const {
+  if (menu_ == nullptr || id < kFirstRow) return false;
+  const size_t index = static_cast<size_t>(data);
+  if (index >= rows_.size() || id != kFirstRow + index) return false;
+
+  MENUITEMINFOW info = {};
+  info.cbSize = sizeof(info);
+  info.fMask = MIIM_DATA | MIIM_FTYPE;
+  if (!GetMenuItemInfoW(menu_, id, FALSE, &info)) return false;
+  return (info.fType & MFT_OWNERDRAW) != 0 && info.dwItemData == data;
+}
+
 void TrayIcon::Destroy() {
   if (icon_added_) {
-    Shell_NotifyIcon(NIM_DELETE, &icon_data_);
+    Shell_NotifyIconW(NIM_DELETE, &icon_data_);
     icon_added_ = false;
   }
+  modern_notifications_ = false;
   if (icon_ != nullptr) {
     DestroyIcon(icon_);
     icon_ = nullptr;
@@ -166,32 +218,7 @@ void TrayIcon::Update(const flutter::EncodableMap& payload) {
     }
   }
 
-  if (!icon_added_) {
-    // Beside the executable, where the bundle puts it — the same place the
-    // Flutter asset it was declared as ends up.
-    wchar_t path[MAX_PATH] = {};
-    GetModuleFileName(nullptr, path, MAX_PATH);
-    std::wstring icon_path(path);
-    const size_t slash = icon_path.find_last_of(L'\\');
-    if (slash != std::wstring::npos) icon_path.resize(slash + 1);
-    icon_path += L"data\\flutter_assets\\assets\\tray\\tray.ico";
-
-    icon_ = static_cast<HICON>(
-        LoadImage(nullptr, icon_path.c_str(), IMAGE_ICON,
-                  GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
-                  LR_LOADFROMFILE));
-
-    icon_data_ = {};
-    icon_data_.cbSize = sizeof(icon_data_);
-    icon_data_.hWnd = window_;
-    icon_data_.uID = 1;
-    icon_data_.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
-    icon_data_.uCallbackMessage = kCallbackMessage;
-    icon_data_.hIcon = icon_;
-    wcscpy_s(icon_data_.szTip, L"ServerBox");
-    Shell_NotifyIcon(NIM_ADD, &icon_data_);
-    icon_added_ = true;
-  }
+  AddIcon();
 
   // Rebuilt whole, because that is what a menu is: there is no API for editing
   // one item, and the Dart side already withholds a push that changes nothing.
@@ -230,9 +257,11 @@ void TrayIcon::ShowMenu() {
   // Documented dance: the window has to be foreground or the menu never gets
   // a mouse-up and stays on screen after the pointer leaves it.
   SetForegroundWindow(window_);
-  TrackPopupMenu(menu_, TPM_RIGHTBUTTON, cursor.x, cursor.y, 0, window_,
-                 nullptr);
+  const UINT command = TrackPopupMenu(
+      menu_, TPM_RIGHTBUTTON | TPM_RETURNCMD | TPM_NONOTIFY, cursor.x,
+      cursor.y, 0, window_, nullptr);
   PostMessage(window_, WM_NULL, 0, 0);
+  if (command != 0) OnCommand(command);
 }
 
 void TrayIcon::Measure(MEASUREITEMSTRUCT* measure) {
@@ -360,59 +389,82 @@ void TrayIcon::Draw(DRAWITEMSTRUCT* draw) {
   DeleteObject(pen);
 }
 
-void TrayIcon::OnCommand(UINT id) {
-  if (channel_ == nullptr) return;
+bool TrayIcon::OnCommand(UINT id) {
+  if (channel_ == nullptr) return false;
   switch (id) {
     case kCmdOpen:
       channel_->InvokeMethod("open", nullptr);
-      return;
+      return true;
     case kCmdSettings:
       channel_->InvokeMethod("settings", nullptr);
-      return;
+      return true;
     case kCmdQuit:
       channel_->InvokeMethod("quit", nullptr);
-      return;
+      return true;
     default:
       break;
   }
+  if (id < kFirstRow) return false;
   const size_t index = id - kFirstRow;
-  if (index >= rows_.size()) return;
+  if (index >= rows_.size()) return false;
   channel_->InvokeMethod(
       "server",
       std::make_unique<flutter::EncodableValue>(rows_[index].id));
+  return true;
 }
 
 bool TrayIcon::HandleMessage(UINT message, WPARAM wparam, LPARAM lparam,
                              LRESULT* result) {
+  if (taskbar_created_message_ != 0 && message == taskbar_created_message_) {
+    // Explorer owns the notification area. When it restarts every registered
+    // icon is lost, while this process still believes its previous add exists.
+    const bool should_restore = icon_added_ || menu_ != nullptr;
+    icon_added_ = false;
+    modern_notifications_ = false;
+    if (should_restore) AddIcon();
+    *result = 0;
+    return true;
+  }
+
   switch (message) {
-    case kCallbackMessage:
+    case kCallbackMessage: {
+      const bool ours = modern_notifications_
+                            ? HIWORD(lparam) == icon_data_.uID
+                            : wparam == icon_data_.uID;
+      if (!ours) return false;
+      const UINT event = modern_notifications_ ? LOWORD(lparam)
+                                               : static_cast<UINT>(lparam);
       // Either button opens the menu. A left click on Windows usually shows
       // the window instead — but this icon exists to be read, and what there
       // is to read is in the menu.
-      if (LOWORD(lparam) == WM_LBUTTONUP || LOWORD(lparam) == WM_RBUTTONUP) {
+      if (event == WM_LBUTTONUP || event == WM_RBUTTONUP ||
+          event == WM_CONTEXTMENU || event == NIN_SELECT ||
+          event == NIN_KEYSELECT) {
         ShowMenu();
       }
       *result = 0;
       return true;
+    }
     case WM_MEASUREITEM: {
       auto* measure = reinterpret_cast<MEASUREITEMSTRUCT*>(lparam);
-      if (measure->CtlType != ODT_MENU) return false;
+      if (measure == nullptr || measure->CtlType != ODT_MENU ||
+          !OwnsRowItem(measure->itemID, measure->itemData)) {
+        return false;
+      }
       Measure(measure);
       *result = TRUE;
       return true;
     }
     case WM_DRAWITEM: {
       auto* draw = reinterpret_cast<DRAWITEMSTRUCT*>(lparam);
-      if (draw->CtlType != ODT_MENU) return false;
+      if (draw == nullptr || draw->CtlType != ODT_MENU ||
+          !OwnsRowItem(draw->itemID, draw->itemData)) {
+        return false;
+      }
       Draw(draw);
       *result = TRUE;
       return true;
     }
-    case WM_COMMAND:
-      if (HIWORD(wparam) != 0) return false;
-      OnCommand(LOWORD(wparam));
-      *result = 0;
-      return true;
     default:
       return false;
   }

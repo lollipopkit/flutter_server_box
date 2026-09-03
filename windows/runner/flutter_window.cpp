@@ -49,6 +49,16 @@ LRESULT
 FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
+  // The tray only claims its own callback and owner-drawn menu messages. It
+  // has to see those before plugin delegates, since a handled result there
+  // stops dispatch and leaves the native popup without a command or a row.
+  if (tray_) {
+    LRESULT tray_result = 0;
+    if (tray_->HandleMessage(message, wparam, lparam, &tray_result)) {
+      return tray_result;
+    }
+  }
+
   // Give Flutter, including plugins, an opportunity to handle window messages.
   if (flutter_controller_) {
     std::optional<LRESULT> result =
@@ -56,16 +66,6 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                                                       lparam);
     if (result) {
       return *result;
-    }
-  }
-
-  // Before Flutter's own handling below would swallow them: the owner-drawn
-  // menu is measured and painted through messages sent to this window, and
-  // `WM_COMMAND` from a popup menu arrives here too.
-  if (tray_) {
-    LRESULT tray_result = 0;
-    if (tray_->HandleMessage(message, wparam, lparam, &tray_result)) {
-      return tray_result;
     }
   }
 

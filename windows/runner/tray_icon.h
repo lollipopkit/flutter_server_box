@@ -51,21 +51,25 @@ class TrayIcon {
     std::vector<double> chart;
   };
 
+  bool AddIcon();
+  bool OwnsRowItem(UINT id, ULONG_PTR data) const;
   void Update(const flutter::EncodableMap& payload);
   void Destroy();
   void ShowMenu();
   void Measure(MEASUREITEMSTRUCT* measure);
   void Draw(DRAWITEMSTRUCT* draw);
-  void OnCommand(UINT id);
+  bool OnCommand(UINT id);
 
   HWND window_ = nullptr;
   NOTIFYICONDATA icon_data_ = {};
   bool icon_added_ = false;
+  bool modern_notifications_ = false;
   HICON icon_ = nullptr;
   HMENU menu_ = nullptr;
   HFONT name_font_ = nullptr;
   HFONT detail_font_ = nullptr;
   bool compact_ = false;
+  UINT taskbar_created_message_ = 0;
 
   // Indexed by the command id a menu item was given, which is how a click
   // finds the row it came from.
