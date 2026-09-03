@@ -10,6 +10,7 @@ part of 'tab.dart';
 class _AddPage extends ConsumerStatefulWidget {
   const _AddPage({
     required this.sortVersion,
+    required this.query,
     required this.onTap,
     required this.onLocal,
     required this.onRootfsOpen,
@@ -21,6 +22,10 @@ class _AddPage extends ConsumerStatefulWidget {
   /// Bumped when the sort changes. The order lives in the settings store, not
   /// in a provider, so nothing else would tell this page to rebuild.
   final Listenable sortVersion;
+
+  /// What the bar's field holds, or null while it is not a field. Read rather
+  /// than listened to: [sortVersion] already carries it.
+  final ValueNotifier<String?> query;
 
   final void Function(Spi spi) onTap;
 
@@ -68,14 +73,31 @@ class _AddPageState extends ConsumerState<_AddPage> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(serversProvider);
-    final order = _SortOrder.stored.apply(state.serverOrder, state.servers);
+    var order = _SortOrder.stored.apply(state.serverOrder, state.servers);
+
+    // What is typed in the bar, applied to the servers here. The systems on
+    // this device are left alone: they are two rows with fixed names, and a
+    // search is for finding one server among many.
+    final needle = widget.query.value?.trim().toLowerCase() ?? '';
+    if (needle.isNotEmpty) {
+      order = [
+        for (final id in order)
+          if (state.servers[id] case final spi?)
+            if (spi.name.toLowerCase().contains(needle) ||
+                spi.displayAddr.toLowerCase().contains(needle))
+              id,
+      ];
+    }
 
     // Not "empty" while this device is on the list: with no servers
     // configured, a shell here is still something this page can open.
     if (order.isEmpty &&
-        !LocalShellBackend.isSupported &&
-        !Rootfs.isAvailable) {
-      return Center(child: Text(libL10n.empty, textAlign: TextAlign.center));
+        (needle.isNotEmpty ||
+            (!LocalShellBackend.isSupported && !Rootfs.isAvailable))) {
+      return EmptyPane(
+        icon: needle.isEmpty ? Icons.dns_outlined : Icons.search_off,
+        label: needle.isEmpty ? null : needle,
+      );
     }
 
     // Sections rather than one flow of cards. The systems on this device and
@@ -93,7 +115,11 @@ class _AddPageState extends ConsumerState<_AddPage> {
       children: [
         // First, and for the same reason the file tab lists it first: it is
         // always reachable, and it needs no credential to be.
-        if (LocalShellBackend.isSupported) ...[
+        //
+        // Both this and the systems below are dropped while a search is on:
+        // they are rows with fixed names, and leaving them under a query that
+        // does not match them makes them read as results.
+        if (LocalShellBackend.isSupported && needle.isEmpty) ...[
           CenterGreyTitle(libL10n.device),
           CardTile(
             icon: Icons.smartphone,
@@ -102,7 +128,7 @@ class _AddPageState extends ConsumerState<_AddPage> {
             onTap: widget.onLocal,
           ),
         ],
-        if (Rootfs.isAvailable) ...[
+        if (Rootfs.isAvailable && needle.isEmpty) ...[
           // Where the beta is said. It used to be the collapsed tile's
           // title; with a row per system there is no one row it belongs to.
           const CenterGreyTitle('Linux (Beta)'),
@@ -220,6 +246,9 @@ class _SideBar extends ConsumerStatefulWidget {
   const _SideBar({
     required this.sessions,
     required this.sortVersion,
+    required this.query,
+    required this.queryCtrl,
+    required this.onEndSearch,
     required this.actions,
     required this.onOpen,
     required this.onLocal,
@@ -236,6 +265,12 @@ class _SideBar extends ConsumerStatefulWidget {
   /// Bumped when the sort changes. The order lives in the settings store, not
   /// in a provider, so nothing else would tell this rail to rebuild.
   final Listenable sortVersion;
+
+  /// What the search field holds, or null while the rail's head is a row of
+  /// buttons. Read rather than listened to: [sortVersion] carries it.
+  final ValueNotifier<String?> query;
+  final TextEditingController queryCtrl;
+  final VoidCallback onEndSearch;
 
   final List<Widget> actions;
   final void Function(Spi spi) onOpen;
@@ -283,7 +318,19 @@ class _SideBarState extends ConsumerState<_SideBar> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(serversProvider);
-    final order = _SortOrder.stored.apply(state.serverOrder, state.servers);
+    var order = _SortOrder.stored.apply(state.serverOrder, state.servers);
+
+    // The same narrowing the picker does, on the same query — see `_AddPage`.
+    final needle = widget.query.value?.trim().toLowerCase() ?? '';
+    if (needle.isNotEmpty) {
+      order = [
+        for (final id in order)
+          if (state.servers[id] case final spi?)
+            if (spi.name.toLowerCase().contains(needle) ||
+                spi.displayAddr.toLowerCase().contains(needle))
+              id,
+      ];
+    }
 
     return ListenBuilder(
       listenable: widget.sessions,
@@ -293,11 +340,19 @@ class _SideBarState extends ConsumerState<_SideBar> {
         onTap: widget.onSelect,
         onClose: widget.onClose,
         actions: widget.actions,
+        header: widget.query.value == null
+            ? null
+            : InlineSearchField(
+                controller: widget.queryCtrl,
+                onChanged: (value) => widget.query.value = value,
+                onClose: widget.onEndSearch,
+              ),
         targets: [
           // Above the servers, the way the file rail puts this device above
           // them: it is the one place that is always reachable, and it needs
           // no credential to be.
-          if (LocalShellBackend.isSupported || Rootfs.isAvailable) ...[
+          if ((LocalShellBackend.isSupported || Rootfs.isAvailable) &&
+              needle.isEmpty) ...[
             SideBarSection(libL10n.device),
             if (LocalShellBackend.isSupported)
               SideBarTile(title: libL10n.device, onTap: widget.onLocal),

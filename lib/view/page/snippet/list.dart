@@ -27,6 +27,12 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
     with AutomaticKeepAliveClientMixin {
   final _tag = ''.vn;
 
+  /// What is typed into the bar, or null while the bar is not a field. Null
+  /// and empty are different states: no field at all, and a field with
+  /// nothing in it yet.
+  final _query = ValueNotifier<String?>(null);
+  final _queryCtrl = TextEditingController();
+
   /// The name of the snippet being edited, [_newSnippet] for one being
   /// created, or null for nothing.
   ///
@@ -39,6 +45,8 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
   void dispose() {
     super.dispose();
     _tag.dispose();
+    _query.dispose();
+    _queryCtrl.dispose();
   }
 
   @override
@@ -84,19 +92,39 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
 
   Widget _buildScaffold(List<Snippet> snippets, String tag, bool split) {
     final snippetState = ref.watch(snippetProvider);
-    final filtered = tag == TagSwitcher.kDefaultTag
-        ? snippets
-        : snippets.where((e) => e.tags?.contains(tag) ?? false).toList();
 
-    return Scaffold(
-      appBar: _SnippetBar(
-        tags: snippetState.tags.vn,
-        onTagChanged: (tag) => _tag.value = tag,
-        initTag: _tag.value,
-        onSearch: () => _search(filtered),
-        onAdd: () => _edit(null, split),
-      ),
-      body: _buildSnippetList(filtered, split),
+    return ListenBuilder(
+      listenable: _query,
+      builder: () {
+        final needle = _query.value?.trim().toLowerCase() ?? '';
+        final filtered = [
+          for (final snippet in snippets)
+            if (tag == TagSwitcher.kDefaultTag ||
+                (snippet.tags?.contains(tag) ?? false))
+              // The script and the note as well as the name: a snippet is
+              // often remembered by the command in it rather than by whatever
+              // it was called when it was saved.
+              if (needle.isEmpty ||
+                  snippet.name.toLowerCase().contains(needle) ||
+                  snippet.script.toLowerCase().contains(needle) ||
+                  (snippet.note?.toLowerCase().contains(needle) ?? false))
+                snippet,
+        ];
+
+        return Scaffold(
+          appBar: _SnippetBar(
+            tags: snippetState.tags.vn,
+            onTagChanged: (tag) => _tag.value = tag,
+            initTag: _tag.value,
+            query: _query,
+            queryCtrl: _queryCtrl,
+            onSearch: _startSearch,
+            onEndSearch: _endSearch,
+            onAdd: () => _edit(null, split),
+          ),
+          body: _buildSnippetList(filtered, split, searching: needle.isNotEmpty),
+        );
+      },
     );
   }
 
@@ -113,10 +141,20 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
     );
   }
 
-  Widget _buildSnippetList(List<Snippet> filtered, bool split) {
-    // Asked of what the tag filter left, not of everything: a tag with nothing
-    // under it used to draw an empty grid rather than say it was empty.
-    if (filtered.isEmpty) return Center(child: Text(libL10n.empty));
+  Widget _buildSnippetList(
+    List<Snippet> filtered,
+    bool split, {
+    required bool searching,
+  }) {
+    // Asked of what the filters left, not of everything: a tag or a query with
+    // nothing under it used to draw an empty grid rather than say it was
+    // empty.
+    if (filtered.isEmpty) {
+      return EmptyPane(
+        icon: searching ? Icons.search_off : Icons.code_outlined,
+        label: searching ? _query.value?.trim() : null,
+      );
+    }
 
     // The same rail the server, terminal and file pages put beside their pane,
     // because it is the same job: a narrow index read while your attention is
@@ -157,43 +195,16 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
     );
   }
 
-  /// Finds a snippet by what it is called or by what it runs.
-  ///
-  /// The script as well as the name, because a snippet is often remembered by
-  /// the command in it rather than by whatever it was called when it was
-  /// saved. Searches what the tag filter left, so the rail and the search
-  /// agree about which snippets are in view.
-  void _search(List<Snippet> within) {
-    showSearch(
-      context: context,
-      delegate: SearchPage<Snippet>(
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-        future: (query) async {
-          if (query.isEmpty) return [];
-          final needle = query.toLowerCase();
-          return [
-            for (final snippet in within)
-              if (snippet.name.toLowerCase().contains(needle) ||
-                  snippet.script.toLowerCase().contains(needle) ||
-                  (snippet.note?.toLowerCase().contains(needle) ?? false))
-                snippet,
-          ];
-        },
-        builder: (ctx, snippet) => ListTile(
-          title: Text(snippet.name),
-          subtitle: Text(
-            snippet.note ?? snippet.script,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () {
-            ctx.pop();
-            _edit(snippet, true);
-          },
-        ),
-      ),
-    );
+  /// Narrows the list in place — see [InlineSearchField]. It was a results
+  /// page, which put a read-only copy of the list over the list.
+  void _startSearch() {
+    _queryCtrl.clear();
+    _query.value = '';
+  }
+
+  void _endSearch() {
+    _queryCtrl.clear();
+    _query.value = null;
   }
 
   Widget _buildSnippetItem(Snippet snippet) {
@@ -222,16 +233,33 @@ final class _SnippetBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onSearch;
   final VoidCallback onAdd;
 
+  /// What the field holds, or null while the bar is a tag switcher.
+  final ValueNotifier<String?> query;
+  final TextEditingController queryCtrl;
+  final VoidCallback onEndSearch;
+
   const _SnippetBar({
     required this.tags,
     required this.initTag,
     required this.onTagChanged,
     required this.onSearch,
     required this.onAdd,
+    required this.query,
+    required this.queryCtrl,
+    required this.onEndSearch,
   });
 
   @override
   Widget build(BuildContext context) {
+    // In place of the switcher, as on every other tab that searches.
+    if (query.value != null) {
+      return InlineSearchField(
+        controller: queryCtrl,
+        onChanged: (value) => query.value = value,
+        onClose: onEndSearch,
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.only(left: 10, right: 4),
       child: Row(

@@ -15,7 +15,6 @@ import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/model/file/transfer.dart';
 import 'package:server_box/data/provider/file_transfer.dart';
 import 'package:server_box/data/res/store.dart';
-import 'package:server_box/view/page/storage/file_pane.dart';
 import 'package:server_box/view/page/storage/send_to.dart';
 import 'package:server_box/view/page/storage/transfer_announce.dart';
 import 'package:server_box/view/widget/omit_start_text.dart';
@@ -179,6 +178,12 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   );
   final _sort = const _SortOption().vn;
 
+  /// What is typed into the app bar, or null while it is a title. Null and
+  /// empty are different states: no field at all, and a field with nothing in
+  /// it yet.
+  final _query = ValueNotifier<String?>(null);
+  final _queryCtrl = TextEditingController();
+
   /// Redrawn when it changes rather than by [setState], so a long delete does
   /// not rebuild the listing under it.
   final _busy = false.vn;
@@ -229,6 +234,8 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   @override
   void dispose() {
     _sort.dispose();
+    _query.dispose();
+    _queryCtrl.dispose();
     _busy.dispose();
     _dropping.dispose();
     _listFocus.dispose();
@@ -892,44 +899,20 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     if (_path.path != before) history?.add(target);
   }
 
-  Future<List<FileEntry>> _matching(String query) async {
-    final entries = await _entries;
-    final needle = query.toLowerCase();
-    // The same visibility rule the listing uses. Searching the raw listing
-    // meant a query could surface — and open — the dotfiles the user had
-    // asked not to see, which is a filter that only holds until someone types.
-    final hidden = Stores.setting.showHiddenFiles.fetch();
-    return [
-      for (final entry in entries)
-        if (hidden || !entry.name.startsWith('.'))
-          if (entry.name.toLowerCase().contains(needle)) entry,
-    ];
+  /// Narrows this directory's listing in place — see [InlineSearchField].
+  ///
+  /// What is being searched is one directory in one session, and it is on
+  /// screen: the rows stay the rows, with the menu and the selection they
+  /// carry, rather than being copied into a page of results that has to be
+  /// dismissed before any of it can be acted on.
+  void _startSearch() {
+    _queryCtrl.clear();
+    _query.value = '';
   }
 
-  void _showSearch() {
-    // In the column beside the rail where there is one. `showSearch` is a
-    // route, so it covers the rail as well as the listing — and what is being
-    // searched is one directory in one session, which the rail is what names.
-    final pane = FilePaneHost.of(context);
-    if (pane != null) {
-      pane.open(
-        (_) => _InlineSearch(
-          search: _matching,
-          onClose: pane.close,
-          itemBuilder: (entry) => _buildEntry(entry, beforeTap: pane.close),
-        ),
-      );
-      return;
-    }
-
-    showSearch(
-      context: context,
-      delegate: SearchPage<FileEntry>(
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-        future: _matching,
-        builder: (ctx, entry) => _buildEntry(entry, beforeTap: ctx.pop),
-      ),
-    );
+  void _endSearch() {
+    _queryCtrl.clear();
+    _query.value = null;
   }
 
   // -------------------------------------------------------------------- build
@@ -957,7 +940,7 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
           onTap: () => showContextMenu(context, _createActions),
         ),
       _buildViewBtn(),
-      Btn.icon(text: libL10n.search, icon: const Icon(Icons.search), onTap: _showSearch),
+      Btn.icon(text: libL10n.search, icon: const Icon(Icons.search), onTap: _startSearch),
       if (isDesktop)
         Btn.icon(text: libL10n.refresh, icon: const Icon(Icons.refresh), onTap: refresh),
     ];
@@ -1005,17 +988,35 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     final sink = widget.args.actionsSink;
     if (sink == null) {
       final title = _path.name;
-      return Scaffold(
-        appBar: CustomAppBar(
-          title: AnimatedSwitcher(
-            duration: Durations.short3,
-            child: Text(title, key: ValueKey(title)),
-          ),
-          actions: actions,
-        ),
+      // Listened to, not read: the bar is a field or a title depending on it.
+      return _query.listenVal((_) => Scaffold(
+        appBar: _query.value != null
+            // In place of the title and its buttons, as on every other page
+            // that searches in this app.
+            ? PreferredSize(
+                preferredSize: const Size.fromHeight(kToolbarHeight),
+                child: SafeArea(
+                  bottom: false,
+                  child: SizedBox(
+                    height: kToolbarHeight,
+                    child: InlineSearchField(
+                      controller: _queryCtrl,
+                      onChanged: (value) => _query.value = value,
+                      onClose: _endSearch,
+                    ),
+                  ),
+                ),
+              )
+            : CustomAppBar(
+                title: AnimatedSwitcher(
+                  duration: Durations.short3,
+                  child: Text(title, key: ValueKey(title)),
+                ),
+                actions: actions,
+              ),
         body: body,
         bottomNavigationBar: _buildBottom(),
-      );
+      ));
     }
 
     // Handed over after the frame, not during it: a notifier written while
@@ -1023,7 +1024,9 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) sink.value = actions;
     });
-    return Scaffold(body: body, bottomNavigationBar: _buildBottom());
+    return _query.listenVal(
+      (_) => Scaffold(body: body, bottomNavigationBar: _buildBottom()),
+    );
   }
 
   /// The address bar, and the whole of the bottom.
@@ -1240,8 +1243,28 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
       future: _entries,
       loading: UIs.placeholder,
       error: (e, _) => _buildError(e),
-      success: (entries) => _sort.listenVal(
-        (option) => _buildListView(_sorted(entries ?? const [], option)),
+      success: (entries) => ListenBuilder(
+        listenable: Listenable.merge([_sort, _query]),
+        builder: () {
+          final sorted = _sorted(entries ?? const [], _sort.value);
+          final needle = _query.value?.trim().toLowerCase() ?? '';
+          if (needle.isEmpty) return _buildListView(sorted);
+
+          // The same visibility rule the listing uses. Searching the raw
+          // listing meant a query could surface — and open — the dotfiles the
+          // user had asked not to see, which is a filter that only holds until
+          // someone types.
+          final hidden = Stores.setting.showHiddenFiles.fetch();
+          final found = [
+            for (final entry in sorted)
+              if (hidden || !entry.name.startsWith('.'))
+                if (entry.name.toLowerCase().contains(needle)) entry,
+          ];
+          if (found.isEmpty) {
+            return EmptyMark(icon: Icons.search_off, label: needle);
+          }
+          return _buildListView(found);
+        },
       ),
     );
   }
@@ -1662,109 +1685,6 @@ class _NameFieldState extends State<_NameField> {
           child: Btn.ok(onTap: _submit),
         ),
       ],
-    );
-  }
-}
-
-/// A search that lives where it was opened, rather than over everything.
-///
-/// `showSearch` pushes a route, which is right for a page and wrong for a
-/// column: it covers the rail beside it, and the rail is what says which
-/// session and which directory is being searched.
-///
-/// Owns its controller, and disposes it when the widget goes — not when the
-/// caller stops waiting, which is what put a red screen on the name dialogs.
-class _InlineSearch extends StatefulWidget {
-  const _InlineSearch({
-    required this.search,
-    required this.itemBuilder,
-    required this.onClose,
-  });
-
-  final Future<List<FileEntry>> Function(String query) search;
-  final Widget Function(FileEntry entry) itemBuilder;
-  final VoidCallback onClose;
-
-  @override
-  State<_InlineSearch> createState() => _InlineSearchState();
-}
-
-class _InlineSearchState extends State<_InlineSearch> {
-  final _query = TextEditingController();
-
-  @override
-  void dispose() {
-    _query.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // A `Scaffold` for its background, not its bar. Without one the column is
-    // transparent and the browser underneath — which stays mounted, so that
-    // this can be built from its state — shows through it.
-    return Scaffold(
-      body: Column(
-        children: [
-        // A row of our own rather than the field inside an `AppBar`: a bar has
-        // a fixed height, which squashed the field and squared off its
-        // corners. No label and no icon either — a search box beside a back
-        // arrow, with the cursor already in it, is not ambiguous.
-        Padding(
-          // No `sysStatusBarHeight` here. `CustomAppBar` does not add it
-          // either — it is a plain `AppBar` with a shorter toolbar — so
-          // whatever gives the window caption its room is above both, and
-          // adding it here was 32 logical pixels nothing else spends.
-          padding: const EdgeInsets.only(left: 3, right: 11, top: 3, bottom: 3),
-          child: Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back),
-                tooltip: libL10n.close,
-                onPressed: widget.onClose,
-              ),
-              Expanded(
-                // `noWrap`, wrapped here: `Input`'s own card adds vertical
-                // padding on top of the field's own, which is most of a row
-                // again in something that is only ever one line.
-                child: CardX(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 11),
-                    child: Input(
-                      noWrap: true,
-                      controller: _query,
-                      autoFocus: true,
-                      suggestion: false,
-                      onChanged: (_) => setState(() {}),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: FutureWidget(
-            // Rebuilt per query, which is what re-reads the listing: the
-            // directory can change under a search that is left open.
-            future: widget.search(_query.text),
-            loading: UIs.centerLoading,
-            error: (e, _) => Center(child: Text('$e', style: UIs.textGrey)),
-            success: (entries) {
-              final found = entries ?? const <FileEntry>[];
-              if (found.isEmpty) {
-                return Center(child: Text(libL10n.empty, style: UIs.textGrey));
-              }
-              return ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 7),
-                itemCount: found.length,
-                itemBuilder: (_, i) => widget.itemBuilder(found[i]),
-              );
-            },
-          ),
-        ),
-        ],
-      ),
     );
   }
 }

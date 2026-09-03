@@ -98,13 +98,14 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
     leadingName: libL10n.open,
   );
 
-  /// Whether the rail is showing its search instead of the session list.
+  /// What is typed into the bar, or null while the bar is not a field.
   ///
-  /// The rail's search is for "which server do I open", which is what the rail
-  /// itself is a list of — so it belongs in that column and not over the whole
-  /// window. Only where there is a rail: on one column the same button still
-  /// pushes `showSearch`, which is all a phone can do.
-  bool _railSearching = false;
+  /// The search is for "which server do I open", which is what the picker and
+  /// the rail are both a list of — so it narrows that list where it is, in the
+  /// column or the tab holding it. Null and empty are different states: no
+  /// field at all, and a field with nothing in it yet.
+  final _query = ValueNotifier<String?>(null);
+  final _queryCtrl = TextEditingController();
 
   /// What the right column is showing instead of the browsers, if anything.
   ///
@@ -113,6 +114,7 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
   WidgetBuilder? _paneView;
 
   late final _picker = _PickPage(
+    query: _query,
     onLocal: _openLocal,
     onServer: _openRemote,
   );
@@ -200,9 +202,10 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
         // different layout.
         sideBuilder: (_) => _SideBar(
           sessions: _sessions,
-          searching: _railSearching,
-          onSearchDone: () => setStateSafe(() => _railSearching = false),
-          actions: [_searchBtn(inRail: true)],
+          query: _query,
+          queryCtrl: _queryCtrl,
+          onEndSearch: _endSearch,
+          actions: [_searchBtn],
           onLocal: _openLocal,
           onServer: _openRemote,
           onSelect: _sessions.select,
@@ -304,11 +307,22 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
   }
 
   PreferredSizeWidget get _tabBar => PreferredSizeListenBuilder(
-    listenable: _sessions,
+    listenable: Listenable.merge([_sessions, _query]),
     // The wrapper is what the `Scaffold` measures, so it has to be told;
     // its own default is a full toolbar.
     preferSize: const Size.fromHeight(SessionTabBar.height),
-    builder: () => SessionTabBar(
+    builder: () => _query.value != null
+        // In place of the strip, as on the terminal tab: what is searched is
+        // the picker, and the tabs beside it are open browsers.
+        ? SizedBox(
+            height: SessionTabBar.height,
+            child: InlineSearchField(
+              controller: _queryCtrl,
+              onChanged: (value) => _query.value = value,
+              onClose: _endSearch,
+            ),
+          )
+        : SessionTabBar(
       names: _sessions.names,
       index: _sessions.index,
       leadingIcon: MingCute.folder_fill,
@@ -320,8 +334,8 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
       sessionActions: [_SessionActions(sessions: _sessions)],
       // The same two the rail carries. On one screen the picker is a tab
       // rather than a column, and these act on what it lists.
-      leadingActions: [_searchBtn(inRail: false)],
-    ),
+            leadingActions: [_searchBtn],
+          ),
   );
 
   PreferredSizeWidget get _sessionBar => PreferredSizeListenBuilder(
@@ -464,46 +478,22 @@ extension _Sessions on _FileTabPageState {
 
 /// What acts on the list of places rather than on one browser in it.
 extension _Actions on _FileTabPageState {
-  Widget _searchBtn({required bool inRail}) => Btn.icon(
+  Widget get _searchBtn => Btn.icon(
     text: libL10n.search,
-    icon: Icon(inRail && _railSearching ? Icons.close : Icons.search, size: 18),
-    onTap: () {
-      if (!inRail) return _showSearch();
-      setStateSafe(() => _railSearching = !_railSearching);
-    },
+    icon: const Icon(Icons.search, size: 18),
+    onTap: _startSearch,
   );
 
-  void _showSearch() {
-    showSearch(
-      context: context,
-      delegate: SearchPage<Spi>(
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-        future: (query) async {
-          if (query.isEmpty) return [];
-          // Read per query rather than snapshotted when the search opened, so
-          // a server added or renamed meanwhile is findable.
-          final state = ref.read(serversProvider);
-          final needle = query.toLowerCase();
-          return [
-            for (final id in state.serverOrder)
-              if (state.servers[id] case final spi? when _canBrowse(ref, spi))
-                if (spi.name.toLowerCase().contains(needle) ||
-                    spi.displayAddr.toLowerCase().contains(needle))
-                  spi,
-          ];
-        },
-        builder: (ctx, spi) => ListTile(
-          leading: distIcon(spi.id),
-          title: Text(spi.name),
-          subtitle: Text(spi.displayAddr),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () {
-            ctx.pop();
-            _openRemote(spi);
-          },
-        ),
-      ),
-    );
+  /// Narrows the picker and the rail in place — see [InlineSearchField]. It
+  /// was a results page, which put a read-only copy of the list over the list.
+  void _startSearch() {
+    _queryCtrl.clear();
+    _query.value = '';
+  }
+
+  void _endSearch() {
+    _queryCtrl.clear();
+    _query.value = null;
   }
 }
 
@@ -523,7 +513,14 @@ bool _canBrowse(WidgetRef ref, Spi spi) => canTransferTo(ref, spi);
 /// This device is first because it is always reachable, and because it is
 /// where downloads land.
 class _PickPage extends ConsumerWidget {
-  const _PickPage({required this.onLocal, required this.onServer});
+  const _PickPage({
+    required this.query,
+    required this.onLocal,
+    required this.onServer,
+  });
+
+  /// What the bar's field holds, or null while it is not a field.
+  final ValueNotifier<String?> query;
 
   final VoidCallback onLocal;
   final void Function(Spi spi) onServer;
@@ -531,29 +528,52 @@ class _PickPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(serversProvider);
-    return MasonryList(
-      columnWidth: _kColumnWidth,
-      children: [
-        CardTile(
-          icon: Icons.smartphone,
-          title: libL10n.device,
-          subtitle: Paths.file,
-          onTap: onLocal,
-        ),
-        for (final id in state.serverOrder)
-          if (state.servers[id] case final spi? when _canBrowse(ref, spi))
-            CardTile(
-              key: ValueKey(id),
-              // The mark where the generic icon was, and the generic icon
-              // still behind it: `distIcon` answers null when marks are off,
-              // and `icon` is what that falls through to.
-              leading: distIcon(spi.id, size: 24),
-              icon: Icons.dns,
-              title: spi.name,
-              subtitle: spi.displayAddr,
-              onTap: () => onServer(spi),
-            ),
-      ],
+
+    return ListenBuilder(
+      listenable: query,
+      builder: () {
+        final needle = query.value?.trim().toLowerCase() ?? '';
+        final found = [
+          for (final id in state.serverOrder)
+            if (state.servers[id] case final spi? when _canBrowse(ref, spi))
+              if (needle.isEmpty ||
+                  spi.name.toLowerCase().contains(needle) ||
+                  spi.displayAddr.toLowerCase().contains(needle))
+                spi,
+        ];
+
+        if (needle.isNotEmpty && found.isEmpty) {
+          return EmptyPane(icon: Icons.search_off, label: needle);
+        }
+
+        return MasonryList(
+          columnWidth: _kColumnWidth,
+          children: [
+            // Dropped while a search is on: it is a card with a fixed name,
+            // and leaving it under a query that does not match it makes it
+            // read as a result.
+            if (needle.isEmpty)
+              CardTile(
+                icon: Icons.smartphone,
+                title: libL10n.device,
+                subtitle: Paths.file,
+                onTap: onLocal,
+              ),
+            for (final spi in found)
+              CardTile(
+                key: ValueKey(spi.id),
+                // The mark where the generic icon was, and the generic icon
+                // still behind it: `distIcon` answers null when marks are off,
+                // and `icon` is what that falls through to.
+                leading: distIcon(spi.id, size: 24),
+                icon: Icons.dns,
+                title: spi.name,
+                subtitle: spi.displayAddr,
+                onTap: () => onServer(spi),
+              ),
+          ],
+        );
+      },
     );
   }
 }
@@ -567,8 +587,9 @@ const _kColumnWidth = 300.0;
 class _SideBar extends ConsumerWidget {
   const _SideBar({
     required this.sessions,
-    required this.searching,
-    required this.onSearchDone,
+    required this.query,
+    required this.queryCtrl,
+    required this.onEndSearch,
     required this.actions,
     required this.onLocal,
     required this.onServer,
@@ -578,11 +599,11 @@ class _SideBar extends ConsumerWidget {
 
   final SessionTabsController<FileSession> sessions;
 
-  /// Whether to draw the search in place of the session list.
-  final bool searching;
-
-  /// Called when the search is over, by picking or by giving up.
-  final VoidCallback onSearchDone;
+  /// What the search field holds, or null while the rail's head is a row of
+  /// buttons.
+  final ValueNotifier<String?> query;
+  final TextEditingController queryCtrl;
+  final VoidCallback onEndSearch;
 
   /// What acts on the rail rather than on one session in it.
   final List<Widget> actions;
@@ -594,35 +615,28 @@ class _SideBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Switched with a fade, so the column does not change under the pointer
-    // with no sign that it did. Nothing here shares state with what it
-    // replaces, which is why this one may swap rather than stack.
-    return AnimatedSwitcher(
-      duration: Durations.short4,
-      child: searching
-          ? _RailSearch(
-              key: const ValueKey('rail-search'),
-              onPick: (spi) {
-                onSearchDone();
-                onServer(spi);
-              },
-              onDone: onSearchDone,
-            )
-          : _buildSessionList(context, ref),
-    );
+    return _buildSessionList(context, ref);
   }
 
   Widget _buildSessionList(BuildContext context, WidgetRef ref) {
     final state = ref.watch(serversProvider);
+    final needle = query.value?.trim().toLowerCase() ?? '';
 
     return ListenBuilder(
-      listenable: sessions,
+      listenable: Listenable.merge([sessions, query]),
       builder: () => SessionSideBar(
         names: sessions.names,
         index: sessions.index,
         onTap: onSelect,
         onClose: onClose,
         actions: actions,
+        header: query.value == null
+            ? null
+            : InlineSearchField(
+                controller: queryCtrl,
+                onChanged: (value) => query.value = value,
+                onClose: onEndSearch,
+              ),
         // Nothing here is running. A browser is a place you are looking at,
         // and the default heading — written for terminals, where a session can
         // have a command still going — said otherwise.
@@ -633,11 +647,19 @@ class _SideBar extends ConsumerWidget {
           // now always one of them, the rail read as the same name twice with
           // nothing between to say that one goes there and the other opens
           // another.
-          SideBarSection(libL10n.open),
-          SideBarTile(title: libL10n.device, onTap: onLocal),
+          // Dropped while a search is on: it is a row with a fixed name, and
+          // leaving it under a query that does not match it makes it read as a
+          // result.
+          if (needle.isEmpty) ...[
+            SideBarSection(libL10n.open),
+            SideBarTile(title: libL10n.device, onTap: onLocal),
+          ],
           SideBarSection(libL10n.servers),
           for (final id in state.serverOrder)
             if (state.servers[id] case final spi? when _canBrowse(ref, spi))
+              if (needle.isEmpty ||
+                  spi.name.toLowerCase().contains(needle) ||
+                  spi.displayAddr.toLowerCase().contains(needle))
               SideBarTile(
                 key: ValueKey(id),
                 leading: distIcon(spi.id, size: 22),
@@ -671,112 +693,6 @@ class _SessionActions extends StatelessWidget {
           for (final action in actions) ...[action, const SizedBox(width: 7)],
         ],
       ),
-    );
-  }
-}
-
-/// The rail's search, drawn where the session list was.
-///
-/// What it looks through is the servers this app knows about, and the answer
-/// opens one as a session — so it belongs in the column the sessions are in.
-/// `showSearch` would draw over the browser beside it as well, which is the
-/// thing the answer is about to change.
-class _RailSearch extends ConsumerStatefulWidget {
-  const _RailSearch({
-    super.key,
-    required this.onPick,
-    required this.onDone,
-  });
-
-  final void Function(Spi spi) onPick;
-  final VoidCallback onDone;
-
-  @override
-  ConsumerState<_RailSearch> createState() => _RailSearchState();
-}
-
-class _RailSearchState extends ConsumerState<_RailSearch> {
-  final _query = TextEditingController();
-
-  /// The way out, in the row the rail's own actions were in — replacing that
-  /// row is what took the button away, and a search with no exit is a column
-  /// the user is stuck in.
-  Widget get _close => IconButton(
-    icon: const Icon(Icons.arrow_back, size: 18),
-    tooltip: libL10n.close,
-    onPressed: widget.onDone,
-  );
-
-  @override
-  void dispose() {
-    _query.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Watched rather than read once: a server added or renamed while this is
-    // open is findable, which is the same reason the route version read the
-    // provider per query.
-    final state = ref.watch(serversProvider);
-    final needle = _query.text.toLowerCase();
-    final found = [
-      for (final id in state.serverOrder)
-        if (state.servers[id] case final spi? when _canBrowse(ref, spi))
-          if (needle.isEmpty ||
-              spi.name.toLowerCase().contains(needle) ||
-              spi.displayAddr.toLowerCase().contains(needle))
-            spi,
-    ];
-
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 3, right: 11, top: 7, bottom: 7),
-          child: Row(
-            children: [
-              _close,
-              Expanded(
-                // `noWrap`, wrapped here instead: `Input`'s own card adds
-                // vertical padding on top of the field's, which is a row and a
-                // half in a column whose entries are one line each.
-                child: CardX(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 11),
-                    child: Input(
-                      noWrap: true,
-                      controller: _query,
-                      autoFocus: true,
-                      suggestion: false,
-                      onChanged: (_) => setState(() {}),
-                      onSubmitted: (_) {
-                        if (found.length == 1) widget.onPick(found.single);
-                      },
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          // `SideBarTile`, the same as the list this is standing in for. A
-          // card with a subtitle is a different kind of thing to look at, and
-          // what changed is which servers are shown rather than what a server
-          // in this column looks like.
-          child: found.isEmpty
-              ? Center(child: Text(libL10n.empty, style: UIs.textGrey))
-              : ListView.builder(
-                  itemCount: found.length,
-                  itemBuilder: (_, i) => SideBarTile(
-                    key: ValueKey(found[i].id),
-                    leading: distIcon(found[i].id, size: 22),
-                    title: found[i].name,
-                    onTap: () => widget.onPick(found[i]),
-                  ),
-                ),
-        ),
-      ],
     );
   }
 }

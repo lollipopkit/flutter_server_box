@@ -83,22 +83,3 @@ class _SortOrder {
     }
   }
 }
-
-/// One row of the sort menu.
-class _SortOptionTile extends StatelessWidget {
-  const _SortOptionTile({required this.order, required this.onTap});
-
-  final _SortOrder order;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final selected = order.isCurrent;
-    final color = selected ? Theme.of(context).colorScheme.primary : null;
-    return ListTile(
-      leading: Icon(order.icon, color: color),
-      title: Text(order.label, style: TextStyle(color: color)),
-      onTap: onTap,
-    );
-  }
-}
