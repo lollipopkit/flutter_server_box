@@ -823,6 +823,16 @@ class SettingStore extends SqliteStore {
   late final sshPageSortBy = propertyDefault('sshPageSortBy', 0);
   late final sshPageSortAsc = propertyDefault('sshPageSortAsc', true);
 
+  /// How the server list is ordered, as an index into `_SortField` and a
+  /// direction — the same pair, stored the same way, as the two above.
+  ///
+  /// The defaults are the first field ascending, which is the order the user
+  /// arranged in the settings. Sorting the list some other way is a view of
+  /// it, and this is where that view is remembered; [serverOrder] stays the
+  /// arrangement itself.
+  late final serverPageSortBy = propertyDefault('serverPageSortBy', 0);
+  late final serverPageSortAsc = propertyDefault('serverPageSortAsc', true);
+
   /// Whether to automatically start/attach tmux on SSH connect.
   late final tmuxAuto = propertyDefault('tmuxAuto', false);
 
