@@ -4,6 +4,7 @@
 #include <windowsx.h>
 
 #include <algorithm>
+#include <cstring>
 #include <string>
 
 namespace {
@@ -23,6 +24,84 @@ constexpr int kChartHeight = 18;
 constexpr int kPadding = 5;
 constexpr int kLineGap = 1;
 constexpr int kMinRowWidth = 240;
+
+template <typename T>
+T LoadUser32Function(const char* name) {
+  const HMODULE user32 = GetModuleHandleW(L"user32.dll");
+  if (user32 == nullptr) return nullptr;
+  const FARPROC address = GetProcAddress(user32, name);
+  T function = nullptr;
+  static_assert(sizeof(function) == sizeof(address));
+  std::memcpy(&function, &address, sizeof(function));
+  return function;
+}
+
+UINT DpiForWindowCompat(HWND window) {
+  using GetDpiForWindowFn = UINT(WINAPI*)(HWND);
+  static const GetDpiForWindowFn get_dpi_for_window =
+      LoadUser32Function<GetDpiForWindowFn>("GetDpiForWindow");
+  if (get_dpi_for_window != nullptr && window != nullptr) {
+    const UINT dpi = get_dpi_for_window(window);
+    if (dpi != 0) return dpi;
+  }
+
+  HDC dc = GetDC(window);
+  if (dc == nullptr) return USER_DEFAULT_SCREEN_DPI;
+  const int dpi = GetDeviceCaps(dc, LOGPIXELSX);
+  ReleaseDC(window, dc);
+  return dpi > 0 ? static_cast<UINT>(dpi) : USER_DEFAULT_SCREEN_DPI;
+}
+
+UINT TrayDpi(HWND owner) {
+  const HWND taskbar = FindWindowW(L"Shell_TrayWnd", nullptr);
+  return DpiForWindowCompat(taskbar != nullptr ? taskbar : owner);
+}
+
+int SystemMetricForDpiCompat(int metric, UINT dpi) {
+  using GetSystemMetricsForDpiFn = int(WINAPI*)(int, UINT);
+  static const GetSystemMetricsForDpiFn get_system_metrics_for_dpi =
+      LoadUser32Function<GetSystemMetricsForDpiFn>("GetSystemMetricsForDpi");
+  if (get_system_metrics_for_dpi != nullptr) {
+    return get_system_metrics_for_dpi(metric, dpi);
+  }
+  return GetSystemMetrics(metric);
+}
+
+bool ReadMenuMetrics(UINT dpi, NONCLIENTMETRICSW* metrics) {
+  metrics->cbSize = sizeof(*metrics);
+  using SystemParametersInfoForDpiFn = BOOL(WINAPI*)(UINT, UINT, PVOID, UINT,
+                                                     UINT);
+  static const SystemParametersInfoForDpiFn system_parameters_info_for_dpi =
+      LoadUser32Function<SystemParametersInfoForDpiFn>(
+          "SystemParametersInfoForDpi");
+  if (system_parameters_info_for_dpi != nullptr) {
+    return system_parameters_info_for_dpi(
+               SPI_GETNONCLIENTMETRICS, sizeof(*metrics), metrics, 0, dpi) !=
+           FALSE;
+  }
+  return SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(*metrics),
+                               metrics, 0) != FALSE;
+}
+
+std::wstring TrayIconPath() {
+  wchar_t path[MAX_PATH] = {};
+  const DWORD path_size = GetModuleFileNameW(nullptr, path, MAX_PATH);
+  if (path_size == 0 || path_size == MAX_PATH) return std::wstring();
+  std::wstring icon_path(path, path_size);
+  const size_t slash = icon_path.find_last_of(L'\\');
+  if (slash != std::wstring::npos) icon_path.resize(slash + 1);
+  icon_path += L"data\\flutter_assets\\assets\\tray\\tray.ico";
+  return icon_path;
+}
+
+HICON LoadTrayIcon(UINT dpi) {
+  const std::wstring path = TrayIconPath();
+  if (path.empty()) return nullptr;
+  return static_cast<HICON>(LoadImageW(
+      nullptr, path.c_str(), IMAGE_ICON,
+      SystemMetricForDpiCompat(SM_CXSMICON, dpi),
+      SystemMetricForDpiCompat(SM_CYSMICON, dpi), LR_LOADFROMFILE));
+}
 
 std::wstring Widen(const std::string& utf8) {
   if (utf8.empty()) return std::wstring();
@@ -86,19 +165,7 @@ TrayIcon::TrayIcon(HWND window, flutter::BinaryMessenger* messenger)
         }
       });
 
-  // The menu's own fonts. `SystemParametersInfo` is what a menu is drawn with,
-  // so an owner-drawn row that picked its own would be the one row on the
-  // machine ignoring the user's font settings.
-  NONCLIENTMETRICS metrics = {};
-  metrics.cbSize = sizeof(metrics);
-  if (SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(metrics), &metrics,
-                           0)) {
-    name_font_ = CreateFontIndirect(&metrics.lfMenuFont);
-    LOGFONT small_font = metrics.lfMenuFont;
-    // 85% of the menu font, floored so it does not vanish on a small setting.
-    small_font.lfHeight = std::min(-11L, small_font.lfHeight * 85 / 100);
-    detail_font_ = CreateFontIndirect(&small_font);
-  }
+  RefreshVisualResources();
 }
 
 TrayIcon::~TrayIcon() {
@@ -107,24 +174,66 @@ TrayIcon::~TrayIcon() {
   if (detail_font_ != nullptr) DeleteObject(detail_font_);
 }
 
+int TrayIcon::Scale(int value) const {
+  return std::max(1, MulDiv(value, static_cast<int>(dpi_),
+                            USER_DEFAULT_SCREEN_DPI));
+}
+
+HFONT TrayIcon::NameFont() const {
+  return name_font_ != nullptr
+             ? name_font_
+             : static_cast<HFONT>(GetStockObject(DEFAULT_GUI_FONT));
+}
+
+HFONT TrayIcon::DetailFont() const {
+  return detail_font_ != nullptr ? detail_font_ : NameFont();
+}
+
+void TrayIcon::RefreshVisualResources() {
+  dpi_ = TrayDpi(window_);
+
+  // The menu's own font, at the notification area's DPI. An owner-drawn row
+  // that picked a private font would be the one row ignoring system settings.
+  NONCLIENTMETRICSW metrics = {};
+  if (ReadMenuMetrics(dpi_, &metrics)) {
+    HFONT next_name = CreateFontIndirectW(&metrics.lfMenuFont);
+    LOGFONTW small_font = metrics.lfMenuFont;
+    // 85% of the menu font, floored so it does not vanish on a small setting.
+    small_font.lfHeight = std::min(
+        -static_cast<LONG>(Scale(11)), small_font.lfHeight * 85 / 100);
+    HFONT next_detail = CreateFontIndirectW(&small_font);
+    if (next_name != nullptr && next_detail != nullptr) {
+      if (name_font_ != nullptr) DeleteObject(name_font_);
+      if (detail_font_ != nullptr) DeleteObject(detail_font_);
+      name_font_ = next_name;
+      detail_font_ = next_detail;
+    } else {
+      if (next_name != nullptr) DeleteObject(next_name);
+      if (next_detail != nullptr) DeleteObject(next_detail);
+    }
+  }
+
+  HICON next_icon = LoadTrayIcon(dpi_);
+  if (next_icon == nullptr) return;
+  if (icon_added_) {
+    NOTIFYICONDATAW update = icon_data_;
+    update.uFlags = NIF_ICON;
+    update.hIcon = next_icon;
+    if (!Shell_NotifyIconW(NIM_MODIFY, &update)) {
+      DestroyIcon(next_icon);
+      return;
+    }
+  }
+  if (icon_ != nullptr) DestroyIcon(icon_);
+  icon_ = next_icon;
+  icon_data_.hIcon = icon_;
+}
+
 bool TrayIcon::AddIcon() {
   if (icon_added_) return true;
 
   if (icon_ == nullptr) {
-    // Beside the executable, where the bundle puts it — the same place the
-    // Flutter asset it was declared as ends up.
-    wchar_t path[MAX_PATH] = {};
-    const DWORD path_size = GetModuleFileNameW(nullptr, path, MAX_PATH);
-    if (path_size == 0 || path_size == MAX_PATH) return false;
-    std::wstring icon_path(path, path_size);
-    const size_t slash = icon_path.find_last_of(L'\\');
-    if (slash != std::wstring::npos) icon_path.resize(slash + 1);
-    icon_path += L"data\\flutter_assets\\assets\\tray\\tray.ico";
-
-    icon_ = static_cast<HICON>(
-        LoadImageW(nullptr, icon_path.c_str(), IMAGE_ICON,
-                   GetSystemMetrics(SM_CXSMICON),
-                   GetSystemMetrics(SM_CYSMICON), LR_LOADFROMFILE));
+    icon_ = LoadTrayIcon(dpi_);
     if (icon_ == nullptr) return false;
   }
 
@@ -158,6 +267,10 @@ bool TrayIcon::OwnsRowItem(UINT id, ULONG_PTR data) const {
 }
 
 void TrayIcon::Destroy() {
+  pending_payload_.reset();
+  refresh_visuals_pending_ = false;
+  if (menu_open_) EndMenu();
+  menu_open_ = false;
   if (icon_added_) {
     Shell_NotifyIconW(NIM_DELETE, &icon_data_);
     icon_added_ = false;
@@ -174,6 +287,14 @@ void TrayIcon::Destroy() {
 }
 
 void TrayIcon::Update(const flutter::EncodableMap& payload) {
+  if (menu_open_) {
+    // TrackPopupMenu runs a nested message loop, so status channel calls can
+    // arrive while this menu is still being used. Keep its rows and itemData
+    // stable until it closes, and retain only the freshest pending model.
+    pending_payload_ = payload;
+    return;
+  }
+
   const auto* config_value = Find(payload, "config");
   const auto* config = config_value == nullptr
                            ? nullptr
@@ -257,11 +378,21 @@ void TrayIcon::ShowMenu() {
   // Documented dance: the window has to be foreground or the menu never gets
   // a mouse-up and stays on screen after the pointer leaves it.
   SetForegroundWindow(window_);
+  menu_open_ = true;
   const UINT command = TrackPopupMenu(
       menu_, TPM_RIGHTBUTTON | TPM_RETURNCMD | TPM_NONOTIFY, cursor.x,
       cursor.y, 0, window_, nullptr);
+  menu_open_ = false;
   PostMessage(window_, WM_NULL, 0, 0);
   if (command != 0) OnCommand(command);
+
+  if (refresh_visuals_pending_) {
+    refresh_visuals_pending_ = false;
+    RefreshVisualResources();
+  }
+  auto pending = std::move(pending_payload_);
+  pending_payload_.reset();
+  if (pending.has_value()) Update(*pending);
 }
 
 void TrayIcon::Measure(MEASUREITEMSTRUCT* measure) {
@@ -270,7 +401,12 @@ void TrayIcon::Measure(MEASUREITEMSTRUCT* measure) {
   const Row& row = rows_[index];
 
   HDC dc = GetDC(window_);
-  HGDIOBJ previous = SelectObject(dc, name_font_);
+  if (dc == nullptr) {
+    measure->itemHeight = Scale(28);
+    measure->itemWidth = Scale(kMinRowWidth);
+    return;
+  }
+  HGDIOBJ previous = SelectObject(dc, NameFont());
   TEXTMETRIC name_metrics = {};
   GetTextMetrics(dc, &name_metrics);
   SIZE name_size = {};
@@ -280,7 +416,7 @@ void TrayIcon::Measure(MEASUREITEMSTRUCT* measure) {
   int detail_height = 0;
   int detail_width = 0;
   if (!row.readings.empty()) {
-    SelectObject(dc, detail_font_);
+    SelectObject(dc, DetailFont());
     TEXTMETRIC detail_metrics = {};
     GetTextMetrics(dc, &detail_metrics);
     detail_height = detail_metrics.tmHeight;
@@ -297,12 +433,14 @@ void TrayIcon::Measure(MEASUREITEMSTRUCT* measure) {
   SelectObject(dc, previous);
   ReleaseDC(window_, dc);
 
-  measure->itemHeight = kPadding * 2 + name_metrics.tmHeight +
-                        (detail_height > 0 ? kLineGap + detail_height : 0);
+  measure->itemHeight = Scale(kPadding) * 2 + name_metrics.tmHeight +
+                        (detail_height > 0 ? Scale(kLineGap) + detail_height
+                                           : 0);
   const int text = std::max<int>(name_size.cx, detail_width);
-  measure->itemWidth =
-      std::max<int>(kMinRowWidth, kLeading + text + kTrailing +
-                                      (row.chart.empty() ? 0 : kChartWidth + 8));
+  measure->itemWidth = std::max<int>(
+      Scale(kMinRowWidth),
+      Scale(kLeading) + text + Scale(kTrailing) +
+          (row.chart.empty() ? 0 : Scale(kChartWidth + 8)));
 }
 
 void TrayIcon::Draw(DRAWITEMSTRUCT* draw) {
@@ -320,7 +458,7 @@ void TrayIcon::Draw(DRAWITEMSTRUCT* draw) {
       GetSysColor(selected ? COLOR_HIGHLIGHTTEXT : COLOR_MENUTEXT);
   SetBkMode(dc, TRANSPARENT);
 
-  HGDIOBJ previous_font = SelectObject(dc, name_font_);
+  HGDIOBJ previous_font = SelectObject(dc, NameFont());
   TEXTMETRIC name_metrics = {};
   GetTextMetrics(dc, &name_metrics);
 
@@ -331,58 +469,64 @@ void TrayIcon::Draw(DRAWITEMSTRUCT* draw) {
       if (!detail.empty()) detail += L"   ";
       detail += reading.label + L" " + reading.value;
     }
-    SelectObject(dc, detail_font_);
+    SelectObject(dc, DetailFont());
     TEXTMETRIC detail_metrics = {};
     GetTextMetrics(dc, &detail_metrics);
     detail_height = detail_metrics.tmHeight;
-    SelectObject(dc, name_font_);
+    SelectObject(dc, NameFont());
   }
 
-  const int name_y = rect.top + kPadding;
+  const int name_y = rect.top + Scale(kPadding);
   SetTextColor(dc, text_colour);
-  TextOut(dc, rect.left + kLeading, name_y, row.name.c_str(),
-          static_cast<int>(row.name.size()));
+  TextOutW(dc, rect.left + Scale(kLeading), name_y, row.name.c_str(),
+           static_cast<int>(row.name.size()));
 
   if (!detail.empty()) {
-    SelectObject(dc, detail_font_);
+    SelectObject(dc, DetailFont());
     // Dimmed against the name, which is what the second line is: the answer,
     // where the first line is the question.
     SetTextColor(dc, selected ? text_colour
                               : RGB(GetRValue(text_colour) / 2 + 0x60,
                                     GetGValue(text_colour) / 2 + 0x60,
                                     GetBValue(text_colour) / 2 + 0x60));
-    TextOut(dc, rect.left + kLeading, name_y + name_metrics.tmHeight + kLineGap,
-            detail.c_str(), static_cast<int>(detail.size()));
+    TextOutW(dc, rect.left + Scale(kLeading),
+             name_y + name_metrics.tmHeight + Scale(kLineGap), detail.c_str(),
+             static_cast<int>(detail.size()));
   }
   SelectObject(dc, previous_font);
 
   // Against the name's line, not the row's middle: it belongs to the line that
   // names the machine.
-  const int dot_y = name_y + (name_metrics.tmHeight - kDotSize) / 2;
+  const int dot_size = Scale(kDotSize);
+  const int dot_left = rect.left + Scale(10);
+  const int dot_y = name_y + (name_metrics.tmHeight - dot_size) / 2;
   HBRUSH dot_brush =
       CreateSolidBrush(selected ? text_colour : DotColour(row.state));
   HGDIOBJ previous_brush = SelectObject(dc, dot_brush);
   HGDIOBJ previous_pen = SelectObject(dc, GetStockObject(NULL_PEN));
-  Ellipse(dc, rect.left + 10, dot_y, rect.left + 10 + kDotSize,
-          dot_y + kDotSize);
+  Ellipse(dc, dot_left, dot_y, dot_left + dot_size, dot_y + dot_size);
   SelectObject(dc, previous_brush);
   SelectObject(dc, previous_pen);
   DeleteObject(dot_brush);
 
   if (row.chart.size() < 2) return;
 
-  const int chart_left = rect.right - kTrailing - kChartWidth;
-  const int chart_top = rect.top + (rect.bottom - rect.top - kChartHeight) / 2;
+  const int chart_width = Scale(kChartWidth);
+  const int chart_height = Scale(kChartHeight);
+  const int chart_left = rect.right - Scale(kTrailing) - chart_width;
+  const int chart_top =
+      rect.top + (rect.bottom - rect.top - chart_height) / 2;
   std::vector<POINT> points;
   points.reserve(row.chart.size());
   for (size_t i = 0; i < row.chart.size(); i++) {
     const double value = std::clamp(row.chart[i], 0.0, 1.0);
     points.push_back(
-        {chart_left + static_cast<int>(kChartWidth * i / (row.chart.size() - 1)),
-         chart_top + kChartHeight -
-             static_cast<int>(kChartHeight * value)});
+        {chart_left +
+             static_cast<int>(chart_width * i / (row.chart.size() - 1)),
+         chart_top + chart_height - static_cast<int>(chart_height * value)});
   }
-  HPEN pen = CreatePen(PS_SOLID, 1, selected ? text_colour : GetSysColor(COLOR_HOTLIGHT));
+  HPEN pen = CreatePen(PS_SOLID, Scale(1),
+                       selected ? text_colour : GetSysColor(COLOR_HOTLIGHT));
   HGDIOBJ previous_chart_pen = SelectObject(dc, pen);
   Polyline(dc, points.data(), static_cast<int>(points.size()));
   SelectObject(dc, previous_chart_pen);
@@ -421,9 +565,23 @@ bool TrayIcon::HandleMessage(UINT message, WPARAM wparam, LPARAM lparam,
     const bool should_restore = icon_added_ || menu_ != nullptr;
     icon_added_ = false;
     modern_notifications_ = false;
-    if (should_restore) AddIcon();
+    if (should_restore) {
+      RefreshVisualResources();
+      AddIcon();
+    }
     *result = 0;
     return true;
+  }
+
+  if (message == WM_DPICHANGED || message == WM_FONTCHANGE ||
+      message == WM_SETTINGCHANGE || message == WM_DISPLAYCHANGE) {
+    if (menu_open_) {
+      refresh_visuals_pending_ = true;
+    } else {
+      RefreshVisualResources();
+    }
+    // Flutter and its plugins also need these system notifications.
+    return false;
   }
 
   switch (message) {

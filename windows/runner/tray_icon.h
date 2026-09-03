@@ -7,6 +7,7 @@
 #include <windows.h>
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -53,6 +54,10 @@ class TrayIcon {
 
   bool AddIcon();
   bool OwnsRowItem(UINT id, ULONG_PTR data) const;
+  void RefreshVisualResources();
+  int Scale(int value) const;
+  HFONT NameFont() const;
+  HFONT DetailFont() const;
   void Update(const flutter::EncodableMap& payload);
   void Destroy();
   void ShowMenu();
@@ -70,6 +75,10 @@ class TrayIcon {
   HFONT detail_font_ = nullptr;
   bool compact_ = false;
   UINT taskbar_created_message_ = 0;
+  UINT dpi_ = USER_DEFAULT_SCREEN_DPI;
+  bool menu_open_ = false;
+  bool refresh_visuals_pending_ = false;
+  std::optional<flutter::EncodableMap> pending_payload_;
 
   // Indexed by the command id a menu item was given, which is how a click
   // finds the row it came from.
