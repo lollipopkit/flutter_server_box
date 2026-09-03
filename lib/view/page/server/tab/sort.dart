@@ -108,8 +108,11 @@ class _SortOrder {
       case _SortField.name:
         final sorted = order.toList();
         sorted.sort((a, b) {
-          final nameA = servers[a]?.name ?? '';
-          final nameB = servers[b]?.name ?? '';
+          // Case-folded, or the order is ASCII's rather than the alphabet's:
+          // every capitalised name sorts above every lowercase one, so `Zeus`
+          // comes before `alpha` under A-Z.
+          final nameA = (servers[a]?.name ?? '').toLowerCase();
+          final nameB = (servers[b]?.name ?? '').toLowerCase();
           return ascending ? nameA.compareTo(nameB) : nameB.compareTo(nameA);
         });
         return sorted;

@@ -184,6 +184,7 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
       tab.data.dispose();
     }
     _sessions.dispose();
+    _search.dispose();
     super.dispose();
   }
 
@@ -597,11 +598,15 @@ class _SideBar extends ConsumerWidget {
 
   Widget _buildSessionList(BuildContext context, WidgetRef ref) {
     final state = ref.watch(serversProvider);
-    final needle = search.needle;
 
     return ListenBuilder(
       listenable: Listenable.merge([sessions, search]),
-      builder: () => SessionSideBar(
+      builder: () {
+        // Read inside, or it is the query from whenever this method last ran:
+        // a notification rebuilds the builder, not the widget around it, so a
+        // value captured out here never changes.
+        final needle = search.needle;
+        return SessionSideBar(
         names: sessions.names,
         index: sessions.index,
         onTap: onSelect,
@@ -637,8 +642,9 @@ class _SideBar extends ConsumerWidget {
                 title: spi.name,
                 onTap: () => onServer(spi),
               ),
-        ],
-      ),
+          ],
+        );
+      },
     );
   }
 }

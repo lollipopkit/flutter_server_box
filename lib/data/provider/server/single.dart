@@ -263,6 +263,25 @@ class ServerNotifier extends _$ServerNotifier {
 
     if (!reconnect) {
       state = state.copyWith(spi: spi);
+      // Installed now, not eventually. Clearing the flag is enough while the
+      // server is between connections — the next one writes the script on its
+      // way up — but on a connection that is staying open nothing else asks:
+      // the install runs once, when the connection is made, and the status
+      // poll after it just runs what is already there. So an edited command
+      // would not take effect until the next reconnect.
+      //
+      // Not awaited and not fatal: the edit is saved either way, and the
+      // failure a write can hit here is the one `ensureScriptExec` already
+      // reports on the pages that call it.
+      if (rewrite && state.client != null) {
+        unawaited(() async {
+          try {
+            await ensureScriptExec();
+          } catch (e, st) {
+            Loggers.app.warning('Reinstalling script for ${spi.name}', e, st);
+          }
+        }());
+      }
       return;
     }
 

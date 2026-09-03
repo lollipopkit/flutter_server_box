@@ -41,9 +41,13 @@ extension _PaneList on _ServerPageState {
                 // and file rails put theirs — see `SessionSideBar`. They were
                 // a small floating button in the corner here, which is a
                 // second place to look for the same thing.
-                itemCount: rows.length + 1,
+                // The buttons stay even with nothing under them: what empties
+                // the rail is usually the search in that very row, and taking
+                // the row away would take the way to clear it.
+                itemCount: rows.isEmpty ? 2 : rows.length + 1,
                 itemBuilder: (context, index) {
                   if (index == 0) return _buildRailActions();
+                  if (rows.isEmpty) return _buildRailEmpty();
                   final row = rows[index - 1];
                   if (row.heading case final heading?) {
                     return SideBarSection(heading);
@@ -57,6 +61,22 @@ extension _PaneList on _ServerPageState {
                   );
                 },
               ),
+      ),
+    );
+  }
+
+  /// What the rail says when the search matched none of the servers.
+  ///
+  /// The query itself, since that is the thing to change. Not [EmptyPane]:
+  /// this is a row in a list rather than a surface, and that one fills what it
+  /// is given.
+  Widget _buildRailEmpty() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+      child: Text(
+        _search.needle,
+        textAlign: TextAlign.center,
+        style: TextStyle(color: Theme.of(context).colorScheme.outline),
       ),
     );
   }

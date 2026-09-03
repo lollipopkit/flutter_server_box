@@ -208,6 +208,20 @@ class _ServerPageState extends ConsumerState<ServerPage>
     final selected = ref.watch(serverSelectionProvider);
     final selectedSpi = selected == null ? null : servers[selected];
 
+    // Watched only for the order that depends on them, and only in this
+    // method — which is a `build`, where `ref.watch` belongs. The sort runs
+    // inside a `ListenableBuilder` below, and watching from that callback
+    // would be a dependency registered outside the build that owns it.
+    //
+    // `select` narrows it to the transition: a status poll landing does not
+    // reorder the list, a server connecting or dropping does.
+    final conns = _SortOrder.stored.field != _SortField.status
+        ? const <String, ServerConn>{}
+        : {
+            for (final id in serverOrder)
+              id: ref.watch(serverProvider(id).select((s) => s.conn)),
+          };
+
     // Both settings listened to, not read. They are changed elsewhere — the
     // switch on the settings page, the width by dragging the divider on the
     // terminal or files tab — and this page is kept alive behind those, so a
@@ -253,7 +267,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
                 final ordered = _SortOrder.stored.apply(
                   serverOrder,
                   servers,
-                  (id) => ref.read(serverProvider(id)).conn,
+                  (id) => conns[id] ?? ServerConn.disconnected,
                 );
                 // The rail gets everything, not the filtered list. It groups
                 // by tag instead of filtering to one, and has no switcher of

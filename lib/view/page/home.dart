@@ -49,6 +49,13 @@ class HomePage extends ConsumerStatefulWidget {
 /// already carries its own way into the settings at its foot.
 const _kMaxBarTabs = 4;
 
+/// What the navigation rail takes from the width a tab gets.
+///
+/// `NavigationRail`'s own default for an unextended rail, which it does not
+/// expose as a constant. Only used to decide whether a rail is worth showing
+/// — the rail lays itself out.
+const _kRailWidth = 80.0;
+
 class _HomePageState extends ConsumerState<HomePage>
     with
         AutomaticKeepAliveClientMixin,
@@ -271,8 +278,14 @@ class _HomePageState extends ConsumerState<HomePage>
     // when a tab can start using the room it costs — see [AdaptivePanes
     // .kSplitWidth]. `ResponsiveBreakpoints`' MOBILE class, which this used to
     // ask, ends at 600.
+    //
+    // Measured against what a tab would be left with, not against the window:
+    // the rail is taken off the top before any page sees the width, so between
+    // 800 and 880 a rail appeared beside pages that were still too narrow to
+    // split — the extra column bought nothing but its own presence.
     final narrow =
-        MediaQuery.sizeOf(context).width < AdaptivePanes.kSplitWidth;
+        MediaQuery.sizeOf(context).width - _kRailWidth <
+        AdaptivePanes.kSplitWidth;
     _syncFullscreenSystemUi();
 
     // No `appBar`, deliberately. It used to hold an empty box the height of
