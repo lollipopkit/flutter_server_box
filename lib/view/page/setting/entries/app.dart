@@ -14,7 +14,10 @@ extension _App on _AppSettingsPageState {
       _buildAppColor(),
       _buildCheckUpdate(),
       PlatformPublicSettings.buildBioAuth,
-      ?PlatformPublicSettings.buildPrivacyBlur,
+      // `buildPrivacyBlur` was here. Covering the app in the switcher is about
+      // who can read what is on screen, which is what the privacy page is —
+      // and a setting is easier to find under the subject it belongs to than
+      // in the list of everything.
       ?androidSettings,
       ?specific,
       _buildAppMore(),
@@ -359,6 +362,11 @@ extension _App on _AppSettingsPageState {
         // and a page whose only content is conditional can otherwise open
         // empty.
         _buildPrivacyPolicy().cardx,
+        // Last, after everything about what leaves the device. It is the one
+        // control here that acts on this moment instead — who can read the
+        // screen — so it reads as a coda rather than as the heading the page
+        // opens on.
+        ?PlatformPublicSettings.buildPrivacyBlur?.cardx,
       ],
     );
   }
@@ -387,6 +395,9 @@ extension _App on _AppSettingsPageState {
   /// control that changes a setting.
   Widget _buildPrivacyPolicy() {
     return ListTile(
+      // Every row on this page carries one, so the column of them reads as a
+      // list rather than as one row that happens to be indented differently.
+      leading: const Icon(Icons.policy_outlined),
       title: Text(l10n.privacyPolicy),
       trailing: const Icon(Icons.open_in_new, size: 17),
       onTap: Urls.privacyPolicy.launchUrl,
