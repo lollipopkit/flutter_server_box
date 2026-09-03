@@ -949,6 +949,77 @@ final typedField = find.byWidgetPredicate(
       expect(find.text('/docs'), findsOneWidget);
     });
 
+    testWidgets('or fills it in, one level at a time, without going there', (
+      tester,
+    ) async {
+      final backend = _MapBackend({
+        '/': [_dir('home')],
+        '/home': [_dir('me')],
+      });
+      await pump(tester, backend);
+
+      await type(tester, '/h');
+      await tester.tap(find.byIcon(Icons.north_west));
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      // In the field with a separator on the end, so the next completion is of
+      // what is inside it.
+      expect(fieldText(tester), '/home/');
+      expect(find.text('/home/me'), findsOneWidget);
+      // And still where it was: filling is not going. The listing behind is
+      // the root's, whose one entry is named rather than pathed.
+      expect(find.text('home'), findsOneWidget);
+      expect(find.text('me'), findsNothing);
+    });
+
+    testWidgets('and puts the path back when the field is left', (
+      tester,
+    ) async {
+      final backend = _MapBackend({
+        '/': [_dir('home')],
+      });
+      await pump(tester, backend);
+
+      await type(tester, '/nowhere-in-particular');
+      FocusManager.instance.primaryFocus?.unfocus();
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      // Abandoned, not submitted: the bar says where the browser is, and
+      // nowhere else was ever asked for — the second listing of `/` is the
+      // completion's, of the directory the typed name would have been in.
+      expect(fieldText(tester), '/');
+      expect(backend.listed.toSet(), {'/'});
+    });
+
+    testWidgets('and forgets what it listed once the directory changes', (
+      tester,
+    ) async {
+      final backend = _MapBackend({
+        '/': [_dir('one')],
+      });
+      await pump(tester, backend);
+
+      await type(tester, '/o');
+      expect(find.text('/one'), findsOneWidget);
+
+      // As a mutation would leave it — every one of them ends in `refresh`.
+      backend.tree['/'] = [_dir('one'), _dir('other')];
+      await tester.tap(find.byIcon(Icons.refresh));
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      // A different query, because `RawAutocomplete` recomputes on a change of
+      // text and the point here is what the cache holds, not what it is asked.
+      await type(tester, '/ot');
+
+      expect(find.text('/other'), findsOneWidget);
+    });
+
     testWidgets('within the browser root, never above it', (tester) async {
       // What the phone builds do: the root is the app's container, the bar
       // shows paths relative to it, and both halves of that have to hold for a

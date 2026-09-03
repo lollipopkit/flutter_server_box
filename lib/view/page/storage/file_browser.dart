@@ -202,7 +202,9 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   /// from there was read back as root-relative and re-rooted, naming
   /// `<root><root>/…`. Nothing exists there, so no path ever completed.
   late final _pathCtrl = TextEditingController(text: _displayPath(_path.path));
-  final _pathFocus = FocusNode();
+
+  /// Leaving the field puts the current path back — see [_onPathFocusChange].
+  late final _pathFocus = FocusNode()..addListener(_onPathFocusChange);
 
   /// Redrawn when it changes rather than by [setState], so a long delete does
   /// not rebuild the listing under it.
@@ -363,6 +365,13 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   @override
   Future<void> refresh() async {
     _syncPathField();
+    // Every mutation ends here, so this is where what a completion remembers
+    // stops being true: a folder just made would not be offered, and one just
+    // deleted would be. Dropped rather than reloaded — the next keystroke in
+    // the address bar reads the directory again, and until there is one there
+    // is nothing to be stale.
+    _completionDir = null;
+    _completionEntries = null;
     final listing = _list();
     // A block, not an arrow: `() => _entries = listing` returns the future it
     // assigned, and `setState` asserts against a callback that returns one —
@@ -375,6 +384,21 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     // here: the list itself shows what went wrong, and the callers that do not
     // await this would leave the error with nobody to catch it.
     await listing.then((_) {}, onError: (Object _) {});
+  }
+
+  /// Puts the path back when the field is left.
+  ///
+  /// Half a path that nobody submitted is not where the browser is, and a bar
+  /// that goes on showing it says the wrong thing about the directory
+  /// underneath — which is the one thing this bar is for. Abandoning an edit
+  /// leaves it as it was, as it does in every other address bar.
+  ///
+  /// Submitting unfocuses too, and this runs first: the field goes back to the
+  /// old path and stays there until the listing of the new one succeeds, which
+  /// is the truth for as long as that takes.
+  void _onPathFocusChange() {
+    if (_pathFocus.hasFocus) return;
+    _syncPathField();
   }
 
   /// Puts the current path in the address bar, unless it is being typed in.
@@ -500,6 +524,24 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     // would name `<root><root>/…`, which is nowhere.
     if (shown == root || shown.startsWith('$root/')) return shown;
     return shown == '/' ? root : '$root$shown';
+  }
+
+  /// Puts a completion in the field without going there.
+  ///
+  /// With a separator on the end, which is what makes it worth having: the
+  /// next completion is then of that directory's contents, so a path is walked
+  /// down one press per level. It is also what a shell's own completion does
+  /// with a directory.
+  ///
+  /// The cursor goes to the end and the field keeps focus — completions are
+  /// offered only while it has some, and this is the middle of typing.
+  void _fillPath(String option) {
+    final text = option.endsWith('/') ? option : '$option/';
+    _pathCtrl.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+    if (!_pathFocus.hasFocus) _pathFocus.requestFocus();
   }
 
   /// A path typed into the bar. Empty means the field was cleared and left,
@@ -1324,6 +1366,17 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
               leading: const Icon(Icons.folder_outlined, size: 18),
               title: Text(option, maxLines: 1, overflow: TextOverflow.ellipsis),
               onTap: () => onSelected(option),
+              // The other half of picking one: put it in the field and stay
+              // there. Tapping the row goes to that directory, which is what
+              // is wanted when it is the destination — and is not, when it is
+              // one level of a path still being typed.
+              trailing: IconButton(
+                tooltip: libL10n.edit,
+                // Points back at the field, which is where the text goes.
+                icon: const Icon(Icons.north_west, size: 16),
+                visualDensity: VisualDensity.compact,
+                onPressed: () => _fillPath(option),
+              ),
             );
           },
         ),
