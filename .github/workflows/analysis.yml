@@ -31,9 +31,9 @@ jobs:
   #
   # On a push to main every filter answers "everything" — that is the ref
   # releases are cut from, and narrowing what runs there trades away the wrong
-  # thing. `macos` is the one exception, and is answered honestly on both: 45
-  # minutes on a macOS runner for a diff that cannot reach the macOS product is
-  # not belt-and-braces, it is only the queue.
+  # thing. Native macOS and Windows builds are the exceptions, and are answered
+  # honestly on both: platform runners should not be queued for a diff that
+  # cannot reach their products.
   changes:
     name: What changed
     runs-on: ubuntu-latest
@@ -41,6 +41,7 @@ jobs:
       rust: ${{ steps.filter.outputs.rust }}
       ish: ${{ steps.filter.outputs.ish }}
       macos: ${{ steps.filter.outputs.macos }}
+      windows: ${{ steps.filter.outputs.windows }}
       dart: ${{ steps.filter.outputs.dart }}
       frontend: ${{ steps.filter.outputs.frontend }}
       docs: ${{ steps.filter.outputs.docs }}
@@ -56,14 +57,14 @@ jobs:
           # Which filters are answered from the diff. Everything, on a pull
           # request; on anything else only the ones named here, and the rest
           # run unconditionally.
-          strict=' rust ish macos dart frontend docs website '
+          strict=' rust ish macos windows dart frontend docs website '
 
           if [[ "${{ github.event_name }}" == 'pull_request' ]]; then
             files="$(gh api --paginate \
               "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" \
               --jq '.[].filename')"
           else
-            strict=' macos '
+            strict=' macos windows '
             base='${{ github.event.before }}'
             # A branch's first push has no `before` to compare against, and a
             # force-push leaves one that is no longer an ancestor. Either way
@@ -120,6 +121,10 @@ jobs:
           # runner. What only a macOS runner can answer is whether the project
           # and the Rust static library still link.
           emit macos "$shared|^macos/|^hook/|^crates/|^Cargo\.(toml|lock)$"
+          # Compile the Windows runner only when its native product or build
+          # inputs changed. Dart-only changes are already compiled and tested
+          # by `check` below on a cheaper runner.
+          emit windows "$shared|^windows/|^hook/|^crates/|^Cargo\.(toml|lock)$|^assets/tray/|^scripts/gen_tray_icons\.py$"
           # `crates/` because `flutter test` loads the FFI dylib and the
           # generated bindings come from there.
           #
@@ -409,6 +414,31 @@ jobs:
       # above has not rewritten.
       - name: Build the unsandboxed app
         run: flutter build macos --debug
+
+  windowsBuild:
+    name: Windows build
+    needs: changes
+    if: needs.changes.outputs.windows == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 1
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Install Flutter
+        uses: ./.github/actions/setup-flutter
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+
+      - name: Install dependencies
+        run: flutter pub get --enforce-lockfile
+
+      - name: Build the Windows app
+        run: flutter build windows --debug --no-pub
 
   check:
     needs: changes
