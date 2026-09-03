@@ -2,6 +2,7 @@
 "Connected" = "Подключено";
 "Connecting" = "Подключение";
 "Disconnected" = "Отключено";
+"Status unknown" = "Состояние неизвестно";
 "Loading" = "Загрузка";
 "Pick a server" = "Выберите сервер";
 "No credential — open the app" = "Нет учётных данных — откройте приложение";

@@ -29,6 +29,33 @@ actor LiveActivityManager {
 
     private var current: Activity<TerminalAttributes>?
 
+    /// How long a state is trusted without a refresh.
+    ///
+    /// Past it the system marks the activity stale and the widget says the
+    /// status is no longer known — see `TerminalLiveActivity`. Nothing else
+    /// can say so: an activity outlives the process that started it, which is
+    /// what ActivityKit is for, and an app killed from the switcher runs no
+    /// code to end its own. The launch after that clears the leftovers
+    /// (`TermSessionManager.init`), but until then this is all that keeps a
+    /// dead session from reporting itself as connected.
+    ///
+    /// Five minutes. A suspended app cannot refresh either, so a trip to
+    /// another app and back reads as stale for as long as it takes the app to
+    /// come forward and update — the two are indistinguishable from here, both
+    /// being "no code is running". The trade is deliberate: saying the status
+    /// is unknown while it is merely old costs a glance, and saying a killed
+    /// session is connected costs a wrong belief about a machine.
+    private static let staleAfter: TimeInterval = 5 * 60
+
+    private static func content(
+        from payload: Payload
+    ) -> ActivityContent<TerminalAttributes.ContentState> {
+        ActivityContent(
+            state: contentState(from: payload),
+            staleDate: Date().addingTimeInterval(staleAfter)
+        )
+    }
+
     private struct Payload: Decodable {
         let id: String
         let title: String
@@ -121,8 +148,7 @@ actor LiveActivityManager {
         guard let payload = Self.parse(json) else { return }
 
         if let activity = updatableActivity() {
-            let content = ActivityContent(state: Self.contentState(from: payload), staleDate: nil)
-            await apply(content, to: activity)
+            await apply(Self.content(from: payload), to: activity)
             return
         }
 
@@ -148,8 +174,7 @@ actor LiveActivityManager {
                 continue
             }
             if let activity = updatableActivity() {
-                let content = ActivityContent(state: Self.contentState(from: payload), staleDate: nil)
-                await apply(content, to: activity)
+                await apply(Self.content(from: payload), to: activity)
             }
             return
         }
@@ -178,8 +203,7 @@ actor LiveActivityManager {
             await start(json: json)
             return
         }
-        let content = ActivityContent(state: Self.contentState(from: payload), staleDate: nil)
-        await apply(content, to: activity)
+        await apply(Self.content(from: payload), to: activity)
     }
 
     func stop() async {
@@ -211,7 +235,7 @@ actor LiveActivityManager {
     private static func request(_ payload: Payload) async -> Activity<TerminalAttributes>? {
         await withCheckedContinuation { continuation in
             requestQueue.async {
-                let content = ActivityContent(state: contentState(from: payload), staleDate: nil)
+                let content = content(from: payload)
                 continuation.resume(
                     returning: try? Activity<TerminalAttributes>.request(
                         attributes: TerminalAttributes(id: payload.id),

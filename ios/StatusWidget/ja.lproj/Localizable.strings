@@ -2,6 +2,7 @@
 "Connected" = "接続済み";
 "Connecting" = "接続中";
 "Disconnected" = "切断";
+"Status unknown" = "ステータス不明";
 "Loading" = "読み込み中";
 "Pick a server" = "サーバーを選択";
 "No credential — open the app" = "認証情報がありません — App を開いてください";

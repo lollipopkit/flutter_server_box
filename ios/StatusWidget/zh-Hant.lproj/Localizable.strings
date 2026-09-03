@@ -2,6 +2,7 @@
 "Connected" = "已連線";
 "Connecting" = "連線中";
 "Disconnected" = "已中斷連線";
+"Status unknown" = "狀態未知";
 "Loading" = "載入中";
 "Pick a server" = "選擇伺服器";
 "No credential — open the app" = "無憑證 —— 請開啟 App";

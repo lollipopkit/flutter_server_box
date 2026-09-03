@@ -2,6 +2,7 @@
 "Connected" = "Terhubung";
 "Connecting" = "Menghubungkan";
 "Disconnected" = "Terputus";
+"Status unknown" = "Status tidak diketahui";
 "Loading" = "Memuat";
 "Pick a server" = "Pilih server";
 "No credential — open the app" = "Tidak ada kredensial — buka aplikasi";
