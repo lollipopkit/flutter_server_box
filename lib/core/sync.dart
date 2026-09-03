@@ -117,10 +117,26 @@ final class BakSyncer extends SyncIface {
     };
   }
 
-  /// Refuses to upload after a failed read of newer remote data. Everything
-  /// else defers to the base implementation.
+  /// Refuses to upload after a failed read of newer remote data, and waits for
+  /// [inheritLegacyRemote] to finish deciding. Everything else defers to the
+  /// base implementation.
   @override
   Future<void> backup([RemoteStorage? rs]) async {
+    // An upload is what creates the versioned remote file, and that file is
+    // exactly what `inheritLegacyRemote` reads as "already inherited" — so a
+    // sync overtaking it ends the one-shot without it ever having happened,
+    // and the history under the old name is never read. Launch starts the
+    // inherit without awaiting it, so the wait belongs here rather than there.
+    //
+    // Bounded, because nothing underneath it has a timeout: an unreachable
+    // remote must not leave this session unable to upload at all. Going ahead
+    // then costs the inheritance, which is what an unreadable remote costs
+    // anyway.
+    final inheriting = _inheriting;
+    if (inheriting != null) {
+      await inheriting.timeout(const Duration(seconds: 30), onTimeout: () {});
+    }
+
     final tooNew = _remoteTooNew;
     if (tooNew != null) {
       // Its own outcome, not a failure: the upload was refused because the
@@ -135,6 +151,10 @@ final class BakSyncer extends SyncIface {
     return super.backup(rs);
   }
 
+  /// The inherit in flight, awaited by [backup] so an upload cannot overtake
+  /// it.
+  Future<void>? _inheriting;
+
   /// Reads the pre-v3 remote file once, so upgrading doesn't look like a
   /// fresh start.
   ///
@@ -145,10 +165,13 @@ final class BakSyncer extends SyncIface {
   /// `Paths.init`.
   ///
   /// A no-op once the versioned file exists remotely, so it runs at most once
-  /// per remote.
+  /// per remote. Memoized for the same reason within a launch: a second call
+  /// would ask the remote a question this one is already answering.
   ///
   /// TODO: remove with the rest of the v2 compatibility shims.
-  Future<void> inheritLegacyRemote() async {
+  Future<void> inheritLegacyRemote() => _inheriting ??= _inheritLegacyRemote();
+
+  Future<void> _inheritLegacyRemote() async {
     final rs = remoteStorage;
     if (rs == null) return;
 
