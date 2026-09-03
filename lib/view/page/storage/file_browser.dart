@@ -17,7 +17,6 @@ import 'package:server_box/data/provider/file_transfer.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/storage/send_to.dart';
 import 'package:server_box/view/page/storage/transfer_announce.dart';
-import 'package:server_box/view/widget/omit_start_text.dart';
 import 'package:server_box/view/widget/unix_perm.dart';
 
 /// What an injected action is allowed to do to the browser it sits in.
@@ -165,6 +164,12 @@ class FileBrowserPage extends ConsumerStatefulWidget {
 
   final FileBrowserArgs args;
 
+  /// The address bar's field.
+  ///
+  /// Public so a test can tell it from a field that has just been opened —
+  /// this one is always on screen, being the path itself.
+  static const pathFieldKey = ValueKey('file-browser-path');
+
   @override
   ConsumerState<FileBrowserPage> createState() => _FileBrowserPageState();
 }
@@ -180,6 +185,24 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
 
   /// The bar's search: what is typed, and whether the bar is a field at all.
   final _search = InlineSearchController();
+
+  /// The address bar, which is a field rather than a label that opens one.
+  ///
+  /// Kept in step with [_path] by [refresh], which every move goes through —
+  /// and only there, because writing it during a build would notify the field
+  /// mid-frame. While it has focus it is the user's: a listing arriving under
+  /// a half-typed path must not retype it.
+  /// Seeded rather than filled by the first [refresh]: the opening listing
+  /// comes from the field initialiser below, not from a move, so nothing would
+  /// have put the starting path in it.
+  ///
+  /// Through [_displayPath], like every other write to it. Seeded with the raw
+  /// path the bar opened showing the container prefix — until the first move,
+  /// which is what made it look like the stripping worked — and anything typed
+  /// from there was read back as root-relative and re-rooted, naming
+  /// `<root><root>/…`. Nothing exists there, so no path ever completed.
+  late final _pathCtrl = TextEditingController(text: _displayPath(_path.path));
+  final _pathFocus = FocusNode();
 
   /// Redrawn when it changes rather than by [setState], so a long delete does
   /// not rebuild the listing under it.
@@ -232,6 +255,8 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   void dispose() {
     _sort.dispose();
     _search.dispose();
+    _pathCtrl.dispose();
+    _pathFocus.dispose();
     _busy.dispose();
     _dropping.dispose();
     _listFocus.dispose();
@@ -337,6 +362,7 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
 
   @override
   Future<void> refresh() async {
+    _syncPathField();
     final listing = _list();
     // A block, not an arrow: `() => _entries = listing` returns the future it
     // assigned, and `setState` asserts against a callback that returns one —
@@ -349,6 +375,149 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     // here: the list itself shows what went wrong, and the callers that do not
     // await this would leave the error with nobody to catch it.
     await listing.then((_) {}, onError: (Object _) {});
+  }
+
+  /// Puts the current path in the address bar, unless it is being typed in.
+  void _syncPathField() {
+    if (_pathFocus.hasFocus) return;
+    final shown = _displayPath(_path.path);
+    if (_pathCtrl.text == shown) return;
+    _pathCtrl.text = shown;
+  }
+
+  /// What the last completion listed, and for which directory.
+  ///
+  /// One directory's worth, because that is what a completion needs: every
+  /// keystroke past the last `/` narrows the same listing. Without it each one
+  /// was a round trip to the server.
+  String? _completionDir;
+  List<FileEntry>? _completionEntries;
+
+  /// The directories under what has been typed so far.
+  ///
+  /// Real ones, read from the machine — not the paths this browser has been to
+  /// before, which is what the dialog this replaced could offer. Directories
+  /// only: a path leads somewhere to open, and a file is not that.
+  ///
+  /// The last component is matched anywhere in a name, not just at its front —
+  /// see below.
+  ///
+  /// Through [FileBackend.list] and nothing more particular, so this is the
+  /// same feature over SFTP, over a `monitor` agent's file API, and over this
+  /// device's own disk.
+  Future<Iterable<String>> _pathOptions(TextEditingValue value) async {
+    // Only while it is being typed in. `RawAutocomplete` asks whenever the
+    // text changes, and it also changes when a move rewrites the field — so
+    // opening a directory listed it a second time, to complete a path nobody
+    // was typing.
+    if (!_pathFocus.hasFocus) return const [];
+
+    final typed = value.text;
+    // Nothing to complete against a name with no separator in it: what would
+    // be listed is the current directory, whose contents are already on
+    // screen underneath.
+    final cut = typed.lastIndexOf('/');
+    if (cut < 0) return const [];
+
+    final shownDir = cut == 0 ? '/' : typed.substring(0, cut);
+    final prefix = typed.substring(cut + 1).toLowerCase();
+    // Only what the browser would go to. Outside the root there is nothing to
+    // offer — picking it would be refused — and on a sandboxed platform the
+    // root is the container, so `/../..` is both typeable and none of this
+    // app's business to list.
+    final dir = _path.resolve(_absolutePath(shownDir));
+    if (dir == null) return const [];
+
+    if (_completionDir != dir) {
+      try {
+        final listed = _named(await backend.list(dir));
+        if (!mounted) return const [];
+        _completionDir = dir;
+        _completionEntries = listed;
+      } catch (_) {
+        // A directory that cannot be read completes to nothing, which is what
+        // it has to offer. Not reported: this runs on every keystroke, and a
+        // half-typed path naming nowhere is the ordinary case.
+        _completionDir = dir;
+        _completionEntries = const [];
+      }
+    }
+
+    final hidden = Stores.setting.showHiddenFiles.fetch();
+    // Anywhere in the name, as this tab's own search matches: a directory is
+    // remembered by a word in it as often as by what it starts with, and
+    // `logs-2026` is not something anyone types from the left.
+    final matches = <({String folded, FileEntry entry})>[];
+    for (final entry in _completionEntries ?? const <FileEntry>[]) {
+      if (!entry.isDir) continue;
+      if (!hidden && entry.name.startsWith('.')) continue;
+      final folded = entry.name.toLowerCase();
+      if (!folded.contains(prefix)) continue;
+      matches.add((folded: folded, entry: entry));
+    }
+
+    // What was typed from the start first, then the rest, each by name. A
+    // listing arrives in whatever order the far side keeps it in, which is no
+    // order at all to read — and a substring match widens the list enough that
+    // the one being typed has to stay at the top of it.
+    matches.sort((a, b) {
+      final aStarts = a.folded.startsWith(prefix);
+      if (aStarts != b.folded.startsWith(prefix)) return aStarts ? -1 : 1;
+      return a.folded.compareTo(b.folded);
+    });
+
+    return [
+      for (final match in matches)
+        _displayPath(BrowsePath.join(dir, match.entry.name)),
+    ];
+  }
+
+  /// A path as the address bar shows it.
+  ///
+  /// Everything above the browser's root is dropped. On a phone that prefix is
+  /// the app's container — a UUID under `/var/mobile/Containers` or
+  /// `/data/user/0` — which is most of the width, none of the meaning, and
+  /// somewhere the user can neither reach nor type. A server's root is `/`,
+  /// where this changes nothing.
+  String _displayPath(String absolute) {
+    final root = _path.root;
+    if (root == '/') return absolute;
+    if (absolute == root) return '/';
+    if (absolute.startsWith('$root/')) return absolute.substring(root.length);
+    return absolute;
+  }
+
+  /// The inverse, for what was typed into it.
+  ///
+  /// A relative path is taken from where the browser is, which is what a bare
+  /// name means anywhere else a path is typed.
+  String _absolutePath(String shown) {
+    final root = _path.root;
+    if (!shown.startsWith('/')) return BrowsePath.join(_path.path, shown);
+    if (root == '/') return shown;
+    // Already rooted, so left alone: a path pasted from somewhere else, or one
+    // this app itself showed before the prefix was stripped. Re-rooting it
+    // would name `<root><root>/…`, which is nowhere.
+    if (shown == root || shown.startsWith('$root/')) return shown;
+    return shown == '/' ? root : '$root$shown';
+  }
+
+  /// A path typed into the bar. Empty means the field was cleared and left,
+  /// which is not a request to go anywhere.
+  Future<void> _gotoTyped(String value) async {
+    final typed = value.trim();
+    _pathFocus.unfocus();
+    final target = typed.isEmpty ? '' : _absolutePath(typed);
+    if (target.isEmpty || target == _path.path) {
+      _syncPathField();
+      return;
+    }
+    final before = _path.path;
+    await goTo(target);
+    if (_path.path != before) widget.args.pathHistory?.add(target);
+    // A refusal leaves the old path in place, so the field has to be told —
+    // otherwise it keeps showing somewhere the browser is not.
+    _syncPathField();
   }
 
   @override
@@ -862,42 +1031,6 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     context.pop(_fullPath(entry));
   }
 
-  Future<void> _goto() async {
-    final history = widget.args.pathHistory;
-    final target = await context.showRoundDialog<String>(
-      title: l10n.goto,
-      child: history == null
-          ? Input(
-              autoFocus: true,
-              icon: Icons.abc,
-              label: libL10n.path,
-              suggestion: true,
-              onSubmitted: (value) => context.popDialog(value),
-            )
-          : Autocomplete<String>(
-              optionsBuilder: (value) =>
-                  history.all.where((e) => e.contains(value.text)),
-              fieldViewBuilder: (_, controller, node, _) => Input(
-                autoFocus: true,
-                icon: Icons.abc,
-                label: libL10n.path,
-                node: node,
-                controller: controller,
-                suggestion: true,
-                onSubmitted: (value) => context.popDialog(value),
-              ),
-            ),
-    );
-    if (target == null || target.isEmpty || !mounted) return;
-
-    final before = _path.path;
-    await goTo(target);
-    if (_path.path != before) history?.add(target);
-  }
-
-  /// Narrows this directory's listing in place — see [InlineSearchField].
-  ///
-
   // -------------------------------------------------------------------- build
 
   @override
@@ -1086,29 +1219,113 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     );
   }
 
-  /// The path, and a tap to type a different one.
+  /// The path, and the field it is typed into.
   ///
-  /// The pencil is what says so. A path is text that looks like a label, and
-  /// nothing about it suggests it can be tapped — which is why the go-to it
-  /// replaces needed a button of its own.
+  /// The path *is* the field: tapping it puts a cursor where the tap was. It
+  /// used to be a label that opened a dialog with an empty box in it, which
+  /// asked the user to retype a path they were looking at in order to change
+  /// one component of it.
+  ///
+  /// A card is what says it can be typed in. Drawn as bare text it read as a
+  /// caption, which is why the go-to it replaces needed a button of its own.
   Widget _buildPathBar() {
-    final scheme = Theme.of(context).colorScheme;
-
-    return InkWell(
-      onTap: _goto,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        child: Row(
-          children: [
-            Expanded(child: OmitStartText(_path.path)),
-            if (widget.args.pathTrailing case final trailing?) ...[
-              UIs.width7,
-              trailing,
+    return CardX(
+      child: RawAutocomplete<String>(
+        textEditingController: _pathCtrl,
+        focusNode: _pathFocus,
+        optionsBuilder: _pathOptions,
+        // Upwards, because this bar is the foot of the page. The default is
+        // down, and the space below the bar is the home indicator: the
+        // framework sizes the list to what is there, which came to
+        // `kMinInteractiveDimension` of it drawn over the field itself. That
+        // is why nothing appeared to open at all.
+        //
+        // Not `mostSpace` — that measures, and the answer here is known: there
+        // is never room below a bar that sits on the bottom edge, and a
+        // measured choice would put the list below the field on the one screen
+        // where the measurement went the other way.
+        optionsViewOpenDirection: OptionsViewOpenDirection.up,
+        // Picking one goes there. A completion of a path is a directory that
+        // exists, so there is nothing else to do with it — and stopping to
+        // press return afterwards would be a second answer to a question
+        // already answered.
+        onSelected: _gotoTyped,
+        fieldViewBuilder: (context, controller, node, onSubmit) => Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 2),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  // Named, because it is a text field that is always on
+                  // screen: a test looking for "the field a dialog just
+                  // opened" would otherwise find two.
+                  key: FileBrowserPage.pathFieldKey,
+                  controller: controller,
+                  focusNode: node,
+                  // The path is one line, however long it is, and a soft
+                  // keyboard should offer a key that acts rather than one
+                  // that wraps.
+                  maxLines: 1,
+                  textInputAction: TextInputAction.go,
+                  onSubmitted: _gotoTyped,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  decoration: const InputDecoration(
+                    isDense: true,
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(vertical: 10),
+                  ),
+                ),
+              ),
+              if (widget.args.pathTrailing case final trailing?) ...[
+                UIs.width7,
+                trailing,
+              ],
             ],
-            UIs.width7,
-            Icon(Icons.edit_outlined, size: 15, color: scheme.onSurfaceVariant),
-          ],
+          ),
+        ),
+        optionsViewBuilder: (context, onSelected, options) =>
+            _buildPathOptions(context, onSelected, options),
+      ),
+    );
+  }
+
+  /// The completions, above the bar and over whatever is behind it.
+  ///
+  /// Where it goes is settled outside this: the field is the anchor, and the
+  /// framework hands this builder a box as wide as the field and as tall as
+  /// the space in the chosen direction, with the keyboard already taken off.
+  /// So this only has to say what a row looks like, and how much of that space
+  /// to take — a list that could grow to the top of the window would cover the
+  /// directory it is completing against.
+  ///
+  /// Its own rather than the Material default, which is a flat rectangle: this
+  /// sits over a rounded card, and a corner is the cheapest way to say the two
+  /// belong together.
+  Widget _buildPathOptions(
+    BuildContext context,
+    void Function(String) onSelected,
+    Iterable<String> options,
+  ) {
+    final shown = options.toList();
+    return Material(
+      elevation: 3,
+      borderRadius: BorderRadius.circular(11),
+      clipBehavior: Clip.antiAlias,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 240),
+        child: ListView.builder(
+          padding: EdgeInsets.zero,
+          shrinkWrap: true,
+          itemCount: shown.length,
+          itemBuilder: (_, index) {
+            final option = shown[index];
+            return ListTile(
+              dense: true,
+              leading: const Icon(Icons.folder_outlined, size: 18),
+              title: Text(option, maxLines: 1, overflow: TextOverflow.ellipsis),
+              onTap: () => onSelected(option),
+            );
+          },
         ),
       ),
     );
