@@ -1,8 +1,12 @@
+import 'dart:async';
 import 'dart:io';
 
+import 'package:dartssh2/dartssh2.dart';
+import 'package:dio/dio.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:server_box/core/service/native_exit.dart';
+import 'package:server_box/core/utils/ssh_file_backend.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
@@ -28,6 +32,43 @@ abstract final class CrashReport {
   /// Also keeps the text small enough to render in a dialog — the file itself
   /// is allowed to be twenty times this.
   static const maxLogChars = 24 * 1024;
+
+  /// Whether an unhandled error is something *this app* got wrong.
+  ///
+  /// It gates the marker, and the marker raises a dialog on the next launch
+  /// asking the user to file a report — so what goes in it has to be something
+  /// a report could act on. A machine that is off, a link that dropped, a
+  /// server that answers the sftp subsystem with the output of a login script:
+  /// those are conditions of the world. The user watched them fail, the
+  /// failure is in the log either way, and being asked at the next launch to
+  /// report the network is the kind of noise that teaches people to dismiss
+  /// the dialog without reading it — including the time it is real.
+  ///
+  /// Narrow on purpose, and not an excuse. An error that reaches the zone
+  /// handler at all is a routing bug: something failed to hand it to the page
+  /// that asked, which is what the file browser's error view is for. This only
+  /// decides whether to interrupt the user about it.
+  static bool isAppFault(Object error) {
+    // Both are wrappers with the original inside, and it is the original that
+    // says where the failure came from.
+    if (error is SftpUnavailable) return isAppFault(error.cause);
+    if (error is AsyncError) return isAppFault(error.error);
+
+    // The whole `dart:io` family: a socket that would not open, a TLS
+    // handshake that failed, a process that would not start, a file the OS
+    // refused. `FileSystemException` is in there too, and included
+    // deliberately — a disk that is full or a directory that is not ours reads
+    // exactly like a path this app got wrong, and of the two only one is worth
+    // waking someone about.
+    if (error is IOException) return false;
+    if (error is TimeoutException) return false;
+
+    // Neither implements `Exception`, so neither is covered above.
+    if (error is SSHError || error is SftpError) return false;
+    if (error is DioException) return false;
+
+    return true;
+  }
 
   /// Builds the report from the previous run's log.
   static Future<String> build() async => compose(

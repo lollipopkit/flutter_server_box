@@ -12,6 +12,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:server_box/app.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/diag.dart';
+import 'package:server_box/core/service/crash_report.dart';
 import 'package:server_box/core/service/diagnostics_upload.dart';
 import 'package:server_box/core/service/native_exit.dart';
 import 'package:server_box/core/service/watch_sync.dart';
@@ -71,7 +72,10 @@ Future<void> _runInZone(Future<void> Function() body) async {
       } else {
         Loggers.app.severe('Zone error', e, s);
       }
-      CrashLog.markUnhandled();
+      // Recorded either way above; only the dialog on the next launch is
+      // gated. A server that answers with something this app cannot parse is
+      // not the app ending badly — see [CrashReport.isAppFault].
+      if (CrashReport.isAppFault(e)) CrashLog.markUnhandled();
     },
     zoneSpecification: zoneSpec,
   );
