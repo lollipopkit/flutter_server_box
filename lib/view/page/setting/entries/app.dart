@@ -334,7 +334,7 @@ extension _App on _AppSettingsPageState {
         if (isMobile) _buildWakeLock(),
         _buildCollapseUI(),
         if (isDesktop) _buildHideTitleBar(),
-        if (isDesktop) _buildTrayKeepRunning(),
+        if (isDesktop) _buildTray(),
         _buildEditRawSettings(),
       ],
     );
@@ -438,6 +438,23 @@ extension _App on _AppSettingsPageState {
     );
   }
 
+  /// The status icon: whether the app stays for it, and what it draws.
+  ///
+  /// Grouped because three settings under **More** would bury the two that
+  /// only matter once somebody has looked at the menu and wanted it different.
+  Widget _buildTray() {
+    return ExpandTile(
+      leading: const Icon(Icons.desktop_windows_outlined),
+      title: Text(l10n.trayTitle),
+      children: [
+        _buildTrayKeepRunning(),
+        _buildTrayReadings(),
+        _buildTrayChart(),
+        _buildTrayCompact(),
+      ],
+    );
+  }
+
   /// Whether closing the window leaves the app in the tray.
   ///
   /// The switch exists because the answer changes what the close button means,
@@ -453,6 +470,124 @@ extension _App on _AppSettingsPageState {
         // The window's own flag is what enforces it, and it is set once at
         // launch — so it has to be told, or the switch would only take effect
         // on the next start.
+        callback: (_) => ref.read(trayServiceProvider).applySetting(),
+      ),
+    );
+  }
+
+  /// Which readings a row carries.
+  ///
+  /// Checkboxes and not a reorderable list: a row is one line of text beside a
+  /// name, and which four of six are on it matters more than their order —
+  /// which stays the order they are listed in here.
+  Widget _buildTrayReadings() {
+    final chosen = _setting.trayMetrics.fetch();
+    final names = [
+      for (final m in TrayMetric.values)
+        if (chosen.contains(m.name)) m.label,
+    ];
+    return ListTile(
+      title: Text(l10n.trayReadings),
+      subtitle: Text(
+        names.isEmpty ? libL10n.empty : names.join('  '),
+        style: UIs.text13Grey,
+      ),
+      trailing: const Icon(Icons.keyboard_arrow_right),
+      onTap: () async {
+        final picked = {..._setting.trayMetrics.fetch()};
+        final ok = await context.showRoundDialog<bool>(
+          title: l10n.trayReadings,
+          child: StatefulBuilder(
+            builder: (_, setState) => Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final metric in TrayMetric.values)
+                  CheckboxListTile(
+                    dense: true,
+                    title: Text(metric.label),
+                    value: picked.contains(metric.name),
+                    onChanged: (on) => setState(() {
+                      if (on == true) {
+                        picked.add(metric.name);
+                      } else {
+                        picked.remove(metric.name);
+                      }
+                    }),
+                  ),
+              ],
+            ),
+          ),
+          actions: Btnx.cancelOk,
+        );
+        if (ok != true) return;
+        // Written in the enum's order, which is the order they are drawn.
+        await _setting.trayMetrics.set([
+          for (final m in TrayMetric.values)
+            if (picked.contains(m.name)) m.name,
+        ]);
+        if (!mounted) return;
+        setStateSafe(() {});
+        await ref.read(trayServiceProvider).applySetting();
+      },
+    );
+  }
+
+  /// Which series the row's sparkline draws, or none.
+  ///
+  /// Only the metrics a chart says something about — a disk that is 41% full
+  /// for a week is a flat line spending the width of the row on nothing.
+  Widget _buildTrayChart() {
+    final current = TrayMetric.byName(_setting.trayChart.fetch());
+    return ListTile(
+      title: Text(l10n.trayChart),
+      subtitle: Text(
+        current?.label ?? l10n.trayChartNone,
+        style: UIs.text13Grey,
+      ),
+      trailing: const Icon(Icons.keyboard_arrow_right),
+      onTap: () async {
+        final options = <String?>[
+          null,
+          for (final m in TrayMetric.values)
+            if (m.chartable) m.name,
+        ];
+        final picked = await context.showRoundDialog<String>(
+          title: l10n.trayChart,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final name in options)
+                ListTile(
+                  dense: true,
+                  title: Text(
+                    name == null
+                        ? l10n.trayChartNone
+                        : TrayMetric.byName(name)!.label,
+                  ),
+                  trailing: (current?.name ?? '') == (name ?? '')
+                      ? const Icon(Icons.check, size: 18)
+                      : null,
+                  onTap: () => context.popDialog(name ?? ''),
+                ),
+            ],
+          ),
+          actions: [Btn.cancel()],
+        );
+        if (picked == null) return;
+        await _setting.trayChart.set(picked);
+        if (!mounted) return;
+        setStateSafe(() {});
+        await ref.read(trayServiceProvider).applySetting();
+      },
+    );
+  }
+
+  Widget _buildTrayCompact() {
+    return ListTile(
+      title: Text(l10n.trayCompact),
+      subtitle: Text(l10n.trayCompactTip, style: UIs.text13Grey),
+      trailing: StoreSwitch(
+        prop: _setting.trayCompact,
         callback: (_) => ref.read(trayServiceProvider).applySetting(),
       ),
     );

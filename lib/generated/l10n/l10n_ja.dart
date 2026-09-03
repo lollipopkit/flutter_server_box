@@ -422,6 +422,25 @@ class AppLocalizationsJa extends AppLocalizations {
       'このスイッチはプログラムがバックグラウンドで実行を試みることを意味しますが、実際にバックグラウンドで実行できるかどうかは、権限が有効になっているかに依存します。AOSPベースのAndroid ROMでは、このアプリの「バッテリー最適化」をオフにしてください。MIUIでは、省エネモードを「無制限」に変更してください。';
 
   @override
+  String get trayTitle => 'Status icon';
+
+  @override
+  String get trayReadings => 'Readings';
+
+  @override
+  String get trayChart => 'Chart';
+
+  @override
+  String get trayChartNone => 'None';
+
+  @override
+  String get trayCompact => 'Compact rows';
+
+  @override
+  String get trayCompactTip =>
+      'One line per server, without the chart. Also what Linux draws either way — its panel menu is sent over D-Bus, which carries a label but not a layout.';
+
+  @override
   String get trayKeepRunning => 'トレイで実行し続ける';
 
   @override

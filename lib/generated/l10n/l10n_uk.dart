@@ -451,6 +451,25 @@ class AppLocalizationsUk extends AppLocalizations {
       'Цей перемикач лише вказує на те, що програма намагатиметься працювати у фоновому режимі. Чи може вона працювати у фоновому режимі, залежить від прав доступу. Для AOSP-орієнтованих Android ROM, будь ласка, вимкніть \"Оптимізацію акумулятора\" в цьому додатку. Для MIUI / HyperOS, будь ласка, змініть політику економії енергії на \"Нескінченна\".';
 
   @override
+  String get trayTitle => 'Status icon';
+
+  @override
+  String get trayReadings => 'Readings';
+
+  @override
+  String get trayChart => 'Chart';
+
+  @override
+  String get trayChartNone => 'None';
+
+  @override
+  String get trayCompact => 'Compact rows';
+
+  @override
+  String get trayCompactTip =>
+      'One line per server, without the chart. Also what Linux draws either way — its panel menu is sent over D-Bus, which carries a label but not a layout.';
+
+  @override
   String get trayKeepRunning => 'Продовжувати роботу в треї';
 
   @override

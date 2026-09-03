@@ -457,6 +457,25 @@ class AppLocalizationsFr extends AppLocalizations {
       'Cette option signifie seulement que le programme essaiera de s\'exécuter en arrière-plan, que cela soit possible dépend de l\'autorisation activée ou non. Pour Android natif, veuillez désactiver l\'« Optimisation de la batterie » dans cette application, et pour MIUI, veuillez changer la politique d\'économie d\'énergie en « Illimité ».';
 
   @override
+  String get trayTitle => 'Status icon';
+
+  @override
+  String get trayReadings => 'Readings';
+
+  @override
+  String get trayChart => 'Chart';
+
+  @override
+  String get trayChartNone => 'None';
+
+  @override
+  String get trayCompact => 'Compact rows';
+
+  @override
+  String get trayCompactTip =>
+      'One line per server, without the chart. Also what Linux draws either way — its panel menu is sent over D-Bus, which carries a label but not a layout.';
+
+  @override
   String get trayKeepRunning =>
       'Continuer à s’exécuter dans la zone de notification';
 

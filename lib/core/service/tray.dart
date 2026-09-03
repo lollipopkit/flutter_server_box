@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart' hide Provider;
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/app_navigator.dart';
 import 'package:server_box/data/model/app/tab.dart';
@@ -9,50 +11,58 @@ import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/selection.dart';
 import 'package:server_box/data/provider/server/single.dart';
-import 'package:server_box/data/res/build_data.dart';
+import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/setting/entry.dart';
-import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
 
 /// The desktop status icon, and the window behaviour that makes it worth
 /// having.
 ///
-/// Desktop only. The three platforms put it in different places — the macOS
-/// menu bar, the Windows notification area, a Linux panel through
-/// libayatana-appindicator — and `tray_manager` is what makes those one API.
-/// It is the sibling of the `window_manager` this app already ships, which is
-/// why there is no hand-written native code here.
-///
 /// **What it is for.** A machine you are watching is a thing you glance at, and
 /// a glance should not cost switching to an app and waiting for a window. The
-/// menu says what each machine is doing, and clicking one opens the app on it.
+/// menu says what each machine is doing — a chart and two lines where the
+/// platform allows it — and clicking one opens the app on that server.
 ///
-/// The icon itself never changes. It was going to go red when something
-/// failed, and that is one more thing in a menu bar competing for attention —
-/// the row that failed says so, in the place where something can be done about
-/// it.
+/// **Why there is no plugin behind it.** The one on pub sets a menu item's
+/// title and nothing else: no image, no attributed title, no view. A row that
+/// is a name, a sparkline and a line of readings is not reachable through it on
+/// any platform. So each platform draws its own and this side only describes
+/// what to draw — see [TrayModel], which crosses as JSON with the text already
+/// formatted and the series already normalised. Nothing over there has to know
+/// what a percentage is or how this app renders a byte count.
 ///
-/// Nothing here polls. The status comes from the providers that were already
-/// refreshing on the app's own cycle, so the tray costs one menu rebuild per
-/// change and nothing at all while nothing changes.
-class TrayService with TrayListener, WindowListener {
+/// **What each platform can do**, because they differ and the difference is not
+/// this app's choice:
+/// - macOS puts an arbitrary `NSView` in a menu item, so it gets the layout.
+/// - Windows owner-draws its menu, so it gets the same.
+/// - Linux reaches its panel through libayatana-appindicator, whose menu is
+///   serialised over the dbusmenu protocol. A widget cannot cross D-Bus. A
+///   label and one image per item can, so a row there is one line — the same
+///   line the compact layout draws everywhere else.
+///
+/// Nothing here polls. The rows come from the providers that were already
+/// refreshing on the app's own cycle, so the menu costs one rebuild per change
+/// and nothing at all while nothing changes.
+class TrayService with WindowListener {
   TrayService(this._ref);
 
   final Ref _ref;
 
-  /// Per-server subscriptions, keyed by id. Kept so that a server added or
-  /// removed while the app runs is picked up: the set of `serverProvider`
-  /// instances is not knowable up front.
+  static const _channel = MethodChannel('${Miscs.pkgName}/tray');
+
+  /// Per-server subscriptions, keyed by id. Kept so a server added or removed
+  /// while the app runs is picked up: which `serverProvider` instances exist is
+  /// not knowable up front.
   final _watched = <String, ProviderSubscription<ServerState>>{};
 
   ProviderSubscription<ServersState>? _watchedAll;
 
   /// What was last pushed, so an unchanged model is not pushed again.
   ///
-  /// A menu is replaced whole — no platform here offers editing one item — so
-  /// a push while the menu is open closes it. At the poll rate that would make
-  /// the menu unusable on a machine whose CPU reading moves every cycle.
+  /// A menu is replaced whole on all three platforms — none of them offers
+  /// editing one item — so a push while the menu is open closes it. At the
+  /// refresh rate that would make the menu unusable.
   TrayModel? _shown;
 
   Timer? _debounce;
@@ -60,10 +70,9 @@ class TrayService with TrayListener, WindowListener {
 
   Future<void> init() async {
     if (!isDesktop) return;
-    trayManager.addListener(this);
+    _channel.setMethodCallHandler(_onNative);
     windowManager.addListener(this);
     await _applyCloseBehaviour();
-    await _setIcon();
 
     _watchedAll = _ref.listen<ServersState>(
       serversProvider,
@@ -75,22 +84,26 @@ class TrayService with TrayListener, WindowListener {
   void dispose() {
     _disposed = true;
     _debounce?.cancel();
-    trayManager.removeListener(this);
     windowManager.removeListener(this);
     for (final sub in _watched.values) {
       sub.close();
     }
     _watched.clear();
     _watchedAll?.close();
-    if (isDesktop) trayManager.destroy();
+    if (isDesktop) unawaited(_invoke('destroy'));
   }
 
-  /// Whether closing the window leaves the app running.
+  /// Re-reads the settings and pushes what they changed.
   ///
-  /// Read on every change rather than cached: the switch is on the settings
-  /// page and takes effect without a restart, and the window's own prevention
-  /// flag is the thing that has to agree with it.
-  Future<void> applySetting() => _applyCloseBehaviour();
+  /// Called by the switches themselves. The layout is part of the payload, so
+  /// changing one is a push like any other — except that the model has to be
+  /// forgotten first, since the rows may be identical and only the shape
+  /// different.
+  Future<void> applySetting() async {
+    await _applyCloseBehaviour();
+    _shown = null;
+    _schedule();
+  }
 
   Future<void> _applyCloseBehaviour() async {
     if (!isDesktop) return;
@@ -119,7 +132,7 @@ class TrayService with TrayListener, WindowListener {
   }
 
   /// Coalesced, because a refresh cycle finishing lands as one change per
-  /// server within a few milliseconds of itself — and each one would otherwise
+  /// server within a few milliseconds of itself — and each would otherwise
   /// rebuild the whole menu.
   void _schedule() {
     if (_disposed) return;
@@ -127,138 +140,96 @@ class TrayService with TrayListener, WindowListener {
     _debounce = Timer(const Duration(milliseconds: 300), _sync);
   }
 
+  /// What the settings say the menu should look like.
+  TrayConfig get config {
+    final metrics = <TrayMetric>[];
+    for (final name in Stores.setting.trayMetrics.fetch()) {
+      final metric = TrayMetric.byName(name);
+      if (metric != null) metrics.add(metric);
+    }
+    final chart = TrayMetric.byName(Stores.setting.trayChart.fetch());
+    return TrayConfig(
+      metrics: metrics,
+      // A metric a chart can say nothing about is not one to draw — see
+      // [TrayMetric.chartable]. Reachable by picking a chart metric and then
+      // removing it from the readings, which is where the two settings meet.
+      chart: chart != null && chart.chartable ? chart : null,
+      compact: Stores.setting.trayCompact.fetch(),
+    );
+  }
+
   Future<void> _sync() async {
     if (_disposed || !isDesktop) return;
 
+    final settings = config;
     final state = _ref.read(serversProvider);
     final lines = <TrayLine>[];
     for (final id in state.serverOrder) {
       final spi = state.servers[id];
       if (spi == null) continue;
       final server = _ref.read(serverProvider(id));
+      final up = trayStateOf(server.conn) == TrayLineState.ok;
       lines.add(
         TrayLine(
           id: id,
           name: spi.name,
           state: trayStateOf(server.conn),
-          detail: trayDetail(
-            conn: server.conn,
-            cpuPercent: server.status.cpu.usedPercent(),
-            memUsedKib: server.status.mem.total - server.status.mem.avail,
-            memTotalKib: server.status.mem.total,
-          ),
+          // Only for a machine that answered. A row for one that is down says
+          // so in its dot, and readings left over from before it went down
+          // would be the wrong kind of reassuring.
+          readings: up
+              ? trayReadings(status: server.status, metrics: settings.metrics)
+              : const [],
+          chart: up && settings.drawsChart
+              ? trayChart(status: server.status, metric: settings.chart)
+              : const [],
         ),
       );
     }
-    final model = TrayModel(lines);
+
+    final model = TrayModel(lines: lines, config: settings);
     if (model == _shown) return;
     _shown = model;
-
-    try {
-      await trayManager.setContextMenu(_menu(model));
-    } catch (e, s) {
-      // Best effort by nature: a Linux desktop with no status area at all is a
-      // supported place to run, and the app is not the tray.
-      Loggers.app.warning('Tray: updating', e, s);
-    }
+    await _invoke('update', jsonEncode(model.toJson()));
   }
 
-  /// Once, at startup. Nothing changes it afterwards.
-  Future<void> _setIcon() async {
+  Future<void> _invoke(String method, [Object? arg]) async {
     try {
-      await trayManager.setIcon(
-        // macOS reads this through the asset bundle; Windows and Linux build a
-        // path under the executable, which is why the three are declared as
-        // assets rather than loaded here.
-        isMacOS
-            ? _mac
-            : isWindows
-            ? _win
-            : _linux,
-        // Black-and-alpha, which the system inverts along with the menu bar.
-        isTemplate: isMacOS,
-      );
+      await _channel.invokeMethod(method, arg);
+    } on MissingPluginException {
+      // A desktop runner with no tray of its own. Nothing to report: the app
+      // is not the tray.
     } catch (e, s) {
-      Loggers.app.warning('Tray: setting the icon', e, s);
+      Loggers.app.warning('Tray: $method', e, s);
     }
-  }
-
-  static const _mac = 'assets/tray/mac.png';
-  static const _win = 'assets/tray/tray.ico';
-  static const _linux = 'assets/tray/tray.png';
-
-  static const _keyOpen = 'open';
-  static const _keySettings = 'settings';
-  static const _keyQuit = 'quit';
-  static const _keyServer = 'server:';
-
-  /// Three groups: the way in, what there is to look at, and what to do with
-  /// the app itself.
-  ///
-  /// Opening the app is first because it is what the icon is most often
-  /// clicked for, and last is where a list of servers pushes it further down
-  /// with every machine added. The servers sit under a heading — a disabled
-  /// item, which is what a native menu makes of one — so that a row is read as
-  /// a machine rather than as another command. An install with no servers says
-  /// so in that group rather than leaving a heading with nothing under it.
-  Menu _menu(TrayModel model) {
-    return Menu(
-      items: [
-        MenuItem(key: _keyOpen, label: '${libL10n.open} ${BuildData.name}'),
-        MenuItem.separator(),
-        MenuItem(label: libL10n.servers, disabled: true),
-        if (model.lines.isEmpty)
-          MenuItem(label: libL10n.empty, disabled: true)
-        else
-          for (final line in model.lines)
-            MenuItem(key: '$_keyServer${line.id}', label: line.label),
-        MenuItem.separator(),
-        MenuItem(key: _keySettings, label: libL10n.setting),
-        MenuItem(key: _keyQuit, label: libL10n.exit),
-      ],
-    );
   }
 
   // ----------------------------------------------------------------- events
 
-  /// Left click. macOS opens the menu, because a menu bar item with no menu is
-  /// a button that does nothing visible; Windows and Linux open the window,
-  /// which is what a taskbar icon does there.
-  @override
-  void onTrayIconMouseDown() {
-    if (isMacOS) {
-      trayManager.popUpContextMenu();
-      return;
+  Future<Object?> _onNative(MethodCall call) async {
+    switch (call.method) {
+      case 'open':
+        await _showWindow();
+      case 'settings':
+        await _openSettings();
+      case 'quit':
+        // Past the prevention flag, which is the point of the item: the window
+        // refuses to close while the app is meant to stay resident, and this is
+        // the way out that leaves.
+        await windowManager.destroy();
+      case 'server':
+        final id = call.arguments;
+        if (id is String) await _openServer(id);
     }
-    unawaited(_showWindow());
+    return null;
   }
 
-  @override
-  void onTrayIconRightMouseDown() {
-    trayManager.popUpContextMenu();
-  }
-
-  @override
-  void onTrayMenuItemClick(MenuItem menuItem) {
-    final key = menuItem.key;
-    if (key == null) return;
-    if (key == _keyOpen) {
-      unawaited(_showWindow());
-      return;
-    }
-    if (key == _keySettings) {
-      unawaited(_openSettings());
-      return;
-    }
-    if (key == _keyQuit) {
-      // Past the prevention flag, which is the whole point of this item: the
-      // window refuses to close while the app is meant to stay resident, and
-      // this is the way out that leaves.
-      unawaited(windowManager.destroy());
-      return;
-    }
-    if (key.startsWith(_keyServer)) {
-      unawaited(_openServer(key.substring(_keyServer.length)));
+  Future<void> _showWindow() async {
+    try {
+      await windowManager.show();
+      await windowManager.focus();
+    } catch (e, s) {
+      Loggers.app.warning('Tray: showing the window', e, s);
     }
   }
 
@@ -273,19 +244,10 @@ class TrayService with TrayListener, WindowListener {
     SettingsPage.route.go(context);
   }
 
-  Future<void> _showWindow() async {
-    try {
-      await windowManager.show();
-      await windowManager.focus();
-    } catch (e, s) {
-      Loggers.app.warning('Tray: showing the window', e, s);
-    }
-  }
-
   /// Brings the window forward on that server.
   ///
   /// The window first: selecting a server rebuilds a page nobody can see yet,
-  /// and doing it in the other order showed the previous selection for a frame.
+  /// and the other order showed the previous selection for a frame.
   Future<void> _openServer(String id) async {
     await _showWindow();
     if (_ref.read(serversProvider).servers[id] == null) return;
@@ -297,7 +259,7 @@ class TrayService with TrayListener, WindowListener {
   ///
   /// `setPreventClose` only stops the close; something still has to say what
   /// happens instead, and hiding is what keeps the engine — and so the polling
-  /// behind the tray — alive. Destroying the window would take both with it.
+  /// behind the menu — alive. Destroying the window would take both with it.
   @override
   void onWindowClose() {
     if (!Stores.setting.trayKeepRunning.fetch()) {

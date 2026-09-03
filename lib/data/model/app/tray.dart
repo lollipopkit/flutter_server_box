@@ -1,13 +1,13 @@
-import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/server.dart';
 
-/// What one server looks like in the tray menu.
+/// What one server looks like in the status menu.
 ///
-/// A plain row of text, and deliberately so. A native menu draws what it is
-/// given: macOS would take an image per item, Windows wants owner-drawn menus
-/// for anything but a checkmark, and GTK wants a widget — three ways to say the
-/// same small thing, none of them shared. A glyph in the label reads the same
-/// on all three and needs no per-platform code at all.
+/// Described here and drawn natively — see `TrayService`. The three platforms
+/// draw a menu row in three unrelated ways, and none of them takes a widget
+/// from Flutter, so what crosses the channel is this: text that has already
+/// been formatted, and a series that has already been normalised. Nothing on
+/// the far side has to know what a percentage is or how to render one.
 enum TrayLineState {
   /// Connected, and the machine answered.
   ok('●'),
@@ -24,16 +24,12 @@ enum TrayLineState {
 
   const TrayLineState(this.glyph);
 
-  /// Drawn before the name. Chosen from what a menu font can be relied on to
-  /// have: these four are in every system UI font on the three platforms.
+  /// Drawn before the name where a row is one line of text — Linux, and the
+  /// compact layout. The rich layouts draw a dot themselves.
   final String glyph;
 }
 
 /// Which of the four a connection reads as.
-///
-/// [ServerConn.finished] and [ServerConn.connected] both mean the machine is
-/// there; the difference between them is whether a status has been parsed yet,
-/// which the detail column says.
 TrayLineState trayStateOf(ServerConn conn) => switch (conn) {
   ServerConn.failed => TrayLineState.failed,
   ServerConn.disconnected => TrayLineState.offline,
@@ -41,97 +37,190 @@ TrayLineState trayStateOf(ServerConn conn) => switch (conn) {
   ServerConn.connected || ServerConn.finished => TrayLineState.ok,
 };
 
-/// The right-hand part of a row: what the machine is doing, or why there is
-/// nothing to say about it.
+/// A reading the menu can show, and the series a chart can be drawn from.
 ///
-/// Percentages rather than the absolute numbers for CPU, and both for memory —
-/// "3.2G/8G" answers "is it nearly full" and "how big is it" at once, and the
-/// second question is what tells two similar machines apart in a list.
-String trayDetail({
-  required ServerConn conn,
-  double? cpuPercent,
-  int? memUsedKib,
-  int? memTotalKib,
-}) {
-  switch (trayStateOf(conn)) {
-    case TrayLineState.failed:
-      return libL10n.fail;
-    case TrayLineState.offline:
-      return libL10n.disconnected;
-    case TrayLineState.working:
-      // No word for it: there is no string in either catalogue for "on its
-      // way", the glyph beside it already says so, and inventing one would be
-      // twelve translations for a row that is on screen for a second.
-      return '…';
-    case TrayLineState.ok:
-      break;
-  }
+/// The set is what every source can answer for — SSH and a monitor agent both
+/// report all six — so a metric never turns out to be missing on half the
+/// servers in the list.
+enum TrayMetric {
+  cpu,
+  mem,
+  swap,
+  net,
+  disk,
+  temp;
 
-  // Connected, but nothing has been read back yet — the first status of a
-  // session, or one that returned nothing. Saying "0%" there would be a
-  // measurement, and this is the absence of one.
-  if (cpuPercent == null || memTotalKib == null || memTotalKib == 0) {
-    return '--';
-  }
+  /// The heading in the settings list and the label in a row.
+  String get label => switch (this) {
+    TrayMetric.cpu => 'CPU',
+    TrayMetric.mem => 'MEM',
+    TrayMetric.swap => 'SWAP',
+    TrayMetric.net => 'NET',
+    TrayMetric.disk => 'DISK',
+    TrayMetric.temp => 'TEMP',
+  };
 
-  final cpu = '${cpuPercent.round()}%';
-  return '$cpu  ${(memUsedKib ?? 0).kb2Str}/${memTotalKib.kb2Str}';
+  /// Whether a chart of it means anything.
+  ///
+  /// A percentage over time is a shape; a disk that is 41% full for a week is
+  /// a flat line, and drawing it would spend the row's width saying nothing.
+  bool get chartable => switch (this) {
+    TrayMetric.cpu || TrayMetric.mem || TrayMetric.swap || TrayMetric.net =>
+      true,
+    TrayMetric.disk || TrayMetric.temp => false,
+  };
+
+  static TrayMetric? byName(String name) {
+    for (final m in TrayMetric.values) {
+      if (m.name == name) return m;
+    }
+    return null;
+  }
 }
 
-/// One row, and what a menu item is built from.
+/// What the user chose to see.
+///
+/// Carried with the model rather than read on the far side, so the native
+/// menus hold no settings of their own: one push describes the whole menu,
+/// including its shape.
+class TrayConfig {
+  const TrayConfig({
+    this.metrics = const [TrayMetric.cpu, TrayMetric.mem],
+    this.chart = TrayMetric.cpu,
+    this.compact = false,
+  });
+
+  /// In the order they are drawn. Empty leaves a row with its name alone,
+  /// which is a legitimate choice: the dot still says whether it is up.
+  final List<TrayMetric> metrics;
+
+  /// Null draws no chart.
+  final TrayMetric? chart;
+
+  /// One line per server instead of two, and no chart. What the menu was
+  /// before this, and what a list of twenty servers wants.
+  final bool compact;
+
+  bool get drawsChart => !compact && chart != null;
+
+  Map<String, Object?> toJson() => {
+    'metrics': [for (final m in metrics) m.label],
+    'chart': drawsChart,
+    'compact': compact,
+  };
+
+  @override
+  bool operator ==(Object other) =>
+      other is TrayConfig &&
+      other.chart == chart &&
+      other.compact == compact &&
+      other.metrics.length == metrics.length &&
+      other.metrics.every(metrics.contains);
+
+  @override
+  int get hashCode => Object.hash(Object.hashAll(metrics), chart, compact);
+}
+
+/// One row.
 class TrayLine {
   const TrayLine({
     required this.id,
     required this.name,
-    required this.detail,
     required this.state,
+    this.readings = const [],
+    this.chart = const [],
   });
 
-  /// The server this row is about. Carried so that clicking the row can open
-  /// it, which is the only reason the tray knows about ids at all.
+  /// The server this row is about, so that clicking it can open that server.
   final String id;
 
   final String name;
-  final String detail;
   final TrayLineState state;
 
-  /// Two spaces after the glyph and four before the detail, which is as much
-  /// alignment as a native menu allows: none of the three platforms lays out
-  /// columns, and a proportional font makes padding to a width a guess that is
-  /// wrong on the next machine.
-  String get label => '${state.glyph}  $name    $detail';
+  /// Already formatted, in the order they are drawn: `('CPU', '12%')`.
+  ///
+  /// Formatted here because the far side would otherwise need this app's
+  /// notion of what a byte count reads as, three times over.
+  final List<(String, String)> readings;
+
+  /// 0..1, oldest first, or empty for no chart. Normalised here for the same
+  /// reason: a drawing routine should not have to know that CPU is a
+  /// percentage and network is bytes per second.
+  final List<double> chart;
+
+  /// The single line a platform that cannot do better draws — Linux, and the
+  /// compact layout everywhere.
+  String get label {
+    final detail = readings.map((r) => '${r.$1} ${r.$2}').join('  ');
+    return detail.isEmpty
+        ? '${state.glyph}  $name'
+        : '${state.glyph}  $name    $detail';
+  }
+
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'name': name,
+    'state': state.name,
+    'label': label,
+    'readings': [
+      for (final r in readings) {'label': r.$1, 'value': r.$2},
+    ],
+    'chart': chart,
+  };
 
   @override
   bool operator ==(Object other) =>
       other is TrayLine &&
       other.id == id &&
       other.name == name &&
-      other.detail == detail &&
-      other.state == state;
+      other.state == state &&
+      _sameReadings(other.readings) &&
+      _sameChart(other.chart);
+
+  bool _sameReadings(List<(String, String)> other) {
+    if (other.length != readings.length) return false;
+    for (var i = 0; i < readings.length; i++) {
+      if (other[i] != readings[i]) return false;
+    }
+    return true;
+  }
+
+  bool _sameChart(List<double> other) {
+    if (other.length != chart.length) return false;
+    for (var i = 0; i < chart.length; i++) {
+      if (other[i] != chart[i]) return false;
+    }
+    return true;
+  }
 
   @override
-  int get hashCode => Object.hash(id, name, detail, state);
+  int get hashCode =>
+      Object.hash(id, name, state, Object.hashAll(readings), chart.length);
 
   @override
   String toString() => 'TrayLine($label)';
 }
 
-/// Everything the tray shows, as one value.
+/// Everything the menu shows, as one value.
 ///
-/// One value so that pushing it can be skipped when nothing changed. The menu
-/// is rebuilt from scratch on every push — there is no API on any of the three
-/// platforms for editing one item — and doing that at the poll rate would
-/// rebuild a menu the user may have open.
+/// One value so that an unchanged menu is not pushed again. A menu is replaced
+/// whole on all three platforms, so a push while it is open closes it — and at
+/// the refresh rate that would make it unusable.
 class TrayModel {
-  const TrayModel(this.lines);
-
-  const TrayModel.empty() : lines = const [];
+  const TrayModel({required this.lines, this.config = const TrayConfig()});
 
   final List<TrayLine> lines;
+  final TrayConfig config;
+
+  Map<String, Object?> toJson() => {
+    'config': config.toJson(),
+    'lines': [for (final l in lines) l.toJson()],
+  };
 
   @override
   bool operator ==(Object other) =>
       other is TrayModel &&
+      other.config == config &&
       other.lines.length == lines.length &&
       _same(other.lines);
 
@@ -143,5 +232,82 @@ class TrayModel {
   }
 
   @override
-  int get hashCode => Object.hashAll(lines);
+  int get hashCode => Object.hash(config, Object.hashAll(lines));
+}
+
+/// The readings [metrics] asks for, formatted.
+///
+/// A metric with nothing behind it is left out rather than shown as zero: a
+/// machine with no temperature sensor is not a machine at 0°C.
+List<(String, String)> trayReadings({
+  required ServerStatus status,
+  required List<TrayMetric> metrics,
+}) {
+  final out = <(String, String)>[];
+  for (final metric in metrics) {
+    final value = _read(status, metric);
+    if (value != null) out.add((metric.label, value));
+  }
+  return out;
+}
+
+String? _read(ServerStatus status, TrayMetric metric) {
+  switch (metric) {
+    case TrayMetric.cpu:
+      final used = status.cpu.usedPercent();
+      return used == null ? null : '${used.round()}%';
+    case TrayMetric.mem:
+      final total = status.mem.total;
+      if (total == 0) return null;
+      return '${(status.mem.usedPercent * 100).round()}%';
+    case TrayMetric.swap:
+      final total = status.swap.total;
+      if (total == 0) return null;
+      return '${(status.swap.usedPercent * 100).round()}%';
+    case TrayMetric.net:
+      final vals = status.netSpeed.cachedVals;
+      if (vals.speedIn == NetSpeed.noReading) return null;
+      return '↓${vals.speedIn}  ↑${vals.speedOut}';
+    case TrayMetric.disk:
+      final usage = status.diskUsage;
+      if (usage == null) return null;
+      // Already 0..100 — unlike the memory ones, which are fractions.
+      return '${usage.usedPercent.round()}%';
+    case TrayMetric.temp:
+      final temp = status.temps.first;
+      return temp == null ? null : '${temp.round()}°C';
+  }
+}
+
+/// The chart series, newest last and scaled to 0..1.
+///
+/// Empty when there is not enough of it: two points are a line segment, not a
+/// trend, and a chart drawn from them says more than it knows.
+List<double> trayChart({
+  required ServerStatus status,
+  required TrayMetric? metric,
+  int count = 40,
+}) {
+  if (metric == null || !metric.chartable) return const [];
+  final history = status.history;
+  final series = switch (metric) {
+    TrayMetric.cpu => history.cpu,
+    TrayMetric.mem => history.mem,
+    TrayMetric.swap => history.mem,
+    _ => null,
+  };
+  if (series == null) return const [];
+
+  final samples = <double>[];
+  for (final value in series.skip(
+    series.length > count ? series.length - count : 0,
+  )) {
+    if (value != null) samples.add(value);
+  }
+  if (samples.length < 3) return const [];
+
+  // Percentages against a fixed 0..100, not against their own range: a machine
+  // idling between 1% and 3% would otherwise draw the same alarming shape as
+  // one swinging between 10% and 90%.
+  return [for (final s in samples) (s / 100).clamp(0.0, 1.0)];
 }

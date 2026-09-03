@@ -75,6 +75,25 @@ class SettingStore extends SqliteStore {
   /// closing the window ends the app.
   late final trayKeepRunning = propertyDefault('trayKeepRunning', isDesktop);
 
+  /// Which readings each row of the tray menu carries, by [TrayMetric.name].
+  ///
+  /// A list rather than a set of switches: the order is the order they are
+  /// drawn in, and a row has only so much width.
+  late final trayMetrics = listProperty<String>(
+    'trayMetrics',
+    defaultValue: const ['cpu', 'mem'],
+  );
+
+  /// Which series the row's chart draws, by [TrayMetric.name]. Empty draws
+  /// none.
+  late final trayChart = propertyDefault('trayChart', 'cpu');
+
+  /// One line per server instead of two, and no chart.
+  ///
+  /// What the menu was before it could do better, and what a list of twenty
+  /// servers wants. Also all Linux can draw — see `TrayService`.
+  late final trayCompact = propertyDefault('trayCompact', false);
+
   // Server order
   late final serverOrder = listProperty<String>('serverOrder');
 

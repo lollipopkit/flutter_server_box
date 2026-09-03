@@ -897,6 +897,42 @@ abstract class AppLocalizations {
   /// **'This switch only means the program will try to run in the background. Whether it can run in the background depends on whether the permission is enabled or not. For AOSP-based Android ROMs, please disable \"Battery Optimization\" in this app. For MIUI / HyperOS, please change the power saving policy to \"Unlimited\".'**
   String get bgRunTip;
 
+  /// No description provided for @trayTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Status icon'**
+  String get trayTitle;
+
+  /// No description provided for @trayReadings.
+  ///
+  /// In en, this message translates to:
+  /// **'Readings'**
+  String get trayReadings;
+
+  /// No description provided for @trayChart.
+  ///
+  /// In en, this message translates to:
+  /// **'Chart'**
+  String get trayChart;
+
+  /// No description provided for @trayChartNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get trayChartNone;
+
+  /// No description provided for @trayCompact.
+  ///
+  /// In en, this message translates to:
+  /// **'Compact rows'**
+  String get trayCompact;
+
+  /// No description provided for @trayCompactTip.
+  ///
+  /// In en, this message translates to:
+  /// **'One line per server, without the chart. Also what Linux draws either way — its panel menu is sent over D-Bus, which carries a label but not a layout.'**
+  String get trayCompactTip;
+
   /// No description provided for @trayKeepRunning.
   ///
   /// In en, this message translates to:
