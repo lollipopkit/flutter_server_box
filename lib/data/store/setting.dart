@@ -335,6 +335,18 @@ class SettingStore extends SqliteStore {
   /// and moving that under them would undo the choice this exists to keep.
   late final paneListWidth = propertyDefault('paneListWidth', 220.0);
 
+  /// Whether that column is folded away entirely.
+  ///
+  /// Shared with [paneListWidth] for the same reason: one answer for every
+  /// list-beside-content layout, so folding the column on one tab does not
+  /// leave the next tab looking like it forgot.
+  ///
+  /// Separate from the width rather than a width of zero. Zero is not a width
+  /// any drag can produce, so storing it there would mean every reader had to
+  /// know that one value means something else — and unfolding would have
+  /// nowhere to find the width to go back to.
+  late final paneListCollapsed = propertyDefault('paneListCollapsed', false);
+
   /// Whether use `rm -r` to delete directory on SFTP
   late final sftpRmrDir = propertyDefault('sftpRmrDir', false);
 

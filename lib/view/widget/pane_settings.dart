@@ -27,9 +27,25 @@ abstract final class PaneSettings {
     return Stores.setting.paneListWidth.listenable().listenVal(builder);
   }
 
+  /// Both numbers at once, for a layout that can fold as well as resize.
+  ///
+  /// Listened to for the same reason as the width: the other tabs holding one
+  /// of these columns are alive behind this one and have to hear that it
+  /// folded, or each would keep whatever it was built with.
+  static Widget listenAll(Widget Function(double width, bool collapsed) builder) {
+    return Stores.setting.paneListWidth.listenable().listenVal(
+      (width) => Stores.setting.paneListCollapsed.listenable().listenVal(
+        (collapsed) => builder(width, collapsed),
+      ),
+    );
+  }
+
   /// Where a drag ends. Writing it notifies every listener above.
   static void saveWidth(double width) =>
       Stores.setting.paneListWidth.put(width);
+
+  static void saveCollapsed(bool collapsed) =>
+      Stores.setting.paneListCollapsed.put(collapsed);
 }
 
 class SbPaneList extends StatelessWidget {
@@ -55,11 +71,18 @@ class SbPaneList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PaneSettings.listen(
-      (width) => AdaptiveSideList(
+    return PaneSettings.listenAll(
+      (width, collapsed) => AdaptiveSideList(
         enabled: hasContent,
         sideWidth: width,
         onSideWidthChanged: PaneSettings.saveWidth,
+        collapsed: collapsed,
+        onCollapsedChanged: PaneSettings.saveCollapsed,
+        // `fold` and `open` are what fl_lib already has for this pair. Neither
+        // is a word chosen for a sidebar, and adding two strings in twelve
+        // languages to say the same thing more exactly is not worth it.
+        collapseTooltip: libL10n.fold,
+        expandTooltip: libL10n.open,
         sideBuilder: sideBuilder,
         builder: builder,
       ),

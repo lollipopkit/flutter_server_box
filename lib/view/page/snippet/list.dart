@@ -57,11 +57,15 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
       });
     }
 
-    return PaneSettings.listen((paneWidth) {
+    return PaneSettings.listenAll((paneWidth, paneCollapsed) {
       return _tag.listenVal((tag) {
         return AdaptivePanes(
           primaryWidth: paneWidth,
           onPrimaryWidthChanged: PaneSettings.saveWidth,
+          primaryCollapsed: paneCollapsed,
+          onPrimaryCollapsedChanged: PaneSettings.saveCollapsed,
+          collapseTooltip: libL10n.fold,
+          expandTooltip: libL10n.open,
           detailId: _editing,
           onCloseDetail: () => setState(() => _editing = null),
           // Never null, so the two columns are what this tab looks like from
