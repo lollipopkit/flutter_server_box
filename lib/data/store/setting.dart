@@ -67,6 +67,14 @@ class SettingStore extends SqliteStore {
   // Backgroud running (Android)
   late final bgRun = propertyDefault('bgRun', isAndroid);
 
+  /// Whether closing the desktop window leaves the app running in the tray.
+  ///
+  /// On by default, because it is what makes the status icon worth having: an
+  /// icon that goes away with the window says nothing at the moment anybody
+  /// would look at it. Off restores what every desktop build did before —
+  /// closing the window ends the app.
+  late final trayKeepRunning = propertyDefault('trayKeepRunning', isDesktop);
+
   // Server order
   late final serverOrder = listProperty<String>('serverOrder');
 

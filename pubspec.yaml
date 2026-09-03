@@ -104,6 +104,7 @@ dependencies:
   fixnum: ^1.1.1
   device_info_plus: ^13.2.0
   aptabase_flutter: ^0.5.0
+  tray_manager: ^0.5.3
 
 dev_dependencies:
   integration_test:
@@ -151,6 +152,17 @@ flutter:
     # in there — see the README beside them, which Flutter leaves out because
     # it only bundles files it can load.
     - assets/distro/
+    # Drawn by `scripts/gen_tray_icons.py`, which says why there are three
+    # shapes of the same picture. Named one by one rather than as a directory:
+    # `tray_manager` builds a path out of the string it is given, and a
+    # directory entry would bundle the same six files without documenting
+    # which platform reads which.
+    - assets/tray/mac.png
+    - assets/tray/mac_alert.png
+    - assets/tray/tray.png
+    - assets/tray/tray_alert.png
+    - assets/tray/tray.ico
+    - assets/tray/tray_alert.ico
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
   # fonts:

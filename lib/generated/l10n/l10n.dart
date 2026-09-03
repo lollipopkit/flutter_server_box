@@ -897,6 +897,18 @@ abstract class AppLocalizations {
   /// **'This switch only means the program will try to run in the background. Whether it can run in the background depends on whether the permission is enabled or not. For AOSP-based Android ROMs, please disable \"Battery Optimization\" in this app. For MIUI / HyperOS, please change the power saving policy to \"Unlimited\".'**
   String get bgRunTip;
 
+  /// No description provided for @trayKeepRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep running in the tray'**
+  String get trayKeepRunning;
+
+  /// No description provided for @trayKeepRunningTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Closing the window leaves the app in the menu bar or notification area, still watching your servers. Turn this off to have the close button end the app.'**
+  String get trayKeepRunningTip;
+
   /// No description provided for @bgRunNeedsNotification.
   ///
   /// In en, this message translates to:

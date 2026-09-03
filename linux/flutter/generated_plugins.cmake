@@ -7,6 +7,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   dynamic_color
   flutter_secure_storage_linux
   screen_retriever_linux
+  tray_manager
   url_launcher_linux
   window_manager
 )

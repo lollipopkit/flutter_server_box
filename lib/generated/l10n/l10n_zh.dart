@@ -415,6 +415,13 @@ class AppLocalizationsZh extends AppLocalizations {
       '此开关只代表程序会尝试在后台运行，具体能否后台运行取决于是否开启了权限。原生 Android 请关闭本 App 的“电池优化”，MIUI / HyperOS 请将省电策略改为“无限制”。';
 
   @override
+  String get trayKeepRunning => 'Keep running in the tray';
+
+  @override
+  String get trayKeepRunningTip =>
+      'Closing the window leaves the app in the menu bar or notification area, still watching your servers. Turn this off to have the close button end the app.';
+
+  @override
   String get bgRunNeedsNotification => '后台运行需要一条常驻通知,而本应用当前无通知权限。点击去开启通知权限。';
 
   @override

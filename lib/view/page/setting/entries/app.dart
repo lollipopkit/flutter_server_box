@@ -334,6 +334,7 @@ extension _App on _AppSettingsPageState {
         if (isMobile) _buildWakeLock(),
         _buildCollapseUI(),
         if (isDesktop) _buildHideTitleBar(),
+        if (isDesktop) _buildTrayKeepRunning(),
         _buildEditRawSettings(),
       ],
     );
@@ -433,6 +434,26 @@ extension _App on _AppSettingsPageState {
         callback: (value) async {
           await SystemUIs.updateTitleBarStyle(hideTitleBar: value);
         },
+      ),
+    );
+  }
+
+  /// Whether closing the window leaves the app in the tray.
+  ///
+  /// The switch exists because the answer changes what the close button means,
+  /// and a window that refuses to close is the kind of surprise a user should
+  /// be able to undo. Off is what every desktop build did before the status
+  /// icon.
+  Widget _buildTrayKeepRunning() {
+    return ListTile(
+      title: Text(l10n.trayKeepRunning),
+      subtitle: Text(l10n.trayKeepRunningTip, style: UIs.text13Grey),
+      trailing: StoreSwitch(
+        prop: _setting.trayKeepRunning,
+        // The window's own flag is what enforces it, and it is set once at
+        // launch — so it has to be told, or the switch would only take effect
+        // on the next start.
+        callback: (_) => ref.read(trayServiceProvider).applySetting(),
       ),
     );
   }

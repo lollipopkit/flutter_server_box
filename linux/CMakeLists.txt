@@ -126,6 +126,38 @@ foreach(bundled_library ${PLUGIN_BUNDLED_LIBRARIES})
     COMPONENT Runtime)
 endforeach(bundled_library)
 
+# The status icon's own libraries, which nothing else here would carry.
+#
+# `tray_manager` links libayatana-appindicator rather than opening it, and
+# declares no bundled libraries of its own — so the loader needs it present at
+# *startup*, and a machine without it does not get an app with no tray icon, it
+# gets an app that will not start. That is fine for the deb and the rpm, where
+# a dependency can be declared, and not fine for the AppImage, which is meant
+# to be a single file that runs.
+#
+# The chain rather than the one name: appindicator pulls in the ayatana
+# indicator library and both halves of dbusmenu, and bundling only the first
+# moves the failure one library along. Resolved by SONAME and skipped when not
+# found, because which of these a distribution splits out varies and a missing
+# one here should not fail the build — the deb and rpm paths do not need any of
+# this.
+foreach(soname
+  "libayatana-appindicator3.so.1"
+  "libayatana-indicator3.so.7"
+  "libdbusmenu-glib.so.4"
+  "libdbusmenu-gtk3.so.4"
+)
+  # `NAMES` with the full SONAME, so what lands in the bundle is the real file
+  # under the name the loader will ask for. A `find_library` on the base name
+  # answers with the `-dev` symlink, which is not in the bundle to follow.
+  find_library(TRAY_LIB_${soname} NAMES "${soname}")
+  if(TRAY_LIB_${soname})
+    install(FILES "${TRAY_LIB_${soname}}"
+      DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+      COMPONENT Runtime)
+  endif()
+endforeach()
+
 # Copy the native assets provided by the build.dart from all packages.
 set(NATIVE_ASSETS_DIR "${PROJECT_BUILD_DIR}native_assets/linux/")
 install(DIRECTORY "${NATIVE_ASSETS_DIR}"
