@@ -47,14 +47,16 @@ void main() {
     expect(_names(groups[1]), ['a', 'c']);
   });
 
-  test('nothing tagged means one group and no heading', () {
+  test('nothing tagged still gets the heading that says why', () {
+    // It divides nothing, and is drawn anyway: without it a rail of untagged
+    // entries gave no sign that grouping is a thing that happens here.
     final groups = _group([
       (name: 'a', tags: null),
       (name: 'b', tags: const []),
     ]);
 
     expect(groups, hasLength(1));
-    expect(groups.single.label, isNull);
+    expect(groups.single.label, isNotNull);
     expect(_names(groups.single), ['a', 'b']);
   });
 
