@@ -51,6 +51,7 @@ import 'package:server_box/view/widget/crash_debug.dart';
 import 'package:server_box/view/widget/diagnostics_level_picker.dart';
 import 'package:server_box/view/widget/dist_icon.dart';
 import 'package:server_box/view/widget/dmg_notice.dart';
+import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/rootfs_install.dart';
 
 part 'about.dart';
@@ -82,8 +83,9 @@ class SettingsPage extends ConsumerStatefulWidget {
 /// columns gets two columns here as well.
 const _kMenuBreakpoint = 800.0;
 
-/// How wide the menu is when it is beside the content.
-const _kMenuWidth = 232.0;
+// `_kMenuWidth` was here, at 232. The menu is laid out by `AdaptiveSideList`
+// now and takes the width every other list column in the app has — the one the
+// user drags, stored in `paneListWidth`.
 
 /// How wide the content beside that menu is allowed to get.
 ///
@@ -502,30 +504,42 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           ),
         ],
       ),
+      // The same column every other list-beside-content page has, rather than
+      // a `Row` of its own. It used to be one, at a fixed 232 and with a plain
+      // divider — so this was the one such column in the app that could not be
+      // resized and, once folding arrived, the one that could not be folded.
+      // Nothing about a menu of settings makes it a different kind of column.
+      //
+      // `minWidthForSide: 0` hands the decision to [wide], which is read from
+      // the `LayoutBuilder` above and is what the app bar and the content are
+      // already built from. Left to decide for itself it would be measuring
+      // inside the `SafeArea` — a few points narrower — and a window sitting
+      // on the breakpoint would get a title naming a page the layout was not
+      // showing.
       body: SafeArea(
-        child: wide
-            ? Row(
-                children: [
-                  SizedBox(width: _kMenuWidth, child: menu),
-                  // Not Material's default: that one is drawn for a light
-                  // background and reads as a bright seam on a dark one, which
-                  // is why every other seam in the app goes through [Hairline]
-                  // — including the one `AdaptivePanes` draws, which this line
-                  // sits at the same corners as.
-                  VerticalDivider(
-                    width: Hairline.thickness,
-                    thickness: Hairline.thickness,
-                    color: Hairline.color(context),
-                  ),
-                  Expanded(child: content),
-                ],
-              )
+        child: PaneSettings.listenAll(
+          (paneWidth, paneCollapsed) => AdaptiveSideList(
+            enabled: wide,
+            minWidthForSide: 0,
+            sideWidth: paneWidth,
+            onSideWidthChanged: PaneSettings.saveWidth,
+            collapsed: paneCollapsed,
+            onCollapsedChanged: PaneSettings.saveCollapsed,
+            collapseTooltip: libL10n.fold,
+            expandTooltip: libL10n.open,
+            sideBuilder: (_) => menu,
             // A `Builder` so the insets read below are the ones this body
             // actually has: the state's own context is above the `Scaffold`,
             // where `padding` is still the whole window's — the status bar the
             // app bar already covers, and the home indicator the `SafeArea`
             // just above here already cleared.
-            : Builder(builder: (context) => _buildNarrow(context, nodes, content)),
+            builder: (ctx, split) => split
+                ? content
+                : Builder(
+                    builder: (ctx) => _buildNarrow(ctx, nodes, content),
+                  ),
+          ),
+        ),
       ),
     );
   }
@@ -570,10 +584,18 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       ),
     );
 
-    Widget pagesOf(String id, List<SettingsNode> level) {
+    /// Keyed by the group it shows, never by what is selected inside it.
+    ///
+    /// Selecting is what a drag *does*: `onPageChanged` fires mid-settle and
+    /// changes the selection, so a key naming the selection made every swipe
+    /// throw away the state — and with it the `PageController` — that the
+    /// settle was running on. It reappeared at the new page with the movement
+    /// cut off, which is the swipe not feeling like a swipe.
+    Widget pagesOf(List<SettingsNode> level) {
+      final leaves = level.where((e) => e.isLeaf).toList();
       return _SettingsPages(
-        key: ValueKey('pages_$id'),
-        leaves: level.where((e) => e.isLeaf).toList(),
+        key: ValueKey('pages_${leaves.firstOrNull?.id ?? 'none'}'),
+        leaves: leaves,
         selectedId: selected.id,
         onChanged: _onSelect,
       );
@@ -585,9 +607,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         if (wide)
           MaterialPage<void>(
             key: ValueKey(_groupOf(nodes, selected.id)?.firstOrNull?.id ?? 'root'),
-            child: opaque(
-              pagesOf(selected.id, _groupOf(nodes, selected.id) ?? const []),
-            ),
+            child: opaque(pagesOf(_groupOf(nodes, selected.id) ?? const [])),
           )
         else ...[
           // What settings there are, which is where a narrow window starts.
@@ -598,7 +618,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           for (final entered in _path)
             MaterialPage<void>(
               key: ValueKey(entered.id),
-              child: opaque(pagesOf(entered.id, _levelOf(entered))),
+              child: opaque(pagesOf(_levelOf(entered))),
             ),
         ],
       ],
