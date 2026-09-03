@@ -53,6 +53,10 @@ add_subdirectory(${FLUTTER_MANAGED_DIR})
 # System-level dependencies.
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTK REQUIRED IMPORTED_TARGET gtk+-3.0)
+# The panel status icon. A hard dependency, and deliberately at configure time:
+# the alternative is an app that builds and then cannot show an icon, which is
+# harder to diagnose than a build that says what is missing.
+pkg_check_modules(APPINDICATOR REQUIRED IMPORTED_TARGET ayatana-appindicator3-0.1)
 
 add_definitions(-DAPPLICATION_ID="${APPLICATION_ID}")
 
@@ -63,6 +67,7 @@ add_definitions(-DAPPLICATION_ID="${APPLICATION_ID}")
 add_executable(${BINARY_NAME}
   "main.cc"
   "my_application.cc"
+  "tray_icon.cc"
   "${FLUTTER_MANAGED_DIR}/generated_plugin_registrant.cc"
 )
 
@@ -73,6 +78,7 @@ apply_standard_settings(${BINARY_NAME})
 # Add dependency libraries. Add any application-specific dependencies here.
 target_link_libraries(${BINARY_NAME} PRIVATE flutter)
 target_link_libraries(${BINARY_NAME} PRIVATE PkgConfig::GTK)
+target_link_libraries(${BINARY_NAME} PRIVATE PkgConfig::APPINDICATOR)
 
 # Run the Flutter tool portions of the build. This must not be removed.
 add_dependencies(${BINARY_NAME} flutter_assemble)
@@ -128,12 +134,11 @@ endforeach(bundled_library)
 
 # The status icon's own libraries, which nothing else here would carry.
 #
-# `tray_manager` links libayatana-appindicator rather than opening it, and
-# declares no bundled libraries of its own — so the loader needs it present at
-# *startup*, and a machine without it does not get an app with no tray icon, it
-# gets an app that will not start. That is fine for the deb and the rpm, where
-# a dependency can be declared, and not fine for the AppImage, which is meant
-# to be a single file that runs.
+# `tray_icon.cc` links libayatana-appindicator rather than opening it, so the
+# loader needs it present at *startup*: a machine without it does not get an
+# app with no status icon, it gets an app that will not start. That is fine for
+# the deb and the rpm, where a dependency can be declared, and not fine for the
+# AppImage, which is meant to be a single file that runs.
 #
 # The chain rather than the one name: appindicator pulls in the ayatana
 # indicator library and both halves of dbusmenu, and bundling only the first

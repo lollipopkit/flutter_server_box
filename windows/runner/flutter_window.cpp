@@ -3,6 +3,7 @@
 #include <optional>
 
 #include "flutter/generated_plugin_registrant.h"
+#include "tray_icon.h"
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
@@ -25,11 +26,18 @@ bool FlutterWindow::OnCreate() {
     return false;
   }
   RegisterPlugins(flutter_controller_->engine());
+  // After the engine, because it needs the messenger, and from here because
+  // the tray's menu and its icon both hang off this window's message loop.
+  tray_ = std::make_unique<TrayIcon>(
+      GetHandle(), flutter_controller_->engine()->messenger());
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
   return true;
 }
 
 void FlutterWindow::OnDestroy() {
+  // Before the engine goes: it holds a channel on that messenger, and the
+  // icon has to come off the notification area whatever ends the process.
+  tray_ = nullptr;
   if (flutter_controller_) {
     flutter_controller_ = nullptr;
   }
@@ -48,6 +56,16 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                                                       lparam);
     if (result) {
       return *result;
+    }
+  }
+
+  // Before Flutter's own handling below would swallow them: the owner-drawn
+  // menu is measured and painted through messages sent to this window, and
+  // `WM_COMMAND` from a popup menu arrives here too.
+  if (tray_) {
+    LRESULT tray_result = 0;
+    if (tray_->HandleMessage(message, wparam, lparam, &tray_result)) {
+      return tray_result;
     }
   }
 

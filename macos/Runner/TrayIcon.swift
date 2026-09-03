@@ -40,8 +40,8 @@ final class TrayIcon: NSObject, NSMenuDelegate {
             }
             switch call.method {
             case "update":
-                if let json = call.arguments as? String {
-                    self.update(json)
+                if let payload = call.arguments as? [String: Any] {
+                    self.update(payload)
                 }
                 result(nil)
             case "destroy":
@@ -77,12 +77,7 @@ final class TrayIcon: NSObject, NSMenuDelegate {
 
     // MARK: - Building
 
-    private func update(_ json: String) {
-        guard
-            let data = json.data(using: .utf8),
-            let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
-        else { return }
-
+    private func update(_ root: [String: Any]) {
         ensureItem()
 
         let config = root["config"] as? [String: Any] ?? [:]

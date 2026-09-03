@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart' hide Provider;
 import 'package:flutter/services.dart';
@@ -28,9 +27,14 @@ import 'package:window_manager/window_manager.dart';
 /// title and nothing else: no image, no attributed title, no view. A row that
 /// is a name, a sparkline and a line of readings is not reachable through it on
 /// any platform. So each platform draws its own and this side only describes
-/// what to draw — see [TrayModel], which crosses as JSON with the text already
+/// what to draw — see [TrayModel], which crosses with the text already
 /// formatted and the series already normalised. Nothing over there has to know
 /// what a percentage is or how this app renders a byte count.
+///
+/// As a map rather than a JSON string, so each side reads it in its own types:
+/// an `NSDictionary`, an `EncodableMap`, an `FlValue`. A string would mean a
+/// JSON parser in Swift, in C++ and in C, for a payload the channel's own
+/// codec already carries.
 ///
 /// **What each platform can do**, because they differ and the difference is not
 /// this app's choice:
@@ -190,7 +194,7 @@ class TrayService with WindowListener {
     final model = TrayModel(lines: lines, config: settings);
     if (model == _shown) return;
     _shown = model;
-    await _invoke('update', jsonEncode(model.toJson()));
+    await _invoke('update', model.toJson());
   }
 
   Future<void> _invoke(String method, [Object? arg]) async {
