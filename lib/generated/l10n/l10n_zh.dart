@@ -415,23 +415,23 @@ class AppLocalizationsZh extends AppLocalizations {
       '此开关只代表程序会尝试在后台运行，具体能否后台运行取决于是否开启了权限。原生 Android 请关闭本 App 的“电池优化”，MIUI / HyperOS 请将省电策略改为“无限制”。';
 
   @override
-  String get trayTitle => 'Status icon';
+  String get trayTitle => '状态图标';
 
   @override
-  String get trayReadings => 'Readings';
+  String get trayReadings => '读数';
 
   @override
-  String get trayChart => 'Chart';
+  String get trayChart => '图表';
 
   @override
-  String get trayChartNone => 'None';
+  String get trayChartNone => '无';
 
   @override
-  String get trayCompact => 'Compact rows';
+  String get trayCompact => '紧凑行';
 
   @override
   String get trayCompactTip =>
-      'One line per server, without the chart. Also what Linux draws either way — its panel menu is sent over D-Bus, which carries a label but not a layout.';
+      '每台服务器显示一行，不显示图表。Linux 无论如何都会使用这种显示方式——它的面板菜单通过 D-Bus 传递，而 D-Bus 只能传递标签，无法传递布局。';
 
   @override
   String get trayKeepRunning => '在托盘中继续运行';
@@ -2053,6 +2053,25 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get bgRunTip =>
       '此開關僅代表程式會嘗試於背景執行，能否成功取決於系統權限。在原生 Android 上，請關閉本應用的「電池最佳化」；在 MIUI / HyperOS 上，請將省電策略調整為「無限制」。';
+
+  @override
+  String get trayTitle => '狀態圖示';
+
+  @override
+  String get trayReadings => '讀數';
+
+  @override
+  String get trayChart => '圖表';
+
+  @override
+  String get trayChartNone => '無';
+
+  @override
+  String get trayCompact => '精簡列';
+
+  @override
+  String get trayCompactTip =>
+      '每部伺服器顯示一行，不顯示圖表。Linux 無論如何都會使用這種顯示方式——它的面板選單透過 D-Bus 傳送，而 D-Bus 只能傳送標籤，無法傳送版面配置。';
 
   @override
   String get trayKeepRunning => '在系統匣中繼續執行';

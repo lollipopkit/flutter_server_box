@@ -425,23 +425,23 @@ class AppLocalizationsKo extends AppLocalizations {
       '이 스위치는 프로그램이 백그라운드에서 실행을 시도한다는 의미입니다. 실제 백그라운드 실행 가능 여부는 권한 활성화 여부에 따라 다릅니다. AOSP 기반 Android ROM의 경우, 이 앱의 \"배터리 최적화\"를 비활성화해 주세요. MIUI / HyperOS의 경우, 절전 정책을 \"무제한\"으로 변경해 주세요.';
 
   @override
-  String get trayTitle => 'Status icon';
+  String get trayTitle => '상태 아이콘';
 
   @override
-  String get trayReadings => 'Readings';
+  String get trayReadings => '측정값';
 
   @override
-  String get trayChart => 'Chart';
+  String get trayChart => '차트';
 
   @override
-  String get trayChartNone => 'None';
+  String get trayChartNone => '없음';
 
   @override
-  String get trayCompact => 'Compact rows';
+  String get trayCompact => '간결한 행';
 
   @override
   String get trayCompactTip =>
-      'One line per server, without the chart. Also what Linux draws either way — its panel menu is sent over D-Bus, which carries a label but not a layout.';
+      '차트 없이 서버당 한 줄로 표시합니다. Linux에서도 항상 이 방식으로 표시됩니다. 패널 메뉴는 D-Bus로 전송되며 레이블은 전달할 수 있지만 레이아웃은 전달할 수 없습니다.';
 
   @override
   String get trayKeepRunning => '트레이에서 계속 실행';

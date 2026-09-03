@@ -454,23 +454,23 @@ class AppLocalizationsIt extends AppLocalizations {
       'Questa opzione significa solo che il programma cercherà di eseguire in background. Se può eseguire in background dipende dal fatto che il permesso sia abilitato o meno. Per le ROM Android basate su AOSP, disabilita \"Ottimizzazione batteria\" in questa app. Per MIUI/HyperOS, cambia la politica di risparmio energetico su \"Illimitato\".';
 
   @override
-  String get trayTitle => 'Status icon';
+  String get trayTitle => 'Icona di stato';
 
   @override
-  String get trayReadings => 'Readings';
+  String get trayReadings => 'Valori';
 
   @override
-  String get trayChart => 'Chart';
+  String get trayChart => 'Grafico';
 
   @override
-  String get trayChartNone => 'None';
+  String get trayChartNone => 'Nessuno';
 
   @override
-  String get trayCompact => 'Compact rows';
+  String get trayCompact => 'Righe compatte';
 
   @override
   String get trayCompactTip =>
-      'One line per server, without the chart. Also what Linux draws either way — its panel menu is sent over D-Bus, which carries a label but not a layout.';
+      'Una riga per server, senza grafico. È anche ciò che Linux visualizza in ogni caso: il suo menu del pannello viene inviato tramite D-Bus, che trasporta un’etichetta ma non un layout.';
 
   @override
   String get trayKeepRunning => 'Continua a funzionare nell’area di notifica';

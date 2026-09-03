@@ -121,6 +121,32 @@ class TrayConfig {
   int get hashCode => Object.hash(Object.hashAll(metrics), chart, compact);
 }
 
+/// One reading on a row.
+///
+/// The metric travels with the value, not just its label: macOS draws an SF
+/// Symbol in place of the words, and choosing one by matching the string
+/// `CPU` would break the moment that label is translated or renamed. The label
+/// goes too, for the platforms that draw it.
+class TrayReading {
+  const TrayReading(this.metric, this.value);
+
+  final TrayMetric metric;
+  final String value;
+
+  Map<String, Object?> toJson() => {
+    'key': metric.name,
+    'label': metric.label,
+    'value': value,
+  };
+
+  @override
+  bool operator ==(Object other) =>
+      other is TrayReading && other.metric == metric && other.value == value;
+
+  @override
+  int get hashCode => Object.hash(metric, value);
+}
+
 /// One row.
 class TrayLine {
   const TrayLine({
@@ -137,11 +163,11 @@ class TrayLine {
   final String name;
   final TrayLineState state;
 
-  /// Already formatted, in the order they are drawn: `('CPU', '12%')`.
+  /// Already formatted, in the order they are drawn.
   ///
   /// Formatted here because the far side would otherwise need this app's
   /// notion of what a byte count reads as, three times over.
-  final List<(String, String)> readings;
+  final List<TrayReading> readings;
 
   /// 0..1, oldest first, or empty for no chart. Normalised here for the same
   /// reason: a drawing routine should not have to know that CPU is a
@@ -151,7 +177,9 @@ class TrayLine {
   /// The single line a platform that cannot do better draws — Linux, and the
   /// compact layout everywhere.
   String get label {
-    final detail = readings.map((r) => '${r.$1} ${r.$2}').join('  ');
+    final detail = readings
+        .map((r) => '${r.metric.label} ${r.value}')
+        .join('  ');
     return detail.isEmpty
         ? '${state.glyph}  $name'
         : '${state.glyph}  $name    $detail';
@@ -162,9 +190,7 @@ class TrayLine {
     'name': name,
     'state': state.name,
     'label': label,
-    'readings': [
-      for (final r in readings) {'label': r.$1, 'value': r.$2},
-    ],
+    'readings': [for (final r in readings) r.toJson()],
     'chart': chart,
   };
 
@@ -177,7 +203,7 @@ class TrayLine {
       _sameReadings(other.readings) &&
       _sameChart(other.chart);
 
-  bool _sameReadings(List<(String, String)> other) {
+  bool _sameReadings(List<TrayReading> other) {
     if (other.length != readings.length) return false;
     for (var i = 0; i < readings.length; i++) {
       if (other[i] != readings[i]) return false;
@@ -239,14 +265,14 @@ class TrayModel {
 ///
 /// A metric with nothing behind it is left out rather than shown as zero: a
 /// machine with no temperature sensor is not a machine at 0°C.
-List<(String, String)> trayReadings({
+List<TrayReading> trayReadings({
   required ServerStatus status,
   required List<TrayMetric> metrics,
 }) {
-  final out = <(String, String)>[];
+  final out = <TrayReading>[];
   for (final metric in metrics) {
     final value = _read(status, metric);
-    if (value != null) out.add((metric.label, value));
+    if (value != null) out.add(TrayReading(metric, value));
   }
   return out;
 }

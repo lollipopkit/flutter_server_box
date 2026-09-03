@@ -451,23 +451,23 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu anahtar yalnızca programın arka planda çalışmayı deneyeceği anlamına gelir. Arka planda çalışıp çalışamayacağı, iznin etkinleştirilip etkinleştirilmediğine bağlıdır. AOSP tabanlı Android ROM\'lar için lütfen bu uygulamada \"Pil Optimizasyonu\"nu devre dışı bırakın. MIUI / HyperOS için lütfen güç tasarrufu politikasını \"Sınırsız\" olarak değiştirin.';
 
   @override
-  String get trayTitle => 'Status icon';
+  String get trayTitle => 'Durum simgesi';
 
   @override
-  String get trayReadings => 'Readings';
+  String get trayReadings => 'Değerler';
 
   @override
-  String get trayChart => 'Chart';
+  String get trayChart => 'Grafik';
 
   @override
-  String get trayChartNone => 'None';
+  String get trayChartNone => 'Yok';
 
   @override
-  String get trayCompact => 'Compact rows';
+  String get trayCompact => 'Sıkıştırılmış satırlar';
 
   @override
   String get trayCompactTip =>
-      'One line per server, without the chart. Also what Linux draws either way — its panel menu is sent over D-Bus, which carries a label but not a layout.';
+      'Grafik olmadan sunucu başına bir satır. Linux da her durumda bunu görüntüler — panel menüsü bir etiket taşıyan ancak düzen taşımayan D-Bus üzerinden gönderilir.';
 
   @override
   String get trayKeepRunning => 'Tepside çalışmaya devam et';

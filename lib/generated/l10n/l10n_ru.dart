@@ -454,23 +454,23 @@ class AppLocalizationsRu extends AppLocalizations {
       'Этот переключатель означает, что программа будет пытаться работать в фоновом режиме, но фактическое выполнение зависит от того, включено ли разрешение. Для нативного Android отключите «Оптимизацию батареи» для этого приложения, для MIUI измените контроль активности на «Нет ограничений».';
 
   @override
-  String get trayTitle => 'Status icon';
+  String get trayTitle => 'Значок состояния';
 
   @override
-  String get trayReadings => 'Readings';
+  String get trayReadings => 'Показания';
 
   @override
-  String get trayChart => 'Chart';
+  String get trayChart => 'График';
 
   @override
-  String get trayChartNone => 'None';
+  String get trayChartNone => 'Нет';
 
   @override
-  String get trayCompact => 'Compact rows';
+  String get trayCompact => 'Компактные строки';
 
   @override
   String get trayCompactTip =>
-      'One line per server, without the chart. Also what Linux draws either way — its panel menu is sent over D-Bus, which carries a label but not a layout.';
+      'По одной строке на сервер, без графика. Linux в любом случае отображает именно так — его меню панели передаётся через D-Bus, который переносит метку, но не макет.';
 
   @override
   String get trayKeepRunning => 'Продолжать работу в системном трее';

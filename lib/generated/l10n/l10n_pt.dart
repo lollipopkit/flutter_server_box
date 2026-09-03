@@ -451,23 +451,23 @@ class AppLocalizationsPt extends AppLocalizations {
       'Este interruptor indica que o programa tentará rodar em segundo plano, mas a capacidade de fazer isso depende das permissões concedidas. No Android nativo, desative a \'Otimização de bateria\' para este app, no MIUI, altere a estratégia de economia de energia para \'Sem restrições\'.';
 
   @override
-  String get trayTitle => 'Status icon';
+  String get trayTitle => 'Ícone de estado';
 
   @override
-  String get trayReadings => 'Readings';
+  String get trayReadings => 'Leituras';
 
   @override
-  String get trayChart => 'Chart';
+  String get trayChart => 'Gráfico';
 
   @override
-  String get trayChartNone => 'None';
+  String get trayChartNone => 'Nenhum';
 
   @override
-  String get trayCompact => 'Compact rows';
+  String get trayCompact => 'Linhas compactas';
 
   @override
   String get trayCompactTip =>
-      'One line per server, without the chart. Also what Linux draws either way — its panel menu is sent over D-Bus, which carries a label but not a layout.';
+      'Uma linha por servidor, sem o gráfico. É também o que o Linux apresenta em qualquer caso — o menu do painel é enviado através do D-Bus, que transporta uma etiqueta, mas não um esquema.';
 
   @override
   String get trayKeepRunning => 'Continuar em execução na bandeja';

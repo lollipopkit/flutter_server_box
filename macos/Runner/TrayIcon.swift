@@ -155,7 +155,7 @@ final class TrayIcon: NSObject, NSMenuDelegate {
 private final class TrayRowView: NSView {
     private let name: String
     private let state: String
-    private let readings: [(String, String)]
+    private let readings: [(key: String, label: String, value: String)]
     private let chart: [Double]
     private weak var item: NSMenuItem?
 
@@ -185,11 +185,90 @@ private final class TrayRowView: NSView {
         return ceil(name + lineGap + detail + padding * 2)
     }
 
+    /// The SF Symbol that stands in for a metric's name.
+    ///
+    /// By the key the model sends and not by the label: the label is a word
+    /// meant to be read, and matching on it would break the day it is
+    /// translated. Nil for a metric with no symbol worth using, and on a
+    /// system too old for symbols at all — both fall back to the word.
+    private static func symbol(for key: String) -> String? {
+        switch key {
+        case "cpu": return "cpu"
+        case "mem": return "memorychip"
+        case "swap": return "arrow.left.arrow.right"
+        case "net": return "arrow.up.arrow.down"
+        case "disk": return "internaldrive"
+        case "temp": return "thermometer"
+        default: return nil
+        }
+    }
+
+    /// The second line: a symbol for each metric, then its value.
+    ///
+    /// An attributed string with attachments rather than glyphs drawn one at a
+    /// time — the baseline of an image next to text is what `NSTextAttachment`
+    /// is for, and doing it by hand means recomputing it for every font size
+    /// the menu can be set to.
+    ///
+    /// The word is kept where there is no symbol, so a row never loses which
+    /// reading it is showing.
+    static func detailLine(
+        _ readings: [(key: String, label: String, value: String)],
+        colour: NSColor
+    ) -> NSAttributedString {
+        let out = NSMutableAttributedString()
+        let attrs: [NSAttributedString.Key: Any] = [
+            .font: detailFont, .foregroundColor: colour,
+        ]
+        for reading in readings {
+            if out.length > 0 {
+                out.append(NSAttributedString(string: "   ", attributes: attrs))
+            }
+            var drewSymbol = false
+            if #available(macOS 11.0, *), let name = symbol(for: reading.key) {
+                let config = NSImage.SymbolConfiguration(
+                    pointSize: NSFont.smallSystemFontSize, weight: .regular
+                )
+                if let image = NSImage(systemSymbolName: name, accessibilityDescription: reading.label)?
+                    .withSymbolConfiguration(config) {
+                    image.isTemplate = true
+                    let attachment = NSTextAttachment()
+                    attachment.image = image
+                    // Sat on the text's own descender, so the symbol reads as
+                    // part of the line rather than as something floating in it.
+                    attachment.bounds = NSRect(
+                        x: 0, y: detailFont.descender,
+                        width: image.size.width, height: image.size.height
+                    )
+                    let attached = NSMutableAttributedString(attachment: attachment)
+                    attached.addAttributes(
+                        [.foregroundColor: colour],
+                        range: NSRange(location: 0, length: attached.length)
+                    )
+                    out.append(attached)
+                    out.append(NSAttributedString(string: " ", attributes: attrs))
+                    drewSymbol = true
+                }
+            }
+            if !drewSymbol {
+                out.append(
+                    NSAttributedString(string: "\(reading.label) ", attributes: attrs)
+                )
+            }
+            out.append(NSAttributedString(string: reading.value, attributes: attrs))
+        }
+        return out
+    }
+
     init(line: [String: Any], item: NSMenuItem) {
         self.name = line["name"] as? String ?? ""
         self.state = line["state"] as? String ?? "offline"
         self.readings = (line["readings"] as? [[String: Any]] ?? []).map {
-            ($0["label"] as? String ?? "", $0["value"] as? String ?? "")
+            (
+                key: $0["key"] as? String ?? "",
+                label: $0["label"] as? String ?? "",
+                value: $0["value"] as? String ?? ""
+            )
         }
         self.chart = (line["chart"] as? [Double]) ?? []
         self.item = item
@@ -233,28 +312,21 @@ private final class TrayRowView: NSView {
             .font: Self.nameFont, .foregroundColor: primary,
         ]
         let nameSize = (name as NSString).size(withAttributes: nameAttrs)
-        let detail = readings.map { "\($0.0) \($0.1)" }.joined(separator: "   ")
-        let detailAttrs: [NSAttributedString.Key: Any] = [
-            .font: Self.detailFont, .foregroundColor: secondary,
-        ]
-        let detailSize = detail.isEmpty
-            ? .zero
-            : (detail as NSString).size(withAttributes: detailAttrs)
+        let detail = Self.detailLine(readings, colour: secondary)
+        let detailSize = detail.length == 0 ? .zero : detail.size()
 
         // Laid out from the bottom, which is where this coordinate space
         // starts: the detail sits on the bottom padding and the name above it,
         // so the two keep their gap whatever the fonts measure.
         let detailY = Self.padding
-        let nameY = detail.isEmpty
+        let nameY = detail.length == 0
             ? (bounds.height - nameSize.height) / 2
             : detailY + detailSize.height + Self.lineGap
 
         let textX = Self.leading + Self.dotSize + 7
         (name as NSString).draw(at: NSPoint(x: textX, y: nameY), withAttributes: nameAttrs)
-        if !detail.isEmpty {
-            (detail as NSString).draw(
-                at: NSPoint(x: textX, y: detailY), withAttributes: detailAttrs
-            )
+        if detail.length > 0 {
+            detail.draw(at: NSPoint(x: textX, y: detailY))
         }
 
         // Against the name, not against the row: it belongs to the line that

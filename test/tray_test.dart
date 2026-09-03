@@ -40,7 +40,10 @@ void main() {
         id: 'srv-1',
         name: 'prod-web',
         state: TrayLineState.ok,
-        readings: [('CPU', '12%'), ('MEM', '40%')],
+        readings: [
+          TrayReading(TrayMetric.cpu, '12%'),
+          TrayReading(TrayMetric.mem, '40%'),
+        ],
       );
 
       expect(row.id, 'srv-1');
@@ -67,7 +70,7 @@ void main() {
         metrics: TrayMetric.values,
       );
 
-      expect(readings.map((r) => r.$1), isNot(contains('TEMP')));
+      expect(readings.map((r) => r.metric), isNot(contains(TrayMetric.temp)));
     });
 
     test('a chart is refused for a metric a chart says nothing about', () {
@@ -110,7 +113,7 @@ void main() {
           id: 'a',
           name: 'one',
           state: TrayLineState.ok,
-          readings: [('CPU', cpu)],
+          readings: [TrayReading(TrayMetric.cpu, cpu)],
         ),
       ],
     );

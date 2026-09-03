@@ -452,23 +452,23 @@ class AppLocalizationsDe extends AppLocalizations {
       'Dieser Schalter bedeutet nur, dass die App versuchen wird, im Hintergrund zu laufen. Ob sie im Hintergrund laufen kann, hängt davon ab, ob die Berechtigungen aktiviert sind oder nicht. Bei nativem Android deaktivieren Sie bitte \"Batterieoptimierung\" in dieser App, und bei miui ändern Sie bitte die Energiesparrichtlinie auf \"Unbegrenzt\".';
 
   @override
-  String get trayTitle => 'Status icon';
+  String get trayTitle => 'Statussymbol';
 
   @override
-  String get trayReadings => 'Readings';
+  String get trayReadings => 'Messwerte';
 
   @override
-  String get trayChart => 'Chart';
+  String get trayChart => 'Diagramm';
 
   @override
-  String get trayChartNone => 'None';
+  String get trayChartNone => 'Keine';
 
   @override
-  String get trayCompact => 'Compact rows';
+  String get trayCompact => 'Kompakte Zeilen';
 
   @override
   String get trayCompactTip =>
-      'One line per server, without the chart. Also what Linux draws either way — its panel menu is sent over D-Bus, which carries a label but not a layout.';
+      'Eine Zeile pro Server, ohne Diagramm. Das ist auch die Darstellung, die Linux immer verwendet – sein Panel-Menü wird über D-Bus übertragen, das ein Label, aber kein Layout überträgt.';
 
   @override
   String get trayKeepRunning => 'Im Tray weiter ausführen';
