@@ -13,23 +13,41 @@ import 'package:server_box/data/res/url.dart';
 /// honest arrangement while the log can still name a server — see
 /// [CrashReport].
 ///
-/// Two steps on purpose. The first dialog is small and says what happened; a
-/// user who wants nothing to do with it answers there. The report itself is
-/// built only after they ask for it, since reading the file is work that a
-/// dismissed prompt should not do.
+/// Two steps on purpose. The first is small and says what happened; a user who
+/// wants nothing to do with it dismisses it there. The report itself is built
+/// only after they ask for it, since reading the file is work that an ignored
+/// notice should not do.
+///
+/// That first step is a toast in the corner rather than a dialog. What the app
+/// has to say here is "the last run ended badly" — which is worth telling
+/// somebody and is not worth taking the screen away from them for. The app has
+/// just started; whatever they opened it to do is what they should be able to
+/// get on with.
 abstract final class CrashReportNotice {
-  static Future<void> showIfNeeded(BuildContext context) async {
-    // Consumed by the launch that read the marker, so this asks once per
+  static void showIfNeeded(BuildContext context) {
+    // Consumed by the launch that read the marker, so this appears once per
     // crash rather than once per launch after one.
     if (!CrashLog.lastRunEndedBadly) return;
     if (!context.mounted) return;
 
-    final wants = await context.showRoundDialog<bool>(
-      title: libL10n.attention,
-      child: Text(l10n.crashNoticeBody),
-      actions: Btnx.cancelOk,
+    Toast.show(
+      l10n.crashNoticeBody,
+      level: ToastLevel.warn,
+      // Stays until it is dismissed, which is not what a toast usually does.
+      // The marker is read once and cleared, and outside a debug build there
+      // is no other way to this report — so a notice that times out while
+      // nobody is looking loses the log for good. Dismissed by the button, or
+      // by dragging it off the way any toast is.
+      duration: Duration.zero,
+      action: ToastAction(
+        label: libL10n.view,
+        onTap: () => _showReport(context),
+      ),
     );
-    if (wants != true || !context.mounted) return;
+  }
+
+  static Future<void> _showReport(BuildContext context) async {
+    if (!context.mounted) return;
 
     final report = await CrashReport.build();
     if (!context.mounted) return;

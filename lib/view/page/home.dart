@@ -584,12 +584,12 @@ class _HomePageState extends ConsumerState<HomePage>
       // [LegacyStatusUrlsMigration].
       await LegacyStatusNotice.showIfNeeded(context);
       if (!mounted) return;
-      // Offers the previous run's log when that run crashed. Ahead of the
-      // guide because a user who just lost their session is not being
-      // introduced to the app, and after the two migration notices because
-      // those are about data rather than about one bad launch.
-      await CrashReportNotice.showIfNeeded(context);
-      if (!mounted) return;
+      // Offers the previous run's log when that run crashed. A toast, so it is
+      // raised rather than awaited: the guide behind it is a dialog, and the
+      // point of the toast is that it does not stand in front of anything.
+      // Last of the three all the same — the two migration notices are about
+      // data, which outlives one bad launch.
+      CrashReportNotice.showIfNeeded(context);
       await _maybeShowNavGuide();
     }());
 
