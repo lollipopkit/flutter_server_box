@@ -7,7 +7,6 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
-import 'package:responsive_framework/responsive_framework.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/tag_group.dart';
@@ -21,7 +20,6 @@ import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/selection.dart';
 import 'package:server_box/data/provider/server/single.dart';
-import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
@@ -36,7 +34,6 @@ part 'content.dart';
 part 'flight.dart';
 part 'landscape.dart';
 part 'pane_list.dart';
-part 'top_bar.dart';
 part 'utils.dart';
 
 class ServerPage extends ConsumerStatefulWidget {
@@ -51,13 +48,12 @@ class ServerPage extends ConsumerStatefulWidget {
 const _cardPad = 74.0;
 const _cardPadSingle = 13.0;
 
-/// Kept clear either side of the floating tag bar.
-///
-/// Set by the add button — a 56pt `FloatingActionButton`, the inset `Scaffold`
-/// gives it, and a gap so the two never touch — and then applied to both ends,
-/// because the bar is centred and room on one side only would move it off
-/// centre to buy that clearance.
-const _kTagBarSideRoom = 80.0;
+/// Above and below the pill inside the floating tag bar.
+const _kTagBarPad = 8.0;
+
+/// How far the pill has to travel to be off the top of the page, below the
+/// notch — what [AutoHide] is given to move it by.
+const _kTagBarHeight = TagSwitcher.kTagBtnHeight + _kTagBarPad * 2;
 
 /// Long enough to read as one movement, short enough not to be waited on.
 const _kFlightDuration = Durations.medium3;
@@ -189,10 +185,12 @@ class _ServerPageState extends ConsumerState<ServerPage>
 
   Widget _buildScaffold(Widget child) {
     return Scaffold(
-      // Nothing to put up here on a wide window — see [_TopBar].
-      appBar: ResponsiveBreakpoints.of(context).isMobile
-          ? const _TopBar()
-          : null,
+      // No bar at any width. A phone used to get the app's name and a cog here
+      // because this was the one layout with no other way into the settings
+      // (#657) — the wider ones have the nav rail, which carries its own. The
+      // bottom bar's "more" is that way now, on every phone and every tab, so
+      // what was left up here was a title naming the app on the app's own
+      // first screen.
       body: GestureDetector(
         behavior: HitTestBehavior.translucent,
         onTap: _autoHideCtrl.show,
@@ -202,17 +200,20 @@ class _ServerPageState extends ConsumerState<ServerPage>
           // a status bar — now that a wide window has no app bar. At the
           // bottom, what the floating tag bar sits above: it is 13pt off the
           // edge of this, not 13pt off the edge of a home indicator.
-          return SafeArea(
-            // Expand, or the grid is as tall as the cards in it and the bar
-            // pinned to the bottom of this is pinned to the bottom of *them*.
-            // A `Stack` hands its unpositioned children loose constraints, and
-            // a `SingleChildScrollView` given a loose one sizes to its content
-            // rather than to the window — which is also a page that stops
-            // scrolling as soon as it has scrolled its own height.
-            child: Stack(
-              fit: StackFit.expand,
-              children: [child, _buildTagBar()],
-            ),
+          // The bar is outside the safe area and the grid is inside it. The
+          // blur has to reach the top of the window — it is what the status
+          // bar is read against while the grid passes under both — and the
+          // grid still starts below the notch.
+          //
+          // Expand, or the grid is as tall as the cards in it and the bar
+          // pinned to this is pinned to the bottom of *them*. A `Stack` hands
+          // its unpositioned children loose constraints, and a
+          // `SingleChildScrollView` given a loose one sizes to its content
+          // rather than to the window — which is also a page that stops
+          // scrolling as soon as it has scrolled its own height.
+          return Stack(
+            fit: StackFit.expand,
+            children: [SafeArea(child: child), _buildTagBar()],
           );
         }),
       ),
@@ -221,6 +222,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
         offset: 75,
         scrollController: _scrollController,
         hideController: _autoHideCtrl,
+        requireScrollable: false,
         child: FloatingActionButton(
           heroTag: 'addServer',
           onPressed: _onTapAddServer,
@@ -281,14 +283,12 @@ class _ServerPageState extends ConsumerState<ServerPage>
     });
   }
 
-  /// The tag filter, floating over the bottom of the grid.
+  /// The tag filter, floating over the top of the grid.
   ///
-  /// Down here rather than in a bar above the cards for the reason the detail
-  /// page's function bar is: it acts on the whole list, so it belongs within
-  /// reach the whole way down instead of scrolling off after the first row.
-  /// Same `HideOnScroll` and same rule — gone on a drag down the page, back on
-  /// a drag up it or at the top, and coming up from the bottom edge when the
-  /// tab arrives.
+  /// Floating rather than in a bar above the cards, because it acts on the
+  /// whole list: it stays within reach the whole way down instead of scrolling
+  /// off after the first row. It withdraws on its own like the add button
+  /// does, and comes back on the same signals.
   ///
   /// A `Stack` child rather than a `Positioned` one, because with no tags
   /// there is nothing to position. `Positioned` reaches the `Stack` through
@@ -303,33 +303,51 @@ class _ServerPageState extends ConsumerState<ServerPage>
       // in the way opening the tab does.
       if (tags.isEmpty) return const SizedBox.shrink();
 
+      final scheme = Theme.of(context).colorScheme;
+      // What the bar has to cover before the grid starts: the notch as well as
+      // its own height, since it is laid out above the safe area.
+      final topInset = MediaQuery.paddingOf(context).top;
+
       return Positioned(
+        top: 0,
         left: 0,
         right: 0,
-        bottom: 0,
-        child: HideOnScroll(
-          controller: _scrollController,
+        // Away on `AutoHide`'s own timer, and back on a scroll or a tap on the
+        // page — the same controller the add button rides, so the two pieces
+        // of chrome over this grid come and go together rather than one at a
+        // time. Off the top, by its whole height, notch included.
+        child: AutoHide(
+          direction: AxisDirection.up,
+          offset: topInset + _kTagBarHeight,
+          scrollController: _scrollController,
+          hideController: _autoHideCtrl,
+          // A tap anywhere on this page brings both back — see the
+          // `GestureDetector` in `_buildScaffold` — so neither has to wait for
+          // a page long enough to scroll before it may withdraw.
+          requireScrollable: false,
+          // The pill and nothing else. It had a blurred band behind it, which
+          // is what a bar has and this is not one: it comes and goes, and a
+          // band that came with it took a strip of the page away each time.
+          // The pill is opaque instead, since what is behind it now is a card.
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: _kTagBarSideRoom,
-            ).copyWith(bottom: 13),
-            // Centred in the window, and the same room kept on both sides so
-            // that stays true — the bar grows from the middle outwards as
-            // tags are added, and the side it would reach something on is the
-            // add button's.
+            padding: EdgeInsets.only(
+              top: topInset + _kTagBarPad,
+              left: 13,
+              right: 13,
+            ),
+            // Centred in the window: the pill grows from the middle outwards
+            // as tags are added.
             child: Center(
               child: Material(
-                // Raised off the page, because it is the one thing here that
-                // is not part of what the page is showing.
                 elevation: 3,
                 shadowColor: Colors.black26,
-                color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                color: scheme.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(19),
                 clipBehavior: Clip.antiAlias,
                 child: SizedBox(
                   height: TagSwitcher.kTagBtnHeight,
                   // Shrink-wrapped, so the pill is as wide as the tags in it
-                  // and scrolls once they outgrow the room above.
+                  // and scrolls once they outgrow the room.
                   child: TagSwitcher(
                     tags: _tags,
                     onTagChanged: (tag) => _tag.value = tag,
@@ -367,8 +385,14 @@ class _ServerPageState extends ConsumerState<ServerPage>
     // moved.
     return AnimatedMasonry(
       controller: _scrollController,
-      // Room at the bottom for the add button and the tag bar to float over.
-      padding: MasonryList.kPadding.copyWith(bottom: 77),
+      // No room kept at the top for the tag pill. It floats and it withdraws,
+      // so a strip reserved for it would be a gap for most of the time it is
+      // not there — the first card starts level with it and passes under it,
+      // which is what floating means.
+      //
+      // The pill's own inset at the top, so the first card and the pill start
+      // on the same line. At the bottom, room for the add button.
+      padding: MasonryList.kPadding.copyWith(top: _kTagBarPad, bottom: 77),
       children: [
         for (final id in filtered)
           // Its own `Consumer`, so a status poll rebuilds the one card whose
