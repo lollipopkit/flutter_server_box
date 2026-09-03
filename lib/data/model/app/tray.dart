@@ -65,8 +65,10 @@ enum TrayMetric {
   /// A percentage over time is a shape; a disk that is 41% full for a week is
   /// a flat line, and drawing it would spend the row's width saying nothing.
   bool get chartable => switch (this) {
-    TrayMetric.cpu || TrayMetric.mem || TrayMetric.swap || TrayMetric.net =>
-      true,
+    TrayMetric.cpu ||
+    TrayMetric.mem ||
+    TrayMetric.swap ||
+    TrayMetric.net => true,
     TrayMetric.disk || TrayMetric.temp => false,
   };
 
@@ -114,8 +116,15 @@ class TrayConfig {
       other is TrayConfig &&
       other.chart == chart &&
       other.compact == compact &&
-      other.metrics.length == metrics.length &&
-      other.metrics.every(metrics.contains);
+      _sameMetrics(other.metrics);
+
+  bool _sameMetrics(List<TrayMetric> other) {
+    if (other.length != metrics.length) return false;
+    for (var i = 0; i < metrics.length; i++) {
+      if (other[i] != metrics[i]) return false;
+    }
+    return true;
+  }
 
   @override
   int get hashCode => Object.hash(Object.hashAll(metrics), chart, compact);
@@ -220,8 +229,13 @@ class TrayLine {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, name, state, Object.hashAll(readings), chart.length);
+  int get hashCode => Object.hash(
+    id,
+    name,
+    state,
+    Object.hashAll(readings),
+    Object.hashAll(chart),
+  );
 
   @override
   String toString() => 'TrayLine($label)';
@@ -314,26 +328,46 @@ List<double> trayChart({
   required TrayMetric? metric,
   int count = 40,
 }) {
-  if (metric == null || !metric.chartable) return const [];
+  if (metric == null || !metric.chartable || count <= 0) return const [];
   final history = status.history;
-  final series = switch (metric) {
+  final List<double?> series = switch (metric) {
     TrayMetric.cpu => history.cpu,
     TrayMetric.mem => history.mem,
-    TrayMetric.swap => history.mem,
-    _ => null,
+    TrayMetric.swap => history.swap,
+    TrayMetric.net => _networkTotals(history.netRx, history.netTx),
+    TrayMetric.disk || TrayMetric.temp => const [],
   };
-  if (series == null) return const [];
 
   final samples = <double>[];
   for (final value in series.skip(
     series.length > count ? series.length - count : 0,
   )) {
-    if (value != null) samples.add(value);
+    if (value != null && value.isFinite) samples.add(value);
   }
   if (samples.length < 3) return const [];
+
+  if (metric == TrayMetric.net) {
+    var peak = 0.0;
+    for (final sample in samples) {
+      if (sample.isFinite && sample > peak) peak = sample;
+    }
+    if (peak <= 0) return [for (final _ in samples) 0.0];
+    return [for (final sample in samples) (sample / peak).clamp(0.0, 1.0)];
+  }
 
   // Percentages against a fixed 0..100, not against their own range: a machine
   // idling between 1% and 3% would otherwise draw the same alarming shape as
   // one swinging between 10% and 90%.
   return [for (final s in samples) (s / 100).clamp(0.0, 1.0)];
+}
+
+/// One network series for a row: total traffic at each aligned sampling point.
+/// A missing direction is zero only when the other direction was measured; if
+/// neither was measured the point stays missing and is omitted from the chart.
+List<double?> _networkTotals(List<double?> rx, List<double?> tx) {
+  final length = rx.length < tx.length ? rx.length : tx.length;
+  return [
+    for (var i = 0; i < length; i++)
+      if (rx[i] == null && tx[i] == null) null else (rx[i] ?? 0) + (tx[i] ?? 0),
+  ];
 }

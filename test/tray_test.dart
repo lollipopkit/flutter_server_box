@@ -35,23 +35,26 @@ void main() {
   });
 
   group('a row', () {
-    test('carries the id, and reads as one line where that is all there is', () {
-      const row = TrayLine(
-        id: 'srv-1',
-        name: 'prod-web',
-        state: TrayLineState.ok,
-        readings: [
-          TrayReading(TrayMetric.cpu, '12%'),
-          TrayReading(TrayMetric.mem, '40%'),
-        ],
-      );
+    test(
+      'carries the id, and reads as one line where that is all there is',
+      () {
+        const row = TrayLine(
+          id: 'srv-1',
+          name: 'prod-web',
+          state: TrayLineState.ok,
+          readings: [
+            TrayReading(TrayMetric.cpu, '12%'),
+            TrayReading(TrayMetric.mem, '40%'),
+          ],
+        );
 
-      expect(row.id, 'srv-1');
-      expect(row.label, startsWith(TrayLineState.ok.glyph));
-      expect(row.label, contains('prod-web'));
-      expect(row.label, contains('CPU 12%'));
-      expect(row.label, contains('MEM 40%'));
-    });
+        expect(row.id, 'srv-1');
+        expect(row.label, startsWith(TrayLineState.ok.glyph));
+        expect(row.label, contains('prod-web'));
+        expect(row.label, contains('CPU 12%'));
+        expect(row.label, contains('MEM 40%'));
+      },
+    );
 
     test('and to a name alone when nothing was asked for', () {
       // Every reading turned off is a choice the settings allow: the dot still
@@ -104,6 +107,53 @@ void main() {
       expect(chart, hasLength(4));
       expect(chart.reduce((a, b) => a > b ? a : b), lessThan(0.05));
     });
+
+    test('the swap chart reads swap history rather than memory history', () {
+      final status = _emptyStatus();
+      for (final (i, values) in [
+        (10.0, 90.0),
+        (20.0, 80.0),
+        (30.0, 70.0),
+      ].indexed) {
+        status.history.add(timeMs: i + 1, mem: values.$1, swap: values.$2);
+      }
+
+      expect(trayChart(status: status, metric: TrayMetric.swap), [
+        0.9,
+        0.8,
+        0.7,
+      ]);
+    });
+
+    test(
+      'the network chart combines both directions and scales to its peak',
+      () {
+        final status = _emptyStatus();
+        status.history.add(timeMs: 1, netRx: 100, netTx: 0);
+        status.history.add(timeMs: 2, netRx: 100, netTx: 100);
+        status.history.add(timeMs: 3, netRx: 100, netTx: 300);
+
+        expect(trayChart(status: status, metric: TrayMetric.net), [
+          0.25,
+          0.5,
+          1.0,
+        ]);
+      },
+    );
+
+    test('the network chart omits samples with neither direction measured', () {
+      final status = _emptyStatus();
+      status.history.add(timeMs: 1);
+      status.history.add(timeMs: 2, netRx: 10);
+      status.history.add(timeMs: 3, netTx: 20);
+      status.history.add(timeMs: 4, netRx: 30, netTx: 10);
+
+      expect(trayChart(status: status, metric: TrayMetric.net), [
+        0.25,
+        0.5,
+        1.0,
+      ]);
+    });
   });
 
   group('pushing the same thing twice', () {
@@ -135,6 +185,35 @@ void main() {
         const TrayModel(lines: rows, config: TrayConfig(compact: true)),
         isNot(const TrayModel(lines: rows)),
       );
+    });
+
+    test('nor are readings in a different display order', () {
+      const first = TrayConfig(metrics: [TrayMetric.cpu, TrayMetric.mem]);
+      const reversed = TrayConfig(metrics: [TrayMetric.mem, TrayMetric.cpu]);
+
+      expect(first, isNot(reversed));
+    });
+
+    test('serialisation preserves metric keys and chart samples', () {
+      const model = TrayModel(
+        config: TrayConfig(metrics: [TrayMetric.swap], chart: TrayMetric.swap),
+        lines: [
+          TrayLine(
+            id: 'srv',
+            name: 'one',
+            state: TrayLineState.ok,
+            readings: [TrayReading(TrayMetric.swap, '25%')],
+            chart: [0.1, 0.2, 0.3],
+          ),
+        ],
+      );
+
+      final json = model.toJson();
+      final line = (json['lines']! as List).single as Map<String, Object?>;
+      final reading =
+          (line['readings']! as List).single as Map<String, Object?>;
+      expect(reading['key'], 'swap');
+      expect(line['chart'], [0.1, 0.2, 0.3]);
     });
   });
 }
