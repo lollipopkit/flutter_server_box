@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:server_box/core/sync.dart';
 import 'package:server_box/data/model/server/bmc_credential.dart';
+import 'package:server_box/data/provider/entity_helpers.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
 
@@ -41,28 +41,24 @@ class BmcCredentialNotifier extends _$BmcCredentialNotifier {
   }
 
   Future<void> add(BmcCredential cred) async {
-    Stores.bmcCredential.put(cred);
-    state = state.copyWith(creds: [...state.creds, cred]);
-    bakSync.sync(milliDelay: 1000);
+    state = state.copyWith(
+      creds: entityAdd(Stores.bmcCredential, state.creds, cred),
+    );
   }
 
   /// The id never changes — see [PrivateKeyNotifier.update] for why that
   /// matters. A rename is an `UPDATE` of one column, and every server pointing
   /// at this account keeps pointing at it.
   Future<void> update(BmcCredential old, BmcCredential fresh) async {
-    if (old.id != fresh.id) {
-      throw ArgumentError('cannot change the id of a BmcCredential');
-    }
-    final creds = [...state.creds];
-    final idx = creds.indexWhere((e) => e.id == old.id);
-    if (idx == -1) {
-      creds.add(fresh);
-    } else {
-      creds[idx] = fresh;
-    }
-    Stores.bmcCredential.put(fresh);
-    state = state.copyWith(creds: creds);
-    bakSync.sync(milliDelay: 1000);
+    state = state.copyWith(
+      creds: entityUpdate(
+        Stores.bmcCredential,
+        state.creds,
+        old,
+        fresh,
+        (e) => e.id,
+      ),
+    );
   }
 
   /// Deletes the account. The servers that used it keep their address and lose
@@ -92,15 +88,18 @@ class BmcCredentialNotifier extends _$BmcCredentialNotifier {
       );
     }
 
-    Stores.bmcCredential.delete(cred);
     state = state.copyWith(
-      creds: state.creds.where((e) => e.id != cred.id).toList(),
+      creds: entityDelete(
+        Stores.bmcCredential,
+        state.creds,
+        cred,
+        (e) => e.id,
+      ),
     );
 
     if (affected.isNotEmpty) {
       unawaited(ref.read(serversProvider.notifier).reload());
     }
-    bakSync.sync(milliDelay: 1000);
   }
 
   /// How many servers point at [id], which the UI says before offering a

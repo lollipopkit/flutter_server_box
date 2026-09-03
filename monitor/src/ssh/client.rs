@@ -13,7 +13,7 @@
 use std::sync::Arc;
 
 use russh::client::{self, AuthResult, Handle, KeyboardInteractiveAuthResponse};
-use russh::keys::ssh_key::PublicKey;
+use russh::keys::PublicKeyOrCertificate;
 use russh::keys::{PrivateKeyWithHashAlg, decode_secret_key};
 use russh::{Channel, ChannelMsg, ChannelReadHalf, Disconnect};
 use sqlx::SqlitePool;
@@ -146,9 +146,13 @@ impl client::Handler for HostKeyChecker {
 
     async fn check_server_key(
         &mut self,
-        server_public_key: &PublicKey,
+        server_public_key: &PublicKeyOrCertificate,
     ) -> Result<bool, Self::Error> {
-        match known_hosts::verify(&self.pool, &self.addr, server_public_key).await {
+        // Pin the underlying public key, whether the server presented a bare
+        // key or an OpenSSH certificate (russh 0.63 reports both through
+        // `PublicKeyOrCertificate`).
+        let key = server_public_key.public_key();
+        match known_hosts::verify(&self.pool, &self.addr, &key).await {
             Ok(Verdict::Known | Verdict::Pinned) => Ok(true),
             Ok(Verdict::Mismatch { expected, actual }) => {
                 tracing::warn!(

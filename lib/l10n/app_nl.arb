@@ -26,7 +26,6 @@
   "connectAll": "Alles verbinden",
   "disconnectAll": "Alles verbreken",
   "distIcon": "Distributiemarkeringen",
-  "distIconConsent": "Alleen om aan te geven welke distributie een server mogelijk draait.",
   "distIconIntroLegal": "Een merkteken zegt alleen wat dit apparaat van het externe systeem heeft gelezen; dat kan onjuist of verouderd zijn en duidt geen afgeleide, herbouw of specifieke versie aan. Kan het niet worden vastgesteld, dan wordt een neutraal pictogram getekend.\n\nElk merkteken is een handelsmerk van de betreffende eigenaar en wordt hier alleen gebruikt om te verwijzen naar het systeem dat het aanduidt.",
   "distIconTip": "Toon naast elke server een klein teken van het systeem dat er lijkt te draaien",
   "distNameMap": "Naamtoewijzing",
@@ -69,13 +68,6 @@
   "discoveryFailed": "Ontdekking mislukt",
   "discoverySettings": "Ontdekkingsinstellingen",
   "distro": "Distributie",
-  "distroSwitchTip": "{from} vervangen door {to}. Alles wat in {from} is geïnstalleerd wordt verwijderd, en {to} wordt in plaats daarvan gedownload en uitgepakt.",
-  "@distroSwitchTip": {
-    "placeholders": {
-      "from": {},
-      "to": {}
-    }
-  },
   "diskHealth": "Schijfgezondheid",
   "displayCpuIndex": "Toon de CPU-index",
   "dl2Local": "Download {fileName} naar lokaal?",
@@ -469,10 +461,6 @@
   "serviceDetailsUnavailable": "Sommige servicedetails zijn niet beschikbaar",
   "serviceDetailsUnavailableTip": "De lijst is bruikbaar, maar de beheerder gaf niet alle status- of opstartinformatie terug.",
   "serviceEnabled": "Ingeschakeld bij opstarten",
-  "systemdMissing": "Geen systemd op deze server",
-  "systemdMissingTip": "`systemctl` is hier niet geïnstalleerd, dus er zijn geen units om te tonen.",
-  "initSystemFmt": "Deze machine lijkt {init} te gebruiken.",
-  "systemdListFailed": "Kon units niet tonen",
   "systemdUserScopeMissing": "Gebruikers-units worden niet getoond",
   "systemdUserScopeMissingTip": "Dit account heeft geen gebruikerssessiebus op de server, dus alleen systeem-units worden getoond.",
   "serverUnreachable": "Kon geen opdracht uitvoeren op deze server",

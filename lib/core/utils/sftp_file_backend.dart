@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
+import 'package:server_box/core/utils/file_transfer_timeout.dart';
 import 'package:server_box/core/utils/sftp_escalation.dart';
 import 'package:server_box/core/utils/sftp_timeout.dart';
 import 'package:server_box/core/utils/shell_file_ops.dart';
@@ -49,15 +50,9 @@ class SftpFileBackend implements FileBackend {
 
   /// What bounds a step of a *transfer*, as opposed to an operation.
   ///
-  /// The same distinction the SCP backend draws, and the same floor: a command
-  /// answers at once or not at all, while a transfer is bounded by the gap
-  /// between bytes — and five seconds of silence on a slow link is a slow
-  /// link, not a stall. See [SftpIdleWatchdog].
-  Duration? get _streamTimeout {
-    final bound = timeout;
-    if (bound == null) return null;
-    return bound < SftpIdleWatchdog.minIdle ? SftpIdleWatchdog.minIdle : bound;
-  }
+  /// Floored at 60s via [transferStreamTimeout] — same as SCP — so a slow link
+  /// is not mistaken for a stall. See [SftpIdleWatchdog].
+  Duration? get _streamTimeout => transferStreamTimeout(timeout);
 
   /// Whatever the SSH account can reach, which sshd decides per path rather
   /// than by a list anything here could enumerate.

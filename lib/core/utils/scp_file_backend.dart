@@ -5,6 +5,7 @@ import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/core/utils/file_transfer_timeout.dart';
 import 'package:server_box/core/utils/scp_protocol.dart';
 import 'package:server_box/core/utils/sftp_escalation.dart';
 import 'package:server_box/core/utils/shell_file_ops.dart';
@@ -44,19 +45,10 @@ class ScpFileBackend implements FileBackend {
 
   /// What bounds a step of a *transfer*, as opposed to a command.
   ///
-  /// A command answers at once or not at all, so [timeout] — five seconds by
-  /// default — is the right bound for one. A transfer is bounded by the gap
-  /// between bytes, and five seconds of silence on a slow link is not a stall,
-  /// it is a slow link: bounding a download that way would abort every large
-  /// file over a bad connection. The SFTP download path draws the same
-  /// distinction, and settles on the same floor.
-  Duration? get _streamTimeout {
-    final bound = timeout;
-    if (bound == null) return null;
-    return bound < _minStreamTimeout ? _minStreamTimeout : bound;
-  }
-
-  static const _minStreamTimeout = Duration(seconds: 60);
+  /// Floored at 60s via [transferStreamTimeout] — same as SFTP — so a slow
+  /// link is not mistaken for a stall. The method used to be duplicated
+  /// verbatim between the two backends; see [file_transfer_timeout.dart].
+  Duration? get _streamTimeout => transferStreamTimeout(timeout);
 
   /// The `scp` channels this backend has open right now.
   ///

@@ -273,9 +273,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get distIcon => '배포판 표시';
 
   @override
-  String get distIconConsent => '해당 서버가 실행 중일 수 있는 배포판을 나타내는 데에만 사용됩니다.';
-
-  @override
   String get distIconIntroLegal =>
       '마크는 이 기기가 원격 시스템에서 읽은 내용만을 나타내며, 그 정보는 틀리거나 오래되었을 수 있고 파생판·재빌드·특정 버전을 뜻하지도 않습니다. 알 수 없을 때는 일반 아이콘을 표시합니다.\n\n각 마크는 해당 소유자의 상표이며, 여기서는 그것이 가리키는 시스템을 지칭하는 데에만 사용됩니다.';
 
@@ -459,11 +456,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get distro => '배포판';
-
-  @override
-  String distroSwitchTip(Object from, Object to) {
-    return '$from을(를) $to(으)로 바꿉니다. $from 안에 설치한 것은 모두 삭제되고, 그 자리에 $to을(를) 내려받아 풉니다.';
-  }
 
   @override
   String get diskHealth => '디스크 상태';
@@ -1527,20 +1519,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get serviceEnabled => '부팅 시 활성화';
-
-  @override
-  String get systemdMissing => '이 서버에는 systemd가 없습니다';
-
-  @override
-  String get systemdMissingTip => '`systemctl`이 설치되어 있지 않아 나열할 unit이 없습니다.';
-
-  @override
-  String initSystemFmt(String init) {
-    return '이 머신은 $init을(를) 사용하는 것으로 보입니다.';
-  }
-
-  @override
-  String get systemdListFailed => 'unit을 나열할 수 없습니다';
 
   @override
   String get systemdUserScopeMissing => '사용자 unit이 나열되지 않았습니다';

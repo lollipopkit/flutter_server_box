@@ -294,10 +294,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get distIcon => 'Значки дистрибутивов';
 
   @override
-  String get distIconConsent =>
-      'Только чтобы обозначить дистрибутив, который может работать на сервере.';
-
-  @override
   String get distIconIntroLegal =>
       'Знак говорит лишь о том, что это устройство прочитало с удалённой системы; эти сведения могут быть неверными или устаревшими и не обозначают ни производную сборку, ни пересборку, ни какую-либо конкретную версию. Если определить не удалось, рисуется обычный значок.\n\nКаждый знак является товарным знаком своего владельца и используется здесь только для указания на систему, которую он обозначает.';
 
@@ -492,11 +488,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get distro => 'Дистрибутив';
-
-  @override
-  String distroSwitchTip(Object from, Object to) {
-    return 'Заменить $from на $to. Всё, что установлено внутри $from, будет удалено, а вместо него будет загружен и распакован $to.';
-  }
 
   @override
   String get diskHealth => 'Состояние диска';
@@ -1633,21 +1624,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get serviceEnabled => 'Включено при запуске';
-
-  @override
-  String get systemdMissing => 'На этом сервере нет systemd';
-
-  @override
-  String get systemdMissingTip =>
-      '`systemctl` здесь не установлен, поэтому юнитов для показа нет.';
-
-  @override
-  String initSystemFmt(String init) {
-    return 'Похоже, эта машина использует $init.';
-  }
-
-  @override
-  String get systemdListFailed => 'Не удалось получить список юнитов';
 
   @override
   String get systemdUserScopeMissing => 'Пользовательские юниты не показаны';

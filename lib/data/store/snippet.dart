@@ -110,14 +110,7 @@ class SnippetStore extends EntityStore<Snippet> {
     return existing == null ? incoming : incoming.copyWith(id: existing.id);
   }
 
-  /// The snippet called [name]. The UI keeps names unique and `snippetOrder`
-  /// is a list of them, so this is how an order entry finds its record.
-  Snippet? fetchByName(String name) {
-    for (final snippet in fetch()) {
-      if (snippet.name == name) return snippet;
-    }
-    return null;
-  }
+
 
   /// Snippets to run when [serverId] connects, as a query rather than a decode
   /// of every record.

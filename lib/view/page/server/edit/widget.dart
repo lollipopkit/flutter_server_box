@@ -932,6 +932,8 @@ extension _Widgets on _ServerEditPageState {
     return IconButton(
       tooltip: libL10n.delete,
       onPressed: () async {
+        final cur = spi;
+        if (cur == null) return;
         // The dialog answers; this — which is on the page — acts on the answer
         // and then closes the page. Doing both from inside the button meant
         // two pops in a row from a callback that can see two navigators: the
@@ -941,14 +943,14 @@ extension _Widgets on _ServerEditPageState {
           title: libL10n.attention,
           child: Text(
             libL10n.askContinue(
-              '${libL10n.delete} ${libL10n.server}(${spi!.name})',
+              '${libL10n.delete} ${libL10n.server}(${cur.name})',
             ),
           ),
           actions: Btn.ok(red: true).toList,
         );
         if (confirmed != true || !mounted) return;
         try {
-          await ref.read(serversProvider.notifier).delServer(spi!.id);
+          await ref.read(serversProvider.notifier).delServer(cur.id);
         } catch (e, s) {
           if (mounted) context.showErrDialog(e, s);
           return;

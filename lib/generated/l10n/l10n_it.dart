@@ -294,10 +294,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get distIcon => 'Contrassegni di distribuzione';
 
   @override
-  String get distIconConsent =>
-      'Solo per indicare la distribuzione che un server potrebbe eseguire.';
-
-  @override
   String get distIconIntroLegal =>
       'Un marchio indica solo ciò che questo dispositivo ha letto dal sistema remoto, informazione che può essere errata o non aggiornata, e non identifica né un derivato, né una ricompilazione, né una versione specifica. Quando non è identificabile, viene disegnata un\'icona generica.\n\nOgni marchio appartiene al rispettivo proprietario ed è usato qui solo per riferirsi al sistema che identifica.';
 
@@ -494,11 +490,6 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get distro => 'Distribuzione';
-
-  @override
-  String distroSwitchTip(Object from, Object to) {
-    return 'Sostituire $from con $to. Tutto ciò che è installato in $from viene eliminato e al suo posto viene scaricato e scompattato $to.';
-  }
 
   @override
   String get diskHealth => 'Salute disco';
@@ -1633,21 +1624,6 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get serviceEnabled => 'Abilitato all\'avvio';
-
-  @override
-  String get systemdMissing => 'Nessun systemd su questo server';
-
-  @override
-  String get systemdMissingTip =>
-      '`systemctl` non è installato qui, quindi non ci sono unità da elencare.';
-
-  @override
-  String initSystemFmt(String init) {
-    return 'Questa macchina sembra usare $init.';
-  }
-
-  @override
-  String get systemdListFailed => 'Impossibile elencare le unità';
 
   @override
   String get systemdUserScopeMissing => 'Le unità utente non sono elencate';

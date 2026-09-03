@@ -184,6 +184,18 @@ abstract class EntityStore<T extends Object> {
     return null;
   }
 
+  /// The record called [name], for stores where names are unique.
+  ///
+  /// Used by `reconcile` and by imports keyed by name. Linear scan over the
+  /// cached list, which is also what every previous per-store `fetchByName`
+  /// did — the tables are at most a few hundred rows.
+  T? fetchByName(String name) {
+    for (final item in fetch()) {
+      if (nameOf(item) == name) return item;
+    }
+    return null;
+  }
+
   bool have(T item) => fetchOneRaw(idOf(item)) != null;
 
   List<String> keys() => (_cache ??= readAll()).map(idOf).toList();
