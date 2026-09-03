@@ -372,6 +372,7 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     // is nothing to be stale.
     _completionDir = null;
     _completionEntries = null;
+    _completionRevision++;
     final listing = _list();
     // A block, not an arrow: `() => _entries = listing` returns the future it
     // assigned, and `setState` asserts against a callback that returns one —
@@ -417,6 +418,12 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   String? _completionDir;
   List<FileEntry>? _completionEntries;
 
+  /// Which generation of the directory the cache belongs to.
+  ///
+  /// Bumped wherever the cache is dropped, so that a listing already in flight
+  /// cannot put back what it was carrying — see [_pathOptions].
+  int _completionRevision = 0;
+
   /// The directories under what has been typed so far.
   ///
   /// Real ones, read from the machine — not the paths this browser has been to
@@ -453,15 +460,21 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     if (dir == null) return const [];
 
     if (_completionDir != dir) {
+      // Read before the await and checked after it: a listing that was already
+      // on its way when the directory changed describes what was there before,
+      // and caching it would undo the invalidation in [refresh]. Nothing is
+      // offered for this keystroke — the next one lists again.
+      final revision = _completionRevision;
       try {
         final listed = _named(await backend.list(dir));
-        if (!mounted) return const [];
+        if (!mounted || revision != _completionRevision) return const [];
         _completionDir = dir;
         _completionEntries = listed;
       } catch (_) {
         // A directory that cannot be read completes to nothing, which is what
         // it has to offer. Not reported: this runs on every keystroke, and a
         // half-typed path naming nowhere is the ordinary case.
+        if (revision != _completionRevision) return const [];
         _completionDir = dir;
         _completionEntries = const [];
       }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
@@ -52,11 +53,19 @@ class _MapBackend implements FileBackend {
   @override
   Future<List<String>> reachableRoots() async => roots;
 
+  /// Holds the listing of one path open, for a test that needs one in flight
+  /// while something else happens. What it answers with is read before it
+  /// waits, so it describes the directory as it was when the call was made.
+  Completer<void>? gate;
+  String? gatePath;
+
   @override
   Future<List<FileEntry>> list(String path) async {
     listed.add(path);
+    final answer = tree[path] ?? const <FileEntry>[];
+    if (path == gatePath) await gate?.future;
     if (failWith case final error?) throw error;
-    return tree[path] ?? const [];
+    return answer;
   }
 
   @override
@@ -1018,6 +1027,39 @@ final typedField = find.byWidgetPredicate(
       await type(tester, '/ot');
 
       expect(find.text('/other'), findsOneWidget);
+    });
+
+    testWidgets('including one that was already on its way', (tester) async {
+      // The window the clearing alone does not cover: a listing asked for
+      // before the directory changed lands after it, and caching it would put
+      // back exactly what `refresh` had just dropped.
+      final backend = _MapBackend({
+        '/': [_dir('sub')],
+        '/sub': [_dir('alpha')],
+      });
+      await pump(tester, backend);
+
+      backend
+        ..gatePath = '/sub'
+        ..gate = Completer<void>();
+      await type(tester, '/sub/a');
+
+      // As a mutation leaves it: the tree has changed and the listing in
+      // flight knows nothing about it.
+      backend.tree['/sub'] = [_dir('alpha'), _dir('added')];
+      await tester.tap(find.byIcon(Icons.refresh));
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      backend.gate!.complete();
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      await type(tester, '/sub/ad');
+
+      expect(find.text('/sub/added'), findsOneWidget);
     });
 
     testWidgets('within the browser root, never above it', (tester) async {
