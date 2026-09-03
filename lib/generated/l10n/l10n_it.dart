@@ -9,6 +9,65 @@ class AppLocalizationsIt extends AppLocalizations {
   AppLocalizationsIt([String locale = 'it']) : super(locale);
 
   @override
+  String get crashCollect => 'Dati diagnostici';
+
+  @override
+  String get crashCollectIntro =>
+      'ServerBox registra ciò che accade durante l\'esecuzione per poter risolvere i problemi. Scegli quanti dati inviare.';
+
+  @override
+  String get crashCollectNone => 'Niente';
+
+  @override
+  String get crashCollectNoneTip =>
+      'I rapporti restano su questo dispositivo; dopo un arresto anomalo puoi inviarne uno manualmente.';
+
+  @override
+  String get crashCollectBasic => 'Informazioni di base';
+
+  @override
+  String get crashCollectBasicTip =>
+      'Include solo le informazioni sull\'arresto anomalo; non include log o dati sulle prestazioni. **Questo ci aiuta a migliorare l\'app e a correggere i bug.**';
+
+  @override
+  String get crashCollectFull => 'Informazioni complete';
+
+  @override
+  String get crashCollectFullTip =>
+      'Oltre al registro dell\'arresto anomalo, include dati sulle prestazioni e l\'uso delle funzioni: **Servono a individuare cosa è lento e quali funzioni vengono davvero usate.**';
+
+  @override
+  String get crashCollectFooter =>
+      'A ogni livello, i nomi dei server noti, i relativi indirizzi e nomi utente vengono sostituiti da segnaposto al momento della registrazione. Puoi modificare il livello di raccolta in seguito nelle impostazioni.';
+
+  @override
+  String get privacy => 'Privacy';
+
+  @override
+  String get privacyPolicy => 'Informativa sulla privacy';
+
+  @override
+  String get crashUpload => 'Invia i rapporti di arresto anomalo';
+
+  @override
+  String get crashUploadTip =>
+      'Invia i rapporti di arresto anomalo allo sviluppatore. I nomi e gli indirizzi dei server noti vengono sostituiti da segnaposto. Disattivato per impostazione predefinita; puoi disattivarlo in qualsiasi momento.';
+
+  @override
+  String get crashNoticeBody =>
+      'ServerBox si è chiuso inaspettatamente durante l\'ultima esecuzione. Vuoi vedere il rapporto di arresto anomalo?';
+
+  @override
+  String get crashReportTitle => 'Rapporto di arresto anomalo';
+
+  @override
+  String get crashReportHint =>
+      'Questo è il registro dell\'esecuzione precedente. I nomi e gli indirizzi dei server noti sono stati sostituiti da segnaposto, ma altri dettagli possono rimanere. Leggilo attentamente prima di inviarlo.';
+
+  @override
+  String get crashReportSubmit => 'Copia e segnala';
+
+  @override
   String get acceptBeta => 'Accetta aggiornamenti versione beta';
 
   @override

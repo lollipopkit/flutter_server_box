@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
+import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/service/scoped_token.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -112,6 +113,7 @@ final class WatchSync {
 
     final payload = await buildPayload();
 
+    Diag.crumb(SbDiag.sync, 'watch push');
     try {
       await wc.updateApplicationContext(payload);
     } catch (e, s) {

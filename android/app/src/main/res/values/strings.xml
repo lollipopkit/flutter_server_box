@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">ServerBox</string>
+    <!-- The product name, the same in every language. Marked untranslatable
+         rather than translated into each: a brand name that varies by locale
+         is a different app to its users, and lint counts a missing one as an
+         error. -->
+    <string name="app_name" translatable="false">ServerBox</string>
 
     <!--
         Widget strings live here rather than in the app's ARB files: they are

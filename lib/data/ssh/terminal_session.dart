@@ -6,6 +6,7 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/widgets.dart';
 import 'package:server_box/core/app_navigator.dart';
+import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/utils/ish_shell.dart';
 import 'package:server_box/core/utils/local_shell.dart';
 import 'package:server_box/core/utils/monitor_terminal.dart';
@@ -128,13 +129,37 @@ class TerminalSession {
     BuildContext? context,
   }) async {
     _ownsBackend = true;
+    final session = Redact.id(source.id);
+
     if (source case final LocalSource local) {
+      // Which of the three this is, is what a report saying "the terminal
+      // crashed" leaves out, and the three fail in entirely different places:
+      // an interpreter linked into the app, proot over the platform's shell,
+      // and the platform's shell itself.
+      final kind = !local.rootfs
+          ? 'host'
+          : isIOS
+          ? 'ish'
+          : 'proot';
+      Diag.crumb(SbDiag.terminal, 'open local shell', data: {
+        'kind': kind,
+        'session': session,
+      });
       return _backend = _localBackend(local);
     }
 
     final agent = _grantedBackend(granted);
-    if (agent != null) return _backend = agent;
+    if (agent != null) {
+      Diag.crumb(SbDiag.terminal, 'open agent shell', data: {
+        'session': session,
+      });
+      return _backend = agent;
+    }
 
+    // Before `genClient` rather than after: a connection that never returns is
+    // exactly the one worth having a record of, and it is the case where the
+    // next crumb never arrives.
+    Diag.crumb(SbDiag.terminal, 'open ssh shell', data: {'session': session});
     final client = await genClient(
       spi!,
       onKeyboardInteractive: (server, request) =>
@@ -144,6 +169,7 @@ class TerminalSession {
             context: context ?? AppNavigator.context,
           ),
     );
+    Diag.crumb(SbDiag.terminal, 'ssh shell ready', data: {'session': session});
     return _backend = SshShellBackend(client);
   }
 
@@ -249,6 +275,13 @@ class TerminalSession {
   /// Ends the session: the shell goes, and the connection with it when this
   /// session is the one that opened it. See [_ownsBackend].
   void close() {
+    // Teardown is where one of the open reports puts the crash: a swipe back,
+    // a white terminal, and then the app going. A crumb on the way in tells a
+    // later stack trace whether that had started.
+    Diag.crumb(SbDiag.terminal, 'close', data: {
+      'session': Redact.id(source.id),
+      'owns': '$_ownsBackend',
+    });
     final foreground = _foreground;
     if (foreground != null) {
       try {

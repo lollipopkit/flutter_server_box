@@ -197,6 +197,61 @@ abstract final class MethodChans {
   }
 
   /// Query whether the Android foreground service is currently running.
+  /// How the process ended last time, as Android recorded it.
+  ///
+  /// The only way this app can see a native crash: one takes the process with
+  /// it, so nothing in Dart runs afterwards and nothing is written. The system
+  /// keeps the record instead, and this reads it on the next launch.
+  ///
+  /// Null below API 30, and null when there is nothing recorded. Keys:
+  /// `reason` (a name — `crash_native`, `anr`, `low_memory`,
+  /// `user_requested`, …), `timestamp` (ms, and the only thing distinguishing
+  /// one record from another), `description`, `status`, `importance`, and one
+  /// of two traces: `trace`, a `String`, for an ANR, or `traceProto`, the
+  /// bytes of a `Tombstone` protocol buffer, for a native crash on API 31+.
+  /// Both are absent for every other reason, and either can be absent anyway —
+  /// the traces live in a global circular buffer that another app's crash can
+  /// evict.
+  static Future<Map<String, Object?>?> lastExitInfo() async {
+    if (!isAndroid) return null;
+    try {
+      final res = await _channel.invokeMapMethod<String, Object?>(
+        'lastExitInfo',
+      );
+      return res;
+    } catch (e, s) {
+      Loggers.app.warning('Failed to read the last exit info', e, s);
+      return null;
+    }
+  }
+
+  /// What MetricKit has reported since this was last asked, on iOS and macOS.
+  ///
+  /// The counterpart to [lastExitInfo], for the platform that has no equivalent
+  /// of it. Delivery is on the system's schedule — a payload arrives somewhere
+  /// between the next launch and about a day later — so these accumulate and
+  /// this hands over whatever has arrived, rather than answering "the last
+  /// run". Cleared by the read.
+  ///
+  /// Each entry has `kind` (`crash` or `hang`), `appVersion`, `callStack`, and
+  /// for a crash whichever of `signal`, `exceptionType`, `exceptionCode` and
+  /// `terminationReason` the payload carried.
+  static Future<List<Map<String, Object?>>> takeCrashDiagnostics() async {
+    if (!isIOS && !isMacOS) return const [];
+    try {
+      final res = await _channel.invokeListMethod<Object?>(
+        'takeCrashDiagnostics',
+      );
+      return [
+        for (final e in res ?? const [])
+          if (e is Map) e.cast<String, Object?>(),
+      ];
+    } catch (e, s) {
+      Loggers.app.warning('Failed to read crash diagnostics', e, s);
+      return const [];
+    }
+  }
+
   static Future<bool> isServiceRunning() async {
     if (!isAndroid) return false;
     try {

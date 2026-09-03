@@ -560,6 +560,39 @@ extension _Actions on _ServerEditPageState {
     }
 
     if (!mounted) return;
+    // Closes the funnel `edit opened` began, and is the one place that knows
+    // the whole shape of what was configured. Every value here is an enum or a
+    // flag this app defines -- no host, no name, no credential -- which is
+    // what makes "which combinations are actually used" answerable without
+    // any of them being about a particular server.
+    Diag.crumb(
+      SbDiag.server,
+      'edit saved',
+      data: {
+        'ssh': '$useSsh',
+        'monitor': '$useMonitorHttp',
+        // The same two key sources the validation above counts, and for the
+        // same reason: a server imported with an IdentityFile has its key in
+        // `_keyPath` and no `selectedKey`, so testing only the latter filed it
+        // under `password` when it has no password at all. `none` is a real
+        // third answer -- the save path asks the user to confirm it and then
+        // goes ahead -- and folding it into `password` would report a
+        // passwordless server as one with a password.
+        if (useSsh)
+          'auth': switch (0) {
+            _ when selectedKey != null || _keyPath.value != null => 'key',
+            _ when _passwordController.text.isNotEmpty => 'password',
+            _ => 'none',
+          },
+        if (useSsh)
+          'via': switch (0) {
+            _ when _jumpServers.value.isNotEmpty => 'jump',
+            _ when proxyCommandText.isNotEmpty => 'proxy',
+            _ => 'direct',
+          },
+        if (useSsh) 'files': _fileTransport.value.name,
+      },
+    );
     // Saved either way — the address may well be one TLS is being set up for,
     // and refusing to store it would be this page deciding that for the user.
     // But it will not connect as it stands, and the switch that would let it

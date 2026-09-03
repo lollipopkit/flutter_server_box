@@ -9,6 +9,61 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get crashCollect => '诊断信息';
+
+  @override
+  String get crashCollectIntro =>
+      'ServerBox 会记录运行过程中发生的情况，以便修复问题。你可以选择要发送多少信息。';
+
+  @override
+  String get crashCollectNone => '不发送';
+
+  @override
+  String get crashCollectNoneTip => '报告会保留在本机；发生崩溃后，你可手动发送。';
+
+  @override
+  String get crashCollectBasic => '基本信息';
+
+  @override
+  String get crashCollectBasicTip => '仅包含崩溃信息，不包含日志/性能数据; **帮助我们完善App, 修复bug**';
+
+  @override
+  String get crashCollectFull => '完整信息';
+
+  @override
+  String get crashCollectFullTip =>
+      '除崩溃日志，加上性能数据和功能使用情况: **用于定位变慢的问题，以及了解哪些功能真的有人用。**';
+
+  @override
+  String get crashCollectFooter =>
+      '无论选择哪个级别，记录时都会将已知服务器名称、地址和用户名替换为占位符。之后可在设置中更改收集级别。';
+
+  @override
+  String get privacy => '隐私';
+
+  @override
+  String get privacyPolicy => '隐私政策';
+
+  @override
+  String get crashUpload => '上传崩溃报告';
+
+  @override
+  String get crashUploadTip => '将崩溃报告发送给开发者。已知的服务器名称和地址会被替换为占位符。默认关闭，可随时停用。';
+
+  @override
+  String get crashNoticeBody => 'ServerBox 上次运行时异常退出。要查看崩溃报告吗？';
+
+  @override
+  String get crashReportTitle => '崩溃报告';
+
+  @override
+  String get crashReportHint =>
+      '这是上次运行的日志。已知的服务器名称和地址已替换为占位符，但其中可能仍包含其他信息。提交前请仔细阅读。';
+
+  @override
+  String get crashReportSubmit => '复制并反馈';
+
+  @override
   String get acceptBeta => '接受测试版更新推送';
 
   @override
@@ -1562,6 +1617,62 @@ class AppLocalizationsZh extends AppLocalizations {
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
 class AppLocalizationsZhTw extends AppLocalizationsZh {
   AppLocalizationsZhTw() : super('zh_TW');
+
+  @override
+  String get crashCollect => '診斷資料';
+
+  @override
+  String get crashCollectIntro => 'ServerBox 會記錄執行期間發生的情況，以便修正問題。你可以選擇要傳送多少資料。';
+
+  @override
+  String get crashCollectNone => '不傳送';
+
+  @override
+  String get crashCollectNoneTip => '報告仍會保留在本機；當機後你仍可手動傳送。';
+
+  @override
+  String get crashCollectBasic => '基本資料';
+
+  @override
+  String get crashCollectBasicTip =>
+      '只包含當機資訊，不包含日誌或效能資料。**這有助於我們改善 App 和修正錯誤。**';
+
+  @override
+  String get crashCollectFull => '完整資料';
+
+  @override
+  String get crashCollectFullTip =>
+      '除了當機日誌外，也會包含效能資料和功能使用情況：用於定位變慢的問題，以及了解哪些功能真的有人用。';
+
+  @override
+  String get crashCollectFooter =>
+      '無論選擇哪個等級，記錄時都會將已知伺服器名稱、位址和使用者名稱替換為預留位置。之後可在設定中更改收集等級。';
+
+  @override
+  String get privacy => '隱私';
+
+  @override
+  String get privacyPolicy => '隱私權政策';
+
+  @override
+  String get crashUpload => '上傳當機報告';
+
+  @override
+  String get crashUploadTip =>
+      '除了保留在本機外，也會將當機報告傳送給開發者。已知的伺服器名稱和位址會替換為預留位置，但其他資訊可能仍會保留。預設關閉，可隨時停用。';
+
+  @override
+  String get crashNoticeBody => 'ServerBox 上次執行時異常結束。要查看當機報告嗎？';
+
+  @override
+  String get crashReportTitle => '當機報告';
+
+  @override
+  String get crashReportHint =>
+      '這是上次執行的日誌。已知的伺服器名稱和位址已替換為預留位置，但其中可能仍包含其他資訊。提交前請仔細閱讀。';
+
+  @override
+  String get crashReportSubmit => '複製並回報';
 
   @override
   String get acceptBeta => '接受測試版更新推送';

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
+import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/utils/android_rootfs.dart';
 import 'package:server_box/core/utils/ios_rootfs.dart';
 import 'package:server_box/core/utils/linux_seed.dart';
@@ -185,6 +186,14 @@ abstract final class Rootfs {
   ///
   /// The caller asks first.
   static Future<void> removeProfile(String id, {LinuxProfile? expected}) async {
+    // The distro, not the id or the label: the id is this install's own and
+    // the label is whatever the user typed. What is worth knowing is which
+    // system people give up on.
+    Diag.crumb(
+      SbDiag.linux,
+      'remove',
+      data: {'distro': expected?.distro.name ?? '-'},
+    );
     if (isAndroid) {
       await AndroidRootfs.removeProfile(id, expected: expected);
     } else {
@@ -206,24 +215,47 @@ abstract final class Rootfs {
     void Function(double? progress)? onProgress,
     CancelToken? cancel,
   }) async {
-    final installed = isAndroid
-        ? await AndroidRootfs.install(
-            distro: distro,
-            release: release,
-            into: into,
-            label: label,
-            onProgress: onProgress,
-            cancel: cancel,
-          )
-        : await IosRootfs.install(
-            distro: distro,
-            release: release,
-            into: into,
-            label: label,
-            onProgress: onProgress,
-            cancel: cancel,
-          );
-    changed.value++;
-    return installed;
+    // `into` is a system already there, so this replaces one rather than
+    // adding one — a distinction nothing downstream can reconstruct, since
+    // both end with a profile that exists.
+    final what = into == null ? 'install' : 'update';
+    Diag.crumb(SbDiag.linux, what, data: {'distro': distro.name});
+    try {
+      final installed = isAndroid
+          ? await AndroidRootfs.install(
+              distro: distro,
+              release: release,
+              into: into,
+              label: label,
+              onProgress: onProgress,
+              cancel: cancel,
+            )
+          : await IosRootfs.install(
+              distro: distro,
+              release: release,
+              into: into,
+              label: label,
+              onProgress: onProgress,
+              cancel: cancel,
+            );
+      changed.value++;
+      Diag.crumb(SbDiag.linux, '$what ok', data: {'distro': distro.name});
+      return installed;
+    } catch (e) {
+      // The pair is the point: this is a download and an unpack of a few
+      // hundred megabytes on a phone, and the share of them that never finish
+      // is not visible from anywhere else. An install that fails never opens a
+      // terminal, so `terminal.open local shell` cannot see it either.
+      //
+      // A cancel is the user's answer, not a failure, and reads differently.
+      Diag.crumb(
+        SbDiag.linux,
+        e is DioException && CancelToken.isCancel(e)
+            ? '$what cancelled'
+            : '$what failed',
+        data: {'distro': distro.name},
+      );
+      rethrow;
+    }
   }
 }

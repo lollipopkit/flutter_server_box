@@ -1,5 +1,7 @@
 package tech.lolli.toolbox
 
+import android.app.ActivityManager
+import android.app.ApplicationExitInfo
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -9,6 +11,7 @@ import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.IntentFilter
+import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterFragmentActivity
@@ -59,6 +62,15 @@ class MainActivity: FlutterFragmentActivity() {
         const val NOTIFICATION_PERMISSION_REQUEST_CODE = 123
         const val NOTIFICATION_PERMISSION_PREFS = "notification_permission"
         const val KEY_NOTIFICATION_PERMISSION_REQUESTED = "requested"
+
+        /**
+         * The most tombstone this will carry across the method channel.
+         *
+         * Real ones run to tens of kilobytes; the ceiling is here so a
+         * pathological record cannot be read into memory at launch, not
+         * because 8 MiB is a size anything is expected to approach.
+         */
+        const val MAX_TOMBSTONE_BYTES = 8 * 1024 * 1024
     }
 
     // --- Privacy cover ------------------------------------------------------
@@ -131,6 +143,21 @@ class MainActivity: FlutterFragmentActivity() {
                     }
                     "isServiceRunning" -> {
                         result.success(ForegroundService.isRunning)
+                    }
+                    // Why the process died last time, from the system rather
+                    // than from anything this app managed to run on its way
+                    // out. Covers the crashes Dart cannot see at all: a SIGSEGV
+                    // in the Rust FFI, in proot, or in sqlite.
+                    "lastExitInfo" -> {
+                        // Off the main thread: an ANR trace is a full thread
+                        // dump and routinely hundreds of KB, and the Dart side
+                        // awaits this before the first frame. Reading it inline
+                        // would stall the UI thread on a device that has just
+                        // been shown to be struggling.
+                        Thread {
+                            val info = lastExitInfo()
+                            runOnUiThread { result.success(info) }
+                        }.start()
                     }
                     // Whether this app may post notifications at all. Without
                     // it there is no foreground service, and without that the
@@ -282,6 +309,189 @@ class MainActivity: FlutterFragmentActivity() {
         }
     }
 
+    /**
+     * How the process ended last time, as the system recorded it.
+     *
+     * The only way to see a native crash from inside the app. A SIGSEGV in the
+     * Rust FFI, in proot, or in sqlite takes the process with it, so nothing in
+     * Dart runs afterwards and nothing is written -- but the system keeps a
+     * record, and this reads it on the next launch.
+     *
+     * Deliberately not a signal handler. Collection happens out of process, so
+     * no code runs inside a crashing app and no handler is installed for
+     * SIGSEGV or SIGABRT -- which matters here beyond the usual reasons,
+     * because the iOS Linux engine interrupts its guest threads with SIGUSR1
+     * and a crash reporter fighting over signal disposition is a class of bug
+     * this avoids entirely.
+     *
+     * Null below API 30, where the API does not exist.
+     *
+     * Two shapes of trace come back, and which one depends on the reason. ANR
+     * hands over a thread dump as plain text and it is passed through as
+     * `trace`. A native crash hands over a tombstone serialised as a protocol
+     * buffer (API 31+); the bytes are passed through as `traceProto` and
+     * decoded on the Dart side, which is where they can be tested against a
+     * fixture without a device.
+     */
+    private fun lastExitInfo(): Map<String, Any?>? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return null
+        return try {
+            val am = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+            // One record: the caller compares timestamps to decide whether it
+            // has seen this one, and anything older it has seen already.
+            val info = am.getHistoricalProcessExitReasons(packageName, 0, 1)
+                .firstOrNull() ?: return null
+            mapOf(
+                "reason" to exitReasonName(info.reason),
+                "timestamp" to info.timestamp,
+                "description" to info.description,
+                "status" to info.status,
+                // Whether the app was in front when it died. A crash the user
+                // was looking at and one that happened in the background are
+                // different reports.
+                "importance" to info.importance,
+                "trace" to textTrace(info),
+                "traceProto" to tombstoneBytes(info),
+            )
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "lastExitInfo: ${e.message}")
+            null
+        }
+    }
+
+    /**
+     * The thread dump the system kept for this record, which is text.
+     *
+     * Not gated on `REASON_ANR`, and that is the point. `getTraceInputStream`
+     * documents that a process which hits an ANR, *recovers*, and dies later
+     * for some other reason still carries that trace on the record of the
+     * death that eventually happened. Requiring ANR here threw exactly those
+     * away -- the case where the trace explains a reason that cannot explain
+     * itself, such as a run the system killed after it had been wedged.
+     *
+     * Skipped only where the stream is a tombstone instead: a native crash on
+     * API 31+, which [tombstoneBytes] reads as the protobuf it is. Read as
+     * text that would be mojibake. The two are mutually exclusive by
+     * [hasTombstone], so a record yields one or the other and never both.
+     */
+    @RequiresApi(Build.VERSION_CODES.R)
+    private fun textTrace(info: ApplicationExitInfo): String? {
+        if (hasTombstone(info)) return null
+        return try {
+            // Kept in a global circular buffer, so another app's crash can
+            // evict it and this is null often enough to be normal.
+            info.traceInputStream?.bufferedReader()?.use { it.readText() }
+        } catch (e: Exception) {
+            // Logged rather than swallowed: a null here is indistinguishable
+            // from the ordinary evicted-trace case, so without this a trace
+            // that failed to read looks exactly like one never recorded.
+            android.util.Log.w("MainActivity", "textTrace: ${e.message}")
+            null
+        }
+    }
+
+    /**
+     * The tombstone for a native crash, as the bytes the system wrote.
+     *
+     * Handed over undecoded on purpose. The `Tombstone` protobuf is read in
+     * Dart, so the parser it needs is covered by `flutter test` against a
+     * recorded fixture rather than only by a device that has to crash first --
+     * and adding the protobuf runtime and its Gradle plugin here would put a
+     * dependency and a code generator into the build that F-Droid rebuilds and
+     * `androidReproducible` compares.
+     *
+     * API 31 is where the stream starts carrying this; on API 30 a native
+     * crash's record still has a reason but no tombstone to go with it, and
+     * [textTrace] takes whatever the stream holds instead.
+     */
+    @RequiresApi(Build.VERSION_CODES.R)
+    private fun tombstoneBytes(info: ApplicationExitInfo): ByteArray? {
+        if (!hasTombstone(info)) return null
+        return try {
+            // Kept in a global circular buffer, so another app's crash can
+            // evict it and this is null often enough to be normal.
+            val stream = info.traceInputStream ?: return null
+            // A tombstone carries memory dumps, every mapping and the tail of
+            // the log buffers, so it is bounded rather than trusted to be
+            // small -- this crosses a method channel at launch. The cap is far
+            // above any real one; hitting it means something is wrong, and a
+            // truncated protobuf is refused by the parser rather than
+            // half-read.
+            stream.use { readBounded(it, MAX_TOMBSTONE_BYTES) }
+        } catch (e: Exception) {
+            // Same reason as [textTrace]: the caller cannot tell a read that
+            // failed from a tombstone that was evicted, and a native crash
+            // reported with no stack is the case worth being able to explain.
+            android.util.Log.w("MainActivity", "tombstoneBytes: ${e.message}")
+            null
+        }
+    }
+
+    /**
+     * Whether this record's trace stream is a tombstone rather than text.
+     *
+     * The one place the split is decided, so [textTrace] and [tombstoneBytes]
+     * cannot both claim a record or both pass on it.
+     */
+    @RequiresApi(Build.VERSION_CODES.R)
+    private fun hasTombstone(info: ApplicationExitInfo): Boolean =
+        info.reason == ApplicationExitInfo.REASON_CRASH_NATIVE &&
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+
+    /**
+     * Everything the stream has, or null if there is more than [limit] of it.
+     *
+     * Null rather than the first [limit] bytes: a truncated protobuf is not a
+     * shorter tombstone, it is one the parser has to refuse, so handing one
+     * over would only move the failure.
+     */
+    private fun readBounded(stream: java.io.InputStream, limit: Int): ByteArray? {
+        val out = java.io.ByteArrayOutputStream()
+        val buf = ByteArray(16 * 1024)
+        while (true) {
+            val n = stream.read(buf)
+            if (n < 0) break
+            if (out.size() + n > limit) {
+                android.util.Log.w("MainActivity", "tombstone over ${limit}B, dropped")
+                return null
+            }
+            out.write(buf, 0, n)
+        }
+        return if (out.size() == 0) null else out.toByteArray()
+    }
+
+    /**
+     * The reason as a name rather than an int, because the int is a platform
+     * constant whose meaning is not obvious in a bug report pasted by a user.
+     */
+    @RequiresApi(Build.VERSION_CODES.R)
+    private fun exitReasonName(reason: Int): String = when (reason) {
+        ApplicationExitInfo.REASON_ANR -> "anr"
+        ApplicationExitInfo.REASON_CRASH -> "crash"
+        ApplicationExitInfo.REASON_CRASH_NATIVE -> "crash_native"
+        ApplicationExitInfo.REASON_DEPENDENCY_DIED -> "dependency_died"
+        ApplicationExitInfo.REASON_EXCESSIVE_RESOURCE_USAGE -> "excessive_resource_usage"
+        ApplicationExitInfo.REASON_EXIT_SELF -> "exit_self"
+        // API 33. A compile-time constant, so naming it here costs nothing on
+        // an older device -- the value simply never matches. The app was
+        // cached, frozen and then dropped, which is the ordinary end of a
+        // backgrounded run and reads as a mystery under `unknown(14)`.
+        ApplicationExitInfo.REASON_FREEZER -> "freezer"
+        ApplicationExitInfo.REASON_INITIALIZATION_FAILURE -> "initialization_failure"
+        ApplicationExitInfo.REASON_LOW_MEMORY -> "low_memory"
+        ApplicationExitInfo.REASON_OTHER -> "other"
+        // API 34, and the pair a self-update produces: the process is stopped
+        // because its own package changed. Worth telling apart from a crash by
+        // name, since that is when a user is most likely to be looking.
+        ApplicationExitInfo.REASON_PACKAGE_STATE_CHANGE -> "package_state_change"
+        ApplicationExitInfo.REASON_PACKAGE_UPDATED -> "package_updated"
+        ApplicationExitInfo.REASON_PERMISSION_CHANGE -> "permission_change"
+        ApplicationExitInfo.REASON_SIGNALED -> "signaled"
+        ApplicationExitInfo.REASON_USER_REQUESTED -> "user_requested"
+        ApplicationExitInfo.REASON_USER_STOPPED -> "user_stopped"
+        else -> "unknown($reason)"
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         handleActionIntent(intent)
@@ -316,16 +526,21 @@ class MainActivity: FlutterFragmentActivity() {
             }
         }
         val filter = IntentFilter(ACTION_STOP_ALL_CONNECTIONS)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            ContextCompat.registerReceiver(this, stopAllReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
-        } else {
-            // `RECEIVER_NOT_EXPORTED` does not exist before API 33, and a bare
-            // `registerReceiver` leaves this reachable by every app on the
-            // device — for an action whose whole job is to disconnect every SSH
-            // session. The signature-level permission is what restricts the
-            // sender to this build.
-            registerReceiver(stopAllReceiver, filter, INTERNAL_BROADCAST_PERMISSION, null)
-        }
+        // Both guards at once, on every version. `RECEIVER_NOT_EXPORTED` is
+        // what API 33+ requires and is ignored below it; the signature-level
+        // permission is what restricts the sender on the versions that have no
+        // flag. Either alone would leave an action whose whole job is to
+        // disconnect every SSH session reachable by other apps on some range of
+        // devices. `ContextCompat` picks the right platform call, which is also
+        // what lets lint see the flag -- it does not follow an SDK_INT branch.
+        ContextCompat.registerReceiver(
+            this,
+            stopAllReceiver,
+            filter,
+            INTERNAL_BROADCAST_PERMISSION,
+            null,
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
     }
 
     override fun onRequestPermissionsResult(

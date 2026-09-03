@@ -9,6 +9,65 @@ class AppLocalizationsNl extends AppLocalizations {
   AppLocalizationsNl([String locale = 'nl']) : super(locale);
 
   @override
+  String get crashCollect => 'Diagnostische gegevens';
+
+  @override
+  String get crashCollectIntro =>
+      'ServerBox legt vast wat er tijdens het gebruik gebeurt, zodat problemen kunnen worden opgelost. Kies hoeveel informatie er wordt verstuurd.';
+
+  @override
+  String get crashCollectNone => 'Niets';
+
+  @override
+  String get crashCollectNoneTip =>
+      'Rapporten blijven op dit apparaat; na een crash kun je er handmatig een versturen.';
+
+  @override
+  String get crashCollectBasic => 'Basisgegevens';
+
+  @override
+  String get crashCollectBasicTip =>
+      'Bevat alleen informatie over de crash; logboeken en prestatiegegevens worden niet opgenomen. **Zo help je ons de app te verbeteren en bugs op te lossen.**';
+
+  @override
+  String get crashCollectFull => 'Volledige gegevens';
+
+  @override
+  String get crashCollectFullTip =>
+      'Naast het crashlogboek bevat dit ook prestatiegegevens en het gebruik van functies: daarmee is te vinden wat traag is en welke functies echt worden gebruikt.';
+
+  @override
+  String get crashCollectFooter =>
+      'Op elk niveau worden bekende servernamen, adressen en gebruikersnamen al bij het vastleggen vervangen door plaatsaanduidingen. Je kunt het verzamelingsniveau later wijzigen in de instellingen.';
+
+  @override
+  String get privacy => 'Privacy';
+
+  @override
+  String get privacyPolicy => 'Privacybeleid';
+
+  @override
+  String get crashUpload => 'Crashrapporten uploaden';
+
+  @override
+  String get crashUploadTip =>
+      'Crashrapporten naar de ontwikkelaar sturen. Bekende servernamen en adressen worden vervangen door plaatsaanduidingen. Standaard uit; je kunt dit op elk moment uitschakelen.';
+
+  @override
+  String get crashNoticeBody =>
+      'ServerBox is tijdens de vorige uitvoering onverwacht afgesloten. Wil je het crashrapport bekijken?';
+
+  @override
+  String get crashReportTitle => 'Crashrapport';
+
+  @override
+  String get crashReportHint =>
+      'Dit is het logboek van de vorige uitvoering. Bekende servernamen en adressen zijn vervangen door plaatsaanduidingen, maar andere gegevens kunnen achterblijven. Lees het zorgvuldig door voordat je het indient.';
+
+  @override
+  String get crashReportSubmit => 'Kopiëren en melden';
+
+  @override
   String get acceptBeta => 'Accepteer testversie-updates';
 
   @override

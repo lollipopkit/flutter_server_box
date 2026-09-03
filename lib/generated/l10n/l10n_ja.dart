@@ -9,6 +9,64 @@ class AppLocalizationsJa extends AppLocalizations {
   AppLocalizationsJa([String locale = 'ja']) : super(locale);
 
   @override
+  String get crashCollect => '診断データ';
+
+  @override
+  String get crashCollectIntro =>
+      'ServerBox は問題を修正できるよう、実行中に起きたことを記録します。送信する情報量を選べます。';
+
+  @override
+  String get crashCollectNone => '送信しない';
+
+  @override
+  String get crashCollectNoneTip => 'レポートは端末に残り、クラッシュ後に手動で送信できます。';
+
+  @override
+  String get crashCollectBasic => '基本情報';
+
+  @override
+  String get crashCollectBasicTip =>
+      'クラッシュ情報のみを含み、ログやパフォーマンスデータは含みません。**アプリの改善やバグの修正に役立ちます。**';
+
+  @override
+  String get crashCollectFull => '完全な情報';
+
+  @override
+  String get crashCollectFullTip =>
+      'クラッシュログに加え、パフォーマンスデータと機能の利用状況も含みます。**動作が遅い箇所の特定と、どの機能が実際に使われているかの把握に役立ちます。**';
+
+  @override
+  String get crashCollectFooter =>
+      'どのレベルでも、既知のサーバー名・アドレス・ユーザー名は記録時にプレースホルダーへ置き換えられます。設定であとから収集レベルを変更できます。';
+
+  @override
+  String get privacy => 'プライバシー';
+
+  @override
+  String get privacyPolicy => 'プライバシーポリシー';
+
+  @override
+  String get crashUpload => 'クラッシュレポートを送信';
+
+  @override
+  String get crashUploadTip =>
+      'クラッシュレポートを開発者に送信します。既知のサーバー名とアドレスはプレースホルダーに置き換えられます。デフォルトはオフで、いつでもオフにできます。';
+
+  @override
+  String get crashNoticeBody =>
+      'ServerBox は前回の実行中に予期せず終了しました。クラッシュレポートを確認しますか？';
+
+  @override
+  String get crashReportTitle => 'クラッシュレポート';
+
+  @override
+  String get crashReportHint =>
+      'これは前回の実行ログです。既知のサーバー名とアドレスはプレースホルダーに置き換えられていますが、他の情報が残っている場合があります。送信する前によく読んでください。';
+
+  @override
+  String get crashReportSubmit => 'コピーして報告';
+
+  @override
   String get acceptBeta => 'テストバージョンの更新を受け入れる';
 
   @override

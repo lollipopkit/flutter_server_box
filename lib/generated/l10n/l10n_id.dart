@@ -9,6 +9,65 @@ class AppLocalizationsId extends AppLocalizations {
   AppLocalizationsId([String locale = 'id']) : super(locale);
 
   @override
+  String get crashCollect => 'Data diagnostik';
+
+  @override
+  String get crashCollectIntro =>
+      'ServerBox mencatat apa yang terjadi saat berjalan agar masalah dapat diperbaiki. Pilih jumlah informasi yang dikirim.';
+
+  @override
+  String get crashCollectNone => 'Tidak ada';
+
+  @override
+  String get crashCollectNoneTip =>
+      'Laporan tetap tersimpan di perangkat ini; setelah terjadi kerusakan, Anda dapat mengirimkannya secara manual.';
+
+  @override
+  String get crashCollectBasic => 'Informasi dasar';
+
+  @override
+  String get crashCollectBasicTip =>
+      'Hanya informasi kerusakan yang disertakan; log dan data performa tidak disertakan. **Ini membantu kami menyempurnakan aplikasi dan memperbaiki bug.**';
+
+  @override
+  String get crashCollectFull => 'Informasi lengkap';
+
+  @override
+  String get crashCollectFullTip =>
+      'Selain log kerusakan, data performa dan penggunaan fitur juga disertakan: **Berguna untuk menemukan apa yang lambat dan fitur mana yang benar-benar dipakai.**';
+
+  @override
+  String get crashCollectFooter =>
+      'Pada tingkat apa pun, nama server yang dikenal beserta alamat dan nama penggunanya diganti dengan placeholder saat dicatat. Tingkat pengumpulan dapat diubah nanti di Pengaturan.';
+
+  @override
+  String get privacy => 'Privasi';
+
+  @override
+  String get privacyPolicy => 'Kebijakan privasi';
+
+  @override
+  String get crashUpload => 'Unggah laporan kerusakan';
+
+  @override
+  String get crashUploadTip =>
+      'Kirim laporan kerusakan kepada pengembang. Nama dan alamat server yang dikenal diganti dengan placeholder. Dinonaktifkan secara default; Anda dapat menonaktifkannya kapan saja.';
+
+  @override
+  String get crashNoticeBody =>
+      'ServerBox berhenti secara tak terduga saat terakhir dijalankan. Ingin melihat laporan kerusakannya?';
+
+  @override
+  String get crashReportTitle => 'Laporan kerusakan';
+
+  @override
+  String get crashReportHint =>
+      'Ini adalah log dari sesi sebelumnya. Nama dan alamat server yang dikenal telah diganti dengan placeholder, tetapi detail lain mungkin tersisa. Baca dengan saksama sebelum mengirimkannya.';
+
+  @override
+  String get crashReportSubmit => 'Salin & laporkan';
+
+  @override
   String get acceptBeta => 'Terima pembaruan versi uji coba';
 
   @override

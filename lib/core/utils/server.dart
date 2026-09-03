@@ -7,6 +7,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/app_navigator.dart';
+import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/proxy_command_socket.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
@@ -459,6 +460,48 @@ Future<SSHClient> genClient(
     );
   }
 
+  // Where the byte stream comes from is the axis that decides which half of
+  // this function runs, and a failure looks the same from the outside whichever
+  // it was. Recorded before the socket is opened, since a connection that never
+  // returns leaves no later crumb.
+  //
+  // Guarded, because the two `Redact` calls are two hash passes and a regex,
+  // and this runs per connection and again per jump hop. On the transfer
+  // isolate — which installs no sink, statics being per isolate — that would
+  // all be computed for a crumb nothing receives.
+  final via = switch (ssh) {
+    _ when spi.resolvedJumpIds.isNotEmpty => 'jump',
+    _ when ssh.proxyCommand != null => 'proxy',
+    _ => 'direct',
+  };
+  if (Diag.enabled) {
+    Diag.crumb(SbDiag.server, 'ssh connect', data: {
+      'server': Redact.id(spi.id),
+      'host': Redact.host(ssh.ip),
+      'via': via,
+    });
+  }
+
+  /// The other end of the crumb above, which on its own says only that a
+  /// connection was attempted.
+  ///
+  /// [at] is which half failed, and the halves fail for unrelated reasons: a
+  /// socket that never opens is the network, the jump chain or the
+  /// `ProxyCommand`, while everything after it is a key, a password or a host
+  /// key that no longer matches. Together with `via` this says which of the
+  /// three routes is unreliable and where — a question nothing else here can
+  /// answer, since a caller is handed one error and cannot tell the phases
+  /// apart either.
+  void connectFailed(String at, Object e) {
+    if (!Diag.enabled) return;
+    Diag.crumb(
+      SbDiag.server,
+      'ssh connect failed',
+      level: DiagLevel.warning,
+      data: {'via': via, 'at': at, 'error': Redact.error(e)},
+    );
+  }
+
   onStatus?.call(GenSSHClientStatus.socket);
 
   final hostKeyCache = Map<String, String>.from(
@@ -577,7 +620,12 @@ Future<SSHClient> genClient(
         rethrow;
       }
     }
-  }();
+  }().onError((Object e, s) {
+    // Attached rather than wrapping the closure in a `try`, so the body above
+    // keeps its indentation and stays reviewable against its own history.
+    connectFailed('socket', e);
+    Error.throwWithStackTrace(e, s);
+  });
 
   // Everything past here can throw with the socket already open, and the
   // caller is given a key error and no handle — so nobody can close it. A
@@ -587,7 +635,7 @@ Future<SSHClient> genClient(
   // `destroy`, not `close`: there is nothing buffered worth flushing, and on
   // the ProxyCommand path this is what kills the process.
   try {
-    return await _authenticatedClient(
+    final client = await _authenticatedClient(
       socket: socket,
       spi: spi,
       ssh: ssh,
@@ -604,7 +652,12 @@ Future<SSHClient> genClient(
         prompt: hostKeyPrompt,
       ),
     );
-  } catch (_) {
+    if (Diag.enabled) {
+      Diag.crumb(SbDiag.server, 'ssh connect ok', data: {'via': via});
+    }
+    return client;
+  } catch (e) {
+    connectFailed('auth', e);
     socket.destroy();
     rethrow;
   }

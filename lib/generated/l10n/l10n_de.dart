@@ -9,6 +9,65 @@ class AppLocalizationsDe extends AppLocalizations {
   AppLocalizationsDe([String locale = 'de']) : super(locale);
 
   @override
+  String get crashCollect => 'Diagnosedaten';
+
+  @override
+  String get crashCollectIntro =>
+      'ServerBox zeichnet während des Betriebs auf, was passiert, damit Probleme behoben werden können. Wählen Sie, wie viele Informationen gesendet werden.';
+
+  @override
+  String get crashCollectNone => 'Nichts';
+
+  @override
+  String get crashCollectNoneTip =>
+      'Berichte bleiben auf diesem Gerät; nach einem Absturz können Sie manuell einen senden.';
+
+  @override
+  String get crashCollectBasic => 'Grundlegende Informationen';
+
+  @override
+  String get crashCollectBasicTip =>
+      'Es werden nur Absturzinformationen erfasst; Protokoll- und Leistungsdaten sind nicht enthalten. **Damit helfen Sie uns, die App zu verbessern und Fehler zu beheben.**';
+
+  @override
+  String get crashCollectFull => 'Vollständige Informationen';
+
+  @override
+  String get crashCollectFullTip =>
+      'Neben dem Absturzprotokoll werden Leistungsdaten und die Nutzung von Funktionen erfasst: **Damit lässt sich finden, was langsam ist und welche Funktionen tatsächlich genutzt werden.**';
+
+  @override
+  String get crashCollectFooter =>
+      'Unabhängig von der Stufe werden bekannte Servernamen, -adressen und Benutzernamen bereits beim Aufzeichnen durch Platzhalter ersetzt. Die Erfassungsstufe kann später in den Einstellungen geändert werden.';
+
+  @override
+  String get privacy => 'Datenschutz';
+
+  @override
+  String get privacyPolicy => 'Datenschutzerklärung';
+
+  @override
+  String get crashUpload => 'Absturzberichte hochladen';
+
+  @override
+  String get crashUploadTip =>
+      'Absturzberichte werden an den Entwickler gesendet. Bekannte Servernamen und -adressen werden durch Platzhalter ersetzt. Standardmäßig deaktiviert; jederzeit wieder deaktivierbar.';
+
+  @override
+  String get crashNoticeBody =>
+      'ServerBox wurde beim letzten Ausführen unerwartet beendet. Möchten Sie den Absturzbericht ansehen?';
+
+  @override
+  String get crashReportTitle => 'Absturzbericht';
+
+  @override
+  String get crashReportHint =>
+      'Dies ist das Protokoll des vorherigen Laufs. Bekannte Servernamen und -adressen wurden durch Platzhalter ersetzt, andere Angaben können jedoch verbleiben. Bitte lesen Sie es vor dem Absenden sorgfältig durch.';
+
+  @override
+  String get crashReportSubmit => 'Kopieren & melden';
+
+  @override
   String get acceptBeta => 'Akzeptieren Sie Testversion-Updates';
 
   @override

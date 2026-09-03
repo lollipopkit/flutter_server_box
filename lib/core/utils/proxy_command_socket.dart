@@ -61,7 +61,13 @@ class ProxyCommandSocket implements SSHSocket {
     );
     final shellCommand = _buildShellCommand(resolvedCommand);
 
-    Loggers.app.info('Starting ProxyCommand for $user@$host:$port');
+    // Not `$user@$host:$port`. This line said which account on which machine,
+    // and it is an `info` — so it landed in the log of every run that used a
+    // ProxyCommand, including the ones pasted into bug reports. The port is
+    // kept because it is the part that explains a failure and names nothing.
+    Loggers.app.info(
+      'Starting ProxyCommand for ${Redact.host(host)}:$port',
+    );
 
     final processFuture = Process.start(
       shellCommand.executable,

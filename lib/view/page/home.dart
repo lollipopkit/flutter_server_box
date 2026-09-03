@@ -22,6 +22,7 @@ import 'package:server_box/view/page/floating_panels.dart';
 import 'package:server_box/view/page/home_tab.dart';
 import 'package:server_box/view/page/macos_menu_bar.dart';
 import 'package:server_box/view/page/setting/entry.dart';
+import 'package:server_box/view/widget/crash_report_notice.dart';
 import 'package:server_box/view/widget/dmg_notice.dart';
 import 'package:server_box/view/widget/legacy_status_notice.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -192,14 +193,14 @@ class _HomePageState extends ConsumerState<HomePage>
           if (delay > 0 && _pausedTime != null) {
             final now = DateTime.now();
             if (now.difference(_pausedTime ?? now).inSeconds > delay) {
-              _goAuth();
+              unawaited(_goAuth());
             } else {
               _shouldAuth = false;
               _releasePrivacyCover();
             }
             _pausedTime = null;
           } else {
-            _goAuth();
+            unawaited(_goAuth());
           }
         } else {
           _releasePrivacyCover();
@@ -450,7 +451,7 @@ class _HomePageState extends ConsumerState<HomePage>
     // Explicitly, because the listener above only fires on a change: the first
     // tab is usually already the value, and nothing would have announced it.
     _publishCurrentTab();
-    _goAuth();
+    final authed = _goAuth(showGuide: false);
 
     if (Stores.setting.autoCheckAppUpdate.fetch()) {
       AppUpdateIface.doUpdate(
@@ -478,6 +479,11 @@ class _HomePageState extends ConsumerState<HomePage>
     // for as long as it takes to time out. The strip the guide points at is
     // already laid out — this runs after the first frame.
     unawaited(() async {
+      // Behind the lock screen, not beside it. Every one of these is a
+      // root-navigator dialog, and the lock page is on that navigator too —
+      // see [_goAuth]. Completes immediately when no lock is configured.
+      await authed;
+      if (!mounted) return;
       // Says so when this launch took over the sandboxed build's data, or
       // when it could not — see [SandboxImport].
       await SandboxImportNotice.showIfNeeded(context);
@@ -485,6 +491,12 @@ class _HomePageState extends ConsumerState<HomePage>
       // Says so when this upgrade took a feature away — see
       // [LegacyStatusUrlsMigration].
       await LegacyStatusNotice.showIfNeeded(context);
+      if (!mounted) return;
+      // Offers the previous run's log when that run crashed. Ahead of the
+      // guide because a user who just lost their session is not being
+      // introduced to the app, and after the two migration notices because
+      // those are about data rather than about one bad launch.
+      await CrashReportNotice.showIfNeeded(context);
       if (!mounted) return;
       await _maybeShowNavGuide();
     }());
@@ -494,7 +506,22 @@ class _HomePageState extends ConsumerState<HomePage>
     bakSync.sync(milliDelay: 1000);
   }
 
-  void _goAuth() {
+  /// Completes once the lock screen, if there is one, has been dismissed.
+  ///
+  /// Awaited by the launch notices. `showRoundDialog` puts a dialog on the
+  /// *root* navigator, which is the one holding the lock page, so anything
+  /// raised while it is up draws over it — and the crash report renders the
+  /// previous run's log, which is precisely what a lock screen exists to keep
+  /// unread. The other two notices are no better placed there.
+  /// [showGuide] is false on the launch path, where the caller shows the guide
+  /// itself once the launch notices have been through.
+  ///
+  /// The call below runs *before* this method's own future completes, so a
+  /// launch with a lock configured had the guide up before the crash and
+  /// migration notices it is supposed to follow — the ordering the caller
+  /// spells out, defeated by the one branch that does not go through it.
+  /// Resuming has no such sequence and is where this still has to happen.
+  Future<void> _goAuth({bool showGuide = true}) async {
     // First, and on every path out of here. On iOS the cover is a view over the
     // Flutter window, so it is *above* every route drawn inside it — left up it
     // would hide the lock screen instead of protecting it. Releasing it before
@@ -516,16 +543,11 @@ class _HomePageState extends ConsumerState<HomePage>
     // navigator answers with — so the guide's "is the home page current"
     // check would say no and skip it every launch, on exactly the devices
     // this branch exists for. The future completes once the pop has.
-    unawaited(
-      LocalAuthPage.route
-          .go(
-            context,
-            args: LocalAuthPageArgs(
-              onAuthSuccess: () => _shouldAuth = false,
-            ),
-          )
-          .then((_) => _maybeShowNavGuide()),
+    await LocalAuthPage.route.go(
+      context,
+      args: LocalAuthPageArgs(onAuthSuccess: () => _shouldAuth = false),
     );
+    if (showGuide) await _maybeShowNavGuide();
   }
 
   /// Let the native privacy cover come off, now that either the lock screen is

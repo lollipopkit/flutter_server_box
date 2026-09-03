@@ -7,6 +7,7 @@ import 'dart:ui' show ImageFilter;
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,6 +15,7 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/service/diagnostics_upload.dart';
 import 'package:server_box/core/utils/linux_seed.dart';
 import 'package:server_box/core/utils/local_exec.dart';
 import 'package:server_box/core/utils/logo_url.dart';
@@ -45,6 +47,8 @@ import 'package:server_box/view/page/setting/platform/platform_pub.dart';
 import 'package:server_box/view/page/setting/seq/known_hosts.dart';
 import 'package:server_box/view/page/setting/seq/srv_orders.dart';
 import 'package:server_box/view/page/setting/seq/virt_key.dart';
+import 'package:server_box/view/widget/crash_debug.dart';
+import 'package:server_box/view/widget/diagnostics_level_picker.dart';
 import 'package:server_box/view/widget/dist_icon.dart';
 import 'package:server_box/view/widget/dmg_notice.dart';
 import 'package:server_box/view/widget/rootfs_install.dart';
@@ -149,6 +153,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             title: libL10n.general,
             icon: Icons.settings_outlined,
             page: () => const AppSettingsPage(section: SettingsSection.app),
+          ),
+          SettingsNode.leaf(
+            id: 'app.privacy',
+            title: l10n.privacy,
+            icon: Icons.privacy_tip_outlined,
+            page: () => const AppSettingsPage(section: SettingsSection.privacy),
           ),
           SettingsNode.leaf(
             id: 'app.ai',
@@ -454,6 +464,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             ? BackButton(onPressed: _onTabBack)
             : null,
         actions: [
+          // `kDebugMode` is a const, so this and everything it reaches is tree
+          // shaken out of a release rather than shipped and hidden.
+          if (kDebugMode)
+            Btn.text(
+              text: 'Crash',
+              onTap: () => CrashDebugMenu.show(context),
+            ),
           Btn.text(
             text: context.libL10n.logs,
             onTap: () => DebugPage.route.go(
@@ -688,6 +705,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 /// controllers on it — survives moving between them.
 enum SettingsSection {
   app,
+  privacy,
   ai,
   server,
   ssh,
@@ -761,6 +779,7 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
     // repeats it. A `CenterGreyTitle` here would be the third time.
     final group = switch (widget.section) {
       SettingsSection.app => _buildApp(),
+      SettingsSection.privacy => _buildPrivacy(),
       SettingsSection.ai => _buildAskAiConfig(),
       SettingsSection.server => _buildServer(),
       SettingsSection.ssh => _buildSSH(),

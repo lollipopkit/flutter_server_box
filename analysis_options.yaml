@@ -12,6 +12,12 @@ include: package:flutter_lints/flutter.yaml
 analyzer:
   exclude:
     - "**/*.g.dart"
+    # protoc's output, regenerated from `third_party/proto` and not edited.
+    # It imports its own siblings by relative path, which this project's
+    # `always_use_package_imports` forbids and the generator will not change.
+    - "**/*.pb.dart"
+    - "**/*.pbenum.dart"
+    - "**/*.pbjson.dart"
     - build/**
     - android/**
     - ios/**

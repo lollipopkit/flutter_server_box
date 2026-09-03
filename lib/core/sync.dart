@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/bak/backup.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
@@ -116,17 +117,43 @@ final class BakSyncer extends SyncIface {
     };
   }
 
-  /// Refuses to upload after a failed read of newer remote data. Everything
-  /// else defers to the base implementation.
+  /// Refuses to upload after a failed read of newer remote data, and waits for
+  /// [inheritLegacyRemote] to finish deciding. Everything else defers to the
+  /// base implementation.
   @override
   Future<void> backup([RemoteStorage? rs]) async {
+    // An upload is what creates the versioned remote file, and that file is
+    // exactly what `inheritLegacyRemote` reads as "already inherited" — so a
+    // sync overtaking it ends the one-shot without it ever having happened,
+    // and the history under the old name is never read. Launch starts the
+    // inherit without awaiting it, so the wait belongs here rather than there.
+    //
+    // Bounded, because nothing underneath it has a timeout: an unreachable
+    // remote must not leave this session unable to upload at all. Going ahead
+    // then costs the inheritance, which is what an unreadable remote costs
+    // anyway.
+    final inheriting = _inheriting;
+    if (inheriting != null) {
+      await inheriting.timeout(const Duration(seconds: 30), onTimeout: () {});
+    }
+
     final tooNew = _remoteTooNew;
     if (tooNew != null) {
+      // Its own outcome, not a failure: the upload was refused because the
+      // remote is newer than what this device last read. It is the one that
+      // says a user has two devices disagreeing, which no error path reports
+      // because nothing here went wrong.
+      Diag.crumb(SbDiag.sync, 'upload skipped', data: {'why': 'remote newer'});
       Loggers.app.warning('Sync upload aborted: $tooNew');
       return;
     }
+    Diag.crumb(SbDiag.sync, 'upload');
     return super.backup(rs);
   }
+
+  /// The inherit in flight, awaited by [backup] so an upload cannot overtake
+  /// it.
+  Future<void>? _inheriting;
 
   /// Reads the pre-v3 remote file once, so upgrading doesn't look like a
   /// fresh start.
@@ -138,13 +165,23 @@ final class BakSyncer extends SyncIface {
   /// `Paths.init`.
   ///
   /// A no-op once the versioned file exists remotely, so it runs at most once
-  /// per remote.
+  /// per remote. An attempt is memoized for the same reason within a launch: a
+  /// second call would ask the remote a question this one is already
+  /// answering.
+  ///
+  /// Having no remote is not an attempt and is not memoized. It is an answer
+  /// about this moment only — sync is configured from a settings page, so the
+  /// next call may well have somewhere to look — and memoizing it would turn
+  /// "not yet" into "never" for the rest of the launch.
   ///
   /// TODO: remove with the rest of the v2 compatibility shims.
-  Future<void> inheritLegacyRemote() async {
+  Future<void> inheritLegacyRemote() {
     final rs = remoteStorage;
-    if (rs == null) return;
+    if (rs == null) return Future.value();
+    return _inheriting ??= _inheritLegacyRemote(rs);
+  }
 
+  Future<void> _inheritLegacyRemote(RemoteStorage rs) async {
     try {
       if (await rs.exists(Paths.bakName)) return;
       if (!await rs.exists(Miscs.legacyBakFileName)) return;

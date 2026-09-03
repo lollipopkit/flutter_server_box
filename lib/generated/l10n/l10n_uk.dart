@@ -9,6 +9,65 @@ class AppLocalizationsUk extends AppLocalizations {
   AppLocalizationsUk([String locale = 'uk']) : super(locale);
 
   @override
+  String get crashCollect => 'Діагностичні дані';
+
+  @override
+  String get crashCollectIntro =>
+      'ServerBox записує те, що відбувається під час роботи, щоб можна було виправляти проблеми. Виберіть, скільки даних надсилати.';
+
+  @override
+  String get crashCollectNone => 'Нічого';
+
+  @override
+  String get crashCollectNoneTip =>
+      'Звіти залишаються на цьому пристрої; після збою ви можете надіслати один вручну.';
+
+  @override
+  String get crashCollectBasic => 'Основні дані';
+
+  @override
+  String get crashCollectBasicTip =>
+      'Містить лише відомості про збій; журнали й дані про продуктивність не включаються. **Це допомагає нам покращувати застосунок і виправляти помилки.**';
+
+  @override
+  String get crashCollectFull => 'Повні дані';
+
+  @override
+  String get crashCollectFullTip =>
+      'Окрім журналу збою, містить дані про продуктивність і відомості про те, які функції використовуються: вони допомагають знайти, що працює повільно та які функції справді потрібні.';
+
+  @override
+  String get crashCollectFooter =>
+      'На всіх рівнях відомі імена серверів, адреси та імена користувачів замінюються заповнювачами вже під час запису. Пізніше рівень збору можна змінити в налаштуваннях.';
+
+  @override
+  String get privacy => 'Конфіденційність';
+
+  @override
+  String get privacyPolicy => 'Політика конфіденційності';
+
+  @override
+  String get crashUpload => 'Надсилати звіти про збої';
+
+  @override
+  String get crashUploadTip =>
+      'Надсилати звіти про збої розробнику. Відомі імена та адреси серверів замінюються заповнювачами. Типово вимкнено; можна вимкнути будь-коли.';
+
+  @override
+  String get crashNoticeBody =>
+      'ServerBox несподівано завершив роботу під час останнього запуску. Бажаєте переглянути звіт про збій?';
+
+  @override
+  String get crashReportTitle => 'Звіт про збій';
+
+  @override
+  String get crashReportHint =>
+      'Це журнал попереднього запуску. Відомі імена та адреси серверів замінено заповнювачами, але інші дані можуть залишитися. Уважно прочитайте звіт перед надсиланням.';
+
+  @override
+  String get crashReportSubmit => 'Копіювати та повідомити';
+
+  @override
   String get acceptBeta => 'Прийняти оновлення бета-версії';
 
   @override

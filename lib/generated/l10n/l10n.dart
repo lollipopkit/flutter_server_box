@@ -123,6 +123,108 @@ abstract class AppLocalizations {
     Locale('zh', 'TW'),
   ];
 
+  /// No description provided for @crashCollect.
+  ///
+  /// In en, this message translates to:
+  /// **'Diagnostic data'**
+  String get crashCollect;
+
+  /// No description provided for @crashCollectIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'ServerBox records what happens while it runs so problems can be fixed. Choose how much information to send.'**
+  String get crashCollectIntro;
+
+  /// No description provided for @crashCollectNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing'**
+  String get crashCollectNone;
+
+  /// No description provided for @crashCollectNoneTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports remain on this device; after a crash, you can send one manually.'**
+  String get crashCollectNoneTip;
+
+  /// No description provided for @crashCollectBasic.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic information'**
+  String get crashCollectBasic;
+
+  /// No description provided for @crashCollectBasicTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Only crash information is included; logs and performance data are not. **This helps us improve the app and fix bugs.**'**
+  String get crashCollectBasicTip;
+
+  /// No description provided for @crashCollectFull.
+  ///
+  /// In en, this message translates to:
+  /// **'Full information'**
+  String get crashCollectFull;
+
+  /// No description provided for @crashCollectFullTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Along with the crash log, performance data and which features are used are included: **they show what is slow, and which features are worth keeping.**'**
+  String get crashCollectFullTip;
+
+  /// No description provided for @crashCollectFooter.
+  ///
+  /// In en, this message translates to:
+  /// **'At every level, known server names, addresses and usernames are replaced with placeholders when recorded. You can change the collection level later in Settings.'**
+  String get crashCollectFooter;
+
+  /// No description provided for @privacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy'**
+  String get privacy;
+
+  /// No description provided for @privacyPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy policy'**
+  String get privacyPolicy;
+
+  /// No description provided for @crashUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload crash reports'**
+  String get crashUpload;
+
+  /// No description provided for @crashUploadTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Send crash reports to the developer. Known server names and addresses are replaced with placeholders. Off by default; you can turn it off at any time.'**
+  String get crashUploadTip;
+
+  /// No description provided for @crashNoticeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'ServerBox exited unexpectedly during its last run. Would you like to view the crash report?'**
+  String get crashNoticeBody;
+
+  /// No description provided for @crashReportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Crash report'**
+  String get crashReportTitle;
+
+  /// No description provided for @crashReportHint.
+  ///
+  /// In en, this message translates to:
+  /// **'This is the log from the previous run. Known server names and addresses have been replaced with placeholders, but other details may remain. Please read it carefully before submitting.'**
+  String get crashReportHint;
+
+  /// No description provided for @crashReportSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy & report'**
+  String get crashReportSubmit;
+
   /// No description provided for @acceptBeta.
   ///
   /// In en, this message translates to:

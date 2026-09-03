@@ -1,3 +1,5 @@
+import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/utils/refresh_interval.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/res/default.dart';
@@ -10,6 +12,23 @@ import 'package:server_box/data/res/store.dart';
 /// device — and naming them made a third pair unrepresentable.
 class FileTransfer {
   FileTransfer({required this.from, required this.to, this.isDir = false}) {
+    // Where each end is, which is what says whether this is an upload, a
+    // download, or a copy between two servers — and never a path or a name.
+    //
+    // Here rather than in the six places one is constructed, and here rather
+    // than on the worker: this is the isolate that has the stores, and so the
+    // only one where a sink exists to receive it. `file.open backend` counts
+    // browsers being opened, which is not the same as anything being moved.
+    Diag.crumb(
+      SbDiag.file,
+      'transfer',
+      data: {
+        'from': _refKind(from),
+        'to': _refKind(to),
+        'dir': isDir ? 'yes' : 'no',
+      },
+    );
+
     // Read here, on the isolate that has the stores. The one that runs the
     // transfer does not.
     timeoutSeconds = Stores.setting.timeout.fetch();
@@ -52,6 +71,17 @@ class FileTransfer {
   /// takes the general path whatever its two ends are.
   bool get isSingleFile => !isDir;
 }
+
+/// Which side of the app an end of a transfer is on.
+///
+/// A `switch` on the sealed type rather than `runtimeType`, so a fourth kind
+/// of [FileRef] fails to compile here instead of arriving as a class name an
+/// obfuscated build is free to rewrite.
+String _refKind(FileRef ref) => switch (ref) {
+  LocalFileRef() => 'local',
+  SshFileRef() => 'ssh',
+  MonitorFileRef() => 'monitor',
+};
 
 /// How far along, in the two numbers a list can show.
 class FileTransferProgress {

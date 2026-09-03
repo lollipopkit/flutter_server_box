@@ -1,7 +1,84 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+   What leaves the device, and under which setting.
+
+   Everything below is sent only when `DiagnosticsLevel` is not `none`. That
+   setting is chosen on an intro page before anything is uploaded, and this
+   platform starts at `basic` — so a declaration is required here even though
+   the Android default is `none`. `basic` sends crash data and the breadcrumbs
+   leading up to it (other diagnostic data); `full` adds performance data and
+   counts which features are used (product interaction). The app's own log
+   stream is uploaded at no level at all -- see `SentrySink.log` -- so none of
+   these four covers it.
+
+   `Tracking` stays false for all of them. Apple's definition is linking to
+   third-party data for advertising or a data broker. This is first-party, is
+   never shared with one, and the identifier is a random value for the install
+   that exists only while `full` is selected and is deleted when it is not --
+   see `Analytics`. It is deliberately kept out of the backup file, so a
+   restore cannot give two devices the same one.
+
+   Nothing is linked to an identity and nothing is used for tracking: reports
+   carry a per-install id the server generates, no account, no advertising
+   identifier, and server names, addresses and usernames are replaced with
+   placeholders where they are recorded rather than where they are sent.
+-->
 <plist version="1.0">
 <dict>
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array>
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeCrashData</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypePerformanceData</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeProductInteraction</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeOtherDiagnosticData</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+	</array>
 	<key>NSPrivacyAccessedAPITypes</key>
 	<array>
 		<dict>

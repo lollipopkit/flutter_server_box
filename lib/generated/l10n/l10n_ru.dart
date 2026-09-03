@@ -9,6 +9,65 @@ class AppLocalizationsRu extends AppLocalizations {
   AppLocalizationsRu([String locale = 'ru']) : super(locale);
 
   @override
+  String get crashCollect => 'Диагностические данные';
+
+  @override
+  String get crashCollectIntro =>
+      'ServerBox записывает происходящее во время работы, чтобы можно было исправлять проблемы. Выберите, сколько данных отправлять.';
+
+  @override
+  String get crashCollectNone => 'Ничего';
+
+  @override
+  String get crashCollectNoneTip =>
+      'Отчёты остаются на устройстве; после сбоя вы можете отправить один вручную.';
+
+  @override
+  String get crashCollectBasic => 'Основные данные';
+
+  @override
+  String get crashCollectBasicTip =>
+      'Включает только сведения о сбое; журналы и данные о производительности не включаются. **Это помогает нам улучшать приложение и исправлять ошибки.**';
+
+  @override
+  String get crashCollectFull => 'Полные данные';
+
+  @override
+  String get crashCollectFullTip =>
+      'Помимо журнала сбоя, включаются данные о производительности и сведения о том, какие функции используются: они помогают найти, что работает медленно и какие функции действительно нужны.';
+
+  @override
+  String get crashCollectFooter =>
+      'На всех уровнях известные имена серверов, адреса и имена пользователей заменяются заполнителями уже при записи. Позже уровень сбора можно изменить в настройках.';
+
+  @override
+  String get privacy => 'Конфиденциальность';
+
+  @override
+  String get privacyPolicy => 'Политика конфиденциальности';
+
+  @override
+  String get crashUpload => 'Отправлять отчёты о сбоях';
+
+  @override
+  String get crashUploadTip =>
+      'Отправлять отчёты о сбоях разработчику. Известные имена и адреса серверов заменяются заполнителями. По умолчанию выключено; можно отключить в любой момент.';
+
+  @override
+  String get crashNoticeBody =>
+      'ServerBox неожиданно завершил работу во время последнего запуска. Хотите посмотреть отчёт о сбое?';
+
+  @override
+  String get crashReportTitle => 'Отчёт о сбое';
+
+  @override
+  String get crashReportHint =>
+      'Это журнал предыдущего запуска. Известные имена и адреса серверов заменены заполнителями, но другие данные могут остаться. Внимательно прочитайте отчёт перед отправкой.';
+
+  @override
+  String get crashReportSubmit => 'Копировать и сообщить';
+
+  @override
   String get acceptBeta => 'Принять обновления тестовой версии';
 
   @override

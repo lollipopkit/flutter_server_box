@@ -9,6 +9,65 @@ class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([String locale = 'es']) : super(locale);
 
   @override
+  String get crashCollect => 'Datos de diagnóstico';
+
+  @override
+  String get crashCollectIntro =>
+      'ServerBox registra lo que ocurre mientras se ejecuta para poder solucionar los problemas. Elige cuánta información se envía.';
+
+  @override
+  String get crashCollectNone => 'Nada';
+
+  @override
+  String get crashCollectNoneTip =>
+      'Los informes se conservan en este dispositivo; después de un fallo, puedes enviar uno manualmente.';
+
+  @override
+  String get crashCollectBasic => 'Información básica';
+
+  @override
+  String get crashCollectBasicTip =>
+      'Solo se incluye información sobre el fallo; no se incluyen registros ni datos de rendimiento. **Esto nos ayuda a mejorar la aplicación y corregir errores.**';
+
+  @override
+  String get crashCollectFull => 'Información completa';
+
+  @override
+  String get crashCollectFullTip =>
+      'Además del registro del fallo, se incluyen datos de rendimiento y el uso de funciones: **Sirven para localizar qué va lento y qué funciones se usan realmente.**';
+
+  @override
+  String get crashCollectFooter =>
+      'En todos los niveles, los nombres de servidores conocidos, sus direcciones y nombres de usuario se sustituyen por marcadores al registrarlos. Puedes cambiar el nivel de recopilación más adelante en Ajustes.';
+
+  @override
+  String get privacy => 'Privacidad';
+
+  @override
+  String get privacyPolicy => 'Política de privacidad';
+
+  @override
+  String get crashUpload => 'Subir informes de fallo';
+
+  @override
+  String get crashUploadTip =>
+      'Enviar los informes de fallo al desarrollador. Los nombres y direcciones de servidor conocidos se sustituyen por marcadores. Desactivado de forma predeterminada; puedes desactivarlo en cualquier momento.';
+
+  @override
+  String get crashNoticeBody =>
+      'ServerBox se cerró inesperadamente durante la última ejecución. ¿Quieres ver el informe de fallo?';
+
+  @override
+  String get crashReportTitle => 'Informe de fallo';
+
+  @override
+  String get crashReportHint =>
+      'Este es el registro de la ejecución anterior. Los nombres y direcciones de servidor conocidos se han sustituido por marcadores, pero pueden quedar otros datos. Lee el informe detenidamente antes de enviarlo.';
+
+  @override
+  String get crashReportSubmit => 'Copiar e informar';
+
+  @override
   String get acceptBeta => 'Aceptar actualizaciones de la versión de prueba';
 
   @override

@@ -11,6 +11,9 @@ import 'package:logging/logging.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:server_box/app.dart';
 import 'package:server_box/core/chan.dart';
+import 'package:server_box/core/diag.dart';
+import 'package:server_box/core/service/diagnostics_upload.dart';
+import 'package:server_box/core/service/native_exit.dart';
 import 'package:server_box/core/service/watch_sync.dart';
 import 'package:server_box/core/service/widget_sync.dart';
 import 'package:server_box/core/sync.dart';
@@ -47,13 +50,79 @@ Future<void> _runInZone(Future<void> Function() body) async {
 
   await runZonedGuarded(
     body,
-    (e, s) => Loggers.app.warning('Zone error', e, s),
+    (e, s) {
+      // `CrashLog.handleErrors` also installs `PlatformDispatcher.onError`,
+      // and inside a guarded zone that handler is never reached: the zone
+      // takes async errors first, and the two are alternatives rather than
+      // layers. So this is the only place an uncaught async error is seen,
+      // and marking has to happen here or not at all.
+      //
+      // Reporting has to happen here for the same reason, and it is the same
+      // reason again that it cannot be left to `CrashLog`: that class only
+      // sees what its own handlers catch, and this is precisely what they do
+      // not. Most uncaught errors in this app are async, so without this the
+      // sink hears about almost none of them.
+      //
+      // `LocalDiagnosticsSink.error` logs it, so logging it here as well would
+      // record it twice — and with no sink installed nothing would be recorded
+      // at all, which is what the fallback covers.
+      if (Diag.enabled) {
+        Diag.error(e, s, 'Zone error');
+      } else {
+        Loggers.app.severe('Zone error', e, s);
+      }
+      CrashLog.markUnhandled();
+    },
     zoneSpecification: zoneSpec,
   );
 }
 
 Future<void> _initApp() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Before anything that can fail, so that a failure during startup is at
+  // least recorded — the errors worth catching most are the ones that stop the
+  // app from reaching a screen anyone could copy a log from.
+  //
+  // Bounded by what it can do without a path: lines are buffered in memory
+  // and written once `CrashLog.attach` below has one, and the marker that
+  // tells the next launch this run died is a file, so neither exists until
+  // then. That window is now two platform channels wide rather than the whole
+  // of `_initData`. What covers even that is the platform's own record of the
+  // exit, read on the following launch — see [NativeExitReport].
+  _setupDebug();
+
+  // Before `RustLib.init`, and that ordering is the point. `_setupDebug`
+  // buffers into memory and can do nothing else until there is a path; the
+  // marker that tells the next launch this one died is a *file*, so until this
+  // runs a crash leaves no marker and the buffered lines are never written.
+  // This used to sit at the top of `_initData`, which runs after the Rust
+  // library, the database and the schema migration — the three things most
+  // likely to take the process down, and precisely the ones whose failure went
+  // unrecorded. Nothing here needs Rust: both are platform channels.
+  //
+  // `img` holds the SSH background, `font` the terminal font. The rest of
+  // `PathDir` belongs to other apps on fl_lib, and creating them here would
+  // only leave empty directories beside the boxes.
+  //
+  // `bakName` is versioned on purpose. Sync is a single shared file on
+  // iCloud/WebDAV/Gist, and `SyncIface._sync` uploads unconditionally after a
+  // failed merge — so a build that cannot read the remote copy overwrites it.
+  // Builds already released have no version check and cannot be given one, and
+  // the only thing that stops them is not seeing the file at all.
+  //
+  // TODO: drop the legacy name (and `BakSyncer.inheritLegacyRemote`) once no
+  // install can still be writing `srvbox_bak.json`.
+  await Paths.init(
+    BuildData.name,
+    bakName: Miscs.bakFileName,
+    dirs: const {PathDir.img, PathDir.font},
+  );
+  await CrashLog.attach(Paths.doc.joinPath('logs'));
+  // Which release a report came from is the first thing asked about one and
+  // the thing users most often leave out.
+  Diag.tag(SbDiagTag.build, '${BuildData.build}');
+  Diag.crumb(DiagCategory.lifecycle, 'launch');
 
   // Shared parsing library (sbm_parser FFI, see the shared-parser design)
   await RustLib.init();
@@ -66,7 +135,6 @@ Future<void> _initApp() async {
   // when that page asks for it.
   registerDistMarkLicenses();
   await _initData();
-  _setupDebug();
   await _initWindow();
 
   await _doPlatformRelated();
@@ -76,23 +144,6 @@ Future<void> _initApp() async {
 }
 
 Future<void> _initData() async {
-  // Versioned on purpose. Sync is a single shared file on iCloud/WebDAV/Gist,
-  // and `SyncIface._sync` uploads unconditionally after a failed merge — so a
-  // build that cannot read the remote copy overwrites it. Builds already
-  // released have no version check and cannot be given one, and the only thing
-  // that stops them is not seeing the file at all.
-  //
-  // TODO: drop the legacy name (and `BakSyncer.inheritLegacyRemote`) once no
-  // install can still be writing `srvbox_bak.json`.
-  // `img` holds the SSH background, `font` the terminal font. The rest of
-  // `PathDir` belongs to other apps on fl_lib, and creating them here would
-  // only leave empty directories beside the boxes.
-  await Paths.init(
-    BuildData.name,
-    bakName: Miscs.bakFileName,
-    dirs: const {PathDir.img, PathDir.font},
-  );
-
   // `extended_image` caches under `getTemporaryDirectory()` and makes its own
   // folder there with a plain `create()`, no `recursive`. On macOS that
   // directory is `~/Library/Caches/<bundle id>`, which nothing has to have
@@ -159,6 +210,40 @@ void _setupDebug() {
   Logger.root.onRecord.listen((record) {
     DebugProvider.addLog(record);
   });
+  CrashLog.handleErrors();
+  // Local only, and that is the whole of it: nothing is sent anywhere, so
+  // there is nothing to ask the user's permission for. The file is theirs
+  // until they paste it into a report — which is also why a crumb has to be
+  // publishable when it is written. See [Redact].
+  Diag.install(LocalDiagnosticsSink());
+
+  // Where the user was is the cheapest context there is, and the one every
+  // report leaves out — two of the three open ones describe a route ("terminal,
+  // then Device") in prose because there was nowhere for it to be recorded.
+  //
+  // A route name is a path, not data: arguments travel in `args`, so this
+  // publishes `/server/detail` rather than which server.
+  AppRouteObserver.addListener((settings, type) {
+    Diag.crumb(
+      DiagCategory.nav,
+      type.name,
+      data: {'route': settings?.name ?? '-'},
+    );
+  });
+
+  // A no-op for the local sink, which writes synchronously — and installed
+  // anyway, because that is exactly the kind of thing that is forgotten until
+  // a sink that *does* buffer is added and quietly loses its last batch. Not
+  // `home.dart`'s lifecycle callback: that one returns early on desktop and
+  // only runs while the home page is mounted.
+  //
+  // Not held in a variable: the constructor registers it with the binding,
+  // which keeps it alive for as long as the process is, and it is never
+  // disposed.
+  AppLifecycleListener(
+    onPause: () => unawaited(Diag.flush()),
+    onDetach: () => unawaited(Diag.flush()),
+  );
 }
 
 Future<void> _doPlatformRelated() async {
@@ -171,6 +256,18 @@ Future<void> _doPlatformRelated() async {
     }
   }
 
+  // Why the process died last time, which for a native crash is the only
+  // record there is — nothing in Dart ran to write one. After the stores are
+  // open, since it remembers which record it has already reported, and after
+  // `CrashLog.attach`, whose answer about the previous run it may correct.
+  await NativeExitReport.collect();
+
+  // Adds the upload sink beside the local one, if this build has a DSN and the
+  // user asked for it. Neither is true by default. Not awaited: the local sink
+  // is already recording, and a slow or unreachable server must not hold up
+  // startup to add a second destination for it.
+  unawaited(DiagnosticsUpload.sync());
+
   // Where the Linux userland is, and whether there is one — proot and an
   // unpacked rootfs on Android, the engine and its filesystem on iOS. A few
   // file checks, and the terminal tab reads the answer while building.
@@ -179,6 +276,9 @@ Future<void> _doPlatformRelated() async {
   } catch (e, s) {
     Loggers.app.warning('Failed to locate the Linux rootfs', e, s);
   }
+  // Both open crash reports naming a terminal are on Android, and neither says
+  // whether a Linux userland was involved at all.
+  Diag.tag(SbDiagTag.rootfs, Rootfs.isAvailable ? 'yes' : 'no');
 
   // Which releases are installable is data that moves on the distributions'
   // schedule, so it is fetched rather than compiled in. Not awaited: what
@@ -270,6 +370,7 @@ Future<void> _doDbMigrate() async {
   // behind on a database it then declined to touch — so a downgrade destroyed
   // exactly the settings the refusal exists to protect.
   await SchemaVersion.migrate(kSchemaMigrations);
+  Diag.tag(SbDiagTag.schema, '${SchemaVersion.current}');
 
   migrateBuildFeatures(BuildData.build);
 

@@ -15,7 +15,7 @@ DMG_PATH ?=
 TAP_REPO_PATH ?=
 
 .PHONY: help deps pub-get run run-device analyze test test-one coverage \
-	test-cla gen gen-build gen-build-clean gen-l10n build build-android build-ios \
+	test-cla gen gen-build gen-build-clean gen-l10n gen-proto build build-android build-ios \
 	build-ios-nosign build-macos build-linux build-windows clean \
 	release-macos-dmg package-dmg sync-homebrew-cask monitor-dev
 
@@ -38,6 +38,7 @@ help:
 		'  gen-build          Run build_runner build --delete-conflicting-outputs' \
 		'  gen-build-clean    Run build_runner build with --clean' \
 		'  gen-l10n           Regenerate localization files' \
+		'  gen-proto          Regenerate the tombstone protobuf reader (needs protoc)' \
 		'' \
 		'Build targets:' \
 		'  build              Build via fl_build: make build PLATFORM=<android|ios|macos|linux|windows>' \
@@ -108,6 +109,21 @@ gen-build-clean:
 
 gen-l10n:
 	$(FLUTTER) gen-l10n
+
+# Not part of `gen`: the schema is a vendored file that changes when a new
+# Android release changes it, which is on the order of once a year, and this
+# needs protoc and protoc_plugin installed. Run it after updating
+# third_party/proto.
+gen-proto:
+	@command -v protoc >/dev/null || { echo 'protoc is not installed'; exit 1; }
+	$(DART) pub global activate protoc_plugin
+	# `protoc` looks for its Dart backend as a `protoc-gen-dart` executable on
+	# PATH, and `pub global activate` installs that into the pub cache's `bin`
+	# — which is not on PATH unless the user has put it there. Without this the
+	# line above succeeds and this one fails with `protoc-gen-dart: program not
+	# found`, naming a plugin nothing asked for by that name.
+	PATH="$${PUB_CACHE:-$$HOME/.pub-cache}/bin:$$PATH" \
+		protoc --dart_out=lib/src/proto -I third_party/proto third_party/proto/tombstone.proto
 
 build:
 	@if [ -z "$(PLATFORM)" ]; then \

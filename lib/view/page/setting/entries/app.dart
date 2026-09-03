@@ -336,6 +336,63 @@ extension _App on _AppSettingsPageState {
     );
   }
 
+  /// Its own page rather than two rows under **More**, because what it decides
+  /// is not the same kind of thing as the rows it sat among.
+  ///
+  /// A page can also be reached — from the intro that first asks the question,
+  /// from a release note, from an answer to someone asking what is collected —
+  /// and a row buried in a collapsed tile cannot. It stays a page even with
+  /// two rows on it: the settings search matches on the node id, so `privacy`
+  /// is now a thing to search for.
+  Widget _buildPrivacy() {
+    return Column(
+      children: [
+        // Only where a report could actually be sent. A control that cannot do
+        // anything is worse than one that is not offered, and a build with no
+        // DSN in it can do nothing here. See [DiagnosticsUpload].
+        //
+        // Not wrapped in a card: the picker is a list of them already.
+        if (DiagnosticsUpload.availableInBuild) _buildDiagnosticsUpload(),
+        // Not under that condition, unlike when these two were rows together.
+        // The policy describes what is kept on the device as well as what is
+        // sent, so it has something to say in a build that uploads nothing —
+        // and a page whose only content is conditional can otherwise open
+        // empty.
+        _buildPrivacyPolicy().cardx,
+      ],
+    );
+  }
+
+  /// Where the choice made on the intro page can be revisited.
+  ///
+  /// The same widget the intro puts the question with, so the answer reads the
+  /// same in both places. It replaced a row whose trailing text named the
+  /// current level and whose tap opened a picker of three bare labels: the
+  /// sentence saying what a level actually sends existed only on the intro,
+  /// which is the one screen a user sees once and cannot go back to.
+  ///
+  /// A page has the room for it. This one holds two rows.
+  Widget _buildDiagnosticsUpload() {
+    return DiagnosticsLevelPicker(
+      // Applied now rather than at the next launch: turning it down has to
+      // take the sink out immediately, not eventually.
+      onPicked: () => unawaited(DiagnosticsUpload.sync()),
+    );
+  }
+
+  /// Beside the level, not inside the picker.
+  ///
+  /// The dialog that picks a level is a list of three options and has nowhere
+  /// to put a link; and the policy is worth reaching without first opening the
+  /// control that changes a setting.
+  Widget _buildPrivacyPolicy() {
+    return ListTile(
+      title: Text(l10n.privacyPolicy),
+      trailing: const Icon(Icons.open_in_new, size: 17),
+      onTap: Urls.privacyPolicy.launchUrl,
+    );
+  }
+
   Widget _buildBeta() {
     return ListTile(
       title: TipText('Beta Program', l10n.acceptBeta),

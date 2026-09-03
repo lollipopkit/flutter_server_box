@@ -12,6 +12,7 @@
 		4A2DCD6B2E4B127100CF68B7 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A2DCD692E4B127100CF68B7 /* LiveActivityManager.swift */; };
 		4A2DCD712E4B127100CF68B7 /* DynamicIslandBrand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A2DCD722E4B127100CF68B7 /* DynamicIslandBrand.swift */; };
 		4A2DCD732E4B127100CF68B7 /* PrivacyBlur.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A2DCD742E4B127100CF68B7 /* PrivacyBlur.swift */; };
+		4A2DCD802E4B127100CF68B7 /* CrashDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A2DCD812E4B127100CF68B7 /* CrashDiagnostics.swift */; };
 		4A2DCD6C2E4B127100CF68B7 /* TerminalLiveActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A2DCD6A2E4B127100CF68B7 /* TerminalLiveActivityAttributes.swift */; };
 		4A2DCD6F2E4B128100CF68B7 /* TerminalLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A2DCD6D2E4B128100CF68B7 /* TerminalLiveActivity.swift */; };
 		4A2DCD702E4B128100CF68B7 /* TerminalLiveActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A2DCD6E2E4B128100CF68B7 /* TerminalLiveActivityAttributes.swift */; };
@@ -132,6 +133,7 @@
 		4A2DCD692E4B127100CF68B7 /* LiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityManager.swift; sourceTree = "<group>"; };
 		4A2DCD722E4B127100CF68B7 /* DynamicIslandBrand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DynamicIslandBrand.swift; sourceTree = "<group>"; };
 		4A2DCD742E4B127100CF68B7 /* PrivacyBlur.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyBlur.swift; sourceTree = "<group>"; };
+		4A2DCD812E4B127100CF68B7 /* CrashDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrashDiagnostics.swift; sourceTree = "<group>"; };
 		4A2DCD6A2E4B127100CF68B7 /* TerminalLiveActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalLiveActivityAttributes.swift; sourceTree = "<group>"; };
 		4A2DCD6D2E4B128100CF68B7 /* TerminalLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalLiveActivity.swift; sourceTree = "<group>"; };
 		4A2DCD6E2E4B128100CF68B7 /* TerminalLiveActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalLiveActivityAttributes.swift; sourceTree = "<group>"; };
@@ -317,6 +319,7 @@
 				4A2DCD6A2E4B127100CF68B7 /* TerminalLiveActivityAttributes.swift */,
 				4A2DCD722E4B127100CF68B7 /* DynamicIslandBrand.swift */,
 				4A2DCD742E4B127100CF68B7 /* PrivacyBlur.swift */,
+				4A2DCD812E4B127100CF68B7 /* CrashDiagnostics.swift */,
 				1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */,
 				E3AE8AE92AB601DB000A6459 /* Utils.swift */,
 				FA7C40000000000000000091 /* WidgetStore.swift */,
@@ -643,6 +646,7 @@
 				4A2DCD6C2E4B127100CF68B7 /* TerminalLiveActivityAttributes.swift in Sources */,
 				4A2DCD712E4B127100CF68B7 /* DynamicIslandBrand.swift in Sources */,
 				4A2DCD732E4B127100CF68B7 /* PrivacyBlur.swift in Sources */,
+				4A2DCD802E4B127100CF68B7 /* CrashDiagnostics.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

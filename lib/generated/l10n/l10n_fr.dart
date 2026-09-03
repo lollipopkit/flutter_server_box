@@ -9,6 +9,65 @@ class AppLocalizationsFr extends AppLocalizations {
   AppLocalizationsFr([String locale = 'fr']) : super(locale);
 
   @override
+  String get crashCollect => 'Données de diagnostic';
+
+  @override
+  String get crashCollectIntro =>
+      'ServerBox enregistre ce qui se passe pendant son fonctionnement afin de pouvoir corriger les problèmes. Choisissez la quantité d\'informations envoyée.';
+
+  @override
+  String get crashCollectNone => 'Rien';
+
+  @override
+  String get crashCollectNoneTip =>
+      'Les rapports restent sur cet appareil ; après un plantage, vous pouvez en envoyer un manuellement.';
+
+  @override
+  String get crashCollectBasic => 'Informations de base';
+
+  @override
+  String get crashCollectBasicTip =>
+      'Seules les informations sur le plantage sont incluses ; les journaux et données de performance ne le sont pas. **Cela nous aide à améliorer l\'application et à corriger les bugs.**';
+
+  @override
+  String get crashCollectFull => 'Informations complètes';
+
+  @override
+  String get crashCollectFullTip =>
+      'En plus du journal du plantage, des données de performance et l\'usage des fonctionnalités sont inclus : **Cela permet de repérer ce qui est lent et quelles fonctionnalités servent vraiment.**';
+
+  @override
+  String get crashCollectFooter =>
+      'Quel que soit le niveau, les noms de serveurs connus, leurs adresses et noms d\'utilisateur sont remplacés par des espaces réservés dès l\'enregistrement. Vous pouvez modifier le niveau de collecte plus tard dans les réglages.';
+
+  @override
+  String get privacy => 'Confidentialité';
+
+  @override
+  String get privacyPolicy => 'Politique de confidentialité';
+
+  @override
+  String get crashUpload => 'Envoyer les rapports de plantage';
+
+  @override
+  String get crashUploadTip =>
+      'Envoyer les rapports de plantage au développeur. Les noms et adresses de serveurs connus sont remplacés par des espaces réservés. Désactivé par défaut ; vous pouvez le désactiver à tout moment.';
+
+  @override
+  String get crashNoticeBody =>
+      'ServerBox s\'est fermé de manière inattendue lors de sa dernière exécution. Voulez-vous consulter le rapport de plantage ?';
+
+  @override
+  String get crashReportTitle => 'Rapport de plantage';
+
+  @override
+  String get crashReportHint =>
+      'Ceci est le journal de l\'exécution précédente. Les noms et adresses de serveurs connus ont été remplacés par des espaces réservés, mais d\'autres informations peuvent subsister. Lisez-le attentivement avant de l\'envoyer.';
+
+  @override
+  String get crashReportSubmit => 'Copier et signaler';
+
+  @override
   String get acceptBeta => 'Accepter les mises à jour de la version de test';
 
   @override

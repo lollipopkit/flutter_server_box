@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/app/ask_ai_config.dart';
+import 'package:server_box/data/model/app/diagnostics_level.dart';
 import 'package:server_box/data/model/app/float_shell_config.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
@@ -268,6 +269,56 @@ class SettingStore extends SqliteStore {
     'legacyStatusNoticePending',
     false,
   );
+
+  /// The timestamp of the most recent `ApplicationExitInfo` already reported.
+  ///
+  /// Android hands back the same record on every launch until another one
+  /// replaces it, and the records carry no id — the timestamp is the only thing
+  /// telling two apart. Without this, one crash would raise the prompt on every
+  /// launch after it, forever.
+  /// Device-local twice over, which takes both the prefix and the flag.
+  ///
+  /// `updateLastModified: false` because a crash is not an edit: stamping the
+  /// sync clock for one would make a phone that merely crashed claim the newer
+  /// copy of every setting at the next merge.
+  ///
+  /// The internal-key prefix because the value must not travel. It is compared
+  /// against *this* device's `ApplicationExitInfo.timestamp`, so another
+  /// device's — which is simply a different clock reading — arriving here
+  /// would silently discard every crash older than it, permanently.
+  late final lastExitInfoTs = propertyDefault(
+    '${StoreDefaults.prefixKey}lastExitInfoTs',
+    0,
+    updateLastModified: false,
+  );
+
+  /// How much of a crash is uploaded — see `DiagnosticsLevel`.
+  ///
+  /// Stored by name, never by index: an index changes meaning the moment a
+  /// case is inserted, and this value outlives the build that wrote it.
+  ///
+  /// The default is `defaultDiagnosticsLevel`: `none` on Android, `basic`
+  /// everywhere else. The split is about F-Droid, which distributes only the
+  /// Android build and requires collection to be off by default — see that
+  /// getter for why it is decided at runtime rather than by a compile-time
+  /// flag.
+  ///
+  /// Either way nothing is uploaded until the user has been shown the intro
+  /// page that explains the three levels. That ordering is what makes this
+  /// "asked before it happens" rather than collection by surprise.
+  late final diagnosticsLevel = propertyDefault(
+    'diagnosticsLevel',
+    defaultDiagnosticsLevel.name,
+  );
+
+  /// The revision of the crash-collection notice this install has seen.
+  ///
+  /// Its own counter rather than `introVer`, which is set to the *build
+  /// number* when an intro completes — so every key in `_builders` is
+  /// permanently below it for anyone who has ever seen one, and a newly added
+  /// page could never appear. Bumping `kDiagnosticsConsentVer` shows this again,
+  /// which is what a change to what is collected would need.
+  late final diagnosticsConsentVer = propertyDefault('diagnosticsConsentVer', 0);
 
   late final autoCheckAppUpdate = propertyDefault('autoCheckAppUpdate', true);
 

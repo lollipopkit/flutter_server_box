@@ -141,6 +141,7 @@ android {
             if(!splits.abi.enable) { // abiFilters cannot be present when splits abi filters are set
                 abiFilters 'arm64-v8a', 'armeabi-v7a'
             }
+
         }
     }
 
@@ -164,6 +165,24 @@ android {
             // and the reproducibility workflow compare the unsigned APK.
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+
+            // Native crashes reach us as a tombstone full of addresses. Without
+            // symbols kept somewhere, `crash_native` is as far as a report can
+            // get -- see NativeExitReport.
+            //
+            // SYMBOL_TABLE rather than FULL: function names are what resolve a
+            // tombstone, and DWARF would multiply the archive's size for line
+            // numbers no crash report here carries anyway.
+            //
+            // Here rather than in defaultConfig, so `flutter run` does not pay
+            // for extraction nothing consumes. This does not grow the APK
+            // either: AGP extracts the symbols and strips the library on its
+            // way in, so what users download is the same stripped .so as
+            // before -- `Cargo.toml` stops stripping `sbm_ffi` precisely so
+            // there is something left here to extract.
+            ndk {
+                debugSymbolLevel 'SYMBOL_TABLE'
+            }
         }
 
         debug {
