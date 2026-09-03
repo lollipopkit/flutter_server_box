@@ -454,11 +454,11 @@ class AppLocalizationsRu extends AppLocalizations {
       'Этот переключатель означает, что программа будет пытаться работать в фоновом режиме, но фактическое выполнение зависит от того, включено ли разрешение. Для нативного Android отключите «Оптимизацию батареи» для этого приложения, для MIUI измените контроль активности на «Нет ограничений».';
 
   @override
-  String get trayKeepRunning => 'Keep running in the tray';
+  String get trayKeepRunning => 'Продолжать работу в системном трее';
 
   @override
   String get trayKeepRunningTip =>
-      'Closing the window leaves the app in the menu bar or notification area, still watching your servers. Turn this off to have the close button end the app.';
+      'При закрытии окна приложение остаётся в меню или области уведомлений и продолжает следить за серверами. Отключите эту настройку, чтобы кнопка закрытия завершала работу приложения.';
 
   @override
   String get bgRunNeedsNotification =>

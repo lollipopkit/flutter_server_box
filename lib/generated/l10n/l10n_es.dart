@@ -456,11 +456,11 @@ class AppLocalizationsEs extends AppLocalizations {
       'Este interruptor solo indica que la aplicación intentará correr en segundo plano, si puede hacerlo o no depende de si tiene el permiso correspondiente. En Android puro, por favor desactiva la “optimización de batería” para esta app, en MIUI por favor cambia la estrategia de ahorro de energía a “Sin restricciones”.';
 
   @override
-  String get trayKeepRunning => 'Keep running in the tray';
+  String get trayKeepRunning => 'Seguir ejecutándose en la bandeja';
 
   @override
   String get trayKeepRunningTip =>
-      'Closing the window leaves the app in the menu bar or notification area, still watching your servers. Turn this off to have the close button end the app.';
+      'Al cerrar la ventana, la aplicación permanece en la bandeja del sistema y sigue supervisando tus servidores. Desactiva esta opción para que el botón de cierre termine la aplicación.';
 
   @override
   String get bgRunNeedsNotification =>

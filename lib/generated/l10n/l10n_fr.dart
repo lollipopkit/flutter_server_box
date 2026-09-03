@@ -457,11 +457,12 @@ class AppLocalizationsFr extends AppLocalizations {
       'Cette option signifie seulement que le programme essaiera de s\'exécuter en arrière-plan, que cela soit possible dépend de l\'autorisation activée ou non. Pour Android natif, veuillez désactiver l\'« Optimisation de la batterie » dans cette application, et pour MIUI, veuillez changer la politique d\'économie d\'énergie en « Illimité ».';
 
   @override
-  String get trayKeepRunning => 'Keep running in the tray';
+  String get trayKeepRunning =>
+      'Continuer à s’exécuter dans la zone de notification';
 
   @override
   String get trayKeepRunningTip =>
-      'Closing the window leaves the app in the menu bar or notification area, still watching your servers. Turn this off to have the close button end the app.';
+      'La fermeture de la fenêtre laisse l’application dans la barre des menus ou la zone de notification, où elle continue de surveiller vos serveurs. Désactivez cette option pour que le bouton de fermeture quitte l’application.';
 
   @override
   String get bgRunNeedsNotification =>

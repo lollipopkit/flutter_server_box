@@ -454,11 +454,11 @@ class AppLocalizationsIt extends AppLocalizations {
       'Questa opzione significa solo che il programma cercherà di eseguire in background. Se può eseguire in background dipende dal fatto che il permesso sia abilitato o meno. Per le ROM Android basate su AOSP, disabilita \"Ottimizzazione batteria\" in questa app. Per MIUI/HyperOS, cambia la politica di risparmio energetico su \"Illimitato\".';
 
   @override
-  String get trayKeepRunning => 'Keep running in the tray';
+  String get trayKeepRunning => 'Continua a funzionare nell’area di notifica';
 
   @override
   String get trayKeepRunningTip =>
-      'Closing the window leaves the app in the menu bar or notification area, still watching your servers. Turn this off to have the close button end the app.';
+      'Chiudendo la finestra, l’app rimane nella barra dei menu o nell’area di notifica e continua a monitorare i server. Disattiva questa opzione per fare in modo che il pulsante di chiusura termini l’app.';
 
   @override
   String get bgRunNeedsNotification =>

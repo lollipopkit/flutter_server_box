@@ -129,13 +129,6 @@ class TrayModel {
 
   final List<TrayLine> lines;
 
-  /// Whether anything needs attention, which is what the icon says.
-  ///
-  /// Only [TrayLineState.failed]. A server nobody has connected yet is not a
-  /// problem, and an icon that turned red for one would be red on most
-  /// launches — which is how an alert stops being read.
-  bool get alert => lines.any((l) => l.state == TrayLineState.failed);
-
   @override
   bool operator ==(Object other) =>
       other is TrayModel &&

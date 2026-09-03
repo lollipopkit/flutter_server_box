@@ -450,11 +450,11 @@ class AppLocalizationsNl extends AppLocalizations {
       'Deze schakelaar betekent alleen dat het programma zal proberen op de achtergrond uit te voeren, of het in de achtergrond kan worden uitgevoerd, hangt af van of de toestemming is ingeschakeld of niet. Voor native Android, schakel \"Batterijoptimalisatie\" uit in deze app, en voor miui, wijzig de energiebesparingsbeleid naar \"Onbeperkt\".';
 
   @override
-  String get trayKeepRunning => 'Keep running in the tray';
+  String get trayKeepRunning => 'In het systeemvak blijven draaien';
 
   @override
   String get trayKeepRunningTip =>
-      'Closing the window leaves the app in the menu bar or notification area, still watching your servers. Turn this off to have the close button end the app.';
+      'Als je het venster sluit, blijft de app in de menubalk of het systeemvak actief en je servers bewaken. Schakel dit uit om de app met de sluitknop te beëindigen.';
 
   @override
   String get bgRunNeedsNotification =>

@@ -7,8 +7,8 @@ a build should not need a drawing tool. Re-run it after changing anything here:
     python3 scripts/gen_tray_icons.py
 
 Written against the standard library alone. The machines that build this repo
-have neither Pillow nor ImageMagick, and adding either to CI to draw six small
-files would cost more than the encoder below.
+have neither Pillow nor ImageMagick, and adding either to CI to draw three
+small files would cost more than the encoder below.
 
 Three formats, because the three platforms want different things:
 
@@ -24,9 +24,11 @@ Three formats, because the three platforms want different things:
 
 Windows and Linux draw the icon as given, on a taskbar that may be light or
 dark, so those two are a mid-tone blue rather than the black macOS wants: black
-on the Windows 11 default taskbar is invisible. The alert state is red
-everywhere, macOS included, where it is deliberately not a template — a status
-worth interrupting someone about should not blend in.
+on the Windows 11 default taskbar is invisible.
+
+One icon per platform and no second state. A menu bar is already a row of
+things competing for attention, and what failed is said by the row that failed,
+where there is something to be done about it.
 """
 
 import struct
@@ -39,7 +41,6 @@ OUT = ROOT / "assets" / "tray"
 # Visible against both a light and a dark taskbar, which rules out the app's
 # own seed colour: it is nearly black.
 BLUE = (0x3B, 0x82, 0xF6)
-RED = (0xE5, 0x48, 0x4D)
 BLACK = (0x00, 0x00, 0x00)
 
 
@@ -156,14 +157,10 @@ def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
 
     # macOS asks for 18pt and renders at up to 2x.
-    for name, rgb in (("mac", BLACK), ("mac_alert", RED)):
-        (OUT / f"{name}.png").write_bytes(png(36, draw(36, rgb)))
+    (OUT / "mac.png").write_bytes(png(36, draw(36, BLACK)))
 
-    for name, rgb in (("tray", BLUE), ("tray_alert", RED)):
-        (OUT / f"{name}.png").write_bytes(png(32, draw(32, rgb)))
-        (OUT / f"{name}.ico").write_bytes(
-            ico([(16, draw(16, rgb)), (32, draw(32, rgb))])
-        )
+    (OUT / "tray.png").write_bytes(png(32, draw(32, BLUE)))
+    (OUT / "tray.ico").write_bytes(ico([(16, draw(16, BLUE)), (32, draw(32, BLUE))]))
 
     for f in sorted(OUT.iterdir()):
         print(f"{f.relative_to(ROOT)}  {f.stat().st_size} bytes")

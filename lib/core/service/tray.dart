@@ -2,13 +2,16 @@ import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart' hide Provider;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:server_box/core/app_navigator.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/app/tray.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/selection.dart';
 import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/page/setting/entry.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -23,8 +26,12 @@ import 'package:window_manager/window_manager.dart';
 ///
 /// **What it is for.** A machine you are watching is a thing you glance at, and
 /// a glance should not cost switching to an app and waiting for a window. The
-/// icon says whether anything has failed; the menu says what each machine is
-/// doing; clicking one opens it.
+/// menu says what each machine is doing, and clicking one opens the app on it.
+///
+/// The icon itself never changes. It was going to go red when something
+/// failed, and that is one more thing in a menu bar competing for attention —
+/// the row that failed says so, in the place where something can be done about
+/// it.
 ///
 /// Nothing here polls. The status comes from the providers that were already
 /// refreshing on the app's own cycle, so the tray costs one menu rebuild per
@@ -47,7 +54,6 @@ class TrayService with TrayListener, WindowListener {
   /// a push while the menu is open closes it. At the poll rate that would make
   /// the menu unusable on a machine whose CPU reading moves every cycle.
   TrayModel? _shown;
-  bool? _shownAlert;
 
   Timer? _debounce;
   var _disposed = false;
@@ -57,6 +63,7 @@ class TrayService with TrayListener, WindowListener {
     trayManager.addListener(this);
     windowManager.addListener(this);
     await _applyCloseBehaviour();
+    await _setIcon();
 
     _watchedAll = _ref.listen<ServersState>(
       serversProvider,
@@ -148,16 +155,6 @@ class TrayService with TrayListener, WindowListener {
     _shown = model;
 
     try {
-      if (_shownAlert != model.alert) {
-        _shownAlert = model.alert;
-        await trayManager.setIcon(
-          _iconPath(alert: model.alert),
-          // Black-and-alpha, inverted by the system with the menu bar. The
-          // alert icon is not one: it is red on purpose, and a template would
-          // throw the colour away.
-          isTemplate: isMacOS && !model.alert,
-        );
-      }
       await trayManager.setContextMenu(_menu(model));
     } catch (e, s) {
       // Best effort by nature: a Linux desktop with no status area at all is a
@@ -166,32 +163,57 @@ class TrayService with TrayListener, WindowListener {
     }
   }
 
-  /// macOS reads this through the asset bundle and Windows and Linux through a
-  /// path under the executable, which is why all six are declared as assets.
-  String _iconPath({required bool alert}) {
-    if (isMacOS) return alert ? _macAlert : _mac;
-    if (isWindows) return alert ? _winAlert : _win;
-    return alert ? _linuxAlert : _linux;
+  /// Once, at startup. Nothing changes it afterwards.
+  Future<void> _setIcon() async {
+    try {
+      await trayManager.setIcon(
+        // macOS reads this through the asset bundle; Windows and Linux build a
+        // path under the executable, which is why the three are declared as
+        // assets rather than loaded here.
+        isMacOS
+            ? _mac
+            : isWindows
+            ? _win
+            : _linux,
+        // Black-and-alpha, which the system inverts along with the menu bar.
+        isTemplate: isMacOS,
+      );
+    } catch (e, s) {
+      Loggers.app.warning('Tray: setting the icon', e, s);
+    }
   }
 
   static const _mac = 'assets/tray/mac.png';
-  static const _macAlert = 'assets/tray/mac_alert.png';
   static const _win = 'assets/tray/tray.ico';
-  static const _winAlert = 'assets/tray/tray_alert.ico';
   static const _linux = 'assets/tray/tray.png';
-  static const _linuxAlert = 'assets/tray/tray_alert.png';
 
   static const _keyOpen = 'open';
+  static const _keySettings = 'settings';
   static const _keyQuit = 'quit';
   static const _keyServer = 'server:';
 
+  /// Three groups: the way in, what there is to look at, and what to do with
+  /// the app itself.
+  ///
+  /// Opening the app is first because it is what the icon is most often
+  /// clicked for, and last is where a list of servers pushes it further down
+  /// with every machine added. The servers sit under a heading — a disabled
+  /// item, which is what a native menu makes of one — so that a row is read as
+  /// a machine rather than as another command. An install with no servers says
+  /// so in that group rather than leaving a heading with nothing under it.
   Menu _menu(TrayModel model) {
     return Menu(
       items: [
-        for (final line in model.lines)
-          MenuItem(key: '$_keyServer${line.id}', label: line.label),
-        if (model.lines.isNotEmpty) MenuItem.separator(),
-        MenuItem(key: _keyOpen, label: libL10n.open),
+        MenuItem(key: _keyOpen, label: '${libL10n.open} ${BuildData.name}'),
+        MenuItem.separator(),
+        MenuItem(label: libL10n.servers, disabled: true),
+        if (model.lines.isEmpty)
+          MenuItem(label: libL10n.empty, disabled: true)
+        else
+          for (final line in model.lines)
+            MenuItem(key: '$_keyServer${line.id}', label: line.label),
+        MenuItem.separator(),
+        MenuItem(key: _keySettings, label: libL10n.setting),
         MenuItem(key: _keyQuit, label: libL10n.exit),
       ],
     );
@@ -224,6 +246,10 @@ class TrayService with TrayListener, WindowListener {
       unawaited(_showWindow());
       return;
     }
+    if (key == _keySettings) {
+      unawaited(_openSettings());
+      return;
+    }
     if (key == _keyQuit) {
       // Past the prevention flag, which is the whole point of this item: the
       // window refuses to close while the app is meant to stay resident, and
@@ -234,6 +260,17 @@ class TrayService with TrayListener, WindowListener {
     if (key.startsWith(_keyServer)) {
       unawaited(_openServer(key.substring(_keyServer.length)));
     }
+  }
+
+  /// The settings page, over whatever the window was showing.
+  ///
+  /// Through the root navigator's own context: this runs from a menu, which is
+  /// not in the widget tree and has no context of its own.
+  Future<void> _openSettings() async {
+    await _showWindow();
+    final context = AppNavigator.context;
+    if (context == null || !context.mounted) return;
+    SettingsPage.route.go(context);
   }
 
   Future<void> _showWindow() async {

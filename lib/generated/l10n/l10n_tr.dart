@@ -451,11 +451,11 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu anahtar yalnızca programın arka planda çalışmayı deneyeceği anlamına gelir. Arka planda çalışıp çalışamayacağı, iznin etkinleştirilip etkinleştirilmediğine bağlıdır. AOSP tabanlı Android ROM\'lar için lütfen bu uygulamada \"Pil Optimizasyonu\"nu devre dışı bırakın. MIUI / HyperOS için lütfen güç tasarrufu politikasını \"Sınırsız\" olarak değiştirin.';
 
   @override
-  String get trayKeepRunning => 'Keep running in the tray';
+  String get trayKeepRunning => 'Tepside çalışmaya devam et';
 
   @override
   String get trayKeepRunningTip =>
-      'Closing the window leaves the app in the menu bar or notification area, still watching your servers. Turn this off to have the close button end the app.';
+      'Pencere kapatıldığında uygulama menü çubuğunda veya bildirim alanında kalır ve sunucularınızı izlemeye devam eder. Kapat düğmesinin uygulamayı sonlandırması için bunu devre dışı bırakın.';
 
   @override
   String get bgRunNeedsNotification =>

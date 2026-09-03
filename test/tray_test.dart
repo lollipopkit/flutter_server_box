@@ -20,8 +20,8 @@ void main() {
     });
 
     test('and a failure is told from never having tried', () {
-      // The whole reason there are four states rather than three: the icon
-      // turns red for one of these and not the other.
+      // Different glyphs, because they are different situations: one is a
+      // machine that would not answer, the other is one nobody has asked.
       expect(trayStateOf(ServerConn.failed), TrayLineState.failed);
       expect(trayStateOf(ServerConn.disconnected), TrayLineState.offline);
     });
@@ -57,31 +57,6 @@ void main() {
         trayDetail(conn: ServerConn.disconnected, cpuPercent: 90),
         isNot(contains('%')),
       );
-    });
-  });
-
-  group('the icon', () {
-    TrayLine line(String id, TrayLineState state) =>
-        TrayLine(id: id, name: id, detail: '', state: state);
-
-    test('says so when something failed', () {
-      final model = TrayModel([
-        line('a', TrayLineState.ok),
-        line('b', TrayLineState.failed),
-      ]);
-
-      expect(model.alert, isTrue);
-    });
-
-    test('and not for a server nobody has connected', () {
-      // Most launches start here, and an icon that is red on most launches is
-      // one nobody reads.
-      final model = TrayModel([
-        line('a', TrayLineState.offline),
-        line('b', TrayLineState.working),
-      ]);
-
-      expect(model.alert, isFalse);
     });
   });
 

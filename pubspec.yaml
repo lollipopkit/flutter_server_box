@@ -153,16 +153,11 @@ flutter:
     # it only bundles files it can load.
     - assets/distro/
     # Drawn by `scripts/gen_tray_icons.py`, which says why there are three
-    # shapes of the same picture. Named one by one rather than as a directory:
-    # `tray_manager` builds a path out of the string it is given, and a
-    # directory entry would bundle the same six files without documenting
-    # which platform reads which.
+    # shapes of the same picture. Named one by one rather than as a directory,
+    # so which platform reads which is written down where they are declared.
     - assets/tray/mac.png
-    - assets/tray/mac_alert.png
     - assets/tray/tray.png
-    - assets/tray/tray_alert.png
     - assets/tray/tray.ico
-    - assets/tray/tray_alert.ico
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
   # fonts:
