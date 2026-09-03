@@ -427,6 +427,7 @@
   "serverDetailOrder": "Detail page widget order",
   "serverFuncBtns": "Server function buttons",
   "serverOrder": "Server order",
+  "serverTabEmpty": "No servers yet",
   "serverTabRequired": "Server tab cannot be removed",
   "shareServerRiskTip": "This QR code holds the server’s connection settings in clear text. Anyone who scans or photographs it can connect.",
   "sftpDlPrepare": "Preparing to connect...",

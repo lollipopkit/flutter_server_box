@@ -1,5 +1,11 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:dartssh2/dartssh2.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/service/crash_report.dart';
+import 'package:server_box/core/utils/ssh_file_backend.dart';
 
 import 'helpers/spi_fixture.dart';
 
@@ -255,6 +261,49 @@ void main() {
 
       expect(report, isNot(contains('secret-host')));
       expect(report, contains('<server-1>'));
+    });
+  });
+
+  group('what counts as this app failing', () {
+    test('a machine that would not answer does not', () {
+      // The one that started this: a server whose login shell prints to the
+      // sftp channel. The listing failed, the browser said so, and the next
+      // launch then asked the user to file a crash report about it.
+      expect(CrashReport.isAppFault(SftpError('Not an SFTP stream')), isFalse);
+      expect(
+        CrashReport.isAppFault(SSHStateError('Connection closed')),
+        isFalse,
+      );
+      expect(
+        CrashReport.isAppFault(const SocketException('Connection refused')),
+        isFalse,
+      );
+      expect(
+        CrashReport.isAppFault(TimeoutException('no answer')),
+        isFalse,
+      );
+      expect(
+        CrashReport.isAppFault(
+          DioException(requestOptions: RequestOptions(path: '/')),
+        ),
+        isFalse,
+      );
+    });
+
+    test('and neither does one wrapped on the way up', () {
+      // `SftpUnavailable` reads as its cause everywhere else too.
+      expect(
+        CrashReport.isAppFault(
+          const SftpUnavailable(SocketException('Connection refused')),
+        ),
+        isFalse,
+      );
+    });
+
+    test('anything else does, since it is this build that went wrong', () {
+      expect(CrashReport.isAppFault(StateError('bad state')), isTrue);
+      expect(CrashReport.isAppFault(ArgumentError('null')), isTrue);
+      expect(CrashReport.isAppFault(Exception('unknown')), isTrue);
     });
   });
 }

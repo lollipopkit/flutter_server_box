@@ -347,6 +347,7 @@
   "serverDetailOrder": "详情页部件顺序",
   "serverFuncBtns": "服务器功能按钮",
   "serverOrder": "服务器顺序",
+  "serverTabEmpty": "还没有服务器",
   "serverTabRequired": "服务器标签不能被移除",
   "shareServerRiskTip": "此二维码以明文包含服务器的连接设置。任何扫描或拍下它的人都能连接到这台服务器。",
   "sftpDlPrepare": "准备连接至服务器...",

@@ -369,12 +369,17 @@ class _SettingsPagesState extends State<_SettingsPages> {
 
   @override
   Widget build(BuildContext context) {
-    return PageView(
+    return PageView.builder(
       controller: _controller,
       // Told rather than inferred: a drag that lands on another page has picked
       // it, and the tabs have to say so.
       onPageChanged: (index) => widget.onChanged(widget.leaves[index]),
-      children: [for (final leaf in widget.leaves) leaf.builder!()],
+      itemCount: widget.leaves.length,
+      // Built as it is reached. Every page change rebuilds this widget — that
+      // is how the tabs hear about a swipe — and a `children` list builds all
+      // of a group's pages again each time, including the ones no drag can
+      // reach without passing through the neighbour first.
+      itemBuilder: (_, index) => widget.leaves[index].builder!(),
     );
   }
 }

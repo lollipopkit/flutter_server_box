@@ -245,6 +245,7 @@
   "serverDetailOrder": "Ordre des widgets de la page de détails du serveur",
   "serverFuncBtns": "Boutons de fonction du serveur",
   "serverOrder": "Ordre du serveur",
+  "serverTabEmpty": "Aucun serveur pour le moment",
   "serverTabRequired": "L'onglet serveur ne peut pas être supprimé",
   "shareServerRiskTip": "Ce QR code contient les paramètres de connexion en clair. Quiconque le scanne ou le photographie peut se connecter.",
   "sftpDlPrepare": "Préparation de la connexion...",

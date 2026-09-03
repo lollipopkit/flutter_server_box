@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/ai/agent_conversation.dart';
 import 'package:server_box/data/provider/ai/agent_session.dart';
-import 'package:server_box/view/widget/float_shell.dart';
 
 /// Opens the conversation list as a sheet, for the layouts too narrow to give
 /// it a column of its own.
@@ -52,6 +51,22 @@ class AgentHistoryPanel extends ConsumerStatefulWidget {
 }
 
 class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
+  /// The rail's search: what is typed, and whether the row is a field at all.
+  final _search = InlineSearchController();
+
+  /// What a conversation is called, or what an unnamed one is called instead.
+  /// Read twice — for the row and for the search — so it is written once.
+  String _titleOf(AgentConversation conversation) =>
+      conversation.title.isEmpty
+      ? context.l10n.askAiUntitledConversation
+      : conversation.title;
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
   AgentSession get _notifier => ref.read(globalAgentSessionProvider.notifier);
 
   // ------------------------------------------------------------------ actions
@@ -151,50 +166,68 @@ class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
     // overrides and `colorScheme.surface` is not, so painting that here left
     // the rail Material grey under an AMOLED theme while the page beside it
     // went black.
-    return Material(
+    return ListenableBuilder(
+      listenable: _search,
+      builder: (context, _) {
+        final needle = _search.needle;
+        final shown = [
+          for (final conversation in conversations)
+            if (needle.isEmpty ||
+                _titleOf(conversation).toLowerCase().contains(needle))
+              conversation,
+        ];
+
+        return Material(
       type: MaterialType.transparency,
       child: ListView(
         padding: const EdgeInsets.only(bottom: 12),
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                if (conversations.isNotEmpty) ...[
-                  IconButton(
-                    tooltip: libL10n.clearHistory,
-                    onPressed: session.isWorking ? null : _clear,
-                    icon: const Icon(
-                      Icons.delete_sweep_outlined,
-                      size: floatHeaderIconSize,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                ],
-                // Plain, not `filledTonal`. A filled button beside a bare one
-                // reads as the bigger of the two whatever their icons measure,
-                // and this row is meant to be one weight — the rails on the
-                // other tabs put their add button in it unfilled too.
-                IconButton(
-                  tooltip: context.l10n.askAiNewConversation,
-                  onPressed: session.isWorking
-                      ? null
-                      : () async {
-                          await _notifier.beginNewConversation();
-                          _closeIfSheet();
-                        },
-                  icon: const Icon(Icons.add, size: floatHeaderIconSize),
+          // The same row, at the same inset and the same height, as the rails
+          // on the other tabs — see [SideBarActions], which is also what turns
+          // it into a search field.
+          SideBarActions(
+            search: _search,
+            // `Btn.icon` at 18, which is what the other rails' rows are made
+            // of. This was `IconButton` at [floatHeaderIconSize] — the size a
+            // floating panel's header uses, not a rail's — so the one row in
+            // the app that was meant to match three others matched none.
+            actions: [
+              if (conversations.isNotEmpty)
+                Btn.icon(
+                  text: libL10n.clearHistory,
+                  icon: const Icon(Icons.delete_sweep_outlined, size: 18),
+                  onTap: session.isWorking ? null : _clear,
                 ),
-              ],
-            ),
+              Btn.icon(
+                text: libL10n.search,
+                icon: const Icon(Icons.search, size: 18),
+                onTap: _search.start,
+              ),
+              // Plain, not `filledTonal`. A filled button beside a bare one
+              // reads as the bigger of the two whatever their icons measure,
+              // and this row is meant to be one weight — the rails on the
+              // other tabs put their add button in it unfilled too.
+              Btn.icon(
+                text: context.l10n.askAiNewConversation,
+                icon: const Icon(Icons.add, size: 18),
+                onTap: session.isWorking
+                    ? null
+                    : () async {
+                        await _notifier.beginNewConversation();
+                        _closeIfSheet();
+                      },
+              ),
+            ],
           ),
           SideBarSection(context.l10n.askAiHistory),
-          if (conversations.isEmpty)
+          // Two different nothings: no conversations at all, and none that
+          // match what was typed. The second says what was typed, since that
+          // is the thing to change.
+          if (shown.isEmpty)
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
               child: Text(
-                context.l10n.agentNoHistory,
+                needle.isEmpty ? context.l10n.agentNoHistory : needle,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
@@ -202,11 +235,9 @@ class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
               ),
             )
           else
-            for (final conversation in conversations)
+            for (final conversation in shown)
               SideBarTile(
-                title: conversation.title.isEmpty
-                    ? context.l10n.askAiUntitledConversation
-                    : conversation.title,
+                title: _titleOf(conversation),
                 selected: conversation.id == activeId,
                 onTap: session.isWorking
                     ? null
@@ -224,6 +255,8 @@ class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
               ),
         ],
       ),
+        );
+      },
     );
   }
 

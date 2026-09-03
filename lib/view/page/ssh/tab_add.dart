@@ -10,6 +10,7 @@ part of 'tab.dart';
 class _AddPage extends ConsumerStatefulWidget {
   const _AddPage({
     required this.sortVersion,
+    required this.search,
     required this.onTap,
     required this.onLocal,
     required this.onRootfsOpen,
@@ -21,6 +22,9 @@ class _AddPage extends ConsumerStatefulWidget {
   /// Bumped when the sort changes. The order lives in the settings store, not
   /// in a provider, so nothing else would tell this page to rebuild.
   final Listenable sortVersion;
+
+  /// The bar's search. Read rather than listened to: [sortVersion] carries it.
+  final InlineSearchController search;
 
   final void Function(Spi spi) onTap;
 
@@ -68,71 +72,93 @@ class _AddPageState extends ConsumerState<_AddPage> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(serversProvider);
-    final order = _SortOrder.stored.apply(state.serverOrder, state.servers);
+    var order = _SortOrder.stored.apply(state.serverOrder, state.servers);
+
+    // What is typed in the bar, applied to the servers here. The systems on
+    // this device are left alone: they are two rows with fixed names, and a
+    // search is for finding one server among many.
+    final needle = widget.search.needle;
+    if (needle.isNotEmpty) {
+      order = [
+        for (final id in order)
+          if (state.servers[id] case final spi?)
+            if (spi.name.toLowerCase().contains(needle) ||
+                spi.displayAddr.toLowerCase().contains(needle))
+              id,
+      ];
+    }
 
     // Not "empty" while this device is on the list: with no servers
     // configured, a shell here is still something this page can open.
     if (order.isEmpty &&
-        !LocalShellBackend.isSupported &&
-        !Rootfs.isAvailable) {
-      return Center(child: Text(libL10n.empty, textAlign: TextAlign.center));
+        (needle.isNotEmpty ||
+            (!LocalShellBackend.isSupported && !Rootfs.isAvailable))) {
+      return EmptyPane(
+        icon: needle.isEmpty ? Icons.dns_outlined : Icons.search_off,
+        label: needle.isEmpty ? null : needle,
+      );
     }
 
     // Sections rather than one flow of cards. The systems on this device and
     // the servers are two kinds of thing, and a masonry grid says only "here
     // are some cards" — which is why the systems used to be pinned above it in
     // a card of their own, collapsed behind a title that named them in a
-    // subtitle. One row each, grouped, says the same thing without a control
-    // to open first. `MasonryList`'s own doc points here for grouping that
-    // means something.
-    return MultiList(
+    // subtitle. One row each, under a heading, says the same thing without a
+    // control to open first.
+    // One column at every width. The sections used to be laid side by side
+    // above 600pt, which is a width this tab has already decided is too narrow
+    // for a rail — so between 600 and 800 the picker answered with two columns
+    // of cards on a screen that was not getting a second column anywhere else.
+    return ListView(
+      padding: context.padBottom(UIs.roundRectCardPadding),
       children: [
         // First, and for the same reason the file tab lists it first: it is
         // always reachable, and it needs no credential to be.
-        if (LocalShellBackend.isSupported)
-          [
-            CenterGreyTitle(libL10n.device),
-            CardTile(
-              icon: Icons.smartphone,
-              title: libL10n.device,
-              subtitle: LocalShellBackend.shellPath,
-              onTap: widget.onLocal,
+        //
+        // Both this and the systems below are dropped while a search is on:
+        // they are rows with fixed names, and leaving them under a query that
+        // does not match them makes them read as results.
+        if (LocalShellBackend.isSupported && needle.isEmpty) ...[
+          CenterGreyTitle(libL10n.device),
+          CardTile(
+            icon: Icons.smartphone,
+            title: libL10n.device,
+            subtitle: LocalShellBackend.shellPath,
+            onTap: widget.onLocal,
+          ),
+        ],
+        if (Rootfs.isAvailable && needle.isEmpty) ...[
+          // Where the beta is said. It used to be the collapsed tile's
+          // title; with a row per system there is no one row it belongs to.
+          const CenterGreyTitle('Linux (Beta)'),
+          for (final profile in Rootfs.profiles)
+            _LinuxTile(
+              key: ValueKey(profile.id),
+              profile: profile,
+              onTap: () => widget.onRootfsOpen(profile.id),
+              onLongPress: () => widget.onRootfsRemove(profile),
             ),
-          ],
-        if (Rootfs.isAvailable)
-          [
-            // Where the beta is said. It used to be the collapsed tile's
-            // title; with a row per system there is no one row it belongs to.
-            const CenterGreyTitle('Linux (Beta)'),
-            for (final profile in Rootfs.profiles)
-              _LinuxTile(
-                key: ValueKey(profile.id),
-                profile: profile,
-                onTap: () => widget.onRootfsOpen(profile.id),
-                onLongPress: () => widget.onRootfsRemove(profile),
+          CardTile(
+            icon: Icons.add,
+            title: Rootfs.profiles.isEmpty ? libL10n.install : libL10n.add,
+            // Only where there is nothing yet: the line explains what a
+            // Linux system on this device *is*, which is a question the
+            // second one does not raise.
+            subtitle: Rootfs.profiles.isEmpty ? l10n.rootfsSubtitle : null,
+            onTap: widget.onRootfsAdd,
+          ),
+        ],
+        if (order.isNotEmpty) ...[
+          CenterGreyTitle(libL10n.servers),
+          for (final id in order)
+            if (state.servers[id] case final spi?)
+              _ServerTile(
+                key: ValueKey(id),
+                spi: spi,
+                onTap: () => widget.onTap(spi),
+                onLongPress: () => widget.onLongPress(spi),
               ),
-            CardTile(
-              icon: Icons.add,
-              title: Rootfs.profiles.isEmpty ? libL10n.install : libL10n.add,
-              // Only where there is nothing yet: the line explains what a
-              // Linux system on this device *is*, which is a question the
-              // second one does not raise.
-              subtitle: Rootfs.profiles.isEmpty ? l10n.rootfsSubtitle : null,
-              onTap: widget.onRootfsAdd,
-            ),
-          ],
-        if (order.isNotEmpty)
-          [
-            CenterGreyTitle(libL10n.servers),
-            for (final id in order)
-              if (state.servers[id] case final spi?)
-                _ServerTile(
-                  key: ValueKey(id),
-                  spi: spi,
-                  onTap: () => widget.onTap(spi),
-                  onLongPress: () => widget.onLongPress(spi),
-                ),
-          ],
+        ],
       ],
     );
   }
@@ -219,6 +245,7 @@ class _SideBar extends ConsumerStatefulWidget {
   const _SideBar({
     required this.sessions,
     required this.sortVersion,
+    required this.search,
     required this.actions,
     required this.onOpen,
     required this.onLocal,
@@ -235,6 +262,9 @@ class _SideBar extends ConsumerStatefulWidget {
   /// Bumped when the sort changes. The order lives in the settings store, not
   /// in a provider, so nothing else would tell this rail to rebuild.
   final Listenable sortVersion;
+
+  /// The bar's search. Read rather than listened to: [sortVersion] carries it.
+  final InlineSearchController search;
 
   final List<Widget> actions;
   final void Function(Spi spi) onOpen;
@@ -282,7 +312,19 @@ class _SideBarState extends ConsumerState<_SideBar> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(serversProvider);
-    final order = _SortOrder.stored.apply(state.serverOrder, state.servers);
+    var order = _SortOrder.stored.apply(state.serverOrder, state.servers);
+
+    // The same narrowing the picker does, on the same query — see `_AddPage`.
+    final needle = widget.search.needle;
+    if (needle.isNotEmpty) {
+      order = [
+        for (final id in order)
+          if (state.servers[id] case final spi?)
+            if (spi.name.toLowerCase().contains(needle) ||
+                spi.displayAddr.toLowerCase().contains(needle))
+              id,
+      ];
+    }
 
     return ListenBuilder(
       listenable: widget.sessions,
@@ -292,11 +334,13 @@ class _SideBarState extends ConsumerState<_SideBar> {
         onTap: widget.onSelect,
         onClose: widget.onClose,
         actions: widget.actions,
+        search: widget.search,
         targets: [
           // Above the servers, the way the file rail puts this device above
           // them: it is the one place that is always reachable, and it needs
           // no credential to be.
-          if (LocalShellBackend.isSupported || Rootfs.isAvailable) ...[
+          if ((LocalShellBackend.isSupported || Rootfs.isAvailable) &&
+              needle.isEmpty) ...[
             SideBarSection(libL10n.device),
             if (LocalShellBackend.isSupported)
               SideBarTile(title: libL10n.device, onTap: widget.onLocal),

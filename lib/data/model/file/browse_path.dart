@@ -83,6 +83,20 @@ class BrowsePath {
     return true;
   }
 
+  /// [target] as this would open it, or null when it is outside [root].
+  ///
+  /// What [goTo] decides, without moving — for a completion, which has to
+  /// offer only what can be reached: a suggestion that is refused when it is
+  /// picked is worse than no suggestion.
+  ///
+  /// The normalizing half matters as much as the answer. `//home/./me` and
+  /// `/home/me` are one directory, and a caller keyed on the string would ask
+  /// the far side twice for it.
+  String? resolve(String target) {
+    final normalized = _normalize(target);
+    return _isWithin(normalized, root) ? normalized : null;
+  }
+
   static String join(String dir, String child) =>
       dir.endsWith('/') ? '$dir$child' : '$dir/$child';
 

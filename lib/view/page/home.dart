@@ -6,7 +6,6 @@ import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
-import 'package:responsive_framework/responsive_framework.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/sync.dart';
@@ -21,6 +20,7 @@ import 'package:server_box/data/ssh/session_manager.dart';
 import 'package:server_box/view/page/floating_panels.dart';
 import 'package:server_box/view/page/home_tab.dart';
 import 'package:server_box/view/page/macos_menu_bar.dart';
+import 'package:server_box/view/page/setting/entries/home_tabs.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/widget/crash_report_notice.dart';
 import 'package:server_box/view/widget/dmg_notice.dart';
@@ -35,6 +35,26 @@ class HomePage extends ConsumerStatefulWidget {
 
   static const route = AppRouteNoArg(page: HomePage.new, path: '/');
 }
+
+/// How many tabs the bottom bar carries itself before the rest go behind
+/// "more".
+///
+/// Four and a fifth slot, which is where `NavigationBar` stops fitting labels
+/// on a phone. The fifth is always "more" and never a tab, even with fewer
+/// than four enabled: it is also the way to the page that arranges them, and
+/// an entry that only appears once there are too many tabs is one nobody finds
+/// while they still have few.
+///
+/// The rail has no such limit and shows every tab — it is a column, and it
+/// already carries its own way into the settings at its foot.
+const _kMaxBarTabs = 4;
+
+/// What the navigation rail takes from the width a tab gets.
+///
+/// `NavigationRail`'s own default for an unextended rail, which it does not
+/// expose as a constant. Only used to decide whether a rail is worth showing
+/// — the rail lays itself out.
+const _kRailWidth = 80.0;
 
 class _HomePageState extends ConsumerState<HomePage>
     with
@@ -254,7 +274,6 @@ class _HomePageState extends ConsumerState<HomePage>
       if (index >= 0) _onDestinationSelected(index);
       ref.read(homeTabRequestProvider.notifier).done();
     });
-    final isMobile = ResponsiveBreakpoints.of(context).isMobile;
     _syncFullscreenSystemUi();
 
     // No `appBar`, deliberately. It used to hold an empty box the height of
@@ -267,10 +286,10 @@ class _HomePageState extends ConsumerState<HomePage>
     //
     // The bottom bar is a different case and stays: it is chrome the tabs
     // share, and a page opened in a tab is meant to leave it in place.
-    final Widget mainContent = Scaffold(
+    Widget mainContent(bool narrow) => Scaffold(
       body: Row(
         children: [
-          if (!isMobile) _buildRailBar(),
+          if (!narrow) _buildRailBar(),
           Expanded(
             child: PageView.builder(
               controller: _pageController,
@@ -308,7 +327,7 @@ class _HomePageState extends ConsumerState<HomePage>
           ),
         ],
       ),
-      bottomNavigationBar: isMobile ? _buildBottomBar() : null,
+      bottomNavigationBar: narrow ? _buildBottomBar() : null,
     );
 
     // Above the `PageView` rather than inside a tab: the Agent and a floated
@@ -321,12 +340,31 @@ class _HomePageState extends ConsumerState<HomePage>
     // down less than it got — and keeping a panel inside the window is not the
     // same as keeping it inside the area it is painted in.
     final withShell = LayoutBuilder(
-      builder: (_, constraints) => Stack(
-        children: [
-          mainContent,
-          FloatingPanels(area: constraints.biggest),
-        ],
-      ),
+      builder: (_, constraints) {
+        // The same width the pages inside decide by, so the rail appears
+        // exactly when a tab can start using the room it costs — see
+        // [AdaptivePanes.kSplitWidth]. `ResponsiveBreakpoints`' MOBILE class,
+        // which this used to ask, ends at 600.
+        //
+        // Measured against what a tab would be left with, not against the
+        // window: the rail is taken off the top before any page sees the
+        // width, so between 800 and 880 a rail appeared beside pages that were
+        // still too narrow to split — the extra column bought nothing but its
+        // own presence.
+        //
+        // And measured from this box for the same reason the panels above are:
+        // everything between the window and here is free to hand down less
+        // than it got, so `MediaQuery.sizeOf` is a different number and it is
+        // not the one a tab is laid out in.
+        final narrow =
+            constraints.maxWidth - _kRailWidth < AdaptivePanes.kSplitWidth;
+        return Stack(
+          children: [
+            mainContent(narrow),
+            FloatingPanels(area: constraints.biggest),
+          ],
+        );
+      },
     );
 
     // The shortcuts, on every desktop. macOS additionally gets a menu bar,
@@ -368,18 +406,79 @@ class _HomePageState extends ConsumerState<HomePage>
       listenable: _selectIndex,
       builder: (context, child) {
         if (_isServerFullscreenMode) return UIs.placeholder;
+        final shown = _tabs.take(_kMaxBarTabs).toList();
+        final selected = _selectIndex.value;
         return NavigationBar(
           key: _navKey,
-          selectedIndex: _selectIndex.value,
+          // Past the bar's own tabs, what is open is inside "more" — which is
+          // then what the last destination stands for, and is lit to say so.
+          selectedIndex: selected < shown.length ? selected : shown.length,
           height: kBottomNavigationBarHeight * 1.1,
           animationDuration: const Duration(milliseconds: 250),
-          onDestinationSelected: _onDestinationSelected,
+          onDestinationSelected: (index) {
+            if (index < shown.length) return _onDestinationSelected(index);
+            unawaited(_showMoreSheet(shown.length));
+          },
           labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
           destinations: [
-            for (final tab in _tabs) tab.navDestination(onMenu: _navMenuFor(tab)),
+            for (final tab in shown) tab.navDestination(onMenu: _navMenuFor(tab)),
+            NavigationDestination(
+              icon: const Icon(Icons.more_horiz),
+              selectedIcon: const Icon(Icons.more_horiz),
+              label: libL10n.more,
+            ),
           ],
         );
       },
+    );
+  }
+
+  /// The tabs that did not fit, and the way to change which ones those are.
+  ///
+  /// [shownCount] rather than the constant: the bar shows fewer than that when
+  /// fewer are enabled, and the split has to be the one the bar actually made.
+  Future<void> _showMoreSheet(int shownCount) async {
+    final overflow = _tabs.skip(shownCount).toList();
+    final selected = _selectIndex.value;
+
+    await showRowsSheet<void>(
+      context,
+      rows: (ctx) => [
+        for (final tab in overflow)
+          ListTile(
+            leading: tab.icon,
+            title: Text(tab.label),
+            selected: _tabs.indexOf(tab) == selected,
+            onTap: () {
+              // The sheet closes itself; the page it came from is what
+              // switches tabs, on the navigator that owns the tabs.
+              Navigator.of(ctx).pop();
+              _onDestinationSelected(_tabs.indexOf(tab));
+            },
+          ),
+        if (overflow.isNotEmpty) const Divider(height: 1),
+        // Where the tabs are arranged, reachable from the bar they arrange
+        // rather than only from four levels into the settings tree. The
+        // same page either way — this pushes it, settings embeds it.
+        ListTile(
+          leading: const Icon(Icons.tab_outlined),
+          title: Text(l10n.homeTabs),
+          onTap: () {
+            Navigator.of(ctx).pop();
+            HomeTabsConfigPage.route.go(context);
+          },
+        ),
+        // The bottom bar has no settings button of its own — the rail on a
+        // wide window does, at its foot — and this is the slot for it.
+        ListTile(
+          leading: const Icon(Icons.settings),
+          title: Text(libL10n.setting),
+          onTap: () {
+            Navigator.of(ctx).pop();
+            SettingsPage.route.go(context);
+          },
+        ),
+      ],
     );
   }
 
@@ -492,12 +591,12 @@ class _HomePageState extends ConsumerState<HomePage>
       // [LegacyStatusUrlsMigration].
       await LegacyStatusNotice.showIfNeeded(context);
       if (!mounted) return;
-      // Offers the previous run's log when that run crashed. Ahead of the
-      // guide because a user who just lost their session is not being
-      // introduced to the app, and after the two migration notices because
-      // those are about data rather than about one bad launch.
-      await CrashReportNotice.showIfNeeded(context);
-      if (!mounted) return;
+      // Offers the previous run's log when that run crashed. A toast, so it is
+      // raised rather than awaited: the guide behind it is a dialog, and the
+      // point of the toast is that it does not stand in front of anything.
+      // Last of the three all the same — the two migration notices are about
+      // data, which outlives one bad launch.
+      CrashReportNotice.showIfNeeded(context);
       await _maybeShowNavGuide();
     }());
 

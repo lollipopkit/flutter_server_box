@@ -1170,6 +1170,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get serverOrder => 'Ordine server';
 
   @override
+  String get serverTabEmpty => 'Ancora nessun server';
+
+  @override
   String get serverTabRequired => 'La scheda server non può essere rimossa';
 
   @override

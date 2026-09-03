@@ -1101,6 +1101,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get serverOrder => '서버 순서';
 
   @override
+  String get serverTabEmpty => '아직 서버가 없습니다';
+
+  @override
   String get serverTabRequired => '서버 탭은 제거할 수 없습니다';
 
   @override

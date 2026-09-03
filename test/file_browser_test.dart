@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
@@ -52,11 +53,19 @@ class _MapBackend implements FileBackend {
   @override
   Future<List<String>> reachableRoots() async => roots;
 
+  /// Holds the listing of one path open, for a test that needs one in flight
+  /// while something else happens. What it answers with is read before it
+  /// waits, so it describes the directory as it was when the call was made.
+  Completer<void>? gate;
+  String? gatePath;
+
   @override
   Future<List<FileEntry>> list(String path) async {
     listed.add(path);
+    final answer = tree[path] ?? const <FileEntry>[];
+    if (path == gatePath) await gate?.future;
     if (failWith case final error?) throw error;
-    return tree[path] ?? const [];
+    return answer;
   }
 
   @override
@@ -97,6 +106,15 @@ FileEntry _file(String name) =>
     FileEntry(name: name, kind: FileKind.file, size: 1);
 
 void main() {
+
+/// A text field other than the address bar's.
+///
+/// The path is a field now and is always on screen, so "the field that just
+/// appeared" — a rename dialog's, the search — has to say it is not that one.
+final typedField = find.byWidgetPredicate(
+  (w) => w is TextField && w.key != FileBrowserPage.pathFieldKey,
+  description: 'a TextField other than the address bar',
+);
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late Directory tempDir;
@@ -364,14 +382,14 @@ void main() {
       await tester.tap(find.text('Rename'));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byType(TextField), 'renamed.txt');
+      await tester.enterText(typedField, 'renamed.txt');
       await tester.testTextInput.receiveAction(TextInputAction.done);
       // Settled, not pumped once: the failure needed the route's exit
       // animation to run to the end.
       await tester.pumpAndSettle();
 
       expect(backend.renamed, [('/notes.txt', '/renamed.txt')]);
-      expect(find.byType(TextField), findsNothing);
+      expect(typedField, findsNothing);
     });
 
     testWidgets('an action runs after the menu has closed', (tester) async {
@@ -610,7 +628,7 @@ void main() {
       await tester.sendKeyEvent(LogicalKeyboardKey.f2);
       await tester.pumpAndSettle();
 
-      expect(find.byType(TextField), findsNothing);
+      expect(typedField, findsNothing);
       expect(find.text('2 selected'), findsOneWidget);
     });
   });
@@ -756,7 +774,7 @@ void main() {
 
       await tester.tap(find.byIcon(Icons.search));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField), 'REPO');
+      await tester.enterText(typedField, 'REPO');
       await tester.pumpAndSettle();
 
       // Case-insensitive, and a substring rather than a prefix.
@@ -776,7 +794,7 @@ void main() {
 
       await tester.tap(find.byIcon(Icons.search));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField), 'arch');
+      await tester.enterText(typedField, 'arch');
       await tester.pumpAndSettle();
 
       expect(find.text('archive'), findsOneWidget);
@@ -795,7 +813,7 @@ void main() {
 
       await tester.tap(find.byIcon(Icons.search));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField), 'bash');
+      await tester.enterText(typedField, 'bash');
       // Counted out rather than settled: a tree holding a text field always
       // has something scheduled, so `pumpAndSettle` has nothing to settle to
       // and only gives up after its ten-minute default. Several frames,
@@ -806,6 +824,272 @@ void main() {
 
       expect(find.text('bash_notes.txt'), findsOneWidget);
       expect(find.text('.bash_history'), findsNothing);
+    });
+  });
+
+  group('completing a typed path', () {
+    final pathField = find.byKey(FileBrowserPage.pathFieldKey);
+
+    Future<void> type(WidgetTester tester, String text) async {
+      await tester.enterText(pathField, text);
+      // Counted out rather than settled, as above — and several, because a
+      // completion is a listing and one frame only starts it.
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+    }
+
+    testWidgets('offers the directories under what has been typed', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        _MapBackend({
+          '/': [_dir('etc'), _dir('home'), _file('hosts.txt')],
+        }),
+      );
+
+      await type(tester, '/h');
+
+      expect(find.text('/home'), findsOneWidget);
+      // Not what the prefix rules out, and not a file: a path leads somewhere
+      // to open.
+      expect(find.text('/etc'), findsNothing);
+      expect(find.text('/hosts.txt'), findsNothing);
+    });
+
+    testWidgets('by any part of a name, what starts with it first', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        _MapBackend({
+          '/': [_dir('abc'), _dir('cache'), _dir('xyz'), _file('cfg.txt')],
+        }),
+      );
+
+      await type(tester, '/c');
+
+      // The rows of the listing itself are named, not pathed, so a leading
+      // slash is what tells a completion from the directory behind it.
+      final options = tester
+          .widgetList<ListTile>(find.byType(ListTile))
+          .map((tile) => (tile.title! as Text).data!)
+          .where((title) => title.startsWith('/'))
+          .toList();
+      // `abc` is a match, and sorts after the one that begins with `c`.
+      expect(options, ['/cache', '/abc']);
+    });
+
+    testWidgets('above the bar, which is at the foot of the page', (
+      tester,
+    ) async {
+      // The direction has to be said. Left at its default the list opens
+      // downwards, where an address bar on the bottom edge has nothing but the
+      // home indicator — so the framework sized it to that and drew it over the
+      // field, and it read as no completions at all.
+      await pump(
+        tester,
+        _MapBackend({
+          '/': [_dir('home')],
+        }),
+      );
+
+      await type(tester, '/h');
+
+      expect(
+        tester.getBottomLeft(find.text('/home')).dy,
+        lessThanOrEqualTo(tester.getTopLeft(pathField).dy),
+      );
+    });
+
+    testWidgets('and goes there when one is picked', (tester) async {
+      final backend = _MapBackend({
+        '/': [_dir('home')],
+        '/home': [_file('inner.txt')],
+      });
+      await pump(tester, backend);
+
+      await type(tester, '/h');
+      await tester.tap(find.text('/home'));
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      expect(backend.listed.last, '/home');
+      expect(find.text('inner.txt'), findsOneWidget);
+    });
+
+    String fieldText(WidgetTester tester) =>
+        tester.widget<TextField>(pathField).controller!.text;
+
+    testWidgets('shows the path with the root off from the first frame', (
+      tester,
+    ) async {
+      // The bar was seeded with the raw path and only stripped on the first
+      // move, so a tab opened and left alone showed the whole container.
+      await pump(
+        tester,
+        _MapBackend({
+          '/home/me': [_dir('docs')],
+        }),
+        root: '/home/me',
+      );
+
+      expect(fieldText(tester), '/');
+    });
+
+    testWidgets('and completes what is typed onto it, before any move', (
+      tester,
+    ) async {
+      // Typed onto what the bar holds, which is how a person uses it and what
+      // the tests above were not doing: `enterText` replaces the field, so
+      // they never saw the seeded text and the bug went straight past them.
+      // With the raw path in there, `/var/…/Documents/d` was read as
+      // root-relative and re-rooted, so every completion listed a directory
+      // that does not exist.
+      final backend = _MapBackend({
+        '/home/me': [_dir('docs')],
+      });
+      await pump(tester, backend, root: '/home/me');
+
+      await type(tester, '${fieldText(tester)}d');
+
+      expect(find.text('/docs'), findsOneWidget);
+    });
+
+    testWidgets('or fills it in, one level at a time, without going there', (
+      tester,
+    ) async {
+      final backend = _MapBackend({
+        '/': [_dir('home')],
+        '/home': [_dir('me')],
+      });
+      await pump(tester, backend);
+
+      await type(tester, '/h');
+      await tester.tap(find.byIcon(Icons.north_west));
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      // In the field with a separator on the end, so the next completion is of
+      // what is inside it.
+      expect(fieldText(tester), '/home/');
+      expect(find.text('/home/me'), findsOneWidget);
+      // And still where it was: filling is not going. The listing behind is
+      // the root's, whose one entry is named rather than pathed.
+      expect(find.text('home'), findsOneWidget);
+      expect(find.text('me'), findsNothing);
+    });
+
+    testWidgets('and puts the path back when the field is left', (
+      tester,
+    ) async {
+      final backend = _MapBackend({
+        '/': [_dir('home')],
+      });
+      await pump(tester, backend);
+
+      await type(tester, '/nowhere-in-particular');
+      FocusManager.instance.primaryFocus?.unfocus();
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      // Abandoned, not submitted: the bar says where the browser is, and
+      // nowhere else was ever asked for — the second listing of `/` is the
+      // completion's, of the directory the typed name would have been in.
+      expect(fieldText(tester), '/');
+      expect(backend.listed.toSet(), {'/'});
+    });
+
+    testWidgets('and forgets what it listed once the directory changes', (
+      tester,
+    ) async {
+      final backend = _MapBackend({
+        '/': [_dir('one')],
+      });
+      await pump(tester, backend);
+
+      await type(tester, '/o');
+      expect(find.text('/one'), findsOneWidget);
+
+      // As a mutation would leave it — every one of them ends in `refresh`.
+      backend.tree['/'] = [_dir('one'), _dir('other')];
+      await tester.tap(find.byIcon(Icons.refresh));
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      // A different query, because `RawAutocomplete` recomputes on a change of
+      // text and the point here is what the cache holds, not what it is asked.
+      await type(tester, '/ot');
+
+      expect(find.text('/other'), findsOneWidget);
+    });
+
+    testWidgets('including one that was already on its way', (tester) async {
+      // The window the clearing alone does not cover: a listing asked for
+      // before the directory changed lands after it, and caching it would put
+      // back exactly what `refresh` had just dropped.
+      final backend = _MapBackend({
+        '/': [_dir('sub')],
+        '/sub': [_dir('alpha')],
+      });
+      await pump(tester, backend);
+
+      backend
+        ..gatePath = '/sub'
+        ..gate = Completer<void>();
+      await type(tester, '/sub/a');
+
+      // As a mutation leaves it: the tree has changed and the listing in
+      // flight knows nothing about it.
+      backend.tree['/sub'] = [_dir('alpha'), _dir('added')];
+      await tester.tap(find.byIcon(Icons.refresh));
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      backend.gate!.complete();
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      await type(tester, '/sub/ad');
+
+      expect(find.text('/sub/added'), findsOneWidget);
+    });
+
+    testWidgets('within the browser root, never above it', (tester) async {
+      // What the phone builds do: the root is the app's container, the bar
+      // shows paths relative to it, and both halves of that have to hold for a
+      // completion too — the far side is asked about the container, and what
+      // comes back is offered under the same short name the bar shows.
+      final backend = _MapBackend({
+        '/home/me': [_dir('docs')],
+        '/': [_dir('etc')],
+      });
+      await pump(tester, backend, root: '/home/me');
+
+      await type(tester, '/d');
+
+      expect(find.text('/docs'), findsOneWidget);
+      expect(backend.listed, isNot(contains('/')));
+    });
+
+    testWidgets('and not at all for a path outside it', (tester) async {
+      final backend = _MapBackend({
+        '/home/me': [_dir('docs')],
+        '/home': [_dir('someone-else')],
+      });
+      await pump(tester, backend, root: '/home/me');
+
+      await type(tester, '/../s');
+
+      expect(find.text('/../someone-else'), findsNothing);
+      expect(backend.listed, isNot(contains('/home')));
     });
   });
 

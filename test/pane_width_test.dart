@@ -106,12 +106,15 @@ void main() {
 
   /// What a caller gets when it names neither width — the numbers under test,
   /// read off the widget rather than copied here.
-  const defaults = AdaptivePanes(primaryBuilder: _unused, detailBuilder: null);
+  const defaults = AdaptivePanes.detail(
+    listBuilder: _unused,
+    detailBuilder: null,
+  );
 
   testWidgets('the width the column opens at fits what goes in it', (
     tester,
   ) async {
-    await pumpSplitAt(tester, defaults.primaryWidth);
+    await pumpSplitAt(tester, defaults.listWidth);
 
     expect(find.byType(SideBarTile), findsWidgets);
   });
@@ -120,7 +123,7 @@ void main() {
     // The number that matters most: every width above it is one the user
     // chose, and this is the one the app can be left in by dragging as far as
     // it goes.
-    await pumpSplitAt(tester, defaults.minPrimaryWidth);
+    await pumpSplitAt(tester, defaults.minListWidth);
 
     expect(find.byType(SideBarTile), findsWidgets);
   });
@@ -172,12 +175,12 @@ void main() {
     // The stored default and the widget's are two numbers in two packages. A
     // column that opened at one and was clamped to the other would move on its
     // own first frame.
-    expect(Stores.setting.paneListWidth.fetch(), defaults.primaryWidth);
+    expect(Stores.setting.paneListWidth.fetch(), defaults.listWidth);
     expect(
-      defaults.primaryWidth,
-      greaterThanOrEqualTo(defaults.minPrimaryWidth),
+      defaults.listWidth,
+      greaterThanOrEqualTo(defaults.minListWidth),
     );
-    expect(defaults.primaryWidth, lessThanOrEqualTo(defaults.maxPrimaryWidth));
+    expect(defaults.listWidth, lessThanOrEqualTo(defaults.maxListWidth));
   });
 }
 

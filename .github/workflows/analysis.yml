@@ -223,6 +223,17 @@ jobs:
           npm run check
           npm run build
 
+  # Installed with bun and built with node, which is how both of these are
+  # written: the lockfile committed beside them is `bun.lock`, and the build
+  # script runs `astro`/`vite` under node.
+  #
+  # `npm install` was reading neither. It ignores a bun lockfile entirely and
+  # resolves the semver ranges afresh on every run, so what CI built was
+  # whatever npm had published that hour — and on 2026-09-03 that was astro
+  # 7.3.0, whose own `dist/assets/vite-plugin-assets.js` imports
+  # `astro/_internal/logger`, a subpath its `package.json` does not export.
+  # Every docs build failed, on branches that had not touched docs in weeks.
+  # A committed lockfile CI does not read is not a lockfile.
   docs:
     name: Documentation site
     needs: changes
@@ -235,10 +246,11 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 24
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
       - name: Install and build
         working-directory: docs
         run: |
-          npm install
+          bun install --frozen-lockfile
           npm run build
 
   website:
@@ -254,10 +266,13 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 24
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      # Same as the docs above, and the same lockfile that was being ignored.
+      # This one has not broken yet, which is luck rather than a difference.
       - name: Install and build
         working-directory: website
         run: |
-          npm install
+          bun install --frozen-lockfile
           npm run build
 
   # The one path nothing else in CI compiles. `Build ios` in build.yml ships

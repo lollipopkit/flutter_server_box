@@ -19,36 +19,36 @@ extension _PaneList on _ServerPageState {
     // Watched, not read: a tag added or removed in the editor regroups the
     // rail, and the row it moves is one this page is already rebuilding for.
     final servers = ref.watch(serversProvider.select((s) => s.servers));
-    final rows = _railRows(order, servers);
+    final rows = _railRows(_filterByQuery(order), servers);
 
     return Scaffold(
-      // No tag switcher over the rail. It filtered to one tag at a time, which
-      // is the question the headings below now answer for every tag at once —
-      // and a filter above a grouped index only takes rows out of it.
-      floatingActionButton: FloatingActionButton.small(
-        heroTag: 'addServerPane',
-        onPressed: _onTapAddServer,
-        tooltip: libL10n.add,
-        child: const Icon(Icons.add),
-      ),
       // With nothing selected there is no detail pane, so `AdaptivePanes`
       // hands this the whole width: what a wide window shows when the tab is
       // empty is this, not a rail beside something. So the same mark as the
       // narrow layout, rather than a rail's worth of text.
+      //
       // The app bar used to be what kept this clear of a notch or a status
-      // bar — a `Scaffold` insets that and nothing else. Only the top: the add
-      // button below floats over the list on purpose.
+      // bar — a `Scaffold` insets that and nothing else.
       body: SafeArea(
         bottom: false,
         child: order.isEmpty
             ? const EmptyPane(icon: BoxIcons.bx_server)
             : ListView.builder(
                 controller: _scrollController,
-                // Room at the bottom for the add button to float over.
-                padding: const EdgeInsets.only(top: 8, bottom: 77),
-                itemCount: rows.length,
+                padding: const EdgeInsets.only(bottom: 12),
+                // One more row than there are: the buttons sit at the head of
+                // the list rather than over it, which is where the terminal
+                // and file rails put theirs — see `SessionSideBar`. They were
+                // a small floating button in the corner here, which is a
+                // second place to look for the same thing.
+                // The buttons stay even with nothing under them: what empties
+                // the rail is usually the search in that very row, and taking
+                // the row away would take the way to clear it.
+                itemCount: rows.isEmpty ? 2 : rows.length + 1,
                 itemBuilder: (context, index) {
-                  final row = rows[index];
+                  if (index == 0) return _buildRailActions();
+                  if (rows.isEmpty) return _buildRailEmpty();
+                  final row = rows[index - 1];
                   if (row.heading case final heading?) {
                     return SideBarSection(heading);
                   }
@@ -62,6 +62,36 @@ extension _PaneList on _ServerPageState {
                 },
               ),
       ),
+    );
+  }
+
+  /// What the rail says when the search matched none of the servers.
+  ///
+  /// The query itself, since that is the thing to change. Not [EmptyPane]:
+  /// this is a row in a list rather than a surface, and that one fills what it
+  /// is given.
+  Widget _buildRailEmpty() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+      child: Text(
+        _search.needle,
+        textAlign: TextAlign.center,
+        style: TextStyle(color: Theme.of(context).colorScheme.outline),
+      ),
+    );
+  }
+
+  /// The rail's own buttons, at the measurements `SessionSideBar` uses for the
+  /// same row.
+  ///
+  /// No tag switcher among them. It filtered to one tag at a time, which is
+  /// the question the headings below answer for every tag at once — and a
+  /// filter above a grouped index only takes rows out of it.
+  Widget _buildRailActions() {
+    return ListenableBuilder(
+      listenable: _sortVersion,
+      builder: (_, _) =>
+          SideBarActions(actions: _listActions, search: _search),
     );
   }
 

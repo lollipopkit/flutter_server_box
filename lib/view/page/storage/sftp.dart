@@ -189,7 +189,6 @@ class _SftpPageState extends ConsumerState<SftpPage> {
             actionsSink: widget.args.actionsSink,
             onPathChanged: _onPathChanged,
             extraActions: _toolbarActions,
-            bottomActions: _bottomActions,
             createActions: _createActions,
             entryActions: _entryActions,
             pathTrailing: _sudoMode.listenVal(
@@ -380,13 +379,6 @@ extension _Actions on _SftpPageState {
           icon: Icon(Icons.security, color: on ? UIs.primaryColor : null),
         ),
       ),
-  ];
-
-  List<Widget> _bottomActions(FileBrowserHandle handle) => [
-    Btn.icon(text: libL10n.upload, 
-      icon: const Icon(Icons.upload_file),
-      onTap: () => _upload(handle),
-    ),
   ];
 
   /// Uploading is done to the directory, not to a file in it.

@@ -2120,6 +2120,12 @@ abstract class AppLocalizations {
   /// **'Server order'**
   String get serverOrder;
 
+  /// No description provided for @serverTabEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No servers yet'**
+  String get serverTabEmpty;
+
   /// No description provided for @serverTabRequired.
   ///
   /// In en, this message translates to:

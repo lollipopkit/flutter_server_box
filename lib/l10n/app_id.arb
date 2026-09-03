@@ -245,6 +245,7 @@
   "serverDetailOrder": "Detail pesanan widget halaman",
   "serverFuncBtns": "Tombol fungsi server",
   "serverOrder": "Pesanan server",
+  "serverTabEmpty": "Belum ada server",
   "serverTabRequired": "Tab server tidak dapat dihapus",
   "shareServerRiskTip": "Kode QR ini memuat pengaturan koneksi dalam teks biasa. Siapa pun yang memindai atau memotretnya bisa terhubung.",
   "sftpDlPrepare": "Bersiap untuk terhubung ...",

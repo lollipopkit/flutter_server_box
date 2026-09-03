@@ -1165,6 +1165,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get serverOrder => 'Порядок сервера';
 
   @override
+  String get serverTabEmpty => 'Серверів ще немає';
+
+  @override
   String get serverTabRequired => 'Вкладку сервера не можна видалити';
 
   @override

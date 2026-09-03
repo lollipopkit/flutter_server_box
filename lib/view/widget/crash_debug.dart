@@ -45,7 +45,7 @@ abstract final class CrashDebugMenu {
           stack: StackTrace.current,
           library: 'crash diagnostics',
         ));
-        Toast.warn('Marked. Restart the app to see the prompt.');
+        Toast.warn('Marked. Restart the app to see the notice.');
 
       case _Action.previewReport:
         // The report as it stands, without needing a crash first. This is the

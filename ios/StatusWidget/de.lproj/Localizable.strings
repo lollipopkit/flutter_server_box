@@ -2,6 +2,7 @@
 "Connected" = "Verbunden";
 "Connecting" = "Verbindung wird hergestellt";
 "Disconnected" = "Getrennt";
+"Status unknown" = "Status unbekannt";
 "Loading" = "Wird geladen";
 "Pick a server" = "Server wählen";
 "No credential — open the app" = "Keine Zugangsdaten – App öffnen";

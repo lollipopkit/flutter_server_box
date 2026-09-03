@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/local_shell.dart';
@@ -74,6 +75,9 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
   /// picker — or the icon on the bar — to rebuild.
   final _sortVersion = RNode();
 
+  /// The bar's search: what is typed, and whether the bar is a field at all.
+  final _search = InlineSearchController();
+
   /// The picker, and the button for adding a server to pick from.
   ///
   /// A scaffold of its own so the button belongs to the page it acts on,
@@ -81,7 +85,8 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
   /// beside the terminals on two.
   late final _picker = Scaffold(
     body: _AddPage(
-      sortVersion: _sortVersion,
+      sortVersion: Listenable.merge([_sortVersion, _search]),
+      search: _search,
       onTap: _openServer,
       onLocal: () => _open(const LocalSource()),
       onRootfsOpen: _openRootfs,
@@ -123,6 +128,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
     Rootfs.removed.removeListener(_onRootfsRemoved);
     _sessions.dispose();
     _sortVersion.dispose();
+    _search.dispose();
     super.dispose();
   }
 
@@ -141,7 +147,8 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
         // for one page, the first of which is not what the page looks like.
         sideBuilder: (_) => _SideBar(
           sessions: _sessions,
-          sortVersion: _sortVersion,
+          sortVersion: Listenable.merge([_sortVersion, _search]),
+          search: _search,
           actions: [_sortBtn, _searchBtn, _historyBtn],
           onOpen: _openServer,
           onLocal: () => _open(const LocalSource()),
@@ -193,18 +200,27 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
   PreferredSizeWidget get _tabBar => PreferredSizeListenBuilder(
     // Both: the bar shows which tab is current *and* how the picker behind it
     // is sorted.
-    listenable: Listenable.merge([_sessions, _sortVersion]),
+    listenable: Listenable.merge([_sessions, _sortVersion, _search]),
     // The wrapper is what the `Scaffold` measures, so it has to be told;
     // its own default is a full toolbar.
     preferSize: const Size.fromHeight(SessionTabBar.height),
-    builder: () => SessionTabBar(
-      names: _sessions.names,
-      index: _sessions.index,
-      onTap: _sessions.select,
-      onClose: _confirmClose,
-      detailOf: _sessionAddr,
-      sessionActions: _serverActions,
-      leadingActions: [_sortBtn, _searchBtn, _historyBtn],
+    builder: () => SizedBox(
+      height: SessionTabBar.height,
+      // In place of the strip, not over it. Only on the picker: a search here
+      // narrows that list, and the tabs beside it are open terminals rather
+      // than anything to find.
+      child: InlineSearchBar(
+        controller: _search,
+        child: SessionTabBar(
+        names: _sessions.names,
+        index: _sessions.index,
+        onTap: _sessions.select,
+        onClose: _confirmClose,
+        detailOf: _sessionAddr,
+        sessionActions: _serverActions,
+          leadingActions: [_sortBtn, _searchBtn, _historyBtn],
+        ),
+      ),
     ),
   );
 
@@ -643,7 +659,7 @@ extension _Actions on _SSHTabPageState {
   Widget get _searchBtn => Btn.icon(
     text: libL10n.search,
     icon: const Icon(Icons.search, size: 18),
-    onTap: _showSearch,
+    onTap: _search.start,
   );
 
   Widget get _historyBtn => Btn.icon(
@@ -655,58 +671,29 @@ extension _Actions on _SSHTabPageState {
   /// The rail's own way to add a server. On one screen that is the picker's
   /// floating button; a rail has no room for one.
 
-  void _showSortMenu() {
-    context.showRoundDialog(
-      title: libL10n.sort,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          for (final order in _SortOrder.all)
-            _SortOptionTile(
-              order: order,
-              onTap: () {
-                order.save();
-                _sortVersion.notify();
-                context.popDialog();
-              },
-            ),
-        ],
-      ),
+  /// A sheet rather than a dialog, which is what every other list of choices
+  /// in the app is now — see `showRowsSheet`. A dialog for this put a box in
+  /// the middle of the screen over the list it was about, and was raised from
+  /// a button in the top corner, as far from it as the window allows.
+  Future<void> _showSortMenu() async {
+    await showRowsSheet<void>(
+      context,
+      rows: (ctx) => [
+        for (final order in _SortOrder.all)
+          SheetChoiceTile(
+            icon: order.icon,
+            title: order.label,
+            selected: order.isCurrent,
+            onTap: () {
+              order.save();
+              Navigator.of(ctx).pop();
+              _sortVersion.notify();
+            },
+          ),
+      ],
     );
   }
 
-  void _showSearch() {
-    showSearch(
-      context: context,
-      delegate: SearchPage<Spi>(
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-        future: (query) async {
-          if (query.isEmpty) return [];
-          // Read per query rather than snapshotted when the dialog opened, so
-          // a server added or renamed meanwhile is findable.
-          final state = ref.read(serversProvider);
-          final needle = query.toLowerCase();
-          return [
-            for (final id in state.serverOrder)
-              if (state.servers[id] case final spi?)
-                if (spi.name.toLowerCase().contains(needle) ||
-                    spi.displayAddr.toLowerCase().contains(needle))
-                  spi,
-          ];
-        },
-        builder: (ctx, spi) => ListTile(
-          leading: distIcon(spi.id, size: 22),
-          title: Text(spi.name),
-          subtitle: Text(spi.displayAddr),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () {
-            ctx.pop();
-            _openServer(spi);
-          },
-        ),
-      ),
-    );
-  }
 
   void _showHistory() {
     final history = Stores.history.sshServerHistory.all.cast<String>();

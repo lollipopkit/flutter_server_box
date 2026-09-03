@@ -1177,6 +1177,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get serverOrder => 'Orden del servidor';
 
   @override
+  String get serverTabEmpty => 'Aún no hay servidores';
+
+  @override
   String get serverTabRequired =>
       'La pestaña del servidor no se puede eliminar';
 

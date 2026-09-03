@@ -36,6 +36,11 @@ private func formatStatus(_ status: String) -> String {
 
 // Localize known statuses; fall back to formatted original.
 @inline(__always)
+/// What is said instead of a status the activity can no longer vouch for.
+private func localizedUnknown() -> String {
+    NSLocalizedString("Status unknown", comment: "Live Activity has not been refreshed recently")
+}
+
 private func localizedStatus(_ status: String) -> String {
     switch status.lowercased() {
     case "connected":
@@ -76,10 +81,16 @@ struct TerminalLiveActivity: Widget {
                         .lineLimit(1)
                         .foregroundStyle(.secondary)
                     HStack(spacing: 8) {
+                        // Stale means nothing has refreshed this for five
+                        // minutes, which is the app being killed as often as
+                        // it is the app being suspended — see
+                        // `LiveActivityManager.staleAfter`. Either way the
+                        // status shown is the one from before that, so it is
+                        // not reported as current.
                         Circle()
-                            .fill(getStatusDotColor(state.status))
+                            .fill(context.isStale ? .secondary : getStatusDotColor(state.status))
                             .frame(width: 6, height: 6)
-                        Text(localizedStatus(state.status))
+                        Text(context.isStale ? localizedUnknown() : localizedStatus(state.status))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -116,10 +127,15 @@ struct TerminalLiveActivity: Widget {
                 DynamicIslandExpandedRegion(.trailing) {
                     VStack(alignment: .trailing, spacing: 6) {
                         HStack(spacing: 6) {
+                            // As on the lock screen: a status nothing has
+                            // refreshed for five minutes is not reported as
+                            // current.
                             Circle()
-                                .fill(getStatusDotColor(context.state.status))
+                                .fill(context.isStale ? .secondary : getStatusDotColor(context.state.status))
                                 .frame(width: 6, height: 6)
-                            Text(localizedStatus(context.state.status))
+                            Text(context.isStale
+                                 ? localizedUnknown()
+                                 : localizedStatus(context.state.status))
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }

@@ -20,6 +20,11 @@ typedef TagGroup<T> = ({String? label, List<T> items});
 /// heading someone is looking for comes before the ones nobody looks for by
 /// name, and nothing in the rail sits outside a group.
 ///
+/// That last heading is drawn even when it is the only one — when nothing is
+/// tagged at all. It divides nothing, but it says what the rail is divided
+/// *by*, which is the question someone looking for a tag they have not made
+/// yet is asking; without it the rail gave no sign that grouping exists.
+///
 /// Within a group the order [items] came in is kept, which is the order the
 /// list was already in — the server rail's is the user's own ordering.
 List<TagGroup<T>> groupByTag<T>(
@@ -40,14 +45,6 @@ List<TagGroup<T>> groupByTag<T>(
       case final count:
         byCount.putIfAbsent(count, () => []).add(item);
     }
-  }
-
-  // Nothing is tagged, so there is one group holding everything. A heading
-  // over the whole rail divides nothing and says only that tags exist, which
-  // is not what someone reading an index is looking for. A lone *tag* group
-  // keeps its heading — that one names something.
-  if (byTag.isEmpty && byCount.isEmpty) {
-    return untagged.isEmpty ? const [] : [(label: null, items: untagged)];
   }
 
   return [

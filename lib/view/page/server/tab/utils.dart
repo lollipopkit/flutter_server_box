@@ -125,13 +125,36 @@ class _ServerOpenRequestState extends ConsumerState<_ServerOpenRequest> {
 }
 
 extension _Utils on _ServerPageState {
+  /// The list narrowed by both of the things that narrow it: the tag picked in
+  /// the bar, and whatever is typed into it.
   List<String> _filterServers(List<String> order) {
     final tag = _tag.value;
-    if (tag == TagSwitcher.kDefaultTag) return order;
-    return order.where((e) {
-      final tags = ref.read(serversProvider).servers[e]?.tags;
-      if (tags == null) return false;
-      return tags.contains(tag);
+    if (tag == TagSwitcher.kDefaultTag) return _filterByQuery(order);
+
+    final servers = ref.read(serversProvider).servers;
+    return _filterByQuery([
+      for (final id in order)
+        if (servers[id]?.tags?.contains(tag) == true) id,
+    ]);
+  }
+
+  /// The list narrowed by the search alone.
+  ///
+  /// Its own step because the rail uses this one without the tag: it groups by
+  /// tag rather than filtering to one, so a tag picked in the grid must not
+  /// take rows out of it — a search must, since that is what was just typed.
+  List<String> _filterByQuery(List<String> order) {
+    final needle = _search.needle;
+    if (needle.isEmpty) return order;
+
+    final servers = ref.read(serversProvider).servers;
+    return order.where((id) {
+      final spi = servers[id];
+      if (spi == null) return false;
+      // Name and address, which is what a server is known by and what it is
+      // reached at — the same two the editor asks for first.
+      return spi.name.toLowerCase().contains(needle) ||
+          spi.displayAddr.toLowerCase().contains(needle);
     }).toList();
   }
 

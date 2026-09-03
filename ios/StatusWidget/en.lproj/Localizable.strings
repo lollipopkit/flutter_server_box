@@ -2,6 +2,7 @@
 "Connected" = "Connected";
 "Connecting" = "Connecting";
 "Disconnected" = "Disconnected";
+"Status unknown" = "Status unknown";
 "Loading" = "Loading";
 "Pick a server" = "Pick a server";
 "No credential — open the app" = "No credential — open the app";

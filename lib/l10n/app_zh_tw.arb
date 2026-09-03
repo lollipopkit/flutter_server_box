@@ -347,6 +347,7 @@
   "serverDetailOrder": "詳情頁部件順序",
   "serverFuncBtns": "伺服器功能按鈕",
   "serverOrder": "伺服器順序",
+  "serverTabEmpty": "還沒有伺服器",
   "serverTabRequired": "服務器標籤不能被移除",
   "shareServerRiskTip": "此 QR Code 以明文包含伺服器的連線設定。任何掃描或拍下它的人都能連線到這台伺服器。",
   "sftpDlPrepare": "準備連線至伺服器...",

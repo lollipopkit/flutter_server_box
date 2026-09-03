@@ -1068,36 +1068,43 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
                               isDense: true,
                               contentPadding: const EdgeInsets.fromLTRB(
                                 15,
-                                12,
+                                10,
                                 8,
-                                12,
+                                10,
                               ),
                             ),
                           ),
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.all(7),
+                        padding: const EdgeInsets.all(6),
                         // One button, because they are the same question at
                         // two moments: while a turn is running the only thing
                         // to do to it is stop it, and a separate stop control
                         // elsewhere is one more place to look.
+                        //
+                        // Compact, and it is what sets the composer's height:
+                        // a filled `IconButton` stands at 40 and the field
+                        // beside it is its padding plus one line, so the row
+                        // was as tall as the button whatever the field did.
                         child: session.isWorking
                             ? IconButton.filled(
                                 tooltip: libL10n.stop,
+                                visualDensity: VisualDensity.compact,
                                 onPressed: _notifier.stopWork,
-                                icon: const Icon(Icons.stop),
+                                icon: const Icon(Icons.stop, size: 20),
                               )
                             : ValueListenableBuilder(
                                 valueListenable: _inputController,
                                 builder: (_, value, _) => IconButton.filled(
                                   tooltip: context.l10n.send,
+                                  visualDensity: VisualDensity.compact,
                                   onPressed:
                                       canSendWhatever &&
                                           value.text.trim().isNotEmpty
                                       ? () => _submitPrompt(_inputController.text)
                                       : null,
-                                  icon: const Icon(Icons.arrow_upward),
+                                  icon: const Icon(Icons.arrow_upward, size: 20),
                                 ),
                               ),
                       ),

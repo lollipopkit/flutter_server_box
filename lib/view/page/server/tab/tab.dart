@@ -7,7 +7,6 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
-import 'package:responsive_framework/responsive_framework.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/tag_group.dart';
@@ -21,7 +20,6 @@ import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/selection.dart';
 import 'package:server_box/data/provider/server/single.dart';
-import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
@@ -36,7 +34,7 @@ part 'content.dart';
 part 'flight.dart';
 part 'landscape.dart';
 part 'pane_list.dart';
-part 'top_bar.dart';
+part 'sort.dart';
 part 'utils.dart';
 
 class ServerPage extends ConsumerStatefulWidget {
@@ -50,14 +48,6 @@ class ServerPage extends ConsumerStatefulWidget {
 
 const _cardPad = 74.0;
 const _cardPadSingle = 13.0;
-
-/// Kept clear either side of the floating tag bar.
-///
-/// Set by the add button — a 56pt `FloatingActionButton`, the inset `Scaffold`
-/// gives it, and a gap so the two never touch — and then applied to both ends,
-/// because the bar is centred and room on one side only would move it off
-/// centre to buy that clearance.
-const _kTagBarSideRoom = 80.0;
 
 /// Long enough to read as one movement, short enough not to be waited on.
 const _kFlightDuration = Durations.medium3;
@@ -78,7 +68,13 @@ class _ServerPageState extends ConsumerState<ServerPage>
   final _tag = ''.vn;
 
   final _scrollController = ScrollController();
-  final _autoHideCtrl = AutoHideController();
+
+  /// Bumped when the sort changes, which is a view over the list rather than
+  /// anything the providers hold — so nothing else would rebuild it.
+  final _sortVersion = RNode();
+
+  /// The bar's search: what is typed, and whether the bar is a field at all.
+  final _search = InlineSearchController();
 
   /// The server whose card is in the air, or null. Its row in the list is
   /// built hidden and carries [_flightAnchorKey], so the flight has somewhere
@@ -121,7 +117,8 @@ class _ServerPageState extends ConsumerState<ServerPage>
     _flyingId.dispose();
     _timer?.cancel();
     _scrollController.dispose();
-    _autoHideCtrl.dispose();
+    _sortVersion.dispose();
+    _search.dispose();
     _tag.dispose();
     _tags.dispose();
     _offsetNotifier.dispose();
@@ -189,45 +186,19 @@ class _ServerPageState extends ConsumerState<ServerPage>
 
   Widget _buildScaffold(Widget child) {
     return Scaffold(
-      // Nothing to put up here on a wide window — see [_TopBar].
-      appBar: ResponsiveBreakpoints.of(context).isMobile
-          ? const _TopBar()
-          : null,
-      body: GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onTap: _autoHideCtrl.show,
-        child: Stores.setting.textFactor.listenable().listenVal((val) {
-          _updateTextScaler(val);
-          // At the top, what the app bar used to keep this clear of — a notch,
-          // a status bar — now that a wide window has no app bar. At the
-          // bottom, what the floating tag bar sits above: it is 13pt off the
-          // edge of this, not 13pt off the edge of a home indicator.
-          return SafeArea(
-            // Expand, or the grid is as tall as the cards in it and the bar
-            // pinned to the bottom of this is pinned to the bottom of *them*.
-            // A `Stack` hands its unpositioned children loose constraints, and
-            // a `SingleChildScrollView` given a loose one sizes to its content
-            // rather than to the window — which is also a page that stops
-            // scrolling as soon as it has scrolled its own height.
-            child: Stack(
-              fit: StackFit.expand,
-              children: [child, _buildTagBar()],
-            ),
-          );
-        }),
-      ),
-      floatingActionButton: AutoHide(
-        direction: AxisDirection.right,
-        offset: 75,
-        scrollController: _scrollController,
-        hideController: _autoHideCtrl,
-        child: FloatingActionButton(
-          heroTag: 'addServer',
-          onPressed: _onTapAddServer,
-          tooltip: libL10n.add,
-          child: const Icon(Icons.add),
-        ),
-      ),
+      // No bar at any width. A phone used to get the app's name and a cog here
+      // because this was the one layout with no other way into the settings
+      // (#657) — the wider ones have the nav rail, which carries its own. The
+      // bottom bar's "more" is that way now, on every phone and every tab, so
+      // what was left up here was a title naming the app on the app's own
+      // first screen.
+      appBar: _buildTagBar(),
+      body: Stores.setting.textFactor.listenable().listenVal((val) {
+        _updateTextScaler(val);
+        // The bar above spends the top inset, as an app bar does; this is what
+        // is left, and what it still has to clear is the home indicator.
+        return SafeArea(top: false, child: child);
+      }),
     );
   }
 
@@ -237,6 +208,20 @@ class _ServerPageState extends ConsumerState<ServerPage>
     final selected = ref.watch(serverSelectionProvider);
     final selectedSpi = selected == null ? null : servers[selected];
 
+    // Watched only for the order that depends on them, and only in this
+    // method — which is a `build`, where `ref.watch` belongs. The sort runs
+    // inside a `ListenableBuilder` below, and watching from that callback
+    // would be a dependency registered outside the build that owns it.
+    //
+    // `select` narrows it to the transition: a status poll landing does not
+    // reorder the list, a server connecting or dropping does.
+    final conns = _SortOrder.stored.field != _SortField.status
+        ? const <String, ServerConn>{}
+        : {
+            for (final id in serverOrder)
+              id: ref.watch(serverProvider(id).select((s) => s.conn)),
+          };
+
     // Both settings listened to, not read. They are changed elsewhere — the
     // switch on the settings page, the width by dragging the divider on the
     // terminal or files tab — and this page is kept alive behind those, so a
@@ -244,110 +229,244 @@ class _ServerPageState extends ConsumerState<ServerPage>
     // way the switch took effect whenever something unrelated happened to
     // rebuild, and this column stayed at whatever width it opened with while
     // the others moved.
-    return PaneSettings.listen((paneWidth) {
-      return _tag.listenVal((val) {
-        final filtered = _filterServers(serverOrder);
-        return AdaptivePanes(
-          primaryWidth: paneWidth,
-          onPrimaryWidthChanged: PaneSettings.saveWidth,
-          detailId: selectedSpi?.id,
-          onCloseDetail: _closeDetail,
-          // Null until something is opened, so a fresh launch gets the whole
-          // width for browsing rather than a column reserved for nothing.
-          detailBuilder: selectedSpi == null
-              ? null
-              : (_) => ServerDetailPage(args: SpiRequiredArgs(selectedSpi)),
-          // Wrapped here rather than around the whole page because this is
-          // where `split` is known — it is the layout's own answer, and the
-          // `PaneScope` that carries it is installed below this state's
-          // context, where an inherited lookup from here cannot reach.
-          primaryBuilder: (_, split) => _ServerOpenRequest(
-            split: split,
-            onOpen: _openRequestedServer,
-            // The rail gets everything, not [filtered]. It groups by tag
-            // instead of filtering by one, and it has no switcher of its own —
-            // so a tag picked in the grid before a server was opened would
-            // hide servers here with nothing on screen to say so or undo it.
-            child: split
-                ? _buildPaneList(serverOrder)
-                : _buildScaffold(_buildBodySmall(filtered: filtered)),
-          ),
-        );
-      });
-    });
-  }
-
-  /// The tag filter, floating over the bottom of the grid.
-  ///
-  /// Down here rather than in a bar above the cards for the reason the detail
-  /// page's function bar is: it acts on the whole list, so it belongs within
-  /// reach the whole way down instead of scrolling off after the first row.
-  /// Same `HideOnScroll` and same rule — gone on a drag down the page, back on
-  /// a drag up it or at the top, and coming up from the bottom edge when the
-  /// tab arrives.
-  ///
-  /// A `Stack` child rather than a `Positioned` one, because with no tags
-  /// there is nothing to position. `Positioned` reaches the `Stack` through
-  /// the builder below it — it is a `ParentDataWidget`, and only an
-  /// intervening *render* object would break that.
-  Widget _buildTagBar() {
-    return _tags.listenVal((tags) {
-      // No tags anywhere means no bar at all, rather than an empty one. The
-      // pill is the tags: an empty one floating over the grid would be a
-      // control that does nothing, and would cover a row of cards to do it.
-      // Built only once there are tags, so the first one added brings the bar
-      // in the way opening the tab does.
-      if (tags.isEmpty) return const SizedBox.shrink();
-
-      return Positioned(
-        left: 0,
-        right: 0,
-        bottom: 0,
-        child: HideOnScroll(
-          controller: _scrollController,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: _kTagBarSideRoom,
-            ).copyWith(bottom: 13),
-            // Centred in the window, and the same room kept on both sides so
-            // that stays true — the bar grows from the middle outwards as
-            // tags are added, and the side it would reach something on is the
-            // add button's.
-            child: Center(
-              child: Material(
-                // Raised off the page, because it is the one thing here that
-                // is not part of what the page is showing.
-                elevation: 3,
-                shadowColor: Colors.black26,
-                color: Theme.of(context).colorScheme.surfaceContainerHigh,
-                borderRadius: BorderRadius.circular(19),
-                clipBehavior: Clip.antiAlias,
-                child: SizedBox(
-                  height: TagSwitcher.kTagBtnHeight,
-                  // Shrink-wrapped, so the pill is as wide as the tags in it
-                  // and scrolls once they outgrow the room above.
-                  child: TagSwitcher(
-                    tags: _tags,
-                    onTagChanged: (tag) => _tag.value = tag,
-                    initTag: _tag.value,
-                    singleLine: true,
-                    shrinkWrap: true,
-                  ),
-                ),
-              ),
-            ),
+    return PaneSettings.listenAll((paneWidth, paneCollapsed) {
+      return AdaptivePanes.detail(
+        listWidth: paneWidth,
+        onListWidthChanged: PaneSettings.saveWidth,
+        collapsed: paneCollapsed,
+        onCollapsedChanged: PaneSettings.saveCollapsed,
+        collapseTooltip: libL10n.fold,
+        expandTooltip: libL10n.open,
+        detailId: selectedSpi?.id,
+        onCloseDetail: _closeDetail,
+        // Null until something is opened, so a fresh launch gets the whole
+        // width for browsing rather than a column reserved for nothing.
+        detailBuilder: selectedSpi == null
+            ? null
+            : (_) => ServerDetailPage(args: SpiRequiredArgs(selectedSpi)),
+        // Wrapped here rather than around the whole page because this is
+        // where `split` is known — it is the layout's own answer, and the
+        // `PaneScope` that carries it is installed below this state's
+        // context, where an inherited lookup from here cannot reach.
+        //
+        // The tag and the sort are listened to *inside* this rather than
+        // around the whole layout: they are two ways of viewing the list, and
+        // neither says anything about the pane beside it. Read from outside,
+        // picking a tag rebuilt the detail page as well.
+        listBuilder: (_, split) => _ServerOpenRequest(
+          split: split,
+          onOpen: _openRequestedServer,
+          child: ListenableBuilder(
+            // The three ways of viewing the list, and nothing else: a tag, a
+            // search and an order.
+            listenable: Listenable.merge([_tag, _sortVersion, _search]),
+            builder: (_, _) {
+                // The settings arrangement, viewed however the sort button
+                // says — see [_SortOrder], whose first option is that
+                // arrangement unchanged.
+                final ordered = _SortOrder.stored.apply(
+                  serverOrder,
+                  servers,
+                  (id) => conns[id] ?? ServerConn.disconnected,
+                );
+                // The rail gets everything, not the filtered list. It groups
+                // by tag instead of filtering to one, and has no switcher of
+                // its own — so a tag picked in the grid before a server was
+                // opened would hide servers there with nothing on screen to
+                // say so or undo it.
+              if (split) return _buildPaneList(ordered);
+              return _buildScaffold(
+                _buildBodySmall(filtered: _filterServers(ordered)),
+              );
+            },
           ),
         ),
       );
     });
   }
 
+  /// The tag filter and the way to add a server, in the strip every other tab
+  /// has: a switcher on the left that opens the rest in a sheet, buttons on
+  /// the right.
+  ///
+  /// It was a pill floating over the grid, which withdrew on a timer and came
+  /// back on a tap. That is one more thing to know about this tab than about
+  /// any of the others, and the add button had to float with it — so the two
+  /// controls this page has were both somewhere that had to be discovered.
+  ///
+  /// [SessionTabBar.height] rather than a bar of its own measurements: the
+  /// strips are read as one line down the app, and a taller one here would
+  /// shift the page contents by that much on every switch between tabs.
+  PreferredSizeWidget _buildTagBar() {
+    return PreferredSizeListenBuilder(
+      // Which tag is on, what tags there are to choose between, and how the
+      // list is ordered — the sort button draws its own current icon.
+      listenable: Listenable.merge([_tags, _tag, _sortVersion]),
+      // The wrapper is what the `Scaffold` measures, so it has to be told; its
+      // own default is a full toolbar.
+      preferSize: const Size.fromHeight(SessionTabBar.height),
+      builder: () {
+        final tags = _tags.value.toList();
+        final current = _tag.value;
+        final at = tags.indexOf(current);
+
+        return SizedBox(
+          height: SessionTabBar.height,
+          child: InlineSearchBar(
+            controller: _search,
+            child: Row(
+            children: [
+              Expanded(
+                child: SessionSwitcherLabel(
+                  name: current.isEmpty ? libL10n.all : '#$current',
+                  // Counting from 1, and null on "all" — which is not one of
+                  // the tags but the absence of a choice among them, so it
+                  // shows the icon instead.
+                  position: at < 0 ? null : at + 1,
+                  total: tags.length,
+                  icon: MingCute.hashtag_line,
+                  // Nothing to switch between with no tags anywhere, so the
+                  // name is a label rather than a way into a sheet — the same
+                  // rule the session strips follow with nothing open.
+                  onTap: tags.isEmpty ? null : () => _showTagSheet(tags),
+                ),
+              ),
+              ..._listActions,
+              const SizedBox(width: 7),
+            ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Find a server by name or address, in the bar and in the list under it.
+  ///
+  /// The field takes the switcher's place rather than opening a page of
+  /// results: what is being searched is on screen, so the list itself is the
+  /// result — it narrows as the query is typed and the cards stay the cards,
+  /// with everything a card can do still on them.
+  ///
+  /// It narrows *within* the tag, because both are in this bar and one of them
+  /// is visibly on. A search that quietly ignored the tag would answer with
+  /// servers the page says it is not showing.
+  /// What acts on the list rather than on one server in it.
+  ///
+  /// One list for the bar on a single column and the rail's head beside a
+  /// pane: they act on the same list and had drifted to two orders and two
+  /// icon sizes.
+  List<Widget> get _listActions => [
+    Btn.icon(
+      text: libL10n.search,
+      icon: const Icon(Icons.search, size: 18),
+      onTap: _search.start,
+    ),
+    Btn.icon(
+      text: libL10n.sort,
+      icon: Icon(_SortOrder.stored.icon, size: 18),
+      onTap: _showSortSheet,
+    ),
+    // Where a phone pulls the grid down instead — see [_buildBodySmall].
+    if (isDesktop)
+      Btn.icon(
+        text: libL10n.refresh,
+        icon: const Icon(Icons.refresh, size: 18),
+        onTap: _refreshAll,
+      ),
+    Btn.icon(
+      text: libL10n.add,
+      icon: const Icon(Icons.add, size: 18),
+      onTap: _onTapAddServer,
+    ),
+  ];
+
+  /// How to order the list. The default is the arrangement from the settings,
+  /// so this starts as a view of what the user already decided rather than as
+  /// a decision it takes from them.
+  Future<void> _showSortSheet() async {
+    await showRowsSheet<void>(
+      context,
+      rows: (ctx) => [
+        for (final order in _SortOrder.all)
+          SheetChoiceTile(
+            icon: order.icon,
+            title: order.label,
+            selected: order.isCurrent,
+            onTap: () {
+              order.save();
+              Navigator.of(ctx).pop();
+              _sortVersion.notify();
+            },
+          ),
+      ],
+    );
+  }
+
+  /// The tags, as rows. The same sheet the session switchers open, for the
+  /// same reason: a strip of them would be as wide as the names happened to be.
+  Future<void> _showTagSheet(List<String> tags) async {
+    await showRowsSheet<void>(
+      context,
+      rows: (ctx) {
+        void pick(String tag) {
+          Navigator.of(ctx).pop();
+          _tag.value = tag;
+        }
+
+        return [
+          SheetChoiceTile(
+            icon: MingCute.hashtag_line,
+            title: libL10n.all,
+            selected: _tag.value.isEmpty,
+            onTap: () => pick(TagSwitcher.kDefaultTag),
+          ),
+          const Divider(height: 1),
+          for (final tag in tags)
+            // The same shape as the row above it: the mark, then the name.
+            // The mark is the `#`, so the name does not carry one as well.
+            SheetChoiceTile(
+              icon: MingCute.hashtag_line,
+              title: tag,
+              selected: tag == _tag.value,
+              onTap: () => pick(tag),
+            ),
+        ];
+      },
+    );
+  }
+
   Widget _buildBodySmall({required List<String> filtered}) {
-    // The same mark the terminal, file and snippet tabs show with nothing
-    // open. A tab with no servers in it is the one place a new install starts,
-    // and it said "Empty" — a word for a list that could have had something in
-    // it, on a page where the thing to do is the button floating over it.
-    if (filtered.isEmpty) return const EmptyPane(icon: BoxIcons.bx_server);
+    // Crossed rather than swapped. The list emptying under a search and
+    // filling again as it is deleted are the two halves of one movement, and
+    // an instant cut reads as the page having been replaced rather than as
+    // what was typed taking effect.
+    //
+    // Keyed, because both states are sometimes the same widget type: the
+    // grid keeps one key throughout — its own contents animate, and a switch
+    // here would fight that — and each empty state has its own, so going from
+    // a filtered-out tag to no servers at all is also a crossing.
+    return AnimatedSwitcher(
+      duration: Durations.medium1,
+      // Told to fill, or the grid is as tall as the cards in it: the default
+      // layout is a `Stack` that sizes to its child and hands it loose
+      // constraints, under which a `SingleChildScrollView` takes the height of
+      // its contents — so the list ended partway down the window and was cut
+      // off there rather than scrolling.
+      layoutBuilder: (current, previous) => Stack(
+        fit: StackFit.expand,
+        children: [...previous, ?current],
+      ),
+      child: filtered.isEmpty
+          ? _buildEmpty()
+          : KeyedSubtree(
+              key: const ValueKey('grid'),
+              child: _buildGrid(filtered),
+            ),
+    );
+  }
+
+  Widget _buildGrid(List<String> filtered) {
 
     // Cards are as tall as what they have to say — a server that has not
     // connected is one line, one that has is several charts. Splitting them
@@ -361,10 +480,11 @@ class _ServerPageState extends ConsumerState<ServerPage>
     // [AnimatedMasonry] — the card that moves is usually not the card anything
     // happened to, which is exactly why it has to be carried rather than
     // moved.
-    return AnimatedMasonry(
+    final grid = AnimatedMasonry(
       controller: _scrollController,
-      // Room at the bottom for the add button and the tag bar to float over.
-      padding: MasonryList.kPadding.copyWith(bottom: 77),
+      // No room kept for chrome at either end: the tag switcher, the sort and
+      // the add button are in the bar above this, and nothing floats over it.
+      padding: MasonryList.kPadding,
       children: [
         for (final id in filtered)
           // Its own `Consumer`, so a status poll rebuilds the one card whose
@@ -378,6 +498,56 @@ class _ServerPageState extends ConsumerState<ServerPage>
           ),
       ],
     );
+
+    // Pulling is how a phone asks for this; a pointer has the button in the
+    // bar. The status poll runs on its own, so neither is the only way — they
+    // are for the moment someone wants an answer now.
+    if (!isMobile) return grid;
+    return RefreshIndicator(onRefresh: _refreshAll, child: grid);
+  }
+
+  /// What the page shows with no cards on it, which is two different things.
+  ///
+  /// A tag with nothing under it is a filter to undo — the servers are still
+  /// there, and an empty page that does not say so reads as having lost them.
+  /// No servers at all is the first thing a new install sees, and the one
+  /// place on this page worth spelling out what to do.
+  Widget _buildEmpty() {
+    // A search with no hits is a third thing again, and the one that would be
+    // read most wrongly: with no tag on, it used to answer "no servers yet"
+    // and offer to add one, on a page whose servers are all still there.
+    final query = _search.needle;
+    if (query.isNotEmpty) {
+      return EmptyPane(
+        key: const ValueKey('empty-search'),
+        icon: Icons.search_off,
+        label: query,
+        action: Btn.text(text: libL10n.clear, onTap: _search.end),
+      );
+    }
+
+    if (_tag.value.isNotEmpty) {
+      return EmptyPane(
+        key: const ValueKey('empty-tag'),
+        icon: BoxIcons.bx_server,
+        label: '#${_tag.value}',
+        action: Btn.text(
+          text: libL10n.clear,
+          onTap: () => _tag.value = TagSwitcher.kDefaultTag,
+        ),
+      );
+    }
+
+    return EmptyPane(
+      key: const ValueKey('empty-none'),
+      icon: BoxIcons.bx_server,
+      label: l10n.serverTabEmpty,
+      action: Btn.text(text: libL10n.add, onTap: _onTapAddServer),
+    );
+  }
+
+  Future<void> _refreshAll() async {
+    await ref.read(serversProvider.notifier).refresh();
   }
 
   Widget _buildEachServerCard(ServerState srv) {

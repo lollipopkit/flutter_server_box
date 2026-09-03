@@ -258,6 +258,12 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   }
 
   Widget _buildForm() {
+    // Read here rather than inside the group below: that one is rebuilt by a
+    // notifier as well as by this method, and a `ref.watch` reached on the
+    // notifier's path is one made outside a build.
+    final tagTile =
+        TagTile(tags: _tags, allTags: ref.watch(serversProvider).tags).cardx;
+
     final children = [
       _buildConnMethodSwitch(),
       // The name is in the same group of cards as the SSH fields rather than
@@ -293,10 +299,13 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
               suggestion: true,
             ),
             if (useSsh) _buildSshConnFields(),
+            // In the group for the same reason the name is. Its own entry took
+            // the grid's spacing on top of the card's own margins, so the one
+            // gap on this form that was 12 points was the one above it.
+            tagTile,
           ],
         ),
       ),
-      TagTile(tags: _tags, allTags: ref.watch(serversProvider).tags).cardx,
       ListTile(
         title: Text(l10n.autoConnect),
         trailing: _autoConnect.listenVal(

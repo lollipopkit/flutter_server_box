@@ -245,6 +245,7 @@
   "serverDetailOrder": "Reihenfolge der Widgets auf der Detailseite",
   "serverFuncBtns": "Server-Funktionsschaltflächen",
   "serverOrder": "Server-Bestellung",
+  "serverTabEmpty": "Noch keine Server",
   "serverTabRequired": "Server-Tab kann nicht entfernt werden",
   "shareServerRiskTip": "Dieser QR-Code enthält die Verbindungsdaten des Servers im Klartext. Wer ihn scannt oder fotografiert, kann sich verbinden.",
   "sftpDlPrepare": "Verbindung vorbereiten...",
