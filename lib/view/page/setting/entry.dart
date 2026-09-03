@@ -16,7 +16,6 @@ import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/service/diagnostics_upload.dart';
-import 'package:server_box/core/service/tray.dart';
 import 'package:server_box/core/utils/linux_seed.dart';
 import 'package:server_box/core/utils/local_exec.dart';
 import 'package:server_box/core/utils/logo_url.dart';
@@ -29,7 +28,6 @@ import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/linux_distros.dart';
 import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/model/app/rootfs_manifest.dart';
-import 'package:server_box/data/model/app/tray.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/build_data.dart';
@@ -44,6 +42,7 @@ import 'package:server_box/view/page/bmc_credential/list.dart';
 import 'package:server_box/view/page/private_key/list.dart';
 import 'package:server_box/view/page/server/connection_stats.dart';
 import 'package:server_box/view/page/setting/entries/home_tabs.dart';
+import 'package:server_box/view/page/setting/platform/desktop.dart';
 import 'package:server_box/view/page/setting/platform/ios.dart';
 import 'package:server_box/view/page/setting/platform/platform_pub.dart';
 import 'package:server_box/view/page/setting/seq/known_hosts.dart';
@@ -179,6 +178,15 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               title: 'iOS',
               icon: MingCute.apple_fill,
               page: () => const IosSettingsPage(embedded: true),
+            ),
+          // Named after the desktop it is running on, like the iOS page above:
+          // what is in there is about the platform rather than about the app.
+          if (isDesktop)
+            SettingsNode.leaf(
+              id: 'app.desktop',
+              title: DesktopSettingsPage.platformName,
+              icon: DesktopSettingsPage.platformIcon,
+              page: () => const DesktopSettingsPage(embedded: true),
             ),
 
           /// Fullscreen Mode is designed for old mobile phone which can be

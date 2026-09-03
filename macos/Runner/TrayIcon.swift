@@ -56,17 +56,40 @@ final class TrayIcon: NSObject, NSMenuDelegate {
     private func ensureItem() {
         guard statusItem == nil else { return }
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        // A template image, so the system inverts it along with the menu bar
-        // and it stays legible in both appearances.
-        if let image = NSImage(named: "TrayIcon") {
-            image.isTemplate = true
-            item.button?.image = image
-        } else {
-            item.button?.title = "SB"
-        }
+        item.button?.image = Self.menuBarImage()
+        if item.button?.image == nil { item.button?.title = "SB" }
         item.menu = menu
         menu.delegate = self
         statusItem = item
+    }
+
+    /// The menu bar's own image.
+    ///
+    /// A symbol first, and a bitmap only as a fallback. A menu bar is drawn at
+    /// whatever height the system is set to and on whichever display the mouse
+    /// is on, so a bitmap is scaled by a factor nobody chose — which is what
+    /// made the drawn one soft on a Retina screen. A symbol is resolved at the
+    /// size it is asked for, every time.
+    ///
+    /// `server.rack` because that is what this app is about, and because it is
+    /// the same shape the app icon draws. Template either way, so the system
+    /// inverts it along with the bar.
+    private static func menuBarImage() -> NSImage? {
+        if #available(macOS 11.0, *) {
+            let config = NSImage.SymbolConfiguration(
+                pointSize: 16, weight: .regular
+            )
+            if let symbol = NSImage(
+                systemSymbolName: "server.rack",
+                accessibilityDescription: "ServerBox"
+            )?.withSymbolConfiguration(config) {
+                symbol.isTemplate = true
+                return symbol
+            }
+        }
+        guard let image = NSImage(named: "TrayIcon") else { return nil }
+        image.isTemplate = true
+        return image
     }
 
     private func destroy() {

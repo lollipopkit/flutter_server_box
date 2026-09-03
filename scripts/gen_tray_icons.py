@@ -12,15 +12,20 @@ small files would cost more than the encoder below.
 
 Three formats, because the three platforms want different things:
 
-- macOS reads the asset through `rootBundle` and takes an `NSImage`. The
-  ordinary state is a *template* image, so the system inverts it with the menu
-  bar and it stays legible in both appearances; a template is black-plus-alpha
-  by definition, which is why `mac.png` has no colour in it.
+- macOS draws an SF Symbol and reaches `mac.png` only on a system too old for
+  one — see `TrayIcon.menuBarImage()`. A menu bar is drawn at whatever height
+  the system is set to, so a bitmap there is scaled by a factor nobody chose
+  and goes soft; the fallback is a template image, black-plus-alpha, which is
+  why it has no colour in it.
 - Windows loads the file with `LoadImage(..., IMAGE_ICON, LR_LOADFROMFILE)`,
   which wants a real `.ico`. The entries here are the classic DIB kind rather
   than PNG-compressed ones — `LoadImage` is documented for the former and
-  inconsistent about the latter.
-- Linux hands the path to libayatana-appindicator, which reads a PNG.
+  inconsistent about the latter. Seven sizes, because `LoadImage` picks the
+  nearest one and Windows asks for a different pixel size at every display
+  scale: at 150% it wants 24, at 200% it wants 32, and upscaling 16 to either
+  is what a blurry tray icon is.
+- Linux hands the path to libayatana-appindicator, which reads a PNG. Drawn at
+  64 so a panel at any height is scaling down rather than up.
 
 Windows and Linux draw the icon as given, on a taskbar that may be light or
 dark, so those two are a mid-tone blue rather than the black macOS wants: black
@@ -156,11 +161,13 @@ def ico(images: list[tuple[int, bytearray]]) -> bytes:
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
 
-    # macOS asks for 18pt and renders at up to 2x.
+    # The pre-Big Sur fallback only: 18pt at 2x.
     (OUT / "mac.png").write_bytes(png(36, draw(36, BLACK)))
 
-    (OUT / "tray.png").write_bytes(png(32, draw(32, BLUE)))
-    (OUT / "tray.ico").write_bytes(ico([(16, draw(16, BLUE)), (32, draw(32, BLUE))]))
+    (OUT / "tray.png").write_bytes(png(64, draw(64, BLUE)))
+    (OUT / "tray.ico").write_bytes(
+        ico([(size, draw(size, BLUE)) for size in (16, 20, 24, 32, 40, 48, 64)])
+    )
 
     for f in sorted(OUT.iterdir()):
         print(f"{f.relative_to(ROOT)}  {f.stat().st_size} bytes")
