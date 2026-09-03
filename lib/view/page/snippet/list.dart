@@ -59,11 +59,11 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
 
     return PaneSettings.listenAll((paneWidth, paneCollapsed) {
       return _tag.listenVal((tag) {
-        return AdaptivePanes(
-          primaryWidth: paneWidth,
-          onPrimaryWidthChanged: PaneSettings.saveWidth,
-          primaryCollapsed: paneCollapsed,
-          onPrimaryCollapsedChanged: PaneSettings.saveCollapsed,
+        return AdaptivePanes.detail(
+          listWidth: paneWidth,
+          onListWidthChanged: PaneSettings.saveWidth,
+          collapsed: paneCollapsed,
+          onCollapsedChanged: PaneSettings.saveCollapsed,
           collapseTooltip: libL10n.fold,
           expandTooltip: libL10n.open,
           detailId: _editing,
@@ -76,7 +76,7 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
           detailBuilder: (_) => _editing == null
               ? const EmptyPane(icon: Icons.code_outlined)
               : SnippetEditPage(args: SnippetEditPageArgs(snippet: editing)),
-          primaryBuilder: (_, split) => _buildScaffold(snippets, tag, split),
+          listBuilder: (_, split) => _buildScaffold(snippets, tag, split),
         );
       });
     });

@@ -247,11 +247,11 @@ class _ServerPageState extends ConsumerState<ServerPage>
     return PaneSettings.listenAll((paneWidth, paneCollapsed) {
       return _tag.listenVal((val) {
         final filtered = _filterServers(serverOrder);
-        return AdaptivePanes(
-          primaryWidth: paneWidth,
-          onPrimaryWidthChanged: PaneSettings.saveWidth,
-          primaryCollapsed: paneCollapsed,
-          onPrimaryCollapsedChanged: PaneSettings.saveCollapsed,
+        return AdaptivePanes.detail(
+          listWidth: paneWidth,
+          onListWidthChanged: PaneSettings.saveWidth,
+          collapsed: paneCollapsed,
+          onCollapsedChanged: PaneSettings.saveCollapsed,
           collapseTooltip: libL10n.fold,
           expandTooltip: libL10n.open,
           detailId: selectedSpi?.id,
@@ -265,7 +265,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
           // where `split` is known — it is the layout's own answer, and the
           // `PaneScope` that carries it is installed below this state's
           // context, where an inherited lookup from here cannot reach.
-          primaryBuilder: (_, split) => _ServerOpenRequest(
+          listBuilder: (_, split) => _ServerOpenRequest(
             split: split,
             onOpen: _openRequestedServer,
             // The rail gets everything, not [filtered]. It groups by tag

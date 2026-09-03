@@ -72,10 +72,10 @@ class SbPaneList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PaneSettings.listenAll(
-      (width, collapsed) => AdaptiveSideList(
+      (width, collapsed) => AdaptivePanes.surface(
         enabled: hasContent,
-        sideWidth: width,
-        onSideWidthChanged: PaneSettings.saveWidth,
+        listWidth: width,
+        onListWidthChanged: PaneSettings.saveWidth,
         collapsed: collapsed,
         onCollapsedChanged: PaneSettings.saveCollapsed,
         // `fold` and `open` are what fl_lib already has for this pair. Neither
@@ -83,8 +83,8 @@ class SbPaneList extends StatelessWidget {
         // languages to say the same thing more exactly is not worth it.
         collapseTooltip: libL10n.fold,
         expandTooltip: libL10n.open,
-        sideBuilder: sideBuilder,
-        builder: builder,
+        listBuilder: (ctx, _) => sideBuilder(ctx),
+        surfaceBuilder: builder,
       ),
     );
   }

@@ -518,22 +518,22 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       // showing.
       body: SafeArea(
         child: PaneSettings.listenAll(
-          (paneWidth, paneCollapsed) => AdaptiveSideList(
+          (paneWidth, paneCollapsed) => AdaptivePanes.surface(
             enabled: wide,
-            minWidthForSide: 0,
-            sideWidth: paneWidth,
-            onSideWidthChanged: PaneSettings.saveWidth,
+            minWidthForSplit: 0,
+            listWidth: paneWidth,
+            onListWidthChanged: PaneSettings.saveWidth,
             collapsed: paneCollapsed,
             onCollapsedChanged: PaneSettings.saveCollapsed,
             collapseTooltip: libL10n.fold,
             expandTooltip: libL10n.open,
-            sideBuilder: (_) => menu,
+            listBuilder: (_, _) => menu,
             // A `Builder` so the insets read below are the ones this body
             // actually has: the state's own context is above the `Scaffold`,
             // where `padding` is still the whole window's — the status bar the
             // app bar already covers, and the home indicator the `SafeArea`
             // just above here already cleared.
-            builder: (ctx, split) => split
+            surfaceBuilder: (ctx, split) => split
                 ? content
                 : Builder(
                     builder: (ctx) => _buildNarrow(ctx, nodes, content),
