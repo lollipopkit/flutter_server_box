@@ -165,16 +165,23 @@ final class BakSyncer extends SyncIface {
   /// `Paths.init`.
   ///
   /// A no-op once the versioned file exists remotely, so it runs at most once
-  /// per remote. Memoized for the same reason within a launch: a second call
-  /// would ask the remote a question this one is already answering.
+  /// per remote. An attempt is memoized for the same reason within a launch: a
+  /// second call would ask the remote a question this one is already
+  /// answering.
+  ///
+  /// Having no remote is not an attempt and is not memoized. It is an answer
+  /// about this moment only — sync is configured from a settings page, so the
+  /// next call may well have somewhere to look — and memoizing it would turn
+  /// "not yet" into "never" for the rest of the launch.
   ///
   /// TODO: remove with the rest of the v2 compatibility shims.
-  Future<void> inheritLegacyRemote() => _inheriting ??= _inheritLegacyRemote();
-
-  Future<void> _inheritLegacyRemote() async {
+  Future<void> inheritLegacyRemote() {
     final rs = remoteStorage;
-    if (rs == null) return;
+    if (rs == null) return Future.value();
+    return _inheriting ??= _inheritLegacyRemote(rs);
+  }
 
+  Future<void> _inheritLegacyRemote(RemoteStorage rs) async {
     try {
       if (await rs.exists(Paths.bakName)) return;
       if (!await rs.exists(Miscs.legacyBakFileName)) return;
