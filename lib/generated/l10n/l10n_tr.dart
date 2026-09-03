@@ -1164,6 +1164,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get serverOrder => 'Sunucu sırası';
 
   @override
+  String get serverTabEmpty => 'Henüz sunucu yok';
+
+  @override
   String get serverTabRequired => 'Sunucu sekmesi kaldırılamaz';
 
   @override

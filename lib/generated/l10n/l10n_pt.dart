@@ -1163,6 +1163,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get serverOrder => 'Ordem do servidor';
 
   @override
+  String get serverTabEmpty => 'Ainda não há servidores';
+
+  @override
   String get serverTabRequired => 'A aba do servidor não pode ser removida';
 
   @override

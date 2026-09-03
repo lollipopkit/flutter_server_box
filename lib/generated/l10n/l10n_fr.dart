@@ -1176,6 +1176,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get serverOrder => 'Ordre du serveur';
 
   @override
+  String get serverTabEmpty => 'Aucun serveur pour le moment';
+
+  @override
   String get serverTabRequired => 'L\'onglet serveur ne peut pas être supprimé';
 
   @override

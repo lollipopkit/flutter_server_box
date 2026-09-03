@@ -245,6 +245,7 @@
   "serverDetailOrder": "Ordem dos componentes na página de detalhes do servidor",
   "serverFuncBtns": "Botões de função do servidor",
   "serverOrder": "Ordem do servidor",
+  "serverTabEmpty": "Ainda não há servidores",
   "serverTabRequired": "A aba do servidor não pode ser removida",
   "shareServerRiskTip": "Este código QR contém as definições de ligação em texto simples. Quem o digitalizar ou fotografar pode ligar-se.",
   "sftpDlPrepare": "Preparando para conectar ao servidor...",

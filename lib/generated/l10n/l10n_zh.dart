@@ -1078,6 +1078,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get serverOrder => '服务器顺序';
 
   @override
+  String get serverTabEmpty => '还没有服务器';
+
+  @override
   String get serverTabRequired => '服务器标签不能被移除';
 
   @override
@@ -2687,6 +2690,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get serverOrder => '伺服器順序';
+
+  @override
+  String get serverTabEmpty => '還沒有伺服器';
 
   @override
   String get serverTabRequired => '服務器標籤不能被移除';

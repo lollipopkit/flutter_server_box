@@ -1098,6 +1098,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get serverOrder => 'サーバー順序';
 
   @override
+  String get serverTabEmpty => 'サーバーはまだありません';
+
+  @override
   String get serverTabRequired => 'サーバータブは削除できません';
 
   @override

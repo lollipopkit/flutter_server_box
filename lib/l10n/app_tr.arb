@@ -245,6 +245,7 @@
   "serverDetailOrder": "Ayrıntı sayfası bileşen sırası",
   "serverFuncBtns": "Sunucu işlev düğmeleri",
   "serverOrder": "Sunucu sırası",
+  "serverTabEmpty": "Henüz sunucu yok",
   "serverTabRequired": "Sunucu sekmesi kaldırılamaz",
   "shareServerRiskTip": "Bu QR kod bağlantı ayarlarını düz metin olarak taşır. Tarayan ya da fotoğraflayan herkes bağlanabilir.",
   "sftpDlPrepare": "Bağlantı hazırlanıyor...",

@@ -1155,6 +1155,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get serverOrder => 'Server order';
 
   @override
+  String get serverTabEmpty => 'No servers yet';
+
+  @override
   String get serverTabRequired => 'Server tab cannot be removed';
 
   @override

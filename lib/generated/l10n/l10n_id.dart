@@ -1162,6 +1162,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get serverOrder => 'Pesanan server';
 
   @override
+  String get serverTabEmpty => 'Belum ada server';
+
+  @override
   String get serverTabRequired => 'Tab server tidak dapat dihapus';
 
   @override

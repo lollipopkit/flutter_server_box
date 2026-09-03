@@ -245,6 +245,7 @@
   "serverDetailOrder": "詳細ページのウィジェット順序",
   "serverFuncBtns": "サーバー機能ボタン",
   "serverOrder": "サーバー順序",
+  "serverTabEmpty": "サーバーはまだありません",
   "serverTabRequired": "サーバータブは削除できません",
   "shareServerRiskTip": "この QR コードはサーバーの接続設定を平文で含みます。読み取った人や撮影した人は誰でも接続できます。",
   "sftpDlPrepare": "サーバーへの接続を準備中...",

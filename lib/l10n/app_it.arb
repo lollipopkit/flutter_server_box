@@ -246,6 +246,7 @@
   "serverDetailOrder": "Ordine widget pagina dettagli",
   "serverFuncBtns": "Pulsanti funzione server",
   "serverOrder": "Ordine server",
+  "serverTabEmpty": "Ancora nessun server",
   "serverTabRequired": "La scheda server non può essere rimossa",
   "shareServerRiskTip": "Questo codice QR contiene le impostazioni di connessione in chiaro. Chi lo scansiona o fotografa può connettersi.",
   "sftpDlPrepare": "Preparazione alla connessione...",

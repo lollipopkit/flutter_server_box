@@ -245,6 +245,7 @@
   "serverDetailOrder": "Volgorde van widget op detailpagina",
   "serverFuncBtns": "Server functieknoppen",
   "serverOrder": "Servervolgorde",
+  "serverTabEmpty": "Nog geen servers",
   "serverTabRequired": "Servertabblad kan niet worden verwijderd",
   "shareServerRiskTip": "Deze QR-code bevat de verbindingsinstellingen in leesbare tekst. Wie hem scant of fotografeert, kan verbinden.",
   "sftpDlPrepare": "Voorbereiden om verbinding te maken...",

@@ -1169,6 +1169,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get serverOrder => 'Server-Bestellung';
 
   @override
+  String get serverTabEmpty => 'Noch keine Server';
+
+  @override
   String get serverTabRequired => 'Server-Tab kann nicht entfernt werden';
 
   @override

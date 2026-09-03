@@ -1165,6 +1165,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get serverOrder => 'Servervolgorde';
 
   @override
+  String get serverTabEmpty => 'Nog geen servers';
+
+  @override
   String get serverTabRequired => 'Servertabblad kan niet worden verwijderd';
 
   @override
