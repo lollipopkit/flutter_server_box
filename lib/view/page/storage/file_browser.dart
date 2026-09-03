@@ -60,7 +60,6 @@ class FileBrowserArgs {
     this.actionsSink,
     this.onPathChanged,
     this.extraActions,
-    this.bottomActions,
     this.createActions,
     this.entryActions,
     this.pathTrailing,
@@ -104,9 +103,9 @@ class FileBrowserArgs {
   /// Toolbar buttons only this backend has.
   final List<Widget> Function(FileBrowserHandle)? extraActions;
 
-  /// Bottom-bar buttons only this backend has, beside the ones every browser
-  /// gets — uploading, which needs somewhere to upload to.
-  final List<Widget> Function(FileBrowserHandle)? bottomActions;
+  // `bottomActions` was here. The bottom is an address bar now and carries no
+  // per-backend buttons; the only one ever passed was SFTP's upload, which
+  // [createActions] already offers in the same menu the `+` opens.
 
   /// Menu entries for the directory itself — what can be *made* here, beside
   /// the browser's own new file and new folder. Shown by the add button and by
@@ -1027,51 +1026,80 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     return Scaffold(body: body, bottomNavigationBar: _buildBottom());
   }
 
+  /// The address bar, and the whole of the bottom.
+  ///
+  /// It used to be a path with a row of buttons under it — back, home, add,
+  /// go-to, upload — most of which said what the toolbar already said: `add`
+  /// is the `+` in the app bar and the right-click menu, and the only `upload`
+  /// any backend put here is in that same menu. Go-to was a button for typing
+  /// a path, next to the path, which is where a browser puts the same thing
+  /// without needing a button at all.
+  ///
+  /// So the path became the control. Back and home stay beside it because they
+  /// are what an address bar carries — they name where to go, which is what
+  /// the bar is about — and neither has anywhere else to be: the app bar is
+  /// full on a phone, and a history that can only be walked with the backspace
+  /// key is no history on a touchscreen.
   Widget _buildBottom() {
     if (_selecting) return _buildSelectionBar();
-    final children = widget.args.isPickDir
-        ? [
-            IconButton(tooltip: libL10n.ok, 
-              onPressed: () => context.pop(_path.path),
-              icon: const Icon(Icons.done),
-            ),
-          ]
-        : [
-            Btn.icon(text: l10n.back, 
-              onTap: () {
-                if (_path.goBack()) refresh();
-              },
-              icon: const Icon(Icons.arrow_back),
-            ),
-            if (widget.args.homePath case final home?)
-              Btn.icon(text: l10n.homeDir, 
-                onTap: () => goTo(home),
-                icon: const Icon(Icons.home),
-              ),
-            if (!widget.args.isPickFile) _buildAddBtn(),
-            Btn.icon(text: l10n.goto, onTap: _goto, icon: const Icon(Icons.gps_fixed)),
-            ...?widget.args.bottomActions?.call(this),
-          ];
 
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(11, 7, 11, 11),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        child: Row(
           children: [
-            Row(
-              children: [
-                Expanded(child: OmitStartText(_path.path)),
-                if (widget.args.pathTrailing case final trailing?) ...[
-                  UIs.width7,
-                  trailing,
-                ],
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: children,
-            ),
+            if (!widget.args.isPickDir) ...[
+              Btn.icon(
+                text: l10n.back,
+                onTap: () {
+                  if (_path.goBack()) refresh();
+                },
+                icon: const Icon(Icons.arrow_back),
+              ),
+              if (widget.args.homePath case final home?)
+                Btn.icon(
+                  text: l10n.homeDir,
+                  onTap: () => goTo(home),
+                  icon: const Icon(Icons.home),
+                ),
+            ],
+            Expanded(child: _buildPathBar()),
+            // Picking ends here and nowhere else: the caller asked for a path
+            // back, and this is the only thing that returns one.
+            if (widget.args.isPickDir)
+              IconButton(
+                tooltip: libL10n.ok,
+                onPressed: () => context.pop(_path.path),
+                icon: const Icon(Icons.done),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// The path, and a tap to type a different one.
+  ///
+  /// The pencil is what says so. A path is text that looks like a label, and
+  /// nothing about it suggests it can be tapped — which is why the go-to it
+  /// replaces needed a button of its own.
+  Widget _buildPathBar() {
+    final scheme = Theme.of(context).colorScheme;
+
+    return InkWell(
+      onTap: _goto,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        child: Row(
+          children: [
+            Expanded(child: OmitStartText(_path.path)),
+            if (widget.args.pathTrailing case final trailing?) ...[
+              UIs.width7,
+              trailing,
+            ],
+            UIs.width7,
+            Icon(Icons.edit_outlined, size: 15, color: scheme.onSurfaceVariant),
           ],
         ),
       ),
@@ -1151,14 +1179,6 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
       );
     }
     _clearSelection();
-  }
-
-  Widget _buildAddBtn() {
-    return Btn.icon(
-      text: libL10n.add,
-      icon: const Icon(Icons.add),
-      onTap: () => showContextMenu(context, _createActions),
-    );
   }
 
   /// Dropping files from the system onto the listing.
