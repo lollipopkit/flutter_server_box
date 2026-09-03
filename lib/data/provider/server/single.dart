@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/scheduler.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -233,18 +234,42 @@ class ServerNotifier extends _$ServerNotifier {
   }
 
   // Update SPI configuration
+  /// The record behind this server was edited.
+  ///
+  /// Editing is one code path for every field a server has, and most of them
+  /// say nothing about the connection or about what runs over it. Dropping the
+  /// client here regardless is what made adding a tag — or renaming a server,
+  /// or turning off auto-connect — cost the session: the connection went, and
+  /// [ServersNotifier.updateServer] then declined to reconnect, because by its
+  /// own reckoning nothing had happened that called for one.
   void updateSpi(Spi spi) {
+    final old = state.spi;
+    final reconnect = spi.shouldReconnect(old);
+    // What was written to the machine and what was read back from it. Both are
+    // about the commands rather than the connection — the script directory and
+    // the custom commands in it, and the extended output cached for five
+    // minutes, which an edited address may have made another machine's.
+    final rewrite =
+        reconnect ||
+        spi.custom != old.custom ||
+        spi.customSystemType != old.customSystemType ||
+        !listEquals(spi.disabledCmdTypes, old.disabledCmdTypes);
+
+    if (rewrite) {
+      _scriptWritten = false;
+      _extendedRaw = '';
+      _extendedFetchedAt = null;
+    }
+
+    if (!reconnect) {
+      state = state.copyWith(spi: spi);
+      return;
+    }
+
     _operationGeneration++;
     unawaited(_disposePersistentShell());
     state.client?.close();
     _usePersistentShellForStatus = true;
-    // The edit may have moved the script directory or changed the custom
-    // commands in it, so what was written no longer matches what will be run.
-    _scriptWritten = false;
-    // Likewise the extended output: an edited address may be a different
-    // machine, and its SMART and GPU segments are cached for five minutes.
-    _extendedRaw = '';
-    _extendedFetchedAt = null;
     state = state.copyWith(
       spi: spi,
       client: null,
