@@ -21,6 +21,7 @@ import 'package:server_box/data/ssh/session_manager.dart';
 import 'package:server_box/view/page/floating_panels.dart';
 import 'package:server_box/view/page/home_tab.dart';
 import 'package:server_box/view/page/macos_menu_bar.dart';
+import 'package:server_box/view/page/setting/entries/home_tabs.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/widget/crash_report_notice.dart';
 import 'package:server_box/view/widget/dmg_notice.dart';
@@ -35,6 +36,19 @@ class HomePage extends ConsumerStatefulWidget {
 
   static const route = AppRouteNoArg(page: HomePage.new, path: '/');
 }
+
+/// How many tabs the bottom bar carries itself before the rest go behind
+/// "more".
+///
+/// Four and a fifth slot, which is where `NavigationBar` stops fitting labels
+/// on a phone. The fifth is always "more" and never a tab, even with fewer
+/// than four enabled: it is also the way to the page that arranges them, and
+/// an entry that only appears once there are too many tabs is one nobody finds
+/// while they still have few.
+///
+/// The rail has no such limit and shows every tab — it is a column, and it
+/// already carries its own way into the settings at its foot.
+const _kMaxBarTabs = 4;
 
 class _HomePageState extends ConsumerState<HomePage>
     with
@@ -368,18 +382,85 @@ class _HomePageState extends ConsumerState<HomePage>
       listenable: _selectIndex,
       builder: (context, child) {
         if (_isServerFullscreenMode) return UIs.placeholder;
+        final shown = _tabs.take(_kMaxBarTabs).toList();
+        final selected = _selectIndex.value;
         return NavigationBar(
           key: _navKey,
-          selectedIndex: _selectIndex.value,
+          // Past the bar's own tabs, what is open is inside "more" — which is
+          // then what the last destination stands for, and is lit to say so.
+          selectedIndex: selected < shown.length ? selected : shown.length,
           height: kBottomNavigationBarHeight * 1.1,
           animationDuration: const Duration(milliseconds: 250),
-          onDestinationSelected: _onDestinationSelected,
+          onDestinationSelected: (index) {
+            if (index < shown.length) return _onDestinationSelected(index);
+            unawaited(_showMoreSheet(shown.length));
+          },
           labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
           destinations: [
-            for (final tab in _tabs) tab.navDestination(onMenu: _navMenuFor(tab)),
+            for (final tab in shown) tab.navDestination(onMenu: _navMenuFor(tab)),
+            NavigationDestination(
+              icon: const Icon(Icons.more_horiz),
+              selectedIcon: const Icon(Icons.more_horiz),
+              label: libL10n.more,
+            ),
           ],
         );
       },
+    );
+  }
+
+  /// The tabs that did not fit, and the way to change which ones those are.
+  ///
+  /// [shownCount] rather than the constant: the bar shows fewer than that when
+  /// fewer are enabled, and the split has to be the one the bar actually made.
+  Future<void> _showMoreSheet(int shownCount) async {
+    final overflow = _tabs.skip(shownCount).toList();
+    final selected = _selectIndex.value;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final tab in overflow)
+              ListTile(
+                leading: tab.icon,
+                title: Text(tab.label),
+                selected: _tabs.indexOf(tab) == selected,
+                onTap: () {
+                  // The sheet closes itself; the page it came from is what
+                  // switches tabs, on the navigator that owns the tabs.
+                  Navigator.of(ctx).pop();
+                  _onDestinationSelected(_tabs.indexOf(tab));
+                },
+              ),
+            if (overflow.isNotEmpty) const Divider(height: 1),
+            // Where the tabs are arranged, reachable from the bar they arrange
+            // rather than only from four levels into the settings tree. The
+            // same page either way — this pushes it, settings embeds it.
+            ListTile(
+              leading: const Icon(Icons.tab_outlined),
+              title: Text(l10n.homeTabs),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                HomeTabsConfigPage.route.go(context);
+              },
+            ),
+            // The bottom bar has no settings button of its own — the rail on a
+            // wide window does, at its foot — and this is the slot for it.
+            ListTile(
+              leading: const Icon(Icons.settings),
+              title: Text(libL10n.setting),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                SettingsPage.route.go(context);
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
