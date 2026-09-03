@@ -811,7 +811,7 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
     };
 
     return ListView(
-      padding: context.padBottom(MultiList.kOuterPadding),
+      padding: context.padBottom(UIs.roundRectCardPadding),
       children: [group],
     );
   }

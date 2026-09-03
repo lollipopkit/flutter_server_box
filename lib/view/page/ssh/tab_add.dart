@@ -82,57 +82,58 @@ class _AddPageState extends ConsumerState<_AddPage> {
     // the servers are two kinds of thing, and a masonry grid says only "here
     // are some cards" — which is why the systems used to be pinned above it in
     // a card of their own, collapsed behind a title that named them in a
-    // subtitle. One row each, grouped, says the same thing without a control
-    // to open first. `MasonryList`'s own doc points here for grouping that
-    // means something.
-    return MultiList(
+    // subtitle. One row each, under a heading, says the same thing without a
+    // control to open first.
+    // One column at every width. The sections used to be laid side by side
+    // above 600pt, which is a width this tab has already decided is too narrow
+    // for a rail — so between 600 and 800 the picker answered with two columns
+    // of cards on a screen that was not getting a second column anywhere else.
+    return ListView(
+      padding: context.padBottom(UIs.roundRectCardPadding),
       children: [
         // First, and for the same reason the file tab lists it first: it is
         // always reachable, and it needs no credential to be.
-        if (LocalShellBackend.isSupported)
-          [
-            CenterGreyTitle(libL10n.device),
-            CardTile(
-              icon: Icons.smartphone,
-              title: libL10n.device,
-              subtitle: LocalShellBackend.shellPath,
-              onTap: widget.onLocal,
+        if (LocalShellBackend.isSupported) ...[
+          CenterGreyTitle(libL10n.device),
+          CardTile(
+            icon: Icons.smartphone,
+            title: libL10n.device,
+            subtitle: LocalShellBackend.shellPath,
+            onTap: widget.onLocal,
+          ),
+        ],
+        if (Rootfs.isAvailable) ...[
+          // Where the beta is said. It used to be the collapsed tile's
+          // title; with a row per system there is no one row it belongs to.
+          const CenterGreyTitle('Linux (Beta)'),
+          for (final profile in Rootfs.profiles)
+            _LinuxTile(
+              key: ValueKey(profile.id),
+              profile: profile,
+              onTap: () => widget.onRootfsOpen(profile.id),
+              onLongPress: () => widget.onRootfsRemove(profile),
             ),
-          ],
-        if (Rootfs.isAvailable)
-          [
-            // Where the beta is said. It used to be the collapsed tile's
-            // title; with a row per system there is no one row it belongs to.
-            const CenterGreyTitle('Linux (Beta)'),
-            for (final profile in Rootfs.profiles)
-              _LinuxTile(
-                key: ValueKey(profile.id),
-                profile: profile,
-                onTap: () => widget.onRootfsOpen(profile.id),
-                onLongPress: () => widget.onRootfsRemove(profile),
+          CardTile(
+            icon: Icons.add,
+            title: Rootfs.profiles.isEmpty ? libL10n.install : libL10n.add,
+            // Only where there is nothing yet: the line explains what a
+            // Linux system on this device *is*, which is a question the
+            // second one does not raise.
+            subtitle: Rootfs.profiles.isEmpty ? l10n.rootfsSubtitle : null,
+            onTap: widget.onRootfsAdd,
+          ),
+        ],
+        if (order.isNotEmpty) ...[
+          CenterGreyTitle(libL10n.servers),
+          for (final id in order)
+            if (state.servers[id] case final spi?)
+              _ServerTile(
+                key: ValueKey(id),
+                spi: spi,
+                onTap: () => widget.onTap(spi),
+                onLongPress: () => widget.onLongPress(spi),
               ),
-            CardTile(
-              icon: Icons.add,
-              title: Rootfs.profiles.isEmpty ? libL10n.install : libL10n.add,
-              // Only where there is nothing yet: the line explains what a
-              // Linux system on this device *is*, which is a question the
-              // second one does not raise.
-              subtitle: Rootfs.profiles.isEmpty ? l10n.rootfsSubtitle : null,
-              onTap: widget.onRootfsAdd,
-            ),
-          ],
-        if (order.isNotEmpty)
-          [
-            CenterGreyTitle(libL10n.servers),
-            for (final id in order)
-              if (state.servers[id] case final spi?)
-                _ServerTile(
-                  key: ValueKey(id),
-                  spi: spi,
-                  onTap: () => widget.onTap(spi),
-                  onLongPress: () => widget.onLongPress(spi),
-                ),
-          ],
+        ],
       ],
     );
   }

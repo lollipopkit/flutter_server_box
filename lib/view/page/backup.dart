@@ -75,7 +75,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     // bar. No heading either, for the reason [AppSettingsPage] gives: the menu
     // names the group and the bar repeats it, so a third would be one too many.
     return ListView(
-      padding: context.padBottom(MultiList.kOuterPadding),
+      padding: context.padBottom(UIs.roundRectCardPadding),
       children: switch (section) {
         BackupSection.sync => _syncTiles,
         BackupSection.import => _importTiles,
@@ -98,12 +98,18 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     _buildImportSnippet,
   ];
 
+  /// Both groups in one list, which is also what each of them is on its own
+  /// when the settings pane shows one — see above. They were columns beside
+  /// each other on a wide window, each scrolling separately inside a row that
+  /// scrolled sideways.
   Widget get _buildBody {
-    return MultiList(
-      widthDivider: 2,
+    return ListView(
+      padding: context.padBottom(UIs.roundRectCardPadding),
       children: [
-        [CenterGreyTitle(libL10n.sync), ..._syncTiles],
-        [CenterGreyTitle(libL10n.import), ..._importTiles],
+        CenterGreyTitle(libL10n.sync),
+        ..._syncTiles,
+        CenterGreyTitle(libL10n.import),
+        ..._importTiles,
       ],
     );
   }
