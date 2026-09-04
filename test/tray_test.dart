@@ -194,6 +194,36 @@ void main() {
       expect(first, isNot(reversed));
     });
 
+    test('nor is the same menu in a different language', () {
+      const english = TrayModel(lines: []);
+      const chinese = TrayModel(
+        lines: [],
+        labels: TrayMenuLabels(
+          open: '打开 ServerBox',
+          servers: '服务器',
+          empty: '空',
+          settings: '设置',
+          quit: '退出',
+        ),
+      );
+
+      expect(english, isNot(chinese));
+    });
+
+    test('serialisation carries native menu labels', () {
+      const labels = TrayMenuLabels(
+        open: '打开 ServerBox',
+        servers: '服务器',
+        empty: '空',
+        settings: '设置',
+        quit: '退出',
+      );
+
+      final json = const TrayModel(lines: [], labels: labels).toJson();
+
+      expect(json['labels'], labels.toJson());
+    });
+
     test('serialisation preserves metric keys and chart samples', () {
       const model = TrayModel(
         config: TrayConfig(metrics: [TrayMetric.swap], chart: TrayMetric.swap),

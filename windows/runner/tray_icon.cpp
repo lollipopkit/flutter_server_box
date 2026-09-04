@@ -297,6 +297,21 @@ void TrayIcon::Update(const flutter::EncodableMap& payload) {
                            : std::get_if<flutter::EncodableMap>(config_value);
   compact_ = config != nullptr && GetBool(*config, "compact");
 
+  const auto* labels_value = Find(payload, "labels");
+  const auto* labels = labels_value == nullptr
+                           ? nullptr
+                           : std::get_if<flutter::EncodableMap>(labels_value);
+  const auto label_or = [labels](const char* key, const wchar_t* fallback) {
+    if (labels == nullptr) return std::wstring(fallback);
+    std::wstring label = Widen(GetString(*labels, key));
+    return label.empty() ? std::wstring(fallback) : label;
+  };
+  const std::wstring open_label = label_or("open", L"Open ServerBox");
+  const std::wstring servers_label = label_or("servers", L"Servers");
+  const std::wstring empty_label = label_or("empty", L"Empty");
+  const std::wstring settings_label = label_or("settings", L"Settings");
+  const std::wstring quit_label = label_or("quit", L"Quit");
+
   rows_.clear();
   const auto* lines_value = Find(payload, "lines");
   const auto* lines =
@@ -342,12 +357,14 @@ void TrayIcon::Update(const flutter::EncodableMap& payload) {
   if (menu_ != nullptr) DestroyMenu(menu_);
   menu_ = CreatePopupMenu();
 
-  AppendMenu(menu_, MF_STRING, kCmdOpen, L"Open ServerBox");
+  AppendMenu(menu_, MF_STRING, kCmdOpen, open_label.c_str());
   AppendMenu(menu_, MF_SEPARATOR, 0, nullptr);
 
-  AppendMenu(menu_, MF_STRING | MF_GRAYED | MF_DISABLED, 0, L"Servers");
+  AppendMenu(menu_, MF_STRING | MF_GRAYED | MF_DISABLED, 0,
+             servers_label.c_str());
   if (rows_.empty()) {
-    AppendMenu(menu_, MF_STRING | MF_GRAYED | MF_DISABLED, 0, L"Empty");
+    AppendMenu(menu_, MF_STRING | MF_GRAYED | MF_DISABLED, 0,
+               empty_label.c_str());
   } else {
     for (size_t i = 0; i < rows_.size(); i++) {
       const UINT id = kFirstRow + static_cast<UINT>(i);
@@ -363,8 +380,8 @@ void TrayIcon::Update(const flutter::EncodableMap& payload) {
   }
 
   AppendMenu(menu_, MF_SEPARATOR, 0, nullptr);
-  AppendMenu(menu_, MF_STRING, kCmdSettings, L"Settings");
-  AppendMenu(menu_, MF_STRING, kCmdQuit, L"Quit");
+  AppendMenu(menu_, MF_STRING, kCmdSettings, settings_label.c_str());
+  AppendMenu(menu_, MF_STRING, kCmdQuit, quit_label.c_str());
 }
 
 void TrayIcon::ShowMenu() {

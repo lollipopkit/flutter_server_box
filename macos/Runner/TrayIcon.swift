@@ -99,18 +99,23 @@ final class TrayIcon: NSObject, NSMenuDelegate {
         let config = root["config"] as? [String: Any] ?? [:]
         let compact = config["compact"] as? Bool ?? false
         let lines = root["lines"] as? [[String: Any]] ?? []
+        let labels = root["labels"] as? [String: Any] ?? [:]
+        func label(_ key: String, fallback: String) -> String {
+            guard let value = labels[key] as? String, !value.isEmpty else { return fallback }
+            return value
+        }
 
         menu.removeAllItems()
 
-        menu.addItem(command(NSLocalizedString("Open ServerBox", comment: "Tray: bring the app forward"), "open"))
+        menu.addItem(command(label("open", fallback: "Open ServerBox"), "open"))
         menu.addItem(.separator())
 
-        let header = NSMenuItem(title: NSLocalizedString("Servers", comment: "Tray: section heading"), action: nil, keyEquivalent: "")
+        let header = NSMenuItem(title: label("servers", fallback: "Servers"), action: nil, keyEquivalent: "")
         header.isEnabled = false
         menu.addItem(header)
 
         if lines.isEmpty {
-            let empty = NSMenuItem(title: NSLocalizedString("Empty", comment: "Tray: no servers configured"), action: nil, keyEquivalent: "")
+            let empty = NSMenuItem(title: label("empty", fallback: "Empty"), action: nil, keyEquivalent: "")
             empty.isEnabled = false
             menu.addItem(empty)
         } else {
@@ -120,8 +125,8 @@ final class TrayIcon: NSObject, NSMenuDelegate {
         }
 
         menu.addItem(.separator())
-        menu.addItem(command(NSLocalizedString("Settings", comment: "Tray: open the settings page"), "settings"))
-        menu.addItem(command(NSLocalizedString("Quit", comment: "Tray: leave the app"), "quit"))
+        menu.addItem(command(label("settings", fallback: "Settings"), "settings"))
+        menu.addItem(command(label("quit", fallback: "Quit"), "quit"))
     }
 
     private func command(_ title: String, _ method: String) -> NSMenuItem {

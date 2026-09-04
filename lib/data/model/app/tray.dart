@@ -37,6 +37,46 @@ TrayLineState trayStateOf(ServerConn conn) => switch (conn) {
   ServerConn.connected || ServerConn.finished => TrayLineState.ok,
 };
 
+/// The native commands around the server rows, in the app's current language.
+///
+/// Dart owns these words so all three platform menus follow the same locale.
+/// English defaults keep older native runners and small model tests useful.
+class TrayMenuLabels {
+  const TrayMenuLabels({
+    this.open = 'Open ServerBox',
+    this.servers = 'Servers',
+    this.empty = 'Empty',
+    this.settings = 'Settings',
+    this.quit = 'Quit',
+  });
+
+  final String open;
+  final String servers;
+  final String empty;
+  final String settings;
+  final String quit;
+
+  Map<String, Object?> toJson() => {
+    'open': open,
+    'servers': servers,
+    'empty': empty,
+    'settings': settings,
+    'quit': quit,
+  };
+
+  @override
+  bool operator ==(Object other) =>
+      other is TrayMenuLabels &&
+      other.open == open &&
+      other.servers == servers &&
+      other.empty == empty &&
+      other.settings == settings &&
+      other.quit == quit;
+
+  @override
+  int get hashCode => Object.hash(open, servers, empty, settings, quit);
+}
+
 /// A reading the menu can show, and the series a chart can be drawn from.
 ///
 /// The set is what every source can answer for — SSH and a monitor agent both
@@ -247,13 +287,19 @@ class TrayLine {
 /// whole on all three platforms, so a push while it is open closes it — and at
 /// the refresh rate that would make it unusable.
 class TrayModel {
-  const TrayModel({required this.lines, this.config = const TrayConfig()});
+  const TrayModel({
+    required this.lines,
+    this.config = const TrayConfig(),
+    this.labels = const TrayMenuLabels(),
+  });
 
   final List<TrayLine> lines;
   final TrayConfig config;
+  final TrayMenuLabels labels;
 
   Map<String, Object?> toJson() => {
     'config': config.toJson(),
+    'labels': labels.toJson(),
     'lines': [for (final l in lines) l.toJson()],
   };
 
@@ -261,6 +307,7 @@ class TrayModel {
   bool operator ==(Object other) =>
       other is TrayModel &&
       other.config == config &&
+      other.labels == labels &&
       other.lines.length == lines.length &&
       _same(other.lines);
 
@@ -272,7 +319,7 @@ class TrayModel {
   }
 
   @override
-  int get hashCode => Object.hash(config, Object.hashAll(lines));
+  int get hashCode => Object.hash(config, labels, Object.hashAll(lines));
 }
 
 /// The readings [metrics] asks for, formatted.

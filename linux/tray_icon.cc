@@ -43,11 +43,18 @@ void OnRow(GtkMenuItem*, gpointer data) {
 void FreeRow(gpointer data, GClosure*) { delete static_cast<RowId*>(data); }
 
 const char* LookupString(FlValue* map, const char* key) {
+  if (map == nullptr || fl_value_get_type(map) != FL_VALUE_TYPE_MAP) return "";
   FlValue* value = fl_value_lookup_string(map, key);
   if (value == nullptr || fl_value_get_type(value) != FL_VALUE_TYPE_STRING) {
     return "";
   }
   return fl_value_get_string(value);
+}
+
+const char* LookupStringOr(FlValue* map, const char* key,
+                           const char* fallback) {
+  const char* value = LookupString(map, key);
+  return value[0] == '\0' ? fallback : value;
 }
 
 /// The series as a small picture, because that is the only way a chart reaches
@@ -150,11 +157,15 @@ void Update(FlValue* payload) {
   if (g_menu != nullptr) gtk_widget_destroy(g_menu);
   g_menu = gtk_menu_new();
 
-  gtk_menu_shell_append(GTK_MENU_SHELL(g_menu),
-                        MakeCommand("Open ServerBox", "open"));
+  FlValue* labels = fl_value_lookup_string(payload, "labels");
+
+  gtk_menu_shell_append(
+      GTK_MENU_SHELL(g_menu),
+      MakeCommand(LookupStringOr(labels, "open", "Open ServerBox"), "open"));
   gtk_menu_shell_append(GTK_MENU_SHELL(g_menu), gtk_separator_menu_item_new());
 
-  GtkWidget* header = gtk_menu_item_new_with_label("Servers");
+  GtkWidget* header = gtk_menu_item_new_with_label(
+      LookupStringOr(labels, "servers", "Servers"));
   gtk_widget_set_sensitive(header, FALSE);
   gtk_menu_shell_append(GTK_MENU_SHELL(g_menu), header);
 
@@ -164,7 +175,8 @@ void Update(FlValue* payload) {
           ? fl_value_get_length(lines)
           : 0;
   if (count == 0) {
-    GtkWidget* empty = gtk_menu_item_new_with_label("Empty");
+    GtkWidget* empty = gtk_menu_item_new_with_label(
+        LookupStringOr(labels, "empty", "Empty"));
     gtk_widget_set_sensitive(empty, FALSE);
     gtk_menu_shell_append(GTK_MENU_SHELL(g_menu), empty);
   } else {
@@ -175,9 +187,13 @@ void Update(FlValue* payload) {
   }
 
   gtk_menu_shell_append(GTK_MENU_SHELL(g_menu), gtk_separator_menu_item_new());
-  gtk_menu_shell_append(GTK_MENU_SHELL(g_menu),
-                        MakeCommand("Settings", "settings"));
-  gtk_menu_shell_append(GTK_MENU_SHELL(g_menu), MakeCommand("Quit", "quit"));
+  gtk_menu_shell_append(
+      GTK_MENU_SHELL(g_menu),
+      MakeCommand(LookupStringOr(labels, "settings", "Settings"),
+                  "settings"));
+  gtk_menu_shell_append(
+      GTK_MENU_SHELL(g_menu),
+      MakeCommand(LookupStringOr(labels, "quit", "Quit"), "quit"));
 
   gtk_widget_show_all(g_menu);
   app_indicator_set_menu(g_indicator, GTK_MENU(g_menu));

@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart' hide Provider;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/app_navigator.dart';
 import 'package:server_box/data/model/app/tab.dart';
@@ -48,7 +50,7 @@ import 'package:window_manager/window_manager.dart';
 /// Nothing here polls. The rows come from the providers that were already
 /// refreshing on the app's own cycle, so the menu costs one rebuild per change
 /// and nothing at all while nothing changes.
-class TrayService with WindowListener {
+class TrayService with WindowListener, WidgetsBindingObserver {
   TrayService(this._ref);
 
   final Ref _ref;
@@ -61,6 +63,7 @@ class TrayService with WindowListener {
   final _watched = <String, ProviderSubscription<ServerState>>{};
 
   ProviderSubscription<ServersState>? _watchedAll;
+  ValueListenable<String>? _localeListenable;
 
   /// What was last pushed, so an unchanged model is not pushed again.
   ///
@@ -76,6 +79,9 @@ class TrayService with WindowListener {
     if (!isDesktop) return;
     _channel.setMethodCallHandler(_onNative);
     windowManager.addListener(this);
+    WidgetsBinding.instance.addObserver(this);
+    _localeListenable = Stores.setting.locale.listenable()
+      ..addListener(_onLocaleChanged);
     await _applyCloseBehaviour();
 
     _watchedAll = _ref.listen<ServersState>(
@@ -89,6 +95,8 @@ class TrayService with WindowListener {
     _disposed = true;
     _debounce?.cancel();
     windowManager.removeListener(this);
+    WidgetsBinding.instance.removeObserver(this);
+    _localeListenable?.removeListener(_onLocaleChanged);
     for (final sub in _watched.values) {
       sub.close();
     }
@@ -144,6 +152,14 @@ class TrayService with WindowListener {
     _debounce = Timer(const Duration(milliseconds: 300), _sync);
   }
 
+  void _onLocaleChanged() {
+    _shown = null;
+    _schedule();
+  }
+
+  @override
+  void didChangeLocales(List<Locale>? locales) => _onLocaleChanged();
+
   /// What the settings say the menu should look like.
   TrayConfig get config {
     final metrics = <TrayMetric>[];
@@ -191,7 +207,17 @@ class TrayService with WindowListener {
       );
     }
 
-    final model = TrayModel(lines: lines, config: settings);
+    final model = TrayModel(
+      lines: lines,
+      config: settings,
+      labels: TrayMenuLabels(
+        open: '${libL10n.open} ServerBox',
+        servers: libL10n.servers,
+        empty: libL10n.empty,
+        settings: libL10n.setting,
+        quit: libL10n.exit,
+      ),
+    );
     if (model == _shown) return;
     _shown = model;
     await _invoke('update', model.toJson());
