@@ -424,6 +424,32 @@ class AppLocalizationsKo extends AppLocalizations {
       '이 스위치는 프로그램이 백그라운드에서 실행을 시도한다는 의미입니다. 실제 백그라운드 실행 가능 여부는 권한 활성화 여부에 따라 다릅니다. AOSP 기반 Android ROM의 경우, 이 앱의 \"배터리 최적화\"를 비활성화해 주세요. MIUI / HyperOS의 경우, 절전 정책을 \"무제한\"으로 변경해 주세요.';
 
   @override
+  String get trayTitle => '상태 아이콘';
+
+  @override
+  String get trayReadings => '측정값';
+
+  @override
+  String get trayChart => '차트';
+
+  @override
+  String get trayChartNone => '없음';
+
+  @override
+  String get trayCompact => '간결한 행';
+
+  @override
+  String get trayCompactTip =>
+      '차트 없이 서버당 한 줄로 표시합니다. Linux는 패널 메뉴를 D-Bus로 전송하며 사용자 지정 레이아웃 대신 레이블을 전달하므로 항상 한 줄 레이아웃을 사용하지만, 선택한 차트를 이미지로 포함할 수 있습니다.';
+
+  @override
+  String get trayKeepRunning => '트레이에서 계속 실행';
+
+  @override
+  String get trayKeepRunningTip =>
+      '창을 닫아도 앱이 메뉴 막대 또는 알림 영역에 남아 서버를 계속 모니터링합니다. 끄면 닫기 버튼으로 앱이 종료됩니다.';
+
+  @override
   String get bgRunNeedsNotification =>
       '백그라운드 실행에는 상주 알림이 필요하지만, 이 앱에는 알림 권한이 없습니다. 눌러서 알림을 허용하세요.';
 

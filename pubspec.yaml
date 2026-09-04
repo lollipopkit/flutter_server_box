@@ -104,7 +104,6 @@ dependencies:
   fixnum: ^1.1.1
   device_info_plus: ^13.2.0
   aptabase_flutter: ^0.5.0
-
 dev_dependencies:
   integration_test:
     sdk: flutter

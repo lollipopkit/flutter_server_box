@@ -53,6 +53,10 @@ add_subdirectory(${FLUTTER_MANAGED_DIR})
 # System-level dependencies.
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTK REQUIRED IMPORTED_TARGET gtk+-3.0)
+# The panel status icon. A hard dependency, and deliberately at configure time:
+# the alternative is an app that builds and then cannot show an icon, which is
+# harder to diagnose than a build that says what is missing.
+pkg_check_modules(APPINDICATOR REQUIRED IMPORTED_TARGET ayatana-appindicator3-0.1)
 
 add_definitions(-DAPPLICATION_ID="${APPLICATION_ID}")
 
@@ -63,6 +67,7 @@ add_definitions(-DAPPLICATION_ID="${APPLICATION_ID}")
 add_executable(${BINARY_NAME}
   "main.cc"
   "my_application.cc"
+  "tray_icon.cc"
   "${FLUTTER_MANAGED_DIR}/generated_plugin_registrant.cc"
 )
 
@@ -73,6 +78,7 @@ apply_standard_settings(${BINARY_NAME})
 # Add dependency libraries. Add any application-specific dependencies here.
 target_link_libraries(${BINARY_NAME} PRIVATE flutter)
 target_link_libraries(${BINARY_NAME} PRIVATE PkgConfig::GTK)
+target_link_libraries(${BINARY_NAME} PRIVATE PkgConfig::APPINDICATOR)
 
 # Run the Flutter tool portions of the build. This must not be removed.
 add_dependencies(${BINARY_NAME} flutter_assemble)
@@ -125,6 +131,102 @@ foreach(bundled_library ${PLUGIN_BUNDLED_LIBRARIES})
     DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
     COMPONENT Runtime)
 endforeach(bundled_library)
+
+# The status icon's own libraries, which nothing else here would carry.
+#
+# `tray_icon.cc` links libayatana-appindicator rather than opening it, so the
+# loader needs it present at *startup*: a machine without it does not get an
+# app with no status icon, it gets an app that will not start. That is fine for
+# the deb and the rpm, where a dependency can be declared, and not fine for the
+# AppImage, which is meant to be a single file that runs.
+#
+# The chain rather than the one name: appindicator pulls in the ayatana
+# indicator library and both halves of dbusmenu, and bundling only the first
+# moves the failure one library along. Resolved by SONAME and skipped when not
+# found, because which of these a distribution splits out varies and a missing
+# one here should not fail the build — the deb and rpm paths do not need any of
+# this.
+function(INSTALL_TRAY_LIBRARY library_path)
+  if(NOT IS_SYMLINK "${library_path}")
+    install(FILES "${library_path}"
+      DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+      COMPONENT Runtime)
+    return()
+  endif()
+
+  # `install(FILES)` can copy only the SONAME symlink returned by
+  # `find_library`, leaving its versioned target outside the AppImage. Follow
+  # the complete chain at configure time, install the real file, then rebuild
+  # every link using only names inside the bundle.
+  set(current_path "${library_path}")
+  set(visited_paths)
+  set(link_names)
+  set(link_targets)
+  while(IS_SYMLINK "${current_path}")
+    list(FIND visited_paths "${current_path}" visited_index)
+    if(NOT visited_index EQUAL -1)
+      message(FATAL_ERROR "Circular tray library symlink: ${current_path}")
+    endif()
+    list(APPEND visited_paths "${current_path}")
+
+    execute_process(
+      COMMAND readlink "${current_path}"
+      RESULT_VARIABLE readlink_result
+      OUTPUT_VARIABLE link_target
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+    if(NOT readlink_result EQUAL 0 OR link_target STREQUAL "")
+      message(FATAL_ERROR "Could not resolve tray library symlink: ${current_path}")
+    endif()
+
+    get_filename_component(link_name "${current_path}" NAME)
+    get_filename_component(link_dir "${current_path}" DIRECTORY)
+    if(IS_ABSOLUTE "${link_target}")
+      set(next_path "${link_target}")
+    else()
+      get_filename_component(next_path "${link_dir}/${link_target}" ABSOLUTE)
+    endif()
+    get_filename_component(target_name "${next_path}" NAME)
+    list(APPEND link_names "${link_name}")
+    list(APPEND link_targets "${target_name}")
+    set(current_path "${next_path}")
+  endwhile()
+
+  install(FILES "${current_path}"
+    DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+    COMPONENT Runtime)
+
+  list(LENGTH link_names link_count)
+  math(EXPR last_link "${link_count} - 1")
+  foreach(link_index RANGE 0 ${last_link})
+    list(GET link_names ${link_index} link_name)
+    list(GET link_targets ${link_index} target_name)
+    install(CODE "
+      file(REMOVE \"${INSTALL_BUNDLE_LIB_DIR}/${link_name}\")
+      execute_process(
+        COMMAND \"${CMAKE_COMMAND}\" -E create_symlink
+          \"${target_name}\" \"${INSTALL_BUNDLE_LIB_DIR}/${link_name}\"
+        RESULT_VARIABLE tray_symlink_result)
+      if(NOT tray_symlink_result EQUAL 0)
+        message(FATAL_ERROR \"Failed to create tray library symlink: ${link_name}\")
+      endif()
+      " COMPONENT Runtime)
+  endforeach()
+endfunction()
+
+foreach(soname
+  "libayatana-appindicator3.so.1"
+  "libayatana-indicator3.so.7"
+  "libdbusmenu-glib.so.4"
+  "libdbusmenu-gtk3.so.4"
+)
+  # `NAMES` with the full SONAME, so what lands in the bundle is the real file
+  # under the name the loader will ask for. A `find_library` on the base name
+  # answers with the `-dev` symlink, which is not in the bundle to follow.
+  find_library(TRAY_LIB_${soname} NAMES "${soname}")
+  if(TRAY_LIB_${soname})
+    install_tray_library("${TRAY_LIB_${soname}}")
+  endif()
+endforeach()
 
 # Copy the native assets provided by the build.dart from all packages.
 set(NATIVE_ASSETS_DIR "${PROJECT_BUILD_DIR}native_assets/linux/")

@@ -421,6 +421,32 @@ class AppLocalizationsJa extends AppLocalizations {
       'このスイッチはプログラムがバックグラウンドで実行を試みることを意味しますが、実際にバックグラウンドで実行できるかどうかは、権限が有効になっているかに依存します。AOSPベースのAndroid ROMでは、このアプリの「バッテリー最適化」をオフにしてください。MIUIでは、省エネモードを「無制限」に変更してください。';
 
   @override
+  String get trayTitle => 'ステータスアイコン';
+
+  @override
+  String get trayReadings => '測定値';
+
+  @override
+  String get trayChart => 'グラフ';
+
+  @override
+  String get trayChartNone => 'なし';
+
+  @override
+  String get trayCompact => 'コンパクトな行';
+
+  @override
+  String get trayCompactTip =>
+      'グラフなしで、サーバーごとに1行で表示します。Linux はパネルメニューを D-Bus 経由で送信し、カスタムレイアウトではなくラベルを渡すため、常に1行レイアウトになりますが、選択したグラフを画像として含めることはできます。';
+
+  @override
+  String get trayKeepRunning => 'トレイで実行し続ける';
+
+  @override
+  String get trayKeepRunningTip =>
+      'ウィンドウを閉じてもアプリはメニューバーまたは通知領域に残り、サーバーの監視を続けます。オフにすると、閉じるボタンでアプリを終了します。';
+
+  @override
   String get bgRunNeedsNotification =>
       'バックグラウンド実行には常駐通知が必要ですが、このアプリには通知の許可がありません。タップして通知を許可してください。';
 

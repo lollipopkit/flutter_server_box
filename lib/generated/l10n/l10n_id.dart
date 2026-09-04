@@ -449,6 +449,32 @@ class AppLocalizationsId extends AppLocalizations {
       'Sakelar ini hanya berarti aplikasi akan mencoba berjalan di latar belakang, apakah aplikasi dapat berjalan di latar belakang tergantung pada apakah izin diaktifkan atau tidak. Untuk Android asli, nonaktifkan \"Pengoptimalan Baterai\" di aplikasi ini, dan untuk miui, ubah kebijakan penghematan daya ke \"Tidak Terbatas\".';
 
   @override
+  String get trayTitle => 'Ikon status';
+
+  @override
+  String get trayReadings => 'Pembacaan';
+
+  @override
+  String get trayChart => 'Grafik';
+
+  @override
+  String get trayChartNone => 'Tidak ada';
+
+  @override
+  String get trayCompact => 'Baris ringkas';
+
+  @override
+  String get trayCompactTip =>
+      'Satu baris per server, tanpa grafik. Linux selalu menggunakan tata letak satu baris karena menu panelnya dikirim melalui D-Bus, yang membawa label alih-alih tata letak khusus; grafik yang dipilih tetap dapat disertakan sebagai gambar.';
+
+  @override
+  String get trayKeepRunning => 'Tetap berjalan di baki sistem';
+
+  @override
+  String get trayKeepRunningTip =>
+      'Menutup jendela akan membiarkan aplikasi tetap berjalan di bilah menu atau area notifikasi, dan tetap memantau server Anda. Nonaktifkan ini agar tombol tutup mengakhiri aplikasi.';
+
+  @override
   String get bgRunNeedsNotification =>
       'Berjalan di latar belakang butuh notifikasi permanen, dan aplikasi ini tidak punya izin notifikasi. Ketuk untuk memberikannya.';
 

@@ -27,6 +27,7 @@ class StatusHistory {
   /// Percent, 0-100
   final cpu = Fifo<double?>(capacity: capacity);
   final mem = Fifo<double?>(capacity: capacity);
+  final swap = Fifo<double?>(capacity: capacity);
   final disk = Fifo<double?>(capacity: capacity);
   final battery = Fifo<double?>(capacity: capacity);
 
@@ -59,6 +60,7 @@ class StatusHistory {
     required int timeMs,
     double? cpu,
     double? mem,
+    double? swap,
     double? disk,
     double? netRx,
     double? netTx,
@@ -76,6 +78,7 @@ class StatusHistory {
     time.add(timeMs);
     this.cpu.add(cpu);
     this.mem.add(mem);
+    this.swap.add(swap);
     this.disk.add(disk);
     this.netRx.add(netRx);
     this.netTx.add(netTx);
@@ -109,6 +112,7 @@ class StatusHistory {
         timeMs: s.timeMs,
         cpu: s.cpu,
         mem: s.mem,
+        swap: s.swap,
         disk: s.disk,
         netRx: s.netRx,
         netTx: s.netTx,
@@ -126,6 +130,7 @@ class StatusHistorySample {
   final int timeMs;
   final double? cpu;
   final double? mem;
+  final double? swap;
   final double? disk;
   final double? netRx;
   final double? netTx;
@@ -138,6 +143,7 @@ class StatusHistorySample {
     required this.timeMs,
     this.cpu,
     this.mem,
+    this.swap,
     this.disk,
     this.netRx,
     this.netTx,
