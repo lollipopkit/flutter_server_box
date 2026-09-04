@@ -449,7 +449,7 @@ jobs:
     uses: ./.github/workflows/android-reproducible.yml
 
   buildAndroid:
-    name: Build android
+    name: Build Android (${{ matrix.abi }})
     if: >-
       github.ref_type == 'tag'
       || contains(needs.reproducibilityCheck.outputs.selected, ',android,')
@@ -462,6 +462,16 @@ jobs:
       APP_NAME: ${{ needs.reproducibilityCheck.outputs.appName }}
       BUILD_NUMBER: ${{ needs.reproducibilityCheck.outputs.buildNumber }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - abi: arm64
+            target: android-arm64
+          - abi: arm
+            target: android-arm
+          - abi: amd64
+            target: android-x64
     # See `buildMacOS` — publication is one job, and it is the only one that
     # needs to write.
     permissions:
@@ -510,21 +520,23 @@ jobs:
       # here. Without this step the feature is absent from the build rather
       # than broken in it, which is why the check below exists.
       - name: Build proot
+        if: matrix.abi == 'arm64'
         shell: bash
         run: scripts/build-proot-android.sh
       - name: Build (release)
         if: needs.reproducibilityCheck.outputs.isRelease == 'true'
         shell: bash
-        run: dart run fl_build -bp -p android
+        run: dart run fl_build -bp -p android -- --target-platform=${{ matrix.target }}
       - name: Build (test)
         if: needs.reproducibilityCheck.outputs.isRelease != 'true'
         shell: bash
-        run: dart run fl_build -p android
+        run: dart run fl_build -p android -- --target-platform=${{ matrix.target }}
       # `useLegacyPackaging` off means nothing is extracted from the APK, so
       # `nativeLibraryDir` does not exist and proot cannot be run from
       # anywhere. The APK still builds, installs and runs — the rootfs entry
       # simply never appears. Checked here because nothing else would say so.
       - name: Check proot shipped
+        if: matrix.abi == 'arm64'
         shell: bash
         run: |
           shopt -s nullglob
@@ -545,18 +557,14 @@ jobs:
           done
           # Remove original APKs copied by fl_build
           rm -f app-*-release.apk
-      # Named one by one rather than `*.apk`, so the artifact holds exactly what
-      # a release publishes and nothing else. `if-no-files-found` only fires
-      # when *no* pattern matched, so it does not catch a single missing ABI —
-      # `publishRelease`'s `Check every expected asset arrived` is what does.
+      # Each matrix leg names one exact APK. Besides making a missing ABI fail
+      # at its source, this keeps the release build invocation identical to the
+      # one F-Droid runs for that ABI.
       - name: Upload artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-android
-          path: |
-            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_arm64.apk
-            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_arm.apk
-            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_amd64.apk
+          name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-android-${{ matrix.abi }}
+          path: build/app/outputs/flutter-apk/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_${{ matrix.abi }}.apk
           if-no-files-found: error
           retention-days: 14
       # A native crash reaches us as a tombstone full of addresses, and these
@@ -567,11 +575,16 @@ jobs:
       # it, not when the build was made. This does not cover an APK built by
       # F-Droid on their own servers -- reproducibility is what covers that,
       # by allowing the same binary to be rebuilt here.
+      - name: Name native debug symbols
+        shell: bash
+        run: |
+          mv build/app/outputs/native-debug-symbols/release/native-debug-symbols.zip \
+            build/app/outputs/native-debug-symbols/release/native-debug-symbols-${{ matrix.abi }}.zip
       - name: Upload native debug symbols
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-android-symbols
-          path: build/app/outputs/native-debug-symbols/release/native-debug-symbols.zip
+          name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-android-${{ matrix.abi }}-symbols
+          path: build/app/outputs/native-debug-symbols/release/native-debug-symbols-${{ matrix.abi }}.zip
           if-no-files-found: error
           retention-days: 90
 
