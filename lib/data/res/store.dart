@@ -9,6 +9,7 @@ import 'package:server_box/data/store/history.dart';
 import 'package:server_box/data/store/migrations/m003_hive_to_sqlite.dart';
 import 'package:server_box/data/store/port_forward.dart';
 import 'package:server_box/data/store/private_key.dart';
+import 'package:server_box/data/store/self_addr.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/server_dist.dart';
 import 'package:server_box/data/store/setting.dart';
@@ -48,6 +49,16 @@ abstract final class Stores {
       getIt<ConnectionStatsStore>();
   static PortForwardStore get portForward => getIt<PortForwardStore>();
 
+  /// What each server said its own address is.
+  ///
+  /// The only thing about the globe that is remembered. There was a second
+  /// store beside it holding where each *host* was, and it went with the
+  /// per-lookup network requests it existed for — see [IpGeo.resolve]. This one
+  /// stays because it is not a cache of a computation: only the machine knows
+  /// which public address is assigned to one of its interfaces, so nothing
+  /// here can work it out again.
+  static SelfAddrStore get selfAddr => getIt<SelfAddrStore>();
+
   /// What each server was last seen running. A cache of an observation, not a
   /// record anyone edits — see [ServerDistStore].
   static ServerDistStore get serverDist => getIt<ServerDistStore>();
@@ -65,8 +76,13 @@ abstract final class Stores {
   ///
   /// `container` is absent because its rows are children of `server`: changing
   /// a container host stamps the server that owns it.
-  static List<EntityStore> get _entityStores =>
-      [server, key, bmcCredential, snippet, portForward];
+  static List<EntityStore> get _entityStores => [
+    server,
+    key,
+    bmcCredential,
+    snippet,
+    portForward,
+  ];
 
   static Future<void> init() async {
     getIt.registerLazySingleton<SettingStore>(() => SettingStore.instance);
@@ -92,6 +108,7 @@ abstract final class Stores {
     getIt.registerLazySingleton<PortForwardStore>(
       () => PortForwardStore.instance,
     );
+    getIt.registerLazySingleton<SelfAddrStore>(() => SelfAddrStore.instance);
 
     // First and on its own: everything below reaches the database, and a
     // `Future.wait` invokes every element before awaiting any of them — so
@@ -120,6 +137,10 @@ abstract final class Stores {
 
     await Future.wait([
       ..._kvStores.map((store) => store.init()),
+      // Not in `_kvStores`, and that is the point: a server answering where it
+      // is is not something the user did, so it must not move the clock sync
+      // reads.
+      selfAddr.init(),
       // Not a table to create — only the per-launch sweep of expired rows.
       connectionStats.init(),
     ]);

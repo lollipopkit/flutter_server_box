@@ -150,6 +150,19 @@ flutter:
     # in there — see the README beside them, which Flutter leaves out because
     # it only bundles files it can load.
     - assets/distro/
+    # What the globe draws: the coastline outline and nothing else, 20 KB,
+    # built by `scripts/build_land_asset.py` from Natural Earth 110m.
+    #
+    # The 4 MB country database that used to sit beside it is gone. City-level
+    # data covers both address families and is downloaded on request, so a
+    # bundled coarser copy would have cost every install 4 MB to answer worse.
+    - assets/geo/
+  shaders:
+    # The sphere's shading and its atmosphere. Compiled ahead of time on every
+    # platform — Impeller has been the default renderer everywhere since 3.47 —
+    # and not required: `GlobePainter` falls back to a radial gradient if the
+    # program will not load.
+    - shaders/globe.frag
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
   # fonts:

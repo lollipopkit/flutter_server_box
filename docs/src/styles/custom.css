@@ -1,7 +1,28 @@
 /* Server Box Custom Styles */
 
+/*
+ * The accent follows the app's default theme color: `SettingStore.colorSeed`
+ * defaults to 4287106639 = #880e4f, which the app feeds to `ColorScheme.fromSeed`.
+ *
+ * Starlight wants three tones per theme, not one, and swaps low/high between
+ * them — so `--sl-color-accent-high` is the light tone in dark mode and the
+ * dark one in light mode. The low and high tones here are the seed's own
+ * OKLCH hue and chroma at Starlight's own lightness steps, so the ramp reads
+ * as one color rather than three.
+ *
+ * These blocks are unlayered while Starlight's live in `@layer starlight.core`,
+ * so they win regardless of specificity — which is also why the light-mode
+ * block is needed at all: without it, `:root` alone leaves half of Starlight's
+ * default blue in place there.
+ */
 :root {
-	--sl-color-accent: #02569b;
-	--sl-color-accent-low: #02569b15;
-	--starlight-cards--border: var(--sl-color-accent-low);
+	--sl-color-accent-low: #5a0a33;
+	--sl-color-accent: #880e4f;
+	--sl-color-accent-high: #f0b5ca;
+}
+
+:root[data-theme='light'] {
+	--sl-color-accent-low: #f0b5ca;
+	--sl-color-accent: #a31460;
+	--sl-color-accent-high: #5a0a33;
 }

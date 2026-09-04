@@ -1,4 +1,5 @@
 import 'package:hive_ce/hive.dart';
+import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/hive/spi_legacy_adapter.dart';
 
@@ -33,6 +34,7 @@ void registerHiveLegacyAdapters() {
   Hive.registerAdapter(LegacySnippetAdapter());
   Hive.registerAdapter(LegacyMonitorHttpCredentialAdapter());
   Hive.registerAdapter(LegacySshCredentialAdapter());
+  Hive.registerAdapter(LegacyServerCustomAdapter());
 }
 
 /// typeId 1, as written up to and including v1.0.1491: an id that was also the
@@ -170,6 +172,86 @@ class LegacySshCredentialV1 {
     jumpIds: jumpIds,
     proxyCommand: proxyCommand,
   );
+}
+
+/// typeId 7, as written up to and including v1.0.1491: nine fields, at the
+/// indexes those builds used, which start at 1 rather than 0.
+///
+/// Frozen the moment `ServerCustom` gained `geo`, and that field is worth
+/// describing because it is the *other* way a generated adapter goes wrong.
+/// The read was safe — a nullable field gets a null cast, and no box carries
+/// one — but `write` had become `writer.write(obj.geo)` for a type with no
+/// adapter registered anywhere, so the first thing to write a record would
+/// have failed with `unknown type: GeoCoord`. Nothing writes Hive, so it would
+/// have sat there being fine until something did.
+class LegacyServerCustomV1 {
+  const LegacyServerCustomV1({
+    required this.pveAddr,
+    required this.pveIgnoreCert,
+    required this.pvePwd,
+    required this.cmds,
+    required this.preferTempDev,
+    required this.tempIsCelsius,
+    required this.logoUrl,
+    required this.netDev,
+    required this.scriptDir,
+  });
+
+  final String? pveAddr;
+  final bool pveIgnoreCert;
+  final String? pvePwd;
+  final Map<String, String>? cmds;
+  final String? preferTempDev;
+  final bool tempIsCelsius;
+  final String? logoUrl;
+  final String? netDev;
+  final String? scriptDir;
+
+  /// Today's model, with everything those builds could not express left at its
+  /// default — `geo` is null, because a coordinate is something the user gives
+  /// a server and no Hive install was ever asked for one.
+  ServerCustom toCustom() => ServerCustom(
+    pveAddr: pveAddr,
+    pveIgnoreCert: pveIgnoreCert,
+    pvePwd: pvePwd,
+    cmds: cmds,
+    preferTempDev: preferTempDev,
+    tempIsCelsius: tempIsCelsius,
+    logoUrl: logoUrl,
+    netDev: netDev,
+    scriptDir: scriptDir,
+  );
+}
+
+class LegacyServerCustomAdapter extends TypeAdapter<LegacyServerCustomV1> {
+  @override
+  final typeId = 7;
+
+  @override
+  LegacyServerCustomV1 read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return LegacyServerCustomV1(
+      pveAddr: fields[1] as String?,
+      pveIgnoreCert: fields[2] == null ? false : fields[2] as bool,
+      cmds: (fields[3] as Map?)?.cast<String, String>(),
+      preferTempDev: fields[4] as String?,
+      logoUrl: fields[5] as String?,
+      netDev: fields[6] as String?,
+      scriptDir: fields[7] as String?,
+      pvePwd: fields[8] as String?,
+      // False, not true, and not the model's default either: it is what the
+      // generated adapter answered for a record written before the field
+      // existed, and this type's job is to say what those builds wrote.
+      tempIsCelsius: fields[9] == null ? false : fields[9] as bool,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, LegacyServerCustomV1 obj) =>
+      throw UnsupportedError('Hive is read-only');
 }
 
 class LegacySshCredentialAdapter extends TypeAdapter<LegacySshCredentialV1> {

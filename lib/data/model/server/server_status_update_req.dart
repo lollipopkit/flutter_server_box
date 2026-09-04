@@ -127,7 +127,12 @@ ServerStatus _createWorkingStatus(ServerStatus source, SystemType system) {
   // mark beside its name blinked out and came back on the next successful
   // read.
   ..osId = source.osId
-  ..osIdLike = source.osIdLike;
+  ..osIdLike = source.osIdLike
+  // Same reason, and it was missing: `_applyMore` writes `ips` only when the
+  // response carried some, so without this a poll whose extended output did
+  // not arrive cleared the addresses — and the server dropped off the globe
+  // back into the unplaced strip until another extended cycle came round.
+  ..ips = source.ips;
 }
 
 List<SingleCpuCore> _coresFromJson(List cores) {
@@ -313,6 +318,12 @@ void _applyMore(ServerStatus ss, Map<String, dynamic> status) {
         (status['os_id_like'] as List?)?.whereType<String>().toList() ??
         const [];
   }
+  // Left alone when the section is absent rather than cleared: this refreshes
+  // on the extended cadence, so most polls carry no `ips` at all and clearing
+  // would blank the globe's answer between two extended runs.
+  final ips = (status['ips'] as List?)?.whereType<String>().toList();
+  if (ips != null && ips.isNotEmpty) ss.ips = ips;
+
   final host = status['host'] as String?;
   if (host != null && !host.contains(ScriptConstants.scriptFile)) {
     ss.more[StatusCmdType.host] = host;

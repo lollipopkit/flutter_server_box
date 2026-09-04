@@ -72,10 +72,14 @@ Future<void> _runInZone(Future<void> Function() body) async {
       } else {
         Loggers.app.severe('Zone error', e, s);
       }
-      // Recorded either way above; only the dialog on the next launch is
+      // Recorded either way above; only what the next launch does about it is
       // gated. A server that answers with something this app cannot parse is
       // not the app ending badly — see [CrashReport.isAppFault].
-      if (CrashReport.isAppFault(e)) CrashLog.markUnhandled();
+      //
+      // The error travels into the marker so the next launch can report it if
+      // nothing here did. Whether it is kept is decided by `CrashLog`, against
+      // whether a sink was uploading at this moment — see [CrashLog.uploadsNow].
+      if (CrashReport.isAppFault(e)) CrashLog.markUnhandled(e, s);
     },
     zoneSpecification: zoneSpec,
   );
@@ -215,6 +219,11 @@ void _setupDebug() {
     DebugProvider.addLog(record);
   });
   CrashLog.handleErrors();
+  // Before the first error can arrive, so the marker knows from the outset
+  // whether anything else is hearing about a crash. Answers false for most of
+  // startup — the sink goes in at the end of `_doPlatformRelated` — which is
+  // exactly the window whose crashes nothing used to report.
+  CrashLog.uploadsNow = () => DiagnosticsUpload.uploading;
   // Local only, and that is the whole of it: nothing is sent anywhere, so
   // there is nothing to ask the user's permission for. The file is theirs
   // until they paste it into a report — which is also why a crumb has to be
@@ -270,7 +279,28 @@ Future<void> _doPlatformRelated() async {
   // user asked for it. Neither is true by default. Not awaited: the local sink
   // is already recording, and a slow or unreachable server must not hold up
   // startup to add a second destination for it.
-  unawaited(DiagnosticsUpload.sync());
+  //
+  // The crash report is split around it, because only half of it needs a sink.
+  // Both orderings matter. `CrashReport.keep` writes the file the settings page
+  // offers and waits for nothing — behind the sink it waited on `Sentry.init`
+  // and two analytics clients, so on a slow endpoint the row was missing from a
+  // page opened straight after launch. `CrashReport.report` files the error and
+  // has nowhere to send it until the sink is in. Both are after
+  // `NativeExitReport.collect` above, which is what may decide the previous run
+  // ended badly at all.
+  unawaited(() async {
+    await CrashReport.keep();
+    // Isolated, because a throw here would take `report` with it and leave the
+    // previous run's crash unreported for the sake of an unrelated failure —
+    // and, being unawaited, would reach the zone handler and mark *this* run
+    // as having ended badly too.
+    try {
+      await DiagnosticsUpload.sync();
+    } catch (e, s) {
+      Loggers.app.warning('Crash upload sync failed', e, s);
+    }
+    CrashReport.report();
+  }());
 
   // Where the Linux userland is, and whether there is one — proot and an
   // unpacked rootfs on Android, the engine and its filesystem on iOS. A few

@@ -71,6 +71,15 @@ abstract final class DiagnosticsUpload {
   static DiagnosticsLevel get level =>
       DiagnosticsLevel.fromName(Stores.setting.diagnosticsLevel.fetch());
 
+  /// Whether an error handed to [Diag] *now* would be uploaded.
+  ///
+  /// Not the same question as [level]: a level that uploads still answers
+  /// false for the whole of startup, because the sink goes in at the end of
+  /// `_doPlatformRelated`. That gap is what [CrashLog.uploadsNow] reads it
+  /// for — a crash inside it is one nothing sent, and the only one the next
+  /// launch has to report on its behalf.
+  static bool get uploading => _started != null;
+
   /// Starts, stops or re-levels uploading to match the setting.
   ///
   /// Safe to call whenever the setting changes, and at launch.
@@ -134,7 +143,6 @@ abstract final class DiagnosticsUpload {
         // app supplying it.
         options.attachThreads = false;
       });
-      _started = wanted;
       // Before the sink is installed, so the first error to arrive already
       // says what it arrived from. The pure-Dart SDK cannot work this out for
       // itself — see [DiagnosticsPlatform], which is also where the line
@@ -163,6 +171,13 @@ abstract final class DiagnosticsUpload {
           const OpenPanelSink(),
         ]),
       );
+      // **Only now.** [uploading] answers from this, and `CrashLog.uploadsNow`
+      // reads that to decide whether the marker keeps the error — so between
+      // an early assignment and this line, `uploading` said yes while nothing
+      // was installed to make it true. That window is two awaits wide and both
+      // reach the network, so a crash inside it was recorded as one somebody
+      // had already heard about, and the next launch dropped it.
+      _started = wanted;
       Loggers.app.info('Crash upload started at ${wanted.name}');
       // The last thing, and only now: a native crash is collected before this
       // runs and has been waiting for a sink that uploads. Without this the

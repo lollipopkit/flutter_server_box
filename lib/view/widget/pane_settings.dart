@@ -4,9 +4,9 @@ import 'package:server_box/data/res/store.dart';
 
 /// How wide the list is in every list-beside-content layout in the app.
 ///
-/// [SbPaneList] binds it to [AdaptiveSideList]; [PaneSettings.listen] binds it
-/// to anything else — the server list, whose detail is a route and so uses
-/// [AdaptivePanes] instead.
+/// [SbPaneList] binds it to [AdaptivePanes.surface]; [PaneSettings.listen]
+/// binds it to anything else — the server list, whose detail is a route and
+/// so uses [AdaptivePanes.detail] instead.
 ///
 /// The server list, the terminal and file rails and the agent's history all
 /// want exactly this, and each used to spell it out — which is three places to

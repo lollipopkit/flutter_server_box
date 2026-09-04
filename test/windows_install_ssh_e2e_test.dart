@@ -116,26 +116,52 @@ class _SshTarget {
     );
   }
 
-  /// The first identity that loads, decrypting with
-  /// `SBM_E2E_SSH_KEY_PASSPHRASE` when one is set. Nothing prompts: a test that
-  /// blocks on a passphrase is the hang this file exists to measure.
-  List<SSHKeyPair> loadIdentities() {
+  /// The first identity that loads, and why each of the others did not.
+  ///
+  /// Decrypts with `SBM_E2E_SSH_KEY_PASSPHRASE` when one is set. Nothing
+  /// prompts: a test that blocks on a passphrase is the hang this file exists
+  /// to measure.
+  ///
+  /// **[reasons] is the point of the return type.** This used to swallow every
+  /// exception and answer an empty list, so a blank passphrase, a wrong one, a
+  /// key format the fork does not read and a path that is not there all failed
+  /// identically — and the failure the runner printed was a guess written into
+  /// the `reason:` of an `expect`. Every one of those has a different fix, and
+  /// the loader is the only place that knows which it was.
+  ({List<SSHKeyPair> pairs, List<String> reasons}) loadIdentities() {
     final passphrase = _env('SBM_E2E_SSH_KEY_PASSPHRASE');
+    final reasons = <String>[];
     for (final path in identityFiles) {
+      // The basename, never the path: `ssh -G` resolves `~`, and a home
+      // directory is a username. This text ends up in CI logs.
+      final name = path.split(Platform.pathSeparator).last;
       final file = File(path);
-      if (!file.existsSync()) continue;
+      if (!file.existsSync()) {
+        reasons.add('$name: not on this machine');
+        continue;
+      }
       final pem = file.readAsStringSync();
-      try {
-        final pairs = SSHKeyPair.fromPem(
-          pem,
-          SSHKeyPair.isEncryptedPem(pem) ? passphrase : null,
+      final encrypted = SSHKeyPair.isEncryptedPem(pem);
+      if (encrypted && passphrase == null) {
+        // The case that cost an afternoon: `.env` carried the key with an
+        // empty value, which `_env` reads as unset — correctly — and the
+        // failure then blamed the identity file.
+        reasons.add(
+          '$name: encrypted, and SBM_E2E_SSH_KEY_PASSPHRASE is empty or unset',
         );
-        if (pairs.isNotEmpty) return pairs;
-      } catch (_) {
-        // Wrong passphrase, or not a key this fork reads. Try the next one.
+        continue;
+      }
+      try {
+        final pairs = SSHKeyPair.fromPem(pem, encrypted ? passphrase : null);
+        if (pairs.isNotEmpty) return (pairs: pairs, reasons: reasons);
+        reasons.add('$name: parsed, but carried no key pair');
+      } catch (e) {
+        // The message, not the object: a wrong passphrase and a format this
+        // fork cannot read both arrive here and read differently.
+        reasons.add('$name: $e');
       }
     }
-    return const [];
+    return (pairs: const [], reasons: reasons);
   }
 }
 
@@ -208,13 +234,15 @@ void main() {
 
     final target = await _SshTarget.resolve(host);
     expect(target, isNotNull, reason: 'ssh -G could not resolve the host');
-    final identities = target!.loadIdentities();
+    final loaded = target!.loadIdentities();
+    final identities = loaded.pairs;
     expect(
       identities,
       isNotEmpty,
-      reason:
-          'none of the identity files ssh -G named could be loaded; if the key '
-          'is encrypted, set SBM_E2E_SSH_KEY_PASSPHRASE (environment or .env)',
+      reason: loaded.reasons.isEmpty
+          ? 'ssh -G named no identity files for this host'
+          : 'no identity ssh -G named could be loaded:\n'
+                '  ${loaded.reasons.join('\n  ')}',
     );
 
     final connected = await _connect(target, identities);

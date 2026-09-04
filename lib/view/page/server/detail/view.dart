@@ -12,6 +12,7 @@ import 'package:redfish/redfish.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/server.dart';
 import 'package:server_box/core/route.dart';
+import 'package:server_box/core/service/self_addr.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/model/server/amd.dart';
@@ -592,34 +593,45 @@ ${err.message ?? 'null'}
 
   Widget? _buildAbout(ServerState si) {
     final ss = si.status;
+    final publicIp = SelfAddr.pick(ss.ips);
     return ExpandTile(
       leading: const Icon(MingCute.information_fill, size: 20),
       controller: _expand('about', _getInitExpand(ss.more.entries.length)),
       title: Text(libL10n.about),
       childrenPadding: const EdgeInsets.symmetric(horizontal: 17, vertical: 11),
-      children: ss.more.entries
-          .map(
-            (e) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 2),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    e.key.i18n,
-                    style: UIs.text13,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    e.value,
-                    style: UIs.text13Grey,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          )
-          .toList(),
+      children: [
+        for (final e in ss.more.entries) _buildAboutRow(e.key.i18n, e.value),
+        // Absent rather than blank when there is none: an empty value here
+        // would read as the machine having no address, when the ordinary
+        // reason is that the extended poll has not landed yet — or that this
+        // machine genuinely is only on a LAN, which is not a fact about the
+        // server worth a row of its own.
+        if (publicIp != null)
+          _buildAboutRow(l10n.publicIp, publicIp.address, secret: true),
+      ],
     ).cardx;
+  }
+
+  Widget _buildAboutRow(String label, String value, {bool secret = false}) {
+    return Padding(
+      // On the row itself, which is what the enclosing list reconciles. Keying
+      // the `_SecretText` inside did nothing: the `Padding`s are matched by
+      // index first, and a keyed child looking for its element among unkeyed
+      // ones of another type simply gets a new one — so a revealed address
+      // still hid itself the moment `ss.more` gained an entry.
+      key: ValueKey('about-$label'),
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: UIs.text13, overflow: TextOverflow.ellipsis),
+          if (secret)
+            _SecretText(value)
+          else
+            Text(value, style: UIs.text13Grey, overflow: TextOverflow.ellipsis),
+        ],
+      ),
+    );
   }
 
   /// CPU: the live figure, its breakdown, the per-core bars, its own trend,
@@ -1749,6 +1761,65 @@ ${err.message ?? 'null'}
       child: Text(key: key, text, style: style, textScaler: _textFactor),
       transitionBuilder: (child, animation) =>
           FadeTransition(opacity: animation, child: child),
+    );
+  }
+}
+
+/// A value that is on screen only once someone asks for it.
+///
+/// A public address is not a secret — anything the server talks to already has
+/// it — but it is the one line on this page that identifies the machine to
+/// someone reading over a shoulder or watching a screen share, and it is on a
+/// card people open for the uptime. Hidden by default costs one tap and
+/// removes that.
+///
+/// **The row that holds this is keyed by its label**, because it is one child
+/// of a list whose length is `ss.more.entries.length + 1`. Matched by index, a
+/// later poll that adds a `more` entry lines it up against a different
+/// subtree, the element is rebuilt from scratch, and an address the user
+/// revealed hides itself again mid-session. By label rather than by value, so
+/// that an address changing does not count as a different row — see
+/// `_buildAboutRow`.
+///
+/// The placeholder has the same number of characters as the address, not the
+/// same width — `•` is not the width of a digit in a proportional face, so
+/// revealing does re-flow the row a little. Monospacing the placeholder alone
+/// would swap that for a bullet run that does not look like the text it stands
+/// for, which is worse on a card people are scanning.
+class _SecretText extends StatefulWidget {
+  const _SecretText(this.value);
+
+  final String value;
+
+  @override
+  State<_SecretText> createState() => _SecretTextState();
+}
+
+class _SecretTextState extends State<_SecretText> {
+  bool _shown = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          _shown ? widget.value : '•' * widget.value.length,
+          style: UIs.text13Grey,
+          overflow: TextOverflow.ellipsis,
+        ),
+        IconButton(
+          padding: EdgeInsets.zero,
+          visualDensity: VisualDensity.compact,
+          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          iconSize: 15,
+          icon: Icon(
+            _shown ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+          ),
+          tooltip: _shown ? libL10n.close : libL10n.open,
+          onPressed: () => setState(() => _shown = !_shown),
+        ),
+      ],
     );
   }
 }

@@ -45,13 +45,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get privacyPolicy => '隐私政策';
 
   @override
-  String get crashUpload => '上传崩溃报告';
-
-  @override
-  String get crashUploadTip => '将崩溃报告发送给开发者。已知的服务器名称和地址会被替换为占位符。默认关闭，可随时停用。';
-
-  @override
-  String get crashNoticeBody => 'ServerBox 上次运行时异常退出。要查看崩溃报告吗？';
+  String get crashLastRunFailed => 'ServerBox 上次运行时异常退出。';
 
   @override
   String get crashReportTitle => '崩溃报告';
@@ -342,6 +336,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get logoUrlTip => '服务器详情页顶部的大图,按原色显示。';
+
+  @override
+  String get globe => '地球仪';
+
+  @override
+  String get locationTip =>
+      '此服务器在地球仪上的显示位置。纬度在前、经度在后，单位为度，例如 39.9042, 116.4074。';
 
   @override
   String get markUrl => '标识地址';
@@ -1641,6 +1642,51 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get termInFloatWindow => '此终端正在悬浮窗中';
+
+  @override
+  String get globeEnabledTip =>
+      '根据服务器地址的地理位置，在地球仪上显示服务器。关闭后，服务器页面会隐藏该按钮，并停止所有地理位置查询。';
+
+  @override
+  String get geoShardsConsentAttribution =>
+      'IP 地理位置数据由 [DB-IP](https://db-ip.com) 提供，采用 CC BY 4.0 许可。';
+
+  @override
+  String get geoMissPrivate => '非公网地址';
+
+  @override
+  String get geoMissNoData => '无可用位置数据';
+
+  @override
+  String get globeGuide => '点击这里，在地球仪上查看服务器及其地址对应的位置。';
+
+  @override
+  String get publicIp => '公网 IP';
+
+  @override
+  String get geoData => '城市级数据';
+
+  @override
+  String get geoDataTip => '下载后，所有地理位置查询都使用保存在本机的数据，不会向下载服务发送服务器地址或查询活动。';
+
+  @override
+  String get geoDataMissing => '未下载';
+
+  @override
+  String get geoDataUnreachable => '无法获取数据。';
+
+  @override
+  String get geoDataRemoveFailed => '无法删除数据。';
+
+  @override
+  String geoDataCurrent(Object month) {
+    return '已经是 $month 的数据。';
+  }
+
+  @override
+  String geoDataConsent(Object download, Object disk) {
+    return '**下载大小：$download · 本机占用：$disk。** 完整数据集保存在本机，后续所有地理位置查询均在本地完成，不会向下载服务发送服务器地址或查询活动。\n\n数据每月更新。新版本会替换已安装的数据，不保留额外副本；你可以随时删除。';
+  }
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -1684,14 +1730,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get privacyPolicy => '隱私權政策';
 
   @override
-  String get crashUpload => '上傳當機報告';
-
-  @override
-  String get crashUploadTip =>
-      '除了保留在本機外，也會將當機報告傳送給開發者。已知的伺服器名稱和位址會替換為預留位置，但其他資訊可能仍會保留。預設關閉，可隨時停用。';
-
-  @override
-  String get crashNoticeBody => 'ServerBox 上次執行時異常結束。要查看當機報告嗎？';
+  String get crashLastRunFailed => 'ServerBox 上次執行時異常結束。';
 
   @override
   String get crashReportTitle => '當機報告';
@@ -1982,6 +2021,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get logoUrlTip => '伺服器詳情頁頂部的大圖,按原色顯示。';
+
+  @override
+  String get globe => '地球儀';
+
+  @override
+  String get locationTip =>
+      '此伺服器在地球儀上的顯示位置。緯度在前、經度在後，單位為度，例如 39.9042, 116.4074。';
 
   @override
   String get markUrl => '標識位址';
@@ -3282,4 +3328,49 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get termInFloatWindow => '此終端正在懸浮視窗中';
+
+  @override
+  String get globeEnabledTip =>
+      '根據伺服器位址的地理位置，在地球儀上顯示伺服器。關閉後，伺服器頁面會隱藏該按鈕，並停止所有地理位置查詢。';
+
+  @override
+  String get geoShardsConsentAttribution =>
+      'IP 地理位置資料由 [DB-IP](https://db-ip.com) 提供，採用 CC BY 4.0 授權。';
+
+  @override
+  String get geoMissPrivate => '非公網位址';
+
+  @override
+  String get geoMissNoData => '無可用位置資料';
+
+  @override
+  String get globeGuide => '點這裡，在地球儀上檢視伺服器及其位址對應的位置。';
+
+  @override
+  String get publicIp => '公網 IP';
+
+  @override
+  String get geoData => '城市級資料';
+
+  @override
+  String get geoDataTip => '下載後，所有地理位置查詢都使用儲存在本機的資料，不會向下載服務傳送伺服器位址或查詢活動。';
+
+  @override
+  String get geoDataMissing => '未下載';
+
+  @override
+  String get geoDataUnreachable => '無法取得資料。';
+
+  @override
+  String get geoDataRemoveFailed => '無法刪除資料。';
+
+  @override
+  String geoDataCurrent(Object month) {
+    return '已經是 $month 的資料。';
+  }
+
+  @override
+  String geoDataConsent(Object download, Object disk) {
+    return '**下載大小：$download · 本機空間：$disk。** 完整資料集儲存在本機，後續所有地理位置查詢都在本機完成，不會向下載服務傳送伺服器位址或查詢活動。\n\n資料每月更新。新版本會取代已安裝的資料，不保留額外副本；你可以隨時刪除。';
+  }
 }

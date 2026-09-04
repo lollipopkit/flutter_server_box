@@ -22,6 +22,19 @@ RC_SERVICE="server-box-monitor"
 TMP_DIR="${TMPDIR:-/tmp}/server-box-monitor-install"
 # TODO(migration residue; remove once no legacy users remain): bare binary location of legacy installs
 LEGACY_BIN="/usr/local/bin/server_box_monitor"
+INSTALL_URL="https://raw.githubusercontent.com/$REPO/main/monitor/install.sh"
+
+# How to spell "run this again" back at the user. The documented install pipes
+# this file into sh, and there $0 is `sh` — so a message built from it reads
+# "sudo sh install", which is not a command that does anything. A file at $0 is
+# the only case where $0 is that command.
+if [ -f "$0" ]; then
+    SELF="$0"
+    SELF_ROOT="sudo $0"
+else
+    SELF="curl -fsSL $INSTALL_URL | sh -s --"
+    SELF_ROOT="curl -fsSL $INSTALL_URL | sudo sh -s --"
+fi
 
 MODE="user"
 CMD=""
@@ -32,7 +45,7 @@ for arg in "$@"; do
         install|uninstall|upgrade) CMD="$arg" ;;
         *)
             echo "Unknown argument: $arg"
-            echo "Usage: $0 [install|uninstall|upgrade] [--user|--system]"
+            echo "Usage: $SELF [install|uninstall|upgrade] [--user|--system]"
             exit 1
             ;;
     esac
@@ -143,7 +156,7 @@ else
         if [ -z "$RUN_USER" ]; then
             echo "Cannot tell which account the agent should run as."
             echo
-            echo "  Re-run as 'sudo $0 $CMD' from that account, or pass"
+            echo "  Re-run as '$SELF_ROOT $CMD' from that account, or pass"
             echo "  --system to deliberately run the agent as root."
             exit 1
         fi
@@ -510,11 +523,18 @@ uninstall() {
     [ "$MODE" = "system" ] && rm -f "$LEGACY_BIN"
 
     if [ -d "$APP_DIR" ]; then
-        printf "Remove %s (including database and .env)? [y/N] " "$APP_DIR"
-        read -r ans
+        # Ask the terminal, not stdin. Piped into sh, stdin *is* this script,
+        # so a bare `read` consumes the lines below instead of an answer. With
+        # no terminal to ask, keep the directory — the reversible direction.
+        if [ -r /dev/tty ]; then
+            printf "Remove %s (including database and .env)? [y/N] " "$APP_DIR"
+            read -r ans < /dev/tty || ans=""
+        else
+            ans=""
+        fi
         case "$ans" in
             y|Y) rm -rf "$APP_DIR" ;;
-            *) echo "Kept $APP_DIR" ;;
+            *) echo "Kept $APP_DIR (remove it by hand to drop the database and .env)" ;;
         esac
     fi
     echo "Uninstall success"
@@ -525,7 +545,7 @@ case "$CMD" in
     uninstall) resolve_target; uninstall ;;
     upgrade) resolve_target; upgrade ;;
     *)
-        echo "Usage: $0 [install|uninstall|upgrade] [--user|--system]"
+        echo "Usage: $SELF [install|uninstall|upgrade] [--user|--system]"
         echo
         echo "  --user    (default) the agent runs as an ordinary account"
         echo "  --system  the agent runs as root"

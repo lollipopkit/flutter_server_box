@@ -59,9 +59,26 @@ final class _AppAboutPageState extends State<_AppAboutPage>
             ),
           ),
           UIs.height13,
+          // The DB-IP line is required, not courteous: the city data is a CC BY
+          // 4.0 derivative and attribution has to travel with it. Nothing is
+          // bundled any more — the download is the whole of it — so this page
+          // is not where the licence condition is discharged; the consent
+          // dialog carries the manifest's own attribution line, which is the
+          // copy that arrives with the data. It is repeated here because that
+          // dialog is seen once, and somebody looking for what this app is
+          // built on looks at About.
           SimpleMarkdown(
             data:
                 '''
+#### Map data
+IP geolocation by [DB-IP](https://db-ip.com), used under
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Built into
+[ipgeo-shards](${Urls.geoDataRepo}), which is where the recipe is.
+
+Coastlines from [Natural Earth](https://www.naturalearthdata.com/), which is
+in the public domain. Named as a source, not as an endorsement — the project
+asks that none be implied.
+
 #### Contributors
 ${GithubIds.contributors.map((e) => e.prsMarkdownLink).join(' ')}
 

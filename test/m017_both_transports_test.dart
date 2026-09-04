@@ -12,6 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
+import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/migrations/m017_both_transports.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/tables.dart';
@@ -100,6 +101,24 @@ void main() {
       .select('PRAGMA table_info(server);')
       .map((column) => column['name'] as String)
       .toList();
+
+  /// This step, and then every step registered after it.
+  ///
+  /// Only the store round-trip below wants this. That test writes through
+  /// today's [ServerStore], which names today's columns — so stopping at the
+  /// step under test fails on whichever column a later step added, and reports
+  /// it as the round trip being broken rather than as the test having stopped
+  /// too early. Every other test here asserts what *this* step produces and
+  /// must not run anything past it.
+  Future<void> applyThisAndEverythingAfter() async {
+    const step = BothTransportsMigration();
+    final rest =
+        kSchemaMigrations.where((m) => m.from >= step.from).toList()
+          ..sort((a, b) => a.from.compareTo(b.from));
+    for (final m in rest) {
+      await m.apply();
+    }
+  }
 
   test('adds the column and keeps every server', () async {
     await createV17Schema();
@@ -205,7 +224,7 @@ void main() {
 
   test('a round trip through the store keeps both credentials', () async {
     await createV17Schema();
-    await const BothTransportsMigration().apply();
+    await applyThisAndEverythingAfter();
 
     final store = ServerStore();
     store.put(

@@ -62,7 +62,7 @@ final class TerminalShellProvider
   }
 }
 
-String _$terminalShellHash() => r'c65bedb82cce9d9d6455db7fd66993452d68f7a9';
+String _$terminalShellHash() => r'299a1e89ddae0025d654822d4914247285e5e55e';
 
 /// Which terminal is floating, if any.
 ///

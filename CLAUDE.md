@@ -1,381 +1,191 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code (claude.ai/code) when working in this repository.
 
 ## Commands
 
-A `Makefile` wraps most common tasks — run `make help` for the full list. Preferred shortcuts:
-
-- `make deps` / `make run` / `make analyze` (`flutter analyze lib test integration_test`)
-- `make gen` - build_runner + gen-l10n in one step
-- `make build PLATFORM=<android|ios|macos|linux|windows>` - wraps `dart run fl_build -p PLATFORM`
-- `make monitor-dev` - monitor backend (API on :3770) + panel vite dev server (:3000) together
-- Release packaging (macOS DMG, Homebrew cask sync): `make release-macos-dmg`, `make package-dmg`, `make sync-homebrew-cask`
+`make help` lists everything. Common: `make deps`, `make run`, `make analyze`, `make gen` (build_runner + gen-l10n), `make build PLATFORM=<android|ios|macos|linux|windows>`, `make monitor-dev` (API :3770 + panel :3000), `make release-macos-dmg`, `make package-dmg`, `make sync-homebrew-cask`.
 
 ### Development
 
-- **The app is normally already running from the user's IDE (VS Code, F5). Do not start another `flutter run`** — a second debug build competes for the same window, and you end up looking at an instance the user is not. Apply changes through the dart MCP server: `dtd` → `listDtdUris` → `connect` to the instance whose workspace root is this repo, then `hot_reload` with the app's URI from `listConnectedApps`.
-  - Changes to `main()`, or anything else that runs before `runApp`, need `hot_restart`: a reload does not re-run them.
-  - `flutter run` is still the right call when there is no such instance, or when the point is the launch path itself (a first-launch migration, `_initApp` ordering).
-- `flutter run` - Run the app in development mode
-- `flutter run --release -PallowDebugReleaseSigning=true` - Run Android release locally with explicit debug-signing fallback for verification only
-- `dart run fl_build -p PLATFORM` - Build the app for specific platform (see fl_build package)
-- `dart run build_runner build --delete-conflicting-outputs` - Generate code for models with annotations (json_serializable, freezed, hive, riverpod)
-  - Every time you change model files, run this command to regenerate code (Hive adapters, Riverpod providers, etc.)
-  - Generated files include: `*.g.dart`, `*.freezed.dart` files
+- **The app is normally already running from the user's IDE. Do not start a second `flutter run`** — it competes for the same window and you end up looking at an instance the user is not. Apply changes through the dart MCP server: `dtd` → `listDtdUris` → `connect` to the instance whose workspace root is this repo → `hot_reload` with the URI from `listConnectedApps`.
+  - Changes to `main()` or anything before `runApp` need `hot_restart`.
+  - `flutter run` is right only when no such instance exists, or when the launch path itself is the subject (first-launch migration, `_initApp` ordering).
+- `dart run build_runner build --delete-conflicting-outputs` after changing any annotated model (freezed, json_serializable, hive, riverpod).
+- `flutter run --release -PallowDebugReleaseSigning=true` — local Android release verification only.
+- Use dart mcp to hot restart/reload
 
 ### Testing
 
-- `flutter test` - Run unit tests
-- `flutter test test/disk_test.dart` - Run specific test file (or `make test-one TEST=test/disk_test.dart`)
-- `cargo test --workspace` - Run all Rust tests (parser, FFI shell, monitor)
-- SSH e2e (opt-in): set `SBM_E2E_SSH_HOST=<ssh destination or ~/.ssh/config alias>` in the workspace-root `.env`, then `cargo test -p sbm_parser --test ssh_e2e` — uploads the generated script to the remote, runs it, and compares the parsed result against direct command output; silently skipped when unset
-- A widget test whose tree writes to a store opens the database **in memory**: `await openTestDb()` from `test/helpers/test_db.dart` in `setUp`, `SqliteDb.close` in `tearDown`, and the store's `forTest()` constructor. That helper is `openInMemory` + the `foreign_keys` pragma + `createTables`; a store backed by a table finds nothing to read without it. `forTest()` no longer varies the name — the schema fixes it — and exists only so the singleton's list cache is not shared between tests. Widgets that persist on their own — the floating Agent writes its mode on every change, panes write their width on every drag — write without the test asking them to, so this applies to more trees than it looks like.
-  - This is also why: a `testWidgets` body runs in a fake-async zone, and a real *file* write started there completes on a callback that zone is no longer pumping. Under Hive that left the box's write lock held, `close()` in `tearDown` blocked forever, and `flutter test` waited on the process — one such test hung the whole run with no failure and no output naming the file. An in-memory database has no such lock, but keeping the writes off disk is still the rule.
-- **A storage migration keeps a permanent regression test, fed by bytes the release being migrated *from* actually wrote.** Permanent meaning the test is never retired once the migration ships; it runs and finishes on every `flutter test` like any other. It gets one pass over a user's records and is not repeatable — once the marker is written the old data is never read again — so a bug there is silence, not a crash. Seeding through the current adapters proves only that today's code agrees with itself.
-  - `test/fixtures/hive_v{1466,1480,1491}/` hold boxes generated by those releases' own adapters (see the shared README for the worktree recipe). `test/hive_release_migration_test.dart` runs **both** steps against each — `HiveImport` and then `KvToTablesMigration` — because the shape between them is one no build ships, and asserting there would prove nothing. `test/hive_import_test.dart` keeps its own scope: the import's mechanics (retry, idempotency, per-box progress), asserted against `kv`, which is all the import produces.
-  - This is not theoretical, twice over. The fixtures' first run exposed `PortForwardConfig` being lost during import — the one freezed model with no `.g.dart` and so no generated `toJson`, which `SqliteStore.set` reports by returning `false` rather than throwing. Their first run against m004 then exposed four field-name mismatches, each silently dropping a whole store: `pubKeyId` vs `keyId`, `private_key` vs `key`, snake_case in `AgentConversation.toJson`, and generated Hive adapters that could no longer open a box at all.
-  - Do the same for the next migration, and never regenerate a fixture to make a failing test pass.
-  - **A schema step is three edits, and a passing test for the step proves none of the other two.** The class, `SchemaVersion.current` in `lib/data/store/schema.dart`, and the `kSchemaMigrations` list in `lib/data/store/migrations/all.dart`. Leave `current` behind and the step is registered and never reached — every install stays on the old version with a green test suite. Advance `current` without registering it and `SchemaVersion.migrate` throws `Missing schema migration from vN`, which happens at launch and on a user's device rather than in a test. Neither is visible in the migration's own test, which calls `apply()` directly.
-  - **A step that changes a table *constraint* is a rebuild, not an `ALTER`.** SQLite cannot drop or replace one, so the only way is the documented create-copy-drop-rename — see `m017_both_transports.dart`. `server` is the parent of six tables with `ON DELETE CASCADE`, so `foreign_keys` must be **off** while the old table is dropped (or the drop takes every tag, jump, env and custom command with it) and **on** again afterwards (or every cascade in the app is disarmed for the life of the connection). `PRAGMA foreign_keys` is a no-op inside a transaction, so it is set outside one. `legacy_alter_table` is the other half: without it the rename rewrites the child tables' foreign keys to point at a table that is about to not exist.
-- Size the view, not the surface, when a test depends on a breakpoint: `tester.view.physicalSize` + `devicePixelRatio`. `setSurfaceSize` changes what the tree is laid out in but not what `MediaQuery` reports, so a "phone" test written that way silently exercises the desktop rendering.
-- `pumpAndSettle` is not usable on a tree containing a text field or another always-scheduling widget: it waits for a frame in which nothing is scheduled, and then gives up after its 10-minute default. Count the frames out with `pump(duration)` instead. `--timeout 30s` keeps any such mistake from costing ten minutes.
+- `flutter test`, `flutter test test/disk_test.dart` (or `make test-one TEST=...`), `cargo test --workspace`.
+- SSH e2e (opt-in): set `SBM_E2E_SSH_HOST=<ssh destination or config alias>` in the workspace-root `.env`, then `cargo test -p sbm_parser --test ssh_e2e`. Silently skipped when unset.
+- **A widget test whose tree writes to a store opens the database in memory**: `await openTestDb()` (`test/helpers/test_db.dart`) in `setUp`, `SqliteDb.close` in `tearDown`, and the store's `forTest()` constructor. `forTest()` exists only so the singleton's list cache is not shared between tests.
+  - A `testWidgets` body runs in a fake-async zone, and a real *file* write started there completes on a callback that zone no longer pumps. Under Hive that held the box's write lock, `close()` blocked forever, and one such test hung the whole run with no failure naming the file.
+  - Widgets persist on their own — the floating Agent writes its mode on every change, panes write their width on every drag — so this applies to more trees than it looks like.
+- **A storage migration keeps a permanent regression test, fed by bytes the release being migrated *from* actually wrote.** A migration gets one pass over a user's records and is not repeatable, so a bug there is silence rather than a crash; seeding through today's adapters only proves the code agrees with itself.
+  - `test/fixtures/hive_v{1466,1480,1491}/` hold boxes generated by those releases' own adapters (recipe in the shared README). `test/hive_release_migration_test.dart` runs **both** steps against each — `HiveImport` then `KvToTablesMigration` — because the shape between them is one no build ships. `test/hive_import_test.dart` covers import mechanics only (retry, idempotency, per-box progress), asserted against `kv`.
+  - Their first run found `PortForwardConfig` lost during import (no `.g.dart`, so no generated `toJson`, which `SqliteStore.set` reports by returning `false`), then four field-name mismatches against m004 that each silently dropped a whole store.
+  - Never regenerate a fixture to make a failing test pass.
+- **A schema step is three edits**: the class, `SchemaVersion.current` (`lib/data/store/schema.dart`), and `kSchemaMigrations` (`lib/data/store/migrations/all.dart`). Missing the second leaves every install on the old version with a green suite; missing the third throws `Missing schema migration from vN` at launch on a user's device. Neither is visible in the step's own test, which calls `apply()` directly.
+- **Changing a table *constraint* is a create-copy-drop-rename, not an `ALTER`** — see `m017_both_transports.dart`. `server` is the parent of six `ON DELETE CASCADE` tables, so `foreign_keys` must be off across the drop (or it takes every tag, jump, env and custom command with it) and on again after (or every cascade is disarmed for the connection's life). `PRAGMA foreign_keys` is a no-op inside a transaction, so set it outside one. `legacy_alter_table` is the other half: without it the rename rewrites children's foreign keys to point at a table about to not exist.
+- Size the view, not the surface, for breakpoint tests: `tester.view.physicalSize` + `devicePixelRatio`. `setSurfaceSize` changes layout but not what `MediaQuery` reports, so a "phone" test written that way exercises the desktop rendering.
+- `pumpAndSettle` never returns on a tree with a text field or another always-scheduling widget; it gives up after its 10-minute default. Count frames with `pump(duration)`, and use `--timeout 30s`.
 
 ### Rust / FFI
 
-- `cargo build -p sbm_ffi` - Build the FFI crate; required before running `flutter test test/frb_parser_test.dart` and `test/ssh_native_crypto_test.dart` (`test/rust_lib_helper.dart` loads the dylib from `target/`)
-- `flutter_rust_bridge_codegen generate` - Regenerate FRB bindings after changing `crates/sbm_ffi/src/api` (config: `flutter_rust_bridge.yaml`; Dart output `lib/src/rust/`, do not edit generated code). Its `dart fix`/`dart format` pass is scoped to that output directory, so it is safe to run.
-  - **Never run `flutter_rust_bridge_codegen integrate`.** It is greenfield scaffolding: on this repo it reformats the whole project *and every submodule*, and writes a second Rust crate at `rust/` beside the real one. To see what a template looks like, run `create` in a temp directory instead.
-- **SSH crypto comes from `sbm_ffi` too**, installed as `NativeSshCrypto` in `_initApp` right after `RustLib.init`. dartssh2 computes it with pointycastle and pinenacl, in Dart, on whichever isolate owns the connection — which for this app is the isolate drawing frames. It is not moved to another isolate because it cannot be: the socket under a transport may be a jump connection wrapping a second `SSHClient` or a `ProxyCommand` wrapping a `Process`, and neither is sendable.
-  - `api/ssh_crypto.rs` is the **record layer** — AES-CTR, AES-CBC, HMAC — which runs on every packet for as long as a session lives. `api/ssh_asym.rs` is what runs **once per connection**: x25519, Ed25519 and ECDSA signing and *host key verification*, and the `bcrypt_pbkdf` that opens an encrypted private key.
-  - The per-connection half is there for a different reason from the record layer. A frame does not care about the total over a launch, it cares whether one synchronous call fits inside it: an ECDSA host key check was 3.9 ms against a 120 Hz frame's 8.3. x25519 also removes isolates rather than just time — `SSHKexX25519.createAsync` and `computeSecretAsync` exist to hide 0.3 ms behind `Isolate.run`, two spawns per handshake, and at 8 µs there is nothing left to hide.
-  - **Benchmark in AOT, not in `flutter test`.** pointycastle is roughly 4x slower compiled AOT than under the JIT — 27 MB/s against 108 for aes256-ctr alone — so a number from the test VM understates a release build, and understates it on one side only. Measured with `dart compile exe` on a pure-Dart harness: the record layer goes 15 → 486 MB/s at 32 KiB packets and 5.5 → 36 at 64 B (the small-packet row is the one worth keeping — a crossing per packet was the reason to doubt this pays off at keystroke sizes). Per operation: ed25519 verify 1.215 → 0.019 ms, ecdsa p-256 verify 3.900 → 0.084, x25519 keypair 0.329 → 0.008, bcrypt_pbkdf 173.6 → 82.4.
-  - `SSHCryptoBackend` (the fork's `algorithm/ssh_crypto_backend.dart`) is the seam, and it is a **class with `null`-returning defaults**, not an interface — it has grown twice and an abstract addition would break every implementer. `null` from any method means "use the built-in". The verify methods answer `bool?` and the three values are the point: `null` is unsupported, `false` is invalid, and collapsing them turns unsupported into trusted.
-  - **What is deliberately not covered, and why, so it does not read as an oversight.** AES-GCM and ChaCha20-Poly1305: the transport computes them inline rather than through the factories the seam sits behind, and they are not what gets negotiated — `SSHAlgorithms.cipher` proposes `aes256-ctr` first. RSA: the pure-Rust `rsa` crate has no stable release and carries RUSTSEC-2023-0071, a timing sidechannel in exactly the private-key operation signing would use, unpatched, while the party able to time our signature is the server we authenticate to; pointycastle's RSA is not constant-time either, so the swap buys nothing, and a constant-time one means a BoringSSL-backed dependency and a C toolchain on five targets. The file-transfer worker: its own isolate, so it would need its own `RustLib.init`, and it is not the isolate anyone is looking at.
-  - `SSHBulkBlockCipher` is the other half of the record layer. Without it `BlockCipherX.processAll` walks a packet a block at a time, which is right for pointycastle and turns a 32 KB packet into two thousand FFI crossings.
-  - **A wrong answer from a verifier is silent.** A broken cipher drops the connection; a broken `verify` accepts a forged host key. So `test/ssh_native_crypto_test.dart` is differential in both directions and adversarial: each implementation must accept what the other signed, and both must refuse a flipped signature byte, a swapped `r` and `s`, a changed message and a changed key, across all three ECDSA curves with real keys. Ed25519 is compared byte for byte because it is deterministic; **ECDSA is cross-verified rather than compared**, since pointycastle's is randomised and the native one is RFC 6979. The record cipher is fed the way the transport feeds it — keyed once, then packet after packet, with the CTR counter and CBC chaining block carrying across the calls, which is what the Rust crate's own NIST/RFC vectors cannot show.
+- `cargo build -p sbm_ffi` before `flutter test test/frb_parser_test.dart` and `test/ssh_native_crypto_test.dart` (`test/rust_lib_helper.dart` loads the dylib from `target/`).
+- `flutter_rust_bridge_codegen generate` after changing `crates/sbm_ffi/src/api` (config `flutter_rust_bridge.yaml`, Dart output `lib/src/rust/`, do not edit). Its `dart fix`/`dart format` pass is scoped to that output directory.
+- **Never run `flutter_rust_bridge_codegen integrate`** — it reformats the whole project *and every submodule* and writes a second Rust crate at `rust/`. Run `create` in a temp directory to see a template.
+- `flutter_rust_bridge` is pinned in `pubspec.yaml` and `crates/sbm_ffi/Cargo.toml`, and **both must match** the codegen version that last generated `lib/src/rust/`. A mismatch is not a build error but `Bad state: sbm_ffi's codegen version (X) should be the same as runtime version (Y)` from `RustLib.init` — a `setUpAll` failure in every FFI test and a crash at launch. Bumping is three steps: both manifests, `cargo install flutter_rust_bridge_codegen --version <v>`, regenerate. Dependabot only does the first, so its FRB bumps arrive broken.
+- `crates/sbm_ffi/rust-toolchain.toml` pins the channel and lists every shipped target, which `native_toolchain_rust` requires. A missing target is a silent fallback to the host.
+- App builds compile Rust through `hook/build.dart` (Dart build hooks). `crates/sbm_ffi` is not a Flutter plugin and not a pubspec dependency — the hook names the crate path — so there is no podspec, no `Package.swift`, and one file covers all five platforms.
 
-- App builds compile Rust through `hook/build.dart` (Dart build hooks, via `flutter_rust_bridge_hooks` → `native_toolchain_rust`). `crates/sbm_ffi` is **not** a Flutter plugin and the app does not depend on it as a package — the hook names the crate path. So it produces no podspec and no `Package.swift`, and one file covers all five platforms.
-  - `flutter_rust_bridge` is pinned to `2.13.0` in `pubspec.yaml` and `crates/sbm_ffi/Cargo.toml`, and **three things must agree**: those two, and the version of `flutter_rust_bridge_codegen` that last generated `lib/src/rust/`. A mismatch is not a build error — it is `Bad state: sbm_ffi's codegen version (X) should be the same as runtime version (Y)` thrown from `RustLib.init`, which is a `setUpAll` failure in every FRB-dependent test and a crash at launch. Bumping the dependency is therefore three steps: the two manifests, `cargo install flutter_rust_bridge_codegen --version <v>`, and `flutter_rust_bridge_codegen generate`. Dependabot only ever does the first, so its FRB bumps arrive broken and the regeneration has to be committed on top.
-  - `crates/sbm_ffi/rust-toolchain.toml` pins the channel and lists every shipped target, which `native_toolchain_rust` requires. A target missing from that list is not an error, it is a silent fallback to the host.
-  - `packages/flutter_pty` is a fork carrying the same change, for the same reason: upstream ships no `Package.swift` and was the last third-party pod. It uses `native_toolchain_c` rather than `native_toolchain_rust`, and is otherwise identical to upstream 0.4.2.
-  - **CocoaPods is gone from iOS and macOS.** No `Podfile`, no `Pods/`, no `Pods-Runner` include in the xcconfigs, nothing named Pods in either `project.pbxproj`. Do not add a pod back without a reason: the CocoaPods registry is read-only from 2026-12-02.
-  - `ios/Flutter/Ish.xcconfig` is still included from `Debug.xcconfig` and `Release.xcconfig` and is what decides whether the iOS Linux engine links. To check it end to end, `xcodebuild -project ios/Runner.xcodeproj -target Runner -configuration Debug -showBuildSettings | rg "SBM_ISH|OTHER_LDFLAGS"`. In a **debug** build the app code is in `Runner.debug.dylib`, not `Runner` — the symbol and `otool -L` checks in that file's own comments are written for a release build and read as "not linked" if pointed at the debug stub.
-    - **`flutter clean` deletes the engine.** The libraries are built out of tree *under `build/`*, which is exactly what that command removes, and the checkout it leaves behind looks unchanged: `Ish.xcconfig` still says to link them and the submodule is still clean. The next iOS build fails in the linker with three `No such file or directory` lines for `build/ish/build-ios-arm64/lib{ish,ish_emu,fakefs}.a` and nothing naming the cause. Rebuild with `scripts/build-ish-ios.sh device` (and `simulator`, and `macos`, each of which has its own `build-<arch>` directory and is wiped the same way). This only bites a checkout that turned the engine on — `SBM_ISH` defaults to `0`, and the untracked `ios/Flutter/IshLocal.xcconfig` is where a development build sets it to `1`.
-    - **Debugging the engine needs SIGUSR1 passed through, and the place to configure that is outside this repo.** iSH interrupts its guest threads with SIGUSR1 — on signal delivery (`kernel/signal.c`), on task exit (`kernel/exit.c`), and on every timer tick (`util/timer.c`). LLDB stops on it by default, and `flutter run` installs `target stop-hook add -o "thread backtrace all" -o "detach"` (`flutter_tools/lib/src/ios/lldb.dart`), so a single stop prints every thread's backtrace and then detaches. In debug mode detaching also removes the `NOTIFY_DEBUGGER_ABOUT_RX_PAGES` breakpoint the Dart VM needs in order to get an executable page, and the app dies. It surfaces as "Alpine crashes on launch", and the full `bt all` accompanying such a report is the stop hook's own output rather than something anyone ran. Put `process handle -n false -p true -s false SIGUSR1 SIGTTIN SIGPIPE` in `~/.lldbinit-lldb`: LLDB reads `~/.lldbinit-<host program>` in preference to `~/.lldbinit` and ignores the latter entirely when it exists, so that file covers the command-line lldb `flutter run` starts and leaves Xcode's sessions on the defaults. `pass=true` is what keeps the signal reaching the program, so only the debugger's behavior changes.
-      - **Do not configure it by pointing `Runner.xcscheme`'s `customLLDBInitFile` at a checked-in file.** On Xcode >= 26 `flutter run` starts a bare `xcrun lldb` and sets its breakpoint over stdin, so it never reads the scheme and the setting has no effect on that path. It was tried once (`bcc7b1a8`, reverted in `adab2745`); debug builds then stopped at the launch screen with nothing printed, and reverting restored them, but the causal link was never established.
+#### SSH crypto
+
+`NativeSshCrypto` is installed in `_initApp` right after `RustLib.init`. dartssh2 otherwise computes this with pointycastle and pinenacl, in Dart, on the isolate drawing frames; it cannot be moved off, because a transport's socket may wrap a second `SSHClient` or a `Process` and neither is sendable.
+
+- `api/ssh_crypto.rs` is the **record layer** — AES-CTR, AES-CBC, HMAC — run on every packet. `api/ssh_asym.rs` is **per connection**: x25519, Ed25519 and ECDSA signing, host key verification, and the `bcrypt_pbkdf` that opens an encrypted private key. The per-connection half is about fitting one synchronous call inside a frame (an ECDSA host key check was 3.9 ms against a 120 Hz frame's 8.3), and about removing the two `Isolate.run` spawns per handshake that hid x25519's 0.3 ms.
+- `SSHBulkBlockCipher` processes a whole packet; without it `BlockCipherX.processAll` makes one FFI crossing per block.
+- `SSHCryptoBackend` (the fork's `algorithm/ssh_crypto_backend.dart`) is a class with `null`-returning defaults, not an interface — it has grown twice and an abstract addition would break every implementer. `null` means "use the built-in". Verify methods return `bool?` and the three values matter: `null` unsupported, `false` invalid; collapsing them turns unsupported into trusted.
+- **Benchmark in AOT (`dart compile exe`), not `flutter test`** — pointycastle is ~4x slower AOT than under the JIT, so a test-VM number understates a release build on one side only. Measured: record layer 15 → 486 MB/s at 32 KiB packets and 5.5 → 36 at 64 B; ed25519 verify 1.215 → 0.019 ms, ecdsa p-256 verify 3.900 → 0.084, x25519 keypair 0.329 → 0.008, bcrypt_pbkdf 173.6 → 82.4.
+- Deliberately not covered: **AES-GCM and ChaCha20-Poly1305** (computed inline rather than through the factories the seam sits behind, and `SSHAlgorithms.cipher` proposes `aes256-ctr` first); **RSA** (the pure-Rust `rsa` crate has no stable release and carries RUSTSEC-2023-0071, a timing sidechannel in exactly the private-key operation signing would use, while pointycastle's is not constant-time either — so the swap buys nothing short of a BoringSSL dependency and a C toolchain on five targets); **the file-transfer worker** (own isolate, so own `RustLib.init`, and not the isolate anyone is looking at).
+- **A wrong answer from a verifier is silent** — a broken cipher drops the connection, a broken `verify` accepts a forged host key. So `test/ssh_native_crypto_test.dart` is differential in both directions and adversarial: each implementation accepts what the other signed, and both refuse a flipped signature byte, swapped `r`/`s`, a changed message and a changed key, across all three ECDSA curves. Ed25519 is compared byte for byte (deterministic); **ECDSA is cross-verified**, since pointycastle's is randomised and the native one is RFC 6979. The record cipher is fed the way the transport feeds it — keyed once, then packet after packet, so the CTR counter and CBC chaining block carry across calls.
+
+#### iOS / macOS native
+
+- **CocoaPods is gone** — no `Podfile`, no `Pods/`, nothing named Pods in either `project.pbxproj`. `packages/flutter_pty` is a fork carrying the same change via `native_toolchain_c`, otherwise identical to upstream 0.4.2. Do not add a pod back: the registry is read-only from 2026-12-02.
+- `ios/Flutter/Ish.xcconfig` decides whether the iOS Linux engine links. Check with `xcodebuild -project ios/Runner.xcodeproj -target Runner -configuration Debug -showBuildSettings | rg "SBM_ISH|OTHER_LDFLAGS"`. The symbol and `otool -L` checks in that file's comments assume a release build — in debug the app code is in `Runner.debug.dylib`, and pointing them at the debug stub reads as "not linked".
+- **`flutter clean` deletes that engine.** It is built out of tree under `build/`, and the checkout it leaves behind looks unchanged. The next iOS build fails in the linker with three `No such file or directory` lines for `build/ish/build-ios-arm64/lib{ish,ish_emu,fakefs}.a` and nothing naming the cause. Rebuild with `scripts/build-ish-ios.sh device` (also `simulator`, `macos`, each with its own `build-<arch>` directory). Only affects checkouts that set `SBM_ISH=1` in the untracked `ios/Flutter/IshLocal.xcconfig`.
+- **Debugging that engine needs SIGUSR1 passed through, configured outside this repo.** iSH interrupts guest threads with SIGUSR1 (signal delivery, task exit, every timer tick). LLDB stops on it, and `flutter run` installs a stop hook that prints every thread's backtrace and detaches — which in debug removes the `NOTIFY_DEBUGGER_ABOUT_RX_PAGES` breakpoint the Dart VM needs for an executable page, so the app dies. It gets reported as "Alpine crashes on launch", with the stop hook's own `bt all` attached. Put `process handle -n false -p true -s false SIGUSR1 SIGTTIN SIGPIPE` in `~/.lldbinit-lldb`: LLDB prefers `~/.lldbinit-<host program>` and ignores `~/.lldbinit` entirely when it exists, so this covers the lldb `flutter run` starts and leaves Xcode on the defaults. `pass=true` keeps the signal reaching the program.
+  - Do not configure it through `Runner.xcscheme`'s `customLLDBInitFile`: on Xcode ≥ 26 `flutter run` starts a bare `xcrun lldb` and sets its breakpoint over stdin, so the scheme is never read. Tried in `bcc7b1a8`, reverted in `adab2745`.
 
 ## Architecture
 
-This is a Flutter application for managing Linux servers with the following key architectural components:
+Flutter app for managing Linux servers, in a Rust workspace monorepo.
 
-### Monorepo Layout (Rust workspace)
+### Rust workspace
 
-- `crates/sbm_parser/` - Shared status parser (single source of truth for command manifest + parsing; used by both the app via FFI and the server-side monitor). Behavior locked by `crates/sbm_parser/tests/dart_compat.rs`
-  - Parsing is pure functions: parsers emit raw counters; diff/windowed computation (speeds etc.) is provided as pure functions, mutable time-series state stays on the caller side. The FFI boundary holds no mutable state.
-  - The command manifest (cmd name → per-platform command, `SrvBoxSep.<cmd>` segmenting) lives here too; the `commands::EXTENDED` keys (smartctl, AMD GPU) are split out of the fast status function into `SbStatusExt`, which both callers run minutes apart — smartctl at poll frequency keeps a disk from staying spun down
-  - Script generation is shared as well (`script.rs`: build/install/exec commands + output splitting, locked by `tests/script_compat.rs`); the app calls it via FFI and merges the two functions' output, the monitor executes the script locally on its extended cycle
-- `crates/sbm_ffi/` - flutter_rust_bridge binding crate, built by the root `hook/build.dart` (Dart side generated into `lib/src/rust/`)
-- `crates/sbm_native/` - Native per-platform sampler, **monitor only** — the app always collects over SSH and has no way to run syscalls on a remote host. `sample()` covers cpu/mem/swap/disks/diskio/net/uptime/host/sys via `sysinfo` (BSD/Windows) or direct procfs/sysfs reads feeding `sbm_parser::linux::parse_*` (Linux); amd/sensors/SMART/battery stay on the shared script, which genuinely needs CLI tools
-- `monitor/` - Server-side monitoring service (Rust + Svelte frontend), has its own `monitor/CLAUDE.md`
-  - Besides status, it serves the endpoints the app uses for a monitor-backed server — `POST /exec`, `/terminal/ws`, `/fs/*` — plus an in-browser terminal for its own panel. All of them are off by default and configured only in `config.toml`; see the "Remote access" section there for the security model
-- Root `Cargo.toml` is the workspace; build/test all Rust with `cargo test --workspace`
-- FFI parity test: `flutter test test/frb_parser_test.dart` (requires `cargo build -p sbm_ffi` first)
-- Migration rule ("test as spec"): before moving a parsing module to Rust, port its Dart fixture tests to Rust; only delete the Dart implementation after the FFI result is asserted identical against the same fixtures
-- Remaining migration work: CI cross-compile verification for all five platforms
+- `crates/sbm_parser/` — shared status parser, the single source of truth for the command manifest and parsing; used by the app via FFI and by the server-side monitor. Locked by `tests/dart_compat.rs`.
+  - Parsers are pure functions emitting raw counters; diff/windowed computation (speeds etc.) is separate pure functions and mutable time-series state stays on the caller side. The FFI boundary holds no mutable state.
+  - The command manifest (cmd name → per-platform command, `SrvBoxSep.<cmd>` segmenting) lives here. `commands::EXTENDED` (smartctl, AMD GPU) is split out of the fast status function into `SbStatusExt`, which both callers run minutes apart — smartctl at poll frequency keeps a disk from spinning down.
+  - Script generation is shared too (`script.rs`: build/install/exec commands + output splitting, locked by `tests/script_compat.rs`). The app calls it via FFI and merges the two functions' output; the monitor executes it locally on its extended cycle.
+- `crates/sbm_ffi/` — flutter_rust_bridge binding crate, built by the root `hook/build.dart`, Dart side generated into `lib/src/rust/`.
+- `crates/sbm_native/` — native per-platform sampler, **monitor only**; the app always collects over SSH. `sample()` covers cpu/mem/swap/disks/diskio/net/uptime/host/sys via `sysinfo` (BSD/Windows) or direct procfs/sysfs reads feeding `sbm_parser::linux::parse_*`. amd/sensors/SMART/battery stay on the shared script, which needs CLI tools.
+- `monitor/` — server-side service (Rust + Svelte), with its own `monitor/CLAUDE.md`. Besides status it serves `POST /exec`, `/terminal/ws` and `/fs/*` for monitor-backed servers, plus a browser terminal for its panel. All off by default and configured only in `config.toml` (see its "Remote access" section).
+- Migration rule ("test as spec"): port a module's Dart fixture tests to Rust before moving it, and delete the Dart implementation only after the FFI result is asserted identical against the same fixtures.
+- Remaining migration work: CI cross-compile verification for all five platforms.
 
-### Project Structure
+### Project structure
 
-- `lib/core/` - Core utilities, extensions, and routing
-- `lib/data/` - Data layer with models, providers, and storage
-  - `model/` - Data models organized by feature (server, container, ssh, etc.)
-  - `provider/` - Riverpod providers for state management
-  - `store/` - Local storage implementations over `SqliteStore` (fl_lib)
-- `lib/view/` - UI layer with pages and widgets
-- `lib/generated/` - Generated localization files
-- `lib/hive/` - Hive adapters, kept only so `HiveImport` can read an upgrading install's old boxes. Nothing writes Hive; the whole directory goes when that import does (TODO in the code). `legacy_adapters.dart` holds the types frozen at what a release wrote — see the storage notes below before adding a model back to `@GenerateAdapters`
-- `lib/src/rust/` - Generated FRB bindings (do not edit)
-- `packages/` - Vendored Dart forks referenced by path from pubspec (dartssh2, xterm, fl_lib, fl_build, etc.), each a submodule. The exception is `packages/webui`, an in-repo Svelte package (`@serverbox/webui`) of shared UI primitives and design tokens, consumed as a `file:` dependency by both `monitor/frontend` and `website/`
-- `third_party/ish-arm64` - The iOS Linux engine, a submodule of the `lollipopkit/ShellBox` fork. Not in `packages/` because it is C built by meson and consumed by the Xcode project rather than by pubspec. Which revision builds is the gitlink, not a hash in a script: move it with `git submodule update --remote third_party/ish-arm64` and `git add`. `scripts/build-ish-ios.sh` builds it out of tree into `build/ish/build-<arch>/`, so a build never leaves the submodule dirty
-- `website/` - Project website (Svelte + bun; deployed via `scripts/build-cloudflare-pages.sh`)
-- `lollipopkit/shellbox-rootfs` - **Not a submodule, deliberately.** It publishes the Linux images the app installs and a signed manifest describing them; the app consumes the *release*, over HTTPS, at runtime — it never builds or reads that repository's source. A gitlink would put back the coupling the manifest exists to remove: bumping it to get a new pin to users would be the app release the whole arrangement avoids. Compare the submodules that *are* here — `third_party/ish-arm64` is linked into the binary, `packages/*` are built as dependencies.
-  - Two copies of the manifest live in this repo, and both are meant to be stale. `assets/rootfs_manifest.json` is the floor: used on a first run, offline, or when the fetched one fails verification. `test/fixtures/rootfs_manifest/ci_produced.json` pins the contract against a known-good release, which is the point — a fixture that tracked that repository's HEAD would test whatever it happened to be, not what the app was written against. Refresh either with `gh release download <tag> --repo lollipopkit/shellbox-rootfs --pattern manifest.json`.
-  - The signing key's public half is compiled in (`RootfsManifestTrust.publicKey`); the private half is in the maintainer's login keychain under `shellbox-rootfs-signing` and in that repository's `MANIFEST_SIGNING_KEY` secret. Rotating it means shipping a build, which is the point — a key a server could replace would protect nothing.
+- `lib/core/` utilities, extensions, routing; `lib/view/` pages and widgets; `lib/generated/` l10n; `lib/src/rust/` FRB bindings (do not edit).
+- `lib/data/` — `model/` by feature (mostly freezed + json_annotation), `provider/` (Riverpod), `store/` over fl_lib's `SqliteStore`.
+- `lib/hive/` — adapters kept only so `HiveImport` can read an upgrading install's old boxes. Nothing writes Hive; the directory goes when the import does (TODO in code). `legacy_adapters.dart` holds types frozen at what a release wrote.
+- `packages/` — vendored Dart forks referenced by path from pubspec, each a submodule (dartssh2, xterm, fl_lib, fl_build). Exception: `packages/webui`, an in-repo Svelte package (`@serverbox/webui`) consumed as a `file:` dependency by `monitor/frontend` and `website/`.
+- `third_party/ish-arm64` — the iOS Linux engine, a submodule of the `lollipopkit/ShellBox` fork. Not in `packages/` because it is C built by meson and consumed by Xcode. The gitlink decides the revision: move it with `git submodule update --remote third_party/ish-arm64` and `git add`. `scripts/build-ish-ios.sh` builds out of tree into `build/ish/build-<arch>/`, so the submodule stays clean.
+- `website/` — Svelte + bun, deployed via `scripts/build-cloudflare-pages.sh`.
+- `lollipopkit/shellbox-rootfs` — **not a submodule, deliberately.** It publishes the Linux images the app installs plus a signed manifest; the app consumes the *release* over HTTPS at runtime and never builds that source. A gitlink would mean an app release per image pin, which is what the manifest exists to avoid.
+  - Two copies of the manifest live here, both meant to be stale: `assets/rootfs_manifest.json` is the floor (first run, offline, or failed verification), and `test/fixtures/rootfs_manifest/ci_produced.json` pins the contract against a known-good release. Refresh either with `gh release download <tag> --repo lollipopkit/shellbox-rootfs --pattern manifest.json`.
+  - The signing key's public half is compiled in (`RootfsManifestTrust.publicKey`); the private half is in the maintainer's login keychain under `shellbox-rootfs-signing` and in that repo's `MANIFEST_SIGNING_KEY` secret. Rotating it means shipping a build — a key a server could replace would protect nothing.
 
-### Key Technologies
+### Key technologies
 
-- **State Management**: Riverpod with code generation (riverpod_annotation)
-- **Local Storage**: one encrypted SQLite file (`store.db`) via `package:sqlite3`, bundled through Dart build hooks with `source: sqlite3mc`
-- **SSH/SFTP**: Custom dartssh2 fork for server connections
-- **Terminal**: Custom xterm.dart fork for SSH terminal interface
-- **Networking**: dio for HTTP requests
-- **Charts**: fl_chart for server status visualization
-- **Localization**: Flutter's built-in i18n with ARB files
-- **Code Generation**: Uses build_runner with json_serializable, freezed, hive_generator, riverpod_generator
-
-### Data Models
-
-- Server management models in `lib/data/model/server/`
-- Container/Docker models in `lib/data/model/container/`
-- SSH and SFTP models in respective directories
-- Most models use freezed for immutability and json_annotation for serialization
+Riverpod + riverpod_annotation · one encrypted SQLite file (`store.db`) via `package:sqlite3`, bundled through Dart build hooks with `source: sqlite3mc` · dartssh2 fork · xterm.dart fork · dio · fl_chart · ARB localization · build_runner (json_serializable, freezed, hive_generator, riverpod_generator).
 
 ### Connection methods
 
-A server is reached over SSH, over a `monitor` agent's HTTP API, **or both**.
-It used to be exclusive, enforced three times over — a validation error, a
-factory that picked one, and a `CHECK` constraint that was an exclusive or.
-What is left of that is an *ordering*: `Spi.preferredTransport` says which is
-tried first, `Spix.transport` resolves it (SSH leads when both are configured
-and nothing says otherwise — what every such server was before the field, and
-the transport that can do everything), and `Spix.fallbackTransport` names the
-other. A preference for a transport that is not configured is ignored rather
-than honoured into a dead end; that happens, because switching a server's SSH
-off leaves the preference behind and nothing clears it.
+A server is reached over SSH, over a `monitor` agent's HTTP API, **or both**. What was once an exclusive choice is now an ordering.
 
-What a server may **not** do is carry neither: `SpiValidationError
-.noConnectionMethod` and `CHECK (ssh_ip IS NOT NULL OR monitor_addr IS NOT
-NULL)` both refuse it. A row with no way in is not a server, it is a name.
+- `Spi.preferredTransport` says which is tried first; `Spix.transport` resolves it (SSH leads when both are configured and nothing says otherwise) and `Spix.fallbackTransport` names the other. A preference for an unconfigured transport is ignored rather than honoured into a dead end — that happens, because switching a server's SSH off leaves the preference behind.
+- A server may not carry neither: `SpiValidationError.noConnectionMethod` and `CHECK (ssh_ip IS NOT NULL OR monitor_addr IS NOT NULL)` both refuse it.
+- `ServerConnectCredential.fromSpi` answers the leading transport and `.fallbackOf` the other. `ServerNotifier.ensureExec()` falls through to the second when the first fails: giving both credentials is a request to reach the machine either way.
+- What a server can do is asked through `ServerCapabilities`, not by testing which transport is in use. For a both-transports server, `ServerCapabilities.ofSpi` answers the **union** (`UnionCapabilities`) — such a server really can do both sets of things. Which transport carries a given feature is decided where it is used.
+  - `SshCapabilities` — everything but `storedHistory`: the app samples the machine itself, so a page opened now starts with an empty buffer.
+  - `MonitorHttpCapabilities` — what the agent reported on `GET /api/v1/capabilities` (`MonitorRemoteAccess`). `shell` and `terminal` are its `full_access` grant; `files` is its file API, separate because that grant means "these directories". `byteStream` is **false** (no endpoint relays a connection to an app-named address, so no SFTP or port forwarding); `storedHistory` is true.
+  - Consequences: a both-transports server answers true to `byteStream`, so `ServerFilePage` gives it SFTP rather than the agent's file API. Anything needing the *agent* specifically reads `Spix.monitor` directly, since `fromSpi` may answer SSH.
+- `ServerNotifier.ensureExec()` is the one place that decides how a command reaches a server: SSH gets an `SshExec`, a monitor server gets `POST /api/v1/exec`. A monitor server never falls back to sshd — that would mean asking for credentials the user chose not to give this app. `ensureShellClient()` is SSH-only and uses a separate `TryLimiter` key (`${id}#shell`), so a shell that won't open doesn't stop the status page refreshing.
+- Where the SSH byte stream comes from is a separate axis, resolved in `genClient` (`lib/core/utils/server.dart`): direct, jump server, or `ProxyCommand`. The last two are mutually exclusive and `Spix.validate()` enforces it. Everything above `SSHSocket` is unchanged either way, and the app verifies the host key itself in every case.
 
-`ServerConnectCredential.fromSpi` answers the leading transport and
-`.fallbackOf` the other. `ServerNotifier.ensureExec()` falls through to the
-second when the first fails — giving both sets of credentials is a request to
-reach the machine either way, and refusing the second because the first was
-asked for first would honour an ordering preference as though it were an
-exclusion.
+#### File transport
 
-What a server can do is asked through `ServerCapabilities`, rather than by
-testing which transport is in use, so a feature needing a shell never has to
-know that "SSH" is the thing that provides one. For a server with both,
-`ServerCapabilities.ofSpi` answers the **union** (`UnionCapabilities`), not the
-leading transport's answers: such a server really can do both sets of things,
-and reporting only one would hide features behind a preference that is about
-ordering. Which transport a given feature ends up using is decided where it is
-used, by whichever can carry it.
+A third axis: `SshCredential.fileTransport`, stored per server, read only in `openSshFileBackend` (`lib/core/utils/ssh_file_backend.dart`). Every caller goes through it rather than naming a backend class.
 
-- `SshCapabilities` answers yes to everything but `storedHistory` — one
-  connection already carries a shell, a PTY and a channel, and the app samples
-  the machine itself, so a page opened now starts with an empty buffer.
-- `MonitorHttpCapabilities` answers with what the agent reported on
-  `GET /api/v1/capabilities` (`MonitorRemoteAccess`). `shell` and `terminal`
-  are its `full_access` grant; `files` is its file API, a separate grant
-  because that one means "these directories" rather than "a shell".
-  `byteStream` is **false** — the agent has no endpoint that relays a
-  connection to an address the app names, so SFTP and port forwarding are not
-  offered on a monitor-only server. `storedHistory` is true, since the agent
-  has been sampling since before the app asked.
-
-Two consequences of the union worth knowing. A both-transports server answers
-true to `byteStream`, so `ServerFilePage` gives it SFTP rather than the agent's
-file API — the fuller of the two. And anything that needs the *agent*
-specifically reads `Spix.monitor` directly rather than casting a connect
-credential, since `fromSpi` may well answer SSH.
-
-`ServerNotifier.ensureExec()` is the one place that decides how a command
-reaches a server: SSH gets an `SshExec`, a monitor server gets the agent's
-`POST /api/v1/exec`. A monitor server never falls back to sshd — the agent is
-how it is reachable at all, and falling back would mean asking for credentials
-the user chose not to give this app. `ensureShellClient()` is the SSH path
-only; its failures use a separate `TryLimiter` key (`${id}#shell`) so a shell
-that won't open doesn't also stop the status page refreshing.
-
-Where the SSH byte stream comes from is a separate axis, resolved in
-`genClient` (`lib/core/utils/server.dart`): direct, through a jump server, or
-through a `ProxyCommand`. The last two are mutually exclusive and
-`Spix.validate()` enforces that. Everything above `SSHSocket` is unchanged
-either way, and this app verifies the host key itself in every case.
-
-Which protocol carries *files* over that connection is a third axis —
-`SshCredential.fileTransport`, stored per server. `openSshFileBackend`
-(`lib/core/utils/ssh_file_backend.dart`) is the one place it is read, and every
-caller that has a client and a server goes through it rather than naming a
-backend class.
-
-- **SFTP** is the default and what everything that can use it should use: one
-  channel, random access, and a protocol that answers metadata questions
-  itself.
-- **SCP** is for a host with no SFTP subsystem to offer — an OpenWrt router
-  running dropbear, an embedded box whose firmware ships one static `scp`
-  (#1288). `ScpFileBackend` moves file contents with `scp -f`/`scp -t`
-  (`scp_protocol.dart`, testable against a scripted remote because the wire
-  protocol is written against a `ScpChannel` rather than an `SSHSession`) and
-  does everything else — list, stat, mkdir, rm, mv, chmod — as shell commands.
-  The listing command and its parser are shared with the SFTP backend's sudo
-  escalation in `shell_file_ops.dart`, so the two cannot drift.
-
-Not probed. Opening SFTP and falling back on failure would answer the second
-failure instead of the first — a link that dropped or an account that was
-locked reads exactly like a host with no subsystem — so the user names it, in
-the server editor under **More**. The file browser's error view says so when an
-SFTP session is the thing that would not open (`SftpUnavailable`).
-
-Two consequences worth knowing. `size` is a hint everywhere in `FileBackend`
-and a *contract* in SCP, because the sink is told the length before the bytes
-start; a write with no size is spooled to a temp file purely to measure it.
-And `read`'s `offset` is honoured by discarding bytes locally, since the
-protocol cannot start anywhere but zero.
-
-**A staged replace must not change a file's permissions.** Every `write` in the
-app stages beside the destination and renames, and the staged copy is created
-with the far side's umask — so the rename carries *that* mode onto the
-destination, and saving an edit to a 0755 script left it 0644 while replacing a
-0600 file made it world-readable. `carryModeToStaging` (`file_backend.dart`) is
-the one implementation, called by the SFTP and SCP backends and by the
-specialised SFTP upload in `transfer_worker.dart` — that last one is the path
-the editor's save-back takes, so it is where the bug actually bit. It is best
-effort and logged, never fatal: the bytes are already across, and a server that
-will not set a mode must not be one where the file can never be saved. The
-monitor agent does the same on its side (`monitor/src/api/fs.rs`);
-`LocalFileBackend` does not and says so, because `dart:io` has no `chmod` and
-that backend answers false to `FileBackendTraits.permissions`.
-
+- **SFTP** is the default and what anything that can should use: one channel, random access, metadata answered in-protocol.
+- **SCP** is for a host with no SFTP subsystem — dropbear on OpenWrt, one static `scp` in firmware (#1288). `ScpFileBackend` moves contents with `scp -f`/`scp -t` (`scp_protocol.dart`, written against a `ScpChannel` rather than an `SSHSession` so it is testable against a scripted remote) and does list, stat, mkdir, rm, mv and chmod as shell commands. Its listing command and parser are shared with the SFTP backend's sudo escalation in `shell_file_ops.dart`.
+- Not probed. Opening SFTP and falling back would answer the second failure instead of the first — a dropped link reads exactly like a missing subsystem — so the user names it in the server editor under **More**. The file browser's error view says so on `SftpUnavailable`.
+- `size` is a hint everywhere in `FileBackend` and a *contract* in SCP, since the sink is told the length before the bytes; a sizeless write is spooled to a temp file to measure it. `read`'s `offset` is honoured by discarding bytes locally.
+- **A staged replace must not change a file's permissions.** Every `write` stages beside the destination and renames, so the staged copy's umask mode lands on the destination — saving an edit left a 0755 script at 0644 and made a 0600 file world-readable. `carryModeToStaging` (`file_backend.dart`) is the one implementation, called by the SFTP and SCP backends and by `transfer_worker.dart`'s specialised upload (the editor's save-back path, where the bug bit). Best effort and logged, never fatal — the bytes are already across. The monitor does the same in `monitor/src/api/fs.rs`; `LocalFileBackend` does not and answers false to `FileBackendTraits.permissions`, since `dart:io` has no chmod.
 
 ### Watch and home-screen widgets
 
-All three surfaces — the watch app, its complication, and the iOS and Android
-home widgets — read a `monitor` agent's `/api/v1/metrics` and
-`/metrics/history` directly, with a scoped read-only credential this app minted
-for them. None of them speaks to the app at request time.
+All three surfaces — watch app, complication, iOS and Android home widgets — read a monitor agent's `/api/v1/metrics` and `/metrics/history` directly, with a scoped read-only credential this app minted. None speaks to the app at request time.
 
-**The credential is the thing to get right.** `POST /api/v1/watch-token` mints
-one per `client_id` (`watch:<id>` and `widget:<id>`, deliberately different so
-revoking one surface leaves the other alone), and it reaches exactly three
-endpoints. That limit is the agent's route table, not anything in the token —
-`monitor/tests/watch_token_scope.rs` is what holds it, and it mounts the real
-`configure_api` so a hand-built test router cannot pass for the shipped one.
-`ScopedToken` carries the agent's `expires_at` and replaces a token inside a
-two-week window; the agent issues them for 90 days, and this app only rebuilds
-the set when something asks it to.
+- **The credential is the thing to get right.** `POST /api/v1/watch-token` mints one per `client_id` (`watch:<id>` and `widget:<id>`, deliberately different so revoking one leaves the other alone), reaching exactly three endpoints. That limit is the agent's route table, not anything in the token — held by `monitor/tests/watch_token_scope.rs`, which mounts the real `configure_api` so a hand-built router cannot pass for the shipped one. `ScopedToken` carries the agent's `expires_at` and replaces a token inside a two-week window; the agent issues for 90 days.
+- Storage differs by what the platform allows. The watch has its own Keychain. The Android widget provider is a `BroadcastReceiver` in the app's process, so it reads app-private storage encrypted under an AndroidKeyStore key (`WidgetStore.kt`). The iOS widget is a separate extension process and needs a **shared Keychain group**, which is the *second* entry in `keychain-access-groups` on purpose: an item added without naming a group lands in the first, `flutter_secure_storage` names none, and that is where the database encryption key is stored.
+- **Two home widgets, and the size is the choice** — small shows readings as text, medium one chart per metric. Each is its own registration (two `Widget` types on iOS, two `AppWidgetProvider`s on Android), so both appear by name and neither resizes. What a widget draws is not configurable; only which server and which metric leads. One widget with a layout setting let size silently overrule the setting, and a widget has nowhere to explain itself.
+- **Nothing is opt-in.** `WatchSync.syncedServerIds()` is every server with an agent minus `SettingStore.watchExcludedServerIds`; `WidgetSync` publishes all of them. The exclusion list stays because syncing mints a credential and puts it on a second device — and excluding a server revokes its token immediately, or it would mean "stop showing this" while the watch could still read it for 90 days.
+- **`allowInsecure` is per server and checked before the token is sent.** Loopback counts as secure without TLS, matching the app. Android's `usesCleartextTraffic` answers a different, process-wide question.
+- Two platform minimums, each costing users a feature and each belonging in release notes: `StatusWidgetExtension` alone is iOS 17 (the app stays 15) because picking a server needs `AppIntentConfiguration`, so iOS 15/16 loses the home widget entirely; `WATCHOS_DEPLOYMENT_TARGET` 10.0 for two-axis paging takes the **whole watch app and complication** from watchOS 9.
+- `GET /status` is gone — unauthenticated, values preformatted as strings, no history, so nothing built on it could draw a trend. The agent answers 410 with a pointer for one release, then the route goes. Schema v17 raises a one-time dialog for installs that hand-typed such an address; a bare address cannot reach the authenticated API, so there is nothing to convert it into.
 
-**Where each surface keeps it differs by what the platform allows.** The watch
-has its own Keychain. The Android widget provider is a `BroadcastReceiver` in
-the app's own process, so it reads app-private storage directly — the token is
-encrypted under an AndroidKeyStore key (`WidgetStore.kt`). The iOS widget is a
-separate extension process and needs a **shared Keychain group**, which is the
-*second* entry in `keychain-access-groups` on purpose: an item added without
-naming a group lands in the first entry, `flutter_secure_storage` names none,
-and that is how the database encryption key is stored. Putting the shared group
-first would quietly start writing that key somewhere the extension can read.
+### State management
 
-**There are two home widgets, and the size is the choice.** Small shows
-readings as text; medium shows one chart per metric. Each is its own
-registration — two `Widget` types on iOS, two `AppWidgetProvider`s on Android —
-so both appear by name in the gallery and neither resizes. What a widget draws
-is not configurable; only which server it points at and which metric leads.
+Riverpod providers for DI and state, organized by feature in `lib/data/provider/`; Freezed for immutable state models; persistence through `lib/data/store/`.
 
-That replaced one widget with a layout setting, which put "how big" and "what
-it shows" in two places that could disagree: pick four charts, place it small,
-and the size quietly overruled the setting. A setting that appears to do
-nothing is worse than one that is not offered, and a widget has nowhere to
-explain itself. There is no large either — it was the medium's charts with more
-space around them.
+### Build system
 
-**Nothing is opt-in any more.** `WatchSync.syncedServerIds()` is every server
-with an agent minus `SettingStore.watchExcludedServerIds`; `WidgetSync`
-publishes every one of them. An opt-in list is somewhere to forget a server,
-and a forgotten server looks exactly like a broken watch. The exclusion list
-stays because syncing means minting a credential and putting it on a second
-device, which is worth being able to refuse — and holding a server back revokes
-its token immediately, or it would mean "stop showing this" while the watch
-could still read it for 90 days.
-
-**`allowInsecure` is per server and is checked before the token is sent.**
-Android's `usesCleartextTraffic` answers a different question — whether the
-*process* may speak plaintext at all — and it is not a decision about any one
-server. Loopback counts as secure without TLS, matching the app.
-
-**Two platform minimums moved with this, and both cost users a feature.** The
-`StatusWidgetExtension` target alone is iOS 17 (the app stays at 15), because
-picking a server from a list needs `AppIntentConfiguration` — an iOS 15/16
-install keeps the app and loses the home widget entirely, since the system will
-not load an extension below its deployment target. `WATCHOS_DEPLOYMENT_TARGET`
-is 10.0 for the two-axis paging, and that one takes the **whole watch app and
-its complication** away from watchOS 9, not just a feature of them. Both belong
-in release notes; neither is visible in the app, which is why they are written
-down here.
-
-`GET /status` is gone. It answered unauthenticated with values preformatted as
-strings and no history, which is why everything built on it could never draw a
-trend. The agent answers 410 there with a sentence saying where to go, for one
-release, then the route goes too. Schema v17 detects an install that had
-hand-typed one of those addresses and raises a one-time dialog: a bare address
-cannot reach the authenticated API, so there is nothing to convert it into.
+- `fl_build` (`dart run fl_build -p PLATFORM`) handles cross-platform builds; the `fl_build:` section of `pubspec.yaml` names the app.
+- **`fl_build` regenerates `lib/data/res/build_data.dart` from scratch on every build**, so anything not fed to it is dropped. That is why the remote script's version is `ScriptConstants.version` rather than a `BuildData` field. `ScriptConstants.version` and the `v<N>` in `ScriptConstants.scriptFile` must stay equal — `test/script_version_test.dart` holds them so.
 
 ### Features
 
-- Server status monitoring (CPU, memory, disk, network)
-- SSH terminal with virtual keyboard
-- SFTP file browser
-- Docker container management
-- Process and systemd service management
-- Server snippets and custom commands
-- Multi-language support (12+ languages)
-- Cross-platform support (iOS, Android, macOS, Linux, Windows)
+Server status monitoring (CPU, memory, disk, network) · SSH terminal with virtual keyboard · SFTP file browser · Docker container management · process and systemd service management · snippets and custom commands · 12+ languages · iOS, Android, macOS, Linux, Windows.
 
-### State Management Pattern
+## Rules
 
-- Uses Riverpod providers for dependency injection and state management
-- Uses Freezed for immutable state models
-- Providers are organized by feature in `lib/data/provider/`
-- State is often persisted using the stores in `lib/data/store/`
+- **Never run code formatting commands.** The codebase has specific formatting that must not be changed.
+- Always run code generation after changing annotated models. Never hand-edit `*.g.dart` or `*.freezed.dart`.
+- Generate l10n with `flutter gen-l10n` after editing ARB files.
+- Use dependency injection via GetIt for Stores, Services, etc.
+- Use `fl_lib` widgets and utilities — `CustomAppBar`, `context.showRoundDialog`, `Input`, `Btnx.cancelOk`. Search with context7 MCP: `lppcg fl_lib KEYWORD`.
+- Localization: check `libL10n` (fl_lib) before adding a string to this project's `l10n`, and prefer an approximate existing string over a duplicate.
+- Split UI into Widget build, Actions and Utils using `extension on`.
 
-### Build System
+### Storage
 
-- Uses custom `fl_build` package for cross-platform building; the `fl_build:` section of `pubspec.yaml` names the app for it
-- `fl_build` **regenerates `lib/data/res/build_data.dart` from scratch** on every build — anything not fed to it is dropped. That is why the remote script's version is `ScriptConstants.version` and not a `BuildData` field: it was a second hand-maintained copy in `make.dart` (now gone). `ScriptConstants.version` and the `v<N>` in `ScriptConstants.scriptFile` must stay equal — `test/script_version_test.dart` is what holds them so
-- Supports building for multiple platforms with platform-specific configurations
-- Many dependencies are custom forks hosted on GitHub (dartssh2, xterm, fl_lib, etc.)
+One encrypted SQLite file, not Hive. `KvStore` in fl_lib is `sealed`, so a new key-value backend goes there as another `part of 'iface.dart'`, not in this repo.
 
-### Important Notes
+- **Two shapes, and which a store uses is a decision.** `setting` and `history` are rows in the shared `kv(store, key, value, updated_at)` table with JSON values — unrelated preferences with nothing queried by field, where adding one stays a one-line change. Everything with relations owns a table: `server`, `private_key`, `snippet`, `port_forward`, `conn_stat`, `agent_conversation` and their children.
+- **Drift owns the DDL and only the DDL** (`lib/data/store/db.dart`). Queries are hand-written and synchronous because the UI reads a store while building, and converting ~100 call sites to Drift's async API would be the change rather than the schema. `SqliteDb` opens the connection, applies the cipher and the per-connection `foreign_keys` pragma, then `createTables` takes the live handle.
+  - `AppDb.schemaVersion` is 1 and stays there. Versioning is `SchemaVersion`, because the steps that matter read Hive boxes and remap ids — outside what a Drift migration can express.
+- **A primary key is an id, never something the user typed.** A private key keyed by its name detached every server pointing at it on rename; a snippet was keyed by its name too. Both have generated ids and a `UNIQUE` name column now, so a rename is an `UPDATE` and a collision surfaces as `DuplicateNameException` from `EntityStore.put` rather than in whichever dialog remembered to check.
+- **A list or map field is a child table**, not a JSON array: `server_tag`, `server_env`, `server_jump`, `snippet_tag`, `container_host`. A child carries no sync columns and moves with its parent, so editing one stamps the parent (`ContainerStore` writes through `Stores.server.synced.stamp`). Children come back ordered by primary key, so insertion order is not preserved.
+- `Tables.syncRoots` is what sync moves as a unit. Each root has `updated_at` and `rev` — two edits in one millisecond are indistinguishable by the clock — and a delete writes a `tombstone` row, without which a peer reads the absence as an addition and restores the record. `conn_stat` and `agent_conversation` are deliberately not roots: connecting is not an edit, and a conversation carries terminal output and reasoning.
+- **Enums are stored by name, never by index** — an index silently changes meaning when a case is inserted, and these values outlive the build that wrote them. A migration reading an older record translates explicitly: `ConnectionStat`'s `@JsonValue`s are snake_case while the column holds the enum's `name`, and three of five differ.
+- A write that should not count as a user edit (migration flag, restore, device-local bookkeeping) passes `updateLastUpdateTsOnSet: false` for a kv store, or an explicit `at:` to `SyncedTable.stamp`. `Stores.lastModTime` reads those timestamps and decides which side of a sync wins.
+- **A value passed to `SqliteStore.set` needs a `toJson`.** `set` encodes with `(value as dynamic).toJson()` and answers `false` instead of throwing, so a model without one is dropped silently on every write. Freezed generates it only with a `.g.dart`; `PortForwardConfig` has a hand-written `fromJson` and no `.g.dart`, so its `toJson` is hand-written and must be kept in step. Entity stores write columns directly and do not go through `set`, but still need `toJson`/`fromJson` for backup, which `EntityStore` declares.
+- **`INSERT OR REPLACE` is wrong on a row with sync columns or children.** It deletes and reinserts, so every unnamed column returns to its default (`rev` to 0, defeating the point) and every `ON DELETE CASCADE` fires. Use `EntityStore.upsert`, which is `ON CONFLICT DO UPDATE` naming only the data columns.
+- **A model that `lib/hive/` still has an adapter for gets a frozen type, never a regenerated one.** No Hive box ever carried a field added after the last Hive release, so an adapter that knows about one describes a shape no box is in — and when the field is non-nullable the generator emits `fields[n] as String`, the box fails to *open*, and its whole store is silently left behind. `Snippet`, `PrivateKeyInfo` and `SshCredential` are out of `@GenerateAdapters` and frozen in `lib/hive/legacy_adapters.dart`, each carrying the fields at the indexes its release wrote. A generated adapter that still compiles is not reassurance: `SshCredential.fileTransport` has a default, so the generator emitted a null check and the import kept working. `test/hive_release_migration_test.dart` catches the fatal version.
 
-- **Never run code formatting commands** - The codebase has specific formatting that should not be changed
-- **Always run code generation** after modifying models with annotations (freezed, json_serializable, hive, riverpod)
-- Generated files (`*.g.dart`, `*.freezed.dart`) should not be manually edited
-- AGAIN, NEVER run code formatting commands.
-- USE dependency injection via GetIt for services like Stores, Services and etc.
-- Generate all l10n files using `flutter gen-l10n` command after modifying ARB files.
-- Storage is one encrypted SQLite file, not Hive. `KvStore` in fl_lib is `sealed`, so a new key-value backend has to be added there as another `part of 'iface.dart'`, not in this repo.
-  - **Two shapes, and which one a store uses is a decision.** `setting` and `history` are rows in the shared `kv(store, key, value, updated_at)` table with `value` as JSON — a hundred unrelated preferences with nothing that queries by field, where adding one should stay a one-line change. Everything with relations owns a table: `server`, `private_key`, `snippet`, `port_forward`, `conn_stat`, `agent_conversation` and the child tables hanging off them.
-  - **Drift owns the DDL and only the DDL** (`lib/data/store/db.dart`). Queries are hand-written and synchronous, because the UI reads a store while building; Drift's API is async and converting ~100 call sites would be the change, not the schema. Drift never opens the connection either — `SqliteDb` does, applies the cipher and the `foreign_keys` pragma (which is *per connection*), and `createTables` hands the live handle over.
-    - `AppDb.schemaVersion` is 1 and stays there. Version is `SchemaVersion`, because the steps that matter read Hive boxes and remap ids — outside what a Drift migration can say. Two mechanisms advancing one number is the ambiguity this arrangement removes.
-  - **A primary key is an id, never something the user typed.** A private key's id *was* its name, so renaming one detached every server pointing at it; a snippet was keyed by its name. Both have generated ids and a `UNIQUE` name column now, so a rename is an `UPDATE` — and a `DuplicateNameException` out of `EntityStore.put` is where a collision is found, rather than in whichever dialog last remembered to check.
-  - **A list or map field is a child table**, not a JSON array in a column: `server_tag`, `server_env`, `server_jump`, `snippet_tag`, `container_host`. A child carries no sync columns and moves with its parent, so editing one stamps the parent — `ContainerStore` writes through `Stores.server.synced.stamp`. A child table's rows come back ordered by its primary key, so the order the user added tags in is not kept.
-  - `Tables.syncRoots` is what sync moves as a unit. Each root has `updated_at` and `rev` — two edits in one millisecond are indistinguishable by the clock alone — and a delete writes a `tombstone` row, without which a peer reads the absence as an addition and puts the record back. `conn_stat` and `agent_conversation` are deliberately not roots: connecting is not an edit, and a conversation carries terminal output and reasoning.
-  - Enums are stored **by name**, never by index: an index silently changes meaning when a case is inserted, and these values outlive the build that wrote them. A migration reading an older record has to translate explicitly — `ConnectionStat`'s `@JsonValue`s are snake_case while the column holds the enum's `name`, and three of the five differ.
-  - A write that should not count as a user edit — a migration flag, a restore, device-local bookkeeping — passes `updateLastUpdateTsOnSet: false` for a kv store, or an explicit `at:` to `SyncedTable.stamp`. `Stores.lastModTime` is read off those timestamps and decides which side of a sync wins.
-  - **A value passed to `SqliteStore.set` needs a `toJson`.** That is the kv-backed stores. `set` encodes with `(value as dynamic).toJson()` and answers `false` on failure instead of throwing, so a model without one is dropped silently on every write. Freezed generates it only when the model has a `.g.dart`; `PortForwardConfig` has a hand-written `fromJson` and no `.g.dart`, so its `toJson` is hand-written too and has to be kept in step with it.
-    - The entity stores write columns and do not go through `set`, so they do not share the requirement in that form. They do need `toJson`/`fromJson` for the backup, which `EntityStore` declares.
-  - **`INSERT OR REPLACE` is wrong on a row with sync columns or children.** It deletes and reinserts, so every column the statement does not name goes back to its default — `rev` to 0, defeating the one thing it exists for — and every `ON DELETE CASCADE` fires, taking the children with it. Use `EntityStore.upsert`, which is `ON CONFLICT DO UPDATE` naming only the data columns.
-  - **A model that `lib/hive/` still has an adapter for gets a frozen type, never a regenerated one.** Hive is the old database and SQLite is the new one: no Hive box has ever carried a field added after the last Hive release, so an adapter that knows about one is an adapter tracking a model it does not describe. It also breaks the import outright when the field is non-nullable — the generator emits `fields[n] as String`, the box fails to *open*, and its whole store is silently left behind. `Snippet`, `PrivateKeyInfo` and `SshCredential` are out of `@GenerateAdapters` for this reason and frozen in `lib/hive/legacy_adapters.dart`, each carrying the fields the release wrote at the indexes it wrote them; do the same rather than regenerating. Do not be reassured by a generated adapter that happens to still compile: `SshCredential.fileTransport` has a default, so the generator emitted a null check and the import kept working — it was still an adapter for a shape no box is in. `test/hive_release_migration_test.dart` is what catches the fatal version.
-- USE widgets and utilities from `fl_lib` package for common functionalities.
-  - Such as `CustomAppBar`, `context.showRoundDialog`, `Input`, `Btnx.cancelOk`, etc.
-  - You can use context7 MCP to search `lppcg fl_lib KEYWORD` to find relevant widgets and utilities.
-- USE `libL10n` and `l10n` for localization strings.
-  - `libL10n` is from `fl_lib` package, and `l10n` is from this project.
-  - Before adding new strings, check if it already exists in `libL10n`.
-  - Prioritize using strings from `libL10n` to avoid duplication, even if the meaning is not 100% exact, just use the substitution of `libL10n`.
-- Split UI into Widget build, Actions, Utils. use `extension on` to achieve this
-- A dialog's buttons close the dialog. The page is closed by the code that awaited it.
-  - `showRoundDialog` puts the dialog on the **root** navigator. A page's `context` finds the navigator holding the *page*, and inside a pane or a tab those are two different navigators. So a `context.pop()` reached from a dialog button closes the page and leaves the dialog on screen — and the awaited future never completes, so whatever the caller meant to do next never runs either.
-  - Close the dialog with `context.popDialog()`, which is explicit about the root navigator. Better, let the dialog answer: `Btn.ok`/`Btnx.cancelOk` already pop a value, so `await context.showRoundDialog<bool>(...)` returns it.
-  - Then do the work and close the page in the *caller*, which is on the page. A callback that does both sees two navigators and has to get each `pop`'s target right, silently.
-  - **The trap is `Btn.ok(onTap: f)`.** With no `onTap`, `Btn` resolves the navigator from the *button's* own context — inside the dialog — and is correct. Passing an `onTap` replaces that, so `f` must pop the dialog itself. Every instance found so far was this, and so was `onSubmitted:` on an `Input` in a dialog.
-  - **The rule is about what a button reaches, not about what is lexically inside the call.** Nine of the ten instances found in Aug 2026 called a named function that popped several lines away, which is why this grep found none of them — including `_showTextDialog` in `setting/entry.dart`, the shared helper most settings dialogs go through:
-    - `rg -U 'showRoundDialog[\s\S]*?context\.pop\(' lib` — a first pass only. Clean does not mean correct.
-    - `rg -n 'Btn\.ok\(onTap:|Btnx?\.\w+\(onTap:' lib` — the candidates worth reading. For each, follow the callback and check that every `pop` in it is a `popDialog`.
-- **Surviving the background on Android is the foreground service, and nothing else** (#1287). `bgRun` keeps the poll timer scheduled; a frozen process runs no timers, so on its own that switch does nothing. `TermSessionManager` is the single owner of the decision — `_serviceWanted` is "something is connected, or the app is backgrounded with `bgRun` on" — and three rules make it work:
-  - **Start on `inactive`, never on `paused`.** Android 12+ refuses to *start* a foreground service for an app already in the background, and Flutter's `paused` comes from `onStop`, by which point it is. `inactive` comes from `onPause`, while the activity is still visible. `home.dart` reports both edges.
-  - **Never stop while backgrounded.** Stopping is the one direction that cannot be undone from there: drop it and the process is cached, frozen, and every connection dies with nothing able to bring it back. That is why the service is held even at zero connections, and why the session payload carries `keepAlive` — an empty list used to make the native side cancel its notification, which is the same thing by another route.
-  - **No notification permission means no foreground service means no background at all.** The settings page says so under `bgRun` rather than leaving the user with connections that drop for no visible reason.
-  - Historical trap worth not repeating: `MethodChans.startService`/`stopService` were gated on a `fgService` setting whose switch was commented out of the Android settings page and then deleted with it. It was false for every install, so both calls did nothing for over a year and the only thing that ever promoted the service was `updateSessions` as a side effect. A setting with no way to reach it is a feature that does not exist.
-- Android release signing:
-  - Normal release builds must use the real release keystore from `key.properties`.
-  - Debug-signing fallback is for local verification only and must be enabled explicitly with `-PallowDebugReleaseSigning=true`.
-  - Do not use debug-signing fallback for formal release artifacts.
-- Android release artifacts:
-  - CI release builds for Android are split per ABI, not a single fat APK.
-  - Do not judge release size from a local `flutter build apk --release` fat APK.
-  - To reproduce CI-style Android artifacts locally, use `dart run fl_build -p android` or `flutter build apk --release --split-per-abi`.
-  - **A release is gated on the tree still building reproducibly.** `androidReproducible` in `build.yml` calls `android-reproducible.yml`, which builds the unsigned F-Droid APKs twice — from two source directories of different path lengths — and requires them byte-identical; `publishRelease` needs it. F-Droid rebuilds from this source and compares against the published APK, so a divergence that is not caught here is caught by someone else, after the fact.
-  - It does **not** run per pull request. It is two full Android builds and about twenty minutes, which is a long time to hold every change touching `lib/`. It runs **weekly on main** instead, because what breaks reproducibility lands between releases — a Flutter, NDK or Gradle plugin bump — and the tag is the worst moment to find out. `workflow_dispatch` is there for checking a change by hand before merging it. If that still leaves too much found late, the next step is a `pull_request` trigger with the paths narrowed to `android/`, `scripts/release/`, `hook/` and the lock files, rather than the list it had, which included all of `lib/`.
-  - **It varies one thing: the build path.** Both jobs are `ubuntu-24.04` on the same day with the same NDK, and `SOURCE_DATE_EPOCH` is pinned. So it catches path leakage and nondeterministic ordering, and does not catch toolchain drift, locale or timezone artifacts, or umask — which is roughly one of the fourteen dimensions `reprotest` varies by default. Adding `TZ`, `LC_ALL`, `umask` and `HOME` to the matrix costs no runtime and would be the cheapest way to widen it. What it still would not catch is the failure F-Droid actually hits, which is *their* environment differing from this one; that needs a rebuild somewhere else, not a second one here.
+### Dialogs
+
+A dialog's buttons close the dialog. The page is closed by the code that awaited it.
+
+- `showRoundDialog` puts the dialog on the **root** navigator, while a page's `context` finds the navigator holding the page — inside a pane or a tab those are two different navigators. So `context.pop()` from a dialog button closes the page, leaves the dialog on screen, and never completes the awaited future, so the caller's next step never runs either.
+- Close with `context.popDialog()`, which is explicit about the root navigator. Better, let the dialog answer: `Btn.ok`/`Btnx.cancelOk` already pop a value, so `await context.showRoundDialog<bool>(...)` returns it. Then do the work and close the page in the caller, which is on the page.
+- **The trap is `Btn.ok(onTap: f)`.** With no `onTap`, `Btn` resolves the navigator from the button's own context — inside the dialog — and is correct. Passing an `onTap` replaces that, so `f` must pop the dialog itself. Same for `onSubmitted:` on an `Input` in a dialog.
+- The rule is about what a button reaches, not what is lexically inside the call. Nine of ten instances found in Aug 2026 popped in a named function several lines away, including `_showTextDialog` in `setting/entry.dart`, the shared helper most settings dialogs go through. These greps are a first pass only — clean does not mean correct:
+  - `rg -U 'showRoundDialog[\s\S]*?context\.pop\(' lib`
+  - `rg -n 'Btn\.ok\(onTap:|Btnx?\.\w+\(onTap:' lib` — follow each callback and check every `pop` in it is a `popDialog`.
+
+### Android
+
+- **Surviving the background is the foreground service and nothing else** (#1287). `bgRun` keeps the poll timer scheduled, but a frozen process runs no timers. `TermSessionManager` is the single owner of the decision (`_serviceWanted` = something is connected, or the app is backgrounded with `bgRun` on):
+  - **Start on `inactive`, never on `paused`.** Android 12+ refuses to start a foreground service for an app already in the background, and Flutter's `paused` comes from `onStop`, by which point it is. `inactive` comes from `onPause`, while the activity is still visible. `home.dart` reports both edges.
+  - **Never stop while backgrounded** — the one direction that cannot be undone from there: the process is cached, frozen, and every connection dies with nothing able to restart it. So the service is held even at zero connections, and the session payload carries `keepAlive` (an empty list used to make the native side cancel its notification).
+  - No notification permission means no foreground service means no background at all. The settings page says so under `bgRun` rather than leaving connections dropping for no visible reason.
+  - Historical trap: `MethodChans.startService`/`stopService` were gated on a `fgService` setting whose switch was commented out of the settings page and later deleted with it, so both calls did nothing for over a year and only `updateSessions`' side effect ever promoted the service.
+- Release signing: normal release builds use the real keystore from `key.properties`. Debug-signing fallback is local verification only, enabled explicitly with `-PallowDebugReleaseSigning=true`, never for release artifacts.
+- CI Android releases are split per ABI. Do not judge release size from a local fat APK; reproduce with `dart run fl_build -p android` or `flutter build apk --release --split-per-abi`.
+- **A release is gated on the tree still building reproducibly.** `androidReproducible` in `build.yml` calls `android-reproducible.yml`, which builds the unsigned F-Droid APKs twice from source directories of different path lengths and requires them byte-identical; `publishRelease` needs it. F-Droid rebuilds from this source and compares against the published APK, so a divergence missed here is found by someone else, after the fact.
+  - It runs **weekly on main**, not per pull request — two full Android builds and ~20 minutes is a long time to hold every change touching `lib/`. What breaks reproducibility lands between releases (a Flutter, NDK or Gradle plugin bump), and the tag is the worst moment to find out. `workflow_dispatch` is there for checking a change by hand. If that still leaves too much found late, narrow a `pull_request` trigger to `android/`, `scripts/release/`, `hook/` and the lock files.
+  - **It varies one thing: the build path.** Both jobs are `ubuntu-24.04` on the same day with the same NDK and a pinned `SOURCE_DATE_EPOCH`, so it catches path leakage and nondeterministic ordering but not toolchain drift, locale, timezone or umask. Adding `TZ`, `LC_ALL`, `umask` and `HOME` costs no runtime and is the cheapest way to widen it. What it still cannot catch is F-Droid's environment differing from this one, which needs a rebuild elsewhere.

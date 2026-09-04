@@ -108,6 +108,18 @@ pub struct SystemMetrics {
     pub sensors: Vec<sbm_parser::types::SensorItem>,
     #[serde(default)]
     pub disk_smart: Vec<SmartSummary>,
+    /// The machine's own interface addresses, as `sbm_parser::common::parse_ips`
+    /// read them — every address, public or not.
+    ///
+    /// Here so the app can place a server it reaches at a private address:
+    /// this agent runs *on* the machine, so it can answer where the machine is
+    /// without the app needing `full_access` to run a command for it. That
+    /// grant is "run anything"; this question deserved far less than that.
+    ///
+    /// Extended cadence, carried forward in between — an address changes when
+    /// a machine moves or its lease does, not between two samples.
+    #[serde(default)]
+    pub ips: Vec<String>,
     /// Output of the user's custom commands, in the order their files sort in
     /// — which is the order the user arranged them in. Refreshed on the
     /// extended cycle, since that is the one that runs the script.
@@ -469,6 +481,7 @@ async fn collect_metrics(
             status.sensors = scripted.sensors;
             status.batteries = scripted.batteries;
             status.disk_smart = scripted.disk_smart;
+            status.ips = scripted.ips;
             if status.conn.is_none() {
                 status.conn = scripted.conn;
             }
@@ -1067,6 +1080,14 @@ fn adapt_status(
             .map(|p| p.disk_smart.clone())
             .unwrap_or_default()
     };
+    // Same cadence and the same carry-forward. Without it every cycle between
+    // two extended runs would report no addresses at all, which a client
+    // cannot tell from a machine that has none.
+    let ips = if extended_refreshed {
+        status.ips.clone()
+    } else {
+        prev_metrics.map(|p| p.ips.clone()).unwrap_or_default()
+    };
 
     let now = Utc::now();
     let diskio = status.diskio;
@@ -1116,6 +1137,7 @@ fn adapt_status(
             prev_metrics.map(|p| p.sensors.clone()).unwrap_or_default()
         },
         disk_smart,
+        ips,
         // Filled in by `collect_metrics`: whether these are fresh or the
         // previous cycle's depends on whether the script ran, which this
         // function is not the one that knows.

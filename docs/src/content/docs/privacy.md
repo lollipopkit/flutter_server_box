@@ -3,7 +3,7 @@ title: Privacy Policy
 description: What Server Box stores, what it sends, and how to control those choices
 ---
 
-Last updated: 2026-09-02.
+Last updated: 2026-09-04.
 
 Server Box is a client for the servers you configure. It has no user account and
 no developer-operated relay for SSH, SFTP, or Monitor traffic. Connections to
@@ -23,6 +23,8 @@ ads, advertising identifiers, or cross-app tracking.
 | App logs | Local log files only; the current and previous run are retained for troubleshooting |
 | Agent conversations | Local encrypted database; they may contain prompts, model responses, command output, selected terminal text and file content |
 | Active terminal output | Kept in the active session; the terminal does not retain it after the session ends |
+| Downloaded city-level location data | Unencrypted files in the app's data directory, created only after you confirm the download; see [Globe and location data](#globe-and-location-data) |
+| Public-interface-address results reported by servers, including an explicit no-address result | Encrypted app database, one entry per server. Once seven days old, a record can be refreshed by a later status poll. Coordinates are not stored; each one is derived again from the downloaded data whenever needed |
 
 Agent conversations are excluded from backups and device sync. They remain on
 this device until you delete them from the conversation history. An Agent
@@ -138,12 +140,24 @@ any reporting sink receives them. They use fixed action names and stand-ins for
 server-related values rather than recording a server name, address or username
 directly.
 
-A manual report is different. After a crash, Server Box can show the previous
-run's log and any platform crash or hang trace, replace known configured server
-values where it can, copy the result to the clipboard and open a GitHub issue
-page. Nothing is posted automatically: you decide whether to paste or submit it,
-and you can read the complete text first. This path works at every diagnostic
-level, including **Nothing**.
+A manual report is different. After a crash, Server Box creates a report from
+the previous run's retained log and any native-crash or hang details supplied by
+the platform. It replaces configured server names, SSH hosts, SSH usernames and
+Monitor addresses that it recognizes, but does not claim the complete report is
+anonymous.
+
+The newest report is kept under **Settings → App → Privacy → Crash report**;
+the row appears only while a report exists. You can review the complete text,
+copy it, copy it and open a GitHub issue page, or delete it. Nothing is posted
+automatically. This manual path is available at every diagnostic level,
+including **Nothing**.
+
+**The app log is never uploaded automatically, at any level.** Basic and Full
+may send the error and stack trace that ended a run, together with the build and
+platform information described above, but they do not send log lines. If the
+error happened before the reporting sink started, it may be sent as an error on
+the next launch. The saved manual report remains on the device until you delete
+it or a later crash replaces it.
 
 Older log lines, temporary hosts and values the app does not know may still be
 present in a manual report. The report is therefore not guaranteed to be
@@ -168,6 +182,62 @@ credential only to the endpoint you configure. If app settings are included in a
 backup, the endpoint, model and API key are included as well. Server Box does not
 proxy AI requests through a developer service.
 
+## Globe and location data
+
+The globe draws each server at a coordinate. Server Box resolves geolocation
+from data stored on this device; it does not send a server address to a
+geolocation API or make a request to the dataset service for each lookup. A
+configured hostname may still be resolved through the device's DNS service, as
+it is when the app connects to that server.
+
+A server is placed from the first of these that answers:
+
+- A coordinate you typed in the server editor, under **More → Location**.
+- A public address the machine reported for itself, when the app connects
+  through a private address. It comes from the ordinary SSH or Monitor status
+  poll, then is resolved with the downloaded city dataset. No separate command
+  or external public-IP lookup is made.
+- The SSH or Monitor connection address, resolved with the downloaded city
+  dataset.
+
+The city dataset is not included in the app and is never fetched automatically.
+Tapping **Download** on the globe or in **Settings → Server → General →
+Globe** first retrieves a small manifest so the confirmation dialog can show
+the current download size, installed size, source URL and attribution. The data
+files are fetched only if you confirm. The dataset is currently about 25 MB to
+download and 52 MB after installation, but the manifest values shown by the app
+are authoritative. The data is updated monthly; **Update** replaces the
+installed files rather than retaining another copy. **Delete** removes the
+dataset. Location data is provided by [DB-IP](https://db-ip.com) under CC BY
+4.0.
+
+The download service can observe a manifest or data-file request from your
+network, including the network IP address and request time available to an HTTP
+service. After installation, every geolocation lookup reads a local file. The
+service receives no per-lookup request and cannot learn which server addresses
+are queried, how many are queried or when they are queried.
+
+Coordinates are not stored. Each one is derived again from the installed dataset
+whenever it is needed, so what the globe shows always reflects the dataset
+currently on the device and stops being available when that dataset is deleted.
+The device-local record kept for this feature is the latest public-interface-
+address result reported by a server, including the result that it reported no
+public address. It is stored in the encrypted app database because only that
+machine can supply it. The record is not included in backup or sync. Once it is
+seven days old, a later ordinary status poll can refresh it.
+
+Turning **Globe** off removes the button from the server tab and stops location
+resolution. It does not delete the downloaded dataset or the stored
+reported-address result. Use **Delete** on the dataset row to remove the data
+files. There is no separate manual-clear action for reported-address records;
+deleting a server removes its record.
+
+At the Full-information level, the globe can report coarse feature-use events
+like any other feature—for example, that the view was opened and how many
+servers each source placed. Relevant redacted breadcrumbs may also accompany an
+error at the Basic level. No coordinate, address, server name or country is
+included.
+
 ## Other network requests
 
 These requests are made only for the corresponding feature and do not carry the
@@ -180,6 +250,7 @@ automatic diagnostic payload described above.
 | Update check | `api.github.com` | On launch when automatic update checks are enabled |
 | Linux userland manifest | `github.com` | When the app checks for a newer local Linux release; it contains release metadata and signatures |
 | Linux userland image | The distribution mirror or source URL selected by the verified manifest | When you install or update a local Linux environment; the image is checked against the manifest's digest |
+| City-level location data | `ipgeo.lollipopkit.com`, with GitHub Releases as fallback | When you tap **Download** on the globe or in **Settings → Server → General → Globe**, or tap **Update** in settings. The manifest is requested first; data archives follow only after confirmation. Later geolocation lookups are local—see [Globe and location data](#globe-and-location-data). |
 | Server logo or distribution mark | The URL configured by you | When a custom logo or mark URL is set; the image provider can receive the request |
 | Sponsor link | `cdn.lpkt.cn` | When you open the sponsor link |
 | Documentation and issue links | `serverbox.lollipopkit.com` or `github.com` | When you open one of those links |

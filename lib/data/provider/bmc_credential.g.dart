@@ -57,7 +57,7 @@ final class BmcCredentialNotifierProvider
 }
 
 String _$bmcCredentialNotifierHash() =>
-    r'1916b95c86dabf99456aa820bc9d5d7c7d194755';
+    r'14d36b6dd48f58b5717255ae91ccf6a1dc274f6d';
 
 /// The BMC accounts, as a provider so the picker and the list page see the
 /// same set without either of them reloading the other.

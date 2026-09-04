@@ -46,15 +46,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get privacyPolicy => 'プライバシーポリシー';
 
   @override
-  String get crashUpload => 'クラッシュレポートを送信';
-
-  @override
-  String get crashUploadTip =>
-      'クラッシュレポートを開発者に送信します。既知のサーバー名とアドレスはプレースホルダーに置き換えられます。デフォルトはオフで、いつでもオフにできます。';
-
-  @override
-  String get crashNoticeBody =>
-      'ServerBox は前回の実行中に予期せず終了しました。クラッシュレポートを確認しますか？';
+  String get crashLastRunFailed => 'ServerBox は前回の実行中に予期せず終了しました。';
 
   @override
   String get crashReportTitle => 'クラッシュレポート';
@@ -348,6 +340,13 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get logoUrlTip => 'サーバー詳細ページの上部に出る大きな画像。元の色のまま表示します。';
+
+  @override
+  String get globe => '地球儀';
+
+  @override
+  String get locationTip =>
+      '地球儀上でこのサーバーを描く位置。緯度、経度の順に度単位で入力します。例: 39.9042, 116.4074';
 
   @override
   String get markUrl => 'マークの URL';
@@ -1684,4 +1683,50 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get termInFloatWindow => 'このターミナルはフローティングウィンドウにあります';
+
+  @override
+  String get globeEnabledTip =>
+      'サーバーをアドレスの所在地に基づいて地球儀上に表示します。オフにするとボタンが消え、一切の照会を行いません。';
+
+  @override
+  String get geoShardsConsentAttribution =>
+      'IP 位置情報は [DB-IP](https://db-ip.com) 提供、CC BY 4.0。';
+
+  @override
+  String get geoMissPrivate => 'プライベートアドレス';
+
+  @override
+  String get geoMissNoData => '位置データなし';
+
+  @override
+  String get globeGuide => 'ここをタップすると、サーバーをアドレスの所在地に基づいて地球儀上に表示します。';
+
+  @override
+  String get publicIp => 'パブリック IP';
+
+  @override
+  String get geoData => '市区レベルのデータ';
+
+  @override
+  String get geoDataTip =>
+      'ダウンロード後の位置情報検索には、この端末に保存されたデータが使用されます。サーバーのアドレスや検索状況がダウンロードサービスに送信されることはありません。';
+
+  @override
+  String get geoDataMissing => '未ダウンロード';
+
+  @override
+  String get geoDataUnreachable => 'データを取得できませんでした。';
+
+  @override
+  String get geoDataRemoveFailed => 'データを削除できませんでした。';
+
+  @override
+  String geoDataCurrent(Object month) {
+    return 'すでに $month のデータです。';
+  }
+
+  @override
+  String geoDataConsent(Object download, Object disk) {
+    return '**ダウンロード：$download · 端末上の使用容量：$disk。** 完全なデータセットはこの端末に保存され、以後の位置情報検索はすべてローカルで行われます。サーバーのアドレスや検索状況がダウンロードサービスに送信されることはありません。\n\n毎月更新されます。新しいバージョンはインストール済みのデータを置き換え、追加のコピーは保持しません。データはいつでも削除できます。';
+  }
 }

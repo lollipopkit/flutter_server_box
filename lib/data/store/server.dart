@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/custom.dart';
+import 'package:server_box/data/model/server/geo.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
@@ -234,11 +235,22 @@ class ServerStore extends EntityStore<Spi> {
     ];
     final pveIgnoreCert = (row['pve_ignore_cert'] as int) == 1;
     final tempIsCelsius = (row['temp_is_celsius'] as int) == 1;
-    // Field by field rather than against `const ServerCustom()`: this is a
-    // plain class with no `==`, so comparing would always say "different".
+    // Null unless both columns hold a value in range — the one place the pair
+    // becomes a coordinate, since the schema has no way to say "both or
+    // neither". `as num?` rather than `as double?`: a REAL column has real
+    // affinity and gives back a double, but a row written by hand, or by an
+    // older tool, can still have an integer sitting in it.
+    final geo = GeoCoord.tryNew(
+      (row['geo_lat'] as num?)?.toDouble(),
+      (row['geo_lon'] as num?)?.toDouble(),
+    );
+    // Field by field rather than against `const ServerCustom()`: that value's
+    // `tempIsCelsius` is false, while the column's default — and what an empty
+    // record means here — is true, so the two would never match.
     if (cmds == null &&
         !pveIgnoreCert &&
         tempIsCelsius &&
+        geo == null &&
         strings.every((c) => row[c] == null)) {
       return null;
     }
@@ -252,6 +264,7 @@ class ServerStore extends EntityStore<Spi> {
       logoUrl: row['logo_url'] as String?,
       netDev: row['net_dev'] as String?,
       scriptDir: row['script_dir'] as String?,
+      geo: geo,
     );
   }
 
@@ -295,6 +308,8 @@ class ServerStore extends EntityStore<Spi> {
       'logo_url',
       'net_dev',
       'script_dir',
+      'geo_lat',
+      'geo_lon',
     ];
     upsert(columns, [
       item.id,
@@ -333,6 +348,8 @@ class ServerStore extends EntityStore<Spi> {
       custom?.logoUrl,
       custom?.netDev,
       custom?.scriptDir,
+      custom?.geo?.lat,
+      custom?.geo?.lon,
     ]);
 
     // Replaced wholesale rather than diffed: the record arrives as one object,
