@@ -22,9 +22,13 @@ String? _inheritedEncodedRustFlags(Map<String, String> environment) {
   final encoded = environment['CARGO_ENCODED_RUSTFLAGS'];
   if (encoded != null && encoded.isNotEmpty) return encoded;
 
-  final rustFlags = environment['RUSTFLAGS']?.trim();
-  if (rustFlags == null || rustFlags.isEmpty) return null;
-  return rustFlags.split(RegExp(r'\s+')).join(_encodedRustFlagSeparator);
+  for (final name in const ['RUSTFLAGS', 'CARGO_BUILD_RUSTFLAGS']) {
+    final rustFlags = environment[name]?.trim();
+    if (rustFlags != null && rustFlags.isNotEmpty) {
+      return rustFlags.split(RegExp(r'\s+')).join(_encodedRustFlagSeparator);
+    }
+  }
+  return null;
 }
 
 /// Resolves Cargo's default home without depending on the current directory.

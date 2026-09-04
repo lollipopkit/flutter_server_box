@@ -47,6 +47,26 @@ void main() {
       );
     });
 
+    test('preserves Cargo build rustflags as the final fallback', () {
+      final result = reproducibleCargoEnvironment(
+        environment: const {
+          'HOME': '/home/runner',
+          'CARGO_BUILD_RUSTFLAGS': '-C strip=symbols',
+        },
+        packageRoot: '/build/server-box',
+        isWindows: false,
+      );
+
+      expect(
+        result['CARGO_ENCODED_RUSTFLAGS'],
+        [
+          '-C${separator}strip=symbols',
+          '--remap-path-prefix=/home/runner/.cargo=/cargo',
+          '--remap-path-prefix=/build/server-box=/source',
+        ].join(separator),
+      );
+    });
+
     test('uses the Unix Cargo default when CARGO_HOME is absent', () {
       final result = reproducibleCargoEnvironment(
         environment: const {'HOME': '/home/vagrant'},
