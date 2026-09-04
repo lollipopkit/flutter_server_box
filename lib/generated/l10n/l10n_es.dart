@@ -1210,8 +1210,74 @@ class AppLocalizationsEs extends AppLocalizations {
       'La pestaña del servidor no se puede eliminar';
 
   @override
-  String get shareServerRiskTip =>
-      'Este código QR contiene los datos de conexión en texto claro. Quien lo escanee o fotografíe puede conectarse.';
+  String get shareCodeHint =>
+      'Comunica estos dígitos al destinatario por separado. No están incluidos en el código QR.';
+
+  @override
+  String get shareCodePrompt => 'Código de 6 dígitos';
+
+  @override
+  String get shareCodeTitle => 'Código de un solo uso';
+
+  @override
+  String get shareExpired =>
+      'Este contenido compartido ha caducado. Solicita uno nuevo.';
+
+  @override
+  String get shareImportTitle => 'Importar servidor compartido';
+
+  @override
+  String get shareIncludesKey =>
+      'El contenido compartido incluye la clave privada.';
+
+  @override
+  String get shareOmittedBmc =>
+      'Las credenciales de BMC. La dirección está incluida, pero las credenciales no.';
+
+  @override
+  String get shareOmittedJump =>
+      'El servidor de salto, porque está guardado como otro servidor en este dispositivo.';
+
+  @override
+  String get shareOmittedKeyPath =>
+      'El archivo de clave, porque su ruta solo es válida en este dispositivo.';
+
+  @override
+  String get shareOmittedMissingKey =>
+      'La clave privada, porque no está en el almacén de claves de este dispositivo.';
+
+  @override
+  String get shareOmittedTip =>
+      'No se incluye; el destinatario debe configurar:';
+
+  @override
+  String get sharePassphraseTip =>
+      'Esta contraseña cifra el archivo. El destinatario la necesita para importar el servidor y no se puede recuperar.';
+
+  @override
+  String shareQrTip(int minutes) {
+    return 'Los datos de conexión de este código QR están cifrados. El contenido compartido caduca en $minutes minutos.';
+  }
+
+  @override
+  String shareServerExists(String name) {
+    return '«$name» ya utiliza esta dirección en este dispositivo. ¿Importarlo de todos modos?';
+  }
+
+  @override
+  String get shareTooBigForQr =>
+      'Es demasiado grande para un código QR. Compártelo como archivo.';
+
+  @override
+  String get shareTooNew =>
+      'Este contenido se creó con una versión más reciente de ServerBox. Actualiza la aplicación para abrirlo.';
+
+  @override
+  String get shareUnreadable =>
+      'Este no es un contenido compartido válido de ServerBox.';
+
+  @override
+  String get shareVia => 'Compartir mediante';
 
   @override
   String get sftpDlPrepare => 'Preparando para conectar al servidor...';

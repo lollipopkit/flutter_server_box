@@ -1202,8 +1202,73 @@ class AppLocalizationsRu extends AppLocalizations {
   String get serverTabRequired => 'Вкладку сервера нельзя удалить';
 
   @override
-  String get shareServerRiskTip =>
-      'Этот QR-код содержит настройки подключения открытым текстом. Любой, кто его отсканирует или сфотографирует, сможет подключиться.';
+  String get shareCodeHint =>
+      'Передайте эти цифры получателю отдельно. В QR-коде их нет.';
+
+  @override
+  String get shareCodePrompt => '6-значный код';
+
+  @override
+  String get shareCodeTitle => 'Одноразовый код';
+
+  @override
+  String get shareExpired =>
+      'Срок действия этих данных истёк. Попросите отправить новые.';
+
+  @override
+  String get shareImportTitle => 'Импорт общего сервера';
+
+  @override
+  String get shareIncludesKey => 'В передаваемые данные включён закрытый ключ.';
+
+  @override
+  String get shareOmittedBmc =>
+      'Учётные данные BMC. Адрес включён, а учётные данные — нет.';
+
+  @override
+  String get shareOmittedJump =>
+      'Промежуточный сервер, поскольку на этом устройстве он хранится как отдельный сервер.';
+
+  @override
+  String get shareOmittedKeyPath =>
+      'Файл ключа, поскольку путь к нему действителен только на этом устройстве.';
+
+  @override
+  String get shareOmittedMissingKey =>
+      'Закрытый ключ, поскольку его нет в хранилище ключей этого устройства.';
+
+  @override
+  String get shareOmittedTip =>
+      'Не включено; получателю потребуется настроить:';
+
+  @override
+  String get sharePassphraseTip =>
+      'Эта парольная фраза шифрует файл. Она нужна получателю для импорта сервера, и восстановить её невозможно.';
+
+  @override
+  String shareQrTip(int minutes) {
+    return 'Данные подключения в этом QR-коде зашифрованы. Срок действия истечёт через $minutes мин.';
+  }
+
+  @override
+  String shareServerExists(String name) {
+    return 'Сервер «$name» на этом устройстве уже использует этот адрес. Всё равно импортировать?';
+  }
+
+  @override
+  String get shareTooBigForQr =>
+      'Данные слишком велики для QR-кода. Отправьте их как файл.';
+
+  @override
+  String get shareTooNew =>
+      'Эти данные созданы в более новой версии ServerBox. Обновите приложение, чтобы открыть их.';
+
+  @override
+  String get shareUnreadable =>
+      'Это недопустимые данные общего доступа ServerBox.';
+
+  @override
+  String get shareVia => 'Способ отправки';
 
   @override
   String get sftpDlPrepare => 'Подготовка подключения...';

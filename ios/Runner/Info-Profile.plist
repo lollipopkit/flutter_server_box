@@ -35,6 +35,41 @@
 		<false/>
 		<key>LSRequiresIPhoneOS</key>
 		<true/>
+		<key>CFBundleDocumentTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleTypeName</key>
+				<string>ServerBox Shared Server</string>
+				<key>CFBundleTypeRole</key>
+				<string>Viewer</string>
+				<key>LSHandlerRank</key>
+				<string>Owner</string>
+				<key>LSItemContentTypes</key>
+				<array>
+					<string>tech.lolli.serverbox.share</string>
+				</array>
+			</dict>
+		</array>
+		<key>UTExportedTypeDeclarations</key>
+		<array>
+			<dict>
+				<key>UTTypeIdentifier</key>
+				<string>tech.lolli.serverbox.share</string>
+				<key>UTTypeDescription</key>
+				<string>ServerBox Shared Server</string>
+				<key>UTTypeConformsTo</key>
+				<array>
+					<string>public.plain-text</string>
+				</array>
+				<key>UTTypeTagSpecification</key>
+				<dict>
+					<key>public.filename-extension</key>
+					<array>
+						<string>sbxsrv</string>
+					</array>
+				</dict>
+			</dict>
+		</array>
 		<key>LSSupportsOpeningDocumentsInPlace</key>
 		<true/>
 		<key>UIApplicationSupportsIndirectInputEvents</key>
@@ -51,7 +86,11 @@
 						<key>UISceneClassName</key>
 						<string>UIWindowScene</string>
 						<key>UISceneDelegateClassName</key>
-						<string>FlutterSceneDelegate</string>
+						<!-- A subclass, so this app can see the URLs it is opened with:
+						     in a scene-based app the app delegate's `application(_:open:)`
+						     is never called. See ios/Runner/SceneDelegate.swift. The bare
+						     name is what `@objc(SceneDelegate)` registers. -->
+						<string>SceneDelegate</string>
 						<key>UISceneConfigurationName</key>
 						<string>flutter</string>
 						<key>UISceneStoryboardFile</key>

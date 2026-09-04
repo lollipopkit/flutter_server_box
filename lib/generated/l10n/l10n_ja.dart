@@ -1129,8 +1129,64 @@ class AppLocalizationsJa extends AppLocalizations {
   String get serverTabRequired => 'サーバータブは削除できません';
 
   @override
-  String get shareServerRiskTip =>
-      'この QR コードはサーバーの接続設定を平文で含みます。読み取った人や撮影した人は誰でも接続できます。';
+  String get shareCodeHint => 'この数字は別の方法で受信者に伝えてください。QR コードには含まれていません。';
+
+  @override
+  String get shareCodePrompt => '6 桁のコード';
+
+  @override
+  String get shareCodeTitle => 'ワンタイムコード';
+
+  @override
+  String get shareExpired => 'この共有データは期限切れです。新しい共有データを依頼してください。';
+
+  @override
+  String get shareImportTitle => '共有サーバーをインポート';
+
+  @override
+  String get shareIncludesKey => '共有データに秘密鍵が含まれています。';
+
+  @override
+  String get shareOmittedBmc => 'BMC の認証情報。アドレスは含まれますが、認証情報は含まれません。';
+
+  @override
+  String get shareOmittedJump => '踏み台サーバー。この端末では別のサーバーとして保存されているためです。';
+
+  @override
+  String get shareOmittedKeyPath => '鍵ファイル。そのパスはこの端末でのみ有効なためです。';
+
+  @override
+  String get shareOmittedMissingKey => '秘密鍵。この端末の鍵ストアに保存されていないためです。';
+
+  @override
+  String get shareOmittedTip => '次の項目は含まれません。受信者側で設定してください：';
+
+  @override
+  String get sharePassphraseTip =>
+      'このパスフレーズでファイルを暗号化します。サーバーのインポート時に必要となり、復元することはできません。';
+
+  @override
+  String shareQrTip(int minutes) {
+    return 'この QR コードの接続情報は暗号化されています。共有データは $minutes 分後に期限切れになります。';
+  }
+
+  @override
+  String shareServerExists(String name) {
+    return 'この端末の「$name」はすでに同じアドレスを使用しています。それでもインポートしますか？';
+  }
+
+  @override
+  String get shareTooBigForQr => 'QR コードに収まりません。代わりにファイルとして共有してください。';
+
+  @override
+  String get shareTooNew =>
+      'この共有データは新しいバージョンの ServerBox で作成されています。アプリを更新してから開いてください。';
+
+  @override
+  String get shareUnreadable => '有効な ServerBox の共有データではありません。';
+
+  @override
+  String get shareVia => '共有方法';
 
   @override
   String get sftpDlPrepare => 'サーバーへの接続を準備中...';

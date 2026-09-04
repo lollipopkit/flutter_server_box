@@ -436,7 +436,38 @@
   "serverOrder": "Server order",
   "serverTabEmpty": "No servers yet",
   "serverTabRequired": "Server tab cannot be removed",
-  "shareServerRiskTip": "This QR code holds the server’s connection settings in clear text. Anyone who scans or photographs it can connect.",
+  "shareCodeHint": "Tell the recipient these digits separately. They are not included in the QR code.",
+  "shareCodePrompt": "6-digit code",
+  "shareCodeTitle": "One-time code",
+  "shareExpired": "This share has expired. Ask for a new one.",
+  "shareImportTitle": "Import shared server",
+  "shareIncludesKey": "The share includes the private key.",
+  "shareOmittedBmc": "BMC credentials. The address is included, but the credentials are not.",
+  "shareOmittedJump": "The jump server, because it is stored as a separate server on this device.",
+  "shareOmittedKeyPath": "The key file, because its path is only valid on this device.",
+  "shareOmittedMissingKey": "The private key, because it is not in this device’s key store.",
+  "shareOmittedTip": "Not included; the recipient must configure:",
+  "sharePassphraseTip": "This passphrase encrypts the file. The recipient needs it to import the server, and it cannot be recovered.",
+  "shareQrTip": "The connection details in this QR code are encrypted. The share expires in {minutes} minutes.",
+  "@shareQrTip": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "shareServerExists": "“{name}” on this device already uses this address. Import anyway?",
+  "@shareServerExists": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shareTooBigForQr": "Too large for a QR code. Share it as a file instead.",
+  "shareTooNew": "This share was created with a newer version of ServerBox. Update the app to open it.",
+  "shareUnreadable": "This is not a valid ServerBox share.",
+  "shareVia": "Share via",
   "sftpDlPrepare": "Preparing to connect...",
   "sftpEditorTip": "Empty uses the built-in editor. For example `vim` (reading `EDITOR` is suggested).",
   "sftpRmrDirSummary": "Use `rm -r` to delete a folder in SFTP.",

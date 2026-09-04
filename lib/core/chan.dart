@@ -288,6 +288,34 @@ abstract final class MethodChans {
     }
   }
 
+  /// The contents of a share file the platform handed this app, and clears it.
+  ///
+  /// A `.sbxsrv` arrives by AirDrop, from the Files app, or from another app's
+  /// share sheet, and the platform's answer to all three is to launch or
+  /// foreground this app with a URL. The native side reads the bytes — on
+  /// Android they are behind a `content://` URI that nothing in Dart can open,
+  /// and on iOS they are in an inbox directory the app is expected to empty —
+  /// and holds them until this asks.
+  ///
+  /// **Pulled, not pushed.** A channel has one handler, `registerHandler`
+  /// already owns it, and it is only installed on Android; a push would
+  /// therefore have to arrive somewhere nothing is listening on exactly the
+  /// two platforms AirDrop exists on. The caller asks after the first frame
+  /// and again on every resume, which covers a cold launch and a file opened
+  /// while the app was already running.
+  ///
+  /// Cleared by the read, so a second resume does not raise the same file
+  /// again.
+  static Future<String?> takeOpenedShare() async {
+    if (!isIOS && !isMacOS && !isAndroid) return null;
+    try {
+      return await _channel.invokeMethod<String>('takeOpenedShare');
+    } catch (e, s) {
+      Loggers.app.warning('Failed to read the opened share', e, s);
+      return null;
+    }
+  }
+
   /// Register a handler for native -> Flutter callbacks.
   /// Currently handles:
   /// - `disconnectSession` with argument map {id: string}

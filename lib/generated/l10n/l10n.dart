@@ -2180,11 +2180,113 @@ abstract class AppLocalizations {
   /// **'Server tab cannot be removed'**
   String get serverTabRequired;
 
-  /// No description provided for @shareServerRiskTip.
+  /// No description provided for @shareCodeHint.
   ///
   /// In en, this message translates to:
-  /// **'This QR code holds the server’s connection settings in clear text. Anyone who scans or photographs it can connect.'**
-  String get shareServerRiskTip;
+  /// **'Tell the recipient these digits separately. They are not included in the QR code.'**
+  String get shareCodeHint;
+
+  /// No description provided for @shareCodePrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'6-digit code'**
+  String get shareCodePrompt;
+
+  /// No description provided for @shareCodeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'One-time code'**
+  String get shareCodeTitle;
+
+  /// No description provided for @shareExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'This share has expired. Ask for a new one.'**
+  String get shareExpired;
+
+  /// No description provided for @shareImportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import shared server'**
+  String get shareImportTitle;
+
+  /// No description provided for @shareIncludesKey.
+  ///
+  /// In en, this message translates to:
+  /// **'The share includes the private key.'**
+  String get shareIncludesKey;
+
+  /// No description provided for @shareOmittedBmc.
+  ///
+  /// In en, this message translates to:
+  /// **'BMC credentials. The address is included, but the credentials are not.'**
+  String get shareOmittedBmc;
+
+  /// No description provided for @shareOmittedJump.
+  ///
+  /// In en, this message translates to:
+  /// **'The jump server, because it is stored as a separate server on this device.'**
+  String get shareOmittedJump;
+
+  /// No description provided for @shareOmittedKeyPath.
+  ///
+  /// In en, this message translates to:
+  /// **'The key file, because its path is only valid on this device.'**
+  String get shareOmittedKeyPath;
+
+  /// No description provided for @shareOmittedMissingKey.
+  ///
+  /// In en, this message translates to:
+  /// **'The private key, because it is not in this device’s key store.'**
+  String get shareOmittedMissingKey;
+
+  /// No description provided for @shareOmittedTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Not included; the recipient must configure:'**
+  String get shareOmittedTip;
+
+  /// No description provided for @sharePassphraseTip.
+  ///
+  /// In en, this message translates to:
+  /// **'This passphrase encrypts the file. The recipient needs it to import the server, and it cannot be recovered.'**
+  String get sharePassphraseTip;
+
+  /// No description provided for @shareQrTip.
+  ///
+  /// In en, this message translates to:
+  /// **'The connection details in this QR code are encrypted. The share expires in {minutes} minutes.'**
+  String shareQrTip(int minutes);
+
+  /// No description provided for @shareServerExists.
+  ///
+  /// In en, this message translates to:
+  /// **'“{name}” on this device already uses this address. Import anyway?'**
+  String shareServerExists(String name);
+
+  /// No description provided for @shareTooBigForQr.
+  ///
+  /// In en, this message translates to:
+  /// **'Too large for a QR code. Share it as a file instead.'**
+  String get shareTooBigForQr;
+
+  /// No description provided for @shareTooNew.
+  ///
+  /// In en, this message translates to:
+  /// **'This share was created with a newer version of ServerBox. Update the app to open it.'**
+  String get shareTooNew;
+
+  /// No description provided for @shareUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'This is not a valid ServerBox share.'**
+  String get shareUnreadable;
+
+  /// No description provided for @shareVia.
+  ///
+  /// In en, this message translates to:
+  /// **'Share via'**
+  String get shareVia;
 
   /// No description provided for @sftpDlPrepare.
   ///

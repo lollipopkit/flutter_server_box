@@ -1194,8 +1194,72 @@ class AppLocalizationsId extends AppLocalizations {
   String get serverTabRequired => 'Tab server tidak dapat dihapus';
 
   @override
-  String get shareServerRiskTip =>
-      'Kode QR ini memuat pengaturan koneksi dalam teks biasa. Siapa pun yang memindai atau memotretnya bisa terhubung.';
+  String get shareCodeHint =>
+      'Sampaikan digit ini secara terpisah kepada penerima. Digit ini tidak disertakan dalam kode QR.';
+
+  @override
+  String get shareCodePrompt => 'Kode 6 digit';
+
+  @override
+  String get shareCodeTitle => 'Kode sekali pakai';
+
+  @override
+  String get shareExpired => 'Bagikan ini sudah kedaluwarsa. Minta yang baru.';
+
+  @override
+  String get shareImportTitle => 'Impor server yang dibagikan';
+
+  @override
+  String get shareIncludesKey =>
+      'Data yang dibagikan menyertakan kunci privat.';
+
+  @override
+  String get shareOmittedBmc =>
+      'Kredensial BMC. Alamat disertakan, tetapi kredensial tidak.';
+
+  @override
+  String get shareOmittedJump =>
+      'Server jump, karena disimpan sebagai server terpisah di perangkat ini.';
+
+  @override
+  String get shareOmittedKeyPath =>
+      'File kunci, karena lokasinya hanya berlaku di perangkat ini.';
+
+  @override
+  String get shareOmittedMissingKey =>
+      'Kunci privat, karena tidak ada di penyimpanan kunci perangkat ini.';
+
+  @override
+  String get shareOmittedTip =>
+      'Tidak disertakan; penerima harus mengonfigurasi:';
+
+  @override
+  String get sharePassphraseTip =>
+      'Frasa sandi ini mengenkripsi file. Penerima memerlukannya untuk mengimpor server dan frasa ini tidak dapat dipulihkan.';
+
+  @override
+  String shareQrTip(int minutes) {
+    return 'Data koneksi dalam kode QR ini dienkripsi. Data yang dibagikan akan kedaluwarsa dalam $minutes menit.';
+  }
+
+  @override
+  String shareServerExists(String name) {
+    return '“$name” di perangkat ini sudah menggunakan alamat tersebut. Tetap impor?';
+  }
+
+  @override
+  String get shareTooBigForQr =>
+      'Terlalu besar untuk kode QR. Bagikan sebagai file.';
+
+  @override
+  String get shareTooNew =>
+      'Data ini dibuat dengan versi ServerBox yang lebih baru. Perbarui aplikasi untuk membukanya.';
+
+  @override
+  String get shareUnreadable => 'Ini bukan data ServerBox yang valid.';
+
+  @override
+  String get shareVia => 'Bagikan melalui';
 
   @override
   String get sftpDlPrepare => 'Bersiap untuk terhubung ...';

@@ -46,30 +46,15 @@ extension _SSH on _AppSettingsPageState {
     );
   }
 
-  Future<void> _onTapQrScan() async {
-    final ret = await BarcodeScannerPage.route.go(
-      context,
-      args: const BarcodeScannerPageArgs(),
-    );
-    final code = ret?.text;
-    if (code == null) return;
-    if (!mounted) return;
-
-    try {
-      final spi = Spi.fromJson(json.decode(code));
-      final existingIds = ref.read(serversProvider).servers.keys;
-      if (existingIds.contains(spi.id)) {
-        Toast.show('${l10n.sameIdServerExist}: ${spi.id}');
-        return;
-      }
-      final resolvedList = ServerDeduplication.resolveNameConflicts([spi]);
-      final resolvedSpi = resolvedList.first;
-      await ref.read(serversProvider.notifier).addServer(resolvedSpi);
-      Toast.success(libL10n.success);
-    } catch (e, s) {
-      context.showErrDialog(e, s);
-    }
-  }
+  /// Everything about reading a code lives in [ServerShareUi] now — the
+  /// prompt for the one-time code, the three failures that each need a
+  /// different sentence, and the key that arrives with the server.
+  ///
+  /// This used to decode the text as a bare `Spi` and add it, which is still
+  /// what happens for a code shared by a build that predates the encrypted
+  /// format. That path is `ServerShareCodec.decode`'s last branch rather than
+  /// a second entry point.
+  Future<void> _onTapQrScan() => ServerShareUi.receiveFromQr(context, ref);
 
   Future<void> _onTapSSHConfigImport() async {
     try {

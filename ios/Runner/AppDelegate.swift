@@ -140,6 +140,10 @@ import ActivityKit
                 result(nil)
             case "widgetTokenState":
                 result(Self.widgetTokenState())
+            // A `.sbxsrv` the platform handed this app — see [IncomingShare]
+            // and [SceneDelegate], which is where it is picked up.
+            case "takeOpenedShare":
+                result(IncomingShare.take())
             default:
                 result(FlutterMethodNotImplemented)
             }

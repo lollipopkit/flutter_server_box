@@ -11,6 +11,16 @@ class AppDelegate: FlutterAppDelegate {
     return true
   }
 
+  /// AirDrop, "Open With", and a `.sbxsrv` double-clicked in the Finder all
+  /// arrive here.
+  ///
+  /// On a cold open this runs *before* `applicationDidFinishLaunching`, so
+  /// there is no engine and no channel yet — which is why [IncomingShare]
+  /// holds the bytes rather than delivering them.
+  override func application(_ application: NSApplication, open urls: [URL]) {
+    IncomingShare.accept(urls)
+  }
+
   override func applicationDidFinishLaunching(_ notification: Notification) {
     // Subscribed at launch because delivery is on the system's schedule: a
     // payload for a crash arrives some time after the launch following it, and
@@ -56,6 +66,8 @@ class AppDelegate: FlutterAppDelegate {
           } else {
             result(nil)
           }
+        } else if call.method == "takeOpenedShare" {
+          result(IncomingShare.take())
         } else {
           result(FlutterMethodNotImplemented)
         }

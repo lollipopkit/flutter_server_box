@@ -32,6 +32,49 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<!-- What this app is offered for in "Open With", and what AirDrop hands
+	     it. One type, its own: claiming `.json` would claim every JSON file on
+	     the machine. `Alternate` rather than `Owner` is wrong here — this app
+	     defines the format, and the exported declaration below is the
+	     definition. -->
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>ServerBox Shared Server</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Owner</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>tech.lolli.serverbox.share</string>
+			</array>
+		</dict>
+	</array>
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>tech.lolli.serverbox.share</string>
+			<key>UTTypeDescription</key>
+			<string>ServerBox Shared Server</string>
+			<!-- Text, because it is: base64 of an encrypted payload. Saying so
+			     is what lets a mail client or a chat app treat it sensibly
+			     instead of guessing. -->
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.plain-text</string>
+			</array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>sbxsrv</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
 	<key>NSFileProviderExtensionAccessControlPolicy</key>
 	<string>NSFileProviderExtensionAccessControlPolicyRequiresExplicitAccess</string>
 	<key>NSFileProviderExtensionUsageDescription</key>

@@ -25,6 +25,7 @@ import 'package:server_box/view/page/setting/entries/home_tabs.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/widget/dmg_notice.dart';
 import 'package:server_box/view/widget/legacy_status_notice.dart';
+import 'package:server_box/view/widget/server_share.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -200,6 +201,15 @@ class _HomePageState extends ConsumerState<HomePage>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
+
+    // Above the desktop guard, deliberately. Opening a `.sbxsrv` foregrounds
+    // the app, and on macOS — where AirDrop and "Open With" both land — that
+    // is the *only* edge this ever arrives on, since everything below returns
+    // before it.
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_consumePendingShare());
+    }
+
     if (isDesktop) return;
 
     switch (state) {
@@ -213,14 +223,14 @@ class _HomePageState extends ConsumerState<HomePage>
           if (delay > 0 && _pausedTime != null) {
             final now = DateTime.now();
             if (now.difference(_pausedTime ?? now).inSeconds > delay) {
-              unawaited(_goAuth());
+              unawaited(_authed = _goAuth());
             } else {
               _shouldAuth = false;
               _releasePrivacyCover();
             }
             _pausedTime = null;
           } else {
-            unawaited(_goAuth());
+            unawaited(_authed = _goAuth());
           }
         } else {
           _releasePrivacyCover();
@@ -555,7 +565,10 @@ class _HomePageState extends ConsumerState<HomePage>
     // Explicitly, because the listener above only fires on a change: the first
     // tab is usually already the value, and nothing would have announced it.
     _publishCurrentTab();
-    final authed = _goAuth(showGuide: false);
+    // Held in a field as well as locally: [_consumePendingShare] runs on the
+    // resume edge too, where there is no such local to await, and it must not
+    // draw over the lock screen either.
+    final authed = _authed = _goAuth(showGuide: false);
 
     if (Stores.setting.autoCheckAppUpdate.fetch()) {
       AppUpdateIface.doUpdate(
@@ -603,11 +616,53 @@ class _HomePageState extends ConsumerState<HomePage>
       // [CrashReportDialog]. The two notices above stay: both are about data
       // this launch changed, which is not something to find out about later.
       await _maybeShowNavGuide();
+      if (!mounted) return;
+      // A share opened from AirDrop or the Files app while this app was not
+      // running: the platform launched it with the URL, and the native side
+      // has been holding the bytes since before the first frame.
+      await _consumePendingShare();
     }());
 
     unawaited(_restartServerRefreshCycle());
 
     bakSync.sync(milliDelay: 1000);
+  }
+
+  /// Guards against two of these being up at once.
+  ///
+  /// The launch path and a resume can both fire while the first is still
+  /// waiting on the passphrase dialog, and `takeOpenedShare` clearing the
+  /// native side is not enough on its own — the second call would find nothing
+  /// and return, but only after the first had already been asked twice on
+  /// platforms where opening a file also resumes the app.
+  var _consumingShare = false;
+
+  /// The lock screen currently up, if any. See where it is assigned.
+  Future<void>? _authed;
+
+  /// Takes in a `.sbxsrv` the platform handed this app, if one is waiting.
+  Future<void> _consumePendingShare() async {
+    if (_consumingShare) return;
+    _consumingShare = true;
+    try {
+      final text = await MethodChans.takeOpenedShare();
+      if (text == null || text.isEmpty || !mounted) return;
+      // Behind the lock screen for the same reason the launch notices are: it
+      // is a root-navigator dialog, and the lock page is on that navigator.
+      //
+      // Read here rather than captured on entry, and that ordering matters:
+      // this method is called from the top of `didChangeAppLifecycleState`,
+      // before the branch that starts the lock. The platform call above is a
+      // channel round trip, so the rest of that method — including assigning
+      // the new [_authed] — has run by the time this line does.
+      await _authed;
+      if (!mounted) return;
+      await ServerShareUi.consume(context, ref, text, digitsOnly: false);
+    } catch (e, s) {
+      Loggers.app.warning('Consume the opened share', e, s);
+    } finally {
+      _consumingShare = false;
+    }
   }
 
   /// Completes once the lock screen, if there is one, has been dismissed.

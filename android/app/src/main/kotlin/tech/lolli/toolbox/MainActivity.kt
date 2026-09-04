@@ -42,6 +42,9 @@ class MainActivity: FlutterFragmentActivity() {
             )
         }
         super.onCreate(savedInstanceState)
+        // The launch intent, which is where a file opened while this app was
+        // not running arrives. `onNewIntent` covers the other direction.
+        IncomingShare.accept(this, intent)
     }
 
     override fun provideFlutterEngine(context: Context): FlutterEngine? {
@@ -143,6 +146,11 @@ class MainActivity: FlutterFragmentActivity() {
                     }
                     "isServiceRunning" -> {
                         result.success(ForegroundService.isRunning)
+                    }
+                    // A `.sbxsrv` another app handed this one, already read
+                    // out of its `content://` URI — see [IncomingShare].
+                    "takeOpenedShare" -> {
+                        result.success(IncomingShare.take())
                     }
                     // Why the process died last time, from the system rather
                     // than from anything this app managed to run on its way
@@ -494,6 +502,7 @@ class MainActivity: FlutterFragmentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        IncomingShare.accept(this, intent)
         handleActionIntent(intent)
     }
 

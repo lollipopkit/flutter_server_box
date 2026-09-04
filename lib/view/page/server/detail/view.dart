@@ -25,7 +25,6 @@ import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/nvdia.dart';
 import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/server.dart' as server_model;
-import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/provider/bmc/bmc.dart';
@@ -35,6 +34,7 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/pve.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
+import 'package:server_box/view/widget/server_share.dart';
 
 part 'misc.dart';
 
@@ -492,7 +492,7 @@ ${err.message ?? 'null'}
         IconButton(
           icon: const Icon(Icons.share),
           tooltip: libL10n.share,
-          onPressed: () => _showShareQr(si.spi),
+          onPressed: () => ServerShareUi.send(context, si.spi),
         ),
         IconButton(tooltip: libL10n.edit, 
           icon: const Icon(Icons.edit),
@@ -510,39 +510,6 @@ ${err.message ?? 'null'}
     );
   }
 
-  /// Not `QrShareBtn`: the code encodes the whole record, passwords included,
-  /// so the dialog has to say so before anyone points a camera at it.
-  void _showShareQr(Spi spi) {
-    context.showRoundDialog(
-      title: libL10n.share,
-      child: ConstrainedBox(
-        // The QR fills whatever width it is given and the hint is one long
-        // line, so without a cap the paragraph's intrinsic width sets the
-        // dialog's — on a desktop window that is a QR code the height of the
-        // screen. A max, not a fixed width: a narrow phone gets less.
-        constraints: const BoxConstraints(maxWidth: 300),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                l10n.shareServerRiskTip,
-                style: UIs.text13Grey,
-                textAlign: TextAlign.start,
-              ),
-              UIs.height13,
-              QrView(
-                data: spi.toJsonString(),
-                tip: spi.name,
-                tip2: '${libL10n.server} ~ ServerBox',
-              ),
-            ],
-          ),
-        ),
-      ),
-      actions: Btnx.oks,
-    );
-  }
 
   /// The large image at the top of a server's page, as published.
   ///
