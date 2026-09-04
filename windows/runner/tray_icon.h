@@ -33,6 +33,11 @@ class TrayIcon {
   bool HandleMessage(UINT message, WPARAM wparam, LPARAM lparam,
                      LRESULT* result);
 
+  // Removes the native resources. If a popup is running its nested message
+  // loop, cleanup is completed when that loop returns.
+  void Destroy();
+  bool IsMenuOpen() const { return menu_open_; }
+
   // The tray's own callback, and the two the owner-drawn items need. Kept
   // apart from `WM_APP` so the runner can forward exactly these.
   static constexpr UINT kCallbackMessage = WM_APP + 1;
@@ -59,7 +64,7 @@ class TrayIcon {
   HFONT NameFont() const;
   HFONT DetailFont() const;
   void Update(const flutter::EncodableMap& payload);
-  void Destroy();
+  void DestroyNow();
   void ShowMenu();
   void Measure(MEASUREITEMSTRUCT* measure);
   void Draw(DRAWITEMSTRUCT* draw);
@@ -77,6 +82,7 @@ class TrayIcon {
   UINT taskbar_created_message_ = 0;
   UINT dpi_ = USER_DEFAULT_SCREEN_DPI;
   bool menu_open_ = false;
+  bool destroy_pending_ = false;
   bool refresh_visuals_pending_ = false;
   std::optional<flutter::EncodableMap> pending_payload_;
 

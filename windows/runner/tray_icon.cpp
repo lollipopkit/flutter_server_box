@@ -124,6 +124,16 @@ bool GetBool(const flutter::EncodableMap& map, const char* key) {
   return flag != nullptr && *flag;
 }
 
+std::wstring EscapeMenuLabel(const std::wstring& label) {
+  std::wstring escaped;
+  escaped.reserve(label.size());
+  for (const wchar_t character : label) {
+    if (character == L'&') escaped.push_back(L'&');
+    escaped.push_back(character);
+  }
+  return escaped;
+}
+
 // The colour of the dot. Only what is not ordinary gets a colour: a menu where
 // every row is coloured is one where the colour has stopped meaning anything.
 COLORREF DotColour(const std::wstring& state) {
@@ -160,7 +170,11 @@ TrayIcon::TrayIcon(HWND window, flutter::BinaryMessenger* messenger)
 }
 
 TrayIcon::~TrayIcon() {
-  Destroy();
+  // The owning window keeps this object alive until a popup's nested message
+  // loop has unwound. This is only a final guard for ordinary teardown.
+  if (menu_open_) EndMenu();
+  menu_open_ = false;
+  DestroyNow();
   if (name_font_ != nullptr) DeleteObject(name_font_);
   if (detail_font_ != nullptr) DeleteObject(detail_font_);
 }
@@ -260,8 +274,18 @@ bool TrayIcon::OwnsRowItem(UINT id, ULONG_PTR data) const {
 void TrayIcon::Destroy() {
   pending_payload_.reset();
   refresh_visuals_pending_ = false;
-  if (menu_open_) EndMenu();
-  menu_open_ = false;
+  if (menu_open_) {
+    destroy_pending_ = true;
+    EndMenu();
+    return;
+  }
+  DestroyNow();
+}
+
+void TrayIcon::DestroyNow() {
+  destroy_pending_ = false;
+  pending_payload_.reset();
+  refresh_visuals_pending_ = false;
   if (icon_added_) {
     Shell_NotifyIconW(NIM_DELETE, &icon_data_);
     icon_added_ = false;
@@ -364,7 +388,8 @@ void TrayIcon::Update(const flutter::EncodableMap& payload) {
     for (size_t i = 0; i < rows_.size(); i++) {
       const UINT id = kFirstRow + static_cast<UINT>(i);
       if (compact_) {
-        AppendMenu(menu_, MF_STRING, id, rows_[i].label.c_str());
+        const std::wstring label = EscapeMenuLabel(rows_[i].label);
+        AppendMenu(menu_, MF_STRING, id, label.c_str());
       } else {
         // The index and not a pointer: `rows_` is replaced on every update,
         // and a menu outliving one would be holding freed rows.
@@ -392,6 +417,13 @@ void TrayIcon::ShowMenu() {
       cursor.y, 0, window_, nullptr);
   menu_open_ = false;
   PostMessage(window_, WM_NULL, 0, 0);
+  if (destroy_pending_) {
+    // A destroy request can arrive inside TrackPopupMenu's nested message
+    // loop. The returned command belongs to the old rows and must not reach
+    // Dart after their tray state has been torn down.
+    DestroyNow();
+    return;
+  }
   if (command != 0) OnCommand(command);
 
   if (refresh_visuals_pending_) {
@@ -580,7 +612,8 @@ bool TrayIcon::HandleMessage(UINT message, WPARAM wparam, LPARAM lparam,
   if (taskbar_created_message_ != 0 && message == taskbar_created_message_) {
     // Explorer owns the notification area. When it restarts every registered
     // icon is lost, while this process still believes its previous add exists.
-    const bool should_restore = icon_added_ || menu_ != nullptr;
+    const bool should_restore =
+        !destroy_pending_ && (icon_added_ || menu_ != nullptr);
     icon_added_ = false;
     modern_notifications_ = false;
     if (should_restore) {

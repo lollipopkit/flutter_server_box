@@ -35,14 +35,18 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
-  // Before the engine goes: it holds a channel on that messenger, and the
-  // icon has to come off the notification area whatever ends the process.
-  tray_ = nullptr;
-  if (flutter_controller_) {
-    flutter_controller_ = nullptr;
-  }
+  // TrackPopupMenu runs a nested message loop in which WM_DESTROY can arrive.
+  // Ask the tray to end that loop, but keep both it and its messenger alive
+  // until the FlutterWindow itself unwinds after MessageHandler returns.
+  if (tray_) tray_->Destroy();
 
   Win32Window::OnDestroy();
+}
+
+void FlutterWindow::ReleaseResourcesIfReady() {
+  if (GetHandle() != nullptr || (tray_ && tray_->IsMenuOpen())) return;
+  tray_ = nullptr;
+  flutter_controller_ = nullptr;
 }
 
 LRESULT
@@ -55,6 +59,7 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
   if (tray_) {
     LRESULT tray_result = 0;
     if (tray_->HandleMessage(message, wparam, lparam, &tray_result)) {
+      ReleaseResourcesIfReady();
       return tray_result;
     }
   }
@@ -75,5 +80,8 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
       break;
   }
 
-  return Win32Window::MessageHandler(hwnd, message, wparam, lparam);
+  const LRESULT result =
+      Win32Window::MessageHandler(hwnd, message, wparam, lparam);
+  ReleaseResourcesIfReady();
+  return result;
 }
