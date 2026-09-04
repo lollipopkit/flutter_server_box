@@ -284,13 +284,14 @@ private final class TrayRowView: NSView {
     init(line: [String: Any], item: NSMenuItem) {
         self.name = line["name"] as? String ?? ""
         self.state = line["state"] as? String ?? "offline"
-        self.readings = (line["readings"] as? [[String: Any]] ?? []).map {
+        let readings = (line["readings"] as? [[String: Any]] ?? []).map {
             (
                 key: $0["key"] as? String ?? "",
                 label: $0["label"] as? String ?? "",
                 value: $0["value"] as? String ?? ""
             )
         }
+        self.readings = readings
         self.chart = (line["chart"] as? [Double]) ?? []
         self.item = item
         super.init(frame: NSRect(
@@ -345,7 +346,17 @@ private final class TrayRowView: NSView {
             : detailY + detailSize.height + Self.lineGap
 
         let textX = Self.leading + Self.dotSize + 7
-        (name as NSString).draw(at: NSPoint(x: textX, y: nameY), withAttributes: nameAttrs)
+        let chartLeft = bounds.maxX - Self.trailing - Self.chartWidth
+        let nameRight = chart.isEmpty ? bounds.maxX - Self.trailing : chartLeft - 8
+        let nameRect = NSRect(
+            x: textX, y: nameY,
+            width: max(0, nameRight - textX), height: nameSize.height
+        )
+        (name as NSString).draw(
+            with: nameRect,
+            options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine],
+            attributes: nameAttrs
+        )
         if detail.length > 0 {
             detail.draw(at: NSPoint(x: textX, y: detailY))
         }
