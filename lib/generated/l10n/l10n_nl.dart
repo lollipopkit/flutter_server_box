@@ -450,6 +450,32 @@ class AppLocalizationsNl extends AppLocalizations {
       'Deze schakelaar betekent alleen dat het programma zal proberen op de achtergrond uit te voeren, of het in de achtergrond kan worden uitgevoerd, hangt af van of de toestemming is ingeschakeld of niet. Voor native Android, schakel \"Batterijoptimalisatie\" uit in deze app, en voor miui, wijzig de energiebesparingsbeleid naar \"Onbeperkt\".';
 
   @override
+  String get trayTitle => 'Statuspictogram';
+
+  @override
+  String get trayReadings => 'Metingen';
+
+  @override
+  String get trayChart => 'Grafiek';
+
+  @override
+  String get trayChartNone => 'Geen';
+
+  @override
+  String get trayCompact => 'Compacte rijen';
+
+  @override
+  String get trayCompactTip =>
+      'Eén regel per server, zonder grafiek. Linux gebruikt altijd een indeling van één regel omdat het paneelmenu via D-Bus wordt verstuurd, dat een label in plaats van een aangepaste indeling overbrengt; de geselecteerde grafiek kan wel als afbeelding worden toegevoegd.';
+
+  @override
+  String get trayKeepRunning => 'In het systeemvak blijven draaien';
+
+  @override
+  String get trayKeepRunningTip =>
+      'Als je het venster sluit, blijft de app in de menubalk of het systeemvak actief en je servers bewaken. Schakel dit uit om de app met de sluitknop te beëindigen.';
+
+  @override
   String get bgRunNeedsNotification =>
       'Op de achtergrond draaien vereist een permanente melding, en deze app heeft geen meldingsrechten. Tik om ze toe te staan.';
 

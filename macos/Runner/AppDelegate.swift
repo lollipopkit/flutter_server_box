@@ -37,6 +37,15 @@ class AppDelegate: FlutterAppDelegate {
         name: "tech.lolli.toolbox/main_chan",
         binaryMessenger: controller.engine.binaryMessenger
       )
+      // Its own channel: the tray talks in both directions and the handler
+      // above is already taken.
+      if #available(macOS 10.15, *) {
+        TrayIcon.shared.attach(FlutterMethodChannel(
+          name: "tech.lolli.toolbox/tray",
+          binaryMessenger: controller.engine.binaryMessenger
+        ))
+      }
+
       mainChannel.setMethodCallHandler { (call: FlutterMethodCall, result: @escaping FlutterResult) in
         // What MetricKit has reported since this was last asked. Cleared by
         // the read — the caller writes them into a log that persists, and

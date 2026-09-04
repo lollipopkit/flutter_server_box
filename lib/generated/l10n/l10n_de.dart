@@ -452,6 +452,32 @@ class AppLocalizationsDe extends AppLocalizations {
       'Dieser Schalter bedeutet nur, dass die App versuchen wird, im Hintergrund zu laufen. Ob sie im Hintergrund laufen kann, hängt davon ab, ob die Berechtigungen aktiviert sind oder nicht. Bei nativem Android deaktivieren Sie bitte \"Batterieoptimierung\" in dieser App, und bei miui ändern Sie bitte die Energiesparrichtlinie auf \"Unbegrenzt\".';
 
   @override
+  String get trayTitle => 'Statussymbol';
+
+  @override
+  String get trayReadings => 'Messwerte';
+
+  @override
+  String get trayChart => 'Diagramm';
+
+  @override
+  String get trayChartNone => 'Keine';
+
+  @override
+  String get trayCompact => 'Kompakte Zeilen';
+
+  @override
+  String get trayCompactTip =>
+      'Eine Zeile pro Server, ohne Diagramm. Linux verwendet immer ein einzeiliges Layout, da sein Panel-Menü über D-Bus übertragen wird, das ein Label statt eines benutzerdefinierten Layouts überträgt; das ausgewählte Diagramm kann jedoch als Bild eingebunden werden.';
+
+  @override
+  String get trayKeepRunning => 'Im Tray weiter ausführen';
+
+  @override
+  String get trayKeepRunningTip =>
+      'Beim Schließen des Fensters bleibt die App in der Menüleiste oder im Infobereich aktiv und überwacht weiterhin Ihre Server. Deaktivieren Sie diese Option, damit der Schließen-Button die App beendet.';
+
+  @override
   String get bgRunNeedsNotification =>
       'Das Laufen im Hintergrund braucht eine dauerhafte Benachrichtigung, und diese App hat keine Benachrichtigungsberechtigung. Zum Erlauben antippen.';
 

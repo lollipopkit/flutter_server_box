@@ -415,6 +415,32 @@ class AppLocalizationsZh extends AppLocalizations {
       '此开关只代表程序会尝试在后台运行，具体能否后台运行取决于是否开启了权限。原生 Android 请关闭本 App 的“电池优化”，MIUI / HyperOS 请将省电策略改为“无限制”。';
 
   @override
+  String get trayTitle => '状态图标';
+
+  @override
+  String get trayReadings => '读数';
+
+  @override
+  String get trayChart => '图表';
+
+  @override
+  String get trayChartNone => '无';
+
+  @override
+  String get trayCompact => '紧凑行';
+
+  @override
+  String get trayCompactTip =>
+      '每台服务器显示一行，不显示图表。Linux 的面板菜单通过 D-Bus 传递标签而非自定义布局，因此始终使用单行布局，但仍可将所选图表作为图片显示。';
+
+  @override
+  String get trayKeepRunning => '在托盘中继续运行';
+
+  @override
+  String get trayKeepRunningTip =>
+      '关闭窗口后，App 会留在菜单栏或通知区域中，并继续监控服务器。关闭此选项后，关闭按钮会退出 App。';
+
+  @override
   String get bgRunNeedsNotification => '后台运行需要一条常驻通知,而本应用当前无通知权限。点击去开启通知权限。';
 
   @override
@@ -2027,6 +2053,32 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get bgRunTip =>
       '此開關僅代表程式會嘗試於背景執行，能否成功取決於系統權限。在原生 Android 上，請關閉本應用的「電池最佳化」；在 MIUI / HyperOS 上，請將省電策略調整為「無限制」。';
+
+  @override
+  String get trayTitle => '狀態圖示';
+
+  @override
+  String get trayReadings => '讀數';
+
+  @override
+  String get trayChart => '圖表';
+
+  @override
+  String get trayChartNone => '無';
+
+  @override
+  String get trayCompact => '精簡列';
+
+  @override
+  String get trayCompactTip =>
+      '每部伺服器顯示一行，不顯示圖表。Linux 的面板選單透過 D-Bus 傳送標籤而非自訂版面配置，因此一律使用單行版面配置，但仍可將所選圖表顯示為圖片。';
+
+  @override
+  String get trayKeepRunning => '在系統匣中繼續執行';
+
+  @override
+  String get trayKeepRunningTip =>
+      '關閉視窗後，App 會留在選單列或通知區域中，並繼續監控伺服器。關閉此選項後，關閉按鈕會結束 App。';
 
   @override
   String get bgRunNeedsNotification => '背景執行需要一條常駐通知，而本應用目前沒有通知權限。點擊前往開啟通知權限。';

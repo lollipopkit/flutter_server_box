@@ -454,6 +454,32 @@ class AppLocalizationsIt extends AppLocalizations {
       'Questa opzione significa solo che il programma cercherà di eseguire in background. Se può eseguire in background dipende dal fatto che il permesso sia abilitato o meno. Per le ROM Android basate su AOSP, disabilita \"Ottimizzazione batteria\" in questa app. Per MIUI/HyperOS, cambia la politica di risparmio energetico su \"Illimitato\".';
 
   @override
+  String get trayTitle => 'Icona di stato';
+
+  @override
+  String get trayReadings => 'Valori';
+
+  @override
+  String get trayChart => 'Grafico';
+
+  @override
+  String get trayChartNone => 'Nessuno';
+
+  @override
+  String get trayCompact => 'Righe compatte';
+
+  @override
+  String get trayCompactTip =>
+      'Una riga per server, senza grafico. Linux usa sempre un layout a riga singola perché il menu del pannello viene inviato tramite D-Bus, che trasporta un’etichetta invece di un layout personalizzato; può comunque includere il grafico selezionato come immagine.';
+
+  @override
+  String get trayKeepRunning => 'Continua a funzionare nell’area di notifica';
+
+  @override
+  String get trayKeepRunningTip =>
+      'Chiudendo la finestra, l’app rimane nella barra dei menu o nell’area di notifica e continua a monitorare i server. Disattiva questa opzione per fare in modo che il pulsante di chiusura termini l’app.';
+
+  @override
   String get bgRunNeedsNotification =>
       'Restare in esecuzione in background richiede una notifica permanente, e questa app non ha il permesso per le notifiche. Tocca per concederlo.';
 

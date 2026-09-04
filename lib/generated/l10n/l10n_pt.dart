@@ -451,6 +451,32 @@ class AppLocalizationsPt extends AppLocalizations {
       'Este interruptor indica que o programa tentará rodar em segundo plano, mas a capacidade de fazer isso depende das permissões concedidas. No Android nativo, desative a \'Otimização de bateria\' para este app, no MIUI, altere a estratégia de economia de energia para \'Sem restrições\'.';
 
   @override
+  String get trayTitle => 'Ícone de estado';
+
+  @override
+  String get trayReadings => 'Leituras';
+
+  @override
+  String get trayChart => 'Gráfico';
+
+  @override
+  String get trayChartNone => 'Nenhum';
+
+  @override
+  String get trayCompact => 'Linhas compactas';
+
+  @override
+  String get trayCompactTip =>
+      'Uma linha por servidor, sem o gráfico. O Linux usa sempre um esquema de linha única porque o menu do painel é enviado através do D-Bus, que transporta uma etiqueta em vez de um esquema personalizado; ainda pode incluir o gráfico selecionado como imagem.';
+
+  @override
+  String get trayKeepRunning => 'Continuar em execução na bandeja';
+
+  @override
+  String get trayKeepRunningTip =>
+      'Ao fechar a janela, a app permanece na barra de menus ou na área de notificação e continua a monitorizar os seus servidores. Desative esta opção para que o botão de fechar encerre a app.';
+
+  @override
   String get bgRunNeedsNotification =>
       'Correr em segundo plano precisa de uma notificação permanente, e esta app não tem permissão de notificações. Toca para a conceder.';
 

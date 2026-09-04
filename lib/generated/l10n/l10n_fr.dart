@@ -457,6 +457,33 @@ class AppLocalizationsFr extends AppLocalizations {
       'Cette option signifie seulement que le programme essaiera de s\'exécuter en arrière-plan, que cela soit possible dépend de l\'autorisation activée ou non. Pour Android natif, veuillez désactiver l\'« Optimisation de la batterie » dans cette application, et pour MIUI, veuillez changer la politique d\'économie d\'énergie en « Illimité ».';
 
   @override
+  String get trayTitle => 'Icône d’état';
+
+  @override
+  String get trayReadings => 'Relevés';
+
+  @override
+  String get trayChart => 'Graphique';
+
+  @override
+  String get trayChartNone => 'Aucun';
+
+  @override
+  String get trayCompact => 'Lignes compactes';
+
+  @override
+  String get trayCompactTip =>
+      'Une ligne par serveur, sans graphique. Linux utilise toujours une disposition sur une seule ligne, car son menu de panneau est transmis par D-Bus, qui transporte un libellé plutôt qu’une disposition personnalisée ; il peut néanmoins inclure le graphique sélectionné sous forme d’image.';
+
+  @override
+  String get trayKeepRunning =>
+      'Continuer à s’exécuter dans la zone de notification';
+
+  @override
+  String get trayKeepRunningTip =>
+      'La fermeture de la fenêtre laisse l’application dans la barre des menus ou la zone de notification, où elle continue de surveiller vos serveurs. Désactivez cette option pour que le bouton de fermeture quitte l’application.';
+
+  @override
   String get bgRunNeedsNotification =>
       'Fonctionner en arrière-plan demande une notification permanente, et cette app n\'a pas la permission de notification. Touchez pour l\'accorder.';
 

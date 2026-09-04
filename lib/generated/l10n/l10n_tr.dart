@@ -451,6 +451,32 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu anahtar yalnızca programın arka planda çalışmayı deneyeceği anlamına gelir. Arka planda çalışıp çalışamayacağı, iznin etkinleştirilip etkinleştirilmediğine bağlıdır. AOSP tabanlı Android ROM\'lar için lütfen bu uygulamada \"Pil Optimizasyonu\"nu devre dışı bırakın. MIUI / HyperOS için lütfen güç tasarrufu politikasını \"Sınırsız\" olarak değiştirin.';
 
   @override
+  String get trayTitle => 'Durum simgesi';
+
+  @override
+  String get trayReadings => 'Değerler';
+
+  @override
+  String get trayChart => 'Grafik';
+
+  @override
+  String get trayChartNone => 'Yok';
+
+  @override
+  String get trayCompact => 'Sıkıştırılmış satırlar';
+
+  @override
+  String get trayCompactTip =>
+      'Grafik olmadan sunucu başına bir satır. Linux, panel menüsü özel bir düzen yerine etiket taşıyan D-Bus üzerinden gönderildiği için her zaman tek satırlı bir düzen kullanır; ancak seçilen grafiği görüntü olarak içerebilir.';
+
+  @override
+  String get trayKeepRunning => 'Tepside çalışmaya devam et';
+
+  @override
+  String get trayKeepRunningTip =>
+      'Pencere kapatıldığında uygulama menü çubuğunda veya bildirim alanında kalır ve sunucularınızı izlemeye devam eder. Kapat düğmesinin uygulamayı sonlandırması için bunu devre dışı bırakın.';
+
+  @override
   String get bgRunNeedsNotification =>
       'Arka planda çalışmak kalıcı bir bildirim gerektirir ve bu uygulamanın bildirim izni yok. İzin vermek için dokunun.';
 
