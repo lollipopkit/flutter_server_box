@@ -11,6 +11,7 @@ void main() {
         environment: const {
           'CARGO_HOME': '/home/runner/.cargo/',
           'CARGO_ENCODED_RUSTFLAGS': '-C${separator}debuginfo=1',
+          'RUSTFLAGS': '-C opt-level=0',
         },
         packageRoot: '/home/runner/work/server-box/',
         isWindows: false,
@@ -22,6 +23,26 @@ void main() {
           '-C${separator}debuginfo=1',
           '--remap-path-prefix=/home/runner/.cargo=/cargo',
           '--remap-path-prefix=/home/runner/work/server-box=/source',
+        ].join(separator),
+      );
+    });
+
+    test('preserves RUSTFLAGS when encoded flags are absent', () {
+      final result = reproducibleCargoEnvironment(
+        environment: const {
+          'HOME': '/home/runner',
+          'RUSTFLAGS': '  -C   opt-level=2  ',
+        },
+        packageRoot: '/build/server-box',
+        isWindows: false,
+      );
+
+      expect(
+        result['CARGO_ENCODED_RUSTFLAGS'],
+        [
+          '-C${separator}opt-level=2',
+          '--remap-path-prefix=/home/runner/.cargo=/cargo',
+          '--remap-path-prefix=/build/server-box=/source',
         ].join(separator),
       );
     });

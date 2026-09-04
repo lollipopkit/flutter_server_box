@@ -6,10 +6,9 @@ Map<String, String> reproducibleCargoEnvironment({
   required String packageRoot,
   required bool isWindows,
 }) {
+  final inheritedFlags = _inheritedEncodedRustFlags(environment);
   final flags = <String>[
-    if (environment['CARGO_ENCODED_RUSTFLAGS'] case final existing?
-        when existing.isNotEmpty)
-      existing,
+    ?inheritedFlags,
     if (resolveCargoHome(environment, isWindows: isWindows)
         case final cargoHome?)
       _remapFlag(cargoHome, '/cargo', isWindows: isWindows),
@@ -17,6 +16,15 @@ Map<String, String> reproducibleCargoEnvironment({
   ];
 
   return {'CARGO_ENCODED_RUSTFLAGS': flags.join(_encodedRustFlagSeparator)};
+}
+
+String? _inheritedEncodedRustFlags(Map<String, String> environment) {
+  final encoded = environment['CARGO_ENCODED_RUSTFLAGS'];
+  if (encoded != null && encoded.isNotEmpty) return encoded;
+
+  final rustFlags = environment['RUSTFLAGS']?.trim();
+  if (rustFlags == null || rustFlags.isEmpty) return null;
+  return rustFlags.split(RegExp(r'\s+')).join(_encodedRustFlagSeparator);
 }
 
 /// Resolves Cargo's default home without depending on the current directory.
