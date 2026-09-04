@@ -146,6 +146,73 @@ endforeach(bundled_library)
 # found, because which of these a distribution splits out varies and a missing
 # one here should not fail the build — the deb and rpm paths do not need any of
 # this.
+function(INSTALL_TRAY_LIBRARY library_path)
+  if(NOT IS_SYMLINK "${library_path}")
+    install(FILES "${library_path}"
+      DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+      COMPONENT Runtime)
+    return()
+  endif()
+
+  # `install(FILES)` can copy only the SONAME symlink returned by
+  # `find_library`, leaving its versioned target outside the AppImage. Follow
+  # the complete chain at configure time, install the real file, then rebuild
+  # every link using only names inside the bundle.
+  set(current_path "${library_path}")
+  set(visited_paths)
+  set(link_names)
+  set(link_targets)
+  while(IS_SYMLINK "${current_path}")
+    list(FIND visited_paths "${current_path}" visited_index)
+    if(NOT visited_index EQUAL -1)
+      message(FATAL_ERROR "Circular tray library symlink: ${current_path}")
+    endif()
+    list(APPEND visited_paths "${current_path}")
+
+    execute_process(
+      COMMAND readlink "${current_path}"
+      RESULT_VARIABLE readlink_result
+      OUTPUT_VARIABLE link_target
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+    if(NOT readlink_result EQUAL 0 OR link_target STREQUAL "")
+      message(FATAL_ERROR "Could not resolve tray library symlink: ${current_path}")
+    endif()
+
+    get_filename_component(link_name "${current_path}" NAME)
+    get_filename_component(link_dir "${current_path}" DIRECTORY)
+    if(IS_ABSOLUTE "${link_target}")
+      set(next_path "${link_target}")
+    else()
+      get_filename_component(next_path "${link_dir}/${link_target}" ABSOLUTE)
+    endif()
+    get_filename_component(target_name "${next_path}" NAME)
+    list(APPEND link_names "${link_name}")
+    list(APPEND link_targets "${target_name}")
+    set(current_path "${next_path}")
+  endwhile()
+
+  install(FILES "${current_path}"
+    DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+    COMPONENT Runtime)
+
+  list(LENGTH link_names link_count)
+  math(EXPR last_link "${link_count} - 1")
+  foreach(link_index RANGE 0 ${last_link})
+    list(GET link_names ${link_index} link_name)
+    list(GET link_targets ${link_index} target_name)
+    install(CODE "
+      file(REMOVE \"${INSTALL_BUNDLE_LIB_DIR}/${link_name}\")
+      execute_process(
+        COMMAND \"${CMAKE_COMMAND}\" -E create_symlink
+          \"${target_name}\" \"${INSTALL_BUNDLE_LIB_DIR}/${link_name}\"
+        RESULT_VARIABLE tray_symlink_result)
+      if(NOT tray_symlink_result EQUAL 0)
+        message(FATAL_ERROR \"Failed to create tray library symlink: ${link_name}\")
+      endif()
+      " COMPONENT Runtime)
+  endforeach()
+endfunction()
+
 foreach(soname
   "libayatana-appindicator3.so.1"
   "libayatana-indicator3.so.7"
@@ -157,9 +224,7 @@ foreach(soname
   # answers with the `-dev` symlink, which is not in the bundle to follow.
   find_library(TRAY_LIB_${soname} NAMES "${soname}")
   if(TRAY_LIB_${soname})
-    install(FILES "${TRAY_LIB_${soname}}"
-      DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
-      COMPONENT Runtime)
+    install_tray_library("${TRAY_LIB_${soname}}")
   endif()
 endforeach()
 

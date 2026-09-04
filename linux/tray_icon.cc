@@ -106,12 +106,12 @@ GtkWidget* MakeCommand(const char* label, const char* method) {
 
 GtkWidget* MakeRow(FlValue* line) {
   // The one-line label the model already formats for exactly this — see
-  // `TrayLine.label`.
-  GtkWidget* item = gtk_menu_item_new();
-  GtkWidget* box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
-  GtkWidget* label = gtk_label_new(LookupString(line, "label"));
-  gtk_label_set_xalign(GTK_LABEL(label), 0.0);
-  gtk_box_pack_start(GTK_BOX(box), label, TRUE, TRUE, 0);
+  // `TrayLine.label`. AppIndicator exports GtkMenuItem properties over
+  // dbusmenu, not arbitrary child layouts, so use the standard image-menu
+  // properties for the optional chart as well.
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+  GtkWidget* item =
+      gtk_image_menu_item_new_with_label(LookupString(line, "label"));
 
   std::vector<double> samples;
   FlValue* chart = fl_value_lookup_string(line, "chart");
@@ -126,10 +126,10 @@ GtkWidget* MakeRow(FlValue* line) {
   if (GdkPixbuf* pixbuf = DrawChart(samples)) {
     GtkWidget* image = gtk_image_new_from_pixbuf(pixbuf);
     g_object_unref(pixbuf);
-    gtk_box_pack_end(GTK_BOX(box), image, FALSE, FALSE, 0);
+    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(item), image);
+    gtk_image_menu_item_set_always_show_image(GTK_IMAGE_MENU_ITEM(item), TRUE);
   }
-
-  gtk_container_add(GTK_CONTAINER(item), box);
+  G_GNUC_END_IGNORE_DEPRECATIONS
 
   auto* row = new RowId{LookupString(line, "id")};
   g_signal_connect_data(item, "activate", G_CALLBACK(OnRow), row, FreeRow,
