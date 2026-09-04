@@ -643,6 +643,14 @@ class _HomePageState extends ConsumerState<HomePage>
   /// Takes in a `.sbxsrv` the platform handed this app, if one is waiting.
   Future<void> _consumePendingShare() async {
     if (_consumingShare) return;
+    // Before the launch path has decided whether there is a lock, [_authed] is
+    // null and awaiting it waits for nothing — so a `resumed` edge arriving
+    // first (a cold launch on macOS, where opening the file is what activates
+    // the app) would put the passphrase prompt on the same root navigator as
+    // the lock page, over it. Returning costs nothing: the launch path calls
+    // this itself once it has assigned it, and taking the guard below would
+    // have made that call a no-op instead.
+    if (_authed == null) return;
     _consumingShare = true;
     try {
       final text = await MethodChans.takeOpenedShare();

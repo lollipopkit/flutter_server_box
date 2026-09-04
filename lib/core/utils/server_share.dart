@@ -159,7 +159,7 @@ abstract final class ServerShareCodec {
     } else {
       plain = trimmed;
     }
-    return _fromPlain(plain);
+    return _fromPlain(plain, wasEncrypted: Cryptor.isEncrypted(trimmed));
   }
 
   /// [decode] with the key derivation on another isolate. See [encodeAsync].
@@ -168,14 +168,19 @@ abstract final class ServerShareCodec {
     String? password,
   }) async {
     final trimmed = text.trim();
-    if (!Cryptor.isEncrypted(trimmed)) return _fromPlain(trimmed);
+    if (!Cryptor.isEncrypted(trimmed)) {
+      return _fromPlain(trimmed, wasEncrypted: false);
+    }
     if (password == null || password.isEmpty) {
       throw const ServerShareUnreadableException('password required');
     }
-    return _fromPlain(await compute(_decrypt, (trimmed, password)));
+    return _fromPlain(
+      await compute(_decrypt, (trimmed, password)),
+      wasEncrypted: true,
+    );
   }
 
-  static ServerShare _fromPlain(String plain) {
+  static ServerShare _fromPlain(String plain, {required bool wasEncrypted}) {
     final Object? decoded;
     try {
       decoded = json.decode(plain);
@@ -186,11 +191,29 @@ abstract final class ServerShareCodec {
       throw const ServerShareUnreadableException('not an object');
     }
 
-    // `version` is what tells the two shapes apart. A bare `Spi` has no such
-    // field, and it is checked before `Spi` is attempted so a payload from a
-    // newer build is refused rather than half-read as a server.
-    if (decoded.containsKey('version')) {
-      final share = ServerShare.fromJson(decoded);
+    // **Only a payload that was encrypted may be a `ServerShare`.** Nothing
+    // has ever written a clear-text one, so accepting it bought no
+    // compatibility and cost the format's only guarantee: a file carrying
+    // `keys` would have been taken in with no password asked for, and
+    // `needsPassword` would have answered false so the user was never
+    // prompted. The clear-text branch below is the one that does have a
+    // compatibility claim -- every QR shared before this format is a bare
+    // `Spi`, and one printed and stuck on a rack has to keep working.
+    if (wasEncrypted) {
+      final ServerShare share;
+      try {
+        share = ServerShare.fromJson(decoded);
+      } catch (e) {
+        // Wrapped for the same reason the `Spi` branch below is. A truncated
+        // or hand-edited payload — `{"version": 1}`, a `version` that is a
+        // string — reaches the generated decoder and comes out as a bare
+        // `TypeError`, which the caller renders verbatim: the user is shown
+        // "type 'Null' is not a subtype of type 'Map<String, dynamic>'"
+        // instead of the sentence this exception exists to produce.
+        throw ServerShareUnreadableException(e);
+      }
+      // Outside the catch: these two are answers about the payload, not
+      // failures to read it, and each has its own message.
       share.validate();
       if (share.isExpired()) throw const ServerShareExpiredException();
       return share;
@@ -317,10 +340,13 @@ abstract final class ServerShareInstaller {
     if (same != null) return (same.id, false);
 
     final names = existing.map((e) => e.name).toSet();
-    var name = incoming.name;
-    for (var n = 2; names.contains(name); n++) {
-      name = '${incoming.name} ($n)';
-    }
+    // The same helper the server's own rename goes through, eleven lines
+    // below. Two loops with different starting numbers meant one collision
+    // produced a server named `web (1)` beside its key named `laptop (2)`.
+    final name = ServerDeduplication.uniqueName(
+      incoming.name,
+      taken: names.contains,
+    );
 
     final id = existing.any((e) => e.id == incoming.id)
         ? ShortId.generate()

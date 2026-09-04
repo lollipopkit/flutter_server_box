@@ -145,6 +145,8 @@ final class _BackupPageState extends ConsumerState<BackupPage>
                         return;
                       }
                       await SecureStoreProps.bakPwd.write(null);
+                      // Same reason as setting one — see `_onTapSetBakPwd`.
+                      await BakSyncer.forgetCheckpoint();
                       Toast.show(l10n.backupPasswordRemoved);
                       setState(() {});
                     },
@@ -206,6 +208,14 @@ final class _BackupPageState extends ConsumerState<BackupPage>
       return false;
     }
     await SecureStoreProps.bakPwd.write(pwd);
+    // The password decides what the remote file *is*, and neither side's sync
+    // tag moves when it changes: `lastModTime` is about the user's data and
+    // the remote's ETag is about bytes nobody has rewritten yet. Without this
+    // the shortcut skips every sync from here, so the remote copy stays
+    // readable only with the old password — and the first time data does
+    // change, the merge fails to decrypt it and `_sync` returns before the
+    // upload. Nothing reaches the remote again, and nothing says so.
+    await BakSyncer.forgetCheckpoint();
     Toast.show(l10n.backupPasswordSet);
     setState(() {});
     return true;

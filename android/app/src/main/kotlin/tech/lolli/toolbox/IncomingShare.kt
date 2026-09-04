@@ -27,9 +27,31 @@ object IncomingShare {
 
     private var pending: String? = null
 
+    /**
+     * Reads whatever [intent] was opened for, and **takes it out of the
+     * intent**.
+     *
+     * The second half is what stops a server being imported twice. Android
+     * keeps the launch intent on the task: once the process is killed for
+     * memory and the user reopens the app from Recents, `onCreate` runs again
+     * with the *same* `ACTION_VIEW`, and without this it reads the same file
+     * and offers the same import. Nothing downstream dedupes it -- a colliding
+     * id is resolved by generating a new one, which is right for a share the
+     * user really did send twice.
+     *
+     * Also refuses a relaunch from history outright, which is the same case
+     * arriving before `onCreate` has had a chance to clear anything.
+     */
     @Synchronized
     fun accept(context: Context, intent: Intent?) {
+        if (intent == null) return
+        if (intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0) return
         val uri = uriOf(intent) ?: return
+        // Cleared whether or not the read works: a file this app cannot read
+        // will not read any better the second time, and leaving it in place
+        // means retrying on every resume from Recents forever.
+        intent.data = null
+        intent.action = Intent.ACTION_MAIN
         pending = read(context, uri) ?: return
     }
 
@@ -44,12 +66,18 @@ object IncomingShare {
         return out
     }
 
-    private fun uriOf(intent: Intent?): Uri? = when (intent?.action) {
-        Intent.ACTION_VIEW -> intent.data
-        @Suppress("DEPRECATION")
-        Intent.ACTION_SEND -> intent.getParcelableExtra(Intent.EXTRA_STREAM) as? Uri
-        else -> null
-    }
+    /**
+     * `ACTION_VIEW` only, matching the one filter the manifest declares.
+     *
+     * There was an `ACTION_SEND` arm here for the share sheet, and it was
+     * unreachable: nothing declares that action, so the app never appears in
+     * one. Adding the filter is not the fix either -- a `.sbxsrv` is handed
+     * over as `application/octet-stream`, and claiming that for `ACTION_SEND`
+     * would put ServerBox in the share sheet of every binary file on the
+     * device. Better to have the Kotlin and the manifest agree.
+     */
+    private fun uriOf(intent: Intent?): Uri? =
+        if (intent?.action == Intent.ACTION_VIEW) intent.data else null
 
     private fun read(context: Context, uri: Uri): String? = try {
         context.contentResolver.openInputStream(uri)?.use { stream ->

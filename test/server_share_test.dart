@@ -11,6 +11,7 @@ library;
 
 import 'dart:convert';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/server_share.dart';
 import 'package:server_box/data/model/app/share/server_share.dart';
@@ -232,15 +233,58 @@ void main() {
     });
 
     test('a payload from a newer build is refused', () {
-      final text = json.encode({
-        'version': ServerShare.formatVer + 1,
-        'spi': _spi().toJson(),
-        'keys': <Object>[],
-      });
+      final text = ServerShareCodec.encode(
+        ServerShare(
+          version: ServerShare.formatVer + 1,
+          spi: _spi(),
+        ),
+        '111111',
+        ShareCarrier.qr,
+      );
       expect(
-        () => ServerShareCodec.decode(text),
+        () => ServerShareCodec.decode(text, password: '111111'),
         throwsA(isA<ServerShareTooNewException>()),
       );
+    });
+
+    /// The shape carries `keys`, so accepting it in clear text would mean a
+    /// file handing over a private key with no password asked for — and
+    /// `needsPassword` answering false, so the user is never prompted either.
+    /// Nothing has ever written one, so there is no compatibility to keep.
+    test('a clear-text ServerShare is refused, keys and all', () {
+      final text = json.encode({
+        'version': ServerShare.formatVer,
+        'spi': _spi().toJson(),
+        'keys': [
+          const PrivateKeyInfo(
+            id: 'k1',
+            name: 'laptop',
+            key: _keyMaterial,
+          ).toJson(),
+        ],
+      });
+      expect(ServerShareCodec.needsPassword(text), isFalse);
+      expect(
+        () => ServerShareCodec.decode(text),
+        throwsA(isA<ServerShareUnreadableException>()),
+      );
+    });
+
+    test('a hand-edited payload says so rather than leaking a TypeError', () {
+      for (final broken in [
+        <String, Object?>{'version': ServerShare.formatVer},
+        <String, Object?>{'version': '1', 'spi': _spi().toJson()},
+        <String, Object?>{'version': ServerShare.formatVer, 'spi': 'nope'},
+      ]) {
+        // Through the envelope, since the encrypted branch is the only one
+        // that reads this shape at all.
+        final text = Cryptor.encrypt(json.encode(broken), '111111');
+        expect(
+          () => ServerShareCodec.decode(text, password: '111111'),
+          throwsA(isA<ServerShareUnreadableException>()),
+          reason: '$broken',
+        );
+      }
     });
 
     test('text that is neither shape is refused', () {
@@ -297,7 +341,29 @@ void main() {
       expect(Stores.key.fetchOne('mine')?.key, _otherMaterial);
       final keys = Stores.key.fetch();
       expect(keys, hasLength(2));
-      expect(keys.map((e) => e.name).toSet(), {'laptop', 'laptop (2)'});
+      // `(1)`, the same numbering `ServerDeduplication` gives the server that
+      // arrived with it. The two used to disagree.
+      expect(keys.map((e) => e.name).toSet(), {'laptop', 'laptop (1)'});
+    });
+
+    test('a renamed key and its server are numbered the same way', () {
+      Stores.server.put(_spi(id: 'ours', name: 'web', ip: '192.168.1.9'));
+      Stores.key.put(
+        const PrivateKeyInfo(id: 'mine', name: 'laptop', key: _otherMaterial),
+      );
+
+      final result = ServerShareInstaller.install(
+        ServerShare(
+          version: ServerShare.formatVer,
+          spi: _spi(keyId: 'k1'),
+          keys: const [
+            PrivateKeyInfo(id: 'k1', name: 'laptop', key: _keyMaterial),
+          ],
+        ),
+      );
+
+      expect(result.spi.name, 'web (1)');
+      expect(Stores.key.fetchOne(result.spi.ssh?.keyId)?.name, 'laptop (1)');
     });
 
     test('a key the device already has by material is reused, not copied', () {

@@ -353,8 +353,20 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     final decoder = gzip.decoder.startChunkedConversion(
       _CountingSink(out, maxBytes ?? _maxPlainBytes),
     );
-    decoder.add(bytes);
-    decoder.close();
+    try {
+      decoder.add(bytes);
+      decoder.close();
+    } catch (_) {
+      // The cap throws from inside `add`, which skips the `close` above and
+      // leaves the native inflate stream for the finalizer — on exactly the
+      // path this exists for, a hostile input, and once per attempt. Closing
+      // an incomplete stream throws in turn, which is nothing to report: the
+      // reason this failed is already on its way out.
+      try {
+        decoder.close();
+      } catch (_) {}
+      rethrow;
+    }
     return out.takeBytes();
   }
 

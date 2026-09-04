@@ -17,7 +17,13 @@ class AppDelegate: FlutterAppDelegate {
   /// On a cold open this runs *before* `applicationDidFinishLaunching`, so
   /// there is no engine and no channel yet — which is why [IncomingShare]
   /// holds the bytes rather than delivering them.
+  /// `super` first and unconditionally, the same as the iOS scene delegate:
+  /// `FlutterAppDelegate` implements this and forwards it to every registered
+  /// plugin through `handleOpenURLs:`, so swallowing it would stop any plugin
+  /// answering a custom scheme or a deep link — for the sake of a file this
+  /// app may not even have been handed.
   override func application(_ application: NSApplication, open urls: [URL]) {
+    super.application(application, open: urls)
     IncomingShare.accept(urls)
   }
 

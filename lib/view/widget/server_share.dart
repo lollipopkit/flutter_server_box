@@ -133,7 +133,13 @@ abstract final class ServerShareUi {
     );
     if (text == null || err != null) return;
 
-    final file = File(Paths.doc.joinPath('${_fileName(spi.name)}.$fileExt'));
+    // A temp directory, not `Paths.doc`. On desktop `sharePaths` *reveals* the
+    // file rather than sending it, so writing it beside `store.db` pointed the
+    // user's file manager straight at the app's private data — and the
+    // encrypted copy of the server's password and key stayed there, one per
+    // share, with nothing listing or removing them.
+    final dir = await Directory.systemTemp.createTemp('sbx-share-');
+    final file = File(dir.path.joinPath('${_fileName(spi.name)}.$fileExt'));
     try {
       await file.writeAsString(text);
       await Pfs.sharePaths(paths: [file.path], title: spi.name);
@@ -142,13 +148,12 @@ abstract final class ServerShareUi {
       Loggers.app.warning('Share server as file', e, s);
     } finally {
       // On mobile the sheet is done with the file by the time `sharePaths`
-      // returns, and leaving one credential file per share in the document
-      // directory is residue nobody asked for. On desktop the same call
-      // *reveals* the file in the file manager, so deleting it is deleting
-      // what the user was just pointed at.
+      // returns. On desktop the file manager is now showing it, so it has to
+      // outlive this call — the OS clears the temp directory instead, which is
+      // a worse guarantee than deleting it and the only one available.
       if (isMobile) {
         try {
-          if (file.existsSync()) await file.delete();
+          await dir.delete(recursive: true);
         } catch (_) {}
       }
     }
@@ -184,7 +189,18 @@ abstract final class ServerShareUi {
     BuildContext context,
     WidgetRef ref,
   ) async {
-    final text = await Pfs.pickFileString();
+    // Guarded, because the picker offers every file and `pickFileString`
+    // reads whatever is chosen as UTF-8. A binary or a mis-encoded file throws
+    // out of here, and an unhandled async error is a button that reads as
+    // broken: no dialog, no toast, nothing on screen changing.
+    String? text;
+    try {
+      text = await Pfs.pickFileString();
+    } catch (e, s) {
+      Loggers.app.warning('Pick a share file', e, s);
+      if (context.mounted) Toast.show(l10n.shareUnreadable);
+      return;
+    }
     if (text == null || text.isEmpty || !context.mounted) return;
     await consume(context, ref, text, digitsOnly: false);
   }
@@ -206,11 +222,28 @@ abstract final class ServerShareUi {
       if (password == null || !context.mounted) return;
     }
 
-    final (share, err) = await context.showLoadingDialog(
-      fn: () => ServerShareCodec.decodeAsync(text, password: password),
+    // Caught inside `fn` rather than let out. `showLoadingDialog` answers a
+    // throw by popping its spinner and raising `showErrDialog` itself, so an
+    // exception that escapes is reported twice — the raw object first, then
+    // the sentence [_errorText] wrote for it. A mistyped digit showed
+    // `Exception: Failed to decrypt: incorrect password or corrupted data`
+    // and, once dismissed, said the same thing again; an expired share led
+    // with `ServerShareExpiredException`. Anything still escaping is the
+    // dialog's own timeout, which has no better message than the raw one.
+    Object? decodeErr;
+    final (share, _) = await context.showLoadingDialog<ServerShare?>(
+      fn: () async {
+        try {
+          return await ServerShareCodec.decodeAsync(text, password: password);
+        } catch (e) {
+          decodeErr = e;
+          return null;
+        }
+      },
     );
     if (!context.mounted) return;
     if (share == null) {
+      final err = decodeErr;
       if (err != null) Toast.show(_errorText(err));
       return;
     }
