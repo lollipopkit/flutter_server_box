@@ -76,7 +76,7 @@ signature.
       - git -C $$flutter$$ checkout -f $flutterVersion
       - export PATH=$$flutter$$/bin:$PATH
       - flutter config --no-analytics
-      - scripts/release/prepare-fdroid.sh
+      - scripts/release/prepare-fdroid.sh amd64
     scandelete:
       - packages/xterm/example/assets/specs_v1.json.gz
     build:
@@ -110,7 +110,7 @@ signature.
       - git -C $$flutter$$ checkout -f $flutterVersion
       - export PATH=$$flutter$$/bin:$PATH
       - flutter config --no-analytics
-      - scripts/release/prepare-fdroid.sh
+      - scripts/release/prepare-fdroid.sh arm
     scandelete:
       - packages/xterm/example/assets/specs_v1.json.gz
     build:
@@ -144,7 +144,7 @@ signature.
       - git -C $$flutter$$ checkout -f $flutterVersion
       - export PATH=$$flutter$$/bin:$PATH
       - flutter config --no-analytics
-      - scripts/release/prepare-fdroid.sh
+      - scripts/release/prepare-fdroid.sh arm64
     scandelete:
       - packages/xterm/example/assets/specs_v1.json.gz
     build:
