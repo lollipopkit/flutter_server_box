@@ -127,7 +127,12 @@ ServerStatus _createWorkingStatus(ServerStatus source, SystemType system) {
   // mark beside its name blinked out and came back on the next successful
   // read.
   ..osId = source.osId
-  ..osIdLike = source.osIdLike;
+  ..osIdLike = source.osIdLike
+  // Same reason, and it was missing: `_applyMore` writes `ips` only when the
+  // response carried some, so without this a poll whose extended output did
+  // not arrive cleared the addresses — and the server dropped off the globe
+  // back into the unplaced strip until another extended cycle came round.
+  ..ips = source.ips;
 }
 
 List<SingleCpuCore> _coresFromJson(List cores) {

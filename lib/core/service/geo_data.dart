@@ -180,13 +180,13 @@ abstract final class GeoData {
         if (digest != asset.sha256) {
           throw StateError('${asset.name} hashes to $digest');
         }
-        final raw = gzip.decode(packed);
-        if (raw.length != asset.unpackedBytes) {
-          throw StateError(
-            '${asset.name} unpacks to ${raw.length}, manifest says '
-            '${asset.unpackedBytes}',
-          );
-        }
+        // Decoded against a ceiling rather than decoded and then measured.
+        // `gzip.decode` materialises the whole output first, so a 64 MB
+        // download declaring 4 MB and expanding to 8 GB was out of memory
+        // before the length check on the next line could refuse it — and the
+        // manifest naming both numbers comes from the same endpoint as the
+        // bytes, so neither is a reason to trust the other.
+        final raw = gunzipCapped(packed, asset.unpackedBytes, asset.name);
         final output = dir.joinPath(asset.unpackedName);
         await File(output).writeAsBytes(raw, flush: true);
         final bundle = GeoBundle.open(output);
@@ -258,6 +258,32 @@ abstract final class GeoData {
       // from an in-memory null while installed.json is still on disk.
       return false;
     }
+  }
+
+  /// Gunzips [packed], refusing as soon as the output passes [expected].
+  ///
+  /// **The refusal has to happen while decoding, not after.** The size a
+  /// manifest declares is not evidence — it arrives from the same place as the
+  /// bytes it describes — so the only thing standing between a hostile or
+  /// corrupt archive and this device's memory is that nothing is allowed to
+  /// accumulate past the declared size. Chunk by chunk through the converter's
+  /// own sink, the answer comes on the first chunk that goes over.
+  ///
+  /// Exact, not a bound: a bundle that unpacks to anything other than what the
+  /// manifest says is not the bundle the manifest describes.
+  @visibleForTesting
+  static Uint8List gunzipCapped(Uint8List packed, int expected, String name) {
+    final out = _CappedBytes(expected, name);
+    final sink = gzip.decoder.startChunkedConversion(out);
+    sink.add(packed);
+    sink.close();
+    final raw = out.builder.takeBytes();
+    // Short is the other direction and cannot be caught above: a truncated
+    // archive simply stops.
+    if (raw.length != expected) {
+      throw StateError('$name unpacks to ${raw.length}, manifest says $expected');
+    }
+    return raw;
   }
 
   /// How much is on disk, in bytes.
@@ -338,4 +364,30 @@ abstract final class GeoData {
     _readInstalled = false;
     clientFactory = _defaultClient;
   }
+}
+
+/// Collects gunzipped bytes and stops the moment there are too many.
+///
+/// The whole point is that it refuses *during* the decode. `gzip.decode`
+/// materialises its output first and would be out of memory before any length
+/// check could run, and the size to check against comes from the same endpoint
+/// as the archive — so the ceiling is enforced where the bytes appear rather
+/// than believed after the fact.
+class _CappedBytes implements Sink<List<int>> {
+  _CappedBytes(this.limit, this.name);
+
+  final int limit;
+  final String name;
+  final builder = BytesBuilder(copy: false);
+
+  @override
+  void add(List<int> chunk) {
+    if (builder.length + chunk.length > limit) {
+      throw StateError('$name unpacks past the $limit bytes it declares');
+    }
+    builder.add(chunk);
+  }
+
+  @override
+  void close() {}
 }

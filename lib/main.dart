@@ -290,7 +290,15 @@ Future<void> _doPlatformRelated() async {
   // ended badly at all.
   unawaited(() async {
     await CrashReport.keep();
-    await DiagnosticsUpload.sync();
+    // Isolated, because a throw here would take `report` with it and leave the
+    // previous run's crash unreported for the sake of an unrelated failure —
+    // and, being unawaited, would reach the zone handler and mark *this* run
+    // as having ended badly too.
+    try {
+      await DiagnosticsUpload.sync();
+    } catch (e, s) {
+      Loggers.app.warning('Crash upload sync failed', e, s);
+    }
     CrashReport.report();
   }());
 

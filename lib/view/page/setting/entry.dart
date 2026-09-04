@@ -761,6 +761,10 @@ final class AppSettingsPage extends ConsumerStatefulWidget {
 final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
   final _setting = Stores.setting;
 
+  /// The kept crash report, read once — see `_buildLastCrashReport`. Null
+  /// again after it is dropped, which is what makes the row disappear.
+  Future<String?>? _savedCrashReport;
+
   late final _sshOpacityCtrl = TextEditingController(
     text: _setting.sshBgOpacity.fetch().toString(),
   );

@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart';
+
 import 'package:dio/dio.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,6 +10,23 @@ import 'package:server_box/core/service/geo_data.dart';
 import 'package:server_box/data/model/app/geo_manifest.dart';
 
 import 'helpers/geo_fixture.dart';
+
+/// An endpoint that serves the same bytes for every request.
+class _ServingAdapter implements HttpClientAdapter {
+  _ServingAdapter(this.body);
+
+  final Uint8List body;
+
+  @override
+  void close({bool force = false}) {}
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async => ResponseBody.fromBytes(body, 200);
+}
 
 /// An endpoint that is not there, so an install fails without a network.
 class _DeadAdapter implements HttpClientAdapter {
@@ -73,6 +92,70 @@ void main() {
         },
     ],
   })!;
+
+  /// An archive whose declared size is a lie.
+  ///
+  /// The manifest and the bytes come from the same endpoint, so neither is
+  /// evidence about the other. **What matters is that the refusal happens
+  /// during the decode**, which is why this asserts the message: the old code
+  /// materialised the whole output and then compared lengths, so it refused
+  /// the same archives — after allocating them. The two are told apart by
+  /// which sentence they refuse with, since telling them apart by memory
+  /// would need an archive big enough to actually exhaust it.
+  test('decoding stops at the declared size rather than after it', () {
+    final bomb = Uint8List.fromList(gzip.encode(Uint8List(64 * 1024)));
+
+    expect(
+      () => GeoData.gunzipCapped(bomb, 640, 'ip4_city_v1.bin.gz'),
+      throwsA(
+        isA<StateError>().having(
+          (e) => e.message,
+          'message',
+          contains('past the 640 bytes it declares'),
+        ),
+      ),
+    );
+  });
+
+  test('and an archive of the declared size decodes', () {
+    final honest = Uint8List.fromList(gzip.encode(Uint8List(640)));
+    expect(GeoData.gunzipCapped(honest, 640, 'x').length, 640);
+  });
+
+  test('a truncated one is refused too, from the other side', () {
+    // Short cannot be caught while decoding — a truncated archive simply
+    // stops — so the length is still compared once it is done.
+    final short = Uint8List.fromList(gzip.encode(Uint8List(320)));
+    expect(
+      () => GeoData.gunzipCapped(short, 640, 'x'),
+      throwsA(isA<StateError>()),
+    );
+  });
+
+  test('an asset that unpacks past what it declares is refused', () async {
+    final bomb = Uint8List.fromList(gzip.encode(Uint8List(64 * 1024)));
+    final manifest = GeoManifest.tryFromJson({
+      'version': 1,
+      'generated': '2026-10',
+      'attribution': 'test',
+      'assets': [
+        for (final (name, family) in [('ip4', 4), ('ip6', 6)])
+          {
+            'name': '${name}_city_v1.bin.gz',
+            'family': family,
+            'bytes': bomb.length,
+            // A hundredth of what it really unpacks to.
+            'unpackedBytes': 640,
+            'sha256': sha256.convert(bomb).toString(),
+          },
+      ],
+    })!;
+    GeoData.clientFactory = () => Dio()
+      ..httpClientAdapter = _ServingAdapter(bomb);
+
+    expect(await GeoData.install(manifest), isFalse);
+    expect(GeoData.installed(), isNull);
+  });
 
   test('a removal is announced once', () async {
     expect(await GeoData.remove(), isTrue);

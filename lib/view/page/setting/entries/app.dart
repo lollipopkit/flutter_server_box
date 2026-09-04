@@ -406,7 +406,11 @@ extension _App on _AppSettingsPageState {
   /// and costs one `exists` call.
   Widget _buildLastCrashReport() {
     return FutureBuilder<String?>(
-      future: CrashReport.saved(),
+      // Held rather than started here. A `FutureBuilder` given a fresh future
+      // on every build re-reads the file on every unrelated rebuild of this
+      // page, and shows its `null` snapshot again each time — so the row
+      // flickered out and back whenever anything else on the page changed.
+      future: _savedCrashReport ??= CrashReport.saved(),
       builder: (_, snapshot) {
         final report = snapshot.data;
         if (report == null) return UIs.placeholder;
@@ -421,8 +425,11 @@ extension _App on _AppSettingsPageState {
           onTap: () async {
             final kept = await CrashReportDialog.show(context, report);
             // The row goes when the report does, and nothing else notices:
-            // `saved()` is a future this build captured, not a listenable.
-            if (!kept) refresh();
+            // the future is held, not a listenable, so it is replaced rather
+            // than left to answer from a file that is no longer there.
+            if (kept) return;
+            _savedCrashReport = null;
+            refresh();
           },
         ).cardx;
       },

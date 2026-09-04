@@ -38,8 +38,8 @@ curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main
 ```
 
 `sh -s --` 之后的内容都会传给脚本，`uninstall` 和 `upgrade` 同理。脚本本身也在
-仓库里（`monitor/install.sh`），从 checkout 执行 `./install.sh install` 效果
-相同。
+仓库里，在 checkout 根目录执行 `./monitor/install.sh install` 做同样的事——用的
+是这份 checkout 里的脚本，不一定和上面命令拉取的 `main` 版本相同。
 
 默认情况下，agent 以普通用户运行。这样可以限制 `full_access` 开启时的权限范围，详见[权限开关](#权限开关)。
 

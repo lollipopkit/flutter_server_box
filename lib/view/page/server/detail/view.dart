@@ -614,13 +614,19 @@ ${err.message ?? 'null'}
 
   Widget _buildAboutRow(String label, String value, {bool secret = false}) {
     return Padding(
+      // On the row itself, which is what the enclosing list reconciles. Keying
+      // the `_SecretText` inside did nothing: the `Padding`s are matched by
+      // index first, and a keyed child looking for its element among unkeyed
+      // ones of another type simply gets a new one — so a revealed address
+      // still hid itself the moment `ss.more` gained an entry.
+      key: ValueKey('about-$label'),
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: UIs.text13, overflow: TextOverflow.ellipsis),
           if (secret)
-            _SecretText(value, key: ValueKey('secret-$label'))
+            _SecretText(value)
           else
             Text(value, style: UIs.text13Grey, overflow: TextOverflow.ellipsis),
         ],
@@ -1767,11 +1773,13 @@ ${err.message ?? 'null'}
 /// card people open for the uptime. Hidden by default costs one tap and
 /// removes that.
 ///
-/// **Keyed by the value it hides**, because this is one child of a list whose
-/// length is `ss.more.entries.length + 1`. Matched by index, a later poll that
-/// adds a `more` entry lines this up against a different subtree, the element
-/// is rebuilt from scratch, and an address the user revealed hides itself
-/// again mid-session.
+/// **The row that holds this is keyed by its label**, because it is one child
+/// of a list whose length is `ss.more.entries.length + 1`. Matched by index, a
+/// later poll that adds a `more` entry lines it up against a different
+/// subtree, the element is rebuilt from scratch, and an address the user
+/// revealed hides itself again mid-session. By label rather than by value, so
+/// that an address changing does not count as a different row — see
+/// `_buildAboutRow`.
 ///
 /// The placeholder has the same number of characters as the address, not the
 /// same width — `•` is not the width of a digit in a proportional face, so
@@ -1779,7 +1787,7 @@ ${err.message ?? 'null'}
 /// would swap that for a bullet run that does not look like the text it stands
 /// for, which is worse on a card people are scanning.
 class _SecretText extends StatefulWidget {
-  const _SecretText(this.value, {super.key});
+  const _SecretText(this.value);
 
   final String value;
 

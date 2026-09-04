@@ -150,6 +150,12 @@ class _ServerPageState extends ConsumerState<ServerPage>
   /// control anywhere to get back to the list.
   void _globeEnabledListener() {
     if (!Stores.setting.globeEnabled.fetch()) _globe.value = false;
+    // Unconditionally, and not left to `_globe` to cause: `_listActions` reads
+    // the setting directly to decide whether the button exists at all, and
+    // `_globe` only notifies when its own value changes. Switching the feature
+    // off while the list was showing left the button there — `_globe` was
+    // already false — and switching it back on never brought it back.
+    _sortVersion.notify();
   }
 
   /// What the globe guide points at.

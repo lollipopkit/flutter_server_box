@@ -39,9 +39,10 @@ curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main
 ```
 
 Everything after `sh -s --` is passed to the script, so `uninstall` and
-`upgrade` go the same way. It is also in the repository as
-`monitor/install.sh`, so `./install.sh install` from a checkout does the same
-thing.
+`upgrade` go the same way. It is also in the repository, so
+`./monitor/install.sh install` from the root of a checkout does the same job —
+with that checkout's copy of the script, which is not necessarily the one on
+`main` that the commands above fetch.
 
 The agent runs as an ordinary user by default. This limits the scope of `full_access`; see [Permission switches](#permission-switches).
 

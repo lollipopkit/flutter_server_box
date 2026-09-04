@@ -51,7 +51,9 @@ curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main
 
 Everything after `sh -s --` is passed to the script, so `uninstall` and
 `upgrade` go the same way. It is also in this repository, so `./install.sh
-install` from a checkout does the same thing.
+install` from this directory does the same job — with this checkout's copy of
+the script, which is not necessarily the one on `main` that the commands above
+fetch.
 
 `install.sh install` downloads the newest `monitor-v*` release of this
 repository. Releases are cut by the `monitor-release.yml` workflow, which is
