@@ -461,7 +461,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get trayCompactTip =>
-      'One line per server, without the chart. Also what Linux draws either way — its panel menu is sent over D-Bus, which carries a label but not a layout.';
+      'One line per server, without the chart. Linux always uses a single-line layout because its panel menu is sent over D-Bus, which carries a label rather than a custom layout; it may still include the selected chart as an image.';
 
   @override
   String get trayKeepRunning => 'Keep running in the tray';

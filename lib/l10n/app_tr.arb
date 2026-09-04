@@ -63,7 +63,7 @@
   "trayChart": "Grafik",
   "trayChartNone": "Yok",
   "trayCompact": "Sıkıştırılmış satırlar",
-  "trayCompactTip": "Grafik olmadan sunucu başına bir satır. Linux da her durumda bunu görüntüler — panel menüsü bir etiket taşıyan ancak düzen taşımayan D-Bus üzerinden gönderilir.",
+  "trayCompactTip": "Grafik olmadan sunucu başına bir satır. Linux, panel menüsü özel bir düzen yerine etiket taşıyan D-Bus üzerinden gönderildiği için her zaman tek satırlı bir düzen kullanır; ancak seçilen grafiği görüntü olarak içerebilir.",
   "trayKeepRunning": "Tepside çalışmaya devam et",
   "trayKeepRunningTip": "Pencere kapatıldığında uygulama menü çubuğunda veya bildirim alanında kalır ve sunucularınızı izlemeye devam eder. Kapat düğmesinin uygulamayı sonlandırması için bunu devre dışı bırakın.",
   "bgRunNeedsNotification": "Arka planda çalışmak kalıcı bir bildirim gerektirir ve bu uygulamanın bildirim izni yok. İzin vermek için dokunun.",

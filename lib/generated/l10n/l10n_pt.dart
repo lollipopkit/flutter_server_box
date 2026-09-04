@@ -467,7 +467,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get trayCompactTip =>
-      'Uma linha por servidor, sem o gráfico. É também o que o Linux apresenta em qualquer caso — o menu do painel é enviado através do D-Bus, que transporta uma etiqueta, mas não um esquema.';
+      'Uma linha por servidor, sem o gráfico. O Linux usa sempre um esquema de linha única porque o menu do painel é enviado através do D-Bus, que transporta uma etiqueta em vez de um esquema personalizado; ainda pode incluir o gráfico selecionado como imagem.';
 
   @override
   String get trayKeepRunning => 'Continuar em execução na bandeja';

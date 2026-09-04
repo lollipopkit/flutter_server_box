@@ -63,7 +63,7 @@
   "trayChart": "Graphique",
   "trayChartNone": "Aucun",
   "trayCompact": "Lignes compactes",
-  "trayCompactTip": "Une ligne par serveur, sans graphique. C’est aussi ce que Linux affiche dans tous les cas : son menu de panneau est transmis par D-Bus, qui transporte un libellé, mais pas une disposition.",
+  "trayCompactTip": "Une ligne par serveur, sans graphique. Linux utilise toujours une disposition sur une seule ligne, car son menu de panneau est transmis par D-Bus, qui transporte un libellé plutôt qu’une disposition personnalisée ; il peut néanmoins inclure le graphique sélectionné sous forme d’image.",
   "trayKeepRunning": "Continuer à s’exécuter dans la zone de notification",
   "trayKeepRunningTip": "La fermeture de la fenêtre laisse l’application dans la barre des menus ou la zone de notification, où elle continue de surveiller vos serveurs. Désactivez cette option pour que le bouton de fermeture quitte l’application.",
   "bgRunNeedsNotification": "Fonctionner en arrière-plan demande une notification permanente, et cette app n'a pas la permission de notification. Touchez pour l'accorder.",

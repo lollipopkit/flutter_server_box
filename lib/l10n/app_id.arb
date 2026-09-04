@@ -63,7 +63,7 @@
   "trayChart": "Grafik",
   "trayChartNone": "Tidak ada",
   "trayCompact": "Baris ringkas",
-  "trayCompactTip": "Satu baris per server, tanpa grafik. Linux juga selalu menampilkan tampilan ini — menu panelnya dikirim melalui D-Bus, yang membawa label tetapi bukan tata letak.",
+  "trayCompactTip": "Satu baris per server, tanpa grafik. Linux selalu menggunakan tata letak satu baris karena menu panelnya dikirim melalui D-Bus, yang membawa label alih-alih tata letak khusus; grafik yang dipilih tetap dapat disertakan sebagai gambar.",
   "trayKeepRunning": "Tetap berjalan di baki sistem",
   "trayKeepRunningTip": "Menutup jendela akan membiarkan aplikasi tetap berjalan di bilah menu atau area notifikasi, dan tetap memantau server Anda. Nonaktifkan ini agar tombol tutup mengakhiri aplikasi.",
   "bgRunNeedsNotification": "Berjalan di latar belakang butuh notifikasi permanen, dan aplikasi ini tidak punya izin notifikasi. Ketuk untuk memberikannya.",

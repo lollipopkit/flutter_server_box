@@ -134,7 +134,7 @@
   "trayChart": "图表",
   "trayChartNone": "无",
   "trayCompact": "紧凑行",
-  "trayCompactTip": "每台服务器显示一行，不显示图表。Linux 无论如何都会使用这种显示方式——它的面板菜单通过 D-Bus 传递，而 D-Bus 只能传递标签，无法传递布局。",
+  "trayCompactTip": "每台服务器显示一行，不显示图表。Linux 的面板菜单通过 D-Bus 传递标签而非自定义布局，因此始终使用单行布局，但仍可将所选图表作为图片显示。",
   "trayKeepRunning": "在托盘中继续运行",
   "trayKeepRunningTip": "关闭窗口后，App 会留在菜单栏或通知区域中，并继续监控服务器。关闭此选项后，关闭按钮会退出 App。",
   "bgRunNeedsNotification": "后台运行需要一条常驻通知,而本应用当前无通知权限。点击去开启通知权限。",

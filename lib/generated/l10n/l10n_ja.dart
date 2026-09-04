@@ -438,7 +438,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get trayCompactTip =>
-      'グラフなしで、サーバーごとに1行で表示します。Linux も常にこの表示になります。パネルメニューは D-Bus 経由で送られ、ラベルは渡せますがレイアウトは渡せません。';
+      'グラフなしで、サーバーごとに1行で表示します。Linux はパネルメニューを D-Bus 経由で送信し、カスタムレイアウトではなくラベルを渡すため、常に1行レイアウトになりますが、選択したグラフを画像として含めることはできます。';
 
   @override
   String get trayKeepRunning => 'トレイで実行し続ける';

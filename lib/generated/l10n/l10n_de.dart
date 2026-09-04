@@ -468,7 +468,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get trayCompactTip =>
-      'Eine Zeile pro Server, ohne Diagramm. Das ist auch die Darstellung, die Linux immer verwendet – sein Panel-Menü wird über D-Bus übertragen, das ein Label, aber kein Layout überträgt.';
+      'Eine Zeile pro Server, ohne Diagramm. Linux verwendet immer ein einzeiliges Layout, da sein Panel-Menü über D-Bus übertragen wird, das ein Label statt eines benutzerdefinierten Layouts überträgt; das ausgewählte Diagramm kann jedoch als Bild eingebunden werden.';
 
   @override
   String get trayKeepRunning => 'Im Tray weiter ausführen';

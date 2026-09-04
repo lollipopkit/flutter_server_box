@@ -399,13 +399,15 @@ List<double> trayChart({
       if (sample.isFinite && sample > peak) peak = sample;
     }
     if (peak <= 0) return [for (final _ in samples) 0.0];
-    return [for (final sample in samples) (sample / peak).clamp(0.0, 1.0)];
+    return [
+      for (final sample in samples) (sample / peak).clamp(0.0, 1.0).toDouble(),
+    ];
   }
 
   // Percentages against a fixed 0..100, not against their own range: a machine
   // idling between 1% and 3% would otherwise draw the same alarming shape as
   // one swinging between 10% and 90%.
-  return [for (final s in samples) (s / 100).clamp(0.0, 1.0)];
+  return [for (final s in samples) (s / 100).clamp(0.0, 1.0).toDouble()];
 }
 
 /// One network series for a row: total traffic at each aligned sampling point.

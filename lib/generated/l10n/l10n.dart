@@ -930,7 +930,7 @@ abstract class AppLocalizations {
   /// No description provided for @trayCompactTip.
   ///
   /// In en, this message translates to:
-  /// **'One line per server, without the chart. Also what Linux draws either way — its panel menu is sent over D-Bus, which carries a label but not a layout.'**
+  /// **'One line per server, without the chart. Linux always uses a single-line layout because its panel menu is sent over D-Bus, which carries a label rather than a custom layout; it may still include the selected chart as an image.'**
   String get trayCompactTip;
 
   /// No description provided for @trayKeepRunning.

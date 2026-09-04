@@ -441,7 +441,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get trayCompactTip =>
-      '차트 없이 서버당 한 줄로 표시합니다. Linux에서도 항상 이 방식으로 표시됩니다. 패널 메뉴는 D-Bus로 전송되며 레이블은 전달할 수 있지만 레이아웃은 전달할 수 없습니다.';
+      '차트 없이 서버당 한 줄로 표시합니다. Linux는 패널 메뉴를 D-Bus로 전송하며 사용자 지정 레이아웃 대신 레이블을 전달하므로 항상 한 줄 레이아웃을 사용하지만, 선택한 차트를 이미지로 포함할 수 있습니다.';
 
   @override
   String get trayKeepRunning => '트레이에서 계속 실행';

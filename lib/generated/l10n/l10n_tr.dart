@@ -467,7 +467,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get trayCompactTip =>
-      'Grafik olmadan sunucu başına bir satır. Linux da her durumda bunu görüntüler — panel menüsü bir etiket taşıyan ancak düzen taşımayan D-Bus üzerinden gönderilir.';
+      'Grafik olmadan sunucu başına bir satır. Linux, panel menüsü özel bir düzen yerine etiket taşıyan D-Bus üzerinden gönderildiği için her zaman tek satırlı bir düzen kullanır; ancak seçilen grafiği görüntü olarak içerebilir.';
 
   @override
   String get trayKeepRunning => 'Tepside çalışmaya devam et';

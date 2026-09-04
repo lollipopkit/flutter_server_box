@@ -63,7 +63,7 @@
   "trayChart": "Grafiek",
   "trayChartNone": "Geen",
   "trayCompact": "Compacte rijen",
-  "trayCompactTip": "Eén regel per server, zonder grafiek. Linux gebruikt deze weergave sowieso — het paneelmenu wordt via D-Bus verstuurd, dat wel een label maar geen indeling kan overbrengen.",
+  "trayCompactTip": "Eén regel per server, zonder grafiek. Linux gebruikt altijd een indeling van één regel omdat het paneelmenu via D-Bus wordt verstuurd, dat een label in plaats van een aangepaste indeling overbrengt; de geselecteerde grafiek kan wel als afbeelding worden toegevoegd.",
   "trayKeepRunning": "In het systeemvak blijven draaien",
   "trayKeepRunningTip": "Als je het venster sluit, blijft de app in de menubalk of het systeemvak actief en je servers bewaken. Schakel dit uit om de app met de sluitknop te beëindigen.",
   "bgRunNeedsNotification": "Op de achtergrond draaien vereist een permanente melding, en deze app heeft geen meldingsrechten. Tik om ze toe te staan.",

@@ -473,7 +473,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get trayCompactTip =>
-      'Une ligne par serveur, sans graphique. C’est aussi ce que Linux affiche dans tous les cas : son menu de panneau est transmis par D-Bus, qui transporte un libellé, mais pas une disposition.';
+      'Une ligne par serveur, sans graphique. Linux utilise toujours une disposition sur une seule ligne, car son menu de panneau est transmis par D-Bus, qui transporte un libellé plutôt qu’une disposition personnalisée ; il peut néanmoins inclure le graphique sélectionné sous forme d’image.';
 
   @override
   String get trayKeepRunning =>

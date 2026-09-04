@@ -431,7 +431,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get trayCompactTip =>
-      '每台服务器显示一行，不显示图表。Linux 无论如何都会使用这种显示方式——它的面板菜单通过 D-Bus 传递，而 D-Bus 只能传递标签，无法传递布局。';
+      '每台服务器显示一行，不显示图表。Linux 的面板菜单通过 D-Bus 传递标签而非自定义布局，因此始终使用单行布局，但仍可将所选图表作为图片显示。';
 
   @override
   String get trayKeepRunning => '在托盘中继续运行';
@@ -2071,7 +2071,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get trayCompactTip =>
-      '每部伺服器顯示一行，不顯示圖表。Linux 無論如何都會使用這種顯示方式——它的面板選單透過 D-Bus 傳送，而 D-Bus 只能傳送標籤，無法傳送版面配置。';
+      '每部伺服器顯示一行，不顯示圖表。Linux 的面板選單透過 D-Bus 傳送標籤而非自訂版面配置，因此一律使用單行版面配置，但仍可將所選圖表顯示為圖片。';
 
   @override
   String get trayKeepRunning => '在系統匣中繼續執行';

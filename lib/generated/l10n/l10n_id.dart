@@ -465,7 +465,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get trayCompactTip =>
-      'Satu baris per server, tanpa grafik. Linux juga selalu menampilkan tampilan ini — menu panelnya dikirim melalui D-Bus, yang membawa label tetapi bukan tata letak.';
+      'Satu baris per server, tanpa grafik. Linux selalu menggunakan tata letak satu baris karena menu panelnya dikirim melalui D-Bus, yang membawa label alih-alih tata letak khusus; grafik yang dipilih tetap dapat disertakan sebagai gambar.';
 
   @override
   String get trayKeepRunning => 'Tetap berjalan di baki sistem';

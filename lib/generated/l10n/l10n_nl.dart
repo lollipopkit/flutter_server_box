@@ -466,7 +466,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get trayCompactTip =>
-      'Eén regel per server, zonder grafiek. Linux gebruikt deze weergave sowieso — het paneelmenu wordt via D-Bus verstuurd, dat wel een label maar geen indeling kan overbrengen.';
+      'Eén regel per server, zonder grafiek. Linux gebruikt altijd een indeling van één regel omdat het paneelmenu via D-Bus wordt verstuurd, dat een label in plaats van een aangepaste indeling overbrengt; de geselecteerde grafiek kan wel als afbeelding worden toegevoegd.';
 
   @override
   String get trayKeepRunning => 'In het systeemvak blijven draaien';

@@ -63,7 +63,7 @@
   "trayChart": "Diagramm",
   "trayChartNone": "Keine",
   "trayCompact": "Kompakte Zeilen",
-  "trayCompactTip": "Eine Zeile pro Server, ohne Diagramm. Das ist auch die Darstellung, die Linux immer verwendet – sein Panel-Menü wird über D-Bus übertragen, das ein Label, aber kein Layout überträgt.",
+  "trayCompactTip": "Eine Zeile pro Server, ohne Diagramm. Linux verwendet immer ein einzeiliges Layout, da sein Panel-Menü über D-Bus übertragen wird, das ein Label statt eines benutzerdefinierten Layouts überträgt; das ausgewählte Diagramm kann jedoch als Bild eingebunden werden.",
   "trayKeepRunning": "Im Tray weiter ausführen",
   "trayKeepRunningTip": "Beim Schließen des Fensters bleibt die App in der Menüleiste oder im Infobereich aktiv und überwacht weiterhin Ihre Server. Deaktivieren Sie diese Option, damit der Schließen-Button die App beendet.",
   "bgRunNeedsNotification": "Das Laufen im Hintergrund braucht eine dauerhafte Benachrichtigung, und diese App hat keine Benachrichtigungsberechtigung. Zum Erlauben antippen.",

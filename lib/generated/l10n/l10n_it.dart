@@ -470,7 +470,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get trayCompactTip =>
-      'Una riga per server, senza grafico. È anche ciò che Linux visualizza in ogni caso: il suo menu del pannello viene inviato tramite D-Bus, che trasporta un’etichetta ma non un layout.';
+      'Una riga per server, senza grafico. Linux usa sempre un layout a riga singola perché il menu del pannello viene inviato tramite D-Bus, che trasporta un’etichetta invece di un layout personalizzato; può comunque includere il grafico selezionato come immagine.';
 
   @override
   String get trayKeepRunning => 'Continua a funzionare nell’area di notifica';
