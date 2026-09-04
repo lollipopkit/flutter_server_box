@@ -731,9 +731,12 @@ class SettingStore extends SqliteStore {
   late final firstTimeReadSSHCfg = propertyDefault('firstTimeReadSSHCfg', true);
 
   /// Tabs at home page
+  ///
+  /// [AppTab.defaultOrder] rather than `AppTab.values`: the two differ, and
+  /// the difference is which tab the bar has room for.
   late final homeTabs = listProperty(
     'homeTabs',
-    defaultValue: AppTab.values,
+    defaultValue: AppTab.defaultOrder,
     fromObj: AppTab.parseAppTabsFromObj,
     toObj: (val) {
       return val?.map((e) => e.name).toList() ?? [];
