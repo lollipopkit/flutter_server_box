@@ -3,7 +3,6 @@
 #include "resource.h"
 
 #include <shellapi.h>
-#include <vssym32.h>
 #include <windowsx.h>
 
 #include <algorithm>
@@ -162,7 +161,6 @@ TrayIcon::TrayIcon(HWND window, flutter::BinaryMessenger* messenger)
 
 TrayIcon::~TrayIcon() {
   Destroy();
-  if (menu_theme_ != nullptr) CloseThemeData(menu_theme_);
   if (name_font_ != nullptr) DeleteObject(name_font_);
   if (detail_font_ != nullptr) DeleteObject(detail_font_);
 }
@@ -184,9 +182,6 @@ HFONT TrayIcon::DetailFont() const {
 
 void TrayIcon::RefreshVisualResources() {
   dpi_ = TrayDpi(window_);
-
-  if (menu_theme_ != nullptr) CloseThemeData(menu_theme_);
-  menu_theme_ = OpenThemeData(window_, L"Menu");
 
   // The menu's own font, at the notification area's DPI. An owner-drawn row
   // that picked a private font would be the one row ignoring system settings.
@@ -466,25 +461,14 @@ void TrayIcon::Draw(DRAWITEMSTRUCT* draw) {
   HDC dc = draw->hDC;
   RECT rect = draw->rcItem;
 
-  const int theme_state = selected ? MPI_HOT : MPI_NORMAL;
-  const bool themed =
-      menu_theme_ != nullptr &&
-      SUCCEEDED(DrawThemeBackground(menu_theme_, dc, MENU_POPUPITEM,
-                                    theme_state, &rect, nullptr));
-  if (!themed) {
-    FillRect(dc, &rect,
-             GetSysColorBrush(selected ? COLOR_HIGHLIGHT : COLOR_MENU));
-  }
-
-  COLORREF text_colour =
+  // Paint an opaque base on every WM_DRAWITEM. The UxTheme popup-item surface
+  // can be partially transparent, so drawing it directly into the menu DC
+  // causes its hot state to accumulate under RDP and on other composited
+  // desktops when Windows reuses the existing pixels.
+  FillRect(dc, &rect,
+           GetSysColorBrush(selected ? COLOR_HIGHLIGHT : COLOR_MENU));
+  const COLORREF text_colour =
       GetSysColor(selected ? COLOR_HIGHLIGHTTEXT : COLOR_MENUTEXT);
-  if (menu_theme_ != nullptr) {
-    COLORREF themed_text = 0;
-    if (SUCCEEDED(GetThemeColor(menu_theme_, MENU_POPUPITEM, theme_state,
-                                TMT_TEXTCOLOR, &themed_text))) {
-      text_colour = themed_text;
-    }
-  }
   SetBkMode(dc, TRANSPARENT);
 
   HGDIOBJ previous_font = SelectObject(dc, NameFont());
@@ -521,15 +505,8 @@ void TrayIcon::Draw(DRAWITEMSTRUCT* draw) {
 
   if (!detail.empty()) {
     SelectObject(dc, DetailFont());
-    COLORREF detail_colour =
+    const COLORREF detail_colour =
         selected ? text_colour : GetSysColor(COLOR_GRAYTEXT);
-    if (!selected && menu_theme_ != nullptr) {
-      COLORREF themed_detail = 0;
-      if (SUCCEEDED(GetThemeColor(menu_theme_, MENU_POPUPITEM, MPI_DISABLED,
-                                  TMT_TEXTCOLOR, &themed_detail))) {
-        detail_colour = themed_detail;
-      }
-    }
     SetTextColor(dc, detail_colour);
     const int detail_y =
         name_y + name_metrics.tmHeight + Scale(kLineGap);

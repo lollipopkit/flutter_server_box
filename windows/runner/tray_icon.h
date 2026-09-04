@@ -5,7 +5,6 @@
 #include <flutter/plugin_registrar_windows.h>
 #include <flutter/standard_method_codec.h>
 #include <windows.h>
-#include <uxtheme.h>
 
 #include <memory>
 #include <optional>
@@ -72,7 +71,6 @@ class TrayIcon {
   bool modern_notifications_ = false;
   HICON icon_ = nullptr;
   HMENU menu_ = nullptr;
-  HTHEME menu_theme_ = nullptr;
   HFONT name_font_ = nullptr;
   HFONT detail_font_ = nullptr;
   bool compact_ = false;
