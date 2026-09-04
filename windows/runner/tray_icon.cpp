@@ -3,6 +3,7 @@
 #include "resource.h"
 
 #include <shellapi.h>
+#include <vssym32.h>
 #include <windowsx.h>
 
 #include <algorithm>
@@ -18,7 +19,6 @@ constexpr UINT kCmdSettings = 2;
 constexpr UINT kCmdQuit = 3;
 constexpr UINT kFirstRow = 100;
 
-constexpr int kDotSize = 7;
 constexpr int kLeading = 24;
 constexpr int kTrailing = 12;
 constexpr int kChartWidth = 60;
@@ -26,6 +26,7 @@ constexpr int kChartHeight = 18;
 constexpr int kPadding = 5;
 constexpr int kLineGap = 1;
 constexpr int kMinRowWidth = 240;
+constexpr int kMaxRowWidth = 420;
 
 template <typename T>
 T LoadUser32Function(const char* name) {
@@ -161,6 +162,7 @@ TrayIcon::TrayIcon(HWND window, flutter::BinaryMessenger* messenger)
 
 TrayIcon::~TrayIcon() {
   Destroy();
+  if (menu_theme_ != nullptr) CloseThemeData(menu_theme_);
   if (name_font_ != nullptr) DeleteObject(name_font_);
   if (detail_font_ != nullptr) DeleteObject(detail_font_);
 }
@@ -182,6 +184,9 @@ HFONT TrayIcon::DetailFont() const {
 
 void TrayIcon::RefreshVisualResources() {
   dpi_ = TrayDpi(window_);
+
+  if (menu_theme_ != nullptr) CloseThemeData(menu_theme_);
+  menu_theme_ = OpenThemeData(window_, L"Menu");
 
   // The menu's own font, at the notification area's DPI. An owner-drawn row
   // that picked a private font would be the one row ignoring system settings.
@@ -428,10 +433,11 @@ void TrayIcon::Measure(MEASUREITEMSTRUCT* measure) {
                         (detail_height > 0 ? Scale(kLineGap) + detail_height
                                            : 0);
   const int text = std::max<int>(name_size.cx, detail_width);
-  measure->itemWidth = std::max<int>(
-      Scale(kMinRowWidth),
+  const int desired_width =
       Scale(kLeading) + text + Scale(kTrailing) +
-          (row.chart.empty() ? 0 : Scale(kChartWidth + 8)));
+      (row.chart.empty() ? 0 : Scale(kChartWidth + 8));
+  measure->itemWidth = std::clamp(
+      desired_width, Scale(kMinRowWidth), Scale(kMaxRowWidth));
 }
 
 void TrayIcon::Draw(DRAWITEMSTRUCT* draw) {
@@ -443,10 +449,25 @@ void TrayIcon::Draw(DRAWITEMSTRUCT* draw) {
   HDC dc = draw->hDC;
   RECT rect = draw->rcItem;
 
-  FillRect(dc, &rect,
-           GetSysColorBrush(selected ? COLOR_HIGHLIGHT : COLOR_MENU));
-  const COLORREF text_colour =
+  const int theme_state = selected ? MPI_HOT : MPI_NORMAL;
+  const bool themed =
+      menu_theme_ != nullptr &&
+      SUCCEEDED(DrawThemeBackground(menu_theme_, dc, MENU_POPUPITEM,
+                                    theme_state, &rect, nullptr));
+  if (!themed) {
+    FillRect(dc, &rect,
+             GetSysColorBrush(selected ? COLOR_HIGHLIGHT : COLOR_MENU));
+  }
+
+  COLORREF text_colour =
       GetSysColor(selected ? COLOR_HIGHLIGHTTEXT : COLOR_MENUTEXT);
+  if (menu_theme_ != nullptr) {
+    COLORREF themed_text = 0;
+    if (SUCCEEDED(GetThemeColor(menu_theme_, MENU_POPUPITEM, theme_state,
+                                TMT_TEXTCOLOR, &themed_text))) {
+      text_colour = themed_text;
+    }
+  }
   SetBkMode(dc, TRANSPARENT);
 
   HGDIOBJ previous_font = SelectObject(dc, NameFont());
@@ -467,44 +488,56 @@ void TrayIcon::Draw(DRAWITEMSTRUCT* draw) {
     SelectObject(dc, NameFont());
   }
 
+  const int text_left = rect.left + Scale(kLeading);
+  const int chart_width = Scale(kChartWidth);
+  const int chart_left = rect.right - Scale(kTrailing) - chart_width;
+  const int text_right = row.chart.empty()
+                             ? rect.right - Scale(kTrailing)
+                             : chart_left - Scale(8);
   const int name_y = rect.top + Scale(kPadding);
+  RECT name_rect = {text_left, name_y, text_right,
+                    name_y + name_metrics.tmHeight};
   SetTextColor(dc, text_colour);
-  TextOutW(dc, rect.left + Scale(kLeading), name_y, row.name.c_str(),
-           static_cast<int>(row.name.size()));
+  DrawTextW(dc, row.name.c_str(), static_cast<int>(row.name.size()),
+            &name_rect,
+            DT_END_ELLIPSIS | DT_LEFT | DT_NOPREFIX | DT_SINGLELINE | DT_TOP);
 
   if (!detail.empty()) {
     SelectObject(dc, DetailFont());
-    // Dimmed against the name, which is what the second line is: the answer,
-    // where the first line is the question.
-    SetTextColor(dc, selected ? text_colour
-                              : RGB(GetRValue(text_colour) / 2 + 0x60,
-                                    GetGValue(text_colour) / 2 + 0x60,
-                                    GetBValue(text_colour) / 2 + 0x60));
-    TextOutW(dc, rect.left + Scale(kLeading),
-             name_y + name_metrics.tmHeight + Scale(kLineGap), detail.c_str(),
-             static_cast<int>(detail.size()));
+    COLORREF detail_colour =
+        selected ? text_colour : GetSysColor(COLOR_GRAYTEXT);
+    if (!selected && menu_theme_ != nullptr) {
+      COLORREF themed_detail = 0;
+      if (SUCCEEDED(GetThemeColor(menu_theme_, MENU_POPUPITEM, MPI_DISABLED,
+                                  TMT_TEXTCOLOR, &themed_detail))) {
+        detail_colour = themed_detail;
+      }
+    }
+    SetTextColor(dc, detail_colour);
+    const int detail_y =
+        name_y + name_metrics.tmHeight + Scale(kLineGap);
+    RECT detail_rect = {text_left, detail_y, text_right,
+                        detail_y + detail_height};
+    DrawTextW(dc, detail.c_str(), static_cast<int>(detail.size()),
+              &detail_rect,
+              DT_END_ELLIPSIS | DT_LEFT | DT_NOPREFIX | DT_SINGLELINE |
+                  DT_TOP);
   }
-  SelectObject(dc, previous_font);
 
-  // Against the name's line, not the row's middle: it belongs to the line that
-  // names the machine.
-  const int dot_size = Scale(kDotSize);
-  const int dot_left = rect.left + Scale(10);
-  const int dot_y = name_y + (name_metrics.tmHeight - dot_size) / 2;
-  HBRUSH dot_brush =
-      CreateSolidBrush(selected ? text_colour : DotColour(row.state));
-  HGDIOBJ previous_brush = SelectObject(dc, dot_brush);
-  HGDIOBJ previous_pen = SelectObject(dc, GetStockObject(NULL_PEN));
-  Ellipse(dc, dot_left, dot_y, dot_left + dot_size, dot_y + dot_size);
-  SelectObject(dc, previous_brush);
-  SelectObject(dc, previous_pen);
-  DeleteObject(dot_brush);
+  // A font glyph remains round under RDP and fractional DPI scaling, where a
+  // seven-pixel GDI ellipse is reduced to a visible diamond.
+  SelectObject(dc, NameFont());
+  SetTextColor(dc, selected ? text_colour : DotColour(row.state));
+  RECT dot_rect = {rect.left + Scale(4), name_y,
+                   rect.left + Scale(kLeading - 3),
+                   name_y + name_metrics.tmHeight};
+  DrawTextW(dc, L"●", 1, &dot_rect,
+            DT_CENTER | DT_NOPREFIX | DT_SINGLELINE | DT_VCENTER);
+  SelectObject(dc, previous_font);
 
   if (row.chart.size() < 2) return;
 
-  const int chart_width = Scale(kChartWidth);
   const int chart_height = Scale(kChartHeight);
-  const int chart_left = rect.right - Scale(kTrailing) - chart_width;
   const int chart_top =
       rect.top + (rect.bottom - rect.top - chart_height) / 2;
   std::vector<POINT> points;
@@ -565,7 +598,8 @@ bool TrayIcon::HandleMessage(UINT message, WPARAM wparam, LPARAM lparam,
   }
 
   if (message == WM_DPICHANGED || message == WM_FONTCHANGE ||
-      message == WM_SETTINGCHANGE || message == WM_DISPLAYCHANGE) {
+      message == WM_SETTINGCHANGE || message == WM_DISPLAYCHANGE ||
+      message == WM_THEMECHANGED || message == WM_SYSCOLORCHANGE) {
     if (menu_open_) {
       refresh_visuals_pending_ = true;
     } else {
