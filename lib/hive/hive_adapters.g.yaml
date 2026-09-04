@@ -133,28 +133,6 @@ types:
         index: 9
       power:
         index: 10
-  ServerCustom:
-    typeId: 7
-    nextIndex: 10
-    fields:
-      pveAddr:
-        index: 1
-      pveIgnoreCert:
-        index: 2
-      cmds:
-        index: 3
-      preferTempDev:
-        index: 4
-      logoUrl:
-        index: 5
-      netDev:
-        index: 6
-      scriptDir:
-        index: 7
-      pvePwd:
-        index: 8
-      tempIsCelsius:
-        index: 9
   WakeOnLanCfg:
     typeId: 8
     nextIndex: 3

@@ -70,6 +70,18 @@ abstract final class SbDiag {
   /// it is true, and openrc and procd are why the abstraction exists.
   static const service = DiagCategory('service');
 
+  /// The globe: whether it is looked at, and what puts a server on it.
+  ///
+  /// Never where a server is. No coordinate, no host, not even a country —
+  /// what is recorded is which link of `IpGeo`'s chain answered and how many
+  /// servers each one accounted for, which is the question the chain exists to
+  /// be judged by: the country database costs every install the megabytes it
+  /// ships in, and the city shards cost a request the user had to consent to.
+  ///
+  /// Apart from [server], where a coordinate typed by hand is one more field of
+  /// a saved server rather than anything the globe did.
+  static const globe = DiagCategory('globe');
+
   /// Moving settings between devices: remote sync, and the push that keeps a
   /// watch or a home widget fed.
   ///

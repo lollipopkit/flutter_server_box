@@ -7,12 +7,14 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/tag_group.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
+import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
@@ -27,6 +29,7 @@ import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/widget/dist_icon.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/percent_circle.dart';
+import 'package:server_box/view/widget/server_globe.dart';
 import 'package:server_box/view/widget/server_power.dart';
 
 part 'card_stat.dart';
@@ -52,6 +55,54 @@ const _cardPadSingle = 13.0;
 /// Long enough to read as one movement, short enough not to be waited on.
 const _kFlightDuration = Durations.medium3;
 
+/// How long the list takes to become the globe, and back.
+///
+/// Longer than the plain cross-fade this replaced (`medium1`): a scale needs
+/// room to read as a movement, and at 150 ms it has arrived before the eye has
+/// decided anything moved.
+const _kViewSwapDuration = Durations.medium2;
+
+/// The grid contracting toward the sphere, and the sphere opening out of it.
+///
+/// One builder for both children and both directions, because
+/// `AnimatedSwitcher` runs the outgoing child's animation in reverse — so a
+/// single 0.9 → 1 tween shrinks what is leaving and grows what is arriving,
+/// about the same point.
+///
+/// **That point is the globe's centre, and it is knowable here.** `GlobeView`
+/// puts the sphere at the middle of whatever box it is given — `center` is
+/// `(size.width / 2, size.height / 2)` — and the `layoutBuilder` below hands
+/// both children that same box. So `Alignment.center`, the default, is not a
+/// guess at a reasonable anchor; it is where the globe is about to be.
+///
+/// A morph, with each card flying to its own dot, would need where those dots
+/// land — which is not knowable when the transition has to start, because
+/// nothing is placed until the lookups come back. Converging on the sphere
+/// needs none of that. See TODOS for the full argument.
+Widget _viewSwapTransition(Widget child, Animation<double> animation) {
+  return FadeTransition(
+    opacity: animation,
+    // `drive` rather than a `CurvedAnimation`, which owns resources and would
+    // be built and dropped on every frame of the transition.
+    child: ScaleTransition(
+      scale: animation.drive(
+        Tween(begin: 0.9, end: 1.0).chain(
+          CurveTween(curve: Curves.easeOutCubic),
+        ),
+      ),
+      child: child,
+    ),
+  );
+}
+
+/// Both children in the same box, which is what makes the anchor above right.
+///
+/// Also what keeps a scrolling child full height: the default `Stack` sizes to
+/// its child and hands it loose constraints, under which a
+/// `SingleChildScrollView` takes the height of its contents.
+Widget _viewSwapLayout(Widget? current, List<Widget> previous) =>
+    Stack(fit: StackFit.expand, children: [...previous, ?current]);
+
 class _ServerPageState extends ConsumerState<ServerPage>
     with AutomaticKeepAliveClientMixin, TickerProviderStateMixin {
   double _textFactorDouble = 1.0;
@@ -75,6 +126,54 @@ class _ServerPageState extends ConsumerState<ServerPage>
 
   /// The bar's search: what is typed, and whether the bar is a field at all.
   final _search = InlineSearchController();
+
+  /// Whether the list is a globe.
+  ///
+  /// A fourth way of viewing the same servers, beside the tag, the search and
+  /// the sort — and stored like the sort is, because reopening the app on the
+  /// grid after having chosen the globe reads as the choice not having taken.
+  ///
+  /// Only ever true when `globeEnabled` is on. The setting is what removes the
+  /// feature; this is what the button toggles.
+  late final _globe = ValueNotifier(
+    Stores.setting.globeEnabled.fetch() &&
+        Stores.setting.serverPageGlobe.fetch(),
+  );
+
+  /// Turns the globe off when the feature is.
+  ///
+  /// Read once at construction and never again, the two could disagree: switch
+  /// `globeEnabled` off in settings while the globe is showing and the button
+  /// that turns it off disappears — because `_listActions` checks the setting
+  /// — while the globe stays. That leaves a sphere with every server in the
+  /// "unplaced" strip, since `IpGeo` now answers null for all of them, and no
+  /// control anywhere to get back to the list.
+  void _globeEnabledListener() {
+    if (!Stores.setting.globeEnabled.fetch()) _globe.value = false;
+    // Unconditionally, and not left to `_globe` to cause: `_listActions` reads
+    // the setting directly to decide whether the button exists at all, and
+    // `_globe` only notifies when its own value changes. Switching the feature
+    // off while the list was showing left the button there — `_globe` was
+    // already false — and switching it back on never brought it back.
+    _sortVersion.notify();
+  }
+
+  /// What the globe guide points at.
+  ///
+  /// [_listActions] is built from three places — the bar over a single column,
+  /// the rail beside a pane, and the row over the globe pane — and the first
+  /// two never coexist, being the narrow and wide layouts. The third does
+  /// coexist with the second for the length of the pane cross-fade, which is
+  /// why it is not given this key. See [_listActions].
+  final _globeBtnKey = GlobalKey();
+
+  /// Waits out the launch notices before the globe guide is considered.
+  ///
+  /// Held rather than awaited so [dispose] can cancel it: a bare
+  /// `Future.delayed` outlives the page, which in a widget test is a pending
+  /// timer after the tree is gone and in the app is work done for a page that
+  /// is no longer there.
+  Timer? _globeGuideTimer;
 
   /// The server whose card is in the air, or null. Its row in the list is
   /// built hidden and carries [_flightAnchorKey], so the flight has somewhere
@@ -116,9 +215,14 @@ class _ServerPageState extends ConsumerState<ServerPage>
     _endFlight();
     _flyingId.dispose();
     _timer?.cancel();
+    _globeGuideTimer?.cancel();
     _scrollController.dispose();
     _sortVersion.dispose();
     _search.dispose();
+    Stores.setting.globeEnabled
+        .listenable()
+        .removeListener(_globeEnabledListener);
+    _globe.dispose();
     _tag.dispose();
     _tags.dispose();
     _offsetNotifier.dispose();
@@ -134,7 +238,79 @@ class _ServerPageState extends ConsumerState<ServerPage>
   void initState() {
     super.initState();
     _tags = ValueNotifier(ref.read(serversProvider).tags);
+    Stores.setting.globeEnabled.listenable().addListener(_globeEnabledListener);
     _startAvoidJitterTimer();
+    _scheduleGlobeGuide();
+  }
+
+  /// Starts the wait before [_maybeShowGlobeGuide], if there is anything to
+  /// wait for.
+  ///
+  /// The two conditions checked here are the ones that do not change by
+  /// waiting — the guide has been seen, or the feature is off — so a launch
+  /// that fails either never arms a timer at all.
+  void _scheduleGlobeGuide() {
+    if (Stores.setting.globeGuided.fetch()) return;
+    if (!Stores.setting.globeEnabled.fetch()) return;
+    // Long enough for the launch notices to be up if there are any, so the
+    // `isCurrent` check below has something to see. They are dialogs on the
+    // root navigator and the guide draws above every route, so it would cover
+    // one rather than wait for it.
+    _globeGuideTimer = Timer(
+      const Duration(seconds: 2),
+      () => unawaited(_maybeShowGlobeGuide()),
+    );
+  }
+
+  /// Points at the globe button, once per install.
+  ///
+  /// The server tab looks finished without it: a grid of cards with a row of
+  /// icons over them, one of which happens to replace the whole list with a
+  /// sphere. Nothing about the icon says that, and a view mode nobody presses
+  /// is a view mode that does not exist.
+  ///
+  /// Every early return here leaves the guide for the *next launch* rather
+  /// than retrying — the same rule the tab strip's guide follows, and the
+  /// reason this runs once from [initState] rather than from a build.
+  Future<void> _maybeShowGlobeGuide() async {
+    final flag = Stores.setting.globeGuided;
+    if (!mounted) return;
+    // Already using it. Being shown where the button that is already pressed
+    // is reads as the app not knowing what is on screen.
+    if (_globe.value) return;
+    // One walkthrough per launch, and the tab strip's comes first: it is about
+    // how to reach anything at all. On a fresh install that puts this on the
+    // second launch, which is also when there is something to look at.
+    if (!Stores.setting.navTabMenuGuided.fetch()) return;
+    // Nothing to place on a globe, and nothing worth interrupting a first run
+    // with.
+    if (ref.read(serversProvider).serverOrder.isEmpty) return;
+    if (ModalRoute.of(context)?.isCurrent != true) return;
+    // The tab is kept alive behind the others, so the wait above can finish
+    // after the user has moved on — and the overlay draws above every route,
+    // so it would point at a button on a page nobody is looking at. Null is
+    // "nobody said", which is this widget mounted outside the home page.
+    final tab = ref.read(currentHomeTabProvider);
+    if (tab != null && tab != AppTab.server) return;
+
+    final overlay = Overlay.maybeOf(context, rootOverlay: true);
+    if (overlay == null) return;
+    // Null when the button is not built — the actions row is gone in full
+    // screen landscape.
+    final spot = rectInOverlay(_globeBtnKey.currentContext, overlay);
+    if (spot == null) return;
+
+    await GuideOverlay.show(context, [
+      GuideStep(body: context.l10n.globeGuide, spot: spot),
+    ]);
+    // At most one per install, and the open half of a funnel `globe.open`
+    // closes. The guide exists because an icon that replaces the list with a
+    // sphere explains nothing about itself; whether it works is whether the
+    // installs that saw it are the ones that later pressed the button, and
+    // every early return above leaves an install that never saw it.
+    Diag.crumb(SbDiag.globe, 'guide');
+    // Written when it has been seen through, not when it was scheduled.
+    flag.put(true);
   }
 
   @override
@@ -257,9 +433,14 @@ class _ServerPageState extends ConsumerState<ServerPage>
           split: split,
           onOpen: _openRequestedServer,
           child: ListenableBuilder(
-            // The three ways of viewing the list, and nothing else: a tag, a
-            // search and an order.
-            listenable: Listenable.merge([_tag, _sortVersion, _search]),
+            // The four ways of viewing the list, and nothing else: a tag, a
+            // search, an order, and whether it is a globe.
+            listenable: Listenable.merge([
+              _tag,
+              _sortVersion,
+              _search,
+              _globe,
+            ]),
             builder: (_, _) {
                 // The settings arrangement, viewed however the sort button
                 // says — see [_SortOrder], whose first option is that
@@ -274,7 +455,35 @@ class _ServerPageState extends ConsumerState<ServerPage>
                 // its own — so a tag picked in the grid before a server was
                 // opened would hide servers there with nothing on screen to
                 // say so or undo it.
-              if (split) return _buildPaneList(ordered);
+                // The globe replaces the list in both layouts rather than only
+                // in one. Beside a detail pane it is a narrow globe, which is
+                // small but is at least still the view that was chosen — and
+                // the actions row above it is how it is left, so it has to
+                // stay reachable there too.
+              if (split) {
+                // The same swap as the narrow layout, which this branch used
+                // to do as a hard cut — the globe simply replaced the rail
+                // between one frame and the next.
+                //
+                // Keyed, because both sides are a `Scaffold` and
+                // `AnimatedSwitcher` tells its children apart by runtime type
+                // and key. Without them the swap is invisible to it and
+                // nothing animates.
+                return AnimatedSwitcher(
+                  duration: _kViewSwapDuration,
+                  transitionBuilder: _viewSwapTransition,
+                  layoutBuilder: _viewSwapLayout,
+                  child: _globe.value
+                      ? KeyedSubtree(
+                          key: const ValueKey('globe-pane'),
+                          child: _buildGlobePane(ordered),
+                        )
+                      : KeyedSubtree(
+                          key: const ValueKey('list-pane'),
+                          child: _buildPaneList(ordered),
+                        ),
+                );
+              }
               return _buildScaffold(
                 _buildBodySmall(filtered: _filterServers(ordered)),
               );
@@ -331,7 +540,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
                   onTap: tags.isEmpty ? null : () => _showTagSheet(tags),
                 ),
               ),
-              ..._listActions,
+              ..._listActions(globeKey: _globeBtnKey),
               const SizedBox(width: 7),
             ],
             ),
@@ -356,7 +565,18 @@ class _ServerPageState extends ConsumerState<ServerPage>
   /// One list for the bar on a single column and the rail's head beside a
   /// pane: they act on the same list and had drifted to two orders and two
   /// icon sizes.
-  List<Widget> get _listActions => [
+  /// [globeKey] marks the globe button for the guide to point at, and is
+  /// passed by the two callers that draw the *list* — the bar over a single
+  /// column and the rail beside a pane.
+  ///
+  /// Not by the row over the globe pane, and that is load-bearing rather than
+  /// tidiness: the split layout now cross-fades the two panes, so both rows
+  /// are mounted at once for the length of the swap, and two widgets carrying
+  /// one `GlobalKey` at the same time is an exception rather than a bad
+  /// layout. Nothing is lost by leaving it off — the guide returns early when
+  /// the globe is already up, so the pane that has no key is never the one it
+  /// would have measured.
+  List<Widget> _listActions({Key? globeKey}) => [
     Btn.icon(
       text: libL10n.search,
       icon: const Icon(Icons.search, size: 18),
@@ -374,12 +594,79 @@ class _ServerPageState extends ConsumerState<ServerPage>
         icon: const Icon(Icons.refresh, size: 18),
         onTap: _refreshAll,
       ),
+    // Absent, not disabled, when the feature is off: a button that explains
+    // itself by doing nothing is worse than one that is not offered.
+    if (Stores.setting.globeEnabled.fetch())
+      _globe.listenVal(
+        (on) => Btn.icon(
+          key: globeKey,
+          text: l10n.globe,
+          icon: Icon(
+            on ? Icons.grid_view_rounded : Icons.public,
+            size: 18,
+            color: on ? Theme.of(context).colorScheme.primary : null,
+          ),
+          onTap: _toggleGlobe,
+        ),
+      ),
     Btn.icon(
       text: libL10n.add,
       icon: const Icon(Icons.add, size: 18),
       onTap: _onTapAddServer,
     ),
   ];
+
+  void _toggleGlobe() {
+    final on = !_globe.value;
+    _globe.value = on;
+    Stores.setting.serverPageGlobe.put(on);
+    // The button is the feature's only front door, so this is what says whether
+    // it is used at all. The pair matters rather than the opening alone: the
+    // choice is remembered across launches, so a globe that is turned back off
+    // is the one signal that someone tried it and did not keep it.
+    Diag.crumb(SbDiag.globe, on ? 'open' : 'close');
+  }
+
+  /// The globe where the rail would be, with the rail's own actions above it.
+  ///
+  /// The actions row is not decoration here: it carries the button that turns
+  /// the globe off, and without it a wide window would have no way back to the
+  /// list.
+  Widget _buildGlobePane(List<String> order) {
+    final filtered = _filterServers(order);
+    return Scaffold(
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            ListenableBuilder(
+              listenable: _sortVersion,
+              builder: (_, _) =>
+                  SideBarActions(actions: _listActions(), search: _search),
+            ),
+            // The same precedence the single-column layout applies: an empty
+            // state wins over the globe. A search or a tag that matches
+            // nothing drew a blank sphere here, with the pane's actions
+            // carrying no tag control — so the only thing on screen saying a
+            // filter was on was the search field.
+            Expanded(
+              child: filtered.isEmpty ? _buildEmpty() : _buildGlobe(filtered),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGlobe(List<String> filtered) {
+    return ServerGlobe(
+      key: const ValueKey('globe'),
+      ids: filtered,
+      onTapServer: (spi) => _onTapCard(context, ref.read(serverProvider(spi.id))),
+      onEditServer: (spi) =>
+          ServerEditPage.route.go(context, args: SpiRequiredArgs(spi)),
+    );
+  }
 
   /// How to order the list. The default is the arrangement from the settings,
   /// so this starts as a view of what the user already decided rather than as
@@ -447,22 +734,26 @@ class _ServerPageState extends ConsumerState<ServerPage>
     // here would fight that — and each empty state has its own, so going from
     // a filtered-out tag to no servers at all is also a crossing.
     return AnimatedSwitcher(
-      duration: Durations.medium1,
-      // Told to fill, or the grid is as tall as the cards in it: the default
-      // layout is a `Stack` that sizes to its child and hands it loose
-      // constraints, under which a `SingleChildScrollView` takes the height of
-      // its contents — so the list ended partway down the window and was cut
-      // off there rather than scrolling.
-      layoutBuilder: (current, previous) => Stack(
-        fit: StackFit.expand,
-        children: [...previous, ?current],
-      ),
-      child: filtered.isEmpty
-          ? _buildEmpty()
-          : KeyedSubtree(
-              key: const ValueKey('grid'),
-              child: _buildGrid(filtered),
-            ),
+      duration: _kViewSwapDuration,
+      // Scale and fade rather than fade alone — see [_viewSwapTransition] for
+      // why the anchor is the sphere and not merely the middle. It applies to
+      // the empty states too, where the same contraction reads as the list
+      // being taken away rather than blinking out.
+      transitionBuilder: _viewSwapTransition,
+      layoutBuilder: _viewSwapLayout,
+      child: switch (true) {
+        // The empty states win over the globe, and each of the three is worth
+        // more than an empty sphere: no servers at all is a new install that
+        // needs telling how to add one, and a tag or a search with no hits is
+        // a filter to undo — with the control to undo it right there. None of
+        // that can be said by a globe with nothing on it.
+        _ when _globe.value && filtered.isNotEmpty => _buildGlobe(filtered),
+        _ when filtered.isEmpty => _buildEmpty(),
+        _ => KeyedSubtree(
+          key: const ValueKey('grid'),
+          child: _buildGrid(filtered),
+        ),
+      },
     );
   }
 

@@ -496,6 +496,7 @@ class ServersNotifier extends _$ServersNotifier {
     await ref.read(portForwardProvider(id).notifier).clear();
     Stores.agentConversation.clearServer(id);
     await Stores.connectionStats.clearServerStats(id);
+    Stores.selfAddr.forget(id);
   }
 
   Future<void> updateServerOrder(List<String> order) =>
@@ -572,6 +573,15 @@ class ServersNotifier extends _$ServersNotifier {
         }
         Stores.setting.serverOrder.put(newOrder);
         Stores.history.renameSshServer(old.id, newSpi.id);
+        // Device-local derived state follows the same stable server identity.
+        // Keeping the old key would retain an orphan and make the renamed
+        // server wait for another extended poll before it can be placed.
+        if (!Stores.selfAddr.rename(old.id, newSpi.id)) {
+          Loggers.app.warning(
+            'Failed to move the self-reported address from ${old.id} '
+            'to ${newSpi.id}',
+          );
+        }
       } else {
         newServers[old.id] = newSpi;
       }

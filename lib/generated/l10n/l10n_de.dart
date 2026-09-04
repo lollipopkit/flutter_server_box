@@ -47,15 +47,8 @@ class AppLocalizationsDe extends AppLocalizations {
   String get privacyPolicy => 'Datenschutzerklärung';
 
   @override
-  String get crashUpload => 'Absturzberichte hochladen';
-
-  @override
-  String get crashUploadTip =>
-      'Absturzberichte werden an den Entwickler gesendet. Bekannte Servernamen und -adressen werden durch Platzhalter ersetzt. Standardmäßig deaktiviert; jederzeit wieder deaktivierbar.';
-
-  @override
-  String get crashNoticeBody =>
-      'ServerBox wurde beim letzten Ausführen unerwartet beendet. Möchten Sie den Absturzbericht ansehen?';
+  String get crashLastRunFailed =>
+      'ServerBox wurde beim letzten Ausführen unerwartet beendet.';
 
   @override
   String get crashReportTitle => 'Absturzbericht';
@@ -372,6 +365,13 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get logoUrlTip =>
       'Das große Bild oben auf der Seite eines Servers, in seinen eigenen Farben.';
+
+  @override
+  String get globe => 'Globus';
+
+  @override
+  String get locationTip =>
+      'Wo dieser Server auf dem Globus gezeichnet wird. Breitengrad, dann Längengrad, in Grad — zum Beispiel 39.9042, 116.4074.';
 
   @override
   String get markUrl => 'Marken-URL';
@@ -1802,4 +1802,51 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get termInFloatWindow => 'Dieses Terminal ist im schwebenden Fenster';
+
+  @override
+  String get globeEnabledTip =>
+      'Server auf einem Globus zeichnen, dort wo ihre Adressen liegen. Aus entfernt die Schaltfläche und beendet jede Abfrage.';
+
+  @override
+  String get geoShardsConsentAttribution =>
+      'IP-Geolokalisierung von [DB-IP](https://db-ip.com), CC BY 4.0.';
+
+  @override
+  String get geoMissPrivate => 'Private Adresse';
+
+  @override
+  String get geoMissNoData => 'Keine Standortdaten';
+
+  @override
+  String get globeGuide =>
+      'Hier tippen, um die Server auf einem Globus dort zu sehen, wo ihre Adressen liegen.';
+
+  @override
+  String get publicIp => 'Öffentliche IP';
+
+  @override
+  String get geoData => 'Daten auf Stadtebene';
+
+  @override
+  String get geoDataTip =>
+      'Nach dem Download verwenden alle Standortabfragen die auf diesem Gerät gespeicherten Daten. Weder Serveradressen noch Abfrageaktivitäten werden an den Download-Dienst übertragen.';
+
+  @override
+  String get geoDataMissing => 'Nicht heruntergeladen';
+
+  @override
+  String get geoDataUnreachable => 'Die Daten konnten nicht geholt werden.';
+
+  @override
+  String get geoDataRemoveFailed => 'Die Daten konnten nicht gelöscht werden.';
+
+  @override
+  String geoDataCurrent(Object month) {
+    return '$month ist bereits installiert.';
+  }
+
+  @override
+  String geoDataConsent(Object download, Object disk) {
+    return '**Download: $download · Gerätespeicher: $disk.** Der vollständige Datensatz wird auf diesem Gerät gespeichert; alle späteren Standortabfragen erfolgen lokal. Weder Serveradressen noch Abfrageaktivitäten werden an den Download-Dienst übertragen.\n\nMonatlich aktualisiert. Eine neuere Version ersetzt die installierten Daten, ohne eine zusätzliche Kopie zu behalten. Sie können die Daten jederzeit löschen.';
+  }
 }

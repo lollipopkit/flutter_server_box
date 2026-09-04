@@ -87,7 +87,11 @@ abstract final class SchemaVersion {
   /// v17: the hand-typed Go-compat `/status` URLs retired, and the user told
   /// v18: `server.preferred_transport`, and the SSH/monitor exclusivity check
   ///      relaxed so one server can carry both
-  static const current = 18;
+  /// v19: `server.geo_lat` and `geo_lon`, the coordinate a user gives a server
+  ///      so the globe can draw it somewhere the app has no way to look up
+  /// v20: the `geo` key-value rows dropped — a cache of where each host was,
+  ///      retired with the per-lookup requests it existed for
+  static const current = 20;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

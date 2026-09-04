@@ -28,14 +28,18 @@ Server Box Monitor 是安装在服务器上的轻量级监控服务。App 通过
 
 ```sh
 # systemd：安装为 `systemctl --user` 服务，以当前用户运行
-./install.sh install
+curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/install.sh | sh -s -- install
 
 # 没有可下载的 release，或进行离线安装
-SBM_INSTALL_PKG=/path/to/server-box-monitor ./install.sh install
+curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/install.sh | SBM_INSTALL_PKG=/path/to/server-box-monitor sh -s -- install
 
 # OpenRC（Alpine）：写入 /etc/init.d 需要 root，但 agent 仍以执行 sudo 前的用户运行
-sudo ./install.sh install
+curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/install.sh | sudo sh -s -- install
 ```
+
+`sh -s --` 之后的内容都会传给脚本，`uninstall` 和 `upgrade` 同理。脚本本身也在
+仓库里，在 checkout 根目录执行 `./monitor/install.sh install` 做同样的事——用的
+是这份 checkout 里的脚本，不一定和上面命令拉取的 `main` 版本相同。
 
 默认情况下，agent 以普通用户运行。这样可以限制 `full_access` 开启时的权限范围，详见[权限开关](#权限开关)。
 

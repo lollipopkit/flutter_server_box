@@ -189,23 +189,11 @@ abstract class AppLocalizations {
   /// **'Privacy policy'**
   String get privacyPolicy;
 
-  /// No description provided for @crashUpload.
+  /// No description provided for @crashLastRunFailed.
   ///
   /// In en, this message translates to:
-  /// **'Upload crash reports'**
-  String get crashUpload;
-
-  /// No description provided for @crashUploadTip.
-  ///
-  /// In en, this message translates to:
-  /// **'Send crash reports to the developer. Known server names and addresses are replaced with placeholders. Off by default; you can turn it off at any time.'**
-  String get crashUploadTip;
-
-  /// No description provided for @crashNoticeBody.
-  ///
-  /// In en, this message translates to:
-  /// **'ServerBox exited unexpectedly during its last run. Would you like to view the crash report?'**
-  String get crashNoticeBody;
+  /// **'ServerBox exited unexpectedly during its last run.'**
+  String get crashLastRunFailed;
 
   /// No description provided for @crashReportTitle.
   ///
@@ -770,6 +758,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The large image at the top of a server\'s own page, drawn in its own colours.'**
   String get logoUrlTip;
+
+  /// No description provided for @globe.
+  ///
+  /// In en, this message translates to:
+  /// **'Globe'**
+  String get globe;
+
+  /// No description provided for @locationTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Where this server is drawn on the globe. Latitude then longitude, in degrees — for example 39.9042, 116.4074.'**
+  String get locationTip;
 
   /// No description provided for @markUrl.
   ///
@@ -3139,6 +3139,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This terminal is in the floating window'**
   String get termInFloatWindow;
+
+  /// No description provided for @globeEnabledTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Draw servers on a globe, at where their addresses are. Off removes the button from the server tab and stops every lookup.'**
+  String get globeEnabledTip;
+
+  /// No description provided for @geoShardsConsentAttribution.
+  ///
+  /// In en, this message translates to:
+  /// **'IP geolocation by [DB-IP](https://db-ip.com), CC BY 4.0.'**
+  String get geoShardsConsentAttribution;
+
+  /// No description provided for @geoMissPrivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Private address'**
+  String get geoMissPrivate;
+
+  /// No description provided for @geoMissNoData.
+  ///
+  /// In en, this message translates to:
+  /// **'No location data'**
+  String get geoMissNoData;
+
+  /// No description provided for @globeGuide.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap here to see your servers on a globe, at where their addresses are.'**
+  String get globeGuide;
+
+  /// No description provided for @publicIp.
+  ///
+  /// In en, this message translates to:
+  /// **'Public IP'**
+  String get publicIp;
+
+  /// No description provided for @geoData.
+  ///
+  /// In en, this message translates to:
+  /// **'City-level data'**
+  String get geoData;
+
+  /// No description provided for @geoDataTip.
+  ///
+  /// In en, this message translates to:
+  /// **'After download, every geolocation lookup uses data stored on this device. Server addresses and lookup activity are not sent to the download service.'**
+  String get geoDataTip;
+
+  /// No description provided for @geoDataMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Not downloaded'**
+  String get geoDataMissing;
+
+  /// No description provided for @geoDataUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not fetch the data.'**
+  String get geoDataUnreachable;
+
+  /// No description provided for @geoDataRemoveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not delete the data.'**
+  String get geoDataRemoveFailed;
+
+  /// No description provided for @geoDataCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'{month} is already installed.'**
+  String geoDataCurrent(Object month);
+
+  /// No description provided for @geoDataConsent.
+  ///
+  /// In en, this message translates to:
+  /// **'**Download: {download} · On-device storage: {disk}.** The complete dataset is stored on this device, and every later geolocation lookup is performed locally. Server addresses and lookup activity are not sent to the download service.\n\nUpdated monthly. A newer version replaces the installed data without keeping an extra copy. You can delete it at any time.'**
+  String geoDataConsent(Object download, Object disk);
 }
 
 class _AppLocalizationsDelegate

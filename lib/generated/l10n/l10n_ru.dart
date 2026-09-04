@@ -47,15 +47,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get privacyPolicy => 'Политика конфиденциальности';
 
   @override
-  String get crashUpload => 'Отправлять отчёты о сбоях';
-
-  @override
-  String get crashUploadTip =>
-      'Отправлять отчёты о сбоях разработчику. Известные имена и адреса серверов заменяются заполнителями. По умолчанию выключено; можно отключить в любой момент.';
-
-  @override
-  String get crashNoticeBody =>
-      'ServerBox неожиданно завершил работу во время последнего запуска. Хотите посмотреть отчёт о сбое?';
+  String get crashLastRunFailed =>
+      'ServerBox неожиданно завершил работу во время последнего запуска.';
 
   @override
   String get crashReportTitle => 'Отчёт о сбое';
@@ -373,6 +366,13 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get logoUrlTip =>
       'Большое изображение вверху страницы сервера, в его собственных цветах.';
+
+  @override
+  String get globe => 'Глобус';
+
+  @override
+  String get locationTip =>
+      'Где этот сервер отображается на глобусе. Сначала широта, затем долгота, в градусах — например 39.9042, 116.4074.';
 
   @override
   String get markUrl => 'Адрес знака';
@@ -1801,4 +1801,51 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get termInFloatWindow => 'Этот терминал открыт в плавающем окне';
+
+  @override
+  String get globeEnabledTip =>
+      'Показывать серверы на глобусе там, где находятся их адреса. Выключено убирает кнопку и прекращает любые запросы.';
+
+  @override
+  String get geoShardsConsentAttribution =>
+      'IP-геолокация от [DB-IP](https://db-ip.com), CC BY 4.0.';
+
+  @override
+  String get geoMissPrivate => 'Частный адрес';
+
+  @override
+  String get geoMissNoData => 'Нет данных о местоположении';
+
+  @override
+  String get globeGuide =>
+      'Нажмите здесь, чтобы увидеть серверы на глобусе — там, где находятся их адреса.';
+
+  @override
+  String get publicIp => 'Публичный IP';
+
+  @override
+  String get geoData => 'Данные городского уровня';
+
+  @override
+  String get geoDataTip =>
+      'После загрузки для всех геолокационных запросов используются данные, хранящиеся на этом устройстве. Адреса серверов и сведения о запросах не передаются сервису загрузки.';
+
+  @override
+  String get geoDataMissing => 'Не загружены';
+
+  @override
+  String get geoDataUnreachable => 'Не удалось получить данные.';
+
+  @override
+  String get geoDataRemoveFailed => 'Не удалось удалить данные.';
+
+  @override
+  String geoDataCurrent(Object month) {
+    return '$month уже установлен.';
+  }
+
+  @override
+  String geoDataConsent(Object download, Object disk) {
+    return '**Размер загрузки: $download · Место на устройстве: $disk.** Полный набор данных хранится на этом устройстве, а все последующие геолокационные запросы выполняются локально. Адреса серверов и сведения о запросах не передаются сервису загрузки.\n\nОбновляется ежемесячно. Новая версия заменяет установленные данные, не сохраняя дополнительную копию. Данные можно удалить в любой момент.';
+  }
 }

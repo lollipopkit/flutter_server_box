@@ -35,6 +35,20 @@ class ServerStatus {
   DiskUsage? diskUsage;
   final Map<String, String> customCmds = {};
 
+  /// The machine's own interface addresses, as it reported them.
+  ///
+  /// Every address the `ip` command printed — loopback, LAN, and whatever
+  /// netmask happened to parse as one. Which of them are reachable from
+  /// outside is `SelfAddr`'s question, answered with `isPrivateAddress`, the
+  /// one table this app has for it.
+  ///
+  /// Collected on the extended cadence rather than every poll: it changes when
+  /// a machine moves, not between two samples. Both transports fill it — SSH
+  /// from the shared script, a monitor agent from its own `/metrics` — which
+  /// is the whole reason it is a manifest command rather than something the
+  /// app runs on the side.
+  List<String> ips = const [];
+
   /// `/etc/os-release`'s `ID=`, when the far end has that file.
   ///
   /// Kept apart from [more] rather than filed under another [StatusCmdType]:

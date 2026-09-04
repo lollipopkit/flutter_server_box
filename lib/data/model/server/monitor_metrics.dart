@@ -63,9 +63,18 @@ class MonitorMetrics {
   /// one — the same cadence as [sensors] and [diskSmart].
   final List<MonitorCustomCmd> customCmds;
 
+  /// The machine's own interface addresses, as the agent read them.
+  ///
+  /// Empty on agents predating the field, and that is indistinguishable from a
+  /// machine with no addresses to report — which is why the app leaves what it
+  /// already knew alone rather than clearing it. Extended cadence, like
+  /// [sensors] and [diskSmart].
+  final List<String> ips;
+
   const MonitorMetrics({
     required this.timestamp,
     this.extendedUpdatedAt,
+    this.ips = const [],
     required this.serverName,
     required this.cpuUsage,
     this.cpuCores = const [],

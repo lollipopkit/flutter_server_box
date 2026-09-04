@@ -322,6 +322,10 @@ void _applyMore(ServerStatus ss, MonitorMetrics m) {
     // through to it whenever the new id was one this build does not know.
     ss.osIdLike = m.osIdLike;
   }
+  // Not cleared when empty: an agent predating the field and a machine with
+  // no addresses look exactly alike here, and one of them is a reason to keep
+  // what the last extended cycle reported.
+  if (m.ips.isNotEmpty) ss.ips = m.ips;
   if (m.serverName.isNotEmpty) {
     ss.more[StatusCmdType.host] = m.serverName;
   }

@@ -410,6 +410,15 @@ extension _Actions on _ServerEditPageState {
       Toast.show(l10n.proxyCommandOnlySupportedOnDesktop);
       return;
     }
+    // Refused rather than dropped. A coordinate that does not parse is a typo
+    // in something the user meant, and silently saving nothing there would
+    // read as the field not working.
+    final geoText = _geoCtrl.text.trim();
+    final geo = GeoCoord.tryParse(geoText);
+    if (geoText.isNotEmpty && geo == null) {
+      Toast.show('${libL10n.invalid}: ${libL10n.location}');
+      return;
+    }
     final customCmds = _unmigratedCmds.value;
     final custom = ServerCustom(
       pveAddr: _pveAddrCtrl.text.selfNotEmptyOrNull,
@@ -421,6 +430,7 @@ extension _Actions on _ServerEditPageState {
       logoUrl: _logoUrlCtrl.text.selfNotEmptyOrNull,
       netDev: _netDevCtrl.text.selfNotEmptyOrNull,
       scriptDir: _scriptDirCtrl.text.selfNotEmptyOrNull,
+      geo: geo,
     );
 
     MonitorHttpCredential? monitorHttp;
@@ -591,6 +601,12 @@ extension _Actions on _ServerEditPageState {
             _ => 'direct',
           },
         if (useSsh) 'files': _fileTransport.value.name,
+        // Whether one was typed, never what it was — a coordinate is where the
+        // user's machine is. Here rather than under `globe` because it is one
+        // more field of a saved server, and it answers a different question
+        // from `globe.placed`: that counts what is on a globe someone has open,
+        // this counts the field being filled in at all.
+        'geo': geo == null ? 'no' : 'yes',
       },
     );
     // Saved either way — the address may well be one TLS is being set up for,
@@ -745,6 +761,7 @@ extension _Utils on _ServerEditPageState {
       _preferTempDevCtrl.text = custom.preferTempDev ?? '';
       _tempIsCelsius.value = custom.tempIsCelsius;
       _logoUrlCtrl.text = custom.logoUrl ?? '';
+      _geoCtrl.text = custom.geo?.text ?? '';
     }
 
     final monitorHttp = spi.monitorHttp;

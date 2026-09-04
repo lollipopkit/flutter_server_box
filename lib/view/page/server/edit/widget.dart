@@ -184,6 +184,7 @@ extension _Widgets on _ServerEditPageState {
         _buildProxyCommand(),
         _buildFileTransport(),
         _buildScriptDir(),
+        _buildGeo(),
         _buildEnvs(),
         _buildPVEs(),
         _buildCustomCmds(),
@@ -221,6 +222,38 @@ extension _Widgets on _ServerEditPageState {
       icon: Icons.folder,
       hint: '~/.config/server_box',
       suggestion: false,
+    );
+  }
+
+  /// Where this server is, when the app has no way to find out.
+  ///
+  /// The tip is its own row because [Input] takes a label rather than a
+  /// widget, so there is nowhere in the field itself to say what the numbers
+  /// are for — and "Location" on a page full of addresses reads as another
+  /// one.
+  Widget _buildGeo() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ListTile(
+          leading: const Icon(MingCute.question_line),
+          title: TipText(libL10n.location, l10n.locationTip),
+        ).cardx,
+        Input(
+          controller: _geoCtrl,
+          // The plain text keyboard, not a numeric one. Android's numeric IME
+          // offers digits, `-` and `.` and neither a comma nor a space — so
+          // with `numberWithOptions` the only thing that could be typed here
+          // was `39.9042116.4074`, which does not parse, and saving is now
+          // refused rather than silently dropped. The comment that used to sit
+          // here said this and the code did the opposite.
+          type: TextInputType.text,
+          icon: Icons.public,
+          label: '${libL10n.location} (lat, lon)',
+          hint: '39.9042, 116.4074',
+          suggestion: false,
+        ),
+      ],
     );
   }
 

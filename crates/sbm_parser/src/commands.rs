@@ -34,6 +34,9 @@ pub const SENSORS: &str = "sensors";
 pub const DISK_SMART: &str = "diskSmart";
 pub const NVIDIA: &str = "nvidia";
 pub const AMD: &str = "amd";
+/// The machine's own interface addresses, so a server reached at a private
+/// address can still say where it is — see `common::parse_ips`
+pub const IP: &str = "ip";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CommandSpec {
@@ -51,9 +54,13 @@ pub struct CommandSpec {
 ///   wake costs a `Start_Stop_Count` / `Load_Cycle_Count` tick.
 /// - `amd-smi`/`rocm-smi` fork through several tools per invocation.
 ///
+/// - `IP` answers a question whose answer changes when a machine moves or its
+///   lease does. Asking every few seconds spends a process spawn on a value
+///   that is the same as it was ten thousand samples ago.
+///
 /// Both callers refresh these on a slow cadence instead: the app on a timer
 /// (minutes), the monitor on its extended cycle.
-pub const EXTENDED: &[&str] = &[DISK_SMART, AMD];
+pub const EXTENDED: &[&str] = &[DISK_SMART, AMD, IP];
 
 impl CommandSpec {
     /// Whether this command belongs to the extended function rather than the
@@ -143,6 +150,18 @@ pub const LINUX: &[CommandSpec] = &[
         cmd: r#"for d in $(lsblk -dn -o KNAME,TYPE 2>/dev/null | awk '$2 == "disk" && $1 !~ /^zram/ { print $1 }'); do if [ -r "/dev/$d" ]; then smartctl -n standby -a -j "/dev/$d" 2>/dev/null; else sudo -n smartctl -n standby -a -j "/dev/$d" 2>/dev/null; fi; echo; done"#,
     },
     CommandSpec { key: CPU_BRAND, cmd: r#"cat /proc/cpuinfo | grep "model name""# },
+    CommandSpec {
+        key: IP,
+        // Three commands because the first is not everywhere: `ip` is iproute2
+        // and Linux-only, `ifconfig` is missing from minimal containers, and
+        // `hostname -I` is a last resort that prints addresses and nothing
+        // else. `||` rather than `;` so a box with all three runs one.
+        //
+        // `scope global` drops loopback and link-local at the source. The
+        // parser does not rely on it — it discards anything not public — but
+        // asking for less output is free.
+        cmd: "ip -o addr show scope global 2>/dev/null || ifconfig 2>/dev/null || hostname -I 2>/dev/null",
+    },
 ];
 
 /// BSD/macOS(App `BSDStatusCmdType`)
@@ -195,6 +214,10 @@ pub const BSD: &[CommandSpec] = &[
         key: CPU_BRAND,
         cmd: "sysctl -n machdep.cpu.brand_string; sysctl -n hw.ncpu",
     },
+    // No `ip` here: iproute2 is Linux-only, and `ifconfig` is the one command
+    // both Darwin and FreeBSD have. Its output carries netmasks and MAC
+    // addresses too, which the parser is written to discard.
+    CommandSpec { key: IP, cmd: "ifconfig 2>/dev/null" },
 ];
 
 /// Windows PowerShell(App `WindowsStatusCmdType`)
@@ -253,6 +276,12 @@ pub const WINDOWS: &[CommandSpec] = &[
         cmd: "Get-PhysicalDisk | Get-StorageReliabilityCounter | Select-Object DeviceId, Temperature, TemperatureMax, Wear, PowerOnHours | ConvertTo-Json",
     },
     CommandSpec { key: CPU_BRAND, cmd: "(Get-WmiObject -Class Win32_Processor).Name" },
+    // `-ExpandProperty`, so what comes back is one address per line rather
+    // than a table the parser would have to un-format.
+    CommandSpec {
+        key: IP,
+        cmd: "Get-NetIPAddress | Select-Object -ExpandProperty IPAddress",
+    },
 ];
 
 pub fn commands(system: crate::SystemType) -> &'static [CommandSpec] {

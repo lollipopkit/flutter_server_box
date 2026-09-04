@@ -37,4 +37,26 @@ abstract final class Urls {
   /// report has been checked not to contain — and consent given without
   /// somewhere to read that is consent to a summary.
   static const privacyPolicy = '$docs/privacy/';
+
+  /// Where the city-level geo data is downloaded from.
+  ///
+  /// Two static files and a manifest, fetched once. Every lookup after that is
+  /// local, so this host learns that someone took the data and nothing else —
+  /// not which addresses were looked up, not how many, not when. That is a
+  /// property of downloading the whole thing rather than a promise about the
+  /// operator, which is why there is no setting to point it elsewhere: there
+  /// would be nothing for it to improve.
+  static const geoData = 'https://ipgeo.lollipopkit.com';
+
+  /// The second endpoint, for a network where the first will not answer.
+  ///
+  /// `releases/latest/download/<file>` resolves without a tag being known, so
+  /// the fallback needs no lookup of its own. The same three files, built from
+  /// the same export — the build is byte-reproducible, which is what makes two
+  /// builders safe.
+  static const geoDataFallback =
+      '$myGithub/ipgeo-shards/releases/latest/download';
+
+  /// How the data is built, and where the DB-IP attribution lives.
+  static const geoDataRepo = '$myGithub/ipgeo-shards';
 }

@@ -90,8 +90,10 @@ extension _PaneList on _ServerPageState {
   Widget _buildRailActions() {
     return ListenableBuilder(
       listenable: _sortVersion,
-      builder: (_, _) =>
-          SideBarActions(actions: _listActions, search: _search),
+      builder: (_, _) => SideBarActions(
+        actions: _listActions(globeKey: _globeBtnKey),
+        search: _search,
+      ),
     );
   }
 

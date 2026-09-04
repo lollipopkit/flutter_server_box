@@ -67,8 +67,8 @@ extension _AskAi on SSHPageState {
     final localeHint = Localizations.maybeLocaleOf(context)?.toLanguageTag();
     // The width this page has, not the window's. On anything but a phone the
     // navigation rail takes its share out of the window before a tab sees any
-    // of it, and every other split in the app — `AdaptiveSideList`,
-    // `AdaptivePanes` — decides from what it was handed. Asking `MediaQuery`
+    // of it, and every other split in the app — both `AdaptivePanes`
+    // constructors — decides from what it was handed. Asking `MediaQuery`
     // instead measured the window, so the same 800 landed about a rail's width
     // earlier here than everywhere else: on an iPad in portrait this opened
     // beside the terminal while the server list still had one column.

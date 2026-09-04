@@ -210,6 +210,10 @@ class ServerNotifier extends _$ServerNotifier {
     status.amd = source.amd?.toList();
     status.osId = source.osId;
     status.osIdLike = source.osIdLike;
+    // Carried, for the reason the mappers do not clear it: it refreshes on the
+    // extended cadence, so most rebuilds of this object happen on a poll that
+    // said nothing about addresses.
+    status.ips = source.ips;
     status.batteries.addAll(source.batteries);
     status.more.addAll(source.more);
     status.sensors.addAll(source.sensors);

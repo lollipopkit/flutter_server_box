@@ -869,6 +869,37 @@ class SettingStore extends SqliteStore {
   /// Default tmux session name. Empty string means use 'server_box'.
   late final tmuxSessionName = propertyDefault('tmuxSessionName', '');
 
+  /// Whether the globe exists at all.
+  ///
+  /// On by default, and off is a real off: no button in the server tab, no
+  /// asset read, no name resolved, no request made. That is worth stating
+  /// because the two things below it are separate switches and neither of them
+  /// is what turns the feature off.
+  late final globeEnabled = propertyDefault('globeEnabled', true);
+
+  /// Whether the server tab is currently showing the globe.
+  ///
+  /// A view over the list, stored the same way the sort order is and for the
+  /// same reason: reopening the app on the grid after having chosen the globe
+  /// reads as the choice not having taken. Distinct from [globeEnabled], which
+  /// is whether the choice exists.
+  late final serverPageGlobe = propertyDefault('serverPageGlobe', false);
+
+  // `geoShards`, `geoShardEndpoint` and `geoCacheLimit` were all here and are
+  // all retired below. Each existed because the data was fetched a shard at a
+  // time: a switch to consent to those requests, an endpoint to send them
+  // somewhere else, and a cap on what they could accumulate. One download
+  // answers all three — having the file is the consent, there is nothing an
+  // endpoint could improve about a request that discloses nothing, and one
+  // copy that replaces itself cannot accumulate.
+
+  /// Whether the guide pointing at the globe button has been shown.
+  ///
+  /// Once per install, like [navTabMenuGuided] — the globe is a way of viewing
+  /// a list that already looks finished, so nothing on the server tab suggests
+  /// the button changes anything until it is pressed.
+  late final globeGuided = propertyDefault('globeGuided', false);
+
   /// Removes settings for UI choices that no longer exist. Idempotent so old
   /// installs are cleaned without another migration flag becoming permanent
   /// state of its own.
@@ -887,6 +918,14 @@ class SettingStore extends SqliteStore {
       // backup stops carrying it; this drops the copy a Hive import brought
       // across, which nothing reads and a backup would still export.
       'schemaVersion',
+      // The three settings the sharded geo data needed. `geoShards` was
+      // consent to a request per lookup, `geoShardEndpoint` sent those
+      // requests elsewhere, and `geoCacheLimit` capped what they piled up.
+      // One download answers all three, so all three are dead — and a backup
+      // taken before this release would otherwise keep restoring them.
+      'geoShards',
+      'geoShardEndpoint',
+      'geoCacheLimit',
     ]) {
       remove(key, updateLastUpdateTsOnRemove: false);
     }
