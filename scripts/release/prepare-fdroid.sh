@@ -10,6 +10,15 @@ cd "$REPO_ROOT"
 # shellcheck source=android-build-env.sh
 source "$REPO_ROOT/scripts/release/android-build-env.sh"
 
+variant="${1:-all}"
+case "$variant" in
+  all) target_args=() ;;
+  arm64) target_args=(--target-platform=android-arm64) ;;
+  arm) target_args=(--target-platform=android-arm) ;;
+  amd64) target_args=(--target-platform=android-x64) ;;
+  *) echo "usage: $0 [all|arm64|arm|amd64]" >&2; exit 2 ;;
+esac
+
 [ ! -e "$FDROID_CACHE_DIR" ] || {
   echo "prepared build cache already exists: $FDROID_CACHE_DIR" >&2
   echo "run preparation from a clean checkout or choose a new FDROID_CACHE_DIR" >&2
@@ -37,7 +46,9 @@ rustup run "$rust_toolchain" cargo fetch \
   --locked \
   --manifest-path crates/sbm_ffi/Cargo.toml
 scripts/release/patch-jni-build-id.sh
-scripts/build-proot-android.sh
+if [ "$variant" = all ] || [ "$variant" = arm64 ]; then
+  scripts/build-proot-android.sh
+fi
 
 # Refresh Flutter's Android metadata after `pub get`, then remove dev-only
 # plugins before Gradle configures the release. The complete build below
@@ -56,5 +67,6 @@ dart --packages="$REPO_ROOT/scripts/release/empty-package-config.json" \
 flutter build apk \
   --release \
   --split-per-abi \
-  --no-pub
+  --no-pub \
+  "${target_args[@]}"
 flutter clean

@@ -3,9 +3,9 @@ name: Android reproducible build
 on:
   # Called by the release pipeline, where it gates publication — see
   # `androidReproducible` in build.yml. Not run per pull request any more: it
-  # is two full Android builds and takes about twenty minutes, which is a long
-  # time to hold every change that touches `lib/` for a property only a release
-  # can act on. What it protects is the F-Droid contract — F-Droid rebuilds
+  # is two independent builds of every ABI, which is too much work to hold every
+  # change that touches `lib/` for a property only a release can act on. What it
+  # protects is the F-Droid contract — F-Droid rebuilds
   # from this source and compares against the published APK — so the release is
   # the moment it has to hold, and the release is where it now runs.
   workflow_call:
@@ -25,7 +25,7 @@ permissions:
 
 jobs:
   build:
-    name: Independent build ${{ matrix.instance }}
+    name: Independent build ${{ matrix.instance }} (${{ matrix.abi }})
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
@@ -33,8 +33,46 @@ jobs:
         include:
           - instance: one
             source_directory: source-one
+            cache_directory: cache-one
+            abi: arm64
+            native_target: android_arm64
+            jni_abi: arm64-v8a
+            apk_name: app-arm64-v8a-release-unsigned.apk
           - instance: two
             source_directory: a/different-length/source-two
+            cache_directory: a/different-length/cache-two
+            abi: arm64
+            native_target: android_arm64
+            jni_abi: arm64-v8a
+            apk_name: app-arm64-v8a-release-unsigned.apk
+          - instance: one
+            source_directory: source-one
+            cache_directory: cache-one
+            abi: arm
+            native_target: android_arm
+            jni_abi: armeabi-v7a
+            apk_name: app-armeabi-v7a-release-unsigned.apk
+          - instance: two
+            source_directory: a/different-length/source-two
+            cache_directory: a/different-length/cache-two
+            abi: arm
+            native_target: android_arm
+            jni_abi: armeabi-v7a
+            apk_name: app-armeabi-v7a-release-unsigned.apk
+          - instance: one
+            source_directory: source-one
+            cache_directory: cache-one
+            abi: amd64
+            native_target: android_x64
+            jni_abi: x86_64
+            apk_name: app-x86_64-release-unsigned.apk
+          - instance: two
+            source_directory: a/different-length/source-two
+            cache_directory: a/different-length/cache-two
+            abi: amd64
+            native_target: android_x64
+            jni_abi: x86_64
+            apk_name: app-x86_64-release-unsigned.apk
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -81,25 +119,66 @@ jobs:
       - name: Prepare the offline build
         shell: bash
         working-directory: ${{ runner.temp }}/${{ matrix.source_directory }}
-        run: scripts/release/prepare-fdroid.sh
+        env:
+          FDROID_CACHE_DIR: ${{ runner.temp }}/${{ matrix.cache_directory }}
+        run: scripts/release/prepare-fdroid.sh ${{ matrix.abi }}
 
-      - name: Build unsigned split APKs without network access
+      - name: Build unsigned split APK without network access
         shell: bash
         working-directory: ${{ runner.temp }}/${{ matrix.source_directory }}
-        run: FDROID_OFFLINE=true scripts/release/build-fdroid.sh all
+        env:
+          FDROID_CACHE_DIR: ${{ runner.temp }}/${{ matrix.cache_directory }}
+          FDROID_OFFLINE: "true"
+        run: scripts/release/build-fdroid.sh ${{ matrix.abi }}
 
-      - name: Upload unsigned APKs
+      - name: Check ABI isolation and native path remapping
+        shell: bash
+        working-directory: ${{ runner.temp }}/${{ matrix.source_directory }}
+        env:
+          FDROID_CACHE_DIR: ${{ runner.temp }}/${{ matrix.cache_directory }}
+        run: |
+          set -euo pipefail
+          apk="build/app/outputs/apk/release/${{ matrix.apk_name }}"
+          manifest="$RUNNER_TEMP/NativeAssetsManifest-${{ matrix.instance }}-${{ matrix.abi }}.json"
+          library="$RUNNER_TEMP/libsbm_ffi-${{ matrix.instance }}-${{ matrix.abi }}.so"
+
+          unzip -p "$apk" assets/flutter_assets/NativeAssetsManifest.json > "$manifest"
+          jq -e --arg target "${{ matrix.native_target }}" \
+            '(."native-assets" | keys) == [$target]' "$manifest" > /dev/null || {
+              echo "::error::native assets are not isolated to ${{ matrix.native_target }}"
+              jq '."native-assets" | keys' "$manifest"
+              exit 1
+            }
+
+          unzip -p "$apk" "lib/${{ matrix.jni_abi }}/libsbm_ffi.so" > "$library"
+          for forbidden in \
+            "$RUNNER_TEMP/${{ matrix.source_directory }}" \
+            "$FDROID_CACHE_DIR/cargo"; do
+            if grep -aFq -- "$forbidden" "$library"; then
+              echo "::error::libsbm_ffi.so contains host path: $forbidden"
+              exit 1
+            fi
+          done
+
+      - name: Upload unsigned APK
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: android-unsigned-${{ matrix.instance }}
-          path: ${{ runner.temp }}/${{ matrix.source_directory }}/build/app/outputs/apk/release/*-release-unsigned.apk
+          name: android-unsigned-${{ matrix.instance }}-${{ matrix.abi }}
+          path: ${{ runner.temp }}/${{ matrix.source_directory }}/build/app/outputs/apk/release/${{ matrix.apk_name }}
           if-no-files-found: error
           retention-days: 7
 
   compare:
-    name: Compare independent APKs
+    name: Compare independent APKs (${{ matrix.abi }})
     needs: build
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - abi: arm64
+          - abi: arm
+          - abi: amd64
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -109,18 +188,18 @@ jobs:
       - name: Download first build
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
-          name: android-unsigned-one
+          name: android-unsigned-one-${{ matrix.abi }}
           path: artifacts/one
 
       - name: Download second build
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
-          name: android-unsigned-two
+          name: android-unsigned-two-${{ matrix.abi }}
           path: artifacts/two
 
       - name: Require byte-identical APKs
         shell: bash
-        run: scripts/release/compare-apks.sh artifacts/one artifacts/two apk-diffoscope.txt
+        run: scripts/release/compare-apks.sh artifacts/one artifacts/two apk-diffoscope-${{ matrix.abi }}.txt
 
       - name: Diagnose a reproducibility failure
         if: failure()
@@ -128,13 +207,13 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends diffoscope
-          scripts/release/compare-apks.sh artifacts/one artifacts/two apk-diffoscope.txt || true
+          scripts/release/compare-apks.sh artifacts/one artifacts/two apk-diffoscope-${{ matrix.abi }}.txt || true
 
       - name: Upload diffoscope report
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: android-reproducibility-diff
-          path: apk-diffoscope.txt
+          name: android-reproducibility-diff-${{ matrix.abi }}
+          path: apk-diffoscope-${{ matrix.abi }}.txt
           if-no-files-found: ignore
           retention-days: 14

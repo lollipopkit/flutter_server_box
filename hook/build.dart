@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter_rust_bridge_hooks/flutter_rust_bridge_hooks.dart';
+
+import 'rust_build_environment.dart';
 
 /// Builds `crates/sbm_ffi` and hands the result to the Dart/Flutter SDK as a
 /// code asset.
@@ -17,8 +21,13 @@ import 'package:flutter_rust_bridge_hooks/flutter_rust_bridge_hooks.dart';
 /// `Package.swift`, and the same file covers all five platforms.
 void main(List<String> args) async {
   await build(args, (input, output) async {
-    await const FlutterRustBridgeNativeAssetsBuilder(
+    await FlutterRustBridgeNativeAssetsBuilder(
       cratePath: 'crates/sbm_ffi',
+      extraCargoEnvironmentVariables: reproducibleCargoEnvironment(
+        environment: Platform.environment,
+        packageRoot: Directory.fromUri(input.packageRoot).path,
+        isWindows: Platform.isWindows,
+      ),
     ).run(input: input, output: output);
   });
 }
