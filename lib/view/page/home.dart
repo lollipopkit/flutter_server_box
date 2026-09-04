@@ -126,6 +126,9 @@ class _HomePageState extends ConsumerState<HomePage>
     super.initState();
     SystemUIs.switchStatusBar(hide: false);
     WidgetsBinding.instance.addObserver(this);
+    // The one way in the lifecycle cannot report: a file opened into an app
+    // that never left the foreground. See [MethodChans.onShareOpened].
+    MethodChans.onShareOpened(() => unawaited(_consumePendingShare()));
     // avoid index out of range
     if (_selectIndex.value >= _tabs.length || _selectIndex.value < 0) {
       _selectIndex.value = 0;

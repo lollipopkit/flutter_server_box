@@ -319,6 +319,35 @@ abstract final class MethodChans {
     }
   }
 
+  /// Its own channel, deliberately.
+  ///
+  /// A channel has exactly one handler and [registerHandler] already owns the
+  /// main one, so a second `setMethodCallHandler` on that name would silently
+  /// replace it. Separate names cannot collide however either side grows.
+  static const _shareChannel = MethodChannel(
+    '${Miscs.pkgName}/incoming_share',
+  );
+
+  /// Runs [onOpened] when the platform hands this app a share while it is
+  /// **already frontmost**.
+  ///
+  /// The lifecycle covers the other two ways in — a cold launch, and coming
+  /// forward to answer the open. It does not cover this one: an app that never
+  /// left the foreground gets no `resumed` edge, so nothing would ask, and
+  /// [takeOpenedShare] would keep holding the payload until some later
+  /// unrelated resume raised the prompt out of nowhere. Reachable on iPadOS in
+  /// Split View, where two apps are foreground at once.
+  ///
+  /// Push rather than pull only for the trigger; the bytes still come back
+  /// through [takeOpenedShare], so there is one path that reads and clears
+  /// them however the app was told.
+  static void onShareOpened(VoidCallback onOpened) {
+    if (!isIOS && !isMacOS) return;
+    _shareChannel.setMethodCallHandler((call) async {
+      if (call.method == 'shareOpened') onOpened();
+    });
+  }
+
   /// Register a handler for native -> Flutter callbacks.
   /// Currently handles:
   /// - `disconnectSession` with argument map {id: string}

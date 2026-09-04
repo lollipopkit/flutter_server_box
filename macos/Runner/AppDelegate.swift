@@ -53,6 +53,26 @@ class AppDelegate: FlutterAppDelegate {
         name: "tech.lolli.toolbox/main_chan",
         binaryMessenger: controller.engine.binaryMessenger
       )
+      // Its own channel, for the same reason the tray has one. Only ever
+      // carries a nudge; the payload still leaves through `takeOpenedShare`.
+      let shareChannel = FlutterMethodChannel(
+        name: "tech.lolli.toolbox/incoming_share",
+        binaryMessenger: controller.engine.binaryMessenger
+      )
+      // Captured strongly, and that is the whole of it: the channel is a
+      // local, so nothing else holds one. Captured weakly it was deallocated
+      // the moment this method returned and every later nudge went to nil.
+      // There is no cycle to break: the closure is owned by `IncomingShare`,
+      // not by the channel.
+      IncomingShare.onArrival = {
+        // Already on the main thread, since every URL callback is; hopped
+        // explicitly anyway, because a channel call from anywhere else is
+        // undefined rather than merely late.
+        DispatchQueue.main.async {
+          shareChannel.invokeMethod("shareOpened", arguments: nil)
+        }
+      }
+
       // Its own channel: the tray talks in both directions and the handler
       // above is already taken.
       if #available(macOS 10.15, *) {

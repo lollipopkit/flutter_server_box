@@ -21,6 +21,18 @@ enum IncomingShare {
 
   private static var pending: String?
 
+  /// Told to the Dart side once a payload is stored, for the case the
+  /// lifecycle cannot report: an app that was already frontmost gets no
+  /// resume, so nothing would ask and the payload would sit here until an
+  /// unrelated one raised it out of nowhere.
+  ///
+  /// Only the trigger. The bytes still leave through `take()`, so there is one
+  /// path that reads and clears them however Dart was told to look.
+  ///
+  /// Null until the engine exists, which is the cold-launch case -- and that
+  /// one is covered by the pull after the first frame.
+  static var onArrival: (() -> Void)?
+
   /// The open arrives on the main thread and the channel call is answered on
   /// it too, so this is not contended. Locked anyway, because "the platform
   /// only ever calls this on the main thread" is an assumption about two
@@ -38,6 +50,7 @@ enum IncomingShare {
       lock.lock()
       pending = text
       lock.unlock()
+      onArrival?()
     }
   }
 

@@ -258,7 +258,7 @@
   "shareCodeHint": "Sampaikan digit ini secara terpisah kepada penerima. Digit ini tidak disertakan dalam kode QR.",
   "shareCodePrompt": "Kode 6 digit",
   "shareCodeTitle": "Kode sekali pakai",
-  "shareExpired": "Bagikan ini sudah kedaluwarsa. Minta yang baru.",
+  "shareExpired": "Data yang dibagikan sudah kedaluwarsa. Minta yang baru.",
   "shareImportFile": "Dari file yang dibagikan",
   "shareImportTitle": "Impor server yang dibagikan",
   "shareIncludesKey": "Data yang dibagikan menyertakan kunci privat.",

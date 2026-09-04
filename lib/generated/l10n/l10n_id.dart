@@ -1204,7 +1204,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get shareCodeTitle => 'Kode sekali pakai';
 
   @override
-  String get shareExpired => 'Bagikan ini sudah kedaluwarsa. Minta yang baru.';
+  String get shareExpired =>
+      'Data yang dibagikan sudah kedaluwarsa. Minta yang baru.';
 
   @override
   String get shareImportFile => 'Dari file yang dibagikan';
