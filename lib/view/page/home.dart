@@ -615,12 +615,19 @@ class _HomePageState extends ConsumerState<HomePage>
       // report is now kept and waits under **Settings → Privacy** — see
       // [CrashReportDialog]. The two notices above stay: both are about data
       // this launch changed, which is not something to find out about later.
-      await _maybeShowNavGuide();
-      if (!mounted) return;
       // A share opened from AirDrop or the Files app while this app was not
       // running: the platform launched it with the URL, and the native side
       // has been holding the bytes since before the first frame.
+      //
+      // **Before the guide, not after.** The guide is an overlay above every
+      // route and skips itself when something else is up — which only works if
+      // the something else is already there. With this second, a launch that
+      // had both drew the hint on top of the passphrase prompt the user had
+      // just asked for, and the guide's own button sat over the dialog's.
+      // Answering the file the user opened comes first either way.
       await _consumePendingShare();
+      if (!mounted) return;
+      await _maybeShowNavGuide();
     }());
 
     unawaited(_restartServerRefreshCycle());
