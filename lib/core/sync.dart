@@ -209,24 +209,30 @@ final class BakSyncer extends SyncIface {
   ///
   /// A `PrefProp` and not a store key on purpose: it describes *this device*
   /// and would be wrong on any other, so it must stay out of the backup. The
-  /// two tags are joined by a NUL, which is the one byte neither an ETag nor a
-  /// timestamp can contain.
+  /// three fields are joined by a NUL, which is the one byte neither an ETag
+  /// nor a timestamp can contain.
   static const _checkpoint = PrefProp<String>('sync_checkpoint');
 
   static const _checkpointSep = '\u0000';
 
   @override
-  (String, String)? get syncCheckpoint {
+  (String, String, int)? get syncCheckpoint {
     final raw = _checkpoint.get();
     if (raw == null) return null;
-    final sep = raw.indexOf(_checkpointSep);
-    if (sep < 0) return null;
-    return (raw.substring(0, sep), raw.substring(sep + 1));
+    final parts = raw.split(_checkpointSep);
+    if (parts.length != 3) return null;
+    final at = int.tryParse(parts[2]);
+    // A record this cannot read is one written by a build with a different
+    // shape. Answered as absent rather than repaired: the cost is one full
+    // sync, and guessing at the missing half would be a checkpoint nothing
+    // stands behind.
+    if (at == null) return null;
+    return (parts[0], parts[1], at);
   }
 
   @override
-  Future<void> saveSyncCheckpoint(String remote, String local) =>
-      _checkpoint.set('$remote$_checkpointSep$local');
+  Future<void> saveSyncCheckpoint(String remote, String local, int atMs) =>
+      _checkpoint.set('$remote$_checkpointSep$local$_checkpointSep$atMs');
 
   /// Forgets where this device was, so the next sync does the full cycle.
   ///
