@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:server_box/data/model/server/geo.dart';
 
 part 'custom.g.dart';
 
@@ -33,6 +34,18 @@ final class ServerCustom {
   /// The directory where the script is stored.
   final String? scriptDir;
 
+  /// Where this server is on the globe, said by hand.
+  ///
+  /// The first link in the chain that answers that question, and the only one
+  /// that is a statement rather than a guess: everything else is looked up
+  /// from an address, and an address is not a machine.
+  ///
+  /// [GeoCoord.tryFromJson] rather than the generated decode, so a backup
+  /// carrying something unreadable here loses the coordinate instead of the
+  /// server.
+  @JsonKey(fromJson: GeoCoord.tryFromJson, toJson: GeoCoord.encode)
+  final GeoCoord? geo;
+
   const ServerCustom({
     this.pveAddr,
     this.pveIgnoreCert = false,
@@ -43,6 +56,7 @@ final class ServerCustom {
     this.logoUrl,
     this.netDev,
     this.scriptDir,
+    this.geo,
   });
 
   /// This, with [cmds] dropped — what the app records once those commands are
@@ -57,6 +71,7 @@ final class ServerCustom {
     logoUrl: logoUrl,
     netDev: netDev,
     scriptDir: scriptDir,
+    geo: geo,
   );
 
   factory ServerCustom.fromJson(Map<String, dynamic> json) =>
@@ -75,7 +90,8 @@ final class ServerCustom {
         other.tempIsCelsius == tempIsCelsius &&
         other.logoUrl == logoUrl &&
         other.netDev == netDev &&
-        other.scriptDir == scriptDir;
+        other.scriptDir == scriptDir &&
+        other.geo == geo;
   }
 
   @override
@@ -88,5 +104,6 @@ final class ServerCustom {
       tempIsCelsius.hashCode ^
       logoUrl.hashCode ^
       netDev.hashCode ^
-      scriptDir.hashCode;
+      scriptDir.hashCode ^
+      geo.hashCode;
 }

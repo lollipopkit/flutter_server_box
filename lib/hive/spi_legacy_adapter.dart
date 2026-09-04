@@ -1,5 +1,4 @@
 import 'package:hive_ce/hive.dart';
-import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
@@ -75,7 +74,7 @@ class LegacySpiV2 {
   final LegacyMonitorHttpCredentialV1? monitorHttp;
   final List<String>? tags;
   final bool autoConnect;
-  final ServerCustom? custom;
+  final LegacyServerCustomV1? custom;
   final WakeOnLanCfg? wolCfg;
   final Map<String, String>? envs;
   final String id;
@@ -102,7 +101,7 @@ class LegacySpiV2 {
     monitorHttp: _monitorCredential(monitorHttp),
     tags: tags,
     autoConnect: autoConnect,
-    custom: custom,
+    custom: custom?.toCustom(),
     wolCfg: wolCfg,
     envs: envs,
     id: id,
@@ -151,7 +150,7 @@ class SpiLegacyAdapter extends TypeAdapter<LegacySpiV2> {
       monitorHttp: fields[18] as LegacyMonitorHttpCredentialV1?,
       tags: (fields[6] as List?)?.cast<String>(),
       autoConnect: fields[8] == null ? true : fields[8] as bool,
-      custom: fields[10] as ServerCustom?,
+      custom: fields[10] as LegacyServerCustomV1?,
       wolCfg: fields[11] as WakeOnLanCfg?,
       envs: (fields[12] as Map?)?.cast<String, String>(),
       id: fields[13] == null ? '' : fields[13] as String,
@@ -191,7 +190,7 @@ class LegacySpiV3 {
   final LegacyMonitorHttpCredentialV1? monitorHttp;
   final List<String>? tags;
   final bool autoConnect;
-  final ServerCustom? custom;
+  final LegacyServerCustomV1? custom;
   final WakeOnLanCfg? wolCfg;
   final Map<String, String>? envs;
   final String id;
@@ -204,7 +203,7 @@ class LegacySpiV3 {
     monitorHttp: _monitorCredential(monitorHttp),
     tags: tags,
     autoConnect: autoConnect,
-    custom: custom,
+    custom: custom?.toCustom(),
     wolCfg: wolCfg,
     envs: envs,
     id: id,
@@ -229,7 +228,7 @@ class SpiNestedLegacyAdapter extends TypeAdapter<LegacySpiV3> {
       monitorHttp: fields[18] as LegacyMonitorHttpCredentialV1?,
       tags: (fields[6] as List?)?.cast<String>(),
       autoConnect: fields[8] == null ? true : fields[8] as bool,
-      custom: fields[10] as ServerCustom?,
+      custom: fields[10] as LegacyServerCustomV1?,
       wolCfg: fields[11] as WakeOnLanCfg?,
       envs: (fields[12] as Map?)?.cast<String, String>(),
       id: fields[13] == null ? '' : fields[13] as String,

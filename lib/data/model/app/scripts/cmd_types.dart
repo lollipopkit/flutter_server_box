@@ -65,7 +65,8 @@ enum StatusCmdType implements ShellCmdType {
   amd,
   sensors,
   diskSmart,
-  cpuBrand;
+  cpuBrand,
+  ip;
 
   @override
   CmdTypeSys get sysType => CmdTypeSys.linux;
@@ -83,7 +84,8 @@ enum BSDStatusCmdType implements ShellCmdType {
   mem,
   host,
   diskSmart,
-  cpuBrand;
+  cpuBrand,
+  ip;
 
   @override
   CmdTypeSys get sysType => CmdTypeSys.bsd;
@@ -108,7 +110,8 @@ enum WindowsStatusCmdType implements ShellCmdType {
   amd,
   sensors,
   diskSmart,
-  cpuBrand;
+  cpuBrand,
+  ip;
 
   @override
   CmdTypeSys get sysType => CmdTypeSys.windows;

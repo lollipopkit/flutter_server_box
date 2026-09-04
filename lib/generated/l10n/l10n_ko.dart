@@ -46,15 +46,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get privacyPolicy => '개인정보 처리방침';
 
   @override
-  String get crashUpload => '충돌 보고서 업로드';
-
-  @override
-  String get crashUploadTip =>
-      '충돌 보고서를 개발자에게 전송합니다. 알려진 서버 이름과 주소는 자리 표시자로 대체됩니다. 기본적으로 꺼져 있으며 언제든지 끌 수 있습니다.';
-
-  @override
-  String get crashNoticeBody =>
-      'ServerBox가 마지막 실행 중 예기치 않게 종료되었습니다. 충돌 보고서를 확인하시겠습니까?';
+  String get crashLastRunFailed => 'ServerBox가 마지막 실행 중 예기치 않게 종료되었습니다.';
 
   @override
   String get crashReportTitle => '충돌 보고서';
@@ -349,6 +341,13 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get logoUrlTip => '서버 상세 페이지 상단의 큰 이미지. 원래 색 그대로 표시합니다.';
+
+  @override
+  String get globe => '지구본';
+
+  @override
+  String get locationTip =>
+      '지구본에서 이 서버를 그릴 위치. 위도, 경도 순으로 도 단위로 입력합니다. 예: 39.9042, 116.4074';
 
   @override
   String get markUrl => '마크 주소';
@@ -1665,4 +1664,50 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get termInFloatWindow => '이 터미널은 플로팅 창에 있습니다';
+
+  @override
+  String get globeEnabledTip =>
+      '서버를 주소가 있는 위치에 따라 지구본에 표시합니다. 끄면 버튼이 사라지고 어떤 조회도 하지 않습니다.';
+
+  @override
+  String get geoShardsConsentAttribution =>
+      'IP 위치 정보 제공: [DB-IP](https://db-ip.com), CC BY 4.0.';
+
+  @override
+  String get geoMissPrivate => '사설 주소';
+
+  @override
+  String get geoMissNoData => '위치 데이터 없음';
+
+  @override
+  String get globeGuide => '여기를 누르면 서버를 주소의 위치에 따라 지구본 위에 표시합니다.';
+
+  @override
+  String get publicIp => '공용 IP';
+
+  @override
+  String get geoData => '도시 단위 데이터';
+
+  @override
+  String get geoDataTip =>
+      '다운로드 후 모든 위치 조회에는 이 기기에 저장된 데이터가 사용됩니다. 서버 주소나 조회 활동은 다운로드 서비스로 전송되지 않습니다.';
+
+  @override
+  String get geoDataMissing => '내려받지 않음';
+
+  @override
+  String get geoDataUnreachable => '데이터를 가져오지 못했습니다.';
+
+  @override
+  String get geoDataRemoveFailed => '데이터를 삭제하지 못했습니다.';
+
+  @override
+  String geoDataCurrent(Object month) {
+    return '이미 $month 데이터입니다.';
+  }
+
+  @override
+  String geoDataConsent(Object download, Object disk) {
+    return '**다운로드: $download · 기기 저장 공간: $disk.** 전체 데이터 세트가 이 기기에 저장되며, 이후의 모든 위치 조회는 로컬에서 처리됩니다. 서버 주소나 조회 활동은 다운로드 서비스로 전송되지 않습니다.\n\n매월 업데이트됩니다. 새 버전은 설치된 데이터를 대체하며 추가 사본을 남기지 않습니다. 언제든지 삭제할 수 있습니다.';
+  }
 }

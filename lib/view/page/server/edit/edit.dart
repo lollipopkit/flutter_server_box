@@ -19,6 +19,7 @@ import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/bmc_credential.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/discovery_result.dart';
+import 'package:server_box/data/model/server/geo.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
@@ -91,6 +92,12 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   final _wolPwdCtrl = TextEditingController();
   final _netDevCtrl = TextEditingController();
   final _scriptDirCtrl = TextEditingController();
+
+  /// The coordinate, as `lat, lon` — see [GeoCoord.tryParse].
+  ///
+  /// One field rather than two, because that is the shape it gets pasted in:
+  /// every map copies a place out as one string with both numbers in it.
+  final _geoCtrl = TextEditingController();
 
   final _nameFocus = FocusNode();
   final _ipFocus = FocusNode();
@@ -193,6 +200,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     _wolPwdCtrl.dispose();
     _netDevCtrl.dispose();
     _scriptDirCtrl.dispose();
+    _geoCtrl.dispose();
 
     _nameFocus.dispose();
     _ipFocus.dispose();

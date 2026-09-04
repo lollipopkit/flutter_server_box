@@ -11,6 +11,9 @@ MonitorMetrics _$MonitorMetricsFromJson(
 ) => MonitorMetrics(
   timestamp: json['timestamp'] as String,
   extendedUpdatedAt: json['extended_updated_at'] as String?,
+  ips:
+      (json['ips'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+      const [],
   serverName: json['server_name'] as String,
   cpuUsage: (json['cpu_usage'] as num).toDouble(),
   cpuCores:
@@ -111,6 +114,7 @@ Map<String, dynamic> _$MonitorMetricsToJson(MonitorMetrics instance) =>
       'sensors': instance.sensors,
       'disk_smart': instance.diskSmart,
       'custom_cmds': instance.customCmds,
+      'ips': instance.ips,
     };
 
 MonitorCpuCoreTime _$MonitorCpuCoreTimeFromJson(Map<String, dynamic> json) =>

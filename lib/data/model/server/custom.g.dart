@@ -18,6 +18,7 @@ ServerCustom _$ServerCustomFromJson(Map<String, dynamic> json) => ServerCustom(
   logoUrl: json['logoUrl'] as String?,
   netDev: json['netDev'] as String?,
   scriptDir: json['scriptDir'] as String?,
+  geo: GeoCoord.tryFromJson(json['geo']),
 );
 
 Map<String, dynamic> _$ServerCustomToJson(ServerCustom instance) =>
@@ -31,4 +32,5 @@ Map<String, dynamic> _$ServerCustomToJson(ServerCustom instance) =>
       'logoUrl': ?instance.logoUrl,
       'netDev': ?instance.netDev,
       'scriptDir': ?instance.scriptDir,
+      'geo': ?GeoCoord.encode(instance.geo),
     };

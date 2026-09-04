@@ -35,17 +35,20 @@
 
 ```sh
 # systemd: 安装为 `systemctl --user` 服务, 以你自己的账号运行
-./install.sh install
+curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/install.sh | sh -s -- install
 
 # OpenRC (Alpine): 写 /etc/init.d 需要 root, 但 agent 仍以你 sudo 前的账号运行
-sudo ./install.sh install
+curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/install.sh | sudo sh -s -- install
 
 # 两种 init 系统, 都以 root 运行
-sudo ./install.sh install --system
+curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/install.sh | sudo sh -s -- install --system
 
 # 没有可下载的 release 时 —— 离线, 或使用未发布的构建
-SBM_INSTALL_PKG=/path/to/server-box-monitor ./install.sh install
+curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/install.sh | SBM_INSTALL_PKG=/path/to/server-box-monitor sh -s -- install
 ```
+
+`sh -s --` 之后的都是传给脚本的参数, `uninstall` 和 `upgrade` 同理。脚本本身
+也在本仓库里, 从 checkout 执行 `./install.sh install` 效果相同。
 
 `install.sh install` 会下载本仓库最新的 `monitor-v*` release。release 由
 `monitor-release.yml` workflow 发布，该 workflow 仅支持 `workflow_dispatch`；

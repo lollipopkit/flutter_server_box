@@ -83,6 +83,16 @@ pub struct ServerStatus {
     /// one. See [`os_id`](ServerStatus::os_id).
     pub os_id_like: Vec<String>,
     pub host: Option<String>,
+    /// The machine's own interface addresses, as it reported them.
+    ///
+    /// Every address the `ip` command printed and nothing else — loopback,
+    /// LAN, netmasks that happen to parse, the lot. Which of them count as
+    /// reachable from outside is the caller's question, and the app answers it
+    /// with the one table it already has; see `common::parse_ips`.
+    ///
+    /// Empty where the command found nothing to say, which is also what a
+    /// machine with no `ip`, `ifconfig` or `hostname` looks like.
+    pub ips: Vec<String>,
     pub diskio: Vec<DiskIoPiece>,
     pub batteries: Vec<Battery>,
     pub sensors: Vec<SensorItem>,
@@ -119,6 +129,9 @@ pub fn parse_status_opts(
     let mut status = ServerStatus {
         uptime: common::parse_uptime(get(commands::UPTIME)),
         host: common::parse_hostname(get(commands::HOST)),
+        // Cross-platform, like `host`: three different commands produce it,
+        // and one tolerant parser reads all three.
+        ips: common::parse_ips(get(commands::IP)),
         nvidia: gpu::nvidia_from_xml(get(commands::NVIDIA)),
         amd: gpu::amd_from_json(get(commands::AMD)),
         ..ServerStatus::default()

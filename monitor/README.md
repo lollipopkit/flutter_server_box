@@ -36,18 +36,22 @@ It is a part of [ServerBox](https://github.com/lollipopkit/flutter_server_box) p
 
 ```sh
 # systemd: a `systemctl --user` service, running as your own account
-./install.sh install
+curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/install.sh | sh -s -- install
 
 # OpenRC (Alpine): needs root to write /etc/init.d, but still runs the agent
 # as the account you sudo'd from
-sudo ./install.sh install
+curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/install.sh | sudo sh -s -- install
 
 # Either init system, as root
-sudo ./install.sh install --system
+curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/install.sh | sudo sh -s -- install --system
 
 # Without a published release to fetch — offline, or an unreleased build
-SBM_INSTALL_PKG=/path/to/server-box-monitor ./install.sh install
+curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/install.sh | SBM_INSTALL_PKG=/path/to/server-box-monitor sh -s -- install
 ```
+
+Everything after `sh -s --` is passed to the script, so `uninstall` and
+`upgrade` go the same way. It is also in this repository, so `./install.sh
+install` from a checkout does the same thing.
 
 `install.sh install` downloads the newest `monitor-v*` release of this
 repository. Releases are cut by the `monitor-release.yml` workflow, which is

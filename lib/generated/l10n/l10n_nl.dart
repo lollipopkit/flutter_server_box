@@ -47,15 +47,8 @@ class AppLocalizationsNl extends AppLocalizations {
   String get privacyPolicy => 'Privacybeleid';
 
   @override
-  String get crashUpload => 'Crashrapporten uploaden';
-
-  @override
-  String get crashUploadTip =>
-      'Crashrapporten naar de ontwikkelaar sturen. Bekende servernamen en adressen worden vervangen door plaatsaanduidingen. Standaard uit; je kunt dit op elk moment uitschakelen.';
-
-  @override
-  String get crashNoticeBody =>
-      'ServerBox is tijdens de vorige uitvoering onverwacht afgesloten. Wil je het crashrapport bekijken?';
+  String get crashLastRunFailed =>
+      'ServerBox is tijdens de vorige uitvoering onverwacht afgesloten.';
 
   @override
   String get crashReportTitle => 'Crashrapport';
@@ -370,6 +363,13 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get logoUrlTip =>
       'De grote afbeelding boven aan de pagina van een server, in de eigen kleuren.';
+
+  @override
+  String get globe => 'Globe';
+
+  @override
+  String get locationTip =>
+      'Waar deze server op de globe wordt getekend. Breedtegraad en dan lengtegraad, in graden — bijvoorbeeld 39.9042, 116.4074.';
 
   @override
   String get markUrl => 'Merkteken-URL';
@@ -1768,4 +1768,51 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get termInFloatWindow => 'Deze terminal staat in het zwevende venster';
+
+  @override
+  String get globeEnabledTip =>
+      'Servers op een globe tekenen, waar hun adressen zijn. Uit verwijdert de knop en stopt elke opzoeking.';
+
+  @override
+  String get geoShardsConsentAttribution =>
+      'IP-geolocatie door [DB-IP](https://db-ip.com), CC BY 4.0.';
+
+  @override
+  String get geoMissPrivate => 'Privéadres';
+
+  @override
+  String get geoMissNoData => 'Geen locatiegegevens';
+
+  @override
+  String get globeGuide =>
+      'Tik hier om je servers op een globe te zien, waar hun adressen liggen.';
+
+  @override
+  String get publicIp => 'Openbaar IP';
+
+  @override
+  String get geoData => 'Gegevens op stadsniveau';
+
+  @override
+  String get geoDataTip =>
+      'Na het downloaden gebruiken alle locatiebepalingen gegevens die op dit apparaat zijn opgeslagen. Er worden geen serveradressen of opzoekactiviteiten naar de downloadservice verzonden.';
+
+  @override
+  String get geoDataMissing => 'Niet gedownload';
+
+  @override
+  String get geoDataUnreachable => 'Kon de gegevens niet ophalen.';
+
+  @override
+  String get geoDataRemoveFailed => 'Kon de gegevens niet verwijderen.';
+
+  @override
+  String geoDataCurrent(Object month) {
+    return '$month is al geïnstalleerd.';
+  }
+
+  @override
+  String geoDataConsent(Object download, Object disk) {
+    return '**Download: $download · Opslag op het apparaat: $disk.** De volledige gegevensset wordt op dit apparaat opgeslagen en alle latere locatiebepalingen worden lokaal uitgevoerd. Er worden geen serveradressen of opzoekactiviteiten naar de downloadservice verzonden.\n\nMaandelijks bijgewerkt. Een nieuwere versie vervangt de geïnstalleerde gegevens zonder een extra kopie te bewaren. Je kunt de gegevens op elk moment verwijderen.';
+  }
 }

@@ -1185,6 +1185,24 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _geoLatMeta = const VerificationMeta('geoLat');
+  @override
+  late final GeneratedColumn<double> geoLat = GeneratedColumn<double>(
+    'geo_lat',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _geoLonMeta = const VerificationMeta('geoLon');
+  @override
+  late final GeneratedColumn<double> geoLon = GeneratedColumn<double>(
+    'geo_lon',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     updatedAt,
@@ -1222,6 +1240,8 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
     logoUrl,
     netDev,
     scriptDir,
+    geoLat,
+    geoLon,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1488,6 +1508,18 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
         scriptDir.isAcceptableOrUnknown(data['script_dir']!, _scriptDirMeta),
       );
     }
+    if (data.containsKey('geo_lat')) {
+      context.handle(
+        _geoLatMeta,
+        geoLat.isAcceptableOrUnknown(data['geo_lat']!, _geoLatMeta),
+      );
+    }
+    if (data.containsKey('geo_lon')) {
+      context.handle(
+        _geoLonMeta,
+        geoLon.isAcceptableOrUnknown(data['geo_lon']!, _geoLonMeta),
+      );
+    }
     return context;
   }
 
@@ -1637,6 +1669,14 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
         DriftSqlType.string,
         data['${effectivePrefix}script_dir'],
       ),
+      geoLat: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}geo_lat'],
+      ),
+      geoLon: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}geo_lon'],
+      ),
     );
   }
 
@@ -1711,6 +1751,16 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
   final String? logoUrl;
   final String? netDev;
   final String? scriptDir;
+
+  /// Where this server is drawn on the globe, said by hand.
+  ///
+  /// Both or neither: half a coordinate is not a place. Nothing in SQL
+  /// enforces that, and nothing checks the ranges either — a CHECK here would
+  /// make a restore carrying one bad value fail the whole insert, losing the
+  /// server over a field nothing else reads. The pair is made whole on the way
+  /// out instead, by `GeoCoord.tryNew` in `ServerStore._customOf`.
+  final double? geoLat;
+  final double? geoLon;
   const ServerRow({
     required this.updatedAt,
     required this.rev,
@@ -1747,6 +1797,8 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     this.logoUrl,
     this.netDev,
     this.scriptDir,
+    this.geoLat,
+    this.geoLon,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1841,6 +1893,12 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     }
     if (!nullToAbsent || scriptDir != null) {
       map['script_dir'] = Variable<String>(scriptDir);
+    }
+    if (!nullToAbsent || geoLat != null) {
+      map['geo_lat'] = Variable<double>(geoLat);
+    }
+    if (!nullToAbsent || geoLon != null) {
+      map['geo_lon'] = Variable<double>(geoLon);
     }
     return map;
   }
@@ -1938,6 +1996,12 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       scriptDir: scriptDir == null && nullToAbsent
           ? const Value.absent()
           : Value(scriptDir),
+      geoLat: geoLat == null && nullToAbsent
+          ? const Value.absent()
+          : Value(geoLat),
+      geoLon: geoLon == null && nullToAbsent
+          ? const Value.absent()
+          : Value(geoLon),
     );
   }
 
@@ -1986,6 +2050,8 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       logoUrl: serializer.fromJson<String?>(json['logoUrl']),
       netDev: serializer.fromJson<String?>(json['netDev']),
       scriptDir: serializer.fromJson<String?>(json['scriptDir']),
+      geoLat: serializer.fromJson<double?>(json['geoLat']),
+      geoLon: serializer.fromJson<double?>(json['geoLon']),
     );
   }
   @override
@@ -2027,6 +2093,8 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       'logoUrl': serializer.toJson<String?>(logoUrl),
       'netDev': serializer.toJson<String?>(netDev),
       'scriptDir': serializer.toJson<String?>(scriptDir),
+      'geoLat': serializer.toJson<double?>(geoLat),
+      'geoLon': serializer.toJson<double?>(geoLon),
     };
   }
 
@@ -2066,6 +2134,8 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     Value<String?> logoUrl = const Value.absent(),
     Value<String?> netDev = const Value.absent(),
     Value<String?> scriptDir = const Value.absent(),
+    Value<double?> geoLat = const Value.absent(),
+    Value<double?> geoLon = const Value.absent(),
   }) => ServerRow(
     updatedAt: updatedAt ?? this.updatedAt,
     rev: rev ?? this.rev,
@@ -2116,6 +2186,8 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     logoUrl: logoUrl.present ? logoUrl.value : this.logoUrl,
     netDev: netDev.present ? netDev.value : this.netDev,
     scriptDir: scriptDir.present ? scriptDir.value : this.scriptDir,
+    geoLat: geoLat.present ? geoLat.value : this.geoLat,
+    geoLon: geoLon.present ? geoLon.value : this.geoLon,
   );
   ServerRow copyWithCompanion(ServersCompanion data) {
     return ServerRow(
@@ -2186,6 +2258,8 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       logoUrl: data.logoUrl.present ? data.logoUrl.value : this.logoUrl,
       netDev: data.netDev.present ? data.netDev.value : this.netDev,
       scriptDir: data.scriptDir.present ? data.scriptDir.value : this.scriptDir,
+      geoLat: data.geoLat.present ? data.geoLat.value : this.geoLat,
+      geoLon: data.geoLon.present ? data.geoLon.value : this.geoLon,
     );
   }
 
@@ -2226,7 +2300,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           ..write('tempIsCelsius: $tempIsCelsius, ')
           ..write('logoUrl: $logoUrl, ')
           ..write('netDev: $netDev, ')
-          ..write('scriptDir: $scriptDir')
+          ..write('scriptDir: $scriptDir, ')
+          ..write('geoLat: $geoLat, ')
+          ..write('geoLon: $geoLon')
           ..write(')'))
         .toString();
   }
@@ -2268,6 +2344,8 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     logoUrl,
     netDev,
     scriptDir,
+    geoLat,
+    geoLon,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -2307,7 +2385,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           other.tempIsCelsius == this.tempIsCelsius &&
           other.logoUrl == this.logoUrl &&
           other.netDev == this.netDev &&
-          other.scriptDir == this.scriptDir);
+          other.scriptDir == this.scriptDir &&
+          other.geoLat == this.geoLat &&
+          other.geoLon == this.geoLon);
 }
 
 class ServersCompanion extends UpdateCompanion<ServerRow> {
@@ -2346,6 +2426,8 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
   final Value<String?> logoUrl;
   final Value<String?> netDev;
   final Value<String?> scriptDir;
+  final Value<double?> geoLat;
+  final Value<double?> geoLon;
   const ServersCompanion({
     this.updatedAt = const Value.absent(),
     this.rev = const Value.absent(),
@@ -2382,6 +2464,8 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     this.logoUrl = const Value.absent(),
     this.netDev = const Value.absent(),
     this.scriptDir = const Value.absent(),
+    this.geoLat = const Value.absent(),
+    this.geoLon = const Value.absent(),
   });
   ServersCompanion.insert({
     this.updatedAt = const Value.absent(),
@@ -2419,6 +2503,8 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     this.logoUrl = const Value.absent(),
     this.netDev = const Value.absent(),
     this.scriptDir = const Value.absent(),
+    this.geoLat = const Value.absent(),
+    this.geoLon = const Value.absent(),
   }) : id = Value(id),
        name = Value(name);
   static Insertable<ServerRow> custom({
@@ -2457,6 +2543,8 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     Expression<String>? logoUrl,
     Expression<String>? netDev,
     Expression<String>? scriptDir,
+    Expression<double>? geoLat,
+    Expression<double>? geoLon,
   }) {
     return RawValuesInsertable({
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -2495,6 +2583,8 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
       if (logoUrl != null) 'logo_url': logoUrl,
       if (netDev != null) 'net_dev': netDev,
       if (scriptDir != null) 'script_dir': scriptDir,
+      if (geoLat != null) 'geo_lat': geoLat,
+      if (geoLon != null) 'geo_lon': geoLon,
     });
   }
 
@@ -2534,6 +2624,8 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     Value<String?>? logoUrl,
     Value<String?>? netDev,
     Value<String?>? scriptDir,
+    Value<double?>? geoLat,
+    Value<double?>? geoLon,
   }) {
     return ServersCompanion(
       updatedAt: updatedAt ?? this.updatedAt,
@@ -2571,6 +2663,8 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
       logoUrl: logoUrl ?? this.logoUrl,
       netDev: netDev ?? this.netDev,
       scriptDir: scriptDir ?? this.scriptDir,
+      geoLat: geoLat ?? this.geoLat,
+      geoLon: geoLon ?? this.geoLon,
     );
   }
 
@@ -2684,6 +2778,12 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     if (scriptDir.present) {
       map['script_dir'] = Variable<String>(scriptDir.value);
     }
+    if (geoLat.present) {
+      map['geo_lat'] = Variable<double>(geoLat.value);
+    }
+    if (geoLon.present) {
+      map['geo_lon'] = Variable<double>(geoLon.value);
+    }
     return map;
   }
 
@@ -2724,7 +2824,9 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
           ..write('tempIsCelsius: $tempIsCelsius, ')
           ..write('logoUrl: $logoUrl, ')
           ..write('netDev: $netDev, ')
-          ..write('scriptDir: $scriptDir')
+          ..write('scriptDir: $scriptDir, ')
+          ..write('geoLat: $geoLat, ')
+          ..write('geoLon: $geoLon')
           ..write(')'))
         .toString();
   }
@@ -8628,6 +8730,8 @@ typedef $$ServersTableCreateCompanionBuilder =
       Value<String?> logoUrl,
       Value<String?> netDev,
       Value<String?> scriptDir,
+      Value<double?> geoLat,
+      Value<double?> geoLon,
     });
 typedef $$ServersTableUpdateCompanionBuilder =
     ServersCompanion Function({
@@ -8666,6 +8770,8 @@ typedef $$ServersTableUpdateCompanionBuilder =
       Value<String?> logoUrl,
       Value<String?> netDev,
       Value<String?> scriptDir,
+      Value<double?> geoLat,
+      Value<double?> geoLon,
     });
 
 final class $$ServersTableReferences
@@ -9086,6 +9192,16 @@ class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
 
   ColumnFilters<String> get scriptDir => $composableBuilder(
     column: $table.scriptDir,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get geoLat => $composableBuilder(
+    column: $table.geoLat,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get geoLon => $composableBuilder(
+    column: $table.geoLon,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -9584,6 +9700,16 @@ class $$ServersTableOrderingComposer extends Composer<_$AppDb, $ServersTable> {
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get geoLat => $composableBuilder(
+    column: $table.geoLat,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get geoLon => $composableBuilder(
+    column: $table.geoLon,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$PrivateKeysTableOrderingComposer get sshKeyId {
     final $$PrivateKeysTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -9770,6 +9896,12 @@ class $$ServersTableAnnotationComposer
 
   GeneratedColumn<String> get scriptDir =>
       $composableBuilder(column: $table.scriptDir, builder: (column) => column);
+
+  GeneratedColumn<double> get geoLat =>
+      $composableBuilder(column: $table.geoLat, builder: (column) => column);
+
+  GeneratedColumn<double> get geoLon =>
+      $composableBuilder(column: $table.geoLon, builder: (column) => column);
 
   $$PrivateKeysTableAnnotationComposer get sshKeyId {
     final $$PrivateKeysTableAnnotationComposer composer = $composerBuilder(
@@ -10172,6 +10304,8 @@ class $$ServersTableTableManager
                 Value<String?> logoUrl = const Value.absent(),
                 Value<String?> netDev = const Value.absent(),
                 Value<String?> scriptDir = const Value.absent(),
+                Value<double?> geoLat = const Value.absent(),
+                Value<double?> geoLon = const Value.absent(),
               }) => ServersCompanion(
                 updatedAt: updatedAt,
                 rev: rev,
@@ -10208,6 +10342,8 @@ class $$ServersTableTableManager
                 logoUrl: logoUrl,
                 netDev: netDev,
                 scriptDir: scriptDir,
+                geoLat: geoLat,
+                geoLon: geoLon,
               ),
           createCompanionCallback:
               ({
@@ -10246,6 +10382,8 @@ class $$ServersTableTableManager
                 Value<String?> logoUrl = const Value.absent(),
                 Value<String?> netDev = const Value.absent(),
                 Value<String?> scriptDir = const Value.absent(),
+                Value<double?> geoLat = const Value.absent(),
+                Value<double?> geoLon = const Value.absent(),
               }) => ServersCompanion.insert(
                 updatedAt: updatedAt,
                 rev: rev,
@@ -10282,6 +10420,8 @@ class $$ServersTableTableManager
                 logoUrl: logoUrl,
                 netDev: netDev,
                 scriptDir: scriptDir,
+                geoLat: geoLat,
+                geoLon: geoLon,
               ),
           withReferenceMapper: (p0) => p0
               .map(

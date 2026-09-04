@@ -22,7 +22,6 @@ import 'package:server_box/view/page/home_tab.dart';
 import 'package:server_box/view/page/macos_menu_bar.dart';
 import 'package:server_box/view/page/setting/entries/home_tabs.dart';
 import 'package:server_box/view/page/setting/entry.dart';
-import 'package:server_box/view/widget/crash_report_notice.dart';
 import 'package:server_box/view/widget/dmg_notice.dart';
 import 'package:server_box/view/widget/legacy_status_notice.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -591,12 +590,12 @@ class _HomePageState extends ConsumerState<HomePage>
       // [LegacyStatusUrlsMigration].
       await LegacyStatusNotice.showIfNeeded(context);
       if (!mounted) return;
-      // Offers the previous run's log when that run crashed. A toast, so it is
-      // raised rather than awaited: the guide behind it is a dialog, and the
-      // point of the toast is that it does not stand in front of anything.
-      // Last of the three all the same — the two migration notices are about
-      // data, which outlives one bad launch.
-      CrashReportNotice.showIfNeeded(context);
+      // Nothing about the previous run is raised here any more. A crash used
+      // to put a toast in front of somebody who had just opened the app to do
+      // something else, once, on the one launch that read the marker; the
+      // report is now kept and waits under **Settings → Privacy** — see
+      // [CrashReportDialog]. The two notices above stay: both are about data
+      // this launch changed, which is not something to find out about later.
       await _maybeShowNavGuide();
     }());
 

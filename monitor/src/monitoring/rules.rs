@@ -331,6 +331,7 @@ mod tests {
             batteries: vec![],
             sensors: vec![],
             disk_smart: vec![],
+        ips: vec![],
             custom_cmds: vec![],
             amd_cache: vec![],
         };

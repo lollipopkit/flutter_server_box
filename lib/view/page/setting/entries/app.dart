@@ -356,6 +356,12 @@ extension _App on _AppSettingsPageState {
         //
         // Not wrapped in a card: the picker is a list of them already.
         if (DiagnosticsUpload.availableInBuild) _buildDiagnosticsUpload(),
+        // Above the policy and below the level, which is where it is about:
+        // the level decides what is sent automatically, and this is the one
+        // thing no level sends. Not behind `availableInBuild` — a build with
+        // no upload endpoint is exactly the one where handing the log over by
+        // hand is the only way a crash gets reported at all.
+        _buildLastCrashReport(),
         // Not under that condition, unlike when these two were rows together.
         // The policy describes what is kept on the device as well as what is
         // sent, so it has something to say in a build that uploads nothing —
@@ -385,6 +391,41 @@ extension _App on _AppSettingsPageState {
       // Applied now rather than at the next launch: turning it down has to
       // take the sink out immediately, not eventually.
       onPicked: () => unawaited(DiagnosticsUpload.sync()),
+    );
+  }
+
+  /// The previous run's log, when there is one, and nothing when there is not.
+  ///
+  /// **Present only when something crashed**, which is what makes this the
+  /// replacement for the toast rather than a second place to look. A row
+  /// reading "no crash report" would be on the page for the whole life of
+  /// every healthy install; a row that appears is itself the news.
+  ///
+  /// Read through a [FutureBuilder] because whether a report exists is a file
+  /// on disk, and this page builds synchronously. The miss is the common case
+  /// and costs one `exists` call.
+  Widget _buildLastCrashReport() {
+    return FutureBuilder<String?>(
+      future: CrashReport.saved(),
+      builder: (_, snapshot) {
+        final report = snapshot.data;
+        if (report == null) return UIs.placeholder;
+        return ListTile(
+          leading: const Icon(Icons.bug_report_outlined),
+          title: Text(l10n.crashReportTitle),
+          subtitle: Text(
+            l10n.crashLastRunFailed,
+            style: UIs.textGrey,
+          ),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () async {
+            final kept = await CrashReportDialog.show(context, report);
+            // The row goes when the report does, and nothing else notices:
+            // `saved()` is a future this build captured, not a listenable.
+            if (!kept) refresh();
+          },
+        ).cardx;
+      },
     );
   }
 

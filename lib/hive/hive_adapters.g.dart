@@ -329,64 +329,6 @@ class ServerFuncBtnAdapter extends TypeAdapter<ServerFuncBtn> {
           typeId == other.typeId;
 }
 
-class ServerCustomAdapter extends TypeAdapter<ServerCustom> {
-  @override
-  final typeId = 7;
-
-  @override
-  ServerCustom read(BinaryReader reader) {
-    final numOfFields = reader.readByte();
-    final fields = <int, dynamic>{
-      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
-    };
-    return ServerCustom(
-      pveAddr: fields[1] as String?,
-      pveIgnoreCert: fields[2] == null ? false : fields[2] as bool,
-      pvePwd: fields[8] as String?,
-      cmds: (fields[3] as Map?)?.cast<String, String>(),
-      preferTempDev: fields[4] as String?,
-      tempIsCelsius: fields[9] == null ? false : fields[9] as bool,
-      logoUrl: fields[5] as String?,
-      netDev: fields[6] as String?,
-      scriptDir: fields[7] as String?,
-    );
-  }
-
-  @override
-  void write(BinaryWriter writer, ServerCustom obj) {
-    writer
-      ..writeByte(9)
-      ..writeByte(1)
-      ..write(obj.pveAddr)
-      ..writeByte(2)
-      ..write(obj.pveIgnoreCert)
-      ..writeByte(3)
-      ..write(obj.cmds)
-      ..writeByte(4)
-      ..write(obj.preferTempDev)
-      ..writeByte(5)
-      ..write(obj.logoUrl)
-      ..writeByte(6)
-      ..write(obj.netDev)
-      ..writeByte(7)
-      ..write(obj.scriptDir)
-      ..writeByte(8)
-      ..write(obj.pvePwd)
-      ..writeByte(9)
-      ..write(obj.tempIsCelsius);
-  }
-
-  @override
-  int get hashCode => typeId.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is ServerCustomAdapter &&
-          runtimeType == other.runtimeType &&
-          typeId == other.typeId;
-}
-
 class WakeOnLanCfgAdapter extends TypeAdapter<WakeOnLanCfg> {
   @override
   final typeId = 8;

@@ -13,9 +13,12 @@ import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/chan.dart';
+import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/service/crash_report.dart';
 import 'package:server_box/core/service/diagnostics_upload.dart';
+import 'package:server_box/core/service/geo_data.dart';
 import 'package:server_box/core/utils/linux_seed.dart';
 import 'package:server_box/core/utils/local_exec.dart';
 import 'package:server_box/core/utils/logo_url.dart';
@@ -24,6 +27,7 @@ import 'package:server_box/core/utils/rootfs_manifest_source.dart';
 import 'package:server_box/core/utils/server_dedup.dart';
 import 'package:server_box/core/utils/ssh_config.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
+import 'package:server_box/data/model/app/geo_manifest.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/linux_distros.dart';
 import 'package:server_box/data/model/app/net_view.dart';
@@ -48,9 +52,11 @@ import 'package:server_box/view/page/setting/seq/known_hosts.dart';
 import 'package:server_box/view/page/setting/seq/srv_orders.dart';
 import 'package:server_box/view/page/setting/seq/virt_key.dart';
 import 'package:server_box/view/widget/crash_debug.dart';
+import 'package:server_box/view/widget/crash_report_dialog.dart';
 import 'package:server_box/view/widget/diagnostics_level_picker.dart';
 import 'package:server_box/view/widget/dist_icon.dart';
 import 'package:server_box/view/widget/dmg_notice.dart';
+import 'package:server_box/view/widget/geo_data_install.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/rootfs_install.dart';
 
@@ -61,6 +67,7 @@ part 'entries/app.dart';
 part 'entries/container.dart';
 part 'entries/editor.dart';
 part 'entries/full_screen.dart';
+part 'entries/globe.dart';
 part 'entries/linux.dart';
 part 'entries/server.dart';
 part 'entries/sftp.dart';
@@ -77,7 +84,7 @@ class SettingsPage extends ConsumerStatefulWidget {
   ConsumerState<SettingsPage> createState() => _SettingsPageState();
 }
 
-// `_kMenuWidth` was here, at 232. The menu is laid out by `AdaptiveSideList`
+// `_kMenuWidth` was here, at 232. The menu is laid out by `AdaptivePanes`
 // now and takes the width every other list column in the app has — the one the
 // user drags, stored in `paneListWidth`.
 

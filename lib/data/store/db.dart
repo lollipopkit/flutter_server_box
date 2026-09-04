@@ -166,6 +166,16 @@ class Servers extends Table with SyncMeta {
   TextColumn get netDev => text().nullable()();
   TextColumn get scriptDir => text().nullable()();
 
+  /// Where this server is drawn on the globe, said by hand.
+  ///
+  /// Both or neither: half a coordinate is not a place. Nothing in SQL
+  /// enforces that, and nothing checks the ranges either — a CHECK here would
+  /// make a restore carrying one bad value fail the whole insert, losing the
+  /// server over a field nothing else reads. The pair is made whole on the way
+  /// out instead, by `GeoCoord.tryNew` in `ServerStore._customOf`.
+  RealColumn get geoLat => real().nullable()();
+  RealColumn get geoLon => real().nullable()();
+
   @override
   Set<Column> get primaryKey => {id};
 

@@ -97,7 +97,7 @@ final class AgentSessionProvider
   }
 }
 
-String _$agentSessionHash() => r'2cbd6bcabfea6e43f57c091af1a7161492e6e0da';
+String _$agentSessionHash() => r'74d8d89c708d3c917ae41084e9612e49da03eeff';
 
 /// An Agent conversation, and everything it is doing right now.
 ///

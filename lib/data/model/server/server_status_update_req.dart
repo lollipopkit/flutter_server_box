@@ -313,6 +313,12 @@ void _applyMore(ServerStatus ss, Map<String, dynamic> status) {
         (status['os_id_like'] as List?)?.whereType<String>().toList() ??
         const [];
   }
+  // Left alone when the section is absent rather than cleared: this refreshes
+  // on the extended cadence, so most polls carry no `ips` at all and clearing
+  // would blank the globe's answer between two extended runs.
+  final ips = (status['ips'] as List?)?.whereType<String>().toList();
+  if (ips != null && ips.isNotEmpty) ss.ips = ips;
+
   final host = status['host'] as String?;
   if (host != null && !host.contains(ScriptConstants.scriptFile)) {
     ss.more[StatusCmdType.host] = host;

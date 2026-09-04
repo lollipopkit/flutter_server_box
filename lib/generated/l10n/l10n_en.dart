@@ -47,15 +47,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get privacyPolicy => 'Privacy policy';
 
   @override
-  String get crashUpload => 'Upload crash reports';
-
-  @override
-  String get crashUploadTip =>
-      'Send crash reports to the developer. Known server names and addresses are replaced with placeholders. Off by default; you can turn it off at any time.';
-
-  @override
-  String get crashNoticeBody =>
-      'ServerBox exited unexpectedly during its last run. Would you like to view the crash report?';
+  String get crashLastRunFailed =>
+      'ServerBox exited unexpectedly during its last run.';
 
   @override
   String get crashReportTitle => 'Crash report';
@@ -367,6 +360,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get logoUrlTip =>
       'The large image at the top of a server\'s own page, drawn in its own colours.';
+
+  @override
+  String get globe => 'Globe';
+
+  @override
+  String get locationTip =>
+      'Where this server is drawn on the globe. Latitude then longitude, in degrees — for example 39.9042, 116.4074.';
 
   @override
   String get markUrl => 'Mark URL';
@@ -1751,4 +1751,51 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get termInFloatWindow => 'This terminal is in the floating window';
+
+  @override
+  String get globeEnabledTip =>
+      'Draw servers on a globe, at where their addresses are. Off removes the button from the server tab and stops every lookup.';
+
+  @override
+  String get geoShardsConsentAttribution =>
+      'IP geolocation by [DB-IP](https://db-ip.com), CC BY 4.0.';
+
+  @override
+  String get geoMissPrivate => 'Private address';
+
+  @override
+  String get geoMissNoData => 'No location data';
+
+  @override
+  String get globeGuide =>
+      'Tap here to see your servers on a globe, at where their addresses are.';
+
+  @override
+  String get publicIp => 'Public IP';
+
+  @override
+  String get geoData => 'City-level data';
+
+  @override
+  String get geoDataTip =>
+      'After download, every geolocation lookup uses data stored on this device. Server addresses and lookup activity are not sent to the download service.';
+
+  @override
+  String get geoDataMissing => 'Not downloaded';
+
+  @override
+  String get geoDataUnreachable => 'Could not fetch the data.';
+
+  @override
+  String get geoDataRemoveFailed => 'Could not delete the data.';
+
+  @override
+  String geoDataCurrent(Object month) {
+    return '$month is already installed.';
+  }
+
+  @override
+  String geoDataConsent(Object download, Object disk) {
+    return '**Download: $download · On-device storage: $disk.** The complete dataset is stored on this device, and every later geolocation lookup is performed locally. Server addresses and lookup activity are not sent to the download service.\n\nUpdated monthly. A newer version replaces the installed data without keeping an extra copy. You can delete it at any time.';
+  }
 }

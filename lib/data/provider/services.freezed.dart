@@ -213,7 +213,7 @@ return $default(_that.isBusy,_that.units,_that.scopeFilter,_that.manager,_that.n
 
 class _ServicesState implements ServicesState {
   const _ServicesState({this.isBusy = false, final  List<ServiceUnit> units = const <ServiceUnit>[], this.scopeFilter = ServiceScopeFilter.all, this.manager, this.notice, this.noticeDetail, this.failure}): _units = units;
-
+  
 
 @override@JsonKey() final  bool isBusy;
  final  List<ServiceUnit> _units;

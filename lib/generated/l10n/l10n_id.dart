@@ -47,15 +47,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get privacyPolicy => 'Kebijakan privasi';
 
   @override
-  String get crashUpload => 'Unggah laporan kerusakan';
-
-  @override
-  String get crashUploadTip =>
-      'Kirim laporan kerusakan kepada pengembang. Nama dan alamat server yang dikenal diganti dengan placeholder. Dinonaktifkan secara default; Anda dapat menonaktifkannya kapan saja.';
-
-  @override
-  String get crashNoticeBody =>
-      'ServerBox berhenti secara tak terduga saat terakhir dijalankan. Ingin melihat laporan kerusakannya?';
+  String get crashLastRunFailed =>
+      'ServerBox berhenti secara tak terduga saat terakhir dijalankan.';
 
   @override
   String get crashReportTitle => 'Laporan kerusakan';
@@ -369,6 +362,13 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get logoUrlTip =>
       'Gambar besar di bagian atas halaman sebuah server, dengan warna aslinya.';
+
+  @override
+  String get globe => 'Bola dunia';
+
+  @override
+  String get locationTip =>
+      'Tempat server ini digambar di bola dunia. Lintang lalu bujur, dalam derajat — misalnya 39.9042, 116.4074.';
 
   @override
   String get markUrl => 'URL tanda';
@@ -1754,4 +1754,51 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get termInFloatWindow => 'Terminal ini ada di jendela mengambang';
+
+  @override
+  String get globeEnabledTip =>
+      'Gambar server di bola dunia, di tempat alamatnya berada. Mati akan menghapus tombolnya dan menghentikan semua pencarian.';
+
+  @override
+  String get geoShardsConsentAttribution =>
+      'Geolokasi IP oleh [DB-IP](https://db-ip.com), CC BY 4.0.';
+
+  @override
+  String get geoMissPrivate => 'Alamat privat';
+
+  @override
+  String get geoMissNoData => 'Tidak ada data lokasi';
+
+  @override
+  String get globeGuide =>
+      'Ketuk di sini untuk melihat server pada bola dunia, di lokasi alamatnya.';
+
+  @override
+  String get publicIp => 'IP publik';
+
+  @override
+  String get geoData => 'Data tingkat kota';
+
+  @override
+  String get geoDataTip =>
+      'Setelah diunduh, semua pencarian lokasi menggunakan data yang tersimpan di perangkat ini. Alamat server dan aktivitas pencarian tidak dikirim ke layanan unduhan.';
+
+  @override
+  String get geoDataMissing => 'Belum diunduh';
+
+  @override
+  String get geoDataUnreachable => 'Tidak dapat mengambil data.';
+
+  @override
+  String get geoDataRemoveFailed => 'Tidak dapat menghapus data.';
+
+  @override
+  String geoDataCurrent(Object month) {
+    return '$month sudah terpasang.';
+  }
+
+  @override
+  String geoDataConsent(Object download, Object disk) {
+    return '**Unduhan: $download · Penyimpanan di perangkat: $disk.** Seluruh kumpulan data disimpan di perangkat ini dan semua pencarian lokasi berikutnya dilakukan secara lokal. Alamat server dan aktivitas pencarian tidak dikirim ke layanan unduhan.\n\nDiperbarui setiap bulan. Versi yang lebih baru menggantikan data yang terpasang tanpa menyimpan salinan tambahan. Anda dapat menghapusnya kapan saja.';
+  }
 }

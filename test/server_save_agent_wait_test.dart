@@ -114,6 +114,7 @@ void main() {
     await withSilentAgent((client) async {
       final doomed = monitorServer('doomed-server', agentAddr);
       Stores.server.put(doomed);
+      Stores.selfAddr.put(doomed.id, InternetAddress('8.8.8.8'));
       final container = ProviderContainer();
       addTearDown(container.dispose);
       container.read(serversProvider);
@@ -130,11 +131,30 @@ void main() {
         container.read(serversProvider).servers,
         isNot(contains(doomed.id)),
       );
+      expect(Stores.selfAddr.probedAt(doomed.id), isNull);
       await client.firstRequest.future.timeout(
         const Duration(seconds: 5),
         onTimeout: () => fail('nothing was sent to the agent'),
       );
     });
+  });
+
+  test('renaming a server moves its self-reported address record', () async {
+    final before = monitorServer('old-id', agentAddr);
+    final after = before.copyWith(id: 'new-id', name: 'new-id');
+    Stores.server.put(before);
+    Stores.selfAddr.put(before.id, InternetAddress('8.8.8.8'));
+    final probedAt = Stores.selfAddr.probedAt(before.id);
+
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    container.read(serversProvider);
+
+    await container.read(serversProvider.notifier).updateServer(before, after);
+
+    expect(Stores.selfAddr.probedAt(before.id), isNull);
+    expect(Stores.selfAddr.probedAt(after.id), probedAt);
+    expect(Stores.selfAddr.addrOf(after.id)?.address, '8.8.8.8');
   });
 }
 

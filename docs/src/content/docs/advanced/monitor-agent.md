@@ -28,15 +28,20 @@ The installer detects the init system automatically:
 
 ```sh
 # systemd: install a `systemctl --user` service running as the current user
-./install.sh install
+curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/install.sh | sh -s -- install
 
 # No downloadable release, or an offline installation
-SBM_INSTALL_PKG=/path/to/server-box-monitor ./install.sh install
+curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/install.sh | SBM_INSTALL_PKG=/path/to/server-box-monitor sh -s -- install
 
 # OpenRC (Alpine): writing /etc/init.d needs root, but the agent runs as
 # the user who invoked sudo
-sudo ./install.sh install
+curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/install.sh | sudo sh -s -- install
 ```
+
+Everything after `sh -s --` is passed to the script, so `uninstall` and
+`upgrade` go the same way. It is also in the repository as
+`monitor/install.sh`, so `./install.sh install` from a checkout does the same
+thing.
 
 The agent runs as an ordinary user by default. This limits the scope of `full_access`; see [Permission switches](#permission-switches).
 

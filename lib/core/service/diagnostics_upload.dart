@@ -71,6 +71,15 @@ abstract final class DiagnosticsUpload {
   static DiagnosticsLevel get level =>
       DiagnosticsLevel.fromName(Stores.setting.diagnosticsLevel.fetch());
 
+  /// Whether an error handed to [Diag] *now* would be uploaded.
+  ///
+  /// Not the same question as [level]: a level that uploads still answers
+  /// false for the whole of startup, because the sink goes in at the end of
+  /// `_doPlatformRelated`. That gap is what [CrashLog.uploadsNow] reads it
+  /// for — a crash inside it is one nothing sent, and the only one the next
+  /// launch has to report on its behalf.
+  static bool get uploading => _started != null;
+
   /// Starts, stops or re-levels uploading to match the setting.
   ///
   /// Safe to call whenever the setting changes, and at launch.

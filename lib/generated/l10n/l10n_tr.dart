@@ -47,15 +47,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get privacyPolicy => 'Gizlilik politikası';
 
   @override
-  String get crashUpload => 'Çökme raporlarını yükle';
-
-  @override
-  String get crashUploadTip =>
-      'Çökme raporlarını geliştiriciye gönderir. Bilinen sunucu adları ve adresleri yer tutucularla değiştirilir. Varsayılan olarak kapalıdır; istediğiniz zaman kapatabilirsiniz.';
-
-  @override
-  String get crashNoticeBody =>
-      'ServerBox son çalıştırmada beklenmedik şekilde kapandı. Çökme raporunu görüntülemek ister misiniz?';
+  String get crashLastRunFailed =>
+      'ServerBox son çalıştırmada beklenmedik şekilde kapandı.';
 
   @override
   String get crashReportTitle => 'Çökme raporu';
@@ -370,6 +363,13 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get logoUrlTip =>
       'Bir sunucunun kendi sayfasının üstündeki büyük görsel, kendi renkleriyle.';
+
+  @override
+  String get globe => 'Küre';
+
+  @override
+  String get locationTip =>
+      'Bu sunucunun küre üzerinde çizileceği yer. Önce enlem, sonra boylam, derece cinsinden — örneğin 39.9042, 116.4074.';
 
   @override
   String get markUrl => 'İşaret adresi';
@@ -1752,4 +1752,51 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get termInFloatWindow => 'Bu terminal yüzen pencerede';
+
+  @override
+  String get globeEnabledTip =>
+      'Sunucuları adreslerinin bulunduğu yerde bir küre üzerinde gösterir. Kapalıyken düğme kaybolur ve hiçbir sorgu yapılmaz.';
+
+  @override
+  String get geoShardsConsentAttribution =>
+      'IP coğrafi konumu [DB-IP](https://db-ip.com) tarafından, CC BY 4.0.';
+
+  @override
+  String get geoMissPrivate => 'Özel adres';
+
+  @override
+  String get geoMissNoData => 'Konum verisi yok';
+
+  @override
+  String get globeGuide =>
+      'Sunucularınızı adreslerinin bulunduğu yerde bir küre üzerinde görmek için buraya dokunun.';
+
+  @override
+  String get publicIp => 'Genel IP';
+
+  @override
+  String get geoData => 'Şehir düzeyinde veri';
+
+  @override
+  String get geoDataTip =>
+      'İndirme tamamlandıktan sonra tüm konum sorguları bu cihazda saklanan verileri kullanır. Sunucu adresleri ve sorgu etkinliği indirme hizmetine gönderilmez.';
+
+  @override
+  String get geoDataMissing => 'İndirilmedi';
+
+  @override
+  String get geoDataUnreachable => 'Veri alınamadı.';
+
+  @override
+  String get geoDataRemoveFailed => 'Veriler silinemedi.';
+
+  @override
+  String geoDataCurrent(Object month) {
+    return '$month zaten yüklü.';
+  }
+
+  @override
+  String geoDataConsent(Object download, Object disk) {
+    return '**İndirme: $download · Cihazdaki depolama alanı: $disk.** Veri kümesinin tamamı bu cihazda saklanır ve sonraki tüm konum sorguları yerel olarak gerçekleştirilir. Sunucu adresleri ve sorgu etkinliği indirme hizmetine gönderilmez.\n\nHer ay güncellenir. Yeni sürüm yüklü verilerin yerini alır ve ek bir kopya tutmaz. İstediğiniz zaman silebilirsiniz.';
+  }
 }

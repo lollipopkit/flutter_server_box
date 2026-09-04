@@ -47,15 +47,8 @@ class AppLocalizationsPt extends AppLocalizations {
   String get privacyPolicy => 'Política de privacidade';
 
   @override
-  String get crashUpload => 'Enviar relatórios de falha';
-
-  @override
-  String get crashUploadTip =>
-      'Enviar os relatórios de falha ao desenvolvedor. Nomes e endereços de servidor conhecidos são substituídos por marcadores. Desativado por padrão; você pode desativá-lo a qualquer momento.';
-
-  @override
-  String get crashNoticeBody =>
-      'O ServerBox fechou inesperadamente durante a última execução. Deseja ver o relatório de falha?';
+  String get crashLastRunFailed =>
+      'O ServerBox fechou inesperadamente durante a última execução.';
 
   @override
   String get crashReportTitle => 'Relatório de falha';
@@ -370,6 +363,13 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get logoUrlTip =>
       'A imagem grande no topo da página de um servidor, nas cores originais.';
+
+  @override
+  String get globe => 'Globo';
+
+  @override
+  String get locationTip =>
+      'Onde este servidor é desenhado no globo. Latitude e depois longitude, em graus — por exemplo 39.9042, 116.4074.';
 
   @override
   String get markUrl => 'URL da marca';
@@ -1763,4 +1763,51 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get termInFloatWindow => 'Este terminal está na janela flutuante';
+
+  @override
+  String get globeEnabledTip =>
+      'Desenhar os servidores num globo, onde estão os seus endereços. Desligado remove o botão e para todas as pesquisas.';
+
+  @override
+  String get geoShardsConsentAttribution =>
+      'Geolocalização de IP por [DB-IP](https://db-ip.com), CC BY 4.0.';
+
+  @override
+  String get geoMissPrivate => 'Endereço privado';
+
+  @override
+  String get geoMissNoData => 'Sem dados de localização';
+
+  @override
+  String get globeGuide =>
+      'Toque aqui para ver os servidores num globo, onde ficam os seus endereços.';
+
+  @override
+  String get publicIp => 'IP público';
+
+  @override
+  String get geoData => 'Dados ao nível da cidade';
+
+  @override
+  String get geoDataTip =>
+      'Após o download, todas as consultas de localização usam os dados armazenados neste dispositivo. Nenhum endereço de servidor ou atividade de consulta é enviado ao serviço de download.';
+
+  @override
+  String get geoDataMissing => 'Não transferidos';
+
+  @override
+  String get geoDataUnreachable => 'Não foi possível obter os dados.';
+
+  @override
+  String get geoDataRemoveFailed => 'Não foi possível excluir os dados.';
+
+  @override
+  String geoDataCurrent(Object month) {
+    return '$month já está instalado.';
+  }
+
+  @override
+  String geoDataConsent(Object download, Object disk) {
+    return '**Download: $download · Armazenamento no dispositivo: $disk.** O conjunto de dados completo fica armazenado neste dispositivo e todas as consultas de localização posteriores são feitas localmente. Nenhum endereço de servidor ou atividade de consulta é enviado ao serviço de download.\n\nAtualizado mensalmente. Uma versão mais recente substitui os dados instalados sem manter uma cópia adicional. Você pode excluí-los a qualquer momento.';
+  }
 }

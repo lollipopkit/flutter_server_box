@@ -1,0 +1,341 @@
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:crypto/crypto.dart';
+import 'package:dio/dio.dart';
+import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart' show ValueNotifier, visibleForTesting;
+import 'package:server_box/core/service/geo_bundle.dart';
+import 'package:server_box/data/model/app/geo_manifest.dart';
+import 'package:server_box/data/res/url.dart';
+
+/// The city-level data as something installed, rather than something fetched.
+///
+/// **The whole thing is downloaded once and every lookup after that is local.**
+/// That is the difference from what this replaced: the old arrangement fetched
+/// one shard per /8, which disclosed eight bits of every address looked up.
+/// Downloading the lot discloses nothing at all — not which addresses, not how
+/// many, not when — which is a property of having the file rather than a
+/// promise about whoever served it.
+///
+/// It costs about 25 MB to fetch and 52 MB on disk, which is why it is opt-in
+/// and why the dialog that asks quotes both numbers from the manifest rather
+/// than from a constant that would go stale every month.
+abstract final class GeoData {
+  /// Where the unpacked bundles live.
+  static String get dir => Paths.doc.joinPath('geo');
+
+  static String get _manifestPath => dir.joinPath('installed.json');
+
+  /// Replaced in tests. Nothing here should reach the network in a test run,
+  /// and a seam is how that is enforced rather than hoped for.
+  @visibleForTesting
+  static Dio Function() clientFactory = _defaultClient;
+
+  static Dio _defaultClient() => Dio(
+    BaseOptions(
+      connectTimeout: const Duration(seconds: 15),
+      // Two files of a dozen megabytes each, possibly on a phone network.
+      receiveTimeout: const Duration(minutes: 10),
+      responseType: ResponseType.bytes,
+      validateStatus: (_) => true,
+    ),
+  );
+
+  static GeoManifest? _installed;
+  static bool _readInstalled = false;
+  static final _open = <int, GeoBundle>{};
+
+  /// Bumped whenever what is installed changes.
+  ///
+  /// Three places show or depend on it — the settings tile, the switch that
+  /// turns the globe on, and the globe itself — and they are in different
+  /// subtrees, so none of them can be told by whichever one caused the change.
+  /// A counter rather than the manifest: the question every listener asks is
+  /// "is what I drew still true", and a value that always differs answers it
+  /// without anyone comparing manifests.
+  static final revision = ValueNotifier(0);
+
+  /// What is on disk, or null when nothing is.
+  ///
+  /// Read once and remembered, including the miss: the answer only changes
+  /// when this class changes it.
+  /// Synchronous for [GeoBundle.open]'s reason: it is a couple of kilobytes
+  /// of JSON, and an `await` on the lookup path is a future a widget test's
+  /// fake-async zone never completes.
+  static GeoManifest? installed() {
+    if (_readInstalled) return _installed;
+    _readInstalled = true;
+    try {
+      final file = File(_manifestPath);
+      if (!file.existsSync()) return null;
+      _installed = GeoManifest.tryFromJson(jsonDecode(file.readAsStringSync()));
+    } catch (e) {
+      Loggers.app.fine('No installed geo data: $e');
+      _installed = null;
+    }
+    return _installed;
+  }
+
+  /// The bundle for [family], opened on first use and kept open.
+  ///
+  /// Kept open because a lookup is a handful of small reads into it — see
+  /// [GeoBundle] for why it is not read into memory — and reopening per
+  /// lookup would make the syscall count the cost rather than the reads.
+  static GeoBundle? bundle(int family) {
+    final held = _open[family];
+    if (held != null) return held;
+    final manifest = installed();
+    if (manifest == null) return null;
+    GeoAsset? asset;
+    for (final a in manifest.assets) {
+      if (a.family == family) asset = a;
+    }
+    if (asset == null) return null;
+    final opened = GeoBundle.open(dir.joinPath(asset.unpackedName));
+    if (opened == null) return null;
+    // The header is checked against the manifest rather than assumed: a file
+    // renamed or half-replaced would otherwise be read as the other family.
+    if (opened.family != family ||
+        opened.year != manifest.year ||
+        opened.month != manifest.month) {
+      opened.close();
+      return null;
+    }
+    _open[family] = opened;
+    return opened;
+  }
+
+  /// What the endpoint is offering, without downloading any of it.
+  ///
+  /// This is the one request made before consent, and it is a couple hundred
+  /// bytes — it exists so the dialog can say what the download actually costs
+  /// this month instead of quoting a number compiled into the app.
+  static Future<GeoManifest?> fetchManifest() async {
+    final bytes = await _fetch('manifest.json', 64 * 1024);
+    if (bytes == null) return null;
+    try {
+      return GeoManifest.tryFromJson(jsonDecode(utf8.decode(bytes)));
+    } catch (e) {
+      Loggers.app.warning('Geo manifest is unreadable: $e');
+      return null;
+    }
+  }
+
+  /// Downloads and unpacks everything [manifest] names.
+  ///
+  /// The directory is emptied first, so a new month replaces the old one
+  /// rather than sitting beside it. That is what the cache-size limit used to
+  /// guard against and no longer has to: there is exactly one copy, its size
+  /// is in the manifest, and nothing accumulates.
+  ///
+  /// [onProgress] is called with bytes received and the total from the
+  /// manifest, so a progress bar has a denominator before the first byte.
+  ///
+  /// Returns whether everything arrived, verified and unpacked. A failure
+  /// leaves nothing installed rather than half of it: one family present and
+  /// the other missing would draw a globe that places IPv4 and silently
+  /// forgets IPv6.
+  static Future<bool> install(
+    GeoManifest manifest, {
+    void Function(int received, int total)? onProgress,
+  }) async {
+    // `_erase`, not `remove`: one download is one change, announced when it
+    // has happened. See [_erase]. The bump is still owed if this fails, since
+    // a partial delete is a change like any other.
+    if (!await _erase()) {
+      revision.value++;
+      return false;
+    }
+    final total = manifest.downloadBytes;
+    var done = 0;
+    try {
+      await Directory(dir).create(recursive: true);
+      for (final asset in manifest.assets) {
+        final packed = await _fetch(
+          asset.name,
+          asset.bytes + 1024,
+          // `done` is whole assets already here; `got` restarts when a URL is
+          // retried, so the bar goes back if the primary endpoint dies partway.
+          // Left honest rather than held at a high-water mark: the bytes really
+          // are being fetched again, and a bar frozen through an 8 MB re-download
+          // followed by a jump is the worse lie.
+          onReceive: (got) => onProgress?.call(done + got, total),
+        );
+        if (packed == null) throw StateError('${asset.name} did not arrive');
+        if (packed.length != asset.bytes) {
+          throw StateError(
+            '${asset.name} is ${packed.length} bytes, manifest says '
+            '${asset.bytes}',
+          );
+        }
+        // Before it is unpacked, and against the *packed* bytes, so what is
+        // checked is what was received. Not a signature: the manifest comes
+        // from the same place as the files, so this catches a corrupted or
+        // truncated transfer rather than a hostile endpoint. What limits the
+        // damage a hostile one could do is that a bundle is coordinates —
+        // there is nothing in it that this app executes.
+        final digest = sha256.convert(packed).toString();
+        if (digest != asset.sha256) {
+          throw StateError('${asset.name} hashes to $digest');
+        }
+        final raw = gzip.decode(packed);
+        if (raw.length != asset.unpackedBytes) {
+          throw StateError(
+            '${asset.name} unpacks to ${raw.length}, manifest says '
+            '${asset.unpackedBytes}',
+          );
+        }
+        final output = dir.joinPath(asset.unpackedName);
+        await File(output).writeAsBytes(raw, flush: true);
+        final bundle = GeoBundle.open(output);
+        final valid =
+            bundle != null &&
+            bundle.family == asset.family &&
+            bundle.year == manifest.year &&
+            bundle.month == manifest.month;
+        bundle?.close();
+        if (!valid) {
+          throw StateError('${asset.name} is not the bundle in the manifest');
+        }
+        done += packed.length;
+        onProgress?.call(done, total);
+      }
+
+      await File(_manifestPath).writeAsString(jsonEncode(manifest.toJson()));
+      _installed = manifest;
+      _readInstalled = true;
+      revision.value++;
+      return true;
+    } catch (e, s) {
+      Loggers.app.warning('Could not install the geo data', e, s);
+      await remove();
+      return false;
+    }
+  }
+
+  /// Takes it all off the device.
+  ///
+  /// Offered because 52 MB is worth being able to reclaim, and because it is
+  /// data this app went and got — somebody who turns the feature off should be
+  /// able to take it back rather than be told it will expire eventually.
+  static Future<bool> remove() async {
+    try {
+      return await _erase();
+    } finally {
+      // A failed recursive delete can still remove part of the installation,
+      // and all open bundles were closed before it started. Every dependent
+      // view must therefore re-check the disk on either outcome.
+      revision.value++;
+    }
+  }
+
+  /// The deletion itself, without telling anybody it happened.
+  ///
+  /// **Separated because [install] begins with one.** Announcing that would
+  /// tell every listener the data is gone at the moment a download starts
+  /// putting it back — and the globe acts on it, clearing what it has resolved
+  /// and running a full pass, so every server dropped into the unplaced strip
+  /// for the length of the download and a name lookup was made per server for
+  /// an answer that could not exist yet. Then the install announced it again
+  /// and the whole pass was discarded.
+  static Future<bool> _erase() async {
+    for (final open in _open.values) {
+      open.close();
+    }
+    _open.clear();
+    _installed = null;
+    _readInstalled = false;
+    try {
+      final handle = Directory(dir);
+      if (await handle.exists()) await handle.delete(recursive: true);
+      _readInstalled = true;
+      return true;
+    } catch (e, s) {
+      Loggers.app.warning('Could not remove the geo data', e, s);
+      // Let the next read inspect what remains instead of claiming success
+      // from an in-memory null while installed.json is still on disk.
+      return false;
+    }
+  }
+
+  /// How much is on disk, in bytes.
+  static Future<int> sizeOnDisk() async {
+    final handle = Directory(dir);
+    if (!await handle.exists()) return 0;
+    var total = 0;
+    await for (final entry in handle.list(recursive: true)) {
+      if (entry is File) total += await entry.length();
+    }
+    return total;
+  }
+
+  /// [path] from the primary endpoint, or from the second.
+  ///
+  /// Both serve the same bytes from the same export; the second exists for a
+  /// network where the first is unreachable. Null for every failure, since
+  /// there is nothing a caller would do differently.
+  static Future<Uint8List?> _fetch(
+    String path,
+    int maxBytes, {
+    void Function(int received)? onReceive,
+  }) async {
+    final targets = ['${Urls.geoData}/$path', '${Urls.geoDataFallback}/$path'];
+    final dio = clientFactory();
+    try {
+      for (final url in targets) {
+        try {
+          // A `cancel` future was threaded through here and through `install`
+          // and never passed by anyone. It also registered a derived future per
+          // URL attempt with no `onError`, so a caller handing it a future that
+          // completed with an error would have produced an unhandled one — which
+          // reaches the zone handler in `main.dart` and leaves a crash marker.
+          // Offering a Cancel button is a product decision, not this parameter.
+          final token = CancelToken();
+          final response = await dio.get<List<int>>(
+            url,
+            cancelToken: token,
+            onReceiveProgress: (got, _) {
+              onReceive?.call(got);
+              // Cancelled as it arrives rather than measured once it has: a
+              // check after the body is already a `List<int>` cannot prevent
+              // the allocation it exists to prevent.
+              if (got > maxBytes && !token.isCancelled) {
+                token.cancel(StateError('$url is over $maxBytes bytes'));
+              }
+            },
+          );
+          if (response.statusCode != 200) continue;
+          final body = response.data;
+          if (body == null || body.isEmpty) continue;
+          // The progress callback is not guaranteed to fire — a response with
+          // no `Content-Length` streamed in one chunk arrives whole — so the
+          // size is checked here as well.
+          if (body.length > maxBytes) {
+            Loggers.app.warning('$url is ${body.length} bytes, refusing it');
+            continue;
+          }
+          return Uint8List.fromList(body);
+        } catch (e) {
+          Loggers.app.fine('Geo endpoint $url did not answer: $e');
+        }
+      }
+    } finally {
+      dio.close();
+    }
+    return null;
+  }
+
+  /// For tests, which need each case to start from nothing.
+  @visibleForTesting
+  static Future<void> resetForTest() async {
+    for (final open in _open.values) {
+      open.close();
+    }
+    _open.clear();
+    _installed = null;
+    _readInstalled = false;
+    clientFactory = _defaultClient;
+  }
+}
