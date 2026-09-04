@@ -1123,6 +1123,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get shareExpired => '此分享已过期，请让分享方重新生成。';
 
   @override
+  String get shareImportFile => '从分享文件导入';
+
+  @override
   String get shareImportTitle => '导入共享服务器';
 
   @override
@@ -1150,6 +1153,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String shareQrTip(int minutes) {
     return '二维码中的连接信息已加密，此分享将在 $minutes 分钟后过期。';
   }
+
+  @override
+  String get shareScanQr => '扫描二维码';
 
   @override
   String shareServerExists(String name) {
@@ -2863,6 +2869,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get shareExpired => '此分享已過期，請讓分享方重新產生。';
 
   @override
+  String get shareImportFile => '從分享檔案匯入';
+
+  @override
   String get shareImportTitle => '匯入共享伺服器';
 
   @override
@@ -2890,6 +2899,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String shareQrTip(int minutes) {
     return 'QR Code 中的連線資訊已加密，此分享將在 $minutes 分鐘後過期。';
   }
+
+  @override
+  String get shareScanQr => '掃描 QR Code';
 
   @override
   String shareServerExists(String name) {

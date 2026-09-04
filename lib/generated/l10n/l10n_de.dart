@@ -1215,6 +1215,9 @@ class AppLocalizationsDe extends AppLocalizations {
       'Diese Freigabe ist abgelaufen. Bitten Sie um eine neue.';
 
   @override
+  String get shareImportFile => 'Aus einer geteilten Datei';
+
+  @override
   String get shareImportTitle => 'Geteilten Server importieren';
 
   @override
@@ -1248,6 +1251,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String shareQrTip(int minutes) {
     return 'Die Verbindungsdaten in diesem QR-Code sind verschlüsselt. Die Freigabe läuft in $minutes Minuten ab.';
   }
+
+  @override
+  String get shareScanQr => 'QR-Code scannen';
 
   @override
   String shareServerExists(String name) {

@@ -1144,6 +1144,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get shareExpired => '이 공유는 만료되었습니다. 새 공유를 요청하세요.';
 
   @override
+  String get shareImportFile => '공유 파일에서 가져오기';
+
+  @override
   String get shareImportTitle => '공유 서버 가져오기';
 
   @override
@@ -1172,6 +1175,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String shareQrTip(int minutes) {
     return '이 QR 코드의 연결 정보는 암호화되어 있습니다. 공유는 $minutes분 후 만료됩니다.';
   }
+
+  @override
+  String get shareScanQr => 'QR 코드 스캔';
 
   @override
   String shareServerExists(String name) {

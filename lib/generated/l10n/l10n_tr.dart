@@ -1209,6 +1209,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get shareExpired => 'Bu paylaşımın süresi doldu. Yenisini isteyin.';
 
   @override
+  String get shareImportFile => 'Paylaşılan dosyadan';
+
+  @override
   String get shareImportTitle => 'Paylaşılan sunucuyu içe aktar';
 
   @override
@@ -1242,6 +1245,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String shareQrTip(int minutes) {
     return 'Bu QR kodundaki bağlantı bilgileri şifrelenmiştir. Paylaşımın süresi $minutes dakika sonra dolar.';
   }
+
+  @override
+  String get shareScanQr => 'QR kodu tara';
 
   @override
   String shareServerExists(String name) {

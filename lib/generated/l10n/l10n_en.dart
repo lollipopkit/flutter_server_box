@@ -1200,6 +1200,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shareExpired => 'This share has expired. Ask for a new one.';
 
   @override
+  String get shareImportFile => 'From a shared file';
+
+  @override
   String get shareImportTitle => 'Import shared server';
 
   @override
@@ -1232,6 +1235,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String shareQrTip(int minutes) {
     return 'The connection details in this QR code are encrypted. The share expires in $minutes minutes.';
   }
+
+  @override
+  String get shareScanQr => 'Scan a QR code';
 
   @override
   String shareServerExists(String name) {

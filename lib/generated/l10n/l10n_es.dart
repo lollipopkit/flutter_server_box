@@ -1224,6 +1224,9 @@ class AppLocalizationsEs extends AppLocalizations {
       'Este contenido compartido ha caducado. Solicita uno nuevo.';
 
   @override
+  String get shareImportFile => 'Desde un archivo compartido';
+
+  @override
   String get shareImportTitle => 'Importar servidor compartido';
 
   @override
@@ -1258,6 +1261,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String shareQrTip(int minutes) {
     return 'Los datos de conexión de este código QR están cifrados. El contenido compartido caduca en $minutes minutos.';
   }
+
+  @override
+  String get shareScanQr => 'Escanear un código QR';
 
   @override
   String shareServerExists(String name) {

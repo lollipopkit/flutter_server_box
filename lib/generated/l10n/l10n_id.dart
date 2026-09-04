@@ -1207,6 +1207,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get shareExpired => 'Bagikan ini sudah kedaluwarsa. Minta yang baru.';
 
   @override
+  String get shareImportFile => 'Dari file yang dibagikan';
+
+  @override
   String get shareImportTitle => 'Impor server yang dibagikan';
 
   @override
@@ -1241,6 +1244,9 @@ class AppLocalizationsId extends AppLocalizations {
   String shareQrTip(int minutes) {
     return 'Data koneksi dalam kode QR ini dienkripsi. Data yang dibagikan akan kedaluwarsa dalam $minutes menit.';
   }
+
+  @override
+  String get shareScanQr => 'Pindai kode QR';
 
   @override
   String shareServerExists(String name) {

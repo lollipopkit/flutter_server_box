@@ -1216,6 +1216,9 @@ class AppLocalizationsRu extends AppLocalizations {
       'Срок действия этих данных истёк. Попросите отправить новые.';
 
   @override
+  String get shareImportFile => 'Из полученного файла';
+
+  @override
   String get shareImportTitle => 'Импорт общего сервера';
 
   @override
@@ -1249,6 +1252,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String shareQrTip(int minutes) {
     return 'Данные подключения в этом QR-коде зашифрованы. Срок действия истечёт через $minutes мин.';
   }
+
+  @override
+  String get shareScanQr => 'Сканировать QR-код';
 
   @override
   String shareServerExists(String name) {

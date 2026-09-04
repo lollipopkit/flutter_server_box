@@ -1141,6 +1141,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get shareExpired => 'この共有データは期限切れです。新しい共有データを依頼してください。';
 
   @override
+  String get shareImportFile => '共有ファイルから';
+
+  @override
   String get shareImportTitle => '共有サーバーをインポート';
 
   @override
@@ -1169,6 +1172,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String shareQrTip(int minutes) {
     return 'この QR コードの接続情報は暗号化されています。共有データは $minutes 分後に期限切れになります。';
   }
+
+  @override
+  String get shareScanQr => 'QR コードをスキャン';
 
   @override
   String shareServerExists(String name) {

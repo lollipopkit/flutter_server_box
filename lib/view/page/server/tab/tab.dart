@@ -31,6 +31,7 @@ import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/percent_circle.dart';
 import 'package:server_box/view/widget/server_globe.dart';
 import 'package:server_box/view/widget/server_power.dart';
+import 'package:server_box/view/widget/server_share.dart';
 
 part 'card_stat.dart';
 part 'content.dart';

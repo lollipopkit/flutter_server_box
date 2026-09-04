@@ -13,7 +13,6 @@ extension _SSH on _AppSettingsPageState {
       children: [
         if (isDesktop) _buildSSHConfigImport(),
         if (isDesktop) _buildSshConnectionMode(),
-        if (isMobile) _buildQrScan(),
         _buildLetterCache(),
         _buildSSHWakeLock(),
         _buildTermTheme(),
@@ -37,24 +36,11 @@ extension _SSH on _AppSettingsPageState {
     );
   }
 
-  Widget _buildQrScan() {
-    return ListTile(
-      leading: const Icon(Icons.qr_code),
-      title: Text(libL10n.import),
-      trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: _onTapQrScan,
-    );
-  }
-
-  /// Everything about reading a code lives in [ServerShareUi] now — the
-  /// prompt for the one-time code, the three failures that each need a
-  /// different sentence, and the key that arrives with the server.
-  ///
-  /// This used to decode the text as a bare `Spi` and add it, which is still
-  /// what happens for a code shared by a build that predates the encrypted
-  /// format. That path is `ServerShareCodec.decode`'s last branch rather than
-  /// a second entry point.
-  Future<void> _onTapQrScan() => ServerShareUi.receiveFromQr(context, ref);
+  // Scanning a shared code used to be a row here, mobile-only and under SSH
+  // *preferences*, while importing the same server from a file was under
+  // Backup. Both are ways of acquiring a server, and which one a person needs
+  // depends on what the sender picked — so they now sit together behind the
+  // server list's add button. See `_onTapAddServer`.
 
   Future<void> _onTapSSHConfigImport() async {
     try {

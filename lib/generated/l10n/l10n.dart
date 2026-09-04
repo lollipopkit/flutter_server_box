@@ -2204,6 +2204,12 @@ abstract class AppLocalizations {
   /// **'This share has expired. Ask for a new one.'**
   String get shareExpired;
 
+  /// No description provided for @shareImportFile.
+  ///
+  /// In en, this message translates to:
+  /// **'From a shared file'**
+  String get shareImportFile;
+
   /// No description provided for @shareImportTitle.
   ///
   /// In en, this message translates to:
@@ -2257,6 +2263,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The connection details in this QR code are encrypted. The share expires in {minutes} minutes.'**
   String shareQrTip(int minutes);
+
+  /// No description provided for @shareScanQr.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan a QR code'**
+  String get shareScanQr;
 
   /// No description provided for @shareServerExists.
   ///

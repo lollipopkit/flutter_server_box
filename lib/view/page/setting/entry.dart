@@ -60,7 +60,6 @@ import 'package:server_box/view/widget/dmg_notice.dart';
 import 'package:server_box/view/widget/geo_data_install.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/rootfs_install.dart';
-import 'package:server_box/view/widget/server_share.dart';
 
 part 'about.dart';
 part 'menu.dart';
