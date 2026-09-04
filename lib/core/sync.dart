@@ -7,6 +7,7 @@ import 'package:server_box/data/model/app/bak/backup.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/app/bak/utils.dart';
 import 'package:server_box/data/res/misc.dart';
+import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/schema.dart';
 
 final bakSync = BakSyncer._();
@@ -202,6 +203,57 @@ final class BakSyncer extends SyncIface {
       // here would block startup over a file that may not even be theirs.
       Loggers.app.warning('Inherit legacy sync file', e, s);
     }
+  }
+
+  /// Where this device's last sync position is kept.
+  ///
+  /// A `PrefProp` and not a store key on purpose: it describes *this device*
+  /// and would be wrong on any other, so it must stay out of the backup. The
+  /// two tags are joined by a NUL, which is the one byte neither an ETag nor a
+  /// timestamp can contain.
+  static const _checkpoint = PrefProp<String>('sync_checkpoint');
+
+  static const _checkpointSep = '\u0000';
+
+  @override
+  (String, String)? get syncCheckpoint {
+    final raw = _checkpoint.get();
+    if (raw == null) return null;
+    final sep = raw.indexOf(_checkpointSep);
+    if (sep < 0) return null;
+    return (raw.substring(0, sep), raw.substring(sep + 1));
+  }
+
+  @override
+  Future<void> saveSyncCheckpoint(String remote, String local) =>
+      _checkpoint.set('$remote$_checkpointSep$local');
+
+  /// Forgets where this device was, so the next sync does the full cycle.
+  ///
+  /// Called when the *remote* is reconfigured. The checkpoint carries the
+  /// backend's runtime type, which does not change when a WebDAV URL is
+  /// pointed at a different server — and pointing it somewhere new is exactly
+  /// when the shortcut would skip the sync that had everything to do.
+  static Future<void> forgetCheckpoint() => _checkpoint.remove();
+
+  /// When the user last changed anything that gets synced.
+  ///
+  /// [Stores.lastModTime] is already the number sync uses to decide which side
+  /// wins, so a change it cannot see is one the merge would discard anyway —
+  /// which is what makes it safe to skip an upload on. It covers deletions:
+  /// `EntityStore.lastModTime` takes the max over the table *and* its
+  /// tombstones, so removing a server moves it.
+  ///
+  /// Zero means nothing has ever been edited on this device, and answers null
+  /// so a fresh install always does the full cycle.
+  @override
+  String? get localVersionTag {
+    final ts = Stores.lastModTime;
+    if (ts == 0) return null;
+    // The switch changes *what* the payload contains without touching any
+    // store, so a tag keyed on modification time alone would skip the upload
+    // that was supposed to add the settings or take them away.
+    return '$ts/${PrefProps.syncAppSettings.get()}';
   }
 
   @override
