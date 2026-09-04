@@ -1,5 +1,7 @@
 #include "tray_icon.h"
 
+#include "resource.h"
+
 #include <shellapi.h>
 #include <windowsx.h>
 
@@ -83,24 +85,13 @@ bool ReadMenuMetrics(UINT dpi, NONCLIENTMETRICSW* metrics) {
                                metrics, 0) != FALSE;
 }
 
-std::wstring TrayIconPath() {
-  wchar_t path[MAX_PATH] = {};
-  const DWORD path_size = GetModuleFileNameW(nullptr, path, MAX_PATH);
-  if (path_size == 0 || path_size == MAX_PATH) return std::wstring();
-  std::wstring icon_path(path, path_size);
-  const size_t slash = icon_path.find_last_of(L'\\');
-  if (slash != std::wstring::npos) icon_path.resize(slash + 1);
-  icon_path += L"data\\flutter_assets\\assets\\tray\\tray.ico";
-  return icon_path;
-}
-
 HICON LoadTrayIcon(UINT dpi) {
-  const std::wstring path = TrayIconPath();
-  if (path.empty()) return nullptr;
+  const HINSTANCE instance = GetModuleHandleW(nullptr);
+  if (instance == nullptr) return nullptr;
   return static_cast<HICON>(LoadImageW(
-      nullptr, path.c_str(), IMAGE_ICON,
+      instance, MAKEINTRESOURCEW(IDI_APP_ICON), IMAGE_ICON,
       SystemMetricForDpiCompat(SM_CXSMICON, dpi),
-      SystemMetricForDpiCompat(SM_CYSMICON, dpi), LR_LOADFROMFILE));
+      SystemMetricForDpiCompat(SM_CYSMICON, dpi), LR_DEFAULTCOLOR));
 }
 
 std::wstring Widen(const std::string& utf8) {

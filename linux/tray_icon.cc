@@ -132,14 +132,14 @@ GtkWidget* MakeRow(FlValue* line) {
 
 void Update(FlValue* payload) {
   if (g_indicator == nullptr) {
-    // By path rather than by icon name: the app is not installed into an icon
-    // theme, and the same file is what the bundle carries for this.
+    // The application icon already ships as a Flutter asset. Point the
+    // indicator at that directory instead of keeping a second tray-only copy.
     g_autofree gchar* dir = g_path_get_dirname(
         g_file_read_link("/proc/self/exe", nullptr) ?: g_strdup("."));
     g_autofree gchar* icon_dir =
-        g_build_filename(dir, "data", "flutter_assets", "assets", "tray", nullptr);
+        g_build_filename(dir, "data", "flutter_assets", "assets", nullptr);
     g_indicator = app_indicator_new_with_path(
-        "serverbox", "tray", APP_INDICATOR_CATEGORY_APPLICATION_STATUS,
+        "serverbox", "app_icon", APP_INDICATOR_CATEGORY_APPLICATION_STATUS,
         icon_dir);
     app_indicator_set_status(g_indicator, APP_INDICATOR_STATUS_ACTIVE);
     app_indicator_set_title(g_indicator, "ServerBox");

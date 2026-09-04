@@ -124,7 +124,7 @@ jobs:
           # Compile the Windows runner only when its native product or build
           # inputs changed. Dart-only changes are already compiled and tested
           # by `check` below on a cheaper runner.
-          emit windows "$shared|^windows/|^hook/|^crates/|^Cargo\.(toml|lock)$|^assets/tray/|^scripts/gen_tray_icons\.py$"
+          emit windows "$shared|^windows/|^hook/|^crates/|^Cargo\.(toml|lock)$"
           # `crates/` because `flutter test` loads the FFI dylib and the
           # generated bindings come from there.
           #

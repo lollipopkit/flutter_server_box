@@ -150,14 +150,6 @@ flutter:
     # in there — see the README beside them, which Flutter leaves out because
     # it only bundles files it can load.
     - assets/distro/
-    # Drawn by `scripts/gen_tray_icons.py`, which says why there are three
-    # shapes of the same picture. Named one by one rather than as a directory,
-    # so which platform reads which is written down where they are declared.
-    # `mac.pdf` is not here: macOS reads it from the asset catalogue, which
-    # has its own copy. A Flutter asset is loaded through the bundle, and
-    # nothing on that platform does.
-    - assets/tray/tray.png
-    - assets/tray/tray.ico
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
   # fonts:
