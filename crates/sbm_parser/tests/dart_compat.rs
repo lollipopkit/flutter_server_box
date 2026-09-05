@@ -216,11 +216,16 @@ fn swap_parse_meminfo() {
 
 // ---------- Disk: disk_test.dart ----------
 
-/// Dart 'parse lsblk JSON output': 6 entries (LVM2_member/ext4//swap/vfat/ext2/crypto_LUKS)
+/// Dart 'parse lsblk JSON output': 5 entries
+/// (LVM2_member/ext4//vfat/ext2/crypto_LUKS)
+///
+/// This fixture came off a real machine and carries the swap partition that
+/// machine has. It was the sixth entry until swap areas were dropped.
 #[test]
 fn disk_parse_lsblk_json() {
     let disks = linux::parse_disk(include_str!("fixtures/lsblk.json"));
-    assert_eq!(disks.len(), 6);
+    assert_eq!(disks.len(), 5);
+    assert!(!disks.iter().any(|d| d.mount == "[SWAP]"));
 
     let root = disks.iter().find(|d| d.mount == "/").unwrap();
     assert_eq!(root.fs_type.as_deref(), Some("ext4"));
@@ -334,6 +339,96 @@ fn disk_parse_df_collapses_repeated_mounts() {
     let orbstack: Vec<_> = disks.iter().filter(|d| d.path == "orbstack").collect();
     assert_eq!(orbstack.len(), 2);
     assert_ne!(orbstack[0].used, orbstack[1].used);
+}
+
+/// A snap-heavy Ubuntu mounts one squashfs per installed revision, each 100%
+/// full by construction. They filled the device list ahead of the machine's
+/// actual disks and added their whole size to the total. A mounted ISO is the
+/// same shape and goes the same way.
+#[test]
+fn disk_parse_lsblk_drops_read_only_images() {
+    let disks = linux::parse_disk(include_str!("fixtures/lsblk_nonstorage.json"));
+
+    assert!(!disks.iter().any(|d| d.mount.starts_with("/snap/")));
+    assert!(!disks.iter().any(|d| matches!(
+        d.fs_type.as_deref(),
+        Some("squashfs" | "erofs" | "iso9660")
+    )));
+
+    let root = disks.iter().find(|d| d.mount == "/").unwrap();
+    assert_eq!(root.path, "/dev/vda1");
+    assert_eq!(root.used_percent, 24);
+
+    // A loop device carrying a writable filesystem is storage someone mounted
+    // on purpose, and is not what any of this is about
+    let image = disks.iter().find(|d| d.path == "/dev/loop7").unwrap();
+    assert_eq!(image.mount, "/mnt/image");
+    assert_eq!(image.used_percent, 50);
+}
+
+/// `lsblk` lists a swap partition and a zram device beside the filesystems,
+/// both with an empty FSSIZE, so each rendered as a device holding 0 B of 0 B.
+/// Swap has its own reading, taken from /proc/meminfo.
+#[test]
+fn disk_parse_lsblk_drops_swap_areas() {
+    let disks = linux::parse_disk(include_str!("fixtures/lsblk_nonstorage.json"));
+
+    assert!(!disks.iter().any(|d| d.mount == "[SWAP]"));
+    assert!(!disks.iter().any(|d| d.fs_type.as_deref() == Some("swap")));
+    assert!(!disks.iter().any(|d| d.path == "/dev/zram0"));
+    assert!(!disks.iter().any(|d| d.path == "/dev/vda2"));
+
+    // The partitions either side of the swap one are untouched
+    assert!(disks.iter().any(|d| d.mount == "/"));
+    assert!(disks.iter().any(|d| d.mount == "/boot/efi"));
+}
+
+/// The `df` fallback reports no filesystem type: `/dev/loop0` is
+/// indistinguishable from a mounted disk image by its source, so the mount
+/// point is what names it. `snapfuse` is snapd inside a container, where the
+/// loop device is unavailable.
+#[test]
+fn disk_parse_df_drops_read_only_images() {
+    let disks = linux::parse_disk(include_str!("fixtures/df_nonstorage.txt"));
+
+    assert!(!disks.iter().any(|d| d.path == "snapfuse"));
+    assert!(!disks.iter().any(|d| d.mount.starts_with("/snap/")));
+    assert!(
+        !disks
+            .iter()
+            .any(|d| d.mount.starts_with("/var/lib/snapd/snap/"))
+    );
+
+    // The known limit of this branch: `df` reports no filesystem type, and a
+    // mounted ISO has no mount point that names it the way a snap's does, so
+    // `/dev/sr0` reads as an ordinary block device here. It is dropped under
+    // `lsblk` — see disk_parse_lsblk_drops_read_only_images — which is every
+    // host that has one; `df` is the fallback for busybox and OpenWrt.
+    // Recognising `/dev/sr` by name would trade the rule for a device list.
+    assert!(disks.iter().any(|d| d.path == "/dev/sr0"));
+}
+
+/// `overlay` already covered docker's own layers and the old `overlayfs`
+/// spelling, but not the `fuse-overlayfs` a rootless podman or docker mounts —
+/// one row per container, each carrying the host filesystem's numbers.
+///
+/// `ramfs` is here as the case that needs no rule: systemd's credential mounts
+/// report a `-` usage, which fails to parse and drops the row already.
+#[test]
+fn disk_parse_df_drops_container_layers() {
+    let disks = linux::parse_disk(include_str!("fixtures/df_nonstorage.txt"));
+
+    assert!(!disks.iter().any(|d| d.path == "overlay"));
+    assert!(!disks.iter().any(|d| d.path == "fuse-overlayfs"));
+    assert!(!disks.iter().any(|d| d.path == "ramfs"));
+
+    // What is left is the root filesystem, the ISO this branch cannot name,
+    // and the deliberately mounted image
+    assert_eq!(disks.len(), 3);
+    assert_eq!(disks[0].path, "/dev/vda1");
+    assert_eq!(disks[0].mount, "/");
+    assert_eq!(disks[2].path, "/dev/loop7");
+    assert_eq!(disks[2].mount, "/mnt/image");
 }
 
 /// Dart 'parse ImmortalWrt df -k output without shrinking units'

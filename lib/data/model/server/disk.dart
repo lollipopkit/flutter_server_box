@@ -41,6 +41,18 @@ class Disk extends Equatable {
 
   // Parsing implementation migrated to the shared Rust library sbm_parser
 
+  /// Whether this describes storage worth showing, rather than a kernel mount,
+  /// a read-only image, a container layer or a swap area.
+  ///
+  /// The parser drops the rest while reading `lsblk`/`df`. A [Disk] built from
+  /// a monitor agent's `disk_details` never went through it, so an agent older
+  /// than a given rule still sends what that rule removes.
+  ///
+  /// [_shouldCalc] is handed a source by `df` and a filesystem type by `lsblk`,
+  /// never both, and takes a different branch for each. A [Disk] carries both,
+  /// so it is asked with each.
+  bool get isStorage =>
+      _shouldCalc(path, mount) && _shouldCalc(fsTyp ?? path, mount);
 
   @override
   List<Object?> get props => [
@@ -166,7 +178,7 @@ class DiskUsage {
     var size = BigInt.zero;
 
     void visit(Disk disk) {
-      if (!_shouldCalc(disk.path, disk.mount)) return;
+      if (!disk.isStorage) return;
       // Use a combination of path and kernel name to uniquely identify disks
       // This helps distinguish between multiple physical disks in BTRFS RAID setups
       final uniqueId = '${disk.path}:${disk.kname ?? "unknown"}';
@@ -194,14 +206,20 @@ bool _shouldCalc(String fs, String mount) {
   // publishes one devtmpfs row per node, two dozen lines all claiming 0 B used
   // of the same size.
   if (_isKernelMount(mount)) return false;
+  if (_isReadOnlyImage(fs, mount)) return false;
+  if (_isSwapArea(fs, mount)) return false;
 
   if (fs.startsWith('/dev')) return true;
   // Some NAS may have mounted path like this `//192.168.1.2/`
   if (fs.startsWith('//')) return true;
   if (mount.startsWith('/mnt')) return true;
 
+  // `overlay` covers the old `overlayfs` spelling too, but not the
+  // `fuse-overlayfs` a rootless podman or docker uses: that one publishes a
+  // row per container carrying the host filesystem's own numbers.
   if (fs.startsWith('shm') ||
       fs.startsWith('overlay') ||
+      fs == 'fuse-overlayfs' ||
       fs.startsWith('tmpfs') ||
       fs.startsWith('devtmpfs')) {
     return false;
@@ -209,6 +227,36 @@ bool _shouldCalc(String fs, String mount) {
 
   return true;
 }
+
+/// A read-only image mounted as a filesystem — a snap's squashfs, the same
+/// image handed to a container through `snapfuse`, a mounted ISO — rather than
+/// storage anyone manages. Each is full by construction, so it reports 100%
+/// and contributes its whole size to the total; a snap-heavy Ubuntu publishes
+/// twenty of them, which is the entire device list.
+///
+/// Matched on the image, never on `/dev/loop`: a loop device carrying a
+/// writable filesystem is storage someone mounted on purpose.
+///
+/// Mirrors `is_read_only_image` in `crates/sbm_parser/src/types.rs`, and takes
+/// the same overloaded first argument: a filesystem type where one is known, a
+/// source otherwise.
+bool _isReadOnlyImage(String fs, String mount) {
+  return const {
+        'squashfs',
+        'erofs',
+        'iso9660',
+        'snapfuse',
+        'fuse.snapfuse',
+      }.contains(fs) ||
+      mount.startsWith('/snap/') ||
+      mount.startsWith('/var/lib/snapd/snap/');
+}
+
+/// A swap area, which `lsblk` lists beside filesystems. It has no mount point
+/// and no `FSSIZE`, so the row reads `0 B / 0 B`, and swap is reported on its
+/// own from `/proc/meminfo` anyway. `df` lists only mounted filesystems and
+/// never produces one of these.
+bool _isSwapArea(String fs, String mount) => fs == 'swap' || mount == '[SWAP]';
 
 /// `/dev`, `/proc`, `/sys`, and anything mounted inside them.
 ///

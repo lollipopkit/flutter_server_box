@@ -121,23 +121,55 @@ pub struct Disk {
 }
 
 /// Whether a `df` row describes storage worth reporting (Dart `_shouldCalc`):
-/// exclude kernel mounts; include /dev-prefixed sources, network mounts (//),
-/// /mnt mount points; exclude shm/overlay/tmpfs/devtmpfs sources; include the rest
+/// exclude kernel mounts, read-only images and swap areas; include /dev-prefixed
+/// sources, network mounts (//), /mnt mount points; exclude
+/// shm/overlay/fuse-overlayfs/tmpfs/devtmpfs sources; include the rest
 pub fn disk_should_calc(fs: &str, mount: &str) -> bool {
     // Checked before the inclusions below, so that a source spelled like a
     // block device cannot bring these back: a host that exposes many device
     // nodes publishes one devtmpfs row per node, two dozen lines all claiming
     // 0 B used of the same size.
-    if is_kernel_mount(mount) {
+    if is_kernel_mount(mount) || is_read_only_image(fs, mount) || is_swap_area(fs, mount) {
         return false;
     }
     if fs.starts_with("/dev") || fs.starts_with("//") || mount.starts_with("/mnt") {
         return true;
     }
+    // `overlay` covers the old `overlayfs` spelling too, but not the
+    // `fuse-overlayfs` a rootless podman or docker uses: that one publishes a
+    // row per container carrying the host filesystem's own numbers.
     !(fs.starts_with("shm")
         || fs.starts_with("overlay")
+        || fs == "fuse-overlayfs"
         || fs.starts_with("tmpfs")
         || fs.starts_with("devtmpfs"))
+}
+
+/// A read-only image mounted as a filesystem — a snap's squashfs, the same
+/// image handed to a container through `snapfuse`, a mounted ISO — rather than
+/// storage anyone manages. Each is full by construction, so it reports 100%
+/// and contributes its whole size to the total; a snap-heavy Ubuntu publishes
+/// twenty of them, which is the entire device list.
+///
+/// Matched on the image, never on `/dev/loop`: a loop device carrying a
+/// writable filesystem is storage someone mounted on purpose, and it is the
+/// `df` fallback hosts (busybox, no lsblk) where that is most likely.
+/// `fs` is a filesystem type under `lsblk` and a source under `df`, so the
+/// two sources are recognised by different halves of this.
+fn is_read_only_image(fs: &str, mount: &str) -> bool {
+    matches!(
+        fs,
+        "squashfs" | "erofs" | "iso9660" | "snapfuse" | "fuse.snapfuse"
+    ) || mount.starts_with("/snap/")
+        || mount.starts_with("/var/lib/snapd/snap/")
+}
+
+/// A swap area, which `lsblk` lists beside filesystems. It has no mount point
+/// and no `FSSIZE`, so the row reads `0 B / 0 B`, and swap is reported on its
+/// own from `/proc/meminfo` anyway. `df` lists only mounted filesystems and
+/// never produces one of these.
+fn is_swap_area(fs: &str, mount: &str) -> bool {
+    fs == "swap" || mount == "[SWAP]"
 }
 
 /// `/dev`, `/proc`, `/sys`, and anything mounted inside them.
