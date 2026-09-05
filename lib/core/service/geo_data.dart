@@ -26,7 +26,10 @@ abstract final class GeoData {
   /// Where the unpacked bundles live.
   static String get dir => Paths.doc.joinPath('geo');
 
-  static String get _manifestPath => dir.joinPath('installed.json');
+  static String get _stagingDir => '$dir.installing';
+  static String get _backupDir => '$dir.previous';
+
+  static String _manifestAt(String root) => root.joinPath('installed.json');
 
   /// Replaced in tests. Nothing here should reach the network in a test run,
   /// and a seam is how that is enforced rather than hoped for.
@@ -57,25 +60,86 @@ abstract final class GeoData {
   /// without anyone comparing manifests.
   static final revision = ValueNotifier(0);
 
-  /// What is on disk, or null when nothing is.
+  /// What is completely and readably installed, or null when nothing is.
   ///
   /// Read once and remembered, including the miss: the answer only changes
   /// when this class changes it.
-  /// Synchronous for [GeoBundle.open]'s reason: it is a couple of kilobytes
-  /// of JSON, and an `await` on the lookup path is a future a widget test's
-  /// fake-async zone never completes.
+  /// Synchronous for [GeoBundle.open]'s reason: validation reads two headers,
+  /// their bucket tables and file lengths, and an `await` on the lookup path is
+  /// a future a widget test's fake-async zone never completes.
+  ///
+  /// A manifest by itself is not an installation. Both bundles must exist,
+  /// have the declared length, open as this format, and agree with the manifest
+  /// on family and month. That makes a damaged installation look absent to all
+  /// three download entry points, so the user can repair it by installing the
+  /// same month again.
   static GeoManifest? installed() {
     if (_readInstalled) return _installed;
     _readInstalled = true;
+    _installed = _readInstalledAt(dir);
+    if (_installed != null) {
+      // A crash after promoting the staging directory but before removing the
+      // old one leaves a harmless duplicate. Once the new copy is known good,
+      // finish that cleanup on the next launch.
+      _discardDirectorySync(_backupDir);
+      return _installed;
+    }
+
+    // The swap moves the old installation aside before promoting the new one.
+    // If the process stopped between those two renames, restore the copy that
+    // was already known good instead of presenting an empty installation.
+    final backup = _readInstalledAt(_backupDir);
+    if (backup == null) return null;
     try {
-      final file = File(_manifestPath);
-      if (!file.existsSync()) return null;
-      _installed = GeoManifest.tryFromJson(jsonDecode(file.readAsStringSync()));
-    } catch (e) {
-      Loggers.app.fine('No installed geo data: $e');
+      final active = Directory(dir);
+      if (active.existsSync()) active.deleteSync(recursive: true);
+      Directory(_backupDir).renameSync(dir);
+      _installed = backup;
+    } catch (e, s) {
+      Loggers.app.warning('Could not restore the previous geo data', e, s);
       _installed = null;
     }
     return _installed;
+  }
+
+  /// Reads and validates one complete installation directory.
+  static GeoManifest? _readInstalledAt(String root) {
+    try {
+      final file = File(_manifestAt(root));
+      if (!file.existsSync()) return null;
+      final manifest = GeoManifest.tryFromJson(
+        jsonDecode(file.readAsStringSync()),
+      );
+      if (manifest == null) return null;
+      for (final asset in manifest.assets) {
+        final handle = File(root.joinPath(asset.unpackedName));
+        if (!handle.existsSync() ||
+            handle.lengthSync() != asset.unpackedBytes) {
+          return null;
+        }
+        final bundle = GeoBundle.open(handle.path);
+        if (bundle == null) return null;
+        final valid =
+            bundle.family == asset.family &&
+            bundle.year == manifest.year &&
+            bundle.month == manifest.month;
+        bundle.close();
+        if (!valid) return null;
+      }
+      return manifest;
+    } catch (e) {
+      Loggers.app.fine('No usable geo data at $root: $e');
+      return null;
+    }
+  }
+
+  static void _discardDirectorySync(String path) {
+    try {
+      final handle = Directory(path);
+      if (handle.existsSync()) handle.deleteSync(recursive: true);
+    } catch (e, s) {
+      Loggers.app.warning('Could not clean up geo directory $path', e, s);
+    }
   }
 
   /// The bundle for [family], opened on first use and kept open.
@@ -125,33 +189,26 @@ abstract final class GeoData {
 
   /// Downloads and unpacks everything [manifest] names.
   ///
-  /// The directory is emptied first, so a new month replaces the old one
-  /// rather than sitting beside it. That is what the cache-size limit used to
-  /// guard against and no longer has to: there is exactly one copy, its size
-  /// is in the manifest, and nothing accumulates.
+  /// Everything is first written to a staging directory beside the live one.
+  /// Only after both families and the manifest validate is that directory
+  /// promoted, so a failed update leaves the previous month usable.
   ///
   /// [onProgress] is called with bytes received and the total from the
   /// manifest, so a progress bar has a denominator before the first byte.
   ///
   /// Returns whether everything arrived, verified and unpacked. A failure
-  /// leaves nothing installed rather than half of it: one family present and
-  /// the other missing would draw a globe that places IPv4 and silently
-  /// forgets IPv6.
+  /// discards only the staging directory: one family is never published on its
+  /// own, and an installation that was working before the attempt stays so.
   static Future<bool> install(
     GeoManifest manifest, {
     void Function(int received, int total)? onProgress,
   }) async {
-    // `_erase`, not `remove`: one download is one change, announced when it
-    // has happened. See [_erase]. The bump is still owed if this fails, since
-    // a partial delete is a change like any other.
-    if (!await _erase()) {
-      revision.value++;
-      return false;
-    }
     final total = manifest.downloadBytes;
     var done = 0;
     try {
-      await Directory(dir).create(recursive: true);
+      final staging = Directory(_stagingDir);
+      if (await staging.exists()) await staging.delete(recursive: true);
+      await staging.create(recursive: true);
       for (final asset in manifest.assets) {
         final packed = await _fetch(
           asset.name,
@@ -187,7 +244,7 @@ abstract final class GeoData {
         // manifest naming both numbers comes from the same endpoint as the
         // bytes, so neither is a reason to trust the other.
         final raw = gunzipCapped(packed, asset.unpackedBytes, asset.name);
-        final output = dir.joinPath(asset.unpackedName);
+        final output = _stagingDir.joinPath(asset.unpackedName);
         await File(output).writeAsBytes(raw, flush: true);
         final bundle = GeoBundle.open(output);
         final valid =
@@ -203,16 +260,73 @@ abstract final class GeoData {
         onProgress?.call(done, total);
       }
 
-      await File(_manifestPath).writeAsString(jsonEncode(manifest.toJson()));
-      _installed = manifest;
-      _readInstalled = true;
-      revision.value++;
+      await File(
+        _manifestAt(_stagingDir),
+      ).writeAsString(jsonEncode(manifest.toJson()), flush: true);
+      if (_readInstalledAt(_stagingDir) == null) {
+        throw StateError('the staged geo installation is incomplete');
+      }
+      if (!await _activateStaging(manifest)) {
+        await _discardDirectory(_stagingDir);
+        return false;
+      }
       return true;
     } catch (e, s) {
       Loggers.app.warning('Could not install the geo data', e, s);
-      await remove();
+      await _discardDirectory(_stagingDir);
       return false;
     }
+  }
+
+  /// Swaps a validated staging directory into place, rolling the old one back
+  /// if the promotion fails.
+  static Future<bool> _activateStaging(GeoManifest manifest) async {
+    final active = Directory(dir);
+    final staging = Directory(_stagingDir);
+    final backup = Directory(_backupDir);
+    var movedActive = false;
+
+    _closeBundles();
+    try {
+      if (await backup.exists()) await backup.delete(recursive: true);
+      if (await active.exists()) {
+        await active.rename(_backupDir);
+        movedActive = true;
+      }
+      await staging.rename(dir);
+    } catch (e, s) {
+      Loggers.app.warning('Could not activate the staged geo data', e, s);
+      if (movedActive) {
+        try {
+          if (await active.exists()) await active.delete(recursive: true);
+          if (await backup.exists()) await backup.rename(dir);
+        } catch (rollbackError, rollbackStack) {
+          Loggers.app.warning(
+            'Could not roll back the previous geo data',
+            rollbackError,
+            rollbackStack,
+          );
+        }
+      }
+      // The disk decides what survived. Do not keep an in-memory answer from
+      // before handles were closed and directories were moved.
+      _installed = null;
+      _readInstalled = false;
+      return false;
+    }
+
+    _installed = manifest;
+    _readInstalled = true;
+    revision.value++;
+    try {
+      if (await backup.exists()) await backup.delete(recursive: true);
+    } catch (e, s) {
+      // The active copy is already complete. A leftover backup is recovered or
+      // cleaned by [installed] on the next launch and does not make this update
+      // a failure.
+      Loggers.app.warning('Could not remove the previous geo data', e, s);
+    }
+    return true;
   }
 
   /// Takes it all off the device.
@@ -233,29 +347,39 @@ abstract final class GeoData {
 
   /// The deletion itself, without telling anybody it happened.
   ///
-  /// **Separated because [install] begins with one.** Announcing that would
-  /// tell every listener the data is gone at the moment a download starts
-  /// putting it back — and the globe acts on it, clearing what it has resolved
-  /// and running a full pass, so every server dropped into the unplaced strip
-  /// for the length of the download and a name lookup was made per server for
-  /// an answer that could not exist yet. Then the install announced it again
-  /// and the whole pass was discarded.
+  /// Includes interrupted staging and backup directories so the explicit
+  /// remove action reclaims every byte this service may have written.
   static Future<bool> _erase() async {
+    _closeBundles();
+    _installed = null;
+    _readInstalled = false;
+    var removed = true;
+    for (final path in [dir, _stagingDir, _backupDir]) {
+      if (!await _discardDirectory(path)) removed = false;
+    }
+    if (removed) {
+      _readInstalled = true;
+    } else {
+      // Let the next read inspect what remains instead of claiming success
+      // from an in-memory null while installed.json is still on disk.
+    }
+    return removed;
+  }
+
+  static void _closeBundles() {
     for (final open in _open.values) {
       open.close();
     }
     _open.clear();
-    _installed = null;
-    _readInstalled = false;
+  }
+
+  static Future<bool> _discardDirectory(String path) async {
     try {
-      final handle = Directory(dir);
+      final handle = Directory(path);
       if (await handle.exists()) await handle.delete(recursive: true);
-      _readInstalled = true;
       return true;
     } catch (e, s) {
-      Loggers.app.warning('Could not remove the geo data', e, s);
-      // Let the next read inspect what remains instead of claiming success
-      // from an in-memory null while installed.json is still on disk.
+      Loggers.app.warning('Could not remove geo directory $path', e, s);
       return false;
     }
   }
@@ -281,7 +405,9 @@ abstract final class GeoData {
     // Short is the other direction and cannot be caught above: a truncated
     // archive simply stops.
     if (raw.length != expected) {
-      throw StateError('$name unpacks to ${raw.length}, manifest says $expected');
+      throw StateError(
+        '$name unpacks to ${raw.length}, manifest says $expected',
+      );
     }
     return raw;
   }
@@ -321,6 +447,7 @@ abstract final class GeoData {
           final token = CancelToken();
           final response = await dio.get<List<int>>(
             url,
+            options: Options(responseType: ResponseType.bytes),
             cancelToken: token,
             onReceiveProgress: (got, _) {
               onReceive?.call(got);
@@ -356,10 +483,7 @@ abstract final class GeoData {
   /// For tests, which need each case to start from nothing.
   @visibleForTesting
   static Future<void> resetForTest() async {
-    for (final open in _open.values) {
-      open.close();
-    }
-    _open.clear();
+    _closeBundles();
     _installed = null;
     _readInstalled = false;
     clientFactory = _defaultClient;

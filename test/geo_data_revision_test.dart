@@ -41,6 +41,28 @@ class _DeadAdapter implements HttpClientAdapter {
   ) => throw const SocketException('no network in tests');
 }
 
+/// An endpoint whose response is selected by the requested filename.
+class _RouteAdapter implements HttpClientAdapter {
+  _RouteAdapter(this.bodies);
+
+  final Map<String, Uint8List> bodies;
+
+  @override
+  void close({bool force = false}) {}
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    final body = bodies[options.uri.pathSegments.last];
+    return body == null
+        ? ResponseBody.fromBytes(const [], 404)
+        : ResponseBody.fromBytes(body, 200);
+  }
+}
+
 /// **When listeners are told the installed data changed.**
 ///
 /// `GeoData.revision` is the only thing keeping the settings row, the switch
@@ -92,6 +114,42 @@ void main() {
         },
     ],
   })!;
+
+  Future<({GeoManifest manifest, Map<String, Uint8List> bodies})> offerOf(
+    String generated,
+  ) async {
+    final year = int.parse(generated.substring(0, 4));
+    final month = int.parse(generated.substring(5, 7));
+    final assets = <Map<String, Object?>>[];
+    final bodies = <String, Uint8List>{};
+    for (final (name, family) in [('ip4', 4), ('ip6', 6)]) {
+      final raw = Uint8List.fromList(
+        await File('test/fixtures/geo/bundle_${name}_v1.bin').readAsBytes(),
+      );
+      raw[6] = year >> 8;
+      raw[7] = year & 0xff;
+      raw[8] = month;
+      final packed = Uint8List.fromList(gzip.encode(raw));
+      final filename = '${name}_city_v1.bin.gz';
+      bodies[filename] = packed;
+      assets.add({
+        'name': filename,
+        'family': family,
+        'bytes': packed.length,
+        'unpackedBytes': raw.length,
+        'sha256': sha256.convert(packed).toString(),
+      });
+    }
+    return (
+      manifest: GeoManifest.tryFromJson({
+        'version': 1,
+        'generated': generated,
+        'attribution': 'test',
+        'assets': assets,
+      })!,
+      bodies: bodies,
+    );
+  }
 
   /// An archive whose declared size is a lie.
   ///
@@ -150,29 +208,54 @@ void main() {
           },
       ],
     })!;
-    GeoData.clientFactory = () => Dio()
-      ..httpClientAdapter = _ServingAdapter(bomb);
+    GeoData.clientFactory = () =>
+        Dio()..httpClientAdapter = _ServingAdapter(bomb);
 
     expect(await GeoData.install(manifest), isFalse);
+    expect(GeoData.installed()?.generated, '2026-09');
+    expect(seen, 0);
+  });
+
+  test('a manifest without both readable bundles is not installed', () async {
+    await File(GeoData.dir.joinPath('ip6_city_v1.bin')).delete();
+    await GeoData.resetForTest();
+
     expect(GeoData.installed(), isNull);
   });
+
+  test('a structurally corrupt bundle is not installed', () async {
+    final file = File(GeoData.dir.joinPath('ip4_city_v1.bin'));
+    await file.writeAsBytes(Uint8List(await file.length()), flush: true);
+    await GeoData.resetForTest();
+
+    expect(GeoData.installed(), isNull);
+  });
+
+  test(
+    'a previous installation is restored after an interrupted swap',
+    () async {
+      await GeoData.resetForTest();
+      final backupPath = '${GeoData.dir}.previous';
+      await Directory(GeoData.dir).rename(backupPath);
+
+      expect(GeoData.installed()?.generated, '2026-09');
+      expect(await Directory(GeoData.dir).exists(), isTrue);
+      expect(await Directory(backupPath).exists(), isFalse);
+    },
+  );
 
   test('a removal is announced once', () async {
     expect(await GeoData.remove(), isTrue);
     expect(seen, 1);
   });
 
-  test('a failed install is announced once, not twice', () async {
-    // The bug: `install` began with `remove()`, which announces. Listeners
-    // heard the data was gone before a single byte had been fetched, and heard
-    // it again when the attempt collapsed — so the globe cleared and
-    // re-resolved everything twice for one failed download.
+  test('a failed update keeps the previous installation', () async {
     GeoData.clientFactory = () => Dio()..httpClientAdapter = _DeadAdapter();
 
     expect(await GeoData.install(manifestOf('2026-10')), isFalse);
 
-    expect(seen, 1, reason: 'one attempt, one change');
-    expect(GeoData.installed(), isNull);
+    expect(seen, 0, reason: 'the installed data did not change');
+    expect(GeoData.installed()?.generated, '2026-09');
   });
 
   test('and nothing is announced before the download is attempted', () async {
@@ -189,8 +272,38 @@ void main() {
     expect(
       seenBeforeFetch,
       0,
-      reason: 'the old data was deleted, and nobody was told yet',
+      reason: 'the old data remains live while staging is downloaded',
     );
+  });
+
+  test(
+    'a partial staged update is discarded without touching the old one',
+    () async {
+      final offer = await offerOf('2026-10');
+      GeoData.clientFactory = () => Dio()
+        ..httpClientAdapter = _RouteAdapter({
+          'ip4_city_v1.bin.gz': offer.bodies['ip4_city_v1.bin.gz']!,
+        });
+
+      expect(await GeoData.install(offer.manifest), isFalse);
+
+      expect(GeoData.installed()?.generated, '2026-09');
+      expect(await Directory('${GeoData.dir}.installing').exists(), isFalse);
+      expect(seen, 0);
+    },
+  );
+
+  test('a complete staged update replaces the old data once', () async {
+    final offer = await offerOf('2026-10');
+    GeoData.clientFactory = () =>
+        Dio()..httpClientAdapter = _RouteAdapter(offer.bodies);
+
+    expect(await GeoData.install(offer.manifest), isTrue);
+
+    expect(GeoData.installed()?.generated, '2026-10');
+    expect(await Directory('${GeoData.dir}.installing').exists(), isFalse);
+    expect(await Directory('${GeoData.dir}.previous').exists(), isFalse);
+    expect(seen, 1);
   });
 }
 
