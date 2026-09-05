@@ -14,6 +14,7 @@ import 'package:server_box/core/utils/tag_group.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
+import 'package:server_box/data/model/app/server_sort.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -38,7 +39,6 @@ part 'content.dart';
 part 'flight.dart';
 part 'landscape.dart';
 part 'pane_list.dart';
-part 'sort.dart';
 part 'utils.dart';
 
 class ServerPage extends ConsumerStatefulWidget {
@@ -392,7 +392,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
     //
     // `select` narrows it to the transition: a status poll landing does not
     // reorder the list, a server connecting or dropping does.
-    final conns = _SortOrder.stored.field != _SortField.status
+    final conns = ServerSortOrder.stored.field != ServerSortField.status
         ? const <String, ServerConn>{}
         : {
             for (final id in serverOrder)
@@ -444,9 +444,9 @@ class _ServerPageState extends ConsumerState<ServerPage>
             ]),
             builder: (_, _) {
                 // The settings arrangement, viewed however the sort button
-                // says — see [_SortOrder], whose first option is that
+                // says — see [ServerSortOrder], whose first option is that
                 // arrangement unchanged.
-                final ordered = _SortOrder.stored.apply(
+                final ordered = ServerSortOrder.stored.apply(
                   serverOrder,
                   servers,
                   (id) => conns[id] ?? ServerConn.disconnected,
@@ -585,7 +585,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
     ),
     Btn.icon(
       text: libL10n.sort,
-      icon: Icon(_SortOrder.stored.icon, size: 18),
+      icon: Icon(ServerSortOrder.stored.icon, size: 18),
       onTap: _showSortSheet,
     ),
     // Absent, not disabled, when the feature is off: a button that explains
@@ -669,7 +669,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
     await showRowsSheet<void>(
       context,
       rows: (ctx) => [
-        for (final order in _SortOrder.all)
+        for (final order in ServerSortOrder.all)
           SheetChoiceTile(
             icon: order.icon,
             title: order.label,

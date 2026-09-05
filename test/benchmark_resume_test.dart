@@ -225,14 +225,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(tester.takeException(), isNull);
-    expect(find.byType(SheetChoiceTile), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byType(SheetChoiceTile),
-        matching: find.text('web'),
-      ),
-      findsOneWidget,
-    );
+    // The shared picker: search, tags and the arrangement the user made.
+    expect(find.text('web'), findsWidgets);
+    expect(find.byIcon(Icons.search), findsOneWidget);
     await close(tester);
   });
 

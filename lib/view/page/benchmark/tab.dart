@@ -6,6 +6,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/utils/server_picker.dart';
 import 'package:server_box/data/model/server/benchmark/benchmark_run.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/benchmark.dart';
@@ -170,7 +171,7 @@ extension _Widgets on _BenchmarkTabPageState {
             IconButton(
               icon: const Icon(Icons.play_arrow),
               tooltip: l10n.benchmark,
-              onPressed: () => _pickServer(servers),
+              onPressed: _pickServer,
             ),
         ],
       ),
@@ -263,35 +264,26 @@ extension _Widgets on _BenchmarkTabPageState {
 extension _Actions on _BenchmarkTabPageState {
   /// Which machine to run on.
   ///
-  /// A sheet rather than a control kept on screen. It is answered once and then
-  /// not looked at again for a quarter of an hour, so a card holding it above
-  /// the history spent a permanent row on a question that is momentary — and
-  /// the history is what this column is for.
-  Future<void> _pickServer(List<Spi> servers) async {
-    await showRowsSheet<void>(
+  /// The shared picker, not one of this page's own: with more than a handful of
+  /// servers the question needs search, tags and the arrangement the user
+  /// already made, and a bespoke dropdown here had none of them.
+  Future<void> _pickServer() async {
+    final spi = await pickServer(
       context,
-      rows: (ctx) => [
-        for (final spi in servers)
-          SheetChoiceTile(
-            title: spi.name,
-            selected: spi.id == _selectedId,
-            // A machine with a run in flight is worth spotting here, since
-            // choosing another is what hides it.
-            icon: BenchmarkStore.instance.activeFor(spi.id) != null
-                ? Icons.timelapse
-                : null,
-            onTap: () {
-              ctx.pop();
-              setState(() {
-                _selectedId = spi.id;
-                // Choosing a machine is asking to act on it, so the right
-                // column stops showing whatever old result was being read.
-                _viewingRunId = null;
-              });
-            },
-          ),
-      ],
+      selectedId: _selectedId,
+      // A machine with a run in flight is worth spotting here, since choosing
+      // another is what hides it.
+      trailingOf: (spi) => BenchmarkStore.instance.activeFor(spi.id) != null
+          ? const Icon(Icons.timelapse, size: 17)
+          : null,
     );
+    if (spi == null || !mounted) return;
+    setState(() {
+      _selectedId = spi.id;
+      // Choosing a machine is asking to act on it, so the right column stops
+      // showing whatever old result was being read.
+      _viewingRunId = null;
+    });
   }
 
   /// Reads a past run: in the right column when there is one, as a page when

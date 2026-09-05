@@ -279,10 +279,23 @@ exit $exitCode
       expect(start.stdout, contains(YabsScript.started));
 
       // Wait for the launcher to record its pid before asking to stop it.
+      //
+      // Bounded by the clock rather than by a count, for `runToCompletion`'s
+      // reason: this waits on a real process being scheduled, and under a
+      // parallel suite run a fixed number of 50ms sleeps is a fraction of the
+      // wall time it looks like. Both waits in this file have timed out that
+      // way, in different tests, on a machine that was merely busy.
       final dir = '${tmp.path}/.config/server_box/bench/run';
-      for (var i = 0; i < 100 && !File('$dir/pid').existsSync(); i++) {
+      final pidDeadline = DateTime.now().add(const Duration(seconds: 30));
+      while (!File('$dir/pid').existsSync() &&
+          DateTime.now().isBefore(pidDeadline)) {
         await Future<void>.delayed(const Duration(milliseconds: 50));
       }
+      expect(
+        File('$dir/pid').existsSync(),
+        isTrue,
+        reason: 'the launcher never recorded its pid',
+      );
       expect(
         YabsPollState.parse(
           (await sh(YabsScript.pollCommand(YabsScript.runDir(options)))).stdout,
