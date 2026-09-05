@@ -27,6 +27,7 @@ import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
+import 'package:server_box/view/page/benchmark/history_tile.dart';
 import 'package:server_box/view/page/benchmark/result.dart';
 import 'package:server_box/view/page/benchmark/tab.dart';
 
@@ -194,6 +195,40 @@ void main() {
     expect(find.textContaining('offline'), findsOneWidget);
     // Still running, and still stoppable: a failed poll is not a failed run.
     expect(find.text(libL10n.stop), findsOneWidget);
+    await close(tester);
+  });
+
+  testWidgets('both columns are drawn, and neither throws', (tester) async {
+    // The tab is a two-column layout, and its detail is built inside the pane's
+    // own `Builder` — a different element from the page's. `ref.watch` and
+    // `ref.listen` are illegal there, and illegal loudly: the first version
+    // threw on every frame that had a detail to draw, which is every frame.
+    seedRunning();
+
+    await pump(tester, const BenchmarkTabPage());
+
+    expect(tester.takeException(), isNull);
+    // Left: the history, naming the machine. Right: that machine's run.
+    expect(find.text('web'), findsWidgets);
+    expect(find.text(libL10n.stop), findsOneWidget);
+    await close(tester);
+  });
+
+  testWidgets('tapping a past run shows it beside the list', (tester) async {
+    final run = seedRunning();
+    BenchmarkStore.instance.put(
+      run.copyWith(status: BenchmarkStatus.completed, exitCode: 0),
+    );
+
+    await pump(tester, const BenchmarkTabPage());
+    await tester.tap(find.byType(BenchmarkHistoryTile).first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(tester.takeException(), isNull);
+    // The result took the right column; the list is still there beside it.
+    expect(find.byType(BenchmarkHistoryTile), findsWidgets);
+    expect(find.text(l10n.benchmarkRawLog), findsWidgets);
     await close(tester);
   });
 

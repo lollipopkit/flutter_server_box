@@ -16,6 +16,7 @@ import 'package:server_box/view/page/benchmark/config.dart';
 import 'package:server_box/view/page/benchmark/history_tile.dart';
 import 'package:server_box/view/page/benchmark/result.dart';
 import 'package:server_box/view/page/benchmark/running_card.dart';
+import 'package:server_box/view/widget/pane_settings.dart';
 
 /// The benchmark tab: pick a machine, run one, and read what every machine has
 /// reported so far.
@@ -26,6 +27,11 @@ import 'package:server_box/view/page/benchmark/running_card.dart';
 /// its own and only means something beside another machine's. Keeping the whole
 /// history on one page is that comparison; a per-server page could only ever
 /// show one column of it.
+///
+/// Two columns, like the snippet and server tabs. The history is a list of
+/// records, and what is done with one — start a run, watch it, read a result —
+/// is the other column. A run takes a quarter of an hour, so reading an old
+/// result without losing sight of the one in flight is most of the point.
 class BenchmarkTabPage extends ConsumerStatefulWidget {
   const BenchmarkTabPage({super.key});
 
@@ -34,7 +40,11 @@ class BenchmarkTabPage extends ConsumerStatefulWidget {
 }
 
 class _BenchmarkTabPageState extends ConsumerState<BenchmarkTabPage> {
+  /// The machine the right column runs against.
   String? _selectedId;
+
+  /// A past run being read, or null for the selected machine's own column.
+  String? _viewingRunId;
 
   /// Redraws the elapsed clock of a run in flight. The record itself only
   /// changes when a poll comes back, which is up to twenty seconds apart.
@@ -88,10 +98,43 @@ class _BenchmarkTabPageState extends ConsumerState<BenchmarkTabPage> {
     // is the one worth showing.
     _selectedId ??= _runningIdAmong(servers) ?? servers.firstOrNull?.id;
 
-    return Scaffold(
-      appBar: CustomAppBar(title: Text(l10n.benchmark)),
-      body: servers.isEmpty ? _buildNoServers() : _buildBody(servers),
-    );
+    // Read here and passed down, not read where it is used. `detailBuilder`
+    // runs inside the pane's own `Builder`, which is a different element from
+    // this one, so `ref.listen` there asserts — it threw on every frame that
+    // had a detail to draw, which is every frame. `ref.watch` does not assert,
+    // which is worse rather than better: it would quietly subscribe from the
+    // wrong element. Both belong here.
+    final spi = _selected;
+    final state = spi == null ? null : ref.watch(benchmarkProvider(spi));
+    if (spi != null) {
+      ref.listen<String?>(benchmarkProvider(spi).select((s) => s.error), (
+        _,
+        err,
+      ) {
+        if (err == null) return;
+        Toast.error(l10n.benchmarkStartFailed, body: err);
+        ref.read(benchmarkProvider(spi).notifier).clearError();
+      });
+    }
+
+    return PaneSettings.listenAll((paneWidth, paneCollapsed) {
+      return AdaptivePanes.detail(
+        listWidth: paneWidth,
+        onListWidthChanged: PaneSettings.saveWidth,
+        collapsed: paneCollapsed,
+        onCollapsedChanged: PaneSettings.saveCollapsed,
+        collapseTooltip: libL10n.fold,
+        expandTooltip: libL10n.open,
+        detailId: _viewingRunId ?? 'server:$_selectedId',
+        // Back to the selected machine's own column rather than to nothing.
+        // There is always something worth showing on the right, and an empty
+        // pane beside a history one tap from filling it is width spent on
+        // nothing.
+        onCloseDetail: () => setState(() => _viewingRunId = null),
+        detailBuilder: (_) => _buildDetail(spi, state),
+        listBuilder: (_, split) => _buildList(servers, split),
+      );
+    });
   }
 
   String? _runningIdAmong(List<Spi> servers) {
@@ -105,56 +148,46 @@ class _BenchmarkTabPageState extends ConsumerState<BenchmarkTabPage> {
 // --- Widgets ---
 
 extension _Widgets on _BenchmarkTabPageState {
-  Widget _buildNoServers() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 27),
-        child: Text(
-          l10n.benchmarkNoServers,
-          style: UIs.textGrey,
-          textAlign: TextAlign.center,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBody(List<Spi> servers) {
-    final spi = _selected;
+  /// The left column: which machine, and everything that has been run.
+  Widget _buildList(List<Spi> servers, bool split) {
     final byId = _byId;
     final history = BenchmarkStore.instance.all();
 
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
-      children: [
-        _buildPicker(servers),
-        UIs.height13,
-        if (spi != null) _buildForServer(spi),
-        UIs.height13,
-        Text('  ${libL10n.log}', style: UIs.textGrey),
-        UIs.height7,
-        if (history.isEmpty)
-          Padding(
-            padding: const EdgeInsets.all(27),
-            child: Text(
-              l10n.benchmarkNoRuns,
-              style: UIs.textGrey,
-              textAlign: TextAlign.center,
+    return Scaffold(
+      appBar: CustomAppBar(title: Text(l10n.benchmark)),
+      body: servers.isEmpty
+          ? _centered(l10n.benchmarkNoServers)
+          : ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+              children: [
+                _buildPicker(servers),
+                UIs.height13,
+                if (history.isEmpty)
+                  _centered(l10n.benchmarkNoRuns)
+                else
+                  // Every server's, not the selected one's. Switching machines
+                  // to read a result would make the list jump under the hand
+                  // that switched.
+                  for (final run in history)
+                    BenchmarkHistoryTile(
+                      run: run,
+                      // Named here because the list spans servers, which is the
+                      // whole point of it: a row without one says nothing.
+                      serverName: byId[run.serverId]?.name,
+                      selected: split && _viewingRunId == run.id,
+                      onTap: () => _openRun(run, split),
+                      onDelete: () => _onDelete(run),
+                    ),
+                UIs.height13,
+              ],
             ),
-          )
-        else
-          // Every server's, not the selected one's. Switching machines to read
-          // a result would make the list jump under the hand that switched.
-          for (final run in history)
-            BenchmarkHistoryTile(
-              run: run,
-              // Named here because the list spans servers, which is the whole
-              // point of it: a row without one says nothing.
-              serverName: byId[run.serverId]?.name,
-              onTap: () => BenchmarkResultPage.route.go(context, run),
-              onDelete: () => _onDelete(run),
-            ),
-        UIs.height13,
-      ],
+    );
+  }
+
+  Widget _centered(String text) {
+    return Padding(
+      padding: const EdgeInsets.all(27),
+      child: Text(text, style: UIs.textGrey, textAlign: TextAlign.center),
     );
   }
 
@@ -193,35 +226,55 @@ extension _Widgets on _BenchmarkTabPageState {
                   ),
                 ),
             ],
-            onChanged: (id) => setState(() => _selectedId = id),
+            // Choosing a machine is asking to act on it, so the right column
+            // stops showing whatever old result was being read.
+            onChanged: (id) => setState(() {
+              _selectedId = id;
+              _viewingRunId = null;
+            }),
           ),
         ),
       ),
     );
   }
 
-  /// The selected machine's run, or the form to start one.
-  Widget _buildForServer(Spi spi) {
-    final state = ref.watch(benchmarkProvider(spi));
-    ref.listen<String?>(benchmarkProvider(spi).select((s) => s.error), (_, err) {
-      if (err == null) return;
-      Toast.error(l10n.benchmarkStartFailed, body: err);
-      ref.read(benchmarkProvider(spi).notifier).clearError();
-    });
-
-    if (state.active case final run?) {
-      return BenchmarkRunningCard(
-        run: run,
-        busy: state.isBusy,
-        onCancel: () => _onCancel(spi),
-      );
+  /// The right column: a result being read, or the selected machine's run.
+  Widget _buildDetail(Spi? spi, BenchmarkState? state) {
+    if (_viewingRunId case final id?) {
+      final run = BenchmarkStore.instance.get(id);
+      // Deleted from the list beside it. Falls through to the machine's own
+      // column rather than rendering a record that is gone.
+      if (run != null) return BenchmarkResultPage(args: run);
     }
-    return BenchmarkConfig(
-      key: ValueKey(spi.id),
-      initial: state.history.firstOrNull?.options,
-      busy: state.isBusy,
-      onStart: (options) =>
-          ref.read(benchmarkProvider(spi).notifier).start(options),
+    if (spi == null || state == null) {
+      return const EmptyPane(icon: Icons.speed_outlined);
+    }
+    return _buildRunPane(spi, state);
+  }
+
+  Widget _buildRunPane(Spi spi, BenchmarkState state) {
+    return Scaffold(
+      appBar: CustomAppBar(title: Text(spi.name)),
+      body: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+        children: [
+          if (state.active case final run?)
+            BenchmarkRunningCard(
+              run: run,
+              busy: state.isBusy,
+              onCancel: () => _onCancel(spi),
+            )
+          else
+            BenchmarkConfig(
+              key: ValueKey(spi.id),
+              initial: state.history.firstOrNull?.options,
+              busy: state.isBusy,
+              onStart: (options) =>
+                  ref.read(benchmarkProvider(spi).notifier).start(options),
+            ),
+          UIs.height13,
+        ],
+      ),
     );
   }
 }
@@ -229,6 +282,16 @@ extension _Widgets on _BenchmarkTabPageState {
 // --- Actions ---
 
 extension _Actions on _BenchmarkTabPageState {
+  /// Reads a past run: in the right column when there is one, as a page when
+  /// the window is too narrow for two.
+  void _openRun(BenchmarkRun run, bool split) {
+    if (split) {
+      setState(() => _viewingRunId = run.id);
+      return;
+    }
+    BenchmarkResultPage.route.go(context, run);
+  }
+
   Future<void> _onCancel(Spi spi) async {
     final ok = await context.showRoundDialog<bool>(
       title: libL10n.attention,
@@ -247,6 +310,11 @@ extension _Actions on _BenchmarkTabPageState {
     );
     if (ok != true) return;
     BenchmarkStore.instance.remove(run.id);
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    setState(() {
+      // The right column was showing it. Back to the machine's own column,
+      // rather than to a pane rendering a record that no longer exists.
+      if (_viewingRunId == run.id) _viewingRunId = null;
+    });
   }
 }

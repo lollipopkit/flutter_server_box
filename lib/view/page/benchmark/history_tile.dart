@@ -10,6 +10,7 @@ class BenchmarkHistoryTile extends StatelessWidget {
     required this.onTap,
     required this.onDelete,
     this.serverName,
+    this.selected = false,
   });
 
   final BenchmarkRun run;
@@ -24,6 +25,12 @@ class BenchmarkHistoryTile extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onDelete;
 
+  /// Whether the column beside this one is showing it.
+  ///
+  /// Only ever true in the two-column layout: with one column the detail is a
+  /// page on top of the list, so there is nothing left on screen to mark.
+  final bool selected;
+
   @override
   Widget build(BuildContext context) {
     final (icon, color) = switch (run.status) {
@@ -36,6 +43,10 @@ class BenchmarkHistoryTile extends StatelessWidget {
 
     return CardX(
       child: ListTile(
+        selected: selected,
+        selectedTileColor: Theme.of(
+          context,
+        ).colorScheme.primary.withValues(alpha: 0.1),
         leading: Icon(icon, color: color),
         title: Text(
           serverName ?? libL10n.unknown,
