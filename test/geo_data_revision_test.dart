@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -8,25 +9,9 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/service/geo_data.dart';
 import 'package:server_box/data/model/app/geo_manifest.dart';
+import 'package:server_box/data/res/url.dart';
 
 import 'helpers/geo_fixture.dart';
-
-/// An endpoint that serves the same bytes for every request.
-class _ServingAdapter implements HttpClientAdapter {
-  _ServingAdapter(this.body);
-
-  final Uint8List body;
-
-  @override
-  void close({bool force = false}) {}
-
-  @override
-  Future<ResponseBody> fetch(
-    RequestOptions options,
-    Stream<Uint8List>? requestStream,
-    Future<void>? cancelFuture,
-  ) async => ResponseBody.fromBytes(body, 200);
-}
 
 /// An endpoint that is not there, so an install fails without a network.
 class _DeadAdapter implements HttpClientAdapter {
@@ -43,9 +28,10 @@ class _DeadAdapter implements HttpClientAdapter {
 
 /// An endpoint whose response is selected by the requested filename.
 class _RouteAdapter implements HttpClientAdapter {
-  _RouteAdapter(this.bodies);
+  _RouteAdapter(this.bodies, {this.requests});
 
   final Map<String, Uint8List> bodies;
+  final List<String>? requests;
 
   @override
   void close({bool force = false}) {}
@@ -56,7 +42,9 @@ class _RouteAdapter implements HttpClientAdapter {
     Stream<Uint8List>? requestStream,
     Future<void>? cancelFuture,
   ) async {
-    final body = bodies[options.uri.pathSegments.last];
+    final url = options.uri.toString();
+    requests?.add(url);
+    final body = bodies[url] ?? bodies[options.uri.pathSegments.last];
     return body == null
         ? ResponseBody.fromBytes(const [], 404)
         : ResponseBody.fromBytes(body, 200);
@@ -116,8 +104,10 @@ void main() {
   })!;
 
   Future<({GeoManifest manifest, Map<String, Uint8List> bodies})> offerOf(
-    String generated,
-  ) async {
+    String generated, {
+    String attribution = 'test',
+    int gzipMarker = 0,
+  }) async {
     final year = int.parse(generated.substring(0, 4));
     final month = int.parse(generated.substring(5, 7));
     final assets = <Map<String, Object?>>[];
@@ -130,6 +120,10 @@ void main() {
       raw[7] = year & 0xff;
       raw[8] = month;
       final packed = Uint8List.fromList(gzip.encode(raw));
+      // The gzip mtime is metadata, not part of the unpacked bundle or its CRC.
+      // Changing it models two builders producing equally sized, equivalent
+      // archives with different packed hashes.
+      packed[4] = gzipMarker;
       final filename = '${name}_city_v1.bin.gz';
       bodies[filename] = packed;
       assets.add({
@@ -140,15 +134,62 @@ void main() {
         'sha256': sha256.convert(packed).toString(),
       });
     }
-    return (
-      manifest: GeoManifest.tryFromJson({
-        'version': 1,
-        'generated': generated,
-        'attribution': 'test',
-        'assets': assets,
-      })!,
-      bodies: bodies,
+    final manifest = GeoManifest.tryFromJson({
+      'version': 1,
+      'generated': generated,
+      'attribution': attribution,
+      'assets': assets,
+    })!;
+    bodies['manifest.json'] = Uint8List.fromList(
+      utf8.encode(jsonEncode(manifest.toJson())),
     );
+    return (manifest: manifest, bodies: bodies);
+  }
+
+  Map<String, Uint8List> routesFor(
+    String endpoint,
+    Map<String, Uint8List> bodies,
+  ) => {
+    for (final entry in bodies.entries) '$endpoint/${entry.key}': entry.value,
+  };
+
+  ({GeoManifest manifest, Map<String, Uint8List> bodies}) withPackedSizeDelta(
+    ({GeoManifest manifest, Map<String, Uint8List> bodies}) offer,
+  ) {
+    final json = offer.manifest.toJson();
+    final assets = json['assets']! as List<Map<String, Object?>>;
+    assets.first['bytes'] = (assets.first['bytes']! as int) + 1;
+    final manifest = GeoManifest.tryFromJson(json)!;
+    return (
+      manifest: manifest,
+      bodies: {
+        ...offer.bodies,
+        'manifest.json': Uint8List.fromList(
+          utf8.encode(jsonEncode(manifest.toJson())),
+        ),
+      },
+    );
+  }
+
+  Future<void> expectIncompatibleFallbackRejected(
+    ({GeoManifest manifest, Map<String, Uint8List> bodies}) confirmed,
+    ({GeoManifest manifest, Map<String, Uint8List> bodies}) fallback,
+  ) async {
+    final requests = <String>[];
+    GeoData.clientFactory = () => Dio()
+      ..httpClientAdapter = _RouteAdapter({
+        // The primary offer is still the one the user confirmed, but its
+        // assets are unavailable so installation reaches the fallback.
+        '${Urls.geoData}/manifest.json': confirmed.bodies['manifest.json']!,
+        ...routesFor(Urls.geoDataFallback, fallback.bodies),
+      }, requests: requests);
+
+    expect(await GeoData.install(confirmed.manifest), isFalse);
+    expect(GeoData.installed()?.generated, '2026-09');
+    expect(seen, 0);
+    expect(requests.where((url) => url.startsWith(Urls.geoDataFallback)), [
+      '${Urls.geoDataFallback}/manifest.json',
+    ], reason: 'incompatible fallback assets must not be downloaded');
   }
 
   /// An archive whose declared size is a lie.
@@ -208,8 +249,14 @@ void main() {
           },
       ],
     })!;
+    final bodies = {
+      'manifest.json': Uint8List.fromList(
+        utf8.encode(jsonEncode(manifest.toJson())),
+      ),
+      for (final asset in manifest.assets) asset.name: bomb,
+    };
     GeoData.clientFactory = () =>
-        Dio()..httpClientAdapter = _ServingAdapter(bomb);
+        Dio()..httpClientAdapter = _RouteAdapter(bodies);
 
     expect(await GeoData.install(manifest), isFalse);
     expect(GeoData.installed()?.generated, '2026-09');
@@ -304,6 +351,80 @@ void main() {
     expect(await Directory('${GeoData.dir}.installing').exists(), isFalse);
     expect(await Directory('${GeoData.dir}.previous').exists(), isFalse);
     expect(seen, 1);
+  });
+
+  test('an invalid primary manifest falls back to a readable one', () async {
+    final fallback = await offerOf('2026-10');
+    GeoData.clientFactory = () => Dio()
+      ..httpClientAdapter = _RouteAdapter({
+        '${Urls.geoData}/manifest.json': Uint8List.fromList(utf8.encode('{')),
+        '${Urls.geoDataFallback}/manifest.json':
+            fallback.bodies['manifest.json']!,
+      });
+
+    expect((await GeoData.fetchManifest())?.generated, '2026-10');
+  });
+
+  test(
+    'fallback uses its own manifest and restarts a partial primary download',
+    () async {
+      final primary = await offerOf('2026-10', gzipMarker: 1);
+      final fallback = await offerOf('2026-10', gzipMarker: 2);
+      final primaryV4 = primary.manifest.assets.firstWhere(
+        (asset) => asset.family == 4,
+      );
+      final fallbackV4 = fallback.manifest.assets.firstWhere(
+        (asset) => asset.family == 4,
+      );
+      expect(primaryV4.bytes, fallbackV4.bytes);
+      expect(primaryV4.sha256, isNot(fallbackV4.sha256));
+
+      final requests = <String>[];
+      GeoData.clientFactory = () => Dio()
+        ..httpClientAdapter = _RouteAdapter({
+          '${Urls.geoData}/manifest.json': primary.bodies['manifest.json']!,
+          '${Urls.geoData}/${primaryV4.name}': primary.bodies[primaryV4.name]!,
+          ...routesFor(Urls.geoDataFallback, fallback.bodies),
+        }, requests: requests);
+
+      expect(await GeoData.install(primary.manifest), isTrue);
+
+      final installedV4 = GeoData.installed()!.assets.firstWhere(
+        (asset) => asset.family == 4,
+      );
+      expect(installedV4.sha256, fallbackV4.sha256);
+      expect(
+        requests,
+        containsAllInOrder([
+          '${Urls.geoData}/${primaryV4.name}',
+          '${Urls.geoDataFallback}/${fallbackV4.name}',
+        ]),
+        reason: 'fallback must restart the first asset after staging is reset',
+      );
+      expect(seen, 1);
+    },
+  );
+
+  test('a fallback from another month is rejected', () async {
+    await expectIncompatibleFallbackRejected(
+      await offerOf('2026-10'),
+      await offerOf('2026-11'),
+    );
+  });
+
+  test('a fallback with different attribution is rejected', () async {
+    await expectIncompatibleFallbackRejected(
+      await offerOf('2026-10'),
+      await offerOf('2026-10', attribution: 'somebody else'),
+    );
+  });
+
+  test('a fallback with different sizes is rejected', () async {
+    final fallback = await offerOf('2026-10');
+    await expectIncompatibleFallbackRejected(
+      await offerOf('2026-10'),
+      withPackedSizeDelta(fallback),
+    );
   });
 }
 

@@ -28,6 +28,7 @@ abstract final class GeoData {
 
   static String get _stagingDir => '$dir.installing';
   static String get _backupDir => '$dir.previous';
+  static const _endpoints = [Urls.geoData, Urls.geoDataFallback];
 
   static String _manifestAt(String root) => root.joinPath('installed.json');
 
@@ -177,14 +178,61 @@ abstract final class GeoData {
   /// bytes — it exists so the dialog can say what the download actually costs
   /// this month instead of quoting a number compiled into the app.
   static Future<GeoManifest?> fetchManifest() async {
-    final bytes = await _fetch('manifest.json', 64 * 1024);
+    for (final endpoint in _endpoints) {
+      final manifest = await _fetchManifestFrom(endpoint);
+      if (manifest != null) return manifest;
+    }
+    return null;
+  }
+
+  static Future<GeoManifest?> _fetchManifestFrom(String endpoint) async {
+    final bytes = await _fetchFrom(endpoint, 'manifest.json', 64 * 1024);
     if (bytes == null) return null;
     try {
-      return GeoManifest.tryFromJson(jsonDecode(utf8.decode(bytes)));
+      final manifest = GeoManifest.tryFromJson(jsonDecode(utf8.decode(bytes)));
+      if (manifest == null) {
+        Loggers.app.warning('Geo manifest from $endpoint is invalid');
+      }
+      return manifest;
     } catch (e) {
-      Loggers.app.warning('Geo manifest is unreadable: $e');
+      Loggers.app.warning('Geo manifest from $endpoint is unreadable: $e');
       return null;
     }
+  }
+
+  /// Whether [offered] still describes what the user agreed to download.
+  ///
+  /// A fallback may gzip the same raw bundle differently, so its packed digest
+  /// is deliberately absent from this comparison. Everything visible in the
+  /// consent dialog or needed to identify the data remains fixed, including
+  /// both packed and unpacked sizes. The successful endpoint's own digest is
+  /// then used to verify its bytes.
+  static bool _matchesConfirmedOffer(
+    GeoManifest confirmed,
+    GeoManifest offered,
+  ) {
+    if (offered.version != confirmed.version ||
+        offered.generated != confirmed.generated ||
+        offered.attribution != confirmed.attribution ||
+        offered.assets.length != confirmed.assets.length) {
+      return false;
+    }
+    for (final expected in confirmed.assets) {
+      GeoAsset? actual;
+      for (final candidate in offered.assets) {
+        if (candidate.family == expected.family) {
+          actual = candidate;
+          break;
+        }
+      }
+      if (actual == null ||
+          actual.name != expected.name ||
+          actual.bytes != expected.bytes ||
+          actual.unpackedBytes != expected.unpackedBytes) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /// Downloads and unpacks everything [manifest] names.
@@ -203,79 +251,96 @@ abstract final class GeoData {
     GeoManifest manifest, {
     void Function(int received, int total)? onProgress,
   }) async {
+    for (final endpoint in _endpoints) {
+      if (!await _discardDirectory(_stagingDir)) return false;
+      try {
+        // Re-read the manifest from the endpoint whose assets will be used.
+        // Otherwise a primary manifest can be paired with a fallback archive,
+        // even though independently produced gzip files need not share a hash.
+        final offered = await _fetchManifestFrom(endpoint);
+        if (offered == null) continue;
+        if (!_matchesConfirmedOffer(manifest, offered)) {
+          Loggers.app.warning(
+            'Geo offer from $endpoint changed after it was confirmed',
+          );
+          continue;
+        }
+        if (await _installFromEndpoint(endpoint, offered, onProgress)) {
+          return true;
+        }
+      } catch (e, s) {
+        Loggers.app.warning('Could not install geo data from $endpoint', e, s);
+      }
+    }
+    await _discardDirectory(_stagingDir);
+    return false;
+  }
+
+  static Future<bool> _installFromEndpoint(
+    String endpoint,
+    GeoManifest manifest,
+    void Function(int received, int total)? onProgress,
+  ) async {
     final total = manifest.downloadBytes;
     var done = 0;
-    try {
-      final staging = Directory(_stagingDir);
-      if (await staging.exists()) await staging.delete(recursive: true);
-      await staging.create(recursive: true);
-      for (final asset in manifest.assets) {
-        final packed = await _fetch(
-          asset.name,
-          asset.bytes + 1024,
-          // `done` is whole assets already here; `got` restarts when a URL is
-          // retried, so the bar goes back if the primary endpoint dies partway.
-          // Left honest rather than held at a high-water mark: the bytes really
-          // are being fetched again, and a bar frozen through an 8 MB re-download
-          // followed by a jump is the worse lie.
-          onReceive: (got) => onProgress?.call(done + got, total),
+    await Directory(_stagingDir).create(recursive: true);
+    for (final asset in manifest.assets) {
+      final packed = await _fetchFrom(
+        endpoint,
+        asset.name,
+        asset.bytes + 1024,
+        // `done` is whole assets already here. It restarts at zero when an
+        // endpoint fails and the next complete source is attempted, because
+        // all bytes in the abandoned staging directory are discarded.
+        onReceive: (got) => onProgress?.call(done + got, total),
+      );
+      if (packed == null) throw StateError('${asset.name} did not arrive');
+      if (packed.length != asset.bytes) {
+        throw StateError(
+          '${asset.name} is ${packed.length} bytes, manifest says '
+          '${asset.bytes}',
         );
-        if (packed == null) throw StateError('${asset.name} did not arrive');
-        if (packed.length != asset.bytes) {
-          throw StateError(
-            '${asset.name} is ${packed.length} bytes, manifest says '
-            '${asset.bytes}',
-          );
-        }
-        // Before it is unpacked, and against the *packed* bytes, so what is
-        // checked is what was received. Not a signature: the manifest comes
-        // from the same place as the files, so this catches a corrupted or
-        // truncated transfer rather than a hostile endpoint. What limits the
-        // damage a hostile one could do is that a bundle is coordinates —
-        // there is nothing in it that this app executes.
-        final digest = sha256.convert(packed).toString();
-        if (digest != asset.sha256) {
-          throw StateError('${asset.name} hashes to $digest');
-        }
-        // Decoded against a ceiling rather than decoded and then measured.
-        // `gzip.decode` materialises the whole output first, so a 64 MB
-        // download declaring 4 MB and expanding to 8 GB was out of memory
-        // before the length check on the next line could refuse it — and the
-        // manifest naming both numbers comes from the same endpoint as the
-        // bytes, so neither is a reason to trust the other.
-        final raw = gunzipCapped(packed, asset.unpackedBytes, asset.name);
-        final output = _stagingDir.joinPath(asset.unpackedName);
-        await File(output).writeAsBytes(raw, flush: true);
-        final bundle = GeoBundle.open(output);
-        final valid =
-            bundle != null &&
-            bundle.family == asset.family &&
-            bundle.year == manifest.year &&
-            bundle.month == manifest.month;
-        bundle?.close();
-        if (!valid) {
-          throw StateError('${asset.name} is not the bundle in the manifest');
-        }
-        done += packed.length;
-        onProgress?.call(done, total);
       }
-
-      await File(
-        _manifestAt(_stagingDir),
-      ).writeAsString(jsonEncode(manifest.toJson()), flush: true);
-      if (_readInstalledAt(_stagingDir) == null) {
-        throw StateError('the staged geo installation is incomplete');
+      // Before it is unpacked, and against the *packed* bytes, so what is
+      // checked is what was received. Not a signature: the manifest comes
+      // from the same place as the files, so this catches a corrupted or
+      // truncated transfer rather than a hostile endpoint. What limits the
+      // damage a hostile one could do is that a bundle is coordinates —
+      // there is nothing in it that this app executes.
+      final digest = sha256.convert(packed).toString();
+      if (digest != asset.sha256) {
+        throw StateError('${asset.name} hashes to $digest');
       }
-      if (!await _activateStaging(manifest)) {
-        await _discardDirectory(_stagingDir);
-        return false;
+      // Decoded against a ceiling rather than decoded and then measured.
+      // `gzip.decode` materialises the whole output first, so a 64 MB
+      // download declaring 4 MB and expanding to 8 GB was out of memory
+      // before the length check on the next line could refuse it — and the
+      // manifest naming both numbers comes from the same endpoint as the
+      // bytes, so neither is a reason to trust the other.
+      final raw = gunzipCapped(packed, asset.unpackedBytes, asset.name);
+      final output = _stagingDir.joinPath(asset.unpackedName);
+      await File(output).writeAsBytes(raw, flush: true);
+      final bundle = GeoBundle.open(output);
+      final valid =
+          bundle != null &&
+          bundle.family == asset.family &&
+          bundle.year == manifest.year &&
+          bundle.month == manifest.month;
+      bundle?.close();
+      if (!valid) {
+        throw StateError('${asset.name} is not the bundle in the manifest');
       }
-      return true;
-    } catch (e, s) {
-      Loggers.app.warning('Could not install the geo data', e, s);
-      await _discardDirectory(_stagingDir);
-      return false;
+      done += packed.length;
+      onProgress?.call(done, total);
     }
+
+    await File(
+      _manifestAt(_stagingDir),
+    ).writeAsString(jsonEncode(manifest.toJson()), flush: true);
+    if (_readInstalledAt(_stagingDir) == null) {
+      throw StateError('the staged geo installation is incomplete');
+    }
+    return _activateStaging(manifest);
   }
 
   /// Swaps a validated staging directory into place, rolling the old one back
@@ -423,61 +488,60 @@ abstract final class GeoData {
     return total;
   }
 
-  /// [path] from the primary endpoint, or from the second.
+  /// [path] from exactly one [endpoint].
   ///
-  /// Both serve the same bytes from the same export; the second exists for a
-  /// network where the first is unreachable. Null for every failure, since
-  /// there is nothing a caller would do differently.
-  static Future<Uint8List?> _fetch(
+  /// Source selection belongs to the manifest/install transaction, so this
+  /// method must never switch endpoints independently. Null for every failure,
+  /// since there is nothing a caller would do differently.
+  static Future<Uint8List?> _fetchFrom(
+    String endpoint,
     String path,
     int maxBytes, {
     void Function(int received)? onReceive,
   }) async {
-    final targets = ['${Urls.geoData}/$path', '${Urls.geoDataFallback}/$path'];
+    final url = '$endpoint/$path';
     final dio = clientFactory();
     try {
-      for (final url in targets) {
-        try {
-          // A `cancel` future was threaded through here and through `install`
-          // and never passed by anyone. It also registered a derived future per
-          // URL attempt with no `onError`, so a caller handing it a future that
-          // completed with an error would have produced an unhandled one — which
-          // reaches the zone handler in `main.dart` and leaves a crash marker.
-          // Offering a Cancel button is a product decision, not this parameter.
-          final token = CancelToken();
-          final response = await dio.get<List<int>>(
-            url,
-            options: Options(responseType: ResponseType.bytes),
-            cancelToken: token,
-            onReceiveProgress: (got, _) {
-              onReceive?.call(got);
-              // Cancelled as it arrives rather than measured once it has: a
-              // check after the body is already a `List<int>` cannot prevent
-              // the allocation it exists to prevent.
-              if (got > maxBytes && !token.isCancelled) {
-                token.cancel(StateError('$url is over $maxBytes bytes'));
-              }
-            },
-          );
-          if (response.statusCode != 200) continue;
-          final body = response.data;
-          if (body == null || body.isEmpty) continue;
-          // The progress callback is not guaranteed to fire — a response with
-          // no `Content-Length` streamed in one chunk arrives whole — so the
-          // size is checked here as well.
-          if (body.length > maxBytes) {
-            Loggers.app.warning('$url is ${body.length} bytes, refusing it');
-            continue;
-          }
-          return Uint8List.fromList(body);
-        } catch (e) {
-          Loggers.app.fine('Geo endpoint $url did not answer: $e');
+      try {
+        // A `cancel` future was threaded through here and through `install`
+        // and never passed by anyone. It also registered a derived future per
+        // URL attempt with no `onError`, so a caller handing it a future that
+        // completed with an error would have produced an unhandled one — which
+        // reaches the zone handler in `main.dart` and leaves a crash marker.
+        // Offering a Cancel button is a product decision, not this parameter.
+        final token = CancelToken();
+        final response = await dio.get<List<int>>(
+          url,
+          options: Options(responseType: ResponseType.bytes),
+          cancelToken: token,
+          onReceiveProgress: (got, _) {
+            onReceive?.call(got);
+            // Cancelled as it arrives rather than measured once it has: a
+            // check after the body is already a `List<int>` cannot prevent
+            // the allocation it exists to prevent.
+            if (got > maxBytes && !token.isCancelled) {
+              token.cancel(StateError('$url is over $maxBytes bytes'));
+            }
+          },
+        );
+        if (response.statusCode != 200) return null;
+        final body = response.data;
+        if (body == null || body.isEmpty) return null;
+        // The progress callback is not guaranteed to fire — a response with
+        // no `Content-Length` streamed in one chunk arrives whole — so the
+        // size is checked here as well.
+        if (body.length > maxBytes) {
+          Loggers.app.warning('$url is ${body.length} bytes, refusing it');
+          return null;
         }
+        return Uint8List.fromList(body);
+      } catch (e) {
+        Loggers.app.fine('Geo endpoint $url did not answer: $e');
+        return null;
       }
     } finally {
       dio.close();
     }
-    return null;
   }
 
   /// For tests, which need each case to start from nothing.
