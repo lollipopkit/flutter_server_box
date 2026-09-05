@@ -85,6 +85,29 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!--
+                No file association on Android, deliberately.
+
+                Verified on an emulator rather than reasoned about: a filter
+                gated on `pathPattern` does resolve for `file:///...sbxsrv`
+                and correctly refuses `other.bin`, but the app then cannot
+                *read* it. A raw path in shared storage needs a storage
+                permission this app does not have and should not ask for:
+                `open failed: EACCES`. And since Android 7 a `file://` URI
+                thrown across apps raises `FileUriExposedException`, so no
+                real file manager sends one anyway; they send `content://`,
+                whose path is opaque and never matches a `pathPattern`.
+
+                So the filter matched only what nothing sends and could not
+                read it, while what is actually sent it did not match.
+                Dropping `pathPattern` to catch `content://` would mean
+                claiming `application/octet-stream`, which puts ServerBox in
+                the "open with" list of every unknown binary on the device.
+
+                A shared server comes in through the add button on the server
+                list instead. That goes through the system file picker, which
+                hands back a URI this app is granted, which is the case that works.
+            -->
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

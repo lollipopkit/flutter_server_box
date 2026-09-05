@@ -1209,8 +1209,77 @@ class AppLocalizationsFr extends AppLocalizations {
   String get serverTabRequired => 'L\'onglet serveur ne peut pas être supprimé';
 
   @override
-  String get shareServerRiskTip =>
-      'Ce QR code contient les paramètres de connexion en clair. Quiconque le scanne ou le photographie peut se connecter.';
+  String get shareCodeHint =>
+      'Communiquez ces chiffres séparément au destinataire. Ils ne sont pas inclus dans le QR code.';
+
+  @override
+  String get shareCodePrompt => 'Code à 6 chiffres';
+
+  @override
+  String get shareCodeTitle => 'Code à usage unique';
+
+  @override
+  String get shareExpired => 'Ce partage a expiré. Demandez-en un nouveau.';
+
+  @override
+  String get shareImportFile => 'Depuis un fichier partagé';
+
+  @override
+  String get shareImportTitle => 'Importer le serveur partagé';
+
+  @override
+  String get shareIncludesKey => 'Le partage inclut la clé privée.';
+
+  @override
+  String get shareOmittedBmc =>
+      'Les identifiants BMC. L’adresse est incluse, mais pas les identifiants.';
+
+  @override
+  String get shareOmittedJump =>
+      'Le serveur de rebond, car il est enregistré comme serveur distinct sur cet appareil.';
+
+  @override
+  String get shareOmittedKeyPath =>
+      'Le fichier de clé, car son chemin n’est valide que sur cet appareil.';
+
+  @override
+  String get shareOmittedMissingKey =>
+      'La clé privée, car elle ne se trouve pas dans le trousseau de cet appareil.';
+
+  @override
+  String get shareOmittedTip =>
+      'Non inclus ; le destinataire doit configurer :';
+
+  @override
+  String get sharePassphraseTip =>
+      'Cette phrase secrète chiffre le fichier. Le destinataire en a besoin pour importer le serveur et elle ne peut pas être récupérée.';
+
+  @override
+  String shareQrTip(int minutes) {
+    return 'Les données de connexion de ce QR code sont chiffrées. Le partage expire dans $minutes minutes.';
+  }
+
+  @override
+  String get shareScanQr => 'Scanner un QR code';
+
+  @override
+  String shareServerExists(String name) {
+    return '« $name » utilise déjà cette adresse sur cet appareil. Importer quand même ?';
+  }
+
+  @override
+  String get shareTooBigForQr =>
+      'Trop volumineux pour un QR code. Partagez-le plutôt sous forme de fichier.';
+
+  @override
+  String get shareTooNew =>
+      'Ce partage a été créé avec une version plus récente de ServerBox. Mettez l’application à jour pour l’ouvrir.';
+
+  @override
+  String get shareUnreadable => 'Ce partage ServerBox n’est pas valide.';
+
+  @override
+  String get shareVia => 'Partager via';
 
   @override
   String get sftpDlPrepare => 'Préparation de la connexion...';

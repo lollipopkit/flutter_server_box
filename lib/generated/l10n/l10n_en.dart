@@ -1187,8 +1187,76 @@ class AppLocalizationsEn extends AppLocalizations {
   String get serverTabRequired => 'Server tab cannot be removed';
 
   @override
-  String get shareServerRiskTip =>
-      'This QR code holds the server’s connection settings in clear text. Anyone who scans or photographs it can connect.';
+  String get shareCodeHint =>
+      'Tell the recipient these digits separately. They are not included in the QR code.';
+
+  @override
+  String get shareCodePrompt => '6-digit code';
+
+  @override
+  String get shareCodeTitle => 'One-time code';
+
+  @override
+  String get shareExpired => 'This share has expired. Ask for a new one.';
+
+  @override
+  String get shareImportFile => 'From a shared file';
+
+  @override
+  String get shareImportTitle => 'Import shared server';
+
+  @override
+  String get shareIncludesKey => 'The share includes the private key.';
+
+  @override
+  String get shareOmittedBmc =>
+      'BMC credentials. The address is included, but the credentials are not.';
+
+  @override
+  String get shareOmittedJump =>
+      'The jump server, because it is stored as a separate server on this device.';
+
+  @override
+  String get shareOmittedKeyPath =>
+      'The key file, because its path is only valid on this device.';
+
+  @override
+  String get shareOmittedMissingKey =>
+      'The private key, because it is not in this device’s key store.';
+
+  @override
+  String get shareOmittedTip => 'Not included; the recipient must configure:';
+
+  @override
+  String get sharePassphraseTip =>
+      'This passphrase encrypts the file. The recipient needs it to import the server, and it cannot be recovered.';
+
+  @override
+  String shareQrTip(int minutes) {
+    return 'The connection details in this QR code are encrypted. The share expires in $minutes minutes.';
+  }
+
+  @override
+  String get shareScanQr => 'Scan a QR code';
+
+  @override
+  String shareServerExists(String name) {
+    return '“$name” on this device already uses this address. Import anyway?';
+  }
+
+  @override
+  String get shareTooBigForQr =>
+      'Too large for a QR code. Share it as a file instead.';
+
+  @override
+  String get shareTooNew =>
+      'This share was created with a newer version of ServerBox. Update the app to open it.';
+
+  @override
+  String get shareUnreadable => 'This is not a valid ServerBox share.';
+
+  @override
+  String get shareVia => 'Share via';
 
   @override
   String get sftpDlPrepare => 'Preparing to connect...';

@@ -13,7 +13,6 @@ extension _SSH on _AppSettingsPageState {
       children: [
         if (isDesktop) _buildSSHConfigImport(),
         if (isDesktop) _buildSshConnectionMode(),
-        if (isMobile) _buildQrScan(),
         _buildLetterCache(),
         _buildSSHWakeLock(),
         _buildTermTheme(),
@@ -37,39 +36,11 @@ extension _SSH on _AppSettingsPageState {
     );
   }
 
-  Widget _buildQrScan() {
-    return ListTile(
-      leading: const Icon(Icons.qr_code),
-      title: Text(libL10n.import),
-      trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: _onTapQrScan,
-    );
-  }
-
-  Future<void> _onTapQrScan() async {
-    final ret = await BarcodeScannerPage.route.go(
-      context,
-      args: const BarcodeScannerPageArgs(),
-    );
-    final code = ret?.text;
-    if (code == null) return;
-    if (!mounted) return;
-
-    try {
-      final spi = Spi.fromJson(json.decode(code));
-      final existingIds = ref.read(serversProvider).servers.keys;
-      if (existingIds.contains(spi.id)) {
-        Toast.show('${l10n.sameIdServerExist}: ${spi.id}');
-        return;
-      }
-      final resolvedList = ServerDeduplication.resolveNameConflicts([spi]);
-      final resolvedSpi = resolvedList.first;
-      await ref.read(serversProvider.notifier).addServer(resolvedSpi);
-      Toast.success(libL10n.success);
-    } catch (e, s) {
-      context.showErrDialog(e, s);
-    }
-  }
+  // Scanning a shared code used to be a row here, mobile-only and under SSH
+  // *preferences*, while importing the same server from a file was under
+  // Backup. Both are ways of acquiring a server, and which one a person needs
+  // depends on what the sender picked — so they now sit together behind the
+  // server list's add button. See `_onTapAddServer`.
 
   Future<void> _onTapSSHConfigImport() async {
     try {

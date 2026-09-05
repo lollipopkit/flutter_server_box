@@ -1197,8 +1197,77 @@ class AppLocalizationsNl extends AppLocalizations {
   String get serverTabRequired => 'Servertabblad kan niet worden verwijderd';
 
   @override
-  String get shareServerRiskTip =>
-      'Deze QR-code bevat de verbindingsinstellingen in leesbare tekst. Wie hem scant of fotografeert, kan verbinden.';
+  String get shareCodeHint =>
+      'Geef deze cijfers afzonderlijk door aan de ontvanger. Ze staan niet in de QR-code.';
+
+  @override
+  String get shareCodePrompt => '6-cijferige code';
+
+  @override
+  String get shareCodeTitle => 'Eenmalige code';
+
+  @override
+  String get shareExpired => 'Deze share is verlopen. Vraag om een nieuwe.';
+
+  @override
+  String get shareImportFile => 'Uit een gedeeld bestand';
+
+  @override
+  String get shareImportTitle => 'Gedeelde server importeren';
+
+  @override
+  String get shareIncludesKey => 'De share bevat de privésleutel.';
+
+  @override
+  String get shareOmittedBmc =>
+      'De BMC-inloggegevens. Het adres is inbegrepen, maar de inloggegevens niet.';
+
+  @override
+  String get shareOmittedJump =>
+      'De jumpserver, omdat deze op dit apparaat als afzonderlijke server is opgeslagen.';
+
+  @override
+  String get shareOmittedKeyPath =>
+      'Het sleutelbestand, omdat het pad alleen geldig is op dit apparaat.';
+
+  @override
+  String get shareOmittedMissingKey =>
+      'De privésleutel, omdat deze niet in de sleutelopslag van dit apparaat staat.';
+
+  @override
+  String get shareOmittedTip =>
+      'Niet inbegrepen; de ontvanger moet het volgende instellen:';
+
+  @override
+  String get sharePassphraseTip =>
+      'Deze wachtwoordzin versleutelt het bestand. De ontvanger heeft deze nodig om de server te importeren; herstellen is niet mogelijk.';
+
+  @override
+  String shareQrTip(int minutes) {
+    return 'De verbindingsgegevens in deze QR-code zijn versleuteld. De share verloopt over $minutes minuten.';
+  }
+
+  @override
+  String get shareScanQr => 'QR-code scannen';
+
+  @override
+  String shareServerExists(String name) {
+    return '‘$name’ op dit apparaat gebruikt dit adres al. Toch importeren?';
+  }
+
+  @override
+  String get shareTooBigForQr =>
+      'Te groot voor een QR-code. Deel het in plaats daarvan als bestand.';
+
+  @override
+  String get shareTooNew =>
+      'Deze share is gemaakt met een nieuwere versie van ServerBox. Werk de app bij om deze te openen.';
+
+  @override
+  String get shareUnreadable => 'Dit is geen geldige ServerBox-share.';
+
+  @override
+  String get shareVia => 'Delen via';
 
   @override
   String get sftpDlPrepare => 'Voorbereiden om verbinding te maken...';

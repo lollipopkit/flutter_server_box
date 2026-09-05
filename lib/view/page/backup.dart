@@ -16,6 +16,7 @@ import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/widget/server_share.dart';
 import 'package:webdav_client_plus/webdav_client_plus.dart';
 
 /// Which half of the page to show.
@@ -94,6 +95,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
   ];
 
   List<Widget> get _importTiles => [
+    _buildImportSharedServer,
     _buildBulkImportServers,
     _buildImportSnippet,
   ];
@@ -143,6 +145,8 @@ final class _BackupPageState extends ConsumerState<BackupPage>
                         return;
                       }
                       await SecureStoreProps.bakPwd.write(null);
+                      // Same reason as setting one — see `_onTapSetBakPwd`.
+                      await BakSyncer.forgetCheckpoint();
                       Toast.show(l10n.backupPasswordRemoved);
                       setState(() {});
                     },
@@ -204,6 +208,14 @@ final class _BackupPageState extends ConsumerState<BackupPage>
       return false;
     }
     await SecureStoreProps.bakPwd.write(pwd);
+    // The password decides what the remote file *is*, and neither side's sync
+    // tag moves when it changes: `lastModTime` is about the user's data and
+    // the remote's ETag is about bytes nobody has rewritten yet. Without this
+    // the shortcut skips every sync from here, so the remote copy stays
+    // readable only with the old password — and the first time data does
+    // change, the merge fails to decrypt it and `_sync` returns before the
+    // upload. Nothing reaches the remote again, and nothing says so.
+    await BakSyncer.forgetCheckpoint();
     Toast.show(l10n.backupPasswordSet);
     setState(() {});
     return true;
@@ -531,6 +543,22 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     );
   }
 
+  /// The other half of the share button on a server's page.
+  ///
+  /// Separate from [_buildBulkImportServers], which takes a plain JSON array
+  /// of servers and carries no keys: this one takes an encrypted payload made
+  /// by another device, which does.
+  Widget get _buildImportSharedServer {
+    return CardX(
+      child: ListTile(
+        title: Text(l10n.shareImportTitle),
+        leading: const Icon(Icons.ios_share),
+        onTap: () => ServerShareUi.receiveFromFile(context, ref),
+        trailing: const Icon(Icons.keyboard_arrow_right),
+      ),
+    );
+  }
+
   Widget get _buildBulkImportServers {
     return CardX(
       child: ListTile(
@@ -767,6 +795,8 @@ extension on _BackupPageState {
         } else {
           await PrefProps.gistId.set(gistId_);
         }
+        // Same reason as WebDAV: a different gist behind the same backend.
+        await BakSyncer.forgetCheckpoint();
       } catch (e, s) {
         context.showErrDialog(e, s, 'Gist');
       }
@@ -831,6 +861,10 @@ extension on _BackupPageState {
         await PrefProps.webdavUrl.set(url_);
         await PrefProps.webdavUser.set(user_);
         await SecureStoreProps.webdavPwd.write(pwd_);
+        // The sync shortcut remembers a tag from *a* WebDAV server, and the
+        // backend's type is the same whichever one it points at. Pointing it
+        // somewhere new is exactly when the skip would be wrong.
+        await BakSyncer.forgetCheckpoint();
       } catch (e, s) {
         context.showErrDialog(e, s, 'Webdav');
       }

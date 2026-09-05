@@ -46,15 +46,12 @@ class ServerDeduplication {
     final result = <Spi>[];
 
     for (final server in importedServers) {
-      String newName = server.name;
-      int suffix = 1;
-
       // Check against both existing servers and already processed servers
-      while (existingNames.contains(newName) ||
-          processedNames.contains(newName)) {
-        newName = '${server.name} ($suffix)';
-        suffix++;
-      }
+      final newName = uniqueName(
+        server.name,
+        taken: (name) =>
+            existingNames.contains(name) || processedNames.contains(name),
+      );
 
       processedNames.add(newName);
 
@@ -66,6 +63,20 @@ class ServerDeduplication {
     }
 
     return result;
+  }
+
+  /// `name`, or the first `name (n)` that [taken] does not claim.
+  ///
+  /// Extracted because importing one shared server renames two kinds of record
+  /// -- the server here and its private key in `ServerShareInstaller` -- and
+  /// the two loops had picked different starting numbers. One collision came
+  /// out as a server named `web (1)` beside a key named `laptop (2)`.
+  static String uniqueName(String name, {required bool Function(String) taken}) {
+    if (!taken(name)) return name;
+    for (var n = 1; ; n++) {
+      final candidate = '$name ($n)';
+      if (!taken(candidate)) return candidate;
+    }
   }
 
   /// Get summary of import operation

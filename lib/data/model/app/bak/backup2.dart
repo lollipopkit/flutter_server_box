@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -243,7 +245,18 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     var result = bak.toJsonString();
 
     if (password != null && password.isNotEmpty) {
-      result = Cryptor.encrypt(result, password);
+      // Compressed *inside* the envelope, so what goes over the wire is
+      // roughly an eighth of what it was: this JSON is one shape repeated a
+      // few hundred times, and every key name is spelled out in every record.
+      // Base64 then expands it once, rather than once per layer — which is
+      // why this goes through `encryptBytes` instead of encoding to text
+      // first.
+      result = Cryptor.encryptBytes(
+        compressBackups
+            ? gzip.encode(utf8.encode(result))
+            : utf8.encode(result),
+        password,
+      );
     }
 
     final path = Paths.doc.joinPath(name ?? Miscs.bakFileName);
@@ -256,12 +269,50 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     return path;
   }
 
+  /// Whether a new backup is compressed before it is encrypted.
+  ///
+  /// **Turning this on is a one-way format change for the sync file.** The
+  /// envelope is unchanged — the default cost still writes V01, so an older
+  /// build recognises the file and decrypts it correctly. What it then has is
+  /// gzip, and its `Cryptor.decrypt` ends in `utf8.decode`, so it throws (as
+  /// "invalid Base64 format", which is the wrong message and the reason to
+  /// expect this in a bug report). `SyncIface._sync` catches that and returns
+  /// **before** it uploads. So such a device stops syncing until it is
+  /// updated; it does not overwrite anything, which is why this is a release
+  /// note rather than a migration.
+  ///
+  /// Deliberately not a filename bump, which is how v2 -> v3 was handled. A
+  /// second name would let an old build keep writing the old one, and the two
+  /// histories would diverge silently in both directions. Stopping is the
+  /// recoverable failure; diverging is not.
+  ///
+  /// TODO: remove this constant once no supported build predates it, and
+  /// compress unconditionally.
+  static const compressBackups = true;
+
+  /// gzip's own header.
+  ///
+  /// What tells the two shapes apart, with no format field to carry: JSON
+  /// always begins with `{` (0x7b) and a gzip stream always with 0x1f 0x8b,
+  /// so this is exact rather than a guess.
+  static const _gzipMagic = [0x1f, 0x8b];
+
+  /// The most a backup may expand to when decompressed.
+  ///
+  /// A restore reads a file the user chose, so this is not the front line —
+  /// but gzip is the one step here where a small input can ask for an
+  /// unbounded allocation, and refusing is cheaper than finding out.
+  static const _maxPlainBytes = 256 * 1024 * 1024;
+
   factory BackupV2.fromJsonString(String jsonString, [String? password]) {
     if (Cryptor.isEncrypted(jsonString)) {
       if (password == null || password.isEmpty) {
         throw Exception('Backup is encrypted but no password provided');
       }
-      jsonString = Cryptor.decrypt(jsonString, password);
+      final bytes = Cryptor.decryptBytes(jsonString, password);
+      jsonString = _looksGzipped(bytes)
+          ? utf8.decode(gunzipCapped(bytes))
+          : utf8.decode(bytes);
     }
 
     final map = json.decode(jsonString) as Map<String, dynamic>;
@@ -282,6 +333,42 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
   }
 
   String toJsonString() => json.encode(_toJsonValue(toJson()));
+
+  static bool _looksGzipped(List<int> bytes) =>
+      bytes.length >= 2 &&
+      bytes[0] == _gzipMagic[0] &&
+      bytes[1] == _gzipMagic[1];
+
+  /// gunzip that stops rather than allocating whatever the stream asks for.
+  ///
+  /// Chunked, because the size is only knowable as the output arrives: gzip's
+  /// trailer carries a length, it is at the *end*, and it is not authenticated
+  /// by anything. Counting as we go is the only bound that holds.
+  /// [maxBytes] is injectable so the bound can be asserted without building a
+  /// [_maxPlainBytes]-sized bomb — a test that only checks the default would
+  /// pass just as well with no cap at all.
+  @visibleForTesting
+  static Uint8List gunzipCapped(List<int> bytes, {int? maxBytes}) {
+    final out = BytesBuilder(copy: false);
+    final decoder = gzip.decoder.startChunkedConversion(
+      _CountingSink(out, maxBytes ?? _maxPlainBytes),
+    );
+    try {
+      decoder.add(bytes);
+      decoder.close();
+    } catch (_) {
+      // The cap throws from inside `add`, which skips the `close` above and
+      // leaves the native inflate stream for the finalizer — on exactly the
+      // path this exists for, a hostile input, and once per attempt. Closing
+      // an incomplete stream throws in turn, which is nothing to report: the
+      // reason this failed is already on its way out.
+      try {
+        decoder.close();
+      } catch (_) {}
+      rethrow;
+    }
+    return out.takeBytes();
+  }
 
   void _validateRestorableTypedStores() {
     _validateRestorableStore('spis', spis);
@@ -814,3 +901,31 @@ void _validateRestorableStore(String storeName, Map<String, Object?> data) {
 bool _isInternalStoreKey(String key) =>
     key.startsWith(StoreDefaults.prefixKey) ||
     key.startsWith(StoreDefaults.prefixKeyOld);
+
+/// Counts what a decompressor produces and refuses past a limit.
+///
+/// The limit has to be enforced here rather than on the result: gzip's own
+/// trailer carries the decompressed length, it sits at the *end* of the
+/// stream, and nothing authenticates it — so the only bound that holds is the
+/// one applied as the bytes arrive.
+final class _CountingSink implements Sink<List<int>> {
+  _CountingSink(this._out, this._max);
+
+  final BytesBuilder _out;
+  final int _max;
+  var _seen = 0;
+
+  @override
+  void add(List<int> chunk) {
+    _seen += chunk.length;
+    if (_seen > _max) {
+      throw FormatException(
+        'Backup expands past the $_max bytes this will decompress',
+      );
+    }
+    _out.add(chunk);
+  }
+
+  @override
+  void close() {}
+}

@@ -1196,8 +1196,77 @@ class AppLocalizationsTr extends AppLocalizations {
   String get serverTabRequired => 'Sunucu sekmesi kaldırılamaz';
 
   @override
-  String get shareServerRiskTip =>
-      'Bu QR kod bağlantı ayarlarını düz metin olarak taşır. Tarayan ya da fotoğraflayan herkes bağlanabilir.';
+  String get shareCodeHint =>
+      'Bu rakamları alıcıya ayrıca iletin. QR koduna dahil değildir.';
+
+  @override
+  String get shareCodePrompt => '6 haneli kod';
+
+  @override
+  String get shareCodeTitle => 'Tek kullanımlık kod';
+
+  @override
+  String get shareExpired => 'Bu paylaşımın süresi doldu. Yenisini isteyin.';
+
+  @override
+  String get shareImportFile => 'Paylaşılan dosyadan';
+
+  @override
+  String get shareImportTitle => 'Paylaşılan sunucuyu içe aktar';
+
+  @override
+  String get shareIncludesKey => 'Paylaşım özel anahtarı içeriyor.';
+
+  @override
+  String get shareOmittedBmc =>
+      'BMC kimlik bilgileri. Adres dahildir ancak kimlik bilgileri değildir.';
+
+  @override
+  String get shareOmittedJump =>
+      'Atlama sunucusu; çünkü bu cihazda ayrı bir sunucu olarak kayıtlıdır.';
+
+  @override
+  String get shareOmittedKeyPath =>
+      'Anahtar dosyası; çünkü yolu yalnızca bu cihazda geçerlidir.';
+
+  @override
+  String get shareOmittedMissingKey =>
+      'Özel anahtar; çünkü bu cihazın anahtar deposunda bulunmuyor.';
+
+  @override
+  String get shareOmittedTip =>
+      'Dahil değildir; alıcının şunları yapılandırması gerekir:';
+
+  @override
+  String get sharePassphraseTip =>
+      'Bu parola dosyayı şifreler. Alıcının sunucuyu içe aktarmak için parolaya ihtiyacı vardır ve parola kurtarılamaz.';
+
+  @override
+  String shareQrTip(int minutes) {
+    return 'Bu QR kodundaki bağlantı bilgileri şifrelenmiştir. Paylaşımın süresi $minutes dakika sonra dolar.';
+  }
+
+  @override
+  String get shareScanQr => 'QR kodu tara';
+
+  @override
+  String shareServerExists(String name) {
+    return 'Bu cihazdaki “$name” zaten bu adresi kullanıyor. Yine de içe aktarılsın mı?';
+  }
+
+  @override
+  String get shareTooBigForQr =>
+      'QR kodu için çok büyük. Bunun yerine dosya olarak paylaşın.';
+
+  @override
+  String get shareTooNew =>
+      'Bu paylaşım daha yeni bir ServerBox sürümüyle oluşturuldu. Açmak için uygulamayı güncelleyin.';
+
+  @override
+  String get shareUnreadable => 'Bu, geçerli bir ServerBox paylaşımı değil.';
+
+  @override
+  String get shareVia => 'Şununla paylaş';
 
   @override
   String get sftpDlPrepare => 'Bağlantı hazırlanıyor...';

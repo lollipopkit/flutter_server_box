@@ -1132,8 +1132,70 @@ class AppLocalizationsKo extends AppLocalizations {
   String get serverTabRequired => '서버 탭은 제거할 수 없습니다';
 
   @override
-  String get shareServerRiskTip =>
-      '이 QR 코드는 서버 접속 설정을 평문으로 담고 있습니다. 스캔하거나 촬영한 사람은 누구나 접속할 수 있습니다.';
+  String get shareCodeHint => '이 숫자는 수신자에게 별도로 알려 주세요. QR 코드에는 포함되어 있지 않습니다.';
+
+  @override
+  String get shareCodePrompt => '6자리 코드';
+
+  @override
+  String get shareCodeTitle => '일회용 코드';
+
+  @override
+  String get shareExpired => '이 공유는 만료되었습니다. 새 공유를 요청하세요.';
+
+  @override
+  String get shareImportFile => '공유 파일에서 가져오기';
+
+  @override
+  String get shareImportTitle => '공유 서버 가져오기';
+
+  @override
+  String get shareIncludesKey => '공유 데이터에 개인 키가 포함되어 있습니다.';
+
+  @override
+  String get shareOmittedBmc => 'BMC 인증 정보. 주소는 포함되지만 인증 정보는 포함되지 않습니다.';
+
+  @override
+  String get shareOmittedJump => '점프 서버. 이 기기에 별도의 서버로 저장되어 있기 때문입니다.';
+
+  @override
+  String get shareOmittedKeyPath => '키 파일. 해당 경로는 이 기기에서만 유효하기 때문입니다.';
+
+  @override
+  String get shareOmittedMissingKey => '개인 키. 이 기기의 키 저장소에 없기 때문입니다.';
+
+  @override
+  String get shareOmittedTip => '포함되지 않은 항목이며 수신자가 직접 설정해야 합니다:';
+
+  @override
+  String get sharePassphraseTip =>
+      '이 암호로 파일을 암호화합니다. 서버를 가져올 때 수신자가 입력해야 하며 복구할 수 없습니다.';
+
+  @override
+  String shareQrTip(int minutes) {
+    return '이 QR 코드의 연결 정보는 암호화되어 있습니다. 공유는 $minutes분 후 만료됩니다.';
+  }
+
+  @override
+  String get shareScanQr => 'QR 코드 스캔';
+
+  @override
+  String shareServerExists(String name) {
+    return '이 기기의 “$name” 서버가 이미 이 주소를 사용하고 있습니다. 그래도 가져올까요?';
+  }
+
+  @override
+  String get shareTooBigForQr => 'QR 코드에 담기에는 너무 큽니다. 대신 파일로 공유하세요.';
+
+  @override
+  String get shareTooNew =>
+      '이 공유는 더 최신 버전의 ServerBox에서 생성되었습니다. 앱을 업데이트한 후 열어 주세요.';
+
+  @override
+  String get shareUnreadable => '유효한 ServerBox 공유 데이터가 아닙니다.';
+
+  @override
+  String get shareVia => '공유 방법';
 
   @override
   String get sftpDlPrepare => '연결 준비 중...';
