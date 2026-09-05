@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/scheduler.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/core/utils/monitor_exec.dart';
 import 'package:server_box/core/utils/server.dart';
@@ -618,6 +619,21 @@ class ServerNotifier extends _$ServerNotifier {
         'falling back to ${spi.fallbackTransport?.name}',
         e,
         s,
+      );
+      // The one moment the two-transport arrangement does its job, and the only
+      // one nothing else records: `server` counts SSH connects, so a server
+      // that quietly runs everything over its agent because sshd is down looks
+      // from here like a server nobody uses. Whether this ever fires is also
+      // what says the *probe* above earns its extra request.
+      Diag.crumb(
+        SbDiag.server,
+        'exec fell back',
+        level: DiagLevel.warning,
+        data: {
+          'from': spi.transport.name,
+          'to': spi.fallbackTransport?.name ?? '-',
+          'error': Redact.error(e),
+        },
       );
       return await _execOver(fallback);
     }

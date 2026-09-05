@@ -2,8 +2,12 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+// `Diag` only: `fl_lib` also exports a `Provider`, which is what `riverpod`
+// below calls its own. Unhidden, the two collide on the `Provider` at line 15.
+import 'package:fl_lib/fl_lib.dart' show Diag;
 import 'package:meta/meta.dart';
 import 'package:riverpod/riverpod.dart';
+import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/utils/secure_endpoint.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/res/store.dart';
@@ -56,6 +60,25 @@ class AskAiRepository {
       endpoint: baseUrl,
     );
     final uri = composeEndpointUri(baseUrl, resolvedProtocol);
+    // The second way into a model, and the one that had no crumb: the Agent
+    // tab records its own prompts, and Ask AI from a terminal reaches the same
+    // endpoint by a different path, so a report showing no prompts at all could
+    // still be an install that uses this constantly.
+    //
+    // Never the prompt, the context or the answer — a terminal's scrollback is
+    // the most private thing this app handles. The protocol is what matters
+    // when a report says nothing came back: two wire formats behind one
+    // setting, resolved partly from the endpoint, is where that goes wrong.
+    Diag.crumb(
+      SbDiag.agent,
+      'ask',
+      data: {
+        'protocol': resolvedProtocol.name,
+        'keyed': '${apiKey.isNotEmpty}',
+        'turns': '${conversation.length}',
+        'tools': '${tools.length}',
+      },
+    );
     final headers = <String, String>{
       Headers.acceptHeader: 'text/event-stream',
       Headers.contentTypeHeader: Headers.jsonContentType,

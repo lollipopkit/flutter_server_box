@@ -182,5 +182,17 @@ class _HomeTabsConfigPageState extends State<HomeTabsConfigPage> {
       _disabled = next.disabled;
     });
     Stores.setting.homeTabs.put(_enabled);
+    // What [AppTab.defaultOrder] is a guess about, and the only thing that can
+    // judge it. That list is four of six tabs, chosen on an argument about what
+    // a tab is *for* — snippets are a library rather than a place, a benchmark
+    // takes a quarter of an hour — and a drag here is somebody disagreeing.
+    //
+    // The names, not a count: which tabs people put in the bar is the whole
+    // question, and a tab's name says nothing about the user.
+    Diag.crumb(
+      DiagCategory.nav,
+      'tabs arranged',
+      data: {'bar': _enabled.map((e) => e.name).join(' ')},
+    );
   }
 }

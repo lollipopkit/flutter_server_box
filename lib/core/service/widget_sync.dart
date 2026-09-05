@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:server_box/core/chan.dart';
+import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/service/scoped_token.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -140,11 +141,32 @@ final class WidgetSync {
       }
     }
 
+    // The other half of `watch push`, and it had none. A home widget reads the
+    // agent directly, so once this has run the app is not involved again —
+    // which means a widget stuck on stale readings is a *push* that did not
+    // happen, and nothing on the phone says so. The token count is the part
+    // that decides what the widget can draw: a server published without one
+    // shows a name and nothing else.
+    Diag.crumb(
+      SbDiag.sync,
+      'widget push',
+      data: {
+        'servers': '${servers.length}',
+        'tokens': '${tokens.length}',
+      },
+    );
+
     try {
       await MethodChans.publishWidgetServers(
         jsonEncode(payloadFrom(servers: servers, tokens: tokens)),
       );
     } catch (e, s) {
+      Diag.crumb(
+        SbDiag.sync,
+        'widget push failed',
+        level: DiagLevel.warning,
+        data: {'error': Redact.error(e)},
+      );
       Loggers.app.warning('Publish widget servers', e, s);
     }
   }

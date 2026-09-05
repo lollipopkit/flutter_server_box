@@ -63,6 +63,41 @@ abstract final class SbDiag {
   /// the machine.
   static const bmc = DiagCategory('bmc');
 
+  /// Proxmox: reaching a cluster, and what it took to get there.
+  ///
+  /// Apart from [server], though it is reached through one. A PVE cluster is
+  /// its own thing behind the machine — a login, a session, and usually an SSH
+  /// tunnel, because the API is not normally on the public internet — and none
+  /// of that is what `server` counts. Never a node name, a guest name or a
+  /// VMID: those name the user's infrastructure.
+  static const pve = DiagCategory('pve');
+
+  /// The process list, and killing something in it.
+  ///
+  /// Apart from [service], which is init-system units. The two look alike and
+  /// are not: a unit is named and declared, a process is whatever is running.
+  /// Killing one is the most destructive thing this app does that nothing
+  /// confirms afterwards — the command answers, and whether the process
+  /// actually went is a marker the far side prints. Which of those came back
+  /// is the whole question, and it differs by system type.
+  static const process = DiagCategory('process');
+
+  /// Handing a server to another device, and taking one in.
+  ///
+  /// Two halves that happen on two devices, which is why neither is visible
+  /// from the other: a share that nobody could open leaves no trace on the
+  /// device that made it. Never a name, an address or a payload — the payload
+  /// is an encrypted server, credentials included.
+  static const share = DiagCategory('share');
+
+  /// Looking for servers on the network this device is on.
+  ///
+  /// How many an install finds, never which. The count is the question: a scan
+  /// that reliably answers zero is a feature that looks broken, and the reasons
+  /// it would — no `arp`, no mDNS responder, a network that isolates clients —
+  /// are invisible from here and unreportable by the user.
+  static const discovery = DiagCategory('discovery');
+
   /// Init-system units: listing them, and acting on one.
   ///
   /// Apart from [container], which is Docker and Podman. Which init system a
@@ -81,6 +116,27 @@ abstract final class SbDiag {
   /// Apart from [server], where a coordinate typed by hand is one more field of
   /// a saved server rather than anything the globe did.
   static const globe = DiagCategory('globe');
+
+  /// A yabs run: what was asked for, and whether it ever came back.
+  ///
+  /// The one feature here measured in *quarter hours*. Everything about how it
+  /// is built — detached under `setsid`, watched by polling a directory, the
+  /// record written at start so a reopened page picks it up — is there so a run
+  /// survives the app being closed, and none of that is worth anything if runs
+  /// do not finish. So the pair matters more than either half: a start with no
+  /// finish is the case the design exists for and the case nobody reports,
+  /// because by the time it has failed the user has moved on.
+  ///
+  /// Which phases were chosen is the other half, and it is the only thing that
+  /// can judge [YabsOptions]' defaults — three of which deliberately disagree
+  /// with yabs' own, each guessing that the user would rather spend less or
+  /// disclose less. A guess nothing measures stays a guess.
+  ///
+  /// Never a result. A yabs run reports the machine's CPU model, its disk and
+  /// network throughput and, with Geekbench on, a public URL naming it — which
+  /// is the user's infrastructure described in detail. What is recorded is
+  /// which phases ran and how it ended.
+  static const benchmark = DiagCategory('benchmark');
 
   /// Moving settings between devices: remote sync, and the push that keeps a
   /// watch or a home widget fed.

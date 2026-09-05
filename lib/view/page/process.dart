@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/refresh_interval.dart';
@@ -809,9 +810,13 @@ extension _ProcessPageStateActions on _ProcessPageState {
     _isRefreshing = true;
     _rebuild();
     var killed = false;
+    // Outside the `try` so the catches below can name it: which command was
+    // built for which system is most of what an outcome means, and a timeout
+    // or a throw is exactly where that matters.
+    SystemType? systemType;
     try {
       final serverState = ref.read(_provider);
-      final systemType = serverState.status.system;
+      systemType = serverState.status.system;
       if (!_canRunProcessCmd(serverState)) {
         if (mounted) Toast.show(libL10n.disconnected);
         return;
@@ -892,20 +897,29 @@ extension _ProcessPageStateActions on _ProcessPageState {
                   .timeout(_processCommandTimeout))
               .combined;
       if (killOutput.contains(_killTargetChangedMarker)) {
+        _reportKill(systemType, 'target changed');
         Toast.show(context.l10n.processKillTargetChanged);
         return;
       }
       if (!killOutput.contains(_killSucceededMarker)) {
+        // Neither marker came back. The command answered and the process is
+        // still there, which is the case a `Toast.error` cannot tell apart from
+        // any other — and the likeliest cause is that this system type needed a
+        // different command than the one it was given.
+        _reportKill(systemType, 'refused');
         Toast.error(libL10n.error);
         return;
       }
       killed = true;
+      _reportKill(systemType, 'ok');
     } on TimeoutException catch (e, s) {
       Loggers.app.warning('Process kill command timed out', e, s);
+      _reportKill(systemType, 'timed out');
       if (mounted) Toast.error(libL10n.error);
       return;
     } catch (e, s) {
       Loggers.app.warning('Process kill failed', e, s);
+      _reportKill(systemType, 'failed', Redact.error(e));
       if (mounted) Toast.error(libL10n.error);
       return;
     } finally {
@@ -913,6 +927,29 @@ extension _ProcessPageStateActions on _ProcessPageState {
       _rebuild();
     }
     if (killed) await _refresh(userTriggered: true);
+  }
+
+  /// How a kill ended, by system type.
+  ///
+  /// The most destructive thing this app does that nothing confirms afterwards:
+  /// the command answers, and whether the process actually went is a marker the
+  /// far side prints. Which of the four outcomes came back is the question, and
+  /// it differs by system type — [_killProcessCmd] builds a different command
+  /// for each, and only one of them is ever tested by hand.
+  ///
+  /// Never the process. A command line is the most revealing thing on a
+  /// machine: paths, arguments, and often a credential.
+  void _reportKill(SystemType? systemType, String how, [String? error]) {
+    Diag.crumb(
+      SbDiag.process,
+      'kill',
+      level: how == 'ok' ? DiagLevel.info : DiagLevel.warning,
+      data: {
+        'how': how,
+        'system': systemType?.name ?? '-',
+        'error': ?error,
+      },
+    );
   }
 }
 

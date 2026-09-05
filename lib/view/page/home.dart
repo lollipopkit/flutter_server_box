@@ -584,6 +584,18 @@ class _HomePageState extends ConsumerState<HomePage>
     final overflow = _tabs.skip(shownCount).toList();
     final selected = _selectIndex.value;
 
+    // Whether the sheet is ever raised, and how much is behind it. A tab put
+    // here is one the user has to know exists before they can look for it, so
+    // "more" holding four tabs nobody opens and "more" holding one everybody
+    // does are different arrangements — and neither is visible from the other
+    // side. [count] rather than which: the names are already on the crumb the
+    // arranging page writes.
+    Diag.crumb(
+      DiagCategory.nav,
+      'more',
+      data: {'behind': '${overflow.length}', 'shown': '$shownCount'},
+    );
+
     await showRowsSheet<void>(
       context,
       rows: (ctx) => [

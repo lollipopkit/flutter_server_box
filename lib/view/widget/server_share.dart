@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/server_share.dart';
 import 'package:server_box/data/model/app/share/server_share.dart';
@@ -68,6 +69,21 @@ abstract final class ServerShareUi {
       actions: Btn.cancel().toList,
     );
     if (carrier == null || !context.mounted) return;
+
+    // The sending half. Which carrier is chosen is a real question: the QR is
+    // the shorter path and the one this feature was built around, and it is
+    // only offered when the payload fits — so `fits: false` here is a server
+    // whose owner was pushed onto the file path by something they cannot see.
+    Diag.crumb(
+      SbDiag.share,
+      'sent',
+      data: {
+        'via': carrier.name,
+        'fits': '$fits',
+        'keys': '${probe.keys.length}',
+        'omitted': '${omissions.length}',
+      },
+    );
 
     switch (carrier) {
       case ShareCarrier.qr:
@@ -244,6 +260,20 @@ abstract final class ServerShareUi {
     if (!context.mounted) return;
     if (share == null) {
       final err = decodeErr;
+      // The half nothing else can see. A share that will not open fails on the
+      // *receiving* device, so the one that made it — and the person who was
+      // told to scan it — have no record at all. By kind: a wrong code, an
+      // expired payload and a build that cannot read the format are three
+      // different bugs and look identical from here.
+      Diag.crumb(
+        SbDiag.share,
+        'import failed',
+        level: DiagLevel.warning,
+        data: {
+          'why': err == null ? 'cancelled' : Redact.error(err),
+          'encrypted': '${password != null}',
+        },
+      );
       if (err != null) Toast.show(_errorText(err));
       return;
     }
@@ -279,8 +309,27 @@ abstract final class ServerShareUi {
       // handing the result back through the notifier would resolve them twice.
       await ref.read(serversProvider.notifier).reload(refreshConnections: false);
       ref.read(privateKeyProvider.notifier).reload();
+      // Whether a key travelled is the part worth knowing: it is the difference
+      // between handing over an address and handing over the way in, and it is
+      // what decides whether the passphrase prompt is on the ordinary path or
+      // the rare one.
+      Diag.crumb(
+        SbDiag.share,
+        'imported',
+        data: {
+          'keys': '${share.keys.length}',
+          'replaced': '${existing != null}',
+          'encrypted': '${password != null}',
+        },
+      );
       Toast.success('${libL10n.success}: ${result.spi.name}');
     } catch (e, s) {
+      Diag.crumb(
+        SbDiag.share,
+        'install failed',
+        level: DiagLevel.warning,
+        data: {'error': Redact.error(e)},
+      );
       if (context.mounted) context.showErrDialog(e, s, libL10n.import);
       Loggers.app.warning('Install shared server', e, s);
     }

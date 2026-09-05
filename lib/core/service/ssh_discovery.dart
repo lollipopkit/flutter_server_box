@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/core/diag.dart';
 import 'package:server_box/data/model/server/discovery_result.dart';
 
 // Pre-compiled RegExp patterns for SSH discovery
@@ -70,12 +71,41 @@ class SshDiscoveryService {
         )
         .toList();
 
+    // Counts only, never an address: where this device's neighbours are is a
+    // description of the user's network. The counts are the question — a scan
+    // that reliably answers zero is a feature that looks broken, and each stage
+    // fails for its own invisible reason: no `arp` or `ip neigh` on the
+    // platform, an interface with no usable prefix, no mDNS responder, or a
+    // network that isolates clients so every probe times out. One number tells
+    // them apart; a bug report cannot.
+    Diag.crumb(
+      SbDiag.discovery,
+      'scan',
+      data: {
+        'found': '${discoveryResults.length}',
+        'probed': '${candidates.length}',
+        'subnets': '${cidrs.length}',
+        'mdns': '${config.enableMdns}',
+        // Bucketed. How long a LAN scan takes is a property of the network,
+        // and the reason someone gives up on it before it answers.
+        'took': _tookFor(DateTime.now().difference(t0)),
+      },
+    );
+
     return SshDiscoveryReport(
       generatedAt: DateTime.now().toIso8601String(),
       durationMs: DateTime.now().difference(t0).inMilliseconds,
       count: discoveryResults.length,
       items: discoveryResults,
     );
+  }
+
+  static String _tookFor(Duration elapsed) {
+    final seconds = elapsed.inSeconds;
+    if (seconds < 2) return '<2s';
+    if (seconds < 10) return '2-10s';
+    if (seconds < 30) return '10-30s';
+    return '>30s';
   }
 
   static Future<String?> _run(

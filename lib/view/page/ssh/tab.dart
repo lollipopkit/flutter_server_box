@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
@@ -365,6 +366,11 @@ extension _Sessions on _SSHTabPageState {
   /// navigation still on screen — and from the side bar, which is a pane, they
   /// would open in the narrow column beside the terminals.
   void _addRootfs() {
+    // The near end of a funnel whose far end `Rootfs.install` already records.
+    // This tile used to install straight away, so a tap *was* an install; now
+    // it opens a page where the choice is made and can be abandoned, and how
+    // many are is exactly what that change put at risk.
+    Diag.crumb(SbDiag.linux, 'add tapped');
     SettingsSectionPage.route.go(
       context,
       SettingsSection.linux,

@@ -8,6 +8,7 @@ import 'package:dio/io.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve.dart';
@@ -165,6 +166,21 @@ class PveNotifier extends _$PveNotifier {
     }
   }
 
+  /// Why a cluster could not be reached, once per attempt.
+  ///
+  /// The kind only. A `PveErr`'s message is built from what the cluster said,
+  /// which quotes hosts, node names and sometimes a user — see [Breadcrumb],
+  /// which is written on the assumption that it will be published.
+  void _reportPveFailure(PveErrType type) {
+    Diag.crumb(
+      SbDiag.pve,
+      type == PveErrType.needTfa ? 'needs a code' : 'failed',
+      // A code being asked for is the flow working, not a failure.
+      level: type == PveErrType.needTfa ? DiagLevel.info : DiagLevel.warning,
+      data: {'why': type.name},
+    );
+  }
+
   Future<void> _initImpl() async {
     final generation = _sessionGeneration;
     Dio? active;
@@ -181,6 +197,24 @@ class PveNotifier extends _$PveNotifier {
       await _getRelease(generation, active);
       if (_abortStaleInit(generation, active)) return;
       state = state.copyWith(isConnected: true);
+      // Reaching a cluster at all, which nothing else counts: `server` records
+      // the SSH connection under it, and a PVE session on top is invisible from
+      // there. The release is the useful half — everything this page parses is
+      // a shape that release decides, so a field that stops arriving is a field
+      // some version renamed, and there is no other way to know which versions
+      // are out there.
+      Diag.crumb(
+        SbDiag.pve,
+        'connected',
+        data: {
+          'release': state.release ?? '-',
+          // Whether it went through a tunnel. The API is not normally on the
+          // public internet, so the forward is the ordinary path and a direct
+          // address is the exception — but only one of them can break in a way
+          // that looks like the server being down.
+          'tunnelled': '${_forwards.isNotEmpty}',
+        },
+      );
       await _list(generation, active);
       if (_abortStaleInit(generation, active)) return;
       state = state.copyWith(loadingStep: PveLoadingStep.none);
@@ -193,6 +227,11 @@ class PveNotifier extends _$PveNotifier {
         await _closeSession(clearPendingTfa: true);
         if (!ref.mounted) return;
       }
+      // By kind, never by message: a PVE error quotes hosts and node names.
+      // `needTfa` is not a failure — it is the page asking for a code — and
+      // separating it is the point: how many clusters need one decides whether
+      // that flow is worth what it costs.
+      _reportPveFailure(e.type);
       state = state.copyWith(error: e, loadingStep: PveLoadingStep.none);
     } catch (e, s) {
       if (!_isActiveInit(generation)) {
@@ -201,6 +240,7 @@ class PveNotifier extends _$PveNotifier {
       }
       Loggers.app.warning('PVE init failed', e, s);
       final error = _toPveErr(e);
+      _reportPveFailure(error.type);
       if (active != null) {
         await _closeSession(clearPendingTfa: true);
         if (!ref.mounted) return;

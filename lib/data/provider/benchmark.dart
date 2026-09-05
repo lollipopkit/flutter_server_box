@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:server_box/core/diag.dart';
 import 'package:server_box/data/model/server/benchmark/benchmark_run.dart';
 import 'package:server_box/data/model/server/benchmark/yabs_options.dart';
 import 'package:server_box/data/model/server/benchmark/yabs_script.dart';
@@ -135,6 +136,12 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
       // was never started would be picked back up on every later open of this
       // page and polled forever.
       _store.put(run);
+      // Here rather than at the top of this method: what is worth counting is a
+      // run that is actually going, and everything above can refuse — no
+      // credentials, no shell, a script that would not install. Those are
+      // `start failed` below, which is a different thing from a run that never
+      // finished.
+      Diag.crumb(SbDiag.benchmark, 'start', data: _asked(options));
       state = state.copyWith(
         active: run,
         history: _store.forServer(_spi.id),
@@ -143,9 +150,37 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
       _schedule(run, immediate: true);
     } catch (e, s) {
       Loggers.app.warning('Benchmark start failed', e, s);
+      Diag.crumb(
+        SbDiag.benchmark,
+        'start failed',
+        level: DiagLevel.warning,
+        data: {..._asked(options), 'error': Redact.error(e)},
+      );
       state = state.copyWith(isBusy: false, error: '$e');
     }
   }
+
+  /// What the user asked for, in the shape the defaults can be judged against.
+  ///
+  /// Every field of [YabsOptions] that costs something — time, egress, disk, or
+  /// a disclosure to a third party — and nothing that identifies the machine.
+  /// The working directory is a path the user typed, so only whether they
+  /// changed it is recorded.
+  Map<String, String> _asked(YabsOptions options) => {
+    'disk': '${options.disk}',
+    'network': '${options.network}',
+    'reduced': '${options.reducedNetwork}',
+    'cpu': '${options.cpu}',
+    if (options.cpu) 'geekbench': options.geekbenchVersion.name,
+    'ip': '${options.ipInfo}',
+    'binaries': '${options.preferPrecompiledBinaries}',
+    'workdir': '${options.workDir.isNotEmpty}',
+    // Which side carried it. The claim this feature rests on is that the
+    // transport does not matter — every command is short, so it works over
+    // sshd and over an agent's `/exec` with neither knowing about the other —
+    // and that is only a claim until both are seen to happen.
+    'transport': _spi.transport.name,
+  };
 
   /// Uploads the script unless this version is already there.
   ///
@@ -183,6 +218,7 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
       // far side and does not care that this device briefly could not reach it,
       // so the record is left alone and the next tick tries again.
       Loggers.app.info('Benchmark poll failed, will retry: $e');
+      _reportPollLost(active, 'unreachable', Redact.error(e));
       // Recorded on the run rather than swallowed. The retry is right — the
       // benchmark is not this device's connection — but a page that shows a
       // spinner while every poll fails is telling the user the run is fine.
@@ -198,6 +234,7 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
       // those says anything about the benchmark, which is in its own session on
       // the far side.
       Loggers.app.info('Benchmark poll produced no state, will retry');
+      _reportPollLost(active, 'unanswered', '-');
       final noted = active.copyWith(
         pollError: 'The server did not answer the poll',
       );
@@ -292,6 +329,25 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
   void _finish(BenchmarkRun run) {
     _timer?.cancel();
     _timer = null;
+    // The other half of `start`. A run that never reaches here is one this
+    // device stopped watching — the page was left and never reopened, the app
+    // was replaced, the record was pruned — and the gap between the two counts
+    // is the only measure of that there is.
+    Diag.crumb(
+      SbDiag.benchmark,
+      'finished',
+      level: run.status == BenchmarkStatus.failed
+          ? DiagLevel.warning
+          : DiagLevel.info,
+      data: {
+        ..._asked(run.options),
+        'status': run.status.name,
+        // Bucketed, not exact. What the number answers is whether a run took
+        // the quarter of an hour this feature is built around, and minutes to
+        // the second is a measurement of the user's hardware.
+        'ran': _ranFor(run.elapsed),
+      },
+    );
     _store.put(run);
     state = state.copyWith(
       active: null,
@@ -335,6 +391,46 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
     // being assumed here.
     state = state.copyWith(isBusy: false);
     await _poll();
+  }
+
+  /// The run whose polling has already been reported as lost.
+  String? _pollLostFor;
+
+  /// Says once per run that this device stopped hearing from it.
+  ///
+  /// **Once**, because a run is polled every three to twenty seconds for up to
+  /// twenty minutes: one crumb a poll would be a hundred of them, and would
+  /// push everything else out of the buffer a crash report is read from.
+  ///
+  /// Worth recording at all because both cases were bugs and neither is a
+  /// failure the user can report usefully — the page goes on saying the run is
+  /// going. [why] separates them: `unreachable` is this device's own network,
+  /// while `unanswered` is a command that returned something unrecognisable,
+  /// which is what a monitor agent hitting its own timeout looks like.
+  void _reportPollLost(BenchmarkRun run, String why, String error) {
+    if (_pollLostFor == run.id) return;
+    _pollLostFor = run.id;
+    Diag.crumb(
+      SbDiag.benchmark,
+      'poll lost',
+      level: DiagLevel.warning,
+      data: {
+        'why': why,
+        'error': error,
+        'transport': _spi.transport.name,
+        'ran': _ranFor(run.elapsed),
+      },
+    );
+  }
+
+  /// How long a run went, to the bucket rather than to the second.
+  static String _ranFor(Duration elapsed) {
+    final minutes = elapsed.inMinutes;
+    if (minutes < 1) return '<1m';
+    if (minutes < 5) return '1-5m';
+    if (minutes < 15) return '5-15m';
+    if (minutes < 30) return '15-30m';
+    return '>30m';
   }
 
   /// Forgets one stored run.
