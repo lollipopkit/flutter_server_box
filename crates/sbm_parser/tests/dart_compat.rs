@@ -431,6 +431,56 @@ fn disk_parse_df_drops_container_layers() {
     assert_eq!(disks[2].mount, "/mnt/image");
 }
 
+/// A `df` source is user-chosen text. Excluding the virtual filesystems by
+/// prefix took every one of these with them: a ZFS pool may be named
+/// `tmpfspool`, an NFS export may come from a host named `shm-nas`, and both
+/// are storage.
+#[test]
+fn disk_parse_df_keeps_storage_named_like_a_virtual_fs() {
+    let raw = "Filesystem 1K-blocks Used Available Use% Mounted on\n\
+        tmpfspool/data 961873408 12345678 949527730 2% /srv/pool\n\
+        shm-nas:/vol1 961873408 12345678 949527730 2% /srv/nfs\n\
+        overlay-01:/export 961873408 12345678 949527730 2% /srv/export\n\
+        devtmpfs-backup:/snapshots 961873408 12345678 949527730 2% /srv/backup\n\
+        tmpfs 800412 1792 798620 1% /run\n\
+        overlay 51343636 12057216 36648004 25% /var/lib/docker/overlay2/9c1f/merged\n";
+    let disks = linux::parse_disk(raw);
+
+    let mounts: Vec<&str> = disks.iter().map(|d| d.mount.as_str()).collect();
+    assert_eq!(mounts, ["/srv/pool", "/srv/nfs", "/srv/export", "/srv/backup"]);
+}
+
+/// `disk_usage` is the Rust side of `DiskUsage.parse`, and takes a [`Disk`]
+/// that carries both a source and a filesystem type where the parser is handed
+/// one or the other. Asking with the path alone missed a row identified only by
+/// its type: a squashfs mounted outside `/snap`, or a swap area whose mount is
+/// empty rather than `[SWAP]`.
+#[test]
+fn disk_usage_drops_rows_identified_only_by_filesystem_type() {
+    let row = |path: &str, fs_type: &str, mount: &str, size: u64| Disk {
+        path: path.to_string(),
+        fs_type: (!fs_type.is_empty()).then(|| fs_type.to_string()),
+        mount: mount.to_string(),
+        used: size,
+        size,
+        ..Disk::default()
+    };
+    let root = row("/dev/vda1", "ext4", "/", 51343636);
+    let disks = [
+        root.clone(),
+        // A squashfs image mounted somewhere the mount-point rule cannot name
+        row("/dev/loop3", "squashfs", "/opt/appimage/mnt", 296960),
+        // A swap partition whose mount `lsblk` left empty
+        row("/dev/vda2", "swap", "", 4194304),
+        // A rootless container layer, recognised by its source
+        row("fuse-overlayfs", "", "/home/u/.local/share/x/merged", 51343636),
+    ];
+
+    let (used, size) = disk_usage(&disks);
+    assert_eq!(used, root.used);
+    assert_eq!(size, root.size);
+}
+
 /// Dart 'parse ImmortalWrt df -k output without shrinking units'
 #[test]
 fn disk_parse_immortalwrt() {

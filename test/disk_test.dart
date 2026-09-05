@@ -113,6 +113,32 @@ void main() {
       ]);
     });
 
+    test('DiskUsage keeps storage named like a virtual filesystem', () {
+      // A source carries user-chosen text. Excluding the virtual filesystems
+      // by prefix took every one of these with them.
+      Disk storage(String path, String mount) => Disk(
+        path: path,
+        mount: mount,
+        usedPercent: 2,
+        used: BigInt.from(12345678),
+        size: BigInt.from(961873408),
+        avail: BigInt.from(949527730),
+      );
+
+      final disks = [
+        storage('tmpfspool/data', '/srv/pool'),
+        storage('shm-nas:/vol1', '/srv/nfs'),
+        storage('overlay-01:/export', '/srv/export'),
+        storage('devtmpfs-backup:/snapshots', '/srv/backup'),
+      ];
+      for (final disk in disks) {
+        expect(disk.isStorage, isTrue, reason: disk.path);
+      }
+
+      final usage = DiskUsage.parse(disks);
+      expect(usage.size, BigInt.from(961873408) * BigInt.from(4));
+    });
+
     test('DiskUsage keeps a loop device carrying a writable filesystem', () {
       final usage = DiskUsage.parse([
         Disk(

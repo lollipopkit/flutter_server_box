@@ -214,19 +214,31 @@ bool _shouldCalc(String fs, String mount) {
   if (fs.startsWith('//')) return true;
   if (mount.startsWith('/mnt')) return true;
 
-  // `overlay` covers the old `overlayfs` spelling too, but not the
-  // `fuse-overlayfs` a rootless podman or docker uses: that one publishes a
-  // row per container carrying the host filesystem's own numbers.
-  if (fs.startsWith('shm') ||
-      fs.startsWith('overlay') ||
-      fs == 'fuse-overlayfs' ||
-      fs.startsWith('tmpfs') ||
-      fs.startsWith('devtmpfs')) {
-    return false;
-  }
+  if (_isVirtualFs(fs)) return false;
 
   return true;
 }
+
+/// A kernel-backed filesystem with nothing stored behind it, by exact name.
+///
+/// Matched exactly rather than by prefix, because [fs] is a *source* under
+/// `df` and a source carries user-chosen text: a ZFS pool named `tmpfspool`,
+/// or an export from an NFS host named `shm-nas`, each begin with one of these
+/// and each is storage.
+///
+/// `overlay` and `overlayfs` are the current and pre-4.0 spellings of docker's
+/// own layers. `fuse-overlayfs` is what a rootless podman or docker mounts,
+/// one row per container carrying the host filesystem's own numbers.
+///
+/// Mirrors `is_virtual_fs` in `crates/sbm_parser/src/types.rs`.
+bool _isVirtualFs(String fs) => const {
+  'shm',
+  'tmpfs',
+  'devtmpfs',
+  'overlay',
+  'overlayfs',
+  'fuse-overlayfs',
+}.contains(fs);
 
 /// A read-only image mounted as a filesystem — a snap's squashfs, the same
 /// image handed to a container through `snapfuse`, a mounted ISO — rather than
