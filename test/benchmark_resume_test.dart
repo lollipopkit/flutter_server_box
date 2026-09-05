@@ -225,9 +225,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(tester.takeException(), isNull);
-    // The shared picker: search, tags and the arrangement the user made.
+    // The shared picker: search, tags and the arrangement the user made. Two
+    // search icons now — the column's own bar button and the sheet's field.
     expect(find.text('web'), findsWidgets);
-    expect(find.byIcon(Icons.search), findsOneWidget);
+    expect(find.byIcon(Icons.search), findsWidgets);
     await close(tester);
   });
 
@@ -305,6 +306,46 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(panes().detailId, run.id);
+    await close(tester);
+  });
+
+  testWidgets('the bar searches the history by machine', (tester) async {
+    // A second server, so filtering has something to filter out.
+    final other = spiFixture(
+      id: 'srv-resume-2',
+      name: 'db',
+      ip: 'h2',
+      user: 'u',
+      autoConnect: false,
+    );
+    Stores.server.put(other);
+    seedRunning();
+    BenchmarkStore.instance.put(
+      BenchmarkRun(
+        id: 'bench_other',
+        serverId: other.id,
+        startedAt: DateTime.now(),
+        status: BenchmarkStatus.completed,
+        options: const YabsOptions(),
+        runDir: '/tmp/y/.server_box_bench',
+        exitCode: 0,
+      ),
+    );
+
+    await pump(tester, const BenchmarkTabPage());
+    expect(find.byType(BenchmarkHistoryTile), findsNWidgets(2));
+
+    // The bar becomes the field rather than a second control appearing, which
+    // is how every other tab that searches behaves.
+    await tester.tap(find.byIcon(Icons.search));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.enterText(find.byType(TextField).first, 'db');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.byType(BenchmarkHistoryTile), findsOneWidget);
+    expect(find.text('db'), findsWidgets);
     await close(tester);
   });
 

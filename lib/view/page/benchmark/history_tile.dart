@@ -39,8 +39,6 @@ class BenchmarkHistoryTile extends StatelessWidget {
       BenchmarkStatus.cancelled => (Icons.cancel_outlined, Colors.orange),
       BenchmarkStatus.running => (Icons.timelapse, Colors.blue),
     };
-    final result = run.result;
-
     return CardX(
       child: ListTile(
         selected: selected,
@@ -54,18 +52,14 @@ class BenchmarkHistoryTile extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
+        // How long ago, and nothing else. The row is one of a list read at a
+        // glance: the machine's name says which, the mark says how it ended,
+        // and this says whether it is still current. The CPU model, the error
+        // and the duration were three more things to read past, and all three
+        // are on the result itself one tap away.
         subtitle: Text(
-          [
-            // How long ago rather than when: reading a benchmark is comparing
-            // it with another, and "3 days ago" answers "is this still current"
-            // in a way a timestamp makes the reader work out.
-            run.startedAt.toAgoStr(),
-            if (result?.cpu.model.isNotEmpty ?? false) result!.cpu.model,
-            if (run.status == BenchmarkStatus.failed && run.error.isNotEmpty)
-              run.error,
-            fmtDuration(run.elapsed),
-          ].join(' · '),
-          maxLines: 2,
+          run.startedAt.toAgoStr(),
+          maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: UIs.text12Grey,
         ),

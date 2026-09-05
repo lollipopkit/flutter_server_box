@@ -47,6 +47,10 @@ class _BenchmarkTabPageState extends ConsumerState<BenchmarkTabPage> {
   /// A past run being read, or null for the selected machine's own column.
   String? _viewingRunId;
 
+  /// The bar's search — the same controller every other tab that searches
+  /// uses, so the field arrives and leaves the same way here as there.
+  final _search = InlineSearchController();
+
   /// Redraws the elapsed clock of a run in flight. The record itself only
   /// changes when a poll comes back, which is up to twenty seconds apart.
   Timer? _tick;
@@ -62,6 +66,7 @@ class _BenchmarkTabPageState extends ConsumerState<BenchmarkTabPage> {
   @override
   void dispose() {
     _tick?.cancel();
+    _search.dispose();
     super.dispose();
   }
 
@@ -153,12 +158,29 @@ class _BenchmarkTabPageState extends ConsumerState<BenchmarkTabPage> {
 extension _Widgets on _BenchmarkTabPageState {
   /// The left column: which machine, and everything that has been run.
   Widget _buildList(List<Spi> servers, bool split) {
+    return ListenBuilder(
+      listenable: _search,
+      builder: () => _buildListWith(servers, split),
+    );
+  }
+
+  Widget _buildListWith(List<Spi> servers, bool split) {
     final byId = _byId;
-    final history = BenchmarkStore.instance.all();
+    final needle = _search.needle;
+    // By the machine's name, which is the only thing on a row that a person
+    // would search for — the rest of what a run says is on the result.
+    final history = [
+      for (final run in BenchmarkStore.instance.all())
+        if (needle.isEmpty ||
+            (byId[run.serverId]?.name.toLowerCase().contains(needle) ?? false))
+          run,
+    ];
 
     return Scaffold(
-      // No title: the nav rail beside this already names the tab, and the room
-      // is better spent on the one thing this column is for besides listing.
+      // No title of its own: the nav rail beside this already names the tab.
+      // The bar is the search field while a search is on, and the buttons
+      // otherwise — the same strip changing rather than one control swapped
+      // for another, as on every other tab that searches.
       //
       // An explicit leading for the same reason as the run column's: with none,
       // `CustomAppBar` supplies a back button wired to `onCloseDetail`, and
@@ -166,12 +188,22 @@ extension _Widgets on _BenchmarkTabPageState {
       // to.
       appBar: CustomAppBar(
         leading: const SizedBox.shrink(),
+        title: InlineSearchBar(
+          controller: _search,
+          hint: libL10n.server,
+          child: const SizedBox.shrink(),
+        ),
         actions: [
+          Btn.icon(
+            text: libL10n.search,
+            icon: const Icon(Icons.search, size: 20),
+            onTap: _search.start,
+          ),
           if (servers.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.play_arrow),
-              tooltip: l10n.benchmark,
-              onPressed: _pickServer,
+            Btn.icon(
+              text: l10n.benchmark,
+              icon: const Icon(Icons.play_arrow, size: 20),
+              onTap: _pickServer,
             ),
         ],
       ),
@@ -181,7 +213,9 @@ extension _Widgets on _BenchmarkTabPageState {
               padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
               children: [
                 if (history.isEmpty)
-                  _centered(l10n.benchmarkNoRuns)
+                  _centered(
+                    needle.isEmpty ? l10n.benchmarkNoRuns : libL10n.empty,
+                  )
                 else
                   // Every server's, not the selected one's. Switching machines
                   // to read a result would make the list jump under the hand
