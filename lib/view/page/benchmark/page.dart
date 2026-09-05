@@ -410,6 +410,15 @@ extension _Widgets on _BenchmarkPageState {
     );
   }
 
+  /// A row whose control is a text field.
+  ///
+  /// The name is an ordinary [Text] in the same column as every other row's
+  /// title, and the field carries only a hint. It is not the field's own label,
+  /// which is what it was: `InputDecorator` paints a resting label through a
+  /// transform of its own, so it landed about six logical pixels right of where
+  /// its box was placed — visible on screen, invisible to any assertion about
+  /// layout. Made structural instead, the title cannot drift from the rows
+  /// above it whatever the decorator does.
   Widget _textField({
     required TextEditingController controller,
     required String label,
@@ -420,24 +429,33 @@ extension _Widgets on _BenchmarkPageState {
     return Padding(
       padding: const EdgeInsets.only(left: _rowLeft, right: 13, bottom: 7),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: _iconSize,
-            child: icon == null ? null : Icon(icon, size: _iconSize),
+          Padding(
+            padding: const EdgeInsets.only(top: 9),
+            child: SizedBox(
+              width: _iconSize,
+              child: icon == null ? null : Icon(icon, size: _iconSize),
+            ),
           ),
           const SizedBox(width: _iconGap),
           Expanded(
-            child: Input(
-              controller: controller,
-              label: label,
-              hint: hint,
-              suggestion: false,
-              onChanged: onChanged,
-              // Without this the field wraps itself in a `CardX` — a card
-              // inside the card this whole column already is, carrying its own
-              // padding. That is what put these two rows on a left edge of
-              // their own.
-              noWrap: true,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                UIs.height7,
+                Text(label, style: UIs.text15),
+                Text(hint, style: UIs.text12Grey),
+                Input(
+                  controller: controller,
+                  suggestion: false,
+                  onChanged: onChanged,
+                  // Without this the field wraps itself in a `CardX` — a card
+                  // inside the card this column already is, with padding of its
+                  // own.
+                  noWrap: true,
+                ),
+              ],
             ),
           ),
         ],
