@@ -746,7 +746,65 @@ enum SettingsSection {
   sftp,
   container,
   editor,
-  fullScreen,
+  fullScreen;
+
+  /// What this group is called when it is a page of its own.
+  ///
+  /// The *subject's* name rather than the leaf's. Inside the settings the menu
+  /// beside a group already says which subject you are in, so three of those
+  /// leaves are called "General" — which on a page with nothing beside it names
+  /// nothing at all.
+  String get title => switch (this) {
+    SettingsSection.app => libL10n.app,
+    SettingsSection.privacy => l10n.privacy,
+    SettingsSection.ai => libL10n.ai,
+    SettingsSection.server => libL10n.server,
+    SettingsSection.ssh => libL10n.terminal,
+    // Not localized: the id is what the settings search matches on, and Linux
+    // is the same word in every locale this ships in.
+    SettingsSection.linux => 'Linux (Beta)',
+    SettingsSection.sftp => 'SFTP',
+    SettingsSection.container => libL10n.container,
+    SettingsSection.editor => libL10n.editor,
+    SettingsSection.fullScreen => l10n.fullScreen,
+  };
+}
+
+/// One settings group as a page of its own.
+///
+/// For the places outside the settings tree that lead into it — the terminal
+/// tab's "add a Linux system" is the one there is.
+///
+/// A wrapper rather than an `embedded` flag on [AppSettingsPage], which is what
+/// the three sibling pages in the menu use: that page is a group's rows and
+/// nothing else, on nine call sites, because the settings' own layout supplies
+/// the bar, the title and the surface. Pushed as a route it was a `ListView` on
+/// an empty one — a black screen with settings on it.
+final class SettingsSectionPage extends StatelessWidget {
+  const SettingsSectionPage({super.key, required this.args});
+
+  final SettingsSection args;
+
+  /// A route rather than a `Navigator.push` written at the call site, and the
+  /// difference is not bookkeeping: `AppRoute` decides *which* navigator the
+  /// page lands on and puts the desktop window frame round it when that is the
+  /// root one. On the nearest navigator — what a bare push finds — a page
+  /// opened from a tab lands inside that tab, so the settings replaced the
+  /// terminal's contents with the navigation still under them, and from the
+  /// side bar beside the terminals they opened in that narrow column. A caller
+  /// that means the whole window says [NavTarget.root].
+  static const route = AppRouteArg<void, SettingsSection>(
+    page: SettingsSectionPage.new,
+    path: '/settings/section',
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: CustomAppBar(title: Text(args.title)),
+      body: AppSettingsPage(section: args),
+    );
+  }
 }
 
 final class AppSettingsPage extends ConsumerStatefulWidget {
@@ -754,15 +812,9 @@ final class AppSettingsPage extends ConsumerStatefulWidget {
 
   const AppSettingsPage({super.key, required this.section});
 
-  /// Opens one section from outside the settings tree.
-  ///
-  /// No `AppRoute`: those take their argument as `args`, and this page's is
-  /// `section` on nine call sites inside the settings navigation itself.
-  static Future<void> go(BuildContext context, SettingsSection section) {
-    return Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => AppSettingsPage(section: section)),
-    );
-  }
+  /// No route of its own — see [SettingsSectionPage], which is what a caller
+  /// outside the settings tree pushes. This builds a group's rows and nothing
+  /// else: no bar, no background, no scaffold.
 
   @override
   ConsumerState<AppSettingsPage> createState() => _AppSettingsPageState();

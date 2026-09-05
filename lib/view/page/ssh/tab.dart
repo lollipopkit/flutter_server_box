@@ -356,8 +356,20 @@ extension _Sessions on _SSHTabPageState {
   /// a `+` on a list of servers. The settings page is where the choice
   /// actually lives — which release, which mirror, which shell — so this is
   /// the way there.
+  /// [SettingsSectionPage], which is the group with a bar and a surface round
+  /// it — [AppSettingsPage] on its own is the rows, and a route holding those
+  /// alone is a black screen.
+  ///
+  /// On the root navigator, not this tab's. The settings are not part of the
+  /// terminal tab, and pushed inside it they replaced its contents with the
+  /// navigation still on screen — and from the side bar, which is a pane, they
+  /// would open in the narrow column beside the terminals.
   void _addRootfs() {
-    AppSettingsPage.go(context, SettingsSection.linux);
+    SettingsSectionPage.route.go(
+      context,
+      SettingsSection.linux,
+      target: NavTarget.root,
+    );
   }
 
   /// Deletes one Linux system, and the terminals that were inside it.
