@@ -502,11 +502,29 @@ fn shell_quote_ps(s: &str) -> String {
     format!("'{}'", s.replace('\'', "''"))
 }
 
+/// A remote Windows path is normally user-controlled data and must stay a
+/// literal. The app's two built-in script directories are the exception: they
+/// start with a PowerShell environment expression because the remote user's
+/// actual home/temp directory is not known locally.
+fn shell_path_ps(s: &str) -> String {
+    for env in ["$env:TEMP", "$env:USERPROFILE"] {
+        if s == env {
+            return env.to_owned();
+        }
+        if let Some(tail) = s.strip_prefix(env)
+            && let Some(path) = tail.strip_prefix(['/', '\\'])
+        {
+            return format!("(Join-Path {env} {})", shell_quote_ps(path));
+        }
+    }
+    shell_quote_ps(s)
+}
+
 pub fn install_command(system: SystemType, script_dir: &str, script_path: &str) -> String {
     match system {
         SystemType::Windows => {
-            let qdir = shell_quote_ps(script_dir);
-            let qpath = shell_quote_ps(script_path);
+            let qdir = shell_path_ps(script_dir);
+            let qpath = shell_path_ps(script_path);
             encoded_powershell_command(&format!(
                 "New-Item -ItemType Directory -Force -Path {qdir} | Out-Null; \
 $sb = New-Object System.Text.StringBuilder; \
@@ -548,7 +566,7 @@ pub fn exec_command(system: SystemType, script_path: &str, func: ShellFunc) -> S
     match system {
         SystemType::Windows => encoded_powershell_command(&format!(
             "& {} -{}",
-            shell_quote_ps(script_path),
+            shell_path_ps(script_path),
             func.flag()
         )),
         _ => format!("sh {} -{}", shell_quote_unix(script_path), func.flag()),
