@@ -22,6 +22,10 @@ import 'package:server_box/data/model/server/benchmark/yabs_script.dart';
 void main() {
   late Directory tmp;
 
+  /// Stands for the id the provider mints per run. It is what stamps a run
+  /// directory as this run's, and what cleanup checks before deleting it.
+  const runId = 'bench_test_1';
+
   /// Runs [command] the way both transports do: handed to `/bin/sh -c`, with
   /// [stdinText] on its stdin when there is an `entry`.
   Future<ProcessResult> sh(String command, {String? stdinText}) async {
@@ -69,7 +73,7 @@ exit $exitCode
 
   Future<void> runToCompletion(YabsOptions options) async {
     final start = await sh(
-      YabsScript.startEntry(options),
+      YabsScript.startEntry(options, runId),
       stdinText: YabsScript.launcher(options),
     );
     expect(start.stdout, contains(YabsScript.started), reason: start.stderr);
@@ -81,12 +85,34 @@ exit $exitCode
     // fraction of the wall time it is meant to allow — which made this fail as
     // a timeout while the stand-in was merely being scheduled slowly.
     final deadline = DateTime.now().add(const Duration(seconds: 30));
+    var polls = 0;
+    ProcessResult? last;
     while (DateTime.now().isBefore(deadline)) {
-      final poll = await sh(YabsScript.pollCommand(YabsScript.runDir(options)));
-      if (YabsPollState.parse(poll.stdout).finished) return;
+      last = await sh(YabsScript.pollCommand(YabsScript.runDir(options)));
+      polls++;
+      if (YabsPollState.parse(last.stdout).finished) return;
       await Future<void>.delayed(const Duration(milliseconds: 50));
     }
-    fail('the run never reported an exit code');
+    // Diagnostics rather than a bare timeout: this has flaked under a parallel
+    // run, and "it did not finish" says nothing about whether the launcher was
+    // written, started, or ran and failed.
+    final dir = Directory(
+      YabsScript.runDir(options).replaceFirst(r'$HOME', tmp.path),
+    );
+    final listing = dir.existsSync()
+        ? dir
+              .listSync()
+              .map((e) => e.path.split('/').last)
+              .join(', ')
+        : '<run directory absent>';
+    final runScript = File('${dir.path}/run.sh');
+    fail(
+      'the run never reported an exit code after $polls polls\n'
+      'run dir: $listing\n'
+      'run.sh: ${runScript.existsSync() ? runScript.readAsStringSync() : "<absent>"}\n'
+      'last poll stdout: ${last?.stdout}\n'
+      'last poll stderr: ${last?.stderr}',
+    );
   }
 
   group('the script is installed where the commands look for it', () {
@@ -191,6 +217,50 @@ exit $exitCode
     });
   });
 
+  group('the moment before the launcher runs', () {
+    test('a directory with no pid yet is not a run that died', () async {
+      // The start command creates the directory and returns as soon as it has
+      // backgrounded the launcher. A poll arriving in that window sees a
+      // directory, no process and no exit code — which is also what a run
+      // killed by the OOM killer looks like. Reading them as the same thing
+      // failed benchmarks the instant they were started.
+      const options = YabsOptions();
+      final dir = YabsScript.runDir(options);
+      await sh('mkdir -p ${YabsScript.quotePath(dir)}');
+
+      final state = YabsPollState.parse(
+        (await sh(YabsScript.pollCommand(dir))).stdout,
+      );
+
+      expect(state.dirExists, isTrue);
+      expect(state.alive, isFalse);
+      expect(state.finished, isFalse);
+      expect(state.launcherStarted, isFalse);
+      expect(
+        state.diedWithoutReporting,
+        isFalse,
+        reason: 'the launcher has not had a chance to write its pid',
+      );
+    });
+
+    test('a pid whose process is gone is a run that died', () async {
+      const options = YabsOptions();
+      final dir = YabsScript.runDir(options);
+      await sh('mkdir -p ${YabsScript.quotePath(dir)}');
+      // A pid that cannot be running: the launcher got as far as recording it
+      // and then the process disappeared without writing an exit code.
+      await sh('echo 2147483646 > ${YabsScript.quotePath(dir)}/pid');
+
+      final state = YabsPollState.parse(
+        (await sh(YabsScript.pollCommand(dir))).stdout,
+      );
+
+      expect(state.launcherStarted, isTrue);
+      expect(state.alive, isFalse);
+      expect(state.diedWithoutReporting, isTrue);
+    });
+  });
+
   group('cancelling', () {
     test('kills the process group and marks the run stopped', () async {
       // A stand-in that sleeps, so there is something to interrupt, and that
@@ -203,7 +273,7 @@ exit $exitCode
 
       const options = YabsOptions();
       final start = await sh(
-        YabsScript.startEntry(options),
+        YabsScript.startEntry(options, runId),
         stdinText: YabsScript.launcher(options),
       );
       expect(start.stdout, contains(YabsScript.started));
@@ -244,7 +314,7 @@ exit $exitCode
       await Directory('${dir.path}/2026-01-01').create(recursive: true);
       expect(dir.existsSync(), isTrue);
 
-      final res = await sh(YabsScript.cleanupCommand(YabsScript.runDir(options)));
+      final res = await sh(YabsScript.cleanupCommand(YabsScript.runDir(options), runId));
       expect(res.stdout, contains(YabsScript.cleaned));
       expect(dir.existsSync(), isFalse);
       // The script itself survives: it is versioned and shared by every run.
@@ -263,6 +333,7 @@ exit $exitCode
       expect(
         YabsScript.cleanupCommand(
           YabsScript.runDir(const YabsOptions(workDir: '/')),
+          runId,
         ),
         contains('.server_box_bench'),
       );
@@ -270,8 +341,45 @@ exit $exitCode
       // the command now takes the path a run recorded, so this is the check
       // that a stored value cannot turn into a recursive delete of a home
       // directory.
-      expect(() => YabsScript.cleanupCommand('/home/me'), throwsArgumentError);
-      expect(() => YabsScript.cleanupCommand('/'), throwsArgumentError);
+      expect(() => YabsScript.cleanupCommand('/home/me', runId), throwsArgumentError);
+      expect(() => YabsScript.cleanupCommand('/', runId), throwsArgumentError);
+    });
+  });
+
+  group('cleanup will not delete a directory it does not own', () {
+    test('a directory another run stamped is left alone', () async {
+      await installFakeYabs();
+      const options = YabsOptions();
+      await runToCompletion(options);
+
+      final dir = YabsScript.runDir(options);
+      expect(Directory(dir.replaceFirst(r'$HOME', tmp.path)).existsSync(), isTrue);
+
+      // The path is the right shape and the marker is somebody else's, which
+      // is the case the shape check alone cannot answer.
+      final res = await sh(YabsScript.cleanupCommand(dir, 'bench_some_other'));
+
+      expect(res.stdout, contains(YabsScript.notOurs));
+      expect(res.stdout, isNot(contains(YabsScript.cleaned)));
+      expect(
+        Directory(dir.replaceFirst(r'$HOME', tmp.path)).existsSync(),
+        isTrue,
+        reason: 'a run that does not own this directory removed it anyway',
+      );
+    });
+
+    test('an unstamped directory is left alone too', () async {
+      const options = YabsOptions();
+      final dir = YabsScript.runDir(options);
+      await sh('mkdir -p ${YabsScript.quotePath(dir)}');
+
+      final res = await sh(YabsScript.cleanupCommand(dir, runId));
+
+      expect(res.stdout, contains(YabsScript.notOurs));
+      expect(
+        Directory(dir.replaceFirst(r'$HOME', tmp.path)).existsSync(),
+        isTrue,
+      );
     });
   });
 

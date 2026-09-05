@@ -147,10 +147,11 @@ echo \$? > exit
   /// backgrounded. A detached child that keeps stdout open holds the channel
   /// open with it, and the caller waits for a process nobody is tracking — see
   /// `ExecResult.outputIncomplete`.
-  static String startEntry(YabsOptions options) {
+  static String startEntry(YabsOptions options, String runId) {
     final dir = quotePath(runDir(options));
     return 'mkdir -p $dir && cat > $dir/run.sh && chmod +x $dir/run.sh '
         '&& cd $dir && rm -f out.json log exit pid '
+        '&& printf %s ${quote(runId)} > $ownerFile '
         '&& { if command -v setsid >/dev/null 2>&1; then '
         'setsid ./run.sh >/dev/null 2>&1 </dev/null & '
         'else nohup ./run.sh >/dev/null 2>&1 </dev/null & fi; } '
@@ -158,6 +159,16 @@ echo \$? > exit
   }
 
   static const started = 'SBM_BENCH_STARTED';
+
+  /// Names the run that owns a directory.
+  ///
+  /// Written before the launcher is detached, and read by two things that
+  /// otherwise have to guess. [cleanupCommand] will not `rm -rf` a directory
+  /// this does not vouch for, which matters because the path is built from a
+  /// working directory the user typed. And its presence is what separates "the
+  /// run has not written its pid yet" from "the run is gone", which a poll
+  /// arriving in the first moments cannot tell apart otherwise.
+  static const ownerFile = 'owner';
 
   /// One request that answers everything the page needs: whether it is still
   /// running, what it has printed, and the result if it has one.
@@ -184,7 +195,9 @@ a=0
 if [ -n "\$p" ] && kill -0 "\$p" 2>/dev/null; then a=1; fi
 s=0
 if [ -d "\$d" ]; then s=1; fi
-echo "$stateMarker exit=\$e alive=\$a started=\$s"
+f=0
+if [ -f "\$d/pid" ]; then f=1; fi
+echo "$stateMarker exit=\$e alive=\$a started=\$s pid=\$f"
 echo $jsonMarker
 cat "\$d/out.json" 2>/dev/null
 echo
@@ -240,12 +253,26 @@ echo $cancelled
   /// assembled from user input deserves a check that it is still the directory
   /// this class names — even though the only way to reach it is through
   /// [runDir].
-  static String cleanupCommand(String runDir) {
+  static String cleanupCommand(String runDir, String runId) {
     if (!runDir.endsWith('/$_runDirName') && !runDir.endsWith('/run')) {
       throw ArgumentError.value(runDir, 'runDir', 'not a benchmark directory');
     }
-    return 'rm -rf ${quotePath(runDir)} && echo $cleaned';
+    final dir = quotePath(runDir);
+    // Two checks, because neither is enough on its own. The shape rules out a
+    // path this class could not have produced; the marker rules out a
+    // directory of that shape that some other run — or something that is not a
+    // run at all — happens to own. `rm -rf` on a path assembled from a working
+    // directory the user typed deserves both.
+    return 'd=$dir\n'
+        'if [ "`cat "\$d/$ownerFile" 2>/dev/null`" = ${quote(runId)} ]; then\n'
+        '  rm -rf "\$d" && echo $cleaned\n'
+        'else\n'
+        '  echo $notOurs\n'
+        'fi\n';
   }
+
+  /// The directory did not carry this run's marker, so nothing was removed.
+  static const notOurs = 'SBM_BENCH_NOT_OURS';
 
   static const cleaned = 'SBM_BENCH_CLEANED';
 
@@ -286,6 +313,7 @@ class YabsPollState {
     required this.exitCode,
     required this.alive,
     required this.dirExists,
+    required this.launcherStarted,
     required this.log,
     required this.resultJson,
   });
@@ -318,6 +346,15 @@ class YabsPollState {
   /// started here, or it has been cleaned up.
   final bool dirExists;
 
+  /// Whether the launcher has recorded its pid yet.
+  ///
+  /// The start command creates the directory and returns as soon as it has
+  /// backgrounded the launcher, so the first poll routinely arrives before the
+  /// launcher has run a single line. Without this, that moment — a directory,
+  /// no process, no exit code — is indistinguishable from a run that died, and
+  /// a benchmark was failed before it began.
+  final bool launcherStarted;
+
   final String log;
 
   /// The raw `out.json` text, or null before yabs writes it.
@@ -330,7 +367,7 @@ class YabsPollState {
 
   /// Started, no exit code, and no process left to produce one.
   bool get diedWithoutReporting =>
-      answered && dirExists && !alive && exitCode == null;
+      answered && dirExists && launcherStarted && !alive && exitCode == null;
 
   /// Reads the fixed shape [YabsScript.pollCommand] prints.
   ///
@@ -346,6 +383,7 @@ class YabsPollState {
         exitCode: null,
         alive: false,
         dirExists: false,
+        launcherStarted: false,
         log: '',
         resultJson: null,
       );
@@ -382,6 +420,9 @@ class YabsPollState {
       exitCode: field('exit'),
       alive: field('alive') == 1,
       dirExists: field('started') == 1,
+      // Absent from an older agent's answer, which reads as null. Treated as
+      // "started" there, so this stays no stricter than the check it replaced.
+      launcherStarted: field('pid') != 0,
       log: log,
       resultJson: json,
     );

@@ -75,6 +75,11 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
     return const Duration(seconds: 20);
   }
 
+  /// How long the launcher is given to record its pid before the run is
+  /// called a failure. Generous: it writes it as its first act, so this only
+  /// bounds the case where it never ran.
+  static const _launchGrace = Duration(seconds: 30);
+
   void _schedule({bool immediate = false}) {
     _timer?.cancel();
     final active = state.active;
@@ -109,7 +114,7 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
 
       final res = await exec.run(
         YabsScript.launcher(options),
-        entry: YabsScript.startEntry(options),
+        entry: YabsScript.startEntry(options, run.id),
       );
       if (!res.combined.contains(YabsScript.started)) {
         throw StateError(
@@ -181,6 +186,28 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
       // the far side.
       Loggers.app.info('Benchmark poll produced no state, will retry');
       _schedule();
+      return;
+    }
+
+    if (!poll.launcherStarted) {
+      // The start command creates the directory and returns the moment it has
+      // backgrounded the launcher, so this poll can beat the launcher to its
+      // first line. That is not a dead run, and treating it as one failed
+      // benchmarks before they began.
+      //
+      // Bounded, because a launcher that never runs at all looks the same:
+      // past the grace period there is nothing left to wait for.
+      if (active.elapsed < _launchGrace) {
+        _schedule();
+        return;
+      }
+      _finish(
+        active.copyWith(
+          status: BenchmarkStatus.failed,
+          finishedAt: DateTime.now(),
+          error: 'The run never started',
+        ),
+      );
       return;
     }
 
@@ -257,7 +284,7 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
   Future<void> _cleanup(BenchmarkRun run) async {
     try {
       final exec = await ref.read(serverProvider(_spi.id).notifier).ensureExec();
-      await exec.run(YabsScript.cleanupCommand(run.runDir));
+      await exec.run(YabsScript.cleanupCommand(run.runDir, run.id));
     } catch (e) {
       // Worth a line: what is left behind is a 2 GB fio file when the run was
       // cancelled mid-disk-test, and the user has no other way to learn it is
