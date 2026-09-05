@@ -20,13 +20,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/route.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
-import 'package:server_box/view/page/benchmark/page.dart';
+import 'package:server_box/view/page/benchmark/tab.dart';
 
 import 'helpers/spi_fixture.dart';
 import 'helpers/test_db.dart';
@@ -79,7 +78,7 @@ void main() {
           ],
           supportedLocales: AppLocalizations.supportedLocales,
           builder: ResponsivePoints.builder,
-          home: BenchmarkPage(args: SpiRequiredArgs(spi)),
+          home: const BenchmarkTabPage(),
         ),
       ),
     );

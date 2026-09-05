@@ -9,10 +9,15 @@ const _barTabs = 4;
 
 void main() {
   group('the default order', () {
-    test('puts Agent in the bar and snippets behind "more"', () {
+    test('puts Agent in the bar, and the libraries behind "more"', () {
       final inBar = AppTab.defaultOrder.take(_barTabs);
       expect(inBar, [AppTab.server, AppTab.ssh, AppTab.file, AppTab.agent]);
-      expect(AppTab.defaultOrder.skip(_barTabs), [AppTab.snippet]);
+      // Snippets are a library rather than a place, and a benchmark is a
+      // quarter of an hour started deliberately — neither is wanted a tap away.
+      expect(AppTab.defaultOrder.skip(_barTabs), [
+        AppTab.snippet,
+        AppTab.benchmark,
+      ]);
     });
 
     test('is every tab, exactly once', () {
@@ -104,7 +109,9 @@ void main() {
     );
   });
 
-  test('offers Agent when only the legacy home tabs are selected', () {
+  test('offers every tab the stored list does not name', () {
+    // The legacy four. Everything added since has to be reachable from here,
+    // or a install that stored that list could never turn one on.
     final available = availableHomeTabs(const [
       AppTab.server,
       AppTab.ssh,
@@ -112,7 +119,7 @@ void main() {
       AppTab.snippet,
     ]);
 
-    expect(available, [AppTab.agent]);
+    expect(available, [AppTab.agent, AppTab.benchmark]);
   });
 
   group('reorderHomeTabs', () {

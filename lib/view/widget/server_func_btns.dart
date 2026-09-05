@@ -21,7 +21,6 @@ import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/store.dart';
-import 'package:server_box/view/page/benchmark/page.dart';
 import 'package:server_box/view/page/container/container.dart';
 import 'package:server_box/view/page/iperf.dart';
 import 'package:server_box/view/page/port_forward.dart';
@@ -237,13 +236,6 @@ extension ServerFuncBtnsActions on ServerFuncBtns {
         // terminal — so nothing to connect here either.
         final args = SpiRequiredArgs(spi);
         IPerfPage.route.go(context, args);
-        break;
-      case ServerFuncBtn.benchmark:
-        // No connection needed to open it: the page is a form, and it may have
-        // a finished result to show for a server that is currently down.
-        // Starting a run is what needs a transport, and that asks for one.
-        final args = SpiRequiredArgs(spi);
-        BenchmarkPage.route.go(context, args);
         break;
       case ServerFuncBtn.systemd:
         if (!await _ensureExec(context, spi.id, ref)) return;

@@ -182,6 +182,20 @@ class BenchmarkStore {
     _invalidate();
   }
 
+  /// Every run of every server, newest first.
+  ///
+  /// What the benchmark tab lists. A run belongs to a server, but the tab does
+  /// not: keeping the history whole is what lets two machines be read against
+  /// each other, which is most of the reason to store a result at all.
+  List<BenchmarkRun> all() {
+    final rows = _db.select(
+      'SELECT $_columns FROM $_table ORDER BY started_at DESC;',
+    );
+    return [
+      for (final row in rows) ?_fromRow(row),
+    ];
+  }
+
   /// Every run of every server, newest first — the cross-server comparison.
   ///
   /// Only rows that produced a result: comparing against a run that failed

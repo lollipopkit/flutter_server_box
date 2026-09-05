@@ -13,7 +13,9 @@ enum AppTab {
   @HiveField(3)
   snippet,
   @HiveField(4)
-  agent;
+  agent,
+  @HiveField(5)
+  benchmark;
 
   /// What a fresh install gets, and the fallback when a stored list cannot be
   /// read.
@@ -29,7 +31,11 @@ enum AppTab {
   /// run against a server, from the server's own page, and the tab is where
   /// they are written and kept. The Agent is the opposite — somewhere to be,
   /// and reached from nowhere else.
-  static const defaultOrder = [server, ssh, file, agent, snippet];
+  ///
+  /// Benchmark is after them both: a run takes a quarter of an hour and is
+  /// started deliberately, so it is the tab least often wanted and the one that
+  /// can afford to sit behind "more".
+  static const defaultOrder = [server, ssh, file, agent, snippet, benchmark];
 
   /// Helper function to parse AppTab list from stored object
   ///

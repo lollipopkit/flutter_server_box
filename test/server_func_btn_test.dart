@@ -25,8 +25,7 @@ void main() {
   List<int> row() => setting.serverFuncBtns.get();
 
   test('adds every entry that shipped during the upgrade', () async {
-    // A row from before systemd, port forwarding and Power shipped. The window
-    // stops at 1536, so Benchmark is deliberately outside it.
+    // A row from before systemd, port forwarding and Power shipped.
     setting.serverFuncBtns.put([
       ServerFuncBtn.terminal.index,
       ServerFuncBtn.files.index,
@@ -68,7 +67,6 @@ void main() {
       1051: ServerFuncBtn.systemd,
       1340: ServerFuncBtn.portForward,
       1491: ServerFuncBtn.power,
-      1553: ServerFuncBtn.benchmark,
     };
 
     for (final MapEntry(key: boundary, value: button) in boundaries.entries) {
@@ -86,7 +84,7 @@ void main() {
     // A window after the newest entry's boundary. It has to move whenever one
     // is added, which is the point: the assertion is about a window containing
     // no entry, not about two particular numbers.
-    ServerFuncBtn.autoAddNewFuncs(1554, 1600);
+    ServerFuncBtn.autoAddNewFuncs(1492, 1600);
 
     expect(row(), [ServerFuncBtn.terminal.index]);
   });
@@ -101,7 +99,7 @@ void main() {
       ServerFuncBtn.systemd.index,
     ]);
 
-    ServerFuncBtn.autoAddNewFuncs(1554, 1600);
+    ServerFuncBtn.autoAddNewFuncs(1536, 1600);
 
     expect(row(), [ServerFuncBtn.terminal.index, ServerFuncBtn.systemd.index]);
   });
@@ -131,16 +129,6 @@ void main() {
     });
   }
 
-  test('adds Benchmark when upgrading from the release before it', () async {
-    setting.serverFuncBtns.put([ServerFuncBtn.terminal.index]);
-
-    ServerFuncBtn.autoAddNewFuncs(1553, 1600);
-
-    expect(row(), [
-      ServerFuncBtn.terminal.index,
-      ServerFuncBtn.benchmark.index,
-    ]);
-  });
 
   test('a fresh install gets the defaults untouched', () async {
     // lastVer is 0 on a first run, and the window is wide open — but the
@@ -159,7 +147,6 @@ void main() {
         ServerFuncBtn.systemd.index,
         ServerFuncBtn.portForward.index,
         ServerFuncBtn.power.index,
-        ServerFuncBtn.benchmark.index,
       ]),
     );
   });

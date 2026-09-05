@@ -133,8 +133,6 @@ types:
         index: 9
       power:
         index: 10
-      benchmark:
-        index: 11
   WakeOnLanCfg:
     typeId: 8
     nextIndex: 3

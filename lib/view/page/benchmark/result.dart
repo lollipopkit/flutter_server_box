@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
@@ -5,9 +7,17 @@ import 'package:flutter/services.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/benchmark/benchmark_run.dart';
 import 'package:server_box/data/model/server/benchmark/yabs_result.dart';
+import 'package:server_box/data/store/benchmark.dart';
+import 'package:server_box/view/page/benchmark/log_view.dart';
 
 /// One benchmark's numbers.
-class BenchmarkResultPage extends StatelessWidget {
+///
+/// Stateful because a run can still be going when this is opened: the history
+/// lists a run from the moment it starts, so tapping one leads here while it is
+/// three minutes into fio. The record handed in is a snapshot, and a snapshot
+/// of a running benchmark has an empty log, no result, and an elapsed time that
+/// stopped the instant the page was built.
+class BenchmarkResultPage extends StatefulWidget {
   const BenchmarkResultPage({super.key, required this.args});
 
   final BenchmarkRun args;
@@ -17,8 +27,45 @@ class BenchmarkResultPage extends StatelessWidget {
     path: '/benchmark/result',
   );
 
-  BenchmarkRun get _run => args;
+  @override
+  State<BenchmarkResultPage> createState() => _BenchmarkResultPageState();
+}
+
+class _BenchmarkResultPageState extends State<BenchmarkResultPage> {
+  late BenchmarkRun _run = widget.args;
+  Timer? _tick;
+
   YabsResult? get _result => _run.result;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_run.status == BenchmarkStatus.running) _startTicking();
+  }
+
+  /// Re-reads the record every second while the run is going.
+  ///
+  /// Re-reads rather than merely redrawing: the poll that drives the run writes
+  /// through the store, so the log and the eventual result arrive there. A
+  /// timer that only called `setState` would tick an elapsed clock over a log
+  /// that never filled in.
+  void _startTicking() {
+    _tick = Timer.periodic(const Duration(seconds: 1), (_) {
+      final fresh = BenchmarkStore.instance.get(_run.id);
+      if (!mounted) return;
+      setState(() => _run = fresh ?? _run);
+      if (_run.status.isTerminal) {
+        _tick?.cancel();
+        _tick = null;
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _tick?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,6 +89,7 @@ class BenchmarkResultPage extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
       children: [
+        _summaryCard(),
         if (_run.error.isNotEmpty) _errorCard(_run.error),
         if (result == null)
           // Either nothing was produced, or yabs assembled a document no parser
@@ -53,7 +101,12 @@ class BenchmarkResultPage extends StatelessWidget {
               if (_run.hasResult)
                 Text(l10n.benchmarkResultUnreadable, style: UIs.text12Grey),
               UIs.height7,
-              _mono(context, _run.resultJson ?? _run.log),
+              // The JSON is data and stays plain; a log is terminal output and
+              // is unreadable as anything else — see `BenchmarkLogView`.
+              if (_run.hasResult)
+                _mono(context, _run.resultJson!)
+              else
+                BenchmarkLogView(log: _run.log, height: 320),
             ],
           )
         else ...[
@@ -65,7 +118,7 @@ class BenchmarkResultPage extends StatelessWidget {
           if (_run.log.isNotEmpty)
             _card(
               title: l10n.benchmarkRawLog,
-              children: [_mono(context, _run.log)],
+              children: [BenchmarkLogView(log: _run.log, height: 320)],
             ),
         ],
         UIs.height13,
@@ -76,7 +129,58 @@ class BenchmarkResultPage extends StatelessWidget {
 
 // --- Sections ---
 
-extension _Sections on BenchmarkResultPage {
+extension _Sections on _BenchmarkResultPageState {
+  /// What this run is, how long it has taken, and whether it is still going.
+  ///
+  /// The elapsed time was on the configuration page's running card and nowhere
+  /// else, so a run reached through the history — the only way to reach one
+  /// that has already finished — said nothing about how long it took.
+  Widget _summaryCard() {
+    final (icon, color, label) = switch (_run.status) {
+      BenchmarkStatus.completed => (Icons.check_circle, Colors.green, libL10n.success),
+      BenchmarkStatus.failed => (Icons.error_outline, Colors.red, libL10n.fail),
+      BenchmarkStatus.cancelled => (Icons.cancel_outlined, Colors.orange, libL10n.cancelled),
+      BenchmarkStatus.running => (Icons.timelapse, Colors.blue, l10n.benchmarkRunning),
+    };
+    // yabs times itself, and its figure is the one to show when there is one:
+    // it measures the benchmark rather than the round trip that started it.
+    final reported = _result?.runtime?.elapsed;
+    final elapsed = reported == null
+        ? _run.elapsed
+        : Duration(seconds: reported);
+
+    return _card(
+      title: label,
+      children: [
+        Row(
+          children: [
+            Icon(icon, color: color, size: 17),
+            UIs.width13,
+            Expanded(
+              child: Text(_fmtDuration(elapsed), style: UIs.text15),
+            ),
+            if (_run.status == BenchmarkStatus.running)
+              const SizedBox(
+                width: 15,
+                height: 15,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+          ],
+        ),
+        UIs.height7,
+        _kv(libL10n.start, _run.startedAt.ymdhms()),
+        if (_run.finishedAt case final at?) _kv(libL10n.done, at.ymdhms()),
+        if (_run.exitCode case final code?) _kv('Exit', '$code'),
+      ],
+    );
+  }
+
+  static String _fmtDuration(Duration d) {
+    final m = d.inMinutes;
+    final s = d.inSeconds % 60;
+    return '${m}m ${s.toString().padLeft(2, '0')}s';
+  }
+
   Widget _systemCard(YabsResult r) {
     final mem = r.mem;
     return _card(
@@ -356,7 +460,7 @@ extension _Sections on BenchmarkResultPage {
 
 // --- Building blocks ---
 
-extension _Parts on BenchmarkResultPage {
+extension _Parts on _BenchmarkResultPageState {
   Widget _card({
     required String title,
     String? subtitle,
