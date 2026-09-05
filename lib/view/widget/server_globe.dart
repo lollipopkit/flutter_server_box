@@ -8,6 +8,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/service/geo_data.dart';
 import 'package:server_box/core/service/ip_geo.dart';
 import 'package:server_box/core/service/self_addr.dart';
+import 'package:server_box/data/model/server/geo.dart';
 import 'package:server_box/data/model/server/geo_source.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -73,11 +74,11 @@ class _ServerGlobeState extends ConsumerState<ServerGlobe> {
   /// again.
   ///
   /// [_located] is keyed by id because that is what the caller hands over, but
-  /// an id is not what decides where a server is. Editing a server's address
-  /// leaves `widget.ids` unchanged, so nothing else here would notice — and
-  /// the dot would stay on the continent the old address was in for as long as
-  /// this widget lived.
-  final _resolvedFrom = <String, String>{};
+  /// an id is not what decides where a server is. Editing either the address or
+  /// the manual coordinate leaves `widget.ids` unchanged, so both inputs have
+  /// to travel with the answer or the old dot stays where it was for as long as
+  /// this widget lives.
+  final _resolvedFrom = <String, ({String? host, GeoCoord? manual})>{};
 
   /// One at a time, not `Future.wait`. Fifty servers behind fifty names is
   /// fifty simultaneous DNS queries, which is a burst a router notices — and
@@ -213,7 +214,7 @@ class _ServerGlobeState extends ConsumerState<ServerGlobe> {
   Future<void> _resolvePass() async {
     final located = <String, ResolvedGeo>{};
     final unplaceable = <String, GeoMiss>{};
-    final resolvedFrom = <String, String>{};
+    final resolvedFrom = <String, ({String? host, GeoCoord? manual})>{};
     final cleared = <String>{};
 
     for (final id in widget.ids) {
@@ -222,18 +223,27 @@ class _ServerGlobeState extends ConsumerState<ServerGlobe> {
       final spi = servers[id];
       if (spi == null) continue;
 
-      // What the answer on hand was derived from. Different now means the
-      // address was edited, and the old answer is about a different machine.
-      final from = IpGeo.geoHostOf(spi) ?? '';
+      // What the answer on hand was derived from. The manual coordinate is the
+      // first link in the resolution chain, so changing or removing it is as
+      // significant as editing the address below it.
+      final from = (host: IpGeo.geoHostOf(spi), manual: spi.custom?.geo);
       final known = _resolvedFrom[id] == from;
       // A settled answer is not asked about again — except a private miss on a
-      // server that can now be asked where it is, which is a new fact rather
-      // than the same lookup.
+      // server that can now be asked where it is, or a self-reported answer
+      // whose seven-day lease can now be refreshed from a later status poll.
+      final canReadWhereItIs = _canReadWhereItIs(id);
+      final placed = _located[id];
+      final refreshSelfReported =
+          placed?.source == GeoSource.selfReported && canReadWhereItIs;
       final settled =
-          _located.containsKey(id) ||
-          (_unplaceable.containsKey(id) && !_canReadWhereItIs(id));
+          (placed != null && !refreshSelfReported) ||
+          (_unplaceable.containsKey(id) && !canReadWhereItIs);
       if (known && settled) continue;
 
+      // `IpGeo.locate` reads the stored self address before returning. Replace
+      // an expired one first, otherwise this pass would faithfully resolve the
+      // same stale address and mark it settled for another seven days.
+      if (refreshSelfReported) _readWhereItIs(id);
       var found = await IpGeo.locate(spi);
       // A LAN address places nothing, and this is the first point at which
       // that is known. What the machine said about its own interfaces is
@@ -308,6 +318,13 @@ class _ServerGlobeState extends ConsumerState<ServerGlobe> {
 
   @override
   Widget build(BuildContext context) {
+    // An editor updates this provider directly. `didUpdateWidget` covers the
+    // parent changing the visible ids, but a Consumer rebuilding from its own
+    // dependency is not given that callback, so the changed resolution inputs
+    // need their own listener.
+    ref.listen(serversProvider.select((s) => s.servers), (_, _) {
+      unawaited(_resolve());
+    });
     final servers = ref.watch(serversProvider.select((s) => s.servers));
 
     final items = <GlobeItem>[];
@@ -333,18 +350,14 @@ class _ServerGlobeState extends ConsumerState<ServerGlobe> {
             // Watching the addresses rather than the connection: what this
             // waits for is the *extended* poll that carries them, which lands
             // some time after the server is up.
-            ref.listen(serverProvider(id).select((s) => s.status.ips), (
-              _,
-              ips,
-            ) {
-              if (ips.isNotEmpty) unawaited(_resolve());
-            });
+            _listenForSelfAddr(id);
           }
           misses.add(miss);
           unplaced.add(_buildUnplaced(spi, miss));
         }
         continue;
       }
+      if (geo.source == GeoSource.selfReported) _listenForSelfAddr(id);
       items.add(
         GlobeItem(
           id: id,
@@ -390,6 +403,16 @@ class _ServerGlobeState extends ConsumerState<ServerGlobe> {
         if (spi != null) _openServer(spi, from: 'dot');
       },
     );
+  }
+
+  /// Re-runs location resolution when an extended poll has something that can
+  /// fill a private miss or replace an expired self-reported address.
+  void _listenForSelfAddr(String id) {
+    ref.listen(serverProvider(id).select((s) => s.status.ips), (_, ips) {
+      if (ips.isNotEmpty && Stores.selfAddr.isStale(id)) {
+        unawaited(_resolve());
+      }
+    });
   }
 
   /// Opens a server, saying which of the two things that reach it was pressed.
