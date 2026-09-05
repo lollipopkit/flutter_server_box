@@ -254,6 +254,79 @@ void main() {
     await close(tester);
   });
 
+  testWidgets('the run column has no back button, a result does', (
+    tester,
+  ) async {
+    // `CustomAppBar` supplies one at the root of a detail pane, wired to
+    // `onCloseDetail`. For a result that is right. For the run column it is
+    // not: that column *is* the root, so the button had nowhere to go and did
+    // nothing at all when pressed.
+    final run = seedRunning();
+    BenchmarkStore.instance.put(
+      run.copyWith(status: BenchmarkStatus.completed, exitCode: 0),
+    );
+
+    await pump(tester, const BenchmarkTabPage());
+    expect(find.byType(BackButton), findsNothing);
+
+    await tester.tap(find.byType(BenchmarkHistoryTile).first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.byType(BackButton), findsOneWidget);
+
+    // And it goes back to the run column rather than nowhere. Pumped past the
+    // transition: the page on its way out is still in the tree, back button and
+    // all, for as long as it is animating.
+    await tester.tap(find.byType(BackButton));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.byType(BackButton), findsNothing);
+    expect(find.text(libL10n.start), findsOneWidget);
+    await close(tester);
+  });
+
+  testWidgets('leaving a result is a way back, not a way in', (tester) async {
+    // `NestedNavigator` reads `rootId` becoming null as the detail closing, and
+    // animates it as a way back. Keying it on the selected machine as well made
+    // every return a non-null id replacing another non-null id — a way *in* —
+    // so the result slid off the wrong edge. Asserted on the contract rather
+    // than on the animation, which is the library's to run.
+    final run = seedRunning();
+    BenchmarkStore.instance.put(
+      run.copyWith(status: BenchmarkStatus.completed, exitCode: 0),
+    );
+
+    await pump(tester, const BenchmarkTabPage());
+    AdaptivePanes panes() =>
+        tester.widget<AdaptivePanes>(find.byType(AdaptivePanes));
+
+    expect(
+      panes().detailId,
+      isNull,
+      reason: 'the run column is the root, so there is nothing to go back from',
+    );
+
+    await tester.tap(find.byType(BenchmarkHistoryTile).first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(panes().detailId, run.id);
+    await close(tester);
+  });
+
+  testWidgets('a history row says how long ago, not when', (tester) async {
+    seedRunning(startedAt: DateTime.now().subtract(const Duration(days: 3)));
+
+    await pump(tester, const BenchmarkTabPage());
+
+    final tile = tester.widget<BenchmarkHistoryTile>(
+      find.byType(BenchmarkHistoryTile).first,
+    );
+    expect(tile.run.startedAt.toAgoStr(), contains(libL10n.day));
+    // The timestamp is gone from the row.
+    expect(find.textContaining(RegExp(r'\d{4}-\d{2}-\d{2}')), findsNothing);
+    await close(tester);
+  });
+
   testWidgets('the result page shows a running run its elapsed time', (
     tester,
   ) async {

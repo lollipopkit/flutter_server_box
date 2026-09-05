@@ -125,11 +125,13 @@ class _BenchmarkTabPageState extends ConsumerState<BenchmarkTabPage> {
         onCollapsedChanged: PaneSettings.saveCollapsed,
         collapseTooltip: libL10n.fold,
         expandTooltip: libL10n.open,
-        detailId: _viewingRunId ?? 'server:$_selectedId',
-        // Back to the selected machine's own column rather than to nothing.
-        // There is always something worth showing on the right, and an empty
-        // pane beside a history one tap from filling it is width spent on
-        // nothing.
+        // Null while the run column is showing, which is how `NestedNavigator`
+        // is told a change is a way *back*: it reads `rootId` becoming null as
+        // the detail closing, and animates accordingly. Keying this on the
+        // selected machine as well made every return from a result — a
+        // non-null id replacing another non-null id — animate as a way in, so
+        // the result slid off the wrong edge.
+        detailId: _viewingRunId,
         onCloseDetail: () => setState(() => _viewingRunId = null),
         detailBuilder: (_) => _buildDetail(spi, state),
         listBuilder: (_, split) => _buildList(servers, split),
@@ -156,7 +158,13 @@ extension _Widgets on _BenchmarkTabPageState {
     return Scaffold(
       // No title: the nav rail beside this already names the tab, and the room
       // is better spent on the one thing this column is for besides listing.
+      //
+      // An explicit leading for the same reason as the run column's: with none,
+      // `CustomAppBar` supplies a back button wired to `onCloseDetail`, and
+      // this column is not a detail — it is the thing a detail is closed back
+      // to.
       appBar: CustomAppBar(
+        leading: const SizedBox.shrink(),
         actions: [
           if (servers.isNotEmpty)
             IconButton(
@@ -217,7 +225,15 @@ extension _Widgets on _BenchmarkTabPageState {
 
   Widget _buildRunPane(Spi spi, BenchmarkState state) {
     return Scaffold(
-      appBar: CustomAppBar(title: Text(spi.name)),
+      // No back button. `CustomAppBar` draws one at the root of a detail pane
+      // wired to `onCloseDetail`, which is right for a result read out of the
+      // history — but this *is* the root, so the button had nowhere to go and
+      // did nothing when pressed. An explicit leading is how the widget is told
+      // not to supply its own.
+      appBar: CustomAppBar(
+        leading: const SizedBox.shrink(),
+        title: Text(spi.name),
+      ),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
         children: [

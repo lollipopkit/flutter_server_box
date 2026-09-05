@@ -56,7 +56,10 @@ class BenchmarkHistoryTile extends StatelessWidget {
         ),
         subtitle: Text(
           [
-            run.startedAt.ymdhms(),
+            // How long ago rather than when: reading a benchmark is comparing
+            // it with another, and "3 days ago" answers "is this still current"
+            // in a way a timestamp makes the reader work out.
+            run.startedAt.toAgoStr(),
             if (result?.cpu.model.isNotEmpty ?? false) result!.cpu.model,
             if (run.status == BenchmarkStatus.failed && run.error.isNotEmpty)
               run.error,
