@@ -546,7 +546,61 @@
   "geoDataUnreachable": "Die Daten konnten nicht geholt werden.",
   "geoDataRemoveFailed": "Die Daten konnten nicht gelöscht werden.",
   "geoDataCurrent": "{month} ist bereits installiert.",
-  "@geoDataCurrent": {"placeholders": {"month": {}}},
+  "@geoDataCurrent": {
+    "placeholders": {
+      "month": {}
+    }
+  },
   "geoDataConsent": "**Download: {download} · Gerätespeicher: {disk}.** Der vollständige Datensatz wird auf diesem Gerät gespeichert; alle späteren Standortabfragen erfolgen lokal. Weder Serveradressen noch Abfrageaktivitäten werden an den Download-Dienst übertragen.\n\nMonatlich aktualisiert. Eine neuere Version ersetzt die installierten Daten, ohne eine zusätzliche Kopie zu behalten. Sie können die Daten jederzeit löschen.",
-  "@geoDataConsent": {"placeholders": {"download": {}, "disk": {}}}
+  "@geoDataConsent": {
+    "placeholders": {
+      "download": {},
+      "disk": {}
+    }
+  },
+  "benchmark": "Benchmark",
+  "benchmarkIntro": "Führt Yet Another Bench Script auf diesem Server aus und testet Datenträger, Netzwerk und CPU. Ein vollständiger Durchlauf dauert 10–20 Minuten und läuft weiter, wenn Sie diese Seite verlassen oder die App schließen.",
+  "benchmarkLinuxOnly": "Benchmarks erfordern Linux. Dieser Server meldet {system}.",
+  "benchmarkNoRuns": "Noch keine Benchmarks.",
+  "benchmarkRunning": "Benchmark läuft",
+  "benchmarkStartFailed": "Benchmark konnte nicht gestartet werden",
+  "benchmarkCancelConfirm": "Diesen Benchmark beenden? Alle bisherigen Messergebnisse gehen verloren.",
+  "benchmarkDeleteConfirm": "Dieses Benchmark-Ergebnis löschen?",
+  "benchmarkNothingSelected": "Alle Testphasen sind deaktiviert. Es werden nur Systeminformationen erfasst; dies dauert wenige Sekunden.",
+  "benchmarkDiskTip": "fio mit vier Blockgrößen; etwa 3 Minuten. Schreibt eine 2-GB-Testdatei in das Arbeitsverzeichnis und benötigt entsprechend viel freien Speicherplatz.",
+  "benchmarkNetworkTip": "iperf3 gegen öffentliche Server; etwa 4 Minuten.",
+  "benchmarkReducedNetwork": "Weniger Standorte",
+  "benchmarkReducedNetworkTip": "Drei statt sieben Standorte. Der Datenverkehr sinkt von etwa {full} auf {reduced}.",
+  "benchmarkCpuTip": "Lädt Geekbench, ein proprietäres Programm, herunter und **veröffentlicht das Ergebnis auf einer öffentlichen Seite bei geekbench.com** – einschließlich CPU-Modell, Kernanzahl und Arbeitsspeicher.",
+  "benchmarkIpInfoTip": "Sendet die öffentliche Adresse dieses Servers über unverschlüsseltes HTTP an ip-api.com.",
+  "benchmarkIpInfo": "IP-Inhaber ermitteln",
+  "benchmarkPreferBin": "fio und iperf3 herunterladen",
+  "benchmarkPreferBinTip": "Lädt die Programme von GitHub herunter, statt die Pakete des Hosts zu verwenden. Nur aktivieren, wenn keines der beiden Programme auf dem Host installiert ist.",
+  "benchmarkWorkDir": "Arbeitsverzeichnis",
+  "benchmarkWorkDirTip": "Legt fest, welches Dateisystem der Datenträgertest misst. Leer bedeutet das Home-Verzeichnis des Anmeldekontos.",
+  "benchmarkEstimatedTime": "Etwa {minutes} Min.",
+  "benchmarkEstimatedTraffic": "Etwa {size} Datenverkehr",
+  "benchmarkPhaseSystem": "Systeminformationen werden gelesen",
+  "benchmarkPhaseDisk": "Datenträger wird getestet",
+  "benchmarkPhaseNetwork": "Netzwerk wird getestet",
+  "benchmarkPhaseCpu": "CPU wird getestet",
+  "benchmarkPhaseDone": "Abschluss",
+  "benchmarkDiedUnreported": "Der Durchlauf wurde beendet, ohne ein Ergebnis zu melden. Auf einem kleinen Server ist meist der Out-of-Memory-Killer die Ursache.",
+  "benchmarkResultUnreadable": "Dieses Ergebnis konnte nicht als JSON gelesen werden. Der Rohtext steht unten.",
+  "benchmarkViewOnGeekbench": "Auf Geekbench ansehen",
+  "benchmarkGeekbenchPublic": "Dieses Ergebnis ist unter dem obigen Link öffentlich verfügbar.",
+  "benchmarkSingleCore": "Einzelkern",
+  "benchmarkMultiCore": "Mehrkern",
+  "benchmarkBlockSize": "Blockgröße",
+  "benchmarkIops": "IOPS",
+  "benchmarkSend": "Upload",
+  "benchmarkRecv": "Download",
+  "benchmarkLatency": "Latenz",
+  "benchmarkVirt": "Virtualisierung",
+  "benchmarkCompare": "Vergleichen",
+  "benchmarkCompareEmpty": "Zum Vergleichen sind mindestens zwei abgeschlossene Benchmarks erforderlich.",
+  "benchmarkRawLog": "Ausführungsprotokoll",
+  "benchmarkUpstream": "Bereitgestellt von Yet Another Bench Script ({version})",
+  "benchmarkPhaseStarting": "Wird gestartet",
+  "benchmarkNoOutputYet": "Noch keine Ausgabe. Vor der ersten Zeile prüft YABS, ob google.com und icanhazip.com erreichbar sind. In Netzwerken, die eine der beiden Websites blockieren, kann dies mehrere Minuten dauern."
 }

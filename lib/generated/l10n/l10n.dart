@@ -3331,6 +3331,282 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'**Download: {download} · On-device storage: {disk}.** The complete dataset is stored on this device, and every later geolocation lookup is performed locally. Server addresses and lookup activity are not sent to the download service.\n\nUpdated monthly. A newer version replaces the installed data without keeping an extra copy. You can delete it at any time.'**
   String geoDataConsent(Object download, Object disk);
+
+  /// No description provided for @benchmark.
+  ///
+  /// In en, this message translates to:
+  /// **'Benchmark'**
+  String get benchmark;
+
+  /// No description provided for @benchmarkIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Runs Yet Another Bench Script on this server: disk, network and CPU. A full run takes 10–20 minutes and keeps going if you leave this page or close the app.'**
+  String get benchmarkIntro;
+
+  /// No description provided for @benchmarkLinuxOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Benchmarking needs Linux. This server reports {system}.'**
+  String benchmarkLinuxOnly(String system);
+
+  /// No description provided for @benchmarkNoRuns.
+  ///
+  /// In en, this message translates to:
+  /// **'No benchmarks yet.'**
+  String get benchmarkNoRuns;
+
+  /// No description provided for @benchmarkRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Benchmark running'**
+  String get benchmarkRunning;
+
+  /// No description provided for @benchmarkStartFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not start the benchmark'**
+  String get benchmarkStartFailed;
+
+  /// No description provided for @benchmarkCancelConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop this benchmark? What it has measured so far is lost.'**
+  String get benchmarkCancelConfirm;
+
+  /// No description provided for @benchmarkDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this benchmark result?'**
+  String get benchmarkDeleteConfirm;
+
+  /// No description provided for @benchmarkNothingSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Every phase is off. The run will collect system information only, and take a few seconds.'**
+  String get benchmarkNothingSelected;
+
+  /// No description provided for @benchmarkDiskTip.
+  ///
+  /// In en, this message translates to:
+  /// **'fio at four block sizes, about 3 minutes. Writes a 2 GB test file into the working directory and needs that much free.'**
+  String get benchmarkDiskTip;
+
+  /// No description provided for @benchmarkNetworkTip.
+  ///
+  /// In en, this message translates to:
+  /// **'iperf3 against public servers, about 4 minutes.'**
+  String get benchmarkNetworkTip;
+
+  /// No description provided for @benchmarkReducedNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Fewer locations'**
+  String get benchmarkReducedNetwork;
+
+  /// No description provided for @benchmarkReducedNetworkTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Three locations instead of seven. Roughly {full} of traffic becomes {reduced}.'**
+  String benchmarkReducedNetworkTip(String full, String reduced);
+
+  /// No description provided for @benchmarkCpuTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloads Geekbench, a proprietary program, and **publishes the result to a public page on geekbench.com** — CPU model, core count and memory included.'**
+  String get benchmarkCpuTip;
+
+  /// No description provided for @benchmarkIpInfoTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Sends this server\'s public address to ip-api.com over plain HTTP.'**
+  String get benchmarkIpInfoTip;
+
+  /// No description provided for @benchmarkIpInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Look up IP owner'**
+  String get benchmarkIpInfo;
+
+  /// No description provided for @benchmarkPreferBin.
+  ///
+  /// In en, this message translates to:
+  /// **'Download fio and iperf3'**
+  String get benchmarkPreferBin;
+
+  /// No description provided for @benchmarkPreferBinTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloads them from GitHub instead of using the host\'s packages. Turn on only if the host has neither installed.'**
+  String get benchmarkPreferBinTip;
+
+  /// No description provided for @benchmarkWorkDir.
+  ///
+  /// In en, this message translates to:
+  /// **'Working directory'**
+  String get benchmarkWorkDir;
+
+  /// No description provided for @benchmarkWorkDirTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Decides which filesystem the disk test measures. Empty means the login account\'s home directory.'**
+  String get benchmarkWorkDirTip;
+
+  /// No description provided for @benchmarkEstimatedTime.
+  ///
+  /// In en, this message translates to:
+  /// **'About {minutes} min'**
+  String benchmarkEstimatedTime(String minutes);
+
+  /// No description provided for @benchmarkEstimatedTraffic.
+  ///
+  /// In en, this message translates to:
+  /// **'About {size} of traffic'**
+  String benchmarkEstimatedTraffic(String size);
+
+  /// No description provided for @benchmarkPhaseSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading system information'**
+  String get benchmarkPhaseSystem;
+
+  /// No description provided for @benchmarkPhaseDisk.
+  ///
+  /// In en, this message translates to:
+  /// **'Testing disk'**
+  String get benchmarkPhaseDisk;
+
+  /// No description provided for @benchmarkPhaseNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Testing network'**
+  String get benchmarkPhaseNetwork;
+
+  /// No description provided for @benchmarkPhaseCpu.
+  ///
+  /// In en, this message translates to:
+  /// **'Testing CPU'**
+  String get benchmarkPhaseCpu;
+
+  /// No description provided for @benchmarkPhaseDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Finishing'**
+  String get benchmarkPhaseDone;
+
+  /// No description provided for @benchmarkDiedUnreported.
+  ///
+  /// In en, this message translates to:
+  /// **'The run stopped without reporting a result. On a small server this is usually the out-of-memory killer.'**
+  String get benchmarkDiedUnreported;
+
+  /// No description provided for @benchmarkResultUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'This result could not be read as JSON. The raw text is below.'**
+  String get benchmarkResultUnreadable;
+
+  /// No description provided for @benchmarkViewOnGeekbench.
+  ///
+  /// In en, this message translates to:
+  /// **'View on Geekbench'**
+  String get benchmarkViewOnGeekbench;
+
+  /// No description provided for @benchmarkGeekbenchPublic.
+  ///
+  /// In en, this message translates to:
+  /// **'This result is published publicly at the link above.'**
+  String get benchmarkGeekbenchPublic;
+
+  /// No description provided for @benchmarkSingleCore.
+  ///
+  /// In en, this message translates to:
+  /// **'Single core'**
+  String get benchmarkSingleCore;
+
+  /// No description provided for @benchmarkMultiCore.
+  ///
+  /// In en, this message translates to:
+  /// **'Multi core'**
+  String get benchmarkMultiCore;
+
+  /// No description provided for @benchmarkBlockSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Block size'**
+  String get benchmarkBlockSize;
+
+  /// No description provided for @benchmarkIops.
+  ///
+  /// In en, this message translates to:
+  /// **'IOPS'**
+  String get benchmarkIops;
+
+  /// No description provided for @benchmarkSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Up'**
+  String get benchmarkSend;
+
+  /// No description provided for @benchmarkRecv.
+  ///
+  /// In en, this message translates to:
+  /// **'Down'**
+  String get benchmarkRecv;
+
+  /// No description provided for @benchmarkLatency.
+  ///
+  /// In en, this message translates to:
+  /// **'Latency'**
+  String get benchmarkLatency;
+
+  /// No description provided for @benchmarkVirt.
+  ///
+  /// In en, this message translates to:
+  /// **'Virtualization'**
+  String get benchmarkVirt;
+
+  /// No description provided for @benchmarkCompare.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare'**
+  String get benchmarkCompare;
+
+  /// No description provided for @benchmarkCompareEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'At least two finished benchmarks are needed to compare.'**
+  String get benchmarkCompareEmpty;
+
+  /// No description provided for @benchmarkRawLog.
+  ///
+  /// In en, this message translates to:
+  /// **'Run log'**
+  String get benchmarkRawLog;
+
+  /// No description provided for @benchmarkUpstream.
+  ///
+  /// In en, this message translates to:
+  /// **'Powered by Yet Another Bench Script ({version})'**
+  String benchmarkUpstream(String version);
+
+  /// No description provided for @benchmarkPhaseStarting.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting'**
+  String get benchmarkPhaseStarting;
+
+  /// No description provided for @benchmarkNoOutputYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No output yet. Before printing its first line, YABS checks whether google.com and icanhazip.com are reachable. On networks that block either site, this can take several minutes.'**
+  String get benchmarkNoOutputYet;
+
+  /// No description provided for @benchmarkNoServers.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a server first, then come back to benchmark it.'**
+  String get benchmarkNoServers;
 }
 
 class _AppLocalizationsDelegate

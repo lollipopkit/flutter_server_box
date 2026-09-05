@@ -546,7 +546,61 @@
   "geoDataUnreachable": "No se han podido obtener los datos.",
   "geoDataRemoveFailed": "No se han podido eliminar los datos.",
   "geoDataCurrent": "{month} ya está instalado.",
-  "@geoDataCurrent": {"placeholders": {"month": {}}},
+  "@geoDataCurrent": {
+    "placeholders": {
+      "month": {}
+    }
+  },
   "geoDataConsent": "**Descarga: {download} · Almacenamiento en el dispositivo: {disk}.** El conjunto de datos completo se guarda en este dispositivo y todas las consultas de ubicación posteriores se realizan localmente. No se envían al servicio de descarga direcciones de servidores ni actividad de consulta.\n\nSe actualiza cada mes. Una versión más reciente sustituye los datos instalados sin conservar una copia adicional. Puedes eliminarlos en cualquier momento.",
-  "@geoDataConsent": {"placeholders": {"download": {}, "disk": {}}}
+  "@geoDataConsent": {
+    "placeholders": {
+      "download": {},
+      "disk": {}
+    }
+  },
+  "benchmark": "Prueba de rendimiento",
+  "benchmarkIntro": "Ejecuta Yet Another Bench Script en este servidor para probar el disco, la red y la CPU. Una ejecución completa tarda entre 10 y 20 minutos y continúa aunque salgas de esta página o cierres la aplicación.",
+  "benchmarkLinuxOnly": "La prueba de rendimiento requiere Linux. Este servidor indica que usa {system}.",
+  "benchmarkNoRuns": "Aún no hay pruebas de rendimiento.",
+  "benchmarkRunning": "Prueba de rendimiento en curso",
+  "benchmarkStartFailed": "No se pudo iniciar la prueba de rendimiento",
+  "benchmarkCancelConfirm": "¿Detener esta prueba? Se perderán todas las mediciones realizadas hasta ahora.",
+  "benchmarkDeleteConfirm": "¿Eliminar el resultado de esta prueba?",
+  "benchmarkNothingSelected": "Todas las fases están desactivadas. Solo se recopilará información del sistema y tardará unos segundos.",
+  "benchmarkDiskTip": "fio con cuatro tamaños de bloque; unos 3 minutos. Escribe un archivo de prueba de 2 GB en el directorio de trabajo y necesita ese espacio libre.",
+  "benchmarkNetworkTip": "iperf3 contra servidores públicos; unos 4 minutos.",
+  "benchmarkReducedNetwork": "Menos ubicaciones",
+  "benchmarkReducedNetworkTip": "Tres ubicaciones en lugar de siete. El tráfico aproximado baja de {full} a {reduced}.",
+  "benchmarkCpuTip": "Descarga Geekbench, un programa propietario, y **publica el resultado en una página pública de geekbench.com**, incluidos el modelo de CPU, el número de núcleos y la memoria.",
+  "benchmarkIpInfoTip": "Envía la dirección pública de este servidor a ip-api.com mediante HTTP sin cifrar.",
+  "benchmarkIpInfo": "Consultar propietario de la IP",
+  "benchmarkPreferBin": "Descargar fio e iperf3",
+  "benchmarkPreferBinTip": "Los descarga de GitHub en lugar de usar los paquetes del host. Actívalo solo si el host no tiene instalado ninguno de los dos.",
+  "benchmarkWorkDir": "Directorio de trabajo",
+  "benchmarkWorkDirTip": "Determina qué sistema de archivos mide la prueba de disco. Si se deja vacío, se usa el directorio personal de la cuenta de inicio de sesión.",
+  "benchmarkEstimatedTime": "Unos {minutes} min",
+  "benchmarkEstimatedTraffic": "Unos {size} de tráfico",
+  "benchmarkPhaseSystem": "Leyendo información del sistema",
+  "benchmarkPhaseDisk": "Probando el disco",
+  "benchmarkPhaseNetwork": "Probando la red",
+  "benchmarkPhaseCpu": "Probando la CPU",
+  "benchmarkPhaseDone": "Finalizando",
+  "benchmarkDiedUnreported": "La ejecución se detuvo sin informar de ningún resultado. En un servidor con poca memoria, normalmente se debe al eliminador de procesos por falta de memoria.",
+  "benchmarkResultUnreadable": "No se pudo interpretar este resultado como JSON. El texto original aparece abajo.",
+  "benchmarkViewOnGeekbench": "Ver en Geekbench",
+  "benchmarkGeekbenchPublic": "Este resultado está publicado de forma pública en el enlace anterior.",
+  "benchmarkSingleCore": "Un núcleo",
+  "benchmarkMultiCore": "Varios núcleos",
+  "benchmarkBlockSize": "Tamaño de bloque",
+  "benchmarkIops": "IOPS",
+  "benchmarkSend": "Subida",
+  "benchmarkRecv": "Bajada",
+  "benchmarkLatency": "Latencia",
+  "benchmarkVirt": "Virtualización",
+  "benchmarkCompare": "Comparar",
+  "benchmarkCompareEmpty": "Se necesitan al menos dos pruebas finalizadas para comparar.",
+  "benchmarkRawLog": "Registro de ejecución",
+  "benchmarkUpstream": "Con tecnología de Yet Another Bench Script ({version})",
+  "benchmarkPhaseStarting": "Iniciando",
+  "benchmarkNoOutputYet": "Aún no hay salida. Antes de mostrar la primera línea, YABS comprueba si se puede acceder a google.com e icanhazip.com. En redes que bloquean cualquiera de estos sitios, puede tardar varios minutos."
 }

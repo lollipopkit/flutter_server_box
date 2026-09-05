@@ -91,7 +91,7 @@ abstract final class SchemaVersion {
   ///      so the globe can draw it somewhere the app has no way to look up
   /// v20: the `geo` key-value rows dropped — a cache of where each host was,
   ///      retired with the per-lookup requests it existed for
-  static const current = 20;
+  static const current = 21;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

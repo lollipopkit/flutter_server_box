@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/foundation.dart' show kReleaseMode;
+import 'package:flutter/foundation.dart' show kReleaseMode, visibleForTesting;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
@@ -37,18 +38,6 @@ class HomePage extends ConsumerStatefulWidget {
   static const route = AppRouteNoArg(page: HomePage.new, path: '/');
 }
 
-/// How many tabs the bottom bar carries itself before the rest go behind
-/// "more".
-///
-/// Four and a fifth slot, which is where `NavigationBar` stops fitting labels
-/// on a phone. The fifth is always "more" and never a tab, even with fewer
-/// than four enabled: it is also the way to the page that arranges them, and
-/// an entry that only appears once there are too many tabs is one nobody finds
-/// while they still have few.
-///
-/// The rail has no such limit and shows every tab — it is a column, and it
-/// already carries its own way into the settings at its foot.
-const _kMaxBarTabs = 4;
 
 /// What the navigation rail takes from the width a tab gets.
 ///
@@ -56,6 +45,75 @@ const _kMaxBarTabs = 4;
 /// expose as a constant. Only used to decide whether a rail is worth showing
 /// — the rail lays itself out.
 const _kRailWidth = 80.0;
+
+/// What the rail spends on things that are not destinations.
+///
+/// Its own top spacer, and the settings button pinned to the bottom of the
+/// stack the rail sits in — see [_HomePageState._buildRailBar]. Rounded up: it
+/// is subtracted before the destinations are counted, so being generous costs
+/// a slot and being mean costs an overflow.
+const _kRailChromeHeight = 72.0;
+
+/// How tall one rail destination is, near enough to count them.
+///
+/// The M3 rail lays one out as a 32pt indicator, a 4pt gap, the label, and 12pt
+/// under it, and only the label moves with the text scale — which this app lets
+/// the user set, so a constant would be wrong on exactly the installs where the
+/// count matters most.
+///
+/// An estimate rather than a measurement, because the count has to be made
+/// *before* the destinations are built. Erring high is a rail with a spare
+/// slot; erring low is a rail that overflows its box, which is why the rail is
+/// also `scrollable`. `test/home_rail_tabs_test.dart` holds it against what
+/// Flutter actually lays out.
+///
+/// Rounded **up**, and that is the whole reason the ceiling is here: a text
+/// layout rounds a line to a whole pixel, so the label is `round(16 × scale)`
+/// and the plain product is under the real height for a third of the scales in
+/// between. Up costs at most a pixel a destination.
+@visibleForTesting
+double railDestinationExtent(BuildContext context) =>
+    48 + MediaQuery.textScalerOf(context).scale(16).ceilToDouble();
+
+/// How many destinations fit in [height].
+///
+/// **Never fewer than two**, and that floor is what makes the arithmetic in
+/// [railShownCount] exact. Below two there is no arrangement that both says
+/// which tab is open and reaches the others: one slot is either a tab with the
+/// rest unreachable, or a "more" with nothing saying where you are. So a rail
+/// too short for two plans for two anyway and scrolls — which is a window under
+/// 200pt tall, where the tab's own contents have about 130 and nothing on
+/// screen is usable either way.
+@visibleForTesting
+int railCapacity({required double height, required double destinationExtent}) {
+  if (destinationExtent <= 0) return 2;
+  final room = height - _kRailChromeHeight;
+  return math.max(2, room ~/ destinationExtent);
+}
+
+/// How many tabs the rail draws, of the [wanted] the user put in it.
+///
+/// The rest are behind "more", **which is a destination itself** — so a rail
+/// that cannot hold everything holds one fewer than it has room for.
+///
+/// [total] is every tab there is. The tabs the user left out of the bar are
+/// already behind "more" whatever the height, and this is where a rail too
+/// short for the ones they kept sends those as well.
+///
+/// The result **plus that slot** is what the rail draws, and it never exceeds
+/// [capacity] — which holds because [railCapacity] is at least 2. The `max(1,
+/// ...)` is only a floor against a smaller one arriving from somewhere else:
+/// with `capacity` 1 it answers one tab and a "more" beside it, two
+/// destinations in room for one, and the rail scrolls.
+@visibleForTesting
+int railShownCount({
+  required int wanted,
+  required int total,
+  required int capacity,
+}) {
+  if (wanted >= total && wanted <= capacity) return wanted;
+  return math.max(1, math.min(wanted, capacity - 1));
+}
 
 class _HomePageState extends ConsumerState<HomePage>
     with
@@ -84,7 +142,13 @@ class _HomePageState extends ConsumerState<HomePage>
   int _serverRefreshCycle = 0;
 
   late final _notifier = ref.read(serversProvider.notifier);
-  late List<AppTab> _tabs = Stores.setting.homeTabs.fetch();
+  /// What the user arranged: the bar, and the rail.
+  late List<AppTab> _barTabs = Stores.setting.homeTabs.fetch();
+
+  /// Every page there is, the bar's first and "more"'s after. The index space
+  /// for everything below, so a tab reached through "more" is a page like any
+  /// other rather than something pushed over one.
+  late List<AppTab> _tabs = [..._barTabs, ...AppTab.overflowOf(_barTabs)];
 
   /// The tab strip, whichever of the two is on screen. Only one is built at a
   /// time — the bar on a phone, the rail beside a window — so one key covers
@@ -96,6 +160,24 @@ class _HomePageState extends ConsumerState<HomePage>
   /// The stored flag is only written once the guide has been dismissed, so
   /// something has to stop a second attempt while the first is still up.
   bool _navGuideHandled = false;
+
+  /// The tab that has asked for the whole window, or null. Kept in a field
+  /// because the strips are built inside `ListenableBuilder`s on
+  /// [_selectIndex], which is not a build this state's `ref` may watch from.
+  AppTab? _immersiveTab;
+
+  /// Whether the tab on screen is the one asking for the window.
+  ///
+  /// The claim names a tab rather than being a flag because a tab is kept alive
+  /// behind the others: the server tab goes on drawing its globe while somebody
+  /// reads a terminal, and the navigation has to be there for that one.
+  bool get _wantsWindow {
+    final tab = _immersiveTab;
+    if (tab == null) return false;
+    final index = _selectIndex.value;
+    if (index < 0 || index >= _tabs.length) return false;
+    return _tabs[index] == tab;
+  }
 
   @override
   void dispose() {
@@ -292,6 +374,11 @@ class _HomePageState extends ConsumerState<HomePage>
     // and a provider kept alive only by a page that comes and goes would take
     // the icon with it. Off desktop the service does nothing.
     ref.watch(trayServiceProvider);
+    // A tab asking for the window — the globe, and nothing else so far. Read
+    // here because a build is where a provider is watched; what it means is
+    // decided in [_wantsWindow], which also has to know *which* tab is on
+    // screen.
+    _immersiveTab = ref.watch(immersiveTabProvider);
     _syncFullscreenSystemUi();
 
     // No `appBar`, deliberately. It used to hold an empty box the height of
@@ -304,48 +391,64 @@ class _HomePageState extends ConsumerState<HomePage>
     //
     // The bottom bar is a different case and stays: it is chrome the tabs
     // share, and a page opened in a tab is meant to leave it in place.
-    Widget mainContent(bool narrow) => Scaffold(
-      body: Row(
-        children: [
-          if (!narrow) _buildRailBar(),
-          Expanded(
-            child: PageView.builder(
-              controller: _pageController,
-              itemCount: _tabs.length,
-              physics: const NeverScrollableScrollPhysics(),
-              // Each tab keeps its own stack, so a page opened inside one —
-              // a server's details, its files — covers the tab and not the
-              // window. The bar or rail that got you here stays put, and
-              // coming back to a tab returns you to where you were in it.
-              itemBuilder: (_, index) => NestedNavigator(
-                key: ValueKey(_tabs[index]),
-                // The top inset lands on the tab's own content and not on the
-                // navigator around it, which is the whole point: a page pushed
-                // here is a sibling route, outside this `SafeArea`, so it
-                // reaches the top of the window and animates across the status
-                // bar. Wrapping the navigator instead would inset the pushed
-                // page too and put the seam back.
-                //
-                // Here rather than in each tab because a tab is not one shape:
-                // three of them put a `Scaffold` *inside* a pane splitter, so
-                // the splitter's own divider is above any app bar that could
-                // have spent the inset.
-                rootBuilder: (_) =>
-                    SafeArea(bottom: false, child: _tabs[index].page),
+    //
+    // Rebuilt on a tab change rather than only on its own state, because
+    // whether there is a bar at all is a `Scaffold` argument and the answer
+    // depends on which tab is showing — see [_wantsWindow]. A bar that is
+    // present but drawing nothing is not the same as no bar: `Scaffold` takes
+    // the bottom inset off the body whenever the slot is filled, on the
+    // grounds that the bar will spend it. An empty one spends nothing, and the
+    // globe ran under the home indicator.
+    Widget mainContent(bool narrow) => ListenableBuilder(
+      listenable: _selectIndex,
+      builder: (_, _) => Scaffold(
+        body: Row(
+          children: [
+            // Absent rather than empty, for the inset again: the rail is a
+            // `SafeArea`, so one wrapped round nothing still holds the left
+            // inset open beside a full-bleed page.
+            if (!narrow && !_wantsWindow) _buildRailBar(),
+            Expanded(
+              child: PageView.builder(
+                controller: _pageController,
+                itemCount: _tabs.length,
+                physics: const NeverScrollableScrollPhysics(),
+                // Each tab keeps its own stack, so a page opened inside one —
+                // a server's details, its files — covers the tab and not the
+                // window. The bar or rail that got you here stays put, and
+                // coming back to a tab returns you to where you were in it.
+                itemBuilder: (_, index) => NestedNavigator(
+                  key: ValueKey(_tabs[index]),
+                  // The top inset lands on the tab's own content and not on
+                  // the navigator around it, which is the whole point: a page
+                  // pushed here is a sibling route, outside this `SafeArea`,
+                  // so it reaches the top of the window and animates across
+                  // the status bar. Wrapping the navigator instead would inset
+                  // the pushed page too and put the seam back.
+                  //
+                  // Here rather than in each tab because a tab is not one
+                  // shape: three of them put a `Scaffold` *inside* a pane
+                  // splitter, so the splitter's own divider is above any app
+                  // bar that could have spent the inset.
+                  rootBuilder: (_) =>
+                      SafeArea(bottom: false, child: _tabs[index].page),
+                ),
+                onPageChanged: (value) {
+                  FocusScope.of(context).unfocus();
+                  if (!_switchingPage) {
+                    _selectIndex.value = value;
+                    _rememberTab(value);
+                  }
+                  _syncFullscreenSystemUi();
+                },
               ),
-              onPageChanged: (value) {
-                FocusScope.of(context).unfocus();
-                if (!_switchingPage) {
-                  _selectIndex.value = value;
-                  _rememberTab(value);
-                }
-                _syncFullscreenSystemUi();
-              },
             ),
-          ),
-        ],
+          ],
+        ),
+        bottomNavigationBar: narrow && !_wantsWindow
+            ? _buildBottomBar()
+            : null,
       ),
-      bottomNavigationBar: narrow ? _buildBottomBar() : null,
     );
 
     // Above the `PageView` rather than inside a tab: the Agent and a floated
@@ -424,7 +527,8 @@ class _HomePageState extends ConsumerState<HomePage>
       listenable: _selectIndex,
       builder: (context, child) {
         if (_isServerFullscreenMode) return UIs.placeholder;
-        final shown = _tabs.take(_kMaxBarTabs).toList();
+        final shown = _barTabs;
+        final overflow = _tabs.length - shown.length;
         final selected = _selectIndex.value;
         return NavigationBar(
           key: _navKey,
@@ -435,16 +539,37 @@ class _HomePageState extends ConsumerState<HomePage>
           animationDuration: const Duration(milliseconds: 250),
           onDestinationSelected: (index) {
             if (index < shown.length) return _onDestinationSelected(index);
-            unawaited(_showMoreSheet(shown.length));
+            // The last slot is one or the other, never both.
+            if (overflow > 0) {
+              unawaited(_showMoreSheet(shown.length));
+              return;
+            }
+            SettingsPage.route.go(context);
           },
           labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
           destinations: [
             for (final tab in shown) tab.navDestination(onMenu: _navMenuFor(tab)),
-            NavigationDestination(
-              icon: const Icon(Icons.more_horiz),
-              selectedIcon: const Icon(Icons.more_horiz),
-              label: libL10n.more,
-            ),
+            // One slot, holding whichever of the two is needed. While
+            // anything is behind "more" that is where the settings live, as
+            // they always have; with every tab turned on there is nothing left
+            // for "more" to hold, and the slot becomes the settings themselves
+            // rather than a sheet with one row in it.
+            //
+            // Settings is not an `AppTab` either way: it is never arranged,
+            // never stored, and never one of the pages the index above
+            // addresses — tapping it pushes rather than switches.
+            if (overflow > 0)
+              NavigationDestination(
+                icon: const Icon(Icons.more_horiz),
+                selectedIcon: const Icon(Icons.more_horiz),
+                label: libL10n.more,
+              )
+            else
+              NavigationDestination(
+                icon: const Icon(Icons.settings_outlined),
+                selectedIcon: const Icon(Icons.settings),
+                label: libL10n.setting,
+              ),
           ],
         );
       },
@@ -474,7 +599,7 @@ class _HomePageState extends ConsumerState<HomePage>
               _onDestinationSelected(_tabs.indexOf(tab));
             },
           ),
-        if (overflow.isNotEmpty) const Divider(height: 1),
+        const Divider(height: 1),
         // Where the tabs are arranged, reachable from the bar they arrange
         // rather than only from four levels into the settings tree. The
         // same page either way — this pushes it, settings embeds it.
@@ -486,8 +611,9 @@ class _HomePageState extends ConsumerState<HomePage>
             HomeTabsConfigPage.route.go(context);
           },
         ),
-        // The bottom bar has no settings button of its own — the rail on a
-        // wide window does, at its foot — and this is the slot for it.
+        // The bar has no settings slot of its own while this sheet exists —
+        // the slot is the one this sheet came out of. It takes that slot back
+        // when every tab is on and there is no sheet to raise.
         ListTile(
           leading: const Icon(Icons.settings),
           title: Text(libL10n.setting),
@@ -500,53 +626,106 @@ class _HomePageState extends ConsumerState<HomePage>
     );
   }
 
+  /// The rail, with the same "more" the bottom bar has.
+  ///
+  /// It had none, which was two things wrong at once. The tabs the user left
+  /// out of the bar were unreachable on a wide window — nothing there listed
+  /// them — and `_selectIndex` addresses every tab while the destinations were
+  /// only the ones in the bar, so arriving on one of the others tripped
+  /// `NavigationRail`'s own `selectedIndex < destinations.length` assert. That
+  /// is reachable without any wide-window navigation at all: the tab the app
+  /// reopens on is restored by name, and a window can be widened while one of
+  /// them is showing.
+  ///
+  /// The rail also runs out of *height*, which the bar never does — so what is
+  /// behind "more" here is the tabs the user hid plus however many of the rest
+  /// do not fit. Both are the same thing to everything downstream, because the
+  /// rail draws the first `shown` of [_tabs] and `_showMoreSheet` takes the
+  /// remainder, exactly as the bar does.
   Widget _buildRailBar({bool extended = false}) {
     return SafeArea(
-      child: Stack(
-        children: [
-          ListenableBuilder(
-            listenable: _selectIndex,
-            builder: (context, _) {
-              if (_isServerFullscreenMode) return UIs.placeholder;
-              return NavigationRail(
-                key: _navKey,
-                extended: extended,
-                minExtendedWidth: 150,
-                leading: extended ? const SizedBox(height: 20) : null,
-                trailing: extended ? const SizedBox(height: 20) : null,
-                labelType: extended
-                    ? NavigationRailLabelType.none
-                    : NavigationRailLabelType.all,
-                selectedIndex: _selectIndex.value,
-                destinations: [
-                  for (final tab in _tabs)
-                    tab.navRailDestination(onMenu: _navMenuFor(tab)),
-                ],
-                onDestinationSelected: _onDestinationSelected,
-              );
-            },
-          ),
-          // Settings Btn
-          ListenableBuilder(
-            listenable: _selectIndex,
-            builder: (context, _) {
-              if (_isServerFullscreenMode) return UIs.placeholder;
-              return Positioned(
-                bottom: 10,
-                left: 0,
-                right: 0,
-                child: IconButton(
-                  icon: const Icon(Icons.settings),
-                  tooltip: libL10n.setting,
-                  onPressed: () {
-                    SettingsPage.route.go(context);
-                  },
-                ),
-              );
-            },
-          ),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final capacity = railCapacity(
+            height: constraints.maxHeight,
+            destinationExtent: railDestinationExtent(context),
+          );
+          final shown = railShownCount(
+            wanted: _barTabs.length,
+            total: _tabs.length,
+            capacity: capacity,
+          );
+          return _buildRail(extended: extended, shown: shown);
+        },
       ),
+    );
+  }
+
+  Widget _buildRail({required bool extended, required int shown}) {
+    final more = shown < _tabs.length;
+    return Stack(
+      children: [
+        ListenableBuilder(
+          listenable: _selectIndex,
+          builder: (context, _) {
+            if (_isServerFullscreenMode) return UIs.placeholder;
+            return NavigationRail(
+              key: _navKey,
+              extended: extended,
+              minExtendedWidth: 150,
+              // What [railDestinationExtent] cannot promise. The count above
+              // is an estimate of a layout this does not perform, so a theme
+              // or a text scale that makes a destination taller than it
+              // guessed is a rail that scrolls rather than one that overflows
+              // its box.
+              scrollable: true,
+              leading: extended ? const SizedBox(height: 20) : null,
+              trailing: extended ? const SizedBox(height: 20) : null,
+              labelType: extended
+                  ? NavigationRailLabelType.none
+                  : NavigationRailLabelType.all,
+              // Past the rail's own tabs, what is open is inside "more" —
+              // which is then what the last destination stands for, and is
+              // lit to say so. The bar does the same.
+              selectedIndex: _selectIndex.value < shown
+                  ? _selectIndex.value
+                  : shown,
+              destinations: [
+                for (final tab in _tabs.take(shown))
+                  tab.navRailDestination(onMenu: _navMenuFor(tab)),
+                if (more)
+                  NavigationRailDestination(
+                    icon: const Icon(Icons.more_horiz),
+                    label: Text(libL10n.more),
+                  ),
+              ],
+              onDestinationSelected: (index) {
+                if (index < shown) return _onDestinationSelected(index);
+                unawaited(_showMoreSheet(shown));
+              },
+            );
+          },
+        ),
+        // Settings Btn
+        ListenableBuilder(
+          listenable: _selectIndex,
+          builder: (context, _) {
+            if (_isServerFullscreenMode) return UIs.placeholder;
+            return Positioned(
+              bottom: 10,
+              left: 0,
+              right: 0,
+              child: IconButton(
+                icon: const Icon(Icons.settings),
+                tooltip: libL10n.setting,
+                onPressed: () {
+                  SettingsPage.route.go(context);
+                },
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 
@@ -786,8 +965,11 @@ extension _HomePageStateUtils on _HomePageState {
 
 extension _HomePageStateActions on _HomePageState {
   void _handleHomeTabsChanged() {
-    final newTabs = Stores.setting.homeTabs.fetch();
-    if (!mounted || newTabs == _tabs) return;
+    final newBar = Stores.setting.homeTabs.fetch();
+    final newTabs = [...newBar, ...AppTab.overflowOf(newBar)];
+    // The page list is every tab either way, so it only changes when the *bar*
+    // does — which is what the setting says.
+    if (!mounted || newBar.equals(_barTabs)) return;
 
     final previousIndex = _selectIndex.value;
     // Which tab was open, not where it was. Dragging Files above Terminal in
@@ -806,6 +988,7 @@ extension _HomePageStateActions on _HomePageState {
 
     // ignore: invalid_use_of_protected_member
     setState(() {
+      _barTabs = newBar;
       _tabs = newTabs;
       _selectIndex.value = nextIndex;
       _rememberTab(nextIndex);

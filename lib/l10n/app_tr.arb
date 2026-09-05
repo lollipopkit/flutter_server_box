@@ -546,7 +546,61 @@
   "geoDataUnreachable": "Veri alınamadı.",
   "geoDataRemoveFailed": "Veriler silinemedi.",
   "geoDataCurrent": "{month} zaten yüklü.",
-  "@geoDataCurrent": {"placeholders": {"month": {}}},
+  "@geoDataCurrent": {
+    "placeholders": {
+      "month": {}
+    }
+  },
   "geoDataConsent": "**İndirme: {download} · Cihazdaki depolama alanı: {disk}.** Veri kümesinin tamamı bu cihazda saklanır ve sonraki tüm konum sorguları yerel olarak gerçekleştirilir. Sunucu adresleri ve sorgu etkinliği indirme hizmetine gönderilmez.\n\nHer ay güncellenir. Yeni sürüm yüklü verilerin yerini alır ve ek bir kopya tutmaz. İstediğiniz zaman silebilirsiniz.",
-  "@geoDataConsent": {"placeholders": {"download": {}, "disk": {}}}
+  "@geoDataConsent": {
+    "placeholders": {
+      "download": {},
+      "disk": {}
+    }
+  },
+  "benchmark": "Performans testi",
+  "benchmarkIntro": "Disk, ağ ve CPU'yu test etmek için bu sunucuda Yet Another Bench Script'i çalıştırır. Tam bir test 10–20 dakika sürer ve bu sayfadan ayrılsanız veya uygulamayı kapatsanız da devam eder.",
+  "benchmarkLinuxOnly": "Performans testi için Linux gerekir. Bu sunucu {system} bildiriyor.",
+  "benchmarkNoRuns": "Henüz performans testi yok.",
+  "benchmarkRunning": "Performans testi çalışıyor",
+  "benchmarkStartFailed": "Performans testi başlatılamadı",
+  "benchmarkCancelConfirm": "Bu test durdurulsun mu? Şimdiye kadar yapılan tüm ölçümler kaybolacak.",
+  "benchmarkDeleteConfirm": "Bu test sonucu silinsin mi?",
+  "benchmarkNothingSelected": "Tüm test aşamaları kapalı. Yalnızca sistem bilgileri toplanacak ve işlem birkaç saniye sürecek.",
+  "benchmarkDiskTip": "Dört blok boyutuyla fio; yaklaşık 3 dakika. Çalışma dizinine 2 GB'lık bir test dosyası yazar ve bu kadar boş alan gerektirir.",
+  "benchmarkNetworkTip": "Genel sunuculara karşı iperf3; yaklaşık 4 dakika.",
+  "benchmarkReducedNetwork": "Daha az konum",
+  "benchmarkReducedNetworkTip": "Yedi yerine üç konum. Tahmini trafik {full} yerine {reduced} olur.",
+  "benchmarkCpuTip": "Tescilli bir program olan Geekbench'i indirir ve **sonucu geekbench.com'da herkese açık bir sayfada yayımlar**; CPU modeli, çekirdek sayısı ve bellek bilgileri de yayımlanır.",
+  "benchmarkIpInfoTip": "Bu sunucunun genel IP adresini şifrelenmemiş HTTP üzerinden ip-api.com'a gönderir.",
+  "benchmarkIpInfo": "IP sahibini sorgula",
+  "benchmarkPreferBin": "fio ve iperf3'ü indir",
+  "benchmarkPreferBinTip": "Ana makinenin paketlerini kullanmak yerine GitHub'dan indirir. Yalnızca ana makinede ikisi de yüklü değilse açın.",
+  "benchmarkWorkDir": "Çalışma dizini",
+  "benchmarkWorkDirTip": "Disk testinin hangi dosya sistemini ölçeceğini belirler. Boş bırakılırsa oturum açılan hesabın ana dizini kullanılır.",
+  "benchmarkEstimatedTime": "Yaklaşık {minutes} dk.",
+  "benchmarkEstimatedTraffic": "Yaklaşık {size} trafik",
+  "benchmarkPhaseSystem": "Sistem bilgileri okunuyor",
+  "benchmarkPhaseDisk": "Disk test ediliyor",
+  "benchmarkPhaseNetwork": "Ağ test ediliyor",
+  "benchmarkPhaseCpu": "CPU test ediliyor",
+  "benchmarkPhaseDone": "Tamamlanıyor",
+  "benchmarkDiedUnreported": "Test sonuç bildirmeden durdu. Düşük bellekli bir sunucuda bunun nedeni genellikle OOM killer'dır.",
+  "benchmarkResultUnreadable": "Bu sonuç JSON olarak okunamadı. Ham metin aşağıdadır.",
+  "benchmarkViewOnGeekbench": "Geekbench'te görüntüle",
+  "benchmarkGeekbenchPublic": "Bu sonuç yukarıdaki bağlantıda herkese açık olarak yayımlanmıştır.",
+  "benchmarkSingleCore": "Tek çekirdek",
+  "benchmarkMultiCore": "Çok çekirdek",
+  "benchmarkBlockSize": "Blok boyutu",
+  "benchmarkIops": "IOPS",
+  "benchmarkSend": "Yükleme",
+  "benchmarkRecv": "İndirme",
+  "benchmarkLatency": "Gecikme",
+  "benchmarkVirt": "Sanallaştırma",
+  "benchmarkCompare": "Karşılaştır",
+  "benchmarkCompareEmpty": "Karşılaştırma için en az iki tamamlanmış test gerekir.",
+  "benchmarkRawLog": "Çalıştırma günlüğü",
+  "benchmarkUpstream": "Yet Another Bench Script ({version}) tarafından desteklenir",
+  "benchmarkPhaseStarting": "Başlatılıyor",
+  "benchmarkNoOutputYet": "Henüz çıktı yok. YABS ilk satırı yazdırmadan önce google.com ve icanhazip.com adreslerine erişilip erişilemediğini kontrol eder. Bu sitelerden birini engelleyen ağlarda işlem birkaç dakika sürebilir."
 }

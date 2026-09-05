@@ -156,6 +156,64 @@ void main() {
     expect(placed.rect.left, greaterThanOrEqualTo(bounds.left));
   });
 
+  /// A control floating over the globe — the way out, when the globe is the
+  /// whole page and nothing else on screen leaves it.
+  ///
+  /// It has to be given to the layout rather than stacked over the result: a
+  /// card goes wherever there is room, and the corner the control sits in is
+  /// room. A card laid out under it is unreadable and its own taps go to the
+  /// control, which is drawn on top.
+  group('a reserved rectangle', () {
+    // The top right corner, where the server tab puts its way back to the list.
+    const corner = Rect.fromLTWH(344, 8, 48, 48);
+
+    List<GlobePlacement> withCorner(List<GlobeAnchor> anchors) =>
+        layoutGlobeCards(
+          anchors: anchors,
+          bounds: bounds,
+          globeCenter: globeCenter,
+          reserved: const [corner],
+        );
+
+    test('is not something a card is placed under', () {
+      // Anchored into the corner itself, so the ideal spot is the one taken.
+      final placed = withCorner([anchor('a', const Offset(370, 30))]).single;
+      expect(placed.rect.overlaps(corner), isFalse);
+    });
+
+    test('and a crowd is pushed clear of it as well', () {
+      final placed = withCorner([
+        for (var i = 0; i < 6; i++)
+          anchor('s$i', const Offset(370, 30), 1 - i / 10),
+      ]);
+      expect(placed, hasLength(6));
+      expect(anyOverlap(placed), isFalse);
+      for (final p in placed) {
+        expect(p.rect.overlaps(corner), isFalse, reason: p.id);
+      }
+    });
+
+    test('is not itself a placement', () {
+      // It belongs to the caller. Returning it would draw a leader line from
+      // the globe to a button.
+      expect(withCorner([anchor('a', const Offset(200, 120))]), hasLength(1));
+    });
+
+    test('and none of it changes anything when there is none', () {
+      final anchors = [
+        anchor('a', const Offset(200, 140), 0.9),
+        anchor('b', const Offset(205, 145), 0.4),
+      ];
+      final without = layoutGlobeCards(
+        anchors: anchors,
+        bounds: bounds,
+        globeCenter: globeCenter,
+        reserved: const [],
+      );
+      expect(without.map((p) => p.rect), run(anchors).map((p) => p.rect));
+    });
+  });
+
   test('the anchor is carried through untouched', () {
     // The leader line is drawn from the card to this, so a layout that moved
     // it would draw a line to where the card already is.

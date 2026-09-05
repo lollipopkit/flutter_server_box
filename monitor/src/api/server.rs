@@ -220,7 +220,16 @@ macro_rules! require_read_access {
 /// liked about a handler and still say nothing about what the shipped binary
 /// exposes — see `tests/watch_token_scope.rs`, whose whole subject is this
 /// table.
-pub fn configure_api(cfg: &mut web::ServiceConfig) {
+///
+/// [`exec_max_request`] is `remote_access.exec.max_request_bytes` as resolved
+/// at startup. It arrives as an argument rather than being read from
+/// `AppState`: ntex applies a payload limit while extracting the body, before
+/// any handler — and therefore before any state — is reached.
+pub fn configure_api(exec_max_request: usize) -> impl FnOnce(&mut web::ServiceConfig) {
+    move |cfg: &mut web::ServiceConfig| configure_api_inner(cfg, exec_max_request)
+}
+
+fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
     cfg.service(
         web::scope("/api/v1")
             .route("/login", web::post().to(login))
@@ -240,11 +249,11 @@ pub fn configure_api(cfg: &mut web::ServiceConfig) {
                 // generated status script — 5 KiB today, but it grows
                 // with every custom command a user adds, and going
                 // over would answer 413 with nothing to explain it.
+                // Configurable, because what a caller legitimately sends
+                // here is not something this file can know — see
+                // `remote_access::ExecConfig`.
                 web::resource("/exec")
-                    .state(
-                        web::types::JsonConfig::default()
-                            .limit(crate::api::exec::MAX_REQUEST),
-                    )
+                    .state(web::types::JsonConfig::default().limit(exec_max_request))
                     .route(web::post().to(crate::api::exec::exec)),
             )
             .service(
@@ -303,6 +312,10 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
         );
     }
 
+    // Read once here rather than inside the factory: the factory runs per
+    // worker, and every worker must apply the same limit.
+    let exec_max_request = app_state.remote_access.exec.max_request_bytes;
+
     let server = HttpServer::new(async move || {
         let cors = Cors::new(app_state.config.get_server().cors_allowed_origins);
 
@@ -310,7 +323,7 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
             .state(app_state.clone())
             .middleware(Logger::default())
             .middleware(cors)
-            .configure(configure_api)
+            .configure(configure_api(exec_max_request))
             // TODO: Go-compat endpoint (used by the flutter_server_box app); remove once the app migrates to /api/v1
             .route("/status", web::get().to(get_status_compat))
             // Static file serving configuration:

@@ -62,6 +62,26 @@ Widget _app() => ProviderScope(
   ),
 );
 
+/// One group as a route builds it, which is what a caller outside the settings
+/// tree gets.
+Widget _sectionApp(SettingsSection section) => ProviderScope(
+  child: MaterialApp(
+    locale: const Locale('en'),
+    localizationsDelegates: const [
+      LibLocalizations.delegate,
+      ...AppLocalizations.localizationsDelegates,
+    ],
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: Builder(
+      builder: (context) {
+        app_locale.l10n = AppLocalizations.of(context)!;
+        context.setLibL10n();
+        return SettingsSectionPage.route.toWidget(args: section);
+      },
+    ),
+  ),
+);
+
 /// The navigator the settings content lives in.
 NavigatorState _contentNav(WidgetTester tester) {
   // The innermost one: the `MaterialApp`'s is above the page, and this is the
@@ -92,6 +112,48 @@ void main() {
   tearDown(() async {
     await getIt.reset();
     await SqliteDb.close();
+  });
+
+  /// A group reached from outside the settings tree — the terminal tab's "add
+  /// a Linux system" is the one caller there is.
+  ///
+  /// [AppSettingsPage] is a group's rows and nothing else: the settings' own
+  /// layout supplies the bar, the title and the surface, on nine call sites. A
+  /// route holding it alone is therefore a `ListView` over an empty route,
+  /// which draws as a black screen with settings on it. [SettingsSectionPage]
+  /// is what a caller pushes instead.
+  group('a group as a page of its own', () {
+    testWidgets('has a surface under it', (tester) async {
+      await tester.pumpWidget(_sectionApp(SettingsSection.editor));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(
+        find.descendant(
+          of: find.byType(SettingsSectionPage),
+          matching: find.byType(Scaffold),
+        ),
+        findsOneWidget,
+        reason: 'without one the route paints nothing behind the rows',
+      );
+      expect(find.byType(AppSettingsPage), findsOneWidget);
+    });
+
+    testWidgets('and says which group it is', (tester) async {
+      // The subject's name rather than the leaf's: three of the leaves in the
+      // menu are called "General", which beside the menu says which General
+      // and on a page of its own says nothing.
+      await tester.pumpWidget(_sectionApp(SettingsSection.editor));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(
+        find.descendant(
+          of: find.byType(CustomAppBar),
+          matching: find.text(SettingsSection.editor.title),
+        ),
+        findsOneWidget,
+      );
+      expect(SettingsSection.editor.title, isNot(libL10n.general));
+    });
   });
 
   testWidgets('a pushed page goes when another section is picked', (

@@ -1748,6 +1748,160 @@ class AppLocalizationsZh extends AppLocalizations {
   String geoDataConsent(Object download, Object disk) {
     return '**下载大小：$download · 本机占用：$disk。** 完整数据集保存在本机，后续所有地理位置查询均在本地完成，不会向下载服务发送服务器地址或查询活动。\n\n数据每月更新。新版本会替换已安装的数据，不保留额外副本；你可以随时删除。';
   }
+
+  @override
+  String get benchmark => '性能测试';
+
+  @override
+  String get benchmarkIntro =>
+      '在此服务器上运行 Yet Another Bench Script：磁盘、网络与 CPU。完整跑一次需要 10–20 分钟，离开本页或关闭 App 都不会中断。';
+
+  @override
+  String benchmarkLinuxOnly(String system) {
+    return '性能测试需要 Linux，此服务器报告的是 $system。';
+  }
+
+  @override
+  String get benchmarkNoRuns => '还没有测试记录。';
+
+  @override
+  String get benchmarkRunning => '正在测试';
+
+  @override
+  String get benchmarkStartFailed => '无法启动测试';
+
+  @override
+  String get benchmarkCancelConfirm => '停止此次测试？已测得的部分会丢失。';
+
+  @override
+  String get benchmarkDeleteConfirm => '删除此条测试结果？';
+
+  @override
+  String get benchmarkNothingSelected => '所有项目均已关闭，本次只会采集系统信息，几秒即可完成。';
+
+  @override
+  String get benchmarkDiskTip =>
+      'fio 四种 block size，约 3 分钟。会在工作目录写入 2 GB 测试文件，需要相应的空闲空间。';
+
+  @override
+  String get benchmarkNetworkTip => 'iperf3 对测公共服务器，约 4 分钟。';
+
+  @override
+  String get benchmarkReducedNetwork => '减少测试节点';
+
+  @override
+  String benchmarkReducedNetworkTip(String full, String reduced) {
+    return '3 个节点而非 7 个，流量从约 $full 降到约 $reduced。';
+  }
+
+  @override
+  String get benchmarkCpuTip =>
+      '下载 Geekbench（专有软件）运行，并**将结果公开发布到 geekbench.com 的公共页面**，包含 CPU 型号、核心数与内存。';
+
+  @override
+  String get benchmarkIpInfoTip => '通过明文 HTTP 将此服务器的公网地址发送至 ip-api.com。';
+
+  @override
+  String get benchmarkIpInfo => '查询 IP 归属';
+
+  @override
+  String get benchmarkPreferBin => '下载 fio 与 iperf3';
+
+  @override
+  String get benchmarkPreferBinTip =>
+      '从 GitHub 下载，而不使用主机自带的软件包。仅在主机两者都没有安装时开启。';
+
+  @override
+  String get benchmarkWorkDir => '工作目录';
+
+  @override
+  String get benchmarkWorkDirTip => '决定磁盘测试测的是哪个文件系统。留空表示登录账户的家目录。';
+
+  @override
+  String benchmarkEstimatedTime(String minutes) {
+    return '约 $minutes 分钟';
+  }
+
+  @override
+  String benchmarkEstimatedTraffic(String size) {
+    return '约 $size 流量';
+  }
+
+  @override
+  String get benchmarkPhaseSystem => '读取系统信息';
+
+  @override
+  String get benchmarkPhaseDisk => '测试磁盘';
+
+  @override
+  String get benchmarkPhaseNetwork => '测试网络';
+
+  @override
+  String get benchmarkPhaseCpu => '测试 CPU';
+
+  @override
+  String get benchmarkPhaseDone => '收尾';
+
+  @override
+  String get benchmarkDiedUnreported =>
+      '测试中断且未产生结果。在小内存服务器上，这通常是 OOM killer 所致。';
+
+  @override
+  String get benchmarkResultUnreadable => '此结果无法按 JSON 解析，原始文本见下方。';
+
+  @override
+  String get benchmarkViewOnGeekbench => '在 Geekbench 查看';
+
+  @override
+  String get benchmarkGeekbenchPublic => '此结果已公开发布在上述链接。';
+
+  @override
+  String get benchmarkSingleCore => '单核';
+
+  @override
+  String get benchmarkMultiCore => '多核';
+
+  @override
+  String get benchmarkBlockSize => '块大小';
+
+  @override
+  String get benchmarkIops => 'IOPS';
+
+  @override
+  String get benchmarkSend => '上行';
+
+  @override
+  String get benchmarkRecv => '下行';
+
+  @override
+  String get benchmarkLatency => '延迟';
+
+  @override
+  String get benchmarkVirt => '虚拟化';
+
+  @override
+  String get benchmarkCompare => '对比';
+
+  @override
+  String get benchmarkCompareEmpty => '至少需要两条已完成的记录才能对比。';
+
+  @override
+  String get benchmarkRawLog => '运行日志';
+
+  @override
+  String benchmarkUpstream(String version) {
+    return '由 Yet Another Bench Script ($version) 提供';
+  }
+
+  @override
+  String get benchmarkPhaseStarting => '正在启动';
+
+  @override
+  String get benchmarkNoOutputYet =>
+      '暂时没有输出。YABS 在输出第一行前会先检查能否访问 google.com 和 icanhazip.com；如果网络屏蔽其中任一站点，可能需要等待数分钟。';
+
+  @override
+  String get benchmarkNoServers => '请先添加服务器，再回来进行性能测试。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -3494,4 +3648,154 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String geoDataConsent(Object download, Object disk) {
     return '**下載大小：$download · 本機空間：$disk。** 完整資料集儲存在本機，後續所有地理位置查詢都在本機完成，不會向下載服務傳送伺服器位址或查詢活動。\n\n資料每月更新。新版本會取代已安裝的資料，不保留額外副本；你可以隨時刪除。';
   }
+
+  @override
+  String get benchmark => '效能測試';
+
+  @override
+  String get benchmarkIntro =>
+      '在此伺服器上執行 Yet Another Bench Script，測試磁碟、網路與 CPU。完整執行一次需要 10–20 分鐘，離開此頁面或關閉 App 都不會中斷。';
+
+  @override
+  String benchmarkLinuxOnly(String system) {
+    return '效能測試需要 Linux，此伺服器回報的系統為 $system。';
+  }
+
+  @override
+  String get benchmarkNoRuns => '尚無效能測試記錄。';
+
+  @override
+  String get benchmarkRunning => '正在進行效能測試';
+
+  @override
+  String get benchmarkStartFailed => '無法啟動效能測試';
+
+  @override
+  String get benchmarkCancelConfirm => '要停止這次測試嗎？目前已測得的結果將會遺失。';
+
+  @override
+  String get benchmarkDeleteConfirm => '要刪除這筆測試結果嗎？';
+
+  @override
+  String get benchmarkNothingSelected => '所有測試項目都已關閉，本次只會收集系統資訊，幾秒內即可完成。';
+
+  @override
+  String get benchmarkDiskTip =>
+      '以四種區塊大小執行 fio，約需 3 分鐘。會在工作目錄寫入 2 GB 測試檔案，因此需要同等的可用空間。';
+
+  @override
+  String get benchmarkNetworkTip => '透過 iperf3 對公用伺服器進行測試，約需 4 分鐘。';
+
+  @override
+  String get benchmarkReducedNetwork => '減少測試節點';
+
+  @override
+  String benchmarkReducedNetworkTip(String full, String reduced) {
+    return '使用 3 個節點而非 7 個，預估流量會從 $full 降至 $reduced。';
+  }
+
+  @override
+  String get benchmarkCpuTip =>
+      '下載並執行專有軟體 Geekbench，且**會將結果公開發佈至 geekbench.com 的公開頁面**，其中包含 CPU 型號、核心數與記憶體資訊。';
+
+  @override
+  String get benchmarkIpInfoTip => '透過未加密的 HTTP，將此伺服器的公用 IP 位址傳送至 ip-api.com。';
+
+  @override
+  String get benchmarkIpInfo => '查詢 IP 所有者';
+
+  @override
+  String get benchmarkPreferBin => '下載 fio 與 iperf3';
+
+  @override
+  String get benchmarkPreferBinTip => '從 GitHub 下載，而不使用主機的套件。僅在主機未安裝這兩個程式時啟用。';
+
+  @override
+  String get benchmarkWorkDir => '工作目錄';
+
+  @override
+  String get benchmarkWorkDirTip => '決定磁碟測試要測量哪個檔案系統。留空表示使用登入帳號的家目錄。';
+
+  @override
+  String benchmarkEstimatedTime(String minutes) {
+    return '約 $minutes 分鐘';
+  }
+
+  @override
+  String benchmarkEstimatedTraffic(String size) {
+    return '約 $size 流量';
+  }
+
+  @override
+  String get benchmarkPhaseSystem => '正在讀取系統資訊';
+
+  @override
+  String get benchmarkPhaseDisk => '正在測試磁碟';
+
+  @override
+  String get benchmarkPhaseNetwork => '正在測試網路';
+
+  @override
+  String get benchmarkPhaseCpu => '正在測試 CPU';
+
+  @override
+  String get benchmarkPhaseDone => '正在完成';
+
+  @override
+  String get benchmarkDiedUnreported =>
+      '測試中斷且未產生結果。在記憶體較小的伺服器上，通常是 OOM Killer 所致。';
+
+  @override
+  String get benchmarkResultUnreadable => '無法將此結果解析為 JSON，原始文字如下。';
+
+  @override
+  String get benchmarkViewOnGeekbench => '在 Geekbench 上檢視';
+
+  @override
+  String get benchmarkGeekbenchPublic => '此結果已透過上述連結公開發佈。';
+
+  @override
+  String get benchmarkSingleCore => '單核心';
+
+  @override
+  String get benchmarkMultiCore => '多核心';
+
+  @override
+  String get benchmarkBlockSize => '區塊大小';
+
+  @override
+  String get benchmarkIops => 'IOPS';
+
+  @override
+  String get benchmarkSend => '上傳';
+
+  @override
+  String get benchmarkRecv => '下載';
+
+  @override
+  String get benchmarkLatency => '延遲';
+
+  @override
+  String get benchmarkVirt => '虛擬化';
+
+  @override
+  String get benchmarkCompare => '比較';
+
+  @override
+  String get benchmarkCompareEmpty => '至少需要兩筆已完成的效能測試才能比較。';
+
+  @override
+  String get benchmarkRawLog => '執行記錄';
+
+  @override
+  String benchmarkUpstream(String version) {
+    return '由 Yet Another Bench Script ($version) 提供';
+  }
+
+  @override
+  String get benchmarkPhaseStarting => '正在啟動';
+
+  @override
+  String get benchmarkNoOutputYet =>
+      '暫時沒有輸出。YABS 在輸出第一行前會先檢查能否連線至 google.com 和 icanhazip.com；如果網路封鎖其中任一網站，可能需要等待數分鐘。';
 }

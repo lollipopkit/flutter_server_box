@@ -546,7 +546,61 @@
   "geoDataUnreachable": "データを取得できませんでした。",
   "geoDataRemoveFailed": "データを削除できませんでした。",
   "geoDataCurrent": "すでに {month} のデータです。",
-  "@geoDataCurrent": {"placeholders": {"month": {}}},
+  "@geoDataCurrent": {
+    "placeholders": {
+      "month": {}
+    }
+  },
   "geoDataConsent": "**ダウンロード：{download} · 端末上の使用容量：{disk}。** 完全なデータセットはこの端末に保存され、以後の位置情報検索はすべてローカルで行われます。サーバーのアドレスや検索状況がダウンロードサービスに送信されることはありません。\n\n毎月更新されます。新しいバージョンはインストール済みのデータを置き換え、追加のコピーは保持しません。データはいつでも削除できます。",
-  "@geoDataConsent": {"placeholders": {"download": {}, "disk": {}}}
+  "@geoDataConsent": {
+    "placeholders": {
+      "download": {},
+      "disk": {}
+    }
+  },
+  "benchmark": "ベンチマーク",
+  "benchmarkIntro": "このサーバーで Yet Another Bench Script を実行し、ディスク、ネットワーク、CPU を測定します。すべてのテストには 10～20 分かかり、このページを離れたりアプリを閉じたりしても実行は継続します。",
+  "benchmarkLinuxOnly": "ベンチマークには Linux が必要です。このサーバーからは {system} と報告されています。",
+  "benchmarkNoRuns": "ベンチマーク結果はまだありません。",
+  "benchmarkRunning": "ベンチマーク実行中",
+  "benchmarkStartFailed": "ベンチマークを開始できませんでした",
+  "benchmarkCancelConfirm": "このベンチマークを停止しますか？ここまでの測定結果は失われます。",
+  "benchmarkDeleteConfirm": "このベンチマーク結果を削除しますか？",
+  "benchmarkNothingSelected": "すべてのテスト項目がオフです。システム情報のみを収集し、数秒で完了します。",
+  "benchmarkDiskTip": "4 種類のブロックサイズで fio を実行します（約 3 分）。作業ディレクトリに 2 GB のテストファイルを書き込むため、同量の空き容量が必要です。",
+  "benchmarkNetworkTip": "公開サーバーに対して iperf3 を実行します（約 4 分）。",
+  "benchmarkReducedNetwork": "測定地点を減らす",
+  "benchmarkReducedNetworkTip": "測定地点を 7 か所から 3 か所に減らします。推定通信量は {full} から {reduced} になります。",
+  "benchmarkCpuTip": "プロプライエタリソフトウェアの Geekbench をダウンロードし、**結果を geekbench.com の公開ページに掲載します**。CPU モデル、コア数、メモリも公開されます。",
+  "benchmarkIpInfoTip": "このサーバーのグローバル IP アドレスを、暗号化されていない HTTP で ip-api.com に送信します。",
+  "benchmarkIpInfo": "IP アドレスの所有者を検索",
+  "benchmarkPreferBin": "fio と iperf3 をダウンロード",
+  "benchmarkPreferBinTip": "ホストのパッケージを使わず、GitHub からダウンロードします。ホストにどちらもインストールされていない場合にのみ有効にしてください。",
+  "benchmarkWorkDir": "作業ディレクトリ",
+  "benchmarkWorkDirTip": "ディスクテストで測定するファイルシステムを決定します。空欄の場合はログインアカウントのホームディレクトリを使用します。",
+  "benchmarkEstimatedTime": "約 {minutes} 分",
+  "benchmarkEstimatedTraffic": "通信量：約 {size}",
+  "benchmarkPhaseSystem": "システム情報を取得中",
+  "benchmarkPhaseDisk": "ディスクを測定中",
+  "benchmarkPhaseNetwork": "ネットワークを測定中",
+  "benchmarkPhaseCpu": "CPU を測定中",
+  "benchmarkPhaseDone": "完了処理中",
+  "benchmarkDiedUnreported": "結果が報告されないまま実行が停止しました。メモリの少ないサーバーでは、通常 OOM Killer が原因です。",
+  "benchmarkResultUnreadable": "この結果を JSON として読み取れませんでした。以下に元のテキストを表示します。",
+  "benchmarkViewOnGeekbench": "Geekbench で表示",
+  "benchmarkGeekbenchPublic": "この結果は上記リンクで一般公開されています。",
+  "benchmarkSingleCore": "シングルコア",
+  "benchmarkMultiCore": "マルチコア",
+  "benchmarkBlockSize": "ブロックサイズ",
+  "benchmarkIops": "IOPS",
+  "benchmarkSend": "アップロード",
+  "benchmarkRecv": "ダウンロード",
+  "benchmarkLatency": "レイテンシ",
+  "benchmarkVirt": "仮想化",
+  "benchmarkCompare": "比較",
+  "benchmarkCompareEmpty": "比較するには、完了したベンチマークが 2 件以上必要です。",
+  "benchmarkRawLog": "実行ログ",
+  "benchmarkUpstream": "Yet Another Bench Script ({version}) を使用",
+  "benchmarkPhaseStarting": "開始中",
+  "benchmarkNoOutputYet": "まだ出力はありません。YABS は最初の行を出力する前に、google.com と icanhazip.com に接続できるか確認します。いずれかのサイトがブロックされているネットワークでは、数分かかる場合があります。"
 }

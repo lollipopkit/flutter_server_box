@@ -546,7 +546,61 @@
   "geoDataUnreachable": "Kon de gegevens niet ophalen.",
   "geoDataRemoveFailed": "Kon de gegevens niet verwijderen.",
   "geoDataCurrent": "{month} is al geïnstalleerd.",
-  "@geoDataCurrent": {"placeholders": {"month": {}}},
+  "@geoDataCurrent": {
+    "placeholders": {
+      "month": {}
+    }
+  },
   "geoDataConsent": "**Download: {download} · Opslag op het apparaat: {disk}.** De volledige gegevensset wordt op dit apparaat opgeslagen en alle latere locatiebepalingen worden lokaal uitgevoerd. Er worden geen serveradressen of opzoekactiviteiten naar de downloadservice verzonden.\n\nMaandelijks bijgewerkt. Een nieuwere versie vervangt de geïnstalleerde gegevens zonder een extra kopie te bewaren. Je kunt de gegevens op elk moment verwijderen.",
-  "@geoDataConsent": {"placeholders": {"download": {}, "disk": {}}}
+  "@geoDataConsent": {
+    "placeholders": {
+      "download": {},
+      "disk": {}
+    }
+  },
+  "benchmark": "Benchmark",
+  "benchmarkIntro": "Voert Yet Another Bench Script uit op deze server om schijf, netwerk en CPU te testen. Een volledige test duurt 10–20 minuten en gaat door als je deze pagina verlaat of de app sluit.",
+  "benchmarkLinuxOnly": "Voor benchmarks is Linux vereist. Deze server meldt {system}.",
+  "benchmarkNoRuns": "Nog geen benchmarks.",
+  "benchmarkRunning": "Benchmark wordt uitgevoerd",
+  "benchmarkStartFailed": "Kon de benchmark niet starten",
+  "benchmarkCancelConfirm": "Deze benchmark stoppen? Alle metingen tot nu toe gaan verloren.",
+  "benchmarkDeleteConfirm": "Dit benchmarkresultaat verwijderen?",
+  "benchmarkNothingSelected": "Alle testfasen zijn uitgeschakeld. Alleen systeeminformatie wordt verzameld; dit duurt enkele seconden.",
+  "benchmarkDiskTip": "fio met vier blokgroottes; ongeveer 3 minuten. Schrijft een testbestand van 2 GB naar de werkmap en heeft evenveel vrije ruimte nodig.",
+  "benchmarkNetworkTip": "iperf3 tegen openbare servers; ongeveer 4 minuten.",
+  "benchmarkReducedNetwork": "Minder locaties",
+  "benchmarkReducedNetworkTip": "Drie locaties in plaats van zeven. Het geschatte dataverkeer daalt van {full} naar {reduced}.",
+  "benchmarkCpuTip": "Downloadt Geekbench, een propriëtair programma, en **publiceert het resultaat op een openbare pagina op geekbench.com**, inclusief CPU-model, aantal kernen en geheugen.",
+  "benchmarkIpInfoTip": "Stuurt het openbare adres van deze server via onbeveiligde HTTP naar ip-api.com.",
+  "benchmarkIpInfo": "Eigenaar van IP opzoeken",
+  "benchmarkPreferBin": "fio en iperf3 downloaden",
+  "benchmarkPreferBinTip": "Downloadt ze van GitHub in plaats van de pakketten van de host te gebruiken. Schakel dit alleen in als geen van beide op de host is geïnstalleerd.",
+  "benchmarkWorkDir": "Werkmap",
+  "benchmarkWorkDirTip": "Bepaalt welk bestandssysteem door de schijftest wordt gemeten. Leeg gebruikt de thuismap van het aanmeldaccount.",
+  "benchmarkEstimatedTime": "Ongeveer {minutes} min.",
+  "benchmarkEstimatedTraffic": "Ongeveer {size} dataverkeer",
+  "benchmarkPhaseSystem": "Systeeminformatie lezen",
+  "benchmarkPhaseDisk": "Schijf testen",
+  "benchmarkPhaseNetwork": "Netwerk testen",
+  "benchmarkPhaseCpu": "CPU testen",
+  "benchmarkPhaseDone": "Afronden",
+  "benchmarkDiedUnreported": "De test stopte zonder een resultaat te melden. Op een kleine server is de OOM-killer meestal de oorzaak.",
+  "benchmarkResultUnreadable": "Dit resultaat kon niet als JSON worden gelezen. De onbewerkte tekst staat hieronder.",
+  "benchmarkViewOnGeekbench": "Bekijken op Geekbench",
+  "benchmarkGeekbenchPublic": "Dit resultaat is openbaar gepubliceerd via de bovenstaande link.",
+  "benchmarkSingleCore": "Eén kern",
+  "benchmarkMultiCore": "Meerdere kernen",
+  "benchmarkBlockSize": "Blokgrootte",
+  "benchmarkIops": "IOPS",
+  "benchmarkSend": "Upload",
+  "benchmarkRecv": "Download",
+  "benchmarkLatency": "Latentie",
+  "benchmarkVirt": "Virtualisatie",
+  "benchmarkCompare": "Vergelijken",
+  "benchmarkCompareEmpty": "Er zijn minstens twee voltooide benchmarks nodig om te vergelijken.",
+  "benchmarkRawLog": "Uitvoeringslogboek",
+  "benchmarkUpstream": "Mogelijk gemaakt door Yet Another Bench Script ({version})",
+  "benchmarkPhaseStarting": "Starten",
+  "benchmarkNoOutputYet": "Nog geen uitvoer. Voordat de eerste regel verschijnt, controleert YABS of google.com en icanhazip.com bereikbaar zijn. Op netwerken die een van beide sites blokkeren, kan dit enkele minuten duren."
 }

@@ -23,6 +23,8 @@ class AppTabAdapter extends TypeAdapter<AppTab> {
         return AppTab.snippet;
       case 4:
         return AppTab.agent;
+      case 5:
+        return AppTab.benchmark;
       default:
         return AppTab.server;
     }
@@ -41,6 +43,8 @@ class AppTabAdapter extends TypeAdapter<AppTab> {
         writer.writeByte(3);
       case AppTab.agent:
         writer.writeByte(4);
+      case AppTab.benchmark:
+        writer.writeByte(5);
     }
   }
 

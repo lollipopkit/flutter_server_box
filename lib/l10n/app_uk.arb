@@ -546,7 +546,61 @@
   "geoDataUnreachable": "Не вдалося отримати дані.",
   "geoDataRemoveFailed": "Не вдалося видалити дані.",
   "geoDataCurrent": "{month} вже встановлено.",
-  "@geoDataCurrent": {"placeholders": {"month": {}}},
+  "@geoDataCurrent": {
+    "placeholders": {
+      "month": {}
+    }
+  },
   "geoDataConsent": "**Розмір завантаження: {download} · Місце на пристрої: {disk}.** Повний набір даних зберігається на цьому пристрої, а всі подальші геолокаційні запити виконуються локально. Адреси серверів і відомості про запити не передаються сервісу завантаження.\n\nОновлюється щомісяця. Нова версія замінює встановлені дані, не зберігаючи додаткову копію. Дані можна видалити будь-коли.",
-  "@geoDataConsent": {"placeholders": {"download": {}, "disk": {}}}
+  "@geoDataConsent": {
+    "placeholders": {
+      "download": {},
+      "disk": {}
+    }
+  },
+  "benchmark": "Тест продуктивності",
+  "benchmarkIntro": "Запускає на цьому сервері Yet Another Bench Script для перевірки диска, мережі та процесора. Повний тест триває 10–20 хвилин і продовжує виконуватися, якщо залишити цю сторінку або закрити застосунок.",
+  "benchmarkLinuxOnly": "Для тесту продуктивності потрібен Linux. Сервер повідомляє, що використовується {system}.",
+  "benchmarkNoRuns": "Результатів тестування ще немає.",
+  "benchmarkRunning": "Виконується тест продуктивності",
+  "benchmarkStartFailed": "Не вдалося запустити тест продуктивності",
+  "benchmarkCancelConfirm": "Зупинити цей тест? Усі отримані результати буде втрачено.",
+  "benchmarkDeleteConfirm": "Видалити результат цього тесту?",
+  "benchmarkNothingSelected": "Усі етапи вимкнено. Буде зібрано лише інформацію про систему; це триватиме кілька секунд.",
+  "benchmarkDiskTip": "fio із чотирма розмірами блоків; близько 3 хвилин. Записує тестовий файл розміром 2 ГБ у робочий каталог і потребує стільки ж вільного місця.",
+  "benchmarkNetworkTip": "iperf3 із загальнодоступними серверами; близько 4 хвилин.",
+  "benchmarkReducedNetwork": "Менше розташувань",
+  "benchmarkReducedNetworkTip": "Три розташування замість семи. Приблизний обсяг трафіку зменшиться з {full} до {reduced}.",
+  "benchmarkCpuTip": "Завантажує Geekbench, пропрієтарну програму, і **публікує результат на загальнодоступній сторінці geekbench.com**, включно з моделлю процесора, кількістю ядер і обсягом пам’яті.",
+  "benchmarkIpInfoTip": "Передає публічну адресу цього сервера сервісу ip-api.com через незашифрований HTTP.",
+  "benchmarkIpInfo": "Дізнатися власника IP-адреси",
+  "benchmarkPreferBin": "Завантажити fio та iperf3",
+  "benchmarkPreferBinTip": "Завантажує їх із GitHub замість використання пакетів хоста. Вмикайте лише тоді, коли на хості не встановлено жодної із цих програм.",
+  "benchmarkWorkDir": "Робочий каталог",
+  "benchmarkWorkDirTip": "Визначає файлову систему для тестування диска. Якщо залишити поле порожнім, буде використано домашній каталог облікового запису.",
+  "benchmarkEstimatedTime": "Близько {minutes} хв.",
+  "benchmarkEstimatedTraffic": "Близько {size} трафіку",
+  "benchmarkPhaseSystem": "Зчитування інформації про систему",
+  "benchmarkPhaseDisk": "Тестування диска",
+  "benchmarkPhaseNetwork": "Тестування мережі",
+  "benchmarkPhaseCpu": "Тестування процесора",
+  "benchmarkPhaseDone": "Завершення",
+  "benchmarkDiedUnreported": "Тест зупинився, не повідомивши результат. На сервері з малим обсягом пам’яті причиною зазвичай є OOM killer.",
+  "benchmarkResultUnreadable": "Не вдалося прочитати цей результат як JSON. Нижче наведено початковий текст.",
+  "benchmarkViewOnGeekbench": "Відкрити в Geekbench",
+  "benchmarkGeekbenchPublic": "Цей результат загальнодоступний за наведеним вище посиланням.",
+  "benchmarkSingleCore": "Одне ядро",
+  "benchmarkMultiCore": "Кілька ядер",
+  "benchmarkBlockSize": "Розмір блока",
+  "benchmarkIops": "IOPS",
+  "benchmarkSend": "Надсилання",
+  "benchmarkRecv": "Отримання",
+  "benchmarkLatency": "Затримка",
+  "benchmarkVirt": "Віртуалізація",
+  "benchmarkCompare": "Порівняти",
+  "benchmarkCompareEmpty": "Для порівняння потрібно щонайменше два завершені тести.",
+  "benchmarkRawLog": "Журнал виконання",
+  "benchmarkUpstream": "На основі Yet Another Bench Script ({version})",
+  "benchmarkPhaseStarting": "Запуск",
+  "benchmarkNoOutputYet": "Виводу ще немає. Перед виведенням першого рядка YABS перевіряє доступність google.com та icanhazip.com. У мережах, де заблоковано хоча б один із цих сайтів, перевірка може тривати кілька хвилин."
 }

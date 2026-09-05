@@ -113,7 +113,7 @@ types:
         index: 2
   ServerFuncBtn:
     typeId: 6
-    nextIndex: 11
+    nextIndex: 12
     fields:
       terminal:
         index: 0

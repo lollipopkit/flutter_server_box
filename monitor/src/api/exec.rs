@@ -19,7 +19,6 @@
 use std::collections::HashMap;
 use std::process::Stdio;
 use std::sync::Arc;
-use std::time::Duration;
 
 use ntex::web::{self, HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
@@ -31,20 +30,15 @@ use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
 use super::server::verify_auth;
 use super::ws;
 
-/// Long enough for a package listing on a slow disk, short enough that a
-/// command waiting on input nobody will type does not hold a worker forever.
-const TIMEOUT: Duration = Duration::from_secs(60);
-
-/// The largest request body accepted, which is `stdin` plus the command.
+/// The bounds on one command — how long it may run and how much of it is kept.
 ///
-/// Generous next to what the app sends — a password, or a status script of a
-/// few KiB — and bounded, so one caller cannot make the agent buffer whatever
-/// it likes before the command has even started.
-pub const MAX_REQUEST: usize = 1024 * 1024;
-
-/// What is kept of each stream. A caller parsing `ps` output does not need
-/// more, and an unbounded read is a way for one command to exhaust memory.
-const MAX_OUTPUT: usize = 1024 * 1024;
+/// Resolved from `[remote_access.exec]` at startup (`core::remote_access`)
+/// rather than being constants here: 60 seconds and a megabyte fit the pages
+/// this endpoint was built for, and fit nothing that takes minutes or prints
+/// more than that. They are the agent's decision and never the caller's — a
+/// request cannot ask for more, so raising either is an operator editing the
+/// config file.
+pub use crate::core::remote_access::Exec as Limits;
 
 #[derive(Deserialize)]
 pub struct ExecRequest {
@@ -72,10 +66,10 @@ struct ExecResponse {
     exit_code: Option<i32>,
     stdout: String,
     stderr: String,
-    /// Whether either stream hit [`MAX_OUTPUT`], so a caller knows the output
-    /// it is parsing is a prefix.
+    /// Whether either stream hit the configured output cap, so a caller knows
+    /// the output it is parsing is a prefix.
     truncated: bool,
-    /// Whether [`TIMEOUT`] elapsed. The process is killed and both streams
+    /// Whether the configured timeout elapsed. The process is killed and both streams
     /// come back empty: they are read as one future together with the wait, so
     /// abandoning it abandons what was buffered too. A caller gets the fact
     /// that it timed out rather than a partial answer it might parse.
@@ -118,7 +112,14 @@ pub async fn exec(
         .record(&app_state.db)
         .await;
 
-    match run(&cmd, body.stdin.as_deref(), body.env.as_ref()).await {
+    match run(
+        &cmd,
+        body.stdin.as_deref(),
+        body.env.as_ref(),
+        &app_state.remote_access.exec,
+    )
+    .await
+    {
         Ok(resp) => Ok(HttpResponse::Ok().json(&resp)),
         Err(e) => {
             Event::new(Kind::Exec, Action::Close, Outcome::Error)
@@ -152,6 +153,7 @@ async fn run(
     cmd: &str,
     stdin: Option<&str>,
     env: Option<&HashMap<String, String>>,
+    limits: &Limits,
 ) -> std::io::Result<ExecResponse> {
     let (shell, flag) = shell();
     let mut command = Command::new(shell);
@@ -194,7 +196,7 @@ async fn run(
     // reads its stdin leaves a write of more than a pipe buffer — 64 KiB on
     // Linux, and the status script is larger than that — blocked forever, and
     // nothing above was bounding it.
-    let output = match tokio::time::timeout(TIMEOUT, async {
+    let output = match tokio::time::timeout(limits.timeout, async {
         feed.await;
         child.wait_with_output().await
     })
@@ -214,8 +216,8 @@ async fn run(
         }
     };
 
-    let (stdout, out_cut) = cap(output.stdout);
-    let (stderr, err_cut) = cap(output.stderr);
+    let (stdout, out_cut) = cap(output.stdout, limits.max_output_bytes);
+    let (stderr, err_cut) = cap(output.stderr, limits.max_output_bytes);
     Ok(ExecResponse {
         exit_code: output.status.code(),
         stdout,
@@ -227,11 +229,11 @@ async fn run(
 
 /// Lossy on purpose: a command's output is bytes, and refusing to report
 /// anything because one of them is not UTF-8 helps nobody.
-fn cap(bytes: Vec<u8>) -> (String, bool) {
-    if bytes.len() <= MAX_OUTPUT {
+fn cap(bytes: Vec<u8>, max: usize) -> (String, bool) {
+    if bytes.len() <= max {
         return (String::from_utf8_lossy(&bytes).into_owned(), false);
     }
-    let mut end = MAX_OUTPUT;
+    let mut end = max;
     while end > 0 && (bytes[end] & 0b1100_0000) == 0b1000_0000 {
         end -= 1;
     }

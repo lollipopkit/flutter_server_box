@@ -72,6 +72,9 @@ pub struct RemoteAccessConfig {
 
     #[serde(default)]
     pub fs: FsConfig,
+
+    #[serde(default)]
+    pub exec: ExecConfig,
 }
 
 /// Hand-written rather than derived: `ssh_addr` has a default that is not the
@@ -84,6 +87,7 @@ impl Default for RemoteAccessConfig {
             full_access: None,
             terminal: TerminalConfig::default(),
             fs: FsConfig::default(),
+            exec: ExecConfig::default(),
         }
     }
 }
@@ -170,6 +174,51 @@ pub struct FsConfig {
     pub max_write_bytes: Option<u64>,
 }
 
+/// `[remote_access.exec]` — `POST /api/v1/exec`.
+///
+/// Every field here is a bound on one request, and every one of them used to be
+/// a constant. They are configurable because what a reasonable command is
+/// differs by what the agent is being asked to do: 60 seconds covers a package
+/// listing and refuses to cover a benchmark, a filesystem scan or a backup, and
+/// an operator who wants those has no way to ask for them from the app side —
+/// the limits are the agent's decision, not the caller's, so a request cannot
+/// raise them.
+///
+/// Under `exec` rather than beside [`RemoteAccessConfig::full_access`]: that
+/// switch decides *whether* commands run at all and is shared with the shell,
+/// while these describe one endpoint's bounds and nothing else reads them.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct ExecConfig {
+    /// How long a command may run before the agent kills it and answers
+    /// `timed_out`. `None` = [`DEFAULT_EXEC_TIMEOUT_SECS`].
+    ///
+    /// Raising this holds a worker for as long as it says, so it is a trade
+    /// against the agent's own responsiveness rather than a free knob. A caller
+    /// that needs to outlive any value here should start the work detached and
+    /// poll it, which costs one short request per check instead.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub timeout_secs: Option<u64>,
+
+    /// Bytes retained per output stream; past this the response says
+    /// `truncated`. `None` = derive from physical memory.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub max_output_bytes: Option<usize>,
+
+    /// Largest request body accepted — the command, its `stdin` and its `env`.
+    /// `None` = derive from physical memory.
+    ///
+    /// The app sends a script on `stdin` here, so this is what decides whether
+    /// a large one can be installed at all; over it, ntex answers 413 before
+    /// the handler sees the request.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub max_request_bytes: Option<usize>,
+}
+
+/// What [`ExecConfig::timeout_secs`] means when unset: long enough for a
+/// package listing on a slow disk, short enough that a command waiting on input
+/// nobody will type does not hold a worker forever.
+pub const DEFAULT_EXEC_TIMEOUT_SECS: u64 = 60;
+
 /// Whether access without SSH is the right default for this platform.
 ///
 /// Split out so the rule is stated once and can be asserted in a test on
@@ -217,6 +266,11 @@ const MIN_SLOTS: usize = 2;
 const MAX_SLOTS: usize = 16;
 const MIN_WRITE_BYTES: u64 = 64 * 1024 * 1024;
 const MAX_WRITE_BYTES: u64 = 4 * 1024 * 1024 * 1024;
+/// The flat cap both exec bounds carried before they were derived. Kept as the
+/// floor so no machine gets *less* than it did, whatever it reports for memory:
+/// the derivation is only allowed to be generous.
+const MIN_EXEC_BYTES: usize = 1024 * 1024;
+const MAX_EXEC_BYTES: usize = 64 * 1024 * 1024;
 
 impl RemoteAccessConfig {
     /// Fills in every unset capacity from `total_memory` (bytes).
@@ -232,6 +286,10 @@ impl RemoteAccessConfig {
         // would make reattach impossible — takeover needs the old session to
         // still exist while the new connection is being set up).
         let slots = ((mem / (1024 * 1024 * 1024)) as usize).clamp(MIN_SLOTS, MAX_SLOTS);
+        // One request at a time rather than one per session, so this can be
+        // freer than the scrollback above: 1 MiB up to 512 MiB of RAM, 16 MiB
+        // at 8 GiB, the cap from 32 GiB up.
+        let exec_bytes = ((mem / 512) as usize).clamp(MIN_EXEC_BYTES, MAX_EXEC_BYTES);
 
         RemoteAccess {
             ssh_addr: self.ssh_addr.clone(),
@@ -260,6 +318,24 @@ impl RemoteAccessConfig {
                     .filter(|&n| n > 0)
                     .unwrap_or_else(|| (mem / 4).clamp(MIN_WRITE_BYTES, MAX_WRITE_BYTES)),
             },
+            exec: Exec {
+                timeout: Duration::from_secs(
+                    self.exec
+                        .timeout_secs
+                        .filter(|&n| n > 0)
+                        .unwrap_or(DEFAULT_EXEC_TIMEOUT_SECS),
+                ),
+                max_output_bytes: self
+                    .exec
+                    .max_output_bytes
+                    .filter(|&n| n > 0)
+                    .unwrap_or(exec_bytes),
+                max_request_bytes: self
+                    .exec
+                    .max_request_bytes
+                    .filter(|&n| n > 0)
+                    .unwrap_or(exec_bytes),
+            },
         }
     }
 }
@@ -274,6 +350,15 @@ pub struct RemoteAccess {
     pub full_access: bool,
     pub terminal: Terminal,
     pub fs: Fs,
+    pub exec: Exec,
+}
+
+/// Resolved [`ExecConfig`].
+#[derive(Debug, Clone)]
+pub struct Exec {
+    pub timeout: Duration,
+    pub max_output_bytes: usize,
+    pub max_request_bytes: usize,
 }
 
 /// Resolved [`TerminalConfig`].
@@ -365,6 +450,14 @@ impl RemoteAccess {
                 "File API: roots={:?}, max write {} MiB",
                 self.fs.roots.as_slice(),
                 self.fs.max_write_bytes / (1024 * 1024),
+            );
+        }
+        if self.full_access_available(tls_active) {
+            tracing::info!(
+                "Exec: {}s timeout, {} MiB max output per stream, {} MiB max request",
+                self.exec.timeout.as_secs(),
+                self.exec.max_output_bytes / (1024 * 1024),
+                self.exec.max_request_bytes / (1024 * 1024),
             );
         }
         if self.terminal.enabled && self.full_access {
@@ -594,6 +687,59 @@ mod tests {
     }
 
     #[test]
+    fn exec_bounds_default_to_at_least_what_the_flat_caps_were() {
+        // The derivation replaced two 1 MiB constants. Whatever it computes,
+        // no machine may end up with a smaller bound than it shipped with.
+        for mem in [64 * 1024 * 1024, 512 * 1024 * 1024, 2 * GIB, 256 * GIB] {
+            let r = resolved(Some(mem));
+            assert!(r.exec.max_output_bytes >= MIN_EXEC_BYTES, "output at {mem}");
+            assert!(r.exec.max_request_bytes >= MIN_EXEC_BYTES, "request at {mem}");
+            assert!(r.exec.max_output_bytes <= MAX_EXEC_BYTES, "output cap at {mem}");
+        }
+        assert_eq!(
+            resolved(None).exec.timeout,
+            Duration::from_secs(DEFAULT_EXEC_TIMEOUT_SECS)
+        );
+    }
+
+    #[test]
+    fn explicit_exec_bounds_win_over_derivation() {
+        let config = RemoteAccessConfig {
+            exec: ExecConfig {
+                timeout_secs: Some(1800),
+                max_output_bytes: Some(4096),
+                max_request_bytes: Some(8192),
+            },
+            ..Default::default()
+        };
+        let r = config.resolve(Some(64 * GIB));
+        assert_eq!(r.exec.timeout, Duration::from_secs(1800));
+        // Below the derivation floor on purpose: an explicit number is the
+        // operator's decision, and clamping it would silently overrule them.
+        assert_eq!(r.exec.max_output_bytes, 4096);
+        assert_eq!(r.exec.max_request_bytes, 8192);
+    }
+
+    #[test]
+    fn zero_exec_bounds_are_unset_rather_than_a_hard_disable() {
+        // Same rule as the terminal capacities: zero would leave the endpoint
+        // on with every request failing, which nobody means by writing 0.
+        let config = RemoteAccessConfig {
+            exec: ExecConfig {
+                timeout_secs: Some(0),
+                max_output_bytes: Some(0),
+                max_request_bytes: Some(0),
+            },
+            ..Default::default()
+        };
+        let r = config.resolve(Some(8 * GIB));
+        let derived = resolved(Some(8 * GIB));
+        assert_eq!(r.exec.timeout, derived.exec.timeout);
+        assert_eq!(r.exec.max_output_bytes, derived.exec.max_output_bytes);
+        assert_eq!(r.exec.max_request_bytes, derived.exec.max_request_bytes);
+    }
+
+    #[test]
     fn an_empty_section_parses_to_the_defaults() {
         let parsed: RemoteAccessConfig = toml::from_str("").unwrap();
         assert_eq!(parsed.ssh_addr, default_ssh_addr());
@@ -623,5 +769,16 @@ mod tests {
         );
         assert_eq!(parsed.ssh_addr, default_ssh_addr());
         assert_eq!(parsed.fs.roots, vec!["/srv".to_string()]);
+    }
+
+    #[test]
+    fn the_exec_section_parses_from_the_file() {
+        let parsed: RemoteAccessConfig =
+            toml::from_str("[exec]\ntimeout_secs = 1800\nmax_output_bytes = 8388608\n").unwrap();
+        assert_eq!(parsed.exec.timeout_secs, Some(1800));
+        assert_eq!(parsed.exec.max_output_bytes, Some(8 * 1024 * 1024));
+        // Naming one key must not zero the others — see the subsection test
+        // above for why this is worth asserting per section.
+        assert_eq!(parsed.exec.max_request_bytes, None);
     }
 }

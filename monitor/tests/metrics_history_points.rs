@@ -81,7 +81,10 @@ async fn state_with_samples_every(span_secs: i64, step_secs: i64) -> Arc<AppStat
 async fn test_server(state: Arc<AppState>) -> TestServer {
     web_test::server(move || {
         let state = state.clone();
-        async move { App::new().state(state).configure(configure_api) }
+        async move {
+            let limit = state.remote_access.exec.max_request_bytes;
+            App::new().state(state).configure(configure_api(limit))
+        }
     })
     .await
 }

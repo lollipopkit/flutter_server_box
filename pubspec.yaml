@@ -145,6 +145,12 @@ flutter:
   assets:
     - assets/app_icon.png
     - assets/rootfs_manifest.json
+    # Yet Another Bench Script, vendored verbatim under WTFPL and pinned by
+    # `YabsScript.upstreamCommit`. Shipped rather than piped from the network
+    # on the server: `curl | bash` fixes no version and verifies nothing, and
+    # raw.githubusercontent.com is unreachable from a good share of the hosts
+    # people run this against. Refresh with `scripts/update-yabs.sh`.
+    - assets/yabs.sh
     # The directory, not each file: `Dist.markAsset` names them by enum name.
     # Only distributions whose logo carries an explicit copyright licence are
     # in there — see the README beside them, which Flutter leaves out because
@@ -162,7 +168,7 @@ flutter:
     # platform — Impeller has been the default renderer everywhere since 3.47 —
     # and not required: `GlobePainter` falls back to a radial gradient if the
     # program will not load.
-    - shaders/globe.frag
+    - assets/shaders/globe.frag
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
   # fonts:

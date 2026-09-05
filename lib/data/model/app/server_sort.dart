@@ -1,4 +1,9 @@
-part of 'tab.dart';
+import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/material.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/res/store.dart';
 
 /// How the server list is ordered.
 ///
@@ -10,12 +15,12 @@ part of 'tab.dart';
 /// An enum rather than the two loose values it is stored as. The stored form
 /// is an int and a bool, which is what the terminal tab's own sort keeps, and
 /// everything above the store deals in one value.
-enum _SortField {
+enum ServerSortField {
   manual,
   name,
   status;
 
-  static _SortField fromStored(int index) {
+  static ServerSortField fromStored(int index) {
     return index >= 0 && index < values.length ? values[index] : manual;
   }
 
@@ -28,15 +33,20 @@ enum _SortField {
 }
 
 /// A field and a direction, with the label and icon that go with them.
-class _SortOrder {
-  const _SortOrder(this.field, {required this.ascending});
+///
+/// A model rather than part of the server tab, which is where it started: the
+/// picker sheet lists the same servers and has to list them in the same order.
+/// A second sort of its own would be a second answer to a question the user has
+/// already answered once.
+class ServerSortOrder {
+  const ServerSortOrder(this.field, {required this.ascending});
 
-  final _SortField field;
+  final ServerSortField field;
   final bool ascending;
 
-  static _SortOrder get stored {
-    final field = _SortField.fromStored(Stores.setting.serverPageSortBy.fetch());
-    return _SortOrder(
+  static ServerSortOrder get stored {
+    final field = ServerSortField.fromStored(Stores.setting.serverPageSortBy.fetch());
+    return ServerSortOrder(
       field,
       // Normalised, so a direction left behind by another field cannot make
       // the default look like something nothing in the sheet offers.
@@ -52,33 +62,33 @@ class _SortOrder {
   }
 
   /// Every option the menu offers, in the order it offers them.
-  static List<_SortOrder> get all => [
-    for (final field in _SortField.values)
+  static List<ServerSortOrder> get all => [
+    for (final field in ServerSortField.values)
       if (field.directional)
         for (final ascending in [true, false])
-          _SortOrder(field, ascending: ascending)
+          ServerSortOrder(field, ascending: ascending)
       else
-        _SortOrder(field, ascending: true),
+        ServerSortOrder(field, ascending: true),
   ];
 
   IconData get icon => switch ((field, ascending)) {
-    (_SortField.manual, _) => Icons.format_list_numbered,
-    (_SortField.name, true) => Icons.sort_by_alpha,
-    (_SortField.name, false) => Icons.sort,
-    (_SortField.status, true) => Icons.arrow_upward,
-    (_SortField.status, false) => Icons.arrow_downward,
+    (ServerSortField.manual, _) => Icons.format_list_numbered,
+    (ServerSortField.name, true) => Icons.sort_by_alpha,
+    (ServerSortField.name, false) => Icons.sort,
+    (ServerSortField.status, true) => Icons.arrow_upward,
+    (ServerSortField.status, false) => Icons.arrow_downward,
   };
 
   String get label {
     final subject = switch (field) {
-      _SortField.manual => libL10n.sequence,
-      _SortField.name => libL10n.sortByName,
-      _SortField.status => l10n.status,
+      ServerSortField.manual => libL10n.sequence,
+      ServerSortField.name => libL10n.sortByName,
+      ServerSortField.status => l10n.status,
     };
     if (!field.directional) return subject;
     final direction = switch (field) {
       // Alphabetical order reads as A-Z, not as "ascending"
-      _SortField.name => ascending ? '(A-Z)' : '(Z-A)',
+      ServerSortField.name => ascending ? '(A-Z)' : '(Z-A)',
       _ => '(${ascending ? libL10n.ascending : libL10n.descending})',
     };
     return '$subject $direction';
@@ -91,7 +101,7 @@ class _SortOrder {
   }
 
   /// [order] is the arrangement from the settings, which is the whole of what
-  /// [_SortField.manual] orders by — so that case is a copy or a reverse, not
+  /// [ServerSortField.manual] orders by — so that case is a copy or a reverse, not
   /// a comparison.
   ///
   /// [connOf] answers what a server's connection is doing. Read through a
@@ -103,9 +113,9 @@ class _SortOrder {
     ServerConn Function(String id) connOf,
   ) {
     switch (field) {
-      case _SortField.manual:
+      case ServerSortField.manual:
         return order;
-      case _SortField.name:
+      case ServerSortField.name:
         final sorted = order.toList();
         sorted.sort((a, b) {
           // Case-folded, or the order is ASCII's rather than the alphabet's:
@@ -116,7 +126,7 @@ class _SortOrder {
           return ascending ? nameA.compareTo(nameB) : nameB.compareTo(nameA);
         });
         return sorted;
-      case _SortField.status:
+      case ServerSortField.status:
         // Both read once per server rather than inside the comparator, which
         // runs O(n log n) times: `connOf` reaches a provider, and a position
         // looked up with `indexOf` is a scan of the list being sorted.

@@ -490,6 +490,65 @@ class ServerDists extends Table {
   Set<Column> get primaryKey => {serverId};
 }
 
+/// One yabs benchmark, from the moment it was started.
+///
+/// A row is written when the run *starts*, not when it finishes: a benchmark
+/// takes ten to twenty minutes and is deliberately detached from the connection
+/// that launched it, so the record is what lets the app find a run again after
+/// the phone changed network or the app was closed. [runDir] is part of that —
+/// it is where the far side keeps the run, and it follows the user's chosen
+/// working directory, so it cannot be recomputed from the server id alone.
+///
+/// `options` and `resultJson` stay JSON for opposite reasons. Options are read
+/// only ever whole, to say what produced a result and to seed the next run.
+/// `resultJson` is yabs' own output kept verbatim, so a field this build did
+/// not understand — or one a later yabs adds — is still on the device instead of
+/// having been dropped at parse time; it is worth more than the fifteen minutes
+/// it would take to collect again.
+///
+/// No sync columns, and deliberately not a sync root, for `conn_stat`'s reason:
+/// a measurement is not an edit anyone made. It is also bulky and specific to
+/// one machine at one moment, which is not something to push at every other
+/// device the user owns.
+@DataClassName('BenchmarkRunRow')
+class BenchmarkRuns extends Table {
+  @override
+  String get tableName => 'benchmark_run';
+  @override
+  bool get withoutRowId => true;
+
+  TextColumn get id => text()();
+  TextColumn get serverId =>
+      text().references(Servers, #id, onDelete: KeyAction.cascade)();
+  IntColumn get startedAt => integer()();
+  IntColumn get finishedAt => integer().nullable()();
+
+  /// A `BenchmarkStatus` name — by name, never by index, for `server_dist`'s
+  /// reason: these rows outlive the build that wrote them.
+  TextColumn get status => text()();
+
+  /// [YabsOptions] as JSON.
+  TextColumn get options => text()();
+
+  /// Where the run lives on the far side, so it can be polled, cancelled and
+  /// cleaned up by a later launch of the app.
+  TextColumn get runDir => text()();
+
+  /// yabs' `-w` output, verbatim. Null until the run produced one.
+  TextColumn get resultJson => text().nullable()();
+
+  /// What the run printed. Kept because it is the only record of a phase yabs
+  /// skipped and why — "less than 2GB of space available" appears here and
+  /// nowhere in the JSON.
+  TextColumn get log => text().withDefault(const Constant(''))();
+
+  IntColumn get exitCode => integer().nullable()();
+  TextColumn get error => text().withDefault(const Constant(''))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 /// `data` stays JSON: a conversation is an ordered log of heterogeneous items
 /// read only ever whole, never queried by field. Columns would buy nothing and
 /// cost a migration for every new item kind.
@@ -606,6 +665,7 @@ class SyncStates extends Table {
     ContainerRuntimes,
     ConnStats,
     ServerDists,
+    BenchmarkRuns,
     AgentConversations,
     AgentActiveConversations,
     Tombstones,
@@ -657,6 +717,10 @@ class AppDb extends _$AppDb {
     // The age sweep asks about `timestamp` alone, which the index above
     // cannot serve — its leading column is `server_id`.
     'CREATE INDEX IF NOT EXISTS idx_conn_stat_ts ON conn_stat(timestamp);',
+    // The history list is per server, newest first, and that is the only way
+    // this table is ever read.
+    'CREATE INDEX IF NOT EXISTS idx_benchmark_run_server_started '
+        'ON benchmark_run(server_id, started_at DESC);',
     'CREATE INDEX IF NOT EXISTS idx_agent_conversation_server_updated '
         'ON agent_conversation(server_id, updated_at DESC);',
     'CREATE INDEX IF NOT EXISTS idx_tombstone_deleted '
