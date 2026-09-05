@@ -588,13 +588,6 @@ class _ServerPageState extends ConsumerState<ServerPage>
       icon: Icon(_SortOrder.stored.icon, size: 18),
       onTap: _showSortSheet,
     ),
-    // Where a phone pulls the grid down instead — see [_buildBodySmall].
-    if (isDesktop)
-      Btn.icon(
-        text: libL10n.refresh,
-        icon: const Icon(Icons.refresh, size: 18),
-        onTap: _refreshAll,
-      ),
     // Absent, not disabled, when the feature is off: a button that explains
     // itself by doing nothing is worse than one that is not offered.
     if (Stores.setting.globeEnabled.fetch())
@@ -791,9 +784,10 @@ class _ServerPageState extends ConsumerState<ServerPage>
       ],
     );
 
-    // Pulling is how a phone asks for this; a pointer has the button in the
-    // bar. The status poll runs on its own, so neither is the only way — they
-    // are for the moment someone wants an answer now.
+    // Pulling is how a phone asks for this, and the only place anything asks
+    // for the whole list at once — the bar's refresh button is gone. Nothing
+    // is lost that a pointer cannot reach: the status poll runs on its own,
+    // and each card carries its own refresh for the one server behind it.
     if (!isMobile) return grid;
     return RefreshIndicator(onRefresh: _refreshAll, child: grid);
   }
