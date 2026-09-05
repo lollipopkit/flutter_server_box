@@ -34,10 +34,16 @@ typedef GlobePlacement = ({String id, Rect rect, Offset anchor, double depth});
 /// [bounds] is the area cards must stay inside; a candidate is clamped into it
 /// before it is scored, so a spot that only fits by hanging off the edge is
 /// correctly judged as still overlapping.
+///
+/// [reserved] is anything else already occupying part of [bounds] — a control
+/// floating over the globe. Cards treat it exactly as they treat each other,
+/// which is the whole trick: taking a band out of [bounds] instead would cost
+/// every card the full width of the box for something sitting in one corner.
 List<GlobePlacement> layoutGlobeCards({
   required List<GlobeAnchor> anchors,
   required Rect bounds,
   required Offset globeCenter,
+  List<Rect> reserved = const [],
   double gap = 6,
   int maxCandidates = 96,
 }) {
@@ -53,7 +59,9 @@ List<GlobePlacement> layoutGlobeCards({
       return byDepth != 0 ? byDepth : a.id.compareTo(b.id);
     });
 
-  final placed = <Rect>[];
+  // Seeded rather than appended to, so the first card placed already avoids
+  // them. They are not in [result]: nothing here owns them.
+  final placed = <Rect>[...reserved];
   final result = <GlobePlacement>[];
 
   for (final anchor in ordered) {

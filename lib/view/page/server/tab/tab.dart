@@ -361,7 +361,11 @@ class _ServerPageState extends ConsumerState<ServerPage>
     );
   }
 
-  Widget _buildScaffold(Widget child) {
+  /// The page around the list, or around the globe.
+  ///
+  /// [bare] is the globe having the window: no bar over it, and — through
+  /// [ImmersiveTab] — no navigation under it either. See [_publishImmersive].
+  Widget _buildScaffold(Widget child, {bool bare = false}) {
     return Scaffold(
       // No bar at any width. A phone used to get the app's name and a cog here
       // because this was the one layout with no other way into the settings
@@ -369,11 +373,13 @@ class _ServerPageState extends ConsumerState<ServerPage>
       // bottom bar's "more" is that way now, on every phone and every tab, so
       // what was left up here was a title naming the app on the app's own
       // first screen.
-      appBar: _buildTagBar(),
+      appBar: bare ? null : _buildTagBar(),
       body: Stores.setting.textFactor.listenable().listenVal((val) {
         _updateTextScaler(val);
         // The bar above spends the top inset, as an app bar does; this is what
-        // is left, and what it still has to clear is the home indicator.
+        // is left, and what it still has to clear is the home indicator — which
+        // it has to clear *especially* with [bare] on, since the navigation
+        // that used to sit between the two is gone.
         return SafeArea(top: false, child: child);
       }),
     );
@@ -462,6 +468,10 @@ class _ServerPageState extends ConsumerState<ServerPage>
                 // the actions row above it is how it is left, so it has to
                 // stay reachable there too.
               if (split) {
+                // Beside a detail pane the globe is a column rather than the
+                // page, and the pane above it carries the way out — so the
+                // window's chrome stays where it is.
+                _publishImmersive(false);
                 // The same swap as the narrow layout, which this branch used
                 // to do as a hard cut — the globe simply replaced the rail
                 // between one frame and the next.
@@ -485,8 +495,15 @@ class _ServerPageState extends ConsumerState<ServerPage>
                         ),
                 );
               }
+              final filtered = _filterServers(ordered);
+              // The empty states win over the globe — see [_buildBodySmall] —
+              // so an empty one is not the globe having the window, and the
+              // bar with the control that undoes the filter has to stay.
+              final globe = _globe.value && filtered.isNotEmpty;
+              _publishImmersive(globe);
               return _buildScaffold(
-                _buildBodySmall(filtered: _filterServers(ordered)),
+                _buildBodySmall(filtered: filtered, globe: globe),
+                bare: globe,
               );
             },
           ),
@@ -652,13 +669,41 @@ class _ServerPageState extends ConsumerState<ServerPage>
     );
   }
 
-  Widget _buildGlobe(List<String> filtered) {
+  /// [immersive] is the globe having the window rather than sharing it with a
+  /// pane, which is what decides whether it has to carry its own way out: the
+  /// bar holding the toggle is not on screen then, and neither is the
+  /// navigation.
+  Widget _buildGlobe(List<String> filtered, {bool immersive = false}) {
     return ServerGlobe(
       key: const ValueKey('globe'),
       ids: filtered,
       onTapServer: (spi) => _onTapCard(context, ref.read(serverProvider(spi.id))),
       onEditServer: (spi) =>
           ServerEditPage.route.go(context, args: SpiRequiredArgs(spi)),
+      action: immersive ? _buildGlobeExit() : null,
+    );
+  }
+
+  /// The way back to the list, over the globe itself.
+  ///
+  /// The same icon the bar's toggle wears while the globe is up, because it is
+  /// the same control — what is offered is the grid, and the icon says so.
+  ///
+  /// On a surface of its own rather than a bare icon: it sits over a sphere,
+  /// a coastline or a card, and none of those is a background an icon reads
+  /// against on its own.
+  Widget _buildGlobeExit() {
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      color: scheme.surfaceContainerHigh.withValues(alpha: 0.92),
+      elevation: 3,
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: IconButton(
+        icon: const Icon(Icons.grid_view_rounded, size: 18),
+        tooltip: l10n.globe,
+        onPressed: _toggleGlobe,
+      ),
     );
   }
 
@@ -717,7 +762,32 @@ class _ServerPageState extends ConsumerState<ServerPage>
     );
   }
 
-  Widget _buildBodySmall({required List<String> filtered}) {
+  /// What [ImmersiveTab] has last been told, so an unchanged answer is not
+  /// repeated.
+  bool _immersive = false;
+
+  /// Says whether the globe is filling this tab.
+  ///
+  /// Called from a build and applied after the frame, which is the same shape
+  /// `_syncFullscreenSystemUi` on the home page has and for the same reason:
+  /// the answer is only knowable while laying the page out — it depends on the
+  /// split, the filter and the toggle — and a provider must not be written to
+  /// during a build.
+  void _publishImmersive(bool on) {
+    if (_immersive == on) return;
+    _immersive = on;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref
+          .read(immersiveTabProvider.notifier)
+          .update(AppTab.server, wants: on);
+    });
+  }
+
+  Widget _buildBodySmall({
+    required List<String> filtered,
+    required bool globe,
+  }) {
     // Crossed rather than swapped. The list emptying under a search and
     // filling again as it is deleted are the two halves of one movement, and
     // an instant cut reads as the page having been replaced rather than as
@@ -741,7 +811,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
         // needs telling how to add one, and a tag or a search with no hits is
         // a filter to undo — with the control to undo it right there. None of
         // that can be said by a globe with nothing on it.
-        _ when _globe.value && filtered.isNotEmpty => _buildGlobe(filtered),
+        _ when globe => _buildGlobe(filtered, immersive: true),
         _ when filtered.isEmpty => _buildEmpty(),
         _ => KeyedSubtree(
           key: const ValueKey('grid'),

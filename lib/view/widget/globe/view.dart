@@ -52,6 +52,7 @@ class GlobeView extends StatefulWidget {
     this.unplaced = const [],
     this.unplacedLabel,
     this.unplacedAction,
+    this.action,
   });
 
   final List<GlobeItem> items;
@@ -70,12 +71,14 @@ class GlobeView extends StatefulWidget {
   /// then except a coordinate typed by hand.
   final List<Widget> unplaced;
 
-  /// What the caption over [unplaced] says, or null for "unknown".
+  /// What the caption over [unplaced] says, or null for no caption at all.
   ///
   /// The caller supplies it because the caller is what knows *why* — this
-  /// widget is given rectangles. Null is the honest answer when the servers
-  /// down there are down there for different reasons; a caption that named one
-  /// of them would be wrong about the rest.
+  /// widget is given rectangles.
+  ///
+  /// Null used to fall back to "Unknown", which named nothing: next to
+  /// [unplacedAction] it read as a button called "Unknown Download". A caption
+  /// is either an answer or absent.
   final String? unplacedLabel;
 
   /// Something to do about the whole strip, on the caption's line.
@@ -88,6 +91,17 @@ class GlobeView extends StatefulWidget {
   /// Beside the caption rather than under it, so the strip keeps the height it
   /// had — see [_buildUnplaced] for why that matters.
   final Widget? unplacedAction;
+
+  /// A control pinned to the top right, over the globe.
+  ///
+  /// The globe is sometimes the whole page — the server tab hides the bar over
+  /// it and the navigation under it to give it the window — and then this is
+  /// the only way out.
+  ///
+  /// Handed to this widget rather than stacked over it by the caller because
+  /// the card layout has to know it is there: a card goes wherever there is
+  /// room, and the top right corner is room. See [_place].
+  final Widget? action;
 
   /// How big a card is, fixed rather than measured.
   ///
@@ -207,6 +221,31 @@ class _GlobeViewState extends State<GlobeView> with TickerProviderStateMixin {
     });
   }
 
+  /// How far [GlobeView.action] sits from the two edges it is pinned to.
+  static const _kActionInset = 8.0;
+
+  /// How big that control turned out to be, or zero when there is none.
+  ///
+  /// Measured for the same reason the strip's height is: the caller builds it,
+  /// so its size is whatever it comes to — and unlike the strip it is a
+  /// rectangle rather than a band, since it takes one corner and cards may
+  /// still use the rest of that row.
+  Size _actionSize = Size.zero;
+  final _actionKey = GlobalKey();
+
+  void _scheduleActionMeasure() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final box = _actionKey.currentContext?.findRenderObject() as RenderBox?;
+      final size = box?.hasSize == true ? box!.size : Size.zero;
+      if ((size.width - _actionSize.width).abs() < 0.5 &&
+          (size.height - _actionSize.height).abs() < 0.5) {
+        return;
+      }
+      setState(() => _actionSize = size);
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -217,6 +256,7 @@ class _GlobeViewState extends State<GlobeView> with TickerProviderStateMixin {
       _faced = true;
     }
     if (widget.unplaced.isNotEmpty) _scheduleUnplacedMeasure();
+    if (widget.action != null) _scheduleActionMeasure();
     unawaited(_loadShader());
     unawaited(_loadLand());
     _syncAutoRotation();
@@ -246,6 +286,9 @@ class _GlobeViewState extends State<GlobeView> with TickerProviderStateMixin {
         (old.unplacedAction == null) != (widget.unplacedAction == null) ||
         old.unplacedLabel != widget.unplacedLabel) {
       _scheduleUnplacedMeasure();
+    }
+    if ((old.action == null) != (widget.action == null)) {
+      _scheduleActionMeasure();
     }
     if (_faced) return;
     final start = widget.initialCoord ?? widget.items.firstOrNull?.coord;
@@ -645,6 +688,18 @@ class _GlobeViewState extends State<GlobeView> with TickerProviderStateMixin {
                         ),
                       ),
                       ),
+                  // Last, so it is above every card. It is the way off this
+                  // screen where there is one, and a card that happened to be
+                  // laid out over it would take the taps.
+                  if (widget.action case final action?)
+                    Positioned(
+                      top: _kActionInset,
+                      right: _kActionInset,
+                      child: Opacity(
+                        opacity: t,
+                        child: KeyedSubtree(key: _actionKey, child: action),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -685,13 +740,14 @@ class _GlobeViewState extends State<GlobeView> with TickerProviderStateMixin {
               padding: const EdgeInsets.only(left: 4, bottom: 6),
               child: Row(
                 children: [
-                  Flexible(
-                    child: Text(
-                      widget.unplacedLabel ?? libL10n.unknown,
-                      style: TextStyle(fontSize: 11, color: scheme.outline),
-                      overflow: TextOverflow.ellipsis,
+                  if (widget.unplacedLabel case final label?)
+                    Flexible(
+                      child: Text(
+                        label,
+                        style: TextStyle(fontSize: 11, color: scheme.outline),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
                   ?widget.unplacedAction,
                 ],
               ),
@@ -753,6 +809,18 @@ class _GlobeViewState extends State<GlobeView> with TickerProviderStateMixin {
       anchors: anchors,
       bounds: Rect.fromLTWH(0, 0, size.width, free),
       globeCenter: center,
+      // The corner control, as something already sitting there. A corner is
+      // not a band, so it is kept off rather than cut out of the bounds — see
+      // [layoutGlobeCards].
+      reserved: [
+        if (!_actionSize.isEmpty)
+          Rect.fromLTWH(
+            size.width - _kActionInset - _actionSize.width,
+            _kActionInset,
+            _actionSize.width,
+            _actionSize.height,
+          ),
+      ],
     );
   }
 }

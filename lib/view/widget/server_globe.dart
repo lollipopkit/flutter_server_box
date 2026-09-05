@@ -33,6 +33,7 @@ class ServerGlobe extends ConsumerStatefulWidget {
     required this.ids,
     required this.onTapServer,
     required this.onEditServer,
+    this.action,
   });
 
   /// In the order the list is showing them, which decides which one the globe
@@ -44,6 +45,10 @@ class ServerGlobe extends ConsumerStatefulWidget {
   /// For a server nothing could place: the editor is where a coordinate is
   /// given by hand, and that is the only thing to do about it.
   final void Function(Spi spi) onEditServer;
+
+  /// Passed straight to [GlobeView.action] — a control in the top right corner,
+  /// for when the globe is the whole page and nothing else on screen leaves it.
+  final Widget? action;
 
   @override
   ConsumerState<ServerGlobe> createState() => _ServerGlobeState();
@@ -361,11 +366,9 @@ class _ServerGlobeState extends ConsumerState<ServerGlobe> {
     return GlobeView(
       items: items,
       cardSize: _kCardSize,
+      action: widget.action,
       unplaced: unplaced,
-      // Only when they all missed for the same reason. Two reasons at once is
-      // one caption that would be wrong about half the strip, and each chip
-      // carries its own icon for that case.
-      unplacedLabel: misses.length == 1 ? _labelOf(misses.first) : null,
+      unplacedLabel: misses.isEmpty ? null : _unplacedLabel(misses),
       // The download, offered where somebody has just found out they need it.
       //
       // This is the entry point that reaches anyone. `globeEnabled` is on by
@@ -518,4 +521,28 @@ class _ServerGlobeState extends ConsumerState<ServerGlobe> {
     GeoMiss.private => l10n.geoMissPrivate,
     GeoMiss.noData => l10n.geoMissNoData,
   };
+
+  /// The caption over the strip: why the servers down there are down there.
+  ///
+  /// **The city data not being installed comes first, and says so in those
+  /// words.** Without it every public server misses as [GeoMiss.noData], which
+  /// reads as "no location data" — true of the app, and heard as a fact about
+  /// the server. Next to the Download button beside it, the caption has to name
+  /// the thing that button downloads, or the pair says nothing: with a LAN
+  /// server in the strip as well the reasons differed, the caption fell back to
+  /// "Unknown", and what was on screen was `Unknown  Download`.
+  ///
+  /// Otherwise every reason present, in the enum's order. It used to be the one
+  /// reason when there was exactly one and nothing at all when there were two —
+  /// but a caption naming both is wrong about neither, and each chip carries the
+  /// icon that says which of them it is.
+  String _unplacedLabel(Set<GeoMiss> misses) {
+    if (misses.contains(GeoMiss.noData) && GeoData.installed() == null) {
+      return '${l10n.geoData} · ${l10n.geoDataMissing}';
+    }
+    return [
+      for (final miss in GeoMiss.values)
+        if (misses.contains(miss)) _labelOf(miss),
+    ].join(' · ');
+  }
 }

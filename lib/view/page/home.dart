@@ -91,6 +91,24 @@ class _HomePageState extends ConsumerState<HomePage>
   /// something has to stop a second attempt while the first is still up.
   bool _navGuideHandled = false;
 
+  /// The tab that has asked for the whole window, or null. Kept in a field
+  /// because the strips are built inside `ListenableBuilder`s on
+  /// [_selectIndex], which is not a build this state's `ref` may watch from.
+  AppTab? _immersiveTab;
+
+  /// Whether the tab on screen is the one asking for the window.
+  ///
+  /// The claim names a tab rather than being a flag because a tab is kept alive
+  /// behind the others: the server tab goes on drawing its globe while somebody
+  /// reads a terminal, and the navigation has to be there for that one.
+  bool get _wantsWindow {
+    final tab = _immersiveTab;
+    if (tab == null) return false;
+    final index = _selectIndex.value;
+    if (index < 0 || index >= _tabs.length) return false;
+    return _tabs[index] == tab;
+  }
+
   @override
   void dispose() {
     _stopServerRefreshCycle();
@@ -286,6 +304,11 @@ class _HomePageState extends ConsumerState<HomePage>
     // and a provider kept alive only by a page that comes and goes would take
     // the icon with it. Off desktop the service does nothing.
     ref.watch(trayServiceProvider);
+    // A tab asking for the window — the globe, and nothing else so far. Read
+    // here because a build is where a provider is watched; what it means is
+    // decided in [_wantsWindow], which also has to know *which* tab is on
+    // screen.
+    _immersiveTab = ref.watch(immersiveTabProvider);
     _syncFullscreenSystemUi();
 
     // No `appBar`, deliberately. It used to hold an empty box the height of
@@ -298,48 +321,64 @@ class _HomePageState extends ConsumerState<HomePage>
     //
     // The bottom bar is a different case and stays: it is chrome the tabs
     // share, and a page opened in a tab is meant to leave it in place.
-    Widget mainContent(bool narrow) => Scaffold(
-      body: Row(
-        children: [
-          if (!narrow) _buildRailBar(),
-          Expanded(
-            child: PageView.builder(
-              controller: _pageController,
-              itemCount: _tabs.length,
-              physics: const NeverScrollableScrollPhysics(),
-              // Each tab keeps its own stack, so a page opened inside one —
-              // a server's details, its files — covers the tab and not the
-              // window. The bar or rail that got you here stays put, and
-              // coming back to a tab returns you to where you were in it.
-              itemBuilder: (_, index) => NestedNavigator(
-                key: ValueKey(_tabs[index]),
-                // The top inset lands on the tab's own content and not on the
-                // navigator around it, which is the whole point: a page pushed
-                // here is a sibling route, outside this `SafeArea`, so it
-                // reaches the top of the window and animates across the status
-                // bar. Wrapping the navigator instead would inset the pushed
-                // page too and put the seam back.
-                //
-                // Here rather than in each tab because a tab is not one shape:
-                // three of them put a `Scaffold` *inside* a pane splitter, so
-                // the splitter's own divider is above any app bar that could
-                // have spent the inset.
-                rootBuilder: (_) =>
-                    SafeArea(bottom: false, child: _tabs[index].page),
+    //
+    // Rebuilt on a tab change rather than only on its own state, because
+    // whether there is a bar at all is a `Scaffold` argument and the answer
+    // depends on which tab is showing — see [_wantsWindow]. A bar that is
+    // present but drawing nothing is not the same as no bar: `Scaffold` takes
+    // the bottom inset off the body whenever the slot is filled, on the
+    // grounds that the bar will spend it. An empty one spends nothing, and the
+    // globe ran under the home indicator.
+    Widget mainContent(bool narrow) => ListenableBuilder(
+      listenable: _selectIndex,
+      builder: (_, _) => Scaffold(
+        body: Row(
+          children: [
+            // Absent rather than empty, for the inset again: the rail is a
+            // `SafeArea`, so one wrapped round nothing still holds the left
+            // inset open beside a full-bleed page.
+            if (!narrow && !_wantsWindow) _buildRailBar(),
+            Expanded(
+              child: PageView.builder(
+                controller: _pageController,
+                itemCount: _tabs.length,
+                physics: const NeverScrollableScrollPhysics(),
+                // Each tab keeps its own stack, so a page opened inside one —
+                // a server's details, its files — covers the tab and not the
+                // window. The bar or rail that got you here stays put, and
+                // coming back to a tab returns you to where you were in it.
+                itemBuilder: (_, index) => NestedNavigator(
+                  key: ValueKey(_tabs[index]),
+                  // The top inset lands on the tab's own content and not on
+                  // the navigator around it, which is the whole point: a page
+                  // pushed here is a sibling route, outside this `SafeArea`,
+                  // so it reaches the top of the window and animates across
+                  // the status bar. Wrapping the navigator instead would inset
+                  // the pushed page too and put the seam back.
+                  //
+                  // Here rather than in each tab because a tab is not one
+                  // shape: three of them put a `Scaffold` *inside* a pane
+                  // splitter, so the splitter's own divider is above any app
+                  // bar that could have spent the inset.
+                  rootBuilder: (_) =>
+                      SafeArea(bottom: false, child: _tabs[index].page),
+                ),
+                onPageChanged: (value) {
+                  FocusScope.of(context).unfocus();
+                  if (!_switchingPage) {
+                    _selectIndex.value = value;
+                    _rememberTab(value);
+                  }
+                  _syncFullscreenSystemUi();
+                },
               ),
-              onPageChanged: (value) {
-                FocusScope.of(context).unfocus();
-                if (!_switchingPage) {
-                  _selectIndex.value = value;
-                  _rememberTab(value);
-                }
-                _syncFullscreenSystemUi();
-              },
             ),
-          ),
-        ],
+          ],
+        ),
+        bottomNavigationBar: narrow && !_wantsWindow
+            ? _buildBottomBar()
+            : null,
       ),
-      bottomNavigationBar: narrow ? _buildBottomBar() : null,
     );
 
     // Above the `PageView` rather than inside a tab: the Agent and a floated

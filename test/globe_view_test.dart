@@ -610,6 +610,84 @@ void main() {
     expect(find.byKey(const ValueKey('card-placed')), findsOneWidget);
   });
 
+  /// The corner control, for when the globe is the whole page.
+  ///
+  /// The server tab hides the bar over it and the navigation under it, so this
+  /// is the only way off that screen — which is what makes where it ends up
+  /// worth a test rather than a detail of the caller's `Stack`.
+  group('the action', () {
+    Future<void> showWithAction(
+      WidgetTester tester, {
+      Widget? action,
+      List<GlobeItem> items = const [],
+    }) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 400,
+              height: 600,
+              child: GlobeView(
+                items: items.isEmpty ? [item('a', 40, 60)] : items,
+                cardSize: cardSize,
+                initialCoord: GeoCoord.tryNew(0, 0),
+                action: action,
+              ),
+            ),
+          ),
+        ),
+      );
+      // Twice: the size is measured after a frame and fed back into the next.
+      await tester.pump(const Duration(milliseconds: 600));
+      await tester.pump(const Duration(milliseconds: 600));
+    }
+
+    testWidgets('is drawn in the top right corner', (tester) async {
+      await showWithAction(
+        tester,
+        action: const SizedBox(
+          key: ValueKey('action'),
+          width: 48,
+          height: 48,
+        ),
+      );
+      final at = tester.getRect(find.byKey(const ValueKey('action')));
+      final box = tester.getRect(find.byType(GlobeView));
+      expect(at.top - box.top, 8);
+      expect(box.right - at.right, 8);
+    });
+
+    testWidgets('and nothing is there without one', (tester) async {
+      await showWithAction(tester);
+      expect(find.byKey(const ValueKey('action')), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('and no card is laid out underneath it', (tester) async {
+      // The control is drawn above the cards, so a card placed there is both
+      // unreadable and untappable — its own taps land on the button.
+      //
+      // A dozen servers on one address, which is what reaches that corner: one
+      // card sits beside its point and the rest spiral out from it until they
+      // find room, and the room in the corner is the control's.
+      const crowd = 12;
+      await showWithAction(
+        tester,
+        items: [for (var i = 0; i < crowd; i++) item('s$i', 40, 60)],
+        action: const SizedBox(
+          key: ValueKey('action'),
+          width: 48,
+          height: 48,
+        ),
+      );
+      final at = tester.getRect(find.byKey(const ValueKey('action')));
+      for (var i = 0; i < crowd; i++) {
+        final card = tester.getRect(find.byKey(ValueKey('card-s$i')));
+        expect(card.overlaps(at), isFalse, reason: 's$i');
+      }
+    });
+  });
+
   /// That the globe was moved by hand, which is what says whether turning it
   /// on its own is enough.
   ///

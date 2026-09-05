@@ -160,6 +160,100 @@ abstract class _$CurrentHomeTab extends $Notifier<AppTab?> {
   }
 }
 
+/// The tab that is drawing something the window's chrome is in the way of.
+///
+/// One thing sets it: the globe. A sphere fills the column it is given, and the
+/// bar over it and the navigation under it are two rows of controls around a
+/// picture that *is* the page — so while it is up the tab takes the window and
+/// carries its own way out.
+///
+/// Which tab rather than a bare flag, because a tab is kept alive behind the
+/// others: the server tab goes on drawing a globe while somebody reads a
+/// terminal, and the chrome has to be back for that one.
+
+@ProviderFor(ImmersiveTab)
+final immersiveTabProvider = ImmersiveTabProvider._();
+
+/// The tab that is drawing something the window's chrome is in the way of.
+///
+/// One thing sets it: the globe. A sphere fills the column it is given, and the
+/// bar over it and the navigation under it are two rows of controls around a
+/// picture that *is* the page — so while it is up the tab takes the window and
+/// carries its own way out.
+///
+/// Which tab rather than a bare flag, because a tab is kept alive behind the
+/// others: the server tab goes on drawing a globe while somebody reads a
+/// terminal, and the chrome has to be back for that one.
+final class ImmersiveTabProvider
+    extends $NotifierProvider<ImmersiveTab, AppTab?> {
+  /// The tab that is drawing something the window's chrome is in the way of.
+  ///
+  /// One thing sets it: the globe. A sphere fills the column it is given, and the
+  /// bar over it and the navigation under it are two rows of controls around a
+  /// picture that *is* the page — so while it is up the tab takes the window and
+  /// carries its own way out.
+  ///
+  /// Which tab rather than a bare flag, because a tab is kept alive behind the
+  /// others: the server tab goes on drawing a globe while somebody reads a
+  /// terminal, and the chrome has to be back for that one.
+  ImmersiveTabProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'immersiveTabProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$immersiveTabHash();
+
+  @$internal
+  @override
+  ImmersiveTab create() => ImmersiveTab();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AppTab? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AppTab?>(value),
+    );
+  }
+}
+
+String _$immersiveTabHash() => r'ab35284389168023d991281a62a018147269ca3d';
+
+/// The tab that is drawing something the window's chrome is in the way of.
+///
+/// One thing sets it: the globe. A sphere fills the column it is given, and the
+/// bar over it and the navigation under it are two rows of controls around a
+/// picture that *is* the page — so while it is up the tab takes the window and
+/// carries its own way out.
+///
+/// Which tab rather than a bare flag, because a tab is kept alive behind the
+/// others: the server tab goes on drawing a globe while somebody reads a
+/// terminal, and the chrome has to be back for that one.
+
+abstract class _$ImmersiveTab extends $Notifier<AppTab?> {
+  AppTab? build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<AppTab?, AppTab?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AppTab?, AppTab?>,
+              AppTab?,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 /// A server waiting to be opened on the server tab.
 ///
 /// A request rather than a call for two reasons. The tab may not exist yet —
