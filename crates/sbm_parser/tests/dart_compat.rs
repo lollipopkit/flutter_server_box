@@ -216,11 +216,16 @@ fn swap_parse_meminfo() {
 
 // ---------- Disk: disk_test.dart ----------
 
-/// Dart 'parse lsblk JSON output': 6 entries (LVM2_member/ext4//swap/vfat/ext2/crypto_LUKS)
+/// Dart 'parse lsblk JSON output': 5 entries
+/// (LVM2_member/ext4//vfat/ext2/crypto_LUKS)
+///
+/// This fixture came off a real machine and carries the swap partition that
+/// machine has. It was the sixth entry until swap areas were dropped.
 #[test]
 fn disk_parse_lsblk_json() {
     let disks = linux::parse_disk(include_str!("fixtures/lsblk.json"));
-    assert_eq!(disks.len(), 6);
+    assert_eq!(disks.len(), 5);
+    assert!(!disks.iter().any(|d| d.mount == "[SWAP]"));
 
     let root = disks.iter().find(|d| d.mount == "/").unwrap();
     assert_eq!(root.fs_type.as_deref(), Some("ext4"));
@@ -334,6 +339,164 @@ fn disk_parse_df_collapses_repeated_mounts() {
     let orbstack: Vec<_> = disks.iter().filter(|d| d.path == "orbstack").collect();
     assert_eq!(orbstack.len(), 2);
     assert_ne!(orbstack[0].used, orbstack[1].used);
+}
+
+/// A snap-heavy Ubuntu mounts one squashfs per installed revision, each 100%
+/// full by construction. They filled the device list ahead of the machine's
+/// actual disks and added their whole size to the total. A mounted ISO is the
+/// same shape and goes the same way.
+#[test]
+fn disk_parse_lsblk_drops_read_only_images() {
+    let disks = linux::parse_disk(include_str!("fixtures/lsblk_nonstorage.json"));
+
+    assert!(!disks.iter().any(|d| d.mount.starts_with("/snap/")));
+    assert!(!disks.iter().any(|d| matches!(
+        d.fs_type.as_deref(),
+        Some("squashfs" | "erofs" | "iso9660")
+    )));
+
+    let root = disks.iter().find(|d| d.mount == "/").unwrap();
+    assert_eq!(root.path, "/dev/vda1");
+    assert_eq!(root.used_percent, 24);
+
+    // A loop device carrying a writable filesystem is storage someone mounted
+    // on purpose, and is not what any of this is about
+    let image = disks.iter().find(|d| d.path == "/dev/loop7").unwrap();
+    assert_eq!(image.mount, "/mnt/image");
+    assert_eq!(image.used_percent, 50);
+}
+
+/// `lsblk` lists a swap partition and a zram device beside the filesystems,
+/// both with an empty FSSIZE, so each rendered as a device holding 0 B of 0 B.
+/// Swap has its own reading, taken from /proc/meminfo.
+#[test]
+fn disk_parse_lsblk_drops_swap_areas() {
+    let disks = linux::parse_disk(include_str!("fixtures/lsblk_nonstorage.json"));
+
+    assert!(!disks.iter().any(|d| d.mount == "[SWAP]"));
+    assert!(!disks.iter().any(|d| d.fs_type.as_deref() == Some("swap")));
+    assert!(!disks.iter().any(|d| d.path == "/dev/zram0"));
+    assert!(!disks.iter().any(|d| d.path == "/dev/vda2"));
+
+    // The partitions either side of the swap one are untouched
+    assert!(disks.iter().any(|d| d.mount == "/"));
+    assert!(disks.iter().any(|d| d.mount == "/boot/efi"));
+}
+
+/// The `df` fallback reports no filesystem type: `/dev/loop0` is
+/// indistinguishable from a mounted disk image by its source, so the mount
+/// point is what names it. `snapfuse` is snapd inside a container, where the
+/// loop device is unavailable.
+#[test]
+fn disk_parse_df_drops_read_only_images() {
+    let disks = linux::parse_disk(include_str!("fixtures/df_nonstorage.txt"));
+
+    assert!(!disks.iter().any(|d| d.path == "snapfuse"));
+    assert!(!disks.iter().any(|d| d.mount.starts_with("/snap/")));
+    assert!(
+        !disks
+            .iter()
+            .any(|d| d.mount.starts_with("/var/lib/snapd/snap/"))
+    );
+
+    // The known limit of this branch: `df` reports no filesystem type, and a
+    // mounted ISO has no mount point that names it the way a snap's does, so
+    // `/dev/sr0` reads as an ordinary block device here. It is dropped under
+    // `lsblk` — see disk_parse_lsblk_drops_read_only_images — which is every
+    // host that has one; `df` is the fallback for busybox and OpenWrt.
+    // Recognising `/dev/sr` by name would trade the rule for a device list.
+    assert!(disks.iter().any(|d| d.path == "/dev/sr0"));
+}
+
+/// `overlay` already covered docker's own layers and the old `overlayfs`
+/// spelling, but not the `fuse-overlayfs` a rootless podman or docker mounts —
+/// one row per container, each carrying the host filesystem's numbers.
+///
+/// The `ramfs` row here is systemd's credential mount in the shape most `df`
+/// builds print it, a `-` usage that fails to parse and drops the row before
+/// any rule applies — see disk_parse_df_drops_ramfs_reporting_a_usage for the
+/// shape that does need one.
+#[test]
+fn disk_parse_df_drops_container_layers() {
+    let disks = linux::parse_disk(include_str!("fixtures/df_nonstorage.txt"));
+
+    assert!(!disks.iter().any(|d| d.path == "overlay"));
+    assert!(!disks.iter().any(|d| d.path == "fuse-overlayfs"));
+    assert!(!disks.iter().any(|d| d.path == "ramfs"));
+
+    // What is left is the root filesystem, the ISO this branch cannot name,
+    // and the deliberately mounted image
+    assert_eq!(disks.len(), 3);
+    assert_eq!(disks[0].path, "/dev/vda1");
+    assert_eq!(disks[0].mount, "/");
+    assert_eq!(disks[2].path, "/dev/loop7");
+    assert_eq!(disks[2].mount, "/mnt/image");
+}
+
+/// `ramfs` holds systemd's credentials, one mount per unit that takes one.
+/// It survived on a `df` that prints a parseable `0%` rather than the `-` most
+/// print, leaving a row of 0 B per unit — the same shape swap areas had.
+#[test]
+fn disk_parse_df_drops_ramfs_reporting_a_usage() {
+    let raw = "Filesystem 1K-blocks Used Available Use% Mounted on\n\
+        /dev/vda1 51343636 12057216 36648004 25% /\n\
+        ramfs 0 0 0 0% /run/credentials/systemd-sysctl.service\n\
+        ramfs 0 0 0 0% /run/credentials/systemd-networkd.service\n";
+    let disks = linux::parse_disk(raw);
+
+    assert!(!disks.iter().any(|d| d.path == "ramfs"));
+    assert_eq!(disks.len(), 1);
+    assert_eq!(disks[0].mount, "/");
+}
+
+/// A `df` source is user-chosen text. Excluding the virtual filesystems by
+/// prefix took every one of these with them: a ZFS pool may be named
+/// `tmpfspool`, an NFS export may come from a host named `shm-nas`, and both
+/// are storage.
+#[test]
+fn disk_parse_df_keeps_storage_named_like_a_virtual_fs() {
+    let raw = "Filesystem 1K-blocks Used Available Use% Mounted on\n\
+        tmpfspool/data 961873408 12345678 949527730 2% /srv/pool\n\
+        shm-nas:/vol1 961873408 12345678 949527730 2% /srv/nfs\n\
+        overlay-01:/export 961873408 12345678 949527730 2% /srv/export\n\
+        devtmpfs-backup:/snapshots 961873408 12345678 949527730 2% /srv/backup\n\
+        tmpfs 800412 1792 798620 1% /run\n\
+        overlay 51343636 12057216 36648004 25% /var/lib/docker/overlay2/9c1f/merged\n";
+    let disks = linux::parse_disk(raw);
+
+    let mounts: Vec<&str> = disks.iter().map(|d| d.mount.as_str()).collect();
+    assert_eq!(mounts, ["/srv/pool", "/srv/nfs", "/srv/export", "/srv/backup"]);
+}
+
+/// `disk_usage` is the Rust side of `DiskUsage.parse`, and takes a [`Disk`]
+/// that carries both a source and a filesystem type where the parser is handed
+/// one or the other. Asking with the path alone missed a row identified only by
+/// its type: a squashfs mounted outside `/snap`, or a swap area whose mount is
+/// empty rather than `[SWAP]`.
+#[test]
+fn disk_usage_drops_rows_identified_only_by_filesystem_type() {
+    let row = |path: &str, fs_type: &str, mount: &str, size: u64| Disk {
+        path: path.to_string(),
+        fs_type: (!fs_type.is_empty()).then(|| fs_type.to_string()),
+        mount: mount.to_string(),
+        used: size,
+        size,
+        ..Disk::default()
+    };
+    let root = row("/dev/vda1", "ext4", "/", 51343636);
+    let disks = [
+        root.clone(),
+        // A squashfs image mounted somewhere the mount-point rule cannot name
+        row("/dev/loop3", "squashfs", "/opt/appimage/mnt", 296960),
+        // A swap partition whose mount `lsblk` left empty
+        row("/dev/vda2", "swap", "", 4194304),
+        // A rootless container layer, recognised by its source
+        row("fuse-overlayfs", "", "/home/u/.local/share/x/merged", 51343636),
+    ];
+
+    let (used, size) = disk_usage(&disks);
+    assert_eq!(used, root.used);
+    assert_eq!(size, root.size);
 }
 
 /// Dart 'parse ImmortalWrt df -k output without shrinking units'

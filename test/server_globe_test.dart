@@ -9,6 +9,7 @@ import 'package:server_box/data/model/server/geo.dart';
 import 'package:server_box/data/model/server/memory.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/status.dart';
 import 'package:server_box/data/res/store.dart';
@@ -382,6 +383,34 @@ void main() {
       expect(Stores.selfAddr.addrOf('vps')?.address, '8.8.8.8');
       expect(Stores.selfAddr.probedAt('vps'), before);
     });
+
+    testWidgets('an expired answer is replaced by a later report', (
+      tester,
+    ) async {
+      addServer('vps', '192.168.1.10', name: 'behind-vpn');
+      Stores.selfAddr.put('vps', InternetAddress('8.8.8.8'));
+      final notifier = await showReporting(tester, 'vps', ['8.8.8.8']);
+      final before = tester
+          .widget<GlobeView>(find.byType(GlobeView))
+          .items
+          .single
+          .coord;
+
+      Stores.selfAddr.set('vps', {
+        'addr': '8.8.8.8',
+        'at': DateTime.now()
+            .subtract(SelfAddrStore.staleAfter + const Duration(days: 1))
+            .millisecondsSinceEpoch,
+      });
+      notifier.report(['8.0.0.1']);
+      await settle(tester);
+
+      expect(Stores.selfAddr.addrOf('vps')?.address, '8.0.0.1');
+      expect(
+        tester.widget<GlobeView>(find.byType(GlobeView)).items.single.coord,
+        isNot(before),
+      );
+    });
   });
 
   testWidgets('tapping a strip chip opens the editor, not the server', (
@@ -431,6 +460,45 @@ void main() {
     await show(tester, ['nat']);
     expect(find.text('homelab'), findsOneWidget);
     expect(find.widgetWithText(ActionChip, 'homelab'), findsNothing);
+  });
+
+  testWidgets('editing and removing a manual coordinate refreshes its place', (
+    tester,
+  ) async {
+    final london = GeoCoord.tryParse('51.5, -0.12')!;
+    final sydney = GeoCoord.tryParse('-33.86, 151.20')!;
+    addServer('nat', '192.168.1.9', name: 'homelab', geo: london);
+    await show(tester, ['nat']);
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(ServerGlobe)),
+    );
+    var current = container.read(serversProvider).servers['nat']!;
+    expect(
+      tester.widget<GlobeView>(find.byType(GlobeView)).items.single.coord,
+      london,
+    );
+
+    var changed = current.copyWith(custom: ServerCustom(geo: sydney));
+    Stores.server.update(current, changed);
+    await container
+        .read(serversProvider.notifier)
+        .reload(refreshConnections: false);
+    await settle(tester);
+    expect(
+      tester.widget<GlobeView>(find.byType(GlobeView)).items.single.coord,
+      sydney,
+    );
+
+    current = container.read(serversProvider).servers['nat']!;
+    changed = current.copyWith(custom: null);
+    Stores.server.update(current, changed);
+    await container
+        .read(serversProvider.notifier)
+        .reload(refreshConnections: false);
+    await settle(tester);
+    expect(find.widgetWithText(ActionChip, 'homelab'), findsOneWidget);
+    expect(tester.widget<GlobeView>(find.byType(GlobeView)).items, isEmpty);
   });
 
   testWidgets('a card says what the server is doing before it connects', (

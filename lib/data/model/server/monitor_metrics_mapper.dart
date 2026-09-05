@@ -193,6 +193,8 @@ void _applyDisks(ServerStatus ss, MonitorMetrics m) {
             avail: BigInt.from(_toKib(d.total - d.used)),
           ),
         )
+        // An agent older than a given parser rule still sends what it removes
+        .where((d) => d.isStorage)
         .toList();
   }
   try {

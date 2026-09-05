@@ -51,9 +51,9 @@ abstract final class Urls {
   /// The second endpoint, for a network where the first will not answer.
   ///
   /// `releases/latest/download/<file>` resolves without a tag being known, so
-  /// the fallback needs no lookup of its own. The same three files, built from
-  /// the same export — the build is byte-reproducible, which is what makes two
-  /// builders safe.
+  /// the fallback needs no lookup of its own. It carries the same logical data,
+  /// but independently produced gzip archives may have different bytes. The
+  /// installer therefore uses each endpoint's manifest and assets as one set.
   static const geoDataFallback =
       '$myGithub/ipgeo-shards/releases/latest/download';
 

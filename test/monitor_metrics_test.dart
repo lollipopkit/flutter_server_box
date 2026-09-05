@@ -199,6 +199,47 @@ void main() {
       expect(status.disk.single.usedPercent, 25);
     });
 
+    test('and its snap images are dropped from the detail list', () {
+      // The parser drops these now, but an agent older than that change keeps
+      // sending one row per installed snap revision.
+      final status = applyMonitorMetrics(
+        InitStatus.status,
+        MonitorMetrics.fromJson(
+          legacyBody({
+            'disk_details': const [
+              {
+                'path': '/dev/vda1',
+                'mount': '/',
+                'fs_type': 'ext4',
+                'used': 1024,
+                'total': 4096,
+                'usage_percent': 25.0,
+              },
+              {
+                'path': '/dev/loop0',
+                'mount': '/snap/copilot-cli/57',
+                'fs_type': 'squashfs',
+                'used': 304087040,
+                'total': 304087040,
+                'usage_percent': 100.0,
+              },
+              {
+                'path': 'snapfuse',
+                'mount': '/snap/lxd/31333',
+                'used': 132120576,
+                'total': 132120576,
+                'usage_percent': 100.0,
+              },
+            ],
+          }),
+        ),
+      );
+
+      expect(status.disk.length, 1);
+      expect(status.disk.single.path, '/dev/vda1');
+      expect(status.diskUsage?.size, BigInt.from(4));
+    });
+
     test('and aggregate network data replaces stale temperature detail', () {
       final status = InitStatus.status;
       status.temps.setAll({'old': 99});
