@@ -24,14 +24,24 @@ if [ -z "$commit" ]; then
   commit="$(gh api "repos/$repo/commits?path=yabs.sh&per_page=1" --jq '.[0].sha')"
 fi
 
-echo "Fetching $repo@$commit"
-curl -fsSL "https://raw.githubusercontent.com/$repo/$commit/yabs.sh" -o "$dest"
+# Downloaded beside the destination and moved into place only once it has been
+# identified. Fetching straight over the asset means a truncated transfer, an
+# HTML error page from a proxy, or a file whose version cannot be read leaves
+# the vendored script destroyed and the checked-in one gone.
+tmp="$(mktemp "${dest}.XXXXXX")"
+trap 'rm -f "$tmp"' EXIT
 
-version="$(sed -n 's/^YABS_VERSION="\(.*\)"$/\1/p' "$dest" | head -1)"
+echo "Fetching $repo@$commit"
+curl -fsSL "https://raw.githubusercontent.com/$repo/$commit/yabs.sh" -o "$tmp"
+
+version="$(sed -n 's/^YABS_VERSION="\(.*\)"$/\1/p' "$tmp" | head -1)"
 if [ -z "$version" ]; then
   echo "No YABS_VERSION in the downloaded file; refusing to write a copy we cannot identify." >&2
   exit 1
 fi
+
+mv "$tmp" "$dest"
+trap - EXIT
 
 if command -v sha256sum >/dev/null 2>&1; then
   digest="$(sha256sum "$dest" | cut -d' ' -f1)"

@@ -21,15 +21,14 @@ class BenchmarkRunsMigration implements SchemaMigration {
   @override
   Future<void> apply() async {
     final db = SqliteDb.instance;
-    // Guarded, so the step is safe to run again after a process stops partway:
-    // the version is recorded only once every statement has run.
-    final existing = db
-        .select("SELECT name FROM sqlite_master WHERE type = 'table';")
-        .map((row) => row['name'] as String)
-        .toSet();
-    if (existing.contains('benchmark_run')) return;
+    // Every statement guards itself rather than the step guarding all of them
+    // behind one existence check. The step is not one statement: a process
+    // that stopped between the table and its index would, under that check,
+    // return early on the next launch and leave the index permanently
+    // missing — and the version is recorded only once `apply()` returns, so
+    // that next launch is guaranteed to happen.
     db.execute('''
-CREATE TABLE benchmark_run (
+CREATE TABLE IF NOT EXISTS benchmark_run (
   id TEXT NOT NULL PRIMARY KEY,
   server_id TEXT NOT NULL REFERENCES server (id) ON DELETE CASCADE,
   started_at INTEGER NOT NULL,
