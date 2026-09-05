@@ -323,6 +323,40 @@ fn install_commands() {
     assert!(decoded.contains(WINDOWS_INSTALL_EOF));
 }
 
+#[test]
+fn windows_default_script_paths_expand_remote_environment() {
+    let install = install_command(
+        SystemType::Windows,
+        r"$env:USERPROFILE/.config/server_box",
+        r"$env:USERPROFILE/.config/server_box\srvboxm.ps1",
+    );
+    let decoded = decode_utf16le_b64(install.rsplit(' ').next().unwrap());
+    assert!(
+        decoded.contains(
+            "New-Item -ItemType Directory -Force -Path (Join-Path $env:USERPROFILE '.config/server_box')"
+        ),
+        "{decoded}"
+    );
+    assert!(
+        decoded.contains(
+            "Set-Content -Path (Join-Path $env:USERPROFILE '.config/server_box\\srvboxm.ps1')"
+        ),
+        "{decoded}"
+    );
+    assert!(!decoded.contains("-Path '$env:USERPROFILE"), "{decoded}");
+
+    let exec = exec_command(
+        SystemType::Windows,
+        r"$env:TEMP/server_box\srvboxm.ps1",
+        ShellFunc::Status,
+    );
+    let decoded = decode_utf16le_b64(exec.rsplit(' ').next().unwrap());
+    assert_eq!(
+        decoded,
+        "& (Join-Path $env:TEMP 'server_box\\srvboxm.ps1') -s"
+    );
+}
+
 /// The two halves have to agree: the command stops at a line the payload is
 /// responsible for putting there, and neither is any use alone.
 #[test]
@@ -405,6 +439,17 @@ fn exec_commands() {
     let encoded = win.split_whitespace().last().unwrap();
     assert!(
         decode_utf16le_b64(encoded).contains("& 'C:\\Program Files\\Server Box\\status.ps1' -s")
+    );
+
+    let custom = exec_command(
+        SystemType::Windows,
+        r"C:\Server $($env:USERNAME)\it's\status.ps1",
+        ShellFunc::Status,
+    );
+    let encoded = custom.split_whitespace().last().unwrap();
+    assert_eq!(
+        decode_utf16le_b64(encoded),
+        "& 'C:\\Server $($env:USERNAME)\\it''s\\status.ps1' -s"
     );
 }
 

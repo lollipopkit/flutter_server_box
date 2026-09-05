@@ -51,6 +51,13 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
       if (key == null) continue;
       if (!_order.contains(key)) _order.add(key);
     }
+    // A key absent from both stored lists has never been configured. This is
+    // the normal state for every optional key on an older install, and for a
+    // key added by a newer build. Keep it available in settings, but disabled,
+    // so opening this page does not silently add it to the terminal strip.
+    for (final key in VirtKey.values) {
+      if (!_order.contains(key)) _order.add(key);
+    }
     _enabled = keys.where((k) => !disabled.contains(k.name)).toSet();
   }
 
