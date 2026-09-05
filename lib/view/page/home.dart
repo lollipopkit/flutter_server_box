@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/foundation.dart' show kReleaseMode;
+import 'package:flutter/foundation.dart' show kReleaseMode, visibleForTesting;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
@@ -44,6 +45,63 @@ class HomePage extends ConsumerStatefulWidget {
 /// expose as a constant. Only used to decide whether a rail is worth showing
 /// — the rail lays itself out.
 const _kRailWidth = 80.0;
+
+/// What the rail spends on things that are not destinations.
+///
+/// Its own top spacer, and the settings button pinned to the bottom of the
+/// stack the rail sits in — see [_HomePageState._buildRailBar]. Rounded up: it
+/// is subtracted before the destinations are counted, so being generous costs
+/// a slot and being mean costs an overflow.
+const _kRailChromeHeight = 72.0;
+
+/// How tall one rail destination is, near enough to count them.
+///
+/// The M3 rail lays one out as a 32pt indicator, a 4pt gap, the label, and 12pt
+/// under it, and only the label moves with the text scale — which this app lets
+/// the user set, so a constant would be wrong on exactly the installs where the
+/// count matters most.
+///
+/// An estimate rather than a measurement, because the count has to be made
+/// *before* the destinations are built. Erring high is a rail with a spare
+/// slot; erring low is a rail that overflows its box, which is why the rail is
+/// also `scrollable`. `test/home_rail_tabs_test.dart` holds it against what
+/// Flutter actually lays out.
+///
+/// Rounded **up**, and that is the whole reason the ceiling is here: a text
+/// layout rounds a line to a whole pixel, so the label is `round(16 × scale)`
+/// and the plain product is under the real height for a third of the scales in
+/// between. Up costs at most a pixel a destination.
+@visibleForTesting
+double railDestinationExtent(BuildContext context) =>
+    48 + MediaQuery.textScalerOf(context).scale(16).ceilToDouble();
+
+/// How many destinations fit in [height].
+@visibleForTesting
+int railCapacity({required double height, required double destinationExtent}) {
+  if (destinationExtent <= 0) return 1;
+  final room = height - _kRailChromeHeight;
+  return math.max(1, room ~/ destinationExtent);
+}
+
+/// How many tabs the rail draws, of the [wanted] the user put in it.
+///
+/// The rest are behind "more", **which is a destination itself** — so a rail
+/// that cannot hold everything holds one fewer than it has room for.
+///
+/// [total] is every tab there is. The tabs the user left out of the bar are
+/// already behind "more" whatever the height, and this is where a rail too
+/// short for the ones they kept sends those as well. At least one is always
+/// drawn: a rail of nothing but "more" says less than a rail with one tab in
+/// it, and the arithmetic below has no lower bound of its own.
+@visibleForTesting
+int railShownCount({
+  required int wanted,
+  required int total,
+  required int capacity,
+}) {
+  if (wanted >= total && wanted <= capacity) return wanted;
+  return math.max(1, math.min(wanted, capacity - 1));
+}
 
 class _HomePageState extends ConsumerState<HomePage>
     with
@@ -556,53 +614,106 @@ class _HomePageState extends ConsumerState<HomePage>
     );
   }
 
+  /// The rail, with the same "more" the bottom bar has.
+  ///
+  /// It had none, which was two things wrong at once. The tabs the user left
+  /// out of the bar were unreachable on a wide window — nothing there listed
+  /// them — and `_selectIndex` addresses every tab while the destinations were
+  /// only the ones in the bar, so arriving on one of the others tripped
+  /// `NavigationRail`'s own `selectedIndex < destinations.length` assert. That
+  /// is reachable without any wide-window navigation at all: the tab the app
+  /// reopens on is restored by name, and a window can be widened while one of
+  /// them is showing.
+  ///
+  /// The rail also runs out of *height*, which the bar never does — so what is
+  /// behind "more" here is the tabs the user hid plus however many of the rest
+  /// do not fit. Both are the same thing to everything downstream, because the
+  /// rail draws the first `shown` of [_tabs] and `_showMoreSheet` takes the
+  /// remainder, exactly as the bar does.
   Widget _buildRailBar({bool extended = false}) {
     return SafeArea(
-      child: Stack(
-        children: [
-          ListenableBuilder(
-            listenable: _selectIndex,
-            builder: (context, _) {
-              if (_isServerFullscreenMode) return UIs.placeholder;
-              return NavigationRail(
-                key: _navKey,
-                extended: extended,
-                minExtendedWidth: 150,
-                leading: extended ? const SizedBox(height: 20) : null,
-                trailing: extended ? const SizedBox(height: 20) : null,
-                labelType: extended
-                    ? NavigationRailLabelType.none
-                    : NavigationRailLabelType.all,
-                selectedIndex: _selectIndex.value,
-                destinations: [
-                  for (final tab in _barTabs)
-                    tab.navRailDestination(onMenu: _navMenuFor(tab)),
-                ],
-                onDestinationSelected: _onDestinationSelected,
-              );
-            },
-          ),
-          // Settings Btn
-          ListenableBuilder(
-            listenable: _selectIndex,
-            builder: (context, _) {
-              if (_isServerFullscreenMode) return UIs.placeholder;
-              return Positioned(
-                bottom: 10,
-                left: 0,
-                right: 0,
-                child: IconButton(
-                  icon: const Icon(Icons.settings),
-                  tooltip: libL10n.setting,
-                  onPressed: () {
-                    SettingsPage.route.go(context);
-                  },
-                ),
-              );
-            },
-          ),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final capacity = railCapacity(
+            height: constraints.maxHeight,
+            destinationExtent: railDestinationExtent(context),
+          );
+          final shown = railShownCount(
+            wanted: _barTabs.length,
+            total: _tabs.length,
+            capacity: capacity,
+          );
+          return _buildRail(extended: extended, shown: shown);
+        },
       ),
+    );
+  }
+
+  Widget _buildRail({required bool extended, required int shown}) {
+    final more = shown < _tabs.length;
+    return Stack(
+      children: [
+        ListenableBuilder(
+          listenable: _selectIndex,
+          builder: (context, _) {
+            if (_isServerFullscreenMode) return UIs.placeholder;
+            return NavigationRail(
+              key: _navKey,
+              extended: extended,
+              minExtendedWidth: 150,
+              // What [railDestinationExtent] cannot promise. The count above
+              // is an estimate of a layout this does not perform, so a theme
+              // or a text scale that makes a destination taller than it
+              // guessed is a rail that scrolls rather than one that overflows
+              // its box.
+              scrollable: true,
+              leading: extended ? const SizedBox(height: 20) : null,
+              trailing: extended ? const SizedBox(height: 20) : null,
+              labelType: extended
+                  ? NavigationRailLabelType.none
+                  : NavigationRailLabelType.all,
+              // Past the rail's own tabs, what is open is inside "more" —
+              // which is then what the last destination stands for, and is
+              // lit to say so. The bar does the same.
+              selectedIndex: _selectIndex.value < shown
+                  ? _selectIndex.value
+                  : shown,
+              destinations: [
+                for (final tab in _tabs.take(shown))
+                  tab.navRailDestination(onMenu: _navMenuFor(tab)),
+                if (more)
+                  NavigationRailDestination(
+                    icon: const Icon(Icons.more_horiz),
+                    label: Text(libL10n.more),
+                  ),
+              ],
+              onDestinationSelected: (index) {
+                if (index < shown) return _onDestinationSelected(index);
+                unawaited(_showMoreSheet(shown));
+              },
+            );
+          },
+        ),
+        // Settings Btn
+        ListenableBuilder(
+          listenable: _selectIndex,
+          builder: (context, _) {
+            if (_isServerFullscreenMode) return UIs.placeholder;
+            return Positioned(
+              bottom: 10,
+              left: 0,
+              right: 0,
+              child: IconButton(
+                icon: const Icon(Icons.settings),
+                tooltip: libL10n.setting,
+                onPressed: () {
+                  SettingsPage.route.go(context);
+                },
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 
