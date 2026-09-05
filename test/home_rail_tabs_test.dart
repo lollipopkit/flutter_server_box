@@ -30,13 +30,16 @@ void main() {
       expect(capacityAt(400), lessThan(6));
     });
 
-    test('and one too short for even one still says one', () {
-      // The rail is drawn either way — it is the navigation — so a count of
-      // zero would be a rail of nothing, or a range error where the arithmetic
-      // below subtracts the "more" slot.
-      expect(capacityAt(0), 1);
-      expect(capacityAt(-100), 1);
-      expect(railCapacity(height: 1000, destinationExtent: 0), 1);
+    test('and one too short for two still plans for two', () {
+      // Two is the floor, and it is what makes the arithmetic below exact.
+      // Below it there is no arrangement that both says which tab is open and
+      // reaches the others — one slot is either a tab with the rest
+      // unreachable, or a "more" with nothing saying where you are. So a rail
+      // this short plans for two anyway and scrolls.
+      expect(capacityAt(0), 2);
+      expect(capacityAt(-100), 2);
+      expect(capacityAt(150), 2);
+      expect(railCapacity(height: 1000, destinationExtent: 0), 2);
     });
   });
 
@@ -55,9 +58,19 @@ void main() {
     });
 
     test('and at least one tab whatever the height', () {
-      // A rail holding nothing but "more" says less than one holding a tab.
+      // Two is the smallest [railCapacity] answers, and at two the rail is one
+      // tab and the way to the rest — never a lone "more", which would say
+      // nothing about where you are.
+      expect(railShownCount(wanted: 6, total: 6, capacity: 2), 1);
+      expect(railShownCount(wanted: 1, total: 6, capacity: 2), 1);
+    });
+
+    test('and a capacity below that floor is still answered sanely', () {
+      // Unreachable through [railCapacity]; here so a smaller one arriving
+      // from somewhere else is one tab and a "more" the rail scrolls to,
+      // rather than a zero or a negative count.
       expect(railShownCount(wanted: 6, total: 6, capacity: 1), 1);
-      expect(railShownCount(wanted: 1, total: 6, capacity: 1), 1);
+      expect(railShownCount(wanted: 6, total: 6, capacity: 0), 1);
     });
 
     /// The property the rail's `selectedIndex` rests on.
@@ -69,7 +82,8 @@ void main() {
     test('never leaves a tab out without a slot standing for it', () {
       for (var total = 1; total <= 6; total++) {
         for (var wanted = 1; wanted <= total; wanted++) {
-          for (var capacity = 1; capacity <= 10; capacity++) {
+          // From two, which is the smallest [railCapacity] answers.
+          for (var capacity = 2; capacity <= 10; capacity++) {
             final shown = railShownCount(
               wanted: wanted,
               total: total,
@@ -80,6 +94,15 @@ void main() {
             expect(shown, lessThanOrEqualTo(total), reason: reason);
 
             final destinations = shown + (shown < total ? 1 : 0);
+            // What the count is *for*. "More" is a destination too, so a rail
+            // that reserves nothing for it draws one more than it measured
+            // room for — which the arithmetic did at a capacity of one, until
+            // [railCapacity] stopped answering one.
+            expect(
+              destinations,
+              lessThanOrEqualTo(capacity),
+              reason: '$reason drew $destinations',
+            );
             // Every tab index the home page can hold, clamped the way the rail
             // clamps it.
             for (var selected = 0; selected < total; selected++) {

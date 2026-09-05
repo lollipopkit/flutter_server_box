@@ -76,11 +76,19 @@ double railDestinationExtent(BuildContext context) =>
     48 + MediaQuery.textScalerOf(context).scale(16).ceilToDouble();
 
 /// How many destinations fit in [height].
+///
+/// **Never fewer than two**, and that floor is what makes the arithmetic in
+/// [railShownCount] exact. Below two there is no arrangement that both says
+/// which tab is open and reaches the others: one slot is either a tab with the
+/// rest unreachable, or a "more" with nothing saying where you are. So a rail
+/// too short for two plans for two anyway and scrolls — which is a window under
+/// 200pt tall, where the tab's own contents have about 130 and nothing on
+/// screen is usable either way.
 @visibleForTesting
 int railCapacity({required double height, required double destinationExtent}) {
-  if (destinationExtent <= 0) return 1;
+  if (destinationExtent <= 0) return 2;
   final room = height - _kRailChromeHeight;
-  return math.max(1, room ~/ destinationExtent);
+  return math.max(2, room ~/ destinationExtent);
 }
 
 /// How many tabs the rail draws, of the [wanted] the user put in it.
@@ -90,9 +98,13 @@ int railCapacity({required double height, required double destinationExtent}) {
 ///
 /// [total] is every tab there is. The tabs the user left out of the bar are
 /// already behind "more" whatever the height, and this is where a rail too
-/// short for the ones they kept sends those as well. At least one is always
-/// drawn: a rail of nothing but "more" says less than a rail with one tab in
-/// it, and the arithmetic below has no lower bound of its own.
+/// short for the ones they kept sends those as well.
+///
+/// The result **plus that slot** is what the rail draws, and it never exceeds
+/// [capacity] — which holds because [railCapacity] is at least 2. The `max(1,
+/// ...)` is only a floor against a smaller one arriving from somewhere else:
+/// with `capacity` 1 it answers one tab and a "more" beside it, two
+/// destinations in room for one, and the rail scrolls.
 @visibleForTesting
 int railShownCount({
   required int wanted,
