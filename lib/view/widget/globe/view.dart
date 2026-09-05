@@ -270,7 +270,7 @@ class _GlobeViewState extends State<GlobeView> with TickerProviderStateMixin {
 
   Future<void> _loadShader() async {
     try {
-      final program = await ui.FragmentProgram.fromAsset('shaders/globe.frag');
+      final program = await ui.FragmentProgram.fromAsset('assets/shaders/globe.frag');
       if (!mounted) return;
       setState(() => _shader = program.fragmentShader());
     } catch (e, s) {

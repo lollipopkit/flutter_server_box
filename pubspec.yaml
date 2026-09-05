@@ -162,7 +162,7 @@ flutter:
     # platform — Impeller has been the default renderer everywhere since 3.47 —
     # and not required: `GlobePainter` falls back to a radial gradient if the
     # program will not load.
-    - shaders/globe.frag
+    - assets/shaders/globe.frag
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
   # fonts:
