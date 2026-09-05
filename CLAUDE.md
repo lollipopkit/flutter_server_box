@@ -179,6 +179,19 @@ One encrypted SQLite file, not Hive. `KvStore` in fl_lib is `sealed`, so a new k
 - **`INSERT OR REPLACE` is wrong on a row with sync columns or children.** It deletes and reinserts, so every unnamed column returns to its default (`rev` to 0, defeating the point) and every `ON DELETE CASCADE` fires. Use `EntityStore.upsert`, which is `ON CONFLICT DO UPDATE` naming only the data columns.
 - **A model that `lib/hive/` still has an adapter for gets a frozen type, never a regenerated one.** No Hive box ever carried a field added after the last Hive release, so an adapter that knows about one describes a shape no box is in — and when the field is non-nullable the generator emits `fields[n] as String`, the box fails to *open*, and its whole store is silently left behind. `Snippet`, `PrivateKeyInfo` and `SshCredential` are out of `@GenerateAdapters` and frozen in `lib/hive/legacy_adapters.dart`, each carrying the fields at the indexes its release wrote. A generated adapter that still compiles is not reassurance: `SshCredential.fileTransport` has a default, so the generator emitted a null check and the import kept working. `test/hive_release_migration_test.dart` catches the fatal version.
 
+### Tabs
+
+**A new tab's single column is what the tab is for, not its list of records.** Applies to tabs added from Sep 2026 on; the ones that predate it are left as they are, and moving them is its own change.
+
+`AdaptivePanes.detail` hands a narrow window `listBuilder` and nothing else. Put the history there and a phone gets a list of past things with no way to make a new one — which is exactly what the benchmark tab shipped as, until a run could not be started on a phone at all. So `listBuilder` branches on its `split` argument: two columns give the list on the left and the subject on the right; one column *is* the subject, and the list moves behind a button in the bar, raised as a sheet. The Agent tab does this with its conversations (`showAgentHistorySheet`); `view/page/benchmark/tab.dart` is the worked example.
+
+Four things that are easy to get wrong and are not compile errors:
+
+- **`detailId` must be null when the root is showing.** `NestedNavigator` reads it becoming null as the detail *closing*, and only then runs the backwards transition. An id that is never null — `_viewing ?? 'something:$selected'` — makes every return one non-null id replacing another, which is a way *in*, so the page slides off the wrong edge.
+- **`CustomAppBar` supplies a back button at a pane's root**, wired to `onCloseDetail`. Right for something opened *into* the pane; wrong for the root itself and for the list column, where it has nowhere to go and does nothing when pressed. Pass an explicit `leading` to say "none".
+- **`detailBuilder` runs on a different element from the page's.** `ref.listen` there asserts. `ref.watch` does not, which is worse: it subscribes from the wrong element and nothing says so. Build the detail as a widget with its own `ref`, or read in `build` and pass down.
+- **The subject is a widget, not a route.** Choosing a different one rebuilds the column; pushing instead stacks one copy per choice, and a test that only checks "the right thing is on screen" cannot tell the difference.
+
 ### Dialogs
 
 A dialog's buttons close the dialog. The page is closed by the code that awaited it.
