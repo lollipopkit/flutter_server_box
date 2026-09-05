@@ -214,6 +214,28 @@ void main() {
     await close(tester);
   });
 
+  testWidgets('the play button asks which machine, in a sheet', (tester) async {
+    // The picker used to be a card above the history, which spent a permanent
+    // row on a question answered once per run.
+    seedRunning();
+
+    await pump(tester, const BenchmarkTabPage());
+    await tester.tap(find.byIcon(Icons.play_arrow));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(SheetChoiceTile), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(SheetChoiceTile),
+        matching: find.text('web'),
+      ),
+      findsOneWidget,
+    );
+    await close(tester);
+  });
+
   testWidgets('tapping a past run shows it beside the list', (tester) async {
     final run = seedRunning();
     BenchmarkStore.instance.put(

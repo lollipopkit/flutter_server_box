@@ -154,14 +154,23 @@ extension _Widgets on _BenchmarkTabPageState {
     final history = BenchmarkStore.instance.all();
 
     return Scaffold(
-      appBar: CustomAppBar(title: Text(l10n.benchmark)),
+      // No title: the nav rail beside this already names the tab, and the room
+      // is better spent on the one thing this column is for besides listing.
+      appBar: CustomAppBar(
+        actions: [
+          if (servers.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.play_arrow),
+              tooltip: l10n.benchmark,
+              onPressed: () => _pickServer(servers),
+            ),
+        ],
+      ),
       body: servers.isEmpty
           ? _centered(l10n.benchmarkNoServers)
           : ListView(
               padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
               children: [
-                _buildPicker(servers),
-                UIs.height13,
                 if (history.isEmpty)
                   _centered(l10n.benchmarkNoRuns)
                 else
@@ -191,52 +200,6 @@ extension _Widgets on _BenchmarkTabPageState {
     );
   }
 
-  /// Which machine to run on.
-  ///
-  /// A dropdown rather than a row of chips: this list is as long as the user's
-  /// server list, and a row that scrolls sideways hides the entries past the
-  /// edge without saying they are there.
-  Widget _buildPicker(List<Spi> servers) {
-    return CardX(
-      child: ListTile(
-        leading: const Icon(Icons.dns_outlined),
-        title: Text(libL10n.server, style: UIs.text13Grey),
-        subtitle: DropdownButtonHideUnderline(
-          child: DropdownButton<String>(
-            isExpanded: true,
-            value: _selectedId,
-            items: [
-              for (final spi in servers)
-                DropdownMenuItem(
-                  value: spi.id,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          spi.name,
-                          style: UIs.text15,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      // A machine with a run in flight is worth spotting from
-                      // the closed dropdown, since choosing another hides it.
-                      if (BenchmarkStore.instance.activeFor(spi.id) != null)
-                        const Icon(Icons.timelapse, size: 15),
-                    ],
-                  ),
-                ),
-            ],
-            // Choosing a machine is asking to act on it, so the right column
-            // stops showing whatever old result was being read.
-            onChanged: (id) => setState(() {
-              _selectedId = id;
-              _viewingRunId = null;
-            }),
-          ),
-        ),
-      ),
-    );
-  }
 
   /// The right column: a result being read, or the selected machine's run.
   Widget _buildDetail(Spi? spi, BenchmarkState? state) {
@@ -282,6 +245,39 @@ extension _Widgets on _BenchmarkTabPageState {
 // --- Actions ---
 
 extension _Actions on _BenchmarkTabPageState {
+  /// Which machine to run on.
+  ///
+  /// A sheet rather than a control kept on screen. It is answered once and then
+  /// not looked at again for a quarter of an hour, so a card holding it above
+  /// the history spent a permanent row on a question that is momentary — and
+  /// the history is what this column is for.
+  Future<void> _pickServer(List<Spi> servers) async {
+    await showRowsSheet<void>(
+      context,
+      rows: (ctx) => [
+        for (final spi in servers)
+          SheetChoiceTile(
+            title: spi.name,
+            selected: spi.id == _selectedId,
+            // A machine with a run in flight is worth spotting here, since
+            // choosing another is what hides it.
+            icon: BenchmarkStore.instance.activeFor(spi.id) != null
+                ? Icons.timelapse
+                : null,
+            onTap: () {
+              ctx.pop();
+              setState(() {
+                _selectedId = spi.id;
+                // Choosing a machine is asking to act on it, so the right
+                // column stops showing whatever old result was being read.
+                _viewingRunId = null;
+              });
+            },
+          ),
+      ],
+    );
+  }
+
   /// Reads a past run: in the right column when there is one, as a page when
   /// the window is too narrow for two.
   void _openRun(BenchmarkRun run, bool split) {
