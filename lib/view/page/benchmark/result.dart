@@ -223,6 +223,7 @@ extension _Sections on _BenchmarkResultPageState {
     final maxRate = rows
         .map((e) => e.totalBytesPerSec ?? 0)
         .fold<double>(0, (a, b) => a > b ? a : b);
+    final maxY = maxRate <= 0 ? 1.0 : maxRate * 1.2;
 
     return _card(
       title: '${libL10n.disk} (fio)',
@@ -233,7 +234,7 @@ extension _Sections on _BenchmarkResultPageState {
           child: BarChart(
             BarChartData(
               alignment: BarChartAlignment.spaceAround,
-              maxY: maxRate <= 0 ? 1 : maxRate * 1.2,
+              maxY: maxY,
               barTouchData: BarTouchData(
                 touchTooltipData: BarTouchTooltipData(
                   getTooltipItem: (group, _, rod, _) => BarTooltipItem(
@@ -248,18 +249,34 @@ extension _Sections on _BenchmarkResultPageState {
                 leftTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
-                    reservedSize: 46,
-                    getTitlesWidget: (value, _) =>
-                        Text(_rate(value), style: UIs.text11Grey),
+                    // Wide enough for the longest label this axis can produce,
+                    // and an interval that keeps them apart. At 46 with no
+                    // interval, `647.3 MB/s` wrapped to two lines and each
+                    // label ran into the one above and below it.
+                    reservedSize: 58,
+                    interval: (maxY <= 0 ? 1 : maxY) / 4,
+                    getTitlesWidget: (value, meta) => SideTitleWidget(
+                      meta: meta,
+                      child: Text(
+                        _axisRate(value),
+                        style: UIs.text11Grey,
+                        maxLines: 1,
+                        softWrap: false,
+                        overflow: TextOverflow.visible,
+                      ),
+                    ),
                   ),
                 ),
                 bottomTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
-                    getTitlesWidget: (value, _) {
+                    getTitlesWidget: (value, meta) {
                       final idx = value.toInt();
                       if (idx < 0 || idx >= rows.length) return UIs.placeholder;
-                      return Text(rows[idx].bs, style: UIs.text11Grey);
+                      return SideTitleWidget(
+                        meta: meta,
+                        child: Text(rows[idx].bs, style: UIs.text11Grey),
+                      );
                     },
                   ),
                 ),
@@ -554,8 +571,24 @@ extension _Parts on _BenchmarkResultPageState {
 
   String _n(double? v) => v == null ? '-' : v.round().toString();
 
-  /// Bytes per second, for an axis label — so `1.2 GB/s`, not `1288490188`.
+  /// Bytes per second, in full — what a tooltip shows, where there is room.
   String _rate(double bytesPerSec) => '${bytesPerSec.bytes2Str}/s';
+
+  /// The same, shortened for an axis tick.
+  ///
+  /// `647.3 MB/s` is eleven characters and does not fit beside a chart this
+  /// size. The fraction goes only above ten, where a gridline does not need a
+  /// tenth of a megabyte and the tooltip has it anyway — below ten it has to
+  /// stay, or `1.2 GB/s` and `1.8 GB/s` become two ticks both reading
+  /// `1 GB/s`.
+  String _axisRate(double bytesPerSec) {
+    final full = bytesPerSec.bytes2Str;
+    final parts = RegExp(r'^([\d.]+) (\w+)$').firstMatch(full);
+    if (parts == null) return '$full/s';
+    final value = double.tryParse(parts.group(1)!) ?? 0;
+    final shown = value >= 10 ? value.round().toString() : parts.group(1)!;
+    return '$shown ${parts.group(2)}/s';
+  }
 
   Future<void> _copy(BuildContext context, String text) async {
     await Clipboard.setData(ClipboardData(text: text));
