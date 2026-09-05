@@ -426,7 +426,19 @@ void main() {
     Stores.server.put(other);
 
     await pump(tester, const BenchmarkTabPage(), size: const Size(420, 900));
-    await tester.tap(find.byIcon(Icons.swap_horiz));
+    // The switcher, not a swap icon: which machine is on screen, and the way
+    // to the rest — the terminal tab's control, chevron and all.
+    expect(find.byType(SessionSwitcherLabel), findsOneWidget);
+    expect(find.byIcon(Icons.expand_more), findsOneWidget);
+    // The chevron, not the widget's bounds: the label is `Align`ed to the
+    // start inside an `Expanded`, so its box spans the bar while the ink only
+    // covers the content — a tap at the centre lands on nothing.
+    await tester.tap(
+      find.descendant(
+        of: find.byType(SessionSwitcherLabel),
+        matching: find.byIcon(Icons.expand_more),
+      ),
+    );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
     await tester.tap(find.text('db').last);

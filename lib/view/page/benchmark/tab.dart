@@ -160,18 +160,34 @@ extension _Widgets on _BenchmarkTabPageState {
     return BenchmarkRunPage(
       key: ValueKey(spi.id),
       args: SpiRequiredArgs(spi),
-      leading: Btn.icon(
-        text: libL10n.log,
-        icon: const Icon(Icons.history, size: 20),
-        onTap: () => _showHistorySheet(servers),
-      ),
-      actions: [
-        Btn.icon(
-          text: libL10n.server,
-          icon: const Icon(Icons.swap_horiz, size: 20),
-          onTap: () => _pickServer(false),
+      // The terminal tab's bar, in shape as well as in detail: the switcher on
+      // the left saying which of the set is on screen and opening the rest,
+      // and the other ways out as actions on the right. The chevron is what
+      // makes that reading available at all — it says "one of several" where a
+      // plain title says "this page".
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(SessionTabBar.height),
+        child: SizedBox(
+          height: SessionTabBar.height,
+          child: Row(
+            children: [
+              Expanded(
+                child: SessionSwitcherLabel(
+                  name: spi.name,
+                  icon: Icons.dns_outlined,
+                  onTap: () => _pickServer(false),
+                ),
+              ),
+              Btn.icon(
+                text: l10n.history,
+                icon: const Icon(Icons.history, size: 18),
+                onTap: () => _showHistorySheet(servers),
+              ),
+              const SizedBox(width: 7),
+            ],
+          ),
         ),
-      ],
+      ),
     );
   }
 
@@ -214,7 +230,7 @@ extension _Widgets on _BenchmarkTabPageState {
         actions: [
           Btn.icon(
             text: libL10n.search,
-            icon: const Icon(Icons.search, size: 20),
+            icon: const Icon(Icons.search, size: 18),
             onTap: _search.start,
           ),
           // Not in the sheet: with one column the run is already on screen
@@ -222,7 +238,7 @@ extension _Widgets on _BenchmarkTabPageState {
           if (servers.isNotEmpty && !inSheet)
             Btn.icon(
               text: l10n.benchmark,
-              icon: const Icon(Icons.play_arrow, size: 20),
+              icon: const Icon(Icons.play_arrow, size: 18),
               onTap: () => _pickServer(split),
             ),
         ],

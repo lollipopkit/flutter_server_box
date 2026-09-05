@@ -21,19 +21,18 @@ class BenchmarkRunPage extends ConsumerStatefulWidget {
     super.key,
     required this.args,
     this.inPane = false,
-    this.leading,
-    this.actions,
+    this.appBar,
   });
 
   final SpiRequiredArgs args;
 
-  /// Put in the bar by whoever is showing this.
+  /// Supplied by whoever is showing this, or the plain one below.
   ///
-  /// With one column this page *is* the tab, so it carries the tab's controls:
-  /// the way to the history, and the way to another machine. Beside a history
-  /// column it carries neither, because both are already on screen.
-  final Widget? leading;
-  final List<Widget>? actions;
+  /// With one column this page *is* the tab, so its bar is the tab's: which
+  /// machine, and the way to the rest. Beside a history column it needs
+  /// neither — both are already on screen — and a `CustomAppBar` naming the
+  /// machine is the whole of it.
+  final PreferredSizeWidget? appBar;
 
   /// Whether this is the root of a detail pane rather than a pushed page.
   ///
@@ -83,11 +82,12 @@ class _BenchmarkRunPageState extends ConsumerState<BenchmarkRunPage> {
     });
 
     return Scaffold(
-      appBar: CustomAppBar(
-        leading: widget.leading ?? (widget.inPane ? const SizedBox.shrink() : null),
-        title: Text(_spi.name),
-        actions: widget.actions,
-      ),
+      appBar:
+          widget.appBar ??
+          CustomAppBar(
+            leading: widget.inPane ? const SizedBox.shrink() : null,
+            title: Text(_spi.name),
+          ),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
         children: [

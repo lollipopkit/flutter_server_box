@@ -185,6 +185,10 @@ One encrypted SQLite file, not Hive. `KvStore` in fl_lib is `sealed`, so a new k
 
 `AdaptivePanes.detail` hands a narrow window `listBuilder` and nothing else. Put the history there and a phone gets a list of past things with no way to make a new one — which is exactly what the benchmark tab shipped as, until a run could not be started on a phone at all. So `listBuilder` branches on its `split` argument: two columns give the list on the left and the subject on the right; one column *is* the subject, and the list moves behind a button in the bar, raised as a sheet. The Agent tab does this with its conversations (`showAgentHistorySheet`); `view/page/benchmark/tab.dart` is the worked example.
 
+Bar buttons follow the terminal tab's: `Btn.icon` with an **18pt** icon, and the same label for the same control — its history button is `l10n.history`, not something new. The server tab is 18 too; the benchmark tab arrived at 20 with a label of its own, and read as a different control doing the same job.
+
+The single column's bar is the terminal tab's, in shape as well as in detail: `SessionSwitcherLabel` on the left — icon, name, chevron — saying which of the set is on screen and opening the rest, with the other ways out as `Btn.icon` actions on the right at **18pt**. The chevron is what makes "one of several" readable at all; a plain `CustomAppBar` title says "this page" and a bare icon in the `leading` slot says nothing.
+
 Four things that are easy to get wrong and are not compile errors:
 
 - **`detailId` must be null when the root is showing.** `NestedNavigator` reads it becoming null as the detail *closing*, and only then runs the backwards transition. An id that is never null — `_viewing ?? 'something:$selected'` — makes every return one non-null id replacing another, which is a way *in*, so the page slides off the wrong edge.
