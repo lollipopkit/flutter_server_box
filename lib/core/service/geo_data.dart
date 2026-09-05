@@ -211,22 +211,17 @@ abstract final class GeoData {
     GeoManifest confirmed,
     GeoManifest offered,
   ) {
-    if (offered.version != confirmed.version ||
-        offered.generated != confirmed.generated ||
-        offered.attribution != confirmed.attribution ||
-        offered.assets.length != confirmed.assets.length) {
+    // Both values have passed [GeoManifest.tryFromJson], which fixes the
+    // supported version and guarantees exactly one asset for each family.
+    if (offered.generated != confirmed.generated ||
+        offered.attribution != confirmed.attribution) {
       return false;
     }
     for (final expected in confirmed.assets) {
-      GeoAsset? actual;
-      for (final candidate in offered.assets) {
-        if (candidate.family == expected.family) {
-          actual = candidate;
-          break;
-        }
-      }
-      if (actual == null ||
-          actual.name != expected.name ||
+      final actual = offered.assets.firstWhere(
+        (candidate) => candidate.family == expected.family,
+      );
+      if (actual.name != expected.name ||
           actual.bytes != expected.bytes ||
           actual.unpackedBytes != expected.unpackedBytes) {
         return false;
@@ -422,12 +417,9 @@ abstract final class GeoData {
     for (final path in [dir, _stagingDir, _backupDir]) {
       if (!await _discardDirectory(path)) removed = false;
     }
-    if (removed) {
-      _readInstalled = true;
-    } else {
-      // Let the next read inspect what remains instead of claiming success
-      // from an in-memory null while installed.json is still on disk.
-    }
+    // A failed delete leaves the cache invalid so the next read inspects what
+    // remains instead of claiming success while installed.json is still there.
+    _readInstalled = removed;
     return removed;
   }
 
@@ -502,43 +494,41 @@ abstract final class GeoData {
     final url = '$endpoint/$path';
     final dio = clientFactory();
     try {
-      try {
-        // A `cancel` future was threaded through here and through `install`
-        // and never passed by anyone. It also registered a derived future per
-        // URL attempt with no `onError`, so a caller handing it a future that
-        // completed with an error would have produced an unhandled one — which
-        // reaches the zone handler in `main.dart` and leaves a crash marker.
-        // Offering a Cancel button is a product decision, not this parameter.
-        final token = CancelToken();
-        final response = await dio.get<List<int>>(
-          url,
-          options: Options(responseType: ResponseType.bytes),
-          cancelToken: token,
-          onReceiveProgress: (got, _) {
-            onReceive?.call(got);
-            // Cancelled as it arrives rather than measured once it has: a
-            // check after the body is already a `List<int>` cannot prevent
-            // the allocation it exists to prevent.
-            if (got > maxBytes && !token.isCancelled) {
-              token.cancel(StateError('$url is over $maxBytes bytes'));
-            }
-          },
-        );
-        if (response.statusCode != 200) return null;
-        final body = response.data;
-        if (body == null || body.isEmpty) return null;
-        // The progress callback is not guaranteed to fire — a response with
-        // no `Content-Length` streamed in one chunk arrives whole — so the
-        // size is checked here as well.
-        if (body.length > maxBytes) {
-          Loggers.app.warning('$url is ${body.length} bytes, refusing it');
-          return null;
-        }
-        return Uint8List.fromList(body);
-      } catch (e) {
-        Loggers.app.fine('Geo endpoint $url did not answer: $e');
+      // A `cancel` future was threaded through here and through `install`
+      // and never passed by anyone. It also registered a derived future per
+      // request with no `onError`, so a caller handing it a future that
+      // completed with an error would have produced an unhandled one — which
+      // reaches the zone handler in `main.dart` and leaves a crash marker.
+      // Offering a Cancel button is a product decision, not this parameter.
+      final token = CancelToken();
+      final response = await dio.get<List<int>>(
+        url,
+        options: Options(responseType: ResponseType.bytes),
+        cancelToken: token,
+        onReceiveProgress: (got, _) {
+          onReceive?.call(got);
+          // Cancelled as it arrives rather than measured once it has: a
+          // check after the body is already a `List<int>` cannot prevent
+          // the allocation it exists to prevent.
+          if (got > maxBytes && !token.isCancelled) {
+            token.cancel(StateError('$url is over $maxBytes bytes'));
+          }
+        },
+      );
+      if (response.statusCode != 200) return null;
+      final body = response.data;
+      if (body == null || body.isEmpty) return null;
+      // The progress callback is not guaranteed to fire — a response with
+      // no `Content-Length` streamed in one chunk arrives whole — so the
+      // size is checked here as well.
+      if (body.length > maxBytes) {
+        Loggers.app.warning('$url is ${body.length} bytes, refusing it');
         return null;
       }
+      return Uint8List.fromList(body);
+    } catch (e) {
+      Loggers.app.fine('Geo endpoint $url did not answer: $e');
+      return null;
     } finally {
       dio.close();
     }

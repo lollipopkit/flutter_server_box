@@ -113,9 +113,9 @@ void main() {
     final assets = <Map<String, Object?>>[];
     final bodies = <String, Uint8List>{};
     for (final (name, family) in [('ip4', 4), ('ip6', 6)]) {
-      final raw = Uint8List.fromList(
-        await File('test/fixtures/geo/bundle_${name}_v1.bin').readAsBytes(),
-      );
+      final raw = await File(
+        'test/fixtures/geo/bundle_${name}_v1.bin',
+      ).readAsBytes();
       raw[6] = year >> 8;
       raw[7] = year & 0xff;
       raw[8] = month;

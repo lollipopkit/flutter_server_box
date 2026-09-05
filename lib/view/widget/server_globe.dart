@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/diag.dart';
@@ -123,11 +124,9 @@ class _ServerGlobeState extends ConsumerState<ServerGlobe> {
   @override
   void didUpdateWidget(ServerGlobe old) {
     super.didUpdateWidget(old);
-    // Unconditionally, not only when the list changed: an address can be
-    // edited without `ids` moving at all, and `_resolvePass` is a no-op for
-    // every server whose address is what it was. An id that is gone simply
-    // stops being asked about.
-    unawaited(_resolve());
+    // Server edits are covered by the provider listener in [build]. A parent
+    // rebuild with the same ids therefore has no new resolution input.
+    if (!listEquals(old.ids, widget.ids)) unawaited(_resolve());
   }
 
   /// What [_reportPlacements] last said, so an unchanged answer is not repeated.
