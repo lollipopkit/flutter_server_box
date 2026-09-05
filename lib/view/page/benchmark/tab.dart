@@ -6,17 +6,16 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/server_picker.dart';
 import 'package:server_box/data/model/server/benchmark/benchmark_run.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/provider/benchmark.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/benchmark.dart';
-import 'package:server_box/view/page/benchmark/config.dart';
 import 'package:server_box/view/page/benchmark/history_tile.dart';
 import 'package:server_box/view/page/benchmark/result.dart';
-import 'package:server_box/view/page/benchmark/running_card.dart';
+import 'package:server_box/view/page/benchmark/run.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 
 /// The benchmark tab: pick a machine, run one, and read what every machine has
@@ -104,24 +103,6 @@ class _BenchmarkTabPageState extends ConsumerState<BenchmarkTabPage> {
     // is the one worth showing.
     _selectedId ??= _runningIdAmong(servers) ?? servers.firstOrNull?.id;
 
-    // Read here and passed down, not read where it is used. `detailBuilder`
-    // runs inside the pane's own `Builder`, which is a different element from
-    // this one, so `ref.listen` there asserts — it threw on every frame that
-    // had a detail to draw, which is every frame. `ref.watch` does not assert,
-    // which is worse rather than better: it would quietly subscribe from the
-    // wrong element. Both belong here.
-    final spi = _selected;
-    final state = spi == null ? null : ref.watch(benchmarkProvider(spi));
-    if (spi != null) {
-      ref.listen<String?>(benchmarkProvider(spi).select((s) => s.error), (
-        _,
-        err,
-      ) {
-        if (err == null) return;
-        Toast.error(l10n.benchmarkStartFailed, body: err);
-        ref.read(benchmarkProvider(spi).notifier).clearError();
-      });
-    }
 
     return PaneSettings.listenAll((paneWidth, paneCollapsed) {
       return AdaptivePanes.detail(
@@ -139,8 +120,13 @@ class _BenchmarkTabPageState extends ConsumerState<BenchmarkTabPage> {
         // the result slid off the wrong edge.
         detailId: _viewingRunId,
         onCloseDetail: () => setState(() => _viewingRunId = null),
-        detailBuilder: (_) => _buildDetail(spi, state),
-        listBuilder: (_, split) => _buildList(servers, split),
+        detailBuilder: (_) => _buildDetail(),
+        // With two columns this is the history. With one it is the whole tab,
+        // and the history is not what somebody opening it came for — starting
+        // a run is. So the single column is the run, and the history moves
+        // behind a button, the way the Agent tab does with its conversations.
+        listBuilder: (_, split) =>
+            split ? _buildList(servers, true) : _buildSingle(servers),
       );
     });
   }
@@ -157,14 +143,43 @@ class _BenchmarkTabPageState extends ConsumerState<BenchmarkTabPage> {
 
 extension _Widgets on _BenchmarkTabPageState {
   /// The left column: which machine, and everything that has been run.
-  Widget _buildList(List<Spi> servers, bool split) {
+  Widget _buildList(List<Spi> servers, bool split, {bool inSheet = false}) {
     return ListenBuilder(
       listenable: _search,
-      builder: () => _buildListWith(servers, split),
+      builder: () => _buildListWith(servers, split, inSheet: inSheet),
     );
   }
 
-  Widget _buildListWith(List<Spi> servers, bool split) {
+  /// The whole tab, when there is only room for one column.
+  ///
+  /// The run rather than the history: a tab called Benchmark is opened to start
+  /// one. The history is a button away, and the machine is another.
+  Widget _buildSingle(List<Spi> servers) {
+    final spi = _selected;
+    if (spi == null) return _buildList(servers, false);
+    return BenchmarkRunPage(
+      key: ValueKey(spi.id),
+      args: SpiRequiredArgs(spi),
+      leading: Btn.icon(
+        text: libL10n.log,
+        icon: const Icon(Icons.history, size: 20),
+        onTap: () => _showHistorySheet(servers),
+      ),
+      actions: [
+        Btn.icon(
+          text: libL10n.server,
+          icon: const Icon(Icons.swap_horiz, size: 20),
+          onTap: () => _pickServer(false),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildListWith(
+    List<Spi> servers,
+    bool split, {
+    bool inSheet = false,
+  }) {
     final byId = _byId;
     final needle = _search.needle;
     // By the machine's name, which is the only thing on a row that a person
@@ -187,6 +202,9 @@ extension _Widgets on _BenchmarkTabPageState {
       // this column is not a detail — it is the thing a detail is closed back
       // to.
       appBar: CustomAppBar(
+        // In a sheet the way out is dragging it away or the button that opened
+        // it; a back arrow there would be a third answer to a question already
+        // answered twice.
         leading: const SizedBox.shrink(),
         title: InlineSearchBar(
           controller: _search,
@@ -199,11 +217,13 @@ extension _Widgets on _BenchmarkTabPageState {
             icon: const Icon(Icons.search, size: 20),
             onTap: _search.start,
           ),
-          if (servers.isNotEmpty)
+          // Not in the sheet: with one column the run is already on screen
+          // behind it, and it carries this itself.
+          if (servers.isNotEmpty && !inSheet)
             Btn.icon(
               text: l10n.benchmark,
               icon: const Icon(Icons.play_arrow, size: 20),
-              onTap: _pickServer,
+              onTap: () => _pickServer(split),
             ),
         ],
       ),
@@ -227,7 +247,7 @@ extension _Widgets on _BenchmarkTabPageState {
                       // whole point of it: a row without one says nothing.
                       serverName: byId[run.serverId]?.name,
                       selected: split && _viewingRunId == run.id,
-                      onTap: () => _openRun(run, split),
+                      onTap: () => _openRun(run, split, inSheet: inSheet),
                       onDelete: () => _onDelete(run),
                     ),
                 UIs.height13,
@@ -245,52 +265,22 @@ extension _Widgets on _BenchmarkTabPageState {
 
 
   /// The right column: a result being read, or the selected machine's run.
-  Widget _buildDetail(Spi? spi, BenchmarkState? state) {
+  ///
+  /// Both are pages with their own `ref`. That is what lets this build them
+  /// inside the pane's `Builder`: a consumer may only watch or listen from its
+  /// own element, and this method runs on a different one.
+  Widget _buildDetail() {
     if (_viewingRunId case final id?) {
       final run = BenchmarkStore.instance.get(id);
       // Deleted from the list beside it. Falls through to the machine's own
       // column rather than rendering a record that is gone.
       if (run != null) return BenchmarkResultPage(args: run);
     }
-    if (spi == null || state == null) {
-      return const EmptyPane(icon: Icons.speed_outlined);
-    }
-    return _buildRunPane(spi, state);
+    final spi = _selected;
+    if (spi == null) return const EmptyPane(icon: Icons.speed_outlined);
+    return BenchmarkRunPage(args: SpiRequiredArgs(spi), inPane: true);
   }
 
-  Widget _buildRunPane(Spi spi, BenchmarkState state) {
-    return Scaffold(
-      // No back button. `CustomAppBar` draws one at the root of a detail pane
-      // wired to `onCloseDetail`, which is right for a result read out of the
-      // history — but this *is* the root, so the button had nowhere to go and
-      // did nothing when pressed. An explicit leading is how the widget is told
-      // not to supply its own.
-      appBar: CustomAppBar(
-        leading: const SizedBox.shrink(),
-        title: Text(spi.name),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
-        children: [
-          if (state.active case final run?)
-            BenchmarkRunningCard(
-              run: run,
-              busy: state.isBusy,
-              onCancel: () => _onCancel(spi),
-            )
-          else
-            BenchmarkConfig(
-              key: ValueKey(spi.id),
-              initial: state.history.firstOrNull?.options,
-              busy: state.isBusy,
-              onStart: (options) =>
-                  ref.read(benchmarkProvider(spi).notifier).start(options),
-            ),
-          UIs.height13,
-        ],
-      ),
-    );
-  }
 }
 
 // --- Actions ---
@@ -301,7 +291,11 @@ extension _Actions on _BenchmarkTabPageState {
   /// The shared picker, not one of this page's own: with more than a handful of
   /// servers the question needs search, tags and the arrangement the user
   /// already made, and a bespoke dropdown here had none of them.
-  Future<void> _pickServer() async {
+  /// Setting the selection is the whole of it, in both layouts: with two
+  /// columns the right one rebuilds, and with one the column *is* the run. It
+  /// used to push a page as well, which on a narrow window stacked another
+  /// copy of the run behind every machine ever chosen.
+  Future<void> _pickServer(bool split) async {
     final spi = await pickServer(
       context,
       selectedId: _selectedId,
@@ -320,25 +314,38 @@ extension _Actions on _BenchmarkTabPageState {
     });
   }
 
+  /// The history, for the layout that has no column to put it in.
+  ///
+  /// The same list, in a sheet — the Agent tab does this with its conversations
+  /// for the same reason. Tall, because it is a list of records rather than a
+  /// short set of choices.
+  Future<void> _showHistorySheet(List<Spi> servers) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      useRootNavigator: true,
+      useSafeArea: true,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => FractionallySizedBox(
+        heightFactor: 0.82,
+        child: _buildList(servers, false, inSheet: true),
+      ),
+    );
+  }
+
   /// Reads a past run: in the right column when there is one, as a page when
   /// the window is too narrow for two.
-  void _openRun(BenchmarkRun run, bool split) {
+  void _openRun(BenchmarkRun run, bool split, {bool inSheet = false}) {
     if (split) {
       setState(() => _viewingRunId = run.id);
       return;
     }
+    // The sheet goes first, or the result is pushed underneath it: the sheet
+    // was raised on the root navigator and this pushes on the tab's.
+    if (inSheet) context.popDialog();
     BenchmarkResultPage.route.go(context, run);
   }
 
-  Future<void> _onCancel(Spi spi) async {
-    final ok = await context.showRoundDialog<bool>(
-      title: libL10n.attention,
-      child: Text(l10n.benchmarkCancelConfirm),
-      actions: Btnx.cancelRedOk,
-    );
-    if (ok != true) return;
-    await ref.read(benchmarkProvider(spi).notifier).cancel();
-  }
 
   Future<void> _onDelete(BenchmarkRun run) async {
     final ok = await context.showRoundDialog<bool>(

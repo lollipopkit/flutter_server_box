@@ -29,6 +29,7 @@ import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/benchmark/history_tile.dart';
 import 'package:server_box/view/page/benchmark/result.dart';
+import 'package:server_box/view/page/benchmark/run.dart';
 import 'package:server_box/view/page/benchmark/tab.dart';
 
 import 'helpers/spi_fixture.dart';
@@ -90,8 +91,16 @@ void main() {
   /// Refusing is also the honest shape. A resumed run polls a server that may
   /// well be unreachable, and the runner is supposed to keep the record and try
   /// again rather than fail the benchmark.
-  Future<void> pump(WidgetTester tester, Widget home) async {
-    tester.view.physicalSize = const Size(1200, 2400);
+  Future<void> pump(
+    WidgetTester tester,
+    Widget home, {
+    Size size = const Size(1200, 2400),
+  }) async {
+    // The view, not `setSurfaceSize`: the split decision is a `MediaQuery`
+    // question, and `setSurfaceSize` changes layout without changing what
+    // `MediaQuery` reports — so a "phone" written that way exercises the
+    // desktop layout.
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
 
@@ -360,6 +369,81 @@ void main() {
     expect(tile.run.startedAt.toAgoStr(), contains(libL10n.day));
     // The timestamp is gone from the row.
     expect(find.textContaining(RegExp(r'\d{4}-\d{2}-\d{2}')), findsNothing);
+    await close(tester);
+  });
+
+  testWidgets('a narrow window opens on the run, not the history', (
+    tester,
+  ) async {
+    // A tab called Benchmark is opened to start one. With one column the
+    // history is not what somebody came for — and when it *was* the single
+    // column, there was no way to reach the run at all.
+    await pump(tester, const BenchmarkTabPage(), size: const Size(420, 900));
+
+    expect(tester.takeException(), isNull);
+    expect(find.text(libL10n.start), findsOneWidget);
+    expect(find.byType(BenchmarkHistoryTile), findsNothing);
+    await close(tester);
+  });
+
+  testWidgets('a narrow window reaches the history from the bar', (
+    tester,
+  ) async {
+    final run = seedRunning();
+    BenchmarkStore.instance.put(
+      run.copyWith(status: BenchmarkStatus.completed, exitCode: 0),
+    );
+
+    await pump(tester, const BenchmarkTabPage(), size: const Size(420, 900));
+    await tester.tap(find.byIcon(Icons.history));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.byType(BenchmarkHistoryTile), findsOneWidget);
+
+    // And a row there opens the result as a page, with the sheet gone rather
+    // than left on top of it.
+    await tester.tap(find.byType(BenchmarkHistoryTile).first);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(tester.takeException(), isNull);
+    expect(find.text(l10n.benchmarkRawLog), findsWidgets);
+    expect(find.byType(BenchmarkHistoryTile), findsNothing);
+    await close(tester);
+  });
+
+  testWidgets('a narrow window can change machine from the bar', (
+    tester,
+  ) async {
+    final other = spiFixture(
+      id: 'srv-resume-3',
+      name: 'db',
+      ip: 'h3',
+      user: 'u',
+      autoConnect: false,
+    );
+    Stores.server.put(other);
+
+    await pump(tester, const BenchmarkTabPage(), size: const Size(420, 900));
+    await tester.tap(find.byIcon(Icons.swap_horiz));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.tap(find.text('db').last);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(tester.takeException(), isNull);
+    // The same single column, now that machine's — not another copy of the run
+    // stacked on top of the last one.
+    expect(find.text('db'), findsWidgets);
+    expect(find.text(libL10n.start), findsOneWidget);
+    expect(
+      find.byType(BenchmarkRunPage),
+      findsOneWidget,
+      reason: 'a page was pushed per machine chosen',
+    );
+    expect(find.byType(BackButton), findsNothing);
     await close(tester);
   });
 
