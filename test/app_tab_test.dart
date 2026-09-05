@@ -2,7 +2,36 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/view/page/setting/entries/home_tabs.dart';
 
+/// How many of the tabs the bottom bar has room for; the rest go behind
+/// "more". Mirrors `_kMaxBarTabs` in `home.dart`, which is private -- if that
+/// changes, the expectation below is what says this one has to as well.
+const _barTabs = 4;
+
 void main() {
+  group('the default order', () {
+    test('puts Agent in the bar and snippets behind "more"', () {
+      final inBar = AppTab.defaultOrder.take(_barTabs);
+      expect(inBar, [AppTab.server, AppTab.ssh, AppTab.file, AppTab.agent]);
+      expect(AppTab.defaultOrder.skip(_barTabs), [AppTab.snippet]);
+    });
+
+    test('is every tab, exactly once', () {
+      // Anything missing here is a tab a fresh install could not reach at all,
+      // since the settings page starts from what is stored.
+      expect(AppTab.defaultOrder.toSet(), AppTab.values.toSet());
+      expect(AppTab.defaultOrder, hasLength(AppTab.values.length));
+    });
+
+    /// The declaration order is the `@HiveField` index and what an `int` in a
+    /// stored record resolves against, so it is not free to follow the bar.
+    test('is allowed to differ from the declaration order', () {
+      expect(AppTab.defaultOrder, isNot(AppTab.values));
+      expect(AppTab.server.index, 0);
+      expect(AppTab.snippet.index, 3);
+      expect(AppTab.agent.index, 4);
+    });
+  });
+
   test('parses the legacy default home tabs without recurring migration', () {
     final tabs = AppTab.parseAppTabsFromObj([
       'server',
@@ -23,7 +52,15 @@ void main() {
       'agent',
     ]);
 
-    expect(tabs, AppTab.values);
+    // The stored order, kept as it was -- not the default, which the two
+    // happen to differ from since Agent moved ahead of snippets.
+    expect(tabs, [
+      AppTab.server,
+      AppTab.ssh,
+      AppTab.file,
+      AppTab.snippet,
+      AppTab.agent,
+    ]);
     expect(tabs.where((tab) => tab == AppTab.agent), hasLength(1));
   });
 
@@ -34,12 +71,12 @@ void main() {
   });
 
   test('uses defaults for null and empty tab values', () {
-    expect(AppTab.parseAppTabsFromObj(null), AppTab.values);
-    expect(AppTab.parseAppTabsFromObj(const []), AppTab.values);
+    expect(AppTab.parseAppTabsFromObj(null), AppTab.defaultOrder);
+    expect(AppTab.parseAppTabsFromObj(const []), AppTab.defaultOrder);
   });
 
   test('uses non-null defaults when every stored tab name is unknown', () {
-    expect(AppTab.parseAppTabsFromObj(['unknown']), AppTab.values);
+    expect(AppTab.parseAppTabsFromObj(['unknown']), AppTab.defaultOrder);
   });
 
   test('names one tab twice and gets it once, in the order it first appeared', () {

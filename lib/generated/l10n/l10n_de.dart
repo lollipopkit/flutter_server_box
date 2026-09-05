@@ -1201,8 +1201,78 @@ class AppLocalizationsDe extends AppLocalizations {
   String get serverTabRequired => 'Server-Tab kann nicht entfernt werden';
 
   @override
-  String get shareServerRiskTip =>
-      'Dieser QR-Code enthält die Verbindungsdaten des Servers im Klartext. Wer ihn scannt oder fotografiert, kann sich verbinden.';
+  String get shareCodeHint =>
+      'Teilen Sie dem Empfänger diese Ziffern separat mit. Sie sind nicht im QR-Code enthalten.';
+
+  @override
+  String get shareCodePrompt => '6-stelliger Code';
+
+  @override
+  String get shareCodeTitle => 'Einmalcode';
+
+  @override
+  String get shareExpired =>
+      'Diese Freigabe ist abgelaufen. Bitten Sie um eine neue.';
+
+  @override
+  String get shareImportFile => 'Aus einer geteilten Datei';
+
+  @override
+  String get shareImportTitle => 'Geteilten Server importieren';
+
+  @override
+  String get shareIncludesKey => 'Die Freigabe enthält den privaten Schlüssel.';
+
+  @override
+  String get shareOmittedBmc =>
+      'BMC-Zugangsdaten. Die Adresse ist enthalten, die Zugangsdaten jedoch nicht.';
+
+  @override
+  String get shareOmittedJump =>
+      'Der Jump-Server, da er auf diesem Gerät als separater Server gespeichert ist.';
+
+  @override
+  String get shareOmittedKeyPath =>
+      'Die Schlüsseldatei, da ihr Pfad nur auf diesem Gerät gültig ist.';
+
+  @override
+  String get shareOmittedMissingKey =>
+      'Der private Schlüssel, da er nicht im Schlüsselspeicher dieses Geräts vorhanden ist.';
+
+  @override
+  String get shareOmittedTip =>
+      'Nicht enthalten; der Empfänger muss Folgendes konfigurieren:';
+
+  @override
+  String get sharePassphraseTip =>
+      'Diese Passphrase verschlüsselt die Datei. Der Empfänger benötigt sie zum Importieren des Servers; sie kann nicht wiederhergestellt werden.';
+
+  @override
+  String shareQrTip(int minutes) {
+    return 'Die Verbindungsdaten in diesem QR-Code sind verschlüsselt. Die Freigabe läuft in $minutes Minuten ab.';
+  }
+
+  @override
+  String get shareScanQr => 'QR-Code scannen';
+
+  @override
+  String shareServerExists(String name) {
+    return '„$name“ auf diesem Gerät verwendet bereits diese Adresse. Trotzdem importieren?';
+  }
+
+  @override
+  String get shareTooBigForQr =>
+      'Zu groß für einen QR-Code. Teilen Sie den Server stattdessen als Datei.';
+
+  @override
+  String get shareTooNew =>
+      'Diese Freigabe wurde mit einer neueren Version von ServerBox erstellt. Aktualisieren Sie die App, um sie zu öffnen.';
+
+  @override
+  String get shareUnreadable => 'Dies ist keine gültige ServerBox-Freigabe.';
+
+  @override
+  String get shareVia => 'Teilen über';
 
   @override
   String get sftpDlPrepare => 'Verbindung vorbereiten...';

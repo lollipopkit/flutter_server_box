@@ -1197,8 +1197,78 @@ class AppLocalizationsUk extends AppLocalizations {
   String get serverTabRequired => 'Вкладку сервера не можна видалити';
 
   @override
-  String get shareServerRiskTip =>
-      'Цей QR-код містить налаштування підключення відкритим текстом. Будь-хто, хто його відсканує чи сфотографує, зможе підключитися.';
+  String get shareCodeHint =>
+      'Передайте ці цифри одержувачу окремо. Їх немає в QR-коді.';
+
+  @override
+  String get shareCodePrompt => '6-значний код';
+
+  @override
+  String get shareCodeTitle => 'Одноразовий код';
+
+  @override
+  String get shareExpired =>
+      'Термін дії цих даних минув. Попросіть надіслати нові.';
+
+  @override
+  String get shareImportFile => 'З отриманого файлу';
+
+  @override
+  String get shareImportTitle => 'Імпорт спільного сервера';
+
+  @override
+  String get shareIncludesKey => 'До спільних даних включено приватний ключ.';
+
+  @override
+  String get shareOmittedBmc =>
+      'Облікові дані BMC. Адресу включено, а облікові дані — ні.';
+
+  @override
+  String get shareOmittedJump =>
+      'Проміжний сервер, оскільки на цьому пристрої він зберігається як окремий сервер.';
+
+  @override
+  String get shareOmittedKeyPath =>
+      'Файл ключа, оскільки шлях до нього дійсний лише на цьому пристрої.';
+
+  @override
+  String get shareOmittedMissingKey =>
+      'Приватний ключ, оскільки його немає у сховищі ключів цього пристрою.';
+
+  @override
+  String get shareOmittedTip => 'Не включено; одержувачу потрібно налаштувати:';
+
+  @override
+  String get sharePassphraseTip =>
+      'Ця парольна фраза шифрує файл. Вона потрібна одержувачу для імпорту сервера, і відновити її неможливо.';
+
+  @override
+  String shareQrTip(int minutes) {
+    return 'Дані підключення в цьому QR-коді зашифровано. Термін дії спливе через $minutes хв.';
+  }
+
+  @override
+  String get shareScanQr => 'Сканувати QR-код';
+
+  @override
+  String shareServerExists(String name) {
+    return 'Сервер «$name» на цьому пристрої вже використовує цю адресу. Усе одно імпортувати?';
+  }
+
+  @override
+  String get shareTooBigForQr =>
+      'Дані завеликі для QR-коду. Надішліть їх як файл.';
+
+  @override
+  String get shareTooNew =>
+      'Ці дані створено в новішій версії ServerBox. Оновіть застосунок, щоб відкрити їх.';
+
+  @override
+  String get shareUnreadable =>
+      'Це неприпустимі дані спільного доступу ServerBox.';
+
+  @override
+  String get shareVia => 'Спосіб надсилання';
 
   @override
   String get sftpDlPrepare => 'Підготовка до підключення...';

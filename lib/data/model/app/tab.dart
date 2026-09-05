@@ -15,6 +15,22 @@ enum AppTab {
   @HiveField(4)
   agent;
 
+  /// What a fresh install gets, and the fallback when a stored list cannot be
+  /// read.
+  ///
+  /// **Not the declaration order, and it cannot be.** The bar shows the first
+  /// `_kMaxBarTabs` of these and puts the rest behind "more", so the order is
+  /// what decides which tab is a tap away — but the declaration order is also
+  /// the `@HiveField` index and what `_parseAppTabFromElement` resolves an
+  /// `int` against, so moving a case there would silently re-point every
+  /// integer an older record holds at a different tab.
+  ///
+  /// Snippets are last because they are a library rather than a place: one is
+  /// run against a server, from the server's own page, and the tab is where
+  /// they are written and kept. The Agent is the opposite — somewhere to be,
+  /// and reached from nowhere else.
+  static const defaultOrder = [server, ssh, file, agent, snippet];
+
   /// Helper function to parse AppTab list from stored object
   ///
   /// A repeat is dropped rather than kept. The home page is a list of pages
@@ -34,7 +50,7 @@ enum AppTab {
       }
       if (tabs.isNotEmpty) return tabs.toList();
     }
-    return AppTab.values;
+    return defaultOrder;
   }
 
   /// Helper function to parse a single AppTab from various element types

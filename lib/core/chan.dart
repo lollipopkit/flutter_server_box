@@ -288,6 +288,66 @@ abstract final class MethodChans {
     }
   }
 
+  /// The contents of a share file the platform handed this app, and clears it.
+  ///
+  /// A `.sbxsrv` arrives by AirDrop, from the Files app, or from the Finder,
+  /// and the platform's answer to all three is to launch or foreground this
+  /// app with a URL. The native side reads the bytes — on iOS out of an inbox
+  /// directory the app is expected to empty — and holds them until this asks.
+  ///
+  /// **Apple platforms only.** Android has no file association here: a filter
+  /// narrow enough not to claim every unknown binary matches only `file://`,
+  /// which nothing has been allowed to send since Android 7 and which this app
+  /// could not read without a storage permission anyway. See the note in
+  /// `AndroidManifest.xml`; a shared server comes in through the picker there.
+  ///
+  /// **Pulled, not pushed.** A channel has one handler and `registerHandler`
+  /// already owns it, so a push would have to arrive somewhere nothing is
+  /// listening. The caller asks after the first frame and again on every
+  /// resume, which covers a cold launch and a file opened while the app was
+  /// already running.
+  ///
+  /// Cleared by the read, so a second resume does not raise the same file
+  /// again.
+  static Future<String?> takeOpenedShare() async {
+    if (!isIOS && !isMacOS) return null;
+    try {
+      return await _channel.invokeMethod<String>('takeOpenedShare');
+    } catch (e, s) {
+      Loggers.app.warning('Failed to read the opened share', e, s);
+      return null;
+    }
+  }
+
+  /// Its own channel, deliberately.
+  ///
+  /// A channel has exactly one handler and [registerHandler] already owns the
+  /// main one, so a second `setMethodCallHandler` on that name would silently
+  /// replace it. Separate names cannot collide however either side grows.
+  static const _shareChannel = MethodChannel(
+    '${Miscs.pkgName}/incoming_share',
+  );
+
+  /// Runs [onOpened] when the platform hands this app a share while it is
+  /// **already frontmost**.
+  ///
+  /// The lifecycle covers the other two ways in — a cold launch, and coming
+  /// forward to answer the open. It does not cover this one: an app that never
+  /// left the foreground gets no `resumed` edge, so nothing would ask, and
+  /// [takeOpenedShare] would keep holding the payload until some later
+  /// unrelated resume raised the prompt out of nowhere. Reachable on iPadOS in
+  /// Split View, where two apps are foreground at once.
+  ///
+  /// Push rather than pull only for the trigger; the bytes still come back
+  /// through [takeOpenedShare], so there is one path that reads and clears
+  /// them however the app was told.
+  static void onShareOpened(VoidCallback onOpened) {
+    if (!isIOS && !isMacOS) return;
+    _shareChannel.setMethodCallHandler((call) async {
+      if (call.method == 'shareOpened') onOpened();
+    });
+  }
+
   /// Register a handler for native -> Flutter callbacks.
   /// Currently handles:
   /// - `disconnectSession` with argument map {id: string}

@@ -52,8 +52,45 @@ extension _Actions on _ServerPageState {
     }
   }
 
-  void _onTapAddServer() {
-    ServerEditPage.route.go(context);
+  /// The three ways a server gets onto this device, in one place.
+  ///
+  /// The two import paths used to live in two different settings groups — a
+  /// scan under SSH preferences, a file under Backup — and which one a person
+  /// needed depended on what the *sender* had picked, which they have no way
+  /// of knowing before opening the app. Both are ways of acquiring a server,
+  /// which is what this button is for, and it puts them opposite the share
+  /// button on a server's own page.
+  ///
+  /// The cost is a tap: this used to open the editor directly. Adding a server
+  /// is rare enough that finding the other two is worth more than saving it.
+  Future<void> _onTapAddServer() async {
+    final way = await context.showRoundDialog<_AddServerWay>(
+      title: libL10n.add,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final way in _AddServerWay.values)
+            if (way.available)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(way.icon),
+                title: Text(way.label),
+                onTap: () => context.popDialog(way),
+              ),
+        ],
+      ),
+      actions: Btn.cancel().toList,
+    );
+    if (way == null || !mounted) return;
+
+    switch (way) {
+      case _AddServerWay.manual:
+        ServerEditPage.route.go(context);
+      case _AddServerWay.qr:
+        await ServerShareUi.receiveFromQr(context, ref);
+      case _AddServerWay.file:
+        await ServerShareUi.receiveFromFile(context, ref);
+    }
   }
 
   /// Opens a server something else asked for — today the Agent's `open_server`.
@@ -262,4 +299,33 @@ extension _ServerX on ServerState {
         return libL10n.fail;
     }
   }
+}
+
+/// The ways a server gets onto this device.
+///
+/// An enum rather than three buttons so the list, the icons and the labels are
+/// one thing — and so a platform that cannot offer one of them (a desktop has
+/// no camera to scan with) drops it in a single place.
+enum _AddServerWay {
+  manual,
+  qr,
+  file;
+
+  bool get available => switch (this) {
+    // `isMobile` matches where the scanner page can actually open one.
+    _AddServerWay.qr => isMobile,
+    _ => true,
+  };
+
+  IconData get icon => switch (this) {
+    _AddServerWay.manual => Icons.edit,
+    _AddServerWay.qr => Icons.qr_code_scanner,
+    _AddServerWay.file => Icons.file_present,
+  };
+
+  String get label => switch (this) {
+    _AddServerWay.manual => libL10n.manual,
+    _AddServerWay.qr => l10n.shareScanQr,
+    _AddServerWay.file => l10n.shareImportFile,
+  };
 }

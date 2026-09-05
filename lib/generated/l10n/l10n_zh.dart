@@ -1111,7 +1111,68 @@ class AppLocalizationsZh extends AppLocalizations {
   String get serverTabRequired => '服务器标签不能被移除';
 
   @override
-  String get shareServerRiskTip => '此二维码以明文包含服务器的连接设置。任何扫描或拍下它的人都能连接到这台服务器。';
+  String get shareCodeHint => '请将这组数字另行告知接收方；验证码不包含在二维码中。';
+
+  @override
+  String get shareCodePrompt => '6 位验证码';
+
+  @override
+  String get shareCodeTitle => '一次性验证码';
+
+  @override
+  String get shareExpired => '此分享已过期，请让分享方重新生成。';
+
+  @override
+  String get shareImportFile => '从分享文件导入';
+
+  @override
+  String get shareImportTitle => '导入共享服务器';
+
+  @override
+  String get shareIncludesKey => '分享内容包含私钥。';
+
+  @override
+  String get shareOmittedBmc => 'BMC 凭据（仅包含地址，不包含账号和密码）。';
+
+  @override
+  String get shareOmittedJump => '跳板机（它在本机保存为另一台服务器）。';
+
+  @override
+  String get shareOmittedKeyPath => '密钥文件（该路径仅在本机有效）。';
+
+  @override
+  String get shareOmittedMissingKey => '私钥（本机密钥库中没有该密钥）。';
+
+  @override
+  String get shareOmittedTip => '以下内容未包含，接收方需自行配置：';
+
+  @override
+  String get sharePassphraseTip => '此密码用于加密文件。接收方导入服务器时需要输入，且无法找回。';
+
+  @override
+  String shareQrTip(int minutes) {
+    return '二维码中的连接信息已加密，此分享将在 $minutes 分钟后过期。';
+  }
+
+  @override
+  String get shareScanQr => '扫描二维码';
+
+  @override
+  String shareServerExists(String name) {
+    return '本机服务器“$name”已使用此地址。仍要导入吗？';
+  }
+
+  @override
+  String get shareTooBigForQr => '内容过大，无法生成二维码，请改用文件分享。';
+
+  @override
+  String get shareTooNew => '此分享由较新版本的 ServerBox 创建，请升级应用后再打开。';
+
+  @override
+  String get shareUnreadable => '这不是有效的 ServerBox 分享内容。';
+
+  @override
+  String get shareVia => '分享方式';
 
   @override
   String get sftpDlPrepare => '准备连接至服务器...';
@@ -2796,8 +2857,68 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get serverTabRequired => '服務器標籤不能被移除';
 
   @override
-  String get shareServerRiskTip =>
-      '此 QR Code 以明文包含伺服器的連線設定。任何掃描或拍下它的人都能連線到這台伺服器。';
+  String get shareCodeHint => '請將這組數字另行告知接收方；驗證碼不包含在 QR Code 中。';
+
+  @override
+  String get shareCodePrompt => '6 位驗證碼';
+
+  @override
+  String get shareCodeTitle => '一次性驗證碼';
+
+  @override
+  String get shareExpired => '此分享已過期，請讓分享方重新產生。';
+
+  @override
+  String get shareImportFile => '從分享檔案匯入';
+
+  @override
+  String get shareImportTitle => '匯入共享伺服器';
+
+  @override
+  String get shareIncludesKey => '分享內容包含私鑰。';
+
+  @override
+  String get shareOmittedBmc => 'BMC 憑證（僅包含位址，不包含帳號和密碼）。';
+
+  @override
+  String get shareOmittedJump => '跳板伺服器（它在本機儲存為另一台伺服器）。';
+
+  @override
+  String get shareOmittedKeyPath => '金鑰檔案（該路徑僅在本機有效）。';
+
+  @override
+  String get shareOmittedMissingKey => '私鑰（本機金鑰庫中沒有該金鑰）。';
+
+  @override
+  String get shareOmittedTip => '以下內容未包含，接收方需自行設定：';
+
+  @override
+  String get sharePassphraseTip => '此密碼用於加密檔案。接收方匯入伺服器時需要輸入，且無法找回。';
+
+  @override
+  String shareQrTip(int minutes) {
+    return 'QR Code 中的連線資訊已加密，此分享將在 $minutes 分鐘後過期。';
+  }
+
+  @override
+  String get shareScanQr => '掃描 QR Code';
+
+  @override
+  String shareServerExists(String name) {
+    return '本機伺服器「$name」已使用此位址。仍要匯入嗎？';
+  }
+
+  @override
+  String get shareTooBigForQr => '內容過大，無法產生 QR Code，請改用檔案分享。';
+
+  @override
+  String get shareTooNew => '此分享由較新版本的 ServerBox 建立，請更新 App 後再開啟。';
+
+  @override
+  String get shareUnreadable => '這不是有效的 ServerBox 分享內容。';
+
+  @override
+  String get shareVia => '分享方式';
 
   @override
   String get sftpDlPrepare => '準備連線至伺服器...';

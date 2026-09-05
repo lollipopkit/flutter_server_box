@@ -53,6 +53,26 @@ import ActivityKit
     }
 
     private func setupMethodChannels(binaryMessenger: FlutterBinaryMessenger) {
+        // Its own channel: `main_chan` has one handler and the Dart side has
+        // already given it to the terminal service. This one only ever carries
+        // a nudge -- the payload still leaves through `takeOpenedShare`.
+        let shareChannel = FlutterMethodChannel(name: "tech.lolli.toolbox/incoming_share", binaryMessenger: binaryMessenger)
+        // Captured strongly, and that is the whole of it: the channel is a
+        // local, so nothing else holds one. Captured weakly it was deallocated
+        // the moment this method returned, and every later nudge went to nil --
+        // the payload still arrived and still sat there until an unrelated
+        // resume raised it, which is exactly the bug this closure is for.
+        // There is no cycle to break: the closure is owned by `IncomingShare`,
+        // not by the channel.
+        IncomingShare.onArrival = {
+            // Already on the main thread, since every URL callback is; hopped
+            // explicitly anyway, because a channel call from anywhere else is
+            // undefined rather than merely late.
+            DispatchQueue.main.async {
+                shareChannel.invokeMethod("shareOpened", arguments: nil)
+            }
+        }
+
         let homeWidgetChannel = FlutterMethodChannel(name: "tech.lolli.toolbox/home_widget", binaryMessenger: binaryMessenger)
         homeWidgetChannel.setMethodCallHandler({(call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in
             switch call.method {
@@ -140,6 +160,10 @@ import ActivityKit
                 result(nil)
             case "widgetTokenState":
                 result(Self.widgetTokenState())
+            // A `.sbxsrv` the platform handed this app — see [IncomingShare]
+            // and [SceneDelegate], which is where it is picked up.
+            case "takeOpenedShare":
+                result(IncomingShare.take())
             default:
                 result(FlutterMethodNotImplemented)
             }
