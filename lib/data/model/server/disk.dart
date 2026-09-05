@@ -230,10 +230,16 @@ bool _shouldCalc(String fs, String mount) {
 /// own layers. `fuse-overlayfs` is what a rootless podman or docker mounts,
 /// one row per container carrying the host filesystem's own numbers.
 ///
+/// `ramfs` is systemd's credential mounts, one per unit that takes a
+/// credential. Most `df` builds report `-` for its usage, which fails to parse
+/// and drops the row before any of this; naming it here does not depend on
+/// that, since a build reporting `0%` instead leaves a row of 0 B.
+///
 /// Mirrors `is_virtual_fs` in `crates/sbm_parser/src/types.rs`.
 bool _isVirtualFs(String fs) => const {
   'shm',
   'tmpfs',
+  'ramfs',
   'devtmpfs',
   'overlay',
   'overlayfs',

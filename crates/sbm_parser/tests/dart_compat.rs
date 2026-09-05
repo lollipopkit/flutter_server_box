@@ -412,8 +412,10 @@ fn disk_parse_df_drops_read_only_images() {
 /// spelling, but not the `fuse-overlayfs` a rootless podman or docker mounts —
 /// one row per container, each carrying the host filesystem's numbers.
 ///
-/// `ramfs` is here as the case that needs no rule: systemd's credential mounts
-/// report a `-` usage, which fails to parse and drops the row already.
+/// The `ramfs` row here is systemd's credential mount in the shape most `df`
+/// builds print it, a `-` usage that fails to parse and drops the row before
+/// any rule applies — see disk_parse_df_drops_ramfs_reporting_a_usage for the
+/// shape that does need one.
 #[test]
 fn disk_parse_df_drops_container_layers() {
     let disks = linux::parse_disk(include_str!("fixtures/df_nonstorage.txt"));
@@ -429,6 +431,22 @@ fn disk_parse_df_drops_container_layers() {
     assert_eq!(disks[0].mount, "/");
     assert_eq!(disks[2].path, "/dev/loop7");
     assert_eq!(disks[2].mount, "/mnt/image");
+}
+
+/// `ramfs` holds systemd's credentials, one mount per unit that takes one.
+/// It survived on a `df` that prints a parseable `0%` rather than the `-` most
+/// print, leaving a row of 0 B per unit — the same shape swap areas had.
+#[test]
+fn disk_parse_df_drops_ramfs_reporting_a_usage() {
+    let raw = "Filesystem 1K-blocks Used Available Use% Mounted on\n\
+        /dev/vda1 51343636 12057216 36648004 25% /\n\
+        ramfs 0 0 0 0% /run/credentials/systemd-sysctl.service\n\
+        ramfs 0 0 0 0% /run/credentials/systemd-networkd.service\n";
+    let disks = linux::parse_disk(raw);
+
+    assert!(!disks.iter().any(|d| d.path == "ramfs"));
+    assert_eq!(disks.len(), 1);
+    assert_eq!(disks[0].mount, "/");
 }
 
 /// A `df` source is user-chosen text. Excluding the virtual filesystems by

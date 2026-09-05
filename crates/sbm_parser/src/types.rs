@@ -151,10 +151,15 @@ pub fn disk_should_calc(fs: &str, mount: &str) -> bool {
 /// `overlay` and `overlayfs` are the current and pre-4.0 spellings of docker's
 /// own layers. `fuse-overlayfs` is what a rootless podman or docker mounts,
 /// one row per container carrying the host filesystem's own numbers.
+///
+/// `ramfs` is systemd's credential mounts, one per unit that takes a
+/// credential. Most `df` builds report `-` for its usage, which fails to parse
+/// and drops the row before any of this; naming it here does not depend on
+/// that, since a build reporting `0%` instead leaves a row of 0 B.
 fn is_virtual_fs(fs: &str) -> bool {
     matches!(
         fs,
-        "shm" | "tmpfs" | "devtmpfs" | "overlay" | "overlayfs" | "fuse-overlayfs"
+        "shm" | "tmpfs" | "ramfs" | "devtmpfs" | "overlay" | "overlayfs" | "fuse-overlayfs"
     )
 }
 
