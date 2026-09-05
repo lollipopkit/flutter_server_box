@@ -137,8 +137,16 @@ the panel password can't switch it on); shared admission checks live in
   stdout, stderr, truncated, timed_out}` out: `stdin` is how a sudo password
   gets in with no terminal to type it into, and `env` is a field rather than
   `export` lines the caller prepends so a value never has to survive shell
-  quoting. Output is capped (1 MiB per stream) and the command is killed after
-  60s, both reported rather than silently applied. `tests/exec_api.rs`.
+  quoting. Output is capped per stream and the command is killed on a timeout,
+  both reported rather than silently applied. **Both bounds, plus the request
+  body limit, are `[remote_access.exec]`** — they were constants sized for
+  process/unit/container listings, which is not a size anything taking minutes
+  fits inside. They are the agent's decision and a request cannot raise them;
+  the payload limit arrives as an argument to `configure_api` because ntex
+  applies it while extracting the body, before any handler sees state.
+  A caller that must outlive any configured timeout should start the work
+  detached and poll it in short requests instead of asking for a longer one.
+  `tests/exec_api.rs`.
 - **`GET/PUT /api/v1/custom-cmds`** — the user's custom status commands, which
   are files in `~/.config/server_box/custom_cmds` (`sbm_parser::script`) rather
   than anything in this agent's config. The same directory the app writes over

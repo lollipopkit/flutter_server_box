@@ -75,7 +75,10 @@ async fn permissive_state() -> Arc<AppState> {
 async fn test_server(state: Arc<AppState>) -> TestServer {
     web_test::server(move || {
         let state = state.clone();
-        async move { App::new().state(state).configure(configure_api) }
+        async move {
+            let limit = state.remote_access.exec.max_request_bytes;
+            App::new().state(state).configure(configure_api(limit))
+        }
     })
     .await
 }

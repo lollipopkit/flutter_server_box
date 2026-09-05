@@ -166,6 +166,26 @@ roots = []
 # this bounds the disk rather than memory.
 # max_write_bytes = 1073741824
 
+# Bounds on one `POST /api/v1/exec` command. Gated by full_access above; these
+# only decide how much a permitted command may take.
+#
+# The defaults suit the pages this endpoint was built for — listing processes,
+# units and containers — and suit nothing that takes minutes or prints more
+# than a megabyte. Raise them for a benchmark, a filesystem scan or a backup.
+# They are the agent's decision and cannot be raised by a request.
+[remote_access.exec]
+# How long a command may run before it is killed and the response says
+# timed_out. Default 60. A longer value holds a worker for as long as it says,
+# so prefer starting long work detached and polling it in short requests.
+# timeout_secs = 60
+# Bytes kept per output stream; past this the response says truncated.
+# Leave unset to size it from physical memory (at least 1 MiB).
+# max_output_bytes = 1048576
+# Largest request body accepted — the command, its stdin and its env. The App
+# sends scripts on stdin, so this is what decides whether a large one installs
+# at all. Leave unset to size it from physical memory (at least 1 MiB).
+# max_request_bytes = 1048576
+
 # Push notification configurations
 [[push]]
 name = "webhook"
