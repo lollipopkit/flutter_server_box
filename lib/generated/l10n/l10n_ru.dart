@@ -1995,13 +1995,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Определяет файловую систему для тестирования диска. Если оставить поле пустым, будет использован домашний каталог учётной записи.';
 
   @override
-  String get benchmarkCustomIperf => 'Пользовательские серверы iperf';
-
-  @override
-  String get benchmarkCustomIperfTip =>
-      'host:port_range:name:location:modes, через запятую. Если оставить поле пустым, будет использован встроенный список.';
-
-  @override
   String benchmarkEstimatedTime(String minutes) {
     return 'Около $minutes мин.';
   }

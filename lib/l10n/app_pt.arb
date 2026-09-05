@@ -546,9 +546,18 @@
   "geoDataUnreachable": "Não foi possível obter os dados.",
   "geoDataRemoveFailed": "Não foi possível excluir os dados.",
   "geoDataCurrent": "{month} já está instalado.",
-  "@geoDataCurrent": {"placeholders": {"month": {}}},
+  "@geoDataCurrent": {
+    "placeholders": {
+      "month": {}
+    }
+  },
   "geoDataConsent": "**Download: {download} · Armazenamento no dispositivo: {disk}.** O conjunto de dados completo fica armazenado neste dispositivo e todas as consultas de localização posteriores são feitas localmente. Nenhum endereço de servidor ou atividade de consulta é enviado ao serviço de download.\n\nAtualizado mensalmente. Uma versão mais recente substitui os dados instalados sem manter uma cópia adicional. Você pode excluí-los a qualquer momento.",
-  "@geoDataConsent": {"placeholders": {"download": {}, "disk": {}}},
+  "@geoDataConsent": {
+    "placeholders": {
+      "download": {},
+      "disk": {}
+    }
+  },
   "benchmark": "Teste de desempenho",
   "benchmarkIntro": "Executa o Yet Another Bench Script neste servidor para testar disco, rede e CPU. Uma execução completa leva de 10 a 20 minutos e continua mesmo se você sair desta página ou fechar o aplicativo.",
   "benchmarkLinuxOnly": "O teste de desempenho requer Linux. Este servidor informa {system}.",
@@ -569,8 +578,6 @@
   "benchmarkPreferBinTip": "Baixa os programas do GitHub em vez de usar os pacotes do host. Ative somente se nenhum dos dois estiver instalado no host.",
   "benchmarkWorkDir": "Diretório de trabalho",
   "benchmarkWorkDirTip": "Determina qual sistema de arquivos será medido pelo teste de disco. Se ficar vazio, usa o diretório inicial da conta de login.",
-  "benchmarkCustomIperf": "Servidores iperf personalizados",
-  "benchmarkCustomIperfTip": "host:port_range:name:location:modes, separados por vírgulas. Se ficar vazio, usa a lista integrada.",
   "benchmarkEstimatedTime": "Cerca de {minutes} min",
   "benchmarkEstimatedTraffic": "Cerca de {size} de tráfego",
   "benchmarkPhaseSystem": "Lendo informações do sistema",

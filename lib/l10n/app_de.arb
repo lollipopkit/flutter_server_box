@@ -546,9 +546,18 @@
   "geoDataUnreachable": "Die Daten konnten nicht geholt werden.",
   "geoDataRemoveFailed": "Die Daten konnten nicht gelöscht werden.",
   "geoDataCurrent": "{month} ist bereits installiert.",
-  "@geoDataCurrent": {"placeholders": {"month": {}}},
+  "@geoDataCurrent": {
+    "placeholders": {
+      "month": {}
+    }
+  },
   "geoDataConsent": "**Download: {download} · Gerätespeicher: {disk}.** Der vollständige Datensatz wird auf diesem Gerät gespeichert; alle späteren Standortabfragen erfolgen lokal. Weder Serveradressen noch Abfrageaktivitäten werden an den Download-Dienst übertragen.\n\nMonatlich aktualisiert. Eine neuere Version ersetzt die installierten Daten, ohne eine zusätzliche Kopie zu behalten. Sie können die Daten jederzeit löschen.",
-  "@geoDataConsent": {"placeholders": {"download": {}, "disk": {}}},
+  "@geoDataConsent": {
+    "placeholders": {
+      "download": {},
+      "disk": {}
+    }
+  },
   "benchmark": "Benchmark",
   "benchmarkIntro": "Führt Yet Another Bench Script auf diesem Server aus und testet Datenträger, Netzwerk und CPU. Ein vollständiger Durchlauf dauert 10–20 Minuten und läuft weiter, wenn Sie diese Seite verlassen oder die App schließen.",
   "benchmarkLinuxOnly": "Benchmarks erfordern Linux. Dieser Server meldet {system}.",
@@ -569,8 +578,6 @@
   "benchmarkPreferBinTip": "Lädt die Programme von GitHub herunter, statt die Pakete des Hosts zu verwenden. Nur aktivieren, wenn keines der beiden Programme auf dem Host installiert ist.",
   "benchmarkWorkDir": "Arbeitsverzeichnis",
   "benchmarkWorkDirTip": "Legt fest, welches Dateisystem der Datenträgertest misst. Leer bedeutet das Home-Verzeichnis des Anmeldekontos.",
-  "benchmarkCustomIperf": "Eigene iperf-Server",
-  "benchmarkCustomIperfTip": "host:port_range:name:location:modes, durch Kommas getrennt. Leer verwendet die integrierte Liste.",
   "benchmarkEstimatedTime": "Etwa {minutes} Min.",
   "benchmarkEstimatedTraffic": "Etwa {size} Datenverkehr",
   "benchmarkPhaseSystem": "Systeminformationen werden gelesen",

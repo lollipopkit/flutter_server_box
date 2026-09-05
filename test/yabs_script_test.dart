@@ -200,20 +200,22 @@ exit $exitCode
       expect(File('$work/.server_box_bench/out.json').existsSync(), isTrue);
     });
 
-    test('a custom iperf list is one argument, never shell syntax', () async {
+    test('a working directory is a path, never shell syntax', () async {
       await installFakeYabs();
       // If this were interpolated unquoted, the `;` would end the command and
-      // `touch` would run.
-      final options = YabsOptions(
-        customIperfServers: 'h:1-2:n:l:IPv4; touch ${tmp.path}/pwned',
+      // `touch` would run. It is the one user-typed value left on these
+      // command lines, and it reaches three of them.
+      final work = '${tmp.path}/x; touch ${tmp.path}/pwned';
+      await Directory(work).create(recursive: true);
+      final options = YabsOptions(workDir: work);
+
+      await sh(
+        YabsScript.startEntry(options, runId),
+        stdinText: YabsScript.launcher(options),
       );
-      await runToCompletion(options);
 
       expect(File('${tmp.path}/pwned').existsSync(), isFalse);
-      final state = YabsPollState.parse(
-        (await sh(YabsScript.pollCommand(YabsScript.runDir(options)))).stdout,
-      );
-      expect(state.log, contains('touch ${tmp.path}/pwned'));
+      expect(File('$work/.server_box_bench/run.sh').existsSync(), isTrue);
     });
   });
 

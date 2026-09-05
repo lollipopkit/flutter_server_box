@@ -1864,13 +1864,6 @@ class AppLocalizationsJa extends AppLocalizations {
       'ディスクテストで測定するファイルシステムを決定します。空欄の場合はログインアカウントのホームディレクトリを使用します。';
 
   @override
-  String get benchmarkCustomIperf => 'カスタム iperf サーバー';
-
-  @override
-  String get benchmarkCustomIperfTip =>
-      'host:port_range:name:location:modes の形式で、複数指定する場合はカンマで区切ります。空欄の場合は内蔵リストを使用します。';
-
-  @override
   String benchmarkEstimatedTime(String minutes) {
     return '約 $minutes 分';
   }

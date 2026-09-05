@@ -128,7 +128,6 @@ void main() {
       // Sub-options, which reserve the icon column instead of filling it.
       'reducedNetwork': l10n.benchmarkReducedNetwork,
       'geekbenchVersion': 'Geekbench 6',
-      'customIperf': l10n.benchmarkCustomIperf,
     };
 
     final edges = {

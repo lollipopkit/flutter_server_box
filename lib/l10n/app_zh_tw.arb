@@ -553,9 +553,18 @@
   "geoDataUnreachable": "無法取得資料。",
   "geoDataRemoveFailed": "無法刪除資料。",
   "geoDataCurrent": "已經是 {month} 的資料。",
-  "@geoDataCurrent": {"placeholders": {"month": {}}},
+  "@geoDataCurrent": {
+    "placeholders": {
+      "month": {}
+    }
+  },
   "geoDataConsent": "**下載大小：{download} · 本機空間：{disk}。** 完整資料集儲存在本機，後續所有地理位置查詢都在本機完成，不會向下載服務傳送伺服器位址或查詢活動。\n\n資料每月更新。新版本會取代已安裝的資料，不保留額外副本；你可以隨時刪除。",
-  "@geoDataConsent": {"placeholders": {"download": {}, "disk": {}}},
+  "@geoDataConsent": {
+    "placeholders": {
+      "download": {},
+      "disk": {}
+    }
+  },
   "benchmark": "效能測試",
   "benchmarkIntro": "在此伺服器上執行 Yet Another Bench Script，測試磁碟、網路與 CPU。完整執行一次需要 10–20 分鐘，離開此頁面或關閉 App 都不會中斷。",
   "benchmarkLinuxOnly": "效能測試需要 Linux，此伺服器回報的系統為 {system}。",
@@ -576,8 +585,6 @@
   "benchmarkPreferBinTip": "從 GitHub 下載，而不使用主機的套件。僅在主機未安裝這兩個程式時啟用。",
   "benchmarkWorkDir": "工作目錄",
   "benchmarkWorkDirTip": "決定磁碟測試要測量哪個檔案系統。留空表示使用登入帳號的家目錄。",
-  "benchmarkCustomIperf": "自訂 iperf 伺服器",
-  "benchmarkCustomIperfTip": "格式為 host:port_range:name:location:modes，多筆資料以逗號分隔。留空則使用內建清單。",
   "benchmarkEstimatedTime": "約 {minutes} 分鐘",
   "benchmarkEstimatedTraffic": "約 {size} 流量",
   "benchmarkPhaseSystem": "正在讀取系統資訊",

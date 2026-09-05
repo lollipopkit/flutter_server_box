@@ -3452,18 +3452,6 @@ abstract class AppLocalizations {
   /// **'Decides which filesystem the disk test measures. Empty means the login account\'s home directory.'**
   String get benchmarkWorkDirTip;
 
-  /// No description provided for @benchmarkCustomIperf.
-  ///
-  /// In en, this message translates to:
-  /// **'Custom iperf servers'**
-  String get benchmarkCustomIperf;
-
-  /// No description provided for @benchmarkCustomIperfTip.
-  ///
-  /// In en, this message translates to:
-  /// **'host:port_range:name:location:modes, comma separated. Empty uses the built-in list.'**
-  String get benchmarkCustomIperfTip;
-
   /// No description provided for @benchmarkEstimatedTime.
   ///
   /// In en, this message translates to:

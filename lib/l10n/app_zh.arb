@@ -585,8 +585,6 @@
   "benchmarkPreferBinTip": "从 GitHub 下载，而不使用主机自带的软件包。仅在主机两者都没有安装时开启。",
   "benchmarkWorkDir": "工作目录",
   "benchmarkWorkDirTip": "决定磁盘测试测的是哪个文件系统。留空表示登录账户的家目录。",
-  "benchmarkCustomIperf": "自定义 iperf 服务器",
-  "benchmarkCustomIperfTip": "host:port_range:name:location:modes，以逗号分隔。留空使用内置列表。",
   "benchmarkEstimatedTime": "约 {minutes} 分钟",
   "benchmarkEstimatedTraffic": "约 {size} 流量",
   "benchmarkPhaseSystem": "读取系统信息",

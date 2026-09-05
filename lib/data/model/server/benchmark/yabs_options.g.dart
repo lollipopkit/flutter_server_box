@@ -20,7 +20,6 @@ _YabsOptions _$YabsOptionsFromJson(Map<String, dynamic> json) => _YabsOptions(
   ipInfo: json['ipInfo'] as bool? ?? false,
   preferPrecompiledBinaries:
       json['preferPrecompiledBinaries'] as bool? ?? false,
-  customIperfServers: json['customIperfServers'] as String? ?? '',
   workDir: json['workDir'] as String? ?? '',
 );
 
@@ -33,7 +32,6 @@ Map<String, dynamic> _$YabsOptionsToJson(_YabsOptions instance) =>
       'geekbenchVersion': _$GeekbenchVersionEnumMap[instance.geekbenchVersion]!,
       'ipInfo': instance.ipInfo,
       'preferPrecompiledBinaries': instance.preferPrecompiledBinaries,
-      'customIperfServers': instance.customIperfServers,
       'workDir': instance.workDir,
     };
 

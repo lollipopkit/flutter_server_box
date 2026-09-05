@@ -546,9 +546,18 @@
   "geoDataUnreachable": "Kon de gegevens niet ophalen.",
   "geoDataRemoveFailed": "Kon de gegevens niet verwijderen.",
   "geoDataCurrent": "{month} is al geïnstalleerd.",
-  "@geoDataCurrent": {"placeholders": {"month": {}}},
+  "@geoDataCurrent": {
+    "placeholders": {
+      "month": {}
+    }
+  },
   "geoDataConsent": "**Download: {download} · Opslag op het apparaat: {disk}.** De volledige gegevensset wordt op dit apparaat opgeslagen en alle latere locatiebepalingen worden lokaal uitgevoerd. Er worden geen serveradressen of opzoekactiviteiten naar de downloadservice verzonden.\n\nMaandelijks bijgewerkt. Een nieuwere versie vervangt de geïnstalleerde gegevens zonder een extra kopie te bewaren. Je kunt de gegevens op elk moment verwijderen.",
-  "@geoDataConsent": {"placeholders": {"download": {}, "disk": {}}},
+  "@geoDataConsent": {
+    "placeholders": {
+      "download": {},
+      "disk": {}
+    }
+  },
   "benchmark": "Benchmark",
   "benchmarkIntro": "Voert Yet Another Bench Script uit op deze server om schijf, netwerk en CPU te testen. Een volledige test duurt 10–20 minuten en gaat door als je deze pagina verlaat of de app sluit.",
   "benchmarkLinuxOnly": "Voor benchmarks is Linux vereist. Deze server meldt {system}.",
@@ -569,8 +578,6 @@
   "benchmarkPreferBinTip": "Downloadt ze van GitHub in plaats van de pakketten van de host te gebruiken. Schakel dit alleen in als geen van beide op de host is geïnstalleerd.",
   "benchmarkWorkDir": "Werkmap",
   "benchmarkWorkDirTip": "Bepaalt welk bestandssysteem door de schijftest wordt gemeten. Leeg gebruikt de thuismap van het aanmeldaccount.",
-  "benchmarkCustomIperf": "Aangepaste iperf-servers",
-  "benchmarkCustomIperfTip": "host:port_range:name:location:modes, gescheiden door komma's. Leeg gebruikt de ingebouwde lijst.",
   "benchmarkEstimatedTime": "Ongeveer {minutes} min.",
   "benchmarkEstimatedTraffic": "Ongeveer {size} dataverkeer",
   "benchmarkPhaseSystem": "Systeeminformatie lezen",

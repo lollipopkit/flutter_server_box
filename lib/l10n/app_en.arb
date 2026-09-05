@@ -766,8 +766,6 @@
   "benchmarkPreferBinTip": "Downloads them from GitHub instead of using the host's packages. Turn on only if the host has neither installed.",
   "benchmarkWorkDir": "Working directory",
   "benchmarkWorkDirTip": "Decides which filesystem the disk test measures. Empty means the login account's home directory.",
-  "benchmarkCustomIperf": "Custom iperf servers",
-  "benchmarkCustomIperfTip": "host:port_range:name:location:modes, comma separated. Empty uses the built-in list.",
   "benchmarkEstimatedTime": "About {minutes} min",
   "@benchmarkEstimatedTime": {
     "placeholders": {

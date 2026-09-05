@@ -1967,13 +1967,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Decides which filesystem the disk test measures. Empty means the login account\'s home directory.';
 
   @override
-  String get benchmarkCustomIperf => 'Custom iperf servers';
-
-  @override
-  String get benchmarkCustomIperfTip =>
-      'host:port_range:name:location:modes, comma separated. Empty uses the built-in list.';
-
-  @override
   String benchmarkEstimatedTime(String minutes) {
     return 'About $minutes min';
   }

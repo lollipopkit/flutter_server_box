@@ -1973,13 +1973,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Menentukan sistem file yang diukur oleh pengujian disk. Jika kosong, direktori home akun masuk akan digunakan.';
 
   @override
-  String get benchmarkCustomIperf => 'Server iperf khusus';
-
-  @override
-  String get benchmarkCustomIperfTip =>
-      'host:port_range:name:location:modes, dipisahkan dengan koma. Jika kosong, daftar bawaan akan digunakan.';
-
-  @override
   String benchmarkEstimatedTime(String minutes) {
     return 'Sekitar $minutes menit';
   }

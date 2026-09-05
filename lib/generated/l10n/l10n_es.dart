@@ -2003,13 +2003,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'Determina qué sistema de archivos mide la prueba de disco. Si se deja vacío, se usa el directorio personal de la cuenta de inicio de sesión.';
 
   @override
-  String get benchmarkCustomIperf => 'Servidores iperf personalizados';
-
-  @override
-  String get benchmarkCustomIperfTip =>
-      'host:port_range:name:location:modes, separados por comas. Si se deja vacío, se usa la lista integrada.';
-
-  @override
   String benchmarkEstimatedTime(String minutes) {
     return 'Unos $minutes min';
   }

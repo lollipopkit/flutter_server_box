@@ -546,9 +546,18 @@
   "geoDataUnreachable": "Impossible de récupérer les données.",
   "geoDataRemoveFailed": "Impossible de supprimer les données.",
   "geoDataCurrent": "{month} est déjà installé.",
-  "@geoDataCurrent": {"placeholders": {"month": {}}},
+  "@geoDataCurrent": {
+    "placeholders": {
+      "month": {}
+    }
+  },
   "geoDataConsent": "**Téléchargement : {download} · Stockage sur l’appareil : {disk}.** Le jeu de données complet est stocké sur cet appareil et toutes les recherches de localisation ultérieures s’effectuent localement. Aucune adresse de serveur ni activité de recherche n’est transmise au service de téléchargement.\n\nMis à jour chaque mois. Une version plus récente remplace les données installées sans conserver de copie supplémentaire. Vous pouvez les supprimer à tout moment.",
-  "@geoDataConsent": {"placeholders": {"download": {}, "disk": {}}},
+  "@geoDataConsent": {
+    "placeholders": {
+      "download": {},
+      "disk": {}
+    }
+  },
   "benchmark": "Test de performances",
   "benchmarkIntro": "Exécute Yet Another Bench Script sur ce serveur pour tester le disque, le réseau et le processeur. Un test complet dure 10 à 20 minutes et continue si vous quittez cette page ou fermez l’application.",
   "benchmarkLinuxOnly": "Le test de performances nécessite Linux. Ce serveur indique {system}.",
@@ -569,8 +578,6 @@
   "benchmarkPreferBinTip": "Les télécharge depuis GitHub au lieu d’utiliser les paquets de l’hôte. Activez cette option uniquement si aucun des deux n’est installé sur l’hôte.",
   "benchmarkWorkDir": "Répertoire de travail",
   "benchmarkWorkDirTip": "Détermine le système de fichiers mesuré par le test de disque. Si ce champ est vide, le dossier personnel du compte de connexion est utilisé.",
-  "benchmarkCustomIperf": "Serveurs iperf personnalisés",
-  "benchmarkCustomIperfTip": "host:port_range:name:location:modes, séparés par des virgules. Si ce champ est vide, la liste intégrée est utilisée.",
   "benchmarkEstimatedTime": "Environ {minutes} min",
   "benchmarkEstimatedTraffic": "Environ {size} de trafic",
   "benchmarkPhaseSystem": "Lecture des informations système",

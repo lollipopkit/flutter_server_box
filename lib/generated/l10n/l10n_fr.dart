@@ -2003,13 +2003,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'Détermine le système de fichiers mesuré par le test de disque. Si ce champ est vide, le dossier personnel du compte de connexion est utilisé.';
 
   @override
-  String get benchmarkCustomIperf => 'Serveurs iperf personnalisés';
-
-  @override
-  String get benchmarkCustomIperfTip =>
-      'host:port_range:name:location:modes, séparés par des virgules. Si ce champ est vide, la liste intégrée est utilisée.';
-
-  @override
   String benchmarkEstimatedTime(String minutes) {
     return 'Environ $minutes min';
   }

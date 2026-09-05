@@ -37,18 +37,6 @@ class HomePage extends ConsumerStatefulWidget {
   static const route = AppRouteNoArg(page: HomePage.new, path: '/');
 }
 
-/// How many tabs the bottom bar carries itself before the rest go behind
-/// "more".
-///
-/// Four and a fifth slot, which is where `NavigationBar` stops fitting labels
-/// on a phone. The fifth is always "more" and never a tab, even with fewer
-/// than four enabled: it is also the way to the page that arranges them, and
-/// an entry that only appears once there are too many tabs is one nobody finds
-/// while they still have few.
-///
-/// The rail has no such limit and shows every tab — it is a column, and it
-/// already carries its own way into the settings at its foot.
-const _kMaxBarTabs = 4;
 
 /// What the navigation rail takes from the width a tab gets.
 ///
@@ -84,7 +72,13 @@ class _HomePageState extends ConsumerState<HomePage>
   int _serverRefreshCycle = 0;
 
   late final _notifier = ref.read(serversProvider.notifier);
-  late List<AppTab> _tabs = Stores.setting.homeTabs.fetch();
+  /// What the user arranged: the bar, and the rail.
+  late List<AppTab> _barTabs = Stores.setting.homeTabs.fetch();
+
+  /// Every page there is, the bar's first and "more"'s after. The index space
+  /// for everything below, so a tab reached through "more" is a page like any
+  /// other rather than something pushed over one.
+  late List<AppTab> _tabs = [..._barTabs, ...AppTab.overflowOf(_barTabs)];
 
   /// The tab strip, whichever of the two is on screen. Only one is built at a
   /// time — the bar on a phone, the rail beside a window — so one key covers
@@ -424,7 +418,8 @@ class _HomePageState extends ConsumerState<HomePage>
       listenable: _selectIndex,
       builder: (context, child) {
         if (_isServerFullscreenMode) return UIs.placeholder;
-        final shown = _tabs.take(_kMaxBarTabs).toList();
+        final shown = _barTabs;
+        final overflow = _tabs.length - shown.length;
         final selected = _selectIndex.value;
         return NavigationBar(
           key: _navKey,
@@ -435,16 +430,37 @@ class _HomePageState extends ConsumerState<HomePage>
           animationDuration: const Duration(milliseconds: 250),
           onDestinationSelected: (index) {
             if (index < shown.length) return _onDestinationSelected(index);
-            unawaited(_showMoreSheet(shown.length));
+            // The last slot is one or the other, never both.
+            if (overflow > 0) {
+              unawaited(_showMoreSheet(shown.length));
+              return;
+            }
+            SettingsPage.route.go(context);
           },
           labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
           destinations: [
             for (final tab in shown) tab.navDestination(onMenu: _navMenuFor(tab)),
-            NavigationDestination(
-              icon: const Icon(Icons.more_horiz),
-              selectedIcon: const Icon(Icons.more_horiz),
-              label: libL10n.more,
-            ),
+            // One slot, holding whichever of the two is needed. While
+            // anything is behind "more" that is where the settings live, as
+            // they always have; with every tab turned on there is nothing left
+            // for "more" to hold, and the slot becomes the settings themselves
+            // rather than a sheet with one row in it.
+            //
+            // Settings is not an `AppTab` either way: it is never arranged,
+            // never stored, and never one of the pages the index above
+            // addresses — tapping it pushes rather than switches.
+            if (overflow > 0)
+              NavigationDestination(
+                icon: const Icon(Icons.more_horiz),
+                selectedIcon: const Icon(Icons.more_horiz),
+                label: libL10n.more,
+              )
+            else
+              NavigationDestination(
+                icon: const Icon(Icons.settings_outlined),
+                selectedIcon: const Icon(Icons.settings),
+                label: libL10n.setting,
+              ),
           ],
         );
       },
@@ -474,7 +490,7 @@ class _HomePageState extends ConsumerState<HomePage>
               _onDestinationSelected(_tabs.indexOf(tab));
             },
           ),
-        if (overflow.isNotEmpty) const Divider(height: 1),
+        const Divider(height: 1),
         // Where the tabs are arranged, reachable from the bar they arrange
         // rather than only from four levels into the settings tree. The
         // same page either way — this pushes it, settings embeds it.
@@ -486,8 +502,9 @@ class _HomePageState extends ConsumerState<HomePage>
             HomeTabsConfigPage.route.go(context);
           },
         ),
-        // The bottom bar has no settings button of its own — the rail on a
-        // wide window does, at its foot — and this is the slot for it.
+        // The bar has no settings slot of its own while this sheet exists —
+        // the slot is the one this sheet came out of. It takes that slot back
+        // when every tab is on and there is no sheet to raise.
         ListTile(
           leading: const Icon(Icons.settings),
           title: Text(libL10n.setting),
@@ -519,7 +536,7 @@ class _HomePageState extends ConsumerState<HomePage>
                     : NavigationRailLabelType.all,
                 selectedIndex: _selectIndex.value,
                 destinations: [
-                  for (final tab in _tabs)
+                  for (final tab in _barTabs)
                     tab.navRailDestination(onMenu: _navMenuFor(tab)),
                 ],
                 onDestinationSelected: _onDestinationSelected,
@@ -786,8 +803,11 @@ extension _HomePageStateUtils on _HomePageState {
 
 extension _HomePageStateActions on _HomePageState {
   void _handleHomeTabsChanged() {
-    final newTabs = Stores.setting.homeTabs.fetch();
-    if (!mounted || newTabs == _tabs) return;
+    final newBar = Stores.setting.homeTabs.fetch();
+    final newTabs = [...newBar, ...AppTab.overflowOf(newBar)];
+    // The page list is every tab either way, so it only changes when the *bar*
+    // does — which is what the setting says.
+    if (!mounted || newBar.equals(_barTabs)) return;
 
     final previousIndex = _selectIndex.value;
     // Which tab was open, not where it was. Dragging Files above Terminal in
@@ -806,6 +826,7 @@ extension _HomePageStateActions on _HomePageState {
 
     // ignore: invalid_use_of_protected_member
     setState(() {
+      _barTabs = newBar;
       _tabs = newTabs;
       _selectIndex.value = nextIndex;
       _rememberTab(nextIndex);

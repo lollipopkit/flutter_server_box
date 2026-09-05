@@ -754,6 +754,16 @@ final class AppSettingsPage extends ConsumerStatefulWidget {
 
   const AppSettingsPage({super.key, required this.section});
 
+  /// Opens one section from outside the settings tree.
+  ///
+  /// No `AppRoute`: those take their argument as `args`, and this page's is
+  /// `section` on nine call sites inside the settings navigation itself.
+  static Future<void> go(BuildContext context, SettingsSection section) {
+    return Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => AppSettingsPage(section: section)),
+    );
+  }
+
   @override
   ConsumerState<AppSettingsPage> createState() => _AppSettingsPageState();
 }

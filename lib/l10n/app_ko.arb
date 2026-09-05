@@ -555,9 +555,18 @@
   "geoDataUnreachable": "데이터를 가져오지 못했습니다.",
   "geoDataRemoveFailed": "데이터를 삭제하지 못했습니다.",
   "geoDataCurrent": "이미 {month} 데이터입니다.",
-  "@geoDataCurrent": {"placeholders": {"month": {}}},
+  "@geoDataCurrent": {
+    "placeholders": {
+      "month": {}
+    }
+  },
   "geoDataConsent": "**다운로드: {download} · 기기 저장 공간: {disk}.** 전체 데이터 세트가 이 기기에 저장되며, 이후의 모든 위치 조회는 로컬에서 처리됩니다. 서버 주소나 조회 활동은 다운로드 서비스로 전송되지 않습니다.\n\n매월 업데이트됩니다. 새 버전은 설치된 데이터를 대체하며 추가 사본을 남기지 않습니다. 언제든지 삭제할 수 있습니다.",
-  "@geoDataConsent": {"placeholders": {"download": {}, "disk": {}}},
+  "@geoDataConsent": {
+    "placeholders": {
+      "download": {},
+      "disk": {}
+    }
+  },
   "benchmark": "벤치마크",
   "benchmarkIntro": "이 서버에서 Yet Another Bench Script를 실행하여 디스크, 네트워크, CPU를 측정합니다. 전체 실행에는 10~20분이 걸리며 이 페이지를 나가거나 앱을 닫아도 계속 진행됩니다.",
   "benchmarkLinuxOnly": "벤치마크에는 Linux가 필요합니다. 이 서버는 {system}(으)로 보고됩니다.",
@@ -578,8 +587,6 @@
   "benchmarkPreferBinTip": "호스트의 패키지 대신 GitHub에서 다운로드합니다. 호스트에 두 프로그램이 모두 설치되어 있지 않을 때만 켜세요.",
   "benchmarkWorkDir": "작업 디렉터리",
   "benchmarkWorkDirTip": "디스크 테스트에서 측정할 파일 시스템을 결정합니다. 비워 두면 로그인 계정의 홈 디렉터리를 사용합니다.",
-  "benchmarkCustomIperf": "사용자 지정 iperf 서버",
-  "benchmarkCustomIperfTip": "host:port_range:name:location:modes 형식이며 쉼표로 구분합니다. 비워 두면 기본 목록을 사용합니다.",
   "benchmarkEstimatedTime": "약 {minutes}분",
   "benchmarkEstimatedTraffic": "트래픽 약 {size}",
   "benchmarkPhaseSystem": "시스템 정보 읽는 중",

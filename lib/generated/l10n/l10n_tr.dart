@@ -1969,13 +1969,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Disk testinin hangi dosya sistemini ölçeceğini belirler. Boş bırakılırsa oturum açılan hesabın ana dizini kullanılır.';
 
   @override
-  String get benchmarkCustomIperf => 'Özel iperf sunucuları';
-
-  @override
-  String get benchmarkCustomIperfTip =>
-      'host:port_range:name:location:modes biçiminde, virgülle ayrılmış. Boş bırakılırsa yerleşik liste kullanılır.';
-
-  @override
   String benchmarkEstimatedTime(String minutes) {
     return 'Yaklaşık $minutes dk.';
   }

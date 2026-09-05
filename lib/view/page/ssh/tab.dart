@@ -19,6 +19,7 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/terminal_session.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
+import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/widget/dist_icon.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
@@ -347,24 +348,16 @@ extension _Sessions on _SSHTabPageState {
   /// The install is where the tap may stop: it downloads, and it can be
   /// cancelled or fail. Only a system that is actually there gets a tab, which
   /// is why the id comes back from the install rather than from the settings.
-  Future<void> _addRootfs() async {
-    final before = {for (final e in Rootfs.profiles) e.id};
-    // The chip says "install" with nothing there and "add" otherwise, and it
-    // has to mean both.
-    if (!await installRootfs(context, another: before.isNotEmpty)) return;
-    if (!mounted) return;
-    final added = Rootfs.profiles.firstWhereOrNull(
-      (e) => !before.contains(e.id),
-    );
-    // Nothing new means it was already there and the install returned early —
-    // the first system, opened by the chip that offered to install it.
-    //
-    // Null rather than an empty string: null is what every layer below reads
-    // as "whichever is selected", while "" is a profile name, and the engine
-    // answers -EINVAL to it.
-    final id = added?.id ?? Rootfs.selected?.id;
-    if (id == null) return;
-    _openRootfs(id);
+  /// Opens the Linux settings rather than installing something.
+  ///
+  /// It used to install straight away: one tap fetched a fixed distribution at
+  /// a fixed version and opened a shell in it. That is a download of a hundred
+  /// megabytes and a choice of distribution, both made on the user's behalf by
+  /// a `+` on a list of servers. The settings page is where the choice
+  /// actually lives — which release, which mirror, which shell — so this is
+  /// the way there.
+  void _addRootfs() {
+    AppSettingsPage.go(context, SettingsSection.linux);
   }
 
   /// Deletes one Linux system, and the terminals that were inside it.

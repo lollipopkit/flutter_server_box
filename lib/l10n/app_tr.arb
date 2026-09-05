@@ -546,9 +546,18 @@
   "geoDataUnreachable": "Veri alınamadı.",
   "geoDataRemoveFailed": "Veriler silinemedi.",
   "geoDataCurrent": "{month} zaten yüklü.",
-  "@geoDataCurrent": {"placeholders": {"month": {}}},
+  "@geoDataCurrent": {
+    "placeholders": {
+      "month": {}
+    }
+  },
   "geoDataConsent": "**İndirme: {download} · Cihazdaki depolama alanı: {disk}.** Veri kümesinin tamamı bu cihazda saklanır ve sonraki tüm konum sorguları yerel olarak gerçekleştirilir. Sunucu adresleri ve sorgu etkinliği indirme hizmetine gönderilmez.\n\nHer ay güncellenir. Yeni sürüm yüklü verilerin yerini alır ve ek bir kopya tutmaz. İstediğiniz zaman silebilirsiniz.",
-  "@geoDataConsent": {"placeholders": {"download": {}, "disk": {}}},
+  "@geoDataConsent": {
+    "placeholders": {
+      "download": {},
+      "disk": {}
+    }
+  },
   "benchmark": "Performans testi",
   "benchmarkIntro": "Disk, ağ ve CPU'yu test etmek için bu sunucuda Yet Another Bench Script'i çalıştırır. Tam bir test 10–20 dakika sürer ve bu sayfadan ayrılsanız veya uygulamayı kapatsanız da devam eder.",
   "benchmarkLinuxOnly": "Performans testi için Linux gerekir. Bu sunucu {system} bildiriyor.",
@@ -569,8 +578,6 @@
   "benchmarkPreferBinTip": "Ana makinenin paketlerini kullanmak yerine GitHub'dan indirir. Yalnızca ana makinede ikisi de yüklü değilse açın.",
   "benchmarkWorkDir": "Çalışma dizini",
   "benchmarkWorkDirTip": "Disk testinin hangi dosya sistemini ölçeceğini belirler. Boş bırakılırsa oturum açılan hesabın ana dizini kullanılır.",
-  "benchmarkCustomIperf": "Özel iperf sunucuları",
-  "benchmarkCustomIperfTip": "host:port_range:name:location:modes biçiminde, virgülle ayrılmış. Boş bırakılırsa yerleşik liste kullanılır.",
   "benchmarkEstimatedTime": "Yaklaşık {minutes} dk.",
   "benchmarkEstimatedTraffic": "Yaklaşık {size} trafik",
   "benchmarkPhaseSystem": "Sistem bilgileri okunuyor",

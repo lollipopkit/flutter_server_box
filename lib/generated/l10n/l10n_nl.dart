@@ -1985,13 +1985,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Bepaalt welk bestandssysteem door de schijftest wordt gemeten. Leeg gebruikt de thuismap van het aanmeldaccount.';
 
   @override
-  String get benchmarkCustomIperf => 'Aangepaste iperf-servers';
-
-  @override
-  String get benchmarkCustomIperfTip =>
-      'host:port_range:name:location:modes, gescheiden door komma\'s. Leeg gebruikt de ingebouwde lijst.';
-
-  @override
   String benchmarkEstimatedTime(String minutes) {
     return 'Ongeveer $minutes min.';
   }

@@ -36,9 +36,6 @@ class BenchmarkConfig extends StatefulWidget {
 class _BenchmarkConfigState extends State<BenchmarkConfig> {
   late var _options = widget.initial ?? const YabsOptions();
   late final _workDirCtrl = TextEditingController(text: _options.workDir);
-  late final _iperfCtrl = TextEditingController(
-    text: _options.customIperfServers,
-  );
 
   /// One left edge for the icons, one for everything written.
   ///
@@ -61,7 +58,6 @@ class _BenchmarkConfigState extends State<BenchmarkConfig> {
   @override
   void dispose() {
     _workDirCtrl.dispose();
-    _iperfCtrl.dispose();
     super.dispose();
   }
 
@@ -125,7 +121,7 @@ extension _Widgets on _BenchmarkConfigState {
         onChanged: (v) =>
             setState(() => _options = _options.copyWith(network: v)),
       ),
-      if (_options.network) ...[
+      if (_options.network)
         _switch(
           title: l10n.benchmarkReducedNetwork,
           subtitle: l10n.benchmarkReducedNetworkTip(
@@ -136,15 +132,6 @@ extension _Widgets on _BenchmarkConfigState {
           onChanged: (v) =>
               setState(() => _options = _options.copyWith(reducedNetwork: v)),
         ),
-        _textField(
-          controller: _iperfCtrl,
-          label: l10n.benchmarkCustomIperf,
-          hint: l10n.benchmarkCustomIperfTip,
-          onChanged: (v) => setState(
-            () => _options = _options.copyWith(customIperfServers: v),
-          ),
-        ),
-      ],
       _switch(
         title: 'CPU',
         // The one option whose cost is not the user's own resources but a
@@ -346,10 +333,7 @@ extension _Actions on _BenchmarkConfigState {
   void _onStart() {
     // Read from the controllers rather than from `_options`: `onChanged` fires
     // per keystroke, and a field left focused has still been typed into.
-    final options = _options.copyWith(
-      workDir: _workDirCtrl.text.trim(),
-      customIperfServers: _iperfCtrl.text.trim(),
-    );
+    final options = _options.copyWith(workDir: _workDirCtrl.text.trim());
     setState(() => _options = options);
     widget.onStart(options);
   }

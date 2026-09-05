@@ -46,6 +46,11 @@ enum GeekbenchVersion {
 /// - [ipInfo] is off. The lookup sends the server's public address to
 ///   `ip-api.com` over **plaintext HTTP**.
 ///
+/// yabs' `-p` — a custom iperf server list — is deliberately not offered. Its
+/// `host:port_range:name:location:modes` is a format to get wrong rather than a
+/// setting to choose, and the built-in locations are what makes one machine's
+/// numbers comparable with another's, which is the whole point of keeping them.
+///
 /// Stored with each run so a result always says what produced it — a benchmark
 /// whose parameters are not recorded cannot be compared with another.
 @freezed
@@ -82,12 +87,6 @@ abstract class YabsOptions with _$YabsOptions {
     /// which a good share of hosts cannot reach.
     @Default(false) bool preferPrecompiledBinaries,
 
-    /// yabs' `-p`: `host:port_range:name:location:modes`, comma-separated.
-    ///
-    /// Empty means the built-in list. This is the escape hatch for measuring
-    /// against a machine that matters to the user rather than against London.
-    @Default('') String customIperfServers,
-
     /// Where the run happens, and therefore **which filesystem fio measures**.
     ///
     /// Empty means the login account's home directory. Anyone benchmarking a
@@ -122,10 +121,6 @@ abstract class YabsOptions with _$YabsOptions {
       // Never both: `-g` sets the skip and any digit clears the default, so
       // sending the pair would ask for a version of a phase that is skipped.
       if (!cpu) '-g' else '-${geekbenchVersion.flagDigit}',
-      if (network && customIperfServers.trim().isNotEmpty) ...[
-        '-p',
-        customIperfServers.trim(),
-      ],
     ];
   }
 }

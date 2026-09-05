@@ -1818,13 +1818,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get benchmarkWorkDirTip => '决定磁盘测试测的是哪个文件系统。留空表示登录账户的家目录。';
 
   @override
-  String get benchmarkCustomIperf => '自定义 iperf 服务器';
-
-  @override
-  String get benchmarkCustomIperfTip =>
-      'host:port_range:name:location:modes，以逗号分隔。留空使用内置列表。';
-
-  @override
   String benchmarkEstimatedTime(String minutes) {
     return '约 $minutes 分钟';
   }
@@ -3722,13 +3715,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get benchmarkWorkDirTip => '決定磁碟測試要測量哪個檔案系統。留空表示使用登入帳號的家目錄。';
-
-  @override
-  String get benchmarkCustomIperf => '自訂 iperf 伺服器';
-
-  @override
-  String get benchmarkCustomIperfTip =>
-      '格式為 host:port_range:name:location:modes，多筆資料以逗號分隔。留空則使用內建清單。';
 
   @override
   String benchmarkEstimatedTime(String minutes) {

@@ -273,7 +273,6 @@ void main() {
         geekbenchVersion: GeekbenchVersion.v7,
         ipInfo: true,
         reducedNetwork: false,
-        customIperfServers: 'h:1-2:n:l:IPv4',
         workDir: '/mnt/nvme',
       );
       expect(

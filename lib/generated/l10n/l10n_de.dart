@@ -1994,13 +1994,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Legt fest, welches Dateisystem der Datenträgertest misst. Leer bedeutet das Home-Verzeichnis des Anmeldekontos.';
 
   @override
-  String get benchmarkCustomIperf => 'Eigene iperf-Server';
-
-  @override
-  String get benchmarkCustomIperfTip =>
-      'host:port_range:name:location:modes, durch Kommas getrennt. Leer verwendet die integrierte Liste.';
-
-  @override
   String benchmarkEstimatedTime(String minutes) {
     return 'Etwa $minutes Min.';
   }

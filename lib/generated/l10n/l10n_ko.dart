@@ -1871,13 +1871,6 @@ class AppLocalizationsKo extends AppLocalizations {
       '디스크 테스트에서 측정할 파일 시스템을 결정합니다. 비워 두면 로그인 계정의 홈 디렉터리를 사용합니다.';
 
   @override
-  String get benchmarkCustomIperf => '사용자 지정 iperf 서버';
-
-  @override
-  String get benchmarkCustomIperfTip =>
-      'host:port_range:name:location:modes 형식이며 쉼표로 구분합니다. 비워 두면 기본 목록을 사용합니다.';
-
-  @override
   String benchmarkEstimatedTime(String minutes) {
     return '약 $minutes분';
   }
