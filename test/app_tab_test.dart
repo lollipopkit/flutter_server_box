@@ -2,24 +2,38 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/view/page/setting/entries/home_tabs.dart';
 
-/// How many of the tabs the bottom bar has room for; the rest go behind
-/// "more". Mirrors `_kMaxBarTabs` in `home.dart`, which is private -- if that
-/// changes, the expectation below is what says this one has to as well.
-const _barTabs = 4;
-
 void main() {
   group('the default order', () {
-    test('puts Agent in the bar and snippets behind "more"', () {
-      final inBar = AppTab.defaultOrder.take(_barTabs);
-      expect(inBar, [AppTab.server, AppTab.ssh, AppTab.file, AppTab.agent]);
-      expect(AppTab.defaultOrder.skip(_barTabs), [AppTab.snippet]);
+    test('is the bar, and the rest are behind "more"', () {
+      // The list *is* the bar now, so it is a subset rather than everything.
+      expect(AppTab.defaultOrder, [
+        AppTab.server,
+        AppTab.ssh,
+        AppTab.file,
+        AppTab.agent,
+      ]);
+      // Snippets are a library rather than a place, and a benchmark is a
+      // quarter of an hour started deliberately — neither is wanted a tap away.
+      expect(AppTab.overflowOf(AppTab.defaultOrder), [
+        AppTab.snippet,
+        AppTab.benchmark,
+      ]);
     });
 
-    test('is every tab, exactly once', () {
-      // Anything missing here is a tab a fresh install could not reach at all,
-      // since the settings page starts from what is stored.
-      expect(AppTab.defaultOrder.toSet(), AppTab.values.toSet());
-      expect(AppTab.defaultOrder, hasLength(AppTab.values.length));
+    test('every tab is reachable, in the bar or behind more', () {
+      // Anything in neither is a tab a fresh install could not reach at all.
+      expect(
+        {...AppTab.defaultOrder, ...AppTab.overflowOf(AppTab.defaultOrder)},
+        AppTab.values.toSet(),
+      );
+    });
+
+    test('turning every tab on leaves nothing behind "more"', () {
+      // Which is what removes the "more" destination — and why the settings
+      // one beside it is pinned rather than being an `AppTab`: it is the only
+      // way into the settings on a phone, and "more" used to carry it.
+      expect(AppTab.overflowOf(AppTab.values), isEmpty);
+      expect(availableHomeTabs(AppTab.values), isEmpty);
     });
 
     /// The declaration order is the `@HiveField` index and what an `int` in a
@@ -104,7 +118,9 @@ void main() {
     );
   });
 
-  test('offers Agent when only the legacy home tabs are selected', () {
+  test('offers every arrangeable tab the stored list does not name', () {
+    // The legacy four. Everything added since has to be reachable from here,
+    // or an install that stored that list could never turn one on.
     final available = availableHomeTabs(const [
       AppTab.server,
       AppTab.ssh,
@@ -112,7 +128,7 @@ void main() {
       AppTab.snippet,
     ]);
 
-    expect(available, [AppTab.agent]);
+    expect(available, [AppTab.agent, AppTab.benchmark]);
   });
 
   group('reorderHomeTabs', () {

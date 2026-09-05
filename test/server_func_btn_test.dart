@@ -81,6 +81,9 @@ void main() {
   test('adds nothing for an upgrade that shipped no new entry', () async {
     setting.serverFuncBtns.put([ServerFuncBtn.terminal.index]);
 
+    // A window after the newest entry's boundary. It has to move whenever one
+    // is added, which is the point: the assertion is about a window containing
+    // no entry, not about two particular numbers.
     ServerFuncBtn.autoAddNewFuncs(1492, 1600);
 
     expect(row(), [ServerFuncBtn.terminal.index]);
@@ -125,6 +128,7 @@ void main() {
       expect(row(), [ServerFuncBtn.terminal.index, ServerFuncBtn.power.index]);
     });
   }
+
 
   test('a fresh install gets the defaults untouched', () async {
     // lastVer is 0 on a first run, and the window is wide open — but the

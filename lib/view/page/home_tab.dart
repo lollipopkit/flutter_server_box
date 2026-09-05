@@ -1,8 +1,10 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/view/page/agent/agent.dart';
+import 'package:server_box/view/page/benchmark/tab.dart';
 import 'package:server_box/view/page/server/tab/tab.dart';
 import 'package:server_box/view/page/snippet/list.dart';
 import 'package:server_box/view/page/ssh/tab.dart';
@@ -17,6 +19,7 @@ extension AppTabViewX on AppTab {
       AppTab.file => const FileTabPage(),
       AppTab.snippet => const SnippetListPage(),
       AppTab.agent => const AgentPage(),
+      AppTab.benchmark => const BenchmarkTabPage(),
     };
   }
 
@@ -29,6 +32,7 @@ extension AppTabViewX on AppTab {
       AppTab.snippet => const Icon(Icons.code_outlined),
       AppTab.file => const Icon(Icons.folder_open),
       AppTab.agent => const Icon(Icons.auto_awesome_outlined),
+      AppTab.benchmark => const Icon(Icons.speed_outlined),
     };
   }
 
@@ -40,6 +44,7 @@ extension AppTabViewX on AppTab {
       AppTab.snippet => const Icon(Icons.code),
       AppTab.file => const Icon(Icons.folder),
       AppTab.agent => const Icon(Icons.auto_awesome),
+      AppTab.benchmark => const Icon(Icons.speed),
     };
   }
 
@@ -54,6 +59,7 @@ extension AppTabViewX on AppTab {
       AppTab.snippet => libL10n.snippet,
       AppTab.file => libL10n.file,
       AppTab.agent => 'Agent',
+      AppTab.benchmark => l10n.benchmark,
     };
   }
 

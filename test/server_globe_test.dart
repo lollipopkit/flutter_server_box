@@ -173,6 +173,29 @@ void main() {
 
       expect(find.widgetWithText(ActionChip, 'washington'), findsOneWidget);
       expect(find.text(libL10n.download), findsOneWidget);
+      // And says what the button downloads. "No location data" is true of this
+      // app and reads as a fact about the server; beside a Download button with
+      // the caption fallen back to "Unknown" it read as `Unknown  Download`,
+      // which names nothing at all.
+      expect(find.text('City-level data · Not downloaded'), findsOneWidget);
+      expect(find.text('Unknown'), findsNothing);
+    });
+
+    testWidgets('and says so even with a LAN server in the strip too', (
+      tester,
+    ) async {
+      // The case the fallback actually appeared in: two reasons at once, one
+      // of which is the download's own absence. That one wins the caption,
+      // because it is what the button beside it is about.
+      await tester.runAsync(removeGeoVectors);
+      addServer('a', '8.8.8.8', name: 'washington');
+      addServer('lan', '192.168.1.10', name: 'nas');
+
+      await show(tester, ['a', 'lan']);
+
+      expect(find.text('City-level data · Not downloaded'), findsOneWidget);
+      expect(find.text(libL10n.download), findsOneWidget);
+      expect(find.text('Unknown'), findsNothing);
     });
 
     testWidgets('not when it is installed', (tester) async {
@@ -226,14 +249,16 @@ void main() {
     });
   });
 
-  testWidgets('two reasons at once leaves it unsaid', (tester) async {
-    // One caption over a strip where half the chips missed for a different
-    // reason would be wrong about that half.
+  testWidgets('two reasons at once names both', (tester) async {
+    // It used to say "Unknown", on the grounds that naming one reason would be
+    // wrong about the half of the strip that missed for the other. Naming both
+    // is wrong about neither, and each chip carries the icon that says which of
+    // them it is.
     addServer('lan', '192.168.1.10', name: 'nas');
     addServer('v6', '2400:cb00::1', name: 'cf');
     await show(tester, ['lan', 'v6']);
-    expect(find.text('Unknown'), findsOneWidget);
-    expect(find.text('Private address'), findsNothing);
+    expect(find.text('Private address · No location data'), findsOneWidget);
+    expect(find.text('Unknown'), findsNothing);
   });
 
   /// A LAN server placed by what the machine says about itself.

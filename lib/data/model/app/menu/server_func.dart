@@ -42,7 +42,10 @@ enum ServerFuncBtn {
   /// time they could have chosen is added.
   ///
   /// [from] is the build this install last ran, 0 on a fresh one — where
-  /// [defaultIdxs] already lists everything, so nothing here fires.
+  /// [defaultIdxs] already lists every entry that carries a boundary, so
+  /// nothing here fires. An entry left out of the defaults must therefore also
+  /// have no [introducedAfterBuild], or a fresh install would be the only kind
+  /// that never gets it.
   ///
   /// Driven by [introducedAfterBuild] over [values] rather than by a branch per entry:
   /// the old form needed three near-identical blocks, and a new entry was

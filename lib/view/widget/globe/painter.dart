@@ -139,7 +139,7 @@ class GlobePainter extends CustomPainter {
       put(c.a);
     }
 
-    // The order here is the declaration order in `shaders/globe.frag`, and
+    // The order here is the declaration order in `assets/shaders/globe.frag`, and
     // there is nothing that checks it: `setFloat` writes into a flat buffer,
     // so a uniform added there and not here shifts every value after it and
     // the globe simply comes out wrong.

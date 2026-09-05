@@ -13,23 +13,46 @@ enum AppTab {
   @HiveField(3)
   snippet,
   @HiveField(4)
-  agent;
+  agent,
+  @HiveField(5)
+  benchmark;
 
-  /// What a fresh install gets, and the fallback when a stored list cannot be
-  /// read.
+  /// The tabs a fresh install puts in the bar, and the fallback when a stored
+  /// list cannot be read.
   ///
-  /// **Not the declaration order, and it cannot be.** The bar shows the first
-  /// `_kMaxBarTabs` of these and puts the rest behind "more", so the order is
-  /// what decides which tab is a tap away — but the declaration order is also
+  /// **A subset, not every tab.** This list *is* the bar: what is not in it is
+  /// behind "more". Four, because that is where `NavigationBar` stops fitting
+  /// labels on a phone — not a cap the code enforces, since the user may add a
+  /// fifth and live with it, but the number to start from.
+  ///
+  /// **Not the declaration order, and it cannot be.** The declaration order is
   /// the `@HiveField` index and what `_parseAppTabFromElement` resolves an
   /// `int` against, so moving a case there would silently re-point every
   /// integer an older record holds at a different tab.
   ///
-  /// Snippets are last because they are a library rather than a place: one is
+  /// Snippets are out because they are a library rather than a place: one is
   /// run against a server, from the server's own page, and the tab is where
-  /// they are written and kept. The Agent is the opposite — somewhere to be,
-  /// and reached from nowhere else.
-  static const defaultOrder = [server, ssh, file, agent, snippet];
+  /// they are written and kept. Benchmark is out because a run takes a quarter
+  /// of an hour and is started deliberately.
+  static const defaultOrder = [server, ssh, file, agent];
+
+  /// The tabs not in [enabled], in declaration order — what "more" holds.
+  ///
+  /// Settings is not among them, and is not an [AppTab] at all: it is a
+  /// destination the bar pins to its end, never stored, never arranged, and
+  /// never read back from a record. As a case here it would have been a
+  /// `@HiveField`, a line in the parser removing it again, a branch in every
+  /// exhaustive switch, and a second list saying which cases are real — all of
+  /// it to express that this one is not like the others. It is what keeps the
+  /// way back to the arranging page reachable when every tab is turned on and
+  /// "more" goes away.
+  static List<AppTab> overflowOf(Iterable<AppTab> enabled) {
+    final on = enabled.toSet();
+    return [
+      for (final tab in values)
+        if (!on.contains(tab)) tab,
+    ];
+  }
 
   /// Helper function to parse AppTab list from stored object
   ///

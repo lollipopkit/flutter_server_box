@@ -1910,4 +1910,167 @@ class AppLocalizationsNl extends AppLocalizations {
   String geoDataConsent(Object download, Object disk) {
     return '**Download: $download · Opslag op het apparaat: $disk.** De volledige gegevensset wordt op dit apparaat opgeslagen en alle latere locatiebepalingen worden lokaal uitgevoerd. Er worden geen serveradressen of opzoekactiviteiten naar de downloadservice verzonden.\n\nMaandelijks bijgewerkt. Een nieuwere versie vervangt de geïnstalleerde gegevens zonder een extra kopie te bewaren. Je kunt de gegevens op elk moment verwijderen.';
   }
+
+  @override
+  String get benchmark => 'Benchmark';
+
+  @override
+  String get benchmarkIntro =>
+      'Voert Yet Another Bench Script uit op deze server om schijf, netwerk en CPU te testen. Een volledige test duurt 10–20 minuten en gaat door als je deze pagina verlaat of de app sluit.';
+
+  @override
+  String benchmarkLinuxOnly(String system) {
+    return 'Voor benchmarks is Linux vereist. Deze server meldt $system.';
+  }
+
+  @override
+  String get benchmarkNoRuns => 'Nog geen benchmarks.';
+
+  @override
+  String get benchmarkRunning => 'Benchmark wordt uitgevoerd';
+
+  @override
+  String get benchmarkStartFailed => 'Kon de benchmark niet starten';
+
+  @override
+  String get benchmarkCancelConfirm =>
+      'Deze benchmark stoppen? Alle metingen tot nu toe gaan verloren.';
+
+  @override
+  String get benchmarkDeleteConfirm => 'Dit benchmarkresultaat verwijderen?';
+
+  @override
+  String get benchmarkNothingSelected =>
+      'Alle testfasen zijn uitgeschakeld. Alleen systeeminformatie wordt verzameld; dit duurt enkele seconden.';
+
+  @override
+  String get benchmarkDiskTip =>
+      'fio met vier blokgroottes; ongeveer 3 minuten. Schrijft een testbestand van 2 GB naar de werkmap en heeft evenveel vrije ruimte nodig.';
+
+  @override
+  String get benchmarkNetworkTip =>
+      'iperf3 tegen openbare servers; ongeveer 4 minuten.';
+
+  @override
+  String get benchmarkReducedNetwork => 'Minder locaties';
+
+  @override
+  String benchmarkReducedNetworkTip(String full, String reduced) {
+    return 'Drie locaties in plaats van zeven. Het geschatte dataverkeer daalt van $full naar $reduced.';
+  }
+
+  @override
+  String get benchmarkCpuTip =>
+      'Downloadt Geekbench, een propriëtair programma, en **publiceert het resultaat op een openbare pagina op geekbench.com**, inclusief CPU-model, aantal kernen en geheugen.';
+
+  @override
+  String get benchmarkIpInfoTip =>
+      'Stuurt het openbare adres van deze server via onbeveiligde HTTP naar ip-api.com.';
+
+  @override
+  String get benchmarkIpInfo => 'Eigenaar van IP opzoeken';
+
+  @override
+  String get benchmarkPreferBin => 'fio en iperf3 downloaden';
+
+  @override
+  String get benchmarkPreferBinTip =>
+      'Downloadt ze van GitHub in plaats van de pakketten van de host te gebruiken. Schakel dit alleen in als geen van beide op de host is geïnstalleerd.';
+
+  @override
+  String get benchmarkWorkDir => 'Werkmap';
+
+  @override
+  String get benchmarkWorkDirTip =>
+      'Bepaalt welk bestandssysteem door de schijftest wordt gemeten. Leeg gebruikt de thuismap van het aanmeldaccount.';
+
+  @override
+  String benchmarkEstimatedTime(String minutes) {
+    return 'Ongeveer $minutes min.';
+  }
+
+  @override
+  String benchmarkEstimatedTraffic(String size) {
+    return 'Ongeveer $size dataverkeer';
+  }
+
+  @override
+  String get benchmarkPhaseSystem => 'Systeeminformatie lezen';
+
+  @override
+  String get benchmarkPhaseDisk => 'Schijf testen';
+
+  @override
+  String get benchmarkPhaseNetwork => 'Netwerk testen';
+
+  @override
+  String get benchmarkPhaseCpu => 'CPU testen';
+
+  @override
+  String get benchmarkPhaseDone => 'Afronden';
+
+  @override
+  String get benchmarkDiedUnreported =>
+      'De test stopte zonder een resultaat te melden. Op een kleine server is de OOM-killer meestal de oorzaak.';
+
+  @override
+  String get benchmarkResultUnreadable =>
+      'Dit resultaat kon niet als JSON worden gelezen. De onbewerkte tekst staat hieronder.';
+
+  @override
+  String get benchmarkViewOnGeekbench => 'Bekijken op Geekbench';
+
+  @override
+  String get benchmarkGeekbenchPublic =>
+      'Dit resultaat is openbaar gepubliceerd via de bovenstaande link.';
+
+  @override
+  String get benchmarkSingleCore => 'Eén kern';
+
+  @override
+  String get benchmarkMultiCore => 'Meerdere kernen';
+
+  @override
+  String get benchmarkBlockSize => 'Blokgrootte';
+
+  @override
+  String get benchmarkIops => 'IOPS';
+
+  @override
+  String get benchmarkSend => 'Upload';
+
+  @override
+  String get benchmarkRecv => 'Download';
+
+  @override
+  String get benchmarkLatency => 'Latentie';
+
+  @override
+  String get benchmarkVirt => 'Virtualisatie';
+
+  @override
+  String get benchmarkCompare => 'Vergelijken';
+
+  @override
+  String get benchmarkCompareEmpty =>
+      'Er zijn minstens twee voltooide benchmarks nodig om te vergelijken.';
+
+  @override
+  String get benchmarkRawLog => 'Uitvoeringslogboek';
+
+  @override
+  String benchmarkUpstream(String version) {
+    return 'Mogelijk gemaakt door Yet Another Bench Script ($version)';
+  }
+
+  @override
+  String get benchmarkPhaseStarting => 'Starten';
+
+  @override
+  String get benchmarkNoOutputYet =>
+      'Nog geen uitvoer. Voordat de eerste regel verschijnt, controleert YABS of google.com en icanhazip.com bereikbaar zijn. Op netwerken die een van beide sites blokkeren, kan dit enkele minuten duren.';
+
+  @override
+  String get benchmarkNoServers =>
+      'Add a server first, then come back to benchmark it.';
 }

@@ -35,6 +35,34 @@ class CurrentHomeTab extends _$CurrentHomeTab {
   void update(AppTab tab) => state = tab;
 }
 
+/// The tab that is drawing something the window's chrome is in the way of.
+///
+/// One thing sets it: the globe. A sphere fills the column it is given, and the
+/// bar over it and the navigation under it are two rows of controls around a
+/// picture that *is* the page — so while it is up the tab takes the window and
+/// carries its own way out.
+///
+/// Which tab rather than a bare flag, because a tab is kept alive behind the
+/// others: the server tab goes on drawing a globe while somebody reads a
+/// terminal, and the chrome has to be back for that one.
+@Riverpod(keepAlive: true)
+class ImmersiveTab extends _$ImmersiveTab {
+  @override
+  AppTab? build() => null;
+
+  /// Says whether [tab] wants the window.
+  ///
+  /// A tab may only clear its own claim, so a page saying "not me" cannot take
+  /// the window back from another that is asking for it.
+  void update(AppTab tab, {required bool wants}) {
+    if (wants) {
+      state = tab;
+    } else if (state == tab) {
+      state = null;
+    }
+  }
+}
+
 /// A server waiting to be opened on the server tab.
 ///
 /// A request rather than a call for two reasons. The tab may not exist yet —

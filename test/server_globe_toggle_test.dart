@@ -58,9 +58,16 @@ void main() {
     await SqliteDb.close();
   });
 
-  Future<void> pump(WidgetTester tester, {Size size = const Size(420, 900)}) async {
+  Future<void> pump(
+    WidgetTester tester, {
+    Size size = const Size(420, 900),
+    double bottomInset = 0,
+  }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
+    if (bottomInset > 0) {
+      tester.view.padding = FakeViewPadding(bottom: bottomInset);
+    }
     addTearDown(tester.view.reset);
 
     await tester.pumpWidget(
@@ -89,6 +96,19 @@ void main() {
   }
 
   Finder globeButton() => find.byIcon(Icons.public);
+
+  /// Past the entrance animation and the post-frame callback that publishes
+  /// the claim. `pumpAndSettle` is not usable here — see the note above.
+  Future<void> settle(WidgetTester tester) async {
+    for (var i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+  }
+
+  /// The tab asking for the whole window, as the home page reads it.
+  AppTab? immersiveTab(WidgetTester tester) => ProviderScope.containerOf(
+    tester.element(find.byType(ServerPage)),
+  ).read(immersiveTabProvider);
 
   /// Opens the detail pane, which is what a wide window needs before it is
   /// split at all.
@@ -202,6 +222,126 @@ void main() {
     await pump(tester);
     expect(find.byType(ServerGlobe), findsNothing);
     expect(find.byType(EmptyPane), findsOneWidget);
+    // And the bar stays, which is not a detail: the empty states are the ones
+    // with something to undo, and the control that undoes it is up there.
+    expect(find.byType(SessionSwitcherLabel), findsOneWidget);
+    expect(immersiveTab(tester), isNull);
+  });
+
+  /// The globe as the whole window.
+  ///
+  /// A sphere fills the column it is given, and the bar over it and the
+  /// navigation under it are two rows of controls around a picture that *is*
+  /// the page. So the tab takes the window and carries its own way out — which
+  /// is the part that has to hold, because nothing else on screen leaves.
+  group('taking the window', () {
+    testWidgets('the bar goes and the globe carries the way back', (
+      tester,
+    ) async {
+      addServer();
+      await pump(tester);
+      expect(find.byType(SessionSwitcherLabel), findsOneWidget);
+
+      await tester.tap(globeButton());
+      await settle(tester);
+
+      expect(find.byType(ServerGlobe), findsOneWidget);
+      expect(find.byType(SessionSwitcherLabel), findsNothing);
+      // What the home page reads to take the navigation away with it.
+      expect(immersiveTab(tester), AppTab.server);
+      // Over the globe itself, since the bar that held the toggle is gone.
+      expect(
+        find.descendant(
+          of: find.byType(ServerGlobe),
+          matching: find.byIcon(Icons.grid_view_rounded),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('and both come back when it is left', (tester) async {
+      Stores.setting.serverPageGlobe.put(true);
+      addServer();
+      await pump(tester);
+      expect(find.byType(SessionSwitcherLabel), findsNothing);
+
+      await tester.tap(find.byIcon(Icons.grid_view_rounded));
+      await settle(tester);
+
+      expect(find.byType(ServerGlobe), findsNothing);
+      expect(find.byType(SessionSwitcherLabel), findsOneWidget);
+      expect(immersiveTab(tester), isNull);
+    });
+
+    testWidgets('the feature being turned off gives the window back', (
+      tester,
+    ) async {
+      // The globe closes with nothing having been tapped, so the claim has to
+      // be dropped by the same build that drops the globe — otherwise the
+      // navigation stays gone with nothing on screen that would bring it back.
+      Stores.setting.serverPageGlobe.put(true);
+      addServer();
+      await pump(tester);
+      expect(immersiveTab(tester), AppTab.server);
+
+      Stores.setting.globeEnabled.put(false);
+      await settle(tester);
+
+      expect(immersiveTab(tester), isNull);
+      expect(find.byType(SessionSwitcherLabel), findsOneWidget);
+    });
+
+    testWidgets('and the bottom inset is still somebody\'s to spend', (
+      tester,
+    ) async {
+      // The bar that used to spend it is gone, so this page has to — which is
+      // why it keeps its `SafeArea` with no app bar over it.
+      //
+      // The other half of that is on the home page and cannot be seen from
+      // here: `Scaffold` takes the bottom padding off its body whenever the
+      // bottom slot is *filled*, on the grounds that the bar will spend it. A
+      // bar left in place drawing nothing spends nothing, and the globe ran
+      // under the home indicator — so the home page removes the bar rather
+      // than emptying it.
+      const inset = 34.0;
+      Stores.setting.serverPageGlobe.put(true);
+      addServer();
+      await pump(tester, bottomInset: inset);
+
+      expect(find.byType(ServerGlobe), findsOneWidget);
+      final globe = tester.getRect(find.byType(ServerGlobe));
+      expect(globe.bottom, 900 - inset);
+    });
+
+    testWidgets('not beside a detail pane, where the pane has the way out', (
+      tester,
+    ) async {
+      // Split, the globe is a column rather than the page and the actions row
+      // above it is still there — so the window's chrome is not in the way of
+      // anything.
+      Stores.setting.serverPageGlobe.put(true);
+      addServer();
+      await pump(tester, size: const Size(1400, 900));
+      await openDetail(tester, 'srv-1');
+
+      expect(find.byKey(const ValueKey('globe-pane')), findsOneWidget);
+      expect(immersiveTab(tester), isNull);
+    });
+
+    testWidgets('and the claim is dropped when the split arrives', (
+      tester,
+    ) async {
+      // A wide window with nothing open goes down the single-column branch, so
+      // the globe does fill it — until a server is selected and it becomes one
+      // column of two.
+      Stores.setting.serverPageGlobe.put(true);
+      addServer();
+      await pump(tester, size: const Size(1400, 900));
+      expect(immersiveTab(tester), AppTab.server);
+
+      await openDetail(tester, 'srv-1');
+      expect(immersiveTab(tester), isNull);
+    });
   });
 
   testWidgets('turning the feature off while the globe is up closes it', (

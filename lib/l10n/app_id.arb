@@ -546,7 +546,61 @@
   "geoDataUnreachable": "Tidak dapat mengambil data.",
   "geoDataRemoveFailed": "Tidak dapat menghapus data.",
   "geoDataCurrent": "{month} sudah terpasang.",
-  "@geoDataCurrent": {"placeholders": {"month": {}}},
+  "@geoDataCurrent": {
+    "placeholders": {
+      "month": {}
+    }
+  },
   "geoDataConsent": "**Unduhan: {download} · Penyimpanan di perangkat: {disk}.** Seluruh kumpulan data disimpan di perangkat ini dan semua pencarian lokasi berikutnya dilakukan secara lokal. Alamat server dan aktivitas pencarian tidak dikirim ke layanan unduhan.\n\nDiperbarui setiap bulan. Versi yang lebih baru menggantikan data yang terpasang tanpa menyimpan salinan tambahan. Anda dapat menghapusnya kapan saja.",
-  "@geoDataConsent": {"placeholders": {"download": {}, "disk": {}}}
+  "@geoDataConsent": {
+    "placeholders": {
+      "download": {},
+      "disk": {}
+    }
+  },
+  "benchmark": "Uji performa",
+  "benchmarkIntro": "Menjalankan Yet Another Bench Script di server ini untuk menguji disk, jaringan, dan CPU. Pengujian lengkap memerlukan 10–20 menit dan tetap berjalan jika Anda meninggalkan halaman ini atau menutup aplikasi.",
+  "benchmarkLinuxOnly": "Uji performa memerlukan Linux. Server ini melaporkan {system}.",
+  "benchmarkNoRuns": "Belum ada uji performa.",
+  "benchmarkRunning": "Uji performa sedang berjalan",
+  "benchmarkStartFailed": "Tidak dapat memulai uji performa",
+  "benchmarkCancelConfirm": "Hentikan pengujian ini? Semua hasil pengukuran sejauh ini akan hilang.",
+  "benchmarkDeleteConfirm": "Hapus hasil pengujian ini?",
+  "benchmarkNothingSelected": "Semua tahap dinonaktifkan. Pengujian hanya akan mengumpulkan informasi sistem dan selesai dalam beberapa detik.",
+  "benchmarkDiskTip": "fio dengan empat ukuran blok; sekitar 3 menit. Menulis file uji 2 GB ke direktori kerja dan memerlukan ruang kosong sebesar itu.",
+  "benchmarkNetworkTip": "iperf3 terhadap server publik; sekitar 4 menit.",
+  "benchmarkReducedNetwork": "Lebih sedikit lokasi",
+  "benchmarkReducedNetworkTip": "Tiga lokasi, bukan tujuh. Perkiraan lalu lintas berkurang dari {full} menjadi {reduced}.",
+  "benchmarkCpuTip": "Mengunduh Geekbench, program berpemilik, lalu **menerbitkan hasilnya pada halaman publik di geekbench.com**, termasuk model CPU, jumlah inti, dan memori.",
+  "benchmarkIpInfoTip": "Mengirim alamat publik server ini ke ip-api.com melalui HTTP tanpa enkripsi.",
+  "benchmarkIpInfo": "Cari pemilik IP",
+  "benchmarkPreferBin": "Unduh fio dan iperf3",
+  "benchmarkPreferBinTip": "Mengunduh keduanya dari GitHub alih-alih menggunakan paket milik host. Aktifkan hanya jika keduanya tidak terpasang di host.",
+  "benchmarkWorkDir": "Direktori kerja",
+  "benchmarkWorkDirTip": "Menentukan sistem file yang diukur oleh pengujian disk. Jika kosong, direktori home akun masuk akan digunakan.",
+  "benchmarkEstimatedTime": "Sekitar {minutes} menit",
+  "benchmarkEstimatedTraffic": "Sekitar {size} lalu lintas",
+  "benchmarkPhaseSystem": "Membaca informasi sistem",
+  "benchmarkPhaseDisk": "Menguji disk",
+  "benchmarkPhaseNetwork": "Menguji jaringan",
+  "benchmarkPhaseCpu": "Menguji CPU",
+  "benchmarkPhaseDone": "Menyelesaikan",
+  "benchmarkDiedUnreported": "Pengujian berhenti tanpa melaporkan hasil. Pada server kecil, penyebabnya biasanya OOM killer.",
+  "benchmarkResultUnreadable": "Hasil ini tidak dapat dibaca sebagai JSON. Teks mentah ditampilkan di bawah.",
+  "benchmarkViewOnGeekbench": "Lihat di Geekbench",
+  "benchmarkGeekbenchPublic": "Hasil ini dipublikasikan melalui tautan di atas.",
+  "benchmarkSingleCore": "Inti tunggal",
+  "benchmarkMultiCore": "Multi-inti",
+  "benchmarkBlockSize": "Ukuran blok",
+  "benchmarkIops": "IOPS",
+  "benchmarkSend": "Unggah",
+  "benchmarkRecv": "Unduh",
+  "benchmarkLatency": "Latensi",
+  "benchmarkVirt": "Virtualisasi",
+  "benchmarkCompare": "Bandingkan",
+  "benchmarkCompareEmpty": "Diperlukan setidaknya dua pengujian yang telah selesai untuk dibandingkan.",
+  "benchmarkRawLog": "Log pengujian",
+  "benchmarkUpstream": "Didukung oleh Yet Another Bench Script ({version})",
+  "benchmarkPhaseStarting": "Memulai",
+  "benchmarkNoOutputYet": "Belum ada keluaran. Sebelum menampilkan baris pertama, YABS memeriksa apakah google.com dan icanhazip.com dapat dijangkau. Pada jaringan yang memblokir salah satu situs tersebut, proses ini dapat memerlukan beberapa menit."
 }

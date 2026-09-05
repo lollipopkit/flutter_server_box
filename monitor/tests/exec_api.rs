@@ -16,6 +16,7 @@ use serde_json::json;
 use server_box_monitor::api::auth::generate_token;
 use server_box_monitor::api::server::AppState;
 use server_box_monitor::core::config::Config;
+use server_box_monitor::core::remote_access::ExecConfig;
 
 const SECRET: &str = "test-secret-that-is-long-enough-32ch";
 
@@ -29,12 +30,17 @@ fn ensure_crypto_provider() {
 }
 
 async fn app_state(full_access: bool) -> Arc<AppState> {
+    app_state_with(full_access, ExecConfig::default()).await
+}
+
+async fn app_state_with(full_access: bool, exec: ExecConfig) -> Arc<AppState> {
     ensure_crypto_provider();
     let mut config = Config {
         jwt_secret: Some(SECRET.to_string()),
         ..Default::default()
     };
     let mut remote = config.get_remote_access();
+    remote.exec = exec;
     // The grant is gated on the terminal being available, so that switching
     // the terminal off cannot leave this door open behind it. The test server
     // listens on loopback, which counts as a secure transport.
@@ -51,13 +57,11 @@ async fn test_server(state: Arc<AppState>) -> TestServer {
     web_test::server(move || {
         let state = state.clone();
         async move {
+            let limit = state.remote_access.exec.max_request_bytes;
             App::new().state(state).service(
                 web::scope("/api/v1").service(
                     web::resource("/exec")
-                        .state(
-                            web::types::JsonConfig::default()
-                                .limit(server_box_monitor::api::exec::MAX_REQUEST),
-                        )
+                        .state(web::types::JsonConfig::default().limit(limit))
                         .route(web::post().to(server_box_monitor::api::exec::exec)),
                 ),
             )
@@ -119,6 +123,61 @@ async fn a_command_runs_and_its_output_comes_back() {
     assert_eq!(body["stdout"], platform_line("exec-ok"));
     assert_eq!(body["stderr"], "");
     assert_eq!(body["truncated"], false);
+    assert_eq!(body["timed_out"], false);
+}
+
+/// The bounds come from `[remote_access.exec]`, so an operator who needs a
+/// command this endpoint was not sized for can have one.
+///
+/// Asserted through a *shortened* limit rather than a lengthened one: the
+/// mechanism is the same either way, and a test that proves a 30-minute
+/// timeout is honoured has to take 30 minutes to fail.
+#[ntex::test]
+async fn the_configured_timeout_is_what_kills_a_command() {
+    let srv = test_server(
+        app_state_with(
+            true,
+            ExecConfig {
+                timeout_secs: Some(1),
+                ..Default::default()
+            },
+        )
+        .await,
+    )
+    .await;
+    let cmd = platform_command("sleep 20", "timeout /t 20 /nobreak");
+    let body = post(&srv, json!({ "cmd": cmd })).await.unwrap();
+
+    assert_eq!(body["timed_out"], true);
+    // Killed rather than exited, and nothing it had buffered is reported as
+    // though the command had finished saying it.
+    assert!(body["exit_code"].is_null());
+    assert_eq!(body["stdout"], "");
+}
+
+/// The other half of the same section: what is kept of each stream.
+#[ntex::test]
+async fn the_configured_output_cap_is_what_truncates() {
+    let srv = test_server(
+        app_state_with(
+            true,
+            ExecConfig {
+                max_output_bytes: Some(16),
+                ..Default::default()
+            },
+        )
+        .await,
+    )
+    .await;
+    let body = post(&srv, json!({"cmd": "echo 0123456789abcdefghijklmnop"}))
+        .await
+        .unwrap();
+
+    assert_eq!(body["truncated"], true);
+    assert_eq!(body["stdout"].as_str().unwrap().len(), 16);
+    // The command itself succeeded; only this agent's copy of its output is a
+    // prefix, which is exactly the distinction `truncated` exists to make.
+    assert_eq!(body["exit_code"], 0);
     assert_eq!(body["timed_out"], false);
 }
 
