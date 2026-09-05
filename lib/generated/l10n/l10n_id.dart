@@ -1898,4 +1898,163 @@ class AppLocalizationsId extends AppLocalizations {
   String geoDataConsent(Object download, Object disk) {
     return '**Unduhan: $download · Penyimpanan di perangkat: $disk.** Seluruh kumpulan data disimpan di perangkat ini dan semua pencarian lokasi berikutnya dilakukan secara lokal. Alamat server dan aktivitas pencarian tidak dikirim ke layanan unduhan.\n\nDiperbarui setiap bulan. Versi yang lebih baru menggantikan data yang terpasang tanpa menyimpan salinan tambahan. Anda dapat menghapusnya kapan saja.';
   }
+
+  @override
+  String get benchmark => 'Uji performa';
+
+  @override
+  String get benchmarkIntro =>
+      'Menjalankan Yet Another Bench Script di server ini untuk menguji disk, jaringan, dan CPU. Pengujian lengkap memerlukan 10–20 menit dan tetap berjalan jika Anda meninggalkan halaman ini atau menutup aplikasi.';
+
+  @override
+  String benchmarkLinuxOnly(String system) {
+    return 'Uji performa memerlukan Linux. Server ini melaporkan $system.';
+  }
+
+  @override
+  String get benchmarkNoRuns => 'Belum ada uji performa.';
+
+  @override
+  String get benchmarkRunning => 'Uji performa sedang berjalan';
+
+  @override
+  String get benchmarkStartFailed => 'Tidak dapat memulai uji performa';
+
+  @override
+  String get benchmarkCancelConfirm =>
+      'Hentikan pengujian ini? Semua hasil pengukuran sejauh ini akan hilang.';
+
+  @override
+  String get benchmarkDeleteConfirm => 'Hapus hasil pengujian ini?';
+
+  @override
+  String get benchmarkNothingSelected =>
+      'Semua tahap dinonaktifkan. Pengujian hanya akan mengumpulkan informasi sistem dan selesai dalam beberapa detik.';
+
+  @override
+  String get benchmarkDiskTip =>
+      'fio dengan empat ukuran blok; sekitar 3 menit. Menulis file uji 2 GB ke direktori kerja dan memerlukan ruang kosong sebesar itu.';
+
+  @override
+  String get benchmarkNetworkTip =>
+      'iperf3 terhadap server publik; sekitar 4 menit.';
+
+  @override
+  String get benchmarkReducedNetwork => 'Lebih sedikit lokasi';
+
+  @override
+  String benchmarkReducedNetworkTip(String full, String reduced) {
+    return 'Tiga lokasi, bukan tujuh. Perkiraan lalu lintas berkurang dari $full menjadi $reduced.';
+  }
+
+  @override
+  String get benchmarkCpuTip =>
+      'Mengunduh Geekbench, program berpemilik, lalu **menerbitkan hasilnya pada halaman publik di geekbench.com**, termasuk model CPU, jumlah inti, dan memori.';
+
+  @override
+  String get benchmarkIpInfoTip =>
+      'Mengirim alamat publik server ini ke ip-api.com melalui HTTP tanpa enkripsi.';
+
+  @override
+  String get benchmarkIpInfo => 'Cari pemilik IP';
+
+  @override
+  String get benchmarkPreferBin => 'Unduh fio dan iperf3';
+
+  @override
+  String get benchmarkPreferBinTip =>
+      'Mengunduh keduanya dari GitHub alih-alih menggunakan paket milik host. Aktifkan hanya jika keduanya tidak terpasang di host.';
+
+  @override
+  String get benchmarkWorkDir => 'Direktori kerja';
+
+  @override
+  String get benchmarkWorkDirTip =>
+      'Menentukan sistem file yang diukur oleh pengujian disk. Jika kosong, direktori home akun masuk akan digunakan.';
+
+  @override
+  String get benchmarkCustomIperf => 'Server iperf khusus';
+
+  @override
+  String get benchmarkCustomIperfTip =>
+      'host:port_range:name:location:modes, dipisahkan dengan koma. Jika kosong, daftar bawaan akan digunakan.';
+
+  @override
+  String benchmarkEstimatedTime(String minutes) {
+    return 'Sekitar $minutes menit';
+  }
+
+  @override
+  String benchmarkEstimatedTraffic(String size) {
+    return 'Sekitar $size lalu lintas';
+  }
+
+  @override
+  String get benchmarkPhaseSystem => 'Membaca informasi sistem';
+
+  @override
+  String get benchmarkPhaseDisk => 'Menguji disk';
+
+  @override
+  String get benchmarkPhaseNetwork => 'Menguji jaringan';
+
+  @override
+  String get benchmarkPhaseCpu => 'Menguji CPU';
+
+  @override
+  String get benchmarkPhaseDone => 'Menyelesaikan';
+
+  @override
+  String get benchmarkDiedUnreported =>
+      'Pengujian berhenti tanpa melaporkan hasil. Pada server kecil, penyebabnya biasanya OOM killer.';
+
+  @override
+  String get benchmarkResultUnreadable =>
+      'Hasil ini tidak dapat dibaca sebagai JSON. Teks mentah ditampilkan di bawah.';
+
+  @override
+  String get benchmarkViewOnGeekbench => 'Lihat di Geekbench';
+
+  @override
+  String get benchmarkGeekbenchPublic =>
+      'Hasil ini dipublikasikan melalui tautan di atas.';
+
+  @override
+  String get benchmarkSingleCore => 'Inti tunggal';
+
+  @override
+  String get benchmarkMultiCore => 'Multi-inti';
+
+  @override
+  String get benchmarkBlockSize => 'Ukuran blok';
+
+  @override
+  String get benchmarkIops => 'IOPS';
+
+  @override
+  String get benchmarkSend => 'Unggah';
+
+  @override
+  String get benchmarkRecv => 'Unduh';
+
+  @override
+  String get benchmarkLatency => 'Latensi';
+
+  @override
+  String get benchmarkVirt => 'Virtualisasi';
+
+  @override
+  String get benchmarkCompare => 'Bandingkan';
+
+  @override
+  String get benchmarkCompareEmpty =>
+      'Diperlukan setidaknya dua pengujian yang telah selesai untuk dibandingkan.';
+
+  @override
+  String get benchmarkRawLog => 'Log pengujian';
+
+  @override
+  String benchmarkUpstream(String version) {
+    return 'Didukung oleh Yet Another Bench Script ($version)';
+  }
 }

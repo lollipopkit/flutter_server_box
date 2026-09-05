@@ -1892,4 +1892,163 @@ class AppLocalizationsEn extends AppLocalizations {
   String geoDataConsent(Object download, Object disk) {
     return '**Download: $download · On-device storage: $disk.** The complete dataset is stored on this device, and every later geolocation lookup is performed locally. Server addresses and lookup activity are not sent to the download service.\n\nUpdated monthly. A newer version replaces the installed data without keeping an extra copy. You can delete it at any time.';
   }
+
+  @override
+  String get benchmark => 'Benchmark';
+
+  @override
+  String get benchmarkIntro =>
+      'Runs Yet Another Bench Script on this server: disk, network and CPU. A full run takes 10–20 minutes and keeps going if you leave this page or close the app.';
+
+  @override
+  String benchmarkLinuxOnly(String system) {
+    return 'Benchmarking needs Linux. This server reports $system.';
+  }
+
+  @override
+  String get benchmarkNoRuns => 'No benchmarks yet.';
+
+  @override
+  String get benchmarkRunning => 'Benchmark running';
+
+  @override
+  String get benchmarkStartFailed => 'Could not start the benchmark';
+
+  @override
+  String get benchmarkCancelConfirm =>
+      'Stop this benchmark? What it has measured so far is lost.';
+
+  @override
+  String get benchmarkDeleteConfirm => 'Delete this benchmark result?';
+
+  @override
+  String get benchmarkNothingSelected =>
+      'Every phase is off. The run will collect system information only, and take a few seconds.';
+
+  @override
+  String get benchmarkDiskTip =>
+      'fio at four block sizes, about 3 minutes. Writes a 2 GB test file into the working directory and needs that much free.';
+
+  @override
+  String get benchmarkNetworkTip =>
+      'iperf3 against public servers, about 4 minutes.';
+
+  @override
+  String get benchmarkReducedNetwork => 'Fewer locations';
+
+  @override
+  String benchmarkReducedNetworkTip(String full, String reduced) {
+    return 'Three locations instead of seven. Roughly $full of traffic becomes $reduced.';
+  }
+
+  @override
+  String get benchmarkCpuTip =>
+      'Downloads Geekbench, a proprietary program, and **publishes the result to a public page on geekbench.com** — CPU model, core count and memory included.';
+
+  @override
+  String get benchmarkIpInfoTip =>
+      'Sends this server\'s public address to ip-api.com over plain HTTP.';
+
+  @override
+  String get benchmarkIpInfo => 'Look up IP owner';
+
+  @override
+  String get benchmarkPreferBin => 'Download fio and iperf3';
+
+  @override
+  String get benchmarkPreferBinTip =>
+      'Downloads them from GitHub instead of using the host\'s packages. Turn on only if the host has neither installed.';
+
+  @override
+  String get benchmarkWorkDir => 'Working directory';
+
+  @override
+  String get benchmarkWorkDirTip =>
+      'Decides which filesystem the disk test measures. Empty means the login account\'s home directory.';
+
+  @override
+  String get benchmarkCustomIperf => 'Custom iperf servers';
+
+  @override
+  String get benchmarkCustomIperfTip =>
+      'host:port_range:name:location:modes, comma separated. Empty uses the built-in list.';
+
+  @override
+  String benchmarkEstimatedTime(String minutes) {
+    return 'About $minutes min';
+  }
+
+  @override
+  String benchmarkEstimatedTraffic(String size) {
+    return 'About $size of traffic';
+  }
+
+  @override
+  String get benchmarkPhaseSystem => 'Reading system information';
+
+  @override
+  String get benchmarkPhaseDisk => 'Testing disk';
+
+  @override
+  String get benchmarkPhaseNetwork => 'Testing network';
+
+  @override
+  String get benchmarkPhaseCpu => 'Testing CPU';
+
+  @override
+  String get benchmarkPhaseDone => 'Finishing';
+
+  @override
+  String get benchmarkDiedUnreported =>
+      'The run stopped without reporting a result. On a small server this is usually the out-of-memory killer.';
+
+  @override
+  String get benchmarkResultUnreadable =>
+      'This result could not be read as JSON. The raw text is below.';
+
+  @override
+  String get benchmarkViewOnGeekbench => 'View on Geekbench';
+
+  @override
+  String get benchmarkGeekbenchPublic =>
+      'This result is published publicly at the link above.';
+
+  @override
+  String get benchmarkSingleCore => 'Single core';
+
+  @override
+  String get benchmarkMultiCore => 'Multi core';
+
+  @override
+  String get benchmarkBlockSize => 'Block size';
+
+  @override
+  String get benchmarkIops => 'IOPS';
+
+  @override
+  String get benchmarkSend => 'Up';
+
+  @override
+  String get benchmarkRecv => 'Down';
+
+  @override
+  String get benchmarkLatency => 'Latency';
+
+  @override
+  String get benchmarkVirt => 'Virtualization';
+
+  @override
+  String get benchmarkCompare => 'Compare';
+
+  @override
+  String get benchmarkCompareEmpty =>
+      'At least two finished benchmarks are needed to compare.';
+
+  @override
+  String get benchmarkRawLog => 'Run log';
+
+  @override
+  String benchmarkUpstream(String version) {
+    return 'Powered by Yet Another Bench Script ($version)';
+  }
 }

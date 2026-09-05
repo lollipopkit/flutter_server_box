@@ -1791,4 +1791,159 @@ class AppLocalizationsJa extends AppLocalizations {
   String geoDataConsent(Object download, Object disk) {
     return '**ダウンロード：$download · 端末上の使用容量：$disk。** 完全なデータセットはこの端末に保存され、以後の位置情報検索はすべてローカルで行われます。サーバーのアドレスや検索状況がダウンロードサービスに送信されることはありません。\n\n毎月更新されます。新しいバージョンはインストール済みのデータを置き換え、追加のコピーは保持しません。データはいつでも削除できます。';
   }
+
+  @override
+  String get benchmark => 'ベンチマーク';
+
+  @override
+  String get benchmarkIntro =>
+      'このサーバーで Yet Another Bench Script を実行し、ディスク、ネットワーク、CPU を測定します。すべてのテストには 10～20 分かかり、このページを離れたりアプリを閉じたりしても実行は継続します。';
+
+  @override
+  String benchmarkLinuxOnly(String system) {
+    return 'ベンチマークには Linux が必要です。このサーバーからは $system と報告されています。';
+  }
+
+  @override
+  String get benchmarkNoRuns => 'ベンチマーク結果はまだありません。';
+
+  @override
+  String get benchmarkRunning => 'ベンチマーク実行中';
+
+  @override
+  String get benchmarkStartFailed => 'ベンチマークを開始できませんでした';
+
+  @override
+  String get benchmarkCancelConfirm => 'このベンチマークを停止しますか？ここまでの測定結果は失われます。';
+
+  @override
+  String get benchmarkDeleteConfirm => 'このベンチマーク結果を削除しますか？';
+
+  @override
+  String get benchmarkNothingSelected =>
+      'すべてのテスト項目がオフです。システム情報のみを収集し、数秒で完了します。';
+
+  @override
+  String get benchmarkDiskTip =>
+      '4 種類のブロックサイズで fio を実行します（約 3 分）。作業ディレクトリに 2 GB のテストファイルを書き込むため、同量の空き容量が必要です。';
+
+  @override
+  String get benchmarkNetworkTip => '公開サーバーに対して iperf3 を実行します（約 4 分）。';
+
+  @override
+  String get benchmarkReducedNetwork => '測定地点を減らす';
+
+  @override
+  String benchmarkReducedNetworkTip(String full, String reduced) {
+    return '測定地点を 7 か所から 3 か所に減らします。推定通信量は $full から $reduced になります。';
+  }
+
+  @override
+  String get benchmarkCpuTip =>
+      'プロプライエタリソフトウェアの Geekbench をダウンロードし、**結果を geekbench.com の公開ページに掲載します**。CPU モデル、コア数、メモリも公開されます。';
+
+  @override
+  String get benchmarkIpInfoTip =>
+      'このサーバーのグローバル IP アドレスを、暗号化されていない HTTP で ip-api.com に送信します。';
+
+  @override
+  String get benchmarkIpInfo => 'IP アドレスの所有者を検索';
+
+  @override
+  String get benchmarkPreferBin => 'fio と iperf3 をダウンロード';
+
+  @override
+  String get benchmarkPreferBinTip =>
+      'ホストのパッケージを使わず、GitHub からダウンロードします。ホストにどちらもインストールされていない場合にのみ有効にしてください。';
+
+  @override
+  String get benchmarkWorkDir => '作業ディレクトリ';
+
+  @override
+  String get benchmarkWorkDirTip =>
+      'ディスクテストで測定するファイルシステムを決定します。空欄の場合はログインアカウントのホームディレクトリを使用します。';
+
+  @override
+  String get benchmarkCustomIperf => 'カスタム iperf サーバー';
+
+  @override
+  String get benchmarkCustomIperfTip =>
+      'host:port_range:name:location:modes の形式で、複数指定する場合はカンマで区切ります。空欄の場合は内蔵リストを使用します。';
+
+  @override
+  String benchmarkEstimatedTime(String minutes) {
+    return '約 $minutes 分';
+  }
+
+  @override
+  String benchmarkEstimatedTraffic(String size) {
+    return '通信量：約 $size';
+  }
+
+  @override
+  String get benchmarkPhaseSystem => 'システム情報を取得中';
+
+  @override
+  String get benchmarkPhaseDisk => 'ディスクを測定中';
+
+  @override
+  String get benchmarkPhaseNetwork => 'ネットワークを測定中';
+
+  @override
+  String get benchmarkPhaseCpu => 'CPU を測定中';
+
+  @override
+  String get benchmarkPhaseDone => '完了処理中';
+
+  @override
+  String get benchmarkDiedUnreported =>
+      '結果が報告されないまま実行が停止しました。メモリの少ないサーバーでは、通常 OOM Killer が原因です。';
+
+  @override
+  String get benchmarkResultUnreadable =>
+      'この結果を JSON として読み取れませんでした。以下に元のテキストを表示します。';
+
+  @override
+  String get benchmarkViewOnGeekbench => 'Geekbench で表示';
+
+  @override
+  String get benchmarkGeekbenchPublic => 'この結果は上記リンクで一般公開されています。';
+
+  @override
+  String get benchmarkSingleCore => 'シングルコア';
+
+  @override
+  String get benchmarkMultiCore => 'マルチコア';
+
+  @override
+  String get benchmarkBlockSize => 'ブロックサイズ';
+
+  @override
+  String get benchmarkIops => 'IOPS';
+
+  @override
+  String get benchmarkSend => 'アップロード';
+
+  @override
+  String get benchmarkRecv => 'ダウンロード';
+
+  @override
+  String get benchmarkLatency => 'レイテンシ';
+
+  @override
+  String get benchmarkVirt => '仮想化';
+
+  @override
+  String get benchmarkCompare => '比較';
+
+  @override
+  String get benchmarkCompareEmpty => '比較するには、完了したベンチマークが 2 件以上必要です。';
+
+  @override
+  String get benchmarkRawLog => '実行ログ';
+
+  @override
+  String benchmarkUpstream(String version) {
+    return 'Yet Another Bench Script ($version) を使用';
+  }
 }

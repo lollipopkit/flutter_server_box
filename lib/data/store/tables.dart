@@ -68,6 +68,7 @@ abstract final class Tables {
     'port_forward',
     'conn_stat',
     'server_dist',
+    'benchmark_run',
     'agent_conversation',
     'agent_active_conversation',
     'tombstone',

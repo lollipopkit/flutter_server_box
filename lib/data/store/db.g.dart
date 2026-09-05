@@ -6900,6 +6900,666 @@ class ServerDistsCompanion extends UpdateCompanion<ServerDistRow> {
   }
 }
 
+class $BenchmarkRunsTable extends BenchmarkRuns
+    with TableInfo<$BenchmarkRunsTable, BenchmarkRunRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $BenchmarkRunsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _serverIdMeta = const VerificationMeta(
+    'serverId',
+  );
+  @override
+  late final GeneratedColumn<String> serverId = GeneratedColumn<String>(
+    'server_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES server (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _startedAtMeta = const VerificationMeta(
+    'startedAt',
+  );
+  @override
+  late final GeneratedColumn<int> startedAt = GeneratedColumn<int>(
+    'started_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _finishedAtMeta = const VerificationMeta(
+    'finishedAt',
+  );
+  @override
+  late final GeneratedColumn<int> finishedAt = GeneratedColumn<int>(
+    'finished_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _optionsMeta = const VerificationMeta(
+    'options',
+  );
+  @override
+  late final GeneratedColumn<String> options = GeneratedColumn<String>(
+    'options',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _runDirMeta = const VerificationMeta('runDir');
+  @override
+  late final GeneratedColumn<String> runDir = GeneratedColumn<String>(
+    'run_dir',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _resultJsonMeta = const VerificationMeta(
+    'resultJson',
+  );
+  @override
+  late final GeneratedColumn<String> resultJson = GeneratedColumn<String>(
+    'result_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _logMeta = const VerificationMeta('log');
+  @override
+  late final GeneratedColumn<String> log = GeneratedColumn<String>(
+    'log',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _exitCodeMeta = const VerificationMeta(
+    'exitCode',
+  );
+  @override
+  late final GeneratedColumn<int> exitCode = GeneratedColumn<int>(
+    'exit_code',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _errorMeta = const VerificationMeta('error');
+  @override
+  late final GeneratedColumn<String> error = GeneratedColumn<String>(
+    'error',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    serverId,
+    startedAt,
+    finishedAt,
+    status,
+    options,
+    runDir,
+    resultJson,
+    log,
+    exitCode,
+    error,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'benchmark_run';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<BenchmarkRunRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('server_id')) {
+      context.handle(
+        _serverIdMeta,
+        serverId.isAcceptableOrUnknown(data['server_id']!, _serverIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_serverIdMeta);
+    }
+    if (data.containsKey('started_at')) {
+      context.handle(
+        _startedAtMeta,
+        startedAt.isAcceptableOrUnknown(data['started_at']!, _startedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_startedAtMeta);
+    }
+    if (data.containsKey('finished_at')) {
+      context.handle(
+        _finishedAtMeta,
+        finishedAt.isAcceptableOrUnknown(data['finished_at']!, _finishedAtMeta),
+      );
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_statusMeta);
+    }
+    if (data.containsKey('options')) {
+      context.handle(
+        _optionsMeta,
+        options.isAcceptableOrUnknown(data['options']!, _optionsMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_optionsMeta);
+    }
+    if (data.containsKey('run_dir')) {
+      context.handle(
+        _runDirMeta,
+        runDir.isAcceptableOrUnknown(data['run_dir']!, _runDirMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_runDirMeta);
+    }
+    if (data.containsKey('result_json')) {
+      context.handle(
+        _resultJsonMeta,
+        resultJson.isAcceptableOrUnknown(data['result_json']!, _resultJsonMeta),
+      );
+    }
+    if (data.containsKey('log')) {
+      context.handle(
+        _logMeta,
+        log.isAcceptableOrUnknown(data['log']!, _logMeta),
+      );
+    }
+    if (data.containsKey('exit_code')) {
+      context.handle(
+        _exitCodeMeta,
+        exitCode.isAcceptableOrUnknown(data['exit_code']!, _exitCodeMeta),
+      );
+    }
+    if (data.containsKey('error')) {
+      context.handle(
+        _errorMeta,
+        error.isAcceptableOrUnknown(data['error']!, _errorMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  BenchmarkRunRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BenchmarkRunRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      serverId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}server_id'],
+      )!,
+      startedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}started_at'],
+      )!,
+      finishedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}finished_at'],
+      ),
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      options: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}options'],
+      )!,
+      runDir: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}run_dir'],
+      )!,
+      resultJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}result_json'],
+      ),
+      log: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}log'],
+      )!,
+      exitCode: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}exit_code'],
+      ),
+      error: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}error'],
+      )!,
+    );
+  }
+
+  @override
+  $BenchmarkRunsTable createAlias(String alias) {
+    return $BenchmarkRunsTable(attachedDatabase, alias);
+  }
+
+  @override
+  bool get withoutRowId => true;
+}
+
+class BenchmarkRunRow extends DataClass implements Insertable<BenchmarkRunRow> {
+  final String id;
+  final String serverId;
+  final int startedAt;
+  final int? finishedAt;
+
+  /// A `BenchmarkStatus` name — by name, never by index, for `server_dist`'s
+  /// reason: these rows outlive the build that wrote them.
+  final String status;
+
+  /// [YabsOptions] as JSON.
+  final String options;
+
+  /// Where the run lives on the far side, so it can be polled, cancelled and
+  /// cleaned up by a later launch of the app.
+  final String runDir;
+
+  /// yabs' `-w` output, verbatim. Null until the run produced one.
+  final String? resultJson;
+
+  /// What the run printed. Kept because it is the only record of a phase yabs
+  /// skipped and why — "less than 2GB of space available" appears here and
+  /// nowhere in the JSON.
+  final String log;
+  final int? exitCode;
+  final String error;
+  const BenchmarkRunRow({
+    required this.id,
+    required this.serverId,
+    required this.startedAt,
+    this.finishedAt,
+    required this.status,
+    required this.options,
+    required this.runDir,
+    this.resultJson,
+    required this.log,
+    this.exitCode,
+    required this.error,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['server_id'] = Variable<String>(serverId);
+    map['started_at'] = Variable<int>(startedAt);
+    if (!nullToAbsent || finishedAt != null) {
+      map['finished_at'] = Variable<int>(finishedAt);
+    }
+    map['status'] = Variable<String>(status);
+    map['options'] = Variable<String>(options);
+    map['run_dir'] = Variable<String>(runDir);
+    if (!nullToAbsent || resultJson != null) {
+      map['result_json'] = Variable<String>(resultJson);
+    }
+    map['log'] = Variable<String>(log);
+    if (!nullToAbsent || exitCode != null) {
+      map['exit_code'] = Variable<int>(exitCode);
+    }
+    map['error'] = Variable<String>(error);
+    return map;
+  }
+
+  BenchmarkRunsCompanion toCompanion(bool nullToAbsent) {
+    return BenchmarkRunsCompanion(
+      id: Value(id),
+      serverId: Value(serverId),
+      startedAt: Value(startedAt),
+      finishedAt: finishedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(finishedAt),
+      status: Value(status),
+      options: Value(options),
+      runDir: Value(runDir),
+      resultJson: resultJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(resultJson),
+      log: Value(log),
+      exitCode: exitCode == null && nullToAbsent
+          ? const Value.absent()
+          : Value(exitCode),
+      error: Value(error),
+    );
+  }
+
+  factory BenchmarkRunRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BenchmarkRunRow(
+      id: serializer.fromJson<String>(json['id']),
+      serverId: serializer.fromJson<String>(json['serverId']),
+      startedAt: serializer.fromJson<int>(json['startedAt']),
+      finishedAt: serializer.fromJson<int?>(json['finishedAt']),
+      status: serializer.fromJson<String>(json['status']),
+      options: serializer.fromJson<String>(json['options']),
+      runDir: serializer.fromJson<String>(json['runDir']),
+      resultJson: serializer.fromJson<String?>(json['resultJson']),
+      log: serializer.fromJson<String>(json['log']),
+      exitCode: serializer.fromJson<int?>(json['exitCode']),
+      error: serializer.fromJson<String>(json['error']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'serverId': serializer.toJson<String>(serverId),
+      'startedAt': serializer.toJson<int>(startedAt),
+      'finishedAt': serializer.toJson<int?>(finishedAt),
+      'status': serializer.toJson<String>(status),
+      'options': serializer.toJson<String>(options),
+      'runDir': serializer.toJson<String>(runDir),
+      'resultJson': serializer.toJson<String?>(resultJson),
+      'log': serializer.toJson<String>(log),
+      'exitCode': serializer.toJson<int?>(exitCode),
+      'error': serializer.toJson<String>(error),
+    };
+  }
+
+  BenchmarkRunRow copyWith({
+    String? id,
+    String? serverId,
+    int? startedAt,
+    Value<int?> finishedAt = const Value.absent(),
+    String? status,
+    String? options,
+    String? runDir,
+    Value<String?> resultJson = const Value.absent(),
+    String? log,
+    Value<int?> exitCode = const Value.absent(),
+    String? error,
+  }) => BenchmarkRunRow(
+    id: id ?? this.id,
+    serverId: serverId ?? this.serverId,
+    startedAt: startedAt ?? this.startedAt,
+    finishedAt: finishedAt.present ? finishedAt.value : this.finishedAt,
+    status: status ?? this.status,
+    options: options ?? this.options,
+    runDir: runDir ?? this.runDir,
+    resultJson: resultJson.present ? resultJson.value : this.resultJson,
+    log: log ?? this.log,
+    exitCode: exitCode.present ? exitCode.value : this.exitCode,
+    error: error ?? this.error,
+  );
+  BenchmarkRunRow copyWithCompanion(BenchmarkRunsCompanion data) {
+    return BenchmarkRunRow(
+      id: data.id.present ? data.id.value : this.id,
+      serverId: data.serverId.present ? data.serverId.value : this.serverId,
+      startedAt: data.startedAt.present ? data.startedAt.value : this.startedAt,
+      finishedAt: data.finishedAt.present
+          ? data.finishedAt.value
+          : this.finishedAt,
+      status: data.status.present ? data.status.value : this.status,
+      options: data.options.present ? data.options.value : this.options,
+      runDir: data.runDir.present ? data.runDir.value : this.runDir,
+      resultJson: data.resultJson.present
+          ? data.resultJson.value
+          : this.resultJson,
+      log: data.log.present ? data.log.value : this.log,
+      exitCode: data.exitCode.present ? data.exitCode.value : this.exitCode,
+      error: data.error.present ? data.error.value : this.error,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BenchmarkRunRow(')
+          ..write('id: $id, ')
+          ..write('serverId: $serverId, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('finishedAt: $finishedAt, ')
+          ..write('status: $status, ')
+          ..write('options: $options, ')
+          ..write('runDir: $runDir, ')
+          ..write('resultJson: $resultJson, ')
+          ..write('log: $log, ')
+          ..write('exitCode: $exitCode, ')
+          ..write('error: $error')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    serverId,
+    startedAt,
+    finishedAt,
+    status,
+    options,
+    runDir,
+    resultJson,
+    log,
+    exitCode,
+    error,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BenchmarkRunRow &&
+          other.id == this.id &&
+          other.serverId == this.serverId &&
+          other.startedAt == this.startedAt &&
+          other.finishedAt == this.finishedAt &&
+          other.status == this.status &&
+          other.options == this.options &&
+          other.runDir == this.runDir &&
+          other.resultJson == this.resultJson &&
+          other.log == this.log &&
+          other.exitCode == this.exitCode &&
+          other.error == this.error);
+}
+
+class BenchmarkRunsCompanion extends UpdateCompanion<BenchmarkRunRow> {
+  final Value<String> id;
+  final Value<String> serverId;
+  final Value<int> startedAt;
+  final Value<int?> finishedAt;
+  final Value<String> status;
+  final Value<String> options;
+  final Value<String> runDir;
+  final Value<String?> resultJson;
+  final Value<String> log;
+  final Value<int?> exitCode;
+  final Value<String> error;
+  const BenchmarkRunsCompanion({
+    this.id = const Value.absent(),
+    this.serverId = const Value.absent(),
+    this.startedAt = const Value.absent(),
+    this.finishedAt = const Value.absent(),
+    this.status = const Value.absent(),
+    this.options = const Value.absent(),
+    this.runDir = const Value.absent(),
+    this.resultJson = const Value.absent(),
+    this.log = const Value.absent(),
+    this.exitCode = const Value.absent(),
+    this.error = const Value.absent(),
+  });
+  BenchmarkRunsCompanion.insert({
+    required String id,
+    required String serverId,
+    required int startedAt,
+    this.finishedAt = const Value.absent(),
+    required String status,
+    required String options,
+    required String runDir,
+    this.resultJson = const Value.absent(),
+    this.log = const Value.absent(),
+    this.exitCode = const Value.absent(),
+    this.error = const Value.absent(),
+  }) : id = Value(id),
+       serverId = Value(serverId),
+       startedAt = Value(startedAt),
+       status = Value(status),
+       options = Value(options),
+       runDir = Value(runDir);
+  static Insertable<BenchmarkRunRow> custom({
+    Expression<String>? id,
+    Expression<String>? serverId,
+    Expression<int>? startedAt,
+    Expression<int>? finishedAt,
+    Expression<String>? status,
+    Expression<String>? options,
+    Expression<String>? runDir,
+    Expression<String>? resultJson,
+    Expression<String>? log,
+    Expression<int>? exitCode,
+    Expression<String>? error,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (serverId != null) 'server_id': serverId,
+      if (startedAt != null) 'started_at': startedAt,
+      if (finishedAt != null) 'finished_at': finishedAt,
+      if (status != null) 'status': status,
+      if (options != null) 'options': options,
+      if (runDir != null) 'run_dir': runDir,
+      if (resultJson != null) 'result_json': resultJson,
+      if (log != null) 'log': log,
+      if (exitCode != null) 'exit_code': exitCode,
+      if (error != null) 'error': error,
+    });
+  }
+
+  BenchmarkRunsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? serverId,
+    Value<int>? startedAt,
+    Value<int?>? finishedAt,
+    Value<String>? status,
+    Value<String>? options,
+    Value<String>? runDir,
+    Value<String?>? resultJson,
+    Value<String>? log,
+    Value<int?>? exitCode,
+    Value<String>? error,
+  }) {
+    return BenchmarkRunsCompanion(
+      id: id ?? this.id,
+      serverId: serverId ?? this.serverId,
+      startedAt: startedAt ?? this.startedAt,
+      finishedAt: finishedAt ?? this.finishedAt,
+      status: status ?? this.status,
+      options: options ?? this.options,
+      runDir: runDir ?? this.runDir,
+      resultJson: resultJson ?? this.resultJson,
+      log: log ?? this.log,
+      exitCode: exitCode ?? this.exitCode,
+      error: error ?? this.error,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (serverId.present) {
+      map['server_id'] = Variable<String>(serverId.value);
+    }
+    if (startedAt.present) {
+      map['started_at'] = Variable<int>(startedAt.value);
+    }
+    if (finishedAt.present) {
+      map['finished_at'] = Variable<int>(finishedAt.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (options.present) {
+      map['options'] = Variable<String>(options.value);
+    }
+    if (runDir.present) {
+      map['run_dir'] = Variable<String>(runDir.value);
+    }
+    if (resultJson.present) {
+      map['result_json'] = Variable<String>(resultJson.value);
+    }
+    if (log.present) {
+      map['log'] = Variable<String>(log.value);
+    }
+    if (exitCode.present) {
+      map['exit_code'] = Variable<int>(exitCode.value);
+    }
+    if (error.present) {
+      map['error'] = Variable<String>(error.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BenchmarkRunsCompanion(')
+          ..write('id: $id, ')
+          ..write('serverId: $serverId, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('finishedAt: $finishedAt, ')
+          ..write('status: $status, ')
+          ..write('options: $options, ')
+          ..write('runDir: $runDir, ')
+          ..write('resultJson: $resultJson, ')
+          ..write('log: $log, ')
+          ..write('exitCode: $exitCode, ')
+          ..write('error: $error')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $AgentConversationsTable extends AgentConversations
     with TableInfo<$AgentConversationsTable, AgentConversationRow> {
   @override
@@ -7893,6 +8553,7 @@ abstract class _$AppDb extends GeneratedDatabase {
       $ContainerRuntimesTable(this);
   late final $ConnStatsTable connStats = $ConnStatsTable(this);
   late final $ServerDistsTable serverDists = $ServerDistsTable(this);
+  late final $BenchmarkRunsTable benchmarkRuns = $BenchmarkRunsTable(this);
   late final $AgentConversationsTable agentConversations =
       $AgentConversationsTable(this);
   late final $AgentActiveConversationsTable agentActiveConversations =
@@ -7921,6 +8582,7 @@ abstract class _$AppDb extends GeneratedDatabase {
     containerRuntimes,
     connStats,
     serverDists,
+    benchmarkRuns,
     agentConversations,
     agentActiveConversations,
     tombstones,
@@ -8046,6 +8708,13 @@ abstract class _$AppDb extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('server_dist', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'server',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('benchmark_run', kind: UpdateKind.delete)],
     ),
     WritePropagation(
       on: TableUpdateQuery.onTableName(
@@ -9020,6 +9689,24 @@ final class $$ServersTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<$BenchmarkRunsTable, List<BenchmarkRunRow>>
+  _benchmarkRunsRefsTable(_$AppDb db) => MultiTypedResultKey.fromTable(
+    db.benchmarkRuns,
+    aliasName: 'server__id__benchmark_run__server_id',
+  );
+
+  $$BenchmarkRunsTableProcessedTableManager get benchmarkRunsRefs {
+    final manager = $$BenchmarkRunsTableTableManager(
+      $_db,
+      $_db.benchmarkRuns,
+    ).filter((f) => f.serverId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_benchmarkRunsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
@@ -9517,6 +10204,31 @@ class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
           }) => $$ServerDistsTableFilterComposer(
             $db: $db,
             $table: $db.serverDists,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> benchmarkRunsRefs(
+    Expression<bool> Function($$BenchmarkRunsTableFilterComposer f) f,
+  ) {
+    final $$BenchmarkRunsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.benchmarkRuns,
+      getReferencedColumn: (t) => t.serverId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BenchmarkRunsTableFilterComposer(
+            $db: $db,
+            $table: $db.benchmarkRuns,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -10225,6 +10937,31 @@ class $$ServersTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> benchmarkRunsRefs<T extends Object>(
+    Expression<T> Function($$BenchmarkRunsTableAnnotationComposer a) f,
+  ) {
+    final $$BenchmarkRunsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.benchmarkRuns,
+      getReferencedColumn: (t) => t.serverId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BenchmarkRunsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.benchmarkRuns,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$ServersTableTableManager
@@ -10254,6 +10991,7 @@ class $$ServersTableTableManager
             bool containerRuntimesRefs,
             bool connStatsRefs,
             bool serverDistsRefs,
+            bool benchmarkRunsRefs,
           })
         > {
   $$ServersTableTableManager(_$AppDb db, $ServersTable table)
@@ -10446,6 +11184,7 @@ class $$ServersTableTableManager
                 containerRuntimesRefs = false,
                 connStatsRefs = false,
                 serverDistsRefs = false,
+                benchmarkRunsRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -10461,6 +11200,7 @@ class $$ServersTableTableManager
                     if (containerRuntimesRefs) db.containerRuntimes,
                     if (connStatsRefs) db.connStats,
                     if (serverDistsRefs) db.serverDists,
+                    if (benchmarkRunsRefs) db.benchmarkRuns,
                   ],
                   addJoins:
                       <
@@ -10740,6 +11480,27 @@ class $$ServersTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (benchmarkRunsRefs)
+                        await $_getPrefetchedData<
+                          ServerRow,
+                          $ServersTable,
+                          BenchmarkRunRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ServersTableReferences
+                              ._benchmarkRunsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ServersTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).benchmarkRunsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.serverId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -10774,6 +11535,7 @@ typedef $$ServersTableProcessedTableManager =
         bool containerRuntimesRefs,
         bool connStatsRefs,
         bool serverDistsRefs,
+        bool benchmarkRunsRefs,
       })
     >;
 typedef $$ServerTagsTableCreateCompanionBuilder =
@@ -15053,6 +15815,439 @@ typedef $$ServerDistsTableProcessedTableManager =
       ServerDistRow,
       PrefetchHooks Function({bool serverId})
     >;
+typedef $$BenchmarkRunsTableCreateCompanionBuilder =
+    BenchmarkRunsCompanion Function({
+      required String id,
+      required String serverId,
+      required int startedAt,
+      Value<int?> finishedAt,
+      required String status,
+      required String options,
+      required String runDir,
+      Value<String?> resultJson,
+      Value<String> log,
+      Value<int?> exitCode,
+      Value<String> error,
+    });
+typedef $$BenchmarkRunsTableUpdateCompanionBuilder =
+    BenchmarkRunsCompanion Function({
+      Value<String> id,
+      Value<String> serverId,
+      Value<int> startedAt,
+      Value<int?> finishedAt,
+      Value<String> status,
+      Value<String> options,
+      Value<String> runDir,
+      Value<String?> resultJson,
+      Value<String> log,
+      Value<int?> exitCode,
+      Value<String> error,
+    });
+
+final class $$BenchmarkRunsTableReferences
+    extends BaseReferences<_$AppDb, $BenchmarkRunsTable, BenchmarkRunRow> {
+  $$BenchmarkRunsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $ServersTable _serverIdTable(_$AppDb db) =>
+      db.servers.createAlias('benchmark_run__server_id__server__id');
+
+  $$ServersTableProcessedTableManager get serverId {
+    final $_column = $_itemColumn<String>('server_id')!;
+
+    final manager = $$ServersTableTableManager(
+      $_db,
+      $_db.servers,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_serverIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$BenchmarkRunsTableFilterComposer
+    extends Composer<_$AppDb, $BenchmarkRunsTable> {
+  $$BenchmarkRunsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get finishedAt => $composableBuilder(
+    column: $table.finishedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get options => $composableBuilder(
+    column: $table.options,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get runDir => $composableBuilder(
+    column: $table.runDir,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get resultJson => $composableBuilder(
+    column: $table.resultJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get log => $composableBuilder(
+    column: $table.log,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get exitCode => $composableBuilder(
+    column: $table.exitCode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get error => $composableBuilder(
+    column: $table.error,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ServersTableFilterComposer get serverId {
+    final $$ServersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableFilterComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$BenchmarkRunsTableOrderingComposer
+    extends Composer<_$AppDb, $BenchmarkRunsTable> {
+  $$BenchmarkRunsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get finishedAt => $composableBuilder(
+    column: $table.finishedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get options => $composableBuilder(
+    column: $table.options,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get runDir => $composableBuilder(
+    column: $table.runDir,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get resultJson => $composableBuilder(
+    column: $table.resultJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get log => $composableBuilder(
+    column: $table.log,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get exitCode => $composableBuilder(
+    column: $table.exitCode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get error => $composableBuilder(
+    column: $table.error,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ServersTableOrderingComposer get serverId {
+    final $$ServersTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableOrderingComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$BenchmarkRunsTableAnnotationComposer
+    extends Composer<_$AppDb, $BenchmarkRunsTable> {
+  $$BenchmarkRunsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get startedAt =>
+      $composableBuilder(column: $table.startedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get finishedAt => $composableBuilder(
+    column: $table.finishedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get options =>
+      $composableBuilder(column: $table.options, builder: (column) => column);
+
+  GeneratedColumn<String> get runDir =>
+      $composableBuilder(column: $table.runDir, builder: (column) => column);
+
+  GeneratedColumn<String> get resultJson => $composableBuilder(
+    column: $table.resultJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get log =>
+      $composableBuilder(column: $table.log, builder: (column) => column);
+
+  GeneratedColumn<int> get exitCode =>
+      $composableBuilder(column: $table.exitCode, builder: (column) => column);
+
+  GeneratedColumn<String> get error =>
+      $composableBuilder(column: $table.error, builder: (column) => column);
+
+  $$ServersTableAnnotationComposer get serverId {
+    final $$ServersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$BenchmarkRunsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDb,
+          $BenchmarkRunsTable,
+          BenchmarkRunRow,
+          $$BenchmarkRunsTableFilterComposer,
+          $$BenchmarkRunsTableOrderingComposer,
+          $$BenchmarkRunsTableAnnotationComposer,
+          $$BenchmarkRunsTableCreateCompanionBuilder,
+          $$BenchmarkRunsTableUpdateCompanionBuilder,
+          (BenchmarkRunRow, $$BenchmarkRunsTableReferences),
+          BenchmarkRunRow,
+          PrefetchHooks Function({bool serverId})
+        > {
+  $$BenchmarkRunsTableTableManager(_$AppDb db, $BenchmarkRunsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$BenchmarkRunsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$BenchmarkRunsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$BenchmarkRunsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> serverId = const Value.absent(),
+                Value<int> startedAt = const Value.absent(),
+                Value<int?> finishedAt = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<String> options = const Value.absent(),
+                Value<String> runDir = const Value.absent(),
+                Value<String?> resultJson = const Value.absent(),
+                Value<String> log = const Value.absent(),
+                Value<int?> exitCode = const Value.absent(),
+                Value<String> error = const Value.absent(),
+              }) => BenchmarkRunsCompanion(
+                id: id,
+                serverId: serverId,
+                startedAt: startedAt,
+                finishedAt: finishedAt,
+                status: status,
+                options: options,
+                runDir: runDir,
+                resultJson: resultJson,
+                log: log,
+                exitCode: exitCode,
+                error: error,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String serverId,
+                required int startedAt,
+                Value<int?> finishedAt = const Value.absent(),
+                required String status,
+                required String options,
+                required String runDir,
+                Value<String?> resultJson = const Value.absent(),
+                Value<String> log = const Value.absent(),
+                Value<int?> exitCode = const Value.absent(),
+                Value<String> error = const Value.absent(),
+              }) => BenchmarkRunsCompanion.insert(
+                id: id,
+                serverId: serverId,
+                startedAt: startedAt,
+                finishedAt: finishedAt,
+                status: status,
+                options: options,
+                runDir: runDir,
+                resultJson: resultJson,
+                log: log,
+                exitCode: exitCode,
+                error: error,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$BenchmarkRunsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({serverId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (serverId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.serverId,
+                                referencedTable: $$BenchmarkRunsTableReferences
+                                    ._serverIdTable(db),
+                                referencedColumn: $$BenchmarkRunsTableReferences
+                                    ._serverIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$BenchmarkRunsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDb,
+      $BenchmarkRunsTable,
+      BenchmarkRunRow,
+      $$BenchmarkRunsTableFilterComposer,
+      $$BenchmarkRunsTableOrderingComposer,
+      $$BenchmarkRunsTableAnnotationComposer,
+      $$BenchmarkRunsTableCreateCompanionBuilder,
+      $$BenchmarkRunsTableUpdateCompanionBuilder,
+      (BenchmarkRunRow, $$BenchmarkRunsTableReferences),
+      BenchmarkRunRow,
+      PrefetchHooks Function({bool serverId})
+    >;
 typedef $$AgentConversationsTableCreateCompanionBuilder =
     AgentConversationsCompanion Function({
       required String id,
@@ -15950,6 +17145,8 @@ class $AppDbManager {
       $$ConnStatsTableTableManager(_db, _db.connStats);
   $$ServerDistsTableTableManager get serverDists =>
       $$ServerDistsTableTableManager(_db, _db.serverDists);
+  $$BenchmarkRunsTableTableManager get benchmarkRuns =>
+      $$BenchmarkRunsTableTableManager(_db, _db.benchmarkRuns);
   $$AgentConversationsTableTableManager get agentConversations =>
       $$AgentConversationsTableTableManager(_db, _db.agentConversations);
   $$AgentActiveConversationsTableTableManager get agentActiveConversations =>

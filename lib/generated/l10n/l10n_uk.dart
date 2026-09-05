@@ -1913,4 +1913,163 @@ class AppLocalizationsUk extends AppLocalizations {
   String geoDataConsent(Object download, Object disk) {
     return '**Розмір завантаження: $download · Місце на пристрої: $disk.** Повний набір даних зберігається на цьому пристрої, а всі подальші геолокаційні запити виконуються локально. Адреси серверів і відомості про запити не передаються сервісу завантаження.\n\nОновлюється щомісяця. Нова версія замінює встановлені дані, не зберігаючи додаткову копію. Дані можна видалити будь-коли.';
   }
+
+  @override
+  String get benchmark => 'Тест продуктивності';
+
+  @override
+  String get benchmarkIntro =>
+      'Запускає на цьому сервері Yet Another Bench Script для перевірки диска, мережі та процесора. Повний тест триває 10–20 хвилин і продовжує виконуватися, якщо залишити цю сторінку або закрити застосунок.';
+
+  @override
+  String benchmarkLinuxOnly(String system) {
+    return 'Для тесту продуктивності потрібен Linux. Сервер повідомляє, що використовується $system.';
+  }
+
+  @override
+  String get benchmarkNoRuns => 'Результатів тестування ще немає.';
+
+  @override
+  String get benchmarkRunning => 'Виконується тест продуктивності';
+
+  @override
+  String get benchmarkStartFailed => 'Не вдалося запустити тест продуктивності';
+
+  @override
+  String get benchmarkCancelConfirm =>
+      'Зупинити цей тест? Усі отримані результати буде втрачено.';
+
+  @override
+  String get benchmarkDeleteConfirm => 'Видалити результат цього тесту?';
+
+  @override
+  String get benchmarkNothingSelected =>
+      'Усі етапи вимкнено. Буде зібрано лише інформацію про систему; це триватиме кілька секунд.';
+
+  @override
+  String get benchmarkDiskTip =>
+      'fio із чотирма розмірами блоків; близько 3 хвилин. Записує тестовий файл розміром 2 ГБ у робочий каталог і потребує стільки ж вільного місця.';
+
+  @override
+  String get benchmarkNetworkTip =>
+      'iperf3 із загальнодоступними серверами; близько 4 хвилин.';
+
+  @override
+  String get benchmarkReducedNetwork => 'Менше розташувань';
+
+  @override
+  String benchmarkReducedNetworkTip(String full, String reduced) {
+    return 'Три розташування замість семи. Приблизний обсяг трафіку зменшиться з $full до $reduced.';
+  }
+
+  @override
+  String get benchmarkCpuTip =>
+      'Завантажує Geekbench, пропрієтарну програму, і **публікує результат на загальнодоступній сторінці geekbench.com**, включно з моделлю процесора, кількістю ядер і обсягом пам’яті.';
+
+  @override
+  String get benchmarkIpInfoTip =>
+      'Передає публічну адресу цього сервера сервісу ip-api.com через незашифрований HTTP.';
+
+  @override
+  String get benchmarkIpInfo => 'Дізнатися власника IP-адреси';
+
+  @override
+  String get benchmarkPreferBin => 'Завантажити fio та iperf3';
+
+  @override
+  String get benchmarkPreferBinTip =>
+      'Завантажує їх із GitHub замість використання пакетів хоста. Вмикайте лише тоді, коли на хості не встановлено жодної із цих програм.';
+
+  @override
+  String get benchmarkWorkDir => 'Робочий каталог';
+
+  @override
+  String get benchmarkWorkDirTip =>
+      'Визначає файлову систему для тестування диска. Якщо залишити поле порожнім, буде використано домашній каталог облікового запису.';
+
+  @override
+  String get benchmarkCustomIperf => 'Власні сервери iperf';
+
+  @override
+  String get benchmarkCustomIperfTip =>
+      'host:port_range:name:location:modes, через кому. Якщо залишити поле порожнім, буде використано вбудований список.';
+
+  @override
+  String benchmarkEstimatedTime(String minutes) {
+    return 'Близько $minutes хв.';
+  }
+
+  @override
+  String benchmarkEstimatedTraffic(String size) {
+    return 'Близько $size трафіку';
+  }
+
+  @override
+  String get benchmarkPhaseSystem => 'Зчитування інформації про систему';
+
+  @override
+  String get benchmarkPhaseDisk => 'Тестування диска';
+
+  @override
+  String get benchmarkPhaseNetwork => 'Тестування мережі';
+
+  @override
+  String get benchmarkPhaseCpu => 'Тестування процесора';
+
+  @override
+  String get benchmarkPhaseDone => 'Завершення';
+
+  @override
+  String get benchmarkDiedUnreported =>
+      'Тест зупинився, не повідомивши результат. На сервері з малим обсягом пам’яті причиною зазвичай є OOM killer.';
+
+  @override
+  String get benchmarkResultUnreadable =>
+      'Не вдалося прочитати цей результат як JSON. Нижче наведено початковий текст.';
+
+  @override
+  String get benchmarkViewOnGeekbench => 'Відкрити в Geekbench';
+
+  @override
+  String get benchmarkGeekbenchPublic =>
+      'Цей результат загальнодоступний за наведеним вище посиланням.';
+
+  @override
+  String get benchmarkSingleCore => 'Одне ядро';
+
+  @override
+  String get benchmarkMultiCore => 'Кілька ядер';
+
+  @override
+  String get benchmarkBlockSize => 'Розмір блока';
+
+  @override
+  String get benchmarkIops => 'IOPS';
+
+  @override
+  String get benchmarkSend => 'Надсилання';
+
+  @override
+  String get benchmarkRecv => 'Отримання';
+
+  @override
+  String get benchmarkLatency => 'Затримка';
+
+  @override
+  String get benchmarkVirt => 'Віртуалізація';
+
+  @override
+  String get benchmarkCompare => 'Порівняти';
+
+  @override
+  String get benchmarkCompareEmpty =>
+      'Для порівняння потрібно щонайменше два завершені тести.';
+
+  @override
+  String get benchmarkRawLog => 'Журнал виконання';
+
+  @override
+  String benchmarkUpstream(String version) {
+    return 'На основі Yet Another Bench Script ($version)';
+  }
 }

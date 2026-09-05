@@ -1894,4 +1894,163 @@ class AppLocalizationsTr extends AppLocalizations {
   String geoDataConsent(Object download, Object disk) {
     return '**İndirme: $download · Cihazdaki depolama alanı: $disk.** Veri kümesinin tamamı bu cihazda saklanır ve sonraki tüm konum sorguları yerel olarak gerçekleştirilir. Sunucu adresleri ve sorgu etkinliği indirme hizmetine gönderilmez.\n\nHer ay güncellenir. Yeni sürüm yüklü verilerin yerini alır ve ek bir kopya tutmaz. İstediğiniz zaman silebilirsiniz.';
   }
+
+  @override
+  String get benchmark => 'Performans testi';
+
+  @override
+  String get benchmarkIntro =>
+      'Disk, ağ ve CPU\'yu test etmek için bu sunucuda Yet Another Bench Script\'i çalıştırır. Tam bir test 10–20 dakika sürer ve bu sayfadan ayrılsanız veya uygulamayı kapatsanız da devam eder.';
+
+  @override
+  String benchmarkLinuxOnly(String system) {
+    return 'Performans testi için Linux gerekir. Bu sunucu $system bildiriyor.';
+  }
+
+  @override
+  String get benchmarkNoRuns => 'Henüz performans testi yok.';
+
+  @override
+  String get benchmarkRunning => 'Performans testi çalışıyor';
+
+  @override
+  String get benchmarkStartFailed => 'Performans testi başlatılamadı';
+
+  @override
+  String get benchmarkCancelConfirm =>
+      'Bu test durdurulsun mu? Şimdiye kadar yapılan tüm ölçümler kaybolacak.';
+
+  @override
+  String get benchmarkDeleteConfirm => 'Bu test sonucu silinsin mi?';
+
+  @override
+  String get benchmarkNothingSelected =>
+      'Tüm test aşamaları kapalı. Yalnızca sistem bilgileri toplanacak ve işlem birkaç saniye sürecek.';
+
+  @override
+  String get benchmarkDiskTip =>
+      'Dört blok boyutuyla fio; yaklaşık 3 dakika. Çalışma dizinine 2 GB\'lık bir test dosyası yazar ve bu kadar boş alan gerektirir.';
+
+  @override
+  String get benchmarkNetworkTip =>
+      'Genel sunuculara karşı iperf3; yaklaşık 4 dakika.';
+
+  @override
+  String get benchmarkReducedNetwork => 'Daha az konum';
+
+  @override
+  String benchmarkReducedNetworkTip(String full, String reduced) {
+    return 'Yedi yerine üç konum. Tahmini trafik $full yerine $reduced olur.';
+  }
+
+  @override
+  String get benchmarkCpuTip =>
+      'Tescilli bir program olan Geekbench\'i indirir ve **sonucu geekbench.com\'da herkese açık bir sayfada yayımlar**; CPU modeli, çekirdek sayısı ve bellek bilgileri de yayımlanır.';
+
+  @override
+  String get benchmarkIpInfoTip =>
+      'Bu sunucunun genel IP adresini şifrelenmemiş HTTP üzerinden ip-api.com\'a gönderir.';
+
+  @override
+  String get benchmarkIpInfo => 'IP sahibini sorgula';
+
+  @override
+  String get benchmarkPreferBin => 'fio ve iperf3\'ü indir';
+
+  @override
+  String get benchmarkPreferBinTip =>
+      'Ana makinenin paketlerini kullanmak yerine GitHub\'dan indirir. Yalnızca ana makinede ikisi de yüklü değilse açın.';
+
+  @override
+  String get benchmarkWorkDir => 'Çalışma dizini';
+
+  @override
+  String get benchmarkWorkDirTip =>
+      'Disk testinin hangi dosya sistemini ölçeceğini belirler. Boş bırakılırsa oturum açılan hesabın ana dizini kullanılır.';
+
+  @override
+  String get benchmarkCustomIperf => 'Özel iperf sunucuları';
+
+  @override
+  String get benchmarkCustomIperfTip =>
+      'host:port_range:name:location:modes biçiminde, virgülle ayrılmış. Boş bırakılırsa yerleşik liste kullanılır.';
+
+  @override
+  String benchmarkEstimatedTime(String minutes) {
+    return 'Yaklaşık $minutes dk.';
+  }
+
+  @override
+  String benchmarkEstimatedTraffic(String size) {
+    return 'Yaklaşık $size trafik';
+  }
+
+  @override
+  String get benchmarkPhaseSystem => 'Sistem bilgileri okunuyor';
+
+  @override
+  String get benchmarkPhaseDisk => 'Disk test ediliyor';
+
+  @override
+  String get benchmarkPhaseNetwork => 'Ağ test ediliyor';
+
+  @override
+  String get benchmarkPhaseCpu => 'CPU test ediliyor';
+
+  @override
+  String get benchmarkPhaseDone => 'Tamamlanıyor';
+
+  @override
+  String get benchmarkDiedUnreported =>
+      'Test sonuç bildirmeden durdu. Düşük bellekli bir sunucuda bunun nedeni genellikle OOM killer\'dır.';
+
+  @override
+  String get benchmarkResultUnreadable =>
+      'Bu sonuç JSON olarak okunamadı. Ham metin aşağıdadır.';
+
+  @override
+  String get benchmarkViewOnGeekbench => 'Geekbench\'te görüntüle';
+
+  @override
+  String get benchmarkGeekbenchPublic =>
+      'Bu sonuç yukarıdaki bağlantıda herkese açık olarak yayımlanmıştır.';
+
+  @override
+  String get benchmarkSingleCore => 'Tek çekirdek';
+
+  @override
+  String get benchmarkMultiCore => 'Çok çekirdek';
+
+  @override
+  String get benchmarkBlockSize => 'Blok boyutu';
+
+  @override
+  String get benchmarkIops => 'IOPS';
+
+  @override
+  String get benchmarkSend => 'Yükleme';
+
+  @override
+  String get benchmarkRecv => 'İndirme';
+
+  @override
+  String get benchmarkLatency => 'Gecikme';
+
+  @override
+  String get benchmarkVirt => 'Sanallaştırma';
+
+  @override
+  String get benchmarkCompare => 'Karşılaştır';
+
+  @override
+  String get benchmarkCompareEmpty =>
+      'Karşılaştırma için en az iki tamamlanmış test gerekir.';
+
+  @override
+  String get benchmarkRawLog => 'Çalıştırma günlüğü';
+
+  @override
+  String benchmarkUpstream(String version) {
+    return 'Yet Another Bench Script ($version) tarafından desteklenir';
+  }
 }

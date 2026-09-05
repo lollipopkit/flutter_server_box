@@ -113,7 +113,7 @@ types:
         index: 2
   ServerFuncBtn:
     typeId: 6
-    nextIndex: 11
+    nextIndex: 12
     fields:
       terminal:
         index: 0
@@ -133,6 +133,8 @@ types:
         index: 9
       power:
         index: 10
+      benchmark:
+        index: 11
   WakeOnLanCfg:
     typeId: 8
     nextIndex: 3

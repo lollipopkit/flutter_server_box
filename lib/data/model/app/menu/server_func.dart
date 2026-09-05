@@ -19,7 +19,8 @@ enum ServerFuncBtn {
   iperf(),
   systemd(1051),
   portForward(1340),
-  power(1491);
+  power(1491),
+  benchmark(1553);
 
   /// The last released build that did not contain this entry.
   ///
@@ -42,7 +43,10 @@ enum ServerFuncBtn {
   /// time they could have chosen is added.
   ///
   /// [from] is the build this install last ran, 0 on a fresh one — where
-  /// [defaultIdxs] already lists everything, so nothing here fires.
+  /// [defaultIdxs] already lists every entry that carries a boundary, so
+  /// nothing here fires. An entry left out of the defaults must therefore also
+  /// have no [introducedAfterBuild], or a fresh install would be the only kind
+  /// that never gets it.
   ///
   /// Driven by [introducedAfterBuild] over [values] rather than by a branch per entry:
   /// the old form needed three near-identical blocks, and a new entry was
@@ -69,6 +73,7 @@ enum ServerFuncBtn {
     systemd,
     portForward,
     power,
+    benchmark,
   ].map((e) => e.index).toList();
 
   IconData get icon => switch (this) {
@@ -79,6 +84,7 @@ enum ServerFuncBtn {
     process => Icons.list_alt_outlined,
     terminal => Icons.terminal,
     iperf => Icons.speed,
+    benchmark => Icons.timer_outlined,
     systemd => MingCute.plugin_2_fill,
     portForward => Icons.compare_arrows,
     power => Icons.power_settings_new,
@@ -94,6 +100,10 @@ enum ServerFuncBtn {
     // start with, and nothing else.
     terminal || snippet || iperf => caps.terminal,
     container || process || systemd || power => caps.shell,
+    // A benchmark is a command whose output is read back, like the four above.
+    // It runs detached and is polled, so nothing here needs a stream — which is
+    // what lets a monitor-backed server run one at all.
+    benchmark => caps.shell,
     // Browsing files is its own question: a transport could grow a file API
     // without growing a stream this app can point anywhere.
     files => caps.files,
@@ -110,6 +120,7 @@ enum ServerFuncBtn {
     process => libL10n.process,
     terminal => libL10n.terminal,
     iperf => 'iperf',
+    benchmark => l10n.benchmark,
     systemd => l10n.services,
     portForward => libL10n.portForward,
     power => l10n.power,

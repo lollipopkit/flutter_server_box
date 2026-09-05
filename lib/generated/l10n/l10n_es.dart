@@ -1927,4 +1927,164 @@ class AppLocalizationsEs extends AppLocalizations {
   String geoDataConsent(Object download, Object disk) {
     return '**Descarga: $download · Almacenamiento en el dispositivo: $disk.** El conjunto de datos completo se guarda en este dispositivo y todas las consultas de ubicación posteriores se realizan localmente. No se envían al servicio de descarga direcciones de servidores ni actividad de consulta.\n\nSe actualiza cada mes. Una versión más reciente sustituye los datos instalados sin conservar una copia adicional. Puedes eliminarlos en cualquier momento.';
   }
+
+  @override
+  String get benchmark => 'Prueba de rendimiento';
+
+  @override
+  String get benchmarkIntro =>
+      'Ejecuta Yet Another Bench Script en este servidor para probar el disco, la red y la CPU. Una ejecución completa tarda entre 10 y 20 minutos y continúa aunque salgas de esta página o cierres la aplicación.';
+
+  @override
+  String benchmarkLinuxOnly(String system) {
+    return 'La prueba de rendimiento requiere Linux. Este servidor indica que usa $system.';
+  }
+
+  @override
+  String get benchmarkNoRuns => 'Aún no hay pruebas de rendimiento.';
+
+  @override
+  String get benchmarkRunning => 'Prueba de rendimiento en curso';
+
+  @override
+  String get benchmarkStartFailed =>
+      'No se pudo iniciar la prueba de rendimiento';
+
+  @override
+  String get benchmarkCancelConfirm =>
+      '¿Detener esta prueba? Se perderán todas las mediciones realizadas hasta ahora.';
+
+  @override
+  String get benchmarkDeleteConfirm => '¿Eliminar el resultado de esta prueba?';
+
+  @override
+  String get benchmarkNothingSelected =>
+      'Todas las fases están desactivadas. Solo se recopilará información del sistema y tardará unos segundos.';
+
+  @override
+  String get benchmarkDiskTip =>
+      'fio con cuatro tamaños de bloque; unos 3 minutos. Escribe un archivo de prueba de 2 GB en el directorio de trabajo y necesita ese espacio libre.';
+
+  @override
+  String get benchmarkNetworkTip =>
+      'iperf3 contra servidores públicos; unos 4 minutos.';
+
+  @override
+  String get benchmarkReducedNetwork => 'Menos ubicaciones';
+
+  @override
+  String benchmarkReducedNetworkTip(String full, String reduced) {
+    return 'Tres ubicaciones en lugar de siete. El tráfico aproximado baja de $full a $reduced.';
+  }
+
+  @override
+  String get benchmarkCpuTip =>
+      'Descarga Geekbench, un programa propietario, y **publica el resultado en una página pública de geekbench.com**, incluidos el modelo de CPU, el número de núcleos y la memoria.';
+
+  @override
+  String get benchmarkIpInfoTip =>
+      'Envía la dirección pública de este servidor a ip-api.com mediante HTTP sin cifrar.';
+
+  @override
+  String get benchmarkIpInfo => 'Consultar propietario de la IP';
+
+  @override
+  String get benchmarkPreferBin => 'Descargar fio e iperf3';
+
+  @override
+  String get benchmarkPreferBinTip =>
+      'Los descarga de GitHub en lugar de usar los paquetes del host. Actívalo solo si el host no tiene instalado ninguno de los dos.';
+
+  @override
+  String get benchmarkWorkDir => 'Directorio de trabajo';
+
+  @override
+  String get benchmarkWorkDirTip =>
+      'Determina qué sistema de archivos mide la prueba de disco. Si se deja vacío, se usa el directorio personal de la cuenta de inicio de sesión.';
+
+  @override
+  String get benchmarkCustomIperf => 'Servidores iperf personalizados';
+
+  @override
+  String get benchmarkCustomIperfTip =>
+      'host:port_range:name:location:modes, separados por comas. Si se deja vacío, se usa la lista integrada.';
+
+  @override
+  String benchmarkEstimatedTime(String minutes) {
+    return 'Unos $minutes min';
+  }
+
+  @override
+  String benchmarkEstimatedTraffic(String size) {
+    return 'Unos $size de tráfico';
+  }
+
+  @override
+  String get benchmarkPhaseSystem => 'Leyendo información del sistema';
+
+  @override
+  String get benchmarkPhaseDisk => 'Probando el disco';
+
+  @override
+  String get benchmarkPhaseNetwork => 'Probando la red';
+
+  @override
+  String get benchmarkPhaseCpu => 'Probando la CPU';
+
+  @override
+  String get benchmarkPhaseDone => 'Finalizando';
+
+  @override
+  String get benchmarkDiedUnreported =>
+      'La ejecución se detuvo sin informar de ningún resultado. En un servidor con poca memoria, normalmente se debe al eliminador de procesos por falta de memoria.';
+
+  @override
+  String get benchmarkResultUnreadable =>
+      'No se pudo interpretar este resultado como JSON. El texto original aparece abajo.';
+
+  @override
+  String get benchmarkViewOnGeekbench => 'Ver en Geekbench';
+
+  @override
+  String get benchmarkGeekbenchPublic =>
+      'Este resultado está publicado de forma pública en el enlace anterior.';
+
+  @override
+  String get benchmarkSingleCore => 'Un núcleo';
+
+  @override
+  String get benchmarkMultiCore => 'Varios núcleos';
+
+  @override
+  String get benchmarkBlockSize => 'Tamaño de bloque';
+
+  @override
+  String get benchmarkIops => 'IOPS';
+
+  @override
+  String get benchmarkSend => 'Subida';
+
+  @override
+  String get benchmarkRecv => 'Bajada';
+
+  @override
+  String get benchmarkLatency => 'Latencia';
+
+  @override
+  String get benchmarkVirt => 'Virtualización';
+
+  @override
+  String get benchmarkCompare => 'Comparar';
+
+  @override
+  String get benchmarkCompareEmpty =>
+      'Se necesitan al menos dos pruebas finalizadas para comparar.';
+
+  @override
+  String get benchmarkRawLog => 'Registro de ejecución';
+
+  @override
+  String benchmarkUpstream(String version) {
+    return 'Con tecnología de Yet Another Bench Script ($version)';
+  }
 }

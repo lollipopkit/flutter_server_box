@@ -717,7 +717,99 @@
   "geoDataUnreachable": "Could not fetch the data.",
   "geoDataRemoveFailed": "Could not delete the data.",
   "geoDataCurrent": "{month} is already installed.",
-  "@geoDataCurrent": {"placeholders": {"month": {}}},
+  "@geoDataCurrent": {
+    "placeholders": {
+      "month": {}
+    }
+  },
   "geoDataConsent": "**Download: {download} · On-device storage: {disk}.** The complete dataset is stored on this device, and every later geolocation lookup is performed locally. Server addresses and lookup activity are not sent to the download service.\n\nUpdated monthly. A newer version replaces the installed data without keeping an extra copy. You can delete it at any time.",
-  "@geoDataConsent": {"placeholders": {"download": {}, "disk": {}}}
+  "@geoDataConsent": {
+    "placeholders": {
+      "download": {},
+      "disk": {}
+    }
+  },
+  "benchmark": "Benchmark",
+  "benchmarkIntro": "Runs Yet Another Bench Script on this server: disk, network and CPU. A full run takes 10–20 minutes and keeps going if you leave this page or close the app.",
+  "benchmarkLinuxOnly": "Benchmarking needs Linux. This server reports {system}.",
+  "@benchmarkLinuxOnly": {
+    "placeholders": {
+      "system": {
+        "type": "String"
+      }
+    }
+  },
+  "benchmarkNoRuns": "No benchmarks yet.",
+  "benchmarkRunning": "Benchmark running",
+  "benchmarkStartFailed": "Could not start the benchmark",
+  "benchmarkCancelConfirm": "Stop this benchmark? What it has measured so far is lost.",
+  "benchmarkDeleteConfirm": "Delete this benchmark result?",
+  "benchmarkNothingSelected": "Every phase is off. The run will collect system information only, and take a few seconds.",
+  "benchmarkDiskTip": "fio at four block sizes, about 3 minutes. Writes a 2 GB test file into the working directory and needs that much free.",
+  "benchmarkNetworkTip": "iperf3 against public servers, about 4 minutes.",
+  "benchmarkReducedNetwork": "Fewer locations",
+  "benchmarkReducedNetworkTip": "Three locations instead of seven. Roughly {full} of traffic becomes {reduced}.",
+  "@benchmarkReducedNetworkTip": {
+    "placeholders": {
+      "full": {
+        "type": "String"
+      },
+      "reduced": {
+        "type": "String"
+      }
+    }
+  },
+  "benchmarkCpuTip": "Downloads Geekbench, a proprietary program, and **publishes the result to a public page on geekbench.com** — CPU model, core count and memory included.",
+  "benchmarkIpInfoTip": "Sends this server's public address to ip-api.com over plain HTTP.",
+  "benchmarkIpInfo": "Look up IP owner",
+  "benchmarkPreferBin": "Download fio and iperf3",
+  "benchmarkPreferBinTip": "Downloads them from GitHub instead of using the host's packages. Turn on only if the host has neither installed.",
+  "benchmarkWorkDir": "Working directory",
+  "benchmarkWorkDirTip": "Decides which filesystem the disk test measures. Empty means the login account's home directory.",
+  "benchmarkCustomIperf": "Custom iperf servers",
+  "benchmarkCustomIperfTip": "host:port_range:name:location:modes, comma separated. Empty uses the built-in list.",
+  "benchmarkEstimatedTime": "About {minutes} min",
+  "@benchmarkEstimatedTime": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "benchmarkEstimatedTraffic": "About {size} of traffic",
+  "@benchmarkEstimatedTraffic": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "benchmarkPhaseSystem": "Reading system information",
+  "benchmarkPhaseDisk": "Testing disk",
+  "benchmarkPhaseNetwork": "Testing network",
+  "benchmarkPhaseCpu": "Testing CPU",
+  "benchmarkPhaseDone": "Finishing",
+  "benchmarkDiedUnreported": "The run stopped without reporting a result. On a small server this is usually the out-of-memory killer.",
+  "benchmarkResultUnreadable": "This result could not be read as JSON. The raw text is below.",
+  "benchmarkViewOnGeekbench": "View on Geekbench",
+  "benchmarkGeekbenchPublic": "This result is published publicly at the link above.",
+  "benchmarkSingleCore": "Single core",
+  "benchmarkMultiCore": "Multi core",
+  "benchmarkBlockSize": "Block size",
+  "benchmarkIops": "IOPS",
+  "benchmarkSend": "Up",
+  "benchmarkRecv": "Down",
+  "benchmarkLatency": "Latency",
+  "benchmarkVirt": "Virtualization",
+  "benchmarkCompare": "Compare",
+  "benchmarkCompareEmpty": "At least two finished benchmarks are needed to compare.",
+  "benchmarkRawLog": "Run log",
+  "benchmarkUpstream": "Powered by Yet Another Bench Script ({version})",
+  "@benchmarkUpstream": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  }
 }

@@ -14,6 +14,7 @@ import 'package:server_box/data/store/migrations/m016_legacy_status_urls.dart';
 import 'package:server_box/data/store/migrations/m017_both_transports.dart';
 import 'package:server_box/data/store/migrations/m018_server_geo.dart';
 import 'package:server_box/data/store/migrations/m019_drop_geo_cache.dart';
+import 'package:server_box/data/store/migrations/m020_benchmark_runs.dart';
 import 'package:server_box/data/store/schema.dart';
 
 /// Every migration, ordered, in the one place that names them.
@@ -50,4 +51,5 @@ const kSchemaMigrations = <SchemaMigration>[
   BothTransportsMigration(),
   ServerGeoMigration(),
   DropGeoCacheMigration(),
+  BenchmarkRunsMigration(),
 ];
