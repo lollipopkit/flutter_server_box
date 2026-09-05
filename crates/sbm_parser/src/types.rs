@@ -121,23 +121,89 @@ pub struct Disk {
 }
 
 /// Whether a `df` row describes storage worth reporting (Dart `_shouldCalc`):
-/// exclude kernel mounts; include /dev-prefixed sources, network mounts (//),
-/// /mnt mount points; exclude shm/overlay/tmpfs/devtmpfs sources; include the rest
+/// exclude kernel mounts, read-only images and swap areas; include /dev-prefixed
+/// sources, network mounts (//), /mnt mount points; exclude the virtual
+/// filesystems [`is_virtual_fs`] names; include the rest
+///
+/// Takes one of a row's two identifiers, whichever the caller has. Prefer
+/// [`Disk::is_storage`] where both are available.
 pub fn disk_should_calc(fs: &str, mount: &str) -> bool {
     // Checked before the inclusions below, so that a source spelled like a
     // block device cannot bring these back: a host that exposes many device
     // nodes publishes one devtmpfs row per node, two dozen lines all claiming
     // 0 B used of the same size.
-    if is_kernel_mount(mount) {
+    if is_kernel_mount(mount) || is_read_only_image(fs, mount) || is_swap_area(fs, mount) {
         return false;
     }
     if fs.starts_with("/dev") || fs.starts_with("//") || mount.starts_with("/mnt") {
         return true;
     }
-    !(fs.starts_with("shm")
-        || fs.starts_with("overlay")
-        || fs.starts_with("tmpfs")
-        || fs.starts_with("devtmpfs"))
+    !is_virtual_fs(fs)
+}
+
+/// A kernel-backed filesystem with nothing stored behind it, by exact name.
+///
+/// Matched exactly rather than by prefix, because `fs` is a *source* under
+/// `df` and a source carries user-chosen text: a ZFS pool named `tmpfspool`,
+/// or an export from an NFS host named `shm-nas`, each begin with one of these
+/// and each is storage.
+///
+/// `overlay` and `overlayfs` are the current and pre-4.0 spellings of docker's
+/// own layers. `fuse-overlayfs` is what a rootless podman or docker mounts,
+/// one row per container carrying the host filesystem's own numbers.
+///
+/// `ramfs` is systemd's credential mounts, one per unit that takes a
+/// credential. Most `df` builds report `-` for its usage, which fails to parse
+/// and drops the row before any of this; naming it here does not depend on
+/// that, since a build reporting `0%` instead leaves a row of 0 B.
+fn is_virtual_fs(fs: &str) -> bool {
+    matches!(
+        fs,
+        "shm" | "tmpfs" | "ramfs" | "devtmpfs" | "overlay" | "overlayfs" | "fuse-overlayfs"
+    )
+}
+
+/// A read-only image mounted as a filesystem — a snap's squashfs, the same
+/// image handed to a container through `snapfuse`, a mounted ISO — rather than
+/// storage anyone manages. Each is full by construction, so it reports 100%
+/// and contributes its whole size to the total; a snap-heavy Ubuntu publishes
+/// twenty of them, which is the entire device list.
+///
+/// Matched on the image, never on `/dev/loop`: a loop device carrying a
+/// writable filesystem is storage someone mounted on purpose, and it is the
+/// `df` fallback hosts (busybox, no lsblk) where that is most likely.
+/// `fs` is a filesystem type under `lsblk` and a source under `df`, so the
+/// two sources are recognised by different halves of this.
+fn is_read_only_image(fs: &str, mount: &str) -> bool {
+    matches!(
+        fs,
+        "squashfs" | "erofs" | "iso9660" | "snapfuse" | "fuse.snapfuse"
+    ) || mount.starts_with("/snap/")
+        || mount.starts_with("/var/lib/snapd/snap/")
+}
+
+/// A swap area, which `lsblk` lists beside filesystems. It has no mount point
+/// and no `FSSIZE`, so the row reads `0 B / 0 B`, and swap is reported on its
+/// own from `/proc/meminfo` anyway. `df` lists only mounted filesystems and
+/// never produces one of these.
+fn is_swap_area(fs: &str, mount: &str) -> bool {
+    fs == "swap" || mount == "[SWAP]"
+}
+
+impl Disk {
+    /// Whether this describes storage worth reporting, rather than a kernel
+    /// mount, a read-only image, a container layer or a swap area
+    /// (Dart `Disk.isStorage`).
+    ///
+    /// [`disk_should_calc`] is handed a source by `df` and a filesystem type
+    /// by `lsblk`, never both, and takes a different branch for each. A [`Disk`]
+    /// carries both, so it is asked with each — otherwise a row identified only
+    /// by its type, such as a squashfs whose mount point is not under `/snap`,
+    /// or a swap area whose mount is empty rather than `[SWAP]`, is missed.
+    pub fn is_storage(&self) -> bool {
+        disk_should_calc(&self.path, &self.mount)
+            && disk_should_calc(self.fs_type.as_deref().unwrap_or(&self.path), &self.mount)
+    }
 }
 
 /// `/dev`, `/proc`, `/sys`, and anything mounted inside them.
@@ -337,7 +403,7 @@ pub struct SmartAttributeFlags {
 /// nodes carrying their own data are not descended into
 pub fn disk_usage(disks: &[Disk]) -> (u64, u64) {
     fn visit(disk: &Disk, seen: &mut Vec<String>, used: &mut u64, size: &mut u64) {
-        if !disk_should_calc(&disk.path, &disk.mount) {
+        if !disk.is_storage() {
             return;
         }
         let unique = format!("{}:{}", disk.path, disk.kname.as_deref().unwrap_or("unknown"));

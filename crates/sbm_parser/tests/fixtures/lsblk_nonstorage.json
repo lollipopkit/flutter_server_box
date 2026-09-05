@@ -1,0 +1,17 @@
+{
+   "blockdevices": [
+      {"fstype":"squashfs","path":"/dev/loop0","name":"loop0","kname":"loop0","mountpoint":"/snap/copilot-cli/57","fssize":"304087040","fsused":"304087040","fsavail":"0","fsuse%":"100%","uuid":null},
+      {"fstype":"squashfs","path":"/dev/loop1","name":"loop1","kname":"loop1","mountpoint":"/snap/core22/2411","fssize":"77594624","fsused":"77594624","fsavail":"0","fsuse%":"100%","uuid":null},
+      {"fstype":"erofs","path":"/dev/loop2","name":"loop2","kname":"loop2","mountpoint":"/snap/bare/5","fssize":"131072","fsused":"131072","fsavail":"0","fsuse%":"100%","uuid":null},
+      {"fstype":"ext4","path":"/dev/loop7","name":"loop7","kname":"loop7","mountpoint":"/mnt/image","fssize":"1057030144","fsused":"527433728","fsavail":"529596416","fsuse%":"50%","uuid":"3f2b1c40-0000-4000-8000-000000000001"},
+      {"fstype":"iso9660","path":"/dev/sr0","name":"sr0","kname":"sr0","mountpoint":"/media/cdrom","fssize":"4831838208","fsused":"4831838208","fsavail":"0","fsuse%":"100%","uuid":null},
+      {"fstype":"swap","path":"/dev/zram0","name":"zram0","kname":"zram0","mountpoint":"[SWAP]","fssize":null,"fsused":null,"fsavail":null,"fsuse%":null,"uuid":null},
+      {"fstype":null,"path":"/dev/vda","name":"vda","kname":"vda","mountpoint":null,"fssize":null,"fsused":null,"fsavail":null,"fsuse%":null,"uuid":null,
+         "children": [
+            {"fstype":"ext4","path":"/dev/vda1","name":"vda1","kname":"vda1","mountpoint":"/","fssize":"52576284672","fsused":"12346589184","fsavail":"37527699456","fsuse%":"24%","uuid":"3f2b1c40-0000-4000-8000-000000000002"},
+            {"fstype":"swap","path":"/dev/vda2","name":"vda2","kname":"vda2","mountpoint":"[SWAP]","fssize":null,"fsused":null,"fsavail":null,"fsuse%":null,"uuid":"3f2b1c40-0000-4000-8000-000000000003"},
+            {"fstype":"vfat","path":"/dev/vda15","name":"vda15","kname":"vda15","mountpoint":"/boot/efi","fssize":"109422592","fsused":"6330368","fsavail":"103092224","fsuse%":"6%","uuid":"A1B2-C3D4"}
+         ]
+      }
+   ]
+}

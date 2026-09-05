@@ -1,0 +1,10 @@
+Filesystem     1K-blocks      Used Available Use% Mounted on
+/dev/vda1       51343636  12057216  36648004  25% /
+/dev/loop0        296960    296960         0 100% /snap/copilot-cli/57
+/dev/loop6         66944     66944         0 100% /var/lib/snapd/snap/core24/1587
+snapfuse          129024    129024         0 100% /snap/lxd/31333
+overlay         51343636  12057216  36648004  25% /var/lib/docker/overlay2/9c1f/merged
+fuse-overlayfs  51343636  12057216  36648004  25% /home/u/.local/share/containers/storage/overlay/7a2e/merged
+ramfs                  0         0         0    - /run/credentials/systemd-sysctl.service
+/dev/sr0         4718592   4718592         0 100% /media/cdrom
+/dev/loop7       1032256    515072    517184  50% /mnt/image
