@@ -51,6 +51,8 @@ class BenchmarkRun {
     this.log = '',
     this.exitCode,
     this.error = '',
+    this.processes = '',
+    this.pollError = '',
   });
 
   final String id;
@@ -76,6 +78,23 @@ class BenchmarkRun {
   final String log;
 
   final int? exitCode;
+
+  /// `ps` for the run's process group, from the last poll.
+  ///
+  /// Not stored: it describes this instant, and an instant that has passed is
+  /// worth nothing. It exists so a run that has printed nothing can still say
+  /// what it is doing.
+  final String processes;
+
+  /// Why the last poll did not come back, or empty when it did.
+  ///
+  /// Not persisted, and not [error]: a poll that fails says nothing about the
+  /// run, which is in its own session on the far side and does not care that
+  /// this device could not reach it. But it says a great deal about what the
+  /// page is showing — without it, a server that has been unreachable for half
+  /// an hour and a benchmark that is merely slow look exactly alike, because
+  /// both leave the record untouched.
+  final String pollError;
 
   /// Why this app gave up on the run — a transport failure, or output that was
   /// not a benchmark. Never yabs' own diagnostics, which are in [log].
@@ -118,6 +137,8 @@ class BenchmarkRun {
     String? log,
     int? exitCode,
     String? error,
+    String? processes,
+    String? pollError,
   }) {
     return BenchmarkRun(
       id: id,
@@ -131,6 +152,8 @@ class BenchmarkRun {
       log: log ?? this.log,
       exitCode: exitCode ?? this.exitCode,
       error: error ?? this.error,
+      processes: processes ?? this.processes,
+      pollError: pollError ?? this.pollError,
     );
   }
 

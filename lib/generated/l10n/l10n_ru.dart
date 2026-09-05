@@ -2079,4 +2079,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String benchmarkUpstream(String version) {
     return 'На основе Yet Another Bench Script ($version)';
   }
+
+  @override
+  String get benchmarkPhaseStarting => 'Запуск';
+
+  @override
+  String get benchmarkNoOutputYet =>
+      'Вывода пока нет. Перед выводом первой строки YABS проверяет доступность google.com и icanhazip.com. В сетях, где заблокирован хотя бы один из этих сайтов, проверка может занять несколько минут.';
+
+  @override
+  String get benchmarkNoServers =>
+      'Add a server first, then come back to benchmark it.';
 }

@@ -1953,4 +1953,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String benchmarkUpstream(String version) {
     return 'Yet Another Bench Script ($version) 기반';
   }
+
+  @override
+  String get benchmarkPhaseStarting => '시작 중';
+
+  @override
+  String get benchmarkNoOutputYet =>
+      '아직 출력이 없습니다. YABS는 첫 줄을 출력하기 전에 google.com과 icanhazip.com에 연결할 수 있는지 확인합니다. 둘 중 하나를 차단하는 네트워크에서는 몇 분이 걸릴 수 있습니다.';
+
+  @override
+  String get benchmarkNoServers =>
+      'Add a server first, then come back to benchmark it.';
 }

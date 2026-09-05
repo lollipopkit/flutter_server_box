@@ -593,5 +593,7 @@
   "benchmarkCompare": "Vergleichen",
   "benchmarkCompareEmpty": "Zum Vergleichen sind mindestens zwei abgeschlossene Benchmarks erforderlich.",
   "benchmarkRawLog": "Ausführungsprotokoll",
-  "benchmarkUpstream": "Bereitgestellt von Yet Another Bench Script ({version})"
+  "benchmarkUpstream": "Bereitgestellt von Yet Another Bench Script ({version})",
+  "benchmarkPhaseStarting": "Wird gestartet",
+  "benchmarkNoOutputYet": "Noch keine Ausgabe. Vor der ersten Zeile prüft YABS, ob google.com und icanhazip.com erreichbar sind. In Netzwerken, die eine der beiden Websites blockieren, kann dies mehrere Minuten dauern."
 }

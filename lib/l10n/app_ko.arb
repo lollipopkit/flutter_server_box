@@ -602,5 +602,7 @@
   "benchmarkCompare": "비교",
   "benchmarkCompareEmpty": "비교하려면 완료된 벤치마크가 두 개 이상 필요합니다.",
   "benchmarkRawLog": "실행 로그",
-  "benchmarkUpstream": "Yet Another Bench Script ({version}) 기반"
+  "benchmarkUpstream": "Yet Another Bench Script ({version}) 기반",
+  "benchmarkPhaseStarting": "시작 중",
+  "benchmarkNoOutputYet": "아직 출력이 없습니다. YABS는 첫 줄을 출력하기 전에 google.com과 icanhazip.com에 연결할 수 있는지 확인합니다. 둘 중 하나를 차단하는 네트워크에서는 몇 분이 걸릴 수 있습니다."
 }

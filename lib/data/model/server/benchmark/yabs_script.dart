@@ -91,17 +91,19 @@ class YabsScript {
   /// Its own round trip rather than uploading unconditionally: the script is
   /// 50 KB, and over a monitor agent that is 50 KB of JSON request body on
   /// every run.
-  static String probeCommand() =>
-      '[ -s ${quotePath(scriptPath)} ] && echo $scriptPresent || echo $scriptMissing';
+  static String probeCommand() => posix(
+    '[ -s ${quotePath(scriptPath)} ] && echo $scriptPresent || echo $scriptMissing',
+  );
 
   static const scriptPresent = 'SBM_BENCH_SCRIPT_OK';
   static const scriptMissing = 'SBM_BENCH_SCRIPT_MISSING';
 
   /// Reads the script on stdin and writes it — the `entry` shape, so the 50 KB
   /// of shell never has to survive a round of quoting into a command line.
-  static String installEntry() =>
-      'mkdir -p ${quotePath(baseDir)} && cat > ${quotePath(scriptPath)} '
-      '&& chmod +x ${quotePath(scriptPath)} && echo $scriptInstalled';
+  static String installEntry() => posix(
+    'mkdir -p ${quotePath(baseDir)} && cat > ${quotePath(scriptPath)} '
+    '&& chmod +x ${quotePath(scriptPath)} && echo $scriptInstalled',
+  );
 
   static const scriptInstalled = 'SBM_BENCH_SCRIPT_INSTALLED';
 
@@ -149,13 +151,15 @@ echo \$? > exit
   /// `ExecResult.outputIncomplete`.
   static String startEntry(YabsOptions options, String runId) {
     final dir = quotePath(runDir(options));
-    return 'mkdir -p $dir && cat > $dir/run.sh && chmod +x $dir/run.sh '
-        '&& cd $dir && rm -f out.json log exit pid '
-        '&& printf %s ${quote(runId)} > $ownerFile '
-        '&& { if command -v setsid >/dev/null 2>&1; then '
-        'setsid ./run.sh >/dev/null 2>&1 </dev/null & '
-        'else nohup ./run.sh >/dev/null 2>&1 </dev/null & fi; } '
-        '&& echo $started';
+    return posix(
+      'mkdir -p $dir && cat > $dir/run.sh && chmod +x $dir/run.sh '
+      '&& cd $dir && rm -f out.json log exit pid '
+      '&& printf %s ${quote(runId)} > $ownerFile '
+      '&& { if command -v setsid >/dev/null 2>&1; then '
+      'setsid ./run.sh >/dev/null 2>&1 </dev/null & '
+      'else nohup ./run.sh >/dev/null 2>&1 </dev/null & fi; } '
+      '&& echo $started',
+    );
   }
 
   static const started = 'SBM_BENCH_STARTED';
@@ -187,7 +191,7 @@ echo \$? > exit
   /// derivation looking somewhere the running benchmark is not.
   static String pollCommand(String runDir) {
     final dir = quotePath(runDir);
-    return '''
+    return posix('''
 d=$dir
 e=`cat "\$d/exit" 2>/dev/null | tr -dc '0-9-'`
 p=`cat "\$d/pid" 2>/dev/null | tr -dc '0-9'`
@@ -201,12 +205,47 @@ echo "$stateMarker exit=\$e alive=\$a started=\$s pid=\$f"
 echo $jsonMarker
 cat "\$d/out.json" 2>/dev/null
 echo
+echo $psMarker
+if [ -n "\$p" ] && [ -d /proc ]; then
+  for e in /proc/[0-9]*; do
+    [ -r "\$e/stat" ] || continue
+    pg=`sed 's/^.*) //' "\$e/stat" 2>/dev/null | awk '{print \$3}'`
+    [ "\$pg" = "\$p" ] || continue
+    c=`tr '\\0' ' ' < "\$e/cmdline" 2>/dev/null`
+    [ -n "\$c" ] || c=`sed -n 's/^Name:[[:space:]]*//p' "\$e/status" 2>/dev/null`
+    echo "\${e#/proc/} \$c"
+  done
+elif [ -n "\$p" ]; then
+  ps -o pid=,args= -p "\$p" 2>/dev/null || true
+fi
 echo $logMarker
 cat "\$d/log" 2>/dev/null
-''';
+''');
   }
 
   static const stateMarker = 'SBM_BENCH_STATE';
+
+  /// What the run's process group is doing.
+  ///
+  /// Collected on every poll because the question it answers only comes up when
+  /// there is nothing else to go on: yabs prints nothing until it has got
+  /// through its own start-up, and a run that is silent for minutes is
+  /// otherwise indistinguishable from a run that is wedged. `ps` names the
+  /// command it is actually sitting in.
+  ///
+  /// The process *group*, not the launcher, since the launcher spends the whole
+  /// run waiting on children — it is the child that is interesting.
+  ///
+  /// Read out of `/proc` rather than asked of `ps`. `ps -g` means *effective
+  /// group id* under procps, not process group, so it selects nothing here; and
+  /// busybox's `ps` takes neither `-o` nor `-g` at all, which is how the first
+  /// attempt at this came back empty on the machine it was meant to explain.
+  /// `/proc` is there on every host this feature runs on, since yabs is Linux
+  /// only. `ps -p` is kept for anything else that answers.
+  ///
+  /// The comm field in `stat` is parenthesised and may contain spaces, so it is
+  /// cut off before the remaining fields are counted — state, ppid, pgrp.
+  static const psMarker = 'SBM_BENCH_PS';
   static const jsonMarker = 'SBM_BENCH_JSON';
   static const logMarker = 'SBM_BENCH_LOG';
 
@@ -223,7 +262,7 @@ cat "\$d/log" 2>/dev/null
   /// line that would have.
   static String cancelCommand(String runDir) {
     final dir = quotePath(runDir);
-    return '''
+    return posix('''
 d=$dir
 p=`cat "\$d/pid" 2>/dev/null | tr -dc '0-9'`
 if [ -n "\$p" ]; then
@@ -233,7 +272,7 @@ if [ -n "\$p" ]; then
 fi
 [ -f "\$d/exit" ] || echo $cancelledExitCode > "\$d/exit"
 echo $cancelled
-''';
+''');
   }
 
   /// 128 + SIGTERM, the shell's own convention for it, so a reader of the
@@ -263,12 +302,14 @@ echo $cancelled
     // directory of that shape that some other run — or something that is not a
     // run at all — happens to own. `rm -rf` on a path assembled from a working
     // directory the user typed deserves both.
-    return 'd=$dir\n'
-        'if [ "`cat "\$d/$ownerFile" 2>/dev/null`" = ${quote(runId)} ]; then\n'
-        '  rm -rf "\$d" && echo $cleaned\n'
-        'else\n'
-        '  echo $notOurs\n'
-        'fi\n';
+    return posix(
+      'd=$dir\n'
+      'if [ "`cat "\$d/$ownerFile" 2>/dev/null`" = ${quote(runId)} ]; then\n'
+      '  rm -rf "\$d" && echo $cleaned\n'
+      'else\n'
+      '  echo $notOurs\n'
+      'fi\n',
+    );
   }
 
   /// The directory did not carry this run's marker, so nothing was removed.
@@ -288,7 +329,24 @@ echo $cancelled
   /// server list, both of which end up on a command line on a machine they own.
   static String quote(String value) => "'${value.replaceAll("'", r"'\''")}'";
 
-  /// [quote], except that a leading `$HOME` is left for the shell to expand.
+  /// Hands [script] to `sh`, rather than to whatever shell the account uses.
+  ///
+  /// `SSHClient.execute` runs a command through the login shell, and nothing
+  /// says that is a POSIX one. fish removed backticks; csh has no
+  /// `if ...; then`. Either turns every script here into a syntax error, and a
+  /// syntax error is not an exception — the command "succeeds" with a
+  /// diagnostic on stderr and none of the markers this app is looking for, so
+  /// it surfaced as "the server did not answer the poll" on a server that was
+  /// answering perfectly well.
+  ///
+  /// This is the convention the rest of the app already follows:
+  /// `sbm_parser::script::exec_command` emits `sh <path> -<flag>` for the same
+  /// reason. Only the wrapper has to survive the login shell, and `sh -c '...'`
+  /// parses the same in every shell anyone logs in with — including fish, which
+  /// reads the `'\''` idiom the way POSIX shells do.
+  static String posix(String script) => 'sh -c ${quote(script)}';
+
+  /// [quote], except that a leading `\$HOME` is left for the shell to expand.
   ///
   /// Single quotes suppress *everything*, `$HOME` included, so quoting these
   /// paths the ordinary way would send a literal `$HOME/.config/...` and every
@@ -316,6 +374,7 @@ class YabsPollState {
     required this.launcherStarted,
     required this.log,
     required this.resultJson,
+    this.processes = '',
   });
 
   /// Whether this is an answer to the poll at all.
@@ -356,6 +415,13 @@ class YabsPollState {
   final bool launcherStarted;
 
   final String log;
+
+  /// `ps` for the run's process group — what it is actually doing.
+  ///
+  /// Empty when the far side has no `ps` that took the flags, which is not
+  /// worth failing over: this exists to explain a silence, and a missing
+  /// explanation is the state the page was already in.
+  final String processes;
 
   /// The raw `out.json` text, or null before yabs writes it.
   ///
@@ -401,14 +467,30 @@ class YabsPollState {
     }
 
     final jsonIdx = output.indexOf(YabsScript.jsonMarker, stateIdx);
-    final logIdx = output.indexOf(YabsScript.logMarker, jsonIdx < 0 ? stateIdx : jsonIdx);
+    final psIdx = output.indexOf(
+      YabsScript.psMarker,
+      jsonIdx < 0 ? stateIdx : jsonIdx,
+    );
+    final logIdx = output.indexOf(
+      YabsScript.logMarker,
+      psIdx < 0 ? (jsonIdx < 0 ? stateIdx : jsonIdx) : psIdx,
+    );
 
     String? json;
     if (jsonIdx >= 0) {
       final start = jsonIdx + YabsScript.jsonMarker.length;
-      final end = logIdx >= 0 ? logIdx : output.length;
+      final end = psIdx >= 0
+          ? psIdx
+          : (logIdx >= 0 ? logIdx : output.length);
       final text = output.substring(start, end).trim();
       if (text.isNotEmpty) json = text;
+    }
+
+    var processes = '';
+    if (psIdx >= 0) {
+      final start = psIdx + YabsScript.psMarker.length;
+      final end = logIdx >= 0 ? logIdx : output.length;
+      processes = output.substring(start, end).trim();
     }
 
     final log = logIdx >= 0
@@ -425,6 +507,7 @@ class YabsPollState {
       launcherStarted: field('pid') != 0,
       log: log,
       resultJson: json,
+      processes: processes,
     );
   }
 }

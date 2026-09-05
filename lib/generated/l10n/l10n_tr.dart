@@ -2053,4 +2053,15 @@ class AppLocalizationsTr extends AppLocalizations {
   String benchmarkUpstream(String version) {
     return 'Yet Another Bench Script ($version) tarafından desteklenir';
   }
+
+  @override
+  String get benchmarkPhaseStarting => 'Başlatılıyor';
+
+  @override
+  String get benchmarkNoOutputYet =>
+      'Henüz çıktı yok. YABS ilk satırı yazdırmadan önce google.com ve icanhazip.com adreslerine erişilip erişilemediğini kontrol eder. Bu sitelerden birini engelleyen ağlarda işlem birkaç dakika sürebilir.';
+
+  @override
+  String get benchmarkNoServers =>
+      'Add a server first, then come back to benchmark it.';
 }

@@ -593,5 +593,7 @@
   "benchmarkCompare": "Vergelijken",
   "benchmarkCompareEmpty": "Er zijn minstens twee voltooide benchmarks nodig om te vergelijken.",
   "benchmarkRawLog": "Uitvoeringslogboek",
-  "benchmarkUpstream": "Mogelijk gemaakt door Yet Another Bench Script ({version})"
+  "benchmarkUpstream": "Mogelijk gemaakt door Yet Another Bench Script ({version})",
+  "benchmarkPhaseStarting": "Starten",
+  "benchmarkNoOutputYet": "Nog geen uitvoer. Voordat de eerste regel verschijnt, controleert YABS of google.com en icanhazip.com bereikbaar zijn. Op netwerken die een van beide sites blokkeren, kan dit enkele minuten duren."
 }

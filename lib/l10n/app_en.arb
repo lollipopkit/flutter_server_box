@@ -811,5 +811,8 @@
         "type": "String"
       }
     }
-  }
+  },
+  "benchmarkPhaseStarting": "Starting",
+  "benchmarkNoOutputYet": "No output yet. Before printing its first line, YABS checks whether google.com and icanhazip.com are reachable. On networks that block either site, this can take several minutes.",
+  "benchmarkNoServers": "Add a server first, then come back to benchmark it."
 }

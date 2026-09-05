@@ -593,5 +593,7 @@
   "benchmarkCompare": "Порівняти",
   "benchmarkCompareEmpty": "Для порівняння потрібно щонайменше два завершені тести.",
   "benchmarkRawLog": "Журнал виконання",
-  "benchmarkUpstream": "На основі Yet Another Bench Script ({version})"
+  "benchmarkUpstream": "На основі Yet Another Bench Script ({version})",
+  "benchmarkPhaseStarting": "Запуск",
+  "benchmarkNoOutputYet": "Виводу ще немає. Перед виведенням першого рядка YABS перевіряє доступність google.com та icanhazip.com. У мережах, де заблоковано хоча б один із цих сайтів, перевірка може тривати кілька хвилин."
 }

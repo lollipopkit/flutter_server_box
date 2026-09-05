@@ -56,7 +56,7 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
     final active = _store.activeFor(spi.id);
     // Polling starts on its own when there is something to poll: the run has
     // been going since before this page existed.
-    if (active != null) _schedule(immediate: true);
+    if (active != null) _schedule(active, immediate: true);
     return BenchmarkState(
       active: active,
       history: _store.forServer(spi.id),
@@ -80,9 +80,17 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
   /// bounds the case where it never ran.
   static const _launchGrace = Duration(seconds: 30);
 
-  void _schedule({bool immediate = false}) {
+  /// Arms the next poll for [active], or disarms when there is nothing to poll.
+  ///
+  /// The run is a parameter rather than read from `state`. `build` has to start
+  /// polling a run that was already going when this page opened, and at that
+  /// moment `state` does not exist yet — reading it there threw
+  /// `Tried to read the state of an uninitialized provider` and took the page
+  /// down with it. Passing the run makes the dependency explicit and removes
+  /// the only reason this had to care when it was called.
+  void _schedule(BenchmarkRun? active, {bool immediate = false}) {
     _timer?.cancel();
-    final active = state.active;
+    _timer = null;
     if (active == null) return;
     _timer = Timer(
       immediate ? Duration.zero : _interval(active.elapsed),
@@ -132,7 +140,7 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
         history: _store.forServer(_spi.id),
         isBusy: false,
       );
-      _schedule(immediate: true);
+      _schedule(run, immediate: true);
     } catch (e, s) {
       Loggers.app.warning('Benchmark start failed', e, s);
       state = state.copyWith(isBusy: false, error: '$e');
@@ -175,7 +183,12 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
       // far side and does not care that this device briefly could not reach it,
       // so the record is left alone and the next tick tries again.
       Loggers.app.info('Benchmark poll failed, will retry: $e');
-      _schedule();
+      // Recorded on the run rather than swallowed. The retry is right — the
+      // benchmark is not this device's connection — but a page that shows a
+      // spinner while every poll fails is telling the user the run is fine.
+      final noted = active.copyWith(pollError: '$e');
+      state = state.copyWith(active: noted);
+      _schedule(noted);
       return;
     }
 
@@ -185,7 +198,11 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
       // those says anything about the benchmark, which is in its own session on
       // the far side.
       Loggers.app.info('Benchmark poll produced no state, will retry');
-      _schedule();
+      final noted = active.copyWith(
+        pollError: 'The server did not answer the poll',
+      );
+      state = state.copyWith(active: noted);
+      _schedule(noted);
       return;
     }
 
@@ -198,7 +215,7 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
       // Bounded, because a launcher that never runs at all looks the same:
       // past the grace period there is nothing left to wait for.
       if (active.elapsed < _launchGrace) {
-        _schedule();
+        _schedule(active);
         return;
       }
       _finish(
@@ -228,6 +245,9 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
     var updated = active.copyWith(
       log: poll.log.isEmpty ? active.log : poll.log,
       resultJson: poll.resultJson,
+      processes: poll.processes,
+      // This poll answered, so whatever the last one could not do is history.
+      pollError: '',
     );
 
     if (poll.diedWithoutReporting) {
@@ -247,7 +267,7 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
     if (!poll.finished) {
       _store.put(updated);
       state = state.copyWith(active: updated);
-      _schedule();
+      _schedule(updated);
       return;
     }
 
@@ -306,7 +326,7 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
     } catch (e, s) {
       Loggers.app.warning('Benchmark cancel failed', e, s);
       state = state.copyWith(isBusy: false, error: '$e');
-      _schedule();
+      _schedule(active);
       return;
     }
 

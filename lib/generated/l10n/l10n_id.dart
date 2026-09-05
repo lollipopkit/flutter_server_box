@@ -2057,4 +2057,15 @@ class AppLocalizationsId extends AppLocalizations {
   String benchmarkUpstream(String version) {
     return 'Didukung oleh Yet Another Bench Script ($version)';
   }
+
+  @override
+  String get benchmarkPhaseStarting => 'Memulai';
+
+  @override
+  String get benchmarkNoOutputYet =>
+      'Belum ada keluaran. Sebelum menampilkan baris pertama, YABS memeriksa apakah google.com dan icanhazip.com dapat dijangkau. Pada jaringan yang memblokir salah satu situs tersebut, proses ini dapat memerlukan beberapa menit.';
+
+  @override
+  String get benchmarkNoServers =>
+      'Add a server first, then come back to benchmark it.';
 }

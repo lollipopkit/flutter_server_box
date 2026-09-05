@@ -2051,4 +2051,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String benchmarkUpstream(String version) {
     return 'Powered by Yet Another Bench Script ($version)';
   }
+
+  @override
+  String get benchmarkPhaseStarting => 'Starting';
+
+  @override
+  String get benchmarkNoOutputYet =>
+      'No output yet. Before printing its first line, YABS checks whether google.com and icanhazip.com are reachable. On networks that block either site, this can take several minutes.';
+
+  @override
+  String get benchmarkNoServers =>
+      'Add a server first, then come back to benchmark it.';
 }

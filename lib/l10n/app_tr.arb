@@ -593,5 +593,7 @@
   "benchmarkCompare": "Karşılaştır",
   "benchmarkCompareEmpty": "Karşılaştırma için en az iki tamamlanmış test gerekir.",
   "benchmarkRawLog": "Çalıştırma günlüğü",
-  "benchmarkUpstream": "Yet Another Bench Script ({version}) tarafından desteklenir"
+  "benchmarkUpstream": "Yet Another Bench Script ({version}) tarafından desteklenir",
+  "benchmarkPhaseStarting": "Başlatılıyor",
+  "benchmarkNoOutputYet": "Henüz çıktı yok. YABS ilk satırı yazdırmadan önce google.com ve icanhazip.com adreslerine erişilip erişilemediğini kontrol eder. Bu sitelerden birini engelleyen ağlarda işlem birkaç dakika sürebilir."
 }

@@ -593,5 +593,7 @@
   "benchmarkCompare": "Bandingkan",
   "benchmarkCompareEmpty": "Diperlukan setidaknya dua pengujian yang telah selesai untuk dibandingkan.",
   "benchmarkRawLog": "Log pengujian",
-  "benchmarkUpstream": "Didukung oleh Yet Another Bench Script ({version})"
+  "benchmarkUpstream": "Didukung oleh Yet Another Bench Script ({version})",
+  "benchmarkPhaseStarting": "Memulai",
+  "benchmarkNoOutputYet": "Belum ada keluaran. Sebelum menampilkan baris pertama, YABS memeriksa apakah google.com dan icanhazip.com dapat dijangkau. Pada jaringan yang memblokir salah satu situs tersebut, proses ini dapat memerlukan beberapa menit."
 }

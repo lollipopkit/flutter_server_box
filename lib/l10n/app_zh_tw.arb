@@ -600,5 +600,7 @@
   "benchmarkCompare": "比較",
   "benchmarkCompareEmpty": "至少需要兩筆已完成的效能測試才能比較。",
   "benchmarkRawLog": "執行記錄",
-  "benchmarkUpstream": "由 Yet Another Bench Script ({version}) 提供"
+  "benchmarkUpstream": "由 Yet Another Bench Script ({version}) 提供",
+  "benchmarkPhaseStarting": "正在啟動",
+  "benchmarkNoOutputYet": "暫時沒有輸出。YABS 在輸出第一行前會先檢查能否連線至 google.com 和 icanhazip.com；如果網路封鎖其中任一網站，可能需要等待數分鐘。"
 }

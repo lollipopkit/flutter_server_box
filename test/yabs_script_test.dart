@@ -346,6 +346,69 @@ exit $exitCode
     });
   });
 
+  group('the login shell is not assumed to be POSIX', () {
+    // `SSHClient.execute` hands the command to whatever shell the account uses.
+    // fish removed backticks and csh has no `if ...; then`, so a script written
+    // straight into that command line is a syntax error — which is not an
+    // exception. The command "succeeds", prints a diagnostic, and none of the
+    // markers arrive; it reached the user as "the server did not answer the
+    // poll" from a server that was answering.
+    for (final entry in {
+      'probe': YabsScript.probeCommand(),
+      'install': YabsScript.installEntry(),
+      'start': YabsScript.startEntry(const YabsOptions(), 'bench_x'),
+      'poll': YabsScript.pollCommand(YabsScript.runDir(const YabsOptions())),
+      'cancel': YabsScript.cancelCommand(
+        YabsScript.runDir(const YabsOptions()),
+      ),
+      'cleanup': YabsScript.cleanupCommand(
+        YabsScript.runDir(const YabsOptions()),
+        'bench_x',
+      ),
+    }.entries) {
+      test('${entry.key} is one sh -c with everything inside it', () {
+        // Structural, so this holds on any machine: only the wrapper has to
+        // survive the login shell, and `sh -c '<one word>'` parses the same
+        // everywhere. Anything after the closing quote would not.
+        expect(entry.value, startsWith("sh -c '"));
+        final body = entry.value.substring("sh -c '".length);
+        expect(body, endsWith("'"));
+        // The body is one single-quoted word: every inner quote has to be the
+        // `'\''` idiom, never a bare one that would end the argument early.
+        final closed = body.substring(0, body.length - 1);
+        expect(
+          closed.replaceAll(r"'\''", ''),
+          isNot(contains("'")),
+          reason: 'the quoted argument ends before the script does',
+        );
+      });
+    }
+
+    test('fish runs them, and would not have run the old form', () async {
+      final fish = ['/opt/homebrew/bin/fish', '/usr/local/bin/fish', '/usr/bin/fish']
+          .firstWhere((p) => File(p).existsSync(), orElse: () => '');
+      if (fish.isEmpty) {
+        markTestSkipped('no fish on this machine');
+        return;
+      }
+
+      // The wrapped form parses.
+      final ok = await Process.run(fish, ['-c', YabsScript.probeCommand()],
+          environment: {'HOME': tmp.path});
+      expect(ok.exitCode, 0, reason: ok.stderr.toString());
+      expect(ok.stdout, contains(YabsScript.scriptMissing));
+
+      // The unwrapped form does not: backticks alone are a syntax error, and
+      // fish reports it without failing in any way a caller would notice as an
+      // exception.
+      final bad = await Process.run(fish, [
+        '-c',
+        'p=`echo 1`\nif [ -n "\$p" ]; then echo MARKER; fi',
+      ], environment: {'HOME': tmp.path});
+      expect(bad.stdout, isNot(contains('MARKER')));
+    });
+  });
+
   group('cleanup will not delete a directory it does not own', () {
     test('a directory another run stamped is left alone', () async {
       await installFakeYabs();

@@ -593,5 +593,7 @@
   "benchmarkCompare": "Comparer",
   "benchmarkCompareEmpty": "Au moins deux tests terminés sont nécessaires pour effectuer une comparaison.",
   "benchmarkRawLog": "Journal d’exécution",
-  "benchmarkUpstream": "Fourni par Yet Another Bench Script ({version})"
+  "benchmarkUpstream": "Fourni par Yet Another Bench Script ({version})",
+  "benchmarkPhaseStarting": "Démarrage",
+  "benchmarkNoOutputYet": "Aucune sortie pour le moment. Avant d’afficher sa première ligne, YABS vérifie si google.com et icanhazip.com sont accessibles. Sur un réseau qui bloque l’un de ces sites, cette étape peut prendre plusieurs minutes."
 }

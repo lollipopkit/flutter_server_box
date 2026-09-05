@@ -1899,6 +1899,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String benchmarkUpstream(String version) {
     return '由 Yet Another Bench Script ($version) 提供';
   }
+
+  @override
+  String get benchmarkPhaseStarting => '正在启动';
+
+  @override
+  String get benchmarkNoOutputYet =>
+      '暂时没有输出。YABS 在输出第一行前会先检查能否访问 google.com 和 icanhazip.com；如果网络屏蔽其中任一站点，可能需要等待数分钟。';
+
+  @override
+  String get benchmarkNoServers => '请先添加服务器，再回来进行性能测试。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -3795,4 +3805,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String benchmarkUpstream(String version) {
     return '由 Yet Another Bench Script ($version) 提供';
   }
+
+  @override
+  String get benchmarkPhaseStarting => '正在啟動';
+
+  @override
+  String get benchmarkNoOutputYet =>
+      '暫時沒有輸出。YABS 在輸出第一行前會先檢查能否連線至 google.com 和 icanhazip.com；如果網路封鎖其中任一網站，可能需要等待數分鐘。';
 }

@@ -3601,6 +3601,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Powered by Yet Another Bench Script ({version})'**
   String benchmarkUpstream(String version);
+
+  /// No description provided for @benchmarkPhaseStarting.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting'**
+  String get benchmarkPhaseStarting;
+
+  /// No description provided for @benchmarkNoOutputYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No output yet. Before printing its first line, YABS checks whether google.com and icanhazip.com are reachable. On networks that block either site, this can take several minutes.'**
+  String get benchmarkNoOutputYet;
+
+  /// No description provided for @benchmarkNoServers.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a server first, then come back to benchmark it.'**
+  String get benchmarkNoServers;
 }
 
 class _AppLocalizationsDelegate
