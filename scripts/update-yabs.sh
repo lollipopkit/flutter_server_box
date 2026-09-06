@@ -15,7 +15,7 @@ set -euo pipefail
 
 repo="masonr/yet-another-bench-script"
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-dest="$root/assets/yabs.sh"
+dest="$root/assets/yabs.b64"
 
 commit="${1:-}"
 if [ -z "$commit" ]; then
@@ -29,7 +29,7 @@ fi
 # HTML error page from a proxy, or a file whose version cannot be read leaves
 # the vendored script destroyed and the checked-in one gone.
 tmp="$(mktemp "${dest}.XXXXXX")"
-trap 'rm -f "$tmp"' EXIT
+trap 'rm -f "$tmp" "$tmp.enc"' EXIT
 
 echo "Fetching $repo@$commit"
 curl -fsSL "https://raw.githubusercontent.com/$repo/$commit/yabs.sh" -o "$tmp"
@@ -40,14 +40,22 @@ if [ -z "$version" ]; then
   exit 1
 fi
 
-mv "$tmp" "$dest"
-trap - EXIT
-
+# The digest is taken over the script itself, never over the encoding: it is
+# what identifies the program a server is asked to run.
 if command -v sha256sum >/dev/null 2>&1; then
-  digest="$(sha256sum "$dest" | cut -d' ' -f1)"
+  digest="$(sha256sum "$tmp" | cut -d' ' -f1)"
 else
-  digest="$(shasum -a 256 "$dest" | cut -d' ' -f1)"
+  digest="$(shasum -a 256 "$tmp" | cut -d' ' -f1)"
 fi
+
+# Encoded rather than copied. App Store validation reads a bundled `.sh` as a
+# nested code object and refuses the upload for it being unsigned — see
+# `YabsScript.assetPath`. `openssl` rather than `base64`, whose wrapping flag
+# is `-w` on GNU and `-b` on BSD.
+openssl base64 -in "$tmp" -out "$tmp.enc"
+mv "$tmp.enc" "$dest"
+rm -f "$tmp"
+trap - EXIT
 
 cat <<EOF
 

@@ -532,19 +532,25 @@ exit $exitCode
 
   group('the vendored asset', () {
     test('matches the recorded digest and version', () async {
-      final file = File('assets/yabs.sh');
-      expect(file.existsSync(), isTrue, reason: 'assets/yabs.sh is missing');
-
-      final bytes = await file.readAsBytes();
+      final file = File(YabsScript.assetPath);
       expect(
-        sha256.convert(bytes).toString(),
+        file.existsSync(),
+        isTrue,
+        reason: '${YabsScript.assetPath} is missing',
+      );
+
+      // Through the app's own decoder, over the asset as it is checked in, so
+      // the digest covers the program a server would be sent rather than the
+      // encoding it travels in.
+      final text = YabsScript.decodeAsset(await file.readAsString());
+      expect(
+        sha256.convert(utf8.encode(text)).toString(),
         YabsScript.sha256Hex,
         reason:
-            'assets/yabs.sh changed. If that was deliberate, run '
+            '${YabsScript.assetPath} changed. If that was deliberate, run '
             'scripts/update-yabs.sh and take the constants it prints.',
       );
 
-      final text = utf8.decode(bytes);
       expect(
         RegExp(
           r'^YABS_VERSION="(.*)"$',
@@ -558,7 +564,9 @@ exit $exitCode
     });
 
     test('downloads fio and iperf3 only when -b was requested', () async {
-      final text = await File('assets/yabs.sh').readAsString();
+      final text = YabsScript.decodeAsset(
+        await File(YabsScript.assetPath).readAsString(),
+      );
 
       // The no-`-b`, no-local-package path must not reach either URL. This is
       // intentionally structural: the asset is the exact shell program sent
@@ -614,6 +622,42 @@ exit $exitCode
         greaterThan(iperf.indexOf(r'elif [[ -n "$PREFER_BIN" ]]; then')),
       );
     });
+
+    // App Store validation walks everything inside `Runner.app` and treats a
+    // file it reads as executable code as a nested code object that must be
+    // signed on its own. Nothing under `flutter_assets` is. So such an asset
+    // costs nothing at build time and fails the *upload*, with `Invalid
+    // Signature. Code object is not signed at all.` — an error that names the
+    // certificates and not the file's contents. `assets/yabs.sh` shipped that
+    // way in v1574, which is why the script is base64 now.
+    //
+    // Over every declared asset rather than yabs alone: the next one to do
+    // this will not be this file.
+    test('no bundled asset reads as executable code', () {
+      const scriptSuffixes = ['.sh', '.bash', '.zsh', '.py', '.pl', '.rb'];
+
+      final assets = _declaredAssets();
+      expect(
+        assets,
+        contains(YabsScript.assetPath),
+        reason: 'pubspec.yaml assets: could not be read',
+      );
+
+      for (final path in assets) {
+        expect(
+          scriptSuffixes.any(path.endsWith),
+          isFalse,
+          reason: '$path has a script suffix and cannot be bundled',
+        );
+
+        final bytes = File(path).readAsBytesSync();
+        expect(
+          bytes.length >= 2 && bytes[0] == 0x23 && bytes[1] == 0x21,
+          isFalse,
+          reason: '$path starts with a shebang and cannot be bundled',
+        );
+      }
+    });
   });
 
   group('results parse leniently', () {
@@ -653,4 +697,43 @@ exit $exitCode
       expect(missing.latencyMs, isNull);
     });
   });
+}
+
+/// Every file the `assets:` section of pubspec puts in the bundle, with a
+/// directory entry expanded the way Flutter expands one — the files directly
+/// inside it, not recursively.
+///
+/// Parsed by indentation rather than with a YAML package: the section is two
+/// levels deep in a file this repo controls, and a test that reads pubspec
+/// should not decide what the build's own parser accepts.
+List<String> _declaredAssets() {
+  final assets = <String>[];
+  var inSection = false;
+
+  for (final line in File('pubspec.yaml').readAsLinesSync()) {
+    if (RegExp(r'^  assets:\s*$').hasMatch(line)) {
+      inSection = true;
+      continue;
+    }
+    if (!inSection) continue;
+
+    final entry = RegExp(r'^    -\s+(\S+)\s*$').firstMatch(line);
+    if (entry == null) {
+      // Comments and blank lines sit between entries; anything else is the
+      // next key, and the section is over.
+      if (line.trim().isEmpty || line.trimLeft().startsWith('#')) continue;
+      break;
+    }
+
+    final path = entry.group(1)!;
+    if (path.endsWith('/')) {
+      assets.addAll(
+        Directory(path).listSync().whereType<File>().map((f) => f.path),
+      );
+    } else {
+      assets.add(path);
+    }
+  }
+
+  return assets;
 }

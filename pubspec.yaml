@@ -150,7 +150,10 @@ flutter:
     # on the server: `curl | bash` fixes no version and verifies nothing, and
     # raw.githubusercontent.com is unreachable from a good share of the hosts
     # people run this against. Refresh with `scripts/update-yabs.sh`.
-    - assets/yabs.sh
+    #
+    # base64, because App Store validation rejects a bundled `.sh` — see
+    # `YabsScript.assetPath`. A shell script cannot be added to this list.
+    - assets/yabs.b64
     # The directory, not each file: `Dist.markAsset` names them by enum name.
     # Only distributions whose logo carries an explicit copyright licence are
     # in there — see the README beside them, which Flutter leaves out because

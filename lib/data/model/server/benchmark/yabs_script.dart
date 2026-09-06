@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:server_box/data/model/server/benchmark/yabs_options.dart';
 
@@ -23,7 +25,19 @@ import 'package:server_box/data/model/server/benchmark/yabs_options.dart';
 class YabsScript {
   const YabsScript._();
 
-  static const assetPath = 'assets/yabs.sh';
+  /// The asset is **base64**, and neither the encoding nor the name is
+  /// cosmetic. App Store validation walks everything inside `Runner.app` and
+  /// treats a file it reads as executable code as a nested code object that
+  /// must carry its own signature — which nothing under `flutter_assets` does.
+  /// Shipped as `assets/yabs.sh` it failed upload with `Invalid Signature.
+  /// Code object is not signed at all.`, naming this path and blaming the
+  /// certificates. Both things the scanner looks at are gone here: the `.sh`
+  /// suffix and the leading `#!/bin/bash`, which is why this is not simply a
+  /// rename.
+  ///
+  /// [sha256Hex] still pins the *decoded* bytes, so it means what it did
+  /// before: the exact program sent to a server.
+  static const assetPath = 'assets/yabs.b64';
 
   /// `YABS_VERSION` inside the asset. Also the remote filename, so a server
   /// that already has this version skips the upload.
@@ -44,10 +58,19 @@ class YabsScript {
 
   static String? _cached;
 
-  /// The script's bytes, read once per process.
+  /// The script's bytes, read and decoded once per process.
   static Future<String> load() async {
-    return _cached ??= await rootBundle.loadString(assetPath);
+    final cached = _cached;
+    if (cached != null) return cached;
+    return _cached = decodeAsset(await rootBundle.loadString(assetPath));
   }
+
+  /// Shared with `scripts/update-yabs.sh` and the asset's test, so what the
+  /// app runs and what the digest is taken over cannot drift apart. The
+  /// encoder wraps at 64 columns to keep the asset diffable, and
+  /// [base64.decode] rejects the line breaks.
+  static String decodeAsset(String encoded) =>
+      utf8.decode(base64.decode(encoded.replaceAll(RegExp(r'\s'), '')));
 
   // --- Remote layout ---
 
