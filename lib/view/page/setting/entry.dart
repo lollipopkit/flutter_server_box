@@ -479,13 +479,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             ? BackButton(onPressed: _onTabBack)
             : null,
         actions: [
-          // `kDebugMode` is a const, so this and everything it reaches is tree
-          // shaken out of a release rather than shipped and hidden.
-          if (kDebugMode)
-            Btn.text(
-              text: 'Crash',
-              onTap: () => CrashDebugMenu.show(context),
-            ),
           Btn.text(
             text: context.libL10n.logs,
             onTap: () => DebugPage.route.go(
@@ -494,6 +487,17 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 title: '${context.libL10n.logs}(${BuildData.build})',
               ),
             ),
+            // The crash menu, behind a long press on the button next to the
+            // thing it is for, rather than a second button in a bar that is
+            // already four wide.
+            //
+            // `kDebugMode` is a const, so a release does not register the
+            // gesture and `CrashDebugMenu` — with everything it reaches — is
+            // tree shaken out rather than shipped behind a gesture nobody is
+            // told about.
+            onLongTap: kDebugMode
+                ? () => CrashDebugMenu.show(context)
+                : null,
           ),
           Btn.icon(text: libL10n.delete, 
             icon: const Icon(Icons.delete),
