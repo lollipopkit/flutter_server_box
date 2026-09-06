@@ -32,7 +32,7 @@ dependencies:
   equatable: ^2.1.0
   easy_isolate: ^1.3.0
   extended_image: ^10.0.0
-  file_picker: ^12.0.0
+  file_picker: ^12.2.0
   flutter_gbk2utf8: ^1.0.1
   flutter_riverpod: ^3.3.1
   flutter_highlight: ^0.7.0
@@ -58,8 +58,8 @@ dependencies:
   # Storage layer over the same encrypted connection: `NativeDatabase.opened`
   # takes the `sqlite3` Database this app already opens and keys itself, so
   # sqlite3mc and the build-hook bundling below are untouched.
-  drift: ^2.34.3
-  wakelock_plus: ^1.7.0
+  drift: ^2.34.4
+  wakelock_plus: ^1.8.0
   wake_on_lan: ^4.1.1+3
   webdav_client_plus: ^2.0.0
   url_launcher: ^6.2.6
@@ -95,7 +95,7 @@ dependencies:
   # Drives the build hook below. `sbm_ffi` is no longer a Flutter plugin — the
   # hook compiles the crate directly, so there is nothing to depend on.
   flutter_rust_bridge_hooks: 2.13.0
-  desktop_drop: ^0.8.2
+  desktop_drop: ^0.8.4
   sentry: ^9.28.0
   # Runtime for the generated reader in `lib/src/proto`, which is how Android's
   # crash tombstone is decoded. Pure Dart, and its own dependencies —
