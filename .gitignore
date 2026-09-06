@@ -71,6 +71,11 @@ linux.AppDir
 
 untranslated.json
 
+# Per-developer overrides merged into BuildData by fl_build's updateBuildData().
+# Optional by design, so a committed one silently changes every build made from
+# that checkout.
+more_build_data.json
+
 .vscode/settings.json
 trans.txt
 android/app/.cxx
