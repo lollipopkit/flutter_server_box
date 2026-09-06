@@ -1,6 +1,15 @@
-A Flutter project which provide charts to display Linux server status and tools to manage server.
-Especially thanks to dartssh2 & xterm.dart.
+Monitor and manage Linux, BSD and Windows servers from one app.
 
-* Status chart (CPU, Sensors, GPU...), SSH Term, SFTP, Docker & Pkg & Process...
-* Platform specific: Bio auth、Msg push、Home widget、watchOS App...
-* English, 简体中文; Deutsch, 繁體中文, Indonesian, Français, Dutch; Español, Русский язык, Português, 日本語
+A server is reached over SSH, over the ServerBox Monitor agent's HTTP API, or both.
+
+* Status charts: CPU, memory, disk, network, temperature, GPU, S.M.A.R.T, battery
+* SSH terminal with a virtual keyboard, a floating window over the rest of the app, and a shell on the device itself
+* Files over SFTP, or over SCP where the host has no SFTP subsystem
+* Docker containers, processes, systemd services, snippets and custom commands
+* Benchmark disk, network and CPU, with the results stored and comparable
+* Your servers drawn on a globe, placed on the device without an address leaving it
+* Port forwarding, jump hosts and ProxyCommand
+* Biometric auth, push notifications, home widgets and a watchOS app
+* 15 languages
+
+Especially thanks to dartssh2 & xterm.dart.
