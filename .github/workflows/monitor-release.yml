@@ -141,9 +141,13 @@ jobs:
         with:
           key: ${{ matrix.target }}
 
+      # `release-monitor`, not `release`: fat LTO and one codegen unit, which
+      # are profile-wide settings and so cannot be asked for on the shared
+      # profile without slowing every app build. Defined in the workspace
+      # Cargo.toml, which says what it costs and what it buys.
       - name: Build
         shell: bash
-        run: cargo build -p server_box_monitor --release --target ${{ matrix.target }}
+        run: cargo build -p server_box_monitor --profile release-monitor --target ${{ matrix.target }}
 
       - name: Download frontend dist
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
@@ -162,7 +166,7 @@ jobs:
 
           staging="${BIN_NAME}"
           mkdir -p "$staging"
-          cp "target/${{ matrix.target }}/release/${bin}${ext}" "$staging/"
+          cp "target/${{ matrix.target }}/release-monitor/${bin}${ext}" "$staging/"
           mkdir -p "$staging/frontend"
           cp -r monitor/frontend/dist "$staging/frontend/dist"
           cp -r monitor/migrations "$staging/migrations"
@@ -207,7 +211,7 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: monitor-bin-linux-${{ matrix.arch }}
-          path: target/${{ matrix.target }}/release/server_box_monitor
+          path: target/${{ matrix.target }}/release-monitor/server_box_monitor
           if-no-files-found: error
           retention-days: 3
 

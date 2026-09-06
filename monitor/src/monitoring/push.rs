@@ -17,6 +17,18 @@ const MAX_CONCURRENT_PUSHES: usize = 4;
 fn http_client() -> &'static Client {
     static CLIENT: OnceLock<Client> = OnceLock::new();
     CLIENT.get_or_init(|| {
+        // reqwest is built without a crypto provider of its own, so the one
+        // the rest of the agent uses has to be the process default before it
+        // builds a TLS config — otherwise the first HTTPS push panics inside
+        // rustls rather than failing as a push error. `ring`, matching the
+        // server side (`api/server.rs`) and russh; the alternative is pulling
+        // aws-lc-rs in beside it for this one client.
+        //
+        // `install_default` answers Err only when one is already installed,
+        // which is the correct outcome here and is what a second call in a
+        // test process does.
+        let _ = rustls::crypto::ring::default_provider().install_default();
+
         Client::builder()
             .connect_timeout(CONNECT_TIMEOUT)
             .timeout(REQUEST_TIMEOUT)

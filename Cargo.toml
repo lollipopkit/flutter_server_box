@@ -37,3 +37,26 @@ strip = true
 # cargo cannot vary `strip` per target.
 [profile.release.package.sbm_ffi]
 strip = false
+
+# The agent's own release profile, used by `monitor-release.yml` and by
+# `monitor/Dockerfile`, and by nothing the app builds.
+#
+# `lto` and `codegen-units` are profile-wide — `[profile.release.package.*]`
+# accepts neither — so setting them above would put a fat-LTO link in front of
+# every app build, for a binary no app ships. Here they cost only the agent's
+# release, which is built by hand a few times a release. Measured on the
+# agent: 20.1 MB → 15.2 MB, at +1 minute.
+#
+# `opt-level` is deliberately left at the inherited 3. `"s"` takes it to
+# 11.2 MB, and this is the process that samples the machine and terminates
+# every TLS connection to it; that trade is not one a build profile should
+# make silently.
+#
+# `monitor/Dockerfile` builds the crate *outside* this workspace — it rewrites
+# the `sbm_parser` path so `monitor/Cargo.toml` becomes the root — so nothing
+# in this file reaches it, `[profile.release]` above included. It passes the
+# same settings as `CARGO_PROFILE_RELEASE_*` and says so there.
+[profile.release-monitor]
+inherits = "release"
+lto = "fat"
+codegen-units = 1
