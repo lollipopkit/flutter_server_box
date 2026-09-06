@@ -329,10 +329,6 @@ jobs:
           # the fenced blocks below are allowed to carry their own line breaks,
           # where they are the commands' own.
           body: |
-            The **ServerBox Monitor** agent, versioned independently of the app — see `monitor/README.md` for what it does and `config.example.toml` in the archive for how it is configured.
-
-            ### Docker
-
             ```sh
             docker run -d --name server-box-monitor \
               -p 3770:3770 -v ./data:/data \
@@ -340,12 +336,6 @@ jobs:
             ```
 
             Also tagged `latest`. `linux/amd64` and `linux/arm64`.
-
-            ### Native
-
-            Pick the archive for the machine being monitored and unpack it. Linux builds are static musl binaries, so they run on Alpine as they are. Each archive carries the binary, the web panel, the migrations and an example config.
-
-            Verify what you downloaded against `SHA256SUMS`:
 
             ```sh
             sha256sum -c SHA256SUMS --ignore-missing
