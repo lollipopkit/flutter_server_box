@@ -120,25 +120,38 @@ pub struct Disk {
     pub children: Vec<Disk>,
 }
 
-/// Whether a `df` row describes storage worth reporting (Dart `_shouldCalc`):
-/// exclude kernel mounts, read-only images and swap areas; include /dev-prefixed
-/// sources, network mounts (//), /mnt mount points; exclude the virtual
-/// filesystems [`is_virtual_fs`] names; include the rest
+/// Whether a `df` source describes storage worth reporting (Dart
+/// `_shouldCalcSource`): exclude kernel mounts, snap mount points and swap
+/// mounts; include /dev-prefixed sources, network mounts (//), /mnt mount
+/// points; exclude the virtual filesystems [`is_virtual_fs`] names; include the
+/// rest.
 ///
-/// Takes one of a row's two identifiers, whichever the caller has. Prefer
-/// [`Disk::is_storage`] where both are available.
-pub fn disk_should_calc(fs: &str, mount: &str) -> bool {
+/// A source carries user-chosen text, so filesystem-type-only rules must not be
+/// applied here. Use [`disk_type_should_calc`] for an `lsblk` filesystem type,
+/// or [`Disk::is_storage`] where both identifiers are available.
+pub fn disk_should_calc(source: &str, mount: &str) -> bool {
     // Checked before the inclusions below, so that a source spelled like a
     // block device cannot bring these back: a host that exposes many device
     // nodes publishes one devtmpfs row per node, two dozen lines all claiming
     // 0 B used of the same size.
-    if is_kernel_mount(mount) || is_read_only_image(fs, mount) || is_swap_area(fs, mount) {
+    if is_kernel_mount(mount) || is_read_only_image_mount(mount) || is_swap_mount(mount) {
         return false;
     }
-    if fs.starts_with("/dev") || fs.starts_with("//") || mount.starts_with("/mnt") {
+    if source.starts_with("/dev") || source.starts_with("//") || mount.starts_with("/mnt") {
         return true;
     }
-    !is_virtual_fs(fs)
+    !is_virtual_fs(source)
+}
+
+/// Whether an `lsblk` filesystem type describes storage worth reporting.
+///
+/// Type-only exclusions live here so a `df` source that happens to be named
+/// `squashfs`, `iso9660` or `swap` remains ordinary user-managed storage.
+pub(crate) fn disk_type_should_calc(fs_type: &str, mount: &str) -> bool {
+    if is_read_only_image_type(fs_type) || fs_type == "swap" {
+        return false;
+    }
+    disk_should_calc(fs_type, mount)
 }
 
 /// A kernel-backed filesystem with nothing stored behind it, by exact name.
@@ -172,22 +185,23 @@ fn is_virtual_fs(fs: &str) -> bool {
 /// Matched on the image, never on `/dev/loop`: a loop device carrying a
 /// writable filesystem is storage someone mounted on purpose, and it is the
 /// `df` fallback hosts (busybox, no lsblk) where that is most likely.
-/// `fs` is a filesystem type under `lsblk` and a source under `df`, so the
-/// two sources are recognised by different halves of this.
-fn is_read_only_image(fs: &str, mount: &str) -> bool {
+fn is_read_only_image_type(fs_type: &str) -> bool {
     matches!(
-        fs,
+        fs_type,
         "squashfs" | "erofs" | "iso9660" | "snapfuse" | "fuse.snapfuse"
-    ) || mount.starts_with("/snap/")
-        || mount.starts_with("/var/lib/snapd/snap/")
+    )
+}
+
+fn is_read_only_image_mount(mount: &str) -> bool {
+    mount.starts_with("/snap/") || mount.starts_with("/var/lib/snapd/snap/")
 }
 
 /// A swap area, which `lsblk` lists beside filesystems. It has no mount point
 /// and no `FSSIZE`, so the row reads `0 B / 0 B`, and swap is reported on its
 /// own from `/proc/meminfo` anyway. `df` lists only mounted filesystems and
 /// never produces one of these.
-fn is_swap_area(fs: &str, mount: &str) -> bool {
-    fs == "swap" || mount == "[SWAP]"
+fn is_swap_mount(mount: &str) -> bool {
+    mount == "[SWAP]"
 }
 
 impl Disk {
@@ -195,14 +209,16 @@ impl Disk {
     /// mount, a read-only image, a container layer or a swap area
     /// (Dart `Disk.isStorage`).
     ///
-    /// [`disk_should_calc`] is handed a source by `df` and a filesystem type
-    /// by `lsblk`, never both, and takes a different branch for each. A [`Disk`]
-    /// carries both, so it is asked with each — otherwise a row identified only
-    /// by its type, such as a squashfs whose mount point is not under `/snap`,
-    /// or a swap area whose mount is empty rather than `[SWAP]`, is missed.
+    /// A [`Disk`] carries both a source and, where known, a filesystem type, so
+    /// each is classified in its own context. Otherwise a `df` source named
+    /// `squashfs` is mistaken for that type, while a squashfs whose mount point
+    /// is not under `/snap` is missed if only the source is checked.
     pub fn is_storage(&self) -> bool {
         disk_should_calc(&self.path, &self.mount)
-            && disk_should_calc(self.fs_type.as_deref().unwrap_or(&self.path), &self.mount)
+            && self
+                .fs_type
+                .as_deref()
+                .is_none_or(|fs_type| disk_type_should_calc(fs_type, &self.mount))
     }
 }
 

@@ -48,11 +48,13 @@ class Disk extends Equatable {
   /// a monitor agent's `disk_details` never went through it, so an agent older
   /// than a given rule still sends what that rule removes.
   ///
-  /// [_shouldCalc] is handed a source by `df` and a filesystem type by `lsblk`,
-  /// never both, and takes a different branch for each. A [Disk] carries both,
-  /// so it is asked with each.
+  /// A [Disk] carries both a source and, where known, a filesystem type, so each
+  /// is classified in its own context. Otherwise a `df` source named
+  /// `squashfs` is mistaken for that type, while a squashfs whose mount point
+  /// is not under `/snap` is missed if only the source is checked.
   bool get isStorage =>
-      _shouldCalc(path, mount) && _shouldCalc(fsTyp ?? path, mount);
+      _shouldCalcSource(path, mount) &&
+      (fsTyp == null || _shouldCalcType(fsTyp!, mount));
 
   @override
   List<Object?> get props => [
@@ -200,23 +202,28 @@ class DiskUsage {
   }
 }
 
-bool _shouldCalc(String fs, String mount) {
+bool _shouldCalcSource(String source, String mount) {
   // Checked before the inclusions below, so that a source spelled like a block
   // device cannot bring these back: a host that exposes many device nodes
   // publishes one devtmpfs row per node, two dozen lines all claiming 0 B used
   // of the same size.
   if (_isKernelMount(mount)) return false;
-  if (_isReadOnlyImage(fs, mount)) return false;
-  if (_isSwapArea(fs, mount)) return false;
+  if (_isReadOnlyImageMount(mount)) return false;
+  if (_isSwapMount(mount)) return false;
 
-  if (fs.startsWith('/dev')) return true;
+  if (source.startsWith('/dev')) return true;
   // Some NAS may have mounted path like this `//192.168.1.2/`
-  if (fs.startsWith('//')) return true;
+  if (source.startsWith('//')) return true;
   if (mount.startsWith('/mnt')) return true;
 
-  if (_isVirtualFs(fs)) return false;
+  if (_isVirtualFs(source)) return false;
 
   return true;
+}
+
+bool _shouldCalcType(String fsType, String mount) {
+  if (_isReadOnlyImageType(fsType) || fsType == 'swap') return false;
+  return _shouldCalcSource(fsType, mount);
 }
 
 /// A kernel-backed filesystem with nothing stored behind it, by exact name.
@@ -255,26 +262,23 @@ bool _isVirtualFs(String fs) => const {
 /// Matched on the image, never on `/dev/loop`: a loop device carrying a
 /// writable filesystem is storage someone mounted on purpose.
 ///
-/// Mirrors `is_read_only_image` in `crates/sbm_parser/src/types.rs`, and takes
-/// the same overloaded first argument: a filesystem type where one is known, a
-/// source otherwise.
-bool _isReadOnlyImage(String fs, String mount) {
-  return const {
-        'squashfs',
-        'erofs',
-        'iso9660',
-        'snapfuse',
-        'fuse.snapfuse',
-      }.contains(fs) ||
-      mount.startsWith('/snap/') ||
-      mount.startsWith('/var/lib/snapd/snap/');
-}
+/// Mirrors `is_read_only_image_type` in `crates/sbm_parser/src/types.rs`.
+bool _isReadOnlyImageType(String fsType) => const {
+  'squashfs',
+  'erofs',
+  'iso9660',
+  'snapfuse',
+  'fuse.snapfuse',
+}.contains(fsType);
+
+bool _isReadOnlyImageMount(String mount) =>
+    mount.startsWith('/snap/') || mount.startsWith('/var/lib/snapd/snap/');
 
 /// A swap area, which `lsblk` lists beside filesystems. It has no mount point
 /// and no `FSSIZE`, so the row reads `0 B / 0 B`, and swap is reported on its
 /// own from `/proc/meminfo` anyway. `df` lists only mounted filesystems and
 /// never produces one of these.
-bool _isSwapArea(String fs, String mount) => fs == 'swap' || mount == '[SWAP]';
+bool _isSwapMount(String mount) => mount == '[SWAP]';
 
 /// `/dev`, `/proc`, `/sys`, and anything mounted inside them.
 ///
