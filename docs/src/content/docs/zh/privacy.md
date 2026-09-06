@@ -128,7 +128,7 @@ API key 保存在本机加密的 App 数据库中，并作为 bearer credential 
 | Linux userland 镜像 | 经验证的 manifest 指定的 distribution mirror 或 source URL | 安装或更新本机 Linux 环境时发起；下载的镜像会按 manifest 中的 digest 校验 |
 | 城市级位置数据 | `ipgeo.lollipopkit.com`，失败时回退到 GitHub Releases | 在地球仪或 **设置 → 服务器 → 通用 → 地球仪** 中点击 **下载**，或在设置中点击 **更新** 时发起。App 会先请求 manifest，确认后才下载数据压缩包；后续位置查询均在本机完成。详见[地球仪与位置数据](#地球仪与位置数据)。 |
 | 服务器 logo 或发行版标识 | 你配置的 URL | 设置自定义 logo 或标识 URL 后发起；图片 provider 可能会收到该请求 |
-| 赞助链接 | `cdn.lpkt.cn` | 打开赞助链接时发起 |
+| 赞助链接 | `cdn.lollipopkit.com` | 打开赞助链接时发起 |
 | 文档和 issue 链接 | `serverbox.lollipopkit.com` 或 `github.com` | 打开对应链接时发起 |
 
 连接你自己的服务器、配置的 BMC 以及你部署的 Monitor agent，会直接发往这些 endpoint，不会经过开发者的基础设施。

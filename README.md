@@ -3,7 +3,7 @@ English | [简体中文](README_zh.md)
 <h2 align="center">Flutter Server Box</h2>
 
 <div align="center">
-  <a href="https://cdn.lpkt.cn/donate"><img alt="donate" src="https://img.shields.io/badge/donate-me-pink"></a>
+  <a href="https://cdn.lollipopkit.com/donate"><img alt="donate" src="https://img.shields.io/badge/donate-me-pink"></a>
   <img alt="lang" src="https://img.shields.io/badge/lang-dart-cyan">
   <img alt="license" src="https://img.shields.io/badge/license-AGPLv3-yellow">
   <a href="https://deepwiki.com/lollipopkit/flutter_server_box"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
@@ -27,21 +27,21 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
 <br>
 <table>
   <tr>
-    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/home.jpg" alt="Server list"></td>
-    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/server-details.jpg" alt="Server details"></td>
-    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/terminal.jpg" alt="Terminal"></td>
-    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/files.jpg" alt="Files"></td>
+    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/home.jpg" alt="Server list"></td>
+    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/server-details.jpg" alt="Server details"></td>
+    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/terminal.jpg" alt="Terminal"></td>
+    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/files.jpg" alt="Files"></td>
   </tr>
   <tr>
-    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/container.jpg" alt="Containers"></td>
-    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/process.jpg" alt="Processes"></td>
-    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/services.jpg" alt="Services"></td>
-    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/snippets.jpg" alt="Snippets"></td>
+    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/container.jpg" alt="Containers"></td>
+    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/process.jpg" alt="Processes"></td>
+    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/services.jpg" alt="Services"></td>
+    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/snippets.jpg" alt="Snippets"></td>
   </tr>
   <tr>
-    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/agent.jpg" alt="Agent"></td>
-    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/bench.jpg" alt="Benchmark"></td>
-    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/settings.jpg" alt="Settings"></td>
+    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/agent.jpg" alt="Agent"></td>
+    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/bench.jpg" alt="Benchmark"></td>
+    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/settings.jpg" alt="Settings"></td>
     <td></td>
   </tr>
 </table>
@@ -52,22 +52,22 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
 <br>
 <table>
   <tr>
-    <td><img width="280px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/ipad/home.jpg" alt="Server list"></td>
-    <td><img width="280px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/ipad/server-details.jpg" alt="Server details"></td>
-    <td><img width="280px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/ipad/terminal.jpg" alt="Terminal"></td>
+    <td><img width="280px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/ipad/home.jpg" alt="Server list"></td>
+    <td><img width="280px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/ipad/server-details.jpg" alt="Server details"></td>
+    <td><img width="280px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/ipad/terminal.jpg" alt="Terminal"></td>
   </tr>
   <tr>
-    <td><img width="280px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/ipad/files.jpg" alt="Files"></td>
-    <td><img width="280px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/ipad/container.jpg" alt="Containers"></td>
-    <td><img width="280px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/ipad/process.jpg" alt="Processes"></td>
+    <td><img width="280px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/ipad/files.jpg" alt="Files"></td>
+    <td><img width="280px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/ipad/container.jpg" alt="Containers"></td>
+    <td><img width="280px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/ipad/process.jpg" alt="Processes"></td>
   </tr>
   <tr>
-    <td><img width="280px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/ipad/services.jpg" alt="Services"></td>
-    <td><img width="280px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/ipad/globe.jpg" alt="Globe"></td>
-    <td><img width="280px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/ipad/agent.jpg" alt="Agent"></td>
+    <td><img width="280px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/ipad/services.jpg" alt="Services"></td>
+    <td><img width="280px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/ipad/globe.jpg" alt="Globe"></td>
+    <td><img width="280px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/ipad/agent.jpg" alt="Agent"></td>
   </tr>
   <tr>
-    <td><img width="280px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/ipad/settings.jpg" alt="Settings"></td>
+    <td><img width="280px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/ipad/settings.jpg" alt="Settings"></td>
     <td></td>
     <td></td>
   </tr>
@@ -79,24 +79,24 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
 <br>
 <table>
   <tr>
-    <td><img width="380px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/mac/home.jpg" alt="Server list"></td>
-    <td><img width="380px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/mac/server-details.jpg" alt="Server details"></td>
+    <td><img width="380px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/home.jpg" alt="Server list"></td>
+    <td><img width="380px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/server-details.jpg" alt="Server details"></td>
   </tr>
   <tr>
-    <td><img width="380px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/mac/terminal.jpg" alt="Terminal"></td>
-    <td><img width="380px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/mac/files.jpg" alt="Files"></td>
+    <td><img width="380px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/terminal.jpg" alt="Terminal"></td>
+    <td><img width="380px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/files.jpg" alt="Files"></td>
   </tr>
   <tr>
-    <td><img width="380px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/mac/container.jpg" alt="Containers"></td>
-    <td><img width="380px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/mac/process.jpg" alt="Processes"></td>
+    <td><img width="380px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/container.jpg" alt="Containers"></td>
+    <td><img width="380px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/process.jpg" alt="Processes"></td>
   </tr>
   <tr>
-    <td><img width="380px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/mac/services.jpg" alt="Services"></td>
-    <td><img width="380px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/mac/globe.jpg" alt="Globe"></td>
+    <td><img width="380px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/services.jpg" alt="Services"></td>
+    <td><img width="380px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/globe.jpg" alt="Globe"></td>
   </tr>
   <tr>
-    <td><img width="380px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/mac/agent.jpg" alt="Agent"></td>
-    <td><img width="380px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/mac/settings.jpg" alt="Settings"></td>
+    <td><img width="380px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/agent.jpg" alt="Agent"></td>
+    <td><img width="380px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/settings.jpg" alt="Settings"></td>
   </tr>
 </table>
 </details>
@@ -107,8 +107,8 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
 |--|--|
 | iOS | [AppStore](https://apps.apple.com/app/id1586449703) / [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) (`_NoSign.ipa`, unsigned, you need to sign it yourself) |
 | macOS | [AppStore](https://apps.apple.com/app/id1586449703) / [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) (`.dmg`) / brew install --cask server-box |
-| Android | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lpkt.cn/serverbox/pkg/?sort=time&order=desc&layout=grid) / [F-Droid](https://f-droid.org/packages/tech.lolli.toolbox) / [OpenAPK](https://www.openapk.net/serverbox/tech.lolli.toolbox/) |
-| Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lpkt.cn/serverbox/pkg/?sort=time&order=desc&layout=grid) |
+| Android | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lollipopkit.com/serverbox/pkg/?sort=time&order=desc&layout=grid) / [F-Droid](https://f-droid.org/packages/tech.lolli.toolbox) / [OpenAPK](https://www.openapk.net/serverbox/tech.lolli.toolbox/) |
+| Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lollipopkit.com/serverbox/pkg/?sort=time&order=desc&layout=grid) |
 
 Please only download pkgs from the source that **you trust**!  
 
@@ -160,7 +160,6 @@ If I forgot to add your name to the contributors list, please add a comment in t
 
 ### Translation
 
-- [Guide](https://blog.lpkt.cn/posts/faq/) can be found in my blog.
 - We need your help! Just feel free to open a PR.
 
 ## 💡 My other apps

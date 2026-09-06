@@ -1,6 +1,6 @@
 part of 'entry.dart';
 
-const _sponsorUrl = 'https://cdn.lpkt.cn/donate';
+const _sponsorUrl = 'https://cdn.lollipopkit.com/donate';
 
 final class _AppAboutPage extends StatefulWidget {
   const _AppAboutPage();

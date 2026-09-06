@@ -252,7 +252,7 @@ automatic diagnostic payload described above.
 | Linux userland image | The distribution mirror or source URL selected by the verified manifest | When you install or update a local Linux environment; the image is checked against the manifest's digest |
 | City-level location data | `ipgeo.lollipopkit.com`, with GitHub Releases as fallback | When you tap **Download** on the globe or in **Settings → Server → General → Globe**, or tap **Update** in settings. The manifest is requested first; data archives follow only after confirmation. Later geolocation lookups are local—see [Globe and location data](#globe-and-location-data). |
 | Server logo or distribution mark | The URL configured by you | When a custom logo or mark URL is set; the image provider can receive the request |
-| Sponsor link | `cdn.lpkt.cn` | When you open the sponsor link |
+| Sponsor link | `cdn.lollipopkit.com` | When you open the sponsor link |
 | Documentation and issue links | `serverbox.lollipopkit.com` or `github.com` | When you open one of those links |
 
 Connections to your own servers, to a BMC you configured and to a Monitor agent

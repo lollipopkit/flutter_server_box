@@ -39,7 +39,7 @@
   // and what the stores are fed, `<name>.jpg` is the same frame at 1440px on
   // its long edge for the web. Both are addressed the same way, so a refreshed
   // screenshot replaces an object and needs no change here.
-  const shotBase = 'https://cdn.lpkt.cn/serverbox/screenshot'
+  const shotBase = 'https://cdn.lollipopkit.com/serverbox/screenshot'
 
   // The hero's four. Order is what the stack's `x`/`rotate` were tuned for, and
   // each one answers to an `alt` string in the locale files — `one` is the
@@ -103,7 +103,7 @@
       label: 'Android',
       sources: [
         { label: 'GitHub Releases', href: 'https://github.com/lollipopkit/flutter_server_box/releases' },
-        { label: 'CDN', href: 'https://cdn.lpkt.cn/serverbox/pkg/?sort=time&order=desc&layout=grid' },
+        { label: 'CDN', href: 'https://cdn.lollipopkit.com/serverbox/pkg/?sort=time&order=desc&layout=grid' },
         { label: 'F-Droid', href: 'https://f-droid.org/packages/tech.lolli.toolbox' },
         { label: 'OpenAPK', href: 'https://www.openapk.net/serverbox/tech.lolli.toolbox/' },
       ],
@@ -113,7 +113,7 @@
       label: 'Linux',
       sources: [
         { label: 'GitHub Releases', href: 'https://github.com/lollipopkit/flutter_server_box/releases' },
-        { label: 'CDN', href: 'https://cdn.lpkt.cn/serverbox/pkg/?sort=time&order=desc&layout=grid' },
+        { label: 'CDN', href: 'https://cdn.lollipopkit.com/serverbox/pkg/?sort=time&order=desc&layout=grid' },
       ],
     },
     {
@@ -121,7 +121,7 @@
       label: 'Windows',
       sources: [
         { label: 'GitHub Releases', href: 'https://github.com/lollipopkit/flutter_server_box/releases' },
-        { label: 'CDN', href: 'https://cdn.lpkt.cn/serverbox/pkg/?sort=time&order=desc&layout=grid' },
+        { label: 'CDN', href: 'https://cdn.lollipopkit.com/serverbox/pkg/?sort=time&order=desc&layout=grid' },
       ],
     },
   ]

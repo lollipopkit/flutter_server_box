@@ -109,7 +109,6 @@ English.
 New strings go into `lib/l10n/app_en.arb`, then `make gen` regenerates the Dart
 side. Translate by editing `lib/l10n/app_<locale>.arb`.
 
-- A [guide](https://blog.lpkt.cn/posts/faq/) is on the maintainer's blog.
 - Partial translations are fine — send what you have.
 - Machine-translated locales exist (marked in the README) and improvements to
   them from native speakers are especially welcome.
