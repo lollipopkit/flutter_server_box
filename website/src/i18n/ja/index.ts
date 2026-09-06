@@ -29,6 +29,12 @@ const ja: Translation = {
     three: 'ServerBox ターミナルのスクリーンショット',
     four: 'ServerBox ツールのスクリーンショット',
   },
+  gallery: {
+    title: 'すべての画面を、すべてのデバイスで。',
+    subtitle:
+      'iPhone・iPad・macOS の 31 枚のスクリーンショット。ページを軽く保つため、開くまで読み込みません。',
+    count: '{count} 枚',
+  },
   features: {
     title: '日常のサーバーメンテナンスに使える小さな作業場。',
     subtitle:

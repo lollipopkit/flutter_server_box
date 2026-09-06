@@ -24,11 +24,50 @@
     { key: 'platforms', icon: '⬡', wide: false },
   ]
 
+  // The origin holds two copies of every shot: `<name>.png` is what was taken
+  // and what the stores are fed, `<name>.jpg` is the same frame at 1440px on
+  // its long edge for the web. Both are addressed the same way, so a refreshed
+  // screenshot replaces an object and needs no change here.
+  const shotBase = 'https://cdn.lpkt.cn/serverbox/screenshot'
+
+  // The hero's four. Order is what the stack's `x`/`rotate` were tuned for, and
+  // each one answers to an `alt` string in the locale files — `one` is the
+  // overview, `two` the charts, `three` the terminal, `four` the tools. Swap a
+  // `src` here and the string it is described by has to move with it.
   const screenshots = [
-    { src: 'https://cdn.lpkt.cn/serverbox/screenshot/1.jpg', key: 'one', x: -18, y: 8, hoverSlot: -1.5, rotate: -7, hoverRotate: -1.8, motion: 18 },
-    { src: 'https://cdn.lpkt.cn/serverbox/screenshot/2.jpg', key: 'two', x: -6, y: -4, hoverSlot: -0.5, rotate: -2, hoverRotate: -0.6, motion: 12 },
-    { src: 'https://cdn.lpkt.cn/serverbox/screenshot/3.jpg', key: 'three', x: 7, y: 4, hoverSlot: 0.5, rotate: 3, hoverRotate: 0.6, motion: 14 },
-    { src: 'https://cdn.lpkt.cn/serverbox/screenshot/4.jpg', key: 'four', x: 18, y: -2, hoverSlot: 1.5, rotate: 8, hoverRotate: 1.8, motion: 20 },
+    { src: `${shotBase}/iphone/home.jpg`, key: 'one', x: -18, y: 8, hoverSlot: -1.5, rotate: -7, hoverRotate: -1.8, motion: 18 },
+    { src: `${shotBase}/iphone/server-details.jpg`, key: 'two', x: -6, y: -4, hoverSlot: -0.5, rotate: -2, hoverRotate: -0.6, motion: 12 },
+    { src: `${shotBase}/iphone/terminal.jpg`, key: 'three', x: 7, y: 4, hoverSlot: 0.5, rotate: 3, hoverRotate: 0.6, motion: 14 },
+    { src: `${shotBase}/iphone/container.jpg`, key: 'four', x: 18, y: -2, hoverSlot: 1.5, rotate: 8, hoverRotate: 1.8, motion: 20 },
+  ]
+
+  // Not in the locale files, deliberately: these are the app's own screen
+  // names, the same ones its tabs carry in English, and translating them into
+  // seven languages would be inventing names the app does not use.
+  const shotLabels = {
+    home: 'Server list',
+    'server-details': 'Server details',
+    terminal: 'Terminal',
+    files: 'Files',
+    container: 'Containers',
+    process: 'Processes',
+    services: 'Services',
+    snippets: 'Snippets',
+    agent: 'Agent',
+    bench: 'Benchmark',
+    globe: 'Globe',
+    settings: 'Settings',
+  }
+
+  // Every shot there is, folded by device class. Folded rather than laid out:
+  // it is 31 images, and none of them is why someone opened the page. `<details>`
+  // and `loading="lazy"` together mean a closed group costs one request for
+  // nothing — a collapsed subtree is never in the viewport, so the browser
+  // does not fetch it until it is opened.
+  const gallery = [
+    { platform: 'iPhone', dir: 'iphone', shots: ['home', 'server-details', 'terminal', 'files', 'container', 'process', 'services', 'snippets', 'agent', 'bench', 'settings'] },
+    { platform: 'iPad', dir: 'ipad', shots: ['home', 'server-details', 'terminal', 'files', 'container', 'process', 'services', 'globe', 'agent', 'settings'] },
+    { platform: 'macOS', dir: 'mac', shots: ['home', 'server-details', 'terminal', 'files', 'container', 'process', 'services', 'globe', 'agent', 'settings'] },
   ]
 
   const downloadGroups = [
@@ -239,6 +278,40 @@
             <h3>{$LL.features[feature.key].title()}</h3>
             <p>{$LL.features[feature.key].description()}</p>
           </article>
+        {/each}
+      </div>
+    </section>
+
+    <section class="page-section" id="screenshots">
+      <div class="section-head">
+        <h2>{$LL.gallery.title()}</h2>
+        <p>
+          {$LL.gallery.subtitle()}
+        </p>
+      </div>
+
+      <div class="gallery">
+        {#each gallery as group}
+          <details class="gallery-group">
+            <summary>
+              <span class="gallery-platform">{group.platform}</span>
+              <span class="gallery-count">{$LL.gallery.count({ count: group.shots.length })}</span>
+            </summary>
+            <div class="gallery-grid" class:desktop={group.dir === 'mac'}>
+              {#each group.shots as shot}
+                <figure>
+                  <img
+                    src={`${shotBase}/${group.dir}/${shot}.jpg`}
+                    alt={`ServerBox on ${group.platform} — ${shotLabels[shot]}`}
+                    loading="lazy"
+                    decoding="async"
+                    referrerpolicy="no-referrer"
+                  />
+                  <figcaption>{shotLabels[shot]}</figcaption>
+                </figure>
+              {/each}
+            </div>
+          </details>
         {/each}
       </div>
     </section>

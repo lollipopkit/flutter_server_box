@@ -371,6 +371,91 @@ body {
   grid-column: span 2;
 }
 
+/* Screenshot gallery.
+   A plain <details> per device class, so the folding needs no state and works
+   with JS off. A closed group is never in the viewport, which is what makes
+   `loading="lazy"` on its images cost nothing until someone opens it. */
+.gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.gallery-group {
+  border: 1px solid var(--light-gray);
+  border-radius: var(--radius-container);
+  background: var(--white);
+}
+
+.gallery-group > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--black);
+}
+
+/* Safari draws its own triangle and ignores `list-style`. */
+.gallery-group > summary::-webkit-details-marker {
+  display: none;
+}
+
+.gallery-group > summary::after {
+  content: '+';
+  margin-left: auto;
+  color: var(--stone);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.gallery-group[open] > summary::after {
+  content: '−';
+}
+
+.gallery-count {
+  color: var(--stone);
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  padding: 0 1.25rem 1.25rem;
+}
+
+/* Desktop shots are landscape and unreadable four across. */
+.gallery-grid.desktop {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.gallery-grid figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.gallery-grid img {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-container);
+  border: 1px solid var(--light-gray);
+  background: var(--snow);
+}
+
+.gallery-grid figcaption {
+  color: var(--stone);
+  font-size: 0.8rem;
+  text-align: center;
+}
+
 .protocol-section {
   width: min(1080px, 92vw);
   margin: 0 auto;
@@ -633,6 +718,11 @@ body {
 
   .feature-card.wide {
     grid-column: span 1;
+  }
+
+  .gallery-grid,
+  .gallery-grid.desktop {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .testimonial-grid {

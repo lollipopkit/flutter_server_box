@@ -29,6 +29,12 @@ const kr: Translation = {
     three: 'ServerBox 터미널 스크린샷',
     four: 'ServerBox 도구 스크린샷',
   },
+  gallery: {
+    title: '모든 화면을, 모든 기기에서.',
+    subtitle:
+      'iPhone, iPad, macOS의 스크린샷 31장. 페이지를 가볍게 유지하기 위해 열기 전에는 불러오지 않습니다.',
+    count: '{count}장',
+  },
   features: {
     title: '일상적인 서버 관리를 위한 컴팩트한 작업 공간.',
     subtitle:

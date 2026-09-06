@@ -17,14 +17,88 @@
 
 ## 🏙️ 截屏
 
+<!-- 按平台折叠，每张图都带 `loading="lazy"`：三个设备形态共 31 张，全部展开
+     会在读者决定要不要看之前就先加载几 MB。想让某一组默认展开，给对应的
+     `<details>` 加上 `open`。 -->
+
+<details>
+<summary><b>iPhone</b> — 11 张</summary>
+<br>
 <table>
   <tr>
-    <td><img width="200px" src="https://cdn.lpkt.cn/serverbox/screenshot/1.jpg"></td>
-    <td><img width="200px" src="https://cdn.lpkt.cn/serverbox/screenshot/2.jpg"></td>
-    <td><img width="200px" src="https://cdn.lpkt.cn/serverbox/screenshot/3.jpg"></td>
-    <td><img width="200px" src="https://cdn.lpkt.cn/serverbox/screenshot/4.jpg"></td>
+    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/home.jpg" alt="服务器列表"></td>
+    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/server-details.jpg" alt="服务器详情"></td>
+    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/terminal.jpg" alt="终端"></td>
+    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/files.jpg" alt="文件"></td>
+  </tr>
+  <tr>
+    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/container.jpg" alt="容器"></td>
+    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/process.jpg" alt="进程"></td>
+    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/services.jpg" alt="服务"></td>
+    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/snippets.jpg" alt="代码片段"></td>
+  </tr>
+  <tr>
+    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/agent.jpg" alt="Agent"></td>
+    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/bench.jpg" alt="基准测试"></td>
+    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/settings.jpg" alt="设置"></td>
+    <td></td>
   </tr>
 </table>
+</details>
+
+<details>
+<summary><b>iPad</b> — 10 张</summary>
+<br>
+<table>
+  <tr>
+    <td><img width="280px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/ipad/home.jpg" alt="服务器列表"></td>
+    <td><img width="280px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/ipad/server-details.jpg" alt="服务器详情"></td>
+    <td><img width="280px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/ipad/terminal.jpg" alt="终端"></td>
+  </tr>
+  <tr>
+    <td><img width="280px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/ipad/files.jpg" alt="文件"></td>
+    <td><img width="280px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/ipad/container.jpg" alt="容器"></td>
+    <td><img width="280px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/ipad/process.jpg" alt="进程"></td>
+  </tr>
+  <tr>
+    <td><img width="280px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/ipad/services.jpg" alt="服务"></td>
+    <td><img width="280px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/ipad/globe.jpg" alt="地球"></td>
+    <td><img width="280px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/ipad/agent.jpg" alt="Agent"></td>
+  </tr>
+  <tr>
+    <td><img width="280px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/ipad/settings.jpg" alt="设置"></td>
+    <td></td>
+    <td></td>
+  </tr>
+</table>
+</details>
+
+<details>
+<summary><b>macOS</b> — 10 张</summary>
+<br>
+<table>
+  <tr>
+    <td><img width="380px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/mac/home.jpg" alt="服务器列表"></td>
+    <td><img width="380px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/mac/server-details.jpg" alt="服务器详情"></td>
+  </tr>
+  <tr>
+    <td><img width="380px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/mac/terminal.jpg" alt="终端"></td>
+    <td><img width="380px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/mac/files.jpg" alt="文件"></td>
+  </tr>
+  <tr>
+    <td><img width="380px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/mac/container.jpg" alt="容器"></td>
+    <td><img width="380px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/mac/process.jpg" alt="进程"></td>
+  </tr>
+  <tr>
+    <td><img width="380px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/mac/services.jpg" alt="服务"></td>
+    <td><img width="380px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/mac/globe.jpg" alt="地球"></td>
+  </tr>
+  <tr>
+    <td><img width="380px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/mac/agent.jpg" alt="Agent"></td>
+    <td><img width="380px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/mac/settings.jpg" alt="设置"></td>
+  </tr>
+</table>
+</details>
 
 ## 📥 安装
 

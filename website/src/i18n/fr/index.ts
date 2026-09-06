@@ -29,6 +29,12 @@ const fr: Translation = {
     three: 'Capture du terminal ServerBox',
     four: 'Capture des outils ServerBox',
   },
+  gallery: {
+    title: "Chaque écran, sur chaque appareil.",
+    subtitle:
+      "31 captures sur iPhone, iPad et macOS, repliées pour garder la page légère jusqu'à ce que vous les demandiez.",
+    count: "{count} captures",
+  },
   features: {
     title: 'Un espace compact pour la maintenance quotidienne.',
     subtitle:

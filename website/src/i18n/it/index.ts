@@ -29,6 +29,12 @@ const it: Translation = {
     three: 'Screenshot terminale ServerBox',
     four: 'Screenshot strumenti ServerBox',
   },
+  gallery: {
+    title: 'Ogni schermata, su ogni dispositivo.',
+    subtitle:
+      '31 screenshot su iPhone, iPad e macOS, richiusi per mantenere leggera la pagina finché non li apri.',
+    count: '{count} screenshot',
+  },
   features: {
     title: 'Uno spazio compatto per la manutenzione quotidiana.',
     subtitle:

@@ -29,6 +29,12 @@ const en: BaseTranslation = {
     three: 'ServerBox terminal screenshot',
     four: 'ServerBox tools screenshot',
   },
+  gallery: {
+    title: 'Every screen, on every device.',
+    subtitle:
+      '31 screenshots across iPhone, iPad and macOS, folded so the page stays light until you ask for them.',
+    count: '{count} screenshots',
+  },
   features: {
     title: 'One compact workspace for everyday server maintenance.',
     subtitle:

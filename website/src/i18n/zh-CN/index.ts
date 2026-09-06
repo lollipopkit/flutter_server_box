@@ -29,6 +29,12 @@ const zhCN: Translation = {
     three: 'ServerBox 终端截图',
     four: 'ServerBox 工具截图',
   },
+  gallery: {
+    title: '每个界面，每种设备。',
+    subtitle:
+      'iPhone、iPad 与 macOS 共 31 张截图，默认折叠，展开后才加载。',
+    count: '{count} 张截图',
+  },
   features: {
     title: '一个紧凑工作区，覆盖日常服务器维护。',
     subtitle: '能力密度高，没有装饰性填充；每个模块都对应真实维护工作流。',

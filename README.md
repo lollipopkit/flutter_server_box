@@ -17,14 +17,89 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
 
 ## 🏙️ Screenshots
 
+<!-- Folded by platform, and every image is `loading="lazy"`: this is 31 shots
+     across three device classes, and unfolded it is several megabytes before a
+     reader has decided they want to look. Add `open` to a `<details>` to have
+     that group start expanded. -->
+
+<details>
+<summary><b>iPhone</b> — 11 screenshots</summary>
+<br>
 <table>
   <tr>
-    <td><img width="200px" src="https://cdn.lpkt.cn/serverbox/screenshot/1.jpg"></td>
-    <td><img width="200px" src="https://cdn.lpkt.cn/serverbox/screenshot/2.jpg"></td>
-    <td><img width="200px" src="https://cdn.lpkt.cn/serverbox/screenshot/3.jpg"></td>
-    <td><img width="200px" src="https://cdn.lpkt.cn/serverbox/screenshot/4.jpg"></td>
+    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/home.jpg" alt="Server list"></td>
+    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/server-details.jpg" alt="Server details"></td>
+    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/terminal.jpg" alt="Terminal"></td>
+    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/files.jpg" alt="Files"></td>
+  </tr>
+  <tr>
+    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/container.jpg" alt="Containers"></td>
+    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/process.jpg" alt="Processes"></td>
+    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/services.jpg" alt="Services"></td>
+    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/snippets.jpg" alt="Snippets"></td>
+  </tr>
+  <tr>
+    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/agent.jpg" alt="Agent"></td>
+    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/bench.jpg" alt="Benchmark"></td>
+    <td><img width="180px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/iphone/settings.jpg" alt="Settings"></td>
+    <td></td>
   </tr>
 </table>
+</details>
+
+<details>
+<summary><b>iPad</b> — 10 screenshots</summary>
+<br>
+<table>
+  <tr>
+    <td><img width="280px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/ipad/home.jpg" alt="Server list"></td>
+    <td><img width="280px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/ipad/server-details.jpg" alt="Server details"></td>
+    <td><img width="280px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/ipad/terminal.jpg" alt="Terminal"></td>
+  </tr>
+  <tr>
+    <td><img width="280px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/ipad/files.jpg" alt="Files"></td>
+    <td><img width="280px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/ipad/container.jpg" alt="Containers"></td>
+    <td><img width="280px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/ipad/process.jpg" alt="Processes"></td>
+  </tr>
+  <tr>
+    <td><img width="280px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/ipad/services.jpg" alt="Services"></td>
+    <td><img width="280px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/ipad/globe.jpg" alt="Globe"></td>
+    <td><img width="280px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/ipad/agent.jpg" alt="Agent"></td>
+  </tr>
+  <tr>
+    <td><img width="280px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/ipad/settings.jpg" alt="Settings"></td>
+    <td></td>
+    <td></td>
+  </tr>
+</table>
+</details>
+
+<details>
+<summary><b>macOS</b> — 10 screenshots</summary>
+<br>
+<table>
+  <tr>
+    <td><img width="380px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/mac/home.jpg" alt="Server list"></td>
+    <td><img width="380px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/mac/server-details.jpg" alt="Server details"></td>
+  </tr>
+  <tr>
+    <td><img width="380px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/mac/terminal.jpg" alt="Terminal"></td>
+    <td><img width="380px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/mac/files.jpg" alt="Files"></td>
+  </tr>
+  <tr>
+    <td><img width="380px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/mac/container.jpg" alt="Containers"></td>
+    <td><img width="380px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/mac/process.jpg" alt="Processes"></td>
+  </tr>
+  <tr>
+    <td><img width="380px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/mac/services.jpg" alt="Services"></td>
+    <td><img width="380px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/mac/globe.jpg" alt="Globe"></td>
+  </tr>
+  <tr>
+    <td><img width="380px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/mac/agent.jpg" alt="Agent"></td>
+    <td><img width="380px" loading="lazy" src="https://cdn.lpkt.cn/serverbox/screenshot/mac/settings.jpg" alt="Settings"></td>
+  </tr>
+</table>
+</details>
 
 ## 📥 Installation
 
