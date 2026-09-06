@@ -322,10 +322,14 @@ jobs:
           # took it, so anyone opening /releases/latest was handed the agent
           # rather than ServerBox.
           make_latest: false
+          # One line per paragraph, however long. GitHub renders release notes
+          # with hard line breaks on, so a paragraph wrapped at 72 columns here
+          # is wrapped at 72 columns on a page as wide as the window — v0.1.2
+          # shipped a column of short lines down the left of the screen. Only
+          # the fenced blocks below are allowed to carry their own line breaks,
+          # where they are the commands' own.
           body: |
-            The **ServerBox Monitor** agent, versioned independently of the
-            app — see `monitor/README.md` for what it does and
-            `config.example.toml` in the archive for how it is configured.
+            The **ServerBox Monitor** agent, versioned independently of the app — see `monitor/README.md` for what it does and `config.example.toml` in the archive for how it is configured.
 
             ### Docker
 
@@ -339,10 +343,7 @@ jobs:
 
             ### Native
 
-            Pick the archive for the machine being monitored and unpack it.
-            Linux builds are static musl binaries, so they run on Alpine as
-            they are. Each archive carries the binary, the web panel, the
-            migrations and an example config.
+            Pick the archive for the machine being monitored and unpack it. Linux builds are static musl binaries, so they run on Alpine as they are. Each archive carries the binary, the web panel, the migrations and an example config.
 
             Verify what you downloaded against `SHA256SUMS`:
 
