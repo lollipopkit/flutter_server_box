@@ -1952,6 +1952,10 @@ class AppLocalizationsId extends AppLocalizations {
       'Mengunduh Geekbench, program berpemilik, lalu **menerbitkan hasilnya pada halaman publik di geekbench.com**, termasuk model CPU, jumlah inti, dan memori.';
 
   @override
+  String get benchmarkSensitiveOptions =>
+      'Opsi di bawah mengunduh dan menjalankan perangkat lunak pihak ketiga di server ini atau mengirim informasi server kepada pihak ketiga. Opsi ini dinonaktifkan secara default.';
+
+  @override
   String get benchmarkIpInfoTip =>
       'Mengirim alamat publik server ini ke ip-api.com melalui HTTP tanpa enkripsi.';
 

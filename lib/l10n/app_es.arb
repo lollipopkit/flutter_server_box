@@ -572,6 +572,7 @@
   "benchmarkReducedNetwork": "Menos ubicaciones",
   "benchmarkReducedNetworkTip": "Tres ubicaciones en lugar de siete. El tráfico aproximado baja de {full} a {reduced}.",
   "benchmarkCpuTip": "Descarga Geekbench, un programa propietario, y **publica el resultado en una página pública de geekbench.com**, incluidos el modelo de CPU, el número de núcleos y la memoria.",
+  "benchmarkSensitiveOptions": "Las siguientes opciones descargan y ejecutan software de terceros en este servidor o envían información del servidor a terceros. Están desactivadas de forma predeterminada.",
   "benchmarkIpInfoTip": "Envía la dirección pública de este servidor a ip-api.com mediante HTTP sin cifrar.",
   "benchmarkIpInfo": "Consultar propietario de la IP",
   "benchmarkPreferBin": "Descargar fio e iperf3",

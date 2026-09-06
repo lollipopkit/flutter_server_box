@@ -1946,6 +1946,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Downloads Geekbench, a proprietary program, and **publishes the result to a public page on geekbench.com** — CPU model, core count and memory included.';
 
   @override
+  String get benchmarkSensitiveOptions =>
+      'The options below download and run third-party software on this server or send server information to third parties. They are off by default.';
+
+  @override
   String get benchmarkIpInfoTip =>
       'Sends this server\'s public address to ip-api.com over plain HTTP.';
 

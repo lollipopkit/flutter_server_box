@@ -1843,6 +1843,10 @@ class AppLocalizationsJa extends AppLocalizations {
       'プロプライエタリソフトウェアの Geekbench をダウンロードし、**結果を geekbench.com の公開ページに掲載します**。CPU モデル、コア数、メモリも公開されます。';
 
   @override
+  String get benchmarkSensitiveOptions =>
+      '以下のオプションは、このサーバーにサードパーティ製ソフトウェアをダウンロードして実行するか、サーバー情報を第三者に送信します。デフォルトではオフです。';
+
+  @override
   String get benchmarkIpInfoTip =>
       'このサーバーのグローバル IP アドレスを、暗号化されていない HTTP で ip-api.com に送信します。';
 

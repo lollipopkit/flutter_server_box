@@ -572,6 +572,7 @@
   "benchmarkReducedNetwork": "Daha az konum",
   "benchmarkReducedNetworkTip": "Yedi yerine üç konum. Tahmini trafik {full} yerine {reduced} olur.",
   "benchmarkCpuTip": "Tescilli bir program olan Geekbench'i indirir ve **sonucu geekbench.com'da herkese açık bir sayfada yayımlar**; CPU modeli, çekirdek sayısı ve bellek bilgileri de yayımlanır.",
+  "benchmarkSensitiveOptions": "Aşağıdaki seçenekler bu sunucuda üçüncü taraf yazılımları indirip çalıştırır veya sunucu bilgilerini üçüncü taraflara gönderir. Varsayılan olarak kapalıdır.",
   "benchmarkIpInfoTip": "Bu sunucunun genel IP adresini şifrelenmemiş HTTP üzerinden ip-api.com'a gönderir.",
   "benchmarkIpInfo": "IP sahibini sorgula",
   "benchmarkPreferBin": "fio ve iperf3'ü indir",

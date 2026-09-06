@@ -572,6 +572,7 @@
   "benchmarkReducedNetwork": "Weniger Standorte",
   "benchmarkReducedNetworkTip": "Drei statt sieben Standorte. Der Datenverkehr sinkt von etwa {full} auf {reduced}.",
   "benchmarkCpuTip": "Lädt Geekbench, ein proprietäres Programm, herunter und **veröffentlicht das Ergebnis auf einer öffentlichen Seite bei geekbench.com** – einschließlich CPU-Modell, Kernanzahl und Arbeitsspeicher.",
+  "benchmarkSensitiveOptions": "Die folgenden Optionen laden Software von Drittanbietern auf diesen Server herunter und führen sie aus oder senden Serverinformationen an Dritte. Sie sind standardmäßig deaktiviert.",
   "benchmarkIpInfoTip": "Sendet die öffentliche Adresse dieses Servers über unverschlüsseltes HTTP an ip-api.com.",
   "benchmarkIpInfo": "IP-Inhaber ermitteln",
   "benchmarkPreferBin": "fio und iperf3 herunterladen",

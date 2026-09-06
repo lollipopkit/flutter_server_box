@@ -1799,6 +1799,10 @@ class AppLocalizationsZh extends AppLocalizations {
       '下载 Geekbench（专有软件）运行，并**将结果公开发布到 geekbench.com 的公共页面**，包含 CPU 型号、核心数与内存。';
 
   @override
+  String get benchmarkSensitiveOptions =>
+      '以下选项会在此服务器下载并运行第三方软件，或向第三方发送服务器信息，默认关闭。';
+
+  @override
   String get benchmarkIpInfoTip => '通过明文 HTTP 将此服务器的公网地址发送至 ip-api.com。';
 
   @override
@@ -3697,6 +3701,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get benchmarkCpuTip =>
       '下載並執行專有軟體 Geekbench，且**會將結果公開發佈至 geekbench.com 的公開頁面**，其中包含 CPU 型號、核心數與記憶體資訊。';
+
+  @override
+  String get benchmarkSensitiveOptions =>
+      '以下選項會在此伺服器下載並執行第三方軟體，或將伺服器資訊傳送給第三方，預設關閉。';
 
   @override
   String get benchmarkIpInfoTip => '透過未加密的 HTTP，將此伺服器的公用 IP 位址傳送至 ip-api.com。';

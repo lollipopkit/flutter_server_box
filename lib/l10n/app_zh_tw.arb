@@ -579,6 +579,7 @@
   "benchmarkReducedNetwork": "減少測試節點",
   "benchmarkReducedNetworkTip": "使用 3 個節點而非 7 個，預估流量會從 {full} 降至 {reduced}。",
   "benchmarkCpuTip": "下載並執行專有軟體 Geekbench，且**會將結果公開發佈至 geekbench.com 的公開頁面**，其中包含 CPU 型號、核心數與記憶體資訊。",
+  "benchmarkSensitiveOptions": "以下選項會在此伺服器下載並執行第三方軟體，或將伺服器資訊傳送給第三方，預設關閉。",
   "benchmarkIpInfoTip": "透過未加密的 HTTP，將此伺服器的公用 IP 位址傳送至 ip-api.com。",
   "benchmarkIpInfo": "查詢 IP 所有者",
   "benchmarkPreferBin": "下載 fio 與 iperf3",

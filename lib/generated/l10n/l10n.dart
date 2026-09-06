@@ -3416,6 +3416,12 @@ abstract class AppLocalizations {
   /// **'Downloads Geekbench, a proprietary program, and **publishes the result to a public page on geekbench.com** — CPU model, core count and memory included.'**
   String get benchmarkCpuTip;
 
+  /// No description provided for @benchmarkSensitiveOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'The options below download and run third-party software on this server or send server information to third parties. They are off by default.'**
+  String get benchmarkSensitiveOptions;
+
   /// No description provided for @benchmarkIpInfoTip.
   ///
   /// In en, this message translates to:

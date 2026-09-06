@@ -572,6 +572,7 @@
   "benchmarkReducedNetwork": "測定地点を減らす",
   "benchmarkReducedNetworkTip": "測定地点を 7 か所から 3 か所に減らします。推定通信量は {full} から {reduced} になります。",
   "benchmarkCpuTip": "プロプライエタリソフトウェアの Geekbench をダウンロードし、**結果を geekbench.com の公開ページに掲載します**。CPU モデル、コア数、メモリも公開されます。",
+  "benchmarkSensitiveOptions": "以下のオプションは、このサーバーにサードパーティ製ソフトウェアをダウンロードして実行するか、サーバー情報を第三者に送信します。デフォルトではオフです。",
   "benchmarkIpInfoTip": "このサーバーのグローバル IP アドレスを、暗号化されていない HTTP で ip-api.com に送信します。",
   "benchmarkIpInfo": "IP アドレスの所有者を検索",
   "benchmarkPreferBin": "fio と iperf3 をダウンロード",

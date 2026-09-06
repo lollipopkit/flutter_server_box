@@ -1850,6 +1850,10 @@ class AppLocalizationsKo extends AppLocalizations {
       '독점 프로그램인 Geekbench를 다운로드하고 **결과를 geekbench.com의 공개 페이지에 게시합니다**. CPU 모델, 코어 수, 메모리 정보도 포함됩니다.';
 
   @override
+  String get benchmarkSensitiveOptions =>
+      '아래 옵션은 이 서버에서 타사 소프트웨어를 다운로드하여 실행하거나 서버 정보를 제3자에게 전송합니다. 기본적으로 꺼져 있습니다.';
+
+  @override
   String get benchmarkIpInfoTip =>
       '이 서버의 공인 IP 주소를 암호화되지 않은 HTTP를 통해 ip-api.com으로 전송합니다.';
 

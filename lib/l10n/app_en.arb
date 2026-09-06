@@ -760,6 +760,7 @@
     }
   },
   "benchmarkCpuTip": "Downloads Geekbench, a proprietary program, and **publishes the result to a public page on geekbench.com** — CPU model, core count and memory included.",
+  "benchmarkSensitiveOptions": "The options below download and run third-party software on this server or send server information to third parties. They are off by default.",
   "benchmarkIpInfoTip": "Sends this server's public address to ip-api.com over plain HTTP.",
   "benchmarkIpInfo": "Look up IP owner",
   "benchmarkPreferBin": "Download fio and iperf3",

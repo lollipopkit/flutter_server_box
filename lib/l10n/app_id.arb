@@ -572,6 +572,7 @@
   "benchmarkReducedNetwork": "Lebih sedikit lokasi",
   "benchmarkReducedNetworkTip": "Tiga lokasi, bukan tujuh. Perkiraan lalu lintas berkurang dari {full} menjadi {reduced}.",
   "benchmarkCpuTip": "Mengunduh Geekbench, program berpemilik, lalu **menerbitkan hasilnya pada halaman publik di geekbench.com**, termasuk model CPU, jumlah inti, dan memori.",
+  "benchmarkSensitiveOptions": "Opsi di bawah mengunduh dan menjalankan perangkat lunak pihak ketiga di server ini atau mengirim informasi server kepada pihak ketiga. Opsi ini dinonaktifkan secara default.",
   "benchmarkIpInfoTip": "Mengirim alamat publik server ini ke ip-api.com melalui HTTP tanpa enkripsi.",
   "benchmarkIpInfo": "Cari pemilik IP",
   "benchmarkPreferBin": "Unduh fio dan iperf3",

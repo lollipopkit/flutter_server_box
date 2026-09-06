@@ -579,6 +579,7 @@
   "benchmarkReducedNetwork": "减少测试节点",
   "benchmarkReducedNetworkTip": "3 个节点而非 7 个，流量从约 {full} 降到约 {reduced}。",
   "benchmarkCpuTip": "下载 Geekbench（专有软件）运行，并**将结果公开发布到 geekbench.com 的公共页面**，包含 CPU 型号、核心数与内存。",
+  "benchmarkSensitiveOptions": "以下选项会在此服务器下载并运行第三方软件，或向第三方发送服务器信息，默认关闭。",
   "benchmarkIpInfoTip": "通过明文 HTTP 将此服务器的公网地址发送至 ip-api.com。",
   "benchmarkIpInfo": "查询 IP 归属",
   "benchmarkPreferBin": "下载 fio 与 iperf3",

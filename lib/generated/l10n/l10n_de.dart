@@ -1973,6 +1973,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Lädt Geekbench, ein proprietäres Programm, herunter und **veröffentlicht das Ergebnis auf einer öffentlichen Seite bei geekbench.com** – einschließlich CPU-Modell, Kernanzahl und Arbeitsspeicher.';
 
   @override
+  String get benchmarkSensitiveOptions =>
+      'Die folgenden Optionen laden Software von Drittanbietern auf diesen Server herunter und führen sie aus oder senden Serverinformationen an Dritte. Sie sind standardmäßig deaktiviert.';
+
+  @override
   String get benchmarkIpInfoTip =>
       'Sendet die öffentliche Adresse dieses Servers über unverschlüsseltes HTTP an ip-api.com.';
 

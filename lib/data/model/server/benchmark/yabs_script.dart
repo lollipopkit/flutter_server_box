@@ -12,9 +12,10 @@ import 'package:server_box/data/model/server/benchmark/yabs_options.dart';
 /// to benchmark. Shipping it makes the run reproducible and makes the network a
 /// dependency only of the phases that genuinely need one.
 ///
-/// What it cannot make offline is the rest: with `-b`, or with no local fio and
-/// iperf3, yabs fetches those binaries itself, and Geekbench always comes from
-/// `cdn.geekbench.com`. That is upstream's business and is left alone.
+/// This copy has one intentional local patch: fio and iperf3 are downloaded
+/// only when the user passed `-b`. Without a local package, the former falls
+/// back to `dd` and the latter is skipped. Geekbench always comes from
+/// `cdn.geekbench.com` when explicitly enabled.
 ///
 /// Refresh with `scripts/update-yabs.sh`, which prints the three constants
 /// below; the `vendored asset` group in `test/yabs_script_test.dart` fails
@@ -35,7 +36,7 @@ class YabsScript {
   /// SHA-256 of the asset, so an accidental edit to a 1100-line vendored shell
   /// script is a failing test rather than something nobody notices.
   static const sha256Hex =
-      '8d2bccbf1dd74f09e09233dc5286a13a17183bd304bc818e75b4ac6066c9e095';
+      'c42397c6a97c32d1b0f75bbee7ab4cca0c9b6c8871c9334d51991f938bb4ae7b';
 
   /// Upstream, for the attribution the configuration sheet shows. WTFPL.
   static const upstreamUrl =
@@ -479,9 +480,7 @@ class YabsPollState {
     String? json;
     if (jsonIdx >= 0) {
       final start = jsonIdx + YabsScript.jsonMarker.length;
-      final end = psIdx >= 0
-          ? psIdx
-          : (logIdx >= 0 ? logIdx : output.length);
+      final end = psIdx >= 0 ? psIdx : (logIdx >= 0 ? logIdx : output.length);
       final text = output.substring(start, end).trim();
       if (text.isNotEmpty) json = text;
     }

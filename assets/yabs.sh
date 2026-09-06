@@ -59,7 +59,7 @@ else
 fi
 
 # flags to skip certain performance tests
-unset PREFER_BIN SKIP_FIO SKIP_IPERF SKIP_GEEKBENCH SKIP_NET PRINT_HELP REDUCE_NET GEEKBENCH_4 GEEKBENCH_5 GEEKBENCH_6 GEEKBENCH_7 DD_FALLBACK IPERF_DL_FAIL JSON JSON_SEND JSON_RESULT JSON_FILE IPERF_SERVERS
+unset PREFER_BIN SKIP_FIO SKIP_IPERF SKIP_GEEKBENCH SKIP_NET PRINT_HELP REDUCE_NET GEEKBENCH_4 GEEKBENCH_5 GEEKBENCH_6 GEEKBENCH_7 DD_FALLBACK IPERF_DL_FAIL IPERF_UNAVAILABLE JSON JSON_SEND JSON_RESULT JSON_FILE IPERF_SERVERS
 GEEKBENCH_6="True" # gb6 test enabled by default
 
 # get any arguments that were passed to the script and set the associated skip flags (if applicable)
@@ -171,12 +171,12 @@ if [ -n "$PRINT_HELP" ]; then
 	[[ -n $IPERF_SERVERS ]] && echo -e "       -p, using custom iperf servers: $IPERF_SERVERS"
 	echo -e
 	echo -e "Local Binary Check:"
-	([[ -z $LOCAL_FIO ]] && echo -e "       fio not detected, will download precompiled binary") ||
-		([[ -z $PREFER_BIN ]] && echo -e "       fio detected, using local package") ||
-		echo -e "       fio detected, but using precompiled binary instead"
-	([[ -z $LOCAL_IPERF ]] && echo -e "       iperf3 not detected, will download precompiled binary") ||
-		([[ -z $PREFER_BIN ]] && echo -e "       iperf3 detected, using local package") ||
-		echo -e "       iperf3 detected, but using precompiled binary instead"
+	([[ -n $PREFER_BIN ]] && echo -e "       downloading precompiled fio binary") ||
+		([[ -n $LOCAL_FIO ]] && echo -e "       fio detected, using local package") ||
+		echo -e "       fio not detected, will use dd as fallback"
+	([[ -n $PREFER_BIN ]] && echo -e "       downloading precompiled iperf3 binary") ||
+		([[ -n $LOCAL_IPERF ]] && echo -e "       iperf3 detected, using local package") ||
+		echo -e "       iperf3 not detected, network test will be skipped"
 	echo -e
 	echo -e "Detected Connectivity:"
 	[[ -n $IPV4_CHECK ]] && echo -e "       IPv4 connected" ||
@@ -645,7 +645,7 @@ fi
 
 	if [[ -z "$PREFER_BIN" && -n "$LOCAL_FIO" ]]; then # local fio has been detected, use instead of pre-compiled binary
 		FIO_CMD=fio
-	else
+	elif [[ -n "$PREFER_BIN" ]]; then
 		# download fio binary
 		if [[ -n $LOCAL_CURL ]]; then
 			curl -s --connect-timeout 5 --retry 5 --retry-delay 0 https://raw.githubusercontent.com/masonr/yet-another-bench-script/master/bin/fio/fio_$ARCH -o "$DISK_PATH/fio"
@@ -661,6 +661,9 @@ fi
 			chmod +x "$DISK_PATH/fio"
 			FIO_CMD=$DISK_PATH/fio
 		fi
+	else
+		echo -e "fio is not installed. Running dd test as fallback..."
+		DD_FALLBACK=True
 	fi
 
 	if [ -z "$DD_FALLBACK" ]; then # if not falling back on dd tests, run fio test
@@ -859,7 +862,7 @@ if [ -z "$SKIP_IPERF" ]; then
 
 	if [[ -z "$PREFER_BIN" && -n "$LOCAL_IPERF" ]]; then # local iperf has been detected, use instead of pre-compiled binary
 		IPERF_CMD=iperf3
-	else
+	elif [[ -n "$PREFER_BIN" ]]; then
 		# create a temp directory to house the required iperf binary and library
 		IPERF_PATH=$YABS_PATH/iperf
 		mkdir -p "$IPERF_PATH"
@@ -877,6 +880,9 @@ if [ -z "$SKIP_IPERF" ]; then
 			chmod +x "$IPERF_PATH/iperf3"
 			IPERF_CMD=$IPERF_PATH/iperf3
 		fi
+	else
+		echo -e "iperf3 is not installed. Skipping network tests..."
+		IPERF_UNAVAILABLE=True
 	fi
 
 	# array containing all currently available iperf3 public servers to use for the network test
@@ -930,14 +936,14 @@ if [ -z "$SKIP_IPERF" ]; then
 	IPERF_LOCS_NUM=${#IPERF_LOCS[@]}
 	IPERF_LOCS_NUM=$((IPERF_LOCS_NUM / 5))
 
-	if [ -z "$IPERF_DL_FAIL" ]; then
+	if [[ -z "$IPERF_DL_FAIL" && -z "$IPERF_UNAVAILABLE" ]]; then
 		[[ -n $JSON ]] && JSON_RESULT+=',"iperf":['
 		# check if the host has IPv4 connectivity, if so, run iperf3 IPv4 tests
 		[ -n "$IPV4_CHECK" ] && launch_iperf "IPv4"
 		# check if the host has IPv6 connectivity, if so, run iperf3 IPv6 tests
 		[ -n "$IPV6_CHECK" ] && launch_iperf "IPv6"
 		[[ -n $JSON ]] && JSON_RESULT=${JSON_RESULT::${#JSON_RESULT}-1} && JSON_RESULT+=']'
-	else
+	elif [ -n "$IPERF_DL_FAIL" ]; then
 		echo -e "\niperf3 binary download failed. Skipping iperf network tests..."
 	fi
 fi

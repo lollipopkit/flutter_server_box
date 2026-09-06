@@ -29,10 +29,12 @@ void main() {
   /// Runs [command] the way both transports do: handed to `/bin/sh -c`, with
   /// [stdinText] on its stdin when there is an `entry`.
   Future<ProcessResult> sh(String command, {String? stdinText}) async {
-    final process = await Process.start('/bin/sh', [
-      '-c',
-      command,
-    ], environment: {'HOME': tmp.path}, includeParentEnvironment: true);
+    final process = await Process.start(
+      '/bin/sh',
+      ['-c', command],
+      environment: {'HOME': tmp.path},
+      includeParentEnvironment: true,
+    );
     if (stdinText != null) process.stdin.write(stdinText);
     await process.stdin.close();
     final out = await process.stdout.transform(utf8.decoder).join();
@@ -50,7 +52,10 @@ void main() {
 
   /// A stand-in for yabs: records the arguments it was given, prints something
   /// on both streams, and writes the `-w` file.
-  Future<void> installFakeYabs({int exitCode = 0, String json = '{"a":1}'}) async {
+  Future<void> installFakeYabs({
+    int exitCode = 0,
+    String json = '{"a":1}',
+  }) async {
     final probe = await sh(YabsScript.probeCommand());
     expect(probe.stdout, contains(YabsScript.scriptMissing));
 
@@ -100,10 +105,7 @@ exit $exitCode
       YabsScript.runDir(options).replaceFirst(r'$HOME', tmp.path),
     );
     final listing = dir.existsSync()
-        ? dir
-              .listSync()
-              .map((e) => e.path.split('/').last)
-              .join(', ')
+        ? dir.listSync().map((e) => e.path.split('/').last).join(', ')
         : '<run directory absent>';
     final runScript = File('${dir.path}/run.sh');
     fail(
@@ -125,9 +127,10 @@ exit $exitCode
       // The whole point of `quotePath`: single quotes would have sent a
       // literal `$HOME` and made a directory of that name.
       expect(
-        File('${tmp.path}/.config/server_box/bench/'
-                'yabs_${YabsScript.upstreamVersion}.sh')
-            .existsSync(),
+        File(
+          '${tmp.path}/.config/server_box/bench/'
+          'yabs_${YabsScript.upstreamVersion}.sh',
+        ).existsSync(),
         isTrue,
       );
       expect(Directory('${tmp.path}/\$HOME').existsSync(), isFalse);
@@ -135,24 +138,28 @@ exit $exitCode
   });
 
   group('a run', () {
-    test('starts detached, reports an exit code, and hands back the JSON',
-        () async {
-      await installFakeYabs(json: '{"version":"v1","cpu":{"cores":4}}');
-      const options = YabsOptions();
-      await runToCompletion(options);
+    test(
+      'starts detached, reports an exit code, and hands back the JSON',
+      () async {
+        await installFakeYabs(json: '{"version":"v1","cpu":{"cores":4}}');
+        const options = YabsOptions();
+        await runToCompletion(options);
 
-      final poll = await sh(YabsScript.pollCommand(YabsScript.runDir(options)));
-      final state = YabsPollState.parse(poll.stdout);
+        final poll = await sh(
+          YabsScript.pollCommand(YabsScript.runDir(options)),
+        );
+        final state = YabsPollState.parse(poll.stdout);
 
-      expect(state.finished, isTrue);
-      expect(state.exitCode, 0);
-      expect(state.alive, isFalse);
-      expect(state.dirExists, isTrue);
-      expect(state.resultJson, '{"version":"v1","cpu":{"cores":4}}');
-      // stdout and stderr both land in the log, which is what the page shows.
-      expect(state.log, contains('args:'));
-      expect(state.log, contains('on stderr'));
-    });
+        expect(state.finished, isTrue);
+        expect(state.exitCode, 0);
+        expect(state.alive, isFalse);
+        expect(state.dirExists, isTrue);
+        expect(state.resultJson, '{"version":"v1","cpu":{"cores":4}}');
+        // stdout and stderr both land in the log, which is what the page shows.
+        expect(state.log, contains('args:'));
+        expect(state.log, contains('on stderr'));
+      },
+    );
 
     test('passes the options through as flags, in yabs order', () async {
       await installFakeYabs();
@@ -305,7 +312,9 @@ exit $exitCode
         isTrue,
       );
 
-      final cancel = await sh(YabsScript.cancelCommand(YabsScript.runDir(options)));
+      final cancel = await sh(
+        YabsScript.cancelCommand(YabsScript.runDir(options)),
+      );
       expect(cancel.stdout, contains(YabsScript.cancelled));
 
       final state = YabsPollState.parse(
@@ -329,14 +338,17 @@ exit $exitCode
       await Directory('${dir.path}/2026-01-01').create(recursive: true);
       expect(dir.existsSync(), isTrue);
 
-      final res = await sh(YabsScript.cleanupCommand(YabsScript.runDir(options), runId));
+      final res = await sh(
+        YabsScript.cleanupCommand(YabsScript.runDir(options), runId),
+      );
       expect(res.stdout, contains(YabsScript.cleaned));
       expect(dir.existsSync(), isFalse);
       // The script itself survives: it is versioned and shared by every run.
       expect(
-        File('${tmp.path}/.config/server_box/bench/'
-                'yabs_${YabsScript.upstreamVersion}.sh')
-            .existsSync(),
+        File(
+          '${tmp.path}/.config/server_box/bench/'
+          'yabs_${YabsScript.upstreamVersion}.sh',
+        ).existsSync(),
         isTrue,
       );
     });
@@ -356,7 +368,10 @@ exit $exitCode
       // the command now takes the path a run recorded, so this is the check
       // that a stored value cannot turn into a recursive delete of a home
       // directory.
-      expect(() => YabsScript.cleanupCommand('/home/me', runId), throwsArgumentError);
+      expect(
+        () => YabsScript.cleanupCommand('/home/me', runId),
+        throwsArgumentError,
+      );
       expect(() => YabsScript.cleanupCommand('/', runId), throwsArgumentError);
     });
   });
@@ -400,26 +415,33 @@ exit $exitCode
     }
 
     test('fish runs them, and would not have run the old form', () async {
-      final fish = ['/opt/homebrew/bin/fish', '/usr/local/bin/fish', '/usr/bin/fish']
-          .firstWhere((p) => File(p).existsSync(), orElse: () => '');
+      final fish = [
+        '/opt/homebrew/bin/fish',
+        '/usr/local/bin/fish',
+        '/usr/bin/fish',
+      ].firstWhere((p) => File(p).existsSync(), orElse: () => '');
       if (fish.isEmpty) {
         markTestSkipped('no fish on this machine');
         return;
       }
 
       // The wrapped form parses.
-      final ok = await Process.run(fish, ['-c', YabsScript.probeCommand()],
-          environment: {'HOME': tmp.path});
+      final ok = await Process.run(
+        fish,
+        ['-c', YabsScript.probeCommand()],
+        environment: {'HOME': tmp.path},
+      );
       expect(ok.exitCode, 0, reason: ok.stderr.toString());
       expect(ok.stdout, contains(YabsScript.scriptMissing));
 
       // The unwrapped form does not: backticks alone are a syntax error, and
       // fish reports it without failing in any way a caller would notice as an
       // exception.
-      final bad = await Process.run(fish, [
-        '-c',
-        'p=`echo 1`\nif [ -n "\$p" ]; then echo MARKER; fi',
-      ], environment: {'HOME': tmp.path});
+      final bad = await Process.run(
+        fish,
+        ['-c', 'p=`echo 1`\nif [ -n "\$p" ]; then echo MARKER; fi'],
+        environment: {'HOME': tmp.path},
+      );
       expect(bad.stdout, isNot(contains('MARKER')));
     });
   });
@@ -431,7 +453,10 @@ exit $exitCode
       await runToCompletion(options);
 
       final dir = YabsScript.runDir(options);
-      expect(Directory(dir.replaceFirst(r'$HOME', tmp.path)).existsSync(), isTrue);
+      expect(
+        Directory(dir.replaceFirst(r'$HOME', tmp.path)).existsSync(),
+        isTrue,
+      );
 
       // The path is the right shape and the marker is somebody else's, which
       // is the case the shape check alone cannot answer.
@@ -514,20 +539,77 @@ exit $exitCode
       expect(
         sha256.convert(bytes).toString(),
         YabsScript.sha256Hex,
-        reason: 'assets/yabs.sh changed. If that was deliberate, run '
+        reason:
+            'assets/yabs.sh changed. If that was deliberate, run '
             'scripts/update-yabs.sh and take the constants it prints.',
       );
 
       final text = utf8.decode(bytes);
       expect(
-        RegExp(r'^YABS_VERSION="(.*)"$', multiLine: true)
-            .firstMatch(text)
-            ?.group(1),
+        RegExp(
+          r'^YABS_VERSION="(.*)"$',
+          multiLine: true,
+        ).firstMatch(text)?.group(1),
         YabsScript.upstreamVersion,
       );
       // The remote filename carries the version, so a version string with a
       // path separator or a space in it would put the script somewhere else.
       expect(YabsScript.upstreamVersion, matches(RegExp(r'^[\w.-]+$')));
+    });
+
+    test('downloads fio and iperf3 only when -b was requested', () async {
+      final text = await File('assets/yabs.sh').readAsString();
+
+      // The no-`-b`, no-local-package path must not reach either URL. This is
+      // intentionally structural: the asset is the exact shell program sent
+      // to a server, and its hash above makes this contract reviewable when
+      // the vendored upstream script is refreshed.
+      final fio = text.substring(
+        text.indexOf('if [[ -z "$SKIP_FIO" ]]'),
+        text.indexOf('if [ -z "$DD_FALLBACK" ]'),
+      );
+      expect(
+        fio,
+        contains('if [[ -z "$PREFER_BIN" && -n "$LOCAL_FIO" ]]; then'),
+      );
+      expect(fio, contains('elif [[ -n "$PREFER_BIN" ]]; then'));
+      expect(
+        fio,
+        contains('fio is not installed. Running dd test as fallback...'),
+      );
+      expect(
+        fio.indexOf(
+          'https://raw.githubusercontent.com/masonr/'
+          'yet-another-bench-script/master/bin/fio/',
+        ),
+        greaterThan(fio.indexOf('elif [[ -n "$PREFER_BIN" ]]; then')),
+      );
+
+      final iperf = text.substring(
+        text.indexOf('if [ -z "$SKIP_IPERF" ]; then'),
+        text.indexOf('# launch_geekbench'),
+      );
+      expect(
+        iperf,
+        contains('if [[ -z "$PREFER_BIN" && -n "$LOCAL_IPERF" ]]; then'),
+      );
+      expect(iperf, contains('elif [[ -n "$PREFER_BIN" ]]; then'));
+      expect(
+        iperf,
+        contains('iperf3 is not installed. Skipping network tests...'),
+      );
+      expect(iperf, contains('IPERF_UNAVAILABLE=True'));
+      expect(
+        iperf,
+        contains('[[ -z "$IPERF_DL_FAIL" && -z "$IPERF_UNAVAILABLE" ]]'),
+      );
+      expect(
+        iperf.indexOf(
+          'https://raw.githubusercontent.com/masonr/'
+          'yet-another-bench-script/master/bin/iperf/',
+        ),
+        greaterThan(iperf.indexOf('elif [[ -n "$PREFER_BIN" ]]; then')),
+      );
     });
   });
 

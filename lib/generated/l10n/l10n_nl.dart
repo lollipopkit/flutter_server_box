@@ -1964,6 +1964,10 @@ class AppLocalizationsNl extends AppLocalizations {
       'Downloadt Geekbench, een propriëtair programma, en **publiceert het resultaat op een openbare pagina op geekbench.com**, inclusief CPU-model, aantal kernen en geheugen.';
 
   @override
+  String get benchmarkSensitiveOptions =>
+      'De onderstaande opties downloaden en voeren software van derden uit op deze server, of sturen serverinformatie naar derden. Ze staan standaard uit.';
+
+  @override
   String get benchmarkIpInfoTip =>
       'Stuurt het openbare adres van deze server via onbeveiligde HTTP naar ip-api.com.';
 

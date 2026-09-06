@@ -1948,6 +1948,10 @@ class AppLocalizationsTr extends AppLocalizations {
       'Tescilli bir program olan Geekbench\'i indirir ve **sonucu geekbench.com\'da herkese açık bir sayfada yayımlar**; CPU modeli, çekirdek sayısı ve bellek bilgileri de yayımlanır.';
 
   @override
+  String get benchmarkSensitiveOptions =>
+      'Aşağıdaki seçenekler bu sunucuda üçüncü taraf yazılımları indirip çalıştırır veya sunucu bilgilerini üçüncü taraflara gönderir. Varsayılan olarak kapalıdır.';
+
+  @override
   String get benchmarkIpInfoTip =>
       'Bu sunucunun genel IP adresini şifrelenmemiş HTTP üzerinden ip-api.com\'a gönderir.';
 

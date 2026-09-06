@@ -148,6 +148,46 @@ void main() {
     }
   });
 
+  testWidgets('sensitive options are isolated and off by default', (
+    tester,
+  ) async {
+    await pumpPage(tester);
+
+    final section = find.ancestor(
+      of: find.text(l10n.benchmarkSensitiveOptions),
+      matching: find.byType(CardX),
+    );
+    expect(section, findsOneWidget);
+    expect(
+      find.descendant(of: section, matching: find.text('CPU')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: section, matching: find.text(l10n.benchmarkIpInfo)),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: section,
+        matching: find.text(l10n.benchmarkPreferBin),
+      ),
+      findsOneWidget,
+    );
+
+    for (final title in [
+      'CPU',
+      l10n.benchmarkIpInfo,
+      l10n.benchmarkPreferBin,
+    ]) {
+      final option = find.ancestor(
+        of: find.text(title),
+        matching: find.byType(SwitchListTile),
+      );
+      expect(tester.widget<SwitchListTile>(option).value, isFalse);
+    }
+    expect(find.text('Geekbench 6'), findsNothing);
+  });
+
   testWidgets('an icon sits left of the text, in its own column', (
     tester,
   ) async {
@@ -167,20 +207,18 @@ void main() {
     expect(textEdge - iconEdge, moreOrLessEquals(40, epsilon: 0.5));
   });
 
-  testWidgets('a text field is not a card inside the card', (tester) async {
+  testWidgets('the working-directory field has a visible input boundary', (
+    tester,
+  ) async {
     await pumpPage(tester);
 
-    // `Input` wraps itself in a `CardX` unless told not to, which is what put
-    // the two text fields on a left edge of their own. One card for the whole
-    // options column, and no others inside it.
-    final field = find.ancestor(
-      of: find.text(l10n.benchmarkWorkDir),
-      matching: find.byType(CardX),
-    );
+    final field = find.byKey(const ValueKey('benchmark-work-dir-input'));
+    expect(field, findsOneWidget);
+    final decoration = tester.widget<TextField>(field).decoration;
     expect(
-      tester.widgetList(field),
-      hasLength(1),
-      reason: 'the field is wrapped in a card of its own',
+      decoration?.border,
+      isA<OutlineInputBorder>(),
+      reason: 'an empty field needs a visible area to show that it is editable',
     );
   });
 }

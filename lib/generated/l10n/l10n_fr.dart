@@ -1982,6 +1982,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Télécharge Geekbench, un logiciel propriétaire, et **publie le résultat sur une page publique de geekbench.com**, avec le modèle du processeur, le nombre de cœurs et la mémoire.';
 
   @override
+  String get benchmarkSensitiveOptions =>
+      'Les options ci-dessous téléchargent et exécutent des logiciels tiers sur ce serveur ou envoient des informations du serveur à des tiers. Elles sont désactivées par défaut.';
+
+  @override
   String get benchmarkIpInfoTip =>
       'Envoie l’adresse publique de ce serveur à ip-api.com via HTTP non chiffré.';
 
