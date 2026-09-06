@@ -107,7 +107,7 @@ void main() {
     // A rename that quietly drops a target from the sweep would leave this
     // file passing while checking nothing.
     expect(
-      manifests.map((f) => f.path),
+      manifests.map(_repoPath),
       containsAll([
         'ios/Runner/PrivacyInfo.xcprivacy',
         'ios/StatusWidget/PrivacyInfo.xcprivacy',
@@ -118,7 +118,7 @@ void main() {
   });
 
   for (final file in manifests) {
-    group(file.path, () {
+    group(_repoPath(file), () {
       late final XmlDocument doc;
       late final Map<String, Object?> root;
 
@@ -209,6 +209,11 @@ void main() {
   }
 }
 
+/// The repo-relative path, `/`-separated on every host. `File.path` carries
+/// the platform separator, which would not match the expected paths below on
+/// Windows.
+String _repoPath(File file) => file.uri.pathSegments.join('/');
+
 /// Every checked-in manifest, build output and third-party copies excluded.
 List<File> _findManifests() {
   const roots = ['ios', 'macos', 'packages'];
@@ -225,7 +230,7 @@ List<File> _findManifests() {
       if (parts.last.endsWith('.xcprivacy')) found.add(entity);
     }
   }
-  found.sort((a, b) => a.path.compareTo(b.path));
+  found.sort((a, b) => _repoPath(a).compareTo(_repoPath(b)));
   return found;
 }
 
