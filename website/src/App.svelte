@@ -14,7 +14,18 @@
     syncLocaleToUrl,
   } from './lib/i18n'
 
-  const capabilities = ['Status chart', 'SSH Terminal', 'SFTP', 'Docker', 'Process', 'Systemd', 'S.M.A.R.T', 'GPU', 'Sensors', 'Push', 'Home Widget', 'watchOS']
+  // The badges under "All the tools. One app." Product and protocol names, so
+  // they are not translated — the locale files carried a `capabilities.items`
+  // copy of this list that nothing ever read, and it is removed rather than
+  // left for someone to edit expecting an effect.
+  //
+  // Second row is what the app has grown since this list was last touched.
+  const capabilities = [
+    'Status chart', 'SSH Terminal', 'SFTP', 'SCP', 'Docker', 'Process',
+    'Systemd', 'S.M.A.R.T', 'GPU', 'Sensors', 'Push', 'Home Widget', 'watchOS',
+    'Monitor Agent', 'AI Agent', 'Globe', 'Benchmark',
+    'Port Forward', 'Local Shell',
+  ]
 
   const features = [
     { key: 'charts', icon: '⬡', wide: false },
@@ -32,13 +43,14 @@
 
   // The hero's four. Order is what the stack's `x`/`rotate` were tuned for, and
   // each one answers to an `alt` string in the locale files — `one` is the
-  // overview, `two` the charts, `three` the terminal, `four` the tools. Swap a
-  // `src` here and the string it is described by has to move with it.
+  // overview, `two` the charts, `three` the terminal, `four` the files. Swap a
+  // `src` here and the string it is described by has to move with it, in all
+  // seven locales.
   const screenshots = [
     { src: `${shotBase}/iphone/home.jpg`, key: 'one', x: -18, y: 8, hoverSlot: -1.5, rotate: -7, hoverRotate: -1.8, motion: 18 },
     { src: `${shotBase}/iphone/server-details.jpg`, key: 'two', x: -6, y: -4, hoverSlot: -0.5, rotate: -2, hoverRotate: -0.6, motion: 12 },
     { src: `${shotBase}/iphone/terminal.jpg`, key: 'three', x: 7, y: 4, hoverSlot: 0.5, rotate: 3, hoverRotate: 0.6, motion: 14 },
-    { src: `${shotBase}/iphone/container.jpg`, key: 'four', x: 18, y: -2, hoverSlot: 1.5, rotate: 8, hoverRotate: 1.8, motion: 20 },
+    { src: `${shotBase}/iphone/files.jpg`, key: 'four', x: 18, y: -2, hoverSlot: 1.5, rotate: 8, hoverRotate: 1.8, motion: 20 },
   ]
 
   // Not in the locale files, deliberately: these are the app's own screen
@@ -393,7 +405,7 @@
     </section>
 
     <footer class="site-footer">
-      <span>© 2026 ServerBox</span>
+      <span>© 2026 lollipopkit</span>
       <div class="footer-links">
         <a href="#features" onclick={(event) => scrollToSection(event, 'features')}>{$LL.footer.features()}</a>
         <a href="#capabilities" onclick={(event) => scrollToSection(event, 'capabilities')}>{$LL.footer.capabilities()}</a>

@@ -95,7 +95,7 @@ type RootTranslation = {
 		 */
 		three: string
 		/**
-		 * S​e​r​v​e​r​B​o​x​ ​t​o​o​l​s​ ​s​c​r​e​e​n​s​h​o​t
+		 * S​e​r​v​e​r​B​o​x​ ​f​i​l​e​ ​b​r​o​w​s​e​r​ ​s​c​r​e​e​n​s​h​o​t
 		 */
 		four: string
 	}
@@ -191,56 +191,6 @@ type RootTranslation = {
 		 * #​ ​A​n​d​r​o​i​d​,​ ​L​i​n​u​x​,​ ​a​n​d​ ​W​i​n​d​o​w​s
 		 */
 		installReleasePrompt: string
-		items: {
-			/**
-			 * S​t​a​t​u​s​ ​c​h​a​r​t
-			 */
-			statusChart: string
-			/**
-			 * S​S​H​ ​T​e​r​m​i​n​a​l
-			 */
-			sshTerminal: string
-			/**
-			 * S​F​T​P
-			 */
-			sftp: string
-			/**
-			 * D​o​c​k​e​r
-			 */
-			docker: string
-			/**
-			 * P​r​o​c​e​s​s
-			 */
-			process: string
-			/**
-			 * S​y​s​t​e​m​d
-			 */
-			systemd: string
-			/**
-			 * S​.​M​.​A​.​R​.​T
-			 */
-			smart: string
-			/**
-			 * G​P​U
-			 */
-			gpu: string
-			/**
-			 * S​e​n​s​o​r​s
-			 */
-			sensors: string
-			/**
-			 * P​u​s​h
-			 */
-			push: string
-			/**
-			 * H​o​m​e​ ​W​i​d​g​e​t
-			 */
-			homeWidget: string
-			/**
-			 * w​a​t​c​h​O​S
-			 */
-			watchos: string
-		}
 	}
 	download: {
 		/**
@@ -375,7 +325,7 @@ export type TranslationFunctions = {
 		 */
 		three: () => LocalizedString
 		/**
-		 * ServerBox tools screenshot
+		 * ServerBox file browser screenshot
 		 */
 		four: () => LocalizedString
 	}
@@ -470,56 +420,6 @@ export type TranslationFunctions = {
 		 * # Android, Linux, and Windows
 		 */
 		installReleasePrompt: () => LocalizedString
-		items: {
-			/**
-			 * Status chart
-			 */
-			statusChart: () => LocalizedString
-			/**
-			 * SSH Terminal
-			 */
-			sshTerminal: () => LocalizedString
-			/**
-			 * SFTP
-			 */
-			sftp: () => LocalizedString
-			/**
-			 * Docker
-			 */
-			docker: () => LocalizedString
-			/**
-			 * Process
-			 */
-			process: () => LocalizedString
-			/**
-			 * Systemd
-			 */
-			systemd: () => LocalizedString
-			/**
-			 * S.M.A.R.T
-			 */
-			smart: () => LocalizedString
-			/**
-			 * GPU
-			 */
-			gpu: () => LocalizedString
-			/**
-			 * Sensors
-			 */
-			sensors: () => LocalizedString
-			/**
-			 * Push
-			 */
-			push: () => LocalizedString
-			/**
-			 * Home Widget
-			 */
-			homeWidget: () => LocalizedString
-			/**
-			 * watchOS
-			 */
-			watchos: () => LocalizedString
-		}
 	}
 	download: {
 		/**
