@@ -564,10 +564,13 @@ exit $exitCode
       // intentionally structural: the asset is the exact shell program sent
       // to a server, and its hash above makes this contract reviewable when
       // the vendored upstream script is refreshed.
-      final fio = text.substring(
-        text.indexOf(r'if [[ -z "$SKIP_FIO" ]]'),
-        text.indexOf(r'if [ -z "$DD_FALLBACK" ]'),
+      final fioStart = text.indexOf(
+        '# create temp directory to store disk write/read test files',
       );
+      final fioEnd = text.indexOf(r'if [ -z "$DD_FALLBACK" ]');
+      expect(fioStart, isNonNegative);
+      expect(fioEnd, greaterThan(fioStart));
+      final fio = text.substring(fioStart, fioEnd);
       expect(
         fio,
         contains(r'if [[ -z "$PREFER_BIN" && -n "$LOCAL_FIO" ]]; then'),
