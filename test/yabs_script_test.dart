@@ -42,12 +42,59 @@ void main() {
     return ProcessResult(process.pid, await process.exitCode, out, err);
   }
 
+  /// Every run this test started, so `tearDown` can stop whatever is still
+  /// going. A launcher runs under `setsid`: it belongs to no process this one
+  /// waits on, and an assertion that fails before the test reaches
+  /// [waitForRun] — or, in the cancel test, before it asks for a stop — leaves
+  /// it running with nothing left in the test that knows about it.
+  final startedRuns = <YabsOptions>[];
+
+  Future<ProcessResult> startRun(YabsOptions options) async {
+    startedRuns.add(options);
+    return sh(
+      YabsScript.startEntry(options, runId),
+      stdinText: YabsScript.launcher(options),
+    );
+  }
+
   setUp(() async {
     tmp = await Directory.systemTemp.createTemp('yabs_script_test');
+    startedRuns.clear();
   });
 
   tearDown(() async {
-    if (tmp.existsSync()) await tmp.delete(recursive: true);
+    if (!tmp.existsSync()) return;
+
+    // Stop first, delete second. The stand-in the cancel test installs sleeps
+    // for a minute, so a failure before its `cancelCommand` would otherwise
+    // leave that process — and the two it spawns — running long after the
+    // suite has moved on.
+    //
+    // Asked before it is stopped, because `cancelCommand` sleeps two seconds
+    // between its TERM and its KILL. On the usual path every run here has
+    // already finished, and paying that per test turned a 5-second file into a
+    // 20-second one; a poll costs one more shell and answers.
+    for (final options in startedRuns) {
+      final dir = YabsScript.runDir(options);
+      final poll = YabsPollState.parse(
+        (await sh(YabsScript.pollCommand(dir))).stdout,
+      );
+      if (poll.alive) await sh(YabsScript.cancelCommand(dir));
+    }
+
+    // Retried anyway, because a stop is not instant and a launcher writing its
+    // exit code into a tree being deleted fails the delete with `Directory not
+    // empty` — which is then the error reported, in place of the assertion
+    // that actually failed.
+    for (var attempt = 0; ; attempt++) {
+      try {
+        await tmp.delete(recursive: true);
+        return;
+      } on FileSystemException {
+        if (attempt >= 20) rethrow;
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+      }
+    }
   });
 
   /// A stand-in for yabs: records the arguments it was given, prints something
@@ -76,13 +123,16 @@ exit $exitCode
     expect(res.stdout, contains(YabsScript.scriptInstalled));
   }
 
-  Future<void> runToCompletion(YabsOptions options) async {
-    final start = await sh(
-      YabsScript.startEntry(options, runId),
-      stdinText: YabsScript.launcher(options),
-    );
-    expect(start.stdout, contains(YabsScript.started), reason: start.stderr);
-
+  /// Polls until the detached launcher has reported an exit code.
+  ///
+  /// **Every test that starts a run has to reach this, or stop the run, before
+  /// it returns.** The launcher is under `setsid`, so it outlives the test body
+  /// that started it, and `tearDown` then deletes a directory a live process is
+  /// still writing into — which fails with `Directory not empty` rather than
+  /// with anything naming the test that left the process behind. That is how it
+  /// arrived: one CI run, one test, and nothing in the failure pointing at the
+  /// one place a run was started and not awaited.
+  Future<void> waitForRun(YabsOptions options) async {
     // The launcher is detached, so "started" says nothing about "finished".
     //
     // Bounded by the clock rather than by a poll count: each poll spawns a
@@ -115,6 +165,12 @@ exit $exitCode
       'last poll stdout: ${last?.stdout}\n'
       'last poll stderr: ${last?.stderr}',
     );
+  }
+
+  Future<void> runToCompletion(YabsOptions options) async {
+    final start = await startRun(options);
+    expect(start.stdout, contains(YabsScript.started), reason: start.stderr);
+    await waitForRun(options);
   }
 
   group('the script is installed where the commands look for it', () {
@@ -216,10 +272,16 @@ exit $exitCode
       await Directory(work).create(recursive: true);
       final options = YabsOptions(workDir: work);
 
-      await sh(
-        YabsScript.startEntry(options, runId),
-        stdinText: YabsScript.launcher(options),
-      );
+      await startRun(options);
+
+      // Waited for before the assertion rather than after it. As the commands
+      // stand today the working directory only reaches the *synchronous* half
+      // of `startEntry` — `launcher` is generated without it and `cd`s to its
+      // own directory — so an injected `touch` would have run before that
+      // command returned, and asserting there would be enough. This order does
+      // not depend on that: it is what the assertion needs the moment any of
+      // it moves behind the `setsid`, and the wait was already happening.
+      await waitForRun(options);
 
       expect(File('${tmp.path}/pwned').existsSync(), isFalse);
       expect(File('$work/.server_box_bench/run.sh').existsSync(), isTrue);
@@ -281,10 +343,7 @@ exit $exitCode
       expect(res.stdout, contains(YabsScript.scriptInstalled));
 
       const options = YabsOptions();
-      final start = await sh(
-        YabsScript.startEntry(options, runId),
-        stdinText: YabsScript.launcher(options),
-      );
+      final start = await startRun(options);
       expect(start.stdout, contains(YabsScript.started));
 
       // Wait for the launcher to record its pid before asking to stop it.

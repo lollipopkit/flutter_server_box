@@ -34,8 +34,19 @@ COPY monitor/.sqlx/ ./.sqlx/
 COPY monitor/src/ ./src/
 
 # 独立构建 monitor(脱离 monorepo workspace),修正 sbm_parser 相对路径
+#
+# That also puts this build outside everything the workspace Cargo.toml says:
+# `monitor/Cargo.toml` becomes the root, so neither `[profile.release] strip`
+# nor the `release-monitor` profile exists here. Until these were added the
+# image carried an unstripped binary — the one build of this crate that did.
+# Environment variables rather than a profile section, since the section would
+# have to be written into a manifest the workspace also reads, where cargo
+# ignores a non-root package's profiles with a warning.
 RUN sed -i 's|path = "../crates/sbm_parser"|path = "crates/sbm_parser"|' Cargo.toml \
-    && cargo build --release
+    && CARGO_PROFILE_RELEASE_STRIP=true \
+       CARGO_PROFILE_RELEASE_LTO=fat \
+       CARGO_PROFILE_RELEASE_CODEGEN_UNITS=1 \
+       cargo build --release
 
 # Final runtime stage(与 Dockerfile.ci 保持一致)
 FROM alpine:3.24

@@ -305,6 +305,41 @@ alone doesn't stop two handlers clobbering each other's fields.
 
 ## Release and Deployment
 
+### Build profile and binary size
+
+The shipped agent is built with `--profile release-monitor` (workspace
+`Cargo.toml`), which is `release` plus `lto = "fat"` and `codegen-units = 1`.
+Both are profile-wide — `[profile.release.package.*]` accepts neither — so
+they cannot be asked for on the shared profile without putting a fat-LTO link
+in front of every app build too.
+
+- **`monitor/Dockerfile` sees none of that.** It rewrites the `sbm_parser`
+  path so `monitor/Cargo.toml` becomes the root, which puts the build outside
+  the workspace and outside every `[profile]` in it, `strip` included. It
+  passes the same three settings as `CARGO_PROFILE_RELEASE_*`. Anything added
+  to a workspace profile has to be repeated there or it silently does not
+  apply to the image people build themselves.
+- **`nix/package.nix` builds inside the workspace** (`buildAndTestSubdir =
+  "monitor"`, source is the repository), so it does get `[profile.release]`
+  and its `strip`, but not `release-monitor`. Moving it there means
+  `cargoBuildType`, whose handling differs between nixpkgs releases and is
+  not verified here.
+- **`opt-level` stays at 3.** `"s"` takes the binary from 15.2 MB to 11.2 MB,
+  measured, and this process samples the machine and terminates every TLS
+  connection to it — worth having the number, not worth taking silently.
+- **One crypto implementation, `ring`.** `cargo tree -i aws-lc-sys` must find
+  nothing: aws-lc-sys is a second complete implementation and a cmake build
+  script in front of the musl targets. reqwest is the one that brings it in
+  by default (its `rustls` feature *is* `__rustls-aws-lc-rs`), so it uses
+  `rustls-no-provider` and `monitoring::push::http_client` installs the ring
+  provider before building the client. Without that install, building the
+  client panics inside reqwest rather than failing as a push error — held by
+  the four webhook tests in `monitoring::push`, which is also the only signal
+  that a newly added TLS dependency has brought its own provider back.
+
+Measured on macOS arm64, all with `strip`: 22.0 MB stock → 20.1 MB without
+aws-lc → 15.2 MB with the profile.
+
 ### Docker
 ```bash
 # Build with Docker

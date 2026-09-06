@@ -141,9 +141,13 @@ jobs:
         with:
           key: ${{ matrix.target }}
 
+      # `release-monitor`, not `release`: fat LTO and one codegen unit, which
+      # are profile-wide settings and so cannot be asked for on the shared
+      # profile without slowing every app build. Defined in the workspace
+      # Cargo.toml, which says what it costs and what it buys.
       - name: Build
         shell: bash
-        run: cargo build -p server_box_monitor --release --target ${{ matrix.target }}
+        run: cargo build -p server_box_monitor --profile release-monitor --target ${{ matrix.target }}
 
       - name: Download frontend dist
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
@@ -162,7 +166,7 @@ jobs:
 
           staging="${BIN_NAME}"
           mkdir -p "$staging"
-          cp "target/${{ matrix.target }}/release/${bin}${ext}" "$staging/"
+          cp "target/${{ matrix.target }}/release-monitor/${bin}${ext}" "$staging/"
           mkdir -p "$staging/frontend"
           cp -r monitor/frontend/dist "$staging/frontend/dist"
           cp -r monitor/migrations "$staging/migrations"
@@ -207,7 +211,7 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: monitor-bin-linux-${{ matrix.arch }}
-          path: target/${{ matrix.target }}/release/server_box_monitor
+          path: target/${{ matrix.target }}/release-monitor/server_box_monitor
           if-no-files-found: error
           retention-days: 3
 
@@ -318,13 +322,13 @@ jobs:
           # took it, so anyone opening /releases/latest was handed the agent
           # rather than ServerBox.
           make_latest: false
+          # One line per paragraph, however long. GitHub renders release notes
+          # with hard line breaks on, so a paragraph wrapped at 72 columns here
+          # is wrapped at 72 columns on a page as wide as the window — v0.1.2
+          # shipped a column of short lines down the left of the screen. Only
+          # the fenced blocks below are allowed to carry their own line breaks,
+          # where they are the commands' own.
           body: |
-            The **ServerBox Monitor** agent, versioned independently of the
-            app — see `monitor/README.md` for what it does and
-            `config.example.toml` in the archive for how it is configured.
-
-            ### Docker
-
             ```sh
             docker run -d --name server-box-monitor \
               -p 3770:3770 -v ./data:/data \
@@ -332,15 +336,6 @@ jobs:
             ```
 
             Also tagged `latest`. `linux/amd64` and `linux/arm64`.
-
-            ### Native
-
-            Pick the archive for the machine being monitored and unpack it.
-            Linux builds are static musl binaries, so they run on Alpine as
-            they are. Each archive carries the binary, the web panel, the
-            migrations and an example config.
-
-            Verify what you downloaded against `SHA256SUMS`:
 
             ```sh
             sha256sum -c SHA256SUMS --ignore-missing

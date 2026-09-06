@@ -55,22 +55,26 @@ getrandom = "0.4"
 rpassword = "7"
 
 # HTTP client for push notifications
-# rustls instead of native-tls: consistent with sqlx, static musl builds without OpenSSL
-reqwest = { version = "0.13", default-features = false, features = ["json", "rustls", "charset", "http2", "stream"] }
+# rustls instead of native-tls: consistent with sqlx, static musl builds without OpenSSL.
+#
+# `rustls-no-provider` and not `rustls`, which is defined as
+# `__rustls-aws-lc-rs` and pulls aws-lc-sys — a second, complete crypto
+# implementation beside the `ring` everything else here uses, and a cmake
+# build script in front of the musl targets. The provider it no longer brings
+# is installed once in `monitoring::push::http_client`; without that, building
+# the client panics inside reqwest rather than failing as a push error, which
+# `monitoring::push`'s webhook tests hold.
+reqwest = { version = "0.13", default-features = false, features = ["json", "rustls-no-provider", "charset", "http2", "stream"] }
 
 # SSH client for the browser terminal. `ring` rather than the default
 # aws-lc-rs, matching the backend rustls and jsonwebtoken are configured with,
 # so this adds no second crypto implementation of its own.
 #
-# NOTE: it does not follow that the build is free of aws-lc. `reqwest`'s
-# `rustls` feature is defined as `__rustls-aws-lc-rs`, so aws-lc-sys and its
-# cmake build script come in regardless of what the direct rustls dependency
-# asks for — the "no cmake for musl" intent above is currently not achieved.
-# Fixing it takes two steps, not one: switch reqwest to `rustls-no-provider`
-# *and* install a process-level provider at startup, since without that the
-# push client panics on its first HTTPS request (verified: it drops aws-lc and
-# cmake from the tree, and fails all five push tests until the provider is
-# installed). Left alone here as it belongs to the push path, not this one.
+# `ring` is now the only one in the tree — `cargo tree -i aws-lc-sys` finds
+# nothing. It was reqwest that brought the other, and that is fixed above; the
+# "no cmake for musl" intent these features are chosen for is achieved rather
+# than merely stated. Anything added here that wants TLS has to be configured
+# the same way, or it comes back.
 russh = { version = "0.63", default-features = false, features = ["ring", "flate2", "rsa"] }
 # Wipes SSH credentials from memory once they have been used
 zeroize = "1"
