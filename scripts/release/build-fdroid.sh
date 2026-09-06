@@ -74,7 +74,7 @@ fi
 # regenerates its registrant from this pruned input even with `--no-pub`.
 flutter build apk --no-pub --release --config-only
 dart --packages="$REPO_ROOT/scripts/release/empty-package-config.json" \
-  "$REPO_ROOT/scripts/release/prune-android-dev-plugins.dart"
+  "$REPO_ROOT/scripts/release/prune_android_dev_plugins.dart"
 dart --packages="$REPO_ROOT/scripts/release/empty-package-config.json" \
   "$REPO_ROOT/scripts/release/map_plugin_registrant_package.dart"
 
