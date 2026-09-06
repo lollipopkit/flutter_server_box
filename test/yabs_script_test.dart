@@ -47,7 +47,21 @@ void main() {
   });
 
   tearDown(() async {
-    if (tmp.existsSync()) await tmp.delete(recursive: true);
+    if (!tmp.existsSync()) return;
+    // Retried, because a test that fails before it can wait for its run leaves
+    // a detached launcher writing in here, and the delete then fails too — with
+    // `Directory not empty`, which is the error that gets reported instead of
+    // the assertion that actually failed. The stand-in exits on its own, so
+    // this only has to outlast it.
+    for (var attempt = 0; ; attempt++) {
+      try {
+        await tmp.delete(recursive: true);
+        return;
+      } on FileSystemException {
+        if (attempt >= 20) rethrow;
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+      }
+    }
   });
 
   /// A stand-in for yabs: records the arguments it was given, prints something
@@ -76,13 +90,16 @@ exit $exitCode
     expect(res.stdout, contains(YabsScript.scriptInstalled));
   }
 
-  Future<void> runToCompletion(YabsOptions options) async {
-    final start = await sh(
-      YabsScript.startEntry(options, runId),
-      stdinText: YabsScript.launcher(options),
-    );
-    expect(start.stdout, contains(YabsScript.started), reason: start.stderr);
-
+  /// Polls until the detached launcher has reported an exit code.
+  ///
+  /// **Every test that starts a run has to reach this, or stop the run, before
+  /// it returns.** The launcher is under `setsid`, so it outlives the test body
+  /// that started it, and `tearDown` then deletes a directory a live process is
+  /// still writing into — which fails with `Directory not empty` rather than
+  /// with anything naming the test that left the process behind. That is how it
+  /// arrived: one CI run, one test, and nothing in the failure pointing at the
+  /// one place a run was started and not awaited.
+  Future<void> waitForRun(YabsOptions options) async {
     // The launcher is detached, so "started" says nothing about "finished".
     //
     // Bounded by the clock rather than by a poll count: each poll spawns a
@@ -115,6 +132,15 @@ exit $exitCode
       'last poll stdout: ${last?.stdout}\n'
       'last poll stderr: ${last?.stderr}',
     );
+  }
+
+  Future<void> runToCompletion(YabsOptions options) async {
+    final start = await sh(
+      YabsScript.startEntry(options, runId),
+      stdinText: YabsScript.launcher(options),
+    );
+    expect(start.stdout, contains(YabsScript.started), reason: start.stderr);
+    await waitForRun(options);
   }
 
   group('the script is installed where the commands look for it', () {
@@ -223,6 +249,10 @@ exit $exitCode
 
       expect(File('${tmp.path}/pwned').existsSync(), isFalse);
       expect(File('$work/.server_box_bench/run.sh').existsSync(), isTrue);
+
+      // What this test is about is settled above; this is about not leaving a
+      // process writing into the directory `tearDown` is about to delete.
+      await waitForRun(options);
     });
   });
 
