@@ -565,14 +565,14 @@ exit $exitCode
       // to a server, and its hash above makes this contract reviewable when
       // the vendored upstream script is refreshed.
       final fio = text.substring(
-        text.indexOf('if [[ -z "$SKIP_FIO" ]]'),
-        text.indexOf('if [ -z "$DD_FALLBACK" ]'),
+        text.indexOf(r'if [[ -z "$SKIP_FIO" ]]'),
+        text.indexOf(r'if [ -z "$DD_FALLBACK" ]'),
       );
       expect(
         fio,
-        contains('if [[ -z "$PREFER_BIN" && -n "$LOCAL_FIO" ]]; then'),
+        contains(r'if [[ -z "$PREFER_BIN" && -n "$LOCAL_FIO" ]]; then'),
       );
-      expect(fio, contains('elif [[ -n "$PREFER_BIN" ]]; then'));
+      expect(fio, contains(r'elif [[ -n "$PREFER_BIN" ]]; then'));
       expect(
         fio,
         contains('fio is not installed. Running dd test as fallback...'),
@@ -582,18 +582,18 @@ exit $exitCode
           'https://raw.githubusercontent.com/masonr/'
           'yet-another-bench-script/master/bin/fio/',
         ),
-        greaterThan(fio.indexOf('elif [[ -n "$PREFER_BIN" ]]; then')),
+        greaterThan(fio.indexOf(r'elif [[ -n "$PREFER_BIN" ]]; then')),
       );
 
       final iperf = text.substring(
-        text.indexOf('if [ -z "$SKIP_IPERF" ]; then'),
+        text.indexOf(r'if [ -z "$SKIP_IPERF" ]; then'),
         text.indexOf('# launch_geekbench'),
       );
       expect(
         iperf,
-        contains('if [[ -z "$PREFER_BIN" && -n "$LOCAL_IPERF" ]]; then'),
+        contains(r'if [[ -z "$PREFER_BIN" && -n "$LOCAL_IPERF" ]]; then'),
       );
-      expect(iperf, contains('elif [[ -n "$PREFER_BIN" ]]; then'));
+      expect(iperf, contains(r'elif [[ -n "$PREFER_BIN" ]]; then'));
       expect(
         iperf,
         contains('iperf3 is not installed. Skipping network tests...'),
@@ -601,14 +601,14 @@ exit $exitCode
       expect(iperf, contains('IPERF_UNAVAILABLE=True'));
       expect(
         iperf,
-        contains('[[ -z "$IPERF_DL_FAIL" && -z "$IPERF_UNAVAILABLE" ]]'),
+        contains(r'[[ -z "$IPERF_DL_FAIL" && -z "$IPERF_UNAVAILABLE" ]]'),
       );
       expect(
         iperf.indexOf(
           'https://raw.githubusercontent.com/masonr/'
           'yet-another-bench-script/master/bin/iperf/',
         ),
-        greaterThan(iperf.indexOf('elif [[ -n "$PREFER_BIN" ]]; then')),
+        greaterThan(iperf.indexOf(r'elif [[ -n "$PREFER_BIN" ]]; then')),
       );
     });
   });
