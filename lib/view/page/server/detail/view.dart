@@ -13,6 +13,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/server.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/service/self_addr.dart';
+import 'package:server_box/core/utils/refresh_interval.dart';
 import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
@@ -30,6 +31,7 @@ import 'package:server_box/data/model/server/server.dart' as server_model;
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/provider/bmc/bmc.dart';
+import 'package:server_box/data/provider/plugin/runtime.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
@@ -37,6 +39,7 @@ import 'package:server_box/data/store/plugin.dart';
 import 'package:server_box/view/page/pve.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/widget/plugin/status_card.dart';
+import 'package:server_box/view/widget/plugin/surface_view.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
 import 'package:server_box/view/widget/server_share.dart';
 
@@ -356,17 +359,48 @@ ${err.message ?? 'null'}
   /// instantiated and instantiated is already the cost.
   Widget? _buildPluginCard(String id, ServerState si) {
     final plugin = PluginContributions.ofFeature(id);
-    final status = plugin?.manifest.status;
-    if (plugin == null || status == null) return null;
-    if (status.requiresConfig &&
-        !PluginCfgStore.instance.has(si.spi.id, plugin.id)) {
+    if (plugin == null) return null;
+    final card = plugin.isCard(id) ? plugin.manifest.card : null;
+    final status = card == null ? plugin.manifest.status : null;
+    if (card == null && status == null) return null;
+
+    // `requires_config` keeps a card off the machines the plugin has nothing
+    // to say about, which for something like a BMC is most of them.
+    final requiresConfig = card?.requiresConfig ?? status!.requiresConfig;
+    if (requiresConfig && !PluginCfgStore.instance.has(si.spi.id, plugin.id)) {
       return null;
     }
+
+    // Keyed by the contribution, so reordering the cards does not hand one
+    // plugin's element — and the instance behind it — to another.
+    final key = ValueKey('plugin:$id');
+    if (card != null) {
+      return CardX(
+        key: key,
+        child: PluginSurfaceView(
+          spec: PluginSurfaceSpec(
+            pluginId: plugin.id,
+            manifestJson: plugin.manifestJson,
+            source: plugin.source,
+            kind: 'card',
+            contributionId: card.id,
+            granted: plugin.granted,
+            config: PluginCfgStore.instance.fetch(si.spi.id, plugin.id),
+            serverId: si.spi.id,
+            l10n: plugin.l10nFor(
+              Localizations.maybeLocaleOf(context)?.toLanguageTag() ?? 'en',
+            ),
+          ),
+          service: ref.read(pluginRuntimeProvider),
+          // The shared interval, and only while the surface is on screen —
+          // a card behind another page has nothing to show, and a plugin
+          // ticking there is one doing work nobody asked for.
+          refreshInterval: serverStatusRefreshInterval(),
+        ),
+      );
+    }
     return PluginStatusCard(
-      // Keyed by the plugin, so reordering the cards does not hand one
-      // plugin's element — and the instance it is collecting through — to
-      // another.
-      key: ValueKey('plugin:$id'),
+      key: key,
       plugin: plugin,
       spi: si.spi,
       system: si.status.system,

@@ -6,7 +6,7 @@
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
 
 /// Reads a manifest without loading anything.
 ///
@@ -130,6 +130,55 @@ abstract class PluginRuntime implements RustOpaqueInterface {
   Future<void> unload({required BigInt instance});
 }
 
+/// A card on the server detail page, drawn from the widget tree the plugin
+/// answers `open` with. PLUGINS.md 5.3.
+///
+/// Unlike a status contribution this has a surface: the plugin holds state,
+/// answers events, and is ticked while it is on screen.
+class PluginCardInfo {
+  /// Stable within the plugin; the stored id is `<plugin id>:<this>`.
+  final String id;
+  final String label;
+  final String? icon;
+  final bool defaultOn;
+
+  /// Show this only on a server that has configuration for the plugin.
+  ///
+  /// Not a nicety. A card that appeared on every server to say "not
+  /// configured" would be a row of noise on the machines that have no BMC,
+  /// which is most of them — and the plugin cannot decide it for itself,
+  /// because deciding means being instantiated and instantiated is already
+  /// the cost.
+  final bool requiresConfig;
+
+  const PluginCardInfo({
+    required this.id,
+    required this.label,
+    this.icon,
+    required this.defaultOn,
+    required this.requiresConfig,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      label.hashCode ^
+      icon.hashCode ^
+      defaultOn.hashCode ^
+      requiresConfig.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PluginCardInfo &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          label == other.label &&
+          icon == other.icon &&
+          defaultOn == other.defaultOn &&
+          requiresConfig == other.requiresConfig;
+}
+
 /// Why a plugin call did not answer.
 ///
 /// A local type rather than the runtime's own enum: the app branches on one
@@ -202,6 +251,9 @@ class PluginManifestInfo {
   /// Permission names, for the dialog. PLUGINS.md 6.1.
   final List<String> permissions;
 
+  /// Present when this plugin draws a card on the server detail page.
+  final PluginCardInfo? card;
+
   /// Present when this plugin contributes readings to the status page.
   final PluginStatusInfo? status;
   final String? license;
@@ -214,6 +266,7 @@ class PluginManifestInfo {
     required this.name,
     required this.description,
     required this.permissions,
+    this.card,
     this.status,
     this.license,
     this.sourceUrl,
@@ -227,6 +280,7 @@ class PluginManifestInfo {
       name.hashCode ^
       description.hashCode ^
       permissions.hashCode ^
+      card.hashCode ^
       status.hashCode ^
       license.hashCode ^
       sourceUrl.hashCode;
@@ -242,6 +296,7 @@ class PluginManifestInfo {
           name == other.name &&
           description == other.description &&
           permissions == other.permissions &&
+          card == other.card &&
           status == other.status &&
           license == other.license &&
           sourceUrl == other.sourceUrl;

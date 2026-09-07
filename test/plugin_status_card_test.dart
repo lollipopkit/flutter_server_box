@@ -205,6 +205,61 @@ void main() {
     expect(find.text('ZFS'), findsOneWidget);
   });
 
+  /// A plugin may contribute both, and they are different things: a status
+  /// contribution says what to run and reads the output, a card holds state
+  /// and answers events. Two ids, two places in the arrangement.
+  test('a card and a status contribution are two entries', () async {
+    final both = Archive()
+      ..add(
+        ArchiveFile.bytes(
+          'manifest.json',
+          utf8.encode(
+            jsonEncode({
+              'id': 'app.serverbox.both',
+              'version': '1.0.0',
+              'abi': 1,
+              'name': 'Both',
+              'permissions': {'server.exec': true},
+              'contributes': {
+                'card': {'id': 'panel', 'label': 'Panel', 'default_on': true},
+                'status': {
+                  'id': 'zfs',
+                  'label': 'ZFS',
+                  'default_on': true,
+                  'platforms': ['linux'],
+                },
+              },
+            }),
+          ),
+        ),
+      )
+      ..add(ArchiveFile.bytes('plugin.js', utf8.encode(_source)));
+
+    final plugin = await installer.install(
+      ZipEncoder().encode(both),
+      consented: {'server.exec'},
+    );
+
+    expect(plugin.statusFeature?.id, 'app.serverbox.both:zfs');
+    expect(plugin.cardFeature?.id, 'app.serverbox.both:panel');
+    expect(plugin.isCard('app.serverbox.both:panel'), isTrue);
+    expect(plugin.isCard('app.serverbox.both:zfs'), isFalse);
+    expect(
+      FeatureSlot.detailCard.enabledIds(),
+      containsAll(['app.serverbox.both:zfs', 'app.serverbox.both:panel']),
+    );
+
+    // And uninstalling takes both places, not one.
+    await installer.uninstall('app.serverbox.both');
+    expect(
+      FeatureSlot.detailCard.enabledIds(),
+      isNot(anyOf(
+        contains('app.serverbox.both:zfs'),
+        contains('app.serverbox.both:panel'),
+      )),
+    );
+  });
+
   /// `requires_config` keeps a card off the machines the plugin has nothing to
   /// say about — most of them, for something like a BMC.
   test('the registry and the arrangement both learn about it', () async {

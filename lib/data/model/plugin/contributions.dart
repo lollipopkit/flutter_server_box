@@ -39,7 +39,12 @@ abstract final class PluginContributions {
   /// What they add to [slot].
   static List<Feature> of(FeatureSlot slot) {
     if (slot != FeatureSlot.detailCard) return const [];
-    return [for (final plugin in _byId.values) ?plugin.statusFeature];
+    return [
+      for (final plugin in _byId.values) ...[
+        ?plugin.statusFeature,
+        ?plugin.cardFeature,
+      ],
+    ];
   }
 
   /// Everything [plugin] contributes, whatever slot it goes in.
@@ -49,6 +54,7 @@ abstract final class PluginContributions {
   /// would put it in a row that has nothing to draw for it.
   static List<Feature> featuresOf(InstalledPlugin plugin) => [
     ?plugin.statusFeature,
+    ?plugin.cardFeature,
   ];
 
   /// What a *first* install should be given a place for.
@@ -59,5 +65,6 @@ abstract final class PluginContributions {
   /// user has since taken out was a decision.
   static List<Feature> defaultOnOf(InstalledPlugin plugin) => [
     if (plugin.manifest.status?.defaultOn == true) ?plugin.statusFeature,
+    if (plugin.manifest.card?.defaultOn == true) ?plugin.cardFeature,
   ];
 }

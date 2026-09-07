@@ -334,6 +334,13 @@ pub fn plugin_read_manifest(manifest_json: String) -> Result<PluginManifestInfo,
         name: m.name.clone(),
         description: m.description.clone(),
         permissions: m.requested().iter().map(|p| p.name().to_string()).collect(),
+        card: m.contributes.card.as_ref().map(|c| PluginCardInfo {
+            id: c.id.clone(),
+            label: c.label.clone(),
+            icon: c.icon.clone(),
+            default_on: c.default_on,
+            requires_config: c.requires_config,
+        }),
         status: m.contributes.status.as_ref().map(|s| PluginStatusInfo {
             id: s.id.clone(),
             label: s.label.clone(),
@@ -357,10 +364,34 @@ pub struct PluginManifestInfo {
     pub description: String,
     /// Permission names, for the dialog. PLUGINS.md 6.1.
     pub permissions: Vec<String>,
+    /// Present when this plugin draws a card on the server detail page.
+    pub card: Option<PluginCardInfo>,
     /// Present when this plugin contributes readings to the status page.
     pub status: Option<PluginStatusInfo>,
     pub license: Option<String>,
     pub source_url: Option<String>,
+}
+
+/// A card on the server detail page, drawn from the widget tree the plugin
+/// answers `open` with. PLUGINS.md 5.3.
+///
+/// Unlike a status contribution this has a surface: the plugin holds state,
+/// answers events, and is ticked while it is on screen.
+#[derive(Debug, Clone)]
+pub struct PluginCardInfo {
+    /// Stable within the plugin; the stored id is `<plugin id>:<this>`.
+    pub id: String,
+    pub label: String,
+    pub icon: Option<String>,
+    pub default_on: bool,
+    /// Show this only on a server that has configuration for the plugin.
+    ///
+    /// Not a nicety. A card that appeared on every server to say "not
+    /// configured" would be a row of noise on the machines that have no BMC,
+    /// which is most of them — and the plugin cannot decide it for itself,
+    /// because deciding means being instantiated and instantiated is already
+    /// the cost.
+    pub requires_config: bool,
 }
 
 /// A status contribution, as the app needs it to decide what to collect.

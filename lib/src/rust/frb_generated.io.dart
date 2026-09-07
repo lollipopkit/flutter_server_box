@@ -122,6 +122,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   double dco_decode_box_autoadd_f_64(dynamic raw);
 
   @protected
+  PluginCardInfo dco_decode_box_autoadd_plugin_card_info(dynamic raw);
+
+  @protected
   PluginSpec dco_decode_box_autoadd_plugin_spec(dynamic raw);
 
   @protected
@@ -184,7 +187,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   double? dco_decode_opt_box_autoadd_f_64(dynamic raw);
 
   @protected
+  PluginCardInfo? dco_decode_opt_box_autoadd_plugin_card_info(dynamic raw);
+
+  @protected
   PluginStatusInfo? dco_decode_opt_box_autoadd_plugin_status_info(dynamic raw);
+
+  @protected
+  PluginCardInfo dco_decode_plugin_card_info(dynamic raw);
 
   @protected
   PluginCmd dco_decode_plugin_cmd(dynamic raw);
@@ -336,6 +345,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   double sse_decode_box_autoadd_f_64(SseDeserializer deserializer);
 
   @protected
+  PluginCardInfo sse_decode_box_autoadd_plugin_card_info(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   PluginSpec sse_decode_box_autoadd_plugin_spec(SseDeserializer deserializer);
 
   @protected
@@ -408,9 +422,17 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   double? sse_decode_opt_box_autoadd_f_64(SseDeserializer deserializer);
 
   @protected
+  PluginCardInfo? sse_decode_opt_box_autoadd_plugin_card_info(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   PluginStatusInfo? sse_decode_opt_box_autoadd_plugin_status_info(
     SseDeserializer deserializer,
   );
+
+  @protected
+  PluginCardInfo sse_decode_plugin_card_info(SseDeserializer deserializer);
 
   @protected
   PluginCmd sse_decode_plugin_cmd(SseDeserializer deserializer);
@@ -585,6 +607,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_box_autoadd_f_64(double self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_autoadd_plugin_card_info(
+    PluginCardInfo self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_plugin_spec(
     PluginSpec self,
     SseSerializer serializer,
@@ -681,8 +709,20 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_opt_box_autoadd_f_64(double? self, SseSerializer serializer);
 
   @protected
+  void sse_encode_opt_box_autoadd_plugin_card_info(
+    PluginCardInfo? self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_opt_box_autoadd_plugin_status_info(
     PluginStatusInfo? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_plugin_card_info(
+    PluginCardInfo self,
     SseSerializer serializer,
   );
 
