@@ -11,3 +11,16 @@ serde_json = "1.0"
 # JS engine, which is what removes the build step for plugin authors. See
 # PLUGINS.md section 3.
 rquickjs = { version = "0.12", features = ["either"] }
+
+# `rquickjs-sys` ships pre-generated bindings for sixteen targets and iOS and
+# Android are not among them: a build for one fails in the linker phase with
+# `couldn't read src/bindings/aarch64-apple-ios.rs`, which names the file
+# rather than the reason. The `bindgen` feature runs bindgen at build time
+# instead, which needs libclang and the platform's sysroot — `hook/build.dart`
+# passes the sysroot, since only it knows which SDK or NDK this build is using.
+#
+# Scoped to those two targets rather than turned on everywhere. Where a
+# binding *is* shipped, using it is one less thing that has to work on a CI
+# runner, and it is byte-for-byte what upstream tested against.
+[target.'cfg(any(target_os = "ios", target_os = "android"))'.dependencies]
+rquickjs = { version = "0.12", features = ["either", "bindgen"] }

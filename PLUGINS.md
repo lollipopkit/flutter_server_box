@@ -601,7 +601,7 @@ App Store 对这种扩展的判断也不能仅凭它没有 UI 就下结论。
 
 - **宿主回调的实现**：已接到 `ServerNotifier.ensureExec`、证书校验、对话框和存储上（`AppPluginHostOps`）。只剩 `sb.http.fetch` 的 `via: "ssh"`——需要把 `SSHForwardChannel` 包成 `HttpClient.connectionFactory` 认的 `ConnectionTask<Socket>`，dartssh2 那边没有现成的适配。
 - **性能与资源**：解释执行比原生慢；开发机上的解析耗时见 3.3，移动端真机没有量过。内存和时间上限的数值待定，计量精度也比 WASM 的 fuel 粗。5.2 的裁剪、值绑定和窗口式列表已在 SDK 侧实现，宿主侧的复用缓存、`ValueListenableBuilder` 和 `ListView.builder` 尚未实现，实际收益要接入后测量。
-- **构建依赖**：QuickJS 是 C 源码，iOS 和 Android 没有预生成 bindings，构建环境需要 libclang 和正确的 sysroot。这部分要写进 `hook/build.dart` 并在五个平台的 CI 上验证。
+- ~~**构建依赖**~~：已解决。`rquickjs-sys` 预生成了 16 个平台的 bindings，iOS 和 Android 都不在里面，构建会在链接阶段报 `couldn't read src/bindings/aarch64-apple-ios.rs`——报的是文件不是原因。现在 `crates/sbm_plugin` 只对这两个 target 打开 `bindgen` feature（`[target.'cfg(...)'.dependencies]`），`hook/bindgen_environment.dart` 补上 bindgen 自己推不出来的 sysroot：它直接驱动 libclang 而不是 SDK 的 clang wrapper，没人告诉过它 `stdio.h` 在哪。iOS 走 `xcrun --show-sdk-path`（SDK 带版本号且跟着 Xcode 走，写死路径就是下次升级 Xcode 就坏），Android 从 `CodeConfig.cCompiler` 反推 `<prebuilt>/sysroot`（不用 `ANDROID_NDK_HOME`，那是拿另一个版本的头文件去编译的来路）。本地已验 iOS device / Android arm64 / macOS 三个都能构建。CI 上五个平台的交叉编译验证仍未做。
 - **语言支持范围**：抽查的 19 项见 3.5，完整 test262 没有跑过。`Intl` 缺失影响日期和数字的本地化，处理方式待定。
 - **供应链**：插件可以打包 npm 依赖，一个插件里可能含有大量第三方代码。审核方式和 `.sbp` 的体积上限需要定。
 - **调试和兼容**：错误可能跨 Dart、FFI 和 JavaScript；发布后的导出名、`sb` 接口和节点属性都要维护兼容。SDK 测试和日志只能覆盖其中一部分。
