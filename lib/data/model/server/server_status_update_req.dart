@@ -141,7 +141,17 @@ ServerStatus _createWorkingStatus(ServerStatus source, SystemType system) {
   // response carried some, so without this a poll whose extended output did
   // not arrive cleared the addresses — and the server dropped off the globe
   // back into the unplaced strip until another extended cycle came round.
-  ..ips = source.ips;
+  ..ips = source.ips
+  // And again, for the same reason: `pkg` comes from the extended cadence, so
+  // every poll between two extended runs parses it out of the cached output —
+  // but a reconnect drops that cache, and the polls until the next extended
+  // run would otherwise report no package manager at all. The card would
+  // vanish and come back, which reads as a machine whose updates are unknown
+  // rather than as one nobody has asked recently.
+  //
+  // This is what makes `_applyPkg`'s "keep what we had" check mean anything:
+  // against a status built fresh every poll it could never fire.
+  ..pkg = source.pkg;
 }
 
 List<SingleCpuCore> _coresFromJson(List cores) {

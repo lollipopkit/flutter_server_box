@@ -1801,10 +1801,17 @@ ${err.message ?? 'null'}
           leading: Icon(ServerDetailCards.pkg.icon, size: 17),
           title: Text(l10n.pkgUpToDate, style: UIs.text13),
           // Which is the difference between "nothing to do" and "nothing was
-          // asked recently enough for that to mean anything".
+          // asked recently enough for that to mean anything" — and orange
+          // here rather than grey, because zero is the count a stale index
+          // misleads about most. A machine with updates pending still says so
+          // whatever the index's age; one reporting none off a five-month-old
+          // cache is saying nothing at all.
           subtitle: stale == null
               ? null
-              : Text(l10n.pkgIndexAge(stale), style: UIs.text12Grey),
+              : Text(
+                  l10n.pkgIndexAge(stale),
+                  style: UIs.text12Grey.copyWith(color: Colors.orange),
+                ),
           trailing: Text(pkg.manager, style: UIs.text12Grey),
         ),
       );
