@@ -1,11 +1,10 @@
-/// The updates tab's two layouts, and the four things about a two-column tab
-/// that are not compile errors.
+/// The updates tab's two layouts, and the things about them that are not
+/// compile errors.
 ///
-/// `AdaptivePanes.detail` hands a narrow window `listBuilder` and nothing
-/// else, so what that column *is* decides what a phone gets. Here it is the
-/// server list in both layouts — the tab answers "which machine is behind",
-/// and that answer is the column of counts — and the machine's own page is
-/// pushed rather than swapped in. None of that is checkable by the analyzer.
+/// The terminal tab's shape: `AdaptivePanes.surface` keeps the *surface* on a
+/// narrow window and drops the rail, so everything the rail said has to be
+/// said again in the bar — which is what `SessionSwitcherLabel` is for. A tab
+/// that forgets leaves a phone on one machine with no way to another.
 library;
 
 import 'package:fl_lib/fl_lib.dart';
@@ -96,78 +95,105 @@ void main() {
   }
 
   group('the single column', () {
-    /// The rule this tab departs from the benchmark tab on, stated as a test:
-    /// there, one column is the run and the history hides behind a button;
-    /// here the list *is* what somebody opened the tab to read.
-    testWidgets('is the server list, not one machine', (tester) async {
+    /// Nothing is selected yet, so the surface is the overview — which is what
+    /// somebody opening this tab came to read.
+    testWidgets('opens on the list of machines', (tester) async {
       await pump(tester, wide: false);
 
       expect(find.text('alpha'), findsOneWidget);
       expect(find.text('beta'), findsOneWidget);
-      // Nothing is selected, so no machine's page is on screen.
       expect(find.byType(PkgUpdatesPage), findsNothing);
+      // No rail: a narrow window keeps the surface, and a column beside it
+      // would be the same list twice.
+      expect(find.byType(SideBarTile), findsNothing);
     });
 
-    /// Pushed on the tab's own navigator, so back returns to the list rather
-    /// than replacing the column — which a test that only checked "the right
-    /// thing is on screen" could not tell apart.
-    testWidgets('opens a machine as a page, and back returns', (tester) async {
+    /// The subject is a widget, not a route: choosing a machine swaps the
+    /// surface. Pushing would stack one copy per choice, which a test that only
+    /// checked "the right thing is on screen" could not tell apart.
+    testWidgets('a machine replaces the list rather than stacking on it', (
+      tester,
+    ) async {
       await pump(tester, wide: false);
 
       await tester.tap(find.text('alpha'));
       await settle(tester);
 
       expect(find.byType(PkgUpdatesPage), findsOneWidget);
-
-      // A route was pushed, and on a navigator *inside* the tab: `canPop` is
-      // what says the page went on top of the list rather than replacing the
-      // column. Popping and finding the list again is the other half — a swap
-      // would have nothing to pop, and popping the tab's own navigator when it
-      // is empty would take the whole tab off instead.
+      expect(
+        tester.widget<PkgUpdatesPage>(find.byType(PkgUpdatesPage)).args?.serverId,
+        'srv-alpha',
+      );
+      // The list is gone rather than underneath, so there is no route to pop
+      // back to — which is why the bar has to carry the way to another machine.
       final ctx = tester.element(find.byType(PkgUpdatesPage));
-      expect(Navigator.of(ctx).canPop(), isTrue);
-      Navigator.of(ctx).pop();
+      expect(Navigator.of(ctx).canPop(), isFalse);
+    });
+
+    /// The requirement this layout turns on: with the rail dropped, the top
+    /// left is the only thing saying which of the set is on screen and the only
+    /// way to another.
+    testWidgets('the bar leads with the switcher, and it switches', (
+      tester,
+    ) async {
+      await pump(tester, wide: false);
+      await tester.tap(find.text('alpha'));
       await settle(tester);
 
-      expect(find.byType(PkgUpdatesPage), findsNothing);
-      expect(find.text('alpha'), findsOneWidget);
-      expect(find.text('beta'), findsOneWidget);
+      final switcher = find.byType(SessionSwitcherLabel);
+      expect(switcher, findsOneWidget);
+      expect(
+        tester.widget<SessionSwitcherLabel>(switcher).name,
+        'alpha',
+        reason: 'it has to say which one is showing',
+      );
+
+      // And it opens the same list, which is what makes reaching another
+      // machine one tap rather than a way back that does not exist.
+      //
+      // The name rather than the widget: the switcher is left-aligned inside
+      // its `Expanded`, so its ink is only as wide as the label and the
+      // widget's centre is empty space beside it.
+      await tester.tap(find.descendant(of: switcher, matching: find.text('alpha')));
+      await settle(tester);
+      expect(find.byType(BottomSheet), findsOneWidget);
+      await tester.tap(find.text('beta').last);
+      await settle(tester);
+
+      expect(
+        tester.widget<PkgUpdatesPage>(find.byType(PkgUpdatesPage)).args?.serverId,
+        'srv-beta',
+      );
+      expect(tester.widget<SessionSwitcherLabel>(switcher).name, 'beta');
     });
   });
 
   group('two columns', () {
-    /// The root shows an empty pane rather than a machine picked for the user:
-    /// `detailId` has to be null while nothing is selected, or every return
-    /// from a machine is one non-null id replacing another — which
-    /// `NestedNavigator` reads as a way *in*, and the pane slides off the
-    /// wrong edge.
-    testWidgets('starts with nothing selected', (tester) async {
+    /// The rail is there from the start, empty surface or not: folding it away
+    /// until a machine was chosen would be two layouts for one page.
+    testWidgets('the rail is compact and always present', (tester) async {
       await pump(tester, wide: true);
 
-      expect(find.text('alpha'), findsOneWidget);
-      expect(find.byType(PkgUpdatesPage), findsNothing);
+      expect(find.byType(SideBarTile), findsNWidgets(2));
+      // Cards are the full-width form. A column this narrow is an index, and a
+      // card per row spends most of the width on its own edges.
+      expect(find.byType(CardX), findsNothing);
       expect(find.byType(EmptyPane), findsOneWidget);
     });
 
-    /// The subject is a widget, not a route: choosing another machine rebuilds
-    /// the column rather than stacking a copy per choice.
-    testWidgets('shows the machine beside the list', (tester) async {
+    testWidgets('shows the machine beside the rail', (tester) async {
       await pump(tester, wide: true);
 
       await tester.tap(find.text('alpha'));
       await settle(tester);
 
       expect(find.byType(PkgUpdatesPage), findsOneWidget);
-      // Both columns, at once — which is the whole of what "two columns" is.
+      // Both columns at once, which is the whole of what "two columns" is.
       expect(find.text('beta'), findsOneWidget);
 
       await tester.tap(find.text('beta'));
       await settle(tester);
 
-      // One, not two. `NestedNavigator` replaces its root when `rootId`
-      // changes and clears anything above it, so a second choice must leave
-      // one page behind — the two coexist only while the change animates,
-      // which is what `settle` waits out.
       expect(find.byType(PkgUpdatesPage), findsOneWidget);
       expect(
         tester.widget<PkgUpdatesPage>(find.byType(PkgUpdatesPage)).args?.serverId,
@@ -175,13 +201,16 @@ void main() {
       );
     });
 
-    /// `CustomAppBar` supplies a back button at a pane's root, wired to
-    /// `onCloseDetail`. Right for something opened *into* the pane; wrong for
-    /// the list column, where it has nowhere to go and does nothing when
-    /// pressed.
-    testWidgets('the list column has no back button', (tester) async {
+    /// The rail says which machine is on screen and how to reach another, so a
+    /// switcher in the bar beside it would say it a second time.
+    testWidgets('the pane carries no switcher and no back button', (
+      tester,
+    ) async {
       await pump(tester, wide: true);
+      await tester.tap(find.text('alpha'));
+      await settle(tester);
 
+      expect(find.byType(SessionSwitcherLabel), findsNothing);
       expect(find.byType(BackButton), findsNothing);
       expect(find.byIcon(Icons.arrow_back), findsNothing);
       expect(find.byIcon(Icons.arrow_back_ios_new), findsNothing);

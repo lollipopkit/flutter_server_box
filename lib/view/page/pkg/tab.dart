@@ -15,16 +15,15 @@ import 'package:server_box/view/widget/pane_settings.dart';
 
 /// Which machines are behind on their packages, and what each one is behind on.
 ///
-/// **The list is the tab, in both layouts.** Every other two-column tab here
-/// answers "do this to one thing"; this one answers "which of them needs
-/// attention", and the answer is the column of counts. So the narrow layout
-/// keeps the list and pushes the machine's own page, rather than making the
-/// list a sheet behind a button the way the benchmark and Agent tabs do — what
-/// a single-column window would gain there it loses here, because the list is
-/// what somebody opened the tab to read.
+/// The terminal tab's shape, which is what every tab holding one of a set uses:
+/// a rail that is always there beside a surface, and on a narrow window the
+/// surface alone with the rail's contents behind the switcher in its bar. Not
+/// the benchmark tab's — there the list is a history of records and the single
+/// column is the run, where here the list *is* the subject and a machine is
+/// what you open out of it.
 ///
-/// A tab rather than only a card on each server's page, for the reason the
-/// card cannot cover: a fleet is behind on updates one machine at a time, and
+/// A tab rather than only a card on each server's page, for the reason the card
+/// cannot cover: a fleet is behind on updates one machine at a time, and
 /// visiting nine detail pages to find the one is how it stays that way.
 class PkgTabPage extends ConsumerStatefulWidget {
   const PkgTabPage({super.key});
@@ -34,14 +33,15 @@ class PkgTabPage extends ConsumerStatefulWidget {
 }
 
 class _PkgTabPageState extends ConsumerState<PkgTabPage> {
-  /// The machine the right column is showing, or null for none.
+  /// The machine the surface is showing, or null for the overview.
   ///
-  /// Null while the root is showing, which is what `NestedNavigator` reads as
-  /// the detail closing — an id that is never null makes every return one
-  /// non-null id replacing another, which is a way *in*, and the pane slides
-  /// off the wrong edge.
-  String? _viewingId;
+  /// Null is a real state and not an unset one: with two columns it is the
+  /// empty pane, and with one it is the list of every machine — which is what
+  /// somebody opening this tab came to read.
+  String? _selectedId;
 
+  /// The rail's search. The same controller every other tab that searches
+  /// uses, so the field arrives and leaves the same way here as there.
   final _search = InlineSearchController();
 
   @override
@@ -52,9 +52,9 @@ class _PkgTabPageState extends ConsumerState<PkgTabPage> {
 
   /// Every server, in the order the server tab shows them.
   ///
-  /// Not filtered by whether a reading has arrived: a machine that has not
-  /// been polled yet is exactly the one worth showing as unknown, and dropping
-  /// it would make the list shorter the less the app knows.
+  /// Not filtered by whether a reading has arrived: a machine that has not been
+  /// polled yet is exactly the one worth showing as unknown, and dropping it
+  /// would make the list shorter the less the app knows.
   List<Spi> get _servers {
     final order = ref.watch(serversProvider.select((s) => s.serverOrder));
     final byId = {for (final spi in Stores.server.fetch()) spi.id: spi};
@@ -63,49 +63,123 @@ class _PkgTabPageState extends ConsumerState<PkgTabPage> {
     ];
   }
 
+  Spi? get _selected {
+    final id = _selectedId;
+    if (id == null) return null;
+    return _servers.firstWhereOrNull((s) => s.id == id);
+  }
+
   @override
   Widget build(BuildContext context) {
     final servers = _servers;
-
-    return PaneSettings.listenAll((paneWidth, paneCollapsed) {
-      return AdaptivePanes.detail(
-        listWidth: paneWidth,
-        onListWidthChanged: PaneSettings.saveWidth,
-        collapsed: paneCollapsed,
-        onCollapsedChanged: PaneSettings.saveCollapsed,
-        collapseTooltip: libL10n.fold,
-        expandTooltip: libL10n.open,
-        detailId: _viewingId,
-        onCloseDetail: () => setState(() => _viewingId = null),
-        detailBuilder: (_) => _buildDetail(),
-        listBuilder: (_, split) => _buildList(servers, split),
-      );
-    });
+    return SbPaneList(
+      // There from the start, empty surface or not: folding it away until a
+      // machine was chosen would greet a wide window with a full-width list and
+      // then rearrange itself into a rail the moment one was — two layouts for
+      // one page, the first of which is not what the page looks like.
+      sideBuilder: (_) => _buildRail(servers),
+      builder: (_, split) => _buildSurface(servers, split),
+    );
   }
 }
 
 // --- Widgets ---
 
 extension _Widgets on _PkgTabPageState {
-  Widget _buildList(List<Spi> servers, bool split) {
+  /// The left column: every machine, compactly.
+  ///
+  /// [SideBarTile] rather than the cards the full-width list uses. A column
+  /// this narrow is an index — you are reading down it for a name — and a card
+  /// per row spends most of the width on its own edges.
+  Widget _buildRail(List<Spi> servers) {
     return ListenBuilder(
       listenable: _search,
-      builder: () => _buildListWith(servers, split),
+      builder: () {
+        final shown = _filtered(servers);
+        // Its own, rather than the one the home page's `Scaffold` happens to
+        // put above every tab: the rows are ink responses, and a column that
+        // only works inside a particular ancestor fails as a red screen rather
+        // than as a compile error. Transparent, so the rail keeps the pane's
+        // background and looks like the other tabs' rails.
+        return Material(
+          type: MaterialType.transparency,
+          child: ListView(
+            padding: const EdgeInsets.only(bottom: 12),
+            children: [
+              SideBarActions(
+                search: _search,
+                actions: [
+                  Btn.icon(
+                    text: libL10n.search,
+                    icon: const Icon(Icons.search, size: 18),
+                    onTap: _search.start,
+                  ),
+                ],
+              ),
+              for (final spi in shown)
+                _ServerTile(
+                  key: ValueKey(spi.id),
+                  spi: spi,
+                  compact: true,
+                  selected: _selectedId == spi.id,
+                  onTap: () => _select(spi.id),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildListWith(List<Spi> servers, bool split) {
-    final needle = _search.needle;
-    final shown = [
-      for (final spi in servers)
-        if (needle.isEmpty || spi.name.toLowerCase().contains(needle)) spi,
-    ];
+  /// The right column, or the whole tab where there is only one.
+  Widget _buildSurface(List<Spi> servers, bool split) {
+    final spi = _selected;
 
+    if (spi == null) {
+      // Two columns: the rail beside this is already the list, and drawing it
+      // twice is what a grid of cards next to an index would be.
+      if (split) {
+        return const EmptyPane(icon: Icons.system_update_alt_outlined);
+      }
+      return _buildOverview(servers);
+    }
+
+    return PkgUpdatesPage(
+      key: ValueKey(spi.id),
+      args: PkgUpdatesPageArgs(serverId: spi.id),
+      inPane: true,
+      // With a rail beside it the rail says which machine is on screen and how
+      // to reach another, so the page needs no switcher of its own. With one
+      // column it is the only way there is.
+      leading: split
+          ? null
+          : SessionSwitcherLabel(
+              name: spi.name,
+              icon: Icons.system_update_alt_outlined,
+              onTap: () => _showListSheet(servers),
+            ),
+    );
+  }
+
+  /// The whole tab, when there is only room for one column and nothing is
+  /// open. The same rows the rail has, at full width, where a card reads
+  /// better than an index line.
+  Widget _buildOverview(List<Spi> servers) {
+    return ListenBuilder(
+      listenable: _search,
+      builder: () => _buildOverviewWith(servers, inSheet: false),
+    );
+  }
+
+  Widget _buildOverviewWith(List<Spi> servers, {required bool inSheet}) {
+    final shown = _filtered(servers);
     return Scaffold(
       // No title: the nav rail beside this already names the tab. An explicit
       // leading because `CustomAppBar` otherwise supplies a back button wired
-      // to `onCloseDetail`, and this column is not a detail — it is the thing
-      // a detail is closed back to.
+      // to `onCloseDetail`, and this column is not a detail — it is the thing a
+      // detail is closed back to. In the sheet the way out is dragging it away
+      // or the control that opened it; a back arrow there would be a third
+      // answer to a question already answered twice.
       appBar: CustomAppBar(
         leading: const SizedBox.shrink(),
         title: InlineSearchBar(
@@ -131,47 +205,53 @@ extension _Widgets on _PkgTabPageState {
                 return _ServerTile(
                   key: ValueKey(spi.id),
                   spi: spi,
-                  selected: split && _viewingId == spi.id,
-                  onTap: () => _open(spi, split),
+                  compact: false,
+                  selected: _selectedId == spi.id,
+                  onTap: () {
+                    if (inSheet) context.popDialog();
+                    _select(spi.id);
+                  },
                 );
               },
             ),
     );
   }
 
-  /// The right column.
-  ///
-  /// A widget with its own `ref`, not a `ref.watch` here: this method runs on
-  /// the pane's element rather than the page's, and watching from it would
-  /// subscribe the wrong one — which is not an error, only wrong.
-  Widget _buildDetail() {
-    final id = _viewingId;
-    if (id == null) {
-      return const EmptyPane(icon: Icons.system_update_alt_outlined);
-    }
-    return PkgUpdatesPage(
-      key: ValueKey(id),
-      args: PkgUpdatesPageArgs(serverId: id),
-      inPane: true,
-    );
+  List<Spi> _filtered(List<Spi> servers) {
+    final needle = _search.needle;
+    if (needle.isEmpty) return servers;
+    return [
+      for (final spi in servers)
+        if (spi.name.toLowerCase().contains(needle)) spi,
+    ];
   }
 }
 
 // --- Actions ---
 
 extension _Actions on _PkgTabPageState {
-  /// The right column when there is one, a pushed page when there is not.
+  void _select(String id) => setState(() => _selectedId = id);
+
+  /// The list, for the layout that has no column to put it in.
   ///
-  /// Pushed on this tab's own navigator, so back returns to the list and the
-  /// bottom bar stays put — the same scope every other tab's detail uses.
-  void _open(Spi spi, bool split) {
-    if (split) {
-      setState(() => _viewingId = spi.id);
-      return;
-    }
-    PkgUpdatesPage.route.go(
-      context,
-      args: PkgUpdatesPageArgs(serverId: spi.id),
+  /// The same rows in a sheet — the Agent and benchmark tabs do this for the
+  /// same reason. Tall, because it is a list of machines rather than a short
+  /// set of choices, and it carries the counts, which is what makes choosing
+  /// from it the same act as reading the overview.
+  Future<void> _showListSheet(List<Spi> servers) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      useRootNavigator: true,
+      useSafeArea: true,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => FractionallySizedBox(
+        heightFactor: 0.82,
+        child: ListenBuilder(
+          listenable: _search,
+          builder: () => _buildOverviewWith(servers, inSheet: true),
+        ),
+      ),
     );
   }
 }
@@ -187,16 +267,28 @@ class _ServerTile extends ConsumerWidget {
     required this.spi,
     required this.selected,
     required this.onTap,
+    required this.compact,
   });
 
   final Spi spi;
   final bool selected;
+  final bool compact;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(serverProvider(spi.id));
     final pkg = state.status.pkg;
+
+    if (compact) {
+      return SideBarTile(
+        title: spi.name,
+        selected: selected,
+        leading: DistIcon(spi.id, size: 17),
+        trailing: _PkgSummary(pkg: pkg),
+        onTap: onTap,
+      );
+    }
 
     return CardX(
       child: ListTile(
@@ -216,13 +308,15 @@ class _ServerTile extends ConsumerWidget {
   /// count is what it is. A machine reporting none off a five-month-old index
   /// is not up to date; it is unasked, and the row is where that has to show —
   /// the count beside it says the opposite.
+  ///
+  /// Only at full width. A rail line has room for a name and a number, and
+  /// what it leaves out is a tap away in the page it opens.
   String _subtitle(PkgUpdates pkg) {
     if (!pkg.supported) return l10n.pkgNoManager;
-    final parts = [
+    return [
       pkg.manager,
       if (pkg.indexAge case final age?) l10n.pkgIndexAge(age.toAgoStr),
-    ];
-    return parts.join(' · ');
+    ].join(' · ');
   }
 }
 
@@ -242,9 +336,9 @@ class _PkgSummary extends StatelessWidget {
       return const Icon(Icons.remove, size: 17, color: Colors.grey);
     }
     if (pkg.total == 0) {
-      // Orange where the index is old: zero is the count a stale index
-      // misleads about most, and this row is the whole of what the tab says
-      // about that machine.
+      // Orange where the index is old: zero is the count a stale index misleads
+      // about most, and this row is the whole of what the tab says about that
+      // machine.
       return Icon(
         pkg.stale ? Icons.help_outline : Icons.check_circle_outline,
         size: 19,

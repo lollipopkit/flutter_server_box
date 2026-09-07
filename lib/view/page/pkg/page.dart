@@ -19,15 +19,33 @@ import 'package:server_box/view/page/ssh/page/page.dart';
 /// being read, and the "upgrade" button under it would offer a command for a
 /// list the machine no longer has.
 class PkgUpdatesPage extends ConsumerStatefulWidget {
-  const PkgUpdatesPage({super.key, this.args, this.inPane = false});
+  const PkgUpdatesPage({
+    super.key,
+    this.args,
+    this.inPane = false,
+    this.leading,
+  });
 
   final PkgUpdatesPageArgs? args;
 
-  /// Whether it is the right column of the updates tab rather than a page.
+  /// Whether it is a column of the updates tab rather than a page.
   ///
-  /// A pane has the tab's own way back and the list beside it, so a back
+  /// A pane has the tab's own way back and the rail beside it, so a back
   /// button here would be a second answer to a question already answered.
   final bool inPane;
+
+  /// The switcher that leads the bar, for the layout with no rail.
+  ///
+  /// A `SessionSwitcherLabel` when this is the whole of a narrow window: it is
+  /// the only thing on screen saying which of the set is showing and the only
+  /// way to another. With a rail beside it the rail says both, and this is
+  /// null.
+  ///
+  /// Given here rather than as an `AppBar.leading`, because that slot is one
+  /// toolbar height wide and a switcher is a name — it overflows. Non-null
+  /// replaces the whole bar with the terminal tab's: the switcher in an
+  /// `Expanded` on the left, this page's own actions on the right.
+  final Widget? leading;
 
   static const route = AppRoute<void, PkgUpdatesPageArgs>(
     page: PkgUpdatesPage.new,
@@ -64,21 +82,42 @@ class _PkgUpdatesPageState extends ConsumerState<PkgUpdatesPage> {
       ...pkg.items.where((i) => !i.security),
     ].where((i) => query.isEmpty || i.name.toLowerCase().contains(query)).toList();
 
+    final actions = [
+      if (pkg.upgradeCommand != null)
+        Btn.icon(
+          icon: const Icon(Icons.terminal, size: 18),
+          text: l10n.pkgUpgrade,
+          onTap: () => openPkgUpgrade(context, spi, pkg),
+        ),
+    ];
+
     return Scaffold(
-      appBar: CustomAppBar(
-        // The pane's list is to the left of this and the tab bar above it;
-        // a back arrow here would have nowhere to go.
-        leading: widget.inPane ? const SizedBox.shrink() : null,
-        title: Text(widget.inPane ? spi.name : l10n.pkgUpdates),
-        actions: [
-          if (pkg.upgradeCommand != null)
-            Btn.icon(
-              icon: const Icon(Icons.terminal, size: 18),
-              text: l10n.pkgUpgrade,
-              onTap: () => openPkgUpgrade(context, spi, pkg),
+      appBar: switch (widget.leading) {
+        // The terminal tab's bar, in shape as well as in detail: the switcher
+        // on the left saying which of the set is on screen and opening the
+        // rest, the other ways out as actions on the right at 18pt.
+        final leading? => PreferredSize(
+          preferredSize: const Size.fromHeight(SessionTabBar.height),
+          child: SizedBox(
+            height: SessionTabBar.height,
+            child: Row(
+              children: [
+                Expanded(child: leading),
+                ...actions,
+                const SizedBox(width: 7),
+              ],
             ),
-        ],
-      ),
+          ),
+        ),
+        // The rail is to the left of this and the tab bar above it; a back
+        // arrow in a pane would have nowhere to go. `SizedBox.shrink` is how
+        // `CustomAppBar` is told to supply none.
+        _ => CustomAppBar(
+          leading: widget.inPane ? const SizedBox.shrink() : null,
+          title: Text(widget.inPane ? spi.name : l10n.pkgUpdates),
+          actions: actions,
+        ),
+      },
       body: Column(
         children: [
           _Header(pkg: pkg),
