@@ -73,6 +73,14 @@ class InstalledPlugin {
     return _feature(card.id, card.label);
   }
 
+  InstalledPlugin copyWith({PluginInstall? record}) => InstalledPlugin(
+    record: record ?? this.record,
+    manifestJson: manifestJson,
+    manifest: manifest,
+    source: source,
+    l10n: l10n,
+  );
+
   /// The button it puts in the server function bar, or null.
   ///
   /// `needs` is the app's own `availableWith` switch moved into data: a button

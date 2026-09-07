@@ -27,8 +27,8 @@
 
 // Section: imports
 
-use crate::api::plugin::*;
-use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::ssh_crypto::*;
+use crate::api::plugin::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};
 
@@ -867,6 +867,15 @@ return crate::api::ssh_asym::EcdsaSignature{r: var_r, s: var_s};}
             }}
                 }
                 
+                impl SseDecode for Option<crate::api::plugin::PluginSettingsInfo> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {if (<bool>::sse_decode(deserializer)) {
+                return Some(<crate::api::plugin::PluginSettingsInfo>::sse_decode(deserializer));
+            } else {
+                return None;
+            }}
+                }
+                
                 impl SseDecode for Option<crate::api::plugin::PluginStatusInfo> {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {if (<bool>::sse_decode(deserializer)) {
@@ -919,10 +928,11 @@ let mut var_description = <String>::sse_decode(deserializer);
 let mut var_permissions = <Vec<String>>::sse_decode(deserializer);
 let mut var_card = <Option<crate::api::plugin::PluginCardInfo>>::sse_decode(deserializer);
 let mut var_page = <Option<crate::api::plugin::PluginPageInfo>>::sse_decode(deserializer);
+let mut var_settings = <Option<crate::api::plugin::PluginSettingsInfo>>::sse_decode(deserializer);
 let mut var_status = <Option<crate::api::plugin::PluginStatusInfo>>::sse_decode(deserializer);
 let mut var_license = <Option<String>>::sse_decode(deserializer);
 let mut var_sourceUrl = <Option<String>>::sse_decode(deserializer);
-return crate::api::plugin::PluginManifestInfo{id: var_id, version: var_version, abi: var_abi, name: var_name, description: var_description, permissions: var_permissions, card: var_card, page: var_page, status: var_status, license: var_license, source_url: var_sourceUrl};}
+return crate::api::plugin::PluginManifestInfo{id: var_id, version: var_version, abi: var_abi, name: var_name, description: var_description, permissions: var_permissions, card: var_card, page: var_page, settings: var_settings, status: var_status, license: var_license, source_url: var_sourceUrl};}
                 }
                 
                 impl SseDecode for crate::api::plugin::PluginPageInfo {
@@ -944,6 +954,14 @@ let mut var_instanceId = <String>::sse_decode(deserializer);
 let mut var_func = <String>::sse_decode(deserializer);
 let mut var_request = <String>::sse_decode(deserializer);
 return crate::api::plugin::PluginRequest{call_id: var_callId, plugin_id: var_pluginId, instance_id: var_instanceId, func: var_func, request: var_request};}
+                }
+                
+                impl SseDecode for crate::api::plugin::PluginSettingsInfo {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_id = <String>::sse_decode(deserializer);
+let mut var_label = <String>::sse_decode(deserializer);
+let mut var_icon = <Option<String>>::sse_decode(deserializer);
+return crate::api::plugin::PluginSettingsInfo{id: var_id, label: var_label, icon: var_icon};}
                 }
                 
                 impl SseDecode for crate::api::plugin::PluginSpec {
@@ -1311,6 +1329,7 @@ self.description.into_into_dart().into_dart(),
 self.permissions.into_into_dart().into_dart(),
 self.card.into_into_dart().into_dart(),
 self.page.into_into_dart().into_dart(),
+self.settings.into_into_dart().into_dart(),
 self.status.into_into_dart().into_dart(),
 self.license.into_into_dart().into_dart(),
 self.source_url.into_into_dart().into_dart()
@@ -1357,6 +1376,22 @@ self.request.into_into_dart().into_dart()
             impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::plugin::PluginRequest {}
 impl flutter_rust_bridge::IntoIntoDart<crate::api::plugin::PluginRequest> for crate::api::plugin::PluginRequest {
             fn into_into_dart(self) -> crate::api::plugin::PluginRequest {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::plugin::PluginSettingsInfo {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    [
+                    self.id.into_into_dart().into_dart(),
+self.label.into_into_dart().into_dart(),
+self.icon.into_into_dart().into_dart()
+                ].into_dart()
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::plugin::PluginSettingsInfo {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::plugin::PluginSettingsInfo> for crate::api::plugin::PluginSettingsInfo {
+            fn into_into_dart(self) -> crate::api::plugin::PluginSettingsInfo {
                 self
             }
         }
@@ -1685,6 +1720,14 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::X25519KeyPair> for 
                 }}
                 }
                 
+                impl SseEncode for Option<crate::api::plugin::PluginSettingsInfo> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<bool>::sse_encode(self.is_some(), serializer);
+                if let Some(value) = self {
+                    <crate::api::plugin::PluginSettingsInfo>::sse_encode(value, serializer);
+                }}
+                }
+                
                 impl SseEncode for Option<crate::api::plugin::PluginStatusInfo> {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<bool>::sse_encode(self.is_some(), serializer);
@@ -1732,6 +1775,7 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::X25519KeyPair> for 
 <Vec<String>>::sse_encode(self.permissions, serializer);
 <Option<crate::api::plugin::PluginCardInfo>>::sse_encode(self.card, serializer);
 <Option<crate::api::plugin::PluginPageInfo>>::sse_encode(self.page, serializer);
+<Option<crate::api::plugin::PluginSettingsInfo>>::sse_encode(self.settings, serializer);
 <Option<crate::api::plugin::PluginStatusInfo>>::sse_encode(self.status, serializer);
 <Option<String>>::sse_encode(self.license, serializer);
 <Option<String>>::sse_encode(self.source_url, serializer);}
@@ -1754,6 +1798,13 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::X25519KeyPair> for 
 <String>::sse_encode(self.instance_id, serializer);
 <String>::sse_encode(self.func, serializer);
 <String>::sse_encode(self.request, serializer);}
+                }
+                
+                impl SseEncode for crate::api::plugin::PluginSettingsInfo {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<String>::sse_encode(self.id, serializer);
+<String>::sse_encode(self.label, serializer);
+<Option<String>>::sse_encode(self.icon, serializer);}
                 }
                 
                 impl SseEncode for crate::api::plugin::PluginSpec {
@@ -1864,8 +1915,8 @@ crate::api::script::ShellFuncKind::Suspend => { 6 }
 
 // Section: imports
 
-use crate::api::plugin::*;
-use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::ssh_crypto::*;
+use crate::api::plugin::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};use super::*;
 
@@ -1924,8 +1975,8 @@ flutter_rust_bridge::frb_generated_boilerplate_io!();
 
 // Section: imports
 
-use crate::api::plugin::*;
-use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::ssh_crypto::*;
+use crate::api::plugin::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};use super::*;
                 use flutter_rust_bridge::for_generated::wasm_bindgen;

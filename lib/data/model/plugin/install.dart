@@ -57,6 +57,7 @@ class PluginInstall {
   bool get isDev => repo == devRepo;
 
   PluginInstall copyWith({
+    String? id,
     String? version,
     String? repo,
     bool clearRepo = false,
@@ -64,7 +65,7 @@ class PluginInstall {
     Set<String>? granted,
     DateTime? installedAt,
   }) => PluginInstall(
-    id: id,
+    id: id ?? this.id,
     version: version ?? this.version,
     repo: clearRepo ? null : (repo ?? this.repo),
     enabled: enabled ?? this.enabled,

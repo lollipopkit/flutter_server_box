@@ -6,7 +6,7 @@
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
 
 /// Reads a manifest without loading anything.
 ///
@@ -257,6 +257,9 @@ class PluginManifestInfo {
   /// Present when this plugin puts a button in the server function bar.
   final PluginPageInfo? page;
 
+  /// Present when this plugin has a page of its own under Settings.
+  final PluginSettingsInfo? settings;
+
   /// Present when this plugin contributes readings to the status page.
   final PluginStatusInfo? status;
   final String? license;
@@ -271,6 +274,7 @@ class PluginManifestInfo {
     required this.permissions,
     this.card,
     this.page,
+    this.settings,
     this.status,
     this.license,
     this.sourceUrl,
@@ -286,6 +290,7 @@ class PluginManifestInfo {
       permissions.hashCode ^
       card.hashCode ^
       page.hashCode ^
+      settings.hashCode ^
       status.hashCode ^
       license.hashCode ^
       sourceUrl.hashCode;
@@ -303,6 +308,7 @@ class PluginManifestInfo {
           permissions == other.permissions &&
           card == other.card &&
           page == other.page &&
+          settings == other.settings &&
           status == other.status &&
           license == other.license &&
           sourceUrl == other.sourceUrl;
@@ -405,6 +411,33 @@ class PluginRequest {
           instanceId == other.instanceId &&
           func == other.func &&
           request == other.request;
+}
+
+/// A plugin's own page under Settings. PLUGINS.md 5.3.
+///
+/// Not in any arrangement: a settings page is where a plugin is configured,
+/// so hiding it behind a switch the user would have to find first is the one
+/// thing it cannot afford. It appears while the plugin is installed and
+/// enabled, and goes when it is not.
+class PluginSettingsInfo {
+  /// Stable within the plugin; the stored id is `<plugin id>:<this>`.
+  final String id;
+  final String label;
+  final String? icon;
+
+  const PluginSettingsInfo({required this.id, required this.label, this.icon});
+
+  @override
+  int get hashCode => id.hashCode ^ label.hashCode ^ icon.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PluginSettingsInfo &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          label == other.label &&
+          icon == other.icon;
 }
 
 /// Everything an instance needs beyond its source.

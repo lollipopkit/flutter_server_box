@@ -7,6 +7,7 @@ import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/plugin/contributions.dart';
 import 'package:server_box/data/model/plugin/install.dart';
 import 'package:server_box/data/model/plugin/installed.dart';
+import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/plugin.dart';
 import 'package:server_box/src/rust/api/plugin.dart' as ffi;
 
@@ -117,6 +118,103 @@ class PluginInstaller {
     return plugin;
   }
 
+  /// Adds an unpacked directory as a plugin. PLUGINS.md section 8.2.
+  ///
+  /// **The directory is not copied.** It is remembered and re-read on every
+  /// refresh, so editing `plugin.js` and restarting the app is the whole
+  /// development cycle — an installed copy would mean repackaging to see a
+  /// one-line change.
+  ///
+  /// Which is also why there is no signature and no repository: the files are
+  /// the developer's own, sitting where they wrote them. It is desktop-only
+  /// for the same reason — a phone has no directory a developer edits in.
+  ///
+  /// Throws [PluginPackageError] if the directory is not a plugin, and
+  /// whatever `plugin_read_manifest` throws for a manifest this build refuses.
+  Future<InstalledPlugin> addDevDir(
+    String path, {
+    required Set<String> consented,
+  }) async {
+    final plugin = await readDevDir(path);
+    if (plugin == null) {
+      throw const PluginPackageError('no manifest.json and plugin.js there');
+    }
+
+    final existing = _store.fetch(plugin.id);
+    final record = PluginInstall(
+      id: plugin.id,
+      version: plugin.manifest.version,
+      repo: PluginInstall.devRepo,
+      enabled: existing?.enabled ?? true,
+      granted: {
+        for (final name in plugin.manifest.permissions)
+          if (consented.contains(name)) name,
+      },
+      installedAt: DateTime.now(),
+    );
+    _store.put(record);
+
+    final dirs = Stores.setting.pluginDevDirs.fetch();
+    if (!dirs.contains(path)) {
+      Stores.setting.pluginDevDirs.put([...dirs, path]);
+    }
+
+    final withRecord = plugin.copyWith(record: record);
+    if (existing == null) _addDefaultOn(withRecord);
+    await refresh();
+    return withRecord;
+  }
+
+  /// Forgets a development directory without touching what is in it.
+  ///
+  /// The record goes with it — a `dev` record whose directory is no longer
+  /// listed names nothing, and would be a row that cannot load on every
+  /// launch.
+  Future<void> removeDevDir(String path) async {
+    final plugin = await readDevDir(path);
+    Stores.setting.pluginDevDirs.put([
+      for (final p in Stores.setting.pluginDevDirs.fetch())
+        if (p != path) p,
+    ]);
+    if (plugin != null) await uninstall(plugin.id);
+    await refresh();
+  }
+
+  /// Every development directory that currently reads as a plugin, by id.
+  Future<Map<String, String>> devDirs() async {
+    final byId = <String, String>{};
+    for (final path in Stores.setting.pluginDevDirs.fetch()) {
+      try {
+        final plugin = await readDevDir(path);
+        if (plugin != null) byId[plugin.id] = path;
+      } catch (_) {}
+    }
+    return byId;
+  }
+
+  /// Reads a directory laid out like an unpacked package, or null.
+  ///
+  /// Null for "not a plugin directory"; a manifest this build refuses still
+  /// throws, since that is a plugin the developer needs told about rather than
+  /// a directory to skip.
+  Future<InstalledPlugin?> readDevDir(String path) async {
+    final dir = Directory(path);
+    if (!await dir.exists()) return null;
+    return _readFrom(
+      dir,
+      // A placeholder until the manifest says what the id is. Nothing reads it
+      // — `_readFrom` replaces the record with the stored one, or the caller
+      // writes a real one.
+      PluginInstall(
+        id: '',
+        version: '',
+        repo: PluginInstall.devRepo,
+        granted: const {},
+        installedAt: DateTime.now(),
+      ),
+    );
+  }
+
   /// Removes the files, the record, and the place in the arrangement.
   ///
   /// [keepData] is the user's choice: a plugin removed to be reinstalled — an
@@ -126,9 +224,31 @@ class PluginInstaller {
     final plugin = PluginContributions.byId(id);
     if (plugin != null) _removeFeatures(PluginContributions.featuresOf(plugin));
     _store.remove(id, keepData: keepData);
+    // Only under the app's own root, never a development directory: those are
+    // the developer's files, sitting where they wrote them, and removing a
+    // plugin from the app is not a request to delete a working tree.
     final dir = dirOf(id);
     if (await dir.exists()) await dir.delete(recursive: true);
+    await _forgetDevDirsOf(id);
     await refresh();
+  }
+
+  /// Drops any development directory holding [id], leaving its files alone.
+  ///
+  /// A listed path whose plugin has been removed would be loaded again on the
+  /// next launch, which is an uninstall that does not stick.
+  Future<void> _forgetDevDirsOf(String id) async {
+    final dirs = Stores.setting.pluginDevDirs.fetch();
+    final kept = <String>[];
+    for (final path in dirs) {
+      try {
+        if ((await readDevDir(path))?.id == id) continue;
+      } catch (_) {
+        // Unreadable: kept, since it cannot be shown to be this one.
+      }
+      kept.add(path);
+    }
+    if (kept.length != dirs.length) Stores.setting.pluginDevDirs.put(kept);
   }
 
   /// Turns one on or off without removing anything.
@@ -144,10 +264,26 @@ class PluginInstaller {
   /// plugin's directory, and a launch that failed on it would be an app that
   /// cannot start because of something the user installed.
   Future<List<InstalledPlugin>> refresh() async {
+    // Read first, so a record marked `dev` is served from the developer's own
+    // directory rather than from a copy under the app — which is what makes an
+    // edit visible on the next launch.
+    final dev = <String, Directory>{};
+    for (final path in Stores.setting.pluginDevDirs.fetch()) {
+      try {
+        final plugin = await readDevDir(path);
+        if (plugin != null) dev[plugin.id] = Directory(path);
+      } catch (e, s) {
+        Loggers.app.warning('Reading the plugin directory $path', e, s);
+      }
+    }
+
     final plugins = <InstalledPlugin>[];
     for (final record in _store.readAll()) {
       try {
-        final plugin = await _read(record);
+        final plugin = await _readFrom(
+          dev[record.id] ?? dirOf(record.id),
+          record,
+        );
         if (plugin != null) plugins.add(plugin);
       } catch (e, s) {
         Loggers.app.warning('Reading plugin ${record.id}', e, s);
@@ -157,12 +293,13 @@ class PluginInstaller {
     return plugins;
   }
 
-  Future<InstalledPlugin?> _read(PluginInstall record) async {
-    final dir = dirOf(record.id);
+  Future<InstalledPlugin?> _readFrom(Directory dir, PluginInstall record) async {
     final manifestFile = File(dir.path.joinPath(PluginPackage.manifestName));
     final sourceFile = File(dir.path.joinPath(PluginPackage.sourceName));
     if (!await manifestFile.exists() || !await sourceFile.exists()) {
-      Loggers.app.warning('Plugin ${record.id} has a record but no files');
+      if (record.id.isNotEmpty) {
+        Loggers.app.warning('Plugin ${record.id} has a record but no files');
+      }
       return null;
     }
     final manifestJson = await manifestFile.readAsString();
@@ -176,10 +313,16 @@ class PluginInstaller {
         l10n[locale] = _parseL10n(await entity.readAsString());
       }
     }
+    final manifest = ffi.pluginReadManifest(manifestJson: manifestJson);
     return InstalledPlugin(
-      record: record,
+      // A development directory is read before its id is known, so the record
+      // handed in may be the placeholder. The manifest is what says which
+      // plugin this is either way.
+      record: record.id.isEmpty
+          ? record.copyWith(id: manifest.id, version: manifest.version)
+          : record,
       manifestJson: manifestJson,
-      manifest: ffi.pluginReadManifest(manifestJson: manifestJson),
+      manifest: manifest,
       source: await sourceFile.readAsString(),
       l10n: l10n,
     );

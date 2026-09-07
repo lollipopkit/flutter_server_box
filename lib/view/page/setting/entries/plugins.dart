@@ -56,7 +56,7 @@ class _PluginsPageState extends State<PluginsPage> {
   Widget build(BuildContext context) {
     final body = _buildBody();
     final add = FloatingActionButton(
-      onPressed: _busy ? null : _onInstall,
+      onPressed: _busy ? null : _onAdd,
       child: const Icon(Icons.add),
     );
     if (widget.embedded) {
@@ -131,6 +131,53 @@ class _PluginsPageState extends State<PluginsPage> {
     try {
       await _installer.setEnabled(id, enabled);
       await _reload();
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  /// A package, or — on a desktop — a directory being worked on.
+  ///
+  /// Only asked where there is something to ask: a phone has no directory a
+  /// developer edits in, so there it goes straight to the file picker.
+  Future<void> _onAdd() async {
+    if (!isDesktop) return _onInstall();
+    final dev = await context.showRoundDialog<bool>(
+      title: l10n.pluginInstall,
+      actions: [
+        Btn.text(text: l10n.pluginDev, onTap: () => context.popDialog(true)),
+        Btn.text(text: '.sbp', onTap: () => context.popDialog(false)),
+      ],
+    );
+    if (dev == null || !mounted) return;
+    return dev ? _onAddDevDir() : _onInstall();
+  }
+
+  /// A directory laid out like an unpacked package.
+  ///
+  /// The same consent dialog as a package, and deliberately: a plugin loaded
+  /// from a directory runs with the same permissions as one that was
+  /// installed, and it is the running that the question is about.
+  Future<void> _onAddDevDir() async {
+    final path = await Pfs.pickDirectory();
+    if (path == null || !mounted) return;
+    setState(() => _busy = true);
+    try {
+      final plugin = await _installer.readDevDir(path);
+      if (plugin == null) {
+        throw const PluginPackageError('no manifest.json and plugin.js there');
+      }
+      if (!mounted) return;
+
+      final consented = await _askConsent(plugin.manifest);
+      if (consented == null || !mounted) return;
+
+      await _installer.addDevDir(path, consented: consented);
+      await _reload();
+      Toast.show(libL10n.saved);
+    } catch (e, s) {
+      Loggers.app.warning('Adding the plugin directory $path', e, s);
+      if (mounted) Toast.error(libL10n.fail, body: '$e');
     } finally {
       if (mounted) setState(() => _busy = false);
     }

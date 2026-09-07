@@ -354,6 +354,70 @@ void main() {
       );
     });
 
+    /// A development directory is read where it sits, not copied.
+    ///
+    /// That is the whole point of it: editing `plugin.js` and restarting is
+    /// the cycle, and a copy under the app would mean repackaging to see a
+    /// one-line change. So the test edits the file and refreshes.
+    test('a development directory is read where it sits', () async {
+      final dir = await Directory.systemTemp.createTemp('sbm_plugin_dev');
+      addTearDown(() => dir.delete(recursive: true));
+      await File(dir.path.joinPath(PluginPackage.manifestName))
+          .writeAsString(_manifest());
+      await File(dir.path.joinPath(PluginPackage.sourceName))
+          .writeAsString('export function statusCmd() { return { cmd: "a" }; }');
+
+      final plugin = await installer.addDevDir(dir.path, consented: const {});
+      expect(plugin.id, 'app.serverbox.zfs');
+      expect(plugin.record.isDev, isTrue);
+      expect(setting.pluginDevDirs.fetch(), [dir.path]);
+      // Nothing copied: the app's own root has no directory for it.
+      expect(installer.dirOf(plugin.id).existsSync(), isFalse);
+      expect(
+        FeatureSlot.detailCard.enabledIds(),
+        contains('app.serverbox.zfs:zfs'),
+      );
+
+      // An edit, and a refresh is enough to see it.
+      await File(dir.path.joinPath(PluginPackage.sourceName))
+          .writeAsString('export function statusCmd() { return { cmd: "b" }; }');
+      final refreshed = await installer.refresh();
+      expect(refreshed.single.source, contains('"b"'));
+
+      // And removing it takes the record and the arrangement, but not the
+      // developer's files.
+      await installer.removeDevDir(dir.path);
+      expect(setting.pluginDevDirs.fetch(), isEmpty);
+      expect(PluginInstallStore().fetch('app.serverbox.zfs'), isNull);
+      expect(
+        FeatureSlot.detailCard.enabledIds(),
+        isNot(contains('app.serverbox.zfs:zfs')),
+      );
+      expect(
+        File(dir.path.joinPath(PluginPackage.sourceName)).existsSync(),
+        isTrue,
+      );
+    });
+
+    /// Uninstalling from the list has to reach the setting too, or the
+    /// directory is loaded again on the next launch — an uninstall that does
+    /// not stick.
+    test('uninstalling a dev plugin forgets its directory', () async {
+      final dir = await Directory.systemTemp.createTemp('sbm_plugin_dev');
+      addTearDown(() => dir.delete(recursive: true));
+      await File(dir.path.joinPath(PluginPackage.manifestName))
+          .writeAsString(_manifest());
+      await File(dir.path.joinPath(PluginPackage.sourceName))
+          .writeAsString('export function statusCmd() { return { cmd: "a" }; }');
+
+      await installer.addDevDir(dir.path, consented: const {});
+      expect(await installer.devDirs(), {'app.serverbox.zfs': dir.path});
+
+      await installer.uninstall('app.serverbox.zfs');
+      expect(setting.pluginDevDirs.fetch(), isEmpty);
+      expect(await installer.refresh(), isEmpty);
+    });
+
     test('a bundled plugin has no repository, a dev one says so', () async {
       final bundled = await installer.install(sbp(), consented: const {});
       expect(bundled.record.bundled, isTrue);

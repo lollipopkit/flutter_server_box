@@ -334,6 +334,11 @@ pub fn plugin_read_manifest(manifest_json: String) -> Result<PluginManifestInfo,
         name: m.name.clone(),
         description: m.description.clone(),
         permissions: m.requested().iter().map(|p| p.name().to_string()).collect(),
+        settings: m.contributes.settings.as_ref().map(|c| PluginSettingsInfo {
+            id: c.id.clone(),
+            label: c.label.clone(),
+            icon: c.icon.clone(),
+        }),
         page: m.contributes.page.as_ref().map(|p| PluginPageInfo {
             id: p.id.clone(),
             label: p.label.clone(),
@@ -376,6 +381,8 @@ pub struct PluginManifestInfo {
     pub card: Option<PluginCardInfo>,
     /// Present when this plugin puts a button in the server function bar.
     pub page: Option<PluginPageInfo>,
+    /// Present when this plugin has a page of its own under Settings.
+    pub settings: Option<PluginSettingsInfo>,
     /// Present when this plugin contributes readings to the status page.
     pub status: Option<PluginStatusInfo>,
     pub license: Option<String>,
@@ -424,6 +431,20 @@ pub struct PluginPageInfo {
 
     /// See [`PluginCardInfo::requires_config`].
     pub requires_config: bool,
+}
+
+/// A plugin's own page under Settings. PLUGINS.md 5.3.
+///
+/// Not in any arrangement: a settings page is where a plugin is configured,
+/// so hiding it behind a switch the user would have to find first is the one
+/// thing it cannot afford. It appears while the plugin is installed and
+/// enabled, and goes when it is not.
+#[derive(Debug, Clone)]
+pub struct PluginSettingsInfo {
+    /// Stable within the plugin; the stored id is `<plugin id>:<this>`.
+    pub id: String,
+    pub label: String,
+    pub icon: Option<String>,
 }
 
 /// A status contribution, as the app needs it to decide what to collect.

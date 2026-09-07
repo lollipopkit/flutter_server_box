@@ -567,6 +567,21 @@ class SettingStore extends SqliteStore {
     defaultValue: ServerFuncBtn.defaultIds,
   );
 
+  /// Unpacked plugin directories on this machine, loaded as if installed.
+  /// PLUGINS.md section 8.2.
+  ///
+  /// A path rather than a copy, and read on every refresh: the point of a
+  /// development directory is that editing `plugin.js` and restarting is the
+  /// whole cycle. An installed copy would mean packaging and reinstalling to
+  /// see a one-line change.
+  ///
+  /// Device-local and deliberately not synced — a path on one machine names
+  /// nothing on another, and this list is a developer's, not a user's.
+  late final pluginDevDirs = listProperty<String>(
+    'pluginDevDirs',
+    defaultValue: const [],
+  );
+
   /// Docker is more popular than podman, set to `false` to use docker
   late final usePodman = propertyDefault('usePodman', false);
 

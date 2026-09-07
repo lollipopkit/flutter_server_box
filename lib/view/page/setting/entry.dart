@@ -47,6 +47,7 @@ import 'package:server_box/view/page/bmc_credential/list.dart';
 import 'package:server_box/view/page/private_key/list.dart';
 import 'package:server_box/view/page/server/connection_stats.dart';
 import 'package:server_box/view/page/setting/entries/home_tabs.dart';
+import 'package:server_box/view/page/setting/entries/plugin_settings.dart';
 import 'package:server_box/view/page/setting/entries/plugins.dart';
 import 'package:server_box/view/page/setting/platform/desktop.dart';
 import 'package:server_box/view/page/setting/platform/ios.dart';
@@ -181,12 +182,32 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             icon: Icons.tab_outlined,
             page: () => const HomeTabsConfigPage(embedded: true),
           ),
-          SettingsNode.leaf(
-            id: 'app.plugins',
-            title: l10n.plugins,
-            icon: Icons.extension_outlined,
-            page: () => const PluginsPage(embedded: true),
-          ),
+          // A branch only once something is under it. A plugin's settings page
+          // has to be reachable while it is installed and nowhere otherwise,
+          // and an install page permanently wrapped in an expandable holding
+          // one row would be a level of menu that says nothing.
+          if (PluginSettingsPage.nodes() case final pages when pages.isNotEmpty)
+            SettingsNode.branch(
+              id: 'app.plugins',
+              title: l10n.plugins,
+              icon: Icons.extension_outlined,
+              children: [
+                SettingsNode.leaf(
+                  id: 'app.plugins.manage',
+                  title: l10n.pluginInstalled,
+                  icon: Icons.extension_outlined,
+                  page: () => const PluginsPage(embedded: true),
+                ),
+                ...pages,
+              ],
+            )
+          else
+            SettingsNode.leaf(
+              id: 'app.plugins',
+              title: l10n.plugins,
+              icon: Icons.extension_outlined,
+              page: () => const PluginsPage(embedded: true),
+            ),
           if (isIOS)
             SettingsNode.leaf(
               id: 'app.ios',
