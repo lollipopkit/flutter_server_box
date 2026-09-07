@@ -93,7 +93,10 @@ abstract final class SchemaVersion {
   ///      retired with the per-lookup requests it existed for
   /// v21: `serverBtns` from enum index to stable id, so the function bar can
   ///      hold an entry that is not a case of one enum
-  static const current = 22;
+  /// v22: `plugin_install`, `server_plugin_cfg`, `plugin_kv` and
+  ///      `server_plugin_kv` — where an installed plugin's record, its
+  ///      per-server configuration and its own data live
+  static const current = 23;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

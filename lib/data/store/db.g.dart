@@ -7560,6 +7560,1407 @@ class BenchmarkRunsCompanion extends UpdateCompanion<BenchmarkRunRow> {
   }
 }
 
+class $PluginInstallsTable extends PluginInstalls
+    with TableInfo<$PluginInstallsTable, PluginInstallRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PluginInstallsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _versionMeta = const VerificationMeta(
+    'version',
+  );
+  @override
+  late final GeneratedColumn<String> version = GeneratedColumn<String>(
+    'version',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _repoMeta = const VerificationMeta('repo');
+  @override
+  late final GeneratedColumn<String> repo = GeneratedColumn<String>(
+    'repo',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _enabledMeta = const VerificationMeta(
+    'enabled',
+  );
+  @override
+  late final GeneratedColumn<bool> enabled = GeneratedColumn<bool>(
+    'enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _grantedMeta = const VerificationMeta(
+    'granted',
+  );
+  @override
+  late final GeneratedColumn<String> granted = GeneratedColumn<String>(
+    'granted',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _installedAtMeta = const VerificationMeta(
+    'installedAt',
+  );
+  @override
+  late final GeneratedColumn<int> installedAt = GeneratedColumn<int>(
+    'installed_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    version,
+    repo,
+    enabled,
+    granted,
+    installedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'plugin_install';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PluginInstallRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('version')) {
+      context.handle(
+        _versionMeta,
+        version.isAcceptableOrUnknown(data['version']!, _versionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_versionMeta);
+    }
+    if (data.containsKey('repo')) {
+      context.handle(
+        _repoMeta,
+        repo.isAcceptableOrUnknown(data['repo']!, _repoMeta),
+      );
+    }
+    if (data.containsKey('enabled')) {
+      context.handle(
+        _enabledMeta,
+        enabled.isAcceptableOrUnknown(data['enabled']!, _enabledMeta),
+      );
+    }
+    if (data.containsKey('granted')) {
+      context.handle(
+        _grantedMeta,
+        granted.isAcceptableOrUnknown(data['granted']!, _grantedMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_grantedMeta);
+    }
+    if (data.containsKey('installed_at')) {
+      context.handle(
+        _installedAtMeta,
+        installedAt.isAcceptableOrUnknown(
+          data['installed_at']!,
+          _installedAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_installedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PluginInstallRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PluginInstallRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      version: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}version'],
+      )!,
+      repo: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}repo'],
+      ),
+      enabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}enabled'],
+      )!,
+      granted: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}granted'],
+      )!,
+      installedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}installed_at'],
+      )!,
+    );
+  }
+
+  @override
+  $PluginInstallsTable createAlias(String alias) {
+    return $PluginInstallsTable(attachedDatabase, alias);
+  }
+
+  @override
+  bool get withoutRowId => true;
+}
+
+class PluginInstallRow extends DataClass
+    implements Insertable<PluginInstallRow> {
+  /// The manifest's reverse-DNS id, which is what everything else keys on.
+  final String id;
+
+  /// The installed version, as the manifest spells it.
+  final String version;
+
+  /// Which repository it came from. Null is bundled with the app; `dev` is a
+  /// directory on the developer's machine.
+  final String? repo;
+  final bool enabled;
+
+  /// The permissions the user agreed to, as a JSON array of names.
+  ///
+  /// What was *consented to*, never what the manifest asks for: an update that
+  /// adds a permission must not be able to use it before the user has seen it
+  /// (PLUGINS.md 6.2), and the two are intersected at load.
+  final String granted;
+  final int installedAt;
+  const PluginInstallRow({
+    required this.id,
+    required this.version,
+    this.repo,
+    required this.enabled,
+    required this.granted,
+    required this.installedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['version'] = Variable<String>(version);
+    if (!nullToAbsent || repo != null) {
+      map['repo'] = Variable<String>(repo);
+    }
+    map['enabled'] = Variable<bool>(enabled);
+    map['granted'] = Variable<String>(granted);
+    map['installed_at'] = Variable<int>(installedAt);
+    return map;
+  }
+
+  PluginInstallsCompanion toCompanion(bool nullToAbsent) {
+    return PluginInstallsCompanion(
+      id: Value(id),
+      version: Value(version),
+      repo: repo == null && nullToAbsent ? const Value.absent() : Value(repo),
+      enabled: Value(enabled),
+      granted: Value(granted),
+      installedAt: Value(installedAt),
+    );
+  }
+
+  factory PluginInstallRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PluginInstallRow(
+      id: serializer.fromJson<String>(json['id']),
+      version: serializer.fromJson<String>(json['version']),
+      repo: serializer.fromJson<String?>(json['repo']),
+      enabled: serializer.fromJson<bool>(json['enabled']),
+      granted: serializer.fromJson<String>(json['granted']),
+      installedAt: serializer.fromJson<int>(json['installedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'version': serializer.toJson<String>(version),
+      'repo': serializer.toJson<String?>(repo),
+      'enabled': serializer.toJson<bool>(enabled),
+      'granted': serializer.toJson<String>(granted),
+      'installedAt': serializer.toJson<int>(installedAt),
+    };
+  }
+
+  PluginInstallRow copyWith({
+    String? id,
+    String? version,
+    Value<String?> repo = const Value.absent(),
+    bool? enabled,
+    String? granted,
+    int? installedAt,
+  }) => PluginInstallRow(
+    id: id ?? this.id,
+    version: version ?? this.version,
+    repo: repo.present ? repo.value : this.repo,
+    enabled: enabled ?? this.enabled,
+    granted: granted ?? this.granted,
+    installedAt: installedAt ?? this.installedAt,
+  );
+  PluginInstallRow copyWithCompanion(PluginInstallsCompanion data) {
+    return PluginInstallRow(
+      id: data.id.present ? data.id.value : this.id,
+      version: data.version.present ? data.version.value : this.version,
+      repo: data.repo.present ? data.repo.value : this.repo,
+      enabled: data.enabled.present ? data.enabled.value : this.enabled,
+      granted: data.granted.present ? data.granted.value : this.granted,
+      installedAt: data.installedAt.present
+          ? data.installedAt.value
+          : this.installedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PluginInstallRow(')
+          ..write('id: $id, ')
+          ..write('version: $version, ')
+          ..write('repo: $repo, ')
+          ..write('enabled: $enabled, ')
+          ..write('granted: $granted, ')
+          ..write('installedAt: $installedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, version, repo, enabled, granted, installedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PluginInstallRow &&
+          other.id == this.id &&
+          other.version == this.version &&
+          other.repo == this.repo &&
+          other.enabled == this.enabled &&
+          other.granted == this.granted &&
+          other.installedAt == this.installedAt);
+}
+
+class PluginInstallsCompanion extends UpdateCompanion<PluginInstallRow> {
+  final Value<String> id;
+  final Value<String> version;
+  final Value<String?> repo;
+  final Value<bool> enabled;
+  final Value<String> granted;
+  final Value<int> installedAt;
+  const PluginInstallsCompanion({
+    this.id = const Value.absent(),
+    this.version = const Value.absent(),
+    this.repo = const Value.absent(),
+    this.enabled = const Value.absent(),
+    this.granted = const Value.absent(),
+    this.installedAt = const Value.absent(),
+  });
+  PluginInstallsCompanion.insert({
+    required String id,
+    required String version,
+    this.repo = const Value.absent(),
+    this.enabled = const Value.absent(),
+    required String granted,
+    required int installedAt,
+  }) : id = Value(id),
+       version = Value(version),
+       granted = Value(granted),
+       installedAt = Value(installedAt);
+  static Insertable<PluginInstallRow> custom({
+    Expression<String>? id,
+    Expression<String>? version,
+    Expression<String>? repo,
+    Expression<bool>? enabled,
+    Expression<String>? granted,
+    Expression<int>? installedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (version != null) 'version': version,
+      if (repo != null) 'repo': repo,
+      if (enabled != null) 'enabled': enabled,
+      if (granted != null) 'granted': granted,
+      if (installedAt != null) 'installed_at': installedAt,
+    });
+  }
+
+  PluginInstallsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? version,
+    Value<String?>? repo,
+    Value<bool>? enabled,
+    Value<String>? granted,
+    Value<int>? installedAt,
+  }) {
+    return PluginInstallsCompanion(
+      id: id ?? this.id,
+      version: version ?? this.version,
+      repo: repo ?? this.repo,
+      enabled: enabled ?? this.enabled,
+      granted: granted ?? this.granted,
+      installedAt: installedAt ?? this.installedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (version.present) {
+      map['version'] = Variable<String>(version.value);
+    }
+    if (repo.present) {
+      map['repo'] = Variable<String>(repo.value);
+    }
+    if (enabled.present) {
+      map['enabled'] = Variable<bool>(enabled.value);
+    }
+    if (granted.present) {
+      map['granted'] = Variable<String>(granted.value);
+    }
+    if (installedAt.present) {
+      map['installed_at'] = Variable<int>(installedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PluginInstallsCompanion(')
+          ..write('id: $id, ')
+          ..write('version: $version, ')
+          ..write('repo: $repo, ')
+          ..write('enabled: $enabled, ')
+          ..write('granted: $granted, ')
+          ..write('installedAt: $installedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ServerPluginCfgsTable extends ServerPluginCfgs
+    with TableInfo<$ServerPluginCfgsTable, ServerPluginCfgRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ServerPluginCfgsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _serverIdMeta = const VerificationMeta(
+    'serverId',
+  );
+  @override
+  late final GeneratedColumn<String> serverId = GeneratedColumn<String>(
+    'server_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES server (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _pluginIdMeta = const VerificationMeta(
+    'pluginId',
+  );
+  @override
+  late final GeneratedColumn<String> pluginId = GeneratedColumn<String>(
+    'plugin_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _cfgMeta = const VerificationMeta('cfg');
+  @override
+  late final GeneratedColumn<String> cfg = GeneratedColumn<String>(
+    'cfg',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _cfgVerMeta = const VerificationMeta('cfgVer');
+  @override
+  late final GeneratedColumn<int> cfgVer = GeneratedColumn<int>(
+    'cfg_ver',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [serverId, pluginId, cfg, cfgVer];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'server_plugin_cfg';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ServerPluginCfgRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('server_id')) {
+      context.handle(
+        _serverIdMeta,
+        serverId.isAcceptableOrUnknown(data['server_id']!, _serverIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_serverIdMeta);
+    }
+    if (data.containsKey('plugin_id')) {
+      context.handle(
+        _pluginIdMeta,
+        pluginId.isAcceptableOrUnknown(data['plugin_id']!, _pluginIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pluginIdMeta);
+    }
+    if (data.containsKey('cfg')) {
+      context.handle(
+        _cfgMeta,
+        cfg.isAcceptableOrUnknown(data['cfg']!, _cfgMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_cfgMeta);
+    }
+    if (data.containsKey('cfg_ver')) {
+      context.handle(
+        _cfgVerMeta,
+        cfgVer.isAcceptableOrUnknown(data['cfg_ver']!, _cfgVerMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_cfgVerMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {serverId, pluginId};
+  @override
+  ServerPluginCfgRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ServerPluginCfgRow(
+      serverId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}server_id'],
+      )!,
+      pluginId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}plugin_id'],
+      )!,
+      cfg: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cfg'],
+      )!,
+      cfgVer: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}cfg_ver'],
+      )!,
+    );
+  }
+
+  @override
+  $ServerPluginCfgsTable createAlias(String alias) {
+    return $ServerPluginCfgsTable(attachedDatabase, alias);
+  }
+
+  @override
+  bool get withoutRowId => true;
+}
+
+class ServerPluginCfgRow extends DataClass
+    implements Insertable<ServerPluginCfgRow> {
+  final String serverId;
+  final String pluginId;
+
+  /// The values, keyed by the manifest's `config.fields[].key`.
+  final String cfg;
+
+  /// The ABI the manifest declared when this row was last written.
+  ///
+  /// The host is the only writer of this table, and of this column — a plugin
+  /// cannot convert its own configuration, because it cannot write here at
+  /// all. What the number is for is a *host-side* conversion later on: it is
+  /// the one thing such a step would have to branch on, and it is only knowable
+  /// at write time.
+  ///
+  /// Nothing converts anything yet. A field the manifest no longer has is
+  /// ignored when the map is read and a new one takes its `default`, which the
+  /// editor does by reading `config.fields` rather than this row.
+  final int cfgVer;
+  const ServerPluginCfgRow({
+    required this.serverId,
+    required this.pluginId,
+    required this.cfg,
+    required this.cfgVer,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['server_id'] = Variable<String>(serverId);
+    map['plugin_id'] = Variable<String>(pluginId);
+    map['cfg'] = Variable<String>(cfg);
+    map['cfg_ver'] = Variable<int>(cfgVer);
+    return map;
+  }
+
+  ServerPluginCfgsCompanion toCompanion(bool nullToAbsent) {
+    return ServerPluginCfgsCompanion(
+      serverId: Value(serverId),
+      pluginId: Value(pluginId),
+      cfg: Value(cfg),
+      cfgVer: Value(cfgVer),
+    );
+  }
+
+  factory ServerPluginCfgRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ServerPluginCfgRow(
+      serverId: serializer.fromJson<String>(json['serverId']),
+      pluginId: serializer.fromJson<String>(json['pluginId']),
+      cfg: serializer.fromJson<String>(json['cfg']),
+      cfgVer: serializer.fromJson<int>(json['cfgVer']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'serverId': serializer.toJson<String>(serverId),
+      'pluginId': serializer.toJson<String>(pluginId),
+      'cfg': serializer.toJson<String>(cfg),
+      'cfgVer': serializer.toJson<int>(cfgVer),
+    };
+  }
+
+  ServerPluginCfgRow copyWith({
+    String? serverId,
+    String? pluginId,
+    String? cfg,
+    int? cfgVer,
+  }) => ServerPluginCfgRow(
+    serverId: serverId ?? this.serverId,
+    pluginId: pluginId ?? this.pluginId,
+    cfg: cfg ?? this.cfg,
+    cfgVer: cfgVer ?? this.cfgVer,
+  );
+  ServerPluginCfgRow copyWithCompanion(ServerPluginCfgsCompanion data) {
+    return ServerPluginCfgRow(
+      serverId: data.serverId.present ? data.serverId.value : this.serverId,
+      pluginId: data.pluginId.present ? data.pluginId.value : this.pluginId,
+      cfg: data.cfg.present ? data.cfg.value : this.cfg,
+      cfgVer: data.cfgVer.present ? data.cfgVer.value : this.cfgVer,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ServerPluginCfgRow(')
+          ..write('serverId: $serverId, ')
+          ..write('pluginId: $pluginId, ')
+          ..write('cfg: $cfg, ')
+          ..write('cfgVer: $cfgVer')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(serverId, pluginId, cfg, cfgVer);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ServerPluginCfgRow &&
+          other.serverId == this.serverId &&
+          other.pluginId == this.pluginId &&
+          other.cfg == this.cfg &&
+          other.cfgVer == this.cfgVer);
+}
+
+class ServerPluginCfgsCompanion extends UpdateCompanion<ServerPluginCfgRow> {
+  final Value<String> serverId;
+  final Value<String> pluginId;
+  final Value<String> cfg;
+  final Value<int> cfgVer;
+  const ServerPluginCfgsCompanion({
+    this.serverId = const Value.absent(),
+    this.pluginId = const Value.absent(),
+    this.cfg = const Value.absent(),
+    this.cfgVer = const Value.absent(),
+  });
+  ServerPluginCfgsCompanion.insert({
+    required String serverId,
+    required String pluginId,
+    required String cfg,
+    required int cfgVer,
+  }) : serverId = Value(serverId),
+       pluginId = Value(pluginId),
+       cfg = Value(cfg),
+       cfgVer = Value(cfgVer);
+  static Insertable<ServerPluginCfgRow> custom({
+    Expression<String>? serverId,
+    Expression<String>? pluginId,
+    Expression<String>? cfg,
+    Expression<int>? cfgVer,
+  }) {
+    return RawValuesInsertable({
+      if (serverId != null) 'server_id': serverId,
+      if (pluginId != null) 'plugin_id': pluginId,
+      if (cfg != null) 'cfg': cfg,
+      if (cfgVer != null) 'cfg_ver': cfgVer,
+    });
+  }
+
+  ServerPluginCfgsCompanion copyWith({
+    Value<String>? serverId,
+    Value<String>? pluginId,
+    Value<String>? cfg,
+    Value<int>? cfgVer,
+  }) {
+    return ServerPluginCfgsCompanion(
+      serverId: serverId ?? this.serverId,
+      pluginId: pluginId ?? this.pluginId,
+      cfg: cfg ?? this.cfg,
+      cfgVer: cfgVer ?? this.cfgVer,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (serverId.present) {
+      map['server_id'] = Variable<String>(serverId.value);
+    }
+    if (pluginId.present) {
+      map['plugin_id'] = Variable<String>(pluginId.value);
+    }
+    if (cfg.present) {
+      map['cfg'] = Variable<String>(cfg.value);
+    }
+    if (cfgVer.present) {
+      map['cfg_ver'] = Variable<int>(cfgVer.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ServerPluginCfgsCompanion(')
+          ..write('serverId: $serverId, ')
+          ..write('pluginId: $pluginId, ')
+          ..write('cfg: $cfg, ')
+          ..write('cfgVer: $cfgVer')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $PluginKvsTable extends PluginKvs
+    with TableInfo<$PluginKvsTable, PluginKvRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PluginKvsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _pluginIdMeta = const VerificationMeta(
+    'pluginId',
+  );
+  @override
+  late final GeneratedColumn<String> pluginId = GeneratedColumn<String>(
+    'plugin_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _keyMeta = const VerificationMeta('key');
+  @override
+  late final GeneratedColumn<String> key = GeneratedColumn<String>(
+    'key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _valueMeta = const VerificationMeta('value');
+  @override
+  late final GeneratedColumn<String> value = GeneratedColumn<String>(
+    'value',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [pluginId, key, value, updatedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'plugin_kv';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PluginKvRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('plugin_id')) {
+      context.handle(
+        _pluginIdMeta,
+        pluginId.isAcceptableOrUnknown(data['plugin_id']!, _pluginIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pluginIdMeta);
+    }
+    if (data.containsKey('key')) {
+      context.handle(
+        _keyMeta,
+        key.isAcceptableOrUnknown(data['key']!, _keyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_keyMeta);
+    }
+    if (data.containsKey('value')) {
+      context.handle(
+        _valueMeta,
+        value.isAcceptableOrUnknown(data['value']!, _valueMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_valueMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {pluginId, key};
+  @override
+  PluginKvRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PluginKvRow(
+      pluginId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}plugin_id'],
+      )!,
+      key: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}key'],
+      )!,
+      value: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}value'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $PluginKvsTable createAlias(String alias) {
+    return $PluginKvsTable(attachedDatabase, alias);
+  }
+
+  @override
+  bool get withoutRowId => true;
+}
+
+class PluginKvRow extends DataClass implements Insertable<PluginKvRow> {
+  final String pluginId;
+  final String key;
+  final String value;
+  final int updatedAt;
+  const PluginKvRow({
+    required this.pluginId,
+    required this.key,
+    required this.value,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['plugin_id'] = Variable<String>(pluginId);
+    map['key'] = Variable<String>(key);
+    map['value'] = Variable<String>(value);
+    map['updated_at'] = Variable<int>(updatedAt);
+    return map;
+  }
+
+  PluginKvsCompanion toCompanion(bool nullToAbsent) {
+    return PluginKvsCompanion(
+      pluginId: Value(pluginId),
+      key: Value(key),
+      value: Value(value),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory PluginKvRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PluginKvRow(
+      pluginId: serializer.fromJson<String>(json['pluginId']),
+      key: serializer.fromJson<String>(json['key']),
+      value: serializer.fromJson<String>(json['value']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'pluginId': serializer.toJson<String>(pluginId),
+      'key': serializer.toJson<String>(key),
+      'value': serializer.toJson<String>(value),
+      'updatedAt': serializer.toJson<int>(updatedAt),
+    };
+  }
+
+  PluginKvRow copyWith({
+    String? pluginId,
+    String? key,
+    String? value,
+    int? updatedAt,
+  }) => PluginKvRow(
+    pluginId: pluginId ?? this.pluginId,
+    key: key ?? this.key,
+    value: value ?? this.value,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  PluginKvRow copyWithCompanion(PluginKvsCompanion data) {
+    return PluginKvRow(
+      pluginId: data.pluginId.present ? data.pluginId.value : this.pluginId,
+      key: data.key.present ? data.key.value : this.key,
+      value: data.value.present ? data.value.value : this.value,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PluginKvRow(')
+          ..write('pluginId: $pluginId, ')
+          ..write('key: $key, ')
+          ..write('value: $value, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(pluginId, key, value, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PluginKvRow &&
+          other.pluginId == this.pluginId &&
+          other.key == this.key &&
+          other.value == this.value &&
+          other.updatedAt == this.updatedAt);
+}
+
+class PluginKvsCompanion extends UpdateCompanion<PluginKvRow> {
+  final Value<String> pluginId;
+  final Value<String> key;
+  final Value<String> value;
+  final Value<int> updatedAt;
+  const PluginKvsCompanion({
+    this.pluginId = const Value.absent(),
+    this.key = const Value.absent(),
+    this.value = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  PluginKvsCompanion.insert({
+    required String pluginId,
+    required String key,
+    required String value,
+    required int updatedAt,
+  }) : pluginId = Value(pluginId),
+       key = Value(key),
+       value = Value(value),
+       updatedAt = Value(updatedAt);
+  static Insertable<PluginKvRow> custom({
+    Expression<String>? pluginId,
+    Expression<String>? key,
+    Expression<String>? value,
+    Expression<int>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (pluginId != null) 'plugin_id': pluginId,
+      if (key != null) 'key': key,
+      if (value != null) 'value': value,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  PluginKvsCompanion copyWith({
+    Value<String>? pluginId,
+    Value<String>? key,
+    Value<String>? value,
+    Value<int>? updatedAt,
+  }) {
+    return PluginKvsCompanion(
+      pluginId: pluginId ?? this.pluginId,
+      key: key ?? this.key,
+      value: value ?? this.value,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (pluginId.present) {
+      map['plugin_id'] = Variable<String>(pluginId.value);
+    }
+    if (key.present) {
+      map['key'] = Variable<String>(key.value);
+    }
+    if (value.present) {
+      map['value'] = Variable<String>(value.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PluginKvsCompanion(')
+          ..write('pluginId: $pluginId, ')
+          ..write('key: $key, ')
+          ..write('value: $value, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ServerPluginKvsTable extends ServerPluginKvs
+    with TableInfo<$ServerPluginKvsTable, ServerPluginKvRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ServerPluginKvsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _serverIdMeta = const VerificationMeta(
+    'serverId',
+  );
+  @override
+  late final GeneratedColumn<String> serverId = GeneratedColumn<String>(
+    'server_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES server (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _pluginIdMeta = const VerificationMeta(
+    'pluginId',
+  );
+  @override
+  late final GeneratedColumn<String> pluginId = GeneratedColumn<String>(
+    'plugin_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _keyMeta = const VerificationMeta('key');
+  @override
+  late final GeneratedColumn<String> key = GeneratedColumn<String>(
+    'key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _valueMeta = const VerificationMeta('value');
+  @override
+  late final GeneratedColumn<String> value = GeneratedColumn<String>(
+    'value',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    serverId,
+    pluginId,
+    key,
+    value,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'server_plugin_kv';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ServerPluginKvRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('server_id')) {
+      context.handle(
+        _serverIdMeta,
+        serverId.isAcceptableOrUnknown(data['server_id']!, _serverIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_serverIdMeta);
+    }
+    if (data.containsKey('plugin_id')) {
+      context.handle(
+        _pluginIdMeta,
+        pluginId.isAcceptableOrUnknown(data['plugin_id']!, _pluginIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pluginIdMeta);
+    }
+    if (data.containsKey('key')) {
+      context.handle(
+        _keyMeta,
+        key.isAcceptableOrUnknown(data['key']!, _keyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_keyMeta);
+    }
+    if (data.containsKey('value')) {
+      context.handle(
+        _valueMeta,
+        value.isAcceptableOrUnknown(data['value']!, _valueMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_valueMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {serverId, pluginId, key};
+  @override
+  ServerPluginKvRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ServerPluginKvRow(
+      serverId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}server_id'],
+      )!,
+      pluginId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}plugin_id'],
+      )!,
+      key: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}key'],
+      )!,
+      value: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}value'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ServerPluginKvsTable createAlias(String alias) {
+    return $ServerPluginKvsTable(attachedDatabase, alias);
+  }
+
+  @override
+  bool get withoutRowId => true;
+}
+
+class ServerPluginKvRow extends DataClass
+    implements Insertable<ServerPluginKvRow> {
+  final String serverId;
+  final String pluginId;
+  final String key;
+  final String value;
+  final int updatedAt;
+  const ServerPluginKvRow({
+    required this.serverId,
+    required this.pluginId,
+    required this.key,
+    required this.value,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['server_id'] = Variable<String>(serverId);
+    map['plugin_id'] = Variable<String>(pluginId);
+    map['key'] = Variable<String>(key);
+    map['value'] = Variable<String>(value);
+    map['updated_at'] = Variable<int>(updatedAt);
+    return map;
+  }
+
+  ServerPluginKvsCompanion toCompanion(bool nullToAbsent) {
+    return ServerPluginKvsCompanion(
+      serverId: Value(serverId),
+      pluginId: Value(pluginId),
+      key: Value(key),
+      value: Value(value),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory ServerPluginKvRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ServerPluginKvRow(
+      serverId: serializer.fromJson<String>(json['serverId']),
+      pluginId: serializer.fromJson<String>(json['pluginId']),
+      key: serializer.fromJson<String>(json['key']),
+      value: serializer.fromJson<String>(json['value']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'serverId': serializer.toJson<String>(serverId),
+      'pluginId': serializer.toJson<String>(pluginId),
+      'key': serializer.toJson<String>(key),
+      'value': serializer.toJson<String>(value),
+      'updatedAt': serializer.toJson<int>(updatedAt),
+    };
+  }
+
+  ServerPluginKvRow copyWith({
+    String? serverId,
+    String? pluginId,
+    String? key,
+    String? value,
+    int? updatedAt,
+  }) => ServerPluginKvRow(
+    serverId: serverId ?? this.serverId,
+    pluginId: pluginId ?? this.pluginId,
+    key: key ?? this.key,
+    value: value ?? this.value,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  ServerPluginKvRow copyWithCompanion(ServerPluginKvsCompanion data) {
+    return ServerPluginKvRow(
+      serverId: data.serverId.present ? data.serverId.value : this.serverId,
+      pluginId: data.pluginId.present ? data.pluginId.value : this.pluginId,
+      key: data.key.present ? data.key.value : this.key,
+      value: data.value.present ? data.value.value : this.value,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ServerPluginKvRow(')
+          ..write('serverId: $serverId, ')
+          ..write('pluginId: $pluginId, ')
+          ..write('key: $key, ')
+          ..write('value: $value, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(serverId, pluginId, key, value, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ServerPluginKvRow &&
+          other.serverId == this.serverId &&
+          other.pluginId == this.pluginId &&
+          other.key == this.key &&
+          other.value == this.value &&
+          other.updatedAt == this.updatedAt);
+}
+
+class ServerPluginKvsCompanion extends UpdateCompanion<ServerPluginKvRow> {
+  final Value<String> serverId;
+  final Value<String> pluginId;
+  final Value<String> key;
+  final Value<String> value;
+  final Value<int> updatedAt;
+  const ServerPluginKvsCompanion({
+    this.serverId = const Value.absent(),
+    this.pluginId = const Value.absent(),
+    this.key = const Value.absent(),
+    this.value = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  ServerPluginKvsCompanion.insert({
+    required String serverId,
+    required String pluginId,
+    required String key,
+    required String value,
+    required int updatedAt,
+  }) : serverId = Value(serverId),
+       pluginId = Value(pluginId),
+       key = Value(key),
+       value = Value(value),
+       updatedAt = Value(updatedAt);
+  static Insertable<ServerPluginKvRow> custom({
+    Expression<String>? serverId,
+    Expression<String>? pluginId,
+    Expression<String>? key,
+    Expression<String>? value,
+    Expression<int>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (serverId != null) 'server_id': serverId,
+      if (pluginId != null) 'plugin_id': pluginId,
+      if (key != null) 'key': key,
+      if (value != null) 'value': value,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  ServerPluginKvsCompanion copyWith({
+    Value<String>? serverId,
+    Value<String>? pluginId,
+    Value<String>? key,
+    Value<String>? value,
+    Value<int>? updatedAt,
+  }) {
+    return ServerPluginKvsCompanion(
+      serverId: serverId ?? this.serverId,
+      pluginId: pluginId ?? this.pluginId,
+      key: key ?? this.key,
+      value: value ?? this.value,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (serverId.present) {
+      map['server_id'] = Variable<String>(serverId.value);
+    }
+    if (pluginId.present) {
+      map['plugin_id'] = Variable<String>(pluginId.value);
+    }
+    if (key.present) {
+      map['key'] = Variable<String>(key.value);
+    }
+    if (value.present) {
+      map['value'] = Variable<String>(value.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ServerPluginKvsCompanion(')
+          ..write('serverId: $serverId, ')
+          ..write('pluginId: $pluginId, ')
+          ..write('key: $key, ')
+          ..write('value: $value, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $AgentConversationsTable extends AgentConversations
     with TableInfo<$AgentConversationsTable, AgentConversationRow> {
   @override
@@ -8554,6 +9955,14 @@ abstract class _$AppDb extends GeneratedDatabase {
   late final $ConnStatsTable connStats = $ConnStatsTable(this);
   late final $ServerDistsTable serverDists = $ServerDistsTable(this);
   late final $BenchmarkRunsTable benchmarkRuns = $BenchmarkRunsTable(this);
+  late final $PluginInstallsTable pluginInstalls = $PluginInstallsTable(this);
+  late final $ServerPluginCfgsTable serverPluginCfgs = $ServerPluginCfgsTable(
+    this,
+  );
+  late final $PluginKvsTable pluginKvs = $PluginKvsTable(this);
+  late final $ServerPluginKvsTable serverPluginKvs = $ServerPluginKvsTable(
+    this,
+  );
   late final $AgentConversationsTable agentConversations =
       $AgentConversationsTable(this);
   late final $AgentActiveConversationsTable agentActiveConversations =
@@ -8583,6 +9992,10 @@ abstract class _$AppDb extends GeneratedDatabase {
     connStats,
     serverDists,
     benchmarkRuns,
+    pluginInstalls,
+    serverPluginCfgs,
+    pluginKvs,
+    serverPluginKvs,
     agentConversations,
     agentActiveConversations,
     tombstones,
@@ -8715,6 +10128,20 @@ abstract class _$AppDb extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('benchmark_run', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'server',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('server_plugin_cfg', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'server',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('server_plugin_kv', kind: UpdateKind.delete)],
     ),
     WritePropagation(
       on: TableUpdateQuery.onTableName(
@@ -9707,6 +11134,46 @@ final class $$ServersTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<$ServerPluginCfgsTable, List<ServerPluginCfgRow>>
+  _serverPluginCfgsRefsTable(_$AppDb db) => MultiTypedResultKey.fromTable(
+    db.serverPluginCfgs,
+    aliasName: 'server__id__server_plugin_cfg__server_id',
+  );
+
+  $$ServerPluginCfgsTableProcessedTableManager get serverPluginCfgsRefs {
+    final manager = $$ServerPluginCfgsTableTableManager(
+      $_db,
+      $_db.serverPluginCfgs,
+    ).filter((f) => f.serverId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _serverPluginCfgsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$ServerPluginKvsTable, List<ServerPluginKvRow>>
+  _serverPluginKvsRefsTable(_$AppDb db) => MultiTypedResultKey.fromTable(
+    db.serverPluginKvs,
+    aliasName: 'server__id__server_plugin_kv__server_id',
+  );
+
+  $$ServerPluginKvsTableProcessedTableManager get serverPluginKvsRefs {
+    final manager = $$ServerPluginKvsTableTableManager(
+      $_db,
+      $_db.serverPluginKvs,
+    ).filter((f) => f.serverId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _serverPluginKvsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
@@ -10229,6 +11696,56 @@ class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
           }) => $$BenchmarkRunsTableFilterComposer(
             $db: $db,
             $table: $db.benchmarkRuns,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> serverPluginCfgsRefs(
+    Expression<bool> Function($$ServerPluginCfgsTableFilterComposer f) f,
+  ) {
+    final $$ServerPluginCfgsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.serverPluginCfgs,
+      getReferencedColumn: (t) => t.serverId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServerPluginCfgsTableFilterComposer(
+            $db: $db,
+            $table: $db.serverPluginCfgs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> serverPluginKvsRefs(
+    Expression<bool> Function($$ServerPluginKvsTableFilterComposer f) f,
+  ) {
+    final $$ServerPluginKvsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.serverPluginKvs,
+      getReferencedColumn: (t) => t.serverId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServerPluginKvsTableFilterComposer(
+            $db: $db,
+            $table: $db.serverPluginKvs,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -10962,6 +12479,56 @@ class $$ServersTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> serverPluginCfgsRefs<T extends Object>(
+    Expression<T> Function($$ServerPluginCfgsTableAnnotationComposer a) f,
+  ) {
+    final $$ServerPluginCfgsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.serverPluginCfgs,
+      getReferencedColumn: (t) => t.serverId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServerPluginCfgsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.serverPluginCfgs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> serverPluginKvsRefs<T extends Object>(
+    Expression<T> Function($$ServerPluginKvsTableAnnotationComposer a) f,
+  ) {
+    final $$ServerPluginKvsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.serverPluginKvs,
+      getReferencedColumn: (t) => t.serverId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServerPluginKvsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.serverPluginKvs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$ServersTableTableManager
@@ -10992,6 +12559,8 @@ class $$ServersTableTableManager
             bool connStatsRefs,
             bool serverDistsRefs,
             bool benchmarkRunsRefs,
+            bool serverPluginCfgsRefs,
+            bool serverPluginKvsRefs,
           })
         > {
   $$ServersTableTableManager(_$AppDb db, $ServersTable table)
@@ -11185,6 +12754,8 @@ class $$ServersTableTableManager
                 connStatsRefs = false,
                 serverDistsRefs = false,
                 benchmarkRunsRefs = false,
+                serverPluginCfgsRefs = false,
+                serverPluginKvsRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -11201,6 +12772,8 @@ class $$ServersTableTableManager
                     if (connStatsRefs) db.connStats,
                     if (serverDistsRefs) db.serverDists,
                     if (benchmarkRunsRefs) db.benchmarkRuns,
+                    if (serverPluginCfgsRefs) db.serverPluginCfgs,
+                    if (serverPluginKvsRefs) db.serverPluginKvs,
                   ],
                   addJoins:
                       <
@@ -11501,6 +13074,48 @@ class $$ServersTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (serverPluginCfgsRefs)
+                        await $_getPrefetchedData<
+                          ServerRow,
+                          $ServersTable,
+                          ServerPluginCfgRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ServersTableReferences
+                              ._serverPluginCfgsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ServersTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).serverPluginCfgsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.serverId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (serverPluginKvsRefs)
+                        await $_getPrefetchedData<
+                          ServerRow,
+                          $ServersTable,
+                          ServerPluginKvRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ServersTableReferences
+                              ._serverPluginKvsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ServersTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).serverPluginKvsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.serverId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -11536,6 +13151,8 @@ typedef $$ServersTableProcessedTableManager =
         bool connStatsRefs,
         bool serverDistsRefs,
         bool benchmarkRunsRefs,
+        bool serverPluginCfgsRefs,
+        bool serverPluginKvsRefs,
       })
     >;
 typedef $$ServerTagsTableCreateCompanionBuilder =
@@ -16248,6 +17865,1006 @@ typedef $$BenchmarkRunsTableProcessedTableManager =
       BenchmarkRunRow,
       PrefetchHooks Function({bool serverId})
     >;
+typedef $$PluginInstallsTableCreateCompanionBuilder =
+    PluginInstallsCompanion Function({
+      required String id,
+      required String version,
+      Value<String?> repo,
+      Value<bool> enabled,
+      required String granted,
+      required int installedAt,
+    });
+typedef $$PluginInstallsTableUpdateCompanionBuilder =
+    PluginInstallsCompanion Function({
+      Value<String> id,
+      Value<String> version,
+      Value<String?> repo,
+      Value<bool> enabled,
+      Value<String> granted,
+      Value<int> installedAt,
+    });
+
+class $$PluginInstallsTableFilterComposer
+    extends Composer<_$AppDb, $PluginInstallsTable> {
+  $$PluginInstallsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get version => $composableBuilder(
+    column: $table.version,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get repo => $composableBuilder(
+    column: $table.repo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get granted => $composableBuilder(
+    column: $table.granted,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get installedAt => $composableBuilder(
+    column: $table.installedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$PluginInstallsTableOrderingComposer
+    extends Composer<_$AppDb, $PluginInstallsTable> {
+  $$PluginInstallsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get version => $composableBuilder(
+    column: $table.version,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get repo => $composableBuilder(
+    column: $table.repo,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get granted => $composableBuilder(
+    column: $table.granted,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get installedAt => $composableBuilder(
+    column: $table.installedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PluginInstallsTableAnnotationComposer
+    extends Composer<_$AppDb, $PluginInstallsTable> {
+  $$PluginInstallsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get version =>
+      $composableBuilder(column: $table.version, builder: (column) => column);
+
+  GeneratedColumn<String> get repo =>
+      $composableBuilder(column: $table.repo, builder: (column) => column);
+
+  GeneratedColumn<bool> get enabled =>
+      $composableBuilder(column: $table.enabled, builder: (column) => column);
+
+  GeneratedColumn<String> get granted =>
+      $composableBuilder(column: $table.granted, builder: (column) => column);
+
+  GeneratedColumn<int> get installedAt => $composableBuilder(
+    column: $table.installedAt,
+    builder: (column) => column,
+  );
+}
+
+class $$PluginInstallsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDb,
+          $PluginInstallsTable,
+          PluginInstallRow,
+          $$PluginInstallsTableFilterComposer,
+          $$PluginInstallsTableOrderingComposer,
+          $$PluginInstallsTableAnnotationComposer,
+          $$PluginInstallsTableCreateCompanionBuilder,
+          $$PluginInstallsTableUpdateCompanionBuilder,
+          (
+            PluginInstallRow,
+            BaseReferences<_$AppDb, $PluginInstallsTable, PluginInstallRow>,
+          ),
+          PluginInstallRow,
+          PrefetchHooks Function()
+        > {
+  $$PluginInstallsTableTableManager(_$AppDb db, $PluginInstallsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PluginInstallsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PluginInstallsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PluginInstallsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> version = const Value.absent(),
+                Value<String?> repo = const Value.absent(),
+                Value<bool> enabled = const Value.absent(),
+                Value<String> granted = const Value.absent(),
+                Value<int> installedAt = const Value.absent(),
+              }) => PluginInstallsCompanion(
+                id: id,
+                version: version,
+                repo: repo,
+                enabled: enabled,
+                granted: granted,
+                installedAt: installedAt,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String version,
+                Value<String?> repo = const Value.absent(),
+                Value<bool> enabled = const Value.absent(),
+                required String granted,
+                required int installedAt,
+              }) => PluginInstallsCompanion.insert(
+                id: id,
+                version: version,
+                repo: repo,
+                enabled: enabled,
+                granted: granted,
+                installedAt: installedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PluginInstallsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDb,
+      $PluginInstallsTable,
+      PluginInstallRow,
+      $$PluginInstallsTableFilterComposer,
+      $$PluginInstallsTableOrderingComposer,
+      $$PluginInstallsTableAnnotationComposer,
+      $$PluginInstallsTableCreateCompanionBuilder,
+      $$PluginInstallsTableUpdateCompanionBuilder,
+      (
+        PluginInstallRow,
+        BaseReferences<_$AppDb, $PluginInstallsTable, PluginInstallRow>,
+      ),
+      PluginInstallRow,
+      PrefetchHooks Function()
+    >;
+typedef $$ServerPluginCfgsTableCreateCompanionBuilder =
+    ServerPluginCfgsCompanion Function({
+      required String serverId,
+      required String pluginId,
+      required String cfg,
+      required int cfgVer,
+    });
+typedef $$ServerPluginCfgsTableUpdateCompanionBuilder =
+    ServerPluginCfgsCompanion Function({
+      Value<String> serverId,
+      Value<String> pluginId,
+      Value<String> cfg,
+      Value<int> cfgVer,
+    });
+
+final class $$ServerPluginCfgsTableReferences
+    extends
+        BaseReferences<_$AppDb, $ServerPluginCfgsTable, ServerPluginCfgRow> {
+  $$ServerPluginCfgsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $ServersTable _serverIdTable(_$AppDb db) =>
+      db.servers.createAlias('server_plugin_cfg__server_id__server__id');
+
+  $$ServersTableProcessedTableManager get serverId {
+    final $_column = $_itemColumn<String>('server_id')!;
+
+    final manager = $$ServersTableTableManager(
+      $_db,
+      $_db.servers,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_serverIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$ServerPluginCfgsTableFilterComposer
+    extends Composer<_$AppDb, $ServerPluginCfgsTable> {
+  $$ServerPluginCfgsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get pluginId => $composableBuilder(
+    column: $table.pluginId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get cfg => $composableBuilder(
+    column: $table.cfg,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get cfgVer => $composableBuilder(
+    column: $table.cfgVer,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ServersTableFilterComposer get serverId {
+    final $$ServersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableFilterComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ServerPluginCfgsTableOrderingComposer
+    extends Composer<_$AppDb, $ServerPluginCfgsTable> {
+  $$ServerPluginCfgsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get pluginId => $composableBuilder(
+    column: $table.pluginId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get cfg => $composableBuilder(
+    column: $table.cfg,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get cfgVer => $composableBuilder(
+    column: $table.cfgVer,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ServersTableOrderingComposer get serverId {
+    final $$ServersTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableOrderingComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ServerPluginCfgsTableAnnotationComposer
+    extends Composer<_$AppDb, $ServerPluginCfgsTable> {
+  $$ServerPluginCfgsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get pluginId =>
+      $composableBuilder(column: $table.pluginId, builder: (column) => column);
+
+  GeneratedColumn<String> get cfg =>
+      $composableBuilder(column: $table.cfg, builder: (column) => column);
+
+  GeneratedColumn<int> get cfgVer =>
+      $composableBuilder(column: $table.cfgVer, builder: (column) => column);
+
+  $$ServersTableAnnotationComposer get serverId {
+    final $$ServersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ServerPluginCfgsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDb,
+          $ServerPluginCfgsTable,
+          ServerPluginCfgRow,
+          $$ServerPluginCfgsTableFilterComposer,
+          $$ServerPluginCfgsTableOrderingComposer,
+          $$ServerPluginCfgsTableAnnotationComposer,
+          $$ServerPluginCfgsTableCreateCompanionBuilder,
+          $$ServerPluginCfgsTableUpdateCompanionBuilder,
+          (ServerPluginCfgRow, $$ServerPluginCfgsTableReferences),
+          ServerPluginCfgRow,
+          PrefetchHooks Function({bool serverId})
+        > {
+  $$ServerPluginCfgsTableTableManager(_$AppDb db, $ServerPluginCfgsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ServerPluginCfgsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ServerPluginCfgsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ServerPluginCfgsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> serverId = const Value.absent(),
+                Value<String> pluginId = const Value.absent(),
+                Value<String> cfg = const Value.absent(),
+                Value<int> cfgVer = const Value.absent(),
+              }) => ServerPluginCfgsCompanion(
+                serverId: serverId,
+                pluginId: pluginId,
+                cfg: cfg,
+                cfgVer: cfgVer,
+              ),
+          createCompanionCallback:
+              ({
+                required String serverId,
+                required String pluginId,
+                required String cfg,
+                required int cfgVer,
+              }) => ServerPluginCfgsCompanion.insert(
+                serverId: serverId,
+                pluginId: pluginId,
+                cfg: cfg,
+                cfgVer: cfgVer,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$ServerPluginCfgsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({serverId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (serverId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.serverId,
+                                referencedTable:
+                                    $$ServerPluginCfgsTableReferences
+                                        ._serverIdTable(db),
+                                referencedColumn:
+                                    $$ServerPluginCfgsTableReferences
+                                        ._serverIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ServerPluginCfgsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDb,
+      $ServerPluginCfgsTable,
+      ServerPluginCfgRow,
+      $$ServerPluginCfgsTableFilterComposer,
+      $$ServerPluginCfgsTableOrderingComposer,
+      $$ServerPluginCfgsTableAnnotationComposer,
+      $$ServerPluginCfgsTableCreateCompanionBuilder,
+      $$ServerPluginCfgsTableUpdateCompanionBuilder,
+      (ServerPluginCfgRow, $$ServerPluginCfgsTableReferences),
+      ServerPluginCfgRow,
+      PrefetchHooks Function({bool serverId})
+    >;
+typedef $$PluginKvsTableCreateCompanionBuilder =
+    PluginKvsCompanion Function({
+      required String pluginId,
+      required String key,
+      required String value,
+      required int updatedAt,
+    });
+typedef $$PluginKvsTableUpdateCompanionBuilder =
+    PluginKvsCompanion Function({
+      Value<String> pluginId,
+      Value<String> key,
+      Value<String> value,
+      Value<int> updatedAt,
+    });
+
+class $$PluginKvsTableFilterComposer
+    extends Composer<_$AppDb, $PluginKvsTable> {
+  $$PluginKvsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get pluginId => $composableBuilder(
+    column: $table.pluginId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get key => $composableBuilder(
+    column: $table.key,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get value => $composableBuilder(
+    column: $table.value,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$PluginKvsTableOrderingComposer
+    extends Composer<_$AppDb, $PluginKvsTable> {
+  $$PluginKvsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get pluginId => $composableBuilder(
+    column: $table.pluginId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get key => $composableBuilder(
+    column: $table.key,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get value => $composableBuilder(
+    column: $table.value,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PluginKvsTableAnnotationComposer
+    extends Composer<_$AppDb, $PluginKvsTable> {
+  $$PluginKvsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get pluginId =>
+      $composableBuilder(column: $table.pluginId, builder: (column) => column);
+
+  GeneratedColumn<String> get key =>
+      $composableBuilder(column: $table.key, builder: (column) => column);
+
+  GeneratedColumn<String> get value =>
+      $composableBuilder(column: $table.value, builder: (column) => column);
+
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$PluginKvsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDb,
+          $PluginKvsTable,
+          PluginKvRow,
+          $$PluginKvsTableFilterComposer,
+          $$PluginKvsTableOrderingComposer,
+          $$PluginKvsTableAnnotationComposer,
+          $$PluginKvsTableCreateCompanionBuilder,
+          $$PluginKvsTableUpdateCompanionBuilder,
+          (PluginKvRow, BaseReferences<_$AppDb, $PluginKvsTable, PluginKvRow>),
+          PluginKvRow,
+          PrefetchHooks Function()
+        > {
+  $$PluginKvsTableTableManager(_$AppDb db, $PluginKvsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PluginKvsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PluginKvsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PluginKvsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> pluginId = const Value.absent(),
+                Value<String> key = const Value.absent(),
+                Value<String> value = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+              }) => PluginKvsCompanion(
+                pluginId: pluginId,
+                key: key,
+                value: value,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                required String pluginId,
+                required String key,
+                required String value,
+                required int updatedAt,
+              }) => PluginKvsCompanion.insert(
+                pluginId: pluginId,
+                key: key,
+                value: value,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PluginKvsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDb,
+      $PluginKvsTable,
+      PluginKvRow,
+      $$PluginKvsTableFilterComposer,
+      $$PluginKvsTableOrderingComposer,
+      $$PluginKvsTableAnnotationComposer,
+      $$PluginKvsTableCreateCompanionBuilder,
+      $$PluginKvsTableUpdateCompanionBuilder,
+      (PluginKvRow, BaseReferences<_$AppDb, $PluginKvsTable, PluginKvRow>),
+      PluginKvRow,
+      PrefetchHooks Function()
+    >;
+typedef $$ServerPluginKvsTableCreateCompanionBuilder =
+    ServerPluginKvsCompanion Function({
+      required String serverId,
+      required String pluginId,
+      required String key,
+      required String value,
+      required int updatedAt,
+    });
+typedef $$ServerPluginKvsTableUpdateCompanionBuilder =
+    ServerPluginKvsCompanion Function({
+      Value<String> serverId,
+      Value<String> pluginId,
+      Value<String> key,
+      Value<String> value,
+      Value<int> updatedAt,
+    });
+
+final class $$ServerPluginKvsTableReferences
+    extends BaseReferences<_$AppDb, $ServerPluginKvsTable, ServerPluginKvRow> {
+  $$ServerPluginKvsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $ServersTable _serverIdTable(_$AppDb db) =>
+      db.servers.createAlias('server_plugin_kv__server_id__server__id');
+
+  $$ServersTableProcessedTableManager get serverId {
+    final $_column = $_itemColumn<String>('server_id')!;
+
+    final manager = $$ServersTableTableManager(
+      $_db,
+      $_db.servers,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_serverIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$ServerPluginKvsTableFilterComposer
+    extends Composer<_$AppDb, $ServerPluginKvsTable> {
+  $$ServerPluginKvsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get pluginId => $composableBuilder(
+    column: $table.pluginId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get key => $composableBuilder(
+    column: $table.key,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get value => $composableBuilder(
+    column: $table.value,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ServersTableFilterComposer get serverId {
+    final $$ServersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableFilterComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ServerPluginKvsTableOrderingComposer
+    extends Composer<_$AppDb, $ServerPluginKvsTable> {
+  $$ServerPluginKvsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get pluginId => $composableBuilder(
+    column: $table.pluginId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get key => $composableBuilder(
+    column: $table.key,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get value => $composableBuilder(
+    column: $table.value,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ServersTableOrderingComposer get serverId {
+    final $$ServersTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableOrderingComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ServerPluginKvsTableAnnotationComposer
+    extends Composer<_$AppDb, $ServerPluginKvsTable> {
+  $$ServerPluginKvsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get pluginId =>
+      $composableBuilder(column: $table.pluginId, builder: (column) => column);
+
+  GeneratedColumn<String> get key =>
+      $composableBuilder(column: $table.key, builder: (column) => column);
+
+  GeneratedColumn<String> get value =>
+      $composableBuilder(column: $table.value, builder: (column) => column);
+
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  $$ServersTableAnnotationComposer get serverId {
+    final $$ServersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ServerPluginKvsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDb,
+          $ServerPluginKvsTable,
+          ServerPluginKvRow,
+          $$ServerPluginKvsTableFilterComposer,
+          $$ServerPluginKvsTableOrderingComposer,
+          $$ServerPluginKvsTableAnnotationComposer,
+          $$ServerPluginKvsTableCreateCompanionBuilder,
+          $$ServerPluginKvsTableUpdateCompanionBuilder,
+          (ServerPluginKvRow, $$ServerPluginKvsTableReferences),
+          ServerPluginKvRow,
+          PrefetchHooks Function({bool serverId})
+        > {
+  $$ServerPluginKvsTableTableManager(_$AppDb db, $ServerPluginKvsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ServerPluginKvsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ServerPluginKvsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ServerPluginKvsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> serverId = const Value.absent(),
+                Value<String> pluginId = const Value.absent(),
+                Value<String> key = const Value.absent(),
+                Value<String> value = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+              }) => ServerPluginKvsCompanion(
+                serverId: serverId,
+                pluginId: pluginId,
+                key: key,
+                value: value,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                required String serverId,
+                required String pluginId,
+                required String key,
+                required String value,
+                required int updatedAt,
+              }) => ServerPluginKvsCompanion.insert(
+                serverId: serverId,
+                pluginId: pluginId,
+                key: key,
+                value: value,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$ServerPluginKvsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({serverId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (serverId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.serverId,
+                                referencedTable:
+                                    $$ServerPluginKvsTableReferences
+                                        ._serverIdTable(db),
+                                referencedColumn:
+                                    $$ServerPluginKvsTableReferences
+                                        ._serverIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ServerPluginKvsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDb,
+      $ServerPluginKvsTable,
+      ServerPluginKvRow,
+      $$ServerPluginKvsTableFilterComposer,
+      $$ServerPluginKvsTableOrderingComposer,
+      $$ServerPluginKvsTableAnnotationComposer,
+      $$ServerPluginKvsTableCreateCompanionBuilder,
+      $$ServerPluginKvsTableUpdateCompanionBuilder,
+      (ServerPluginKvRow, $$ServerPluginKvsTableReferences),
+      ServerPluginKvRow,
+      PrefetchHooks Function({bool serverId})
+    >;
 typedef $$AgentConversationsTableCreateCompanionBuilder =
     AgentConversationsCompanion Function({
       required String id,
@@ -17147,6 +19764,14 @@ class $AppDbManager {
       $$ServerDistsTableTableManager(_db, _db.serverDists);
   $$BenchmarkRunsTableTableManager get benchmarkRuns =>
       $$BenchmarkRunsTableTableManager(_db, _db.benchmarkRuns);
+  $$PluginInstallsTableTableManager get pluginInstalls =>
+      $$PluginInstallsTableTableManager(_db, _db.pluginInstalls);
+  $$ServerPluginCfgsTableTableManager get serverPluginCfgs =>
+      $$ServerPluginCfgsTableTableManager(_db, _db.serverPluginCfgs);
+  $$PluginKvsTableTableManager get pluginKvs =>
+      $$PluginKvsTableTableManager(_db, _db.pluginKvs);
+  $$ServerPluginKvsTableTableManager get serverPluginKvs =>
+      $$ServerPluginKvsTableTableManager(_db, _db.serverPluginKvs);
   $$AgentConversationsTableTableManager get agentConversations =>
       $$AgentConversationsTableTableManager(_db, _db.agentConversations);
   $$AgentActiveConversationsTableTableManager get agentActiveConversations =>

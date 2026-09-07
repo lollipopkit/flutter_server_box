@@ -549,6 +549,136 @@ class BenchmarkRuns extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// One installed plugin. PLUGINS.md section 7.
+///
+/// The record, not the plugin: the `.sbp` and what was unpacked from it are
+/// files, and this row says which version of them is installed, where it came
+/// from, and what the user agreed it may do.
+///
+/// **Not a sync root, and not for `conn_stat`'s reason.** Installing puts
+/// files on *this* device; a row arriving on another one would name a plugin
+/// that is not there, and `granted` would be consent the user gave on a
+/// different device to code this one has never seen. A backup carries it
+/// (section 7's `plugins` field), because a backup restores the files too.
+@DataClassName('PluginInstallRow')
+class PluginInstalls extends Table {
+  @override
+  String get tableName => 'plugin_install';
+  @override
+  bool get withoutRowId => true;
+
+  /// The manifest's reverse-DNS id, which is what everything else keys on.
+  TextColumn get id => text()();
+
+  /// The installed version, as the manifest spells it.
+  TextColumn get version => text()();
+
+  /// Which repository it came from. Null is bundled with the app; `dev` is a
+  /// directory on the developer's machine.
+  TextColumn get repo => text().nullable()();
+
+  BoolColumn get enabled => boolean().withDefault(const Constant(true))();
+
+  /// The permissions the user agreed to, as a JSON array of names.
+  ///
+  /// What was *consented to*, never what the manifest asks for: an update that
+  /// adds a permission must not be able to use it before the user has seen it
+  /// (PLUGINS.md 6.2), and the two are intersected at load.
+  TextColumn get granted => text()();
+
+  IntColumn get installedAt => integer()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// One server's configuration for one plugin. PLUGINS.md section 7.
+///
+/// A child of `server`, like `container_host`: it has no meaning without the
+/// server, it cascades with it, and editing it stamps the parent rather than
+/// carrying sync columns of its own.
+///
+/// `cfg` stays JSON because the host never queries it by field — it hands the
+/// whole map to the plugin and to the editor, and the fields are the
+/// manifest's, not this schema's.
+@DataClassName('ServerPluginCfgRow')
+class ServerPluginCfgs extends Table {
+  @override
+  String get tableName => 'server_plugin_cfg';
+  @override
+  bool get withoutRowId => true;
+
+  TextColumn get serverId =>
+      text().references(Servers, #id, onDelete: KeyAction.cascade)();
+  TextColumn get pluginId => text()();
+
+  /// The values, keyed by the manifest's `config.fields[].key`.
+  TextColumn get cfg => text()();
+
+  /// The ABI the manifest declared when this row was last written.
+  ///
+  /// The host is the only writer of this table, and of this column — a plugin
+  /// cannot convert its own configuration, because it cannot write here at
+  /// all. What the number is for is a *host-side* conversion later on: it is
+  /// the one thing such a step would have to branch on, and it is only knowable
+  /// at write time.
+  ///
+  /// Nothing converts anything yet. A field the manifest no longer has is
+  /// ignored when the map is read and a new one takes its `default`, which the
+  /// editor does by reading `config.fields` rather than this row.
+  IntColumn get cfgVer => integer()();
+
+  @override
+  Set<Column> get primaryKey => {serverId, pluginId};
+}
+
+/// A plugin's own key-value data, not bound to a server. PLUGINS.md section 7.
+///
+/// **Two tables rather than one with a nullable `server_id`**, which is what
+/// the design sketch had. A `WITHOUT ROWID` table refuses NULL in a primary
+/// key, and a rowid table would not have refused a *second* global row with
+/// the same key — SQLite treats two NULLs as distinct in a unique index, so
+/// the one shape that expresses "global" would also be the one shape with no
+/// uniqueness. Splitting gives both halves an honest primary key and lets the
+/// per-server half cascade.
+@DataClassName('PluginKvRow')
+class PluginKvs extends Table {
+  @override
+  String get tableName => 'plugin_kv';
+  @override
+  bool get withoutRowId => true;
+
+  TextColumn get pluginId => text()();
+  TextColumn get key => text()();
+  TextColumn get value => text()();
+  IntColumn get updatedAt => integer()();
+
+  @override
+  Set<Column> get primaryKey => {pluginId, key};
+}
+
+/// The same, for what a plugin stores against one server.
+///
+/// Cascades with the server: a machine that is gone takes the BMC session
+/// token, the cached inventory and whatever else a plugin kept about it.
+@DataClassName('ServerPluginKvRow')
+class ServerPluginKvs extends Table {
+  @override
+  String get tableName => 'server_plugin_kv';
+  @override
+  bool get withoutRowId => true;
+
+  TextColumn get serverId =>
+      text().references(Servers, #id, onDelete: KeyAction.cascade)();
+  TextColumn get pluginId => text()();
+  TextColumn get key => text()();
+  TextColumn get value => text()();
+  IntColumn get updatedAt => integer()();
+
+  @override
+  Set<Column> get primaryKey => {serverId, pluginId, key};
+}
+
 /// `data` stays JSON: a conversation is an ordered log of heterogeneous items
 /// read only ever whole, never queried by field. Columns would buy nothing and
 /// cost a migration for every new item kind.
@@ -666,6 +796,10 @@ class SyncStates extends Table {
     ConnStats,
     ServerDists,
     BenchmarkRuns,
+    PluginInstalls,
+    ServerPluginCfgs,
+    PluginKvs,
+    ServerPluginKvs,
     AgentConversations,
     AgentActiveConversations,
     Tombstones,
@@ -723,6 +857,13 @@ class AppDb extends _$AppDb {
         'ON benchmark_run(server_id, started_at DESC);',
     'CREATE INDEX IF NOT EXISTS idx_agent_conversation_server_updated '
         'ON agent_conversation(server_id, updated_at DESC);',
+    // "everything this plugin stored", which uninstalling asks for and which
+    // the primary key cannot serve — its leading column is `server_id`.
+    'CREATE INDEX IF NOT EXISTS idx_server_plugin_kv_plugin '
+        'ON server_plugin_kv(plugin_id);',
+    // The same question of the configuration table.
+    'CREATE INDEX IF NOT EXISTS idx_server_plugin_cfg_plugin '
+        'ON server_plugin_cfg(plugin_id);',
     'CREATE INDEX IF NOT EXISTS idx_tombstone_deleted '
         'ON tombstone(deleted_at);',
   ];

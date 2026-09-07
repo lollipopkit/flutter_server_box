@@ -437,7 +437,11 @@ BMC 样本已经促使设计增加了 `tone`、`requires_config`、`options_from
 - `server_plugin_cfg`：每台服务器上的插件配置。
 - `plugin_kv`：插件自己的键值数据，可按服务器保存，也可全局保存。
 
-以下保留原设计的 SQL 草案，实际 migration 尚未实现：
+已实现（m022，schema v22 → v23）。Drift 的定义在 `lib/data/store/db.dart`，手写的 DDL 在 `lib/data/store/migrations/m022_plugin_tables.dart`，两者由 `test/plugin_store_test.dart` 的 migration 组比对 —— `tables_schema_test.dart` 只见得到全新创建的 schema，永远跑不到那一步。
+
+与原草案的**一处偏离**：`plugin_kv` 拆成了两张表。草案里 `server_id` 可空且属于主键，这在 SQLite 里做不到 —— `WITHOUT ROWID` 表拒绝主键列为 NULL；而普通 rowid 表又不会拒绝第二条同 key 的全局行，因为 SQLite 认为两个 NULL 互不相同。也就是说，唯一能表达"全局"的形状，同时也是唯一没有唯一性约束的形状。拆开之后两半都有诚实的主键，按服务器的那一半还能跟着服务器级联删除。
+
+原草案：
 
 ```sql
 CREATE TABLE plugin_install (
@@ -457,6 +461,8 @@ CREATE TABLE server_plugin_cfg (
   PRIMARY KEY (server_id, plugin_id)
 ) WITHOUT ROWID;
 
+-- 实际实现拆成了 plugin_kv (plugin_id, key) 和
+-- server_plugin_kv (server_id, plugin_id, key)，理由见上
 CREATE TABLE plugin_kv (
   plugin_id TEXT NOT NULL,
   server_id TEXT REFERENCES server (id) ON DELETE CASCADE,  -- NULL 表示全局
@@ -467,7 +473,7 @@ CREATE TABLE plugin_kv (
 ) WITHOUT ROWID;
 ```
 
-配置用 JSON 保存，因为宿主不需要按内部字段查询。`cfg_ver` 用来标识配置版本，原方案安排插件在 `init` 时升级；这与“配置只能由宿主写入”的约定如何衔接，接入时还需明确。秘密字段沿用现有整库加密保护，分享时按 `secret` 标记移除。服务器配置更新时，要像 `container_host` 一样更新父行 stamp。
+配置用 JSON 保存，因为宿主不需要按内部字段查询。`cfg_ver` 已定：存的是**写入这一行时 manifest 声明的 `abi`**。宿主是这张表唯一的写入者，也是这一列唯一的写入者 —— 插件无法转换自己的配置，因为它根本写不了这张表。这个数字留给将来**宿主侧**的转换：那是这种步骤唯一需要分支的依据，而且只有写入的那一刻知道。目前没有任何转换：manifest 里已不存在的字段在读取时被忽略，新增字段取 `default`，这两件事编辑器读 `config.fields` 时本来就会做。秘密字段沿用现有整库加密保护，分享时按 `secret` 标记移除。服务器配置更新时，要像 `container_host` 一样更新父行 stamp。
 
 `plugin_kv` 提供持久化存储。实例内的临时状态用普通 JavaScript 变量即可，但实例销毁后不保留。键值数据默认留在本机，声明并获准 `storage.sync` 后，按插件 id 作为独立同步项处理。备份计划在 `BackupV2` 中增加通用的 `plugins: {id: {cfg: [...], kv: [...]}}` 字段。
 
@@ -555,7 +561,7 @@ App Store 对这种扩展的判断也不能仅凭它没有 UI 就下结论。
 | 2 | `sbm_ffi` 暴露加载、调用和释放，Dart 实现宿主回调 | **FFI 已完成**（`test/plugin_ffi_test.dart` 走通加载、调用、宿主回调、权限拒绝）。剩下 Dart 侧把 14 个接口接到 App 的实际功能上，属于第 5 步 |
 | 3 | 接入状态命令插件，随包提供一个样本 | 进行中。`StatusResult` 的形状与校验、`contributes.status`（含必须申请 `server.exec`）、`inline_cmds_script`（一次往返跑完所有插件命令、服务器上不留文件）、`PluginRuntime.statusCmd`/`statusParse`、SDK 的状态插件类型和样例都已完成，Rust 侧 121 个测试 + `test/plugin_ffi_test.dart` 打通「插件要什么命令 → 真跑一遍 → 结果回到同一个插件」。剩下的要等第 5 步的插件存储：App 得先知道装了哪些插件，才谈得上在状态页画出来 |
 | 4 | Dart feature registry 和按钮 id 迁移 | **已完成**。`lib/data/model/app/feature.dart`：`Feature`/`FeatureSlot`/`Features`，三个入口面（功能栏按钮、详情卡片、首页 tab）合并成一个 id 空间和一份"这次升级新增了什么"的规则。`serverBtns` 由 enum index 迁到 id（m021，`kLegacyServerFuncBtnIds` 冻结旧顺序），恢复备份时也会转换 |
-| 5 | Flutter 渲染器、插件卡片、存储、备份、安装管理和开发目录 | 未开始；实现 5.2 的三项（修订号复用缓存、`ValueListenableBuilder`、`ListView.builder`），补 golden 和宿主集成测试 |
+| 5 | Flutter 渲染器、插件卡片、存储、备份、安装管理和开发目录 | 进行中。**存储已完成**：四张表（m022）、`PluginInstall` 模型、`PluginInstallStore`/`PluginCfgStore`/`PluginKvStore`，23 个测试。剩下渲染器（含 5.2 的三项）、插件卡片、`BackupV2` 的 `plugins` 字段、安装管理和开发目录 |
 | 6 | 在 App 中接通 BMC 插件 | 未开始；对照 `packages/redfish/test/` 的 fixture 和现有行为，验证一致后再删除 Dart 实现及 `packages/redfish` |
 | 7 | 在线仓库、第三方仓库和网站插件页 | 未开始；先只收状态插件，BMC 验证完 UI 接口后再开放 UI 插件 |
 
