@@ -1954,18 +1954,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "internal-russh-num-bigint"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae8e22120c32fb4d19ec55fba35015f57095cd95a2e3b732e44457f5915b2ee8"
-dependencies = [
- "num-integer",
- "num-traits",
- "rand 0.10.2",
- "rand_core 0.10.1",
-]
-
-[[package]]
 name = "ipnet"
 version = "2.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2659,12 +2647,14 @@ dependencies = [
 
 [[package]]
 name = "num-bigint"
-version = "0.4.8"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c89e69e7e0f03bea5ef08013795c25018e101932225a656383bd384495ecc367"
+checksum = "93e7820bc0a80a0238e650327316f929ba18d5be054b647490a3a6a339f3e7c0"
 dependencies = [
  "num-integer",
  "num-traits",
+ "rand 0.10.2",
+ "rand_core 0.10.1",
 ]
 
 [[package]]
@@ -3398,9 +3388,9 @@ dependencies = [
 
 [[package]]
 name = "russh"
-version = "0.63.1"
+version = "0.63.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "35bab1b87d915817d5d9cc352637cd40d5f0b298a48c6309af9156a4addc3031"
+checksum = "8e134e2480f4e86f83e4aa45b4c0a9723f84beaffa694c54bdf056e74efdd7dd"
 dependencies = [
  "aes",
  "bitflags 2.13.1",
@@ -3428,7 +3418,6 @@ dependencies = [
  "hex-literal",
  "hmac 0.13.0",
  "inout",
- "internal-russh-num-bigint",
  "keccak",
  "log",
  "md5",
