@@ -230,7 +230,7 @@ jobs:
           echo "build $build, release $release"
 
   buildMacOS:
-    name: Build macos
+    name: Build macos (${{ matrix.arch }})
     # A tag builds everything, unconditionally. The selector exists to narrow
     # a manual dispatch; letting it decide the release path would mean an empty
     # or unemitted output skips every job and reports success — which is the
@@ -246,6 +246,23 @@ jobs:
     env:
       APP_NAME: ${{ needs.reproducibilityCheck.outputs.appName }}
       BUILD_NUMBER: ${{ needs.reproducibilityCheck.outputs.buildNumber }}
+    # One DMG per architecture rather than one universal DMG. `arch` is what
+    # the asset is named after, matching the APKs and the AppImage; `xcarch` is
+    # what Xcode calls the same thing, and reaches the build as `ARCHS`.
+    #
+    # Splitting is what makes the Intel build checkable at all: this runner is
+    # Apple Silicon, so the x86_64 half of a universal binary was published
+    # having never been loaded by anything. `Check the architecture` below now
+    # says what is in each bundle, and the launch check runs the Intel slice
+    # whenever the runner has Rosetta to run it with.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: arm64
+            xcarch: arm64
+          - arch: amd64
+            xcarch: x86_64
     runs-on: macos-latest
     timeout-minutes: 45
     # Read-only, on a release run as on any other. Nothing here writes to the
@@ -297,12 +314,65 @@ jobs:
           </plist>
           EOF
       - name: Build release
+        # `flutter build macos` has no `--target-platform`, but it forwards
+        # every `FLUTTER_XCODE_*` variable to xcodebuild as a build setting on
+        # the command line — which outranks the `ARCHS = arm64` in
+        # macos/Runner/Configs/Release.xcconfig, and reaches the Rust build
+        # hook as `-dDarwinArchs`.
+        env:
+          FLUTTER_XCODE_ARCHS: ${{ matrix.xcarch }}
         run: |
           flutter build macos --release \
             --build-number="${BUILD_NUMBER}" \
             --build-name="1.0.${BUILD_NUMBER}"
+      # What the split is for, and the one thing that cannot be seen by looking
+      # at the app: a slice that did not build the way it was asked to. The
+      # Rust crate is the case that matters — `native_toolchain_rust` falls
+      # back to the host target rather than failing when the one it wants is
+      # missing, which would put an arm64 sbm_ffi in an Intel app and take the
+      # process down at `RustLib.init`, on a machine nobody here has.
+      - name: Check the architecture
+        shell: bash
+        env:
+          EXPECTED_ARCH: ${{ matrix.xcarch }}
+        run: |
+          set -euo pipefail
+          app="build/macos/Build/Products/Release/Server Box.app"
+
+          checked=0
+          bad=()
+          while IFS= read -r -d '' binary; do
+            archs="$(lipo -archs "$binary" 2>/dev/null)" || continue
+            checked=$((checked + 1))
+            case "${binary##*/}" in
+              libswift*.dylib)
+                # Apple's Swift back-deployment runtime, copied out of the
+                # toolchain by Xcode's "Copy Swift Standard Libraries" phase
+                # and universal as it ships. It only has to carry this slice.
+                [[ " $archs " == *" $EXPECTED_ARCH "* ]] ||
+                  bad+=("${binary#"$app/"}: $archs")
+                ;;
+              *)
+                [[ "$archs" == "$EXPECTED_ARCH" ]] ||
+                  bad+=("${binary#"$app/"}: $archs")
+                ;;
+            esac
+          done < <(find "$app/Contents/MacOS" "$app/Contents/Frameworks" -type f -print0)
+
+          if (( checked == 0 )); then
+            echo "::error::no Mach-O binary found in $app"
+            exit 1
+          fi
+          if (( ${#bad[@]} )); then
+            echo "::error::${#bad[@]} binary/binaries are not $EXPECTED_ARCH alone:"
+            printf '  %s\n' "${bad[@]}"
+            exit 1
+          fi
+          echo "$checked binaries, all $EXPECTED_ARCH"
       - name: Verify release launch
         shell: bash
+        env:
+          EXPECTED_ARCH: ${{ matrix.xcarch }}
         run: |
           set -euo pipefail
           app="build/macos/Build/Products/Release/Server Box.app"
@@ -310,6 +380,17 @@ jobs:
           log_file="$RUNNER_TEMP/server-box.log"
 
           codesign --verify --deep --strict "$app"
+
+          # A foreign slice needs Rosetta, which is not on every image. Skipped
+          # rather than failed when it is absent: this is the check the Intel
+          # build never had, and having it only when the runner can run it is
+          # still more than none.
+          if [[ "$EXPECTED_ARCH" != "$(uname -m)" ]] &&
+            ! /usr/bin/arch "-$EXPECTED_ARCH" /usr/bin/true >/dev/null 2>&1; then
+            echo "::notice::this runner cannot execute $EXPECTED_ARCH; skipping the launch check"
+            exit 0
+          fi
+
           "$executable" >"$log_file" 2>&1 &
           pid=$!
 
@@ -352,7 +433,7 @@ jobs:
           APP_NAME: Server Box
           APP_ASSET_NAME: ${{ env.APP_NAME }}
           APP_PATH: build/macos/Build/Products/Release/Server Box.app
-          DMG_BASENAME: ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_NoSign
+          DMG_BASENAME: ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_NoSign_${{ matrix.arch }}
         run: bash scripts/release/package-dmg-from-xcarchive.sh
       # Always, release or not. The artifact is how the build reaches
       # `publishRelease`; `if-no-files-found: error` is what makes a rename
@@ -361,18 +442,21 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-macos
-          path: build/artifacts/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_NoSign.dmg
+          name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-macos-${{ matrix.arch }}
+          path: build/artifacts/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_NoSign_${{ matrix.arch }}.dmg
           if-no-files-found: error
           retention-days: 14
       # macOS subscribes to MetricKit the same way iOS does, so it needs the
       # same symbols: a call stack there is a binary UUID and an offset too.
       # `sbm_ffi.framework.dSYM` is the one that matters most -- Rust is linked
       # as its own framework here, and it is what can take the process down.
+      #
+      # Per architecture, because the binaries they describe now are: a dSYM
+      # only resolves an address for the slice it was built alongside.
       - name: Upload dSYMs
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-macos-dsyms
+          name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-macos-${{ matrix.arch }}-dsyms
           path: build/macos/Build/Products/Release/**/*.dSYM
           if-no-files-found: error
           retention-days: 90
@@ -853,7 +937,8 @@ jobs:
           set -euo pipefail
 
           expected=(
-            "${APP_NAME}_${TAG}_NoSign.dmg"
+            "${APP_NAME}_${TAG}_NoSign_arm64.dmg"
+            "${APP_NAME}_${TAG}_NoSign_amd64.dmg"
             "${APP_NAME}_${TAG}_NoSign.ipa"
             "${APP_NAME}_${TAG}_arm64.apk"
             "${APP_NAME}_${TAG}_arm.apk"

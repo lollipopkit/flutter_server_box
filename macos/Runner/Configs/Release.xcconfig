@@ -1,2 +1,33 @@
 #include "../../Flutter/Flutter-Release.xcconfig"
 #include "Warnings.xcconfig"
+
+// The App Store build is Apple Silicon only, and so is any Release build that
+// does not say otherwise. Intel Macs are served by the Developer ID DMG, which
+// is built once per architecture: scripts/release/release-macos-dmg.sh passes
+// `ARCHS=x86_64` on the xcodebuild command line and the macOS CI job sets
+// `FLUTTER_XCODE_ARCHS`, which `flutter build macos` forwards the same way. A
+// command-line build setting outranks every xcconfig, so the split needs no
+// second configuration and no second scheme.
+//
+// Here rather than `flutter config --enable-macos-arm64-only`: that flag is
+// per machine and lives outside the checkout, so CI and every other clone
+// would keep producing a universal binary while the machine that set it did
+// not.
+//
+// ARCHS is also what decides the architectures the Rust crate is built for —
+// Xcode's value reaches the build hook as `-dDarwinArchs`, so a thin app
+// carries a thin sbm_ffi.framework rather than a universal one.
+//
+// What allows this: Apple Developer Relations, 2026-09-01 — a universal macOS
+// app on the Mac App Store that requires **macOS 13 or later** may now drop
+// Intel. `MACOSX_DEPLOYMENT_TARGET` is 13.0 for that reason as much as for its
+// own (see the Xcode project), so lowering it and keeping this line is a
+// submission Apple refuses, with `Invalid bundle ... must include the x86_64
+// architecture` (90981). The two move together or not at all.
+//
+// TODO(app-store): the first submission after this lands is worth putting
+// through Xcode Organizer's "Validate App" before the tag is pushed — nothing
+// local checks it, and the answer arrives at upload otherwise. If it is
+// refused, delete this line: the App Store build is universal again, and the
+// DMGs and CI pass ARCHS themselves and do not care either way.
+ARCHS = arm64

@@ -41,7 +41,17 @@ fi
 
 APP_VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$INFO_PLIST")"
 APP_BUILD="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$INFO_PLIST")"
-DMG_BASENAME="${DMG_BASENAME:-${APP_ASSET_NAME}-${APP_VERSION}}"
+
+# The name says what is inside it. A release ships one DMG per architecture, so
+# a file that does not name one cannot be told from the other after it is
+# downloaded. A universal bundle keeps the plain name, which is what it is.
+if [[ -z "${DMG_BASENAME:-}" ]]; then
+  case "$(lipo -archs "$APP_PATH/Contents/MacOS/${APP_NAME}" 2>/dev/null)" in
+    arm64) DMG_BASENAME="${APP_ASSET_NAME}-${APP_VERSION}-arm64" ;;
+    x86_64) DMG_BASENAME="${APP_ASSET_NAME}-${APP_VERSION}-amd64" ;;
+    *) DMG_BASENAME="${APP_ASSET_NAME}-${APP_VERSION}" ;;
+  esac
+fi
 DMG_PATH="${DMG_PATH:-$ARTIFACTS_PATH/${DMG_BASENAME}.dmg}"
 
 mkdir -p "$ARTIFACTS_PATH"
