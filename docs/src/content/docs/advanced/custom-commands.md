@@ -3,7 +3,15 @@ title: Custom Commands
 description: Show custom command output on the server detail page
 ---
 
-You can add custom shell commands and view their output on the server detail page. The output refreshes with the server status data.
+You can add custom shell commands and view their output on the server detail page.
+
+## Refresh interval
+
+Custom commands run on their own schedule, separate from the status poll. **Settings → Server → More → Custom command interval** sets it; the default is 30 seconds.
+
+They only run on a status poll, so the interval that takes effect is the one you set rounded up to a whole number of status update intervals: 7 seconds against a 3-second status poll means 9. The settings entry shows the value that takes effect.
+
+Set it to `0` to run them on every status poll, which is what earlier versions did.
 
 ## Storage location
 
@@ -13,6 +21,7 @@ Consequences:
 
 - **The server must be reachable while editing.** If it is unavailable, the editor explains that the changes cannot be saved.
 - **The App and Monitor agent share the same commands.** The Monitor web panel edits this directory, and the status script reads it, so no synchronization step is needed.
+- **A save replaces the whole set, and is refused if it would discard someone else's edits.** The editor records what the directory held when it loaded, and the save checks that value before replacing anything. If another App or panel changed the commands in between, the save fails and offers to reload.
 
 ## Editing
 
@@ -50,7 +59,7 @@ ps aux | sort -rk 3 | head -5
 uptime | awk -F'load average:' '{print $2}'
 ```
 
-**Keep execution time short.** Ideally, finish within one second; the command runs on every status refresh.
+**Keep execution time short.** Each command has a 5-second timeout on the server, and the commands run one after another.
 
 **Limit output:**
 
@@ -62,7 +71,7 @@ tail -20 /var/log/syslog
 
 Commands run as the identity used to reach the server: the SSH user for SSH connections, or the user running Monitor agent for Monitor connections.
 
-On a Monitor server, editing custom commands requires `full_access`. The agent must also have terminal access enabled, and the request must use secure transport or explicitly allow `allow_insecure`. Adding a file to this directory schedules code to run as the agent user on every refresh.
+On a Monitor server, editing custom commands requires `full_access`. The agent must also have terminal access enabled, and the request must use secure transport or explicitly allow `allow_insecure`. Adding a file to this directory schedules code to run as the agent user on every extended collection cycle.
 
 Avoid commands that modify system state. Never put passwords, tokens, or other credentials in a custom command.
 

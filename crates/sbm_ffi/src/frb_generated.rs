@@ -27,8 +27,8 @@
 
 // Section: imports
 
-use crate::api::plugin::*;
-use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::ssh_crypto::*;
+use crate::api::plugin::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};
 
@@ -40,7 +40,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
                     default_rust_auto_opaque = RustAutoOpaqueMoi,
                 );
                 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-                pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 454338062;
+                pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -508223517;
             
 
 // Section: executor
@@ -349,6 +349,14 @@ let api_build_number = <String>::sse_decode(&mut deserializer);deserializer.end(
                 transform_result_sse::<_, ()>((move || {
                      let output_ok = Ok::<_, ()>(crate::api::script::contains_status_segment(api_raw))?;   std::result::Result::Ok(output_ok)
                 })()) })
+            }fn wire__crate__api__script__custom_cmds_conflict_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "custom_cmds_conflict", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_output = <String>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, ()>((move || {
+                     let output_ok = Ok::<_, ()>(crate::api::script::custom_cmds_conflict(api_output))?;   std::result::Result::Ok(output_ok)
+                })()) })
             }fn wire__crate__api__script__custom_result_key_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
                 FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "custom_result_key", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
             let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
@@ -440,9 +448,10 @@ let api_script_path = <String>::sse_decode(&mut deserializer);deserializer.end()
             let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
             let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
             let api_system = <String>::sse_decode(&mut deserializer);
-let api_cmds = <Vec<crate::api::script::CustomCmd>>::sse_decode(&mut deserializer);deserializer.end();
+let api_cmds = <Vec<crate::api::script::CustomCmd>>::sse_decode(&mut deserializer);
+let api_expect = <Option<String>>::sse_decode(&mut deserializer);deserializer.end();
                 transform_result_sse::<_, String>((move || {
-                     let output_ok = crate::api::script::install_custom_cmds_command(api_system, api_cmds)?;   std::result::Result::Ok(output_ok)
+                     let output_ok = crate::api::script::install_custom_cmds_command(api_system, api_cmds, api_expect)?;   std::result::Result::Ok(output_ok)
                 })()) })
             }fn wire__crate__api__script__install_payload_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
                 FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "install_payload", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
@@ -452,6 +461,14 @@ let api_cmds = <Vec<crate::api::script::CustomCmd>>::sse_decode(&mut deserialize
 let api_content = <String>::sse_decode(&mut deserializer);deserializer.end();
                 transform_result_sse::<_, String>((move || {
                      let output_ok = crate::api::script::install_payload(api_system, api_content)?;   std::result::Result::Ok(output_ok)
+                })()) })
+            }fn wire__crate__api__script__parse_custom_cmds_fingerprint_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "parse_custom_cmds_fingerprint", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_output = <String>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, ()>((move || {
+                     let output_ok = Ok::<_, ()>(crate::api::script::parse_custom_cmds_fingerprint(api_output))?;   std::result::Result::Ok(output_ok)
                 })()) })
             }fn wire__crate__api__script__parse_custom_cmds_listing_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
                 FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "parse_custom_cmds_listing", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
@@ -660,6 +677,13 @@ let mut var_cmd = <String>::sse_decode(deserializer);
 return crate::api::script::CustomCmd{name: var_name, cmd: var_cmd};}
                 }
                 
+                impl SseDecode for crate::api::script::CustomCmdsListing {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_fingerprint = <String>::sse_decode(deserializer);
+let mut var_cmds = <Vec<crate::api::script::CustomCmd>>::sse_decode(deserializer);
+return crate::api::script::CustomCmdsListing{fingerprint: var_fingerprint, cmds: var_cmds};}
+                }
+                
                 impl SseDecode for crate::api::ssh_asym::EcdsaSignature {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_r = <Vec<u8>>::sse_decode(deserializer);
@@ -734,10 +758,10 @@ return crate::api::ssh_asym::EcdsaSignature{r: var_r, s: var_s};}
             }}
                 }
                 
-                impl SseDecode for Option<Vec<crate::api::script::CustomCmd>> {
+                impl SseDecode for Option<crate::api::script::CustomCmdsListing> {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {if (<bool>::sse_decode(deserializer)) {
-                return Some(<Vec<crate::api::script::CustomCmd>>::sse_decode(deserializer));
+                return Some(<crate::api::script::CustomCmdsListing>::sse_decode(deserializer));
             } else {
                 return None;
             }}
@@ -813,10 +837,11 @@ return crate::api::script::ScriptSegment{key: var_key, value: var_value};}
         return match inner {
             0 => crate::api::script::ShellFuncKind::Status,
 1 => crate::api::script::ShellFuncKind::StatusExt,
-2 => crate::api::script::ShellFuncKind::Process,
-3 => crate::api::script::ShellFuncKind::Shutdown,
-4 => crate::api::script::ShellFuncKind::Reboot,
-5 => crate::api::script::ShellFuncKind::Suspend,
+2 => crate::api::script::ShellFuncKind::Custom,
+3 => crate::api::script::ShellFuncKind::Process,
+4 => crate::api::script::ShellFuncKind::Shutdown,
+5 => crate::api::script::ShellFuncKind::Reboot,
+6 => crate::api::script::ShellFuncKind::Suspend,
             _ => unreachable!("Invalid variant for ShellFuncKind: {}", inner),
         };}
                 }
@@ -865,9 +890,9 @@ return crate::api::ssh_asym::X25519KeyPair{private_key: var_privateKey, public_k
 6 => wire__crate__api__plugin__PluginRuntime_load_impl(port, ptr, rust_vec_len, data_len),
 7 => wire__crate__api__plugin__PluginRuntime_new_impl(port, ptr, rust_vec_len, data_len),
 9 => wire__crate__api__plugin__PluginRuntime_unload_impl(port, ptr, rust_vec_len, data_len),
-28 => wire__crate__api__parser__init_app_impl(port, ptr, rust_vec_len, data_len),
-33 => wire__crate__api__script__parse_script_segments_impl(port, ptr, rust_vec_len, data_len),
-34 => wire__crate__api__parser__parse_status_json_impl(port, ptr, rust_vec_len, data_len),
+29 => wire__crate__api__parser__init_app_impl(port, ptr, rust_vec_len, data_len),
+35 => wire__crate__api__script__parse_script_segments_impl(port, ptr, rust_vec_len, data_len),
+36 => wire__crate__api__parser__parse_status_json_impl(port, ptr, rust_vec_len, data_len),
                         _ => unreachable!(),
                     }
                 }
@@ -896,27 +921,29 @@ return crate::api::ssh_asym::X25519KeyPair{private_key: var_privateKey, public_k
 18 => wire__crate__api__parser__command_specs_impl(ptr, rust_vec_len, data_len),
 19 => wire__crate__api__script__contains_script_segment_impl(ptr, rust_vec_len, data_len),
 20 => wire__crate__api__script__contains_status_segment_impl(ptr, rust_vec_len, data_len),
-21 => wire__crate__api__script__custom_result_key_impl(ptr, rust_vec_len, data_len),
-22 => wire__crate__api__script__custom_result_name_impl(ptr, rust_vec_len, data_len),
-23 => wire__crate__api__ssh_asym__ecdsa_sign_impl(ptr, rust_vec_len, data_len),
-24 => wire__crate__api__ssh_asym__ecdsa_verify_impl(ptr, rust_vec_len, data_len),
-25 => wire__crate__api__ssh_asym__ed25519_sign_impl(ptr, rust_vec_len, data_len),
-26 => wire__crate__api__ssh_asym__ed25519_verify_impl(ptr, rust_vec_len, data_len),
-27 => wire__crate__api__script__exec_command_impl(ptr, rust_vec_len, data_len),
-29 => wire__crate__api__script__install_command_impl(ptr, rust_vec_len, data_len),
-30 => wire__crate__api__script__install_custom_cmds_command_impl(ptr, rust_vec_len, data_len),
-31 => wire__crate__api__script__install_payload_impl(ptr, rust_vec_len, data_len),
-32 => wire__crate__api__script__parse_custom_cmds_listing_impl(ptr, rust_vec_len, data_len),
-35 => wire__crate__api__parser__parse_windows_net_speed_json_impl(ptr, rust_vec_len, data_len),
-36 => wire__crate__api__plugin__plugin_abi_version_impl(ptr, rust_vec_len, data_len),
-37 => wire__crate__api__plugin__plugin_host_functions_impl(ptr, rust_vec_len, data_len),
-38 => wire__crate__api__plugin__plugin_permissions_impl(ptr, rust_vec_len, data_len),
-39 => wire__crate__api__plugin__plugin_read_manifest_impl(ptr, rust_vec_len, data_len),
-40 => wire__crate__api__script__read_custom_cmds_command_impl(ptr, rust_vec_len, data_len),
-41 => wire__crate__api__script__script_segment_marker_impl(ptr, rust_vec_len, data_len),
-42 => wire__crate__api__script__shell_func_flag_impl(ptr, rust_vec_len, data_len),
-43 => wire__crate__api__ssh_asym__x25519_keypair_impl(ptr, rust_vec_len, data_len),
-44 => wire__crate__api__ssh_asym__x25519_shared_secret_impl(ptr, rust_vec_len, data_len),
+21 => wire__crate__api__script__custom_cmds_conflict_impl(ptr, rust_vec_len, data_len),
+22 => wire__crate__api__script__custom_result_key_impl(ptr, rust_vec_len, data_len),
+23 => wire__crate__api__script__custom_result_name_impl(ptr, rust_vec_len, data_len),
+24 => wire__crate__api__ssh_asym__ecdsa_sign_impl(ptr, rust_vec_len, data_len),
+25 => wire__crate__api__ssh_asym__ecdsa_verify_impl(ptr, rust_vec_len, data_len),
+26 => wire__crate__api__ssh_asym__ed25519_sign_impl(ptr, rust_vec_len, data_len),
+27 => wire__crate__api__ssh_asym__ed25519_verify_impl(ptr, rust_vec_len, data_len),
+28 => wire__crate__api__script__exec_command_impl(ptr, rust_vec_len, data_len),
+30 => wire__crate__api__script__install_command_impl(ptr, rust_vec_len, data_len),
+31 => wire__crate__api__script__install_custom_cmds_command_impl(ptr, rust_vec_len, data_len),
+32 => wire__crate__api__script__install_payload_impl(ptr, rust_vec_len, data_len),
+33 => wire__crate__api__script__parse_custom_cmds_fingerprint_impl(ptr, rust_vec_len, data_len),
+34 => wire__crate__api__script__parse_custom_cmds_listing_impl(ptr, rust_vec_len, data_len),
+37 => wire__crate__api__parser__parse_windows_net_speed_json_impl(ptr, rust_vec_len, data_len),
+38 => wire__crate__api__plugin__plugin_abi_version_impl(ptr, rust_vec_len, data_len),
+39 => wire__crate__api__plugin__plugin_host_functions_impl(ptr, rust_vec_len, data_len),
+40 => wire__crate__api__plugin__plugin_permissions_impl(ptr, rust_vec_len, data_len),
+41 => wire__crate__api__plugin__plugin_read_manifest_impl(ptr, rust_vec_len, data_len),
+42 => wire__crate__api__script__read_custom_cmds_command_impl(ptr, rust_vec_len, data_len),
+43 => wire__crate__api__script__script_segment_marker_impl(ptr, rust_vec_len, data_len),
+44 => wire__crate__api__script__shell_func_flag_impl(ptr, rust_vec_len, data_len),
+45 => wire__crate__api__ssh_asym__x25519_keypair_impl(ptr, rust_vec_len, data_len),
+46 => wire__crate__api__ssh_asym__x25519_shared_secret_impl(ptr, rust_vec_len, data_len),
                         _ => unreachable!(),
                     }
                 }
@@ -996,6 +1023,21 @@ self.cmd.into_into_dart().into_dart()
             impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::script::CustomCmd {}
 impl flutter_rust_bridge::IntoIntoDart<crate::api::script::CustomCmd> for crate::api::script::CustomCmd {
             fn into_into_dart(self) -> crate::api::script::CustomCmd {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::script::CustomCmdsListing {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    [
+                    self.fingerprint.into_into_dart().into_dart(),
+self.cmds.into_into_dart().into_dart()
+                ].into_dart()
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::script::CustomCmdsListing {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::script::CustomCmdsListing> for crate::api::script::CustomCmdsListing {
+            fn into_into_dart(self) -> crate::api::script::CustomCmdsListing {
                 self
             }
         }
@@ -1125,10 +1167,11 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::script::ScriptSegment> for cr
                     match self {
                     Self::Status => 0.into_dart(),
 Self::StatusExt => 1.into_dart(),
-Self::Process => 2.into_dart(),
-Self::Shutdown => 3.into_dart(),
-Self::Reboot => 4.into_dart(),
-Self::Suspend => 5.into_dart(),
+Self::Custom => 2.into_dart(),
+Self::Process => 3.into_dart(),
+Self::Shutdown => 4.into_dart(),
+Self::Reboot => 5.into_dart(),
+Self::Suspend => 6.into_dart(),
                     _ => unreachable!(),
                 }
                 }
@@ -1233,6 +1276,12 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::X25519KeyPair> for 
 <String>::sse_encode(self.cmd, serializer);}
                 }
                 
+                impl SseEncode for crate::api::script::CustomCmdsListing {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<String>::sse_encode(self.fingerprint, serializer);
+<Vec<crate::api::script::CustomCmd>>::sse_encode(self.cmds, serializer);}
+                }
+                
                 impl SseEncode for crate::api::ssh_asym::EcdsaSignature {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<Vec<u8>>::sse_encode(self.r, serializer);
@@ -1293,11 +1342,11 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::X25519KeyPair> for 
                 }}
                 }
                 
-                impl SseEncode for Option<Vec<crate::api::script::CustomCmd>> {
+                impl SseEncode for Option<crate::api::script::CustomCmdsListing> {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<bool>::sse_encode(self.is_some(), serializer);
                 if let Some(value) = self {
-                    <Vec<crate::api::script::CustomCmd>>::sse_encode(value, serializer);
+                    <crate::api::script::CustomCmdsListing>::sse_encode(value, serializer);
                 }}
                 }
                 
@@ -1362,10 +1411,11 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::X25519KeyPair> for 
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<i32>::sse_encode(match self {crate::api::script::ShellFuncKind::Status => { 0 }
 crate::api::script::ShellFuncKind::StatusExt => { 1 }
-crate::api::script::ShellFuncKind::Process => { 2 }
-crate::api::script::ShellFuncKind::Shutdown => { 3 }
-crate::api::script::ShellFuncKind::Reboot => { 4 }
-crate::api::script::ShellFuncKind::Suspend => { 5 }
+crate::api::script::ShellFuncKind::Custom => { 2 }
+crate::api::script::ShellFuncKind::Process => { 3 }
+crate::api::script::ShellFuncKind::Shutdown => { 4 }
+crate::api::script::ShellFuncKind::Reboot => { 5 }
+crate::api::script::ShellFuncKind::Suspend => { 6 }
  _ => { unimplemented!(""); }}, serializer);}
                 }
                 
@@ -1413,8 +1463,8 @@ crate::api::script::ShellFuncKind::Suspend => { 5 }
 
 // Section: imports
 
-use crate::api::plugin::*;
-use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::ssh_crypto::*;
+use crate::api::plugin::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};use super::*;
 
@@ -1473,8 +1523,8 @@ flutter_rust_bridge::frb_generated_boilerplate_io!();
 
 // Section: imports
 
-use crate::api::plugin::*;
-use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::ssh_crypto::*;
+use crate::api::plugin::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};use super::*;
                 use flutter_rust_bridge::for_generated::wasm_bindgen;

@@ -555,6 +555,18 @@ class AppLocalizationsFr extends AppLocalizations {
   String get customCmd => 'Commandes personnalisées';
 
   @override
+  String get customCmdInterval => 'Custom command interval';
+
+  @override
+  String customCmdIntervalTip(Object seconds) {
+    return 'They run on a status poll, so this is rounded up to a whole number of update intervals. Actual: ${seconds}s.';
+  }
+
+  @override
+  String get customCmdChangedOnServer =>
+      'The commands on this server have changed since this page loaded them. Reload to see them; saving now would discard them.';
+
+  @override
   String get deleteServers => 'Supprimer des serveurs en lot';
 
   @override

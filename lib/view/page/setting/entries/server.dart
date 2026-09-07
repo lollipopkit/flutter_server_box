@@ -156,6 +156,7 @@ extension _Server on _AppSettingsPageState {
         _buildKeepStatusWhenErr(),
         _buildDoubleColumnServersPage(),
         _buildUpdateInterval(),
+        _buildCustomCmdInterval(),
         _buildMaxRetry(),
         if (isDesktop) _buildSSHConfigAutoImportToggle(),
       ],

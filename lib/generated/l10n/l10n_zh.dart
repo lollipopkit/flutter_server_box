@@ -506,6 +506,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String get customCmd => '自定义命令';
 
   @override
+  String get customCmdInterval => '自定义命令间隔';
+
+  @override
+  String customCmdIntervalTip(Object seconds) {
+    return '命令随状态轮询执行，因此该值会向上取整到刷新间隔的整数倍。实际：$seconds 秒。';
+  }
+
+  @override
+  String get customCmdChangedOnServer => '本页加载后，服务器上的命令已被改动。保存会覆盖掉这些改动，请先重新加载。';
+
+  @override
   String get deleteServers => '批量删除服务器';
 
   @override

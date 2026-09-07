@@ -517,6 +517,18 @@ class AppLocalizationsKo extends AppLocalizations {
   String get customCmd => '사용자 정의 명령어';
 
   @override
+  String get customCmdInterval => 'Custom command interval';
+
+  @override
+  String customCmdIntervalTip(Object seconds) {
+    return 'They run on a status poll, so this is rounded up to a whole number of update intervals. Actual: ${seconds}s.';
+  }
+
+  @override
+  String get customCmdChangedOnServer =>
+      'The commands on this server have changed since this page loaded them. Reload to see them; saving now would discard them.';
+
+  @override
   String get deleteServers => '서버 일괄 삭제';
 
   @override

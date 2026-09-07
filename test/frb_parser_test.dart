@@ -245,6 +245,7 @@ void main() {
 
     final listing = [
       'SrvBoxCusCmdDir',
+      'SrvBoxCusCmdFp 3010678734-27',
       // 00100_<base64url of 'probe'> <base64 of the command>
       '00100_${base64Url.encode(utf8.encode('probe'))} '
           '${base64.encode(utf8.encode('echo hi\necho there'))}',
@@ -253,16 +254,75 @@ void main() {
     ].join('\n');
     final parsed = script.parseCustomCmdsListing(raw: listing);
     expect(parsed, isNotNull);
-    expect(parsed!.length, 1);
-    expect(parsed.first.name, 'probe');
-    expect(parsed.first.cmd, 'echo hi\necho there');
+    expect(parsed!.cmds.length, 1);
+    expect(parsed.cmds.first.name, 'probe');
+    expect(parsed.cmds.first.cmd, 'echo hi\necho there');
+    // What a later save is checked against, so two clients editing one server
+    // cannot silently discard each other's work.
+    expect(parsed.fingerprint, '3010678734-27');
 
     expect(script.parseCustomCmdsListing(raw: ''), isNull);
     expect(
       script.parseCustomCmdsListing(
         raw: 'SrvBoxCusCmdDir\nSrvBoxCusCmdDirEnd\n',
-      ),
+      )?.cmds,
       isEmpty,
+    );
+  });
+
+  test('a save says what it expected, and a refusal is told apart', () {
+    // The expectation reaches the shell as a comparison it makes for itself,
+    // and the refusal comes back as a line rather than only an exit code —
+    // this output crosses SSH and a monitor agent's `/exec`, and a line
+    // survives both.
+    final checked = script.installCustomCmdsCommand(
+      system: 'linux',
+      cmds: [script.CustomCmd(name: 'probe', cmd: 'echo hi')],
+      expect: '3010678734-27',
+    );
+    expect(checked, contains('3010678734-27'));
+    expect(checked, contains('SrvBoxCusCmdConflict'));
+
+    final unchecked = script.installCustomCmdsCommand(
+      system: 'linux',
+      cmds: [script.CustomCmd(name: 'probe', cmd: 'echo hi')],
+      expect: null,
+    );
+    expect(unchecked, isNot(contains('SrvBoxCusCmdConflict')));
+
+    expect(script.customCmdsConflict(output: 'SrvBoxCusCmdConflict'), isTrue);
+    expect(script.customCmdsConflict(output: 'mv: cannot stat'), isFalse);
+
+    // A successful install says what it left behind, so the editor's next save
+    // needs no second round trip.
+    expect(
+      script.parseCustomCmdsFingerprint(output: 'x\nSrvBoxCusCmdFp 42-7\n'),
+      '42-7',
+    );
+    expect(script.parseCustomCmdsFingerprint(output: 'nothing'), isNull);
+  });
+
+  test('custom commands are not in the status function', () {
+    // Their own function, so the poll does not wait on arbitrary shell a user
+    // typed and each side runs on its own cadence.
+    final generated = script.buildScript(
+      system: 'linux',
+      disabled: const [],
+      buildNumber: 'test',
+    );
+    final status = generated.substring(
+      generated.indexOf('SbStatus() {'),
+      generated.indexOf('SbStatusExt() {'),
+    );
+    expect(status, isNot(contains('SrvBoxCusCmdSep.')));
+    expect(generated, contains('SbCustom() {'));
+    expect(
+      script.execCommand(
+        system: 'linux',
+        scriptPath: '/tmp/s.sh',
+        func: script.ShellFuncKind.custom,
+      ),
+      endsWith('-c'),
     );
   });
 

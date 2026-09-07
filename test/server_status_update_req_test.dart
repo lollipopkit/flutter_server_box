@@ -212,6 +212,35 @@ Filesystem  1024-blocks   Used Available Capacity Mounted on
     });
   });
 
+  /// The output carried into a poll is the whole of the last successful
+  /// `SbCustom` run — replayed on the polls in between, kept on a run that
+  /// failed. So a name that is not in it is a command that is not there any
+  /// more, and merging left a deleted one's last output on the page forever.
+  group('custom command output', () {
+    Future<ServerStatus> parse(ServerStatus into, Map<String, String> raw) =>
+        getStatus(
+          ServerStatusUpdateReq(
+            system: SystemType.linux,
+            ss: into,
+            parsedOutput: raw,
+          ),
+        );
+
+    test('a deleted command stops being shown', () async {
+      final first = await parse(InitStatus.status, {
+        'SrvBoxCusCmdSep.kept': 'a',
+        'SrvBoxCusCmdSep.gone': 'b',
+      });
+      expect(first.customCmds, {'kept': 'a', 'gone': 'b'});
+
+      final second = await parse(first, {'SrvBoxCusCmdSep.kept': 'a'});
+      expect(second.customCmds, {'kept': 'a'});
+
+      final third = await parse(second, const {});
+      expect(third.customCmds, isEmpty);
+    });
+  });
+
   /// The wiring between the parser's JSON and the fields the marks are drawn
   /// from. Every failure here is silent: a key that stopped arriving leaves
   /// `osId` null and the prose match answers instead, usually with the parent.

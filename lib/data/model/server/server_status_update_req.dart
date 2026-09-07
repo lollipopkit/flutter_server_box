@@ -78,7 +78,14 @@ Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
   // Taken from what the script printed, not from a list the app holds: the
   // commands live on the server now, so their names and their order are only
   // knowable from the output.
+  //
+  // Cleared first, as the monitor path does. The output carried here is the
+  // whole of the last successful `SbCustom` run — replayed on the polls in
+  // between, kept on a run that failed — so a name absent from it is a command
+  // that is not there any more. Merging instead left a deleted command's last
+  // output on the status page for the life of the process.
   _apply('custom', () {
+    ss.customCmds.clear();
     for (final e in req.parsedOutput.entries) {
       final name = script_ffi.customResultName(key: e.key);
       if (name == null) continue;

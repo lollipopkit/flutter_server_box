@@ -44,6 +44,15 @@ final class _CustomCmdsPageState extends ConsumerState<CustomCmdsPage> {
   bool _dirty = false;
   bool _saving = false;
 
+  /// What the directory held when this page loaded it, sent back on save.
+  ///
+  /// The set lives on the server and every client edits the same one, so a
+  /// save writes the whole thing. Without this, two people editing one machine
+  /// would each write their own copy and the second would silently discard the
+  /// first's work. Null when the directory does not exist yet — there is then
+  /// nothing to discard.
+  String? _fingerprint;
+
   Spi get _spi => widget.args.spi;
 
   @override
@@ -185,12 +194,13 @@ extension on _CustomCmdsPageState {
         throw '${res.exitCode}: ${res.combined}';
       }
       // A directory that does not exist yet reads as no commands: the first
-      // save creates it. Telling the two apart matters to the migration, not
-      // here.
-      final parsed = ShellFuncManager.parseCustomCmds(res.stdout) ?? const [];
+      // save creates it. Telling the two apart matters to the migration and to
+      // [_fingerprint], not to the list.
+      final parsed = ShellFuncManager.parseCustomCmds(res.stdout);
       if (!mounted) return;
       setState(() {
-        _cmds = [for (final c in parsed) (name: c.name, cmd: c.cmd)];
+        _cmds = [for (final c in parsed?.cmds ?? const []) (name: c.name, cmd: c.cmd)];
+        _fingerprint = parsed?.fingerprint;
         _dirty = false;
       });
     } catch (e) {
@@ -210,14 +220,33 @@ extension on _CustomCmdsPageState {
         ShellFuncManager.installCustomCmds(
           [for (final c in cmds) ffi.CustomCmd(name: c.name, cmd: c.cmd)],
           systemType: system,
+          expect: _fingerprint,
         ),
         entry: ShellFuncManager.customCmdsEntry(system),
       );
+      // Told apart from any other failure because the answer is different:
+      // somebody else edited this server's commands, and nothing here is
+      // wrong except that this page is looking at an older set.
+      if (ShellFuncManager.customCmdsConflict(res.combined)) {
+        if (!mounted) return;
+        await _confirmReload();
+        return;
+      }
       if (!res.succeeded) {
         throw '${res.exitCode}: ${res.combined}';
       }
       if (!mounted) return;
-      setState(() => _dirty = false);
+      setState(() {
+        _dirty = false;
+        // What the next save is checked against. Taken from the install's own
+        // output rather than by reading the directory back: that would be a
+        // second round trip, and somebody else's save could land in the gap —
+        // which is the case this whole mechanism exists to catch.
+        //
+        // Null only from an install command old enough not to print one, and
+        // then the next save goes unchecked rather than being refused forever.
+        _fingerprint = ShellFuncManager.customCmdsFingerprint(res.stdout);
+      });
       Toast.show(libL10n.saved);
     } catch (e) {
       if (!mounted) return;
@@ -225,6 +254,22 @@ extension on _CustomCmdsPageState {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  /// Offers to reload after a save was refused.
+  ///
+  /// Reloading throws away what the user typed, so it is theirs to choose —
+  /// the alternative is copying the edits out by hand first. Saying no leaves
+  /// the page exactly as it was, which will be refused again, and that is
+  /// honest: this set cannot be written without looking at the other one.
+  Future<void> _confirmReload() async {
+    final ok = await context.showRoundDialog<bool>(
+      title: libL10n.attention,
+      child: Text(l10n.customCmdChangedOnServer),
+      actions: Btnx.cancelRedOk,
+    );
+    if (ok != true || !mounted) return;
+    await _load();
   }
 
   Future<void> _onAdd() async {

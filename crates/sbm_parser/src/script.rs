@@ -55,6 +55,62 @@ pub const CUSTOM_CMD_DIR_END_MARKER: &str = "SrvBoxCusCmdDirEnd";
 pub const CUSTOM_CMD_DIR_MISSING_MARKER: &str = "SrvBoxCusCmdDirMissing";
 const CUSTOM_CMD_OUTPUT_PREFIX: &str = "SrvBoxCusCmdOut.";
 
+/// Line the listing carries its fingerprint on: `SrvBoxCusCmdFp <token>`.
+///
+/// Inside the marker pair, so it belongs to the same listing the files do —
+/// two clients editing at once is exactly the case this exists for, and a
+/// fingerprint taken from a different run of the script would be a check that
+/// looks like one and is not.
+const CUSTOM_CMD_FP_PREFIX: &str = "SrvBoxCusCmdFp";
+
+/// Fingerprint of a directory that is not there.
+///
+/// A value rather than an absence, so "nobody has installed here" is something
+/// [`install_custom_cmds_script`] can be told to expect and can refuse when it
+/// turns out to be false.
+pub const CUSTOM_CMD_FP_ABSENT: &str = "-";
+
+/// Fingerprint of a host that cannot compute one.
+///
+/// The Unix half needs `cksum`. It is POSIX and busybox has it, but a host
+/// without it must still be able to save: this token compares equal to
+/// anything, so such a host degrades to the unchecked behaviour rather than to
+/// a save that can never succeed.
+pub const CUSTOM_CMD_FP_UNAVAILABLE: &str = "?";
+
+/// Printed by [`install_custom_cmds_script`] when the directory is not what the
+/// caller expected, before it exits non-zero.
+///
+/// A marker rather than only an exit code: the app reaches this through SSH and
+/// through a monitor agent's `/exec`, and a line in the output survives both
+/// unchanged.
+pub const CUSTOM_CMD_CONFLICT_MARKER: &str = "SrvBoxCusCmdConflict";
+
+/// Whether `output` is [`install_custom_cmds_script`] reporting a conflict.
+pub fn custom_cmds_conflict(output: &str) -> bool {
+    output
+        .split('\n')
+        .any(|line| line.strip_suffix('\r').unwrap_or(line).trim() == CUSTOM_CMD_CONFLICT_MARKER)
+}
+
+/// The fingerprint [`install_custom_cmds_script`] printed after installing.
+///
+/// What the caller's *next* save has to be checked against. Read from the
+/// install rather than from a second listing: a reload would be another round
+/// trip and would leave a window in which someone else's save lands between
+/// the two, which is the case the fingerprint exists to catch.
+pub fn parse_custom_cmds_fingerprint(output: &str) -> Option<String> {
+    output
+        .split('\n')
+        .rev()
+        .filter_map(|line| {
+            let line = line.strip_suffix('\r').unwrap_or(line).trim();
+            let token = line.strip_prefix(CUSTOM_CMD_FP_PREFIX)?.trim();
+            (!token.is_empty()).then(|| token.to_string())
+        })
+        .next()
+}
+
 /// The custom-command directory for a platform, as an expression the platform's
 /// shell expands.
 pub fn custom_cmd_dir(system: SystemType) -> &'static str {
@@ -207,6 +263,16 @@ pub enum ShellFunc {
     /// The `commands::EXTENDED` subset, split out of [`ShellFunc::Status`] so
     /// callers can run it on a slower cadence than the status poll
     StatusExt,
+    /// The user's custom commands, split out of [`ShellFunc::Status`] for the
+    /// same reason and one more.
+    ///
+    /// These are arbitrary shell a user typed, each given its own timeout, and
+    /// running them meant the status poll waited on all of them — so a machine
+    /// polled every three seconds ran every custom command every three
+    /// seconds, and one slow command delayed the readings beside it. On its own
+    /// function it has its own cadence, and its output arrives in its own
+    /// stream rather than sharing one with the built-in probes.
+    Custom,
     Process,
     Shutdown,
     Reboot,
@@ -214,9 +280,10 @@ pub enum ShellFunc {
 }
 
 impl ShellFunc {
-    pub const ALL: [ShellFunc; 6] = [
+    pub const ALL: [ShellFunc; 7] = [
         ShellFunc::Status,
         ShellFunc::StatusExt,
+        ShellFunc::Custom,
         ShellFunc::Process,
         ShellFunc::Shutdown,
         ShellFunc::Reboot,
@@ -227,6 +294,7 @@ impl ShellFunc {
         match self {
             ShellFunc::Status => "SbStatus",
             ShellFunc::StatusExt => "SbStatusExt",
+            ShellFunc::Custom => "SbCustom",
             ShellFunc::Process => "SbProcess",
             ShellFunc::Shutdown => "SbShutdown",
             ShellFunc::Reboot => "SbReboot",
@@ -238,6 +306,7 @@ impl ShellFunc {
         match self {
             ShellFunc::Status => "s",
             ShellFunc::StatusExt => "e",
+            ShellFunc::Custom => "c",
             ShellFunc::Process => "p",
             ShellFunc::Shutdown => "sd",
             ShellFunc::Reboot => "r",
@@ -270,18 +339,44 @@ pub struct ScriptOptions {
 /// Contents travel base64-encoded. A custom command is arbitrary text that a
 /// user typed, and a heredoc carrying it verbatim would end wherever the text
 /// happened to say so.
-pub fn install_custom_cmds_script(system: SystemType, cmds: &[(u32, String, String)]) -> String {
+///
+/// `expect` is the fingerprint the caller believes the directory currently
+/// has, from the [`CustomCmdsListing`] it loaded. The whole set is written at
+/// once — that is what makes a reorder expressible — so two clients editing the
+/// same server would otherwise silently discard whichever saved first. With an
+/// expectation the second save is refused instead, reporting
+/// [`CUSTOM_CMD_CONFLICT_MARKER`]. `None` skips the check, which is right for a
+/// caller that has not read the directory at all.
+pub fn install_custom_cmds_script(
+    system: SystemType,
+    cmds: &[(u32, String, String)],
+    expect: Option<&str>,
+) -> String {
     use base64::Engine;
     let b64 = base64::engine::general_purpose::STANDARD;
 
     match system {
         SystemType::Windows => {
+            let check = match expect {
+                Some(expect) => format!(
+                    "$cur = SbFp $dir\n\
+                     if ($cur -ne '{CUSTOM_CMD_FP_UNAVAILABLE}' -and $cur -ne {}) {{\n\
+                     \x20 Write-Host '{CUSTOM_CMD_CONFLICT_MARKER}'\n\
+                     \x20 exit 3\n\
+                     }}\n",
+                    shell_quote_ps(expect)
+                ),
+                None => String::new(),
+            };
             let mut out = format!(
                 "$ErrorActionPreference = 'Stop'\n\
                  $dir = {CUSTOM_CMD_DIR_WINDOWS}\n\
                  $tmp = \"$dir.new\"\n\
+                 {}\
+                 {check}\
                  if (Test-Path $tmp) {{ Remove-Item -Recurse -Force $tmp }}\n\
-                 New-Item -ItemType Directory -Force -Path $tmp | Out-Null\n"
+                 New-Item -ItemType Directory -Force -Path $tmp | Out-Null\n",
+                windows_recover_and_fingerprint()
             );
             let ext = custom_cmd_file_ext(SystemType::Windows);
             for (order, name, cmd) in cmds {
@@ -304,16 +399,35 @@ pub fn install_custom_cmds_script(system: SystemType, cmds: &[(u32, String, Stri
                  }\n\
                  if (Test-Path $bak) { Remove-Item -Recurse -Force $bak }\n",
             );
+            // What the caller's next save is checked against, so it does not
+            // have to read the directory back to find out.
+            out.push_str(&format!(
+                "Write-Host (\"{CUSTOM_CMD_FP_PREFIX} {{0}}\" -f (SbFp $dir))\n"
+            ));
             out
         }
         SystemType::Linux | SystemType::Bsd => {
+            let check = match expect {
+                Some(expect) => format!(
+                    "cur=$(sb_fp \"$d\")\n\
+                     if [ \"$cur\" != '{CUSTOM_CMD_FP_UNAVAILABLE}' ] && [ \"$cur\" != {} ]; then\n\
+                     \x20 echo {CUSTOM_CMD_CONFLICT_MARKER}\n\
+                     \x20 exit 3\n\
+                     fi\n",
+                    shell_quote_unix(expect)
+                ),
+                None => String::new(),
+            };
             let mut out = format!(
                 "set -e\n\
                  d=\"{CUSTOM_CMD_DIR_UNIX}\"\n\
                  t=\"$d.new\"\n\
                  b=\"$d.bak\"\n\
+                 {}\
+                 {check}\
                  rm -rf \"$t\" \"$b\"\n\
-                 mkdir -p \"$t\"\n"
+                 mkdir -p \"$t\"\n",
+                unix_recover_and_fingerprint()
             );
             for (order, name, cmd) in cmds {
                 let file = custom_cmd_file_name(*order, name);
@@ -331,9 +445,69 @@ pub fn install_custom_cmds_script(system: SystemType, cmds: &[(u32, String, Stri
                  fi\n\
                  rm -rf \"$b\"\n",
             );
+            // What the caller's next save is checked against, so it does not
+            // have to read the directory back to find out.
+            out.push_str(&format!("echo \"{CUSTOM_CMD_FP_PREFIX} $(sb_fp \"$d\")\"\n"));
             out
         }
     }
+}
+
+/// Repairs an interrupted install, then defines `sb_fp`.
+///
+/// Installing moves the old directory aside and moves the new one into place.
+/// A connection dropped between those two leaves no directory and a `.bak`
+/// holding the user's commands — and until this existed, both the reader and
+/// the status function papered over it by reading `.bak` instead, so every
+/// client silently ran a set nobody was editing and a save could overwrite it
+/// with whatever the editor had managed to show.
+///
+/// Repair belongs to the two paths that already write. The function that
+/// *runs* the commands deliberately has none of this: a status poll that
+/// repairs state is a poll with a new way to fail, and its job is to run what
+/// is installed. A directory that is not there runs nothing.
+///
+/// `sb_fp <dir>` prints the fingerprint of a directory — the same listing the
+/// reader prints, through `cksum`. Both halves are on the same machine, so
+/// this never has to agree with the Windows one.
+fn unix_recover_and_fingerprint() -> String {
+    format!(
+        "if [ ! -e \"$d\" ] && [ -d \"$d.bak\" ]; then mv \"$d.bak\" \"$d\"; fi\n\
+         sb_fp() {{\n\
+         \tif [ ! -d \"$1\" ]; then printf %s '{CUSTOM_CMD_FP_ABSENT}'; return 0; fi\n\
+         \tcommand -v cksum >/dev/null 2>&1 || {{ printf %s '{CUSTOM_CMD_FP_UNAVAILABLE}'; return 0; }}\n\
+         \tfor _f in \"$1\"/*; do\n\
+         \t\t[ -f \"$_f\" ] || continue\n\
+         \t\t_n=${{_f##*/}}\n\
+         \t\t_o=${{_n%%_*}}\n\
+         \t\t_e=${{_n#*_}}\n\
+         \t\t[ ${{#_o}} -eq 5 ] || continue\n\
+         \t\tcase \"$_o\" in *[!0-9]*) continue;; esac\n\
+         \t\tcase \"$_e\" in ''|*[!A-Za-z0-9_=-]*) continue;; esac\n\
+         \t\tprintf '%s ' \"$_n\"\n\
+         \t\tbase64 < \"$_f\" | tr -d '\\n'\n\
+         \t\techo\n\
+         \tdone | cksum | tr ' ' '-' | tr -d '\\n'\n\
+         }}\n"
+    )
+}
+
+/// The Windows half of [`unix_recover_and_fingerprint`]. `$dir` is already set.
+fn windows_recover_and_fingerprint() -> String {
+    format!(
+        "if (-not (Test-Path $dir) -and (Test-Path \"$dir.bak\")) {{ Move-Item \"$dir.bak\" $dir }}\n\
+         function SbFp($p) {{\n\
+         \x20 if (-not (Test-Path $p)) {{ return '{CUSTOM_CMD_FP_ABSENT}' }}\n\
+         \x20 $sb = New-Object System.Text.StringBuilder\n\
+         \x20 Get-ChildItem -File $p | Sort-Object Name | ForEach-Object {{\n\
+         \x20   if ($_.Name -match '^[0-9]{{5}}_[A-Za-z0-9_=-]+\\.ps1$') {{\n\
+         \x20     [void]$sb.AppendLine((\"{{0}} {{1}}\" -f $_.Name, [Convert]::ToBase64String([IO.File]::ReadAllBytes($_.FullName))))\n\
+         \x20   }}\n\
+         \x20 }}\n\
+         \x20 $h = [Security.Cryptography.SHA256]::Create()\n\
+         \x20 return [BitConverter]::ToString($h.ComputeHash([Text.Encoding]::UTF8.GetBytes($sb.ToString()))).Replace('-','')\n\
+         }}\n"
+    )
 }
 
 /// A script that prints the custom-command directory back, for an editor to
@@ -347,14 +521,20 @@ pub fn install_custom_cmds_script(system: SystemType, cmds: &[(u32, String, Stri
 /// Prints nothing at all when the directory does not exist, which the caller
 /// must distinguish from a directory that exists and is empty — the first
 /// means "never installed here", the second means "the user deleted them all".
+///
+/// Repairs an interrupted install on its way past — see
+/// [`unix_recover_and_fingerprint`]. Reading is not normally allowed to write,
+/// and this is the exception that keeps the invariant everything else rests
+/// on: the directory is the only place these commands live.
 pub fn read_custom_cmds_script(system: SystemType) -> String {
     match system {
         SystemType::Windows => format!(
-            "$d = {CUSTOM_CMD_DIR_WINDOWS}\n\
-             if (-not (Test-Path $d) -and (Test-Path \"$d.bak\")) {{ $d = \"$d.bak\" }}\n\
-             if (Test-Path $d) {{\n\
+            "$dir = {CUSTOM_CMD_DIR_WINDOWS}\n\
+             {}\
+             if (Test-Path $dir) {{\n\
              \x20 Write-Host '{CUSTOM_CMD_DIR_MARKER}'\n\
-             \x20 Get-ChildItem -File $d | Sort-Object Name | ForEach-Object {{\n\
+             \x20 Write-Host (\"{CUSTOM_CMD_FP_PREFIX} {{0}}\" -f (SbFp $dir))\n\
+             \x20 Get-ChildItem -File $dir | Sort-Object Name | ForEach-Object {{\n\
              \x20   if ($_.Name -match '^[0-9]{{5}}_[A-Za-z0-9_=-]+\\.ps1$') {{\n\
              \x20     Write-Host (\"{{0}} {{1}}\" -f $_.Name, [Convert]::ToBase64String([IO.File]::ReadAllBytes($_.FullName)))\n\
              \x20   }}\n\
@@ -362,13 +542,15 @@ pub fn read_custom_cmds_script(system: SystemType) -> String {
              \x20 Write-Host '{CUSTOM_CMD_DIR_END_MARKER}'\n\
              }} else {{\n\
              \x20 Write-Host '{CUSTOM_CMD_DIR_MISSING_MARKER}'\n\
-             }}\n"
+             }}\n",
+            windows_recover_and_fingerprint()
         ),
         SystemType::Linux | SystemType::Bsd => format!(
             "d=\"{CUSTOM_CMD_DIR_UNIX}\"\n\
-             [ -d \"$d\" ] || d=\"$d.bak\"\n\
+             {}\
              if [ ! -d \"$d\" ]; then echo {CUSTOM_CMD_DIR_MISSING_MARKER}; exit 0; fi\n\
              echo {CUSTOM_CMD_DIR_MARKER}\n\
+             echo \"{CUSTOM_CMD_FP_PREFIX} $(sb_fp \"$d\")\"\n\
              for f in \"$d\"/*; do\n\
              \t[ -f \"$f\" ] || continue\n\
              \tn=${{f##*/}}\n\
@@ -381,19 +563,34 @@ pub fn read_custom_cmds_script(system: SystemType) -> String {
              \tbase64 < \"$f\" | tr -d '\\n'\n\
              \techo\n\
              done\n\
-             echo {CUSTOM_CMD_DIR_END_MARKER}\n"
+             echo {CUSTOM_CMD_DIR_END_MARKER}\n",
+            unix_recover_and_fingerprint()
         ),
     }
 }
 
-/// The directory [`read_custom_cmds_script`] printed, as `(order, name, cmd)`
-/// in file-name order.
+/// One reading of the custom-command directory.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CustomCmdsListing {
+    /// What the directory held when this was read, to be handed back to
+    /// [`install_custom_cmds_script`] so a save that would discard someone
+    /// else's edit is refused instead.
+    ///
+    /// [`CUSTOM_CMD_FP_UNAVAILABLE`] on a host that cannot compute one, and
+    /// empty when the listing came from a script old enough not to print one —
+    /// both compare equal to anything, so an app talking to either still saves.
+    pub fingerprint: String,
+    /// `(order, name, cmd)` in file-name order, which is the order they run in.
+    pub cmds: Vec<(u32, String, String)>,
+}
+
+/// The directory [`read_custom_cmds_script`] printed.
 ///
 /// `None` when the directory does not exist. Files that are not ours — a name
 /// without an order prefix, content that is not valid base64 — are skipped
 /// rather than failing the whole listing: the directory is on someone's
 /// server, and a stray file in it should not cost them the editor.
-pub fn parse_custom_cmds_listing(raw: &str) -> Option<Vec<(u32, String, String)>> {
+pub fn parse_custom_cmds_listing(raw: &str) -> Option<CustomCmdsListing> {
     use base64::Engine;
     let b64 = base64::engine::general_purpose::STANDARD;
 
@@ -415,10 +612,15 @@ pub fn parse_custom_cmds_listing(raw: &str) -> Option<Vec<(u32, String, String)>
         .iter()
         .rposition(|line| line.trim() == CUSTOM_CMD_DIR_MARKER)?;
     let mut out = Vec::new();
+    let mut fingerprint = String::new();
     for line in &lines[start + 1..end] {
         let Some((file, encoded)) = line.split_once(' ') else {
             continue;
         };
+        if file.trim() == CUSTOM_CMD_FP_PREFIX {
+            fingerprint = encoded.trim().to_string();
+            continue;
+        }
         let Some(name) = custom_cmd_name_from_file(file) else {
             continue;
         };
@@ -436,7 +638,10 @@ pub fn parse_custom_cmds_listing(raw: &str) -> Option<Vec<(u32, String, String)>
         };
         out.push((order, name, cmd));
     }
-    Some(out)
+    Some(CustomCmdsListing {
+        fingerprint,
+        cmds: out,
+    })
 }
 
 /// Build the full script. Linux and Bsd produce the identical Unix script
@@ -818,14 +1023,18 @@ fn build_unix_script(opts: &ScriptOptions) -> String {
     out
 }
 
-/// Custom commands are only injected into the status function
+/// Custom commands are only injected into [`ShellFunc::Custom`]
 fn unix_custom_cmds(func: ShellFunc) -> String {
-    if func != ShellFunc::Status {
+    if func != ShellFunc::Custom {
         return String::new();
     }
     // Read, not baked in. The directory's files sort by the order prefix in
     // their names, and the marker is that name — so a command's text never
     // touches this script and a broken one breaks only itself.
+    //
+    // No `.bak` fallback and no repair: a directory that is not there runs
+    // nothing. See [`unix_recover_and_fingerprint`] for where repair lives and
+    // why it is not here.
     //
     // `sh "$f"` rather than executing the file: no execute bit to set, and it
     // works on a `noexec` mount. Output goes through a size-limited file so a
@@ -833,7 +1042,6 @@ fn unix_custom_cmds(func: ShellFunc) -> String {
     let file_blocks = CUSTOM_CMD_MAX_OUTPUT_BYTES.div_ceil(512);
     format!(
         "\nd=\"{CUSTOM_CMD_DIR_UNIX}\"\n\
-         [ -d \"$d\" ] || d=\"$d.bak\"\n\
          for f in \"$d\"/*; do\n\
          \t[ -f \"$f\" ] || continue\n\
          \tn=${{f##*/}}\n\
@@ -880,6 +1088,9 @@ fn unix_command(func: ShellFunc, opts: &ScriptOptions) -> String {
                 "if [ \"$macSign\" = \"\" ] && [ \"$bsdSign\" = \"\" ]; then\n\t{linux}\nelse\n\t{bsd}\nfi"
             )
         }
+        // The whole body is the directory loop `unix_custom_cmds` appends;
+        // this keeps the function valid on its own.
+        ShellFunc::Custom => ":".to_string(),
         ShellFunc::Process => "if [ \"$macSign\" = \"\" ] && [ \"$bsdSign\" = \"\" ]; then
 \tif [ \"$isBusybox\" != \"\" ]; then
 \t\tps w
@@ -967,11 +1178,12 @@ fn build_windows_script(opts: &ScriptOptions) -> String {
 }
 
 fn windows_custom_cmds(func: ShellFunc) -> String {
-    if func != ShellFunc::Status {
+    if func != ShellFunc::Custom {
         return String::new();
     }
     // The same shape as the Unix half: sorted by file name, the marker taken
-    // from that name, and the file run rather than its text spliced in here.
+    // from that name, the file run rather than its text spliced in here, and
+    // no `.bak` fallback.
     //
     // `BaseName`, not `Name`: these files carry a `.ps1` extension because
     // `&` will not run an extensionless one, and the extension is not part of
@@ -979,7 +1191,6 @@ fn windows_custom_cmds(func: ShellFunc) -> String {
     // nothing, so the command's output was swallowed by the section above it.
     format!(
         "\n    $d = {CUSTOM_CMD_DIR_WINDOWS}\n\
-         \x20   if (-not (Test-Path $d) -and (Test-Path \"$d.bak\")) {{ $d = \"$d.bak\" }}\n\
          \x20   if (Test-Path $d) {{\n\
          \x20     Get-ChildItem -File $d | Sort-Object Name | ForEach-Object {{\n\
          \x20       if ($_.Name -notmatch '^[0-9]{{5}}_[A-Za-z0-9_=-]+\\.ps1$') {{ return }}\n\
@@ -1013,6 +1224,8 @@ fn windows_command(func: ShellFunc, opts: &ScriptOptions) -> String {
             func == ShellFunc::StatusExt,
             |key| format!("\n    Write-Host \"{}\"\n    ", cmd_marker(key)),
         ),
+        // As on Unix: the body is what `windows_custom_cmds` appends.
+        ShellFunc::Custom => String::new(),
         ShellFunc::Process => "Get-Process | Select-Object ProcessName, Id, CPU, WorkingSet,
     @{Name='IOReadBytes';Expression={$_.IOReadBytes}},
     @{Name='IOWriteBytes';Expression={$_.IOWriteBytes}} | ConvertTo-Json"
@@ -1025,3 +1238,5 @@ fn windows_command(func: ShellFunc, opts: &ScriptOptions) -> String {
         }
     }
 }
+
+

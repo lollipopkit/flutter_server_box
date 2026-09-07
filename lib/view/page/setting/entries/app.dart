@@ -149,6 +149,62 @@ extension _App on _AppSettingsPageState {
     );
   }
 
+  /// How often a server's custom commands run.
+  ///
+  /// The number the user picks is a request, not the answer: the commands run
+  /// on a status poll and nowhere else, so what takes effect is that number
+  /// rounded up to a whole number of poll intervals. The subtitle says which,
+  /// because otherwise picking 7 against a 3-second poll silently means 9 and
+  /// nothing on screen would ever say so.
+  Widget _buildCustomCmdInterval() {
+    // Both, since the effective value is a function of the two.
+    final listenable = Listenable.merge([
+      _setting.customCmdInterval.listenable(),
+      _setting.serverStatusUpdateInterval.listenable(),
+    ]);
+    return ListTile(
+      title: Text(l10n.customCmdInterval),
+      subtitle: ListenBuilder(
+        listenable: listenable,
+        builder: () {
+          final effective = effectiveCustomCmdSeconds(
+            requested: _setting.customCmdInterval.fetch(),
+            poll: normalizeServerStatusRefreshSeconds(
+              _setting.serverStatusUpdateInterval.fetch(),
+            ),
+          );
+          // Null only when the status poll is itself manual: there is then no
+          // interval to align to, and the commands run when a person refreshes.
+          final actual = effective == null
+              ? libL10n.manual
+              : '$effective ${l10n.second}';
+          return Text(
+            l10n.customCmdIntervalTip(actual),
+            style: UIs.textGrey,
+          );
+        },
+      ),
+      onTap: () async {
+        final val = await context.showPickSingleDialog(
+          title: libL10n.setting,
+          items: const [0, 5, 10, 15, 30, 60, 120, 300, 600],
+          initial: _setting.customCmdInterval.fetch(),
+          // 0 is "whatever the status poll is", which is what the entry above
+          // sets — the subtitle then says the number it came out as.
+          display: (p0) => p0 == 0 ? libL10n.auto : '$p0 ${l10n.second}',
+        );
+        if (val != null) _setting.customCmdInterval.put(val);
+      },
+      trailing: ValBuilder(
+        listenable: _setting.customCmdInterval.listenable(),
+        builder: (val) => Text(
+          val == 0 ? libL10n.auto : '$val ${l10n.second}',
+          style: UIs.text15,
+        ),
+      ),
+    );
+  }
+
   Widget _buildAppColor() {
     return ListTile(
       leading: const Icon(Icons.colorize),

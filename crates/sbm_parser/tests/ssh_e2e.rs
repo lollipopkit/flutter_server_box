@@ -514,51 +514,112 @@ fn ssh_e2e_unix_custom_and_disabled() {
     )];
     let installed = ssh(
         &host,
-        &script::install_custom_cmds_script(SystemType::Linux, &cmds),
+        &script::install_custom_cmds_script(SystemType::Linux, &cmds, None),
         None,
     );
-    let raw = installed
+    let custom_raw = installed
         .and_then(|_| {
             ssh(
                 &host,
-                &script::exec_command(SystemType::Linux, &path, ShellFunc::Status),
+                &script::exec_command(SystemType::Linux, &path, ShellFunc::Custom),
                 None,
             )
         })
         .inspect_err(|_| restore_custom_cmd_dir(&host, cmd_dir))
-        .expect("install custom commands and run status script");
+        .expect("install custom commands and run the custom function");
+    let status_raw = ssh(
+        &host,
+        &script::exec_command(SystemType::Linux, &path, ShellFunc::Status),
+        None,
+    )
+    .inspect_err(|_| restore_custom_cmd_dir(&host, cmd_dir))
+    .expect("run status script");
     let listing = ssh(
         &host,
         &script::read_custom_cmds_script(SystemType::Linux),
         None,
     )
     .unwrap_or_default();
+    // The compare-and-swap against a real shell: `cksum` exists, the reader and
+    // the installer compute the same value over the same directory, and a stale
+    // expectation is refused rather than silently overwriting.
+    let parsed = script::parse_custom_cmds_listing(&listing);
+    // Stdout regardless of exit status, which is how the app reads it: the
+    // marker is what tells a conflict from any other failure, and it has to
+    // survive SSH and a monitor agent's `/exec` alike.
+    let stale = ssh_stdout(
+        &host,
+        &script::install_custom_cmds_script(SystemType::Linux, &cmds, Some("0-0")),
+    );
+    let fresh = parsed.as_ref().map(|l| {
+        ssh(
+            &host,
+            &script::install_custom_cmds_script(
+                SystemType::Linux,
+                &cmds,
+                Some(&l.fingerprint),
+            ),
+            None,
+        )
+    });
     restore_custom_cmd_dir(&host, cmd_dir);
     let _ = ssh(&host, &format!("rm -rf {DIR}"), None);
 
     // The editor's read path against a real shell: `base64`/`tr` exist and the
     // command comes back byte-identical to what was written.
+    let parsed = parsed.expect("listing must report an existing directory");
     assert_eq!(
-        script::parse_custom_cmds_listing(&listing),
-        Some(vec![(
+        parsed.cmds,
+        vec![(
             100,
             "e2e_probe".to_string(),
             "echo custom-cmd-works".to_string()
-        )]),
+        )],
         "listing must round-trip; raw: {listing:?}"
     );
+    assert!(
+        !parsed.fingerprint.is_empty()
+            && parsed.fingerprint != script::CUSTOM_CMD_FP_UNAVAILABLE
+            && parsed.fingerprint != script::CUSTOM_CMD_FP_ABSENT,
+        "a real host must produce a fingerprint; got {:?}",
+        parsed.fingerprint
+    );
+    assert!(
+        script::custom_cmds_conflict(&stale),
+        "a stale expectation must report a conflict; got {stale:?}"
+    );
+    let fresh = fresh
+        .expect("a fingerprint was read")
+        .expect("the fingerprint the reader printed must satisfy the installer");
+    // And the install says what it left behind, so the editor's next save needs
+    // no second round trip.
+    assert!(
+        script::parse_custom_cmds_fingerprint(&fresh).is_some(),
+        "an install must report the fingerprint it leaves; got {fresh:?}"
+    );
 
-    let segments = script::parse_script_output(&raw);
+    let segments = script::parse_script_output(&custom_raw);
+    // Byte for byte, trailing newline included: custom output travels base64
+    // precisely so that nothing about it is guessed at, and `echo` emits one.
     assert_eq!(
         segments
             .get(&script::custom_result_key("e2e_probe"))
             .map(String::as_str),
-        Some("custom-cmd-works"),
+        Some("custom-cmd-works\n"),
         "custom command segment must round-trip"
     );
+
+    let segments = script::parse_script_output(&status_raw);
     assert!(
         !segments.contains_key(commands::NET),
         "disabled net segment must be absent; keys: {:?}",
+        segments.keys().collect::<Vec<_>>()
+    );
+    assert!(
+        !segments
+            .keys()
+            .any(|key| script::custom_result_name(key).is_some()),
+        "custom commands must not run on the status poll; keys: {:?}",
         segments.keys().collect::<Vec<_>>()
     );
     assert!(

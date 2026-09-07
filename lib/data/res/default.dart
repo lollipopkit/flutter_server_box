@@ -1,6 +1,17 @@
 abstract final class Defaults {
   static const updateInterval = 3;
 
+  /// How often the user's custom status commands run, in seconds.
+  ///
+  /// They used to run on every status poll, which meant arbitrary shell a user
+  /// typed executing every three seconds and the readings beside it waiting on
+  /// whichever one was slowest. An order of magnitude off that, and still
+  /// fresh enough to read as live; `0` puts it back on every poll.
+  ///
+  /// Rounded up to a whole number of poll intervals, since that is when the
+  /// app is talking to the server anyway — see `customCmdRefreshInterval`.
+  static const customCmdInterval = 30;
+
   static const editorTheme = 'a11y-light';
   static const editorDarkTheme = 'monokai';
 

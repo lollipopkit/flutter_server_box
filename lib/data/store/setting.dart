@@ -55,6 +55,17 @@ class SettingStore extends SqliteStore {
     Defaults.updateInterval,
   );
 
+  /// Seconds between runs of a server's custom status commands.
+  ///
+  /// What the user asks for, not what they get: the commands only run on a
+  /// status poll, so the interval that takes effect is this rounded up to a
+  /// whole number of [serverStatusUpdateInterval]s. `customCmdRefreshInterval`
+  /// computes it and the settings page shows it.
+  late final customCmdInterval = propertyDefault(
+    'customCmdInterval',
+    Defaults.customCmdInterval,
+  );
+
   // Max retry count when connect to server
   late final maxRetryCount = propertyDefault('maxRetryCount', 2);
 

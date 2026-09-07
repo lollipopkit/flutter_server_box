@@ -306,10 +306,12 @@ export const api = {
   /// The whole set, in the order it should run in. A replace rather than a
   /// per-command edit: the order is part of what is stored, so a move has no
   /// smaller expression than the new list.
-  updateCustomCmds: (commands: CustomCmd[]) =>
+  /// `expect` is the `fingerprint` from the view this set was edited from; the
+  /// agent refuses the save if the directory has changed since.
+  updateCustomCmds: (commands: CustomCmd[], expect: string | null) =>
     request<CustomCmdsView>(
       '/custom-cmds',
-      { method: 'PUT', body: JSON.stringify({ commands }) },
+      { method: 'PUT', body: JSON.stringify({ commands, expect }) },
       'Failed to save custom commands',
     ),
   getCardOrder: () => request<CardOrderPayload>('/card-order', {}, 'Failed to fetch card order'),

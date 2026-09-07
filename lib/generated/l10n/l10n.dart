@@ -1059,6 +1059,24 @@ abstract class AppLocalizations {
   /// **'Custom commands'**
   String get customCmd;
 
+  /// No description provided for @customCmdInterval.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom command interval'**
+  String get customCmdInterval;
+
+  /// No description provided for @customCmdIntervalTip.
+  ///
+  /// In en, this message translates to:
+  /// **'They run on a status poll, so this is rounded up to a whole number of update intervals. Actual: {seconds}s.'**
+  String customCmdIntervalTip(Object seconds);
+
+  /// No description provided for @customCmdChangedOnServer.
+  ///
+  /// In en, this message translates to:
+  /// **'The commands on this server have changed since this page loaded them. Reload to see them; saving now would discard them.'**
+  String get customCmdChangedOnServer;
+
   /// No description provided for @deleteServers.
   ///
   /// In en, this message translates to:

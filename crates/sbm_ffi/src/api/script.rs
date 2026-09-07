@@ -17,6 +17,9 @@ pub struct CustomCmd {
 pub enum ShellFuncKind {
     Status,
     StatusExt,
+    /// The user's custom commands. Its own function so it can run on its own
+    /// cadence instead of on every status poll.
+    Custom,
     Process,
     Shutdown,
     Reboot,
@@ -29,6 +32,7 @@ impl From<ShellFuncKind> for sbm_parser::script::ShellFunc {
         match kind {
             ShellFuncKind::Status => F::Status,
             ShellFuncKind::StatusExt => F::StatusExt,
+            ShellFuncKind::Custom => F::Custom,
             ShellFuncKind::Process => F::Process,
             ShellFuncKind::Shutdown => F::Shutdown,
             ShellFuncKind::Reboot => F::Reboot,
@@ -55,10 +59,17 @@ pub fn build_script(
 /// One round trip for the whole set, written aside and moved into place, and
 /// the commands travel encoded — see `install_custom_cmds_script`. The
 /// directory is fixed under the user's home, so there is no path to pass.
+///
+/// `expect` is the `fingerprint` of the [`CustomCmdsListing`] this set was
+/// edited from. The whole set is written at once, so without it a second app
+/// editing the same server would silently discard the first's edits; with it
+/// the second save is refused and reports [`custom_cmds_conflict`]. `None`
+/// only for a caller that never read the directory.
 #[flutter_rust_bridge::frb(sync)]
 pub fn install_custom_cmds_command(
     system: String,
     cmds: Vec<CustomCmd>,
+    expect: Option<String>,
 ) -> Result<String, String> {
     let system = parse_system_or_err(&system)?;
     let cmds: Vec<(u32, String, String)> = cmds
@@ -74,8 +85,25 @@ pub fn install_custom_cmds_command(
             )
         })
         .collect();
-    let script = sbm_parser::script::install_custom_cmds_script(system, &cmds);
+    let script =
+        sbm_parser::script::install_custom_cmds_script(system, &cmds, expect.as_deref());
     Ok(wrap_for_default_shell(system, script))
+}
+
+/// Whether an install refused to run because the directory had changed under
+/// the caller.
+#[flutter_rust_bridge::frb(sync)]
+pub fn custom_cmds_conflict(output: String) -> bool {
+    sbm_parser::script::custom_cmds_conflict(&output)
+}
+
+/// The fingerprint a successful install printed, for the caller's next save.
+///
+/// Saves reading the directory back, and closes the window in which somebody
+/// else's save would land between the write and that read.
+#[flutter_rust_bridge::frb(sync)]
+pub fn parse_custom_cmds_fingerprint(output: String) -> Option<String> {
+    sbm_parser::script::parse_custom_cmds_fingerprint(&output)
 }
 
 /// Script that prints the custom-command directory back, for the editor to
@@ -99,18 +127,32 @@ fn wrap_for_default_shell(system: sbm_parser::SystemType, script: String) -> Str
     }
 }
 
+/// One reading of the custom-command directory.
+pub struct CustomCmdsListing {
+    /// Hand back to `install_custom_cmds_command` so a save that would discard
+    /// another client's edits is refused. Empty, or `?`, on a host that cannot
+    /// produce one — both compare equal to anything.
+    pub fingerprint: String,
+    pub cmds: Vec<CustomCmd>,
+}
+
 /// The installed set, parsed from `read_custom_cmds_command`'s output.
 ///
-/// `None` means the directory does not exist — distinct from `Some([])`, an
-/// existing directory the user has emptied. The app seeds the first case from
-/// what it still holds locally and must not touch the second.
+/// `None` means the directory does not exist — distinct from an empty `cmds`,
+/// an existing directory the user has emptied. The app seeds the first case
+/// from what it still holds locally and must not touch the second.
 #[flutter_rust_bridge::frb(sync)]
-pub fn parse_custom_cmds_listing(raw: String) -> Option<Vec<CustomCmd>> {
-    sbm_parser::script::parse_custom_cmds_listing(&raw).map(|cmds| {
+pub fn parse_custom_cmds_listing(raw: String) -> Option<CustomCmdsListing> {
+    sbm_parser::script::parse_custom_cmds_listing(&raw).map(|listing| CustomCmdsListing {
+        fingerprint: listing.fingerprint,
         // Order is the position in this list: it arrives sorted, and the app
         // has no use for the numbers themselves — it reassigns them whenever
         // it writes the directory back.
-        cmds.into_iter().map(|(_, name, cmd)| CustomCmd { name, cmd }).collect()
+        cmds: listing
+            .cmds
+            .into_iter()
+            .map(|(_, name, cmd)| CustomCmd { name, cmd })
+            .collect(),
     })
 }
 

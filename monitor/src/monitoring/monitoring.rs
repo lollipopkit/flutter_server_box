@@ -451,6 +451,7 @@ async fn collect_metrics(
     let script_due = extended_due || !native_status_available(system);
     let mut custom_cmds = Vec::new();
     let mut extended_refreshed = false;
+    let mut custom_refreshed = false;
     if script_due {
         let execution = match execute_commands(system, extended_due).await {
             Ok(execution) => execution,
@@ -466,6 +467,7 @@ async fn collect_metrics(
             ));
         }
         extended_refreshed = extended_due && execution.extended_succeeded;
+        custom_refreshed = extended_due && execution.custom_succeeded;
         let segments = execution.segments;
         custom_cmds = custom_cmd_outputs(&segments);
         // Built-in probes run before custom commands. Keep the first value for
@@ -502,18 +504,18 @@ async fn collect_metrics(
         prev_metrics,
         extended_refreshed,
     );
-    metrics.custom_cmds = refreshed_custom_cmds(custom_cmds, prev_metrics, extended_refreshed);
+    metrics.custom_cmds = refreshed_custom_cmds(custom_cmds, prev_metrics, custom_refreshed);
     Ok(metrics)
 }
 
 fn refreshed_custom_cmds(
     custom_cmds: Vec<CustomCmdOutput>,
     prev_metrics: Option<&SystemMetrics>,
-    extended_refreshed: bool,
+    custom_refreshed: bool,
 ) -> Vec<CustomCmdOutput> {
-    // An empty successful extended result means the user deleted their
-    // commands. A skipped or failed extended refresh keeps the previous set.
-    if extended_refreshed {
+    // An empty result from a run that happened means the user deleted their
+    // commands. A skipped or failed one keeps the previous set.
+    if custom_refreshed {
         custom_cmds
     } else {
         prev_metrics
@@ -590,9 +592,9 @@ fn build_status_script(system: SystemType) -> String {
 /// invocation above. Keeping every other manifest key disabled prevents an
 /// extended cycle from collecting CPU/memory/disk/network a second time and,
 /// on Windows, avoids the two one-second WMI samples for net and disk I/O.
-/// Custom commands are not manifest entries; `SbStatus` continues to read and
-/// run their directory even when every ordinary command in that function is
-/// disabled.
+/// Custom commands are not manifest entries and are not in either status
+/// function: `SbCustom` reads and runs their directory whatever is disabled
+/// here.
 fn monitor_script_command_needed(system: SystemType, key: &str) -> bool {
     use sbm_parser::commands::{AMD, BATTERY, CONN, DISK_SMART, SENSORS};
 
@@ -647,13 +649,15 @@ fn ensure_script(path: &std::path::Path, content: &str) -> std::io::Result<()> {
     Ok(())
 }
 
-/// Shell functions the extended cycle runs. Both halves are needed because
-/// SMART and AMD are in `SbStatusExt`, while sensors/battery, Windows conn and
-/// custom commands live in `SbStatus`. `monitor_script_disabled` strips the
-/// native-covered commands from both functions before this script is written.
-const EXTENDED_FUNCS: [sbm_parser::script::ShellFunc; 2] = [
+/// Shell functions the extended cycle runs. All three are needed because SMART
+/// and AMD are in `SbStatusExt`, sensors/battery and Windows conn in
+/// `SbStatus`, and the user's commands in `SbCustom`.
+/// `monitor_script_disabled` strips the native-covered commands from the
+/// status halves before this script is written.
+const EXTENDED_FUNCS: [sbm_parser::script::ShellFunc; 3] = [
     sbm_parser::script::ShellFunc::StatusExt,
     sbm_parser::script::ShellFunc::Status,
+    sbm_parser::script::ShellFunc::Custom,
 ];
 const CORE_FUNCS: [sbm_parser::script::ShellFunc; 1] = [sbm_parser::script::ShellFunc::Status];
 
@@ -662,6 +666,11 @@ struct ScriptExecution {
     segments: Vec<(String, String)>,
     status_succeeded: bool,
     extended_succeeded: bool,
+    /// Whether `SbCustom` ran. Separate from `extended_succeeded` because they
+    /// are separate runs now: an empty result from a run that happened means
+    /// the user deleted their commands, and an empty result from one that did
+    /// not means nothing at all.
+    custom_succeeded: bool,
 }
 
 impl ScriptExecution {
@@ -672,6 +681,7 @@ impl ScriptExecution {
         match func {
             sbm_parser::script::ShellFunc::Status => self.status_succeeded = true,
             sbm_parser::script::ShellFunc::StatusExt => self.extended_succeeded = true,
+            sbm_parser::script::ShellFunc::Custom => self.custom_succeeded = true,
             _ => {}
         }
         self.segments

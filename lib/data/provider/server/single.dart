@@ -9,6 +9,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/core/utils/monitor_exec.dart';
+import 'package:server_box/core/utils/refresh_interval.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/core/utils/ssh_exec.dart';
@@ -111,6 +112,15 @@ class ServerNotifier extends _$ServerNotifier {
   /// [_extendedStatusInterval]
   String _extendedRaw = '';
   DateTime? _extendedFetchedAt;
+
+  /// The same arrangement for [ShellFunc.custom], on the interval the user
+  /// chose (`customCmdRefreshInterval`).
+  ///
+  /// Its own cache rather than a share of [_extendedRaw]: the two run on
+  /// different schedules and either can fail on its own, and a failed run of
+  /// one must not blank the other's readings.
+  String _customRaw = '';
+  DateTime? _customFetchedAt;
 
   /// Reads status for whichever connection method this server uses. Rebuilt
   /// when the SPI's connection config changes.
@@ -230,10 +240,13 @@ class ServerNotifier extends _$ServerNotifier {
       // A different connection may be to a machine that has been rebooted
       // since, and a reboot takes `/tmp` — where the script lives — with it.
       _scriptWritten = false;
-      // A new connection reinstalls the script, so drop the cache: the next
-      // refresh re-runs the extended function against the current script
+      // A new connection reinstalls the script, so drop the caches: the next
+      // refresh re-runs the extended and custom functions against the current
+      // script
       _extendedRaw = '';
       _extendedFetchedAt = null;
+      _customRaw = '';
+      _customFetchedAt = null;
     }
     state = state.copyWith(client: client);
   }
@@ -264,6 +277,8 @@ class ServerNotifier extends _$ServerNotifier {
       _scriptWritten = false;
       _extendedRaw = '';
       _extendedFetchedAt = null;
+      _customRaw = '';
+      _customFetchedAt = null;
     }
 
     if (!reconnect) {
@@ -720,9 +735,10 @@ class ServerNotifier extends _$ServerNotifier {
         throw 'read exited with ${listing.exitCode}: ${listing.combined}';
       }
       final onServer = ShellFuncManager.parseCustomCmds(listing.stdout);
-      final existing = onServer?.map((c) => c.name).toSet() ?? const <String>{};
+      final existing =
+          onServer?.cmds.map((c) => c.name).toSet() ?? const <String>{};
       final merged = [
-        ...?onServer,
+        ...?onServer?.cmds,
         for (final e in local.entries)
           if (!existing.contains(e.key))
             ffi.CustomCmd(name: e.key, cmd: e.value),
@@ -734,8 +750,16 @@ class ServerNotifier extends _$ServerNotifier {
       // which is the one that cannot be taken back.
       if (!isExecCurrent(exec, spi)) return;
 
+      // What the listing above said the directory held. A migration that
+      // arrived while somebody was editing the same server has nothing to add
+      // to a set it no longer knows — the install refuses, the local copy is
+      // kept, and the next connection tries again against what is there then.
       final install = await exec.run(
-        ShellFuncManager.installCustomCmds(merged, systemType: system),
+        ShellFuncManager.installCustomCmds(
+          merged,
+          systemType: system,
+          expect: onServer?.fingerprint,
+        ),
         entry: entry,
       );
       if (!install.succeeded) {
@@ -1284,16 +1308,28 @@ class ServerNotifier extends _$ServerNotifier {
 
     try {
       // Segments the status function no longer carries, refreshed on their own
-      // schedule and concatenated here: the parser splits by separator, so one
-      // combined output parses exactly as the two runs would have
+      // schedules and concatenated here: the parser splits by separator, so
+      // one combined output parses exactly as the separate runs would have
       final extended = await _refreshExtendedRaw(
         force: interactive,
         operation: operation,
       );
+      final custom = await _refreshCustomRaw(
+        force: interactive,
+        operation: operation,
+      );
       // Built-in markers are trusted only before the first custom section;
-      // custom output may contain marker-looking text. Extended status has no
-      // custom commands, so put it first and leave custom output last.
-      final combined = extended.isEmpty ? raw : '$extended\n$raw';
+      // custom output may contain marker-looking text. Neither status function
+      // runs custom commands, so both go first and custom output goes last.
+      // Empty parts dropped rather than joined: a blank line between two
+      // sections is buffered into the one above it, so an empty `raw` — every
+      // built-in command disabled — would append one to the last extended
+      // segment's value.
+      final combined = [
+        extended,
+        raw,
+        custom,
+      ].where((part) => part.isNotEmpty).join('\n');
 
       // Same conversion contract as the monitor path: raw transport output in,
       // ServerStatus (plus a trend sample) out
@@ -1370,6 +1406,66 @@ class ServerNotifier extends _$ServerNotifier {
     return _extendedRaw;
   }
 
+  /// Runs [ShellFunc.custom] when the user's interval has elapsed (or [force],
+  /// for a refresh a person asked for) and returns its output, falling back to
+  /// the last successful one.
+  ///
+  /// The commands are arbitrary shell a user typed, each with its own timeout
+  /// on the far side, and they used to run inside the status function — so a
+  /// machine polled every three seconds ran all of them every three seconds
+  /// and the built-in readings waited on the slowest. They have their own
+  /// function now, and this decides how often it runs.
+  ///
+  /// There is no timer here: this is called from the poll, so the interval
+  /// that takes effect is the requested one rounded up to a whole number of
+  /// poll intervals. That is what `effectiveCustomCmdSeconds` computes and the
+  /// settings page shows, and it is why asking for 7 seconds against a
+  /// 3-second poll gets 9 rather than something that drifts.
+  ///
+  /// On the exec path rather than the persistent shell, for the reason
+  /// [_refreshExtendedRaw] is.
+  Future<String> _refreshCustomRaw({
+    required bool force,
+    required int operation,
+  }) async {
+    final interval = customCmdRefreshInterval();
+    final fetchedAt = _customFetchedAt;
+    final due =
+        force ||
+        interval == null ||
+        fetchedAt == null ||
+        DateTime.now().difference(fetchedAt) >= interval;
+    final client = state.client;
+    if (!due || client == null) return _customRaw;
+
+    // Stamped before the run, as the extended half is: a remote that cannot
+    // answer — an older script with no such function, until the next connect
+    // reinstalls it — is retried on this schedule rather than on every poll.
+    _customFetchedAt = DateTime.now();
+    final spi = state.spi;
+    try {
+      final cmd = ShellFunc.custom.exec(
+        spi.id,
+        systemType: state.status.system,
+        customDir: spi.custom?.scriptDir,
+      );
+      final raw = await _runStatusCommandWithExec(
+        client,
+        cmd,
+        isWindows: state.status.system == SystemType.windows,
+      );
+      if (!_isRefreshCurrent(operation, spi)) return _customRaw;
+      // Kept whatever it says, empty included: a server whose commands the
+      // user deleted must stop showing them, and unlike the extended half
+      // there is no marker that says "this ran" — no commands is no output.
+      // A run that *failed* throws and is caught below.
+      _customRaw = raw;
+    } catch (e, s) {
+      Loggers.app.warning('Custom commands for ${spi.name} failed', e, s);
+    }
+    return _customRaw;
+  }
+
   Future<String> _runStatusCommand(String statusCmd) async {
     final client = state.client;
     final spi = state.spi;
@@ -1405,8 +1501,13 @@ class ServerNotifier extends _$ServerNotifier {
     }
   }
 
+  /// Whether the status function was asked for anything at all.
+  ///
+  /// Custom commands are deliberately not counted: they are their own function
+  /// now, so a host with every built-in disabled legitimately answers the
+  /// status poll with nothing, and treating that as a failure would put a
+  /// working server through the connect path on every poll.
   bool _hasEnabledStatusCommands(Spi spi, SystemType system) {
-    if (spi.custom?.cmds?.isNotEmpty == true) return true;
     final disabled = spi.disabledCmdTypes?.toSet() ?? const <String>{};
     final Iterable<ShellCmdType> commands = switch (system) {
       SystemType.linux => StatusCmdType.values,

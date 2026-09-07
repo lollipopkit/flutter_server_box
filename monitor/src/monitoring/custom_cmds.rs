@@ -42,6 +42,8 @@ pub enum Error {
     /// somewhere neither the script nor the app would look.
     NoHome,
     Invalid(String),
+    /// The directory is not what the caller read. See [`Listing::fingerprint`].
+    Conflict,
     Io(std::io::Error),
 }
 
@@ -50,9 +52,32 @@ impl std::fmt::Display for Error {
         match self {
             Error::NoHome => write!(f, "no home directory for this process"),
             Error::Invalid(msg) => write!(f, "{msg}"),
+            Error::Conflict => write!(
+                f,
+                "the custom commands changed since they were loaded; reload and try again"
+            ),
             Error::Io(e) => write!(f, "{e}"),
         }
     }
+}
+
+/// One reading of the directory.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Listing {
+    pub commands: Vec<CustomCmd>,
+    /// What the directory held when this was read.
+    ///
+    /// A write replaces the whole set, so two clients editing the same machine
+    /// would each send their own copy and the second would silently discard
+    /// the first's edits. Handing this back to [`replace`] refuses that write
+    /// instead.
+    ///
+    /// Only ever compared with another value from this function. The app
+    /// reaches the same directory over SSH and computes its own fingerprint in
+    /// the shell (`sbm_parser::script`); the two are different values of the
+    /// same directory and never meet, because each client checks against what
+    /// it read itself.
+    pub fingerprint: String,
 }
 
 impl From<std::io::Error> for Error {
@@ -73,8 +98,36 @@ fn dir() -> Result<PathBuf, Error> {
 ///
 /// Files that are not ours are skipped, not fatal. The directory is on
 /// someone's machine and a stray file in it should not cost them the editor.
-pub fn list() -> Result<Vec<CustomCmd>, Error> {
-    read_dir(&dir()?)
+pub fn list() -> Result<Listing, Error> {
+    listing(&dir()?)
+}
+
+fn listing(dir: &Path) -> Result<Listing, Error> {
+    let commands = read_dir(dir)?;
+    Ok(Listing {
+        fingerprint: fingerprint(&commands),
+        commands,
+    })
+}
+
+/// Length-prefixed rather than delimited: a name and a body are both arbitrary
+/// text, and a separator either of them could contain would let two different
+/// sets hash the same.
+fn fingerprint(commands: &[CustomCmd]) -> String {
+    use sha2::Digest;
+
+    let mut hasher = sha2::Sha256::new();
+    for command in commands {
+        for part in [&command.name, &command.cmd] {
+            hasher.update((part.len() as u64).to_le_bytes());
+            hasher.update(part.as_bytes());
+        }
+    }
+    hasher
+        .finalize()
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect()
 }
 
 fn read_dir(dir: &Path) -> Result<Vec<CustomCmd>, Error> {
@@ -109,12 +162,16 @@ fn read_dir(dir: &Path) -> Result<Vec<CustomCmd>, Error> {
 /// Written aside and installed with a rollback directory. A crash after the
 /// old directory moves aside is repaired before the next write, so an aborted
 /// update cannot permanently erase the user's commands.
-pub fn replace(cmds: &[CustomCmd]) -> Result<(), Error> {
+///
+/// `expect` is the [`Listing::fingerprint`] the caller edited from, checked
+/// under the same lock the write takes. `None` skips the check — right only
+/// for a caller that never read the directory.
+pub fn replace(cmds: &[CustomCmd], expect: Option<&str>) -> Result<(), Error> {
     validate(cmds)?;
-    write_dir(&dir()?, cmds)
+    write_dir(&dir()?, cmds, expect)
 }
 
-fn write_dir(dir: &Path, cmds: &[CustomCmd]) -> Result<(), Error> {
+fn write_dir(dir: &Path, cmds: &[CustomCmd], expect: Option<&str>) -> Result<(), Error> {
     // The side paths are fixed per directory. Keep the advisory lock through
     // recovery and replacement so concurrent processes cannot reuse them.
     let _lock = replace_lock(dir)?;
@@ -124,6 +181,14 @@ fn write_dir(dir: &Path, cmds: &[CustomCmd]) -> Result<(), Error> {
         std::fs::create_dir_all(parent)?;
     }
     recover_interrupted_replace(dir, &backup)?;
+    // Under the lock and after recovery, so what is compared is the directory
+    // this write is about to replace rather than one another writer was still
+    // installing.
+    if let Some(expect) = expect
+        && listing(dir)?.fingerprint != expect
+    {
+        return Err(Error::Conflict);
+    }
     let _ = std::fs::remove_dir_all(&tmp);
     if let Err(error) = std::fs::create_dir_all(&tmp) {
         let _ = std::fs::remove_dir_all(&tmp);
@@ -262,7 +327,7 @@ mod tests {
             // would end a heredoc if any of this went through a shell.
             cmd("磁盘 / 用量", "EOF'\n df -h #"),
         ];
-        write_dir(&tmp, &cmds).unwrap();
+        write_dir(&tmp, &cmds, None).unwrap();
 
         // Insertion order, not alphabetical: the user arranged these.
         assert_eq!(read_dir(&tmp).unwrap(), cmds);
@@ -275,7 +340,7 @@ mod tests {
         let _ = std::fs::remove_dir_all(tmp.parent().unwrap());
         assert!(read_dir(&tmp).unwrap().is_empty());
 
-        write_dir(&tmp, &[cmd("ok", "echo ok")]).unwrap();
+        write_dir(&tmp, &[cmd("ok", "echo ok")], None).unwrap();
         std::fs::write(tmp.join("README"), "not ours").unwrap();
         assert_eq!(read_dir(&tmp).unwrap(), vec![cmd("ok", "echo ok")]);
         let _ = std::fs::remove_dir_all(tmp.parent().unwrap());
@@ -285,8 +350,8 @@ mod tests {
     fn replacing_removes_what_is_gone() {
         let tmp = std::env::temp_dir().join("sbm_custom_cmds_replace/custom_cmds");
         let _ = std::fs::remove_dir_all(tmp.parent().unwrap());
-        write_dir(&tmp, &[cmd("old", "echo old"), cmd("kept", "echo kept")]).unwrap();
-        write_dir(&tmp, &[cmd("kept", "echo kept")]).unwrap();
+        write_dir(&tmp, &[cmd("old", "echo old"), cmd("kept", "echo kept")], None).unwrap();
+        write_dir(&tmp, &[cmd("kept", "echo kept")], None).unwrap();
         assert_eq!(read_dir(&tmp).unwrap(), vec![cmd("kept", "echo kept")]);
         let _ = std::fs::remove_dir_all(tmp.parent().unwrap());
     }
@@ -296,7 +361,7 @@ mod tests {
         let tmp = std::env::temp_dir().join("sbm_custom_cmds_recovery/custom_cmds");
         let parent = tmp.parent().unwrap();
         let _ = std::fs::remove_dir_all(parent);
-        write_dir(&tmp, &[cmd("old", "echo old")]).unwrap();
+        write_dir(&tmp, &[cmd("old", "echo old")], None).unwrap();
 
         let backup = side_path(&tmp, "old");
         std::fs::rename(&tmp, &backup).unwrap();
@@ -305,6 +370,55 @@ mod tests {
         assert_eq!(read_dir(&tmp).unwrap(), vec![cmd("old", "echo old")]);
         assert!(!backup.exists());
         let _ = std::fs::remove_dir_all(parent);
+    }
+
+    /// Two panels editing one machine: the second save is refused rather than
+    /// discarding the first's edits, and the fingerprint it reloads then works.
+    #[test]
+    fn a_stale_expectation_is_refused() {
+        let tmp = std::env::temp_dir().join("sbm_custom_cmds_cas/custom_cmds");
+        let _ = std::fs::remove_dir_all(tmp.parent().unwrap());
+
+        let empty = listing(&tmp).unwrap().fingerprint;
+        write_dir(&tmp, &[cmd("a", "echo a")], Some(&empty)).unwrap();
+
+        let loaded = listing(&tmp).unwrap();
+        assert_ne!(loaded.fingerprint, empty, "the directory changed");
+
+        // Somebody else saved in between.
+        write_dir(&tmp, &[cmd("a", "echo a"), cmd("b", "echo b")], None).unwrap();
+        assert!(matches!(
+            write_dir(&tmp, &[cmd("a", "mine")], Some(&loaded.fingerprint)),
+            Err(Error::Conflict)
+        ));
+        assert_eq!(
+            read_dir(&tmp).unwrap(),
+            vec![cmd("a", "echo a"), cmd("b", "echo b")],
+            "a refused write must change nothing"
+        );
+
+        let reloaded = listing(&tmp).unwrap().fingerprint;
+        write_dir(&tmp, &[cmd("a", "mine")], Some(&reloaded)).unwrap();
+        assert_eq!(read_dir(&tmp).unwrap(), vec![cmd("a", "mine")]);
+        let _ = std::fs::remove_dir_all(tmp.parent().unwrap());
+    }
+
+    /// Order is part of what is stored, so a reorder has to be a change.
+    #[test]
+    fn a_fingerprint_covers_order_names_and_bodies() {
+        let a = CustomCmd { name: "a".into(), cmd: "x".into() };
+        let b = CustomCmd { name: "b".into(), cmd: "y".into() };
+        assert_ne!(fingerprint(&[a.clone(), b.clone()]), fingerprint(&[b, a.clone()]));
+        assert_ne!(
+            fingerprint(&[a.clone()]),
+            fingerprint(&[CustomCmd { name: "a".into(), cmd: "z".into() }])
+        );
+        // Length-prefixed, so no pair of concatenations can collide.
+        assert_ne!(
+            fingerprint(&[CustomCmd { name: "ab".into(), cmd: "c".into() }]),
+            fingerprint(&[CustomCmd { name: "a".into(), cmd: "bc".into() }])
+        );
+        assert_eq!(fingerprint(&[a.clone()]), fingerprint(&[a]));
     }
 
     #[test]
@@ -335,11 +449,11 @@ mod tests {
         let worker_gate = Arc::clone(&gate);
         let worker = std::thread::spawn(move || {
             worker_gate.wait();
-            write_dir(&worker_dir, &first)
+            write_dir(&worker_dir, &first, None)
         });
 
         gate.wait();
-        write_dir(&dir, &second).unwrap();
+        write_dir(&dir, &second, None).unwrap();
         worker.join().unwrap().unwrap();
 
         let current = read_dir(&dir).unwrap();

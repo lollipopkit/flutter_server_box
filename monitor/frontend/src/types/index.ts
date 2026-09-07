@@ -65,6 +65,12 @@ export interface CustomCmdsView {
   /// run as the agent's user, so it needs the same grant as the shell. A hint
   /// for the UI; the agent re-checks it on the write.
   editable: boolean;
+  /// What the directory held when this was read, sent back on save.
+  ///
+  /// A save is the whole set, so without this a panel left open on a stale
+  /// copy would discard whatever another client changed in between. The agent
+  /// answers 409 instead.
+  fingerprint: string;
 }
 
 export type FieldSupport = 'supported' | 'not_implemented' | 'hardware_dependent'

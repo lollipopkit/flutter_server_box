@@ -118,4 +118,31 @@ async fn listing_works_without_full_access_and_says_it_is_read_only() {
     let body: serde_json::Value = resp.json().await.unwrap();
     assert_eq!(body["editable"], false);
     assert!(body["commands"].is_array());
+    // What a later save is checked against. A panel that cannot get one has
+    // nothing honest to send back and would save unchecked.
+    assert!(
+        body["fingerprint"].is_string(),
+        "the listing must say what it read: {body}"
+    );
+}
+
+/// A save is the whole set, so one carrying a stale expectation is refused
+/// rather than discarding whatever another client changed in between.
+///
+/// Deliberately no write: a conflict is answered before anything is staged, so
+/// this reaches the real directory without touching it. `stale` cannot be a
+/// fingerprint — those are 64 hex characters.
+#[ntex::test]
+async fn a_stale_expectation_is_refused_without_writing() {
+    let srv = test_server(app_state(true).await).await;
+    let resp = srv
+        .put("/api/v1/custom-cmds")
+        .header("Authorization", format!("Bearer {}", token()))
+        .send_json(&json!({
+            "commands": [{"name": "x", "cmd": "echo x"}],
+            "expect": "stale",
+        }))
+        .await
+        .unwrap();
+    assert_eq!(resp.status().as_u16(), 409);
 }

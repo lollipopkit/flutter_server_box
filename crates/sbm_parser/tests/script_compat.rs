@@ -53,9 +53,6 @@ fn script_reads_custom_commands_from_a_directory() {
         assert!(script.contains(script::custom_cmd_dir(system)));
         // The marker prefix is emitted; the name comes from the file.
         assert!(script.contains("SrvBoxCusCmdSep."));
-        // Only in the status function.
-        let after_status = script.split("SbProcess").nth(1).unwrap();
-        assert!(!after_status.contains("SrvBoxCusCmdSep."));
     }
     // A command that would break a script if it were spliced in cannot: it is
     // never in the script.
@@ -63,6 +60,80 @@ fn script_reads_custom_commands_from_a_directory() {
     assert_eq!(
         build_script(SystemType::Linux, &hostile),
         build_script(SystemType::Linux, &opts())
+    );
+}
+
+/// Custom commands are their own function, so the status poll does not wait on
+/// arbitrary shell a user typed and each side can run on its own cadence.
+#[test]
+fn custom_commands_are_not_in_the_status_function() {
+    let unix = build_script(SystemType::Linux, &opts());
+    assert!(!func_body(&unix, ShellFunc::Status).contains("SrvBoxCusCmdSep."));
+    assert!(!func_body(&unix, ShellFunc::StatusExt).contains("SrvBoxCusCmdSep."));
+    assert!(func_body(&unix, ShellFunc::Custom).contains("SrvBoxCusCmdSep."));
+
+    let win = build_script(SystemType::Windows, &opts());
+    let before_custom = win.split("function SbCustom").next().unwrap();
+    let after_custom = win.split("function SbCustom").nth(1).unwrap();
+    assert!(!before_custom.contains("SrvBoxCusCmdSep."));
+    assert!(
+        after_custom
+            .split("function SbProcess")
+            .next()
+            .unwrap()
+            .contains("SrvBoxCusCmdSep.")
+    );
+    assert!(!win.split("function SbProcess").nth(1).unwrap().contains("SrvBoxCusCmdSep."));
+}
+
+/// Every generated script has to be something the shell will actually parse.
+///
+/// The custom-command loop and the fingerprint function are the parts of this
+/// module that are shell rather than Rust, so a mistake in them is a runtime
+/// syntax error on someone's server and nothing here would otherwise notice.
+#[test]
+fn generated_unix_shell_parses() {
+    let scripts = [
+        build_script(SystemType::Linux, &opts()),
+        script::read_custom_cmds_script(SystemType::Linux),
+        script::install_custom_cmds_script(
+            SystemType::Linux,
+            &[(100, "disk".into(), "df -h".into())],
+            Some("123-45"),
+        ),
+        script::install_custom_cmds_script(SystemType::Linux, &[], None),
+    ];
+    for script in scripts {
+        assert_sh_parses(&script);
+    }
+}
+
+fn assert_sh_parses(script: &str) {
+    use std::io::Write as _;
+    use std::process::{Command, Stdio};
+
+    let mut child = match Command::new("sh")
+        .arg("-n")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+    {
+        Ok(child) => child,
+        // A host without `sh` is a host this test cannot say anything on.
+        Err(_) => return,
+    };
+    child
+        .stdin
+        .take()
+        .unwrap()
+        .write_all(script.as_bytes())
+        .unwrap();
+    let out = child.wait_with_output().unwrap();
+    assert!(
+        out.status.success(),
+        "sh -n rejected the generated script:\n{}\n--- script ---\n{script}",
+        String::from_utf8_lossy(&out.stderr)
     );
 }
 
@@ -100,7 +171,7 @@ fn custom_cmd_installer_replaces_the_directory() {
         ),
     ];
     for system in [SystemType::Linux, SystemType::Windows] {
-        let install = script::install_custom_cmds_script(system, &cmds);
+        let install = script::install_custom_cmds_script(system, &cmds, None);
         // Nothing a command contains reaches the shell: it travels encoded.
         assert!(!install.contains("rm -rf /"));
         assert!(install.contains(&script::custom_cmd_file_name(100, "disk")));
@@ -230,11 +301,153 @@ fn custom_cmd_listing_round_trips() {
 
     let parsed = script::parse_custom_cmds_listing(&listing).expect("directory exists");
     assert_eq!(
-        parsed,
+        parsed.cmds,
         cmds.iter()
             .map(|(o, n, c)| (*o, n.to_string(), c.to_string()))
             .collect::<Vec<_>>()
     );
+    // Nothing said what the directory held, so there is nothing to check a
+    // later save against — see the fingerprint tests below.
+    assert_eq!(parsed.fingerprint, "");
+}
+
+/// The listing carries what a save has to be checked against.
+///
+/// The whole set is written at once, so without this two clients editing one
+/// server would each write their own copy and the second would silently
+/// discard the first's edits.
+#[test]
+fn custom_cmd_listing_carries_a_fingerprint() {
+    use base64::Engine;
+    let b64 = base64::engine::general_purpose::STANDARD;
+    let listing = format!(
+        "{}\nSrvBoxCusCmdFp 3010678734-27\n{} {}\n{}\n",
+        script::CUSTOM_CMD_DIR_MARKER,
+        script::custom_cmd_file_name(100, "disk"),
+        b64.encode("df -h"),
+        script::CUSTOM_CMD_DIR_END_MARKER,
+    );
+    let parsed = script::parse_custom_cmds_listing(&listing).expect("directory exists");
+    assert_eq!(parsed.fingerprint, "3010678734-27");
+    assert_eq!(parsed.cmds.len(), 1, "the fingerprint line is not a command");
+}
+
+/// An expectation reaches the installer as a comparison it makes for itself,
+/// and a mismatch is reported as something the app can tell from any other
+/// failure — it has to survive both SSH and a monitor agent's `/exec`.
+#[test]
+fn an_install_with_an_expectation_checks_before_it_swaps() {
+    let cmds = [(100u32, "disk".to_string(), "df -h".to_string())];
+    for system in [SystemType::Linux, SystemType::Windows] {
+        let checked = script::install_custom_cmds_script(system, &cmds, Some("3010678734-27"));
+        assert!(checked.contains("3010678734-27"), "{system:?}");
+        assert!(checked.contains(script::CUSTOM_CMD_CONFLICT_MARKER), "{system:?}");
+        // Before anything is written, not after: a check that ran after the
+        // swap would report a conflict it had already caused.
+        let at_check = checked.find(script::CUSTOM_CMD_CONFLICT_MARKER).unwrap();
+        let staging = match system {
+            SystemType::Windows => "New-Item -ItemType Directory",
+            _ => "mkdir -p \"$t\"",
+        };
+        let at_write = checked.find(staging).unwrap();
+        assert!(at_check < at_write, "{system:?}: {checked}");
+
+        let unchecked = script::install_custom_cmds_script(system, &cmds, None);
+        assert!(!unchecked.contains(script::CUSTOM_CMD_CONFLICT_MARKER), "{system:?}");
+    }
+}
+
+/// The expectation is a value the app hands back, so it is quoted rather than
+/// trusted — nothing about a token from a server should be able to become
+/// shell.
+#[test]
+fn an_expectation_cannot_become_shell() {
+    let hostile = "x'; rm -rf / #";
+    let unix = script::install_custom_cmds_script(SystemType::Linux, &[], Some(hostile));
+    assert!(!unix.contains("; rm -rf / #\n"), "{unix}");
+    assert_sh_parses(&unix);
+
+    let win = script::install_custom_cmds_script(SystemType::Windows, &[], Some("x'; rm"));
+    assert!(win.contains("'x''; rm'"), "{win}");
+}
+
+/// A host that cannot compute a fingerprint must still be able to save.
+///
+/// The Unix half needs `cksum`; without it every save would be refused against
+/// an expectation it can never meet.
+#[test]
+fn a_host_without_cksum_saves_anyway() {
+    let unix = script::install_custom_cmds_script(SystemType::Linux, &[], Some("123-4"));
+    assert!(unix.contains(&format!("!= '{}' ]", script::CUSTOM_CMD_FP_UNAVAILABLE)), "{unix}");
+    assert!(unix.contains("command -v cksum"), "{unix}");
+}
+
+/// An install interrupted between the two renames leaves no directory and a
+/// `.bak` holding the commands. The paths that write repair it; the one that
+/// runs the commands does not, and finds nothing to run rather than silently
+/// running a set nobody is editing.
+#[test]
+fn an_interrupted_install_is_repaired_by_the_paths_that_write() {
+    let read = script::read_custom_cmds_script(SystemType::Linux);
+    assert!(read.contains("mv \"$d.bak\" \"$d\""), "{read}");
+    let install = script::install_custom_cmds_script(SystemType::Linux, &[], None);
+    assert!(install.contains("mv \"$d.bak\" \"$d\""), "{install}");
+
+    let script = build_script(SystemType::Linux, &opts());
+    let custom = func_body(&script, ShellFunc::Custom);
+    assert!(!custom.contains(".bak"), "{custom}");
+
+    let win = build_script(SystemType::Windows, &opts());
+    let custom = win
+        .split("function SbCustom")
+        .nth(1)
+        .unwrap()
+        .split("function SbProcess")
+        .next()
+        .unwrap();
+    assert!(!custom.contains(".bak"), "{custom}");
+    assert!(
+        script::read_custom_cmds_script(SystemType::Windows).contains("Move-Item \"$dir.bak\" $dir"),
+    );
+}
+
+/// A successful install says what it left behind, so the editor's next save
+/// can be checked without a second round trip — and without a window for
+/// somebody else's save to land in between.
+#[test]
+fn an_install_reports_the_fingerprint_it_leaves() {
+    for system in [SystemType::Linux, SystemType::Windows] {
+        let install = script::install_custom_cmds_script(system, &[], None);
+        let at_print = install.rfind("SrvBoxCusCmdFp").unwrap();
+        let at_swap = install
+            .rfind(match system {
+                SystemType::Windows => "Move-Item $tmp $dir",
+                _ => "if ! mv \"$t\" \"$d\"",
+            })
+            .unwrap();
+        assert!(at_swap < at_print, "{system:?}: {install}");
+    }
+
+    assert_eq!(
+        script::parse_custom_cmds_fingerprint("noise\nSrvBoxCusCmdFp 123-45\n"),
+        Some("123-45".to_string())
+    );
+    // The last one: a login banner could carry an older line, and the install
+    // prints its own after everything else it does.
+    assert_eq!(
+        script::parse_custom_cmds_fingerprint("SrvBoxCusCmdFp old\r\nSrvBoxCusCmdFp new\r\n"),
+        Some("new".to_string())
+    );
+    assert_eq!(script::parse_custom_cmds_fingerprint("SrvBoxCusCmdFp "), None);
+    assert_eq!(script::parse_custom_cmds_fingerprint("nothing here"), None);
+}
+
+#[test]
+fn a_conflict_is_recognised_in_whatever_carried_it() {
+    assert!(script::custom_cmds_conflict("SrvBoxCusCmdConflict"));
+    assert!(script::custom_cmds_conflict("noise\r\nSrvBoxCusCmdConflict\r\nmore"));
+    assert!(!script::custom_cmds_conflict("mv: cannot stat"));
+    assert!(!script::custom_cmds_conflict(""));
 }
 
 /// A directory that does not exist and one that is empty are different
@@ -253,7 +466,8 @@ fn custom_cmd_listing_tells_missing_from_empty() {
             "{}\n{}\n",
             script::CUSTOM_CMD_DIR_MARKER,
             script::CUSTOM_CMD_DIR_END_MARKER,
-        )),
+        ))
+        .map(|l| l.cmds),
         Some(vec![])
     );
     assert_eq!(
@@ -276,7 +490,7 @@ fn custom_cmd_listing_skips_what_is_not_ours() {
         script::CUSTOM_CMD_DIR_END_MARKER,
     );
     assert_eq!(
-        script::parse_custom_cmds_listing(&listing),
+        script::parse_custom_cmds_listing(&listing).map(|l| l.cmds),
         Some(vec![(300, "ok".to_string(), "echo ok".to_string())])
     );
 }
@@ -291,7 +505,10 @@ fn custom_cmd_listing_uses_the_last_complete_marker_pair() {
         script::CUSTOM_CMD_DIR_END_MARKER,
     );
 
-    assert_eq!(script::parse_custom_cmds_listing(&raw), Some(vec![]));
+    assert_eq!(
+        script::parse_custom_cmds_listing(&raw).map(|l| l.cmds),
+        Some(vec![])
+    );
 }
 
 /// Dart 'install commands are generated correctly'; the Windows variant is
@@ -905,7 +1122,7 @@ fn consecutive_custom_commands_do_not_add_a_blank_line() {
     .unwrap();
     let output = Command::new("sh")
         .arg(&status)
-        .arg("-s")
+        .arg("-c")
         .env("HOME", &home)
         .output()
         .unwrap();
@@ -954,7 +1171,7 @@ fn newline_terminated_custom_output_has_no_extra_blank_line() {
 
     let output = Command::new("sh")
         .arg(&status)
-        .arg("-s")
+        .arg("-c")
         .env("HOME", &home)
         .output()
         .unwrap();
@@ -1015,7 +1232,7 @@ fn windows_custom_commands_have_time_and_output_bounds() {
     let mut child = Command::new("powershell")
         .args(["-NoProfile", "-ExecutionPolicy", "Bypass", "-File"])
         .arg(&status)
-        .arg("-s")
+        .arg("-c")
         .env("USERPROFILE", &home)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())

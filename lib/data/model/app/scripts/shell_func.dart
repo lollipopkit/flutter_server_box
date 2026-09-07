@@ -168,13 +168,23 @@ class ShellFuncManager {
   /// set. No directory to pass: they live at a fixed path under the user's
   /// home, deliberately not following the script's own directory, which
   /// defaults to a temp one and moves when that turns out to be unwritable.
+  ///
+  /// [expect] is the [ffi.CustomCmdsListing.fingerprint] this set was edited
+  /// from. The commands live on the server and every client edits the same
+  /// set, so a save that writes the whole thing has to be able to say what it
+  /// believed it was replacing — otherwise two people editing one machine each
+  /// write their own copy and the second silently discards the first. Null
+  /// only where nothing was read: the first install on a machine that has
+  /// none.
   static String installCustomCmds(
     List<ffi.CustomCmd> customCmds, {
     SystemType? systemType,
+    required String? expect,
   }) {
     return ffi.installCustomCmdsCommand(
       system: ffiSystem(systemType),
       cmds: customCmds,
+      expect: expect,
     );
   }
 
@@ -185,6 +195,18 @@ class ShellFuncManager {
   /// What [readCustomCmds] printed, or null when the directory does not exist
   /// on that server at all — which is not the same as an empty one, and is the
   /// only case in which the app may seed it from what it still holds locally.
-  static List<ffi.CustomCmd>? parseCustomCmds(String raw) =>
+  static ffi.CustomCmdsListing? parseCustomCmds(String raw) =>
       ffi.parseCustomCmdsListing(raw: raw);
+
+  /// Whether an install refused to run because the set on the server had
+  /// changed since it was loaded. Told apart from any other failure because
+  /// the answer is different: reload, rather than retry.
+  static bool customCmdsConflict(String output) =>
+      ffi.customCmdsConflict(output: output);
+
+  /// The fingerprint a successful [installCustomCmds] printed, for the next
+  /// save. Null when the output did not carry one, which is what an older
+  /// install command's output looks like.
+  static String? customCmdsFingerprint(String output) =>
+      ffi.parseCustomCmdsFingerprint(output: output);
 }

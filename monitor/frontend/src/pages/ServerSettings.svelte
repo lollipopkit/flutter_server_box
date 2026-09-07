@@ -42,6 +42,10 @@
   let customCmdsEditable = $state(false)
   let customCmdsSaving = $state(false)
   let customCmdsError = $state<string | null>(null)
+  /// What the directory held when this set was loaded. Sent back on save so a
+  /// panel left open cannot discard another client's edits — see
+  /// `CustomCmdsView.fingerprint`.
+  let customCmdsFingerprint = $state<string | null>(null)
   let customCmdsOk = $state(false)
 
   function applyLoaded(v: SettingsView) {
@@ -76,6 +80,7 @@
       const view = await api.getCustomCmds()
       customCmds = view.commands.map((c) => ({ ...c }))
       customCmdsEditable = view.editable
+      customCmdsFingerprint = view.fingerprint
     } catch (e) {
       customCmdsError = e instanceof ApiError ? e.message : String(e)
     }
@@ -130,8 +135,12 @@
     customCmdsError = null
     customCmdsOk = false
     try {
-      const view = await api.updateCustomCmds(customCmds.map((c) => ({ ...c, name: c.name.trim() })))
+      const view = await api.updateCustomCmds(
+        customCmds.map((c) => ({ ...c, name: c.name.trim() })),
+        customCmdsFingerprint,
+      )
       customCmds = view.commands.map((c) => ({ ...c }))
+      customCmdsFingerprint = view.fingerprint
       customCmdsOk = true
     } catch (e) {
       customCmdsError = e instanceof ApiError ? e.message : String(e)
@@ -388,6 +397,12 @@
       {/if}
       {#if customCmdsError}
         <p class="text-sm text-danger">{customCmdsError}</p>
+        <!-- The one thing that resolves a refused save: the agent has a newer
+             set than this panel does, and it has to be looked at before it can
+             be edited. -->
+        <Button variant="secondary" size="sm" onclick={loadCustomCmds}>
+          {$LL.refresh()}
+        </Button>
       {/if}
       {#if customCmdsOk}
         <p class="text-sm text-success">{$LL.settingsSaved()}</p>

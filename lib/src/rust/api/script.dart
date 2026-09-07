@@ -26,13 +26,35 @@ String buildScript({
 /// One round trip for the whole set, written aside and moved into place, and
 /// the commands travel encoded — see `install_custom_cmds_script`. The
 /// directory is fixed under the user's home, so there is no path to pass.
+///
+/// `expect` is the `fingerprint` of the [`CustomCmdsListing`] this set was
+/// edited from. The whole set is written at once, so without it a second app
+/// editing the same server would silently discard the first's edits; with it
+/// the second save is refused and reports [`custom_cmds_conflict`]. `None`
+/// only for a caller that never read the directory.
 String installCustomCmdsCommand({
   required String system,
   required List<CustomCmd> cmds,
+  String? expect,
 }) => RustLib.instance.api.crateApiScriptInstallCustomCmdsCommand(
   system: system,
   cmds: cmds,
+  expect: expect,
 );
+
+/// Whether an install refused to run because the directory had changed under
+/// the caller.
+bool customCmdsConflict({required String output}) =>
+    RustLib.instance.api.crateApiScriptCustomCmdsConflict(output: output);
+
+/// The fingerprint a successful install printed, for the caller's next save.
+///
+/// Saves reading the directory back, and closes the window in which somebody
+/// else's save would land between the write and that read.
+String? parseCustomCmdsFingerprint({required String output}) => RustLib
+    .instance
+    .api
+    .crateApiScriptParseCustomCmdsFingerprint(output: output);
 
 /// Script that prints the custom-command directory back, for the editor to
 /// load. Output goes to `parse_custom_cmds_listing`.
@@ -41,10 +63,10 @@ String readCustomCmdsCommand({required String system}) =>
 
 /// The installed set, parsed from `read_custom_cmds_command`'s output.
 ///
-/// `None` means the directory does not exist — distinct from `Some([])`, an
-/// existing directory the user has emptied. The app seeds the first case from
-/// what it still holds locally and must not touch the second.
-List<CustomCmd>? parseCustomCmdsListing({required String raw}) =>
+/// `None` means the directory does not exist — distinct from an empty `cmds`,
+/// an existing directory the user has emptied. The app seeds the first case
+/// from what it still holds locally and must not touch the second.
+CustomCmdsListing? parseCustomCmdsListing({required String raw}) =>
     RustLib.instance.api.crateApiScriptParseCustomCmdsListing(raw: raw);
 
 /// Command that installs the script on the target (content piped via stdin,
@@ -138,6 +160,28 @@ class CustomCmd {
           cmd == other.cmd;
 }
 
+/// One reading of the custom-command directory.
+class CustomCmdsListing {
+  /// Hand back to `install_custom_cmds_command` so a save that would discard
+  /// another client's edits is refused. Empty, or `?`, on a host that cannot
+  /// produce one — both compare equal to anything.
+  final String fingerprint;
+  final List<CustomCmd> cmds;
+
+  const CustomCmdsListing({required this.fingerprint, required this.cmds});
+
+  @override
+  int get hashCode => fingerprint.hashCode ^ cmds.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CustomCmdsListing &&
+          runtimeType == other.runtimeType &&
+          fingerprint == other.fingerprint &&
+          cmds == other.cmds;
+}
+
 /// One section of the script's output.
 class ScriptSegment {
   final String key;
@@ -158,4 +202,15 @@ class ScriptSegment {
 }
 
 /// Shell functions of the generated script (mirrors sbm_parser::script::ShellFunc)
-enum ShellFuncKind { status, statusExt, process, shutdown, reboot, suspend }
+enum ShellFuncKind {
+  status,
+  statusExt,
+
+  /// The user's custom commands. Its own function so it can run on its own
+  /// cadence instead of on every status poll.
+  custom,
+  process,
+  shutdown,
+  reboot,
+  suspend,
+}

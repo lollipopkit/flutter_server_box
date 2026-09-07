@@ -150,8 +150,8 @@ the panel password can't switch it on); shared admission checks live in
 - **`GET/PUT /api/v1/custom-cmds`** — the user's custom status commands, which
   are files in `~/.config/server_box/custom_cmds` (`sbm_parser::script`) rather
   than anything in this agent's config. The same directory the app writes over
-  SSH and the generated status script reads, so the panel and the app edit one
-  set; the extended cycle picks up a change with nothing having to be told.
+  SSH and `SbCustom` runs, so the panel and the app edit one set; the extended
+  cycle picks up a change with nothing having to be told.
   A PUT replaces the whole set in order — the order is what is stored (the
   files' name prefixes), so a move has no smaller expression. **Writing is
   gated on `full_access`**, the same grant as the shell and `/exec`: a file in
@@ -160,6 +160,14 @@ the panel password can't switch it on); shared admission checks live in
   response says `editable` so the editor can go read-only instead of failing on
   save. The store is `monitoring::custom_cmds` (write-aside-and-rename, stray
   files skipped, names never logged — only the audit `subject`).
+  **A replace is compare-and-swap**: `GET` answers a `fingerprint`, `PUT` takes
+  it back as `expect`, and a mismatch is 409. Without it a panel left open on a
+  stale copy would silently discard whatever another client changed, since the
+  write is the whole set. The check runs under the write's own lock, after
+  interrupted-replace recovery. The app reaches the same directory over SSH and
+  computes its own fingerprint in the shell; the two are different values of
+  the same directory and never meet, because each client checks against what
+  it read itself.
 - **`/api/v1/fs/*`** — list, stat, read, write, mkdir, rename, chmod, remove,
   for the app's file browser. Its own switch (`[remote_access.fs] enabled`), not
   folded into `full_access`: that grant means "a shell as the agent's user",

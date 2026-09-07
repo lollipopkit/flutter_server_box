@@ -116,6 +116,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   bool dco_decode_bool(dynamic raw);
 
   @protected
+  CustomCmdsListing dco_decode_box_autoadd_custom_cmds_listing(dynamic raw);
+
+  @protected
   PluginSpec dco_decode_box_autoadd_plugin_spec(dynamic raw);
 
   @protected
@@ -123,6 +126,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   CustomCmd dco_decode_custom_cmd(dynamic raw);
+
+  @protected
+  CustomCmdsListing dco_decode_custom_cmds_listing(dynamic raw);
 
   @protected
   EcdsaSignature dco_decode_ecdsa_signature(dynamic raw);
@@ -158,7 +164,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String? dco_decode_opt_String(dynamic raw);
 
   @protected
-  List<CustomCmd>? dco_decode_opt_list_custom_cmd(dynamic raw);
+  CustomCmdsListing? dco_decode_opt_box_autoadd_custom_cmds_listing(
+    dynamic raw,
+  );
 
   @protected
   PluginFailure dco_decode_plugin_failure(dynamic raw);
@@ -287,6 +295,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   bool sse_decode_bool(SseDeserializer deserializer);
 
   @protected
+  CustomCmdsListing sse_decode_box_autoadd_custom_cmds_listing(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   PluginSpec sse_decode_box_autoadd_plugin_spec(SseDeserializer deserializer);
 
   @protected
@@ -294,6 +307,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   CustomCmd sse_decode_custom_cmd(SseDeserializer deserializer);
+
+  @protected
+  CustomCmdsListing sse_decode_custom_cmds_listing(
+    SseDeserializer deserializer,
+  );
 
   @protected
   EcdsaSignature sse_decode_ecdsa_signature(SseDeserializer deserializer);
@@ -333,7 +351,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String? sse_decode_opt_String(SseDeserializer deserializer);
 
   @protected
-  List<CustomCmd>? sse_decode_opt_list_custom_cmd(SseDeserializer deserializer);
+  CustomCmdsListing? sse_decode_opt_box_autoadd_custom_cmds_listing(
+    SseDeserializer deserializer,
+  );
 
   @protected
   PluginFailure sse_decode_plugin_failure(SseDeserializer deserializer);
@@ -482,6 +502,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_bool(bool self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_autoadd_custom_cmds_listing(
+    CustomCmdsListing self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_plugin_spec(
     PluginSpec self,
     SseSerializer serializer,
@@ -492,6 +518,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_custom_cmd(CustomCmd self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_custom_cmds_listing(
+    CustomCmdsListing self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_ecdsa_signature(
@@ -545,8 +577,8 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_opt_String(String? self, SseSerializer serializer);
 
   @protected
-  void sse_encode_opt_list_custom_cmd(
-    List<CustomCmd>? self,
+  void sse_encode_opt_box_autoadd_custom_cmds_listing(
+    CustomCmdsListing? self,
     SseSerializer serializer,
   );
 

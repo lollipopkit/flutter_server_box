@@ -163,6 +163,14 @@
   "copyPath": "Copy path",
   "cpuViewAsProgressTip": "Display the usage of each CPU in a progress bar style (old style)",
   "customCmd": "Custom commands",
+  "customCmdInterval": "Custom command interval",
+  "customCmdIntervalTip": "They run on a status poll, so this is rounded up to a whole number of update intervals. Actual: {seconds}s.",
+  "@customCmdIntervalTip": {
+    "placeholders": {
+      "seconds": {}
+    }
+  },
+  "customCmdChangedOnServer": "The commands on this server have changed since this page loaded them. Reload to see them; saving now would discard them.",
   "deleteServers": "Batch delete servers",
   "deleteDirRecursive": "Delete the folder and everything in it",
   "desktopTerminalTip": "Command used to open the terminal emulator when launching SSH sessions.",
