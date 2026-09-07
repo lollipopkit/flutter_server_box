@@ -25,9 +25,14 @@ import {
 
 beforeEach(() => resetFrame());
 
-/** A node the app already has: type, key and revision, nothing else. */
+/// A node the app already has.
+///
+/// Asked of the marker, not of the shape: `spacer` and `divider` carry no
+/// properties and no children either, so reading the shape would call one of
+/// those a stub — which is the same confusion `Walked.changed` exists for, one
+/// layer down.
 function isStub(n: Node): boolean {
-  return n.c === undefined && n.p === undefined && n.on === undefined;
+  return n.s === 1;
 }
 
 /** Every node in the tree, depth first. */

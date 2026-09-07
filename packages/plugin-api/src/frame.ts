@@ -11,9 +11,10 @@
  * object, so the framework walks the whole tree to discover that nothing moved.
  *
  * So each node carries a revision. A node whose revision the app already has is
- * sent as `{t, k, v}` with no properties and no children, and the app hands
- * back the Widget instance it built last time — which is what makes the fast
- * path fire.
+ * sent as `{t, k, v, s: 1}` with no properties and no children, and the app
+ * hands back the Widget instance it built last time — which is what makes the
+ * fast path fire. `s` is what separates that from a node with no content of
+ * its own; see {@link stub}.
  *
  * The author writes none of this. {@link frame} diffs against the tree it sent
  * last time and assigns the revisions itself.
@@ -107,9 +108,16 @@ function walk(next: Node, prev: Node | null): Walked {
   return { kept, sent, changed: true };
 }
 
-/** A node reduced to "you already have this". */
+/**
+ * A node reduced to "you already have this".
+ *
+ * `s` is what separates it from a node that simply has no content. A `spacer`
+ * carries no properties and no children, so without the marker `{t, v}` would
+ * mean both things — and the app, told to reuse a revision it has never seen,
+ * would report that rather than draw the spacer.
+ */
 function stub(prev: Node): Node {
-  const n: Node = { t: prev.t };
+  const n: Node = { t: prev.t, s: 1 };
   if (prev.v !== undefined) n.v = prev.v;
   if (prev.k !== undefined) n.k = prev.k;
   return n;

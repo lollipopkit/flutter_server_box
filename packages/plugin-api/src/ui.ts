@@ -47,6 +47,17 @@ export interface Node {
   v?: number;
 
   /**
+   * Marks this as "you already have this subtree", rather than a node.
+   *
+   * Written by {@link frame}, never by hand. It is here because the two are
+   * otherwise indistinguishable: a `spacer` carries no properties and no
+   * children either, so `{t, v}` would mean both "a spacer" and "reuse what
+   * you have" — and the app would answer the second by reporting a revision it
+   * has never seen.
+   */
+  s?: 1;
+
+  /**
    * A key that is stable across rebuilds, mapped to a Flutter `ValueKey`.
    *
    * An input control with one keeps its focus and cursor between trees. This is

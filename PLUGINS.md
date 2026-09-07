@@ -304,6 +304,9 @@ FFI 那一层已经接好：`sbm_ffi` 用 `StreamSink` 把请求推给 Dart，Da
 | `c` | 子节点 |
 | `on` | 用户事件对应的消息，由宿主原样传给 `onEvent`；输入控件另传当前 `value` |
 | `v` | 该子树的修订号，由 SDK 自动填写，作者不写。见 5.2 |
+| `s` | `1` 表示"这棵子树你已经有了"，同样由 SDK 填写。见下 |
+
+`s` 是补上的：`spacer` 和 `divider` 本来就没有 `p` 也没有 `c`，所以 `{t, v}` 同时意味着"一个 spacer"和"复用你手上那个"。没有这个标记，宿主收到一个新 spacer 会当成"复用一个从没见过的修订号"并报错。SDK 的 `Walked.changed` 是同一个混淆在上一层的版本。
 
 `k` 比看上去重要。Flutter 用 `runtimeType` 加 `key` 判断新旧节点是不是同一个（`Widget.canUpdate`）；不带 key 的一组子节点重排之后，框架会把每个节点和现在占据该位置的那个配对，于是对应的 element 和它保存的状态被丢弃。输入焦点只是其中一种表现，列表行的滚动位置和展开状态也一样。
 
@@ -320,6 +323,8 @@ FFI 那一层已经接好：`sbm_ffi` 用 `StreamSink` 把请求推给 Dart，Da
 ### 5.2 怎么让 Flutter 少做事
 
 界面每隔一段时间刷新一次，而每次刷新真正变的通常只有几个数字。这一节记录为此做的三件事，依据是 Flutter 自己的更新机制。
+
+已实现：`lib/data/model/plugin/node.dart`（节点格式）、`lib/view/widget/plugin/surface.dart`（一个 surface 跨帧保存的东西）、`lib/view/widget/plugin/render.dart`（画树），测试在 `test/plugin_render_test.dart`。
 
 **Flutter 的判断点。** `Element.updateChild`（`packages/flutter/lib/src/widgets/framework.dart`）在新旧 widget 相等时直接返回，不调用 `update()`，于是整棵子树跳过：不重建、不布局、不绘制。`Widget` 没有重写 `==`，所以这个比较是引用相等。每次从 JSON 重新构造的 widget 全是新对象，永远走不到这条路径 —— 框架只能遍历整棵树，逐个属性比较之后才发现什么都没动。
 
@@ -561,7 +566,7 @@ App Store 对这种扩展的判断也不能仅凭它没有 UI 就下结论。
 | 2 | `sbm_ffi` 暴露加载、调用和释放，Dart 实现宿主回调 | **FFI 已完成**（`test/plugin_ffi_test.dart` 走通加载、调用、宿主回调、权限拒绝）。剩下 Dart 侧把 14 个接口接到 App 的实际功能上，属于第 5 步 |
 | 3 | 接入状态命令插件，随包提供一个样本 | 进行中。`StatusResult` 的形状与校验、`contributes.status`（含必须申请 `server.exec`）、`inline_cmds_script`（一次往返跑完所有插件命令、服务器上不留文件）、`PluginRuntime.statusCmd`/`statusParse`、SDK 的状态插件类型和样例都已完成，Rust 侧 121 个测试 + `test/plugin_ffi_test.dart` 打通「插件要什么命令 → 真跑一遍 → 结果回到同一个插件」。剩下的要等第 5 步的插件存储：App 得先知道装了哪些插件，才谈得上在状态页画出来 |
 | 4 | Dart feature registry 和按钮 id 迁移 | **已完成**。`lib/data/model/app/feature.dart`：`Feature`/`FeatureSlot`/`Features`，三个入口面（功能栏按钮、详情卡片、首页 tab）合并成一个 id 空间和一份"这次升级新增了什么"的规则。`serverBtns` 由 enum index 迁到 id（m021，`kLegacyServerFuncBtnIds` 冻结旧顺序），恢复备份时也会转换 |
-| 5 | Flutter 渲染器、插件卡片、存储、备份、安装管理和开发目录 | 进行中。**存储已完成**：四张表（m022）、`PluginInstall` 模型、`PluginInstallStore`/`PluginCfgStore`/`PluginKvStore`，23 个测试。剩下渲染器（含 5.2 的三项）、插件卡片、`BackupV2` 的 `plugins` 字段、安装管理和开发目录 |
+| 5 | Flutter 渲染器、插件卡片、存储、备份、安装管理和开发目录 | 进行中。**存储已完成**（四张表 m022 + 三个 store，23 个测试）；**渲染器已完成**（22 种控件、5.2 的三项、l10n、错误节点，24 个测试）。剩下插件卡片和其余 surface、`BackupV2` 的 `plugins` 字段、安装管理、开发目录，以及 5.5 的 golden 截图 |
 | 6 | 在 App 中接通 BMC 插件 | 未开始；对照 `packages/redfish/test/` 的 fixture 和现有行为，验证一致后再删除 Dart 实现及 `packages/redfish` |
 | 7 | 在线仓库、第三方仓库和网站插件页 | 未开始；先只收状态插件，BMC 验证完 UI 接口后再开放 UI 插件 |
 
