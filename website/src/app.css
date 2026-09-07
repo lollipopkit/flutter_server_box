@@ -212,7 +212,12 @@ body {
   padding: clamp(5rem, 12vw, 9rem) 0;
 }
 
+/* The same content width as the nav and every section below it. Without it the
+   hero was the one full-bleed block on the page, and on a phone its heading and
+   subtitle ran to both edges while everything around them kept a gutter. */
 .hero {
+  width: min(1080px, 92vw);
+  margin: 0 auto;
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -708,6 +713,10 @@ body {
     display: none;
   }
 
+  /* The links are hidden at this width, so the switcher shares the bar with the
+     brand alone. A select is as wide as its widest option, and this is only the
+     floor that keeps the pill from changing size with the language chosen —
+     capping it instead is what cut `English` down to `Engli`. */
   .language-switcher select {
     min-width: 7.2rem;
   }
@@ -749,14 +758,6 @@ body {
     padding: 0.55rem 1rem;
   }
 
-  .language-switcher select {
-    min-width: 4.5rem;
-    max-width: 4.5rem;
-    padding-right: 1.45rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
   .nav-actions {
     gap: 0.4rem;
   }
@@ -767,6 +768,14 @@ body {
 
   .hero {
     padding: clamp(4rem, 10vw, 6rem) 0 clamp(3rem, 6vw, 5rem);
+  }
+
+  /* The heading is written as two lines and carries its own `<br>`. The base
+     size is a floor rather than a ratio, so on a phone it is wider than the
+     column and the second half wraps again — three lines, one of them a single
+     word. Scaled to the viewport here so each half stays one line. */
+  .hero h1 {
+    font-size: clamp(1.9rem, 8.6vw, 2.5rem);
   }
 
   .screenshot-stack {

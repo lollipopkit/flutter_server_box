@@ -198,7 +198,7 @@ type RootTranslation = {
 		 */
 		title: string
 		/**
-		 * C​h​o​o​s​e​ ​t​h​e​ ​c​h​a​n​n​e​l​ ​t​h​a​t​ ​m​a​t​c​h​e​s​ ​y​o​u​r​ ​d​e​v​i​c​e​ ​a​n​d​ ​t​r​u​s​t​ ​m​o​d​e​l​.​ ​i​O​S​ ​u​s​e​s​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e​;​ ​m​a​c​O​S​ ​u​s​e​s​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e​ ​o​r​ ​H​o​m​e​b​r​e​w​;​ ​A​n​d​r​o​i​d​,​ ​L​i​n​u​x​,​ ​a​n​d​ ​W​i​n​d​o​w​s​ ​a​l​s​o​ ​h​a​v​e​ ​d​i​r​e​c​t​ ​p​a​c​k​a​g​e​ ​d​o​w​n​l​o​a​d​s​.
+		 * C​h​o​o​s​e​ ​a​ ​t​r​u​s​t​e​d​ ​s​o​u​r​c​e​ ​f​o​r​ ​y​o​u​r​ ​d​e​v​i​c​e​.​ ​i​O​S​ ​i​s​ ​a​v​a​i​l​a​b​l​e​ ​f​r​o​m​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e​.​ ​O​n​ ​m​a​c​O​S​,​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e​ ​b​u​i​l​d​ ​s​u​p​p​o​r​t​s​ ​A​p​p​l​e​ ​s​i​l​i​c​o​n​ ​o​n​l​y​;​ ​I​n​t​e​l​ ​u​s​e​r​s​ ​c​a​n​ ​i​n​s​t​a​l​l​ ​t​h​e​ ​a​p​p​ ​f​r​o​m​ ​G​i​t​H​u​b​ ​R​e​l​e​a​s​e​s​ ​o​r​ ​H​o​m​e​b​r​e​w​.​ ​D​i​r​e​c​t​ ​d​o​w​n​l​o​a​d​s​ ​a​r​e​ ​a​l​s​o​ ​a​v​a​i​l​a​b​l​e​ ​f​o​r​ ​A​n​d​r​o​i​d​,​ ​L​i​n​u​x​,​ ​a​n​d​ ​W​i​n​d​o​w​s​.
 		 */
 		subtitle: string
 		/**
@@ -427,7 +427,7 @@ export type TranslationFunctions = {
 		 */
 		title: () => LocalizedString
 		/**
-		 * Choose the channel that matches your device and trust model. iOS uses the App Store; macOS uses the App Store or Homebrew; Android, Linux, and Windows also have direct package downloads.
+		 * Choose a trusted source for your device. iOS is available from the App Store. On macOS, the App Store build supports Apple silicon only; Intel users can install the app from GitHub Releases or Homebrew. Direct downloads are also available for Android, Linux, and Windows.
 		 */
 		subtitle: () => LocalizedString
 		/**

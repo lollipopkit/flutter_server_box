@@ -41,7 +41,16 @@ fi
 
 APP_VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$INFO_PLIST")"
 APP_BUILD="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$INFO_PLIST")"
-DMG_BASENAME="${DMG_BASENAME:-${APP_ASSET_NAME}-${APP_VERSION}}"
+
+# Include the architecture in the filename for thin builds so downloaded DMGs
+# remain distinguishable. Keep the plain filename for a universal build.
+if [[ -z "${DMG_BASENAME:-}" ]]; then
+  case "$(lipo -archs "$APP_PATH/Contents/MacOS/${APP_NAME}" 2>/dev/null)" in
+    arm64) DMG_BASENAME="${APP_ASSET_NAME}-${APP_VERSION}-arm64" ;;
+    x86_64) DMG_BASENAME="${APP_ASSET_NAME}-${APP_VERSION}-amd64" ;;
+    *) DMG_BASENAME="${APP_ASSET_NAME}-${APP_VERSION}" ;;
+  esac
+fi
 DMG_PATH="${DMG_PATH:-$ARTIFACTS_PATH/${DMG_BASENAME}.dmg}"
 
 mkdir -p "$ARTIFACTS_PATH"

@@ -4,6 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 APP_NAME="${APP_NAME:-Server Box}"
+APP_ASSET_NAME="${APP_ASSET_NAME:-ServerBox}"
 CASK_NAME="${CASK_NAME:-server-box}"
 CASK_SUBDIR="${CASK_SUBDIR:-${CASK_NAME:0:1}}"
 CASK_DISPLAY_NAME="${CASK_DISPLAY_NAME:-ServerBox}"
@@ -13,6 +14,12 @@ TAP_REPO_PATH="${TAP_REPO_PATH:-$HOME/proj/homebrew-cask}"
 TAP_CASK_PATH="${TAP_CASK_PATH:-}"
 EXPLICIT_TAP_CASK_PATH="${TAP_CASK_PATH:-}"
 XCARCHIVE_PATH="${1:-${XCARCHIVE_PATH:-}}"
+
+# One cask serves both architectures through `arch arm:`/`intel:` and an
+# interpolated URL. Generate it only when both DMGs are available; otherwise,
+# one architecture would receive a URL for an unpublished asset.
+DMG_ARM64_PATH="${DMG_ARM64_PATH:-}"
+DMG_AMD64_PATH="${DMG_AMD64_PATH:-}"
 
 if [[ -n "$XCARCHIVE_PATH" ]]; then
   APP_PATH="${APP_PATH:-$XCARCHIVE_PATH/Products/Applications/${APP_NAME}.app}"
@@ -34,42 +41,39 @@ else
   APP_BUILD=""
 fi
 
-if [[ -n "$APP_VERSION" && "$APP_VERSION" != '$('* ]]; then
-  DMG_BASENAME="${DMG_BASENAME:-ServerBox-${APP_VERSION}}"
+# The checked-in Info.plist contains the unresolved `$(FLUTTER_BUILD_NAME)`
+# setting rather than a version. Ignore that placeholder and infer the version
+# from a DMG filename instead.
+if [[ -z "$APP_VERSION" || "$APP_VERSION" == '$('* ]]; then
+  APP_VERSION=""
+  for candidate in "$DMG_ARM64_PATH" "$DMG_AMD64_PATH"; do
+    [[ -n "$candidate" ]] || continue
+    dmg_filename="$(basename "$candidate")"
+    if [[ "$dmg_filename" =~ ^${APP_ASSET_NAME}-([0-9]+(\.[0-9]+){1,2})-(arm64|amd64)\.dmg$ ]]; then
+      APP_VERSION="${BASH_REMATCH[1]}"
+      break
+    fi
+  done
 fi
 
-if [[ -z "${DMG_PATH:-}" ]]; then
-  if [[ -z "${DMG_BASENAME:-}" ]]; then
-    echo "DMG_PATH requires DMG_BASENAME when version is unavailable" >&2
-    echo "Provide DMG_PATH directly, or provide XCARCHIVE_PATH/APP_PATH so DMG_BASENAME can be resolved." >&2
-    exit 1
-  fi
-  DMG_PATH="$REPO_ROOT/build/artifacts/${DMG_BASENAME}.dmg"
-fi
-
-if [[ ! -f "$DMG_PATH" ]]; then
-  echo "DMG not found: $DMG_PATH" >&2
-  echo "Run package-dmg-from-xcarchive.sh first or provide DMG_PATH." >&2
+if [[ -z "$APP_VERSION" ]]; then
+  echo "unable to determine the app version" >&2
+  echo "Provide XCARCHIVE_PATH or APP_PATH, or DMGs named ${APP_ASSET_NAME}-<version>-<arm64|amd64>.dmg." >&2
   exit 1
 fi
 
-if [[ -z "$APP_VERSION" || "$APP_VERSION" == '$('* ]]; then
-  dmg_filename="$(basename "$DMG_PATH")"
-  if [[ "$dmg_filename" =~ ^ServerBox-([0-9]+(\.[0-9]+){1,2})\.dmg$ ]]; then
-    APP_VERSION="${BASH_REMATCH[1]}"
-    APP_BUILD="${APP_BUILD:-}"
-  elif [[ "$dmg_filename" =~ ^ServerBox-([0-9]+(\.[0-9]+){1,2})-([0-9]+)\.dmg$ ]]; then
-    APP_VERSION="${BASH_REMATCH[1]}"
-    APP_BUILD="${BASH_REMATCH[3]}"
-  else
-    echo "unable to determine version from $DMG_PATH" >&2
-    echo "Provide XCARCHIVE_PATH, APP_PATH, or a DMG named ServerBox-<version>.dmg." >&2
+RELEASE_TAG="${RELEASE_TAG:-v${APP_VERSION}}"
+DMG_BASENAME="${DMG_BASENAME:-${APP_ASSET_NAME}-${APP_VERSION}}"
+DMG_ARM64_PATH="${DMG_ARM64_PATH:-$REPO_ROOT/build/artifacts/${DMG_BASENAME}-arm64.dmg}"
+DMG_AMD64_PATH="${DMG_AMD64_PATH:-$REPO_ROOT/build/artifacts/${DMG_BASENAME}-amd64.dmg}"
+
+for dmg in "$DMG_ARM64_PATH" "$DMG_AMD64_PATH"; do
+  if [[ ! -f "$dmg" ]]; then
+    echo "DMG not found: $dmg" >&2
+    echo "Run release-macos-dmg.sh for both architectures, or provide DMG_ARM64_PATH and DMG_AMD64_PATH." >&2
     exit 1
   fi
-fi
-
-RELEASE_TAG="${RELEASE_TAG:-v${APP_VERSION}}"
-DMG_BASENAME="${DMG_BASENAME:-ServerBox-${APP_VERSION}}"
+done
 
 if [[ -z "$TAP_CASK_PATH" && -n "$TAP_REPO_PATH" ]]; then
   TAP_CASK_PATH="$TAP_REPO_PATH/Casks/${CASK_SUBDIR}/${CASK_NAME}.rb"
@@ -85,25 +89,31 @@ if [[ -z "$EXPLICIT_TAP_CASK_PATH" && -n "$TAP_REPO_PATH" && ! -d "$TAP_REPO_PAT
   exit 1
 fi
 
-SHA256="$(shasum -a 256 "$DMG_PATH" | awk '{print $1}')"
+SHA256_ARM64="$(shasum -a 256 "$DMG_ARM64_PATH" | awk '{print $1}')"
+SHA256_AMD64="$(shasum -a 256 "$DMG_AMD64_PATH" | awk '{print $1}')"
 
+# `#{version}` and `#{arch}` are Ruby interpolations. They remain literal here
+# because the shell expands `$`, not `#`.
 mkdir -p "$(dirname "$TAP_CASK_PATH")"
 cat > "$TAP_CASK_PATH" <<CASK
 cask "$CASK_NAME" do
-  version "$APP_VERSION"
-  sha256 "$SHA256"
+  arch arm: "arm64", intel: "amd64"
 
-  url "https://github.com/$APP_REPO_SLUG/releases/download/$RELEASE_TAG/${DMG_BASENAME}.dmg",
+  version "$APP_VERSION"
+  sha256 arm:   "$SHA256_ARM64",
+         intel: "$SHA256_AMD64"
+
+  url "https://github.com/$APP_REPO_SLUG/releases/download/$RELEASE_TAG/${APP_ASSET_NAME}-#{version}-#{arch}.dmg",
       verified: "github.com/$APP_REPO_SLUG/"
   name "$CASK_DISPLAY_NAME"
   desc "$CASK_DESC"
   homepage "https://github.com/$APP_REPO_SLUG"
 
-  # Matches macos/Podfile and MACOSX_DEPLOYMENT_TARGET. Without it Homebrew
+  # Matches MACOSX_DEPLOYMENT_TARGET in the Xcode project. Without it Homebrew
   # installs happily on an older macOS and the app then fails to launch with
   # a dyld error, which reads as a broken build rather than as a machine that
   # is too old.
-  depends_on macos: ">= :monterey"
+  depends_on macos: ">= :ventura"
 
   app "$APP_NAME.app"
 end
@@ -115,5 +125,7 @@ if [[ -n "$APP_BUILD" && "$APP_BUILD" != '$('* ]]; then
   echo "Build number: $APP_BUILD"
 fi
 echo "Release tag: $RELEASE_TAG"
-echo "DMG: $DMG_PATH"
-echo "SHA256: $SHA256"
+echo "DMG (arm64): $DMG_ARM64_PATH"
+echo "SHA256 (arm64): $SHA256_ARM64"
+echo "DMG (amd64): $DMG_AMD64_PATH"
+echo "SHA256 (amd64): $SHA256_AMD64"

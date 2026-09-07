@@ -24,13 +24,15 @@ Choose an installation source:
 
 ### macOS
 
-Download from the **[App Store](https://apps.apple.com/app/id1586449703)** or install with Homebrew Cask:
+Download from the **[App Store](https://apps.apple.com/app/id1586449703)** or **[GitHub Releases](https://github.com/lollipopkit/flutter_server_box/releases)**, or install with Homebrew Cask:
 
 ```sh
 brew install --cask server-box
 ```
 
-The macOS builds support both Intel and Apple Silicon. The DMG build also provides a local terminal; the App Store build is sandboxed and cannot provide that feature.
+All macOS builds require macOS 13 or later. The App Store build supports Apple silicon only. GitHub Releases provide `ServerBox-<version>-arm64.dmg` for Apple silicon and `ServerBox-<version>-amd64.dmg` for Intel; Homebrew automatically selects the correct build for your Mac.
+
+The DMG build also includes a local terminal. The sandboxed App Store build cannot provide this feature.
 
 ### Linux
 

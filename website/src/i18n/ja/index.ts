@@ -75,7 +75,7 @@ const ja: Translation = {
   download: {
     title: 'すべてのプラットフォーム、すべての配布元。',
     subtitle:
-      'デバイスと信頼できる配布元に合わせて選択できます。iOS は App Store、macOS は App Store または Homebrew、Android、Linux、Windows は直接パッケージも利用できます。',
+      'デバイスに合った信頼できる配布元を選んでください。iOS 版は App Store から入手できます。macOS の App Store 版は Apple シリコンにのみ対応しており、Intel Mac では GitHub Releases または Homebrew からインストールできます。Android、Linux、Windows 向けには直接ダウンロードも用意されています。',
     copied: 'インストールコマンドをコピーしました',
     copyPrompt: 'このインストールコマンドをコピーしてください:',
     note:
