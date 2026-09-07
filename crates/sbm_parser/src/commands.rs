@@ -62,17 +62,50 @@ pub struct CommandSpec {
 ///
 /// Both callers refresh these on a slow cadence instead: the app on a timer
 /// (minutes), the monitor on its extended cycle.
-/// - `PKG` asks a package manager to work out what would be upgraded. That is
-///   a second of CPU on a large Debian install, it reads a cache that only
-///   changes when someone runs `apt update`, and the answer is the same for
-///   hours at a time.
-pub const EXTENDED: &[&str] = &[DISK_SMART, AMD, IP, PKG];
+pub const EXTENDED: &[&str] = &[DISK_SMART, AMD, IP];
+
+/// Commands in neither status function, emitted by one of their own and run
+/// only when something asks.
+///
+/// A third bucket because "slow" and "only when looked at" are different
+/// answers. An extended command still runs on a timer, for every connected
+/// machine, whether or not anybody is reading it — right for `IP`, which the
+/// globe draws unprompted, and wrong for a package list.
+///
+/// `PKG` asks a package manager to work out what would be upgraded: a second
+/// of CPU on a large Debian install, per machine, off a cache that only
+/// changes when someone runs the manager's own refresh. Paying that every few
+/// minutes for a fleet nobody is looking at is the cost with none of the
+/// benefit, and the answer is the same when it is finally asked for.
+pub const ON_DEMAND: &[&str] = &[PKG];
+
+/// When a command runs, which is what decides the function it lands in.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Cadence {
+    /// Every status poll — seconds.
+    Poll,
+    /// [`EXTENDED`]: on a timer, minutes apart.
+    Extended,
+    /// [`ON_DEMAND`]: when a caller asks and not otherwise.
+    OnDemand,
+}
 
 impl CommandSpec {
     /// Whether this command belongs to the extended function rather than the
     /// fast status one — see [`EXTENDED`]
     pub fn is_extended(&self) -> bool {
         EXTENDED.contains(&self.key)
+    }
+
+    /// Which function this command is emitted into.
+    pub fn cadence(&self) -> Cadence {
+        if ON_DEMAND.contains(&self.key) {
+            Cadence::OnDemand
+        } else if EXTENDED.contains(&self.key) {
+            Cadence::Extended
+        } else {
+            Cadence::Poll
+        }
     }
 }
 

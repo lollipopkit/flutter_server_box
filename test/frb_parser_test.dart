@@ -302,6 +302,48 @@ void main() {
     expect(script.parseCustomCmdsFingerprint(output: 'nothing'), isNull);
   });
 
+  /// Nobody is waiting for a package list, so nothing takes one on a timer.
+  ///
+  /// A regression here is silent in both directions: back in `SbStatusExt` it
+  /// costs a second of CPU per machine every few minutes for a fleet nobody is
+  /// looking at, and missing from `SbPkg` it means the page that asks gets
+  /// nothing and shows a machine as having no package manager.
+  test('package updates are in neither status function', () {
+    final generated = script.buildScript(
+      system: 'linux',
+      disabled: const [],
+      buildNumber: 'test',
+    );
+    final marker = script.scriptSegmentMarker(key: 'pkg', custom: false);
+
+    final upTo = generated.indexOf('SbCustom() {');
+    final statusHalves = generated.substring(
+      generated.indexOf('SbStatus() {'),
+      upTo,
+    );
+    expect(
+      statusHalves,
+      isNot(contains(marker)),
+      reason: 'neither the poll nor the extended timer may carry it',
+    );
+
+    expect(generated, contains('SbPkg() {'));
+    final pkgFn = generated.substring(generated.indexOf('SbPkg() {'));
+    expect(pkgFn, contains(marker));
+    // And the manager detection itself, so the function is not an empty shell
+    // that happens to print the marker.
+    expect(pkgFn, contains('apt-get'));
+
+    expect(
+      script.execCommand(
+        system: 'linux',
+        scriptPath: '/tmp/s.sh',
+        func: script.ShellFuncKind.pkg,
+      ),
+      endsWith('-pk'),
+    );
+  });
+
   test('custom commands are not in the status function', () {
     // Their own function, so the poll does not wait on arbitrary shell a user
     // typed and each side runs on its own cadence.

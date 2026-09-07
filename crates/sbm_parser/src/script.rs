@@ -313,6 +313,13 @@ pub enum ShellFunc {
     /// function it has its own cadence, and its output arrives in its own
     /// stream rather than sharing one with the built-in probes.
     Custom,
+    /// The `commands::ON_DEMAND` subset, on a function of its own for a third
+    /// reason again: not that it is slow, but that nobody is waiting for it.
+    ///
+    /// [`ShellFunc::StatusExt`] still runs on a timer for every connected
+    /// machine; this runs when a caller asks and not otherwise. See
+    /// `commands::ON_DEMAND`.
+    Pkg,
     Process,
     Shutdown,
     Reboot,
@@ -320,10 +327,11 @@ pub enum ShellFunc {
 }
 
 impl ShellFunc {
-    pub const ALL: [ShellFunc; 7] = [
+    pub const ALL: [ShellFunc; 8] = [
         ShellFunc::Status,
         ShellFunc::StatusExt,
         ShellFunc::Custom,
+        ShellFunc::Pkg,
         ShellFunc::Process,
         ShellFunc::Shutdown,
         ShellFunc::Reboot,
@@ -335,6 +343,7 @@ impl ShellFunc {
             ShellFunc::Status => "SbStatus",
             ShellFunc::StatusExt => "SbStatusExt",
             ShellFunc::Custom => "SbCustom",
+            ShellFunc::Pkg => "SbPkg",
             ShellFunc::Process => "SbProcess",
             ShellFunc::Shutdown => "SbShutdown",
             ShellFunc::Reboot => "SbReboot",
@@ -347,6 +356,7 @@ impl ShellFunc {
             ShellFunc::Status => "s",
             ShellFunc::StatusExt => "e",
             ShellFunc::Custom => "c",
+            ShellFunc::Pkg => "pk",
             ShellFunc::Process => "p",
             ShellFunc::Shutdown => "sd",
             ShellFunc::Reboot => "r",
@@ -1075,12 +1085,12 @@ fn segment_list(
     specs: &[CommandSpec],
     scope: &str,
     opts: &ScriptOptions,
-    extended: bool,
+    cadence: commands::Cadence,
     divider: impl Fn(&str) -> String,
 ) -> String {
     let joined: String = specs
         .iter()
-        .filter(|s| s.is_extended() == extended && enabled(s, scope, opts))
+        .filter(|s| s.cadence() == cadence && enabled(s, scope, opts))
         .map(|s| format!("{}{}", divider(s.key), s.cmd))
         .collect();
     joined.trim_end().to_string()
@@ -1228,11 +1238,15 @@ fn or_noop(segments: String) -> String {
 
 fn unix_command(func: ShellFunc, opts: &ScriptOptions) -> String {
     match func {
-        ShellFunc::Status | ShellFunc::StatusExt => {
-            let extended = func == ShellFunc::StatusExt;
+        ShellFunc::Status | ShellFunc::StatusExt | ShellFunc::Pkg => {
+            let cadence = match func {
+                ShellFunc::StatusExt => commands::Cadence::Extended,
+                ShellFunc::Pkg => commands::Cadence::OnDemand,
+                _ => commands::Cadence::Poll,
+            };
             let divider = |key: &str| format!("\necho {}\n\t", cmd_marker(key));
-            let linux = or_noop(segment_list(commands::LINUX, "Linux", opts, extended, divider));
-            let bsd = or_noop(segment_list(commands::BSD, "BSD", opts, extended, divider));
+            let linux = or_noop(segment_list(commands::LINUX, "Linux", opts, cadence, divider));
+            let bsd = or_noop(segment_list(commands::BSD, "BSD", opts, cadence, divider));
             format!(
                 "if [ \"$macSign\" = \"\" ] && [ \"$bsdSign\" = \"\" ]; then\n\t{linux}\nelse\n\t{bsd}\nfi"
             )
@@ -1384,11 +1398,15 @@ fn windows_cmd_runner(indent: &str) -> String {
 
 fn windows_command(func: ShellFunc, opts: &ScriptOptions) -> String {
     match func {
-        ShellFunc::Status | ShellFunc::StatusExt => segment_list(
+        ShellFunc::Status | ShellFunc::StatusExt | ShellFunc::Pkg => segment_list(
             commands::WINDOWS,
             "Windows",
             opts,
-            func == ShellFunc::StatusExt,
+            match func {
+                ShellFunc::StatusExt => commands::Cadence::Extended,
+                ShellFunc::Pkg => commands::Cadence::OnDemand,
+                _ => commands::Cadence::Poll,
+            },
             |key| format!("\n    Write-Host \"{}\"\n    ", cmd_marker(key)),
         ),
         // As on Unix: the body is what `windows_custom_cmds` appends.

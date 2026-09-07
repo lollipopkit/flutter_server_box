@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/tab.dart';
+import 'package:server_box/data/provider/pkg_hook.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
@@ -214,6 +215,32 @@ void main() {
       expect(find.byType(BackButton), findsNothing);
       expect(find.byIcon(Icons.arrow_back), findsNothing);
       expect(find.byIcon(Icons.arrow_back_ios_new), findsNothing);
+    });
+  });
+
+  /// The reading is not on a timer, so a surface has to ask on the way in —
+  /// and what it asks for is the scope it is showing. Asserted on the enum
+  /// rather than on a collection, which needs a live connection: what is
+  /// checkable here is that the tab and the page disagree about scope in the
+  /// right direction, which is the part that gets wired backwards.
+  group('the collection hook', () {
+    testWidgets('the tab asks for the whole fleet', (tester) async {
+      await pump(tester, wide: false);
+
+      final state = tester.state(find.byType(PkgTabPage)) as PkgHookOnEnter;
+      expect(state.pkgHookScope, PkgHookScope.fleet);
+      expect(state.pkgHookServerId, isNull);
+    });
+
+    testWidgets('a machine asks for itself', (tester) async {
+      await pump(tester, wide: false);
+      await tester.tap(find.text('alpha'));
+      await settle(tester);
+
+      final state =
+          tester.state(find.byType(PkgUpdatesPage)) as PkgHookOnEnter;
+      expect(state.pkgHookScope, PkgHookScope.server);
+      expect(state.pkgHookServerId, 'srv-alpha');
     });
   });
 

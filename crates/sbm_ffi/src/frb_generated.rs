@@ -1030,10 +1030,11 @@ return crate::api::script::ScriptSegment{key: var_key, value: var_value};}
             0 => crate::api::script::ShellFuncKind::Status,
 1 => crate::api::script::ShellFuncKind::StatusExt,
 2 => crate::api::script::ShellFuncKind::Custom,
-3 => crate::api::script::ShellFuncKind::Process,
-4 => crate::api::script::ShellFuncKind::Shutdown,
-5 => crate::api::script::ShellFuncKind::Reboot,
-6 => crate::api::script::ShellFuncKind::Suspend,
+3 => crate::api::script::ShellFuncKind::Pkg,
+4 => crate::api::script::ShellFuncKind::Process,
+5 => crate::api::script::ShellFuncKind::Shutdown,
+6 => crate::api::script::ShellFuncKind::Reboot,
+7 => crate::api::script::ShellFuncKind::Suspend,
             _ => unreachable!("Invalid variant for ShellFuncKind: {}", inner),
         };}
                 }
@@ -1502,10 +1503,11 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::script::ScriptSegment> for cr
                     Self::Status => 0.into_dart(),
 Self::StatusExt => 1.into_dart(),
 Self::Custom => 2.into_dart(),
-Self::Process => 3.into_dart(),
-Self::Shutdown => 4.into_dart(),
-Self::Reboot => 5.into_dart(),
-Self::Suspend => 6.into_dart(),
+Self::Pkg => 3.into_dart(),
+Self::Process => 4.into_dart(),
+Self::Shutdown => 5.into_dart(),
+Self::Reboot => 6.into_dart(),
+Self::Suspend => 7.into_dart(),
                     _ => unreachable!(),
                 }
                 }
@@ -1864,10 +1866,11 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::X25519KeyPair> for 
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<i32>::sse_encode(match self {crate::api::script::ShellFuncKind::Status => { 0 }
 crate::api::script::ShellFuncKind::StatusExt => { 1 }
 crate::api::script::ShellFuncKind::Custom => { 2 }
-crate::api::script::ShellFuncKind::Process => { 3 }
-crate::api::script::ShellFuncKind::Shutdown => { 4 }
-crate::api::script::ShellFuncKind::Reboot => { 5 }
-crate::api::script::ShellFuncKind::Suspend => { 6 }
+crate::api::script::ShellFuncKind::Pkg => { 3 }
+crate::api::script::ShellFuncKind::Process => { 4 }
+crate::api::script::ShellFuncKind::Shutdown => { 5 }
+crate::api::script::ShellFuncKind::Reboot => { 6 }
+crate::api::script::ShellFuncKind::Suspend => { 7 }
  _ => { unimplemented!(""); }}, serializer);}
                 }
                 

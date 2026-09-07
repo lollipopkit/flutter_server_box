@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
@@ -26,6 +27,7 @@ import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
+import 'package:server_box/data/model/server/pkg_updates.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -41,6 +43,7 @@ import 'package:server_box/data/res/status.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/persistent_shell.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
+import 'package:server_box/src/rust/api/parser.dart' as parser_ffi;
 import 'package:server_box/src/rust/api/script.dart' as ffi;
 
 part 'single.g.dart';
@@ -1405,6 +1408,76 @@ class ServerNotifier extends _$ServerNotifier {
     }
     return _extendedRaw;
   }
+
+  /// Collects pending package updates, now, because something is showing them.
+  ///
+  /// **Not on any timer.** Working out what a package manager would upgrade is
+  /// about a second of CPU per machine, and the answer only changes when
+  /// somebody runs that manager's own refresh — so paying it every few minutes
+  /// for a fleet nobody is looking at is the whole cost with none of the
+  /// benefit. `SbPkg` is its own shell function for exactly this: the extended
+  /// one still runs on a timer, and this runs when asked.
+  ///
+  /// Who asks is the page: the updates tab asks for every server it lists, a
+  /// server's detail card asks for that one. Both go through here, so the
+  /// scope is the caller's and the collection is the same.
+  ///
+  /// A monitor-backed server is not asked at all — its agent collects on its
+  /// own cycle and the reading arrives with `/metrics`, so there is nothing
+  /// here to run and nothing to wait for.
+  Future<void> refreshPkg() async {
+    if (_pkgInFlight) return;
+    final client = state.client;
+    if (client == null) return;
+
+    _pkgInFlight = true;
+    final spi = state.spi;
+    try {
+      final raw = await _runStatusCommandWithExec(
+        client,
+        ShellFunc.pkg.exec(
+          spi.id,
+          systemType: state.status.system,
+          customDir: spi.custom?.scriptDir,
+        ),
+        isWindows: state.status.system == SystemType.windows,
+      );
+      // The same guard the extended cache has, and for the same reason: a
+      // refresh against the address the server used to have must not write the
+      // old machine's reading onto the new one.
+      if (!_isRefreshCurrent(_operationGeneration, spi)) return;
+      if (!ffi.containsStatusSegment(raw: raw)) return;
+
+      // Only this one field, through the shared parser. Not `getStatus`: that
+      // recomputes the windowed values — cpu deltas, net and disk speeds —
+      // against whatever raw it is given, and this raw has one section in it.
+      final segments = await ffi.parseScriptSegments(raw: raw);
+      final json = await parser_ffi.parseStatusJson(
+        system: ShellFuncManager.ffiSystem(state.status.system),
+        raw: {for (final seg in segments) seg.key: seg.value},
+        tempDivisor: 1000.0,
+      );
+      final decoded = jsonDecode(json) as Map<String, dynamic>;
+      final pkg = PkgUpdates.fromJson(decoded['pkg'] as Map<String, dynamic>);
+      if (!_isRefreshCurrent(_operationGeneration, spi)) return;
+
+      // A new object, or nothing is notified: the state compares equal when the
+      // status is the same instance, so mutating it in place would update the
+      // field and leave every watcher on the old reading.
+      state = state.copyWith(status: _copyStatus(state.status)..pkg = pkg);
+    } catch (e, s) {
+      Loggers.app.warning('Package updates for ${spi.name} failed', e, s);
+    } finally {
+      _pkgInFlight = false;
+    }
+  }
+
+  /// One collection at a time per server.
+  ///
+  /// Every surface that shows a count asks on the way in, and a wide window
+  /// shows two of them at once — the rail's row and the page beside it. Without
+  /// this, opening the tab runs the command twice per machine for one answer.
+  bool _pkgInFlight = false;
 
   /// Runs [ShellFunc.custom] when the user's interval has elapsed (or [force],
   /// for a refresh a person asked for) and returns its output, falling back to

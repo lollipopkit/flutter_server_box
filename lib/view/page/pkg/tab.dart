@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/pkg_updates.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/provider/pkg_hook.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
@@ -32,7 +33,13 @@ class PkgTabPage extends ConsumerStatefulWidget {
   ConsumerState<PkgTabPage> createState() => _PkgTabPageState();
 }
 
-class _PkgTabPageState extends ConsumerState<PkgTabPage> {
+class _PkgTabPageState extends ConsumerState<PkgTabPage>
+    with PkgHookOnEnter<PkgTabPage> {
+  /// Every machine: the tab's whole content is a count per one, so a reading
+  /// that has not been taken is a row that says nothing.
+  @override
+  PkgHookScope get pkgHookScope => PkgHookScope.fleet;
+
   /// The machine the surface is showing, or null for the overview.
   ///
   /// Null is a real state and not an unset one: with two columns it is the

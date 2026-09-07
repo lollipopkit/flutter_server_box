@@ -32,6 +32,7 @@ import 'package:server_box/data/model/server/server.dart' as server_model;
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/provider/bmc/bmc.dart';
+import 'package:server_box/data/provider/pkg_hook.dart';
 import 'package:server_box/data/provider/plugin/runtime.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
@@ -73,7 +74,16 @@ const _kFuncBarHeight = 56.0;
 const _kFuncBarInset = _kFuncBarHeight + 26;
 
 class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, PkgHookOnEnter<ServerDetailPage> {
+  /// This machine's packages, once, on the way in. The card is one of a dozen
+  /// on this page and the reading behind it is not on a timer — see
+  /// `ServerNotifier.refreshPkg` — so opening the page is what asks.
+  @override
+  PkgHookScope get pkgHookScope => PkgHookScope.server;
+
+  @override
+  String? get pkgHookServerId => widget.args.spi.id;
+
   /// Keyed by the enum, not paired positionally with `ServerDetailCards.names`.
   ///
   /// The positional form threw `Iterables do not have same length` at runtime

@@ -1,11 +1,17 @@
 /// Pending package updates, as the shared parser reports them.
 ///
-/// Read on the extended cadence (`commands::EXTENDED`), which is minutes
-/// rather than the status poll's seconds: working out what would be upgraded
-/// costs a second of CPU on a large install, and the answer only changes when
-/// somebody runs the package manager's own refresh.
+/// **Read when something asks, not on a timer.** Working out what would be
+/// upgraded costs about a second of CPU per machine, and the answer only
+/// changes when somebody runs the package manager's own refresh — so it lives
+/// in its own shell function (`SbPkg`, `commands::ON_DEMAND`) and the surfaces
+/// that show it collect on the way in. `PkgHook` is where that is decided: the
+/// updates tab asks for every machine, a server's own page for one.
 ///
-/// **The command never refreshes an index.** That needs root and the network,
+/// A monitor-backed server is the exception and cannot be otherwise: its agent
+/// collects on its own extended cycle, because a client asking for `/metrics`
+/// expects an answer rather than a package manager running inside the request.
+///
+/// **And it never refreshes an index.** That needs root and the network,
 /// and is a decision an operator makes rather than a side effect of opening a
 /// page. Which is why [indexAge] exists and is load-bearing: `apt` off a
 /// three-month-old cache reports zero updates, and is telling the truth about

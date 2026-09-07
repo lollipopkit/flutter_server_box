@@ -5,6 +5,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/model/server/pkg_updates.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/provider/pkg_hook.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
@@ -56,7 +57,17 @@ class PkgUpdatesPage extends ConsumerStatefulWidget {
   ConsumerState<PkgUpdatesPage> createState() => _PkgUpdatesPageState();
 }
 
-class _PkgUpdatesPageState extends ConsumerState<PkgUpdatesPage> {
+class _PkgUpdatesPageState extends ConsumerState<PkgUpdatesPage>
+    with PkgHookOnEnter<PkgUpdatesPage> {
+  /// This one machine. Asked again on the way in even when the tab already
+  /// did: a page opened minutes later is looking at a reading minutes old, and
+  /// the notifier refuses a second collection while one is in flight anyway.
+  @override
+  PkgHookScope get pkgHookScope => PkgHookScope.server;
+
+  @override
+  String? get pkgHookServerId => widget.args?.serverId;
+
   final _search = TextEditingController();
 
   @override

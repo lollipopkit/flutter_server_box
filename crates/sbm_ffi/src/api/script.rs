@@ -20,6 +20,10 @@ pub enum ShellFuncKind {
     /// The user's custom commands. Its own function so it can run on its own
     /// cadence instead of on every status poll.
     Custom,
+    /// Pending package updates. Its own function for a third reason: not that
+    /// it is slow, but that nobody is waiting for it — the app runs this when
+    /// a page that shows it is opened, and not otherwise.
+    Pkg,
     Process,
     Shutdown,
     Reboot,
@@ -33,6 +37,7 @@ impl From<ShellFuncKind> for sbm_parser::script::ShellFunc {
             ShellFuncKind::Status => F::Status,
             ShellFuncKind::StatusExt => F::StatusExt,
             ShellFuncKind::Custom => F::Custom,
+            ShellFuncKind::Pkg => F::Pkg,
             ShellFuncKind::Process => F::Process,
             ShellFuncKind::Shutdown => F::Shutdown,
             ShellFuncKind::Reboot => F::Reboot,

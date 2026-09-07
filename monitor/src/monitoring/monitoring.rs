@@ -461,6 +461,7 @@ async fn collect_metrics(
     let mut custom_cmds = Vec::new();
     let mut extended_refreshed = false;
     let mut custom_refreshed = false;
+    let mut pkg_refreshed = false;
     if script_due {
         let execution = match execute_commands(system, extended_due).await {
             Ok(execution) => execution,
@@ -477,6 +478,7 @@ async fn collect_metrics(
         }
         extended_refreshed = extended_due && execution.extended_succeeded;
         custom_refreshed = extended_due && execution.custom_succeeded;
+        pkg_refreshed = extended_due && execution.pkg_succeeded;
         let segments = execution.segments;
         custom_cmds = custom_cmd_outputs(&segments);
         // Built-in probes run before custom commands. Keep the first value for
@@ -516,6 +518,7 @@ async fn collect_metrics(
         prev.as_ref(),
         prev_metrics,
         extended_refreshed,
+        pkg_refreshed,
     );
     metrics.custom_cmds = refreshed_custom_cmds(custom_cmds, prev_metrics, custom_refreshed);
     Ok(metrics)
@@ -667,10 +670,16 @@ fn ensure_script(path: &std::path::Path, content: &str) -> std::io::Result<()> {
 /// `SbStatus`, and the user's commands in `SbCustom`.
 /// `monitor_script_disabled` strips the native-covered commands from the
 /// status halves before this script is written.
-const EXTENDED_FUNCS: [sbm_parser::script::ShellFunc; 3] = [
+const EXTENDED_FUNCS: [sbm_parser::script::ShellFunc; 4] = [
     sbm_parser::script::ShellFunc::StatusExt,
     sbm_parser::script::ShellFunc::Status,
     sbm_parser::script::ShellFunc::Custom,
+    // On the extended cycle here, though the app runs it only when somebody
+    // opens a page. The two are not inconsistent: the app can tell whether
+    // anybody is looking and this cannot — a client asks for `/metrics` and
+    // expects an answer, and running a package manager inside that request is
+    // a second of latency on every poll rather than one every extended cycle.
+    sbm_parser::script::ShellFunc::Pkg,
 ];
 const CORE_FUNCS: [sbm_parser::script::ShellFunc; 1] = [sbm_parser::script::ShellFunc::Status];
 
@@ -684,6 +693,11 @@ struct ScriptExecution {
     /// the user deleted their commands, and an empty result from one that did
     /// not means nothing at all.
     custom_succeeded: bool,
+    /// Whether `SbPkg` ran. Its own for the same reason as `custom_succeeded`:
+    /// a machine with nothing to upgrade and a run that did not happen both
+    /// produce no package rows, and only one of them should replace what was
+    /// reported last cycle.
+    pkg_succeeded: bool,
 }
 
 impl ScriptExecution {
@@ -695,6 +709,7 @@ impl ScriptExecution {
             sbm_parser::script::ShellFunc::Status => self.status_succeeded = true,
             sbm_parser::script::ShellFunc::StatusExt => self.extended_succeeded = true,
             sbm_parser::script::ShellFunc::Custom => self.custom_succeeded = true,
+            sbm_parser::script::ShellFunc::Pkg => self.pkg_succeeded = true,
             _ => {}
         }
         self.segments
@@ -1023,6 +1038,9 @@ fn adapt_status(
     prev_cpu: Option<&CpuCore>,
     prev_metrics: Option<&SystemMetrics>,
     extended_refreshed: bool,
+    // Its own flag, not `extended_refreshed`: `SbPkg` is a separate run and
+    // may succeed on a cycle where `SbStatusExt` did not.
+    pkg_refreshed: bool,
 ) -> SystemMetrics {
     let (cpu_usage, cpu_cores) = adapt_cpu(
         system,
@@ -1115,7 +1133,7 @@ fn adapt_status(
     // which is deliberately *not* aged along with it: the field says how stale
     // the package index was when it was read, and a client that wants to know
     // how stale the reading is has `extended_updated_at` for that.
-    let pkg = if extended_refreshed {
+    let pkg = if pkg_refreshed {
         status.pkg.clone()
     } else {
         prev_metrics.map(|p| p.pkg.clone()).unwrap_or_default()
@@ -1785,6 +1803,7 @@ mod tests {
             None,
             None,
             true,
+            true,
         );
 
         assert_eq!(metrics.uptime.as_deref(), Some("up 1 day"));
@@ -1820,6 +1839,7 @@ mod tests {
             None,
             None,
             true,
+            true,
         );
         // Next (non-extended) cycle: script-only fields carry forward, while
         // the native disk-I/O snapshot reflects the current empty device set.
@@ -1829,6 +1849,7 @@ mod tests {
             &Config::default(),
             None,
             Some(&prev),
+            false,
             false,
         );
 
@@ -1860,6 +1881,7 @@ mod tests {
             &Config::default(),
             None,
             None,
+            true,
             true,
         );
         prev.custom_cmds = vec![CustomCmdOutput {
@@ -1893,6 +1915,7 @@ mod tests {
             None,
             Some(&prev),
             execution.extended_succeeded,
+            execution.pkg_succeeded,
         );
 
         assert_eq!(metrics.batteries, prev.batteries);
@@ -1922,6 +1945,7 @@ mod tests {
             None,
             None,
             true,
+            true,
         );
 
         let metrics = adapt_status(
@@ -1930,6 +1954,7 @@ mod tests {
             &Config::default(),
             None,
             Some(&prev),
+            true,
             true,
         );
 
@@ -1951,6 +1976,7 @@ mod tests {
             None,
             None,
             false,
+            false,
         );
         assert!(
             first.diskio_rate.is_empty(),
@@ -1970,6 +1996,7 @@ mod tests {
             &Config::default(),
             None,
             Some(&first),
+            false,
             false,
         );
         // Force a known 2-second elapsed window instead of relying on real time
@@ -1999,6 +2026,7 @@ mod tests {
             &Config::default(),
             None,
             None,
+            false,
             false,
         );
 
