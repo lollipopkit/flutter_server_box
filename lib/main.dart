@@ -23,6 +23,7 @@ import 'package:server_box/core/utils/rootfs_manifest_source.dart';
 import 'package:server_box/core/utils/sandbox_import.dart';
 import 'package:server_box/core/utils/ssh_native_crypto.dart';
 import 'package:server_box/data/model/server/dist_license.dart';
+import 'package:server_box/data/provider/plugin/installer.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
@@ -407,6 +408,20 @@ Future<void> _doDbMigrate() async {
   Diag.tag(SbDiagTag.schema, '${SchemaVersion.current}');
 
   migrateBuildFeatures(BuildData.build);
+
+  // What the installed plugins contribute, published once so the feature
+  // registry can answer for them. Before anything draws, because a card whose
+  // id nothing claims is ignored — a page built first would leave the plugin's
+  // place empty until something happened to reload.
+  //
+  // Best effort: a plugin whose files will not read is skipped and logged, and
+  // an app that cannot start because of something the user installed is worse
+  // than one plugin that does not appear.
+  try {
+    await PluginInstaller(root: PluginInstaller.appRoot).refresh();
+  } catch (e, s) {
+    Loggers.app.warning('Reading the installed plugins', e, s);
+  }
 
   // No app-level fixups follow. `migrateIds` and `migrateIdentityFilePaths`
   // both scanned every server on every launch to repair a record only an

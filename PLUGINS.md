@@ -422,6 +422,8 @@ BMC 样本已经促使设计增加了 `tone`、`requires_config`、`options_from
 
 读写自己的存储、读取配置、更新自己的界面、让用户选服务器、显示提示、日志和导航，不需要额外申请权限。这不表示插件能访问其他插件的数据。
 
+安装对话框（`PluginsPage`）逐项列出这些权限，并且是**全有或全无**：申请两项却只被授予一项的插件，是作者从未测过的组合，代价最后落在用户身上，表现为一个半能用的功能。申请了 `server.exec` 的插件额外提示"它会在你的服务器上执行命令"，因为列表里只有权限名。同意的结果与 manifest 取交集后存进 `plugin_install.granted`，加载时再取一次交集 —— 更新新增的权限在用户看到之前用不了（6.2）。
+
 ### 6.2 宿主如何执行限制
 
 建上下文、装入 `sb` 时，未授权的函数装成直接抛 `PermissionDenied` 的替身，错误信息说明缺哪一项权限。判断只在这一刻做，调用路径上没有分支。涉及具体地址和服务器的请求，还要检查调用参数是否在授权范围内。
@@ -581,7 +583,7 @@ App Store 对这种扩展的判断也不能仅凭它没有 UI 就下结论。
 | 2 | `sbm_ffi` 暴露加载、调用和释放，Dart 实现宿主回调 | **已完成**。`PluginBridge` 实现 14 个接口的协议侧（`sb.http.fetch` 除外，见下），`PluginRuntimeService` 持有运行时并把请求流接到它上面。`test/plugin_bridge_test.dart` 21 个、`test/plugin_runtime_service_test.dart` 6 个（真 QuickJS 上下文）、`test/plugin_ffi_test.dart` 21 个 |
 | 3 | 接入状态命令插件，随包提供一个样本 | 进行中。`StatusResult` 的形状与校验、`contributes.status`（含必须申请 `server.exec`）、`inline_cmds_script`（一次往返跑完所有插件命令、服务器上不留文件）、`PluginRuntime.statusCmd`/`statusParse`、SDK 的状态插件类型和样例都已完成，Rust 侧 121 个测试 + `test/plugin_ffi_test.dart` 打通「插件要什么命令 → 真跑一遍 → 结果回到同一个插件」。剩下的要等第 5 步的插件存储：App 得先知道装了哪些插件，才谈得上在状态页画出来 |
 | 4 | Dart feature registry 和按钮 id 迁移 | **已完成**。`lib/data/model/app/feature.dart`：`Feature`/`FeatureSlot`/`Features`，三个入口面（功能栏按钮、详情卡片、首页 tab）合并成一个 id 空间和一份"这次升级新增了什么"的规则。`serverBtns` 由 enum index 迁到 id（m021，`kLegacyServerFuncBtnIds` 冻结旧顺序），恢复备份时也会转换 |
-| 5 | Flutter 渲染器、插件卡片、存储、备份、安装管理和开发目录 | 进行中。**存储**（四张表 m022 + 三个 store）、**渲染器**（22 种控件、5.2 的三项、l10n、错误节点）、**surface**（`PluginSurfaceView` 驱动 `init`/`open`/`tick`/`onEvent`/`patch`，`AppPluginHostOps` 接 14 个接口）、**安装管理**（`.sbp` 读取与校验、装/卸/开关、`contributes` 接进 feature registry）、**备份**（`plugins` 字段）均已完成，共 81 个测试。**详情页卡片**（`PluginStatusCard`，`contributes.status` 画在服务器详情页上）均已完成，共 84 个测试。剩下带 UI 的插件 surface 挂到 `contributes.card`/`page`/`tab`/`settings` 上、安装页 UI、开发目录，以及 5.5 的 golden 截图 |
+| 5 | Flutter 渲染器、插件卡片、存储、备份、安装管理和开发目录 | 进行中。**存储**（四张表 m022 + 三个 store）、**渲染器**（22 种控件、5.2 的三项、l10n、错误节点）、**surface**（`PluginSurfaceView` 驱动 `init`/`open`/`tick`/`onEvent`/`patch`，`AppPluginHostOps` 接 14 个接口）、**安装管理**（`.sbp` 读取与校验、装/卸/开关、`contributes` 接进 feature registry）、**备份**（`plugins` 字段）均已完成，共 81 个测试。**详情页卡片**（`PluginStatusCard`，`contributes.status` 画在服务器详情页上）均已完成，共 84 个测试。**`contributes.card`**（详情页上的 UI 卡片，走 `PluginSurfaceView`）、**安装页**（`PluginsPage`：列出已装插件、装/卸/开关、权限对话框）均已完成。剩下 `contributes.page`/`tab`/`settings` 三个入口面、开发目录，以及 5.5 的 golden 截图 |
 | 6 | 在 App 中接通 BMC 插件 | 未开始；对照 `packages/redfish/test/` 的 fixture 和现有行为，验证一致后再删除 Dart 实现及 `packages/redfish` |
 | 7 | 在线仓库、第三方仓库和网站插件页 | 未开始；先只收状态插件，BMC 验证完 UI 接口后再开放 UI 插件 |
 

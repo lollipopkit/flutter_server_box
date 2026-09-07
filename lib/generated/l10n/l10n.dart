@@ -1077,6 +1077,66 @@ abstract class AppLocalizations {
   /// **'The commands on this server have changed since this page loaded them. Reload to see them; saving now would discard them.'**
   String get customCmdChangedOnServer;
 
+  /// No description provided for @plugins.
+  ///
+  /// In en, this message translates to:
+  /// **'Plugins'**
+  String get plugins;
+
+  /// No description provided for @pluginInstall.
+  ///
+  /// In en, this message translates to:
+  /// **'Install a plugin'**
+  String get pluginInstall;
+
+  /// No description provided for @pluginInstalled.
+  ///
+  /// In en, this message translates to:
+  /// **'Installed'**
+  String get pluginInstalled;
+
+  /// No description provided for @pluginBundled.
+  ///
+  /// In en, this message translates to:
+  /// **'Bundled'**
+  String get pluginBundled;
+
+  /// No description provided for @pluginDev.
+  ///
+  /// In en, this message translates to:
+  /// **'Development'**
+  String get pluginDev;
+
+  /// No description provided for @pluginNeedsConsent.
+  ///
+  /// In en, this message translates to:
+  /// **'This update asks for more than you agreed to. Reinstall it to review.'**
+  String get pluginNeedsConsent;
+
+  /// No description provided for @pluginPermissionsAsk.
+  ///
+  /// In en, this message translates to:
+  /// **'This plugin asks to:'**
+  String get pluginPermissionsAsk;
+
+  /// No description provided for @pluginNoPermissions.
+  ///
+  /// In en, this message translates to:
+  /// **'It asks for nothing outside itself.'**
+  String get pluginNoPermissions;
+
+  /// No description provided for @pluginUninstallKeepData.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep its settings and data'**
+  String get pluginUninstallKeepData;
+
+  /// No description provided for @pluginRunsOnServer.
+  ///
+  /// In en, this message translates to:
+  /// **'It runs commands on your servers. Only install one you trust.'**
+  String get pluginRunsOnServer;
+
   /// No description provided for @deleteServers.
   ///
   /// In en, this message translates to:

@@ -560,6 +560,38 @@ class AppLocalizationsTr extends AppLocalizations {
       'The commands on this server have changed since this page loaded them. Reload to see them; saving now would discard them.';
 
   @override
+  String get plugins => 'Plugins';
+
+  @override
+  String get pluginInstall => 'Install a plugin';
+
+  @override
+  String get pluginInstalled => 'Installed';
+
+  @override
+  String get pluginBundled => 'Bundled';
+
+  @override
+  String get pluginDev => 'Development';
+
+  @override
+  String get pluginNeedsConsent =>
+      'This update asks for more than you agreed to. Reinstall it to review.';
+
+  @override
+  String get pluginPermissionsAsk => 'This plugin asks to:';
+
+  @override
+  String get pluginNoPermissions => 'It asks for nothing outside itself.';
+
+  @override
+  String get pluginUninstallKeepData => 'Keep its settings and data';
+
+  @override
+  String get pluginRunsOnServer =>
+      'It runs commands on your servers. Only install one you trust.';
+
+  @override
   String get deleteServers => 'Sunucuları toplu sil';
 
   @override

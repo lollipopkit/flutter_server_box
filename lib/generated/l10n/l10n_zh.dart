@@ -517,6 +517,36 @@ class AppLocalizationsZh extends AppLocalizations {
   String get customCmdChangedOnServer => '本页加载后，服务器上的命令已被改动。保存会覆盖掉这些改动，请先重新加载。';
 
   @override
+  String get plugins => '插件';
+
+  @override
+  String get pluginInstall => '安装插件';
+
+  @override
+  String get pluginInstalled => '已安装';
+
+  @override
+  String get pluginBundled => '随包';
+
+  @override
+  String get pluginDev => '开发';
+
+  @override
+  String get pluginNeedsConsent => '此更新申请了你未同意的权限，重新安装以查看。';
+
+  @override
+  String get pluginPermissionsAsk => '该插件申请：';
+
+  @override
+  String get pluginNoPermissions => '不申请任何自身之外的能力。';
+
+  @override
+  String get pluginUninstallKeepData => '保留它的配置和数据';
+
+  @override
+  String get pluginRunsOnServer => '它会在你的服务器上执行命令，只安装你信任的插件。';
+
+  @override
   String get deleteServers => '批量删除服务器';
 
   @override

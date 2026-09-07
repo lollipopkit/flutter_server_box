@@ -47,6 +47,7 @@ import 'package:server_box/view/page/bmc_credential/list.dart';
 import 'package:server_box/view/page/private_key/list.dart';
 import 'package:server_box/view/page/server/connection_stats.dart';
 import 'package:server_box/view/page/setting/entries/home_tabs.dart';
+import 'package:server_box/view/page/setting/entries/plugins.dart';
 import 'package:server_box/view/page/setting/platform/desktop.dart';
 import 'package:server_box/view/page/setting/platform/ios.dart';
 import 'package:server_box/view/page/setting/platform/platform_pub.dart';
@@ -179,6 +180,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             title: l10n.homeTabs,
             icon: Icons.tab_outlined,
             page: () => const HomeTabsConfigPage(embedded: true),
+          ),
+          SettingsNode.leaf(
+            id: 'app.plugins',
+            title: l10n.plugins,
+            icon: Icons.extension_outlined,
+            page: () => const PluginsPage(embedded: true),
           ),
           if (isIOS)
             SettingsNode.leaf(
