@@ -133,7 +133,7 @@ describe("the mock refuses what the real host refuses", () => {
       name: "PermissionDenied",
     });
     // And one that was asked for still works.
-    await expect(sb.ui.toast("hi")).resolves.toBeUndefined();
+    await expect(sb.ui.toast({ text: "hi" })).resolves.toBeUndefined();
   });
 });
 
@@ -159,7 +159,9 @@ describe("scripting", () => {
 
   test("store list is prefixed and sorted", async () => {
     mount(new MockHost({ global: { "cred/b": "1", "cred/a": "2", other: "3" } }));
-    expect(await sb.store.list("global", "cred/")).toEqual(["cred/a", "cred/b"]);
+    expect(await sb.store.list({ scope: "global", prefix: "cred/" })).toEqual({
+      keys: ["cred/a", "cred/b"],
+    });
   });
 });
 

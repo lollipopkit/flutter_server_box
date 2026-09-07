@@ -4,6 +4,12 @@
  * PLUGINS.md section 4.3. Anything that goes through the app answers a
  * `Promise`; the two that read instance-local state are synchronous.
  *
+ * **Every function takes one object and answers one object.** That is what the
+ * host implements — a host call carries a single JSON value in each direction
+ * — so a positional signature here would describe an interface that does not
+ * exist, and a plugin written against it would fail on a device after passing
+ * its own tests.
+ *
  * A namespace exists whether or not its functions are granted. Calling one the
  * manifest did not ask for throws an `Error` whose `name` is
  * `PermissionDenied` — there is nothing useful to do with it except report, and
@@ -170,49 +176,91 @@ export interface Http {
   fetch(req: HttpRequest): Promise<HttpResponse>;
 }
 
+export interface PatchRequest {
+  /** A JSON Pointer into this surface's last tree. */
+  path: string;
+  node: Node;
+}
+
+export interface ToastRequest {
+  text: string;
+  kind?: ToastKind;
+}
+
+/** What {@link Ui.pickServer} answers: one of the two, never both. */
+export interface PickedServer {
+  server?: ServerHandle;
+  cancelled?: boolean;
+}
+
 export interface Ui {
   /**
    * Replaces the subtree the JSON Pointer names in this surface's last tree.
    *
    * For a long-running task, so a plugin streaming a log does not resend the
-   * page per line.
+   * page per line. Rejects with `no_surface` when nothing is showing this
+   * instance, which is how a plugin streaming a log can tell nobody is
+   * watching.
    */
-  patch(path: string, node: Node): Promise<void>;
+  patch(req: PatchRequest): Promise<void>;
 
   /** Raises a dialog and waits. Needs `ui.dialog`. */
   prompt(spec: PromptSpec): Promise<PromptAnswer>;
 
-  /** Cancelled answers `null`. The returned handle may then be used. */
-  pickServer(): Promise<ServerHandle | null>;
+  /** `{server}` when one was chosen, `{cancelled: true}` when not. */
+  pickServer(): Promise<PickedServer>;
 
-  toast(text: string, kind?: ToastKind): Promise<void>;
+  toast(req: ToastRequest): Promise<void>;
+}
+
+export interface StoreGetRequest {
+  scope: Scope;
+  key: string;
+}
+
+export interface StoreSetRequest {
+  scope: Scope;
+  key: string;
+  /** `null` deletes. */
+  value: string | null;
+}
+
+export interface StoreListRequest {
+  scope: Scope;
+  prefix: string;
 }
 
 export interface Store {
-  get(scope: Scope, key: string): Promise<string | null>;
-  /** A `null` value deletes. */
-  set(scope: Scope, key: string, value: string | null): Promise<void>;
-  list(scope: Scope, prefix: string): Promise<string[]>;
+  /** `{value}`, which is `null` for a key that is not there. */
+  get(req: StoreGetRequest): Promise<{ value: string | null }>;
+  set(req: StoreSetRequest): Promise<void>;
+  list(req: StoreListRequest): Promise<{ keys: string[] }>;
+}
+
+export interface CrumbRequest {
+  /**
+   * What happened, never what it was about.
+   *
+   * The host keeps this and the level and decides what else is safe to keep,
+   * so do not put a value in the name.
+   */
+  name: string;
+  level?: "info" | "warning";
 }
 
 export interface Diag {
-  /**
-   * Records that something happened, never what.
-   *
-   * The host keeps the name and the level and decides what else is safe to
-   * keep, so do not put a value in the name.
-   */
-  crumb(name: string, level?: "info" | "warning"): Promise<void>;
+  crumb(req: CrumbRequest): Promise<void>;
 }
 
 export interface Nav {
-  openServer(server: ServerHandle): Promise<void>;
-  goTab(tab: string): Promise<void>;
+  openServer(req: { server: ServerHandle }): Promise<void>;
+  goTab(req: { tab: string }): Promise<void>;
 }
 
 export interface Clipboard {
-  read(): Promise<string | null>;
-  write(text: string): Promise<void>;
+  /** `{text}`, which is `null` when there is nothing to read. */
+  read(): Promise<{ text: string | null }>;
+  write(req: { text: string }): Promise<void>;
 }
 
 export interface Config {

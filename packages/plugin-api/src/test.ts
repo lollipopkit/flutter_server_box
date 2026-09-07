@@ -266,7 +266,7 @@ export class MockHost {
       },
 
       ui: {
-        patch: async (path, node) => {
+        patch: async ({ path, node }) => {
           this.calls.push({ fn: "ui.patch", path, node });
         },
         prompt: async (spec) => {
@@ -278,42 +278,44 @@ export class MockHost {
         },
         pickServer: async () => {
           this.calls.push({ fn: "ui.pickServer" });
-          return this.pick;
+          return this.pick === null ? { cancelled: true } : { server: this.pick };
         },
-        toast: async (text, kind = "info") => {
+        toast: async ({ text, kind = "info" }) => {
           this.calls.push({ fn: "ui.toast", text, kind });
           this.toasts.push([text, kind]);
         },
       },
 
       store: {
-        get: async (scope, key) => {
+        get: async ({ scope, key }) => {
           this.calls.push({ fn: "store.get", scope, key });
-          return this.kv[scope].get(key) ?? null;
+          return { value: this.kv[scope].get(key) ?? null };
         },
-        set: async (scope, key, value) => {
+        set: async ({ scope, key, value }) => {
           this.calls.push({ fn: "store.set", scope, key, value });
           if (value === null) this.kv[scope].delete(key);
           else this.kv[scope].set(key, value);
         },
-        list: async (scope, prefix) => {
+        list: async ({ scope, prefix }) => {
           this.calls.push({ fn: "store.list", scope, prefix });
-          return [...this.kv[scope].keys()].filter((k) => k.startsWith(prefix)).sort();
+          return {
+            keys: [...this.kv[scope].keys()].filter((k) => k.startsWith(prefix)).sort(),
+          };
         },
       },
 
       diag: {
-        crumb: async (name) => {
+        crumb: async ({ name }) => {
           this.calls.push({ fn: "diag.crumb", name });
           this.crumbs.push(name);
         },
       },
 
       nav: {
-        openServer: async (server) => {
+        openServer: async ({ server }) => {
           this.calls.push({ fn: "nav.openServer", server });
         },
-        goTab: async (tab) => {
+        goTab: async ({ tab }) => {
           this.calls.push({ fn: "nav.goTab", tab });
         },
       },
@@ -322,9 +324,9 @@ export class MockHost {
         read: async () => {
           check("clipboard.read");
           this.calls.push({ fn: "clipboard.read" });
-          return this.clipboard;
+          return { text: this.clipboard };
         },
-        write: async (text) => {
+        write: async ({ text }) => {
           check("clipboard.write");
           this.calls.push({ fn: "clipboard.write", text });
           this.clipboard = text;

@@ -50,6 +50,8 @@ BMC 是唯一保留的 UI 插件样本：它主要显示一张详情卡片，不
 
 ## 二、整体怎么工作
 
+**每个宿主函数收一个对象、答一个对象。** 宿主的实现就是这样 —— 一次 host call 每个方向只带一个 JSON 值 —— 所以 SDK 里写成多参数的签名描述的是一个不存在的接口：照它写的插件能通过自己的测试，到设备上才失败。`Sb` 和 `MockHost` 已按此更正。
+
 一个插件是扩展名为 `.sbp` 的 zip 包，包含 `manifest.json`、`plugin.js`、`l10n/*.json` 和 `icon.png`。`plugin.js` 是一个 ES module，导出第四节列出的函数。
 
 带界面的插件按下面的流程工作：
@@ -563,7 +565,7 @@ App Store 对这种扩展的判断也不能仅凭它没有 UI 就下结论。
 | 顺序 | 工作 | 当前状态与验收重点 |
 |---|---|---|
 | 1 | QuickJS 运行时、`sb` 接口注入、权限检查、manifest 解析，以及 TypeScript SDK | **已完成**。运行时 81 个测试（权限拒绝、接口表一致性、异步、资源限制、实例线程），SDK 45 个测试（控件、l10n、帧裁剪、模拟宿主） |
-| 2 | `sbm_ffi` 暴露加载、调用和释放，Dart 实现宿主回调 | **FFI 已完成**（`test/plugin_ffi_test.dart` 走通加载、调用、宿主回调、权限拒绝）。剩下 Dart 侧把 14 个接口接到 App 的实际功能上，属于第 5 步 |
+| 2 | `sbm_ffi` 暴露加载、调用和释放，Dart 实现宿主回调 | **已完成**。`PluginBridge` 实现 14 个接口的协议侧（`sb.http.fetch` 除外，见下），`PluginRuntimeService` 持有运行时并把请求流接到它上面。`test/plugin_bridge_test.dart` 21 个、`test/plugin_runtime_service_test.dart` 6 个（真 QuickJS 上下文）、`test/plugin_ffi_test.dart` 21 个 |
 | 3 | 接入状态命令插件，随包提供一个样本 | 进行中。`StatusResult` 的形状与校验、`contributes.status`（含必须申请 `server.exec`）、`inline_cmds_script`（一次往返跑完所有插件命令、服务器上不留文件）、`PluginRuntime.statusCmd`/`statusParse`、SDK 的状态插件类型和样例都已完成，Rust 侧 121 个测试 + `test/plugin_ffi_test.dart` 打通「插件要什么命令 → 真跑一遍 → 结果回到同一个插件」。剩下的要等第 5 步的插件存储：App 得先知道装了哪些插件，才谈得上在状态页画出来 |
 | 4 | Dart feature registry 和按钮 id 迁移 | **已完成**。`lib/data/model/app/feature.dart`：`Feature`/`FeatureSlot`/`Features`，三个入口面（功能栏按钮、详情卡片、首页 tab）合并成一个 id 空间和一份"这次升级新增了什么"的规则。`serverBtns` 由 enum index 迁到 id（m021，`kLegacyServerFuncBtnIds` 冻结旧顺序），恢复备份时也会转换 |
 | 5 | Flutter 渲染器、插件卡片、存储、备份、安装管理和开发目录 | 进行中。**存储已完成**（四张表 m022 + 三个 store，23 个测试）；**渲染器已完成**（22 种控件、5.2 的三项、l10n、错误节点，24 个测试）。剩下插件卡片和其余 surface、`BackupV2` 的 `plugins` 字段、安装管理、开发目录，以及 5.5 的 golden 截图 |

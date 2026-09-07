@@ -27,7 +27,7 @@ let uptime: string | null = null;
 let failure: string | null = null;
 
 export async function init(): Promise<void> {
-  uptime = await sb.store.get("server", "uptime");
+  uptime = (await sb.store.get({ scope: "server", key: "uptime" })).value;
 }
 
 export async function open(_surface: Surface): Promise<UiOutput> {
@@ -39,7 +39,7 @@ export async function onEvent(msg: unknown): Promise<UiOutput> {
   const m = msg as Msg;
   if (m.m === "refresh") await refresh();
   if (m.m === "wipe") {
-    await sb.store.set("server", "uptime", null);
+    await sb.store.set({ scope: "server", key: "uptime", value: null });
     uptime = null;
   }
   return { ui: view() };
@@ -55,7 +55,7 @@ async function refresh(): Promise<void> {
     const r = await sb.server.exec({ server: server as never, script: "uptime -p" });
     uptime = r.stdout.trim();
     failure = null;
-    await sb.store.set("server", "uptime", uptime);
+    await sb.store.set({ scope: "server", key: "uptime", value: uptime });
   } catch (e) {
     // A host that could not do the thing is an answer, not a death.
     failure = (e as { kind?: string }).kind ?? "unknown";
