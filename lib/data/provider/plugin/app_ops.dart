@@ -8,6 +8,7 @@ import 'package:server_box/core/utils/server_picker.dart' as picker;
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/plugin/host_ops.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
+import 'package:server_box/data/provider/plugin/http.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
@@ -34,6 +35,39 @@ class AppPluginHostOps implements PluginHostOps {
   /// when nothing is on screen, which a plugin has to be able to be told
   /// rather than left waiting for.
   BuildContext? get _context => AppNavigator.context;
+
+  @override
+  Future<PluginFetchResult> fetch({
+    required String url,
+    required String method,
+    Map<String, String> headers = const {},
+    String? body,
+    String bodyEncoding = 'utf8',
+    String? pinSha256,
+    bool probeCert = false,
+    Duration? timeout,
+  }) {
+    final at = timeout ?? PluginHttp.defaultTimeout;
+    if (probeCert) {
+      final uri = Uri.parse(url);
+      return PluginHttp.probe(
+        uri.host,
+        // The scheme's own, so a plugin naming `https://bmc.example` does not
+        // have to say 443 for the review step and nothing else.
+        uri.hasPort ? uri.port : (uri.scheme == 'http' ? 80 : 443),
+        timeout: at,
+      );
+    }
+    return PluginHttp.fetch(
+      url: url,
+      method: method,
+      headers: headers,
+      body: body,
+      bodyEncoding: bodyEncoding,
+      pinSha256: pinSha256,
+      timeout: at,
+    );
+  }
 
   @override
   Future<PluginExecResult> exec(

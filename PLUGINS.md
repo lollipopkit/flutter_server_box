@@ -236,6 +236,10 @@ quickjs-ng 0.15.1。2026-09-06 在引擎里抽查了 19 项：
 
 HTTP 统一走 `sb.http.fetch`，上下文里没有 `fetch` 这个全局函数。这样才能统一处理地址权限、SSH 转发、cookie 和证书。经 SSH 时，宿主通过 `ensureShellClient` 和 `SSHForwardChannel` 建立连接。
 
+证书的两半（`lib/data/provider/plugin/http.dart`）：`probeCert` 是**审阅**，握手完就断开，一个字节都不发，返回 `CertInfo`；`pinSha256` 是**执行**，客户端用 `SecurityContext(withTrustedRoots: false)` 建，所以每次握手都会落到 `badCertificateCallback`，pin 是唯一能接受证书的东西——公共 CA 签过的链和自签的一样被拒。没有 pin 的 `https` 直接拒绝，不回落到普通校验：这批硬件（BMC）的证书没有任何 CA 见过，「链有效」和「是那台机器」在这里没有关系。`http://` 不需要 pin，因为没有证书可 pin，能到哪些地址已经由权限列表决定了。重定向不跟随，否则 pin 过的请求会被 3xx 带到另一台主机。
+
+`via: "ssh"` 还没实现，宿主返回 `unsupported` 而不是改走直连——直连会把请求发到插件没有要求的地方。
+
 证书复核分两步，避免用户还没确认就发送密码：
 
 1. `probeCert: true` 只握手、读取证书并关闭连接，不发送 HTTP 请求内容。宿主拒绝同时带 body 或 header 的探测请求。
@@ -580,7 +584,7 @@ App Store 对这种扩展的判断也不能仅凭它没有 UI 就下结论。
 | 顺序 | 工作 | 当前状态与验收重点 |
 |---|---|---|
 | 1 | QuickJS 运行时、`sb` 接口注入、权限检查、manifest 解析，以及 TypeScript SDK | **已完成**。运行时 81 个测试（权限拒绝、接口表一致性、异步、资源限制、实例线程），SDK 45 个测试（控件、l10n、帧裁剪、模拟宿主） |
-| 2 | `sbm_ffi` 暴露加载、调用和释放，Dart 实现宿主回调 | **已完成**。`PluginBridge` 实现 14 个接口的协议侧（`sb.http.fetch` 除外，见下），`PluginRuntimeService` 持有运行时并把请求流接到它上面。`test/plugin_bridge_test.dart` 21 个、`test/plugin_runtime_service_test.dart` 6 个（真 QuickJS 上下文）、`test/plugin_ffi_test.dart` 21 个 |
+| 2 | `sbm_ffi` 暴露加载、调用和释放，Dart 实现宿主回调 | **已完成**。`PluginBridge` 实现 14 个接口的协议侧，`PluginRuntimeService` 持有运行时并把请求流接到它上面。`sb.http.fetch` 的直连、证书 pin 和 `probeCert` 审阅已实现（`via: "ssh"` 仍返回 `unsupported`）。`test/plugin_bridge_test.dart` 26 个、`test/plugin_http_test.dart` 12 个（对真 TLS server 跑完整握手）、`test/plugin_runtime_service_test.dart` 6 个（真 QuickJS 上下文）、`test/plugin_ffi_test.dart` 21 个 |
 | 3 | 接入状态命令插件，随包提供一个样本 | 进行中。`StatusResult` 的形状与校验、`contributes.status`（含必须申请 `server.exec`）、`inline_cmds_script`（一次往返跑完所有插件命令、服务器上不留文件）、`PluginRuntime.statusCmd`/`statusParse`、SDK 的状态插件类型和样例都已完成，Rust 侧 121 个测试 + `test/plugin_ffi_test.dart` 打通「插件要什么命令 → 真跑一遍 → 结果回到同一个插件」。剩下的要等第 5 步的插件存储：App 得先知道装了哪些插件，才谈得上在状态页画出来 |
 | 4 | Dart feature registry 和按钮 id 迁移 | **已完成**。`lib/data/model/app/feature.dart`：`Feature`/`FeatureSlot`/`Features`，三个入口面（功能栏按钮、详情卡片、首页 tab）合并成一个 id 空间和一份"这次升级新增了什么"的规则。`serverBtns` 由 enum index 迁到 id（m021，`kLegacyServerFuncBtnIds` 冻结旧顺序），恢复备份时也会转换 |
 | 5 | Flutter 渲染器、插件卡片、存储、备份、安装管理和开发目录 | 进行中。**存储**（四张表 m022 + 三个 store）、**渲染器**（22 种控件、5.2 的三项、l10n、错误节点）、**surface**（`PluginSurfaceView` 驱动 `init`/`open`/`tick`/`onEvent`/`patch`，`AppPluginHostOps` 接 14 个接口）、**安装管理**（`.sbp` 读取与校验、装/卸/开关、`contributes` 接进 feature registry）、**备份**（`plugins` 字段）均已完成，共 81 个测试。**详情页卡片**（`PluginStatusCard`，`contributes.status` 画在服务器详情页上）均已完成，共 84 个测试。**`contributes.card`**（详情页上的 UI 卡片，走 `PluginSurfaceView`）、**安装页**（`PluginsPage`：列出已装插件、装/卸/开关、权限对话框）、**`contributes.page`**（功能栏按钮打开整页，`needs` 按 `ServerCapabilities` 过滤；功能栏改为按 id 分发，内置项和插件项走同一条路径）、**`contributes.settings`**（设置菜单里插件自己的页，有插件贡献时 `app.plugins` 才变成分支）、**开发目录**（`SettingStore.pluginDevDirs` 记路径，每次 refresh 直接从开发者目录读，不拷贝；卸载只删记录不动文件）均已完成。剩下 `contributes.tab` 和 5.5 的 golden 截图。tab 要先把 `SettingStore.homeTabs` 从 `List<AppTab>` 放宽成 id 列表，否则插件的 tab 名字没有地方可存 |
@@ -595,7 +599,7 @@ App Store 对这种扩展的判断也不能仅凭它没有 UI 就下结论。
 
 其他需要继续验证的事项：
 
-- **宿主回调的实现**：FFI 已通，但 14 个接口在 Dart 侧还只有测试里的假实现。接到 `ServerNotifier.ensureExec`、SSH 转发、证书校验、对话框和存储上是第 5 步的主要工作量。
+- **宿主回调的实现**：已接到 `ServerNotifier.ensureExec`、证书校验、对话框和存储上（`AppPluginHostOps`）。只剩 `sb.http.fetch` 的 `via: "ssh"`——需要把 `SSHForwardChannel` 包成 `HttpClient.connectionFactory` 认的 `ConnectionTask<Socket>`，dartssh2 那边没有现成的适配。
 - **性能与资源**：解释执行比原生慢；开发机上的解析耗时见 3.3，移动端真机没有量过。内存和时间上限的数值待定，计量精度也比 WASM 的 fuel 粗。5.2 的裁剪、值绑定和窗口式列表已在 SDK 侧实现，宿主侧的复用缓存、`ValueListenableBuilder` 和 `ListView.builder` 尚未实现，实际收益要接入后测量。
 - **构建依赖**：QuickJS 是 C 源码，iOS 和 Android 没有预生成 bindings，构建环境需要 libclang 和正确的 sysroot。这部分要写进 `hook/build.dart` 并在五个平台的 CI 上验证。
 - **语言支持范围**：抽查的 19 项见 3.5，完整 test262 没有跑过。`Intl` 缺失影响日期和数字的本地化，处理方式待定。

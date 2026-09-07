@@ -139,15 +139,56 @@ class PluginBridge {
         });
 
       case 'sb.http.fetch':
-        // Deliberately not implemented yet rather than silently absent. The
-        // address list and the certificate rules are already enforced by the
-        // runtime; what is missing is the request itself, and half of it —
-        // pinning, the review probe, and going out through a server's SSH
-        // connection — is the part worth its own change.
-        return PluginAnswer.error(
-          'unsupported',
-          'sb.http.fetch is not implemented in this build',
-        );
+        final url = req['url'];
+        if (url is! String || url.isEmpty) {
+          return PluginAnswer.badRequest('sb.http.fetch: no `url`');
+        }
+        // The runtime already refused an address outside the grant, a probe
+        // carrying a body, and `via: "ssh"` without `server.stream`. What is
+        // left here is the one case it cannot decide: this build has no way
+        // to put a request through an SSH connection yet, and answering it
+        // over the network instead would send it somewhere the plugin did not
+        // ask for.
+        final via = req['via'];
+        if (via is String && via != 'direct') {
+          return PluginAnswer.error(
+            'unsupported',
+            'sb.http.fetch: `via: "$via"` is not implemented in this build',
+          );
+        }
+        final PluginFetchResult result;
+        try {
+          result = await ops.fetch(
+            url: url,
+            // Normalised here rather than in whoever sends it: the method is
+            // part of the protocol, and a plugin writing `post` means the
+            // same thing as one writing `POST`.
+            method: req['method'] is String
+                ? (req['method'] as String).toUpperCase()
+                : 'GET',
+            headers: _strings(req['headers']),
+            body: req['body'] is String ? req['body'] as String : null,
+            bodyEncoding: req['bodyEncoding'] == 'base64' ? 'base64' : 'utf8',
+            pinSha256: req['pinSha256'] is String
+                ? req['pinSha256'] as String
+                : null,
+            probeCert: req['probeCert'] == true,
+            timeout: _duration(req['timeoutMs']),
+          );
+        } catch (e) {
+          // The plugin sees a rejected promise it can catch. A refused
+          // certificate arrives here like any other failure, and deliberately:
+          // what the plugin can do about it — ask the user to review the new
+          // one — is the same either way.
+          return PluginAnswer.error('http', '$e');
+        }
+        return PluginAnswer.json({
+          'status': result.status,
+          'headers': result.headers,
+          'body': result.body,
+          'bodyEncoding': result.bodyEncoding,
+          'cert': ?result.cert,
+        });
 
       case 'sb.ui.patch':
         final path = req['path'];
@@ -312,6 +353,20 @@ class PluginBridge {
 
   static Duration? _duration(Object? ms) =>
       ms is num && ms > 0 ? Duration(milliseconds: ms.toInt()) : null;
+
+  /// A JSON object read as a string map, dropping anything that is not one.
+  ///
+  /// Dropped rather than refused: a header whose value came out a number is a
+  /// plugin's mistake in one entry, and failing the whole request over it
+  /// gives no better answer than sending the rest.
+  static Map<String, String> _strings(Object? raw) {
+    if (raw is! Map) return const {};
+    return {
+      for (final e in raw.entries)
+        if (e.key is String && e.value is String)
+          e.key as String: e.value as String,
+    };
+  }
 }
 
 /// The opaque names the host gives a plugin for the servers it may act on.

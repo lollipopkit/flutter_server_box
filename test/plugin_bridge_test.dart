@@ -8,6 +8,7 @@
 library;
 
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -45,6 +46,38 @@ class _FakeOps implements PluginHostOps {
     final thrown = execThrows;
     if (thrown != null) throw thrown;
     return execResult;
+  }
+
+  PluginFetchResult fetchResult = (
+    status: 200,
+    headers: {'content-type': 'application/json'},
+    body: '{}',
+    bodyEncoding: 'utf8',
+    cert: null,
+  );
+  Object? fetchThrows;
+
+  @override
+  Future<PluginFetchResult> fetch({
+    required String url,
+    required String method,
+    Map<String, String> headers = const {},
+    String? body,
+    String bodyEncoding = 'utf8',
+    String? pinSha256,
+    bool probeCert = false,
+    Duration? timeout,
+  }) async {
+    calls.add(
+      _Recorded(
+        'fetch',
+        '$method $url|${headers.length}|$bodyEncoding|$pinSha256|$probeCert'
+            '|${timeout?.inMilliseconds}',
+      ),
+    );
+    final thrown = fetchThrows;
+    if (thrown != null) throw thrown;
+    return fetchResult;
   }
 
   @override
@@ -215,6 +248,100 @@ void main() {
     });
   });
 
+  /// The protocol half of `sb.http.fetch`. What the request *means* — which
+  /// addresses are in the grant, what a probe may carry, whether `via: "ssh"`
+  /// is allowed — is the runtime's and is checked in `sbm_plugin::scope`; what
+  /// is here is the encoding, which has no other check on it.
+  group('fetching', () {
+    test('the request and the answer both cross intact', () async {
+      ops.fetchResult = (
+        status: 201,
+        headers: {'location': '/redfish/v1/Systems/1'},
+        body: '{"ok":true}',
+        bodyEncoding: 'utf8',
+        cert: {'sha256': 'ab', 'subject': 'CN=bmc', 'expired': false},
+      );
+
+      final answer = await call('sb.http.fetch', {
+        'url': 'https://10.0.0.9/redfish/v1',
+        'method': 'post',
+        'headers': {'accept': 'application/json', 'x-n': 3},
+        'body': '{}',
+        'pinSha256': 'AB12',
+        'timeoutMs': 5000,
+      });
+
+      expect(decoded(answer), {
+        'status': 201,
+        'headers': {'location': '/redfish/v1/Systems/1'},
+        'body': '{"ok":true}',
+        'bodyEncoding': 'utf8',
+        'cert': {'sha256': 'ab', 'subject': 'CN=bmc', 'expired': false},
+      });
+      // Uppercased method, the non-string header dropped rather than the
+      // request refused, and the pin passed through as written.
+      expect(
+        '${ops.calls.single}',
+        'fetch(POST https://10.0.0.9/redfish/v1|1|utf8|AB12|false|5000)',
+      );
+    });
+
+    /// No certificate is the ordinary case for `http://`, and the field has to
+    /// be absent rather than null — a plugin reading `res.cert.sha256` off a
+    /// null gets a different error than off an undefined.
+    test('an answer with no certificate carries no cert field', () async {
+      final answer = await call('sb.http.fetch', {'url': 'http://127.0.0.1:8080/a'});
+
+      expect(decoded(answer), isNot(contains('cert')));
+      expect('${ops.calls.single}', startsWith('fetch(GET http://127.0.0.1:8080/a'));
+    });
+
+    test('a probe is passed on as one', () async {
+      await call('sb.http.fetch', {
+        'url': 'https://10.0.0.9/',
+        'probeCert': true,
+      });
+
+      expect('${ops.calls.single}', contains('|true|'));
+    });
+
+    /// A refused certificate arrives like any other failure, and deliberately:
+    /// what the plugin can do about it — ask the user to review the new one —
+    /// is the same either way.
+    test('a refused certificate is a rejected promise', () async {
+      ops.fetchThrows = const TlsException('certificate not accepted');
+
+      final answer = await call('sb.http.fetch', {
+        'url': 'https://10.0.0.9/',
+        'pinSha256': 'ab',
+      });
+
+      expect(answer.errorKind, 'http');
+      expect(answer.errorMessage, contains('certificate not accepted'));
+    });
+
+    test('no url is a bad request, and nothing is sent', () async {
+      final answer = await call('sb.http.fetch', {'method': 'GET'});
+
+      expect(answer.errorKind, 'bad_request');
+      expect(ops.calls, isEmpty);
+    });
+
+    /// This build cannot put a request through an SSH connection. Answering it
+    /// over the network instead would send it somewhere the plugin did not ask
+    /// for, so it is refused rather than quietly redirected.
+    test('via ssh says it is unsupported rather than going direct', () async {
+      final answer = await call('sb.http.fetch', {
+        'url': 'https://10.0.0.9/',
+        'via': 'ssh',
+        'server': handles.issue('inst-1', 'srv-1'),
+      });
+
+      expect(answer.errorKind, 'unsupported');
+      expect(ops.calls, isEmpty);
+    });
+  });
+
   group('the key-value namespaces', () {
     test('global and server are two places', () async {
       handles.bind('inst-1', 'srv-1');
@@ -379,14 +506,6 @@ void main() {
       expect(answer.errorKind, isNull);
       expect(seen?.path, '/c/0');
       expect(seen?.node.type, 'text');
-    });
-
-    /// Not implemented rather than silently absent: the plugin gets a rejected
-    /// promise naming what is missing, and can say so.
-    test('http.fetch answers that this build does not have it', () async {
-      final answer = await call('sb.http.fetch', {'url': 'https://x/'});
-
-      expect(answer.errorKind, 'unsupported');
     });
 
     /// It can only be reached from a runtime that installed it, so the two

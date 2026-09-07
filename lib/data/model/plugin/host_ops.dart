@@ -51,12 +51,40 @@ class PluginPromptField {
   }
 }
 
+/// What a request answered. `cert` is absent where there was no TLS.
+typedef PluginFetchResult = ({
+  int status,
+  Map<String, String> headers,
+  String body,
+  String bodyEncoding,
+  Map<String, Object?>? cert,
+});
+
 abstract interface class PluginHostOps {
   /// Runs [script] on [serverId], which the bridge resolved from a handle the
   /// host itself issued.
   Future<PluginExecResult> exec(
     String serverId,
     String script, {
+    Duration? timeout,
+  });
+
+  /// One HTTP request, or — with [probeCert] — a handshake that sends nothing
+  /// and answers with the certificate.
+  ///
+  /// [pinSha256] is the whole trust decision: absent refuses every
+  /// certificate, since the alternative is trusting whatever answers the first
+  /// time a request is made, and by then the request carries a password. The
+  /// address list and the `probeCert` rules are the runtime's and have already
+  /// been checked (`sbm_plugin::scope`).
+  Future<PluginFetchResult> fetch({
+    required String url,
+    required String method,
+    Map<String, String> headers,
+    String? body,
+    String bodyEncoding,
+    String? pinSha256,
+    bool probeCert,
     Duration? timeout,
   });
 

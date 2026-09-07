@@ -236,11 +236,16 @@ export class MockHost {
           check("http.fetch");
           this.calls.push({ fn: "http.fetch", req });
 
-          // What the app does before anything reaches the network: no pin and
-          // no review means no connection. A mock that let this through would
-          // be testing a host this app does not have.
-          if (!req.pinSha256 && !req.probeCert) {
-            throw hostError("cert", "no reviewed certificate");
+          // What the app does before anything reaches the network: an `https`
+          // URL with no pin and no review means no connection. A mock that let
+          // this through would be testing a host this app does not have.
+          //
+          // `http` is exempt, and so is the app: there is no certificate to
+          // pin, and a plugin reaching `127.0.0.1` over a forwarded port is a
+          // real case that the address grant already decided.
+          const tls = /^https:/i.test(req.url);
+          if (tls && !req.pinSha256 && !req.probeCert) {
+            throw hostError("http", "no reviewed certificate");
           }
           if (req.probeCert && (req.body || Object.keys(req.headers ?? {}).length > 0)) {
             const e = new Error("`probeCert` sends nothing, so it takes no body or headers");
