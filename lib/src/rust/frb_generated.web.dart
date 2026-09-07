@@ -11,6 +11,7 @@ import 'dart:convert';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_web.dart';
 import 'package:server_box/src/rust/api/parser.dart';
+import 'package:server_box/src/rust/api/plugin.dart';
 import 'package:server_box/src/rust/api/script.dart';
 import 'package:server_box/src/rust/api/ssh_asym.dart';
 import 'package:server_box/src/rust/api/ssh_crypto.dart';
@@ -25,12 +26,25 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   });
 
   CrossPlatformFinalizerArg
+  get rust_arc_decrement_strong_count_PluginRuntimePtr => wire
+      .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginRuntime;
+
+  CrossPlatformFinalizerArg
   get rust_arc_decrement_strong_count_SshBlockCipherPtr => wire
       .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshBlockCipher;
 
   CrossPlatformFinalizerArg
   get rust_arc_decrement_strong_count_SshMacPtr => wire
       .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshMac;
+
+  @protected
+  AnyhowException dco_decode_AnyhowException(dynamic raw);
+
+  @protected
+  PluginRuntime
+  dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginRuntime(
+    dynamic raw,
+  );
 
   @protected
   SshBlockCipher
@@ -51,6 +65,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  PluginRuntime
+  dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginRuntime(
+    dynamic raw,
+  );
+
+  @protected
   SshBlockCipher
   dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshBlockCipher(
     dynamic raw,
@@ -66,6 +86,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Map<String, String> dco_decode_Map_String_String_None(dynamic raw);
 
   @protected
+  PluginRuntime
+  dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginRuntime(
+    dynamic raw,
+  );
+
+  @protected
   SshBlockCipher
   dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshBlockCipher(
     dynamic raw,
@@ -78,10 +104,21 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  RustStreamSink<PluginLog> dco_decode_StreamSink_plugin_log_Sse(dynamic raw);
+
+  @protected
+  RustStreamSink<PluginRequest> dco_decode_StreamSink_plugin_request_Sse(
+    dynamic raw,
+  );
+
+  @protected
   String dco_decode_String(dynamic raw);
 
   @protected
   bool dco_decode_bool(dynamic raw);
+
+  @protected
+  PluginSpec dco_decode_box_autoadd_plugin_spec(dynamic raw);
 
   @protected
   CommandSpec dco_decode_command_spec(dynamic raw);
@@ -126,6 +163,21 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<CustomCmd>? dco_decode_opt_list_custom_cmd(dynamic raw);
 
   @protected
+  PluginFailure dco_decode_plugin_failure(dynamic raw);
+
+  @protected
+  PluginLog dco_decode_plugin_log(dynamic raw);
+
+  @protected
+  PluginManifestInfo dco_decode_plugin_manifest_info(dynamic raw);
+
+  @protected
+  PluginRequest dco_decode_plugin_request(dynamic raw);
+
+  @protected
+  PluginSpec dco_decode_plugin_spec(dynamic raw);
+
+  @protected
   (String, String) dco_decode_record_string_string(dynamic raw);
 
   @protected
@@ -138,6 +190,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int dco_decode_u_32(dynamic raw);
 
   @protected
+  BigInt dco_decode_u_64(dynamic raw);
+
+  @protected
   int dco_decode_u_8(dynamic raw);
 
   @protected
@@ -148,6 +203,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   X25519KeyPair dco_decode_x_25519_key_pair(dynamic raw);
+
+  @protected
+  AnyhowException sse_decode_AnyhowException(SseDeserializer deserializer);
+
+  @protected
+  PluginRuntime
+  sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginRuntime(
+    SseDeserializer deserializer,
+  );
 
   @protected
   SshBlockCipher
@@ -164,6 +228,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   SshBlockCipher
   sse_decode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshBlockCipher(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  PluginRuntime
+  sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginRuntime(
     SseDeserializer deserializer,
   );
 
@@ -185,6 +255,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  PluginRuntime
+  sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginRuntime(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   SshBlockCipher
   sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshBlockCipher(
     SseDeserializer deserializer,
@@ -197,10 +273,23 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  RustStreamSink<PluginLog> sse_decode_StreamSink_plugin_log_Sse(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  RustStreamSink<PluginRequest> sse_decode_StreamSink_plugin_request_Sse(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   String sse_decode_String(SseDeserializer deserializer);
 
   @protected
   bool sse_decode_bool(SseDeserializer deserializer);
+
+  @protected
+  PluginSpec sse_decode_box_autoadd_plugin_spec(SseDeserializer deserializer);
 
   @protected
   CommandSpec sse_decode_command_spec(SseDeserializer deserializer);
@@ -249,6 +338,23 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<CustomCmd>? sse_decode_opt_list_custom_cmd(SseDeserializer deserializer);
 
   @protected
+  PluginFailure sse_decode_plugin_failure(SseDeserializer deserializer);
+
+  @protected
+  PluginLog sse_decode_plugin_log(SseDeserializer deserializer);
+
+  @protected
+  PluginManifestInfo sse_decode_plugin_manifest_info(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  PluginRequest sse_decode_plugin_request(SseDeserializer deserializer);
+
+  @protected
+  PluginSpec sse_decode_plugin_spec(SseDeserializer deserializer);
+
+  @protected
   (String, String) sse_decode_record_string_string(
     SseDeserializer deserializer,
   );
@@ -263,6 +369,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int sse_decode_u_32(SseDeserializer deserializer);
 
   @protected
+  BigInt sse_decode_u_64(SseDeserializer deserializer);
+
+  @protected
   int sse_decode_u_8(SseDeserializer deserializer);
 
   @protected
@@ -273,6 +382,19 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   X25519KeyPair sse_decode_x_25519_key_pair(SseDeserializer deserializer);
+
+  @protected
+  void sse_encode_AnyhowException(
+    AnyhowException self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void
+  sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginRuntime(
+    PluginRuntime self,
+    SseSerializer serializer,
+  );
 
   @protected
   void
@@ -292,6 +414,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void
   sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshBlockCipher(
     SshBlockCipher self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void
+  sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginRuntime(
+    PluginRuntime self,
     SseSerializer serializer,
   );
 
@@ -317,6 +446,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void
+  sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginRuntime(
+    PluginRuntime self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void
   sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshBlockCipher(
     SshBlockCipher self,
     SseSerializer serializer,
@@ -330,10 +466,28 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_StreamSink_plugin_log_Sse(
+    RustStreamSink<PluginLog> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_StreamSink_plugin_request_Sse(
+    RustStreamSink<PluginRequest> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_String(String self, SseSerializer serializer);
 
   @protected
   void sse_encode_bool(bool self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_plugin_spec(
+    PluginSpec self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_command_spec(CommandSpec self, SseSerializer serializer);
@@ -399,6 +553,24 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_plugin_failure(PluginFailure self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_plugin_log(PluginLog self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_plugin_manifest_info(
+    PluginManifestInfo self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_plugin_request(PluginRequest self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_plugin_spec(PluginSpec self, SseSerializer serializer);
+
+  @protected
   void sse_encode_record_string_string(
     (String, String) self,
     SseSerializer serializer,
@@ -412,6 +584,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_u_32(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_u_64(BigInt self, SseSerializer serializer);
 
   @protected
   void sse_encode_u_8(int self, SseSerializer serializer);
@@ -433,6 +608,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
 class RustLibWire implements BaseWire {
   RustLibWire.fromExternalLibrary(ExternalLibrary lib);
+
+  void
+  rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginRuntime(
+    int ptr,
+  ) => wasmModule
+      .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginRuntime(
+        ptr,
+      );
+
+  void
+  rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginRuntime(
+    int ptr,
+  ) => wasmModule
+      .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginRuntime(
+        ptr,
+      );
 
   void
   rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshBlockCipher(
@@ -473,6 +664,16 @@ external RustLibWasmModule get wasmModule;
 @JS()
 @anonymous
 extension type RustLibWasmModule._(JSObject _) implements JSObject {
+  external void
+  rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginRuntime(
+    int ptr,
+  );
+
+  external void
+  rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginRuntime(
+    int ptr,
+  );
+
   external void
   rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshBlockCipher(
     int ptr,

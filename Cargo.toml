@@ -6,7 +6,13 @@
 # - monitor:           server-side monitoring (service + web frontend)
 [workspace]
 resolver = "2"
-members = ["crates/sbm_parser", "crates/sbm_native", "crates/sbm_ffi", "monitor"]
+members = [
+    "crates/sbm_parser",
+    "crates/sbm_native",
+    "crates/sbm_ffi",
+    "crates/sbm_plugin",
+    "monitor",
+]
 
 [profile.release]
 # Smaller release binaries for the shipped container / native packages

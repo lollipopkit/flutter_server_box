@@ -1,0 +1,23 @@
+{
+  "name": "@serverbox/plugin-api",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Write ServerBox plugins in TypeScript or JavaScript",
+  "license": "MIT",
+  "repository": "https://github.com/lollipopkit/flutter_server_box",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./test": "./src/test.ts"
+  },
+  "files": ["src"],
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.6.0"
+  }
+}
