@@ -27,7 +27,7 @@ pub use channel::{ChannelBridge, HostRequest, LogEvent};
 pub use host::{InstanceId, PluginHost};
 pub use error::{PluginError, Refusal};
 pub use hostfn::{HostFn, LogLevel, exports};
-pub use manifest::Manifest;
+pub use manifest::{Manifest, Platform};
 pub use permission::{Grants, HostPattern, Permission};
 pub use status::{StatusCmd, StatusItem, StatusResult};
 pub use runtime::{

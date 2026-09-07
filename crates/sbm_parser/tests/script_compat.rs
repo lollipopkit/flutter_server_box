@@ -442,6 +442,120 @@ fn an_install_reports_the_fingerprint_it_leaves() {
     assert_eq!(script::parse_custom_cmds_fingerprint("nothing here"), None);
 }
 
+// ---------- plugin status commands (PLUGINS.md 9.1) ----------
+
+/// A plugin's command leaves nothing behind: it is not the user's data, it
+/// changes whenever the plugin or its config does, and the user's directory is
+/// where the user's own commands are edited.
+#[test]
+fn a_plugin_command_writes_nothing_to_the_users_directory() {
+    let cmds = vec![("zfs".to_string(), "zpool list -Hp".to_string())];
+    for system in [SystemType::Linux, SystemType::Windows] {
+        let script = script::inline_cmds_script(system, &cmds);
+        let readable = match system {
+            SystemType::Windows => decode_utf16le_b64(script.split_whitespace().last().unwrap()),
+            _ => script.clone(),
+        };
+        assert!(
+            !readable.contains(script::CUSTOM_CMD_DIR_LEAF),
+            "{system:?}: {readable}"
+        );
+        assert!(readable.contains(&script::plugin_cmd_marker("zfs")), "{system:?}");
+        // Encoded, so nothing in a command has to survive quoting.
+        assert!(!readable.contains("zpool list -Hp"), "{system:?}: {readable}");
+    }
+}
+
+/// The same bounds a custom command gets, from the same code — the timeout,
+/// the size cap and the temp file are the part that must not be re-derived.
+#[test]
+fn a_plugin_command_is_bounded_the_way_a_custom_one_is() {
+    let cmds = vec![("zfs".to_string(), "zpool list".to_string())];
+    let inline = script::inline_cmds_script(SystemType::Linux, &cmds);
+    let status = build_script(SystemType::Linux, &opts());
+    for fragment in [
+        "sb_cmd() {",
+        "timeout 5 sh",
+        &format!("head -c {}", script::CUSTOM_CMD_MAX_OUTPUT_BYTES),
+        "server_box_custom.XXXXXX",
+    ] {
+        assert!(inline.contains(fragment), "inline missing {fragment}");
+        assert!(status.contains(fragment), "status script missing {fragment}");
+    }
+    assert_sh_parses(&inline);
+    assert_sh_parses(&script::inline_cmds_script(SystemType::Linux, &[]));
+}
+
+/// A plugin's output and a user's are different namespaces. One separator
+/// would let a command of the right name replace the other's readings, in
+/// either direction.
+#[test]
+fn plugin_output_and_custom_output_are_separate_namespaces() {
+    let raw = format!(
+        "{}\nplugin said\n{}\nuser said\n",
+        script::plugin_cmd_marker("zfs"),
+        script::custom_cmd_marker("zfs"),
+    );
+    let map = parse_script_output(&raw);
+    assert_eq!(map[&script::plugin_result_key("zfs")], "plugin said");
+    assert_eq!(map[&script::custom_result_key("zfs")], "user said");
+
+    assert_eq!(script::plugin_result_name(&script::plugin_result_key("zfs")), Some("zfs"));
+    assert_eq!(script::plugin_result_name(&script::custom_result_key("zfs")), None);
+    assert_eq!(script::custom_result_name(&script::plugin_result_key("zfs")), None);
+}
+
+/// Everything a plugin prints is data, including a built-in marker. The
+/// extended-status cache must not accept a refresh made of it either.
+#[test]
+fn plugin_output_cannot_forge_a_builtin_section() {
+    let forged = script::cmd_marker("cpu");
+    let raw = format!("{}\nbefore\n{forged}\nforged\n", script::plugin_cmd_marker("probe"));
+    let map = parse_script_output(&raw);
+
+    assert!(!map.contains_key("cpu"));
+    assert_eq!(
+        map[&script::plugin_result_key("probe")],
+        format!("before\n{forged}\nforged")
+    );
+    assert!(!script::contains_status_segment(&raw));
+    assert!(script::contains_script_segment(&raw));
+}
+
+/// Running the real thing: two plugin commands in one round trip, output
+/// bounded and filed under their own names.
+#[cfg(unix)]
+#[test]
+fn e2e_inline_plugin_commands_run() {
+    use std::process::Command;
+
+    let cmds = vec![
+        ("zfs".to_string(), "printf 'a\\nb'".to_string()),
+        // A command whose text would end a heredoc, close a quote and start
+        // something new if any of it were taken literally.
+        ("hostile".to_string(), "printf \"EOF'\"; echo \" #\"".to_string()),
+    ];
+    let script = script::inline_cmds_script(SystemType::Linux, &cmds);
+    let out = Command::new("sh")
+        .arg("-c")
+        .arg(&script)
+        .output()
+        .expect("run the inline script");
+    assert!(out.status.success(), "{}", String::from_utf8_lossy(&out.stderr));
+
+    let map = parse_script_output(&String::from_utf8_lossy(&out.stdout));
+    assert_eq!(map[&script::plugin_result_key("zfs")], "a\nb");
+    assert_eq!(map[&script::plugin_result_key("hostile")], "EOF' #\n");
+    // And nothing of the temp file it used survives.
+    assert!(
+        std::fs::read_dir(std::env::temp_dir())
+            .unwrap()
+            .filter_map(Result::ok)
+            .all(|e| !e.file_name().to_string_lossy().starts_with("server_box_plugin")),
+        "the inline script left a command file behind"
+    );
+}
+
 #[test]
 fn a_conflict_is_recognised_in_whatever_carried_it() {
     assert!(script::custom_cmds_conflict("SrvBoxCusCmdConflict"));

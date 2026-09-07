@@ -17,6 +17,17 @@ use std::collections::HashMap;
 /// Custom-command segment separator (`SrvBoxCusCmdSep.b64.<name>`)
 pub const CUSTOM_CMD_SEPARATOR: &str = "SrvBoxCusCmdSep";
 
+/// Segment separator for a plugin's status command
+/// (`SrvBoxPluginSep.b64.<name>`). PLUGINS.md section 9.
+///
+/// Its own namespace rather than a share of the custom-command one. Both carry
+/// output from something the host did not write, but they come from different
+/// places and are drawn differently — a custom command is text the user typed,
+/// a plugin's command is text a plugin returned — and one namespace would let
+/// a command of the right name replace the other's readings in either
+/// direction.
+pub const PLUGIN_CMD_SEPARATOR: &str = "SrvBoxPluginSep";
+
 /// Marks a segment marker's name as base64url-encoded.
 ///
 /// Markers are ordinary lines in the same stream as command output, so a
@@ -253,6 +264,35 @@ pub fn custom_result_key(name: &str) -> String {
 pub fn custom_result_name(key: &str) -> Option<&str> {
     let name = key.strip_prefix(CUSTOM_CMD_SEPARATOR)?.strip_prefix('.')?;
     (!name.is_empty()).then_some(name)
+}
+
+/// Segment marker for a plugin's status command.
+pub fn plugin_cmd_marker(name: &str) -> String {
+    format!(
+        "{PLUGIN_CMD_SEPARATOR}.{ENCODED_NAME_PREFIX}{}",
+        encode_marker_name(name)
+    )
+}
+
+/// Key a plugin's command output is filed under in [`parse_script_output`].
+pub fn plugin_result_key(name: &str) -> String {
+    format!("{PLUGIN_CMD_SEPARATOR}.{name}")
+}
+
+/// The plugin-command name encoded in a parsed result key.
+pub fn plugin_result_name(key: &str) -> Option<&str> {
+    let name = key.strip_prefix(PLUGIN_CMD_SEPARATOR)?.strip_prefix('.')?;
+    (!name.is_empty()).then_some(name)
+}
+
+/// Whether `key` names a section produced by something the host did not write.
+///
+/// A built-in marker is only believed before the first of these — see
+/// [`split_marker`] — and the extended-status cache refuses to be refreshed by
+/// one, so the classification is worth having in one place rather than as two
+/// prefix checks at each site.
+pub fn untrusted_result_name(key: &str) -> Option<&str> {
+    custom_result_name(key).or_else(|| plugin_result_name(key))
 }
 
 /// Shell functions exposed by the generated script. Names and flags are wire
@@ -644,6 +684,71 @@ pub fn parse_custom_cmds_listing(raw: &str) -> Option<CustomCmdsListing> {
     })
 }
 
+/// A one-shot script that runs `cmds` and prints each one's output under
+/// [`PLUGIN_CMD_SEPARATOR`], leaving nothing on the server.
+///
+/// What a plugin's status command uses (PLUGINS.md 9.1). The user's commands
+/// are files in a directory because they are the user's data and several
+/// clients edit them; a plugin's command is neither — it comes back from
+/// `statusCmd` and changes whenever the plugin or its configuration does, so
+/// there is nothing to keep and a directory would only put it in the editor
+/// beside the user's own.
+///
+/// One round trip for every plugin rather than one each: they are all bounded
+/// the same way and run in the order given, so a second connection buys
+/// nothing.
+///
+/// Each command is bounded exactly as a custom command is — see
+/// [`unix_cmd_runner`] — and travels base64-encoded, so nothing in it has to
+/// survive quoting. It is written to a temporary file and removed; the
+/// alternative is putting the text on a command line, where `ps` would show it
+/// and its length would be capped.
+pub fn inline_cmds_script(system: SystemType, cmds: &[(String, String)]) -> String {
+    use base64::Engine;
+    let b64 = base64::engine::general_purpose::STANDARD;
+
+    match system {
+        SystemType::Windows => {
+            let mut out = format!(
+                "{}$t = [IO.Path]::GetTempPath()\n",
+                windows_cmd_runner("")
+            );
+            for (name, cmd) in cmds {
+                out.push_str(&format!(
+                    "$c = Join-Path $t (\"server_box_plugin_{{0}}.ps1\" -f $PID)\n\
+                     [IO.File]::WriteAllBytes($c, [Convert]::FromBase64String('{}'))\n\
+                     SbCmd '{}' $c\n\
+                     Remove-Item -Force $c -ErrorAction SilentlyContinue\n",
+                    b64.encode(cmd),
+                    plugin_cmd_marker(name),
+                ));
+            }
+            encoded_powershell_command(&out)
+        }
+        SystemType::Linux | SystemType::Bsd => {
+            let mut out = unix_cmd_runner();
+            for (name, cmd) in cmds {
+                out.push_str(&format!(
+                    "if command -v mktemp >/dev/null 2>&1; then\n\
+                     \tc=$(mktemp \"${{TMPDIR:-/tmp}}/server_box_plugin.XXXXXX\" 2>/dev/null)\n\
+                     else\n\
+                     \tc=\"${{TMPDIR:-/tmp}}/server_box_plugin_$$\"\n\
+                     \t(umask 077; set -C; : > \"$c\") 2>/dev/null || c=''\n\
+                     fi\n\
+                     if [ -n \"$c\" ]; then\n\
+                     \tprintf %s '{}' | base64 -d > \"$c\"\n\
+                     \tsb_cmd '{}' \"$c\"\n\
+                     \trm -f \"$c\"\n\
+                     fi\n",
+                    b64.encode(cmd),
+                    plugin_cmd_marker(name),
+                ));
+            }
+            out
+        }
+    }
+}
+
 /// Build the full script. Linux and Bsd produce the identical Unix script
 /// (the script self-detects the OS at runtime); Windows produces PowerShell.
 pub fn build_script(system: SystemType, opts: &ScriptOptions) -> String {
@@ -813,8 +918,7 @@ pub fn parse_script_segments(raw: &str) -> Vec<(String, String)> {
         return result;
     }
 
-    let sep_prefix = format!("{SEPARATOR}.");
-    let custom_prefix = format!("{CUSTOM_CMD_SEPARATOR}.");
+    let prefixes = MarkerPrefixes::new();
     let mut current: Option<String> = None;
     let mut buf = String::new();
 
@@ -831,7 +935,7 @@ pub fn parse_script_segments(raw: &str) -> Vec<(String, String)> {
                 if out.ends_with('\r') {
                     out.pop();
                 }
-                if custom_result_name(&key).is_some()
+                if untrusted_result_name(&key).is_some()
                     && let Some(encoded) = out.strip_prefix(CUSTOM_CMD_OUTPUT_PREFIX)
                 {
                     use base64::Engine;
@@ -846,8 +950,8 @@ pub fn parse_script_segments(raw: &str) -> Vec<(String, String)> {
 
     for line in raw.split_terminator('\n') {
         let line = line.strip_suffix('\r').unwrap_or(line);
-        let allow_builtin = current.as_deref().and_then(custom_result_name).is_none();
-        let marker = split_marker(line, &sep_prefix, &custom_prefix, allow_builtin);
+        let allow_builtin = current.as_deref().and_then(untrusted_result_name).is_none();
+        let marker = split_marker(line, &prefixes, allow_builtin);
         match marker {
             Some((leading, key)) => {
                 // Output the marker was appended to closes the section it
@@ -885,22 +989,41 @@ pub fn parse_script_segments(raw: &str) -> Vec<(String, String)> {
 /// [`ENCODED_NAME_PREFIX`]).
 fn split_marker<'a>(
     line: &'a str,
-    sep_prefix: &str,
-    custom_prefix: &str,
+    prefixes: &MarkerPrefixes,
     allow_builtin: bool,
 ) -> Option<(&'a str, String)> {
-    let builtin = allow_builtin
-        .then(|| find_marker(line, sep_prefix))
-        .flatten();
-    let custom = find_marker(line, custom_prefix).map(|(at, name)| (at, custom_result_key(&name)));
-    match (builtin, custom) {
-        // The earlier one, so the text before it stays with the section it was
-        // printed by. Neither separator is a prefix of the other, so a line
-        // holding both is a custom command echoing a built-in marker.
-        (Some(b), Some(c)) => Some(if b.0 <= c.0 { b } else { c }),
-        (found, None) | (None, found) => found,
+    let candidates = [
+        allow_builtin
+            .then(|| find_marker(line, &prefixes.builtin))
+            .flatten(),
+        find_marker(line, &prefixes.custom).map(|(at, name)| (at, custom_result_key(&name))),
+        find_marker(line, &prefixes.plugin).map(|(at, name)| (at, plugin_result_key(&name))),
+    ];
+    // The earliest, so the text before it stays with the section it was printed
+    // by. No separator is a prefix of another, so a line holding two of them is
+    // one command echoing the other's marker.
+    candidates
+        .into_iter()
+        .flatten()
+        .min_by_key(|(at, _)| *at)
+        .map(|(at, key)| (&line[..at], key))
+}
+
+/// The three separators, built once rather than per line.
+struct MarkerPrefixes {
+    builtin: String,
+    custom: String,
+    plugin: String,
+}
+
+impl MarkerPrefixes {
+    fn new() -> Self {
+        Self {
+            builtin: format!("{SEPARATOR}."),
+            custom: format!("{CUSTOM_CMD_SEPARATOR}."),
+            plugin: format!("{PLUGIN_CMD_SEPARATOR}."),
+        }
     }
-    .map(|(at, key)| (&line[..at], key))
 }
 
 /// Where `prefix` begins a decodable marker running to the end of `line`.
@@ -916,23 +1039,22 @@ fn find_marker(line: &str, prefix: &str) -> Option<(usize, String)> {
 /// print text such as `SrvBoxSep.cpu` without turning an otherwise invalid
 /// response into a status sample.
 pub fn contains_script_segment(raw: &str) -> bool {
-    let sep_prefix = format!("{SEPARATOR}.");
-    let custom_prefix = format!("{CUSTOM_CMD_SEPARATOR}.");
+    let prefixes = MarkerPrefixes::new();
     raw.split('\n').any(|line| {
         let line = line.strip_suffix('\r').unwrap_or(line);
-        split_marker(line, &sep_prefix, &custom_prefix, true).is_some()
+        split_marker(line, &prefixes, true).is_some()
     })
 }
 
 /// Whether output contains at least one valid built-in segment marker.
 ///
-/// The extended-status cache uses this stricter form because custom commands
-/// belong to the ordinary status function and must not replace cached SMART
-/// or AMD output on their own.
+/// The extended-status cache uses this stricter form because a custom or
+/// plugin command's output must not replace cached SMART or AMD output on its
+/// own.
 pub fn contains_status_segment(raw: &str) -> bool {
     parse_script_segments(raw)
         .iter()
-        .any(|(key, _)| custom_result_name(key).is_none())
+        .any(|(key, _)| untrusted_result_name(key).is_none())
 }
 
 // ---------- internal: shared filtering ----------
@@ -966,7 +1088,14 @@ fn segment_list(
 
 // ---------- internal: Unix ----------
 
+/// The preamble, plus `sb_cmd`.
+///
+/// At file scope rather than inside [`ShellFunc::Custom`]: it is a helper of
+/// the script, `sh` only needs it defined before the dispatch at the bottom
+/// runs, and a function defined inside another is a thing every reader has to
+/// check the scoping rules for.
 fn unix_header(build_number: &str) -> String {
+    let runner = unix_cmd_runner();
     format!(
         "#!/bin/sh
 # Script for ServerBox app v1.0.{build_number}
@@ -985,6 +1114,7 @@ userId=$(id -u)
 
 exec 2>/dev/null
 
+{runner}
 "
     )
 }
@@ -1036,10 +1166,6 @@ fn unix_custom_cmds(func: ShellFunc) -> String {
     // nothing. See [`unix_recover_and_fingerprint`] for where repair lives and
     // why it is not here.
     //
-    // `sh "$f"` rather than executing the file: no execute bit to set, and it
-    // works on a `noexec` mount. Output goes through a size-limited file so a
-    // child that survives its shell cannot keep the status pipe open.
-    let file_blocks = CUSTOM_CMD_MAX_OUTPUT_BYTES.div_ceil(512);
     format!(
         "\nd=\"{CUSTOM_CMD_DIR_UNIX}\"\n\
          for f in \"$d\"/*; do\n\
@@ -1050,19 +1176,42 @@ fn unix_custom_cmds(func: ShellFunc) -> String {
          \t[ ${{#o_prefix}} -eq 5 ] || continue\n\
          \tcase \"$o_prefix\" in *[!0-9]*) continue;; esac\n\
          \tcase \"$encoded\" in ''|*[!A-Za-z0-9_=-]*) continue;; esac\n\
-         \tprintf '%s\\n' \"{CUSTOM_CMD_SEPARATOR}.{ENCODED_NAME_PREFIX}${{n#*_}}\"\n\
+         \tsb_cmd \"{CUSTOM_CMD_SEPARATOR}.{ENCODED_NAME_PREFIX}${{n#*_}}\" \"$f\"\n\
+         done\n"
+    )
+}
+
+/// `sb_cmd <marker line> <script file>` — run one command and print its
+/// bounded output under that marker.
+///
+/// One copy, shared by [`ShellFunc::Custom`] and [`inline_cmds_script`],
+/// because everything that bounds an untrusted command is in here and its four
+/// fallback paths are the part nobody re-derives correctly: a `timeout` if the
+/// host has one and a process-group kill if it does not, `ulimit -f` and a
+/// `head -c`/`dd` cap on what is kept, and a temp file rather than a pipe so a
+/// child that outlives its shell cannot hold the output open.
+///
+/// `sh "$2"` rather than executing the file: no execute bit to set, and it
+/// works on a `noexec` mount. The caller owns the file — `SbCustom` passes one
+/// out of the user's directory and leaves it there, the inline form writes a
+/// temporary one and removes it.
+fn unix_cmd_runner() -> String {
+    let file_blocks = CUSTOM_CMD_MAX_OUTPUT_BYTES.div_ceil(512);
+    format!(
+        "sb_cmd() {{\n\
+         \tprintf '%s\\n' \"$1\"\n\
          \tif command -v mktemp >/dev/null 2>&1; then\n\
-         \t\to=$(mktemp \"${{TMPDIR:-/tmp}}/server_box_custom.XXXXXX\" 2>/dev/null) || continue\n\
+         \t\to=$(mktemp \"${{TMPDIR:-/tmp}}/server_box_custom.XXXXXX\" 2>/dev/null) || return 0\n\
          \telse\n\
          \t\to=\"${{TMPDIR:-/tmp}}/server_box_custom_$$\"\n\
-         \t\t(umask 077; set -C; : > \"$o\") 2>/dev/null || continue\n\
+         \t\t(umask 077; set -C; : > \"$o\") 2>/dev/null || return 0\n\
          \tfi\n\
-         \t(ulimit -f {file_blocks} 2>/dev/null || :; if command -v timeout >/dev/null 2>&1; then timeout 5 sh \"$f\"; else kill_tree() {{ for c in $(ps -eo pid=,ppid= 2>/dev/null | awk -v p=\"$1\" '$2 == p {{ print $1 }}'); do kill_tree \"$c\"; done; kill \"$1\" 2>/dev/null; }}; grouped=0; if command -v setsid >/dev/null 2>&1; then setsid sh \"$f\" & p=$!; grouped=1; else sh \"$f\" & p=$!; fi; (sleep 5; if [ \"$grouped\" -eq 1 ]; then kill -TERM -\"$p\" 2>/dev/null; else kill_tree \"$p\"; fi; sleep 1; if [ \"$grouped\" -eq 1 ]; then kill -KILL -\"$p\" 2>/dev/null; else kill_tree \"$p\"; fi) & w=$!; wait \"$p\" 2>/dev/null; kill \"$w\" 2>/dev/null; wait \"$w\" 2>/dev/null; fi) > \"$o\"\n\
+         \t(ulimit -f {file_blocks} 2>/dev/null || :; if command -v timeout >/dev/null 2>&1; then timeout 5 sh \"$2\"; else kill_tree() {{ for c in $(ps -eo pid=,ppid= 2>/dev/null | awk -v p=\"$1\" '$2 == p {{ print $1 }}'); do kill_tree \"$c\"; done; kill \"$1\" 2>/dev/null; }}; grouped=0; if command -v setsid >/dev/null 2>&1; then setsid sh \"$2\" & p=$!; grouped=1; else sh \"$2\" & p=$!; fi; (sleep 5; if [ \"$grouped\" -eq 1 ]; then kill -TERM -\"$p\" 2>/dev/null; else kill_tree \"$p\"; fi; sleep 1; if [ \"$grouped\" -eq 1 ]; then kill -KILL -\"$p\" 2>/dev/null; else kill_tree \"$p\"; fi) & w=$!; wait \"$p\" 2>/dev/null; kill \"$w\" 2>/dev/null; wait \"$w\" 2>/dev/null; fi) > \"$o\"\n\
          \tprintf '%s' '{CUSTOM_CMD_OUTPUT_PREFIX}'\n\
          \tif command -v head >/dev/null 2>&1; then head -c {CUSTOM_CMD_MAX_OUTPUT_BYTES} \"$o\" 2>/dev/null | base64 | tr -d '\\n'; else dd if=\"$o\" bs=1 count={CUSTOM_CMD_MAX_OUTPUT_BYTES} 2>/dev/null | base64 | tr -d '\\n'; fi\n\
          \trm -f \"$o\"\n\
          \tprintf '\\n'\n\
-         done\n"
+         }}\n"
     )
 }
 
@@ -1132,7 +1281,10 @@ fi"
 
 // ---------- internal: Windows ----------
 
+/// The preamble, plus `SbCmd`. At file scope for the reason [`unix_header`]'s
+/// `sb_cmd` is.
 fn windows_header(build_number: &str) -> String {
+    let runner = windows_cmd_runner("");
     format!(
         "# PowerShell script for ServerBox app v1.0.{build_number}
 # DO NOT delete this file while app is running
@@ -1140,6 +1292,7 @@ fn windows_header(build_number: &str) -> String {
 $ErrorActionPreference = \"SilentlyContinue\"
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
+{runner}
 "
     )
 }
@@ -1194,24 +1347,38 @@ fn windows_custom_cmds(func: ShellFunc) -> String {
          \x20   if (Test-Path $d) {{\n\
          \x20     Get-ChildItem -File $d | Sort-Object Name | ForEach-Object {{\n\
          \x20       if ($_.Name -notmatch '^[0-9]{{5}}_[A-Za-z0-9_=-]+\\.ps1$') {{ return }}\n\
-         \x20       Write-Host \"{CUSTOM_CMD_SEPARATOR}.{ENCODED_NAME_PREFIX}$($_.BaseName -replace '^[0-9]+_','')\"\n\
-         \x20       $o = Join-Path ([IO.Path]::GetTempPath()) (\"server_box_custom_{{0}}.out\" -f $PID)\n\
-         \x20       $e = \"$o.err\"\n\
-         \x20       Remove-Item -Force $o,$e -ErrorAction SilentlyContinue\n\
-         \x20       $q = '\"' + $_.FullName + '\"'\n\
-         \x20       $p = Start-Process powershell -WindowStyle Hidden -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',$q) -RedirectStandardOutput $o -RedirectStandardError $e -PassThru\n\
-         \x20       $deadline = [DateTime]::UtcNow.AddSeconds(5)\n\
-         \x20       while (-not $p.HasExited -and [DateTime]::UtcNow -lt $deadline -and (-not (Test-Path $o) -or (Get-Item $o).Length -le {CUSTOM_CMD_MAX_OUTPUT_BYTES})) {{ Start-Sleep -Milliseconds 50 }}\n\
-         \x20       if (-not $p.HasExited) {{ taskkill /PID $p.Id /T /F | Out-Null; $p.WaitForExit() }}\n\
-         \x20       [Console]::Out.Write('{CUSTOM_CMD_OUTPUT_PREFIX}')\n\
-         \x20       if (Test-Path $o) {{\n\
-         \x20         $s = [IO.File]::OpenRead($o)\n\
-         \x20         try {{ $b = New-Object byte[] {CUSTOM_CMD_MAX_OUTPUT_BYTES}; $c = 0; while ($c -lt $b.Length) {{ $n = $s.Read($b, $c, $b.Length - $c); if ($n -le 0) {{ break }}; $c += $n }}; [Console]::Out.Write([Convert]::ToBase64String($b, 0, $c)) }} finally {{ $s.Dispose() }}\n\
-         \x20       }}\n\
-         \x20       Remove-Item -Force $o,$e -ErrorAction SilentlyContinue\n\
-         \x20       Write-Host ''\n\
+         \x20       SbCmd \"{CUSTOM_CMD_SEPARATOR}.{ENCODED_NAME_PREFIX}$($_.BaseName -replace '^[0-9]+_','')\" $_.FullName\n\
          \x20     }}\n\
          \x20   }}\n"
+    )
+}
+
+/// The Windows half of [`unix_cmd_runner`]: `SbCmd <marker> <file>`.
+///
+/// A separate process with its output redirected to a file rather than a
+/// pipe, for the same reason — a child that outlives the one that was waited
+/// on cannot then hold the status output open. `taskkill /T` walks the tree,
+/// since PowerShell has no process group to signal.
+fn windows_cmd_runner(indent: &str) -> String {
+    format!(
+        "{indent}function SbCmd($marker, $file) {{\n\
+         {indent}  Write-Host $marker\n\
+         {indent}  $o = Join-Path ([IO.Path]::GetTempPath()) (\"server_box_custom_{{0}}.out\" -f $PID)\n\
+         {indent}  $e = \"$o.err\"\n\
+         {indent}  Remove-Item -Force $o,$e -ErrorAction SilentlyContinue\n\
+         {indent}  $q = '\"' + $file + '\"'\n\
+         {indent}  $p = Start-Process powershell -WindowStyle Hidden -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',$q) -RedirectStandardOutput $o -RedirectStandardError $e -PassThru\n\
+         {indent}  $deadline = [DateTime]::UtcNow.AddSeconds(5)\n\
+         {indent}  while (-not $p.HasExited -and [DateTime]::UtcNow -lt $deadline -and (-not (Test-Path $o) -or (Get-Item $o).Length -le {CUSTOM_CMD_MAX_OUTPUT_BYTES})) {{ Start-Sleep -Milliseconds 50 }}\n\
+         {indent}  if (-not $p.HasExited) {{ taskkill /PID $p.Id /T /F | Out-Null; $p.WaitForExit() }}\n\
+         {indent}  [Console]::Out.Write('{CUSTOM_CMD_OUTPUT_PREFIX}')\n\
+         {indent}  if (Test-Path $o) {{\n\
+         {indent}    $s = [IO.File]::OpenRead($o)\n\
+         {indent}    try {{ $b = New-Object byte[] {CUSTOM_CMD_MAX_OUTPUT_BYTES}; $c = 0; while ($c -lt $b.Length) {{ $n = $s.Read($b, $c, $b.Length - $c); if ($n -le 0) {{ break }}; $c += $n }}; [Console]::Out.Write([Convert]::ToBase64String($b, 0, $c)) }} finally {{ $s.Dispose() }}\n\
+         {indent}  }}\n\
+         {indent}  Remove-Item -Force $o,$e -ErrorAction SilentlyContinue\n\
+         {indent}  Write-Host ''\n\
+         {indent}}}\n"
     )
 }
 

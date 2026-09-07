@@ -11,10 +11,12 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/src/rust/api/plugin.dart';
+import 'package:server_box/src/rust/api/script.dart' as script_ffi;
 
 import 'rust_lib_helper.dart';
 
@@ -141,6 +143,55 @@ void main() {
       expect(info.abi, 1);
       // Sorted, because the manifest keeps permissions in a sorted map.
       expect(info.permissions, ['net.http', 'server.exec']);
+    });
+
+    test('the manifest says it contributes status, and on what', () {
+      final info = pluginReadManifest(
+        manifestJson: jsonEncode({
+          'id': 'app.serverbox.zfs',
+          'version': '1.0.0',
+          'abi': 1,
+          'name': 'ZFS',
+          'permissions': {'server.exec': true},
+          'contributes': {
+            'status': {
+              'id': 'zfs',
+              'label': 'ZFS',
+              'default_on': true,
+              'platforms': ['linux', 'bsd'],
+            },
+          },
+        }),
+      );
+
+      expect(info.status, isNotNull);
+      expect(info.status!.id, 'zfs');
+      expect(info.status!.platforms, ['linux', 'bsd']);
+      expect(info.status!.defaultOn, isTrue);
+      // The command runs on the user's server, so it costs the permission that
+      // means exactly that — and the install dialog lists it like any other.
+      expect(info.permissions, ['server.exec']);
+    });
+
+    test('a status contribution without server.exec is refused', () {
+      expect(
+        () => pluginReadManifest(
+          manifestJson: jsonEncode({
+            'id': 'x',
+            'version': '1',
+            'abi': 1,
+            'name': 'X',
+            'contributes': {
+              'status': {'id': 's', 'label': 'S', 'platforms': ['linux']},
+            },
+          }),
+        ),
+        throwsA(
+          isA<PluginFailure>()
+              .having((e) => e.kind, 'kind', 'manifest')
+              .having((e) => e.message, 'message', contains('server.exec')),
+        ),
+      );
     });
 
     test('a manifest needing a newer ABI is refused with both numbers', () {
@@ -386,6 +437,81 @@ void main() {
       expect(
         () => fx.runtime.call(instance: id, export_: 'a', input: ''),
         throwsA(isA<PluginFailure>().having((e) => e.kind, 'kind', 'internal')),
+      );
+    });
+  });
+
+  // PLUGINS.md section 9: no surface, two exports, and the app runs the
+  // command in between. The whole chain is here because no single side of it
+  // proves anything — Rust can call the plugin, and the shell can run a
+  // command, but only this says the command a plugin asked for is the command
+  // that ran and that what it printed came back to the same plugin.
+  group('a status plugin, end to end', () {
+    late _Fixture fx;
+    tearDown(() => fx.dispose());
+
+    const zfs = '''
+export function statusCmd({ platform }) {
+  return { cmd: platform === 'windows' ? 'Get-Pool' : "printf 'tank\\t1000\\t330\\tONLINE\\n'" };
+}
+export function parse({ text }) {
+  const items = text.split('\\n').filter(Boolean).map((line) => {
+    const [name, size, alloc, health] = line.split('\\t');
+    return {
+      label: name,
+      value: alloc + ' / ' + size,
+      percent: Number(alloc) / Number(size),
+      tone: health === 'ONLINE' ? 'success' : 'danger',
+    };
+  });
+  return { title: 'ZFS', items };
+}
+''';
+
+    test('what it asks for is what runs, and what ran comes back to it', () async {
+      fx = await _Fixture.start((_) => 'null');
+      final id = await fx.runtime.load(spec: _spec(zfs));
+
+      final asked = await fx.runtime.statusCmd(instance: id, platform: 'linux');
+      expect(asked.cmd, contains('printf'));
+
+      // One command for every plugin, bounded the way a custom command is, and
+      // nothing written to the server that outlives it.
+      final script = script_ffi.pluginCmdsCommand(
+        system: 'linux',
+        cmds: [script_ffi.PluginCmd(name: 'app.serverbox.zfs:zfs', cmd: asked.cmd)],
+      );
+      final ran = await Process.run('sh', ['-c', script]);
+      expect(ran.exitCode, 0, reason: '${ran.stderr}');
+
+      // The app files each section under the name it sent, and only its own:
+      // a plugin's output is its own namespace, not a share of the user's.
+      final segments = await script_ffi.parseScriptSegments(
+        raw: ran.stdout as String,
+      );
+      final mine = {
+        for (final s in segments)
+          ?script_ffi.pluginResultName(key: s.key): s.value,
+      };
+      expect(mine.keys, ['app.serverbox.zfs:zfs']);
+
+      final readings = await fx.runtime.statusParse(
+        instance: id,
+        text: mine['app.serverbox.zfs:zfs']!,
+      );
+      expect(readings.title, 'ZFS');
+      expect(readings.items.single.label, 'tank');
+      expect(readings.items.single.value, '330 / 1000');
+      expect(readings.items.single.percent, closeTo(0.33, 1e-9));
+      expect(readings.items.single.tone, 'success');
+    });
+
+    test('a platform the app made up is refused rather than guessed', () async {
+      fx = await _Fixture.start((_) => 'null');
+      final id = await fx.runtime.load(spec: _spec(zfs));
+      expect(
+        () => fx.runtime.statusCmd(instance: id, platform: 'plan9'),
+        throwsA(isA<PluginFailure>()),
       );
     });
   });

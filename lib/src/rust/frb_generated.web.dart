@@ -121,7 +121,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   CustomCmdsListing dco_decode_box_autoadd_custom_cmds_listing(dynamic raw);
 
   @protected
+  double dco_decode_box_autoadd_f_64(dynamic raw);
+
+  @protected
   PluginSpec dco_decode_box_autoadd_plugin_spec(dynamic raw);
+
+  @protected
+  PluginStatusInfo dco_decode_box_autoadd_plugin_status_info(dynamic raw);
 
   @protected
   CommandSpec dco_decode_command_spec(dynamic raw);
@@ -151,6 +157,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<CustomCmd> dco_decode_list_custom_cmd(dynamic raw);
 
   @protected
+  List<PluginCmd> dco_decode_list_plugin_cmd(dynamic raw);
+
+  @protected
+  List<PluginStatusItem> dco_decode_list_plugin_status_item(dynamic raw);
+
+  @protected
   List<int> dco_decode_list_prim_u_8_loose(dynamic raw);
 
   @protected
@@ -171,6 +183,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  double? dco_decode_opt_box_autoadd_f_64(dynamic raw);
+
+  @protected
+  PluginStatusInfo? dco_decode_opt_box_autoadd_plugin_status_info(dynamic raw);
+
+  @protected
+  PluginCmd dco_decode_plugin_cmd(dynamic raw);
+
+  @protected
   PluginFailure dco_decode_plugin_failure(dynamic raw);
 
   @protected
@@ -184,6 +205,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   PluginSpec dco_decode_plugin_spec(dynamic raw);
+
+  @protected
+  PluginStatusCmd dco_decode_plugin_status_cmd(dynamic raw);
+
+  @protected
+  PluginStatusInfo dco_decode_plugin_status_info(dynamic raw);
+
+  @protected
+  PluginStatusItem dco_decode_plugin_status_item(dynamic raw);
+
+  @protected
+  PluginStatusResult dco_decode_plugin_status_result(dynamic raw);
 
   @protected
   (String, String) dco_decode_record_string_string(dynamic raw);
@@ -302,7 +335,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  double sse_decode_box_autoadd_f_64(SseDeserializer deserializer);
+
+  @protected
   PluginSpec sse_decode_box_autoadd_plugin_spec(SseDeserializer deserializer);
+
+  @protected
+  PluginStatusInfo sse_decode_box_autoadd_plugin_status_info(
+    SseDeserializer deserializer,
+  );
 
   @protected
   CommandSpec sse_decode_command_spec(SseDeserializer deserializer);
@@ -334,6 +375,14 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<CustomCmd> sse_decode_list_custom_cmd(SseDeserializer deserializer);
 
   @protected
+  List<PluginCmd> sse_decode_list_plugin_cmd(SseDeserializer deserializer);
+
+  @protected
+  List<PluginStatusItem> sse_decode_list_plugin_status_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<int> sse_decode_list_prim_u_8_loose(SseDeserializer deserializer);
 
   @protected
@@ -358,6 +407,17 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  double? sse_decode_opt_box_autoadd_f_64(SseDeserializer deserializer);
+
+  @protected
+  PluginStatusInfo? sse_decode_opt_box_autoadd_plugin_status_info(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  PluginCmd sse_decode_plugin_cmd(SseDeserializer deserializer);
+
+  @protected
   PluginFailure sse_decode_plugin_failure(SseDeserializer deserializer);
 
   @protected
@@ -373,6 +433,20 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   PluginSpec sse_decode_plugin_spec(SseDeserializer deserializer);
+
+  @protected
+  PluginStatusCmd sse_decode_plugin_status_cmd(SseDeserializer deserializer);
+
+  @protected
+  PluginStatusInfo sse_decode_plugin_status_info(SseDeserializer deserializer);
+
+  @protected
+  PluginStatusItem sse_decode_plugin_status_item(SseDeserializer deserializer);
+
+  @protected
+  PluginStatusResult sse_decode_plugin_status_result(
+    SseDeserializer deserializer,
+  );
 
   @protected
   (String, String) sse_decode_record_string_string(
@@ -510,8 +584,17 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_box_autoadd_f_64(double self, SseSerializer serializer);
+
+  @protected
   void sse_encode_box_autoadd_plugin_spec(
     PluginSpec self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_plugin_status_info(
+    PluginStatusInfo self,
     SseSerializer serializer,
   );
 
@@ -555,6 +638,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_plugin_cmd(
+    List<PluginCmd> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_plugin_status_item(
+    List<PluginStatusItem> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_prim_u_8_loose(List<int> self, SseSerializer serializer);
 
   @protected
@@ -585,6 +680,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_opt_box_autoadd_f_64(double? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_plugin_status_info(
+    PluginStatusInfo? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_plugin_cmd(PluginCmd self, SseSerializer serializer);
+
+  @protected
   void sse_encode_plugin_failure(PluginFailure self, SseSerializer serializer);
 
   @protected
@@ -601,6 +708,30 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_plugin_spec(PluginSpec self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_plugin_status_cmd(
+    PluginStatusCmd self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_plugin_status_info(
+    PluginStatusInfo self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_plugin_status_item(
+    PluginStatusItem self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_plugin_status_result(
+    PluginStatusResult self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_record_string_string(

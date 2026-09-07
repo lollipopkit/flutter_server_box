@@ -26,7 +26,7 @@ use flutter_rust_bridge::frb;
 use crate::frb_generated::StreamSink;
 use sbm_plugin::{
     BridgeError, ChannelBridge, Grants, InstanceId, InstanceOptions, LogLevel, Manifest,
-    Permission, PluginError, PluginHost,
+    Permission, Platform, PluginError, PluginHost,
 };
 
 /// Why a plugin call did not answer.
@@ -238,6 +238,84 @@ impl PluginRuntime {
     pub fn outstanding(&self) -> u32 {
         self.bridge.outstanding() as u32
     }
+
+    /// What a status plugin wants run on `platform`. PLUGINS.md 9.
+    ///
+    /// Not `sync`, for [`PluginRuntime::call`]'s reason: a plugin may await a
+    /// host call while answering.
+    ///
+    /// The same call the install page makes to show what the plugin will run,
+    /// so what the user was shown and what the app runs cannot differ for want
+    /// of asking twice.
+    pub async fn status_cmd(
+        &self,
+        instance: u64,
+        platform: String,
+    ) -> Result<PluginStatusCmd, PluginFailure> {
+        let platform = Platform::parse(&platform)
+            .ok_or_else(|| PluginError::BadAnswer(format!("unknown platform `{platform}`")))?;
+        let cmd = self.host.status_cmd(InstanceId(instance), platform)?;
+        Ok(PluginStatusCmd { cmd: cmd.cmd })
+    }
+
+    /// Hands a status plugin what its command printed, and takes back the
+    /// readings.
+    ///
+    /// Checked by `sbm_plugin::status` before it gets here: a label longer
+    /// than a label is cut, a `percent` outside 0..1 is dropped rather than
+    /// clamped, and only a document that is not this shape at all is refused.
+    /// A bad status plugin costs a row, not a card.
+    pub async fn status_parse(
+        &self,
+        instance: u64,
+        text: String,
+    ) -> Result<PluginStatusResult, PluginFailure> {
+        let out = self.host.status_parse(InstanceId(instance), &text)?;
+        Ok(PluginStatusResult {
+            title: out.title,
+            note: out.note,
+            items: out
+                .items
+                .into_iter()
+                .map(|i| PluginStatusItem {
+                    label: i.label,
+                    value: i.value,
+                    percent: i.percent,
+                    tone: format!("{:?}", i.tone).to_lowercase(),
+                })
+                .collect(),
+        })
+    }
+}
+
+/// What a status plugin says to run.
+#[derive(Debug, Clone)]
+pub struct PluginStatusCmd {
+    pub cmd: String,
+}
+
+/// One reading.
+#[derive(Debug, Clone)]
+pub struct PluginStatusItem {
+    pub label: String,
+    pub value: String,
+    /// 0..1, drawn as a bar beside the value. Absent where the reading is not
+    /// a proportion.
+    pub percent: Option<f64>,
+    /// `normal`, `muted`, `success`, `warning` or `danger` — a name rather
+    /// than a colour, so a plugin's row looks like the app's own in both
+    /// themes and cannot ship an unreadable one.
+    pub tone: String,
+}
+
+/// A status plugin's readings for one collection.
+#[derive(Debug, Clone)]
+pub struct PluginStatusResult {
+    /// Falls back to the plugin's name when empty.
+    pub title: String,
+    pub items: Vec<PluginStatusItem>,
+    /// Shown under the readings, for what a row cannot say.
+    pub note: Option<String>,
 }
 
 /// Reads a manifest without loading anything.
@@ -256,6 +334,14 @@ pub fn plugin_read_manifest(manifest_json: String) -> Result<PluginManifestInfo,
         name: m.name.clone(),
         description: m.description.clone(),
         permissions: m.requested().iter().map(|p| p.name().to_string()).collect(),
+        status: m.contributes.status.as_ref().map(|s| PluginStatusInfo {
+            id: s.id.clone(),
+            label: s.label.clone(),
+            icon: s.icon.clone(),
+            default_on: s.default_on,
+            requires_config: s.requires_config,
+            platforms: s.platforms.iter().map(|p| p.name().to_string()).collect(),
+        }),
         license: m.license.clone(),
         source_url: m.source_url.clone(),
     })
@@ -271,8 +357,29 @@ pub struct PluginManifestInfo {
     pub description: String,
     /// Permission names, for the dialog. PLUGINS.md 6.1.
     pub permissions: Vec<String>,
+    /// Present when this plugin contributes readings to the status page.
+    pub status: Option<PluginStatusInfo>,
     pub license: Option<String>,
     pub source_url: Option<String>,
+}
+
+/// A status contribution, as the app needs it to decide what to collect.
+///
+/// PLUGINS.md 9. There is no surface: the app asks the plugin what to run,
+/// runs it, hands back what it printed, and draws the readings with the
+/// widgets it draws its own with.
+#[derive(Debug, Clone)]
+pub struct PluginStatusInfo {
+    /// Stable within the plugin; the stored id is `<plugin id>:<this>`.
+    pub id: String,
+    pub label: String,
+    pub icon: Option<String>,
+    pub default_on: bool,
+    pub requires_config: bool,
+    /// `linux`, `bsd`, `windows`. A plugin is not asked about a platform it
+    /// did not name — the answer would be nothing, once per collection, or a
+    /// command for the wrong system.
+    pub platforms: Vec<String>,
 }
 
 /// The ABI this build implements. A plugin whose manifest asks for more is

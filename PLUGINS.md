@@ -527,13 +527,21 @@ F-Droid 构建的在线仓库默认关闭。用户主动开启前，需要说明
 
 所以插件的命令由 App 单独执行（`ServerNotifier.ensureExec`），节奏可以比状态轮询慢，和 `EXTENDED` 那批是同一个道理。服务器上不留文件。
 
-用户的自定义命令已经按同样的方式改过：它们现在是脚本里的一个独立函数 `SbCustom`，由 App 按 `Stores.setting.customCmdInterval` 单独触发，缓存上一次的输出在中间的轮询里重放（`_customRaw`）。插件的命令可以照搬这套节奏与缓存的做法，但不共用它的目录 —— 那个目录是用户的数据，插件的命令来自插件。
+用户的自定义命令已经按同样的方式改过：它们现在是脚本里的一个独立函数 `SbCustom`，由 App 按 `Stores.setting.customCmdInterval` 单独触发，缓存上一次的输出在中间的轮询里重放（`_customRaw`）。插件的命令照搬这套节奏与缓存的做法，但不共用它的目录 —— 那个目录是用户的数据，插件的命令来自插件。
 
-多个插件各执行一次会是多次往返；要不要合并成一次由 App 自己决定，不需要共享机制。这部分是第十节第 3 步的工作。
+多个插件合并成一次往返：`sbm_parser::script::inline_cmds_script` 生成一条命令，逐个跑完所有插件的采集命令。每条的超时、输出上限、临时输出文件都和自定义命令共用同一段 shell（`sb_cmd`/`SbCmd`），因为那四条 fallback 路径是最容易重写错的部分。命令 base64 内联，写进临时文件、跑完即删。
+
+输出用自己的分隔符 `SrvBoxPluginSep`，不与用户自定义命令的 `SrvBoxCusCmdSep` 共用：两边都是宿主没写的文本，共用一个命名空间会让一边取对名字就能顶掉另一边的读数。
 
 ### 9.2 边界
 
-「插件不直接执行命令」不等于「没有执行风险」：`statusCmd` 返回的命令仍要由宿主执行，且它来自插件而不是用户。接入时需要明确这条的信任边界 —— 至少安装时要能看到这个插件会在服务器上执行什么。App Store 对这种扩展的判断也不能仅凭它没有 UI 就下结论。
+「插件不直接执行命令」不等于「没有执行风险」：`statusCmd` 返回的命令仍要由宿主执行，且它来自插件而不是用户。
+
+**信任边界落在 `server.exec` 上。** 声明了 `contributes.status` 的 manifest 必须同时申请 `server.exec`，否则解析阶段就拒绝 —— 那条权限的含义正是"在你的服务器上执行命令"，于是这类插件通过已有的安装对话框和权限列表出现在用户面前，而不是靠某个人记得再加一处披露。安装页展示的命令来自 `statusCmd` 本身（`PluginRuntime.statusCmd`），和运行时用的是同一次调用的同一个值，所以"给用户看的"和"实际执行的"不会因为问了两次而不一致。
+
+仍未解决的是运行时命令变化：`statusCmd` 在配置改变后会返回不同的命令，这是正常的（比如换了一个 pool 名），但也意味着安装时看到的那条不是永久承诺。可选做法是按 SSH host key 的同一套 trust-on-first-use：记住每台服务器上次跑的命令，变了就先让用户看过再跑。这条留到第 5 步和插件卡片一起定。
+
+App Store 对这种扩展的判断也不能仅凭它没有 UI 就下结论。
 
 ## 十、接下来按什么顺序做
 
@@ -543,7 +551,7 @@ F-Droid 构建的在线仓库默认关闭。用户主动开启前，需要说明
 |---|---|---|
 | 1 | QuickJS 运行时、`sb` 接口注入、权限检查、manifest 解析，以及 TypeScript SDK | **已完成**。运行时 81 个测试（权限拒绝、接口表一致性、异步、资源限制、实例线程），SDK 45 个测试（控件、l10n、帧裁剪、模拟宿主） |
 | 2 | `sbm_ffi` 暴露加载、调用和释放，Dart 实现宿主回调 | **FFI 已完成**（`test/plugin_ffi_test.dart` 走通加载、调用、宿主回调、权限拒绝）。剩下 Dart 侧把 14 个接口接到 App 的实际功能上，属于第 5 步 |
-| 3 | 接入状态命令插件，随包提供一个样本 | 进行中。`StatusResult` 的形状与校验已实现；剩下 App 侧单独执行命令、`contributes.status`、以及安装时展示命令的边界 |
+| 3 | 接入状态命令插件，随包提供一个样本 | 进行中。`StatusResult` 的形状与校验、`contributes.status`（含必须申请 `server.exec`）、`inline_cmds_script`（一次往返跑完所有插件命令、服务器上不留文件）、`PluginRuntime.statusCmd`/`statusParse`、SDK 的状态插件类型和样例都已完成，Rust 侧 121 个测试 + `test/plugin_ffi_test.dart` 打通「插件要什么命令 → 真跑一遍 → 结果回到同一个插件」。剩下的要等第 5 步的插件存储：App 得先知道装了哪些插件，才谈得上在状态页画出来 |
 | 4 | Dart feature registry 和按钮 id 迁移 | 未开始；内置功能继续用 Dart，验证旧配置兼容 |
 | 5 | Flutter 渲染器、插件卡片、存储、备份、安装管理和开发目录 | 未开始；实现 5.2 的三项（修订号复用缓存、`ValueListenableBuilder`、`ListView.builder`），补 golden 和宿主集成测试 |
 | 6 | 在 App 中接通 BMC 插件 | 未开始；对照 `packages/redfish/test/` 的 fixture 和现有行为，验证一致后再删除 Dart 实现及 `packages/redfish` |

@@ -6,7 +6,7 @@
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
 
 /// Reads a manifest without loading anything.
 ///
@@ -100,6 +100,31 @@ abstract class PluginRuntime implements RustOpaqueInterface {
   /// How many requests the app has not answered. For diagnostics.
   int outstanding();
 
+  /// What a status plugin wants run on `platform`. PLUGINS.md 9.
+  ///
+  /// Not `sync`, for [`PluginRuntime::call`]'s reason: a plugin may await a
+  /// host call while answering.
+  ///
+  /// The same call the install page makes to show what the plugin will run,
+  /// so what the user was shown and what the app runs cannot differ for want
+  /// of asking twice.
+  Future<PluginStatusCmd> statusCmd({
+    required BigInt instance,
+    required String platform,
+  });
+
+  /// Hands a status plugin what its command printed, and takes back the
+  /// readings.
+  ///
+  /// Checked by `sbm_plugin::status` before it gets here: a label longer
+  /// than a label is cut, a `percent` outside 0..1 is dropped rather than
+  /// clamped, and only a document that is not this shape at all is refused.
+  /// A bad status plugin costs a row, not a card.
+  Future<PluginStatusResult> statusParse({
+    required BigInt instance,
+    required String text,
+  });
+
   /// Ends an instance and waits for its thread, so its outstanding requests
   /// are cancelled before this returns.
   Future<void> unload({required BigInt instance});
@@ -176,6 +201,9 @@ class PluginManifestInfo {
 
   /// Permission names, for the dialog. PLUGINS.md 6.1.
   final List<String> permissions;
+
+  /// Present when this plugin contributes readings to the status page.
+  final PluginStatusInfo? status;
   final String? license;
   final String? sourceUrl;
 
@@ -186,6 +214,7 @@ class PluginManifestInfo {
     required this.name,
     required this.description,
     required this.permissions,
+    this.status,
     this.license,
     this.sourceUrl,
   });
@@ -198,6 +227,7 @@ class PluginManifestInfo {
       name.hashCode ^
       description.hashCode ^
       permissions.hashCode ^
+      status.hashCode ^
       license.hashCode ^
       sourceUrl.hashCode;
 
@@ -212,6 +242,7 @@ class PluginManifestInfo {
           name == other.name &&
           description == other.description &&
           permissions == other.permissions &&
+          status == other.status &&
           license == other.license &&
           sourceUrl == other.sourceUrl;
 }
@@ -314,4 +345,134 @@ class PluginSpec {
           granted == other.granted &&
           config == other.config &&
           boundServer == other.boundServer;
+}
+
+/// What a status plugin says to run.
+class PluginStatusCmd {
+  final String cmd;
+
+  const PluginStatusCmd({required this.cmd});
+
+  @override
+  int get hashCode => cmd.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PluginStatusCmd &&
+          runtimeType == other.runtimeType &&
+          cmd == other.cmd;
+}
+
+/// A status contribution, as the app needs it to decide what to collect.
+///
+/// PLUGINS.md 9. There is no surface: the app asks the plugin what to run,
+/// runs it, hands back what it printed, and draws the readings with the
+/// widgets it draws its own with.
+class PluginStatusInfo {
+  /// Stable within the plugin; the stored id is `<plugin id>:<this>`.
+  final String id;
+  final String label;
+  final String? icon;
+  final bool defaultOn;
+  final bool requiresConfig;
+
+  /// `linux`, `bsd`, `windows`. A plugin is not asked about a platform it
+  /// did not name — the answer would be nothing, once per collection, or a
+  /// command for the wrong system.
+  final List<String> platforms;
+
+  const PluginStatusInfo({
+    required this.id,
+    required this.label,
+    this.icon,
+    required this.defaultOn,
+    required this.requiresConfig,
+    required this.platforms,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      label.hashCode ^
+      icon.hashCode ^
+      defaultOn.hashCode ^
+      requiresConfig.hashCode ^
+      platforms.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PluginStatusInfo &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          label == other.label &&
+          icon == other.icon &&
+          defaultOn == other.defaultOn &&
+          requiresConfig == other.requiresConfig &&
+          platforms == other.platforms;
+}
+
+/// One reading.
+class PluginStatusItem {
+  final String label;
+  final String value;
+
+  /// 0..1, drawn as a bar beside the value. Absent where the reading is not
+  /// a proportion.
+  final double? percent;
+
+  /// `normal`, `muted`, `success`, `warning` or `danger` — a name rather
+  /// than a colour, so a plugin's row looks like the app's own in both
+  /// themes and cannot ship an unreadable one.
+  final String tone;
+
+  const PluginStatusItem({
+    required this.label,
+    required this.value,
+    this.percent,
+    required this.tone,
+  });
+
+  @override
+  int get hashCode =>
+      label.hashCode ^ value.hashCode ^ percent.hashCode ^ tone.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PluginStatusItem &&
+          runtimeType == other.runtimeType &&
+          label == other.label &&
+          value == other.value &&
+          percent == other.percent &&
+          tone == other.tone;
+}
+
+/// A status plugin's readings for one collection.
+class PluginStatusResult {
+  /// Falls back to the plugin's name when empty.
+  final String title;
+  final List<PluginStatusItem> items;
+
+  /// Shown under the readings, for what a row cannot say.
+  final String? note;
+
+  const PluginStatusResult({
+    required this.title,
+    required this.items,
+    this.note,
+  });
+
+  @override
+  int get hashCode => title.hashCode ^ items.hashCode ^ note.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PluginStatusResult &&
+          runtimeType == other.runtimeType &&
+          title == other.title &&
+          items == other.items &&
+          note == other.note;
 }

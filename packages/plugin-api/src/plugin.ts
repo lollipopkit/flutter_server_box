@@ -7,7 +7,9 @@
  */
 
 import type { ServerHandle } from "./host.ts";
-import type { Node } from "./ui.ts";
+// The same five names a widget is toned with, for the same reason: a plugin's
+// row has to look like the app's own in both themes.
+import type { Node, Tone } from "./ui.ts";
 
 /** Where a plugin is being shown. */
 export type SurfaceKind =
@@ -89,10 +91,63 @@ export interface OptionsOutput {
   options: ConfigOption[];
 }
 
-/** A status plugin's command, and how the host should split its output. */
+/** What `statusCmd` is asked about. The host asks about nothing else. */
+export type Platform = "linux" | "bsd" | "windows";
+
+export interface StatusCmdCtx {
+  platform: Platform;
+}
+
+/** A status plugin's command. PLUGINS.md section 9. */
 export interface StatusCmd {
+  /** A shell command, run on the server the way a custom command is. */
   cmd: string;
-  sep: string;
+  /**
+   * How this plugin splits its own output, when it runs several probes in one
+   * command.
+   *
+   * The host does not read it — the separator between *commands* is the
+   * host's. It is here so that a plugin needing one has somewhere to say what
+   * it used, instead of putting it in the command text.
+   */
+  sep?: string;
+}
+
+export interface StatusParseCtx {
+  /** What the command printed, byte for byte. */
+  text: string;
+}
+
+export interface StatusItem {
+  label: string;
+  value: string;
+  /**
+   * 0..1, drawn as a bar beside the value. Omit where the reading is not a
+   * proportion — a temperature, a count.
+   *
+   * A value outside the range is dropped by the host rather than clamped: a
+   * bar at 100% because a plugin divided by the wrong thing is a wrong reading
+   * shown confidently.
+   */
+  percent?: number;
+  tone?: Tone;
+}
+
+/**
+ * What `parse` answers with.
+ *
+ * Checked by the host, and trimmed wherever it can be: at most 64 items, at
+ * most 200 characters of a label or a value, a row with nothing on either side
+ * dropped. Only a document that is not this shape at all is refused — the whole
+ * cost of a bad status plugin should be a wrong row, not a card that will not
+ * draw.
+ */
+export interface StatusResult {
+  /** The card's heading. Falls back to the plugin's name when empty. */
+  title?: string;
+  items: StatusItem[];
+  /** Shown under the readings, for what a row cannot say — "3 of 20 sensors unreadable". */
+  note?: string;
 }
 
 /**
@@ -100,6 +155,15 @@ export interface StatusCmd {
  *
  * Not something to implement — a plugin is a module, not a class. It is here so
  * a plugin can write `satisfies Plugin` and have its export signatures checked.
+ *
+ * **Every export is called with exactly one argument**, the host's input parsed
+ * from JSON. That is why the ones below that need more than one value take an
+ * object. The multi-parameter signatures still written that way — `onEvent`,
+ * `listWindow`, `configOptions`, `tool` — are the ones the host does not call
+ * yet; their shape is settled with the renderer (PLUGINS.md section 10 step 5),
+ * and until then this interface describes an intent rather than a contract.
+ * `init`, `open`, `onServerEvent`, `validateConfig`, `statusCmd` and `parse`
+ * are the calls that exist, and each takes one object.
  */
 export interface Plugin {
   /** Once, after the instance exists and before any surface is shown. */
@@ -151,11 +215,18 @@ export interface Plugin {
    */
   dispose?(): void | Promise<void>;
 
-  // ---- status plugins (section 9). Neither needs a surface or a permission.
+  // ---- status plugins (section 9). Neither needs a surface.
 
-  /** The command to run on the server, and its segment marker. */
-  statusCmd?(platform: string): StatusCmd | Promise<StatusCmd>;
+  /**
+   * The command to run on the server.
+   *
+   * Asked once per platform the manifest named, and again whenever the
+   * plugin's configuration changes. The host runs it — bounded by a timeout
+   * and a size cap, and shown to the user — so the manifest must ask for
+   * `server.exec` to contribute status at all.
+   */
+  statusCmd?(ctx: StatusCmdCtx): StatusCmd | Promise<StatusCmd>;
 
-  /** That command's output, as typed counters. */
-  parse?(text: string): unknown | Promise<unknown>;
+  /** That command's output, as readings the app draws with its own widgets. */
+  parse?(ctx: StatusParseCtx): StatusResult | Promise<StatusResult>;
 }

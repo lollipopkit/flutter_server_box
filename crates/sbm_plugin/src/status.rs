@@ -13,6 +13,36 @@
 use serde::{Deserialize, Serialize};
 
 use crate::error::PluginError;
+use crate::host::{InstanceId, PluginHost};
+use crate::hostfn::exports;
+use crate::manifest::Platform;
+
+impl PluginHost {
+    /// Asks a status plugin what to run on `platform`.
+    ///
+    /// Typed here rather than left to the caller for the reason the manifest
+    /// is parsed here: one parser, and what comes back is not trusted. A
+    /// caller assembling `{"platform":"linux"}` and reading `answer["cmd"]`
+    /// would be a second one.
+    ///
+    /// The answer is what the install page shows and what the app is about to
+    /// run — the same value, from the same call, so what the user was shown
+    /// cannot differ from what happens for want of asking twice.
+    pub fn status_cmd(&self, id: InstanceId, platform: Platform) -> Result<StatusCmd, PluginError> {
+        let input = serde_json::json!({ "platform": platform.name() }).to_string();
+        StatusCmd::parse(&self.call(id, exports::STATUS_CMD, input.as_bytes())?)
+    }
+
+    /// Hands a status plugin what its command printed.
+    ///
+    /// `text` is the command's stdout as it came back, not JSON: a plugin
+    /// parses text, and making the caller quote it would be a second encoding
+    /// for the same bytes.
+    pub fn status_parse(&self, id: InstanceId, text: &str) -> Result<StatusResult, PluginError> {
+        let input = serde_json::json!({ "text": text }).to_string();
+        StatusResult::parse(&self.call(id, exports::PARSE, input.as_bytes())?)
+    }
+}
 
 /// The command to run on the server, and how its output is delimited.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

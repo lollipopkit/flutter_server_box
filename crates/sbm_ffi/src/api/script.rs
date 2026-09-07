@@ -90,6 +90,39 @@ pub fn install_custom_cmds_command(
     Ok(wrap_for_default_shell(system, script))
 }
 
+/// One command a plugin wants run, and the name its output is filed under.
+pub struct PluginCmd {
+    /// `<plugin id>:<contribution id>`, which is what the app files the
+    /// readings under too.
+    pub name: String,
+    pub cmd: String,
+}
+
+/// A single command that runs every plugin's status command and prints each
+/// one's output under its own name. PLUGINS.md 9.1.
+///
+/// One round trip rather than one per plugin, and nothing left on the server:
+/// a plugin's command is not the user's data, and it changes whenever the
+/// plugin or its configuration does. Each is bounded exactly as a custom
+/// command is — a timeout, a size cap, and its output through a file rather
+/// than the pipe this answer comes back on.
+///
+/// Fed to `customCmdsEntry`'s shell on Unix, and already a complete command
+/// line on Windows, for the same reasons the custom-command scripts are.
+#[flutter_rust_bridge::frb(sync)]
+pub fn plugin_cmds_command(system: String, cmds: Vec<PluginCmd>) -> Result<String, String> {
+    let system = parse_system_or_err(&system)?;
+    let cmds: Vec<(String, String)> = cmds.into_iter().map(|c| (c.name, c.cmd)).collect();
+    Ok(sbm_parser::script::inline_cmds_script(system, &cmds))
+}
+
+/// The plugin-command name in a parsed result key, or `None` when the section
+/// came from somewhere else.
+#[flutter_rust_bridge::frb(sync)]
+pub fn plugin_result_name(key: String) -> Option<String> {
+    sbm_parser::script::plugin_result_name(&key).map(str::to_string)
+}
+
 /// Whether an install refused to run because the directory had changed under
 /// the caller.
 #[flutter_rust_bridge::frb(sync)]

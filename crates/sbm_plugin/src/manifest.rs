@@ -72,6 +72,29 @@ impl Manifest {
                 return err(format!("unknown permission `{name}`"));
             }
         }
+        if let Some(status) = &self.contributes.status {
+            if status.id.trim().is_empty() {
+                return err("`contributes.status.id` is empty".into());
+            }
+            if status.platforms.is_empty() {
+                return err("`contributes.status` names no platform".into());
+            }
+            // The command it answers with is run on the user's server, which
+            // is exactly what `server.exec` means. Requiring it here rather
+            // than checking at the call site is what puts a status plugin in
+            // front of the user through the machinery that already exists:
+            // the install dialog lists permissions, and this is one of them.
+            //
+            // PLUGINS.md 9.2 — a plugin that does not execute anything itself
+            // is still arranging for something to be executed.
+            if !self.permissions.contains(Permission::ServerExec) {
+                return err(
+                    "`contributes.status` runs a command on the server, so the manifest must \
+                     ask for `server.exec`"
+                        .into(),
+                );
+            }
+        }
         // A `$config.<key>` pattern that names no field would be a grant with
         // nothing behind it, and the install dialog would show the user an
         // address that never resolves.
@@ -248,6 +271,61 @@ pub struct Contributions {
     /// A section on the settings page.
     #[serde(default)]
     pub settings: Option<SettingsContribution>,
+    /// Readings on the server status page. PLUGINS.md section 9.
+    #[serde(default)]
+    pub status: Option<StatusContribution>,
+}
+
+/// Readings on the status page, collected by a command the host runs.
+///
+/// No surface: the plugin answers `statusCmd(platform)` with a command and
+/// `parse(text)` with a [`crate::StatusResult`], and the app draws it with the
+/// widgets it draws its own readings with.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StatusContribution {
+    /// Stable within the plugin; the stored id is `<plugin id>:<this>`.
+    pub id: String,
+    pub label: String,
+    #[serde(default)]
+    pub icon: Option<String>,
+    #[serde(default)]
+    pub default_on: bool,
+    /// See [`CardContribution::requires_config`].
+    #[serde(default)]
+    pub requires_config: bool,
+
+    /// The platforms it has a command for.
+    ///
+    /// Declared rather than discovered by asking. A plugin that only knows
+    /// Linux would otherwise be called on every BSD host in the list, once per
+    /// collection, to answer nothing — or worse, to answer a Linux command,
+    /// which is a command that fails on the machine it was sent to.
+    pub platforms: Vec<Platform>,
+}
+
+/// What `statusCmd` is asked about, and the only values it is asked with.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Platform {
+    Linux,
+    Bsd,
+    Windows,
+}
+
+impl Platform {
+    pub const ALL: [Platform; 3] = [Platform::Linux, Platform::Bsd, Platform::Windows];
+
+    pub const fn name(self) -> &'static str {
+        match self {
+            Platform::Linux => "linux",
+            Platform::Bsd => "bsd",
+            Platform::Windows => "windows",
+        }
+    }
+
+    pub fn parse(name: &str) -> Option<Self> {
+        Self::ALL.into_iter().find(|p| p.name() == name)
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

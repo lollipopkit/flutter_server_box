@@ -42,6 +42,30 @@ String installCustomCmdsCommand({
   expect: expect,
 );
 
+/// A single command that runs every plugin's status command and prints each
+/// one's output under its own name. PLUGINS.md 9.1.
+///
+/// One round trip rather than one per plugin, and nothing left on the server:
+/// a plugin's command is not the user's data, and it changes whenever the
+/// plugin or its configuration does. Each is bounded exactly as a custom
+/// command is — a timeout, a size cap, and its output through a file rather
+/// than the pipe this answer comes back on.
+///
+/// Fed to `customCmdsEntry`'s shell on Unix, and already a complete command
+/// line on Windows, for the same reasons the custom-command scripts are.
+String pluginCmdsCommand({
+  required String system,
+  required List<PluginCmd> cmds,
+}) => RustLib.instance.api.crateApiScriptPluginCmdsCommand(
+  system: system,
+  cmds: cmds,
+);
+
+/// The plugin-command name in a parsed result key, or `None` when the section
+/// came from somewhere else.
+String? pluginResultName({required String key}) =>
+    RustLib.instance.api.crateApiScriptPluginResultName(key: key);
+
 /// Whether an install refused to run because the directory had changed under
 /// the caller.
 bool customCmdsConflict({required String output}) =>
@@ -180,6 +204,27 @@ class CustomCmdsListing {
           runtimeType == other.runtimeType &&
           fingerprint == other.fingerprint &&
           cmds == other.cmds;
+}
+
+/// One command a plugin wants run, and the name its output is filed under.
+class PluginCmd {
+  /// `<plugin id>:<contribution id>`, which is what the app files the
+  /// readings under too.
+  final String name;
+  final String cmd;
+
+  const PluginCmd({required this.name, required this.cmd});
+
+  @override
+  int get hashCode => name.hashCode ^ cmd.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PluginCmd &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          cmd == other.cmd;
 }
 
 /// One section of the script's output.
