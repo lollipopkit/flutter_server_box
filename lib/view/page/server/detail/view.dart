@@ -37,9 +37,9 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/plugin.dart';
+import 'package:server_box/view/page/pkg/page.dart';
 import 'package:server_box/view/page/pve.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
-import 'package:server_box/view/page/server/pkg_updates.dart';
 import 'package:server_box/view/widget/plugin/status_card.dart';
 import 'package:server_box/view/widget/plugin/surface_view.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
@@ -1882,7 +1882,7 @@ ${err.message ?? 'null'}
 
   void _onTapPkgAll(ServerState si) => PkgUpdatesPage.route.go(
     context,
-    args: PkgUpdatesPageArgs(spi: si.spi, pkg: si.status.pkg),
+    args: PkgUpdatesPageArgs(serverId: si.spi.id),
   );
 
   void _onTapPkgUpgrade(ServerState si) =>

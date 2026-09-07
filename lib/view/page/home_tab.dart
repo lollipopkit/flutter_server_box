@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/view/page/agent/agent.dart';
 import 'package:server_box/view/page/benchmark/tab.dart';
+import 'package:server_box/view/page/pkg/tab.dart';
 import 'package:server_box/view/page/server/tab/tab.dart';
 import 'package:server_box/view/page/snippet/list.dart';
 import 'package:server_box/view/page/ssh/tab.dart';
@@ -18,6 +19,7 @@ extension AppTabViewX on AppTab {
       AppTab.snippet => const SnippetListPage(),
       AppTab.agent => const AgentPage(),
       AppTab.benchmark => const BenchmarkTabPage(),
+      AppTab.pkg => const PkgTabPage(),
     };
   }
 

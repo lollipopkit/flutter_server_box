@@ -20,7 +20,9 @@ enum AppTab {
   @HiveField(4)
   agent,
   @HiveField(5)
-  benchmark;
+  benchmark,
+  @HiveField(6)
+  pkg;
 
   /// The tabs a fresh install puts in the bar, and the fallback when a stored
   /// list cannot be read.
@@ -38,7 +40,9 @@ enum AppTab {
   /// Snippets are out because they are a library rather than a place: one is
   /// run against a server, from the server's own page, and the tab is where
   /// they are written and kept. Benchmark is out because a run takes a quarter
-  /// of an hour and is started deliberately.
+  /// of an hour and is started deliberately. Updates are out because they are
+  /// read when somebody goes looking, and the detail page's card already says
+  /// so for the machine in front of them.
   static const defaultOrder = [server, ssh, file, agent];
 
   /// The tabs not in [enabled], in declaration order — what "more" holds.
@@ -104,9 +108,14 @@ enum AppTab {
 
   /// This tab as the registry sees it.
   ///
-  /// No [Feature.since]: every tab has been here since the bar was
-  /// arrangeable, and a new one gets a boundary the way the other two slots
-  /// do.
+  /// No [Feature.since], including for tabs added later.
+  ///
+  /// The other two slots use one to put what arrived in a release into the
+  /// arrangement. A tab cannot: [enabledIds] for this slot *is* the bottom
+  /// bar, which fits four labels on a phone, so auto-adding one takes a place
+  /// from a tab the user chose. A new tab is reachable the moment it exists —
+  /// [overflowOf] puts it behind "more" and the arranging page lists it — and
+  /// moving it into the bar stays the user's decision.
   Feature get feature => Feature(
     id: name,
     slot: FeatureSlot.homeTab,
@@ -126,6 +135,7 @@ enum AppTab {
     file => Icons.folder_open,
     agent => Icons.auto_awesome_outlined,
     benchmark => Icons.speed_outlined,
+    pkg => Icons.system_update_alt_outlined,
   };
 
   /// The filled form, for the tab being looked at.
@@ -136,6 +146,7 @@ enum AppTab {
     file => Icons.folder,
     agent => Icons.auto_awesome,
     benchmark => Icons.speed,
+    pkg => Icons.system_update_alt,
   };
 
   String get label => switch (this) {
@@ -149,5 +160,6 @@ enum AppTab {
     file => libL10n.file,
     agent => 'Agent',
     benchmark => l10n.benchmark,
+    pkg => l10n.pkgUpdates,
   };
 }

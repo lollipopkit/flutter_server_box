@@ -12,11 +12,13 @@ void main() {
         AppTab.file,
         AppTab.agent,
       ]);
-      // Snippets are a library rather than a place, and a benchmark is a
-      // quarter of an hour started deliberately — neither is wanted a tap away.
+      // Snippets are a library rather than a place, a benchmark is a quarter
+      // of an hour started deliberately, and updates are read when somebody
+      // goes looking — none is wanted a tap away.
       expect(AppTab.overflowOf(AppTab.defaultOrder), [
         AppTab.snippet,
         AppTab.benchmark,
+        AppTab.pkg,
       ]);
     });
 
@@ -128,7 +130,7 @@ void main() {
       AppTab.snippet,
     ]);
 
-    expect(available, [AppTab.agent, AppTab.benchmark]);
+    expect(available, [AppTab.agent, AppTab.benchmark, AppTab.pkg]);
   });
 
   group('reorderHomeTabs', () {
