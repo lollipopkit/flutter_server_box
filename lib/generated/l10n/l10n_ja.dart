@@ -514,84 +514,91 @@ class AppLocalizationsJa extends AppLocalizations {
   String get customCmd => 'カスタムコマンド';
 
   @override
-  String get customCmdInterval => 'Custom command interval';
+  String get customCmdInterval => 'カスタムコマンドの実行間隔';
 
   @override
   String customCmdIntervalTip(Object seconds) {
-    return 'They run on a status poll, so this is rounded up to a whole number of update intervals. Actual: ${seconds}s.';
+    return 'ステータスの取得時に実行されるため、更新間隔の整数倍になるよう切り上げられます。実際の間隔：$seconds 秒。';
   }
 
   @override
   String get customCmdChangedOnServer =>
-      'The commands on this server have changed since this page loaded them. Reload to see them; saving now would discard them.';
+      'このページで読み込んだ後に、サーバー上のコマンドが変更されました。再読み込みすると変更内容を確認できます。このまま保存すると、その変更は失われます。';
 
   @override
-  String get plugins => 'Plugins';
+  String get plugins => 'プラグイン';
 
   @override
-  String get pkgUpdates => 'Updates';
+  String get pkgUpdates => '更新';
 
   @override
-  String get pkgUpToDate => 'Up to date';
+  String get pkgUpToDate => '最新';
 
   @override
   String pkgSecurityCount(int n) {
-    return '$n security';
+    return 'セキュリティ更新 $n 件';
   }
 
   @override
-  String get pkgNoManager => 'No package manager this app can read';
+  String get pkgNoManager => 'このアプリで読み取れるパッケージマネージャーがありません';
 
   @override
   String pkgIndexAge(String age) {
-    return 'Index refreshed $age ago';
+    return 'インデックスの更新：$age 前';
   }
 
   @override
   String pkgIndexStale(String age) {
-    return 'The package index has not been refreshed in $age. This count is what the server already knew, not what is available.';
+    return 'パッケージインデックスは $age 更新されていません。この件数はサーバーが以前把握していたもので、現在利用できる更新の件数ではありません。';
   }
 
   @override
-  String get pkgUpgrade => 'Upgrade in terminal';
+  String get pkgUpgrade => 'ターミナルでアップグレード';
 
   @override
   String get pkgUpgradeDesc =>
-      'Opens a terminal with the upgrade command ready. Nothing runs until you send it.';
+      'アップグレードコマンドを入力した状態でターミナルを開きます。送信するまでは何も実行されません。';
 
   @override
   String pkgSecurityUnknown(String manager) {
-    return '$manager does not say which updates are security fixes';
+    return '$manager では、どの更新がセキュリティ修正か判別できません';
   }
 
   @override
-  String get pluginInstall => 'Install a plugin';
+  String get pluginInstall => 'プラグインをインストール';
 
   @override
-  String get pluginInstalled => 'Installed';
+  String get pluginInstalled => 'インストール済み';
 
   @override
-  String get pluginBundled => 'Bundled';
+  String get pluginBundled => '同梱';
 
   @override
-  String get pluginDev => 'Development';
+  String get pluginDev => '開発';
 
   @override
   String get pluginNeedsConsent =>
-      'This update asks for more than you agreed to. Reinstall it to review.';
+      'この更新では、同意済みの範囲を超える権限が要求されています。再インストールして内容を確認してください。';
 
   @override
-  String get pluginPermissionsAsk => 'This plugin asks to:';
+  String get pluginPermissionsAsk => 'このプラグインが要求する権限：';
 
   @override
-  String get pluginNoPermissions => 'It asks for nothing outside itself.';
+  String get pluginNoPermissions => 'プラグイン自体の外部に対する権限は要求しません。';
 
   @override
-  String get pluginUninstallKeepData => 'Keep its settings and data';
+  String get pluginUninstallKeepData => '設定とデータを保持する';
 
   @override
   String get pluginRunsOnServer =>
-      'It runs commands on your servers. Only install one you trust.';
+      'サーバー上でコマンドを実行します。信頼できるプラグインだけをインストールしてください。';
+
+  @override
+  String get pluginSeesAllServers => 'サーバー一覧を表示';
+
+  @override
+  String get pluginSeesAllServersTip =>
+      'このプラグインは、開いた元のサーバーだけでなく、すべてのサーバー名を確認できます。アドレスや認証情報が共有されることはありません。';
 
   @override
   String get deleteServers => 'サーバーを一括削除';
@@ -2028,6 +2035,5 @@ class AppLocalizationsJa extends AppLocalizations {
       'まだ出力はありません。YABS は最初の行を出力する前に、google.com と icanhazip.com に接続できるか確認します。いずれかのサイトがブロックされているネットワークでは、数分かかる場合があります。';
 
   @override
-  String get benchmarkNoServers =>
-      'Add a server first, then come back to benchmark it.';
+  String get benchmarkNoServers => '先にサーバーを追加してから、パフォーマンステストに戻ってください。';
 }

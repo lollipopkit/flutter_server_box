@@ -213,11 +213,12 @@ quickjs-ng 0.15.1。2026-09-06 在引擎里抽查了 19 项：
 
 ### 4.3 插件可以调用的 App 函数
 
-全局对象 `sb` 按用途分组。凡是要经过 Dart 的都返回 Promise；只读本地状态的是同步函数。下表是设计，Dart 侧尚未接上实际功能。
+全局对象 `sb` 按用途分组。凡是要经过 Dart 的都返回 Promise；只读本地状态的是同步函数。Dart 侧已全部接上（`AppPluginHostOps`）。
 
 | 接口 | 用途 | 所需权限 |
 |---|---|---|
 | `sb.server.exec(req)` | 在宿主允许的服务器上执行命令 | `server.exec` |
+| `sb.server.list()` | 列出用户的全部服务器，只给句柄和显示名 | `server.list` |
 | `sb.http.fetch(req)` | 发 HTTP 请求，可直连或经服务器的 SSH 连接访问 | `net.http`；经 SSH 时另需 `server.stream` |
 | `sb.ui.patch(path, node)` | 替换界面的一部分，适合持续追加日志 | 无额外权限 |
 | `sb.ui.prompt(spec)` | 弹出对话框并等待用户回答 | `ui.dialog` |
@@ -226,13 +227,18 @@ quickjs-ng 0.15.1。2026-09-06 在引擎里抽查了 19 项：
 | `sb.store.get / set / list` | 读写插件自己的持久化数据 | 无额外权限 |
 | `sb.diag.crumb(name, level)` | 记录诊断事件，只记录发生了什么，不记录敏感内容 | 无额外权限 |
 | `sb.nav.openServer(h)` / `sb.nav.goTab(id)` | 打开服务器或切换 tab | 无额外权限 |
+| `sb.nav.openTerminal(req)` | 打开终端并把命令**填进去**；`run: true` 才发送，默认不发送 | `server.exec` |
 | `sb.clipboard.read / write` | 读写剪贴板 | `clipboard` |
 | `sb.config.get(key)` | 读取插件设置和绑定服务器上的插件配置；同步 | 无额外权限 |
 | `sb.log.trace / debug / info / warn / error` | 写日志；同步 | 无额外权限 |
 
 时间不需要宿主接口，`Date.now()` 可用。这是与 WebAssembly 方案的一处差别，先前需要为此单独加 `time_now`。
 
-`sb.server.exec` 对接现有 `ServerNotifier.ensureExec` 和 `ServerExec.run`。插件只能使用宿主给出的服务器句柄，来源是当前绑定的服务器或用户选择结果，不能自行指定任意服务器。
+`sb.server.exec` 对接现有 `ServerNotifier.ensureExec` 和 `ServerExec.run`。插件只能使用宿主给出的服务器句柄，来源是当前绑定的服务器、用户选择结果，或 `sb.server.list`，不能自行指定任意服务器。
+
+**`sb.server.list` 单列一项权限，刻意不并入 `server.exec`。** exec 作用在用户指过的那台机器上——surface 绑定的那台,或 `pickServer` 选的那台；list 是在没人选择的情况下把整份名单交出去。只画一张当前机器卡片的插件不需要它,也不该申请。返回的只有句柄和显示名:地址、用户名和凭据不在里面,也没有任何权限能拿到它们——插件够到服务器的唯一途径是 `sb.server.exec`,而那条路经过 App。
+
+**`sb.nav.openTerminal` 归在 `server.exec` 下,不是免费的。** 让命令在一台机器上跑起来就是 `server.exec` 这项能力,由谁敲进去不改变这一点——只是更显眼。默认只填不发,让用户先读再按回车;插件要的是输出而不是一段用户盯着的会话时,该用 `sb.server.exec`。
 
 HTTP 统一走 `sb.http.fetch`，上下文里没有 `fetch` 这个全局函数。这样才能统一处理地址权限、SSH 转发、cookie 和证书。经 SSH 时，宿主通过 `ensureShellClient` 和 `SSHForwardChannel` 建立连接。
 
@@ -419,6 +425,7 @@ BMC 样本已经促使设计增加了 `tone`、`requires_config`、`options_from
 |---|---|
 | `server.exec` | 在宿主授权的服务器上执行命令 |
 | `server.stream` | 通过该服务器的 SSH 连接建立 TCP 连接，供 `sb.http.fetch` 的 `via: "ssh"` 使用 |
+| `server.list` | 列举用户的全部服务器，只拿到句柄和显示名。见 4.3 |
 | `net.http: [pattern]` | 访问匹配的 HTTP 目标；pattern 可用 glob，也可用 `$config.<key>` 引用 `role: address` 配置 |
 | `ui.dialog` | 弹出对话框并等待输入 |
 | `clipboard` | 读写剪贴板 |

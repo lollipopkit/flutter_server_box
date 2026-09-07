@@ -206,6 +206,8 @@
   "pluginNoPermissions": "不申请任何自身之外的能力。",
   "pluginUninstallKeepData": "保留它的配置和数据",
   "pluginRunsOnServer": "它会在你的服务器上执行命令，只安装你信任的插件。",
+  "pluginSeesAllServers": "查看你的服务器列表",
+  "pluginSeesAllServersTip": "它能看到每台服务器的名称，不只是你打开它的那台。地址和凭据绝不会共享给它。",
   "deleteServers": "批量删除服务器",
   "deleteDirRecursive": "连同文件夹里的所有内容一起删除",
   "desktopTerminalTip": "启动 SSH 连接所用的终端模拟器命令",

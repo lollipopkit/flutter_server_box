@@ -245,6 +245,16 @@ class _PluginsPageState extends State<PluginsPage> {
           // A status plugin runs a command it chose on every server it is
           // shown for. `server.exec` is what says so in the list above, but
           // the list is names and this is what they mean.
+          // The two that are worth a sentence rather than a name: one runs
+          // arbitrary commands, the other learns the whole fleet exists.
+          if (permissions.contains('server.list'))
+            Text(
+              l10n.pluginSeesAllServersTip,
+              style: TextStyle(
+                fontSize: 11,
+                color: context.theme.colorScheme.error,
+              ),
+            ),
           if (permissions.contains('server.exec'))
             Text(
               l10n.pluginRunsOnServer,
@@ -268,6 +278,7 @@ class _PluginsPageState extends State<PluginsPage> {
   /// alternative is asking the user to agree to a blank line.
   String _describe(String name) => switch (name) {
     'server.exec' => libL10n.cmd,
+    'server.list' => l10n.pluginSeesAllServers,
     'net.http' => libL10n.network,
     'ui.dialog' => libL10n.attention,
     'clipboard' => libL10n.copy,

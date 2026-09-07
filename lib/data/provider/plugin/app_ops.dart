@@ -11,7 +11,9 @@ import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/plugin/http.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
+import 'package:server_box/view/page/ssh/page/page.dart';
 
 /// The app doing what a plugin asked for. PLUGINS.md section 4.3.
 ///
@@ -166,6 +168,40 @@ class AppPluginHostOps implements PluginHostOps {
 
   @override
   Future<void> clipboardWrite(String text) async => Pfs.copy(text);
+
+  @override
+  Future<List<PluginServerSummary>> listServers() async {
+    // The order the server tab shows them in, so a plugin's fleet view and the
+    // app's own list read the same way round.
+    final state = ref.read(serversProvider);
+    return [
+      for (final id in state.serverOrder)
+        if (state.servers[id] case final spi?) (id: id, name: spi.name),
+    ];
+  }
+
+  @override
+  Future<void> openTerminal(
+    String serverId, {
+    String? cmd,
+    bool run = false,
+  }) async {
+    final context = _context;
+    if (context == null) return;
+    final spi = ref.read(serversProvider).servers[serverId];
+    if (spi == null) return;
+    await SSHPage.route.go(
+      context,
+      SshPageArgs(
+        source: ServerSource(spi),
+        initCmd: cmd,
+        // A plugin asking for a command to be *sent* is asking for something
+        // the user did not type. The default leaves it in the prompt, which is
+        // the same promise the app's own package-upgrade button makes.
+        initCmdRun: run,
+      ),
+    );
+  }
 
   @override
   Future<void> openServer(String serverId) async {

@@ -218,6 +218,8 @@
   "pluginNoPermissions": "It asks for nothing outside itself.",
   "pluginUninstallKeepData": "Keep its settings and data",
   "pluginRunsOnServer": "It runs commands on your servers. Only install one you trust.",
+  "pluginSeesAllServers": "See your list of servers",
+  "pluginSeesAllServersTip": "It can see every server's name, not only the one you open it from. Addresses and credentials are never shared.",
   "deleteServers": "Batch delete servers",
   "deleteDirRecursive": "Delete the folder and everything in it",
   "desktopTerminalTip": "Command used to open the terminal emulator when launching SSH sessions.",

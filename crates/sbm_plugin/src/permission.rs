@@ -22,6 +22,20 @@ pub enum Permission {
     #[serde(rename = "server.stream")]
     ServerStream,
 
+    /// Enumerate the user's servers, as handles and display names.
+    ///
+    /// Separate from [`ServerExec`](Self::ServerExec), and strictly more:
+    /// exec acts on a server the *user* pointed at — the one a surface is
+    /// bound to, or one picked in `sb.ui.pickServer` — while this hands over
+    /// the whole list without anybody choosing. What a fleet-wide surface
+    /// needs, and what a plugin that only draws a card for the machine in
+    /// front of you must not have.
+    ///
+    /// Names and handles only. An address, a user name and a credential are
+    /// not in it, and no permission grants them.
+    #[serde(rename = "server.list")]
+    ServerList,
+
     /// Reach an address directly over HTTP. Scoped by [`Grants::http_patterns`].
     #[serde(rename = "net.http")]
     NetHttp,
@@ -49,6 +63,7 @@ impl Permission {
         match self {
             Self::ServerExec => "server.exec",
             Self::ServerStream => "server.stream",
+            Self::ServerList => "server.list",
             Self::NetHttp => "net.http",
             Self::UiDialog => "ui.dialog",
             Self::Clipboard => "clipboard",
@@ -59,6 +74,7 @@ impl Permission {
     pub const ALL: &'static [Permission] = &[
         Self::ServerExec,
         Self::ServerStream,
+        Self::ServerList,
         Self::NetHttp,
         Self::UiDialog,
         Self::Clipboard,

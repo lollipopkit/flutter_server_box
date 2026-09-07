@@ -81,6 +81,21 @@ class _FakeOps implements PluginHostOps {
   }
 
   @override
+  Future<List<PluginServerSummary>> listServers() async {
+    calls.add(_Recorded('listServers'));
+    return servers;
+  }
+
+  List<PluginServerSummary> servers = const [];
+
+  @override
+  Future<void> openTerminal(
+    String serverId, {
+    String? cmd,
+    bool run = false,
+  }) async => calls.add(_Recorded('openTerminal', '$serverId|$cmd|$run'));
+
+  @override
   void toast(String text, String kind) =>
       calls.add(_Recorded('toast', '$kind|$text'));
 
@@ -338,6 +353,77 @@ void main() {
       });
 
       expect(answer.errorKind, 'unsupported');
+      expect(ops.calls, isEmpty);
+    });
+  });
+
+  /// A fleet-wide surface is bound to no one machine, so it has to be able to
+  /// ask what exists. The protocol half: handles out, ids never.
+  group('listing servers', () {
+    test('answers handles and names, never ids', () async {
+      ops.servers = const [
+        (id: 'srv-1', name: 'web'),
+        (id: 'srv-2', name: 'db'),
+      ];
+
+      final answer = await call('sb.server.list');
+      final servers = (decoded(answer) as Map)['servers'] as List;
+
+      expect(servers, hasLength(2));
+      expect(servers.map((s) => (s as Map)['name']), ['web', 'db']);
+      // The whole point of a handle: what crosses is opaque, so one that
+      // leaked into a log or a plugin's own storage names nothing.
+      for (final s in servers) {
+        expect((s as Map)['server'], isNot(anyOf('srv-1', 'srv-2')));
+      }
+      expect(answer.ok, isNot(contains('srv-1')));
+    });
+
+    /// The same handle the instance already had, so a plugin can compare the
+    /// one it was bound to against the list and find itself.
+    test('reuses a handle the instance already holds', () async {
+      final bound = handles.bind('inst-1', 'srv-1');
+      ops.servers = const [(id: 'srv-1', name: 'web')];
+
+      final answer = await call('sb.server.list');
+      final servers = (decoded(answer) as Map)['servers'] as List;
+
+      expect((servers.single as Map)['server'], bound);
+    });
+
+    /// A device with no servers is a state a plugin has to be able to draw,
+    /// and it must not look like a failure.
+    test('no servers is an empty list, not an error', () async {
+      final answer = await call('sb.server.list');
+
+      expect(answer.errorKind, isNull);
+      expect((decoded(answer) as Map)['servers'], isEmpty);
+    });
+  });
+
+  group('opening a terminal', () {
+    /// Typed and not sent unless asked. A plugin asking for a command to be
+    /// *sent* is asking for something the user did not type, so the quiet
+    /// default is the safe one.
+    test('does not send the command unless told to', () async {
+      final handle = handles.bind('inst-1', 'srv-1');
+
+      await call('sb.nav.openTerminal', {'server': handle, 'cmd': 'apk upgrade'});
+      expect('${ops.calls.single}', 'openTerminal(srv-1|apk upgrade|false)');
+
+      ops.calls.clear();
+      await call('sb.nav.openTerminal', {
+        'server': handle,
+        'cmd': 'apk upgrade',
+        'run': true,
+      });
+      expect('${ops.calls.single}', 'openTerminal(srv-1|apk upgrade|true)');
+    });
+
+    test('a handle nothing was issued for opens nothing', () async {
+      final answer = await call('sb.nav.openTerminal', {'server': 'srv-1'});
+
+      expect(answer.errorKind, 'bad_request');
       expect(ops.calls, isEmpty);
     });
   });

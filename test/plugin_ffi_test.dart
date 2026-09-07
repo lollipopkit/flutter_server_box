@@ -134,7 +134,11 @@ void main() {
       final fns = pluginHostFunctions();
       expect(fns, contains('sb.http.fetch'));
       expect(fns, contains('sb.server.exec'));
-      expect(fns.length, 14);
+      // What a fleet-wide surface needs, and the one that opens a terminal
+      // rather than running something the user never sees.
+      expect(fns, contains('sb.server.list'));
+      expect(fns, contains('sb.nav.openTerminal'));
+      expect(fns.length, 16);
     });
 
     test('a manifest is read without running anything', () {

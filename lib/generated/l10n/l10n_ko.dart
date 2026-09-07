@@ -517,84 +517,90 @@ class AppLocalizationsKo extends AppLocalizations {
   String get customCmd => '사용자 정의 명령어';
 
   @override
-  String get customCmdInterval => 'Custom command interval';
+  String get customCmdInterval => '사용자 정의 명령어 실행 간격';
 
   @override
   String customCmdIntervalTip(Object seconds) {
-    return 'They run on a status poll, so this is rounded up to a whole number of update intervals. Actual: ${seconds}s.';
+    return '상태를 확인할 때 실행되므로 업데이트 간격의 정수 배수로 올림됩니다. 실제 간격: $seconds초.';
   }
 
   @override
   String get customCmdChangedOnServer =>
-      'The commands on this server have changed since this page loaded them. Reload to see them; saving now would discard them.';
+      '이 페이지에서 불러온 후 서버의 명령어가 변경되었습니다. 변경 내용을 보려면 다시 불러오세요. 지금 저장하면 해당 변경 내용이 사라집니다.';
 
   @override
-  String get plugins => 'Plugins';
+  String get plugins => '플러그인';
 
   @override
-  String get pkgUpdates => 'Updates';
+  String get pkgUpdates => '업데이트';
 
   @override
-  String get pkgUpToDate => 'Up to date';
+  String get pkgUpToDate => '최신 상태';
 
   @override
   String pkgSecurityCount(int n) {
-    return '$n security';
+    return '보안 업데이트 $n개';
   }
 
   @override
-  String get pkgNoManager => 'No package manager this app can read';
+  String get pkgNoManager => '이 앱에서 읽을 수 있는 패키지 관리자가 없습니다';
 
   @override
   String pkgIndexAge(String age) {
-    return 'Index refreshed $age ago';
+    return '인덱스 업데이트: $age 전';
   }
 
   @override
   String pkgIndexStale(String age) {
-    return 'The package index has not been refreshed in $age. This count is what the server already knew, not what is available.';
+    return '패키지 인덱스가 $age 동안 업데이트되지 않았습니다. 이 개수는 서버가 이미 알고 있던 값이며 현재 제공되는 업데이트 수가 아닙니다.';
   }
 
   @override
-  String get pkgUpgrade => 'Upgrade in terminal';
+  String get pkgUpgrade => '터미널에서 업그레이드';
 
   @override
   String get pkgUpgradeDesc =>
-      'Opens a terminal with the upgrade command ready. Nothing runs until you send it.';
+      '업그레이드 명령어가 준비된 터미널을 엽니다. 전송하기 전에는 아무것도 실행되지 않습니다.';
 
   @override
   String pkgSecurityUnknown(String manager) {
-    return '$manager does not say which updates are security fixes';
+    return '$manager에서는 어떤 업데이트가 보안 수정인지 알려 주지 않습니다';
   }
 
   @override
-  String get pluginInstall => 'Install a plugin';
+  String get pluginInstall => '플러그인 설치';
 
   @override
-  String get pluginInstalled => 'Installed';
+  String get pluginInstalled => '설치됨';
 
   @override
-  String get pluginBundled => 'Bundled';
+  String get pluginBundled => '기본 제공';
 
   @override
-  String get pluginDev => 'Development';
+  String get pluginDev => '개발';
 
   @override
   String get pluginNeedsConsent =>
-      'This update asks for more than you agreed to. Reinstall it to review.';
+      '이 업데이트는 동의한 범위를 넘어서는 권한을 요청합니다. 다시 설치하여 검토하세요.';
 
   @override
-  String get pluginPermissionsAsk => 'This plugin asks to:';
+  String get pluginPermissionsAsk => '이 플러그인이 요청하는 권한:';
 
   @override
-  String get pluginNoPermissions => 'It asks for nothing outside itself.';
+  String get pluginNoPermissions => '플러그인 자체 외부의 어떤 항목에도 접근 권한을 요청하지 않습니다.';
 
   @override
-  String get pluginUninstallKeepData => 'Keep its settings and data';
+  String get pluginUninstallKeepData => '설정 및 데이터 유지';
 
   @override
-  String get pluginRunsOnServer =>
-      'It runs commands on your servers. Only install one you trust.';
+  String get pluginRunsOnServer => '서버에서 명령어를 실행합니다. 신뢰하는 플러그인만 설치하세요.';
+
+  @override
+  String get pluginSeesAllServers => '서버 목록 보기';
+
+  @override
+  String get pluginSeesAllServersTip =>
+      '이 플러그인은 플러그인을 연 서버뿐 아니라 모든 서버의 이름을 볼 수 있습니다. 주소와 자격 증명은 절대 공유되지 않습니다.';
 
   @override
   String get deleteServers => '서버 일괄 삭제';
@@ -2035,6 +2041,5 @@ class AppLocalizationsKo extends AppLocalizations {
       '아직 출력이 없습니다. YABS는 첫 줄을 출력하기 전에 google.com과 icanhazip.com에 연결할 수 있는지 확인합니다. 둘 중 하나를 차단하는 네트워크에서는 몇 분이 걸릴 수 있습니다.';
 
   @override
-  String get benchmarkNoServers =>
-      'Add a server first, then come back to benchmark it.';
+  String get benchmarkNoServers => '먼저 서버를 추가한 다음 돌아와서 성능을 테스트하세요.';
 }

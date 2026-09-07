@@ -168,8 +168,29 @@ export interface PromptAnswer {
 
 // -------------------------------------------------------------- namespaces
 
+/** One server, as a plugin is allowed to see it. */
+export interface ServerSummary {
+  server: ServerHandle;
+  name: string;
+}
+
 export interface Server {
   exec(req: ExecRequest): Promise<ExecResponse>;
+
+  /**
+   * Every server the user has, in the order the server tab shows them.
+   *
+   * Needs the `server.list` permission, which is **not** part of
+   * `server.exec`: exec acts on a machine the user pointed at — the one a
+   * surface is bound to, or one picked in {@link Ui.pickServer} — and this
+   * hands over the whole list with nobody choosing. A plugin that only draws a
+   * card for the machine in front of you does not need it and should not ask.
+   *
+   * Handles and names, and nothing else. There is no address in here and no
+   * permission that adds one: reaching a server goes through
+   * {@link Server.exec}, which goes through the app.
+   */
+  list(): Promise<{ servers: ServerSummary[] }>;
 }
 
 export interface Http {
@@ -252,8 +273,30 @@ export interface Diag {
   crumb(req: CrumbRequest): Promise<void>;
 }
 
+export interface OpenTerminalRequest {
+  server: ServerHandle;
+
+  /** Typed into the terminal. Absent opens an empty one. */
+  cmd?: string;
+
+  /**
+   * Whether the command is sent as well as typed.
+   *
+   * Defaults to false, and that is the point of the call: the user reads the
+   * line, edits it if they like, and presses enter. A plugin that wants a
+   * command's output rather than a session the user watches has
+   * {@link Server.exec}.
+   */
+  run?: boolean;
+}
+
 export interface Nav {
   openServer(req: { server: ServerHandle }): Promise<void>;
+
+  /** Needs `server.exec` — causing commands to run on a machine is the same
+   * capability whoever types them. */
+  openTerminal(req: OpenTerminalRequest): Promise<void>;
+
   goTab(req: { tab: string }): Promise<void>;
 }
 

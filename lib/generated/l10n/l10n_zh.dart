@@ -582,6 +582,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pluginRunsOnServer => '它会在你的服务器上执行命令，只安装你信任的插件。';
 
   @override
+  String get pluginSeesAllServers => '查看你的服务器列表';
+
+  @override
+  String get pluginSeesAllServersTip => '它能看到每台服务器的名称，不只是你打开它的那台。地址和凭据绝不会共享给它。';
+
+  @override
   String get deleteServers => '批量删除服务器';
 
   @override
@@ -2482,6 +2488,90 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get customCmd => '自訂指令';
 
   @override
+  String get customCmdInterval => '自訂指令間隔';
+
+  @override
+  String customCmdIntervalTip(Object seconds) {
+    return '這些指令會在查詢狀態時執行，因此此值會向上取整為更新間隔的整數倍。實際間隔：$seconds 秒。';
+  }
+
+  @override
+  String get customCmdChangedOnServer =>
+      '這個頁面載入指令後，伺服器上的指令已有變更。重新載入即可查看；若現在儲存，這些變更將會遺失。';
+
+  @override
+  String get plugins => '外掛';
+
+  @override
+  String get pkgUpdates => '更新';
+
+  @override
+  String get pkgUpToDate => '已是最新版本';
+
+  @override
+  String pkgSecurityCount(int n) {
+    return '$n 個安全性更新';
+  }
+
+  @override
+  String get pkgNoManager => '沒有這個 App 能讀取的套件管理工具';
+
+  @override
+  String pkgIndexAge(String age) {
+    return '索引更新於 $age 前';
+  }
+
+  @override
+  String pkgIndexStale(String age) {
+    return '套件索引已有 $age 未更新。這個數量是伺服器先前已知的更新，不是目前實際可用的更新。';
+  }
+
+  @override
+  String get pkgUpgrade => '在終端機中升級';
+
+  @override
+  String get pkgUpgradeDesc => '開啟終端機並準備好升級指令。你送出前不會執行任何操作。';
+
+  @override
+  String pkgSecurityUnknown(String manager) {
+    return '$manager 不會指出哪些更新是安全性修正';
+  }
+
+  @override
+  String get pluginInstall => '安裝外掛';
+
+  @override
+  String get pluginInstalled => '已安裝';
+
+  @override
+  String get pluginBundled => '隨附';
+
+  @override
+  String get pluginDev => '開發';
+
+  @override
+  String get pluginNeedsConsent => '此更新要求的權限超出你已同意的範圍。請重新安裝以檢查。';
+
+  @override
+  String get pluginPermissionsAsk => '這個外掛要求：';
+
+  @override
+  String get pluginNoPermissions => '不要求存取自身以外的任何項目。';
+
+  @override
+  String get pluginUninstallKeepData => '保留其設定與資料';
+
+  @override
+  String get pluginRunsOnServer => '它會在你的伺服器上執行指令。只安裝你信任的外掛。';
+
+  @override
+  String get pluginSeesAllServers => '查看你的伺服器清單';
+
+  @override
+  String get pluginSeesAllServersTip =>
+      '它能看到每台伺服器的名稱，不只是你開啟它時所在的那台。位址和憑證永遠不會分享給它。';
+
+  @override
   String get deleteServers => '大量刪除伺服器';
 
   @override
@@ -3874,4 +3964,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get benchmarkNoOutputYet =>
       '暫時沒有輸出。YABS 在輸出第一行前會先檢查能否連線至 google.com 和 icanhazip.com；如果網路封鎖其中任一網站，可能需要等待數分鐘。';
+
+  @override
+  String get benchmarkNoServers => '請先新增伺服器，再回來測試效能。';
 }

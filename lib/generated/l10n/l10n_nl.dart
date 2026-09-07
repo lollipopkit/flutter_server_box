@@ -547,84 +547,92 @@ class AppLocalizationsNl extends AppLocalizations {
   String get customCmd => 'Aangepaste opdrachten';
 
   @override
-  String get customCmdInterval => 'Custom command interval';
+  String get customCmdInterval => 'Interval voor aangepaste opdrachten';
 
   @override
   String customCmdIntervalTip(Object seconds) {
-    return 'They run on a status poll, so this is rounded up to a whole number of update intervals. Actual: ${seconds}s.';
+    return 'Ze worden tijdens een statuscontrole uitgevoerd. Daarom wordt deze waarde naar boven afgerond op een heel aantal vernieuwingsintervallen. Werkelijk: $seconds s.';
   }
 
   @override
   String get customCmdChangedOnServer =>
-      'The commands on this server have changed since this page loaded them. Reload to see them; saving now would discard them.';
+      'De opdrachten op deze server zijn gewijzigd sinds deze pagina ze heeft geladen. Laad ze opnieuw om de wijzigingen te bekijken; als je nu opslaat, gaan ze verloren.';
 
   @override
-  String get plugins => 'Plugins';
+  String get plugins => 'Plug-ins';
 
   @override
   String get pkgUpdates => 'Updates';
 
   @override
-  String get pkgUpToDate => 'Up to date';
+  String get pkgUpToDate => 'Actueel';
 
   @override
   String pkgSecurityCount(int n) {
-    return '$n security';
+    return '$n beveiligingsupdates';
   }
 
   @override
-  String get pkgNoManager => 'No package manager this app can read';
+  String get pkgNoManager => 'Geen pakketbeheerder die deze app kan uitlezen';
 
   @override
   String pkgIndexAge(String age) {
-    return 'Index refreshed $age ago';
+    return 'Index $age geleden bijgewerkt';
   }
 
   @override
   String pkgIndexStale(String age) {
-    return 'The package index has not been refreshed in $age. This count is what the server already knew, not what is available.';
+    return 'De pakketindex is al $age niet bijgewerkt. Dit aantal is wat de server al wist, niet wat er nu beschikbaar is.';
   }
 
   @override
-  String get pkgUpgrade => 'Upgrade in terminal';
+  String get pkgUpgrade => 'Upgraden in de terminal';
 
   @override
   String get pkgUpgradeDesc =>
-      'Opens a terminal with the upgrade command ready. Nothing runs until you send it.';
+      'Opent een terminal waarin de upgradeopdracht klaarstaat. Er wordt niets uitgevoerd totdat je deze verstuurt.';
 
   @override
   String pkgSecurityUnknown(String manager) {
-    return '$manager does not say which updates are security fixes';
+    return '$manager geeft niet aan welke updates beveiligingsproblemen oplossen';
   }
 
   @override
-  String get pluginInstall => 'Install a plugin';
+  String get pluginInstall => 'Plug-in installeren';
 
   @override
-  String get pluginInstalled => 'Installed';
+  String get pluginInstalled => 'Geïnstalleerd';
 
   @override
-  String get pluginBundled => 'Bundled';
+  String get pluginBundled => 'Meegeleverd';
 
   @override
-  String get pluginDev => 'Development';
+  String get pluginDev => 'Ontwikkeling';
 
   @override
   String get pluginNeedsConsent =>
-      'This update asks for more than you agreed to. Reinstall it to review.';
+      'Deze update vraagt om meer rechten dan je hebt goedgekeurd. Installeer de plug-in opnieuw om ze te bekijken.';
 
   @override
-  String get pluginPermissionsAsk => 'This plugin asks to:';
+  String get pluginPermissionsAsk => 'Deze plug-in vraagt om:';
 
   @override
-  String get pluginNoPermissions => 'It asks for nothing outside itself.';
+  String get pluginNoPermissions =>
+      'De plug-in vraagt nergens buiten zichzelf toegang toe.';
 
   @override
-  String get pluginUninstallKeepData => 'Keep its settings and data';
+  String get pluginUninstallKeepData => 'Instellingen en gegevens behouden';
 
   @override
   String get pluginRunsOnServer =>
-      'It runs commands on your servers. Only install one you trust.';
+      'De plug-in voert opdrachten uit op je servers. Installeer alleen plug-ins die je vertrouwt.';
+
+  @override
+  String get pluginSeesAllServers => 'Je serverlijst bekijken';
+
+  @override
+  String get pluginSeesAllServersTip =>
+      'De plug-in kan de naam van al je servers zien, niet alleen van de server vanwaaruit je de plug-in opent. Adressen en inloggegevens worden nooit gedeeld.';
 
   @override
   String get deleteServers => 'Servers batchgewijs verwijderen';
@@ -2152,5 +2160,5 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get benchmarkNoServers =>
-      'Add a server first, then come back to benchmark it.';
+      'Voeg eerst een server toe en kom daarna terug om de prestaties te testen.';
 }

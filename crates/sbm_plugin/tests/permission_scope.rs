@@ -31,7 +31,9 @@ fn argument(f: HostFn) -> &'static str {
         HostFn::StoreSet => r#"{ scope: "global", key: "k", value: "v" }"#,
         HostFn::StoreList => r#"{ scope: "global", prefix: "" }"#,
         HostFn::DiagCrumb => r#"{ name: "power" }"#,
+        HostFn::ServerList => "undefined",
         HostFn::NavOpenServer => r#"{ server: "bound" }"#,
+        HostFn::NavOpenTerminal => r#"{ server: "bound", cmd: "uptime" }"#,
         HostFn::NavGoTab => r#"{ tab: "server" }"#,
         HostFn::ClipboardRead => "undefined",
         HostFn::ClipboardWrite => r#"{ text: "hi" }"#,
@@ -161,11 +163,41 @@ fn a_manifest_that_asks_for_nothing_reaches_only_what_is_always_granted() {
     assert_scope(Grants::default(), &always_granted());
 }
 
+/// `server.exec` opens two: running a command, and opening a terminal on the
+/// machine so a person runs one. The second is not less than the first — it is
+/// the same capability with the user watching — so they are granted together
+/// rather than the terminal being free.
 #[test]
 fn server_exec_is_reachable_only_with_its_permission() {
     let mut expected = always_granted();
     expected.push(HostFn::ServerExec);
+    expected.push(HostFn::NavOpenTerminal);
     assert_scope(Grants::new([Permission::ServerExec]), &expected);
+}
+
+/// Enumerating every server is its own permission, and deliberately not part
+/// of `server.exec`: exec acts on a machine the user pointed at, and this
+/// hands over the whole list with nobody choosing.
+#[test]
+fn server_list_is_its_own_permission() {
+    let mut expected = always_granted();
+    expected.push(HostFn::ServerList);
+    assert_scope(Grants::new([Permission::ServerList]), &expected);
+}
+
+/// The pairing that would be easiest to get wrong: a plugin allowed to run
+/// commands on the machine in front of it must not thereby learn about every
+/// other machine.
+#[test]
+fn server_exec_does_not_imply_server_list() {
+    let mut expected = always_granted();
+    expected.push(HostFn::ServerExec);
+    expected.push(HostFn::NavOpenTerminal);
+    assert_scope(Grants::new([Permission::ServerExec]), &expected);
+
+    let mut listing = always_granted();
+    listing.push(HostFn::ServerList);
+    assert_scope(Grants::new([Permission::ServerList]), &listing);
 }
 
 #[test]
@@ -216,6 +248,7 @@ fn everything_granted_reaches_everything() {
     let grants = Grants::new([
         Permission::ServerExec,
         Permission::ServerStream,
+        Permission::ServerList,
         Permission::NetHttp,
         Permission::UiDialog,
         Permission::Clipboard,
@@ -332,14 +365,28 @@ fn nothing_on_sb_can_change_a_server() {
             "{path} writes to a server"
         );
     }
-    // The two that touch a server at all do not change it: one runs a command,
-    // one opens its page.
+    // The four that touch a server at all, none of which changes the record:
+    // one runs a command, one lists what exists, one opens a server's page and
+    // one opens a terminal on it. Adding a fifth means changing this line,
+    // which is the argument this test exists to force.
     let touching: Vec<String> = HostFn::ALL
         .iter()
-        .filter(|f| f.namespace() == "server" || f.path() == "sb.nav.openServer")
+        .filter(|f| {
+            f.namespace() == "server"
+                || f.path() == "sb.nav.openServer"
+                || f.path() == "sb.nav.openTerminal"
+        })
         .map(|f| f.path())
         .collect();
-    assert_eq!(touching, ["sb.server.exec", "sb.nav.openServer"]);
+    assert_eq!(
+        touching,
+        [
+            "sb.server.exec",
+            "sb.server.list",
+            "sb.nav.openServer",
+            "sb.nav.openTerminal",
+        ]
+    );
 
     // And `sb.config` is read-only: one method, and it reads.
     let config: Vec<String> = HostFn::ALL

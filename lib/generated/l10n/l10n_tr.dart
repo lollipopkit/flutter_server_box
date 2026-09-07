@@ -548,84 +548,93 @@ class AppLocalizationsTr extends AppLocalizations {
   String get customCmd => 'Özel komutlar';
 
   @override
-  String get customCmdInterval => 'Custom command interval';
+  String get customCmdInterval => 'Özel komut aralığı';
 
   @override
   String customCmdIntervalTip(Object seconds) {
-    return 'They run on a status poll, so this is rounded up to a whole number of update intervals. Actual: ${seconds}s.';
+    return 'Durum sorgusu sırasında çalıştırıldıkları için bu değer, yenileme aralığının tam katına yukarı yuvarlanır. Gerçek: $seconds sn.';
   }
 
   @override
   String get customCmdChangedOnServer =>
-      'The commands on this server have changed since this page loaded them. Reload to see them; saving now would discard them.';
+      'Bu sunucudaki komutlar, bu sayfa onları yükledikten sonra değişti. Değişiklikleri görmek için yeniden yükleyin; şimdi kaydederseniz değişiklikler silinir.';
 
   @override
-  String get plugins => 'Plugins';
+  String get plugins => 'Eklentiler';
 
   @override
-  String get pkgUpdates => 'Updates';
+  String get pkgUpdates => 'Güncellemeler';
 
   @override
-  String get pkgUpToDate => 'Up to date';
+  String get pkgUpToDate => 'Güncel';
 
   @override
   String pkgSecurityCount(int n) {
-    return '$n security';
+    return '$n güvenlik güncellemesi';
   }
 
   @override
-  String get pkgNoManager => 'No package manager this app can read';
+  String get pkgNoManager =>
+      'Bu uygulamanın okuyabildiği bir paket yöneticisi yok';
 
   @override
   String pkgIndexAge(String age) {
-    return 'Index refreshed $age ago';
+    return 'Dizin $age önce güncellendi';
   }
 
   @override
   String pkgIndexStale(String age) {
-    return 'The package index has not been refreshed in $age. This count is what the server already knew, not what is available.';
+    return 'Paket dizini $age süredir güncellenmedi. Bu sayı, şu anda sunulanları değil sunucunun daha önce bildiklerini gösterir.';
   }
 
   @override
-  String get pkgUpgrade => 'Upgrade in terminal';
+  String get pkgUpgrade => 'Terminalde yükselt';
 
   @override
   String get pkgUpgradeDesc =>
-      'Opens a terminal with the upgrade command ready. Nothing runs until you send it.';
+      'Yükseltme komutu hazır olarak bir terminal açar. Siz gönderene kadar hiçbir şey çalıştırılmaz.';
 
   @override
   String pkgSecurityUnknown(String manager) {
-    return '$manager does not say which updates are security fixes';
+    return '$manager, hangi güncellemelerin güvenlik düzeltmesi olduğunu belirtmiyor';
   }
 
   @override
-  String get pluginInstall => 'Install a plugin';
+  String get pluginInstall => 'Eklenti yükle';
 
   @override
-  String get pluginInstalled => 'Installed';
+  String get pluginInstalled => 'Yüklü';
 
   @override
-  String get pluginBundled => 'Bundled';
+  String get pluginBundled => 'Dâhilî';
 
   @override
-  String get pluginDev => 'Development';
+  String get pluginDev => 'Geliştirme';
 
   @override
   String get pluginNeedsConsent =>
-      'This update asks for more than you agreed to. Reinstall it to review.';
+      'Bu güncelleme, kabul ettiğinizden daha fazla izin istiyor. İncelemek için eklentiyi yeniden yükleyin.';
 
   @override
-  String get pluginPermissionsAsk => 'This plugin asks to:';
+  String get pluginPermissionsAsk => 'Bu eklentinin istediği izinler:';
 
   @override
-  String get pluginNoPermissions => 'It asks for nothing outside itself.';
+  String get pluginNoPermissions =>
+      'Kendi alanı dışında hiçbir şeye erişim istemiyor.';
 
   @override
-  String get pluginUninstallKeepData => 'Keep its settings and data';
+  String get pluginUninstallKeepData => 'Ayarlarını ve verilerini koru';
 
   @override
   String get pluginRunsOnServer =>
-      'It runs commands on your servers. Only install one you trust.';
+      'Sunucularınızda komut çalıştırır. Yalnızca güvendiğiniz eklentileri yükleyin.';
+
+  @override
+  String get pluginSeesAllServers => 'Sunucu listenizi görme';
+
+  @override
+  String get pluginSeesAllServersTip =>
+      'Yalnızca eklentiyi açtığınız sunucunun değil, tüm sunucularınızın adını görebilir. Adresler ve kimlik bilgileri hiçbir zaman paylaşılmaz.';
 
   @override
   String get deleteServers => 'Sunucuları toplu sil';
@@ -2136,5 +2145,5 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get benchmarkNoServers =>
-      'Add a server first, then come back to benchmark it.';
+      'Önce bir sunucu ekleyin, ardından performansını test etmek için geri dönün.';
 }

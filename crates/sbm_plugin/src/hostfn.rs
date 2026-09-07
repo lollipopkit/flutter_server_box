@@ -60,8 +60,28 @@ pub enum HostFn {
     /// and the level and decides what else is safe to keep.
     DiagCrumb,
 
+    /// null → `{servers: [{server, name}]}`
+    ///
+    /// Every server the user has, as handles and display names. What a
+    /// fleet-wide surface — a tab — is for: it is bound to no one machine, so
+    /// it cannot be handed a single handle at load.
+    ///
+    /// Names and handles, and nothing else. An address is what a plugin would
+    /// need to reach a machine behind the app's back, and a handle is
+    /// meaningless outside the instance it was issued to.
+    ServerList,
+
     /// `{server}` → null
     NavOpenServer,
+
+    /// `{server, cmd?, run?}` → null
+    ///
+    /// Opens a terminal on that server with `cmd` typed into it. `run` sends
+    /// it; the default does not, so the user reads the line before it runs and
+    /// can edit it. A plugin that wants the output rather than the session has
+    /// `sb.server.exec`; this is for the commands a person should watch —
+    /// anything interactive, anything that asks before it acts.
+    NavOpenTerminal,
 
     /// `{tab}` → null
     NavGoTab,
@@ -90,7 +110,9 @@ impl HostFn {
         Self::StoreSet,
         Self::StoreList,
         Self::DiagCrumb,
+        Self::ServerList,
         Self::NavOpenServer,
+        Self::NavOpenTerminal,
         Self::NavGoTab,
         Self::ClipboardRead,
         Self::ClipboardWrite,
@@ -99,12 +121,12 @@ impl HostFn {
     /// The object on `sb` this hangs off.
     pub const fn namespace(self) -> &'static str {
         match self {
-            Self::ServerExec => "server",
+            Self::ServerExec | Self::ServerList => "server",
             Self::HttpFetch => "http",
             Self::UiPatch | Self::UiPrompt | Self::UiPickServer | Self::UiToast => "ui",
             Self::StoreGet | Self::StoreSet | Self::StoreList => "store",
             Self::DiagCrumb => "diag",
-            Self::NavOpenServer | Self::NavGoTab => "nav",
+            Self::NavOpenServer | Self::NavOpenTerminal | Self::NavGoTab => "nav",
             Self::ClipboardRead | Self::ClipboardWrite => "clipboard",
         }
     }
@@ -113,6 +135,7 @@ impl HostFn {
     pub const fn method(self) -> &'static str {
         match self {
             Self::ServerExec => "exec",
+            Self::ServerList => "list",
             Self::HttpFetch => "fetch",
             Self::UiPatch => "patch",
             Self::UiPrompt => "prompt",
@@ -123,6 +146,7 @@ impl HostFn {
             Self::StoreList => "list",
             Self::DiagCrumb => "crumb",
             Self::NavOpenServer => "openServer",
+            Self::NavOpenTerminal => "openTerminal",
             Self::NavGoTab => "goTab",
             Self::ClipboardRead => "read",
             Self::ClipboardWrite => "write",
@@ -139,6 +163,11 @@ impl HostFn {
     pub const fn permission(self) -> Option<Permission> {
         match self {
             Self::ServerExec => Some(Permission::ServerExec),
+            Self::ServerList => Some(Permission::ServerList),
+            // Opening a terminal is causing commands to run on that machine,
+            // which is what `server.exec` is. That it is the user who types
+            // them makes it no less than exec, only more visible.
+            Self::NavOpenTerminal => Some(Permission::ServerExec),
             Self::HttpFetch => Some(Permission::NetHttp),
             Self::UiPrompt => Some(Permission::UiDialog),
             Self::ClipboardRead | Self::ClipboardWrite => Some(Permission::Clipboard),
@@ -261,6 +290,8 @@ mod tests {
         for f in HostFn::ALL {
             let _: &'static str = match f {
                 HostFn::ServerExec
+                | HostFn::ServerList
+                | HostFn::NavOpenTerminal
                 | HostFn::HttpFetch
                 | HostFn::UiPatch
                 | HostFn::UiPrompt
@@ -276,7 +307,7 @@ mod tests {
                 | HostFn::ClipboardWrite => f.method(),
             };
         }
-        assert_eq!(HostFn::ALL.len(), 14);
+        assert_eq!(HostFn::ALL.len(), 16);
     }
 
     /// Every namespace a function hangs off has to be one the bindings create,

@@ -622,6 +622,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'It runs commands on your servers. Only install one you trust.';
 
   @override
+  String get pluginSeesAllServers => 'See your list of servers';
+
+  @override
+  String get pluginSeesAllServersTip =>
+      'It can see every server\'s name, not only the one you open it from. Addresses and credentials are never shared.';
+
+  @override
   String get deleteServers => 'Batch delete servers';
 
   @override

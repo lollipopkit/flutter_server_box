@@ -546,84 +546,93 @@ class AppLocalizationsId extends AppLocalizations {
   String get customCmd => 'Perintah kustom';
 
   @override
-  String get customCmdInterval => 'Custom command interval';
+  String get customCmdInterval => 'Interval perintah kustom';
 
   @override
   String customCmdIntervalTip(Object seconds) {
-    return 'They run on a status poll, so this is rounded up to a whole number of update intervals. Actual: ${seconds}s.';
+    return 'Perintah dijalankan saat pemeriksaan status, sehingga nilai ini dibulatkan ke atas menjadi kelipatan utuh interval pembaruan. Aktual: $seconds dtk.';
   }
 
   @override
   String get customCmdChangedOnServer =>
-      'The commands on this server have changed since this page loaded them. Reload to see them; saving now would discard them.';
+      'Perintah di server ini telah berubah sejak dimuat oleh halaman ini. Muat ulang untuk melihatnya; menyimpan sekarang akan membuang perubahan tersebut.';
 
   @override
-  String get plugins => 'Plugins';
+  String get plugins => 'Plugin';
 
   @override
-  String get pkgUpdates => 'Updates';
+  String get pkgUpdates => 'Pembaruan';
 
   @override
-  String get pkgUpToDate => 'Up to date';
+  String get pkgUpToDate => 'Sudah terbaru';
 
   @override
   String pkgSecurityCount(int n) {
-    return '$n security';
+    return '$n keamanan';
   }
 
   @override
-  String get pkgNoManager => 'No package manager this app can read';
+  String get pkgNoManager =>
+      'Tidak ada pengelola paket yang dapat dibaca aplikasi ini';
 
   @override
   String pkgIndexAge(String age) {
-    return 'Index refreshed $age ago';
+    return 'Indeks diperbarui $age lalu';
   }
 
   @override
   String pkgIndexStale(String age) {
-    return 'The package index has not been refreshed in $age. This count is what the server already knew, not what is available.';
+    return 'Indeks paket belum diperbarui selama $age. Jumlah ini adalah yang sudah diketahui server, bukan yang tersedia saat ini.';
   }
 
   @override
-  String get pkgUpgrade => 'Upgrade in terminal';
+  String get pkgUpgrade => 'Tingkatkan di terminal';
 
   @override
   String get pkgUpgradeDesc =>
-      'Opens a terminal with the upgrade command ready. Nothing runs until you send it.';
+      'Membuka terminal dengan perintah peningkatan yang sudah disiapkan. Tidak ada yang dijalankan sampai Anda mengirimkannya.';
 
   @override
   String pkgSecurityUnknown(String manager) {
-    return '$manager does not say which updates are security fixes';
+    return '$manager tidak menunjukkan pembaruan mana yang merupakan perbaikan keamanan';
   }
 
   @override
-  String get pluginInstall => 'Install a plugin';
+  String get pluginInstall => 'Instal plugin';
 
   @override
-  String get pluginInstalled => 'Installed';
+  String get pluginInstalled => 'Terinstal';
 
   @override
-  String get pluginBundled => 'Bundled';
+  String get pluginBundled => 'Bawaan';
 
   @override
-  String get pluginDev => 'Development';
+  String get pluginDev => 'Pengembangan';
 
   @override
   String get pluginNeedsConsent =>
-      'This update asks for more than you agreed to. Reinstall it to review.';
+      'Pembaruan ini meminta izin lebih dari yang Anda setujui. Instal ulang untuk meninjaunya.';
 
   @override
-  String get pluginPermissionsAsk => 'This plugin asks to:';
+  String get pluginPermissionsAsk => 'Plugin ini meminta:';
 
   @override
-  String get pluginNoPermissions => 'It asks for nothing outside itself.';
+  String get pluginNoPermissions =>
+      'Plugin ini tidak meminta akses ke apa pun di luar dirinya.';
 
   @override
-  String get pluginUninstallKeepData => 'Keep its settings and data';
+  String get pluginUninstallKeepData => 'Pertahankan pengaturan dan datanya';
 
   @override
   String get pluginRunsOnServer =>
-      'It runs commands on your servers. Only install one you trust.';
+      'Plugin ini menjalankan perintah di server Anda. Instal hanya plugin yang Anda percayai.';
+
+  @override
+  String get pluginSeesAllServers => 'Melihat daftar server Anda';
+
+  @override
+  String get pluginSeesAllServersTip =>
+      'Plugin ini dapat melihat nama setiap server, bukan hanya server tempat Anda membukanya. Alamat dan kredensial tidak pernah dibagikan.';
 
   @override
   String get deleteServers => 'Penghapusan server secara batch';
@@ -2140,5 +2149,5 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get benchmarkNoServers =>
-      'Add a server first, then come back to benchmark it.';
+      'Tambahkan server terlebih dahulu, lalu kembali untuk menguji performanya.';
 }

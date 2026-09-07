@@ -294,6 +294,36 @@ class PluginBridge {
         ops.crumb(pluginId, name, '${req['level'] ?? 'info'}');
         return const PluginAnswer.ok();
 
+      case 'sb.server.list':
+        final servers = await ops.listServers();
+        return PluginAnswer.json({
+          'servers': [
+            for (final s in servers)
+              // A handle rather than the id: it is meaningless outside this
+              // instance, so one that leaked into a log or a plugin's own
+              // storage names nothing.
+              {'server': handles.issue(instanceId, s.id), 'name': s.name},
+          ],
+        });
+
+      case 'sb.nav.openTerminal':
+        final serverId = handles.resolve(req['server']);
+        if (serverId == null) {
+          return PluginAnswer.badRequest('sb.nav.openTerminal: unknown server');
+        }
+        final cmd = req['cmd'];
+        if (cmd != null && cmd is! String) {
+          return PluginAnswer.badRequest('sb.nav.openTerminal: `cmd`');
+        }
+        await ops.openTerminal(
+          serverId,
+          cmd: cmd as String?,
+          // Absent means typed and not sent, which is the safer default and
+          // the one the app's own callers use.
+          run: req['run'] == true,
+        );
+        return const PluginAnswer.ok();
+
       case 'sb.nav.openServer':
         final serverId = handles.resolve(req['server']);
         if (serverId == null) {

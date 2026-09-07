@@ -60,6 +60,14 @@ typedef PluginFetchResult = ({
   Map<String, Object?>? cert,
 });
 
+/// One server, as a plugin is allowed to see it.
+///
+/// A name and nothing else. An address, a user name and a port are what a
+/// plugin would need to reach a machine behind the app's back, and no
+/// permission grants them — `sb.server.exec` is how a plugin reaches a server,
+/// and it goes through the app.
+typedef PluginServerSummary = ({String id, String name});
+
 abstract interface class PluginHostOps {
   /// Runs [script] on [serverId], which the bridge resolved from a handle the
   /// host itself issued.
@@ -87,6 +95,21 @@ abstract interface class PluginHostOps {
     bool probeCert,
     Duration? timeout,
   });
+
+  /// Every server the user has, in the order the server tab shows them.
+  ///
+  /// For a surface bound to no one machine — a tab. Gated by `server.list`,
+  /// which is deliberately not part of `server.exec`: exec acts on a machine
+  /// the user pointed at, and this hands over the whole list with nobody
+  /// choosing.
+  Future<List<PluginServerSummary>> listServers();
+
+  /// Opens a terminal on [serverId] with [cmd] typed into it.
+  ///
+  /// [run] sends it; the default does not, so the user reads the line before
+  /// it runs and can edit it. A plugin that wants the output rather than the
+  /// session has [exec] — this is for the commands a person should watch.
+  Future<void> openTerminal(String serverId, {String? cmd, bool run = false});
 
   /// [kind] is `info`, `success`, `warn` or `error`.
   void toast(String text, String kind);

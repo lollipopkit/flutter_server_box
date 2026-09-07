@@ -1191,6 +1191,18 @@ abstract class AppLocalizations {
   /// **'It runs commands on your servers. Only install one you trust.'**
   String get pluginRunsOnServer;
 
+  /// No description provided for @pluginSeesAllServers.
+  ///
+  /// In en, this message translates to:
+  /// **'See your list of servers'**
+  String get pluginSeesAllServers;
+
+  /// No description provided for @pluginSeesAllServersTip.
+  ///
+  /// In en, this message translates to:
+  /// **'It can see every server\'s name, not only the one you open it from. Addresses and credentials are never shared.'**
+  String get pluginSeesAllServersTip;
+
   /// No description provided for @deleteServers.
   ///
   /// In en, this message translates to:

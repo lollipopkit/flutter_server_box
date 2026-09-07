@@ -41,6 +41,16 @@ class _Ops implements PluginHostOps {
   }) async => (code: 0, stdout: '', stderr: '');
 
   @override
+  Future<List<PluginServerSummary>> listServers() async => const [];
+
+  @override
+  Future<void> openTerminal(
+    String serverId, {
+    String? cmd,
+    bool run = false,
+  }) async {}
+
+  @override
   Future<PluginFetchResult> fetch({
     required String url,
     required String method,

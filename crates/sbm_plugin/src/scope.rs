@@ -64,7 +64,7 @@ impl State {
     pub(crate) fn verify_scope(&self, func: HostFn, request: &[u8]) -> Result<(), Refusal> {
         let name = || func.path();
         match func {
-            HostFn::ServerExec | HostFn::NavOpenServer => {
+            HostFn::ServerExec | HostFn::NavOpenServer | HostFn::NavOpenTerminal => {
                 let req = parse(func, request)?;
                 self.check_handle(func, &req)?;
             }
@@ -123,6 +123,10 @@ impl State {
                     }
                 }
             }
+            // Takes no argument and names no server, so there is nothing here
+            // to check: the whole of the decision was `server.list`, made when
+            // the binding was installed.
+            HostFn::ServerList => {}
             HostFn::UiPatch
             | HostFn::UiPrompt
             | HostFn::UiPickServer

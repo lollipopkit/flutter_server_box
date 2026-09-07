@@ -21,7 +21,9 @@ import type {
   PromptSpec,
   Sb,
   Scope,
+  OpenTerminalRequest,
   ServerHandle,
+  ServerSummary,
   ToastKind,
 } from "./host.ts";
 import { L10N_ARG_SEP, type Node } from "./ui.ts";
@@ -31,6 +33,8 @@ export type LogLevel = "trace" | "debug" | "info" | "warn" | "error";
 /** One thing the plugin asked the host to do. */
 export type Recorded =
   | { fn: "server.exec"; req: ExecRequest }
+  | { fn: "server.list" }
+  | { fn: "nav.openTerminal"; req: OpenTerminalRequest }
   | { fn: "http.fetch"; req: HttpRequest }
   | { fn: "ui.patch"; path: string; node: Node }
   | { fn: "ui.prompt"; spec: PromptSpec }
@@ -87,6 +91,7 @@ function denied(fn: string, permission: string): Error {
 /** Which permission each function needs, matching `hostfn.rs`. */
 const PERMISSION: Record<string, string | null> = {
   "server.exec": "server.exec",
+  "server.list": "server.list",
   "http.fetch": "net.http",
   "ui.patch": null,
   "ui.prompt": "ui.dialog",
@@ -97,6 +102,9 @@ const PERMISSION: Record<string, string | null> = {
   "store.list": null,
   "diag.crumb": null,
   "nav.openServer": null,
+  // Causing commands to run on a machine is the same capability whoever types
+  // them, so this is `server.exec` and not free.
+  "nav.openTerminal": "server.exec",
   "nav.goTab": null,
   "clipboard.read": "clipboard",
   "clipboard.write": "clipboard",
@@ -119,6 +127,10 @@ export class MockHost {
   private prompts: PromptAnswer[] = [];
   private pick: ServerHandle | null = null;
   private execs = new Map<string, ExecResponse>();
+
+  /// Empty until `servers()` scripts one, which is what a plugin sees on a
+  /// device with no servers — a state worth being able to test.
+  private serverList: ServerSummary[] = [];
   private clipboard: string | null = null;
 
   private cfg: Record<string, string>;
@@ -156,6 +168,19 @@ export class MockHost {
 
   exec(script: string, response: Partial<ExecResponse>): this {
     this.execs.set(script, { code: 0, stdout: "", stderr: "", ...response });
+    return this;
+  }
+
+  /** What `sb.server.list` answers. Handles are the names unless given. */
+  servers(...names: (string | ServerSummary)[]): this {
+    this.serverList = names.map((n) =>
+      typeof n === "string"
+        // A handle is opaque to the plugin and meaningless outside the
+        // instance it was issued to, so any string will do here — the shape is
+        // what a test is checking, never the value.
+        ? { server: `h:${n}` as ServerHandle, name: n }
+        : n,
+    );
     return this;
   }
 
@@ -228,6 +253,11 @@ export class MockHost {
           const found = this.execs.get(req.script);
           if (!found) throw hostError("io", `no exec scripted for: ${req.script}`);
           return found;
+        },
+        list: async () => {
+          check("server.list");
+          this.calls.push({ fn: "server.list" });
+          return { servers: this.serverList };
         },
       },
 
@@ -319,6 +349,10 @@ export class MockHost {
       nav: {
         openServer: async ({ server }) => {
           this.calls.push({ fn: "nav.openServer", server });
+        },
+        openTerminal: async (req) => {
+          check("nav.openTerminal");
+          this.calls.push({ fn: "nav.openTerminal", req });
         },
         goTab: async ({ tab }) => {
           this.calls.push({ fn: "nav.goTab", tab });
